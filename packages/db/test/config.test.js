@@ -5,7 +5,7 @@ const { test } = require('tap')
 const { buildServer } = require('..')
 const { request } = require('undici')
 const { tmpdir } = require('os')
-const { writeFile, unlink } = require('fs/promises')
+const { readFile, writeFile, unlink } = require('fs/promises')
 const { join } = require('path')
 const DBConfigManager = require('../lib/config')
 
@@ -251,4 +251,28 @@ test('ignore watch sqlite file', async ({ teardown, equal, same, comment }) => {
     equal(parseResult, true)
     same(cm.watchIgnore, [join('databases', 'db-watchIgnore.sqlite'), join('databases', 'db-watchIgnore.sqlite-journal'), '.esm*'])
   }
+})
+
+test('should save config with relative paths', async ({ teardown, equal }) => {
+  const configPath = join(__dirname, 'fixtures', 'config-to-replace.json')
+  const configFile = await readFile(configPath, 'utf8')
+  const config = JSON.parse(configFile)
+
+  teardown(() => writeFile(configPath, configFile))
+
+  const cm = new DBConfigManager({
+    source: configPath,
+    schema: {}
+  })
+  const parseResult = await cm.parse()
+  equal(parseResult, true)
+
+  await cm.save()
+
+  const savedConfigFile = await readFile(configPath, 'utf8')
+  const savedConfig = JSON.parse(savedConfigFile)
+
+  equal(savedConfig.core.connectionString, config.core.connectionString)
+  equal(savedConfig.plugin.path, config.plugin.path)
+  equal(savedConfig.migrations.dir, config.migrations.dir)
 })

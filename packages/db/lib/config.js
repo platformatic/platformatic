@@ -1,9 +1,10 @@
 'use strict'
 
 const ConfigManager = require('@platformatic/config')
-const { dirname, resolve } = require('path')
+const { dirname, resolve, relative, isAbsolute } = require('path')
 const { schema } = require('./schema')
 const { computeSQLiteIgnores } = require('./utils')
+const clone = require('rfdc')()
 
 class DBConfigManager extends ConfigManager {
   constructor (opts) {
@@ -57,6 +58,31 @@ class DBConfigManager extends ConfigManager {
         [this.current.migrations.table || 'versions']: true
       }, this.current.core.ignore)
     }
+  }
+
+  _sanitizeConfig () {
+    const sanitizedConfig = clone(this.current)
+
+    const dirOfConfig = dirname(this.fullPath)
+    if (this.current.core && this.current.core.connectionString.indexOf('sqlite') === 0) {
+      const sqliteFullPath = this.current.core.connectionString.replace('sqlite://', '')
+      if (isAbsolute(sqliteFullPath)) {
+        const originalSqlitePath = relative(dirOfConfig, sqliteFullPath)
+        sanitizedConfig.core.connectionString = 'sqlite://' + originalSqlitePath
+      }
+    }
+
+    // absolute-to-relative migrations path
+    if (this.current.migrations && isAbsolute(this.current.migrations.dir)) {
+      sanitizedConfig.migrations.dir = relative(dirOfConfig, this.current.migrations.dir)
+    }
+
+    // relative-to-absolute plugin path
+    if (this.current.plugin && isAbsolute(this.current.plugin.path)) {
+      sanitizedConfig.plugin.path = relative(dirOfConfig, this.current.plugin.path)
+    }
+
+    return sanitizedConfig
   }
 }
 

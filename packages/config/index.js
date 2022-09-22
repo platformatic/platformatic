@@ -165,6 +165,10 @@ class ConfigManager extends EventEmitter {
 
   _transformConfig () {}
 
+  _sanitizeConfig () {
+    return this.current
+  }
+
   async parse () {
     try {
       if (this._shouldSave) {
@@ -235,7 +239,8 @@ class ConfigManager extends EventEmitter {
     if (!this.current) {
       return false
     }
-    return await writeFile(this.fullPath, this.serializer.stringify(this.current))
+    const sanitizedConfig = this._sanitizeConfig()
+    return await writeFile(this.fullPath, this.serializer.stringify(sanitizedConfig))
   }
 
   async load () {
