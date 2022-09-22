@@ -39,6 +39,7 @@ function computeSQLiteIgnores (sqliteFullPath, dirOfConfig) {
   return result
 }
 
+/* c8 ignore start */
 function addLoggerToTheConfig (config) {
   if (config === undefined || config.server === undefined) return
 
@@ -58,6 +59,7 @@ function addLoggerToTheConfig (config) {
     }
   }
 }
+/* c8 ignore stop */
 
 module.exports = {
   setupDB,
