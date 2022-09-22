@@ -149,6 +149,30 @@ test('simple db, simple rest API', async (t) => {
       title: 'Hello fields'
     }, 'POST /pages/1?fields=title response')
   }
+
+  {
+    // Fields as array
+    const res = await app.inject({
+      method: 'GET',
+      url: '/pages/1?fields=title&fields=id'
+    })
+    same(res.json(), {
+      id: 1,
+      title: 'Hello fields'
+    }, 'GET /pages/1?fields=title&fields=id response')
+  }
+
+  {
+    // Fields as comma separated strings
+    const res = await app.inject({
+      method: 'GET',
+      url: '/pages/1?fields=title,id'
+    })
+    same(res.json(), {
+      id: 1,
+      title: 'Hello fields'
+    }, 'GET /pages/1?fields=title,id response')
+  }
 })
 
 async function createBasicPagesNullable (db, sql) {

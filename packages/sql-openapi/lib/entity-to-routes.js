@@ -67,7 +67,7 @@ async function entityPlugin (app, opts) {
   }, {})
 
   app.addHook('preValidation', async (req) => {
-    if (req.query.fields) {
+    if (typeof req.query.fields === 'string') {
       req.query.fields = req.query.fields.split(',')
     }
   })
