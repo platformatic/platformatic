@@ -1,0 +1,69 @@
+{
+  "name": "@platformatic/db-dashboard",
+  "version": "0.0.21",
+  "main": "index.js",
+  "description": "Platformatic DB Dashboard",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/plaformatic/platformatic.git"
+  },
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/plaformatic/platformatic/issues"
+  },
+  "homepage": "https://github.com/plaformatic/platformatic#readme",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "prepublish": "npm run build",
+    "preview": "vite preview",
+    "test": "standard | snazzy && vitest run",
+    "test:e2e": "playwright test",
+    "test:watch": "vitest watch",
+    "lint": "standard | snazzy"
+  },
+  "dependencies": {
+    "@fastify/static": "^6.5.0"
+  },
+  "devDependencies": {
+    "@graphiql/toolkit": "^0.8.0",
+    "@playwright/test": "^1.24.2",
+    "bulma": "^0.9.4",
+    "graphiql": "^2.0.0",
+    "json-format-highlight": "^1.0.4",
+    "jsoneditor": "^9.9.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.3.0",
+    "react-router-dom": "^6.3.0",
+    "snazzy": "^9.0.0",
+    "standard": "^17.0.0",
+    "swagger-ui-react": "4.13.0",
+    "@types/react": "^18.0.17",
+    "@types/react-dom": "^18.0.6",
+    "@vitejs/plugin-react": "^2.0.0",
+    "happy-dom": "^6.0.4",
+    "history": "^5.3.0",
+    "playwright": "^1.24.2",
+    "react-test-renderer": "^18.2.0",
+    "vite": "^3.0.4",
+    "vitest": "^0.23.0"
+  },
+  "standard": {
+    "globals": [
+      "describe",
+      "context",
+      "before",
+      "beforeEach",
+      "after",
+      "afterEach",
+      "it",
+      "expect",
+      "test",
+      "screen"
+    ],
+    "ignore": [
+      "/build"
+    ]
+  }
+}

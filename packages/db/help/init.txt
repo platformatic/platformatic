@@ -1,0 +1,14 @@
+Initiate default Platformatic DB application:
+
+  $ platformatic db init
+
+As a result of executing this command, the `platformatic.db.json` configuration
+file and the `migrations` folder with migration examples will be generated.
+
+Options:
+
+  * `-h, --hostname <hostname>`: The hostname where Platformatic DB server will listen for connections.
+  * `-p, --port <port>`: The port where Platformatic DB server will listen for connections.
+  * `-db, --database <database_name>`: The name of the database to use. Default: `sqlite`. 
+  * `-m, --migrations <path>`: Relative path to the migrations folder. Default: `./migrations`.
+  * `-t, --types <boolean>`: Set true to enable type autogeneration. Default: `true`.

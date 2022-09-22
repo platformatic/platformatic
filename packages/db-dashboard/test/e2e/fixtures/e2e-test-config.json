@@ -1,0 +1,35 @@
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "3042",
+    "logger": {
+      "level": "info"
+    },
+    "cors": {
+      "origin": true,
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "PATCH"
+      ]
+    }
+  },
+  "migrations": {
+    "dir": "./migrations"
+  },
+  "core": {
+    "connectionString": "postgres://postgres:postgres@127.0.0.1:5432/postgres",
+    "ignore": {
+      "versions": true
+    }
+  },
+  "dashboard": {
+    "enabled": true,
+    "rootPath": true
+  },
+  "authorization": {
+    "adminSecret": "basegraph"
+  }
+}

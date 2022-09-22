@@ -1,0 +1,51 @@
+{
+  "server": {
+    "logger": {
+      "level": "info"
+    },
+    "hostname": "127.0.0.1",
+    "port": "3042"
+  },
+  "core": {
+    "connectionString": "postgres://postgres:postgres@127.0.0.1:5432/postgres",
+    "graphql": {
+      "graphiql": true
+    }
+  },
+  "migrations": {
+    "dir": "./migrations"
+  },
+  "plugin": {
+    "path": "./plugin.js"
+  },
+  "authorization": {
+    "adminSecret": "platformatic",
+    "rules": [
+      {
+        "role": "user",
+        "entity": "page",
+        "delete": false,
+        "defaults": {
+          "userId": "X-PLATFORMATIC-USER-ID"
+        },
+        "find": {
+          "checks": {
+            "userId": "X-PLATFORMATIC-USER-ID"
+          }
+        },
+        "save": {
+          "checks": {
+            "userId": "X-PLATFORMATIC-USER-ID"
+          }
+        }
+      },
+      {
+        "role": "anonymous",
+        "entity": "page",
+        "find": false,
+        "delete": false,
+        "save": false
+      }
+    ]
+  }
+}

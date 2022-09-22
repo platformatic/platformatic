@@ -1,0 +1,32 @@
+Generate typescript types for your entities from the database.
+
+  $ platformatic db types
+
+As a result of executing this command, the Platformatic DB will generate a `types`
+folder with a typescript file for each database entity. It will also generate a
+`global.d.ts` file that injects the types into the Application instance.
+
+In order to add type support to your plugins, you need to install some additional
+dependencies. To do this, copy and run an `npm install` command with dependencies
+that "platformatic db types" will ask you.
+
+Here is an example of a platformatic plugin.js with jsdoc support.
+You can use it to add autocomplete to your code.
+
+/// <reference path="./global.d.ts" />
+'use strict'
+
+/** @param {import('fastify').FastifyInstance} app */
+module.exports = async function (app) {
+  app.get('/movie', async () => {
+    const movies = await app.platformatic.entities.movie.find({
+      where: { title: { eq: 'The Hitchhiker\'s Guide to the Galaxy' } }
+    })
+    return movies[0].id
+  })
+}
+
+If not specified, the configuration specified will be loaded from
+`platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
+You can find more details about the configuration format at:
+https://oss.platformatic.dev/docs/reference/configuration.

@@ -1,0 +1,33 @@
+{
+  "name": "@platformatic/db-authorization",
+  "version": "0.0.21",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "standard | snazzy && tap test/*test.js"
+  },
+  "author": "Matteo Collina <hello@matteocollina.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@fastify/cookie": "^8.0.0",
+    "@fastify/session": "^10.0.0",
+    "@platformatic/db-core": "workspace:*",
+    "fast-jwt": "^1.7.1",
+    "fastify": "^4.6.0",
+    "mercurius": "^11.0.0",
+    "snazzy": "^9.0.0",
+    "standard": "^17.0.0",
+    "tap": "^16.0.0"
+  },
+  "dependencies": {
+    "@fastify/error": "^3.0.0",
+    "@fastify/jwt": "^6.3.1",
+    "fastify-plugin": "^4.1.0",
+    "get-jwks": "^8.0.0",
+    "undici": "^5.6.1"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "3042",
+    "logger": {
+      "level": "info"
+    }
+  },
+  "core": {
+    "connectionString": "sqlite://./demo/db.sqlite3`",
+    "graphiql": true,
+    "ignore": {
+      "versions": true
+    }
+  }
+}

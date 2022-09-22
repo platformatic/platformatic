@@ -1,0 +1,33 @@
+version: "3.3"
+services:
+  postgresql:
+    ports:
+      - "5432:5432"
+    image: "arm64v8/postgres:14-alpine"
+    environment:
+      - POSTGRES_PASSWORD=postgres
+  mariadb:
+    ports:
+      - "3307:3306"
+    image: "arm64v8/mariadb:10.9"
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_DATABASE=graph
+  mysql:
+    platform: 'linux/amd64'
+    ports:
+      - "3306:3306"
+    image: "mysql:5.7"
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_DATABASE=graph
+  mysql8:
+    ports:
+      - "3308:3306"
+    image: "arm64v8/mysql:8-oracle"
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_DATABASE=graph
+
+
+

@@ -1,0 +1,36 @@
+{
+  "name": "@platformatic/cli",
+  "version": "0.0.21",
+  "description": "Platformatic DB cli",
+  "main": "cli.js",
+  "type": "module",
+  "bin": {
+    "platformatic": "cli.js"
+  },
+  "scripts": {
+    "test": "standard | snazzy && c8 --100 tap --no-coverage test/*.test.js"
+  },
+  "author": "Matteo Collina <hello@matteocollina.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "c8": "^7.11.0",
+    "execa": "^6.1.0",
+    "snazzy": "^9.0.0",
+    "split2": "^4.1.0",
+    "standard": "^17.0.0",
+    "tap": "^16.0.0"
+  },
+  "dependencies": {
+    "@platformatic/authenticate": "workspace:*",
+    "@platformatic/db": "workspace:*",
+    "colorette": "^2.0.19",
+    "commist": "^3.1.2",
+    "desm": "^1.2.0",
+    "help-me": "^4.1.0",
+    "minimist": "^1.2.6"
+  }
+}

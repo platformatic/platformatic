@@ -1,0 +1,1 @@
+ALTER TABLE pages ADD COLUMN user_id INTEGER;

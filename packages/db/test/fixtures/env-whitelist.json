@@ -1,0 +1,12 @@
+{
+  "server": {
+    "hostname": "{HOSTNAME}",
+    "port": 0,
+    "logger": {
+      "level": "info"
+    }
+  },
+  "core": {
+    "connectionString": "{DATABASE_URL}"
+  }
+}

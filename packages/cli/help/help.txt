@@ -1,0 +1,5 @@
+Welcome to Platformatic. Available commands are:
+
+* help - Display this message
+* help <command> - shows more information about a command.
+* db - start Platformatic DB; type `platformatic db help` to know more.

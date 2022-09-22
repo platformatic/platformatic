@@ -1,0 +1,18 @@
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0,
+    "logger": {
+      "level": "info"
+    }
+  },
+  "plugin":{
+    "path": "./antani.js"
+  },
+  "core": {
+    "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres"
+  },
+  "authorization": {
+    "adminSecret": "platformatic"
+  }
+}

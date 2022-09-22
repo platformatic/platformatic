@@ -1,0 +1,18 @@
+{
+  "core": {
+    "connectionString": "sqlite://./db",
+    "ignore": {
+      "versions": true
+    }
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 3042,
+    "logger": {
+      "level": "info"
+    }
+  },
+  "migrations": {
+    "dir": "./migrations"
+  }
+}

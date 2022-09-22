@@ -1,0 +1,176 @@
+'use strict'
+
+const t = require('tap')
+const fastify = require('fastify')
+const sqlOpenAPI = require('..')
+const sqlMapper = require('@platformatic/sql-mapper')
+const { clear, connInfo, isSQLite } = require('./helper')
+const { resolve } = require('path')
+const { test } = t
+
+Object.defineProperty(t, 'fullname', {
+  value: 'platformatic/db/openapi/orderby'
+})
+
+test('one-level order by', async (t) => {
+  const { pass, teardown, same, equal, matchSnapshot } = t
+  t.snapshotFile = resolve(__dirname, 'tap-snapshots', 'orderby-openapi-1.cjs')
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      if (isSQLite) {
+        await db.query(sql`CREATE TABLE pages (
+          id INTEGER PRIMARY KEY,
+          title VARCHAR(42),
+          counter INTEGER
+        );`)
+      } else {
+        await db.query(sql`CREATE TABLE pages (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(42),
+          counter INTEGER
+        );`)
+      }
+    }
+  })
+  app.register(sqlOpenAPI)
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  {
+    const pages = [
+      { title: 'Page 1', counter: 3 },
+      { title: 'Page 2', counter: 2 },
+      { title: 'Page 3', counter: 1 }
+    ]
+    const expected = [
+      { id: 1, title: 'Page 1', counter: 3 },
+      { id: 2, title: 'Page 2', counter: 2 },
+      { id: 3, title: 'Page 3', counter: 1 }
+    ]
+
+    for (const body of pages) {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/pages',
+        body
+      })
+      equal(res.statusCode, 200, 'POST /pages status code')
+      same(res.json(), expected.shift(), 'POST /pages response')
+    }
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/pages?orderby.counter=asc&fields=id,title,counter'
+    })
+    equal(res.statusCode, 200, 'POST /pages?orderby.counter=asc status code')
+    same(res.json(), [
+      { id: 3, title: 'Page 3', counter: 1 },
+      { id: 2, title: 'Page 2', counter: 2 },
+      { id: 1, title: 'Page 1', counter: 3 }
+    ], 'POST /pages?orderby.counter=asc response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/pages?orderby.counter=desc&fields=id,title,counter'
+    })
+    equal(res.statusCode, 200, 'POST /pages?orderby.counter=desc status code')
+    same(res.json(), [
+      { id: 1, title: 'Page 1', counter: 3 },
+      { id: 2, title: 'Page 2', counter: 2 },
+      { id: 3, title: 'Page 3', counter: 1 }
+    ], 'POST /pages?orderby.counter=desc response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/documentation/json'
+    })
+    const json = res.json()
+    // console.log(JSON.stringify(json, null, 2))
+    matchSnapshot(json, 'GET /documentation/json response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/pages?orderby.counter=xxxx'
+    })
+    equal(res.statusCode, 400, 'POST /pages?orderby.counter=desc status code')
+    same(res.json(), {
+      statusCode: 400,
+      error: 'Bad Request',
+      message: 'querystring/orderby.counter must be equal to one of the allowed values'
+    }
+    , 'POST /pages?orderby.counter=desc response')
+  }
+})
+
+test('list order by', async ({ pass, teardown, same, equal }) => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      if (isSQLite) {
+        await db.query(sql`CREATE TABLE pages (
+          id INTEGER PRIMARY KEY,
+          counter INTEGER,
+          counter2 INTEGER
+        );`)
+      } else {
+        await db.query(sql`CREATE TABLE pages (
+          id SERIAL PRIMARY KEY,
+          counter INTEGER,
+          counter2 INTEGER
+        );`)
+      }
+    }
+  })
+  app.register(sqlOpenAPI)
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  {
+    const res = await app.platformatic.entities.page.insert({
+      inputs: [
+        { counter: 3, counter2: 3 },
+        { counter: 3, counter2: 2 },
+        { counter: 1, counter2: 1 }
+      ]
+    })
+    same(res, [
+      { id: 1, counter: 3, counter2: 3 },
+      { id: 2, counter: 3, counter2: 2 },
+      { id: 3, counter: 1, counter2: 1 }
+    ])
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/pages?orderby.counter=asc&orderby.counter2=desc&fields=id,counter,counter2'
+    })
+    equal(res.statusCode, 200, 'POST /pages?orderby.counter=asc&orderby.counter2=desc status code')
+    same(res.json(), [
+      { id: 3, counter: 1, counter2: 1 },
+      { id: 1, counter: 3, counter2: 3 },
+      { id: 2, counter: 3, counter2: 2 }
+    ], 'POST /pages?orderby.counter=asc&orderby.counter2=desc response')
+  }
+})

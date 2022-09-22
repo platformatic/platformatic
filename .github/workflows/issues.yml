@@ -1,0 +1,25 @@
+name: Add new issue/PR to project
+
+on:
+  issues:
+    types:
+      - opened
+
+jobs:
+  add-to-project:
+    name: Add issue or PR to project
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate token
+        id: generate_token
+        uses: vidavidorra/github-app-token@v1.0.0
+        with:
+          appId: ${{ secrets.INTERNAL_GH_APP_ID }}
+          privateKey: ${{ secrets.INTERNAL_GH_APP_SECRET }}
+      - name: Add to Project
+        env:
+          TOKEN: ${{ steps.generate_token.outputs.token }}
+        uses: actions/add-to-project@338ac1805ece459f9c25a3e7a2b749fec994576d
+        with:
+          project-url: https://github.com/orgs/platformatic/projects/1
+          github-token: ${{ env.TOKEN }}

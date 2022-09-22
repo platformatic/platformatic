@@ -1,0 +1,14 @@
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
+  },
+  "core": {
+    "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres"
+  },
+  "migrations": {
+    "dir": "./migrations",
+    "table": "versions",
+    "autoApply": false
+  }
+}

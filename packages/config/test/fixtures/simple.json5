@@ -1,0 +1,41 @@
+{
+  server: {
+    // Server ip address
+    hostname: "127.0.0.1",
+    // Server port
+    port: "3042",
+    logger: {
+      level: "info"
+    }
+  },
+  "metrics": {
+    "auth": {
+      "username": "plt-db",
+      "password": "plt-db"
+    }
+  },
+  "plugin": {
+    "path": "./plugin-sum.js"
+  },
+  "core": {
+    "connectionString": "postgres://postgres:postgres@localhost:5432/postgres",
+    "graphiql": true,
+    "ignore": {
+      "versions": true
+    }
+  },
+  "migrations": {
+    "dir": "./demo/auth/migrations",
+    "validateChecksums": false
+  },
+  "dashboard": {
+    "enabled": true,
+    "rootPath": true
+  },
+  "authorization": {
+    // Single quotes are allowed
+    "adminSecret": 'plt-db'
+  },
+  foobar: 'foobar',
+  // Trailing comma is allowed
+}

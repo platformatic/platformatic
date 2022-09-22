@@ -1,0 +1,46 @@
+{
+  "name": "@platformatic/sql-openapi",
+  "version": "0.0.21",
+  "description": "Map a SQL database to OpenAPI, for Fastify",
+  "main": "index.js",
+  "scripts": {
+    "test": "standard | snazzy && npm run test:typescript && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
+    "test:postgresql": "DB=postgresql tap test/*.test.js",
+    "test:mariadb": "DB=mariadb tap test/*.test.js",
+    "test:mysql": "DB=mysql tap test/*.test.js",
+    "test:mysql8": "DB=mysql8 tap test/*.test.js",
+    "test:sqlite": "DB=sqlite tap test/*.test.js",
+    "test:typescript": "tsd"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/plaformatic/platformatic.git"
+  },
+  "author": "Matteo Collina <hello@matteocollina.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/plaformatic/platformatic/issues"
+  },
+  "homepage": "https://github.com/plaformatic/platformatic#readme",
+  "devDependencies": {
+    "@platformatic/sql-mapper": "workspace:*",
+    "fastify": "^4.6.0",
+    "mercurius": "^11.0.0",
+    "openapi-types": "^12.0.2",
+    "snazzy": "^9.0.0",
+    "standard": "^17.0.0",
+    "tap": "^16.0.0",
+    "tsd": "^0.24.0"
+  },
+  "dependencies": {
+    "@platformatic/sql-json-schema-mapper": "workspace:*",
+    "@fastify/deepmerge": "^1.1.0",
+    "@fastify/swagger": "^7.4.1",
+    "camelcase": "^6.0.0",
+    "fastify-plugin": "^4.1.0",
+    "inflected": "^2.1.0"
+  },
+  "tsd": {
+    "directory": "test/types"
+  }
+}

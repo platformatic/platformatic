@@ -1,0 +1,23 @@
+name: "Trigger OSS repo"
+on:
+  release:
+    types: [published]
+
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - '**.md'
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update docs
+        if: ${{ github.event_name == 'release' }}
+        run: |
+          curl -XPOST -u "${{ secrets.GH_API_USERNAME }}:${{ secrets.GH_API_TOKEN }}" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" https://api.github.com/repos/platformatic/oss/dispatches --data '{"event_type": "update_docs"}'
+      - name: Force update docs
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          curl -XPOST -u "${{ secrets.GH_API_USERNAME }}:${{ secrets.GH_API_TOKEN }}" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" https://api.github.com/repos/platformatic/oss/dispatches --data '{"event_type": "update_docs", "inputs": { "force": true }}'
