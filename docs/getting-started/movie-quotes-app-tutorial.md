@@ -1,24 +1,24 @@
 # Movie Quotes App Tutorial
 
 This tutorial will help you learn how to build a full stack application on top
-of Platformatic DB. We're going to build an application that allows us to
-save our favourite movie quotes. We'll also be building in custom API functionality
+of Platformatic DB. We are going to build an application that allows us to
+save our favourite movie quotes. We will also be building in custom API functionality
 that allows for some neat user interaction on our frontend.
 
-You can find the complete code for the application that we're going to build
+You can find the complete code for the application that we are going to build
 [on GitHub](https://github.com/platformatic/tutorial-movie-quotes-app).
 
 :::note
 
-We'll be building the frontend of our application with the [Astro](https://astro.build/)
-framework, but the GraphQL API integration steps that we're going to cover can
+We will be building the frontend of our application with the [Astro](https://astro.build/)
+framework, but the GraphQL API integration steps that we are going to cover can
 be applied with most frontend frameworks.
 
 :::
 
-## What we're going to cover
+## What we are Going to Cover
 
-In this tutorial we'll learn how to:
+In this tutorial we will learn how to:
 
 - Create a Platformatic API
 - Apply database migrations
@@ -30,20 +30,20 @@ In this tutorial we'll learn how to:
 
 ## Prerequisites
 
-To follow along with this tutorial you'll need to have these things installed:
+To follow along with this tutorial you will need to have these things installed:
 
 - [Node.js](https://nodejs.org/) >= v16.17.0 or >= v18.8.0
 - [npm](https://docs.npmjs.com/cli/) v7 or later
 - A code editor, for example [Visual Studio Code](https://code.visualstudio.com/)
 
-You'll also need to have some experience with JavaScript, and be comfortable with
+You will also need to have some experience with JavaScript, and be comfortable with
 running commands in a terminal.
 
-## Build the backend
+## Build the Backend
 
 ### Create a Platformatic API
 
-First, let's create our project directory:
+First, let us create our project directory:
 
 ```bash
 mkdir -p tutorial-movie-quotes-app/apps/movie-quotes-api/
@@ -51,7 +51,7 @@ mkdir -p tutorial-movie-quotes-app/apps/movie-quotes-api/
 cd tutorial-movie-quotes-app/apps/movie-quotes-api/
 ```
 
-Then let's create a `package.json` file:
+Then let us create a `package.json` file:
 
 ```bash
 npm init --yes
@@ -64,7 +64,7 @@ CLI as a dependency:
 npm install platformatic
 ```
 
-Let's also add some npm run scripts for convenience:
+Let us also add some npm run scripts for convenience:
 
 ```bash
 npm pkg set scripts.start="platformatic db start"
@@ -72,7 +72,7 @@ npm pkg set scripts.start="platformatic db start"
 npm pkg set scripts.dev="npm start"
 ```
 
-Now we're going to configure our API. Let's create our Platformatic configuration
+Now we are going to configure our API. Let us create our Platformatic configuration
 file, **`platformatic.db.json`**:
 
 ```json
@@ -93,7 +93,7 @@ file, **`platformatic.db.json`**:
 }
 ```
 
-Now we'll create a **`.env`** file with settings for our configuration to use:
+Now we will create a **`.env`** file with settings for our configuration to use:
 
 ```
 PORT=3042
@@ -109,15 +109,15 @@ to see all the supported configuration settings.
 
 :::
 
-### Define the database schema
+### Define the Database Schema
 
-Let's create a new directory to store our migration files:
+Let us create a new directory to store our migration files:
 
 ```bash
 mkdir migrations
 ```
 
-Then we'll create a migration file named **`001.do.sql`** in the **`migrations`**
+Then we will create a migration file named **`001.do.sql`** in the **`migrations`**
 directory:
 
 ```sql
@@ -129,7 +129,7 @@ CREATE TABLE quotes (
 );
 ```
 
-Let's also create `.gitignore` so that we avoid accidentally committing our
+Let us also create `.gitignore` so that we avoid accidentally committing our
 SQLite database:
 
 ```bash
@@ -142,7 +142,7 @@ Now we can start the Platformatic DB server:
 npm run dev
 ```
 
-Our Platformatic DB server should start, and we'll see messages like these:
+Our Platformatic DB server should start, and we will see messages like these:
 
 ```
 [11:26:48.772] INFO (15235): running 001.do.sql
@@ -150,24 +150,24 @@ Our Platformatic DB server should start, and we'll see messages like these:
     url: "http://127.0.0.1:3042"
 ```
 
-Let's open a new terminal and make a request to our server's REST API that
+Let us open a new terminal and make a request to our server's REST API that
 creates a new quote:
 
 ```bash
 curl --request POST --header "Content-Type: application/json" \
-  -d "{ \"quote\": \"Toto, I've got a feeling we're not in Kansas anymore.\", \"saidBy\": \"Dorothy Gale\" }" \
+  -d "{ \"quote\": \"Toto, I've got a feeling we are not in Kansas anymore.\", \"saidBy\": \"Dorothy Gale\" }" \
   http://localhost:3042/quotes
 ```
 
 We should receive a response like this from the API:
 
 ```json
-{"id":1,"quote":"Toto, I've got a feeling we're not in Kansas anymore.","saidBy":"Dorothy Gale","createdAt":"2022-09-13 10:39:35"}
+{"id":1,"quote":"Toto, I've got a feeling we are not in Kansas anymore.","saidBy":"Dorothy Gale","createdAt":"2022-09-13 10:39:35"}
 ```
 
-### Create an entity relationship
+### Create an Entity Relationship
 
-Now let's create a migration file named **`002.do.sql`** in the **`migrations`**
+Now let us create a migration file named **`002.do.sql`** in the **`migrations`**
 directory:
 
 ```sql
@@ -183,21 +183,21 @@ This SQL will create a new `movies` database table and also add a `movie_id`
 column to the `quotes` table. This will allow us to store movie data in the
 `movies` table and then reference them by ID in our `quotes` table.
 
-Let's stop the Platformatic DB server with `Ctrl + C`, and then start it again:
+Let us stop the Platformatic DB server with `Ctrl + C`, and then start it again:
 
 ```bash
 npm run dev
 ```
 
-The new migration should be automatically applied and we'll see the log message
+The new migration should be automatically applied and we will see the log message
 `running 002.do.sql`.
 
-Our Platformatic DB server also provides a GraphQL API. Let's open up the GraphiQL
+Our Platformatic DB server also provides a GraphQL API. Let us open up the GraphiQL
 application in our web browser:
 
 > http://localhost:3042/graphiql
 
-Now let's run this query with GraphiQL to add the movie for the quote that we
+Now let us run this query with GraphiQL to add the movie for the quote that we
 added earlier:
 
 ```graphql
@@ -275,7 +275,7 @@ query {
 }
 ```
 
-To view the GraphQL schema that's generated for our API by Platformatic DB,
+To view the GraphQL schema that us generated for our API by Platformatic DB,
 we can run this command in our terminal:
 
 ```bash
@@ -285,12 +285,12 @@ npx platformatic db schema graphql
 The GraphQL schema shows all of the queries and mutations that we can run
 against our GraphQL API, as well as the types of data that it expects as input.
 
-### Populate the database
+### Populate the Database
 
-Our movie quotes database is looking a little empty! We're going to create a
+Our movie quotes database is looking a little empty! We are going to create a
 "seed" script to populate it with some data.
 
-Let's create a new file named **`seed.js`** and copy and paste in this code:
+Let us create a new file named **`seed.js`** and copy and paste in this code:
 
 ```javascript
 'use strict'
@@ -342,31 +342,31 @@ Take a look at the [Seed a Database](/guides/seed-a-database.md) guide to learn 
 about how database seeding works with Platformatic DB.
 :::
 
-Let's stop our Platformatic DB server running and remove our SQLite database:
+Let us stop our Platformatic DB server running and remove our SQLite database:
 
 ```
 rm movie-quotes.db
 ```
 
-Now let's create a fresh SQLite database by running our migrations:
+Now let us create a fresh SQLite database by running our migrations:
 
 ```bash
 npx platformatic db migrate
 ```
 
-And then let's populate the `quotes` and `movies` tables with data using our
+And then let us populate the `quotes` and `movies` tables with data using our
 seed script:
 
 ```bash
 npx platformatic db seed seed.js
 ```
 
-Our database is full of data, but we don't have anywhere to display it. It's
+Our database is full of data, but we do not have anywhere to display it. It's
 time to start building our frontend!
 
-## Build the frontend
+## Build the Frontend
 
-We're now going to use [Astro](https://astro.build/) to build our frontend
+We are now going to use [Astro](https://astro.build/) to build our frontend
 application. If you've not used it before, you might find it helpful
 to read [this overview](https://docs.astro.build/en/core-concepts/astro-components/)
 on how Astro components are structured.
@@ -377,9 +377,9 @@ Astro provide some extensions and tools to help improve your
 Astro application.
 :::
 
-### Create an Astro application
+### Create an Astro Application
 
-In the root of our project, let's create a new directory for our frontent
+In the root of our project, let us create a new directory for our frontent
 application:
 
 ```bash
@@ -388,7 +388,7 @@ mkdir -p apps/movie-quotes-frontend/
 cd apps/movie-quotes-frontend/
 ```
 
-And then we'll create a new `package.json` file:
+And then we will create a new `package.json` file:
 
 ```bash
 npm init --yes
@@ -400,7 +400,7 @@ Now we can install [astro](https://www.npmjs.com/package/astro) as a dependency:
 npm install --save-dev astro
 ```
 
-Then let's set up some npm run scripts for convenience:
+Then let us set up some npm run scripts for convenience:
 
 ```bash
 npm pkg delete scripts.test
@@ -409,7 +409,7 @@ npm pkg set scripts.start="astro dev --port 3000"
 npm pkg set scripts.build="astro build"
 ```
 
-Now we'll create our Astro configuration file, **`astro.config.mjs`** and
+Now we will create our Astro configuration file, **`astro.config.mjs`** and
 copy and paste in this code:
 
 ```javascript
@@ -421,7 +421,7 @@ export default defineConfig({
 })
 ```
 
-And we'll also create a **`tsconfig.json`** file and add in this configuration:
+And we will also create a **`tsconfig.json`** file and add in this configuration:
 
 ```json
 {
@@ -432,14 +432,14 @@ And we'll also create a **`tsconfig.json`** file and add in this configuration:
 }
 ```
 
-Now let's create the directories where we'll be adding the components for our
+Now let us create the directories where we will be adding the components for our
 frontend application:
 
 ```bash
 mkdir -p src/pages src/layouts src/components
 ```
 
-And inside the **`src/pages`** directory let's create our first page, **`index.astro`**:
+And inside the **`src/pages`** directory let us create our first page, **`index.astro`**:
 
 ```astro
 <h1>Movie Quotes</h1>
@@ -453,9 +453,9 @@ npm run dev
 
 And then load up the frontend in our browser at [http://localhost:3000](http://localhost:3000)
 
-### Create a layout
+### Create a Layout
 
-In the **`src/layouts`** directory, let's create a new file named **`Layout.astro`**:
+In the **`src/layouts`** directory, let us create a new file named **`Layout.astro`**:
 
 ```astro
 ---
@@ -492,8 +492,8 @@ code after that is the component template. The component script will *only* run
 on the server side when a web browser makes a request. The component template
 is rendered server side and sent back as an HTML response to the web browser.
 
-Now we'll update **`src/pages/index.astro`** to use this `Layout` component.
-Let's replace the contents of **`src/pages/index.astro`** with this code:
+Now we will update **`src/pages/index.astro`** to use this `Layout` component.
+Let us replace the contents of **`src/pages/index.astro`** with this code:
 
 ```astro
 ---
@@ -502,37 +502,37 @@ import Layout from '../layouts/Layout.astro';
 
 <Layout title="All quotes" page="listing">
   <main>
-    <p>We'll list all the movie quotes here.</p>
+    <p>We will list all the movie quotes here.</p>
   </main>
 </Layout>
 ```
 
-### Integrate the urql GraphQL client
+### Integrate the urql GraphQL Client
 
-We're now going to integrate the [URQL](https://formidable.com/open-source/urql/)
+we are now going to integrate the [URQL](https://formidable.com/open-source/urql/)
 GraphQL client into our frontend application. This will allow us to run queries
 and mutations against our Platformatic GraphQL API.
 
-Let's first install [@urql/core](https://www.npmjs.com/package/@urql/core) and
+Let us first install [@urql/core](https://www.npmjs.com/package/@urql/core) and
 [graphql](https://www.npmjs.com/package/graphql) as project dependencies:
 
 ```bash
 npm install @urql/core graphql
 ```
 
-Then let's create a new **`.env`** file and add this configuration:
+Then let us create a new **`.env`** file and add this configuration:
 
 ```
 PUBLIC_GRAPHQL_API_ENDPOINT=http://127.0.0.1:3042/graphql
 ```
 
-Now we'll create a new directory:
+Now we will create a new directory:
 
 ```bash
 mkdir src/lib
 ```
 
-And then create a new file named **`src/lib/quotes-api.js`**. In that file we'll
+And then create a new file named **`src/lib/quotes-api.js`**. In that file we will
 create a new URQL client:
 
 ```javascript
@@ -546,7 +546,7 @@ const graphqlClient = createClient({
 });
 ```
 
-We'll also add a thin wrapper around the client that does some basic error
+We will also add a thin wrapper around the client that does some basic error
 handling for us:
 
 ```javascript
@@ -578,7 +578,7 @@ export const quotesApi = {
 }
 ```
 
-And lastly, we'll export `gql` from the `@urql/core` package, to make it
+And lastly, we will export `gql` from the `@urql/core` package, to make it
 simpler for us to write GraphQL queries in our pages:
 
 ```javascript
@@ -594,11 +594,11 @@ file:
 npm run dev
 ```
 
-### Display all quotes
+### Display all Quotes
 
-Let's display all the movie quotes in **`src/pages/index.astro`**.
+Let us display all the movie quotes in **`src/pages/index.astro`**.
 
-First, we'll update the component script at the top and add in a query to
+First, we will update the component script at the top and add in a query to
 our GraphQL API for quotes:
 
 ```astro
@@ -627,7 +627,7 @@ const quotes = data?.quotes || [];
 ---
 ```
 
-Then we'll update the component template to display the quotes:
+Then we will update the component template to display the quotes:
 
 ```astro
 <Layout title="All quotes" page="listing">
@@ -655,7 +655,7 @@ Then we'll update the component template to display the quotes:
 
 And just like that, we have all the movie quotes displaying on the page!
 
-### Integrate Tailwind for styling
+### Integrate Tailwind for Styling
 
 Automatically add the [@astrojs/tailwind integration](https://docs.astro.build/en/guides/integrations-guide/tailwind/):
 
@@ -697,9 +697,9 @@ configuration changes:
 npm run dev
 ```
 
-### Style the listing page
+### Style the Listing Page
 
-To style our listing page, let's add CSS classes to the component template in
+To style our listing page, let us add CSS classes to the component template in
 **`src/layouts/Layout.astro`**:
 
 ```astro
@@ -741,7 +741,7 @@ const navActiveClasses = "font-bold bg-yellow-400 no-underline";
 </html>
 ```
 
-Then let's add CSS classes to the component template in **`src/pages/index.astro`**:
+Then let us add CSS classes to the component template in **`src/pages/index.astro`**:
 
 ```astro
 <Layout title="All quotes">
@@ -773,12 +773,12 @@ Then let's add CSS classes to the component template in **`src/pages/index.astro
 
 Our listing page is now looking much more user friendly!
 
-### Create an add quote page
+### Create an add Quote Page
 
-We're going to create a form component that we can use for adding and editing
+we are going to create a form component that we can use for adding and editing
 quotes.
 
-First let's create a new component file, **`src/components/QuoteForm.astro`**:
+First let us create a new component file, **`src/components/QuoteForm.astro`**:
 
 ```astro
 ---
@@ -840,7 +840,7 @@ let saveError = false;
 </Layout>
 ```
 
-And now let's add a link to this page in the layout navigation in **`src/layouts/Layout.astro`**:
+And now let us add a link to this page in the layout navigation in **`src/layouts/Layout.astro`**:
 
 ```astro
 <nav class="prose mx-auto mb-6 border-y border-gray-200 flex">
@@ -850,12 +850,12 @@ And now let's add a link to this page in the layout navigation in **`src/layouts
 </nav>
 ```
 
-### Send form data to the API
+### Send Form Data to the API
 
 When a user submits the add quote form we want to send the form data to our API
-so it can then save it to our database. Let's wire that up now.
+so it can then save it to our database. Let us wire that up now.
 
-First we're going to create a new file, **`src/lib/request-utils.js`**:
+First we are going to create a new file, **`src/lib/request-utils.js`**:
 
 ```javascript
 export function isPostRequest (request) {
@@ -869,7 +869,7 @@ export async function getFormData (request) {
 }
 ```
 
-Then let's update the component script in **`src/pages/add.astro`** to use
+Then let us update the component script in **`src/pages/add.astro`** to use
 these new request utility functions:
 
 ```astro
@@ -900,7 +900,7 @@ user submits the add quote form we need to:
 - Return the movie `id` if it does exist
 - If it doesn't exist, create a new movie entity record and return the movie ID
 
-Let's update the `import` statement at the top of **`src/lib/quotes-api.js`**
+Let us update the `import` statement at the top of **`src/lib/quotes-api.js`**
 
 ```diff
 -import { createClient } from '@urql/core'
@@ -958,7 +958,7 @@ async function getMovieId (movieName) {
 }
 ```
 
-And let's export it too:
+And let us export it too:
 
 ```javascript
 export const quotesApi = {
@@ -1022,19 +1022,19 @@ if (isPostRequest(Astro.request)) {
 }
 ```
 
-### Add autosuggest for movies
+### Add Autosuggest for Movies
 
 We can create a better experience for our users by autosuggesting the movie name
-when they're adding a new quote.
+when they are adding a new quote.
 
-Let's open up **`src/components/QuoteForm.astro`** and import our API helper methods
+Let us open up **`src/components/QuoteForm.astro`** and import our API helper methods
 in the component script:
 
 ```astro
 import { quotesApi, gql } from '../lib/quotes-api.js';
 ```
 
-Then let's add in a query to our GraphQL API for all movies:
+Then let us add in a query to our GraphQL API for all movies:
 
 ```astro
 const { data } = await quotesApi.query(gql`
@@ -1048,8 +1048,8 @@ const { data } = await quotesApi.query(gql`
 const movies = data?.movies || [];
 ```
 
-Now lets update the *Movie* field in the component template to use the
-array of movies that we've retrieved from the API:
+Now let us update the *Movie* field in the component template to use the
+array of movies that we have retrieved from the API:
 
 ```astro
 <label for="movie" class="block">
@@ -1067,13 +1067,13 @@ array of movies that we've retrieved from the API:
 
 ### Create an edit quote page
 
-Let's create a new directory, **`src/pages/edit/`**:
+Let us create a new directory, **`src/pages/edit/`**:
 
 ```bash
 mkdir src/pages/edit/
 ```
 
-And inside of it, let's create a new page, **`[id].astro`**:
+And inside of it, let us create a new page, **`[id].astro`**:
 
 ```astro
 ---
@@ -1095,12 +1095,12 @@ let saveError = false;
 </Layout>
 ```
 
-You'll see that we're using the same `QuoteForm` component that our add quote
-page uses. Now we're going to wire up our edit page so that it can load an
+You will see that we are using the same `QuoteForm` component that our add quote
+page uses. Now we are going to wire up our edit page so that it can load an
 existing quote from our API and save changes back to the API when the form is
 submitted.
 
-In the **`[id.astro]`** component script, let's add some code to take care of
+In the **`[id.astro]`** component script, let us add some code to take care of
 these tasks:
 
 ```astro
@@ -1181,7 +1181,7 @@ if (isPostRequest(Astro.request)) {
 Load up [http://localhost:3000/edit/1](http://localhost:3000/edit/1) in your
 browser to test out the edit quote page.
 
-Now we're going to add edit links to the quotes listing page. Let's start by
+Now we are going to add edit links to the quotes listing page. Let us start by
 creating a new component **`src/components/QuoteActionEdit.astro`**:
 
 ```astro
@@ -1201,7 +1201,7 @@ const { id } = Astro.props;
 </a>
 ```
 
-Then let's import this component and use it in our listing page,
+Then let us import this component and use it in our listing page,
 **`src/pages/index.astro`**:
 
 ```astro
@@ -1237,10 +1237,10 @@ import { quotesApi, gql } from '../lib/quotes-api';
 
 ### Add delete quote functionality
 
-Our Movie Quotes app can create, retrieve and update quotes. Now we're going
+Our Movie Quotes app can create, retrieve, and update quotes. Now we are going
 to implement the D in CRUD — delete!
 
-First let's create a new component, **`src/components/QuoteActionDelete.astro`**:
+First let us create a new component, **`src/components/QuoteActionDelete.astro`**:
 
 ```astro
 ---
@@ -1260,7 +1260,7 @@ const { id } = Astro.props;
 </form>
 ```
 
-And then we'll drop it into our listing page, **`src/pages/index.astro`**:
+And then we will drop it into our listing page, **`src/pages/index.astro`**:
 
 ```astro
 ---
@@ -1291,13 +1291,13 @@ import { quotesApi, gql } from '../lib/quotes-api';
 ```
 
 At the moment when a delete form is submitted from our listing page, we get
-an Astro 404 page. Let's fix this by creating a new directory, **`src/pages/delete/`**:
+an Astro 404 page. Let us fix this by creating a new directory, **`src/pages/delete/`**:
 
 ```bash
 mkdir src/pages/delete/
 ```
 
-And inside of it, let's create a new page, **`[id].astro`**:
+And inside of it, let us create a new page, **`[id].astro`**:
 
 ```astro
 ---
@@ -1331,19 +1331,19 @@ if (isPostRequest(Astro.request)) {
 ```
 
 Now if we click on a delete quote button on our listings page, it should call our
-GraphQL API to delete the quote. To make this a little more user friendly, let's
-add in a confirmation dialog so that users don't delete a quote by accident.
+GraphQL API to delete the quote. To make this a little more user friendly, let us
+add in a confirmation dialog so that users do not delete a quote by accident.
 
 <!-- TODO: There's an Astro bug with client side scripts in dev: https://github.com/withastro/astro/issues/4217 -->
 <!-- TODO: Potentially leave this out, especially as there's an Astro bug -->
 
-Let's create a new directory, **`src/scripts/`**:
+Let us create a new directory, **`src/scripts/`**:
 
 ```bash
 mkdir src/scripts/
 ```
 
-And inside of that directory let's create a new file, **`quote-actions.js`**:
+And inside of that directory let us create a new file, **`quote-actions.js`**:
 
 ```javascript
 // src/scripts/quote-actions.js
@@ -1379,21 +1379,21 @@ Then we can pull it in as client side JavaScript on our listing page,
 
 ## Build a "like" quote feature
 
-We've built all the basic CRUD (Create, Retrieve, Update & Delete) features
-into our application. Now let's build a feature so that users can interact
+We have built all the basic CRUD (Create, Retrieve, Update & Delete) features
+into our application. Now let us build a feature so that users can interact
 and "like" their favourite movie quotes.
 
-To build this feature we're going to add custom functionality to our API
+To build this feature we are going to add custom functionality to our API
 and then add a new component, along with some client side JavaScript, to
 our frontend.
 
 ### Create an API migration
 
-We're now going to work on the code for API, under the **`apps/movie-quotes-api`**
+We are now going to work on the code for API, under the **`apps/movie-quotes-api`**
 directory.
 
-First let's create a migration that adds a `likes` column to our `quotes`
-database table. We'll create a new migration file, **`migrations/003.do.sql`**:
+First let us create a migration that adds a `likes` column to our `quotes`
+database table. We will create a new migration file, **`migrations/003.do.sql`**:
 
 ```sql
 ALTER TABLE quotes ADD COLUMN likes INTEGER default 0;
@@ -1408,7 +1408,7 @@ To add custom functionality to our Platformatic API, we need to create a
 [Fastify plugin](https://www.fastify.io/docs/latest/Reference/Plugins/) and
 update our API configuration to use it.
 
-Let's create a new file, **`plugin.js`**, and inside it we'll add the skeleton
+Let us create a new file, **`plugin.js`**, and inside it we will add the skeleton
 structure for our plugin:
 
 ```javascript
@@ -1421,7 +1421,7 @@ module.exports = async function plugin (app) {
 }
 ```
 
-Now let's register our plugin in our API configuration file, **`platformatic.db.json`**:
+Now let us register our plugin in our API configuration file, **`platformatic.db.json`**:
 
 ```json
 {
@@ -1437,7 +1437,7 @@ Now let's register our plugin in our API configuration file, **`platformatic.db.
 }
 ```
 
-And then we'll start up our Platformatic API:
+And then we will start up our Platformatic API:
 
 ```bash
 npm run dev
@@ -1453,30 +1453,30 @@ applied and our plugin has been loaded:
     url: "http://127.0.0.1:3042"
 ```
 
-Now it's time to start adding some custom functionality inside our plugin.
+Now it is time to start adding some custom functionality inside our plugin.
 
 ### Add a REST API route
 
 <!--
-TODO: As we're only using the GraphQL API from our frontend, should we skip creating a REST API route?
+TODO: As we are only using the GraphQL API from our frontend, should we skip creating a REST API route?
 
-It's good for completeness, but adds complexity to this tutorial.
+It is good for completeness, but adds complexity to this tutorial.
 Could be a good "bonus points" activity in the workshop?
 -->
 
-We're going to add a REST route to our API that increments the count of
+We are going to add a REST route to our API that increments the count of
 likes for a specific quote: `/quotes/:id/like`
 
-First let's add [fluent-json-schema](https://www.npmjs.com/package/fluent-json-schema) as a dependency for our API:
+First let us add [fluent-json-schema](https://www.npmjs.com/package/fluent-json-schema) as a dependency for our API:
 
 ```bash
 npm install fluent-json-schema
 ```
 
-We'll use `fluent-json-schema` to help us generate a JSON Schema. We can then
+We will use `fluent-json-schema` to help us generate a JSON Schema. We can then
 use this schema to validate the request path parameters for our route (`id`).
 
-Now let's add our REST API route in **`plugin.js`**:
+Now let us add our REST API route in **`plugin.js`**:
 
 ```javascript
 'use strict'
@@ -1513,9 +1513,9 @@ Learn more about how validation works in the
 [Fastify validation documentation](https://www.fastify.io/docs/latest/Reference/Validation-and-Serialization/).
 :::
 
-Our API route is currently returning an empty object (`{}`). Let's wire things
+Our API route is currently returning an empty object (`{}`). Let us wire things
 up so that it increments the number of likes for the quote with the specified ID.
-To do this we'll add a new function inside of our plugin:
+To do this we will add a new function inside of our plugin:
 
 ```javascript
 module.exports = async function plugin (app) {
@@ -1537,7 +1537,7 @@ module.exports = async function plugin (app) {
 }
 ```
 
-And then we'll call that function in our route handler function:
+And then we will call that function in our route handler function:
 
 ```javascript
 app.post('/quotes/:id/like', { schema }, async function (request, response) {
@@ -1566,7 +1566,7 @@ we make a request to the route.
 We can add a `likeQuote` mutation to our GraphQL API by reusing the
 `incrementQuoteLikes` function that we just created.
 
-Let's add this code at the end of our plugin, inside **`plugin.js`**:
+Let us add this code at the end of our plugin, inside **`plugin.js`**:
 
 ```javascript
 module.exports = async function plugin (app) {
@@ -1588,7 +1588,7 @@ module.exports = async function plugin (app) {
 }
 ```
 
-The code we've just added extends our API's GraphQL schema and defines
+The code we have just added extends our API's GraphQL schema and defines
 a corresponding resolver for the `likeQuote` mutation.
 
 We can now load up GraphiQL in our web browser and try out our new `likeQuote`
@@ -1607,12 +1607,12 @@ Learn more about how to extend the GraphQL schema and define resolvers in the
 
 ### Enable CORS on the API
 
-When we build "like" functionality into our frontend, we'll be making a client
+When we build "like" functionality into our frontend, we will be making a client
 side HTTP request to our GraphQL API. Our backend API and our frontend are running
 on different origins, so we need to configure our API to allow requests from
 the frontend. This is known as Cross-Origin Resource Sharing (CORS).
 
-To enable CORS on our API, let's open up our API's **`.env`** file and add in
+To enable CORS on our API, let us open up our API's **`.env`** file and add in
 a new setting:
 
 ```
@@ -1653,10 +1653,10 @@ origin to make requests to our API.
 
 ### Add like quote functionality
 
-Now that our API supports "liking" a quote, let's integrate it as a feature in
+Now that our API supports "liking" a quote, let us integrate it as a feature in
 our frontend.
 
-First we'll create a new component, **`src/components/QuoteActionLike.astro`**:
+First we will create a new component, **`src/components/QuoteActionLike.astro`**:
 
 ```astro
 ---
@@ -1682,7 +1682,7 @@ const { id, likes } = Astro.props;
 </style>
 ```
 
-And in our listing page, **`src/pages/index.astro`**, let's import our new
+And in our listing page, **`src/pages/index.astro`**, let us import our new
 component and add it into the interface:
 
 ```astro
@@ -1715,7 +1715,7 @@ import { quotesApi, gql } from '../lib/quotes-api';
 ...
 ```
 
-Then let's update the GraphQL query in this component's script to retrieve the
+Then let us update the GraphQL query in this component's script to retrieve the
 `likes` field for all quotes:
 
 ```javascript
@@ -1737,10 +1737,10 @@ const { data } = await quotesApi.query(gql`
 `);
 ```
 
-Now we have the likes showing for each quote, let's wire things up so that
+Now we have the likes showing for each quote, let us wire things up so that
 clicking on the like component for a quote will call our API and add a like.
 
-Let's open up **`src/scripts/quote-actions.js`** and add a new function that
+Let us open up **`src/scripts/quote-actions.js`** and add a new function that
 makes a request to our GraphQL API:
 
 ```javascript
@@ -1773,7 +1773,7 @@ export async function likeQuote (likeQuote) {
 // highlight-end
 ```
 
-And then let's attach the `likeQuote` function to the click event for each
+And then let us attach the `likeQuote` function to the click event for each
 like quote component on our listing page. We can do this by adding a little
 extra code inside the `<script>` block in **`src/pages/index.astro`**:
 
@@ -1801,10 +1801,10 @@ extra code inside the `<script>` block in **`src/pages/index.astro`**:
 
 ### Sort the listing by top quotes
 
-Now that users can like their favourite quotes, as a final step, we'll allow
+Now that users can like their favourite quotes, as a final step, we will allow
 for sorting quotes on the listing page by the number of likes they have.
 
-Let's update **`src/pages/index.astro`** to read a `sort` query string parameter
+Let us update **`src/pages/index.astro`** to read a `sort` query string parameter
 and use it the GraphQL query that we make to our API:
 
 ```astro
@@ -1841,7 +1841,7 @@ const quotes = data?.quotes || [];
 ...
 ```
 
-Then let's replace the 'All quotes' link in the `<nav>` in **`src/layouts/Layout.astro`**
+Then let us replace the 'All quotes' link in the `<nav>` in **`src/layouts/Layout.astro`**
 with two new links:
 
 ```astro
@@ -1859,7 +1859,7 @@ were created or by the number of likes that they have. Neat!
 
 ## Wrapping up
 
-And we're done — you now have the knowledge you need to build a full stack
+And we are done — you now have the knowledge you need to build a full stack
 application on top of Platformatic DB.
 
-We can't wait to see what you'll build next!
+We cannot wait to see what you will build next!
