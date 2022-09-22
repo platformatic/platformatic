@@ -1,12 +1,14 @@
 {
   "name": "platformatic",
   "version": "0.0.23",
-  "description": "Platformatic DB cli",
+  "description": "Platformatic CLI",
   "main": "cli.js",
   "type": "module",
   "bin": {
-    "platformatic": "cli.js"
+    "platformatic": "cli.js",
+    "plt": "cli.js"
   },
+  "homepage": "https://oss.platformatic.dev/",
   "scripts": {
     "test": "standard | snazzy && c8 --100 tap --no-coverage test/*.test.js"
   },
@@ -16,6 +18,17 @@
     "url": "git+https://github.com/platformatic/platformatic.git"
   },
   "license": "Apache-2.0",
+  "keywords": [
+    "platformatic",
+    "GraphQL",
+    "OpenAPI",
+    "SQLite",
+    "PostgreSQL",
+    "MySQL",
+    "MariaDB",
+    "fastify",
+    "mercurius"
+  ],
   "devDependencies": {
     "c8": "^7.11.0",
     "execa": "^6.1.0",
