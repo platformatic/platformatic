@@ -176,7 +176,6 @@ CREATE TABLE movies (
   name TEXT NOT NULL UNIQUE
 );
 
--- TODO: Add a foreign key constraint so quotes.movie_id must exist in movies.id
 ALTER TABLE quotes ADD COLUMN movie_id INTEGER REFERENCES movies(id);
 ```
 
@@ -338,8 +337,6 @@ module.exports = async function ({ entities, db, sql }) {
 }
 ```
 
-<!-- TODO: Explain what's happening above -->
-
 :::info
 Take a look at the [Seed a Database](/guides/seed-a-database.md) guide to learn more
 about how database seeding works with Platformatic DB.
@@ -434,10 +431,6 @@ And we'll also create a **`tsconfig.json`** file and add in this configuration:
   }
 }
 ```
-
-> We won't be writing our frontend application with TypeScript, but adding this
-> configuration file allows Astro to provide TODO
-> https://docs.astro.build/en/guides/typescript/
 
 Now let's create the directories where we'll be adding the components for our
 frontend application:
@@ -876,8 +869,6 @@ export async function getFormData (request) {
 }
 ```
 
-<!-- TODO: Explain these functions, link to MDN `Request` page -->
-
 Then let's update the component script in **`src/pages/add.astro`** to use
 these new request utility functions:
 
@@ -900,8 +891,6 @@ if (isPostRequest(Astro.request)) {
 // highlight-end
 ---
 ```
-
-<!-- TODO: Explain what this is doing -->
 
 When we create a new quote entity record via our API, we need to include a
 `movieId` field that references a movie entity record. This means that when a
@@ -1033,8 +1022,6 @@ if (isPostRequest(Astro.request)) {
 }
 ```
 
-<!-- TODO: Explain what this is doing -->
-
 ### Add autosuggest for movies
 
 We can create a better experience for our users by autosuggesting the movie name
@@ -1077,8 +1064,6 @@ array of movies that we've retrieved from the API:
 // highlight-end
 </label>
 ```
-
-<!-- TODO: Explain what this is doing, link to MDN datalist -->
 
 ### Create an edit quote page
 
@@ -1193,8 +1178,6 @@ if (isPostRequest(Astro.request)) {
 ---
 ```
 
-<!-- TODO: Explain what this does -->
-
 Load up [http://localhost:3000/edit/1](http://localhost:3000/edit/1) in your
 browser to test out the edit quote page.
 
@@ -1277,8 +1260,6 @@ const { id } = Astro.props;
 </form>
 ```
 
-<!-- TODO: Explain what this is -->
-
 And then we'll drop it into our listing page, **`src/pages/index.astro`**:
 
 ```astro
@@ -1349,8 +1330,6 @@ if (isPostRequest(Astro.request)) {
 </Layout>
 ```
 
-<!-- TODO: Explain what this does -->
-
 Now if we click on a delete quote button on our listings page, it should call our
 GraphQL API to delete the quote. To make this a little more user friendly, let's
 add in a confirmation dialog so that users don't delete a quote by accident.
@@ -1397,8 +1376,6 @@ Then we can pull it in as client side JavaScript on our listing page,
   })
 </script>
 ```
-
-<!-- TODO: Explain what this does -->
 
 ## Build a "like" quote feature
 
