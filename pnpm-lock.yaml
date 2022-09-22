@@ -313,7 +313,7 @@ importers:
       snazzy: ^9.0.0
       standard: ^17.0.0
       tap: ^16.0.0
-      tsd: ^0.23.0
+      tsd: ^0.24.0
     dependencies:
       camelcase: 6.3.0
       fastify-plugin: 4.2.1
@@ -327,7 +327,7 @@ importers:
       snazzy: 9.0.0
       standard: 17.0.0
       tap: 16.3.0
-      tsd: 0.23.0
+      tsd: 0.24.1
 
   packages/sql-json-schema-mapper:
     specifiers:
@@ -356,7 +356,7 @@ importers:
       snazzy: ^9.0.0
       standard: ^17.0.0
       tap: ^16.0.0
-      tsd: ^0.23.0
+      tsd: ^0.24.0
     dependencies:
       '@databases/mysql': 5.2.1
       '@databases/pg': 5.4.1
@@ -370,7 +370,7 @@ importers:
       snazzy: 9.0.0
       standard: 17.0.0
       tap: 16.3.0
-      tsd: 0.23.0
+      tsd: 0.24.1
 
   packages/sql-openapi:
     specifiers:
@@ -6894,19 +6894,6 @@ packages:
       json5: 1.0.1
       minimist: 1.2.6
       strip-bom: 3.0.0
-    dev: true
-
-  /tsd/0.23.0:
-    resolution: {integrity: sha512-dY4p7LbshRQ1hizr+xlbebgkfB0kT8wnQZW7LjBrOsmbws5mt1YYY4VSKoLYXyzYxObIOSQ3qns+tX8tP0Mz6g==}
-    engines: {node: '>=14.16'}
-    hasBin: true
-    dependencies:
-      '@tsd/typescript': 4.8.3
-      eslint-formatter-pretty: 4.1.0
-      globby: 11.1.0
-      meow: 9.0.0
-      path-exists: 4.0.0
-      read-pkg-up: 7.0.1
     dev: true
 
   /tsd/0.24.1:
