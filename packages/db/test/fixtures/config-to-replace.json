@@ -1,0 +1,22 @@
+{
+  "server": {
+    "logger": {
+      "level": "info"
+    },
+    "hostname": "127.0.0.1",
+    "port": 3042
+  },
+  "core": {
+    "connectionString": "sqlite://db.sqlite",
+    "graphiql": true
+  },
+  "migrations": {
+    "dir": "migrations"
+  },
+  "types": {
+    "autogenerate": true
+  },
+  "plugin": {
+    "path": "plugin"
+  }
+}
