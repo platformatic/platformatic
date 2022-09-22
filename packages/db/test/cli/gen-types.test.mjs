@@ -1,5 +1,5 @@
 import path from 'path'
-import { rm } from 'fs/promises'
+import { rm, readFile, writeFile } from 'fs/promises'
 import { cliPath } from './helper.mjs'
 import { test } from 'tap'
 import { fileURLToPath } from 'url'
@@ -13,11 +13,14 @@ const pathToTSD = path.join(urlDirname(import.meta.url), '../../node_modules/.bi
 
 test('generate ts types', async (t) => {
   const cwd = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types')
+  const configFile = await readFile(path.join(cwd, 'platformatic.db.json'), 'utf8')
 
   t.teardown(async () => {
     await Promise.all([
+      writeFile(path.join(cwd, 'platformatic.db.json'), configFile),
       rm(path.join(cwd, 'types'), { recursive: true, force: true }),
-      rm(path.join(cwd, 'global.d.ts'), { force: true })
+      rm(path.join(cwd, 'global.d.ts'), { force: true }),
+      rm(path.join(cwd, 'plugin.js'), { force: true })
     ])
   })
 
@@ -35,11 +38,14 @@ test('generate ts types', async (t) => {
 
 test('generate ts types twice', async (t) => {
   const cwd = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types')
+  const configFile = await readFile(path.join(cwd, 'platformatic.db.json'), 'utf8')
 
   t.teardown(async () => {
     await Promise.all([
+      writeFile(path.join(cwd, 'platformatic.db.json'), configFile),
       rm(path.join(cwd, 'types'), { recursive: true, force: true }),
-      rm(path.join(cwd, 'global.d.ts'), { force: true })
+      rm(path.join(cwd, 'global.d.ts'), { force: true }),
+      rm(path.join(cwd, 'plugin.js'), { force: true })
     ])
   })
 

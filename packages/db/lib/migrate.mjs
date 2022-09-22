@@ -6,7 +6,7 @@ import pino from 'pino'
 import pretty from 'pino-pretty'
 import { MigrateError } from './errors.mjs'
 import loadConfig from './load-config.mjs'
-import { execute as generateTypes, checkForDependencies } from './gen-types.mjs'
+import { execute as generateTypes, checkForDependencies, generatePluginWithTypesSupport } from './gen-types.mjs'
 
 async function migrate (_args) {
   const logger = pino(pretty({
@@ -29,6 +29,7 @@ async function migrate (_args) {
 
     if (config.types && config.types.autogenerate) {
       await generateTypes(logger, args, config)
+      await generatePluginWithTypesSupport(logger, args, configManager)
       await checkForDependencies(logger, args, config)
     }
   } catch (err) {

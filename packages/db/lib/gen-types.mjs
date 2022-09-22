@@ -1,4 +1,4 @@
-import { resolve, join, dirname } from 'path'
+import { resolve, join, dirname, relative } from 'path'
 import { createRequire } from 'module'
 import { access, mkdir, writeFile, readFile, readdir, unlink } from 'fs/promises'
 import { join as desmJoin } from 'desm'
@@ -20,6 +20,14 @@ declare module '@platformatic/sql-mapper' {
     ENTITIES_DEFINITION_PLACEHOLDER
   }
 }
+`
+
+const PLUGIN_WITH_TYPES_SUPPORT = `\
+/// <reference path="./global.d.ts" />
+'use strict'
+
+/** @param {import('fastify').FastifyInstance} app */
+module.exports = async function (app) {}
 `
 
 async function isFileAccessible (filename) {
@@ -119,6 +127,26 @@ async function checkForDependencies (logger, args, config) {
   logger.warn(`Please run \`${command}\` to install types dependencies.`)
 }
 
+async function generatePluginWithTypesSupport (logger, args, configManager) {
+  const config = configManager.current
+
+  if (config.plugin === undefined) {
+    config.plugin = {}
+  }
+
+  const configPluginPath = config.plugin.path || './plugin.js'
+  const pluginPath = resolve(process.cwd(), configPluginPath)
+
+  const isPluginExists = await isFileAccessible(pluginPath)
+  if (isPluginExists) return
+
+  await writeFile(pluginPath, PLUGIN_WITH_TYPES_SUPPORT)
+  config.plugin.path = configPluginPath
+  await configManager.save()
+
+  logger.info(`Plugin file created at ${relative(process.cwd(), pluginPath)}`)
+}
+
 async function execute (logger, args, config) {
   const { db, entities } = await setupDB(logger, config.core)
 
@@ -161,7 +189,8 @@ async function generateTypes (_args) {
   const config = configManager.current
 
   await execute(logger, args, config)
+  await generatePluginWithTypesSupport(logger, args, configManager)
   await checkForDependencies(logger, args, config)
 }
 
-export { execute, generateTypes, checkForDependencies }
+export { execute, generateTypes, checkForDependencies, generatePluginWithTypesSupport }
