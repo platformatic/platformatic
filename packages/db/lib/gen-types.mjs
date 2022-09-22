@@ -122,6 +122,11 @@ async function checkForDependencies (logger, args, config) {
 async function execute (logger, args, config) {
   const { db, entities } = await setupDB(logger, config.core)
 
+  if (Object.values(entities).length === 0) {
+    logger.warn('No entities found. Please run `platformatic db migrate` to generate entities.')
+    return
+  }
+
   const isTypeFolderExists = await isFileAccessible(TYPES_FOLDER_PATH)
   if (isTypeFolderExists) {
     await removeAllFilesFromDir(TYPES_FOLDER_PATH)
