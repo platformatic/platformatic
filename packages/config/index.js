@@ -105,9 +105,15 @@ class ConfigManager extends EventEmitter {
       case '.yml':
         return YAML
       case '.json':
-        return JSON
+        return {
+          parse: (json) => JSON.parse(json),
+          stringify: (data) => JSON.stringify(data, null, 2)
+        }
       case '.json5':
-        return JSON5
+        return {
+          parse: (json) => JSON5.parse(json),
+          stringify: (data) => JSON5.stringify(data, null, 2)
+        }
       case '.toml':
         return TOML
       default:
