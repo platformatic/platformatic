@@ -56,6 +56,29 @@ test('generate ts types twice', async (t) => {
   t.pass()
 })
 
+test('should show warning if there is no entities', async (t) => {
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
+
+  t.teardown(async () => {
+    await Promise.all([
+      rm(path.join(cwd, 'types'), { recursive: true, force: true }),
+      rm(path.join(cwd, 'global.d.ts'), { force: true }),
+      rm(path.join(cwd, 'db'), { force: true })
+    ])
+  })
+
+  try {
+    const { stdout } = await execa('node', [cliPath, 'types'], { cwd })
+    t.match(stdout, /(.*)No entities found. Please run `platformatic db migrate` to generate entities./)
+  } catch (err) {
+    console.log(err.stdout)
+    console.log(err.stderr)
+    t.fail(err.stderr)
+  }
+
+  t.pass()
+})
+
 test('run migrate command with type generation', async (t) => {
   const cwd = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
 
