@@ -6,6 +6,7 @@ const { saveConfigToFile } = require('./helper')
 const { readFile, unlink } = require('fs/promises')
 const YAML = require('yaml')
 const TOML = require('@iarna/toml')
+const JSON5 = require('json5')
 test('should not save invalid config', async ({ equal, fail, pass, same, teardown }) => {
   const invalidConfig = {
     name: ['Platformatic'],
@@ -252,6 +253,48 @@ test('should support TOML format', async ({ same, teardown }) => {
   await cm.update(newConfig)
   same(cm.current, newConfig)
   const configData = TOML.parse(await readFile(file, 'utf-8'))
+  same(configData, cm.current)
+})
+
+test('should support JSON5 format', async ({ same, teardown }) => {
+  const config = {
+    name: 'Platformatic',
+    props: {
+      foo: 'bar'
+    }
+  }
+  const schema = {
+    type: 'object',
+    properties: {
+      name: { type: 'string' },
+      props: {
+        type: 'object',
+        properties: {
+          foo: { type: 'string' },
+          bar: { type: 'integer' }
+        }
+      }
+    }
+  }
+
+  const file = await saveConfigToFile(config, 'to-replace.json5', JSON5)
+  teardown(async () => await unlink(file))
+  const cm = new ConfigManager({
+    source: file,
+    schema,
+    env: { PLT_FOO: 'foobar' }
+  })
+  await cm.parse()
+  const newConfig = {
+    name: 'Platformatic',
+    props: {
+      foo: 'foobar',
+      bar: 42
+    }
+  }
+  await cm.update(newConfig)
+  same(cm.current, newConfig)
+  const configData = JSON5.parse(await readFile(file, 'utf-8'))
   same(configData, cm.current)
 })
 
