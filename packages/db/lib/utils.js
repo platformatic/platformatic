@@ -39,7 +39,30 @@ function computeSQLiteIgnores (sqliteFullPath, dirOfConfig) {
   return result
 }
 
+/* c8 ignore start */
+function addLoggerToTheConfig (config) {
+  if (config === undefined || config.server === undefined) return
+
+  // Set the logger if not present
+  let logger = config.server.logger
+  if (!logger) {
+    config.server.logger = { level: 'info' }
+    logger = config.server.logger
+  }
+
+  // If TTY use pino-pretty
+  if (process.stdout.isTTY) {
+    if (!logger.transport) {
+      logger.transport = {
+        target: 'pino-pretty'
+      }
+    }
+  }
+}
+/* c8 ignore stop */
+
 module.exports = {
   setupDB,
-  computeSQLiteIgnores
+  computeSQLiteIgnores,
+  addLoggerToTheConfig
 }
