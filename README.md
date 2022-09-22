@@ -27,7 +27,7 @@ Check out our full documentation at [oss.platformatic.dev](https://oss.platforma
 
 ## Support
 
-Having issues? Drop in to the [Platformatic Discord](https://discord.com/channels/1011258196905689118/1011258204371554307)
+Having issues? Drop in to the [Platformatic Discord](https://discord.gg/platformatic)
 for help.
 
 ## License
