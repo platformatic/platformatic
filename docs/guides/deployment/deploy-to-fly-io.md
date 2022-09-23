@@ -1,14 +1,6 @@
 # Deploy to Fly.io
 
-Requirements:
-
-1. Dockerfile with access to `platformatic` CLI
-2. A fly.io account
-3. A platformatic app that works locally
-
-## On Fly.io
-
-1. Need a fly.io account and the CLI tool: https://fly.io/docs/hands-on/
+1. Need a Fly.io account and the CLI tool: https://fly.io/docs/hands-on/
 2. Navigate to your project on your local machine
 1. Create a **Dockerfile**:
     ```dockerfile
@@ -39,7 +31,7 @@ Requirements:
     ```
 9. Now deploy: `fly deploy`
 
-### With sqlite
+### With SQLite
 
 1. Follow steps above, skipping deployment until the end
 2. Create a volume for database storage: `fly volumes create data`

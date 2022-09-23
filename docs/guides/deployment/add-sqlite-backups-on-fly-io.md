@@ -1,14 +1,15 @@
 # Add SQLite Backups on Fly.io
 
-TODO: This guide shows you how to configure SQLite backups on Fly.io with Litestream and S3.
+This guide shows you how to configure SQLite backups on Fly.io with Litestream and S3.
+It assumes you have followed the [Deploy to Fly.io](./deploy-to-fly-io.md) guide
+first.
 
-TODO: Mention following the [Deploy to Fly.io](TODO) guide first
-
-This requires an AWS account and the appropriate setup in AWS. Follow the
-[Litestream guide for configuring an AWS user](https://litestream.io/guides/s3/) and then come back here to
-integrate with Platformatic and Fly.
+This guide requires an AWS account and the appropriate setup in AWS. Follow the
+[Litestream guide for configuring an AWS user](https://litestream.io/guides/s3/)
+and then come back here to integrate with Platformatic and Fly.
 
 Once AWS is setup, store the credentials on Fly:
+
 ```bash
 fly secrets set \
   AWS_ACCESS_KEY_ID=some-access-key \
@@ -16,6 +17,7 @@ fly secrets set \
 ```
 
 Update **fly.toml** with the bucket name:
+
 ```toml
 [env]
   AWS_BACKUP_BUCKET = "bucket-name"
@@ -23,6 +25,7 @@ Update **fly.toml** with the bucket name:
 
 Configuration of Litestream will be done through the standard yaml file, create
 a **litestream.yml** file in the project with the following contents:
+
 ```yml
 dbs:
   # make sure to replace <app-name>
@@ -44,7 +47,7 @@ then
     litestream restore -v "$DSN"
 fi
 
-# TODO change <app-name>
+# TODO Change <app-name>
 echo "Starting Litestream & application"
 litestream replicate -exec "platformatic db --config /opt/<app-name>/platformatic.db.json"
 ```
@@ -87,7 +90,7 @@ COPY --from=litestream /usr/local/bin/litestream /usr/local/bin/litestream
 
 RUN apk add sqlite bash ca-certificates curl
 
-# Set environment variables.
+# Set environment variables
 ENV DSN "/opt/<app-name>/.platformatic/data/<app-name>.db"
 COPY image/db-cli /usr/local/bin/db-cli
 RUN chmod +x /usr/local/bin/db-cli

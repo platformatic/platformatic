@@ -322,7 +322,7 @@ Same for the `anonymous` role, which value can be changed using `anonymousRole`.
   }
 ```
 
-## Configuration placeholders
+## Environment variable placeholders
 
 The value for any configuration setting can be replaced with an environment variable
 by adding a placeholder in the configuration file, for example `{PLT_SERVER_LOGGER_LEVEL}`.
