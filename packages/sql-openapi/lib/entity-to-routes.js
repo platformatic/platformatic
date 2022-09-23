@@ -58,7 +58,7 @@ async function entityPlugin (app, opts) {
     return acc
   }, {})
 
-  const ordeByArgs = Object.keys(entity.fields).sort().map((name) => {
+  const orderByArgs = Object.keys(entity.fields).sort().map((name) => {
     return entity.fields[name]
   }).reduce((acc, field) => {
     const key = `orderby.${field.camelcase}`
@@ -90,7 +90,7 @@ async function entityPlugin (app, opts) {
           offset: { type: 'integer' },
           fields,
           ...whereArgs,
-          ...ordeByArgs
+          ...orderByArgs
         },
         additionalProperties: false
       },
@@ -133,7 +133,7 @@ async function entityPlugin (app, opts) {
     }, [])
     const ctx = { app: this, reply }
     const res = await entity.find({ limit, offset, fields, orderBy, where, ctx })
-    return res
+    return res.map(item => entity.stripUnwantedFields(item, fields))
   })
 
   app.post('/', {
@@ -150,7 +150,7 @@ async function entityPlugin (app, opts) {
     const ctx = { app: this, reply }
     const res = await entity.save({ input: request.body, ctx })
     reply.header('location', `${app.prefix}/${res.id}`)
-    return res
+    return entity.stripUnwantedFields(res)
   })
 
   app.get(`/:${primaryKeyCamelcase}`, {
@@ -184,7 +184,7 @@ async function entityPlugin (app, opts) {
     if (res.length === 0) {
       return reply.callNotFound()
     }
-    return res[0]
+    return entity.stripUnwantedFields(res[0], request.query.fields)
   })
 
   for (const method of ['POST', 'PUT']) {
@@ -227,7 +227,7 @@ async function entityPlugin (app, opts) {
           return reply.callNotFound()
         }
         reply.header('location', `${app.prefix}/${res[primaryKeyCamelcase]}`)
-        return res
+        return entity.stripUnwantedFields(res, request.query.fields)
       }
     })
   }
@@ -259,7 +259,7 @@ async function entityPlugin (app, opts) {
     if (res.length === 0) {
       return reply.callNotFound()
     }
-    return res[0]
+    return entity.stripUnwantedFields(res[0])
   })
 }
 

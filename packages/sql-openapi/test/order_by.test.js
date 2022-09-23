@@ -71,12 +71,12 @@ test('one-level order by', async (t) => {
       method: 'GET',
       url: '/pages?orderby.counter=asc&fields=id,title,counter'
     })
-    equal(res.statusCode, 200, 'POST /pages?orderby.counter=asc status code')
+    equal(res.statusCode, 200, 'GET /pages?orderby.counter=asc status code')
     same(res.json(), [
       { id: 3, title: 'Page 3', counter: 1 },
       { id: 2, title: 'Page 2', counter: 2 },
       { id: 1, title: 'Page 1', counter: 3 }
-    ], 'POST /pages?orderby.counter=asc response')
+    ], 'GET /pages?orderby.counter=asc response')
   }
 
   {
@@ -84,12 +84,12 @@ test('one-level order by', async (t) => {
       method: 'GET',
       url: '/pages?orderby.counter=desc&fields=id,title,counter'
     })
-    equal(res.statusCode, 200, 'POST /pages?orderby.counter=desc status code')
+    equal(res.statusCode, 200, 'GET /pages?orderby.counter=desc status code')
     same(res.json(), [
       { id: 1, title: 'Page 1', counter: 3 },
       { id: 2, title: 'Page 2', counter: 2 },
       { id: 3, title: 'Page 3', counter: 1 }
-    ], 'POST /pages?orderby.counter=desc response')
+    ], 'GET /pages?orderby.counter=desc response')
   }
 
   {
@@ -107,13 +107,13 @@ test('one-level order by', async (t) => {
       method: 'GET',
       url: '/pages?orderby.counter=xxxx'
     })
-    equal(res.statusCode, 400, 'POST /pages?orderby.counter=desc status code')
+    equal(res.statusCode, 400, 'GET /pages?orderby.counter=desc status code')
     same(res.json(), {
       statusCode: 400,
       error: 'Bad Request',
       message: 'querystring/orderby.counter must be equal to one of the allowed values'
     }
-    , 'POST /pages?orderby.counter=desc response')
+    , 'GET /pages?orderby.counter=desc response')
   }
 })
 
@@ -166,11 +166,11 @@ test('list order by', async ({ pass, teardown, same, equal }) => {
       method: 'GET',
       url: '/pages?orderby.counter=asc&orderby.counter2=desc&fields=id,counter,counter2'
     })
-    equal(res.statusCode, 200, 'POST /pages?orderby.counter=asc&orderby.counter2=desc status code')
+    equal(res.statusCode, 200, 'GET /pages?orderby.counter=asc&orderby.counter2=desc status code')
     same(res.json(), [
       { id: 3, counter: 1, counter2: 1 },
       { id: 1, counter: 3, counter2: 3 },
       { id: 2, counter: 3, counter2: 2 }
-    ], 'POST /pages?orderby.counter=asc&orderby.counter2=desc response')
+    ], 'GET /pages?orderby.counter=asc&orderby.counter2=desc response')
   }
 })

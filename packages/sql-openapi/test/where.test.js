@@ -455,7 +455,7 @@ test('nested where', async (t) => {
     for (const owner of res1.json()) {
       const res2 = await app.inject({
         method: 'GET',
-        url: `/posts?where.ownerId.eq=${owner.id}&fields=title,longText,counter`
+        url: `/posts?where.ownerId.eq=${owner.id}&fields=title,longText,counter,ownerId`
       })
       equal(res2.statusCode, 200, 'GET /posts status code')
       same(res2.json(), [expected.shift(), expected.shift()], 'GET /posts response')
