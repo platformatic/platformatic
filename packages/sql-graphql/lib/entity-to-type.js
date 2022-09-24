@@ -17,7 +17,8 @@ const ascDesc = new graphql.GraphQLEnumType({
 
 function constructGraph (app, entity, opts) {
   const primaryKey = entity.primaryKey
-
+  const relationalFields = entity.relations
+    .map((relation) => relation.column_name)
   const entityName = entity.name
   const singular = entity.singularName
   const plural = entity.pluralName
@@ -128,7 +129,7 @@ function constructGraph (app, entity, opts) {
   resolvers.Query[plural] = (_, query, ctx, info) => {
     const requestedFields = info.fieldNodes[0].selectionSet.selections.map((s) => s.name.value)
     requestedFields.push(primaryKey)
-    return entity.find({ ...query, fields: requestedFields, ctx })
+    return entity.find({ ...query, fields: [...requestedFields, ...relationalFields], ctx })
   }
 
   const inputType = new graphql.GraphQLInputObjectType({
@@ -154,7 +155,7 @@ function constructGraph (app, entity, opts) {
 
   resolvers.Mutation[save] = async (_, { input }, ctx, info) => {
     const fields = fromSelectionSet(info.fieldNodes[0].selectionSet)
-    return entity.save({ input, ctx, fields: [...fields] })
+    return entity.save({ input, ctx, fields: [...fields, ...relationalFields] })
   }
 
   const insert = camelcase(['insert', plural])
@@ -168,7 +169,7 @@ function constructGraph (app, entity, opts) {
 
   resolvers.Mutation[insert] = (_, { inputs }, ctx, info) => {
     const fields = fromSelectionSet(info.fieldNodes[0].selectionSet)
-    return entity.insert({ inputs, ctx, fields: [...fields] })
+    return entity.insert({ inputs, ctx, fields: [...fields, ...relationalFields] })
   }
 
   const deleteKey = camelcase(['delete', plural])
@@ -181,7 +182,7 @@ function constructGraph (app, entity, opts) {
 
   resolvers.Mutation[deleteKey] = (_, args, ctx, info) => {
     const fields = info.fieldNodes[0].selectionSet.selections.map((s) => s.name.value)
-    return entity.delete({ ...args, fields, ctx })
+    return entity.delete({ ...args, fields: [...fields, ...relationalFields], ctx })
   }
 
   federationReplacements.push({
@@ -236,11 +237,12 @@ function constructGraph (app, entity, opts) {
   }
 
   function getFields (queries) {
-    const fields = new Set()
+    const fields = new Set([...relationalFields])
     fields.add(primaryKey)
     for (const query of queries) {
       fromSelectionSet(query.info.fieldNodes[0].selectionSet, fields)
     }
+    fields.delete(undefined)
     return [...fields]
   }
 }

@@ -10,7 +10,8 @@
     "test:mysql": "DB=mysql tap test/*.test.js",
     "test:mysql8": "DB=mysql8 tap test/*.test.js",
     "test:sqlite": "DB=sqlite tap test/*.test.js",
-    "test:typescript": "tsd"
+    "test:typescript": "tsd",
+    "test:hooks": "DB=mysql tap test/hooks.test.js"
   },
   "repository": {
     "type": "git",
