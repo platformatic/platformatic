@@ -306,7 +306,7 @@ test('mixing snake and camel case', async ({ pass, teardown, same, equal }) => {
 
   {
     const res = await pageEntity.insert({
-      fields: ['id', 'title'],
+      fields: ['id', 'title', 'categoryId'],
       inputs: [
         {
           title: 'A fiction', bodyContent: 'This is our first fiction', categoryId: newCategory.id
@@ -330,7 +330,7 @@ test('mixing snake and camel case', async ({ pass, teardown, same, equal }) => {
 
   {
     const res = await pageEntity.save({
-      fields: ['id', 'title'],
+      fields: ['id', 'title', 'categoryId'],
       input: {
         title: 'A fiction', body_content: 'This is our first fiction', category_id: newCategory.id
       }
@@ -343,7 +343,7 @@ test('mixing snake and camel case', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('strip unwanted fields', async ({ pass, teardown, same, equal }) => {
+test('only include wanted fields', async ({ pass, teardown, same, equal }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
     teardown(() => db.dispose())
@@ -422,14 +422,14 @@ test('strip unwanted fields', async ({ pass, teardown, same, equal }) => {
         }
       ]
     })
-    same(res.map((item) => pageEntity.stripUnwantedFields(item, fields)), [{
+    same(res, [{
       id: '1',
       title: 'A fiction'
     }])
   }
 })
 
-test('do not strip if no fields passed', async ({ pass, teardown, same, equal }) => {
+test('include all fields', async ({ pass, teardown, same, equal }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
     teardown(() => db.dispose())
@@ -506,7 +506,7 @@ test('do not strip if no fields passed', async ({ pass, teardown, same, equal })
         }
       ]
     })
-    same(res.map((item) => pageEntity.stripUnwantedFields(item)), [{
+    same(res, [{
       id: '1',
       title: 'A fiction',
       bodyContent: 'This is our first fiction',

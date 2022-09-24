@@ -133,7 +133,7 @@ async function entityPlugin (app, opts) {
     }, [])
     const ctx = { app: this, reply }
     const res = await entity.find({ limit, offset, fields, orderBy, where, ctx })
-    return res.map(item => entity.stripUnwantedFields(item, fields))
+    return res
   })
 
   app.post('/', {
@@ -150,7 +150,7 @@ async function entityPlugin (app, opts) {
     const ctx = { app: this, reply }
     const res = await entity.save({ input: request.body, ctx })
     reply.header('location', `${app.prefix}/${res.id}`)
-    return entity.stripUnwantedFields(res)
+    return res
   })
 
   app.get(`/:${primaryKeyCamelcase}`, {
@@ -184,7 +184,7 @@ async function entityPlugin (app, opts) {
     if (res.length === 0) {
       return reply.callNotFound()
     }
-    return entity.stripUnwantedFields(res[0], request.query.fields)
+    return res[0]
   })
 
   for (const method of ['POST', 'PUT']) {
@@ -227,7 +227,7 @@ async function entityPlugin (app, opts) {
           return reply.callNotFound()
         }
         reply.header('location', `${app.prefix}/${res[primaryKeyCamelcase]}`)
-        return entity.stripUnwantedFields(res, request.query.fields)
+        return res
       }
     })
   }
@@ -259,7 +259,7 @@ async function entityPlugin (app, opts) {
     if (res.length === 0) {
       return reply.callNotFound()
     }
-    return entity.stripUnwantedFields(res[0])
+    return res[0]
   })
 }
 

@@ -202,11 +202,6 @@ export interface Entity<EntityFields = any> {
    * Converts database column names to entities fields names.
    */
   fixOutput(input: { [columnName: string]: any }): { [columnName: string]: any },
-
-  /**
-   * Strips unwanted foreign keys not in fields from the output.
-   */
-  stripUnwantedFields(input: {[columnName: string]: any}): { [columnName: string]: any }
   /**
    * Selects matching entities from the database.
    */

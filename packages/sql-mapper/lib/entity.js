@@ -55,16 +55,6 @@ function createMapper (db, sql, log, table, fields, primaryKey, relations, queri
     return newOutput
   }
 
-  function stripUnwantedFields (output, fieldStringArray) {
-    const strippedOutput = {}
-    for (const key of Object.keys(output)) {
-      if (!fieldStringArray?.length || fieldStringArray.includes(camelcase(key))) {
-        strippedOutput[key] = output[key]
-      }
-    }
-    return strippedOutput
-  }
-
   async function save (args) {
     if (args.input === undefined) {
       throw new Error('Input not provided.')
@@ -130,8 +120,10 @@ function createMapper (db, sql, log, table, fields, primaryKey, relations, queri
       return Object.values(inputToFieldMap)
     }
 
+    const relationalFields = fields.filter((field) => alwaysRetrieve.includes(field))
     const requestedFields = fields.map((field) => inputToFieldMap[field])
-    const set = new Set([...alwaysRetrieve, ...requestedFields])
+
+    const set = new Set([...requestedFields, ...relationalFields])
     set.delete(undefined)
     const fieldsToRetrieve = [...set]
     return fieldsToRetrieve
@@ -228,7 +220,6 @@ function createMapper (db, sql, log, table, fields, primaryKey, relations, queri
     table,
     fields,
     camelCasedFields,
-    stripUnwantedFields,
     fixInput,
     fixOutput,
     find,

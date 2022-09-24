@@ -281,7 +281,7 @@ test('foreign keys', async ({ pass, teardown, same, equal }) => {
     equal(owners.length, 2)
 
     for (const owner of owners) {
-      owner.posts = await mapper.entities.post.find({ where: { ownerId: { eq: owner.id } }, fields: ['id', 'title', 'longText'] })
+      owner.posts = await mapper.entities.post.find({ where: { ownerId: { eq: owner.id } }, fields: ['id', 'title', 'longText', 'ownerId'] })
     }
     same(owners, [{
       id: '1',
