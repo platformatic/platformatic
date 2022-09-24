@@ -58,7 +58,7 @@ async function entityPlugin (app, opts) {
     return acc
   }, {})
 
-  const ordeByArgs = Object.keys(entity.fields).sort().map((name) => {
+  const orderByArgs = Object.keys(entity.fields).sort().map((name) => {
     return entity.fields[name]
   }).reduce((acc, field) => {
     const key = `orderby.${field.camelcase}`
@@ -90,7 +90,7 @@ async function entityPlugin (app, opts) {
           offset: { type: 'integer' },
           fields,
           ...whereArgs,
-          ...ordeByArgs
+          ...orderByArgs
         },
         additionalProperties: false
       },
