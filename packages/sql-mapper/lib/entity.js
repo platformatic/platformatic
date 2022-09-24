@@ -20,7 +20,6 @@ function createMapper (db, sql, log, table, fields, primaryKey, relations, queri
     fields[key].camelcase = camel
     return acc
   }, {})
-  const alwaysRetrieve = relations.map((relation) => relation.column_name)
 
   function fixInput (input) {
     const newInput = {}
@@ -120,10 +119,19 @@ function createMapper (db, sql, log, table, fields, primaryKey, relations, queri
       return Object.values(inputToFieldMap)
     }
 
-    const relationalFields = fields.filter((field) => alwaysRetrieve.includes(field))
-    const requestedFields = fields.map((field) => inputToFieldMap[field])
+    /**
+     * The 'field' can be a relational field which is undefined
+     * in the inputToFieldMap
+     * @see sql-graphql
+    */
+    const requestedFields = fields.map((field) => {
+      if (relations.some((relation) => field === relation.column_name)) {
+        return field
+      }
+      return inputToFieldMap[field]
+    })
 
-    const set = new Set([...requestedFields, ...relationalFields])
+    const set = new Set(requestedFields)
     set.delete(undefined)
     const fieldsToRetrieve = [...set]
     return fieldsToRetrieve

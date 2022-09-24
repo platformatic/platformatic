@@ -343,7 +343,93 @@ test('mixing snake and camel case', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('only include wanted fields', async ({ pass, teardown, same, equal }) => {
+test('only include wanted fields - with foreign', async ({ pass, teardown, same, equal }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+
+    if (isMysql) {
+      await db.query(sql`
+          CREATE TABLE categories (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255)
+          );
+          CREATE TABLE pages (
+            id SERIAL PRIMARY KEY,
+            title VARCHAR(255),
+            body_content TEXT,
+            category_id BIGINT UNSIGNED,
+            FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
+          );
+        `)
+    } else if (isSQLite) {
+      await db.query(sql`
+        CREATE TABLE "categories" (
+          "id" INTEGER PRIMARY KEY,
+          "name" TEXT NOT NULL
+        );
+      `)
+      await db.query(sql`
+        CREATE TABLE "pages" (
+          "id" INTEGER PRIMARY KEY,
+          "title" TEXT NOT NULL,
+          "body_content" TEXT
+        );
+      `)
+      await db.query(sql`
+        ALTER TABLE "pages" ADD COLUMN "category_id" REFERENCES "categories"("id");
+      `)
+    } else {
+      await db.query(sql`
+        CREATE TABLE categories (
+          id SERIAL PRIMARY KEY,
+          name varchar(255) NOT NULL
+        );
+
+        CREATE TABLE pages (
+          id SERIAL PRIMARY KEY,
+          title varchar(255) NOT NULL,
+          body_content text,
+          category_id int NOT NULL REFERENCES categories(id)
+        );
+      `)
+    }
+  }
+
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+
+  const pageEntity = mapper.entities.page
+  const categoryEntity = mapper.entities.category
+
+  const [newCategory] = await categoryEntity.insert({
+    fields: ['id', 'name'],
+    inputs: [{ name: 'fiction' }]
+  })
+
+  {
+    const fields = ['id', 'category_id']
+    const res = await pageEntity.insert({
+      fields,
+      inputs: [
+        {
+          title: 'A fiction', bodyContent: 'This is our first fiction', categoryId: newCategory.id
+        }
+      ]
+    })
+    same(res, [{
+      id: '1',
+      categoryId: newCategory.id
+    }])
+  }
+})
+
+test('only include wanted fields - without foreign', async ({ pass, teardown, same, equal }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
     teardown(() => db.dispose())

@@ -51,8 +51,7 @@ module.exports = function establishRelations (app, relations, resolvers, loaders
         resolvers[foreign.type] = resolvers[foreign.type] || {}
         resolvers[foreign.type][lowered] = async function (obj, args, ctx, info) {
           const fields = fromSelectionSet(info.fieldNodes[0].selectionSet, new Set())
-          const relationalFields = current.entity.relations.map((relation) => relation.column_name)
-          const toSearch = { ...args, fields: [...fields, ...relationalFields], ctx }
+          const toSearch = { ...args, fields: [...fields, relation.column_name], ctx }
           toSearch.where = toSearch.where || {}
           toSearch.where[camelcase(relation.column_name)] = { eq: obj.id }
           return current.entity.find(toSearch)
