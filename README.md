@@ -1,7 +1,6 @@
 # Platformatic
 
-Platformatic is a set of Open Source tools that you can use to build your own
-_Internal Developer Platform_.
+Platformatic is a set of Open Source tools that you can use to build your own _Internal Developer Platform_.
 
 The first of these tools is **Platformatic DB** — more will follow!
 
