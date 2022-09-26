@@ -65,7 +65,7 @@ async function connect ({ connectionString, log, onDatabaseLoad, ignore = {}, au
     if (db.isMariaDB) {
       queries = queriesFactory.mariadb
     } else {
-      db.isMySQL = true
+      db.isMySql = true
       queries = queriesFactory.mysql
     }
   } else if (connectionString.indexOf('sqlite') === 0) {

@@ -18,7 +18,7 @@ export interface Database {
   /**
    * An option that is true if a MySQL database is used.
    */
-  isMySQL?: boolean,
+  isMySql?: boolean,
   /**
    * An option that is true if a SQLite database is used.
    */
