@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('tap')
-const { computeSQLiteIgnores } = require('../lib/utils')
+const { computeSQLiteIgnores, urlDirname } = require('../lib/utils')
 const os = require('os')
 const isWindows = os.platform() === 'win32'
 
@@ -47,4 +47,10 @@ test('compute SQLite ignores (Windows)', { skip: !isWindows }, ({ same, equal, p
     const result = computeSQLiteIgnores(sqliteFullPath, dirOfConfig)
     same(result, ['subdir\\db.sqlite', 'subdir\\db.sqlite-journal'])
   }
+})
+
+test('urlDirname', ({ same, plan }) => {
+  plan(1)
+  const str = 'file:///path/to/file.json'
+  same(urlDirname(str), '/path/to')
 })
