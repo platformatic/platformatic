@@ -55,6 +55,11 @@ expectType<SQLMapperPluginInterface>(await connect({ connectionString: '', ignor
 expectType<SQLMapperPluginInterface>(await connect({ connectionString: '', onDatabaseLoad(db: Database, sql: SQL) {
   expectType<(query: SQLQuery) => Promise<any[]>>(db.query)
   expectType<() => Promise<void>>(db.dispose)
+  expectType<boolean | undefined>(pluginOptions.db.isMySql)
+  expectType<boolean | undefined>(pluginOptions.db.isMariaDB)
+  expectType<boolean | undefined>(pluginOptions.db.isSQLite)
+  expectType<boolean | undefined>(pluginOptions.db.isPg)
+
 }}))
 
 const instance: FastifyInstance = fastify()
