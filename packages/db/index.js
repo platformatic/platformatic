@@ -4,7 +4,7 @@ const core = require('@platformatic/db-core')
 const auth = require('@platformatic/db-authorization')
 const dashboard = require('@platformatic/db-dashboard')
 const { start } = require('@fastify/restartable')
-const isolate = require('fastify-isolate')
+const sandbox = require('fastify-sandbox')
 const underPressure = require('@fastify/under-pressure')
 
 const { isKeyEnabledInConfig } = require('./lib/helper')
@@ -74,7 +74,7 @@ async function platformaticDB (app, opts) {
 
   if (opts.plugin) {
     app.log.debug({ plugin: opts.plugin }, 'loading plugin')
-    await app.register(isolate, {
+    await app.register(sandbox, {
       ...opts.plugin,
       customizeGlobalThis (_globalThis) {
         // Taken from https://github.com/nodejs/undici/blob/fa9fd9066569b6357acacffb806aa804b688c9d8/lib/global.js#L5
