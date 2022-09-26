@@ -119,7 +119,9 @@ test('missing config file', async ({ equal, match }) => {
   }
 })
 
-test('generate types on start', async ({ equal, teardown, fail }) => {
+test('generate types on start', async ({ plan, equal, teardown, fail, pass }) => {
+  plan(2)
+
   const cwd = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
 
   teardown(async () => {
@@ -153,4 +155,6 @@ test('generate types on start', async ({ equal, teardown, fail }) => {
     console.log(err.stderr)
     fail(err.stderr)
   }
+
+  pass()
 })
