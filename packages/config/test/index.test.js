@@ -126,7 +126,7 @@ test('should throw if file is not JSON, yaml, or toml', async ({ fail, equal, pl
     await cm.parse()
     fail()
   } catch (err) {
-    equal(err.message, 'Invalid config file extension. Only yml, yaml, json, json5, toml are supported.')
+    equal(err.message, 'Invalid config file extension. Only yml, yaml, json, json5, toml, tml are supported.')
   }
 })
 

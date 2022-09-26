@@ -1,14 +1,13 @@
 import parseArgs from 'minimist'
 import { access } from 'fs/promises'
-import { resolve } from 'path'
 import ConfigManager from './config.js'
 import deepmerge from '@fastify/deepmerge'
+import { findConfigFile } from './utils.js'
 
 async function loadConfig (minimistConfig, _args, configOpts = {}) {
   const args = parseArgs(_args, deepmerge({ all: true })({
     string: ['allow-env'],
     default: {
-      config: resolve(process.cwd(), 'platformatic.db.json'),
       allowEnv: '' // The default is set in ConfigManager
     },
     alias: {
@@ -18,6 +17,9 @@ async function loadConfig (minimistConfig, _args, configOpts = {}) {
     }
   }, minimistConfig))
   try {
+    if (!args.config) {
+      args.config = await findConfigFile(process.cwd())
+    }
     await access(args.config)
   } catch (err) {
     console.error('Missing config file')
