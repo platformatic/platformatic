@@ -4,12 +4,9 @@ import { request } from 'undici'
 import { execa } from 'execa'
 import stripAnsi from 'strip-ansi'
 import split from 'split2'
-import { fileURLToPath } from 'url'
 import path from 'path'
+import { urlDirname } from '../../lib/utils'
 
-function urlDirname (url) {
-  return path.dirname(fileURLToPath(url))
-}
 
 const dbLocation = path.resolve(path.join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite', 'db'))
 
