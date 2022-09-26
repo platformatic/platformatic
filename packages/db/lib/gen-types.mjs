@@ -1,4 +1,4 @@
-import { resolve, join, dirname, relative } from 'path'
+import { resolve, join, dirname, relative, basename } from 'path'
 import { createRequire } from 'module'
 import { access, mkdir, writeFile, readFile, readdir, unlink } from 'fs/promises'
 import { join as desmJoin } from 'desm'
@@ -39,9 +39,11 @@ async function isFileAccessible (filename) {
   }
 }
 
-async function removeAllFilesFromDir (dir) {
-  const files = await readdir(dir)
-  await Promise.all(files.map((file) => unlink(join(dir, file))))
+async function removeUnusedTypeFiles (entities, dir) {
+  const entityTypes = await readdir(dir)
+  const entityNames = Object.values(entities).map((entity) => entity.name)
+  const removedEntityNames = entityTypes.filter((file) => !entityNames.includes(basename(file, '.d.ts')))
+  await Promise.all(removedEntityNames.map((file) => unlink(join(dir, file))))
 }
 
 async function generateEntityType (entity) {
@@ -147,6 +149,16 @@ async function generatePluginWithTypesSupport (logger, args, configManager) {
   logger.info(`Plugin file created at ${relative(process.cwd(), pluginPath)}`)
 }
 
+async function writeFileIfChanged (filename, content) {
+  const isFileExists = await isFileAccessible(filename)
+  if (isFileExists) {
+    const fileContent = await readFile(filename, 'utf-8')
+    if (fileContent === content) return false
+  }
+  await writeFile(filename, content)
+  return true
+}
+
 async function execute (logger, args, config) {
   const { db, entities } = await setupDB(logger, config.core)
 
@@ -157,22 +169,24 @@ async function execute (logger, args, config) {
 
   const isTypeFolderExists = await isFileAccessible(TYPES_FOLDER_PATH)
   if (isTypeFolderExists) {
-    await removeAllFilesFromDir(TYPES_FOLDER_PATH)
+    await removeUnusedTypeFiles(entities, TYPES_FOLDER_PATH)
   } else {
     await mkdir(TYPES_FOLDER_PATH)
   }
 
   for (const entity of Object.values(entities)) {
-    logger.info(`Generating types for ${entity.name}`)
-
     const types = await generateEntityType(entity)
 
     const pathToFile = join(TYPES_FOLDER_PATH, entity.name + '.d.ts')
-    await writeFile(pathToFile, types)
+    const isTypeChanged = await writeFileIfChanged(pathToFile, types)
+
+    if (isTypeChanged) {
+      logger.info(`Generated type for ${entity.name} entity.`)
+    }
   }
 
   const globalTypes = await generateGlobalTypes(entities, config)
-  await writeFile(join(TYPES_FOLDER_PATH, '..', 'global.d.ts'), globalTypes)
+  await writeFileIfChanged(join(TYPES_FOLDER_PATH, '..', 'global.d.ts'), globalTypes)
 
   await db.dispose()
 }

@@ -4,6 +4,8 @@ import { cliPath } from './helper.mjs'
 import { test } from 'tap'
 import { fileURLToPath } from 'url'
 import { execa } from 'execa'
+import stripAnsi from 'strip-ansi'
+import split from 'split2'
 
 function urlDirname (url) {
   return path.dirname(fileURLToPath(url))
@@ -115,4 +117,44 @@ test('missing config file', async ({ equal, match }) => {
     equal(err.exitCode, 1)
     match(err.stderr, 'Missing config file')
   }
+})
+
+test('generate types on start', async ({ plan, equal, teardown, fail, pass }) => {
+  plan(2)
+
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
+
+  teardown(async () => {
+    await Promise.all([
+      rm(path.join(cwd, 'types'), { recursive: true, force: true }),
+      rm(path.join(cwd, 'global.d.ts'), { force: true }),
+      rm(path.join(cwd, 'db'), { force: true })
+    ])
+  })
+
+  const child = execa('node', [cliPath, 'start'], { cwd })
+  teardown(() => child.kill('SIGINT'))
+
+  const splitter = split()
+  child.stdout.pipe(splitter)
+
+  let found = false
+  for await (const data of splitter) {
+    const sanitized = stripAnsi(data)
+    if (sanitized.match(/(.*)Generated type for(.*)/)) {
+      found = true
+      break
+    }
+  }
+  equal(found, true)
+
+  try {
+    await execa(pathToTSD, { cwd })
+  } catch (err) {
+    console.log(err.stdout)
+    console.log(err.stderr)
+    fail(err.stderr)
+  }
+
+  pass()
 })
