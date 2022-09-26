@@ -1,5 +1,5 @@
 import path from 'path'
-import { rm, mkdir, cp } from 'fs/promises'
+import { rm, mkdir, cp, access } from 'fs/promises'
 import { cliPath } from './helper.mjs'
 import t from 'tap'
 import { execa } from 'execa'
@@ -81,6 +81,31 @@ t.test('should show warning if there is no entities', async (t) => {
   t.pass()
 })
 
+t.test('generate ts types with typescript plugin', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types-typescript')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'gen-types-typescript-clone-1')
+
+  await mkdir(cwd)
+  await cp(testDir, cwd, { recursive: true })
+
+  t.teardown(async () => {
+    await rm(cwd, { force: true, recursive: true })
+  })
+
+  try {
+    await execa('node', [cliPath, 'types'], { cwd })
+  } catch (err) {
+    console.log(err.stdout)
+    console.log(err.stderr)
+    t.fail(err.stderr)
+  }
+
+  const pathToTSPlugin = path.join(cwd, 'plugin.ts')
+  await access(pathToTSPlugin)
+
+  t.pass()
+})
+
 t.test('run migrate command with type generation', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
   const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'auto-gen-types-clone-2')
@@ -93,7 +118,10 @@ t.test('run migrate command with type generation', async (t) => {
   })
 
   try {
-    await execa('node', [cliPath, 'migrate'], { cwd })
+    const child = await execa('node', [cliPath, 'migrate'], { cwd })
+    t.equal(child.stdout.includes('Generated type for Graph entity.'), true)
+    t.equal(child.stdout.includes('Please run `npm i --save'), true)
+
     await execa(pathToTSD, { cwd })
   } catch (err) {
     console.log(err.stdout)
@@ -144,11 +172,10 @@ t.test('generate types on start', async ({ plan, equal, teardown, fail, pass }) 
 
   try {
     await execa(pathToTSD, { cwd })
+    pass()
   } catch (err) {
     console.log(err.stdout)
     console.log(err.stderr)
     fail(err.stderr)
   }
-
-  pass()
 })

@@ -9,6 +9,7 @@ import { join } from 'desm'
 
 import start from './lib/start.mjs'
 import { init } from './lib/init.mjs'
+import { compile } from './lib/compile.mjs'
 import { migrate } from './lib/migrate.mjs'
 import { seed } from './lib/seed.mjs'
 import { generateTypes } from './lib/gen-types.mjs'
@@ -31,6 +32,7 @@ program.register('help schema', help.toStdout.bind(null, ['schema']))
 
 program.register('start', start)
 program.register('init', init)
+program.register('compile', compile)
 program.register('migrate', migrate)
 program.register('seed', seed)
 program.register('types', generateTypes)

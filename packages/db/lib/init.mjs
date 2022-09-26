@@ -27,8 +27,31 @@ const moviesMigrationUndo = `
 -- Add SQL in this file to drop the database tables 
 DROP TABLE movies;
 `
+function getTsConfig (outDir) {
+  return {
+    compilerOptions: {
+      module: 'commonjs',
+      esModuleInterop: true,
+      target: 'es6',
+      moduleResolution: 'node',
+      sourceMap: true,
+      pretty: true,
+      noEmitOnError: true,
+      outDir
+    },
+    watchOptions: {
+      watchFile: 'fixedPollingInterval',
+      watchDirectory: 'fixedPollingInterval',
+      fallbackPolling: 'dynamicPriority',
+      synchronousWatchDirectory: true,
+      excludeDirectories: ['**/node_modules', outDir]
+    }
+  }
+}
 
-function generateConfig (hostname, port, database, migrations, types) {
+function generateConfig (args) {
+  const { hostname, port, database, migrations, types, typescript } = args
+
   const connectionString = connectionStrings[database]
 
   const config = {
@@ -40,6 +63,12 @@ function generateConfig (hostname, port, database, migrations, types) {
   if (types === true) {
     config.types = {
       autogenerate: true
+    }
+  }
+
+  if (typescript === true) {
+    config.typescript = {
+      outDir: 'dist'
     }
   }
 
@@ -58,23 +87,26 @@ async function init (_args) {
       port: 3042,
       database: 'sqlite',
       migrations: './migrations',
-      types: true
+      types: true,
+      typescript: false
     },
     alias: {
       h: 'hostname',
       p: 'port',
       db: 'database',
       m: 'migrations',
-      t: 'types'
-    }
+      t: 'types',
+      ts: 'typescript'
+    },
+    boolean: ['types', 'typescript']
   })
 
-  const { hostname, port, database, migrations, types } = args
+  const { migrations, types, typescript } = args
 
   const currentDir = process.cwd()
   const accessibleConfigFilename = await findConfigFile(currentDir)
   if (accessibleConfigFilename === undefined) {
-    const config = generateConfig(hostname, port, database, migrations, types)
+    const config = generateConfig(args)
     await writeFile('platformatic.db.json', JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.db.json successfully created.')
   } else {
@@ -112,6 +144,18 @@ async function init (_args) {
   }
   if (types === true) {
     await checkForDependencies(logger, args, config)
+  }
+
+  if (typescript === true) {
+    const tsConfigFileName = 'tsconfig.json'
+    const isTsConfigExists = await isFileAccessible(tsConfigFileName)
+    if (!isTsConfigExists) {
+      const tsConfig = getTsConfig(config.typescript.outDir)
+      await writeFile(tsConfigFileName, JSON.stringify(tsConfig, null, 2))
+      logger.info(`Typescript configuration file ${tsConfigFileName} successfully created.`)
+    } else {
+      logger.info(`Typescript configuration file ${tsConfigFileName} found, skipping creation of typescript configuration file.`)
+    }
   }
 }
 

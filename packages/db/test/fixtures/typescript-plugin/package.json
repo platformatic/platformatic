@@ -1,5 +1,5 @@
 {
-  "name": "gen-types",
+  "name": "typescript-plugin",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -8,8 +8,7 @@
   },
   "author": "",
   "license": "ISC",
-  "types": "./index.d.ts",
   "devDependencies": {
-    "@platformatic/sql-mapper": "workspace:*"
+    "typescript": "^4.8.3"
   }
 }

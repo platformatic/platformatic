@@ -1,10 +1,9 @@
 'use strict'
 
-const { connect } = require('@platformatic/db-core')
-const { sep } = require('path')
+const { sep, relative, join, basename, dirname } = require('path')
 const { access } = require('fs/promises')
+const { connect } = require('@platformatic/db-core')
 const { resolve } = require('path')
-const path = require('path')
 const { fileURLToPath } = require('url')
 
 async function setupDB (log, config) {
@@ -92,14 +91,25 @@ async function isFileAccessible (filename, directory) {
 }
 
 function urlDirname (url) {
-  return path.dirname(fileURLToPath(url))
+  return dirname(fileURLToPath(url))
+}
+
+function getJSPluginPath (tsPluginPath, compileDir) {
+  const cwd = process.cwd()
+  const tsPluginRelativePath = relative(cwd, tsPluginPath)
+  const jsPluginRelativePath = join(
+    dirname(tsPluginRelativePath),
+    basename(tsPluginRelativePath, '.ts') + '.js'
+  )
+  return join(cwd, compileDir, jsPluginRelativePath)
 }
 
 module.exports = {
   setupDB,
+  getJSPluginPath,
+  isFileAccessible,
   computeSQLiteIgnores,
   addLoggerToTheConfig,
   findConfigFile,
-  isFileAccessible,
   urlDirname
 }
