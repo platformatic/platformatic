@@ -49,6 +49,12 @@ async function platformaticDB (app, opts) {
     await execute(app.log, { config: opts.configFileLocation }, opts)
   }
 
+  if (opts.types && opts.types.autogenerate === true) {
+    app.log.debug({ types: opts.types }, 'generating types')
+    const { execute } = await import('./lib/gen-types.mjs')
+    await execute(app.log, { config: opts.configFileLocation }, opts)
+  }
+
   app.register(require('./_admin'), { ...opts, prefix: '_admin' })
   if (isKeyEnabledInConfig('dashboard', opts) && opts.dashboard.enabled) {
     await app.register(dashboard, {
