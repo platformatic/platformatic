@@ -1,7 +1,7 @@
 import path from 'path'
-import { rm, readFile, writeFile } from 'fs/promises'
+import { rm, mkdir, cp } from 'fs/promises'
 import { cliPath } from './helper.mjs'
-import { test } from 'tap'
+import t from 'tap'
 import { fileURLToPath } from 'url'
 import { execa } from 'execa'
 import stripAnsi from 'strip-ansi'
@@ -11,19 +11,19 @@ function urlDirname (url) {
   return path.dirname(fileURLToPath(url))
 }
 
+t.jobs = 6
+
 const pathToTSD = path.join(urlDirname(import.meta.url), '../../node_modules/.bin/tsd')
 
-test('generate ts types', async (t) => {
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types')
-  const configFile = await readFile(path.join(cwd, 'platformatic.db.json'), 'utf8')
+t.test('generate ts types', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types')
+  const cwd = path.join(testDir, '..', 'gen-types-clone-1')
+
+  await mkdir(cwd)
+  await cp(testDir, cwd, { recursive: true })
 
   t.teardown(async () => {
-    await Promise.all([
-      writeFile(path.join(cwd, 'platformatic.db.json'), configFile),
-      rm(path.join(cwd, 'types'), { recursive: true, force: true }),
-      rm(path.join(cwd, 'global.d.ts'), { force: true }),
-      rm(path.join(cwd, 'plugin.js'), { force: true })
-    ])
+    await rm(cwd, { force: true, recursive: true })
   })
 
   try {
@@ -38,17 +38,15 @@ test('generate ts types', async (t) => {
   t.pass()
 })
 
-test('generate ts types twice', async (t) => {
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types')
-  const configFile = await readFile(path.join(cwd, 'platformatic.db.json'), 'utf8')
+t.test('generate ts types twice', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types')
+  const cwd = path.join(testDir, '..', 'gen-types-clone-2')
+
+  await mkdir(cwd)
+  await cp(testDir, cwd, { recursive: true })
 
   t.teardown(async () => {
-    await Promise.all([
-      writeFile(path.join(cwd, 'platformatic.db.json'), configFile),
-      rm(path.join(cwd, 'types'), { recursive: true, force: true }),
-      rm(path.join(cwd, 'global.d.ts'), { force: true }),
-      rm(path.join(cwd, 'plugin.js'), { force: true })
-    ])
+    await rm(cwd, { force: true, recursive: true })
   })
 
   try {
@@ -64,15 +62,15 @@ test('generate ts types twice', async (t) => {
   t.pass()
 })
 
-test('should show warning if there is no entities', async (t) => {
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
+t.test('should show warning if there is no entities', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
+  const cwd = path.join(testDir, '..', 'auto-gen-types-clone-1')
+
+  await mkdir(cwd)
+  await cp(testDir, cwd, { recursive: true })
 
   t.teardown(async () => {
-    await Promise.all([
-      rm(path.join(cwd, 'types'), { recursive: true, force: true }),
-      rm(path.join(cwd, 'global.d.ts'), { force: true }),
-      rm(path.join(cwd, 'db'), { force: true })
-    ])
+    await rm(cwd, { force: true, recursive: true })
   })
 
   try {
@@ -87,15 +85,15 @@ test('should show warning if there is no entities', async (t) => {
   t.pass()
 })
 
-test('run migrate command with type generation', async (t) => {
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
+t.test('run migrate command with type generation', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
+  const cwd = path.join(testDir, '..', 'auto-gen-types-clone-2')
+
+  await mkdir(cwd)
+  await cp(testDir, cwd, { recursive: true })
 
   t.teardown(async () => {
-    await Promise.all([
-      rm(path.join(cwd, 'types'), { recursive: true, force: true }),
-      rm(path.join(cwd, 'global.d.ts'), { force: true }),
-      rm(path.join(cwd, 'db'), { force: true })
-    ])
+    await rm(cwd, { force: true, recursive: true })
   })
 
   try {
@@ -110,7 +108,7 @@ test('run migrate command with type generation', async (t) => {
   t.pass()
 })
 
-test('missing config file', async ({ equal, match }) => {
+t.test('missing config file', async ({ equal, match }) => {
   try {
     await execa('node', [cliPath, 'seed'])
   } catch (err) {
@@ -119,17 +117,17 @@ test('missing config file', async ({ equal, match }) => {
   }
 })
 
-test('generate types on start', async ({ plan, equal, teardown, fail, pass }) => {
+t.test('generate types on start', async ({ plan, equal, teardown, fail, pass }) => {
   plan(2)
 
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
+  const cwd = path.join(testDir, '..', 'auto-gen-types-clone-3')
+
+  await mkdir(cwd)
+  await cp(testDir, cwd, { recursive: true })
 
   teardown(async () => {
-    await Promise.all([
-      rm(path.join(cwd, 'types'), { recursive: true, force: true }),
-      rm(path.join(cwd, 'global.d.ts'), { force: true }),
-      rm(path.join(cwd, 'db'), { force: true })
-    ])
+    await rm(cwd, { force: true, recursive: true })
   })
 
   const child = execa('node', [cliPath, 'start'], { cwd })
