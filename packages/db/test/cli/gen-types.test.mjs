@@ -17,7 +17,7 @@ const pathToTSD = path.join(urlDirname(import.meta.url), '../../node_modules/.bi
 
 t.test('generate ts types', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types')
-  const cwd = path.join(testDir, '..', 'gen-types-clone-1')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'gen-types-clone-1')
 
   await mkdir(cwd)
   await cp(testDir, cwd, { recursive: true })
@@ -40,7 +40,7 @@ t.test('generate ts types', async (t) => {
 
 t.test('generate ts types twice', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types')
-  const cwd = path.join(testDir, '..', 'gen-types-clone-2')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'gen-types-clone-2')
 
   await mkdir(cwd)
   await cp(testDir, cwd, { recursive: true })
@@ -64,7 +64,7 @@ t.test('generate ts types twice', async (t) => {
 
 t.test('should show warning if there is no entities', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
-  const cwd = path.join(testDir, '..', 'auto-gen-types-clone-1')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'auto-gen-types-clone-1')
 
   await mkdir(cwd)
   await cp(testDir, cwd, { recursive: true })
@@ -87,7 +87,7 @@ t.test('should show warning if there is no entities', async (t) => {
 
 t.test('run migrate command with type generation', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
-  const cwd = path.join(testDir, '..', 'auto-gen-types-clone-2')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'auto-gen-types-clone-2')
 
   await mkdir(cwd)
   await cp(testDir, cwd, { recursive: true })
@@ -121,7 +121,7 @@ t.test('generate types on start', async ({ plan, equal, teardown, fail, pass }) 
   plan(2)
 
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
-  const cwd = path.join(testDir, '..', 'auto-gen-types-clone-3')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'auto-gen-types-clone-3')
 
   await mkdir(cwd)
   await cp(testDir, cwd, { recursive: true })
