@@ -6,7 +6,7 @@ import sqlite from '@databases/sqlite'
 import { execute } from '../../lib/migrator.mjs'
 import ConfigManager from '../../lib/config.js'
 import { cleanSQLite } from './helper.mjs'
-import { urlDirname } from '../../lib/utils'
+import { urlDirname } from '../../lib/utils.js'
 
 function join (url, ...str) {
   return path.join(urlDirname(url), ...str)

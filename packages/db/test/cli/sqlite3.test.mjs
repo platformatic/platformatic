@@ -6,7 +6,7 @@ import stripAnsi from 'strip-ansi'
 import { access } from 'fs/promises'
 import split from 'split2'
 import path from 'path'
-import { urlDirname } from '../../lib/utils'
+import { urlDirname } from '../../lib/utils.js'
 
 const dbLocation = path.resolve(path.join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite', 'db'))
 
