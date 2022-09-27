@@ -1,5 +1,5 @@
-import { access, writeFile, mkdir } from 'fs/promises'
-import { join, resolve } from 'path'
+import { writeFile, mkdir } from 'fs/promises'
+import { join } from 'path'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import parseArgs from 'minimist'

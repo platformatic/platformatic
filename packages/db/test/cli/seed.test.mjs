@@ -7,7 +7,6 @@ import split from 'split2'
 import path from 'path'
 import { urlDirname } from '../../lib/utils'
 
-
 const dbLocation = path.resolve(path.join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite', 'db'))
 
 test('seed and start', async ({ comment, equal, match, teardown }) => {
