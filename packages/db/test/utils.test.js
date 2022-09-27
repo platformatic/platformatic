@@ -1,8 +1,9 @@
 'use strict'
 
 const { test } = require('tap')
-const { computeSQLiteIgnores, urlDirname } = require('../lib/utils')
+const { computeSQLiteIgnores, isFileAccessible, urlDirname } = require('../lib/utils')
 const os = require('os')
+const { basename } = require('path')
 const isWindows = os.platform() === 'win32'
 
 test('compute SQLite ignores (Unix)', { skip: isWindows }, ({ same, equal, plan }) => {
@@ -53,4 +54,21 @@ test('urlDirname', ({ same, plan }) => {
   plan(1)
   const str = 'file:///path/to/file.json'
   same(urlDirname(str), '/path/to')
+})
+
+test('isFileAccessible', async ({ same, plan }) => {
+  plan(4)
+  {
+    // single filename
+    const file = basename(__filename)
+    same(await isFileAccessible(file, __dirname), true)
+    same(await isFileAccessible('impossible.file', __dirname), false)
+  }
+
+  {
+    // full path
+    const file = __filename
+    same(await isFileAccessible(file), true)
+    same(await isFileAccessible('/impossible/path/impossible.file'), false)
+  }
 })
