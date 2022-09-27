@@ -83,12 +83,14 @@ async function findConfigFile (directory) {
 
 async function isFileAccessible (filename, directory) {
   try {
-    await access(resolve(directory, filename))
+    const filePath = directory ? resolve(directory, filename) : filename
+    await access(filePath)
     return true
   } catch (err) {
     return false
   }
 }
+
 function urlDirname (url) {
   return path.dirname(fileURLToPath(url))
 }
