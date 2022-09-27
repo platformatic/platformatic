@@ -51,7 +51,7 @@
     "env-schema": "^5.0.0",
     "es-main": "^1.2.0",
     "fastify": "^4.6.0",
-    "fastify-isolate": "^0.7.0",
+    "fastify-sandbox": "^0.8.0",
     "fastify-metrics": "^9.2.1",
     "fastify-plugin": "^4.1.0",
     "fastify-print-routes": "^2.0.0",

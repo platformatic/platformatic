@@ -125,10 +125,10 @@ importers:
       es-main: ^1.2.0
       execa: ^6.1.0
       fastify: ^4.6.0
-      fastify-isolate: ^0.7.0
       fastify-metrics: ^9.2.1
       fastify-plugin: ^4.1.0
       fastify-print-routes: ^2.0.0
+      fastify-sandbox: ^0.8.0
       graphql: ^16.6.0
       help-me: ^4.1.0
       minimatch: ^5.1.0
@@ -166,10 +166,10 @@ importers:
       es-main: 1.2.0
       execa: 6.1.0
       fastify: 4.6.0
-      fastify-isolate: 0.7.0
       fastify-metrics: 9.2.2_fastify@4.6.0
       fastify-plugin: 4.2.1
       fastify-print-routes: 2.0.4
+      fastify-sandbox: 0.8.0
       graphql: 16.6.0
       help-me: 4.1.0
       minimatch: 5.1.0
@@ -1154,8 +1154,8 @@ packages:
       - encoding
       - supports-color
 
-  /@matteo.collina/isolates/2.1.0:
-    resolution: {integrity: sha512-jZZCJsPszJJsYtXxzug6ACL+iOzE+9lM27ZDqFBDy1iMl9Q3q/v1R5n+nmJ6TmYVPDVbYij8EFLyXARPBsLkWg==}
+  /@matteo.collina/worker/3.0.0:
+    resolution: {integrity: sha512-Y9K6EmDatDDsNXMZBdT/dBsGPRg2sMI5KbApdVZOVSwsNRLZLN/MRrhaU38IlQcjUL/iVwICPA//uqmxnPmEfw==}
     engines: {node: '>= 15.5.0'}
     requiresBuild: true
     dependencies:
@@ -3240,14 +3240,6 @@ packages:
       reusify: 1.0.4
     dev: false
 
-  /fastify-isolate/0.7.0:
-    resolution: {integrity: sha512-Fih0xKwd60QudKxcpdX5blzl2j5tfraFg4atSoGPPiMDpfF4iG6KGvX96SjLnSkFt0AUtzYWXHr71WFmYbMemw==}
-    dependencies:
-      import-fresh: 3.3.0
-    optionalDependencies:
-      '@matteo.collina/isolates': 2.1.0
-    dev: false
-
   /fastify-metrics/9.2.2_fastify@4.6.0:
     resolution: {integrity: sha512-67PsMy33zCvZk9juIY79YXO/dSLnVhYAV4510uiHfoa/z1VwTIoSkbsEa17JB+VL+KNW3seaSCDacjxOO/OINg==}
     peerDependencies:
@@ -3272,6 +3264,14 @@ packages:
       acquerello: 1.0.9
       fastify-plugin: 4.2.1
       table: 6.8.0
+    dev: false
+
+  /fastify-sandbox/0.8.0:
+    resolution: {integrity: sha512-c7rIKFSIAeJ8qhLMdzp7dgeTQGxSZJWXGvLH1kq0zOm5eJchZjXl+dHTlWXxKcHsXnM4+qqQdoeN3yfPBxhrRg==}
+    dependencies:
+      import-fresh: 3.3.0
+    optionalDependencies:
+      '@matteo.collina/worker': 3.0.0
     dev: false
 
   /fastify/4.6.0:
