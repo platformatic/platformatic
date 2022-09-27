@@ -2,7 +2,6 @@
 
 const { cliPath, connectAndResetDB } = require('./helper.js')
 const { test } = require('tap')
-// const { execa } = require('execa')
 const split = require('split2')
 const { once } = require('events')
 const { join } = require('path')
