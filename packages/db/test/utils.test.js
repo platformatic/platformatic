@@ -52,8 +52,14 @@ test('compute SQLite ignores (Windows)', { skip: !isWindows }, ({ same, equal, p
 
 test('urlDirname', ({ same, plan }) => {
   plan(1)
-  const str = 'file:///path/to/file.json'
-  same(urlDirname(str), '/path/to')
+  let filePath
+  if (isWindows) {
+    filePath = 'file://C:\\Users\\matteo\\path\\to\\file.json'
+    same(urlDirname(str), 'C:\\Users\\matteo\\path\\to\\')
+  } else {
+    filePath = 'file:///path/to/file.json'
+    same(urlDirname(str), '/path/to')
+  }
 })
 
 test('isFileAccessible', async ({ same, plan }) => {
