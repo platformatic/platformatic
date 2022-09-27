@@ -14,12 +14,17 @@ const connectionStrings = {
   mariadb: 'mysql://root@localhost:3307/graph'
 }
 
-const moviesMigration = `
+const moviesMigrationDo = `
 -- Add SQL in this file to create the database tables for your API
 CREATE TABLE IF NOT EXISTS movies (
   id INTEGER PRIMARY KEY,
   title TEXT NOT NULL
 );
+`
+
+const moviesMigrationUndo = `
+-- Add SQL in this file to drop the database tables 
+DROP TABLE movies;
 `
 
 function generateConfig (hostname, port, database, migrations, types) {
@@ -106,14 +111,21 @@ async function init (_args) {
     logger.info(`Migrations folder ${migrationsFolderName} found, skipping creation of migrations folder.`)
   }
 
-  const migrationFileName = '001.do.sql'
-  const migrationFilePath = join(migrationsFolderName, migrationFileName)
-  const isMigrationFileExists = await isFileAccessible(migrationFilePath)
-  if (!isMigrationFileExists) {
-    await writeFile(migrationFilePath, moviesMigration)
-    logger.info(`Migration file ${migrationFileName} successfully created.`)
+  const migrationFileNameDo = '001.do.sql'
+  const migrationFileNameUndo = '001.undo.sql'
+  const migrationFilePathDo = join(migrationsFolderName, migrationFileNameDo)
+  const migrationFilePathUndo = join(migrationsFolderName, migrationFileNameUndo)
+  const isMigrationFileDoExists = await isFileAccessible(migrationFilePathDo)
+  const isMigrationFileUndoExists = await isFileAccessible(migrationFilePathUndo)
+  if (!isMigrationFileDoExists) {
+    await writeFile(migrationFilePathDo, moviesMigrationDo)
+    logger.info(`Migration file ${migrationFileNameDo} successfully created.`)
+    if (!isMigrationFileUndoExists) {
+      await writeFile(migrationFilePathUndo, moviesMigrationUndo)
+      logger.info(`Migration file ${migrationFileNameUndo} successfully created.`)
+    }
   } else {
-    logger.info(`Migration file ${migrationFileName} found, skipping creation of migration file.`)
+    logger.info(`Migration file ${migrationFileNameDo} found, skipping creation of migration file.`)
   }
 
   if (types === true) {

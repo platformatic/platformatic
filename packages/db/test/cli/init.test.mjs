@@ -5,7 +5,7 @@ import { join } from 'desm'
 import { execa } from 'execa'
 import { cliPath } from './helper.mjs'
 
-const moviesMigration = `
+const moviesMigrationDo = `
 -- Add SQL in this file to create the database tables for your API
 CREATE TABLE IF NOT EXISTS movies (
   id INTEGER PRIMARY KEY,
@@ -13,11 +13,17 @@ CREATE TABLE IF NOT EXISTS movies (
 );
 `
 
+const moviesMigrationUndo = `
+-- Add SQL in this file to drop the database tables 
+DROP TABLE movies;
+`
+
 test('run db init with default options', async (t) => {
   const pathToFolder = join(import.meta.url, '..', 'fixtures', 'init')
   const pathToDbConfigFile = path.join(pathToFolder, 'platformatic.db.json')
   const pathToMigrationFolder = path.join(pathToFolder, 'migrations')
-  const pathToMigrationFile = path.join(pathToMigrationFolder, '001.do.sql')
+  const pathToMigrationFileDo = path.join(pathToMigrationFolder, '001.do.sql')
+  const pathToMigrationFileUndo = path.join(pathToMigrationFolder, '001.undo.sql')
 
   await execa('node', [cliPath, 'init'], { cwd: pathToFolder })
   t.teardown(async () => {
@@ -38,15 +44,18 @@ test('run db init with default options', async (t) => {
 
   t.equal(migrations.dir, './migrations')
 
-  const migrationFile = await fs.readFile(pathToMigrationFile, 'utf8')
-  t.equal(migrationFile, moviesMigration)
+  const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
+  t.equal(migrationFileDo, moviesMigrationDo)
+  const migrationFileUndo = await fs.readFile(pathToMigrationFileUndo, 'utf8')
+  t.equal(migrationFileUndo, moviesMigrationUndo)
 })
 
 test('run init with default options twice', async (t) => {
   const pathToFolder = join(import.meta.url, '..', 'fixtures', 'init')
   const pathToDbConfigFile = path.join(pathToFolder, 'platformatic.db.json')
   const pathToMigrationFolder = path.join(pathToFolder, 'migrations')
-  const pathToMigrationFile = path.join(pathToMigrationFolder, '001.do.sql')
+  const pathToMigrationFileDo = path.join(pathToMigrationFolder, '001.do.sql')
+  const pathToMigrationFileUndo = path.join(pathToMigrationFolder, '001.undo.sql')
 
   const { stdout: firstRunStdout } = await execa('node', [cliPath, 'init'], { cwd: pathToFolder })
   const { stdout: secondRunStdout } = await execa('node', [cliPath, 'init'], { cwd: pathToFolder })
@@ -60,7 +69,8 @@ test('run init with default options twice', async (t) => {
   t.match(firstRunStdoutLines[0], /(.*)Configuration file platformatic.db.json successfully created./)
   t.match(firstRunStdoutLines[1], /(.*)Migrations folder .\/migrations successfully created./)
   t.match(firstRunStdoutLines[2], /(.*)Migration file 001.do.sql successfully created./)
-  t.match(firstRunStdoutLines[3], /(.*)Please run `npm i --save-dev(.*)/)
+  t.match(firstRunStdoutLines[3], /(.*)Migration file 001.undo.sql successfully created./)
+  t.match(firstRunStdoutLines[4], /(.*)Please run `npm i --save-dev(.*)/)
 
   const secondRunStdoutLines = secondRunStdout.split('\n')
   t.match(secondRunStdoutLines[0], /(.*)Configuration file platformatic.db.json found, skipping creation of configuration file./)
@@ -81,15 +91,18 @@ test('run init with default options twice', async (t) => {
 
   t.equal(migrations.dir, './migrations')
 
-  const migrationFile = await fs.readFile(pathToMigrationFile, 'utf8')
-  t.equal(migrationFile, moviesMigration)
+  const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
+  t.equal(migrationFileDo, moviesMigrationDo)
+  const migrationFileUndo = await fs.readFile(pathToMigrationFileUndo, 'utf8')
+  t.equal(migrationFileUndo, moviesMigrationUndo)
 })
 
 test('run db init --database postgres', async (t) => {
   const pathToFolder = join(import.meta.url, '..', 'fixtures', 'init')
   const pathToDbConfigFile = path.join(pathToFolder, 'platformatic.db.json')
   const pathToMigrationFolder = path.join(pathToFolder, 'migrations')
-  const pathToMigrationFile = path.join(pathToMigrationFolder, '001.do.sql')
+  const pathToMigrationFileDo = path.join(pathToMigrationFolder, '001.do.sql')
+  const pathToMigrationFileUndo = path.join(pathToMigrationFolder, '001.undo.sql')
 
   await execa('node', [cliPath, 'init', '--database', 'postgres'], { cwd: pathToFolder })
   t.teardown(async () => {
@@ -110,15 +123,18 @@ test('run db init --database postgres', async (t) => {
 
   t.equal(migrations.dir, './migrations')
 
-  const migrationFile = await fs.readFile(pathToMigrationFile, 'utf8')
-  t.equal(migrationFile, moviesMigration)
+  const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
+  t.equal(migrationFileDo, moviesMigrationDo)
+  const migrationFileUndo = await fs.readFile(pathToMigrationFileUndo, 'utf8')
+  t.equal(migrationFileUndo, moviesMigrationUndo)
 })
 
 test('run db init --database mysql', async (t) => {
   const pathToFolder = join(import.meta.url, '..', 'fixtures', 'init')
   const pathToDbConfigFile = path.join(pathToFolder, 'platformatic.db.json')
   const pathToMigrationFolder = path.join(pathToFolder, 'migrations')
-  const pathToMigrationFile = path.join(pathToMigrationFolder, '001.do.sql')
+  const pathToMigrationFileDo = path.join(pathToMigrationFolder, '001.do.sql')
+  const pathToMigrationFileUndo = path.join(pathToMigrationFolder, '001.undo.sql')
 
   await execa('node', [cliPath, 'init', '--database', 'mysql'], { cwd: pathToFolder })
   t.teardown(async () => {
@@ -139,15 +155,18 @@ test('run db init --database mysql', async (t) => {
 
   t.equal(migrations.dir, './migrations')
 
-  const migrationFile = await fs.readFile(pathToMigrationFile, 'utf8')
-  t.equal(migrationFile, moviesMigration)
+  const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
+  t.equal(migrationFileDo, moviesMigrationDo)
+  const migrationFileUndo = await fs.readFile(pathToMigrationFileUndo, 'utf8')
+  t.equal(migrationFileUndo, moviesMigrationUndo)
 })
 
 test('run db init --database mariadb', async (t) => {
   const pathToFolder = join(import.meta.url, '..', 'fixtures', 'init')
   const pathToDbConfigFile = path.join(pathToFolder, 'platformatic.db.json')
   const pathToMigrationFolder = path.join(pathToFolder, 'migrations')
-  const pathToMigrationFile = path.join(pathToMigrationFolder, '001.do.sql')
+  const pathToMigrationFileDo = path.join(pathToMigrationFolder, '001.do.sql')
+  const pathToMigrationFileUndo = path.join(pathToMigrationFolder, '001.undo.sql')
 
   await execa('node', [cliPath, 'init', '--database', 'mariadb'], { cwd: pathToFolder })
   t.teardown(async () => {
@@ -168,15 +187,18 @@ test('run db init --database mariadb', async (t) => {
 
   t.equal(migrations.dir, './migrations')
 
-  const migrationFile = await fs.readFile(pathToMigrationFile, 'utf8')
-  t.equal(migrationFile, moviesMigration)
+  const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
+  t.equal(migrationFileDo, moviesMigrationDo)
+  const migrationFileUndo = await fs.readFile(pathToMigrationFileUndo, 'utf8')
+  t.equal(migrationFileUndo, moviesMigrationUndo)
 })
 
 test('run db init --database mysql8', async (t) => {
   const pathToFolder = join(import.meta.url, '..', 'fixtures', 'init')
   const pathToDbConfigFile = path.join(pathToFolder, 'platformatic.db.json')
   const pathToMigrationFolder = path.join(pathToFolder, 'migrations')
-  const pathToMigrationFile = path.join(pathToMigrationFolder, '001.do.sql')
+  const pathToMigrationFileDo = path.join(pathToMigrationFolder, '001.do.sql')
+  const pathToMigrationFileUndo = path.join(pathToMigrationFolder, '001.undo.sql')
 
   await execa('node', [cliPath, 'init', '--database', 'mysql8'], { cwd: pathToFolder })
   t.teardown(async () => {
@@ -197,15 +219,18 @@ test('run db init --database mysql8', async (t) => {
 
   t.equal(migrations.dir, './migrations')
 
-  const migrationFile = await fs.readFile(pathToMigrationFile, 'utf8')
-  t.equal(migrationFile, moviesMigration)
+  const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
+  t.equal(migrationFileDo, moviesMigrationDo)
+  const migrationFileUndo = await fs.readFile(pathToMigrationFileUndo, 'utf8')
+  t.equal(migrationFileUndo, moviesMigrationUndo)
 })
 
 test('run db init --hostname 127.0.0.5', async (t) => {
   const pathToFolder = join(import.meta.url, '..', 'fixtures', 'init')
   const pathToDbConfigFile = path.join(pathToFolder, 'platformatic.db.json')
   const pathToMigrationFolder = path.join(pathToFolder, 'migrations')
-  const pathToMigrationFile = path.join(pathToMigrationFolder, '001.do.sql')
+  const pathToMigrationFileDo = path.join(pathToMigrationFolder, '001.do.sql')
+  const pathToMigrationFileUndo = path.join(pathToMigrationFolder, '001.undo.sql')
 
   await execa('node', [cliPath, 'init', '--hostname', '127.0.0.5'], { cwd: pathToFolder })
   t.teardown(async () => {
@@ -226,15 +251,18 @@ test('run db init --hostname 127.0.0.5', async (t) => {
 
   t.equal(migrations.dir, './migrations')
 
-  const migrationFile = await fs.readFile(pathToMigrationFile, 'utf8')
-  t.equal(migrationFile, moviesMigration)
+  const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
+  t.equal(migrationFileDo, moviesMigrationDo)
+  const migrationFileUndo = await fs.readFile(pathToMigrationFileUndo, 'utf8')
+  t.equal(migrationFileUndo, moviesMigrationUndo)
 })
 
 test('run db init --port 3055', async (t) => {
   const pathToFolder = join(import.meta.url, '..', 'fixtures', 'init')
   const pathToDbConfigFile = path.join(pathToFolder, 'platformatic.db.json')
   const pathToMigrationFolder = path.join(pathToFolder, 'migrations')
-  const pathToMigrationFile = path.join(pathToMigrationFolder, '001.do.sql')
+  const pathToMigrationFileDo = path.join(pathToMigrationFolder, '001.do.sql')
+  const pathToMigrationFileUndo = path.join(pathToMigrationFolder, '001.undo.sql')
 
   await execa('node', [cliPath, 'init', '--port', '3055'], { cwd: pathToFolder })
   t.teardown(async () => {
@@ -255,15 +283,18 @@ test('run db init --port 3055', async (t) => {
 
   t.equal(migrations.dir, './migrations')
 
-  const migrationFile = await fs.readFile(pathToMigrationFile, 'utf8')
-  t.equal(migrationFile, moviesMigration)
+  const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
+  t.equal(migrationFileDo, moviesMigrationDo)
+  const migrationFileUndo = await fs.readFile(pathToMigrationFileUndo, 'utf8')
+  t.equal(migrationFileUndo, moviesMigrationUndo)
 })
 
 test('run db init --migrations custom-migrations-folder', async (t) => {
   const pathToFolder = join(import.meta.url, '..', 'fixtures', 'init')
   const pathToDbConfigFile = path.join(pathToFolder, 'platformatic.db.json')
   const pathToMigrationFolder = path.join(pathToFolder, './custom-migrations-folder')
-  const pathToMigrationFile = path.join(pathToMigrationFolder, '001.do.sql')
+  const pathToMigrationFileDo = path.join(pathToMigrationFolder, '001.do.sql')
+  const pathToMigrationFileUndo = path.join(pathToMigrationFolder, '001.undo.sql')
 
   await execa('node', [cliPath, 'init', '--migrations', 'custom-migrations-folder'], { cwd: pathToFolder })
   t.teardown(async () => {
@@ -284,6 +315,8 @@ test('run db init --migrations custom-migrations-folder', async (t) => {
 
   t.equal(migrations.dir, 'custom-migrations-folder')
 
-  const migrationFile = await fs.readFile(pathToMigrationFile, 'utf8')
-  t.equal(migrationFile, moviesMigration)
+  const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
+  t.equal(migrationFileDo, moviesMigrationDo)
+  const migrationFileUndo = await fs.readFile(pathToMigrationFileUndo, 'utf8')
+  t.equal(migrationFileUndo, moviesMigrationUndo)
 })
