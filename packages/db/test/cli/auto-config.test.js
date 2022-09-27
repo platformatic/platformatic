@@ -1,3 +1,5 @@
+'use strict'
+
 const { cliPath, connectAndResetDB } = require('./helper.js')
 const { test } = require('tap')
 // const { execa } = require('execa')
