@@ -5,7 +5,7 @@ import t from 'tap'
 import { execa } from 'execa'
 import stripAnsi from 'strip-ansi'
 import split from 'split2'
-import { urlDirname } from '../../lib/utils'
+import { urlDirname } from '../../lib/utils.js'
 
 t.jobs = 6
 
