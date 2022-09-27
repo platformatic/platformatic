@@ -23,11 +23,10 @@ CREATE TABLE IF NOT EXISTS movies (
 `
 
 function generateConfig (hostname, port, database, migrations, types) {
-  const logger = { level: 'info' }
   const connectionString = connectionStrings[database]
 
   const config = {
-    server: { logger, hostname, port },
+    server: { hostname, port },
     core: { connectionString, graphiql: true },
     migrations: { dir: migrations }
   }
