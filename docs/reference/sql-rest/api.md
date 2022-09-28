@@ -69,6 +69,23 @@ $ curl -X 'GET' \
   -H 'accept: application/json'
 ```
 
+### Total Count
+
+If `totalCount` boolean is in query, the GET returns the total number of elements in the `X-Total-Count` header ignoring `limit` and `offset` (if specified).
+
+```bash
+$ curl -v -X 'GET' \
+  'http://localhost:3042/movies/?limit=2&offset=0&totalCount=true' \
+  -H 'accept: application/json'
+
+ (...)
+> HTTP/1.1 200 OK
+> x-total-count: 18
+ (...)
+
+[{"id":1,"title":"Movie1"},{"id":2,"title":"Movie2"}]%
+```
+
 
 ## `POST [PLURAL_ENTITY_NAME]`
 
@@ -147,3 +164,4 @@ $ curl -X 'DELETE' 'http://localhost:3042/pages/1?fields=title'
   "title": "Hello Platformatic!"
 }
 ```
+
