@@ -75,7 +75,7 @@ If `totalCount` boolean is in query, the GET returns the total number of element
 
 ```bash
 $ curl -v -X 'GET' \
-  'http://localhost:3042/movies/?limit=2&offset=0&totalCount=true' \
+  'http://localhost:3042/pages/?limit=2&offset=0&totalCount=true' \
   -H 'accept: application/json'
 
  (...)
