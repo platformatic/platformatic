@@ -759,3 +759,89 @@ test('default query hello should not be created when entities are found', async 
   same(json.data, null)
   same(json.errors[0].message, 'Cannot query field "hello" on type "Query".')
 })
+
+test('primary key snake_case', async ({ pass, teardown, same, equal }) => {
+  async function createBasicPagesWithSnakeCasePK (db, sql) {
+    if (isSQLite) {
+      await db.query(sql`CREATE TABLE pages (
+      page_id INTEGER PRIMARY KEY,
+      title VARCHAR(42)
+    );`)
+    } else {
+      await db.query(sql`CREATE TABLE pages (
+      page_id SERIAL PRIMARY KEY,
+      title VARCHAR(42)
+    );`)
+    }
+  }
+
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicPagesWithSnakeCasePK(db, sql)
+    }
+  })
+  app.register(sqlGraphQL, {
+    graphiql: false
+  })
+  teardown(app.close.bind(app))
+
+  const res = await app.inject('/graphiql')
+  equal(res.statusCode, 404)
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+          mutation {
+            savePage(input: { title: "Hello" }) {
+              pageId
+              title
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'savePage status code')
+    same(res.json(), {
+      data: {
+        savePage: {
+          pageId: 1,
+          title: 'Hello'
+        }
+      }
+    }, 'savePage response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+          query {
+            getPageByPageId(pageId: 1) {
+              pageId
+              title
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'pages status code')
+    same(res.json(), {
+      data: {
+        getPageByPageId: {
+          pageId: 1,
+          title: 'Hello'
+        }
+      }
+    }, 'pages response')
+  }
+})
