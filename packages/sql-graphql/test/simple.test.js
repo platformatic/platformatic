@@ -706,3 +706,56 @@ test('graphiql can be disabled', async ({ pass, teardown, same, equal }) => {
   const res = await app.inject('/graphiql')
   equal(res.statusCode, 404)
 })
+
+test('default query hello should be created when no entities are found', async ({ pass, teardown, same, equal }) => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+      await clear(db, sql)
+    }
+  })
+  app.register(sqlGraphQL)
+  teardown(app.close.bind(app))
+
+  const res = await app.inject({
+    method: 'POST',
+    url: '/graphql',
+    body: {
+      query: 'query { hello }'
+    }
+  })
+  equal(res.statusCode, 200)
+  same(res.json(), {
+    data: {
+      hello: 'Hello Platformatic!'
+    }
+  })
+})
+
+test('default query hello should not be created when entities are found', async ({ pass, teardown, same, equal }) => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(sqlGraphQL)
+  teardown(app.close.bind(app))
+
+  const res = await app.inject({
+    method: 'POST',
+    url: '/graphql',
+    body: {
+      query: 'query { hello }'
+    }
+  })
+  equal(res.statusCode, 400)
+  const json = res.json()
+  same(json.data, null)
+  same(json.errors[0].message, 'Cannot query field "hello" on type "Query".')
+})
