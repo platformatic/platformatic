@@ -18,6 +18,7 @@ It exports a function that accepts an object with the following properties:
 ## Code samples
 
 ```javascript
+const { connect } = require('@platformatic/sql-mapper')
 const { pino } = require('pino')
 
 const logger = pino()
