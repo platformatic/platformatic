@@ -4,5 +4,6 @@ Available commands:
 * `help <command>` - shows more information about a command.
 * `init` - initiate default application.
 * `start` - start the server.
+* `compile` - compile typescript plugins.
 * `migrate` - run migrations.
 * `seed` - run a seed file.
