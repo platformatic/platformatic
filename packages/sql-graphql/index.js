@@ -26,39 +26,46 @@ async function mapperToGraphql (app, opts) {
     federationMetadata: opts.federationMetadata,
     autoTimestamp
   }
+  if (Object.keys(mapper.entities).length === 0) {
+    // no schema
+    queryTopFields.hello = { type: graphql.GraphQLString }
+    resolvers.Query = {
+      hello: () => 'Hello Platformatic!'
+    }
+  } else {
+    const metaMap = new Map()
+    for (const entity of Object.values(mapper.entities)) {
+      relations.push(...entity.relations)
+      const meta = constructGraph(app, entity, graphOpts)
+      metaMap.set(entity, meta)
+    }
 
-  const metaMap = new Map()
-  for (const entity of Object.values(mapper.entities)) {
-    relations.push(...entity.relations)
-    const meta = constructGraph(app, entity, graphOpts)
-    metaMap.set(entity, meta)
-  }
+    establishRelations(app, relations, resolvers, loaders, queryTopFields, opts.resolvers || {}, metaMap)
 
-  establishRelations(app, relations, resolvers, loaders, queryTopFields, opts.resolvers || {}, metaMap)
+    if (opts.resolvers) {
+      for (const key of Object.keys(opts.resolvers)) {
+        if (!resolvers[key]) {
+          resolvers[key] = {}
+        }
 
-  if (opts.resolvers) {
-    for (const key of Object.keys(opts.resolvers)) {
-      if (!resolvers[key]) {
-        resolvers[key] = {}
-      }
-
-      const type = opts.resolvers[key]
-      for (const resolver of Object.keys(type)) {
-        if (type[resolver] === false) {
-          if (resolvers[key][resolver]) {
-            delete resolvers[key][resolver]
+        const type = opts.resolvers[key]
+        for (const resolver of Object.keys(type)) {
+          if (type[resolver] === false) {
+            if (resolvers[key][resolver]) {
+              delete resolvers[key][resolver]
+            }
+            if (loaders[key]) {
+              delete loaders[key][resolver]
+            }
+            /* istanbul ignore else */
+            if (key === 'Mutation') {
+              delete mutationTopFields[resolver]
+            } else if (key === 'Query') {
+              delete queryTopFields[resolver]
+            }
+          } else {
+            resolvers[key][resolver] = type[resolver]
           }
-          if (loaders[key]) {
-            delete loaders[key][resolver]
-          }
-          /* istanbul ignore else */
-          if (key === 'Mutation') {
-            delete mutationTopFields[resolver]
-          } else if (key === 'Query') {
-            delete queryTopFields[resolver]
-          }
-        } else {
-          resolvers[key][resolver] = type[resolver]
         }
       }
     }
@@ -93,7 +100,6 @@ async function mapperToGraphql (app, opts) {
     sdl += '\n'
     sdl += opts.schema
   }
-
   // Ignoriring because SQLite doesn't support dates
   /* istanbul ignore next */
   if (sdl.match(/scalar Date\n/)) {
