@@ -2,6 +2,11 @@
 
 const { connect } = require('@platformatic/db-core')
 const { sep } = require('path')
+const { access } = require('fs/promises')
+const { resolve } = require('path')
+const path = require('path')
+const { fileURLToPath } = require('url')
+
 async function setupDB (log, config) {
   const { db, sql, entities } = await connect({ ...config, log })
   let driver = ''
@@ -61,8 +66,40 @@ function addLoggerToTheConfig (config) {
 }
 /* c8 ignore stop */
 
+async function findConfigFile (directory) {
+  const configFileNames = [
+    'platformatic.db.json',
+    'platformatic.db.json5',
+    'platformatic.db.yaml',
+    'platformatic.db.yml',
+    'platformatic.db.toml',
+    'platformatic.db.tml'
+  ]
+
+  const configFilesAccessibility = await Promise.all(configFileNames.map((fileName) => isFileAccessible(fileName, directory)))
+  const accessibleConfigFilename = configFileNames.find((value, index) => configFilesAccessibility[index])
+  return accessibleConfigFilename
+}
+
+async function isFileAccessible (filename, directory) {
+  try {
+    const filePath = directory ? resolve(directory, filename) : filename
+    await access(filePath)
+    return true
+  } catch (err) {
+    return false
+  }
+}
+
+function urlDirname (url) {
+  return path.dirname(fileURLToPath(url))
+}
+
 module.exports = {
   setupDB,
   computeSQLiteIgnores,
-  addLoggerToTheConfig
+  addLoggerToTheConfig,
+  findConfigFile,
+  isFileAccessible,
+  urlDirname
 }

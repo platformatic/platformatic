@@ -115,9 +115,10 @@ class ConfigManager extends EventEmitter {
           stringify: (data) => JSON5.stringify(data, null, 2)
         }
       case '.toml':
+      case '.tml':
         return TOML
       default:
-        throw new Error('Invalid config file extension. Only yml, yaml, json, json5, toml are supported.')
+        throw new Error('Invalid config file extension. Only yml, yaml, json, json5, toml, tml are supported.')
     }
   }
 

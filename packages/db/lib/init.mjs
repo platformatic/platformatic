@@ -1,10 +1,11 @@
-import { access, writeFile, mkdir } from 'fs/promises'
+import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import parseArgs from 'minimist'
 import { checkForDependencies } from './gen-types.mjs'
 import loadConfig from './load-config.mjs'
+import { findConfigFile, isFileAccessible } from './utils.js'
 
 const connectionStrings = {
   postgres: 'postgres://postgres:postgres@localhost:5432/postgres',
@@ -45,15 +46,6 @@ function generateConfig (hostname, port, database, migrations, types) {
   return config
 }
 
-async function isFileAccessible (filename) {
-  try {
-    await access(filename)
-    return true
-  } catch (err) {
-    return false
-  }
-}
-
 async function init (_args) {
   const logger = pino(pretty({
     translateTime: 'SYS:HH:MM:ss',
@@ -79,17 +71,8 @@ async function init (_args) {
 
   const { hostname, port, database, migrations, types } = args
 
-  const configFileNames = [
-    'platformatic.db.json',
-    'platformatic.db.json5',
-    'platformatic.db.yaml',
-    'platformatic.db.yml',
-    'platformatic.db.toml'
-  ]
-
-  const configFilesAccessibility = await Promise.all(configFileNames.map(isFileAccessible))
-  const accessibleConfigFilename = configFileNames.find((value, index) => configFilesAccessibility[index])
-
+  const currentDir = process.cwd()
+  const accessibleConfigFilename = await findConfigFile(currentDir)
   if (accessibleConfigFilename === undefined) {
     const config = generateConfig(hostname, port, database, migrations, types)
     await writeFile('platformatic.db.json', JSON.stringify(config, null, 2))
@@ -103,7 +86,7 @@ async function init (_args) {
   const config = configManager.current
 
   const migrationsFolderName = migrations
-  const isMigrationFolderExists = await isFileAccessible(migrationsFolderName)
+  const isMigrationFolderExists = await isFileAccessible(migrationsFolderName, currentDir)
   if (!isMigrationFolderExists) {
     await mkdir(migrationsFolderName)
     logger.info(`Migrations folder ${migrationsFolderName} successfully created.`)
@@ -127,7 +110,6 @@ async function init (_args) {
   } else {
     logger.info(`Migration file ${migrationFileNameDo} found, skipping creation of migration file.`)
   }
-
   if (types === true) {
     await checkForDependencies(logger, args, config)
   }

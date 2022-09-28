@@ -1,5 +1,4 @@
 import { test } from 'tap'
-import { fileURLToPath } from 'url'
 import path from 'path'
 import pino from 'pino'
 import split from 'split2'
@@ -7,10 +6,7 @@ import sqlite from '@databases/sqlite'
 import { execute } from '../../lib/migrator.mjs'
 import ConfigManager from '../../lib/config.js'
 import { cleanSQLite } from './helper.mjs'
-
-function urlDirname (url) {
-  return path.dirname(fileURLToPath(url))
-}
+import { urlDirname } from '../../lib/utils.js'
 
 function join (url, ...str) {
   return path.join(urlDirname(url), ...str)

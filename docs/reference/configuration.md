@@ -11,7 +11,7 @@ one of these filenames, it will automatically load it:
 - `platformatic.db.json`
 - `platformatic.db.json5`
 - `platformatic.db.yml` or `platformatic.db.yaml`
-- `platformatic.db.tml`
+- `platformatic.db.tml` or `platformatic.db.toml`
 
 Alternatively, a [`--config` option](/reference/cli.md#db) with a configuration
 filepath can be passed to most `platformatic db` CLI commands.

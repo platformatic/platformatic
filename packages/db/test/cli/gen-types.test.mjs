@@ -2,14 +2,10 @@ import path from 'path'
 import { rm, mkdir, cp } from 'fs/promises'
 import { cliPath } from './helper.mjs'
 import t from 'tap'
-import { fileURLToPath } from 'url'
 import { execa } from 'execa'
 import stripAnsi from 'strip-ansi'
 import split from 'split2'
-
-function urlDirname (url) {
-  return path.dirname(fileURLToPath(url))
-}
+import { urlDirname } from '../../lib/utils.js'
 
 t.jobs = 6
 
