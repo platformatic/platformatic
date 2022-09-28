@@ -16,7 +16,7 @@ const ascDesc = new graphql.GraphQLEnumType({
 })
 
 function constructGraph (app, entity, opts) {
-  const primaryKey = entity.primaryKey
+  const primaryKey = camelcase(entity.primaryKey)
   const relationalFields = entity.relations
     .map((relation) => relation.column_name)
   const entityName = entity.name
