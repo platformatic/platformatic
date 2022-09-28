@@ -1,6 +1,6 @@
 'use strict'
 
-const { test } = require('tap')
+const { test, only } = require('tap')
 
 const { clear, connInfo, isSQLite, isMysql } = require('./helper')
 const { connect } = require('..')
@@ -43,7 +43,7 @@ test('entity fields', async ({ equal, not, same, teardown }) => {
   equal(pageEntity.camelCasedFields.id.primaryKey, true)
 })
 
-test('entity API', async ({ equal, same, teardown, rejects }) => {
+only('entity API', async ({ equal, same, teardown, rejects }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
     teardown(() => db.dispose())
@@ -87,6 +87,10 @@ test('entity API', async ({ equal, same, teardown, rejects }) => {
   // find
   const findResult = await pageEntity.find({ fields: ['theTitle'] })
   same(findResult, [{ theTitle: 'foo' }, { theTitle: 'bar' }])
+
+  // findTotalCount
+  const findTotalCountResult = await pageEntity.findTotalCount({ fields: ['theTitle'] })
+  same(findTotalCountResult, 2)
 
   // insert - single
   const insertResult = await pageEntity.insert({

@@ -119,6 +119,15 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
           },
           {
             "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "in": "query",
+            "name": "totalCount",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "array",
               "items": {
                 "type": "string",

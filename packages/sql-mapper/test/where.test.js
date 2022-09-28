@@ -178,6 +178,67 @@ test('list', async ({ pass, teardown, same, equal }) => {
   }])
 })
 
+test('totalCount', async ({ pass, teardown, same, equal }) => {
+  const mapper = await connect({
+    ...connInfo,
+    log: fakeLogger,
+    async onDatabaseLoad (db, sql) {
+      teardown(() => db.dispose())
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      if (isSQLite) {
+        await db.query(sql`CREATE TABLE posts (
+          id INTEGER PRIMARY KEY,
+          title VARCHAR(42),
+          long_text TEXT,
+          counter INTEGER
+        );`)
+      } else {
+        await db.query(sql`CREATE TABLE posts (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(42),
+          long_text TEXT,
+          counter INTEGER
+        );`)
+      }
+    }
+  })
+
+  const entity = mapper.entities.post
+
+  const posts = [{
+    title: 'Dog',
+    longText: 'Foo',
+    counter: 10
+  }, {
+    title: 'Cat',
+    longText: 'Bar',
+    counter: 20
+  }, {
+    title: 'Mouse',
+    longText: 'Baz',
+    counter: 30
+  }, {
+    title: 'Duck',
+    longText: 'A duck tale',
+    counter: 40
+  }]
+
+  await entity.insert({
+    inputs: posts
+  })
+
+  same(await entity.findTotalCount(), 4)
+
+  same(await entity.findTotalCount({ where: { title: { eq: 'Dog' } } }), 1)
+
+  same(await entity.findTotalCount({ where: { title: { neq: 'Dog' } } }), 3)
+
+  same(await entity.findTotalCount({ limit: 2, offset: 0, fields: ['id', 'title', 'longText'] }), 4)
+})
+
 test('foreign keys', async ({ pass, teardown, same, equal }) => {
   const mapper = await connect({
     ...connInfo,

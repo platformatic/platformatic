@@ -81,6 +81,15 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "totalCount",
+            "required": false,
+            "schema": Object {
+              "default": false,
+              "type": "boolean",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "fields",
             "required": false,
             "schema": Object {
@@ -514,6 +523,15 @@ Object {
             "required": false,
             "schema": Object {
               "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "totalCount",
+            "required": false,
+            "schema": Object {
+              "default": false,
+              "type": "boolean",
             },
           },
           Object {
