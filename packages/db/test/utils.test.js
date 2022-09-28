@@ -52,7 +52,6 @@ test('compute SQLite ignores (Windows)', { skip: !isWindows }, ({ same, equal, p
 
 test('urlDirname', ({ same, plan }) => {
   plan(1)
-  
   let filePath
   if (isWindows) {
     filePath = 'file://C:\\Users\\matteo\\path\\to\\file.json'
