@@ -93,7 +93,7 @@ async function init (_args) {
   } else {
     logger.info(`Migrations folder ${migrationsFolderName} found, skipping creation of migrations folder.`)
   }
-  
+
   const migrationFileNameDo = '001.do.sql'
   const migrationFileNameUndo = '001.undo.sql'
   const migrationFilePathDo = join(migrationsFolderName, migrationFileNameDo)

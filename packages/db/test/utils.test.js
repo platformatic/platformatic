@@ -55,10 +55,10 @@ test('urlDirname', ({ same, plan }) => {
   let filePath
   if (isWindows) {
     filePath = 'file://C:\\Users\\matteo\\path\\to\\file.json'
-    same(urlDirname(str), 'C:\\Users\\matteo\\path\\to')
+    same(urlDirname(filePath), 'C:\\Users\\matteo\\path\\to')
   } else {
     filePath = 'file:///path/to/file.json'
-    same(urlDirname(str), '/path/to')
+    same(urlDirname(filePath), '/path/to')
   }
 })
 
