@@ -81,6 +81,8 @@ async function compileWatch () {
   let isCompiled = false
   return new Promise((resolve, reject) => {
     const child = execa(tscExecutablePath, ['--project', 'tsconfig.json', '--watch'], { cwd })
+    process.on('SIGINT', () => child.kill('SIGKILL'))
+    process.on('SIGTERM', () => child.kill('SIGKILL'))
 
     let tsCompilationMessages = []
 
