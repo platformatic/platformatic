@@ -9,6 +9,7 @@ exports['test/cli/schema.test.mjs TAP print the graphql schema to stdout > must 
 type Query {
   getGraphById(id: ID!): Graph
   graphs(limit: Int, offset: Int, orderBy: [GraphOrderByArguments], where: GraphWhereArguments): [Graph]
+  countGraphs(where: GraphWhereArguments): graphsCount
 }
 
 type Graph {
@@ -56,6 +57,10 @@ input GraphWhereArgumentsname {
   lte: String
   in: [String]
   nin: [String]
+}
+
+type graphsCount {
+  totalCount: Int
 }
 
 type Mutation {

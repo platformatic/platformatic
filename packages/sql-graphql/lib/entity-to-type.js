@@ -22,7 +22,6 @@ function constructGraph (app, entity, opts) {
   const entityName = entity.name
   const singular = entity.singularName
   const plural = entity.pluralName
-
   const {
     queryTopFields,
     mutationTopFields,
@@ -143,6 +142,29 @@ function constructGraph (app, entity, opts) {
       return acc
     }, {})
   })
+
+  const count = camelcase(['count', plural])
+
+  const countType = new graphql.GraphQLObjectType({
+    name: `${plural}Count`,
+    fields: {
+      totalCount: { type: graphql.GraphQLInt }
+    }
+  })
+
+  queryTopFields[count] = {
+    type: countType,
+    args: {
+      where: { type: whereArgType }
+    }
+  }
+
+  resolvers.Query[count] = async (_, query, ctx, info) => {
+    const requestedFields = info.fieldNodes[0].selectionSet.selections.map((s) => s.name.value)
+    requestedFields.push(primaryKey)
+    const totalCount = await entity.count({ ...query, fields: [...requestedFields, ...relationalFields], ctx })
+    return { totalCount }
+  }
 
   const save = camelcase(['save', singular])
 
