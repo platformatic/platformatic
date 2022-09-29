@@ -1,4 +1,5 @@
 import path from 'path'
+import os from 'os'
 import { access, rename, cp } from 'fs/promises'
 import t from 'tap'
 import { execa } from 'execa'
@@ -44,7 +45,15 @@ t.test('should compile typescript plugin with start command', async (t) => {
   const child = execa('node', [cliPath, 'start'], { cwd })
 
   t.teardown(async () => {
-    child.kill('SIGINT')
+    if (os.platform() === 'win32') {
+      try {
+        await execa('taskkill', ['/pid', child.pid, '/f', '/t'])
+      } catch (err) {
+        console.error(`Failed to kill process ${child.pid})`)
+      }
+    } else {
+      child.kill('SIGINT')
+    }
   })
 
   const splitter = split()
