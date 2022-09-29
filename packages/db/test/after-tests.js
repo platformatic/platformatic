@@ -18,7 +18,15 @@ async function cleanTmpDir () {
     retryDelay: 1000
   }
 
-  await Promise.all(filesToRemove.map(file => rm(file, removeOptions)))
+  const results = await Promise.allSettled(filesToRemove.map(file => rm(file, removeOptions)))
+
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i]
+    if (result.status === 'rejected') {
+      console.error(`Failed to remove ${filesToRemove[i]}`)
+      console.error(result.reason)
+    }
+  }
 }
 
 cleanTmpDir()
