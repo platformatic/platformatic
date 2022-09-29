@@ -17,7 +17,7 @@ async function start (_args) {
   // Set the logger if not present
   addLoggerToTheConfig(config)
 
-  if (config.typescript !== undefined) {
+  if (config.typescript !== undefined && config.typescript.watch) {
     try {
       await compileWatch()
     } catch (error) {

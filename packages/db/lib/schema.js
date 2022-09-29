@@ -354,6 +354,9 @@ const typescript = {
   properties: {
     config: {
       type: 'string'
+    },
+    watch: {
+      type: 'boolean'
     }
   }
 }

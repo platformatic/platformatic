@@ -68,6 +68,7 @@ function generateConfig (args) {
 
   if (typescript === true) {
     config.typescript = {
+      watch: true,
       outDir: 'dist'
     }
   }

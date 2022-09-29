@@ -21,6 +21,7 @@
     "autogenerate": true
   },
   "typescript": {
+    "watch": true,
     "outDir": "dist"
   },
   "plugin": {
