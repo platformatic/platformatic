@@ -229,7 +229,7 @@ test('ignore watch sqlite file', async ({ teardown, equal, same, comment }) => {
     })
     const parseResult = await cm.parse()
     equal(parseResult, true)
-    same(cm.watchIgnore, ['db-watchIgnore.sqlite', 'db-watchIgnore.sqlite-journal', '.esm*'])
+    same(cm.watchIgnore, ['*.ts', 'db-watchIgnore.sqlite', 'db-watchIgnore.sqlite-journal', '.esm*'])
   }
 
   {
@@ -249,7 +249,7 @@ test('ignore watch sqlite file', async ({ teardown, equal, same, comment }) => {
     })
     const parseResult = await cm.parse()
     equal(parseResult, true)
-    same(cm.watchIgnore, [join('databases', 'db-watchIgnore.sqlite'), join('databases', 'db-watchIgnore.sqlite-journal'), '.esm*'])
+    same(cm.watchIgnore, ['*.ts', join('databases', 'db-watchIgnore.sqlite'), join('databases', 'db-watchIgnore.sqlite-journal'), '.esm*'])
   }
 })
 

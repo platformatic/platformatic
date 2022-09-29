@@ -16,6 +16,7 @@ class DBConfigManager extends ConfigManager {
         coerceTypes: true,
         allErrors: true
       },
+      watchIgnore: ['*.ts', ...(opts.watchIgnore || [])],
       envWhitelist: ['PORT', 'DATABASE_URL', ...(opts.envWhitelist || [])]
     })
   }
