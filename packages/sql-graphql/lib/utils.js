@@ -2,6 +2,7 @@
 
 const graphql = require('graphql')
 const scalars = require('graphql-scalars')
+const { GraphQLJSONObject } = require('graphql-type-json')
 
 // The sqlTypeToGraphQL is shared between
 // all database adapters.
@@ -51,6 +52,8 @@ function sqlTypeToGraphQL (sqlType) {
       return scalars.GraphQLDateTime
     case 'uuid':
       return graphql.GraphQLString
+    case 'json':
+      return GraphQLJSONObject
     default:
       return graphql.GraphQLString
   }

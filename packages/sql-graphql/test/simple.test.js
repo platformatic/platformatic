@@ -845,3 +845,56 @@ test('primary key snake_case', async ({ pass, teardown, same, equal }) => {
     }, 'pages response')
   }
 })
+
+test('deserialize JSON columns', { skip: isSQLite }, async (t) => {
+  const { pass, teardown, same } = t
+  const app = fastify()
+  const jsonData = {
+    foo: 'bar',
+    baz: 42,
+    items: ['foo', 'bar'],
+    nested: {
+      hello: 'world'
+    }
+  }
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      await db.query(sql`CREATE TABLE pages (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        metadata JSON NOT NULL
+      );`)
+
+      await db.query(sql`INSERT INTO pages (id, title, metadata) VALUES (1, 'Hello World', ${JSON.stringify(jsonData)})`)
+    }
+  })
+  app.register(sqlGraphQL, {
+    graphiql: false
+  })
+  teardown(app.close.bind(app))
+
+  await app.ready()
+  const res = await app.inject({
+    method: 'POST',
+    url: '/graphql',
+    body: {
+      query: `
+        query {
+          getPageById(id: 1) {
+            id
+            title
+            metadata
+          }
+        }
+      `
+    }
+  })
+  const json = res.json()
+  console.log(json)
+  same(json.data.getPageById.metadata, jsonData)
+})

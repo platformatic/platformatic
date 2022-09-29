@@ -60,7 +60,15 @@ function mapSQLEntityToJSONSchema (entity) {
   for (const name of Object.keys(fields)) {
     const field = fields[name]
     const type = mapSQLTypeToOpenAPIType(field.sqlType)
-    properties[field.camelcase] = { type }
+
+    if (field.sqlType === 'json') {
+      properties[field.camelcase] = {
+        type: 'object',
+        additionalProperties: true
+      }
+    } else {
+      properties[field.camelcase] = { type }
+    }
     if (field.isNullable) {
       properties[field.camelcase].nullable = true
     }
