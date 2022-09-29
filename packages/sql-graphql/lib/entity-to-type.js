@@ -148,7 +148,7 @@ function constructGraph (app, entity, opts) {
   const countType = new graphql.GraphQLObjectType({
     name: `${plural}Count`,
     fields: {
-      totalCount: { type: graphql.GraphQLInt }
+      total: { type: graphql.GraphQLInt }
     }
   })
 
@@ -162,8 +162,8 @@ function constructGraph (app, entity, opts) {
   resolvers.Query[count] = async (_, query, ctx, info) => {
     const requestedFields = info.fieldNodes[0].selectionSet.selections.map((s) => s.name.value)
     requestedFields.push(primaryKey)
-    const totalCount = await entity.count({ ...query, fields: [...requestedFields, ...relationalFields], ctx })
-    return { totalCount }
+    const total = await entity.count({ ...query, fields: [...requestedFields, ...relationalFields], ctx })
+    return { total }
   }
 
   const save = camelcase(['save', singular])

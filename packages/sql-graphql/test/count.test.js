@@ -84,7 +84,7 @@ test('count', async ({ pass, teardown, same, equal }) => {
         query: `
           query {
             countPosts {
-              totalCount
+              total
             }
           }
         `
@@ -94,7 +94,7 @@ test('count', async ({ pass, teardown, same, equal }) => {
     same(res.json(), {
       data: {
         countPosts: {
-          totalCount: 4
+          total: 4
         }
       }
     }, 'posts response')
@@ -108,7 +108,7 @@ test('count', async ({ pass, teardown, same, equal }) => {
         query: `
           query {
             countPosts(where: { counter: { gt: 20 } }) {
-              totalCount
+              total
             }
           }
         `
@@ -118,7 +118,7 @@ test('count', async ({ pass, teardown, same, equal }) => {
     same(res.json(), {
       data: {
         countPosts: {
-          totalCount: 2
+          total: 2
         }
       }
     }, 'posts response')

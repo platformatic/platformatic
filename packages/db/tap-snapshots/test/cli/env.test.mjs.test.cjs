@@ -60,7 +60,7 @@ input PageWhereArgumentstitle {
 }
 
 type pagesCount {
-  totalCount: Int
+  total: Int
 }
 
 type Mutation {

@@ -87,13 +87,13 @@ const res = await app.inject({
     query: `
       query {
         countPages {
-          totalCount
+          total
         }
       }
     `
   }
 })
 const result = await res.json()
-console.log(result.data) // { countMovies : { totalCount: { 17 } } }
+console.log(result.data) // { countMovies : { total: { 17 } }
 ```
 

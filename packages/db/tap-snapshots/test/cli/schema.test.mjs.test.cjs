@@ -60,7 +60,7 @@ input GraphWhereArgumentsname {
 }
 
 type graphsCount {
-  totalCount: Int
+  total: Int
 }
 
 type Mutation {
