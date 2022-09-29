@@ -1,5 +1,5 @@
 import path from 'path'
-import { access, rename, cp, rm } from 'fs/promises'
+import { access, rename, cp } from 'fs/promises'
 import t from 'tap'
 import { execa } from 'execa'
 import stripAnsi from 'strip-ansi'
@@ -15,10 +15,6 @@ t.test('should compile typescript plugin', async (t) => {
   const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-1')
 
   await cp(testDir, cwd, { recursive: true })
-
-  t.teardown(async () => {
-    await rm(cwd, { force: true, recursive: true })
-  })
 
   try {
     const child = await execa('node', [cliPath, 'compile'], { cwd })
@@ -49,7 +45,6 @@ t.test('should compile typescript plugin with start command', async (t) => {
 
   t.teardown(async () => {
     child.kill('SIGINT')
-    await rm(cwd, { force: true, recursive: true, maxRetries: 5, retryDelay: 1000 })
   })
 
   const splitter = split()
@@ -89,10 +84,6 @@ t.test('missing tsconfig file', async (t) => {
   const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-2')
 
   await cp(testDir, cwd, { recursive: true })
-
-  t.teardown(async () => {
-    await rm(cwd, { force: true, recursive: true })
-  })
 
   const pathToTSConfig = path.join(cwd, 'tsconfig.json')
   const pathToTSConfigBackup = path.join(cwd, 'tsconfig.json.backup')
@@ -140,10 +131,6 @@ t.test('should not compile typescript plugin with start without tsconfig', async
   const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-4')
 
   await cp(testDir, cwd, { recursive: true })
-
-  t.teardown(async () => {
-    await rm(cwd, { force: true, recursive: true })
-  })
 
   const pathToTSConfig = path.join(cwd, 'tsconfig.json')
   const pathToTSConfigBackup = path.join(cwd, 'tsconfig.json.backup')
