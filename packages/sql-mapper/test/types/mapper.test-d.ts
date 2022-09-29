@@ -39,28 +39,34 @@ expectType<Partial<EntityFields>[]>(await entity.find())
 expectType<Partial<EntityFields>[]>(await entity.insert({ inputs: [{ id: 1, name: 'test' }] }))
 expectType<Partial<EntityFields>>(await entity.save({ input: { id: 1, name: 'test' } }))
 expectType<Partial<EntityFields>[]>(await entity.delete())
+expectType<number>(await entity.count())
 
 expectType<SQLMapperPluginInterface>(await connect({ connectionString: '' }))
 expectType<SQLMapperPluginInterface>(await connect({ connectionString: '', autoTimestamp: true }))
 expectType<SQLMapperPluginInterface>(await connect({ connectionString: '', hooks: {} }))
-expectType<SQLMapperPluginInterface>(await connect({ connectionString: '', hooks: {
-  Page: {
-    async find(options: any): Promise<any[]> { return [] },
-    async insert(options: { inputs: any[], fields?: string[] }): Promise<any[]> { return [] },
-    async save(options: { input: any, fields?: string[] }): Promise<any> { return {} },
-    async delete(options?: { where: WhereCondition, fields: string[] }): Promise<any[]> { return [] },
+expectType<SQLMapperPluginInterface>(await connect({
+  connectionString: '', hooks: {
+    Page: {
+      async find(options: any): Promise<any[]> { return [] },
+      async insert(options: { inputs: any[], fields?: string[] }): Promise<any[]> { return [] },
+      async save(options: { input: any, fields?: string[] }): Promise<any> { return {} },
+      async delete(options?: { where: WhereCondition, fields: string[] }): Promise<any[]> { return [] },
+      async count(options?: { where?: WhereCondition }): Promise<number> { return 0 },
+    }
   }
-}}))
+}))
 expectType<SQLMapperPluginInterface>(await connect({ connectionString: '', ignore: {} }))
-expectType<SQLMapperPluginInterface>(await connect({ connectionString: '', onDatabaseLoad(db: Database, sql: SQL) {
-  expectType<(query: SQLQuery) => Promise<any[]>>(db.query)
-  expectType<() => Promise<void>>(db.dispose)
-  expectType<boolean | undefined>(pluginOptions.db.isMySql)
-  expectType<boolean | undefined>(pluginOptions.db.isMariaDB)
-  expectType<boolean | undefined>(pluginOptions.db.isSQLite)
-  expectType<boolean | undefined>(pluginOptions.db.isPg)
+expectType<SQLMapperPluginInterface>(await connect({
+  connectionString: '', onDatabaseLoad(db: Database, sql: SQL) {
+    expectType<(query: SQLQuery) => Promise<any[]>>(db.query)
+    expectType<() => Promise<void>>(db.dispose)
+    expectType<boolean | undefined>(pluginOptions.db.isMySql)
+    expectType<boolean | undefined>(pluginOptions.db.isMariaDB)
+    expectType<boolean | undefined>(pluginOptions.db.isSQLite)
+    expectType<boolean | undefined>(pluginOptions.db.isPg)
 
-}}))
+  }
+}))
 
 const instance: FastifyInstance = fastify()
 instance.register(plugin, { connectionString: '', autoTimestamp: true })
