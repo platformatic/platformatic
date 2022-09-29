@@ -51,7 +51,6 @@ test('list', async (t) => {
       url: '/documentation/json'
     })
     const openapi = res.json()
-    // console.log(JSON.stringify(openapi, null, 2))
     matchSnapshot(openapi, 'matches expected OpenAPI defs')
   }
 
@@ -391,7 +390,6 @@ test('nested where', async (t) => {
       url: '/documentation/json'
     })
     const openapi = res.json()
-    // console.log(JSON.stringify(openapi, null, 2))
     matchSnapshot(openapi, 'matches expected OpenAPI defs')
   }
 

@@ -98,7 +98,6 @@ test('one-level order by', async (t) => {
       url: '/documentation/json'
     })
     const json = res.json()
-    // console.log(JSON.stringify(json, null, 2))
     matchSnapshot(json, 'GET /documentation/json response')
   }
 

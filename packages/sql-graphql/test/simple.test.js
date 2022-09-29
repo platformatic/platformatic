@@ -895,6 +895,5 @@ test('deserialize JSON columns', { skip: isSQLite }, async (t) => {
     }
   })
   const json = res.json()
-  console.log(json)
   same(json.data.getPageById.metadata, jsonData)
 })
