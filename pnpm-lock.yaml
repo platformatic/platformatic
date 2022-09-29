@@ -304,6 +304,27 @@ importers:
       vite: 3.1.1
       vitest: 0.23.2_happy-dom@6.0.4
 
+  packages/sql-events:
+    specifiers:
+      '@platformatic/sql-mapper': workspace:*
+      fastify: ^4.6.0
+      fastify-plugin: ^4.1.0
+      mqemitter: ^5.0.0
+      snazzy: ^9.0.0
+      standard: ^17.0.0
+      tap: ^16.0.0
+      tsd: ^0.24.0
+    dependencies:
+      fastify-plugin: 4.2.1
+      mqemitter: 5.0.0
+    devDependencies:
+      '@platformatic/sql-mapper': link:../sql-mapper
+      fastify: 4.6.0
+      snazzy: 9.0.0
+      standard: 17.0.0
+      tap: 16.3.0
+      tsd: 0.24.1
+
   packages/sql-graphql:
     specifiers:
       '@platformatic/sql-mapper': workspace:*
