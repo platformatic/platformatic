@@ -117,6 +117,8 @@ jobs:
         cache: 'pnpm'
     - name: pnpm install
       run: pnpm install --offline 
+    - name: npm install -g typescript
+      run: npm install -g typescript 
     - name: Builds the dashboard
       run: pnpm run dashboard:build
     - name: Run test suite core
