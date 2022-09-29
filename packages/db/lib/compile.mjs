@@ -137,6 +137,7 @@ async function compile (_args) {
 
   try {
     await execute(logger, args, config)
+    process.exit(0)
   } catch (error) {
     logger.error(error.message)
     process.exit(1)

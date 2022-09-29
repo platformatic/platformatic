@@ -1,5 +1,5 @@
 import path from 'path'
-import { access, rename, cp, mkdir, rm } from 'fs/promises'
+import { access, rename, cp, rm } from 'fs/promises'
 import t from 'tap'
 import { execa } from 'execa'
 import stripAnsi from 'strip-ansi'
@@ -7,39 +7,38 @@ import split from 'split2'
 import { cliPath } from './helper.mjs'
 import { urlDirname } from '../../lib/utils.js'
 
-t.test('should compile typescript plugin', async (t) => {
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-1')
-
-  await mkdir(cwd)
-  await cp(testDir, cwd, { recursive: true })
-
-  t.teardown(async () => {
-    await rm(cwd, { force: true, recursive: true })
-  })
-
-  try {
-    const child = await execa('node', [cliPath, 'compile'], { cwd })
-    t.equal(child.stdout.includes('Typescript compilation completed successfully.'), true)
-  } catch (err) {
-    console.log(err.stdout)
-    console.log(err.stderr)
-    t.fail(err.stderr)
-  }
-
-  const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
-  try {
-    await access(jsPluginPath)
-  } catch (err) {
-    t.fail(err)
-  }
-
-  t.pass()
-})
-
 t.test('parallel test cases', (t) => {
-  t.jobs = 5
-  t.plan(5)
+  t.jobs = 6
+  t.plan(6)
+
+  t.test('should compile typescript plugin', async (t) => {
+    const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
+    const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-1')
+
+    await cp(testDir, cwd, { recursive: true })
+
+    t.teardown(async () => {
+      await rm(cwd, { force: true, recursive: true })
+    })
+
+    try {
+      const child = await execa('node', [cliPath, 'compile'], { cwd })
+      t.equal(child.stdout.includes('Typescript compilation completed successfully.'), true)
+    } catch (err) {
+      console.log(err.stdout)
+      console.log(err.stderr)
+      t.fail(err.stderr)
+    }
+
+    const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
+    try {
+      await access(jsPluginPath)
+    } catch (err) {
+      t.fail(err)
+    }
+
+    t.pass()
+  })
 
   t.test('should compile typescript plugin with start command', async (t) => {
     const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
