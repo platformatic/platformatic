@@ -135,7 +135,7 @@ async function entityPlugin (app, opts) {
     const ctx = { app: this, reply }
     const res = await entity.find({ limit, offset, fields, orderBy, where, ctx })
     if (query.totalCount) {
-      const totalCount = await entity.findTotalCount({ where, ctx })
+      const totalCount = await entity.count({ where, ctx })
       reply.header('X-Total-Count', totalCount)
     }
     return res

@@ -213,7 +213,7 @@ function createMapper (db, sql, log, table, fields, primaryKey, relations, queri
     return res.map(fixOutput)
   }
 
-  async function findTotalCount (opts = {}) {
+  async function count (opts = {}) {
     let totalCountQuery = null
     totalCountQuery = sql`
         SELECT COUNT(*) AS total 
@@ -245,7 +245,7 @@ function createMapper (db, sql, log, table, fields, primaryKey, relations, queri
     fixInput,
     fixOutput,
     find,
-    findTotalCount,
+    count,
     insert,
     save,
     delete: _delete

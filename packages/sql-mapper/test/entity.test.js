@@ -88,9 +88,9 @@ test('entity API', async ({ equal, same, teardown, rejects }) => {
   const findResult = await pageEntity.find({ fields: ['theTitle'] })
   same(findResult, [{ theTitle: 'foo' }, { theTitle: 'bar' }])
 
-  // findTotalCount
-  const findTotalCountResult = await pageEntity.findTotalCount({ fields: ['theTitle'] })
-  same(findTotalCountResult, 2)
+  // count
+  const countResult = await pageEntity.count({ fields: ['theTitle'] })
+  same(countResult, 2)
 
   // insert - single
   const insertResult = await pageEntity.insert({

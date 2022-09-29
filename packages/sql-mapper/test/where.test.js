@@ -230,13 +230,13 @@ test('totalCount', async ({ pass, teardown, same, equal }) => {
     inputs: posts
   })
 
-  same(await entity.findTotalCount(), 4)
+  same(await entity.count(), 4)
 
-  same(await entity.findTotalCount({ where: { title: { eq: 'Dog' } } }), 1)
+  same(await entity.count({ where: { title: { eq: 'Dog' } } }), 1)
 
-  same(await entity.findTotalCount({ where: { title: { neq: 'Dog' } } }), 3)
+  same(await entity.count({ where: { title: { neq: 'Dog' } } }), 3)
 
-  same(await entity.findTotalCount({ limit: 2, offset: 0, fields: ['id', 'title', 'longText'] }), 4)
+  same(await entity.count({ limit: 2, offset: 0, fields: ['id', 'title', 'longText'] }), 4)
 })
 
 test('foreign keys', async ({ pass, teardown, same, equal }) => {
