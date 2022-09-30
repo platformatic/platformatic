@@ -75,3 +75,25 @@ const res = await app.inject({
 const result = await res.json()
 console.log(result.data) // { getPageById: { id: '3', title: 'A fiction' } }
 ```
+
+### `count[ENTITIES]`
+
+```js
+...
+const res = await app.inject({
+  method: 'POST',
+  url: '/graphql',
+  body: {
+    query: `
+      query {
+        countPages {
+          total
+        }
+      }
+    `
+  }
+})
+const result = await res.json()
+console.log(result.data) // { countMovies : { total: { 17 } }
+```
+

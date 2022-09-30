@@ -122,6 +122,15 @@ interface Find<EntityFields> {
   }): Promise<Partial<EntityFields>[]>
 }
 
+interface Count {
+  (options?: {
+    /**
+     * SQL where condition.
+     */
+    where?: WhereCondition,
+  }): Promise<number>
+}
+
 interface Insert<EntityFields> {
   (options: {
     /**
@@ -218,6 +227,10 @@ export interface Entity<EntityFields = any> {
    * Deletes entities from the database.
    */
   delete: Delete<EntityFields>,
+  /**
+   * Count the entities considering the where condition.
+   */
+  count: Count,
 }
 
 
@@ -227,6 +240,7 @@ export interface EntityHooks<EntityFields = any> {
     insert?: Insert<EntityFields>,
     save?: Save<EntityFields>,
     delete?: Delete<EntityFields>,
+    count?: Count,
   }
 }
 
@@ -304,5 +318,5 @@ export default plugin
  * An object that contains utility functions.
  */
 export module utils {
-  export function toSingular (str: string): string
+  export function toSingular(str: string): string
 }

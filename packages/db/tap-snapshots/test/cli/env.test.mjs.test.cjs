@@ -9,6 +9,7 @@ exports['test/cli/env.test.mjs TAP env white list schema > must match snapshot 1
 type Query {
   getPageById(id: ID!): Page
   pages(limit: Int, offset: Int, orderBy: [PageOrderByArguments], where: PageWhereArguments): [Page]
+  countPages(where: PageWhereArguments): pagesCount
 }
 
 type Page {
@@ -56,6 +57,10 @@ input PageWhereArgumentstitle {
   lte: String
   in: [String]
   nin: [String]
+}
+
+type pagesCount {
+  total: Int
 }
 
 type Mutation {

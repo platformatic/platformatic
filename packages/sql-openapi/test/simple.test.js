@@ -302,6 +302,19 @@ test('list', async ({ pass, teardown, same, equal }) => {
       url: '/posts?limit=2&offset=1'
     })
     equal(res.statusCode, 200, 'posts status code')
+    same(res.headers['x-total-count'], undefined, 'GET /api/pages without totalCount')
+    same(res.json(), posts.map((p, i) => {
+      return { ...p, id: i + 1 + '' }
+    }).slice(1, 3), 'posts response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?limit=2&offset=1&totalCount=true'
+    })
+    equal(res.headers['x-total-count'], 4, 'GET /api/pages with totalCount')
+    equal(res.statusCode, 200, 'posts status code')
     same(res.json(), posts.map((p, i) => {
       return { ...p, id: i + 1 + '' }
     }).slice(1, 3), 'posts response')

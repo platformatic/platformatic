@@ -9,6 +9,7 @@ exports['test/cli/schema.test.mjs TAP print the graphql schema to stdout > must 
 type Query {
   getGraphById(id: ID!): Graph
   graphs(limit: Int, offset: Int, orderBy: [GraphOrderByArguments], where: GraphWhereArguments): [Graph]
+  countGraphs(where: GraphWhereArguments): graphsCount
 }
 
 type Graph {
@@ -56,6 +57,10 @@ input GraphWhereArgumentsname {
   lte: String
   in: [String]
   nin: [String]
+}
+
+type graphsCount {
+  total: Int
 }
 
 type Mutation {
@@ -115,6 +120,15 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
             },
             "in": "query",
             "name": "offset",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "in": "query",
+            "name": "totalCount",
             "required": false
           },
           {

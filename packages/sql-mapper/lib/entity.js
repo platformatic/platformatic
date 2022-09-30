@@ -213,6 +213,20 @@ function createMapper (db, sql, log, table, fields, primaryKey, relations, queri
     return res.map(fixOutput)
   }
 
+  async function count (opts = {}) {
+    let totalCountQuery = null
+    totalCountQuery = sql`
+        SELECT COUNT(*) AS total 
+        FROM ${sql.ident(table)}
+      `
+    const criteria = computeCriteria(opts)
+    if (criteria.length > 0) {
+      totalCountQuery = sql`${totalCountQuery} WHERE ${sql.join(criteria, sql` AND `)}`
+    }
+    const [{ total }] = await db.query(totalCountQuery)
+    return +total
+  }
+
   async function _delete (opts) {
     const fieldsToRetrieve = computeFields(opts.fields).map((f) => sql.ident(f))
     const criteria = computeCriteria(opts)
@@ -231,6 +245,7 @@ function createMapper (db, sql, log, table, fields, primaryKey, relations, queri
     fixInput,
     fixOutput,
     find,
+    count,
     insert,
     save,
     delete: _delete

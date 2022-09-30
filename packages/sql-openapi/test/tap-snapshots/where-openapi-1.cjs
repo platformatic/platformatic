@@ -62,6 +62,15 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "totalCount",
+            "required": false,
+            "schema": Object {
+              "default": false,
+              "type": "boolean",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "fields",
             "required": false,
             "schema": Object {
