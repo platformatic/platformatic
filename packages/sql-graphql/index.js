@@ -9,7 +9,6 @@ const scalars = require('graphql-scalars')
 
 async function mapperToGraphql (app, opts) {
   const mapper = app.platformatic
-  const autoTimestamp = opts.autoTimestamp
   const queryTopFields = {}
   const mutationTopFields = {}
   const resolvers = {}
@@ -23,8 +22,7 @@ async function mapperToGraphql (app, opts) {
     resolvers,
     loaders,
     federationReplacements,
-    federationMetadata: opts.federationMetadata,
-    autoTimestamp
+    federationMetadata: opts.federationMetadata
   }
   if (Object.keys(mapper.entities).length === 0) {
     // no schema

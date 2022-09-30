@@ -5,7 +5,6 @@ import plugin, { SQLGraphQLPluginOptions } from '../../index'
 
 const pluginOptions: SQLGraphQLPluginOptions = {
   graphiql: true,
-  autoTimestamp: true,
   federationMetadata: true,
   resolvers: {
     Mutation: {
