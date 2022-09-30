@@ -105,6 +105,8 @@ Available commands:
 * `start` - start the server.
 * `migrate` - run migrations.
 * `seed` - run a seed file.
+* `types` - generate typescript types for entities.
+* `schema` - generate and print api schema.
 
   
 #### init
