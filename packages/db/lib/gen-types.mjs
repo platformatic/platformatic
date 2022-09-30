@@ -1,12 +1,12 @@
 import { resolve, join, dirname, relative, basename } from 'path'
 import { createRequire } from 'module'
-import { access, mkdir, writeFile, readFile, readdir, unlink } from 'fs/promises'
+import { mkdir, writeFile, readFile, readdir, unlink } from 'fs/promises'
 import { join as desmJoin } from 'desm'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import dtsgenerator, { parseSchema } from 'dtsgenerator'
 import { mapSQLEntityToJSONSchema } from '@platformatic/sql-json-schema-mapper'
-import { setupDB } from './utils.js'
+import { setupDB, isFileAccessible } from './utils.js'
 import loadConfig from './load-config.mjs'
 
 const TYPES_FOLDER_PATH = resolve(process.cwd(), 'types')
@@ -22,7 +22,7 @@ declare module '@platformatic/sql-mapper' {
 }
 `
 
-const PLUGIN_WITH_TYPES_SUPPORT = `\
+const JS_PLUGIN_WITH_TYPES_SUPPORT = `\
 /// <reference path="./global.d.ts" />
 'use strict'
 
@@ -30,14 +30,12 @@ const PLUGIN_WITH_TYPES_SUPPORT = `\
 module.exports = async function (app) {}
 `
 
-async function isFileAccessible (filename) {
-  try {
-    await access(filename)
-    return true
-  } catch (err) {
-    return false
-  }
-}
+const TS_PLUGIN_WITH_TYPES_SUPPORT = `\
+/// <reference path="./global.d.ts" />
+import { FastifyInstance } from 'fastify'
+
+export default async function (app: FastifyInstance) {}
+`
 
 async function removeUnusedTypeFiles (entities, dir) {
   const entityTypes = await readdir(dir)
@@ -59,7 +57,7 @@ async function generateGlobalTypes (entities, config) {
   const globalTypesInterface = []
 
   if (config.core.graphiql) {
-    globalTypesImports.push('import graphqlPlugin from \'@platformatic/sql-graphql\';')
+    globalTypesImports.push('import graphqlPlugin from \'@platformatic/sql-graphql\'')
   }
 
   for (const [key, entity] of Object.entries(entities)) {
@@ -122,7 +120,11 @@ async function checkForDependencies (logger, args, config) {
     if (allRequiredDependenciesInstalled) return
   }
 
-  let command = 'npm i --save-dev'
+  let command = 'npm i --save'
+
+  if (config.typescript !== undefined) {
+    command += ' @types/node'
+  }
   for (const [depName, depVersion] of Object.entries(requiredDependencies)) {
     command += ` ${depName}@${depVersion}`
   }
@@ -136,14 +138,22 @@ async function generatePluginWithTypesSupport (logger, args, configManager) {
     config.plugin = {}
   }
 
-  const configPluginPath = config.plugin.path || './plugin.js'
-  const pluginPath = resolve(process.cwd(), configPluginPath)
+  const isTypescript = config.typescript !== undefined
+
+  if (config.plugin.path === undefined) {
+    config.plugin.path = isTypescript ? 'plugin.ts' : 'plugin.js'
+  }
+
+  const pluginPath = resolve(process.cwd(), config.plugin.path)
 
   const isPluginExists = await isFileAccessible(pluginPath)
   if (isPluginExists) return
 
-  await writeFile(pluginPath, PLUGIN_WITH_TYPES_SUPPORT)
-  config.plugin.path = configPluginPath
+  const pluginTemplate = isTypescript
+    ? TS_PLUGIN_WITH_TYPES_SUPPORT
+    : JS_PLUGIN_WITH_TYPES_SUPPORT
+
+  await writeFile(pluginPath, pluginTemplate)
   await configManager.save()
 
   logger.info(`Plugin file created at ${relative(process.cwd(), pluginPath)}`)

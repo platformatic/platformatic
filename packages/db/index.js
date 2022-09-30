@@ -10,7 +10,7 @@ const underPressure = require('@fastify/under-pressure')
 const { isKeyEnabledInConfig } = require('./lib/helper')
 const { schema } = require('./lib/schema')
 const ConfigManager = require('./lib/config.js')
-const { addLoggerToTheConfig } = require('./lib/utils')
+const { addLoggerToTheConfig, getJSPluginPath } = require('./lib/utils')
 
 function deepmergeArray (options) {
   const deepmerge = options.deepmerge
@@ -73,9 +73,17 @@ async function platformaticDB (app, opts) {
   }
 
   if (opts.plugin) {
+    let pluginOptions = opts.plugin
+
+    /* c8 ignore next 4 */
+    if (opts.typescript !== undefined) {
+      const pluginPath = getJSPluginPath(opts.plugin.path, opts.typescript.outDir)
+      pluginOptions = { ...pluginOptions, path: pluginPath }
+    }
+
     app.log.debug({ plugin: opts.plugin }, 'loading plugin')
     await app.register(sandbox, {
-      ...opts.plugin,
+      ...pluginOptions,
       customizeGlobalThis (_globalThis) {
         // Taken from https://github.com/nodejs/undici/blob/fa9fd9066569b6357acacffb806aa804b688c9d8/lib/global.js#L5
         const globalDispatcher = Symbol.for('undici.globalDispatcher.1')

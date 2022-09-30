@@ -1,0 +1,19 @@
+{
+  "core": {
+    "connectionString": "sqlite://./db",
+    "graphiql": true
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0,
+    "logger": {
+      "level": "info"
+    }
+  },
+  "migrations": {
+    "dir": "./migrations"
+  },
+  "typescript": {
+    "outDir": "dist"
+  }
+}

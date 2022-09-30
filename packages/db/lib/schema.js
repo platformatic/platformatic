@@ -348,6 +348,20 @@ const types = {
   }
 }
 
+const typescript = {
+  $id: 'https://schemas.platformatic.dev/db/typescript',
+  type: 'object',
+  properties: {
+    outDir: {
+      type: 'string'
+    },
+    watch: {
+      type: 'boolean'
+    }
+  },
+  required: ['outDir']
+}
+
 const platformaticDBschema = {
   $id: 'https://schemas.platformatic.dev/db',
   type: 'object',
@@ -360,6 +374,7 @@ const platformaticDBschema = {
     migrations,
     metrics,
     types,
+    typescript,
     plugin: {
       type: 'object',
       properties: {

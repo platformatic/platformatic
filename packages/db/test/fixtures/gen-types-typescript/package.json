@@ -9,7 +9,9 @@
   "author": "",
   "license": "ISC",
   "types": "./index.d.ts",
-  "devDependencies": {
-    "@platformatic/sql-mapper": "workspace:*"
+  "dependencies": {
+    "@platformatic/sql-mapper": "workspace:*",
+    "@platformatic/sql-graphql": "workspace:*",
+    "fastify": "^4.6.0"
   }
 }

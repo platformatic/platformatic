@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "standard | snazzy && c8 --100 tap --no-coverage test/*test.js test/*/*test.mjs"
+    "test": "standard | snazzy && c8 --100 tap --no-coverage --after=test/after-tests.js test/*test.js test/*/*test.mjs"
   },
   "author": "Matteo Collina <hello@matteocollina.com>",
   "repository": {
@@ -30,7 +30,7 @@
     "tap": "^16.0.0",
     "undici": "^5.8.0",
     "why-is-node-running": "^2.2.2",
-    "tsd": "0.24.1"
+    "tsd": "^0.24.1"
   },
   "dependencies": {
     "@fastify/basic-auth": "^4.0.0",

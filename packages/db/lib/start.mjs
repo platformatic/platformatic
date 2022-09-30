@@ -1,6 +1,7 @@
 import { buildServer } from '../index.js'
 import close from 'close-with-grace'
 import loadConfig from './load-config.mjs'
+import { compileWatch } from './compile.mjs'
 import { addLoggerToTheConfig } from './utils.js'
 
 // TODO make sure coverage is reported for Windows
@@ -11,18 +12,28 @@ async function start (_args) {
     string: ['to']
   }, _args, { watch: true })
 
+  const config = configManager.current
+
   // Set the logger if not present
-  addLoggerToTheConfig(configManager.current)
+  addLoggerToTheConfig(config)
+
+  if (config.typescript !== undefined && config.typescript.watch !== false) {
+    try {
+      await compileWatch()
+    } catch (error) {
+      process.exit(1)
+    }
+  }
 
   // Set the location of the config
   const server = await buildServer({
-    ...configManager.current,
+    ...config,
     configManager
-
   })
+
   configManager.on('update', (newConfig) => onConfigUpdated(newConfig, server))
   server.app.platformatic.configManager = configManager
-  server.app.platformatic.config = configManager.current
+  server.app.platformatic.config = config
 
   await server.listen()
 

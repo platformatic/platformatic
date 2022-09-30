@@ -95,6 +95,21 @@ platformatic db <command>
 ```
 
 
+#### compile
+
+Compile typescript plugins.
+
+  $ platformatic db compile
+
+As a result of executing this command, the Platformatic DB will compile typescript
+plugins in the `outDir` directory. 
+
+If not specified, the configuration specified will be loaded from
+`platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
+You can find more details about the configuration format at:
+https://oss.platformatic.dev/docs/reference/configuration.
+
+  
 #### help
 
 Available commands:
@@ -103,6 +118,7 @@ Available commands:
 * `help <command>` - shows more information about a command.
 * `init` - initiate default application.
 * `start` - start the server.
+* `compile` - compile typescript plugins.
 * `migrate` - run migrations.
 * `seed` - run a seed file.
 * `types` - generate typescript types for entities.
@@ -125,6 +141,7 @@ Options:
   * `-db, --database <database_name>`: The name of the database to use. Default: `sqlite`. 
   * `-m, --migrations <path>`: Relative path to the migrations folder. Default: `./migrations`.
   * `-t, --types <boolean>`: Set true to enable type autogeneration. Default: `true`.
+  * `-ts` --typescript <boolean>`: Set true to enable TypeScript plugins. Default: `false`.
 
   
 #### migrate
@@ -158,7 +175,7 @@ Options:
   * `-t, --to <version>`: Migrate to a specific version.
 
 If not specified, the configuration specified will be loaded from
-`platformatic.db.json`, `platformatic.db.yml`, `platformatic.db.yaml`, `platformatic.db.json5`, `platformatic.db.toml`, or `platformatic.db.tml` in the current directory.
+`platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
 You can find more details about the configuration format at:
 https://oss.platformatic.dev/docs/reference/configuration.
 
@@ -175,7 +192,7 @@ Options:
   -c, --config FILE  Specify a configuration file to use
 
 If not specified, the configuration specified will be loaded from
-`platformatic.db.json`, `platformatic.db.yml`, `platformatic.db.yaml`, `platformatic.db.json5`, `platformatic.db.toml`, or `platformatic.db.tml` in the current directory.
+`platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
 You can find more details about the configuration format at:
 https://oss.platformatic.dev/docs/reference/configuration.
 
@@ -206,7 +223,7 @@ Options:
   * `--config` - Path to the configuration file.
 
 If not specified, the configuration specified will be loaded from
-`platformatic.db.json`, `platformatic.db.yml`, `platformatic.db.yaml`, `platformatic.db.json5`, `platformatic.db.toml`, or `platformatic.db.tml` in the current directory.
+`platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
 You can find more details about the configuration format at:
 https://oss.platformatic.dev/docs/reference/configuration.
 
@@ -287,7 +304,7 @@ module.exports = async function (app) {
 }
 
 If not specified, the configuration specified will be loaded from
-`platformatic.db.json`, `platformatic.db.yml`, `platformatic.db.yaml`, `platformatic.db.json5`, `platformatic.db.toml`, or `platformatic.db.tml` in the current directory.
+`platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
 You can find more details about the configuration format at:
 https://oss.platformatic.dev/docs/reference/configuration.
 
