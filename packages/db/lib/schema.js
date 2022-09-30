@@ -352,13 +352,14 @@ const typescript = {
   $id: 'https://schemas.platformatic.dev/db/typescript',
   type: 'object',
   properties: {
-    config: {
+    outDir: {
       type: 'string'
     },
     watch: {
       type: 'boolean'
     }
-  }
+  },
+  required: ['outDir']
 }
 
 const platformaticDBschema = {
