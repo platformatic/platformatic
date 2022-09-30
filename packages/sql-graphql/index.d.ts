@@ -21,7 +21,6 @@ export interface SQLGraphQLPluginOptions {
    * If true, serves GraphiQL on /graphiql.
    */
   graphiql?: boolean,
-  autoTimestamp?: boolean,
   /**
    * Parameter that enables federation metadata support.
    */
