@@ -4,13 +4,12 @@ const MQEmitter = require('mqemitter')
 const fp = require('fastify-plugin')
 const { PassThrough } = require('stream')
 
-async function fastifySqlEvents (fastify, opts) {
-  // const emitter = new MQEmitter(opts)
-
-  // fastify.decorate('sqlEvents', emitter)
+async function fastifySqlEvents (app, opts) {
+  setupEmitter({ ...opts, mapper: app.platformatic })
 }
 
 function setupEmitter ({ mq, mapper }) {
+  mq = mq || new MQEmitter()
   for (const entityName of Object.keys(mapper.entities)) {
     const entity = mapper.entities[entityName]
     const { primaryKey } = entity
@@ -20,7 +19,7 @@ function setupEmitter ({ mq, mapper }) {
         const topic = isNew ? `/entity/${entityName}/create` : `/entity/${entityName}/update/${data.input[primaryKey]}`
         const res = await original(data)
         await new Promise((resolve) => {
-          mq.emit({ 
+          mq.emit({
             topic,
             [entityName]: res
           }, resolve)
@@ -32,7 +31,7 @@ function setupEmitter ({ mq, mapper }) {
         await Promise.all(res.map((data) => {
           const topic = `/entity/${entityName}/delete/${data[primaryKey]}`
           return new Promise((resolve) => {
-            mq.emit({ 
+            mq.emit({
               topic,
               [entityName]: data
             }, resolve)
@@ -45,8 +44,6 @@ function setupEmitter ({ mq, mapper }) {
 
   mapper.mq = mq
   mapper.subscribe = subscribe
-  
-  return
 
   function subscribe (topics) {
     topics = typeof topics === 'string' ? [topics] : topics
