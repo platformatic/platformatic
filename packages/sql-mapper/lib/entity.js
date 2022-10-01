@@ -6,7 +6,7 @@ const {
   toSingular
 } = require('./utils')
 
-function createMapper (db, sql, log, table, fields, primaryKey, relations, queries, autoTimestamp) {
+function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations, queries, autoTimestamp) {
   const entityName = toSingular(table)
 
   // Fields remapping
@@ -55,6 +55,7 @@ function createMapper (db, sql, log, table, fields, primaryKey, relations, queri
   }
 
   async function save (args) {
+    const db = args.tx || defaultDb
     if (args.input === undefined) {
       throw new Error('Input not provided.')
     }
@@ -81,6 +82,7 @@ function createMapper (db, sql, log, table, fields, primaryKey, relations, queri
   }
 
   async function insert (args) {
+    const db = args.tx || defaultDb
     const fieldsToRetrieve = computeFields(args.fields).map((f) => sql.ident(f))
     const inputs = args.inputs
     // This else is skipped on MySQL because of https://github.com/ForbesLindesay/atdatabases/issues/221
@@ -186,6 +188,7 @@ function createMapper (db, sql, log, table, fields, primaryKey, relations, queri
   }
 
   async function find (opts = {}) {
+    const db = opts.tx || defaultDb
     const fieldsToRetrieve = computeFields(opts.fields).map((f) => sql.ident(f))
     const criteria = computeCriteria(opts)
     let query = sql`
@@ -219,6 +222,7 @@ function createMapper (db, sql, log, table, fields, primaryKey, relations, queri
   }
 
   async function count (opts = {}) {
+    const db = opts.tx || defaultDb
     let totalCountQuery = null
     totalCountQuery = sql`
         SELECT COUNT(*) AS total 
@@ -233,6 +237,7 @@ function createMapper (db, sql, log, table, fields, primaryKey, relations, queri
   }
 
   async function _delete (opts) {
+    const db = opts.tx || defaultDb
     const fieldsToRetrieve = computeFields(opts.fields).map((f) => sql.ident(f))
     const criteria = computeCriteria(opts)
     const res = await queries.deleteAll(db, sql, table, criteria, fieldsToRetrieve)
