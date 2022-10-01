@@ -19,7 +19,7 @@ async function getTSCExecutablePath (cwd) {
     isFileAccessible(tscGlobalPath)
   ])
 
-  /* c8 ignore next 3 */
+  /* c8 ignore next 7 */
   if (tscLocalExists) {
     return tscLocalPath
   }

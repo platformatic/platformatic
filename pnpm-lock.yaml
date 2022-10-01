@@ -143,6 +143,7 @@ importers:
       strip-ansi: ^7.0.1
       tap: ^16.0.0
       tsd: ^0.24.1
+      typescript: ^4.8.4
       ua-parser-js: ^1.0.2
       undici: ^5.8.0
       why-is-node-running: ^2.2.2
@@ -190,8 +191,9 @@ importers:
       split2: 4.1.0
       standard: 17.0.0
       strip-ansi: 7.0.1
-      tap: 16.3.0
+      tap: 16.3.0_typescript@4.8.4
       tsd: 0.24.1
+      typescript: 4.8.4
       undici: 5.10.0
       why-is-node-running: 2.2.2
 
@@ -6768,6 +6770,57 @@ packages:
       - '@isaacs/import-jsx'
       - react
 
+  /tap/16.3.0_typescript@4.8.4:
+    resolution: {integrity: sha512-J9GffPUAbX6FnWbQ/jj7ktzd9nnDFP1fH44OzidqOmxUfZ1hPLMOvpS99LnDiP0H2mO8GY3kGN5XoY0xIKbNFA==}
+    engines: {node: '>=12'}
+    hasBin: true
+    peerDependencies:
+      coveralls: ^3.1.1
+      flow-remove-types: '>=2.112.0'
+      ts-node: '>=8.5.2'
+      typescript: '>=3.7.2'
+    peerDependenciesMeta:
+      coveralls:
+        optional: true
+      flow-remove-types:
+        optional: true
+      ts-node:
+        optional: true
+      typescript:
+        optional: true
+    dependencies:
+      chokidar: 3.5.3
+      findit: 2.0.0
+      foreground-child: 2.0.0
+      fs-exists-cached: 1.0.0
+      glob: 7.2.3
+      isexe: 2.0.0
+      istanbul-lib-processinfo: 2.0.3
+      jackspeak: 1.4.1
+      libtap: 1.4.0
+      minipass: 3.3.4
+      mkdirp: 1.0.4
+      nyc: 15.1.0
+      opener: 1.5.2
+      rimraf: 3.0.2
+      signal-exit: 3.0.7
+      source-map-support: 0.5.21
+      tap-mocha-reporter: 5.0.3
+      tap-parser: 11.0.1
+      tap-yaml: 1.0.0
+      tcompare: 5.0.7
+      typescript: 4.8.4
+      which: 2.0.2
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+    bundledDependencies:
+      - ink
+      - treport
+      - '@types/react'
+      - '@isaacs/import-jsx'
+      - react
+
   /tar/6.1.11:
     resolution: {integrity: sha512-an/KZQzQUkZCkuoAA64hM92X0Urb6VpRhAFllDzz44U2mcD5scmT3zBc4VgVpkugF580+DQn8eAFSyoQt0tznA==}
     engines: {node: '>= 10'}
@@ -6970,7 +7023,6 @@ packages:
     resolution: {integrity: sha512-QCh+85mCy+h0IGff8r5XWzOVSbBO+KfeYrMQh7NJ58QujwcE22u+NUSmUxqF+un70P9GXKxa2HCNiTTMJknyjQ==}
     engines: {node: '>=4.2.0'}
     hasBin: true
-    dev: false
 
   /ua-parser-js/1.0.2:
     resolution: {integrity: sha512-00y/AXhx0/SsnI51fTc0rLRmafiGOM4/O+ny10Ps7f+j/b8p/ZY11ytMgznXkOVo4GQ+KwQG5UQLkLGirsACRg==}
