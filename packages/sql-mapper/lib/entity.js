@@ -205,8 +205,13 @@ function createMapper (db, sql, log, table, fields, primaryKey, relations, queri
       query = sql`${query} ORDER BY ${sql.join(orderBy, sql`, `)}`
     }
 
-    if (opts.limit && opts.offset !== undefined) {
-      query = sql`${query} LIMIT ${opts.limit} OFFSET ${opts.offset}`
+    if (opts.limit || opts.offset !== undefined) {
+      // Use Number.MAX_SAFE_INTEGER as default value for limit because in the sql query you cannot add OFFSET without LIMIT
+      const limit = (opts.limit !== undefined) ? opts.limit : Number.MAX_SAFE_INTEGER
+      query = sql`${query} LIMIT ${limit}`
+      if (opts.offset !== undefined) {
+        query = sql`${query} OFFSET ${opts.offset}`
+      }
     }
 
     const res = await db.query(query)

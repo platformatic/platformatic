@@ -66,6 +66,18 @@ test('list', async ({ pass, teardown, same, equal }) => {
     longText: 'Foo'
   }])
 
+  same(await entity.find({ limit: 1, fields: ['id', 'title', 'longText'] }), [{
+    id: '1',
+    title: 'Dog',
+    longText: 'Foo'
+  }])
+
+  same(await entity.find({ offset: 3, fields: ['id', 'title', 'longText'] }), [{
+    id: '4',
+    title: 'Duck',
+    longText: 'A duck tale',
+  }])
+
   same(await entity.find({ limit: 1, offset: 0, fields: ['id', 'title', 'longText'] }), [{
     id: '1',
     title: 'Dog',

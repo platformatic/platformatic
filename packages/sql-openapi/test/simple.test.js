@@ -300,6 +300,28 @@ test('list', async ({ pass, teardown, same, equal }) => {
   {
     const res = await app.inject({
       method: 'GET',
+      url: '/posts?limit=3'
+    })
+    equal(res.statusCode, 200, '/posts?limit=3 status code')
+    same(res.json(), posts.map((p, i) => {
+      return { ...p, id: i + 1 + '' }
+    }).slice(0, 3), '/posts?limit=3 response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?offset=2'
+    })
+    equal(res.statusCode, 200, '/posts?offset=2 status code')
+    same(res.json(), posts.map((p, i) => {
+      return { ...p, id: i + 1 + '' }
+    }).slice(2), '/posts?offset=2 response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
       url: '/posts?totalCount=true'
     })
     equal(res.headers['x-total-count'], posts.length, '/posts?totalCount=true with x-total-count')
