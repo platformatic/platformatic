@@ -4,7 +4,7 @@ const { test } = require('tap')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { clear, connInfo, isSQLite, isMysql } = require('./helper')
+const { clear, connInfo, isSQLite, isMysql, isMariaDB } = require('./helper')
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -895,5 +895,9 @@ test('deserialize JSON columns', { skip: isSQLite }, async (t) => {
     }
   })
   const json = res.json()
-  same(json.data.getPageById.metadata, jsonData)
+  if (isMariaDB) {
+    same(json.data.getPageById.metadata, JSON.stringify(jsonData))
+  } else {
+    same(json.data.getPageById.metadata, jsonData)
+  }
 })

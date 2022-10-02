@@ -4,7 +4,7 @@ const t = require('tap')
 const sqlOpenAPI = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { clear, connInfo, isSQLite } = require('./helper')
+const { clear, connInfo, isSQLite, isMariaDB } = require('./helper')
 const { resolve } = require('path')
 const { test } = t
 
@@ -502,5 +502,9 @@ test('deserialize JSON columns', { skip: isSQLite }, async (t) => {
     url: '/pages'
   })
   const json = res.json()
-  same(json[0].metadata, jsonData)
+  if (isMariaDB) {
+    same(json[0].metadata, JSON.stringify(jsonData))
+  } else {
+    same(json[0].metadata, jsonData)
+  }
 })
