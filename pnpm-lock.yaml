@@ -327,6 +327,7 @@ importers:
 
   packages/sql-graphql:
     specifiers:
+      '@platformatic/sql-events': workspace:*
       '@platformatic/sql-mapper': workspace:*
       camelcase: ^6.0.0
       fastify: ^4.6.0
@@ -339,6 +340,7 @@ importers:
       standard: ^17.0.0
       tap: ^16.0.0
       tsd: ^0.24.0
+      ws: ^8.9.0
     dependencies:
       camelcase: 6.3.0
       fastify-plugin: 4.2.1
@@ -347,12 +349,14 @@ importers:
       inflected: 2.1.0
       mercurius: 11.0.0_graphql@16.6.0
     devDependencies:
+      '@platformatic/sql-events': link:../sql-events
       '@platformatic/sql-mapper': link:../sql-mapper
       fastify: 4.6.0
       snazzy: 9.0.0
       standard: 17.0.0
       tap: 16.3.0
       tsd: 0.24.1
+      ws: 8.9.0
 
   packages/sql-json-schema-mapper:
     specifiers:
@@ -998,7 +1002,7 @@ packages:
     resolution: {integrity: sha512-LHOUKqRr1iV4w47sVQAT5IrVPsTiuEAqOS1QgtRymJYPeVfIC65LTxg22eoR7kyYW4W84oWJk0gtsBwUGhDEVg==}
     dependencies:
       fastify-plugin: 4.2.1
-      ws: 8.8.1
+      ws: 8.9.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -4717,7 +4721,7 @@ packages:
       single-user-cache: 0.6.0
       tiny-lru: 8.0.2
       undici: 5.10.0
-      ws: 8.8.1
+      ws: 8.9.0
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -7351,8 +7355,8 @@ packages:
       typedarray-to-buffer: 3.1.5
     dev: true
 
-  /ws/8.8.1:
-    resolution: {integrity: sha512-bGy2JzvzkPowEJV++hF07hAD6niYSr0JzBNo/J29WsB57A2r7Wlc1UFcTR9IzrPvuNVO4B8LGqF8qcpsVOhJCA==}
+  /ws/8.9.0:
+    resolution: {integrity: sha512-Ja7nszREasGaYUYCI2k4lCKIRTt+y7XuqVoHR44YpI49TtryyqbqvDMn5eqfW7e6HzTukDRIsXqzVHScqRcafg==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1

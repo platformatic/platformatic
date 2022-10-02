@@ -41,9 +41,9 @@ test('emit events', async ({ equal, same, teardown }) => {
   const mq = MQEmitter()
   equal(setupEmitter({ mapper, mq }), undefined)
   const queue = await mapper.subscribe([
-    '/entity/page/create',
-    '/entity/page/update/+',
-    '/entity/page/delete/+'
+    '/entity/page/created',
+    '/entity/page/updated/+',
+    '/entity/page/deleted/+'
   ])
   equal(mapper.mq, mq)
 
@@ -119,9 +119,9 @@ test('return entities', async ({ pass, teardown, equal, same }) => {
   await app.ready()
   const pageEntity = app.platformatic.entities.page
   const queue = await app.platformatic.subscribe([
-    '/entity/page/create',
-    '/entity/page/update/+',
-    '/entity/page/delete/+'
+    '/entity/page/created',
+    '/entity/page/updated/+',
+    '/entity/page/deleted/+'
   ])
 
   const expected = []
@@ -131,7 +131,7 @@ test('return entities', async ({ pass, teardown, equal, same }) => {
     input: { title: 'fourth page' }
   })
   expected.push({
-    topic: '/entity/page/create',
+    topic: '/entity/page/created',
     page
   })
 
@@ -143,7 +143,7 @@ test('return entities', async ({ pass, teardown, equal, same }) => {
     }
   })
   expected.push({
-    topic: '/entity/page/update/' + page.id,
+    topic: '/entity/page/updated/' + page.id,
     page: page2
   })
 
@@ -157,7 +157,7 @@ test('return entities', async ({ pass, teardown, equal, same }) => {
   })
 
   expected.push({
-    topic: '/entity/page/delete/' + page.id,
+    topic: '/entity/page/deleted/' + page.id,
     page: page2
   })
 
@@ -195,7 +195,7 @@ test('subscribe 1 argument', async ({ equal, same, teardown }) => {
 
   const mq = MQEmitter()
   equal(setupEmitter({ mapper, mq }), undefined)
-  const queue = await mapper.subscribe('/entity/page/create')
+  const queue = await mapper.subscribe('/entity/page/created')
   equal(mapper.mq, mq)
 
   const expected = []
@@ -205,7 +205,7 @@ test('subscribe 1 argument', async ({ equal, same, teardown }) => {
     input: { title: 'fourth page' }
   })
   expected.push({
-    topic: '/entity/page/create',
+    topic: '/entity/page/created',
     page
   })
 
