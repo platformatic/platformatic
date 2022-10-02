@@ -169,6 +169,14 @@ jobs:
       if: ${{ matrix.db != 'sqlite' }}
     - name: pnpm install
       run: pnpm install --offline 
+    - name: Linting for test suite sql-mapper
+      run: cd packages/sql-mapper && npx standard; cd ../..
+    - name: Linting for test suite sql-json-schema-mapper
+      run: cd packages/sql-json-schema-mapper && npx standard; cd ../..
+    - name: Linting for test suite sql-openapi
+      run: cd packages/sql-openapi && npx standard; cd ../..
+    - name: Linting for test suite sql-graphql
+      run: cd packages/sql-graphql && npx standard; cd ../..
     - name: Wait for DB
       run: sleep 10
       if: ${{ matrix.db != 'sqlite' }}
