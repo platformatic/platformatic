@@ -59,20 +59,7 @@ async function execute (logger, args, config) {
     const migrations = await postgrator.getMigrations()
     const current = await postgrator.getDatabaseVersion()
 
-    if (args.up) {
-      const nextUp = migrations.filter(x => x.version > current)
-        .filter(x => x.action === 'do')
-        .sort((a, b) => a.version - b.version)
-        .map(extractVersionFromMigration)[0]
-      if (!nextUp) {
-        logger.info('No migrations to run')
-        return
-      }
-      await postgrator.migrate(nextUp)
-      return
-    }
-
-    if (args.down) {
+    if (args.rollback) {
       if (current === 0) {
         logger.info('No migrations to rollback')
         return
@@ -81,10 +68,8 @@ async function execute (logger, args, config) {
         .filter(x => x.action === 'undo')
         .sort((a, b) => a.version - b.version).reverse()
         .map(extractVersionFromMigration)[0]
+      nextDown ||= '000'
 
-      if (!nextDown) {
-        nextDown = '000'
-      }
       await postgrator.migrate(nextDown)
       return
     }

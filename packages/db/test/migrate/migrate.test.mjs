@@ -38,7 +38,7 @@ test('ignore versions', async ({ equal, match, teardown }) => {
   match(sanitized, '001.do.sql')
 })
 
-test('migrate up & down', async ({ rejects, match, teardown }) => {
+test('migrations rollback', async ({ rejects, match, teardown }) => {
   const db = await connectAndResetDB()
   teardown(() => db.dispose())
 
@@ -51,38 +51,30 @@ test('migrate up & down', async ({ rejects, match, teardown }) => {
     match(sanitized, '003.do.sql')
   }
 
-  // Migration up, no migrations to run
-  {
-    const { stdout } = await execa('node', [cliPath, '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-u'])
-    console.log(stdout)
-    const sanitized = stripAnsi(stdout)
-    match(sanitized, 'No migrations to run')
-  }
-
   // Down to no migrations applied
   {
-    const { stdout } = await execa('node', [cliPath, '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-d'])
+    const { stdout } = await execa('node', [cliPath, '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'])
     console.log(stdout)
     const sanitized = stripAnsi(stdout)
     match(sanitized, '003.undo.sql')
   }
 
   {
-    const { stdout } = await execa('node', [cliPath, '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-d'])
+    const { stdout } = await execa('node', [cliPath, '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'])
     console.log(stdout)
     const sanitized = stripAnsi(stdout)
     match(sanitized, '002.undo.sql')
   }
 
   {
-    const { stdout } = await execa('node', [cliPath, '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-d'])
+    const { stdout } = await execa('node', [cliPath, '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'])
     console.log(stdout)
     const sanitized = stripAnsi(stdout)
     match(sanitized, '001.undo.sql')
   }
 
   {
-    const { stdout } = await execa('node', [cliPath, '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-d'])
+    const { stdout } = await execa('node', [cliPath, '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'])
     console.log(stdout)
     const sanitized = stripAnsi(stdout)
     match(sanitized, 'No migrations to rollback')
@@ -90,30 +82,11 @@ test('migrate up & down', async ({ rejects, match, teardown }) => {
 
   // ...and back!
   {
-    const { stdout } = await execa('node', [cliPath, '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-u'])
-    console.log(stdout)
+    // apply all migrations
+    const { stdout } = await execa('node', [cliPath, '-c', getFixturesConfigFileLocation('multiple-migrations.json')])
     const sanitized = stripAnsi(stdout)
     match(sanitized, '001.do.sql')
-  }
-
-  {
-    const { stdout } = await execa('node', [cliPath, '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-u'])
-    console.log(stdout)
-    const sanitized = stripAnsi(stdout)
     match(sanitized, '002.do.sql')
-  }
-
-  {
-    const { stdout } = await execa('node', [cliPath, '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-u'])
-    console.log(stdout)
-    const sanitized = stripAnsi(stdout)
     match(sanitized, '003.do.sql')
-  }
-
-  {
-    const { stdout } = await execa('node', [cliPath, '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-u'])
-    console.log(stdout)
-    const sanitized = stripAnsi(stdout)
-    match(sanitized, 'No migrations to run')
   }
 })

@@ -17,11 +17,10 @@ async function migrate (_args) {
   try {
     const { configManager, args } = await loadConfig({
       string: ['to'],
-      boolean: ['up', 'down'],
+      boolean: ['rollback'],
       alias: {
         t: 'to',
-        u: 'up',
-        d: 'down'
+        r: 'rollback'
       }
     }, _args)
 

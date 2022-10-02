@@ -30,10 +30,10 @@ $ platformatic db migrate --to 002
 
 Will execute `004.undo.sql`, `003.undo.sql` in this order. If you keep those files in migrations directory, when the server restarts it will execute `003.do.sql` and `004.do.sql` in this order.
 
-Also, it's possible to apply/rollback migrations one step up or down  with `-u` and `-d`.   
+It's also possible to rollback a single migration with `-r`:   
 
 ```shell
-$ platformatic db migrate -u 
+$ platformatic db migrate -r 
 ```
 
 ## How to run migrations
