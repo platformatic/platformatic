@@ -1,8 +1,19 @@
-import { join, basename } from 'path'
+import { join, basename, extname } from 'path'
 import Postgrator from 'postgrator'
 import { MigrateError } from './errors.mjs'
 import { setupDB } from './utils.js'
 import { stat } from 'fs/promises'
+
+// We need to parse the version from the filename
+// because of https://github.com/rickbergfalk/postgrator/issues/160
+const extractVersionFromMigration = (migration) => {
+  const base = basename(migration.filename)
+  const ext = extname(base)
+  const basenameNoExt = basename(migration.filename, ext)
+  const [version] = basenameNoExt.split('.')
+  return version
+}
+
 async function execute (logger, args, config) {
   const migrationsConfig = config.migrations
   if (!migrationsConfig || !migrationsConfig.dir) {
@@ -45,14 +56,31 @@ async function execute (logger, args, config) {
       'migration-finished',
       (migration) => logger.debug(`completed ${basename(migration.filename)}`)
     )
+    const migrations = await postgrator.getMigrations()
+    const current = await postgrator.getDatabaseVersion()
+
+    if (args.rollback) {
+      if (current === 0) {
+        logger.info('No migrations to rollback')
+        return
+      }
+      let nextDown = migrations.filter(x => x.version < current)
+        .filter(x => x.action === 'undo')
+        .sort((a, b) => a.version - b.version).reverse()
+        .map(extractVersionFromMigration)[0]
+      nextDown ||= '000'
+
+      await postgrator.migrate(nextDown)
+      return
+    }
 
     await postgrator.migrate(args.to)
   } catch (error) {
     logger.error(error)
+  } finally {
+    // Once done migrating, close your connection.
+    await db.dispose()
   }
-
-  // Once done migrating, close your connection.
-  await db.dispose()
 }
 async function checkMigrationsDirectoryExists (dirName) {
   try {
