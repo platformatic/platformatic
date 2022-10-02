@@ -4,7 +4,7 @@ const t = require('tap')
 const sqlOpenAPI = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { clear, connInfo, isSQLite } = require('./helper')
+const { clear, connInfo, isSQLite, isMariaDB } = require('./helper')
 const { resolve } = require('path')
 const { test } = t
 
@@ -123,7 +123,6 @@ test('simple db, simple rest API', async (t) => {
       url: '/documentation/json'
     })
     const json = res.json()
-    // console.log(JSON.stringify(json, null, 2))
     matchSnapshot(json, 'GET /documentation/json response')
   }
 
@@ -229,7 +228,6 @@ test('nullable fields', async (t) => {
       url: '/documentation/json'
     })
     const openapi = res.json()
-    // console.log(JSON.stringify(openapi, null, 2))
     matchSnapshot(openapi, 'GET /documentation/json response')
   }
 })
@@ -510,4 +508,48 @@ test('simple db, simple rest API', async (t) => {
   })
   const json = res.json()
   matchSnapshot(json, 'GET /documentation/json response')
+})
+
+test('deserialize JSON columns', { skip: isSQLite }, async (t) => {
+  const { pass, teardown, same } = t
+  const app = fastify()
+  const jsonData = {
+    foo: 'bar',
+    baz: 42,
+    items: ['foo', 'bar'],
+    nested: {
+      hello: 'world'
+    }
+  }
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      await db.query(sql`CREATE TABLE pages (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        metadata JSON NOT NULL
+      );`)
+
+      await db.query(sql`INSERT INTO pages (id, title, metadata) VALUES (1, 'Hello World', ${JSON.stringify(jsonData)})`)
+    }
+  })
+  app.register(sqlOpenAPI)
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  const res = await app.inject({
+    method: 'GET',
+    url: '/pages'
+  })
+  const json = res.json()
+  if (isMariaDB) {
+    same(json[0].metadata, JSON.stringify(jsonData))
+  } else {
+    same(json[0].metadata, jsonData)
+  }
 })
