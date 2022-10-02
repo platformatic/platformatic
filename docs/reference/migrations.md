@@ -24,7 +24,7 @@ You can always rollback some migrations specifing what version you would like to
 
 _Example_
 
-```shell
+```bash
 $ platformatic db migrate --to 002
 ```
 
@@ -32,7 +32,7 @@ Will execute `004.undo.sql`, `003.undo.sql` in this order. If you keep those fil
 
 It's also possible to rollback a single migration with `-r`:   
 
-```shell
+```bash
 $ platformatic db migrate -r 
 ```
 
