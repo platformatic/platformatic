@@ -291,6 +291,7 @@ test('list', async ({ pass, teardown, same, equal }) => {
       url: '/posts'
     })
     equal(res.statusCode, 200, '/posts status code')
+    equal(res.headers['x-total-count'], undefined, '/posts without x-total-count')
     same(res.json(), posts.map((p, i) => {
       return { ...p, id: i + 1 + '' }
     }), '/posts response')
@@ -299,13 +300,22 @@ test('list', async ({ pass, teardown, same, equal }) => {
   {
     const res = await app.inject({
       method: 'GET',
+      url: '/posts?totalCount=true'
+    })
+    equal(res.headers['x-total-count'], posts.length, '/posts?totalCount=true with x-total-count')
+    equal(res.statusCode, 200, '/posts?totalCount=true status code')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
       url: '/posts?limit=2&offset=1'
     })
-    equal(res.statusCode, 200, 'posts status code')
-    same(res.headers['x-total-count'], undefined, 'GET /api/pages without totalCount')
+    equal(res.statusCode, 200, '/posts?limit=2&offset=1 status code')
+    same(res.headers['x-total-count'], undefined, '/posts?limit=2&offset=1 without x-total-count')
     same(res.json(), posts.map((p, i) => {
       return { ...p, id: i + 1 + '' }
-    }).slice(1, 3), 'posts response')
+    }).slice(1, 3), '/posts?limit=2&offset=1 response')
   }
 
   {
@@ -313,11 +323,11 @@ test('list', async ({ pass, teardown, same, equal }) => {
       method: 'GET',
       url: '/posts?limit=2&offset=1&totalCount=true'
     })
-    equal(res.headers['x-total-count'], 4, 'GET /api/pages with totalCount')
+    equal(res.headers['x-total-count'], posts.length, '/posts?limit=2&offset=1&totalCount=true without x-total-count')
     equal(res.statusCode, 200, 'posts status code')
     same(res.json(), posts.map((p, i) => {
       return { ...p, id: i + 1 + '' }
-    }).slice(1, 3), 'posts response')
+    }).slice(1, 3), '/posts?limit=2&offset=1&totalCount=true response')
   }
 })
 
