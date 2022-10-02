@@ -166,13 +166,13 @@ jobs:
     - name: pnpm install
       run: pnpm install --offline 
     - name: Linting for test suite sql-mapper
-      run: cd packages/sql-mapper && npx standard; cd ../..
+      run: cd packages/sql-mapper && pnpm run lint; cd ../..
     - name: Linting for test suite sql-json-schema-mapper
-      run: cd packages/sql-json-schema-mapper && npx standard; cd ../..
+      run: cd packages/sql-json-schema-mapper && pnpm run lint; cd ../..
     - name: Linting for test suite sql-openapi
-      run: cd packages/sql-openapi && npx standard; cd ../..
+      run: cd packages/sql-openapi && pnpm run lint; cd ../..
     - name: Linting for test suite sql-graphql
-      run: cd packages/sql-graphql && npx standard; cd ../..
+      run: cd packages/sql-graphql && pnpm run lint; cd ../..
 
   ci-db-core-test:
     needs: setup-node_modules
