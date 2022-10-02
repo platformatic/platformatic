@@ -147,8 +147,34 @@ jobs:
       run: pnpm install --offline 
     - name: Run test suite
       run: cd packages/db-authorization && pnpm test
-  
-  ci-db-core:
+
+  ci-db-core-lint:
+    needs: setup-node_modules
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 5
+    strategy:
+      matrix:
+        node-version: [16, 18]
+        os: [ubuntu-latest]
+    steps:
+    - uses: actions/checkout@v3
+    - uses: pnpm/action-setup@v2.2.2
+    - uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'pnpm'
+    - name: pnpm install
+      run: pnpm install --offline 
+    - name: Linting for test suite sql-mapper
+      run: cd packages/sql-mapper && npx standard; cd ../..
+    - name: Linting for test suite sql-json-schema-mapper
+      run: cd packages/sql-json-schema-mapper && npx standard; cd ../..
+    - name: Linting for test suite sql-openapi
+      run: cd packages/sql-openapi && npx standard; cd ../..
+    - name: Linting for test suite sql-graphql
+      run: cd packages/sql-graphql && npx standard; cd ../..
+
+  ci-db-core-test:
     needs: setup-node_modules
     runs-on: ${{matrix.os}}
     timeout-minutes: 5
@@ -169,14 +195,6 @@ jobs:
       if: ${{ matrix.db != 'sqlite' }}
     - name: pnpm install
       run: pnpm install --offline 
-    - name: Linting for test suite sql-mapper
-      run: cd packages/sql-mapper && npx standard; cd ../..
-    - name: Linting for test suite sql-json-schema-mapper
-      run: cd packages/sql-json-schema-mapper && npx standard; cd ../..
-    - name: Linting for test suite sql-openapi
-      run: cd packages/sql-openapi && npx standard; cd ../..
-    - name: Linting for test suite sql-graphql
-      run: cd packages/sql-graphql && npx standard; cd ../..
     - name: Wait for DB
       run: sleep 10
       if: ${{ matrix.db != 'sqlite' }}
