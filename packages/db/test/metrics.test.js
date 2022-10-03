@@ -150,8 +150,8 @@ test('support basic auth', async ({ teardown, equal, fail, match }) => {
   }
 })
 
-function testPrometheusJsonOutput(output) {
-  for (let metric of output) {
+function testPrometheusJsonOutput (output) {
+  for (const metric of output) {
     equal(typeof metric.help, 'string', 'metric.help is string')
     equal(typeof metric.name, 'string', 'metric.name is string')
     equal(typeof metric.type, 'string', 'metric.type is string')
