@@ -114,7 +114,7 @@ async function entityPlugin (app, opts) {
 
       if (key.startsWith('where.')) {
         const [, field, modifier] = key.split('.')
-        where[field] ||=  {}
+        where[field] ||= {}
         let value = query[key]
         if (modifier === 'in' || modifier === 'nin') {
           // TODO handle escaping of ,
