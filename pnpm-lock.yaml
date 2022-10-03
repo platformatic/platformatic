@@ -102,6 +102,7 @@ importers:
     specifiers:
       '@databases/pg': ^5.3.0
       '@databases/sqlite': ^4.0.0
+      '@fastify/accepts': ^4.0.1
       '@fastify/basic-auth': ^4.0.0
       '@fastify/cors': ^8.0.0
       '@fastify/deepmerge': ^1.1.0
@@ -148,6 +149,7 @@ importers:
       undici: ^5.8.0
       why-is-node-running: ^2.2.2
     dependencies:
+      '@fastify/accepts': 4.0.1
       '@fastify/basic-auth': 4.0.0
       '@fastify/cors': 8.1.0
       '@fastify/deepmerge': 1.1.0
@@ -225,7 +227,7 @@ importers:
       '@platformatic/db-core': link:../db-core
       fast-jwt: 1.7.1
       fastify: 4.6.0
-      mercurius: 11.0.0
+      mercurius: 11.0.0_graphql@16.6.0
       snazzy: 9.0.0
       standard: 17.0.0
       tap: 16.3.0
@@ -248,7 +250,7 @@ importers:
       fastify-plugin: 4.2.1
     devDependencies:
       fastify: 4.6.0
-      mercurius: 11.0.0
+      mercurius: 11.0.0_graphql@16.6.0
       snazzy: 9.0.0
       standard: 17.0.0
       tap: 16.3.0
@@ -326,7 +328,7 @@ importers:
       graphql-scalars: 1.18.0_graphql@16.6.0
       graphql-type-json: 0.3.2_graphql@16.6.0
       inflected: 2.1.0
-      mercurius: 11.0.0
+      mercurius: 11.0.0_graphql@16.6.0
     devDependencies:
       '@platformatic/sql-mapper': link:../sql-mapper
       fastify: 4.6.0
@@ -404,7 +406,7 @@ importers:
     devDependencies:
       '@platformatic/sql-mapper': link:../sql-mapper
       fastify: 4.6.0
-      mercurius: 11.0.0
+      mercurius: 11.0.0_graphql@16.6.0
       openapi-types: 12.0.2
       snazzy: 9.0.0
       standard: 17.0.0
@@ -877,11 +879,18 @@ packages:
     resolution: {integrity: sha512-4R/N2KfYeld7A5LGkai+iUFMahXcxxYbDp+XS2B1yuL3cdmZLJ9TlCnNzT3q5xFTqsYm0GPpinLUwfSwjcVjyA==}
     engines: {node: '>=14'}
 
+  /@fastify/accepts/4.0.1:
+    resolution: {integrity: sha512-ekyareDwz1i9mNXOdX8Mh1DRU/vDuAf0ht7pvf2vs95/4gYKj54Viztpcb+v745Rgxlq6I+U3n+iO3OiKYcaaQ==}
+    dependencies:
+      accepts: 1.3.8
+      fastify-plugin: 4.2.1
+    dev: false
+
   /@fastify/ajv-compiler/3.3.1:
     resolution: {integrity: sha512-IRnids8lblQ8e1i8h4JLyfJmebXE+ohcj8x8X/+Ew6ZB4H0Ui05z5YL6q5FOcl0zItVpu4adRzeyVNNUwmduIg==}
     dependencies:
       ajv: 8.11.0
-      ajv-formats: 2.1.1
+      ajv-formats: 2.1.1_ajv@8.11.0
       fast-uri: 2.1.0
 
   /@fastify/basic-auth/4.0.0:
@@ -1618,6 +1627,14 @@ packages:
   /abstract-logging/2.0.1:
     resolution: {integrity: sha512-2BjRTZxTPvheOvGbBslFSYOUkr+SjPtOnrLP33f+VIWLzezQpZcqVg7ja3L4dBXmzzgwT+a029jRx5PCi3JuiA==}
 
+  /accepts/1.3.8:
+    resolution: {integrity: sha512-PYAthTa2m2VKxuvSD3DPC/Gy+U+sOA1LAuT8mkmRuvw+NACSaeXEQ+NHcVF7rONl6qcaxV3Uuemwawk+7+SJLw==}
+    engines: {node: '>= 0.6'}
+    dependencies:
+      mime-types: 2.1.35
+      negotiator: 0.6.3
+    dev: false
+
   /ace-builds/1.11.2:
     resolution: {integrity: sha512-1VNeUF56b6gkaeeWJXMBBuz5n0ceDchjUwwVmTKpNM/N3YRrUEpykGEEsg7Y1PKP7IRyqtXfAu6VJDg7OZaLfA==}
     dev: true
@@ -1667,8 +1684,10 @@ packages:
       clean-stack: 2.2.0
       indent-string: 4.0.0
 
-  /ajv-formats/2.1.1:
+  /ajv-formats/2.1.1_ajv@8.11.0:
     resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
+    peerDependencies:
+      ajv: ^8.0.0
     peerDependenciesMeta:
       ajv:
         optional: true
@@ -3230,7 +3249,7 @@ packages:
     dependencies:
       '@fastify/deepmerge': 1.1.0
       ajv: 8.11.0
-      ajv-formats: 2.1.1
+      ajv-formats: 2.1.1_ajv@8.11.0
       fast-deep-equal: 3.1.3
       fast-uri: 2.1.0
       rfdc: 1.3.0
@@ -4711,9 +4730,11 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
-  /mercurius/11.0.0:
+  /mercurius/11.0.0_graphql@16.6.0:
     resolution: {integrity: sha512-7t++ALNt9agIrc2hLhGes4ZIEwQ9zAz8hUmmTQojLNhuGCLDU7NKzcxKsX7UClBJewaQCORqlepE+k11Dsq6lg==}
     engines: {node: '>=14.19.3'}
+    peerDependencies:
+      graphql: ^16.0.0
     dependencies:
       '@fastify/error': 3.0.0
       '@fastify/static': 6.5.0
@@ -4765,14 +4786,12 @@ packages:
   /mime-db/1.52.0:
     resolution: {integrity: sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg==}
     engines: {node: '>= 0.6'}
-    dev: true
 
   /mime-types/2.1.35:
     resolution: {integrity: sha512-ZDY+bPm5zTTF+YpCrAU9nK0UgICYPT0QtT1NZWFv4s++TNkcgVaT0g6+4R2uI4MjQjzysHB1zxuWL50hzaeXiw==}
     engines: {node: '>= 0.6'}
     dependencies:
       mime-db: 1.52.0
-    dev: true
 
   /mime/1.6.0:
     resolution: {integrity: sha512-x0Vn8spI+wuJ1O6S7gnbaQg8Pxh4NNHb7KSINmEWKiPE4RKOplvijn+NkmYmmRgP68mc70j2EbeTFRsrswaQeg==}
@@ -4934,7 +4953,6 @@ packages:
   /negotiator/0.6.3:
     resolution: {integrity: sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==}
     engines: {node: '>= 0.6'}
-    optional: true
 
   /node-addon-api/4.3.0:
     resolution: {integrity: sha512-73sE9+3UaLYYFmDsFZnqCInzPyh3MqIwZO9cw58yIqAZhONrrabrYyYe3TuIqtIiOuTXVhsGau8hcrhhwSsDIQ==}

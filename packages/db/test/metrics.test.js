@@ -32,6 +32,39 @@ test('has /metrics endpoint on default prometheus port', async ({ teardown, equa
   }
 })
 
+test('has /metrics endpoint with accept application/json', async ({ teardown, equal, fail, match }) => {
+  const server = await buildServer(buildConfig({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    metrics: true,
+    core: {
+      ...connInfo
+    },
+    authorization: {
+      adminSecret: 'secret'
+    }
+  }))
+  teardown(server.stop)
+  await server.listen()
+  const res = await (request(
+    'http://127.0.0.1:9090/metrics',
+    {
+      headers: {
+        accept: 'application/json'
+      }
+    }
+  ))
+  equal(res.statusCode, 200)
+  match(res.headers['content-type'], /^application\/json/)
+  try {
+    await res.body.json()
+  } catch (err) {
+    fail()
+  }
+})
+
 test('has /metrics endpoint on configured port', async ({ teardown, equal, fail, match }) => {
   const server = await buildServer(buildConfig({
     server: {
