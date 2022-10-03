@@ -154,14 +154,13 @@ jobs:
     timeout-minutes: 5
     strategy:
       matrix:
-        node-version: [18]
         os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@v3
     - uses: pnpm/action-setup@v2.2.2
     - uses: actions/setup-node@v3
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: 18
         cache: 'pnpm'
     - name: pnpm install
       run: pnpm install --offline 
