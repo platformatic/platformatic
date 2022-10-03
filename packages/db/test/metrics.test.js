@@ -1,6 +1,6 @@
 'use strict'
 
-const { test } = require('tap')
+const { test, equal } = require('tap')
 const { buildServer } = require('..')
 const { buildConfig, connInfo } = require('./helper')
 const { request } = require('undici')
@@ -59,7 +59,8 @@ test('has /metrics endpoint with accept application/json', async ({ teardown, eq
   equal(res.statusCode, 200)
   match(res.headers['content-type'], /^application\/json/)
   try {
-    await res.body.json()
+    const json = await res.body.json()
+    testPrometheusJsonOutput(json)
   } catch (err) {
     fail()
   }
@@ -149,6 +150,15 @@ test('support basic auth', async ({ teardown, equal, fail, match }) => {
   }
 })
 
+function testPrometheusJsonOutput(output) {
+  for (let metric of output) {
+    equal(typeof metric.help, 'string', 'metric.help is string')
+    equal(typeof metric.name, 'string', 'metric.name is string')
+    equal(typeof metric.type, 'string', 'metric.type is string')
+    equal(typeof metric.aggregator, 'string', 'metric.aggregator is string')
+    equal(Array.isArray(metric.values), true, 'metric.values is array')
+  }
+}
 function testPrometheusOutput (output) {
   let metricBlock = []
   const lines = output.split('\n')
