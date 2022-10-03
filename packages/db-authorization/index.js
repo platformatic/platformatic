@@ -86,13 +86,13 @@ async function auth (app, opts) {
       checkSaveMandatoryFieldsInRules(type, rules)
 
       app.platformatic.addEntityHooks(entityKey, {
-        async find (originalFind, { where, ctx, fields }) {
+        async find (originalFind, { where, ctx, fields, ...restOpts }) {
           const request = getRequestFromContext(ctx)
           const rule = findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
           checkFieldsFromRule(rule.find, fields)
           where = await fromRuleToWhere(ctx, rule.find, where, request.user)
 
-          return originalFind({ where, ctx, fields })
+          return originalFind({ ...restOpts, where, ctx, fields })
         },
 
         async save (originalSave, { input, ctx, fields }) {
