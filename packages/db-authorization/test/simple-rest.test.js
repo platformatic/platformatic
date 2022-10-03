@@ -226,3 +226,97 @@ test('users can save and update their own pages, read everybody\'s and delete no
     }, 'DELETE /pages/1 response (Unauthorized)')
   }
 })
+
+test('users can find pages with parameters specified', async ({ pass, teardown, same, equal }) => {
+  const app = fastify()
+  app.register(core, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(auth, {
+    jwt: {
+      secret: 'supersecret'
+    },
+    roleKey: 'X-PLATFORMATIC-ROLE',
+    anonymousRole: 'anonymous',
+    rules: [{
+      role: 'user',
+      entity: 'page',
+      save: true,
+      find: true,
+      delete: false,
+      defaults: {
+        userId: 'X-PLATFORMATIC-USER-ID'
+      }
+    }]
+  })
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  const token = await app.jwt.sign({
+    'X-PLATFORMATIC-USER-ID': 42,
+    'X-PLATFORMATIC-ROLE': 'user'
+  })
+
+  const pages = [
+    {
+      title: 'title 1'
+    },
+    {
+      title: 'title 2'
+    },
+    {
+      title: 'title 3'
+    },
+    {
+      title: 'title 4'
+    },
+    {
+      title: 'title 5'
+    }
+  ]
+  for (const page of pages) {
+    await app.inject({
+      method: 'POST',
+      url: '/pages',
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body: page
+    })
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/pages?limit=2&offset=2',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    equal(res.statusCode, 200, '/pages?limit=2&offset=2 status code')
+    same(res.json(), pages.map((p, i) => {
+      return { ...p, id: i + 1, userId: 42 }
+    }).slice(2, 4), '/pages?limit=2&offset=2 response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/pages?orderby.id=desc',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    equal(res.statusCode, 200, '/pages?orderby.id=desc status code')
+    same(res.json(), pages.map((p, i) => {
+      return { ...p, id: i + 1, userId: 42 }
+    }).reverse(), '/pages?orderby.id=desc response')
+  }
+})
