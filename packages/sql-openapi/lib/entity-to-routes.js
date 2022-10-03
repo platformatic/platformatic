@@ -41,9 +41,10 @@ async function entityPlugin (app, opts) {
     }
   }
 
-  const whereArgs = Object.keys(entity.fields).sort().map((name) => {
-    return entity.fields[name]
-  }).reduce((acc, field) => {
+  const sortedEntityFields = Object.keys(entity.fields).sort()
+
+  const whereArgs = sortedEntityFields.reduce((acc, name) => {
+    const field = entity.fields[name]
     const baseKey = `where.${field.camelcase}.`
     for (const modifier of ['eq', 'neq', 'gt', 'gte', 'lt', 'lte']) {
       const key = baseKey + modifier
@@ -58,9 +59,8 @@ async function entityPlugin (app, opts) {
     return acc
   }, {})
 
-  const orderByArgs = Object.keys(entity.fields).sort().map((name) => {
-    return entity.fields[name]
-  }).reduce((acc, field) => {
+  const orderByArgs = sortedEntityFields.reduce((acc, name) => {
+    const field = entity.fields[name]
     const key = `orderby.${field.camelcase}`
     acc[key] = { type: 'string', enum: ['asc', 'desc'] }
     return acc
