@@ -1,10 +1,13 @@
 Start the Platformatic DB server with the following command:
 
+``` bash
  $ platformatic db start
+ ```
 
 You will need a  configuration file. Here is an example to get you started,
 save the following as `platformatic.db.json`:
 
+``` json
   {
     "server": {
       "hostname": "127.0.0.1",
@@ -20,9 +23,10 @@ save the following as `platformatic.db.json`:
       "dir": "./migrations"
     }
   }
+```
 
 
-Remeber to create a migration, run the `db help migrate` command to know more.
+Remember to create a migration, run the `db help migrate` command to know more.
 
 All outstanding migrations will be applied to the database unless the
 `migrations.autoApply` configuration option is set to false.

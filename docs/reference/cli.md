@@ -148,7 +148,8 @@ Options:
   
 #### migrate
 
-Apply all configured migrations to the database:
+Apply all configurated migrations to the database:
+
 ``` bash
   $ platformatic db migrate
 ```
@@ -156,6 +157,7 @@ Apply all configured migrations to the database:
 The migrations will be applied in the order they are specified in the
 folder defined in the configuration file. If you want to apply a specific migration,
 you can use the `--to` option:
+
 ``` bash
   $ platformatic db migrate --to 001
 ```
@@ -170,6 +172,7 @@ Here is an example migration:
 ```
 
 You can always rollback to a specific migration with:
+
 ``` bash
   $ platformatic db migrate --to VERSION
 ```
@@ -195,9 +198,8 @@ Generate a schema from the database and prints it to standard output:
 * `schema openapi` - generate the OpenAPI schema
 
 Options:
-```bash
+
   -c, --config FILE  Specify a configuration file to use
-```
 
 If not specified, the configuration specified will be loaded from
 `platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
@@ -212,6 +214,7 @@ a JavaScript file and configure @platformatic/sql-mapper to connect to
 the database specified in the configuration file.
 
 Here is an example of a seed file:
+
 ``` javascript
   'use strict'
 
@@ -224,6 +227,7 @@ Here is an example of a seed file:
 ```
 
 You can run this using the `seed` command:
+
 ``` bash
   $ platformatic db seed seed.js
 ```
@@ -241,9 +245,10 @@ https://oss.platformatic.dev/docs/reference/configuration.
 #### start
 
 Start the Platformatic DB server with the following command:
+
 ``` bash
  $ platformatic db start
-```
+ ```
 
 You will need a  configuration file. Here is an example to get you started,
 save the following as `platformatic.db.json`:
@@ -275,11 +280,10 @@ All outstanding migrations will be applied to the database unless the
 By sending the SIGUSR2 signal, the server can be reloaded.
 
 Options:
-``` bash
+
   -c, --config FILE     Specify a configuration file to use
   --watch-ignore LIST   Specify a comma separated list of glob patterns to
                         ignore when watching for changes
-```
 
 If not specified, the configuration specified will be loaded from `platformatic.db.json`,
 `platformatic.db.yml`, or `platformatic.db.tml` in the current directory. You can find more details about
@@ -290,6 +294,7 @@ https://oss.platformatic.dev/docs/reference/configuration.
 #### types
 
 Generate typescript types for your entities from the database.
+
 ``` bash
   $ platformatic db types
 ```

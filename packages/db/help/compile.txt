@@ -1,6 +1,7 @@
 Compile typescript plugins.
-
+``` bash
   $ platformatic db compile
+```
 
 As a result of executing this command, the Platformatic DB will compile typescript
 plugins in the `outDir` directory. 

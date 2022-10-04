@@ -1,6 +1,8 @@
 Generate typescript types for your entities from the database.
 
+``` bash
   $ platformatic db types
+```
 
 As a result of executing this command, the Platformatic DB will generate a `types`
 folder with a typescript file for each database entity. It will also generate a
@@ -13,6 +15,7 @@ that "platformatic db types" will ask you.
 Here is an example of a platformatic plugin.js with jsdoc support.
 You can use it to add autocomplete to your code.
 
+``` javascript
 /// <reference path="./global.d.ts" />
 'use strict'
 
@@ -25,6 +28,7 @@ module.exports = async function (app) {
     return movies[0].id
   })
 }
+```
 
 If not specified, the configuration specified will be loaded from
 `platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
