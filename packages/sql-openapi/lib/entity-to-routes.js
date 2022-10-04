@@ -123,7 +123,7 @@ async function entityPlugin (app, opts) {
             value = value.map((v) => parseInt(v))
           }
         }
-        where[modifier] = value
+        where[field][modifier] = value
       } else if (key.startsWith('orderby.')) {
         const [, field] = key.split('.')
         orderBy[field] ||= {}
