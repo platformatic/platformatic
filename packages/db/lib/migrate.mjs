@@ -38,7 +38,9 @@ async function migrate (_args) {
 
     // touch the platformatic db config to trigger a restart
     const now = new Date()
-    utimesSync('platformatic.db.json', now, now)
+
+    const configPath = configManager.fullPath
+    utimesSync(configPath, now, now)
   } catch (err) {
     if (err instanceof MigrateError) {
       logger.error(err.message)
