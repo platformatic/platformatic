@@ -2,6 +2,7 @@ import { test } from 'tap'
 import { execa } from 'execa'
 import { cliPath, connectAndResetDB, getFixturesConfigFileLocation } from './helper.mjs'
 import stripAnsi from 'strip-ansi'
+import fs from 'fs'
 
 test('migrate up', async ({ equal, match, teardown }) => {
   const db = await connectAndResetDB()
@@ -88,5 +89,23 @@ test('migrations rollback', async ({ rejects, match, teardown }) => {
     match(sanitized, '001.do.sql')
     match(sanitized, '002.do.sql')
     match(sanitized, '003.do.sql')
+  }
+})
+
+test('after a migration, platformatic config is touched', async ({ rejects, match, teardown, notSame }) => {
+  const db = await connectAndResetDB()
+  teardown(() => db.dispose())
+
+  const d = new Date()
+  d.setFullYear(d.getFullYear() - 1)
+  fs.utimesSync(getFixturesConfigFileLocation('simple.json'), d, d)
+  const { mtime: mtimePrev } = fs.statSync(getFixturesConfigFileLocation('simple.json'))
+  {
+    const { stdout } = await execa('node', [cliPath, '-c', getFixturesConfigFileLocation('simple.json')])
+    const sanitized = stripAnsi(stdout)
+    match(sanitized, '001.do.sql')
+
+    const { mtime: mtimeAfter } = fs.statSync(getFixturesConfigFileLocation('simple.json'))
+    notSame(mtimePrev, mtimeAfter)
   }
 })
