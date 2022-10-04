@@ -148,7 +148,7 @@ Options:
   
 #### migrate
 
-Apply all configurated migrations to the database:
+Apply all configured migrations to the database:
 
 ``` bash
   $ platformatic db migrate
