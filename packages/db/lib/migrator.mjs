@@ -40,7 +40,7 @@ async function execute (logger, args, config) {
           rows: res
         }
       },
-      validateChecksums: migrationsConfig.validateChecksums === true
+      validateChecksums: true
     })
     if (migrationsConfig.validateChecksums === true) {
       postgrator.on(

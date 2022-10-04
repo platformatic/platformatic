@@ -105,7 +105,7 @@ importers:
       '@fastify/basic-auth': ^4.0.0
       '@fastify/cors': ^8.0.0
       '@fastify/deepmerge': ^1.1.0
-      '@fastify/restartable': ^1.2.1
+      '@fastify/restartable': ^1.3.0
       '@fastify/static': ^6.5.0
       '@fastify/swagger': ^7.4.1
       '@fastify/under-pressure': ^8.0.0
@@ -151,7 +151,7 @@ importers:
       '@fastify/basic-auth': 4.0.0
       '@fastify/cors': 8.1.0
       '@fastify/deepmerge': 1.1.0
-      '@fastify/restartable': 1.2.1
+      '@fastify/restartable': 1.3.0
       '@fastify/static': 6.5.0
       '@fastify/swagger': 7.6.1
       '@fastify/under-pressure': 8.1.0
@@ -225,7 +225,7 @@ importers:
       '@platformatic/db-core': link:../db-core
       fast-jwt: 1.7.1
       fastify: 4.6.0
-      mercurius: 11.0.0
+      mercurius: 11.0.0_graphql@16.6.0
       snazzy: 9.0.0
       standard: 17.0.0
       tap: 16.3.0
@@ -248,7 +248,7 @@ importers:
       fastify-plugin: 4.2.1
     devDependencies:
       fastify: 4.6.0
-      mercurius: 11.0.0
+      mercurius: 11.0.0_graphql@16.6.0
       snazzy: 9.0.0
       standard: 17.0.0
       tap: 16.3.0
@@ -326,7 +326,7 @@ importers:
       graphql-scalars: 1.18.0_graphql@16.6.0
       graphql-type-json: 0.3.2_graphql@16.6.0
       inflected: 2.1.0
-      mercurius: 11.0.0
+      mercurius: 11.0.0_graphql@16.6.0
     devDependencies:
       '@platformatic/sql-mapper': link:../sql-mapper
       fastify: 4.6.0
@@ -404,7 +404,7 @@ importers:
     devDependencies:
       '@platformatic/sql-mapper': link:../sql-mapper
       fastify: 4.6.0
-      mercurius: 11.0.0
+      mercurius: 11.0.0_graphql@16.6.0
       openapi-types: 12.0.2
       snazzy: 9.0.0
       standard: 17.0.0
@@ -881,7 +881,7 @@ packages:
     resolution: {integrity: sha512-IRnids8lblQ8e1i8h4JLyfJmebXE+ohcj8x8X/+Ew6ZB4H0Ui05z5YL6q5FOcl0zItVpu4adRzeyVNNUwmduIg==}
     dependencies:
       ajv: 8.11.0
-      ajv-formats: 2.1.1
+      ajv-formats: 2.1.1_ajv@8.11.0
       fast-uri: 2.1.0
 
   /@fastify/basic-auth/4.0.0:
@@ -935,8 +935,8 @@ packages:
       which: 2.0.2
     dev: true
 
-  /@fastify/restartable/1.2.1:
-    resolution: {integrity: sha512-CxB8qrRn3n6n3cUi27i1oI/MtOXeuZSgXbUNTUZP3t0eYQEsLQTh+WhKH5nfb7dT3Op5BVMefuWpRDUXmmHFhQ==}
+  /@fastify/restartable/1.3.0:
+    resolution: {integrity: sha512-dyi/m9dK7ZWjNr/cAH4gqRSR8ceQoCMtfmU5VqMeF0jd91ym20Tsy0bA3oBWE3psVEjQxmMJcZdihr0vZleiqw==}
     dependencies:
       '@fastify/error': 3.0.0
       fastify: 4.6.0
@@ -1667,8 +1667,10 @@ packages:
       clean-stack: 2.2.0
       indent-string: 4.0.0
 
-  /ajv-formats/2.1.1:
+  /ajv-formats/2.1.1_ajv@8.11.0:
     resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
+    peerDependencies:
+      ajv: ^8.0.0
     peerDependenciesMeta:
       ajv:
         optional: true
@@ -3230,7 +3232,7 @@ packages:
     dependencies:
       '@fastify/deepmerge': 1.1.0
       ajv: 8.11.0
-      ajv-formats: 2.1.1
+      ajv-formats: 2.1.1_ajv@8.11.0
       fast-deep-equal: 3.1.3
       fast-uri: 2.1.0
       rfdc: 1.3.0
@@ -4711,9 +4713,11 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
-  /mercurius/11.0.0:
+  /mercurius/11.0.0_graphql@16.6.0:
     resolution: {integrity: sha512-7t++ALNt9agIrc2hLhGes4ZIEwQ9zAz8hUmmTQojLNhuGCLDU7NKzcxKsX7UClBJewaQCORqlepE+k11Dsq6lg==}
     engines: {node: '>=14.19.3'}
+    peerDependencies:
+      graphql: ^16.0.0
     dependencies:
       '@fastify/error': 3.0.0
       '@fastify/static': 6.5.0
