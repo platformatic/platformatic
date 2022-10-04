@@ -98,8 +98,9 @@ platformatic db <command>
 #### compile
 
 Compile typescript plugins.
-
+``` bash
   $ platformatic db compile
+```
 
 As a result of executing this command, the Platformatic DB will compile typescript
 plugins in the `outDir` directory. 
@@ -128,8 +129,9 @@ Available commands:
 #### init
 
 Initiate default Platformatic DB application:
-
+``` bash
   $ platformatic db init
+```
 
 As a result of executing this command, the `platformatic.db.json` configuration
 file and the `migrations` folder with migration examples will be generated.
@@ -146,26 +148,31 @@ Options:
   
 #### migrate
 
-Apply all configurated migrations to the database:
-
+Apply all configured migrations to the database:
+``` bash
   $ platformatic db migrate
+```
 
 The migrations will be applied in the order they are specified in the
 folder defined in the configuration file. If you want to apply a specific migration,
 you can use the `--to` option:
-
+``` bash
   $ platformatic db migrate --to 001
+```
 
 Here is an example migration:
 
+``` sql
   CREATE TABLE graphs (
     id SERIAL PRIMARY KEY,
     name TEXT
   );
+```
 
 You can always rollback to a specific migration with:
-
+``` bash
   $ platformatic db migrate --to VERSION
+```
 
 Use 000 to reset to the initial state.
 
@@ -188,8 +195,9 @@ Generate a schema from the database and prints it to standard output:
 * `schema openapi` - generate the OpenAPI schema
 
 Options:
-
+```bash
   -c, --config FILE  Specify a configuration file to use
+```
 
 If not specified, the configuration specified will be loaded from
 `platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
@@ -204,7 +212,7 @@ a JavaScript file and configure @platformatic/sql-mapper to connect to
 the database specified in the configuration file.
 
 Here is an example of a seed file:
-
+``` javascript
   'use strict'
 
   module.exports = async function ({ entities, db, sql }) {
@@ -213,10 +221,12 @@ Here is an example of a seed file:
       INSERT INTO graphs (name) VALUES ('Hello 2');
     `)
   }
+```
 
 You can run this using the `seed` command:
-
+``` bash
   $ platformatic db seed seed.js
+```
 
 Options:
 
@@ -231,12 +241,14 @@ https://oss.platformatic.dev/docs/reference/configuration.
 #### start
 
 Start the Platformatic DB server with the following command:
-
+``` bash
  $ platformatic db start
+```
 
 You will need a  configuration file. Here is an example to get you started,
 save the following as `platformatic.db.json`:
 
+``` json
   {
     "server": {
       "hostname": "127.0.0.1",
@@ -252,9 +264,10 @@ save the following as `platformatic.db.json`:
       "dir": "./migrations"
     }
   }
+```
 
 
-Remeber to create a migration, run the `db help migrate` command to know more.
+Remember to create a migration, run the `db help migrate` command to know more.
 
 All outstanding migrations will be applied to the database unless the
 `migrations.autoApply` configuration option is set to false.
@@ -262,10 +275,11 @@ All outstanding migrations will be applied to the database unless the
 By sending the SIGUSR2 signal, the server can be reloaded.
 
 Options:
-
+``` bash
   -c, --config FILE     Specify a configuration file to use
   --watch-ignore LIST   Specify a comma separated list of glob patterns to
                         ignore when watching for changes
+```
 
 If not specified, the configuration specified will be loaded from `platformatic.db.json`,
 `platformatic.db.yml`, or `platformatic.db.tml` in the current directory. You can find more details about
@@ -276,8 +290,9 @@ https://oss.platformatic.dev/docs/reference/configuration.
 #### types
 
 Generate typescript types for your entities from the database.
-
+``` bash
   $ platformatic db types
+```
 
 As a result of executing this command, the Platformatic DB will generate a `types`
 folder with a typescript file for each database entity. It will also generate a
@@ -290,6 +305,7 @@ that "platformatic db types" will ask you.
 Here is an example of a platformatic plugin.js with jsdoc support.
 You can use it to add autocomplete to your code.
 
+``` javascript
 /// <reference path="./global.d.ts" />
 'use strict'
 
@@ -302,6 +318,7 @@ module.exports = async function (app) {
     return movies[0].id
   })
 }
+```
 
 If not specified, the configuration specified will be loaded from
 `platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
