@@ -21,7 +21,6 @@ function setupEmitter ({ mq, mapper }) {
         data.fields = undefined
         const res = await original(data)
         await new Promise((resolve) => {
-          console.log('publishing on topic', topic)
           mq.emit({
             topic,
             payload: {
@@ -31,18 +30,32 @@ function setupEmitter ({ mq, mapper }) {
         })
         return res
       },
-      async delete  (original, data) {
-        const res = await original(data)
+      async delete (original, data) {
+        const fields = new Set(data.fields)
+        const res = await original({ ...data, fields: undefined })
         await Promise.all(res.map((data) => {
           const topic = `/entity/${entityName}/deleted/${data[primaryKey]}`
           return new Promise((resolve) => {
             mq.emit({
               topic,
-              [entityName]: data
+              payload: data
             }, resolve)
           })
         }))
-        return res
+
+        if (fields.size > 0) {
+          const actual = []
+          for (const element of res) {
+            const obj = {}
+            for (const field of fields) {
+              obj[field] = element[field]
+            }
+            actual.push(obj)
+          }
+          return actual
+        } else {
+          return res
+        }
       }
     })
   }

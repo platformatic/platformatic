@@ -34,7 +34,7 @@ function createWebSocketClient (t, app) {
   return { client, ws }
 }
 
-test('subscription - automatically creation', async t => {
+test('subscription - crud', async t => {
   const app = Fastify()
   t.teardown(() => app.close())
 
@@ -52,23 +52,57 @@ test('subscription - automatically creation', async t => {
 
   const { client } = createWebSocketClient(t, app)
 
-  const query = `subscription {
-    pageCreated {
-      id
-      title
-    }
-  }`
-
   client.write(JSON.stringify({
     type: 'connection_init'
   }))
-  client.write(JSON.stringify({
-    id: 1,
-    type: 'start',
-    payload: {
-      query
-    }
-  }))
+
+  {
+    const query = `subscription {
+      pageCreated {
+        id
+        title
+      }
+    }`
+    client.write(JSON.stringify({
+      id: 1,
+      type: 'start',
+      payload: {
+        query
+      }
+    }))
+  }
+
+  {
+    const query = `subscription {
+      pageUpdated {
+        id
+        title
+      }
+    }`
+    client.write(JSON.stringify({
+      id: 1,
+      type: 'start',
+      payload: {
+        query
+      }
+    }))
+  }
+
+  {
+    const query = `subscription {
+      pageDeleted {
+        id
+        title
+      }
+    }`
+    client.write(JSON.stringify({
+      id: 1,
+      type: 'start',
+      payload: {
+        query
+      }
+    }))
+  }
 
   {
     const [chunk] = await once(client, 'data')
@@ -106,6 +140,76 @@ test('subscription - automatically creation', async t => {
           pageCreated: {
             id: '1',
             title: 'Hello World'
+          }
+        }
+      }
+    })
+  }
+
+  t.comment('updating entity')
+
+  await app.inject({
+    method: 'POST',
+    url: '/graphql',
+    body: {
+      query: `
+        mutation {
+          savePage(input: { id: 1, title: "Harry Potter" }) {
+            id
+          }
+        }
+      `
+    }
+  })
+
+  t.comment('entity updated')
+
+  {
+    const [chunk] = await once(client, 'data')
+    const data = JSON.parse(chunk)
+    t.same(data, {
+      id: 1,
+      type: 'data',
+      payload: {
+        data: {
+          pageUpdated: {
+            id: '1',
+            title: 'Harry Potter'
+          }
+        }
+      }
+    })
+  }
+
+  t.comment('deleting entity')
+
+  await app.inject({
+    method: 'POST',
+    url: '/graphql',
+    body: {
+      query: `
+        mutation {
+          deletePages(where: { id: { eq: 1 } }) {
+            id
+          }
+        }
+      `
+    }
+  })
+
+  t.comment('entity deleted')
+
+  {
+    const [chunk] = await once(client, 'data')
+    const data = JSON.parse(chunk)
+    t.same(data, {
+      id: 1,
+      type: 'data',
+      payload: {
+        data: {
+          pageDeleted: {
+            id: '1',
+            title: 'Harry Potter'
           }
         }
       }
