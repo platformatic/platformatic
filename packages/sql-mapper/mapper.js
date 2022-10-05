@@ -72,6 +72,13 @@ async function connect ({ connectionString, log, onDatabaseLoad, ignore = {}, au
     const sqlite = require('@databases/sqlite')
     const path = connectionString.replace('sqlite://', '')
     db = sqlite(connectionString === 'sqlite://:memory:' ? undefined : path)
+    db._database.on('trace', sql => {
+      log.trace({
+        query: {
+          text: sql
+        }
+      }, 'query')
+    })
     sql = sqlite.sql
     queries = queriesFactory.sqlite
     db.isSQLite = true
