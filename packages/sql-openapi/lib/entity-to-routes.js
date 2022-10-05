@@ -41,9 +41,10 @@ async function entityPlugin (app, opts) {
     }
   }
 
-  const whereArgs = Object.keys(entity.fields).sort().map((name) => {
-    return entity.fields[name]
-  }).reduce((acc, field) => {
+  const sortedEntityFields = Object.keys(entity.fields).sort()
+
+  const whereArgs = sortedEntityFields.reduce((acc, name) => {
+    const field = entity.fields[name]
     const baseKey = `where.${field.camelcase}.`
     for (const modifier of ['eq', 'neq', 'gt', 'gte', 'lt', 'lte']) {
       const key = baseKey + modifier
@@ -58,9 +59,8 @@ async function entityPlugin (app, opts) {
     return acc
   }, {})
 
-  const orderByArgs = Object.keys(entity.fields).sort().map((name) => {
-    return entity.fields[name]
-  }).reduce((acc, field) => {
+  const orderByArgs = sortedEntityFields.reduce((acc, name) => {
+    const field = entity.fields[name]
     const key = `orderby.${field.camelcase}`
     acc[key] = { type: 'string', enum: ['asc', 'desc'] }
     return acc
@@ -105,12 +105,16 @@ async function entityPlugin (app, opts) {
   }, async function (request, reply) {
     const query = request.query
     const { limit, offset, fields } = query
-    // TODO computing this where clause will be slow
-    // refactor to use a barebone for(;;) loop
-    const where = Object.keys(query).reduce((acc, key) => {
-      if (key.indexOf('where.') === 0) {
+    const queryKeys = Object.keys(query)
+    const where = {}
+    const orderBy = []
+
+    for (let i = 0; i < queryKeys.length; i++) {
+      const key = queryKeys[i]
+
+      if (key.startsWith('where.')) {
         const [, field, modifier] = key.split('.')
-        acc[field] = acc[field] || {}
+        where[field] ||= {}
         let value = query[key]
         if (modifier === 'in' || modifier === 'nin') {
           // TODO handle escaping of ,
@@ -119,19 +123,14 @@ async function entityPlugin (app, opts) {
             value = value.map((v) => parseInt(v))
           }
         }
-        acc[field][modifier] = value
-        return acc
-      }
-      return acc
-    }, {})
-    const orderBy = Object.keys(query).reduce((acc, key) => {
-      if (key.indexOf('orderby.') === 0) {
+        where[field][modifier] = value
+      } else if (key.startsWith('orderby.')) {
         const [, field] = key.split('.')
-        acc[field] = acc[field] || {}
-        acc.push({ field, direction: query[key] })
+        orderBy[field] ||= {}
+        orderBy.push({ field, direction: query[key] })
       }
-      return acc
-    }, [])
+    }
+
     const ctx = { app: this, reply }
     const res = await entity.find({ limit, offset, fields, orderBy, where, ctx })
     if (query.totalCount) {
