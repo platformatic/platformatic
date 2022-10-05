@@ -55,21 +55,22 @@ async function platformaticDB (app, opts) {
     await execute(app.log, { config: opts.configFileLocation }, opts)
   }
 
+  // Metrics plugin
+  if (isKeyEnabledInConfig('metrics', opts)) {
+    app.register(require('./lib/metrics-plugin'), opts.metrics)
+  }
+
   app.register(require('./_admin'), { ...opts, prefix: '_admin' })
   if (isKeyEnabledInConfig('dashboard', opts) && opts.dashboard.enabled) {
     await app.register(dashboard, {
       dashboardAtRoot: opts.dashboard.rootPath || true
     })
   }
+
   app.register(core, opts.core)
 
   if (opts.authorization) {
     app.register(auth, opts.authorization)
-  }
-
-  // Metrics plugin
-  if (isKeyEnabledInConfig('metrics', opts)) {
-    app.register(require('./lib/metrics-plugin'), opts.metrics)
   }
 
   if (opts.plugin) {
