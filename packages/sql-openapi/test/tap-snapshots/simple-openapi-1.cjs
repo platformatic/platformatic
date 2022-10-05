@@ -35,7 +35,7 @@ Object {
   "paths": Object {
     "/pages/": Object {
       "get": Object {
-        "operationId": "getAllPage",
+        "operationId": "getPages",
         "parameters": Array [
           Object {
             "in": "query",
