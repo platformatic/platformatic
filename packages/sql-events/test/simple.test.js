@@ -54,8 +54,10 @@ test('emit events', async ({ equal, same, teardown }) => {
     input: { title: 'fourth page' }
   })
   expected.push({
-    topic: '/entity/page/create',
-    page
+    topic: '/entity/page/created',
+    payload: {
+      id: page.id
+    }
   })
 
   // save - update record
@@ -66,8 +68,10 @@ test('emit events', async ({ equal, same, teardown }) => {
     }
   })
   expected.push({
-    topic: '/entity/page/update/' + page.id,
-    page: page2
+    topic: '/entity/page/updated/' + page.id,
+    payload: {
+      id: page2.id
+    }
   })
 
   await pageEntity.delete({
@@ -80,8 +84,8 @@ test('emit events', async ({ equal, same, teardown }) => {
   })
 
   expected.push({
-    topic: '/entity/page/delete/' + page.id,
-    page: page2
+    topic: '/entity/page/deleted/' + page.id,
+    payload: page2
   })
 
   for await (const ev of queue) {
@@ -132,7 +136,9 @@ test('return entities', async ({ pass, teardown, equal, same }) => {
   })
   expected.push({
     topic: '/entity/page/created',
-    page
+    payload: {
+      id: page.id
+    }
   })
 
   // save - update record
@@ -144,7 +150,9 @@ test('return entities', async ({ pass, teardown, equal, same }) => {
   })
   expected.push({
     topic: '/entity/page/updated/' + page.id,
-    page: page2
+    payload: {
+      id: page.id
+    }
   })
 
   await pageEntity.delete({
@@ -152,13 +160,12 @@ test('return entities', async ({ pass, teardown, equal, same }) => {
       id: {
         eq: page.id
       }
-    },
-    fields: ['id', 'title']
+    }
   })
 
   expected.push({
     topic: '/entity/page/deleted/' + page.id,
-    page: page2
+    payload: page2
   })
 
   for await (const ev of queue) {
@@ -169,7 +176,7 @@ test('return entities', async ({ pass, teardown, equal, same }) => {
   }
 })
 
-test('subscribe 1 argument', async ({ equal, same, teardown }) => {
+test('insert', async ({ equal, same, teardown }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
     teardown(() => db.dispose())
@@ -201,13 +208,22 @@ test('subscribe 1 argument', async ({ equal, same, teardown }) => {
   const expected = []
 
   // save - new record
-  const page = await pageEntity.save({
-    input: { title: 'fourth page' }
+  const pages = await pageEntity.insert({
+    inputs: [{
+      title: 'fourth page'
+    }, {
+      title: 'fifth page'
+    }]
   })
-  expected.push({
-    topic: '/entity/page/created',
-    page
-  })
+
+  for (const page of pages) {
+    expected.push({
+      topic: '/entity/page/created',
+      payload: {
+        id: page.id
+      }
+    })
+  }
 
   for await (const ev of queue) {
     same(ev, expected.shift())

@@ -4,12 +4,10 @@ const { test } = require('tap')
 const Fastify = require('fastify')
 const WebSocket = require('ws')
 const { once } = require('events')
-const { GraphQLSchema, parse } = require('graphql')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const sqlEvents = require('@platformatic/sql-events')
-const { clear, connInfo, isSQLite, isMysql } = require('./helper')
-const { setTimeout } = require('timers/promises')
+const { clear, connInfo, isSQLite } = require('./helper')
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -24,7 +22,6 @@ async function createBasicPages (db, sql) {
     );`)
   }
 }
-
 
 function createWebSocketClient (t, app) {
   const ws = new WebSocket('ws://localhost:' + (app.server.address()).port + '/graphql', 'graphql-ws')
@@ -111,7 +108,6 @@ test('subscription - crud', async t => {
   }
 
   t.comment('sending mutation')
-  await setTimeout(1000)
 
   await app.inject({
     method: 'POST',
@@ -203,7 +199,7 @@ test('subscription - crud', async t => {
     const [chunk] = await once(client, 'data')
     const data = JSON.parse(chunk)
     t.same(data, {
-      id: 1,
+      id: '1',
       type: 'data',
       payload: {
         data: {
@@ -214,5 +210,48 @@ test('subscription - crud', async t => {
         }
       }
     })
+  }
+
+  t.comment('sending mutation')
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+        mutation batch($inputs : [PageInput]!) {
+          insertPages (inputs: $inputs) {
+            id
+            title
+          }
+        }
+      `,
+        variables: {
+          inputs: [
+            { title: 'Page 1' },
+            { title: 'Page 2' },
+            { title: 'Page 3' }
+          ]
+        }
+      }
+    })
+    const pages = res.json().data.insertPages
+
+    t.comment('mutation sent')
+
+    for (const page of pages) {
+      const [chunk] = await once(client, 'data')
+      const data = JSON.parse(chunk)
+      t.same(data, {
+        id: '1',
+        type: 'data',
+        payload: {
+          data: {
+            pageCreated: page
+          }
+        }
+      })
+    }
   }
 })

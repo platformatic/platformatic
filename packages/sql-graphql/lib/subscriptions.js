@@ -13,7 +13,7 @@ function setupSubscriptions (app, metaMap, resolvers) {
     }
     resolvers.Subscription[created] = {
       subscribe: async (_, query, { pubsub }, info) => {
-        const topic = `/entity/${field.singularName}/created` 
+        const topic = `/entity/${field.singularName}/created`
         const res = await pubsub.subscribe(topic)
         return augment(res, meta, info, app, field, created)
       }
@@ -25,10 +25,8 @@ function setupSubscriptions (app, metaMap, resolvers) {
     }
     resolvers.Subscription[updated] = {
       subscribe: async (_, query, { pubsub }, info) => {
-        const topic = `/entity/${field.singularName}/updated/+` 
+        const topic = `/entity/${field.singularName}/updated/+`
         const res = await pubsub.subscribe(topic)
-        const entity = app.platformatic.entities[field.singularName]
-        const primaryKey = entity.primaryKey
         return augment(res, meta, info, app, field, updated)
       }
     }
@@ -39,7 +37,7 @@ function setupSubscriptions (app, metaMap, resolvers) {
     }
     resolvers.Subscription[deleted] = {
       subscribe: async (_, query, { pubsub }, info) => {
-        const topic = `/entity/${field.singularName}/deleted/+` 
+        const topic = `/entity/${field.singularName}/deleted/+`
         const res = await pubsub.subscribe(topic)
         return wrap(res, deleted)
       }
@@ -67,7 +65,7 @@ async function * augment (iterator, meta, info, app, field, key) {
     const found = await entity.find({ where: { [primaryKey]: { eq: msg[primaryKey] } }, fields })
     // The following could happen in case of a race condition
     // testing it would be very hard, so we skip it for now
-    /* c8 ignore next 4 */
+    /* istanbul ignore next */
     if (found.length === 0) {
       app.log.warn({ ...msg.payload, entity: field.singularName }, 'could not find element')
       continue

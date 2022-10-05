@@ -87,7 +87,7 @@ async function mapperToGraphql (app, opts) {
     delete resolvers.Mutation
   }
 
-  let subscription = undefined
+  let subscription
   if (app.platformatic.mq) {
     opts.subscription = {
       emitter: app.platformatic.mq

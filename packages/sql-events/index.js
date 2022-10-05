@@ -14,11 +14,24 @@ function setupEmitter ({ mq, mapper }) {
     const entity = mapper.entities[entityName]
     const { primaryKey } = entity
     mapper.addEntityHooks(entityName, {
+      async insert (original, data) {
+        const res = await original(data)
+        await Promise.all(res.map((data) => {
+          const topic = `/entity/${entityName}/created`
+          return new Promise((resolve) => {
+            mq.emit({
+              topic,
+              payload: {
+                [primaryKey]: data[primaryKey]
+              }
+            }, resolve)
+          })
+        }))
+        return res
+      },
       async save (original, data) {
         const isNew = data.input[primaryKey] === undefined
         const topic = isNew ? `/entity/${entityName}/created` : `/entity/${entityName}/updated/${data.input[primaryKey]}`
-        // TODO remove the not needed fields
-        data.fields = undefined
         const res = await original(data)
         await new Promise((resolve) => {
           mq.emit({
