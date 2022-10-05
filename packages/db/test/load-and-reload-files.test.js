@@ -493,3 +493,59 @@ test('load and reload ESM', async ({ teardown, equal, pass, same }) => {
     }, 'add response')
   }
 })
+
+test('server should be available after reload a compromised plugin', async ({ teardown, equal, pass }) => {
+  const file = join(os.tmpdir(), `some-plugin-${process.pid}.js`)
+
+  const workingModule = `
+    module.exports = async function (app) {
+      (() => { /* console.log('loaded') */ })()
+    }`
+  const compromisedModule = `//console.log('loaded but server fails')`
+  await writeFile(file, workingModule)
+
+  const core = {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  }
+
+  const config = buildConfig({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugin: {
+      path: file,
+    },
+    core
+  })
+  const restartConfig = { ...config }
+  delete restartConfig.server
+
+  const server = await buildServer(config)
+  await server.listen()
+  await writeFile(file, compromisedModule)
+  await server.restart(restartConfig).catch(() => {
+    pass('plugin reload failed')
+  })
+
+  {
+    const res = await request(`${server.url}/`, { method: 'GET' })
+    equal(res.statusCode, 200, 'add status code')
+  }
+
+  await writeFile(file, workingModule)
+  await server.restart(restartConfig)
+
+  {
+    const res = await request(`${server.url}/`, { method: 'GET' })
+    equal(res.statusCode, 200, 'add status code')
+  }
+
+  teardown(server.stop)
+})
