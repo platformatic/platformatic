@@ -1,6 +1,7 @@
 Initiate default Platformatic DB application:
-
+``` bash
   $ platformatic db init
+```
 
 As a result of executing this command, the `platformatic.db.json` configuration
 file and the `migrations` folder with migration examples will be generated.
