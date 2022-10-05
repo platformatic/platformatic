@@ -79,8 +79,8 @@ const server = {
     },
     port: {
       anyOf: [
-        { type: 'string' },
-        { type: 'integer' }
+        { type: 'integer' },
+        { type: 'string' }
       ]
     },
     healthCheck: {

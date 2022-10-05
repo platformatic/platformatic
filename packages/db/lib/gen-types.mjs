@@ -1,4 +1,4 @@
-import { resolve, join, dirname, relative, basename } from 'path'
+import { resolve, join, dirname, basename } from 'path'
 import { createRequire } from 'module'
 import { mkdir, writeFile, readFile, readdir, unlink } from 'fs/promises'
 import { join as desmJoin } from 'desm'
@@ -20,21 +20,6 @@ declare module '@platformatic/sql-mapper' {
     ENTITIES_DEFINITION_PLACEHOLDER
   }
 }
-`
-
-const JS_PLUGIN_WITH_TYPES_SUPPORT = `\
-/// <reference path="./global.d.ts" />
-'use strict'
-
-/** @param {import('fastify').FastifyInstance} app */
-module.exports = async function (app) {}
-`
-
-const TS_PLUGIN_WITH_TYPES_SUPPORT = `\
-/// <reference path="./global.d.ts" />
-import { FastifyInstance } from 'fastify'
-
-export default async function (app: FastifyInstance) {}
 `
 
 async function removeUnusedTypeFiles (entities, dir) {
@@ -68,6 +53,11 @@ async function generateGlobalTypes (entities, config) {
   return GLOBAL_TYPES_TEMPLATE
     .replace('ENTITIES_IMPORTS_PLACEHOLDER', globalTypesImports.join('\n'))
     .replace('ENTITIES_DEFINITION_PLACEHOLDER', globalTypesInterface.join('\n    '))
+}
+
+async function generateGlobalTypesFile (entities, config) {
+  const globalTypes = await generateGlobalTypes(entities, config)
+  await writeFileIfChanged(join(TYPES_FOLDER_PATH, '..', 'global.d.ts'), globalTypes)
 }
 
 async function getDependencyVersion (dependencyName) {
@@ -131,34 +121,6 @@ async function checkForDependencies (logger, args, config) {
   logger.warn(`Please run \`${command}\` to install types dependencies.`)
 }
 
-async function generatePluginWithTypesSupport (logger, args, configManager) {
-  const config = configManager.current
-
-  if (config.plugin === undefined) {
-    config.plugin = {}
-  }
-
-  const isTypescript = config.typescript !== undefined
-
-  if (config.plugin.path === undefined) {
-    config.plugin.path = isTypescript ? 'plugin.ts' : 'plugin.js'
-  }
-
-  const pluginPath = resolve(process.cwd(), config.plugin.path)
-
-  const isPluginExists = await isFileAccessible(pluginPath)
-  if (isPluginExists) return
-
-  const pluginTemplate = isTypescript
-    ? TS_PLUGIN_WITH_TYPES_SUPPORT
-    : JS_PLUGIN_WITH_TYPES_SUPPORT
-
-  await writeFile(pluginPath, pluginTemplate)
-  await configManager.save()
-
-  logger.info(`Plugin file created at ${relative(process.cwd(), pluginPath)}`)
-}
-
 async function writeFileIfChanged (filename, content) {
   const isFileExists = await isFileAccessible(filename)
   if (isFileExists) {
@@ -174,7 +136,6 @@ async function execute (logger, args, config) {
 
   if (Object.values(entities).length === 0) {
     logger.warn('No entities found. Please run `platformatic db migrate` to generate entities.')
-    return
   }
 
   const isTypeFolderExists = await isFileAccessible(TYPES_FOLDER_PATH)
@@ -194,10 +155,7 @@ async function execute (logger, args, config) {
       logger.info(`Generated type for ${entity.name} entity.`)
     }
   }
-
-  const globalTypes = await generateGlobalTypes(entities, config)
-  await writeFileIfChanged(join(TYPES_FOLDER_PATH, '..', 'global.d.ts'), globalTypes)
-
+  await generateGlobalTypesFile(entities, config)
   await db.dispose()
 }
 
@@ -213,8 +171,7 @@ async function generateTypes (_args) {
   const config = configManager.current
 
   await execute(logger, args, config)
-  await generatePluginWithTypesSupport(logger, args, configManager)
   await checkForDependencies(logger, args, config)
 }
 
-export { execute, generateTypes, checkForDependencies, generatePluginWithTypesSupport }
+export { execute, generateTypes, generateGlobalTypesFile, checkForDependencies }
