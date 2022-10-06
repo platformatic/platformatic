@@ -501,7 +501,7 @@ test('server should be available after reload a compromised plugin', async ({ te
     module.exports = async function (app) {
       (() => { /* console.log('loaded') */ })()
     }`
-  const compromisedModule = `//console.log('loaded but server fails')`
+  const compromisedModule = '//console.log(\'loaded but server fails\')'
   await writeFile(file, workingModule)
 
   const core = {
@@ -520,7 +520,7 @@ test('server should be available after reload a compromised plugin', async ({ te
       port: 0
     },
     plugin: {
-      path: file,
+      path: file
     },
     core
   })
