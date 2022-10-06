@@ -53,10 +53,16 @@ function mapSQLTypeToOpenAPIType (sqlType) {
   }
 }
 
-function mapSQLEntityToJSONSchema (entity) {
+function mapSQLEntityToJSONSchema (entity, noRequired = false) {
   const fields = entity.fields
   const properties = {}
   const required = []
+  let schemaId = entity.name
+
+  if (noRequired) {
+    schemaId += noRequiredSuffix
+  }
+
   for (const name of Object.keys(fields)) {
     const field = fields[name]
     const type = mapSQLTypeToOpenAPIType(field.sqlType)
@@ -72,13 +78,14 @@ function mapSQLEntityToJSONSchema (entity) {
     if (field.isNullable) {
       properties[field.camelcase].nullable = true
     }
-    if (!field.isNullable && !field.primaryKey) {
+    if (!field.isNullable && !field.primaryKey && !noRequired) {
       // we skip the primary key for creation
       required.push(field.camelcase)
     }
   }
+
   return {
-    $id: entity.name,
+    $id: schemaId,
     title: entity.name,
     description: `A ${entity.name}`,
     type: 'object',
@@ -87,4 +94,5 @@ function mapSQLEntityToJSONSchema (entity) {
   }
 }
 
-module.exports = { mapSQLTypeToOpenAPIType, mapSQLEntityToJSONSchema }
+const noRequiredSuffix = 'NoRequired'
+module.exports = { mapSQLTypeToOpenAPIType, mapSQLEntityToJSONSchema, noRequiredSuffix }

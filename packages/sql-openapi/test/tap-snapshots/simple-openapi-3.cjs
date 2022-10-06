@@ -12,6 +12,9 @@ Object {
       "Page": Object {
         "description": "A Page",
         "properties": Object {
+          "author": Object {
+            "type": "string",
+          },
           "id": Object {
             "type": "integer",
           },
@@ -20,8 +23,26 @@ Object {
           },
         },
         "required": Array [
+          "author",
           "title",
         ],
+        "title": "Page",
+        "type": "object",
+      },
+      "PageNoRequired": Object {
+        "description": "A Page",
+        "properties": Object {
+          "author": Object {
+            "type": "string",
+          },
+          "id": Object {
+            "type": "integer",
+          },
+          "title": Object {
+            "type": "string",
+          },
+        },
+        "required": Array [],
         "title": "Page",
         "type": "object",
       },
@@ -70,12 +91,77 @@ Object {
             "schema": Object {
               "items": Object {
                 "enum": Array [
+                  "author",
                   "id",
                   "title",
                 ],
                 "type": "string",
               },
               "type": "array",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.author.eq",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.author.neq",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.author.gt",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.author.gte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.author.lt",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.author.lte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.author.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.author.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
             },
           },
           Object {
@@ -208,6 +294,18 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "orderby.author",
+            "required": false,
+            "schema": Object {
+              "enum": Array [
+                "asc",
+                "desc",
+              ],
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "orderby.id",
             "required": false,
             "schema": Object {
@@ -237,7 +335,7 @@ Object {
               "application/json": Object {
                 "schema": Object {
                   "items": Object {
-                    "$ref": "#/components/schemas/Page",
+                    "$ref": "#/components/schemas/PageNoRequired",
                   },
                   "type": "array",
                 },
@@ -282,6 +380,7 @@ Object {
             "schema": Object {
               "items": Object {
                 "enum": Array [
+                  "author",
                   "id",
                   "title",
                 ],
@@ -322,6 +421,7 @@ Object {
             "schema": Object {
               "items": Object {
                 "enum": Array [
+                  "author",
                   "id",
                   "title",
                 ],
@@ -344,7 +444,7 @@ Object {
             "content": Object {
               "application/json": Object {
                 "schema": Object {
-                  "$ref": "#/components/schemas/Page",
+                  "$ref": "#/components/schemas/PageNoRequired",
                 },
               },
             },
@@ -362,6 +462,7 @@ Object {
             "schema": Object {
               "items": Object {
                 "enum": Array [
+                  "author",
                   "id",
                   "title",
                 ],
@@ -411,6 +512,7 @@ Object {
             "schema": Object {
               "items": Object {
                 "enum": Array [
+                  "author",
                   "id",
                   "title",
                 ],

@@ -32,6 +32,29 @@ Object {
         "title": "Post",
         "type": "object",
       },
+      "PostNoRequired": Object {
+        "description": "A Post",
+        "properties": Object {
+          "counter": Object {
+            "nullable": true,
+            "type": "integer",
+          },
+          "id": Object {
+            "type": "integer",
+          },
+          "longText": Object {
+            "nullable": true,
+            "type": "string",
+          },
+          "title": Object {
+            "nullable": true,
+            "type": "string",
+          },
+        },
+        "required": Array [],
+        "title": "Post",
+        "type": "object",
+      },
     },
   },
   "info": Object {
@@ -397,7 +420,7 @@ Object {
               "application/json": Object {
                 "schema": Object {
                   "items": Object {
-                    "$ref": "#/components/schemas/Post",
+                    "$ref": "#/components/schemas/PostNoRequired",
                   },
                   "type": "array",
                 },
@@ -508,7 +531,7 @@ Object {
             "content": Object {
               "application/json": Object {
                 "schema": Object {
-                  "$ref": "#/components/schemas/Post",
+                  "$ref": "#/components/schemas/PostNoRequired",
                 },
               },
             },

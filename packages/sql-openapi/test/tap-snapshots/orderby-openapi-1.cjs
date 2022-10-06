@@ -28,6 +28,25 @@ Object {
         "title": "Page",
         "type": "object",
       },
+      "PageNoRequired": Object {
+        "description": "A Page",
+        "properties": Object {
+          "counter": Object {
+            "nullable": true,
+            "type": "integer",
+          },
+          "id": Object {
+            "type": "integer",
+          },
+          "title": Object {
+            "nullable": true,
+            "type": "string",
+          },
+        },
+        "required": Array [],
+        "title": "Page",
+        "type": "object",
+      },
     },
   },
   "info": Object {
@@ -316,7 +335,7 @@ Object {
               "application/json": Object {
                 "schema": Object {
                   "items": Object {
-                    "$ref": "#/components/schemas/Page",
+                    "$ref": "#/components/schemas/PageNoRequired",
                   },
                   "type": "array",
                 },
@@ -425,7 +444,7 @@ Object {
             "content": Object {
               "application/json": Object {
                 "schema": Object {
-                  "$ref": "#/components/schemas/Page",
+                  "$ref": "#/components/schemas/PageNoRequired",
                 },
               },
             },

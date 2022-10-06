@@ -1,6 +1,6 @@
 'use strict'
 
-const { mapSQLTypeToOpenAPIType } = require('@platformatic/sql-json-schema-mapper')
+const { mapSQLTypeToOpenAPIType, noRequiredSuffix } = require('@platformatic/sql-json-schema-mapper')
 const camelcase = require('camelcase')
 const { singularize } = require('inflected')
 
@@ -50,6 +50,11 @@ async function entityPlugin (app, opts) {
   const entitySchema = {
     $ref: entity.name + '#'
   }
+
+  const entityNoRequiredSchema = {
+    $ref: entity.name + noRequiredSuffix + '#'
+  }
+
   const primaryKeyParams = getPrimaryKeyParams(entity)
   const primaryKeyCamelcase = camelcase(entity.primaryKey)
   const entityLinks = getEntityLinksForEntity(app, entity)
@@ -105,7 +110,7 @@ async function entityPlugin (app, opts) {
       response: {
         200: {
           type: 'array',
-          items: entitySchema
+          items: entityNoRequiredSchema
         }
       }
     }
@@ -175,7 +180,7 @@ async function entityPlugin (app, opts) {
         }
       },
       response: {
-        200: entitySchema
+        200: entityNoRequiredSchema
       }
     },
     links: {
@@ -203,8 +208,8 @@ async function entityPlugin (app, opts) {
     const targetEntityName = singularize(camelcase(reverseRelationship.relation.table_name))
     const targetEntity = app.platformatic.entities[targetEntityName]
     const targetForeignKeyCamelcase = camelcase(reverseRelationship.relation.column_name)
-    const targetEntitySchema = {
-      $ref: targetEntity.name + '#'
+    const targetEntityNoRequiredSchema = {
+      $ref: targetEntity.name + noRequiredSuffix + '#'
     }
     const entityLinks = getEntityLinksForEntity(app, targetEntity)
     // e.g. getQuotesForMovie
@@ -222,7 +227,7 @@ async function entityPlugin (app, opts) {
         response: {
           200: {
             type: 'array',
-            items: targetEntitySchema
+            items: targetEntityNoRequiredSchema
           }
         }
       },
@@ -272,8 +277,8 @@ async function entityPlugin (app, opts) {
     const targetEntityName = singularize(camelcase(relation.foreign_table_name))
     const targetEntity = app.platformatic.entities[targetEntityName]
     const targetForeignKeyCamelcase = camelcase(relation.foreign_column_name)
-    const targetEntitySchema = {
-      $ref: targetEntity.name + '#'
+    const targetEntityNoRequiredSchema = {
+      $ref: targetEntity.name + noRequiredSuffix + '#'
     }
     const entityLinks = getEntityLinksForEntity(app, targetEntity)
     // e.g. getMovieForQuote
@@ -289,7 +294,7 @@ async function entityPlugin (app, opts) {
           }
         },
         response: {
-          200: targetEntitySchema
+          200: targetEntityNoRequiredSchema
         }
       },
       links: {

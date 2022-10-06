@@ -98,6 +98,21 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
           }
         },
         "required": []
+      },
+      "GraphNoRequired": {
+        "title": "Graph",
+        "description": "A Graph",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": []
       }
     }
   },
@@ -307,7 +322,7 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Graph"
+                    "$ref": "#/components/schemas/GraphNoRequired"
                   }
                 }
               }
@@ -374,7 +389,7 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Graph"
+                  "$ref": "#/components/schemas/GraphNoRequired"
                 }
               }
             },

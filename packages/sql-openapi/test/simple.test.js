@@ -16,11 +16,13 @@ async function createBasicPages (db, sql) {
   if (isSQLite) {
     await db.query(sql`CREATE TABLE pages (
       id INTEGER PRIMARY KEY,
+      author VARCHAR(42) NOT NULL,
       title VARCHAR(42) NOT NULL
     );`)
   } else {
     await db.query(sql`CREATE TABLE pages (
       id SERIAL PRIMARY KEY,
+      author VARCHAR(42) NOT NULL,
       title VARCHAR(42) NOT NULL
     );`)
   }
@@ -50,14 +52,16 @@ test('simple db, simple rest API', async (t) => {
       method: 'POST',
       url: '/pages',
       body: {
-        title: 'Hello'
+        title: 'Hello',
+        author: 'Jone'
       }
     })
     equal(res.statusCode, 200, 'POST /pages status code')
     equal(res.headers.location, '/pages/1', 'POST /api/pages location')
     same(res.json(), {
       id: 1,
-      title: 'Hello'
+      title: 'Hello',
+      author: 'Jone'
     }, 'POST /pages response')
   }
 
@@ -69,7 +73,8 @@ test('simple db, simple rest API', async (t) => {
     equal(res.statusCode, 200, 'GET /pages/1 status code')
     same(res.json(), {
       id: 1,
-      title: 'Hello'
+      title: 'Hello',
+      author: 'Jone'
     }, 'GET /pages/1 response')
   }
 
@@ -78,13 +83,15 @@ test('simple db, simple rest API', async (t) => {
       method: 'POST',
       url: '/pages/1',
       body: {
-        title: 'Hello World'
+        title: 'Hello World',
+        author: 'Jone Smith'
       }
     })
     equal(res.statusCode, 200, 'POST /pages/1 status code')
     same(res.json(), {
       id: 1,
-      title: 'Hello World'
+      title: 'Hello World',
+      author: 'Jone Smith'
     }, 'POST /pages/1 response')
   }
 
@@ -96,7 +103,8 @@ test('simple db, simple rest API', async (t) => {
     equal(res.statusCode, 200, 'GET /pages/1 status code')
     same(res.json(), {
       id: 1,
-      title: 'Hello World'
+      title: 'Hello World',
+      author: 'Jone Smith'
     }, 'GET /pages/1 response')
   }
 
@@ -105,7 +113,8 @@ test('simple db, simple rest API', async (t) => {
       method: 'POST',
       url: '/pages',
       body: {
-        tilte: 'Hello' // typo, wrong field
+        tilte: 'Hello', // typo, wrong field
+        author: 'Jone'
       }
     })
     equal(res.statusCode, 400, 'POST /pages status code')
@@ -139,13 +148,15 @@ test('simple db, simple rest API', async (t) => {
   {
     const res = await app.inject({
       method: 'POST',
-      url: '/pages/1?fields=title',
+      url: '/pages/1?fields=title,author',
       body: {
-        title: 'Hello fields'
+        title: 'Hello fields',
+        author: 'Jone new'
       }
     })
     same(res.json(), {
-      title: 'Hello fields'
+      title: 'Hello fields',
+      author: 'Jone new'
     }, 'POST /pages/1?fields=title response')
   }
 
@@ -381,7 +392,8 @@ test('not found', async ({ pass, teardown, same, equal }) => {
       method: 'POST',
       url: '/pages/1',
       body: {
-        title: 'Hello World'
+        title: 'Hello World',
+        author: 'Any'
       }
     })
     equal(res.statusCode, 404, 'POST /pages/1 status code')
@@ -426,14 +438,16 @@ test('delete', async ({ pass, teardown, same, equal }) => {
       method: 'POST',
       url: '/pages',
       body: {
-        title: 'Hello'
+        title: 'Hello',
+        author: 'Smith'
       }
     })
     equal(res.statusCode, 200, 'POST /pages status code')
     equal(res.headers.location, '/pages/1', 'POST /api/pages location')
     same(res.json(), {
       id: 1,
-      title: 'Hello'
+      title: 'Hello',
+      author: 'Smith'
     }, 'POST /pages response')
   }
 
@@ -445,7 +459,8 @@ test('delete', async ({ pass, teardown, same, equal }) => {
     equal(res.statusCode, 200, 'DELETE /pages/1 status code')
     same(res.json(), {
       id: 1,
-      title: 'Hello'
+      title: 'Hello',
+      author: 'Smith'
     }, 'DELETE /pages response')
   }
 
@@ -462,17 +477,19 @@ test('delete', async ({ pass, teardown, same, equal }) => {
       method: 'POST',
       url: '/pages',
       body: {
-        title: 'Hello fields'
+        title: 'Hello fields',
+        author: 'Author of fields'
       }
     })
     const { id } = res.json()
 
     const res2 = await app.inject({
       method: 'DELETE',
-      url: `/pages/${id}?fields=title`
+      url: `/pages/${id}?fields=title,author`
     })
     same(res2.json(), {
-      title: 'Hello fields'
+      title: 'Hello fields',
+      author: 'Author of fields'
     }, 'DELETE /pages?fields=title response')
   }
 })

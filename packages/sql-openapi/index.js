@@ -33,11 +33,13 @@ async function setupOpenAPI (app, opts) {
 
   for (const entity of Object.values(app.platformatic.entities)) {
     const entitySchema = mapSQLEntityToJSONSchema(entity)
+    const entitySchemaNoRequired = mapSQLEntityToJSONSchema(entity, true)
     // TODO remove reverseRelationships from the entity
     /* istanbul ignore next */
     entity.reverseRelationships = entity.reverseRelationships || []
 
     app.addSchema(entitySchema)
+    app.addSchema(entitySchemaNoRequired)
 
     for (const relation of Object.values(entity.relations)) {
       const targetEntityName = singularize(camelcase(relation.foreign_table_name))
