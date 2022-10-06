@@ -1,9 +1,8 @@
 name: docker build
 
 on:
-  push:
-    branches:
-      - main
+  release:
+    types: [published]
 
 jobs:
   buildx:
@@ -25,5 +24,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           push: true
-          tags: platformatic/platformatic:latest
+          tags: |
+            platformatic/platformatic:latest
+            platformatic/platformatic:${{ github.ref_name }}
           platforms: linux/amd64,linux/arm64
