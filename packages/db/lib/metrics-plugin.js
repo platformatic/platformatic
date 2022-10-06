@@ -6,12 +6,65 @@ const basicAuth = require('@fastify/basic-auth')
 const fastifyAccepts = require('@fastify/accepts')
 const Fastify = require('fastify')
 const http = require('http')
+const { roundNumber } = require('./utils')
 
 // This is a global server to match global
 // prometheus. It's an antipattern, so do
 // not use it elsewhere.
 let server = null
 let handler = null
+
+function transformHttpPromMetrics (httpMetrics = []) {
+  const requestMetrics = {
+    reqMetrics: {},
+    totalReqCount: 0
+  }
+
+  for (const metric of httpMetrics) {
+    const { method, route, status_code: statusCode } = metric.labels
+    if (!requestMetrics.reqMetrics[method]) {
+      requestMetrics.reqMetrics[method] = {}
+    }
+    const methodMetrics = requestMetrics.reqMetrics[method]
+
+    if (!methodMetrics[route]) {
+      methodMetrics[route] = {
+        reqCountPerStatusCode: {},
+        totalReqCount: 0
+      }
+    }
+    const routeMetrics = methodMetrics[route]
+
+    if (metric.metricName === 'http_request_summary_seconds_count') {
+      routeMetrics.reqCountPerStatusCode[statusCode] = metric.value
+      routeMetrics.totalReqCount += metric.value
+      requestMetrics.totalReqCount += metric.value
+      continue
+    }
+    if (metric.labels && metric.labels.quantile === 0.5) {
+      const medianResponseTimeSec = metric.value
+      routeMetrics.medianResponseTime = roundNumber(medianResponseTimeSec * 1000)
+      continue
+    }
+  }
+
+  let failedCount = 0
+  for (const methodMetrics of Object.values(requestMetrics.reqMetrics)) {
+    for (const routeMetrics of Object.values(methodMetrics)) {
+      let reqFailedCount = 0
+      for (const statusCode in routeMetrics.reqCountPerStatusCode) {
+        if (statusCode.charAt(0) !== '2') {
+          reqFailedCount += routeMetrics.reqCountPerStatusCode[statusCode]
+        }
+      }
+      failedCount += reqFailedCount
+      routeMetrics.failureRate = roundNumber(reqFailedCount / routeMetrics.totalReqCount, 2)
+    }
+  }
+  requestMetrics.failureRate = roundNumber(failedCount / requestMetrics.totalReqCount || 0, 2)
+
+  return requestMetrics
+}
 
 module.exports = fp(async function (app, opts) {
   let port = 9090
@@ -74,6 +127,18 @@ module.exports = fp(async function (app, opts) {
       return await promRegistry.metrics()
     }
   }
+
+  const dashboardMetricsEndpointOptions = {
+    url: '/metrics/dashboard',
+    method: 'GET',
+    logLevel: 'info',
+    handler: async () => {
+      const metrics = await app.metrics.client.register.getMetricsAsJSON()
+      const httpMetrics = metrics.find((metric) => metric.name === 'http_request_summary_seconds').values
+      return transformHttpPromMetrics(httpMetrics)
+    }
+  }
+
   if (opts.auth) {
     const { username, password } = opts.auth
     await promServer.register(basicAuth, {
@@ -87,6 +152,7 @@ module.exports = fp(async function (app, opts) {
     metricsEndpointOptions.onRequest = promServer.basicAuth
   }
   promServer.route(metricsEndpointOptions)
+  promServer.route(dashboardMetricsEndpointOptions)
 
   app.addHook('onClose', async (instance) => {
     await promServer.close()
