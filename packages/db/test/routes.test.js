@@ -6,7 +6,7 @@ const { buildConfig, connInfo } = require('./helper')
 const { request } = require('undici')
 const { join } = require('path')
 
-test('should respond 200 on root endpoint', async ({ teardown, equal, same }) => {
+test('should respond 200 on root endpoint', async ({ teardown, equal, same, match }) => {
   const server = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
@@ -44,8 +44,12 @@ test('should respond 200 on root endpoint', async ({ teardown, equal, same }) =>
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'
       }
     }))
+    const html = await res.body.text()
     equal(res.statusCode, 200)
     equal(res.headers['content-type'], 'text/html; charset=UTF-8')
+    // has links to OpenAPI/GraphQL docs
+    match(html, '<h2><a href="/documentation" target="_blank">OpenAPI Documentation</a></h2>')
+    match(html, '<h2><a href="/graphiql" target="_blank">GraphiQL</a></h2>')
   }
 })
 
