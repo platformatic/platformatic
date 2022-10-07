@@ -95,7 +95,7 @@ test('throws if migrations directory does not exist', async ({ match }) => {
   match(data, /^MigrateError: Migrations directory (.*) does not exist.$/)
 })
 
-test('do not validate migration checksums if not configured', async ({ equal, match, teardown }) => {
+test('do not run migrations by default', async ({ equal, teardown }) => {
   const db = await connectAndResetDB()
 
   const firstChild = execa('node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('no-auto-apply.json')])
@@ -108,4 +108,15 @@ test('do not validate migration checksums if not configured', async ({ equal, ma
   const [out] = await once(firstOutput, 'data')
   const { msg } = JSON.parse(out)
   equal(msg, 'server listening')
+
+  const [{ exists }] = await db.query(db.sql(
+    `SELECT EXISTS (
+    SELECT FROM
+        pg_tables
+    WHERE
+        schemaname = 'public' AND
+        tablename  = 'graphs'
+    );`
+  ))
+  equal(exists, false)
 })
