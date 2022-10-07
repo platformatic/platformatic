@@ -1,4 +1,5 @@
 name: "Announce Release on Discord"
+on:
   release:
     types: [published]
   workflow_dispatch:
@@ -8,9 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Send Discord notification
+        if: ${{ github.event_name == 'release' }}
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_RELEASES_WEBHOOK }}
         uses: Ilshidur/action-discord@master
         with:
-          args: 'The project {{ EVENT_PAYLOAD.repository.full_name }} has been deployed.'
+          args: '📣 Platformatic ${{ github.event.release.tag_name }} has been released! Check it out: ${{ github.event.release.html_url }}.'
 
