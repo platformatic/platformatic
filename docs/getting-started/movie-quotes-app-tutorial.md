@@ -100,7 +100,7 @@ Now we'll create a **`.env`** file with settings for our configuration to use:
 PORT=3042
 PLT_SERVER_HOSTNAME=127.0.0.1
 PLT_SERVER_LOGGER_LEVEL=info
-DATABASE_URL=sqlite://./movie-quotes.sqlite
+DATABASE_URL=sqlite://./movie-quotes.db
 ```
 
 :::info
