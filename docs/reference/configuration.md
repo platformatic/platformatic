@@ -389,3 +389,31 @@ npx platformatic db --allow-env=HOST,SERVER_LOGGER_LEVEL
 
 If `--allow-env` is passed as an option to the CLI, it will be merged with the
 default allow list.
+
+## Sample Configuration
+
+This is a bare minimum configuration for Platformatic DB. Uses a local `./db.sqlite` SQLite database, with OpenAPI and GraphQL support, and with the dashboard enabled.
+
+Server will listen to `http://127.0.0.1:3042`
+
+```json
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "3042"
+  },
+  "core": {
+    "connectionString": "'sqlite://./db.sqlite'",
+    "graphiql": true,
+    "openapi": {
+      "enabled": true
+    },
+    "graphql": {
+      "enabled": true
+    }
+  },
+  "dashboard": {
+    "enabled": true
+  }
+}
+```
