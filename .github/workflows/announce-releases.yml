@@ -2,14 +2,12 @@ name: "Announce Release on Discord"
 on:
   release:
     types: [published]
-  workflow_dispatch:
 
 jobs:
   announce-on-discord:
     runs-on: ubuntu-latest
     steps:
       - name: Send Discord notification
-        if: ${{ github.event_name == 'release' }}
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_RELEASES_WEBHOOK }}
         uses: Ilshidur/action-discord@master
