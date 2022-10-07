@@ -211,7 +211,7 @@ $ curl -X 'GET' 'http://localhost:3042/movies/1/quotes?fields=quote
 You can query for the parent directly, e.g.:
 
 ```
-$ curl -X 'GET' 'http://localhost:3042/quotes/1/movies?fields=title
+$ curl -X 'GET' 'http://localhost:3042/quotes/1/movie?fields=title
 
 {
   "title": "Terminator"
