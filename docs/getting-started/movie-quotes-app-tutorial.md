@@ -346,7 +346,7 @@ about how database seeding works with Platformatic DB.
 Let's stop our Platformatic DB server running and remove our SQLite database:
 
 ```
-rm movie-quotes.db
+rm movie-quotes.sqlite
 ```
 
 Now let's create a fresh SQLite database by running our migrations:
