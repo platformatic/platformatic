@@ -100,7 +100,7 @@ Now we'll create a **`.env`** file with settings for our configuration to use:
 PORT=3042
 PLT_SERVER_HOSTNAME=127.0.0.1
 PLT_SERVER_LOGGER_LEVEL=info
-DATABASE_URL=sqlite://./movie-quotes.db
+DATABASE_URL=sqlite://./movie-quotes.sqlite
 ```
 
 :::info
@@ -346,7 +346,7 @@ about how database seeding works with Platformatic DB.
 Let's stop our Platformatic DB server running and remove our SQLite database:
 
 ```
-rm movie-quotes.db
+rm movie-quotes.sqlite
 ```
 
 Now let's create a fresh SQLite database by running our migrations:
