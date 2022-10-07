@@ -43,7 +43,7 @@ function createServerConfig (config) {
 }
 
 async function platformaticDB (app, opts) {
-  if (opts.migrations && opts.migrations.autoApply !== false && !app.restarted) {
+  if (opts.migrations && opts.migrations.autoApply === true && !app.restarted) {
     app.log.debug({ migrations: opts.migrations }, 'running migrations')
     const { execute } = await import('./lib/migrate.mjs')
     await execute(app.log, { config: opts.configFileLocation }, opts)

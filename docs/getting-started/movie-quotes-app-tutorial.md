@@ -88,7 +88,8 @@ file, **`platformatic.db.json`**:
     "connectionString": "{DATABASE_URL}"
   },
   "migrations": {
-    "dir": "./migrations"
+    "dir": "./migrations",
+    "autoApply": true
   }
 }
 ```

@@ -12,6 +12,7 @@
   "migrations": {
     "dir": "./migrations",
     "table": "versions",
-    "validateChecksums": true
+    "validateChecksums": true,
+    "autoApply": true
   }
 }

@@ -11,7 +11,8 @@
     }
   },
   "migrations": {
-    "dir": "./migrations"
+    "dir": "./migrations",
+    "autoApply": true
   },
   "typescript": {
     "outDir": "dist"

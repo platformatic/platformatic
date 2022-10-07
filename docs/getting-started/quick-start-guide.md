@@ -115,7 +115,8 @@ Copy and paste in this configuration:
     "connectionString": "sqlite://./pages.db"
   },
   "migrations": {
-    "dir": "./migrations"
+    "dir": "./migrations",
+    "autoApply": true
   }
 }
 ```

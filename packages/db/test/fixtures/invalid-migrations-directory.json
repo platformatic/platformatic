@@ -11,6 +11,7 @@
   },
   "migrations": {
     "dir": "./invalid/migrations/path",
-    "table": "versions"
+    "table": "versions",
+    "autoApply": true
   }
 }

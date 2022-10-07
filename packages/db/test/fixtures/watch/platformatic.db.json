@@ -11,6 +11,7 @@
   },
   "migrations": {
     "dir": "./migrations",
-    "table": "versions"
+    "table": "versions",
+    "autoApply": true
   }
 }

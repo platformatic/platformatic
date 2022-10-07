@@ -48,7 +48,7 @@ To run migrations when Platformatic DB starts, you need to use the config file r
 
 There are two options in the `"migrations"` property
 - `dir` (_required_) the directory where the migration files are located. It will be relative to the config file path.
-- `autoApply` a boolean value that tells Platformatic DB to auto-apply migrations or not (default: `true`)
+- `autoApply` a boolean value that tells Platformatic DB to auto-apply migrations or not (default: `false`)
 
 _Example_
 
