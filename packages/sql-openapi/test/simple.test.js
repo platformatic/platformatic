@@ -297,6 +297,7 @@ test('list', async ({ pass, teardown, same, equal }) => {
     const url = '/posts?limit=3'
     const res = await app.inject({ method: 'GET', url })
     equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], undefined, `${url} without x-total-count`)
     same(res.json(), posts.map((p, i) => {
       return { ...p, id: i + 1 + '' }
     }).slice(0, 3), `${url} response`)
@@ -306,6 +307,7 @@ test('list', async ({ pass, teardown, same, equal }) => {
     const url = '/posts?offset=2'
     const res = await app.inject({ method: 'GET', url })
     equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], undefined, `${url} without x-total-count`)
     same(res.json(), posts.map((p, i) => {
       return { ...p, id: i + 1 + '' }
     }).slice(2), `${url} response`)
