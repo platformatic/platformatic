@@ -331,6 +331,26 @@ test('list', async ({ pass, teardown, same, equal }) => {
   }
 
   {
+    const url = '/posts?totalCount=true&limit=3'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
+    same(res.json(), posts.map((p, i) => {
+      return { ...p, id: i + 1 + '' }
+    }).slice(0, 3), `${url} response`)
+  }
+
+  {
+    const url = '/posts?totalCount=true&offset=2'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
+    same(res.json(), posts.map((p, i) => {
+      return { ...p, id: i + 1 + '' }
+    }).slice(2), `${url} response`)
+  }
+
+  {
     const url = '/posts?totalCount=true&limit=2&offset=1'
     const res = await app.inject({ method: 'GET', url })
     equal(res.statusCode, 200, `${url} status code`)
@@ -338,6 +358,34 @@ test('list', async ({ pass, teardown, same, equal }) => {
     same(res.json(), posts.map((p, i) => {
       return { ...p, id: i + 1 + '' }
     }).slice(1, 3), `${url} response`)
+  }
+
+  {
+    const url = '/posts?totalCount=true&limit=2&offset=99'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
+    same(res.json(), [], `${url} response`)
+  }
+
+  {
+    const url = '/posts?totalCount=true&limit=99&offset=0'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
+    same(res.json(), posts.map((p, i) => {
+      return { ...p, id: i + 1 + '' }
+    }).slice(0, 4), `${url} response`)
+  }
+
+  {
+    const url = '/posts?totalCount=true&limit=99&offset=2'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
+    same(res.json(), posts.map((p, i) => {
+      return { ...p, id: i + 1 + '' }
+    }).slice(2, 4), `${url} response`)
   }
 })
 
