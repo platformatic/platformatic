@@ -284,15 +284,13 @@ test('list', async ({ pass, teardown, same, equal }) => {
   }
 
   {
-    const res = await app.inject({
-      method: 'GET',
-      url: '/posts'
-    })
-    equal(res.statusCode, 200, '/posts status code')
-    equal(res.headers['x-total-count'], undefined, '/posts without x-total-count')
+    const url = '/posts'
+    const res = await app.inject({ method: 'GET', url: url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], undefined, `${url} without x-total-count`)
     same(res.json(), posts.map((p, i) => {
       return { ...p, id: i + 1 + '' }
-    }), '/posts response')
+    }), `${url} response`)
   }
 
   {
