@@ -13,7 +13,8 @@ async function setupOpenAPI (app, opts) {
     exposeRoute: true,
     info: {
       title: 'Platformatic DB',
-      description: 'Exposing a SQL database as REST'
+      description: 'Exposing a SQL database as REST',
+      version: '1.0.0'
     }
   }, opts)
   app.log.trace({ openapi: openapiConfig })
