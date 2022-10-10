@@ -5,6 +5,7 @@ const fastify = require('fastify')
 const core = require('@platformatic/db-core')
 const { connInfo, clear, isSQLite } = require('./helper')
 const auth = require('..')
+const { request } = require('undici')
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -35,9 +36,6 @@ test('admin can do impersonate a users', async ({ pass, teardown, same, equal })
     }
   })
   app.register(auth, {
-    jwt: {
-      secret: 'supersecret'
-    },
     adminSecret,
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
@@ -1007,9 +1005,6 @@ test('platformatic-admin has lower priority to allow user impersonation', async 
     }
   })
   app.register(auth, {
-    jwt: {
-      secret: 'supersecret'
-    },
     adminSecret,
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
@@ -1038,17 +1033,14 @@ test('platformatic-admin has lower priority to allow user impersonation', async 
 
   await app.ready()
 
-  const token = await app.jwt.sign({
-    'X-PLATFORMATIC-USER-ID': 42,
-    'X-PLATFORMATIC-ROLE': ['user', 'platformatic-admin']
-  })
-
   {
     const res = await app.inject({
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
+        'X-PLATFORMATIC-USER-ID': 42,
+        'X-PLATFORMATIC-ROLE': ['user', 'platformatic-admin']
       },
       body: {
         query: `
@@ -1079,7 +1071,9 @@ test('platformatic-admin has lower priority to allow user impersonation', async 
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
+        'X-PLATFORMATIC-USER-ID': 42,
+        'X-PLATFORMATIC-ROLE': ['user', 'platformatic-admin']
       },
       body: {
         query: `
@@ -1114,17 +1108,14 @@ test('platformatic-admin has lower priority to allow user impersonation', async 
     }, 'deletePages response')
   }
 
-  const token2 = await app.jwt.sign({
-    'X-PLATFORMATIC-USER-ID': 42,
-    'X-PLATFORMATIC-ROLE': ['platformatic-admin']
-  })
-
   {
     const res = await app.inject({
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token2}`
+        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
+        'X-PLATFORMATIC-USER-ID': 42,
+        'X-PLATFORMATIC-ROLE': ['platformatic-admin']
       },
       body: {
         query: `
@@ -1146,5 +1137,216 @@ test('platformatic-admin has lower priority to allow user impersonation', async 
         }]
       }
     }, 'deletePages response')
+  }
+})
+
+test('adminSecret is disabled if jwt is set', async ({ pass, teardown, same, equal }) => {
+  const app = fastify()
+  const adminSecret = require('crypto').randomUUID()
+  app.register(core, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(auth, {
+    jwt: {
+      secret: 'supersecret'
+    },
+    adminSecret,
+    roleKey: 'X-PLATFORMATIC-ROLE',
+    anonymousRole: 'anonymous',
+    rules: [{
+      role: 'platformatic-admin',
+      entity: 'page',
+      find: true,
+      delete: true,
+      save: true
+    }, {
+      role: 'anonymous',
+      entity: 'page',
+      find: false,
+      delete: false,
+      save: false
+    }]
+  })
+  teardown(app.close.bind(app))
+
+  await app.ready()
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      headers: {
+        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret
+      },
+      body: {
+        query: `
+          mutation {
+            savePage(input: { title: "Hello" }) {
+              id
+              title
+              userId
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'savePage status code')
+    same(res.json(), {
+      data: {
+        savePage: null
+      },
+      errors: [
+        {
+          message: 'operation not allowed',
+          locations: [
+            {
+              line: 3,
+              column: 13
+            }
+          ],
+          path: [
+            'savePage'
+          ]
+        }
+      ]
+    }, 'savePage response')
+  }
+})
+
+test('adminSecret is disabled if webhook is set', async ({ pass, teardown, same, equal }) => {
+  async function buildAuthorizer (opts = {}) {
+    const app = fastify()
+    app.register(require('@fastify/cookie'))
+    app.register(require('@fastify/session'), {
+      cookieName: 'sessionId',
+      secret: 'a secret with minimum length of 32 characters',
+      cookie: { secure: false }
+    })
+
+    app.post('/login', async (request, reply) => {
+      request.session.user = request.body
+      return {
+        status: 'ok'
+      }
+    })
+
+    app.post('/authorize', async (request, reply) => {
+      if (typeof opts.onAuthorize === 'function') {
+        await opts.onAuthorize(request)
+      }
+
+      const user = request.session.user
+      if (!user) {
+        return reply.code(401).send({ error: 'Unauthorized' })
+      }
+      return user
+    })
+
+    await app.listen({ port: 0 })
+
+    return app
+  }
+
+  const app = fastify()
+  const adminSecret = require('crypto').randomUUID()
+  app.register(core, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+
+  const authorizer = await buildAuthorizer()
+  app.register(auth, {
+    webhook: {
+      url: `http://localhost:${authorizer.server.address().port}/authorize`
+    },
+    adminSecret,
+    roleKey: 'X-PLATFORMATIC-ROLE',
+    anonymousRole: 'anonymous',
+    rules: [{
+      role: 'platformatic-admin',
+      entity: 'page',
+      find: true,
+      delete: true,
+      save: true
+    }, {
+      role: 'anonymous',
+      entity: 'page',
+      find: false,
+      delete: false,
+      save: false
+    }]
+  })
+  async function getCookie (userId, role) {
+    const res = await request(`http://localhost:${authorizer.server.address().port}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        'X-PLATFORMATIC-USER-ID': userId,
+        'X-PLATFORMATIC-ROLE': role
+      })
+    })
+
+    res.body.resume()
+
+    const cookie = res.headers['set-cookie'].split(';')[0]
+    return cookie
+  }
+  teardown(app.close.bind(app))
+  teardown(() => authorizer.close())
+
+  const cookie = await getCookie(42, 'user')
+  await app.ready()
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      headers: {
+        cookie,
+        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret
+      },
+      body: {
+        query: `
+          mutation {
+            savePage(input: { title: "Hello" }) {
+              id
+              title
+              userId
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'savePage status code')
+    same(res.json(), {
+      data: {
+        savePage: null
+      },
+      errors: [
+        {
+          message: 'operation not allowed',
+          locations: [
+            {
+              line: 3,
+              column: 13
+            }
+          ],
+          path: [
+            'savePage'
+          ]
+        }
+      ]
+    }, 'savePage response')
   }
 })

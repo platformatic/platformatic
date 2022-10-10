@@ -100,15 +100,18 @@ In the Webhook case, the HTTP response contains the roles/user information as HT
 ***Note that using admin API key on HTTP headers is highly insecure and should be used only within protected networks.***
 :::
 
+:::info
+When JWT or Webhook are configured, `adminSecret` and user impersonation are ignored.
+:::
+
 To make testing and developing easier, it's possible to bypass JWT / WebHook integration if a `adminSecret` is set.
-If so, and if a request has `X-PLATFORMATIC-ADMIN-SECRET` HTTP header set with the configured `adminSecret`, the JWT/Webhook authentication is skipped, and
-the role set automatically as `platformatic-admin`.
+If so, and if a request has `X-PLATFORMATIC-ADMIN-SECRET` HTTP header set with the configured `adminSecret`, the role set automatically as `platformatic-admin`.
 
 
 ![Platformatic DB JWT integration](./images/http.png)
 
-### Impersonation
-If a user is recognized with a `platformatic-admin` role, can also **impersonate users**.
+### User Impersonation
+If a user is recognized with a `platformatic-admin` role, can also **impersonate users**.
 The users/roles to impersonate are specified by:
 - `X-PLATFORMATIC-USER-ID`: the `userId` of the authenticated user. Note that this key value is conventional, any key can be used as long that is the same key specified in authorization rules.
 - `X-PLATFORMATIC-ROLE`: comma separated list of roles
