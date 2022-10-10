@@ -159,7 +159,7 @@ test('should emit event if .env file is updated', async ({ same, fail, plan, tea
   await writeFile(envFile, 'PLT_PROP=foo\n')
   await writeFile(file, JSON.stringify(config))
 
-  const cm = new ConfigManager({ source: file, schema, watch: true })
+  const cm = new ConfigManager({ source: file, schema, watch: true, allowedToWatch: ['.env'] })
   await cm.parse()
   const updatedConfig = {
     name: 'Platformatic',
