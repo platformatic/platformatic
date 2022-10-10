@@ -290,7 +290,7 @@ test('list', async ({ pass, teardown, same, equal }) => {
     equal(res.headers['x-total-count'], undefined, `${url} without x-total-count`)
     same(res.json(), posts.map((p, i) => {
       return { ...p, id: i + 1 + '' }
-    }), '/posts response')
+    }), `${url} response`)
   }
 
   {
