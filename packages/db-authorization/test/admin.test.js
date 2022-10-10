@@ -1220,7 +1220,8 @@ test('adminSecret is disabled if jwt is set', async ({ pass, teardown, same, equ
 
 test('adminSecret is disabled if webhook is set', async ({ pass, teardown, same, equal }) => {
   async function buildAuthorizer (opts = {}) {
-    const app = fastify()
+    // We need forceCloseConnection otherwise the test will hang with node16
+    const app = fastify({ forceCloseConnections: true })
     app.register(require('@fastify/cookie'))
     app.register(require('@fastify/session'), {
       cookieName: 'sessionId',
