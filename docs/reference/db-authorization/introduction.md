@@ -96,7 +96,9 @@ In the Webhook case, the HTTP response contains the roles/user information as HT
 
 ## HTTP Headers
 
+:::danger
 ***Note that using admin API key on HTTP headers is highly insecure and should be used only within protected networks.***
+:::
 
 To make testing and developing easier, it's possible to bypass JWT / WebHook integration if a `adminSecret` is set.
 If so, and if a request has `X-PLATFORMATIC-ADMIN-SECRET` HTTP header set with the configured `adminSecret`, the JWT/Webhook authentication is skipped, and
