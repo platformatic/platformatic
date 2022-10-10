@@ -227,6 +227,9 @@ test('call /metrics/dashboard before any requests', async ({ teardown, equal, sa
       port: 0
     },
     metrics: true,
+    dashboard: {
+      enabled: true
+    },
     core: {
       ...connInfo,
       async onDatabaseLoad (db, sql) {
@@ -239,9 +242,9 @@ test('call /metrics/dashboard before any requests', async ({ teardown, equal, sa
     }
   }))
   teardown(server.stop)
-  await server.listen()
+  const { port } = await server.listen()
 
-  const res = await (request('http://127.0.0.1:9090/metrics/dashboard'))
+  const res = await (request(`http://127.0.0.1:${port}/dashboard/metrics`))
   equal(res.statusCode, 200)
   match(res.headers['content-type'], /^application\/json/)
   try {
@@ -262,6 +265,9 @@ test('call /metrics/dashboard after user requests', async ({ teardown, equal, ha
       port: 0
     },
     metrics: true,
+    dashboard: {
+      enabled: true
+    },
     core: {
       ...connInfo,
       async onDatabaseLoad (db, sql) {
@@ -274,7 +280,7 @@ test('call /metrics/dashboard after user requests', async ({ teardown, equal, ha
     }
   }))
   teardown(server.stop)
-  await server.listen()
+  const { port } = await server.listen()
 
   const authHeaders = {
     'X-PLATFORMATIC-ADMIN-SECRET': 'secret'
@@ -290,11 +296,12 @@ test('call /metrics/dashboard after user requests', async ({ teardown, equal, ha
     server.inject({ method: 'POST', url: '/graphql', headers: authHeaders, body: {} })
   ])
 
-  const res = await (request('http://127.0.0.1:9090/metrics/dashboard'))
+  const res = await (request(`http://127.0.0.1:${port}/dashboard/metrics`))
   equal(res.statusCode, 200)
   match(res.headers['content-type'], /^application\/json/)
   try {
     const body = await res.body.json()
+    console.log(body)
 
     const expectedReqMetrics = {
       GET: {

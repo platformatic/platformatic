@@ -104,11 +104,6 @@ function getJSPluginPath (tsPluginPath, compileDir) {
   return join(cwd, compileDir, jsPluginRelativePath)
 }
 
-function roundNumber (value, precision = 0) {
-  const multiplier = Math.pow(10, precision || 0)
-  return Math.round((value + Number.EPSILON) * multiplier) / multiplier
-}
-
 module.exports = {
   setupDB,
   getJSPluginPath,
@@ -116,6 +111,5 @@ module.exports = {
   computeSQLiteIgnores,
   addLoggerToTheConfig,
   findConfigFile,
-  urlDirname,
-  roundNumber
+  urlDirname
 }
