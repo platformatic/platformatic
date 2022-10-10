@@ -140,10 +140,18 @@ async function entityPlugin (app, opts) {
 
     const ctx = { app: this, reply }
     const res = await entity.find({ limit, offset, fields, orderBy, where, ctx })
+
+    // X-Total-Count header
     if (query.totalCount) {
-      const totalCount = await entity.count({ where, ctx })
+      let totalCount
+      if ((((offset ?? 0) === 0) || (res.length > 0)) && ((limit === undefined) || (res.length < limit))) {
+        totalCount = (offset ?? 0) + res.length
+      } else {
+        totalCount = await entity.count({ where, ctx })
+      }
       reply.header('X-Total-Count', totalCount)
     }
+
     return res
   })
 

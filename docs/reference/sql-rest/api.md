@@ -71,7 +71,7 @@ $ curl -X 'GET' \
 
 ### Total Count
 
-If `totalCount` boolean is in query, the GET returns the total number of elements in the `X-Total-Count` header ignoring `limit` and `offset` (if specified).
+If `totalCount` boolean is `true` in query, the GET returns the total number of elements in the `X-Total-Count` header ignoring `limit` and `offset` (if specified).
 
 ```bash
 $ curl -v -X 'GET' \
