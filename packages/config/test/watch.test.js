@@ -271,6 +271,31 @@ test('do not emit event for ignored files', async ({ teardown, equal, same, fail
   await sleep(150)
 })
 
+test('do not emit event for not allowed files', async ({ teardown, equal, fail }) => {
+  const configFile = path.join(__dirname, 'fixtures', 'simple.json')
+  const cm = new ConfigManager({
+    source: configFile,
+    schema: {},
+    watch: true
+  })
+  const parseResult = await cm.parse()
+  equal(parseResult, true)
+  const testFileFullPath = `${path.join(path.dirname(cm.fullPath))}/test.file`
+  cm.on('update', () => {
+    fail()
+  })
+  await writeFile(testFileFullPath, 'foobar')
+
+  teardown(async () => {
+    await cm.stopWatch()
+    await unlink(testFileFullPath)
+  })
+
+  // await a full event loop cycle to make sure all possible updates
+  // have been processed.
+  await sleep(150)
+})
+
 test('emit event for not-ignored files', async ({ teardown, equal, same, pass, fail }) => {
   const configFile = path.join(__dirname, 'fixtures', 'simple.json')
   const cm = new ConfigManager({
