@@ -24,6 +24,7 @@ function transformHttpPromMetrics (httpMetrics = []) {
     if (!methodMetrics[route]) {
       methodMetrics[route] = {
         reqCountPerStatusCode: {},
+        resTime: {},
         totalReqCount: 0
       }
     }
@@ -33,12 +34,11 @@ function transformHttpPromMetrics (httpMetrics = []) {
       routeMetrics.reqCountPerStatusCode[statusCode] = metric.value
       routeMetrics.totalReqCount += metric.value
       requestMetrics.totalReqCount += metric.value
-      continue
-    }
-    if (metric.labels && metric.labels.quantile === 0.5) {
-      const medianResponseTimeSec = metric.value
-      routeMetrics.medianResponseTime = roundNumber(medianResponseTimeSec * 1000)
-      continue
+    } else if (metric.metricName === 'http_request_summary_seconds_sum') {
+      routeMetrics.reqSumTime = metric.value * 1000
+    } else if (metric.labels && metric.labels.quantile !== undefined) {
+      const quantile = metric.labels.quantile
+      routeMetrics.resTime[quantile] = metric.value * 1000
     }
   }
 
@@ -53,6 +53,7 @@ function transformHttpPromMetrics (httpMetrics = []) {
       }
       failedCount += reqFailedCount
       routeMetrics.failureRate = roundNumber(reqFailedCount / routeMetrics.totalReqCount, 2)
+      routeMetrics.avgResTime = roundNumber(routeMetrics.reqSumTime / routeMetrics.totalReqCount, 2)
     }
   }
   requestMetrics.failureRate = roundNumber(failedCount / requestMetrics.totalReqCount || 0, 2)
@@ -85,6 +86,6 @@ module.exports = async function app (app, opts) {
 
     const metrics = await app.metrics.client.register.getMetricsAsJSON()
     const httpMetrics = metrics.find((metric) => metric.name === 'http_request_summary_seconds').values
-    return transformHttpPromMetrics(httpMetrics)
+    return JSON.stringify(transformHttpPromMetrics(httpMetrics), null, 2)
   })
 }

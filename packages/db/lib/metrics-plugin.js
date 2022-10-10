@@ -29,7 +29,10 @@ module.exports = fp(async function (app, opts) {
     defaultMetrics: { enabled: true },
     endpoint: null,
     name: 'metrics',
-    routeMetrics: { enabled: true },
+    routeMetrics: {
+      enabled: true,
+      groupStatusCodes: true
+    },
     clearRegisterOnInit: true
   })
 
