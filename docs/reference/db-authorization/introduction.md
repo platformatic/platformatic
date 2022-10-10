@@ -105,12 +105,17 @@ When JWT or Webhook are configured, `adminSecret` and user impersonation are ign
 :::
 
 To make testing and developing easier, it's possible to bypass JWT / WebHook integration if a `adminSecret` is set.
-If so, and if a request has `X-PLATFORMATIC-ADMIN-SECRET` HTTP header set with the configured `adminSecret`, the role set automatically as `platformatic-admin`.
+If so, and if a request has `X-PLATFORMATIC-ADMIN-SECRET` HTTP header set with the configured `adminSecret`, the role set automatically as `platformatic-admin` if not otherwise specified.
 
 
 ![Platformatic DB JWT integration](./images/http.png)
 
 ### User Impersonation
+
+:::info
+When JWT or Webhook are configured, user impersonation is not enabled.
+:::
+
 If a user is recognized with a `platformatic-admin` role, can also **impersonate users**.
 The users/roles to impersonate are specified by:
 - `X-PLATFORMATIC-USER-ID`: the `userId` of the authenticated user. Note that this key value is conventional, any key can be used as long that is the same key specified in authorization rules.
