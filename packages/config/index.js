@@ -1,6 +1,6 @@
 'use strict'
 
-const { extname, join, resolve, dirname } = require('path')
+const { basename, extname, join, resolve, dirname } = require('path')
 const { readFile, watch, writeFile, access } = require('fs/promises')
 const { tmpdir } = require('os')
 const EventEmitter = require('events')
@@ -11,9 +11,11 @@ const TOML = require('@iarna/toml')
 const JSON5 = require('json5')
 const dotenv = require('dotenv')
 const minimatch = require('minimatch')
+
 class ConfigManager extends EventEmitter {
   constructor (opts) {
     super()
+    this.allowedToWatch = opts.allowedToWatch || []
     this.watchIgnore = opts.watchIgnore || []
     this.pupa = null
     this.abortController = null
@@ -31,6 +33,7 @@ class ConfigManager extends EventEmitter {
       this.current = opts.source
       this._shouldSave = true
     }
+    this.allowedToWatch.push(basename(this.fullPath))
     this.serializer = this.getSerializer()
     this.schema = opts.schema || {}
     this.schemaOptions = opts.schemaOptions || {}
@@ -250,14 +253,17 @@ class ConfigManager extends EventEmitter {
   }
 
   shouldFileBeWatched (fileName) {
-    let found = true
     for (const ignoredFile of this.watchIgnore) {
       if (minimatch(fileName, ignoredFile)) {
-        found = false
-        break
+        return false
       }
     }
-    return found
+    for (const allowedFile of this.allowedToWatch) {
+      if (minimatch(fileName, allowedFile)) {
+        return true
+      }
+    }
+    return false
   }
 }
 
