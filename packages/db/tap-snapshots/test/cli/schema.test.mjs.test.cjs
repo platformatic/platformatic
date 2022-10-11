@@ -75,22 +75,6 @@ input GraphInput {
 }
 `
 
-exports['test/cli/schema.test.mjs TAP print the help if schema type is missing > must match snapshot 1'] = `
-Generate a schema from the database and prints it to standard output:
-
-* \`schema graphql\` - generate the GraphQL schema
-* \`schema openapi\` - generate the OpenAPI schema
-
-Options:
-
-  -c, --config FILE  Specify a configuration file to use
-
-If not specified, the configuration specified will be loaded from
-\`platformatic.db.json\`, \`platformatic.db.yml\`, or \`platformatic.db.tml\` in the current directory.
-You can find more details about the configuration format at:
-https://oss.platformatic.dev/docs/reference/configuration.
-`
-
 exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must match snapshot 1'] = `
 {
   "openapi": "3.0.3",
