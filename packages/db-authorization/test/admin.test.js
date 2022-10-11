@@ -1140,7 +1140,7 @@ test('platformatic-admin has lower priority to allow user impersonation', async 
   }
 })
 
-test('adminSecret is disabled if jwt is set', async ({ pass, teardown, same, equal }) => {
+test('adminSecret set admin role as only role if jwt is set', async ({ pass, teardown, same, equal }) => {
   const app = fastify()
   const adminSecret = require('crypto').randomUUID()
   app.register(core, {
@@ -1160,11 +1160,11 @@ test('adminSecret is disabled if jwt is set', async ({ pass, teardown, same, equ
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
     rules: [{
-      role: 'platformatic-admin',
+      role: 'user',
       entity: 'page',
-      find: true,
-      delete: true,
-      save: true
+      find: false,
+      delete: false,
+      save: false
     }, {
       role: 'anonymous',
       entity: 'page',
@@ -1176,12 +1176,20 @@ test('adminSecret is disabled if jwt is set', async ({ pass, teardown, same, equ
   teardown(app.close.bind(app))
 
   await app.ready()
+
+  const token = await app.jwt.sign({
+    'X-PLATFORMATIC-USER-ID': 42,
+    'X-PLATFORMATIC-ROLE': 'user'
+  })
+
   {
+    // This succeeds because the adminSecret is set and then the admin role is set as the only role
     const res = await app.inject({
       method: 'POST',
       url: '/graphql',
       headers: {
-        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret
+        'X-PLATFORMATIC-ADMIN-SECRET': adminSecret,
+        Authorization: `Bearer ${token}`
       },
       body: {
         query: `
@@ -1198,27 +1206,17 @@ test('adminSecret is disabled if jwt is set', async ({ pass, teardown, same, equ
     equal(res.statusCode, 200, 'savePage status code')
     same(res.json(), {
       data: {
-        savePage: null
-      },
-      errors: [
-        {
-          message: 'operation not allowed',
-          locations: [
-            {
-              line: 3,
-              column: 13
-            }
-          ],
-          path: [
-            'savePage'
-          ]
+        savePage: {
+          id: '1',
+          title: 'Hello',
+          userId: null
         }
-      ]
+      }
     }, 'savePage response')
   }
 })
 
-test('adminSecret is disabled if webhook is set', async ({ pass, teardown, same, equal }) => {
+test('adminSecret set admin as only role if webhook is set', async ({ pass, teardown, same, equal }) => {
   async function buildAuthorizer (opts = {}) {
     // We need forceCloseConnection otherwise the test will hang with node16
     const app = fastify({ forceCloseConnections: true })
@@ -1274,11 +1272,11 @@ test('adminSecret is disabled if webhook is set', async ({ pass, teardown, same,
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
     rules: [{
-      role: 'platformatic-admin',
+      role: 'user',
       entity: 'page',
-      find: true,
-      delete: true,
-      save: true
+      find: false,
+      delete: false,
+      save: false
     }, {
       role: 'anonymous',
       entity: 'page',
@@ -1332,22 +1330,12 @@ test('adminSecret is disabled if webhook is set', async ({ pass, teardown, same,
     equal(res.statusCode, 200, 'savePage status code')
     same(res.json(), {
       data: {
-        savePage: null
-      },
-      errors: [
-        {
-          message: 'operation not allowed',
-          locations: [
-            {
-              line: 3,
-              column: 13
-            }
-          ],
-          path: [
-            'savePage'
-          ]
+        savePage: {
+          id: '1',
+          title: 'Hello',
+          userId: null
         }
-      ]
+      }
     }, 'savePage response')
   }
 })

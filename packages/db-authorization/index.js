@@ -17,37 +17,50 @@ async function auth (app, opts) {
     app.register(require('./lib/webhook'), opts.webhook)
   }
 
-  const disableAdminSecret = !!(opts.jwt || opts.webhook)
-
   const adminSecret = opts.adminSecret
   const roleKey = opts.roleKey || 'X-PLATFORMATIC-ROLE'
   const anonymousRole = opts.anonymousRole || 'anonymous'
+
   app.addHook('preHandler', async (request) => {
-    if (adminSecret && !disableAdminSecret && request.headers['x-platformatic-admin-secret'] === adminSecret) {
-      request.log.info('admin secret is valid')
-      request.user = new Proxy(request.headers, {
-        get: (target, key) => {
-          let value
-          if (!target[key]) {
-            const newKey = key.toLowerCase()
-            value = target[newKey]
-          } else {
-            value = target[key]
-          }
+    let forceAdminRole = false
+    if (adminSecret && request.headers['x-platformatic-admin-secret'] === adminSecret) {
+      if (opts.jwt || opts.webhook) {
+        forceAdminRole = true
+      } else {
+        request.log.info('admin secret is valid')
+        request.user = new Proxy(request.headers, {
+          get: (target, key) => {
+            let value
+            if (!target[key]) {
+              const newKey = key.toLowerCase()
+              value = target[newKey]
+            } else {
+              value = target[key]
+            }
 
-          if (!value && key.toLowerCase() === roleKey.toLowerCase()) {
-            value = PLT_ADMIN_ROLE
+            if (!value && key.toLowerCase() === roleKey.toLowerCase()) {
+              value = PLT_ADMIN_ROLE
+            }
+            return value
           }
-          return value
-        }
-      })
-
-      return
+        })
+      }
     }
+
     try {
+      // `createSession` actually exists only if jwt or webhook are enabled
+      // and creates a new `request.user` object
       await request.createSession()
     } catch (err) {
       request.log.trace({ err })
+    }
+
+    if (forceAdminRole) {
+      // We replace just the role in `request.user`, all the rest is untouched
+      request.user = {
+        ...request.user,
+        [roleKey]: PLT_ADMIN_ROLE
+      }
     }
   })
 
@@ -73,7 +86,7 @@ async function auth (app, opts) {
       const rules = entityRules[entityKey] || []
       const type = app.platformatic.entities[entityKey]
 
-      if (adminSecret && !disableAdminSecret) {
+      if (adminSecret) {
         rules.push({
           role: PLT_ADMIN_ROLE,
           find: true,
