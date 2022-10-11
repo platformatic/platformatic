@@ -66,9 +66,10 @@ const cors = {
       type: 'boolean',
       default: true
     }
-  }
-
+  },
+  additionalProperties: false
 }
+
 const server = {
   $id: 'https://schemas.platformatic.dev/db/server',
   type: 'object',
@@ -90,12 +91,14 @@ const server = {
           type: 'object',
           properties: {
             interval: { type: 'integer' }
-          }
+          },
+          additionalProperties: false
         }
       ]
     },
     cors
   },
+  additionalProperties: false,
   required: ['hostname', 'port']
 }
 
@@ -115,7 +118,8 @@ const core = {
           graphiql: {
             type: 'boolean'
           }
-        }
+        },
+        additionalProperties: false
       }]
     },
     openapi: {
@@ -136,7 +140,8 @@ const core = {
             type: 'string',
             description: 'Base URL for the OpenAPI'
           }
-        }
+        },
+        additionalProperties: false
       }]
     },
     ignore: {
@@ -150,9 +155,11 @@ const core = {
         value: {
           type: 'boolean'
         }
-      }
+      },
+      additionalProperties: false
     }
   },
+  additionalProperties: false,
   required: ['connectionString']
 }
 
@@ -199,7 +206,8 @@ const authorization = {
           type: 'string',
           description: 'the webhook url'
         }
-      }
+      },
+      additionalProperties: false
     },
     rules: {
       type: 'array',
@@ -287,7 +295,6 @@ const authorization = {
         type: 'boolean',
         description: 'true if enabled (with not authorization constraints enabled)'
       }]
-
     }
   }
 }
@@ -301,7 +308,8 @@ const dashboard = {
       description: 'Whether the dashboard should be served on / path or not.',
       default: false
     }
-  }
+  },
+  additionalProperties: false
 }
 
 const migrations = {
@@ -317,6 +325,7 @@ const migrations = {
       description: 'Whether to automatically apply migrations when running the migrate command.'
     }
   },
+  additionalProperties: false,
   required: ['dir']
 }
 
@@ -335,9 +344,11 @@ const metrics = {
             username: { type: 'string' },
             password: { type: 'string' }
           },
+          additionalProperties: false,
           required: ['username', 'password']
         }
-      }
+      },
+      additionalProperties: false
     }
   ]
 }
@@ -349,7 +360,8 @@ const types = {
     autogenerate: {
       type: 'boolean'
     }
-  }
+  },
+  additionalProperties: false
 }
 
 const typescript = {
@@ -363,13 +375,13 @@ const typescript = {
       type: 'boolean'
     }
   },
+  additionalProperties: false,
   required: ['outDir']
 }
 
 const platformaticDBschema = {
   $id: 'https://schemas.platformatic.dev/db',
   type: 'object',
-  additionalProperties: false,
   properties: {
     server,
     core,
@@ -392,6 +404,7 @@ const platformaticDBschema = {
       required: ['path']
     }
   },
+  additionalProperties: false,
   required: ['core', 'server']
 }
 
