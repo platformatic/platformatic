@@ -301,7 +301,6 @@ test('call /metrics/dashboard after user requests', async ({ teardown, equal, ha
   match(res.headers['content-type'], /^application\/json/)
   try {
     const body = await res.body.json()
-    console.log(body)
 
     const expectedReqMetrics = {
       GET: {
