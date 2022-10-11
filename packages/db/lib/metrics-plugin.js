@@ -74,6 +74,7 @@ module.exports = fp(async function (app, opts) {
       return await promRegistry.metrics()
     }
   }
+
   if (opts.auth) {
     const { username, password } = opts.auth
     await promServer.register(basicAuth, {
