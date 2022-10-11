@@ -1,6 +1,7 @@
 'use strict'
 
 const Swagger = require('@fastify/swagger')
+const SwaggerUI = require('@fastify/swagger-ui')
 const deepmerge = require('@fastify/deepmerge')({ all: true })
 const camelcase = require('camelcase')
 const { singularize } = require('inflected')
@@ -30,6 +31,8 @@ async function setupOpenAPI (app, opts) {
       }
     }
   })
+
+  app.register(SwaggerUI, opts)
 
   for (const entity of Object.values(app.platformatic.entities)) {
     const entitySchema = mapSQLEntityToJSONSchema(entity)
