@@ -38,6 +38,7 @@ program.register('seed', seed)
 program.register('types', generateTypes)
 program.register('schema graphql', printGraphQLSchema)
 program.register('schema openapi', printOpenAPISchema)
+program.register('schema', help.toStdout.bind(null, ['schema']))
 
 // TODO add help command
 
