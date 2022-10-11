@@ -1,5 +1,5 @@
 import { cliPath } from './helper.mjs'
-import { test, only } from 'tap'
+import { test } from 'tap'
 import { join } from 'desm'
 import { execa } from 'execa'
 import { rm } from 'fs/promises'
@@ -34,7 +34,7 @@ test('print the openapi schema to stdout', async ({ matchSnapshot }) => {
   matchSnapshot(stdout)
 })
 
-only('print the help if schema type is missing', async ({ matchSnapshot }) => {
+test('print the help if schema type is missing', async ({ matchSnapshot }) => {
   try {
     await rm(dbLocation)
   } catch {
