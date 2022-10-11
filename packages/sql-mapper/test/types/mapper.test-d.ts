@@ -41,18 +41,20 @@ expectType<Partial<EntityFields>>(await entity.save({ input: { id: 1, name: 'tes
 expectType<Partial<EntityFields>[]>(await entity.delete())
 expectType<number>(await entity.count())
 
+const entityHooks: EntityHooks = {
+  async find(options: any): Promise<any[]> { return [] },
+  async insert(options: { inputs: any[], fields?: string[] }): Promise<any[]> { return [] },
+  async save(options: { input: any, fields?: string[] }): Promise<any> { return {} },
+  async delete(options?: { where: WhereCondition, fields: string[] }): Promise<any[]> { return [] },
+  async count(options?: { where?: WhereCondition }): Promise<number> { return 0 },
+}
+expectType<EntityHooks>(entityHooks)
 expectType<SQLMapperPluginInterface>(await connect({ connectionString: '' }))
 expectType<SQLMapperPluginInterface>(await connect({ connectionString: '', autoTimestamp: true }))
 expectType<SQLMapperPluginInterface>(await connect({ connectionString: '', hooks: {} }))
 expectType<SQLMapperPluginInterface>(await connect({
   connectionString: '', hooks: {
-    Page: {
-      async find(options: any): Promise<any[]> { return [] },
-      async insert(options: { inputs: any[], fields?: string[] }): Promise<any[]> { return [] },
-      async save(options: { input: any, fields?: string[] }): Promise<any> { return {} },
-      async delete(options?: { where: WhereCondition, fields: string[] }): Promise<any[]> { return [] },
-      async count(options?: { where?: WhereCondition }): Promise<number> { return 0 },
-    }
+    Page: entityHooks
   }
 }))
 expectType<SQLMapperPluginInterface>(await connect({ connectionString: '', ignore: {} }))
