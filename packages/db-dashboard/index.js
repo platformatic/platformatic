@@ -14,6 +14,9 @@ function transformHttpPromMetrics (httpMetrics = []) {
     totalReqCount: 0
   }
 
+  const quantileSummary = {}
+  let quantileCounter = 0
+
   for (const metric of httpMetrics) {
     const { method, route, status_code: statusCode } = metric.labels
     if (!requestMetrics.reqMetrics[method]) {
@@ -24,7 +27,7 @@ function transformHttpPromMetrics (httpMetrics = []) {
     if (!methodMetrics[route]) {
       methodMetrics[route] = {
         reqCountPerStatusCode: {},
-        resTime: {},
+        reqTime: {},
         totalReqCount: 0
       }
     }
@@ -34,13 +37,27 @@ function transformHttpPromMetrics (httpMetrics = []) {
       routeMetrics.reqCountPerStatusCode[statusCode] = metric.value
       routeMetrics.totalReqCount += metric.value
       requestMetrics.totalReqCount += metric.value
+      quantileCounter++
     } else if (metric.metricName === 'http_request_summary_seconds_sum') {
       routeMetrics.reqSumTime = metric.value * 1000
     } else if (metric.labels && metric.labels.quantile !== undefined) {
       const quantile = metric.labels.quantile
-      routeMetrics.resTime[quantile] = metric.value * 1000
+      routeMetrics.reqTime[quantile] = metric.value * 1000
+
+      if (quantileSummary[quantile] === undefined) {
+        quantileSummary[quantile] = 0
+      }
+      quantileSummary[quantile] += metric.value
     }
   }
+
+  const avgReqTimeByQuantile = {}
+  for (const quantile in quantileSummary) {
+    const summaryReqTimeMs = quantileSummary[quantile] * 1000
+    const averageReqTimeMs = roundNumber(summaryReqTimeMs / quantileCounter, 2)
+    avgReqTimeByQuantile[quantile] = averageReqTimeMs
+  }
+  requestMetrics.avgReqTimeByQuantile = avgReqTimeByQuantile
 
   let failedCount = 0
   for (const methodMetrics of Object.values(requestMetrics.reqMetrics)) {
@@ -53,7 +70,7 @@ function transformHttpPromMetrics (httpMetrics = []) {
       }
       failedCount += reqFailedCount
       routeMetrics.failureRate = roundNumber(reqFailedCount / routeMetrics.totalReqCount, 2)
-      routeMetrics.avgResTime = roundNumber(routeMetrics.reqSumTime / routeMetrics.totalReqCount, 2)
+      routeMetrics.avgReqTime = roundNumber(routeMetrics.reqSumTime / routeMetrics.totalReqCount, 2)
     }
   }
   requestMetrics.failureRate = roundNumber(failedCount / requestMetrics.totalReqCount || 0, 2)
@@ -78,6 +95,8 @@ module.exports = async function app (app, opts) {
   })
 
   app.get('/dashboard/metrics', { hide: true }, async function (req, reply) {
+    reply.header('Content-Type', 'application/json')
+
     if (app.metrics === undefined) {
       reply.status = 404
       reply.send({ error: 'Metrics plugin is not enabled' })
