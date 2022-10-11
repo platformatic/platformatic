@@ -296,13 +296,13 @@ When an entity is created, the `userId` column is used and populated using the v
 If a user has no role, the `anonymous` role is assigned automatically. It's possible to specify a rule for it:
 
 ```json
-     {
-        "role": "anonymous",
-        "entity": "page",
-        "find": false,
-        "delete": false,
-        "save": false
-      }
+    {
+      "role": "anonymous",
+      "entity": "page",
+      "find": false,
+      "delete": false,
+      "save": false
+    }
 ```
 
 In this case, the user that has no role (or has an explicitly `anonymous` role) has no operations allowed on the `page` entity.
