@@ -9,6 +9,7 @@ const entityPlugin = require('./lib/entity-to-routes')
 const fp = require('fastify-plugin')
 
 async function setupOpenAPI (app, opts) {
+  const prefix = opts.prefix || ''
   const openapiConfig = deepmerge({
     exposeRoute: true,
     info: {
@@ -56,7 +57,7 @@ async function setupOpenAPI (app, opts) {
     // TODO support ignore
     app.register(entityPlugin, {
       entity,
-      prefix: '/' + entity.pluralName
+      prefix: `${prefix}/${entity.pluralName}`
     })
   }
 }

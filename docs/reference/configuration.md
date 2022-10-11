@@ -79,7 +79,7 @@ A **required** object with the following settings:
   }
   ```
 - **`openapi`** (`boolean` or `object`, default: `true`) — Enables OpenAPI REST support.
-  - If value is an object, all [OpenAPI v3](https://swagger.io/specification/) allowed properties can be passed.
+  - If value is an object, all [OpenAPI v3](https://swagger.io/specification/) allowed properties can be passed. Also a `prefix` property can be passed to set the OpenAPI prefix.
   - Platformatic DB uses [`@fastify/swagger`](https://github.com/fastify/fastify-swagger) under the hood to manage this configuration.
 
   _Examples_
@@ -91,6 +91,19 @@ A **required** object with the following settings:
     "core": {
       ...
       "openapi": true
+    }
+  }
+  ```
+
+  Enables OpenAPI with prefix
+
+  ```json
+  {
+    "core": {
+      ...
+      "openapi": {
+        "prefix": "/api"
+      }
     }
   }
   ```
