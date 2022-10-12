@@ -90,6 +90,7 @@ const server = {
         {
           type: 'object',
           properties: {
+            enabled: { type: 'boolean' },
             interval: { type: 'integer' }
           },
           additionalProperties: false
@@ -98,7 +99,6 @@ const server = {
     },
     cors
   },
-  additionalProperties: false,
   required: ['hostname', 'port']
 }
 
@@ -147,16 +147,9 @@ const core = {
     ignore: {
       type: 'object',
       // TODO add support for column-level ignore
-      properties: {
-        key: {
-          type: 'string',
-          description: 'Non-entity table name.'
-        },
-        value: {
-          type: 'boolean'
-        }
-      },
-      additionalProperties: false
+      additionalProperties: {
+        type: 'boolean'
+      }
     }
   },
   additionalProperties: false,
@@ -225,10 +218,8 @@ const authorization = {
           defaults: {
             type: 'object',
             description: 'defaults for entity creation',
-            patternProperties: {
-              '.*': {
-                type: 'string'
-              }
+            additionalProperties: {
+              type: 'string'
             }
           },
           find: {
@@ -257,28 +248,26 @@ const authorization = {
           checks: {
             description: 'checks for the operation',
             type: 'object',
-            patternProperties: {
-              '.*': {
-                if: {
-                  type: 'object'
+            additionalProperties: {
+              if: {
+                type: 'object'
+              },
+              then: {
+                type: 'object',
+                properties: {
+                  eq: { type: 'string' },
+                  in: { type: 'string' },
+                  nin: { type: 'string' },
+                  nen: { type: 'string' },
+                  gt: { type: 'string' },
+                  gte: { type: 'string' },
+                  lt: { type: 'string' },
+                  lte: { type: 'string' }
                 },
-                then: {
-                  type: 'object',
-                  properties: {
-                    eq: { type: 'string' },
-                    in: { type: 'string' },
-                    nin: { type: 'string' },
-                    nen: { type: 'string' },
-                    gt: { type: 'string' },
-                    gte: { type: 'string' },
-                    lt: { type: 'string' },
-                    lte: { type: 'string' }
-                  },
-                  additionalProperties: false
-                },
-                else: {
-                  type: 'string'
-                }
+                additionalProperties: false
+              },
+              else: {
+                type: 'string'
               }
             }
           },
@@ -303,6 +292,9 @@ const dashboard = {
   $id: 'https://schemas.platformatic.dev/db/dashboard',
   type: 'object',
   properties: {
+    enabled: {
+      type: 'boolean'
+    },
     rootPath: {
       type: 'boolean',
       description: 'Whether the dashboard should be served on / path or not.',
@@ -319,6 +311,12 @@ const migrations = {
     dir: {
       type: 'string',
       description: 'The path to the directory containing the migrations.'
+    },
+    table: {
+      type: 'string'
+    },
+    validateChecksums: {
+      type: 'boolean'
     },
     autoApply: {
       type: 'boolean',
