@@ -83,17 +83,28 @@ async function platformaticDB (app, opts) {
     }
 
     app.log.debug({ plugin: opts.plugin }, 'loading plugin')
-    await app.register(sandbox, {
-      ...pluginOptions,
-      customizeGlobalThis (_globalThis) {
+
+    // if not defined, we defaults to true (which can happen only if config is set programmatically,
+    // that's why we ignore the coverage of the `undefined` case, which cannot be covered in cli tests)
+    /* c8 ignore next */
+    const hotReload = opts.plugin.hotReload === undefined ? true : opts.plugin.hotReload
+    if (hotReload) {
+      await app.register(sandbox, {
+        ...pluginOptions,
+        customizeGlobalThis (_globalThis) {
         // Taken from https://github.com/nodejs/undici/blob/fa9fd9066569b6357acacffb806aa804b688c9d8/lib/global.js#L5
-        const globalDispatcher = Symbol.for('undici.globalDispatcher.1')
-        const dispatcher = globalThis[globalDispatcher]
-        if (dispatcher) {
-          _globalThis[globalDispatcher] = dispatcher
+          const globalDispatcher = Symbol.for('undici.globalDispatcher.1')
+          const dispatcher = globalThis[globalDispatcher]
+          /* istanbul ignore else */
+          if (dispatcher) {
+            _globalThis[globalDispatcher] = dispatcher
+          }
         }
-      }
-    })
+      })
+    } else {
+      const plugin = await import(pluginOptions.path)
+      await app.register(plugin, pluginOptions.options)
+    }
   }
 
   // Enable CORS

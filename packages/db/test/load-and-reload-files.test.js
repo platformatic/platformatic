@@ -549,3 +549,124 @@ test('server should be available after reload a compromised plugin', async ({ te
 
   teardown(server.stop)
 })
+
+test('hot reload disabled, CommonJS', async ({ teardown, equal, pass, same }) => {
+  const file = join(os.tmpdir(), `some-plugin-hot-rel-test-${process.pid}.js`)
+
+  await writeFile(file, `
+    module.exports = async function plugin (app) {
+      app.get('/test', {}, async function (request, response) {
+        return { res: "plugin, version 1"}
+      })
+    }`
+  )
+
+  const server = await buildServer(buildConfig({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugin: {
+      hotReload: false,
+      path: file
+    },
+    core: {
+      ...connInfo,
+      async onDatabaseLoad (db, sql) {
+        pass('onDatabaseLoad called')
+        await clear(db, sql)
+        await createBasicPages(db, sql)
+      }
+    }
+  }))
+  teardown(server.stop)
+  await server.listen()
+
+  {
+    const res = await request(`${server.url}/test`, {
+      method: 'GET'
+    })
+    equal(res.statusCode, 200)
+    same(await res.body.json(), { res: 'plugin, version 1' }, 'get rest plugin')
+  }
+
+  await writeFile(file, `
+    module.exports = async function plugin (app) {
+      app.get('/test', {}, async function (request, response) {
+        return { res: "plugin, version 2"}
+      })
+    }`
+  )
+
+  await server.restart()
+
+  {
+    const res = await request(`${server.url}/test`, {
+      method: 'GET'
+    })
+    equal(res.statusCode, 200)
+    // must be unchanged
+    same(await res.body.json(), { res: 'plugin, version 1' }, 'get rest plugin')
+  }
+})
+
+test('hot reload disabled, ESM', async ({ teardown, equal, pass, same }) => {
+  const file = join(os.tmpdir(), `some-plugin-hot-rel-test-${process.pid}.mjs`)
+
+  await writeFile(file, `
+    export default async function (app) {
+      app.get('/test', {}, async function (request, response) {
+        return { res: "plugin, version 1"}
+      })
+    }`
+  )
+
+  const server = await buildServer(buildConfig({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugin: {
+      hotReload: false,
+      path: file,
+      stopTimeout: 1000
+    },
+    core: {
+      ...connInfo,
+      async onDatabaseLoad (db, sql) {
+        pass('onDatabaseLoad called')
+        await clear(db, sql)
+        await createBasicPages(db, sql)
+      }
+    }
+  }))
+  teardown(server.stop)
+  await server.listen()
+
+  {
+    const res = await request(`${server.url}/test`, {
+      method: 'GET'
+    })
+    equal(res.statusCode, 200)
+    same(await res.body.json(), { res: 'plugin, version 1' }, 'get rest plugin')
+  }
+
+  await writeFile(file, `
+    export default async function (app) {
+      app.get('/test', {}, async function (request, response) {
+        return { res: "plugin, version 2"}
+      })
+    }`
+  )
+
+  await server.restart()
+
+  {
+    const res = await request(`${server.url}/test`, {
+      method: 'GET'
+    })
+    equal(res.statusCode, 200)
+    // must be unchanged
+    same(await res.body.json(), { res: 'plugin, version 1' }, 'get rest plugin')
+  }
+})
