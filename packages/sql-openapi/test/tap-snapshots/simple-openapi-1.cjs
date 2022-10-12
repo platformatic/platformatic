@@ -5,7 +5,7 @@
  * Make sure to inspect the output below.  Do not ignore changes!
  */
 'use strict'
-exports['platformatic/db/openapi/simple simple db, simple rest API > GET /documentation/json response 1'] = `
+exports[`platformatic/db/openapi/simple simple db, simple rest API > GET /documentation/json response 1`] = `
 Object {
   "components": Object {
     "schemas": Object {
@@ -30,7 +30,7 @@ Object {
   "info": Object {
     "description": "Exposing a SQL database as REST",
     "title": "Platformatic DB",
-    "version": "1.0.0",
+    "version": "0.3.0",
   },
   "openapi": "3.0.3",
   "paths": Object {
