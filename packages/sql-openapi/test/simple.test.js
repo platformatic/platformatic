@@ -593,7 +593,7 @@ test('deserialize JSON columns', { skip: isSQLite }, async (t) => {
 })
 
 test('expose the api with a prefix, if defined', async (t) => {
-  const { pass, teardown, same, equal } = t
+  const { pass, teardown, same, equal, matchSnapshot } = t
 
   const app = fastify()
   app.register(sqlMapper, {
@@ -638,5 +638,16 @@ test('expose the api with a prefix, if defined', async (t) => {
       id: 1,
       title: 'Hello'
     }, 'POST /pages response')
+  }
+
+  // Check that the documentation is not prefixed
+  {
+    t.snapshotFile = resolve(__dirname, 'tap-snapshots', 'simple-openapi-4.cjs')
+    const res = await app.inject({
+      method: 'GET',
+      url: '/documentation/json'
+    })
+    const json = res.json()
+    matchSnapshot(json, 'GET /documentation/json response')
   }
 })
