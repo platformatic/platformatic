@@ -591,3 +591,63 @@ test('deserialize JSON columns', { skip: isSQLite }, async (t) => {
     same(json[0].metadata, jsonData)
   }
 })
+
+test('expose the api with a prefix, if defined', async (t) => {
+  const { pass, teardown, same, equal, matchSnapshot } = t
+
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(sqlOpenAPI, { prefix: '/api' })
+  teardown(app.close.bind(app))
+
+  await app.ready()
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/pages',
+      body: {
+        title: 'Hello'
+      }
+    })
+    equal(res.statusCode, 404, 'POST /pages status code')
+    same(res.json(), {
+      message: 'Route POST:/pages not found',
+      error: 'Not Found',
+      statusCode: 404
+    }, 'POST /pages response')
+  }
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/pages',
+      body: {
+        title: 'Hello'
+      }
+    })
+    equal(res.statusCode, 200, 'POST /pages status code')
+    equal(res.headers.location, '/api/pages/1', 'POST /api/pages location')
+    same(res.json(), {
+      id: 1,
+      title: 'Hello'
+    }, 'POST /pages response')
+  }
+
+  // Check that the documentation is not prefixed
+  {
+    t.snapshotFile = resolve(__dirname, 'tap-snapshots', 'simple-openapi-4.cjs')
+    const res = await app.inject({
+      method: 'GET',
+      url: '/documentation/json'
+    })
+    const json = res.json()
+    matchSnapshot(json, 'GET /documentation/json response')
+  }
+})

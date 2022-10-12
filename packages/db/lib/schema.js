@@ -131,6 +131,10 @@ const core = {
               description: { type: 'string' },
               version: { type: 'string' }
             }
+          },
+          prefix: {
+            type: 'string',
+            description: 'Base URL for the OpenAPI'
           }
         }
       }]
