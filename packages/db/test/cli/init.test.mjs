@@ -38,7 +38,7 @@ t.test('run db init with default options', async (t) => {
   t.equal(server.port, 3042)
 
   t.equal(core.connectionString, 'sqlite://db.sqlite')
-  t.equal(core.graphiql, true)
+  t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
 
@@ -81,7 +81,7 @@ t.test('run init with default options twice', async (t) => {
   t.equal(server.port, 3042)
 
   t.equal(core.connectionString, 'sqlite://db.sqlite')
-  t.equal(core.graphiql, true)
+  t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
 
@@ -109,7 +109,7 @@ t.test('run db init --typescript', async (t) => {
   t.equal(server.port, 3042)
 
   t.equal(core.connectionString, 'sqlite://db.sqlite')
-  t.equal(core.graphiql, true)
+  t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
   t.equal(typescript.outDir, 'dist')
@@ -140,7 +140,7 @@ t.test('run db init --typescript twice', async (t) => {
   t.equal(server.port, 3042)
 
   t.equal(core.connectionString, 'sqlite://db.sqlite')
-  t.equal(core.graphiql, true)
+  t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
   t.equal(typescript.outDir, 'dist')
@@ -170,7 +170,7 @@ t.test('run db init --database postgres', async (t) => {
   t.equal(server.port, 3042)
 
   t.equal(core.connectionString, 'postgres://postgres:postgres@localhost:5432/postgres')
-  t.equal(core.graphiql, true)
+  t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
 
@@ -198,7 +198,7 @@ t.test('run db init --database mysql', async (t) => {
   t.equal(server.port, 3042)
 
   t.equal(core.connectionString, 'mysql://root@localhost:3306/graph')
-  t.equal(core.graphiql, true)
+  t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
 
@@ -226,7 +226,7 @@ t.test('run db init --database mariadb', async (t) => {
   t.equal(server.port, 3042)
 
   t.equal(core.connectionString, 'mysql://root@localhost:3307/graph')
-  t.equal(core.graphiql, true)
+  t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
 
@@ -254,7 +254,7 @@ t.test('run db init --database mysql8', async (t) => {
   t.equal(server.port, 3042)
 
   t.equal(core.connectionString, 'mysql://root@localhost:3308/graph')
-  t.equal(core.graphiql, true)
+  t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
 
@@ -282,7 +282,7 @@ t.test('run db init --hostname 127.0.0.5', async (t) => {
   t.equal(server.port, 3042)
 
   t.equal(core.connectionString, 'sqlite://db.sqlite')
-  t.equal(core.graphiql, true)
+  t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
 
@@ -310,7 +310,7 @@ t.test('run db init --port 3055', async (t) => {
   t.equal(server.port, 3055)
 
   t.equal(core.connectionString, 'sqlite://db.sqlite')
-  t.equal(core.graphiql, true)
+  t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
 
@@ -338,7 +338,7 @@ t.test('run db init --migrations custom-migrations-folder', async (t) => {
   t.equal(server.port, 3042)
 
   t.equal(core.connectionString, 'sqlite://db.sqlite')
-  t.equal(core.graphiql, true)
+  t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'custom-migrations-folder')
 

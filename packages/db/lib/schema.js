@@ -66,9 +66,10 @@ const cors = {
       type: 'boolean',
       default: true
     }
-  }
-
+  },
+  additionalProperties: false
 }
+
 const server = {
   $id: 'https://schemas.platformatic.dev/db/server',
   type: 'object',
@@ -89,8 +90,10 @@ const server = {
         {
           type: 'object',
           properties: {
+            enabled: { type: 'boolean' },
             interval: { type: 'integer' }
-          }
+          },
+          additionalProperties: false
         }
       ]
     },
@@ -115,7 +118,8 @@ const core = {
           graphiql: {
             type: 'boolean'
           }
-        }
+        },
+        additionalProperties: false
       }]
     },
     openapi: {
@@ -136,23 +140,19 @@ const core = {
             type: 'string',
             description: 'Base URL for the OpenAPI'
           }
-        }
+        },
+        additionalProperties: false
       }]
     },
     ignore: {
       type: 'object',
       // TODO add support for column-level ignore
-      properties: {
-        key: {
-          type: 'string',
-          description: 'Non-entity table name.'
-        },
-        value: {
-          type: 'boolean'
-        }
+      additionalProperties: {
+        type: 'boolean'
       }
     }
   },
+  additionalProperties: false,
   required: ['connectionString']
 }
 
@@ -199,7 +199,8 @@ const authorization = {
           type: 'string',
           description: 'the webhook url'
         }
-      }
+      },
+      additionalProperties: false
     },
     rules: {
       type: 'array',
@@ -217,10 +218,8 @@ const authorization = {
           defaults: {
             type: 'object',
             description: 'defaults for entity creation',
-            patternProperties: {
-              '.*': {
-                type: 'string'
-              }
+            additionalProperties: {
+              type: 'string'
             }
           },
           find: {
@@ -249,28 +248,26 @@ const authorization = {
           checks: {
             description: 'checks for the operation',
             type: 'object',
-            patternProperties: {
-              '.*': {
-                if: {
-                  type: 'object'
+            additionalProperties: {
+              if: {
+                type: 'object'
+              },
+              then: {
+                type: 'object',
+                properties: {
+                  eq: { type: 'string' },
+                  in: { type: 'string' },
+                  nin: { type: 'string' },
+                  nen: { type: 'string' },
+                  gt: { type: 'string' },
+                  gte: { type: 'string' },
+                  lt: { type: 'string' },
+                  lte: { type: 'string' }
                 },
-                then: {
-                  type: 'object',
-                  properties: {
-                    eq: { type: 'string' },
-                    in: { type: 'string' },
-                    nin: { type: 'string' },
-                    nen: { type: 'string' },
-                    gt: { type: 'string' },
-                    gte: { type: 'string' },
-                    lt: { type: 'string' },
-                    lte: { type: 'string' }
-                  },
-                  additionalProperties: false
-                },
-                else: {
-                  type: 'string'
-                }
+                additionalProperties: false
+              },
+              else: {
+                type: 'string'
               }
             }
           },
@@ -287,7 +284,6 @@ const authorization = {
         type: 'boolean',
         description: 'true if enabled (with not authorization constraints enabled)'
       }]
-
     }
   }
 }
@@ -296,12 +292,16 @@ const dashboard = {
   $id: 'https://schemas.platformatic.dev/db/dashboard',
   type: 'object',
   properties: {
+    enabled: {
+      type: 'boolean'
+    },
     rootPath: {
       type: 'boolean',
       description: 'Whether the dashboard should be served on / path or not.',
       default: false
     }
-  }
+  },
+  additionalProperties: false
 }
 
 const migrations = {
@@ -312,11 +312,18 @@ const migrations = {
       type: 'string',
       description: 'The path to the directory containing the migrations.'
     },
+    table: {
+      type: 'string'
+    },
+    validateChecksums: {
+      type: 'boolean'
+    },
     autoApply: {
       type: 'boolean',
       description: 'Whether to automatically apply migrations when running the migrate command.'
     }
   },
+  additionalProperties: false,
   required: ['dir']
 }
 
@@ -335,9 +342,11 @@ const metrics = {
             username: { type: 'string' },
             password: { type: 'string' }
           },
+          additionalProperties: false,
           required: ['username', 'password']
         }
-      }
+      },
+      additionalProperties: false
     }
   ]
 }
@@ -349,7 +358,8 @@ const types = {
     autogenerate: {
       type: 'boolean'
     }
-  }
+  },
+  additionalProperties: false
 }
 
 const typescript = {
@@ -363,13 +373,13 @@ const typescript = {
       type: 'boolean'
     }
   },
+  additionalProperties: false,
   required: ['outDir']
 }
 
 const platformaticDBschema = {
   $id: 'https://schemas.platformatic.dev/db',
   type: 'object',
-  additionalProperties: false,
   properties: {
     server,
     core,
@@ -392,6 +402,7 @@ const platformaticDBschema = {
       required: ['path']
     }
   },
+  additionalProperties: false,
   required: ['core', 'server']
 }
 

@@ -41,7 +41,7 @@ async function generateGlobalTypes (entities, config) {
   const globalTypesImports = []
   const globalTypesInterface = []
 
-  if (config.core.graphiql) {
+  if (config.core.graphql) {
     globalTypesImports.push('import graphqlPlugin from \'@platformatic/sql-graphql\'')
   }
 
@@ -88,7 +88,7 @@ async function checkForDependencies (logger, args, config) {
   requiredDependencies.fastify = await getDependencyVersion('fastify')
   requiredDependencies['@platformatic/sql-mapper'] = await getPlatformaticPackageVersion('sql-mapper')
 
-  if (config.core.graphiql) {
+  if (config.core.graphql) {
     requiredDependencies['@platformatic/sql-graphql'] = await getPlatformaticPackageVersion('sql-graphql')
   }
 
