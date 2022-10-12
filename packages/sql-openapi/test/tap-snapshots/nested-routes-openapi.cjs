@@ -5,7 +5,7 @@
  * Make sure to inspect the output below.  Do not ignore changes!
  */
 'use strict'
-exports['platformatic/db/openapi/where nested where > matches expected OpenAPI defs 1'] = `
+exports['platformatic/db/openapi/where nested routes > matches expected OpenAPI defs 1'] = `
 Object {
   "components": Object {
     "schemas": Object {
@@ -56,7 +56,6 @@ Object {
   "info": Object {
     "description": "Exposing a SQL database as REST",
     "title": "Platformatic DB",
-    "version": "0.3.0",
   },
   "openapi": "3.0.3",
   "paths": Object {

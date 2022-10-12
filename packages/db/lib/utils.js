@@ -1,6 +1,6 @@
 'use strict'
 
-const { sep, relative, join, basename, dirname } = require('path')
+const { relative, join, basename, dirname } = require('path')
 const { access } = require('fs/promises')
 const { connect } = require('@platformatic/db-core')
 const { resolve } = require('path')
@@ -29,18 +29,6 @@ async function setupDB (log, config) {
     entities,
     driver
   }
-}
-
-function computeSQLiteIgnores (sqliteFullPath, dirOfConfig) {
-  let result = []
-  const journalFullPath = sqliteFullPath + '-journal'
-  // [windows] remove Backslash at the beginning
-  if (sqliteFullPath.indexOf(dirOfConfig) === 0) {
-    const sqliteRelativePath = sqliteFullPath.replace(dirOfConfig + sep, '')
-    const journalRelativePath = journalFullPath.replace(dirOfConfig + sep, '')
-    result = [sqliteRelativePath, journalRelativePath]
-  }
-  return result
 }
 
 /* c8 ignore start */
@@ -108,7 +96,6 @@ module.exports = {
   setupDB,
   getJSPluginPath,
   isFileAccessible,
-  computeSQLiteIgnores,
   addLoggerToTheConfig,
   findConfigFile,
   urlDirname

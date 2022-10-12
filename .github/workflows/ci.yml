@@ -29,7 +29,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2.2.2
+      - uses: pnpm/action-setup@v2.2.3
       - uses: actions/setup-node@v3
         with:
           node-version: 18
@@ -47,7 +47,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
     - uses: actions/checkout@v3
-    - uses: pnpm/action-setup@v2.2.2
+    - uses: pnpm/action-setup@v2.2.3
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
@@ -67,7 +67,7 @@ jobs:
         os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@v3
-    - uses: pnpm/action-setup@v2.2.2
+    - uses: pnpm/action-setup@v2.2.3
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
@@ -89,7 +89,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
     - uses: actions/checkout@v3
-    - uses: pnpm/action-setup@v2.2.2
+    - uses: pnpm/action-setup@v2.2.3
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
@@ -109,7 +109,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
     - uses: actions/checkout@v3
-    - uses: pnpm/action-setup@v2.2.2
+    - uses: pnpm/action-setup@v2.2.3
     - uses: ikalnytskyi/action-setup-postgres@v3
     - uses: actions/setup-node@v3
       with:
@@ -136,7 +136,7 @@ jobs:
         os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@v3
-    - uses: pnpm/action-setup@v2.2.2
+    - uses: pnpm/action-setup@v2.2.3
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
@@ -157,7 +157,7 @@ jobs:
         os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@v3
-    - uses: pnpm/action-setup@v2.2.2
+    - uses: pnpm/action-setup@v2.2.3
     - uses: actions/setup-node@v3
       with:
         node-version: 18
@@ -184,7 +184,7 @@ jobs:
         os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@v3
-    - uses: pnpm/action-setup@v2.2.2
+    - uses: pnpm/action-setup@v2.2.3
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
@@ -216,7 +216,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2.2.2
+      - uses: pnpm/action-setup@v2.2.3
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
@@ -232,7 +232,7 @@ jobs:
     timeout-minutes: 5
     steps:
     - uses: actions/checkout@v3
-    - uses: pnpm/action-setup@v2.2.2
+    - uses: pnpm/action-setup@v2.2.3
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}

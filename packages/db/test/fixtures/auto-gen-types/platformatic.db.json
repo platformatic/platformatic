@@ -10,7 +10,8 @@
     }
   },
   "migrations": {
-    "dir": "./migrations"
+    "dir": "./migrations",
+    "autoApply": true
   },
   "types": {
     "autogenerate": true

@@ -79,7 +79,7 @@ A **required** object with the following settings:
   }
   ```
 - **`openapi`** (`boolean` or `object`, default: `true`) — Enables OpenAPI REST support.
-  - If value is an object, all [OpenAPI v3](https://swagger.io/specification/) allowed properties can be passed.
+  - If value is an object, all [OpenAPI v3](https://swagger.io/specification/) allowed properties can be passed. Also a `prefix` property can be passed to set the OpenAPI prefix.
   - Platformatic DB uses [`@fastify/swagger`](https://github.com/fastify/fastify-swagger) under the hood to manage this configuration.
 
   _Examples_
@@ -91,6 +91,19 @@ A **required** object with the following settings:
     "core": {
       ...
       "openapi": true
+    }
+  }
+  ```
+
+  Enables OpenAPI with prefix
+
+  ```json
+  {
+    "core": {
+      ...
+      "openapi": {
+        "prefix": "/api"
+      }
     }
   }
   ```
@@ -296,13 +309,13 @@ When an entity is created, the `userId` column is used and populated using the v
 If a user has no role, the `anonymous` role is assigned automatically. It's possible to specify a rule for it:
 
 ```json
-     {
-        "role": "anonymous",
-        "entity": "page",
-        "find": false,
-        "delete": false,
-        "save": false
-      }
+    {
+      "role": "anonymous",
+      "entity": "page",
+      "find": false,
+      "delete": false,
+      "save": false
+    }
 ```
 
 In this case, the user that has no role (or has an explicitly `anonymous` role) has no operations allowed on the `page` entity.
@@ -389,3 +402,31 @@ npx platformatic db --allow-env=HOST,SERVER_LOGGER_LEVEL
 
 If `--allow-env` is passed as an option to the CLI, it will be merged with the
 default allow list.
+
+## Sample Configuration
+
+This is a bare minimum configuration for Platformatic DB. Uses a local `./db.sqlite` SQLite database, with OpenAPI and GraphQL support, and with the dashboard enabled.
+
+Server will listen to `http://127.0.0.1:3042`
+
+```json
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "3042"
+  },
+  "core": {
+    "connectionString": "'sqlite://./db.sqlite'",
+    "graphiql": true,
+    "openapi": {
+      "enabled": true
+    },
+    "graphql": {
+      "enabled": true
+    }
+  },
+  "dashboard": {
+    "enabled": true
+  }
+}
+```

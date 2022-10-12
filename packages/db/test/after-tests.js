@@ -8,7 +8,7 @@ const TMP_DIR_PATH = join(__dirname, 'tmp')
 async function cleanTmpDir () {
   const filenames = await readdir(TMP_DIR_PATH)
   const filesToRemove = filenames
-    .filter(filename => filename !== '.gitkeep')
+    .filter(filename => !['.gitkeep', '.gitignore'].includes(filename))
     .map(filename => join(TMP_DIR_PATH, filename))
 
   const removeOptions = {

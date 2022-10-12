@@ -102,10 +102,11 @@ importers:
     specifiers:
       '@databases/pg': ^5.3.0
       '@databases/sqlite': ^4.0.0
+      '@fastify/accepts': ^4.0.1
       '@fastify/basic-auth': ^4.0.0
       '@fastify/cors': ^8.0.0
       '@fastify/deepmerge': ^1.1.0
-      '@fastify/restartable': ^1.3.0
+      '@fastify/restartable': ^1.3.1
       '@fastify/static': ^6.5.0
       '@fastify/swagger': ^7.4.1
       '@fastify/under-pressure': ^8.0.0
@@ -148,10 +149,11 @@ importers:
       undici: ^5.8.0
       why-is-node-running: ^2.2.2
     dependencies:
+      '@fastify/accepts': 4.0.1
       '@fastify/basic-auth': 4.0.0
       '@fastify/cors': 8.1.0
       '@fastify/deepmerge': 1.1.0
-      '@fastify/restartable': 1.3.0
+      '@fastify/restartable': 1.3.1
       '@fastify/static': 6.5.0
       '@fastify/swagger': 7.6.1
       '@fastify/under-pressure': 8.1.0
@@ -263,7 +265,7 @@ importers:
       '@vitejs/plugin-react': ^2.0.0
       bulma: ^0.9.4
       graphiql: ^2.0.0
-      happy-dom: ^6.0.4
+      happy-dom: ^7.0.0
       history: ^5.3.0
       json-format-highlight: ^1.0.4
       jsoneditor: ^9.9.0
@@ -288,7 +290,7 @@ importers:
       '@vitejs/plugin-react': 2.1.0_vite@3.1.4
       bulma: 0.9.4
       graphiql: 2.0.8_ugpyugt3hxz5matbilj5ensms4
-      happy-dom: 6.0.4
+      happy-dom: 7.0.0
       history: 5.3.0
       json-format-highlight: 1.0.4
       jsoneditor: 9.9.2
@@ -302,7 +304,7 @@ importers:
       standard: 17.0.0
       swagger-ui-react: 4.13.0_biqbaboplfbrettd7655fr4n2y
       vite: 3.1.4
-      vitest: 0.23.4_happy-dom@6.0.4
+      vitest: 0.23.4_happy-dom@7.0.0
 
   packages/sql-graphql:
     specifiers:
@@ -877,6 +879,13 @@ packages:
     resolution: {integrity: sha512-4R/N2KfYeld7A5LGkai+iUFMahXcxxYbDp+XS2B1yuL3cdmZLJ9TlCnNzT3q5xFTqsYm0GPpinLUwfSwjcVjyA==}
     engines: {node: '>=14'}
 
+  /@fastify/accepts/4.0.1:
+    resolution: {integrity: sha512-ekyareDwz1i9mNXOdX8Mh1DRU/vDuAf0ht7pvf2vs95/4gYKj54Viztpcb+v745Rgxlq6I+U3n+iO3OiKYcaaQ==}
+    dependencies:
+      accepts: 1.3.8
+      fastify-plugin: 4.2.1
+    dev: false
+
   /@fastify/ajv-compiler/3.3.1:
     resolution: {integrity: sha512-IRnids8lblQ8e1i8h4JLyfJmebXE+ohcj8x8X/+Ew6ZB4H0Ui05z5YL6q5FOcl0zItVpu4adRzeyVNNUwmduIg==}
     dependencies:
@@ -935,8 +944,8 @@ packages:
       which: 2.0.2
     dev: true
 
-  /@fastify/restartable/1.3.0:
-    resolution: {integrity: sha512-dyi/m9dK7ZWjNr/cAH4gqRSR8ceQoCMtfmU5VqMeF0jd91ym20Tsy0bA3oBWE3psVEjQxmMJcZdihr0vZleiqw==}
+  /@fastify/restartable/1.3.1:
+    resolution: {integrity: sha512-oKcCi+k7p8XMvadGJodGhI2uPAHdYF1iMC3p5vjwsCg/X+BNbhgIj+GoOYE/saFrXZHWiL/iBpvmfv1wt17l3A==}
     dependencies:
       '@fastify/error': 3.0.0
       fastify: 4.6.0
@@ -1468,7 +1477,7 @@ packages:
   /@types/concat-stream/1.6.1:
     resolution: {integrity: sha512-eHE4cQPoj6ngxBZMvVf6Hw7Mh4jMW4U9lpGmS5GBPB9RYxlFg+CHaVN7ErNY4W9XfLIEn20b4VDYaIrbq0q4uA==}
     dependencies:
-      '@types/node': 8.10.66
+      '@types/node': 18.7.23
     dev: true
 
   /@types/cuid/1.3.1:
@@ -1488,7 +1497,7 @@ packages:
   /@types/form-data/0.0.33:
     resolution: {integrity: sha512-8BSvG1kGm83cyJITQMZSulnl6QV8jqAGreJsc5tPu1Jq0vTSOiY/k24Wx82JRpWwZSqrala6sd5rWi6aNXvqcw==}
     dependencies:
-      '@types/node': 8.10.66
+      '@types/node': 18.7.23
     dev: true
 
   /@types/hast/2.3.4:
@@ -1617,6 +1626,14 @@ packages:
 
   /abstract-logging/2.0.1:
     resolution: {integrity: sha512-2BjRTZxTPvheOvGbBslFSYOUkr+SjPtOnrLP33f+VIWLzezQpZcqVg7ja3L4dBXmzzgwT+a029jRx5PCi3JuiA==}
+
+  /accepts/1.3.8:
+    resolution: {integrity: sha512-PYAthTa2m2VKxuvSD3DPC/Gy+U+sOA1LAuT8mkmRuvw+NACSaeXEQ+NHcVF7rONl6qcaxV3Uuemwawk+7+SJLw==}
+    engines: {node: '>= 0.6'}
+    dependencies:
+      mime-types: 2.1.35
+      negotiator: 0.6.3
+    dev: false
 
   /ace-builds/1.11.2:
     resolution: {integrity: sha512-1VNeUF56b6gkaeeWJXMBBuz5n0ceDchjUwwVmTKpNM/N3YRrUEpykGEEsg7Y1PKP7IRyqtXfAu6VJDg7OZaLfA==}
@@ -3762,8 +3779,8 @@ packages:
     resolution: {integrity: sha512-KPIBPDlW7NxrbT/eh4qPXz5FiFdL5UbaA0XUNz2Rp3Z3hqBSkbj0GVjwFDztsWVauZUWsbKHgMg++sk8UX0bkw==}
     engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
 
-  /happy-dom/6.0.4:
-    resolution: {integrity: sha512-b+ID23Ms0BY08UNLymsOMG7EI2jSlwEt4cbJs938GZfeNAg+fqgkSO3TokQMgSOFoHznpjWmpVjBUL5boJ9PWw==}
+  /happy-dom/7.0.0:
+    resolution: {integrity: sha512-nLhVhWIf4M4SIm2hBqAb1rshuAyzJwgD0iJtWeXa07poPdhiR99o0A+JxCOquJWWSFkCREynMNbbvA6sGEz/cQ==}
     dependencies:
       css.escape: 1.5.1
       he: 1.2.0
@@ -4769,14 +4786,12 @@ packages:
   /mime-db/1.52.0:
     resolution: {integrity: sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg==}
     engines: {node: '>= 0.6'}
-    dev: true
 
   /mime-types/2.1.35:
     resolution: {integrity: sha512-ZDY+bPm5zTTF+YpCrAU9nK0UgICYPT0QtT1NZWFv4s++TNkcgVaT0g6+4R2uI4MjQjzysHB1zxuWL50hzaeXiw==}
     engines: {node: '>= 0.6'}
     dependencies:
       mime-db: 1.52.0
-    dev: true
 
   /mime/1.6.0:
     resolution: {integrity: sha512-x0Vn8spI+wuJ1O6S7gnbaQg8Pxh4NNHb7KSINmEWKiPE4RKOplvijn+NkmYmmRgP68mc70j2EbeTFRsrswaQeg==}
@@ -4938,7 +4953,6 @@ packages:
   /negotiator/0.6.3:
     resolution: {integrity: sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==}
     engines: {node: '>= 0.6'}
-    optional: true
 
   /node-addon-api/4.3.0:
     resolution: {integrity: sha512-73sE9+3UaLYYFmDsFZnqCInzPyh3MqIwZO9cw58yIqAZhONrrabrYyYe3TuIqtIiOuTXVhsGau8hcrhhwSsDIQ==}
@@ -7234,7 +7248,7 @@ packages:
       fsevents: 2.3.2
     dev: true
 
-  /vitest/0.23.4_happy-dom@6.0.4:
+  /vitest/0.23.4_happy-dom@7.0.0:
     resolution: {integrity: sha512-iukBNWqQAv8EKDBUNntspLp9SfpaVFbmzmM0sNcnTxASQZMzRw3PsM6DMlsHiI+I6GeO5/sYDg3ecpC+SNFLrQ==}
     engines: {node: '>=v14.16.0'}
     hasBin: true
@@ -7261,7 +7275,7 @@ packages:
       '@types/node': 18.7.23
       chai: 4.3.6
       debug: 4.3.4
-      happy-dom: 6.0.4
+      happy-dom: 7.0.0
       local-pkg: 0.4.2
       strip-literal: 0.4.2
       tinybench: 2.1.5

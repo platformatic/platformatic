@@ -6,6 +6,7 @@ the GraphQL schema.
 ## `save[ENTITY]`
 
 Saves a new entity to the database or updates an existing entity.
+This actually behaves as an `upsert`, allowing both behaviours depending on the presence of the primary key field.
 
 ### Example
 <!-- docs/sql-graphql/examples/saveEntity.js -->

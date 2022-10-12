@@ -1,5 +1,5 @@
 import path from 'path'
-import { rm, mkdir, cp, access } from 'fs/promises'
+import { rm, mkdir, cp } from 'fs/promises'
 import { cliPath } from './helper.mjs'
 import t from 'tap'
 import { execa } from 'execa'
@@ -77,31 +77,6 @@ t.test('should show warning if there is no entities', async (t) => {
     console.log(err.stderr)
     t.fail(err.stderr)
   }
-
-  t.pass()
-})
-
-t.test('generate ts types with typescript plugin', async (t) => {
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types-typescript')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'gen-types-typescript-clone-1')
-
-  await mkdir(cwd)
-  await cp(testDir, cwd, { recursive: true })
-
-  t.teardown(async () => {
-    await rm(cwd, { force: true, recursive: true })
-  })
-
-  try {
-    await execa('node', [cliPath, 'types'], { cwd })
-  } catch (err) {
-    console.log(err.stdout)
-    console.log(err.stderr)
-    t.fail(err.stderr)
-  }
-
-  const pathToTSPlugin = path.join(cwd, 'plugin.ts')
-  await access(pathToTSPlugin)
 
   t.pass()
 })

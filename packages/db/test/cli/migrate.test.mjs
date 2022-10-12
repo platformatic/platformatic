@@ -94,3 +94,29 @@ test('throws if migrations directory does not exist', async ({ match }) => {
   const [data] = await once(output, 'data')
   match(data, /^MigrateError: Migrations directory (.*) does not exist.$/)
 })
+
+test('do not run migrations by default', async ({ equal, teardown }) => {
+  const db = await connectAndResetDB()
+
+  const firstChild = execa('node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('no-auto-apply.json')])
+
+  teardown(() => firstChild.kill('SIGINT'))
+  teardown(() => db.dispose())
+
+  const splitter = split()
+  const firstOutput = firstChild.stdout.pipe(splitter)
+  const [out] = await once(firstOutput, 'data')
+  const { msg } = JSON.parse(out)
+  equal(msg, 'server listening')
+
+  const [{ exists }] = await db.query(db.sql(
+    `SELECT EXISTS (
+    SELECT FROM
+        pg_tables
+    WHERE
+        schemaname = 'public' AND
+        tablename  = 'graphs'
+    );`
+  ))
+  equal(exists, false)
+})

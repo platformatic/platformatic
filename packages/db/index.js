@@ -43,7 +43,7 @@ function createServerConfig (config) {
 }
 
 async function platformaticDB (app, opts) {
-  if (opts.migrations && opts.migrations.autoApply !== false && !app.restarted) {
+  if (opts.migrations && opts.migrations.autoApply === true && !app.restarted) {
     app.log.debug({ migrations: opts.migrations }, 'running migrations')
     const { execute } = await import('./lib/migrate.mjs')
     await execute(app.log, { config: opts.configFileLocation }, opts)
@@ -61,15 +61,16 @@ async function platformaticDB (app, opts) {
       dashboardAtRoot: opts.dashboard.rootPath || true
     })
   }
-  app.register(core, opts.core)
-
-  if (opts.authorization) {
-    app.register(auth, opts.authorization)
-  }
 
   // Metrics plugin
   if (isKeyEnabledInConfig('metrics', opts)) {
     app.register(require('./lib/metrics-plugin'), opts.metrics)
+  }
+
+  app.register(core, opts.core)
+
+  if (opts.authorization) {
+    app.register(auth, opts.authorization)
   }
 
   if (opts.plugin) {

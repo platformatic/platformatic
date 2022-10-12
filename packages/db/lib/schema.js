@@ -79,8 +79,8 @@ const server = {
     },
     port: {
       anyOf: [
-        { type: 'string' },
-        { type: 'integer' }
+        { type: 'integer' },
+        { type: 'string' }
       ]
     },
     healthCheck: {
@@ -131,6 +131,10 @@ const core = {
               description: { type: 'string' },
               version: { type: 'string' }
             }
+          },
+          prefix: {
+            type: 'string',
+            description: 'Base URL for the OpenAPI'
           }
         }
       }]

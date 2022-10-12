@@ -1,0 +1,16 @@
+name: "Announce Release on Discord"
+on:
+  release:
+    types: [published]
+
+jobs:
+  announce-on-discord:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_RELEASES_WEBHOOK }}
+        uses: Ilshidur/action-discord@master
+        with:
+          args: '📣 Platformatic ${{ github.event.release.tag_name }} has been released! Check it out: ${{ github.event.release.html_url }}.'
+

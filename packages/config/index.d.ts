@@ -11,6 +11,7 @@ interface IConfigManagerOptions {
   envWhitelist?: string[]
   watch?: boolean
   watchIgnore?: string[]
+  allowedToWatch?: string[]
 }
 
 type JsonArray = boolean[] | number[] | string[] | JsonMap[] | Date[]

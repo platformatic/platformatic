@@ -6,7 +6,7 @@ const { buildServer } = require('..')
 const { request } = require('undici')
 const { tmpdir } = require('os')
 const { readFile, writeFile, unlink } = require('fs/promises')
-const { join } = require('path')
+const { join, basename } = require('path')
 const DBConfigManager = require('../lib/config')
 
 test('return config with adminSecret', async ({ teardown, equal, same }) => {
@@ -229,7 +229,10 @@ test('ignore watch sqlite file', async ({ teardown, equal, same, comment }) => {
     })
     const parseResult = await cm.parse()
     equal(parseResult, true)
-    same(cm.watchIgnore, ['*.ts', 'db-watchIgnore.sqlite', 'db-watchIgnore.sqlite-journal', '.esm*'])
+    same(cm.watchIgnore, [])
+
+    const configFileName = basename(cm.fullPath)
+    same(cm.allowedToWatch, ['*.js', '**/*.js', configFileName])
   }
 
   {
@@ -249,7 +252,10 @@ test('ignore watch sqlite file', async ({ teardown, equal, same, comment }) => {
     })
     const parseResult = await cm.parse()
     equal(parseResult, true)
-    same(cm.watchIgnore, ['*.ts', join('databases', 'db-watchIgnore.sqlite'), join('databases', 'db-watchIgnore.sqlite-journal'), '.esm*'])
+    same(cm.watchIgnore, [])
+
+    const configFileName = basename(cm.fullPath)
+    same(cm.allowedToWatch, ['*.js', '**/*.js', configFileName])
   }
 })
 

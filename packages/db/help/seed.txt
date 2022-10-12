@@ -4,6 +4,7 @@ the database specified in the configuration file.
 
 Here is an example of a seed file:
 
+``` javascript
   'use strict'
 
   module.exports = async function ({ entities, db, sql }) {
@@ -12,10 +13,13 @@ Here is an example of a seed file:
       INSERT INTO graphs (name) VALUES ('Hello 2');
     `)
   }
+```
 
 You can run this using the `seed` command:
 
+``` bash
   $ platformatic db seed seed.js
+```
 
 Options:
 

@@ -5,7 +5,7 @@
  * Make sure to inspect the output below.  Do not ignore changes!
  */
 'use strict'
-exports['platformatic/db/openapi/simple nullable fields > GET /documentation/json response 1'] = `
+exports['platformatic/db/openapi/simple expose the api with a prefix, if defined > GET /documentation/json response 1'] = `
 Object {
   "components": Object {
     "schemas": Object {
@@ -16,11 +16,12 @@ Object {
             "type": "integer",
           },
           "title": Object {
-            "nullable": true,
             "type": "string",
           },
         },
-        "required": Array [],
+        "required": Array [
+          "title",
+        ],
         "title": "Page",
         "type": "object",
       },
@@ -29,11 +30,10 @@ Object {
   "info": Object {
     "description": "Exposing a SQL database as REST",
     "title": "Platformatic DB",
-    "version": "0.3.0",
   },
   "openapi": "3.0.3",
   "paths": Object {
-    "/pages/": Object {
+    "/api/pages/": Object {
       "get": Object {
         "operationId": "getPages",
         "parameters": Array [
@@ -271,7 +271,7 @@ Object {
         },
       },
     },
-    "/pages/{id}": Object {
+    "/api/pages/{id}": Object {
       "delete": Object {
         "parameters": Array [
           Object {

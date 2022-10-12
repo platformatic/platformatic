@@ -3,6 +3,7 @@
 const fp = require('fastify-plugin')
 const metricsPlugin = require('fastify-metrics')
 const basicAuth = require('@fastify/basic-auth')
+const fastifyAccepts = require('@fastify/accepts')
 const Fastify = require('fastify')
 const http = require('http')
 
@@ -57,15 +58,23 @@ module.exports = fp(async function (app, opts) {
     logger: app.log.child({ name: 'prometheus' })
   })
 
+  promServer.register(fastifyAccepts)
+
   const metricsEndpointOptions = {
     url: '/metrics',
     method: 'GET',
     logLevel: 'info',
-    handler: async (_, reply) => {
+    handler: async (req, reply) => {
+      const promRegistry = app.metrics.client.register
+      const accepts = req.accepts()
+      if (!accepts.type('text/plain') && accepts.type('application/json')) {
+        return await promRegistry.getMetricsAsJSON()
+      }
       reply.type('text/plain')
-      return await app.metrics.client.register.metrics()
+      return await promRegistry.metrics()
     }
   }
+
   if (opts.auth) {
     const { username, password } = opts.auth
     await promServer.register(basicAuth, {

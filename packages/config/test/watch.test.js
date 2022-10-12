@@ -84,6 +84,7 @@ test('start & stop cannot be called multiple times', async ({ same, fail, plan, 
   ])
   await cm.stopWatch()
 })
+
 test('should emit error for invalid config and not update current', async ({ teardown, fail }) => {
   const config = {
     name: 'Platformatic',
@@ -158,7 +159,7 @@ test('should emit event if .env file is updated', async ({ same, fail, plan, tea
   await writeFile(envFile, 'PLT_PROP=foo\n')
   await writeFile(file, JSON.stringify(config))
 
-  const cm = new ConfigManager({ source: file, schema, watch: true })
+  const cm = new ConfigManager({ source: file, schema, watch: true, allowedToWatch: ['.env'] })
   await cm.parse()
   const updatedConfig = {
     name: 'Platformatic',
@@ -215,7 +216,11 @@ test('return correct files to ignore watch', async ({ equal, same, plan }) => {
       }
     }
     const file = await saveConfigToFile(config, 'test-watchIgnore.json')
-    const cm = new ConfigManager({ source: file, watchIgnore: ['test.file', 'test2.file'] })
+    const cm = new ConfigManager({
+      source: file,
+      allowedToWatch: ['*'],
+      watchIgnore: ['test.file', 'test2.file']
+    })
     equal(false, cm.shouldFileBeWatched('test.file'))
     equal(false, cm.shouldFileBeWatched('test2.file'))
     await unlink(file)
@@ -228,7 +233,11 @@ test('return correct files to ignore watch', async ({ equal, same, plan }) => {
       }
     }
     const file = await saveConfigToFile(config, 'test-watchIgnore.json')
-    const cm = new ConfigManager({ source: file, watchIgnore: ['test.file', 'test2.file'] })
+    const cm = new ConfigManager({
+      source: file,
+      allowedToWatch: ['*'],
+      watchIgnore: ['test.file', 'test2.file']
+    })
     equal(true, cm.shouldFileBeWatched('another.file'))
     await unlink(file)
   }
@@ -262,12 +271,38 @@ test('do not emit event for ignored files', async ({ teardown, equal, same, fail
   await sleep(150)
 })
 
+test('do not emit event for not allowed files', async ({ teardown, equal, fail }) => {
+  const configFile = path.join(__dirname, 'fixtures', 'simple.json')
+  const cm = new ConfigManager({
+    source: configFile,
+    schema: {},
+    watch: true
+  })
+  const parseResult = await cm.parse()
+  equal(parseResult, true)
+  const testFileFullPath = `${path.join(path.dirname(cm.fullPath))}/test.file`
+  cm.on('update', () => {
+    fail()
+  })
+  await writeFile(testFileFullPath, 'foobar')
+
+  teardown(async () => {
+    await cm.stopWatch()
+    await unlink(testFileFullPath)
+  })
+
+  // await a full event loop cycle to make sure all possible updates
+  // have been processed.
+  await sleep(150)
+})
+
 test('emit event for not-ignored files', async ({ teardown, equal, same, pass, fail }) => {
   const configFile = path.join(__dirname, 'fixtures', 'simple.json')
   const cm = new ConfigManager({
     source: configFile,
     schema: {},
     watch: true,
+    allowedToWatch: ['*'],
     watchIgnore: ['test.file']
   })
   let eventEmitted = false
