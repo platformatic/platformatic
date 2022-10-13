@@ -325,8 +325,7 @@ test('admin routes are not included in main openapi', async ({ teardown, same, e
 
     same(Object.keys(body.paths), [
       '/pages/',
-      '/pages/{id}',
-      '/'
+      '/pages/{id}'
     ])
   }
 })
