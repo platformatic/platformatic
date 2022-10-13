@@ -72,11 +72,12 @@ importers:
   packages/config:
     specifiers:
       '@iarna/toml': ^2.2.5
+      '@platformatic/utils': workspace:*
       ajv: ^8.11.0
       c8: ^7.11.0
       dotenv: ^16.0.1
+      fastify: ^4.6.0
       json5: ^2.2.1
-      minimatch: ^5.1.0
       pupa: ^3.1.0
       snazzy: ^9.0.0
       standard: ^17.0.0
@@ -85,15 +86,16 @@ importers:
       yaml: ^2.1.1
     dependencies:
       '@iarna/toml': 2.2.5
+      '@platformatic/utils': link:../utils
       ajv: 8.11.0
       c8: 7.12.0
       dotenv: 16.0.2
       json5: 2.2.1
-      minimatch: 5.1.0
       pupa: 3.1.0
       undici: 5.10.0
       yaml: 2.1.1
     devDependencies:
+      fastify: 4.6.0
       snazzy: 9.0.0
       standard: 17.0.0
       tap: 16.3.0
@@ -117,6 +119,7 @@ importers:
       '@platformatic/sql-graphql': workspace:*
       '@platformatic/sql-json-schema-mapper': workspace:*
       '@platformatic/sql-mapper': workspace:*
+      '@platformatic/utils': workspace:*
       c8: ^7.11.0
       close-with-grace: ^1.1.0
       commist: ^3.1.2
@@ -161,6 +164,7 @@ importers:
       '@platformatic/db-authorization': link:../db-authorization
       '@platformatic/db-core': link:../db-core
       '@platformatic/db-dashboard': link:../db-dashboard
+      '@platformatic/utils': link:../utils
       close-with-grace: 1.1.0
       commist: 3.1.2
       desm: 1.3.0
@@ -414,6 +418,21 @@ importers:
       standard: 17.0.0
       tap: 16.3.0
       tsd: 0.24.1
+
+  packages/utils:
+    specifiers:
+      c8: ^7.11.0
+      minimatch: ^5.1.0
+      snazzy: ^9.0.0
+      standard: ^17.0.0
+      tap: ^16.0.0
+    dependencies:
+      minimatch: 5.1.0
+    devDependencies:
+      c8: 7.12.0
+      snazzy: 9.0.0
+      standard: 17.0.0
+      tap: 16.3.0
 
 packages:
 

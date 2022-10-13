@@ -10,8 +10,7 @@ interface IConfigManagerOptions {
   env?: IEnv
   envWhitelist?: string[]
   watch?: boolean
-  watchIgnore?: string[]
-  allowedToWatch?: string[]
+  allowToWatch?: string[]
 }
 
 type JsonArray = boolean[] | number[] | string[] | JsonMap[] | Date[]
@@ -28,8 +27,8 @@ interface ISerializer {
 export declare class ConfigManager {
   constructor(opts: IConfigManagerOptions)
   current: object
-  stopWatch(): void
-  startWatch(): Promise<void>
+  startWatching(): void
+  stopWatching(): Promise<void>
   getSerializer(): ISerializer
   purgeEnv(): IEnv
   replaceEnv(configString: string): string
