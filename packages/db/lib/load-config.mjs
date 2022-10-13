@@ -25,22 +25,10 @@ async function loadConfig (minimistConfig, _args, configOpts = {}) {
     console.error('Missing config file')
     process.exit(1)
   }
-  let watchIgnore = null
-  // Apparently C8 cannot detect these three lines on Windows
-  /* c8 ignore next 3 */
-  if (args['watch-ignore']) {
-    watchIgnore = args['watch-ignore'].split(',')
-  }
-  let allowedToWatch = null
-  /* c8 ignore next 3 */
-  if (args['allow-to-watch']) {
-    allowedToWatch = args['allow-to-watch'].split(',')
-  }
+
   const configManager = new ConfigManager({
     source: args.config,
     envWhitelist: [...args.allowEnv.split(',')],
-    watchIgnore,
-    allowedToWatch,
     ...configOpts
   })
 

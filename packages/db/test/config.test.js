@@ -229,10 +229,9 @@ test('ignore watch sqlite file', async ({ teardown, equal, same, comment }) => {
     })
     const parseResult = await cm.parse()
     equal(parseResult, true)
-    same(cm.watchIgnore, [])
 
     const configFileName = basename(cm.fullPath)
-    same(cm.allowedToWatch, ['*.js', '**/*.js', configFileName])
+    same(cm.fileWatcher.allowToWatch, ['.env', configFileName])
   }
 
   {
@@ -252,10 +251,9 @@ test('ignore watch sqlite file', async ({ teardown, equal, same, comment }) => {
     })
     const parseResult = await cm.parse()
     equal(parseResult, true)
-    same(cm.watchIgnore, [])
 
     const configFileName = basename(cm.fullPath)
-    same(cm.allowedToWatch, ['*.js', '**/*.js', configFileName])
+    same(cm.fileWatcher.allowToWatch, ['.env', configFileName])
   }
 })
 

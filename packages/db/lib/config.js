@@ -15,8 +15,7 @@ class DBConfigManager extends ConfigManager {
         coerceTypes: true,
         allErrors: true
       },
-      allowedToWatch: opts.allowedToWatch || ['*.js', '**/*.js'],
-      watchIgnore: opts.watchIgnore || [],
+      allowToWatch: ['.env'],
       envWhitelist: ['PORT', 'DATABASE_URL', ...(opts.envWhitelist || [])]
     })
   }
