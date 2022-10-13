@@ -22,10 +22,10 @@ Platformatic can be configured to expose Prometheus metrics:
 In this case, we are exposing the metrics on port 9091 (defaults to `9090`), and we are using basic authentication to protect the endpoint.
 We can also specify the IP address to bind to (defaults to `0.0.0.0`). 
 Note that the metrics port is not the default in this configuration. This is because if you want to test the integration running both Prometheus and Platformatic on the same host, Prometheus starts on `9090` port too.
-All the configuration settings are optional. To use the default settings, set `"metrics": true`. See the [configuration reference](/reference/configuration.md#metrics) for more details.
+All the configuration settings are optional. To use the default settings, set `"metrics": true`. See the [configuration reference](/reference/db/configuration.md#metrics) for more details.
 
 :::caution
-Use [environment variable placeholders](/reference/configuration.md#environment-variable-placeholders) in your Platformatic DB configuration file to avoid exposing credentials.
+Use [environment variable placeholders](/reference/db/configuration.md#environment-variable-placeholders) in your Platformatic DB configuration file to avoid exposing credentials.
 :::
 
 ## Prometheus Configuration

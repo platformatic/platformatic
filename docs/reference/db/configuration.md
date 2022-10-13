@@ -264,7 +264,7 @@ Note that `"userId": "X-PLATFORMATIC-USER-ID"` is syntactic sugar for:
       }
 ```
 
-It's possible to specify more complex rules using all the [supported where clause operators](./sql-mapper/entities/api.md#where-clause).
+It's possible to specify more complex rules using all the [supported where clause operators](/reference/sql-mapper/entities/api.md#where-clause).
 
 Note that `userId` MUST exist as a field in the database table to use this feature.
 

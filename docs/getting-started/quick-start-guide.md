@@ -129,7 +129,7 @@ This configuration tells Platformatic to:
 
 :::tip
 
-The [Configuration reference](/reference/configuration.md) explains all of the
+The [Configuration reference](/reference/db/configuration.md) explains all of the
 supported configuration options.
 
 :::
@@ -214,16 +214,6 @@ query {
 :::tip
 
 Learn more about your API's GraphQL interface in the
-[GraphQL API reference](reference/sql-graphql/introduction.md).
+[GraphQL API reference](/reference/sql-graphql/introduction.md).
 
 :::
-
-<!--
-
-## Next steps
-
-TODO: Add link to the tutorial
-
-TODO: Add link to How To and Reference categories
-
--->
