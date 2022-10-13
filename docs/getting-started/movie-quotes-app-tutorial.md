@@ -105,7 +105,7 @@ DATABASE_URL=sqlite://./movie-quotes.sqlite
 
 :::info
 
-Take a look at the [Configuration reference](/reference/configuration.md)
+Take a look at the [Configuration reference](/reference/db/configuration.md)
 to see all the supported configuration settings.
 
 :::
