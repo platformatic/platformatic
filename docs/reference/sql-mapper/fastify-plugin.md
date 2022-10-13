@@ -8,8 +8,8 @@ The plugin decorates the server with a `platformatic` object that has the follow
 
 - `db` — the DB wrapper object provided by [`@databases`](https://www.atdatabases.org/)
 - `sql` — the SQL query mapper object provided by [`@databases`](https://www.atdatabases.org/)
-- `entities` — all entity objects with their [API methods](./entity/api)
-- `addEntityHooks` — a function to add a [hook](./entity/hooks) to an entity API method.
+- `entities` — all entity objects with their [API methods](./entities/api)
+- `addEntityHooks` — a function to add a [hook](./entities/hooks) to an entity API method.
 
 #### Usage
 
