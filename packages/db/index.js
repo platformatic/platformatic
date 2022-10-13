@@ -102,7 +102,7 @@ async function platformaticDB (app, opts) {
         }
       })
     } else {
-      const plugin = await import(pluginOptions.path)
+      const plugin = await import(`file://${pluginOptions.path}`)
       await app.register(plugin, pluginOptions.options)
     }
   }
