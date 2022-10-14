@@ -35,8 +35,12 @@ test('login', async (t) => {
 })
 
 test('command not found', async (t) => {
-  const { stdout } = await execa('node', [cliPath, 'foo'])
-  t.ok(stdout.includes('Command not found: foo'))
+  try {
+    await execa('node', [cliPath, 'foo'])
+    t.fail('bug')
+  } catch (err) {
+    t.ok(err.stdout.includes('Command not found: foo'))
+  }
 })
 
 test('prints the help with help command', async (t) => {
