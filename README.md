@@ -1,5 +1,19 @@
 # Platformatic
 
+
+<div align="center">
+
+[![CI](https://github.com/platformatic/platformatic/actions/workflows/ci.yml/badge.svg)](https://github.com/platformatic/platformatic/actions/workflows/ci.yml)
+[![Documentation](https://github.com/platformatic/platformatic/actions/workflows/update-docs.yml/badge.svg)](https://github.com/platformatic/platformatic/actions/workflows/update-docs.yml)
+[![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](https://standardjs.com/)
+[![NPM version](https://img.shields.io/npm/v/platformatic.svg?style=flat)](https://www.npmjs.com/package/platformatic)
+[![Discord](https://img.shields.io/discord/1011258196905689118)](https://discord.gg/platformatic)
+
+</div>
+
+
+<br />
+
 Platformatic is a set of Open Source tools that you can use to build your own _Internal Developer Platform_.
 
 The first of these tools is **Platformatic DB** — more will follow!
