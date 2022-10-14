@@ -160,7 +160,10 @@ test('hotreload disabled', { skip: isWindows }, async ({ teardown, equal, same, 
   "plugin": {
     "path": "./${basename(file)}",
     "stopTimeout": 1000,
-    "hotReload": false
+    "watch": true,
+    "watchOptions": {
+      "hotReload": false
+    }
   },
   "core": {
     "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres"

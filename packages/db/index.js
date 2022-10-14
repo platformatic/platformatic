@@ -87,8 +87,10 @@ async function platformaticDB (app, opts) {
     // if not defined, we defaults to true (which can happen only if config is set programmatically,
     // that's why we ignore the coverage of the `undefined` case, which cannot be covered in cli tests)
     /* c8 ignore next */
-    const hotReload = opts.plugin.hotReload === undefined ? true : opts.plugin.hotReload
-    if (hotReload) {
+    const hotReload = opts.plugin.watchOptions?.hotReload !== false
+    const isWatchEnabled = opts.plugin.watch !== false
+
+    if (isWatchEnabled && hotReload) {
       await app.register(sandbox, {
         ...pluginOptions,
         customizeGlobalThis (_globalThis) {
