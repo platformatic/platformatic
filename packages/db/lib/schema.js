@@ -397,6 +397,10 @@ const platformaticDBschema = {
         },
         stopTimeout: {
           type: 'integer'
+        },
+        hotReload: {
+          type: 'boolean',
+          default: true
         }
       },
       required: ['path']
