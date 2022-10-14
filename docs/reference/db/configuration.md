@@ -172,7 +172,7 @@ An optional object with the following settings:
 
 An optional object that defines a plugin loaded by Platformatic DB.
 - **`path`** (**required**, `string`): Relative path to plugin's entry point.
-- **`hotReload`** if `true` or not specified, the plugin is loaded using [`fastify-isolate`](https://github.com/mcollina/fastify-isolate), otherwise is loaded directly using `require`/`import` and the hot reload is not enabled
+- **`hotReload`** if `true` or not specified, the plugin is loaded using [`fastify-sandbox`](https://github.com/mcollina/fastify-sandbox), otherwise is loaded directly using `require`/`import` and the hot reload is not enabled
 - **`options`** (`object`): Optional plugin options.
 
 :::warning:::
