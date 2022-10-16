@@ -7,7 +7,7 @@ const { join } = require('path')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { isSQLite, connInfo, clear } = require('./helper')
+const { isSQLite, connInfo, isMysql } = require('./helper')
 
 test('should fail when an unknown foreign key relationship exists', async ({ pass, rejects, same, teardown }) => {
   if (!isSQLite) {
@@ -63,21 +63,63 @@ test('should handle multi references', async ({ pass, teardown, same, equal }) =
     ...connInfo,
     async onDatabaseLoad (db, sql) {
       pass('onDatabaseLoad called')
-      await clear(db, sql)
-      await db.query(sql`
-          CREATE TABLE quotes (
+
+      try {
+        await db.query(sql`DROP TABLE books`)
+      } catch (err) {
+      }
+
+      try {
+        await db.query(sql`DROP TABLE authors`)
+      } catch (err) {
+      }
+
+      if (isMysql) {
+        await db.query(sql`
+          CREATE TABLE authors (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255)
+          );
+          CREATE TABLE books (
+            id SERIAL PRIMARY KEY,
+            title VARCHAR(42),
+            author_id BIGINT UNSIGNED,
+            another_author_id BIGINT UNSIGNED,
+            FOREIGN KEY (author_id) REFERENCES authors(id) ON DELETE CASCADE,
+            FOREIGN KEY (another_author_id) REFERENCES authors(id) ON DELETE CASCADE
+          );
+        `)
+      } else if (isSQLite) {
+        await db.query(sql`
+          CREATE TABLE authors (
             id INTEGER PRIMARY KEY,
-            quote TEXT NOT NULL
-          );`)
-      await db.query(sql`
-          CREATE TABLE movies (
+            name VARCHAR(255)
+          );
+        `)
+        await db.query(sql`
+          CREATE TABLE books (
             id INTEGER PRIMARY KEY,
-            name TEXT NOT NULL UNIQUE
-          );`)
-      await db.query(sql`
-          ALTER TABLE quotes ADD COLUMN movie_id INTEGER REFERENCES movies(id);`)
-      await db.query(sql`
-          ALTER TABLE quotes ADD COLUMN another_movie_id INTEGER REFERENCES movies(id);`)
+            title VARCHAR(42),
+            author_id BIGINT UNSIGNED,
+            another_author_id BIGINT UNSIGNED,
+            FOREIGN KEY (author_id) REFERENCES authors(id) ON DELETE CASCADE,
+            FOREIGN KEY (another_author_id) REFERENCES authors(id) ON DELETE CASCADE
+          );
+        `)
+      } else {
+        await db.query(sql`
+          CREATE TABLE authors (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(42)
+          );
+          CREATE TABLE books (
+            id SERIAL PRIMARY KEY,
+            title VARCHAR(42),
+            author_id INTEGER REFERENCES authors(id),
+            another_author_id INTEGER REFERENCES authors(id)
+          );
+        `)
+      }
     }
   })
   app.register(sqlGraphQL)
@@ -85,16 +127,16 @@ test('should handle multi references', async ({ pass, teardown, same, equal }) =
 
   await app.ready()
 
-  const movies = [{
+  const authors = [{
     id: 1,
-    name: 'Harry Potter'
+    name: 'Mark'
   }]
 
-  const quotes = [{
+  const books = [{
     id: 1,
-    quote: 'Hello Harry',
-    movieId: 1,
-    anotherMovieId: 1
+    title: 'Harry',
+    authorId: 1,
+    anotherAuthorId: 1
   }]
 
   {
@@ -103,19 +145,19 @@ test('should handle multi references', async ({ pass, teardown, same, equal }) =
       url: '/graphql',
       body: {
         query: `
-            mutation batch($inputs : [MovieInput]!) {
-              insertMovies(inputs: $inputs) {
+            mutation batch($inputs : [AuthorInput]!) {
+              insertAuthors(inputs: $inputs) {
                 id
                 name
               }
             }
           `,
         variables: {
-          inputs: movies
+          inputs: authors
         }
       }
     })
-    equal(res.statusCode, 200, 'movies status code')
+    equal(res.statusCode, 200, 'authors status code')
   }
 
   {
@@ -124,19 +166,19 @@ test('should handle multi references', async ({ pass, teardown, same, equal }) =
       url: '/graphql',
       body: {
         query: `
-            mutation batch($inputs : [QuoteInput]!) {
-              insertQuotes(inputs: $inputs) {
+            mutation batch($inputs : [BookInput]!) {
+              insertBooks(inputs: $inputs) {
                 id
-                quote
+                title
               }
             }
           `,
         variables: {
-          inputs: quotes
+          inputs: books
         }
       }
     })
-    equal(res.statusCode, 200, 'quotes status code')
+    equal(res.statusCode, 200, 'books status code')
   }
 
   {
@@ -146,12 +188,12 @@ test('should handle multi references', async ({ pass, teardown, same, equal }) =
       body: {
         query: `
             query {
-              quotes {
+              books {
                 id
-                movie {
+                author {
                   id
                 }
-                anotherMovie {
+                anotherAuthor {
                   id
                 }
               }
@@ -159,20 +201,20 @@ test('should handle multi references', async ({ pass, teardown, same, equal }) =
           `
       }
     })
-    equal(res.statusCode, 200, 'query quotes')
+    equal(res.statusCode, 200, 'query books')
     same(res.json(), {
       data: {
-        quotes: [{
+        books: [{
           id: 1,
-          movie: {
+          author: {
             id: 1
           },
-          anotherMovie: {
+          anotherAuthor: {
             id: 1
           }
         }]
       }
-    }, 'query quote response')
+    }, 'query book response')
   }
 
   {
@@ -182,9 +224,9 @@ test('should handle multi references', async ({ pass, teardown, same, equal }) =
       body: {
         query: `
             query {
-              movies {
+              authors {
                 id
-                quotes {
+                books {
                   id
                 }
               }
@@ -192,16 +234,16 @@ test('should handle multi references', async ({ pass, teardown, same, equal }) =
           `
       }
     })
-    equal(res.statusCode, 200, 'query movies')
+    equal(res.statusCode, 200, 'query authors')
     same(res.json(), {
       data: {
-        movies: [{
+        authors: [{
           id: 1,
-          quotes: [{
+          books: [{
             id: 1
           }]
         }]
       }
-    }, 'query movie response')
+    }, 'query authors response')
   }
 })
