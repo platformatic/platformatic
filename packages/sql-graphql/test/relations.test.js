@@ -7,7 +7,7 @@ const { join } = require('path')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { isSQLite, connInfo, isMysql } = require('./helper')
+const { isSQLite, connInfo, isMysql, clear } = require('./helper')
 
 test('should fail when an unknown foreign key relationship exists', async ({ pass, rejects, same, teardown }) => {
   if (!isSQLite) {
@@ -64,15 +64,7 @@ test('should handle multi references', async ({ pass, teardown, same, equal }) =
     async onDatabaseLoad (db, sql) {
       pass('onDatabaseLoad called')
 
-      try {
-        await db.query(sql`DROP TABLE books`)
-      } catch (err) {
-      }
-
-      try {
-        await db.query(sql`DROP TABLE authors`)
-      } catch (err) {
-      }
+      await clear(db, sql)
 
       if (isMysql) {
         await db.query(sql`
