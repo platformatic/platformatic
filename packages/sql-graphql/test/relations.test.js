@@ -65,10 +65,7 @@ test('should handle multi references', async ({ pass, teardown, same, equal }) =
     ...connInfo,
     async onDatabaseLoad (db, sql) {
       pass('onDatabaseLoad called')
-
       await clear(db, sql)
-
-      
       await db.query(sql`
           CREATE TABLE quotes (
             id INTEGER PRIMARY KEY,
@@ -165,7 +162,7 @@ test('should handle multi references', async ({ pass, teardown, same, equal }) =
                 }
               }
             }
-          `,
+          `
       }
     })
     equal(res.statusCode, 200, 'query quotes')
@@ -174,7 +171,7 @@ test('should handle multi references', async ({ pass, teardown, same, equal }) =
         quotes: [{
           id: 1,
           movie: {
-            id: 1,
+            id: 1
           },
           anotherMovie: {
             id: 1
@@ -198,7 +195,7 @@ test('should handle multi references', async ({ pass, teardown, same, equal }) =
                 }
               }
             }
-          `,
+          `
       }
     })
     equal(res.statusCode, 200, 'query movies')
