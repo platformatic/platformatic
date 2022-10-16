@@ -9,12 +9,10 @@ const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
 const { isSQLite, connInfo, clear } = require('./helper')
 
-if (!isSQLite) {
-  skip('The db is not SQLite')
-  process.exit(0)
-}
-
 test('should fail when an unknown foreign key relationship exists', async ({ pass, rejects, same, teardown }) => {
+  if (!isSQLite) {
+    skip('The db is not SQLite')
+  }
   const file = join(tmpdir(), randomUUID())
   const app = fastify()
   app.register(sqlMapper, {
@@ -70,20 +68,16 @@ test('should handle multi references', async ({ pass, teardown, same, equal }) =
           CREATE TABLE quotes (
             id INTEGER PRIMARY KEY,
             quote TEXT NOT NULL
-          );
-        );`)
+          );`)
       await db.query(sql`
           CREATE TABLE movies (
             id INTEGER PRIMARY KEY,
             name TEXT NOT NULL UNIQUE
-          );
-        );`)
+          );`)
       await db.query(sql`
-          ALTER TABLE quotes ADD COLUMN movie_id INTEGER REFERENCES movies(id);
-        );`)
+          ALTER TABLE quotes ADD COLUMN movie_id INTEGER REFERENCES movies(id);`)
       await db.query(sql`
-          ALTER TABLE quotes ADD COLUMN another_movie_id INTEGER REFERENCES movies(id);
-        );`)
+          ALTER TABLE quotes ADD COLUMN another_movie_id INTEGER REFERENCES movies(id);`)
     }
   })
   app.register(sqlGraphQL)
