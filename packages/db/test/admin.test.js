@@ -4,6 +4,7 @@ const { buildConfig, connInfo, clear, createBasicPages } = require('./helper')
 const { test } = require('tap')
 const { buildServer } = require('..')
 const { request } = require('undici')
+const yaml = require('yaml')
 
 test('adminSecret', async ({ teardown, equal, pass, same }) => {
   const server = await buildServer(buildConfig({
@@ -288,10 +289,23 @@ test('Swagger documentation', async ({ teardown, same, equal }) => {
   }
 
   {
-    // HTML Documentation
-    const res = await request(`${server.url}/_admin/documentation/static/index.html`)
+    // YAML Documentation
+    const res = await request(`${server.url}/_admin/documentation/yaml`)
     equal(res.statusCode, 200)
-    equal(res.headers['content-type'], 'text/html; charset=UTF-8')
+    const body = yaml.parse(await res.body.text())
+
+    equal(body.openapi, '3.0.3')
+    same(body.info, {
+      title: 'Platformatic DB Admin Routes',
+      description: 'Configure and manage your Platformatic DB instance.'
+    })
+
+    same(Object.keys(body.paths), [
+      '/_admin/config',
+      '/_admin/login',
+      '/_admin/restart',
+      '/_admin/config-file'
+    ])
   }
 })
 
