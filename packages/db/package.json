@@ -40,7 +40,7 @@
     "@fastify/deepmerge": "^1.1.0",
     "@fastify/restartable": "^1.3.1",
     "@fastify/static": "^6.5.0",
-    "@fastify/swagger": "^7.4.1",
+    "@fastify/swagger": "^8.0.0",
     "@fastify/under-pressure": "^8.0.0",
     "@platformatic/config": "workspace:*",
     "@platformatic/db-authorization": "workspace:*",
