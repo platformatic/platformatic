@@ -25,7 +25,7 @@ Platformatic DB is currently in [public beta](#public-beta).
   - Support for [Apollo Federation](https://www.apollographql.com/apollo-federation/)
   - Web based GraphQL IDE ([GraphiQL](https://github.com/graphql/graphiql))
   - Generated GraphQL schema
-- [Authentication & authorization](/reference/db-authorization/introduction.md)
+- [Authentication & authorization](/reference/db/authorization/introduction.md)
   - Supported methods: JWT, Webhook, HTTP Headers (development only)
   - Authorization via role based access control (RBAC)
 - Complete flexibility
