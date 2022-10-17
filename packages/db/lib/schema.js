@@ -109,6 +109,9 @@ const core = {
     connectionString: {
       type: 'string'
     },
+    poolSize: {
+      type: 'integer'
+    },
     graphql: {
       anyOf: [{
         type: 'boolean'
@@ -397,6 +400,10 @@ const platformaticDBschema = {
         },
         stopTimeout: {
           type: 'integer'
+        },
+        hotReload: {
+          type: 'boolean',
+          default: true
         }
       },
       required: ['path']

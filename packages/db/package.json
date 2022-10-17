@@ -46,6 +46,7 @@
     "@platformatic/db-authorization": "workspace:*",
     "@platformatic/db-core": "workspace:*",
     "@platformatic/db-dashboard": "workspace:*",
+    "@platformatic/utils": "workspace:*",
     "close-with-grace": "^1.1.0",
     "commist": "^3.1.2",
     "desm": "^1.2.0",

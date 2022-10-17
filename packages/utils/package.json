@@ -1,7 +1,7 @@
 {
-  "name": "@platformatic/config",
+  "name": "@platformatic/utils",
   "version": "0.3.0",
-  "description": "Platformatic DB Config Manager",
+  "description": "Platformatic DB Utils",
   "main": "index.js",
   "scripts": {
     "test": "standard | snazzy && c8 --100 tap --no-coverage test/*test.js"
@@ -10,7 +10,7 @@
     "type": "git",
     "url": "git+https://github.com/platformatic/platformatic.git"
   },
-  "author": "Leonardo Rossi <leonardo.rossi@gmail.com>",
+  "author": "Ivan Tymoshenko <ivan@tymoshenko.me>",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/platformatic/platformatic/issues"
@@ -20,16 +20,9 @@
     "snazzy": "^9.0.0",
     "standard": "^17.0.0",
     "tap": "^16.0.0",
-    "c8": "^7.11.0",
-    "fastify": "^4.6.0"
+    "c8": "^7.11.0"
   },
   "dependencies": {
-    "@platformatic/utils": "workspace:*",
-    "@iarna/toml": "^2.2.5",
-    "ajv": "^8.11.0",
-    "dotenv": "^16.0.1",
-    "json5": "^2.2.1",
-    "pupa": "^3.1.0",
-    "yaml": "^2.1.1"
+    "minimatch": "^5.1.0"
   }
 }
