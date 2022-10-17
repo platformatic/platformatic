@@ -140,7 +140,9 @@ A **required** object with the following settings:
 
 ### `dashboard`
 
-An optional object with the following settings:
+This setting can be a `boolean` or an `object`. If set to `true` the dashboard will be served at the root path (`/`).
+
+Supported object properties:
 
 - **`rootPath`** (`boolean`, default: `true`) — Make the dashboard available at the root path (`/`).
 
