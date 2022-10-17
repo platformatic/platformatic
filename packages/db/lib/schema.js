@@ -109,6 +109,9 @@ const core = {
     connectionString: {
       type: 'string'
     },
+    poolSize: {
+      type: 'integer'
+    },
     graphql: {
       anyOf: [{
         type: 'boolean'
