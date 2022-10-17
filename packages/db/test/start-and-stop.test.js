@@ -18,7 +18,6 @@ test('starts the dashboard', async ({ teardown, equal, pass, same }) => {
       ...connInfo
     },
     dashboard: {
-      enabled: true,
       rootPath: true
     }
   }))
@@ -349,7 +348,6 @@ test('ignore and sqlite3', async ({ teardown, equal, pass, same }) => {
       connectionString: `sqlite://${dbLocation}`
     },
     dashboard: {
-      enabled: true,
       rootPath: true
     },
     migrations: {

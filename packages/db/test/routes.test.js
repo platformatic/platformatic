@@ -22,9 +22,7 @@ test('should respond 200 on root endpoint', async ({ teardown, equal, same, matc
     authorization: {
       adminSecret: 'secret'
     },
-    dashboard: {
-      enabled: false
-    }
+    dashboard: false
   }))
   teardown(server.stop)
 
@@ -69,9 +67,7 @@ test('should not overwrite a plugin which define a root endpoint', async ({ tear
     authorization: {
       adminSecret: 'secret'
     },
-    dashboard: {
-      enabled: false
-    },
+    dashboard: false,
     plugin: {
       path: join(__dirname, 'fixtures', 'root-endpoint-plugin.js')
     }
@@ -101,9 +97,7 @@ test('should not overwrite dashboard endpoint', async ({ teardown, equal, same }
     authorization: {
       adminSecret: 'secret'
     },
-    dashboard: {
-      enabled: true
-    }
+    dashboard: true
   }))
   teardown(server.stop)
 
@@ -125,9 +119,7 @@ test('should exclude the root endpoint from the openapi documentation', async ({
     authorization: {
       adminSecret: 'secret'
     },
-    dashboard: {
-      enabled: false
-    }
+    dashboard: false
   }))
   teardown(server.stop)
 
