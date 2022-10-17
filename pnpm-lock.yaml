@@ -108,7 +108,7 @@ importers:
       '@fastify/deepmerge': ^1.1.0
       '@fastify/restartable': ^1.3.1
       '@fastify/static': ^6.5.0
-      '@fastify/swagger': ^7.4.1
+      '@fastify/swagger': ^8.0.0
       '@fastify/under-pressure': ^8.0.0
       '@platformatic/config': workspace:*
       '@platformatic/db-authorization': workspace:*
@@ -149,6 +149,7 @@ importers:
       ua-parser-js: ^1.0.2
       undici: ^5.8.0
       why-is-node-running: ^2.2.2
+      yaml: ^2.1.1
     dependencies:
       '@fastify/accepts': 4.0.1
       '@fastify/basic-auth': 4.0.0
@@ -156,7 +157,7 @@ importers:
       '@fastify/deepmerge': 1.1.0
       '@fastify/restartable': 1.3.1
       '@fastify/static': 6.5.0
-      '@fastify/swagger': 7.6.1
+      '@fastify/swagger': 8.0.0
       '@fastify/under-pressure': 8.1.0
       '@platformatic/config': link:../config
       '@platformatic/db-authorization': link:../db-authorization
@@ -200,6 +201,7 @@ importers:
       typescript: 4.8.4
       undici: 5.11.0
       why-is-node-running: 2.2.2
+      yaml: 2.1.3
 
   packages/db-authorization:
     specifiers:
@@ -999,19 +1001,6 @@ packages:
       '@fastify/static': 6.5.0
       fastify-plugin: 4.3.0
       openapi-types: 12.0.2
-    transitivePeerDependencies:
-      - supports-color
-    dev: false
-
-  /@fastify/swagger/7.6.1:
-    resolution: {integrity: sha512-fpwblS7aOfnVymdRyKI3Zw/ZNt2u0oGm7KQgQ/itmd4Hlh/LKNNoWg6R/+eLa9H/4JTd34ZRRC3mNKhkVl5Kdw==}
-    dependencies:
-      '@fastify/static': 6.5.0
-      fastify-plugin: 4.3.0
-      json-schema-resolver: 2.0.0
-      openapi-types: 12.0.2
-      rfdc: 1.3.0
-      yaml: 2.1.3
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -7535,7 +7524,6 @@ packages:
   /yaml/2.1.3:
     resolution: {integrity: sha512-AacA8nRULjKMX2DvWvOAdBZMOfQlypSFkjcOcu9FalllIDJ1kvlREzcdIZmidQUqqeMv7jorHjq2HlLv/+c2lg==}
     engines: {node: '>= 14'}
-    dev: false
 
   /yargs-parser/18.1.3:
     resolution: {integrity: sha512-o50j0JeToy/4K6OZcaQmW6lyXXKhq7csREXcDwk2omFPJEwUNOVtJKvmDr9EI1fAJZUyZcRF7kxGBWmRXudrCQ==}
