@@ -112,3 +112,28 @@ test('should not overwrite dashboard endpoint', async ({ teardown, equal, same }
   equal(res.statusCode, 302)
   equal(res.headers.location, '/dashboard')
 })
+
+test('should exclude the root endpoint from the openapi documentation', async ({ teardown, equal, has }) => {
+  const server = await buildServer(buildConfig({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    core: {
+      ...connInfo
+    },
+    authorization: {
+      adminSecret: 'secret'
+    },
+    dashboard: {
+      enabled: false
+    }
+  }))
+  teardown(server.stop)
+
+  await server.listen()
+  const res = await (request(`${server.url}/documentation/json`))
+  const openapi = await res.body.json()
+  equal(res.statusCode, 200)
+  has(openapi.paths, { '/': undefined })
+})
