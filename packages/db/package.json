@@ -56,7 +56,7 @@
     "es-main": "^1.2.0",
     "execa": "^6.1.0",
     "fastify": "^4.6.0",
-    "fastify-metrics": "^9.2.1",
+    "fastify-metrics": "^10.0.0",
     "fastify-plugin": "^4.1.0",
     "fastify-print-routes": "^2.0.0",
     "fastify-sandbox": "^0.8.0",
