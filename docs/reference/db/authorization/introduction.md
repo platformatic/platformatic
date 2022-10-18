@@ -100,7 +100,7 @@ In the Webhook case, the HTTP response contains the roles/user information as HT
 ***Note that using admin API key on HTTP headers is highly insecure and should be used only within protected networks.***
 :::
 
-If a request has `X-PLATFORMATIC-ADMIN-SECRET` HTTP header set with a valid `adminSecret` (see [configuration reference](../configuration.md#authorization)]) the role is set automatically as `platformatic-admin`, unless a different role is set for user impersonation (which is disabled if JWT or Webhook are set, see [below](#user-impersonation)). 
+If a request has `X-PLATFORMATIC-ADMIN-SECRET` HTTP header set with a valid `adminSecret` (see [configuration reference](/reference/db/configuration.md#authorization)]) the role is set automatically as `platformatic-admin`, unless a different role is set for user impersonation (which is disabled if JWT or Webhook are set, see [below](#user-impersonation)). 
 
 
 ![Platformatic DB HTTP Headers](./images/http.png)
@@ -128,10 +128,8 @@ The roles to impersonate can be specified by `X-PLATFORMATIC-ROLE` containing a 
 ## User Metadata
 In all cases, the roles/user information is passed to Platformatic from the external _authentication service_ as a string (JWT claims or HTTP headers).
 We can refer to these as **user metadata**. Platformatic saves the user metadata for each request in a `user` object.
-Roles can be set using `X-PLATFORMATIC-ROLE` as list of comma-separated roles (this key is configurable, see [References](../configuration.md#role-and-anonymous-keys)).
+Roles can be set using `X-PLATFORMATIC-ROLE` as list of comma-separated roles (this key is [configurable](/reference/db/configuration.md#role-and-anonymous-keys)).
 
 Note that roles are just strings. Some "special roles" are reserved:
 - `platformatic-admin` : this identifies a user who has admin powers
 - `anonymous`: set automatically when no roles are associated
-
-

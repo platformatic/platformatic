@@ -26,7 +26,6 @@
     }
   },
   "dashboard": {
-    "enabled": true,
     "rootPath": true
   },
   "authorization": {

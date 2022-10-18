@@ -36,7 +36,8 @@
   "dependencies": {
     "@platformatic/sql-json-schema-mapper": "workspace:*",
     "@fastify/deepmerge": "^1.1.0",
-    "@fastify/swagger": "^7.4.1",
+    "@fastify/swagger": "^8.0.0",
+    "@fastify/swagger-ui": "^1.0.0",
     "camelcase": "^6.0.0",
     "fastify-plugin": "^4.1.0",
     "inflected": "^2.1.0"

@@ -128,6 +128,85 @@ test('load and reload', { skip: isWindows }, async ({ teardown, equal, same, com
   child.kill('SIGINT')
 })
 
+test('hotreload disabled', { skip: isWindows }, async ({ teardown, equal, same, comment }) => {
+  const db = await connectAndResetDB()
+  teardown(() => db.dispose())
+
+  await db.query(db.sql`CREATE TABLE pages (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(42)
+  );`)
+  const file = join(os.tmpdir(), `some-plugin-${process.pid}.js`)
+  const config = join(os.tmpdir(), `config-${process.pid}.json`)
+
+  await Promise.all([
+    writeFile(file, `
+      module.exports = async function plugin (app) {
+        app.get('/test', {}, async function (request, response) {
+          return { res: "plugin, version 1"}
+        })
+      }`
+    ),
+
+    writeFile(config, `
+{ 
+  "server": {
+    "logger": {
+      "level": "info"
+    },
+    "hostname": "127.0.0.1",
+    "port": 0
+  },
+  "plugin": {
+    "path": "./${basename(file)}",
+    "stopTimeout": 1000,
+    "hotReload": false
+  },
+  "core": {
+    "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres"
+  },
+  "authorization": {}
+}
+    `)
+  ])
+
+  comment('files written')
+
+  const { child, url } = await start('-c', config)
+
+  comment('server started')
+
+  {
+    const res = await request(`${url}/test`, {
+      method: 'GET'
+    })
+    equal(res.statusCode, 200)
+    same(await res.body.json(), { res: 'plugin, version 1' }, 'get rest plugin')
+  }
+
+  await writeFile(file, `
+    module.exports = async function plugin (app) {
+      app.get('/test', {}, async function (request, response) {
+        return { res: "plugin, version 2"}
+      })
+    }`
+  )
+
+  await sleep(500)
+  child.kill('SIGUSR2')
+
+  {
+    const res = await request(`${url}/test`, {
+      method: 'GET'
+    })
+    equal(res.statusCode, 200)
+    // must be unchanged
+    same(await res.body.json(), { res: 'plugin, version 1' }, 'get rest plugin')
+  }
+
+  child.kill('SIGINT')
+})
+
 test('do not crash on reload', { skip: isWindows }, async ({ teardown, match, comment }) => {
   const db = await connectAndResetDB()
   teardown(() => db.dispose())

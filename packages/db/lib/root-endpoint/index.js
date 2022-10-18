@@ -8,14 +8,19 @@ module.exports = async (app, opts) => {
     root: path.join(__dirname, 'public')
   })
   // root endpoint
-  app.get('/', (req, reply) => {
-    const uaString = req.headers['user-agent']
-    if (uaString) {
-      const parsed = userAgentParser(uaString)
-      if (parsed.browser.name !== undefined) {
-        return reply.sendFile('./index.html')
+  app.route({
+    method: 'GET',
+    path: '/',
+    schema: { hide: true },
+    handler: (req, reply) => {
+      const uaString = req.headers['user-agent']
+      if (uaString) {
+        const parsed = userAgentParser(uaString)
+        if (parsed.browser.name !== undefined) {
+          return reply.sendFile('./index.html')
+        }
       }
+      return { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' }
     }
-    return { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' }
   })
 }

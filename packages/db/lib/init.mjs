@@ -55,7 +55,7 @@ function generateConfig (args) {
 
   const config = {
     server: { hostname, port },
-    core: { connectionString, graphiql: true },
+    core: { connectionString, graphql: true },
     migrations: { dir: migrations }
   }
 

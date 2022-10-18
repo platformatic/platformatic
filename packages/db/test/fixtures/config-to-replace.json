@@ -8,7 +8,7 @@
   },
   "core": {
     "connectionString": "sqlite://db.sqlite",
-    "graphiql": true
+    "graphql": true
   },
   "migrations": {
     "dir": "migrations"

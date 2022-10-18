@@ -69,6 +69,25 @@ $ curl -X 'GET' \
   -H 'accept: application/json'
 ```
 
+## OrderBy clause
+
+You can define the ordering of the returned rows within your REST API calls with the `orderby` clause using the following pattern:
+
+`?orderby.[field]=[asc | desc]`
+
+The **field** is one of the fields found in the schema.
+The **value** can be `asc` or `desc`.
+
+_Example_
+
+If you want to get the `pages` ordered alphabetically by their `titles` you can make an HTTP request like this:
+
+```bash
+$ curl -X 'GET' \
+  'http://localhost:3042/pages?orderby.title=asc' \
+  -H 'accept: application/json'
+```
+
 ### Total Count
 
 If `totalCount` boolean is `true` in query, the GET returns the total number of elements in the `X-Total-Count` header ignoring `limit` and `offset` (if specified).

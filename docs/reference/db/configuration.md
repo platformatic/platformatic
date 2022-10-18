@@ -140,7 +140,9 @@ A **required** object with the following settings:
 
 ### `dashboard`
 
-An optional object with the following settings:
+This setting can be a `boolean` or an `object`. If set to `true` the dashboard will be served at the root path (`/`).
+
+Supported object properties:
 
 - **`rootPath`** (`boolean`, default: `true`) — Make the dashboard available at the root path (`/`).
 
@@ -170,11 +172,15 @@ An optional object with the following settings:
 
 ### `plugin`
 
-An optional object that defines a plugin to be loaded with [`fastify-isolate`](https://github.com/mcollina/fastify-isolate):
-
+An optional object that defines a plugin loaded by Platformatic DB.
 - **`path`** (**required**, `string`): Relative path to plugin's entry point.
+- **`hotReload`** if `true` or not specified, the plugin is loaded using [`fastify-sandbox`](https://github.com/mcollina/fastify-sandbox), otherwise is loaded directly using `require`/`import` and the hot reload is not enabled
+- **`options`** (`object`): Optional plugin options.
 
-All properties will be passed to `fastify-isolate`.
+:::warning:::
+While hot reloading is useful for development, it is not recommended to use it in production.
+To switch if off, set `hotReload` to `false`.
+:::
 
 ### `server`
 
@@ -264,7 +270,7 @@ Note that `"userId": "X-PLATFORMATIC-USER-ID"` is syntactic sugar for:
       }
 ```
 
-It's possible to specify more complex rules using all the [supported where clause operators](./sql-mapper/entities/api.md#where-clause).
+It's possible to specify more complex rules using all the [supported where clause operators](/reference/sql-mapper/entities/api.md#where-clause).
 
 Note that `userId` MUST exist as a field in the database table to use this feature.
 

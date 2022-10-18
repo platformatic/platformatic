@@ -9,6 +9,7 @@ The Platformatic DB Mapper will inspect a database schema and return an object c
 It exports a function that accepts an object with the following properties:
 
 - `connectionString` — The Database connection string
+- `poolSize` - Maximum number of connections in the connection pool. Defaults to `10`.
 - `log` — A logger object (like [Pino](https://getpino.io))
 - `onDatabaseLoad` — An async function that is called after the connection is established. It will receive `db` and `sql` as parameter.
 - `ignore` — Object used to ignore some tables from building entities. (i.e. `{ 'versions': true }` will ignore `versions` table)

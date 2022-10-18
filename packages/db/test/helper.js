@@ -95,8 +95,7 @@ module.exports.dropUsersTable = dropUsersTable
 function buildConfig (options) {
   const base = {
     server: {},
-    core: {},
-    dashboard: {}
+    core: {}
   }
 
   return Object.assign(base, options)

@@ -51,6 +51,7 @@ if (args.help) {
 
   if (result) {
     console.log('Command not found:', result.join(' '))
+    process.exit(1)
   }
 } else {
   help.toStdout(['help'])
