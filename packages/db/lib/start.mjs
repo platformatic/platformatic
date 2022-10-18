@@ -1,3 +1,5 @@
+import { dirname } from 'path'
+import { FileWatcher } from '@platformatic/utils'
 import { buildServer } from '../index.js'
 import close from 'close-with-grace'
 import loadConfig from './load-config.mjs'
@@ -8,9 +10,21 @@ import { addLoggerToTheConfig } from './utils.js'
 // Currently C8 is not reporting it
 /* c8 ignore start */
 async function start (_args) {
-  const { configManager } = await loadConfig({
+  const { configManager, args } = await loadConfig({
     string: ['to']
   }, _args, { watch: true })
+
+  let watchIgnore = null
+  // Apparently C8 cannot detect these three lines on Windows
+  /* c8 ignore next 3 */
+  if (args['watch-ignore']) {
+    watchIgnore = args['watch-ignore'].split(',')
+  }
+  let allowToWatch = ['*.js', '**/*.js']
+  /* c8 ignore next 3 */
+  if (args['allow-to-watch']) {
+    allowToWatch = args['allow-to-watch'].split(',')
+  }
 
   const config = configManager.current
 
@@ -30,6 +44,16 @@ async function start (_args) {
     ...config,
     configManager
   })
+
+  const fileWatcher = new FileWatcher({
+    path: dirname(configManager.fullPath),
+    allowToWatch,
+    watchIgnore
+  })
+  fileWatcher.on('update', () => {
+    onFilesUpdated(server)
+  })
+  fileWatcher.startWatching()
 
   configManager.on('update', (newConfig) => onConfigUpdated(newConfig, server))
   server.app.platformatic.configManager = configManager
@@ -93,6 +117,22 @@ async function onConfigUpdated (newConfig, server) {
         stack: err.stack
       }
     }, 'failed to reload config')
+  }
+}
+
+async function onFilesUpdated (server) {
+  try {
+    const config = server.app.platformatic.config
+    server.app.log.info('files changed')
+    await server.restart(config)
+  } catch (err) {
+    // TODO: test this
+    server.app.log.error({
+      err: {
+        message: err.message,
+        stack: err.stack
+      }
+    }, 'failed to reload server')
   }
 }
 

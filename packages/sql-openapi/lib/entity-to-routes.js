@@ -4,25 +4,18 @@ const { mapSQLTypeToOpenAPIType } = require('@platformatic/sql-json-schema-mappe
 const camelcase = require('camelcase')
 const { singularize } = require('inflected')
 
-async function entityPlugin (app, opts) {
-  const entity = opts.entity
-
-  const entitySchema = {
-    $ref: entity.name + '#'
-  }
-  const primaryKeyParams = getPrimaryKeyParams(entity)
+const getEntityLinksForEntity = (app, entity) => {
   const entityLinks = {}
-  const primaryKeyCamelcase = camelcase(entity.primaryKey)
-
   for (const relation of entity.relations) {
     const ownField = camelcase(relation.column_name)
     const relatedEntity = app.platformatic.entities[camelcase(singularize(relation.foreign_table_name))]
-    const relatedEntityPrimaryKeyCamelcase = capitalize(camelcase(relatedEntity.primaryKey))
-    const getEntityById = `Get${relatedEntity.name}With${relatedEntityPrimaryKeyCamelcase}`
+    const relatedEntityPrimaryKeyCamelcase = camelcase(relatedEntity.primaryKey)
+    const relatedEntityPrimaryKeyCamelcaseCapitalized = capitalize(relatedEntityPrimaryKeyCamelcase)
+    const getEntityById = `Get${relatedEntity.name}By${relatedEntityPrimaryKeyCamelcaseCapitalized}`
     entityLinks[getEntityById] = {
-      operationId: `get${relatedEntity.name}By${relatedEntityPrimaryKeyCamelcase}`,
+      operationId: `get${relatedEntity.name}By${relatedEntityPrimaryKeyCamelcaseCapitalized}`,
       parameters: {
-        [primaryKeyCamelcase]: `$response.body#/${ownField}`
+        [relatedEntityPrimaryKeyCamelcase]: `$response.body#/${ownField}`
       }
     }
   }
@@ -32,18 +25,39 @@ async function entityPlugin (app, opts) {
     const theirField = camelcase(relation.column_name)
     const ownField = camelcase(relation.foreign_column_name)
     const relatedEntity = app.platformatic.entities[camelcase(singularize(relation.table_name))]
-    const getAllEntities = `GetAll${capitalize(relatedEntity.pluralName)}`
-    entityLinks[getAllEntities] = {
-      operationId: `getAll${capitalize(relatedEntity.pluralName)}`,
+    const getEntities = `Get${capitalize(relatedEntity.pluralName)}`
+    entityLinks[getEntities] = {
+      operationId: `get${capitalize(relatedEntity.pluralName)}`,
       parameters: {
         [`where.${theirField}.eq`]: `$response.body#/${ownField}`
       }
     }
   }
+  return entityLinks
+}
 
-  const whereArgs = Object.keys(entity.fields).sort().map((name) => {
-    return entity.fields[name]
-  }).reduce((acc, field) => {
+const getFieldsForEntity = (entity) => ({
+  type: 'array',
+  items: {
+    type: 'string',
+    enum: Object.keys(entity.fields).map((field) => entity.fields[field].camelcase).sort()
+  }
+})
+
+async function entityPlugin (app, opts) {
+  const entity = opts.entity
+
+  const entitySchema = {
+    $ref: entity.name + '#'
+  }
+  const primaryKeyParams = getPrimaryKeyParams(entity)
+  const primaryKeyCamelcase = camelcase(entity.primaryKey)
+  const entityLinks = getEntityLinksForEntity(app, entity)
+
+  const sortedEntityFields = Object.keys(entity.fields).sort()
+
+  const whereArgs = sortedEntityFields.reduce((acc, name) => {
+    const field = entity.fields[name]
     const baseKey = `where.${field.camelcase}.`
     for (const modifier of ['eq', 'neq', 'gt', 'gte', 'lt', 'lte']) {
       const key = baseKey + modifier
@@ -58,9 +72,8 @@ async function entityPlugin (app, opts) {
     return acc
   }, {})
 
-  const orderByArgs = Object.keys(entity.fields).sort().map((name) => {
-    return entity.fields[name]
-  }).reduce((acc, field) => {
+  const orderByArgs = sortedEntityFields.reduce((acc, name) => {
+    const field = entity.fields[name]
     const key = `orderby.${field.camelcase}`
     acc[key] = { type: 'string', enum: ['asc', 'desc'] }
     return acc
@@ -72,17 +85,11 @@ async function entityPlugin (app, opts) {
     }
   })
 
-  const fields = {
-    type: 'array',
-    items: {
-      type: 'string',
-      enum: Object.keys(entity.fields).map((field) => entity.fields[field].camelcase).sort()
-    }
-  }
+  const fields = getFieldsForEntity(entity)
 
   app.get('/', {
     schema: {
-      operationId: 'getAll' + entity.name,
+      operationId: 'get' + capitalize(entity.pluralName),
       querystring: {
         type: 'object',
         properties: {
@@ -105,12 +112,16 @@ async function entityPlugin (app, opts) {
   }, async function (request, reply) {
     const query = request.query
     const { limit, offset, fields } = query
-    // TODO computing this where clause will be slow
-    // refactor to use a barebone for(;;) loop
-    const where = Object.keys(query).reduce((acc, key) => {
-      if (key.indexOf('where.') === 0) {
+    const queryKeys = Object.keys(query)
+    const where = {}
+    const orderBy = []
+
+    for (let i = 0; i < queryKeys.length; i++) {
+      const key = queryKeys[i]
+
+      if (key.startsWith('where.')) {
         const [, field, modifier] = key.split('.')
-        acc[field] = acc[field] || {}
+        where[field] ||= {}
         let value = query[key]
         if (modifier === 'in' || modifier === 'nin') {
           // TODO handle escaping of ,
@@ -119,25 +130,28 @@ async function entityPlugin (app, opts) {
             value = value.map((v) => parseInt(v))
           }
         }
-        acc[field][modifier] = value
-        return acc
-      }
-      return acc
-    }, {})
-    const orderBy = Object.keys(query).reduce((acc, key) => {
-      if (key.indexOf('orderby.') === 0) {
+        where[field][modifier] = value
+      } else if (key.startsWith('orderby.')) {
         const [, field] = key.split('.')
-        acc[field] = acc[field] || {}
-        acc.push({ field, direction: query[key] })
+        orderBy[field] ||= {}
+        orderBy.push({ field, direction: query[key] })
       }
-      return acc
-    }, [])
+    }
+
     const ctx = { app: this, reply }
     const res = await entity.find({ limit, offset, fields, orderBy, where, ctx })
+
+    // X-Total-Count header
     if (query.totalCount) {
-      const totalCount = await entity.count({ where, ctx })
+      let totalCount
+      if ((((offset ?? 0) === 0) || (res.length > 0)) && ((limit === undefined) || (res.length < limit))) {
+        totalCount = (offset ?? 0) + res.length
+      } else {
+        totalCount = await entity.count({ where, ctx })
+      }
       reply.header('X-Total-Count', totalCount)
     }
+
     return res
   })
 
@@ -191,6 +205,137 @@ async function entityPlugin (app, opts) {
     }
     return res[0]
   })
+
+  // For every reverse relationship we create: entity/:entity_Id/target_entity
+  for (const reverseRelationship of entity.reverseRelationships) {
+    const targetEntityName = singularize(camelcase(reverseRelationship.relation.table_name))
+    const targetEntity = app.platformatic.entities[targetEntityName]
+    const targetForeignKeyCamelcase = camelcase(reverseRelationship.relation.column_name)
+    const targetEntitySchema = {
+      $ref: targetEntity.name + '#'
+    }
+    const entityLinks = getEntityLinksForEntity(app, targetEntity)
+    // e.g. getQuotesForMovie
+    const operationId = `get${capitalize(targetEntity.pluralName)}For${capitalize(entity.singularName)}`
+    app.get(`/:${camelcase(entity.primaryKey)}/${targetEntity.pluralName}`, {
+      schema: {
+        operationId,
+        params: getPrimaryKeyParams(entity),
+        querystring: {
+          type: 'object',
+          properties: {
+            fields: getFieldsForEntity(targetEntity)
+          }
+        },
+        response: {
+          200: {
+            type: 'array',
+            items: targetEntitySchema
+          }
+        }
+      },
+      links: {
+        200: entityLinks
+      }
+    }, async function (request, reply) {
+      const ctx = { app: this, reply }
+      // IF we want to have HTTP/404 in case the entity does not exist
+      // we need to do 2 queries. One to check if the entity exists. the other to get the related entities
+      // Improvement: this could be also done with a single query with a join,
+
+      // check that the entity exists
+      const resEntity = await entity.count({
+        ctx,
+        where: {
+          [primaryKeyCamelcase]: {
+            eq: request.params[primaryKeyCamelcase]
+          }
+        }
+      })
+      if (resEntity === 0) {
+        return reply.callNotFound()
+      }
+
+      // get the related entities
+      const res = await targetEntity.find({
+        ctx,
+        where: {
+          [targetForeignKeyCamelcase]: {
+            eq: request.params[primaryKeyCamelcase]
+          }
+        },
+        fields: request.query.fields
+
+      })
+      if (res.length === 0) {
+        // This is a query on a FK, so
+        return []
+      }
+      return res
+    })
+  }
+
+  // For every relationship we create: entity/:entity_Id/target_entity
+  for (const relation of entity.relations) {
+    const targetEntityName = singularize(camelcase(relation.foreign_table_name))
+    const targetEntity = app.platformatic.entities[targetEntityName]
+    const targetForeignKeyCamelcase = camelcase(relation.foreign_column_name)
+    const targetEntitySchema = {
+      $ref: targetEntity.name + '#'
+    }
+    const entityLinks = getEntityLinksForEntity(app, targetEntity)
+    // e.g. getMovieForQuote
+    const operationId = `get${capitalize(targetEntity.singularName)}For${capitalize(entity.singularName)}`
+    app.get(`/:${camelcase(entity.primaryKey)}/${targetEntity.singularName}`, {
+      schema: {
+        operationId,
+        params: getPrimaryKeyParams(entity),
+        querystring: {
+          type: 'object',
+          properties: {
+            fields: getFieldsForEntity(targetEntity)
+          }
+        },
+        response: {
+          200: targetEntitySchema
+        }
+      },
+      links: {
+        200: entityLinks
+      }
+    }, async function (request, reply) {
+      const ctx = { app: this, reply }
+      // check that the entity exists
+      const resEntity = await entity.count({
+        ctx,
+        where: {
+          [primaryKeyCamelcase]: {
+            eq: request.params[primaryKeyCamelcase]
+          }
+        }
+      })
+
+      if (resEntity === 0) {
+        return reply.callNotFound()
+      }
+
+      // get the related entity
+      const res = await targetEntity.find({
+        ctx,
+        where: {
+          [targetForeignKeyCamelcase]: {
+            eq: request.params[primaryKeyCamelcase]
+          }
+        },
+        fields: request.query.fields
+      })
+
+      if (res.length === 0) {
+        return reply.callNotFound()
+      }
+      return res[0]
+    })
+  }
 
   for (const method of ['POST', 'PUT']) {
     app.route({

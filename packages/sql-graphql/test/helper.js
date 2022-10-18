@@ -13,6 +13,7 @@ if (!process.env.DB || process.env.DB === 'postgresql') {
   connInfo.connectionString = 'mysql://root@127.0.0.1:3307/graph'
   connInfo.poolSize = 10
   module.exports.isMysql = true
+  module.exports.isMariaDB = true
 } else if (process.env.DB === 'mysql') {
   connInfo.connectionString = 'mysql://root@127.0.0.1/graph'
   connInfo.poolSize = 10
@@ -66,5 +67,14 @@ module.exports.clear = async function (db, sql) {
   try {
     await db.query(sql`DROP TABLE graphs`)
   } catch {
+  }
+
+  try {
+    await db.query(sql`DROP TABLE books`)
+  } catch (err) {
+  }
+  try {
+    await db.query(sql`DROP TABLE authors`)
+  } catch (err) {
   }
 }

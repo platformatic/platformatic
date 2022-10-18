@@ -37,10 +37,10 @@ t.test('run db init with default options', async (t) => {
   t.equal(server.hostname, '127.0.0.1')
   t.equal(server.port, 3042)
 
-  t.equal(core.connectionString, 'sqlite://./db.sqlite')
-  t.equal(core.graphiql, true)
+  t.equal(core.connectionString, 'sqlite://db.sqlite')
+  t.equal(core.graphql, true)
 
-  t.equal(migrations.dir, './migrations')
+  t.equal(migrations.dir, 'migrations')
 
   const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
   t.equal(migrationFileDo, moviesMigrationDo)
@@ -60,14 +60,15 @@ t.test('run init with default options twice', async (t) => {
 
   const firstRunStdoutLines = firstRunStdout.split('\n')
   t.match(firstRunStdoutLines[0], /(.*)Configuration file platformatic.db.json successfully created./)
-  t.match(firstRunStdoutLines[1], /(.*)Migrations folder .\/migrations successfully created./)
+  t.match(firstRunStdoutLines[1], /(.*)Migrations folder migrations successfully created./)
   t.match(firstRunStdoutLines[2], /(.*)Migration file 001.do.sql successfully created./)
   t.match(firstRunStdoutLines[3], /(.*)Migration file 001.undo.sql successfully created./)
-  t.match(firstRunStdoutLines[4], /(.*)Please run `npm i --save(.*)/)
+  t.match(firstRunStdoutLines[4], /(.*)Plugin file created at plugin.js/)
+  t.match(firstRunStdoutLines[5], /(.*)Please run `npm i --save(.*)/)
 
   const secondRunStdoutLines = secondRunStdout.split('\n')
   t.match(secondRunStdoutLines[0], /(.*)Configuration file platformatic.db.json found, skipping creation of configuration file./)
-  t.match(secondRunStdoutLines[1], /(.*)Migrations folder .\/migrations found, skipping creation of migrations folder./)
+  t.match(secondRunStdoutLines[1], /(.*)Migrations folder migrations found, skipping creation of migrations folder./)
   t.match(secondRunStdoutLines[2], /(.*)Migration file 001.do.sql found, skipping creation of migration file./)
   t.match(secondRunStdoutLines[3], /(.*)Please run `npm i --save(.*)/)
 
@@ -79,10 +80,10 @@ t.test('run init with default options twice', async (t) => {
   t.equal(server.hostname, '127.0.0.1')
   t.equal(server.port, 3042)
 
-  t.equal(core.connectionString, 'sqlite://./db.sqlite')
-  t.equal(core.graphiql, true)
+  t.equal(core.connectionString, 'sqlite://db.sqlite')
+  t.equal(core.graphql, true)
 
-  t.equal(migrations.dir, './migrations')
+  t.equal(migrations.dir, 'migrations')
 
   const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
   t.equal(migrationFileDo, moviesMigrationDo)
@@ -107,10 +108,10 @@ t.test('run db init --typescript', async (t) => {
   t.equal(server.hostname, '127.0.0.1')
   t.equal(server.port, 3042)
 
-  t.equal(core.connectionString, 'sqlite://./db.sqlite')
-  t.equal(core.graphiql, true)
+  t.equal(core.connectionString, 'sqlite://db.sqlite')
+  t.equal(core.graphql, true)
 
-  t.equal(migrations.dir, './migrations')
+  t.equal(migrations.dir, 'migrations')
   t.equal(typescript.outDir, 'dist')
   t.equal(types.autogenerate, true)
 
@@ -138,10 +139,10 @@ t.test('run db init --typescript twice', async (t) => {
   t.equal(server.hostname, '127.0.0.1')
   t.equal(server.port, 3042)
 
-  t.equal(core.connectionString, 'sqlite://./db.sqlite')
-  t.equal(core.graphiql, true)
+  t.equal(core.connectionString, 'sqlite://db.sqlite')
+  t.equal(core.graphql, true)
 
-  t.equal(migrations.dir, './migrations')
+  t.equal(migrations.dir, 'migrations')
   t.equal(typescript.outDir, 'dist')
   t.equal(types.autogenerate, true)
 
@@ -169,9 +170,9 @@ t.test('run db init --database postgres', async (t) => {
   t.equal(server.port, 3042)
 
   t.equal(core.connectionString, 'postgres://postgres:postgres@localhost:5432/postgres')
-  t.equal(core.graphiql, true)
+  t.equal(core.graphql, true)
 
-  t.equal(migrations.dir, './migrations')
+  t.equal(migrations.dir, 'migrations')
 
   const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
   t.equal(migrationFileDo, moviesMigrationDo)
@@ -197,9 +198,9 @@ t.test('run db init --database mysql', async (t) => {
   t.equal(server.port, 3042)
 
   t.equal(core.connectionString, 'mysql://root@localhost:3306/graph')
-  t.equal(core.graphiql, true)
+  t.equal(core.graphql, true)
 
-  t.equal(migrations.dir, './migrations')
+  t.equal(migrations.dir, 'migrations')
 
   const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
   t.equal(migrationFileDo, moviesMigrationDo)
@@ -225,9 +226,9 @@ t.test('run db init --database mariadb', async (t) => {
   t.equal(server.port, 3042)
 
   t.equal(core.connectionString, 'mysql://root@localhost:3307/graph')
-  t.equal(core.graphiql, true)
+  t.equal(core.graphql, true)
 
-  t.equal(migrations.dir, './migrations')
+  t.equal(migrations.dir, 'migrations')
 
   const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
   t.equal(migrationFileDo, moviesMigrationDo)
@@ -253,9 +254,9 @@ t.test('run db init --database mysql8', async (t) => {
   t.equal(server.port, 3042)
 
   t.equal(core.connectionString, 'mysql://root@localhost:3308/graph')
-  t.equal(core.graphiql, true)
+  t.equal(core.graphql, true)
 
-  t.equal(migrations.dir, './migrations')
+  t.equal(migrations.dir, 'migrations')
 
   const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
   t.equal(migrationFileDo, moviesMigrationDo)
@@ -280,10 +281,10 @@ t.test('run db init --hostname 127.0.0.5', async (t) => {
   t.equal(server.hostname, '127.0.0.5')
   t.equal(server.port, 3042)
 
-  t.equal(core.connectionString, 'sqlite://./db.sqlite')
-  t.equal(core.graphiql, true)
+  t.equal(core.connectionString, 'sqlite://db.sqlite')
+  t.equal(core.graphql, true)
 
-  t.equal(migrations.dir, './migrations')
+  t.equal(migrations.dir, 'migrations')
 
   const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
   t.equal(migrationFileDo, moviesMigrationDo)
@@ -308,10 +309,10 @@ t.test('run db init --port 3055', async (t) => {
   t.equal(server.hostname, '127.0.0.1')
   t.equal(server.port, 3055)
 
-  t.equal(core.connectionString, 'sqlite://./db.sqlite')
-  t.equal(core.graphiql, true)
+  t.equal(core.connectionString, 'sqlite://db.sqlite')
+  t.equal(core.graphql, true)
 
-  t.equal(migrations.dir, './migrations')
+  t.equal(migrations.dir, 'migrations')
 
   const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
   t.equal(migrationFileDo, moviesMigrationDo)
@@ -336,8 +337,8 @@ t.test('run db init --migrations custom-migrations-folder', async (t) => {
   t.equal(server.hostname, '127.0.0.1')
   t.equal(server.port, 3042)
 
-  t.equal(core.connectionString, 'sqlite://./db.sqlite')
-  t.equal(core.graphiql, true)
+  t.equal(core.connectionString, 'sqlite://db.sqlite')
+  t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'custom-migrations-folder')
 

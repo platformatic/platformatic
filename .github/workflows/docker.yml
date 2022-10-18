@@ -25,5 +25,5 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           push: true
-          tags: platformatic/platformatic-private:latest
+          tags: platformatic/platformatic:development
           platforms: linux/amd64,linux/arm64

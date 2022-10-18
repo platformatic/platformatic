@@ -104,7 +104,7 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
   "paths": {
     "/graphs/": {
       "get": {
-        "operationId": "getAllGraph",
+        "operationId": "getGraphs",
         "parameters": [
           {
             "schema": {
@@ -516,15 +516,6 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Default Response"
           }
         }
       }

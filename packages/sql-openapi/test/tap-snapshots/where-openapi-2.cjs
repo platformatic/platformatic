@@ -61,7 +61,7 @@ Object {
   "paths": Object {
     "/owners/": Object {
       "get": Object {
-        "operationId": "getAllOwner",
+        "operationId": "getOwners",
         "parameters": Array [
           Object {
             "in": "query",
@@ -293,8 +293,8 @@ Object {
             },
             "description": "Default Response",
             "links": Object {
-              "GetAllPosts": Object {
-                "operationId": "getAllPosts",
+              "GetPosts": Object {
+                "operationId": "getPosts",
                 "parameters": Object {
                   "where.ownerId.eq": "$response.body#/id",
                 },
@@ -382,8 +382,8 @@ Object {
             },
             "description": "Default Response",
             "links": Object {
-              "GetAllPosts": Object {
-                "operationId": "getAllPosts",
+              "GetPosts": Object {
+                "operationId": "getPosts",
                 "parameters": Object {
                   "where.ownerId.eq": "$response.body#/id",
                 },
@@ -438,8 +438,8 @@ Object {
             },
             "description": "Default Response",
             "links": Object {
-              "GetAllPosts": Object {
-                "operationId": "getAllPosts",
+              "GetPosts": Object {
+                "operationId": "getPosts",
                 "parameters": Object {
                   "where.ownerId.eq": "$response.body#/id",
                 },
@@ -494,8 +494,8 @@ Object {
             },
             "description": "Default Response",
             "links": Object {
-              "GetAllPosts": Object {
-                "operationId": "getAllPosts",
+              "GetPosts": Object {
+                "operationId": "getPosts",
                 "parameters": Object {
                   "where.ownerId.eq": "$response.body#/id",
                 },
@@ -505,9 +505,65 @@ Object {
         },
       },
     },
+    "/owners/{id}/posts": Object {
+      "get": Object {
+        "operationId": "getPostsForOwner",
+        "parameters": Array [
+          Object {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": Object {
+              "items": Object {
+                "enum": Array [
+                  "counter",
+                  "id",
+                  "longText",
+                  "ownerId",
+                  "title",
+                ],
+                "type": "string",
+              },
+              "type": "array",
+            },
+          },
+          Object {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+        ],
+        "responses": Object {
+          "200": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "items": Object {
+                    "$ref": "#/components/schemas/Post",
+                  },
+                  "type": "array",
+                },
+              },
+            },
+            "description": "Default Response",
+            "links": Object {
+              "GetOwnerById": Object {
+                "operationId": "getOwnerById",
+                "parameters": Object {
+                  "id": "$response.body#/ownerId",
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     "/posts/": Object {
       "get": Object {
-        "operationId": "getAllPost",
+        "operationId": "getPosts",
         "parameters": Array [
           Object {
             "in": "query",
@@ -970,7 +1026,7 @@ Object {
             },
             "description": "Default Response",
             "links": Object {
-              "GetOwnerWithId": Object {
+              "GetOwnerById": Object {
                 "operationId": "getOwnerById",
                 "parameters": Object {
                   "id": "$response.body#/ownerId",
@@ -1065,7 +1121,7 @@ Object {
             },
             "description": "Default Response",
             "links": Object {
-              "GetOwnerWithId": Object {
+              "GetOwnerById": Object {
                 "operationId": "getOwnerById",
                 "parameters": Object {
                   "id": "$response.body#/ownerId",
@@ -1124,7 +1180,7 @@ Object {
             },
             "description": "Default Response",
             "links": Object {
-              "GetOwnerWithId": Object {
+              "GetOwnerById": Object {
                 "operationId": "getOwnerById",
                 "parameters": Object {
                   "id": "$response.body#/ownerId",
@@ -1183,10 +1239,60 @@ Object {
             },
             "description": "Default Response",
             "links": Object {
-              "GetOwnerWithId": Object {
+              "GetOwnerById": Object {
                 "operationId": "getOwnerById",
                 "parameters": Object {
                   "id": "$response.body#/ownerId",
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/posts/{id}/owner": Object {
+      "get": Object {
+        "operationId": "getOwnerForPost",
+        "parameters": Array [
+          Object {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": Object {
+              "items": Object {
+                "enum": Array [
+                  "id",
+                  "name",
+                ],
+                "type": "string",
+              },
+              "type": "array",
+            },
+          },
+          Object {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+        ],
+        "responses": Object {
+          "200": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "$ref": "#/components/schemas/Owner",
+                },
+              },
+            },
+            "description": "Default Response",
+            "links": Object {
+              "GetPosts": Object {
+                "operationId": "getPosts",
+                "parameters": Object {
+                  "where.ownerId.eq": "$response.body#/id",
                 },
               },
             },

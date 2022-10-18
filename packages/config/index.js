@@ -1,7 +1,7 @@
 'use strict'
 
-const { extname, join, resolve, dirname } = require('path')
-const { readFile, watch, writeFile, access } = require('fs/promises')
+const { basename, extname, join, resolve, dirname } = require('path')
+const { readFile, writeFile, access } = require('fs/promises')
 const { tmpdir } = require('os')
 const EventEmitter = require('events')
 const Ajv = require('ajv')
@@ -10,13 +10,12 @@ const YAML = require('yaml')
 const TOML = require('@iarna/toml')
 const JSON5 = require('json5')
 const dotenv = require('dotenv')
-const minimatch = require('minimatch')
+const { FileWatcher } = require('@platformatic/utils')
+
 class ConfigManager extends EventEmitter {
   constructor (opts) {
     super()
-    this.watchIgnore = opts.watchIgnore || []
     this.pupa = null
-    this.abortController = null
     this._shouldSave = false
     this.envWhitelist = opts.envWhitelist || []
     if (!opts.source) {
@@ -31,6 +30,15 @@ class ConfigManager extends EventEmitter {
       this.current = opts.source
       this._shouldSave = true
     }
+
+    const allowToWatch = opts.allowToWatch || []
+    allowToWatch.push(basename(this.fullPath))
+
+    this.fileWatcher = new FileWatcher({
+      path: dirname(this.fullPath),
+      allowToWatch
+    })
+
     this.serializer = this.getSerializer()
     this.schema = opts.schema || {}
     this.schemaOptions = opts.schemaOptions || {}
@@ -38,7 +46,7 @@ class ConfigManager extends EventEmitter {
     this.env = this.purgeEnv(this._originalEnv)
     /* c8 ignore next 3 */
     if (opts.watch) {
-      this.startWatch()
+      this.startWatching()
     }
   }
 
@@ -51,52 +59,22 @@ class ConfigManager extends EventEmitter {
     }
   }
 
-  async stopWatch () {
-    if (!this.abortController) {
-      return
-    }
-    this.abortController.abort()
-    this.abortController = false
-    await this._watcher.catch(() => {})
+  async stopWatching () {
+    await this.fileWatcher.stopWatching()
   }
 
-  startWatch () {
-    if (this.abortController) {
-      return this._watcher
-    }
-    this.abortController = new AbortController()
-    const { signal } = this.abortController
-    const watcher = watch(dirname(this.fullPath), { signal, recursive: true })
-    let timer = null
-    const refresh = async () => {
-      timer = null
+  startWatching () {
+    if (this.fileWatcher.isWatching) return
+
+    this.fileWatcher.on('update', async () => {
       try {
         await this.parseAndValidate()
         this.emit('update', this.current)
       } catch (err) {
         this.emit('error', err)
       }
-    }
-
-    const loop = async () => {
-      for await (const event of watcher) {
-        if (timer) {
-          continue
-        }
-
-        // eventType can be both 'change' and 'rename'
-        /* c8 ignore next 1 */
-        if (event.eventType === 'change' || event.eventType === 'rename') {
-          if (this.shouldFileBeWatched(event.filename)) {
-            timer = setTimeout(refresh, 100)
-          }
-        }
-      }
-      /* c8 ignore next 1 */
-    }
-
-    this._watcher = loop()
-    return this._watcher
+    })
+    this.fileWatcher.startWatching()
   }
 
   getSerializer () {
@@ -247,17 +225,6 @@ class ConfigManager extends EventEmitter {
   async load () {
     const configString = await readFile(this.fullPath, 'utf-8')
     return configString
-  }
-
-  shouldFileBeWatched (fileName) {
-    let found = true
-    for (const ignoredFile of this.watchIgnore) {
-      if (minimatch(fileName, ignoredFile)) {
-        found = false
-        break
-      }
-    }
-    return found
   }
 }
 

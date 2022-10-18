@@ -5,7 +5,6 @@ const Swagger = require('@fastify/swagger')
 module.exports = async (app, opts) => {
   await app.register(Swagger, {
     routePrefix: 'documentation',
-    exposeRoute: true,
     openapi: {
       info: {
         title: 'Platformatic DB Admin Routes',
@@ -13,6 +12,27 @@ module.exports = async (app, opts) => {
       }
     }
   })
+
+  app.route({
+    url: '/documentation/json',
+    method: 'GET',
+    schema: { hide: true },
+    handler: function (req, reply) {
+      reply.send(app.swagger())
+    }
+  })
+
+  app.route({
+    url: '/documentation/yaml',
+    method: 'GET',
+    schema: { hide: true },
+    handler: function (req, reply) {
+      reply
+        .type('application/x-yaml')
+        .send(app.swagger({ yaml: true }))
+    }
+  })
+
   app.register(require('./non-auth-routes'), {
     ...opts,
     prefix: ''

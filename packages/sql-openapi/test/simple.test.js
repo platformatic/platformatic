@@ -4,7 +4,7 @@ const t = require('tap')
 const sqlOpenAPI = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { clear, connInfo, isSQLite } = require('./helper')
+const { clear, connInfo, isSQLite, isMariaDB } = require('./helper')
 const { resolve } = require('path')
 const { test } = t
 
@@ -123,7 +123,6 @@ test('simple db, simple rest API', async (t) => {
       url: '/documentation/json'
     })
     const json = res.json()
-    // console.log(JSON.stringify(json, null, 2))
     matchSnapshot(json, 'GET /documentation/json response')
   }
 
@@ -229,7 +228,6 @@ test('nullable fields', async (t) => {
       url: '/documentation/json'
     })
     const openapi = res.json()
-    // console.log(JSON.stringify(openapi, null, 2))
     matchSnapshot(openapi, 'GET /documentation/json response')
   }
 })
@@ -286,38 +284,108 @@ test('list', async ({ pass, teardown, same, equal }) => {
   }
 
   {
-    const res = await app.inject({
-      method: 'GET',
-      url: '/posts'
-    })
-    equal(res.statusCode, 200, '/posts status code')
+    const url = '/posts'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], undefined, `${url} without x-total-count`)
     same(res.json(), posts.map((p, i) => {
       return { ...p, id: i + 1 + '' }
-    }), '/posts response')
+    }), `${url} response`)
   }
 
   {
-    const res = await app.inject({
-      method: 'GET',
-      url: '/posts?limit=2&offset=1'
-    })
-    equal(res.statusCode, 200, 'posts status code')
-    same(res.headers['x-total-count'], undefined, 'GET /api/pages without totalCount')
+    const url = '/posts?limit=3'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], undefined, `${url} without x-total-count`)
     same(res.json(), posts.map((p, i) => {
       return { ...p, id: i + 1 + '' }
-    }).slice(1, 3), 'posts response')
+    }).slice(0, 3), `${url} response`)
   }
 
   {
-    const res = await app.inject({
-      method: 'GET',
-      url: '/posts?limit=2&offset=1&totalCount=true'
-    })
-    equal(res.headers['x-total-count'], 4, 'GET /api/pages with totalCount')
-    equal(res.statusCode, 200, 'posts status code')
+    const url = '/posts?offset=2'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], undefined, `${url} without x-total-count`)
     same(res.json(), posts.map((p, i) => {
       return { ...p, id: i + 1 + '' }
-    }).slice(1, 3), 'posts response')
+    }).slice(2), `${url} response`)
+  }
+
+  {
+    const url = '/posts?limit=2&offset=1'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], undefined, `${url} without x-total-count`)
+    same(res.json(), posts.map((p, i) => {
+      return { ...p, id: i + 1 + '' }
+    }).slice(1, 3), `${url} response`)
+  }
+
+  {
+    const url = '/posts?totalCount=true'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
+  }
+
+  {
+    const url = '/posts?totalCount=true&limit=3'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
+    same(res.json(), posts.map((p, i) => {
+      return { ...p, id: i + 1 + '' }
+    }).slice(0, 3), `${url} response`)
+  }
+
+  {
+    const url = '/posts?totalCount=true&offset=2'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
+    same(res.json(), posts.map((p, i) => {
+      return { ...p, id: i + 1 + '' }
+    }).slice(2), `${url} response`)
+  }
+
+  {
+    const url = '/posts?totalCount=true&limit=2&offset=1'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
+    same(res.json(), posts.map((p, i) => {
+      return { ...p, id: i + 1 + '' }
+    }).slice(1, 3), `${url} response`)
+  }
+
+  {
+    const url = '/posts?totalCount=true&limit=2&offset=99'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
+    same(res.json(), [], `${url} response`)
+  }
+
+  {
+    const url = '/posts?totalCount=true&limit=99&offset=0'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
+    same(res.json(), posts.map((p, i) => {
+      return { ...p, id: i + 1 + '' }
+    }).slice(0, 4), `${url} response`)
+  }
+
+  {
+    const url = '/posts?totalCount=true&limit=99&offset=2'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
+    same(res.json(), posts.map((p, i) => {
+      return { ...p, id: i + 1 + '' }
+    }).slice(2, 4), `${url} response`)
   }
 })
 
@@ -478,4 +546,108 @@ test('simple db, simple rest API', async (t) => {
   })
   const json = res.json()
   matchSnapshot(json, 'GET /documentation/json response')
+})
+
+test('deserialize JSON columns', { skip: isSQLite }, async (t) => {
+  const { pass, teardown, same } = t
+  const app = fastify()
+  const jsonData = {
+    foo: 'bar',
+    baz: 42,
+    items: ['foo', 'bar'],
+    nested: {
+      hello: 'world'
+    }
+  }
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      await db.query(sql`CREATE TABLE pages (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        metadata JSON NOT NULL
+      );`)
+
+      await db.query(sql`INSERT INTO pages (id, title, metadata) VALUES (1, 'Hello World', ${JSON.stringify(jsonData)})`)
+    }
+  })
+  app.register(sqlOpenAPI)
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  const res = await app.inject({
+    method: 'GET',
+    url: '/pages'
+  })
+  const json = res.json()
+  if (isMariaDB) {
+    same(json[0].metadata, JSON.stringify(jsonData))
+  } else {
+    same(json[0].metadata, jsonData)
+  }
+})
+
+test('expose the api with a prefix, if defined', async (t) => {
+  const { pass, teardown, same, equal, matchSnapshot } = t
+
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(sqlOpenAPI, { prefix: '/api' })
+  teardown(app.close.bind(app))
+
+  await app.ready()
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/pages',
+      body: {
+        title: 'Hello'
+      }
+    })
+    equal(res.statusCode, 404, 'POST /pages status code')
+    same(res.json(), {
+      message: 'Route POST:/pages not found',
+      error: 'Not Found',
+      statusCode: 404
+    }, 'POST /pages response')
+  }
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/pages',
+      body: {
+        title: 'Hello'
+      }
+    })
+    equal(res.statusCode, 200, 'POST /pages status code')
+    equal(res.headers.location, '/api/pages/1', 'POST /api/pages location')
+    same(res.json(), {
+      id: 1,
+      title: 'Hello'
+    }, 'POST /pages response')
+  }
+
+  // Check that the documentation is not prefixed
+  {
+    t.snapshotFile = resolve(__dirname, 'tap-snapshots', 'simple-openapi-4.cjs')
+    const res = await app.inject({
+      method: 'GET',
+      url: '/documentation/json'
+    })
+    const json = res.json()
+    matchSnapshot(json, 'GET /documentation/json response')
+  }
 })

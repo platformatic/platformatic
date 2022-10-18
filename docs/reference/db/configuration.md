@@ -79,7 +79,7 @@ A **required** object with the following settings:
   }
   ```
 - **`openapi`** (`boolean` or `object`, default: `true`) — Enables OpenAPI REST support.
-  - If value is an object, all [OpenAPI v3](https://swagger.io/specification/) allowed properties can be passed.
+  - If value is an object, all [OpenAPI v3](https://swagger.io/specification/) allowed properties can be passed. Also a `prefix` property can be passed to set the OpenAPI prefix.
   - Platformatic DB uses [`@fastify/swagger`](https://github.com/fastify/fastify-swagger) under the hood to manage this configuration.
 
   _Examples_
@@ -91,6 +91,19 @@ A **required** object with the following settings:
     "core": {
       ...
       "openapi": true
+    }
+  }
+  ```
+
+  Enables OpenAPI with prefix
+
+  ```json
+  {
+    "core": {
+      ...
+      "openapi": {
+        "prefix": "/api"
+      }
     }
   }
   ```
@@ -127,7 +140,9 @@ A **required** object with the following settings:
 
 ### `dashboard`
 
-An optional object with the following settings:
+This setting can be a `boolean` or an `object`. If set to `true` the dashboard will be served at the root path (`/`).
+
+Supported object properties:
 
 - **`rootPath`** (`boolean`, default: `true`) — Make the dashboard available at the root path (`/`).
 
@@ -157,11 +172,15 @@ An optional object with the following settings:
 
 ### `plugin`
 
-An optional object that defines a plugin to be loaded with [`fastify-isolate`](https://github.com/mcollina/fastify-isolate):
-
+An optional object that defines a plugin loaded by Platformatic DB.
 - **`path`** (**required**, `string`): Relative path to plugin's entry point.
+- **`hotReload`** if `true` or not specified, the plugin is loaded using [`fastify-sandbox`](https://github.com/mcollina/fastify-sandbox), otherwise is loaded directly using `require`/`import` and the hot reload is not enabled
+- **`options`** (`object`): Optional plugin options.
 
-All properties will be passed to `fastify-isolate`.
+:::warning:::
+While hot reloading is useful for development, it is not recommended to use it in production.
+To switch if off, set `hotReload` to `false`.
+:::
 
 ### `server`
 
@@ -251,7 +270,7 @@ Note that `"userId": "X-PLATFORMATIC-USER-ID"` is syntactic sugar for:
       }
 ```
 
-It's possible to specify more complex rules using all the [supported where clause operators](./sql-mapper/entities/api.md#where-clause).
+It's possible to specify more complex rules using all the [supported where clause operators](/reference/sql-mapper/entities/api.md#where-clause).
 
 Note that `userId` MUST exist as a field in the database table to use this feature.
 
@@ -296,13 +315,13 @@ When an entity is created, the `userId` column is used and populated using the v
 If a user has no role, the `anonymous` role is assigned automatically. It's possible to specify a rule for it:
 
 ```json
-     {
-        "role": "anonymous",
-        "entity": "page",
-        "find": false,
-        "delete": false,
-        "save": false
-      }
+    {
+      "role": "anonymous",
+      "entity": "page",
+      "find": false,
+      "delete": false,
+      "save": false
+    }
 ```
 
 In this case, the user that has no role (or has an explicitly `anonymous` role) has no operations allowed on the `page` entity.
@@ -389,3 +408,31 @@ npx platformatic db --allow-env=HOST,SERVER_LOGGER_LEVEL
 
 If `--allow-env` is passed as an option to the CLI, it will be merged with the
 default allow list.
+
+## Sample Configuration
+
+This is a bare minimum configuration for Platformatic DB. Uses a local `./db.sqlite` SQLite database, with OpenAPI and GraphQL support, and with the dashboard enabled.
+
+Server will listen to `http://127.0.0.1:3042`
+
+```json
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "3042"
+  },
+  "core": {
+    "connectionString": "'sqlite://./db.sqlite'",
+    "graphiql": true,
+    "openapi": {
+      "enabled": true
+    },
+    "graphql": {
+      "enabled": true
+    }
+  },
+  "dashboard": {
+    "enabled": true
+  }
+}
+```

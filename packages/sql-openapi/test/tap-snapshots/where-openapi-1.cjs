@@ -42,7 +42,7 @@ Object {
   "paths": Object {
     "/posts/": Object {
       "get": Object {
-        "operationId": "getAllPost",
+        "operationId": "getPosts",
         "parameters": Array [
           Object {
             "in": "query",

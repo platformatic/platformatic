@@ -96,28 +96,40 @@ In the Webhook case, the HTTP response contains the roles/user information as HT
 
 ## HTTP Headers
 
-To make testing and developing easier, it's possible to bypass JWT / WebHook integration if a `adminSecret` is set.
-If so, and if a request has `X-PLATFORMATIC-ADMIN-SECRET` HTTP header set with the configured `adminSecret`, the JWT/Webhook authentication is skipped, and
-the role set automatically as `platformatic-admin`.
+:::danger
+***Note that using admin API key on HTTP headers is highly insecure and should be used only within protected networks.***
+:::
+
+If a request has `X-PLATFORMATIC-ADMIN-SECRET` HTTP header set with a valid `adminSecret` (see [configuration reference](/reference/db/configuration.md#authorization)]) the role is set automatically as `platformatic-admin`, unless a different role is set for user impersonation (which is disabled if JWT or Webhook are set, see [below](#user-impersonation)). 
 
 
-![Platformatic DB JWT integration](./images/http.png)
+![Platformatic DB HTTP Headers](./images/http.png)
 
-Note that setting user roles on HTTP headers is highly insecure and should be used only within protected networks.
+Also, the following rule is automatically added to every entity, allowing the user that presented the `adminSecret` to perform any operation on any entity:
 
-### Impersonation
-If a user is recognized with a `platformatic-admin` role, can also **impersonate users**.
-The users/roles to impersonate are specified by:
-- `X-PLATFORMATIC-USER-ID`: the `userId` of the authenticated user. Note that this key value is conventional, any key can be used as long that is the same key specified in authorization rules.
-- `X-PLATFORMATIC-ROLE`: comma separated list of roles
+```json
+    {
+      "role": "platformatic-admin",
+      "find": false,
+      "delete": false,
+      "save": false
+    }
+```
+
+### User Impersonation
+
+:::info
+When JWT or Webhook are set, user impersonation is not enabled, and the role is always set as `platfomatic-admin` automatically.
+:::
+
+If a user presents a valid `X-PLATFORMATIC-ADMIN-SECRET`, can also **impersonate users** with different roles.
+The roles to impersonate can be specified by `X-PLATFORMATIC-ROLE` containing a comma separated list of roles.
 
 ## User Metadata
 In all cases, the roles/user information is passed to Platformatic from the external _authentication service_ as a string (JWT claims or HTTP headers).
 We can refer to these as **user metadata**. Platformatic saves the user metadata for each request in a `user` object.
-Roles can be set using `X-PLATFORMATIC-ROLE` as list of comma-separated roles (this key is configurable, see [References](../configuration.md#role-and-anonymous-keys)).
+Roles can be set using `X-PLATFORMATIC-ROLE` as list of comma-separated roles (this key is [configurable](/reference/db/configuration.md#role-and-anonymous-keys)).
 
 Note that roles are just strings. Some "special roles" are reserved:
 - `platformatic-admin` : this identifies a user who has admin powers
 - `anonymous`: set automatically when no roles are associated
-
-

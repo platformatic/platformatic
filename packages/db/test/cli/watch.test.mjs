@@ -19,7 +19,7 @@ test('watch file', async ({ teardown, equal, same, comment }) => {
   const config = join(os.tmpdir(), `config-${process.pid}.json`)
 
   await writeFile(config, `
-{ 
+{
   "server": {
     "logger": {
       "level": "info"
@@ -82,7 +82,7 @@ test('watch file', async ({ teardown, equal, same, comment }) => {
     }`)
 
   await writeFile(config, `
-{ 
+{
   "server": {
     "logger": {
       "level": "info"
@@ -134,6 +134,55 @@ test('watch file', async ({ teardown, equal, same, comment }) => {
   child.kill('SIGINT')
 })
 
+test('watch allowed file', async ({ comment }) => {
+  const file = join(os.tmpdir(), `some-plugin-${process.pid}.js`)
+  const jsonFile = join(os.tmpdir(), `some-config-${process.pid}.json`)
+  const config = join(os.tmpdir(), `config-${process.pid}.json`)
+
+  await writeFile(config, `
+{ 
+  "server": {
+    "logger": {
+      "level": "info"
+    },
+    "hostname": "127.0.0.1",
+    "port": 0
+  },
+  "core": {
+    "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres"
+  },
+  "plugin": {
+    "path": "./${basename(file)}",
+    "stopTimeout": 1000
+  }
+}
+    `)
+
+  await writeFile(jsonFile, 'INITIAL')
+  await writeFile(file, `
+    const readFileSync = require('fs').readFileSync
+    const json = readFileSync(${JSON.stringify(jsonFile)}, 'utf8')
+
+    module.exports = async function (app) {
+      if (json === 'RESTARTED') {
+        app.log.info('RESTARTED')
+      }
+    }`)
+
+  const { child } = await start('-c', config, '--allow-to-watch', basename(jsonFile))
+
+  writeFile(jsonFile, 'RESTARTED')
+
+  for await (const log of child.ndj) {
+    comment(log.msg)
+    if (log.msg === 'RESTARTED') {
+      break
+    }
+  }
+
+  child.kill('SIGINT')
+})
+
 test('do not watch ignored file', async ({ teardown, equal, same, comment }) => {
   const db = await connectAndResetDB()
   teardown(() => db.dispose())
@@ -164,7 +213,7 @@ test('do not watch ignored file', async ({ teardown, equal, same, comment }) => 
   )
   const config = join(folder, `config-${process.pid}.json`)
   await writeFile(config, `
-{ 
+{
   "server": {
     "logger": {
       "level": "info"
@@ -256,7 +305,7 @@ test('does not loop forever when doing ESM', async ({ teardown, equal, same, com
   )
   const config = join(folder, `config-${process.pid}.json`)
   await writeFile(config, `
-{ 
+{
   "server": {
     "logger": {
       "level": "info"

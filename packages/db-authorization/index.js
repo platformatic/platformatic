@@ -20,33 +20,47 @@ async function auth (app, opts) {
   const adminSecret = opts.adminSecret
   const roleKey = opts.roleKey || 'X-PLATFORMATIC-ROLE'
   const anonymousRole = opts.anonymousRole || 'anonymous'
+
   app.addHook('preHandler', async (request) => {
+    let forceAdminRole = false
     if (adminSecret && request.headers['x-platformatic-admin-secret'] === adminSecret) {
-      request.log.info('admin secret is valid')
-      request.user = new Proxy(request.headers, {
-        get: (target, key) => {
-          let value
-          if (!target[key]) {
-            const newKey = key.toLowerCase()
-            value = target[newKey]
-          } else {
-            value = target[key]
+      if (opts.jwt || opts.webhook) {
+        forceAdminRole = true
+      } else {
+        request.log.info('admin secret is valid')
+        request.user = new Proxy(request.headers, {
+          get: (target, key) => {
+            let value
+            if (!target[key]) {
+              const newKey = key.toLowerCase()
+              value = target[newKey]
+            } else {
+              value = target[key]
+            }
+
+            if (!value && key.toLowerCase() === roleKey.toLowerCase()) {
+              value = PLT_ADMIN_ROLE
+            }
+            return value
           }
-
-          if (!value && key.toLowerCase() === roleKey.toLowerCase()) {
-            value = PLT_ADMIN_ROLE
-          }
-
-          return value
-        }
-      })
-
-      return
+        })
+      }
     }
+
     try {
+      // `createSession` actually exists only if jwt or webhook are enabled
+      // and creates a new `request.user` object
       await request.createSession()
     } catch (err) {
       request.log.trace({ err })
+    }
+
+    if (forceAdminRole) {
+      // We replace just the role in `request.user`, all the rest is untouched
+      request.user = {
+        ...request.user,
+        [roleKey]: PLT_ADMIN_ROLE
+      }
     }
   })
 
@@ -86,13 +100,13 @@ async function auth (app, opts) {
       checkSaveMandatoryFieldsInRules(type, rules)
 
       app.platformatic.addEntityHooks(entityKey, {
-        async find (originalFind, { where, ctx, fields }) {
+        async find (originalFind, { where, ctx, fields, ...restOpts }) {
           const request = getRequestFromContext(ctx)
           const rule = findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
           checkFieldsFromRule(rule.find, fields)
           where = await fromRuleToWhere(ctx, rule.find, where, request.user)
 
-          return originalFind({ where, ctx, fields })
+          return originalFind({ ...restOpts, where, ctx, fields })
         },
 
         async save (originalSave, { input, ctx, fields }) {

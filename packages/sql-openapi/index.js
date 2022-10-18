@@ -1,6 +1,7 @@
 'use strict'
 
 const Swagger = require('@fastify/swagger')
+const SwaggerUI = require('@fastify/swagger-ui')
 const deepmerge = require('@fastify/deepmerge')({ all: true })
 const camelcase = require('camelcase')
 const { singularize } = require('inflected')
@@ -9,6 +10,7 @@ const entityPlugin = require('./lib/entity-to-routes')
 const fp = require('fastify-plugin')
 
 async function setupOpenAPI (app, opts) {
+  const prefix = opts.prefix || ''
   const openapiConfig = deepmerge({
     exposeRoute: true,
     info: {
@@ -30,6 +32,8 @@ async function setupOpenAPI (app, opts) {
       }
     }
   })
+
+  app.register(SwaggerUI, opts)
 
   for (const entity of Object.values(app.platformatic.entities)) {
     const entitySchema = mapSQLEntityToJSONSchema(entity)
@@ -56,7 +60,7 @@ async function setupOpenAPI (app, opts) {
     // TODO support ignore
     app.register(entityPlugin, {
       entity,
-      prefix: '/' + entity.pluralName
+      prefix: `${prefix}/${entity.pluralName}`
     })
   }
 }

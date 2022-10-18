@@ -1,10 +1,13 @@
 Start the Platformatic DB server with the following command:
 
+``` bash
  $ platformatic db start
+ ```
 
 You will need a  configuration file. Here is an example to get you started,
 save the following as `platformatic.db.json`:
 
+``` json
   {
     "server": {
       "hostname": "127.0.0.1",
@@ -20,9 +23,10 @@ save the following as `platformatic.db.json`:
       "dir": "./migrations"
     }
   }
+```
 
 
-Remeber to create a migration, run the `db help migrate` command to know more.
+Remember to create a migration, run the `db help migrate` command to know more.
 
 All outstanding migrations will be applied to the database unless the
 `migrations.autoApply` configuration option is set to false.
@@ -31,11 +35,13 @@ By sending the SIGUSR2 signal, the server can be reloaded.
 
 Options:
 
-  -c, --config FILE     Specify a configuration file to use
-  --watch-ignore LIST   Specify a comma separated list of glob patterns to
-                        ignore when watching for changes
+  -c, --config FILE      Specify a configuration file to use
+  --watch-ignore LIST    Specify a comma separated list of glob patterns to
+                         ignore when watching for changes
+  --allow-to-watch LIST  Specify a comma separated list of glob patterns to
+                         allow when watching for changes. Default is *.js and **/*.js
 
 If not specified, the configuration specified will be loaded from `platformatic.db.json`,
 `platformatic.db.yml`, or `platformatic.db.tml` in the current directory. You can find more details about
 the configuration format at:
-https://oss.platformatic.dev/docs/reference/configuration.
+https://oss.platformatic.dev/docs/reference/db/configuration.

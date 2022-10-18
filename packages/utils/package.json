@@ -1,0 +1,28 @@
+{
+  "name": "@platformatic/utils",
+  "version": "0.3.0",
+  "description": "Platformatic DB Utils",
+  "main": "index.js",
+  "scripts": {
+    "test": "standard | snazzy && c8 --100 tap --no-coverage test/*test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "author": "Ivan Tymoshenko <ivan@tymoshenko.me>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformatic/platformatic/issues"
+  },
+  "homepage": "https://github.com/platformatic/platformatic#readme",
+  "devDependencies": {
+    "snazzy": "^9.0.0",
+    "standard": "^17.0.0",
+    "tap": "^16.0.0",
+    "c8": "^7.11.0"
+  },
+  "dependencies": {
+    "minimatch": "^5.1.0"
+  }
+}

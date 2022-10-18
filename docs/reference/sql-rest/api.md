@@ -69,9 +69,28 @@ $ curl -X 'GET' \
   -H 'accept: application/json'
 ```
 
+## OrderBy clause
+
+You can define the ordering of the returned rows within your REST API calls with the `orderby` clause using the following pattern:
+
+`?orderby.[field]=[asc | desc]`
+
+The **field** is one of the fields found in the schema.
+The **value** can be `asc` or `desc`.
+
+_Example_
+
+If you want to get the `pages` ordered alphabetically by their `titles` you can make an HTTP request like this:
+
+```bash
+$ curl -X 'GET' \
+  'http://localhost:3042/pages?orderby.title=asc' \
+  -H 'accept: application/json'
+```
+
 ### Total Count
 
-If `totalCount` boolean is in query, the GET returns the total number of elements in the `X-Total-Count` header ignoring `limit` and `offset` (if specified).
+If `totalCount` boolean is `true` in query, the GET returns the total number of elements in the `X-Total-Count` header ignoring `limit` and `offset` (if specified).
 
 ```bash
 $ curl -v -X 'GET' \
@@ -162,6 +181,59 @@ $ curl -X 'DELETE' 'http://localhost:3042/pages/1?fields=title'
 
 {
   "title": "Hello Platformatic!"
+}
+```
+
+## Nested Relationships
+
+Let's consider the following SQL:
+
+```sql
+CREATE TABLE IF NOT EXISTS movies (
+  movie_id INTEGER PRIMARY KEY,
+  title TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS quotes (
+  id INTEGER PRIMARY KEY,
+  quote TEXT NOT NULL,
+  movie_id INTEGER NOT NULL REFERENCES movies(movie_id)
+);
+```
+
+And:
+- `[P_PARENT_ENTITY]` is `movies`
+- `[S_PARENT_ENTITY]` is `movie`
+- `[P_CHILDREN_ENTITY]` is `quotes`
+- `[S_CHILDREN_ENTITY]` is `quote`
+
+In this case, more APIs are available:
+
+### `GET [P_PARENT_ENTITY]/[PARENT_PRIMARY_KEY]/[P_CHILDREN_ENTITY]`
+
+Given a 1-to-many relationship, where a parent entity can have many children, you can query for the children directly.
+
+```
+$ curl -X 'GET' 'http://localhost:3042/movies/1/quotes?fields=quote
+
+[
+  {
+    "quote": "I'll be back"
+  },
+  {
+    "quote": "Hasta la vista, baby"
+  }
+]
+```
+
+### `GET [P_CHILDREN_ENTITY]/[CHILDREN_PRIMARY_KEY]/[S_PARENT_ENTITY]`
+
+You can query for the parent directly, e.g.:
+
+```
+$ curl -X 'GET' 'http://localhost:3042/quotes/1/movie?fields=title
+
+{
+  "title": "Terminator"
 }
 ```
 

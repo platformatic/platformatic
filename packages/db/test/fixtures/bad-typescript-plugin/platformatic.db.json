@@ -8,14 +8,15 @@
   },
   "core": {
     "connectionString": "sqlite://db.sqlite",
-    "graphiql": true,
+    "graphql": true,
     "ignore": {
       "versions": true
     }
   },
   "migrations": {
     "dir": "migrations",
-    "table": "versions"
+    "table": "versions",
+    "autoApply": true
   },
   "types": {
     "autogenerate": true

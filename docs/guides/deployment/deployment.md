@@ -36,14 +36,14 @@ npm run script, for example:
 
 :::info
 
-See the [Configuration](/reference/configuration.md) reference for all
+See the [Configuration](/reference/db/configuration.md) reference for all
 configuration settings.
 
 :::
 
 ### Configuration with environment variables
 
-We recommend that you use [environment variable placeholders](/reference/configuration.md#environment-variable-placeholders)
+We recommend that you use [environment variable placeholders](/reference/db/configuration.md#environment-variable-placeholders)
 in your Platformatic DB configuration. This will allow you to configure
 different settings in your development and production environments.
 
@@ -113,7 +113,7 @@ with the following configuration:
 ```
 
 If you want to use this feature in development, replace the configuration
-values with [environment variable placeholders](/reference/configuration.md#environment-variable-placeholders)
+values with [environment variable placeholders](/reference/db/configuration.md#environment-variable-placeholders)
 so you can set it to `true` in development and `false` in production.
 
 ## Databases

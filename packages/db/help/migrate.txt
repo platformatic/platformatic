@@ -1,23 +1,31 @@
-Apply all configurated migrations to the database:
+Apply all configured migrations to the database:
 
+``` bash
   $ platformatic db migrate
+```
 
 The migrations will be applied in the order they are specified in the
 folder defined in the configuration file. If you want to apply a specific migration,
 you can use the `--to` option:
 
+``` bash
   $ platformatic db migrate --to 001
+```
 
 Here is an example migration:
 
+``` sql
   CREATE TABLE graphs (
     id SERIAL PRIMARY KEY,
     name TEXT
   );
+```
 
 You can always rollback to a specific migration with:
 
+``` bash
   $ platformatic db migrate --to VERSION
+```
 
 Use 000 to reset to the initial state.
 
@@ -29,4 +37,4 @@ Options:
 If not specified, the configuration specified will be loaded from
 `platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
 You can find more details about the configuration format at:
-https://oss.platformatic.dev/docs/reference/configuration.
+https://oss.platformatic.dev/docs/reference/db/configuration.

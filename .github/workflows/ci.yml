@@ -1,4 +1,4 @@
-name: Run tests
+name: run tests
 
 on:
   push:
@@ -29,7 +29,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2.2.2
+      - uses: pnpm/action-setup@v2.2.4
       - uses: actions/setup-node@v3
         with:
           node-version: 18
@@ -47,7 +47,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
     - uses: actions/checkout@v3
-    - uses: pnpm/action-setup@v2.2.2
+    - uses: pnpm/action-setup@v2.2.4
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
@@ -67,7 +67,7 @@ jobs:
         os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@v3
-    - uses: pnpm/action-setup@v2.2.2
+    - uses: pnpm/action-setup@v2.2.4
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
@@ -89,7 +89,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
     - uses: actions/checkout@v3
-    - uses: pnpm/action-setup@v2.2.2
+    - uses: pnpm/action-setup@v2.2.4
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
@@ -109,7 +109,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
     - uses: actions/checkout@v3
-    - uses: pnpm/action-setup@v2.2.2
+    - uses: pnpm/action-setup@v2.2.4
     - uses: ikalnytskyi/action-setup-postgres@v3
     - uses: actions/setup-node@v3
       with:
@@ -136,7 +136,7 @@ jobs:
         os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@v3
-    - uses: pnpm/action-setup@v2.2.2
+    - uses: pnpm/action-setup@v2.2.4
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
@@ -147,8 +147,33 @@ jobs:
       run: pnpm install --offline 
     - name: Run test suite
       run: cd packages/db-authorization && pnpm test
-  
-  ci-db-core:
+
+  ci-db-core-lint:
+    needs: setup-node_modules
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 5
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    steps:
+    - uses: actions/checkout@v3
+    - uses: pnpm/action-setup@v2.2.4
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 18
+        cache: 'pnpm'
+    - name: pnpm install
+      run: pnpm install --offline 
+    - name: Linting for test suite sql-mapper
+      run: cd packages/sql-mapper && pnpm run lint; cd ../..
+    - name: Linting for test suite sql-json-schema-mapper
+      run: cd packages/sql-json-schema-mapper && pnpm run lint; cd ../..
+    - name: Linting for test suite sql-openapi
+      run: cd packages/sql-openapi && pnpm run lint; cd ../..
+    - name: Linting for test suite sql-graphql
+      run: cd packages/sql-graphql && pnpm run lint; cd ../..
+
+  ci-db-core-test:
     needs: setup-node_modules
     runs-on: ${{matrix.os}}
     timeout-minutes: 5
@@ -159,7 +184,7 @@ jobs:
         os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@v3
-    - uses: pnpm/action-setup@v2.2.2
+    - uses: pnpm/action-setup@v2.2.4
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
@@ -191,7 +216,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2.2.2
+      - uses: pnpm/action-setup@v2.2.4
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
@@ -207,7 +232,7 @@ jobs:
     timeout-minutes: 5
     steps:
     - uses: actions/checkout@v3
-    - uses: pnpm/action-setup@v2.2.2
+    - uses: pnpm/action-setup@v2.2.4
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}

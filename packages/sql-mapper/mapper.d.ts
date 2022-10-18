@@ -235,13 +235,11 @@ export interface Entity<EntityFields = any> {
 
 
 export interface EntityHooks<EntityFields = any> {
-  [entityName: string]: {
-    find?: Find<EntityFields>,
-    insert?: Insert<EntityFields>,
-    save?: Save<EntityFields>,
-    delete?: Delete<EntityFields>,
-    count?: Count,
-  }
+  find?: Find<EntityFields>,
+  insert?: Insert<EntityFields>,
+  save?: Save<EntityFields>,
+  delete?: Delete<EntityFields>,
+  count?: Count,
 }
 
 export interface SQLMapperPluginOptions {
@@ -268,7 +266,9 @@ export interface SQLMapperPluginOptions {
   /**
    * For each entity name (like `Page`) you can customize any of the entity API function. Your custom function will receive the original function as first parameter, and then all the other parameters passed to it.
    */
-  hooks?: EntityHooks,
+  hooks?: {
+    [entityName: string]: EntityHooks
+  },
   /**
    * An async function that is called after the connection is established.
    */

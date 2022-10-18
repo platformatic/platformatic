@@ -6,10 +6,11 @@ const fp = require('fastify-plugin')
 
 // Ignore the function as it is only used only for MySQL and PostgreSQL
 /* istanbul ignore next */
-async function buildConnection (log, createConnectionPool, connectionString) {
+async function buildConnection (log, createConnectionPool, connectionString, poolSize) {
   const db = await createConnectionPool({
     connectionString,
     bigIntMode: 'string',
+    poolSize,
     onQueryStart: (_query, { text, values }) => {
       log.trace({
         query: {
@@ -38,7 +39,7 @@ async function buildConnection (log, createConnectionPool, connectionString) {
   return db
 }
 
-async function connect ({ connectionString, log, onDatabaseLoad, ignore = {}, autoTimestamp = true, hooks = {} }) {
+async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, ignore = {}, autoTimestamp = true, hooks = {} }) {
   // TODO validate config using the schema
   if (!connectionString) {
     throw new Error('connectionString is required')
@@ -51,13 +52,13 @@ async function connect ({ connectionString, log, onDatabaseLoad, ignore = {}, au
   /* istanbul ignore next */
   if (connectionString.indexOf('postgres') === 0) {
     const createConnectionPoolPg = require('@databases/pg')
-    db = await buildConnection(log, createConnectionPoolPg, connectionString)
+    db = await buildConnection(log, createConnectionPoolPg, connectionString, poolSize)
     sql = createConnectionPoolPg.sql
     queries = queriesFactory.pg
     db.isPg = true
   } else if (connectionString.indexOf('mysql') === 0) {
     const createConnectionPoolMysql = require('@databases/mysql')
-    db = await buildConnection(log, createConnectionPoolMysql, connectionString)
+    db = await buildConnection(log, createConnectionPoolMysql, connectionString, poolSize)
     sql = createConnectionPoolMysql.sql
     const version = (await db.query(sql`SELECT VERSION()`))[0]['VERSION()']
     db.version = version
@@ -72,6 +73,13 @@ async function connect ({ connectionString, log, onDatabaseLoad, ignore = {}, au
     const sqlite = require('@databases/sqlite')
     const path = connectionString.replace('sqlite://', '')
     db = sqlite(connectionString === 'sqlite://:memory:' ? undefined : path)
+    db._database.on('trace', sql => {
+      log.trace({
+        query: {
+          text: sql
+        }
+      }, 'query')
+    })
     sql = sqlite.sql
     queries = queriesFactory.sqlite
     db.isSQLite = true

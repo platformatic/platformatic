@@ -24,11 +24,17 @@ You can always rollback some migrations specifing what version you would like to
 
 _Example_
 
-```
+```bash
 $ platformatic db migrate --to 002
 ```
 
 Will execute `004.undo.sql`, `003.undo.sql` in this order. If you keep those files in migrations directory, when the server restarts it will execute `003.do.sql` and `004.do.sql` in this order.
+
+It's also possible to rollback a single migration with `-r`:   
+
+```bash
+$ platformatic db migrate -r 
+```
 
 ## How to run migrations
 
@@ -42,7 +48,7 @@ To run migrations when Platformatic DB starts, you need to use the config file r
 
 There are two options in the `"migrations"` property
 - `dir` (_required_) the directory where the migration files are located. It will be relative to the config file path.
-- `autoApply` a boolean value that tells Platformatic DB to auto-apply migrations or not (default: `true`)
+- `autoApply` a boolean value that tells Platformatic DB to auto-apply migrations or not (default: `false`)
 
 _Example_
 

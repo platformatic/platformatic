@@ -1,9 +1,9 @@
 import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
+import { join, relative, resolve } from 'path'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import parseArgs from 'minimist'
-import { checkForDependencies } from './gen-types.mjs'
+import { checkForDependencies, generateGlobalTypesFile } from './gen-types.mjs'
 import loadConfig from './load-config.mjs'
 import { findConfigFile, isFileAccessible } from './utils.js'
 
@@ -33,7 +33,6 @@ function getTsConfig (outDir) {
       module: 'commonjs',
       esModuleInterop: true,
       target: 'es6',
-      moduleResolution: 'node',
       sourceMap: true,
       pretty: true,
       noEmitOnError: true,
@@ -56,7 +55,7 @@ function generateConfig (args) {
 
   const config = {
     server: { hostname, port },
-    core: { connectionString, graphiql: true },
+    core: { connectionString, graphql: true },
     migrations: { dir: migrations }
   }
 
@@ -76,6 +75,49 @@ function generateConfig (args) {
   return config
 }
 
+const JS_PLUGIN_WITH_TYPES_SUPPORT = `\
+/// <reference path="./global.d.ts" />
+'use strict'
+
+/** @param {import('fastify').FastifyInstance} app */
+module.exports = async function (app) {}
+`
+
+const TS_PLUGIN_WITH_TYPES_SUPPORT = `\
+/// <reference path="./global.d.ts" />
+import { FastifyInstance } from 'fastify'
+
+export default async function (app: FastifyInstance) {}
+`
+
+async function generatePluginWithTypesSupport (logger, args, configManager) {
+  const config = configManager.current
+
+  if (config.plugin === undefined) {
+    config.plugin = {}
+  }
+
+  const isTypescript = config.typescript !== undefined
+
+  if (config.plugin.path === undefined) {
+    config.plugin.path = isTypescript ? 'plugin.ts' : 'plugin.js'
+  }
+
+  const pluginPath = resolve(process.cwd(), config.plugin.path)
+
+  const isPluginExists = await isFileAccessible(pluginPath)
+  if (isPluginExists) return
+
+  const pluginTemplate = isTypescript
+    ? TS_PLUGIN_WITH_TYPES_SUPPORT
+    : JS_PLUGIN_WITH_TYPES_SUPPORT
+
+  await writeFile(pluginPath, pluginTemplate)
+  await configManager.save()
+
+  logger.info(`Plugin file created at ${relative(process.cwd(), pluginPath)}`)
+}
+
 async function init (_args) {
   const logger = pino(pretty({
     translateTime: 'SYS:HH:MM:ss',
@@ -87,7 +129,7 @@ async function init (_args) {
       hostname: '127.0.0.1',
       port: 3042,
       database: 'sqlite',
-      migrations: './migrations',
+      migrations: 'migrations',
       types: true,
       typescript: false
     },
@@ -102,7 +144,7 @@ async function init (_args) {
     boolean: ['types', 'typescript']
   })
 
-  const { migrations, types, typescript } = args
+  const { migrations, typescript } = args
 
   const currentDir = process.cwd()
   const accessibleConfigFilename = await findConfigFile(currentDir)
@@ -143,9 +185,6 @@ async function init (_args) {
   } else {
     logger.info(`Migration file ${migrationFileNameDo} found, skipping creation of migration file.`)
   }
-  if (types === true) {
-    await checkForDependencies(logger, args, config)
-  }
 
   if (typescript === true) {
     const tsConfigFileName = 'tsconfig.json'
@@ -157,6 +196,12 @@ async function init (_args) {
     } else {
       logger.info(`Typescript configuration file ${tsConfigFileName} found, skipping creation of typescript configuration file.`)
     }
+  }
+
+  if (config.types && config.types.autogenerate) {
+    await generateGlobalTypesFile({}, config)
+    await generatePluginWithTypesSupport(logger, args, configManager)
+    await checkForDependencies(logger, args, config)
   }
 }
 

@@ -3,7 +3,6 @@
 const ConfigManager = require('@platformatic/config')
 const { dirname, resolve, relative, isAbsolute } = require('path')
 const { schema } = require('./schema')
-const { computeSQLiteIgnores } = require('./utils')
 const clone = require('rfdc')()
 
 class DBConfigManager extends ConfigManager {
@@ -16,7 +15,7 @@ class DBConfigManager extends ConfigManager {
         coerceTypes: true,
         allErrors: true
       },
-      watchIgnore: ['*.ts', ...(opts.watchIgnore || [])],
+      allowToWatch: ['.env'],
       envWhitelist: ['PORT', 'DATABASE_URL', ...(opts.envWhitelist || [])]
     })
   }
@@ -30,15 +29,8 @@ class DBConfigManager extends ConfigManager {
     if (this.current.core && this.current.core.connectionString.indexOf('sqlite') === 0) {
       const originalSqlitePath = this.current.core.connectionString.replace('sqlite://', '')
       const sqliteFullPath = resolve(dirOfConfig, originalSqlitePath)
-      const ignores = computeSQLiteIgnores(sqliteFullPath, dirOfConfig)
       this.current.core.connectionString = 'sqlite://' + sqliteFullPath
-      if (!this.watchIgnore.includes(ignores[0])) { // if restarted, this array may include already the file
-        this.watchIgnore.push(...ignores)
-      }
     }
-
-    // Ignore the ESM jumpfile created by fastify-isolate
-    this.watchIgnore.push('.esm*')
 
     // relative-to-absolute migrations path
     if (this.current.migrations) {

@@ -43,7 +43,7 @@ function createServerConfig (config) {
 }
 
 async function platformaticDB (app, opts) {
-  if (opts.migrations && opts.migrations.autoApply !== false) {
+  if (opts.migrations && opts.migrations.autoApply === true && !app.restarted) {
     app.log.debug({ migrations: opts.migrations }, 'running migrations')
     const { execute } = await import('./lib/migrate.mjs')
     await execute(app.log, { config: opts.configFileLocation }, opts)
@@ -56,20 +56,21 @@ async function platformaticDB (app, opts) {
   }
 
   app.register(require('./_admin'), { ...opts, prefix: '_admin' })
-  if (isKeyEnabledInConfig('dashboard', opts) && opts.dashboard.enabled) {
+  if (isKeyEnabledInConfig('dashboard', opts)) {
     await app.register(dashboard, {
-      dashboardAtRoot: opts.dashboard.rootPath || true
+      dashboardAtRoot: opts.dashboard.rootPath ?? true
     })
-  }
-  app.register(core, opts.core)
-
-  if (opts.authorization) {
-    app.register(auth, opts.authorization)
   }
 
   // Metrics plugin
   if (isKeyEnabledInConfig('metrics', opts)) {
     app.register(require('./lib/metrics-plugin'), opts.metrics)
+  }
+
+  app.register(core, opts.core)
+
+  if (opts.authorization) {
+    app.register(auth, opts.authorization)
   }
 
   if (opts.plugin) {
@@ -82,17 +83,30 @@ async function platformaticDB (app, opts) {
     }
 
     app.log.debug({ plugin: opts.plugin }, 'loading plugin')
-    await app.register(sandbox, {
-      ...pluginOptions,
-      customizeGlobalThis (_globalThis) {
+
+    // if not defined, we defaults to true (which can happen only if config is set programmatically,
+    // that's why we ignore the coverage of the `undefined` case, which cannot be covered in cli tests)
+    /* c8 ignore next */
+    const hotReload = opts.plugin.hotReload === undefined ? true : opts.plugin.hotReload
+    if (hotReload) {
+      await app.register(sandbox, {
+        ...pluginOptions,
+        customizeGlobalThis (_globalThis) {
         // Taken from https://github.com/nodejs/undici/blob/fa9fd9066569b6357acacffb806aa804b688c9d8/lib/global.js#L5
-        const globalDispatcher = Symbol.for('undici.globalDispatcher.1')
-        const dispatcher = globalThis[globalDispatcher]
-        if (dispatcher) {
-          _globalThis[globalDispatcher] = dispatcher
+          const globalDispatcher = Symbol.for('undici.globalDispatcher.1')
+          const dispatcher = globalThis[globalDispatcher]
+          /* istanbul ignore else */
+          if (dispatcher) {
+            _globalThis[globalDispatcher] = dispatcher
+          }
         }
-      }
-    })
+      })
+    // c8 fails in reporting the coverage of this else branch, so we ignore it
+    /* c8 ignore next 4 */
+    } else {
+      const plugin = await import(`file://${pluginOptions.path}`)
+      await app.register(plugin, pluginOptions.options)
+    }
   }
 
   // Enable CORS

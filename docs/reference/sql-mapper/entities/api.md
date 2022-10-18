@@ -169,7 +169,8 @@ main()
 
 Create a new entity row in the database or update an existing one.
 
-To update an existing entity, the `id` field (or equivalent primary key) must be included in the `input` object.
+To update an existing entity, the `id` field (or equivalent primary key) must be included in the `input` object. 
+`save` actually behaves as an `upsert`, allowing both behaviours depending on the presence of the primary key field.
 
 #### Options
 

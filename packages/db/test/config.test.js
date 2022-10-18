@@ -6,7 +6,7 @@ const { buildServer } = require('..')
 const { request } = require('undici')
 const { tmpdir } = require('os')
 const { readFile, writeFile, unlink } = require('fs/promises')
-const { join } = require('path')
+const { join, basename } = require('path')
 const DBConfigManager = require('../lib/config')
 
 test('return config with adminSecret', async ({ teardown, equal, same }) => {
@@ -63,7 +63,6 @@ test('return config file', async ({ teardown, equal, same }) => {
       adminSecret: 'secret'
     },
     dashboard: {
-      enabled: true,
       rootPath: false
     }
   }))
@@ -90,7 +89,6 @@ test('return config file', async ({ teardown, equal, same }) => {
       anonymousRole: 'anonymous'
     },
     dashboard: {
-      enabled: true,
       rootPath: false
     }
   })
@@ -138,9 +136,6 @@ test('no need for configFileLocation to return config', async ({ teardown, equal
       adminSecret: 'secret',
       roleKey: 'X-PLATFORMATIC-ROLE',
       anonymousRole: 'anonymous'
-    },
-    dashboard: {
-      rootPath: false
     }
   })
 })
@@ -229,7 +224,9 @@ test('ignore watch sqlite file', async ({ teardown, equal, same, comment }) => {
     })
     const parseResult = await cm.parse()
     equal(parseResult, true)
-    same(cm.watchIgnore, ['*.ts', 'db-watchIgnore.sqlite', 'db-watchIgnore.sqlite-journal', '.esm*'])
+
+    const configFileName = basename(cm.fullPath)
+    same(cm.fileWatcher.allowToWatch, ['.env', configFileName])
   }
 
   {
@@ -249,7 +246,9 @@ test('ignore watch sqlite file', async ({ teardown, equal, same, comment }) => {
     })
     const parseResult = await cm.parse()
     equal(parseResult, true)
-    same(cm.watchIgnore, ['*.ts', join('databases', 'db-watchIgnore.sqlite'), join('databases', 'db-watchIgnore.sqlite-journal'), '.esm*'])
+
+    const configFileName = basename(cm.fullPath)
+    same(cm.fileWatcher.allowToWatch, ['.env', configFileName])
   }
 })
 

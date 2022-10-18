@@ -1,7 +1,7 @@
 {
   "core": {
     "connectionString": "sqlite://./db",
-    "graphiql": true
+    "graphql": true
   },
   "server": {
     "hostname": "127.0.0.1",
@@ -11,6 +11,7 @@
     }
   },
   "migrations": {
-    "dir": "./migrations"
+    "dir": "./migrations",
+    "autoApply": true
   }
 }
