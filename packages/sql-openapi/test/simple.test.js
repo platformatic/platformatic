@@ -50,7 +50,7 @@ test('simple db, simple rest API', async (t) => {
       method: 'GET',
       url: '/documentation/json'
     })
-    equal(res.json().info.version, "1.0.0", 'GET /documentation/json info version default')
+    equal(res.json().info.version, '1.0.0', 'GET /documentation/json info version default')
   }
 
   {
