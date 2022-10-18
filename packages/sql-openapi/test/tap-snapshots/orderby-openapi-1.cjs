@@ -33,7 +33,7 @@ Object {
   "info": Object {
     "description": "Exposing a SQL database as REST",
     "title": "Platformatic DB",
-    "version": "0.3.0",
+    "version": "1.0.0",
   },
   "openapi": "3.0.3",
   "paths": Object {

@@ -8,7 +8,6 @@ const { singularize } = require('inflected')
 const { mapSQLEntityToJSONSchema } = require('@platformatic/sql-json-schema-mapper')
 const entityPlugin = require('./lib/entity-to-routes')
 const fp = require('fastify-plugin')
-const { version } = require('./package.json')
 
 async function setupOpenAPI (app, opts) {
   const prefix = opts.prefix || ''
@@ -17,7 +16,7 @@ async function setupOpenAPI (app, opts) {
     info: {
       title: 'Platformatic DB',
       description: 'Exposing a SQL database as REST',
-      version
+      version: '1.0.0'
     }
   }, opts)
   app.log.trace({ openapi: openapiConfig })

@@ -7,7 +7,6 @@ const fastify = require('fastify')
 const { clear, connInfo, isSQLite, isMariaDB } = require('./helper')
 const { resolve } = require('path')
 const { test } = t
-const { version } = require('../package.json')
 
 Object.defineProperty(t, 'fullname', {
   value: 'platformatic/db/openapi/simple'
@@ -51,7 +50,7 @@ test('simple db, simple rest API', async (t) => {
       method: 'GET',
       url: '/documentation/json'
     })
-    equal(res.json().info.version, version, 'GET /documentation/json info version default')
+    equal(res.json().info.version, "1.0.0", 'GET /documentation/json info version default')
   }
 
   {
