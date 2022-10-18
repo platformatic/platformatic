@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:19-alpine
 
 ENV HOME=/home
 ENV PLT_HOME=$HOME/platformatic/
