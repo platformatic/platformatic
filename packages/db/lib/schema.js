@@ -293,18 +293,19 @@ const authorization = {
 
 const dashboard = {
   $id: 'https://schemas.platformatic.dev/db/dashboard',
-  type: 'object',
-  properties: {
-    enabled: {
-      type: 'boolean'
-    },
-    rootPath: {
-      type: 'boolean',
-      description: 'Whether the dashboard should be served on / path or not.',
-      default: false
+  anyOf: [
+    { type: 'boolean' },
+    {
+      type: 'object',
+      properties: {
+        rootPath: {
+          type: 'boolean',
+          description: 'Whether the dashboard should be served on / path or not.'
+        }
+      },
+      additionalProperties: false
     }
-  },
-  additionalProperties: false
+  ]
 }
 
 const migrations = {

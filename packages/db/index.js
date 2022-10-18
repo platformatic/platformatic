@@ -56,9 +56,9 @@ async function platformaticDB (app, opts) {
   }
 
   app.register(require('./_admin'), { ...opts, prefix: '_admin' })
-  if (isKeyEnabledInConfig('dashboard', opts) && opts.dashboard.enabled) {
+  if (isKeyEnabledInConfig('dashboard', opts)) {
     await app.register(dashboard, {
-      dashboardAtRoot: opts.dashboard.rootPath || true
+      dashboardAtRoot: opts.dashboard.rootPath ?? true
     })
   }
 

@@ -63,7 +63,6 @@ test('return config file', async ({ teardown, equal, same }) => {
       adminSecret: 'secret'
     },
     dashboard: {
-      enabled: true,
       rootPath: false
     }
   }))
@@ -90,7 +89,6 @@ test('return config file', async ({ teardown, equal, same }) => {
       anonymousRole: 'anonymous'
     },
     dashboard: {
-      enabled: true,
       rootPath: false
     }
   })
@@ -138,9 +136,6 @@ test('no need for configFileLocation to return config', async ({ teardown, equal
       adminSecret: 'secret',
       roleKey: 'X-PLATFORMATIC-ROLE',
       anonymousRole: 'anonymous'
-    },
-    dashboard: {
-      rootPath: false
     }
   })
 })

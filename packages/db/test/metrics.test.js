@@ -227,9 +227,7 @@ test('call /metrics/dashboard before any requests', async ({ teardown, equal, sa
       port: 0
     },
     metrics: true,
-    dashboard: {
-      enabled: true
-    },
+    dashboard: true,
     core: {
       ...connInfo,
       async onDatabaseLoad (db, sql) {
@@ -265,9 +263,7 @@ test('call /metrics/dashboard after user requests', async ({ teardown, equal, ha
       port: 0
     },
     metrics: true,
-    dashboard: {
-      enabled: true
-    },
+    dashboard: true,
     core: {
       ...connInfo,
       async onDatabaseLoad (db, sql) {
