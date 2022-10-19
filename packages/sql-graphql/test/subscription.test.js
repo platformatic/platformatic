@@ -53,6 +53,7 @@ test('subscription - crud', async t => {
   await app.listen({ port: 0 })
 
   const { client } = createWebSocketClient(t, app)
+  t.teardown(() => { client.destroy() })
 
   client.write(JSON.stringify({
     type: 'connection_init'
