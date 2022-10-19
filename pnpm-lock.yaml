@@ -127,7 +127,7 @@ importers:
       es-main: ^1.2.0
       execa: ^6.1.0
       fastify: ^4.6.0
-      fastify-metrics: ^9.2.1
+      fastify-metrics: ^10.0.0
       fastify-plugin: ^4.1.0
       fastify-print-routes: ^2.0.0
       fastify-sandbox: ^0.8.0
@@ -172,7 +172,7 @@ importers:
       es-main: 1.2.0
       execa: 6.1.0
       fastify: 4.9.0
-      fastify-metrics: 9.2.2_fastify@4.9.0
+      fastify-metrics: 10.0.0_fastify@4.9.0
       fastify-plugin: 4.3.0
       fastify-print-routes: 2.0.6
       fastify-sandbox: 0.8.0
@@ -3328,10 +3328,10 @@ packages:
       reusify: 1.0.4
     dev: false
 
-  /fastify-metrics/9.2.2_fastify@4.9.0:
-    resolution: {integrity: sha512-67PsMy33zCvZk9juIY79YXO/dSLnVhYAV4510uiHfoa/z1VwTIoSkbsEa17JB+VL+KNW3seaSCDacjxOO/OINg==}
+  /fastify-metrics/10.0.0_fastify@4.9.0:
+    resolution: {integrity: sha512-1UmWgBQgwItQPmBd2pranQzaYpc0RltW+CQ871Gka4pzpiadtroPVy+llEVC58pejpqN65vvzCAfIUv9y2voxA==}
     peerDependencies:
-      fastify: ^4.0.0
+      fastify: ^4.9.2
     dependencies:
       fastify: 4.9.0
       fastify-plugin: 4.3.0
