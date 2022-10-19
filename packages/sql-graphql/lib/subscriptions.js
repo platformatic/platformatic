@@ -62,15 +62,18 @@ async function * augment (iterator, meta, info, app, field, key) {
   const primaryKey = entity.primaryKey
   const fields = meta.getFields([{ info }])
   for await (const msg of iterator) {
+    app.log.trace({ msg, entity: field.singularName }, 'graphql subscription augmenting data')
     const found = await entity.find({ where: { [primaryKey]: { eq: msg[primaryKey] } }, fields })
     // The following could happen in case of a race condition
     // testing it would be very hard, so we skip it for now
     /* istanbul ignore next */
     if (found.length === 0) {
-      app.log.warn({ ...msg.payload, entity: field.singularName }, 'could not find element')
+      app.log.warn({ ...msg.payload, entity: field.singularName }, 'graphql subscription could not find element')
       continue
     }
-    yield { [key]: found[0] }
+    const toYield = { [key]: found[0] }
+    app.log.trace({ yield: toYield, entity: field.singularName }, 'graphql subscription augmented data')
+    yield toYield
   }
 }
 

@@ -17,7 +17,6 @@ function setupEmitter ({ mq, mapper }) {
       async insert (original, data) {
         const res = await original(data)
         await Promise.all(res.map((data) => {
-          console.log('insert', entityName, data)
           const topic = `/entity/${entityName}/created`
           return new Promise((resolve) => {
             mq.emit({
