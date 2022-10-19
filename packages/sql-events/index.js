@@ -71,6 +71,17 @@ function setupEmitter ({ mq, mapper }) {
         }
       }
     })
+
+    entity.getTopic = async function ({ action }) {
+      switch (action) {
+        case 'create':
+          return `/entity/${entityName}/created`
+        case 'update':
+          return `/entity/${entityName}/updated/+`
+        case 'delete':
+          return `/entity/${entityName}/deleted/+`
+      }
+    }
   }
 
   mapper.mq = mq

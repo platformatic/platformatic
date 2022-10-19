@@ -12,10 +12,12 @@ function setupSubscriptions (app, metaMap, resolvers) {
       type
     }
     resolvers.Subscription[created] = {
-      subscribe: async (_, query, { pubsub }, info) => {
-        const topic = `/entity/${field.singularName}/created`
+      subscribe: async (_, query, ctx, info) => {
+        const { pubsub } = ctx
+        const entity = app.platformatic.entities[field.singularName]
+        const topic = await entity.getTopic({ action: 'create', ctx })
         const res = await pubsub.subscribe(topic)
-        return augment(res, meta, info, app, field, created)
+        return augment(res, meta, info, app, field, created, ctx)
       }
     }
 
@@ -24,10 +26,12 @@ function setupSubscriptions (app, metaMap, resolvers) {
       type
     }
     resolvers.Subscription[updated] = {
-      subscribe: async (_, query, { pubsub }, info) => {
-        const topic = `/entity/${field.singularName}/updated/+`
+      subscribe: async (_, query, ctx, info) => {
+        const { pubsub } = ctx
+        const entity = app.platformatic.entities[field.singularName]
+        const topic = await entity.getTopic({ action: 'update', ctx })
         const res = await pubsub.subscribe(topic)
-        return augment(res, meta, info, app, field, updated)
+        return augment(res, meta, info, app, field, updated, ctx)
       }
     }
 
@@ -36,8 +40,11 @@ function setupSubscriptions (app, metaMap, resolvers) {
       type
     }
     resolvers.Subscription[deleted] = {
-      subscribe: async (_, query, { pubsub }, info) => {
-        const topic = `/entity/${field.singularName}/deleted/+`
+      subscribe: async (_, query, ctx, info) => {
+        const { pubsub } = ctx
+        const entity = app.platformatic.entities[field.singularName]
+        const topic = await entity.getTopic({ action: 'delete', ctx })
+        console.log(topic)
         const res = await pubsub.subscribe(topic)
         return wrap(res, deleted)
       }
@@ -57,13 +64,13 @@ async function * wrap (iterator, key) {
   }
 }
 
-async function * augment (iterator, meta, info, app, field, key) {
+async function * augment (iterator, meta, info, app, field, key, ctx) {
   const entity = app.platformatic.entities[field.singularName]
   const primaryKey = entity.primaryKey
   const fields = meta.getFields([{ info }])
   for await (const msg of iterator) {
     app.log.trace({ msg, entity: field.singularName }, 'graphql subscription augmenting data')
-    const found = await entity.find({ where: { [primaryKey]: { eq: msg[primaryKey] } }, fields })
+    const found = await entity.find({ where: { [primaryKey]: { eq: msg[primaryKey] } }, fields, ctx })
     // The following could happen in case of a race condition
     // testing it would be very hard, so we skip it for now
     /* istanbul ignore next */
