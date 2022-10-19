@@ -47,6 +47,14 @@ test('simple db, simple rest API', async (t) => {
 
   {
     const res = await app.inject({
+      method: 'GET',
+      url: '/documentation/json'
+    })
+    equal(res.json().info.version, '1.0.0', 'GET /documentation/json info version default')
+  }
+
+  {
+    const res = await app.inject({
       method: 'POST',
       url: '/pages',
       body: {
@@ -516,7 +524,7 @@ test('delete', async ({ pass, teardown, same, equal }) => {
 })
 
 test('simple db, simple rest API', async (t) => {
-  const { pass, teardown, matchSnapshot } = t
+  const { pass, teardown, matchSnapshot, equal } = t
   t.snapshotFile = resolve(__dirname, 'tap-snapshots', 'simple-openapi-3.cjs')
 
   const app = fastify()
@@ -546,6 +554,7 @@ test('simple db, simple rest API', async (t) => {
   })
   const json = res.json()
   matchSnapshot(json, 'GET /documentation/json response')
+  equal(json.info.version, '42.42.42', 'GET /documentation/json info version override by opts')
 })
 
 test('deserialize JSON columns', { skip: isSQLite }, async (t) => {
