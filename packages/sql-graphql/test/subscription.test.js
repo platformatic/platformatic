@@ -35,7 +35,7 @@ function createWebSocketClient (t, app) {
 test('subscription - crud', async t => {
   const app = Fastify({
     logger: {
-      level: "trace"
+      level: 'trace'
     }
   })
   t.teardown(() => app.close())
