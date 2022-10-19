@@ -247,8 +247,9 @@ test('subscription - crud', async t => {
     t.comment(JSON.stringify(pages, null, 2))
 
     for await (const chunk of client.iterator({ destroyOnReturn: false })) {
+      console.log('received', chunk.toString())
       const data = JSON.parse(chunk)
-      console.log('received', data)
+      console.log('parsed', data)
       const page = pages.shift()
       t.same(data, {
         id: '1',
