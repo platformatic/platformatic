@@ -32,7 +32,11 @@ function createWebSocketClient (t, app) {
 }
 
 test('subscription - crud', async t => {
-  const app = Fastify()
+  const app = Fastify({
+    logger: {
+      level: "trace"
+    }
+  })
   t.teardown(() => app.close())
 
   app.register(sqlMapper, {
