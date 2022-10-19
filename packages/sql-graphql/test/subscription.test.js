@@ -219,50 +219,53 @@ test('subscription - crud', async t => {
   t.comment('sending mutation')
 
   {
-    const res = await app.inject({
-      method: 'POST',
-      url: '/graphql',
-      body: {
-        query: `
-        mutation batch($inputs : [PageInput]!) {
-          insertPages (inputs: $inputs) {
-            id
-            title
+    const [
+      received,
+      stored
+    ] = await Promise.all(([
+      (async function () {
+        const res = await app.inject({
+          method: 'POST',
+          url: '/graphql',
+          body: {
+            query: `
+            mutation batch($inputs : [PageInput]!) {
+              insertPages (inputs: $inputs) {
+                id
+                title
+              }
+            }
+          `,
+            variables: {
+              inputs: [
+                { title: 'Page 1' },
+                { title: 'Page 2' },
+                { title: 'Page 3' }
+              ]
+            }
+          }
+        })
+        t.comment('mutation sent')
+        const pages = res.json().data.insertPages
+        t.comment(JSON.stringify(pages, null, 2))
+        return pages
+      })(),
+      (async function () {
+        const pages = []
+        for await (const chunk of client.iterator({ destroyOnReturn: false })) {
+          console.log('received', chunk.toString())
+          const data = JSON.parse(chunk)
+          console.log('parsed', data)
+          pages.push(data.payload.data.pageCreated)
+          if (pages.length === 3) {
+            break
           }
         }
-      `,
-        variables: {
-          inputs: [
-            { title: 'Page 1' },
-            { title: 'Page 2' },
-            { title: 'Page 3' }
-          ]
-        }
-      }
-    })
-    const pages = res.json().data.insertPages
+        t.comment('received all pages', JSON.stringify(pages, null, 2))
+        return pages
+      })()
+    ]))
 
-    t.comment('mutation sent')
-
-    t.comment(JSON.stringify(pages, null, 2))
-
-    for await (const chunk of client.iterator({ destroyOnReturn: false })) {
-      console.log('received', chunk.toString())
-      const data = JSON.parse(chunk)
-      console.log('parsed', data)
-      const page = pages.shift()
-      t.same(data, {
-        id: '1',
-        type: 'data',
-        payload: {
-          data: {
-            pageCreated: page
-          }
-        }
-      })
-      if (pages.length === 0) {
-        break
-      }
-    }
+    t.same(received, stored)
   }
 })
