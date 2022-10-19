@@ -240,6 +240,8 @@ test('subscription - crud', async t => {
 
     t.comment('mutation sent')
 
+    t.comment(JSON.stringify(pages, null, 2))
+
     for (const page of pages) {
       const [chunk] = await once(client, 'data')
       const data = JSON.parse(chunk)
