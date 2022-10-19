@@ -33,11 +33,7 @@ function createWebSocketClient (t, app) {
 }
 
 test('subscription - crud', async t => {
-  const app = Fastify({
-    logger: {
-      level: 'trace'
-    }
-  })
+  const app = Fastify()
   t.teardown(() => app.close())
 
   app.register(sqlMapper, {
@@ -257,9 +253,7 @@ test('subscription - crud', async t => {
         const second = new stream.PassThrough({ objectMode: true })
         client.pipe(second)
         for await (const chunk of second) {
-          console.log('received', chunk.toString())
           const data = JSON.parse(chunk)
-          console.log('parsed', data)
           pages.push(data.payload.data.pageCreated)
           if (pages.length === 3) {
             break
