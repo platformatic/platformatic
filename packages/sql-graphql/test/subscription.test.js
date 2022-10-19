@@ -8,6 +8,7 @@ const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const sqlEvents = require('@platformatic/sql-events')
 const { clear, connInfo, isSQLite } = require('./helper')
+const stream = require('stream')
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -252,7 +253,9 @@ test('subscription - crud', async t => {
       })(),
       (async function () {
         const pages = []
-        for await (const chunk of client.iterator({ destroyOnReturn: false })) {
+        const second = new stream.PassThrough({ objectMode: true })
+        client.pipe(second)
+        for await (const chunk of second) {
           console.log('received', chunk.toString())
           const data = JSON.parse(chunk)
           console.log('parsed', data)
