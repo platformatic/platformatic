@@ -246,9 +246,10 @@ test('subscription - crud', async t => {
 
     t.comment(JSON.stringify(pages, null, 2))
 
-    for (const page of pages) {
-      const [chunk] = await once(client, 'data')
+    for await (const chunk of client.iterator({ destroyOnReturn: false })) {
       const data = JSON.parse(chunk)
+      console.log('received', data)
+      const page = pages.shift()
       t.same(data, {
         id: '1',
         type: 'data',
@@ -258,6 +259,9 @@ test('subscription - crud', async t => {
           }
         }
       })
+      if (pages.length === 0) {
+        break
+      }
     }
   }
 })
