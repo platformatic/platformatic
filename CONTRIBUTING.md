@@ -16,9 +16,9 @@ We use Docker to start all the databases we develop against.
 
 On Linux, execute: `docker compose up`
 
-On Intel Macs: `docker compose up -f docker-compose-mac.yml` 
+On Intel Macs: `docker compose -f docker-compose-mac.yml up` 
 
-On Apple Silicon Macs: `docker compose up -f docker-compose-apple-silicon.yml` 
+On Apple Silicon Macs: `docker compose -f docker-compose-apple-silicon.yml up` 
 
 ### Start platformatic db
 
