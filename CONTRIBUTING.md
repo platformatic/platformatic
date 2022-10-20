@@ -36,7 +36,7 @@ pnpm i
 The CLI package is now available at **./node_modules/.bin/platformatic**. Use
 `pnpm link` to use `platformatic` everywhere.
 ```sh
-(cd packages/cli && pnpm link)
+(cd packages/cli && pnpm link --global)
 ```
 
 ### Run dashboard development server
