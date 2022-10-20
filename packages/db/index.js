@@ -167,7 +167,7 @@ async function buildServer (options) {
 
   const _restart = handler.restart
 
-  handler.restart = (opts) => {
+  handler.restart = async (opts) => {
     addLoggerToTheConfig(opts)
 
     // Ignore because not tested on Windows
@@ -177,7 +177,21 @@ async function buildServer (options) {
     if (opts) {
       opts = createServerConfig(opts)
       opts.app = platformaticDB
-      return _restart(opts)
+
+      const fileWatcher = handler.app.platformatic.fileWatcher
+      const configManager = handler.app.platformatic.configManager
+
+      await _restart(opts)
+
+      if (fileWatcher !== undefined) {
+        handler.app.platformatic.fileWatcher = fileWatcher
+      }
+      if (configManager !== undefined) {
+        handler.app.platformatic.configManager = configManager
+        handler.app.platformatic.config = configManager.current
+      }
+
+      return handler
     }
     return _restart()
   }

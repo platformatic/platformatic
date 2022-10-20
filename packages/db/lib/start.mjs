@@ -33,21 +33,16 @@ async function start (_args) {
     configManager
   })
 
-  if (config.plugin !== undefined && config.plugin.watch !== false) {
-    const fileWatcher = new FileWatcher({
-      path: dirname(configManager.fullPath),
-      allowToWatch: config.plugin.watchOptions?.allow,
-      watchIgnore: config.plugin.watchOptions?.ignore
-    })
-    fileWatcher.on('update', () => {
-      onFilesUpdated(server)
-    })
-    fileWatcher.startWatching()
-  }
-
   configManager.on('update', (newConfig) => onConfigUpdated(newConfig, server))
   server.app.platformatic.configManager = configManager
   server.app.platformatic.config = config
+
+  if (
+    config.plugin !== undefined &&
+    config.plugin.watch !== false
+  ) {
+    await startFileWatching(server)
+  }
 
   await server.listen()
 
@@ -93,11 +88,50 @@ async function start (_args) {
   })
 }
 
+async function startFileWatching (server) {
+  await stopFileWatching(server)
+
+  const configManager = server.app.platformatic.configManager
+  const config = configManager.current
+
+  const fileWatcher = new FileWatcher({
+    path: dirname(configManager.fullPath),
+    allowToWatch: config.plugin.watchOptions?.allow,
+    watchIgnore: config.plugin.watchOptions?.ignore
+  })
+  fileWatcher.on('update', () => {
+    onFilesUpdated(server)
+  })
+  fileWatcher.startWatching()
+
+  server.app.log.info('start watching files')
+  server.app.platformatic.fileWatcher = fileWatcher
+}
+
+async function stopFileWatching (server) {
+  const fileWatcher = server.app.platformatic.fileWatcher
+  if (fileWatcher !== undefined) {
+    await fileWatcher.stopWatching()
+
+    server.app.log.info('stop watching files')
+    server.app.platformatic.fileWatcher = undefined
+  }
+}
+
 async function onConfigUpdated (newConfig, server) {
   try {
     server.app.platformatic.config = newConfig
     server.app.log.info('config changed')
     server.app.log.trace({ newConfig }, 'new config')
+
+    if (
+      newConfig.plugin !== undefined &&
+      newConfig.plugin.watch !== false
+    ) {
+      await startFileWatching(server)
+    } else {
+      await stopFileWatching(server)
+    }
     await server.restart(newConfig)
   } catch (err) {
     // TODO: test this
