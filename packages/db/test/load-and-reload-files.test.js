@@ -567,8 +567,11 @@ test('hot reload disabled, CommonJS', async ({ teardown, equal, pass, same }) =>
       port: 0
     },
     plugin: {
-      hotReload: false,
-      path: file
+      path: file,
+      watch: true,
+      watchOptions: {
+        hotReload: false
+      }
     },
     core: {
       ...connInfo,
@@ -627,9 +630,12 @@ test('hot reload disabled, ESM', async ({ teardown, equal, pass, same }) => {
       port: 0
     },
     plugin: {
-      hotReload: false,
       path: file,
-      stopTimeout: 1000
+      stopTimeout: 1000,
+      watch: true,
+      watchOptions: {
+        hotReload: false
+      }
     },
     core: {
       ...connInfo,
