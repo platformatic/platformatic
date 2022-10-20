@@ -44,7 +44,6 @@ function setupSubscriptions (app, metaMap, resolvers) {
         const { pubsub } = ctx
         const entity = app.platformatic.entities[field.singularName]
         const topic = await entity.getTopic({ action: 'delete', ctx })
-        console.log(topic)
         const res = await pubsub.subscribe(topic)
         return wrap(res, deleted)
       }
@@ -69,18 +68,22 @@ async function * augment (iterator, meta, info, app, field, key, ctx) {
   const primaryKey = entity.primaryKey
   const fields = meta.getFields([{ info }])
   for await (const msg of iterator) {
-    app.log.trace({ msg, entity: field.singularName }, 'graphql subscription augmenting data')
-    const found = await entity.find({ where: { [primaryKey]: { eq: msg[primaryKey] } }, fields, ctx })
-    // The following could happen in case of a race condition
-    // testing it would be very hard, so we skip it for now
-    /* istanbul ignore next */
-    if (found.length === 0) {
-      app.log.warn({ ...msg.payload, entity: field.singularName }, 'graphql subscription could not find element')
-      continue
+    try {
+      app.log.trace({ msg, entity: field.singularName }, 'graphql subscription augmenting data')
+      const found = await entity.find({ where: { [primaryKey]: { eq: msg[primaryKey] } }, fields, ctx })
+      // The following could happen in case of a race condition
+      // testing it would be very hard, so we skip it for now
+      /* istanbul ignore next */
+      if (found.length === 0) {
+        app.log.warn({ ...msg.payload, entity: field.singularName }, 'graphql subscription could not find element')
+        continue
+      }
+      const toYield = { [key]: found[0] }
+      app.log.trace({ yield: toYield, entity: field.singularName }, 'graphql subscription augmented data')
+      yield toYield
+    } catch (err) {
+      app.log.warn({ err, entity: field.singularName }, 'graphql subscription error')
     }
-    const toYield = { [key]: found[0] }
-    app.log.trace({ yield: toYield, entity: field.singularName }, 'graphql subscription augmented data')
-    yield toYield
   }
 }
 
