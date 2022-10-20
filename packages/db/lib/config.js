@@ -25,6 +25,17 @@ class DBConfigManager extends ConfigManager {
   }
 
   _transformConfig () {
+    /* c8 ignore start */
+    if (!this.current.server.logger) {
+      this.current.server.logger = { level: 'info' }
+    }
+
+    // If TTY use pino-pretty
+    if (!this.current.server.logger.transport && process.stdout.isTTY) {
+      this.current.server.logger.transport = { target: 'pino-pretty' }
+    }
+    /* c8 ignore stop */
+
     const dirOfConfig = dirname(this.fullPath)
     if (this.current.core && this.current.core.connectionString.indexOf('sqlite') === 0) {
       const originalSqlitePath = this.current.core.connectionString.replace('sqlite://', '')

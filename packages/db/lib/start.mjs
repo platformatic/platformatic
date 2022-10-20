@@ -4,7 +4,6 @@ import { buildServer } from '../index.js'
 import close from 'close-with-grace'
 import loadConfig from './load-config.mjs'
 import { compileWatch } from './compile.mjs'
-import { addLoggerToTheConfig } from './utils.js'
 
 // TODO make sure coverage is reported for Windows
 // Currently C8 is not reporting it
@@ -27,9 +26,6 @@ async function start (_args) {
   }
 
   const config = configManager.current
-
-  // Set the logger if not present
-  addLoggerToTheConfig(config)
 
   if (config.typescript !== undefined && config.typescript.watch !== false) {
     try {

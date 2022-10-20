@@ -10,7 +10,7 @@ const underPressure = require('@fastify/under-pressure')
 const { isKeyEnabledInConfig } = require('./lib/helper')
 const { schema } = require('./lib/schema')
 const ConfigManager = require('./lib/config.js')
-const { addLoggerToTheConfig, getJSPluginPath } = require('./lib/utils')
+const { getJSPluginPath } = require('./lib/utils')
 
 function deepmergeArray (options) {
   const deepmerge = options.deepmerge
@@ -166,8 +166,6 @@ async function buildServer (options) {
   const _restart = handler.restart
 
   handler.restart = (opts) => {
-    addLoggerToTheConfig(opts)
-
     // Ignore because not tested on Windows
     // TODO: remove the ignore, we shoduld be testing
     // this on Windows
