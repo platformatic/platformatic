@@ -173,7 +173,7 @@ async function buildServer (options) {
     // Ignore because not tested on Windows
     // TODO: remove the ignore, we shoduld be testing
     // this on Windows
-    /* c8 ignore next 5 */
+    /* c8 ignore start */
     if (opts) {
       opts = createServerConfig(opts)
       opts.app = platformaticDB
@@ -193,6 +193,7 @@ async function buildServer (options) {
 
       return handler
     }
+    /* c8 ignore stop */
     return _restart()
   }
 
