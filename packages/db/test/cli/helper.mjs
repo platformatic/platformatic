@@ -95,7 +95,7 @@ async function start (...args) {
 
   const errorTimeout = setTimeout(() => {
     throw new Error('Couldn\'t start server')
-  }, 5000)
+  }, 10000)
 
   for await (const messages of on(output, 'data')) {
     for (const message of messages) {
