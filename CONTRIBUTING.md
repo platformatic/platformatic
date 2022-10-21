@@ -84,7 +84,7 @@ The procedure to release is simple:
 
 1. Update the version of the root `package.json`
 1. run `./scripts/sync-version.sh`
-1. run `pnpm -r publish`
+1. run `pnpm -r publish --access=public`
 
 ### Creating and merging a PR 
 On the top of the PR description, if this is a fix of a github issue, add:
