@@ -269,21 +269,14 @@ test('list', async ({ pass, teardown, same, equal }) => {
 
   await app.ready()
 
-  const posts = [{
-    title: 'Post 1',
-    longText: 'This is a long text 1'
-  }, {
-    title: 'Post 2',
-    longText: 'This is a long text 2'
-  }, {
-    title: 'Post 3',
-    longText: 'This is a long text 3'
-  }, {
-    title: 'Post 4',
-    longText: 'This is a long text 4'
-  }]
+  const posts = []
+  for (let i = 0; i <= 101; i++) {
+    const body = {
+      title: `Post ${i}`,
+      longText: `This is a long text ${i}`
+    }
+    posts.push(body)
 
-  for (const body of posts) {
     await app.inject({
       method: 'POST',
       url: '/posts',
@@ -298,7 +291,7 @@ test('list', async ({ pass, teardown, same, equal }) => {
     equal(res.headers['x-total-count'], undefined, `${url} without x-total-count`)
     same(res.json(), posts.map((p, i) => {
       return { ...p, id: i + 1 + '' }
-    }), `${url} response`)
+    }).slice(0, 10), `${url} response`)
   }
 
   {
@@ -318,7 +311,7 @@ test('list', async ({ pass, teardown, same, equal }) => {
     equal(res.headers['x-total-count'], undefined, `${url} without x-total-count`)
     same(res.json(), posts.map((p, i) => {
       return { ...p, id: i + 1 + '' }
-    }).slice(2), `${url} response`)
+    }).slice(2, 12), `${url} response`)
   }
 
   {
@@ -355,7 +348,7 @@ test('list', async ({ pass, teardown, same, equal }) => {
     equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
     same(res.json(), posts.map((p, i) => {
       return { ...p, id: i + 1 + '' }
-    }).slice(2), `${url} response`)
+    }).slice(2, 12), `${url} response`)
   }
 
   {
@@ -373,7 +366,9 @@ test('list', async ({ pass, teardown, same, equal }) => {
     const res = await app.inject({ method: 'GET', url })
     equal(res.statusCode, 200, `${url} status code`)
     equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
-    same(res.json(), [], `${url} response`)
+    same(res.json(), posts.map((p, i) => {
+      return { ...p, id: i + 1 + '' }
+    }).slice(99, 101), `${url} response`)
   }
 
   {
@@ -383,7 +378,7 @@ test('list', async ({ pass, teardown, same, equal }) => {
     equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
     same(res.json(), posts.map((p, i) => {
       return { ...p, id: i + 1 + '' }
-    }).slice(0, 4), `${url} response`)
+    }).slice(0, 99), `${url} response`)
   }
 
   {
@@ -393,7 +388,7 @@ test('list', async ({ pass, teardown, same, equal }) => {
     equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
     same(res.json(), posts.map((p, i) => {
       return { ...p, id: i + 1 + '' }
-    }).slice(2, 4), `${url} response`)
+    }).slice(2, 101), `${url} response`)
   }
 })
 
