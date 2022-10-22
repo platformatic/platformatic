@@ -258,7 +258,7 @@ test('cut out id exactly from ending when forming a name of relation', async ({ 
           CREATE TABLE organizations (
             id SERIAL PRIMARY KEY,
             name VARCHAR(42),
-            individual_id BIGINT UNSIGNED
+            individual_id BIGINT UNSIGNED,
             FOREIGN KEY (individual_id) REFERENCES individuals(id) ON DELETE CASCADE
           );
         `)
