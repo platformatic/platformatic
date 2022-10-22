@@ -77,4 +77,13 @@ module.exports.clear = async function (db, sql) {
     await db.query(sql`DROP TABLE authors`)
   } catch (err) {
   }
+
+  try {
+    await db.query(sql`DROP TABLE organizations`)
+  } catch (err) {
+  }
+  try {
+    await db.query(sql`DROP TABLE individuals`)
+  } catch (err) {
+  }
 }
