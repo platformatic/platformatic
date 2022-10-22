@@ -3,6 +3,7 @@
 const { mapSQLTypeToOpenAPIType } = require('@platformatic/sql-json-schema-mapper')
 const camelcase = require('camelcase')
 const { singularize } = require('inflected')
+const { sanitizeLimit } = require('@platformatic/sql-mapper/lib/utils')
 
 const getEntityLinksForEntity = (app, entity) => {
   const entityLinks = {}
@@ -144,7 +145,7 @@ async function entityPlugin (app, opts) {
     // X-Total-Count header
     if (query.totalCount) {
       let totalCount
-      if ((((offset ?? 0) === 0) || (res.length > 0)) && ((limit === undefined) || (res.length < limit))) {
+      if ((((offset ?? 0) === 0) || (res.length > 0)) && (res.length < sanitizeLimit(limit))) {
         totalCount = (offset ?? 0) + res.length
       } else {
         totalCount = await entity.count({ where, ctx })
