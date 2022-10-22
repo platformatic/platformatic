@@ -3,7 +3,8 @@
 const camelcase = require('camelcase')
 const { singularize } = require('inflected')
 const {
-  toSingular
+  toSingular,
+  sanitizeLimit
 } = require('./utils')
 
 function createMapper (db, sql, log, table, fields, primaryKey, relations, queries, autoTimestamp) {
@@ -205,13 +206,9 @@ function createMapper (db, sql, log, table, fields, primaryKey, relations, queri
       query = sql`${query} ORDER BY ${sql.join(orderBy, sql`, `)}`
     }
 
-    if (opts.limit || opts.offset !== undefined) {
-      // Use Number.MAX_SAFE_INTEGER as default value for limit because in the sql query you cannot add OFFSET without LIMIT
-      const limit = (opts.limit !== undefined) ? opts.limit : Number.MAX_SAFE_INTEGER
-      query = sql`${query} LIMIT ${limit}`
-      if (opts.offset !== undefined) {
-        query = sql`${query} OFFSET ${opts.offset}`
-      }
+    query = sql`${query} LIMIT ${sanitizeLimit(opts.limit)}`
+    if (opts.offset !== undefined && opts.offset >= 0) {
+      query = sql`${query} OFFSET ${opts.offset}`
     }
 
     const res = await db.query(query)
