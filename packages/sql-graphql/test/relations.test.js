@@ -239,3 +239,148 @@ test('should handle multi references', async ({ pass, teardown, same, equal }) =
     }, 'query authors response')
   }
 })
+
+test('cut out id exactly from ending when forming a name of relation', async ({ pass, teardown, same, equal }) => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      if (isMysql) {
+        await db.query(sql`
+          CREATE TABLE individuals (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255)
+          );
+          CREATE TABLE organizations (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(42),
+            individual_id BIGINT UNSIGNED
+            FOREIGN KEY (individual_id) REFERENCES individuals(id) ON DELETE CASCADE
+          );
+        `)
+      } else if (isSQLite) {
+        await db.query(sql`
+          CREATE TABLE individuals (
+            id INTEGER PRIMARY KEY,
+            name VARCHAR(255)
+          );
+        `)
+        await db.query(sql`
+          CREATE TABLE organizations (
+            id INTEGER PRIMARY KEY,
+            name VARCHAR(42),
+            individual_id BIGINT UNSIGNED,
+            FOREIGN KEY (individual_id) REFERENCES individuals(id) ON DELETE CASCADE
+          );
+        `)
+      } else {
+        await db.query(sql`
+          CREATE TABLE individuals (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(42)
+          );
+          CREATE TABLE organizations (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(42),
+            individual_id INTEGER REFERENCES individuals(id)
+          );
+        `)
+      }
+    }
+  })
+  app.register(sqlGraphQL)
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  const individuals = [{
+    id: 1,
+    name: 'Mark'
+  }]
+
+  const organization = [{
+    id: 1,
+    name: 'Platformatic',
+    individualId: 1
+  }]
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+            mutation batch($inputs : [IndividualInput]!) {
+              insertIndividuals(inputs: $inputs) {
+                id
+                name
+              }
+            }
+          `,
+        variables: {
+          inputs: individuals
+        }
+      }
+    })
+    equal(res.statusCode, 200, 'individuals status code')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+            mutation batch($inputs : [OrganizationInput]!) {
+              insertOrganizations(inputs: $inputs) {
+                id
+                name
+              }
+            }
+          `,
+        variables: {
+          inputs: organization
+        }
+      }
+    })
+    equal(res.statusCode, 200, 'organization status code')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+            query {
+              organizations {
+                id
+                name
+                individual {
+                  id
+                  name
+                }
+              }
+            }
+          `
+      }
+    })
+    equal(res.statusCode, 200, 'query organization')
+    same(res.json(), {
+      data: {
+        organizations: [{
+          id: 1,
+          name: 'Platformatic',
+          individual: {
+            id: 1,
+            name: 'Mark'
+          }
+        }]
+      }
+    }, 'query organization response')
+  }
+})
