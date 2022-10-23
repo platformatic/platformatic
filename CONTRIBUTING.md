@@ -43,7 +43,7 @@ The CLI package is now available at **./node_modules/.bin/platformatic**. Use
 
 Use the command 
 ```sh
-npm run dashboard:start
+pnpm run dashboard:start
 ```
 
 This will start a webpack server on port `3000` by default, with watcher and hot-reload (as a standard `create-react-app` application).
@@ -70,8 +70,8 @@ If you want to use another config file use the option `--config=/path/to/some.js
 ### Testing
 
 1. [Run docker](#run-docker)
-1. Run `npm run dashboard:build` 
-1. Run tests: `npm test`
+1. Run `pnpm run dashboard:build` 
+1. Run tests: `pnpm test`
 
 ### Releasing
 
