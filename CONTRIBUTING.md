@@ -9,6 +9,12 @@
 2. Install dependencies for root project: `pnpm i`
 4. Install docker with Docker Desktop or [Colima](https://github.com/abiosoft/colima)
 
+The CLI package is now available at **./node_modules/.bin/platformatic**. Use
+`pnpm link` to use `platformatic` everywhere.
+```sh
+(cd packages/cli && pnpm link --global)
+```
+
 <a id='run-docker'></a>
 ### Start the RDBMS
 
@@ -22,22 +28,40 @@ On Apple Silicon Macs: `docker compose -f docker-compose-apple-silicon.yml up`
 
 ### Start platformatic db
 
-Create directories to work from:
+Read thorough documentation on the [quick start guide](https://github.com/platformatic/platformatic/blob/main/docs/getting-started/quick-start-guide.md), or
+follow these steps to quickly create and start a platformatic db:
 
-```sh
-mkdir -p my-demo/migrations
-```
-
-Install all dependencies:
-```sh
-pnpm i 
-```
-
-The CLI package is now available at **./node_modules/.bin/platformatic**. Use
-`pnpm link` to use `platformatic` everywhere.
-```sh
-(cd packages/cli && pnpm link --global)
-```
+1. Create directories to work from `mkdir -p my-demo` then `cd my-demo`
+2. Then create a package.json file with the default configs: `npm init --yes`
+3. Create a migrations directory to store your database migration files: `mkdir migrations`
+   Then create a new migration file named 001.do.sql in the migrations directory: `touch migrations/001.do.sql`
+   Copy and paste this SQL query into the migration file:
+   ```sql
+   CREATE TABLE pages (
+    id INTEGER PRIMARY KEY,
+    title VARCHAR(255) NOT NULL
+   )
+   ```
+4. In your project directory, create a new Platformatic configuration file named platformatic.db.json: `touch platformatic.db.json`
+   Copy and paste this configuration:
+   ```json
+   {
+     "server": {
+       "hostname": "127.0.0.1",
+       "port": "3042"
+     },
+     "core": {
+       "connectionString": "sqlite://./pages.db"
+     },
+     "migrations": {
+       "dir": "./migrations",
+       "autoApply": true
+     }
+   }
+   ```
+5. In your project directory, use the Platformatic CLI to start your API server: `platformatic db start`
+6. Start interacting with the API by opening the following link on your browser http://127.0.0.1:3042/documentation/static/index.html or you can use curl
+   to do it. Read the quick start guide to see examples.
 
 ### Run dashboard development server
 
