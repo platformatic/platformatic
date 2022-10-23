@@ -6,27 +6,25 @@
 
 1. Clone this repository
 1. Install pnpm `npm i pnpm --location=global`
-1. Install dependencies for root project: `pnpm i`
-1. Install docker with Docker Desktop or [Colima](https://github.com/abiosoft/colima)
+2. Install dependencies for root project: `pnpm i`
+4. Install docker with Docker Desktop or [Colima](https://github.com/abiosoft/colima)
 
 The CLI package is now available at **./node_modules/.bin/platformatic**. Use
 `pnpm link` to use `platformatic` everywhere.
-
 ```sh
 (cd packages/cli && pnpm link --global)
 ```
 
 <a id='run-docker'></a>
-
 ### Start the RDBMS
 
 We use Docker to start all the databases we develop against.
 
 On Linux, execute: `docker compose up`
 
-On Intel Macs: `docker compose -f docker-compose-mac.yml up`
+On Intel Macs: `docker compose -f docker-compose-mac.yml up` 
 
-On Apple Silicon Macs: `docker compose -f docker-compose-apple-silicon.yml up`
+On Apple Silicon Macs: `docker compose -f docker-compose-apple-silicon.yml up` 
 
 ### Start platformatic db
 
@@ -67,8 +65,7 @@ follow these steps to quickly create and start a platformatic db:
 
 ### Run dashboard development server
 
-Use the command
-
+Use the command 
 ```sh
 pnpm run dashboard:start
 ```
@@ -81,18 +78,15 @@ yet.
 ### Run platformatic-db service
 
 First build the dashboard for production with the command
-
 ```sh
 pnpm run dashboard:build
 ```
 
 This will create compressed files and assets under **packages/dashboard/build** directory.
 To run the service:
-
 ```sh
 platformatic db
 ```
-
 This will load config from local directory (i.e using config file **platformatic.db.json**).
 
 If you want to use another config file use the option `--config=/path/to/some.json`.
@@ -100,7 +94,7 @@ If you want to use another config file use the option `--config=/path/to/some.js
 ### Testing
 
 1. [Run docker](#run-docker)
-1. Run `pnpm run dashboard:build`
+1. Run `pnpm run dashboard:build` 
 1. Run tests: `pnpm test`
 
 ### Releasing
@@ -116,12 +110,9 @@ The procedure to release is simple:
 1. run `./scripts/sync-version.sh`
 1. run `pnpm -r publish --access=public`
 
-### Creating and merging a PR
-
+### Creating and merging a PR 
 On the top of the PR description, if this is a fix of a github issue, add:
-
 ```
-fixes #issuenum
+fixes #issuenum 
 ```
-
 When all checks are passed and the changes are approved, merge the PR with `squash and merge` option
