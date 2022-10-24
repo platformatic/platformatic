@@ -73,6 +73,12 @@ input GraphInput {
   id: ID
   name: String
 }
+
+type Subscription {
+  graphCreated: Graph
+  graphUpdated: Graph
+  graphDeleted: Graph
+}
 `
 
 exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must match snapshot 1'] = `

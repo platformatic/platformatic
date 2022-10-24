@@ -88,7 +88,7 @@ async function mapperToGraphql (app, opts) {
   }
 
   let subscription
-  if (app.platformatic.mq) {
+  if (app.platformatic.mq && Object.keys(app.platformatic.entities).length > 0) {
     opts.subscription = {
       emitter: app.platformatic.mq
     }

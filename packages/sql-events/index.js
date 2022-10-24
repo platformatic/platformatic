@@ -14,8 +14,8 @@ function setupEmitter ({ mq, mapper }) {
     const entity = mapper.entities[entityName]
     const { primaryKey } = entity
     mapper.addEntityHooks(entityName, {
-      async save (original, data) {
-        const topic = await entity.getPublishTopic({ action: 'update', input: data.input })
+      async save (original, data, ctx) {
+        const topic = await entity.getPublishTopic({ action: 'update', input: data.input, ctx: data.ctx })
         const res = await original(data)
         if (topic) {
           await new Promise((resolve) => {
@@ -40,7 +40,7 @@ function setupEmitter ({ mq, mapper }) {
         const res = await original({ ...data, fields: undefined })
 
         await Promise.all(res.map(async (input) => {
-          const topic = await entity.getPublishTopic({ action, input })
+          const topic = await entity.getPublishTopic({ action, input, ctx: data.ctx })
           if (topic) {
             return new Promise((resolve) => {
               mq.emit({

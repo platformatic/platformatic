@@ -4,7 +4,6 @@ const fp = require('fastify-plugin')
 const createError = require('@fastify/error')
 const { getRequestFromContext, getRoles } = require('./lib/utils')
 const findRule = require('./lib/find-rule')
-const {request} = require('undici')
 
 const PLT_ADMIN_ROLE = 'platformatic-admin'
 const Unauthorized = createError('PLT_DB_AUTH_UNAUTHORIZED', 'operation not allowed', 401)
@@ -63,7 +62,6 @@ async function auth (app, opts) {
       // and creates a new `request.user` object
       await request.createSession()
     } catch (err) {
-      console.log(err)
       request.log.trace({ err })
     }
 
@@ -75,7 +73,6 @@ async function auth (app, opts) {
       }
     }
   }
-
 
   const rules = opts.rules || []
 
@@ -111,6 +108,31 @@ async function auth (app, opts) {
       // If we have `fields` in save rules, we need to check if all the not-nullable
       // fields are specified
       checkSaveMandatoryFieldsInRules(type, rules)
+
+      // We have subscriptions!
+      let userPropToFillForPublish
+      /* istanbul ignore else */
+      if (app.platformatic.mq) {
+        for (const rule of rules) {
+          const checks = rule.find?.checks
+          if (typeof checks !== 'object') {
+            continue
+          }
+          for (const key of Object.keys(checks)) {
+            /* istanbul ignore next */
+            const val = checks[key] || checks[key].eq
+            /* istanbul ignore else */
+            if (val) {
+              /* istanbul ignore else */
+              if (userPropToFillForPublish === undefined) {
+                userPropToFillForPublish = { key, val }
+              } else if (userPropToFillForPublish.val !== val) {
+                throw new Error('Unable to configure subscriptions and authorization due to multiple check clauses in find')
+              }
+            }
+          }
+        }
+      }
 
       app.platformatic.addEntityHooks(entityKey, {
         async find (originalFind, { where, ctx, fields, ...restOpts }) {
@@ -202,9 +224,14 @@ async function auth (app, opts) {
 
           return originalDelete({ where, ctx, fields })
         },
-        
+
         async getPublishTopic (original, opts) {
-          return original(opts)
+          const request = opts.ctx.reply.request
+          const originalTopic = await original(opts)
+          if (userPropToFillForPublish) {
+            return `/${userPropToFillForPublish.key}/${request.user[userPropToFillForPublish.val] || ''}${originalTopic}`
+          }
+          return originalTopic
         },
 
         async getSubscriptionTopic (original, opts) {
@@ -212,8 +239,18 @@ async function auth (app, opts) {
           if (ctx.request.user === undefined) {
             await setupUser(ctx.request)
           }
+          // TODO make sure anonymous users cannot subscribe
 
-          return original(opts)
+          const request = getRequestFromContext(ctx)
+
+          const originalTopic = await original(opts)
+
+          /* istanbul ignore next */
+          if (userPropToFillForPublish) {
+            return `/${userPropToFillForPublish.key}/${request.user[userPropToFillForPublish.val] || '+'}${originalTopic}`
+          }
+
+          return originalTopic
         }
       })
     }

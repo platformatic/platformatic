@@ -73,4 +73,10 @@ input PageInput {
   id: ID
   title: String
 }
+
+type Subscription {
+  pageCreated: Page
+  pageUpdated: Page
+  pageDeleted: Page
+}
 `

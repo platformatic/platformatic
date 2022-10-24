@@ -55,28 +55,24 @@ test('migrations rollback', async ({ rejects, match, teardown }) => {
   // Down to no migrations applied
   {
     const { stdout } = await execa('node', [cliPath, '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'])
-    console.log(stdout)
     const sanitized = stripAnsi(stdout)
     match(sanitized, '003.undo.sql')
   }
 
   {
     const { stdout } = await execa('node', [cliPath, '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'])
-    console.log(stdout)
     const sanitized = stripAnsi(stdout)
     match(sanitized, '002.undo.sql')
   }
 
   {
     const { stdout } = await execa('node', [cliPath, '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'])
-    console.log(stdout)
     const sanitized = stripAnsi(stdout)
     match(sanitized, '001.undo.sql')
   }
 
   {
     const { stdout } = await execa('node', [cliPath, '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'])
-    console.log(stdout)
     const sanitized = stripAnsi(stdout)
     match(sanitized, 'No migrations to rollback')
   }

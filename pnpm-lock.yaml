@@ -348,7 +348,7 @@ importers:
       graphql-scalars: ^1.13.1
       graphql-type-json: ^0.3.2
       inflected: ^2.1.0
-      mercurius: ^11.0.0
+      mercurius: ^11.2.0
       snazzy: ^9.0.0
       standard: ^17.0.0
       tap: ^16.0.0
@@ -361,7 +361,7 @@ importers:
       graphql-scalars: 1.19.0_graphql@16.6.0
       graphql-type-json: 0.3.2_graphql@16.6.0
       inflected: 2.1.0
-      mercurius: 11.0.1_graphql@16.6.0
+      mercurius: 11.2.0_graphql@16.6.0
     devDependencies:
       '@platformatic/sql-events': link:../sql-events
       '@platformatic/sql-mapper': link:../sql-mapper
@@ -4835,6 +4835,35 @@ packages:
       - bufferutil
       - supports-color
       - utf-8-validate
+    dev: true
+
+  /mercurius/11.2.0_graphql@16.6.0:
+    resolution: {integrity: sha512-xKqNx/QzJpW+FBsSHUTwBS+QPoevZ/o1jgMTxmIIBio0+wgINtlWNaoX2asUwTHoB3BG1IkNgY+PDsxra3y9iA==}
+    engines: {node: '>=14.19.3'}
+    peerDependencies:
+      graphql: ^16.0.0
+    dependencies:
+      '@fastify/error': 3.0.0
+      '@fastify/static': 6.5.0
+      '@fastify/websocket': 7.1.0
+      events.on: 1.0.1
+      fastify-plugin: 4.3.0
+      graphql: 16.6.0
+      graphql-jit: 0.7.4_graphql@16.6.0
+      mqemitter: 5.0.0
+      p-map: 4.0.0
+      readable-stream: 4.2.0
+      safe-stable-stringify: 2.4.0
+      secure-json-parse: 2.5.0
+      single-user-cache: 0.6.0
+      tiny-lru: 8.0.2
+      undici: 5.11.0
+      ws: 8.9.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+    dev: false
 
   /merge-stream/2.0.0:
     resolution: {integrity: sha512-abv/qOcuPfk3URPfDzmZU1LKmuw8kT+0nIHvKrKgFrwifol/doWcdA4ZqsWQ8ENrFKkd67Mfpo/LovbIUsbt3w==}

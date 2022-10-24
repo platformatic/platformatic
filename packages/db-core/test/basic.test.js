@@ -171,7 +171,7 @@ test('mq is available', async ({ equal, same, teardown }) => {
   teardown(() => app.close())
 
   const queue = await app.platformatic.subscribe([
-    await app.platformatic.entities.page.getTopic({ action: 'create' }),
+    await app.platformatic.entities.page.getSubscriptionTopic({ action: 'create' })
   ])
 
   const res = await app.inject({
