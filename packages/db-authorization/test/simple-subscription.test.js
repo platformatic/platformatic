@@ -299,8 +299,8 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
 
   await app.listen({ port: 0 })
 
-  const { client } = createWebSocketClient(app)
-  teardown(() => { client.destroy() })
+  const client1 = createWebSocketClient(app).client
+  teardown(() => { client1.destroy() })
 
   {
     const token = await app.jwt.sign({
@@ -308,7 +308,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
       'X-PLATFORMATIC-ROLE': 'user'
     })
 
-    client.write(JSON.stringify({
+    client1.write(JSON.stringify({
       type: 'connection_init',
       payload: {
         authorization: `Bearer ${token}`
@@ -323,7 +323,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
         title
       }
     }`
-    client.write(JSON.stringify({
+    client1.write(JSON.stringify({
       id: 1,
       type: 'start',
       payload: {
@@ -339,7 +339,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
         title
       }
     }`
-    client.write(JSON.stringify({
+    client1.write(JSON.stringify({
       id: 1,
       type: 'start',
       payload: {
@@ -355,7 +355,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
         title
       }
     }`
-    client.write(JSON.stringify({
+    client1.write(JSON.stringify({
       id: 1,
       type: 'start',
       payload: {
@@ -365,19 +365,87 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
   }
 
   {
-    const [chunk] = await once(client, 'data')
+    const [chunk] = await once(client1, 'data')
     const data = JSON.parse(chunk)
     equal(data.type, 'connection_ack')
   }
 
-  const events = []
-  const wrap = new PassThrough({ objectMode: true, transform (chunk, enc, cb) { cb(null, JSON.parse(chunk)) } })
-  client.pipe(wrap)
+  const events1 = []
+  const wrap1 = new PassThrough({ objectMode: true, transform (chunk, enc, cb) { cb(null, JSON.parse(chunk)) } })
+  client1.pipe(wrap1)
 
   const token = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 43,
     'X-PLATFORMATIC-ROLE': 'user'
   })
+
+  const client2 = createWebSocketClient(app).client
+  teardown(() => { client2.destroy() })
+
+  client2.write(JSON.stringify({
+    type: 'connection_init',
+    payload: {
+      authorization: `Bearer ${token}`
+    }
+  }))
+
+  {
+    const query = `subscription {
+      pageCreated {
+        id
+        title
+      }
+    }`
+    client2.write(JSON.stringify({
+      id: 1,
+      type: 'start',
+      payload: {
+        query
+      }
+    }))
+  }
+
+  {
+    const query = `subscription {
+      pageUpdated {
+        id
+        title
+      }
+    }`
+    client2.write(JSON.stringify({
+      id: 1,
+      type: 'start',
+      payload: {
+        query
+      }
+    }))
+  }
+
+  {
+    const query = `subscription {
+      pageDeleted {
+        id
+        title
+      }
+    }`
+    client2.write(JSON.stringify({
+      id: 1,
+      type: 'start',
+      payload: {
+        query
+      }
+    }))
+  }
+
+  {
+    const [chunk] = await once(client2, 'data')
+    const data = JSON.parse(chunk)
+    equal(data.type, 'connection_ack')
+  }
+
+  const events2 = []
+  const wrap2 = new PassThrough({ objectMode: true, transform (chunk, enc, cb) { cb(null, JSON.parse(chunk)) } })
+  client2.pipe(wrap2)
 
   {
     const res = await app.inject({
@@ -432,14 +500,56 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
     }, 'DELETE /pages/1')
   }
 
-  client.end()
+  client1.end()
 
-  for await (const data of wrap) {
-    events.push(data)
-    if (events.length === 3) {
+  for await (const data of wrap1) {
+    events1.push(data)
+    if (events1.length === 3) {
       break
     }
   }
 
-  same(events, [], 'events')
+  same(events1, [], 'events')
+
+  for await (const data of wrap2) {
+    events2.push(data)
+    if (events2.length === 3) {
+      break
+    }
+  }
+
+  same(events2, [{
+    type: 'data',
+    id: 1,
+    payload: {
+      data: {
+        pageCreated: {
+          id: '1',
+          title: 'Hello'
+        }
+      }
+    }
+  }, {
+    type: 'data',
+    id: 1,
+    payload: {
+      data: {
+        pageUpdated: {
+          id: '1',
+          title: 'Hello World'
+        }
+      }
+    }
+  }, {
+    type: 'data',
+    id: 1,
+    payload: {
+      data: {
+        pageDeleted: {
+          id: '1',
+          title: 'Hello World'
+        }
+      }
+    }
+  }], 'events')
 })
