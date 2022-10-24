@@ -7,6 +7,9 @@ const { connInfo, clear, isSQLite } = require('./helper')
 const auth = require('..')
 const WebSocket = require('ws')
 const { once } = require('events')
+const { promisify } = require('util')
+const immediate = promisify(setImmediate)
+const { PassThrough } = require('stream')
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -32,7 +35,8 @@ function createWebSocketClient (app) {
 }
 
 test('GraphQL subscription authorization', async ({ pass, teardown, same, equal }) => {
-  const app = fastify({ logger: { level: 'trace' }})
+  // const app = fastify({ logger: { level: 'trace' }})
+  const app = fastify()
   app.register(core, {
     ...connInfo,
     subscriptions: true,
@@ -66,6 +70,7 @@ test('GraphQL subscription authorization', async ({ pass, teardown, same, equal 
           userId: 'X-PLATFORMATIC-USER-ID'
         }
       },
+      /*
       subscribe: {
         create: {
           checks: {
@@ -83,6 +88,7 @@ test('GraphQL subscription authorization', async ({ pass, teardown, same, equal 
           }
         }
       }
+      */
     }, {
       role: 'anonymous',
       entity: 'page',
@@ -164,6 +170,10 @@ test('GraphQL subscription authorization', async ({ pass, teardown, same, equal 
     equal(data.type, 'connection_ack')
   }
 
+  let events = []
+  const wrap = new PassThrough({ objectMode: true, transform (chunk, enc, cb) { cb(null, JSON.parse(chunk)) } })
+  client.pipe(wrap)
+
   {
     const res = await app.inject({
       method: 'POST',
@@ -217,12 +227,8 @@ test('GraphQL subscription authorization', async ({ pass, teardown, same, equal 
     }, 'DELETE /pages/1')
   }
 
-  let events = []
-  for await (const chunk of client) {
-    console.log(chunk)
-    const data = JSON.parse(chunk)
+  for await (const data of wrap) {
     events.push(data)
-    console.log(data)
     if (events.length === 3) {
       break
     }

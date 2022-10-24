@@ -15,7 +15,7 @@ function setupSubscriptions (app, metaMap, resolvers) {
       subscribe: async (_, query, ctx, info) => {
         const { pubsub } = ctx
         const entity = app.platformatic.entities[field.singularName]
-        const topic = await entity.getTopic({ action: 'create', ctx })
+        const topic = await entity.getSubscriptionTopic({ action: 'create', ctx })
         const res = await pubsub.subscribe(topic)
         return augment(res, meta, info, app, field, created, ctx)
       }
@@ -29,7 +29,7 @@ function setupSubscriptions (app, metaMap, resolvers) {
       subscribe: async (_, query, ctx, info) => {
         const { pubsub } = ctx
         const entity = app.platformatic.entities[field.singularName]
-        const topic = await entity.getTopic({ action: 'update', ctx })
+        const topic = await entity.getSubscriptionTopic({ action: 'update', ctx })
         const res = await pubsub.subscribe(topic)
         return augment(res, meta, info, app, field, updated, ctx)
       }
@@ -43,7 +43,7 @@ function setupSubscriptions (app, metaMap, resolvers) {
       subscribe: async (_, query, ctx, info) => {
         const { pubsub } = ctx
         const entity = app.platformatic.entities[field.singularName]
-        const topic = await entity.getTopic({ action: 'delete', ctx })
+        const topic = await entity.getSubscriptionTopic({ action: 'delete', ctx })
         const res = await pubsub.subscribe(topic)
         return wrap(res, deleted)
       }
@@ -82,6 +82,7 @@ async function * augment (iterator, meta, info, app, field, key, ctx) {
       app.log.trace({ yield: toYield, entity: field.singularName }, 'graphql subscription augmented data')
       yield toYield
     } catch (err) {
+      /* istanbul ignore next */
       app.log.warn({ err, entity: field.singularName }, 'graphql subscription error')
     }
   }

@@ -40,9 +40,9 @@ test('get topics', async ({ equal, same, teardown }) => {
   const mq = MQEmitter()
   equal(setupEmitter({ mapper, mq }), undefined)
   const queue = await mapper.subscribe([
-    await pageEntity.getTopic({ action: 'create' }),
-    await pageEntity.getTopic({ action: 'update' }),
-    await pageEntity.getTopic({ action: 'delete' })
+    await pageEntity.getSubscriptionTopic({ action: 'create' }),
+    await pageEntity.getSubscriptionTopic({ action: 'update' }),
+    await pageEntity.getSubscriptionTopic({ action: 'delete' })
   ])
   equal(mapper.mq, mq)
 
@@ -122,9 +122,9 @@ test('hooks', async ({ equal, same, teardown }) => {
   const mq = MQEmitter()
   equal(setupEmitter({ mapper, mq }), undefined)
   const queue = await mapper.subscribe([
-    await pageEntity.getTopic({ action: 'create' }),
-    await pageEntity.getTopic({ action: 'update' }),
-    await pageEntity.getTopic({ action: 'delete' })
+    await pageEntity.getSubscriptionTopic({ action: 'create' }),
+    await pageEntity.getSubscriptionTopic({ action: 'update' }),
+    await pageEntity.getSubscriptionTopic({ action: 'delete' })
   ])
   equal(mapper.mq, mq)
 
@@ -200,7 +200,7 @@ test('get topics', async ({ equal, same, teardown }) => {
     onDatabaseLoad
   })
   mapper.addEntityHooks('page', {
-    async getTopic (original, { action }) {
+    async getSubscriptionTopic (original, { action }) {
       equal('create', action)
       return original({ action })
     }
@@ -210,5 +210,106 @@ test('get topics', async ({ equal, same, teardown }) => {
 
   const mq = MQEmitter()
   equal(setupEmitter({ mapper, mq }), undefined)
-  await pageEntity.getTopic({ action: 'create' })
+  await pageEntity.getSubscriptionTopic({ action: 'create' })
+})
+
+test('no events', async ({ equal, same, teardown, fail, comment }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+
+    if (isSQLite) {
+      await db.query(sql`CREATE TABLE pages (
+        id INTEGER PRIMARY KEY,
+        title VARCHAR(42)
+      );`)
+    } else {
+      await db.query(sql`CREATE TABLE pages (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL
+      );`)
+    }
+  }
+  const mapper = await connect({
+    log: fakeLogger,
+    ...connInfo,
+    onDatabaseLoad
+  })
+
+  const mq = MQEmitter()
+  equal(setupEmitter({ mapper, mq }), undefined)
+
+  const pageEntity = mapper.entities.page
+
+  // disable publishing
+  pageEntity.getPublishTopic = function () {
+    return false
+  }
+
+  const queue = await mapper.subscribe([
+    await pageEntity.getSubscriptionTopic({ action: 'create' }),
+    await pageEntity.getSubscriptionTopic({ action: 'update' }),
+    await pageEntity.getSubscriptionTopic({ action: 'delete' })
+  ])
+  equal(mapper.mq, mq)
+
+  queue.on('data', function (msg) {
+    comment(JSON.stringify(msg, null, 2))
+    fail('no message')
+  })
+
+  // save - new record
+  const page = await pageEntity.save({
+    input: { title: 'fourth page' }
+  })
+
+  // save - update record
+  await pageEntity.save({
+    input: {
+      id: page.id,
+      title: 'fifth page'
+    }
+  })
+
+  // delete a record
+  await pageEntity.delete({
+    where: {
+      id: {
+        eq: page.id
+      }
+    },
+    fields: ['id', 'title']
+  })
+})
+
+test('wrong action', async ({ equal, rejects, teardown, fail, comment }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+
+    if (isSQLite) {
+      await db.query(sql`CREATE TABLE pages (
+        id INTEGER PRIMARY KEY,
+        title VARCHAR(42)
+      );`)
+    } else {
+      await db.query(sql`CREATE TABLE pages (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL
+      );`)
+    }
+  }
+  const mapper = await connect({
+    log: fakeLogger,
+    ...connInfo,
+    onDatabaseLoad
+  })
+
+  setupEmitter({ mapper })
+
+  const pageEntity = mapper.entities.page
+
+  equal(await pageEntity.getPublishTopic({ action: 'foo' }), false)
+  equal(await pageEntity.getPublishTopic({ action: 'foo', input: {} }), false)
+  rejects(pageEntity.getSubscriptionTopic({ action: 'foo' }), 'no such action foo')
 })

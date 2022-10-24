@@ -14,46 +14,41 @@ function setupEmitter ({ mq, mapper }) {
     const entity = mapper.entities[entityName]
     const { primaryKey } = entity
     mapper.addEntityHooks(entityName, {
-      async insert (original, data) {
+      async save (original, data) {
+        const topic = await entity.getPublishTopic({ action: 'update', input: data.input })
         const res = await original(data)
-        await Promise.all(res.map((data) => {
-          const topic = `/entity/${entityName}/created`
-          return new Promise((resolve) => {
+        if (topic) {
+          await new Promise((resolve) => {
             mq.emit({
               topic,
               payload: {
-                [primaryKey]: data[primaryKey]
+                [primaryKey]: res[primaryKey]
               }
             }, resolve)
           })
-        }))
+        }
         return res
       },
-      async save (original, data) {
-        const isNew = data.input[primaryKey] === undefined
-        const topic = isNew ? `/entity/${entityName}/created` : `/entity/${entityName}/updated/${data.input[primaryKey]}`
-        const res = await original(data)
-        await new Promise((resolve) => {
-          mq.emit({
-            topic,
-            payload: {
-              [primaryKey]: res[primaryKey]
-            }
-          }, resolve)
-        })
-        return res
-      },
-      async delete (original, data) {
+
+      delete: multiField('delete'),
+      insert: multiField('create')
+    })
+
+    function multiField (action) {
+      return async function (original, data) {
         const fields = new Set(data.fields)
         const res = await original({ ...data, fields: undefined })
-        await Promise.all(res.map((data) => {
-          const topic = `/entity/${entityName}/deleted/${data[primaryKey]}`
-          return new Promise((resolve) => {
-            mq.emit({
-              topic,
-              payload: data
-            }, resolve)
-          })
+
+        await Promise.all(res.map(async (input) => {
+          const topic = await entity.getPublishTopic({ action, input })
+          if (topic) {
+            return new Promise((resolve) => {
+              mq.emit({
+                topic,
+                payload: input
+              }, resolve)
+            })
+          }
         }))
 
         if (fields.size > 0) {
@@ -70,9 +65,27 @@ function setupEmitter ({ mq, mapper }) {
           return res
         }
       }
-    })
+    }
 
-    entity.getTopic = async function ({ action }) {
+    entity.getPublishTopic = async function ({ action, input }) {
+      if (!input) {
+        return false
+      }
+
+      const isNew = input[primaryKey] === undefined
+      switch (action) {
+        case 'create':
+          return `/entity/${entityName}/created`
+        case 'update':
+          return isNew ? `/entity/${entityName}/created` : `/entity/${entityName}/updated/${input[primaryKey]}`
+        case 'delete':
+          return `/entity/${entityName}/deleted/${input[primaryKey]}`
+        default:
+          return false
+      }
+    }
+
+    entity.getSubscriptionTopic = async function ({ action }) {
       switch (action) {
         case 'create':
           return `/entity/${entityName}/created`
@@ -80,6 +93,8 @@ function setupEmitter ({ mq, mapper }) {
           return `/entity/${entityName}/updated/+`
         case 'delete':
           return `/entity/${entityName}/deleted/+`
+        default:
+          throw new Error(`no such action ${action}`)
       }
     }
   }

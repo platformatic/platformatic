@@ -4,6 +4,7 @@ const fp = require('fastify-plugin')
 const createError = require('@fastify/error')
 const { getRequestFromContext, getRoles } = require('./lib/utils')
 const findRule = require('./lib/find-rule')
+const {request} = require('undici')
 
 const PLT_ADMIN_ROLE = 'platformatic-admin'
 const Unauthorized = createError('PLT_DB_AUTH_UNAUTHORIZED', 'operation not allowed', 401)
@@ -22,6 +23,16 @@ async function auth (app, opts) {
   const anonymousRole = opts.anonymousRole || 'anonymous'
 
   app.addHook('preHandler', async (request) => {
+    if (request.ws) {
+      // we have not received the WebSocket headers yet.
+      // we are postponing this to the first subscription
+      return
+    }
+
+    return setupUser(request)
+  })
+
+  async function setupUser (request) {
     let forceAdminRole = false
     if (adminSecret && request.headers['x-platformatic-admin-secret'] === adminSecret) {
       if (opts.jwt || opts.webhook) {
@@ -52,6 +63,7 @@ async function auth (app, opts) {
       // and creates a new `request.user` object
       await request.createSession()
     } catch (err) {
+      console.log(err)
       request.log.trace({ err })
     }
 
@@ -62,7 +74,8 @@ async function auth (app, opts) {
         [roleKey]: PLT_ADMIN_ROLE
       }
     }
-  })
+  }
+
 
   const rules = opts.rules || []
 
@@ -188,6 +201,19 @@ async function auth (app, opts) {
           where = await fromRuleToWhere(ctx, rule.delete, where, request.user)
 
           return originalDelete({ where, ctx, fields })
+        },
+        
+        async getPublishTopic (original, opts) {
+          return original(opts)
+        },
+
+        async getSubscriptionTopic (original, opts) {
+          const { ctx } = opts
+          if (ctx.request.user === undefined) {
+            await setupUser(ctx.request)
+          }
+
+          return original(opts)
         }
       })
     }

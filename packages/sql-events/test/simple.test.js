@@ -220,10 +220,76 @@ test('insert', async ({ equal, same, teardown }) => {
     expected.push({
       topic: '/entity/page/created',
       payload: {
-        id: page.id
+        id: page.id,
+        title: page.title
       }
     })
   }
+
+  for await (const ev of queue) {
+    same(ev, expected.shift())
+    if (expected.length === 0) {
+      break
+    }
+  }
+})
+
+test('more than one element for delete', async ({ equal, same, teardown }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+
+    if (isSQLite) {
+      await db.query(sql`CREATE TABLE pages (
+        id INTEGER PRIMARY KEY,
+        title VARCHAR(42)
+      );`)
+    } else {
+      await db.query(sql`CREATE TABLE pages (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL
+      );`)
+    }
+  }
+  const mapper = await connect({
+    log: fakeLogger,
+    ...connInfo,
+    onDatabaseLoad
+  })
+  const pageEntity = mapper.entities.page
+
+  const mq = MQEmitter()
+  equal(setupEmitter({ mapper, mq }), undefined)
+  const queue = await mapper.subscribe([
+    '/entity/page/deleted/+'
+  ])
+  equal(mapper.mq, mq)
+
+  const expected = []
+
+  const page1 = await pageEntity.save({
+    input: { title: 'fourth page' }
+  })
+
+  const page2 = await pageEntity.save({
+    input: { title: 'fifth page' }
+  })
+
+  // delete all pages
+  await pageEntity.delete({
+    where: {},
+    fields: ['id', 'title']
+  })
+
+  expected.push({
+    topic: '/entity/page/deleted/' + page1.id,
+    payload: page1
+  })
+
+  expected.push({
+    topic: '/entity/page/deleted/' + page2.id,
+    payload: page2
+  })
 
   for await (const ev of queue) {
     same(ev, expected.shift())
