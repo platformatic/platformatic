@@ -395,6 +395,40 @@ test('list', async ({ pass, teardown, same, equal }) => {
       return { ...p, id: i + 1 + '' }
     }).slice(2, 4), `${url} response`)
   }
+
+  for (let i = 5; i <= 100; i++) {
+    const body = {
+      title: `Post ${i}`,
+      longText: `This is a long text ${i}`
+    }
+    posts.push(body)
+
+    await app.inject({
+      method: 'POST',
+      url: '/posts',
+      body
+    })
+  }
+
+  {
+    const url = '/posts?totalCount=true&limit=120&offset=10'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
+    same(res.json(), posts.map((p, i) => {
+      return { ...p, id: i + 1 + '' }
+    }).slice(10), `${url} response`)
+  }
+
+  {
+    const url = '/posts?totalCount=true&limit=101&offset=3'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
+    same(res.json(), posts.map((p, i) => {
+      return { ...p, id: i + 1 + '' }
+    }).slice(3, 103), `${url} response`)
+  }
 })
 
 test('not found', async ({ pass, teardown, same, equal }) => {
