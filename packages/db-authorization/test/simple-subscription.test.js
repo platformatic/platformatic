@@ -96,23 +96,7 @@ test('GraphQL subscription authorization (same user)', async ({ pass, teardown, 
 
   {
     const query = `subscription {
-      pageCreated {
-        id
-        title
-      }
-    }`
-    client.write(JSON.stringify({
-      id: 1,
-      type: 'start',
-      payload: {
-        query
-      }
-    }))
-  }
-
-  {
-    const query = `subscription {
-      pageUpdated {
+      pageSaved {
         id
         title
       }
@@ -217,7 +201,7 @@ test('GraphQL subscription authorization (same user)', async ({ pass, teardown, 
     type: 'data',
     payload: {
       data: {
-        pageCreated: {
+        pageSaved: {
           id: 1,
           title: 'Hello'
         }
@@ -228,7 +212,7 @@ test('GraphQL subscription authorization (same user)', async ({ pass, teardown, 
     type: 'data',
     payload: {
       data: {
-        pageUpdated: {
+        pageSaved: {
           id: 1,
           title: 'Hello World'
         }
@@ -318,23 +302,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
 
   {
     const query = `subscription {
-      pageCreated {
-        id
-        title
-      }
-    }`
-    client1.write(JSON.stringify({
-      id: 1,
-      type: 'start',
-      payload: {
-        query
-      }
-    }))
-  }
-
-  {
-    const query = `subscription {
-      pageUpdated {
+      pageSaved {
         id
         title
       }
@@ -391,23 +359,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
 
   {
     const query = `subscription {
-      pageCreated {
-        id
-        title
-      }
-    }`
-    client2.write(JSON.stringify({
-      id: 1,
-      type: 'start',
-      payload: {
-        query
-      }
-    }))
-  }
-
-  {
-    const query = `subscription {
-      pageUpdated {
+      pageSaved {
         id
         title
       }
@@ -523,7 +475,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
     id: 1,
     payload: {
       data: {
-        pageCreated: {
+        pageSaved: {
           id: '1',
           title: 'Hello'
         }
@@ -534,7 +486,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
     id: 1,
     payload: {
       data: {
-        pageUpdated: {
+        pageSaved: {
           id: '1',
           title: 'Hello World'
         }

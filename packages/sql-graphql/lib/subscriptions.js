@@ -7,31 +7,38 @@ function setupSubscriptions (app, metaMap, resolvers) {
   resolvers.Subscription = {}
   for (const [field, meta] of metaMap) {
     const { type } = meta
-    const created = `${field.singularName}Created`
-    fields[created] = {
+    const saved = `${field.singularName}Saved`
+    fields[saved] = {
       type
     }
-    resolvers.Subscription[created] = {
-      subscribe: async (_, query, ctx, info) => {
+    resolvers.Subscription[saved] = {
+      subscribe: async function * (_, query, ctx, info) {
         const { pubsub } = ctx
         const entity = app.platformatic.entities[field.singularName]
-        const topic = await entity.getSubscriptionTopic({ action: 'create', ctx })
+        const topic = await entity.getSubscriptionTopic({ action: 'save', ctx })
         const res = await pubsub.subscribe(topic)
-        return augment(res, meta, info, app, field, created, ctx)
-      }
-    }
+        const primaryKey = entity.primaryKey
+        const fields = meta.getFields([{ info }])
 
-    const updated = `${field.singularName}Updated`
-    fields[updated] = {
-      type
-    }
-    resolvers.Subscription[updated] = {
-      subscribe: async (_, query, ctx, info) => {
-        const { pubsub } = ctx
-        const entity = app.platformatic.entities[field.singularName]
-        const topic = await entity.getSubscriptionTopic({ action: 'update', ctx })
-        const res = await pubsub.subscribe(topic)
-        return augment(res, meta, info, app, field, updated, ctx)
+        for await (const msg of res) {
+          try {
+            app.log.trace({ msg, entity: field.singularName }, 'graphql subscription augmenting data')
+            const found = await entity.find({ where: { [primaryKey]: { eq: msg[primaryKey] } }, fields, ctx })
+            // The following could happen in case of a race condition
+            // testing it would be very hard, so we skip it for now
+            /* istanbul ignore next */
+            if (found.length === 0) {
+              app.log.warn({ ...msg.payload, entity: field.singularName }, 'graphql subscription could not find element')
+              continue
+            }
+            const toYield = { [saved]: found[0] }
+            app.log.trace({ yield: toYield, entity: field.singularName }, 'graphql subscription augmented data')
+            yield toYield
+          } catch (err) {
+            /* istanbul ignore next */
+            app.log.warn({ err, entity: field.singularName }, 'graphql subscription error')
+          }
+        }
       }
     }
 
@@ -60,31 +67,6 @@ function setupSubscriptions (app, metaMap, resolvers) {
 async function * wrap (iterator, key) {
   for await (const msg of iterator) {
     yield { [key]: msg }
-  }
-}
-
-async function * augment (iterator, meta, info, app, field, key, ctx) {
-  const entity = app.platformatic.entities[field.singularName]
-  const primaryKey = entity.primaryKey
-  const fields = meta.getFields([{ info }])
-  for await (const msg of iterator) {
-    try {
-      app.log.trace({ msg, entity: field.singularName }, 'graphql subscription augmenting data')
-      const found = await entity.find({ where: { [primaryKey]: { eq: msg[primaryKey] } }, fields, ctx })
-      // The following could happen in case of a race condition
-      // testing it would be very hard, so we skip it for now
-      /* istanbul ignore next */
-      if (found.length === 0) {
-        app.log.warn({ ...msg.payload, entity: field.singularName }, 'graphql subscription could not find element')
-        continue
-      }
-      const toYield = { [key]: found[0] }
-      app.log.trace({ yield: toYield, entity: field.singularName }, 'graphql subscription augmented data')
-      yield toYield
-    } catch (err) {
-      /* istanbul ignore next */
-      app.log.warn({ err, entity: field.singularName }, 'graphql subscription error')
-    }
   }
 }
 

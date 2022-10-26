@@ -15,8 +15,8 @@ function setupEmitter ({ mq, mapper }) {
     const { primaryKey } = entity
     mapper.addEntityHooks(entityName, {
       async save (original, data, ctx) {
-        const topic = await entity.getPublishTopic({ action: 'update', input: data.input, ctx: data.ctx })
         const res = await original(data)
+        const topic = await entity.getPublishTopic({ action: 'save', data: res, ctx: data.ctx })
         if (topic) {
           await new Promise((resolve) => {
             mq.emit({
@@ -31,7 +31,7 @@ function setupEmitter ({ mq, mapper }) {
       },
 
       delete: multiField('delete'),
-      insert: multiField('create')
+      insert: multiField('save')
     })
 
     function multiField (action) {
@@ -40,7 +40,7 @@ function setupEmitter ({ mq, mapper }) {
         const res = await original({ ...data, fields: undefined })
 
         await Promise.all(res.map(async (input) => {
-          const topic = await entity.getPublishTopic({ action, input, ctx: data.ctx })
+          const topic = await entity.getPublishTopic({ action, data: input, ctx: data.ctx })
           if (topic) {
             return new Promise((resolve) => {
               mq.emit({
@@ -67,19 +67,20 @@ function setupEmitter ({ mq, mapper }) {
       }
     }
 
-    entity.getPublishTopic = async function ({ action, input }) {
-      if (!input) {
-        return false
+    entity.getPublishTopic = async function ({ action, data }) {
+      if (!data) {
+        throw new Error('The object that will be published is required under the data property')
       }
 
-      const isNew = input[primaryKey] === undefined
+      if (!data[primaryKey]) {
+        throw new Error('The primaryKey is necessary inside data')
+      }
+
       switch (action) {
-        case 'create':
-          return `/entity/${entityName}/created`
-        case 'update':
-          return isNew ? `/entity/${entityName}/created` : `/entity/${entityName}/updated/${input[primaryKey]}`
+        case 'save':
+          return `/entity/${entityName}/save/${data[primaryKey]}`
         case 'delete':
-          return `/entity/${entityName}/deleted/${input[primaryKey]}`
+          return `/entity/${entityName}/delete/${data[primaryKey]}`
         default:
           return false
       }
@@ -87,12 +88,10 @@ function setupEmitter ({ mq, mapper }) {
 
     entity.getSubscriptionTopic = async function ({ action }) {
       switch (action) {
-        case 'create':
-          return `/entity/${entityName}/created`
-        case 'update':
-          return `/entity/${entityName}/updated/+`
+        case 'save':
+          return `/entity/${entityName}/save/+`
         case 'delete':
-          return `/entity/${entityName}/deleted/+`
+          return `/entity/${entityName}/delete/+`
         default:
           throw new Error(`no such action ${action}`)
       }

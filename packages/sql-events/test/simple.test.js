@@ -41,9 +41,8 @@ test('emit events', async ({ equal, same, teardown }) => {
   const mq = MQEmitter()
   equal(setupEmitter({ mapper, mq }), undefined)
   const queue = await mapper.subscribe([
-    '/entity/page/created',
-    '/entity/page/updated/+',
-    '/entity/page/deleted/+'
+    '/entity/page/save/+',
+    '/entity/page/delete/+'
   ])
   equal(mapper.mq, mq)
 
@@ -54,7 +53,7 @@ test('emit events', async ({ equal, same, teardown }) => {
     input: { title: 'fourth page' }
   })
   expected.push({
-    topic: '/entity/page/created',
+    topic: '/entity/page/save/' + page.id,
     payload: {
       id: page.id
     }
@@ -68,7 +67,7 @@ test('emit events', async ({ equal, same, teardown }) => {
     }
   })
   expected.push({
-    topic: '/entity/page/updated/' + page.id,
+    topic: '/entity/page/save/' + page.id,
     payload: {
       id: page2.id
     }
@@ -84,7 +83,7 @@ test('emit events', async ({ equal, same, teardown }) => {
   })
 
   expected.push({
-    topic: '/entity/page/deleted/' + page.id,
+    topic: '/entity/page/delete/' + page.id,
     payload: page2
   })
 
@@ -123,9 +122,8 @@ test('return entities', async ({ pass, teardown, equal, same }) => {
   await app.ready()
   const pageEntity = app.platformatic.entities.page
   const queue = await app.platformatic.subscribe([
-    '/entity/page/created',
-    '/entity/page/updated/+',
-    '/entity/page/deleted/+'
+    '/entity/page/save/+',
+    '/entity/page/delete/+'
   ])
 
   const expected = []
@@ -135,7 +133,7 @@ test('return entities', async ({ pass, teardown, equal, same }) => {
     input: { title: 'fourth page' }
   })
   expected.push({
-    topic: '/entity/page/created',
+    topic: '/entity/page/save/' + page.id,
     payload: {
       id: page.id
     }
@@ -149,7 +147,7 @@ test('return entities', async ({ pass, teardown, equal, same }) => {
     }
   })
   expected.push({
-    topic: '/entity/page/updated/' + page.id,
+    topic: '/entity/page/save/' + page.id,
     payload: {
       id: page.id
     }
@@ -164,7 +162,7 @@ test('return entities', async ({ pass, teardown, equal, same }) => {
   })
 
   expected.push({
-    topic: '/entity/page/deleted/' + page.id,
+    topic: '/entity/page/delete/' + page.id,
     payload: page2
   })
 
@@ -202,7 +200,7 @@ test('insert', async ({ equal, same, teardown }) => {
 
   const mq = MQEmitter()
   equal(setupEmitter({ mapper, mq }), undefined)
-  const queue = await mapper.subscribe('/entity/page/created')
+  const queue = await mapper.subscribe('/entity/page/save/+')
   equal(mapper.mq, mq)
 
   const expected = []
@@ -218,7 +216,7 @@ test('insert', async ({ equal, same, teardown }) => {
 
   for (const page of pages) {
     expected.push({
-      topic: '/entity/page/created',
+      topic: '/entity/page/save/' + page.id,
       payload: {
         id: page.id,
         title: page.title
@@ -261,7 +259,7 @@ test('more than one element for delete', async ({ equal, same, teardown }) => {
   const mq = MQEmitter()
   equal(setupEmitter({ mapper, mq }), undefined)
   const queue = await mapper.subscribe([
-    '/entity/page/deleted/+'
+    '/entity/page/delete/+'
   ])
   equal(mapper.mq, mq)
 
@@ -282,12 +280,12 @@ test('more than one element for delete', async ({ equal, same, teardown }) => {
   })
 
   expected.push({
-    topic: '/entity/page/deleted/' + page1.id,
+    topic: '/entity/page/delete/' + page1.id,
     payload: page1
   })
 
   expected.push({
-    topic: '/entity/page/deleted/' + page2.id,
+    topic: '/entity/page/delete/' + page2.id,
     payload: page2
   })
 

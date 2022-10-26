@@ -40,8 +40,7 @@ test('get topics', async ({ equal, same, teardown }) => {
   const mq = MQEmitter()
   equal(setupEmitter({ mapper, mq }), undefined)
   const queue = await mapper.subscribe([
-    await pageEntity.getSubscriptionTopic({ action: 'create' }),
-    await pageEntity.getSubscriptionTopic({ action: 'update' }),
+    await pageEntity.getSubscriptionTopic({ action: 'save' }),
     await pageEntity.getSubscriptionTopic({ action: 'delete' })
   ])
   equal(mapper.mq, mq)
@@ -53,7 +52,7 @@ test('get topics', async ({ equal, same, teardown }) => {
     input: { title: 'fourth page' }
   })
   expected.push({
-    topic: '/entity/page/created',
+    topic: '/entity/page/save/' + page.id,
     payload: {
       id: page.id
     }
@@ -67,7 +66,7 @@ test('get topics', async ({ equal, same, teardown }) => {
     }
   })
   expected.push({
-    topic: '/entity/page/updated/' + page.id,
+    topic: '/entity/page/save/' + page.id,
     payload: {
       id: page2.id
     }
@@ -83,7 +82,7 @@ test('get topics', async ({ equal, same, teardown }) => {
   })
 
   expected.push({
-    topic: '/entity/page/deleted/' + page.id,
+    topic: '/entity/page/delete/' + page.id,
     payload: page2
   })
 
@@ -122,8 +121,7 @@ test('hooks', async ({ equal, same, teardown }) => {
   const mq = MQEmitter()
   equal(setupEmitter({ mapper, mq }), undefined)
   const queue = await mapper.subscribe([
-    await pageEntity.getSubscriptionTopic({ action: 'create' }),
-    await pageEntity.getSubscriptionTopic({ action: 'update' }),
+    await pageEntity.getSubscriptionTopic({ action: 'save' }),
     await pageEntity.getSubscriptionTopic({ action: 'delete' })
   ])
   equal(mapper.mq, mq)
@@ -135,7 +133,7 @@ test('hooks', async ({ equal, same, teardown }) => {
     input: { title: 'fourth page' }
   })
   expected.push({
-    topic: '/entity/page/created',
+    topic: '/entity/page/save/' + page.id,
     payload: {
       id: page.id
     }
@@ -149,7 +147,7 @@ test('hooks', async ({ equal, same, teardown }) => {
     }
   })
   expected.push({
-    topic: '/entity/page/updated/' + page.id,
+    topic: '/entity/page/save/' + page.id,
     payload: {
       id: page2.id
     }
@@ -165,7 +163,7 @@ test('hooks', async ({ equal, same, teardown }) => {
   })
 
   expected.push({
-    topic: '/entity/page/deleted/' + page.id,
+    topic: '/entity/page/delete/' + page.id,
     payload: page2
   })
 
@@ -210,7 +208,7 @@ test('get topics', async ({ equal, same, teardown }) => {
 
   const mq = MQEmitter()
   equal(setupEmitter({ mapper, mq }), undefined)
-  await pageEntity.getSubscriptionTopic({ action: 'create' })
+  await pageEntity.getSubscriptionTopic({ action: 'save' })
 })
 
 test('no events', async ({ equal, same, teardown, fail, comment }) => {
@@ -247,8 +245,7 @@ test('no events', async ({ equal, same, teardown, fail, comment }) => {
   }
 
   const queue = await mapper.subscribe([
-    await pageEntity.getSubscriptionTopic({ action: 'create' }),
-    await pageEntity.getSubscriptionTopic({ action: 'update' }),
+    await pageEntity.getSubscriptionTopic({ action: 'save' }),
     await pageEntity.getSubscriptionTopic({ action: 'delete' })
   ])
   equal(mapper.mq, mq)
@@ -309,7 +306,8 @@ test('wrong action', async ({ equal, rejects, teardown, fail, comment }) => {
 
   const pageEntity = mapper.entities.page
 
-  equal(await pageEntity.getPublishTopic({ action: 'foo' }), false)
-  equal(await pageEntity.getPublishTopic({ action: 'foo', input: {} }), false)
+  equal(await pageEntity.getPublishTopic({ action: 'foo', data: { id: 42 } }), false)
+  rejects(pageEntity.getPublishTopic({ action: 'foo', data: { } }))
+  rejects(pageEntity.getPublishTopic({ action: 'foo' }))
   rejects(pageEntity.getSubscriptionTopic({ action: 'foo' }), 'no such action foo')
 })

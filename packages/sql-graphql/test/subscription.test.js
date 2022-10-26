@@ -56,23 +56,7 @@ test('subscription - crud', async t => {
 
   {
     const query = `subscription {
-      pageCreated {
-        id
-        title
-      }
-    }`
-    client.write(JSON.stringify({
-      id: 1,
-      type: 'start',
-      payload: {
-        query
-      }
-    }))
-  }
-
-  {
-    const query = `subscription {
-      pageUpdated {
+      pageSaved {
         id
         title
       }
@@ -134,7 +118,7 @@ test('subscription - crud', async t => {
       type: 'data',
       payload: {
         data: {
-          pageCreated: {
+          pageSaved: {
             id: '1',
             title: 'Hello World'
           }
@@ -169,7 +153,7 @@ test('subscription - crud', async t => {
       type: 'data',
       payload: {
         data: {
-          pageUpdated: {
+          pageSaved: {
             id: '1',
             title: 'Harry Potter'
           }
@@ -253,7 +237,7 @@ test('subscription - crud', async t => {
         client.pipe(second)
         for await (const chunk of second) {
           const data = JSON.parse(chunk)
-          pages.push(data.payload.data.pageCreated)
+          pages.push(data.payload.data.pageSaved)
           if (pages.length === 3) {
             break
           }
