@@ -171,7 +171,7 @@ test('mq is available', async ({ equal, same, teardown }) => {
   teardown(() => app.close())
 
   const queue = await app.platformatic.subscribe([
-    await app.platformatic.entities.page.getSubscriptionTopic({ action: 'create' })
+    await app.platformatic.entities.page.getSubscriptionTopic({ action: 'save' })
   ])
 
   const res = await app.inject({
@@ -200,7 +200,7 @@ test('mq is available', async ({ equal, same, teardown }) => {
 
   const [ev] = await once(queue, 'data')
   same(ev, {
-    topic: '/entity/page/created',
+    topic: '/entity/page/save/1',
     payload: {
       id: 1
     }
