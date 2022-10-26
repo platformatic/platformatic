@@ -75,8 +75,7 @@ input GraphInput {
 }
 
 type Subscription {
-  graphCreated: Graph
-  graphUpdated: Graph
+  graphSaved: Graph
   graphDeleted: Graph
 }
 `

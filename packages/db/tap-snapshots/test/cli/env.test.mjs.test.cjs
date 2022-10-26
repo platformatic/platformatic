@@ -75,8 +75,7 @@ input PageInput {
 }
 
 type Subscription {
-  pageCreated: Page
-  pageUpdated: Page
+  pageSaved: Page
   pageDeleted: Page
 }
 `
