@@ -16,6 +16,7 @@ module.exports = function establishRelations (app, relations, resolvers, loaders
   for (const relation of relations) {
     assert(relation.table_name, 'table_name is required')
     assert(relation.foreign_table_name, 'foreign_table_name is required')
+    assert(relation.column_name.toLowerCase().endsWith('id'), 'The column with id reference must be ended with `id` postfix')
 
     const current = tablesTypeMap[relation.table_name]
     const foreign = tablesTypeMap[relation.foreign_table_name]
@@ -23,7 +24,6 @@ module.exports = function establishRelations (app, relations, resolvers, loaders
 
     // current to foreign
     {
-      assert(relation.column_name.toLowerCase().endsWith('id'), 'The column with id reference must be ended with `id` postfix')
       const lowered = lowerCaseFirst(camelcase(cutOutIdEnding(relation.column_name)))
       if (!relationships[current.type] || relationships[current.type][lowered] !== false) {
         current.fields[lowered] = { type: foreign.type }
@@ -79,7 +79,7 @@ function lowerCaseFirst (str) {
 
 function cutOutIdEnding (str) {
   str = str.toString()
-  return str.slice(0, str.toLowerCase().indexOf('id'))
+  return str.slice(0, str.toLowerCase().lastIndexOf('id'))
 }
 
 function findPrimaryColumnName (camelCasedFields) {
