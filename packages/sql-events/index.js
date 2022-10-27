@@ -3,13 +3,22 @@
 const MQEmitter = require('mqemitter')
 const fp = require('fastify-plugin')
 const { PassThrough } = require('stream')
+const MQEmitterRedis = require('mqemitter-redis')
+const { promisify } = require('util')
 
 async function fastifySqlEvents (app, opts) {
   setupEmitter({ ...opts, mapper: app.platformatic })
+  const mq = app.platformatic.mq
+  app.addHook('onClose', () => promisify(mq.close.bind(mq)))
 }
 
-function setupEmitter ({ mq, mapper }) {
-  mq = mq || new MQEmitter()
+function setupEmitter ({ mq, mapper, connectionString }) {
+  if (connectionString) {
+    mq = MQEmitterRedis({ connectionString })
+  } else if (!mq) {
+    mq = MQEmitter()
+  }
+
   for (const entityName of Object.keys(mapper.entities)) {
     const entity = mapper.entities[entityName]
     const { primaryKey } = entity

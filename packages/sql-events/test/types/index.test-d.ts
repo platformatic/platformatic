@@ -13,3 +13,5 @@ instance.register(async (instance) => {
 })
 
 setupEmitter({ mapper: {} as SQLMapperPluginInterface })
+setupEmitter({ mapper: {} as SQLMapperPluginInterface, connectionString: 'redis://localhost:6379' })
+setupEmitter({ mapper: {} as SQLMapperPluginInterface, mq: {} })

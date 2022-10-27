@@ -14,6 +14,10 @@ declare module 'fastify' {
 
 export interface SQLEventsPluginOptions {
   mapper: SQLMapperPluginInterface
+
+  // TODO mqemitter has no types
+  mq?: any
+  connectionString?: String
 }
 
 /**

@@ -25,6 +25,7 @@
   "devDependencies": {
     "@platformatic/sql-mapper": "workspace:*",
     "fastify": "^4.6.0",
+    "ioredis": "^5.2.3",
     "snazzy": "^9.0.0",
     "standard": "^17.0.0",
     "tap": "^16.0.0",
@@ -32,7 +33,8 @@
   },
   "dependencies": {
     "fastify-plugin": "^4.1.0",
-    "mqemitter": "^5.0.0"
+    "mqemitter": "^5.0.0",
+    "mqemitter-redis": "^5.0.0"
   },
   "tsd": {
     "directory": "test/types"
