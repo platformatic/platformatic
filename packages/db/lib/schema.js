@@ -2,7 +2,8 @@
 
 const cors = {
   type: 'object',
-  $comment: 'See https://github.com/fastify/fastify-cors', properties: {
+  $comment: 'See https://github.com/fastify/fastify-cors',
+  properties: {
     origin: {
       anyOf: [
         { type: 'boolean' },
@@ -165,7 +166,7 @@ const core = {
         },
         additionalProperties: false
       }]
-    },
+    }
   },
   additionalProperties: false,
   required: ['connectionString']
