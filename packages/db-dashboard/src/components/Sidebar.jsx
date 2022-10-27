@@ -23,6 +23,9 @@ export default function Sidebar () {
         <li>
           <NavLink data-testid='my-app-link' to='/my-app'>My App</NavLink>
         </li>
+        <li>
+          <NavLink data-testid='react-admin-link' to='/react-admin'>React Admin</NavLink>
+        </li>
       </ul>
     </aside>
   )
