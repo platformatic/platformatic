@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "outDir": "lib",
+    "rootDir": "src",
+    "allowJs": false /* Basic Options */,
+    "target": "ES5" /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */,
+    "module": "commonjs" /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */,
+    "lib": [
+      "es2017",
+      "dom"
+    ] /* Specify library files to be included in the compilation. */,
+    "jsx": "react" /* Specify JSX code generation: 'preserve', 'react-native', or 'react'. */,
+    "declaration": true /* Generates corresponding '.d.ts' file. */,
+    "declarationMap": true /* Generates a sourcemap for each corresponding '.d.ts' file. */,
+    "sourceMap": true /* Generates corresponding '.map' file. */,
+    "noImplicitAny": false /* Raise error on expressions and declarations with an implied 'any' type. */,
+    "noFallthroughCasesInSwitch": true /* Report errors for fallthrough cases in switch statement. */,
+    /* Module Resolution Options */
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "exclude": ["**/*.spec.ts", "**/*.spec.tsx", "**/*.spec.js"],
+  "include": ["src"]
+}

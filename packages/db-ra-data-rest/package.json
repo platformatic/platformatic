@@ -1,0 +1,45 @@
+{
+  "name": "@platformatic/db-ra-data-rest",
+  "version": "0.4.0",
+  "description": "React Admin data provider REST API for Platformatic DB",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/cjs/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "*.md",
+    "dist",
+    "src"
+  ],
+  "authors": [
+    "Giacomo Cerquone"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "build": "yarn run build-cjs && yarn run build-esm",
+    "build-cjs": "rimraf ./dist/cjs && tsc --outDir dist/cjs",
+    "build-esm": "rimraf ./dist/esm && tsc --outDir dist/esm --module es2015",
+    "watch": "tsc --outDir dist/esm --module es2015 --watch",
+    "test": "jest ./index.spec.ts"
+  },
+  "dependencies": {
+    "query-string": "^7.1.1",
+    "ra-core": "^4.4.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.19.3",
+    "@babel/preset-env": "^7.19.4",
+    "@babel/preset-typescript": "^7.18.6",
+    "@types/jest": "^29.1.2",
+    "babel-jest": "^29.2.0",
+    "cross-env": "^5.2.0",
+    "history": "^5.3.0",
+    "jest": "^29.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.38.0",
+    "react-router-dom": "^6.4.2",
+    "rimraf": "^3.0.2",
+    "typescript": "^4.4.0"
+  }
+}
