@@ -191,8 +191,28 @@ An optional object with the following settings:
 
 An optional object that defines a plugin loaded by Platformatic DB.
 - **`path`** (**required**, `string`): Relative path to plugin's entry point.
-- **`hotReload`** if `true` or not specified, the plugin is loaded using [`fastify-sandbox`](https://github.com/mcollina/fastify-sandbox), otherwise is loaded directly using `require`/`import` and the hot reload is not enabled
+- **`watch`** (`boolean`, default: `true`): Watch plugin for changes and reload it automatically.
+- **`watchOptions`** (`object`): Options to configure the plugin watcher.
+  - **`hotReload`** (`boolean`, default: `true`) if `true` or not specified, the plugin is loaded using [`fastify-sandbox`](https://github.com/mcollina/fastify-sandbox), otherwise is loaded directly using `require`/`import` and the hot reload is not enabled
+  - **`ignore`** (`string[]`, default: `null`): List of glob patterns to ignore when watching for changes. If `null` or not specified, ignore rule is not applied.
+  - **`allow`** (`string[]`, default: `['*.js', '**/*.js']`): List of glob patterns to allow when watching for changes. If `null` or not specified, allow rule is not applied.
 - **`options`** (`object`): Optional plugin options.
+
+  _Example_
+
+  ```json
+  {
+    "plugin": {
+      "path": "./my-plugin.js",
+      "watch": true,
+      "watchOptions": {
+        "hotReload": true,
+        "ignore": ["*.mjs", "**/*.mjs"],
+        "allow": ["my-plugin.js", "plugins/*.js"]
+      },
+    }
+  }
+  ```
 
 :::warning:::
 While hot reloading is useful for development, it is not recommended to use it in production.

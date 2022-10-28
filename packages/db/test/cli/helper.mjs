@@ -2,7 +2,7 @@ import why from 'why-is-node-running'
 import { Agent, setGlobalDispatcher } from 'undici'
 import { join } from 'desm'
 import createConnectionPool from '@databases/pg'
-import { once } from 'events'
+import { on } from 'events'
 import { execa } from 'execa'
 import { setTimeout as sleep } from 'timers/promises'
 import split from 'split2'
@@ -93,15 +93,18 @@ async function start (...args) {
   }))
   child.ndj = output
 
-  const [data] = await once(output, 'data')
-  const { url } = data
-
-  if (!url) {
+  const errorTimeout = setTimeout(() => {
     throw new Error('Couldn\'t start server')
-  }
+  }, 10000)
 
-  return {
-    child, url, output
+  for await (const messages of on(output, 'data')) {
+    for (const message of messages) {
+      const url = message.url
+      if (url !== undefined) {
+        clearTimeout(errorTimeout)
+        return { child, url, output }
+      }
+    }
   }
 }
 

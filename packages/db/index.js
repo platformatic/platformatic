@@ -87,8 +87,10 @@ async function platformaticDB (app, opts) {
     // if not defined, we defaults to true (which can happen only if config is set programmatically,
     // that's why we ignore the coverage of the `undefined` case, which cannot be covered in cli tests)
     /* c8 ignore next */
-    const hotReload = opts.plugin.hotReload === undefined ? true : opts.plugin.hotReload
-    if (hotReload) {
+    const hotReload = opts.plugin.watchOptions?.hotReload !== false
+    const isWatchEnabled = opts.plugin.watch !== false
+
+    if (isWatchEnabled && hotReload) {
       await app.register(sandbox, {
         ...pluginOptions,
         customizeGlobalThis (_globalThis) {
@@ -165,18 +167,33 @@ async function buildServer (options) {
 
   const _restart = handler.restart
 
-  handler.restart = (opts) => {
+  handler.restart = async (opts) => {
     addLoggerToTheConfig(opts)
 
     // Ignore because not tested on Windows
     // TODO: remove the ignore, we shoduld be testing
     // this on Windows
-    /* c8 ignore next 5 */
+    /* c8 ignore start */
     if (opts) {
       opts = createServerConfig(opts)
       opts.app = platformaticDB
-      return _restart(opts)
+
+      const fileWatcher = handler.app.platformatic.fileWatcher
+      const configManager = handler.app.platformatic.configManager
+
+      await _restart(opts)
+
+      if (fileWatcher !== undefined) {
+        handler.app.platformatic.fileWatcher = fileWatcher
+      }
+      if (configManager !== undefined) {
+        handler.app.platformatic.configManager = configManager
+        handler.app.platformatic.config = configManager.current
+      }
+
+      return handler
     }
+    /* c8 ignore stop */
     return _restart()
   }
 

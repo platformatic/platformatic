@@ -85,7 +85,8 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
   "openapi": "3.0.3",
   "info": {
     "title": "Platformatic DB",
-    "description": "Exposing a SQL database as REST"
+    "description": "Exposing a SQL database as REST",
+    "version": "1.0.0"
   },
   "components": {
     "schemas": {

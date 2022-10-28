@@ -394,6 +394,49 @@ const typescript = {
   required: ['outDir']
 }
 
+const plugin = {
+  type: 'object',
+  properties: {
+    path: {
+      type: 'string'
+    },
+    stopTimeout: {
+      type: 'integer'
+    },
+    watch: {
+      type: 'boolean'
+    },
+    watchOptions: {
+      type: 'object',
+      properties: {
+        hotReload: {
+          type: 'boolean',
+          default: true
+        },
+        allow: {
+          type: 'array',
+          items: {
+            type: 'string'
+          },
+          minItems: 1,
+          nullable: true,
+          default: null
+        },
+        ignore: {
+          type: 'array',
+          items: {
+            type: 'string'
+          },
+          nullable: true,
+          default: null
+        }
+      },
+      additionalProperties: false
+    }
+  },
+  required: ['path']
+}
+
 const platformaticDBschema = {
   $id: 'https://schemas.platformatic.dev/db',
   type: 'object',
@@ -406,22 +449,7 @@ const platformaticDBschema = {
     metrics,
     types,
     typescript,
-    plugin: {
-      type: 'object',
-      properties: {
-        path: {
-          type: 'string'
-        },
-        stopTimeout: {
-          type: 'integer'
-        },
-        hotReload: {
-          type: 'boolean',
-          default: true
-        }
-      },
-      required: ['path']
-    }
+    plugin
   },
   additionalProperties: false,
   required: ['core', 'server']

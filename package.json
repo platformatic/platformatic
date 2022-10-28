@@ -1,6 +1,6 @@
 {
   "name": "platformatic",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "scripts": {
     "test": "pnpm -r --workspace-concurrency=1 test",
@@ -9,7 +9,7 @@
     "cleanall": "rm pnpm-lock.yaml && rm -rf node_modules && rm -rf packages/*/node_modules",
     "postinstall": "node ./scripts/postinstall.js"
   },
-  "packageManager": "pnpm@7.13.5",
+  "packageManager": "pnpm@7.14.0",
   "devDependencies": {
     "@fastify/pre-commit": "^2.0.2"
   },
