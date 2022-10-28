@@ -2,22 +2,24 @@
   "name": "@platformatic/react-admin",
   "version": "0.4.0",
   "description": "Build a React Admin app from a SQL database",
+  "author": "Riccardo Fiorenza <ricfio.professional@gmail.com>",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/plaformatic/platformatic.git"
+  },
+  "bugs": {
+    "url": "https://github.com/plaformatic/platformatic/issues"
+  },
+  "homepage": "/react-admin-hp",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/plaformatic/platformatic.git"
-  },
-  "author": "Riccardo Fiorenza <ricfio.professional@gmail.com>",
-  "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://github.com/plaformatic/platformatic/issues"
-  },
   "dependencies": {
+    "@platformatic/db-ra-data-rest": "workspace:*",
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^13.0.0",
     "@testing-library/user-event": "^13.2.1",
@@ -28,12 +30,6 @@
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.0"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
   },
   "browserslist": {
     "production": [

@@ -46,7 +46,7 @@ function App () {
           <Route path='/swagger-docs' element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
           <Route path='/swagger-plt-db-docs' element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/_admin/documentation/json`} />} />
           <Route path='/my-app' element={<MyApp />} />
-          <Route path='/react-admin' element={<ReactAdmin />} />
+          <Route path='/react-admin/*' element={<ReactAdmin basename="/react-admin" apiUrl={`${urlPrefix}`}/>} />
         </Routes>
       </Layout>
     </AppContext.Provider>
