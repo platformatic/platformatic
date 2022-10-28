@@ -75,7 +75,7 @@ jobs:
     - name: pnpm install
       run: pnpm install
     - name: Builds the dashboard
-      run: npm run dashboard:build
+      run: pnpm run dashboard:build
     - name: Run test suite Dashboard
       run: cd packages/db-dashboard && pnpm test
 
@@ -117,8 +117,8 @@ jobs:
         cache: 'pnpm'
     - name: pnpm install
       run: pnpm install --offline 
-    - name: npm install -g typescript
-      run: npm install -g typescript 
+    - name: pnpm install -g typescript
+      run: pnpm install -g typescript 
     - name: Builds the dashboard
       run: pnpm run dashboard:build
     - name: Run test suite core
