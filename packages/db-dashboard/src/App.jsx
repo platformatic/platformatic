@@ -33,14 +33,7 @@ function App () {
         <Routes>
           <Route path='/' exact element={<Navigate to='/dashboard' />} />
           <Route path='/dashboard' element={<Home />} />
-          <Route
-            path='/giql'
-            element={
-              <GraphiQLPage
-                graphqlEndpoint={`${urlPrefix}/graphql`}
-              />
-            }
-          />
+          <Route path='/giql' element={<GraphiQLPage graphqlEndpoint={`${urlPrefix}/graphql`} />} />
           <Route path='/config-view' element={<ConfigViewer />} />
           <Route path='/swagger-docs' element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
           <Route path='/swagger-plt-db-docs' element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/_admin/documentation/json`} />} />
