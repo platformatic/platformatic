@@ -124,8 +124,8 @@ const core = {
           subscriptionIgnore: {
             type: 'array',
             items: {
-              type: 'string',
-            },
+              type: 'string'
+            }
           }
         }
       }]
