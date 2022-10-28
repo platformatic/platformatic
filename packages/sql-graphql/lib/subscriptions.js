@@ -13,30 +13,32 @@ function setupSubscriptions (app, metaMap, resolvers) {
     }
     resolvers.Subscription[saved] = {
       subscribe: async function * (_, query, ctx, info) {
+        const log = ctx.reply.request.log
         const { pubsub } = ctx
         const entity = app.platformatic.entities[field.singularName]
         const topic = await entity.getSubscriptionTopic({ action: 'save', ctx })
+        log.trace({ topic }, 'subscribed')
         const res = await pubsub.subscribe(topic)
         const primaryKey = entity.primaryKey
         const fields = meta.getFields([{ info }])
 
         for await (const msg of res) {
           try {
-            app.log.trace({ msg, entity: field.singularName }, 'graphql subscription augmenting data')
+            log.trace({ msg, entity: field.singularName }, 'graphql subscription augmenting data')
             const found = await entity.find({ where: { [primaryKey]: { eq: msg[primaryKey] } }, fields, ctx })
             // The following could happen in case of a race condition
             // testing it would be very hard, so we skip it for now
             /* istanbul ignore next */
             if (found.length === 0) {
-              app.log.warn({ ...msg.payload, entity: field.singularName }, 'graphql subscription could not find element')
+              log.warn({ ...msg.payload, entity: field.singularName }, 'graphql subscription could not find element')
               continue
             }
             const toYield = { [saved]: found[0] }
-            app.log.trace({ yield: toYield, entity: field.singularName }, 'graphql subscription augmented data')
+            log.trace({ yield: toYield, entity: field.singularName }, 'graphql subscription augmented data')
             yield toYield
           } catch (err) {
             /* istanbul ignore next */
-            app.log.warn({ err, entity: field.singularName }, 'graphql subscription error')
+            log.warn({ err, entity: field.singularName }, 'graphql subscription error')
           }
         }
       }
@@ -52,6 +54,7 @@ function setupSubscriptions (app, metaMap, resolvers) {
         const entity = app.platformatic.entities[field.singularName]
         const topic = await entity.getSubscriptionTopic({ action: 'delete', ctx })
         const res = await pubsub.subscribe(topic)
+        ctx.reply.request.log.trace({ topic }, 'subscribed')
         return wrap(res, deleted)
       }
     }

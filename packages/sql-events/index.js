@@ -23,16 +23,20 @@ function setupEmitter ({ mq, mapper, connectionString }) {
     const entity = mapper.entities[entityName]
     const { primaryKey } = entity
     mapper.addEntityHooks(entityName, {
-      async save (original, data, ctx) {
+      async save (original, data) {
+        const ctx = data.ctx
+        const log = ctx.reply.request.log
         const res = await original(data)
-        const topic = await entity.getPublishTopic({ action: 'save', data: res, ctx: data.ctx })
+        const topic = await entity.getPublishTopic({ action: 'save', data: res, ctx })
         if (topic) {
+          const payload = {
+            [primaryKey]: res[primaryKey]
+          }
+          log.trace({ topic, payload }, 'publishing event')
           await new Promise((resolve) => {
             mq.emit({
               topic,
-              payload: {
-                [primaryKey]: res[primaryKey]
-              }
+              payload
             }, resolve)
           })
         }
@@ -45,16 +49,19 @@ function setupEmitter ({ mq, mapper, connectionString }) {
 
     function multiField (action) {
       return async function (original, data) {
+        const ctx = data.ctx
+        const log = ctx.reply.request.log
         const fields = new Set(data.fields)
         const res = await original({ ...data, fields: undefined })
 
-        await Promise.all(res.map(async (input) => {
-          const topic = await entity.getPublishTopic({ action, data: input, ctx: data.ctx })
+        await Promise.all(res.map(async (payload) => {
+          const topic = await entity.getPublishTopic({ action, data: payload, ctx })
           if (topic) {
+            log.trace({ topic, payload }, 'publishing event')
             return new Promise((resolve) => {
               mq.emit({
                 topic,
-                payload: input
+                payload
               }, resolve)
             })
           }
