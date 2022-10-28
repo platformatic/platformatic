@@ -5,7 +5,6 @@ import Home from './pages/Home'
 import GraphiQLPage from './pages/GQL'
 import ConfigViewer from './pages/ConfigViewer'
 import SwaggerViewer from './pages/SwaggerViewer'
-import MyApp from './pages/MyApp'
 import ReactAdmin from './pages/ReactAdmin'
 
 const AppContext = createContext({})
@@ -45,7 +44,6 @@ function App () {
           <Route path='/config-view' element={<ConfigViewer />} />
           <Route path='/swagger-docs' element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
           <Route path='/swagger-plt-db-docs' element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/_admin/documentation/json`} />} />
-          <Route path='/my-app' element={<MyApp />} />
           <Route path='/react-admin/*' element={<ReactAdmin basename="/react-admin" apiUrl={`${urlPrefix}`}/>} />
         </Routes>
       </Layout>
