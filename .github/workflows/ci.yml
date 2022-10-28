@@ -76,6 +76,8 @@ jobs:
       run: pnpm install
     - name: Builds the dashboard
       run: pnpm run dashboard:build
+    - name: Builds the ra-data-rest
+      run: pnpm run ra-data-rest:build
     - name: Run test suite Dashboard
       run: cd packages/db-dashboard && pnpm test
 
@@ -121,6 +123,8 @@ jobs:
       run: pnpm install -g typescript 
     - name: Builds the dashboard
       run: pnpm run dashboard:build
+    - name: Builds the ra-data-rest
+      run: pnpm run ra-data-rest:build
     - name: Run test suite core
       run: cd packages/db-core && pnpm test
     - name: Run test suite Platformatic DB
