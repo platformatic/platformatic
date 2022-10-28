@@ -3,7 +3,10 @@
 The Platformatic DB sql-events uses [mqemitter](http://npm.im/mqemitter) to publish events when [entities](/sql-mapper/entities/introduction.md) are saved and deleted.
 
 These events are useful to distribute updates to clients, e.g. via WebSocket, Server-Sent Events, or GraphQL Subscritions.
-They are not the right choice for doing "event processing" within the same process, in that case
+When subscribing and using a multi-process system with a broker like Redis, a subscribed topic will receive the data from all
+the other processes.
+
+They are not the right choice for executing some code whenever an entity is created, modified or deleted, in that case
 use [@platformatic/sql-mapper hooks](/sql-mapper/entities/hooks.md).
 
 ## Install
