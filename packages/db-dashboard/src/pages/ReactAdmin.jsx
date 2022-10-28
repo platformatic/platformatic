@@ -1,6 +1,7 @@
 'use strict'
 import React from 'react'
 import { Admin, Resource, ListGuesser, EditGuesser, ShowGuesser } from 'react-admin';
+import './ReactAdmin.css'
 
 import platformaticDbRestProvider from '@platformatic/db-ra-data-rest'
 
