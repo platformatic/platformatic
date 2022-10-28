@@ -26,6 +26,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
   const app = fastify()
   app.register(core, {
     ...connInfo,
+    events: false,
     async onDatabaseLoad (db, sql) {
       pass('onDatabaseLoad called')
 

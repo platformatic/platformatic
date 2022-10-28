@@ -96,6 +96,35 @@ async function auth (app, opts) {
       const rules = entityRules[entityKey] || []
       const type = app.platformatic.entities[entityKey]
 
+      // We have subscriptions!
+      let userPropToFillForPublish
+      let topicsWithoutChecks = false
+      if (app.platformatic.mq) {
+        for (const rule of rules) {
+          const checks = rule.find?.checks
+          if (typeof checks !== 'object') {
+            topicsWithoutChecks = !!rule.find
+            continue
+          }
+          const keys = Object.keys(checks)
+          if (keys.length !== 1) {
+            throw new Error(`Subscription requires that the role "${rule.role}" has only one check in the find rule for entity "${rule.entity}"`)
+          }
+          const key = keys[0]
+
+          const val = typeof checks[key] === 'object' ? checks[key].eq : checks[key]
+          if (userPropToFillForPublish && userPropToFillForPublish.val !== val) {
+            throw new Error('Unable to configure subscriptions and authorization due to multiple check clauses in find')
+          }
+          userPropToFillForPublish = { key, val }
+        }
+      }
+
+      if (userPropToFillForPublish && topicsWithoutChecks) {
+        throw new Error(`Subscription for entity "${entityKey}" have conflictling rules across roles`)
+      }
+
+      // MUST set this after doing the security checks on the subscriptions
       if (adminSecret) {
         rules.push({
           role: PLT_ADMIN_ROLE,
@@ -108,31 +137,6 @@ async function auth (app, opts) {
       // If we have `fields` in save rules, we need to check if all the not-nullable
       // fields are specified
       checkSaveMandatoryFieldsInRules(type, rules)
-
-      // We have subscriptions!
-      let userPropToFillForPublish
-      /* istanbul ignore else */
-      if (app.platformatic.mq) {
-        for (const rule of rules) {
-          const checks = rule.find?.checks
-          if (typeof checks !== 'object') {
-            continue
-          }
-          for (const key of Object.keys(checks)) {
-            /* istanbul ignore next */
-            const val = checks[key] || checks[key].eq
-            /* istanbul ignore else */
-            if (val) {
-              /* istanbul ignore else */
-              if (userPropToFillForPublish === undefined) {
-                userPropToFillForPublish = { key, val }
-              } else if (userPropToFillForPublish.val !== val) {
-                throw new Error('Unable to configure subscriptions and authorization due to multiple check clauses in find')
-              }
-            }
-          }
-        }
-      }
 
       app.platformatic.addEntityHooks(entityKey, {
         async find (originalFind, { where, ctx, fields, ...restOpts }) {
@@ -229,7 +233,7 @@ async function auth (app, opts) {
           const request = opts.ctx.reply.request
           const originalTopic = await original(opts)
           if (userPropToFillForPublish) {
-            return `/${userPropToFillForPublish.key}/${request.user[userPropToFillForPublish.val] || ''}${originalTopic}`
+            return `/${userPropToFillForPublish.key}/${request.user[userPropToFillForPublish.val]}${originalTopic}`
           }
           return originalTopic
         },
