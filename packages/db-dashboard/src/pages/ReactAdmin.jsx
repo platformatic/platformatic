@@ -1,9 +1,15 @@
 'use strict'
 import React from 'react'
-import ReactAdmin from '../../../react-admin/src/App';
+import { Admin, Resource, ListGuesser, EditGuesser, ShowGuesser } from 'react-admin';
 
-export default function App(props) {
-  return (
-    <ReactAdmin basename={props.basename} apiUrl={props.apiUrl}/>
-  )
+import platformaticDbRestProvider from '@platformatic/db-ra-data-rest'
+
+export default function ReactAdmin(props) {
+    const dataProvider = platformaticDbRestProvider(props.apiUrl);
+    return (
+        <Admin basename={props.basename} dataProvider={dataProvider}>
+            <Resource name="movies" list={ListGuesser} show={ShowGuesser} edit={EditGuesser} />
+            <Resource name="quotes" list={ListGuesser} show={ShowGuesser} edit={EditGuesser} />
+        </Admin>
+    );
 }
