@@ -38,7 +38,7 @@ test('get topics', async ({ equal, same, teardown }) => {
   const pageEntity = mapper.entities.page
 
   const mq = MQEmitter()
-  equal(setupEmitter({ mapper, mq }), undefined)
+  equal(setupEmitter({ mapper, mq, log: fakeLogger }), undefined)
   const queue = await mapper.subscribe([
     await pageEntity.getSubscriptionTopic({ action: 'save' }),
     await pageEntity.getSubscriptionTopic({ action: 'delete' })
@@ -119,7 +119,7 @@ test('hooks', async ({ equal, same, teardown }) => {
   const pageEntity = mapper.entities.page
 
   const mq = MQEmitter()
-  equal(setupEmitter({ mapper, mq }), undefined)
+  equal(setupEmitter({ mapper, mq, log: fakeLogger }), undefined)
   const queue = await mapper.subscribe([
     await pageEntity.getSubscriptionTopic({ action: 'save' }),
     await pageEntity.getSubscriptionTopic({ action: 'delete' })
@@ -207,7 +207,7 @@ test('get topics', async ({ equal, same, teardown }) => {
   const pageEntity = mapper.entities.page
 
   const mq = MQEmitter()
-  equal(setupEmitter({ mapper, mq }), undefined)
+  equal(setupEmitter({ mapper, mq, log: fakeLogger }), undefined)
   await pageEntity.getSubscriptionTopic({ action: 'save' })
 })
 
@@ -235,7 +235,7 @@ test('no events', async ({ equal, same, teardown, fail, comment }) => {
   })
 
   const mq = MQEmitter()
-  equal(setupEmitter({ mapper, mq }), undefined)
+  equal(setupEmitter({ mapper, mq, log: fakeLogger }), undefined)
 
   const pageEntity = mapper.entities.page
 
@@ -302,7 +302,7 @@ test('wrong action', async ({ equal, rejects, teardown, fail, comment }) => {
     onDatabaseLoad
   })
 
-  setupEmitter({ mapper })
+  setupEmitter({ mapper, log: fakeLogger })
 
   const pageEntity = mapper.entities.page
 

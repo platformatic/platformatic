@@ -17,7 +17,7 @@ const { connect } = require('@platformatic/sql-mapper')
 const { setupEmitter } = require('@platformatic/sql-events')
 const { pino } = require('pino')
 
-const logger = pino()
+const log = pino()
 
 async function onDatabaseLoad (db, sql) {
   await db.query(sql`CREATE TABLE pages (
@@ -28,7 +28,7 @@ async function onDatabaseLoad (db, sql) {
 const connectionString = 'postgres://postgres:postgres@localhost:5432/postgres'
 const mapper = await connect({
   connectionString,
-  log: logger,
+  log,
   onDatabaseLoad,
   ignore: {},
   hooks: {
@@ -41,7 +41,7 @@ const mapper = await connect({
   }
 })
 
-setupEmitter(mapper)
+setupEmitter({ mapper, log })
 
 const pageEntity = mapper.entities.page
 

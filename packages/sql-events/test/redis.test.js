@@ -39,7 +39,7 @@ test('emit events', async ({ equal, same, teardown, comment }) => {
   })
   const pageEntity = mapper.entities.page
 
-  equal(setupEmitter({ mapper, connectionString: 'redis://127.0.0.1:6379' }), undefined)
+  equal(setupEmitter({ mapper, connectionString: 'redis://127.0.0.1:6379', log: fakeLogger }), undefined)
   teardown(promisify(mapper.mq.close.bind(mapper.mq)))
 
   const anotherMQ = new MQEmitterRedis()

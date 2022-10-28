@@ -88,12 +88,17 @@ async function mapperToGraphql (app, opts) {
   }
 
   let subscription
-  if (app.platformatic.mq && Object.keys(app.platformatic.entities).length > 0) {
-    opts.subscription = {
-      emitter: app.platformatic.mq
+  if (app.platformatic.mq) {
+    const entitiesList = Object.keys(app.platformatic.entities)
+    const ignoreList = opts.subscriptionIgnore || []
+
+    if (entitiesList.length - ignoreList.length > 0) {
+      opts.subscription = {
+        emitter: app.platformatic.mq
+      }
+      // TODO support ignoring some of those
+      subscription = setupSubscriptions(app, metaMap, resolvers, ignoreList)
     }
-    // TODO support ignoring some of those
-    subscription = setupSubscriptions(app, metaMap, resolvers)
   }
 
   let sdl = graphql.printSchema(new graphql.GraphQLSchema({ query, mutation, subscription }))

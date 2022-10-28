@@ -7,12 +7,12 @@ const MQEmitterRedis = require('mqemitter-redis')
 const { promisify } = require('util')
 
 async function fastifySqlEvents (app, opts) {
-  setupEmitter({ ...opts, mapper: app.platformatic })
+  setupEmitter({ ...opts, mapper: app.platformatic, log: app.log })
   const mq = app.platformatic.mq
   app.addHook('onClose', () => promisify(mq.close.bind(mq)))
 }
 
-function setupEmitter ({ mq, mapper, connectionString }) {
+function setupEmitter ({ log, mq, mapper, connectionString }) {
   if (connectionString) {
     mq = MQEmitterRedis({ connectionString })
   } else if (!mq) {
@@ -25,14 +25,15 @@ function setupEmitter ({ mq, mapper, connectionString }) {
     mapper.addEntityHooks(entityName, {
       async save (original, data) {
         const ctx = data.ctx
-        const log = ctx.reply.request.log
+        /* istanbul ignore next */
+        const _log = ctx?.reply?.request?.log || log
         const res = await original(data)
         const topic = await entity.getPublishTopic({ action: 'save', data: res, ctx })
         if (topic) {
           const payload = {
             [primaryKey]: res[primaryKey]
           }
-          log.trace({ topic, payload }, 'publishing event')
+          _log.trace({ topic, payload }, 'publishing event')
           await new Promise((resolve) => {
             mq.emit({
               topic,
@@ -50,14 +51,15 @@ function setupEmitter ({ mq, mapper, connectionString }) {
     function multiField (action) {
       return async function (original, data) {
         const ctx = data.ctx
-        const log = ctx.reply.request.log
+        /* istanbul ignore next */
+        const _log = ctx?.reply?.request?.log || log
         const fields = new Set(data.fields)
         const res = await original({ ...data, fields: undefined })
 
         await Promise.all(res.map(async (payload) => {
           const topic = await entity.getPublishTopic({ action, data: payload, ctx })
           if (topic) {
-            log.trace({ topic, payload }, 'publishing event')
+            _log.trace({ topic, payload }, 'publishing event')
             return new Promise((resolve) => {
               mq.emit({
                 topic,

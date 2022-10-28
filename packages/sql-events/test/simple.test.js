@@ -39,7 +39,7 @@ test('emit events', async ({ equal, same, teardown }) => {
   const pageEntity = mapper.entities.page
 
   const mq = MQEmitter()
-  equal(setupEmitter({ mapper, mq }), undefined)
+  equal(setupEmitter({ mapper, mq, log: fakeLogger }), undefined)
   const queue = await mapper.subscribe([
     '/entity/page/save/+',
     '/entity/page/delete/+'
@@ -199,7 +199,7 @@ test('insert', async ({ equal, same, teardown }) => {
   const pageEntity = mapper.entities.page
 
   const mq = MQEmitter()
-  equal(setupEmitter({ mapper, mq }), undefined)
+  equal(setupEmitter({ mapper, mq, log: fakeLogger }), undefined)
   const queue = await mapper.subscribe('/entity/page/save/+')
   equal(mapper.mq, mq)
 
@@ -257,7 +257,7 @@ test('more than one element for delete', async ({ equal, same, teardown }) => {
   const pageEntity = mapper.entities.page
 
   const mq = MQEmitter()
-  equal(setupEmitter({ mapper, mq }), undefined)
+  equal(setupEmitter({ mapper, mq, log: fakeLogger }), undefined)
   const queue = await mapper.subscribe([
     '/entity/page/delete/+'
   ])

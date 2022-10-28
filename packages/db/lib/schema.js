@@ -120,9 +120,14 @@ const core = {
         properties: {
           graphiql: {
             type: 'boolean'
+          },
+          subscriptionIgnore: {
+            type: 'array',
+            items: {
+              type: 'string',
+            },
           }
-        },
-        additionalProperties: false
+        }
       }]
     },
     openapi: {

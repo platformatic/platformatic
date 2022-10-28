@@ -2,10 +2,13 @@
 
 const graphql = require('graphql')
 
-function setupSubscriptions (app, metaMap, resolvers) {
+function setupSubscriptions (app, metaMap, resolvers, ignores) {
   const fields = {}
   resolvers.Subscription = {}
   for (const [field, meta] of metaMap) {
+    if (ignores.indexOf(field.singularName) >= 0) {
+      continue
+    }
     const { type } = meta
     const saved = `${field.singularName}Saved`
     fields[saved] = {

@@ -9,6 +9,7 @@ const sqlMapper = require('@platformatic/sql-mapper')
 const sqlEvents = require('@platformatic/sql-events')
 const { clear, connInfo, isSQLite } = require('./helper')
 const stream = require('stream')
+const graphql = require('graphql')
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -248,5 +249,90 @@ test('subscription - crud', async t => {
     ]))
 
     t.same(received, stored)
+  }
+})
+
+test('subscription - ignore', async t => {
+  const app = Fastify()
+  t.teardown(() => app.close())
+
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(sqlEvents)
+  app.register(sqlGraphQL, {
+    subscriptionIgnore: ['page']
+  })
+
+  await app.ready()
+  t.equal(graphql.printSchema(app.graphql.schema).indexOf('type Subscription'), -1)
+})
+
+test('subscription - crud with two schemas and a ignore', async t => {
+  const app = Fastify()
+  t.teardown(() => app.close())
+
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+
+      if (isSQLite) {
+        await db.query(sql`CREATE TABLE categories (
+          id INTEGER PRIMARY KEY,
+          name VARCHAR(42)
+        );`)
+      } else {
+        await db.query(sql`CREATE TABLE categories (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(42)
+        );`)
+      }
+    }
+  })
+  app.register(sqlEvents)
+  app.register(sqlGraphQL, {
+    subscriptionIgnore: ['category']
+  })
+
+  await app.listen({ port: 0 })
+
+  const { client } = createWebSocketClient(t, app)
+  t.teardown(() => client.destroy())
+
+  client.write(JSON.stringify({
+    type: 'connection_init'
+  }))
+
+  {
+    const [chunk] = await once(client, 'data')
+    const data = JSON.parse(chunk)
+    t.equal(data.type, 'connection_ack')
+  }
+
+  {
+    const query = `subscription {
+      categorySaved {
+        id
+      }
+    }`
+    client.write(JSON.stringify({
+      id: 1,
+      type: 'start',
+      payload: {
+        query
+      }
+    }))
+  }
+
+  {
+    const [chunk] = await once(client, 'data')
+    const data = JSON.parse(chunk)
+    t.equal(data.payload, 'The subscription field "categorySaved" is not defined.')
   }
 })
