@@ -65,6 +65,12 @@ follow these steps to quickly create and start a platformatic db:
 
 ### Run dashboard development server
 
+Create a `./packages/db-dashboard/.env` file with the following content
+```
+VITE_SERVER_URL=http://localhost:3042
+```
+Or whatever port you are running platformatic DB server on. 
+
 Use the command 
 ```sh
 pnpm run dashboard:start
