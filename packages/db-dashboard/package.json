@@ -25,7 +25,7 @@
   "dependencies": {
     "@fastify/static": "^6.5.0",
     "@mui/material": "^5.10.11",
-    "@platformatic/db-ra-data-rest": "workspace:0.4.0",
+    "@platformatic/db-ra-data-rest": "workspace:*",
     "inflected": "^2.1.0",
     "react-admin": "^4.4.4"
   },
