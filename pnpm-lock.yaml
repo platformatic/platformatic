@@ -264,7 +264,7 @@ importers:
       '@fastify/static': ^6.5.0
       '@graphiql/toolkit': ^0.8.0
       '@mui/material': ^5.10.11
-      '@platformatic/db-ra-data-rest': workspace:0.4.0
+      '@platformatic/db-ra-data-rest': workspace:*
       '@playwright/test': ^1.24.2
       '@types/react': ^18.0.17
       '@types/react-dom': ^18.0.6
