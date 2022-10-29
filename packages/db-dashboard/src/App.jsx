@@ -1,4 +1,3 @@
-import React from 'react'
 import { Navigate, Routes, Route } from 'react-router-dom'
 import { createContext, useState } from 'react'
 import Layout from './components/Layout'
