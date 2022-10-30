@@ -15,6 +15,11 @@ const ascDesc = new graphql.GraphQLEnumType({
   }
 })
 
+const limitType = new graphql.GraphQLScalarType({
+  name: 'LimitInt',
+  description: 'Default: 10. Max accept value: 100. If an higher value is provided will be capped to the actual accepted max value.'
+})
+
 function constructGraph (app, entity, opts) {
   const primaryKey = camelcase(entity.primaryKey)
   const relationalFields = entity.relations
@@ -110,7 +115,7 @@ function constructGraph (app, entity, opts) {
   queryTopFields[plural] = {
     type: new graphql.GraphQLList(type),
     args: {
-      limit: { type: graphql.GraphQLInt },
+      limit: { type: limitType },
       offset: { type: graphql.GraphQLInt },
       orderBy: {
         type: new graphql.GraphQLList(new graphql.GraphQLInputObjectType({

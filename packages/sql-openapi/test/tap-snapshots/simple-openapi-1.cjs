@@ -39,10 +39,12 @@ Object {
         "operationId": "getPages",
         "parameters": Array [
           Object {
+            "description": "Default: 10. Max accept value: 100. If an higher value is provided will be capped to the actual accepted max value.",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": Object {
+              "default": 10,
               "type": "integer",
             },
           },
