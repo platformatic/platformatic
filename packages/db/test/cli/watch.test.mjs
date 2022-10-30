@@ -1,339 +1,196 @@
-import { start, connectAndResetDB } from './helper.mjs'
-import { test } from 'tap'
-import { request } from 'undici'
-import { join, basename } from 'path'
 import os from 'os'
-import { writeFile, mkdir } from 'fs/promises'
+import { join, basename } from 'path'
+import { writeFile, mkdtemp } from 'fs/promises'
 import { setTimeout as sleep } from 'timers/promises'
+import t, { test } from 'tap'
+import { request } from 'undici'
+import { start } from './helper.mjs'
 
-test('watch file', async ({ teardown, equal, same, comment }) => {
-  const db = await connectAndResetDB()
-  teardown(() => db.dispose())
+t.jobs = 5
 
-  await db.query(db.sql`CREATE TABLE pages (
-    id SERIAL PRIMARY KEY,
-    title VARCHAR(42)
-  );`)
-
-  const file = join(os.tmpdir(), `some-plugin-${process.pid}.js`)
-  const config = join(os.tmpdir(), `config-${process.pid}.json`)
-
-  await writeFile(config, `
-{
-  "server": {
-    "logger": {
-      "level": "info"
-    },
-    "hostname": "127.0.0.1",
-    "port": 0
-  },
-  "core": {
-    "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres"
-  }
+function createLoggingPlugin (text) {
+  return `\
+    module.exports = async (app) => {
+      app.get('/version', () => '${text}')
+    }
+  `
 }
-    `)
 
-  comment('file written')
+test('should watch js files by default', async ({ equal, teardown }) => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'watch-'))
+  const pluginFilePath = join(tmpDir, 'plugin.js')
+  const configFilePath = join(tmpDir, 'platformatic.db.json')
 
-  const { child, url } = await start('-c', config)
-
-  comment('server started')
-
-  {
-    const res = await request(`${url}/graphql`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: `
-          query {
-            add(x: 2, y: 2)
-          }
-        `
-      })
-    })
-    equal(res.statusCode, 400, 'add status code')
-    same(await res.body.json(), {
-      data: null,
-      errors: [{
-        message: 'Cannot query field "add" on type "Query".',
-        locations: [{
-          line: 3,
-          column: 13
-        }]
-      }]
-    }, 'add response')
-  }
-
-  comment('updating files')
-
-  await writeFile(file, `
-    module.exports = async function (app) {
-      app.log.info('loaded')
-      app.graphql.extendSchema(\`
-        extend type Query {
-          add(x: Int, y: Int): Int
-        }
-      \`)
-      app.graphql.defineResolvers({
-        Query: {
-          add: async (_, { x, y }) => x + y
-        }
-      })
-    }`)
-
-  await writeFile(config, `
-{
-  "server": {
-    "logger": {
-      "level": "info"
+  const defaultConfig = {
+    server: {
+      logger: {
+        level: 'info'
+      },
+      hostname: '127.0.0.1',
+      port: 0
     },
-    "hostname": "127.0.0.1",
-    "port": 0
-  },
-  "plugin": {
-    "path": "./${basename(file)}",
-    "stopTimeout": 1000
-  },
-  "core": {
-    "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres"
-  },
-  "authorization": {},
-  "dashboard": {}
-}
-    `)
-
-  for await (const log of child.ndj) {
-    comment(log.msg)
-    if (log.msg === 'loaded') {
-      break
+    core: {
+      connectionString: 'sqlite://db.sqlite'
+    },
+    plugin: {
+      path: pluginFilePath,
+      watch: true
     }
   }
 
-  comment('reloaded')
+  await Promise.all([
+    writeFile(configFilePath, JSON.stringify(defaultConfig)),
+    writeFile(pluginFilePath, createLoggingPlugin('v1'))
+  ])
 
-  {
-    const res = await request(`${url}/graphql`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: `
-          query {
-            add(x: 2, y: 2)
-          }
-        `
-      })
-    })
-    equal(res.statusCode, 200, 'add status code')
-    same(await res.body.json(), {
-      data: {
-        add: 4
-      }
-    }, 'add response')
-  }
+  const { child, url } = await start('-c', configFilePath)
+  teardown(() => child.kill('SIGINT'))
 
-  child.kill('SIGINT')
+  await writeFile(pluginFilePath, createLoggingPlugin('v2'))
+
+  await sleep(5000)
+
+  const res = await request(`${url}/version`)
+  const version = await res.body.text()
+  equal(version, 'v2')
 })
 
-test('watch allowed file', async ({ comment }) => {
-  const file = join(os.tmpdir(), `some-plugin-${process.pid}.js`)
-  const jsonFile = join(os.tmpdir(), `some-config-${process.pid}.json`)
-  const config = join(os.tmpdir(), `config-${process.pid}.json`)
+test('should watch allowed file', async ({ comment, teardown }) => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'watch-'))
+  const jsonFilePath = join(tmpDir, 'plugin-config.json')
+  const pluginFilePath = join(tmpDir, 'plugin.js')
+  const configFilePath = join(tmpDir, 'platformatic.db.json')
 
-  await writeFile(config, `
-{ 
-  "server": {
-    "logger": {
-      "level": "info"
+  const config = {
+    server: {
+      logger: {
+        level: 'info'
+      },
+      hostname: '127.0.0.1',
+      port: 0
     },
-    "hostname": "127.0.0.1",
-    "port": 0
-  },
-  "core": {
-    "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres"
-  },
-  "plugin": {
-    "path": "./${basename(file)}",
-    "stopTimeout": 1000
-  }
-}
-    `)
-
-  await writeFile(jsonFile, 'INITIAL')
-  await writeFile(file, `
-    const readFileSync = require('fs').readFileSync
-    const json = readFileSync(${JSON.stringify(jsonFile)}, 'utf8')
-
-    module.exports = async function (app) {
-      if (json === 'RESTARTED') {
-        app.log.info('RESTARTED')
+    core: {
+      connectionString: 'sqlite://db.sqlite'
+    },
+    plugin: {
+      path: pluginFilePath,
+      watch: true,
+      watchOptions: {
+        allow: ['*.js', '*.json']
       }
-    }`)
-
-  const { child } = await start('-c', config, '--allow-to-watch', basename(jsonFile))
-
-  writeFile(jsonFile, 'RESTARTED')
-
-  for await (const log of child.ndj) {
-    comment(log.msg)
-    if (log.msg === 'RESTARTED') {
-      break
     }
   }
 
-  child.kill('SIGINT')
+  const pluginCode = `\
+  const readFileSync = require('fs').readFileSync
+  const json = readFileSync(${JSON.stringify(jsonFilePath)}, 'utf8')
+
+  module.exports = async function (app) {
+    if (json === 'RESTARTED') {
+      app.log.info('RESTARTED')
+    }
+  }`
+
+  await Promise.all([
+    writeFile(configFilePath, JSON.stringify(config)),
+    writeFile(jsonFilePath, 'INITIAL'),
+    writeFile(pluginFilePath, pluginCode)
+  ])
+
+  const { child } = await start('-c', configFilePath)
+  teardown(() => child.kill('SIGINT'))
+
+  writeFile(jsonFilePath, 'RESTARTED')
+  for await (const log of child.ndj) {
+    if (log.msg === 'RESTARTED') break
+  }
 })
 
-test('do not watch ignored file', async ({ teardown, equal, same, comment }) => {
-  const db = await connectAndResetDB()
-  teardown(() => db.dispose())
+test('should not watch ignored file', async ({ teardown, equal }) => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'watch-'))
+  const pluginFilePath = join(tmpDir, 'plugin.js')
+  const configFilePath = join(tmpDir, 'platformatic.db.json')
 
-  await db.query(db.sql`CREATE TABLE pages (
-    id SERIAL PRIMARY KEY,
-    title VARCHAR(42)
-  );`)
-
-  const folder = join(os.tmpdir(), `plt-${process.pid}`)
-  await mkdir(folder)
-  const pluginFile = join(folder, 'some-plugin-.js')
-  comment('plugin file is ' + pluginFile)
-
-  await writeFile(pluginFile, `
-    module.exports = async function (app) {
-      app.graphql.extendSchema(\`
-        extend type Query {
-          add(x: Int, y: Int): Int
-        }
-      \`)
-      app.graphql.defineResolvers({
-        Query: {
-          add: async (_, { x, y }) => x + y
-        }
-      })
-    }`
-  )
-  const config = join(folder, `config-${process.pid}.json`)
-  await writeFile(config, `
-{
-  "server": {
-    "logger": {
-      "level": "info"
+  const config = {
+    server: {
+      logger: {
+        level: 'info'
+      },
+      hostname: '127.0.0.1',
+      port: 0
     },
-    "hostname": "127.0.0.1",
-    "port": 0
-  },
-  "plugin": {
-    "path": "./${basename(pluginFile)}",
-    "stopTimeout": 1000
-  },
-  "core": {
-    "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres"
-  }
-}
-    `)
-
-  const { child, url } = await start('-c', config, '--watch-ignore', basename(pluginFile))
-
-  await writeFile(pluginFile, `
-    module.exports = async function (app) {
-      app.log.info('loaded')
-      app.graphql.extendSchema(\`
-        extend type Query {
-          add(x: Int, y: Int): Int
-        }
-      \`)
-      app.graphql.defineResolvers({
-        Query: {
-          add: async (_, { x, y }) => x + y + 20
-        }
-      })
-    }`
-  )
-
-  await sleep(5000)
-
-  {
-    // plugin is not reloaded
-    const res = await request(`${url}/graphql`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: `
-          query {
-            add(x: 2, y: 2)
-          }
-        `
-      })
-    })
-    equal(res.statusCode, 200, 'add status code')
-    same(await res.body.json(), {
-      data: {
-        add: 4
+    core: {
+      connectionString: 'sqlite://db.sqlite'
+    },
+    plugin: {
+      path: pluginFilePath,
+      watch: true,
+      watchOptions: {
+        ignore: [basename(pluginFilePath)]
       }
-    }, 'add response')
+    }
   }
 
-  child.kill('SIGINT')
-})
+  await Promise.all([
+    writeFile(configFilePath, JSON.stringify(config)),
+    writeFile(pluginFilePath, createLoggingPlugin('v1'))
+  ])
 
-test('does not loop forever when doing ESM', async ({ teardown, equal, same, comment }) => {
-  const db = await connectAndResetDB()
-  teardown(() => db.dispose())
+  const { child, url } = await start('-c', configFilePath)
+  teardown(() => child.kill('SIGINT'))
 
-  await db.query(db.sql`CREATE TABLE pages (
-    id SERIAL PRIMARY KEY,
-    title VARCHAR(42)
-  );`)
-
-  const folder = join(os.tmpdir(), `plt-${process.pid}-2`)
-  await mkdir(folder)
-  const pluginFile = join(folder, 'some-plugin.mjs')
-  comment('plugin file is ' + pluginFile)
-
-  await writeFile(pluginFile, `
-    export default async function (app) {
-      app.graphql.extendSchema(\`
-        extend type Query {
-          add(x: Int, y: Int): Int
-        }
-      \`)
-      app.graphql.defineResolvers({
-        Query: {
-          add: async (_, { x, y }) => x + y
-        }
-      })
-    }`
-  )
-  const config = join(folder, `config-${process.pid}.json`)
-  await writeFile(config, `
-{
-  "server": {
-    "logger": {
-      "level": "info"
-    },
-    "hostname": "127.0.0.1",
-    "port": 0
-  },
-  "plugin": {
-    "path": "./${basename(pluginFile)}",
-    "stopTimeout": 1000
-  },
-  "core": {
-    "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres"
-  }
-}
-    `)
-
-  const { child } = await start('-c', config, '--watch-ignore', basename(pluginFile))
-
+  await writeFile(pluginFilePath, createLoggingPlugin('v2'))
   await sleep(5000)
 
+  const res = await request(`${url}/version`)
+  const version = await res.body.text()
+  equal(version, 'v1')
+})
+
+test('should not loop forever when doing ESM', async ({ comment, fail }) => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'watch-'))
+  const pluginFilePath = join(tmpDir, 'plugin.mjs')
+  const configFilePath = join(tmpDir, 'platformatic.db.json')
+
+  const config = {
+    server: {
+      logger: {
+        level: 'info'
+      },
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    core: {
+      connectionString: 'sqlite://db.sqlite'
+    },
+    plugin: {
+      path: pluginFilePath,
+      watch: true,
+      watchOptions: {
+        ignore: [basename(pluginFilePath)]
+      }
+    }
+  }
+
+  await Promise.all([
+    writeFile(configFilePath, JSON.stringify(config)),
+    writeFile(pluginFilePath, 'export default async (app) => {}')
+  ])
+
+  const { child } = await start('-c', configFilePath)
+
+  await sleep(1000)
+
   child.kill('SIGINT')
 
-  const lines = []
+  let linesCounter = 0
   for await (const line of child.ndj) {
-    lines.push(line)
+    // lines will have a series of "config changed"
+    // messages without an ignore
+    comment(line.msg)
+    if (++linesCounter > 2) {
+      fail()
+      break
+    }
   }
-  // lines will have a series of "config changed"
-  // messages without an ignore
-  equal(lines.length <= 2, true)
 })

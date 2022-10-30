@@ -4,5 +4,13 @@
     "config:base"
   ],
   "rangeStrategy": "update-lockfile",
-  "ignoreDeps": ["camelcase", "mysql", "swagger-ui-react"]
+  "ignoreDeps": ["camelcase", "mysql", "swagger-ui-react"],
+  "prHourlyLimit": 10,
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true
+    }
+  ],
+  "lockFileMaintenance": { "enabled": true }
 }

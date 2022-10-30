@@ -9,7 +9,7 @@ Copy and paste this code into `./sample-plugin.js` file
 ```js
 'use strict'
 module.exports = async(app, opts) => {
-  app.get('/sum', async(req, reply) => {
+  app.post('/sum', async(req, reply) => {
     const { x, y } = req.body
     return { sum: (x + y)}
   })
