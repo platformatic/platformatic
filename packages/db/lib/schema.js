@@ -380,9 +380,6 @@ const plugin = {
       properties: {
         outDir: {
           type: 'string'
-        },
-        watch: {
-          type: 'boolean'
         }
       },
       additionalProperties: false,
