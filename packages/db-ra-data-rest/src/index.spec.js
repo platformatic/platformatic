@@ -1,9 +1,10 @@
+import { vi } from 'vitest';
 import restClient from ".";
 
 describe("Data Simple REST Client", () => {
   describe("getList", () => {
     it("should compose the url correctly", async () => {
-      const httpClient = jest.fn(() =>
+      const httpClient = vi.fn(() =>
         Promise.resolve({
           headers: new Headers({
             "x-total-count": "42",
@@ -30,12 +31,12 @@ describe("Data Simple REST Client", () => {
     });
 
     it("should throw an error if the response doesn't contain the 'x-total-count' header", async () => {
-      const httpClient = jest.fn(() =>
+      const httpClient = vi.fn(() =>
         Promise.resolve({
           headers: new Headers({}),
           json: [{ id: 1 }],
           status: 200,
-          body: "",
+          body: "", 
         })
       );
       const client = restClient("http://localhost:3000", httpClient);
