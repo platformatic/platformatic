@@ -11,13 +11,15 @@
     "url": "https://github.com/plaformatic/platformatic/issues"
   },
   "homepage": "https://github.com/plaformatic/platformatic#readme",
-  "main": "./src/index.js",
+  "main": "dist/index.umd.js",
+  "module": "dist/index.es.js",
   "sideEffects": false,
   "files": [
     "*.md",
     "src"
   ],
   "scripts": {
+    "build": "vite build",
     "test": "vitest run"
   },
   "dependencies": {
