@@ -5,10 +5,10 @@
  * Make sure to inspect the output below.  Do not ignore changes!
  */
 'use strict'
-exports['test/cli/schema.test.mjs TAP print the graphql schema to stdout > must match snapshot 1'] = `
+exports[`test/cli/schema.test.mjs TAP print the graphql schema to stdout > must match snapshot 1`] = `
 type Query {
   getGraphById(id: ID!): Graph
-  graphs(limit: Int, offset: Int, orderBy: [GraphOrderByArguments], where: GraphWhereArguments): [Graph]
+  graphs(limit: LimitInt, offset: Int, orderBy: [GraphOrderByArguments], where: GraphWhereArguments): [Graph]
   countGraphs(where: GraphWhereArguments): graphsCount
 }
 
@@ -16,6 +16,11 @@ type Graph {
   id: ID
   name: String
 }
+
+"""
+Default: 10. Max accept value: 100. If an higher value is provided will be capped to the actual accepted max value.
+"""
+scalar LimitInt
 
 input GraphOrderByArguments {
   field: GraphOrderByField
@@ -75,7 +80,7 @@ input GraphInput {
 }
 `
 
-exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must match snapshot 1'] = `
+exports[`test/cli/schema.test.mjs TAP print the openapi schema to stdout > must match snapshot 1`] = `
 {
   "openapi": "3.0.3",
   "info": {
@@ -109,11 +114,13 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
         "parameters": [
           {
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "default": 10
             },
             "in": "query",
             "name": "limit",
-            "required": false
+            "required": false,
+            "description": "Default: 10. Max accept value: 100. If an higher value is provided will be capped to the actual accepted max value."
           },
           {
             "schema": {

@@ -5,10 +5,10 @@
  * Make sure to inspect the output below.  Do not ignore changes!
  */
 'use strict'
-exports['test/cli/env.test.mjs TAP env white list schema > must match snapshot 1'] = `
+exports[`test/cli/env.test.mjs TAP env white list schema > must match snapshot 1`] = `
 type Query {
   getPageById(id: ID!): Page
-  pages(limit: Int, offset: Int, orderBy: [PageOrderByArguments], where: PageWhereArguments): [Page]
+  pages(limit: LimitInt, offset: Int, orderBy: [PageOrderByArguments], where: PageWhereArguments): [Page]
   countPages(where: PageWhereArguments): pagesCount
 }
 
@@ -16,6 +16,11 @@ type Page {
   id: ID
   title: String
 }
+
+"""
+Default: 10. Max accept value: 100. If an higher value is provided will be capped to the actual accepted max value.
+"""
+scalar LimitInt
 
 input PageOrderByArguments {
   field: PageOrderByField
