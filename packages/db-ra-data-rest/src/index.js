@@ -34,7 +34,7 @@ import { fetchUtils } from "ra-core";
  * export default App;
  */
 
-const formatFilters = ({ filters }) =>
+const formatFilters = (filters) =>
   filters
     ? Object.keys(filters).reduce((acc, param) => {
         acc[`where.${param}.eq`] = filters[param];
@@ -50,7 +50,7 @@ export default (apiUrl, httpClient = fetchUtils.fetchJson) => ({
 
     const query = {
       ...formatFilters(params.filter),
-      [`orderby.${field}`]: order.toLowerCase(),
+      ...(order && { [`orderby.${field}`]: order.toLowerCase() }),
       limit: perPage,
       offset: (page - 1) * perPage,
       totalCount: true,
