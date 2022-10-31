@@ -19,7 +19,10 @@ async function start (_args) {
   // Set the logger if not present
   addLoggerToTheConfig(config)
 
-  if (config.typescript !== undefined && config.typescript.watch !== false) {
+  if (
+    config.plugin?.typescript !== undefined &&
+    config.plugin?.watch !== false
+  ) {
     try {
       await compileWatch()
     } catch (error) {
@@ -89,8 +92,6 @@ async function start (_args) {
 }
 
 async function startFileWatching (server) {
-  await stopFileWatching(server)
-
   const configManager = server.app.platformatic.configManager
   const config = configManager.current
 
@@ -124,14 +125,15 @@ async function onConfigUpdated (newConfig, server) {
     server.app.log.info('config changed')
     server.app.log.trace({ newConfig }, 'new config')
 
+    await stopFileWatching(server)
+
     if (
       newConfig.plugin !== undefined &&
       newConfig.plugin.watch !== false
     ) {
       await startFileWatching(server)
-    } else {
-      await stopFileWatching(server)
     }
+
     await server.restart(newConfig)
   } catch (err) {
     // TODO: test this

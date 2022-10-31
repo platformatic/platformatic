@@ -20,10 +20,10 @@
   "types": {
     "autogenerate": true
   },
-  "typescript": {
-    "outDir": "dist"
-  },
   "plugin": {
-    "path": "plugin.ts"
+    "path": "plugin.ts",
+    "typescript": {
+      "outDir": "dist"
+    }
   }
 }

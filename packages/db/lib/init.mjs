@@ -27,6 +27,7 @@ const moviesMigrationUndo = `
 -- Add SQL in this file to drop the database tables 
 DROP TABLE movies;
 `
+
 function getTsConfig (outDir) {
   return {
     compilerOptions: {
@@ -56,7 +57,10 @@ function generateConfig (args) {
   const config = {
     server: { hostname, port },
     core: { connectionString, graphql: true },
-    migrations: { dir: migrations }
+    migrations: { dir: migrations },
+    plugin: {
+      path: typescript === true ? 'plugin.ts' : 'plugin.js'
+    }
   }
 
   if (types === true) {
@@ -66,8 +70,7 @@ function generateConfig (args) {
   }
 
   if (typescript === true) {
-    config.typescript = {
-      watch: true,
+    config.plugin.typescript = {
       outDir: 'dist'
     }
   }
@@ -93,17 +96,8 @@ export default async function (app: FastifyInstance) {}
 async function generatePluginWithTypesSupport (logger, args, configManager) {
   const config = configManager.current
 
-  if (config.plugin === undefined) {
-    config.plugin = {}
-  }
-
-  const isTypescript = config.typescript !== undefined
-
-  if (config.plugin.path === undefined) {
-    config.plugin.path = isTypescript ? 'plugin.ts' : 'plugin.js'
-  }
-
   const pluginPath = resolve(process.cwd(), config.plugin.path)
+  const isTypescript = config.plugin.typescript !== undefined
 
   const isPluginExists = await isFileAccessible(pluginPath)
   if (isPluginExists) return
@@ -190,7 +184,7 @@ async function init (_args) {
     const tsConfigFileName = 'tsconfig.json'
     const isTsConfigExists = await isFileAccessible(tsConfigFileName)
     if (!isTsConfigExists) {
-      const tsConfig = getTsConfig(config.typescript.outDir)
+      const tsConfig = getTsConfig(config.plugin.typescript.outDir)
       await writeFile(tsConfigFileName, JSON.stringify(tsConfig, null, 2))
       logger.info(`Typescript configuration file ${tsConfigFileName} successfully created.`)
     } else {
