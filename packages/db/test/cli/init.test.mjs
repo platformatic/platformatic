@@ -103,7 +103,7 @@ t.test('run db init --typescript', async (t) => {
   const dbConfigFile = await fs.readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
 
-  const { server, core, migrations, typescript, types } = dbConfig
+  const { server, core, migrations, plugin, types } = dbConfig
 
   t.equal(server.hostname, '127.0.0.1')
   t.equal(server.port, 3042)
@@ -112,8 +112,10 @@ t.test('run db init --typescript', async (t) => {
   t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
-  t.equal(typescript.outDir, 'dist')
   t.equal(types.autogenerate, true)
+
+  t.equal(plugin.path, 'plugin.ts')
+  t.equal(plugin.typescript.outDir, 'dist')
 
   const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
   t.equal(migrationFileDo, moviesMigrationDo)
@@ -134,7 +136,7 @@ t.test('run db init --typescript twice', async (t) => {
   const dbConfigFile = await fs.readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
 
-  const { server, core, migrations, typescript, types } = dbConfig
+  const { server, core, migrations, plugin, types } = dbConfig
 
   t.equal(server.hostname, '127.0.0.1')
   t.equal(server.port, 3042)
@@ -143,8 +145,10 @@ t.test('run db init --typescript twice', async (t) => {
   t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
-  t.equal(typescript.outDir, 'dist')
   t.equal(types.autogenerate, true)
+
+  t.equal(plugin.path, 'plugin.ts')
+  t.equal(plugin.typescript.outDir, 'dist')
 
   const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
   t.equal(migrationFileDo, moviesMigrationDo)

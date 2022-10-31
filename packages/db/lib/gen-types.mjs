@@ -112,7 +112,7 @@ async function checkForDependencies (logger, args, config) {
 
   let command = 'npm i --save'
 
-  if (config.typescript !== undefined) {
+  if (config.plugin.typescript !== undefined) {
     command += ' @types/node'
   }
   for (const [depName, depVersion] of Object.entries(requiredDependencies)) {
