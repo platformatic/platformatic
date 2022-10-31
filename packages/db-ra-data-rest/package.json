@@ -28,11 +28,12 @@
     "ra-core": "^4.4.1"
   },
   "devDependencies": {
-    "rimraf": "^3.0.2",
-    "whatwg-fetch": "^3.6.2",
     "@vitejs/plugin-react": "^2.0.0",
+    "@vitest/coverage-c8": "^0.24.3",
+    "rimraf": "^3.0.2",
     "vite": "^3.0.4",
-    "vitest": "^0.24.0"
+    "vitest": "^0.24.0",
+    "whatwg-fetch": "^3.6.2"
   },
   "standard": {
     "globals": [

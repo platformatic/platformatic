@@ -118,8 +118,8 @@ describe("Data Simple REST Client", () => {
       const httpClient = vi.fn(() => Promise.resolve({}));
       const client = restClient("http://localhost:3000", httpClient);
 
-      await client.getOne("post", { id: 1 });
-      expect(httpClient).toHaveBeenCalledWith("http://localhost:3000/post/1");
+      await client.getOne("posts", { id: 1 });
+      expect(httpClient).toHaveBeenCalledWith("http://localhost:3000/posts/1");
     });
 
     it("should return the data field", async () => {
@@ -132,7 +132,7 @@ describe("Data Simple REST Client", () => {
       );
       const client = restClient("http://localhost:3000", httpClient);
 
-      const response = await client.getOne("post", { id: 1 });
+      const response = await client.getOne("posts", { id: 1 });
       expect(response).toMatchObject({ data: { userId: 1 } });
     });
 
@@ -141,7 +141,185 @@ describe("Data Simple REST Client", () => {
       const client = restClient("http://localhost:3000", httpClient);
 
       try {
-        await client.getOne("post", { id: 1 });
+        await client.getOne("posts", { id: 1 });
+      } catch (e) {
+        expect(e.message).toBe("error");
+      }
+    });
+  });
+
+  describe("getMany", () => {
+    it("should compose the right URL", async () => {
+      const httpClient = vi.fn(() =>
+        Promise.resolve({
+          json: [],
+        })
+      );
+      const client = restClient("http://localhost:3000", httpClient);
+
+      await client.getMany("posts", { ids: [1, 2] });
+      expect(httpClient).toHaveBeenCalledWith(
+        "http://localhost:3000/posts?where.id.in=1%2C2"
+      );
+    });
+
+    it("should return the data field", async () => {
+      const httpClient = vi.fn(() =>
+        Promise.resolve({
+          json: [
+            {
+              userId: 1,
+            },
+            {
+              userId: 2,
+            },
+          ],
+        })
+      );
+      const client = restClient("http://localhost:3000", httpClient);
+
+      const response = await client.getMany("posts", { ids: [1, 2] });
+      expect(response).toMatchObject({
+        data: [
+          {
+            userId: 1,
+          },
+          {
+            userId: 2,
+          },
+        ],
+      });
+    });
+
+    it("should throw if the request throws", async () => {
+      const httpClient = vi.fn(() => Promise.reject(new Error("error")));
+      const client = restClient("http://localhost:3000", httpClient);
+
+      try {
+        await client.getMany("posts", { ids: [1, 2] });
+      } catch (e) {
+        expect(e.message).toBe("error");
+      }
+    });
+  });
+
+  describe("update", () => {
+    it("should compose the right URL and pass the proper method and body params", async () => {
+      const httpClient = vi.fn(() =>
+        Promise.resolve({
+          json: [],
+        })
+      );
+      const client = restClient("http://localhost:3000", httpClient);
+      const data = {
+        name: "jack",
+      };
+      await client.update("posts", { id: 1, data });
+      expect(httpClient).toHaveBeenCalledWith("http://localhost:3000/posts/1", {
+        method: "PUT",
+        body: JSON.stringify(data),
+      });
+    });
+
+    it("should return the data field", async () => {
+      const httpClient = vi.fn(() =>
+        Promise.resolve({
+          json: {
+            userId: 1,
+            name: "jack",
+          },
+        })
+      );
+      const client = restClient("http://localhost:3000", httpClient);
+
+      const response = await client.update("posts", { id: 1, name: "jack" });
+      expect(response).toMatchObject({
+        data: {
+          userId: 1,
+          name: "jack",
+        },
+      });
+    });
+
+    it("should throw if the request throws", async () => {
+      const httpClient = vi.fn(() => Promise.reject(new Error("error")));
+      const client = restClient("http://localhost:3000", httpClient);
+
+      try {
+        await client.update("posts", { id: 1, data: { whatever: "" } });
+      } catch (e) {
+        expect(e.message).toBe("error");
+      }
+    });
+  });
+
+  describe("updateMany", () => {
+    it("should compose the right URL and pass the proper method and body params", async () => {
+      const httpClient = vi.fn(() =>
+        Promise.resolve({
+          json: [],
+        })
+      );
+      const client = restClient("http://localhost:3000", httpClient);
+      const data = {
+        name: "jack",
+      };
+      await client.updateMany("posts", { ids: [1, 2], data });
+      expect(httpClient).toHaveBeenNthCalledWith(
+        1,
+        "http://localhost:3000/posts/1",
+        {
+          method: "PUT",
+          body: JSON.stringify(data),
+        }
+      );
+      expect(httpClient).toHaveBeenNthCalledWith(
+        2,
+        "http://localhost:3000/posts/2",
+        {
+          method: "PUT",
+          body: JSON.stringify(data),
+        }
+      );
+    });
+
+    it("should return the data field with the updated ids", async () => {
+      const httpClient = vi.fn();
+      httpClient.mockImplementationOnce(() =>
+        Promise.resolve({
+          json: {
+            id: 1,
+            name: "jack",
+          },
+        })
+      );
+      httpClient.mockImplementationOnce(() =>
+        Promise.resolve({
+          json: {
+            id: 2,
+            name: "jack",
+          },
+        })
+      );
+      const client = restClient("http://localhost:3000", httpClient);
+
+      const response = await client.updateMany("posts", {
+        ids: [1, 2],
+        data: {},
+      });
+      expect(response).toMatchObject({
+        data: [1, 2],
+      });
+    });
+
+    it("should throw if one of the many updates throws", async () => {
+      const httpClient = vi
+        .fn()
+        .mockImplementationOnce(() => Promise.reject(new Error("error")));
+      const client = restClient("http://localhost:3000", httpClient);
+
+      try {
+        await client.update("posts", { id: 1, data: { whatever: "" } });
       } catch (e) {
         expect(e.message).toBe("error");
       }
