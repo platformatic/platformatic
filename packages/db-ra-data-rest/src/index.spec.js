@@ -32,6 +32,32 @@ describe('Data Simple REST Client', () => {
       )
     })
 
+    it('should add no filter if object is empty', async () => {
+      const httpClient = vi.fn(() =>
+        Promise.resolve({
+          headers: new Headers({
+            'x-total-count': '42'
+          })
+        })
+      )
+      const client = restClient('http://localhost:3000', httpClient)
+
+      await client.getList('posts', {
+        pagination: {
+          page: 1,
+          perPage: 10
+        },
+        sort: {
+          field: 'title',
+          order: 'desc'
+        }
+      })
+
+      expect(httpClient).toHaveBeenCalledWith(
+        'http://localhost:3000/posts?limit=10&offset=0&orderby.title=desc&totalCount=true'
+      )
+    })
+
     it("should return 'total' and 'data' fields", async () => {
       const httpClient = vi.fn(() =>
         Promise.resolve({

@@ -20,7 +20,7 @@
   ],
   "scripts": {
     "build": "vite build",
-    "test": "standard | snazzy && vitest run",
+    "test": "standard | snazzy && vitest run --coverage",
     "test:watch": "vitest watch",
     "lint": "standard | snazzy"
   },
