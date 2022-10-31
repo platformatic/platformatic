@@ -118,6 +118,7 @@ export default (apiUrl, httpClient = fetchUtils.fetchJson) => ({
     }).then(({ json }) => ({ data: json })),
 
   // platformatic doesn't handle filters on UPDATE route, so we fallback to calling UPDATE n times instead
+  // https://github.com/platformatic/platformatic/issues/249
   updateMany: (resource, params) =>
     Promise.all(
       params.ids.map((id) =>
@@ -142,6 +143,7 @@ export default (apiUrl, httpClient = fetchUtils.fetchJson) => ({
     }).then(({ json }) => ({ data: json })),
 
   // platformatic doesn't handle filters on DELETE route, so we fallback to calling DELETE n times instead
+  // https://github.com/platformatic/platformatic/issues/250
   deleteMany: (resource, params) =>
     Promise.all(
       params.ids.map((id) =>
