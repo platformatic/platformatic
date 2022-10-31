@@ -312,11 +312,12 @@ importers:
 
   packages/db-ra-data-rest:
     specifiers:
-      '@vitejs/plugin-react': ^2.0.0
       '@vitest/coverage-c8': ^0.24.3
       query-string: ^7.1.1
       ra-core: ^4.4.1
       rimraf: ^3.0.2
+      snazzy: ^9.0.0
+      standard: ^17.0.0
       vite: ^3.0.4
       vitest: ^0.24.0
       whatwg-fetch: ^3.6.2
@@ -324,9 +325,10 @@ importers:
       query-string: 7.1.1
       ra-core: 4.4.4_4waqzlhqbgqf74ns7akudb56cq
     devDependencies:
-      '@vitejs/plugin-react': 2.1.0_vite@3.1.8
       '@vitest/coverage-c8': 0.24.3
       rimraf: 3.0.2
+      snazzy: 9.0.0
+      standard: 17.0.0
       vite: 3.1.8
       vitest: 0.24.3
       whatwg-fetch: 3.6.2

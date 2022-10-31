@@ -1,5 +1,5 @@
-import { stringify } from "query-string";
-import { fetchUtils } from "ra-core";
+import { stringify } from 'query-string'
+import { fetchUtils } from 'ra-core'
 
 /**
  * Maps react-admin queries to a platformatic powered REST API
@@ -37,56 +37,56 @@ import { fetchUtils } from "ra-core";
 const formatFilters = (filters) =>
   filters
     ? Object.keys(filters).reduce((acc, param) => {
-        acc[`where.${param}.eq`] = filters[param];
+      acc[`where.${param}.eq`] = filters[param]
 
-        return acc;
-      }, {})
-    : {};
+      return acc
+    }, {})
+    : {}
 
 export default (apiUrl, httpClient = fetchUtils.fetchJson) => ({
   getList: (resource, params) => {
-    const { page, perPage } = params.pagination;
-    const { field, order } = params.sort;
+    const { page, perPage } = params.pagination
+    const { field, order } = params.sort
 
     const query = {
       ...formatFilters(params.filter),
       ...(order && { [`orderby.${field}`]: order.toLowerCase() }),
       limit: perPage,
       offset: (page - 1) * perPage,
-      totalCount: true,
-    };
+      totalCount: true
+    }
 
-    const url = `${apiUrl}/${resource}?${stringify(query)}`;
+    const url = `${apiUrl}/${resource}?${stringify(query)}`
 
     return httpClient(url).then(({ headers, json }) => {
-      if (!headers.has("x-total-count")) {
+      if (!headers.has('x-total-count')) {
         throw new Error(
-          "The X-Total-Count header is missing in the HTTP Response. The jsonServer Data Provider expects responses for lists of resources to contain this header with the total number of results to build the pagination. If you are using CORS, did you declare X-Total-Count in the Access-Control-Expose-Headers header?"
-        );
+          'The X-Total-Count header is missing in the HTTP Response. The jsonServer Data Provider expects responses for lists of resources to contain this header with the total number of results to build the pagination. If you are using CORS, did you declare X-Total-Count in the Access-Control-Expose-Headers header?'
+        )
       }
       return {
         data: json,
-        total: parseInt(headers.get("x-total-count").split("/").pop(), 10),
-      };
-    });
+        total: parseInt(headers.get('x-total-count').split('/').pop(), 10)
+      }
+    })
   },
 
   getOne: (resource, params) =>
     httpClient(`${apiUrl}/${resource}/${params.id}`).then(({ json }) => ({
-      data: json,
+      data: json
     })),
 
   getMany: (resource, params) => {
     const query = {
-      "where.id.in": params.ids.join(","),
-    };
-    const url = `${apiUrl}/${resource}?${stringify(query)}`;
-    return httpClient(url).then(({ json }) => ({ data: json }));
+      'where.id.in': params.ids.join(',')
+    }
+    const url = `${apiUrl}/${resource}?${stringify(query)}`
+    return httpClient(url).then(({ json }) => ({ data: json }))
   },
 
   getManyReference: (resource, params) => {
-    const { page, perPage } = params.pagination;
-    const { field, order } = params.sort;
+    const { page, perPage } = params.pagination
+    const { field, order } = params.sort
 
     const query = {
       ...formatFilters(params.filter),
@@ -94,27 +94,27 @@ export default (apiUrl, httpClient = fetchUtils.fetchJson) => ({
       [`orderby.${field}`]: order.toLowerCase(),
       limit: perPage,
       offset: (page - 1) * perPage,
-      totalCount: true,
-    };
-    const url = `${apiUrl}/${resource}?${stringify(query)}`;
+      totalCount: true
+    }
+    const url = `${apiUrl}/${resource}?${stringify(query)}`
 
     return httpClient(url).then(({ headers, json }) => {
-      if (!headers.has("x-total-count")) {
+      if (!headers.has('x-total-count')) {
         throw new Error(
-          "The X-Total-Count header is missing in the HTTP Response. The jsonServer Data Provider expects responses for lists of resources to contain this header with the total number of results to build the pagination. If you are using CORS, did you declare X-Total-Count in the Access-Control-Expose-Headers header?"
-        );
+          'The X-Total-Count header is missing in the HTTP Response. The jsonServer Data Provider expects responses for lists of resources to contain this header with the total number of results to build the pagination. If you are using CORS, did you declare X-Total-Count in the Access-Control-Expose-Headers header?'
+        )
       }
       return {
         data: json,
-        total: parseInt(headers.get("x-total-count").split("/").pop(), 10),
-      };
-    });
+        total: parseInt(headers.get('x-total-count').split('/').pop(), 10)
+      }
+    })
   },
 
   update: (resource, params) =>
     httpClient(`${apiUrl}/${resource}/${params.id}`, {
-      method: "PUT",
-      body: JSON.stringify(params.data),
+      method: 'PUT',
+      body: JSON.stringify(params.data)
     }).then(({ json }) => ({ data: json })),
 
   // platformatic doesn't handle filters on UPDATE route, so we fallback to calling UPDATE n times instead
@@ -122,23 +122,23 @@ export default (apiUrl, httpClient = fetchUtils.fetchJson) => ({
     Promise.all(
       params.ids.map((id) =>
         httpClient(`${apiUrl}/${resource}/${id}`, {
-          method: "PUT",
-          body: JSON.stringify(params.data),
+          method: 'PUT',
+          body: JSON.stringify(params.data)
         })
       )
     ).then((responses) => ({ data: responses.map(({ json }) => json.id) })),
 
   create: (resource, params) =>
     httpClient(`${apiUrl}/${resource}`, {
-      method: "POST",
-      body: JSON.stringify(params.data),
+      method: 'POST',
+      body: JSON.stringify(params.data)
     }).then(({ json }) => ({
-      data: { ...params.data, id: json.id },
+      data: { ...params.data, id: json.id }
     })),
 
   delete: (resource, params) =>
     httpClient(`${apiUrl}/${resource}/${params.id}`, {
-      method: "DELETE",
+      method: 'DELETE'
     }).then(({ json }) => ({ data: json })),
 
   // platformatic doesn't handle filters on DELETE route, so we fallback to calling DELETE n times instead
@@ -146,8 +146,8 @@ export default (apiUrl, httpClient = fetchUtils.fetchJson) => ({
     Promise.all(
       params.ids.map((id) =>
         httpClient(`${apiUrl}/${resource}/${id}`, {
-          method: "DELETE",
+          method: 'DELETE'
         })
       )
-    ).then((responses) => ({ data: responses.map(({ json }) => json.id) })),
-});
+    ).then((responses) => ({ data: responses.map(({ json }) => json.id) }))
+})

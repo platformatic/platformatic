@@ -20,20 +20,22 @@
   ],
   "scripts": {
     "build": "vite build",
-    "test": "vitest run",
-    "test:watch": "vitest watch"
+    "test": "standard | snazzy && vitest run",
+    "test:watch": "vitest watch",
+    "lint": "standard | snazzy"
   },
   "dependencies": {
     "query-string": "^7.1.1",
     "ra-core": "^4.4.1"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^2.0.0",
     "@vitest/coverage-c8": "^0.24.3",
     "rimraf": "^3.0.2",
     "vite": "^3.0.4",
     "vitest": "^0.24.0",
-    "whatwg-fetch": "^3.6.2"
+    "whatwg-fetch": "^3.6.2",
+    "standard": "^17.0.0",
+    "snazzy": "^9.0.0"
   },
   "standard": {
     "globals": [
@@ -46,10 +48,11 @@
       "it",
       "expect",
       "test",
-      "screen"
+      "screen",
+      "Headers"
     ],
     "ignore": [
-      "/build"
+      "/dist"
     ]
   }
 }
