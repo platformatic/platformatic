@@ -74,6 +74,7 @@ function setupEmitter ({ log, mq, mapper, connectionString }) {
       }
     }
 
+    // getPublishTopic is async because it could be overridden to be asynchronous
     entity.getPublishTopic = async function ({ action, data }) {
       if (!data) {
         throw new Error('The object that will be published is required under the data property')
@@ -93,6 +94,7 @@ function setupEmitter ({ log, mq, mapper, connectionString }) {
       }
     }
 
+    // getSubscriptionTopic is async because it could be overridden to be asynchronous
     entity.getSubscriptionTopic = async function ({ action }) {
       switch (action) {
         case 'save':
