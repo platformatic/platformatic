@@ -76,7 +76,11 @@ input GraphInput {
 
 type Subscription {
   graphSaved: Graph
-  graphDeleted: Graph
+  graphDeleted: GraphDeleted
+}
+
+type GraphDeleted {
+  id: ID
 }
 `
 

@@ -76,6 +76,10 @@ input PageInput {
 
 type Subscription {
   pageSaved: Page
-  pageDeleted: Page
+  pageDeleted: PageDeleted
+}
+
+type PageDeleted {
+  id: ID
 }
 `
