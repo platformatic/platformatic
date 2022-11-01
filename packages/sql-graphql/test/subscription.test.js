@@ -33,7 +33,7 @@ function createWebSocketClient (t, app) {
   return { client, ws }
 }
 
-test('subscription - crud', async t => {
+test('subscription - crud', { only: true }, async t => {
   const app = Fastify()
   t.teardown(() => app.close())
 
@@ -75,7 +75,6 @@ test('subscription - crud', async t => {
     const query = `subscription {
       pageDeleted {
         id
-        title
       }
     }`
     client.write(JSON.stringify({
@@ -190,8 +189,7 @@ test('subscription - crud', async t => {
       payload: {
         data: {
           pageDeleted: {
-            id: '1',
-            title: 'Harry Potter'
+            id: '1'
           }
         }
       }

@@ -116,7 +116,6 @@ test('GraphQL subscription authorization (same user)', async ({ pass, teardown, 
     const query = `subscription {
       pageDeleted {
         id
-        title
       }
     }`
     client.write(JSON.stringify({
@@ -230,8 +229,7 @@ test('GraphQL subscription authorization (same user)', async ({ pass, teardown, 
     payload: {
       data: {
         pageDeleted: {
-          id: 1,
-          title: 'Hello World'
+          id: 1
         }
       }
     }
@@ -326,7 +324,6 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
     const query = `subscription {
       pageDeleted {
         id
-        title
       }
     }`
     client1.write(JSON.stringify({
@@ -383,7 +380,6 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
     const query = `subscription {
       pageDeleted {
         id
-        title
       }
     }`
     client2.write(JSON.stringify({
@@ -508,8 +504,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
     payload: {
       data: {
         pageDeleted: {
-          id: '1',
-          title: 'Hello World'
+          id: '1'
         }
       }
     }
@@ -610,7 +605,6 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
     const query = `subscription {
       pageDeleted {
         id
-        title
       }
     }`
     client1.write(JSON.stringify({
@@ -667,7 +661,6 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
     const query = `subscription {
       pageDeleted {
         id
-        title
       }
     }`
     client2.write(JSON.stringify({
@@ -788,8 +781,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
     payload: {
       data: {
         pageDeleted: {
-          id: '1',
-          title: 'Hello World'
+          id: '1'
         }
       }
     }

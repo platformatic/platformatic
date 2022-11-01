@@ -69,7 +69,7 @@ test('emit events', async ({ equal, same, teardown, comment }) => {
   })
 
   // save - update record
-  const page2 = await pageEntity.save({
+  await pageEntity.save({
     input: {
       id: page.id,
       title: 'fifth page'
@@ -78,7 +78,7 @@ test('emit events', async ({ equal, same, teardown, comment }) => {
   expected.push({
     topic: '/entity/page/save/' + page.id,
     payload: {
-      id: page2.id
+      id: page.id
     }
   })
 
@@ -93,7 +93,9 @@ test('emit events', async ({ equal, same, teardown, comment }) => {
 
   expected.push({
     topic: '/entity/page/delete/' + page.id,
-    payload: page2
+    payload: {
+      id: page.id
+    }
   })
 
   let i = 0

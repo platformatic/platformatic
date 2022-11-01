@@ -26,8 +26,11 @@ function setupSubscriptions (app, metaMap, resolvers, ignores) {
         const fields = meta.getFields([{ info }])
 
         for await (const msg of res) {
+          // TODO optimize this by not calling find() if the subscriber is only asking for the id.
           try {
             log.trace({ msg, entity: field.singularName }, 'graphql subscription augmenting data')
+            // The alternative to augmenting the data is installing a resolver for every type
+            // of a given entity that loads up the type via a dataloader.
             const found = await entity.find({ where: { [primaryKey]: { eq: msg[primaryKey] } }, fields, ctx })
             // The following could happen in case of a race condition
             // testing it would be very hard, so we skip it for now
@@ -49,7 +52,14 @@ function setupSubscriptions (app, metaMap, resolvers, ignores) {
 
     const deleted = `${field.singularName}Deleted`
     fields[deleted] = {
-      type
+      type: new graphql.GraphQLObjectType({
+        name: `${field.name}Deleted`,
+        fields: {
+          [field.primaryKey]: {
+            type: meta.fields[field.primaryKey].type
+          }
+        }
+      })
     }
     resolvers.Subscription[deleted] = {
       subscribe: async (_, query, ctx, info) => {

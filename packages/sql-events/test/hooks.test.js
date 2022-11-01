@@ -59,7 +59,7 @@ test('get topics', async ({ equal, same, teardown }) => {
   })
 
   // save - update record
-  const page2 = await pageEntity.save({
+  await pageEntity.save({
     input: {
       id: page.id,
       title: 'fifth page'
@@ -68,7 +68,7 @@ test('get topics', async ({ equal, same, teardown }) => {
   expected.push({
     topic: '/entity/page/save/' + page.id,
     payload: {
-      id: page2.id
+      id: page.id
     }
   })
 
@@ -83,7 +83,9 @@ test('get topics', async ({ equal, same, teardown }) => {
 
   expected.push({
     topic: '/entity/page/delete/' + page.id,
-    payload: page2
+    payload: {
+      id: page.id
+    }
   })
 
   for await (const ev of queue) {
@@ -140,7 +142,7 @@ test('hooks', async ({ equal, same, teardown }) => {
   })
 
   // save - update record
-  const page2 = await pageEntity.save({
+  await pageEntity.save({
     input: {
       id: page.id,
       title: 'fifth page'
@@ -149,7 +151,7 @@ test('hooks', async ({ equal, same, teardown }) => {
   expected.push({
     topic: '/entity/page/save/' + page.id,
     payload: {
-      id: page2.id
+      id: page.id
     }
   })
 
@@ -164,7 +166,9 @@ test('hooks', async ({ equal, same, teardown }) => {
 
   expected.push({
     topic: '/entity/page/delete/' + page.id,
-    payload: page2
+    payload: {
+      id: page.id
+    }
   })
 
   for await (const ev of queue) {

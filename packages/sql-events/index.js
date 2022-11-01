@@ -44,17 +44,16 @@ function setupEmitter ({ log, mq, mapper, connectionString }) {
         return res
       },
 
-      delete: multiField('delete'),
-      insert: multiField('save')
+      delete: multiElement('delete'),
+      insert: multiElement('save')
     })
 
-    function multiField (action) {
+    function multiElement (action) {
       return async function (original, data) {
         const ctx = data.ctx
         /* istanbul ignore next */
         const _log = ctx?.reply?.request?.log || log
-        const fields = new Set(data.fields)
-        const res = await original({ ...data, fields: undefined })
+        const res = await original(data)
 
         await Promise.all(res.map(async (payload) => {
           const topic = await entity.getPublishTopic({ action, data: payload, ctx })
@@ -63,25 +62,15 @@ function setupEmitter ({ log, mq, mapper, connectionString }) {
             return new Promise((resolve) => {
               mq.emit({
                 topic,
-                payload
+                payload: {
+                  [primaryKey]: payload[primaryKey]
+                }
               }, resolve)
             })
           }
         }))
 
-        if (fields.size > 0) {
-          const actual = []
-          for (const element of res) {
-            const obj = {}
-            for (const field of fields) {
-              obj[field] = element[field]
-            }
-            actual.push(obj)
-          }
-          return actual
-        } else {
-          return res
-        }
+        return res
       }
     }
 

@@ -84,7 +84,9 @@ test('emit events', async ({ equal, same, teardown }) => {
 
   expected.push({
     topic: '/entity/page/delete/' + page.id,
-    payload: page2
+    payload: {
+      id: page.id
+    }
   })
 
   for await (const ev of queue) {
@@ -140,7 +142,7 @@ test('return entities', async ({ pass, teardown, equal, same }) => {
   })
 
   // save - update record
-  const page2 = await pageEntity.save({
+  await pageEntity.save({
     input: {
       id: page.id,
       title: 'fifth page'
@@ -163,7 +165,9 @@ test('return entities', async ({ pass, teardown, equal, same }) => {
 
   expected.push({
     topic: '/entity/page/delete/' + page.id,
-    payload: page2
+    payload: {
+      id: page.id
+    }
   })
 
   for await (const ev of queue) {
@@ -218,8 +222,7 @@ test('insert', async ({ equal, same, teardown }) => {
     expected.push({
       topic: '/entity/page/save/' + page.id,
       payload: {
-        id: page.id,
-        title: page.title
+        id: page.id
       }
     })
   }
@@ -281,12 +284,16 @@ test('more than one element for delete', async ({ equal, same, teardown }) => {
 
   expected.push({
     topic: '/entity/page/delete/' + page1.id,
-    payload: page1
+    payload: {
+      id: page1.id
+    }
   })
 
   expected.push({
     topic: '/entity/page/delete/' + page2.id,
-    payload: page2
+    payload: {
+      id: page2.id
+    }
   })
 
   for await (const ev of queue) {
