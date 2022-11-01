@@ -34,7 +34,10 @@ async function setupOpenAPI (app, opts) {
     }
   })
 
-  app.register(SwaggerUI, opts)
+  app.register(SwaggerUI, {
+    ...opts,
+    prefix: '/documentation'
+  })
 
   for (const entity of Object.values(app.platformatic.entities)) {
     const entitySchema = mapSQLEntityToJSONSchema(entity)
