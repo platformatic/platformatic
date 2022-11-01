@@ -4,6 +4,8 @@
 
 To follow this how-to guide, you'll first need to install the Fly CLI and create
 an account by [following this official guide](https://fly.io/docs/hands-on/).
+You will also need an existing Platformatic DB project, please check out our
+getting started guide if needed.
 
 :::note
 
@@ -18,7 +20,7 @@ application in London (`lhr`):
 fly launch --no-deploy --generate-name --region lhr --org personal --path .
 ```
 
-The `fly` application should have created a **fly.toml** file in your project
+The `fly` CLI should have created a **fly.toml** file in your project
 directory.
 
 ## Explicit builder
@@ -72,7 +74,7 @@ The command above assumes that your SQLite database file ends with the extension
 `.db` — if the extension is different then you must change the command to match.
 
 Change the connection string to an environment variable and make sure that
-migrations are `autoApply`ing (for v0.4.0+) in **platformatic.db.json**:
+migrations are `autoApply`ing (for `platformatic@^0.4.0`) in **platformatic.db.json**:
 
 ```json
 {
@@ -88,7 +90,7 @@ migrations are `autoApply`ing (for v0.4.0+) in **platformatic.db.json**:
 
 ## Configure server
 
-Change or confirm that your **platformatic.db.json** uses environment variables
+Make sure that your **platformatic.db.json** uses environment variables
 for the server section:
 
 ```json
@@ -114,6 +116,12 @@ PLT_SERVER_LOGGER_LEVEL=debug
 DATABASE_URL=sqlite://.platformatic/data/movie-quotes.db
 ```
 
+Avoid accidental leaks by ignoring your **.env** file:
+
+```bash
+echo ".env" >> .gitignore
+```
+
 This same configuration needs to added to **fly.toml**:
 
 ```toml
@@ -126,7 +134,26 @@ This same configuration needs to added to **fly.toml**:
 
 ## Deploy application
 
-Deploy the application to Fly by running:
+A valid **package.json** will be needed so if you do not have one, generate one
+by running `npm init`.
+
+In your **package.json**, make sure there is a `start` script to run your
+application:
+
+```json
+{
+  "scripts": {
+    "start": "platformatic db"
+  }
+}
+```
+
+Before deploying, make sure a **.dockerignore** file is created:
+```sh
+cp .gitignore .dockerignore
+```
+
+Finally, deploy the application to Fly by running:
 
 ```sh
 fly deploy
