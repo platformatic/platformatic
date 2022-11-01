@@ -13,7 +13,7 @@ now, say "no" as there are a few things that you'll need to configure first.
 
 <!-- TODO: Could probably put a command here to launch the app in non-interactive mode -->
 
-Create a volume for database storage:
+Create a volume for database storage, name it `data`:
 
 ```bash
 fly volumes create data
@@ -22,15 +22,14 @@ fly volumes create data
 This will create storage in the same region as the application. The volume
 defaults to 3GB size, use  `-s` to change the size. For example, `-s 10` is 10GB.
 
-Add a `mounts` section in **fly.toml**, replacing `<app-name>` with the name
-of your application:
+Add a `mounts` section in **fly.toml**:
 
 <!-- TODO: Check this mount path, probably not correct now we're not using Docker -->
 
 ```toml
 [mounts]
   source = "data"
-  destination = "/opt/<app-name>/.platformatic/data"
+  destination = "/app/.platformatic/data"
 ```
 
 Create a directory in your project where your SQLite database will be created:
@@ -56,12 +55,12 @@ The command above assumes that your SQLite database file ends with the extension
 
 <!-- TODO: This should be done by setting a `DATABASE_URL` environment variable in `fly.toml` -->
 
-Update the connection string to point to the SQLite database, replacing `<app-name>`:
+Update the connection string to point to the SQLite database:
 
 ```json
 {
   "core": {
-    "connectionString": "sqlite://.platformatic/data/<app-name>.db"
+    "connectionString": "sqlite://.platformatic/data/app.db"
   }
 }
 ```
@@ -91,7 +90,7 @@ Add the following snippet to the **Dockerfile**:
 # Setup sqlite viewer
 # Replace <app-name> with your app name
 RUN apk add sqlite
-ENV DSN "/opt/<app-name>/.platformatic/data/demo.db"
+ENV DSN "/app/.platformatic/data/app.db"
 COPY db-cli.sh /usr/local/bin/db-cli
 RUN chmod +x /usr/local/bin/db-cli
 ```
