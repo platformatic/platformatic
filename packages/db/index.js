@@ -77,8 +77,8 @@ async function platformaticDB (app, opts) {
     let pluginOptions = opts.plugin
 
     /* c8 ignore next 4 */
-    if (opts.typescript !== undefined) {
-      const pluginPath = getJSPluginPath(opts.plugin.path, opts.typescript.outDir)
+    if (pluginOptions.typescript !== undefined) {
+      const pluginPath = getJSPluginPath(pluginOptions.path, pluginOptions.typescript.outDir)
       pluginOptions = { ...pluginOptions, path: pluginPath }
     }
 

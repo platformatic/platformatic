@@ -14,7 +14,9 @@
     "dir": "./migrations",
     "autoApply": true
   },
-  "typescript": {
-    "outDir": "dist"
+  "plugin": {
+    "typescript": {
+      "outDir": "dist"
+    }
   }
 }

@@ -384,21 +384,6 @@ const types = {
   additionalProperties: false
 }
 
-const typescript = {
-  $id: 'https://schemas.platformatic.dev/db/typescript',
-  type: 'object',
-  properties: {
-    outDir: {
-      type: 'string'
-    },
-    watch: {
-      type: 'boolean'
-    }
-  },
-  additionalProperties: false,
-  required: ['outDir']
-}
-
 const plugin = {
   type: 'object',
   properties: {
@@ -407,6 +392,16 @@ const plugin = {
     },
     stopTimeout: {
       type: 'integer'
+    },
+    typescript: {
+      type: 'object',
+      properties: {
+        outDir: {
+          type: 'string'
+        }
+      },
+      additionalProperties: false,
+      required: ['outDir']
     },
     watch: {
       type: 'boolean'
@@ -453,7 +448,6 @@ const platformaticDBschema = {
     migrations,
     metrics,
     types,
-    typescript,
     plugin
   },
   additionalProperties: false,
