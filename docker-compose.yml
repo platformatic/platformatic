@@ -30,4 +30,4 @@ services:
   redis:
     ports:
       - "6379:6379"
-    image: "redis:6"
+    image: "redis:7"
