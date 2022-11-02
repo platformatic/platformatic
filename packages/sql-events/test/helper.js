@@ -1,14 +1,5 @@
 'use strict'
 
-const why = require('why-is-node-running')
-
-// This file must be required/imported as the first file
-// in the test suite. It sets up the global environment
-// to track the open handles via why-is-node-running.
-setInterval(() => {
-  why()
-}, 20000).unref()
-
 // Needed to work with dates & postgresql
 // See https://node-postgres.com/features/types/
 process.env.TZ = 'UTC'
@@ -42,26 +33,34 @@ module.exports.clear = async function (db, sql) {
     await db.query(sql`DROP TABLE pages`)
   } catch (err) {
   }
+
   try {
     await db.query(sql`DROP TABLE categories`)
-  } catch (err) {
+  } catch {
+  }
+
+  try {
+    await db.query(sql`DROP TABLE posts`)
+  } catch {
+  }
+
+  try {
+    await db.query(sql`DROP TABLE simple_types`)
+  } catch {
+  }
+
+  try {
+    await db.query(sql`DROP TABLE owners`)
+  } catch {
+  }
+
+  try {
+    await db.query(sql`DROP TABLE users`)
+  } catch {
+  }
+
+  try {
+    await db.query(sql`DROP TABLE versions`)
+  } catch {
   }
 }
-
-async function createBasicPages (db, sql) {
-  if (module.exports.isSQLite) {
-    await db.query(sql`CREATE TABLE pages (
-      id INTEGER PRIMARY KEY,
-      title VARCHAR(42),
-      user_id INTEGER
-    );`)
-  } else {
-    await db.query(sql`CREATE TABLE pages (
-      id SERIAL PRIMARY KEY,
-      title VARCHAR(42),
-      user_id INTEGER
-    );`)
-  }
-}
-
-module.exports.createBasicPages = createBasicPages

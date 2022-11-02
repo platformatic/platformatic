@@ -219,6 +219,8 @@ importers:
       standard: ^17.0.0
       tap: ^16.0.0
       undici: ^5.6.1
+      why-is-node-running: ^2.2.2
+      ws: ^8.9.0
     dependencies:
       '@fastify/error': 3.0.0
       '@fastify/jwt': 6.3.2
@@ -235,9 +237,12 @@ importers:
       snazzy: 9.0.0
       standard: 17.0.0
       tap: 16.3.0
+      why-is-node-running: 2.2.2
+      ws: 8.10.0
 
   packages/db-core:
     specifiers:
+      '@platformatic/sql-events': workspace:*
       '@platformatic/sql-graphql': workspace:*
       '@platformatic/sql-mapper': workspace:*
       '@platformatic/sql-openapi': workspace:*
@@ -247,7 +252,9 @@ importers:
       snazzy: ^9.0.0
       standard: ^17.0.0
       tap: ^16.0.0
+      why-is-node-running: ^2.2.2
     dependencies:
+      '@platformatic/sql-events': link:../sql-events
       '@platformatic/sql-graphql': link:../sql-graphql
       '@platformatic/sql-mapper': link:../sql-mapper
       '@platformatic/sql-openapi': link:../sql-openapi
@@ -258,6 +265,7 @@ importers:
       snazzy: 9.0.0
       standard: 17.0.0
       tap: 16.3.0
+      why-is-node-running: 2.2.2
 
   packages/db-dashboard:
     specifiers:
@@ -333,8 +341,34 @@ importers:
       vitest: 0.24.4
       whatwg-fetch: 3.6.2
 
+  packages/sql-events:
+    specifiers:
+      '@platformatic/sql-mapper': workspace:*
+      fastify: ^4.6.0
+      fastify-plugin: ^4.1.0
+      ioredis: ^5.2.3
+      mqemitter: ^5.0.0
+      mqemitter-redis: ^5.0.0
+      snazzy: ^9.0.0
+      standard: ^17.0.0
+      tap: ^16.0.0
+      tsd: ^0.24.0
+    dependencies:
+      fastify-plugin: 4.3.0
+      mqemitter: 5.0.0
+      mqemitter-redis: 5.0.0
+    devDependencies:
+      '@platformatic/sql-mapper': link:../sql-mapper
+      fastify: 4.9.2
+      ioredis: 5.2.3
+      snazzy: 9.0.0
+      standard: 17.0.0
+      tap: 16.3.0
+      tsd: 0.24.1
+
   packages/sql-graphql:
     specifiers:
+      '@platformatic/sql-events': workspace:*
       '@platformatic/sql-mapper': workspace:*
       camelcase: ^6.0.0
       fastify: ^4.6.0
@@ -343,11 +377,12 @@ importers:
       graphql-scalars: ^1.13.1
       graphql-type-json: ^0.3.2
       inflected: ^2.1.0
-      mercurius: ^11.0.0
+      mercurius: ^11.2.0
       snazzy: ^9.0.0
       standard: ^17.0.0
       tap: ^16.0.0
       tsd: ^0.24.0
+      ws: ^8.9.0
     dependencies:
       camelcase: 6.3.0
       fastify-plugin: 4.3.0
@@ -357,12 +392,14 @@ importers:
       inflected: 2.1.0
       mercurius: 11.2.0_graphql@16.6.0
     devDependencies:
+      '@platformatic/sql-events': link:../sql-events
       '@platformatic/sql-mapper': link:../sql-mapper
       fastify: 4.9.2
       snazzy: 9.0.0
       standard: 17.0.0
       tap: 16.3.0
       tsd: 0.24.1
+      ws: 8.10.0
 
   packages/sql-json-schema-mapper:
     specifiers:
@@ -1136,6 +1173,9 @@ packages:
   /@iarna/toml/2.2.5:
     resolution: {integrity: sha512-trnsAYxU3xnS1gPHPyU961coFyLkh4gAD/0zQ5mymY4yOZ+CYvsPqUbOFSw0aDM4y0tV7tiFxL/1XfXPNC6IPg==}
     dev: false
+
+  /@ioredis/commands/1.2.0:
+    resolution: {integrity: sha512-Sx1pU8EM64o2BrqNpEO1CNLtKQwyhuXuqyfH7oGKCk+1a33d2r5saW8zNwm3j6BTExtjrv2BxTgzzkMwts6vGg==}
 
   /@istanbuljs/load-nyc-config/1.1.0:
     resolution: {integrity: sha512-VjeHSlIzpv/NyD3N0YuHfXOPDIixcA1q2ZV98wsMqcYlPmv2n3Yb2lYP9XMElnaFVXg5A7YLTeLu6V84uQDjmQ==}
@@ -2274,6 +2314,10 @@ packages:
     engines: {node: '>=6'}
     dev: false
 
+  /cluster-key-slot/1.1.2:
+    resolution: {integrity: sha512-RMr0FhtfXemyinomL4hrWcYJxmX6deFdCxpJzhDttxgO1+bcCnkk+9drydLVDmAMG7NE6aN/fl4F7ucU/90gAA==}
+    engines: {node: '>=0.10.0'}
+
   /codemirror-graphql/2.0.2_ar7tylx7sosddrxmqpjfntlg3a:
     resolution: {integrity: sha512-9c1cItR+8lG7thmTnDDQ3zI8YesNKiFCp2BnLFkYWCtdhSSuCUHebU/Vurew6ayyUl8MBCldNx3Ev66QAWM5Kw==}
     peerDependencies:
@@ -2540,7 +2584,6 @@ packages:
   /denque/2.1.0:
     resolution: {integrity: sha512-HVQE3AAb/pxF8fQAoiqpvg9i3evqug3hoiwakOyZAwJm+6vZehbkYXZ0l4JxS+I3QxM97v5aaRNhj8v5oBhekw==}
     engines: {node: '>=0.10'}
-    dev: false
 
   /depd/1.1.2:
     resolution: {integrity: sha512-7emPTl6Dpo6JRXOXjLRxck+FlLRX5847cLKEn00PLAgc3g2hTZZgr+e4c2v6QpSmLeFP3n5yUo7ft6avBK/5jQ==}
@@ -3296,6 +3339,10 @@ packages:
   /etag/1.8.1:
     resolution: {integrity: sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==}
     engines: {node: '>= 0.6'}
+
+  /event-lite/0.1.2:
+    resolution: {integrity: sha512-HnSYx1BsJ87/p6swwzv+2v6B4X+uxUteoDfRxsAb1S1BePzQqOLevVmkdA15GHJVd9A9Ok6wygUR18Hu0YeV9g==}
+    dev: false
 
   /event-target-shim/5.0.1:
     resolution: {integrity: sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==}
@@ -4118,6 +4165,13 @@ packages:
       ms: 2.1.3
     optional: true
 
+  /hyperid/3.0.1:
+    resolution: {integrity: sha512-I+tl7TS5nsoVhkxqX1rS3Qmqlq44eoPUcgPthW8v3IW8CvWL7lwtd6HQbkDUMrBKJTG0vgEaRsjT35imW/D+9Q==}
+    dependencies:
+      uuid: 8.3.2
+      uuid-parse: 1.1.0
+    dev: false
+
   /iconv-lite/0.6.3:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
     engines: {node: '>=0.10.0'}
@@ -4181,6 +4235,10 @@ packages:
   /inherits/2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
 
+  /int64-buffer/0.1.10:
+    resolution: {integrity: sha512-v7cSY1J8ydZ0GyjUHqF+1bshJ6cnEVLo9EnjB8p+4HDRPZc9N5jjmvUV7NvEsqQOKyH0pmIBFWXVQbiS0+OBbA==}
+    dev: false
+
   /internal-slot/1.0.3:
     resolution: {integrity: sha512-O0DB1JC/sPyZl7cIo78n5dR7eUSwwpYPiXRhTzNxZVAMUuB8vlnRFyLxdrVToks6XPLVnFfbzaVd5WLjhgg+vA==}
     engines: {node: '>= 0.4'}
@@ -4195,6 +4253,28 @@ packages:
     dependencies:
       loose-envify: 1.4.0
     dev: true
+
+  /ioredis-auto-pipeline/1.0.2:
+    resolution: {integrity: sha512-Axp07oVqbUAArCuIjlfXfME0/te/R7x43zfeGEpY1UTJjWdTUIw/h+K/LfIkRGCv8aCB4bCypHft8AQZ+1Z7zw==}
+    dependencies:
+      to-fast-properties: 3.0.1
+    dev: false
+
+  /ioredis/5.2.3:
+    resolution: {integrity: sha512-gQNcMF23/NpvjCaa1b5YycUyQJ9rBNH2xP94LWinNpodMWVUPP5Ai/xXANn/SM7gfIvI62B5CCvZxhg5pOgyMw==}
+    engines: {node: '>=12.22.0'}
+    dependencies:
+      '@ioredis/commands': 1.2.0
+      cluster-key-slot: 1.1.2
+      debug: 4.3.4
+      denque: 2.1.0
+      lodash.defaults: 4.2.0
+      lodash.isarguments: 3.1.0
+      redis-errors: 1.2.0
+      redis-parser: 3.0.0
+      standard-as-callback: 2.1.0
+    transitivePeerDependencies:
+      - supports-color
 
   /ip/2.0.0:
     resolution: {integrity: sha512-WKa+XuLG1A1R0UWhl2+1XQSi+fZWMsYKffMZTTYsiZaUD8k2yDAj5atimTUD2TZkyCkNEeYE5NhFZmupOGtjYQ==}
@@ -4431,7 +4511,6 @@ packages:
 
   /isarray/1.0.0:
     resolution: {integrity: sha512-VLghIWNM6ELQzo7zwmcg0NmTVyWKYjvIeM83yjp0wRDTmUnrM678fQbcKBo6n2CJEF0szoG//ytg+TKla89ALQ==}
-    dev: true
 
   /isexe/2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
@@ -4742,9 +4821,15 @@ packages:
     resolution: {integrity: sha512-FT1yDzDYEoYWhnSGnpE/4Kj1fLZkDFyqRb7fNt6FdYOSxlUWAtp42Eh6Wb0rGIv/m9Bgo7x4GhQbm5Ys4SG5ow==}
     dev: true
 
+  /lodash.defaults/4.2.0:
+    resolution: {integrity: sha512-qjxPLHd3r5DnsdGacqOMU6pb/avJzdh9tFX2ymgoZE27BmjXrNy/y4LoaiTeAb+O3gL8AfpJGtqfX/ae2leYYQ==}
+
   /lodash.flattendeep/4.4.0:
     resolution: {integrity: sha512-uHaJFihxmJcEX3kT4I23ABqKKalJ/zDrDg0lsFtc1h+3uw49SIJ5beyhx5ExVRti3AvKoOJngIj7xz3oylPdWQ==}
     dev: true
+
+  /lodash.isarguments/3.1.0:
+    resolution: {integrity: sha512-chi4NHZlZqZD18a0imDHnZPrDeBbTtVN7GXMwuGdRH9qotxAjYs3aVLKc7zNOG9eddR5Ksd8rvFEBc9SsggPpg==}
 
   /lodash.memoize/4.1.2:
     resolution: {integrity: sha512-t7j+NzmgnQzTAYXcsHYLgimltOV1MXHtlOWf6GjL9Kj8GK5FInw5JotxvbOs+IvV1/Dzo04/fCGfLVs7aXb4Ag==}
@@ -5082,6 +5167,28 @@ packages:
     resolution: {integrity: sha512-Mk9qDrvU44UUL0EBhbAA1phfQZ7aMZPjwtL7wkpiBzGh8dETGqfsh50mWoX9EkjDlkONlErWXArHCKfoxVg0Bw==}
     dev: true
 
+  /mqemitter-redis/5.0.0:
+    resolution: {integrity: sha512-4ld+yZHfQ+YTbP5IfF8nsZDjSyfMe8DTefdm40E80BwvGbKvMSOABMWXUjmmXHawGm+whKUGBIYlMytsQoOIUw==}
+    dependencies:
+      hyperid: 3.0.1
+      inherits: 2.0.4
+      ioredis: 5.2.3
+      ioredis-auto-pipeline: 1.0.2
+      lru-cache: 7.14.0
+      mqemitter: 4.5.0
+      msgpack-lite: 0.1.26
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /mqemitter/4.5.0:
+    resolution: {integrity: sha512-Mp/zytFeIv6piJQkEKnncHcP4R/ErJc5C7dfonkhkNUT2LA/nTayrfNxbipp3M5iCJUTQSUtzfQAQA3XVcKz6w==}
+    engines: {node: '>=10'}
+    dependencies:
+      fastparallel: 2.4.1
+      qlobber: 5.0.3
+    dev: false
+
   /mqemitter/5.0.0:
     resolution: {integrity: sha512-rqNRQhGgl0W/NV+Zrx0rpAUTZcSlAtivCVUmXBUPcFYt+AeDEpoJgy5eKlFWJP6xnatONL59WIFdV0W6niOMhw==}
     engines: {node: '>=10'}
@@ -5097,6 +5204,16 @@ packages:
 
   /ms/2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
+
+  /msgpack-lite/0.1.26:
+    resolution: {integrity: sha512-SZ2IxeqZ1oRFGo0xFGbvBJWMp3yLIY9rlIJyxy8CGrwZn1f0ZK4r6jV/AM1r0FZMDUkWkglOk/eeKIL9g77Nxw==}
+    hasBin: true
+    dependencies:
+      event-lite: 0.1.2
+      ieee754: 1.2.1
+      int64-buffer: 0.1.10
+      isarray: 1.0.0
+    dev: false
 
   /mysql2/2.3.3:
     resolution: {integrity: sha512-wxJUev6LgMSgACDkb/InIFxDprRa6T95+VEoR+xPvtngtccNH2dGjEB/fVZ8yg1gWv1510c9CvXuJHi5zUm0ZA==}
@@ -5850,6 +5967,11 @@ packages:
       escape-goat: 4.0.0
     dev: false
 
+  /qlobber/5.0.3:
+    resolution: {integrity: sha512-wW4GTZPePyh0RgOsM18oDyOUlXfurVRgoNyJfS+y7VWPyd0GYhQp5T2tycZFZjonH+hngxIfklGJhTP/ghidgQ==}
+    engines: {node: '>= 8'}
+    dev: false
+
   /qlobber/7.0.1:
     resolution: {integrity: sha512-FsFg9lMuMEFNKmTO9nV7tlyPhx8BmskPPjH2akWycuYVTtWaVwhW5yCHLJQ6Q+3mvw5cFX2vMfW2l9z2SiYAbg==}
     engines: {node: '>= 14'}
@@ -6288,6 +6410,16 @@ packages:
       indent-string: 4.0.0
       strip-indent: 3.0.0
     dev: true
+
+  /redis-errors/1.2.0:
+    resolution: {integrity: sha512-1qny3OExCf0UvUV/5wpYKf2YwPcOqXzkwKKSmKHiE6ZMQs5heeE/c8eXK+PNllPvmjgAbfnsbpkGZWy8cBpn9w==}
+    engines: {node: '>=4'}
+
+  /redis-parser/3.0.0:
+    resolution: {integrity: sha512-DJnGAeenTdpMEH6uAJRK/uiyEIH9WVsUmoLwzudwGJUwZPp80PDBWPHXSAGNPwNvIXAbe7MSUB1zQFugFml66A==}
+    engines: {node: '>=4'}
+    dependencies:
+      redis-errors: 1.2.0
 
   /redux-immutable/4.0.0_immutable@3.8.2:
     resolution: {integrity: sha512-SchSn/DWfGb3oAejd+1hhHx01xUoxY+V7TeK0BKqpkLKiQPVFf7DYzEaKmrEVxsWxielKfSK9/Xq66YyxgR1cg==}
@@ -6743,6 +6875,9 @@ packages:
   /stackback/0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
     dev: true
+
+  /standard-as-callback/2.1.0:
+    resolution: {integrity: sha512-qoRRSyROncaz1z0mvYqIE4lCd9p2R90i6GxW3uZv5ucSu8tU7B5HXUP1gG8pVZsYNVaXjk8ClXHPttLyxAL48A==}
 
   /standard-engine/15.0.0:
     resolution: {integrity: sha512-4xwUhJNo1g/L2cleysUqUv7/btn7GEbYJvmgKrQ2vd/8pkTmN8cpqAZg+BT8Z1hNeEH787iWUdOpL8fmApLtxA==}
@@ -7254,6 +7389,11 @@ packages:
     engines: {node: '>=4'}
     dev: true
 
+  /to-fast-properties/3.0.1:
+    resolution: {integrity: sha512-/wtNi1tW1F3nf0OL6AqVxGw9Tr1ET70InMhJuVxPwFdGqparF0nQ4UWGLf2DsoI2bFDtthlBnALncZpUzOnsUw==}
+    engines: {node: '>=8'}
+    dev: false
+
   /to-regex-range/5.0.1:
     resolution: {integrity: sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==}
     engines: {node: '>=8.0'}
@@ -7479,10 +7619,13 @@ packages:
   /util-deprecate/1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
+  /uuid-parse/1.1.0:
+    resolution: {integrity: sha512-OdmXxA8rDsQ7YpNVbKSJkNzTw2I+S5WsbMDnCtIWSQaosNAcWtFuI/YK1TjzUI6nbkgiqEyh8gWngfcv8Asd9A==}
+    dev: false
+
   /uuid/8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
     hasBin: true
-    dev: true
 
   /v8-to-istanbul/9.0.1:
     resolution: {integrity: sha512-74Y4LqY74kLE6IFyIjPtkSTWzUZmj8tdHT9Ii/26dvQ6K9Dl2NbEfj0XgU2sHCtKgt5VupqhlO/5aWuqS+IY1w==}

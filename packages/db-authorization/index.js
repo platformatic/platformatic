@@ -22,6 +22,16 @@ async function auth (app, opts) {
   const anonymousRole = opts.anonymousRole || 'anonymous'
 
   app.addHook('preHandler', async (request) => {
+    if (request.ws) {
+      // we have not received the WebSocket headers yet.
+      // we are postponing this to the first subscription
+      return
+    }
+
+    return setupUser(request)
+  })
+
+  async function setupUser (request) {
     let forceAdminRole = false
     if (adminSecret && request.headers['x-platformatic-admin-secret'] === adminSecret) {
       if (opts.jwt || opts.webhook) {
@@ -62,7 +72,7 @@ async function auth (app, opts) {
         [roleKey]: PLT_ADMIN_ROLE
       }
     }
-  })
+  }
 
   const rules = opts.rules || []
 
@@ -86,6 +96,35 @@ async function auth (app, opts) {
       const rules = entityRules[entityKey] || []
       const type = app.platformatic.entities[entityKey]
 
+      // We have subscriptions!
+      let userPropToFillForPublish
+      let topicsWithoutChecks = false
+      if (app.platformatic.mq) {
+        for (const rule of rules) {
+          const checks = rule.find?.checks
+          if (typeof checks !== 'object') {
+            topicsWithoutChecks = !!rule.find
+            continue
+          }
+          const keys = Object.keys(checks)
+          if (keys.length !== 1) {
+            throw new Error(`Subscription requires that the role "${rule.role}" has only one check in the find rule for entity "${rule.entity}"`)
+          }
+          const key = keys[0]
+
+          const val = typeof checks[key] === 'object' ? checks[key].eq : checks[key]
+          if (userPropToFillForPublish && userPropToFillForPublish.val !== val) {
+            throw new Error('Unable to configure subscriptions and authorization due to multiple check clauses in find')
+          }
+          userPropToFillForPublish = { key, val }
+        }
+      }
+
+      if (userPropToFillForPublish && topicsWithoutChecks) {
+        throw new Error(`Subscription for entity "${entityKey}" have conflictling rules across roles`)
+      }
+
+      // MUST set this after doing the security checks on the subscriptions
       if (adminSecret) {
         rules.push({
           role: PLT_ADMIN_ROLE,
@@ -188,6 +227,34 @@ async function auth (app, opts) {
           where = await fromRuleToWhere(ctx, rule.delete, where, request.user)
 
           return originalDelete({ where, ctx, fields })
+        },
+
+        async getPublishTopic (original, opts) {
+          const request = opts.ctx.reply.request
+          const originalTopic = await original(opts)
+          if (userPropToFillForPublish) {
+            return `/${userPropToFillForPublish.key}/${request.user[userPropToFillForPublish.val]}${originalTopic}`
+          }
+          return originalTopic
+        },
+
+        async getSubscriptionTopic (original, opts) {
+          const { ctx } = opts
+          if (ctx.request.user === undefined) {
+            await setupUser(ctx.request)
+          }
+          // TODO make sure anonymous users cannot subscribe
+
+          const request = getRequestFromContext(ctx)
+
+          const originalTopic = await original(opts)
+
+          /* istanbul ignore next */
+          if (userPropToFillForPublish) {
+            return `/${userPropToFillForPublish.key}/${request.user[userPropToFillForPublish.val] || '+'}${originalTopic}`
+          }
+
+          return originalTopic
         }
       })
     }

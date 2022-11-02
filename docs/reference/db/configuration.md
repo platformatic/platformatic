@@ -138,6 +138,23 @@ A **required** object with the following settings:
   }
   ```
 
+- **`events`** (`boolean` or `object`, default: `true`) — Controls the support for events published by the SQL mapping layer.
+  If enabled, this option add support for GraphQL Subscription over WebSocket. By default it uses an in-process message broker.
+  It's possible to configure it to use Redis instead.
+
+  _Examples_
+
+  ```json
+  {
+    "core": {
+      ...
+      "events": {
+        "connectionString": "redis://:password@redishost.com:6380/"
+      }
+    }
+  }
+  ```
+
 ### `dashboard`
 
 This setting can be a `boolean` or an `object`. If set to `true` the dashboard will be served at the root path (`/`).

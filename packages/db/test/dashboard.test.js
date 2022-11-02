@@ -9,6 +9,7 @@ test('should serve the dashboard if the dashboard option is enabled', async ({ t
   const sharedConfig = {
     server: {
       hostname: '127.0.0.1',
+      logger: { level: 'error' },
       port: 0
     },
     core: {
@@ -47,6 +48,7 @@ test('should serve the dashboard if any dashboard configuration option is set', 
   const server = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
+      logger: { level: 'error' },
       port: 0
     },
     core: {
@@ -71,6 +73,7 @@ test('should not serve the dashboard if the dashboard configuration option is di
   const sharedConfig = {
     server: {
       hostname: '127.0.0.1',
+      logger: { level: 'error' },
       port: 0
     },
     core: {

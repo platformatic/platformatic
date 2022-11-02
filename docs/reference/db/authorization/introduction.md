@@ -133,3 +133,14 @@ Roles can be set using `X-PLATFORMATIC-ROLE` as list of comma-separated roles (t
 Note that roles are just strings. Some "special roles" are reserved:
 - `platformatic-admin` : this identifies a user who has admin powers
 - `anonymous`: set automatically when no roles are associated
+
+## Events and Subscriptions
+
+Platformatic DB supports GraphQL subscriptions and therefore db-authorization must protect them.
+The check is performed based on the `find` permissions, the only permissions that are supported are:
+
+1. `find: false`, the subscription for that role is disabled
+2. `find: { checks: { [prop]: 'X-PLATFORMATIC-PROP' } }` validates that the given prop is equal
+3. `find: { checks: { [prop]: { eq: 'X-PLATFORMATIC-PROP' } } }` validates that the given prop is equal
+
+Conflicting rules across roles for different equality checks will not be supported.

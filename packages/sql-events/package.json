@@ -1,10 +1,9 @@
 {
-  "name": "@platformatic/sql-graphql",
-  "version": "0.4.0",
-  "description": "Map SQL dbs to GraphQL",
+  "name": "@platformatic/sql-events",
+  "version": "0.1.0",
+  "description": "Emit events via MQEmitter",
   "main": "index.js",
   "scripts": {
-    "lint": "standard",
     "test": "standard | snazzy && npm run test:typescript && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
     "test:postgresql": "DB=postgresql tap test/*.test.js",
     "test:mariadb": "DB=mariadb tap test/*.test.js",
@@ -24,23 +23,18 @@
   },
   "homepage": "https://github.com/plaformatic/platformatic#readme",
   "devDependencies": {
-    "@platformatic/sql-events": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
     "fastify": "^4.6.0",
+    "ioredis": "^5.2.3",
     "snazzy": "^9.0.0",
     "standard": "^17.0.0",
     "tap": "^16.0.0",
-    "tsd": "^0.24.0",
-    "ws": "^8.9.0"
+    "tsd": "^0.24.0"
   },
   "dependencies": {
-    "camelcase": "^6.0.0",
     "fastify-plugin": "^4.1.0",
-    "graphql": "^16.6.0",
-    "graphql-scalars": "^1.13.1",
-    "graphql-type-json": "^0.3.2",
-    "inflected": "^2.1.0",
-    "mercurius": "^11.2.0"
+    "mqemitter": "^5.0.0",
+    "mqemitter-redis": "^5.0.0"
   },
   "tsd": {
     "directory": "test/types"

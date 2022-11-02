@@ -120,9 +120,14 @@ const core = {
         properties: {
           graphiql: {
             type: 'boolean'
+          },
+          subscriptionIgnore: {
+            type: 'array',
+            items: {
+              type: 'string'
+            }
           }
-        },
-        additionalProperties: false
+        }
       }]
     },
     openapi: {
@@ -153,6 +158,19 @@ const core = {
       additionalProperties: {
         type: 'boolean'
       }
+    },
+    events: {
+      anyOf: [{
+        type: 'boolean'
+      }, {
+        type: 'object',
+        properties: {
+          connectionString: {
+            type: 'string'
+          }
+        },
+        additionalProperties: false
+      }]
     }
   },
   additionalProperties: false,

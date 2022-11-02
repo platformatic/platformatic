@@ -3,26 +3,34 @@
 const fp = require('fastify-plugin')
 const sqlMapper = require('@platformatic/sql-mapper')
 
+const defaults = [{
+  module: '@platformatic/sql-events',
+  configKey: 'events'
+}, {
+  module: '@platformatic/sql-graphql',
+  configKey: 'graphql'
+}, {
+  module: '@platformatic/sql-openapi',
+  configKey: 'openapi'
+}]
+
 module.exports = fp(async function (app, opts) {
   app.register(sqlMapper, {
     ...opts
   })
 
-  if (opts.graphql !== false) {
-    const sqlGraphQL = require('@platformatic/sql-graphql')
-    const graphqlConfig = typeof opts.graphql === 'object' ? opts.graphql : {}
-    app.register(sqlGraphQL, {
-      ...graphqlConfig
-    })
+  for (const obj of defaults) {
+    registerAndConfig(obj)
   }
 
-  // enabled by default
-  if (opts.openapi !== false) {
-    const sqlOpenAPI = require('@platformatic/sql-openapi')
-    const openapiConfig = typeof opts.openapi === 'object' ? opts.openapi : {}
-    app.register(sqlOpenAPI, {
-      ...openapiConfig
-    })
+  function registerAndConfig ({ module, configKey }) {
+    if (opts[configKey] !== false) {
+      const sqlModule = require(module)
+      const config = typeof opts[configKey] === 'object' ? opts[configKey] : {}
+      return app.register(sqlModule, {
+        ...config
+      })
+    }
   }
 })
 
