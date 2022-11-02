@@ -96,7 +96,8 @@ The `setupEmitter` function has the following options:
 The `setupEmitter` functions adds the following properties to the `mapper` object:
 
 - `mq` — an instance of [`mqemitter`](https://npm.im/mqemitter)
-- `subscribe(topics)` — a method to create a node [`Readable`]() that will contain the events emitted by those topics. 
+- `subscribe(topics)` — a method to create a node [`Readable`](https://nodejs.org/api/stream.html#new-streamreadableoptions)
+  that will contain the events emitted by those topics.
 
 Each entities of `app.platformatic.entities` will be augmented with two functions:
 
