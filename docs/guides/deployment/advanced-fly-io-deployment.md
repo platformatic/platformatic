@@ -1,6 +1,7 @@
 # Advanced Fly.io Deployment
 
-Techniques used in this guide are based on [the name of the other guide]().
+Techniques used in this guide are based on [the Deploy to Fly.io with SQLite](/guides/deployment/deploy-to-fly-io-with-sqlite.md)
+deployment guide.
 
 ## Adding `sqlite` for debugging
 
