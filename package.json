@@ -10,7 +10,7 @@
     "cleanall": "rm pnpm-lock.yaml && rm -rf node_modules && rm -rf packages/*/node_modules",
     "postinstall": "node ./scripts/postinstall.js"
   },
-  "packageManager": "pnpm@7.14.1",
+  "packageManager": "pnpm@7.14.2",
   "devDependencies": {
     "@fastify/pre-commit": "^2.0.2"
   },
