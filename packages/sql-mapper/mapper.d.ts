@@ -119,6 +119,10 @@ interface Find<EntityFields> {
      * Number of entities to skip.
      */
     offset?: number,
+    /**
+     * If present, the entity partecipates in transaction
+    */
+    tx?: Database
   }): Promise<Partial<EntityFields>[]>
 }
 
