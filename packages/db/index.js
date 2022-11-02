@@ -6,33 +6,11 @@ const dashboard = require('@platformatic/db-dashboard')
 const { start } = require('@fastify/restartable')
 const sandbox = require('fastify-sandbox')
 const underPressure = require('@fastify/under-pressure')
-
+const { deepmerge } = require('@platformatic/utils')
 const { isKeyEnabledInConfig } = require('./lib/helper')
 const { schema } = require('./lib/schema')
 const ConfigManager = require('./lib/config.js')
 const { addLoggerToTheConfig, getJSPluginPath } = require('./lib/utils')
-
-function deepmergeArray (options) {
-  const deepmerge = options.deepmerge
-  const clone = options.clone
-  return function (target, source) {
-    let i = 0
-    const sl = source.length
-    const il = Math.max(target.length, source.length)
-    const result = new Array(il)
-    for (i = 0; i < il; ++i) {
-      if (i < sl) {
-        result[i] = deepmerge(target[i], source[i])
-        /* c8 ignore next 3 */
-      } else {
-        result[i] = clone(target[i])
-      }
-    }
-    return result
-  }
-}
-
-const deepmerge = require('@fastify/deepmerge')({ all: true, mergeArray: deepmergeArray })
 
 function createServerConfig (config) {
   // convert the config file to a new structure

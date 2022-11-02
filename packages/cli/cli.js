@@ -3,6 +3,7 @@
 import commist from 'commist'
 import minimist from 'minimist'
 import { runDB } from '@platformatic/db/db.mjs'
+import { runService } from '@platformatic/db/service.mjs'
 import { login } from '@platformatic/authenticate/authenticate.js'
 import { readFile } from 'fs/promises'
 import { join } from 'desm'
@@ -19,9 +20,13 @@ const help = helpMe({
 })
 
 program.register('db', runDB)
+program.register('service', runService)
 program.register('help', help.toStdout)
 program.register('help db', function (args) {
   runDB(['help', ...args])
+})
+program.register('help service', function (args) {
+  runService(['help', ...args])
 })
 program.register({ command: 'login', strict: true }, login)
 

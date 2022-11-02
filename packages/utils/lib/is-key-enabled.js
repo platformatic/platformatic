@@ -1,6 +1,6 @@
 'use strict'
 
-function isKeyEnabledInConfig (key, config) {
+function isKeyEnabled (key, config) {
   if (typeof config[key] === 'boolean') {
     return config[key]
   }
@@ -10,4 +10,4 @@ function isKeyEnabledInConfig (key, config) {
   return true
 }
 
-module.exports.isKeyEnabledInConfig = isKeyEnabledInConfig
+module.exports = isKeyEnabled
