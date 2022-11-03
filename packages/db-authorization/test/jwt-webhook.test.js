@@ -50,6 +50,20 @@ async function buildAuthorizer (opts = {}) {
   return app
 }
 
+async function buildAuthorizerAPIToken (opts = {}) {
+  const app = fastify({
+    forceCloseConnections: true
+  })
+
+  app.post('/authorize', async (request, reply) => {
+    return await opts.onAuthorize(request)
+  })
+
+  await app.listen({ port: 0 })
+
+  return app
+}
+
 async function createBasicPages (db, sql) {
   if (isSQLite) {
     await db.query(sql`CREATE TABLE pages (
@@ -86,7 +100,7 @@ async function buildJwksEndpoint (jwks, fail = false) {
   return app
 }
 
-test('users can save and update their own pages, read everybody\'s and delete none', async ({ pass, teardown, same, equal }) => {
+test('JWT + cookies with WebHook', async ({ pass, teardown, same, equal }) => {
   const authorizer = await buildAuthorizer()
   teardown(() => authorizer.close())
 
@@ -187,6 +201,153 @@ test('users can save and update their own pages, read everybody\'s and delete no
       url: '/graphql',
       headers: {
         cookie
+      },
+      body: {
+        query: `
+          mutation {
+            savePage(input: { title: "Hello" }) {
+              id
+              title
+              userId
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'savePage status code')
+    same(res.json(), {
+      data: {
+        savePage: {
+          id: 1,
+          title: 'Hello',
+          userId: 42
+        }
+      }
+    }, 'savePage response')
+  }
+
+  {
+    const signSync = createSigner({
+      algorithm: 'RS256',
+      key: privateKey,
+      header,
+      iss: issuer,
+      kid
+    })
+    const payload = {
+      'X-PLATFORMATIC-USER-ID': 42,
+      'X-PLATFORMATIC-ROLE': ['user']
+    }
+    const token = signSync(payload)
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/pages/1',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    equal(res.statusCode, 200, 'pages status code')
+    same(res.json(), {
+      id: 1,
+      title: 'Hello',
+      userId: 42
+    })
+  }
+})
+
+test('Authorization both with JWT and WebHook', async ({ pass, teardown, same, equal }) => {
+  const authorizer = await buildAuthorizerAPIToken({
+    async onAuthorize (request) {
+      equal(request.headers.authorization, 'Bearer foobar')
+      const payload = {
+        'X-PLATFORMATIC-USER-ID': 42,
+        'X-PLATFORMATIC-ROLE': 'user'
+      }
+
+      return payload
+    }
+  })
+  teardown(() => authorizer.close())
+
+  const { n, e, kty } = jwtPublicKey
+  const kid = 'TEST-KID'
+  const alg = 'RS256'
+  const jwksEndpoint = await buildJwksEndpoint(
+    {
+      keys: [
+        {
+          alg,
+          kty,
+          n,
+          e,
+          use: 'sig',
+          kid
+        }
+      ]
+    }
+  )
+  teardown(() => jwksEndpoint.close())
+
+  const issuer = `http://localhost:${jwksEndpoint.server.address().port}`
+  const header = {
+    kid,
+    alg,
+    typ: 'JWT'
+  }
+  const app = fastify({
+    forceCloseConnections: true
+  })
+  app.register(core, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(auth, {
+    webhook: {
+      url: `http://localhost:${authorizer.server.address().port}/authorize`
+    },
+    jwt: {
+      jwks: true
+    },
+    roleKey: 'X-PLATFORMATIC-ROLE',
+    anonymousRole: 'anonymous',
+    rules: [{
+      role: 'user',
+      entity: 'page',
+      find: true,
+      delete: false,
+      defaults: {
+        userId: 'X-PLATFORMATIC-USER-ID'
+      },
+      save: {
+        checks: {
+          userId: 'X-PLATFORMATIC-USER-ID'
+        }
+      }
+    }, {
+      role: 'anonymous',
+      entity: 'page',
+      find: false,
+      delete: false,
+      save: false
+    }]
+  })
+  teardown(app.close.bind(app))
+  teardown(() => authorizer.close())
+
+  await app.ready()
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      headers: {
+        Authorization: 'Bearer foobar'
       },
       body: {
         query: `

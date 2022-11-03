@@ -24,12 +24,12 @@ async function auth (app, opts) {
       try {
         // `createSession` actually exists only if jwt or webhook are enabled
         // and creates a new `request.user` object
-        return await this.createJWTSession()
+        await this.createJWTSession()
       } catch (err) {
         this.log.trace({ err })
-      }
 
-      return await this.createWebhookSession()
+        await this.createWebhookSession()
+      }
     })
   } else if (opts.jwt) {
     app.decorateRequest('createSession', function () {
