@@ -6,8 +6,7 @@ const dashboard = require('@platformatic/db-dashboard')
 const { start } = require('@fastify/restartable')
 const sandbox = require('fastify-sandbox')
 const underPressure = require('@fastify/under-pressure')
-const { deepmerge } = require('@platformatic/utils')
-const { isKeyEnabledInConfig } = require('./lib/helper')
+const { deepmerge, isKeyEnabled } = require('@platformatic/utils')
 const { schema } = require('./lib/schema')
 const ConfigManager = require('./lib/config.js')
 const { addLoggerToTheConfig, getJSPluginPath } = require('./lib/utils')
@@ -34,14 +33,14 @@ async function platformaticDB (app, opts) {
   }
 
   app.register(require('./_admin'), { ...opts, prefix: '_admin' })
-  if (isKeyEnabledInConfig('dashboard', opts)) {
+  if (isKeyEnabled('dashboard', opts)) {
     await app.register(dashboard, {
       dashboardAtRoot: opts.dashboard.rootPath ?? true
     })
   }
 
   // Metrics plugin
-  if (isKeyEnabledInConfig('metrics', opts)) {
+  if (isKeyEnabled('metrics', opts)) {
     app.register(require('./lib/metrics-plugin'), opts.metrics)
   }
 
@@ -93,7 +92,7 @@ async function platformaticDB (app, opts) {
   if (opts.cors) {
     app.register(require('@fastify/cors'), opts.cors)
   }
-  if (isKeyEnabledInConfig('healthCheck', opts)) {
+  if (isKeyEnabled('healthCheck', opts)) {
     app.register(underPressure, {
       exposeStatusRoute: '/status',
       healthCheckInterval: opts.healthCheck.interval !== undefined ? opts.healthCheck.interval : 5000,
