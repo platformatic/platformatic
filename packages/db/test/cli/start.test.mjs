@@ -1,4 +1,4 @@
-import { connectAndResetDB, start } from './helper.mjs'
+import { connectAndResetDB, start } from './helper.js'
 import { test } from 'tap'
 import { join } from 'desm'
 import { request } from 'undici'
@@ -240,20 +240,6 @@ test('start command', async ({ equal, same, match, teardown }) => {
     }, 'pages response')
   }
 
-  child.kill('SIGINT')
-})
-
-test('default logger', async ({ equal, same, match, teardown }) => {
-  const db = await connectAndResetDB()
-  teardown(() => db.dispose())
-
-  await db.query(db.sql`CREATE TABLE pages (
-    id SERIAL PRIMARY KEY,
-    title VARCHAR(42)
-  );`)
-
-  const { child, url } = await start('-c', join(import.meta.url, '..', 'fixtures', 'no-server-logger.json'))
-  match(url, /http:\/\/127.0.0.1:[0-9]+/)
   child.kill('SIGINT')
 })
 

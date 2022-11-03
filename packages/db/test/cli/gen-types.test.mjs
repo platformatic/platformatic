@@ -1,6 +1,6 @@
 import path from 'path'
 import { rm, mkdir, cp } from 'fs/promises'
-import { cliPath } from './helper.mjs'
+import { cliPath } from './helper.js'
 import t from 'tap'
 import { execa } from 'execa'
 import stripAnsi from 'strip-ansi'

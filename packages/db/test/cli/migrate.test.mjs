@@ -1,4 +1,4 @@
-import { cliPath, connectAndResetDB, getFixturesConfigFileLocation } from './helper.mjs'
+import { cliPath, connectAndResetDB, getFixturesConfigFileLocation } from './helper.js'
 import { test } from 'tap'
 import { execa } from 'execa'
 import stripAnsi from 'strip-ansi'
