@@ -24,8 +24,6 @@ program.register('help schema', help.toStdout.bind(null, ['schema']))
 
 program.register('start', start)
 
-// TODO add help command
-
 export async function runService (argv) {
   const args = parseArgs(argv, {
     alias: {

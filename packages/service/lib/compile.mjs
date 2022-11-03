@@ -2,7 +2,7 @@ import { resolve, join } from 'path'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa } from 'execa'
-import loadConfig from './load-config.mjs'
+import loadConfig from './load-config.js'
 import { isFileAccessible } from './utils.js'
 
 async function getTSCExecutablePath (cwd) {

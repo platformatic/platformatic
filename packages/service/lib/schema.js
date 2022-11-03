@@ -103,6 +103,7 @@ const server = {
 }
 
 const plugin = {
+  $id: 'https://schemas.platformatic.dev/service/plugin',
   type: 'object',
   properties: {
     path: {
@@ -155,15 +156,44 @@ const plugin = {
   required: ['path']
 }
 
+const metrics = {
+  $id: 'https://schemas.platformatic.dev/db/metrics',
+  anyOf: [
+    { type: 'boolean' },
+    {
+      type: 'object',
+      properties: {
+        port: { type: 'integer' },
+        hostname: { type: 'string' },
+        auth: {
+          type: 'object',
+          properties: {
+            username: { type: 'string' },
+            password: { type: 'string' }
+          },
+          additionalProperties: false,
+          required: ['username', 'password']
+        }
+      },
+      additionalProperties: false
+    }
+  ]
+}
+
 const platformaticServiceSchema = {
   $id: 'https://schemas.platformatic.dev/db',
   type: 'object',
   properties: {
     server,
-    plugin
+    plugin,
+    metrics
   },
   additionalProperties: false,
-  required: ['plugin', 'server']
+  required: ['server']
 }
 
 module.exports.schema = platformaticServiceSchema
+module.exports.metrics = metrics
+module.exports.cors = cors
+module.exports.server = server
+module.exports.plugin = plugin

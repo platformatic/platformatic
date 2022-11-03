@@ -2,7 +2,7 @@ import { dirname } from 'path'
 import { FileWatcher } from '@platformatic/utils'
 import { buildServer } from '../index.js'
 import close from 'close-with-grace'
-import loadConfig from './load-config.mjs'
+import loadConfig from './load-config.js'
 import { compileWatch } from './compile.mjs'
 import { addLoggerToTheConfig } from './utils.js'
 
@@ -169,4 +169,3 @@ function exit (err) {
   process.exit(1)
 }
 /* c8 ignore stop */
-

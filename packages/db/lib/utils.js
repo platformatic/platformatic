@@ -1,6 +1,6 @@
 'use strict'
 
-const { relative, join, basename, dirname } = require('path')
+const { dirname } = require('path')
 const { access } = require('fs/promises')
 const { connect } = require('@platformatic/db-core')
 const { resolve } = require('path')
@@ -31,28 +31,6 @@ async function setupDB (log, config) {
   }
 }
 
-/* c8 ignore start */
-function addLoggerToTheConfig (config) {
-  if (config === undefined || config.server === undefined) return
-
-  // Set the logger if not present
-  let logger = config.server.logger
-  if (!logger) {
-    config.server.logger = { level: 'info' }
-    logger = config.server.logger
-  }
-
-  // If TTY use pino-pretty
-  if (process.stdout.isTTY) {
-    if (!logger.transport) {
-      logger.transport = {
-        target: 'pino-pretty'
-      }
-    }
-  }
-}
-/* c8 ignore stop */
-
 async function findConfigFile (directory) {
   const configFileNames = [
     'platformatic.db.json',
@@ -82,21 +60,9 @@ function urlDirname (url) {
   return dirname(fileURLToPath(url))
 }
 
-function getJSPluginPath (tsPluginPath, compileDir) {
-  const cwd = process.cwd()
-  const tsPluginRelativePath = relative(cwd, tsPluginPath)
-  const jsPluginRelativePath = join(
-    dirname(tsPluginRelativePath),
-    basename(tsPluginRelativePath, '.ts') + '.js'
-  )
-  return join(cwd, compileDir, jsPluginRelativePath)
-}
-
 module.exports = {
   setupDB,
-  getJSPluginPath,
   isFileAccessible,
-  addLoggerToTheConfig,
   findConfigFile,
   urlDirname
 }

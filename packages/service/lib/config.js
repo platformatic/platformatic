@@ -1,7 +1,7 @@
 'use strict'
 
 const ConfigManager = require('@platformatic/config')
-const { dirname, resolve, relative, isAbsolute } = require('path')
+const { dirname, resolve, relative } = require('path')
 const { schema } = require('./schema')
 const clone = require('rfdc')()
 
@@ -21,17 +21,22 @@ class ServiceConfigManager extends ConfigManager {
   }
 
   _transformConfig () {
-    const dirOfConfig = dirname(this.fullPath)
-
     // relative-to-absolute plugin path
-    this.current.plugin.path = this._fixRelativePath(this.current.plugin.path)
+    /* c8 ignore next 3 */
+    if (this.current.plugin) {
+      this.current.plugin.path = this._fixRelativePath(this.current.plugin.path)
+    }
   }
 
   _sanitizeConfig () {
     const sanitizedConfig = clone(this.current)
+    const dirOfConfig = dirname(this.fullPath)
 
     // relative-to-absolute plugin path
-    sanitizedConfig.plugin.path = relative(dirOfConfig, this.current.plugin.path)
+    /* c8 ignore next 3 */
+    if (this.current.plugin) {
+      sanitizedConfig.plugin.path = relative(dirOfConfig, this.current.plugin.path)
+    }
 
     return sanitizedConfig
   }

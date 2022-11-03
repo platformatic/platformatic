@@ -2,26 +2,24 @@
 
 const { test } = require('tap')
 const { buildServer } = require('..')
-const { buildConfig, connInfo } = require('./helper')
+require('./helper')
 const { request } = require('undici')
 
 test('healthcheck route enabled with interval', async ({ teardown, equal, same }) => {
-  const server = await buildServer(buildConfig({
+  let check = true
+  const server = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0,
       healthCheck: {
-        enabled: true,
-        interval: 2000
+        interval: 2000,
+        fn: function () {
+          return check
+        }
       }
     },
-    core: {
-      ...connInfo
-    },
-    authorization: {
-      adminSecret: 'secret'
-    }
-  }))
+    metrics: false
+  })
   teardown(server.stop)
 
   await server.listen()
@@ -32,8 +30,9 @@ test('healthcheck route enabled with interval', async ({ teardown, equal, same }
     same(body, { status: 'ok' })
   }
 
+  check = false
+
   {
-    await server.app.platformatic.db.dispose()
     const res = await (request(`${server.url}/status`))
     equal(res.statusCode, 503)
     const body = await res.body.json()
@@ -44,22 +43,19 @@ test('healthcheck route enabled with interval', async ({ teardown, equal, same }
       message: 'Service Unavailable'
     })
   }
+
+  check = true
 })
 
 test('healthcheck route enabled without interval', async ({ teardown, equal, same }) => {
-  const server = await buildServer(buildConfig({
+  const server = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0,
       healthCheck: true
     },
-    core: {
-      ...connInfo
-    },
-    authorization: {
-      adminSecret: 'secret'
-    }
-  }))
+    metrics: false
+  })
   teardown(server.stop)
 
   await server.listen()
@@ -69,34 +65,16 @@ test('healthcheck route enabled without interval', async ({ teardown, equal, sam
     const body = await res.body.json()
     same(body, { status: 'ok' })
   }
-
-  {
-    await server.app.platformatic.db.dispose()
-    const res = await (request(`${server.url}/status`))
-    equal(res.statusCode, 503)
-    const body = await res.body.json()
-    same(body, {
-      statusCode: 503,
-      code: 'FST_UNDER_PRESSURE',
-      error: 'Service Unavailable',
-      message: 'Service Unavailable'
-    })
-  }
 })
 
 test('healthcheck route disabled', async ({ teardown, equal, same }) => {
-  const server = await buildServer(buildConfig({
+  const server = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
-      ...connInfo
-    },
-    authorization: {
-      adminSecret: 'secret'
-    }
-  }))
+    metrics: false
+  })
   teardown(server.stop)
 
   await server.listen()

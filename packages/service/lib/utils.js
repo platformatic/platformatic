@@ -1,19 +1,9 @@
 'use strict'
 
-const { relative, join, basename, dirname } = require('path')
 const { access } = require('fs/promises')
-const { resolve } = require('path')
+const { resolve, join, relative, dirname, basename } = require('path')
 
-async function findConfigFile (directory) {
-  const configFileNames = [
-    'platformatic.service.json',
-    'platformatic.service.json5',
-    'platformatic.service.yaml',
-    'platformatic.service.yml',
-    'platformatic.service.toml',
-    'platformatic.service.tml'
-  ]
-
+async function findConfigFile (directory, configFileNames) {
   const configFilesAccessibility = await Promise.all(configFileNames.map((fileName) => isFileAccessible(fileName, directory)))
   const accessibleConfigFilename = configFileNames.find((value, index) => configFilesAccessibility[index])
   return accessibleConfigFilename
@@ -51,8 +41,19 @@ function addLoggerToTheConfig (config) {
 }
 /* c8 ignore stop */
 
+function getJSPluginPath (tsPluginPath, compileDir) {
+  const cwd = process.cwd()
+  const tsPluginRelativePath = relative(cwd, tsPluginPath)
+  const jsPluginRelativePath = join(
+    dirname(tsPluginRelativePath),
+    basename(tsPluginRelativePath, '.ts') + '.js'
+  )
+  return join(cwd, compileDir, jsPluginRelativePath)
+}
+
 module.exports = {
   findConfigFile,
   isFileAccessible,
+  getJSPluginPath,
   addLoggerToTheConfig
 }

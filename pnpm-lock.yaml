@@ -106,14 +106,13 @@ importers:
       '@fastify/basic-auth': ^4.0.0
       '@fastify/cors': ^8.0.0
       '@fastify/deepmerge': ^1.1.0
-      '@fastify/restartable': ^1.3.1
       '@fastify/static': ^6.5.0
       '@fastify/swagger': ^8.0.0
-      '@fastify/under-pressure': ^8.0.0
       '@platformatic/config': workspace:*
       '@platformatic/db-authorization': workspace:*
       '@platformatic/db-core': workspace:*
       '@platformatic/db-dashboard': workspace:*
+      '@platformatic/service': workspace:*
       '@platformatic/sql-graphql': workspace:*
       '@platformatic/sql-json-schema-mapper': workspace:*
       '@platformatic/sql-mapper': workspace:*
@@ -130,7 +129,6 @@ importers:
       fastify-metrics: ^10.0.0
       fastify-plugin: ^4.1.0
       fastify-print-routes: ^2.0.0
-      fastify-sandbox: ^0.8.0
       graphql: ^16.6.0
       help-me: ^4.1.0
       minimatch: ^5.1.0
@@ -155,14 +153,13 @@ importers:
       '@fastify/basic-auth': 4.0.0
       '@fastify/cors': 8.1.1
       '@fastify/deepmerge': 1.1.0
-      '@fastify/restartable': 1.3.1
       '@fastify/static': 6.5.0
       '@fastify/swagger': 8.1.0
-      '@fastify/under-pressure': 8.1.0
       '@platformatic/config': link:../config
       '@platformatic/db-authorization': link:../db-authorization
       '@platformatic/db-core': link:../db-core
       '@platformatic/db-dashboard': link:../db-dashboard
+      '@platformatic/service': link:../service
       '@platformatic/utils': link:../utils
       close-with-grace: 1.1.0
       commist: 3.1.2
@@ -175,7 +172,6 @@ importers:
       fastify-metrics: 10.0.0_fastify@4.9.2
       fastify-plugin: 4.3.0
       fastify-print-routes: 2.0.6
-      fastify-sandbox: 0.8.0
       graphql: 16.6.0
       help-me: 4.1.0
       minimatch: 5.1.0

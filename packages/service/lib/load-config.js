@@ -1,10 +1,21 @@
-import parseArgs from 'minimist'
-import { access } from 'fs/promises'
-import ConfigManager from './config.js'
-import deepmerge from '@fastify/deepmerge'
-import { findConfigFile } from './utils.js'
+'use strict'
 
-async function loadConfig (minimistConfig, _args, configOpts = {}) {
+const parseArgs = require('minimist')
+const { access } = require('fs/promises')
+const ConfigManager = require('./config.js')
+const deepmerge = require('@fastify/deepmerge')
+const { findConfigFile } = require('./utils.js')
+
+const ourConfigFiles = [
+  'platformatic.service.json',
+  'platformatic.service.json5',
+  'platformatic.service.yaml',
+  'platformatic.service.yml',
+  'platformatic.service.toml',
+  'platformatic.service.tml'
+]
+
+async function loadConfig (minimistConfig, _args, configOpts = {}, Manager = ConfigManager, configFileNames = ourConfigFiles) {
   const args = parseArgs(_args, deepmerge({ all: true })({
     string: ['allow-env'],
     default: {
@@ -18,7 +29,7 @@ async function loadConfig (minimistConfig, _args, configOpts = {}) {
   }, minimistConfig))
   try {
     if (!args.config) {
-      args.config = await findConfigFile(process.cwd())
+      args.config = await findConfigFile(process.cwd(), configFileNames)
     }
     await access(args.config)
   } catch (err) {
@@ -26,7 +37,7 @@ async function loadConfig (minimistConfig, _args, configOpts = {}) {
     process.exit(1)
   }
 
-  const configManager = new ConfigManager({
+  const configManager = new Manager({
     source: args.config,
     envWhitelist: [...args.allowEnv.split(',')],
     ...configOpts
@@ -51,4 +62,4 @@ function printConfigValidationErrors (configManager) {
   console.table(tabularData, ['path', 'message'])
 }
 
-export default loadConfig
+module.exports = loadConfig
