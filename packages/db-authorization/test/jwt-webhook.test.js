@@ -16,7 +16,9 @@ const agent = new Agent({
 setGlobalDispatcher(agent)
 
 async function buildAuthorizer (opts = {}) {
-  const app = fastify()
+  const app = fastify({
+    forceCloseConnections: true
+  })
   app.register(require('@fastify/cookie'))
   app.register(require('@fastify/session'), {
     cookieName: 'sessionId',
@@ -113,7 +115,9 @@ test('users can save and update their own pages, read everybody\'s and delete no
     alg,
     typ: 'JWT'
   }
-  const app = fastify()
+  const app = fastify({
+    forceCloseConnections: true
+  })
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
