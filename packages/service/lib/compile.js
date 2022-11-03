@@ -1,11 +1,13 @@
-import { resolve, join } from 'path'
-import pino from 'pino'
-import pretty from 'pino-pretty'
-import { execa } from 'execa'
-import loadConfig from './load-config.js'
-import { isFileAccessible } from './utils.js'
+'use strict'
+
+const { resolve, join } = require('path')
+const pino = require('pino')
+const pretty = require('pino-pretty')
+const loadConfig = require('./load-config.js')
+const { isFileAccessible } = require('./utils.js')
 
 async function getTSCExecutablePath (cwd) {
+  const { execa } = await import('execa')
   const [npmBinLocalFolder, npmBinGlobalFolder] = await Promise.all([
     execa('npm', ['bin'], { cwd }).then((result) => result.stdout),
     execa('npm', ['bin', '-g'], { cwd }).then((result) => result.stdout)
@@ -30,6 +32,7 @@ async function getTSCExecutablePath (cwd) {
 }
 
 async function execute (logger, args, config) {
+  const { execa } = await import('execa')
   const cwd = process.cwd()
 
   const tscExecutablePath = await getTSCExecutablePath(cwd)
@@ -54,6 +57,7 @@ async function execute (logger, args, config) {
 }
 
 async function compileWatch () {
+  const { execa } = await import('execa')
   const logger = pino(
     pretty({
       translateTime: 'SYS:HH:MM:ss',
@@ -146,4 +150,6 @@ async function compile (_args) {
   }
 }
 
-export { compile, compileWatch, execute }
+module.exports.compile = compile
+module.exports.compileWatch = compileWatch
+module.exports.execute = execute

@@ -3,7 +3,7 @@ import { FileWatcher } from '@platformatic/utils'
 import { buildServer } from '../index.js'
 import close from 'close-with-grace'
 import loadConfig from './load-config.js'
-import { compileWatch } from './compile.mjs'
+import { compileWatch } from './compile.js'
 import { addLoggerToTheConfig } from './utils.js'
 
 // TODO make sure coverage is reported for Windows

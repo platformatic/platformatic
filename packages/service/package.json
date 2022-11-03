@@ -23,6 +23,7 @@
     "standard": "^17.0.0",
     "strip-ansi": "^7.0.1",
     "tap": "^16.0.0",
+    "typescript": "^4.8.4",
     "undici": "^5.8.0",
     "why-is-node-running": "^2.2.2",
     "yaml": "^2.1.1"
@@ -56,5 +57,10 @@
     "pino": "^8.4.1",
     "pino-pretty": "^9.0.0",
     "rfdc": "^1.3.0"
+  },
+  "standard": {
+    "ignore": [
+      "**/dist/*"
+    ]
   }
 }

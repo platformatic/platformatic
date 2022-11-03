@@ -8,6 +8,7 @@ const ConfigManager = require('./lib/config.js')
 const { addLoggerToTheConfig, getJSPluginPath } = require('./lib/utils')
 const loadConfig = require('./lib/load-config')
 const { isKeyEnabled, deepmerge } = require('@platformatic/utils')
+const compiler = require('./lib/compile')
 
 function createServerConfig (config) {
   // convert the config file to a new structure
@@ -151,3 +152,4 @@ module.exports.createServerConfig = createServerConfig
 module.exports.platformaticService = platformaticService
 module.exports.addLoggerToTheConfig = addLoggerToTheConfig
 module.exports.loadConfig = loadConfig
+module.exports.compiler = compiler

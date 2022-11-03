@@ -8,7 +8,7 @@ import { readFile } from 'fs/promises'
 import { join } from 'desm'
 
 import start from './lib/start.mjs'
-// import { printGraphQLSchema, printOpenAPISchema } from './lib/gen-schema.mjs'
+import { compile } from './lib/compile.js'
 
 const help = helpMe({
   dir: join(import.meta.url, 'help'),
@@ -23,6 +23,7 @@ program.register('help start', help.toStdout.bind(null, ['start']))
 program.register('help schema', help.toStdout.bind(null, ['schema']))
 
 program.register('start', start)
+program.register('compile', compile)
 
 export async function runService (argv) {
   const args = parseArgs(argv, {
