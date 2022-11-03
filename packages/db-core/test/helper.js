@@ -1,7 +1,6 @@
 'use strict'
 
 const why = require('why-is-node-running')
-const { Agent, setGlobalDispatcher } = require('undici')
 
 // This file must be required/imported as the first file
 // in the test suite. It sets up the global environment
@@ -9,15 +8,6 @@ const { Agent, setGlobalDispatcher } = require('undici')
 setInterval(() => {
   why()
 }, 10000).unref()
-
-const agent = new Agent({
-  keepAliveTimeout: 10,
-  keepAliveMaxTimeout: 10,
-  tls: {
-    rejectUnauthorized: false
-  }
-})
-setGlobalDispatcher(agent)
 
 // Needed to work with dates & postgresql
 // See https://node-postgres.com/features/types/

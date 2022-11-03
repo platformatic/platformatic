@@ -5,6 +5,7 @@ const constructGraph = require('./lib/entity-to-type')
 const mercurius = require('mercurius')
 const graphql = require('graphql')
 const establishRelations = require('./lib/relationship')
+const setupSubscriptions = require('./lib/subscriptions')
 const scalars = require('graphql-scalars')
 
 async function mapperToGraphql (app, opts) {
@@ -24,6 +25,8 @@ async function mapperToGraphql (app, opts) {
     federationReplacements,
     federationMetadata: opts.federationMetadata
   }
+  const metaMap = new Map()
+
   if (Object.keys(mapper.entities).length === 0) {
     // no schema
     queryTopFields.hello = { type: graphql.GraphQLString }
@@ -31,7 +34,6 @@ async function mapperToGraphql (app, opts) {
       hello: () => 'Hello Platformatic!'
     }
   } else {
-    const metaMap = new Map()
     for (const entity of Object.values(mapper.entities)) {
       relations.push(...entity.relations)
       const meta = constructGraph(app, entity, graphOpts)
@@ -85,7 +87,21 @@ async function mapperToGraphql (app, opts) {
     delete resolvers.Mutation
   }
 
-  let sdl = graphql.printSchema(new graphql.GraphQLSchema({ query, mutation }))
+  let subscription
+  if (app.platformatic.mq) {
+    const entitiesList = Object.keys(app.platformatic.entities)
+    const ignoreList = opts.subscriptionIgnore || []
+
+    if (entitiesList.length - ignoreList.length > 0) {
+      opts.subscription = {
+        emitter: app.platformatic.mq
+      }
+      // TODO support ignoring some of those
+      subscription = setupSubscriptions(app, metaMap, resolvers, ignoreList)
+    }
+  }
+
+  let sdl = graphql.printSchema(new graphql.GraphQLSchema({ query, mutation, subscription }))
 
   if (opts.federationMetadata) {
     for (const replacement of federationReplacements) {
@@ -108,6 +124,7 @@ async function mapperToGraphql (app, opts) {
   }
 
   opts.graphiql = opts.graphiql !== false
+
   await app.register(mercurius, {
     ...opts,
     schema: sdl,

@@ -34,7 +34,7 @@
     "@databases/mysql": "^5.2.0",
     "@databases/pg": "^5.3.0",
     "@databases/sql": "^3.2.0",
-    "@databases/sqlite": "^4.0.0",
+    "@databases/sqlite": "^4.0.2",
     "camelcase": "^6.0.0",
     "fastify-plugin": "^4.1.0",
     "inflected": "^2.1.0"

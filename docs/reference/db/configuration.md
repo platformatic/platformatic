@@ -138,6 +138,23 @@ A **required** object with the following settings:
   }
   ```
 
+- **`events`** (`boolean` or `object`, default: `true`) — Controls the support for events published by the SQL mapping layer.
+  If enabled, this option add support for GraphQL Subscription over WebSocket. By default it uses an in-process message broker.
+  It's possible to configure it to use Redis instead.
+
+  _Examples_
+
+  ```json
+  {
+    "core": {
+      ...
+      "events": {
+        "connectionString": "redis://:password@redishost.com:6380/"
+      }
+    }
+  }
+  ```
+
 ### `dashboard`
 
 This setting can be a `boolean` or an `object`. If set to `true` the dashboard will be served at the root path (`/`).
@@ -174,11 +191,13 @@ An optional object with the following settings:
 
 An optional object that defines a plugin loaded by Platformatic DB.
 - **`path`** (**required**, `string`): Relative path to plugin's entry point.
-- **`watch`** (`boolean`, default: `true`): Watch plugin for changes and reload it automatically.
+- **`typescript`** (`object`): TypeScript configuration for the plugin.
+  - **`outDir`** (`string`): Relative path to the output directory for compiled JavaScript files.
+- **`watch`** (`boolean`, default: `true`): Watch plugin for changes and reload it automatically. Typescript files will be watched by `tsc` if `plugin.typescript` is defined.
 - **`watchOptions`** (`object`): Options to configure the plugin watcher.
   - **`hotReload`** (`boolean`, default: `true`) if `true` or not specified, the plugin is loaded using [`fastify-sandbox`](https://github.com/mcollina/fastify-sandbox), otherwise is loaded directly using `require`/`import` and the hot reload is not enabled
-  - **`ignore`** (`string[]`, default: `null`): List of glob patterns to ignore when watching for changes. If `null` or not specified, ignore rule is not applied.
-  - **`allow`** (`string[]`, default: `['*.js', '**/*.js']`): List of glob patterns to allow when watching for changes. If `null` or not specified, allow rule is not applied.
+  - **`ignore`** (`string[]`, default: `null`): List of glob patterns to ignore when watching for changes. If `null` or not specified, ignore rule is not applied. Ignore option doesn't work for typescript files.
+  - **`allow`** (`string[]`, default: `['*.js', '**/*.js']`): List of glob patterns to allow when watching for changes. If `null` or not specified, allow rule is not applied. Allow option doesn't work for typescript files.
 - **`options`** (`object`): Optional plugin options.
 
   _Example_

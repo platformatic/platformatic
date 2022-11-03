@@ -4,6 +4,7 @@ const { test } = require('tap')
 const Fastify = require('fastify')
 const { clear, connInfo } = require('./helper')
 const core = require('..')
+const { once } = require('events')
 
 async function createBasicPages (db, sql) {
   if (module.exports.isSQLite) {
@@ -158,4 +159,50 @@ test('openapi with an object', async ({ equal, teardown }) => {
     url: '/pages'
   })
   equal(res.statusCode, 200, '/pages status code')
+})
+
+test('mq is available', async ({ equal, same, teardown }) => {
+  const app = Fastify()
+  await app.register(core, {
+    ...connInfo,
+    events: true,
+    onDatabaseLoad
+  })
+  teardown(() => app.close())
+
+  const queue = await app.platformatic.subscribe([
+    await app.platformatic.entities.page.getSubscriptionTopic({ action: 'save' })
+  ])
+
+  const res = await app.inject({
+    method: 'POST',
+    url: '/graphql',
+    body: {
+      query: `
+          mutation {
+            savePage(input: { title: "Hello" }) {
+              id
+              title
+            }
+          }
+        `
+    }
+  })
+  equal(res.statusCode, 200, 'savePage status code')
+  same(res.json(), {
+    data: {
+      savePage: {
+        id: 1,
+        title: 'Hello'
+      }
+    }
+  }, 'savePage response')
+
+  const [ev] = await once(queue, 'data')
+  same(ev, {
+    topic: '/entity/page/save/1',
+    payload: {
+      id: 1
+    }
+  })
 })

@@ -24,12 +24,14 @@
   },
   "homepage": "https://github.com/plaformatic/platformatic#readme",
   "devDependencies": {
+    "@platformatic/sql-events": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
     "fastify": "^4.6.0",
     "snazzy": "^9.0.0",
     "standard": "^17.0.0",
     "tap": "^16.0.0",
-    "tsd": "^0.24.0"
+    "tsd": "^0.24.0",
+    "ws": "^8.9.0"
   },
   "dependencies": {
     "camelcase": "^6.0.0",
@@ -38,7 +40,7 @@
     "graphql-scalars": "^1.13.1",
     "graphql-type-json": "^0.3.2",
     "inflected": "^2.1.0",
-    "mercurius": "^11.0.0"
+    "mercurius": "^11.2.0"
   },
   "tsd": {
     "directory": "test/types"

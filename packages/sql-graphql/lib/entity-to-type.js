@@ -234,6 +234,7 @@ function constructGraph (app, entity, opts) {
     type,
     entity,
     loadMany,
+    getFields,
     fields
   }
 

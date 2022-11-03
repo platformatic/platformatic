@@ -1,5 +1,14 @@
 'use strict'
 
+const why = require('why-is-node-running')
+
+// This file must be required/imported as the first file
+// in the test suite. It sets up the global environment
+// to track the open handles via why-is-node-running.
+setInterval(() => {
+  why()
+}, 20000).unref()
+
 // Needed to work with dates & postgresql
 // See https://node-postgres.com/features/types/
 process.env.TZ = 'UTC'

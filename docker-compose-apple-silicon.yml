@@ -28,6 +28,7 @@ services:
     environment:
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
       - MYSQL_DATABASE=graph
-
-
-
+  redis:
+    ports:
+      - "6379:6379"
+    image: "redis:7"

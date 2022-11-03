@@ -23,7 +23,7 @@ async function createBasicPages (db, sql) {
   }
 }
 
-test('admin can do impersonate a users', async ({ pass, teardown, same, equal }) => {
+test('admin can impersonate a users', async ({ pass, teardown, same, equal }) => {
   const app = fastify()
   const adminSecret = require('crypto').randomUUID()
   app.register(core, {
