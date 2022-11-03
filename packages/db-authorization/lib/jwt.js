@@ -24,7 +24,7 @@ module.exports = fp(async function (app, opts) {
     app.register(jwt, opts)
   }
 
-  app.decorateRequest('createSession', function () {
+  app.decorateRequest('createJWTSession', function () {
     return this.jwtVerify()
   })
 })

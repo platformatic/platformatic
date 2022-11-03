@@ -15,7 +15,7 @@ module.exports = fp(async function (app, opts) {
   origin.pathname = '/'
   const pool = new Pool(origin)
   app.addHook('onClose', () => pool.close())
-  app.decorateRequest('createSession', async function () {
+  app.decorateRequest('createWebhookSession', async function () {
     const headers = {}
     for (const header of Object.keys(this.headers)) {
       if (!notAllowed.has(header)) {

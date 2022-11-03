@@ -12,9 +12,33 @@ const MissingNotNullableError = createError('PLT_DB_AUTH_NOT_NULLABLE_MISSING', 
 
 async function auth (app, opts) {
   if (opts.jwt) {
-    app.register(require('./lib/jwt'), opts.jwt)
+    await app.register(require('./lib/jwt'), opts.jwt)
+  }
+
+  if (opts.webhook) {
+    await app.register(require('./lib/webhook'), opts.webhook)
+  }
+
+  if (opts.jwt && opts.webhook) {
+    app.decorateRequest('createSession', async function () {
+      try {
+        // `createSession` actually exists only if jwt or webhook are enabled
+        // and creates a new `request.user` object
+        return await this.createJWTSession()
+      } catch (err) {
+        this.log.trace({ err })
+      }
+
+      return await this.createWebhookSession()
+    })
+  } else if (opts.jwt) {
+    app.decorateRequest('createSession', function () {
+      return this.createJWTSession()
+    })
   } else if (opts.webhook) {
-    app.register(require('./lib/webhook'), opts.webhook)
+    app.decorateRequest('createSession', function () {
+      return this.createWebhookSession()
+    })
   }
 
   const adminSecret = opts.adminSecret
