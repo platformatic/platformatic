@@ -1,7 +1,7 @@
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import loadConfig from './load-config.mjs'
-import { compiler } from '@platformatic/service'
+import { tsCompiler } from '@platformatic/service'
 
 async function compile (_args) {
   const logger = pino(
@@ -16,7 +16,7 @@ async function compile (_args) {
   const config = configManager.current
 
   try {
-    await compiler.execute(logger, args, config)
+    await tsCompiler.execute(logger, args, config)
     process.exit(0)
   } catch (error) {
     logger.error(error.message)
@@ -24,7 +24,7 @@ async function compile (_args) {
   }
 }
 
-const compileWatch = compiler.compileWatch
+const compileWatch = tsCompiler.compileWatch
 
 export {
   compile,

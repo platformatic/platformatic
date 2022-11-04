@@ -155,4 +155,4 @@ module.exports.createServerConfig = createServerConfig
 module.exports.platformaticService = platformaticService
 module.exports.addLoggerToTheConfig = addLoggerToTheConfig
 module.exports.loadConfig = loadConfig
-module.exports.compiler = compiler
+module.exports.tsCompiler = compiler
