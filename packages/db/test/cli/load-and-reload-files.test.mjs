@@ -27,7 +27,7 @@ test('load and reload', { skip: isWindows }, async ({ teardown, equal, same, com
     ),
 
     writeFile(config, `
-{ 
+{
   "server": {
     "logger": {
       "level": "info"
@@ -149,7 +149,7 @@ test('hotreload disabled', { skip: isWindows }, async ({ teardown, equal, same, 
     ),
 
     writeFile(config, `
-{ 
+{
   "server": {
     "logger": {
       "level": "info"
@@ -232,7 +232,7 @@ test('hotreload disabled with default export', { skip: isWindows }, async ({ tea
     ),
 
     writeFile(config, `
-{ 
+{
   "server": {
     "logger": {
       "level": "info"
@@ -308,7 +308,7 @@ test('hotreload disabled with default export', { skip: isWindows }, async ({ tea
   await Promise.all([
     writeFile(file, `
       Object.defineProperty(exports, "__esModule", { value: true });
-      exports.default = (app) => {
+      exports.default = async (app) => {
         app.get('/test', {}, async function (request, response) {
           return { res: "plugin, version 1"}
         })
@@ -398,7 +398,7 @@ test('do not crash on reload', { skip: isWindows }, async ({ teardown, match, co
     ),
 
     writeFile(config, `
-{ 
+{
   "server": {
     "logger": {
       "level": "info"
@@ -465,7 +465,7 @@ test('log the error', { skip: isWindows }, async ({ teardown, match, comment }) 
     ),
 
     writeFile(config, `
-{ 
+{
   "server": {
     "logger": {
       "level": "info"
