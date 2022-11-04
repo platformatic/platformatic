@@ -180,10 +180,10 @@ test('nested routes', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/posts/1/owner'
+      url: '/posts/3/owner'
     })
     equal(res.statusCode, 200, 'GET /posts/:id/owner status code')
-    same(res.json().name, owners[0].name, 'GET /posts/:id/owner response')
+    same(res.json().name, owners[1].name, 'GET /posts/:id/owner response')
   }
 
   {
@@ -212,5 +212,109 @@ test('nested routes', async (t) => {
       error: 'Not Found',
       statusCode: 404
     }, 'GET /posts/:id/owner response')
+  }
+})
+
+test('nested routes with recursive FK', async (t) => {
+  const { pass, teardown, same, equal, matchSnapshot } = t
+  t.snapshotFile = resolve(__dirname, 'tap-snapshots', 'nested-routes-openapi-recursive.cjs')
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      if (isMysql) {
+        await db.query(sql`
+          CREATE TABLE people (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            FOREIGN KEY (parent_id) REFERENCES people(id)
+          );
+        `)
+      } else if (isSQLite) {
+        await db.query(sql`
+          CREATE TABLE people (
+            id INTEGER PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            FOREIGN KEY (parent_id) REFERENCES people(id)
+          );
+        `)
+      } else {
+        await db.query(sql`
+          CREATE TABLE people (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            parent_id INTEGER REFERENCES people(id)
+          );
+        `)
+      }
+    }
+  })
+  app.register(sqlOpenAPI)
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/documentation/json'
+    })
+    const openapi = res.json()
+    matchSnapshot(openapi, 'matches expected OpenAPI defs')
+  }
+
+  const res = await app.inject({
+    method: 'POST',
+    url: '/people',
+    body: {
+      name: 'Dad'
+    }
+  })
+  equal(res.statusCode, 200, 'POST /people status code')
+  const dad = res.json()
+
+  const res2 = await app.inject({
+    method: 'POST',
+    url: '/people',
+    body: {
+      name: 'Child',
+      parentId: dad.id
+    }
+  })
+  equal(res.statusCode, 200, 'POST /people status code')
+  const child = res2.json()
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/people'
+    })
+    equal(res.statusCode, 200, 'GET /people status code')
+    same(res.json(), [{
+      id: 1,
+      name: 'Dad',
+      parentId: null
+    }, {
+      id: 2,
+      name: 'Child',
+      parentId: 1
+    }], 'GET /people response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: `/people/${child.id}/parent`
+    })
+    equal(res.statusCode, 200, 'GET /people/:id/parent status code')
+    same(res.json(), {
+      id: 1,
+      name: 'Dad',
+      parentId: null
+    }, 'GET /people/:id/parent response')
   }
 })
