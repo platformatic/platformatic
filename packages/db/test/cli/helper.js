@@ -114,6 +114,7 @@ async function cleanSQLite (dbLocation, i = 0) {
 async function start (...args) {
   const { execa } = await import('execa')
   const child = execa('node', [cliPath, ...args])
+  child.stderr.pipe(process.stdout)
   const output = child.stdout.pipe(split(function (line) {
     try {
       const obj = JSON.parse(line)

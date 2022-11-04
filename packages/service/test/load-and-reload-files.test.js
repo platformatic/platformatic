@@ -396,3 +396,61 @@ test('hot reload disabled, ESM', async ({ teardown, equal, pass, same }) => {
     same(await res.body.json(), { res: 'plugin, version 1' }, 'get rest plugin')
   }
 })
+
+test('hot reload disabled, with default export', async ({ teardown, equal, pass, same }) => {
+  const file = join(os.tmpdir(), `some-plugin-hot-rel-test-${process.pid}.js`)
+
+  await writeFile(file, `
+    Object.defineProperty(exports, "__esModule", { value: true })
+    exports.default = async function plugin (app) {
+      app.get('/test', {}, async function (request, response) {
+        return { res: "plugin, version 1"}
+      })
+    }`)
+
+  const server = await buildServer({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugin: {
+      path: file,
+      stopTimeout: 1000,
+      watch: true,
+      watchOptions: {
+        hotReload: false
+      }
+    },
+    metrics: false
+  })
+  teardown(server.stop)
+  await server.listen()
+
+  {
+    const res = await request(`${server.url}/test`, {
+      method: 'GET'
+    })
+    equal(res.statusCode, 200)
+    same(await res.body.json(), { res: 'plugin, version 1' }, 'get rest plugin')
+  }
+
+  await writeFile(file, `
+    Object.defineProperty(exports, "__esModule", { value: true })
+    exports.default = async function plugin (app) {
+      app.get('/test', {}, async function (request, response) {
+        return { res: "plugin, version 2"}
+      })
+    }`
+  )
+
+  await server.restart()
+
+  {
+    const res = await request(`${server.url}/test`, {
+      method: 'GET'
+    })
+    equal(res.statusCode, 200)
+    // must be unchanged
+    same(await res.body.json(), { res: 'plugin, version 1' }, 'get rest plugin')
+  }
+})

@@ -24,6 +24,8 @@ export const cliPath = join(import.meta.url, '..', '..', 'service.mjs')
 
 export async function start (...args) {
   const child = execa('node', [cliPath, ...args])
+  child.stderr.pipe(process.stdout)
+
   const output = child.stdout.pipe(split(function (line) {
     try {
       const obj = JSON.parse(line)
