@@ -3,7 +3,7 @@
 import commist from 'commist'
 import minimist from 'minimist'
 import { runDB } from '@platformatic/db/db.mjs'
-import { runService } from '@platformatic/db/service.mjs'
+import { runService } from '@platformatic/service/service.mjs'
 import { login } from '@platformatic/authenticate/authenticate.js'
 import { readFile } from 'fs/promises'
 import { join } from 'desm'

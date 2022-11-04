@@ -48,7 +48,7 @@
     "fastify": "^4.6.0",
     "fastify-metrics": "^10.0.0",
     "fastify-plugin": "^4.1.0",
-    "fastify-sandbox": "^0.8.0",
+    "fastify-sandbox": "^0.9.0",
     "graphql": "^16.6.0",
     "help-me": "^4.1.0",
     "mercurius": "^11.3.0",

@@ -20,7 +20,6 @@ const program = commist({ maxDistance: 4 })
 
 program.register('help', help.toStdout)
 program.register('help start', help.toStdout.bind(null, ['start']))
-program.register('help schema', help.toStdout.bind(null, ['schema']))
 
 program.register('start', start)
 program.register('compile', compile)
