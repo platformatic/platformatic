@@ -104,7 +104,7 @@ async function platformaticDB (app, opts) {
         }
       })
     // c8 fails in reporting the coverage of this else branch, so we ignore it
-    /* c8 ignore next 4 */
+    /* c8 ignore next 7 */
     } else {
       let plugin = await import(`file://${pluginOptions.path}`)
       if (plugin.__esModule === true) {
