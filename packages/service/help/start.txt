@@ -1,0 +1,23 @@
+Start the Platformatic Service with the following command:
+
+``` bash
+ $ platformatic service start
+ ```
+
+You will need a  configuration file. Here is an example to get you started,
+save the following as `platformatic.service.json`:
+
+``` json
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0,
+    "logger": {
+      "level": "info"
+    }
+  },
+  "plugin": {
+    "path": "./plugin.js"
+  }
+}
+```

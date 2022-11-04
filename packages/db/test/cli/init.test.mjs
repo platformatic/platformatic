@@ -3,7 +3,7 @@ import fs from 'fs/promises'
 import { tmpdir } from 'os'
 import t from 'tap'
 import { execa } from 'execa'
-import { cliPath } from './helper.mjs'
+import { cliPath } from './helper.js'
 
 const moviesMigrationDo = `
 -- Add SQL in this file to create the database tables for your API

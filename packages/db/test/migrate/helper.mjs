@@ -1,6 +1,6 @@
 import { join } from 'desm'
 import createConnectionPool from '@databases/pg'
-import { cleanSQLite } from '../cli/helper.mjs'
+import { cleanSQLite } from '../cli/helper.js'
 
 const cliPath = join(import.meta.url, '..', '..', 'lib', 'migrate.mjs')
 

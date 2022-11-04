@@ -4,7 +4,7 @@ import { writeFile, mkdtemp } from 'fs/promises'
 import { setTimeout as sleep } from 'timers/promises'
 import t, { test } from 'tap'
 import { request } from 'undici'
-import { start } from './helper.mjs'
+import { start } from './helper.js'
 
 t.jobs = 5
 

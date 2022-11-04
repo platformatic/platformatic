@@ -1,4 +1,4 @@
-import { cliPath } from './helper.mjs'
+import { cliPath } from './helper.js'
 import { test } from 'tap'
 import { join } from 'desm'
 import { execa } from 'execa'

@@ -1,9 +1,9 @@
 'use strict'
 
 const { test } = require('tap')
-const { isFileAccessible, urlDirname, getJSPluginPath } = require('../lib/utils')
+const { isFileAccessible, urlDirname } = require('../lib/utils')
 const os = require('os')
-const { basename, join } = require('path')
+const { basename } = require('path')
 const isWindows = os.platform() === 'win32'
 
 test('urlDirname', ({ same, plan }) => {
@@ -33,12 +33,4 @@ test('isFileAccessible', async ({ same, plan }) => {
     same(await isFileAccessible(file), true)
     same(await isFileAccessible('/impossible/path/impossible.file'), false)
   }
-})
-
-test('should get the path of a JS plugin', (t) => {
-  t.plan(1)
-
-  const result = getJSPluginPath('plugin.ts', 'dist')
-  const expected = join(process.cwd(), 'dist', 'plugin.js')
-  t.equal(result, expected)
 })

@@ -111,3 +111,5 @@ packages/db-dashboard/build/
 playwright-report
 .DS_Store
 .swp
+
+packages/service/test/tmp 

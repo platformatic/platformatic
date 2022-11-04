@@ -1,0 +1,16 @@
+{
+  "server": {
+    "logger": {
+      "level": "info"
+    },
+    "hostname": "127.0.0.1",
+    "port": "3042"
+  },
+  "plugin": {
+    "path": "plugin.ts",
+    "watch": true,
+    "typescript": {
+      "outDir": "dist"
+    }
+  }
+}

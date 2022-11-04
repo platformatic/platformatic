@@ -3,7 +3,8 @@ import pretty from 'pino-pretty'
 import Fastify from 'fastify'
 import graphql from 'graphql'
 import loadConfig from './load-config.mjs'
-import { createServerConfig, platformaticDB } from '../index.js'
+import { createServerConfig } from '@platformatic/utils'
+import { platformaticDB } from '../index.js'
 
 async function buildServer (_args, onServer) {
   const logger = pino(pretty({
@@ -13,7 +14,7 @@ async function buildServer (_args, onServer) {
   }))
 
   try {
-    const { configManager } = await loadConfig({}, _args)
+    const { configManager } = await loadConfig({}, _args, {})
 
     await configManager.parseAndValidate()
     const config = configManager.current

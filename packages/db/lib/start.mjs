@@ -4,7 +4,7 @@ import { buildServer } from '../index.js'
 import close from 'close-with-grace'
 import loadConfig from './load-config.mjs'
 import { compileWatch } from './compile.mjs'
-import { addLoggerToTheConfig } from './utils.js'
+import { addLoggerToTheConfig } from '@platformatic/service'
 
 // TODO make sure coverage is reported for Windows
 // Currently C8 is not reporting it
