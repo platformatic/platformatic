@@ -231,6 +231,7 @@ test('nested routes with recursive FK', async (t) => {
           CREATE TABLE people (
             id SERIAL PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
+            parent_id BIGINT UNSIGNED,
             FOREIGN KEY (parent_id) REFERENCES people(id)
           );
         `)
@@ -239,6 +240,7 @@ test('nested routes with recursive FK', async (t) => {
           CREATE TABLE people (
             id INTEGER PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
+            parent_id BIGINT UNSIGNED,
             FOREIGN KEY (parent_id) REFERENCES people(id)
           );
         `)
