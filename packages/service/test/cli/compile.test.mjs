@@ -12,9 +12,6 @@ function urlDirname (url) {
   return path.dirname(fileURLToPath(url))
 }
 
-t.jobs = 6
-t.plan(6)
-
 t.test('should compile typescript plugin', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
   const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-1')
