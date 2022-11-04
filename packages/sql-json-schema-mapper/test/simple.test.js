@@ -4,7 +4,7 @@ const t = require('tap')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
 const { clear, connInfo, isSQLite, isMariaDB } = require('./helper')
-const { mapSQLEntityToJSONSchema } = require('..')
+const { mapSQLEntityToJSONSchema, noRequiredSuffix } = require('..')
 const { test } = t
 
 async function createBasicPages (db, sql) {
@@ -45,6 +45,7 @@ test('simple db, simple rest API', async (t) => {
   {
     const page = app.platformatic.entities.page
     const pageJsonSchema = mapSQLEntityToJSONSchema(page)
+    const pageJsonSchemaNoRequired = mapSQLEntityToJSONSchema(page, true)
 
     t.equal(pageJsonSchema.$id, 'Page')
     t.equal(pageJsonSchema.title, 'Page')
@@ -59,5 +60,19 @@ test('simple db, simple rest API', async (t) => {
       t.same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
     }
     t.same(pageJsonSchema.required, ['title'])
+
+    t.equal(pageJsonSchemaNoRequired.$id, 'Page' + noRequiredSuffix)
+    t.equal(pageJsonSchemaNoRequired.title, 'Page')
+    t.equal(pageJsonSchemaNoRequired.description, 'A Page')
+    t.equal(pageJsonSchemaNoRequired.type, 'object')
+    t.same(pageJsonSchemaNoRequired.properties.id, { type: 'integer' })
+    t.same(pageJsonSchemaNoRequired.properties.title, { type: 'string' })
+    t.same(pageJsonSchemaNoRequired.properties.description, { type: 'string', nullable: true })
+    if (isMariaDB) {
+      t.same(pageJsonSchemaNoRequired.properties.metadata, { type: 'string', nullable: true })
+    } else {
+      t.same(pageJsonSchemaNoRequired.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
+    }
+    t.same(pageJsonSchemaNoRequired.required, [])
   }
 })

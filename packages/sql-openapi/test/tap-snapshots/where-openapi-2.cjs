@@ -24,7 +24,49 @@ Object {
         "title": "Owner",
         "type": "object",
       },
+      "OwnerNoRequired": Object {
+        "description": "A Owner",
+        "properties": Object {
+          "id": Object {
+            "type": "integer",
+          },
+          "name": Object {
+            "nullable": true,
+            "type": "string",
+          },
+        },
+        "required": Array [],
+        "title": "Owner",
+        "type": "object",
+      },
       "Post": Object {
+        "description": "A Post",
+        "properties": Object {
+          "counter": Object {
+            "nullable": true,
+            "type": "integer",
+          },
+          "id": Object {
+            "type": "integer",
+          },
+          "longText": Object {
+            "nullable": true,
+            "type": "string",
+          },
+          "ownerId": Object {
+            "nullable": true,
+            "type": "integer",
+          },
+          "title": Object {
+            "nullable": true,
+            "type": "string",
+          },
+        },
+        "required": Array [],
+        "title": "Post",
+        "type": "object",
+      },
+      "PostNoRequired": Object {
         "description": "A Post",
         "properties": Object {
           "counter": Object {
@@ -263,7 +305,7 @@ Object {
               "application/json": Object {
                 "schema": Object {
                   "items": Object {
-                    "$ref": "#/components/schemas/Owner",
+                    "$ref": "#/components/schemas/OwnerNoRequired",
                   },
                   "type": "array",
                 },
@@ -377,7 +419,7 @@ Object {
             "content": Object {
               "application/json": Object {
                 "schema": Object {
-                  "$ref": "#/components/schemas/Owner",
+                  "$ref": "#/components/schemas/OwnerNoRequired",
                 },
               },
             },
@@ -543,7 +585,7 @@ Object {
               "application/json": Object {
                 "schema": Object {
                   "items": Object {
-                    "$ref": "#/components/schemas/Post",
+                    "$ref": "#/components/schemas/PostNoRequired",
                   },
                   "type": "array",
                 },
@@ -996,7 +1038,7 @@ Object {
               "application/json": Object {
                 "schema": Object {
                   "items": Object {
-                    "$ref": "#/components/schemas/Post",
+                    "$ref": "#/components/schemas/PostNoRequired",
                   },
                   "type": "array",
                 },
@@ -1116,7 +1158,7 @@ Object {
             "content": Object {
               "application/json": Object {
                 "schema": Object {
-                  "$ref": "#/components/schemas/Post",
+                  "$ref": "#/components/schemas/PostNoRequired",
                 },
               },
             },
@@ -1284,7 +1326,7 @@ Object {
             "content": Object {
               "application/json": Object {
                 "schema": Object {
-                  "$ref": "#/components/schemas/Owner",
+                  "$ref": "#/components/schemas/OwnerNoRequired",
                 },
               },
             },
