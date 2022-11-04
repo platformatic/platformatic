@@ -27,7 +27,7 @@ test('load and reload', { skip: isWindows }, async ({ teardown, equal, same, com
     ),
 
     writeFile(config, `
-{ 
+{
   "server": {
     "logger": {
       "level": "info"
@@ -149,7 +149,7 @@ test('hotreload disabled', { skip: isWindows }, async ({ teardown, equal, same, 
     ),
 
     writeFile(config, `
-{ 
+{
   "server": {
     "logger": {
       "level": "info"
@@ -210,6 +210,175 @@ test('hotreload disabled', { skip: isWindows }, async ({ teardown, equal, same, 
   child.kill('SIGINT')
 })
 
+test('hotreload disabled with default export', { skip: isWindows }, async ({ teardown, equal, same, comment }) => {
+  const db = await connectAndResetDB()
+  teardown(() => db.dispose())
+
+  await db.query(db.sql`CREATE TABLE pages (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(42)
+  );`)
+  const file = join(os.tmpdir(), `some-plugin-${process.pid}.js`)
+  const config = join(os.tmpdir(), `config-${process.pid}.json`)
+
+  await Promise.all([
+    writeFile(file, `
+      Object.defineProperty(exports, "__esModule", { value: true })
+      exports.default = async function plugin (app) {
+        app.get('/test', {}, async function (request, response) {
+          return { res: "plugin, version 1"}
+        })
+      }`
+    ),
+
+    writeFile(config, `
+{
+  "server": {
+    "logger": {
+      "level": "info"
+    },
+    "hostname": "127.0.0.1",
+    "port": 0
+  },
+  "plugin": {
+    "path": "./${basename(file)}",
+    "stopTimeout": 1000,
+    "watch": true,
+    "watchOptions": {
+      "hotReload": false
+    }
+  },
+  "core": {
+    "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres"
+  },
+  "authorization": {}
+}
+    `)
+  ])
+
+  comment('files written')
+
+  const { child, url } = await start('-c', config)
+
+  comment('server started')
+
+  {
+    const res = await request(`${url}/test`, {
+      method: 'GET'
+    })
+    equal(res.statusCode, 200)
+    same(await res.body.json(), { res: 'plugin, version 1' }, 'get rest plugin')
+  }
+
+  await writeFile(file, `
+    Object.defineProperty(exports, "__esModule", { value: true })
+    exports.default = async function plugin (app) {
+      app.get('/test', {}, async function (request, response) {
+        return { res: "plugin, version 2"}
+      })
+    }`
+  )
+
+  await sleep(500)
+  child.kill('SIGUSR2')
+
+  {
+    const res = await request(`${url}/test`, {
+      method: 'GET'
+    })
+    equal(res.statusCode, 200)
+    // must be unchanged
+    same(await res.body.json(), { res: 'plugin, version 1' }, 'get rest plugin')
+  }
+
+  child.kill('SIGINT')
+})
+
+test('hotreload disabled with default export', { skip: isWindows }, async ({ teardown, equal, same, comment }) => {
+  const db = await connectAndResetDB()
+  teardown(() => db.dispose())
+
+  await db.query(db.sql`CREATE TABLE pages (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(42)
+  );`)
+  const file = join(os.tmpdir(), `some-plugin-${process.pid}.js`)
+  const config = join(os.tmpdir(), `config-${process.pid}.json`)
+
+  await Promise.all([
+    writeFile(file, `
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.default = async (app) => {
+        app.get('/test', {}, async function (request, response) {
+          return { res: "plugin, version 1"}
+        })
+      };`
+    ),
+
+    writeFile(config, `
+{
+  "server": {
+    "logger": {
+      "level": "info"
+    },
+    "hostname": "127.0.0.1",
+    "port": 0
+  },
+  "plugin": {
+    "path": "./${basename(file)}",
+    "stopTimeout": 1000,
+    "watch": true,
+    "watchOptions": {
+      "hotReload": false
+    }
+  },
+  "core": {
+    "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres"
+  },
+  "authorization": {}
+}
+    `)
+  ])
+
+  comment('files written')
+
+  const { child, url } = await start('-c', config)
+
+  comment('server started')
+
+  {
+    const res = await request(`${url}/test`, {
+      method: 'GET'
+    })
+    equal(res.statusCode, 200)
+    same(await res.body.json(), { res: 'plugin, version 1' }, 'get rest plugin')
+  }
+
+  await writeFile(file, `
+    module.exports = async function plugin (app) {
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.default = (app) => {
+        app.get('/test', {}, async function (request, response) {
+          return { res: "plugin, version 2"}
+        })
+      };`
+  )
+
+  await sleep(500)
+  child.kill('SIGUSR2')
+
+  {
+    const res = await request(`${url}/test`, {
+      method: 'GET'
+    })
+    equal(res.statusCode, 200)
+    // must be unchanged
+    same(await res.body.json(), { res: 'plugin, version 1' }, 'get rest plugin')
+  }
+
+  child.kill('SIGINT')
+})
+
 test('do not crash on reload', { skip: isWindows }, async ({ teardown, match, comment }) => {
   const db = await connectAndResetDB()
   teardown(() => db.dispose())
@@ -229,7 +398,7 @@ test('do not crash on reload', { skip: isWindows }, async ({ teardown, match, co
     ),
 
     writeFile(config, `
-{ 
+{
   "server": {
     "logger": {
       "level": "info"
@@ -296,7 +465,7 @@ test('log the error', { skip: isWindows }, async ({ teardown, match, comment }) 
     ),
 
     writeFile(config, `
-{ 
+{
   "server": {
     "logger": {
       "level": "info"
