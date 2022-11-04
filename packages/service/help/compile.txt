@@ -1,0 +1,12 @@
+Compile typescript plugins.
+``` bash
+  $ platformatic service compile
+```
+
+As a result of executing this command, the Platformatic DB will compile typescript
+plugins in the `outDir` directory. 
+
+If not specified, the configuration specified will be loaded from
+`platformatic.service.json`, `platformatic.service.yml`, or `platformatic.service.tml` in the current directory.
+You can find more details about the configuration format at:
+https://oss.platformatic.dev/docs/reference/service/configuration.
