@@ -15,5 +15,8 @@
   },
   "types": {
     "autogenerate": true
+  },
+  "plugin": {
+    "path": "./plugin.js"
   }
 }
