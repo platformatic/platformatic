@@ -94,6 +94,11 @@ When a request is received, Platformatic sends a `POST` to the webhook, replicat
 
 In the Webhook case, the HTTP response contains the roles/user information as HTTP headers.
 
+## JWT and Webhook
+
+It's possible to configure the server to first try to validate a JWT token and if that is not found,
+forward the request to the webhook.
+
 ## HTTP Headers
 
 :::danger

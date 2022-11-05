@@ -1,4 +1,4 @@
-import { cliPath, connectAndResetDB } from './helper.mjs'
+import { cliPath, connectAndResetDB } from './helper.js'
 import { test } from 'tap'
 import { join } from 'desm'
 import { request } from 'undici'

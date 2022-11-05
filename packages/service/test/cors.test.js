@@ -1,23 +1,26 @@
 'use strict'
 
-const { buildConfig, connInfo } = require('./helper')
+require('./helper')
 const { test } = require('tap')
-const { buildServer } = require('..')
+const { buildServer, platformaticService } = require('..')
 const { request } = require('undici')
 
 test('CORS is disabled by default', async ({ teardown, equal, pass, same }) => {
-  const server = await buildServer(buildConfig({
+  const server = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
-      ...connInfo
-    }
-  }))
+    metrics: false
+  }, async function (app, opts) {
+    app.register(platformaticService, opts)
+    app.post('/login', (req, reply) => {})
+  })
+
+  // handles login
   teardown(server.stop)
   await server.listen()
-  const res = await (request(`${server.url}/_admin/login`, {
+  const res = await (request(`${server.url}/login`, {
     method: 'OPTIONS',
     headers: {
       'Access-Control-Request-Method': 'POST',
@@ -26,8 +29,9 @@ test('CORS is disabled by default', async ({ teardown, equal, pass, same }) => {
   }))
   equal(res.statusCode, 404)
 })
+
 test('CORS can be enabled', async ({ teardown, equal, pass, same }) => {
-  const server = await buildServer(buildConfig({
+  const server = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -36,10 +40,11 @@ test('CORS can be enabled', async ({ teardown, equal, pass, same }) => {
         methods: ['GET', 'POST']
       }
     },
-    core: {
-      ...connInfo
-    }
-  }))
+    metrics: false
+  }, async function (app, opts) {
+    app.register(platformaticService, opts)
+    app.post('/login', (req, reply) => {})
+  })
   teardown(server.stop)
   await server.listen()
   const res = await (request(`${server.url}/_admin/login`, {

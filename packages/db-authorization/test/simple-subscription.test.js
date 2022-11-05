@@ -597,10 +597,6 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
     }))
   }
 
-  // There is a race condition that could lead to the pageDeleted event
-  // arriving before the pageSaved event
-  await sleep(1000)
-
   {
     const query = `subscription {
       pageDeleted {
@@ -718,6 +714,10 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
       title: 'Hello World'
     }, 'POST /pages/1 response')
   }
+
+  // There is a race condition that could lead to the pageDeleted event
+  // arriving before the pageSaved event
+  await sleep(1000)
 
   {
     const res = await app.inject({

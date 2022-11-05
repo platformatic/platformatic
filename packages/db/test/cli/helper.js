@@ -1,9 +1,13 @@
+'use strict'
+
 const why = require('why-is-node-running')
 const { Agent, setGlobalDispatcher } = require('undici')
 const { join } = require('path')
 const createConnectionPool = require('@databases/pg')
 const { setTimeout } = require('timers/promises')
 const { rm } = require('fs/promises')
+const split = require('split2')
+const { on } = require('events')
 
 // This file must be required/imported as the first file
 // in the test suite. It sets up the global environment
@@ -107,9 +111,37 @@ async function cleanSQLite (dbLocation, i = 0) {
   }
 }
 
-module.exports = {
-  cliPath,
-  cleanSQLite,
-  connectAndResetDB,
-  getFixturesConfigFileLocation
+async function start (...args) {
+  const { execa } = await import('execa')
+  const child = execa('node', [cliPath, ...args])
+  child.stderr.pipe(process.stdout)
+  const output = child.stdout.pipe(split(function (line) {
+    try {
+      const obj = JSON.parse(line)
+      return obj
+    } catch (err) {
+      console.log(line)
+    }
+  }))
+  child.ndj = output
+
+  const errorTimeout = setTimeout(() => {
+    throw new Error('Couldn\'t start server')
+  }, 10000)
+
+  for await (const messages of on(output, 'data')) {
+    for (const message of messages) {
+      const url = message.url
+      if (url !== undefined) {
+        clearTimeout(errorTimeout)
+        return { child, url, output }
+      }
+    }
+  }
 }
+
+module.exports.cliPath = cliPath
+module.exports.cleanSQLite = cleanSQLite
+module.exports.connectAndResetDB = connectAndResetDB
+module.exports.getFixturesConfigFileLocation = getFixturesConfigFileLocation
+module.exports.start = start

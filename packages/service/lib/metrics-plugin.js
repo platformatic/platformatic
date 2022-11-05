@@ -58,7 +58,7 @@ module.exports = fp(async function (app, opts) {
   })
 
   if (server && server.address().port !== port) {
-    server.close()
+    await new Promise((resolve) => server.close(resolve))
     server = null
     handler = null
   }
