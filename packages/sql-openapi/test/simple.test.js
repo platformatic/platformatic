@@ -411,7 +411,7 @@ test('list', async ({ pass, teardown, same, equal }) => {
   }
 
   {
-    const url = '/posts?totalCount=true&limit=120&offset=10'
+    const url = '/posts?totalCount=true&limit=99&offset=10'
     const res = await app.inject({ method: 'GET', url })
     equal(res.statusCode, 200, `${url} status code`)
     equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
@@ -421,7 +421,7 @@ test('list', async ({ pass, teardown, same, equal }) => {
   }
 
   {
-    const url = '/posts?totalCount=true&limit=101&offset=3'
+    const url = '/posts?totalCount=true&limit=100&offset=3'
     const res = await app.inject({ method: 'GET', url })
     equal(res.statusCode, 200, `${url} status code`)
     equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)

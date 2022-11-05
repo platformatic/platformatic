@@ -388,7 +388,7 @@ test('foreign keys', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('limit should be 10 by default 100 at max', async ({ pass, teardown, same, equal }) => {
+test('limit should be 10 by default 100 at max', async ({ pass, teardown, same, fail, match }) => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
@@ -443,11 +443,87 @@ test('limit should be 10 by default 100 at max', async ({ pass, teardown, same, 
 
   same(await (await entity.find({ limit: 1, offset: 0 })).length, 1)
 
-  same(await (await entity.find({ limit: 200 })).length, max)
-
   same(await (await entity.find({ limit: 0 })).length, 0)
 
   same(await (await entity.find({ limit: -1 })).length, defaultLimit)
 
   same(await (await entity.find({ limit: 1, offset: -1 })).length, 1)
+
+  try {
+    await entity.find({ limit: 200 })
+    fail('Expected error for limit exceeding max allowed value')
+  } catch (e) {
+    match(e, new Error(`Params limit=200 not allowed. Max accepted value ${max}.`))
+  }
+})
+
+test('limit must accept custom configuration', async ({ pass, teardown, same, fail, match }) => {
+  const customLimitConf = {
+    default: 1,
+    max: 5
+  }
+  const mapper = await connect({
+    ...connInfo,
+    log: fakeLogger,
+    async onDatabaseLoad (db, sql) {
+      teardown(() => db.dispose())
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      if (isSQLite) {
+        await db.query(sql`CREATE TABLE posts (
+          id INTEGER PRIMARY KEY,
+          title VARCHAR(42),
+          long_text TEXT,
+          counter INTEGER
+        );`)
+      } else {
+        await db.query(sql`CREATE TABLE posts (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(42),
+          long_text TEXT,
+          counter INTEGER
+        );`)
+      }
+    },
+    limit: customLimitConf
+  })
+
+  const entity = mapper.entities.post
+
+  const posts = []
+
+  for (let i = 0; i <= 10; i++) {
+    posts.push({
+      title: 'Dog',
+      longText: 'Foo',
+      counter: i
+    })
+  }
+
+  await entity.insert({
+    inputs: posts
+  })
+
+  same(await (await entity.find()).length, customLimitConf.default)
+
+  same(await (await entity.find({ limit: 1 })).length, 1)
+
+  same(await (await entity.find({ offset: 3 })).length, customLimitConf.default)
+
+  same(await (await entity.find({ limit: 1, offset: 0 })).length, 1)
+
+  same(await (await entity.find({ limit: 0 })).length, 0)
+
+  same(await (await entity.find({ limit: -1 })).length, customLimitConf.default)
+
+  same(await (await entity.find({ limit: 1, offset: -1 })).length, 1)
+
+  try {
+    await entity.find({ limit: 200 })
+    fail('Expected error for limit exceeding max allowed value')
+  } catch (e) {
+    match(e, new Error(`Params limit=200 not allowed. Max accepted value ${customLimitConf.max}.`))
+  }
 })

@@ -7,7 +7,7 @@ const {
   sanitizeLimit
 } = require('./utils')
 
-function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations, queries, autoTimestamp) {
+function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations, queries, autoTimestamp, limitConfig) {
   const entityName = toSingular(table)
 
   // Fields remapping
@@ -209,7 +209,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
       query = sql`${query} ORDER BY ${sql.join(orderBy, sql`, `)}`
     }
 
-    query = sql`${query} LIMIT ${sanitizeLimit(opts.limit)}`
+    query = sql`${query} LIMIT ${sanitizeLimit(opts.limit, limitConfig)}`
     if (opts.offset !== undefined && opts.offset >= 0) {
       query = sql`${query} OFFSET ${opts.offset}`
     }
@@ -259,7 +259,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
   }
 }
 
-async function buildEntity (db, sql, log, table, queries, autoTimestamp, ignore) {
+async function buildEntity (db, sql, log, table, queries, autoTimestamp, ignore, limitConfig) {
   // Compute the columns
   const columns = (await queries.listColumns(db, sql, table)).filter((c) => !ignore[c.column_name])
   const fields = columns.reduce((acc, column) => {
@@ -310,7 +310,7 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, ignore)
     }
   }
 
-  const entity = createMapper(db, sql, log, table, fields, primaryKey, currentRelations, queries, autoTimestamp)
+  const entity = createMapper(db, sql, log, table, fields, primaryKey, currentRelations, queries, autoTimestamp, limitConfig)
   entity.relations = currentRelations
 
   return entity
