@@ -5,7 +5,7 @@
  * Make sure to inspect the output below.  Do not ignore changes!
  */
 'use strict'
-exports[`platformatic/db/openapi/orderby one-level order by > GET /documentation/json response 1`] = `
+exports['platformatic/db/openapi/orderby one-level order by > GET /documentation/json response 1'] = `
 Object {
   "components": Object {
     "schemas": Object {

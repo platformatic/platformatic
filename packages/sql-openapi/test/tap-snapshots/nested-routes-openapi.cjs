@@ -5,7 +5,7 @@
  * Make sure to inspect the output below.  Do not ignore changes!
  */
 'use strict'
-exports[`platformatic/db/openapi/where nested routes > matches expected OpenAPI defs 1`] = `
+exports['platformatic/db/openapi/where nested routes > matches expected OpenAPI defs 1'] = `
 Object {
   "components": Object {
     "schemas": Object {
