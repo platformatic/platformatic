@@ -47,7 +47,7 @@
     "playwright": "^1.24.2",
     "react-test-renderer": "^18.2.0",
     "vite": "^3.0.4",
-    "vitest": "^0.24.0"
+    "vitest": "^0.25.0"
   },
   "standard": {
     "globals": [
