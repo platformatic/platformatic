@@ -11,6 +11,9 @@ const help = await readFile(join(import.meta.url, '..', 'help', 'help.txt'), 'ut
 // This reads a file from packages/db
 const helpDB = await readFile(join(import.meta.url, '..', '..', 'db', 'help', 'help.txt'), 'utf8')
 
+// This reads a file from packages/service
+const helpService = await readFile(join(import.meta.url, '..', '..', 'service', 'help', 'help.txt'), 'utf8')
+
 test('version', async (t) => {
   const { stdout } = await execa('node', [cliPath, '--version'])
   t.ok(stdout.includes('v' + version))
@@ -61,4 +64,9 @@ test('prints the help of db', async (t) => {
 test('prints the help if not commands are specified', async (t) => {
   const { stdout } = await execa('node', [cliPath])
   t.equal(stdout + EOL, help)
+})
+
+test('prints the help of service', async (t) => {
+  const { stdout } = await execa('node', [cliPath, 'help', 'service'])
+  t.equal(stdout + EOL, helpService)
 })

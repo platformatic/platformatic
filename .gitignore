@@ -41,6 +41,9 @@ build/Release
 node_modules/
 jspm_packages/
 
+# Dependency lock file
+package-lock.json
+
 # TypeScript v1 declaration files
 typings/
 
@@ -111,3 +114,5 @@ packages/db-dashboard/build/
 playwright-report
 .DS_Store
 .swp
+
+packages/service/test/tmp 

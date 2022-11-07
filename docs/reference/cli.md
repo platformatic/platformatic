@@ -85,6 +85,7 @@ Welcome to Platformatic. Available commands are:
 * help - Display this message
 * help <command> - shows more information about a command.
 * db - start Platformatic DB; type `platformatic db help` to know more.
+* service - start Platformatic Service; type `platformatic service help` to know more.
 ```
 
 
@@ -327,3 +328,5 @@ If not specified, the configuration specified will be loaded from
 `platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
 You can find more details about the configuration format at:
 https://oss.platformatic.dev/docs/reference/db/configuration.
+
+  

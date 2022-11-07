@@ -4,7 +4,7 @@ const os = require('os')
 const { writeFile } = require('fs/promises')
 const { join } = require('path')
 const { test } = require('tap')
-const FileWatcher = require('../lib/file-watcher')
+const { FileWatcher } = require('..')
 
 test('should throw an error if there is no path argument', async ({ throws, plan }) => {
   plan(1)

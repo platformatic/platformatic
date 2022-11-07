@@ -1,4 +1,4 @@
-import { cliPath, cleanSQLite } from './helper.mjs'
+import { cliPath, cleanSQLite } from './helper.js'
 import { test } from 'tap'
 import { request } from 'undici'
 import { execa } from 'execa'

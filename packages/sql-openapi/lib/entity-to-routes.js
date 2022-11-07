@@ -280,13 +280,16 @@ async function entityPlugin (app, opts) {
     const targetEntityName = singularize(camelcase(relation.foreign_table_name))
     const targetEntity = app.platformatic.entities[targetEntityName]
     const targetForeignKeyCamelcase = camelcase(relation.foreign_column_name)
+    const targetColumnCamelcase = camelcase(relation.column_name)
+    const targetRelation = relation.column_name.replace(/_id$/, '')
     const targetEntitySchema = {
       $ref: targetEntity.name + '#'
     }
     const entityLinks = getEntityLinksForEntity(app, targetEntity)
     // e.g. getMovieForQuote
     const operationId = `get${capitalize(targetEntity.singularName)}For${capitalize(entity.singularName)}`
-    app.get(`/:${camelcase(entity.primaryKey)}/${targetEntity.singularName}`, {
+    // We need to get the relation name from the PK column:
+    app.get(`/:${camelcase(entity.primaryKey)}/${targetRelation}`, {
       schema: {
         operationId,
         params: getPrimaryKeyParams(entity),
@@ -306,16 +309,16 @@ async function entityPlugin (app, opts) {
     }, async function (request, reply) {
       const ctx = { app: this, reply }
       // check that the entity exists
-      const resEntity = await entity.count({
+      const resEntity = (await entity.find({
         ctx,
         where: {
           [primaryKeyCamelcase]: {
             eq: request.params[primaryKeyCamelcase]
           }
         }
-      })
+      }))[0]
 
-      if (resEntity === 0) {
+      if (!resEntity) {
         return reply.callNotFound()
       }
 
@@ -324,7 +327,7 @@ async function entityPlugin (app, opts) {
         ctx,
         where: {
           [targetForeignKeyCamelcase]: {
-            eq: request.params[primaryKeyCamelcase]
+            eq: resEntity[targetColumnCamelcase]
           }
         },
         fields: request.query.fields
