@@ -164,7 +164,13 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
           throw new Error(`Unsupported where clause ${JSON.stringify(where[key])}`)
         }
         const fieldWrap = fields[field]
-        criteria.push(sql`${sql.ident(field)} ${sql.__dangerous__rawValue(operator)} ${computeCriteriaValue(fieldWrap, value[key])}`)
+        if (operator === '=' && value[key] === null) {
+          criteria.push(sql`${sql.ident(field)} IS NULL`)
+        } else if (operator === '<>' && value[key] === null) {
+          criteria.push(sql`${sql.ident(field)} IS NOT NULL`)
+        } else {
+          criteria.push(sql`${sql.ident(field)} ${sql.__dangerous__rawValue(operator)} ${computeCriteriaValue(fieldWrap, value[key])}`)
+        }
       }
     }
     return criteria
