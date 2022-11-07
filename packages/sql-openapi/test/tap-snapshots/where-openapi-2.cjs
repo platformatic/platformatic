@@ -5,7 +5,7 @@
  * Make sure to inspect the output below.  Do not ignore changes!
  */
 'use strict'
-exports['platformatic/db/openapi/where nested where > matches expected OpenAPI defs 1'] = `
+exports[`platformatic/db/openapi/where nested where > matches expected OpenAPI defs 1`] = `
 Object {
   "components": Object {
     "schemas": Object {
@@ -65,12 +65,11 @@ Object {
         "operationId": "getOwners",
         "parameters": Array [
           Object {
-            "description": "Default: 10. Max accept value: 100. If an higher value is provided will be capped to the actual accepted max value.",
+            "description": "Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": Object {
-              "default": 10,
               "type": "integer",
             },
           },
@@ -569,12 +568,11 @@ Object {
         "operationId": "getPosts",
         "parameters": Array [
           Object {
-            "description": "Default: 10. Max accept value: 100. If an higher value is provided will be capped to the actual accepted max value.",
+            "description": "Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": Object {
-              "default": 10,
               "type": "integer",
             },
           },

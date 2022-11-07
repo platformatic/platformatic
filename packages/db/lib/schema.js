@@ -164,7 +164,7 @@ const core = {
       properties: {
         default: {
           type: 'integer',
-          default: 10 
+          default: 10
         },
         max: {
           type: 'integer',

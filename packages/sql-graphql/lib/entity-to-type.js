@@ -17,7 +17,7 @@ const ascDesc = new graphql.GraphQLEnumType({
 
 const limitType = new graphql.GraphQLScalarType({
   name: 'LimitInt',
-  description: 'Default: 10. Max accept value: 100. If an higher value is provided will be capped to the actual accepted max value.'
+  description: 'Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown'
 })
 
 function constructGraph (app, entity, opts) {

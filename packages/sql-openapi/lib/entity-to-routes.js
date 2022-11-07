@@ -93,7 +93,7 @@ async function entityPlugin (app, opts) {
       querystring: {
         type: 'object',
         properties: {
-          limit: { type: 'integer', default: 10, description: 'Default: 10. Max accept value: 100. If an higher value is provided will be capped to the actual accepted max value.' },
+          limit: { type: 'integer', description: 'Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown' },
           offset: { type: 'integer' },
           totalCount: { type: 'boolean', default: false },
           fields,

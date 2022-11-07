@@ -5,7 +5,7 @@
  * Make sure to inspect the output below.  Do not ignore changes!
  */
 'use strict'
-exports['test/cli/env.test.mjs TAP env white list schema > must match snapshot 1'] = `
+exports[`test/cli/env.test.mjs TAP env white list schema > must match snapshot 1`] = `
 type Query {
   getPageById(id: ID!): Page
   pages(limit: LimitInt, offset: Int, orderBy: [PageOrderByArguments], where: PageWhereArguments): [Page]
@@ -18,7 +18,7 @@ type Page {
 }
 
 """
-Default: 10. Max accept value: 100. If an higher value is provided will be capped to the actual accepted max value.
+Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown
 """
 scalar LimitInt
 

@@ -5,7 +5,7 @@
  * Make sure to inspect the output below.  Do not ignore changes!
  */
 'use strict'
-exports['test/cli/schema.test.mjs TAP print the graphql schema to stdout > must match snapshot 1'] = `
+exports[`test/cli/schema.test.mjs TAP print the graphql schema to stdout > must match snapshot 1`] = `
 type Query {
   getGraphById(id: ID!): Graph
   graphs(limit: LimitInt, offset: Int, orderBy: [GraphOrderByArguments], where: GraphWhereArguments): [Graph]
@@ -18,7 +18,7 @@ type Graph {
 }
 
 """
-Default: 10. Max accept value: 100. If an higher value is provided will be capped to the actual accepted max value.
+Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown
 """
 scalar LimitInt
 
@@ -89,7 +89,7 @@ type GraphDeleted {
 }
 `
 
-exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must match snapshot 1'] = `
+exports[`test/cli/schema.test.mjs TAP print the openapi schema to stdout > must match snapshot 1`] = `
 {
   "openapi": "3.0.3",
   "info": {
@@ -123,13 +123,12 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
         "parameters": [
           {
             "schema": {
-              "type": "integer",
-              "default": 10
+              "type": "integer"
             },
             "in": "query",
             "name": "limit",
             "required": false,
-            "description": "Default: 10. Max accept value: 100. If an higher value is provided will be capped to the actual accepted max value."
+            "description": "Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown"
           },
           {
             "schema": {
