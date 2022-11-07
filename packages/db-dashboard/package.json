@@ -23,24 +23,24 @@
     "lint": "standard | snazzy"
   },
   "dependencies": {
-    "@fastify/static": "^6.5.0",
-    "@mui/material": "^5.10.11",
-    "@platformatic/db-ra-data-rest": "workspace:*",
-    "inflected": "^2.1.0",
-    "react-admin": "^4.4.4"
+    "@fastify/static": "^6.5.0"
   },
   "devDependencies": {
     "@graphiql/toolkit": "^0.8.0",
+    "@mui/material": "^5.10.12",
+    "@platformatic/db-ra-data-rest": "workspace:*",
     "@playwright/test": "^1.24.2",
     "@vitejs/plugin-react": "^2.0.0",
     "bulma": "^0.9.4",
     "graphiql": "^2.0.0",
     "happy-dom": "^7.0.0",
     "history": "^5.3.0",
+    "inflected": "^2.1.0",
     "json-format-highlight": "^1.0.4",
     "jsoneditor": "^9.9.0",
     "playwright": "^1.24.2",
     "react": "^18.2.0",
+    "react-admin": "^4.5.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.3.0",
     "react-router-dom": "^6.3.0",
