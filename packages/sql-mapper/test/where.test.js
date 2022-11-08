@@ -551,3 +551,50 @@ test('limit must accept custom configuration', async ({ pass, teardown, same, fa
     match(e, new Error(`Param limit=200 not allowed. Max accepted value ${customLimitConf.max}.`))
   }
 })
+
+test('is NULL', async ({ pass, teardown, same, equal }) => {
+  const mapper = await connect({
+    ...connInfo,
+    log: fakeLogger,
+    async onDatabaseLoad (db, sql) {
+      teardown(() => db.dispose())
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      if (isSQLite) {
+        await db.query(sql`CREATE TABLE posts (
+          id INTEGER PRIMARY KEY,
+          title VARCHAR(42)
+        );`)
+      } else {
+        await db.query(sql`CREATE TABLE posts (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(42)
+        );`)
+      }
+    }
+  })
+
+  const entity = mapper.entities.post
+
+  const posts = [{
+    title: 'Dog'
+  }, {
+    title: null
+  }]
+
+  await entity.insert({
+    inputs: posts
+  })
+
+  same(await entity.find({ where: { title: { eq: null } } }), [{
+    id: '2',
+    title: null
+  }])
+
+  same(await entity.find({ where: { title: { neq: null } } }), [{
+    id: '1',
+    title: 'Dog'
+  }])
+})

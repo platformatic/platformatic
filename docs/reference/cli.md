@@ -8,6 +8,12 @@ import TOCInline from '@theme/TOCInline';
 
 # Platformatic CLI
 
+<!--
+WARNING: THIS DOCUMENTATION IS AUTOMATICALLY GENERATED. DO NOT MANUALLY EDIT IT.
+
+TO UPDATE THIS DOCUMENTATION, RUN: scripts/gen-cli-doc.mjs
+-->
+
 ## Installation and usage
 
 Install the Platformatic CLI as a dependency for your project:
@@ -111,7 +117,7 @@ If not specified, the configuration specified will be loaded from
 You can find more details about the configuration format at:
 https://oss.platformatic.dev/docs/reference/db/configuration.
 
-  
+
 #### help
 
 Available commands:
@@ -126,7 +132,7 @@ Available commands:
 * `types` - generate typescript types for entities.
 * `schema` - generate and print api schema.
 
-  
+
 #### init
 
 Initiate default Platformatic DB application:
@@ -146,7 +152,7 @@ Options:
   * `-t, --types <boolean>`: Set true to enable type autogeneration. Default: `true`.
   * `-ts, --typescript <boolean>`: Set true to enable TypeScript plugins. Default: `false`.
 
-  
+
 #### migrate
 
 Apply all configured migrations to the database:
@@ -190,7 +196,7 @@ If not specified, the configuration specified will be loaded from
 You can find more details about the configuration format at:
 https://oss.platformatic.dev/docs/reference/db/configuration.
 
-  
+
 #### schema
 
 Generate a schema from the database and prints it to standard output:
@@ -207,7 +213,7 @@ If not specified, the configuration specified will be loaded from
 You can find more details about the configuration format at:
 https://oss.platformatic.dev/docs/reference/db/configuration.
 
-  
+
 #### seed
 
 Load a seed into the database. This is a convenience method that loads
@@ -242,7 +248,7 @@ If not specified, the configuration specified will be loaded from
 You can find more details about the configuration format at:
 https://oss.platformatic.dev/docs/reference/db/configuration.
 
-  
+
 #### start
 
 Start the Platformatic DB server with the following command:
@@ -289,7 +295,7 @@ If not specified, the configuration specified will be loaded from `platformatic.
 the configuration format at:
 https://oss.platformatic.dev/docs/reference/db/configuration.
 
-  
+
 #### types
 
 Generate typescript types for your entities from the database.
@@ -329,4 +335,62 @@ If not specified, the configuration specified will be loaded from
 You can find more details about the configuration format at:
 https://oss.platformatic.dev/docs/reference/db/configuration.
 
-  
+
+### service
+
+```bash
+platformatic service <command>
+```
+
+
+#### compile
+
+Compile typescript plugins.
+``` bash
+  $ platformatic service compile
+```
+
+As a result of executing this command, the Platformatic DB will compile typescript
+plugins in the `outDir` directory. 
+
+If not specified, the configuration specified will be loaded from
+`platformatic.service.json`, `platformatic.service.yml`, or `platformatic.service.tml` in the current directory.
+You can find more details about the configuration format at:
+https://oss.platformatic.dev/docs/reference/service/configuration.
+
+
+#### help
+
+Available commands:
+
+* `help` - show this help message.
+* `help <command>` - shows more information about a command.
+* `start` - start the server.
+
+
+#### start
+
+Start the Platformatic Service with the following command:
+
+``` bash
+ $ platformatic service start
+ ```
+
+You will need a  configuration file. Here is an example to get you started,
+save the following as `platformatic.service.json`:
+
+``` json
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0,
+    "logger": {
+      "level": "info"
+    }
+  },
+  "plugin": {
+    "path": "./plugin.js"
+  }
+}
+```
+

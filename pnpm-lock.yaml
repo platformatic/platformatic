@@ -291,7 +291,7 @@ importers:
       standard: ^17.0.0
       swagger-ui-react: 4.13.0
       vite: ^3.0.4
-      vitest: ^0.24.0
+      vitest: ^0.25.0
     dependencies:
       '@fastify/static': 6.5.0
     devDependencies:
@@ -316,29 +316,29 @@ importers:
       standard: 17.0.0
       swagger-ui-react: 4.13.0_biqbaboplfbrettd7655fr4n2y
       vite: 3.2.2
-      vitest: 0.24.5_happy-dom@7.6.6
+      vitest: 0.25.0_happy-dom@7.6.6
 
   packages/db-ra-data-rest:
     specifiers:
-      '@vitest/coverage-c8': ^0.24.3
+      '@vitest/coverage-c8': ^0.25.0
       query-string: ^7.1.1
       ra-core: ^4.4.1
       rimraf: ^3.0.2
       snazzy: ^9.0.0
       standard: ^17.0.0
       vite: ^3.0.4
-      vitest: ^0.24.0
+      vitest: ^0.25.0
       whatwg-fetch: ^3.6.2
     dependencies:
       query-string: 7.1.1
       ra-core: 4.5.0_mz7ownnpwqeg25gh7pey2ymfbi
     devDependencies:
-      '@vitest/coverage-c8': 0.24.5
+      '@vitest/coverage-c8': 0.25.0
       rimraf: 3.0.2
       snazzy: 9.0.0
       standard: 17.0.0
       vite: 3.2.2
-      vitest: 0.24.5
+      vitest: 0.25.0
       whatwg-fetch: 3.6.2
 
   packages/service:
@@ -1655,7 +1655,7 @@ packages:
   /@types/concat-stream/1.6.1:
     resolution: {integrity: sha512-eHE4cQPoj6ngxBZMvVf6Hw7Mh4jMW4U9lpGmS5GBPB9RYxlFg+CHaVN7ErNY4W9XfLIEn20b4VDYaIrbq0q4uA==}
     dependencies:
-      '@types/node': 8.10.66
+      '@types/node': 18.11.9
     dev: true
 
   /@types/cuid/1.3.1:
@@ -1675,7 +1675,7 @@ packages:
   /@types/form-data/0.0.33:
     resolution: {integrity: sha512-8BSvG1kGm83cyJITQMZSulnl6QV8jqAGreJsc5tPu1Jq0vTSOiY/k24Wx82JRpWwZSqrala6sd5rWi6aNXvqcw==}
     dependencies:
-      '@types/node': 8.10.66
+      '@types/node': 18.11.9
     dev: true
 
   /@types/hast/2.3.4:
@@ -1790,11 +1790,11 @@ packages:
       - supports-color
     dev: true
 
-  /@vitest/coverage-c8/0.24.5:
-    resolution: {integrity: sha512-955yK/SdSBZPYrSXgXB0F+0JnOX5EY9kSL7ywJ4rNajmkFUhwLjuKm13Xb6YKSyIY/g5WvbBnyowqfNRxBJ3ww==}
+  /@vitest/coverage-c8/0.25.0:
+    resolution: {integrity: sha512-rAeekiideYYvuHk0/nfMvlPiJhyeE9oFFL/Zxp5ZvRF3p2AvQaj8Z6Na//08lIxvm6oi9rDijdkYE0CFMtT7uA==}
     dependencies:
       c8: 7.12.0
-      vitest: 0.24.5
+      vitest: 0.25.0
     transitivePeerDependencies:
       - '@edge-runtime/vm'
       - '@vitest/browser'
@@ -1843,6 +1843,11 @@ packages:
       acorn: ^6.0.0 || ^7.0.0 || ^8.0.0
     dependencies:
       acorn: 8.8.1
+    dev: true
+
+  /acorn-walk/8.2.0:
+    resolution: {integrity: sha512-k+iyHEuPgSw6SbuDpGQM+06HQUa04DZ3o+F6CSzXMvvI5KMvnaEqXe+YVe555R9nn6GPt404fos4wcgpw12SDA==}
+    engines: {node: '>=0.4.0'}
     dev: true
 
   /acorn/8.8.1:
@@ -7836,8 +7841,8 @@ packages:
       fsevents: 2.3.2
     dev: true
 
-  /vitest/0.24.5:
-    resolution: {integrity: sha512-zw6JhPUHtLILQDe5Q39b/SzoITkG+R7hcFjuthp4xsi6zpmfQPOZcHodZ+3bqoWl4EdGK/p1fuMiEwdxgbGLOA==}
+  /vitest/0.25.0:
+    resolution: {integrity: sha512-CVgBdKSeA27mowKC/C31Tx7ZBjRoyasq/yW7zoqUaCdKaOsjdzRUH5KgSL3eG36DzaaUsbnwWPUbAOtFz5k6tQ==}
     engines: {node: '>=v14.16.0'}
     hasBin: true
     peerDependencies:
@@ -7861,9 +7866,12 @@ packages:
       '@types/chai': 4.3.3
       '@types/chai-subset': 1.3.3
       '@types/node': 18.11.9
+      acorn: 8.8.1
+      acorn-walk: 8.2.0
       chai: 4.3.6
       debug: 4.3.4
       local-pkg: 0.4.2
+      source-map: 0.6.1
       strip-literal: 0.4.2
       tinybench: 2.3.1
       tinypool: 0.3.0
@@ -7878,8 +7886,8 @@ packages:
       - terser
     dev: true
 
-  /vitest/0.24.5_happy-dom@7.6.6:
-    resolution: {integrity: sha512-zw6JhPUHtLILQDe5Q39b/SzoITkG+R7hcFjuthp4xsi6zpmfQPOZcHodZ+3bqoWl4EdGK/p1fuMiEwdxgbGLOA==}
+  /vitest/0.25.0_happy-dom@7.6.6:
+    resolution: {integrity: sha512-CVgBdKSeA27mowKC/C31Tx7ZBjRoyasq/yW7zoqUaCdKaOsjdzRUH5KgSL3eG36DzaaUsbnwWPUbAOtFz5k6tQ==}
     engines: {node: '>=v14.16.0'}
     hasBin: true
     peerDependencies:
@@ -7903,10 +7911,13 @@ packages:
       '@types/chai': 4.3.3
       '@types/chai-subset': 1.3.3
       '@types/node': 18.11.9
+      acorn: 8.8.1
+      acorn-walk: 8.2.0
       chai: 4.3.6
       debug: 4.3.4
       happy-dom: 7.6.6
       local-pkg: 0.4.2
+      source-map: 0.6.1
       strip-literal: 0.4.2
       tinybench: 2.3.1
       tinypool: 0.3.0
