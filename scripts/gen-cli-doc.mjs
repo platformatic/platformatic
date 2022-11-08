@@ -84,6 +84,8 @@ The Platformatic CLI provides the following commands:
 
 `
 
+// Command: help
+
 const cliHelpDir = join(import.meta.url, '../packages/cli/help')
 const cliHelp = path.join(cliHelpDir, 'help.txt')
 
@@ -94,7 +96,11 @@ out += `
 ${mainHelp.trim()}
 \`\`\`
 
+`;
 
+// Command: db
+
+out += `
 ### db
 
 \`\`\`bash
@@ -113,7 +119,31 @@ for (const dbHelp of dbHelps) {
 #### ${dbHelp.replace('.txt', '')}
 
 ${content}
-  `
+`
+}
+
+// Command: service
+
+out += `
+### service
+
+\`\`\`bash
+platformatic service <command>
+\`\`\`
+
+`
+
+const serviceHelpsDir = join(import.meta.url, '../packages/service/help')
+const serviceHelps = await readdir(serviceHelpsDir)
+
+for (const serviceHelp of serviceHelps) {
+  const serviceHelpPath = path.join(serviceHelpsDir, serviceHelp)
+  const content = await readFile(serviceHelpPath)
+  out += `
+#### ${serviceHelp.replace('.txt', '')}
+
+${content}
+`
 }
 
 await writeFile(join(import.meta.url, '..', 'docs', 'reference', 'cli.md'), out)
