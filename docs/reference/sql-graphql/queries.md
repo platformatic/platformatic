@@ -135,7 +135,7 @@ Limit's values can be customized through configuration:
 }
 ```
 
-*Limit* only accepts values `>= 0`. Otherwise the default behavior is applied.
+*Limit* only accepts values `>= 0`. Otherwise an error is return.
 
 
 ### Offset
@@ -143,4 +143,4 @@ Limit's values can be customized through configuration:
 By default *offset* is not applied to the request.
 Clients can override this behavior by passing a value.
 
-*Offset* only accepts values `>= 0`. Otherwise the default behavior is applied.
+*Offset* only accepts values `>= 0`. Otherwise an error is return.
