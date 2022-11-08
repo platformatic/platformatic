@@ -19,6 +19,7 @@
     "src"
   ],
   "scripts": {
+    "prepublish": "npm run build",
     "build": "vite build",
     "test": "standard | snazzy && vitest run --coverage",
     "test:watch": "vitest watch",
