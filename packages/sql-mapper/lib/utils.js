@@ -15,11 +15,15 @@ function toSingular (str) {
  */
 function sanitizeLimit (unsafeLimit, conf) {
   const defaultLimit = conf?.default ?? 10
-  const limit = (unsafeLimit !== undefined && unsafeLimit >= 0) ? unsafeLimit : defaultLimit
+  const limit = (unsafeLimit !== undefined) ? unsafeLimit : defaultLimit
   const max = conf?.max ?? 100
 
   if (limit > max) {
-    throw new Error(`Params limit=${limit} not allowed. Max accepted value ${max}.`)
+    throw new Error(`Param limit=${limit} not allowed. Max accepted value ${max}.`)
+  }
+
+  if (limit < 0) {
+    throw new Error(`Param limit=${limit} not allowed. It must be not negative value.`)
   }
 
   return limit

@@ -445,15 +445,27 @@ test('limit should be 10 by default 100 at max', async ({ pass, teardown, same, 
 
   same(await (await entity.find({ limit: 0 })).length, 0)
 
-  same(await (await entity.find({ limit: -1 })).length, defaultLimit)
+  try {
+    await entity.find({ limit: -1 })
+    fail('Expected error for limit not allowed value')
+  } catch (e) {
+    match(e, new Error(`Param limit=-1 not allowed. It must be not negative value.`))
+  }
 
-  same(await (await entity.find({ limit: 1, offset: -1 })).length, 1)
+  same(await (await entity.find({ limit: 1, offset: 0 })).length, 1)
+
+  try {
+    await entity.find({ limit: 1, offset: -1 })
+    fail('Expected error for offset not allowed value')
+  } catch (e) {
+    match(e, new Error(`Param offset=-1 not allowed. It must be not negative value.`))
+  }
 
   try {
     await entity.find({ limit: 200 })
     fail('Expected error for limit exceeding max allowed value')
   } catch (e) {
-    match(e, new Error(`Params limit=200 not allowed. Max accepted value ${max}.`))
+    match(e, new Error(`Param limit=200 not allowed. Max accepted value ${max}.`))
   }
 })
 
@@ -516,14 +528,26 @@ test('limit must accept custom configuration', async ({ pass, teardown, same, fa
 
   same(await (await entity.find({ limit: 0 })).length, 0)
 
-  same(await (await entity.find({ limit: -1 })).length, customLimitConf.default)
+  try {
+    await entity.find({ limit: -1 })
+    fail('Expected error for limit not allowed value')
+  } catch (e) {
+    match(e, new Error(`Param limit=-1 not allowed. It must be not negative value.`))
+  }
 
-  same(await (await entity.find({ limit: 1, offset: -1 })).length, 1)
+  same(await (await entity.find({ limit: 1, offset: 0 })).length, 1)
+
+  try {
+    await entity.find({ limit: 1, offset: -1 })
+    fail('Expected error for offset not allowed value')
+  } catch (e) {
+    match(e, new Error(`Param offset=-1 not allowed. It must be not negative value.`))
+  }
 
   try {
     await entity.find({ limit: 200 })
     fail('Expected error for limit exceeding max allowed value')
   } catch (e) {
-    match(e, new Error(`Params limit=200 not allowed. Max accepted value ${customLimitConf.max}.`))
+    match(e, new Error(`Param limit=200 not allowed. Max accepted value ${customLimitConf.max}.`))
   }
 })

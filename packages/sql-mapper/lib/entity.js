@@ -210,7 +210,10 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     }
 
     query = sql`${query} LIMIT ${sanitizeLimit(opts.limit, limitConfig)}`
-    if (opts.offset !== undefined && opts.offset >= 0) {
+    if (opts.offset !== undefined) {
+      if (opts.offset < 0) {
+        throw new Error(`Param offset=${opts.offset} not allowed. It must be not negative value.`)
+      }
       query = sql`${query} OFFSET ${opts.offset}`
     }
 
