@@ -449,7 +449,7 @@ test('limit should be 10 by default 100 at max', async ({ pass, teardown, same, 
     await entity.find({ limit: -1 })
     fail('Expected error for limit not allowed value')
   } catch (e) {
-    match(e, new Error(`Param limit=-1 not allowed. It must be not negative value.`))
+    match(e, new Error('Param limit=-1 not allowed. It must be not negative value.'))
   }
 
   same(await (await entity.find({ limit: 1, offset: 0 })).length, 1)
@@ -458,7 +458,7 @@ test('limit should be 10 by default 100 at max', async ({ pass, teardown, same, 
     await entity.find({ limit: 1, offset: -1 })
     fail('Expected error for offset not allowed value')
   } catch (e) {
-    match(e, new Error(`Param offset=-1 not allowed. It must be not negative value.`))
+    match(e, new Error('Param offset=-1 not allowed. It must be not negative value.'))
   }
 
   try {
@@ -532,7 +532,7 @@ test('limit must accept custom configuration', async ({ pass, teardown, same, fa
     await entity.find({ limit: -1 })
     fail('Expected error for limit not allowed value')
   } catch (e) {
-    match(e, new Error(`Param limit=-1 not allowed. It must be not negative value.`))
+    match(e, new Error('Param limit=-1 not allowed. It must be not negative value.'))
   }
 
   same(await (await entity.find({ limit: 1, offset: 0 })).length, 1)
@@ -541,7 +541,7 @@ test('limit must accept custom configuration', async ({ pass, teardown, same, fa
     await entity.find({ limit: 1, offset: -1 })
     fail('Expected error for offset not allowed value')
   } catch (e) {
-    match(e, new Error(`Param offset=-1 not allowed. It must be not negative value.`))
+    match(e, new Error('Param offset=-1 not allowed. It must be not negative value.'))
   }
 
   try {
