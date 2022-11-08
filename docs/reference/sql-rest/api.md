@@ -237,3 +237,59 @@ $ curl -X 'GET' 'http://localhost:3042/quotes/1/movie?fields=title
 }
 ```
 
+## Pagination
+
+The Platformatic DB supports for result's pagination through input parameters: `limit` and `offset`
+
+_Example_
+```
+$ curl -X 'GET' 'http://localhost:3042/movies?limit=5&offset=10
+
+[
+  {
+    "title": "Star Wars",
+    "movie_id": 10
+  },
+  ...
+  {
+    "title": "007",
+    "movie_id": 14
+  }
+]
+```
+
+It returns 5 movies starting from position 10.
+
+[TotalCount](#total-count) functionality can be used in order to evaluate if there are more pages.
+
+### Limit
+
+By default a *limit* value (`10`) is applied to each request.
+
+Clients can override this behavior by passing a value.
+In this case the server validates the input and an error is return if exceeds the `max` accepted value (`100`).
+
+Limit's values can be customized through configuration:
+
+```json
+{
+  ...
+  "core": {
+    ...
+    "limit": {
+      "default": 50,
+      "max": 1000
+    }
+  }
+}
+```
+
+*Limit* only accepts values `>= 0`. Otherwise the default behavior is applied.
+
+
+### Offset
+
+By default *offset* is not applied to the request.
+Clients can override this behavior by passing a value.
+
+*Offset* only accepts values `>= 0`. Otherwise the default behavior is applied.
