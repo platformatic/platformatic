@@ -116,6 +116,23 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     }
   }
 
+  async function updateMany (args) {
+    const db = args.tx || defaultDb
+    if (args.input === undefined) {
+      throw new Error('Input not provided.')
+    }
+    const input = fixInput(args.input)
+    let now
+    if (autoTimestamp && fields.updated_at) {
+      now = new Date()
+      input.updated_at = now
+    }
+    const criteria = computeCriteria(args)
+
+    const res = await queries.updateMany(db, sql, table, criteria, input)
+    return res.map(fixOutput)
+  }
+
   function computeFields (fields) {
     if (!fields) {
       return Object.values(inputToFieldMap)
@@ -264,7 +281,8 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     count,
     insert,
     save,
-    delete: _delete
+    delete: _delete,
+    updateMany
   }
 }
 

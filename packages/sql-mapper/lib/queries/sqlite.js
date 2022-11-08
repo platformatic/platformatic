@@ -167,3 +167,20 @@ async function deleteAll (db, sql, table, criteria, fieldsToRetrieve) {
 }
 
 module.exports.deleteAll = deleteAll
+
+async function updateMany (db, sql, table, criteria, input) {
+  const pairs = Object.keys(input).map((key) => {
+    const value = input[key]
+    return sql`${sql.ident(key)} = ${value}`
+  })
+  const update = sql`
+    UPDATE ${sql.ident(table)}
+    SET ${sql.join(pairs, sql`, `)}
+    WHERE ${sql.join(criteria, sql` AND `)}
+    RETURNING *
+  `
+  const res = await db.query(update)
+  return res
+}
+
+module.exports.updateMany = updateMany
