@@ -183,7 +183,7 @@ test('should not loop forever when doing ESM', async ({ comment, fail }) => {
   }
 })
 
-test('should watch config file', { only: true }, async ({ comment, teardown }) => {
+test('should watch config file', async ({ comment, teardown }) => {
   const tmpDir = await mkdtemp(join(os.tmpdir(), 'watch-config-'))
   const pluginFilePath = join(tmpDir, 'plugin.js')
   const configFilePath = join(tmpDir, 'platformatic.service.json')
@@ -215,10 +215,6 @@ test('should watch config file', { only: true }, async ({ comment, teardown }) =
     },
     plugin: {
       path: pluginFilePath,
-      watch: true,
-      watchOptions: {
-        allow: ['*.js', '*.json']
-      },
       options: {
         log: true
       }
@@ -240,6 +236,7 @@ test('should watch config file', { only: true }, async ({ comment, teardown }) =
   const { child } = await start('-c', configFilePath)
   teardown(() => child.kill('SIGINT'))
 
+  // We do not await
   writeFile(configFilePath, JSON.stringify(config2))
   for await (const log of child.ndj) {
     if (log.msg === 'RESTARTED') break

@@ -34,9 +34,9 @@ async function start (_args) {
     configManager
   })
 
-  configManager.on('update', (newConfig) => onConfigUpdated(newConfig, server))
   server.app.platformatic.configManager = configManager
   server.app.platformatic.config = config
+  configManager.on('update', (newConfig) => onConfigUpdated(newConfig, server))
 
   if (
     config.plugin !== undefined &&
@@ -58,9 +58,6 @@ async function start (_args) {
   process.on('SIGUSR2', function () {
     server.app.log.info('reloading configuration')
     server.restart()
-      .then(() => {
-        server.app.log.info('restarted')
-      })
       .catch((err) => {
         server.app.log.error({
           err: {
@@ -103,7 +100,7 @@ async function startFileWatching (server) {
   })
   fileWatcher.startWatching()
 
-  server.app.log.info('start watching files')
+  server.app.log.debug('start watching files')
   server.app.platformatic.fileWatcher = fileWatcher
 }
 
@@ -112,7 +109,7 @@ async function stopFileWatching (server) {
   if (fileWatcher !== undefined) {
     await fileWatcher.stopWatching()
 
-    server.app.log.info('stop watching files')
+    server.app.log.debug('stop watching files')
     server.app.platformatic.fileWatcher = undefined
   }
 }
@@ -120,19 +117,12 @@ async function stopFileWatching (server) {
 async function onConfigUpdated (newConfig, server) {
   try {
     server.app.platformatic.config = newConfig
-    server.app.log.info('config changed')
+    server.app.log.debug('config changed')
     server.app.log.trace({ newConfig }, 'new config')
 
     await stopFileWatching(server)
 
     await server.restart(newConfig)
-
-    if (
-      newConfig.plugin !== undefined &&
-      newConfig.plugin.watch !== false
-    ) {
-      await startFileWatching(server)
-    }
   } catch (err) {
     // TODO: test this
     server.app.log.error({
@@ -141,14 +131,24 @@ async function onConfigUpdated (newConfig, server) {
         stack: err.stack
       }
     }, 'failed to reload config')
+  } finally {
+    if (
+      newConfig.plugin !== undefined &&
+      newConfig.plugin.watch !== false
+    ) {
+      await startFileWatching(server)
+    }
   }
 }
 
 async function onFilesUpdated (server) {
+  // Reload the config as well, otherwise we will have problems
+  // in case the files watcher triggers the config watcher too
+  const configManager = server.app.platformatic.configManager
   try {
-    const config = server.app.platformatic.config
-    server.app.log.info('files changed')
-    await server.restart(config)
+    server.app.log.debug('files changed')
+    await configManager.parse()
+    await server.restart(configManager.current)
   } catch (err) {
     // TODO: test this
     server.app.log.error({
