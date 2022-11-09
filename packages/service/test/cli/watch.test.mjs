@@ -139,7 +139,7 @@ test('should not watch ignored file', async ({ teardown, equal }) => {
 })
 
 test('should not loop forever when doing ESM', async ({ comment, fail }) => {
-  const tmpDir = await mkdtemp(join(os.tmpdir(), 'watch-'))
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'watch-esm-'))
   const pluginFilePath = join(tmpDir, 'plugin.mjs')
   const configFilePath = join(tmpDir, 'platformatic.service.json')
 
