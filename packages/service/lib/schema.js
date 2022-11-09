@@ -151,6 +151,9 @@ const plugin = {
         }
       },
       additionalProperties: false
+    },
+    options: {
+      type: 'object'
     }
   },
   required: ['path']

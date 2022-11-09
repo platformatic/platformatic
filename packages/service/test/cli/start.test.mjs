@@ -17,7 +17,14 @@ test('autostart', async ({ equal, same, match, teardown }) => {
 })
 
 test('start command', async ({ equal, same, match, teardown }) => {
-  const { child } = await start('start', '-c', join(import.meta.url, '..', '..', 'fixtures', 'hello', 'platformatic.service.json'))
+  const { child, url } = await start('start', '-c', join(import.meta.url, '..', '..', 'fixtures', 'hello', 'platformatic.service.json'))
+
+  const res = await request(`${url}`)
+  equal(res.statusCode, 200)
+  const body = await res.body.json()
+  match(body, {
+    hello: 'world'
+  }, 'response')
 
   child.kill('SIGINT')
 })
@@ -25,5 +32,18 @@ test('start command', async ({ equal, same, match, teardown }) => {
 test('default logger', async ({ equal, same, match, teardown }) => {
   const { child, url } = await start('-c', join(import.meta.url, '..', '..', 'fixtures', 'hello', 'no-server-logger.json'))
   match(url, /http:\/\/127.0.0.1:[0-9]+/)
+  child.kill('SIGINT')
+})
+
+test('plugin options', async ({ equal, same, match, teardown }) => {
+  const { child, url } = await start('-c', join(import.meta.url, '..', '..', 'fixtures', 'options', 'platformatic.service.yml'))
+
+  const res = await request(`${url}`)
+  equal(res.statusCode, 200)
+  const body = await res.body.json()
+  match(body, {
+    something: 'else'
+  }, 'response')
+
   child.kill('SIGINT')
 })
