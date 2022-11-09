@@ -163,7 +163,10 @@ async function auth (app, opts) {
       checkSaveMandatoryFieldsInRules(type, rules)
 
       app.platformatic.addEntityHooks(entityKey, {
-        async find (originalFind, { where, ctx, fields, ...restOpts }) {
+        async find (originalFind, { where, ctx, fields, skipAuth, ...restOpts }) {
+          if (skipAuth) {
+            return originalFind({ ...restOpts, where, ctx, fields })
+          }
           const request = getRequestFromContext(ctx)
           const rule = findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
           checkFieldsFromRule(rule.find, fields)
@@ -172,7 +175,10 @@ async function auth (app, opts) {
           return originalFind({ ...restOpts, where, ctx, fields })
         },
 
-        async save (originalSave, { input, ctx, fields }) {
+        async save (originalSave, { input, ctx, fields, skipAuth }) {
+          if (skipAuth) {
+            return originalSave({ input, ctx, fields })
+          }
           const request = getRequestFromContext(ctx)
           const rule = findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
 
@@ -216,7 +222,10 @@ async function auth (app, opts) {
           return originalSave({ input, ctx, fields })
         },
 
-        async insert (originalInsert, { inputs, ctx, fields }) {
+        async insert (originalInsert, { inputs, ctx, fields, skipAuth }) {
+          if (skipAuth) {
+            return originalInsert({ inputs, ctx, fields })
+          }
           const request = getRequestFromContext(ctx)
           const rule = findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
 
@@ -244,7 +253,10 @@ async function auth (app, opts) {
           return originalInsert({ inputs, ctx, fields })
         },
 
-        async delete (originalDelete, { where, ctx, fields }) {
+        async delete (originalDelete, { where, ctx, fields, skipAuth }) {
+          if (skipAuth) {
+            return originalDelete({ where, ctx, fields })
+          }
           const request = getRequestFromContext(ctx)
           const rule = findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
 
