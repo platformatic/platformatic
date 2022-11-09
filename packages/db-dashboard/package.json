@@ -5,13 +5,13 @@
   "description": "Platformatic DB Dashboard",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/plaformatic/platformatic.git"
+    "url": "git+https://github.com/platformatic/platformatic.git"
   },
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/plaformatic/platformatic/issues"
+    "url": "https://github.com/platformatic/platformatic/issues"
   },
-  "homepage": "https://github.com/plaformatic/platformatic#readme",
+  "homepage": "https://github.com/platformatic/platformatic#readme",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
