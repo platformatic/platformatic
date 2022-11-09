@@ -125,14 +125,14 @@ async function onConfigUpdated (newConfig, server) {
 
     await stopFileWatching(server)
 
+    await server.restart(newConfig)
+
     if (
       newConfig.plugin !== undefined &&
       newConfig.plugin.watch !== false
     ) {
       await startFileWatching(server)
     }
-
-    await server.restart(newConfig)
   } catch (err) {
     // TODO: test this
     server.app.log.error({
