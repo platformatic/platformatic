@@ -23,7 +23,9 @@ module.exports = fp(async function (app, opts) {
       }
     }
     const body = JSON.stringify(this.body)
-    headers['content-length'] = Buffer.byteLength(body)
+    if (body) {
+      headers['content-length'] = Buffer.byteLength(body)
+    }
     const res = await pool.request({
       path,
       method: 'POST',
