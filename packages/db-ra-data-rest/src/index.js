@@ -14,7 +14,7 @@ import { fetchUtils } from 'ra-core'
  * getMany          => GET http://my.api.url/posts?where.id.in=123,456,789
  * create           => POST http://my.api.url/posts/123
  * update           => PUT http://my.api.url/posts/123
- * updateMany       => PUT http://my.api.url/posts/123, PUT http://my.api.url/posts/456, PUT http://my.api.url/posts/789
+ * updateMany       => PUT http://my.api.url/posts?where.id.in=123,456,789 http://my.api.url/posts?where.authorId.in=345,346
  * delete           => DELETE http://my.api.url/posts/123
  *
  * @example
@@ -117,17 +117,11 @@ export default (apiUrl, httpClient = fetchUtils.fetchJson) => ({
       body: JSON.stringify(params.data)
     }).then(({ json }) => ({ data: json })),
 
-  // platformatic doesn't handle filters on UPDATE route, so we fallback to calling UPDATE n times instead
-  // https://github.com/platformatic/platformatic/issues/249
   updateMany: (resource, params) =>
-    Promise.all(
-      params.ids.map((id) =>
-        httpClient(`${apiUrl}/${resource}/${id}`, {
-          method: 'PUT',
-          body: JSON.stringify(params.data)
-        })
-      )
-    ).then((responses) => ({ data: responses.map(({ json }) => json.id) })),
+    httpClient(`${apiUrl}/${resource}`, {
+      method: 'PUT',
+      body: JSON.stringify(params)
+    }).then(({ json }) => json),
 
   create: (resource, params) =>
     httpClient(`${apiUrl}/${resource}`, {
