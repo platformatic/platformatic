@@ -363,7 +363,7 @@ importers:
       fastify: ^4.6.0
       fastify-metrics: ^10.0.0
       fastify-plugin: ^4.1.0
-      fastify-sandbox: ^0.9.0
+      fastify-sandbox: ^0.10.0
       graphql: ^16.6.0
       help-me: ^4.1.0
       mercurius: ^11.3.0
@@ -401,7 +401,7 @@ importers:
       fastify: 4.9.2
       fastify-metrics: 10.0.0_fastify@4.9.2
       fastify-plugin: 4.3.0
-      fastify-sandbox: 0.9.2
+      fastify-sandbox: 0.10.0
       graphql: 16.6.0
       help-me: 4.1.0
       mercurius: 11.3.0_graphql@16.6.0
@@ -3579,8 +3579,8 @@ packages:
       table: 6.8.1
     dev: false
 
-  /fastify-sandbox/0.9.2:
-    resolution: {integrity: sha512-VkJR05n3ZJxMc65K9lM2JmUqKuW1W4Xv6XcB8p0FIB0THLVKNb+gsMZzTdeQl+TihluhjS42wZBbews20Har9w==}
+  /fastify-sandbox/0.10.0:
+    resolution: {integrity: sha512-Qeua7svdr3x8gztMPi8WB7yNJ05batohtYsMRhL6pwmqFxbJ36nNPjeAsGKt2Iexizaz0y+fJ/BDdcczvVdjLQ==}
     dependencies:
       import-fresh: 3.3.0
     optionalDependencies:
