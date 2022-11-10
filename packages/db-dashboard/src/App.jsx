@@ -1,5 +1,5 @@
 import { Navigate, Routes, Route } from 'react-router-dom'
-import { createContext, useState } from 'react'
+import React, { createContext, useState } from 'react'
 import Layout from './components/Layout'
 import Home from './pages/Home'
 import GraphiQLPage from './pages/GQL'
