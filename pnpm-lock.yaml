@@ -276,6 +276,7 @@ importers:
       '@playwright/test': ^1.24.2
       '@vitejs/plugin-react': ^2.0.0
       bulma: ^0.9.4
+      camelcase: ^6.0.0
       graphiql: ^2.0.0
       happy-dom: ^7.0.0
       history: ^5.3.0
@@ -303,6 +304,7 @@ importers:
       '@playwright/test': 1.27.1
       '@vitejs/plugin-react': 2.2.0_vite@3.2.2
       bulma: 0.9.4
+      camelcase: 6.3.0
       graphiql: 2.0.13_tzcj7wyg7rp7mghrqu75lokvou
       happy-dom: 7.6.6
       history: 5.3.0
@@ -2723,7 +2725,6 @@ packages:
   /camelcase/6.3.0:
     resolution: {integrity: sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==}
     engines: {node: '>=10'}
-    dev: false
 
   /caniuse-lite/1.0.30001430:
     resolution: {integrity: sha512-IB1BXTZKPDVPM7cnV4iaKaHxckvdr/3xtctB3f7Hmenx3qYBhGtTZ//7EllK66aKXW98Lx0+7Yr0kxBtIt3tzg==}

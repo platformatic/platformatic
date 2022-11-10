@@ -32,6 +32,7 @@
     "@playwright/test": "^1.24.2",
     "@vitejs/plugin-react": "^2.0.0",
     "bulma": "^0.9.4",
+    "camelcase": "^6.0.0",
     "graphiql": "^2.0.0",
     "happy-dom": "^7.0.0",
     "history": "^5.3.0",
