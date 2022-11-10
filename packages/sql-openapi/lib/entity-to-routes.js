@@ -66,8 +66,7 @@ async function entityPlugin (app, opts) {
 
     for (const modifier of ['in', 'nin']) {
       const key = baseKey + modifier
-      if (field.enum) acc[key] = { type: 'array', items: { type: 'string', enum: field.enum }}
-      else acc[key] = { type: 'string' }
+      acc[key] = { type: 'string' }
     }
 
     return acc
@@ -126,7 +125,7 @@ async function entityPlugin (app, opts) {
         let value = query[key]
         if (modifier === 'in' || modifier === 'nin') {
           // TODO handle escaping of ,
-          value = (Array.isArray(query[key])) ? query[key] : query[key].split(',')
+          value = query[key].split(',')
           if (mapSQLTypeToOpenAPIType(entity.fields[field].sqlType) === 'integer') {
             value = value.map((v) => parseInt(v))
           }
