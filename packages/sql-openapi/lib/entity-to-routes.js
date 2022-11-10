@@ -61,12 +61,13 @@ async function entityPlugin (app, opts) {
     const baseKey = `where.${field.camelcase}.`
     for (const modifier of ['eq', 'neq', 'gt', 'gte', 'lt', 'lte']) {
       const key = baseKey + modifier
-      acc[key] = { type: mapSQLTypeToOpenAPIType(field.sqlType) }
+      acc[key] = { type: mapSQLTypeToOpenAPIType(field.sqlType), enum: field.enum }
     }
 
     for (const modifier of ['in', 'nin']) {
       const key = baseKey + modifier
-      acc[key] = { type: 'string' }
+      if (field.enum) acc[key] = { type: 'array', items: { type: 'string', enum: field.enum }}
+      else acc[key] = { type: 'string' }
     }
 
     return acc
@@ -125,7 +126,7 @@ async function entityPlugin (app, opts) {
         let value = query[key]
         if (modifier === 'in' || modifier === 'nin') {
           // TODO handle escaping of ,
-          value = query[key].split(',')
+          value = (Array.isArray(query[key])) ? query[key] : query[key].split(',')
           if (mapSQLTypeToOpenAPIType(entity.fields[field].sqlType) === 'integer') {
             value = value.map((v) => parseInt(v))
           }

@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 
-const { clear, connInfo, isSQLite, isMysql } = require('./helper')
+const { clear, connInfo, isSQLite, isMysql, isPg } = require('./helper')
 const { connect } = require('..')
 const fakeLogger = {
   trace: () => {},
@@ -603,4 +603,38 @@ test('include all fields', async ({ pass, teardown, same, equal }) => {
       categoryId: newCategory.id
     }])
   }
+})
+
+test('include possible values of enum columns', { skip: isSQLite }, async ({ same, teardown }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+
+    if (isPg) {
+      await db.query(sql`
+      CREATE TYPE pagetype as enum ('blank', 'non-blank');
+      CREATE TABLE pages (
+        id INTEGER PRIMARY KEY,
+        title VARCHAR(42),
+        type pagetype
+      );`)
+    } else {
+      await db.query(sql`CREATE TABLE pages (
+        id INTEGER PRIMARY KEY,
+        title VARCHAR(42),
+        type ENUM ('blank', 'non-blank')
+      );
+      `)
+    }
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+  const pageEntity = mapper.entities.page
+  const typeField = pageEntity.fields.type
+  same(typeField.enum, ['blank', 'non-blank'])
 })
