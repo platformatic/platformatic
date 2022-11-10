@@ -43,6 +43,13 @@ const formatFilters = (filters) =>
     }, {})
     : {}
 
+const parseWhereStatement = (where) =>
+  Object.keys(where).reduce((acc, param) => {
+    const [v] = Object.keys(where[param])
+    acc[`where.${param}.${v}`] = Array.isArray(where[param][v]) ? where[param][v].join(',') : where[param][v]
+    return acc
+  }, {})
+
 export default (apiUrl, httpClient = fetchUtils.fetchJson) => ({
   getList: (resource, params) => {
     const { page, perPage } = params.pagination
@@ -117,11 +124,18 @@ export default (apiUrl, httpClient = fetchUtils.fetchJson) => ({
       body: JSON.stringify(params.data)
     }).then(({ json }) => ({ data: json })),
 
-  updateMany: (resource, params) =>
-    httpClient(`${apiUrl}/${resource}`, {
+  updateMany: (resource, params) => {
+    if (!params?.where || Object.keys(params.where).length === 0) {
+      throw new Error('where can not be empty')
+    }
+    const query = {
+      ...parseWhereStatement(params.where)
+    }
+    return httpClient(`${apiUrl}/${resource}?${stringify(query)}`, {
       method: 'PUT',
-      body: JSON.stringify(params)
-    }).then(({ json }) => json),
+      body: JSON.stringify(params.data)
+    }).then(({ json }) => json)
+  },
 
   create: (resource, params) =>
     httpClient(`${apiUrl}/${resource}`, {

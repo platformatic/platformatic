@@ -393,7 +393,6 @@ async function entityPlugin (app, opts) {
         properties: {
           fields,
           ...whereArgs,
-          ...orderByArgs
         },
         additionalProperties: false
       },
@@ -407,7 +406,7 @@ async function entityPlugin (app, opts) {
     links: {
       200: entityLinks
     },
-    async handler(request, reply) {
+    async handler (request, reply) {
       const ctx = { app: this, reply }
       const query = request.query
       const queryKeys = Object.keys(query)
@@ -428,16 +427,12 @@ async function entityPlugin (app, opts) {
             }
           }
           where[field][modifier] = value
-        } else if (key.startsWith('orderby.')) {
-          const [, field] = key.split('.')
-          orderBy[field] ||= {}
-          orderBy.push({ field, direction: query[key] })
         }
       }
 
       const res = await entity.updateMany({
         input: {
-          ...request.body,
+          ...request.body
         },
         where,
         ctx
