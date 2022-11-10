@@ -392,7 +392,7 @@ async function entityPlugin (app, opts) {
         type: 'object',
         properties: {
           fields,
-          ...whereArgs,
+          ...whereArgs
         },
         additionalProperties: false
       },
