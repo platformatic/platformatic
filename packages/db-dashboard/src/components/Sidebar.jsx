@@ -20,7 +20,9 @@ export default function Sidebar () {
         <li>
           <NavLink data-testid='swagger-plt-db-view-link' to='/swagger-plt-db-docs'>Platformatic DB Admin API Docs</NavLink>
         </li>
-
+        <li>
+          <NavLink data-testid='react-admin-link' to='/react-admin'>React Admin</NavLink>
+        </li>
       </ul>
     </aside>
   )

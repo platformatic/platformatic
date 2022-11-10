@@ -44,7 +44,7 @@ const formatFilters = (filters) =>
     : {}
 
 export default (apiUrl, httpClient = fetchUtils.fetchJson) => ({
-  getList: (resource, params) => {
+  getList: async (resource, params) => {
     const { page, perPage } = params.pagination
     const { field, order } = params.sort
 
@@ -58,33 +58,34 @@ export default (apiUrl, httpClient = fetchUtils.fetchJson) => ({
 
     const url = `${apiUrl}/${resource}?${stringify(query)}`
 
-    return httpClient(url).then(({ headers, json }) => {
-      if (!headers.has('x-total-count')) {
-        throw new Error(
-          'The X-Total-Count header is missing in the HTTP Response. The jsonServer Data Provider expects responses for lists of resources to contain this header with the total number of results to build the pagination. If you are using CORS, did you declare X-Total-Count in the Access-Control-Expose-Headers header?'
-        )
-      }
-      return {
-        data: json,
-        total: parseInt(headers.get('x-total-count').split('/').pop(), 10)
-      }
-    })
+    const { headers, json } = await httpClient(url)
+
+    if (!headers.has('x-total-count')) {
+      throw new Error(
+        'The X-Total-Count header is missing in the HTTP Response. The jsonServer Data Provider expects responses for lists of resources to contain this header with the total number of results to build the pagination. If you are using CORS, did you declare X-Total-Count in the Access-Control-Expose-Headers header?'
+      )
+    }
+    return {
+      data: json,
+      total: parseInt(headers.get('x-total-count').split('/').pop(), 10)
+    }
   },
 
-  getOne: (resource, params) =>
-    httpClient(`${apiUrl}/${resource}/${params.id}`).then(({ json }) => ({
-      data: json
-    })),
+  getOne: async (resource, params) => {
+    const { json } = await httpClient(`${apiUrl}/${resource}/${params.id}`)
+    return { data: json }
+  },
 
-  getMany: (resource, params) => {
+  getMany: async (resource, params) => {
     const query = {
       'where.id.in': params.ids.join(',')
     }
     const url = `${apiUrl}/${resource}?${stringify(query)}`
-    return httpClient(url).then(({ json }) => ({ data: json }))
+    const { json } = await httpClient(url)
+    return { data: json }
   },
 
-  getManyReference: (resource, params) => {
+  getManyReference: async (resource, params) => {
     const { page, perPage } = params.pagination
     const { field, order } = params.sort
 
@@ -98,58 +99,65 @@ export default (apiUrl, httpClient = fetchUtils.fetchJson) => ({
     }
     const url = `${apiUrl}/${resource}?${stringify(query)}`
 
-    return httpClient(url).then(({ headers, json }) => {
-      if (!headers.has('x-total-count')) {
-        throw new Error(
-          'The X-Total-Count header is missing in the HTTP Response. The jsonServer Data Provider expects responses for lists of resources to contain this header with the total number of results to build the pagination. If you are using CORS, did you declare X-Total-Count in the Access-Control-Expose-Headers header?'
-        )
-      }
-      return {
-        data: json,
-        total: parseInt(headers.get('x-total-count').split('/').pop(), 10)
-      }
-    })
+    const { headers, json } = await httpClient(url)
+    if (!headers.has('x-total-count')) {
+      throw new Error(
+        'The X-Total-Count header is missing in the HTTP Response. The jsonServer Data Provider expects responses for lists of resources to contain this header with the total number of results to build the pagination. If you are using CORS, did you declare X-Total-Count in the Access-Control-Expose-Headers header?'
+      )
+    }
+    return {
+      data: json,
+      total: parseInt(headers.get('x-total-count').split('/').pop(), 10)
+    }
   },
 
-  update: (resource, params) =>
-    httpClient(`${apiUrl}/${resource}/${params.id}`, {
+  update: async (resource, params) => {
+    const { json } = await httpClient(`${apiUrl}/${resource}/${params.id}`, {
       method: 'PUT',
       body: JSON.stringify(params.data)
-    }).then(({ json }) => ({ data: json })),
-
+    })
+    return { data: json }
+  },
   // platformatic doesn't handle filters on UPDATE route, so we fallback to calling UPDATE n times instead
   // https://github.com/platformatic/platformatic/issues/249
-  updateMany: (resource, params) =>
-    Promise.all(
+  updateMany: async (resource, params) => {
+    const proms = Promise.all(
       params.ids.map((id) =>
         httpClient(`${apiUrl}/${resource}/${id}`, {
           method: 'PUT',
           body: JSON.stringify(params.data)
         })
       )
-    ).then((responses) => ({ data: responses.map(({ json }) => json.id) })),
+    )
+    const responses = await proms
+    return { data: responses.map(({ json }) => json.id) }
+  },
 
-  create: (resource, params) =>
-    httpClient(`${apiUrl}/${resource}`, {
+  create: async (resource, params) => {
+    const { json } = await httpClient(`${apiUrl}/${resource}`, {
       method: 'POST',
       body: JSON.stringify(params.data)
-    }).then(({ json }) => ({
-      data: { ...params.data, id: json.id }
-    })),
-
-  delete: (resource, params) =>
-    httpClient(`${apiUrl}/${resource}/${params.id}`, {
+    })
+    return { data: { ...params.data, id: json.id } }
+  },
+  delete: async (resource, params) => {
+    const { json } = await httpClient(`${apiUrl}/${resource}/${params.id}`, {
       method: 'DELETE'
-    }).then(({ json }) => ({ data: json })),
-
+    })
+    return { data: json }
+  },
   // platformatic doesn't handle filters on DELETE route, so we fallback to calling DELETE n times instead
   // https://github.com/platformatic/platformatic/issues/250
-  deleteMany: (resource, params) =>
-    Promise.all(
+  deleteMany: async (resource, params) => {
+    const proms = Promise.all(
       params.ids.map((id) =>
         httpClient(`${apiUrl}/${resource}/${id}`, {
           method: 'DELETE'
         })
       )
-    ).then((responses) => ({ data: responses.map(({ json }) => json.id) }))
+    )
+    const responses = await proms
+    return { data: responses.map(({ json }) => json.id) }
+  }
+
 })
