@@ -59,17 +59,23 @@ async function updateMany (db, sql, table, criteria, input) {
     const value = input[key]
     return sql`${sql.ident(key)} = ${value}`
   })
-  const separator = ','
+
+  const selectIds = sql`
+    SELECT id
+    FROM ${sql.ident(table)}
+    WHERE ${sql.join(criteria, sql` AND `)}
+  `
+  const resp = await db.query(selectIds)
+  const ids = resp.map(({ id }) => id)
+
   const update = sql`
-    SET @uids := null;
     UPDATE ${sql.ident(table)}
     SET ${sql.join(pairs, sql`, `)}
-    WHERE ${sql.join(criteria, sql` AND `)} AND ( SELECT @uids := CONCAT_WS(${separator}, id, @uids) );
-    SELECT @uids;
+    WHERE ${sql.join(criteria, sql` AND `)}
   `
-  const updateRes = await db.query(update)
 
-  const ids = updateRes[0]['@uids'].toString().split(separator)
+  await db.query(update)
+
   const select = sql`
     SELECT *
     FROM ${sql.ident(table)}

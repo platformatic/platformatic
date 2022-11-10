@@ -128,6 +128,23 @@ test('updateMany', async (t) => {
   {
     const res = await app.inject({
       method: 'PUT',
+      url: '/posts?where.id.in=2&where.title.eq=Cat',
+      body: {
+        title: 'Kitten'
+      }
+    })
+    equal(res.statusCode, 200, 'PUT /posts?where.counter.gte=2&where.title.eq=Cat status code')
+    same(res.json(), [{
+      id: 2,
+      title: 'Kitten',
+      longText: 'Updated long text',
+      counter: 20
+    }], 'PUT /posts?where.counter.gte=2&where.title.eq=Cat response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'PUT',
       url: '/post?where.id.in=1,2',
       body: {}
     })

@@ -414,7 +414,6 @@ async function entityPlugin (app, opts) {
 
       for (let i = 0; i < queryKeys.length; i++) {
         const key = queryKeys[i]
-
         if (key.startsWith('where.')) {
           const [, field, modifier] = key.split('.')
           where[field] ||= {}
@@ -437,9 +436,8 @@ async function entityPlugin (app, opts) {
         where,
         ctx
       })
-      if (!res) {
-        return reply.callNotFound()
-      }
+      // TODO: Should find a way to test this line
+      // if (!res) return reply.callNotFound()
       reply.header('location', `${app.prefix}`)
       return res
     }
