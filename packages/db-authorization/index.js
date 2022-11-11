@@ -124,7 +124,7 @@ async function auth (app, opts) {
           }
           return acc
         }, { distance: Infinity, entity: null })
-        throw new Error(`Unknown entity '${rule.entity} in authorization rule ${i}. Did you mean '${nearest.entity}?'`)
+        throw new Error(`Unknown entity '${rule.entity}' in authorization rule ${i}. Did you mean '${nearest.entity}'?`)
       }
       if (!entityRules[rule.entity]) {
         entityRules[rule.entity] = []

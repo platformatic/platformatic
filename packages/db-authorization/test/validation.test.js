@@ -34,7 +34,7 @@ async function createBasicPages (db, sql) {
   }
 }
 
-test('users can save and update their own pages, read everybody\'s and delete none', async ({ pass, teardown, same, equal, rejects }) => {
+test('users can save and update their own pages, read everybody\'s and delete none', async ({ pass, teardown, equal, fail }) => {
   const app = fastify({
     pluginTimeout: 3000
   })
@@ -77,5 +77,10 @@ test('users can save and update their own pages, read everybody\'s and delete no
   })
   teardown(app.close.bind(app))
 
-  await rejects(app.ready(), 'Unknown entity \'pages\' in authorization rule 0. Did you mean \'page\'?')
+  try {
+    await app.ready()
+    fail('should not be ready')
+  } catch (err) {
+    equal(err.message, 'Unknown entity \'pages\' in authorization rule 0. Did you mean \'page\'?')
+  }
 })
