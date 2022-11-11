@@ -342,10 +342,10 @@ function findRuleForRequestUser (ctx, rules, roleKey, anonymousRole) {
   const roles = getRoles(getRequestFromContext(ctx), roleKey, anonymousRole)
   const rule = findRule(rules, roles)
   if (!rule) {
-    ctx.reply.log.warn({ roles, rules }, 'no rule for roles')
+    ctx.reply.request.log.warn({ roles, rules }, 'no rule for roles')
     throw new Unauthorized()
   }
-  ctx.reply.log.trace({ roles, rule }, 'found rule')
+  ctx.reply.request.log.trace({ roles, rule }, 'found rule')
   return rule
 }
 
