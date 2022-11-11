@@ -20,6 +20,18 @@ async function createBasicPages (db, sql) {
       user_id INTEGER
     );`)
   }
+
+  if (isSQLite) {
+    await db.query(sql`CREATE TABLE categories (
+      id INTEGER PRIMARY KEY,
+      title VARCHAR(42)
+    );`)
+  } else {
+    await db.query(sql`CREATE TABLE categories (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(42)
+    );`)
+  }
 }
 
 test('users can save and update their own pages, read everybody\'s and delete none', async ({ pass, teardown, same, equal, rejects }) => {
