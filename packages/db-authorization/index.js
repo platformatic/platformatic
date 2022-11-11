@@ -85,6 +85,7 @@ async function auth (app, opts) {
       // `createSession` actually exists only if jwt or webhook are enabled
       // and creates a new `request.user` object
       await request.createSession()
+      request.log.debug({ user: request.user }, 'logged user in')
     } catch (err) {
       request.log.trace({ err })
     }
@@ -341,9 +342,10 @@ function findRuleForRequestUser (ctx, rules, roleKey, anonymousRole) {
   const roles = getRoles(getRequestFromContext(ctx), roleKey, anonymousRole)
   const rule = findRule(rules, roles)
   if (!rule) {
-    ctx.reply.log.warn({ roles }, 'no rule for roles')
+    ctx.reply.log.warn({ roles, rules }, 'no rule for roles')
     throw new Unauthorized()
   }
+  ctx.reply.log.trace({ roles, rule }, 'found rule')
   return rule
 }
 
