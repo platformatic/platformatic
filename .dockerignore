@@ -39,6 +39,7 @@ build/Release
 
 # Dependency directories
 node_modules/
+packages/*/node_modules
 jspm_packages/
 
 # TypeScript v1 declaration files
@@ -110,3 +111,11 @@ packages/db-dashboard/build/
 playwright-report
 .DS_Store
 .swp
+
+# Ignore useless stuff
+docs
+signatures
+.github
+demo
+packages/*/test
+packages/*/fixtures

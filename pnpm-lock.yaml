@@ -7,10 +7,9 @@ importers:
       '@fastify/pre-commit': ^2.0.2
       desm: ^1.2.0
       markdownlint-cli2: ^0.5.1
-    dependencies:
-      desm: 1.3.0
     devDependencies:
       '@fastify/pre-commit': 2.0.2
+      desm: 1.3.0
       markdownlint-cli2: 0.5.1
 
   packages/authenticate:
@@ -164,6 +163,7 @@ importers:
       '@platformatic/db-core': link:../db-core
       '@platformatic/db-dashboard': link:../db-dashboard
       '@platformatic/service': link:../service
+      '@platformatic/sql-json-schema-mapper': link:../sql-json-schema-mapper
       '@platformatic/utils': link:../utils
       close-with-grace: 1.1.0
       commist: 3.1.2
@@ -189,7 +189,6 @@ importers:
       '@databases/pg': 5.4.1
       '@databases/sqlite': 4.0.2
       '@platformatic/sql-graphql': link:../sql-graphql
-      '@platformatic/sql-json-schema-mapper': link:../sql-json-schema-mapper
       '@platformatic/sql-mapper': link:../sql-mapper
       c8: 7.12.0
       snazzy: 9.0.0
@@ -3125,7 +3124,6 @@ packages:
 
   /desm/1.3.0:
     resolution: {integrity: sha512-RvlHN2gfYA0BpCfjpWzCdQeR6p5U+84f5DzcirLow86UA/OcpwuOqXRC4Oz0bG9rzcJPVtMT6ZgNtjp4qh+uqA==}
-    dev: false
 
   /destroy/1.2.0:
     resolution: {integrity: sha512-2sJGJTaXIIaR1w4iJSNoN0hnMY7Gpc/n8D4qSCJw8QqFWXf7cuAgnEHxBpweaVcPevC2l3KpjYCx3NypQQgaJg==}

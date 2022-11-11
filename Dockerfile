@@ -23,13 +23,13 @@ COPY pnpm-lock.yaml ./
 COPY pnpm-workspace.yaml ./
 
 # Fetch all dependencies
-RUN pnpm fetch --prod
+RUN pnpm fetch --prod --frozen-lockfile
 
 # Copy files
 COPY . .
 
 # Install all the deps in the source code
-RUN pnpm install --frozen-lockfile --prod --offline
+RUN pnpm install --prod --offline
 
 # Add platformatic to path
 RUN cd packages/cli && pnpm link --global
