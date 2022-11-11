@@ -25,4 +25,4 @@ jobs:
           allowlist: 'renovate[bot]'
           use-dco-flag: true
           custom-pr-sign-comment: 'I have read the DCO document and I hereby sign-off my contribution'
-          signed-commit-message: '$contributorName has signed the DCO in $pullRequestNo'
+          signed-commit-message: '$contributorName has signed the DCO in #$pullRequestNo'
