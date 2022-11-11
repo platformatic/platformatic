@@ -3,7 +3,7 @@
 const t = require('tap')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { clear, connInfo, isSQLite, isMariaDB } = require('./helper')
+const { clear, connInfo, isSQLite, isMariaDB, isPg } = require('./helper')
 const { mapSQLEntityToJSONSchema } = require('..')
 const { test } = t
 
@@ -15,12 +15,22 @@ async function createBasicPages (db, sql) {
       metadata JSON,
       description TEXT
     );`)
+  } else if (isPg) {
+    await db.query(sql`CREATE TYPE pagetype as enum ('blank', 'non-blank');
+      CREATE TABLE pages (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(42) NOT NULL,
+      metadata JSON,
+      description TEXT,
+      type pagetype
+    );`)
   } else {
     await db.query(sql`CREATE TABLE pages (
       id SERIAL PRIMARY KEY,
       title VARCHAR(42) NOT NULL,
       metadata JSON,
-      description TEXT
+      description TEXT,
+      type ENUM ('blank', 'non-blank')
     );`)
   }
 }
@@ -59,5 +69,8 @@ test('simple db, simple rest API', async (t) => {
       t.same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
     }
     t.same(pageJsonSchema.required, ['title'])
+    if (!isSQLite) {
+      t.same(pageJsonSchema.properties.type, { type: 'string', nullable: true, enum: ['blank', 'non-blank'] })
+    }
   }
 })

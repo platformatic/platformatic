@@ -36,7 +36,18 @@ function constructGraph (app, entity, opts) {
   for (const key of Object.keys(entity.fields)) {
     const field = entity.fields[key]
     const meta = { field }
-    meta.type = sqlTypeToGraphQL(field.sqlType)
+
+    // sqlite doesn't support enums
+    /* istanbul ignore next */
+    if (field.enum) {
+      const enumValues = field.enum.reduce((acc, enumValue) => {
+        acc[enumValue] = { value: enumValue }
+        return acc
+      }, {})
+      meta.type = new graphql.GraphQLEnumType({ name: key, values: enumValues })
+    } else {
+      meta.type = sqlTypeToGraphQL(field.sqlType)
+    }
     if (field.primaryKey) {
       meta.primaryKeyType = field.type
       meta.type = graphql.GraphQLID

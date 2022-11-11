@@ -76,6 +76,10 @@ function mapSQLEntityToJSONSchema (entity) {
       // we skip the primary key for creation
       required.push(field.camelcase)
     }
+    /* istanbul ignore next */
+    if (field.enum) {
+      properties[field.camelcase].enum = field.enum
+    }
   }
   return {
     $id: entity.name,
