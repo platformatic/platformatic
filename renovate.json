@@ -4,7 +4,7 @@
     "config:base"
   ],
   "rangeStrategy": "update-lockfile",
-  "ignoreDeps": ["camelcase", "mysql", "swagger-ui-react"],
+  "ignoreDeps": ["camelcase", "mysql", "swagger-ui-react", "level"],
   "prHourlyLimit": 10,
   "packageRules": [
     {

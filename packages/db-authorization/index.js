@@ -4,6 +4,7 @@ const fp = require('fastify-plugin')
 const createError = require('@fastify/error')
 const { getRequestFromContext, getRoles } = require('./lib/utils')
 const findRule = require('./lib/find-rule')
+const leven = require('leven')
 
 const PLT_ADMIN_ROLE = 'platformatic-admin'
 const Unauthorized = createError('PLT_DB_AUTH_UNAUTHORIZED', 'operation not allowed', 401)
@@ -110,7 +111,21 @@ async function auth (app, opts) {
   app.addHook('onReady', function () {
     const entityRules = {}
     // TODO validate that there is at most a rule for a given role
-    for (const rule of rules) {
+    for (let i = 0; i < rules.length; i++) {
+      const rule = rules[i]
+      if (!app.platformatic.entities[rule.entity]) {
+        // There is a unknown entity. Let's find out the nearest one for a nice error message
+        const entities = Object.keys(app.platformatic.entities)
+        const nearest = entities.reduce((acc, entity) => {
+          const distance = leven(rule.entity, entity)
+          if (distance < acc.distance) {
+            acc.distance = distance
+            acc.entity = entity
+          }
+          return acc
+        }, { distance: Infinity, entity: null })
+        throw new Error(`Unknown entity '${rule.entity} in authorization rule ${i}. Did you mean '${nearest.entity}?'`)
+      }
       if (!entityRules[rule.entity]) {
         entityRules[rule.entity] = []
       }
