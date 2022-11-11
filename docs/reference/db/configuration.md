@@ -470,8 +470,6 @@ Server will listen to `http://127.0.0.1:3042`
       "enabled": true
     }
   },
-  "dashboard": {
-    "enabled": true
-  }
+  "dashboard": true
 }
 ```
