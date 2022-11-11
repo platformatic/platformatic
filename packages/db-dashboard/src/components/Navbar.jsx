@@ -1,6 +1,6 @@
 import styles from './Navbar.module.css'
 import { AppContext } from '../App'
-import { useContext } from 'react'
+import React, { useContext } from 'react'
 export default function Navbar () {
   const { userName, setUsername, logged, setLogged } = useContext(AppContext)
   function onLogoutButtonClicked (event) {
