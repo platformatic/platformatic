@@ -7,10 +7,12 @@ on:
     paths-ignore:
       - 'docs/**'
       - '**.md'
+      - 'signatures/**'
   pull_request:
     paths-ignore:
       - 'docs/**'
       - '**.md'
+      - 'signatures/**'
 
 # This allows a subsequently queued workflow run to interrupt previous runs
 concurrency:
