@@ -65,4 +65,9 @@ _Example_
 
 ### Manually with the CLI
 
-See documentation about `db migrate` [command](./cli#migrate)
+See documentation about `db migrate` running `npx platformatic help db migrate`.
+
+In short:
+- be sure to define a correct `migrations.dir` folder under the config on `platformatic.db.json`
+- get the `MIGRATION_NUMBER` (f.e. if the file is named `002.do.sql` will be `002`)
+- run `npx platformatic db migrate --to MIGRATION_NUMBER` 
