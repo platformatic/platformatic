@@ -186,6 +186,22 @@ test('users can find only the authorized fields', async ({ pass, teardown, same,
       ]
     }, 'pages response')
   }
+
+  {
+    const res = await app.inject({
+      url: '/pages',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    equal(res.statusCode, 401, 'GET /pages status code (Unauthorized)')
+    same(res.json(), {
+      statusCode: 401,
+      error: 'Unauthorized',
+      code: 'PLT_DB_AUTH_UNAUTHORIZED',
+      message: 'field not allowed: author'
+    }, 'GET /pages status response (Unauthorized)')
+  }
 })
 
 test('users can save only the authorized fields', async ({ pass, teardown, same, equal }) => {

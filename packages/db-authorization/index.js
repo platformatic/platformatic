@@ -170,7 +170,7 @@ async function auth (app, opts) {
           }
           const request = getRequestFromContext(ctx)
           const rule = findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
-          checkFieldsFromRule(rule.find, fields)
+          checkFieldsFromRule(rule.find, fields || Object.keys(app.platformatic.entities[entityKey].fields))
           where = await fromRuleToWhere(ctx, rule.find, where, request.user)
 
           return originalFind({ ...restOpts, where, ctx, fields })
