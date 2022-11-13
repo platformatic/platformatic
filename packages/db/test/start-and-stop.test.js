@@ -54,8 +54,6 @@ test('should not restart if not authorized', async ({ teardown, equal, same }) =
 })
 
 test('restarts the server', async ({ teardown, equal, pass, same, match }) => {
-  let dbHandler, sqlHandler
-  let started = false
   const server = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
@@ -64,12 +62,8 @@ test('restarts the server', async ({ teardown, equal, pass, same, match }) => {
     core: {
       ...connInfo,
       async onDatabaseLoad (db, sql) {
-        if (!started) {
-          await dropUsersTable(db, sql)
-        }
-        started = true
-        dbHandler = db
-        sqlHandler = sql
+        await dropUsersTable(db, sql)
+        await createAndPopulateUsersTable(db, sql)
       }
     },
     authorization: {
@@ -84,34 +78,6 @@ test('restarts the server', async ({ teardown, equal, pass, same, match }) => {
   teardown(server.stop)
 
   await server.listen()
-
-  {
-    // query users and get an error
-    const res = await request(`${server.url}/graphql`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-PLATFORMATIC-ADMIN-SECRET': 'secret'
-      },
-      body: JSON.stringify({
-        query: `
-          query {
-            users {
-              name
-              age
-            }
-          }
-        `
-      })
-    })
-    const body = await res.body.json()
-    equal(res.statusCode, 400)
-    equal(body.errors.length, 1)
-    match(body.errors[0].message, 'Cannot query field "users" on type "Query".')
-  }
-
-  // Create users table
-  await createAndPopulateUsersTable(dbHandler, sqlHandler)
 
   {
     const res = await (request(`${server.url}/_admin/restart`, {

@@ -213,6 +213,7 @@ importers:
       fastify: ^4.6.0
       fastify-plugin: ^4.1.0
       get-jwks: ^8.0.0
+      leven: 3.x
       mercurius: ^11.0.0
       snazzy: ^9.0.0
       standard: ^17.0.0
@@ -225,6 +226,7 @@ importers:
       '@fastify/jwt': 6.3.2
       fastify-plugin: 4.3.0
       get-jwks: 8.0.0
+      leven: 3.1.0
       undici: 5.12.0
     devDependencies:
       '@fastify/cookie': 8.3.0
@@ -5292,6 +5294,11 @@ packages:
     resolution: {integrity: sha512-dcS1ul+9tmeD95T+x28/ehLgd9mENa3LsvDTtzm3vyBEO7RPptvAD+t44WVXaUjTBRcrpFeFlC8WCruUR456hw==}
     engines: {node: '>=0.10.0'}
     dev: true
+
+  /leven/3.1.0:
+    resolution: {integrity: sha512-qsda+H8jTaUaN/x5vzW2rzc+8Rw4TAQ/4KjB46IwK5VH+IlVeeeje/EoZRpiXvIqjFgK84QffqPztGI3VBLG1A==}
+    engines: {node: '>=6'}
+    dev: false
 
   /levn/0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
