@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@fastify/static": "^6.5.0",
-    "@platformatic/ui-components": "file:../../../ui-components",
+    "@platformatic/ui-components": "^0.1.19",
     "autoprefixer": "^10.4.13",
     "inflected": "^2.1.0",
     "postcss": "^8.4.18",
