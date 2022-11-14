@@ -213,6 +213,45 @@ test('use the skipAuth option tp avoid permissions programatically', async ({ pa
     }, 'deletePages response')
   }
 
+  // update many pages through the API fails...
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/pages?where.id.gte=1',
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body: {
+        title: 'Updated page title'
+      }
+    })
+    equal(res.statusCode, 401, 'updateMay status code')
+
+    same(res.json(), {
+      statusCode: 401,
+      code: 'PLT_DB_AUTH_UNAUTHORIZED',
+      error: 'Unauthorized',
+      message: 'operation not allowed'
+    }, 'updateMany response')
+  }
+
+  // ...but it works if we skip the authorization programmatically
+  {
+    const res = await app.platformatic.entities.page.updateMany({
+      where: {
+        id: {
+          gte: 1
+        }
+      },
+      input: { title: 'Updated page title' },
+      skipAuth: true
+    })
+    same(res, [
+      { id: '1', title: 'Updated page title', userId: null },
+      { id: '2', title: 'Updated page title', userId: null }
+    ], 'updateMany')
+  }
+
   {
     await app.platformatic.entities.page.delete({
       where: {

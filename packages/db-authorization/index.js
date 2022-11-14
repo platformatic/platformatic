@@ -281,6 +281,18 @@ async function auth (app, opts) {
           return originalDelete({ where, ctx, fields })
         },
 
+        async updateMany (originalUpdateMany, { where, ctx, fields, skipAuth, ...restOpts }) {
+          if (skipAuth) {
+            return originalUpdateMany({ ...restOpts, where, ctx, fields })
+          }
+          const request = getRequestFromContext(ctx)
+          const rule = findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
+
+          where = await fromRuleToWhere(ctx, rule.updateMany, where, request.user)
+
+          return originalUpdateMany({ ...restOpts, where, ctx, fields })
+        },
+
         async getPublishTopic (original, opts) {
           const request = opts.ctx.reply.request
           const originalTopic = await original(opts)
