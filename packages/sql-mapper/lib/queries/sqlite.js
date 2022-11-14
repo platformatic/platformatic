@@ -75,7 +75,6 @@ async function insertOne (db, sql, table, input, primaryKey, useUUID, fieldsToRe
   let primaryKeyValue
   if (fieldNames.indexOf(primaryKey) === -1) {
     keysToSql.push(sql.ident(primaryKey))
-    // TODO add test for this
     if (useUUID) {
       primaryKeyValue = randomUUID()
     } else {
