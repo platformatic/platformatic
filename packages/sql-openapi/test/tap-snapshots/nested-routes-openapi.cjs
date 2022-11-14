@@ -304,6 +304,185 @@ Object {
           },
         },
       },
+      "put": Object {
+        "parameters": Array [
+          Object {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": Object {
+              "items": Object {
+                "enum": Array [
+                  "id",
+                  "name",
+                ],
+                "type": "string",
+              },
+              "type": "array",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.eq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.neq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.gt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.gte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.lt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.lte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.name.eq",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.name.neq",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.name.gt",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.name.gte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.name.lt",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.name.lte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.name.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.name.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+        ],
+        "requestBody": Object {
+          "content": Object {
+            "application/json": Object {
+              "schema": Object {
+                "$ref": "#/components/schemas/Owner",
+              },
+            },
+          },
+        },
+        "responses": Object {
+          "200": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "items": Object {
+                    "$ref": "#/components/schemas/Owner",
+                  },
+                  "type": "array",
+                },
+              },
+            },
+            "description": "Default Response",
+            "links": Object {
+              "GetPosts": Object {
+                "operationId": "getPosts",
+                "parameters": Object {
+                  "where.ownerId.eq": "$response.body#/id",
+                },
+              },
+            },
+          },
+        },
+      },
     },
     "/owners/{id}": Object {
       "delete": Object {
@@ -1022,6 +1201,380 @@ Object {
               "application/json": Object {
                 "schema": Object {
                   "$ref": "#/components/schemas/Post",
+                },
+              },
+            },
+            "description": "Default Response",
+            "links": Object {
+              "GetOwnerById": Object {
+                "operationId": "getOwnerById",
+                "parameters": Object {
+                  "id": "$response.body#/ownerId",
+                },
+              },
+            },
+          },
+        },
+      },
+      "put": Object {
+        "parameters": Array [
+          Object {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": Object {
+              "items": Object {
+                "enum": Array [
+                  "counter",
+                  "id",
+                  "longText",
+                  "ownerId",
+                  "title",
+                ],
+                "type": "string",
+              },
+              "type": "array",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.eq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.neq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.gt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.gte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.lt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.lte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.eq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.neq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.gt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.gte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.lt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.lte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.eq",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.neq",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.gt",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.gte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.lt",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.lte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.ownerId.eq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.ownerId.neq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.ownerId.gt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.ownerId.gte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.ownerId.lt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.ownerId.lte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.ownerId.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.ownerId.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.eq",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.neq",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.gt",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.gte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.lt",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.lte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+        ],
+        "requestBody": Object {
+          "content": Object {
+            "application/json": Object {
+              "schema": Object {
+                "$ref": "#/components/schemas/Post",
+              },
+            },
+          },
+        },
+        "responses": Object {
+          "200": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "items": Object {
+                    "$ref": "#/components/schemas/Post",
+                  },
+                  "type": "array",
                 },
               },
             },

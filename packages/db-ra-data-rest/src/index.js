@@ -14,7 +14,7 @@ import { fetchUtils } from 'ra-core'
  * getMany          => GET http://my.api.url/posts?where.id.in=123,456,789
  * create           => POST http://my.api.url/posts/123
  * update           => PUT http://my.api.url/posts/123
- * updateMany       => PUT http://my.api.url/posts/123, PUT http://my.api.url/posts/456, PUT http://my.api.url/posts/789
+ * updateMany       => PUT http://my.api.url/posts?where.id.in=123,456,789 http://my.api.url/posts?where.authorId.in=345,346
  * delete           => DELETE http://my.api.url/posts/123
  *
  * @example
@@ -42,6 +42,13 @@ const formatFilters = (filters) =>
       return acc
     }, {})
     : {}
+
+const parseWhereStatement = (where) =>
+  Object.keys(where).reduce((acc, param) => {
+    const [v] = Object.keys(where[param])
+    acc[`where.${param}.${v}`] = Array.isArray(where[param][v]) ? where[param][v].join(',') : where[param][v]
+    return acc
+  }, {})
 
 export default (apiUrl, httpClient = fetchUtils.fetchJson) => ({
   getList: async (resource, params) => {
@@ -118,19 +125,18 @@ export default (apiUrl, httpClient = fetchUtils.fetchJson) => ({
     })
     return { data: json }
   },
-  // platformatic doesn't handle filters on UPDATE route, so we fallback to calling UPDATE n times instead
-  // https://github.com/platformatic/platformatic/issues/249
-  updateMany: async (resource, params) => {
-    const proms = Promise.all(
-      params.ids.map((id) =>
-        httpClient(`${apiUrl}/${resource}/${id}`, {
-          method: 'PUT',
-          body: JSON.stringify(params.data)
-        })
-      )
-    )
-    const responses = await proms
-    return { data: responses.map(({ json }) => json.id) }
+
+  updateMany: (resource, params) => {
+    if (!params?.where || Object.keys(params.where).length === 0) {
+      throw new Error('where can not be empty')
+    }
+    const query = {
+      ...parseWhereStatement(params.where)
+    }
+    return httpClient(`${apiUrl}/${resource}?${stringify(query)}`, {
+      method: 'PUT',
+      body: JSON.stringify(params.data)
+    }).then(({ json }) => json)
   },
 
   create: async (resource, params) => {

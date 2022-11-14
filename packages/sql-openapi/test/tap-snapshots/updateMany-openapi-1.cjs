@@ -5,38 +5,45 @@
  * Make sure to inspect the output below.  Do not ignore changes!
  */
 'use strict'
-exports['platformatic/db/openapi/simple simple db, simple rest API > GET /documentation/json response 1'] = `
+exports['platformatic/db/openapi/updateMany updateMany > matches expected OpenAPI defs 1'] = `
 Object {
   "components": Object {
     "schemas": Object {
-      "Page": Object {
-        "description": "A Page",
+      "Post": Object {
+        "description": "A Post",
         "properties": Object {
+          "counter": Object {
+            "nullable": true,
+            "type": "integer",
+          },
           "id": Object {
             "type": "integer",
           },
+          "longText": Object {
+            "nullable": true,
+            "type": "string",
+          },
           "title": Object {
+            "nullable": true,
             "type": "string",
           },
         },
-        "required": Array [
-          "title",
-        ],
-        "title": "Page",
+        "required": Array [],
+        "title": "Post",
         "type": "object",
       },
     },
   },
   "info": Object {
-    "description": "Simple Description",
-    "title": "Simple Title",
-    "version": "42.42.42",
+    "description": "Exposing a SQL database as REST",
+    "title": "Platformatic DB",
+    "version": "1.0.0",
   },
   "openapi": "3.0.3",
   "paths": Object {
-    "/pages/": Object {
+    "/posts/": Object {
       "get": Object {
-        "operationId": "getPages",
+        "operationId": "getPosts",
         "parameters": Array [
           Object {
             "in": "query",
@@ -70,12 +77,78 @@ Object {
             "schema": Object {
               "items": Object {
                 "enum": Array [
+                  "counter",
                   "id",
+                  "longText",
                   "title",
                 ],
                 "type": "string",
               },
               "type": "array",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.eq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.neq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.gt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.gte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.lt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.lte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
             },
           },
           Object {
@@ -137,6 +210,70 @@ Object {
           Object {
             "in": "query",
             "name": "where.id.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.eq",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.neq",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.gt",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.gte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.lt",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.lte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.nin",
             "required": false,
             "schema": Object {
               "type": "string",
@@ -208,7 +345,31 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "orderby.counter",
+            "required": false,
+            "schema": Object {
+              "enum": Array [
+                "asc",
+                "desc",
+              ],
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "orderby.id",
+            "required": false,
+            "schema": Object {
+              "enum": Array [
+                "asc",
+                "desc",
+              ],
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "orderby.longText",
             "required": false,
             "schema": Object {
               "enum": Array [
@@ -237,7 +398,7 @@ Object {
               "application/json": Object {
                 "schema": Object {
                   "items": Object {
-                    "$ref": "#/components/schemas/Page",
+                    "$ref": "#/components/schemas/Post",
                   },
                   "type": "array",
                 },
@@ -252,7 +413,7 @@ Object {
           "content": Object {
             "application/json": Object {
               "schema": Object {
-                "$ref": "#/components/schemas/Page",
+                "$ref": "#/components/schemas/Post",
               },
             },
           },
@@ -262,7 +423,7 @@ Object {
             "content": Object {
               "application/json": Object {
                 "schema": Object {
-                  "$ref": "#/components/schemas/Page",
+                  "$ref": "#/components/schemas/Post",
                 },
               },
             },
@@ -280,12 +441,78 @@ Object {
             "schema": Object {
               "items": Object {
                 "enum": Array [
+                  "counter",
                   "id",
+                  "longText",
                   "title",
                 ],
                 "type": "string",
               },
               "type": "array",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.eq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.neq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.gt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.gte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.lt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.lte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
             },
           },
           Object {
@@ -347,6 +574,70 @@ Object {
           Object {
             "in": "query",
             "name": "where.id.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.eq",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.neq",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.gt",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.gte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.lt",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.lte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.nin",
             "required": false,
             "schema": Object {
               "type": "string",
@@ -421,7 +712,7 @@ Object {
           "content": Object {
             "application/json": Object {
               "schema": Object {
-                "$ref": "#/components/schemas/Page",
+                "$ref": "#/components/schemas/Post",
               },
             },
           },
@@ -432,7 +723,7 @@ Object {
               "application/json": Object {
                 "schema": Object {
                   "items": Object {
-                    "$ref": "#/components/schemas/Page",
+                    "$ref": "#/components/schemas/Post",
                   },
                   "type": "array",
                 },
@@ -444,7 +735,7 @@ Object {
         },
       },
     },
-    "/pages/{id}": Object {
+    "/posts/{id}": Object {
       "delete": Object {
         "parameters": Array [
           Object {
@@ -454,7 +745,9 @@ Object {
             "schema": Object {
               "items": Object {
                 "enum": Array [
+                  "counter",
                   "id",
+                  "longText",
                   "title",
                 ],
                 "type": "string",
@@ -476,7 +769,7 @@ Object {
             "content": Object {
               "application/json": Object {
                 "schema": Object {
-                  "$ref": "#/components/schemas/Page",
+                  "$ref": "#/components/schemas/Post",
                 },
               },
             },
@@ -485,7 +778,7 @@ Object {
         },
       },
       "get": Object {
-        "operationId": "getPageById",
+        "operationId": "getPostById",
         "parameters": Array [
           Object {
             "in": "query",
@@ -494,7 +787,9 @@ Object {
             "schema": Object {
               "items": Object {
                 "enum": Array [
+                  "counter",
                   "id",
+                  "longText",
                   "title",
                 ],
                 "type": "string",
@@ -516,7 +811,7 @@ Object {
             "content": Object {
               "application/json": Object {
                 "schema": Object {
-                  "$ref": "#/components/schemas/Page",
+                  "$ref": "#/components/schemas/Post",
                 },
               },
             },
@@ -534,7 +829,9 @@ Object {
             "schema": Object {
               "items": Object {
                 "enum": Array [
+                  "counter",
                   "id",
+                  "longText",
                   "title",
                 ],
                 "type": "string",
@@ -555,7 +852,7 @@ Object {
           "content": Object {
             "application/json": Object {
               "schema": Object {
-                "$ref": "#/components/schemas/Page",
+                "$ref": "#/components/schemas/Post",
               },
             },
           },
@@ -565,7 +862,7 @@ Object {
             "content": Object {
               "application/json": Object {
                 "schema": Object {
-                  "$ref": "#/components/schemas/Page",
+                  "$ref": "#/components/schemas/Post",
                 },
               },
             },
@@ -583,7 +880,9 @@ Object {
             "schema": Object {
               "items": Object {
                 "enum": Array [
+                  "counter",
                   "id",
+                  "longText",
                   "title",
                 ],
                 "type": "string",
@@ -604,7 +903,7 @@ Object {
           "content": Object {
             "application/json": Object {
               "schema": Object {
-                "$ref": "#/components/schemas/Page",
+                "$ref": "#/components/schemas/Post",
               },
             },
           },
@@ -614,7 +913,7 @@ Object {
             "content": Object {
               "application/json": Object {
                 "schema": Object {
-                  "$ref": "#/components/schemas/Page",
+                  "$ref": "#/components/schemas/Post",
                 },
               },
             },

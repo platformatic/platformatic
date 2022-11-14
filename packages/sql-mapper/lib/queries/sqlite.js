@@ -1,6 +1,7 @@
 'use strict'
 
 const { randomUUID } = require('crypto')
+const shared = require('./shared')
 
 async function listTables (db, sql) {
   const tables = await db.query(sql`
@@ -167,3 +168,5 @@ async function deleteAll (db, sql, table, criteria, fieldsToRetrieve) {
 }
 
 module.exports.deleteAll = deleteAll
+
+module.exports.updateMany = shared.updateMany

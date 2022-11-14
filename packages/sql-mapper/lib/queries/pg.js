@@ -78,6 +78,8 @@ async function updateOne (db, sql, table, input, primaryKey, fieldsToRetrieve) {
 
 module.exports.updateOne = updateOne
 
+module.exports.updateMany = shared.updateMany
+
 async function listEnumValues (db, sql, table) {
   return (await db.query(sql`
   SELECT udt_name, enumlabel, column_name

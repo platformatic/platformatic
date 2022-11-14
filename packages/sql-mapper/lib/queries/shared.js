@@ -92,9 +92,25 @@ function insertPrep (inputs, inputToFieldMap, fields, sql) {
   return { keys, values }
 }
 
+async function updateMany (db, sql, table, criteria, input, fieldsToRetrieve) {
+  const pairs = Object.keys(input).map((key) => {
+    const value = input[key]
+    return sql`${sql.ident(key)} = ${value}`
+  })
+  const update = sql`
+    UPDATE ${sql.ident(table)}
+    SET ${sql.join(pairs, sql`, `)}
+    WHERE ${sql.join(criteria, sql` AND `)}
+    RETURNING ${sql.join(fieldsToRetrieve, sql`, `)}
+    `
+  const res = await db.query(update)
+  return res
+}
+
 module.exports = {
   insertOne,
   insertPrep,
   deleteAll,
-  insertMany
+  insertMany,
+  updateMany
 }

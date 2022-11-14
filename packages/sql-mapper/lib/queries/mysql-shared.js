@@ -54,9 +54,41 @@ async function updateOne (db, sql, table, input, primaryKey, fieldsToRetrieve) {
   return res[0]
 }
 
+async function updateMany (db, sql, table, criteria, input, fieldsToRetrieve) {
+  const pairs = Object.keys(input).map((key) => {
+    const value = input[key]
+    return sql`${sql.ident(key)} = ${value}`
+  })
+
+  const selectIds = sql`
+    SELECT id
+    FROM ${sql.ident(table)}
+    WHERE ${sql.join(criteria, sql` AND `)}
+  `
+  const resp = await db.query(selectIds)
+  const ids = resp.map(({ id }) => id)
+
+  const update = sql`
+    UPDATE ${sql.ident(table)}
+    SET ${sql.join(pairs, sql`, `)}
+    WHERE ${sql.join(criteria, sql` AND `)}
+  `
+
+  await db.query(update)
+
+  const select = sql`
+    SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
+    FROM ${sql.ident(table)}
+    WHERE id IN (${ids});
+  `
+  const res = await db.query(select)
+  return res
+}
+
 module.exports = {
   listTables,
   listColumns,
   listConstraints,
-  updateOne
+  updateOne,
+  updateMany
 }

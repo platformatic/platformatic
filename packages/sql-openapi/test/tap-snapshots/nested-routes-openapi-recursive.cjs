@@ -365,6 +365,256 @@ Object {
           },
         },
       },
+      "put": Object {
+        "parameters": Array [
+          Object {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": Object {
+              "items": Object {
+                "enum": Array [
+                  "id",
+                  "name",
+                  "parentId",
+                ],
+                "type": "string",
+              },
+              "type": "array",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.eq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.neq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.gt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.gte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.lt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.lte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.name.eq",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.name.neq",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.name.gt",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.name.gte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.name.lt",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.name.lte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.name.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.name.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.parentId.eq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.parentId.neq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.parentId.gt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.parentId.gte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.parentId.lt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.parentId.lte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.parentId.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.parentId.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+        ],
+        "requestBody": Object {
+          "content": Object {
+            "application/json": Object {
+              "schema": Object {
+                "$ref": "#/components/schemas/Person",
+              },
+            },
+          },
+        },
+        "responses": Object {
+          "200": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "items": Object {
+                    "$ref": "#/components/schemas/Person",
+                  },
+                  "type": "array",
+                },
+              },
+            },
+            "description": "Default Response",
+            "links": Object {
+              "GetPeople": Object {
+                "operationId": "getPeople",
+                "parameters": Object {
+                  "where.parentId.eq": "$response.body#/id",
+                },
+              },
+              "GetPersonById": Object {
+                "operationId": "getPersonById",
+                "parameters": Object {
+                  "id": "$response.body#/parentId",
+                },
+              },
+            },
+          },
+        },
+      },
     },
     "/people/{id}": Object {
       "delete": Object {

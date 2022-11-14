@@ -320,3 +320,95 @@ test('users can find pages with parameters specified', async ({ pass, teardown, 
     }).reverse(), '/pages?orderby.id=desc response')
   }
 })
+
+test('users can find and updateMany pages', async ({ pass, teardown, same, equal }) => {
+  const app = fastify()
+  app.register(core, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(auth, {
+    jwt: {
+      secret: 'supersecret'
+    },
+    roleKey: 'X-PLATFORMATIC-ROLE',
+    anonymousRole: 'anonymous',
+    rules: [{
+      role: 'user',
+      entity: 'page',
+      save: true,
+      find: true,
+      updateMany: true,
+      defaults: {
+        userId: 'X-PLATFORMATIC-USER-ID'
+      }
+    }]
+  })
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  const token = await app.jwt.sign({
+    'X-PLATFORMATIC-USER-ID': 42,
+    'X-PLATFORMATIC-ROLE': 'user'
+  })
+
+  const pages = [
+    {
+      title: 'title 1'
+    },
+    {
+      title: 'title 2'
+    },
+    {
+      title: 'title 3'
+    },
+    {
+      title: 'title 4'
+    },
+    {
+      title: 'title 5'
+    }
+  ]
+  for (const page of pages) {
+    await app.inject({
+      method: 'POST',
+      url: '/pages',
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body: page
+    })
+  }
+
+  {
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/pages?where.id.in=1,2',
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body: {
+        title: 'Updated title'
+      }
+    })
+    equal(res.statusCode, 200, '/pages?where.id.in=1,2 status code')
+    same(res.json(), [
+      {
+        id: 1,
+        title: 'Updated title',
+        userId: 42
+      },
+      {
+        id: 2,
+        title: 'Updated title',
+        userId: 42
+      }
+    ], '/pages?where.id.in=1,2 response')
+  }
+})

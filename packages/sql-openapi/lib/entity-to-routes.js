@@ -385,6 +385,65 @@ async function entityPlugin (app, opts) {
     })
   }
 
+  app.put('/', {
+    schema: {
+      body: entitySchema,
+      querystring: {
+        type: 'object',
+        properties: {
+          fields,
+          ...whereArgs
+        },
+        additionalProperties: false
+      },
+      response: {
+        200: {
+          type: 'array',
+          items: entitySchema
+        }
+      }
+    },
+    links: {
+      200: entityLinks
+    },
+    async handler (request, reply) {
+      const ctx = { app: this, reply }
+      const query = request.query
+      const queryKeys = Object.keys(query)
+      const where = {}
+
+      for (let i = 0; i < queryKeys.length; i++) {
+        const key = queryKeys[i]
+        if (key.startsWith('where.')) {
+          const [, field, modifier] = key.split('.')
+          where[field] ||= {}
+          let value = query[key]
+          if (modifier === 'in' || modifier === 'nin') {
+            // TODO handle escaping of ,
+            value = query[key].split(',')
+            if (mapSQLTypeToOpenAPIType(entity.fields[field].sqlType) === 'integer') {
+              value = value.map((v) => parseInt(v))
+            }
+          }
+          where[field][modifier] = value
+        }
+      }
+
+      const res = await entity.updateMany({
+        input: {
+          ...request.body
+        },
+        where,
+        fields: request.query.fields,
+        ctx
+      })
+      // TODO: Should find a way to test this line
+      // if (!res) return reply.callNotFound()
+      reply.header('location', `${app.prefix}`)
+      return res
+    }
+  })
+
   app.delete(`/:${primaryKeyCamelcase}`, {
     schema: {
       params: primaryKeyParams,
