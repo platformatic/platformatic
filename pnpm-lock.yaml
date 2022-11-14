@@ -280,11 +280,11 @@ importers:
       '@types/react-dom': ^18.0.6
       '@vitejs/plugin-react': ^2.0.0
       autoprefixer: ^10.4.13
-      bulma: ^0.9.4
       camelcase: ^6.0.0
       graphiql: ^2.0.0
       happy-dom: ^7.0.0
       history: ^5.3.0
+      inflected: ^2.1.0
       json-format-highlight: ^1.0.4
       jsoneditor: ^9.9.0
       playwright: ^1.24.2
@@ -305,6 +305,7 @@ importers:
       '@fastify/static': 6.5.0
       '@platformatic/ui-components': file:../ui-components_w37yad5l2i4zuwspz4it7vqim4
       autoprefixer: 10.4.13_postcss@8.4.19
+      inflected: 2.1.0
       postcss: 8.4.19
       tailwindcss: 3.2.4_postcss@8.4.19
     devDependencies:
@@ -315,7 +316,6 @@ importers:
       '@types/react': 18.0.25
       '@types/react-dom': 18.0.8
       '@vitejs/plugin-react': 2.2.0_vite@3.2.3
-      bulma: 0.9.4
       camelcase: 6.3.0
       graphiql: 2.1.0_yewmqbb5aeictmbtanzutcp6ly
       happy-dom: 7.7.0
@@ -4768,10 +4768,6 @@ packages:
     resolution: {integrity: sha512-qwVpFEHNfhYJIzNRBvd2C1kyo6jz3ZSMPyyuR47OPdiKWlbYnZNyDWuyR175qDnAJLiCo5fBBqPb3RiXgWlkOQ==}
     dependencies:
       semver: 7.3.8
-    dev: true
-
-  /bulma/0.9.4:
-    resolution: {integrity: sha512-86FlT5+1GrsgKbPLRRY7cGDg8fsJiP/jzTqXXVqiUZZ2aZT8uemEOHlU1CDU+TxklPEZ11HZNNWclRBBecP4CQ==}
     dev: true
 
   /busboy/1.6.0:
