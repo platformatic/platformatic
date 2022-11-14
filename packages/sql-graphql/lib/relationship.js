@@ -1,5 +1,7 @@
 'use strict'
 
+/* eslint camelcase: 0 */
+
 const camelcase = require('camelcase')
 const {
   fromSelectionSet
