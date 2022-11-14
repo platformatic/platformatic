@@ -1,6 +1,6 @@
 {
   "name": "platformatic",
-  "version": "0.5.1",
+  "version": "0.6.1",
   "private": true,
   "scripts": {
     "test": "pnpm -r --workspace-concurrency=1 test",
@@ -11,13 +11,13 @@
     "postinstall": "node ./scripts/postinstall.js",
     "lint:markdown": "markdownlint-cli2"
   },
-  "packageManager": "pnpm@7.14.2",
+  "packageManager": "pnpm@7.15.0",
   "devDependencies": {
     "@fastify/pre-commit": "^2.0.2",
-    "markdownlint-cli2": "^0.5.1"
+    "markdownlint-cli2": "^0.5.1",
+    "desm": "^1.2.0"
   },
   "dependencies": {
-    "desm": "^1.2.0"
   },
   "pre-commit": []
 }

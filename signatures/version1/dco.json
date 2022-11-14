@@ -1,0 +1,28 @@
+{
+  "signedContributors": [
+    {
+      "name": "mcollina",
+      "id": 52195,
+      "comment_id": 1311540044,
+      "created_at": "2022-11-11T10:51:17Z",
+      "repoId": 539855084,
+      "pullRequestNo": 312
+    },
+    {
+      "name": "rozzilla",
+      "id": 3996291,
+      "comment_id": 1311778365,
+      "created_at": "2022-11-11T14:44:36Z",
+      "repoId": 539855084,
+      "pullRequestNo": 316
+    },
+    {
+      "name": "Abdullah0sama",
+      "id": 52256824,
+      "comment_id": 1312522084,
+      "created_at": "2022-11-12T16:33:19Z",
+      "repoId": 539855084,
+      "pullRequestNo": 324
+    }
+  ]
+}

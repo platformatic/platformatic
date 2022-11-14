@@ -393,12 +393,12 @@ and must meet the [allowed placeholder name](#allowed-placeholder-names) rules.
 ```json title="platformatic.db.json"
 {
   "core": {
-    "logger": {
-      "level": "{PLT_SERVER_LOGGER_LEVEL}"
-    },
     "connectionString": "{DATABASE_URL}"
   },
   "server": {
+    "logger": {
+      "level": "{PLT_SERVER_LOGGER_LEVEL}"
+    },
     "port": "{PORT}"
   }
 }
@@ -470,8 +470,6 @@ Server will listen to `http://127.0.0.1:3042`
       "enabled": true
     }
   },
-  "dashboard": {
-    "enabled": true
-  }
+  "dashboard": true
 }
 ```

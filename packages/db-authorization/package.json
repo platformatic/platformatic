@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db-authorization",
-  "version": "0.5.1",
+  "version": "0.6.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -30,6 +30,7 @@
     "@fastify/jwt": "^6.3.1",
     "fastify-plugin": "^4.1.0",
     "get-jwks": "^8.0.0",
+    "leven": "3.x",
     "undici": "^5.6.1"
   }
 }

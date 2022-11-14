@@ -61,7 +61,7 @@ async function entityPlugin (app, opts) {
     const baseKey = `where.${field.camelcase}.`
     for (const modifier of ['eq', 'neq', 'gt', 'gte', 'lt', 'lte']) {
       const key = baseKey + modifier
-      acc[key] = { type: mapSQLTypeToOpenAPIType(field.sqlType) }
+      acc[key] = { type: mapSQLTypeToOpenAPIType(field.sqlType), enum: field.enum }
     }
 
     for (const modifier of ['in', 'nin']) {

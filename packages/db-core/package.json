@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db-core",
-  "version": "0.5.1",
+  "version": "0.6.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/plaformatic/platformatic.git"
+    "url": "git+https://github.com/platformatic/platformatic.git"
   },
   "author": "Matteo Collina <hello@matteocollina.com>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/plaformatic/platformatic/issues"
+    "url": "https://github.com/platformatic/platformatic/issues"
   },
-  "homepage": "https://github.com/plaformatic/platformatic#readme",
+  "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "fastify": "^4.6.0",
     "mercurius": "^11.0.0",

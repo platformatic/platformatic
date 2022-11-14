@@ -7,10 +7,12 @@ on:
     paths-ignore:
       - 'docs/**'
       - '**.md'
+      - 'signatures/**'
   pull_request:
     paths-ignore:
       - 'docs/**'
       - '**.md'
+      - 'signatures/**'
 
 # This allows a subsequently queued workflow run to interrupt previous runs
 concurrency:
@@ -35,7 +37,7 @@ jobs:
           node-version: 18
           cache: 'pnpm'
       - name: pnpm fetch
-        run: pnpm fetch
+        run: pnpm fetch --ignore-scripts
 
   ci-cli:
     needs: setup-node_modules
@@ -74,8 +76,10 @@ jobs:
         cache: 'pnpm'
     - name: pnpm install
       run: pnpm install
+    - name: Builds the ra-data-rest
+      run: pnpm run ra-data-rest build
     - name: Builds the dashboard
-      run: npm run dashboard:build
+      run: pnpm run dashboard:build
     - name: Run test suite Dashboard
       run: cd packages/db-dashboard && pnpm test
 
@@ -95,7 +99,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
     - name: pnpm install
-      run: pnpm install --offline 
+      run: pnpm install  
     - name: Run test suite config manager
       run: cd packages/config && pnpm test
 
@@ -116,9 +120,11 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
     - name: pnpm install
-      run: pnpm install --offline 
-    - name: npm install -g typescript
-      run: npm install -g typescript 
+      run: pnpm install  
+    - name: pnpm install -g typescript
+      run: pnpm install -g typescript 
+    - name: Builds the ra-data-rest
+      run: pnpm run ra-data-rest build
     - name: Builds the dashboard
       run: pnpm run dashboard:build
     - name: Run test suite core
@@ -144,7 +150,7 @@ jobs:
     - name: Start docker containers for testing
       run: docker-compose up -d postgresql
     - name: pnpm install
-      run: pnpm install --offline 
+      run: pnpm install  
     - name: Run test suite
       run: cd packages/db-authorization && pnpm test
 
@@ -163,7 +169,7 @@ jobs:
         node-version: 18
         cache: 'pnpm'
     - name: pnpm install
-      run: pnpm install --offline 
+      run: pnpm install  
     - name: Linting & Typescript for test suite sql-mapper
       run: cd packages/sql-mapper && pnpm run lint && pnpm run test:typescript; cd ../..
     - name: Linting for test suite sql-json-schema-mapper
@@ -195,7 +201,7 @@ jobs:
       run: docker-compose up -d ${{ matrix.db }}
       if: ${{ matrix.db != 'sqlite' }}
     - name: pnpm install
-      run: pnpm install --offline 
+      run: pnpm install  
     - name: Wait for DB
       run: sleep 10
       if: ${{ matrix.db != 'sqlite' }}
@@ -230,7 +236,7 @@ jobs:
     - name: Start redis containers for testing
       run: docker-compose up -d redis
     - name: pnpm install
-      run: pnpm install --offline 
+      run: pnpm install  
     - name: Wait for DB
       run: sleep 10
       if: ${{ matrix.db != 'sqlite' }}
@@ -253,14 +259,14 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
       - name: pnpm install
-        run: pnpm install --offline 
+        run: pnpm install  
       - name: Run test suite
         run: cd packages/authenticate && pnpm test; cd ../..
 
   ci-service:
     needs: setup-node_modules
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 5
+    timeout-minutes: 15
     strategy:
       matrix:
         node-version: [16, 18]
@@ -273,7 +279,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
       - name: pnpm install
-        run: pnpm install --offline 
+        run: pnpm install  
       - name: Run test suite
         run: cd packages/service && pnpm test; cd ../..
 
@@ -291,7 +297,9 @@ jobs:
     - name: Start docker containers for testing
       run: docker-compose up -d postgresql
     - name: pnpm install
-      run: pnpm install --offline --frozen-lockfile
+      run: pnpm install
+    - name: Builds the ra-data-rest
+      run: pnpm run ra-data-rest build
     - name: Builds the dashboard
       run: pnpm run dashboard:build
     - name: Install Playwright browsers

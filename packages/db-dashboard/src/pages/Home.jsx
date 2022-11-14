@@ -1,4 +1,4 @@
-import { Fragment } from 'react'
+import React from 'react'
 import Title from '../elements/Title'
 import { notify } from '../utils'
 export default function Home () {
@@ -23,6 +23,5 @@ export default function Home () {
       <Title>Welcome to Platformatic DB!</Title>
       <button className='button is-primary' onClick={onRestartClicked}>Restart Server</button>
     </>
-
   )
 }

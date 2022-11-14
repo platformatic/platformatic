@@ -295,12 +295,30 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, ignore)
       sqlType: column.udt_name,
       isNullable: column.is_nullable === 'YES'
     }
+
+    // To get enum values in mysql and mariadb
+    /* istanbul ignore next */
+    if (column.udt_name === 'enum') {
+      acc[column.column_name].enum = column.column_type.match(/'(.+?)'/g).map(enumValue => enumValue.slice(1, enumValue.length - 1))
+    }
+
     if (autoTimestamp && (column.column_name === 'updated_at' || column.column_name === 'inserted_at')) {
       acc[column.column_name].autoTimestamp = true
     }
     return acc
   }, {})
-
+  // To get enum values in pg
+  /* istanbul ignore next */
+  if (db.isPg) {
+    const enums = await queries.listEnumValues(db, sql, table)
+    for (const enumValue of enums) {
+      if (!fields[enumValue.column_name].enum) {
+        fields[enumValue.column_name].enum = [enumValue.enumlabel]
+      } else {
+        fields[enumValue.column_name].enum.push(enumValue.enumlabel)
+      }
+    }
+  }
   const currentRelations = []
 
   const constraintsList = await queries.listConstraints(db, sql, table)

@@ -11,7 +11,7 @@ async function listTables (db, sql) {
 
 async function listColumns (db, sql, table) {
   const res = await db.query(sql`
-    SELECT column_name as column_name, data_type as udt_name, is_nullable as is_nullable
+    SELECT column_name as column_name, data_type as udt_name, is_nullable as is_nullable, column_type as column_type
     FROM information_schema.columns
     WHERE table_name = ${table}
     AND table_schema = (SELECT DATABASE())

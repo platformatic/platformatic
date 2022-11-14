@@ -63,4 +63,9 @@ module.exports.clear = async function (db, sql) {
     await db.query(sql`DROP TABLE versions`)
   } catch {
   }
+
+  try {
+    await db.query(sql`DROP TYPE pagetype`)
+  } catch {
+  }
 }
