@@ -434,6 +434,7 @@ async function entityPlugin (app, opts) {
           ...request.body
         },
         where,
+        fields: request.query.fields,
         ctx
       })
       // TODO: Should find a way to test this line

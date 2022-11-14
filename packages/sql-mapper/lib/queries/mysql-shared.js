@@ -54,7 +54,7 @@ async function updateOne (db, sql, table, input, primaryKey, fieldsToRetrieve) {
   return res[0]
 }
 
-async function updateMany (db, sql, table, criteria, input) {
+async function updateMany (db, sql, table, criteria, input, fieldsToRetrieve) {
   const pairs = Object.keys(input).map((key) => {
     const value = input[key]
     return sql`${sql.ident(key)} = ${value}`
@@ -77,7 +77,7 @@ async function updateMany (db, sql, table, criteria, input) {
   await db.query(update)
 
   const select = sql`
-    SELECT *
+    SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
     FROM ${sql.ident(table)}
     WHERE id IN (${ids});
   `

@@ -157,18 +157,15 @@ test('updateMany will return the updated values', async ({ pass, teardown, same 
     },
     input: {
       title: 'Updated title'
-    }
+    },
+    fields: ['id', 'counter']
   })
 
   same(updatedPosts, [{
     id: '3',
-    title: 'Updated title',
-    longText: 'Baz',
     counter: 30
   }, {
     id: '4',
-    title: 'Updated title',
-    longText: 'A duck tale',
     counter: 40
   }])
 })

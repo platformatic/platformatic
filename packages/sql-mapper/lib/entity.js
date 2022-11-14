@@ -118,6 +118,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
 
   async function updateMany (args) {
     const db = args.tx || defaultDb
+    const fieldsToRetrieve = computeFields(args.fields).map((f) => sql.ident(f))
     if (args.input === undefined) {
       throw new Error('Input not provided.')
     }
@@ -129,7 +130,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     }
     const criteria = computeCriteria(args)
 
-    const res = await queries.updateMany(db, sql, table, criteria, input)
+    const res = await queries.updateMany(db, sql, table, criteria, input, fieldsToRetrieve)
     return res.map(fixOutput)
   }
 

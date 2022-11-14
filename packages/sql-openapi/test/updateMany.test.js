@@ -84,12 +84,12 @@ test('updateMany', async (t) => {
   {
     const res = await app.inject({
       method: 'PUT',
-      url: '/posts?where.counter.gte=30',
+      url: '/posts?where.counter.in=30,40',
       body: {
         title: 'Updated title'
       }
     })
-    equal(res.statusCode, 200, 'PUT /posts?where.counter.gte=30 status code')
+    equal(res.statusCode, 200, '/posts?where.counter.in=30,40 status code')
     same(res.json(), [{
       id: 3,
       title: 'Updated title',
@@ -100,7 +100,7 @@ test('updateMany', async (t) => {
       title: 'Updated title',
       longText: 'A duck tale',
       counter: 40
-    }], 'PUT /posts?where.counter.gte=30 response')
+    }], '/posts?where.counter.in=30,40 response')
   }
 
   {
@@ -140,6 +140,43 @@ test('updateMany', async (t) => {
       longText: 'Updated long text',
       counter: 20
     }], 'PUT /posts?where.counter.gte=2&where.title.eq=Cat response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/posts?where.id.in=2&where.title.eq=Kitten&fields=id&fields=title',
+      body: {
+        title: 'Cat'
+      }
+    })
+    equal(res.statusCode, 200, '/posts?where.id.in=2&where.title.eq=Kitten&fields=id&fields=title status code')
+    same(res.json(), [{
+      id: 2,
+      title: 'Cat'
+    }], '/posts?where.id.in=2&where.title.eq=Kitten&fields=id&fields=title response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/posts?where.title.in=Cat,Dog',
+      body: {
+        title: 'Best pet friends'
+      }
+    })
+    equal(res.statusCode, 200, 'PUT /posts?where.title.in=Cat,Dog status code')
+    same(res.json(), [{
+      id: 1,
+      title: 'Best pet friends',
+      longText: 'Updated long text',
+      counter: 10
+    }, {
+      id: 2,
+      title: 'Best pet friends',
+      longText: 'Updated long text',
+      counter: 20
+    }], 'PUT /posts?where.title.in=Cat,Dog response')
   }
 
   {
