@@ -82,7 +82,7 @@ async function insertOne (db, sql, table, input, primaryKey, useUUID, fieldsToRe
     }
     valuesToSql.push(sql.value(primaryKeyValue))
   }
- 
+
   const keys = sql.join(
     keysToSql,
     sql`, `
