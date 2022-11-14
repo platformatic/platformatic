@@ -1,10 +1,17 @@
-.navbar {
-  @apply flex text-white items-center justify-between;
+.active {
+  background-color: #17e98a;
 }
-.brand {
-  @apply flex items-center;
+.list {
+  @apply flex justify-between items-center gap-x-4 uppercase tracking-[.25rem] h-[2rem];
 }
-.logo {
-  margin-right: .25rem;
-  width: 5rem;
+.listItem {
+  @apply text-white p-2 mt-2;
 }
+.selected {
+  @apply underline text-main-green underline-offset-8 font-bold;
+}
+.activeListItem {
+  @apply text-dark-blue bg-main-green;
+}
+
+

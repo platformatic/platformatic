@@ -1,6 +1,6 @@
-import Navbar from './Navbar'
+import Header from './Header'
 import React, { Fragment, useContext, useEffect, useState } from 'react'
-import Sidebar from './Sidebar'
+import Navbar from './Navbar'
 import styles from './Dashboard.module.css'
 import { Toaster } from 'react-hot-toast'
 import LoginBox from './LoginBox'
@@ -28,10 +28,10 @@ export default function Dashboard (props) {
   if (logged) {
     return (
       <>
-        <Navbar />
+        <Header />
         <div className={styles.container}>
-          <div className={styles.sidebar}>
-            <Sidebar />
+          <div className={styles.navbar}>
+            <Navbar />
           </div>
 
           <div className={styles.main}>

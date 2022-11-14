@@ -1,5 +1,5 @@
 .container {
-  @apply flex;
+  @apply flex flex-col gap-y-4;
 }
 
 .sidebar {
