@@ -65,7 +65,7 @@ _Example_
 
 ### Manually with the CLI
 
-See documentation about `db migrate` running `npx platformatic help db migrate`.
+See documentation about `db migrate` [command](../cli#migrate)
 
 In short:
 - be sure to define a correct `migrations.dir` folder under the config on `platformatic.db.json`
