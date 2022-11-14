@@ -122,7 +122,7 @@ export default (apiUrl, httpClient = fetchUtils.fetchJson) => ({
     const { json } = await httpClient(`${apiUrl}/${resource}/${params.id}`, {
       method: 'PUT',
       body: JSON.stringify(params.data)
-    }).then(({ json }) => ({ data: json }))
+    })
     return { data: json }
   },
 
