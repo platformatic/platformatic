@@ -22,7 +22,7 @@ export default function Home () {
   return (
     <>
       <h1 className={styles.title}>Welcome to Platformatic DB!</h1>
-      <Button onClick={onRestartClicked} primary="true" label="Restart Server"/>
+      <Button onClick={onRestartClicked} primary='true' label='Restart Server' />
     </>
   )
 }
