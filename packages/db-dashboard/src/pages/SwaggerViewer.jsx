@@ -8,6 +8,5 @@ export default function SwaggerViewer (props) {
     <div className={styles.container}>
       <SwaggerUI url={swaggerDocUrl} />
     </div>
-    
   )
 }

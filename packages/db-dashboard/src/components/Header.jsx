@@ -1,6 +1,7 @@
 import styles from './Header.module.css'
 import { AppContext } from '../App'
 import React, { useContext } from 'react'
+import { Button } from '@platformatic/ui-components'
 export default function Header () {
   const { userName, setUsername, logged, setLogged } = useContext(AppContext)
   function onLogoutButtonClicked (event) {
@@ -14,7 +15,7 @@ export default function Header () {
         <img className={styles.logo} src='/images/logo-192x192.png' />
       </a>
       {logged && (
-        <button className='button is-danger is-small' onClick={onLogoutButtonClicked}>Logout {userName}</button>
+        <Button color='red' primary='false' onClick={onLogoutButtonClicked} label={`Logout ${userName}`} />
       )}
     </div>
   )
