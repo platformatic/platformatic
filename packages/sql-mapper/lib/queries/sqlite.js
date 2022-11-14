@@ -73,7 +73,7 @@ async function insertOne (db, sql, table, input, primaryKey, useUUID, fieldsToRe
   const valuesToSql = fieldNames.map((key) => sql.value(input[key]))
 
   let primaryKeyValue
-  if (fieldNames.indexOf(primaryKey) == -1) {
+  if (fieldNames.indexOf(primaryKey) === -1) {
     keysToSql.push(sql.ident(primaryKey))
     // TODO add test for this
     if (useUUID) {
