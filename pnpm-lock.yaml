@@ -209,7 +209,7 @@ importers:
       '@fastify/jwt': ^6.3.1
       '@fastify/session': ^10.0.0
       '@platformatic/db-core': workspace:*
-      fast-jwt: ^1.7.1
+      fast-jwt: ^2.0.0
       fastify: ^4.6.0
       fastify-plugin: ^4.1.0
       get-jwks: ^8.0.0
@@ -232,7 +232,7 @@ importers:
       '@fastify/cookie': 8.3.0
       '@fastify/session': 10.0.2
       '@platformatic/db-core': link:../db-core
-      fast-jwt: 1.7.2
+      fast-jwt: 2.0.0
       fastify: 4.9.2
       mercurius: 11.3.0_graphql@16.6.0
       snazzy: 9.0.0
@@ -3972,6 +3972,16 @@ packages:
       asn1.js: 5.4.1
       ecdsa-sig-formatter: 1.0.11
       mnemonist: 0.39.5
+    dev: false
+
+  /fast-jwt/2.0.0:
+    resolution: {integrity: sha512-djKTjdq4R89dd/dmbzvFNt2j0ia1kh98GVZxe884zCnatHXy8ael/dSt3fXmmUq8rrQYweX++102Q8xCdvUQEg==}
+    engines: {node: '>=14 <20'}
+    dependencies:
+      asn1.js: 5.4.1
+      ecdsa-sig-formatter: 1.0.11
+      mnemonist: 0.39.5
+    dev: true
 
   /fast-levenshtein/2.0.6:
     resolution: {integrity: sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw==}
