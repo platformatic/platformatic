@@ -68,24 +68,27 @@ async function listConstraints (db, sql, table) {
 module.exports.listConstraints = listConstraints
 
 async function insertOne (db, sql, table, input, primaryKey, useUUID, fieldsToRetrieve) {
-  const keysToSql = Object.keys(input).map((key) => sql.ident(key))
-  keysToSql.push(sql.ident(primaryKey))
+  const fieldNames = Object.keys(input)
+  const keysToSql = fieldNames.map((key) => sql.ident(key))
+  const valuesToSql = fieldNames.map((key) => sql.value(input[key]))
+
+  let primaryKeyValue
+  if (fieldNames.indexOf(primaryKey) == -1) {
+    keysToSql.push(sql.ident(primaryKey))
+    // TODO add test for this
+    if (useUUID) {
+      primaryKeyValue = randomUUID()
+    } else {
+      primaryKeyValue = null
+    }
+    valuesToSql.push(sql.value(primaryKeyValue))
+  }
+ 
   const keys = sql.join(
     keysToSql,
     sql`, `
   )
 
-  const valuesToSql = Object.keys(input).map((key) => {
-    return sql.value(input[key])
-  })
-  let primaryKeyValue
-  // TODO add test for this
-  if (useUUID) {
-    primaryKeyValue = randomUUID()
-    valuesToSql.push(sql.value(primaryKeyValue))
-  } else {
-    valuesToSql.push(sql.value(null))
-  }
   const values = sql.join(
     valuesToSql,
     sql`, `
