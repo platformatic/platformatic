@@ -1,12 +1,14 @@
 import { Navigate, Routes, Route } from 'react-router-dom'
-import React, { createContext, useState } from 'react'
-import Layout from './components/Layout'
+import { createContext, useState } from 'react'
+// import Layout from './components/Layout'
+import {Layout} from '@platformatic/ui-components'
 import Home from './pages/Home'
 import GraphiQLPage from './pages/GQL'
 import ConfigViewer from './pages/ConfigViewer'
 import SwaggerViewer from './pages/SwaggerViewer'
 import ReactAdmin from './pages/ReactAdmin'
 
+import '@platformatic/ui-components/dist/main.css'
 const AppContext = createContext({})
 export { AppContext }
 function getCurrentUrl () {
@@ -29,6 +31,7 @@ function App () {
         urlPrefix
       }}
     >
+      
       <Layout>
         <Routes>
           <Route path='/' exact element={<Navigate to='/dashboard' />} />
