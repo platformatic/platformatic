@@ -1,0 +1,11 @@
+.container {
+  @apply flex;
+}
+
+.sidebar {
+  @apply w-60;
+}
+
+.main {
+  @apply grow;
+}

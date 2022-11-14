@@ -1,18 +1,21 @@
+import { Navigate, Routes, Route } from 'react-router-dom'
 import { createContext, useState } from 'react'
 import {Button, Layout, TabbedWindow} from '@platformatic/ui-components'
 import GraphiQLPage from './pages/GQL'
 import ConfigViewer from './pages/ConfigViewer'
 import SwaggerViewer from './pages/SwaggerViewer'
 import ReactAdmin from './pages/ReactAdmin'
-import Title from './elements/Title'
+import Dashboard from './components/Dashboard'
 
 import '@platformatic/ui-components/dist/main.css'
+import Home from './pages/Home'
+
 const AppContext = createContext({})
 export { AppContext }
 function getCurrentUrl () {
   return `${window.location.protocol}//${window.location.host}`
 }
-function App () {
+function App (props) {
   const [userName, setUsername] = useState(null)
   const [logged, setLogged] = useState(false)
   const [adminSecret, setAdminSecret] = useState(null)
@@ -75,17 +78,19 @@ function App () {
     >
       
       <Layout>
-        {/* <Routes>
-          <Route path='/' exact element={<Navigate to='/dashboard' />} />
-          <Route path='/dashboard' element={<Home />} />
-          <Route path='/giql' element={<GraphiQLPage graphqlEndpoint={`${urlPrefix}/graphql`} />} />
-          <Route path='/config-view' element={<ConfigViewer />} />
-          <Route path='/swagger-docs' element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
-          <Route path='/swagger-plt-db-docs' element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/_admin/documentation/json`} />} />
-          <Route path='/react-admin/*' element={<ReactAdmin basename='/react-admin' apiUrl={`${urlPrefix}`} swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
-        </Routes> */}
+        <Dashboard>
+          <Routes>
+            <Route path='/' exact element={<Navigate to='/dashboard' />} />
+            <Route path='/dashboard' element={<Home />} />
+            <Route path='/giql' element={<GraphiQLPage graphqlEndpoint={`${urlPrefix}/graphql`} />} />
+            <Route path='/config-view' element={<ConfigViewer />} />
+            <Route path='/swagger-docs' element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
+            <Route path='/swagger-plt-db-docs' element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/_admin/documentation/json`} />} />
+            <Route path='/react-admin/*' element={<ReactAdmin basename='/react-admin' apiUrl={`${urlPrefix}`} swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
+          </Routes>
 
-        <TabbedWindow tabs={tabs}/>
+          {/* <TabbedWindow tabs={tabs}/> */}
+        </Dashboard>
       </Layout>
     </AppContext.Provider>
   )

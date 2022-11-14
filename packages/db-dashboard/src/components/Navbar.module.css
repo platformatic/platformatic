@@ -1,3 +1,10 @@
+.navbar {
+  @apply flex text-white items-center justify-between;
+}
+.brand {
+  @apply flex items-center;
+}
 .logo {
   margin-right: .25rem;
+  width: 5rem;
 }

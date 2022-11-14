@@ -1,10 +1,11 @@
 import Navbar from './Navbar'
 import React, { Fragment, useContext, useEffect, useState } from 'react'
 import Sidebar from './Sidebar'
+import styles from './Dashboard.module.css'
 import { Toaster } from 'react-hot-toast'
 import LoginBox from './LoginBox'
 import { AppContext } from '../App'
-export default function Layout (props) {
+export default function Dashboard (props) {
   const [loaded, setLoaded] = useState(false)
   const { logged, setLogged, urlPrefix } = useContext(AppContext)
   useEffect(() => {
@@ -28,22 +29,20 @@ export default function Layout (props) {
     return (
       <>
         <Navbar />
-        <div className='container'>
-          <div className='columns'>
-            <div className='column is-2'>
-              <Sidebar />
-            </div>
+        <div className={styles.container}>
+          <div className={styles.sidebar}>
+            <Sidebar />
+          </div>
 
-            <div className='column is-10'>
-              <main>
-                <div className='notifications'>
-                  <Toaster />
-                </div>
-                <div>
-                  <div>{props.children}</div>
-                </div>
-              </main>
-            </div>
+          <div className={styles.main}>
+            <main>
+              <div className='notifications'>
+                <Toaster />
+              </div>
+              <div>
+                <div>{props.children}</div>
+              </div>
+            </main>
           </div>
         </div>
       </>
