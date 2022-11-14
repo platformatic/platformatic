@@ -184,7 +184,7 @@ jobs:
   ci-db-core-test:
     needs: setup-node_modules
     runs-on: ${{matrix.os}}
-    timeout-minutes: 5
+    timeout-minutes: 10 
     strategy:
       matrix:
         db: [postgresql, mariadb, mysql, mysql8, sqlite]
@@ -217,7 +217,7 @@ jobs:
   ci-sql-events:
     needs: setup-node_modules
     runs-on: ${{matrix.os}}
-    timeout-minutes: 5
+    timeout-minutes: 10
     strategy:
       matrix:
         db: [postgresql, mariadb, mysql, mysql8, sqlite]
@@ -246,7 +246,7 @@ jobs:
   ci-auth-login:
     needs: setup-node_modules
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 5
+    timeout-minutes: 10
     strategy:
       matrix:
         node-version: [16, 18]
