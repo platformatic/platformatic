@@ -97,7 +97,7 @@ async function startFileWatching (server) {
 
   const fileWatcher = new FileWatcher({
     path: dirname(configManager.fullPath),
-    allowToWatch: config.plugin.watchOptions?.allow,
+    allowToWatch: config.plugin.watchOptions?.allow || ['*.js', '**/*.js'],
     watchIgnore: config.plugin.watchOptions?.ignore
   })
   fileWatcher.on('update', () => {
