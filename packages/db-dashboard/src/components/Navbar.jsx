@@ -1,25 +1,32 @@
+import React from 'react'
+import { NavLink } from 'react-router-dom'
+import './Navbar.css'
 import styles from './Navbar.module.css'
-import { AppContext } from '../App'
-import React, { useContext } from 'react'
+
+function getListItemClass ({ isActive }) {
+  return (isActive ? `${styles.selected} ${styles.listItem}` : styles.listItem)
+}
 export default function Navbar () {
-  const { userName, setUsername, logged, setLogged } = useContext(AppContext)
-  function onLogoutButtonClicked (event) {
-    event.preventDefault()
-    setLogged(false)
-    setUsername(null)
-  }
   return (
-    <nav className='navbar is-white'>
-      <div className='container is-flex is-align-items-center is-justify-content-space-between'>
-        <div className='navbar-brand'>
-          <a className='navbar-item brand-text' href='/dashboard' data-testid='navbar-home-link'>
-            <img className={styles.logo} src='/images/logo-192x192.png' /> Platformatic DB
-          </a>
-        </div>
-        {logged && (
-          <button className='button is-danger is-small' onClick={onLogoutButtonClicked}>Logout {userName}</button>
-        )}
+    <div className={styles.list}>
+      <div>
+        <NavLink className={getListItemClass} data-testid='dashboard-link' to='/dashboard'>Dashboard</NavLink>
       </div>
-    </nav>
+      <div>
+        <NavLink className={getListItemClass} data-testid='graphiql-link' to='/giql'>GraphiQL</NavLink>
+      </div>
+      <div>
+        <NavLink className={getListItemClass} data-testid='config-view-link' to='/config-view'>Configuration</NavLink>
+      </div>
+      <div>
+        <NavLink className={getListItemClass} data-testid='swagger-view-link' to='/swagger-docs'>Entity API Docs</NavLink>
+      </div>
+      <div>
+        <NavLink className={getListItemClass} data-testid='swagger-plt-db-view-link' to='/swagger-plt-db-docs'>Admin API Docs</NavLink>
+      </div>
+      <div>
+        <NavLink className={getListItemClass} data-testid='react-admin-link' to='/react-admin'>Table View</NavLink>
+      </div>
+    </div>
   )
 }

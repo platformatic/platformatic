@@ -1,0 +1,3 @@
+.container {
+  @apply bg-white py-4;
+}
