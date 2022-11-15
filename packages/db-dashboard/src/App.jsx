@@ -16,7 +16,7 @@ function getCurrentUrl () {
   return `${window.location.protocol}//${window.location.host}`
 }
 function App () {
-  const [userName, setUsername] = useState(null)
+  const [userName, setUsername] = useState('')
   const [logged, setLogged] = useState(false)
   const [adminSecret, setAdminSecret] = useState(null)
   const urlPrefix = import.meta.env.VITE_SERVER_URL || getCurrentUrl()

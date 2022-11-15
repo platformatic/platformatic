@@ -1,4 +1,4 @@
-import { Button } from '@platformatic/ui-components'
+import { BorderedBox, Button } from '@platformatic/ui-components'
 import React from 'react'
 import { notify } from '../utils'
 import styles from './Home.module.css'
@@ -20,9 +20,9 @@ export default function Home () {
     }
   }
   return (
-    <>
-      <h1 className={styles.title}>Welcome to Platformatic DB!</h1>
+    <BorderedBox>
+      <h1 className={styles.title}>Actions</h1>
       <Button onClick={onRestartClicked} primary='true' label='Restart Server' />
-    </>
+    </BorderedBox>
   )
 }

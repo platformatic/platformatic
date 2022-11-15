@@ -7,7 +7,7 @@ export default function Header () {
   function onLogoutButtonClicked (event) {
     event.preventDefault()
     setLogged(false)
-    setUsername(null)
+    setUsername('')
   }
   return (
     <div className={styles.header}>

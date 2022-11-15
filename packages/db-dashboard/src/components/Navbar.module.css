@@ -5,7 +5,7 @@
   @apply flex justify-between items-center gap-x-4 uppercase tracking-[.25rem] h-[2rem];
 }
 .listItem {
-  @apply text-white p-2 mt-2;
+  @apply text-white py-2 mt-2;
 }
 .selected {
   @apply underline text-main-green underline-offset-8 font-bold;
