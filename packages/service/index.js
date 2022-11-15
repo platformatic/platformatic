@@ -61,7 +61,7 @@ async function platformaticService (app, opts, toLoad = []) {
     /* c8 ignore next */
     const hotReload = opts.plugin.watchOptions?.hotReload !== false
     const isWatchEnabled = opts.plugin.watch !== false
-
+    /* c8 ignore next 13 */
     if (isWatchEnabled && hotReload) {
       await app.register(sandbox, {
         ...pluginOptions,
