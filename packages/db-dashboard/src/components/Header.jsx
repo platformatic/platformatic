@@ -14,7 +14,7 @@ export default function Header () {
       <a href='/dashboard' data-testid='header-home-link' className={styles.brand}>
         <img className={styles.logo} src='/images/logo-192x192.png' />
       </a>
-      {logged && (
+      {logged && userName && (
         <Button color='red' primary='false' onClick={onLogoutButtonClicked} label={`Logout ${userName}`} />
       )}
     </div>
