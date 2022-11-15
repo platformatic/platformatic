@@ -125,6 +125,9 @@ const plugin = {
     watch: {
       type: 'boolean'
     },
+    fallback: {
+      type: 'boolean'
+    },
     watchOptions: {
       type: 'object',
       properties: {
@@ -156,6 +159,7 @@ const plugin = {
       type: 'object'
     }
   },
+  additionalProperties: false,
   required: ['path']
 }
 
