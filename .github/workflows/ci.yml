@@ -62,7 +62,7 @@ jobs:
   ci-db-dashboard:
     needs: setup-node_modules
     runs-on: ${{matrix.os}}
-    timeout-minutes: 5
+    timeout-minutes: 15
     strategy:
       matrix:
         node-version: [16, 18]
