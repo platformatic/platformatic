@@ -16,7 +16,7 @@ Platformatic DB is currently in [public beta](#public-beta).
 - Support for [multiple database systems](#supported-databases)
 - [Database migrations](/reference/db/migrations.md)
 - REST/OpenAPI
-  - Automatic [REST API](/reference/sql-rest/introduction.md) from your database schema
+  - Automatic [REST API](/reference/sql-openapi/introduction.md) from your database schema
   - Interactive documentation ([Swagger UI](https://swagger.io/tools/swagger-ui/))
   - [OpenAPI 3.0](https://swagger.io/resources/open-api/) schema
 - GraphQL

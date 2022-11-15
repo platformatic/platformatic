@@ -185,7 +185,7 @@ containing all the pages in your database:
 
 :::tip
 
-Take a look at the [REST API reference](/reference/sql-rest/introduction.md) for an
+Take a look at the [REST API reference](/reference/sql-openapi/introduction.md) for an
 overview of the REST interface that the API provides.
 
 :::
