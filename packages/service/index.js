@@ -131,6 +131,7 @@ async function buildServer (options, app = platformaticService) {
 
   let debounce = null
   handler.restart = (opts) => {
+    /* c8 ignore next 3 */
     if (debounce) {
       return debounce
     }
