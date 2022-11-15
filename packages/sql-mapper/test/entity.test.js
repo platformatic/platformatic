@@ -168,9 +168,10 @@ test('empty save', async ({ equal, same, teardown, rejects }) => {
   same(insertResult, { id: '1', theTitle: null })
 })
 
-test('insert with explicit PK value', async ({ same }) => {
+test('insert with explicit PK value', async ({ same, teardown }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
+    teardown(() => db.dispose())
     await db.query(sql`CREATE TABLE pages (
       id INTEGER PRIMARY KEY,
       title varchar(255) NOT NULL
