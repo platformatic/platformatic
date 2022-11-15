@@ -1,4 +1,4 @@
-import { Button, HorizontalSeparator } from '@platformatic/ui-components'
+import { Button } from '@platformatic/ui-components'
 import { useContext, useRef, useState } from 'react'
 import { AppContext } from '../App'
 import styles from './LoginBox.module.css'
@@ -32,9 +32,9 @@ export default function LoginBox () {
     <section className={styles.container}>
       <h3 className={styles.title}>Login</h3>
       <form className={styles.form}>
-          <input className={styles.input} type='password' placeholder='Your Password' onChange={(e) => setLoginError(null)} ref={inputPasswordRef} />
+        <input className={styles.input} type='password' placeholder='Your Password' onChange={(e) => setLoginError(null)} ref={inputPasswordRef} />
         <div className={styles.button}>
-          <Button color="green" primary={true} label='Login' onClick={onLoginButtonClicked} />
+          <Button color='green' primary label='Login' onClick={onLoginButtonClicked} />
         </div>
       </form>
       {loginError && <p className='help is-danger'>Wrong password.</p>}
