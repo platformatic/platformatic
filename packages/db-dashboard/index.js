@@ -105,6 +105,7 @@ module.exports = async function app (app, opts) {
 
     const metrics = await app.metrics.client.register.getMetricsAsJSON()
     const httpMetrics = metrics.find((metric) => metric.name === 'http_request_summary_seconds').values
-    return JSON.stringify(transformHttpPromMetrics(httpMetrics), null, 2)
+    const processUptime = process.uptime()
+    return JSON.stringify({ processUptime, ...transformHttpPromMetrics(httpMetrics) }, null, 2)
   })
 }

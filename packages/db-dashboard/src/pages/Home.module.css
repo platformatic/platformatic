@@ -1,3 +1,11 @@
 .title {
-  @apply text-2xl text-white mb-2;
+  @apply text-2xl text-white w-full
+}
+
+.actionsContainer {
+  @apply flex flex-row justify-between w-full;
+}
+
+.actions {
+  @apply flex w-full justify-end;
 }
