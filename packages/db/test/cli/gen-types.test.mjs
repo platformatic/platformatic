@@ -7,6 +7,8 @@ import stripAnsi from 'strip-ansi'
 import split from 'split2'
 import { urlDirname } from '../../lib/utils.js'
 
+t.jobs = 6
+
 const pathToTSD = path.join(urlDirname(import.meta.url), '../../node_modules/.bin/tsd')
 
 t.test('generate ts types', async (t) => {
