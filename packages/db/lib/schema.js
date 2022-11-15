@@ -102,6 +102,10 @@ const authorization = {
           type: 'string',
           description: 'the shared secret for JWT'
         },
+        namespace: {
+          type: 'string',
+          description: 'the namespace for JWT custom claims'
+        },
         jwks: {
           oneOf: [{
             type: 'boolean'

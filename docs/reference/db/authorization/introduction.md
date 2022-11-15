@@ -68,6 +68,25 @@ It's also possible to enable [JWKS](https://www.rfc-editor.org/rfc/rfc7517) with
 ```
 In this case, the JWKS URL is calculated from the `iss` (issuer) field of JWT, so every JWT token from an issuer that exposes a valid JWKS token will pass the validation. For that reason, **this configuration should be used only for development**, while in every other case the `allowedDomains` should be specified.
 
+### JWT Custom Claim Namespace
+JWT claims can be namespaced to avoid name collisions. If so, we will receive tokens with custom claims such as: `https://platformatic.dev/X-PLATFORMATIC-ROLE` (where `https://platformatic.cloud/ is the namespace).
+If we want to map these claims to user metadata removing our namespace, we can specify the namespace in the JWT options:
+
+```json
+  ...
+
+  "authorization": {
+    "jwt": {
+      "namespace": "https://platformatic.dev/"
+      }
+    },
+  }
+
+  ...
+```
+
+With this configuration, the `https://platformatic.dev/X-PLATFORMATIC-ROLE` claim is mapped to `X-PLATFORMATIC-ROLE` user metadata.
+
 
 ## Webhook
 Platformatic can use a webhook to authenticate the requests.
