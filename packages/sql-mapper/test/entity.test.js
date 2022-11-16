@@ -688,17 +688,17 @@ test('JSON type', { skip: !(isPg || isMysql8) }, async ({ teardown, same, equal,
 
   // save - new record
   same(await simpleType.save({
-    input: { config: { foo: 'bar' } },
+    input: { config: { foo: 'bar' } }
   }), { id: 1, config: { foo: 'bar' } })
 
   // save - update
   same(await simpleType.save({
-    input: { id: 1, config: { foo: 'bar', bar: 'foo' } },
+    input: { id: 1, config: { foo: 'bar', bar: 'foo' } }
   }), { id: 1, config: { foo: 'bar', bar: 'foo' } })
 
   // insert
   same(await simpleType.insert({
-    inputs: [{ config: { foo: 'bar' } }],
+    inputs: [{ config: { foo: 'bar' } }]
   }), [{ id: 2, config: { foo: 'bar' } }])
 
   // updateMany
