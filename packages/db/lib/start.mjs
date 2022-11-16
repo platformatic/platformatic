@@ -49,6 +49,10 @@ async function start (_args) {
 
   await server.listen()
 
+  if (Object.keys(server.app.platformatic.entities).length === 0) {
+    server.app.log.warn('No tables found in the database. Are you connected to the right database? Did you forget to run your migrations?')
+  }
+
   configManager.on('error', function (err) {
     server.app.log.error({
       err

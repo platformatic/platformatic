@@ -71,7 +71,7 @@ t.test('should show warning if there is no entities', async (t) => {
 
   try {
     const { stdout } = await execa('node', [cliPath, 'types'], { cwd })
-    t.match(stdout, /(.*)No entities found. Please run `platformatic db migrate` to generate entities./)
+    t.match(stdout, /(.*)No table found. Please run `platformatic db migrate` to generate types./)
   } catch (err) {
     console.log(err.stdout)
     console.log(err.stderr)
