@@ -245,6 +245,8 @@ A **required** object with the following settings:
   ```
 - **`cors`** (`object`) — Configuration for Cross-Origin Resource Sharing (CORS) headers.
   - All options will be passed to the [`@fastify/cors`](https://github.com/fastify/fastify-cors) plugin.
+- **`logger`** (`object`) -- the [logger configuration](https://www.fastify.io/docs/latest/Reference/Server/#logger).
+- **`pluginTimeout** (`integer`) -- the milliseconds to wait for a Fastify plugin to load, see the [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#plugintimeout) for more details.
 
 ### `authorization`
 
