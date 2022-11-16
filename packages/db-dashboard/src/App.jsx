@@ -39,11 +39,11 @@ function App () {
           <Routes>
             <Route path='/' exact element={<Navigate to='/dashboard' />} />
             <Route path='/dashboard' element={<Home />} />
-            <Route path='/giql' element={<GraphiQLPage graphqlEndpoint={`${urlPrefix}/graphql`} />} />
-            <Route path='/config-view' element={<ConfigViewer />} />
-            <Route path='/swagger-docs' element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
-            <Route path='/swagger-plt-db-docs' element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/_admin/documentation/json`} />} />
-            <Route path='/react-admin/*' element={<ReactAdmin basename='/react-admin' apiUrl={`${urlPrefix}`} swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
+            <Route path='/dashboard/graphiql' element={<GraphiQLPage graphqlEndpoint={`${urlPrefix}/graphql`} />} />
+            <Route path='/dashboard/config-view' element={<ConfigViewer />} />
+            <Route path='/dashboard/openapi' element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
+            <Route path='/dashboard/openapi-admin' element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/_admin/documentation/json`} />} />
+            <Route path='/dashboard/table-view/*' element={<ReactAdmin basename='/dashboard/table-view' apiUrl={`${urlPrefix}`} swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
           </Routes>
 
         </Dashboard>
