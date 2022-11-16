@@ -18,6 +18,10 @@ export default function Metrics () {
       }
     }
     getMetrics()
+    const intervalId = setInterval(getMetrics, 5000)
+    return () => {
+      clearInterval(intervalId)
+    }
   }, [])
 
   if (!metrics || metrics.error) return
