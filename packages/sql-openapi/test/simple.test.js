@@ -661,7 +661,7 @@ test('expose the api with a prefix, if defined', async (t) => {
   }
 })
 
-test('JSON type', { skip: !(isPg || isMysql8), only: true }, async ({ teardown, same, equal, pass }) => {
+test('JSON type', { skip: !(isPg || isMysql8) }, async ({ teardown, same, equal, pass }) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
