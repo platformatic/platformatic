@@ -34,7 +34,11 @@ async function listConstraints (db, sql, table) {
 
 async function updateOne (db, sql, table, input, primaryKey, fieldsToRetrieve) {
   const pairs = Object.keys(input).map((key) => {
-    const value = input[key]
+    let value = input[key]
+    /* istanbul ignore next */
+    if (value && typeof value === 'object' && !(value instanceof Date)) {
+      value = JSON.stringify(value)
+    }
     return sql`${sql.ident(key)} = ${value}`
   })
   const update = sql`
@@ -56,7 +60,11 @@ async function updateOne (db, sql, table, input, primaryKey, fieldsToRetrieve) {
 
 async function updateMany (db, sql, table, criteria, input, fieldsToRetrieve) {
   const pairs = Object.keys(input).map((key) => {
-    const value = input[key]
+    let value = input[key]
+    /* istanbul ignore next */
+    if (value && typeof value === 'object' && !(value instanceof Date)) {
+      value = JSON.stringify(value)
+    }
     return sql`${sql.ident(key)} = ${value}`
   })
 
