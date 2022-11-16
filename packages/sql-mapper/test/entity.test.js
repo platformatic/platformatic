@@ -168,6 +168,33 @@ test('empty save', async ({ equal, same, teardown, rejects }) => {
   same(insertResult, { id: '1', theTitle: null })
 })
 
+test('insert with explicit PK value', async ({ same, teardown }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+    await db.query(sql`CREATE TABLE pages (
+      id INTEGER PRIMARY KEY,
+      title varchar(255) NOT NULL
+    );`)
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+  const pageEntity = mapper.entities.page
+  const [newPage] = await pageEntity.insert({
+    fields: ['id', 'title'],
+    inputs: [{ id: 13, title: '13th page with explicit id equal to 13' }]
+  })
+  same(newPage, {
+    id: '13',
+    title: '13th page with explicit id equal to 13'
+  })
+})
+
 test('[SQLite] - UUID', { skip: !isSQLite }, async ({ pass, teardown, same, equal }) => {
   const mapper = await connect({
     connectionString: connInfo.connectionString,
@@ -216,7 +243,7 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async ({ pass, teardown, same, equa
   }
 })
 
-test('[sqlite] throws if PK is not INTEGER', { skip: !isSQLite }, async ({ fail, equal, teardown, rejects }) => {
+test('[SQLite] throws if PK is not INTEGER', { skip: !isSQLite }, async ({ fail, equal, teardown, rejects }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
     await db.query(sql`CREATE TABLE pages (
