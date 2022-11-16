@@ -18,6 +18,7 @@ export default function Metrics () {
       }
     }
     getMetrics()
+    setInterval(getMetrics, 5000)
   }, [])
 
   if (!metrics || metrics.error) return
