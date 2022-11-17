@@ -11,6 +11,11 @@ function insertOne (db, sql, table, input, primaryKey, useUUID, fieldsToRetrieve
   )
 
   const valuesToSql = Object.keys(input).map((key) => {
+    /* istanbul ignore next */
+    if (input[key] && typeof input[key] === 'object' && !(input[key] instanceof Date)) {
+      // This is a JSON field
+      return sql.value(JSON.stringify(input[key]))
+    }
     return sql.value(input[key])
   })
   const values = sql.join(

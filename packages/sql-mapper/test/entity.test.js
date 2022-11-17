@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 
-const { clear, connInfo, isSQLite, isMysql, isPg } = require('./helper')
+const { clear, connInfo, isSQLite, isMysql, isPg, isMysql8 } = require('./helper')
 const { connect } = require('..')
 const fakeLogger = {
   trace: () => {},
@@ -664,4 +664,55 @@ test('include possible values of enum columns', { skip: isSQLite }, async ({ sam
   const pageEntity = mapper.entities.page
   const typeField = pageEntity.fields.type
   same(typeField.enum, ['blank', 'non-blank'])
+})
+
+test('JSON type', { skip: !(isPg || isMysql8) }, async ({ teardown, same, equal, pass }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+
+    await db.query(sql`CREATE TABLE simple_types (
+        id SERIAL PRIMARY KEY,
+        config json NOT NULL
+      );`)
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+
+  const simpleType = mapper.entities.simpleType
+
+  // save - new record
+  same(await simpleType.save({
+    input: { config: { foo: 'bar' } }
+  }), { id: 1, config: { foo: 'bar' } })
+
+  // save - update
+  same(await simpleType.save({
+    input: { id: 1, config: { foo: 'bar', bar: 'foo' } }
+  }), { id: 1, config: { foo: 'bar', bar: 'foo' } })
+
+  // insert
+  same(await simpleType.insert({
+    inputs: [{ config: { foo: 'bar' } }]
+  }), [{ id: 2, config: { foo: 'bar' } }])
+
+  // updateMany
+  same(await simpleType.updateMany({
+    where: {
+      id: {
+        eq: 2
+      }
+    },
+    input: {
+      config: {
+        foo: 'bar',
+        bar: 'foo'
+      }
+    }
+  }), [{ id: 2, config: { foo: 'bar', bar: 'foo' } }])
 })

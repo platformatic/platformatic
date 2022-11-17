@@ -42,7 +42,6 @@ test('entity transactions', async ({ equal, same, teardown, rejects }) => {
     same(findResult, [{ title: 'foo' }, { title: 'bar' }])
 
     try {
-      console.log('isSQLite', mapper.db.isSQLite)
       await mapper.db.tx(async tx => {
         same(await pageEntity.save({
           input: { title: 'new page' },

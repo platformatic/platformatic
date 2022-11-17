@@ -4,7 +4,7 @@ const t = require('tap')
 const sqlOpenAPI = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { clear, connInfo, isSQLite, isMariaDB } = require('./helper')
+const { clear, connInfo, isSQLite, isMariaDB, isPg, isMysql8 } = require('./helper')
 const { resolve } = require('path')
 const { test } = t
 
@@ -658,5 +658,67 @@ test('expose the api with a prefix, if defined', async (t) => {
     })
     const json = res.json()
     matchSnapshot(json, 'GET /documentation/json response')
+  }
+})
+
+test('JSON type', { skip: !(isPg || isMysql8) }, async ({ teardown, same, equal, pass }) => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      await db.query(sql`CREATE TABLE simple_types (
+        id SERIAL PRIMARY KEY,
+        config json NOT NULL
+      );`)
+    }
+  })
+  app.register(sqlOpenAPI)
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/simpleTypes',
+      body: {
+        config: {
+          foo: 'bar'
+        }
+      }
+    })
+    equal(res.statusCode, 200, 'POST /simpleTypes status code')
+    equal(res.headers.location, '/simpleTypes/1', 'POST /simpleTypes location')
+    same(res.json(), {
+      id: 1,
+      config: {
+        foo: 'bar'
+      }
+    }, 'POST /simpleTypes response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/simpleTypes/1',
+      body: {
+        config: {
+          foo: 'bar',
+          bar: 'foo'
+        }
+      }
+    })
+    equal(res.statusCode, 200, 'PUT /simpleTypes status code')
+    same(res.json(), {
+      id: 1,
+      config: {
+        foo: 'bar',
+        bar: 'foo'
+      }
+    }, 'PUT /simpleTypes response')
   }
 })

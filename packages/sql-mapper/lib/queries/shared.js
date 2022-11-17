@@ -75,7 +75,13 @@ function insertPrep (inputs, inputToFieldMap, fields, sql) {
 
       inputSet.add(newKey)
 
-      const value = input[key] || input[newKey]
+      let value = input[key] || input[newKey]
+
+      if (value && typeof value === 'object' && !(value instanceof Date)) {
+        // This is a JSON field
+        value = JSON.stringify(value)
+      }
+
       inputValues.push(sql.value(value))
     }
 
