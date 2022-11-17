@@ -4,7 +4,7 @@ const { test } = require('tap')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { clear, connInfo, isSQLite, isMysql, isMariaDB } = require('./helper')
+const { clear, connInfo, isSQLite, isMysql, isMariaDB, isPg } = require('./helper')
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -868,6 +868,62 @@ test('deserialize JSON columns', { skip: isSQLite }, async (t) => {
         id SERIAL PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
         metadata JSON NOT NULL
+      );`)
+
+      await db.query(sql`INSERT INTO pages (id, title, metadata) VALUES (1, 'Hello World', ${JSON.stringify(jsonData)})`)
+    }
+  })
+  app.register(sqlGraphQL, {
+    graphiql: false
+  })
+  teardown(app.close.bind(app))
+
+  await app.ready()
+  const res = await app.inject({
+    method: 'POST',
+    url: '/graphql',
+    body: {
+      query: `
+        query {
+          getPageById(id: 1) {
+            id
+            title
+            metadata
+          }
+        }
+      `
+    }
+  })
+  const json = res.json()
+  if (isMariaDB) {
+    same(json.data.getPageById.metadata, JSON.stringify(jsonData))
+  } else {
+    same(json.data.getPageById.metadata, jsonData)
+  }
+})
+
+test('deserialize JSONB columns', { skip: !isPg }, async (t) => {
+  const { pass, teardown, same } = t
+  const app = fastify()
+  const jsonData = {
+    foo: 'bar',
+    baz: 42,
+    items: ['foo', 'bar'],
+    nested: {
+      hello: 'world'
+    }
+  }
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      await db.query(sql`CREATE TABLE pages (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        metadata JSONB NOT NULL
       );`)
 
       await db.query(sql`INSERT INTO pages (id, title, metadata) VALUES (1, 'Hello World', ${JSON.stringify(jsonData)})`)

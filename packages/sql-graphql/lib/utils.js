@@ -54,6 +54,8 @@ function sqlTypeToGraphQL (sqlType) {
       return graphql.GraphQLString
     case 'json':
       return GraphQLJSONObject
+    case 'jsonb':
+      return GraphQLJSONObject
     default:
       return graphql.GraphQLString
   }
