@@ -1,7 +1,8 @@
-import { start } from './helper.mjs'
+import { start, cliPath } from './helper.mjs'
 import { test } from 'tap'
 import { join } from 'desm'
 import { request } from 'undici'
+import { execa } from 'execa'
 
 test('autostart', async ({ equal, same, match, teardown }) => {
   const { child, url } = await start('-c', join(import.meta.url, '..', '..', 'fixtures', 'hello', 'platformatic.service.json'))
@@ -46,4 +47,8 @@ test('plugin options', async ({ equal, same, match, teardown }) => {
   }, 'response')
 
   child.kill('SIGINT')
+})
+
+test('not load', async ({ rejects }) => {
+  await rejects(execa('node', [cliPath, 'start', '-c', join(import.meta.url, '..', 'fixtures', 'not-load.service.json')]))
 })

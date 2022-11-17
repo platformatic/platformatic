@@ -84,6 +84,9 @@ const server = {
         { type: 'string' }
       ]
     },
+    pluginTimeout: {
+      type: 'integer'
+    },
     healthCheck: {
       anyOf: [
         { type: 'boolean' },
