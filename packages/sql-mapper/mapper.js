@@ -110,8 +110,8 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, 
 
       const entity = await buildEntity(db, sql, log, table, queries, autoTimestamp, ignore[table] || {})
       // Check for primary key of all entities
-      if (!entity.primaryKey) {
-        throw new Error(`Cannot find primary key for ${entity.name} entity`)
+      if (entity.primaryKeys.size === 0) {
+        throw new Error(`Cannot find any primary keys for ${entity.name} entity`)
       }
       entities[entity.singularName] = entity
       if (hooks[entity.name]) {

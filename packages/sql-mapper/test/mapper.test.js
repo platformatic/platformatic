@@ -193,7 +193,8 @@ test('missing connectionString', async ({ rejects }) => {
   await rejects(app.ready(), /connectionString/)
 })
 
-test('[pg] throws if no primary key', { skip: !isPg }, async ({ pass, teardown, equal }) => {
+test('[pg] throws if no primary key', { skip: !isPg }, async ({ pass, teardown, equal, plan }) => {
+  plan(1)
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
     teardown(() => db.dispose())
@@ -212,11 +213,12 @@ test('[pg] throws if no primary key', { skip: !isPg }, async ({ pass, teardown, 
       hooks: {}
     })
   } catch (err) {
-    equal(err.message, 'Cannot find primary key for Page entity')
+    equal(err.message, 'Cannot find any primary keys for Page entity')
   }
 })
 
-test('[mysql] throws if no primary key', { skip: !isMysql }, async ({ pass, teardown, equal }) => {
+test('[mysql] throws if no primary key', { skip: !isMysql }, async ({ pass, teardown, equal, plan }) => {
+  plan(1)
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
     teardown(() => db.dispose())
@@ -235,11 +237,12 @@ test('[mysql] throws if no primary key', { skip: !isMysql }, async ({ pass, tear
       hooks: {}
     })
   } catch (err) {
-    equal(err.message, 'Cannot find primary key for Page entity')
+    equal(err.message, 'Cannot find any primary keys for Page entity')
   }
 })
 
-test('[sqlite] throws if primary key is not defined', { skip: !isSQLite }, async ({ pass, teardown, equal }) => {
+test('[sqlite] throws if primary key is not defined', { skip: !isSQLite }, async ({ pass, teardown, equal, plan }) => {
+  plan(1)
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
 
@@ -258,7 +261,7 @@ test('[sqlite] throws if primary key is not defined', { skip: !isSQLite }, async
       hooks: {}
     })
   } catch (err) {
-    equal(err.message, 'Cannot find primary key for Page entity')
+    equal(err.message, 'Cannot find any primary keys for Page entity')
   }
 })
 
