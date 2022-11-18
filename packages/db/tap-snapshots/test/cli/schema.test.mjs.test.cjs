@@ -44,6 +44,7 @@ input GraphWhereArgumentsid {
   gte: ID
   lt: ID
   lte: ID
+  like: ID
   in: [ID]
   nin: [ID]
 }
@@ -55,6 +56,7 @@ input GraphWhereArgumentsname {
   gte: String
   lt: String
   lte: String
+  like: String
   in: [String]
   nin: [String]
 }
@@ -206,6 +208,14 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
           },
           {
             "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.id.like",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -266,6 +276,14 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
             },
             "in": "query",
             "name": "where.name.lte",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.name.like",
             "required": false
           },
           {
@@ -425,6 +443,14 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
           },
           {
             "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.id.like",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -485,6 +511,14 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
             },
             "in": "query",
             "name": "where.name.lte",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.name.like",
             "required": false
           },
           {
