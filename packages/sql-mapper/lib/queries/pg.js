@@ -21,23 +21,33 @@ module.exports.insertOne = insertOne
 module.exports.deleteAll = shared.deleteAll
 module.exports.insertMany = shared.insertMany
 
+// The search path are the schemas that are allowed to NOT use the schema prefix
+async function getSearchPath (db, sql) {
+  const schemas = (await db.query(sql`SHOW search_path;`))[0]
+    .search_path.split(',')
+    .map(s => s.trim())
+    .map(s => `'${s}'`)
+  return sql.__dangerous__rawValue(schemas)
+}
+
 async function listTables (db, sql) {
+  const searchPath = await getSearchPath(db, sql)
   return (await db.query(sql`
     SELECT tablename
     FROM pg_catalog.pg_tables
     WHERE
-      schemaname = current_schema()
-    `)).map(t => t.tablename)
+      schemaname in (${searchPath})`)).map(t => t.tablename)
 }
 
 module.exports.listTables = listTables
 
 async function listColumns (db, sql, table) {
+  const searchPath = await getSearchPath(db, sql)
   return db.query(sql`
     SELECT column_name, udt_name, is_nullable
     FROM information_schema.columns
     WHERE table_name = ${table}
-    AND table_schema = current_schema()
+    AND table_schema in (${searchPath})
   `)
 }
 

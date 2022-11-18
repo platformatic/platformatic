@@ -6,7 +6,7 @@ const fp = require('fastify-plugin')
 
 // Ignore the function as it is only used only for MySQL and PostgreSQL
 /* istanbul ignore next */
-async function buildConnection (log, createConnectionPool, connectionString, poolSize) {
+async function buildConnection (log, createConnectionPool, connectionString, poolSize, schema) {
   const db = await createConnectionPool({
     connectionString,
     bigIntMode: 'string',
@@ -34,12 +34,13 @@ async function buildConnection (log, createConnectionPool, connectionString, poo
           error: err.message
         }
       }, 'query error')
-    }
+    },
+    schema
   })
   return db
 }
 
-async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, ignore = {}, autoTimestamp = true, hooks = {} }) {
+async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, ignore = {}, autoTimestamp = true, hooks = {}, schema }) {
   // TODO validate config using the schema
   if (!connectionString) {
     throw new Error('connectionString is required')
@@ -52,7 +53,7 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, 
   /* istanbul ignore next */
   if (connectionString.indexOf('postgres') === 0) {
     const createConnectionPoolPg = require('@databases/pg')
-    db = await buildConnection(log, createConnectionPoolPg, connectionString, poolSize)
+    db = await buildConnection(log, createConnectionPoolPg, connectionString, poolSize, schema)
     sql = createConnectionPoolPg.sql
     queries = queriesFactory.pg
     db.isPg = true
@@ -96,6 +97,13 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, 
     }
 
     const tables = await queries.listTables(db, sql)
+
+    const duplicates = tables.filter((table, index) => tables.indexOf(table) !== index)
+    // Ignored because this can happen only in postgres
+    /* istanbul ignore next */
+    if (duplicates.length > 0) {
+      throw new Error(`Conflicting table names: ${duplicates.join(', ')}`)
+    }
 
     for (const table of tables) {
       // The following line is a safety net when developing this module,
