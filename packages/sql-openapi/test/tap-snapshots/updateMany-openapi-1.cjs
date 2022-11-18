@@ -137,6 +137,14 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "where.counter.like",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "where.counter.in",
             "required": false,
             "schema": Object {
@@ -194,6 +202,14 @@ Object {
           Object {
             "in": "query",
             "name": "where.id.lte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.like",
             "required": false,
             "schema": Object {
               "type": "integer",
@@ -265,6 +281,14 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "where.longText.like",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "where.longText.in",
             "required": false,
             "schema": Object {
@@ -322,6 +346,14 @@ Object {
           Object {
             "in": "query",
             "name": "where.title.lte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.like",
             "required": false,
             "schema": Object {
               "type": "string",
@@ -501,6 +533,14 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "where.counter.like",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "where.counter.in",
             "required": false,
             "schema": Object {
@@ -558,6 +598,14 @@ Object {
           Object {
             "in": "query",
             "name": "where.id.lte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.like",
             "required": false,
             "schema": Object {
               "type": "integer",
@@ -629,6 +677,14 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "where.longText.like",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "where.longText.in",
             "required": false,
             "schema": Object {
@@ -686,6 +742,14 @@ Object {
           Object {
             "in": "query",
             "name": "where.title.lte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.like",
             "required": false,
             "schema": Object {
               "type": "string",

@@ -133,6 +133,14 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "where.id.like",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "where.id.in",
             "required": false,
             "schema": Object {
@@ -197,6 +205,14 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "where.name.like",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "where.name.in",
             "required": false,
             "schema": Object {
@@ -254,6 +270,14 @@ Object {
           Object {
             "in": "query",
             "name": "where.parentId.lte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.parentId.like",
             "required": false,
             "schema": Object {
               "type": "integer",
@@ -433,6 +457,14 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "where.id.like",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "where.id.in",
             "required": false,
             "schema": Object {
@@ -497,6 +529,14 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "where.name.like",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "where.name.in",
             "required": false,
             "schema": Object {
@@ -554,6 +594,14 @@ Object {
           Object {
             "in": "query",
             "name": "where.parentId.lte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.parentId.like",
             "required": false,
             "schema": Object {
               "type": "integer",
