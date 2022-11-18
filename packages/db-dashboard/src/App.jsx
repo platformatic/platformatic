@@ -1,5 +1,5 @@
 import { Navigate, Routes, Route } from 'react-router-dom'
-import { createContext, useState } from 'react'
+import React, { createContext, useState } from 'react'
 import { Layout } from '@platformatic/ui-components'
 import GraphiQLPage from './pages/GQL'
 import ConfigViewer from './pages/ConfigViewer'
