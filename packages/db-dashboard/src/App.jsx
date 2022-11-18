@@ -12,9 +12,11 @@ import Home from './pages/Home'
 
 const AppContext = createContext({})
 export { AppContext }
+
 function getCurrentUrl () {
   return `${window.location.protocol}//${window.location.host}`
 }
+
 function App () {
   const [userName, setUsername] = useState('')
   const [logged, setLogged] = useState(false)
