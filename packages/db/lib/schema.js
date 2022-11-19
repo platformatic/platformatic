@@ -9,6 +9,12 @@ const core = {
     connectionString: {
       type: 'string'
     },
+    schema: {
+      type: 'array',
+      items: {
+        type: 'string'
+      }
+    },
     poolSize: {
       type: 'integer'
     },

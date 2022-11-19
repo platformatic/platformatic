@@ -50,6 +50,23 @@ A **required** object with the following settings:
 
 - **`connectionString`** (**required**, `string`) — Database connection URL.
   - Example: `postgres://user:password@my-database:5432/db-name`
+
+- ** `schema`** (array of `string`) - Currently supported only for postgres, schemas used tolook for entities. If not provided, the default `public` schema is used.
+
+ _Examples_
+
+```json
+  "core": {
+    "connectionString": "(...)",
+    "schema": [
+      "schema1", "schema2"
+    ],
+    ... 
+
+  },
+
+```
+
   - Platformatic DB supports MySQL, MariaDB, PostgreSQL and SQLite.
 - **`graphql`** (`boolean` or `object`, default: `true`) — Controls the GraphQL API interface, with optional GraphiQL UI.
 
