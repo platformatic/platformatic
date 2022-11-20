@@ -11,7 +11,7 @@
     "postinstall": "node ./scripts/postinstall.js",
     "lint:markdown": "markdownlint-cli2"
   },
-  "packageManager": "pnpm@7.16.1",
+  "packageManager": "pnpm@7.17.0",
   "devDependencies": {
     "@fastify/pre-commit": "^2.0.2",
     "markdownlint-cli2": "^0.5.1",
