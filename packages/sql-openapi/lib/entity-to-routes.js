@@ -59,7 +59,7 @@ async function entityPlugin (app, opts) {
   const whereArgs = sortedEntityFields.reduce((acc, name) => {
     const field = entity.fields[name]
     const baseKey = `where.${field.camelcase}.`
-    for (const modifier of ['eq', 'neq', 'gt', 'gte', 'lt', 'lte']) {
+    for (const modifier of ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like']) {
       const key = baseKey + modifier
       acc[key] = { type: mapSQLTypeToOpenAPIType(field.sqlType), enum: field.enum }
     }

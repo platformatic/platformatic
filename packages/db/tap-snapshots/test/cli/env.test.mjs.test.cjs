@@ -44,6 +44,7 @@ input PageWhereArgumentsid {
   gte: ID
   lt: ID
   lte: ID
+  like: ID
   in: [ID]
   nin: [ID]
 }
@@ -55,6 +56,7 @@ input PageWhereArgumentstitle {
   gte: String
   lt: String
   lte: String
+  like: String
   in: [String]
   nin: [String]
 }

@@ -165,7 +165,8 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     gt: '>',
     gte: '>=',
     lt: '<',
-    lte: '<='
+    lte: '<=',
+    like: 'LIKE'
   }
 
   function computeCriteria (opts) {
@@ -186,6 +187,14 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
           criteria.push(sql`${sql.ident(field)} IS NULL`)
         } else if (operator === '<>' && value[key] === null) {
           criteria.push(sql`${sql.ident(field)} IS NOT NULL`)
+        } else if (operator === 'LIKE') {
+          let leftHand = sql.ident(field)
+          // NOTE: cast fields AS CHAR(64) and TRIM the whitespaces
+          // to prevent errors with fields different than VARCHAR & TEXT
+          if (!['text', 'varchar'].includes(fieldWrap.sqlType)) {
+            leftHand = sql`TRIM(CAST(${sql.ident(field)} AS CHAR(64)))`
+          }
+          criteria.push(sql`${leftHand} LIKE ${value[key]}`)
         } else {
           criteria.push(sql`${sql.ident(field)} ${sql.__dangerous__rawValue(operator)} ${computeCriteriaValue(fieldWrap, value[key])}`)
         }
