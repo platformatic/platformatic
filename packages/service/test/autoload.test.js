@@ -3,21 +3,20 @@
 require('./helper')
 const { test } = require('tap')
 const { buildServer } = require('..')
-const { request, setGlobalDispatcher, getGlobalDispatcher, MockAgent } = require('undici')
+const { request } = require('undici')
 const { join } = require('path')
-const os = require('os')
 
 test('autoload & filesystem based routing / watch disabled', async ({ teardown, equal }) => {
   const config = {
-    "server": {
-      "hostname": "127.0.0.1",
-      "port": 0
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
     },
-    "plugin": {
-      "path": join(__dirname, 'fixtures', 'directories', 'routes'),
-      "watch": false
+    plugin: {
+      path: join(__dirname, 'fixtures', 'directories', 'routes'),
+      watch: false
     },
-    "metrics": false
+    metrics: false
   }
 
   const server = await buildServer(config)
@@ -48,15 +47,15 @@ test('autoload & filesystem based routing / watch disabled', async ({ teardown, 
 
 test('autoload & filesystem based routing / watch enabled', async ({ teardown, equal }) => {
   const config = {
-    "server": {
-      "hostname": "127.0.0.1",
-      "port": 0
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
     },
-    "plugin": {
-      "path": join(__dirname, 'fixtures', 'directories', 'routes'),
-      "watch": true
+    plugin: {
+      path: join(__dirname, 'fixtures', 'directories', 'routes'),
+      watch: true
     },
-    "metrics": false
+    metrics: false
   }
 
   const server = await buildServer(config)
