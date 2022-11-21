@@ -20,8 +20,8 @@ async function createBasicPages (db, sql) {
   }
 }
 
-test('simple db simple graphql schema', async ({ pass, teardown, same, equal }) => {
-  const app = fastify()
+test('simple db simple graphql schema', { only: true }, async ({ pass, teardown, same, equal }) => {
+  const app = fastify({ logger: { level: 'trace' } })
   app.register(sqlMapper, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {

@@ -16,7 +16,7 @@ const ascDesc = new graphql.GraphQLEnumType({
 })
 
 function constructGraph (app, entity, opts) {
-  const primaryKey = camelcase(entity.primaryKey)
+  const primaryKeys = Array.from(entity.primaryKeys).map((key) => camelcase(key))
   const relationalFields = entity.relations
     .map((relation) => relation.column_name)
   const entityName = entity.name
@@ -66,7 +66,12 @@ function constructGraph (app, entity, opts) {
   resolvers.Mutation = resolvers.Mutation || {}
   loaders.Query = loaders.Query || {}
 
-  const getBy = camelcase(['get', singular, 'by', primaryKey])
+  const getBy = camelcase(['get', singular, ...(primaryKeys.map((key, i) => {
+    if (i === 0) {
+      return ['by', key]
+    }
+    return ['and', key]
+  }).flat())].join('_'))
 
   const whereArgType = new graphql.GraphQLInputObjectType({
     name: `${entityName}WhereArguments`,
@@ -93,14 +98,19 @@ function constructGraph (app, entity, opts) {
   queryTopFields[getBy] = {
     type,
     args: {
-      [primaryKey]: { type: new graphql.GraphQLNonNull(fields[primaryKey].type) }
+      ...(primaryKeys.reduce((acc, primaryKey) => {
+        acc[primaryKey] = { type: new graphql.GraphQLNonNull(fields[primaryKey].type) }
+        return acc
+      }, {}))
     }
   }
   loaders.Query[getBy] = {
     loader (queries, ctx) {
       const keys = []
       for (const query of queries) {
-        keys.push(query.params[primaryKey])
+        for (const key of primaryKeys) {
+          keys.push({ key, value: query.params[key] })
+        }
       }
       return loadMany(keys, queries, ctx)
     },
@@ -138,7 +148,9 @@ function constructGraph (app, entity, opts) {
 
   resolvers.Query[plural] = (_, query, ctx, info) => {
     const requestedFields = info.fieldNodes[0].selectionSet.selections.map((s) => s.name.value)
-    requestedFields.push(primaryKey)
+    for (const primaryKey of primaryKeys) {
+      requestedFields.push(primaryKey)
+    }
     return entity.find({ ...query, fields: [...requestedFields, ...relationalFields], ctx })
   }
 
@@ -172,7 +184,9 @@ function constructGraph (app, entity, opts) {
 
   resolvers.Query[count] = async (_, query, ctx, info) => {
     const requestedFields = info.fieldNodes[0].selectionSet.selections.map((s) => s.name.value)
-    requestedFields.push(primaryKey)
+    for (const primaryKey of primaryKeys) {
+      requestedFields.push(primaryKey)
+    }
     const total = await entity.count({ ...query, fields: [...requestedFields, ...relationalFields], ctx })
     return { total }
   }
@@ -220,7 +234,7 @@ function constructGraph (app, entity, opts) {
 
   federationReplacements.push({
     find: new RegExp(`type ${entityName}`),
-    replace: `type ${entityName} @key(fields: "${primaryKey}")`
+    replace: `type ${entityName} @key(fields: "${primaryKeys}")`
   })
 
   if (federationMetadata) {
@@ -247,32 +261,47 @@ function constructGraph (app, entity, opts) {
   async function loadMany (keys, queries, ctx) {
     const fields = getFields(queries)
     const res = await entity.find({
-      where: {
-        [primaryKey]: {
-          in: keys
+      where: keys.reduce((acc, { key, value }) => {
+        if (acc[key]) {
+          acc[key].in.push(value)
+        } else {
+          acc[key] = {
+            in: [value]
+          }
         }
-      },
+        return acc
+      }, {}),
       fields,
       ctx
     })
 
+    console.log(res)
+
+    for (const primaryKey of primaryKeys) {
+    }
+
     const map = {}
 
     for (const row of res) {
-      map[row[primaryKey]] = row
+        map[row[primaryKey]] = row
+      }
     }
 
     const output = []
-    for (const key of keys) {
+    for (const key of primaryKeys) {
       output.push(map[key])
     }
+
+    console.log(res, map, output)
 
     return output
   }
 
   function getFields (queries) {
     const fields = new Set([...relationalFields])
-    fields.add(primaryKey)
+    for (const primaryKey of primaryKeys) {
+      fields.add(primaryKey)
+    }
     for (const query of queries) {
       fromSelectionSet(query.info.fieldNodes[0].selectionSet, fields)
     }
