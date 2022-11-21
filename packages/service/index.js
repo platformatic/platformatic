@@ -11,6 +11,8 @@ const loadConfig = require('./lib/load-config')
 const { isKeyEnabled, deepmerge } = require('@platformatic/utils')
 const compiler = require('./lib/compile')
 const { stat } = require('fs').promises
+const { join } = require('path')
+const wrapperPath = join(__dirname, 'lib', 'autoload-wrapper.js')
 
 function createServerConfig (config) {
   // convert the config file to a new structure
@@ -65,8 +67,15 @@ async function platformaticService (app, opts, toLoad = []) {
     const isWatchEnabled = opts.plugin.watch !== false
     /* c8 ignore next 13 */
     if (isWatchEnabled && hotReload) {
+      let options = pluginOptions
+      if ((await stat(pluginOptions.path)).isDirectory()) {
+        options = {
+          path: wrapperPath,
+          options: pluginOptions
+        }
+      }
       await app.register(sandbox, {
-        ...pluginOptions,
+        ...options,
         customizeGlobalThis (_globalThis) {
         // Taken from https://github.com/nodejs/undici/blob/fa9fd9066569b6357acacffb806aa804b688c9d8/lib/global.js#L5
           const globalDispatcher = Symbol.for('undici.globalDispatcher.1')
@@ -87,7 +96,6 @@ async function platformaticService (app, opts, toLoad = []) {
         }
         await app.register(autoload, options)
       } else {
-        // TODO we are implementing autoload only for the non-watch case
         let plugin = await import(`file://${pluginOptions.path}`)
         if (plugin.__esModule === true) {
           plugin = plugin.default
