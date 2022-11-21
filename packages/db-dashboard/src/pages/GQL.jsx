@@ -1,5 +1,5 @@
 import GraphiQL from 'graphiql'
-import { Fragment, useContext } from 'react'
+import React, { useContext } from 'react'
 import { createGraphiQLFetcher } from '@graphiql/toolkit'
 import { AppContext } from '../App'
 import 'graphiql/graphiql.css'
