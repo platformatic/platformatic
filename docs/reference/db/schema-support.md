@@ -1,9 +1,5 @@
 # Schema support
 
-:::info
-*** Schemas are currently supported only in postgres***
-:::
-
 It's possible to specify the schemas where the tables are located. 
 
 _Example_

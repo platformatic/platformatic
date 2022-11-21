@@ -3,10 +3,11 @@
 const camelcase = require('camelcase')
 const { singularize } = require('inflected')
 const {
-  toSingular
+  toSingular,
+  tableName
 } = require('./utils')
 
-function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations, queries, autoTimestamp) {
+function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations, queries, autoTimestamp, schema) {
   const entityName = toSingular(table)
 
   // Fields remapping
@@ -59,7 +60,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     if (args.input === undefined) {
       throw new Error('Input not provided.')
     }
-    // args.input is not array
+    // args.input is not array/
     const fieldsToRetrieve = computeFields(args.fields).map((f) => sql.ident(f))
     const input = fixInput(args.input)
     let now
@@ -68,7 +69,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
       input.updated_at = now
     }
     if (input[primaryKey]) { // update
-      const res = await queries.updateOne(db, sql, table, input, primaryKey, fieldsToRetrieve)
+      const res = await queries.updateOne(db, sql, table, schema, input, primaryKey, fieldsToRetrieve)
       return fixOutput(res)
     } else { // insert
       if (autoTimestamp && fields.inserted_at) {
@@ -76,7 +77,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
         now = now || new Date()
         input.inserted_at = now
       }
-      const res = await queries.insertOne(db, sql, table, input, primaryKey, fields[primaryKey].sqlType.toLowerCase() === 'uuid', fieldsToRetrieve)
+      const res = await queries.insertOne(db, sql, table, schema, input, primaryKey, fields[primaryKey].sqlType.toLowerCase() === 'uuid', fieldsToRetrieve)
       return fixOutput(res)
     }
   }
@@ -101,14 +102,14 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     /* istanbul ignore next */
     if (queries.insertMany) {
       // We are not fixing the input here because it is done in the query.
-      const res = await queries.insertMany(db, sql, table, inputs, inputToFieldMap, primaryKey, fieldsToRetrieve, fields)
+      const res = await queries.insertMany(db, sql, table, schema, inputs, inputToFieldMap, primaryKey, fieldsToRetrieve, fields)
       return res.map(fixOutput)
     } else {
       // TODO this can be optimized, we can still use a batch insert if we do not want any fields
       const res = []
       for (let input of inputs) {
         input = fixInput(input)
-        const resOne = await queries.insertOne(db, sql, table, input, primaryKey, fields[primaryKey].sqlType.toLowerCase() === 'uuid', fieldsToRetrieve)
+        const resOne = await queries.insertOne(db, sql, table, schema, input, primaryKey, fields[primaryKey].sqlType.toLowerCase() === 'uuid', fieldsToRetrieve)
         res.push(fixOutput(resOne))
       }
 
@@ -130,7 +131,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     }
     const criteria = computeCriteria(args)
 
-    const res = await queries.updateMany(db, sql, table, criteria, input, fieldsToRetrieve)
+    const res = await queries.updateMany(db, sql, table, schema, criteria, input, fieldsToRetrieve)
     return res.map(fixOutput)
   }
 
@@ -224,9 +225,10 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     const db = opts.tx || defaultDb
     const fieldsToRetrieve = computeFields(opts.fields).map((f) => sql.ident(f))
     const criteria = computeCriteria(opts)
+
     let query = sql`
       SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
-      FROM ${sql.ident(table)}
+      FROM ${tableName(sql, table, schema)}
     `
 
     if (criteria.length > 0) {
@@ -259,7 +261,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     let totalCountQuery = null
     totalCountQuery = sql`
         SELECT COUNT(*) AS total 
-        FROM ${sql.ident(table)}
+        FROM ${tableName(sql, table, schema)}
       `
     const criteria = computeCriteria(opts)
     if (criteria.length > 0) {
@@ -273,7 +275,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     const db = opts.tx || defaultDb
     const fieldsToRetrieve = computeFields(opts.fields).map((f) => sql.ident(f))
     const criteria = computeCriteria(opts)
-    const res = await queries.deleteAll(db, sql, table, criteria, fieldsToRetrieve)
+    const res = await queries.deleteAll(db, sql, table, schema, criteria, fieldsToRetrieve)
     return res.map(fixOutput)
   }
 
@@ -283,6 +285,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     pluralName: camelcase(table),
     primaryKey,
     table,
+    schema,
     fields,
     camelCasedFields,
     fixInput,
@@ -296,9 +299,9 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
   }
 }
 
-async function buildEntity (db, sql, log, table, queries, autoTimestamp, ignore) {
+async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, ignore) {
   // Compute the columns
-  const columns = (await queries.listColumns(db, sql, table)).filter((c) => !ignore[c.column_name])
+  const columns = (await queries.listColumns(db, sql, table, schema)).filter((c) => !ignore[c.column_name])
   const fields = columns.reduce((acc, column) => {
     acc[column.column_name] = {
       sqlType: column.udt_name,
@@ -316,10 +319,12 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, ignore)
     }
     return acc
   }, {})
+
   // To get enum values in pg
   /* istanbul ignore next */
   if (db.isPg) {
-    const enums = await queries.listEnumValues(db, sql, table)
+    // TODO: schema?
+    const enums = await queries.listEnumValues(db, sql, table, schema)
     for (const enumValue of enums) {
       if (!fields[enumValue.column_name].enum) {
         fields[enumValue.column_name].enum = [enumValue.enumlabel]
@@ -330,7 +335,7 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, ignore)
   }
   const currentRelations = []
 
-  const constraintsList = await queries.listConstraints(db, sql, table)
+  const constraintsList = await queries.listConstraints(db, sql, table, schema)
   let primaryKey
 
   for (const constraint of constraintsList) {
@@ -365,7 +370,7 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, ignore)
     }
   }
 
-  const entity = createMapper(db, sql, log, table, fields, primaryKey, currentRelations, queries, autoTimestamp)
+  const entity = createMapper(db, sql, log, table, fields, primaryKey, currentRelations, queries, autoTimestamp, schema)
   entity.relations = currentRelations
 
   return entity

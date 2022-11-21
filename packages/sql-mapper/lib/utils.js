@@ -9,6 +9,11 @@ function toSingular (str) {
   return str
 }
 
+function tableName (sql, table, schema) {
+  return schema ? sql.ident(schema, table) : sql.ident(table)
+}
+
 module.exports = {
-  toSingular
+  toSingular,
+  tableName
 }
