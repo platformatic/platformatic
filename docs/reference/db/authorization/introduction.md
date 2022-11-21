@@ -171,13 +171,19 @@ Conflicting rules across roles for different equality checks will not be support
 
 ## Programmatically skip authorization rules 
 
-In custom plugins, it's possible to skip the authorization rules on entities programmatically by setting the `skipAuth` flag to `true`, e.g.:
-
+In custom plugins, it's possible to skip the authorization rules on entities programmatically by setting the `skipAuth` flag to `true` or not passing a `ctx`, e.g.:
 
 ```js
-    // this works even if the user's role doesn't have the `find` permission
-    const res = await app.platformatic.entities.page.find({skipAuth: true})
+    // this works even if the user's role doesn't have the `find` permission. 
+    const res = await app.platformatic.entities.page.find({skipAuth: true, ...})
 ```
+
+This has the same effect:
+```js
+    // this works even if the user's role doesn't have the `find` permission
+    const res = await app.platformatic.entities.page.find() // no ctx
+```
+
 
 This is useful for custom plugins for which the authentication is not necessary, so there is no user role set when invoked.
 

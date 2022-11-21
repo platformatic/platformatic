@@ -1,8 +1,8 @@
 'use strict'
 
 function getRequestFromContext (ctx) {
-  if (!ctx || !ctx.reply) {
-    throw new Error('Missing context. You should call this function with { ctx: { reply }}')
+  if (ctx && !ctx.reply) {
+    throw new Error('Missing reply in context. You should call this function with { ctx: { reply }}')
   }
   return ctx.reply.request
 }
