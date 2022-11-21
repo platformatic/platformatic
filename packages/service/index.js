@@ -1,6 +1,7 @@
 'use strict'
 
 const { start } = require('@fastify/restartable')
+const autoload = require('@fastify/autoload')
 const sandbox = require('fastify-sandbox')
 const underPressure = require('@fastify/under-pressure')
 const { schema } = require('./lib/schema')
@@ -9,6 +10,7 @@ const { addLoggerToTheConfig, getJSPluginPath } = require('./lib/utils')
 const loadConfig = require('./lib/load-config')
 const { isKeyEnabled, deepmerge } = require('@platformatic/utils')
 const compiler = require('./lib/compile')
+const { stat } = require('fs').promises
 
 function createServerConfig (config) {
   // convert the config file to a new structure
@@ -78,11 +80,20 @@ async function platformaticService (app, opts, toLoad = []) {
     // c8 fails in reporting the coverage of this else branch, so we ignore it
     /* c8 ignore next 7 */
     } else {
-      let plugin = await import(`file://${pluginOptions.path}`)
-      if (plugin.__esModule === true) {
-        plugin = plugin.default
+      if ((await stat(pluginOptions.path)).isDirectory()) {
+        const options = {
+          ...pluginOptions.options,
+          dir: pluginOptions.path
+        }
+        await app.register(autoload, options)
+      } else {
+        // TODO we are implementing autoload only for the non-watch case
+        let plugin = await import(`file://${pluginOptions.path}`)
+        if (plugin.__esModule === true) {
+          plugin = plugin.default
+        }
+        await app.register(plugin, pluginOptions.options)
       }
-      await app.register(plugin, pluginOptions.options)
     }
   }
 
