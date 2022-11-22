@@ -85,10 +85,9 @@ async function loadPlugin (app, config, pluginOptions) {
 
   // if not defined, we defaults to true (which can happen only if config is set programmatically,
   // that's why we ignore the coverage of the `undefined` case, which cannot be covered in cli tests)
-  /* c8 ignore next */
+  /* c8 ignore next 35  */
   const hotReload = pluginOptions.hotReload !== false
   const isWatchEnabled = config.watch !== false
-  /* c8 ignore next 13 */
   if (isWatchEnabled && hotReload) {
     let options = pluginOptions
     if ((await stat(pluginOptions.path)).isDirectory()) {
@@ -110,7 +109,6 @@ async function loadPlugin (app, config, pluginOptions) {
       }
     })
     // c8 fails in reporting the coverage of this else branch, so we ignore it
-    /* c8 ignore next 15 */
   } else {
     if ((await stat(pluginOptions.path)).isDirectory()) {
       const options = {
