@@ -204,10 +204,16 @@ const platformaticServiceSchema = {
       anyOf: [{
         type: 'array',
         items: {
-          $ref: '#/$defs/plugin'
+          anyOf: [{
+            $ref: '#/$defs/plugin'
+          }, {
+            type: 'string'
+          }]
         }
       }, {
         $ref: '#/$defs/plugin'
+      }, {
+        type: 'string'
       }]
     },
     metrics

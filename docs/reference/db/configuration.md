@@ -239,6 +239,8 @@ To switch if off, set `hotReload` to `false`.
   }
   ```
 
+`plugin` can also be a string, or an array of strings.
+
 
 ### `watch`
 

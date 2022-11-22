@@ -138,7 +138,7 @@ async function buildServer (options, app = platformaticService) {
       schema
     })
     await cm.parseAndValidate()
-    options = deepmerge({}, cm.current, options)
+    options = deepmerge({}, options, cm.current)
     options.configManager = cm
   }
   const serverConfig = createServerConfig(options)

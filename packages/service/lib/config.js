@@ -23,15 +23,21 @@ class ServiceConfigManager extends ConfigManager {
 
   _transformConfig () {
     const fixPluginPath = (plugin) => {
+      // for some reasons c8 does not detect these
+      /* c8 ignore next 3 */
+      if (typeof plugin === 'string') {
+        plugin = { path: plugin }
+      }
       plugin.path = this._fixRelativePath(plugin.path)
+      return plugin
     }
 
     // relative-to-absolute plugin path
     /* c8 ignore next 3 */
     if (Array.isArray(this.current.plugin)) {
-      this.current.plugin.forEach(fixPluginPath)
+      this.current.plugin = this.current.plugin.map(fixPluginPath)
     } else if (this.current.plugin) {
-      fixPluginPath(this.current.plugin)
+      this.current.plugin = fixPluginPath(this.current.plugin)
     }
   }
 
@@ -40,15 +46,21 @@ class ServiceConfigManager extends ConfigManager {
     const dirOfConfig = dirname(this.fullPath)
 
     const fixPluginPath = (plugin) => {
+      // for some reasons c8 does not detect these
+      /* c8 ignore next 3 */
+      if (typeof plugin === 'string') {
+        plugin = { path: plugin }
+      }
       plugin.path = relative(dirOfConfig, plugin.path)
+      return plugin
     }
 
     // relative-to-absolute plugin path
     /* c8 ignore next 6 */
     if (Array.isArray(this.current.plugin)) {
-      sanitizedConfig.plugin.forEach(fixPluginPath)
+      sanitizedConfig.plugin = sanitizedConfig.plugin.map(fixPluginPath)
     } else if (this.current.plugin) {
-      fixPluginPath(sanitizedConfig.plugin)
+      sanitizedConfig.plugin = fixPluginPath(sanitizedConfig.plugin)
     }
 
     return sanitizedConfig

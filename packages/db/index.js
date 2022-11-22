@@ -71,7 +71,7 @@ async function buildDBServer (options) {
       schema
     })
     await cm.parseAndValidate()
-    options = deepmerge({}, cm.current, options)
+    options = deepmerge({}, options, cm.current)
     options.configManager = cm
   }
   return buildServer(options, platformaticDB)
