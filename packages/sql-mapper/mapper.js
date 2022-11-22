@@ -104,6 +104,7 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, 
     const tablesWithSchema = await queries.listTables(db, sql, schemaList)
     const tables = tablesWithSchema.map(({ table }) => table)
     const duplicates = tables.filter((table, index) => tables.indexOf(table) !== index)
+
     if (duplicates.length > 0) {
       throw new Error(`Conflicting table names: ${duplicates.join(', ')}`)
     }

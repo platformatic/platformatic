@@ -60,7 +60,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     if (args.input === undefined) {
       throw new Error('Input not provided.')
     }
-    // args.input is not array/
+    // args.input is not array
     const fieldsToRetrieve = computeFields(args.fields).map((f) => sql.ident(f))
     const input = fixInput(args.input)
     let now
@@ -323,7 +323,6 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema,
   // To get enum values in pg
   /* istanbul ignore next */
   if (db.isPg) {
-    // TODO: schema?
     const enums = await queries.listEnumValues(db, sql, table, schema)
     for (const enumValue of enums) {
       if (!fields[enumValue.column_name].enum) {

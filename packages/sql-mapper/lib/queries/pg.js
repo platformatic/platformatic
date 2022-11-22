@@ -92,8 +92,7 @@ module.exports.updateOne = updateOne
 module.exports.updateMany = shared.updateMany
 
 async function listEnumValues (db, sql, table, schema) {
-  const query = schema
-    ? sql`
+  const query = sql`
     SELECT udt_name, enumlabel, column_name
     FROM pg_enum e 
     JOIN pg_type t ON e.enumtypid = t.oid 
@@ -101,13 +100,6 @@ async function listEnumValues (db, sql, table, schema) {
     WHERE table_name = ${table}
     AND table_schema = ${schema};
     `
-    : sql`
-    SELECT udt_name, enumlabel, column_name
-    FROM pg_enum e 
-    JOIN pg_type t ON e.enumtypid = t.oid 
-    JOIN information_schema.columns c on c.udt_name = t.typname
-    WHERE table_name = ${table};
-  `
   return db.query(query)
 }
 

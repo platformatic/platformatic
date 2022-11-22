@@ -22,39 +22,23 @@ async function listTables (db, sql, schemas) {
 }
 
 async function listColumns (db, sql, table, schema) {
-  const query = schema
-    ? sql`
+  const query = sql`
     SELECT column_name as column_name, data_type as udt_name, is_nullable as is_nullable, column_type as column_type
     FROM information_schema.columns
     WHERE table_name = ${table}
     AND table_schema = ${schema}
   `
-    : sql`
-    SELECT column_name as column_name, data_type as udt_name, is_nullable as is_nullable, column_type as column_type
-    FROM information_schema.columns
-    WHERE table_name = ${table}
-    AND table_schema = (SELECT DATABASE())
-  `
   return db.query(query)
 }
 
 async function listConstraints (db, sql, table, schema) {
-  const query = schema
-    ? sql`
+  const query = sql`
     SELECT TABLE_NAME as table_name, COLUMN_NAME as column_name, CONSTRAINT_TYPE as constraint_type, referenced_table_name AS foreign_table_name, referenced_column_name AS foreign_column_name
     FROM information_schema.table_constraints t
     JOIN information_schema.key_column_usage k
     USING (constraint_name, table_schema, table_name)
     WHERE t.table_name = ${table}
     AND t.table_schema = ${schema}
-    `
-    : sql`
-      SELECT TABLE_NAME as table_name, COLUMN_NAME as column_name, CONSTRAINT_TYPE as constraint_type, referenced_table_name AS foreign_table_name, referenced_column_name AS foreign_column_name
-    FROM information_schema.table_constraints t
-    JOIN information_schema.key_column_usage k
-    USING (constraint_name, table_schema, table_name)
-    WHERE t.table_name = ${table}
-    AND t.table_schema = (SELECT DATABASE())
     `
   return db.query(query)
 }
