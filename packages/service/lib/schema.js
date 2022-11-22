@@ -193,9 +193,21 @@ const metrics = {
 const platformaticServiceSchema = {
   $id: 'https://schemas.platformatic.dev/db',
   type: 'object',
+  $defs: {
+    plugin
+  },
   properties: {
     server,
-    plugin,
+    plugin: {
+      anyOf: [{
+        type: 'array',
+        items: {
+          $ref: '#/$defs/plugin'
+        }
+      }, {
+        $ref: '#/$defs/plugin'
+      }]
+    },
     metrics
   },
   additionalProperties: false,

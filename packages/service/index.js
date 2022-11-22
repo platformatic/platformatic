@@ -50,59 +50,15 @@ async function platformaticService (app, opts, toLoad = []) {
     }
   }
 
-  if (opts.plugin) {
-    let pluginOptions = opts.plugin
-    /* c8 ignore next 4 */
-    if (pluginOptions.typescript !== undefined) {
-      const pluginPath = getJSPluginPath(pluginOptions.path, pluginOptions.typescript.outDir)
-      pluginOptions = { ...pluginOptions, path: pluginPath }
+  // TODO apparently c8 is not able to mark
+  // this as covered even if it is
+  /* c8 ignore next 7 */
+  if (Array.isArray(opts.plugin)) {
+    for (const plugin of opts.plugin) {
+      await loadPlugin(app, plugin)
     }
-
-    app.log.debug({ plugin: opts.plugin }, 'loading plugin')
-
-    // if not defined, we defaults to true (which can happen only if config is set programmatically,
-    // that's why we ignore the coverage of the `undefined` case, which cannot be covered in cli tests)
-    /* c8 ignore next */
-    const hotReload = opts.plugin.watchOptions?.hotReload !== false
-    const isWatchEnabled = opts.plugin.watch !== false
-    /* c8 ignore next 13 */
-    if (isWatchEnabled && hotReload) {
-      let options = pluginOptions
-      if ((await stat(pluginOptions.path)).isDirectory()) {
-        options = {
-          path: wrapperPath,
-          options: pluginOptions
-        }
-      }
-      await app.register(sandbox, {
-        ...options,
-        customizeGlobalThis (_globalThis) {
-        // Taken from https://github.com/nodejs/undici/blob/fa9fd9066569b6357acacffb806aa804b688c9d8/lib/global.js#L5
-          const globalDispatcher = Symbol.for('undici.globalDispatcher.1')
-          const dispatcher = globalThis[globalDispatcher]
-          /* istanbul ignore else */
-          if (dispatcher) {
-            _globalThis[globalDispatcher] = dispatcher
-          }
-        }
-      })
-    // c8 fails in reporting the coverage of this else branch, so we ignore it
-    /* c8 ignore next 7 */
-    } else {
-      if ((await stat(pluginOptions.path)).isDirectory()) {
-        const options = {
-          ...pluginOptions.options,
-          dir: pluginOptions.path
-        }
-        await app.register(autoload, options)
-      } else {
-        let plugin = await import(`file://${pluginOptions.path}`)
-        if (plugin.__esModule === true) {
-          plugin = plugin.default
-        }
-        await app.register(plugin, pluginOptions.options)
-      }
-    }
+  } else if (opts.plugin) {
+    await loadPlugin(app, opts.plugin)
   }
 
   // Enable CORS
@@ -115,6 +71,60 @@ async function platformaticService (app, opts, toLoad = []) {
       healthCheckInterval: opts.healthCheck.interval !== undefined ? opts.healthCheck.interval : 5000,
       healthCheck: opts.healthCheck.fn
     })
+  }
+}
+
+async function loadPlugin (app, pluginOptions) {
+  /* c8 ignore next 4 */
+  if (pluginOptions.typescript !== undefined) {
+    const pluginPath = getJSPluginPath(pluginOptions.path, pluginOptions.typescript.outDir)
+    pluginOptions = { ...pluginOptions, path: pluginPath }
+  }
+
+  app.log.debug({ plugin: pluginOptions }, 'loading plugin')
+
+  // if not defined, we defaults to true (which can happen only if config is set programmatically,
+  // that's why we ignore the coverage of the `undefined` case, which cannot be covered in cli tests)
+  /* c8 ignore next */
+  const hotReload = pluginOptions.watchOptions?.hotReload !== false
+  const isWatchEnabled = pluginOptions.watch !== false
+  /* c8 ignore next 13 */
+  if (isWatchEnabled && hotReload) {
+    let options = pluginOptions
+    if ((await stat(pluginOptions.path)).isDirectory()) {
+      options = {
+        path: wrapperPath,
+        options: pluginOptions
+      }
+    }
+    await app.register(sandbox, {
+      ...options,
+      customizeGlobalThis (_globalThis) {
+        // Taken from https://github.com/nodejs/undici/blob/fa9fd9066569b6357acacffb806aa804b688c9d8/lib/global.js#L5
+        const globalDispatcher = Symbol.for('undici.globalDispatcher.1')
+        const dispatcher = globalThis[globalDispatcher]
+        /* istanbul ignore else */
+        if (dispatcher) {
+          _globalThis[globalDispatcher] = dispatcher
+        }
+      }
+    })
+    // c8 fails in reporting the coverage of this else branch, so we ignore it
+    /* c8 ignore next 15 */
+  } else {
+    if ((await stat(pluginOptions.path)).isDirectory()) {
+      const options = {
+        ...pluginOptions.options,
+        dir: pluginOptions.path
+      }
+      await app.register(autoload, options)
+    } else {
+      let plugin = await import(`file://${pluginOptions.path}`)
+      if (plugin.__esModule === true) {
+        plugin = plugin.default
+      }
+      await app.register(plugin, pluginOptions.options)
+    }
   }
 }
 
