@@ -50,7 +50,7 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, 
   let sql
   let db
 
-  // Specify an empty array must be the same of specifyong no schema
+  // Specify an empty array must be the same of specifying no schema
   const schemaList = schema?.length > 0 ? schema : null
 
   /* istanbul ignore next */
@@ -105,6 +105,8 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, 
     const tables = tablesWithSchema.map(({ table }) => table)
     const duplicates = tables.filter((table, index) => tables.indexOf(table) !== index)
 
+    // Ignored because this never happens in sqlite
+    /* istanbul ignore next */
     if (duplicates.length > 0) {
       throw new Error(`Conflicting table names: ${duplicates.join(', ')}`)
     }

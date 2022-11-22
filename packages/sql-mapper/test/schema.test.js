@@ -8,33 +8,6 @@ const fakeLogger = {
   error: () => {}
 }
 
-// const clear = async function (db, sql) {
-//   try {
-//     await db.query(sql`DROP TABLE test1.pages`)
-//   } catch (err) {
-//   }
-//   try {
-//     await db.query(sql`DROP TABLE test2.users`)
-//   } catch (err) {
-//   }
-//   try {
-//     await db.query(sql`DROP TABLE test2.pages`)
-//   } catch (err) {
-//   }
-//   try {
-//     await db.query(sql`DROP TABLE public.pages`)
-//   } catch (err) {
-//   }
-//   try {
-//     await db.query(sql`DROP TABLE public.posts`)
-//   } catch (err) {
-//   }
-//   try {
-//     await db.query(sql`DROP TYPE pagetype`)
-//   } catch {
-//   }
-// }
-
 test('uses tables from different schemas', { skip: isSQLite }, async ({ pass, teardown, equal }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
@@ -257,5 +230,32 @@ test('[pg] if schema is empty array, should find entities only in default \'publ
   equal(pageEntity.singularName, 'page')
   equal(pageEntity.pluralName, 'pages')
   equal(pageEntity.schema, 'public')
+  pass()
+})
+
+test('[sqlite] if sqllite, ignores schema information', { skip: !isSQLite }, async ({ pass, teardown, equal }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+    await db.query(sql`CREATE TABLE "pages" (
+      "id" INTEGER PRIMARY KEY,
+      "title" TEXT NOT NULL
+    );`)
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {},
+    schema: ['ignored', 'also_ignored']
+  })
+
+  equal(Object.keys(mapper.entities).length, 1)
+  const pageEntity = mapper.entities.page
+  equal(pageEntity.name, 'Page')
+  equal(pageEntity.singularName, 'page')
+  equal(pageEntity.pluralName, 'pages')
+  equal(pageEntity.schema, null)
   pass()
 })
