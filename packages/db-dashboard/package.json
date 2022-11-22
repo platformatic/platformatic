@@ -25,9 +25,7 @@
   "dependencies": {
     "@fastify/static": "^6.5.0",
     "@platformatic/ui-components": "^0.1.19",
-    "inflected": "^2.1.0",
-    "postcss": "^8.4.18",
-    "tailwindcss": "^3.2.2"
+    "inflected": "^2.1.0"
   },
   "devDependencies": {
     "@graphiql/toolkit": "^0.8.0",
@@ -45,6 +43,7 @@
     "json-format-highlight": "^1.0.4",
     "jsoneditor": "^9.9.0",
     "playwright": "^1.24.2",
+    "postcss": "^8.4.19",
     "react": "^18.2.0",
     "react-admin": "^4.5.0",
     "react-dom": "^18.2.0",
@@ -54,6 +53,7 @@
     "snazzy": "^9.0.0",
     "standard": "^17.0.0",
     "swagger-ui-react": "4.13.0",
+    "tailwindcss": "^3.2.4",
     "vite": "^3.0.4",
     "vitest": "^0.25.0"
   },
