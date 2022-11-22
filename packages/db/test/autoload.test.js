@@ -16,9 +16,9 @@ test('autoload & filesystem based routing / watch disabled', { only: true }, asy
       ...connInfo
     },
     plugin: {
-      path: join(__dirname, 'fixtures', 'directories', 'routes'),
-      watch: false
+      path: join(__dirname, 'fixtures', 'directories', 'routes')
     },
+    watch: false,
     metrics: false
   }
 
@@ -58,9 +58,9 @@ test('autoload & filesystem based routing / watch enabled', async ({ teardown, e
       ...connInfo
     },
     plugin: {
-      path: join(__dirname, 'fixtures', 'directories', 'routes'),
-      watch: true
+      path: join(__dirname, 'fixtures', 'directories', 'routes')
     },
+    watch: true,
     metrics: false
   }
 
@@ -100,12 +100,11 @@ test('multiple files', async ({ teardown, equal }) => {
       ...connInfo
     },
     plugin: [{
-      path: join(__dirname, 'fixtures', 'directories', 'plugins'),
-      watch: true
+      path: join(__dirname, 'fixtures', 'directories', 'plugins')
     }, {
-      path: join(__dirname, 'fixtures', 'directories', 'routes'),
-      watch: true
+      path: join(__dirname, 'fixtures', 'directories', 'routes')
     }],
+    watch: true,
     metrics: false
   }
 
@@ -152,12 +151,11 @@ test('multiple files / watch false', async ({ teardown, equal }) => {
       ...connInfo
     },
     plugin: [{
-      path: join(__dirname, 'fixtures', 'directories', 'plugins'),
-      watch: false
+      path: join(__dirname, 'fixtures', 'directories', 'plugins')
     }, {
-      path: join(__dirname, 'fixtures', 'directories', 'routes'),
-      watch: false
+      path: join(__dirname, 'fixtures', 'directories', 'routes')
     }],
+    watch: false,
     metrics: false
   }
 

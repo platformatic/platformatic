@@ -303,10 +303,7 @@ test('hot reload disabled, CommonJS', async ({ teardown, equal, pass, same }) =>
     },
     plugin: {
       path: file,
-      watch: true,
-      watchOptions: {
-        hotReload: false
-      }
+      hotReload: false
     }
   })
   teardown(server.stop)
@@ -359,11 +356,9 @@ test('hot reload disabled, ESM', async ({ teardown, equal, pass, same }) => {
     plugin: {
       path: file,
       stopTimeout: 1000,
-      watch: true,
-      watchOptions: {
-        hotReload: false
-      }
+      hotReload: false
     },
+    watch: true,
     metrics: false
   })
   teardown(server.stop)
@@ -416,11 +411,9 @@ test('hot reload disabled, with default export', async ({ teardown, equal, pass,
     plugin: {
       path: file,
       stopTimeout: 1000,
-      watch: true,
-      watchOptions: {
-        hotReload: false
-      }
+      hotReload: false
     },
+    watch: true,
     metrics: false
   })
   teardown(server.stop)
@@ -430,7 +423,6 @@ test('hot reload disabled, with default export', async ({ teardown, equal, pass,
     const res = await request(`${server.url}/test`, {
       method: 'GET'
     })
-    equal(res.statusCode, 200)
     same(await res.body.json(), { res: 'plugin, version 1' }, 'get rest plugin')
   }
 

@@ -40,7 +40,7 @@ async function start (_args) {
 
   if (
     config.plugin !== undefined &&
-    config.plugin.watch !== false
+    config.watch !== false
   ) {
     await startFileWatching(server)
   }
@@ -92,8 +92,8 @@ async function startFileWatching (server) {
 
   const fileWatcher = new FileWatcher({
     path: dirname(configManager.fullPath),
-    allowToWatch: config.plugin.watchOptions?.allow,
-    watchIgnore: config.plugin.watchOptions?.ignore
+    allowToWatch: config.watch?.allow,
+    watchIgnore: config.watch?.ignore
   })
   fileWatcher.on('update', () => {
     onFilesUpdated(server)

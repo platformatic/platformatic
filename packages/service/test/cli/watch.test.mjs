@@ -29,9 +29,9 @@ test('should watch js files by default', async ({ equal, teardown }) => {
       hostname: '127.0.0.1',
       port: 0
     },
+    watch: true,
     plugin: {
-      path: pluginFilePath,
-      watch: true
+      path: pluginFilePath
     }
   }
 
@@ -66,12 +66,11 @@ test('should watch allowed file', async ({ comment, teardown }) => {
       hostname: '127.0.0.1',
       port: 0
     },
+    watch: {
+      allow: ['*.js', '*.json']
+    },
     plugin: {
-      path: pluginFilePath,
-      watch: true,
-      watchOptions: {
-        allow: ['*.js', '*.json']
-      }
+      path: pluginFilePath
     }
   }
 
@@ -113,12 +112,11 @@ test('should not watch ignored file', async ({ teardown, equal }) => {
       hostname: '127.0.0.1',
       port: 0
     },
+    watch: {
+      ignore: [basename(pluginFilePath)]
+    },
     plugin: {
-      path: pluginFilePath,
-      watch: true,
-      watchOptions: {
-        ignore: [basename(pluginFilePath)]
-      }
+      path: pluginFilePath
     }
   }
 
@@ -151,12 +149,11 @@ test('should not loop forever when doing ESM', { skip: true }, async ({ comment,
       hostname: '127.0.0.1',
       port: 0
     },
+    watch: {
+      ignore: [basename(pluginFilePath)]
+    },
     plugin: {
-      path: pluginFilePath,
-      watch: true,
-      watchOptions: {
-        ignore: [basename(pluginFilePath)]
-      }
+      path: pluginFilePath
     }
   }
 
@@ -196,12 +193,11 @@ test('should watch config file', async ({ comment, teardown }) => {
       hostname: '127.0.0.1',
       port: 0
     },
+    watch: {
+      allow: ['*.js', '*.json']
+    },
     plugin: {
-      path: pluginFilePath,
-      watch: true,
-      watchOptions: {
-        allow: ['*.js', '*.json']
-      }
+      path: pluginFilePath
     }
   }
 

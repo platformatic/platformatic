@@ -55,10 +55,10 @@ async function platformaticService (app, opts, toLoad = []) {
   /* c8 ignore next 7 */
   if (Array.isArray(opts.plugin)) {
     for (const plugin of opts.plugin) {
-      await loadPlugin(app, plugin)
+      await loadPlugin(app, opts, plugin)
     }
   } else if (opts.plugin) {
-    await loadPlugin(app, opts.plugin)
+    await loadPlugin(app, opts, opts.plugin)
   }
 
   // Enable CORS
@@ -74,7 +74,7 @@ async function platformaticService (app, opts, toLoad = []) {
   }
 }
 
-async function loadPlugin (app, pluginOptions) {
+async function loadPlugin (app, config, pluginOptions) {
   /* c8 ignore next 4 */
   if (pluginOptions.typescript !== undefined) {
     const pluginPath = getJSPluginPath(pluginOptions.path, pluginOptions.typescript.outDir)
@@ -86,8 +86,8 @@ async function loadPlugin (app, pluginOptions) {
   // if not defined, we defaults to true (which can happen only if config is set programmatically,
   // that's why we ignore the coverage of the `undefined` case, which cannot be covered in cli tests)
   /* c8 ignore next */
-  const hotReload = pluginOptions.watchOptions?.hotReload !== false
-  const isWatchEnabled = pluginOptions.watch !== false
+  const hotReload = pluginOptions.hotReload !== false
+  const isWatchEnabled = config.watch !== false
   /* c8 ignore next 13 */
   if (isWatchEnabled && hotReload) {
     let options = pluginOptions
