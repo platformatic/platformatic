@@ -6,7 +6,7 @@ const { buildServer } = require('..')
 const { request } = require('undici')
 const { join } = require('path')
 
-test('autoload & filesystem based routing / watch disabled', { only: true }, async ({ teardown, equal }) => {
+test('autoload & filesystem based routing / watch disabled', async ({ teardown, equal }) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
