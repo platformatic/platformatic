@@ -50,10 +50,15 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, 
   let sql
   let db
 
+  // Specify an empty array must be the same of specifying no schema
+  const schemaList = schema?.length > 0 ? schema : null
+
   /* istanbul ignore next */
   if (connectionString.indexOf('postgres') === 0) {
     const createConnectionPoolPg = require('@databases/pg')
-    db = await buildConnection(log, createConnectionPoolPg, connectionString, poolSize, schema)
+    // We pass schema here so @databases/pg set the schema in the search path. This is not stritly necessary, though,
+    // because now we use fully qualified names in all queries.
+    db = await buildConnection(log, createConnectionPoolPg, connectionString, poolSize, schemaList)
     sql = createConnectionPoolPg.sql
     queries = queriesFactory.pg
     db.isPg = true
@@ -96,16 +101,17 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, 
       await onDatabaseLoad(db, sql)
     }
 
-    const tables = await queries.listTables(db, sql)
-
+    const tablesWithSchema = await queries.listTables(db, sql, schemaList)
+    const tables = tablesWithSchema.map(({ table }) => table)
     const duplicates = tables.filter((table, index) => tables.indexOf(table) !== index)
-    // Ignored because this can happen only in postgres
+
+    // Ignored because this never happens in sqlite
     /* istanbul ignore next */
     if (duplicates.length > 0) {
       throw new Error(`Conflicting table names: ${duplicates.join(', ')}`)
     }
 
-    for (const table of tables) {
+    for (const { table, schema } of tablesWithSchema) {
       // The following line is a safety net when developing this module,
       // it should never happen.
       /* istanbul ignore next */
@@ -115,8 +121,7 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, 
       if (ignore[table] === true) {
         continue
       }
-
-      const entity = await buildEntity(db, sql, log, table, queries, autoTimestamp, ignore[table] || {})
+      const entity = await buildEntity(db, sql, log, table, queries, autoTimestamp, schema, ignore[table] || {})
       // Check for primary key of all entities
       if (!entity.primaryKey) {
         throw new Error(`Cannot find primary key for ${entity.name} entity`)

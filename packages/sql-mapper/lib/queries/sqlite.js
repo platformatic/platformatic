@@ -4,11 +4,12 @@ const { randomUUID } = require('crypto')
 const shared = require('./shared')
 
 async function listTables (db, sql) {
-  const tables = await db.query(sql`
+  const res = await db.query(sql`
     SELECT name FROM sqlite_master
     WHERE type='table'
   `)
-  return tables.map(t => t.name)
+  // sqlite has no schemas
+  return res.map(r => ({ schema: null, table: r.name }))
 }
 
 module.exports.listTables = listTables
@@ -67,7 +68,7 @@ async function listConstraints (db, sql, table) {
 
 module.exports.listConstraints = listConstraints
 
-async function insertOne (db, sql, table, input, primaryKey, useUUID, fieldsToRetrieve) {
+async function insertOne (db, sql, table, schema, input, primaryKey, useUUID, fieldsToRetrieve) {
   const fieldNames = Object.keys(input)
   const keysToSql = fieldNames.map((key) => sql.ident(key))
   const valuesToSql = fieldNames.map((key) => sql.value(input[key]))
@@ -118,7 +119,7 @@ async function insertOne (db, sql, table, input, primaryKey, useUUID, fieldsToRe
 
 module.exports.insertOne = insertOne
 
-async function updateOne (db, sql, table, input, primaryKey, fieldsToRetrieve) {
+async function updateOne (db, sql, table, schema, input, primaryKey, fieldsToRetrieve) {
   const pairs = Object.keys(input).map((key) => {
     const value = input[key]
     return sql`${sql.ident(key)} = ${value}`
@@ -142,7 +143,7 @@ async function updateOne (db, sql, table, input, primaryKey, fieldsToRetrieve) {
 
 module.exports.updateOne = updateOne
 
-async function deleteAll (db, sql, table, criteria, fieldsToRetrieve) {
+async function deleteAll (db, sql, table, schema, criteria, fieldsToRetrieve) {
   let query = sql`
     SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
     FROM ${sql.ident(table)}
