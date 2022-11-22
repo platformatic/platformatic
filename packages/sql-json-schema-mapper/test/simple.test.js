@@ -68,6 +68,7 @@ test('simple db, simple rest API', async (t) => {
     } else {
       t.same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
     }
+    t.same(pageJsonSchema.primaryKey, ['id'])
     t.same(pageJsonSchema.required, ['title'])
     if (!isSQLite) {
       t.same(pageJsonSchema.properties.type, { type: 'string', nullable: true, enum: ['blank', 'non-blank'] })
