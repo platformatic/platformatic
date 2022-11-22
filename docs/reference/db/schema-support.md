@@ -1,6 +1,8 @@
 # Schema support
 
-It's possible to specify the schemas where the tables are located. 
+It's possible to specify the schemas where the tables are located (if the database supports schemas).
+
+```typescript
 
 _Example_
 
