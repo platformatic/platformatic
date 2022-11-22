@@ -9,10 +9,11 @@ class ServiceConfigManager extends ConfigManager {
   constructor (opts) {
     super({
       ...opts,
-      schema,
+      schema: opts.schema || schema,
       schemaOptions: {
         useDefaults: true,
         coerceTypes: true,
+        allErrors: true,
         strict: false
       },
       allowToWatch: ['.env'],

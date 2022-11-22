@@ -273,6 +273,9 @@ const types = {
 const platformaticDBschema = {
   $id: 'https://schemas.platformatic.dev/db',
   type: 'object',
+  $defs: {
+    plugin
+  },
   properties: {
     server,
     core,
@@ -281,7 +284,16 @@ const platformaticDBschema = {
     migrations,
     metrics,
     types,
-    plugin
+    plugin: {
+      anyOf: [{
+        type: 'array',
+        items: {
+          $ref: '#/$defs/plugin'
+        }
+      }, {
+        $ref: '#/$defs/plugin'
+      }]
+    }
   },
   additionalProperties: false,
   required: ['core', 'server']

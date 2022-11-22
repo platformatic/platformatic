@@ -198,3 +198,4 @@ module.exports.platformaticService = platformaticService
 module.exports.addLoggerToTheConfig = addLoggerToTheConfig
 module.exports.loadConfig = loadConfig
 module.exports.tsCompiler = compiler
+module.exports.ConfigManager = ConfigManager
