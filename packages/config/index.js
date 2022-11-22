@@ -139,7 +139,13 @@ class ConfigManager extends EventEmitter {
       env = { ...env, ...parsed }
     }
     this.env = this.purgeEnv(env)
-    return this.pupa(configString, this.env)
+
+    const escapeNewlines = ({ value }) => {
+      if (!value) return value
+      return value.replace(/\n/g, '\\n')
+    }
+
+    return this.pupa(configString, this.env, { transform: escapeNewlines })
   }
 
   _transformConfig () {}
