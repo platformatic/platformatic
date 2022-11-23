@@ -82,13 +82,15 @@ async function auth (app, opts) {
       }
     }
 
-    try {
-      // `createSession` actually exists only if jwt or webhook are enabled
-      // and creates a new `request.user` object
-      await request.createSession()
-      request.log.debug({ user: request.user }, 'logged user in')
-    } catch (err) {
-      request.log.trace({ err })
+    if (typeof request.createSession === 'function') {
+      try {
+        // `createSession` actually exists only if jwt or webhook are enabled
+        // and creates a new `request.user` object
+        await request.createSession()
+        request.log.debug({ user: request.user }, 'logged user in')
+      } catch (err) {
+        request.log.trace({ err })
+      }
     }
 
     if (forceAdminRole) {
@@ -215,12 +217,15 @@ async function auth (app, opts) {
             }
           }
 
-          if (input[type.primaryKey]) {
-            const where = await fromRuleToWhere(ctx, rule.save, {
-              [type.primaryKey]: {
-                eq: input[type.primaryKey]
-              }
-            }, request.user)
+          let hasAllPrimaryKeys = false
+          const whereConditions = {}
+          for (const key of type.primaryKeys) {
+            hasAllPrimaryKeys = hasAllPrimaryKeys || input[key] !== undefined
+            whereConditions[key] = { eq: input[key] }
+          }
+
+          if (hasAllPrimaryKeys) {
+            const where = await fromRuleToWhere(ctx, rule.save, whereConditions, request.user)
 
             const found = await type.find({
               where,
