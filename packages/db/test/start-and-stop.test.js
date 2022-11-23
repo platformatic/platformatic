@@ -298,8 +298,8 @@ test('inject', async ({ teardown, equal, pass, same }) => {
 })
 
 test('ignore and sqlite3', async ({ teardown, equal, pass, same }) => {
-  const dbLocation = path.posix.join(__dirname, '..', 'fixtures', 'sqlite', 'db')
-  const migrations = path.posix.join(__dirname, '..', 'fixtures', 'sqlite', 'migrations')
+  const dbLocation = path.join(__dirname, '..', 'fixtures', 'sqlite', 'db')
+  const migrations = path.join(__dirname, '..', 'fixtures', 'sqlite', 'migrations')
   try {
     await rm(dbLocation)
   } catch {

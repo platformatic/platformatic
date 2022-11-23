@@ -1,30 +1,21 @@
 'use strict'
 
-const ConfigManager = require('@platformatic/config')
+const { ConfigManager } = require('@platformatic/service')
 const { dirname, resolve, relative, isAbsolute } = require('path')
 const { schema } = require('./schema')
-const clone = require('rfdc')()
 
 class DBConfigManager extends ConfigManager {
   constructor (opts) {
     super({
       ...opts,
       schema,
-      schemaOptions: {
-        useDefaults: true,
-        coerceTypes: true,
-        allErrors: true
-      },
       allowToWatch: ['.env'],
       envWhitelist: ['PORT', 'DATABASE_URL', ...(opts.envWhitelist || [])]
     })
   }
 
-  _fixRelativePath (path) {
-    return resolve(dirname(this.fullPath), path)
-  }
-
   _transformConfig () {
+    super._transformConfig.call(this)
     const dirOfConfig = dirname(this.fullPath)
     if (this.current.core && this.current.core.connectionString.indexOf('sqlite') === 0) {
       const originalSqlitePath = this.current.core.connectionString.replace('sqlite://', '')
@@ -38,11 +29,6 @@ class DBConfigManager extends ConfigManager {
       this.current.migrations.table = this.current.migrations.table || 'versions'
     }
 
-    // relative-to-absolute plugin path
-    if (this.current.plugin) {
-      this.current.plugin.path = this._fixRelativePath(this.current.plugin.path)
-    }
-
     if (this.current.migrations && this.current.core) {
       // TODO remove the ignores
       /* c8 ignore next 4 */
@@ -54,7 +40,7 @@ class DBConfigManager extends ConfigManager {
   }
 
   _sanitizeConfig () {
-    const sanitizedConfig = clone(this.current)
+    const sanitizedConfig = super._sanitizeConfig.call(this)
 
     const dirOfConfig = dirname(this.fullPath)
     if (this.current.core && this.current.core.connectionString.indexOf('sqlite') === 0) {
@@ -68,11 +54,6 @@ class DBConfigManager extends ConfigManager {
     // absolute-to-relative migrations path
     if (this.current.migrations && isAbsolute(this.current.migrations.dir)) {
       sanitizedConfig.migrations.dir = relative(dirOfConfig, this.current.migrations.dir)
-    }
-
-    // relative-to-absolute plugin path
-    if (this.current.plugin && isAbsolute(this.current.plugin.path)) {
-      sanitizedConfig.plugin.path = relative(dirOfConfig, this.current.plugin.path)
     }
 
     return sanitizedConfig
