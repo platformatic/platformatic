@@ -11,6 +11,7 @@ function setupSubscriptions (app, metaMap, resolvers, ignores) {
     }
     // TODO currently we are not supporting subscriptions for
     // entities that have a composite primary key
+    /* istanbul ignore next */
     if (field.primaryKeys.size !== 1) {
       continue
     }

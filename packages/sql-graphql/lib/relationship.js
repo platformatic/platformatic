@@ -41,7 +41,6 @@ module.exports = function establishRelations (app, relations, resolvers, loaders
             for (const { obj } of queries) {
               keys.push([{ key, value: obj[originalField].toString() }])
             }
-            console.log(keys)
             return foreign.loadMany(keys, queries, ctx)
           },
           opts: {
