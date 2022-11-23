@@ -3,13 +3,17 @@
 const { mapSQLTypeToOpenAPIType } = require('@platformatic/sql-json-schema-mapper')
 const camelcase = require('camelcase')
 const { singularize } = require('inflected')
+const { generateArgs } = require('./shared')
 
 const getEntityLinksForEntity = (app, entity) => {
   const entityLinks = {}
   for (const relation of entity.relations) {
     const ownField = camelcase(relation.column_name)
     const relatedEntity = app.platformatic.entities[camelcase(singularize(relation.foreign_table_name))]
-    const relatedEntityPrimaryKeyCamelcase = camelcase(relatedEntity.primaryKey)
+    if (relatedEntity.primaryKeys.size !== 1) {
+      continue
+    }
+    const relatedEntityPrimaryKeyCamelcase = camelcase(relatedEntity.primaryKeys.values().next().value)
     const relatedEntityPrimaryKeyCamelcaseCapitalized = capitalize(relatedEntityPrimaryKeyCamelcase)
     const getEntityById = `Get${relatedEntity.name}By${relatedEntityPrimaryKeyCamelcaseCapitalized}`
     entityLinks[getEntityById] = {
@@ -25,6 +29,9 @@ const getEntityLinksForEntity = (app, entity) => {
     const theirField = camelcase(relation.column_name)
     const ownField = camelcase(relation.foreign_column_name)
     const relatedEntity = app.platformatic.entities[camelcase(singularize(relation.table_name))]
+    if (relatedEntity.primaryKeys.size !== 1) {
+      continue
+    }
     const getEntities = `Get${capitalize(relatedEntity.pluralName)}`
     entityLinks[getEntities] = {
       operationId: `get${capitalize(relatedEntity.pluralName)}`,
@@ -50,34 +57,12 @@ async function entityPlugin (app, opts) {
   const entitySchema = {
     $ref: entity.name + '#'
   }
+  const primaryKey = entity.primaryKeys.values().next().value
   const primaryKeyParams = getPrimaryKeyParams(entity)
-  const primaryKeyCamelcase = camelcase(entity.primaryKey)
+  const primaryKeyCamelcase = camelcase(primaryKey)
   const entityLinks = getEntityLinksForEntity(app, entity)
 
-  const sortedEntityFields = Object.keys(entity.fields).sort()
-
-  const whereArgs = sortedEntityFields.reduce((acc, name) => {
-    const field = entity.fields[name]
-    const baseKey = `where.${field.camelcase}.`
-    for (const modifier of ['eq', 'neq', 'gt', 'gte', 'lt', 'lte']) {
-      const key = baseKey + modifier
-      acc[key] = { type: mapSQLTypeToOpenAPIType(field.sqlType), enum: field.enum }
-    }
-
-    for (const modifier of ['in', 'nin']) {
-      const key = baseKey + modifier
-      acc[key] = { type: 'string' }
-    }
-
-    return acc
-  }, {})
-
-  const orderByArgs = sortedEntityFields.reduce((acc, name) => {
-    const field = entity.fields[name]
-    const key = `orderby.${field.camelcase}`
-    acc[key] = { type: 'string', enum: ['asc', 'desc'] }
-    return acc
-  }, {})
+  const { whereArgs, orderByArgs } = generateArgs(entity)
 
   app.addHook('preValidation', async (req) => {
     if (typeof req.query.fields === 'string') {
@@ -217,7 +202,7 @@ async function entityPlugin (app, opts) {
     const entityLinks = getEntityLinksForEntity(app, targetEntity)
     // e.g. getQuotesForMovie
     const operationId = `get${capitalize(targetEntity.pluralName)}For${capitalize(entity.singularName)}`
-    app.get(`/:${camelcase(entity.primaryKey)}/${targetEntity.pluralName}`, {
+    app.get(`/:${camelcase(primaryKey)}/${targetEntity.pluralName}`, {
       schema: {
         operationId,
         params: getPrimaryKeyParams(entity),
@@ -289,7 +274,7 @@ async function entityPlugin (app, opts) {
     // e.g. getMovieForQuote
     const operationId = `get${capitalize(targetEntity.singularName)}For${capitalize(entity.singularName)}`
     // We need to get the relation name from the PK column:
-    app.get(`/:${camelcase(entity.primaryKey)}/${targetRelation}`, {
+    app.get(`/:${camelcase(primaryKey)}/${targetRelation}`, {
       schema: {
         operationId,
         params: getPrimaryKeyParams(entity),
@@ -376,9 +361,6 @@ async function entityPlugin (app, opts) {
           },
           fields: request.query.fields
         })
-        if (!res) {
-          return reply.callNotFound()
-        }
         reply.header('location', `${app.prefix}/${res[primaryKeyCamelcase]}`)
         return res
       }
@@ -476,7 +458,7 @@ async function entityPlugin (app, opts) {
 }
 
 function getPrimaryKeyParams (entity) {
-  const primaryKey = entity.primaryKey
+  const primaryKey = entity.primaryKeys.values().next().value
   const fields = entity.fields
   const field = fields[primaryKey]
   const properties = {

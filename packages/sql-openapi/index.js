@@ -7,6 +7,7 @@ const camelcase = require('camelcase')
 const { singularize } = require('inflected')
 const { mapSQLEntityToJSONSchema } = require('@platformatic/sql-json-schema-mapper')
 const entityPlugin = require('./lib/entity-to-routes')
+const manyToMany = require('./lib/many-to-many')
 const fp = require('fastify-plugin')
 
 async function setupOpenAPI (app, opts) {
@@ -61,11 +62,19 @@ async function setupOpenAPI (app, opts) {
   }
 
   for (const entity of Object.values(app.platformatic.entities)) {
+    const localPrefix = `${prefix}/${entity.pluralName}`
     // TODO support ignore
-    app.register(entityPlugin, {
-      entity,
-      prefix: `${prefix}/${entity.pluralName}`
-    })
+    if (entity.primaryKeys.size === 1) {
+      app.register(entityPlugin, {
+        entity,
+        prefix: localPrefix
+      })
+    } else {
+      app.register(manyToMany, {
+        entity,
+        prefix: localPrefix
+      })
+    }
   }
 }
 
