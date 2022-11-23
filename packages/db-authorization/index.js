@@ -4,6 +4,7 @@ const fp = require('fastify-plugin')
 const createError = require('@fastify/error')
 const { getRequestFromContext, getRoles } = require('./lib/utils')
 const findRule = require('./lib/find-rule')
+const leven = require('leven')
 
 const PLT_ADMIN_ROLE = 'platformatic-admin'
 const Unauthorized = createError('PLT_DB_AUTH_UNAUTHORIZED', 'operation not allowed', 401)
@@ -85,6 +86,7 @@ async function auth (app, opts) {
       // `createSession` actually exists only if jwt or webhook are enabled
       // and creates a new `request.user` object
       await request.createSession()
+      request.log.debug({ user: request.user }, 'logged user in')
     } catch (err) {
       request.log.trace({ err })
     }
@@ -109,7 +111,21 @@ async function auth (app, opts) {
   app.addHook('onReady', function () {
     const entityRules = {}
     // TODO validate that there is at most a rule for a given role
-    for (const rule of rules) {
+    for (let i = 0; i < rules.length; i++) {
+      const rule = rules[i]
+      if (!app.platformatic.entities[rule.entity]) {
+        // There is a unknown entity. Let's find out the nearest one for a nice error message
+        const entities = Object.keys(app.platformatic.entities)
+        const nearest = entities.reduce((acc, entity) => {
+          const distance = leven(rule.entity, entity)
+          if (distance < acc.distance) {
+            acc.distance = distance
+            acc.entity = entity
+          }
+          return acc
+        }, { distance: Infinity, entity: null })
+        throw new Error(`Unknown entity '${rule.entity}' in authorization rule ${i}. Did you mean '${nearest.entity}'?`)
+      }
       if (!entityRules[rule.entity]) {
         entityRules[rule.entity] = []
       }
@@ -163,16 +179,22 @@ async function auth (app, opts) {
       checkSaveMandatoryFieldsInRules(type, rules)
 
       app.platformatic.addEntityHooks(entityKey, {
-        async find (originalFind, { where, ctx, fields, ...restOpts }) {
+        async find (originalFind, { where, ctx, fields, skipAuth, ...restOpts } = {}) {
+          if (skipAuth || !ctx) {
+            return originalFind({ ...restOpts, where, ctx, fields })
+          }
           const request = getRequestFromContext(ctx)
           const rule = findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
-          checkFieldsFromRule(rule.find, fields)
+          checkFieldsFromRule(rule.find, fields || Object.keys(app.platformatic.entities[entityKey].fields))
           where = await fromRuleToWhere(ctx, rule.find, where, request.user)
 
           return originalFind({ ...restOpts, where, ctx, fields })
         },
 
-        async save (originalSave, { input, ctx, fields }) {
+        async save (originalSave, { input, ctx, fields, skipAuth }) {
+          if (skipAuth || !ctx) {
+            return originalSave({ input, ctx, fields })
+          }
           const request = getRequestFromContext(ctx)
           const rule = findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
 
@@ -216,7 +238,10 @@ async function auth (app, opts) {
           return originalSave({ input, ctx, fields })
         },
 
-        async insert (originalInsert, { inputs, ctx, fields }) {
+        async insert (originalInsert, { inputs, ctx, fields, skipAuth }) {
+          if (skipAuth || !ctx) {
+            return originalInsert({ inputs, ctx, fields })
+          }
           const request = getRequestFromContext(ctx)
           const rule = findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
 
@@ -244,13 +269,28 @@ async function auth (app, opts) {
           return originalInsert({ inputs, ctx, fields })
         },
 
-        async delete (originalDelete, { where, ctx, fields }) {
+        async delete (originalDelete, { where, ctx, fields, skipAuth }) {
+          if (skipAuth || !ctx) {
+            return originalDelete({ where, ctx, fields })
+          }
           const request = getRequestFromContext(ctx)
           const rule = findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
 
           where = await fromRuleToWhere(ctx, rule.delete, where, request.user)
 
           return originalDelete({ where, ctx, fields })
+        },
+
+        async updateMany (originalUpdateMany, { where, ctx, fields, skipAuth, ...restOpts }) {
+          if (skipAuth || !ctx) {
+            return originalUpdateMany({ ...restOpts, where, ctx, fields })
+          }
+          const request = getRequestFromContext(ctx)
+          const rule = findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
+
+          where = await fromRuleToWhere(ctx, rule.updateMany, where, request.user)
+
+          return originalUpdateMany({ ...restOpts, where, ctx, fields })
         },
 
         async getPublishTopic (original, opts) {
@@ -329,9 +369,10 @@ function findRuleForRequestUser (ctx, rules, roleKey, anonymousRole) {
   const roles = getRoles(getRequestFromContext(ctx), roleKey, anonymousRole)
   const rule = findRule(rules, roles)
   if (!rule) {
-    ctx.reply.log.warn({ roles }, 'no rule for roles')
+    ctx.reply.request.log.warn({ roles, rules }, 'no rule for roles')
     throw new Unauthorized()
   }
+  ctx.reply.request.log.trace({ roles, rule }, 'found rule')
   return rule
 }
 

@@ -14,7 +14,7 @@ The config file will specify where the plugin file is located as the example bel
 ```
 The path is relative to the config file path.
 
-Since it uses [fastify-sandbox](https://github.com/mcollina/fastify-sanbdbox) under the hood, all other options of that package may be specified under the `plugin` property.
+Since it uses [fastify-sandbox](https://github.com/mcollina/fastify-sandbox) under the hood, all other options of that package may be specified under the `plugin` property.
 
 Once the config file is set up, you can write your plugin to extend Platformatic DB API or write your custom business logic.
 

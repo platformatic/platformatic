@@ -68,6 +68,25 @@ It's also possible to enable [JWKS](https://www.rfc-editor.org/rfc/rfc7517) with
 ```
 In this case, the JWKS URL is calculated from the `iss` (issuer) field of JWT, so every JWT token from an issuer that exposes a valid JWKS token will pass the validation. For that reason, **this configuration should be used only for development**, while in every other case the `allowedDomains` should be specified.
 
+### JWT Custom Claim Namespace
+JWT claims can be namespaced to avoid name collisions. If so, we will receive tokens with custom claims such as: `https://platformatic.dev/X-PLATFORMATIC-ROLE` (where `https://platformatic.cloud/ is the namespace).
+If we want to map these claims to user metadata removing our namespace, we can specify the namespace in the JWT options:
+
+```json
+  ...
+
+  "authorization": {
+    "jwt": {
+      "namespace": "https://platformatic.dev/"
+      }
+    },
+  }
+
+  ...
+```
+
+With this configuration, the `https://platformatic.dev/X-PLATFORMATIC-ROLE` claim is mapped to `X-PLATFORMATIC-ROLE` user metadata.
+
 
 ## Webhook
 Platformatic can use a webhook to authenticate the requests.
@@ -149,3 +168,27 @@ The check is performed based on the `find` permissions, the only permissions tha
 3. `find: { checks: { [prop]: { eq: 'X-PLATFORMATIC-PROP' } } }` validates that the given prop is equal
 
 Conflicting rules across roles for different equality checks will not be supported.
+
+## Programmatically skip authorization rules 
+
+In custom plugins, it's possible to skip the authorization rules on entities programmatically by setting the `skipAuth` flag to `true` or not passing a `ctx`, e.g.:
+
+```js
+    // this works even if the user's role doesn't have the `find` permission. 
+    const res = await app.platformatic.entities.page.find({skipAuth: true, ...})
+```
+
+This has the same effect:
+```js
+    // this works even if the user's role doesn't have the `find` permission
+    const res = await app.platformatic.entities.page.find() // no ctx
+```
+
+
+This is useful for custom plugins for which the authentication is not necessary, so there is no user role set when invoked.
+
+:::info
+Skip authorization rules is not possible on the automatically generated REST and GraphQL APIs. 
+:::
+
+

@@ -15,7 +15,9 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async ({ pass, tea
 
       await clear(db, sql)
 
-      await db.query(sql`CREATE TABLE simple_types (
+      await db.query(sql`
+      CREATE TYPE simple_enum as ENUM ('value1', 'value2');
+      CREATE TABLE simple_types (
         id SERIAL8 PRIMARY KEY,
         published BOOL,
         current DOUBLE PRECISION,
@@ -26,7 +28,8 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async ({ pass, tea
         uuid UUID UNIQUE,
         a_real real,
         a_smallint smallint,
-        a_decimal decimal
+        a_decimal decimal,
+        an_enum simple_enum
       );`)
     }
   })
@@ -55,7 +58,9 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async ({ pass, tea
                               uuid: "12345678-1234-1234-1234-123456789012",
                               aReal: 1.2,
                               aSmallint: 42,
-                              aDecimal: 42 }) {
+                              aDecimal: 42,
+                              anEnum: value1
+                            }) {
               id
               published
               current
@@ -67,6 +72,7 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async ({ pass, tea
               aReal
               aSmallint
               aDecimal
+              anEnum
             }
           }
         `
@@ -86,7 +92,8 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async ({ pass, tea
           uuid: '12345678-1234-1234-1234-123456789012',
           aReal: 1.2,
           aSmallint: 42,
-          aDecimal: 42
+          aDecimal: 42,
+          anEnum: 'value1'
         }
       }
     }, 'saveSimpleType response')
@@ -111,6 +118,7 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async ({ pass, tea
               aReal
               aSmallint
               aDecimal
+              anEnum
             }
           }
         `
@@ -130,7 +138,8 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async ({ pass, tea
           uuid: '12345678-1234-1234-1234-123456789012',
           aReal: 1.2,
           aSmallint: 42,
-          aDecimal: 42
+          aDecimal: 42,
+          anEnum: 'value1'
         }
       }
     }, 'getSimpleTypeById response')
@@ -262,7 +271,8 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async ({ pas
         uuid ${uuidType} UNIQUE,
         a_real real,
         a_smallint smallint,
-        a_decimal decimal
+        a_decimal decimal,
+        an_enum enum ('value1', 'value2')
       );`)
     }
   })
@@ -293,7 +303,9 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async ({ pas
                               uuid: "12345678-1234-1234-1234-123456789012",
                               aReal: 1.2,
                               aSmallint: 42,
-                              aDecimal: 42 }) {
+                              aDecimal: 42,
+                              anEnum: value1
+                            }) {
               id
               published
               current
@@ -305,6 +317,7 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async ({ pas
               aReal
               aSmallint
               aDecimal
+              anEnum
             }
           }
         `
@@ -324,7 +337,8 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async ({ pas
           uuid: '12345678-1234-1234-1234-123456789012',
           aReal: 1.2,
           aSmallint: 42,
-          aDecimal: 42
+          aDecimal: 42,
+          anEnum: 'value1'
         }
       }
     }, 'saveSimpleType response')
@@ -349,6 +363,7 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async ({ pas
               aReal
               aSmallint
               aDecimal
+              anEnum
             }
           }
         `
@@ -368,7 +383,8 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async ({ pas
           uuid: '12345678-1234-1234-1234-123456789012',
           aReal: 1.2,
           aSmallint: 42,
-          aDecimal: 42
+          aDecimal: 42,
+          anEnum: 'value1'
         }
       }
     }, 'getSimpleTypeById response')

@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db-authorization",
-  "version": "0.5.1",
+  "version": "0.7.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -16,7 +16,7 @@
     "@fastify/cookie": "^8.0.0",
     "@fastify/session": "^10.0.0",
     "@platformatic/db-core": "workspace:*",
-    "fast-jwt": "^1.7.1",
+    "fast-jwt": "^2.0.0",
     "fastify": "^4.6.0",
     "mercurius": "^11.0.0",
     "snazzy": "^9.0.0",
@@ -30,6 +30,7 @@
     "@fastify/jwt": "^6.3.1",
     "fastify-plugin": "^4.1.0",
     "get-jwks": "^8.0.0",
+    "leven": "3.x",
     "undici": "^5.6.1"
   }
 }

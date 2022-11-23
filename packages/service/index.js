@@ -33,6 +33,19 @@ async function platformaticService (app, opts, toLoad = []) {
     app.decorate('platformatic', {})
   }
 
+  {
+    const fileWatcher = opts.fileWatcher
+    const configManager = opts.configManager
+    /* c8 ignore next 4 */
+    if (fileWatcher !== undefined) {
+      app.platformatic.fileWatcher = fileWatcher
+    }
+    if (configManager !== undefined) {
+      app.platformatic.configManager = configManager
+      app.platformatic.config = configManager.current
+    }
+  }
+
   if (opts.plugin) {
     let pluginOptions = opts.plugin
     /* c8 ignore next 4 */
@@ -48,7 +61,7 @@ async function platformaticService (app, opts, toLoad = []) {
     /* c8 ignore next */
     const hotReload = opts.plugin.watchOptions?.hotReload !== false
     const isWatchEnabled = opts.plugin.watch !== false
-
+    /* c8 ignore next 13 */
     if (isWatchEnabled && hotReload) {
       await app.register(sandbox, {
         ...pluginOptions,
@@ -116,7 +129,13 @@ async function buildServer (options, app = platformaticService) {
 
   const _restart = handler.restart
 
-  handler.restart = async (opts) => {
+  let debounce = null
+  handler.restart = (opts) => {
+    /* c8 ignore next 3 */
+    if (debounce) {
+      return debounce
+    }
+
     addLoggerToTheConfig(opts)
 
     // Ignore because not tested on Windows
@@ -124,26 +143,20 @@ async function buildServer (options, app = platformaticService) {
     // this on Windows
     /* c8 ignore start */
     if (opts) {
-      opts = createServerConfig(opts)
-      opts.app = app
-
       const fileWatcher = handler.app.platformatic.fileWatcher
       const configManager = handler.app.platformatic.configManager
-
-      await _restart(opts)
-
-      if (fileWatcher !== undefined) {
-        handler.app.platformatic.fileWatcher = fileWatcher
-      }
-      if (configManager !== undefined) {
-        handler.app.platformatic.configManager = configManager
-        handler.app.platformatic.config = configManager.current
-      }
-
-      return handler
+      opts.fileWatcher = fileWatcher
+      opts.configManager = configManager
+      opts = createServerConfig(opts)
+      opts.app = app
     }
+    debounce = _restart(opts).then(() => {
+      handler.app.log.info('restarted')
+    }).finally(() => {
+      debounce = null
+    })
     /* c8 ignore stop */
-    return _restart()
+    return debounce
   }
 
   return handler

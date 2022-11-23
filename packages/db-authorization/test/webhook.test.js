@@ -188,6 +188,24 @@ test('users can save and update their own pages, read everybody\'s and delete no
     }, 'pages response')
   }
 
+  // check that works also with a GET request
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/pages',
+      headers: {
+        cookie
+      }
+    })
+    equal(res.statusCode, 200, 'pages status code')
+    same(res.json(), [{
+      id: 1,
+      title: 'Hello',
+      userId: 42
+    }]
+    , 'pages response')
+  }
+
   {
     const res = await app.inject({
       method: 'POST',

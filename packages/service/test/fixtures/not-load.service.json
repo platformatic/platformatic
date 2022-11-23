@@ -1,0 +1,14 @@
+{
+  "server": {
+    "logger": {
+      "level": "info"
+    },
+    "hostname": "127.0.0.1",
+    "port": "3042",
+    "pluginTimeout": "10"
+  },
+  "plugin": {
+    "path": "./not-load.js",
+    "watch": false
+  }
+}

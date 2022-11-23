@@ -1,0 +1,22 @@
+.container {
+  @apply text-white flex flex-col gap-y-4 w-64 mx-auto items-center my-auto h-screen;
+}
+
+.title {
+  @apply text-2xl font-bold;
+}
+
+.form {
+  @apply flex gap-x-4;
+}
+
+.input {
+  @apply flex justify-between h-10  text-white border-main-green border border-solid box-border rounded-md p-4;
+}
+.input > input:focus {
+  @apply outline-none;
+}
+
+.button {
+  @apply w-full;
+}

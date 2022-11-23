@@ -6,6 +6,7 @@ A set of operation methods are available on each entity:
 - [`insert`](#insert)
 - [`save`](#save)
 - [`delete`](#delete)
+- [`updateMany`](#updatemany)
 
 
 ## Returned fields
@@ -28,6 +29,7 @@ The `where` object's key is the field you want to check, the value is a key/valu
 | gte | `'>='` |
 | lt | `'<'` |
 | lte | `'<='` |
+| like | `'LIKE'` |
 
 ### Examples
 
@@ -236,6 +238,51 @@ async function main() {
         lt: 4
       }
     },
+  })
+  logger.info(res)
+  await mapper.db.dispose()
+}
+main()
+
+```
+
+### `updateMany`
+
+Update one or more entity rows from the database, depending on the `where` option. Returns the data for all updated objects.
+
+#### Options
+
+| Name | Type | Description
+|---|---|---|
+| `where` | `Object` | [Where clause 🔗](#where-clause)
+| `input` | `Object` | The new values that want to update
+| `fields` | Array of `string` | List of fields to be returned for each object |
+
+#### Usage
+<!-- docs/reference/sql-mapper/examples/delete.js -->
+```js
+'use strict'
+const { connect } = require('@platformatic/sql-mapper')
+const { pino } = require('pino')
+const pretty = require('pino-pretty')
+const logger = pino(pretty())
+
+async function main() {
+  const connectionString = 'postgres://postgres:postgres@127.0.0.1/postgres'
+  const mapper = await connect({
+    connectionString: connectionString,
+    log: logger,
+  })
+  const res = await mapper.entities.page.updateMany({
+    fields: ['id', 'title',],
+    where: {
+      counter: {
+        gte: 30
+      }
+    },
+    input: { 
+      title: 'Updated title'
+    }
   })
   logger.info(res)
   await mapper.db.dispose()

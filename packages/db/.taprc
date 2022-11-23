@@ -1,3 +1,3 @@
 jobs: 1
-timeout: 80
+timeout: 200
 coverage: false

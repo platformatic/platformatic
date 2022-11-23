@@ -41,7 +41,18 @@ function constructGraph (app, entity, opts) {
   for (const key of Object.keys(entity.fields)) {
     const field = entity.fields[key]
     const meta = { field }
-    meta.type = sqlTypeToGraphQL(field.sqlType)
+
+    // sqlite doesn't support enums
+    /* istanbul ignore next */
+    if (field.enum) {
+      const enumValues = field.enum.reduce((acc, enumValue) => {
+        acc[enumValue] = { value: enumValue }
+        return acc
+      }, {})
+      meta.type = new graphql.GraphQLEnumType({ name: key, values: enumValues })
+    } else {
+      meta.type = sqlTypeToGraphQL(field.sqlType)
+    }
     if (field.primaryKey) {
       meta.primaryKeyType = field.type
       meta.type = graphql.GraphQLID
@@ -75,6 +86,7 @@ function constructGraph (app, entity, opts) {
             gte: { type: fields[field].type },
             lt: { type: fields[field].type },
             lte: { type: fields[field].type },
+            like: { type: fields[field].type },
             in: { type: new graphql.GraphQLList(fields[field].type) },
             nin: { type: new graphql.GraphQLList(fields[field].type) }
           }

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-test('login box should appear', async ({ page }) => {
+test.skip('login box should appear', async ({ page }) => {
   await page.goto('http://localhost:3042/')
 
   await expect(page).toHaveTitle(/Platformatic DB/)
@@ -14,7 +14,7 @@ test('login box should appear', async ({ page }) => {
   expect(mainTitle).toBe('Welcome to Platformatic DB!')
 })
 
-test('graphiql is loading', async ({ page }) => {
+test.skip('graphiql is loading', async ({ page }) => {
   await page.goto('http://localhost:3042/')
   await page.locator('input[type=password]').fill('basegraph')
   const loginButton = page.locator('.box button')

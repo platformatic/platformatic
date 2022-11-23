@@ -1,6 +1,8 @@
-import { Fragment } from 'react'
-import Title from '../elements/Title'
+import { BorderedBox, Button } from '@platformatic/ui-components'
+import React from 'react'
 import { notify } from '../utils'
+import styles from './Home.module.css'
+import Metrics from '../components/metrics/Metrics'
 export default function Home () {
   async function onRestartClicked () {
     const res = await fetch('/_admin/restart', {
@@ -20,9 +22,17 @@ export default function Home () {
   }
   return (
     <>
-      <Title>Welcome to Platformatic DB!</Title>
-      <button className='button is-primary' onClick={onRestartClicked}>Restart Server</button>
+      <BorderedBox>
+        <div className={styles.actionsContainer}>
+          <div className={styles.title}>
+            <h1>Welcome to Platformatic DB!</h1>
+          </div>
+          <div className={styles.actions}>
+            <Button onClick={onRestartClicked} primary='true' label='Restart Server' />
+          </div>
+        </div>
+      </BorderedBox>
+      <Metrics />
     </>
-
   )
 }

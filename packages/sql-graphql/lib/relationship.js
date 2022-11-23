@@ -1,5 +1,7 @@
 'use strict'
 
+/* eslint camelcase: 0 */
+
 const camelcase = require('camelcase')
 const {
   fromSelectionSet
@@ -13,21 +15,23 @@ module.exports = function establishRelations (app, relations, resolvers, loaders
     const entity = entities[key]
     tablesTypeMap[entity.table] = metaMap.get(entity)
   }
-  for (const relation of relations) {
-    assert(relation.table_name, 'table_name is required')
-    assert(relation.foreign_table_name, 'foreign_table_name is required')
-    assert(relation.column_name.toLowerCase().endsWith('id'), 'The column with id reference must be ended with `id` postfix')
+  for (const { table_name, foreign_table_name, column_name } of relations) {
+    const enhanceAssertLogMsg = `(table: "${table_name}", foreign table: "${foreign_table_name}", column: "${column_name}")`
 
-    const current = tablesTypeMap[relation.table_name]
-    const foreign = tablesTypeMap[relation.foreign_table_name]
-    assert(foreign !== undefined, `No foreign table named "${relation.foreign_table_name}" was found`)
+    assert(table_name, `table_name is required ${enhanceAssertLogMsg}`)
+    assert(foreign_table_name, `foreign_table_name is required ${enhanceAssertLogMsg}`)
+    assert(column_name.toLowerCase().endsWith('id'), `The column with id reference must be ended with "id" postfix ${enhanceAssertLogMsg}`)
+
+    const current = tablesTypeMap[table_name]
+    const foreign = tablesTypeMap[foreign_table_name]
+    assert(foreign !== undefined, `No foreign table named "${foreign_table_name}" was found ${enhanceAssertLogMsg}`)
 
     // current to foreign
     {
-      const lowered = lowerCaseFirst(camelcase(cutOutIdEnding(relation.column_name)))
+      const lowered = lowerCaseFirst(camelcase(cutOutIdEnding(column_name)))
       if (!relationships[current.type] || relationships[current.type][lowered] !== false) {
         current.fields[lowered] = { type: foreign.type }
-        const originalField = camelcase(relation.column_name)
+        const originalField = camelcase(column_name)
         delete current.fields[originalField]
         loaders[current.type] = loaders[current.type] || resolvers[current.type] || {}
         loaders[current.type][lowered] = {
@@ -52,9 +56,9 @@ module.exports = function establishRelations (app, relations, resolvers, loaders
         resolvers[foreign.type] = resolvers[foreign.type] || {}
         const resolveRelation = async function (obj, args, ctx, info) {
           const fields = fromSelectionSet(info.fieldNodes[0].selectionSet, new Set())
-          const toSearch = { ...args, fields: [...fields, relation.column_name], ctx }
+          const toSearch = { ...args, fields: [...fields, column_name], ctx }
           toSearch.where = toSearch.where || {}
-          toSearch.where[camelcase(relation.column_name)] = { eq: obj.id }
+          toSearch.where[camelcase(column_name)] = { eq: obj.id }
           return current.entity.find(toSearch)
         }
         if (resolvers[foreign.type][lowered] === undefined) {

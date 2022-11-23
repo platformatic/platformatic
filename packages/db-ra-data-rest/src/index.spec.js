@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { expect, vi } from 'vitest'
 import restClient from '.'
 
 describe('Data Simple REST Client', () => {
@@ -407,75 +407,72 @@ describe('Data Simple REST Client', () => {
   })
 
   describe('updateMany', () => {
-    it('should compose the right URL and pass the proper method and body params', async () => {
+    it('should throw an error if where is missing', async () => {
       const httpClient = vi.fn(() =>
         Promise.resolve({
           json: []
         })
       )
       const client = restClient('http://localhost:3000', httpClient)
-      const data = {
-        name: 'jack'
+
+      try {
+        await client.updateMany('posts', {})
+      } catch (error) {
+        expect(error).toEqual(new Error('where can not be empty'))
       }
-      await client.updateMany('posts', { ids: [1, 2], data })
-      expect(httpClient).toHaveBeenNthCalledWith(
-        1,
-        'http://localhost:3000/posts/1',
-        {
-          method: 'PUT',
-          body: JSON.stringify(data)
-        }
-      )
-      expect(httpClient).toHaveBeenNthCalledWith(
-        2,
-        'http://localhost:3000/posts/2',
-        {
-          method: 'PUT',
-          body: JSON.stringify(data)
-        }
-      )
     })
 
-    it('should return the data field with the updated ids', async () => {
-      const httpClient = vi.fn()
-      httpClient.mockImplementationOnce(() =>
+    it('should throw an error if where is empty', async () => {
+      const httpClient = vi.fn(() =>
         Promise.resolve({
-          json: {
-            id: 1,
-            name: 'jack'
-          }
+          json: []
         })
       )
-      httpClient.mockImplementationOnce(() =>
-        Promise.resolve({
-          json: {
-            id: 2,
-            name: 'jack'
-          }
-        })
-      )
-      const client = restClient('http://localhost:3000', httpClient)
-
-      const response = await client.updateMany('posts', {
-        ids: [1, 2],
-        data: {}
-      })
-      expect(response).toMatchObject({
-        data: [1, 2]
-      })
-    })
-
-    it('should throw if one of the many updates throws', async () => {
-      const httpClient = vi
-        .fn()
-        .mockImplementationOnce(() => Promise.reject(new Error('error')))
       const client = restClient('http://localhost:3000', httpClient)
 
       try {
-        await client.update('posts', { id: 1, data: { whatever: '' } })
-      } catch (e) {
-        expect(e.message).toBe('error')
+        await client.updateMany('posts', { where: {} })
+      } catch (error) {
+        expect(error).toEqual(new Error('where can not be empty'))
       }
+    })
+
+    it('should construct proper url with where statement', async () => {
+      const httpClient = vi.fn(() =>
+        Promise.resolve({
+          json: [{
+            id: 2,
+            name: 'Mollaj'
+          }]
+        })
+      )
+
+      const client = restClient('http://localhost:3000', httpClient)
+
+      const data = {
+        name: 'Mollaj'
+      }
+
+      await client.updateMany('posts', {
+        where: {
+          id: {
+            in: [1, 2, 3]
+          },
+          name: {
+            eq: 'Marcelo'
+          }
+        },
+        data
+      })
+
+      expect(httpClient).toHaveBeenNthCalledWith(
+        1,
+        'http://localhost:3000/posts?where.id.in=1%2C2%2C3&where.name.eq=Marcelo',
+        {
+          method: 'PUT',
+          body: JSON.stringify(data)
+        }
+      )
     })
   })
 

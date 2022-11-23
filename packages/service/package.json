@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/service",
-  "version": "0.5.1",
+  "version": "0.7.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -9,13 +9,13 @@
   "author": "Matteo Collina <hello@matteocollina.com>",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/plaformatic/platformatic.git"
+    "url": "git+https://github.com/platformatic/platformatic.git"
   },
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/plaformatic/platformatic/issues"
+    "url": "https://github.com/platformatic/platformatic/issues"
   },
-  "homepage": "https://github.com/plaformatic/platformatic#readme",
+  "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "c8": "^7.11.0",
     "snazzy": "^9.0.0",
@@ -48,7 +48,7 @@
     "fastify": "^4.6.0",
     "fastify-metrics": "^10.0.0",
     "fastify-plugin": "^4.1.0",
-    "fastify-sandbox": "^0.9.0",
+    "fastify-sandbox": "^0.11.0",
     "graphql": "^16.6.0",
     "help-me": "^4.1.0",
     "mercurius": "^11.3.0",

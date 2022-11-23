@@ -29,7 +29,13 @@ function sanitizeLimit (unsafeLimit, conf) {
   return limit
 }
 
+function tableName (sql, table, schema) {
+  /* istanbul ignore next */
+  return schema ? sql.ident(schema, table) : sql.ident(table)
+}
+
 module.exports = {
   toSingular,
-  sanitizeLimit
+  sanitizeLimit,
+  tableName
 }

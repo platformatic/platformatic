@@ -1,12 +1,14 @@
 'use strict'
 
+const { tableName } = require('../utils')
+
 /* istanbul ignore file */
 
-async function insertOne (db, sql, table, input, primaryKey, isUuid, fieldsToRetrieve) {
+async function insertOne (db, sql, table, schema, input, primaryKey, isUuid, fieldsToRetrieve) {
   const inputKeys = Object.keys(input)
   if (inputKeys.length === 0) {
     const insert = sql`
-      INSERT INTO ${sql.ident(table)}
+      INSERT INTO ${tableName(sql, table, schema)}
       ()
       VALUES ()
       RETURNING ${sql.join(fieldsToRetrieve, sql`, `)}
@@ -24,7 +26,7 @@ async function insertOne (db, sql, table, input, primaryKey, isUuid, fieldsToRet
     sql`, `
   )
   const insert = sql`
-    INSERT INTO ${sql.ident(table)} (${keys})
+    INSERT INTO ${tableName(sql, table, schema)} (${keys})
     VALUES (${values})
     RETURNING ${sql.join(fieldsToRetrieve, sql`, `)}
   `
@@ -32,9 +34,9 @@ async function insertOne (db, sql, table, input, primaryKey, isUuid, fieldsToRet
   return res[0]
 }
 
-async function deleteAll (db, sql, table, criteria, fieldsToRetrieve) {
+async function deleteAll (db, sql, table, schema, criteria, fieldsToRetrieve) {
   let query = sql`
-      DELETE FROM ${sql.ident(table)}
+      DELETE FROM ${tableName(sql, table, schema)}
     `
 
   if (criteria.length > 0) {
@@ -46,10 +48,10 @@ async function deleteAll (db, sql, table, criteria, fieldsToRetrieve) {
   return res
 }
 
-async function insertMany (db, sql, table, inputs, inputToFieldMap, primaryKey, fieldsToRetrieve, fields) {
+async function insertMany (db, sql, table, schema, inputs, inputToFieldMap, primaryKey, fieldsToRetrieve, fields) {
   const { keys, values } = insertPrep(inputs, inputToFieldMap, fields, sql)
   const insert = sql`
-    insert into ${sql.ident(table)} (${keys})
+    insert into ${tableName(sql, table, schema)} (${keys})
     values ${sql.join(values, sql`, `)}
     returning ${sql.join(fieldsToRetrieve, sql`, `)}
   `
@@ -75,7 +77,13 @@ function insertPrep (inputs, inputToFieldMap, fields, sql) {
 
       inputSet.add(newKey)
 
-      const value = input[key] || input[newKey]
+      let value = input[key] || input[newKey]
+
+      if (value && typeof value === 'object' && !(value instanceof Date)) {
+        // This is a JSON field
+        value = JSON.stringify(value)
+      }
+
       inputValues.push(sql.value(value))
     }
 
@@ -92,9 +100,25 @@ function insertPrep (inputs, inputToFieldMap, fields, sql) {
   return { keys, values }
 }
 
+async function updateMany (db, sql, table, schema, criteria, input, fieldsToRetrieve) {
+  const pairs = Object.keys(input).map((key) => {
+    const value = input[key]
+    return sql`${sql.ident(key)} = ${value}`
+  })
+  const update = sql`
+    UPDATE ${sql.ident(table)}
+    SET ${sql.join(pairs, sql`, `)}
+    WHERE ${sql.join(criteria, sql` AND `)}
+    RETURNING ${sql.join(fieldsToRetrieve, sql`, `)}
+    `
+  const res = await db.query(update)
+  return res
+}
+
 module.exports = {
   insertOne,
   insertPrep,
   deleteAll,
-  insertMany
+  insertMany,
+  updateMany
 }

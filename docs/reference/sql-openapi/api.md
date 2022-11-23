@@ -170,6 +170,33 @@ $ curl -X 'POST' \
 
 Same as `POST [PLURAL_ENTITY_NAME]/[PRIMARY_KEY]`.
 
+## `PUT [PLURAL_ENTITY_NAME]`
+
+Updates all entities matching `where` clause
+
+_Example_
+
+```
+$ curl -X 'PUT' \
+  'http://localhost:3042/pages?where.id.in=1,2' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "title": "Updated title!",
+  "body": "Updated body!"
+}'
+
+[{
+  "id": 1,
+  "title": "Updated title!",
+  "body": "Updated body!"
+},{
+  "id": 2,
+  "title": "Updated title!",
+  "body": "Updated body!"
+}]
+```
+
 ## `DELETE [PLURAL_ENTITY_NAME]/[PRIMARY_KEY]`
 
 Deletes a row identified by the `PRIMARY_KEY`.

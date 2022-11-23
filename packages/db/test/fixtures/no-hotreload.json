@@ -16,6 +16,8 @@
   },
   "plugin": {
     "path": "./plugin.mjs",
-    "hotReload": false
+    "watchOptions": {
+      "hotReload": false
+    }
   }
 }

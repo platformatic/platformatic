@@ -4,10 +4,11 @@ const camelcase = require('camelcase')
 const { singularize } = require('inflected')
 const {
   toSingular,
+  tableName,
   sanitizeLimit
 } = require('./utils')
 
-function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations, queries, autoTimestamp, limitConfig) {
+function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations, queries, autoTimestamp, schema, limitConfig) {
   const entityName = toSingular(table)
 
   // Fields remapping
@@ -69,7 +70,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
       input.updated_at = now
     }
     if (input[primaryKey]) { // update
-      const res = await queries.updateOne(db, sql, table, input, primaryKey, fieldsToRetrieve)
+      const res = await queries.updateOne(db, sql, table, schema, input, primaryKey, fieldsToRetrieve)
       return fixOutput(res)
     } else { // insert
       if (autoTimestamp && fields.inserted_at) {
@@ -77,7 +78,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
         now = now || new Date()
         input.inserted_at = now
       }
-      const res = await queries.insertOne(db, sql, table, input, primaryKey, fields[primaryKey].sqlType.toLowerCase() === 'uuid', fieldsToRetrieve)
+      const res = await queries.insertOne(db, sql, table, schema, input, primaryKey, fields[primaryKey].sqlType.toLowerCase() === 'uuid', fieldsToRetrieve)
       return fixOutput(res)
     }
   }
@@ -102,19 +103,37 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     /* istanbul ignore next */
     if (queries.insertMany) {
       // We are not fixing the input here because it is done in the query.
-      const res = await queries.insertMany(db, sql, table, inputs, inputToFieldMap, primaryKey, fieldsToRetrieve, fields)
+      const res = await queries.insertMany(db, sql, table, schema, inputs, inputToFieldMap, primaryKey, fieldsToRetrieve, fields)
       return res.map(fixOutput)
     } else {
       // TODO this can be optimized, we can still use a batch insert if we do not want any fields
       const res = []
       for (let input of inputs) {
         input = fixInput(input)
-        const resOne = await queries.insertOne(db, sql, table, input, primaryKey, fields[primaryKey].sqlType.toLowerCase() === 'uuid', fieldsToRetrieve)
+        const resOne = await queries.insertOne(db, sql, table, schema, input, primaryKey, fields[primaryKey].sqlType.toLowerCase() === 'uuid', fieldsToRetrieve)
         res.push(fixOutput(resOne))
       }
 
       return res
     }
+  }
+
+  async function updateMany (args) {
+    const db = args.tx || defaultDb
+    const fieldsToRetrieve = computeFields(args.fields).map((f) => sql.ident(f))
+    if (args.input === undefined) {
+      throw new Error('Input not provided.')
+    }
+    const input = fixInput(args.input)
+    let now
+    if (autoTimestamp && fields.updated_at) {
+      now = new Date()
+      input.updated_at = now
+    }
+    const criteria = computeCriteria(args)
+
+    const res = await queries.updateMany(db, sql, table, schema, criteria, input, fieldsToRetrieve)
+    return res.map(fixOutput)
   }
 
   function computeFields (fields) {
@@ -148,7 +167,8 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     gt: '>',
     gte: '>=',
     lt: '<',
-    lte: '<='
+    lte: '<=',
+    like: 'LIKE'
   }
 
   function computeCriteria (opts) {
@@ -169,6 +189,14 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
           criteria.push(sql`${sql.ident(field)} IS NULL`)
         } else if (operator === '<>' && value[key] === null) {
           criteria.push(sql`${sql.ident(field)} IS NOT NULL`)
+        } else if (operator === 'LIKE') {
+          let leftHand = sql.ident(field)
+          // NOTE: cast fields AS CHAR(64) and TRIM the whitespaces
+          // to prevent errors with fields different than VARCHAR & TEXT
+          if (!['text', 'varchar'].includes(fieldWrap.sqlType)) {
+            leftHand = sql`TRIM(CAST(${sql.ident(field)} AS CHAR(64)))`
+          }
+          criteria.push(sql`${leftHand} LIKE ${value[key]}`)
         } else {
           criteria.push(sql`${sql.ident(field)} ${sql.__dangerous__rawValue(operator)} ${computeCriteriaValue(fieldWrap, value[key])}`)
         }
@@ -198,9 +226,10 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     const db = opts.tx || defaultDb
     const fieldsToRetrieve = computeFields(opts.fields).map((f) => sql.ident(f))
     const criteria = computeCriteria(opts)
+
     let query = sql`
       SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
-      FROM ${sql.ident(table)}
+      FROM ${tableName(sql, table, schema)}
     `
 
     if (criteria.length > 0) {
@@ -232,7 +261,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     let totalCountQuery = null
     totalCountQuery = sql`
         SELECT COUNT(*) AS total 
-        FROM ${sql.ident(table)}
+        FROM ${tableName(sql, table, schema)}
       `
     const criteria = computeCriteria(opts)
     if (criteria.length > 0) {
@@ -246,7 +275,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     const db = opts.tx || defaultDb
     const fieldsToRetrieve = computeFields(opts.fields).map((f) => sql.ident(f))
     const criteria = computeCriteria(opts)
-    const res = await queries.deleteAll(db, sql, table, criteria, fieldsToRetrieve)
+    const res = await queries.deleteAll(db, sql, table, schema, criteria, fieldsToRetrieve)
     return res.map(fixOutput)
   }
 
@@ -256,6 +285,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     pluralName: camelcase(table),
     primaryKey,
     table,
+    schema,
     fields,
     camelCasedFields,
     fixInput,
@@ -264,27 +294,47 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     count,
     insert,
     save,
-    delete: _delete
+    delete: _delete,
+    updateMany
   }
 }
 
-async function buildEntity (db, sql, log, table, queries, autoTimestamp, ignore, limitConfig) {
+async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, ignore, limitConfig) {
   // Compute the columns
-  const columns = (await queries.listColumns(db, sql, table)).filter((c) => !ignore[c.column_name])
+  const columns = (await queries.listColumns(db, sql, table, schema)).filter((c) => !ignore[c.column_name])
   const fields = columns.reduce((acc, column) => {
     acc[column.column_name] = {
       sqlType: column.udt_name,
       isNullable: column.is_nullable === 'YES'
     }
+
+    // To get enum values in mysql and mariadb
+    /* istanbul ignore next */
+    if (column.udt_name === 'enum') {
+      acc[column.column_name].enum = column.column_type.match(/'(.+?)'/g).map(enumValue => enumValue.slice(1, enumValue.length - 1))
+    }
+
     if (autoTimestamp && (column.column_name === 'updated_at' || column.column_name === 'inserted_at')) {
       acc[column.column_name].autoTimestamp = true
     }
     return acc
   }, {})
 
+  // To get enum values in pg
+  /* istanbul ignore next */
+  if (db.isPg) {
+    const enums = await queries.listEnumValues(db, sql, table, schema)
+    for (const enumValue of enums) {
+      if (!fields[enumValue.column_name].enum) {
+        fields[enumValue.column_name].enum = [enumValue.enumlabel]
+      } else {
+        fields[enumValue.column_name].enum.push(enumValue.enumlabel)
+      }
+    }
+  }
   const currentRelations = []
 
-  const constraintsList = await queries.listConstraints(db, sql, table)
+  const constraintsList = await queries.listConstraints(db, sql, table, schema)
   let primaryKey
 
   for (const constraint of constraintsList) {
@@ -319,7 +369,7 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, ignore,
     }
   }
 
-  const entity = createMapper(db, sql, log, table, fields, primaryKey, currentRelations, queries, autoTimestamp, limitConfig)
+  const entity = createMapper(db, sql, log, table, fields, primaryKey, currentRelations, queries, autoTimestamp, schema, limitConfig)
   entity.relations = currentRelations
 
   return entity

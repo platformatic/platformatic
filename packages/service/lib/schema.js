@@ -84,6 +84,9 @@ const server = {
         { type: 'string' }
       ]
     },
+    pluginTimeout: {
+      type: 'integer'
+    },
     healthCheck: {
       anyOf: [
         { type: 'boolean' },
@@ -125,6 +128,9 @@ const plugin = {
     watch: {
       type: 'boolean'
     },
+    fallback: {
+      type: 'boolean'
+    },
     watchOptions: {
       type: 'object',
       properties: {
@@ -151,8 +157,12 @@ const plugin = {
         }
       },
       additionalProperties: false
+    },
+    options: {
+      type: 'object'
     }
   },
+  additionalProperties: false,
   required: ['path']
 }
 

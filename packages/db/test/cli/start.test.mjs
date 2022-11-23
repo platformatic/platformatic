@@ -243,7 +243,7 @@ test('start command', async ({ equal, same, match, teardown }) => {
   child.kill('SIGINT')
 })
 
-test('start with hotreload disabled', async ({ equal, same, match, teardown }) => {
+test('start with hotreload disabled', { skip: true }, async ({ equal, same, match, teardown }) => {
   const db = await connectAndResetDB()
   teardown(() => db.dispose())
 

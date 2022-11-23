@@ -1,16 +1,16 @@
 {
   "name": "@platformatic/db-ra-data-rest",
-  "version": "0.5.1",
+  "version": "0.7.0",
   "description": "Platformatic DB React-Admin REST data provider",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/plaformatic/platformatic.git"
+    "url": "git+https://github.com/platformatic/platformatic.git"
   },
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/plaformatic/platformatic/issues"
+    "url": "https://github.com/platformatic/platformatic/issues"
   },
-  "homepage": "https://github.com/plaformatic/platformatic#readme",
+  "homepage": "https://github.com/platformatic/platformatic#readme",
   "main": "dist/index.umd.js",
   "module": "dist/index.es.js",
   "sideEffects": false,
@@ -19,6 +19,7 @@
     "src"
   ],
   "scripts": {
+    "prepublish": "npm run build",
     "build": "vite build",
     "test": "standard | snazzy && vitest run --coverage",
     "test:watch": "vitest watch",
