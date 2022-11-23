@@ -3,15 +3,7 @@
 const { mapSQLTypeToOpenAPIType } = require('@platformatic/sql-json-schema-mapper')
 const camelcase = require('camelcase')
 const { singularize } = require('inflected')
-const { generateArgs } = require('./shared')
-
-const getFieldsForEntity = (entity) => ({
-  type: 'array',
-  items: {
-    type: 'string',
-    enum: Object.keys(entity.fields).map((field) => entity.fields[field].camelcase).sort()
-  }
-})
+const { generateArgs, capitalize, getFieldsForEntity, rootEntityRoutes } = require('./shared')
 
 async function entityPlugin (app, opts) {
   const entity = opts.entity
@@ -26,87 +18,7 @@ async function entityPlugin (app, opts) {
 
   const fields = getFieldsForEntity(entity)
 
-  app.get('/', {
-    schema: {
-      operationId: 'get' + capitalize(entity.pluralName),
-      querystring: {
-        type: 'object',
-        properties: {
-          limit: { type: 'integer' },
-          offset: { type: 'integer' },
-          totalCount: { type: 'boolean', default: false },
-          fields,
-          ...whereArgs,
-          ...orderByArgs
-        },
-        additionalProperties: false
-      },
-      response: {
-        200: {
-          type: 'array',
-          items: entitySchema
-        }
-      }
-    }
-  }, async function (request, reply) {
-    const query = request.query
-    const { limit, offset, fields } = query
-    const queryKeys = Object.keys(query)
-    const where = {}
-    const orderBy = []
-
-    for (let i = 0; i < queryKeys.length; i++) {
-      const key = queryKeys[i]
-
-      if (key.startsWith('where.')) {
-        const [, field, modifier] = key.split('.')
-        where[field] ||= {}
-        let value = query[key]
-        if (modifier === 'in' || modifier === 'nin') {
-          // TODO handle escaping of ,
-          value = query[key].split(',')
-          if (mapSQLTypeToOpenAPIType(entity.fields[field].sqlType) === 'integer') {
-            value = value.map((v) => parseInt(v))
-          }
-        }
-        where[field][modifier] = value
-      } else if (key.startsWith('orderby.')) {
-        const [, field] = key.split('.')
-        orderBy[field] ||= {}
-        orderBy.push({ field, direction: query[key] })
-      }
-    }
-
-    const ctx = { app: this, reply }
-    const res = await entity.find({ limit, offset, fields, orderBy, where, ctx })
-
-    // X-Total-Count header
-    if (query.totalCount) {
-      let totalCount
-      if ((((offset ?? 0) === 0) || (res.length > 0)) && ((limit === undefined) || (res.length < limit))) {
-        totalCount = (offset ?? 0) + res.length
-      } else {
-        totalCount = await entity.count({ where, ctx })
-      }
-      reply.header('X-Total-Count', totalCount)
-    }
-
-    return res
-  })
-
-  app.post('/', {
-    schema: {
-      body: entitySchema,
-      response: {
-        200: entitySchema
-      }
-    }
-  }, async function (request, reply) {
-    const ctx = { app: this, reply }
-    const res = await entity.save({ input: request.body, ctx })
-    reply.header('location', `${app.prefix}/${res.id}`)
-    return res
-  })
+  rootEntityRoutes(app, entity, whereArgs, orderByArgs, undefined, entitySchema, fields)
 
   let pathWithParams = ''
 
@@ -192,79 +104,19 @@ async function entityPlugin (app, opts) {
           }, {}),
           fields: request.query.fields
         })
-        if (!res) {
-          return reply.callNotFound()
-        }
-        let location = ''
+        let location = app.prefix + pathWithParams
         for (const key of primaryKeysCamelcase) {
-          location += `/${key}/${res[key]}`
+          location = location.replace(`:${key}`, request.params[key])
         }
-        reply.header('location', `${app.prefix}/${location}`)
+        reply.header('location', location)
         return res
       }
     })
   }
 
-  /*
-  app.put('/', {
+  app.delete(pathWithParams, {
     schema: {
-      body: entitySchema,
-      querystring: {
-        type: 'object',
-        properties: {
-          fields,
-          ...whereArgs
-        },
-        additionalProperties: false
-      },
-      response: {
-        200: {
-          type: 'array',
-          items: entitySchema
-        }
-      }
-    },
-    async handler (request, reply) {
-      const ctx = { app: this, reply }
-      const query = request.query
-      const queryKeys = Object.keys(query)
-      const where = {}
-
-      for (let i = 0; i < queryKeys.length; i++) {
-        const key = queryKeys[i]
-        if (key.startsWith('where.')) {
-          const [, field, modifier] = key.split('.')
-          where[field] ||= {}
-          let value = query[key]
-          if (modifier === 'in' || modifier === 'nin') {
-            // TODO handle escaping of ,
-            value = query[key].split(',')
-            if (mapSQLTypeToOpenAPIType(entity.fields[field].sqlType) === 'integer') {
-              value = value.map((v) => parseInt(v))
-            }
-          }
-          where[field][modifier] = value
-        }
-      }
-
-      const res = await entity.updateMany({
-        input: {
-          ...request.body
-        },
-        where,
-        fields: request.query.fields,
-        ctx
-      })
-      // TODO: Should find a way to test this line
-      // if (!res) return reply.callNotFound()
-      reply.header('location', `${app.prefix}`)
-      return res
-    }
-  })
-
-  app.delete(`/:${primaryKeyCamelcase}`, {
-    schema: {
-      params: primaryKeyParams,
+      params: primaryKeysParams,
       querystring: {
         type: 'object',
         properties: {
@@ -276,14 +128,14 @@ async function entityPlugin (app, opts) {
       }
     }
   }, async function (request, reply) {
+    const ids = primaryKeysCamelcase.map((key) => { return { key, value: request.params[key] } })
     const ctx = { app: this, reply }
     const res = await entity.delete({
       ctx,
-      where: {
-        [primaryKeyCamelcase]: {
-          eq: request.params[primaryKeyCamelcase]
-        }
-      },
+      where: ids.reduce((acc, { key, value }) => {
+        acc[key] = { eq: value }
+        return acc
+      }, {}),
       fields: request.query.fields
     })
     if (res.length === 0) {
@@ -291,7 +143,6 @@ async function entityPlugin (app, opts) {
     }
     return res[0]
   })
-  */
 }
 
 function getPrimaryKeysParams (entity) {
@@ -310,10 +161,6 @@ function getPrimaryKeysParams (entity) {
     properties,
     required
   }
-}
-
-function capitalize (str) {
-  return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
 module.exports = entityPlugin

@@ -156,6 +156,28 @@ test('composite primary keys', async ({ equal, same, teardown, rejects }) => {
       pageId: 1,
       role: 'author'
     }, 'POST /editors/page/1/user/2 response')
+    equal(res.headers.location, '/editors/page/1/user/2', 'POST /editors/page/1/user/2 location header')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/editors/page/1/user/2'
+    })
+    equal(res.statusCode, 200, 'GET /editors/page/1/user/2 status code')
+    same(res.json(), {
+      userId: 2,
+      pageId: 1,
+      role: 'author'
+    }, 'GET /editors/page/1/user/2 response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/editors/page/1/user/3'
+    })
+    equal(res.statusCode, 404, 'GET /editors/page/1/user/3 status code')
   }
 
   {
@@ -202,5 +224,34 @@ test('composite primary keys', async ({ equal, same, teardown, rejects }) => {
       pageId: '1',
       role: 'author'
     }], 'GET /editors response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/editors/page/1/user/2'
+    })
+    equal(res.statusCode, 200, 'DELETE /editors/page/1/user/2 status code')
+    same(res.json(), {
+      userId: 2,
+      pageId: 1,
+      role: 'author'
+    }, 'DELETE /editors/page/1/user/2 response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/editors/page/1/user/2'
+    })
+    equal(res.statusCode, 404, 'GET /editors/page/1/user/2 status code')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/editors/page/1/user/2'
+    })
+    equal(res.statusCode, 404, 'DELETE /editors/page/1/user/2 status code')
   }
 })
