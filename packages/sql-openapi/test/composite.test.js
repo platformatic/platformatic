@@ -255,3 +255,172 @@ test('composite primary keys', async ({ equal, same, teardown, rejects }) => {
     equal(res.statusCode, 404, 'DELETE /editors/page/1/user/2 status code')
   }
 })
+
+test('composite primary keys withour relations', async ({ equal, same, teardown, rejects }) => {
+  /* https://github.com/platformatic/platformatic/issues/299 */
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+
+    if (isSQLite) {
+      await db.query(sql`CREATE TABLE editors (
+        page_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        role VARCHAR(255) NOT NULL,
+        PRIMARY KEY (page_id, user_id)
+      );`)
+    } else if (isPg) {
+      await db.query(sql`CREATE TABLE editors (
+        page_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        role VARCHAR(255) NOT NULL,
+        PRIMARY KEY (page_id, user_id)
+      );`)
+    } else if (isMysql) {
+      await db.query(sql`CREATE TABLE editors (
+        page_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        role VARCHAR(255) NOT NULL,
+        PRIMARY KEY (page_id, user_id)
+      );`)
+    }
+  }
+
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    onDatabaseLoad
+  })
+  app.register(sqlOpenAPI)
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/editors/pageId/1/userId/1',
+      body: {
+        role: 'admin'
+      }
+    })
+    equal(res.statusCode, 200, 'POST /editors/pageId/1/userId/1 status code')
+    same(res.json(), {
+      userId: 1,
+      pageId: 1,
+      role: 'admin'
+    }, 'POST /editors/pageId/1/userId/1 response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/editors/pageId/1/userId/2',
+      body: {
+        role: 'author'
+      }
+    })
+    equal(res.statusCode, 200, 'POST /editors/pageId/1/userId/2 status code')
+    same(res.json(), {
+      userId: 2,
+      pageId: 1,
+      role: 'author'
+    }, 'POST /editors/pageId/1/userId/2 response')
+    equal(res.headers.location, '/editors/pageId/1/userId/2', 'POST /editors/page/1/user/2 location header')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/editors/pageId/1/userId/2'
+    })
+    equal(res.statusCode, 200, 'GET /editors/pageId/1/userId/2 status code')
+    same(res.json(), {
+      userId: 2,
+      pageId: 1,
+      role: 'author'
+    }, 'GET /editors/pageId/1/userId/2 response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/editors/pageId/1/userId/3'
+    })
+    equal(res.statusCode, 404, 'GET /editors/pageId/1/userId/3 status code')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/editors/pageId/1/userId/1',
+      body: {
+        role: 'captain'
+      }
+    })
+    equal(res.statusCode, 200, 'POST /editors/pageId/1/userId/1 status code')
+    same(res.json(), {
+      userId: 1,
+      pageId: 1,
+      role: 'captain'
+    }, 'POST /editors/pageId/1/userId/1 response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/editors?orderby.role=desc'
+    })
+    equal(res.statusCode, 200, 'GET /editors status code')
+    same(res.json(), [{
+      userId: '1',
+      pageId: '1',
+      role: 'captain'
+    }, {
+      userId: '2',
+      pageId: '1',
+      role: 'author'
+    }], 'GET /editors response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/editors?where.role.eq=author'
+    })
+    equal(res.statusCode, 200, 'GET /editors status code')
+    same(res.json(), [{
+      userId: '2',
+      pageId: '1',
+      role: 'author'
+    }], 'GET /editors response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/editors/pageId/1/userId/2'
+    })
+    equal(res.statusCode, 200, 'DELETE /editors/pageId/1/userId/2 status code')
+    same(res.json(), {
+      userId: 2,
+      pageId: 1,
+      role: 'author'
+    }, 'DELETE /editors/pageId/1/userId/2 response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/editors/pageId/1/userId/2'
+    })
+    equal(res.statusCode, 404, 'GET /editors/pageId/1/userId/2 status code')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/editors/pageId/1/userId/2'
+    })
+    equal(res.statusCode, 404, 'DELETE /editors/pageId/1/userId/2 status code')
+  }
+})

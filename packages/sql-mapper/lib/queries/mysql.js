@@ -18,7 +18,7 @@ function insertOne (db, sql, table, input, primaryKeys, fieldsToRetrieve) {
     sql`, `
   )
 
-  if (primaryKeys.length === 1) {
+  if (primaryKeys.length === 1 && input[primaryKeys[0].key] === undefined) {
     return db.tx(async function (db) {
       const insert = sql`
       INSERT INTO ${sql.ident(table)} (${keys})

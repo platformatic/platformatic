@@ -6,7 +6,8 @@ const fastify = require('fastify')
 
 const fakeLogger = {
   trace: () => {},
-  error: () => {}
+  error: () => {},
+  warn: () => {}
 }
 
 test('should throw if no connection string is provided', async ({ equal }) => {
@@ -193,99 +194,19 @@ test('missing connectionString', async ({ rejects }) => {
   await rejects(app.ready(), /connectionString/)
 })
 
-test('[pg] throws if no primary key', { skip: !isPg }, async ({ pass, teardown, equal, plan }) => {
-  plan(1)
+test('throw if no primary keys', async ({ rejects, teardown }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
-
-    await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
-      id SERIAL,
-      title VARCHAR(255) NOT NULL
-    );`)
-  }
-  try {
-    await connect({
-      connectionString: connInfo.connectionString,
-      log: fakeLogger,
-      onDatabaseLoad,
-      ignore: {},
-      hooks: {}
-    })
-  } catch (err) {
-    equal(err.message, 'Cannot find any primary keys for Page entity')
-  }
-})
-
-test('[mysql] throws if no primary key', { skip: !isMysql }, async ({ pass, teardown, equal, plan }) => {
-  plan(1)
-  async function onDatabaseLoad (db, sql) {
-    await clear(db, sql)
-    teardown(() => db.dispose())
 
     await db.query(sql`CREATE TABLE pages (
-      id SERIAL,
       title VARCHAR(255) NOT NULL
     );`)
   }
-  try {
-    await connect({
-      connectionString: connInfo.connectionString,
-      log: fakeLogger,
-      onDatabaseLoad,
-      ignore: {},
-      hooks: {}
-    })
-  } catch (err) {
-    equal(err.message, 'Cannot find any primary keys for Page entity')
-  }
-})
-
-test('[sqlite] throws if primary key is not defined', { skip: !isSQLite }, async ({ pass, teardown, equal, plan }) => {
-  plan(1)
-  async function onDatabaseLoad (db, sql) {
-    await clear(db, sql)
-
-    await db.query(sql`CREATE TABLE pages(
-      id INTEGER NOT NULL,
-      title TEXT NOT NULL
-   );
-   `)
-  }
-  try {
-    await connect({
-      connectionString: connInfo.connectionString,
-      log: fakeLogger,
-      onDatabaseLoad,
-      ignore: {},
-      hooks: {}
-    })
-  } catch (err) {
-    equal(err.message, 'Cannot find any primary keys for Page entity')
-  }
-})
-
-test('[sqlite] throws with multiple primary keys', { skip: !isSQLite }, async ({ pass, teardown, equal }) => {
-  async function onDatabaseLoad (db, sql) {
-    await clear(db, sql)
-
-    await db.query(sql`CREATE TABLE pages(
-      id INTEGER NOT NULL,
-      author_id INTEGER NOT NULL,
-      title TEXT NOT NULL,
-      PRIMARY KEY (id, author_id)
-   );
-   `)
-  }
-  try {
-    await connect({
-      connectionString: connInfo.connectionString,
-      log: fakeLogger,
-      onDatabaseLoad,
-      ignore: {},
-      hooks: {}
-    })
-  } catch (err) {
-    equal(err.message, 'Table pages has 2 primary keys')
-  }
+  await rejects(connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  }))
 })
