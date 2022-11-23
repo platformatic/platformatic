@@ -90,7 +90,6 @@ function mapSQLEntityToJSONSchema (entity) {
     description: `A ${entity.name}`,
     type: 'object',
     properties,
-    primaryKey,
     required
   }
 }
