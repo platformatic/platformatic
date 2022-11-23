@@ -108,9 +108,11 @@ function constructGraph (app, entity, opts) {
     loader (queries, ctx) {
       const keys = []
       for (const query of queries) {
+        const pairs = []
         for (const key of primaryKeys) {
-          keys.push({ key, value: query.params[key] })
+          pairs.push({ key, value: query.params[key] })
         }
+        keys.push(pairs)
       }
       return loadMany(keys, queries, ctx)
     },
@@ -241,7 +243,14 @@ function constructGraph (app, entity, opts) {
     loaders[entityName] = loaders[entityName] || {}
     loaders[entityName].__resolveReference = {
       loader (queries, ctx) {
-        const keys = queries.map(({ obj }) => obj[primaryKey])
+        const keys = []
+        for (const { obj } of queries) {
+          const pairs = []
+          for (const key of primaryKeys) {
+            pairs.push({ key, value: obj[key] })
+          }
+          keys.push(pairs)
+        }
         return loadMany(keys, queries, ctx)
       },
       opts: {
@@ -260,8 +269,12 @@ function constructGraph (app, entity, opts) {
 
   async function loadMany (keys, queries, ctx) {
     const fields = getFields(queries)
-    const res = await entity.find({
-      where: keys.reduce((acc, { key, value }) => {
+
+    // TODO this is inefficient as it might load
+    // more data than needed if there are more than
+    // one primary key
+    const where = keys.reduce((acc, pairs) => {
+      pairs.reduce((acc, { key, value }) => {
         if (acc[key]) {
           acc[key].in.push(value)
         } else {
@@ -270,29 +283,34 @@ function constructGraph (app, entity, opts) {
           }
         }
         return acc
-      }, {}),
+      }, acc)
+      return acc
+    }, {})
+
+    const res = await entity.find({
+      where,
       fields,
       ctx
     })
 
-    console.log(res)
+    const output = []
+    // TODO this is extremely inefficient
+    // we need a better data structure
+    for (const pair of keys) {
+      for (const row of res) {
+        let target = row
+        for (const { key, value } of pair) {
+          if (row[key] !== value) {
+            target = null
+            break
+          }
+        }
 
-    for (const primaryKey of primaryKeys) {
-    }
-
-    const map = {}
-
-    for (const row of res) {
-        map[row[primaryKey]] = row
+        if (target) {
+          output.push(target)
+        }
       }
     }
-
-    const output = []
-    for (const key of primaryKeys) {
-      output.push(map[key])
-    }
-
-    console.log(res, map, output)
 
     return output
   }
