@@ -22,6 +22,7 @@ function setupEmitter ({ log, mq, mapper, connectionString }) {
   for (const entityName of Object.keys(mapper.entities)) {
     const entity = mapper.entities[entityName]
     // Skip entities with composite primary keys
+    /* istanbul ignore next */
     if (entity.primaryKeys.size !== 1) {
       continue
     }
