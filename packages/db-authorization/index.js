@@ -181,8 +181,8 @@ async function auth (app, opts) {
       checkSaveMandatoryFieldsInRules(type, rules)
 
       app.platformatic.addEntityHooks(entityKey, {
-        async find (originalFind, { where, ctx, fields, skipAuth, ...restOpts }) {
-          if (skipAuth) {
+        async find (originalFind, { where, ctx, fields, skipAuth, ...restOpts } = {}) {
+          if (skipAuth || !ctx) {
             return originalFind({ ...restOpts, where, ctx, fields })
           }
           const request = getRequestFromContext(ctx)
@@ -194,7 +194,7 @@ async function auth (app, opts) {
         },
 
         async save (originalSave, { input, ctx, fields, skipAuth }) {
-          if (skipAuth) {
+          if (skipAuth || !ctx) {
             return originalSave({ input, ctx, fields })
           }
           const request = getRequestFromContext(ctx)
@@ -244,7 +244,7 @@ async function auth (app, opts) {
         },
 
         async insert (originalInsert, { inputs, ctx, fields, skipAuth }) {
-          if (skipAuth) {
+          if (skipAuth || !ctx) {
             return originalInsert({ inputs, ctx, fields })
           }
           const request = getRequestFromContext(ctx)
@@ -275,7 +275,7 @@ async function auth (app, opts) {
         },
 
         async delete (originalDelete, { where, ctx, fields, skipAuth }) {
-          if (skipAuth) {
+          if (skipAuth || !ctx) {
             return originalDelete({ where, ctx, fields })
           }
           const request = getRequestFromContext(ctx)
@@ -287,7 +287,7 @@ async function auth (app, opts) {
         },
 
         async updateMany (originalUpdateMany, { where, ctx, fields, skipAuth, ...restOpts }) {
-          if (skipAuth) {
+          if (skipAuth || !ctx) {
             return originalUpdateMany({ ...restOpts, where, ctx, fields })
           }
           const request = getRequestFromContext(ctx)

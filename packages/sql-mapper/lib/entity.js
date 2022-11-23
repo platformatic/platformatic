@@ -3,10 +3,11 @@
 const camelcase = require('camelcase')
 const { singularize } = require('inflected')
 const {
-  toSingular
+  toSingular,
+  tableName
 } = require('./utils')
 
-function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relations, queries, autoTimestamp) {
+function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relations, queries, autoTimestamp, schema) {
   const entityName = toSingular(table)
 
   // Fields remapping
@@ -83,9 +84,8 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
       now = new Date()
       input.updated_at = now
     }
-
-    if (hasPrimaryKeys) { // update if the record exists
-      const res = await queries.updateOne(db, sql, table, input, primaryKeys, fieldsToRetrieve)
+    if (hasPrimaryKeys) { // update
+      const res = await queries.updateOne(db, sql, table, schema, input, primaryKeys, fieldsToRetrieve)
       if (res) {
         return fixOutput(res)
       }
@@ -100,7 +100,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
       now = now || new Date()
       input.inserted_at = now
     }
-    const res = await queries.insertOne(db, sql, table, input, primaryKeysTypes, fieldsToRetrieve)
+    const res = await queries.insertOne(db, sql, table, schema, input, primaryKeysTypes, fieldsToRetrieve)
     return fixOutput(res)
   }
 
@@ -124,14 +124,14 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     /* istanbul ignore next */
     if (queries.insertMany) {
       // We are not fixing the input here because it is done in the query.
-      const res = await queries.insertMany(db, sql, table, inputs, inputToFieldMap, primaryKeysTypes, fieldsToRetrieve, fields)
+      const res = await queries.insertMany(db, sql, table, schema, inputs, inputToFieldMap, primaryKeysTypes, fieldsToRetrieve, fields)
       return res.map(fixOutput)
     } else {
       // TODO this can be optimized, we can still use a batch insert if we do not want any fields
       const res = []
       for (let input of inputs) {
         input = fixInput(input)
-        const resOne = await queries.insertOne(db, sql, table, input, primaryKeysTypes, fieldsToRetrieve)
+        const resOne = await queries.insertOne(db, sql, table, schema, input, primaryKeysTypes, fieldsToRetrieve)
         res.push(fixOutput(resOne))
       }
 
@@ -153,7 +153,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     }
     const criteria = computeCriteria(args)
 
-    const res = await queries.updateMany(db, sql, table, criteria, input, fieldsToRetrieve)
+    const res = await queries.updateMany(db, sql, table, schema, criteria, input, fieldsToRetrieve)
     return res.map(fixOutput)
   }
 
@@ -188,7 +188,8 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     gt: '>',
     gte: '>=',
     lt: '<',
-    lte: '<='
+    lte: '<=',
+    like: 'LIKE'
   }
 
   function computeCriteria (opts) {
@@ -209,6 +210,14 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
           criteria.push(sql`${sql.ident(field)} IS NULL`)
         } else if (operator === '<>' && value[key] === null) {
           criteria.push(sql`${sql.ident(field)} IS NOT NULL`)
+        } else if (operator === 'LIKE') {
+          let leftHand = sql.ident(field)
+          // NOTE: cast fields AS CHAR(64) and TRIM the whitespaces
+          // to prevent errors with fields different than VARCHAR & TEXT
+          if (!['text', 'varchar'].includes(fieldWrap.sqlType)) {
+            leftHand = sql`TRIM(CAST(${sql.ident(field)} AS CHAR(64)))`
+          }
+          criteria.push(sql`${leftHand} LIKE ${value[key]}`)
         } else {
           criteria.push(sql`${sql.ident(field)} ${sql.__dangerous__rawValue(operator)} ${computeCriteriaValue(fieldWrap, value[key])}`)
         }
@@ -238,9 +247,10 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     const db = opts.tx || defaultDb
     const fieldsToRetrieve = computeFields(opts.fields).map((f) => sql.ident(f))
     const criteria = computeCriteria(opts)
+
     let query = sql`
       SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
-      FROM ${sql.ident(table)}
+      FROM ${tableName(sql, table, schema)}
     `
 
     if (criteria.length > 0) {
@@ -273,7 +283,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     let totalCountQuery = null
     totalCountQuery = sql`
         SELECT COUNT(*) AS total 
-        FROM ${sql.ident(table)}
+        FROM ${tableName(sql, table, schema)}
       `
     const criteria = computeCriteria(opts)
     if (criteria.length > 0) {
@@ -287,7 +297,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     const db = opts.tx || defaultDb
     const fieldsToRetrieve = computeFields(opts.fields).map((f) => sql.ident(f))
     const criteria = computeCriteria(opts)
-    const res = await queries.deleteAll(db, sql, table, criteria, fieldsToRetrieve)
+    const res = await queries.deleteAll(db, sql, table, schema, criteria, fieldsToRetrieve)
     return res.map(fixOutput)
   }
 
@@ -297,6 +307,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     pluralName: camelcase(table),
     primaryKeys,
     table,
+    schema,
     fields,
     camelCasedFields,
     fixInput,
@@ -310,9 +321,9 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
   }
 }
 
-async function buildEntity (db, sql, log, table, queries, autoTimestamp, ignore) {
+async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, ignore) {
   // Compute the columns
-  const columns = (await queries.listColumns(db, sql, table)).filter((c) => !ignore[c.column_name])
+  const columns = (await queries.listColumns(db, sql, table, schema)).filter((c) => !ignore[c.column_name])
   const fields = columns.reduce((acc, column) => {
     acc[column.column_name] = {
       sqlType: column.udt_name,
@@ -330,10 +341,11 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, ignore)
     }
     return acc
   }, {})
+
   // To get enum values in pg
   /* istanbul ignore next */
   if (db.isPg) {
-    const enums = await queries.listEnumValues(db, sql, table)
+    const enums = await queries.listEnumValues(db, sql, table, schema)
     for (const enumValue of enums) {
       if (!fields[enumValue.column_name].enum) {
         fields[enumValue.column_name].enum = [enumValue.enumlabel]
@@ -344,7 +356,7 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, ignore)
   }
   const currentRelations = []
 
-  const constraintsList = await queries.listConstraints(db, sql, table)
+  const constraintsList = await queries.listConstraints(db, sql, table, schema)
   const primaryKeys = new Set()
 
   for (const constraint of constraintsList) {
@@ -379,7 +391,7 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, ignore)
     }
   }
 
-  const entity = createMapper(db, sql, log, table, fields, primaryKeys, currentRelations, queries, autoTimestamp)
+  const entity = createMapper(db, sql, log, table, fields, primaryKeys, currentRelations, queries, autoTimestamp, schema)
   entity.relations = currentRelations
 
   return entity

@@ -83,3 +83,29 @@ test('throws if not all placeholders are defined', async ({ plan, same, throws }
     same(err.message, 'Missing a value for the placeholder: PLT_PLUGIN')
   }
 })
+
+test('transform placeholders with newlines', async ({ plan, same }) => {
+  const cm = new ConfigManager({
+    source: './file.json',
+    env: {
+      PLT_FOO: 'bar\nbar2\nbar3',
+      PLT_USERNAME: 'john\njohn2'
+    }
+  })
+  const config = {
+    server: {
+      hostname: '127.0.0.1',
+      port: '3042',
+      replace: '{PLT_FOO}'
+    }
+  }
+
+  const res = await cm.replaceEnv(JSON.stringify(config))
+  same(JSON.parse(res), {
+    server: {
+      hostname: '127.0.0.1',
+      port: '3042',
+      replace: 'bar\nbar2\nbar3'
+    }
+  })
+})

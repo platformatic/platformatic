@@ -2,8 +2,9 @@
 
 const { insertPrep } = require('./shared')
 const shared = require('./mysql-shared')
+const { tableName } = require('../utils')
 
-function insertOne (db, sql, table, input, primaryKeys, fieldsToRetrieve) {
+function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve) {
   const keysToSql = Object.keys(input).map((key) => sql.ident(key))
   const keys = sql.join(
     keysToSql,
@@ -11,6 +12,11 @@ function insertOne (db, sql, table, input, primaryKeys, fieldsToRetrieve) {
   )
 
   const valuesToSql = Object.keys(input).map((key) => {
+    /* istanbul ignore next */
+    if (input[key] && typeof input[key] === 'object' && !(input[key] instanceof Date)) {
+      // This is a JSON field
+      return sql.value(JSON.stringify(input[key]))
+    }
     return sql.value(input[key])
   })
   const values = sql.join(
@@ -21,14 +27,14 @@ function insertOne (db, sql, table, input, primaryKeys, fieldsToRetrieve) {
   if (primaryKeys.length === 1 && input[primaryKeys[0].key] === undefined) {
     return db.tx(async function (db) {
       const insert = sql`
-      INSERT INTO ${sql.ident(table)} (${keys})
+      INSERT INTO ${tableName(sql, table, schema)} (${keys})
       VALUES(${values})
     `
       await db.query(insert)
 
       const res2 = await db.query(sql`
       SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
-      FROM ${sql.ident(table)}
+      FROM ${tableName(sql, table, schema)}
       WHERE ${sql.ident(primaryKeys[0].key)} = (
         SELECT last_insert_id()
       )
@@ -65,11 +71,11 @@ function insertOne (db, sql, table, input, primaryKeys, fieldsToRetrieve) {
   }
 }
 
-function insertMany (db, sql, table, inputs, inputToFieldMap, primaryKeys, fieldsToRetrieve, fields) {
+function insertMany (db, sql, table, schema, inputs, inputToFieldMap, primaryKeys, fieldsToRetrieve, fields) {
   return db.tx(async function (db) {
     const { keys, values } = insertPrep(inputs, inputToFieldMap, fields, sql)
     const insert = sql`
-      insert into ${sql.ident(table)} (${keys})
+      insert into ${tableName(sql, table, schema)} (${keys})
       values ${sql.join(values, sql`, `)}
     `
 
@@ -82,8 +88,8 @@ function insertMany (db, sql, table, inputs, inputToFieldMap, primaryKeys, field
 
     const res = await db.query(sql`
       SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
-      FROM ${sql.ident(table)}
-      ORDER BY ${sql.join(orderBy, ',')}
+      FROM ${tableName(sql, table, schema)}
+      ORDER BY ${sql.join(orderBy, sql`, `)}
       LIMIT ${inputs.length}
     `)
 
@@ -104,11 +110,11 @@ function insertMany (db, sql, table, inputs, inputToFieldMap, primaryKeys, field
   })
 }
 
-function deleteAll (db, sql, table, criteria, fieldsToRetrieve) {
+function deleteAll (db, sql, table, schema, criteria, fieldsToRetrieve) {
   return db.tx(async function (db) {
     let selectQuery = sql`
       SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
-      FROM ${sql.ident(table)}
+      FROM ${tableName(sql, table, schema)}
     `
     /* istanbul ignore else */
     if (criteria.length > 0) {
@@ -121,7 +127,7 @@ function deleteAll (db, sql, table, criteria, fieldsToRetrieve) {
     const res = await db.query(selectQuery)
 
     let deleteQuery = sql`
-      DELETE FROM ${sql.ident(table)}
+      DELETE FROM ${tableName(sql, table, schema)}
     `
 
     /* istanbul ignore else */

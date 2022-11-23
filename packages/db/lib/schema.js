@@ -9,6 +9,12 @@ const core = {
     connectionString: {
       type: 'string'
     },
+    schema: {
+      type: 'array',
+      items: {
+        type: 'string'
+      }
+    },
     poolSize: {
       type: 'integer'
     },
@@ -97,10 +103,17 @@ const authorization = {
     },
     jwt: {
       type: 'object',
+      additionalProperties: true,
       properties: {
         secret: {
-          type: 'string',
-          description: 'the shared secret for JWT'
+          oneOf: [{
+            type: 'string',
+            description: 'the shared secret for JWT'
+          }, {
+            type: 'object',
+            description: 'the JWT secret configuration (see: https://github.com/fastify/fastify-jwt#secret-required)',
+            additionalProperties: true
+          }]
         },
         namespace: {
           type: 'string',

@@ -86,6 +86,7 @@ function constructGraph (app, entity, opts) {
             gte: { type: fields[field].type },
             lt: { type: fields[field].type },
             lte: { type: fields[field].type },
+            like: { type: fields[field].type },
             in: { type: new graphql.GraphQLList(fields[field].type) },
             nin: { type: new graphql.GraphQLList(fields[field].type) }
           }

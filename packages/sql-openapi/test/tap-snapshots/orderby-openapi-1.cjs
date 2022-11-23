@@ -132,6 +132,14 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "where.counter.like",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "where.counter.in",
             "required": false,
             "schema": Object {
@@ -196,6 +204,14 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "where.id.like",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "where.id.in",
             "required": false,
             "schema": Object {
@@ -253,6 +269,14 @@ Object {
           Object {
             "in": "query",
             "name": "where.title.lte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.like",
             "required": false,
             "schema": Object {
               "type": "string",
@@ -419,6 +443,14 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "where.counter.like",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "where.counter.in",
             "required": false,
             "schema": Object {
@@ -483,6 +515,14 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "where.id.like",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "where.id.in",
             "required": false,
             "schema": Object {
@@ -540,6 +580,14 @@ Object {
           Object {
             "in": "query",
             "name": "where.title.lte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.like",
             "required": false,
             "schema": Object {
               "type": "string",
