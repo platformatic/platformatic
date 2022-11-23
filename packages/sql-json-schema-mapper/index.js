@@ -56,7 +56,6 @@ function mapSQLTypeToOpenAPIType (sqlType) {
 function mapSQLEntityToJSONSchema (entity) {
   const fields = entity.fields
   const properties = {}
-  const primaryKey = []
   const required = []
   for (const name of Object.keys(fields)) {
     const field = fields[name]
@@ -70,11 +69,11 @@ function mapSQLEntityToJSONSchema (entity) {
     } else {
       properties[field.camelcase] = { type }
     }
+    if (field.primaryKey) {
+      properties[field.camelcase].primaryKey = true
+    }
     if (field.isNullable) {
       properties[field.camelcase].nullable = true
-    }
-    if (field.primaryKey) {
-      primaryKey.push(field.camelcase)
     }
     if (!field.isNullable && !field.primaryKey) {
       // we skip the primary key for creation

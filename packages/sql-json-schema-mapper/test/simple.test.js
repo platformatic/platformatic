@@ -60,7 +60,7 @@ test('simple db, simple rest API', async (t) => {
     t.equal(pageJsonSchema.title, 'Page')
     t.equal(pageJsonSchema.description, 'A Page')
     t.equal(pageJsonSchema.type, 'object')
-    t.same(pageJsonSchema.properties.id, { type: 'integer' })
+    t.same(pageJsonSchema.properties.id, { type: 'integer', primaryKey: true })
     t.same(pageJsonSchema.properties.title, { type: 'string' })
     t.same(pageJsonSchema.properties.description, { type: 'string', nullable: true })
     if (isMariaDB) {
@@ -68,7 +68,6 @@ test('simple db, simple rest API', async (t) => {
     } else {
       t.same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
     }
-    t.same(pageJsonSchema.primaryKey, ['id'])
     t.same(pageJsonSchema.required, ['title'])
     if (!isSQLite) {
       t.same(pageJsonSchema.properties.type, { type: 'string', nullable: true, enum: ['blank', 'non-blank'] })
