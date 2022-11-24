@@ -50,8 +50,9 @@ module.exports = function establishRelations (app, relations, resolvers, loaders
       }
     }
 
-    // foreign to current
-    {
+    // foreign to current, we skip this if the current table has a composite primary key
+    // TODO implement support for this case
+    if (current.entity.primaryKeys.size === 1) {
       const lowered = lowerCaseFirst(camelcase(current.entity.table))
       if (!relationships[foreign.type] || relationships[foreign.type][lowered] !== false) {
         foreign.fields[lowered] = queryTopFields[lowered]
