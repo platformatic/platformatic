@@ -55,14 +55,14 @@ function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve
 
     return db.tx(async function (db) {
       const insert = sql`
-      INSERT INTO ${sql.ident(table)} (${keys})
+      INSERT INTO ${tableName(sql, table, schema)} (${keys})
       VALUES(${values})
     `
       await db.query(insert)
 
       const res2 = await db.query(sql`
         SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
-        FROM ${sql.ident(table)}
+        FROM ${tableName(sql, table, schema)}
         WHERE ${sql.join(where, sql` AND `)}
       `)
 
