@@ -16,6 +16,7 @@ async function mapperToGraphql (app, opts) {
   const loaders = {}
   const federationReplacements = []
   const relations = []
+  const ignore = opts.ignore || {}
 
   const graphOpts = {
     queryTopFields,
@@ -35,8 +36,11 @@ async function mapperToGraphql (app, opts) {
     }
   } else {
     for (const entity of Object.values(mapper.entities)) {
+      if (ignore[entity.pluralName] === true) {
+        continue
+      }
       relations.push(...entity.relations)
-      const meta = constructGraph(app, entity, graphOpts)
+      const meta = constructGraph(app, entity, graphOpts, ignore[entity.pluralName] || {})
       metaMap.set(entity, meta)
     }
 
