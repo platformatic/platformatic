@@ -274,7 +274,7 @@ another table and vice versa.
 Many-to-many relationship are implemented in SQL via a "join table", a table whose **primary key**
 is composed by the identifier of the two parts of the many-to-many relationship.
 
-Platformatic DB fully support many-to-many relationships on all supported databases.
+Platformatic DB fully support many-to-many relationships on all supported database.
 
 Let's consider the following SQL:
 
@@ -312,19 +312,19 @@ In this case, here the APIs that are available for the join table:
 
 ### `GET [P_ENTITY]/[S_REL_1]/[KEY_REL_1]/[S_REL_2]/[KEY_REL_2]`
 
-This returns the entity in the "join table", e.g. `GET /editors/user/1/page1`.
+This returns the entity in the "join table", e.g. `GET /editors/page/1/user/1`.
 
 ### `POST [P_ENTITY]/[S_REL_1]/[KEY_REL_1]/[S_REL_2]/[KEY_REL_2]`
 
-Creates a new entity in the "join table", e.g. `POST /editors/user/1/page1`.
+Creates a new entity in the "join table", e.g. `POST /editors/page/1/user/1`.
 
 ### `PUT [P_ENTITY]/[S_REL_1]/[KEY_REL_1]/[S_REL_2]/[KEY_REL_2]`
 
-Updates an entity in the "join table", e.g. `PUT /editors/user/1/page1`.
+Updates an entity in the "join table", e.g. `PUT /editors/page/1/user/1`.
 
 ### `DELETE [P_ENTITY]/[S_REL_1]/[KEY_REL_1]/[S_REL_2]/[KEY_REL_2]`
 
-Delete the entity in the "join table", e.g. `DELETE /editors/user/1/page1`.
+Delete the entity in the "join table", e.g. `DELETE /editors/page/1/user/1`.
 
 ## `GET /[P_ENTITY]`
 
