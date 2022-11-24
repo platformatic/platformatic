@@ -274,7 +274,7 @@ another table and vice versa.
 Many-to-many relationship are implemented in SQL via a "join table", a table whose **primary key**
 is composed by the identifier of the two parts of the many-to-many relationship.
 
-Platformatic DB fully support many-to-many relationships on all supported database.
+Platformatic DB fully support many-to-many relationships on all supported databases.
 
 Let's consider the following SQL:
 
