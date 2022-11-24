@@ -95,6 +95,38 @@ A **required** object with the following settings:
     }
   }
   ```
+
+  It's possible to selectively ignore entites:
+
+  ```json
+  {
+    "core": {
+      ...
+      "graphql": {
+        "ignore": {
+          "categories": true
+        }
+      }
+    }
+  }
+  ```
+
+  It's possible to selectively ignore fields:
+
+  ```json
+  {
+    "core": {
+      ...
+      "graphql": {
+        "ignore": {
+          "categories": {
+            "name": true
+          }
+        }
+      }
+    }
+  }
+  ```
 - **`openapi`** (`boolean` or `object`, default: `true`) — Enables OpenAPI REST support.
   - If value is an object, all [OpenAPI v3](https://swagger.io/specification/) allowed properties can be passed. Also a `prefix` property can be passed to set the OpenAPI prefix.
   - Platformatic DB uses [`@fastify/swagger`](https://github.com/fastify/fastify-swagger) under the hood to manage this configuration.
@@ -140,6 +172,39 @@ A **required** object with the following settings:
     }
   }
   ```
+
+  It's possible to selectively ignore entites:
+
+  ```json
+  {
+    "core": {
+      ...
+      "openapi": {
+        "ignore": {
+          "categories": true
+        }
+      }
+    }
+  }
+  ```
+
+  It's possible to selectively ignore fields:
+
+  ```json
+  {
+    "core": {
+      ...
+      "openapi": {
+        "ignore": {
+          "categories": {
+            "name": true
+          }
+        }
+      }
+    }
+  }
+  ```
+
 - **`ignore`** (`object`) — Key/value object that defines which database tables should not be mapped as API entities.
 
   _Examples_
@@ -504,12 +569,8 @@ Server will listen to `http://127.0.0.1:3042`
   "core": {
     "connectionString": "'sqlite://./db.sqlite'",
     "graphiql": true,
-    "openapi": {
-      "enabled": true
-    },
-    "graphql": {
-      "enabled": true
-    }
+    "openapi": true,
+    "graphql": true
   },
   "dashboard": true
 }
