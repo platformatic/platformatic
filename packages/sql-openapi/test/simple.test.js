@@ -424,21 +424,43 @@ test('not found', async ({ pass, teardown, same, equal }) => {
 
   {
     const res = await app.inject({
+      method: 'DELETE',
+      url: '/pages/1'
+    })
+    equal(res.statusCode, 404, 'DELETE /pages/1 status code')
+  }
+})
+
+test('POST with an Id', async ({ pass, teardown, same, equal }) => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(sqlOpenAPI)
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  {
+    const res = await app.inject({
       method: 'POST',
       url: '/pages/1',
       body: {
         title: 'Hello World'
       }
     })
-    equal(res.statusCode, 404, 'POST /pages/1 status code')
-  }
-
-  {
-    const res = await app.inject({
-      method: 'DELETE',
-      url: '/pages/1'
+    equal(res.statusCode, 200, 'POST /pages/1 status code')
+    same(res.json(), {
+      id: 1,
+      title: 'Hello World'
     })
-    equal(res.statusCode, 404, 'DELETE /pages/1 status code')
   }
 })
 

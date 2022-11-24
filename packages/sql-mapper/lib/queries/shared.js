@@ -4,7 +4,7 @@ const { tableName } = require('../utils')
 
 /* istanbul ignore file */
 
-async function insertOne (db, sql, table, schema, input, primaryKey, isUuid, fieldsToRetrieve) {
+async function insertOne (db, sql, table, schema, input, primaryKeysTypes, fieldsToRetrieve) {
   const inputKeys = Object.keys(input)
   if (inputKeys.length === 0) {
     const insert = sql`

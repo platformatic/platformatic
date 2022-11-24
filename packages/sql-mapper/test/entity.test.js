@@ -38,12 +38,12 @@ test('entity fields', async ({ equal, not, same, teardown }) => {
   equal(pageEntity.name, 'Page')
   equal(pageEntity.singularName, 'page')
   equal(pageEntity.pluralName, 'pages')
-  equal(pageEntity.primaryKey, 'id')
+  same(pageEntity.primaryKeys, new Set(['id']))
   equal(pageEntity.table, 'pages')
   equal(pageEntity.camelCasedFields.id.primaryKey, true)
 })
 
-test('entity API', async ({ equal, same, teardown, rejects }) => {
+test('entity API', { only: true }, async ({ equal, same, teardown, rejects }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
     teardown(() => db.dispose())
@@ -213,6 +213,7 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async ({ pass, teardown, same, equa
       );`)
     }
   })
+  teardown(() => mapper.db.dispose())
 
   const pageEntity = mapper.entities.page
 

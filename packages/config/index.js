@@ -26,7 +26,7 @@ class ConfigManager extends EventEmitter {
     if (typeof opts.source === 'string') {
       this.fullPath = resolve(opts.source)
     } else {
-      this.fullPath = join(tmpdir(), `platformatic-config-${Date.now()}.json`)
+      this.fullPath = join(tmpdir(), `platformatic-config-${process.pid}-${Date.now()}.json`)
       this.current = opts.source
       this._shouldSave = true
     }

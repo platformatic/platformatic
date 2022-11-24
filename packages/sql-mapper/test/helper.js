@@ -31,6 +31,11 @@ module.exports.connInfo = connInfo
 
 module.exports.clear = async function (db, sql) {
   try {
+    await db.query(sql`DROP TABLE editors`)
+  } catch {
+  }
+
+  try {
     await db.query(sql`DROP TABLE pages`)
   } catch (err) {
   }
