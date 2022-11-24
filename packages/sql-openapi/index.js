@@ -35,13 +35,15 @@ async function setupOpenAPI (app, opts) {
     }
   })
 
+  const ignore = opts.ignore || []
+
   app.register(SwaggerUI, {
     ...opts,
     prefix: '/documentation'
   })
 
   for (const entity of Object.values(app.platformatic.entities)) {
-    const entitySchema = mapSQLEntityToJSONSchema(entity)
+    const entitySchema = mapSQLEntityToJSONSchema(entity, ignore[entity.pluralName])
     // TODO remove reverseRelationships from the entity
     /* istanbul ignore next */
     entity.reverseRelationships = entity.reverseRelationships || []
@@ -62,17 +64,23 @@ async function setupOpenAPI (app, opts) {
   }
 
   for (const entity of Object.values(app.platformatic.entities)) {
+    if (ignore[entity.pluralName] === true) {
+      continue
+    }
     const localPrefix = `${prefix}/${entity.pluralName}`
     // TODO support ignore
     if (entity.primaryKeys.size === 1) {
       app.register(entityPlugin, {
         entity,
-        prefix: localPrefix
+        prefix: localPrefix,
+        ignore: ignore[entity.pluralName] || {}
       })
     } else {
+      // TODO support ignore
       app.register(manyToMany, {
         entity,
-        prefix: localPrefix
+        prefix: localPrefix,
+        ignore
       })
     }
   }

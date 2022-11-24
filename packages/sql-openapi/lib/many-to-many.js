@@ -7,6 +7,7 @@ const { generateArgs, capitalize, getFieldsForEntity, rootEntityRoutes } = requi
 
 async function entityPlugin (app, opts) {
   const entity = opts.entity
+  const ignore = opts.ignore
 
   const entitySchema = {
     $ref: entity.name + '#'
@@ -14,9 +15,9 @@ async function entityPlugin (app, opts) {
   const primaryKeysParams = getPrimaryKeysParams(entity)
   const primaryKeysCamelcase = Array.from(entity.primaryKeys).map((key) => camelcase(key))
 
-  const { whereArgs, orderByArgs } = generateArgs(entity)
+  const { whereArgs, orderByArgs } = generateArgs(entity, ignore)
 
-  const fields = getFieldsForEntity(entity)
+  const fields = getFieldsForEntity(entity, ignore)
 
   rootEntityRoutes(app, entity, whereArgs, orderByArgs, undefined, entitySchema, fields)
 

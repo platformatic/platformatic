@@ -42,16 +42,17 @@ const getEntityLinksForEntity = (app, entity) => {
 
 async function entityPlugin (app, opts) {
   const entity = opts.entity
+  const ignore = opts.ignore
 
   const entitySchema = {
     $ref: entity.name + '#'
   }
   const primaryKey = entity.primaryKeys.values().next().value
-  const primaryKeyParams = getPrimaryKeyParams(entity)
+  const primaryKeyParams = getPrimaryKeyParams(entity, ignore)
   const primaryKeyCamelcase = camelcase(primaryKey)
   const entityLinks = getEntityLinksForEntity(app, entity)
 
-  const { whereArgs, orderByArgs } = generateArgs(entity)
+  const { whereArgs, orderByArgs } = generateArgs(entity, ignore)
 
   app.addHook('preValidation', async (req) => {
     if (typeof req.query.fields === 'string') {
@@ -59,7 +60,7 @@ async function entityPlugin (app, opts) {
     }
   })
 
-  const fields = getFieldsForEntity(entity)
+  const fields = getFieldsForEntity(entity, ignore)
 
   rootEntityRoutes(app, entity, whereArgs, orderByArgs, entityLinks, entitySchema, fields)
 
@@ -111,11 +112,11 @@ async function entityPlugin (app, opts) {
     app.get(`/:${camelcase(primaryKey)}/${targetEntity.pluralName}`, {
       schema: {
         operationId,
-        params: getPrimaryKeyParams(entity),
+        params: getPrimaryKeyParams(entity, ignore),
         querystring: {
           type: 'object',
           properties: {
-            fields: getFieldsForEntity(targetEntity)
+            fields: getFieldsForEntity(targetEntity, ignore)
           }
         },
         response: {
@@ -183,11 +184,11 @@ async function entityPlugin (app, opts) {
     app.get(`/:${camelcase(primaryKey)}/${targetRelation}`, {
       schema: {
         operationId,
-        params: getPrimaryKeyParams(entity),
+        params: getPrimaryKeyParams(entity, ignore),
         querystring: {
           type: 'object',
           properties: {
-            fields: getFieldsForEntity(targetEntity)
+            fields: getFieldsForEntity(targetEntity, ignore)
           }
         },
         response: {
@@ -304,12 +305,12 @@ async function entityPlugin (app, opts) {
   })
 }
 
-function getPrimaryKeyParams (entity) {
+function getPrimaryKeyParams (entity, ignore) {
   const primaryKey = entity.primaryKeys.values().next().value
   const fields = entity.fields
   const field = fields[primaryKey]
   const properties = {
-    [field.camelcase]: { type: mapSQLTypeToOpenAPIType(field.sqlType) }
+    [field.camelcase]: { type: mapSQLTypeToOpenAPIType(field.sqlType, ignore) }
   }
   const required = [field.camelcase]
 
