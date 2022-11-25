@@ -274,4 +274,28 @@ test('should save config with relative paths', async ({ teardown, equal }) => {
   equal(savedConfig.core.connectionString, config.core.connectionString)
   equal(savedConfig.plugin.path, config.plugin.path)
   equal(savedConfig.migrations.dir, config.migrations.dir)
+  equal(savedConfig.migrations.table, 'versions')
+})
+
+test('should save config with correct versions if there are postgresql schema', async ({ teardown, equal }) => {
+  const configPath = join(__dirname, 'fixtures', 'with-postgresql-schema.json')
+  const configFile = await readFile(configPath, 'utf8')
+
+  teardown(() => writeFile(configPath, configFile))
+
+  const cm = new DBConfigManager({
+    source: configPath,
+    schema: {}
+  })
+  const parseResult = await cm.parse()
+  equal(parseResult, true)
+
+  await cm.save()
+
+  const savedConfigFile = await readFile(configPath, 'utf8')
+  const savedConfig = JSON.parse(savedConfigFile)
+
+  console.log({savedConfig})
+
+  equal(savedConfig.migrations.table, 'public.versions')
 })
