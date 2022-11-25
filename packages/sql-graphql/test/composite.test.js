@@ -4,6 +4,7 @@ const { clear, connInfo, isSQLite, isMysql, isPg } = require('./helper')
 const { test } = require('tap')
 const fastify = require('fastify')
 const sqlMapper = require('@platformatic/sql-mapper')
+const sqlEvents = require('@platformatic/sql-events')
 const sqlGraphQL = require('..')
 
 test('composite primary keys', async ({ equal, same, teardown, rejects }) => {
@@ -76,6 +77,7 @@ test('composite primary keys', async ({ equal, same, teardown, rejects }) => {
     ...connInfo,
     onDatabaseLoad
   })
+  app.register(sqlEvents) // needed as if it's present it might throw
   app.register(sqlGraphQL)
   teardown(app.close.bind(app))
 
@@ -323,6 +325,147 @@ test('composite primary keys', async ({ equal, same, teardown, rejects }) => {
             id: '1',
             theTitle: 'foobar'
           },
+          role: 'author'
+        }]
+      }
+    }, 'editor response')
+  }
+})
+
+test('composite primary keys with no foreign keys', async ({ equal, same, teardown, rejects }) => {
+  /* https://github.com/platformatic/platformatic/issues/299 */
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+
+    await db.query(sql`CREATE TABLE editors (
+      page_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      role VARCHAR(255) NOT NULL,
+      PRIMARY KEY (page_id, user_id)
+    );`)
+  }
+
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    onDatabaseLoad
+  })
+  app.register(sqlEvents) // needed as if it's present it will throw
+  app.register(sqlGraphQL)
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+          mutation {
+            saveEditor(input: { userId: "1", pageId: "1", role: "admin" }) {
+              userId
+              pageId
+              role
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'saveEditor status code')
+    same(res.json(), {
+      data: {
+        saveEditor: {
+          userId: '1',
+          pageId: '1',
+          role: 'admin'
+        }
+      }
+    }, 'saveEditor response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+          mutation {
+            saveEditor(input: { userId: "2", pageId: "1", role: "author" }) {
+              userId
+              pageId
+              role
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'saveEditor status code')
+    same(res.json(), {
+      data: {
+        saveEditor: {
+          userId: '2',
+          pageId: '1',
+          role: 'author'
+        }
+      }
+    }, 'saveEditor response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+          mutation {
+            saveEditor(input: { userId: "1", pageId: "1", role: "captain" }) {
+              userId
+              pageId
+              role
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'saveEditor status code')
+    same(res.json(), {
+      data: {
+        saveEditor: {
+          userId: 1,
+          pageId: 1,
+          role: 'captain'
+        }
+      }
+    }, 'saveEditor response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'post',
+      url: '/graphql',
+      body: {
+        query: `
+          query {
+            editors(orderBy: { field: role, direction: DESC }) {
+              userId
+              pageId
+              role
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'editors status code')
+    same(res.json(), {
+      data: {
+        editors: [{
+          userId: '1',
+          pageId: '1',
+          role: 'captain'
+        }, {
+          userId: '2',
+          pageId: '1',
           role: 'author'
         }]
       }
