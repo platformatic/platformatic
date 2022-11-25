@@ -99,7 +99,7 @@ async function mapperToGraphql (app, opts) {
     const entitiesList = []
 
     for (const entity of Object.values(app.platformatic.entities)) {
-      if (ignoreList.includes(entity.pluralName)) {
+      if (ignoreList.includes(entity.singularName)) {
         continue
       }
       // We currently do not support subscriptions for join tables
