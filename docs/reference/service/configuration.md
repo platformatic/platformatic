@@ -97,12 +97,10 @@ An optional object that defines a plugin loaded by Platformatic DB.
   {
     "plugin": {
       "path": "./my-plugin.js",
-      "watch": true,
-      "watchOptions": {
-        "hotReload": true,
-        "ignore": ["*.mjs", "**/*.mjs"],
-        "allow": ["my-plugin.js", "plugins/*.js"]
-      },
+      "hotReload": true,
+      "options": {
+        "foo": "bar"
+      }
     }
   }
   ```
