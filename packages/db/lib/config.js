@@ -23,10 +23,14 @@ class DBConfigManager extends ConfigManager {
       this.current.core.connectionString = 'sqlite://' + sqliteFullPath
     }
 
+    const versionsTableName = this.current.core.schema.length > 0
+      ? 'public.versions'
+      : 'versions'
+
     // relative-to-absolute migrations path
     if (this.current.migrations) {
       this.current.migrations.dir = this._fixRelativePath(this.current.migrations.dir)
-      this.current.migrations.table = this.current.migrations.table || 'versions'
+      this.current.migrations.table = this.current.migrations.table || versionsTableName
     }
 
     if (this.current.migrations && this.current.core) {
@@ -34,7 +38,7 @@ class DBConfigManager extends ConfigManager {
       /* c8 ignore next 4 */
       this.current.core.ignore = this.current.core.ignore || {}
       this.current.core.ignore = Object.assign({}, {
-        [this.current.migrations.table || 'versions']: true
+        [this.current.migrations.table || versionsTableName]: true
       }, this.current.core.ignore)
     }
   }
