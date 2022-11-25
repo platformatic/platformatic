@@ -295,7 +295,5 @@ test('should save config with correct versions if there are postgresql schema', 
   const savedConfigFile = await readFile(configPath, 'utf8')
   const savedConfig = JSON.parse(savedConfigFile)
 
-  console.log({savedConfig})
-
   equal(savedConfig.migrations.table, 'public.versions')
 })
