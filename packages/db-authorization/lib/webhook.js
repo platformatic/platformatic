@@ -29,7 +29,10 @@ module.exports = fp(async function (app, opts) {
     const res = await pool.request({
       path,
       method: 'POST',
-      headers,
+      headers: {
+        ...headers,
+        'accept-encoding': 'identity'
+      },
       body
     })
 
