@@ -103,6 +103,11 @@ If you want to use another config file use the option `--config=/path/to/some.js
 1. Run `pnpm run dashboard:build` 
 1. Run tests: `pnpm test`
 
+If you encounter issues running tests (f.e. failing tests without making a change to the codebase), try to:
+1. Run `pnpm cleanall`
+2. Run `pnpm store path` and remove the folder shown as an output
+3. Run `pnpm install` again
+
 ### Releasing
 
 All platformatic modules share the same release number and are released
