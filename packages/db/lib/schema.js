@@ -27,6 +27,13 @@ const core = {
           graphiql: {
             type: 'boolean'
           },
+          ignore: {
+            type: 'object',
+            // TODO add support for column-level ignore
+            additionalProperties: {
+              type: 'boolean'
+            }
+          },
           subscriptionIgnore: {
             type: 'array',
             items: {
@@ -53,6 +60,13 @@ const core = {
           prefix: {
             type: 'string',
             description: 'Base URL for the OpenAPI'
+          },
+          ignore: {
+            type: 'object',
+            // TODO add support for column-level ignore
+            additionalProperties: {
+              type: 'boolean'
+            }
           }
         },
         additionalProperties: false

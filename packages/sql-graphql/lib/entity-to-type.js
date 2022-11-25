@@ -15,7 +15,7 @@ const ascDesc = new graphql.GraphQLEnumType({
   }
 })
 
-function constructGraph (app, entity, opts) {
+function constructGraph (app, entity, opts, ignore) {
   const primaryKeys = Array.from(entity.primaryKeys).map((key) => camelcase(key))
   const relationalFields = entity.relations
     .map((relation) => relation.column_name)
@@ -35,6 +35,10 @@ function constructGraph (app, entity, opts) {
 
   for (const key of Object.keys(entity.fields)) {
     const field = entity.fields[key]
+    if (ignore[field.camelcase]) {
+      continue
+    }
+
     const meta = { field }
 
     // sqlite doesn't support enums

@@ -115,3 +115,93 @@ test('ignore a column', async ({ pass, teardown, equal }) => {
     equal(Category.fields.find((f) => f.name === 'name'), undefined, 'name column is ignored')
   }
 })
+
+test('ignore a table via sql-graphql option', async ({ pass, teardown, equal }) => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(sqlGraphQL, {
+    ignore: {
+      categories: true
+    }
+  })
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+          query {
+            __schema {
+              types {
+                name
+              }
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'introspection query status code')
+    const data = res.json().data
+    equal(data.__schema.types.find((t) => t.name === 'Category'), undefined, 'Category type is ignored')
+  }
+})
+
+test('ignore a column via sql-graphql option', async ({ pass, teardown, equal }) => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(sqlGraphQL, {
+    ignore: {
+      categories: {
+        name: true
+      }
+    }
+  })
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+          query {
+            __schema {
+              types {
+                name
+                fields {
+                  name
+                }
+              }
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'introspection query status code')
+    const data = res.json().data
+    const Category = data.__schema.types.find((t) => t.name === 'Category')
+    equal(Category.fields.find((f) => f.name === 'name'), undefined, 'name column is ignored')
+  }
+})

@@ -2,10 +2,13 @@
 
 const { mapSQLTypeToOpenAPIType } = require('@platformatic/sql-json-schema-mapper')
 
-function generateArgs (entity) {
+function generateArgs (entity, ignore) {
   const sortedEntityFields = Object.keys(entity.fields).sort()
 
   const whereArgs = sortedEntityFields.reduce((acc, name) => {
+    if (ignore[name]) {
+      return acc
+    }
     const field = entity.fields[name]
     const baseKey = `where.${field.camelcase}.`
     for (const modifier of ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like']) {
@@ -22,6 +25,9 @@ function generateArgs (entity) {
   }, {})
 
   const orderByArgs = sortedEntityFields.reduce((acc, name) => {
+    if (ignore[name]) {
+      return acc
+    }
     const field = entity.fields[name]
     const key = `orderby.${field.camelcase}`
     acc[key] = { type: 'string', enum: ['asc', 'desc'] }
@@ -187,12 +193,15 @@ function capitalize (str) {
 
 module.exports.capitalize = capitalize
 
-function getFieldsForEntity (entity) {
+function getFieldsForEntity (entity, ignore) {
   return {
     type: 'array',
     items: {
       type: 'string',
-      enum: Object.keys(entity.fields).map((field) => entity.fields[field].camelcase).sort()
+      enum: Object.keys(entity.fields)
+        .map((field) => entity.fields[field].camelcase)
+        .filter((field) => !ignore[field])
+        .sort()
     }
   }
 }
