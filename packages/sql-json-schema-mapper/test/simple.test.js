@@ -74,3 +74,45 @@ test('simple db, simple rest API', async (t) => {
     }
   }
 })
+
+test('ignore one field', async (t) => {
+  const { pass, teardown } = t
+
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  {
+    const page = app.platformatic.entities.page
+    const pageJsonSchema = mapSQLEntityToJSONSchema(page, {
+      title: true
+    })
+
+    t.equal(pageJsonSchema.$id, 'Page')
+    t.equal(pageJsonSchema.title, 'Page')
+    t.equal(pageJsonSchema.description, 'A Page')
+    t.equal(pageJsonSchema.type, 'object')
+    t.same(pageJsonSchema.properties.id, { type: 'integer' })
+    t.equal(pageJsonSchema.properties.title, undefined)
+    t.same(pageJsonSchema.properties.description, { type: 'string', nullable: true })
+    if (isMariaDB) {
+      t.same(pageJsonSchema.properties.metadata, { type: 'string', nullable: true })
+    } else {
+      t.same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
+    }
+    t.same(pageJsonSchema.required, [])
+    if (!isSQLite) {
+      t.same(pageJsonSchema.properties.type, { type: 'string', nullable: true, enum: ['blank', 'non-blank'] })
+    }
+  }
+})

@@ -43,7 +43,7 @@ async function listConstraints (db, sql, table, schema) {
   return db.query(query)
 }
 
-async function updateOne (db, sql, table, schema, input, primaryKey, fieldsToRetrieve) {
+async function updateOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve) {
   const pairs = Object.keys(input).map((key) => {
     let value = input[key]
     /* istanbul ignore next */
@@ -52,17 +52,21 @@ async function updateOne (db, sql, table, schema, input, primaryKey, fieldsToRet
     }
     return sql`${sql.ident(key)} = ${value}`
   })
+  const where = []
+  for (const key of primaryKeys) {
+    where.push(sql`${sql.ident(key)} = ${input[key]}`)
+  }
   const update = sql`
     UPDATE ${tableName(sql, table, schema)}
     SET ${sql.join(pairs, sql`, `)}
-    WHERE ${sql.ident(primaryKey)} = ${sql.value(input[primaryKey])}
+    WHERE ${sql.join(where, sql` AND `)}
   `
   await db.query(update)
 
   const select = sql`
     SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
     FROM ${tableName(sql, table, schema)}
-    WHERE ${sql.ident(primaryKey)} = ${sql.value(input[primaryKey])}
+    WHERE ${sql.join(where, sql` AND `)}
   `
 
   const res = await db.query(select)

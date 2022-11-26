@@ -33,9 +33,9 @@ test('should watch js files by default', async ({ equal, teardown }) => {
       connectionString: 'sqlite://db.sqlite'
     },
     plugin: {
-      path: pluginFilePath,
-      watch: true
-    }
+      path: pluginFilePath
+    },
+    watch: true
   }
 
   await Promise.all([
@@ -73,11 +73,10 @@ test('should watch allowed file', async ({ comment, teardown }) => {
       connectionString: 'sqlite://db.sqlite'
     },
     plugin: {
-      path: pluginFilePath,
-      watch: true,
-      watchOptions: {
-        allow: ['*.js', '*.json']
-      }
+      path: pluginFilePath
+    },
+    watch: {
+      allow: ['*.js', '*.json']
     }
   }
 
@@ -123,11 +122,10 @@ test('should not watch ignored file', async ({ teardown, equal }) => {
       connectionString: 'sqlite://db.sqlite'
     },
     plugin: {
-      path: pluginFilePath,
-      watch: true,
-      watchOptions: {
-        ignore: [basename(pluginFilePath)]
-      }
+      path: pluginFilePath
+    },
+    watch: {
+      ignore: [basename(pluginFilePath)]
     }
   }
 
@@ -164,11 +162,10 @@ test('should not loop forever when doing ESM', { skip: true }, async ({ comment,
       connectionString: 'sqlite://db.sqlite'
     },
     plugin: {
-      path: pluginFilePath,
-      watch: true,
-      watchOptions: {
-        ignore: [basename(pluginFilePath)]
-      }
+      path: pluginFilePath
+    },
+    watch: {
+      ignore: [basename(pluginFilePath)]
     }
   }
 
@@ -212,9 +209,9 @@ test('should watch only js files by default', async ({ equal, teardown }) => {
       connectionString: 'sqlite://db.sqlite'
     },
     plugin: {
-      path: pluginFilePath,
-      watch: true
-    }
+      path: pluginFilePath
+    },
+    watch: true
   }
 
   await Promise.all([

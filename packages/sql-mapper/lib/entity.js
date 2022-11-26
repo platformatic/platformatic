@@ -8,7 +8,7 @@ const {
   sanitizeLimit
 } = require('./utils')
 
-function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations, queries, autoTimestamp, schema, limitConfig) {
+function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relations, queries, autoTimestamp, schema, limitConfig) {
   const entityName = toSingular(table)
 
   // Fields remapping
@@ -22,6 +22,13 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     fields[key].camelcase = camel
     return acc
   }, {})
+
+  const primaryKeysTypes = Array.from(primaryKeys).map((key) => {
+    return {
+      key,
+      sqlType: fields[key].sqlType
+    }
+  })
 
   function fixInput (input) {
     const newInput = {}
@@ -48,7 +55,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     for (const key of Object.keys(output)) {
       let value = output[key]
       const newKey = fieldMapToRetrieve[key]
-      if (key === primaryKey && value !== null && value !== undefined) {
+      if (primaryKeys.has(key) && value !== null && value !== undefined) {
         value = value.toString()
       }
       newOutput[newKey] = value
@@ -64,23 +71,38 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     // args.input is not array
     const fieldsToRetrieve = computeFields(args.fields).map((f) => sql.ident(f))
     const input = fixInput(args.input)
+
+    let hasPrimaryKeys = true
+    for (const key of primaryKeys) {
+      if (input[key] === undefined) {
+        hasPrimaryKeys = false
+        break
+      }
+    }
+
     let now
     if (autoTimestamp && fields.updated_at) {
       now = new Date()
       input.updated_at = now
     }
-    if (input[primaryKey]) { // update
-      const res = await queries.updateOne(db, sql, table, schema, input, primaryKey, fieldsToRetrieve)
-      return fixOutput(res)
-    } else { // insert
-      if (autoTimestamp && fields.inserted_at) {
-        /* istanbul ignore next */
-        now = now || new Date()
-        input.inserted_at = now
+    if (hasPrimaryKeys) { // update
+      const res = await queries.updateOne(db, sql, table, schema, input, primaryKeys, fieldsToRetrieve)
+      if (res) {
+        return fixOutput(res)
       }
-      const res = await queries.insertOne(db, sql, table, schema, input, primaryKey, fields[primaryKey].sqlType.toLowerCase() === 'uuid', fieldsToRetrieve)
-      return fixOutput(res)
+      // If we are here, the record does not exist, so we create it
+      // this is inefficient because it will do 2 queries.
+      // TODO there is a way to do it in one query with DB specific syntax.
     }
+
+    // insert
+    if (autoTimestamp && fields.inserted_at) {
+      /* istanbul ignore next */
+      now = now || new Date()
+      input.inserted_at = now
+    }
+    const res = await queries.insertOne(db, sql, table, schema, input, primaryKeysTypes, fieldsToRetrieve)
+    return fixOutput(res)
   }
 
   async function insert (args) {
@@ -103,14 +125,14 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     /* istanbul ignore next */
     if (queries.insertMany) {
       // We are not fixing the input here because it is done in the query.
-      const res = await queries.insertMany(db, sql, table, schema, inputs, inputToFieldMap, primaryKey, fieldsToRetrieve, fields)
+      const res = await queries.insertMany(db, sql, table, schema, inputs, inputToFieldMap, primaryKeysTypes, fieldsToRetrieve, fields)
       return res.map(fixOutput)
     } else {
       // TODO this can be optimized, we can still use a batch insert if we do not want any fields
       const res = []
       for (let input of inputs) {
         input = fixInput(input)
-        const resOne = await queries.insertOne(db, sql, table, schema, input, primaryKey, fields[primaryKey].sqlType.toLowerCase() === 'uuid', fieldsToRetrieve)
+        const resOne = await queries.insertOne(db, sql, table, schema, input, primaryKeysTypes, fieldsToRetrieve)
         res.push(fixOutput(resOne))
       }
 
@@ -283,7 +305,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKey, relations
     name: entityName,
     singularName: camelcase(singularize(table)),
     pluralName: camelcase(table),
-    primaryKey,
+    primaryKeys,
     table,
     schema,
     fields,
@@ -335,7 +357,7 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema,
   const currentRelations = []
 
   const constraintsList = await queries.listConstraints(db, sql, table, schema)
-  let primaryKey
+  const primaryKeys = new Set()
 
   for (const constraint of constraintsList) {
     const field = fields[constraint.column_name]
@@ -350,12 +372,12 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema,
     }
 
     if (constraint.constraint_type === 'PRIMARY KEY') {
-      primaryKey = constraint.column_name
+      primaryKeys.add(constraint.column_name)
       // Check for SQLite typeless PK
       /* istanbul ignore next */
       if (db.isSQLite) {
         const validTypes = ['integer', 'uuid', 'serial']
-        const pkType = fields[primaryKey].sqlType.toLowerCase()
+        const pkType = fields[constraint.column_name].sqlType.toLowerCase()
         if (!validTypes.includes(pkType)) {
           throw new Error(`Invalid Primary Key type. Expected "integer", found "${pkType}"`)
         }
@@ -369,7 +391,7 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema,
     }
   }
 
-  const entity = createMapper(db, sql, log, table, fields, primaryKey, currentRelations, queries, autoTimestamp, schema, limitConfig)
+  const entity = createMapper(db, sql, log, table, fields, primaryKeys, currentRelations, queries, autoTimestamp, schema, limitConfig)
   entity.relations = currentRelations
 
   return entity

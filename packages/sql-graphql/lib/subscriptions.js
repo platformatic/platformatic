@@ -9,6 +9,14 @@ function setupSubscriptions (app, metaMap, resolvers, ignores) {
     if (ignores.indexOf(field.singularName) >= 0) {
       continue
     }
+    // TODO currently we are not supporting subscriptions for
+    // entities that have a composite primary key
+    /* istanbul ignore next */
+    if (field.primaryKeys.size !== 1) {
+      continue
+    }
+    const entity = app.platformatic.entities[field.singularName]
+    const primaryKey = entity.primaryKeys.values().next().value
     const { type } = meta
     const saved = `${field.singularName}Saved`
     fields[saved] = {
@@ -18,11 +26,9 @@ function setupSubscriptions (app, metaMap, resolvers, ignores) {
       subscribe: async function * (_, query, ctx, info) {
         const log = ctx.reply.request.log
         const { pubsub } = ctx
-        const entity = app.platformatic.entities[field.singularName]
         const topic = await entity.getSubscriptionTopic({ action: 'save', ctx })
         log.trace({ topic }, 'subscribed')
         const res = await pubsub.subscribe(topic)
-        const primaryKey = entity.primaryKey
         const fields = meta.getFields([{ info }])
 
         for await (const msg of res) {
@@ -55,8 +61,8 @@ function setupSubscriptions (app, metaMap, resolvers, ignores) {
       type: new graphql.GraphQLObjectType({
         name: `${field.name}Deleted`,
         fields: {
-          [field.primaryKey]: {
-            type: meta.fields[field.primaryKey].type
+          [primaryKey]: {
+            type: meta.fields[primaryKey].type
           }
         }
       })
@@ -64,7 +70,6 @@ function setupSubscriptions (app, metaMap, resolvers, ignores) {
     resolvers.Subscription[deleted] = {
       subscribe: async (_, query, ctx, info) => {
         const { pubsub } = ctx
-        const entity = app.platformatic.entities[field.singularName]
         const topic = await entity.getSubscriptionTopic({ action: 'delete', ctx })
         const res = await pubsub.subscribe(topic)
         ctx.reply.request.log.trace({ topic }, 'subscribed')
