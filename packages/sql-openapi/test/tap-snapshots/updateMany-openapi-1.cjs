@@ -5,7 +5,7 @@
  * Make sure to inspect the output below.  Do not ignore changes!
  */
 'use strict'
-exports['platformatic/db/openapi/updateMany updateMany > matches expected OpenAPI defs 1'] = `
+exports[`platformatic/db/openapi/updateMany updateMany > matches expected OpenAPI defs 1`] = `
 Object {
   "components": Object {
     "schemas": Object {
@@ -46,6 +46,7 @@ Object {
         "operationId": "getPosts",
         "parameters": Array [
           Object {
+            "description": "Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown",
             "in": "query",
             "name": "limit",
             "required": false,
