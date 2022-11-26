@@ -277,8 +277,8 @@ test('should save config with relative paths', async ({ teardown, equal }) => {
   equal(savedConfig.migrations.table, 'versions')
 })
 
-test('should save config with correct versions if there are postgresql schema', async ({ teardown, equal }) => {
-  const configPath = join(__dirname, 'fixtures', 'with-postgresql-schema.json')
+test('should set migrations table to public.versions if there are postgresql schema', async ({ teardown, equal }) => {
+  const configPath = join(__dirname, 'fixtures', 'postgresql-with-schema.json')
   const configFile = await readFile(configPath, 'utf8')
 
   teardown(() => writeFile(configPath, configFile))
@@ -296,4 +296,25 @@ test('should save config with correct versions if there are postgresql schema', 
   const savedConfig = JSON.parse(savedConfigFile)
 
   equal(savedConfig.migrations.table, 'public.versions')
+})
+
+test('should set migrations table to versions if there are no postgresql schema', async ({ teardown, equal }) => {
+  const configPath = join(__dirname, 'fixtures', 'postgresql-without-schema.json')
+  const configFile = await readFile(configPath, 'utf8')
+
+  teardown(() => writeFile(configPath, configFile))
+
+  const cm = new DBConfigManager({
+    source: configPath,
+    schema: {}
+  })
+  const parseResult = await cm.parse()
+  equal(parseResult, true)
+
+  await cm.save()
+
+  const savedConfigFile = await readFile(configPath, 'utf8')
+  const savedConfig = JSON.parse(savedConfigFile)
+
+  equal(savedConfig.migrations.table, 'versions')
 })

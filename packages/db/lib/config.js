@@ -23,7 +23,7 @@ class DBConfigManager extends ConfigManager {
       this.current.core.connectionString = 'sqlite://' + sqliteFullPath
     }
 
-    const arePostgresqlSchemaDefined = this.current.core?.connectionString.indexOf('postgresql') === 0 && this.current.core?.schema?.length > 0
+    const arePostgresqlSchemaDefined = this.current.core?.connectionString.indexOf('postgres') === 0 && this.current.core?.schema?.length > 0
 
     const migrationsTableName = arePostgresqlSchemaDefined ? 'public.versions' : 'versions'
 
