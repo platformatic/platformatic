@@ -312,6 +312,13 @@ test('list', async ({ pass, teardown, same, equal }) => {
   }
 
   {
+    const url = '/posts?totalCount=true&limit=7'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url}`)
+  }
+
+  {
     const url = '/posts?offset=2'
     const res = await app.inject({ method: 'GET', url })
     equal(res.statusCode, 200, `${url} status code`)
@@ -408,6 +415,13 @@ test('list', async ({ pass, teardown, same, equal }) => {
       url: '/posts',
       body
     })
+  }
+
+  {
+    const url = '/posts?totalCount=true'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
   }
 
   {

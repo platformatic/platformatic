@@ -97,7 +97,7 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
     // X-Total-Count header
     if (query.totalCount) {
       let totalCount
-      if ((((offset ?? 0) === 0) || (res.length > 0)) && ((limit === undefined) || (res.length < limit))) {
+      if ((((offset ?? 0) === 0) || (res.length > 0)) && ((limit !== undefined) && (res.length < limit))) {
         totalCount = (offset ?? 0) + res.length
       } else {
         totalCount = await entity.count({ where, ctx })
