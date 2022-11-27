@@ -957,3 +957,47 @@ test('deserialize JSONB columns', { skip: !isPg }, async (t) => {
     same(json.data.getPageById.metadata, jsonData)
   }
 })
+
+test('handle multiple enums having same name', { skip: isSQLite }, async ({ pass, teardown }) => {
+  async function createPagesWithEnums (db, sql) {
+    if (isPg) {
+      db.query(sql`
+      CREATE TYPE simple_enum as ENUM ('value1', 'value2');
+      CREATE TABLE pages (
+        id SERIAL PRIMARY KEY,
+        enumName simple_enum 
+      );
+      CREATE TABLE books (
+        id SERIAL PRIMARY KEY,
+        enumName simple_enum 
+      );
+      `)
+    } else {
+      await db.query(sql`
+      CREATE TABLE pages (
+        id SERIAL PRIMARY KEY,
+        enumName ENUM ('value1', 'value2')
+      );
+      CREATE TABLE books (
+        id SERIAL PRIMARY KEY,
+        enumName ENUM ('value1', 'value2')
+      );`)
+    }
+  }
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createPagesWithEnums(db, sql)
+    }
+  })
+  app.register(sqlGraphQL, {
+    graphiql: false
+  })
+
+  teardown(app.close.bind(app))
+  await app.ready()
+})
