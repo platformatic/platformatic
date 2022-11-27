@@ -1017,7 +1017,7 @@ test('handle enums with dashed values', { skip: isSQLite }, async ({ pass, teard
       CREATE TABLE pages (
         id SERIAL PRIMARY KEY,
         enumName ENUM ('value-1', 'value-2')
-      );`);
+      );`)
     }
   }
   const app = fastify()
@@ -1055,10 +1055,9 @@ test('handle enums with dashed values', { skip: isSQLite }, async ({ pass, teard
   same(res.json(), {
     data: {
       savePage: {
-        id: 1, 
+        id: 1,
         enumName: 'value-1'
       }
     }
   })
-
 })
