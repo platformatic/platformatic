@@ -8,7 +8,7 @@
 exports['test/cli/schema.test.mjs TAP print the graphql schema to stdout > must match snapshot 1'] = `
 type Query {
   getGraphById(id: ID!): Graph
-  graphs(limit: Int, offset: Int, orderBy: [GraphOrderByArguments], where: GraphWhereArguments): [Graph]
+  graphs(limit: LimitInt, offset: Int, orderBy: [GraphOrderByArguments], where: GraphWhereArguments): [Graph]
   countGraphs(where: GraphWhereArguments): graphsCount
 }
 
@@ -16,6 +16,11 @@ type Graph {
   id: ID
   name: String
 }
+
+"""
+Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown
+"""
+scalar LimitInt
 
 input GraphOrderByArguments {
   field: GraphOrderByField
@@ -124,7 +129,8 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
             },
             "in": "query",
             "name": "limit",
-            "required": false
+            "required": false,
+            "description": "Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown"
           },
           {
             "schema": {

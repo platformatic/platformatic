@@ -15,6 +15,11 @@ const ascDesc = new graphql.GraphQLEnumType({
   }
 })
 
+const limitType = new graphql.GraphQLScalarType({
+  name: 'LimitInt',
+  description: 'Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown'
+})
+
 function constructGraph (app, entity, opts, ignore) {
   const primaryKeys = Array.from(entity.primaryKeys).map((key) => camelcase(key))
   const relationalFields = entity.relations
@@ -138,7 +143,7 @@ function constructGraph (app, entity, opts, ignore) {
   queryTopFields[plural] = {
     type: new graphql.GraphQLList(type),
     args: {
-      limit: { type: graphql.GraphQLInt },
+      limit: { type: limitType },
       offset: { type: graphql.GraphQLInt },
       orderBy: {
         type: new graphql.GraphQLList(new graphql.GraphQLInputObjectType({

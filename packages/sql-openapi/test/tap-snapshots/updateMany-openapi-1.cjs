@@ -46,6 +46,7 @@ Object {
         "operationId": "getPosts",
         "parameters": Array [
           Object {
+            "description": "Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown",
             "in": "query",
             "name": "limit",
             "required": false,

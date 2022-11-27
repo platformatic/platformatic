@@ -40,7 +40,7 @@ async function buildConnection (log, createConnectionPool, connectionString, poo
   return db
 }
 
-async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, ignore = {}, autoTimestamp = true, hooks = {}, schema }) {
+async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, ignore = {}, autoTimestamp = true, hooks = {}, schema, limit = {} }) {
   // TODO validate config using the schema
   if (!connectionString) {
     throw new Error('connectionString is required')
@@ -121,7 +121,7 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, 
       if (ignore[table] === true) {
         continue
       }
-      const entity = await buildEntity(db, sql, log, table, queries, autoTimestamp, schema, ignore[table] || {})
+      const entity = await buildEntity(db, sql, log, table, queries, autoTimestamp, schema, ignore[table] || {}, limit)
       // Check for primary key of all entities
       if (entity.primaryKeys.size === 0) {
         throw new Error(`Cannot find any primary keys for ${entity.name} entity`)

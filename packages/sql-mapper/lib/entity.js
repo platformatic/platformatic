@@ -4,10 +4,11 @@ const camelcase = require('camelcase')
 const { singularize } = require('inflected')
 const {
   toSingular,
-  tableName
+  tableName,
+  sanitizeLimit
 } = require('./utils')
 
-function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relations, queries, autoTimestamp, schema) {
+function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relations, queries, autoTimestamp, schema, limitConfig) {
   const entityName = toSingular(table)
 
   // Fields remapping
@@ -265,13 +266,12 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
       query = sql`${query} ORDER BY ${sql.join(orderBy, sql`, `)}`
     }
 
-    if (opts.limit || opts.offset !== undefined) {
-      // Use Number.MAX_SAFE_INTEGER as default value for limit because in the sql query you cannot add OFFSET without LIMIT
-      const limit = (opts.limit !== undefined) ? opts.limit : Number.MAX_SAFE_INTEGER
-      query = sql`${query} LIMIT ${limit}`
-      if (opts.offset !== undefined) {
-        query = sql`${query} OFFSET ${opts.offset}`
+    query = sql`${query} LIMIT ${sanitizeLimit(opts.limit, limitConfig)}`
+    if (opts.offset !== undefined) {
+      if (opts.offset < 0) {
+        throw new Error(`Param offset=${opts.offset} not allowed. It must be not negative value.`)
       }
+      query = sql`${query} OFFSET ${opts.offset}`
     }
 
     const res = await db.query(query)
@@ -321,7 +321,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
   }
 }
 
-async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, ignore) {
+async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, ignore, limitConfig) {
   // Compute the columns
   const columns = (await queries.listColumns(db, sql, table, schema)).filter((c) => !ignore[c.column_name])
   const fields = columns.reduce((acc, column) => {
@@ -391,7 +391,7 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema,
     }
   }
 
-  const entity = createMapper(db, sql, log, table, fields, primaryKeys, currentRelations, queries, autoTimestamp, schema)
+  const entity = createMapper(db, sql, log, table, fields, primaryKeys, currentRelations, queries, autoTimestamp, schema, limitConfig)
   entity.relations = currentRelations
 
   return entity

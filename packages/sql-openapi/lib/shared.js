@@ -46,7 +46,7 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
       querystring: {
         type: 'object',
         properties: {
-          limit: { type: 'integer' },
+          limit: { type: 'integer', description: 'Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown' },
           offset: { type: 'integer' },
           totalCount: { type: 'boolean', default: false },
           fields,
@@ -97,7 +97,7 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
     // X-Total-Count header
     if (query.totalCount) {
       let totalCount
-      if ((((offset ?? 0) === 0) || (res.length > 0)) && ((limit === undefined) || (res.length < limit))) {
+      if ((((offset ?? 0) === 0) || (res.length > 0)) && ((limit !== undefined) && (res.length < limit))) {
         totalCount = (offset ?? 0) + res.length
       } else {
         totalCount = await entity.count({ where, ctx })

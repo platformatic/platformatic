@@ -79,6 +79,19 @@ const core = {
         type: 'boolean'
       }
     },
+    limit: {
+      type: 'object',
+      properties: {
+        default: {
+          type: 'integer',
+          default: 10
+        },
+        max: {
+          type: 'integer',
+          default: 100
+        }
+      }
+    },
     events: {
       anyOf: [{
         type: 'boolean'

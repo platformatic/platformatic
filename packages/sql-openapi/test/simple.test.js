@@ -312,6 +312,13 @@ test('list', async ({ pass, teardown, same, equal }) => {
   }
 
   {
+    const url = '/posts?totalCount=true&limit=7'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url}`)
+  }
+
+  {
     const url = '/posts?offset=2'
     const res = await app.inject({ method: 'GET', url })
     equal(res.statusCode, 200, `${url} status code`)
@@ -394,6 +401,47 @@ test('list', async ({ pass, teardown, same, equal }) => {
     same(res.json(), posts.map((p, i) => {
       return { ...p, id: i + 1 + '' }
     }).slice(2, 4), `${url} response`)
+  }
+
+  for (let i = 5; i <= 100; i++) {
+    const body = {
+      title: `Post ${i}`,
+      longText: `This is a long text ${i}`
+    }
+    posts.push(body)
+
+    await app.inject({
+      method: 'POST',
+      url: '/posts',
+      body
+    })
+  }
+
+  {
+    const url = '/posts?totalCount=true'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
+  }
+
+  {
+    const url = '/posts?totalCount=true&limit=99&offset=10'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
+    same(res.json(), posts.map((p, i) => {
+      return { ...p, id: i + 1 + '' }
+    }).slice(10), `${url} response`)
+  }
+
+  {
+    const url = '/posts?totalCount=true&limit=100&offset=3'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
+    same(res.json(), posts.map((p, i) => {
+      return { ...p, id: i + 1 + '' }
+    }).slice(3, 103), `${url} response`)
   }
 })
 
