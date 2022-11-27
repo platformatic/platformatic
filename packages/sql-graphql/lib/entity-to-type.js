@@ -50,7 +50,7 @@ function constructGraph (app, entity, opts, ignore) {
     /* istanbul ignore next */
     if (field.enum) {
       const enumValues = field.enum.reduce((acc, enumValue) => {
-        acc[enumValue] = { value: enumValue }
+        acc[enumValue.replace(/-/g, '_')] = { value: enumValue }
         return acc
       }, {})
       const enumName = `${entityName}_${key}`

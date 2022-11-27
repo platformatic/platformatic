@@ -1001,3 +1001,64 @@ test('handle multiple enums having same name', { skip: isSQLite }, async ({ pass
   teardown(app.close.bind(app))
   await app.ready()
 })
+
+test('handle enums with dashed values', { skip: isSQLite }, async ({ pass, teardown, same }) => {
+  async function createPagesWithEnums (db, sql) {
+    if (isPg) {
+      db.query(sql`
+      CREATE TYPE simple_enum as ENUM ('value-1', 'value-2');
+      CREATE TABLE pages (
+        id SERIAL PRIMARY KEY,
+        enumName simple_enum 
+      );
+      `)
+    } else {
+      await db.query(sql`
+      CREATE TABLE pages (
+        id SERIAL PRIMARY KEY,
+        enumName ENUM ('value-1', 'value-2')
+      );`);
+    }
+  }
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createPagesWithEnums(db, sql)
+    }
+  })
+  app.register(sqlGraphQL, {
+    graphiql: false
+  })
+
+  teardown(app.close.bind(app))
+  await app.ready()
+
+  const res = await app.inject({
+    method: 'POST',
+    url: '/graphql',
+    body: {
+      query: `
+        mutation {
+          savePage(input: { id: 1, enumName: value_1 }) {
+            id
+            enumName
+          }
+        }
+      `
+    }
+  })
+
+  same(res.json(), {
+    data: {
+      savePage: {
+        id: 1, 
+        enumName: 'value-1'
+      }
+    }
+  })
+
+})
