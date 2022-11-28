@@ -51,14 +51,21 @@ function getTsConfig (outDir) {
 }
 
 function generateConfig (args) {
-  const { hostname, port, database, migrations, types, typescript } = args
-
-  const connectionString = connectionStrings[database]
+  const { migrations, types, typescript } = args
 
   const config = {
     $schema: `./${filenameConfigJsonSchema}`,
-    server: { hostname, port },
-    core: { connectionString, graphql: true },
+    server: {
+      hostname: '{PLT_SERVER_HOSTNAME}',
+      port: '{PORT}',
+      logger: {
+        level: '{PLT_SERVER_LOGGER_LEVEL}'
+      }
+    },
+    core: {
+      connectionString: '{DATABASE_URL}',
+      graphql: true
+    },
     migrations: { dir: migrations },
     plugin: {
       path: typescript === true ? 'plugin.ts' : 'plugin.js'
@@ -78,6 +85,18 @@ function generateConfig (args) {
   }
 
   return config
+}
+
+function generateEnv (args) {
+  const { hostname, port, database } = args
+  const connectionString = connectionStrings[database]
+  const env = `
+PLT_SERVER_HOSTNAME=${hostname}
+PORT=${port}
+PLT_SERVER_LOGGER_LEVEL=info
+DATABASE_URL=${connectionString}
+`
+  return env
 }
 
 const JS_PLUGIN_WITH_TYPES_SUPPORT = `\
@@ -109,7 +128,6 @@ async function generatePluginWithTypesSupport (logger, args, configManager) {
     : JS_PLUGIN_WITH_TYPES_SUPPORT
 
   await writeFile(pluginPath, pluginTemplate)
-  await configManager.save()
 
   logger.info(`Plugin file created at ${relative(process.cwd(), pluginPath)}`)
 }
@@ -149,6 +167,11 @@ async function init (_args) {
     await generateJsonSchemaConfig()
     await writeFile('platformatic.db.json', JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.db.json successfully created.')
+
+    const env = generateEnv(args)
+    await writeFile('.env', env)
+    await writeFile('.env.sample', env)
+    logger.info('Environment file .env successfully created.')
   } else {
     logger.info(`Configuration file ${accessibleConfigFilename} found, skipping creation of configuration file.`)
   }

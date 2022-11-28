@@ -1,0 +1,10 @@
+Welcome to Platformatic DB Creator. 
+Available options are:
+
+  * --help - Display this message
+  * -h, --hostname <hostname>`: The hostname where Platformatic DB server will listen for connections.
+  * -p, --port <port>`: The port where Platformatic DB server will listen for connections.
+  * -db, --database <database_name>`: The name of the database to use. Default: `sqlite`. 
+  * -m, --migrations <path>`: Relative path to the migrations folder. Default: `./migrations`.
+  * -t, --types <boolean>`: Set true to enable type autogeneration. Default: `true`.
+  * -ts, --typescript <boolean>`: Set true to enable TypeScript plugins. Default: `false`.
