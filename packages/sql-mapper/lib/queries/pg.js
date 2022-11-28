@@ -14,7 +14,6 @@ async function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRe
     const res = await db.query(insert)
     return res[0]
   }
-
   return shared.insertOne(db, sql, table, schema, input, primaryKeys, fieldsToRetrieve)
 }
 
