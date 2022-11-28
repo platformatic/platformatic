@@ -158,7 +158,7 @@ Options:
 Apply all configured migrations to the database:
 
 ``` bash
-  $ platformatic db migrate
+  $ platformatic db migrations apply
 ```
 
 The migrations will be applied in the order they are specified in the
@@ -166,7 +166,7 @@ folder defined in the configuration file. If you want to apply a specific migrat
 you can use the `--to` option:
 
 ``` bash
-  $ platformatic db migrate --to 001
+  $ platformatic db migrations apply --to 001
 ```
 
 Here is an example migration:
@@ -181,7 +181,7 @@ Here is an example migration:
 You can always rollback to a specific migration with:
 
 ``` bash
-  $ platformatic db migrate --to VERSION
+  $ platformatic db migrations apply --to VERSION
 ```
 
 Use 000 to reset to the initial state.

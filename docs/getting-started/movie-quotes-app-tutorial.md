@@ -352,7 +352,7 @@ rm movie-quotes.sqlite
 Now let's create a fresh SQLite database by running our migrations:
 
 ```bash
-npx platformatic db migrate
+npx platformatic db migrations apply
 ```
 
 And then let's populate the `quotes` and `movies` tables with data using our
