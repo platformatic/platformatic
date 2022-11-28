@@ -1,6 +1,6 @@
 'use strict'
 
-const { test, only } = require('tap')
+const { test } = require('tap')
 
 const { clear, connInfo, isSQLite, isMysql, isPg, isMysql8 } = require('./helper')
 const { connect } = require('..')
@@ -9,7 +9,7 @@ const fakeLogger = {
   error: () => {}
 }
 
-only('entity fields', async ({ equal, not, same, teardown }) => {
+test('entity fields', async ({ equal, not, same, teardown }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
     teardown(() => db.dispose())

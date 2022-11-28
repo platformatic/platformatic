@@ -25,7 +25,6 @@ async function insertOne (db, sql, table, schema, input, primaryKeysTypes, field
     Object.keys(input).map((key) => sql.value(input[key])),
     sql`, `
   )
-  console.log('@@@@@@@@@@@@@@@@@', input)
   const insert = sql`
     INSERT INTO ${tableName(sql, table, schema)} (${keys})
     VALUES (${values})
