@@ -93,10 +93,23 @@ async function mapperToGraphql (app, opts) {
 
   let subscription
   if (app.platformatic.mq) {
-    const entitiesList = Object.keys(app.platformatic.entities)
-    const ignoreList = opts.subscriptionIgnore || []
+    // Create a copy because we will alter it
+    const ignoreList = Array.from(opts.subscriptionIgnore || [])
 
-    if (entitiesList.length - ignoreList.length > 0) {
+    const entitiesList = []
+
+    for (const entity of Object.values(app.platformatic.entities)) {
+      if (ignoreList.includes(entity.singularName)) {
+        continue
+      }
+      // We currently do not support subscriptions for join tables
+      if (entity.primaryKeys.size > 1) {
+        continue
+      }
+      entitiesList.push(entity)
+    }
+
+    if (entitiesList.length > 0) {
       opts.subscription = {
         emitter: app.platformatic.mq
       }
