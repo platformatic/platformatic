@@ -1,15 +1,19 @@
 'use strict'
 
 const camelcase = require('camelcase')
-const { singularize } = require('inflected')
 const {
   toSingular,
+  toUpperFirst,
   tableName,
   sanitizeLimit
 } = require('./utils')
 
-function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relations, queries, autoTimestamp, schema, limitConfig) {
-  const entityName = toSingular(table)
+function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relations, queries, autoTimestamp, schema, useSchemaInName, limitConfig) {
+  /* istanbul ignore next */ // Ignoring because this won't be fully covered by DB not supporting schemas (SQLite)
+  const entityName = useSchemaInName ? toUpperFirst(`${schema}${toSingular(table)}`) : toSingular(table)
+  /* istanbul ignore next */
+  const pluralName = camelcase(useSchemaInName ? camelcase(`${schema} ${table}`) : table)
+  const singularName = camelcase(entityName)
 
   // Fields remapping
   const fieldMapToRetrieve = {}
@@ -303,8 +307,8 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
 
   return {
     name: entityName,
-    singularName: camelcase(singularize(table)),
-    pluralName: camelcase(table),
+    singularName,
+    pluralName,
     primaryKeys,
     table,
     schema,
@@ -321,7 +325,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
   }
 }
 
-async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, ignore, limitConfig) {
+async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, useSchemaInName, ignore, limitConfig) {
   // Compute the columns
   const columns = (await queries.listColumns(db, sql, table, schema)).filter((c) => !ignore[c.column_name])
   const fields = columns.reduce((acc, column) => {
@@ -391,7 +395,7 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema,
     }
   }
 
-  const entity = createMapper(db, sql, log, table, fields, primaryKeys, currentRelations, queries, autoTimestamp, schema, limitConfig)
+  const entity = createMapper(db, sql, log, table, fields, primaryKeys, currentRelations, queries, autoTimestamp, schema, useSchemaInName, limitConfig)
   entity.relations = currentRelations
 
   return entity

@@ -3,9 +3,13 @@
 const { singularize } = require('inflected')
 const camelcase = require('camelcase')
 
+function toUpperFirst (str) {
+  return str[0].toUpperCase() + str.slice(1)
+}
+
 function toSingular (str) {
   str = camelcase(singularize(str))
-  str = str[0].toUpperCase() + str.slice(1)
+  str = toUpperFirst(str)
   return str
 }
 
@@ -34,8 +38,14 @@ function tableName (sql, table, schema) {
   return schema ? sql.ident(schema, table) : sql.ident(table)
 }
 
+function areSchemasSupported (sql) {
+  return !sql.isSQLite
+}
+
 module.exports = {
   toSingular,
+  toUpperFirst,
   sanitizeLimit,
-  tableName
+  tableName,
+  areSchemasSupported
 }

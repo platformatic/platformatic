@@ -1,8 +1,7 @@
 # Schema support
 
 It's possible to specify the schemas where the tables are located (if the database supports schemas).
-
-```typescript
+PlatformaticDB will inspect this schemas to create the entities 
 
 _Example_
 
@@ -20,8 +19,9 @@ CREATE TABLE IF NOT EXISTS test2.users (
 );
 ```
 
-Schemas must be specified in configuration. These are then automatically set in the postgres `search path` for the connection (see [here](https://www.postgresql.org/docs/current/ddl-schemas.html#DDL-SCHEMAS-PATH) for more info).
-Note that if we use schemas and migrations, we must specify the schema in the migrations table as well.
+The schemas must be specified in configuration in the `schema` section.
+Note that if we use schemas and migrations, we must specify the schema in the migrations table as well 
+(with postgresql, we assume we use the default `public` schema).
 
 ```json
   ...
@@ -42,9 +42,9 @@ Note that if we use schemas and migrations, we must specify the schema in the mi
   ...
 ```
 
-:::danger
-If two tables with the same name are present in different schemas, an error is thrown.
-Tables with the same name in different schema are not supported.
+The entities name are then generated in the form `schemaName + entityName`, PascalCase (this is necessary to avoid name collisions in case there are tables with same name in different schemas).
+So for instance for the example above we generate the `Test1Movie` and `Test2User` entities.
+
+:::info
+***Please pay attention to the entity names when using schema, these are also used to setup authorization rules***
 :::
-
-
