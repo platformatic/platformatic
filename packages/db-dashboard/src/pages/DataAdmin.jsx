@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import {
+  BulkDeleteButton,
+  BulkExportButton,
   CreateButton,
   DatagridConfigurable,
   ExportButton,
@@ -117,11 +119,18 @@ const ListActions = (props) => (
 )
 
 const DatagridBuilder = (props) => (
-  <DatagridConfigurable rowClick="edit">
+  <DatagridConfigurable rowClick="edit" bulkActionButtons={<BulkActionButtons />}>
     {props.fields.map((field) => (
       <FieldGuesser key={field.name} source={field.name} />
     ))}
   </DatagridConfigurable>
+)
+
+const BulkActionButtons = () => (
+  <>
+    <BulkExportButton />
+    <BulkDeleteButton />
+  </>
 )
 
 export default DataAdmin
