@@ -117,7 +117,7 @@ const ListActions = (props) => (
 )
 
 const DatagridBuilder = (props) => (
-  <DatagridConfigurable>
+  <DatagridConfigurable rowClick="edit">
     {props.fields.map((field) => (
       <FieldGuesser key={field.name} source={field.name} />
     ))}
