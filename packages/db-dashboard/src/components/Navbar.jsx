@@ -27,6 +27,9 @@ export default function Navbar () {
       <div>
         <NavLink className={getListItemClass} data-testid='react-admin-link' to='/dashboard/table-view'>Table View</NavLink>
       </div>
+      <div>
+        <NavLink className={getListItemClass} data-testid='data-admin-link' to='/dashboard/data-admin'>Data Admin</NavLink>
+      </div>
     </div>
   )
 }

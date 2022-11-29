@@ -5,6 +5,8 @@ import GraphiQLPage from './pages/GQL'
 import ConfigViewer from './pages/ConfigViewer'
 import SwaggerViewer from './pages/SwaggerViewer'
 import ReactAdmin from './pages/ReactAdmin'
+import DataAdmin from './pages/DataAdmin'
+
 import Dashboard from './components/Dashboard'
 
 import '@platformatic/ui-components/dist/main.css'
@@ -35,7 +37,6 @@ function App () {
         urlPrefix
       }}
     >
-
       <Layout>
         <Dashboard>
           <Routes>
@@ -46,8 +47,8 @@ function App () {
             <Route path='/dashboard/openapi' element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
             <Route path='/dashboard/openapi-admin' element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/_admin/documentation/json`} />} />
             <Route path='/dashboard/table-view/*' element={<ReactAdmin basename='/dashboard/table-view' apiUrl={`${urlPrefix}`} swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
+            <Route path='/dashboard/data-admin/*' element={<DataAdmin basename='/dashboard/data-admin' apiUrl={`${urlPrefix}`} swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
           </Routes>
-
         </Dashboard>
       </Layout>
     </AppContext.Provider>
