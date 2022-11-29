@@ -106,7 +106,7 @@ importers:
       '@databases/pg': ^5.3.0
       '@databases/sqlite': ^4.0.0
       '@fastify/accepts': ^4.0.1
-      '@fastify/basic-auth': ^4.0.0
+      '@fastify/basic-auth': ^5.0.0
       '@fastify/cors': ^8.0.0
       '@fastify/deepmerge': ^1.1.0
       '@fastify/static': ^6.5.0
@@ -153,7 +153,7 @@ importers:
       yaml: ^2.1.1
     dependencies:
       '@fastify/accepts': 4.1.0
-      '@fastify/basic-auth': 4.0.0
+      '@fastify/basic-auth': 5.0.0
       '@fastify/cors': 8.2.0
       '@fastify/deepmerge': 1.2.0
       '@fastify/static': 6.5.1
@@ -362,7 +362,7 @@ importers:
     specifiers:
       '@fastify/accepts': ^4.0.1
       '@fastify/autoload': ^5.5.0
-      '@fastify/basic-auth': ^4.0.0
+      '@fastify/basic-auth': ^5.0.0
       '@fastify/cors': ^8.0.0
       '@fastify/deepmerge': ^1.1.0
       '@fastify/restartable': ^1.3.1
@@ -402,7 +402,7 @@ importers:
     dependencies:
       '@fastify/accepts': 4.1.0
       '@fastify/autoload': 5.6.0
-      '@fastify/basic-auth': 4.0.0
+      '@fastify/basic-auth': 5.0.0
       '@fastify/cors': 8.2.0
       '@fastify/deepmerge': 1.2.0
       '@fastify/restartable': 1.3.1
@@ -2325,12 +2325,12 @@ packages:
       pkg-up: 3.1.0
     dev: false
 
-  /@fastify/basic-auth/4.0.0:
-    resolution: {integrity: sha512-qx8n2BTutuCmzMw/7yQmvr1MOsCmasV/CljYg2CCBgAi4ljps627a6FpFX+xFj5wfjmYrvZQRcCMP5Oa67CJpA==}
+  /@fastify/basic-auth/5.0.0:
+    resolution: {integrity: sha512-SKqJ0z6ziUZ2rfTcI0Y/RTlyvWgLlwATsOC9HSkAUEfIunFUXCTeygijSZRg/CYQkBRjoczwhNvBFr8Pm6agTg==}
     dependencies:
+      '@fastify/error': 3.0.0
       basic-auth: 2.0.1
-      fastify-plugin: 3.0.1
-      http-errors: 2.0.0
+      fastify-plugin: 4.3.0
     dev: false
 
   /@fastify/cookie/8.3.0:
@@ -6724,10 +6724,6 @@ packages:
       fastify: 4.10.2
       fastify-plugin: 4.3.0
       prom-client: 14.1.0
-    dev: false
-
-  /fastify-plugin/3.0.1:
-    resolution: {integrity: sha512-qKcDXmuZadJqdTm6vlCqioEbyewF60b/0LOFCcYN1B6BIZGlYJumWWOYs70SFYLDAH4YqdE1cxH/RKMG7rFxgA==}
     dev: false
 
   /fastify-plugin/4.3.0:
