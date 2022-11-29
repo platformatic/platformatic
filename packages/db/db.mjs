@@ -10,7 +10,7 @@ import { join } from 'desm'
 import start from './lib/start.mjs'
 import { init } from './lib/init.mjs'
 import { compile } from './lib/compile.mjs'
-import { migrate } from './lib/migrate.mjs'
+import { applyMigrations } from './lib/migrate.mjs'
 import { seed } from './lib/seed.mjs'
 import { generateTypes } from './lib/gen-types.mjs'
 import { printGraphQLSchema, printOpenAPISchema } from './lib/gen-schema.mjs'
@@ -26,14 +26,14 @@ const program = commist({ maxDistance: 4 })
 program.register('help', help.toStdout)
 program.register('help init', help.toStdout.bind(null, ['init']))
 program.register('help start', help.toStdout.bind(null, ['start']))
-program.register('help migrate', help.toStdout.bind(null, ['migrate']))
+program.register('help migrations apply', help.toStdout.bind(null, ['migrations apply']))
 program.register({ command: 'help seed', strict: true }, help.toStdout.bind(null, ['seed']))
 program.register('help schema', help.toStdout.bind(null, ['schema']))
 
 program.register('start', start)
 program.register('init', init)
 program.register('compile', compile)
-program.register('migrate', migrate)
+program.register('migrations apply', applyMigrations)
 program.register('seed', seed)
 program.register('types', generateTypes)
 program.register('schema graphql', printGraphQLSchema)

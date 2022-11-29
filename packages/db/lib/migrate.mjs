@@ -9,7 +9,7 @@ import loadConfig from './load-config.mjs'
 import { execute as generateTypes, checkForDependencies } from './gen-types.mjs'
 import { utimesSync } from 'fs'
 
-async function migrate (_args) {
+async function applyMigrations (_args) {
   const logger = pino(pretty({
     translateTime: 'SYS:HH:MM:ss',
     ignore: 'hostname,pid'
@@ -50,8 +50,8 @@ async function migrate (_args) {
   }
 }
 
-export { migrate, execute }
+export { applyMigrations, execute }
 
 if (isMain(import.meta)) {
-  await migrate(process.argv.splice(2))
+  await applyMigrations(process.argv.splice(2))
 }

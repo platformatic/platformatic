@@ -17,7 +17,7 @@ test('migrate and start', async ({ comment, equal, match, teardown }) => {
   const cwd = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite')
   comment(`dbl ${dbLocation}`)
   comment(`cwd ${cwd}`)
-  const { stdout } = await execa('node', [cliPath, 'migrate'], {
+  const { stdout } = await execa('node', [cliPath, 'migrations', 'apply'], {
     cwd
   })
 
@@ -83,7 +83,7 @@ test('no cwd', async ({ comment, equal, match, teardown }) => {
   const config = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite', 'platformatic.db.json')
   comment(`dbl ${dbLocation}`)
   comment(`cfg ${config}`)
-  const { stdout } = await execa('node', [cliPath, 'migrate', '-c', config])
+  const { stdout } = await execa('node', [cliPath, 'migrations', 'apply', '-c', config])
 
   {
     const sanitized = stripAnsi(stdout)

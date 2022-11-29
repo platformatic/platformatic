@@ -171,7 +171,7 @@ async function generateTypes (_args) {
 
   const count = await execute(logger, args, config)
   if (count === 0) {
-    logger.warn('No table found. Please run `platformatic db migrate` to generate types.')
+    logger.warn('No table found. Please run `platformatic db migrations apply` to generate types.')
   }
   await checkForDependencies(logger, args, config)
 }
