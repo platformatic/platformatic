@@ -25,9 +25,6 @@ export default function Navbar () {
         <NavLink className={getListItemClass} data-testid='swagger-plt-db-view-link' to='/dashboard/openapi-admin'>Admin API Docs</NavLink>
       </div>
       <div>
-        <NavLink className={getListItemClass} data-testid='react-admin-link' to='/dashboard/table-view'>Table View</NavLink>
-      </div>
-      <div>
         <NavLink className={getListItemClass} data-testid='data-admin-link' to='/dashboard/data-admin'>Data Admin</NavLink>
       </div>
     </div>
