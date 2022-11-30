@@ -23,6 +23,7 @@ t.jobs = 10
 t.test('run db init with default options', async (t) => {
   const pathToFolder = await fs.mkdtemp(path.join(tmpdir(), 'init-1'))
   const pathToDbConfigFile = path.join(pathToFolder, 'platformatic.db.json')
+  const pathToConfigSchema = path.join(pathToFolder, 'platformatic.db.schema.json')
   const pathToMigrationFolder = path.join(pathToFolder, 'migrations')
   const pathToMigrationFileDo = path.join(pathToMigrationFolder, '001.do.sql')
   const pathToMigrationFileUndo = path.join(pathToMigrationFolder, '001.undo.sql')
@@ -32,8 +33,12 @@ t.test('run db init with default options', async (t) => {
   const dbConfigFile = await fs.readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
 
-  const { server, core, migrations } = dbConfig
+  const configSchema = await fs.readFile(pathToConfigSchema, 'utf8')
+  const parseConfigSchema = JSON.parse(configSchema)
 
+  const { server, core, migrations, $schema } = dbConfig
+
+  t.equal($schema, './platformatic.db.schema.json')
   t.equal(server.hostname, '127.0.0.1')
   t.equal(server.port, 3042)
 
@@ -46,6 +51,10 @@ t.test('run db init with default options', async (t) => {
   t.equal(migrationFileDo, moviesMigrationDo)
   const migrationFileUndo = await fs.readFile(pathToMigrationFileUndo, 'utf8')
   t.equal(migrationFileUndo, moviesMigrationUndo)
+
+  const {title, type} = parseConfigSchema
+  t.equal(title, 'Platformatic DB config')
+  t.equal(type, 'object')
 })
 
 t.test('run init with default options twice', async (t) => {
