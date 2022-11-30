@@ -52,7 +52,7 @@ t.test('run db init with default options', async (t) => {
   const migrationFileUndo = await fs.readFile(pathToMigrationFileUndo, 'utf8')
   t.equal(migrationFileUndo, moviesMigrationUndo)
 
-  const {title, type} = parseConfigSchema
+  const { title, type } = parseConfigSchema
   t.equal(title, 'Platformatic DB config')
   t.equal(type, 'object')
 })
