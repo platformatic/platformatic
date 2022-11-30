@@ -1,7 +1,6 @@
-import { request } from 'undici'
+const { request } = require('undici')
 
-/* c8 ignore start */
-export const getOneStepVersion = async () => {
+const getOneStepVersion = async () => {
   try {
     // We try to get latest version from GitHub API, but if not present (lke now) we fallback to tags
     const { statusCode, body } = await request('https://api.github.com/repos/platformatic/onestep/releases/latest', {
@@ -38,9 +37,8 @@ export const getOneStepVersion = async () => {
     return 'CHANGE-ME-TO-LATEST-VERSION'
   }
 }
-/* c8 ignore stop */
 
-export const getGHAction = async () => {
+const getGHAction = async () => {
   const onestepVersion = await getOneStepVersion()
   const ghActionConfig =
 `name: Deploy Platformatic DB application to the cloud
@@ -66,4 +64,9 @@ jobs:
           platformatic_api_key: \${{ secrets.PLATFORMATIC_API_KEY }}
   `
   return ghActionConfig
+}
+
+module.exports = {
+  getOneStepVersion,
+  getGHAction
 }
