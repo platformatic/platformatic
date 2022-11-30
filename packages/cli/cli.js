@@ -30,11 +30,6 @@ program.register('help service', function (args) {
 })
 program.register({ command: 'login', strict: true }, login)
 
-/* c8 ignore next 3 */
-if (isColorSupported && process.stdout.isTTY) {
-  console.log(logo)
-}
-
 const args = minimist(process.argv.slice(2), {
   boolean: ['help', 'version'],
   alias: {
@@ -59,5 +54,10 @@ if (args.help) {
     process.exit(1)
   }
 } else {
+  /* c8 ignore next 3 */
+  if (isColorSupported && process.stdout.isTTY) {
+    console.log(logo)
+  }
+
   help.toStdout(['help'])
 }
