@@ -365,7 +365,6 @@ t.test('run db init --migrations custom-migrations-folder', async (t) => {
 
 t.test('run db init --h', async (t) => {
   const pathToFolder = await fs.mkdtemp(path.join(tmpdir(), 'init-11'))
-  const pathToDbConfigFile = path.join(pathToFolder, 'platformatic.db.json')
   const pathToGithubAction = path.join(pathToFolder, '.github', 'workflows', 'platformatic-deploy.yml')
 
   await execa('node', [cliPath, 'init', '--gh'], { cwd: pathToFolder })
