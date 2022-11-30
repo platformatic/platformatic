@@ -233,6 +233,7 @@ async function init (_args) {
       const githubAction = await getGHAction()
       await writeFile(ghActionFilePath, githubAction)
       logger.info(`Github action file ${ghActionFilePath} successfully created.`)
+    /* c8 ignore next 3 */
     } else {
       logger.info(`Github action file ${ghActionFilePath} found, skipping creation of github action file.`)
     }
