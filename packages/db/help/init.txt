@@ -13,4 +13,5 @@ Options:
   * `-db, --database <database_name>`: The name of the database to use. Default: `sqlite`. 
   * `-m, --migrations <path>`: Relative path to the migrations folder. Default: `./migrations`.
   * `-t, --types <boolean>`: Set true to enable type autogeneration. Default: `true`.
-  * `-ts, --typescript <boolean>`: Set true to enable TypeScript plugins. Default: `false`.
+  * `--ts, --typescript`: Set true to enable TypeScript plugins. Default: `false`.
+  * `--gh, --github <boolean>`: Set true to create the github action. Default: `false`.

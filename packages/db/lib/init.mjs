@@ -7,6 +7,9 @@ import { checkForDependencies, generateGlobalTypesFile } from './gen-types.mjs'
 import loadConfig from './load-config.mjs'
 import { findConfigFile, isFileAccessible } from './utils.js'
 import { generateJsonSchemaConfig, filenameConfigJsonSchema } from './gen-schema.mjs'
+import { getGHAction } from './ghaction.mjs'
+import inquirer from 'inquirer'
+import mkdirp from 'mkdirp'
 
 const connectionStrings = {
   postgres: 'postgres://postgres:postgres@localhost:5432/postgres',
@@ -127,7 +130,9 @@ async function init (_args) {
       database: 'sqlite',
       migrations: 'migrations',
       types: true,
-      typescript: false
+      typescript: false,
+      github: false,
+      nointeractive: false
     },
     alias: {
       h: 'hostname',
@@ -135,12 +140,14 @@ async function init (_args) {
       db: 'database',
       m: 'migrations',
       t: 'types',
-      ts: 'typescript'
+      ts: 'typescript',
+      gh: 'github',
+      ni: 'nointeractive'
     },
-    boolean: ['types', 'typescript']
+    boolean: ['types', 'typescript', 'github', 'nointeractive']
   })
 
-  const { migrations, typescript } = args
+  const { migrations, typescript, github, nointeractive } = args
 
   const currentDir = process.cwd()
   const accessibleConfigFilename = await findConfigFile(currentDir)
@@ -199,6 +206,36 @@ async function init (_args) {
     await generateGlobalTypesFile({}, config)
     await generatePluginWithTypesSupport(logger, args, configManager)
     await checkForDependencies(logger, args, config)
+  }
+
+  let createGHaction = github
+
+  /* c8 ignore start */
+  if (!createGHaction && !nointeractive) {
+    // we ask if the option is not explicitly set to true
+    const wizardOptions = await inquirer.prompt([{
+      type: 'list',
+      name: 'github',
+      message: 'Do you want to create the github action?',
+      default: true,
+      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+    }])
+    createGHaction = wizardOptions.github
+  }
+  /* c8 ignore stop */
+
+  if (createGHaction) {
+    const ghActionFileName = 'platformatic-deploy.yml'
+    const ghActionFilePath = join('.github', 'workflows', ghActionFileName)
+    const isGithubActionExists = await isFileAccessible(ghActionFilePath)
+    if (!isGithubActionExists) {
+      await mkdirp.sync(join('.github', 'workflows'))
+      const githubAction = await getGHAction()
+      await writeFile(ghActionFilePath, githubAction)
+      logger.info(`Github action file ${ghActionFilePath} successfully created.`)
+    } else {
+      logger.info(`Github action file ${ghActionFilePath} found, skipping creation of github action file.`)
+    }
   }
 }
 
