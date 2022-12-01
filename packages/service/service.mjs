@@ -9,6 +9,7 @@ import { join } from 'desm'
 
 import start from './lib/start.mjs'
 import { compile } from './lib/compile.js'
+import { init } from './lib/init.mjs'
 
 const help = helpMe({
   dir: join(import.meta.url, 'help'),
@@ -21,6 +22,7 @@ const program = commist({ maxDistance: 4 })
 program.register('help', help.toStdout)
 program.register('help start', help.toStdout.bind(null, ['start']))
 
+program.register('init', init)
 program.register('start', start)
 program.register('compile', compile)
 
