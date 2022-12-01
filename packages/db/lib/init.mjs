@@ -6,6 +6,7 @@ import parseArgs from 'minimist'
 import { checkForDependencies, generateGlobalTypesFile } from './gen-types.mjs'
 import loadConfig from './load-config.mjs'
 import { findConfigFile, isFileAccessible } from './utils.js'
+import { schema as platformaticDBschema } from './schema.js'
 
 const connectionStrings = {
   postgres: 'postgres://postgres:postgres@localhost:5432/postgres',
@@ -26,121 +27,6 @@ CREATE TABLE IF NOT EXISTS movies (
 const moviesMigrationUndo = `
 -- Add SQL in this file to drop the database tables 
 DROP TABLE movies;
-`
-
-const jsonConfigDbSchema = `
-{
-  "title": "Platformatic DB config",
-  "type": "object",
-  "properties": {
-    "core": {
-      "type": "object",
-      "properties": {
-        "connectionString": { "type": "string" },
-        "schema": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "graphql": {
-          "default": true,
-          "type": ["boolean", "object"],
-          "properties": {
-            "graphiql": { "type": "boolean" }
-          }
-        },
-        "openapi": {
-          "default": true,
-          "type": ["boolean", "object"],
-          "properties": {
-            "prefix": { "type": "string" }
-          }
-        },
-        "ignore": {
-          "type": "object",
-          "properties": {
-            "versions": { "type": "boolean" }
-          }
-        },
-        "events": {
-          "default": true,
-          "type": ["boolean", "object"]
-        }
-      },
-      "required": ["connectionString"]
-    },
-    "dashboard": {
-      "type": ["boolean", "object"],
-      "properties": {
-        "rootPath": { "type": "boolean", "default": true }
-      }
-    },
-    "metrics": {
-      "type": ["boolean", "object"],
-      "properties": {
-        "hostname": { "type": "string" },
-        "port": { "type": "number" },
-        "auth": { "type": "object" }
-      }
-    },
-    "migrations": {
-      "type": "object",
-      "properties": {
-        "dir": { "type": "string" },
-        "autoApply": { "type": "boolean", "default": true }
-      }
-    },
-    "plugin": {
-      "type": ["object", "array", "string"],
-      "properties": {
-        "path": { "type": "string" },
-        "typescript": {
-          "type": "object",
-          "properties": {
-            "outDir": { "type": "string" }
-          }
-        },
-        "hotReload": { "type": "boolean", "default": true },
-        "options": { "type": "object" }
-      },
-      "required": ["path"]
-    },
-    "watch": {
-      "type": ["object", "boolean"],
-      "properties": {
-        "ignore": {
-          "type": ["array", "null"],
-          "default": null,
-          "items": { "type": "string" }
-        },
-        "allow": {
-          "type": ["array"],
-          "default": ["*.js", "**/*.js"],
-          "items": { "type": "string" }
-        }
-      }
-    },
-    "server": {
-      "type": ["object"],
-      "properties": {
-        "hostname": { "type": "string" },
-        "port": { "type": "number" },
-        "healthCheck": { "type": ["boolean", "object"] },
-        "cors": { "type": "object" },
-        "logger": { "type": "object" },
-        "pluginTimeout": { "type": "number" }
-      },
-      "required": ["hostname", "port"]
-    },
-    "authorization": {
-      "type": "object",
-      "properties": {
-        "adminSecret": { "type": "string" },
-        "rules": { "type": "array" }
-      }
-    }
-  },
-  "required": ["core", "server"]
-}
 `
 
 function getTsConfig (outDir) {
@@ -260,7 +146,7 @@ async function init (_args) {
   const accessibleConfigFilename = await findConfigFile(currentDir)
   if (accessibleConfigFilename === undefined) {
     const config = generateConfig(args)
-    await writeFile('platformatic.db.schema.json', jsonConfigDbSchema)
+    await writeFile('platformatic.db.schema.json', JSON.stringify(platformaticDBschema))
     await writeFile('platformatic.db.json', JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.db.json successfully created.')
   } else {

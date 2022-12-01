@@ -52,9 +52,10 @@ t.test('run db init with default options', async (t) => {
   const migrationFileUndo = await fs.readFile(pathToMigrationFileUndo, 'utf8')
   t.equal(migrationFileUndo, moviesMigrationUndo)
 
-  const { title, type } = parseConfigSchema
-  t.equal(title, 'Platformatic DB config')
+  const { $id, type, required } = parseConfigSchema
+  t.equal($id, 'https://schemas.platformatic.dev/db')
   t.equal(type, 'object')
+  t.has(required, ['core', 'server'])
 })
 
 t.test('run init with default options twice', async (t) => {
