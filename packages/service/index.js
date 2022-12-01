@@ -173,7 +173,6 @@ async function buildServer (options, app = platformaticService) {
     // Ignore because not tested on Windows
     // TODO: remove the ignore, we shoduld be testing
     // this on Windows
-    /* c8 ignore start */
     const fileWatcher = handler.app.platformatic.fileWatcher
     opts.fileWatcher = fileWatcher
     opts.configManager = configManager
@@ -185,7 +184,6 @@ async function buildServer (options, app = platformaticService) {
     }).finally(() => {
       debounce = null
     })
-    /* c8 ignore stop */
     return debounce
   }
 
