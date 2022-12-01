@@ -28,6 +28,7 @@
     "inflected": "^2.1.0"
   },
   "devDependencies": {
+    "@api-platform/admin": "^3.4.3",
     "@graphiql/toolkit": "^0.8.0",
     "@mui/material": "^5.10.12",
     "@platformatic/db-ra-data-rest": "workspace:*",
