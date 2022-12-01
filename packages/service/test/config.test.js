@@ -3,7 +3,7 @@
 require('./helper')
 const { test } = require('tap')
 const { buildServer } = require('..')
-const { request, setGlobalDispatcher, getGlobalDispatcher, MockAgent } = require('undici')
+const { request } = require('undici')
 const { join } = require('path')
 const os = require('os')
 const { writeFile } = require('fs/promises')
