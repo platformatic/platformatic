@@ -216,7 +216,7 @@ async function init (_args) {
     const wizardOptions = await inquirer.prompt([{
       type: 'list',
       name: 'github',
-      message: 'Do you want to create the github action?',
+      message: 'Do you want to create the github action to deploy this application to Platformatic Cloud?',
       default: true,
       choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
     }])
