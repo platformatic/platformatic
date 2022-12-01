@@ -146,7 +146,7 @@ async function init (_args) {
   const accessibleConfigFilename = await findConfigFile(currentDir)
   if (accessibleConfigFilename === undefined) {
     const config = generateConfig(args)
-    await writeFile('platformatic.db.schema.json', JSON.stringify(platformaticDBschema))
+    await writeFile('platformatic.db.schema.json', JSON.stringify(platformaticDBschema, null, 2))
     await writeFile('platformatic.db.json', JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.db.json successfully created.')
   } else {
