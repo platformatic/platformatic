@@ -2,9 +2,11 @@ import pino from 'pino'
 import pretty from 'pino-pretty'
 import Fastify from 'fastify'
 import graphql from 'graphql'
+import { writeFile } from 'fs/promises'
 import loadConfig from './load-config.mjs'
 import { createServerConfig } from '@platformatic/utils'
 import { platformaticDB } from '../index.js'
+import { schema as platformaticDBschema } from './schema.js'
 
 async function buildServer (_args, onServer) {
   const logger = pino(pretty({
@@ -52,4 +54,10 @@ function printOpenAPISchema (_args) {
   })
 }
 
-export { printGraphQLSchema, printOpenAPISchema }
+const filenameConfigJsonSchema = 'platformatic.db.schema.json'
+
+async function generateJsonSchemaConfig () {
+  await writeFile(filenameConfigJsonSchema, JSON.stringify(platformaticDBschema, null, 2))
+}
+
+export { printGraphQLSchema, printOpenAPISchema, generateJsonSchemaConfig, filenameConfigJsonSchema }
