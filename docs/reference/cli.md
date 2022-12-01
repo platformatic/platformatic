@@ -199,6 +199,10 @@ https://oss.platformatic.dev/docs/reference/db/configuration.
 
 #### schema
 
+Generate the schema of your config file:
+
+* `schema config` - create / update the JSON schema config available on `platformatic.db.schema.json`
+
 Generate a schema from the database and prints it to standard output:
 
 * `schema graphql` - generate the GraphQL schema
