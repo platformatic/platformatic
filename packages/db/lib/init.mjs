@@ -29,6 +29,8 @@ const moviesMigrationUndo = `
 DROP TABLE movies;
 `
 
+const filenameSchema = 'platformatic.db.schema.json'
+
 function getTsConfig (outDir) {
   return {
     compilerOptions: {
@@ -56,7 +58,7 @@ function generateConfig (args) {
   const connectionString = connectionStrings[database]
 
   const config = {
-    $schema: './platformatic.db.schema.json',
+    $schema: `./${filenameSchema}`,
     server: { hostname, port },
     core: { connectionString, graphql: true },
     migrations: { dir: migrations },
@@ -146,7 +148,7 @@ async function init (_args) {
   const accessibleConfigFilename = await findConfigFile(currentDir)
   if (accessibleConfigFilename === undefined) {
     const config = generateConfig(args)
-    await writeFile('platformatic.db.schema.json', JSON.stringify(platformaticDBschema, null, 2))
+    await writeFile(filenameSchema, JSON.stringify(platformaticDBschema, null, 2))
     await writeFile('platformatic.db.json', JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.db.json successfully created.')
   } else {
