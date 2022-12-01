@@ -9,3 +9,4 @@ Available commands:
 * `seed` - run a seed file.
 * `types` - generate typescript types for entities.
 * `schema` - generate and print api schema.
+* `migrations create` - generate do and undo migration files.
