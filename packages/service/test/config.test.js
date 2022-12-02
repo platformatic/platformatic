@@ -147,7 +147,7 @@ test('config reloads from a written file from a route', async ({ teardown, equal
             port: 0
           },
           plugin: {
-            path: '${file}',
+            path: '${file.replace(/\\/g, '\\\\')}',
             options: {
               message: 'ciao mondo'
             }
