@@ -23,11 +23,11 @@
     "lint": "standard | snazzy"
   },
   "dependencies": {
-    "@fastify/static": "^6.5.0",
-    "@platformatic/ui-components": "^0.1.19",
-    "inflected": "^2.1.0"
+    "@fastify/static": "^6.5.0"
   },
   "devDependencies": {
+    "@platformatic/ui-components": "^0.1.19",
+    "inflected": "^2.1.0",
     "@graphiql/toolkit": "^0.8.0",
     "@mui/material": "^5.10.12",
     "@platformatic/db-ra-data-rest": "workspace:*",
