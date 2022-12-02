@@ -187,6 +187,8 @@ async function buildServer (options, app = platformaticService) {
     return debounce
   }
 
+  handler.app.restart = handler.restart
+
   return handler
 }
 

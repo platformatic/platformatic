@@ -116,3 +116,70 @@ test('config reloads from a written file', async ({ teardown, equal, pass, same 
     same(await res.body.text(), 'ciao mondo', 'response')
   }
 })
+
+test('config reloads from a written file from a route', async ({ teardown, equal, pass, same }) => {
+  const config = join(os.tmpdir(), `some-config-${process.pid}-2.json`)
+  const file = join(os.tmpdir(), `some-plugin-${process.pid}-2.js`)
+
+  await writeFile(config, JSON.stringify({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugin: {
+      path: file,
+      options: {
+        message: 'hello'
+      }
+    },
+    metrics: false
+  }))
+
+  await writeFile(file, `
+    module.exports = async function (app, options) {
+      app.get('/', () => options.message)
+
+      app.post('/restart', async (req, res) => {
+        await app.platformatic.configManager.update({
+          server: {
+            hostname: '127.0.0.1',
+            port: 0
+          },
+          plugin: {
+            path: '${file}',
+            options: {
+              message: 'ciao mondo'
+            }
+          },
+          metrics: false
+        })
+
+        await app.restart()
+
+        return true
+      })
+    }`)
+
+  const server = await buildServer(config)
+  teardown(server.stop)
+  await server.listen()
+
+  {
+    const res = await request(`${server.url}/`)
+    equal(res.statusCode, 200, 'add status code')
+    same(await res.body.text(), 'hello', 'response')
+  }
+
+  {
+    const res = await request(`${server.url}/restart`, {
+      method: 'POST'
+    })
+    equal(res.statusCode, 200, 'add status code')
+  }
+
+  {
+    const res = await request(`${server.url}/`)
+    equal(res.statusCode, 200, 'add status code')
+    same(await res.body.text(), 'ciao mondo', 'response')
+  }
+})
