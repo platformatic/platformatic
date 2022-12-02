@@ -124,6 +124,7 @@ test('config reloads from a written file from a route', async ({ teardown, equal
   await writeFile(config, JSON.stringify({
     server: {
       hostname: '127.0.0.1',
+      logger: { level: 'error' },
       port: 0
     },
     plugin: {
