@@ -199,9 +199,13 @@ https://oss.platformatic.dev/docs/reference/db/configuration.
 
 #### schema
 
-Generate the schema of your config file:
+Update the config schema file:
 
-* `schema config` - create / update the JSON schema config available on `platformatic.db.schema.json`
+* `schema config` - update the JSON schema config available on `platformatic.db.schema.json`
+
+Your configuration on `platformatic.db.json` has a schema defined to improve the developer experience and avoid mistakes when updating the configuration of Platformatic DB.
+When you run `platformatic db init`, a new JSON `$schema` property is added in `platformatic.db.schema.json`. This can allow your IDE to add suggestions (f.e. mandatory/missing fields, types, default values) by opening the config in `platformatic.db.json`.
+Running `platformatic db schema config` you can update your schema so that it matches well the latest changes available on your config.
 
 Generate a schema from the database and prints it to standard output:
 
