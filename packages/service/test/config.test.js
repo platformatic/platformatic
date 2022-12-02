@@ -9,7 +9,7 @@ const os = require('os')
 const { writeFile } = require('fs/promises')
 
 test('config reloads', async ({ teardown, equal, pass, same }) => {
-  const file = join(os.tmpdir(), `some-plugin-${process.pid}.js`)
+  const file = join(os.tmpdir(), `${process.pid}-1.js`)
 
   await writeFile(file, `
     module.exports = async function (app, options) {
@@ -62,8 +62,8 @@ test('config reloads', async ({ teardown, equal, pass, same }) => {
 })
 
 test('config reloads from a written file', async ({ teardown, equal, pass, same }) => {
-  const config = join(os.tmpdir(), `some-config-${process.pid}-2.json`)
-  const file = join(os.tmpdir(), `some-plugin-${process.pid}-2.js`)
+  const config = join(os.tmpdir(), `${process.pid}-2.json`)
+  const file = join(os.tmpdir(), `${process.pid}-2.js`)
 
   await writeFile(config, JSON.stringify({
     server: {
@@ -118,8 +118,8 @@ test('config reloads from a written file', async ({ teardown, equal, pass, same 
 })
 
 test('config reloads from a written file from a route', async ({ teardown, equal, pass, same }) => {
-  const config = join(os.tmpdir(), `some-config-${process.pid}-2.json`)
-  const file = join(os.tmpdir(), `some-plugin-${process.pid}-2.js`)
+  const config = join(os.tmpdir(), `${process.pid}-3.json`)
+  const file = join(os.tmpdir(), `${process.pid}-3.js`)
 
   await writeFile(config, JSON.stringify({
     server: {
