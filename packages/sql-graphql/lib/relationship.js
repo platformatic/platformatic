@@ -20,19 +20,20 @@ module.exports = function establishRelations (app, relations, resolvers, loaders
 
     assert(table_name, `table_name is required ${enhanceAssertLogMsg}`)
     assert(foreign_table_name, `foreign_table_name is required ${enhanceAssertLogMsg}`)
-    assert(column_name.toLowerCase().endsWith('id'), `The column with id reference must be ended with "id" postfix ${enhanceAssertLogMsg}`)
 
     const current = tablesTypeMap[table_name]
     const foreign = tablesTypeMap[foreign_table_name]
     assert(foreign !== undefined, `No foreign table named "${foreign_table_name}" was found ${enhanceAssertLogMsg}`)
 
-    // current to foreign
-    {
-      const lowered = lowerCaseFirst(camelcase(cutOutIdEnding(column_name)))
+    // current to foreign, we skip this if the foreign table has a composite primary key
+    // TODO implement support for this case
+    /* istanbul ignore else */
+    if (foreign.entity.primaryKeys.size === 1) {
+      const lowered = generateRelationshipName(column_name, foreign)
       if (!relationships[current.type] || relationships[current.type][lowered] !== false) {
-        current.fields[lowered] = { type: foreign.type }
         const originalField = camelcase(column_name)
         delete current.fields[originalField]
+        current.fields[lowered] = { type: foreign.type }
         loaders[current.type] = loaders[current.type] || resolvers[current.type] || {}
         const key = camelcase(foreign_column_name)
         loaders[current.type][lowered] = {
@@ -84,9 +85,13 @@ function lowerCaseFirst (str) {
   return str.charAt(0).toLowerCase() + str.slice(1)
 }
 
-function cutOutIdEnding (str) {
+function generateRelationshipName (str, foreign) {
+  const primaryKey = foreign.entity.primaryKeys.values().next().value
   str = str.toString()
-  return str.slice(0, str.toLowerCase().lastIndexOf('id'))
+  if (str.endsWith('_' + primaryKey)) {
+    str = str.slice(0, -2)
+  }
+  return lowerCaseFirst(camelcase(str))
 }
 
 function findPrimaryColumnName (camelCasedFields) {
