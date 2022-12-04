@@ -168,7 +168,6 @@ async function init (_args) {
 
   const { migrations, typescript, plugin } = args
   const createMigrations = !!migrations // If we don't define a migrations folder, we don't create it
-  console.log('createMigrations@@@@@@@@@@@@@@@@@@@@@@@@@@@@', createMigrations, migrations)
   const currentDir = process.cwd()
   const accessibleConfigFilename = await findConfigFile(currentDir)
   if (accessibleConfigFilename === undefined) {
