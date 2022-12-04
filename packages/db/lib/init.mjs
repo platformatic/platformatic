@@ -53,7 +53,7 @@ function getTsConfig (outDir) {
 function generateConfig (args) {
   const { migrations, plugin, types, typescript } = args
 
-  // c8 ignore next
+  /* c8 ignore next 1 */
   const migrationsFolder = migrations || 'migrations'
 
   const config = {
