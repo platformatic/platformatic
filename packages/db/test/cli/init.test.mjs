@@ -437,3 +437,38 @@ t.test('run db init --migrations custom-migrations-folder', async (t) => {
   const migrationFileUndo = await fs.readFile(pathToMigrationFileUndo, 'utf8')
   t.equal(migrationFileUndo, moviesMigrationUndo)
 })
+
+t.test('run db init --plugin=false', async (t) => {
+  const pathToFolder = await fs.mkdtemp(path.join(tmpdir(), 'init-2'))
+  const pathToDbConfigFile = path.join(pathToFolder, 'platformatic.db.json')
+  const pathToMigrationFolder = path.join(pathToFolder, 'migrations')
+  const pathToMigrationFileDo = path.join(pathToMigrationFolder, '001.do.sql')
+  const pathToMigrationFileUndo = path.join(pathToMigrationFolder, '001.undo.sql')
+
+  await execa('node', [cliPath, 'init', '--plugin=false'], { cwd: pathToFolder })
+
+  const dbConfigFile = await fs.readFile(pathToDbConfigFile, 'utf8')
+  const dbConfig = JSON.parse(dbConfigFile)
+
+  const { server, core, migrations, plugin, types } = dbConfig
+
+  t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
+  t.equal(server.port, '{PORT}')
+  t.equal(core.connectionString, '{DATABASE_URL}')
+  const pathToDbEnvFile = path.join(pathToFolder, '.env')
+  const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
+  const dbEnv = parseEnv(dbEnvFile)
+  t.equal(dbEnv.PLT_SERVER_HOSTNAME, '127.0.0.1')
+  t.equal(dbEnv.PORT, '3042')
+  t.equal(dbEnv.DATABASE_URL, 'sqlite://./db.sqlite')
+
+  t.equal(core.graphql, true)
+
+  t.equal(migrations.dir, 'migrations')
+  t.equal(types.autogenerate, true)
+
+  const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
+  t.equal(migrationFileDo, moviesMigrationDo)
+  const migrationFileUndo = await fs.readFile(pathToMigrationFileUndo, 'utf8')
+  t.equal(migrationFileUndo, moviesMigrationUndo)
+})

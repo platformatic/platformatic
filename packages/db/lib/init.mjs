@@ -51,7 +51,9 @@ function getTsConfig (outDir) {
 }
 
 function generateConfig (args) {
-  const { migrations, types, typescript } = args
+  const { migrations, plugin, types, typescript } = args
+
+  const migrationsFolder = migrations || 'migrations'
 
   const config = {
     $schema: `./${filenameConfigJsonSchema}`,
@@ -66,8 +68,11 @@ function generateConfig (args) {
       connectionString: '{DATABASE_URL}',
       graphql: true
     },
-    migrations: { dir: migrations },
-    plugin: {
+    migrations: { dir: migrationsFolder }
+  }
+
+  if (plugin === true) {
+    config.plugin = {
       path: typescript === true ? 'plugin.ts' : 'plugin.js'
     }
   }
@@ -144,21 +149,24 @@ async function init (_args) {
       port: 3042,
       database: 'sqlite',
       migrations: 'migrations',
+      plugin: true,
       types: true,
       typescript: false
     },
     alias: {
       h: 'hostname',
       p: 'port',
+      pl: 'plugin',
       db: 'database',
       m: 'migrations',
       t: 'types',
       ts: 'typescript'
     },
-    boolean: ['types', 'typescript']
+    boolean: ['plugin', 'types', 'typescript']
   })
 
-  const { migrations, typescript } = args
+  const { migrations, typescript, plugin } = args
+  const createMigrations = !!migrations // If we don't define a migrations folder, we don't create it
 
   const currentDir = process.cwd()
   const accessibleConfigFilename = await findConfigFile(currentDir)
@@ -181,12 +189,14 @@ async function init (_args) {
   const config = configManager.current
 
   const migrationsFolderName = migrations
-  const isMigrationFolderExists = await isFileAccessible(migrationsFolderName, currentDir)
-  if (!isMigrationFolderExists) {
-    await mkdir(migrationsFolderName)
-    logger.info(`Migrations folder ${migrationsFolderName} successfully created.`)
-  } else {
-    logger.info(`Migrations folder ${migrationsFolderName} found, skipping creation of migrations folder.`)
+  if (createMigrations) {
+    const isMigrationFolderExists = await isFileAccessible(migrationsFolderName, currentDir)
+    if (!isMigrationFolderExists) {
+      await mkdir(migrationsFolderName)
+      logger.info(`Migrations folder ${migrationsFolderName} successfully created.`)
+    } else {
+      logger.info(`Migrations folder ${migrationsFolderName} found, skipping creation of migrations folder.`)
+    }
   }
 
   const migrationFileNameDo = '001.do.sql'
@@ -218,7 +228,7 @@ async function init (_args) {
     }
   }
 
-  if (config.types && config.types.autogenerate) {
+  if (plugin && config.types && config.types.autogenerate) {
     await generateGlobalTypesFile({}, config)
     await generatePluginWithTypesSupport(logger, args, configManager)
     await checkForDependencies(logger, args, config)

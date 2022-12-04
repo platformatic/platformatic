@@ -69,7 +69,7 @@ const createPlatformaticDB = async () => {
   await say(`${greeting} welcome to ${version ? `Platformatic ${version}!` : 'Platformatic!'}`)
   await say('Let\'s start by creating a new project.')
 
-  const wizardOptionsFirstPart = await inquirer.prompt([{
+  const wizardOptions = await inquirer.prompt([{
     type: 'input',
     name: 'dir',
     message: 'Where would you like to create your project?',
@@ -78,7 +78,6 @@ const createPlatformaticDB = async () => {
   }, {
     type: 'list',
     name: 'migrations',
-    when: !args.migrations,
     message: 'Do you want to create default migrations?',
     default: true,
     choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
@@ -98,16 +97,17 @@ const createPlatformaticDB = async () => {
   }])
 
   // Create the project directory
-  const projectDir = resolve(process.cwd(), wizardOptionsFirstPart.dir)
+  const projectDir = resolve(process.cwd(), wizardOptions.dir)
   mkdirSync(projectDir)
 
   const params = [
     '--hostname', args.hostname,
     '--port', args.port,
     '--database', args.database,
-    '--migrations', args.migrations || wizardOptionsFirstPart.migrations,
-    '--types', wizardOptionsFirstPart.generatePlugin,
-    '--typescript', wizardOptionsFirstPart.useTypescript
+    '--migrations', wizardOptions.migrations ? args.migrations : '',
+    '--plugin', wizardOptions.generatePlugin,
+    '--types', wizardOptions.generatePlugin, // we set this always to true if we want to generate a plugin
+    '--typescript', !!wizardOptions.useTypescript
   ]
   await execaNode(join(import.meta.url, '../node_modules/@platformatic/db/db.mjs'), ['init', ...params], { cwd: projectDir })
 
@@ -132,18 +132,21 @@ const createPlatformaticDB = async () => {
     spinner.succeed('...done!')
   }
 
-  const { applyMigrations } = await inquirer.prompt([{
-    type: 'list',
-    name: 'applyMigrations',
-    message: 'Do you want to apply migrations?',
-    default: true,
-    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-  }])
+  // if we don;t generate migrations, we don't ask to apply them (the folder might not exist)
+  if (wizardOptions.migrations) {
+    const { applyMigrations } = await inquirer.prompt([{
+      type: 'list',
+      name: 'applyMigrations',
+      message: 'Do you want to apply migrations?',
+      default: true,
+      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+    }])
 
-  if (applyMigrations) {
-    const spinner = ora('Applying migrations...').start()
-    await execaNode(join(import.meta.url, '../node_modules/@platformatic/db/db.mjs'), ['migrations', 'apply'], { cwd: projectDir })
-    spinner.succeed('...done!')
+    if (applyMigrations) {
+      const spinner = ora('Applying migrations...').start()
+      await execaNode(join(import.meta.url, '../node_modules/@platformatic/db/db.mjs'), ['migrations', 'apply'], { cwd: projectDir })
+      spinner.succeed('...done!')
+    }
   }
 
   await say('All done! Please open the project directory and check the README.')
