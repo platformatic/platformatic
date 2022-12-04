@@ -450,7 +450,7 @@ t.test('run db init --plugin=false', async (t) => {
   const dbConfigFile = await fs.readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
 
-  const { server, core, migrations, plugin, types } = dbConfig
+  const { server, core, migrations, types } = dbConfig
 
   t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   t.equal(server.port, '{PORT}')
