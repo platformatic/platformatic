@@ -2,7 +2,10 @@ import { isFileAccessible } from './utils.mjs'
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-const gitignore = `
+const gitignore = `\
+dist 
+.DS_Store
+
 # dotenv environment variable files
 .env
 

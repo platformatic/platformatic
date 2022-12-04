@@ -3,7 +3,7 @@ import { isFileAccessible } from './utils.mjs'
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-const packageJsonTemplate = `
+const packageJsonTemplate = `\
 {
   "name": "platformatic-db-api-example",
   "version": "0.0.1",

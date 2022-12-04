@@ -53,6 +53,7 @@ function getTsConfig (outDir) {
 function generateConfig (args) {
   const { migrations, plugin, types, typescript } = args
 
+  // c8 ignore next
   const migrationsFolder = migrations || 'migrations'
 
   const config = {
@@ -167,7 +168,7 @@ async function init (_args) {
 
   const { migrations, typescript, plugin } = args
   const createMigrations = !!migrations // If we don't define a migrations folder, we don't create it
-
+  console.log('createMigrations@@@@@@@@@@@@@@@@@@@@@@@@@@@@', createMigrations, migrations)
   const currentDir = process.cwd()
   const accessibleConfigFilename = await findConfigFile(currentDir)
   if (accessibleConfigFilename === undefined) {
@@ -205,7 +206,7 @@ async function init (_args) {
   const migrationFilePathUndo = join(migrationsFolderName, migrationFileNameUndo)
   const isMigrationFileDoExists = await isFileAccessible(migrationFilePathDo)
   const isMigrationFileUndoExists = await isFileAccessible(migrationFilePathUndo)
-  if (!isMigrationFileDoExists) {
+  if (!isMigrationFileDoExists && createMigrations) {
     await writeFile(migrationFilePathDo, moviesMigrationDo)
     logger.info(`Migration file ${migrationFileNameDo} successfully created.`)
     if (!isMigrationFileUndoExists) {

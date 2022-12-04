@@ -1,4 +1,3 @@
-
 import { say } from './say.mjs'
 import { getUsername, getVersion, validatePath } from './utils.mjs'
 import { createPackageJson } from './create-package-json.mjs'
