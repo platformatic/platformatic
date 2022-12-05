@@ -94,39 +94,3 @@ test('throws if migrations directory does not exist', async ({ match }) => {
   const [data] = await once(output, 'data')
   match(data, /^Migrations directory (.*) does not exist.$/)
 })
-
-test('throws if migration name is wrong', async ({ equal, teardown }) => {
-  const cwd = await mkdtemp(join(tmpdir(), 'gen-migration-test-'))
-  const configFilePath = join(cwd, 'gen-migration.json')
-  const migrationsDirPath = join(cwd, 'migrations-wrong-name')
-
-  const config = {
-    server: {
-      hostname: '127.0.0.1',
-      port: 0,
-      logger: {
-        level: 'info'
-      }
-    },
-    core: {
-      connectionString: 'sqlite://db.sqlite'
-    },
-    migrations: {
-      dir: migrationsDirPath,
-      table: 'versions',
-      autoApply: true
-    }
-  }
-  await mkdir(migrationsDirPath)
-  await writeFile(configFilePath, JSON.stringify(config))
-  await writeFile(join(migrationsDirPath, 'abc.do.sql'), '')
-
-  const child = execa('node', [cliPath, 'migrations', 'create', '-c', configFilePath], { cwd })
-  teardown(() => child.kill('SIGINT'))
-
-  const splitter = split()
-  const firstOutput = child.stderr.pipe(splitter)
-  const [out] = await once(firstOutput, 'data')
-
-  equal(out, 'Previous migration has corrupted name')
-})
