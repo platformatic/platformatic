@@ -1,3 +1,5 @@
+'use strict'
+
 const buildEntity = require('./lib/entity')
 const queriesFactory = require('./lib/queries')
 const fp = require('fastify-plugin')

@@ -15,10 +15,12 @@ function mapSQLTypeToOpenAPIType (sqlType) {
     case 'decimal':
       return 'integer'
     case 'bigint':
-      return 'integer'
+      return 'string'
     case 'int2':
       return 'integer'
     case 'int4':
+      return 'integer'
+    case 'int8':
       return 'integer'
     case 'varchar':
       return 'string'

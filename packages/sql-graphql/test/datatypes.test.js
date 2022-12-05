@@ -722,3 +722,82 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async ({ pass, teardown, same, equa
     }, 'savePage response')
   }
 })
+
+test('BIGINT!', { skip: isSQLite, only: true }, async ({ pass, teardown, same, equal }) => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      await db.query(sql`
+      CREATE TABLE simple_types (
+        id SERIAL PRIMARY KEY,
+        counter BIGINT
+      );`)
+    }
+  })
+  teardown(app.close.bind(app))
+
+  app.register(sqlGraphQL)
+
+  await app.ready()
+
+  const counter = BigInt(Number.MAX_SAFE_INTEGER) + 1000n
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+          mutation {
+            saveSimpleType(input: {
+                             counter: "${counter}"
+                           }) {
+              id
+              counter
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'saveSimpleType status code')
+    same(res.json(), {
+      data: {
+        saveSimpleType: {
+          id: '1',
+          counter
+        }
+      }
+    }, 'saveSimpleType response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+          query {
+            getSimpleTypeById(id: 1) {
+              id
+              counter
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'getSimpleTypeById status code')
+    same(res.json(), {
+      data: {
+        getSimpleTypeById: {
+          id: 1,
+          counter
+        }
+      }
+    }, 'getSimpleTypeById response')
+  }
+})

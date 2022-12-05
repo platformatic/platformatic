@@ -792,3 +792,105 @@ test('JSON type', { skip: !(isPg || isMysql8) }, async ({ teardown, same, equal,
     }, 'PUT /simpleTypes response')
   }
 })
+
+test('BIGINT', { skip: isSQLite }, async ({ pass, teardown, same, equal }) => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      await db.query(sql`
+      CREATE TABLE simple_types (
+        id SERIAL PRIMARY KEY,
+        counter BIGINT
+      );`)
+    }
+  })
+  teardown(app.close.bind(app))
+
+  app.register(sqlOpenAPI)
+
+  await app.ready()
+
+  const counter = BigInt(Number.MAX_SAFE_INTEGER) + 1000n
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/simpleTypes',
+      body: {
+        id: 1,
+        counter: counter.toString()
+      }
+    })
+    equal(res.statusCode, 200, 'POST /simpleTypes status code')
+    same(res.json(), {
+      id: 1,
+      counter: counter.toString()
+    }, 'POST /simpleTypes response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/simpleTypes/1'
+    })
+    equal(res.statusCode, 200, 'GET /simpleTypes status code')
+    same(res.json(), {
+      id: 1,
+      counter: counter.toString()
+    }, 'GET /simpleTypes response')
+  }
+})
+
+test('BIGINT as ids', { skip: isSQLite }, async ({ pass, teardown, same, equal }) => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      await db.query(sql`
+      CREATE TABLE simple_types (
+        counter BIGINT PRIMARY KEY
+      );`)
+    }
+  })
+  teardown(app.close.bind(app))
+
+  app.register(sqlOpenAPI)
+
+  await app.ready()
+
+  const counter = BigInt(Number.MAX_SAFE_INTEGER) + 1000n
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/simpleTypes',
+      body: {
+        counter: counter.toString()
+      }
+    })
+    equal(res.statusCode, 200, 'POST /simpleTypes status code')
+    same(res.json(), {
+      counter: counter.toString()
+    }, 'POST /simpleTypes response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: `/simpleTypes/${counter}`
+    })
+    equal(res.statusCode, 200, 'GET /simpleTypes status code')
+    same(res.json(), {
+      counter: counter.toString()
+    }, 'GET /simpleTypes response')
+  }
+})
