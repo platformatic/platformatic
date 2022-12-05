@@ -4,7 +4,7 @@ const t = require('tap')
 const sqlOpenAPI = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { clear, connInfo, isSQLite, isMariaDB, isPg, isMysql8 } = require('./helper')
+const { clear, connInfo, isSQLite, isMariaDB, isPg, isMysql8, isMysql } = require('./helper')
 const { resolve } = require('path')
 const { test } = t
 
@@ -16,6 +16,11 @@ async function createBasicPages (db, sql) {
   if (isSQLite) {
     await db.query(sql`CREATE TABLE pages (
       id INTEGER PRIMARY KEY,
+      title VARCHAR(42) NOT NULL
+    );`)
+  } else if (isMysql) {
+    await db.query(sql`CREATE TABLE pages (
+      id INT NOT NULL AUTO_INCREMENT UNIQUE PRIMARY KEY,
       title VARCHAR(42) NOT NULL
     );`)
   } else {
@@ -186,6 +191,11 @@ async function createBasicPagesNullable (db, sql) {
   if (isSQLite) {
     await db.query(sql`CREATE TABLE pages (
       id INTEGER PRIMARY KEY,
+      title VARCHAR(42)
+    );`)
+  } else if (isMysql) {
+    await db.query(sql`CREATE TABLE pages (
+      id INT NOT NULL AUTO_INCREMENT UNIQUE PRIMARY KEY,
       title VARCHAR(42)
     );`)
   } else {

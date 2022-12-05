@@ -21,6 +21,8 @@ function mapSQLTypeToOpenAPIType (sqlType) {
     case 'int4':
       return 'integer'
     case 'int8':
+      return 'string'
+    case 'integer unsigned':
       return 'integer'
     case 'varchar':
       return 'string'
