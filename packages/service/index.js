@@ -121,6 +121,7 @@ async function loadPlugin (app, config, pluginOptions) {
       if (plugin.__esModule === true) {
         plugin = plugin.default
       }
+      /* c8 ignore next 4 */
       await app.register(plugin, pluginOptions.options)
     }
   }
