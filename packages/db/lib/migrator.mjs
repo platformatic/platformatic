@@ -118,8 +118,8 @@ class Migrator {
     await this.postgrator.migrate(prevMigrationVersionStr)
   }
 
-  static convertVersionToStr (version) {
-    version.toString().padStart(3, '0')
+  convertVersionToStr (version) {
+    return version.toString().padStart(3, '0')
   }
 
   async getNextMigrationVersion () {
