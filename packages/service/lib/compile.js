@@ -7,14 +7,11 @@ const loadConfig = require('./load-config.js')
 const { isFileAccessible } = require('./utils.js')
 
 async function getTSCExecutablePath (cwd) {
-  const { execa } = await import('execa')
-  const [npmBinLocalFolder, npmBinGlobalFolder] = await Promise.all([
-    execa('npm', ['bin'], { cwd }).then((result) => result.stdout),
-    execa('npm', ['bin', '-g'], { cwd }).then((result) => result.stdout)
-  ])
+  const typescriptPath = require.resolve('typescript')
+  const typescriptPathCWD = require.resolve('typescript', { paths: [process.cwd()] })
 
-  const tscLocalPath = join(npmBinLocalFolder, 'tsc')
-  const tscGlobalPath = join(npmBinGlobalFolder, 'tsc')
+  const tscLocalPath = join(typescriptPath, '..', '..', 'bin', 'tsc')
+  const tscGlobalPath = join(typescriptPathCWD, '..', '..', 'bin', 'tsc')
 
   const [tscLocalExists, tscGlobalExists] = await Promise.all([
     isFileAccessible(tscLocalPath),
