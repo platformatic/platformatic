@@ -5,7 +5,7 @@
  * Make sure to inspect the output below.  Do not ignore changes!
  */
 'use strict'
-exports[`platformatic/db/openapi/simple expose the api with a prefix, if defined > GET /documentation/json response 1`] = `
+exports['platformatic/db/openapi/simple expose the api with a prefix, if defined > GET /documentation/json response 1'] = `
 Object {
   "components": Object {
     "schemas": Object {
