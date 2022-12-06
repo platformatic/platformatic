@@ -26,7 +26,7 @@ async function createBasicPages (db, sql) {
     );`)
   } else {
     await db.query(sql`CREATE TABLE pages (
-      id SERIAL PRIMARY KEY,
+      id INTEGER UNSIGNED AUTO_INCREMENT PRIMARY KEY,
       title VARCHAR(42) NOT NULL,
       metadata JSON,
       description TEXT,

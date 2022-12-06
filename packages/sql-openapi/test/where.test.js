@@ -30,6 +30,13 @@ test('list', async (t) => {
           long_text TEXT,
           counter INTEGER
         );`)
+      } else if (isMysql) {
+        await db.query(sql`CREATE TABLE posts (
+          id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+          title VARCHAR(42),
+          long_text TEXT,
+          counter INTEGER
+        );`)
       } else {
         await db.query(sql`CREATE TABLE posts (
           id SERIAL PRIMARY KEY,
@@ -333,15 +340,15 @@ test('nested where', async (t) => {
       if (isMysql) {
         await db.query(sql`
           CREATE TABLE owners (
-            id SERIAL PRIMARY KEY,
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(255)
           );
           CREATE TABLE posts (
-            id SERIAL PRIMARY KEY,
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             title VARCHAR(42),
             long_text TEXT,
             counter INTEGER,
-            owner_id BIGINT UNSIGNED,
+            owner_id INT UNSIGNED,
             FOREIGN KEY (owner_id) REFERENCES owners(id) ON DELETE CASCADE
           );
         `)
