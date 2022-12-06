@@ -48,17 +48,15 @@ async function auth (app, opts) {
   const roleKey = opts.roleKey || 'X-PLATFORMATIC-ROLE'
   const anonymousRole = opts.anonymousRole || 'anonymous'
 
-  app.addHook('preHandler', async (request) => {
-    if (request.ws) {
-      // we have not received the WebSocket headers yet.
-      // we are postponing this to the first subscription
+  app.decorateRequest('setupDBAuthorizationUser', setupUser)
+
+  async function setupUser () {
+    if (this.user) {
       return
     }
 
-    return setupUser(request)
-  })
+    const request = this
 
-  async function setupUser (request) {
     let forceAdminRole = false
     if (adminSecret && request.headers['x-platformatic-admin-secret'] === adminSecret) {
       if (opts.jwt || opts.webhook) {
@@ -188,7 +186,7 @@ async function auth (app, opts) {
             return originalFind({ ...restOpts, where, ctx, fields })
           }
           const request = getRequestFromContext(ctx)
-          const rule = findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
+          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
           checkFieldsFromRule(rule.find, fields || Object.keys(app.platformatic.entities[entityKey].fields))
           where = await fromRuleToWhere(ctx, rule.find, where, request.user)
 
@@ -200,7 +198,7 @@ async function auth (app, opts) {
             return originalSave({ input, ctx, fields })
           }
           const request = getRequestFromContext(ctx)
-          const rule = findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
+          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
 
           if (!rule.save) {
             throw new Unauthorized()
@@ -250,7 +248,7 @@ async function auth (app, opts) {
             return originalInsert({ inputs, ctx, fields })
           }
           const request = getRequestFromContext(ctx)
-          const rule = findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
+          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
 
           if (!rule.save) {
             throw new Unauthorized()
@@ -281,7 +279,7 @@ async function auth (app, opts) {
             return originalDelete({ where, ctx, fields })
           }
           const request = getRequestFromContext(ctx)
-          const rule = findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
+          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
 
           where = await fromRuleToWhere(ctx, rule.delete, where, request.user)
 
@@ -293,7 +291,7 @@ async function auth (app, opts) {
             return originalUpdateMany({ ...restOpts, where, ctx, fields })
           }
           const request = getRequestFromContext(ctx)
-          const rule = findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
+          const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
 
           where = await fromRuleToWhere(ctx, rule.updateMany, where, request.user)
 
@@ -311,12 +309,10 @@ async function auth (app, opts) {
 
         async getSubscriptionTopic (original, opts) {
           const { ctx } = opts
-          if (ctx.request.user === undefined) {
-            await setupUser(ctx.request)
-          }
-          // TODO make sure anonymous users cannot subscribe
-
           const request = getRequestFromContext(ctx)
+          await request.setupDBAuthorizationUser()
+
+          // TODO make sure anonymous users cannot subscribe
 
           const originalTopic = await original(opts)
 
@@ -372,8 +368,10 @@ async function fromRuleToWhere (ctx, rule, where, user) {
   return where
 }
 
-function findRuleForRequestUser (ctx, rules, roleKey, anonymousRole) {
-  const roles = getRoles(getRequestFromContext(ctx), roleKey, anonymousRole)
+async function findRuleForRequestUser (ctx, rules, roleKey, anonymousRole) {
+  const request = getRequestFromContext(ctx)
+  await request.setupDBAuthorizationUser()
+  const roles = getRoles(request, roleKey, anonymousRole)
   const rule = findRule(rules, roles)
   if (!rule) {
     ctx.reply.request.log.warn({ roles, rules }, 'no rule for roles')
