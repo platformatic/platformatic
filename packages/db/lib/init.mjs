@@ -7,7 +7,7 @@ import { checkForDependencies, generateGlobalTypesFile } from './gen-types.mjs'
 import loadConfig from './load-config.mjs'
 import { findConfigFile, isFileAccessible } from './utils.js'
 import { generateJsonSchemaConfig, filenameConfigJsonSchema } from './gen-schema.mjs'
-import { getGHAction } from './ghaction.mjs'
+import { getGHAction } from './ghaction.js'
 import inquirer from 'inquirer'
 import mkdirp from 'mkdirp'
 
