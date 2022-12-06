@@ -1,15 +1,17 @@
 'use strict'
 
 const fp = require('fastify-plugin')
-const createError = require('@fastify/error')
-const { getRequestFromContext, getRoles } = require('./lib/utils')
-const findRule = require('./lib/find-rule')
 const leven = require('leven')
 
+const findRule = require('./lib/find-rule')
+const { getRequestFromContext, getRoles } = require('./lib/utils')
+const {
+  Unauthorized,
+  UnauthorizedField,
+  MissingNotNullableError
+} = require('./lib/errors')
+
 const PLT_ADMIN_ROLE = 'platformatic-admin'
-const Unauthorized = createError('PLT_DB_AUTH_UNAUTHORIZED', 'operation not allowed', 401)
-const UnauthorizedField = createError('PLT_DB_AUTH_UNAUTHORIZED', 'field not allowed: %s', 401)
-const MissingNotNullableError = createError('PLT_DB_AUTH_NOT_NULLABLE_MISSING', 'missing not nullable field: "%s" in save rule for entity "%s"')
 
 async function auth (app, opts) {
   if (opts.jwt) {

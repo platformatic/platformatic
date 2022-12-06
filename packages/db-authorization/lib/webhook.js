@@ -3,6 +3,8 @@
 const fp = require('fastify-plugin')
 const { Pool } = require('undici')
 
+const { Unauthorized } = require('./errors')
+
 const notAllowed = new Set([
   'content-length',
   'host',
@@ -37,7 +39,7 @@ module.exports = fp(async function (app, opts) {
     })
 
     if (res.statusCode > 299) {
-      throw new Error('operation not allowed')
+      throw new Unauthorized()
     }
 
     const data = await res.body.json()
