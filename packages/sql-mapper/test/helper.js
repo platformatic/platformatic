@@ -4,7 +4,13 @@
 // See https://node-postgres.com/features/types/
 process.env.TZ = 'UTC'
 
-const connInfo = {}
+const connInfo = {
+  autoTimestamp: {
+    enabled: true,
+    createdAt: 'inserted_at',
+    updatedAt: 'updated_at'
+  }
+}
 
 if (!process.env.DB || process.env.DB === 'postgresql') {
   connInfo.connectionString = 'postgres://postgres:postgres@127.0.0.1/postgres'

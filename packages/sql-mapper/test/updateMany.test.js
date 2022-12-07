@@ -234,7 +234,6 @@ test('updateMany missing input', async ({ pass, teardown, rejects }) => {
 test('updateMany successful and update updated_at', async ({ pass, teardown, same, notSame }) => {
   const mapper = await connect({
     ...connInfo,
-    autoTimestamp: true,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
       teardown(() => db.dispose())
