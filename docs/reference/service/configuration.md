@@ -64,7 +64,8 @@ A **required** object with the following settings:
   ```
 - **`cors`** (`object`) — Configuration for Cross-Origin Resource Sharing (CORS) headers.
   - All options will be passed to the [`@fastify/cors`](https://github.com/fastify/fastify-cors) plugin.
-
+- **`logger`** (`object`) -- the [logger configuration](https://www.fastify.io/docs/latest/Reference/Server/#logger).
+- **`pluginTimeout`** (`integer`) -- the milliseconds to wait for a Fastify plugin to load, see the [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#plugintimeout) for more details.
 
 ### `metrics`
 
@@ -87,11 +88,7 @@ An optional object that defines a plugin loaded by Platformatic DB.
 - **`path`** (**required**, `string`): Relative path to plugin's entry point.
 - **`typescript`** (`object`): TypeScript configuration for the plugin.
   - **`outDir`** (`string`): Relative path to the output directory for compiled JavaScript files.
-- **`watch`** (`boolean`, default: `true`): Watch plugin for changes and reload it automatically. Typescript files will be watched by `tsc` if `plugin.typescript` is defined.
-- **`watchOptions`** (`object`): Options to configure the plugin watcher.
-  - **`hotReload`** (`boolean`, default: `true`) if `true` or not specified, the plugin is loaded using [`fastify-sandbox`](https://github.com/mcollina/fastify-sandbox), otherwise is loaded directly using `require`/`import` and the hot reload is not enabled
-  - **`ignore`** (`string[]`, default: `null`): List of glob patterns to ignore when watching for changes. If `null` or not specified, ignore rule is not applied. Ignore option doesn't work for typescript files.
-  - **`allow`** (`string[]`, default: `['*.js', '**/*.js']`): List of glob patterns to allow when watching for changes. If `null` or not specified, allow rule is not applied. Allow option doesn't work for typescript files.
+- **`hotReload`** (`boolean`, default: `true`) if `true` or not specified, the plugin is loaded using [`fastify-sandbox`](https://github.com/mcollina/fastify-sandbox), otherwise is loaded directly using `require`/`import` and the hot reload is not enabled
 - **`options`** (`object`): Optional plugin options.
 
   _Example_
@@ -100,12 +97,10 @@ An optional object that defines a plugin loaded by Platformatic DB.
   {
     "plugin": {
       "path": "./my-plugin.js",
-      "watch": true,
-      "watchOptions": {
-        "hotReload": true,
-        "ignore": ["*.mjs", "**/*.mjs"],
-        "allow": ["my-plugin.js", "plugins/*.js"]
-      },
+      "hotReload": true,
+      "options": {
+        "foo": "bar"
+      }
     }
   }
   ```
@@ -114,6 +109,37 @@ An optional object that defines a plugin loaded by Platformatic DB.
 While hot reloading is useful for development, it is not recommended to use it in production.
 To switch if off, set `hotReload` to `false`.
 :::
+
+`plugin` can also be an array, like so:
+
+  ```json
+  {
+    "plugin": [{
+      "path": "./my-plugin.js"
+    }]
+  }
+  ```
+
+`plugin` can also be a string, or an array of strings.
+
+
+### `watch`
+
+Disable watching for file changes if set to `false`. It can also be customized with the following options:
+
+- **`ignore`** (`string[]`, default: `null`): List of glob patterns to ignore when watching for changes. If `null` or not specified, ignore rule is not applied. Ignore option doesn't work for typescript files.
+- **`allow`** (`string[]`, default: `['*.js', '**/*.js']`): List of glob patterns to allow when watching for changes. If `null` or not specified, allow rule is not applied. Allow option doesn't work for typescript files.
+
+  _Example_
+
+  ```json
+  {
+    "watch": {
+      "ignore": ["*.mjs", "**/*.mjs"],
+      "allow": ["my-plugin.js", "plugins/*.js"]
+    }
+  }
+  ```
 
 ## Environment variable placeholders
 

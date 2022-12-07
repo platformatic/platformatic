@@ -4,7 +4,7 @@ const t = require('tap')
 const sqlOpenAPI = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { clear, connInfo, isSQLite, isMariaDB } = require('./helper')
+const { clear, connInfo, isSQLite, isMariaDB, isPg, isMysql8, isMysql } = require('./helper')
 const { resolve } = require('path')
 const { test } = t
 
@@ -16,6 +16,11 @@ async function createBasicPages (db, sql) {
   if (isSQLite) {
     await db.query(sql`CREATE TABLE pages (
       id INTEGER PRIMARY KEY,
+      title VARCHAR(42) NOT NULL
+    );`)
+  } else if (isMysql) {
+    await db.query(sql`CREATE TABLE pages (
+      id INT NOT NULL AUTO_INCREMENT UNIQUE PRIMARY KEY,
       title VARCHAR(42) NOT NULL
     );`)
   } else {
@@ -188,6 +193,11 @@ async function createBasicPagesNullable (db, sql) {
       id INTEGER PRIMARY KEY,
       title VARCHAR(42)
     );`)
+  } else if (isMysql) {
+    await db.query(sql`CREATE TABLE pages (
+      id INT NOT NULL AUTO_INCREMENT UNIQUE PRIMARY KEY,
+      title VARCHAR(42)
+    );`)
   } else {
     await db.query(sql`CREATE TABLE pages (
       id SERIAL PRIMARY KEY,
@@ -312,6 +322,13 @@ test('list', async ({ pass, teardown, same, equal }) => {
   }
 
   {
+    const url = '/posts?totalCount=true&limit=7'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url}`)
+  }
+
+  {
     const url = '/posts?offset=2'
     const res = await app.inject({ method: 'GET', url })
     equal(res.statusCode, 200, `${url} status code`)
@@ -395,6 +412,47 @@ test('list', async ({ pass, teardown, same, equal }) => {
       return { ...p, id: i + 1 + '' }
     }).slice(2, 4), `${url} response`)
   }
+
+  for (let i = 5; i <= 100; i++) {
+    const body = {
+      title: `Post ${i}`,
+      longText: `This is a long text ${i}`
+    }
+    posts.push(body)
+
+    await app.inject({
+      method: 'POST',
+      url: '/posts',
+      body
+    })
+  }
+
+  {
+    const url = '/posts?totalCount=true'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
+  }
+
+  {
+    const url = '/posts?totalCount=true&limit=99&offset=10'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
+    same(res.json(), posts.map((p, i) => {
+      return { ...p, id: i + 1 + '' }
+    }).slice(10), `${url} response`)
+  }
+
+  {
+    const url = '/posts?totalCount=true&limit=100&offset=3'
+    const res = await app.inject({ method: 'GET', url })
+    equal(res.statusCode, 200, `${url} status code`)
+    equal(res.headers['x-total-count'], posts.length, `${url} with x-total-count`)
+    same(res.json(), posts.map((p, i) => {
+      return { ...p, id: i + 1 + '' }
+    }).slice(3, 103), `${url} response`)
+  }
 })
 
 test('not found', async ({ pass, teardown, same, equal }) => {
@@ -424,21 +482,43 @@ test('not found', async ({ pass, teardown, same, equal }) => {
 
   {
     const res = await app.inject({
+      method: 'DELETE',
+      url: '/pages/1'
+    })
+    equal(res.statusCode, 404, 'DELETE /pages/1 status code')
+  }
+})
+
+test('POST with an Id', async ({ pass, teardown, same, equal }) => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(sqlOpenAPI)
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  {
+    const res = await app.inject({
       method: 'POST',
       url: '/pages/1',
       body: {
         title: 'Hello World'
       }
     })
-    equal(res.statusCode, 404, 'POST /pages/1 status code')
-  }
-
-  {
-    const res = await app.inject({
-      method: 'DELETE',
-      url: '/pages/1'
+    equal(res.statusCode, 200, 'POST /pages/1 status code')
+    same(res.json(), {
+      id: 1,
+      title: 'Hello World'
     })
-    equal(res.statusCode, 404, 'DELETE /pages/1 status code')
   }
 })
 
@@ -658,5 +738,169 @@ test('expose the api with a prefix, if defined', async (t) => {
     })
     const json = res.json()
     matchSnapshot(json, 'GET /documentation/json response')
+  }
+})
+
+test('JSON type', { skip: !(isPg || isMysql8) }, async ({ teardown, same, equal, pass }) => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      await db.query(sql`CREATE TABLE simple_types (
+        id SERIAL PRIMARY KEY,
+        config json NOT NULL
+      );`)
+    }
+  })
+  app.register(sqlOpenAPI)
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/simpleTypes',
+      body: {
+        config: {
+          foo: 'bar'
+        }
+      }
+    })
+    equal(res.statusCode, 200, 'POST /simpleTypes status code')
+    equal(res.headers.location, '/simpleTypes/1', 'POST /simpleTypes location')
+    same(res.json(), {
+      id: 1,
+      config: {
+        foo: 'bar'
+      }
+    }, 'POST /simpleTypes response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/simpleTypes/1',
+      body: {
+        config: {
+          foo: 'bar',
+          bar: 'foo'
+        }
+      }
+    })
+    equal(res.statusCode, 200, 'PUT /simpleTypes status code')
+    same(res.json(), {
+      id: 1,
+      config: {
+        foo: 'bar',
+        bar: 'foo'
+      }
+    }, 'PUT /simpleTypes response')
+  }
+})
+
+test('BIGINT', { skip: isSQLite }, async ({ pass, teardown, same, equal }) => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      await db.query(sql`
+      CREATE TABLE simple_types (
+        id SERIAL PRIMARY KEY,
+        counter BIGINT
+      );`)
+    }
+  })
+  teardown(app.close.bind(app))
+
+  app.register(sqlOpenAPI)
+
+  await app.ready()
+
+  const counter = BigInt(Number.MAX_SAFE_INTEGER) + 1000n
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/simpleTypes',
+      body: {
+        id: 1,
+        counter: counter.toString()
+      }
+    })
+    equal(res.statusCode, 200, 'POST /simpleTypes status code')
+    same(res.json(), {
+      id: 1,
+      counter: counter.toString()
+    }, 'POST /simpleTypes response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/simpleTypes/1'
+    })
+    equal(res.statusCode, 200, 'GET /simpleTypes status code')
+    same(res.json(), {
+      id: 1,
+      counter: counter.toString()
+    }, 'GET /simpleTypes response')
+  }
+})
+
+test('BIGINT as ids', { skip: isSQLite }, async ({ pass, teardown, same, equal }) => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      await db.query(sql`
+      CREATE TABLE simple_types (
+        counter BIGINT PRIMARY KEY
+      );`)
+    }
+  })
+  teardown(app.close.bind(app))
+
+  app.register(sqlOpenAPI)
+
+  await app.ready()
+
+  const counter = BigInt(Number.MAX_SAFE_INTEGER) + 1000n
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/simpleTypes',
+      body: {
+        counter: counter.toString()
+      }
+    })
+    equal(res.statusCode, 200, 'POST /simpleTypes status code')
+    same(res.json(), {
+      counter: counter.toString()
+    }, 'POST /simpleTypes response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: `/simpleTypes/${counter}`
+    })
+    equal(res.statusCode, 200, 'GET /simpleTypes status code')
+    same(res.json(), {
+      counter: counter.toString()
+    }, 'GET /simpleTypes response')
   }
 })

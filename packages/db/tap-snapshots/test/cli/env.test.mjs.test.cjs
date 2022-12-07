@@ -8,7 +8,7 @@
 exports['test/cli/env.test.mjs TAP env white list schema > must match snapshot 1'] = `
 type Query {
   getPageById(id: ID!): Page
-  pages(limit: Int, offset: Int, orderBy: [PageOrderByArguments], where: PageWhereArguments): [Page]
+  pages(limit: LimitInt, offset: Int, orderBy: [PageOrderByArguments], where: PageWhereArguments): [Page]
   countPages(where: PageWhereArguments): pagesCount
 }
 
@@ -16,6 +16,11 @@ type Page {
   id: ID
   title: String
 }
+
+"""
+Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown
+"""
+scalar LimitInt
 
 input PageOrderByArguments {
   field: PageOrderByField
@@ -44,6 +49,7 @@ input PageWhereArgumentsid {
   gte: ID
   lt: ID
   lte: ID
+  like: ID
   in: [ID]
   nin: [ID]
 }
@@ -55,6 +61,7 @@ input PageWhereArgumentstitle {
   gte: String
   lt: String
   lte: String
+  like: String
   in: [String]
   nin: [String]
 }

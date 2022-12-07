@@ -94,6 +94,10 @@ export interface WhereCondition {
      * Not in values.
      */
     nin?: any[]
+    /**
+     * Like value.
+     */
+    like?: string
   }
 }
 

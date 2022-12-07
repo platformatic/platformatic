@@ -1,5 +1,5 @@
 import { Navigate, Routes, Route } from 'react-router-dom'
-import { createContext, useState } from 'react'
+import React, { createContext, useState } from 'react'
 import { Layout } from '@platformatic/ui-components'
 import GraphiQLPage from './pages/GQL'
 import ConfigViewer from './pages/ConfigViewer'
@@ -12,9 +12,11 @@ import Home from './pages/Home'
 
 const AppContext = createContext({})
 export { AppContext }
+
 function getCurrentUrl () {
   return `${window.location.protocol}//${window.location.host}`
 }
+
 function App () {
   const [userName, setUsername] = useState('')
   const [logged, setLogged] = useState(false)
@@ -39,11 +41,11 @@ function App () {
           <Routes>
             <Route path='/' exact element={<Navigate to='/dashboard' />} />
             <Route path='/dashboard' element={<Home />} />
-            <Route path='/giql' element={<GraphiQLPage graphqlEndpoint={`${urlPrefix}/graphql`} />} />
-            <Route path='/config-view' element={<ConfigViewer />} />
-            <Route path='/swagger-docs' element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
-            <Route path='/swagger-plt-db-docs' element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/_admin/documentation/json`} />} />
-            <Route path='/react-admin/*' element={<ReactAdmin basename='/react-admin' apiUrl={`${urlPrefix}`} swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
+            <Route path='/dashboard/graphiql' element={<GraphiQLPage graphqlEndpoint={`${urlPrefix}/graphql`} />} />
+            <Route path='/dashboard/config-view' element={<ConfigViewer />} />
+            <Route path='/dashboard/openapi' element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
+            <Route path='/dashboard/openapi-admin' element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/_admin/documentation/json`} />} />
+            <Route path='/dashboard/table-view/*' element={<ReactAdmin basename='/dashboard/table-view' apiUrl={`${urlPrefix}`} swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
           </Routes>
 
         </Dashboard>

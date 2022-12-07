@@ -13,19 +13,19 @@ export default function Navbar () {
         <NavLink className={getListItemClass} data-testid='dashboard-link' to='/dashboard'>Dashboard</NavLink>
       </div>
       <div>
-        <NavLink className={getListItemClass} data-testid='graphiql-link' to='/giql'>GraphiQL</NavLink>
+        <NavLink className={getListItemClass} data-testid='graphiql-link' to='/dashboard/graphiql'>GraphiQL</NavLink>
       </div>
       <div>
-        <NavLink className={getListItemClass} data-testid='config-view-link' to='/config-view'>Configuration</NavLink>
+        <NavLink className={getListItemClass} data-testid='config-view-link' to='/dashboard/config-view'>Configuration</NavLink>
       </div>
       <div>
-        <NavLink className={getListItemClass} data-testid='swagger-view-link' to='/swagger-docs'>Entity API Docs</NavLink>
+        <NavLink className={getListItemClass} data-testid='swagger-view-link' to='/dashboard/openapi'>Entity API Docs</NavLink>
       </div>
       <div>
-        <NavLink className={getListItemClass} data-testid='swagger-plt-db-view-link' to='/swagger-plt-db-docs'>Admin API Docs</NavLink>
+        <NavLink className={getListItemClass} data-testid='swagger-plt-db-view-link' to='/dashboard/openapi-admin'>Admin API Docs</NavLink>
       </div>
       <div>
-        <NavLink className={getListItemClass} data-testid='react-admin-link' to='/react-admin'>Table View</NavLink>
+        <NavLink className={getListItemClass} data-testid='react-admin-link' to='/dashboard/table-view'>Table View</NavLink>
       </div>
     </div>
   )

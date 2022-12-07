@@ -1,14 +1,20 @@
 'use strict'
 import React, { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader } from '@mui/material'
-import { Admin, BooleanInput, Create, EditGuesser, ListGuesser, NumberInput, required, Resource, ShowGuesser, SimpleForm, TextInput } from 'react-admin'
+import { Admin, BooleanInput, Create, EditGuesser, Layout, ListGuesser, NumberInput, required, Resource, ShowGuesser, SimpleForm, TextInput } from 'react-admin'
 import './ReactAdmin.css'
 
 import camelcase from 'camelcase'
 import { pluralize } from 'inflected'
 
 import platformaticDbRestProvider from '@platformatic/db-ra-data-rest'
-
+function customLayout (props) {
+  return (
+    <Layout
+      {...props}
+      appBar={() => undefined}
+    />
+  )
+}
 const FieldInput = (props) => {
   const { source, attributes } = props
 
@@ -49,15 +55,6 @@ const CreateGuesser = (props) => {
   )
 }
 
-function buildDashboard (swagger) {
-  return () => (
-    <Card>
-      <CardHeader title={`React Admin for '${swagger.info.title}'`} />
-      <CardContent>This React Admin app was generated for you by Platformatic DB to quickly explore your database.</CardContent>
-    </Card>
-  )
-}
-
 const ReactAdmin = (props) => {
   const { basename, apiUrl, swaggerDocUrl } = props
 
@@ -77,11 +74,10 @@ const ReactAdmin = (props) => {
   }
 
   const schemas = swagger.components.schemas
-  const dashboard = buildDashboard(swagger)
   const dataProvider = platformaticDbRestProvider(apiUrl)
 
   return (
-    <Admin basename={basename} dataProvider={dataProvider} dashboard={dashboard}>
+    <Admin basename={basename} dataProvider={dataProvider} layout={customLayout}>
       {Object.keys(schemas).map((entity) =>
         <Resource
           key={entity}

@@ -32,6 +32,7 @@ Every API can define a `fields` parameter, representing the entity fields you wa
 
 `fields` parameter are always sent in query string, even for `POST`, `PUT` and `DELETE` requests, as a comma separated value.
 
+<a name="plural"></a>
 ## `GET /[PLURAL_ENTITY_NAME]`
 
 Return all entities matching `where` clause
@@ -170,6 +171,7 @@ $ curl -X 'POST' \
 
 Same as `POST [PLURAL_ENTITY_NAME]/[PRIMARY_KEY]`.
 
+<a name="put-plural"></a>
 ## `PUT [PLURAL_ENTITY_NAME]`
 
 Updates all entities matching `where` clause
@@ -264,3 +266,125 @@ $ curl -X 'GET' 'http://localhost:3042/quotes/1/movie?fields=title
 }
 ```
 
+## Many-to-Many Relationships
+
+Many-to-Many relationship lets you relate each row in one table to many rows in
+another table and vice versa. 
+
+Many-to-many relationship are implemented in SQL via a "join table", a table whose **primary key**
+is composed by the identifier of the two parts of the many-to-many relationship.
+
+Platformatic DB fully support many-to-many relationships on all supported database.
+
+Let's consider the following SQL:
+
+```SQL
+CREATE TABLE pages (
+  id INTEGER PRIMARY KEY,
+  the_title VARCHAR(42)
+);
+
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY,
+  username VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE editors (
+  page_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  role VARCHAR(255) NOT NULL,
+  CONSTRAINT fk_editor_pages FOREIGN KEY (page_id) REFERENCES pages(id),
+  CONSTRAINT fk_editor_users FOREIGN KEY (user_id) REFERENCES users(id),
+  PRIMARY KEY (page_id, user_id)
+);
+```
+
+And:
+- `[P_ENTITY]` is `editors`
+- `[P_REL_1]` is `pages`
+- `[S_REL_1]` is `page`
+- `[KEY_REL_1]` is `pages` PRIMARY KEY: `pages(id)`
+- `[P_REL_2]` is `users`
+- `[S_REL_2]` is `user`
+- `[KEY_REL_2]` is `users` PRIMARY KEY: `users(id)`
+
+In this case, here the APIs that are available for the join table:
+
+### `GET [P_ENTITY]/[S_REL_1]/[KEY_REL_1]/[S_REL_2]/[KEY_REL_2]`
+
+This returns the entity in the "join table", e.g. `GET /editors/page/1/user/1`.
+
+### `POST [P_ENTITY]/[S_REL_1]/[KEY_REL_1]/[S_REL_2]/[KEY_REL_2]`
+
+Creates a new entity in the "join table", e.g. `POST /editors/page/1/user/1`.
+
+### `PUT [P_ENTITY]/[S_REL_1]/[KEY_REL_1]/[S_REL_2]/[KEY_REL_2]`
+
+Updates an entity in the "join table", e.g. `PUT /editors/page/1/user/1`.
+
+### `DELETE [P_ENTITY]/[S_REL_1]/[KEY_REL_1]/[S_REL_2]/[KEY_REL_2]`
+
+Delete the entity in the "join table", e.g. `DELETE /editors/page/1/user/1`.
+
+## `GET /[P_ENTITY]`
+
+See the [above](#plural).
+
+*Offset* only accepts values `>= 0`. Otherwise an error is return.
+
+## Pagination
+
+The Platformatic DB supports for result's pagination through input parameters: `limit` and `offset`
+
+_Example_
+```
+$ curl -X 'GET' 'http://localhost:3042/movies?limit=5&offset=10
+
+[
+  {
+    "title": "Star Wars",
+    "movie_id": 10
+  },
+  ...
+  {
+    "title": "007",
+    "movie_id": 14
+  }
+]
+```
+
+It returns 5 movies starting from position 10.
+
+[TotalCount](#total-count) functionality can be used in order to evaluate if there are more pages.
+
+### Limit
+
+By default a *limit* value (`10`) is applied to each request.
+
+Clients can override this behavior by passing a value.
+In this case the server validates the input and an error is return if exceeds the `max` accepted value (`100`).
+
+Limit's values can be customized through configuration:
+
+```json
+{
+  ...
+  "core": {
+    ...
+    "limit": {
+      "default": 50,
+      "max": 1000
+    }
+  }
+}
+```
+
+*Limit* only accepts values `>= 0`. Otherwise an error is return.
+
+
+### Offset
+
+By default *offset* is not applied to the request.
+Clients can override this behavior by passing a value.
+
+*Offset* only accepts values `>= 0`. Otherwise an error is return.

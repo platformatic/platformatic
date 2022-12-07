@@ -6,7 +6,7 @@ A set of operation methods are available on each entity:
 - [`insert`](#insert)
 - [`save`](#save)
 - [`delete`](#delete)
-- [`updateMany`](#updateMany)
+- [`updateMany`](#updatemany)
 
 
 ## Returned fields
@@ -29,6 +29,7 @@ The `where` object's key is the field you want to check, the value is a key/valu
 | gte | `'>='` |
 | lt | `'<'` |
 | lte | `'<='` |
+| like | `'LIKE'` |
 
 ### Examples
 

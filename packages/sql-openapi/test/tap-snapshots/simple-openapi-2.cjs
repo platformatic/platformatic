@@ -38,6 +38,7 @@ Object {
         "operationId": "getPages",
         "parameters": Array [
           Object {
+            "description": "Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown",
             "in": "query",
             "name": "limit",
             "required": false,
@@ -127,6 +128,14 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "where.id.like",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "where.id.in",
             "required": false,
             "schema": Object {
@@ -184,6 +193,14 @@ Object {
           Object {
             "in": "query",
             "name": "where.title.lte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.like",
             "required": false,
             "schema": Object {
               "type": "string",
@@ -337,6 +354,14 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "where.id.like",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "where.id.in",
             "required": false,
             "schema": Object {
@@ -394,6 +419,14 @@ Object {
           Object {
             "in": "query",
             "name": "where.title.lte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.like",
             "required": false,
             "schema": Object {
               "type": "string",

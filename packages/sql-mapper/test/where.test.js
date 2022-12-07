@@ -388,6 +388,170 @@ test('foreign keys', async ({ pass, teardown, same, equal }) => {
   }
 })
 
+test('limit should be 10 by default 100 at max', async ({ pass, teardown, same, fail, match }) => {
+  const mapper = await connect({
+    ...connInfo,
+    log: fakeLogger,
+    async onDatabaseLoad (db, sql) {
+      teardown(() => db.dispose())
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      if (isSQLite) {
+        await db.query(sql`CREATE TABLE posts (
+          id INTEGER PRIMARY KEY,
+          title VARCHAR(42),
+          long_text TEXT,
+          counter INTEGER
+        );`)
+      } else {
+        await db.query(sql`CREATE TABLE posts (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(42),
+          long_text TEXT,
+          counter INTEGER
+        );`)
+      }
+    }
+  })
+
+  const entity = mapper.entities.post
+
+  const posts = []
+
+  for (let i = 0; i <= 105; i++) {
+    posts.push({
+      title: 'Dog',
+      longText: 'Foo',
+      counter: i
+    })
+  }
+
+  await entity.insert({
+    inputs: posts
+  })
+
+  const defaultLimit = 10
+  const max = 100
+
+  same(await (await entity.find()).length, defaultLimit)
+
+  same(await (await entity.find({ limit: 1 })).length, 1)
+
+  same(await (await entity.find({ offset: 3 })).length, defaultLimit)
+
+  same(await (await entity.find({ limit: 1, offset: 0 })).length, 1)
+
+  same(await (await entity.find({ limit: 0 })).length, 0)
+
+  try {
+    await entity.find({ limit: -1 })
+    fail('Expected error for limit not allowed value')
+  } catch (e) {
+    match(e, new Error('Param limit=-1 not allowed. It must be not negative value.'))
+  }
+
+  same(await (await entity.find({ limit: 1, offset: 0 })).length, 1)
+
+  try {
+    await entity.find({ limit: 1, offset: -1 })
+    fail('Expected error for offset not allowed value')
+  } catch (e) {
+    match(e, new Error('Param offset=-1 not allowed. It must be not negative value.'))
+  }
+
+  try {
+    await entity.find({ limit: 200 })
+    fail('Expected error for limit exceeding max allowed value')
+  } catch (e) {
+    match(e, new Error(`Param limit=200 not allowed. Max accepted value ${max}.`))
+  }
+})
+
+test('limit must accept custom configuration', async ({ pass, teardown, same, fail, match }) => {
+  const customLimitConf = {
+    default: 1,
+    max: 5
+  }
+  const mapper = await connect({
+    ...connInfo,
+    log: fakeLogger,
+    async onDatabaseLoad (db, sql) {
+      teardown(() => db.dispose())
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      if (isSQLite) {
+        await db.query(sql`CREATE TABLE posts (
+          id INTEGER PRIMARY KEY,
+          title VARCHAR(42),
+          long_text TEXT,
+          counter INTEGER
+        );`)
+      } else {
+        await db.query(sql`CREATE TABLE posts (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(42),
+          long_text TEXT,
+          counter INTEGER
+        );`)
+      }
+    },
+    limit: customLimitConf
+  })
+
+  const entity = mapper.entities.post
+
+  const posts = []
+
+  for (let i = 0; i <= 10; i++) {
+    posts.push({
+      title: 'Dog',
+      longText: 'Foo',
+      counter: i
+    })
+  }
+
+  await entity.insert({
+    inputs: posts
+  })
+
+  same(await (await entity.find()).length, customLimitConf.default)
+
+  same(await (await entity.find({ limit: 1 })).length, 1)
+
+  same(await (await entity.find({ offset: 3 })).length, customLimitConf.default)
+
+  same(await (await entity.find({ limit: 1, offset: 0 })).length, 1)
+
+  same(await (await entity.find({ limit: 0 })).length, 0)
+
+  try {
+    await entity.find({ limit: -1 })
+    fail('Expected error for limit not allowed value')
+  } catch (e) {
+    match(e, new Error('Param limit=-1 not allowed. It must be not negative value.'))
+  }
+
+  same(await (await entity.find({ limit: 1, offset: 0 })).length, 1)
+
+  try {
+    await entity.find({ limit: 1, offset: -1 })
+    fail('Expected error for offset not allowed value')
+  } catch (e) {
+    match(e, new Error('Param offset=-1 not allowed. It must be not negative value.'))
+  }
+
+  try {
+    await entity.find({ limit: 200 })
+    fail('Expected error for limit exceeding max allowed value')
+  } catch (e) {
+    match(e, new Error(`Param limit=200 not allowed. Max accepted value ${customLimitConf.max}.`))
+  }
+})
+
 test('is NULL', async ({ pass, teardown, same, equal }) => {
   const mapper = await connect({
     ...connInfo,
@@ -433,4 +597,144 @@ test('is NULL', async ({ pass, teardown, same, equal }) => {
     id: '1',
     title: 'Dog'
   }])
+})
+
+test('LIKE', async ({ pass, teardown, same, equal }) => {
+  const mapper = await connect({
+    ...connInfo,
+    log: fakeLogger,
+    async onDatabaseLoad (db, sql) {
+      teardown(() => db.dispose())
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      if (isSQLite) {
+        await db.query(sql`CREATE TABLE posts (
+          id INTEGER PRIMARY KEY,
+          title VARCHAR(42),
+          long_text TEXT,
+          counter INTEGER
+        );`)
+      } else {
+        await db.query(sql`CREATE TABLE posts (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(42),
+          long_text TEXT,
+          counter INTEGER
+        );`)
+      }
+    }
+  })
+
+  const entity = mapper.entities.post
+
+  const posts = [
+    {
+      title: 'Dog',
+      longText: 'The Dog barks',
+      counter: 1
+    },
+    {
+      title: 'Cat',
+      longText: 'The Cat meows',
+      counter: 2
+    },
+    {
+      title: 'Potato',
+      longText: 'The Potato is vegetable',
+      counter: 3
+    },
+    {
+      title: 'atmosphere',
+      longText: 'The atmosphere is not a sphere',
+      counter: 4
+    },
+    {
+      title: 'planet',
+      longText: 'The planet have atmosphere',
+      counter: 14
+    }
+  ]
+
+  await entity.insert({
+    inputs: posts
+  })
+
+  same(await entity.find({ where: { title: { like: '%at' } } }), [{
+    id: '2',
+    title: 'Cat',
+    longText: 'The Cat meows',
+    counter: 2
+  }], 'where: { title: { like: \'%at\' } }')
+
+  same(await entity.find({ where: { title: { like: '%at%' } } }), [{
+    id: '2',
+    title: 'Cat',
+    longText: 'The Cat meows',
+    counter: 2
+  },
+  {
+    id: '3',
+    title: 'Potato',
+    longText: 'The Potato is vegetable',
+    counter: 3
+  },
+  {
+    id: '4',
+    title: 'atmosphere',
+    longText: 'The atmosphere is not a sphere',
+    counter: 4
+  }], 'where: { title: { like: \'%at%\' } }')
+
+  same(await entity.find({ where: { title: { like: 'at%' } } }), [{
+    id: '4',
+    title: 'atmosphere',
+    longText: 'The atmosphere is not a sphere',
+    counter: 4
+  }], 'where: { title: { like: \'at%\' } }')
+
+  same(await entity.find({ where: { longText: { like: '%is%' } } }), [{
+    id: '3',
+    title: 'Potato',
+    longText: 'The Potato is vegetable',
+    counter: 3
+  },
+  {
+    id: '4',
+    title: 'atmosphere',
+    longText: 'The atmosphere is not a sphere',
+    counter: 4
+  }], 'where: { longText: { like: \'%is%\' } }')
+
+  same(await entity.find({ where: { longText: { like: null } } }), [], 'where: { longText: { like: null } }')
+
+  same(await entity.find({ where: { counter: { like: 4 } } }), [{
+    id: '4',
+    title: 'atmosphere',
+    longText: 'The atmosphere is not a sphere',
+    counter: 4
+  }], 'where: { counter: { like: 4 } }')
+
+  same(await entity.find({ where: { counter: { like: '%4' } } }), [{
+    id: '4',
+    title: 'atmosphere',
+    longText: 'The atmosphere is not a sphere',
+    counter: 4
+  },
+  {
+    id: '5',
+    title: 'planet',
+    longText: 'The planet have atmosphere',
+    counter: 14
+  }], 'where: { counter: { like: \'%4\' } }')
+
+  same(await entity.find({ where: { counter: { like: '4%' } } }), [{
+    id: '4',
+    title: 'atmosphere',
+    longText: 'The atmosphere is not a sphere',
+    counter: 4
+  }], 'where: { counter: { like: \'4%\' } }')
+
+  same(await entity.find({ where: { counter: { like: null } } }), [], 'where: { counter: { like: null } }')
 })

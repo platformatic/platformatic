@@ -15,10 +15,14 @@ function mapSQLTypeToOpenAPIType (sqlType) {
     case 'decimal':
       return 'integer'
     case 'bigint':
-      return 'integer'
+      return 'string'
     case 'int2':
       return 'integer'
     case 'int4':
+      return 'integer'
+    case 'int8':
+      return 'string'
+    case 'integer unsigned':
       return 'integer'
     case 'varchar':
       return 'string'
@@ -53,12 +57,15 @@ function mapSQLTypeToOpenAPIType (sqlType) {
   }
 }
 
-function mapSQLEntityToJSONSchema (entity) {
+function mapSQLEntityToJSONSchema (entity, ignore = {}) {
   const fields = entity.fields
   const properties = {}
   const required = []
   for (const name of Object.keys(fields)) {
     const field = fields[name]
+    if (ignore[name] === true) {
+      continue
+    }
     const type = mapSQLTypeToOpenAPIType(field.sqlType)
     /* istanbul ignore next */
     if (field.sqlType === 'json') {

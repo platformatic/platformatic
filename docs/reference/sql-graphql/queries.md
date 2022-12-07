@@ -97,3 +97,50 @@ const result = await res.json()
 console.log(result.data) // { countMovies : { total: { 17 } }
 ```
 
+## Pagination
+
+The Platformatic DB supports for result's pagination through input parameters: `limit` and `offset`
+
+_Example_
+
+```js
+{
+  users(limit:5, offset: 10) {
+    name
+  }
+}
+```
+
+It returns 5 users starting from position 10.
+
+### Limit
+
+By default a *limit* value (`10`) is applied to each request.
+
+Clients can override this behavior by passing a value.
+In this case the server validates the input and an error is return if exceeds the `max` accepted value (`100`).
+
+Limit's values can be customized through configuration:
+
+```json
+{
+  ...
+  "core": {
+    ...
+    "limit": {
+      "default": 50,
+      "max": 1000
+    }
+  }
+}
+```
+
+*Limit* only accepts values `>= 0`. Otherwise an error is return.
+
+
+### Offset
+
+By default *offset* is not applied to the request.
+Clients can override this behavior by passing a value.
+
+*Offset* only accepts values `>= 0`. Otherwise an error is return.

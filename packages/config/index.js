@@ -26,7 +26,7 @@ class ConfigManager extends EventEmitter {
     if (typeof opts.source === 'string') {
       this.fullPath = resolve(opts.source)
     } else {
-      this.fullPath = join(tmpdir(), `platformatic-config-${Date.now()}.json`)
+      this.fullPath = join(tmpdir(), `platformatic-config-${process.pid}-${Date.now()}.json`)
       this.current = opts.source
       this._shouldSave = true
     }
@@ -139,7 +139,13 @@ class ConfigManager extends EventEmitter {
       env = { ...env, ...parsed }
     }
     this.env = this.purgeEnv(env)
-    return this.pupa(configString, this.env)
+
+    const escapeNewlines = ({ value }) => {
+      if (!value) return value
+      return value.replace(/\n/g, '\\n')
+    }
+
+    return this.pupa(configString, this.env, { transform: escapeNewlines })
   }
 
   _transformConfig () {}
@@ -170,7 +176,9 @@ class ConfigManager extends EventEmitter {
           throw new Error(`${err.key} env variable is missing.`)
         }
       }
-      throw new Error(`Cannot parse config file. ${err.message}`)
+      const newerr = new Error(`Cannot parse config file. ${err.message}`)
+      newerr.cause = err
+      throw newerr
     }
   }
 

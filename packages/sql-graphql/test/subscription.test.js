@@ -33,7 +33,7 @@ function createWebSocketClient (t, app) {
   return { client, ws }
 }
 
-test('subscription - crud', { only: true }, async t => {
+test('subscription - crud', async t => {
   const app = Fastify()
   t.teardown(() => app.close())
 

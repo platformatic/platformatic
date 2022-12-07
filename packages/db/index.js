@@ -67,11 +67,11 @@ async function buildDBServer (options) {
   if (!options.configManager) {
     // instantiate a new config manager from current options
     const cm = new ConfigManager({
-      source: { ...options },
+      source: options,
       schema
     })
     await cm.parseAndValidate()
-    options = deepmerge({}, cm.current, options)
+    options = deepmerge({}, options, cm.current)
     options.configManager = cm
   }
   return buildServer(options, platformaticDB)

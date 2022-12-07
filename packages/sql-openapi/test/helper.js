@@ -22,6 +22,7 @@ if (!process.env.DB || process.env.DB === 'postgresql') {
   connInfo.connectionString = 'mysql://root@127.0.0.1:3308/graph'
   connInfo.poolSize = 10
   module.exports.isMysql = true
+  module.exports.isMysql8 = true
 } else if (process.env.DB === 'sqlite') {
   connInfo.connectionString = 'sqlite://:memory:'
   module.exports.isSQLite = true
@@ -30,6 +31,11 @@ if (!process.env.DB || process.env.DB === 'postgresql') {
 module.exports.connInfo = connInfo
 
 module.exports.clear = async function (db, sql) {
+  try {
+    await db.query(sql`DROP TABLE editors`)
+  } catch (err) {
+  }
+
   try {
     await db.query(sql`DROP TABLE pages`)
   } catch (err) {

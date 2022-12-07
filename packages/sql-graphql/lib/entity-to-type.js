@@ -15,8 +15,13 @@ const ascDesc = new graphql.GraphQLEnumType({
   }
 })
 
-function constructGraph (app, entity, opts) {
-  const primaryKey = camelcase(entity.primaryKey)
+const limitType = new graphql.GraphQLScalarType({
+  name: 'LimitInt',
+  description: 'Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown'
+})
+
+function constructGraph (app, entity, opts, ignore) {
+  const primaryKeys = Array.from(entity.primaryKeys).map((key) => camelcase(key))
   const relationalFields = entity.relations
     .map((relation) => relation.column_name)
   const entityName = entity.name
@@ -35,6 +40,10 @@ function constructGraph (app, entity, opts) {
 
   for (const key of Object.keys(entity.fields)) {
     const field = entity.fields[key]
+    if (ignore[field.camelcase]) {
+      continue
+    }
+
     const meta = { field }
 
     // sqlite doesn't support enums
@@ -66,7 +75,12 @@ function constructGraph (app, entity, opts) {
   resolvers.Mutation = resolvers.Mutation || {}
   loaders.Query = loaders.Query || {}
 
-  const getBy = camelcase(['get', singular, 'by', primaryKey])
+  const getBy = camelcase(['get', singular, ...(primaryKeys.map((key, i) => {
+    if (i === 0) {
+      return ['by', key]
+    }
+    return ['and', key]
+  }).flat())].join('_'))
 
   const whereArgType = new graphql.GraphQLInputObjectType({
     name: `${entityName}WhereArguments`,
@@ -81,6 +95,7 @@ function constructGraph (app, entity, opts) {
             gte: { type: fields[field].type },
             lt: { type: fields[field].type },
             lte: { type: fields[field].type },
+            like: { type: fields[field].type },
             in: { type: new graphql.GraphQLList(fields[field].type) },
             nin: { type: new graphql.GraphQLList(fields[field].type) }
           }
@@ -93,14 +108,21 @@ function constructGraph (app, entity, opts) {
   queryTopFields[getBy] = {
     type,
     args: {
-      [primaryKey]: { type: new graphql.GraphQLNonNull(fields[primaryKey].type) }
+      ...(primaryKeys.reduce((acc, primaryKey) => {
+        acc[primaryKey] = { type: new graphql.GraphQLNonNull(fields[primaryKey].type) }
+        return acc
+      }, {}))
     }
   }
   loaders.Query[getBy] = {
     loader (queries, ctx) {
       const keys = []
       for (const query of queries) {
-        keys.push(query.params[primaryKey])
+        const pairs = []
+        for (const key of primaryKeys) {
+          pairs.push({ key, value: query.params[key] })
+        }
+        keys.push(pairs)
       }
       return loadMany(keys, queries, ctx)
     },
@@ -121,7 +143,7 @@ function constructGraph (app, entity, opts) {
   queryTopFields[plural] = {
     type: new graphql.GraphQLList(type),
     args: {
-      limit: { type: graphql.GraphQLInt },
+      limit: { type: limitType },
       offset: { type: graphql.GraphQLInt },
       orderBy: {
         type: new graphql.GraphQLList(new graphql.GraphQLInputObjectType({
@@ -138,7 +160,9 @@ function constructGraph (app, entity, opts) {
 
   resolvers.Query[plural] = (_, query, ctx, info) => {
     const requestedFields = info.fieldNodes[0].selectionSet.selections.map((s) => s.name.value)
-    requestedFields.push(primaryKey)
+    for (const primaryKey of primaryKeys) {
+      requestedFields.push(primaryKey)
+    }
     return entity.find({ ...query, fields: [...requestedFields, ...relationalFields], ctx })
   }
 
@@ -172,7 +196,9 @@ function constructGraph (app, entity, opts) {
 
   resolvers.Query[count] = async (_, query, ctx, info) => {
     const requestedFields = info.fieldNodes[0].selectionSet.selections.map((s) => s.name.value)
-    requestedFields.push(primaryKey)
+    for (const primaryKey of primaryKeys) {
+      requestedFields.push(primaryKey)
+    }
     const total = await entity.count({ ...query, fields: [...requestedFields, ...relationalFields], ctx })
     return { total }
   }
@@ -220,14 +246,21 @@ function constructGraph (app, entity, opts) {
 
   federationReplacements.push({
     find: new RegExp(`type ${entityName}`),
-    replace: `type ${entityName} @key(fields: "${primaryKey}")`
+    replace: `type ${entityName} @key(fields: "${primaryKeys}")`
   })
 
   if (federationMetadata) {
     loaders[entityName] = loaders[entityName] || {}
     loaders[entityName].__resolveReference = {
       loader (queries, ctx) {
-        const keys = queries.map(({ obj }) => obj[primaryKey])
+        const keys = []
+        for (const { obj } of queries) {
+          const pairs = []
+          for (const key of primaryKeys) {
+            pairs.push({ key, value: obj[key] })
+          }
+          keys.push(pairs)
+        }
         return loadMany(keys, queries, ctx)
       },
       opts: {
@@ -241,30 +274,53 @@ function constructGraph (app, entity, opts) {
     entity,
     loadMany,
     getFields,
+    relationalFields,
     fields
   }
 
   async function loadMany (keys, queries, ctx) {
     const fields = getFields(queries)
-    const res = await entity.find({
-      where: {
-        [primaryKey]: {
-          in: keys
+
+    // TODO this is inefficient as it might load
+    // more data than needed if there are more than
+    // one primary key
+    const where = keys.reduce((acc, pairs) => {
+      pairs.reduce((acc, { key, value }) => {
+        if (acc[key]) {
+          acc[key].in.push(value)
+        } else {
+          acc[key] = {
+            in: [value]
+          }
         }
-      },
+        return acc
+      }, acc)
+      return acc
+    }, {})
+
+    const res = await entity.find({
+      where,
       fields,
       ctx
     })
 
-    const map = {}
-
-    for (const row of res) {
-      map[row[primaryKey]] = row
-    }
-
     const output = []
-    for (const key of keys) {
-      output.push(map[key])
+    // TODO this is extremely inefficient
+    // we need a better data structure
+    for (const pair of keys) {
+      for (const row of res) {
+        let target = row
+        for (const { key, value } of pair) {
+          if (row[key] !== value) {
+            target = null
+            break
+          }
+        }
+
+        if (target) {
+          output.push(target)
+        }
+      }
     }
 
     return output
@@ -272,7 +328,9 @@ function constructGraph (app, entity, opts) {
 
   function getFields (queries) {
     const fields = new Set([...relationalFields])
-    fields.add(primaryKey)
+    for (const primaryKey of primaryKeys) {
+      fields.add(primaryKey)
+    }
     for (const query of queries) {
       fromSelectionSet(query.info.fieldNodes[0].selectionSet, fields)
     }

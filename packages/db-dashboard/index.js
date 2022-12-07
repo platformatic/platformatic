@@ -94,6 +94,10 @@ module.exports = async function app (app, opts) {
     return reply.sendFile('index.html')
   })
 
+  app.get('/dashboard/*', { hide: true }, function (req, reply) {
+    return reply.sendFile('index.html')
+  })
+
   app.get('/dashboard/metrics', { hide: true }, async function (req, reply) {
     reply.header('Content-Type', 'application/json')
 

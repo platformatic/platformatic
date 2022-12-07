@@ -513,3 +513,229 @@ test('jwt verify fail if the domain is not allowed', async ({ pass, teardown, sa
     }, 'savePage response')
   }
 })
+
+test('jwt skips configure namespace in custom claims', async ({ pass, teardown, same, equal }) => {
+  const { n, e, kty } = jwtPublicKey
+  const kid = 'TEST-KID'
+  const alg = 'RS256'
+  const jwksEndpoint = await buildJwksEndpoint(
+    {
+      keys: [
+        {
+          alg,
+          kty,
+          n,
+          e,
+          use: 'sig',
+          kid
+        }
+      ]
+    }
+  )
+  const issuer = `http://localhost:${jwksEndpoint.server.address().port}`
+  const header = {
+    kid,
+    alg,
+    typ: 'JWT'
+  }
+  const namespace = 'https://test.com/'
+  const payload = {
+    [`${namespace}X-PLATFORMATIC-USER-ID`]: 42,
+    [`${namespace}X-PLATFORMATIC-ROLE`]: ['user']
+  }
+
+  const app = fastify()
+  app.register(core, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(auth, {
+    jwt: {
+      jwks: true,
+      namespace
+    },
+    rules: [{
+      role: 'user',
+      entity: 'page',
+      find: true,
+      delete: false,
+      defaults: {
+        userId: 'X-PLATFORMATIC-USER-ID'
+      },
+      save: {
+        checks: {
+          userId: 'X-PLATFORMATIC-USER-ID'
+        }
+      }
+    }]
+  })
+  teardown(app.close.bind(app))
+  teardown(() => jwksEndpoint.close())
+
+  await app.ready()
+
+  const signSync = createSigner({
+    algorithm: 'RS256',
+    key: privateKey,
+    header,
+    iss: issuer,
+    kid
+  })
+  const token = signSync(payload)
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body: {
+        query: `
+          mutation {
+            savePage(input: { title: "Hello" }) {
+              id
+              title
+              userId
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'savePage status code')
+    same(res.json(), {
+      data: {
+        savePage: {
+          id: 1,
+          title: 'Hello',
+          userId: 42
+        }
+      }
+    }, 'savePage response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body: {
+        query: `
+          query {
+            getPageById(id: 1) {
+              id
+              title
+              userId
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'pages status code')
+    same(res.json(), {
+      data: {
+        getPageById: {
+          id: 1,
+          title: 'Hello',
+          userId: 42
+        }
+      }
+    }, 'pages response')
+  }
+})
+
+test('do not install a preHandler hook', async ({ pass, teardown, same, equal }) => {
+  const { n, e, kty } = jwtPublicKey
+  const kid = 'TEST-KID'
+  const alg = 'RS256'
+  const jwksEndpoint = await buildJwksEndpoint(
+    {
+      keys: [
+        {
+          alg,
+          kty,
+          n,
+          e,
+          use: 'sig',
+          kid
+        }
+      ]
+    }
+  )
+  const issuer = `http://localhost:${jwksEndpoint.server.address().port}`
+  const header = {
+    kid,
+    alg,
+    typ: 'JWT'
+  }
+  const payload = {
+    'X-PLATFORMATIC-USER-ID': 42,
+    'X-PLATFORMATIC-ROLE': ['user']
+  }
+
+  const app = fastify()
+  app.register(core, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(auth, {
+    jwt: {
+      jwks: true
+    },
+    rules: [{
+      role: 'user',
+      entity: 'page',
+      find: true,
+      delete: false,
+      defaults: {
+        userId: 'X-PLATFORMATIC-USER-ID'
+      },
+      save: {
+        checks: {
+          userId: 'X-PLATFORMATIC-USER-ID'
+        }
+      }
+    }]
+  })
+  teardown(app.close.bind(app))
+  teardown(() => jwksEndpoint.close())
+
+  app.get('/test', async (req, reply) => {
+    equal(req.user, null)
+    return 'ok'
+  })
+
+  await app.ready()
+
+  const signSync = createSigner({
+    algorithm: 'RS256',
+    key: privateKey,
+    header,
+    iss: issuer,
+    kid
+  })
+  const token = signSync(payload)
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/test',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    equal(res.statusCode, 200, 'test status code')
+  }
+})

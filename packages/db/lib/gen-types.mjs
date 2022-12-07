@@ -134,10 +134,6 @@ async function writeFileIfChanged (filename, content) {
 async function execute (logger, args, config) {
   const { db, entities } = await setupDB(logger, config.core)
 
-  if (Object.values(entities).length === 0) {
-    logger.warn('No entities found. Please run `platformatic db migrate` to generate entities.')
-  }
-
   const isTypeFolderExists = await isFileAccessible(TYPES_FOLDER_PATH)
   if (isTypeFolderExists) {
     await removeUnusedTypeFiles(entities, TYPES_FOLDER_PATH)
@@ -145,7 +141,9 @@ async function execute (logger, args, config) {
     await mkdir(TYPES_FOLDER_PATH)
   }
 
+  let count = 0
   for (const entity of Object.values(entities)) {
+    count++
     const types = await generateEntityType(entity)
 
     const pathToFile = join(TYPES_FOLDER_PATH, entity.name + '.d.ts')
@@ -157,6 +155,7 @@ async function execute (logger, args, config) {
   }
   await generateGlobalTypesFile(entities, config)
   await db.dispose()
+  return count
 }
 
 async function generateTypes (_args) {
@@ -170,7 +169,10 @@ async function generateTypes (_args) {
   await configManager.parseAndValidate()
   const config = configManager.current
 
-  await execute(logger, args, config)
+  const count = await execute(logger, args, config)
+  if (count === 0) {
+    logger.warn('No table found. Please run `platformatic db migrations apply` to generate types.')
+  }
   await checkForDependencies(logger, args, config)
 }
 

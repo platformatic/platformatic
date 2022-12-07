@@ -4,11 +4,12 @@ const { randomUUID } = require('crypto')
 const shared = require('./shared')
 
 async function listTables (db, sql) {
-  const tables = await db.query(sql`
+  const res = await db.query(sql`
     SELECT name FROM sqlite_master
     WHERE type='table'
   `)
-  return tables.map(t => t.name)
+  // sqlite has no schemas
+  return res.map(r => ({ schema: null, table: r.name }))
 }
 
 module.exports.listTables = listTables
@@ -37,13 +38,9 @@ async function listConstraints (db, sql, table) {
     WHERE pk > 0
   `)
 
-  if (pks.length > 1) {
-    throw new Error(`Table ${table} has ${pks.length} primary keys`)
-  }
-
-  if (pks.length === 1) {
+  for (const pk of pks) {
     constraints.push({
-      column_name: pks[0].name,
+      column_name: pk.name,
       constraint_type: 'PRIMARY KEY'
     })
   }
@@ -67,25 +64,38 @@ async function listConstraints (db, sql, table) {
 
 module.exports.listConstraints = listConstraints
 
-async function insertOne (db, sql, table, input, primaryKey, useUUID, fieldsToRetrieve) {
-  const keysToSql = Object.keys(input).map((key) => sql.ident(key))
-  keysToSql.push(sql.ident(primaryKey))
+async function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve) {
+  const fieldNames = Object.keys(input)
+  const keysToSql = fieldNames.map((key) => sql.ident(key))
+  const valuesToSql = fieldNames.map((key) => sql.value(input[key]))
+
+  const primaryKeyValues = {}
+  let useUUID = false
+  const where = []
+  let autoIncrement = 0
+  for (const { key, sqlType } of primaryKeys) {
+    keysToSql.push(sql.ident(key))
+    // TODO figure out while this is not covered by tests
+    /* istanbul ignore next */
+    if (sqlType === 'uuid') {
+      useUUID = true
+      primaryKeyValues[key] = randomUUID()
+    } else if (autoIncrement > 1) {
+      throw new Error('SQLite only supports autoIncrement on one column')
+    } else if (input[key]) {
+      primaryKeyValues[key] = input[key]
+    } else {
+      autoIncrement++
+      primaryKeyValues[key] = null
+    }
+    valuesToSql.push(sql.value(primaryKeyValues[key]))
+  }
+
   const keys = sql.join(
     keysToSql,
     sql`, `
   )
 
-  const valuesToSql = Object.keys(input).map((key) => {
-    return sql.value(input[key])
-  })
-  let primaryKeyValue
-  // TODO add test for this
-  if (useUUID) {
-    primaryKeyValue = randomUUID()
-    valuesToSql.push(sql.value(primaryKeyValue))
-  } else {
-    valuesToSql.push(sql.value(null))
-  }
   const values = sql.join(
     valuesToSql,
     sql`, `
@@ -97,18 +107,22 @@ async function insertOne (db, sql, table, input, primaryKey, useUUID, fieldsToRe
   `
   await db.query(insert)
 
-  if (!useUUID) {
+  if (!useUUID && primaryKeys.length === 1) {
     const res2 = await db.query(sql`
       SELECT last_insert_rowid()
     `)
 
-    primaryKeyValue = res2[0]['last_insert_rowid()']
+    primaryKeyValues[primaryKeys[0].key] = res2[0]['last_insert_rowid()']
+  }
+
+  for (const { key } of primaryKeys) {
+    where.push(sql`${sql.ident(key)} = ${sql.value(primaryKeyValues[key])}`)
   }
 
   const res = await db.query(sql`
     SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
     FROM ${sql.ident(table)}
-    WHERE ${sql.ident(primaryKey)} = ${sql.value(primaryKeyValue)}
+    WHERE ${sql.join(where, sql` AND `)}
   `)
 
   return res[0]
@@ -116,23 +130,28 @@ async function insertOne (db, sql, table, input, primaryKey, useUUID, fieldsToRe
 
 module.exports.insertOne = insertOne
 
-async function updateOne (db, sql, table, input, primaryKey, fieldsToRetrieve) {
+async function updateOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve) {
   const pairs = Object.keys(input).map((key) => {
     const value = input[key]
     return sql`${sql.ident(key)} = ${value}`
   })
 
+  const where = []
+  for (const key of primaryKeys) {
+    where.push(sql`${sql.ident(key)} = ${input[key]}`)
+  }
+
   const update = sql`
     UPDATE ${sql.ident(table)}
     SET ${sql.join(pairs, sql`, `)}
-    WHERE ${sql.ident(primaryKey)} = ${sql.value(input[primaryKey])}
+    WHERE ${sql.join(where, sql` AND `)}
   `
   await db.query(update)
 
   const select = sql`
     SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
     FROM ${sql.ident(table)}
-    WHERE ${sql.ident(primaryKey)} = ${sql.value(input[primaryKey])}
+    WHERE ${sql.join(where, sql` AND `)}
   `
   const res = await db.query(select)
   return res[0]
@@ -140,7 +159,7 @@ async function updateOne (db, sql, table, input, primaryKey, fieldsToRetrieve) {
 
 module.exports.updateOne = updateOne
 
-async function deleteAll (db, sql, table, criteria, fieldsToRetrieve) {
+async function deleteAll (db, sql, table, schema, criteria, fieldsToRetrieve) {
   let query = sql`
     SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
     FROM ${sql.ident(table)}

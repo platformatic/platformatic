@@ -84,6 +84,9 @@ const server = {
         { type: 'string' }
       ]
     },
+    pluginTimeout: {
+      type: 'integer'
+    },
     healthCheck: {
       anyOf: [
         { type: 'boolean' },
@@ -100,6 +103,34 @@ const server = {
     cors
   },
   required: ['hostname', 'port']
+}
+
+const watch = {
+  $id: 'https://schemas.platformatic.dev/service/watch',
+  type: 'object',
+  properties: {
+    type: 'object',
+    properties: {
+      allow: {
+        type: 'array',
+        items: {
+          type: 'string'
+        },
+        minItems: 1,
+        nullable: true,
+        default: null
+      },
+      ignore: {
+        type: 'array',
+        items: {
+          type: 'string'
+        },
+        nullable: true,
+        default: null
+      }
+    },
+    additionalProperties: false
+  }
 }
 
 const plugin = {
@@ -122,38 +153,12 @@ const plugin = {
       additionalProperties: false,
       required: ['outDir']
     },
-    watch: {
-      type: 'boolean'
-    },
     fallback: {
       type: 'boolean'
     },
-    watchOptions: {
-      type: 'object',
-      properties: {
-        hotReload: {
-          type: 'boolean',
-          default: true
-        },
-        allow: {
-          type: 'array',
-          items: {
-            type: 'string'
-          },
-          minItems: 1,
-          nullable: true,
-          default: null
-        },
-        ignore: {
-          type: 'array',
-          items: {
-            type: 'string'
-          },
-          nullable: true,
-          default: null
-        }
-      },
-      additionalProperties: false
+    hotReload: {
+      type: 'boolean',
+      default: true
     },
     options: {
       type: 'object'
@@ -190,12 +195,36 @@ const metrics = {
 const platformaticServiceSchema = {
   $id: 'https://schemas.platformatic.dev/db',
   type: 'object',
+  $defs: {
+    plugin
+  },
   properties: {
     server,
-    plugin,
+    plugin: {
+      anyOf: [{
+        type: 'array',
+        items: {
+          anyOf: [{
+            $ref: '#/$defs/plugin'
+          }, {
+            type: 'string'
+          }]
+        }
+      }, {
+        $ref: '#/$defs/plugin'
+      }, {
+        type: 'string'
+      }]
+    },
     metrics
   },
-  additionalProperties: false,
+  additionalProperties: {
+    watch: {
+      anyOf: [watch, {
+        type: 'boolean'
+      }]
+    }
+  },
   required: ['server']
 }
 
@@ -204,3 +233,4 @@ module.exports.metrics = metrics
 module.exports.cors = cors
 module.exports.server = server
 module.exports.plugin = plugin
+module.exports.watch = watch

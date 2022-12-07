@@ -1,6 +1,5 @@
 # Migrations
 
-Platformatic DB is already set up to run migrations for you when it starts. 
 It uses [Postgrator](https://www.npmjs.com/package/postgrator) under the hood to run migrations. Please refer to the [Postgrator documentation](https://github.com/rickbergfalk/postgrator) for guidance on writing migration files.
 
 In brief, you should create a file structure like this
@@ -25,20 +24,20 @@ You can always rollback some migrations specifing what version you would like to
 _Example_
 
 ```bash
-$ platformatic db migrate --to 002
+$ platformatic db migrations apply --to 002
 ```
 
-Will execute `004.undo.sql`, `003.undo.sql` in this order. If you keep those files in migrations directory, when the server restarts it will execute `003.do.sql` and `004.do.sql` in this order.
+Will execute `004.undo.sql`, `003.undo.sql` in this order. If you keep those files in migrations directory, when the server restarts it will execute `003.do.sql` and `004.do.sql` in this order if the `autoApply` value is true, or you can run the `db migrations apply` command.
 
 It's also possible to rollback a single migration with `-r`:   
 
 ```bash
-$ platformatic db migrate -r 
+$ platformatic db migrations apply -r 
 ```
 
 ## How to run migrations
 
-There are two ways to run migrations in Platformatic DB. They can be processed automatically when the server starts, or you can just run the `db migrate` command.
+There are two ways to run migrations in Platformatic DB. They can be processed automatically when the server starts if the `autoApply` value is true, or you can just run the `db migrations apply` command.
 
 In both cases you have to edit your config file to tell Platformatic DB where are your migration files.
 
@@ -65,9 +64,9 @@ _Example_
 
 ### Manually with the CLI
 
-See documentation about `db migrate` [command](../cli#migrate)
+See documentation about `db migrations apply` [command](../cli#migrate)
 
 In short:
 - be sure to define a correct `migrations.dir` folder under the config on `platformatic.db.json`
 - get the `MIGRATION_NUMBER` (f.e. if the file is named `002.do.sql` will be `002`)
-- run `npx platformatic db migrate --to MIGRATION_NUMBER` 
+- run `npx platformatic db migrations apply --to MIGRATION_NUMBER` 

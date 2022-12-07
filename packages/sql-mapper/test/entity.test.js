@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 
-const { clear, connInfo, isSQLite, isMysql, isPg } = require('./helper')
+const { clear, connInfo, isSQLite, isMysql, isPg, isMysql8 } = require('./helper')
 const { connect } = require('..')
 const fakeLogger = {
   trace: () => {},
@@ -38,12 +38,12 @@ test('entity fields', async ({ equal, not, same, teardown }) => {
   equal(pageEntity.name, 'Page')
   equal(pageEntity.singularName, 'page')
   equal(pageEntity.pluralName, 'pages')
-  equal(pageEntity.primaryKey, 'id')
+  same(pageEntity.primaryKeys, new Set(['id']))
   equal(pageEntity.table, 'pages')
   equal(pageEntity.camelCasedFields.id.primaryKey, true)
 })
 
-test('entity API', async ({ equal, same, teardown, rejects }) => {
+test('entity API', { only: true }, async ({ equal, same, teardown, rejects }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
     teardown(() => db.dispose())
@@ -168,6 +168,33 @@ test('empty save', async ({ equal, same, teardown, rejects }) => {
   same(insertResult, { id: '1', theTitle: null })
 })
 
+test('insert with explicit PK value', async ({ same, teardown }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+    await db.query(sql`CREATE TABLE pages (
+      id INTEGER PRIMARY KEY,
+      title varchar(255) NOT NULL
+    );`)
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+  const pageEntity = mapper.entities.page
+  const [newPage] = await pageEntity.insert({
+    fields: ['id', 'title'],
+    inputs: [{ id: 13, title: '13th page with explicit id equal to 13' }]
+  })
+  same(newPage, {
+    id: '13',
+    title: '13th page with explicit id equal to 13'
+  })
+})
+
 test('[SQLite] - UUID', { skip: !isSQLite }, async ({ pass, teardown, same, equal }) => {
   const mapper = await connect({
     connectionString: connInfo.connectionString,
@@ -186,6 +213,7 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async ({ pass, teardown, same, equa
       );`)
     }
   })
+  teardown(() => mapper.db.dispose())
 
   const pageEntity = mapper.entities.page
 
@@ -216,7 +244,7 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async ({ pass, teardown, same, equa
   }
 })
 
-test('[sqlite] throws if PK is not INTEGER', { skip: !isSQLite }, async ({ fail, equal, teardown, rejects }) => {
+test('[SQLite] throws if PK is not INTEGER', { skip: !isSQLite }, async ({ fail, equal, teardown, rejects }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
     await db.query(sql`CREATE TABLE pages (
@@ -637,4 +665,55 @@ test('include possible values of enum columns', { skip: isSQLite }, async ({ sam
   const pageEntity = mapper.entities.page
   const typeField = pageEntity.fields.type
   same(typeField.enum, ['blank', 'non-blank'])
+})
+
+test('JSON type', { skip: !(isPg || isMysql8) }, async ({ teardown, same, equal, pass }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+
+    await db.query(sql`CREATE TABLE simple_types (
+        id SERIAL PRIMARY KEY,
+        config json NOT NULL
+      );`)
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+
+  const simpleType = mapper.entities.simpleType
+
+  // save - new record
+  same(await simpleType.save({
+    input: { config: { foo: 'bar' } }
+  }), { id: 1, config: { foo: 'bar' } })
+
+  // save - update
+  same(await simpleType.save({
+    input: { id: 1, config: { foo: 'bar', bar: 'foo' } }
+  }), { id: 1, config: { foo: 'bar', bar: 'foo' } })
+
+  // insert
+  same(await simpleType.insert({
+    inputs: [{ config: { foo: 'bar' } }]
+  }), [{ id: 2, config: { foo: 'bar' } }])
+
+  // updateMany
+  same(await simpleType.updateMany({
+    where: {
+      id: {
+        eq: 2
+      }
+    },
+    input: {
+      config: {
+        foo: 'bar',
+        bar: 'foo'
+      }
+    }
+  }), [{ id: 2, config: { foo: 'bar', bar: 'foo' } }])
 })

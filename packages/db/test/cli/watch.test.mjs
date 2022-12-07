@@ -33,9 +33,9 @@ test('should watch js files by default', async ({ equal, teardown }) => {
       connectionString: 'sqlite://db.sqlite'
     },
     plugin: {
-      path: pluginFilePath,
-      watch: true
-    }
+      path: pluginFilePath
+    },
+    watch: true
   }
 
   await Promise.all([
@@ -73,11 +73,10 @@ test('should watch allowed file', async ({ comment, teardown }) => {
       connectionString: 'sqlite://db.sqlite'
     },
     plugin: {
-      path: pluginFilePath,
-      watch: true,
-      watchOptions: {
-        allow: ['*.js', '*.json']
-      }
+      path: pluginFilePath
+    },
+    watch: {
+      allow: ['*.js', '*.json']
     }
   }
 
@@ -123,11 +122,10 @@ test('should not watch ignored file', async ({ teardown, equal }) => {
       connectionString: 'sqlite://db.sqlite'
     },
     plugin: {
-      path: pluginFilePath,
-      watch: true,
-      watchOptions: {
-        ignore: [basename(pluginFilePath)]
-      }
+      path: pluginFilePath
+    },
+    watch: {
+      ignore: [basename(pluginFilePath)]
     }
   }
 
@@ -164,11 +162,10 @@ test('should not loop forever when doing ESM', { skip: true }, async ({ comment,
       connectionString: 'sqlite://db.sqlite'
     },
     plugin: {
-      path: pluginFilePath,
-      watch: true,
-      watchOptions: {
-        ignore: [basename(pluginFilePath)]
-      }
+      path: pluginFilePath
+    },
+    watch: {
+      ignore: [basename(pluginFilePath)]
     }
   }
 
@@ -193,4 +190,42 @@ test('should not loop forever when doing ESM', { skip: true }, async ({ comment,
       break
     }
   }
+})
+
+test('should watch only js files by default', async ({ equal, teardown }) => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'watch-'))
+  const pluginFilePath = join(tmpDir, 'plugin.tmp')
+  const configFilePath = join(tmpDir, 'platformatic.db.json')
+
+  const config = {
+    server: {
+      logger: {
+        level: 'info'
+      },
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    core: {
+      connectionString: 'sqlite://db.sqlite'
+    },
+    plugin: {
+      path: pluginFilePath
+    },
+    watch: true
+  }
+
+  await Promise.all([
+    writeFile(configFilePath, JSON.stringify(config)),
+    writeFile(pluginFilePath, createLoggingPlugin('v1'))
+  ])
+
+  const { child, url } = await start('-c', configFilePath)
+  teardown(() => child.kill('SIGINT'))
+
+  await writeFile(pluginFilePath, createLoggingPlugin('v2'))
+  await sleep(5000)
+
+  const res = await request(`${url}/version`)
+  const version = await res.body.text()
+  equal(version, 'v1')
 })

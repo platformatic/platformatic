@@ -158,7 +158,7 @@ Options:
 Apply all configured migrations to the database:
 
 ``` bash
-  $ platformatic db migrate
+  $ platformatic db migrations apply
 ```
 
 The migrations will be applied in the order they are specified in the
@@ -166,7 +166,7 @@ folder defined in the configuration file. If you want to apply a specific migrat
 you can use the `--to` option:
 
 ``` bash
-  $ platformatic db migrate --to 001
+  $ platformatic db migrations apply --to 001
 ```
 
 Here is an example migration:
@@ -181,7 +181,7 @@ Here is an example migration:
 You can always rollback to a specific migration with:
 
 ``` bash
-  $ platformatic db migrate --to VERSION
+  $ platformatic db migrations apply --to VERSION
 ```
 
 Use 000 to reset to the initial state.
@@ -198,6 +198,14 @@ https://oss.platformatic.dev/docs/reference/db/configuration.
 
 
 #### schema
+
+Update the config schema file:
+
+* `schema config` - update the JSON schema config available on `platformatic.db.schema.json`
+
+Your configuration on `platformatic.db.json` has a schema defined to improve the developer experience and avoid mistakes when updating the configuration of Platformatic DB.
+When you run `platformatic db init`, a new JSON `$schema` property is added in `platformatic.db.schema.json`. This can allow your IDE to add suggestions (f.e. mandatory/missing fields, types, default values) by opening the config in `platformatic.db.json`.
+Running `platformatic db schema config` you can update your schema so that it matches well the latest changes available on your config.
 
 Generate a schema from the database and prints it to standard output:
 

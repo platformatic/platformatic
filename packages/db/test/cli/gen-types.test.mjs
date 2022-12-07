@@ -7,7 +7,7 @@ import stripAnsi from 'strip-ansi'
 import split from 'split2'
 import { urlDirname } from '../../lib/utils.js'
 
-t.jobs = 6
+t.jobs = 1
 
 const pathToTSD = path.join(urlDirname(import.meta.url), '../../node_modules/.bin/tsd')
 
@@ -71,7 +71,7 @@ t.test('should show warning if there is no entities', async (t) => {
 
   try {
     const { stdout } = await execa('node', [cliPath, 'types'], { cwd })
-    t.match(stdout, /(.*)No entities found. Please run `platformatic db migrate` to generate entities./)
+    t.match(stdout, /(.*)No table found. Please run `platformatic db migrations apply` to generate types./)
   } catch (err) {
     console.log(err.stdout)
     console.log(err.stderr)
@@ -93,7 +93,7 @@ t.test('run migrate command with type generation', async (t) => {
   })
 
   try {
-    const child = await execa('node', [cliPath, 'migrate'], { cwd })
+    const child = await execa('node', [cliPath, 'migrations', 'apply'], { cwd })
     t.equal(child.stdout.includes('Generated type for Graph entity.'), true)
     t.equal(child.stdout.includes('Please run `npm i --save'), true)
 
@@ -119,7 +119,7 @@ t.test('run migrate command with type generation without plugin in config', asyn
   })
 
   try {
-    const child = await execa('node', [cliPath, 'migrate'], { cwd })
+    const child = await execa('node', [cliPath, 'migrations', 'apply'], { cwd })
     t.equal(child.stdout.includes('Generated type for Graph entity.'), true)
     t.equal(child.stdout.includes('Please run `npm i --save'), true)
 

@@ -23,9 +23,9 @@
   },
   "plugin": {
     "path": "plugin.ts",
-    "watch": true,
     "typescript": {
       "outDir": "dist"
     }
-  }
+  },
+  "watch": true
 }

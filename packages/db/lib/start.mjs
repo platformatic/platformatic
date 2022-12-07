@@ -42,12 +42,16 @@ async function start (_args) {
 
   if (
     config.plugin !== undefined &&
-    config.plugin.watch !== false
+    config.watch !== false
   ) {
     await startFileWatching(server)
   }
 
   await server.listen()
+
+  if (Object.keys(server.app.platformatic.entities).length === 0) {
+    server.app.log.warn('No tables found in the database. Are you connected to the right database? Did you forget to run your migrations?')
+  }
 
   configManager.on('error', function (err) {
     server.app.log.error({
@@ -97,8 +101,8 @@ async function startFileWatching (server) {
 
   const fileWatcher = new FileWatcher({
     path: dirname(configManager.fullPath),
-    allowToWatch: config.plugin.watchOptions?.allow,
-    watchIgnore: config.plugin.watchOptions?.ignore
+    allowToWatch: config.watch?.allow || ['*.js', '**/*.js'],
+    watchIgnore: config.watch?.ignore
   })
   fileWatcher.on('update', () => {
     onFilesUpdated(server)
@@ -129,7 +133,7 @@ async function onConfigUpdated (newConfig, server) {
 
     if (
       newConfig.plugin !== undefined &&
-      newConfig.plugin.watch !== false
+      newConfig.watch !== false
     ) {
       await startFileWatching(server)
     }

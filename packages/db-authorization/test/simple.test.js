@@ -1241,7 +1241,7 @@ test('defaults are false', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('should throw if context is not passed', async ({ pass, teardown, same, equal }) => {
+test('should throw if context is passed with no reply', async ({ pass, teardown, same, equal }) => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
@@ -1262,7 +1262,8 @@ test('should throw if context is not passed', async ({ pass, teardown, same, equ
   teardown(app.close.bind(app))
   app.get('/no-context', async (req, reply) => {
     const res = await app.platformatic.entities.page.find({
-      fields: ['id', 'title']
+      fields: ['id', 'title'],
+      ctx: {}
     })
     return res
   })
@@ -1277,7 +1278,7 @@ test('should throw if context is not passed', async ({ pass, teardown, same, equ
   same(res.json(), {
     statusCode: 500,
     error: 'Internal Server Error',
-    message: 'Missing context. You should call this function with { ctx: { reply }}'
+    message: 'Missing reply in context. You should call this function with { ctx: { reply }}'
   })
 })
 

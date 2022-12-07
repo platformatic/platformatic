@@ -21,11 +21,13 @@ function sqlTypeToGraphQL (sqlType) {
     case 'decimal':
       return graphql.GraphQLInt
     case 'bigint':
-      return graphql.GraphQLInt
+      return graphql.GraphQLString
     case 'int2':
       return graphql.GraphQLInt
     case 'int4':
       return graphql.GraphQLInt
+    case 'int8':
+      return graphql.GraphQLString
     case 'varchar':
       return graphql.GraphQLString
     case 'text':
@@ -53,6 +55,8 @@ function sqlTypeToGraphQL (sqlType) {
     case 'uuid':
       return graphql.GraphQLString
     case 'json':
+      return GraphQLJSONObject
+    case 'jsonb':
       return GraphQLJSONObject
     default:
       return graphql.GraphQLString

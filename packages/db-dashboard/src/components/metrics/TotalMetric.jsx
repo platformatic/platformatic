@@ -29,17 +29,17 @@ export default function TotalMetric ({ metrics }) {
     title: 'RequestTimes',
     pre: 'P90',
     unit: 'ms',
-    value: ninetyPercentile,
+    value: ninetyPercentile || 0,
     tooltip: 'Request process times per percentile',
     leftDetail: {
       pre: 'P95',
       unit: 'ms',
-      value: ninetyFivePercentile
+      value: ninetyFivePercentile || 0
     },
     rightDetail: {
       pre: 'P99',
       unit: 'ms',
-      value: ninetyNinePercentile
+      value: ninetyNinePercentile || 0
     }
   }
 

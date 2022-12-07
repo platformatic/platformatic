@@ -54,6 +54,7 @@ Let's implement a `/page-by-title` endpoint, using Entities API
 'use strict'
 module.exports = async(app, opts) => {
   app.get('/page-by-title', async(req, reply) => {
+    const { title } = req.query
     const res = await app.platformatic.entities.page.find({
       where: {
         title: {

@@ -6,6 +6,7 @@ import parseArgs from 'minimist'
 import { checkForDependencies, generateGlobalTypesFile } from './gen-types.mjs'
 import loadConfig from './load-config.mjs'
 import { findConfigFile, isFileAccessible } from './utils.js'
+import { generateJsonSchemaConfig, filenameConfigJsonSchema } from './gen-schema.mjs'
 
 const connectionStrings = {
   postgres: 'postgres://postgres:postgres@localhost:5432/postgres',
@@ -55,6 +56,7 @@ function generateConfig (args) {
   const connectionString = connectionStrings[database]
 
   const config = {
+    $schema: `./${filenameConfigJsonSchema}`,
     server: { hostname, port },
     core: { connectionString, graphql: true },
     migrations: { dir: migrations },
@@ -144,6 +146,7 @@ async function init (_args) {
   const accessibleConfigFilename = await findConfigFile(currentDir)
   if (accessibleConfigFilename === undefined) {
     const config = generateConfig(args)
+    await generateJsonSchemaConfig()
     await writeFile('platformatic.db.json', JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.db.json successfully created.')
   } else {

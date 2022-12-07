@@ -1,6 +1,6 @@
 'use strict'
 
-const { metrics, server, plugin } = require('@platformatic/service').schema
+const { metrics, server, plugin, watch } = require('@platformatic/service').schema
 
 const core = {
   $id: 'https://schemas.platformatic.dev/db/core',
@@ -8,6 +8,12 @@ const core = {
   properties: {
     connectionString: {
       type: 'string'
+    },
+    schema: {
+      type: 'array',
+      items: {
+        type: 'string'
+      }
     },
     poolSize: {
       type: 'integer'
@@ -20,6 +26,13 @@ const core = {
         properties: {
           graphiql: {
             type: 'boolean'
+          },
+          ignore: {
+            type: 'object',
+            // TODO add support for column-level ignore
+            additionalProperties: {
+              type: 'boolean'
+            }
           },
           subscriptionIgnore: {
             type: 'array',
@@ -47,6 +60,13 @@ const core = {
           prefix: {
             type: 'string',
             description: 'Base URL for the OpenAPI'
+          },
+          ignore: {
+            type: 'object',
+            // TODO add support for column-level ignore
+            additionalProperties: {
+              type: 'boolean'
+            }
           }
         },
         additionalProperties: false
@@ -57,6 +77,19 @@ const core = {
       // TODO add support for column-level ignore
       additionalProperties: {
         type: 'boolean'
+      }
+    },
+    limit: {
+      type: 'object',
+      properties: {
+        default: {
+          type: 'integer',
+          default: 10
+        },
+        max: {
+          type: 'integer',
+          default: 100
+        }
       }
     },
     events: {
@@ -97,10 +130,21 @@ const authorization = {
     },
     jwt: {
       type: 'object',
+      additionalProperties: true,
       properties: {
         secret: {
+          oneOf: [{
+            type: 'string',
+            description: 'the shared secret for JWT'
+          }, {
+            type: 'object',
+            description: 'the JWT secret configuration (see: https://github.com/fastify/fastify-jwt#secret-required)',
+            additionalProperties: true
+          }]
+        },
+        namespace: {
           type: 'string',
-          description: 'the shared secret for JWT'
+          description: 'the namespace for JWT custom claims'
         },
         jwks: {
           oneOf: [{
@@ -263,6 +307,9 @@ const types = {
 const platformaticDBschema = {
   $id: 'https://schemas.platformatic.dev/db',
   type: 'object',
+  $defs: {
+    plugin
+  },
   properties: {
     server,
     core,
@@ -271,9 +318,28 @@ const platformaticDBschema = {
     migrations,
     metrics,
     types,
-    plugin
+    plugin: {
+      anyOf: [{
+        type: 'array',
+        items: {
+          anyOf: [{
+            $ref: '#/$defs/plugin'
+          }, {
+            type: 'string'
+          }]
+        }
+      }, {
+        $ref: '#/$defs/plugin'
+      }]
+    }
   },
-  additionalProperties: false,
+  additionalProperties: {
+    watch: {
+      anyOf: [watch, {
+        type: 'boolean'
+      }]
+    }
+  },
   required: ['core', 'server']
 }
 
