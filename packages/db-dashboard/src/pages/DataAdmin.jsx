@@ -114,7 +114,7 @@ const ListActions = (props) => (
     <FilterButton filters={props.filters} />
     <SelectColumnsButton />
     <CreateButton />
-    <ExportButton maxResults='100' />
+    <ExportButton maxResults={100} />
   </TopToolbar>
 )
 
