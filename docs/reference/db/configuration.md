@@ -267,7 +267,7 @@ Configures [Postgrator](https://github.com/rickbergfalk/postgrator) to run migra
 An optional object with the following settings:
 
 - **`dir`** (**required**, `string`): Relative path to the migrations directory.
-- **`autoApply`** (`boolean`, default: `true`): Automatically apply migrations when Platformatic DB server starts.
+- **`autoApply`** (`boolean`, default: `false`): Automatically apply migrations when Platformatic DB server starts.
 
 ### `plugin`
 
