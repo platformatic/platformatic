@@ -37,7 +37,7 @@ jobs:
           node-version: 18
           cache: 'pnpm'
       - name: pnpm fetch
-        run: pnpm fetch --ignore-scripts
+        run: pnpm fetch
 
   ci-cli:
     needs: setup-node_modules
