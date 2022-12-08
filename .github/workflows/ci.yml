@@ -23,8 +23,24 @@ env:
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
 jobs:
+  setup-node_modules:
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2.2.4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'pnpm'
+      - name: pnpm fetch
+        run: pnpm fetch --ignore-scripts
+
   ci-cli:
-    
+    needs: setup-node_modules
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
@@ -37,14 +53,14 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        
+        cache: 'pnpm'
     - name: pnpm install
       run: pnpm install
     - name: Run test suite
       run: cd packages/cli && pnpm test
 
   ci-db-dashboard:
-    
+    needs: setup-node_modules
     runs-on: ${{matrix.os}}
     timeout-minutes: 15
     strategy:
@@ -57,7 +73,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        
+        cache: 'pnpm'
     - name: pnpm install
       run: pnpm install
     - name: Builds the ra-data-rest
@@ -68,7 +84,7 @@ jobs:
       run: cd packages/db-dashboard && pnpm test
 
   ci-config:
-    
+    needs: setup-node_modules
     runs-on: ${{matrix.os}}
     timeout-minutes: 15
     strategy:
@@ -81,14 +97,14 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        
+        cache: 'pnpm'
     - name: pnpm install
       run: pnpm install  
     - name: Run test suite config manager
       run: cd packages/config && pnpm test
 
   ci-db:
-    
+    needs: setup-node_modules
     runs-on: ${{matrix.os}}
     timeout-minutes: 15
     strategy:
@@ -102,7 +118,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        
+        cache: 'pnpm'
     - name: pnpm install
       run: pnpm install  
     - name: pnpm install -g typescript
@@ -114,10 +130,10 @@ jobs:
     - name: Run test suite core
       run: cd packages/db-core && pnpm test
     - name: Run test suite Platformatic DB
-      run: cd packages/db && pnpm test
+      run: cd packages/db && pnpm rebuild && pnpm test
 
   ci-db-authorization:
-    
+    needs: setup-node_modules
     runs-on: ${{matrix.os}}
     timeout-minutes: 5
     strategy:
@@ -130,7 +146,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        
+        cache: 'pnpm'
     - name: Start docker containers for testing
       run: docker-compose up -d postgresql
     - name: pnpm install
@@ -139,7 +155,7 @@ jobs:
       run: cd packages/db-authorization && pnpm test
 
   ci-db-core-lint:
-    
+    needs: setup-node_modules
     runs-on: ${{matrix.os}}
     timeout-minutes: 5
     strategy:
@@ -151,7 +167,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: 18
-        
+        cache: 'pnpm'
     - name: pnpm install
       run: pnpm install  
     - name: Linting & Typescript for test suite sql-mapper
@@ -176,7 +192,7 @@ jobs:
         pnpm --filter="@platformatic/sql-events" run test:typescript
 
   ci-db-core-test:
-    
+    needs: setup-node_modules
     runs-on: ${{matrix.os}}
     timeout-minutes: 10 
     strategy:
@@ -190,7 +206,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        
+        cache: 'pnpm'
     - name: Start docker containers for testing
       run: docker-compose up -d ${{ matrix.db }}
       if: ${{ matrix.db != 'sqlite' }}
@@ -209,7 +225,7 @@ jobs:
       run: cd packages/sql-graphql && pnpm run test:${{ matrix.db }}; cd ..
 
   ci-sql-events:
-    
+    needs: setup-node_modules
     runs-on: ${{matrix.os}}
     timeout-minutes: 10
     strategy:
@@ -223,7 +239,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        
+        cache: 'pnpm'
     - name: Start docker containers for testing
       run: docker-compose up -d ${{ matrix.db }}
       if: ${{ matrix.db != 'sqlite' }}
@@ -238,7 +254,7 @@ jobs:
       run: cd packages/sql-events && pnpm run test:${{ matrix.db }}; cd ../..
 
   ci-auth-login:
-    
+    needs: setup-node_modules
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
@@ -251,14 +267,14 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          
+          cache: 'pnpm'
       - name: pnpm install
         run: pnpm install  
       - name: Run test suite
         run: cd packages/authenticate && pnpm test; cd ../..
 
   ci-service:
-    
+    needs: setup-node_modules
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
@@ -271,14 +287,14 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          
+          cache: 'pnpm'
       - name: pnpm install
         run: pnpm install  
       - name: Run test suite
-        run: cd packages/service && pnpm test; cd ../..
+        run: cd packages/service && pnpm rebuild && pnpm test; cd ../..
 
   playwright-e2e:
-    
+    needs: setup-node_modules
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -287,7 +303,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        
+        cache: 'pnpm'
     - name: Start docker containers for testing
       run: docker-compose up -d postgresql
     - name: pnpm install
