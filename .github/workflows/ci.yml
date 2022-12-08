@@ -37,7 +37,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'pnpm'
+        
     - name: pnpm install
       run: pnpm install
     - name: Run test suite
@@ -57,7 +57,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'pnpm'
+        
     - name: pnpm install
       run: pnpm install
     - name: Builds the ra-data-rest
@@ -81,7 +81,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'pnpm'
+        
     - name: pnpm install
       run: pnpm install  
     - name: Run test suite config manager
@@ -102,7 +102,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'pnpm'
+        
     - name: pnpm install
       run: pnpm install  
     - name: pnpm install -g typescript
@@ -130,7 +130,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'pnpm'
+        
     - name: Start docker containers for testing
       run: docker-compose up -d postgresql
     - name: pnpm install
@@ -151,7 +151,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: 18
-        cache: 'pnpm'
+        
     - name: pnpm install
       run: pnpm install  
     - name: Linting & Typescript for test suite sql-mapper
@@ -190,7 +190,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'pnpm'
+        
     - name: Start docker containers for testing
       run: docker-compose up -d ${{ matrix.db }}
       if: ${{ matrix.db != 'sqlite' }}
@@ -223,7 +223,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'pnpm'
+        
     - name: Start docker containers for testing
       run: docker-compose up -d ${{ matrix.db }}
       if: ${{ matrix.db != 'sqlite' }}
@@ -251,7 +251,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
+          
       - name: pnpm install
         run: pnpm install  
       - name: Run test suite
@@ -271,7 +271,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
+          
       - name: pnpm install
         run: pnpm install  
       - name: Run test suite
@@ -287,7 +287,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'pnpm'
+        
     - name: Start docker containers for testing
       run: docker-compose up -d postgresql
     - name: pnpm install
