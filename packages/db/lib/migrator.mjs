@@ -140,27 +140,4 @@ class Migrator {
   }
 }
 
-async function execute (logger, args, config) {
-  const migrationsConfig = config.migrations
-  if (migrationsConfig === undefined) {
-    throw new MigrateError('Missing migrations in config file')
-  }
-
-  const migrator = new Migrator(migrationsConfig, config.core, logger)
-
-  try {
-    if (args.rollback) {
-      await migrator.rollbackMigration()
-    } else {
-      await migrator.applyMigrations(args.to)
-    }
-  } catch (error) {
-    logger.error(error)
-    throw error
-  } finally {
-    // Once done migrating, close your connection.
-    await migrator.close()
-  }
-}
-
-export { Migrator, execute }
+export { Migrator }

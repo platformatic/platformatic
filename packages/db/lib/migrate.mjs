@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 
-import { execute } from './migrator.mjs'
+import { Migrator } from './migrator.mjs'
 import isMain from 'es-main'
 import pino from 'pino'
 import pretty from 'pino-pretty'
@@ -8,6 +8,28 @@ import { MigrateError } from './errors.mjs'
 import loadConfig from './load-config.mjs'
 import { execute as generateTypes, checkForDependencies } from './gen-types.mjs'
 import { utimesSync } from 'fs'
+
+async function execute (logger, args, config) {
+  const migrationsConfig = config.migrations
+  if (migrationsConfig === undefined) {
+    throw new MigrateError('Missing migrations in config file')
+  }
+
+  const migrator = new Migrator(migrationsConfig, config.core, logger)
+
+  try {
+    if (args.rollback) {
+      await migrator.rollbackMigration()
+    } else {
+      await migrator.applyMigrations(args.to)
+    }
+  } catch (error) {
+    logger.error(error)
+    throw error
+  } finally {
+    await migrator.close()
+  }
+}
 
 async function applyMigrations (_args) {
   const logger = pino(pretty({

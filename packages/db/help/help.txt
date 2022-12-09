@@ -5,8 +5,8 @@ Available commands:
 * `init` - initiate default application.
 * `start` - start the server.
 * `compile` - compile typescript plugins.
-* `migrate` - run migrations.
 * `seed` - run a seed file.
 * `types` - generate typescript types for entities.
 * `schema` - generate and print api schema.
 * `migrations create` - generate do and undo migration files.
+* `migrations apply` - apply migration files.

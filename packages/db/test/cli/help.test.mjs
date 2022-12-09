@@ -5,15 +5,25 @@ import { join } from 'desm'
 import { readFile } from 'fs/promises'
 import { EOL } from 'os'
 
-for (const cmd of ['start', 'seed', 'schema', 'migrate']) {
+const CLI_COMMANDS = [
+  'init',
+  'types',
+  'start',
+  'seed',
+  'schema',
+  'migrations create',
+  'migrations apply'
+]
+
+for (const cmd of CLI_COMMANDS) {
   test(`db help ${cmd}`, async (t) => {
-    const { stdout } = await execa(cliPath, ['help', cmd])
+    const { stdout } = await execa('node', [cliPath, 'help', cmd])
     const path = join(import.meta.url, '..', '..', 'help', `${cmd}.txt`)
     t.match(stdout + EOL, await readFile(path, 'utf8'))
   })
 }
 
 test('db help foobar', async (t) => {
-  const { stdout } = await execa(cliPath, ['help', 'foobar'])
+  const { stdout } = await execa('node', [cliPath, 'help', 'foobar'])
   t.match(stdout, 'no such help file: foobar')
 })
