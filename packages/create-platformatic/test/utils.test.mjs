@@ -1,7 +1,11 @@
 import { test, beforeEach } from 'tap'
 import { MockAgent, setGlobalDispatcher } from 'undici'
-import { getVersion, randomBetween, sleep, validatePath } from '../src/utils.mjs'
+import { getVersion, randomBetween, sleep, validatePath, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible } from '../src/utils.mjs'
+import { mkdtempSync, rmSync, writeFileSync } from 'fs'
+import { tmpdir } from 'os'
+import { join } from 'path'
 import esmock from 'esmock'
+import semver from 'semver'
 
 let mockAgent
 
@@ -116,4 +120,43 @@ test('validatePath', async ({ end, equal, rejects }) => {
   const ok = await validatePath('new-project')
   equal(ok, true)
   rejects(validatePath('test'), Error('Please, specify an empty directory or create a new one.'))
+})
+
+test('getDependencyVersion', async ({ equal }) => {
+  const fastifyVersion = await getDependencyVersion('fastify')
+  // We cannot assert the exact version because it changes
+  equal(semver.valid(fastifyVersion), fastifyVersion)
+  equal(semver.gt(fastifyVersion, '4.10.0'), true)
+})
+
+test('findDBConfigFile', async ({ end, equal, mock }) => {
+  const tmpDir1 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
+  const tmpDir2 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
+  const config = join(tmpDir1, 'platformatic.db.yml')
+  writeFileSync(config, 'TEST')
+  equal(await findDBConfigFile(tmpDir1), 'platformatic.db.yml')
+  equal(await findDBConfigFile(tmpDir2), undefined)
+  rmSync(tmpDir1, { recursive: true, force: true })
+  rmSync(tmpDir2, { recursive: true, force: true })
+})
+
+test('findServiceConfigFile', async ({ end, equal, mock }) => {
+  const tmpDir1 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
+  const tmpDir2 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
+  const config = join(tmpDir1, 'platformatic.service.toml')
+  writeFileSync(config, 'TEST')
+  equal(await findServiceConfigFile(tmpDir1), 'platformatic.service.toml')
+  equal(await findServiceConfigFile(tmpDir2), undefined)
+  rmSync(tmpDir1, { recursive: true, force: true })
+  rmSync(tmpDir2, { recursive: true, force: true })
+})
+
+test('isFileAccessible', async ({ end, equal, mock }) => {
+  const tmpDir1 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
+  const config = join(tmpDir1, 'platformatic.db.yml')
+  writeFileSync(config, 'TEST')
+  equal(await isFileAccessible(config), true)
+  const config2 = join(tmpDir1, 'platformatic2.db.yml')
+  equal(await isFileAccessible(config2), false)
+  rmSync(tmpDir1, { recursive: true, force: true })
 })

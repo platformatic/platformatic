@@ -5,26 +5,25 @@ import { join } from 'node:path'
 
 const packageJsonTemplate = `\
 {
-  "name": "platformatic-db-api-example",
-  "version": "0.0.1",
-  "description": "Platformatic DB API",
   "scripts": {
-    "start": "platformatic db start"
+    "start": "platformatic {type} start"
   },
   "devDependencies": {
-    "fastify": "^{fastifyVersion}",
+    "fastify": "^{fastifyVersion}"
+  },
+  "dependencies": {
     "platformatic": "^{platVersion}"
   },
   "engines": {
-    "node": ">=16"
+    "node": "^16.17.0 || ^18.8.0 || >=19"
   }
 }`
 
-export const createPackageJson = async (platVersion, fastifyVersion, logger, dir = '.') => {
+export const createPackageJson = async (type, platVersion, fastifyVersion, logger, dir = '.') => {
   const packageJsonFileName = join(dir, 'package.json')
   const isPackageJsonExists = await isFileAccessible(packageJsonFileName)
   if (!isPackageJsonExists) {
-    const packageJson = pupa(packageJsonTemplate, { platVersion, fastifyVersion })
+    const packageJson = pupa(packageJsonTemplate, { platVersion, fastifyVersion, type })
     writeFileSync(packageJsonFileName, packageJson)
     logger.debug(`${packageJsonFileName} successfully created.`)
   } else {

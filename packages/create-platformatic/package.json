@@ -1,5 +1,5 @@
 {
-  "name": "create-platformatic-db",
+  "name": "create-platformatic",
   "version": "0.7.0",
   "description": "Create platformatic-db interactive tool",
   "repository": {
@@ -7,22 +7,20 @@
     "url": "git+https://github.com/platformatic/platformatic.git"
   },
   "exports": {
-    ".": "./create-platformatic-db.mjs"
+    ".": "./create-platformatic.mjs"
   },
   "bin": {
-    "create-platformatic-db": "./create-platformatic-db.mjs"
+    "create-platformatic": "./create-platformatic.mjs"
   },
   "scripts": {
-    "test": "standard | snazzy && NODE_OPTIONS=--loader=esmock c8 --100 tap --no-coverage test/**/*test.mjs"
+    "test": "standard | snazzy && NODE_OPTIONS=--loader=esmock c8 --100 tap --no-coverage test/*test.mjs test/*/*test.mjs"
   },
   "author": "Marco Piraccini <marco.piraccini@gmail.com>",
   "dependencies": {
-    "@platformatic/db": "workspace:*",
-    "@platformatic/sql-graphql": "workspace:*",
-    "@platformatic/sql-mapper": "workspace:*",
     "chalk": "^5.1.2",
     "commist": "^3.1.2",
     "desm": "^1.2.0",
+    "es-main": "^1.2.0",
     "execa": "^6.1.0",
     "fastify": "^4.6.0",
     "help-me": "^4.1.0",
@@ -38,6 +36,7 @@
   "devDependencies": {
     "c8": "^7.12.0",
     "esmock": "^2.1.0",
+    "semver": "^7.3.8",
     "snazzy": "^9.0.0",
     "standard": "^17.0.0",
     "tap": "^16.0.0"

@@ -1,6 +1,6 @@
 Welcome to Platformatic DB Creator. 
-Available options are:
 
+Available options are:
   * --help - Display this message
   * -h, --hostname <hostname>`: The hostname where Platformatic DB server will listen for connections.
   * -p, --port <port>`: The port where Platformatic DB server will listen for connections.
@@ -8,3 +8,4 @@ Available options are:
   * -m, --migrations <path>`: Relative path to the migrations folder. Default: `./migrations`.
   * -t, --types <boolean>`: Set true to enable type autogeneration. Default: `true`.
   * -ts, --typescript <boolean>`: Set true to enable TypeScript plugins. Default: `false`.
+

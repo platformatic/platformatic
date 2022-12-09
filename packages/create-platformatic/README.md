@@ -1,6 +1,6 @@
 # @platformatic/create-platformatic-db
 
-Platformatic DB Creator
+Platformatic Creator
 
 ## Usage
 

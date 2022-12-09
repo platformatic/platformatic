@@ -19,10 +19,10 @@ export const say = async (messages, { clear = false } = {}) => {
     for (const word of [''].concat(_message)) {
       msg.push(word)
       logUpdate(pltGreen(msg.join(' ')))
-      await sleep(randomBetween(75, 200))
+      await sleep(randomBetween(75, 100))
       // process.stdout.write('\u0007') // Do we want to enable terminal bell?
     }
-    await sleep(randomBetween(75, 400))
+    await sleep(randomBetween(75, 200))
   }
   done()
 }

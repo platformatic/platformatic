@@ -101,15 +101,13 @@ importers:
       standard: 17.0.0
       tap: 16.3.2
 
-  packages/create-platformatic-db:
+  packages/create-platformatic:
     specifiers:
-      '@platformatic/db': workspace:*
-      '@platformatic/sql-graphql': workspace:*
-      '@platformatic/sql-mapper': workspace:*
       c8: ^7.12.0
       chalk: ^5.1.2
       commist: ^3.1.2
       desm: ^1.2.0
+      es-main: ^1.2.0
       esmock: ^2.1.0
       execa: ^6.1.0
       fastify: ^4.6.0
@@ -121,17 +119,16 @@ importers:
       pino: ^8.4.1
       pino-pretty: ^9.0.0
       pupa: ^3.1.0
+      semver: ^7.3.8
       snazzy: ^9.0.0
       standard: ^17.0.0
       tap: ^16.0.0
       undici: ^5.13.0
     dependencies:
-      '@platformatic/db': link:../db
-      '@platformatic/sql-graphql': link:../sql-graphql
-      '@platformatic/sql-mapper': link:../sql-mapper
       chalk: 5.1.2
       commist: 3.1.2
       desm: 1.3.0
+      es-main: 1.2.0
       execa: 6.1.0
       fastify: 4.10.2
       help-me: 4.1.0
@@ -146,6 +143,7 @@ importers:
     devDependencies:
       c8: 7.12.0
       esmock: 2.1.0
+      semver: 7.3.8
       snazzy: 9.0.0
       standard: 17.0.0
       tap: 16.3.2
