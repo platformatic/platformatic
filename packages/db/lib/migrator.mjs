@@ -7,11 +7,6 @@ import { stat } from 'fs/promises'
 class Migrator {
   constructor (migrationConfig, coreConfig, logger) {
     this.coreConfig = coreConfig
-
-    if (migrationConfig.dir === undefined) {
-      throw new MigrateError('Migrations directory is not specified')
-    }
-
     this.migrationDir = migrationConfig.dir
     this.migrationsTable = migrationConfig.table
     this.validateChecksums = migrationConfig.validateChecksums
@@ -20,8 +15,6 @@ class Migrator {
 
     this.db = null
     this.postgrator = null
-
-    this.isClosing = false
   }
 
   async setupPostgrator () {
@@ -56,6 +49,7 @@ class Migrator {
       this.postgrator.on(
         'validation-started',
         (migration) => {
+          /* c8 ignore next 3 */
           const migrationName = basename(migration.filename)
           this.logger.info(`verifying checksum of migration ${migrationName}`)
         }
@@ -82,7 +76,7 @@ class Migrator {
       await stat(this.migrationDir)
     } catch (err) {
       if (err.code === 'ENOENT') {
-        throw new MigrateError(`Migrations directory ${this.migrationDir} does not exist.`)
+        throw new MigrateError(`Migrations directory ${this.migrationDir} does not exist`)
       }
     }
   }
@@ -130,10 +124,7 @@ class Migrator {
 
     let maxMigrationVersion = currentVersion
     for (const migration of migrations) {
-      if (
-        migration.action === 'do' &&
-        migration.version > maxMigrationVersion
-      ) {
+      if (migration.version > maxMigrationVersion) {
         maxMigrationVersion = migration.version
       }
     }
@@ -141,11 +132,6 @@ class Migrator {
   }
 
   async close () {
-    if (this.isClosing) {
-      return
-    }
-    this.isClosing = true
-
     if (this.db !== null) {
       await this.db.dispose()
       this.db = null

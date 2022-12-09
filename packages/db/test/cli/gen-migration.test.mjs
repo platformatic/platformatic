@@ -69,6 +69,28 @@ test('generates next file correctly with existing files', async ({ equal }) => {
   equal(newMigrations[3], '002.undo.sql')
 })
 
+test('throws if there is no migrations in the config', async ({ match }) => {
+  const cwd = await mkdtemp(join(tmpdir(), 'gen-migration-test-'))
+  const configFilePath = join(cwd, 'gen-migration.json')
+
+  const config = {
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    core: {
+      connectionString: 'sqlite://db.sqlite'
+    }
+  }
+
+  await writeFile(configFilePath, JSON.stringify(config))
+
+  const child = execa('node', [cliPath, 'migrations', 'create', '-c', configFilePath], { cwd })
+  const output = child.stdout.pipe(split())
+  const [data] = await once(output, 'data')
+  match(data, /Missing migrations in config file/)
+})
+
 test('throws if migrations directory does not exist', async ({ match }) => {
   const cwd = await mkdtemp(join(tmpdir(), 'gen-migration-test-'))
   const configFilePath = join(cwd, 'gen-migration.json')
@@ -90,7 +112,7 @@ test('throws if migrations directory does not exist', async ({ match }) => {
   await writeFile(configFilePath, JSON.stringify(config))
 
   const child = execa('node', [cliPath, 'migrations', 'create', '-c', configFilePath], { cwd })
-  const output = child.stderr.pipe(split())
+  const output = child.stdout.pipe(split())
   const [data] = await once(output, 'data')
-  match(data, /^Migrations directory (.*) does not exist.$/)
+  match(data, /Migrations directory (.*) does not exist/)
 })

@@ -17,7 +17,7 @@ async function generateMigration (_args) {
 
   const migrationsConfig = config.migrations
   if (migrationsConfig === undefined) {
-    throw new Error('Missing migrations in config file')
+    logger.error('Missing migrations in config file')
   }
 
   const migrator = new Migrator(migrationsConfig, config.core, logger)
@@ -33,9 +33,10 @@ async function generateMigration (_args) {
       writeFile(join(migrator.migrationDir, nextDoMigrationName), ''),
       writeFile(join(migrator.migrationDir, nextUndoMigrationName), '')
     ])
-  } catch (err) {
-    console.error(err.message)
-    process.exit(1)
+  } catch (error) {
+    logger.error(error.message)
+  } finally {
+    await migrator.close()
   }
 }
 
