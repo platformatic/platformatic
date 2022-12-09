@@ -278,7 +278,7 @@ importers:
       '@playwright/test': ^1.24.2
       '@types/react': ^18.0.17
       '@types/react-dom': ^18.0.6
-      '@vitejs/plugin-react': ^2.0.0
+      '@vitejs/plugin-react': ^3.0.0
       autoprefixer: ^10.4.13
       camelcase: ^6.0.0
       graphiql: ^2.0.0
@@ -311,7 +311,7 @@ importers:
       '@playwright/test': 1.28.1
       '@types/react': 18.0.26
       '@types/react-dom': 18.0.9
-      '@vitejs/plugin-react': 2.2.0_vite@4.0.0
+      '@vitejs/plugin-react': 3.0.0_vite@4.0.0
       autoprefixer: 10.4.13_postcss@8.4.19
       camelcase: 6.3.0
       graphiql: 2.2.0_luzgakhqtjkplaj4ago4dpitsq
@@ -4030,6 +4030,22 @@ packages:
       '@babel/plugin-transform-react-jsx-self': 7.18.6_@babel+core@7.20.5
       '@babel/plugin-transform-react-jsx-source': 7.19.6_@babel+core@7.20.5
       magic-string: 0.26.7
+      react-refresh: 0.14.0
+      vite: 4.0.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
+  /@vitejs/plugin-react/3.0.0_vite@4.0.0:
+    resolution: {integrity: sha512-1mvyPc0xYW5G8CHQvJIJXLoMjl5Ct3q2g5Y2s6Ccfgwm45y48LBvsla7az+GkkAtYikWQ4Lxqcsq5RHLcZgtNQ==}
+    engines: {node: ^14.18.0 || >=16.0.0}
+    peerDependencies:
+      vite: ^4.0.0
+    dependencies:
+      '@babel/core': 7.20.5
+      '@babel/plugin-transform-react-jsx-self': 7.18.6_@babel+core@7.20.5
+      '@babel/plugin-transform-react-jsx-source': 7.19.6_@babel+core@7.20.5
+      magic-string: 0.27.0
       react-refresh: 0.14.0
       vite: 4.0.0
     transitivePeerDependencies:
@@ -9061,6 +9077,13 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       sourcemap-codec: 1.4.8
+    dev: true
+
+  /magic-string/0.27.0:
+    resolution: {integrity: sha512-8UnnX2PeRAPZuN12svgR9j7M1uWMovg/CEnIwIG0LFkXSJJe4PdfUGiTGl8V9bsBHFUtfVINcSyYxd7q+kx9fA==}
+    engines: {node: '>=12'}
+    dependencies:
+      '@jridgewell/sourcemap-codec': 1.4.14
     dev: true
 
   /make-dir/2.1.0:
