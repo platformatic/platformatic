@@ -121,6 +121,7 @@ async function loadPlugin (app, config, pluginOptions) {
       if (plugin.__esModule === true) {
         plugin = plugin.default
       }
+      /* c8 ignore next 4 */
       await app.register(plugin, pluginOptions.options)
     }
   }
@@ -132,7 +133,7 @@ async function buildServer (options, app = platformaticService) {
   if (!options.configManager) {
     // instantiate a new config manager from current options
     const cm = new ConfigManager({
-      source: { ...options },
+      source: options,
       schema
     })
     await cm.parseAndValidate()
@@ -164,27 +165,30 @@ async function buildServer (options, app = platformaticService) {
     }
 
     addLoggerToTheConfig(opts)
+    const configManager = handler.app.platformatic.configManager
+
+    if (!opts) {
+      opts = configManager.current
+    }
 
     // Ignore because not tested on Windows
     // TODO: remove the ignore, we shoduld be testing
     // this on Windows
-    /* c8 ignore start */
-    if (opts) {
-      const fileWatcher = handler.app.platformatic.fileWatcher
-      const configManager = handler.app.platformatic.configManager
-      opts.fileWatcher = fileWatcher
-      opts.configManager = configManager
-      opts = createServerConfig(opts)
-      opts.app = app
-    }
+    const fileWatcher = handler.app.platformatic.fileWatcher
+    opts.fileWatcher = fileWatcher
+    opts.configManager = configManager
+    opts = createServerConfig(opts)
+    opts.app = app
+
     debounce = _restart(opts).then(() => {
       handler.app.log.info('restarted')
     }).finally(() => {
       debounce = null
     })
-    /* c8 ignore stop */
     return debounce
   }
+
+  handler.app.restart = handler.restart
 
   return handler
 }

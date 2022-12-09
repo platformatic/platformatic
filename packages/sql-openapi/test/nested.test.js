@@ -27,15 +27,15 @@ test('nested routes', async (t) => {
       if (isMysql) {
         await db.query(sql`
           CREATE TABLE owners (
-            id SERIAL PRIMARY KEY,
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(255)
           );
           CREATE TABLE posts (
-            id SERIAL PRIMARY KEY,
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
             title VARCHAR(42),
             long_text TEXT,
             counter INTEGER,
-            owner_id BIGINT UNSIGNED,
+            owner_id INT UNSIGNED,
             FOREIGN KEY (owner_id) REFERENCES owners(id) ON DELETE CASCADE
           );
         `)
@@ -229,9 +229,9 @@ test('nested routes with recursive FK', async (t) => {
       if (isMysql) {
         await db.query(sql`
           CREATE TABLE people (
-            id SERIAL PRIMARY KEY,
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
-            parent_id BIGINT UNSIGNED,
+            parent_id INT UNSIGNED,
             FOREIGN KEY (parent_id) REFERENCES people(id)
           );
         `)
@@ -240,7 +240,7 @@ test('nested routes with recursive FK', async (t) => {
           CREATE TABLE people (
             id INTEGER PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
-            parent_id BIGINT UNSIGNED,
+            parent_id INTEGER UNSIGNED,
             FOREIGN KEY (parent_id) REFERENCES people(id)
           );
         `)

@@ -158,6 +158,8 @@ Note that roles are just strings. Some "special roles" are reserved:
 - `platformatic-admin` : this identifies a user who has admin powers
 - `anonymous`: set automatically when no roles are associated
 
+The user metadata is populated on demand. It's possible to fetch it by running `await request.setupDBAuthorizationUser()`.
+
 ## Events and Subscriptions
 
 Platformatic DB supports GraphQL subscriptions and therefore db-authorization must protect them.

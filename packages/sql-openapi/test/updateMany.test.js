@@ -4,7 +4,7 @@ const t = require('tap')
 const fastify = require('fastify')
 const sqlOpenAPI = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
-const { clear, connInfo, isSQLite } = require('./helper')
+const { clear, connInfo, isSQLite, isMysql } = require('./helper')
 const { resolve } = require('path')
 const { test } = t
 
@@ -26,6 +26,13 @@ test('updateMany', async (t) => {
       if (isSQLite) {
         await db.query(sql`CREATE TABLE posts (
           id INTEGER PRIMARY KEY,
+          title VARCHAR(42),
+          long_text TEXT,
+          counter INTEGER
+        );`)
+      } else if (isMysql) {
+        await db.query(sql`CREATE TABLE posts (
+          id INTEGER UNSIGNED AUTO_INCREMENT PRIMARY KEY,
           title VARCHAR(42),
           long_text TEXT,
           counter INTEGER

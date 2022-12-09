@@ -267,7 +267,7 @@ Configures [Postgrator](https://github.com/rickbergfalk/postgrator) to run migra
 An optional object with the following settings:
 
 - **`dir`** (**required**, `string`): Relative path to the migrations directory.
-- **`autoApply`** (`boolean`, default: `true`): Automatically apply migrations when Platformatic DB server starts.
+- **`autoApply`** (`boolean`, default: `false`): Automatically apply migrations when Platformatic DB server starts.
 
 ### `plugin`
 
@@ -350,7 +350,7 @@ A **required** object with the following settings:
 - **`cors`** (`object`) — Configuration for Cross-Origin Resource Sharing (CORS) headers.
   - All options will be passed to the [`@fastify/cors`](https://github.com/fastify/fastify-cors) plugin.
 - **`logger`** (`object`) -- the [logger configuration](https://www.fastify.io/docs/latest/Reference/Server/#logger).
-- **`pluginTimeout** (`integer`) -- the milliseconds to wait for a Fastify plugin to load, see the [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#plugintimeout) for more details.
+- **`pluginTimeout`** (`integer`) -- the milliseconds to wait for a Fastify plugin to load, see the [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#plugintimeout) for more details.
 
 ### `authorization`
 

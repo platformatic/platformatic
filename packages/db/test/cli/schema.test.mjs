@@ -2,14 +2,14 @@ import { cliPath } from './helper.js'
 import { test } from 'tap'
 import { join } from 'desm'
 import { execa } from 'execa'
-import { rm } from 'fs/promises'
+import fs from 'fs/promises'
 import stripAnsi from 'strip-ansi'
 
 const dbLocation = join(import.meta.url, '..', 'fixtures', 'sqlite', 'db')
 
 test('print the graphql schema to stdout', async ({ matchSnapshot }) => {
   try {
-    await rm(dbLocation)
+    await fs.rm(dbLocation)
   } catch {
     // ignore
   }
@@ -23,7 +23,7 @@ test('print the graphql schema to stdout', async ({ matchSnapshot }) => {
 
 test('print the openapi schema to stdout', async ({ matchSnapshot }) => {
   try {
-    await rm(dbLocation)
+    await fs.rm(dbLocation)
   } catch {
     // ignore
   }
@@ -35,9 +35,19 @@ test('print the openapi schema to stdout', async ({ matchSnapshot }) => {
   matchSnapshot(stdout)
 })
 
+test('generates the json schema config', async (t) => {
+  process.chdir('./test/tmp')
+  await execa('node', [cliPath, 'schema', 'config'])
+
+  const configSchema = await fs.readFile('platformatic.db.schema.json', 'utf8')
+  const { $id, type } = JSON.parse(configSchema)
+  t.equal($id, 'https://schemas.platformatic.dev/db')
+  t.equal(type, 'object')
+})
+
 test('print the help if schema type is missing', async ({ match }) => {
   try {
-    await rm(dbLocation)
+    await fs.rm(dbLocation)
   } catch {
     // ignore
   }

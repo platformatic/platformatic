@@ -13,7 +13,7 @@ import { compile } from './lib/compile.mjs'
 import { applyMigrations } from './lib/migrate.mjs'
 import { seed } from './lib/seed.mjs'
 import { generateTypes } from './lib/gen-types.mjs'
-import { printGraphQLSchema, printOpenAPISchema } from './lib/gen-schema.mjs'
+import { printGraphQLSchema, printOpenAPISchema, generateJsonSchemaConfig } from './lib/gen-schema.mjs'
 import { generateMigration } from './lib/gen-migration.mjs'
 
 const help = helpMe({
@@ -40,6 +40,7 @@ program.register('seed', seed)
 program.register('types', generateTypes)
 program.register('schema graphql', printGraphQLSchema)
 program.register('schema openapi', printOpenAPISchema)
+program.register('schema config', generateJsonSchemaConfig)
 program.register('schema', help.toStdout.bind(null, ['schema']))
 
 // TODO add help command
