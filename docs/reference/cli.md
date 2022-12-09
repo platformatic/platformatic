@@ -223,6 +223,14 @@ You can find more details about the configuration format at:
 https://oss.platformatic.dev/docs/reference/db/configuration.
 
 
+#### migrations
+
+Available commands:
+
+* `migrations create` - generate do and undo migration files.
+* `migrations apply` - apply migration files.
+
+
 #### schema
 
 Update the config schema file:

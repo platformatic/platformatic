@@ -11,6 +11,7 @@ const CLI_COMMANDS = [
   'start',
   'seed',
   'schema',
+  'migrations',
   'migrations create',
   'migrations apply'
 ]
