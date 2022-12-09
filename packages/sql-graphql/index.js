@@ -118,7 +118,12 @@ async function mapperToGraphql (app, opts) {
     }
   }
 
-  let sdl = graphql.printSchema(new graphql.GraphQLSchema({ query, mutation, subscription }))
+  let sdl = ''
+  try {
+    graphql.printSchema(new graphql.GraphQLSchema({ query, mutation, subscription }))
+  } catch (error) {
+    throw new Error('Error printing the GraphQL schema: ' + error)
+  }
 
   if (opts.federationMetadata) {
     for (const replacement of federationReplacements) {
