@@ -115,4 +115,7 @@ playwright-report
 .DS_Store
 .swp
 
+# IDE folders
+.vscode
+
 packages/service/test/tmp 
