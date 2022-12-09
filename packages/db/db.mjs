@@ -21,7 +21,7 @@ const help = helpMe({
   ext: '.txt'
 })
 
-const program = commist({ maxDistance: 4 })
+const program = commist({ maxDistance: 2 })
 
 program.register('help', help.toStdout)
 program.register('help init', help.toStdout.bind(null, ['init']))
@@ -59,7 +59,10 @@ export async function runDB (argv) {
 
   if (result) {
     // We did have a command we did not match
-    return start(result)
+    console.log('Command not found:', result.join(' '), '\n')
+    await help.toStdout()
+
+    process.exit(1)
   }
 }
 

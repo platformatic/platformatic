@@ -50,7 +50,9 @@ if (args.help) {
   const result = program.parse(process.argv.slice(2))
 
   if (result) {
-    console.log('Command not found:', result.join(' '))
+    console.log('Command not found:', result.join(' '), '\n')
+    await help.toStdout()
+
     process.exit(1)
   }
 } else {
