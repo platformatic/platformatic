@@ -4,7 +4,7 @@ import pretty from 'pino-pretty'
 import { access } from 'fs/promises'
 import { setupDB } from './utils.js'
 import { SeedError } from './errors.mjs'
-import { execute as migrator } from './migrator.mjs'
+import { execute as migrator } from './migrate.mjs'
 import { pathToFileURL } from 'url'
 import loadConfig from './load-config.mjs'
 async function execute (logger, args, config) {

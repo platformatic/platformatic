@@ -90,9 +90,9 @@ test('do not validate migration checksums if not configured', async ({ equal, ma
 
 test('throws if migrations directory does not exist', async ({ match }) => {
   const child = execa('node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('invalid-migrations-directory.json')])
-  const output = child.stderr.pipe(split())
+  const output = child.stdout.pipe(split())
   const [data] = await once(output, 'data')
-  match(data, /^MigrateError: Migrations directory (.*) does not exist.$/)
+  match(data, /MigrateError: Migrations directory (.*) does not exist/)
 })
 
 test('do not run migrations by default', async ({ equal, teardown }) => {
