@@ -127,10 +127,11 @@ Available commands:
 * `init` - initiate default application.
 * `start` - start the server.
 * `compile` - compile typescript plugins.
-* `migrate` - run migrations.
 * `seed` - run a seed file.
 * `types` - generate typescript types for entities.
 * `schema` - generate and print api schema.
+* `migrations create` - generate do and undo migration files.
+* `migrations apply` - apply migration files.
 
 
 #### init
@@ -153,7 +154,7 @@ Options:
   * `-ts, --typescript <boolean>`: Set true to enable TypeScript plugins. Default: `false`.
 
 
-#### migrate
+#### migrations apply
 
 Apply all configured migrations to the database:
 
@@ -190,6 +191,31 @@ Options:
 
   * `-c, --config <path>`: Path to the configuration file.
   * `-t, --to <version>`: Migrate to a specific version.
+
+If not specified, the configuration specified will be loaded from
+`platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
+You can find more details about the configuration format at:
+https://oss.platformatic.dev/docs/reference/db/configuration.
+
+
+#### migrations create
+
+Create next migration files
+
+``` bash
+  $ platformatic db migrations create
+```
+
+It will generate do and undo sql files in the migrations folder. The name of the
+files will be the next migration number.
+
+``` bash
+  $ platformatic db migrations create --name "create_users_table"
+```
+
+Options:
+
+  * `-c, --config <path>`: Path to the configuration file.
 
 If not specified, the configuration specified will be loaded from
 `platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
