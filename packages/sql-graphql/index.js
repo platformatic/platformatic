@@ -120,8 +120,11 @@ async function mapperToGraphql (app, opts) {
 
   let sdl = ''
   try {
-    graphql.printSchema(new graphql.GraphQLSchema({ query, mutation, subscription }))
+    sdl = graphql.printSchema(new graphql.GraphQLSchema({ query, mutation, subscription }))
   } catch (error) {
+    app.log.debug(query, 'query')
+    app.log.debug(mutation, 'mutation')
+    app.log.debug(subscription, 'subscription')
     throw new Error('Error printing the GraphQL schema: ' + error)
   }
 
