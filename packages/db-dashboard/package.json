@@ -26,11 +26,11 @@
     "@fastify/static": "^6.5.0"
   },
   "devDependencies": {
-    "@platformatic/ui-components": "^0.1.19",
-    "inflected": "^2.1.0",
+    "@api-platform/admin": "^3.4.3",
     "@graphiql/toolkit": "^0.8.0",
     "@mui/material": "^5.10.12",
     "@platformatic/db-ra-data-rest": "workspace:*",
+    "@platformatic/ui-components": "^0.1.19",
     "@playwright/test": "^1.24.2",
     "@types/react": "^18.0.17",
     "@types/react-dom": "^18.0.6",
@@ -40,6 +40,7 @@
     "graphiql": "^2.0.0",
     "happy-dom": "^7.0.0",
     "history": "^5.3.0",
+    "inflected": "^2.1.0",    
     "json-format-highlight": "^1.0.4",
     "jsoneditor": "^9.9.0",
     "playwright": "^1.24.2",
