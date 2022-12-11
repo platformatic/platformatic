@@ -214,6 +214,6 @@ query {
 :::tip
 
 Learn more about your API's GraphQL interface in the
-[GraphQL API reference](/reference/sql-graphql/introduction.md).
+[GraphQL API reference](/docs/reference/sql-graphql/introduction.md).
 
 :::
