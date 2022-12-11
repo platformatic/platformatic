@@ -4,7 +4,7 @@ import TabItem from '@theme/TabItem';
 # Quick Start Guide
 
 In this guide you'll learn how to create and run your first API with
-[Platformatic DB](/reference/db/introduction.md). Let's get started!
+[Platformatic DB](/docs/reference/db/introduction.md). Let's get started!
 
 :::info
 
