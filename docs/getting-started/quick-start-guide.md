@@ -129,7 +129,7 @@ This configuration tells Platformatic to:
 
 :::tip
 
-The [Configuration reference](/reference/db/configuration.md) explains all of the
+The [Configuration reference](/docs/reference/db/configuration.md) explains all of the
 supported configuration options.
 
 :::
