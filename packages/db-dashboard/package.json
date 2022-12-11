@@ -38,7 +38,7 @@
     "autoprefixer": "^10.4.13",
     "camelcase": "^6.0.0",
     "graphiql": "^2.0.0",
-    "happy-dom": "^7.0.0",
+    "happy-dom": "^8.0.0",
     "history": "^5.3.0",
     "json-format-highlight": "^1.0.4",
     "jsoneditor": "^9.9.0",
