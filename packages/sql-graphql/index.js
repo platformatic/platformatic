@@ -123,11 +123,10 @@ async function mapperToGraphql (app, opts) {
     sdl = graphql.printSchema(new graphql.GraphQLSchema({ query, mutation, subscription }))
   } catch (error) {
     // The next lines are excluded from test coverage:
-    // it's quite hard to test for all of the DB types
+    // it's quite hard to test the following lines for all of the DB types
     /* istanbul ignore next */
-    app.log.debug(query, 'query')
-    app.log.debug(mutation, 'mutation')
-    app.log.debug(subscription, 'subscription')
+    app.log.debug({ query, mutation, subscription }, 'GraphQL input schema')
+    /* istanbul ignore next */
     throw new Error('Error printing the GraphQL schema: ' + error)
   }
 
