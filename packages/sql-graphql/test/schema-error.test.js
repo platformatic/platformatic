@@ -8,7 +8,7 @@ const { clear, connInfo, isPg } = require('./helper')
 
 const connInfoWithSchema = {
   ...connInfo,
-  schema: ["public", "myschema"]
+  schema: ['public', 'myschema']
 }
 
 test('should catch GraphQL print schema errors', { skip: !isPg }, async ({ pass, teardown, same }) => {
