@@ -9,6 +9,7 @@ const CLI_COMMANDS = [
   'init',
   'types',
   'start',
+  'compile',
   'seed',
   'schema',
   'migrations',
