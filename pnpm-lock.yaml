@@ -338,7 +338,7 @@ importers:
   packages/db-ra-data-rest:
     specifiers:
       '@vitest/coverage-c8': ^0.25.0
-      query-string: ^7.1.1
+      query-string: ^8.0.0
       ra-core: ^4.4.1
       rimraf: ^3.0.2
       snazzy: ^9.0.0
@@ -347,7 +347,7 @@ importers:
       vitest: ^0.25.0
       whatwg-fetch: ^3.6.2
     dependencies:
-      query-string: 7.1.3
+      query-string: 8.0.0
       ra-core: 4.6.0_udm3pbbeg52ynodcvpgeyktka4
     devDependencies:
       '@vitest/coverage-c8': 0.25.3
@@ -7139,6 +7139,11 @@ packages:
     resolution: {integrity: sha512-8rXg1ZnX7xzy2NGDVkBVaAy+lSlPNwad13BtgSlLuxfIslyt5Vg64U7tFcCt4WS1R0hvtnQybT/IyCkGZ3DpXQ==}
     engines: {node: '>=0.10.0'}
 
+  /filter-obj/5.1.0:
+    resolution: {integrity: sha512-qWeTREPoT7I0bifpPUXtxkZJ1XJzxWtfoWWkdVGqa+eCr3SHW/Ocp89o8vLvbUuQnadybJpjOKu4V+RwO6sGng==}
+    engines: {node: '>=14.16'}
+    dev: false
+
   /finalhandler/1.2.0:
     resolution: {integrity: sha512-5uXcUVftlQMFnWC9qu/svkWv3GTd2PfUhK/3PLkYNAe7FbqJMt3515HaxE6eRL74GdsriiwujiawdaB1BpEISg==}
     engines: {node: '>= 0.8'}
@@ -10614,6 +10619,15 @@ packages:
       filter-obj: 1.1.0
       split-on-first: 1.1.0
       strict-uri-encode: 2.0.0
+
+  /query-string/8.0.0:
+    resolution: {integrity: sha512-mB9U/uR7+1ZTzHMMlkk06qH74bKeNkZXzZXxLpoOfypAR9AVhVcYhvOnFtiosoS6Mf7rNwsLhnzeefgZMgCE/A==}
+    engines: {node: '>=14.16'}
+    dependencies:
+      decode-uri-component: 0.2.2
+      filter-obj: 5.1.0
+      split-on-first: 1.1.0
+    dev: false
 
   /querystring-es3/0.2.1:
     resolution: {integrity: sha512-773xhDQnZBMFobEiztv8LIl70ch5MSF/jUQVlhwFyBILqq96anmoctVIYz+ZRp0qbCKATTn6ev02M3r7Ga5vqA==}

@@ -26,7 +26,7 @@
     "lint": "standard | snazzy"
   },
   "dependencies": {
-    "query-string": "^7.1.1",
+    "query-string": "^8.0.0",
     "ra-core": "^4.4.1"
   },
   "devDependencies": {
