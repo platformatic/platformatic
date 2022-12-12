@@ -19,7 +19,7 @@ for (const fileType of fileTypes) {
       title VARCHAR(42)
     );`)
 
-    const child = execa('node', [cliPath], {
+    const child = execa('node', [cliPath, 'start'], {
       cwd: join(__dirname, '..', 'fixtures', 'auto-config', fileType)
     })
     const output = child.stdout.pipe(split(JSON.parse))

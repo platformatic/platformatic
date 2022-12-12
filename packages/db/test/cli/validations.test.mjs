@@ -12,13 +12,13 @@ test('version', async (t) => {
 })
 
 test('missing config', async (t) => {
-  await t.rejects(execa('node', [cliPath]))
+  await t.rejects(execa('node', [cliPath, 'start']))
 })
 
 test('print validation errors', async ({ equal, plan }) => {
   plan(2)
   try {
-    await execa('node', [cliPath, '--config', join(import.meta.url, '..', 'fixtures', 'missing-required-values.json')])
+    await execa('node', [cliPath, 'start', '--config', join(import.meta.url, '..', 'fixtures', 'missing-required-values.json')])
   } catch (err) {
     equal(err.exitCode, 1)
     equal(err.stdout, `

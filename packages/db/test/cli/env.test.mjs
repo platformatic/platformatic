@@ -25,6 +25,7 @@ test('env white list', async ({ equal, same, match, teardown }) => {
   );`)
   const child = execa('node', [
     cliPath,
+    'start',
     '--config',
     join(import.meta.url, '..', 'fixtures', 'env-whitelist.json'),
     '--allow-env',
@@ -78,6 +79,7 @@ test('env white list default values', async ({ equal, same, match, teardown }) =
   );`)
   const child = execa('node', [
     cliPath,
+    'start',
     '--config',
     join(import.meta.url, '..', 'fixtures', 'env-whitelist-default.json')
   ], {

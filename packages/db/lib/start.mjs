@@ -9,7 +9,7 @@ import { addLoggerToTheConfig } from '@platformatic/service'
 // TODO make sure coverage is reported for Windows
 // Currently C8 is not reporting it
 /* c8 ignore start */
-async function start (_args) {
+export async function start (_args) {
   const { configManager } = await loadConfig({
     string: ['to']
   }, _args, { watch: true })
