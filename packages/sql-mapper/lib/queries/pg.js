@@ -44,7 +44,7 @@ module.exports.listTables = listTables
 
 async function listColumns (db, sql, table, schema) {
   return db.query(sql`
-    SELECT column_name, udt_name, is_nullable
+    SELECT column_name, udt_name, is_nullable, is_generated
     FROM information_schema.columns
     WHERE table_name = ${table}
     AND table_schema = ${schema}
