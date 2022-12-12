@@ -45,6 +45,7 @@ test('should catch GraphQL print schema errors', { skip: !isPg }, async ({ pass,
     same(true, false, 'We check that this line never runs, since we should catch the previous error')
   } catch (error) {
     same(error.name, 'Error')
-    same(error.message, 'Error printing the GraphQL schema: Error: MyschemaTemplate.mytable field config must be an object.')
+    same(error.message, 'Error printing the GraphQL schema')
+    same(error.cause, new Error('MyschemaTemplate.mytable field config must be an object.'))
   }
 })

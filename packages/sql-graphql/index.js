@@ -127,7 +127,11 @@ async function mapperToGraphql (app, opts) {
     /* istanbul ignore next */
     app.log.debug({ query, mutation, subscription }, 'GraphQL input schema')
     /* istanbul ignore next */
-    throw new Error('Error printing the GraphQL schema: ' + error)
+    const newError = new Error('Error printing the GraphQL schema')
+    /* istanbul ignore next */
+    newError.cause = error
+    /* istanbul ignore next */
+    throw newError
   }
 
   if (opts.federationMetadata) {
