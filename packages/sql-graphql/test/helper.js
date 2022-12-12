@@ -96,4 +96,19 @@ module.exports.clear = async function (db, sql) {
     await db.query(sql`DROP Type simple_enum`)
   } catch (err) {
   }
+
+  try {
+    await db.query(sql`DROP TABLE "myschema"."mytable"`)
+  } catch (err) {
+  }
+
+  try {
+    await db.query(sql`DROP TABLE "myschema"."template"`)
+  } catch (err) {
+  }
+
+  try {
+    await db.query(sql`DROP SCHEMA "myschema"`)
+  } catch (err) {
+  }
 }

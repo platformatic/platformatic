@@ -118,7 +118,21 @@ async function mapperToGraphql (app, opts) {
     }
   }
 
-  let sdl = graphql.printSchema(new graphql.GraphQLSchema({ query, mutation, subscription }))
+  let sdl = ''
+  try {
+    sdl = graphql.printSchema(new graphql.GraphQLSchema({ query, mutation, subscription }))
+  } catch (error) {
+    // The next lines are excluded from test coverage:
+    // it's quite hard to test the following lines for all of the DB types
+    /* istanbul ignore next */
+    app.log.debug({ query, mutation, subscription }, 'GraphQL input schema')
+    /* istanbul ignore next */
+    const newError = new Error('Error printing the GraphQL schema')
+    /* istanbul ignore next */
+    newError.cause = error
+    /* istanbul ignore next */
+    throw newError
+  }
 
   if (opts.federationMetadata) {
     for (const replacement of federationReplacements) {
