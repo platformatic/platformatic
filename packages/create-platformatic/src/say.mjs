@@ -1,16 +1,8 @@
-import readline from 'node:readline'
 import logUpdate from 'log-update'
 import { pltGreen } from './colors.mjs'
 import { sleep, randomBetween } from './utils.mjs'
 
-export const say = async (messages, { clear = false } = {}) => {
-  const rl = readline.createInterface({ input: process.stdin, escapeCodeTimeout: 50 })
-
-  const done = async () => {
-    rl.close()
-    logUpdate.done()
-  }
-
+export const say = async (messages) => {
   const _messages = Array.isArray(messages) ? messages : [messages]
 
   for (const message of _messages) {
@@ -20,9 +12,9 @@ export const say = async (messages, { clear = false } = {}) => {
       msg.push(word)
       logUpdate(pltGreen(msg.join(' ')))
       await sleep(randomBetween(75, 100))
-      // process.stdout.write('\u0007') // Do we want to enable terminal bell?
+      process.stdout.write('\u0007') // Do we want to enable terminal bell?
     }
     await sleep(randomBetween(75, 200))
   }
-  done()
+  logUpdate.done()
 }

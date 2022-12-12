@@ -35,6 +35,7 @@
   },
   "devDependencies": {
     "c8": "^7.12.0",
+    "dotenv": "^16.0.1",
     "esmock": "^2.1.0",
     "semver": "^7.3.8",
     "snazzy": "^9.0.0",

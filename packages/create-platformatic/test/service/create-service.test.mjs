@@ -4,7 +4,7 @@ import { test, beforeEach, afterEach } from 'tap'
 import { tmpdir } from 'os'
 import { mkdtempSync, rmSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { join } from 'path'
-import { parseEnv } from '../helper.mjs'
+import dotenv from 'dotenv'
 
 let tmpDir
 let log = []
@@ -15,6 +15,7 @@ beforeEach(() => {
 afterEach(() => {
   log = []
   rmSync(tmpDir, { recursive: true, force: true })
+  process.env = {}
 })
 
 const fakeLogger = {
@@ -40,16 +41,15 @@ test('creates service with no typescript', async ({ end, equal, same, ok }) => {
   equal(server.port, '{PORT}')
 
   const pathToDbEnvFile = join(tmpDir, '.env')
-  const dbEnvFile = readFileSync(pathToDbEnvFile, 'utf8')
-  const dbEnv = parseEnv(dbEnvFile)
-  equal(dbEnv.PLT_SERVER_HOSTNAME, 'myhost')
-  equal(dbEnv.PORT, '6666')
+  dotenv.config({ path: pathToDbEnvFile })
+  equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
+  equal(process.env.PORT, '6666')
+  process.env = {}
 
   const pathToDbEnvSampleFile = join(tmpDir, '.env.sample')
-  const dbEnvSampleFile = readFileSync(pathToDbEnvSampleFile, 'utf8')
-  const dbEnvSample = parseEnv(dbEnvSampleFile)
-  equal(dbEnvSample.PLT_SERVER_HOSTNAME, 'myhost')
-  equal(dbEnvSample.PORT, '6666')
+  dotenv.config({ path: pathToDbEnvSampleFile })
+  equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
+  equal(process.env.PORT, '6666')
 
   same(plugin, ['./plugins', './routes'])
   ok(isFileAccessible(join(tmpDir, 'plugins', 'examples.js')))

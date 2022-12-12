@@ -4,7 +4,7 @@ import { isFileAccessible } from '../../src/utils.mjs'
 import { tmpdir } from 'os'
 import { mkdtempSync, rmSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { join } from 'path'
-import { parseEnv } from '../helper.mjs'
+import dotenv from 'dotenv'
 
 const moviesMigrationDo = `
 -- Add SQL in this file to create the database tables for your API
@@ -28,6 +28,7 @@ beforeEach(() => {
 afterEach(() => {
   log = []
   rmSync(tmpDir, { recursive: true, force: true })
+  process.env = {}
 })
 
 const fakeLogger = {
@@ -58,18 +59,17 @@ test('creates project with no typescript', async ({ end, equal }) => {
   equal(core.connectionString, '{DATABASE_URL}')
 
   const pathToDbEnvFile = join(tmpDir, '.env')
-  const dbEnvFile = readFileSync(pathToDbEnvFile, 'utf8')
-  const dbEnv = parseEnv(dbEnvFile)
-  equal(dbEnv.PLT_SERVER_HOSTNAME, 'myhost')
-  equal(dbEnv.PORT, '6666')
-  equal(dbEnv.DATABASE_URL, 'sqlite://./db.sqlite')
+  dotenv.config({ path: pathToDbEnvFile })
+  equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
+  equal(process.env.PORT, '6666')
+  equal(process.env.DATABASE_URL, 'sqlite://./db.sqlite')
+  process.env = {}
 
   const pathToDbEnvSampleFile = join(tmpDir, '.env.sample')
-  const dbEnvSampleFile = readFileSync(pathToDbEnvSampleFile, 'utf8')
-  const dbEnvSample = parseEnv(dbEnvSampleFile)
-  equal(dbEnvSample.PLT_SERVER_HOSTNAME, 'myhost')
-  equal(dbEnvSample.PORT, '6666')
-  equal(dbEnvSample.DATABASE_URL, 'sqlite://./db.sqlite')
+  dotenv.config({ path: pathToDbEnvSampleFile })
+  equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
+  equal(process.env.PORT, '6666')
+  equal(process.env.DATABASE_URL, 'sqlite://./db.sqlite')
 
   equal(core.graphql, true)
   equal(core.openapi, true)
@@ -106,18 +106,17 @@ test('creates project with no typescript and no plugin', async ({ end, equal }) 
   equal(core.connectionString, '{DATABASE_URL}')
 
   const pathToDbEnvFile = join(tmpDir, '.env')
-  const dbEnvFile = readFileSync(pathToDbEnvFile, 'utf8')
-  const dbEnv = parseEnv(dbEnvFile)
-  equal(dbEnv.PLT_SERVER_HOSTNAME, 'myhost')
-  equal(dbEnv.PORT, '6666')
-  equal(dbEnv.DATABASE_URL, 'sqlite://./db.sqlite')
+  dotenv.config({ path: pathToDbEnvFile })
+  equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
+  equal(process.env.PORT, '6666')
+  equal(process.env.DATABASE_URL, 'sqlite://./db.sqlite')
+  process.env = {}
 
   const pathToDbEnvSampleFile = join(tmpDir, '.env.sample')
-  const dbEnvSampleFile = readFileSync(pathToDbEnvSampleFile, 'utf8')
-  const dbEnvSample = parseEnv(dbEnvSampleFile)
-  equal(dbEnvSample.PLT_SERVER_HOSTNAME, 'myhost')
-  equal(dbEnvSample.PORT, '6666')
-  equal(dbEnvSample.DATABASE_URL, 'sqlite://./db.sqlite')
+  dotenv.config({ path: pathToDbEnvSampleFile })
+  equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
+  equal(process.env.PORT, '6666')
+  equal(process.env.DATABASE_URL, 'sqlite://./db.sqlite')
 
   equal(core.graphql, true)
   equal(core.openapi, true)
@@ -154,18 +153,17 @@ test('creates project with typescript', async ({ end, equal }) => {
   equal(core.connectionString, '{DATABASE_URL}')
 
   const pathToDbEnvFile = join(tmpDir, '.env')
-  const dbEnvFile = readFileSync(pathToDbEnvFile, 'utf8')
-  const dbEnv = parseEnv(dbEnvFile)
-  equal(dbEnv.PLT_SERVER_HOSTNAME, 'myhost')
-  equal(dbEnv.PORT, '6666')
-  equal(dbEnv.DATABASE_URL, 'sqlite://./db.sqlite')
+  dotenv.config({ path: pathToDbEnvFile })
+  equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
+  equal(process.env.PORT, '6666')
+  equal(process.env.DATABASE_URL, 'sqlite://./db.sqlite')
+  process.env = {}
 
   const pathToDbEnvSampleFile = join(tmpDir, '.env.sample')
-  const dbEnvSampleFile = readFileSync(pathToDbEnvSampleFile, 'utf8')
-  const dbEnvSample = parseEnv(dbEnvSampleFile)
-  equal(dbEnvSample.PLT_SERVER_HOSTNAME, 'myhost')
-  equal(dbEnvSample.PORT, '6666')
-  equal(dbEnvSample.DATABASE_URL, 'sqlite://./db.sqlite')
+  dotenv.config({ path: pathToDbEnvSampleFile })
+  equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
+  equal(process.env.PORT, '6666')
+  equal(process.env.DATABASE_URL, 'sqlite://./db.sqlite')
 
   equal(core.graphql, true)
   equal(core.openapi, true)
@@ -239,6 +237,5 @@ test('creates project with plugin already present', async ({ end, equal, ok }) =
     types: true
   }
   await createDB(params, fakeLogger, tmpDir)
-  console.error(log)
   ok(log.includes(`Plugin file ${pathToPlugin} found, skipping creation of plugin file.`))
 })
