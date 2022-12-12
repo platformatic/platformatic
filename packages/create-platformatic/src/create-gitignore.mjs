@@ -1,5 +1,5 @@
 import { isFileAccessible } from './utils.mjs'
-import { writeFileSync } from 'node:fs'
+import { writeFile } from 'fs/promises'
 import { join } from 'node:path'
 
 const gitignore = `\
@@ -26,7 +26,7 @@ export const createGitignore = async (logger, dir = '.') => {
   const gitignoreFileName = join(dir, '.gitignore')
   const isGitignoreExists = await isFileAccessible(gitignoreFileName)
   if (!isGitignoreExists) {
-    writeFileSync(gitignoreFileName, gitignore)
+    await writeFile(gitignoreFileName, gitignore)
     logger.debug(`Gitignore file ${gitignoreFileName} successfully created.`)
   } else {
     logger.debug(`Gitignore file ${gitignoreFileName} found, skipping creation of gitignore file.`)

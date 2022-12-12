@@ -5,21 +5,22 @@ import { getPkgManager } from '../get-pkg-manager.mjs'
 import parseArgs from 'minimist'
 import { join } from 'path'
 import inquirer from 'inquirer'
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdir, readFile, writeFile } from 'fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa, execaNode } from 'execa'
 import ora from 'ora'
 import createDB from './create-db.mjs'
 import askProjectDir from '../ask-project-dir.mjs'
+import { askCreateGHAction } from '../ghaction.mjs'
 
 export const createReadme = async (logger, dir = '.') => {
   const readmeFileName = join(dir, 'README.md')
   const isReadmeExists = await isFileAccessible(readmeFileName)
   if (!isReadmeExists) {
     const readmeFile = new URL('README.md', import.meta.url)
-    const readme = readFileSync(readmeFile, 'utf-8')
-    writeFileSync(readmeFileName, readme)
+    const readme = await readFile(readmeFile, 'utf-8')
+    await writeFile(readmeFileName, readme)
     logger.debug(`${readmeFileName} successfully created.`)
   } else {
     logger.debug(`${readmeFileName} found, skipping creation of README.md file.`)
@@ -81,7 +82,7 @@ const createPlatformaticDB = async (_args) => {
   }])
 
   // Create the project directory
-  mkdirSync(projectDir)
+  await mkdir(projectDir)
 
   const generatePlugin = args.plugin || wizardOptions.generatePlugin
   const useTypescript = args.typescript || wizardOptions.useTypescript
@@ -136,7 +137,7 @@ const createPlatformaticDB = async (_args) => {
 
       if (applyMigrations) {
         const spinner = ora('Applying migrations...').start()
-        // We need to applyu migration using the platformatic installed in the project
+        // We need to apply migrations using the platformatic installed in the project
         await execaNode('./node_modules/@platformatic/db/db.mjs', ['migrations', 'apply'], { cwd: projectDir })
         spinner.succeed('...done!')
       }
@@ -157,6 +158,7 @@ const createPlatformaticDB = async (_args) => {
       }
     }
   }
+  await askCreateGHAction(logger, projectDir)
 }
 
 export default createPlatformaticDB

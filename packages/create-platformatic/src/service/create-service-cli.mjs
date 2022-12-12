@@ -6,21 +6,22 @@ import { getPkgManager } from '../get-pkg-manager.mjs'
 import parseArgs from 'minimist'
 import { join } from 'path'
 import inquirer from 'inquirer'
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdir, readFile, writeFile } from 'fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa } from 'execa'
 import ora from 'ora'
 import createService from './create-service.mjs'
 import askProjectDir from '../ask-project-dir.mjs'
+import { askCreateGHAction } from '../ghaction.mjs'
 
 export const createReadme = async (logger, dir = '.') => {
   const readmeFileName = join(dir, 'README.md')
   const isReadmeExists = await isFileAccessible(readmeFileName)
   if (!isReadmeExists) {
     const readmeFile = new URL('README.md', import.meta.url)
-    const readme = readFileSync(readmeFile, 'utf-8')
-    writeFileSync(readmeFileName, readme)
+    const readme = await readFile(readmeFile, 'utf-8')
+    await writeFile(readmeFileName, readme)
     logger.debug(`${readmeFileName} successfully created.`)
   } else {
     logger.debug(`${readmeFileName} found, skipping creation of README.md file.`)
@@ -50,7 +51,7 @@ const createPlatformaticService = async (_args) => {
   const projectDir = await askProjectDir(logger, './my-service')
 
   // Create the project directory
-  mkdirSync(projectDir)
+  await mkdir(projectDir)
 
   const params = {
     hostname: args.hostname,
@@ -79,6 +80,8 @@ const createPlatformaticService = async (_args) => {
     await execa(pkgManager, ['install'], { cwd: projectDir })
     spinner.succeed('...done!')
   }
+
+  await askCreateGHAction(logger, projectDir)
 }
 
 export default createPlatformaticService

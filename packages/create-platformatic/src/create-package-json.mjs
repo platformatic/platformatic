@@ -1,6 +1,6 @@
 import pupa from 'pupa'
 import { isFileAccessible } from './utils.mjs'
-import { writeFileSync } from 'node:fs'
+import { writeFile } from 'fs/promises'
 import { join } from 'node:path'
 
 const packageJsonTemplate = `\
@@ -24,7 +24,7 @@ export const createPackageJson = async (type, platVersion, fastifyVersion, logge
   const isPackageJsonExists = await isFileAccessible(packageJsonFileName)
   if (!isPackageJsonExists) {
     const packageJson = pupa(packageJsonTemplate, { platVersion, fastifyVersion, type })
-    writeFileSync(packageJsonFileName, packageJson)
+    await writeFile(packageJsonFileName, packageJson)
     logger.debug(`${packageJsonFileName} successfully created.`)
   } else {
     logger.debug(`${packageJsonFileName} found, skipping creation of package.json file.`)
