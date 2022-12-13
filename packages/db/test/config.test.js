@@ -19,6 +19,7 @@ test('return config with adminSecret', async ({ teardown, equal, same }) => {
     core: {
       ...connInfo
     },
+    dashboard: true,
     authorization: {
       adminSecret: 'secret'
     }
@@ -38,6 +39,7 @@ test('return config without adminSecret', async ({ teardown, equal, same }) => {
       hostname: '127.0.0.1',
       port: 0
     },
+    dashboard: true,
     core: {
       ...connInfo
     }
@@ -102,6 +104,7 @@ test('no need for configFileLocation to return config', async ({ teardown, equal
       hostname: '127.0.0.1',
       port: 0
     },
+    dashboard: true,
     core: {
       ...connInfo
     },
@@ -133,6 +136,7 @@ test('no need for configFileLocation to return config', async ({ teardown, equal
     core: {
       ...connInfo
     },
+    dashboard: true,
     authorization: {
       adminSecret: 'secret',
       roleKey: 'X-PLATFORMATIC-ROLE',
@@ -150,6 +154,7 @@ test('update config file', async ({ teardown, equal, same }) => {
     core: {
       ...connInfo
     },
+    dashboard: true,
     authorization: {
       adminSecret: 'secret'
     }
@@ -186,6 +191,7 @@ test('not update config file if unauthorized', { skip: true }, async ({ teardown
     core: {
       ...connInfo
     },
+    dashboard: true,
     authorization: {
       adminSecret: 'secret'
     },
@@ -335,6 +341,7 @@ test('config reloads from a written file', async ({ teardown, equal, pass, same 
         message: 'hello'
       }
     },
+    dashboard: true,
     core: {
       ...connInfo
     },
@@ -343,7 +350,7 @@ test('config reloads from a written file', async ({ teardown, equal, pass, same 
 
   await writeFile(file, `
     module.exports = async function (app, options) {
-      app.get('/', () => options.message)
+      app.get('/message', () => options.message)
     }`)
 
   const server = await buildServer(config)
@@ -351,7 +358,7 @@ test('config reloads from a written file', async ({ teardown, equal, pass, same 
   await server.listen()
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${server.url}/message`)
     equal(res.statusCode, 200, 'add status code')
     same(await res.body.text(), 'hello', 'response')
   }
@@ -364,6 +371,7 @@ test('config reloads from a written file', async ({ teardown, equal, pass, same 
     core: {
       ...connInfo
     },
+    dashboard: true,
     plugin: {
       path: file,
       options: {
@@ -376,7 +384,7 @@ test('config reloads from a written file', async ({ teardown, equal, pass, same 
   await server.restart()
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${server.url}/message`)
     equal(res.statusCode, 200, 'add status code')
     same(await res.body.text(), 'ciao mondo', 'response')
   }
