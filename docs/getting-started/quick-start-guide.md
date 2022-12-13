@@ -4,7 +4,7 @@ import TabItem from '@theme/TabItem';
 # Quick Start Guide
 
 In this guide you'll learn how to create and run your first API with
-[Platformatic DB](/reference/db/introduction.md). Let's get started!
+[Platformatic DB](/docs/reference/db/introduction.md). Let's get started!
 
 :::info
 
@@ -129,7 +129,7 @@ This configuration tells Platformatic to:
 
 :::tip
 
-The [Configuration reference](/reference/db/configuration.md) explains all of the
+The [Configuration reference](/docs/reference/db/configuration.md) explains all of the
 supported configuration options.
 
 :::
@@ -185,7 +185,7 @@ containing all the pages in your database:
 
 :::tip
 
-Take a look at the [REST API reference](/reference/sql-openapi/introduction.md) for an
+Take a look at the [REST API reference](/docs/reference/sql-openapi/introduction.md) for an
 overview of the REST interface that the API provides.
 
 :::
@@ -214,6 +214,6 @@ query {
 :::tip
 
 Learn more about your API's GraphQL interface in the
-[GraphQL API reference](/reference/sql-graphql/introduction.md).
+[GraphQL API reference](/docs/reference/sql-graphql/introduction.md).
 
 :::

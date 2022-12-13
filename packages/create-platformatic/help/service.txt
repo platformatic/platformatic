@@ -1,0 +1,7 @@
+Welcome to Platformatic Service Creator. 
+
+Available options are:
+  * --help - Display this message
+  * -h, --hostname <hostname>`: The hostname where Platformatic DB server will listen for connections.
+  * -p, --port <port>`: The port where Platformatic DB server will listen for connections.
+
