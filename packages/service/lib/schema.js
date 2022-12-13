@@ -169,7 +169,7 @@ const plugin = {
 }
 
 const metrics = {
-  $id: 'https://schemas.platformatic.dev/db/metrics',
+  $id: 'https://schemas.platformatic.dev/service/metrics',
   anyOf: [
     { type: 'boolean' },
     {
@@ -193,7 +193,7 @@ const metrics = {
 }
 
 const platformaticServiceSchema = {
-  $id: 'https://schemas.platformatic.dev/db',
+  $id: 'https://schemas.platformatic.dev/service',
   type: 'object',
   $defs: {
     plugin
