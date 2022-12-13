@@ -168,6 +168,27 @@ const plugin = {
   required: ['path']
 }
 
+const pluginTypes = {
+  $id: 'https://schemas.platformatic.dev/service/pluginTypes',
+  $defs: {
+    plugin
+  },
+  anyOf: [{
+    type: 'array',
+    items: {
+      anyOf: [{
+        $ref: '#/$defs/plugin'
+      }, {
+        type: 'string'
+      }]
+    }
+  }, {
+    $ref: '#/$defs/plugin'
+  }, {
+    type: 'string'
+  }]
+}
+
 const metrics = {
   $id: 'https://schemas.platformatic.dev/service/metrics',
   anyOf: [
@@ -195,27 +216,9 @@ const metrics = {
 const platformaticServiceSchema = {
   $id: 'https://schemas.platformatic.dev/service',
   type: 'object',
-  $defs: {
-    plugin
-  },
   properties: {
     server,
-    plugin: {
-      anyOf: [{
-        type: 'array',
-        items: {
-          anyOf: [{
-            $ref: '#/$defs/plugin'
-          }, {
-            type: 'string'
-          }]
-        }
-      }, {
-        $ref: '#/$defs/plugin'
-      }, {
-        type: 'string'
-      }]
-    },
+    plugin: pluginTypes,
     metrics
   },
   additionalProperties: {
@@ -233,4 +236,5 @@ module.exports.metrics = metrics
 module.exports.cors = cors
 module.exports.server = server
 module.exports.plugin = plugin
+module.exports.pluginTypes = pluginTypes
 module.exports.watch = watch
