@@ -99,7 +99,7 @@ const createPlatformaticDB = async (_args) => {
     typescript: useTypescript
   }
 
-  await createDB(params, logger, projectDir)
+  const env = await createDB(params, logger, projectDir)
 
   const fastifyVersion = await getDependencyVersion('fastify')
 
@@ -159,7 +159,7 @@ const createPlatformaticDB = async (_args) => {
       }
     }
   }
-  await askCreateGHAction(logger)
+  await askCreateGHAction(logger, env, 'db')
 }
 
 export default createPlatformaticDB

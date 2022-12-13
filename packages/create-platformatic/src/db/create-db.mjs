@@ -187,6 +187,13 @@ async function createDB ({ hostname, database = 'sqlite', port, migrations = 'mi
   if (plugin) {
     await generatePluginWithTypesSupport(logger, currentDir, typescript)
   }
+
+  return {
+    DATABASE_URL: connectionStrings[database],
+    PLT_SERVER_LOGGER_LEVEL: 'info',
+    PORT: port,
+    PLT_SERVER_HOSTNAME: hostname
+  }
 }
 
 export default createDB

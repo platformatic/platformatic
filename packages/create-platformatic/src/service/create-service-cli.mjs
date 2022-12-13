@@ -59,7 +59,7 @@ const createPlatformaticService = async (_args) => {
     port: args.port
   }
 
-  await createService(params, logger, projectDir)
+  const env = await createService(params, logger, projectDir)
 
   const fastifyVersion = await getDependencyVersion('fastify')
 
@@ -82,7 +82,7 @@ const createPlatformaticService = async (_args) => {
     spinner.succeed('...done!')
   }
 
-  await askCreateGHAction(logger)
+  await askCreateGHAction(logger, env, 'service')
 }
 
 export default createPlatformaticService
