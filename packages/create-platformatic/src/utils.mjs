@@ -1,7 +1,6 @@
 import { execa } from 'execa'
 import { request } from 'undici'
-import { existsSync, statSync, readdirSync, readFileSync } from 'node:fs'
-import { access } from 'fs/promises'
+import { access, constants, readFile } from 'fs/promises'
 import { resolve, join, dirname } from 'path'
 import { createRequire } from 'module'
 
@@ -45,12 +44,29 @@ export const getVersion = async () => {
   }
 }
 
-export const validatePath = async projectPath => {
-  const projectDir = resolve(process.cwd(), projectPath)
-  if (existsSync(projectDir) && statSync(projectDir).isDirectory() && readdirSync(projectDir).length > 0) {
-    throw Error('Please, specify an empty directory or create a new one.')
+export async function isDirectoryWriteable (directory) {
+  try {
+    await access(directory, constants.R_OK | constants.W_OK)
+    return true
+  } catch (err) {
+    return false
   }
-  return true
+}
+
+export const validatePath = async projectPath => {
+  // if the folder exists, is OK:
+  const projectDir = resolve(projectPath)
+  const canAccess = await isDirectoryWriteable(projectDir)
+  if (canAccess) {
+    return true
+  }
+  // if the folder does not exist, check if the parent folder exists:
+  const parentDir = dirname(projectDir)
+  const canAccessParent = await isDirectoryWriteable(parentDir)
+  if (canAccessParent) {
+    return true
+  }
+  return false
 }
 
 const findConfigFile = async (directory, type) => {
@@ -73,7 +89,7 @@ export const findServiceConfigFile = async (directory) => (findConfigFile(direct
 export const getDependencyVersion = async (dependencyName) => {
   const require = createRequire(import.meta.url)
   const pathToPackageJson = join(dirname(require.resolve(dependencyName)), 'package.json')
-  const packageJsonFile = readFileSync(pathToPackageJson, 'utf-8')
+  const packageJsonFile = await readFile(pathToPackageJson, 'utf-8')
   const packageJson = JSON.parse(packageJsonFile)
   return packageJson.version
 }

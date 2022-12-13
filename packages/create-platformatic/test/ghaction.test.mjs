@@ -11,14 +11,15 @@ import { isFileAccessible } from '../src/utils.mjs'
 import { getGHAction, getOneStepVersion, createGHAction } from '../src/ghaction.mjs'
 
 let mockAgent
-let log = ''
+let log = []
 let tmpDir
 const fakeLogger = {
-  info: msg => { log = msg }
+  info: msg => { log.push(msg) },
+  warn: msg => { log.push(msg) }
 }
 
 beforeEach(async () => {
-  log = ''
+  log = []
   tmpDir = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
   mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -160,7 +161,7 @@ test('getGHAction, no version', async ({ same, plan }) => {
 
 test('creates gh action', async ({ end, equal }) => {
   await createGHAction(fakeLogger, tmpDir)
-  equal(log, `Github action file ${tmpDir}/.github/workflows/platformatic-deploy.yml successfully created.`)
+  equal(log[0], `Github action file ${tmpDir}/.github/workflows/platformatic-deploy.yml successfully created.`)
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-deploy.yml'))
   equal(accessible, true)
 })
@@ -170,5 +171,22 @@ test('do not create gitignore file because already present', async ({ end, equal
   const ghaction = join(tmpDir, '.github', 'workflows', 'platformatic-deploy.yml')
   await writeFile(ghaction, 'TEST')
   await createGHAction(fakeLogger, tmpDir)
-  equal(log, `Github action file ${tmpDir}/.github/workflows/platformatic-deploy.yml found, skipping creation of github action file.`)
+  equal(log[0], `Github action file ${tmpDir}/.github/workflows/platformatic-deploy.yml found, skipping creation of github action file.`)
+})
+
+test('creates gh action with a warn if a .git folder is not present', async ({ end, equal }) => {
+  await createGHAction(fakeLogger, tmpDir)
+  equal(log[0], `Github action file ${tmpDir}/.github/workflows/platformatic-deploy.yml successfully created.`)
+  const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-deploy.yml'))
+  equal(accessible, true)
+  equal(log[1], 'No git repository found. The Github action won\'t be triggered.')
+})
+
+test('creates gh action without a warn if a .git folder is present', async ({ end, equal }) => {
+  await mkdirp(join(tmpDir, '.git'))
+  await createGHAction(fakeLogger, tmpDir)
+  equal(log[0], `Github action file ${tmpDir}/.github/workflows/platformatic-deploy.yml successfully created.`)
+  const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-deploy.yml'))
+  equal(accessible, true)
+  equal(log.length, 1)
 })

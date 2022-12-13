@@ -5,7 +5,7 @@ import { getPkgManager } from '../get-pkg-manager.mjs'
 import parseArgs from 'minimist'
 import { join } from 'path'
 import inquirer from 'inquirer'
-import { mkdir, readFile, writeFile } from 'fs/promises'
+import { readFile, writeFile } from 'fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa, execaNode } from 'execa'
@@ -13,6 +13,7 @@ import ora from 'ora'
 import createDB from './create-db.mjs'
 import askProjectDir from '../ask-project-dir.mjs'
 import { askCreateGHAction } from '../ghaction.mjs'
+import mkdirp from 'mkdirp'
 
 export const createReadme = async (logger, dir = '.') => {
   const readmeFileName = join(dir, 'README.md')
@@ -58,7 +59,7 @@ const createPlatformaticDB = async (_args) => {
   const version = await getVersion()
   const pkgManager = getPkgManager()
 
-  const projectDir = await askProjectDir(logger, './my-api')
+  const projectDir = await askProjectDir(logger, '.')
 
   const wizardOptions = await inquirer.prompt([{
     type: 'list',
@@ -82,7 +83,7 @@ const createPlatformaticDB = async (_args) => {
   }])
 
   // Create the project directory
-  await mkdir(projectDir)
+  await mkdirp(projectDir)
 
   const generatePlugin = args.plugin || wizardOptions.generatePlugin
   const useTypescript = args.typescript || wizardOptions.useTypescript
@@ -158,7 +159,7 @@ const createPlatformaticDB = async (_args) => {
       }
     }
   }
-  await askCreateGHAction(logger, projectDir)
+  await askCreateGHAction(logger)
 }
 
 export default createPlatformaticDB

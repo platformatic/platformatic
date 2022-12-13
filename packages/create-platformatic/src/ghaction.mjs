@@ -78,13 +78,18 @@ export const createGHAction = async (logger, projectDir) => {
     const githubAction = await getGHAction()
     await writeFile(ghActionFilePath, githubAction)
     logger.info(`Github action file ${ghActionFilePath} successfully created.`)
+
+    const isGitDir = await isFileAccessible('.git', projectDir)
+    if (!isGitDir) {
+      logger.warn('No git repository found. The Github action won\'t be triggered.')
+    }
   } else {
     logger.info(`Github action file ${ghActionFilePath} found, skipping creation of github action file.`)
   }
 }
 
 /* c8 ignore next 12 */
-export const askCreateGHAction = async (logger, projectDir) => {
+export const askCreateGHAction = async (logger, projectDir = process.cwd()) => {
   const { githubAction } = await inquirer.prompt([{
     type: 'list',
     name: 'githubAction',
