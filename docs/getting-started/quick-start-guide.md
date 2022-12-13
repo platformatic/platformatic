@@ -26,71 +26,76 @@ To follow along with this guide you'll need to have these things installed:
 
 ## Create a new API project
 
+Launch the create platormatic command:
 Create a directory for your new API project:
 
 ```bash
-mkdir quick-start
-
-cd quick-start
+npm create platformatic@latest 
 ```
 
-Then create a `package.json` file and install the [platformatic](https://www.npmjs.com/package/platformatic)
-CLI as a project dependency:
-
-<Tabs groupId="package-manager">
-<TabItem value="npm" label="npm">
-
+This starts the creator wizards. Select "DB" as project type: 
 ```bash
-npm init --yes
-
-npm install platformatic
+ Hello, marcopiraccini welcome to Platformatic 0.10.0!
+ Let's start by creating a new project.
+? Which kind of project do you want to create? (Use arrow keys)
+❯ DB 
+  Service
 ```
 
-</TabItem>
-<TabItem value="yarn" label="Yarn">
-
-```bash
-yarn init --yes
-
-yarn add platformatic
+Then, specify the project folder name:
+```
+? Where would you like to create your project? (./my-api) quick-start
 ```
 
-</TabItem>
-<TabItem value="pnpm" label="pnpm">
-
-```bash
-pnpm init
-
-pnpm add platformatic
+Create default migrations:
+```
+? Do you want to create default migrations? (Use arrow keys)
+❯ yes 
+  no
 ```
 
-</TabItem>
-</Tabs>
-
-
-## Add a database schema
-
-In your project directory (`quick-start`), create a `migrations` directory to
-store your database migration files:
-
-```bash
-mkdir migrations
+Then you can crete an example of plugin too, and decide i you want to use typescript:
+```
+? Do you want to create a plugin? yes
+? Do you want to use TypeScript? no
 ```
 
-Then create a new migration file named **`001.do.sql`** in the **`migrations`**
-directory.
+Then the `quick-start` folder is created and you can install all the dependencies (select `yes`):
+```
+[12:01:30] INFO: Configuration file platformatic.db.json successfully created.
+[12:01:30] INFO: Environment file .env successfully created.
+[12:01:30] INFO: Migrations folder migrations successfully created.
+[12:01:30] INFO: Migration file 001.do.sql successfully created.
+[12:01:30] INFO: Migration file 001.undo.sql successfully created.
+[12:01:30] INFO: Plugin file created at plugin.js
+? Do you want to run npm install? (Use arrow keys)
+❯ yes 
+  no
 
-Copy and paste this SQL query into the migration file:
+```
+
+Finally, you can apply the migrations:
+
+```
+? Do you want to apply migrations? (Use arrow keys)
+❯ yes 
+  no
+```
+
+You can answer "no" to the last questions (to generate types and install the Platformatic cloud Github action).
+
+## Check the  database schema
+
+In your project directory (`quick-start`), open the `migrations` directory that can store your database migration files that will contain both the `001.do.sql` and `001.undo.sql` files. The `001.do.sql` file contains the SQL statements to create the database schema, and the `001.undo.sql` file contains the SQL statements to drop the database schema.
 
 ```sql title="migrations/001.do.sql"
-CREATE TABLE pages (
+CREATE TABLE IF NOT EXISTS movies (
   id INTEGER PRIMARY KEY,
-  title VARCHAR(255) NOT NULL
+  title TEXT NOT NULL
 );
 ```
 
-When it's run by Platformatic, this query will create a new database table
-named `pages`.
+Note that this migration has been already applied by Platformatic creator.
 
 :::tip
 
@@ -98,34 +103,52 @@ You can check syntax for SQL queries on the [Database.Guide SQL Reference](https
 
 :::
 
-## Configure your API
+## Check your API configurtion
 
-In your project directory, create a new Platformatic configuration file named
-**`platformatic.db.json`**.
-
-Copy and paste in this configuration:
+In your project directory, check the Platformatic configuration file named
+**`platformatic.db.json`**:
 
 ```json title="platformatic.db.json"
 {
   "server": {
-    "hostname": "127.0.0.1",
-    "port": "3042"
+    "hostname": "{PLT_SERVER_HOSTNAME}",
+    "port": "{PORT}",
+    "logger": {
+      "level": "{PLT_SERVER_LOGGER_LEVEL}"
+    }
   },
   "core": {
-    "connectionString": "sqlite://./pages.db"
+    "connectionString": "{DATABASE_URL}",
+    "graphql": true,
+    "openapi": true
   },
   "migrations": {
-    "dir": "./migrations",
-    "autoApply": true
+    "dir": "migrations"
+  },
+  "plugin": {
+    "path": "plugin.js"
+  },
+  "types": {
+    "autogenerate": true
   }
 }
+```
+
+...and the environment file named **`.env`**:
+
+```bash title=".env"
+PLT_SERVER_HOSTNAME=127.0.0.1
+PORT=3042
+PLT_SERVER_LOGGER_LEVEL=info
+DATABASE_URL=sqlite://./db.sqlite
 ```
 
 This configuration tells Platformatic to:
 
 - Run an API server on `http://127.0.0.1:3042/`
-- Connect to an SQLite database stored in a file named `pages.db`
+- Connect to an SQLite database stored in a file named `db.sqlite`
 - Look for database migration files in the `migrations` directory
+- Load the plugin file named `plugin.js` and automatically generate types
 
 :::tip
 
@@ -139,12 +162,16 @@ supported configuration options.
 In your project directory, use the Platformatic CLI to start your API server:
 
 ```bash
+npm start 
+```
+or 
+```
 npx platformatic db start
 ```
 
 This will:
 
-1. Run your SQL migration file and create a `pages` table in the SQLite database.
+1. If not already applied, run your SQL migration file and create a `movies` table in the SQLite database.
 1. Automatically map your SQL database to REST and GraphQL API interfaces.
 1. Start the Platformatic API server.
 
@@ -156,12 +183,12 @@ Your Platformatic API is now up and running! 🌟
 
 You can use cURL to make requests to the REST interface of your API, for example:
 
-#### Create a new page
+#### Create a new movie
 
 ```bash
 curl -X POST -H "Content-Type: application/json" \
   -d "{ \"title\": \"Hello Platformatic DB\" }" \
-	http://localhost:3042/pages
+	http://localhost:3042/movies
 ```
 
 You should receive a response from your API like this:
@@ -170,14 +197,14 @@ You should receive a response from your API like this:
 {"id":1,"title":"Hello Platformatic DB"}
 ```
 
-#### Get all pages
+#### Get all movies
 
 ```bash
-curl http://localhost:3042/pages
+curl http://localhost:3042/movies
 ```
 
 You should receive a response from your API like this, with an array
-containing all the pages in your database:
+containing all the movies in your database:
 
 ```json
 [{"id":1,"title":"Hello Platformatic DB"}]
@@ -200,11 +227,11 @@ You can explore the OpenAPI documentation for your REST API in the Swagger UI at
 Open [http://localhost:3042/graphiql](http://localhost:3042/graphiql) in your
 web browser to explore the GraphQL interface of your API.
 
-Try out this GraphQL query to retrieve all pages from your API:
+Try out this GraphQL query to retrieve all movies from your API:
 
 ```graphql
 query {
-  pages {
+  movies {
     id
     title
   }
