@@ -24,69 +24,43 @@ To follow along with this guide you'll need to have these things installed:
 - [npm](https://docs.npmjs.com/cli/) v7 or later
 - A code editor, for example [Visual Studio Code](https://code.visualstudio.com/)
 
+
 ## Create a new API project
 
-Launch the create platormatic command:
-Create a directory for your new API project:
+<Tabs groupId="quickstart-create">
+
+<TabItem value="automatic" label="Automatic">
+
+Launch the create platformatic command:
 
 ```bash
 npm create platformatic@latest 
 ```
 
-This starts the creator wizards. Select "DB" as project type: 
-```bash
- Hello, marcopiraccini welcome to Platformatic 0.10.0!
- Let's start by creating a new project.
-? Which kind of project do you want to create? (Use arrow keys)
-❯ DB 
-  Service
-```
+This starts the Platformatic creator wizard, which asks you some questions on how to create the Platformatic project. 
+For this quick-start, you should answer the questions as follows:
 
-Then, specify the project folder name:
-```
-? Where would you like to create your project? (./my-api) quick-start
-```
+- Which kind of project do you want to create?  => DB
+- Where would you like to create your project?  => quick-start 
+- Do you want to create default migrations?     => Yes
+- Do you want to create a plugin?               => Yes
+- Do you want to use TypeScript?                => No
+- Do you want to install dependencies?          => Yes (this can take a while)
+- Do you want to apply the migrations?          => Yes
+- Do you want to create the github action to deploy this application to Platformatic Cloud? => No
 
-Create default migrations:
-```
-? Do you want to create default migrations? (Use arrow keys)
-❯ yes 
-  no
-```
+:::info
 
-Then you can crete an example of plugin too, and decide i you want to use typescript:
-```
-? Do you want to create a plugin? yes
-? Do you want to use TypeScript? no
-```
+Please feel free to answer the questions differently, if you want to create a different kind of project.
+Just make sure to run the `npm install` manually if not done through the wizard.
 
-Then the `quick-start` folder is created and you can install all the dependencies (select `yes`):
-```
-[12:01:30] INFO: Configuration file platformatic.db.json successfully created.
-[12:01:30] INFO: Environment file .env successfully created.
-[12:01:30] INFO: Migrations folder migrations successfully created.
-[12:01:30] INFO: Migration file 001.do.sql successfully created.
-[12:01:30] INFO: Migration file 001.undo.sql successfully created.
-[12:01:30] INFO: Plugin file created at plugin.js
-? Do you want to run npm install? (Use arrow keys)
-❯ yes 
-  no
+:::
 
-```
-
-Finally, you can apply the migrations:
-
-```
-? Do you want to apply migrations? (Use arrow keys)
-❯ yes 
-  no
-```
-
-You can answer "no" to the last questions (to generate types and install the Platformatic cloud Github action).
+Now you have a Platformatic project in the folder `quick-start` with a default migration and a plugin.
 
 ## Check the  database schema
 
-In your project directory (`quick-start`), open the `migrations` directory that can store your database migration files that will contain both the `001.do.sql` and `001.undo.sql` files. The `001.do.sql` file contains the SQL statements to create the database schema, and the `001.undo.sql` file contains the SQL statements to drop the database schema.
+In your project directory (`quick-start`), open the `migrations` directory that can store your database migration files that will contain both the `001.do.sql` and `001.undo.sql` files. The `001.do.sql` file contains the SQL statements to create the database objects, while the `001.undo.sql` file contains the SQL statements to drop them.
 
 ```sql title="migrations/001.do.sql"
 CREATE TABLE IF NOT EXISTS movies (
@@ -97,13 +71,7 @@ CREATE TABLE IF NOT EXISTS movies (
 
 Note that this migration has been already applied by Platformatic creator.
 
-:::tip
-
-You can check syntax for SQL queries on the [Database.Guide SQL Reference](https://database.guide/sql-reference-for-beginners/).
-
-:::
-
-## Check your API configurtion
+## Check your API configuration
 
 In your project directory, check the Platformatic configuration file named
 **`platformatic.db.json`**:
@@ -161,12 +129,14 @@ supported configuration options.
 
 In your project directory, use the Platformatic CLI to start your API server:
 
-```bash
-npm start 
-```
-or 
+
 ```
 npx platformatic db start
+```
+or
+
+```
+npm start 
 ```
 
 This will:
@@ -176,6 +146,138 @@ This will:
 1. Start the Platformatic API server.
 
 Your Platformatic API is now up and running! 🌟
+
+</TabItem>
+
+<TabItem value="manual" label="Manual">
+
+Create a directory for your new API project:
+
+```bash
+mkdir quick-start
+
+cd quick-start
+```
+
+Then create a `package.json` file and install the [platformatic](https://www.npmjs.com/package/platformatic)
+CLI as a project dependency:
+
+<Tabs groupId="package-manager">
+<TabItem value="npm" label="npm">
+
+```bash
+npm init --yes
+
+npm install platformatic
+```
+
+</TabItem>
+<TabItem value="yarn" label="Yarn">
+
+```bash
+yarn init --yes
+
+yarn add platformatic
+```
+
+</TabItem>
+<TabItem value="pnpm" label="pnpm">
+
+```bash
+pnpm init
+
+pnpm add platformatic
+```
+
+</TabItem>
+</Tabs>
+
+
+## Add a database schema
+
+In your project directory (`quick-start`), create a `migrations` directory to
+store your database migration files:
+
+```bash
+mkdir migrations
+```
+
+Then create a new migration file named **`001.do.sql`** in the **`migrations`**
+directory.
+
+Copy and paste this SQL query into the migration file:
+
+```sql title="migrations/001.do.sql"
+CREATE TABLE movies (
+  id INTEGER PRIMARY KEY,
+  title VARCHAR(255) NOT NULL
+);
+```
+
+When it's run by Platformatic, this query will create a new database table
+named `movies`.
+
+:::tip
+
+You can check syntax for SQL queries on the [Database.Guide SQL Reference](https://database.guide/sql-reference-for-beginners/).
+
+:::
+
+## Configure your API
+
+In your project directory, create a new Platformatic configuration file named
+**`platformatic.db.json`**.
+
+Copy and paste in this configuration:
+
+```json title="platformatic.db.json"
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "3042"
+  },
+  "core": {
+    "connectionString": "sqlite://./movies.db"
+  },
+  "migrations": {
+    "dir": "./migrations",
+    "autoApply": true
+  }
+}
+```
+
+This configuration tells Platformatic to:
+
+- Run an API server on `http://127.0.0.1:3042/`
+- Connect to an SQLite database stored in a file named `movies.db`
+- Look for database migration files in the `migrations` directory
+
+:::tip
+
+The [Configuration reference](/docs/reference/db/configuration.md) explains all of the
+supported configuration options.
+
+:::
+
+## Start your API server
+
+In your project directory, use the Platformatic CLI to start your API server:
+
+```bash
+npx platformatic db start
+```
+
+This will:
+
+1. Run your SQL migration file and create a `movies` table in the SQLite database.
+1. Automatically map your SQL database to REST and GraphQL API interfaces.
+1. Start the Platformatic API server.
+
+Your Platformatic API is now up and running! 🌟
+
+</TabItem>
+</Tabs>
+
 
 ## Next steps
 
