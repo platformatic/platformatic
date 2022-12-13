@@ -3,7 +3,7 @@ import fs from 'fs/promises'
 import { tmpdir } from 'os'
 import t from 'tap'
 import { execa } from 'execa'
-import { cliPath } from './helper.js'
+import { cliPath, parseEnv } from './helper.js'
 
 const moviesMigrationDo = `
 -- Add SQL in this file to create the database tables for your API
@@ -39,10 +39,18 @@ t.test('run db init with default options', async (t) => {
   const { server, core, migrations, $schema } = dbConfig
 
   t.equal($schema, './platformatic.db.schema.json')
-  t.equal(server.hostname, '127.0.0.1')
-  t.equal(server.port, 3042)
 
-  t.equal(core.connectionString, 'sqlite://db.sqlite')
+  t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
+  t.equal(server.port, '{PORT}')
+  t.equal(core.connectionString, '{DATABASE_URL}')
+
+  const pathToDbEnvFile = path.join(pathToFolder, '.env')
+  const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
+  const dbEnv = parseEnv(dbEnvFile)
+  t.equal(dbEnv.PLT_SERVER_HOSTNAME, '127.0.0.1')
+  t.equal(dbEnv.PORT, '3042')
+  t.equal(dbEnv.DATABASE_URL, 'sqlite://./db.sqlite')
+
   t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
@@ -70,11 +78,12 @@ t.test('run init with default options twice', async (t) => {
 
   const firstRunStdoutLines = firstRunStdout.split('\n')
   t.match(firstRunStdoutLines[0], /(.*)Configuration file platformatic.db.json successfully created./)
-  t.match(firstRunStdoutLines[1], /(.*)Migrations folder migrations successfully created./)
-  t.match(firstRunStdoutLines[2], /(.*)Migration file 001.do.sql successfully created./)
-  t.match(firstRunStdoutLines[3], /(.*)Migration file 001.undo.sql successfully created./)
-  t.match(firstRunStdoutLines[4], /(.*)Plugin file created at plugin.js/)
-  t.match(firstRunStdoutLines[5], /(.*)Please run `npm i --save(.*)/)
+  t.match(firstRunStdoutLines[1], /(.*)Environment file .env successfully created./)
+  t.match(firstRunStdoutLines[2], /(.*)Migrations folder migrations successfully created./)
+  t.match(firstRunStdoutLines[3], /(.*)Migration file 001.do.sql successfully created./)
+  t.match(firstRunStdoutLines[4], /(.*)Migration file 001.undo.sql successfully created./)
+  t.match(firstRunStdoutLines[5], /(.*)Plugin file created at plugin.js/)
+  t.match(firstRunStdoutLines[6], /(.*)Please run `npm i --save(.*)/)
 
   const secondRunStdoutLines = secondRunStdout.split('\n')
   t.match(secondRunStdoutLines[0], /(.*)Configuration file platformatic.db.json found, skipping creation of configuration file./)
@@ -87,10 +96,16 @@ t.test('run init with default options twice', async (t) => {
 
   const { server, core, migrations } = dbConfig
 
-  t.equal(server.hostname, '127.0.0.1')
-  t.equal(server.port, 3042)
+  t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
+  t.equal(server.port, '{PORT}')
+  t.equal(core.connectionString, '{DATABASE_URL}')
+  const pathToDbEnvFile = path.join(pathToFolder, '.env')
+  const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
+  const dbEnv = parseEnv(dbEnvFile)
+  t.equal(dbEnv.PLT_SERVER_HOSTNAME, '127.0.0.1')
+  t.equal(dbEnv.PORT, '3042')
+  t.equal(dbEnv.DATABASE_URL, 'sqlite://./db.sqlite')
 
-  t.equal(core.connectionString, 'sqlite://db.sqlite')
   t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
@@ -115,10 +130,16 @@ t.test('run db init --typescript', async (t) => {
 
   const { server, core, migrations, plugin, types } = dbConfig
 
-  t.equal(server.hostname, '127.0.0.1')
-  t.equal(server.port, 3042)
+  t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
+  t.equal(server.port, '{PORT}')
+  t.equal(core.connectionString, '{DATABASE_URL}')
+  const pathToDbEnvFile = path.join(pathToFolder, '.env')
+  const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
+  const dbEnv = parseEnv(dbEnvFile)
+  t.equal(dbEnv.PLT_SERVER_HOSTNAME, '127.0.0.1')
+  t.equal(dbEnv.PORT, '3042')
+  t.equal(dbEnv.DATABASE_URL, 'sqlite://./db.sqlite')
 
-  t.equal(core.connectionString, 'sqlite://db.sqlite')
   t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
@@ -148,10 +169,16 @@ t.test('run db init --typescript twice', async (t) => {
 
   const { server, core, migrations, plugin, types } = dbConfig
 
-  t.equal(server.hostname, '127.0.0.1')
-  t.equal(server.port, 3042)
+  t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
+  t.equal(server.port, '{PORT}')
+  t.equal(core.connectionString, '{DATABASE_URL}')
 
-  t.equal(core.connectionString, 'sqlite://db.sqlite')
+  const pathToDbEnvFile = path.join(pathToFolder, '.env')
+  const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
+  const dbEnv = parseEnv(dbEnvFile)
+  t.equal(dbEnv.PLT_SERVER_HOSTNAME, '127.0.0.1')
+  t.equal(dbEnv.PORT, '3042')
+  t.equal(dbEnv.DATABASE_URL, 'sqlite://./db.sqlite')
   t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
@@ -180,10 +207,17 @@ t.test('run db init --database postgres', async (t) => {
 
   const { server, core, migrations } = dbConfig
 
-  t.equal(server.hostname, '127.0.0.1')
-  t.equal(server.port, 3042)
+  t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
+  t.equal(server.port, '{PORT}')
+  t.equal(core.connectionString, '{DATABASE_URL}')
 
-  t.equal(core.connectionString, 'postgres://postgres:postgres@localhost:5432/postgres')
+  const pathToDbEnvFile = path.join(pathToFolder, '.env')
+  const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
+  const dbEnv = parseEnv(dbEnvFile)
+  t.equal(dbEnv.PLT_SERVER_HOSTNAME, '127.0.0.1')
+  t.equal(dbEnv.PORT, '3042')
+  t.equal(dbEnv.DATABASE_URL, 'postgres://postgres:postgres@localhost:5432/postgres')
+
   t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
@@ -208,10 +242,17 @@ t.test('run db init --database mysql', async (t) => {
 
   const { server, core, migrations } = dbConfig
 
-  t.equal(server.hostname, '127.0.0.1')
-  t.equal(server.port, 3042)
+  t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
+  t.equal(server.port, '{PORT}')
+  t.equal(core.connectionString, '{DATABASE_URL}')
 
-  t.equal(core.connectionString, 'mysql://root@localhost:3306/graph')
+  const pathToDbEnvFile = path.join(pathToFolder, '.env')
+  const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
+  const dbEnv = parseEnv(dbEnvFile)
+  t.equal(dbEnv.PLT_SERVER_HOSTNAME, '127.0.0.1')
+  t.equal(dbEnv.PORT, '3042')
+  t.equal(dbEnv.DATABASE_URL, 'mysql://root@localhost:3306/graph')
+
   t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
@@ -236,10 +277,17 @@ t.test('run db init --database mariadb', async (t) => {
 
   const { server, core, migrations } = dbConfig
 
-  t.equal(server.hostname, '127.0.0.1')
-  t.equal(server.port, 3042)
+  t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
+  t.equal(server.port, '{PORT}')
+  t.equal(core.connectionString, '{DATABASE_URL}')
 
-  t.equal(core.connectionString, 'mysql://root@localhost:3307/graph')
+  const pathToDbEnvFile = path.join(pathToFolder, '.env')
+  const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
+  const dbEnv = parseEnv(dbEnvFile)
+  t.equal(dbEnv.PLT_SERVER_HOSTNAME, '127.0.0.1')
+  t.equal(dbEnv.PORT, '3042')
+  t.equal(dbEnv.DATABASE_URL, 'mysql://root@localhost:3307/graph')
+
   t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
@@ -264,10 +312,17 @@ t.test('run db init --database mysql8', async (t) => {
 
   const { server, core, migrations } = dbConfig
 
-  t.equal(server.hostname, '127.0.0.1')
-  t.equal(server.port, 3042)
+  t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
+  t.equal(server.port, '{PORT}')
+  t.equal(core.connectionString, '{DATABASE_URL}')
 
-  t.equal(core.connectionString, 'mysql://root@localhost:3308/graph')
+  const pathToDbEnvFile = path.join(pathToFolder, '.env')
+  const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
+  const dbEnv = parseEnv(dbEnvFile)
+  t.equal(dbEnv.PLT_SERVER_HOSTNAME, '127.0.0.1')
+  t.equal(dbEnv.PORT, '3042')
+  t.equal(dbEnv.DATABASE_URL, 'mysql://root@localhost:3308/graph')
+
   t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
@@ -292,10 +347,17 @@ t.test('run db init --hostname 127.0.0.5', async (t) => {
 
   const { server, core, migrations } = dbConfig
 
-  t.equal(server.hostname, '127.0.0.5')
-  t.equal(server.port, 3042)
+  t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
+  t.equal(server.port, '{PORT}')
+  t.equal(core.connectionString, '{DATABASE_URL}')
 
-  t.equal(core.connectionString, 'sqlite://db.sqlite')
+  const pathToDbEnvFile = path.join(pathToFolder, '.env')
+  const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
+  const dbEnv = parseEnv(dbEnvFile)
+  t.equal(dbEnv.PLT_SERVER_HOSTNAME, '127.0.0.5')
+  t.equal(dbEnv.PORT, '3042')
+  t.equal(dbEnv.DATABASE_URL, 'sqlite://./db.sqlite')
+
   t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
@@ -320,10 +382,17 @@ t.test('run db init --port 3055', async (t) => {
 
   const { server, core, migrations } = dbConfig
 
-  t.equal(server.hostname, '127.0.0.1')
-  t.equal(server.port, 3055)
+  t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
+  t.equal(server.port, '{PORT}')
+  t.equal(core.connectionString, '{DATABASE_URL}')
 
-  t.equal(core.connectionString, 'sqlite://db.sqlite')
+  const pathToDbEnvFile = path.join(pathToFolder, '.env')
+  const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
+  const dbEnv = parseEnv(dbEnvFile)
+  t.equal(dbEnv.PLT_SERVER_HOSTNAME, '127.0.0.1')
+  t.equal(dbEnv.PORT, '3055')
+  t.equal(dbEnv.DATABASE_URL, 'sqlite://./db.sqlite')
+
   t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
@@ -348,13 +417,55 @@ t.test('run db init --migrations custom-migrations-folder', async (t) => {
 
   const { server, core, migrations } = dbConfig
 
-  t.equal(server.hostname, '127.0.0.1')
-  t.equal(server.port, 3042)
+  t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
+  t.equal(server.port, '{PORT}')
+  t.equal(core.connectionString, '{DATABASE_URL}')
 
-  t.equal(core.connectionString, 'sqlite://db.sqlite')
+  const pathToDbEnvFile = path.join(pathToFolder, '.env')
+  const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
+  const dbEnv = parseEnv(dbEnvFile)
+  t.equal(dbEnv.PLT_SERVER_HOSTNAME, '127.0.0.1')
+  t.equal(dbEnv.PORT, '3042')
+  t.equal(dbEnv.DATABASE_URL, 'sqlite://./db.sqlite')
+
   t.equal(core.graphql, true)
 
   t.equal(migrations.dir, 'custom-migrations-folder')
+
+  const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
+  t.equal(migrationFileDo, moviesMigrationDo)
+  const migrationFileUndo = await fs.readFile(pathToMigrationFileUndo, 'utf8')
+  t.equal(migrationFileUndo, moviesMigrationUndo)
+})
+
+t.test('run db init --plugin=false', async (t) => {
+  const pathToFolder = await fs.mkdtemp(path.join(tmpdir(), 'init-2'))
+  const pathToDbConfigFile = path.join(pathToFolder, 'platformatic.db.json')
+  const pathToMigrationFolder = path.join(pathToFolder, 'migrations')
+  const pathToMigrationFileDo = path.join(pathToMigrationFolder, '001.do.sql')
+  const pathToMigrationFileUndo = path.join(pathToMigrationFolder, '001.undo.sql')
+
+  await execa('node', [cliPath, 'init', '--plugin=false'], { cwd: pathToFolder })
+
+  const dbConfigFile = await fs.readFile(pathToDbConfigFile, 'utf8')
+  const dbConfig = JSON.parse(dbConfigFile)
+
+  const { server, core, migrations, types } = dbConfig
+
+  t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
+  t.equal(server.port, '{PORT}')
+  t.equal(core.connectionString, '{DATABASE_URL}')
+  const pathToDbEnvFile = path.join(pathToFolder, '.env')
+  const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
+  const dbEnv = parseEnv(dbEnvFile)
+  t.equal(dbEnv.PLT_SERVER_HOSTNAME, '127.0.0.1')
+  t.equal(dbEnv.PORT, '3042')
+  t.equal(dbEnv.DATABASE_URL, 'sqlite://./db.sqlite')
+
+  t.equal(core.graphql, true)
+
+  t.equal(migrations.dir, 'migrations')
+  t.equal(types.autogenerate, true)
 
   const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
   t.equal(migrationFileDo, moviesMigrationDo)
