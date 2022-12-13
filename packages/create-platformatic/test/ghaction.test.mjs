@@ -24,8 +24,13 @@ afterEach(async () => {
   await rmdir(tmpDir, { recursive: true, force: true })
 })
 
+const env = {
+  DATABASE_URL: 'mydbconnetionstring',
+  PLT_SERVER_LOGGER_LEVEL: 'info'
+}
+
 test('creates gh action', async ({ end, equal }) => {
-  await createGHAction(fakeLogger, tmpDir)
+  await createGHAction(fakeLogger, env, 'db', tmpDir)
   equal(log[0], `Github action file ${tmpDir}/.github/workflows/platformatic-deploy.yml successfully created.`)
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-deploy.yml'))
   equal(accessible, true)
@@ -35,12 +40,12 @@ test('do not create gitignore file because already present', async ({ end, equal
   await mkdirp(join(tmpDir, '.github', 'workflows'))
   const ghaction = join(tmpDir, '.github', 'workflows', 'platformatic-deploy.yml')
   await writeFile(ghaction, 'TEST')
-  await createGHAction(fakeLogger, tmpDir)
+  await createGHAction(fakeLogger, env, 'db', tmpDir)
   equal(log[0], `Github action file ${tmpDir}/.github/workflows/platformatic-deploy.yml found, skipping creation of github action file.`)
 })
 
 test('creates gh action with a warn if a .git folder is not present', async ({ end, equal }) => {
-  await createGHAction(fakeLogger, tmpDir)
+  await createGHAction(fakeLogger, env, 'db', tmpDir)
   equal(log[0], `Github action file ${tmpDir}/.github/workflows/platformatic-deploy.yml successfully created.`)
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-deploy.yml'))
   equal(accessible, true)
@@ -49,7 +54,7 @@ test('creates gh action with a warn if a .git folder is not present', async ({ e
 
 test('creates gh action without a warn if a .git folder is present', async ({ end, equal }) => {
   await mkdirp(join(tmpDir, '.git'))
-  await createGHAction(fakeLogger, tmpDir)
+  await createGHAction(fakeLogger, env, 'db', tmpDir)
   equal(log[0], `Github action file ${tmpDir}/.github/workflows/platformatic-deploy.yml successfully created.`)
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-deploy.yml'))
   equal(accessible, true)
