@@ -331,8 +331,7 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema,
   const fields = columns.reduce((acc, column) => {
     acc[column.column_name] = {
       sqlType: column.udt_name,
-      isNullable: column.is_nullable === 'YES',
-      isGenerated: column.is_generated !== 'NEVER'
+      isNullable: column.is_nullable === 'YES'
     }
 
     // To get enum values in mysql and mariadb
