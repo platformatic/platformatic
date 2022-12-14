@@ -13,6 +13,7 @@ import ora from 'ora'
 import createDB from './create-db.mjs'
 import askProjectDir from '../ask-project-dir.mjs'
 import { askCreateGHAction } from '../ghaction.mjs'
+import { addSchemaToConfig } from './add-schema.mjs'
 import mkdirp from 'mkdirp'
 
 export const createReadme = async (logger, dir = '.') => {
@@ -158,6 +159,9 @@ const createPlatformaticDB = async (_args) => {
         spinner.succeed('...done!')
       }
     }
+    await execaNode('./node_modules/@platformatic/db/db.mjs', ['schema', 'config'], { cwd: projectDir })
+    await addSchemaToConfig(logger, projectDir)
+    logger.info('Configuration schema successfully created.')
   }
   await askCreateGHAction(logger, env, 'db')
 }
