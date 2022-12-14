@@ -14,7 +14,7 @@ Platformatic DB also supports [PostgreSQL](https://www.postgresql.org/),
 
 :::
 
-## Requirements
+## Prerequisites
 
 Platformatic supports macOS, Linux and Windows ([WSL](https://docs.microsoft.com/windows/wsl/) recommended).
 
@@ -25,6 +25,110 @@ To follow along with this guide you'll need to have these things installed:
 - A code editor, for example [Visual Studio Code](https://code.visualstudio.com/)
 
 ## Create a new API project
+
+### Automatic CLI
+
+Run this command in your terminal to start the Platformatic creator wizard:
+
+<Tabs groupId="package-manager-create">
+<TabItem value="npm" label="npm">
+
+```bash
+npm create platformatic@latest
+```
+
+</TabItem>
+<TabItem value="yarn" label="yarn">
+
+```bash
+yarn create platformatic
+```
+
+</TabItem>
+<TabItem value="pnpm" label="pnpm">
+
+```bash
+pnpm create platformatic@latest
+```
+
+</TabItem>
+</Tabs>
+
+This interactive command-line tool will ask you some questions about how you'd
+like to set up your new Platformatic project. For this guide, select these options:
+
+```
+- Which kind of project do you want to create?  => DB
+- Where would you like to create your project?  => quick-start 
+- Do you want to create default migrations?     => Yes
+- Do you want to create a plugin?               => Yes
+- Do you want to use TypeScript?                => No
+- Do you want to install dependencies?          => Yes (this can take a while)
+- Do you want to apply the migrations?          => Yes
+- Do you want to create the GitHub action to deploy this application to Platformatic Cloud? => No
+```
+
+Once the wizard is complete, you'll have a Platformatic app project in the
+folder `quick-start`, with example migration files and a plugin script.
+
+:::info
+
+Make sure you run the npm/yarn/pnpm command `install` command manually if you
+don't ask the wizard to do it for you.
+
+:::
+
+#### Start your API server
+
+In your project directory, run this command to start your API server:
+
+```bash
+npm start 
+```
+
+Your Platformatic API is now up and running! 🌟
+
+This command will:
+
+- Automatically map your SQL database to REST and GraphQL API interfaces.
+- Start the Platformatic API server.
+
+You can jump down to [Next steps](#next-steps) or read on to learn more about
+the project files that the wizard has created for you.
+
+#### Check the database schema
+
+In your project directory (`quick-start`), open the `migrations` directory that can store your database migration files that will contain both the `001.do.sql` and `001.undo.sql` files. The `001.do.sql` file contains the SQL statements to create the database objects, while the `001.undo.sql` file contains the SQL statements to drop them.
+
+```sql title="migrations/001.do.sql"
+CREATE TABLE IF NOT EXISTS movies (
+  id INTEGER PRIMARY KEY,
+  title TEXT NOT NULL
+);
+```
+
+Note that this migration has been already applied by Platformatic creator.
+
+#### Check your API configuration
+
+In your project directory, check the Platformatic configuration file named
+**`platformatic.db.json`** and the environment file named **`.env`**:
+
+The created configuration tells Platformatic to:
+
+- Run an API server on `http://127.0.0.1:3042/`
+- Connect to an SQLite database stored in a file named `db.sqlite`
+- Look for database migration files in the `migrations` directory
+- Load the plugin file named `plugin.js` and automatically generate types
+
+:::tip
+
+The [Configuration reference](/docs/reference/db/configuration.md) explains all of the
+supported configuration options.
+
+:::
+
+### Manual setup
 
 Create a directory for your new API project:
 
@@ -47,7 +151,7 @@ npm install platformatic
 ```
 
 </TabItem>
-<TabItem value="yarn" label="Yarn">
+<TabItem value="yarn" label="yarn">
 
 ```bash
 yarn init --yes
@@ -67,8 +171,7 @@ pnpm add platformatic
 </TabItem>
 </Tabs>
 
-
-## Add a database schema
+#### Add a database schema
 
 In your project directory (`quick-start`), create a `migrations` directory to
 store your database migration files:
@@ -83,14 +186,14 @@ directory.
 Copy and paste this SQL query into the migration file:
 
 ```sql title="migrations/001.do.sql"
-CREATE TABLE pages (
+CREATE TABLE movies (
   id INTEGER PRIMARY KEY,
   title VARCHAR(255) NOT NULL
 );
 ```
 
 When it's run by Platformatic, this query will create a new database table
-named `pages`.
+named `movies`.
 
 :::tip
 
@@ -98,7 +201,7 @@ You can check syntax for SQL queries on the [Database.Guide SQL Reference](https
 
 :::
 
-## Configure your API
+#### Configure your API
 
 In your project directory, create a new Platformatic configuration file named
 **`platformatic.db.json`**.
@@ -112,11 +215,10 @@ Copy and paste in this configuration:
     "port": "3042"
   },
   "core": {
-    "connectionString": "sqlite://./pages.db"
+    "connectionString": "sqlite://./db.sqlite"
   },
   "migrations": {
-    "dir": "./migrations",
-    "autoApply": true
+    "dir": "./migrations"
   }
 }
 ```
@@ -124,7 +226,7 @@ Copy and paste in this configuration:
 This configuration tells Platformatic to:
 
 - Run an API server on `http://127.0.0.1:3042/`
-- Connect to an SQLite database stored in a file named `pages.db`
+- Connect to an SQLite database stored in a file named `db.sqlite`
 - Look for database migration files in the `migrations` directory
 
 :::tip
@@ -134,7 +236,7 @@ supported configuration options.
 
 :::
 
-## Start your API server
+#### Start your API server
 
 In your project directory, use the Platformatic CLI to start your API server:
 
@@ -144,9 +246,8 @@ npx platformatic db start
 
 This will:
 
-1. Run your SQL migration file and create a `pages` table in the SQLite database.
-1. Automatically map your SQL database to REST and GraphQL API interfaces.
-1. Start the Platformatic API server.
+- Automatically map your SQL database to REST and GraphQL API interfaces.
+- Start the Platformatic API server.
 
 Your Platformatic API is now up and running! 🌟
 
@@ -156,12 +257,12 @@ Your Platformatic API is now up and running! 🌟
 
 You can use cURL to make requests to the REST interface of your API, for example:
 
-#### Create a new page
+#### Create a new movie
 
 ```bash
 curl -X POST -H "Content-Type: application/json" \
   -d "{ \"title\": \"Hello Platformatic DB\" }" \
-	http://localhost:3042/pages
+	http://localhost:3042/movies
 ```
 
 You should receive a response from your API like this:
@@ -170,14 +271,14 @@ You should receive a response from your API like this:
 {"id":1,"title":"Hello Platformatic DB"}
 ```
 
-#### Get all pages
+#### Get all movies
 
 ```bash
-curl http://localhost:3042/pages
+curl http://localhost:3042/movies
 ```
 
 You should receive a response from your API like this, with an array
-containing all the pages in your database:
+containing all the movies in your database:
 
 ```json
 [{"id":1,"title":"Hello Platformatic DB"}]
@@ -200,11 +301,11 @@ You can explore the OpenAPI documentation for your REST API in the Swagger UI at
 Open [http://localhost:3042/graphiql](http://localhost:3042/graphiql) in your
 web browser to explore the GraphQL interface of your API.
 
-Try out this GraphQL query to retrieve all pages from your API:
+Try out this GraphQL query to retrieve all movies from your API:
 
 ```graphql
 query {
-  pages {
+  movies {
     id
     title
   }
