@@ -43,8 +43,7 @@ export const createGHAction = async (logger, env, type, projectDir) => {
   if (!isGithubActionExists) {
     await mkdirp(join(projectDir, '.github', 'workflows'))
     await writeFile(ghActionFilePath, ghTemplate(env, type))
-    logger.info(`Github action file ${ghActionFilePath} successfully created.`)
-
+    logger.info('Github action successfully created, please add PLATFORMATIC_API_KEY as repository secret.')
     const isGitDir = await isFileAccessible('.git', projectDir)
     if (!isGitDir) {
       logger.warn('No git repository found. The Github action won\'t be triggered.')

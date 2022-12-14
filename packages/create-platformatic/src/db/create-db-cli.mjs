@@ -158,8 +158,17 @@ const createPlatformaticDB = async (_args) => {
         spinner.succeed('...done!')
       }
     }
+    await execaNode('./node_modules/@platformatic/db/db.mjs', ['schema', 'config'], { cwd: projectDir })
+    logger.info('Configuration schema successfully created.')
   }
   await askCreateGHAction(logger, env, 'db')
+
+  if (!runPackageManagerInstall) {
+    logger.warn(`You must run the following commands in the project folder to complete the setup:
+    - ${pkgManager} install
+    - npx platformatic db schema config > ./platformatic.config.schema.json
+`)
+  }
 }
 
 export default createPlatformaticDB
