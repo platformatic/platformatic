@@ -255,9 +255,8 @@ npx platformatic db start
 
 This will:
 
-1. Run your SQL migration file and create a `movies` table in the SQLite database.
-1. Automatically map your SQL database to REST and GraphQL API interfaces.
-1. Start the Platformatic API server.
+- Automatically map your SQL database to REST and GraphQL API interfaces.
+- Start the Platformatic API server.
 
 Your Platformatic API is now up and running! 🌟
 
