@@ -8,6 +8,8 @@ import loadConfig from './load-config.mjs'
 import { findConfigFile, isFileAccessible } from './utils.js'
 import { generateJsonSchemaConfig, filenameConfigJsonSchema } from './gen-schema.mjs'
 
+import { createDB } from 'create-platformatic'
+
 const connectionStrings = {
   postgres: 'postgres://postgres:postgres@localhost:5432/postgres',
   sqlite: 'sqlite://./db.sqlite',
@@ -167,73 +169,75 @@ async function init (_args) {
     boolean: ['plugin', 'types', 'typescript']
   })
 
-  const { migrations, typescript, plugin } = args
-  const createMigrations = !!migrations // If we don't define a migrations folder, we don't create it
-  const currentDir = process.cwd()
-  const accessibleConfigFilename = await findConfigFile(currentDir)
-  if (accessibleConfigFilename === undefined) {
-    const config = generateConfig(args)
-    await generateJsonSchemaConfig()
-    await writeFile('platformatic.db.json', JSON.stringify(config, null, 2))
-    logger.info('Configuration file platformatic.db.json successfully created.')
+  await createDB(args, logger, process.cwd())
 
-    const env = generateEnv(args)
-    await writeFile('.env', env)
-    await writeFile('.env.sample', env)
-    logger.info('Environment file .env successfully created.')
-  } else {
-    logger.info(`Configuration file ${accessibleConfigFilename} found, skipping creation of configuration file.`)
-  }
+  // const { migrations, typescript, plugin } = args
+  // const createMigrations = !!migrations // If we don't define a migrations folder, we don't create it
+  // const currentDir = process.cwd()
+  // const accessibleConfigFilename = await findConfigFile(currentDir)
+  // if (accessibleConfigFilename === undefined) {
+  //   const config = generateConfig(args)
+  //   await generateJsonSchemaConfig()
+  //   await writeFile('platformatic.db.json', JSON.stringify(config, null, 2))
+  //   logger.info('Configuration file platformatic.db.json successfully created.')
 
-  const { configManager } = await loadConfig({}, _args)
-  await configManager.parseAndValidate()
-  const config = configManager.current
+  //   const env = generateEnv(args)
+  //   await writeFile('.env', env)
+  //   await writeFile('.env.sample', env)
+  //   logger.info('Environment file .env successfully created.')
+  // } else {
+  //   logger.info(`Configuration file ${accessibleConfigFilename} found, skipping creation of configuration file.`)
+  // }
 
-  const migrationsFolderName = migrations
-  if (createMigrations) {
-    const isMigrationFolderExists = await isFileAccessible(migrationsFolderName, currentDir)
-    if (!isMigrationFolderExists) {
-      await mkdir(migrationsFolderName)
-      logger.info(`Migrations folder ${migrationsFolderName} successfully created.`)
-    } else {
-      logger.info(`Migrations folder ${migrationsFolderName} found, skipping creation of migrations folder.`)
-    }
-  }
+  // const { configManager } = await loadConfig({}, _args)
+  // await configManager.parseAndValidate()
+  // const config = configManager.current
 
-  const migrationFileNameDo = '001.do.sql'
-  const migrationFileNameUndo = '001.undo.sql'
-  const migrationFilePathDo = join(migrationsFolderName, migrationFileNameDo)
-  const migrationFilePathUndo = join(migrationsFolderName, migrationFileNameUndo)
-  const isMigrationFileDoExists = await isFileAccessible(migrationFilePathDo)
-  const isMigrationFileUndoExists = await isFileAccessible(migrationFilePathUndo)
-  if (!isMigrationFileDoExists && createMigrations) {
-    await writeFile(migrationFilePathDo, moviesMigrationDo)
-    logger.info(`Migration file ${migrationFileNameDo} successfully created.`)
-    if (!isMigrationFileUndoExists) {
-      await writeFile(migrationFilePathUndo, moviesMigrationUndo)
-      logger.info(`Migration file ${migrationFileNameUndo} successfully created.`)
-    }
-  } else {
-    logger.info(`Migration file ${migrationFileNameDo} found, skipping creation of migration file.`)
-  }
+  // const migrationsFolderName = migrations
+  // if (createMigrations) {
+  //   const isMigrationFolderExists = await isFileAccessible(migrationsFolderName, currentDir)
+  //   if (!isMigrationFolderExists) {
+  //     await mkdir(migrationsFolderName)
+  //     logger.info(`Migrations folder ${migrationsFolderName} successfully created.`)
+  //   } else {
+  //     logger.info(`Migrations folder ${migrationsFolderName} found, skipping creation of migrations folder.`)
+  //   }
+  // }
 
-  if (typescript === true) {
-    const tsConfigFileName = 'tsconfig.json'
-    const isTsConfigExists = await isFileAccessible(tsConfigFileName)
-    if (!isTsConfigExists) {
-      const tsConfig = getTsConfig(config.plugin.typescript.outDir)
-      await writeFile(tsConfigFileName, JSON.stringify(tsConfig, null, 2))
-      logger.info(`Typescript configuration file ${tsConfigFileName} successfully created.`)
-    } else {
-      logger.info(`Typescript configuration file ${tsConfigFileName} found, skipping creation of typescript configuration file.`)
-    }
-  }
+  // const migrationFileNameDo = '001.do.sql'
+  // const migrationFileNameUndo = '001.undo.sql'
+  // const migrationFilePathDo = join(migrationsFolderName, migrationFileNameDo)
+  // const migrationFilePathUndo = join(migrationsFolderName, migrationFileNameUndo)
+  // const isMigrationFileDoExists = await isFileAccessible(migrationFilePathDo)
+  // const isMigrationFileUndoExists = await isFileAccessible(migrationFilePathUndo)
+  // if (!isMigrationFileDoExists && createMigrations) {
+  //   await writeFile(migrationFilePathDo, moviesMigrationDo)
+  //   logger.info(`Migration file ${migrationFileNameDo} successfully created.`)
+  //   if (!isMigrationFileUndoExists) {
+  //     await writeFile(migrationFilePathUndo, moviesMigrationUndo)
+  //     logger.info(`Migration file ${migrationFileNameUndo} successfully created.`)
+  //   }
+  // } else {
+  //   logger.info(`Migration file ${migrationFileNameDo} found, skipping creation of migration file.`)
+  // }
 
-  if (plugin && config.types && config.types.autogenerate) {
-    await generateGlobalTypesFile({}, config)
-    await generatePluginWithTypesSupport(logger, args, configManager)
-    await checkForDependencies(logger, args, config)
-  }
+  // if (typescript === true) {
+  //   const tsConfigFileName = 'tsconfig.json'
+  //   const isTsConfigExists = await isFileAccessible(tsConfigFileName)
+  //   if (!isTsConfigExists) {
+  //     const tsConfig = getTsConfig(config.plugin.typescript.outDir)
+  //     await writeFile(tsConfigFileName, JSON.stringify(tsConfig, null, 2))
+  //     logger.info(`Typescript configuration file ${tsConfigFileName} successfully created.`)
+  //   } else {
+  //     logger.info(`Typescript configuration file ${tsConfigFileName} found, skipping creation of typescript configuration file.`)
+  //   }
+  // }
+
+  // if (plugin && config.types && config.types.autogenerate) {
+  //   await generateGlobalTypesFile({}, config)
+  //   await generatePluginWithTypesSupport(logger, args, configManager)
+  //   await checkForDependencies(logger, args, config)
+  // }
 }
 
 export { init }

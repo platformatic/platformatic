@@ -20,7 +20,7 @@ DROP TABLE movies;
 
 t.jobs = 10
 
-t.test('run db init with default options', async (t) => {
+t.only('run db init with default options', async (t) => {
   const pathToFolder = await fs.mkdtemp(path.join(tmpdir(), 'init-1'))
   const pathToDbConfigFile = path.join(pathToFolder, 'platformatic.db.json')
   const pathToConfigSchema = path.join(pathToFolder, 'platformatic.db.schema.json')
