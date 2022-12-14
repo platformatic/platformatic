@@ -80,3 +80,4 @@ async function buildDBServer (options) {
 module.exports.buildServer = buildDBServer
 module.exports.schema = schema
 module.exports.platformaticDB = platformaticDB
+module.exports.ConfigManager = ConfigManager
