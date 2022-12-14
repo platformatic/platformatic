@@ -24,12 +24,9 @@ To follow along with this guide you'll need to have these things installed:
 - [npm](https://docs.npmjs.com/cli/) v7 or later
 - A code editor, for example [Visual Studio Code](https://code.visualstudio.com/)
 
-
 ## Create a new API project
 
-<Tabs groupId="quickstart-create">
-
-<TabItem value="automatic" label="Automatic">
+### Automatic CLI
 
 Launch the create platformatic command:
 
@@ -79,7 +76,7 @@ Just make sure to run the npm/yarn/pnpm `install` manually if not done through t
 
 Now you have a Platformatic project in the folder `quick-start` with a default migration and a plugin.
 
-## Start your API server
+#### Start your API server
 
 In your project directory, use the Platformatic CLI to start your API server:
 
@@ -101,7 +98,7 @@ This will:
 Your Platformatic API is now up and running! 🌟
 
 
-## Check the  database schema
+#### Check the database schema
 
 In your project directory (`quick-start`), open the `migrations` directory that can store your database migration files that will contain both the `001.do.sql` and `001.undo.sql` files. The `001.do.sql` file contains the SQL statements to create the database objects, while the `001.undo.sql` file contains the SQL statements to drop them.
 
@@ -114,7 +111,7 @@ CREATE TABLE IF NOT EXISTS movies (
 
 Note that this migration has been already applied by Platformatic creator.
 
-## Check your API configuration
+#### Check your API configuration
 
 In your project directory, check the Platformatic configuration file named
 **`platformatic.db.json`** and the environment file named **`.env`**:
@@ -133,9 +130,7 @@ supported configuration options.
 
 :::
 
-</TabItem>
-
-<TabItem value="manual" label="Manual">
+### Manual setup
 
 Create a directory for your new API project:
 
@@ -178,8 +173,7 @@ pnpm add platformatic
 </TabItem>
 </Tabs>
 
-
-## Add a database schema
+#### Add a database schema
 
 In your project directory (`quick-start`), create a `migrations` directory to
 store your database migration files:
@@ -209,7 +203,7 @@ You can check syntax for SQL queries on the [Database.Guide SQL Reference](https
 
 :::
 
-## Configure your API
+#### Configure your API
 
 In your project directory, create a new Platformatic configuration file named
 **`platformatic.db.json`**.
@@ -245,7 +239,7 @@ supported configuration options.
 
 :::
 
-## Start your API server
+#### Start your API server
 
 In your project directory, use the Platformatic CLI to start your API server:
 
@@ -259,10 +253,6 @@ This will:
 - Start the Platformatic API server.
 
 Your Platformatic API is now up and running! 🌟
-
-</TabItem>
-</Tabs>
-
 
 ## Next steps
 
