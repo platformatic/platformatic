@@ -44,7 +44,7 @@ const createPlatformatic = async (argv) => {
       await createPlatformaticService(argv)
     }
 
-    await say('All done! Please open the project directory and check the README.')
+    await say('\nAll done! Please open the project directory and check the README.')
   }
 }
 

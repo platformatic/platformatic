@@ -31,7 +31,7 @@ const env = {
 
 test('creates gh action', async ({ end, equal }) => {
   await createGHAction(fakeLogger, env, 'db', tmpDir)
-  equal(log[0], `Github action file ${tmpDir}/.github/workflows/platformatic-deploy.yml successfully created.`)
+  equal(log[0], 'Github action successfully created, please add PLATFORMATIC_API_KEY as repository secret.')
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-deploy.yml'))
   equal(accessible, true)
 })
@@ -46,18 +46,17 @@ test('do not create gitignore file because already present', async ({ end, equal
 
 test('creates gh action with a warn if a .git folder is not present', async ({ end, equal }) => {
   await createGHAction(fakeLogger, env, 'db', tmpDir)
-  equal(log[0], `Github action file ${tmpDir}/.github/workflows/platformatic-deploy.yml successfully created.`)
+  equal(log[0], 'Github action successfully created, please add PLATFORMATIC_API_KEY as repository secret.')
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-deploy.yml'))
   equal(accessible, true)
-  equal(log[2], 'No git repository found. The Github action won\'t be triggered.')
+  equal(log[1], 'No git repository found. The Github action won\'t be triggered.')
 })
 
 test('creates gh action without a warn if a .git folder is present', async ({ end, equal }) => {
   await mkdirp(join(tmpDir, '.git'))
   await createGHAction(fakeLogger, env, 'db', tmpDir)
-  equal(log[0], `Github action file ${tmpDir}/.github/workflows/platformatic-deploy.yml successfully created.`)
-  equal(log[1], 'Github action successfully created, please add PLATFORMATIC_API_KEY as repository secret.')
+  equal(log[0], 'Github action successfully created, please add PLATFORMATIC_API_KEY as repository secret.')
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-deploy.yml'))
   equal(accessible, true)
-  equal(log.length, 2)
+  equal(log.length, 1)
 })

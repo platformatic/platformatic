@@ -13,7 +13,6 @@ import ora from 'ora'
 import createDB from './create-db.mjs'
 import askProjectDir from '../ask-project-dir.mjs'
 import { askCreateGHAction } from '../ghaction.mjs'
-import { addSchemaToConfig } from './add-schema.mjs'
 import mkdirp from 'mkdirp'
 
 export const createReadme = async (logger, dir = '.') => {
@@ -160,10 +159,16 @@ const createPlatformaticDB = async (_args) => {
       }
     }
     await execaNode('./node_modules/@platformatic/db/db.mjs', ['schema', 'config'], { cwd: projectDir })
-    await addSchemaToConfig(logger, projectDir)
     logger.info('Configuration schema successfully created.')
   }
   await askCreateGHAction(logger, env, 'db')
+
+  if (!runPackageManagerInstall) {
+    logger.warn(`You must run the following commands in the project folder to complete the setup:
+    - ${pkgManager} install
+    - npx platformatic db schema config > ./platformatic.config.schema.json
+`)
+  }
 }
 
 export default createPlatformaticDB

@@ -49,6 +49,7 @@ const TS_OUT_DIR = 'dist'
 
 function generateConfig (migrations, plugin, types, typescript) {
   const config = {
+    $schema: './platformatic.db.schema.json',
     server: {
       hostname: '{PLT_SERVER_HOSTNAME}',
       port: '{PORT}',
