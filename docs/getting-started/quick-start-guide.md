@@ -33,11 +33,32 @@ To follow along with this guide you'll need to have these things installed:
 
 Launch the create platformatic command:
 
+<Tabs groupId="package-manager-create">
+<TabItem value="npm" label="npm">
+
 ```bash
 npm create platformatic@latest 
 ```
 
-This starts the Platformatic creator wizard, which asks you some questions on how to create the Platformatic project. 
+</TabItem>
+<TabItem value="yarn" label="yarn">
+
+```bash
+yarn create platformatic
+```
+
+</TabItem>
+<TabItem value="pnpm" label="pnpm">
+
+```bash
+pnpm create platformatic
+```
+
+</TabItem>
+</Tabs>
+
+
+This starts Platformatic creator wizard, which asks you some questions on how to create the Platformatic project. 
 For this quick-start, you should answer the questions as follows:
 
 - Which kind of project do you want to create?  => DB
@@ -52,78 +73,11 @@ For this quick-start, you should answer the questions as follows:
 :::info
 
 Please feel free to answer the questions differently, if you want to create a different kind of project.
-Just make sure to run the `npm install` manually if not done through the wizard.
+Just make sure to run the npm/yarn/pnpm `install` manually if not done through the wizard.
 
 :::
 
 Now you have a Platformatic project in the folder `quick-start` with a default migration and a plugin.
-
-## Check the  database schema
-
-In your project directory (`quick-start`), open the `migrations` directory that can store your database migration files that will contain both the `001.do.sql` and `001.undo.sql` files. The `001.do.sql` file contains the SQL statements to create the database objects, while the `001.undo.sql` file contains the SQL statements to drop them.
-
-```sql title="migrations/001.do.sql"
-CREATE TABLE IF NOT EXISTS movies (
-  id INTEGER PRIMARY KEY,
-  title TEXT NOT NULL
-);
-```
-
-Note that this migration has been already applied by Platformatic creator.
-
-## Check your API configuration
-
-In your project directory, check the Platformatic configuration file named
-**`platformatic.db.json`**:
-
-```json title="platformatic.db.json"
-{
-  "server": {
-    "hostname": "{PLT_SERVER_HOSTNAME}",
-    "port": "{PORT}",
-    "logger": {
-      "level": "{PLT_SERVER_LOGGER_LEVEL}"
-    }
-  },
-  "core": {
-    "connectionString": "{DATABASE_URL}",
-    "graphql": true,
-    "openapi": true
-  },
-  "migrations": {
-    "dir": "migrations"
-  },
-  "plugin": {
-    "path": "plugin.js"
-  },
-  "types": {
-    "autogenerate": true
-  }
-}
-```
-
-...and the environment file named **`.env`**:
-
-```bash title=".env"
-PLT_SERVER_HOSTNAME=127.0.0.1
-PORT=3042
-PLT_SERVER_LOGGER_LEVEL=info
-DATABASE_URL=sqlite://./db.sqlite
-```
-
-This configuration tells Platformatic to:
-
-- Run an API server on `http://127.0.0.1:3042/`
-- Connect to an SQLite database stored in a file named `db.sqlite`
-- Look for database migration files in the `migrations` directory
-- Load the plugin file named `plugin.js` and automatically generate types
-
-:::tip
-
-The [Configuration reference](/docs/reference/db/configuration.md) explains all of the
-supported configuration options.
-
-:::
 
 ## Start your API server
 
@@ -141,11 +95,43 @@ npm start
 
 This will:
 
-1. If not already applied, run your SQL migration file and create a `movies` table in the SQLite database.
-1. Automatically map your SQL database to REST and GraphQL API interfaces.
-1. Start the Platformatic API server.
+- Automatically map your SQL database to REST and GraphQL API interfaces.
+- Start the Platformatic API server.
 
 Your Platformatic API is now up and running! 🌟
+
+
+## Check the  database schema
+
+In your project directory (`quick-start`), open the `migrations` directory that can store your database migration files that will contain both the `001.do.sql` and `001.undo.sql` files. The `001.do.sql` file contains the SQL statements to create the database objects, while the `001.undo.sql` file contains the SQL statements to drop them.
+
+```sql title="migrations/001.do.sql"
+CREATE TABLE IF NOT EXISTS movies (
+  id INTEGER PRIMARY KEY,
+  title TEXT NOT NULL
+);
+```
+
+Note that this migration has been already applied by Platformatic creator.
+
+## Check your API configuration
+
+In your project directory, check the Platformatic configuration file named
+**`platformatic.db.json`** and the environment file named **`.env`**:
+
+The created configuration tells Platformatic to:
+
+- Run an API server on `http://127.0.0.1:3042/`
+- Connect to an SQLite database stored in a file named `db.sqlite`
+- Look for database migration files in the `migrations` directory
+- Load the plugin file named `plugin.js` and automatically generate types
+
+:::tip
+
+The [Configuration reference](/docs/reference/db/configuration.md) explains all of the
+supported configuration options.
+
+:::
 
 </TabItem>
 
@@ -172,7 +158,7 @@ npm install platformatic
 ```
 
 </TabItem>
-<TabItem value="yarn" label="Yarn">
+<TabItem value="yarn" label="yarn">
 
 ```bash
 yarn init --yes
@@ -237,7 +223,7 @@ Copy and paste in this configuration:
     "port": "3042"
   },
   "core": {
-    "connectionString": "sqlite://./movies.db"
+    "connectionString": "sqlite://./db.sqlite"
   },
   "migrations": {
     "dir": "./migrations",
@@ -249,7 +235,7 @@ Copy and paste in this configuration:
 This configuration tells Platformatic to:
 
 - Run an API server on `http://127.0.0.1:3042/`
-- Connect to an SQLite database stored in a file named `movies.db`
+- Connect to an SQLite database stored in a file named `db.sqlite`
 - Look for database migration files in the `migrations` directory
 
 :::tip
