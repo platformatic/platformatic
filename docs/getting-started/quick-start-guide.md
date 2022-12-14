@@ -220,8 +220,7 @@ Copy and paste in this configuration:
     "connectionString": "sqlite://./db.sqlite"
   },
   "migrations": {
-    "dir": "./migrations",
-    "autoApply": true
+    "dir": "./migrations"
   }
 }
 ```
