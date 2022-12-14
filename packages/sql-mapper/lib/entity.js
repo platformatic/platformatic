@@ -85,7 +85,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     }
 
     let now
-    if (autoTimestamp.enabled && fields[autoTimestamp.updatedAt]) {
+    if (autoTimestamp && fields[autoTimestamp.updatedAt]) {
       now = new Date()
       input[autoTimestamp.updatedAt] = now
     }
@@ -100,7 +100,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     }
 
     // insert
-    if (autoTimestamp.enabled && fields[autoTimestamp.createdAt]) {
+    if (autoTimestamp && fields[autoTimestamp.createdAt]) {
       /* istanbul ignore next */
       now = now || new Date()
       input[autoTimestamp.createdAt] = now
@@ -115,7 +115,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     const inputs = args.inputs
     // This else is skipped on MySQL because of https://github.com/ForbesLindesay/atdatabases/issues/221
     /* istanbul ignore else */
-    if (autoTimestamp.enabled) {
+    if (autoTimestamp) {
       const now = new Date()
       for (const input of inputs) {
         if (fields[autoTimestamp.createdAt]) {
@@ -151,7 +151,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
       throw new Error('Input not provided.')
     }
     const input = fixInput(args.input)
-    if (autoTimestamp.enabled && fields[autoTimestamp.updatedAt]) {
+    if (autoTimestamp && fields[autoTimestamp.updatedAt]) {
       const now = new Date()
       input[autoTimestamp.updatedAt] = now
     }
@@ -339,7 +339,7 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema,
       acc[column.column_name].enum = column.column_type.match(/'(.+?)'/g).map(enumValue => enumValue.slice(1, enumValue.length - 1))
     }
 
-    if (autoTimestamp.enabled && (column.column_name === autoTimestamp.createdAt || column.column_name === autoTimestamp.updatedAt)) {
+    if (autoTimestamp && (column.column_name === autoTimestamp.createdAt || column.column_name === autoTimestamp.updatedAt)) {
       acc[column.column_name].autoTimestamp = true
     }
     return acc

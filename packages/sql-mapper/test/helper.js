@@ -6,7 +6,6 @@ process.env.TZ = 'UTC'
 
 const connInfo = {
   autoTimestamp: {
-    enabled: true,
     createdAt: 'inserted_at',
     updatedAt: 'updated_at'
   }
