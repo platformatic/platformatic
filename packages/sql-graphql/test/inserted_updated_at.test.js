@@ -274,9 +274,7 @@ test('do not assign inserted_at updated_at', async ({ pass, teardown, same, equa
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
-    autoTimestamp: {
-      enabled: false
-    },
+    autoTimestamp: false,
     async onDatabaseLoad (db, sql) {
       pass('onDatabaseLoad called')
 
@@ -488,9 +486,7 @@ test('bulk insert with autoTimestamp=false do not had inserted_at updated_at', a
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
-    autoTimestamp: {
-      enabled: false
-    },
+    autoTimestamp: false,
     async onDatabaseLoad (db, sql) {
       pass('onDatabaseLoad called')
 

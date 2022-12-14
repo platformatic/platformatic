@@ -2,18 +2,18 @@
 
 Timestamps can be used to automatically set the `created_at` and `updated_at` fields on your entities.
 
-Timestamps are enabled by default, but can be disabled by setting the `autoTimestamps` option to `false` in configuration.
+Timestamps are enabled by default
 
 ## Configuration
 
-To enable timestamps, you need to set the `autoTimestamps` field to `true` in configuration file:
+To disable timestamps, you need to set the `autoTimestamp` field to `false` in configuration file:
 
 ```json
 {
 ...
   "core": {
     "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres",
-    "autoTimestamp": true
+    "autoTimestamp": false
   },
 ...
 }
