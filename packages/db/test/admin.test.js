@@ -194,6 +194,7 @@ test('login route', async ({ teardown, same, equal }) => {
     authorization: {
       adminSecret: 'secret'
     },
+    dashboard: true,
     core: {
       ...connInfo
     }
@@ -261,6 +262,7 @@ test('Swagger documentation', async ({ teardown, same, equal }) => {
     authorization: {
       adminSecret: 'secret'
     },
+    dashboard: true,
     core: {
       ...connInfo
     }
@@ -318,6 +320,7 @@ test('admin routes are not included in main openapi', async ({ teardown, same, e
     authorization: {
       adminSecret: 'secret'
     },
+    dashboard: true,
     core: {
       ...connInfo,
       async onDatabaseLoad (db, sql) {
