@@ -14,7 +14,7 @@ Platformatic DB also supports [PostgreSQL](https://www.postgresql.org/),
 
 :::
 
-## Requirements
+## Prerequisites
 
 Platformatic supports macOS, Linux and Windows ([WSL](https://docs.microsoft.com/windows/wsl/) recommended).
 
@@ -28,13 +28,13 @@ To follow along with this guide you'll need to have these things installed:
 
 ### Automatic CLI
 
-Launch the create platformatic command:
+Run this command in your terminal to start the Platformatic creator wizard:
 
 <Tabs groupId="package-manager-create">
 <TabItem value="npm" label="npm">
 
 ```bash
-npm create platformatic@latest 
+npm create platformatic@latest
 ```
 
 </TabItem>
@@ -48,16 +48,16 @@ yarn create platformatic
 <TabItem value="pnpm" label="pnpm">
 
 ```bash
-pnpm create platformatic
+pnpm create platformatic@latest
 ```
 
 </TabItem>
 </Tabs>
 
+This interactive command-line tool will ask you some questions about how you'd
+like to set up your new Platformatic project. For this guide, select these options:
 
-This starts Platformatic creator wizard, which asks you some questions on how to create the Platformatic project. 
-For this quick-start, you should answer the questions as follows:
-
+```
 - Which kind of project do you want to create?  => DB
 - Where would you like to create your project?  => quick-start 
 - Do you want to create default migrations?     => Yes
@@ -65,38 +65,36 @@ For this quick-start, you should answer the questions as follows:
 - Do you want to use TypeScript?                => No
 - Do you want to install dependencies?          => Yes (this can take a while)
 - Do you want to apply the migrations?          => Yes
-- Do you want to create the github action to deploy this application to Platformatic Cloud? => No
+- Do you want to create the GitHub action to deploy this application to Platformatic Cloud? => No
+```
+
+Once the wizard is complete, you'll have a Platformatic app project in the
+folder `quick-start`, with example migration files and a plugin script.
 
 :::info
 
-Please feel free to answer the questions differently, if you want to create a different kind of project.
-Just make sure to run the npm/yarn/pnpm `install` manually if not done through the wizard.
+Make sure you run the npm/yarn/pnpm command `install` command manually if you
+don't ask the wizard to do it for you.
 
 :::
 
-Now you have a Platformatic project in the folder `quick-start` with a default migration and a plugin.
-
 #### Start your API server
 
-In your project directory, use the Platformatic CLI to start your API server:
+In your project directory, run this command to start your API server:
 
-
-```
-npx platformatic db start
-```
-or
-
-```
+```bash
 npm start 
 ```
 
-This will:
+Your Platformatic API is now up and running! 🌟
+
+This command will:
 
 - Automatically map your SQL database to REST and GraphQL API interfaces.
 - Start the Platformatic API server.
 
-Your Platformatic API is now up and running! 🌟
-
+You can jump down to [Next steps](#next-steps) or read on to learn more about
+the project files that the wizard has created for you.
 
 #### Check the database schema
 
