@@ -32,7 +32,6 @@ t.only('run db init with default options', async (t) => {
 
   const dbConfigFile = await fs.readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
-
   const configSchema = await fs.readFile(pathToConfigSchema, 'utf8')
   const parseConfigSchema = JSON.parse(configSchema)
 
