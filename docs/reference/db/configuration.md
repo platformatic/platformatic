@@ -61,7 +61,7 @@ A **required** object with the following settings:
     "schema": [
       "schema1", "schema2"
     ],
-    ... 
+    ...
 
   },
 
@@ -289,7 +289,7 @@ An optional object that defines a plugin loaded by Platformatic DB.
   }
   ```
 
-:::warning:::
+:::warning
 While hot reloading is useful for development, it is not recommended to use it in production.
 To switch if off, set `hotReload` to `false`.
 :::
@@ -354,136 +354,51 @@ A **required** object with the following settings:
 
 ### `authorization`
 
-Authorization settings can be set with an optional `authorization` object, for example:
+An optional object with the following settings:
 
-```json
+- `adminSecret` (`string`): A secret that will be required as a password to
+access the Platformatic DB dashboard. This secret can also be sent in an
+`x-platformatic-admin-secret` HTTP header when performing GraphQL/REST API
+calls. Use an [environment variable placeholder](#environment-variable-placeholders)
+to securely provide the value for this setting.
+- `roleKey` (`string`, default: `X-PLATFORMATIC-ROLE`): The name of the key in user
+  metadata that is used to store the user's roles. See [Role configuration](/docs/reference/db/authorization/user-roles-metadata#role-configuration).
+- `anonymousRole` (`string`, default: `anonymous`): The name of the anonymous role. See [Role configuration](/docs/reference/db/authorization/user-roles-metadata#role-configuration).
+- `jwt` (`object`): Configuration for the [JWT authorization strategy](/docs/reference/db/authorization/strategies#json-web-token-jwt).
+  Any option accepted by [`@fastify/jwt`](https://github.com/fastify/fastify-jwt)
+  can be passed in this object.
+  - `secret` (required, `string` or `object`): The secret key that the JWT was signed with.
+  See the [`@fastify/jwt` documentation](https://github.com/fastify/fastify-jwt#secret-required)
+  for accepted string and object values. Use an [environment variable placeholder](#environment-variable-placeholders)
+  to securely provide the value for this setting.
+  - `jwks` (`boolean` or `object`): Configure authorization with JSON Web Key Sets (JWKS). See the [JWKS documentation](/docs/reference/db/authorization/strategies#json-web-key-sets-jwks).
+  - `namespace` (`string`): Configure a [JWT Custom Claim Namespace](/docs/reference/db/authorization/strategies#jwt-custom-claim-namespace)
+    to avoid name collisions.
+- `webhook` (`object`): Configuration for the [Webhook authorization strategy](/docs/reference/db/authorization/strategies#webhook).
+  - `url` (required, `string`): Webhook URL that Platformatic DB will make a
+  POST request to.
+- `rules` (`array`): Authorization rules that describe the CRUD actions that
+  users are allowed to perform against entities. See [Rules](/docs/reference/db/authorization/rules)
+  documentation.
+
+:::note
+If an `authorization` object is present, but no rules are specified, no CRUD
+operations are allowed unless `adminSecret` is passed.
+:::
+
+#### Example
+
+```json title="platformatic.db.json"
+{
   "authorization": {
-    "adminSecret": "platformatic",
+    "jwt": {
+      "secret": "{PLT_AUTHORIZATION_JWT_SECRET}"
+    },
     "rules": [
        ...
     ]
   }
-```
-
-- **`adminSecret`** (`string`, optional) — If defined, it will be the password used to access the dashboard and the string to send within the `x-platformatic-admin-secret` header when performing GraphQL/REST API calls.
-- **`rules`** (`array`) — Authorization rules that describe the CRUD actions that users are allowed to perform.
-
-Note that if an `authorization` section is present, but _**no rules**_ are specified, no CRUD operations are allowed (unless `adminSecret` is passed).
-
-#### Authorization rules
-
-Every rule must specify:
-- `role` — the role name. It's a string and must match with the role(s) set by the external authentication service
-- `entity` — the Platformatic DB entity
-- A set of optional [`defaults`](#defaults)
-- One entry for each supported CRUD operation: `find`, `save`, `delete`
-
-#### Operation options
-
-Every operation can specify `checks` used for the authorizations.
-This value can be `false` (operation disabled) or `true` (operation enabled with no checks).
-
-To specify more fine-grained authorization controls, add a `checks` field, e.g.:
-
-```json
-{
-  "role": "user",
-  "entity": "page",
-  "find": {
-    "checks": {
-      "userId": "X-PLATFORMATIC-USER-ID"
-    }
-  },
-  ...
 }
-
-```
-
-In this example, when a user with a `user` role executes a `findPage`, they can
-access all the data that has `userId` equal to the value  in user metadata with
-key `X-PLATFORMATIC-USER-ID`.
-
-Note that `"userId": "X-PLATFORMATIC-USER-ID"` is syntactic sugar for:
-
-```json
-      "find": {
-        "checks": {
-          "userId": {
-            "eq": "X-PLATFORMATIC-USER-ID"
-          }
-        }
-      }
-```
-
-It's possible to specify more complex rules using all the [supported where clause operators](/reference/sql-mapper/entities/api.md#where-clause).
-
-Note that `userId` MUST exist as a field in the database table to use this feature.
-
-#### Fields
-
-If a `fields` array is present on an operation, Platformatic DB restricts the columns on which the user can execute to that list.
-For `save` operations, the configuration must specify all the not-nullable fields (otherwise, it would fail at runtime).
-Platformatic does these checks at startup.
-
-Example:
-
-```json
-    "rule": {
-        "entity": "page",
-        "role": "user",
-        "find": {
-          "checks": {
-            "userId": "X-PLATFORMATIC-USER-ID"
-          },
-          "fields": ["id", "title"]
-        }
-        ...
-    }
-```
-
-In this case, only `id` and `title` are returned for a user with a `user` role on the `page` entity.
-
-#### Defaults
-
-Defaults are used in database insert and are default fields added automatically populated from user metadata, e.g.:
-
-```json
-        "defaults": {
-          "userId": "X-PLATFORMATIC-USER-ID"
-        },
-```
-
-When an entity is created, the `userId` column is used and populated using the value from user metadata.
-
-#### Anonymous role
-
-If a user has no role, the `anonymous` role is assigned automatically. It's possible to specify a rule for it:
-
-```json
-    {
-      "role": "anonymous",
-      "entity": "page",
-      "find": false,
-      "delete": false,
-      "save": false
-    }
-```
-
-In this case, the user that has no role (or has an explicitly `anonymous` role) has no operations allowed on the `page` entity.
-
-#### Role and anonymous keys
-
-The roles key in user metadata defaults to `X-PLATFORMATIC-ROLE`. It's possible to change it using the `roleKey` field in configuration.
-Same for the `anonymous` role, which value can be changed using `anonymousRole`.
-
-```json
- "authorization": {
-    "roleKey": "X-MYCUSTOM-ROLE_KEY",
-    "anonymousRole": "anonym",
-    "rules": [
-    ...
-    ]
-  }
 ```
 
 ## Environment variable placeholders
