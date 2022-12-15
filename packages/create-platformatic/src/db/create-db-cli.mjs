@@ -166,7 +166,7 @@ const createPlatformaticDB = async (_args) => {
   if (!runPackageManagerInstall) {
     logger.warn(`You must run the following commands in the project folder to complete the setup:
     - ${pkgManager} install
-    - npx platformatic db schema config > ./platformatic.config.schema.json
+    - npx platformatic db schema config > ./platformatic.db.schema.json
 `)
   }
 }
