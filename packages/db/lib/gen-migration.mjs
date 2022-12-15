@@ -29,10 +29,15 @@ async function generateMigration (_args) {
     const nextDoMigrationName = `${nextMigrationVersionStr}.do.sql`
     const nextUndoMigrationName = `${nextMigrationVersionStr}.undo.sql`
 
+    const doFile = join(migrator.migrationDir, nextDoMigrationName)
+    const undoFile = join(migrator.migrationDir, nextUndoMigrationName)
+
     await Promise.all([
-      writeFile(join(migrator.migrationDir, nextDoMigrationName), ''),
-      writeFile(join(migrator.migrationDir, nextUndoMigrationName), '')
+      writeFile(doFile, ''),
+      writeFile(undoFile, '')
     ])
+
+    logger.info({ do: doFile, undo: undoFile }, 'Created migration files')
   } catch (error) {
     logger.error(error.message)
   } finally {
