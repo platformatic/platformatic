@@ -399,22 +399,28 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema,
   }
 
   if (primaryKeys.size === 0) {
+    let found = false
     for (const constraint of constraintsList) {
       const field = fields[constraint.column_name]
 
       /* istanbul ignore else */
       if (constraint.constraint_type === 'UNIQUE') {
-        // Check for SQLite typeless PK
-        /* istanbul ignore next */
-        try {
-          checkSQLitePrimaryKey(constraint)
-        } catch {
-          continue
-        }
+        field.unique = true
 
-        primaryKeys.add(constraint.column_name)
-        field.primaryKey = true
-        break
+        /* istanbul ignore else */
+        if (!found) {
+          // Check for SQLite typeless PK
+          /* istanbul ignore next */
+          try {
+            checkSQLitePrimaryKey(constraint)
+          } catch {
+            continue
+          }
+
+          primaryKeys.add(constraint.column_name)
+          field.primaryKey = true
+          found = true
+        }
       }
     }
   }

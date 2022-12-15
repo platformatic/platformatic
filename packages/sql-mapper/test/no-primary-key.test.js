@@ -42,4 +42,6 @@ test('unique key', async ({ equal, not, same, teardown }) => {
     same(pageEntity.primaryKeys, new Set(['xx']))
     equal(pageEntity.camelCasedFields.xx.primaryKey, true)
   }
+  equal(pageEntity.camelCasedFields.xx.unique, true)
+  equal(pageEntity.camelCasedFields.name.unique, true)
 })
