@@ -1,11 +1,11 @@
-# @platformatic/create-platformatic-db
+# create-platformatic
 
 Platformatic Creator
 
 ## Usage
 
 ```sh
-npm create platformatic-db
+npm create platformatic
 ```
 
 ## License
