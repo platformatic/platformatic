@@ -140,8 +140,20 @@ async function start (...args) {
   }
 }
 
+function parseEnv (envFile) {
+  const env = {}
+  for (const line of envFile.split('\n')) {
+    if (line) {
+      const [key, value] = line.split('=')
+      env[key.trim()] = value.trim()
+    }
+  }
+  return env
+}
+
 module.exports.cliPath = cliPath
 module.exports.cleanSQLite = cleanSQLite
 module.exports.connectAndResetDB = connectAndResetDB
 module.exports.getFixturesConfigFileLocation = getFixturesConfigFileLocation
 module.exports.start = start
+module.exports.parseEnv = parseEnv

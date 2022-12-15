@@ -36,6 +36,10 @@ test('inserted_at updated_at happy path', async ({ pass, teardown, same, equal, 
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
+    autoTimestamp: {
+      createdAt: 'inserted_at',
+      updatedAt: 'updated_at'
+    },
     async onDatabaseLoad (db, sql) {
       pass('onDatabaseLoad called')
 
@@ -159,6 +163,10 @@ test('cannot set inserted_at', async ({ pass, teardown, same, equal, not, commen
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
+    autoTimestamp: {
+      createdAt: 'inserted_at',
+      updatedAt: 'updated_at'
+    },
     async onDatabaseLoad (db, sql) {
       pass('onDatabaseLoad called')
 
@@ -198,6 +206,10 @@ test('cannot set updated_at', async ({ pass, teardown, same, equal, not, comment
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
+    autoTimestamp: {
+      createdAt: 'inserted_at',
+      updatedAt: 'updated_at'
+    },
     async onDatabaseLoad (db, sql) {
       pass('onDatabaseLoad called')
 
@@ -371,6 +383,10 @@ test('bulk insert adds inserted_at updated_at', async ({ pass, teardown, same, e
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
+    autoTimestamp: {
+      createdAt: 'inserted_at',
+      updatedAt: 'updated_at'
+    },
     async onDatabaseLoad (db, sql) {
       pass('onDatabaseLoad called')
 
@@ -466,7 +482,7 @@ test('bulk insert adds inserted_at updated_at', async ({ pass, teardown, same, e
   }
 })
 
-test('bulk insert with autoTimestamp=false do not hadd inserted_at updated_at', async ({ pass, teardown, same, equal, not, comment }) => {
+test('bulk insert with autoTimestamp=false do not had inserted_at updated_at', async ({ pass, teardown, same, equal, not, comment }) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,

@@ -51,16 +51,30 @@ function getTsConfig (outDir) {
 }
 
 function generateConfig (args) {
-  const { hostname, port, database, migrations, types, typescript } = args
+  const { migrations, plugin, types, typescript } = args
 
-  const connectionString = connectionStrings[database]
+  /* c8 ignore next 1 */
+  const migrationsFolder = migrations || 'migrations'
 
   const config = {
     $schema: `./${filenameConfigJsonSchema}`,
-    server: { hostname, port },
-    core: { connectionString, graphql: true },
-    migrations: { dir: migrations },
-    plugin: {
+    server: {
+      hostname: '{PLT_SERVER_HOSTNAME}',
+      port: '{PORT}',
+      logger: {
+        level: '{PLT_SERVER_LOGGER_LEVEL}'
+      }
+    },
+    core: {
+      connectionString: '{DATABASE_URL}',
+      graphql: true,
+      openapi: true
+    },
+    migrations: { dir: migrationsFolder }
+  }
+
+  if (plugin === true) {
+    config.plugin = {
       path: typescript === true ? 'plugin.ts' : 'plugin.js'
     }
   }
@@ -78,6 +92,18 @@ function generateConfig (args) {
   }
 
   return config
+}
+
+function generateEnv (args) {
+  const { hostname, port, database } = args
+  const connectionString = connectionStrings[database]
+  const env = `\
+PLT_SERVER_HOSTNAME=${hostname}
+PORT=${port}
+PLT_SERVER_LOGGER_LEVEL=info
+DATABASE_URL=${connectionString}
+`
+  return env
 }
 
 const JS_PLUGIN_WITH_TYPES_SUPPORT = `\
@@ -109,7 +135,6 @@ async function generatePluginWithTypesSupport (logger, args, configManager) {
     : JS_PLUGIN_WITH_TYPES_SUPPORT
 
   await writeFile(pluginPath, pluginTemplate)
-  await configManager.save()
 
   logger.info(`Plugin file created at ${relative(process.cwd(), pluginPath)}`)
 }
@@ -126,22 +151,24 @@ async function init (_args) {
       port: 3042,
       database: 'sqlite',
       migrations: 'migrations',
+      plugin: true,
       types: true,
       typescript: false
     },
     alias: {
       h: 'hostname',
       p: 'port',
+      pl: 'plugin',
       db: 'database',
       m: 'migrations',
       t: 'types',
       ts: 'typescript'
     },
-    boolean: ['types', 'typescript']
+    boolean: ['plugin', 'types', 'typescript']
   })
 
-  const { migrations, typescript } = args
-
+  const { migrations, typescript, plugin } = args
+  const createMigrations = !!migrations // If we don't define a migrations folder, we don't create it
   const currentDir = process.cwd()
   const accessibleConfigFilename = await findConfigFile(currentDir)
   if (accessibleConfigFilename === undefined) {
@@ -149,6 +176,11 @@ async function init (_args) {
     await generateJsonSchemaConfig()
     await writeFile('platformatic.db.json', JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.db.json successfully created.')
+
+    const env = generateEnv(args)
+    await writeFile('.env', env)
+    await writeFile('.env.sample', env)
+    logger.info('Environment file .env successfully created.')
   } else {
     logger.info(`Configuration file ${accessibleConfigFilename} found, skipping creation of configuration file.`)
   }
@@ -158,12 +190,14 @@ async function init (_args) {
   const config = configManager.current
 
   const migrationsFolderName = migrations
-  const isMigrationFolderExists = await isFileAccessible(migrationsFolderName, currentDir)
-  if (!isMigrationFolderExists) {
-    await mkdir(migrationsFolderName)
-    logger.info(`Migrations folder ${migrationsFolderName} successfully created.`)
-  } else {
-    logger.info(`Migrations folder ${migrationsFolderName} found, skipping creation of migrations folder.`)
+  if (createMigrations) {
+    const isMigrationFolderExists = await isFileAccessible(migrationsFolderName, currentDir)
+    if (!isMigrationFolderExists) {
+      await mkdir(migrationsFolderName)
+      logger.info(`Migrations folder ${migrationsFolderName} successfully created.`)
+    } else {
+      logger.info(`Migrations folder ${migrationsFolderName} found, skipping creation of migrations folder.`)
+    }
   }
 
   const migrationFileNameDo = '001.do.sql'
@@ -172,7 +206,7 @@ async function init (_args) {
   const migrationFilePathUndo = join(migrationsFolderName, migrationFileNameUndo)
   const isMigrationFileDoExists = await isFileAccessible(migrationFilePathDo)
   const isMigrationFileUndoExists = await isFileAccessible(migrationFilePathUndo)
-  if (!isMigrationFileDoExists) {
+  if (!isMigrationFileDoExists && createMigrations) {
     await writeFile(migrationFilePathDo, moviesMigrationDo)
     logger.info(`Migration file ${migrationFileNameDo} successfully created.`)
     if (!isMigrationFileUndoExists) {
@@ -195,7 +229,7 @@ async function init (_args) {
     }
   }
 
-  if (config.types && config.types.autogenerate) {
+  if (plugin && config.types && config.types.autogenerate) {
     await generateGlobalTypesFile({}, config)
     await generatePluginWithTypesSupport(logger, args, configManager)
     await checkForDependencies(logger, args, config)

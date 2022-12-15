@@ -1,0 +1,4 @@
+Available commands:
+
+* `migrations create` - generate do and undo migration files.
+* `migrations apply` - apply migration files.

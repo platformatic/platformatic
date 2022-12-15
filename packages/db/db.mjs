@@ -14,6 +14,7 @@ import { applyMigrations } from './lib/migrate.mjs'
 import { seed } from './lib/seed.mjs'
 import { generateTypes } from './lib/gen-types.mjs'
 import { printGraphQLSchema, printOpenAPISchema, generateJsonSchemaConfig } from './lib/gen-schema.mjs'
+import { generateMigration } from './lib/gen-migration.mjs'
 
 const help = helpMe({
   dir: join(import.meta.url, 'help'),
@@ -26,6 +27,7 @@ const program = commist({ maxDistance: 4 })
 program.register('help', help.toStdout)
 program.register('help init', help.toStdout.bind(null, ['init']))
 program.register('help start', help.toStdout.bind(null, ['start']))
+program.register('help compile', help.toStdout.bind(null, ['compile']))
 program.register('help migrations apply', help.toStdout.bind(null, ['migrations apply']))
 program.register({ command: 'help seed', strict: true }, help.toStdout.bind(null, ['seed']))
 program.register('help schema', help.toStdout.bind(null, ['schema']))
@@ -33,6 +35,7 @@ program.register('help schema', help.toStdout.bind(null, ['schema']))
 program.register('start', start)
 program.register('init', init)
 program.register('compile', compile)
+program.register('migrations create', generateMigration)
 program.register('migrations apply', applyMigrations)
 program.register('seed', seed)
 program.register('types', generateTypes)

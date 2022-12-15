@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db-ra-data-rest",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Platformatic DB React-Admin REST data provider",
   "repository": {
     "type": "git",
@@ -32,7 +32,7 @@
   "devDependencies": {
     "@vitest/coverage-c8": "^0.25.0",
     "rimraf": "^3.0.2",
-    "vite": "^3.0.4",
+    "vite": "^4.0.0",
     "vitest": "^0.25.0",
     "whatwg-fetch": "^3.6.2",
     "standard": "^17.0.0",
