@@ -31,3 +31,4 @@ if (isMain(import.meta)) {
 }
 
 export { default as createDB } from './src/db/create-db.mjs'
+export { parseDBArgs } from './src/db/create-db-cli.mjs'
