@@ -31,21 +31,6 @@ async function setupDB (log, config) {
   }
 }
 
-async function findConfigFile (directory) {
-  const configFileNames = [
-    'platformatic.db.json',
-    'platformatic.db.json5',
-    'platformatic.db.yaml',
-    'platformatic.db.yml',
-    'platformatic.db.toml',
-    'platformatic.db.tml'
-  ]
-
-  const configFilesAccessibility = await Promise.all(configFileNames.map((fileName) => isFileAccessible(fileName, directory)))
-  const accessibleConfigFilename = configFileNames.find((value, index) => configFilesAccessibility[index])
-  return accessibleConfigFilename
-}
-
 async function isFileAccessible (filename, directory) {
   try {
     const filePath = directory ? resolve(directory, filename) : filename
@@ -63,6 +48,5 @@ function urlDirname (url) {
 module.exports = {
   setupDB,
   isFileAccessible,
-  findConfigFile,
   urlDirname
 }

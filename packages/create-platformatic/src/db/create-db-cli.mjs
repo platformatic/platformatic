@@ -28,13 +28,8 @@ export const createReadme = async (logger, dir = '.') => {
   }
 }
 
-const createPlatformaticDB = async (_args) => {
-  const logger = pino(pretty({
-    translateTime: 'SYS:HH:MM:ss',
-    ignore: 'hostname,pid'
-  }))
-
-  const args = parseArgs(_args, {
+export const parseDBArgs = (_args) => {
+  return parseArgs(_args, {
     default: {
       hostname: '127.0.0.1',
       port: 3042,
@@ -55,10 +50,17 @@ const createPlatformaticDB = async (_args) => {
     },
     boolean: ['plugin', 'types', 'typescript']
   })
+}
 
+const createPlatformaticDB = async (_args) => {
+  const logger = pino(pretty({
+    translateTime: 'SYS:HH:MM:ss',
+    ignore: 'hostname,pid'
+  }))
+
+  const args = parseDBArgs(_args)
   const version = await getVersion()
   const pkgManager = getPkgManager()
-
   const projectDir = await askProjectDir(logger, '.')
 
   const wizardOptions = await inquirer.prompt([{
@@ -166,7 +168,7 @@ const createPlatformaticDB = async (_args) => {
   if (!runPackageManagerInstall) {
     logger.warn(`You must run the following commands in the project folder to complete the setup:
     - ${pkgManager} install
-    - npx platformatic db schema config > ./platformatic.db.schema.json
+    - npx platformatic db schema config
 `)
   }
 }

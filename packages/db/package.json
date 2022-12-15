@@ -50,6 +50,7 @@
     "@platformatic/utils": "workspace:*",
     "close-with-grace": "^1.1.0",
     "commist": "^3.1.2",
+    "create-platformatic": "workspace:*",
     "desm": "^1.2.0",
     "dtsgenerator": "^3.16.1",
     "env-schema": "^5.0.0",

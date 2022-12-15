@@ -32,7 +32,6 @@ t.test('run db init with default options', async (t) => {
 
   const dbConfigFile = await fs.readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
-
   const configSchema = await fs.readFile(pathToConfigSchema, 'utf8')
   const parseConfigSchema = JSON.parse(configSchema)
 
@@ -86,10 +85,12 @@ t.test('run init with default options twice', async (t) => {
   t.match(firstRunStdoutLines[6], /(.*)Please run `npm i --save(.*)/)
 
   const secondRunStdoutLines = secondRunStdout.split('\n')
+
   t.match(secondRunStdoutLines[0], /(.*)Configuration file platformatic.db.json found, skipping creation of configuration file./)
   t.match(secondRunStdoutLines[1], /(.*)Migrations folder migrations found, skipping creation of migrations folder./)
   t.match(secondRunStdoutLines[2], /(.*)Migration file 001.do.sql found, skipping creation of migration file./)
-  t.match(secondRunStdoutLines[3], /(.*)Please run `npm i --save(.*)/)
+  t.match(secondRunStdoutLines[3], /(.*)Plugin file (.*?)plugin.js found, skipping creation of plugin file./)
+  t.match(secondRunStdoutLines[4], /(.*)Please run `npm i --save(.*)/)
 
   const dbConfigFile = await fs.readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
