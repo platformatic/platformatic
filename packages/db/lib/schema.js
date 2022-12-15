@@ -18,6 +18,23 @@ const core = {
     poolSize: {
       type: 'integer'
     },
+    autoTimestamp: {
+      oneOf: [{
+        type: 'object',
+        properties: {
+          createdAt: {
+            type: 'string',
+            default: 'created_at'
+          },
+          updatedAt: {
+            type: 'string',
+            default: 'updated_at'
+          }
+        }
+      }, {
+        type: 'boolean'
+      }]
+    },
     graphql: {
       anyOf: [{
         type: 'boolean'
