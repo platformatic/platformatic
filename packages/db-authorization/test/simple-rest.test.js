@@ -412,3 +412,126 @@ test('users can find and updateMany pages', async ({ pass, teardown, same, equal
     ], '/pages?where.id.in=1,2 response')
   }
 })
+
+test('additional options are passed to original functions', async ({ plan, teardown, equal }) => {
+  plan(5)
+  const app = fastify()
+  app.register(core, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(auth, {
+    jwt: { secret: 'supersecret' },
+    roleKey: 'X-PLATFORMATIC-ROLE',
+    anonymousRole: 'anonymous',
+    rules: [{
+      role: 'user',
+      entity: 'page',
+      save: true,
+      find: true,
+      updateMany: true,
+      delete: true,
+      insert: true,
+      defaults: {
+        userId: 'X-PLATFORMATIC-USER-ID'
+      }
+    }]
+  })
+
+  // add hooks to intercept options passed from entity action to db-auth
+  app.register(async function (fastify, opts) {
+    fastify.platformatic.addEntityHooks('page', {
+      find: (originalFind, opts) => {
+        equal(opts.cool, 'find')
+        return originalFind(opts)
+      },
+      save: (originalSave, opts) => {
+        equal(opts.cool, 'save')
+        return originalSave(opts)
+      },
+      delete: (originalDelete, opts) => {
+        equal(opts.cool, 'delete')
+        return originalDelete(opts)
+      },
+      insert: (originalInsert, opts) => {
+        equal(opts.cool, 'insert')
+        return originalInsert(opts)
+      },
+      updateMany: (originalUpdateMany, opts) => {
+        equal(opts.cool, 'updateMany')
+        return originalUpdateMany(opts)
+      }
+    })
+
+    fastify.post('/rest-save', async (req, reply) => {
+      await fastify.platformatic.entities.page.save({
+        fields: ['id'],
+        input: { title: 'title 1' },
+        cool: 'save'
+      })
+    })
+
+    fastify.post('/rest-insert', async (req, reply) => {
+      await fastify.platformatic.entities.page.insert({
+        fields: ['id'],
+        inputs: [
+          { title: 'title 2' },
+          { title: 'title 3' }
+        ],
+        cool: 'insert'
+      })
+    })
+
+    fastify.post('/rest-update', async (req, reply) => {
+      await fastify.platformatic.entities.page.updateMany({
+        fields: ['id'],
+        input: { title: 'title 2 - updated' },
+        where: {
+          title: { eq: 'title 2' }
+        },
+        cool: 'updateMany'
+      })
+    })
+
+    fastify.post('/rest-delete', async (req, reply) => {
+      await fastify.platformatic.entities.page.delete({
+        fields: ['id'],
+        where: {
+          title: { eq: 'title 3' }
+        },
+        cool: 'delete'
+      })
+    })
+
+    fastify.post('/rest-find', async (req, reply) => {
+      await fastify.platformatic.entities.page.find({
+        fields: ['id'],
+        cool: 'find'
+      })
+    })
+  })
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  const token = await app.jwt.sign({
+    'X-PLATFORMATIC-USER-ID': 42,
+    'X-PLATFORMATIC-ROLE': 'user'
+  })
+
+  const entityFns = ['save', 'insert', 'delete', 'update', 'find'].map(action => {
+    return app.inject({
+      method: 'POST',
+      url: `/rest-${action}`,
+      headers: {
+        authorization: `Bearer ${token}`
+      },
+      body: {}
+    })
+  })
+
+  await Promise.all(entityFns)
+})
