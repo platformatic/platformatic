@@ -54,11 +54,13 @@ test('stored and virtual generated columns should be read only', async (t) => {
     const generatedTest = app.platformatic.entities.generatedTest
     const generatedTestJsonSchema = mapSQLEntityToJSONSchema(generatedTest)
 
-    if(isPg) {
+    // as of postgresql 15 virtual generated column is not supported
+    if (isPg) {
       t.same(generatedTestJsonSchema.properties.testStored, { type: 'integer', nullable: true, readOnly: true })
+    } else {
+      t.same(generatedTestJsonSchema.properties.testStored, { type: 'integer', nullable: true, readOnly: true })
+      t.same(generatedTestJsonSchema.properties.testVirtual, { type: 'integer', nullable: true, readOnly: true })
     }
-    t.same(generatedTestJsonSchema.properties.testStored, { type: 'integer', nullable: true, readOnly: true })
-    t.same(generatedTestJsonSchema.properties.testVirtual, { type: 'integer', nullable: true, readOnly: true })
   }
 })
 

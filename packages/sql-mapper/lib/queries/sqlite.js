@@ -16,7 +16,7 @@ module.exports.listTables = listTables
 
 async function listColumns (db, sql, table) {
   // pragma_table_info is not returning hidden column which tells if the column is generated or not
-  // therefore it is changed to pragma_table_xinfo 
+  // therefore it is changed to pragma_table_xinfo
   const columns = await db.query(sql`
     SELECT * FROM pragma_table_xinfo(${table})
   `)

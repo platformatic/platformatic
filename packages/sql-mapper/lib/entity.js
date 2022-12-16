@@ -343,15 +343,14 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema,
       acc[column.column_name].autoTimestamp = true
     }
 
-    if(db.isPg) {
+    if (db.isPg) {
       acc[column.column_name].isGenerated = column.is_generated !== 'NEVER'
+    } else if (db.isSQLite) {
+      acc[column.column_name].isGenerated = column.is_generated === 'YES'
+    } else {
+      acc[column.column_name].isGenerated = column.is_generated.includes('GENERATED')
     }
-    if(db.isMySql) {
-      acc[column.column_name].isGenerated = column.is_generated.includes('GENERATED');
-    }
-    if(db.isSQLite) {
-      acc[column.column_name].isGenerated = column.is_generated === 'YES';
-    }
+
     return acc
   }, {})
 
