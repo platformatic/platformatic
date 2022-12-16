@@ -49,6 +49,7 @@ const TS_OUT_DIR = 'dist'
 
 function generateConfig (migrations, plugin, types, typescript) {
   const config = {
+    $schema: './platformatic.db.schema.json',
     server: {
       hostname: '{PLT_SERVER_HOSTNAME}',
       port: '{PORT}',
@@ -186,6 +187,13 @@ async function createDB ({ hostname, database = 'sqlite', port, migrations = 'mi
 
   if (plugin) {
     await generatePluginWithTypesSupport(logger, currentDir, typescript)
+  }
+
+  return {
+    DATABASE_URL: connectionStrings[database],
+    PLT_SERVER_LOGGER_LEVEL: 'info',
+    PORT: port,
+    PLT_SERVER_HOSTNAME: hostname
   }
 }
 

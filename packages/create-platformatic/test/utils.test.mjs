@@ -116,10 +116,30 @@ test('sleep', async ({ equal }) => {
   equal(end - start >= 100, true)
 })
 
-test('validatePath', async ({ end, equal, rejects }) => {
-  const ok = await validatePath('new-project')
-  equal(ok, true)
-  rejects(validatePath('test'), Error('Please, specify an empty directory or create a new one.'))
+test('validatePath', async ({ end, equal, rejects, ok }) => {
+  {
+    // new folder
+    const valid = await validatePath('new-project')
+    ok(valid)
+  }
+
+  {
+    // existing folder
+    const valid = await validatePath('test')
+    ok(valid)
+  }
+
+  {
+    // current folder
+    const valid = await validatePath('.')
+    ok(valid)
+  }
+
+  {
+    // not writeable folder
+    const valid = await validatePath('/')
+    ok(!valid)
+  }
 })
 
 test('getDependencyVersion', async ({ equal }) => {

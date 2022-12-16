@@ -21,8 +21,8 @@ async function platformaticDB (app, opts) {
     await execute(app.log, { config: opts.configFileLocation }, opts)
   }
 
-  app.register(require('./_admin'), { ...opts, prefix: '_admin' })
   if (isKeyEnabled('dashboard', opts)) {
+    app.register(require('./_admin'), { ...opts, prefix: '_admin' })
     await app.register(dashboard, {
       dashboardAtRoot: opts.dashboard.rootPath ?? true
     })
@@ -80,3 +80,4 @@ async function buildDBServer (options) {
 module.exports.buildServer = buildDBServer
 module.exports.schema = schema
 module.exports.platformaticDB = platformaticDB
+module.exports.ConfigManager = ConfigManager

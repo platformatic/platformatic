@@ -1,6 +1,6 @@
 'use strict'
 
-const { metrics, server, plugin, watch } = require('@platformatic/service').schema
+const { metrics, server, pluginTypes, watch } = require('@platformatic/service').schema
 
 const core = {
   $id: 'https://schemas.platformatic.dev/db/core',
@@ -17,6 +17,23 @@ const core = {
     },
     poolSize: {
       type: 'integer'
+    },
+    autoTimestamp: {
+      oneOf: [{
+        type: 'object',
+        properties: {
+          createdAt: {
+            type: 'string',
+            default: 'created_at'
+          },
+          updatedAt: {
+            type: 'string',
+            default: 'updated_at'
+          }
+        }
+      }, {
+        type: 'boolean'
+      }]
     },
     graphql: {
       anyOf: [{
@@ -307,9 +324,6 @@ const types = {
 const platformaticDBschema = {
   $id: 'https://schemas.platformatic.dev/db',
   type: 'object',
-  $defs: {
-    plugin
-  },
   properties: {
     server,
     core,
@@ -318,20 +332,7 @@ const platformaticDBschema = {
     migrations,
     metrics,
     types,
-    plugin: {
-      anyOf: [{
-        type: 'array',
-        items: {
-          anyOf: [{
-            $ref: '#/$defs/plugin'
-          }, {
-            type: 'string'
-          }]
-        }
-      }, {
-        $ref: '#/$defs/plugin'
-      }]
-    }
+    plugin: pluginTypes
   },
   additionalProperties: {
     watch: {

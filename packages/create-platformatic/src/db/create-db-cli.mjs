@@ -5,7 +5,7 @@ import { getPkgManager } from '../get-pkg-manager.mjs'
 import parseArgs from 'minimist'
 import { join } from 'path'
 import inquirer from 'inquirer'
-import { mkdir, readFile, writeFile } from 'fs/promises'
+import { readFile, writeFile } from 'fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa, execaNode } from 'execa'
@@ -13,6 +13,7 @@ import ora from 'ora'
 import createDB from './create-db.mjs'
 import askProjectDir from '../ask-project-dir.mjs'
 import { askCreateGHAction } from '../ghaction.mjs'
+import mkdirp from 'mkdirp'
 
 export const createReadme = async (logger, dir = '.') => {
   const readmeFileName = join(dir, 'README.md')
@@ -27,13 +28,8 @@ export const createReadme = async (logger, dir = '.') => {
   }
 }
 
-const createPlatformaticDB = async (_args) => {
-  const logger = pino(pretty({
-    translateTime: 'SYS:HH:MM:ss',
-    ignore: 'hostname,pid'
-  }))
-
-  const args = parseArgs(_args, {
+export const parseDBArgs = (_args) => {
+  return parseArgs(_args, {
     default: {
       hostname: '127.0.0.1',
       port: 3042,
@@ -54,11 +50,18 @@ const createPlatformaticDB = async (_args) => {
     },
     boolean: ['plugin', 'types', 'typescript']
   })
+}
 
+const createPlatformaticDB = async (_args) => {
+  const logger = pino(pretty({
+    translateTime: 'SYS:HH:MM:ss',
+    ignore: 'hostname,pid'
+  }))
+
+  const args = parseDBArgs(_args)
   const version = await getVersion()
   const pkgManager = getPkgManager()
-
-  const projectDir = await askProjectDir(logger, './my-api')
+  const projectDir = await askProjectDir(logger, '.')
 
   const wizardOptions = await inquirer.prompt([{
     type: 'list',
@@ -82,7 +85,7 @@ const createPlatformaticDB = async (_args) => {
   }])
 
   // Create the project directory
-  await mkdir(projectDir)
+  await mkdirp(projectDir)
 
   const generatePlugin = args.plugin || wizardOptions.generatePlugin
   const useTypescript = args.typescript || wizardOptions.useTypescript
@@ -98,7 +101,7 @@ const createPlatformaticDB = async (_args) => {
     typescript: useTypescript
   }
 
-  await createDB(params, logger, projectDir)
+  const env = await createDB(params, logger, projectDir)
 
   const fastifyVersion = await getDependencyVersion('fastify')
 
@@ -157,8 +160,17 @@ const createPlatformaticDB = async (_args) => {
         spinner.succeed('...done!')
       }
     }
+    await execaNode('./node_modules/@platformatic/db/db.mjs', ['schema', 'config'], { cwd: projectDir })
+    logger.info('Configuration schema successfully created.')
   }
-  await askCreateGHAction(logger, projectDir)
+  await askCreateGHAction(logger, env, 'db')
+
+  if (!runPackageManagerInstall) {
+    logger.warn(`You must run the following commands in the project folder to complete the setup:
+    - ${pkgManager} install
+    - npx platformatic db schema config
+`)
+  }
 }
 
 export default createPlatformaticDB

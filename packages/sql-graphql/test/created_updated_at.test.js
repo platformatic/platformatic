@@ -12,34 +12,30 @@ async function createBasicPages (db, sql) {
     await db.query(sql`CREATE TABLE pages (
       id INTEGER PRIMARY KEY,
       title VARCHAR(42),
-      inserted_at TIMESTAMP,
+      created_at TIMESTAMP,
       updated_at TIMESTAMP
     );`)
   } else if (isMysql) {
     await db.query(sql`CREATE TABLE pages (
       id SERIAL PRIMARY KEY,
       title VARCHAR(42),
-      inserted_at TIMESTAMP NULL DEFAULT NULL,
+      created_at TIMESTAMP NULL DEFAULT NULL,
       updated_at TIMESTAMP NULL DEFAULT NULL
     );`)
   } else {
     await db.query(sql`CREATE TABLE pages (
       id SERIAL PRIMARY KEY,
       title VARCHAR(42),
-      inserted_at TIMESTAMP,
+      created_at TIMESTAMP,
       updated_at TIMESTAMP
     );`)
   }
 }
 
-test('inserted_at updated_at happy path', async ({ pass, teardown, same, equal, not, comment }) => {
+test('created_at updated_at happy path', async ({ pass, teardown, same, equal, not, comment }) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
-    autoTimestamp: {
-      createdAt: 'inserted_at',
-      updatedAt: 'updated_at'
-    },
     async onDatabaseLoad (db, sql) {
       pass('onDatabaseLoad called')
 
@@ -64,7 +60,7 @@ test('inserted_at updated_at happy path', async ({ pass, teardown, same, equal, 
             savePage(input: { title: "Hello" }) {
               id
               title
-              insertedAt
+              createdAt
               updatedAt
             }
           }
@@ -73,9 +69,9 @@ test('inserted_at updated_at happy path', async ({ pass, teardown, same, equal, 
     })
     equal(res.statusCode, 200, 'savePage status code')
     const data = res.json().data
-    not(data.savePage.insertedAt, null, 'insertedAt')
+    not(data.savePage.createdAt, null, 'createdAt')
     not(data.savePage.updatedAt, null, 'updatedAt')
-    comment(`insertedAt: ${data.savePage.insertedAt}`)
+    comment(`createdAt: ${data.savePage.createdAt}`)
     comment(`updatedAt: ${data.savePage.updatedAt}`)
     original = data.savePage
   }
@@ -90,7 +86,7 @@ test('inserted_at updated_at happy path', async ({ pass, teardown, same, equal, 
             getPageById(id: 1) {
               id
               title
-              insertedAt
+              createdAt
               updatedAt
             }
           }
@@ -99,9 +95,9 @@ test('inserted_at updated_at happy path', async ({ pass, teardown, same, equal, 
     })
     equal(res.statusCode, 200, 'pages status code')
     const data = res.json().data
-    equal(data.getPageById.insertedAt, original.insertedAt, 'insertedAt')
+    equal(data.getPageById.createdAt, original.createdAt, 'createdAt')
     equal(data.getPageById.updatedAt, original.updatedAt, 'updatedAt')
-    comment(`insertedAt: ${data.getPageById.insertedAt}`)
+    comment(`createdAt: ${data.getPageById.createdAt}`)
     comment(`updatedAt: ${data.getPageById.updatedAt}`)
   }
 
@@ -118,7 +114,7 @@ test('inserted_at updated_at happy path', async ({ pass, teardown, same, equal, 
             savePage(input: { id: 1, title: "Hello World" }) {
               id
               title
-              insertedAt
+              createdAt
               updatedAt
             }
           }
@@ -126,10 +122,10 @@ test('inserted_at updated_at happy path', async ({ pass, teardown, same, equal, 
       }
     })
     const data = res.json().data
-    equal(data.savePage.insertedAt, original.insertedAt, 'insertedAt')
+    equal(data.savePage.createdAt, original.createdAt, 'createdAt')
     not(data.savePage.updatedAt, original.updatedAt, 'updatedAt')
     updated = data.savePage
-    comment(`insertedAt: ${data.savePage.insertedAt}`)
+    comment(`createdAt: ${data.savePage.createdAt}`)
     comment(`updatedAt: ${data.savePage.updatedAt}`)
   }
 
@@ -143,7 +139,7 @@ test('inserted_at updated_at happy path', async ({ pass, teardown, same, equal, 
             getPageById(id: 1) {
               id
               title
-              insertedAt
+              createdAt
               updatedAt
             }
           }
@@ -152,21 +148,17 @@ test('inserted_at updated_at happy path', async ({ pass, teardown, same, equal, 
     })
     equal(res.statusCode, 200, 'pages status code')
     const data = res.json().data
-    equal(data.getPageById.insertedAt, updated.insertedAt, 'insertedAt')
+    equal(data.getPageById.createdAt, updated.createdAt, 'createdAt')
     equal(data.getPageById.updatedAt, updated.updatedAt, 'updatedAt')
-    comment(`insertedAt: ${data.getPageById.insertedAt}`)
+    comment(`createdAt: ${data.getPageById.createdAt}`)
     comment(`updatedAt: ${data.getPageById.updatedAt}`)
   }
 })
 
-test('cannot set inserted_at', async ({ pass, teardown, same, equal, not, comment }) => {
+test('cannot set created_at', async ({ pass, teardown, same, equal, not, comment }) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
-    autoTimestamp: {
-      createdAt: 'inserted_at',
-      updatedAt: 'updated_at'
-    },
     async onDatabaseLoad (db, sql) {
       pass('onDatabaseLoad called')
 
@@ -186,10 +178,10 @@ test('cannot set inserted_at', async ({ pass, teardown, same, equal, not, commen
       body: {
         query: `
           mutation {
-            savePage(input: { title: "Hello", insertedAt: "${new Date().toISOString()}" }) {
+            savePage(input: { title: "Hello", createdAt: "${new Date().toISOString()}" }) {
               id
               title
-              insertedAt
+              createdAt
               updatedAt
             }
           }
@@ -198,7 +190,7 @@ test('cannot set inserted_at', async ({ pass, teardown, same, equal, not, commen
     })
     equal(res.statusCode, 400, 'savePage status code')
     const data = res.json()
-    equal(data.errors[0].message, 'Field "insertedAt" is not defined by type "PageInput".')
+    equal(data.errors[0].message, 'Field "createdAt" is not defined by type "PageInput".')
   }
 })
 
@@ -206,10 +198,6 @@ test('cannot set updated_at', async ({ pass, teardown, same, equal, not, comment
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
-    autoTimestamp: {
-      createdAt: 'inserted_at',
-      updatedAt: 'updated_at'
-    },
     async onDatabaseLoad (db, sql) {
       pass('onDatabaseLoad called')
 
@@ -232,7 +220,7 @@ test('cannot set updated_at', async ({ pass, teardown, same, equal, not, comment
             savePage(input: { title: "Hello" }) {
               id
               title
-              insertedAt
+              createdAt
               updatedAt
             }
           }
@@ -241,9 +229,9 @@ test('cannot set updated_at', async ({ pass, teardown, same, equal, not, comment
     })
     equal(res.statusCode, 200, 'savePage status code')
     const data = res.json().data
-    not(data.savePage.insertedAt, null, 'insertedAt')
+    not(data.savePage.createdAt, null, 'createdAt')
     not(data.savePage.updatedAt, null, 'updatedAt')
-    comment(`insertedAt: ${data.savePage.insertedAt}`)
+    comment(`createdAt: ${data.savePage.createdAt}`)
     comment(`updatedAt: ${data.savePage.updatedAt}`)
   }
 
@@ -257,7 +245,7 @@ test('cannot set updated_at', async ({ pass, teardown, same, equal, not, comment
             savePage(input: { id: 1, title: "Hello World", updatedAt: "${new Date().toISOString()}" }) {
               id
               title
-              insertedAt
+              createdAt
               updatedAt
             }
           }
@@ -270,7 +258,7 @@ test('cannot set updated_at', async ({ pass, teardown, same, equal, not, comment
   }
 })
 
-test('do not assign inserted_at updated_at', async ({ pass, teardown, same, equal, not, comment }) => {
+test('do not assign created_at updated_at', async ({ pass, teardown, same, equal, not, comment }) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -297,7 +285,7 @@ test('do not assign inserted_at updated_at', async ({ pass, teardown, same, equa
             savePage(input: { title: "Hello" }) {
               id
               title
-              insertedAt
+              createdAt
               updatedAt
             }
           }
@@ -306,7 +294,7 @@ test('do not assign inserted_at updated_at', async ({ pass, teardown, same, equa
     })
     equal(res.statusCode, 200, 'savePage status code')
     const data = res.json().data
-    equal(data.savePage.insertedAt, null, 'insertedAt')
+    equal(data.savePage.createdAt, null, 'createdAt')
     equal(data.savePage.updatedAt, null, 'updatedAt')
   }
 
@@ -320,7 +308,7 @@ test('do not assign inserted_at updated_at', async ({ pass, teardown, same, equa
             getPageById(id: 1) {
               id
               title
-              insertedAt
+              createdAt
               updatedAt
             }
           }
@@ -329,7 +317,7 @@ test('do not assign inserted_at updated_at', async ({ pass, teardown, same, equa
     })
     equal(res.statusCode, 200, 'pages status code')
     const data = res.json().data
-    equal(data.getPageById.insertedAt, null, 'insertedAt')
+    equal(data.getPageById.createdAt, null, 'createdAt')
     equal(data.getPageById.updatedAt, null, 'updatedAt')
   }
 
@@ -343,7 +331,7 @@ test('do not assign inserted_at updated_at', async ({ pass, teardown, same, equa
             savePage(input: { id: 1, title: "Hello World" }) {
               id
               title
-              insertedAt
+              createdAt
               updatedAt
             }
           }
@@ -351,7 +339,7 @@ test('do not assign inserted_at updated_at', async ({ pass, teardown, same, equa
       }
     })
     const data = res.json().data
-    equal(data.savePage.insertedAt, null, 'insertedAt')
+    equal(data.savePage.createdAt, null, 'createdAt')
     equal(data.savePage.updatedAt, null, 'updatedAt')
   }
 
@@ -365,7 +353,7 @@ test('do not assign inserted_at updated_at', async ({ pass, teardown, same, equa
             getPageById(id: 1) {
               id
               title
-              insertedAt
+              createdAt
               updatedAt
             }
           }
@@ -374,19 +362,15 @@ test('do not assign inserted_at updated_at', async ({ pass, teardown, same, equa
     })
     equal(res.statusCode, 200, 'pages status code')
     const data = res.json().data
-    equal(data.getPageById.insertedAt, null, 'insertedAt')
+    equal(data.getPageById.createdAt, null, 'createdAt')
     equal(data.getPageById.updatedAt, null, 'updatedAt')
   }
 })
 
-test('bulk insert adds inserted_at updated_at', async ({ pass, teardown, same, equal, not, comment }) => {
+test('bulk insert adds created_at updated_at', async ({ pass, teardown, same, equal, not, comment }) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
-    autoTimestamp: {
-      createdAt: 'inserted_at',
-      updatedAt: 'updated_at'
-    },
     async onDatabaseLoad (db, sql) {
       pass('onDatabaseLoad called')
 
@@ -409,7 +393,7 @@ test('bulk insert adds inserted_at updated_at', async ({ pass, teardown, same, e
             savePage(input: { title: "Hello" }) {
               id
               title
-              insertedAt
+              createdAt
               updatedAt
             }
           }
@@ -418,7 +402,7 @@ test('bulk insert adds inserted_at updated_at', async ({ pass, teardown, same, e
     })
     equal(res.statusCode, 200, 'savePage status code')
     const data = res.json().data
-    not(data.savePage.insertedAt, null, 'insertedAt')
+    not(data.savePage.createdAt, null, 'createdAt')
     not(data.savePage.updatedAt, null, 'updatedAt')
   }
 
@@ -432,7 +416,7 @@ test('bulk insert adds inserted_at updated_at', async ({ pass, teardown, same, e
             insertPages (inputs: $inputs) {
               id
               title
-              insertedAt
+              createdAt
               updatedAt
             }
           }
@@ -449,9 +433,9 @@ test('bulk insert adds inserted_at updated_at', async ({ pass, teardown, same, e
     equal(res.statusCode, 200, 'savePage status code')
     const pages = res.json().data.insertPages
     for (const page of pages) {
-      not(page.insertedAt, null, 'insertedAt')
+      not(page.createdAt, null, 'createdAt')
       not(page.updatedAt, null, 'updatedAt')
-      equal(page.insertedAt, page.updatedAt, 'insertedAt === updatedAt')
+      equal(page.createdAt, page.updatedAt, 'createdAt === updatedAt')
     }
   }
 
@@ -465,7 +449,7 @@ test('bulk insert adds inserted_at updated_at', async ({ pass, teardown, same, e
             pages {
               id
               title
-              insertedAt
+              createdAt
               updatedAt
             }
           }
@@ -475,14 +459,14 @@ test('bulk insert adds inserted_at updated_at', async ({ pass, teardown, same, e
     equal(res.statusCode, 200, 'pages status code')
     const pages = res.json().data.pages
     for (const page of pages) {
-      not(page.insertedAt, null, 'insertedAt')
+      not(page.createdAt, null, 'createdAt')
       not(page.updatedAt, null, 'updatedAt')
-      equal(page.insertedAt, page.updatedAt, 'insertedAt === updatedAt')
+      equal(page.createdAt, page.updatedAt, 'createdAt === updatedAt')
     }
   }
 })
 
-test('bulk insert with autoTimestamp=false do not had inserted_at updated_at', async ({ pass, teardown, same, equal, not, comment }) => {
+test('bulk insert with autoTimestamp=false do not had created_at updated_at', async ({ pass, teardown, same, equal, not, comment }) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -509,7 +493,7 @@ test('bulk insert with autoTimestamp=false do not had inserted_at updated_at', a
             insertPages (inputs: $inputs) {
               id
               title
-              insertedAt
+              createdAt
               updatedAt
             }
           }
@@ -526,7 +510,7 @@ test('bulk insert with autoTimestamp=false do not had inserted_at updated_at', a
     equal(res.statusCode, 200, 'savePage status code')
     const pages = res.json().data.insertPages
     for (const page of pages) {
-      equal(page.insertedAt, null, 'insertedAt')
+      equal(page.createdAt, null, 'createdAt')
       equal(page.updatedAt, null, 'updatedAt')
     }
   }

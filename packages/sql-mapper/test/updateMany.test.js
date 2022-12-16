@@ -248,7 +248,7 @@ test('updateMany successful and update updated_at', async ({ pass, teardown, sam
           title VARCHAR(42),
           long_text TEXT,
           counter INTEGER,
-          inserted_at TIMESTAMP,
+          created_at TIMESTAMP,
           updated_at TIMESTAMP
         );`)
       } else if (isMysql) {
@@ -257,7 +257,7 @@ test('updateMany successful and update updated_at', async ({ pass, teardown, sam
           title VARCHAR(42),
           long_text TEXT,
           counter INTEGER,
-          inserted_at TIMESTAMP NULL DEFAULT NULL,
+          created_at TIMESTAMP NULL DEFAULT NULL,
           updated_at TIMESTAMP NULL DEFAULT NULL
         );`)
       } else {
@@ -266,7 +266,7 @@ test('updateMany successful and update updated_at', async ({ pass, teardown, sam
           title VARCHAR(42),
           long_text TEXT,
           counter INTEGER,
-          inserted_at TIMESTAMP,
+          created_at TIMESTAMP,
           updated_at TIMESTAMP
         );`)
       }
@@ -313,6 +313,6 @@ test('updateMany successful and update updated_at', async ({ pass, teardown, sam
 
   const updatedPost3 = (await entity.find({ where: { id: { eq: '3' } } }))[0]
   same(updatedPost3.title, 'Updated title')
-  same(createdPost3.insertedAt, updatedPost3.insertedAt)
+  same(createdPost3.createdAt, updatedPost3.createdAt)
   notSame(createdPost3.updatedAt, updatedPost3.updatedAt)
 })

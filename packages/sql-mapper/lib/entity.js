@@ -85,9 +85,9 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     }
 
     let now
-    if (autoTimestamp && fields.updated_at) {
+    if (autoTimestamp && fields[autoTimestamp.updatedAt]) {
       now = new Date()
-      input.updated_at = now
+      input[autoTimestamp.updatedAt] = now
     }
     if (hasPrimaryKeys) { // update
       const res = await queries.updateOne(db, sql, table, schema, input, primaryKeys, fieldsToRetrieve)
@@ -100,10 +100,10 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     }
 
     // insert
-    if (autoTimestamp && fields.inserted_at) {
+    if (autoTimestamp && fields[autoTimestamp.createdAt]) {
       /* istanbul ignore next */
       now = now || new Date()
-      input.inserted_at = now
+      input[autoTimestamp.createdAt] = now
     }
     const res = await queries.insertOne(db, sql, table, schema, input, primaryKeysTypes, fieldsToRetrieve)
     return fixOutput(res)
@@ -118,11 +118,11 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     if (autoTimestamp) {
       const now = new Date()
       for (const input of inputs) {
-        if (fields.inserted_at) {
-          input.insertedAt = now
+        if (fields[autoTimestamp.createdAt]) {
+          input[autoTimestamp.createdAt] = now
         }
-        if (fields.updated_at) {
-          input.updatedAt = now
+        if (fields[autoTimestamp.updatedAt]) {
+          input[autoTimestamp.updatedAt] = now
         }
       }
     }
@@ -151,10 +151,9 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
       throw new Error('Input not provided.')
     }
     const input = fixInput(args.input)
-    let now
-    if (autoTimestamp && fields.updated_at) {
-      now = new Date()
-      input.updated_at = now
+    if (autoTimestamp && fields[autoTimestamp.updatedAt]) {
+      const now = new Date()
+      input[autoTimestamp.updatedAt] = now
     }
     const criteria = computeCriteria(args)
 
@@ -340,7 +339,7 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema,
       acc[column.column_name].enum = column.column_type.match(/'(.+?)'/g).map(enumValue => enumValue.slice(1, enumValue.length - 1))
     }
 
-    if (autoTimestamp && (column.column_name === 'updated_at' || column.column_name === 'inserted_at')) {
+    if (autoTimestamp && (column.column_name === autoTimestamp.createdAt || column.column_name === autoTimestamp.updatedAt)) {
       acc[column.column_name].autoTimestamp = true
     }
 

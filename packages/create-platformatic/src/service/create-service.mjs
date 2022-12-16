@@ -83,6 +83,12 @@ async function createService ({ hostname, port }, logger, currentDir = process.c
   } else {
     logger.info('Routes folder "routes" found, skipping creation of routes folder.')
   }
+
+  return {
+    PLT_SERVER_LOGGER_LEVEL: 'info',
+    PORT: port,
+    PLT_SERVER_HOSTNAME: hostname
+  }
 }
 
 export default createService

@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -49,6 +49,7 @@
     "@platformatic/sql-json-schema-mapper": "workspace:*",
     "close-with-grace": "^1.1.0",
     "commist": "^3.1.2",
+    "create-platformatic": "workspace:*",
     "desm": "^1.2.0",
     "dtsgenerator": "^3.16.1",
     "env-schema": "^5.0.0",
