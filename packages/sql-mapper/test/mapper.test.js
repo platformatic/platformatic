@@ -193,20 +193,3 @@ test('missing connectionString', async ({ rejects }) => {
 
   await rejects(app.ready(), /connectionString/)
 })
-
-test('throw if no primary keys', async ({ rejects, teardown }) => {
-  async function onDatabaseLoad (db, sql) {
-    await clear(db, sql)
-
-    await db.query(sql`CREATE TABLE pages (
-      title VARCHAR(255) NOT NULL
-    );`)
-  }
-  await rejects(connect({
-    connectionString: connInfo.connectionString,
-    log: fakeLogger,
-    onDatabaseLoad,
-    ignore: {},
-    hooks: {}
-  }))
-})
