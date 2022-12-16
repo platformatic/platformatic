@@ -22,9 +22,7 @@ async function createBasicPages (db, sql) {
       title VARCHAR(42) NOT NULL,
       metadata JSON,
       description TEXT,
-      type pagetype,
-      height_cm numeric,
-      height_in numeric GENERATED ALWAYS AS (height_cm / 2.54) STORED
+      type pagetype
     );`)
   } else {
     await db.query(sql`CREATE TABLE pages (
@@ -74,9 +72,6 @@ test('simple db, simple rest API', async (t) => {
     if (!isSQLite) {
       t.same(pageJsonSchema.properties.type, { type: 'string', nullable: true, enum: ['blank', 'non-blank'] })
     }
-    if(isPg) {
-      t.same(pageJsonSchema.properties.heightIn, { type: 'number', nullable: true, readOnly: true })
-    }
   }
 })
 
@@ -118,9 +113,6 @@ test('ignore one field', async (t) => {
     t.same(pageJsonSchema.required, [])
     if (!isSQLite) {
       t.same(pageJsonSchema.properties.type, { type: 'string', nullable: true, enum: ['blank', 'non-blank'] })
-    }
-    if(isPg) {
-      t.same(pageJsonSchema.properties.heightIn, { type: 'number', nullable: true, readOnly: true })
     }
   }
 })

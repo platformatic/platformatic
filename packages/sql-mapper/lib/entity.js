@@ -331,8 +331,7 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema,
   const fields = columns.reduce((acc, column) => {
     acc[column.column_name] = {
       sqlType: column.udt_name,
-      isNullable: column.is_nullable === 'YES',
-      isGenerated: column.is_generated !== 'NEVER'
+      isNullable: column.is_nullable === 'YES'
     }
 
     // To get enum values in mysql and mariadb
@@ -343,6 +342,16 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema,
 
     if (autoTimestamp && (column.column_name === 'updated_at' || column.column_name === 'inserted_at')) {
       acc[column.column_name].autoTimestamp = true
+    }
+
+    if(db.isPg) {
+      acc[column.column_name].isGenerated = column.is_generated !== 'NEVER'
+    }
+    if(db.isMySql) {
+      acc[column.column_name].isGenerated = column.is_generated.includes('GENERATED');
+    }
+    if(db.isSQLite) {
+      acc[column.column_name].isGenerated = column.is_generated === 'YES';
     }
     return acc
   }, {})
