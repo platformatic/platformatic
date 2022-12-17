@@ -173,6 +173,7 @@ importers:
       '@platformatic/sql-json-schema-mapper': workspace:*
       '@platformatic/sql-mapper': workspace:*
       '@platformatic/utils': workspace:*
+      bindings: ^1.5.0
       c8: ^7.12.0
       close-with-grace: ^1.1.0
       commist: ^3.2.0
@@ -245,6 +246,7 @@ importers:
       '@databases/sqlite': 4.0.2
       '@platformatic/sql-graphql': link:../sql-graphql
       '@platformatic/sql-mapper': link:../sql-mapper
+      bindings: 1.5.0
       c8: 7.12.0
       snazzy: 9.0.0
       split2: 4.1.0
@@ -426,6 +428,7 @@ importers:
       '@fastify/under-pressure': ^8.2.0
       '@platformatic/config': workspace:*
       '@platformatic/utils': workspace:*
+      bindings: ^1.5.0
       c8: ^7.12.0
       close-with-grace: ^1.1.0
       commist: ^3.2.0
@@ -485,6 +488,7 @@ importers:
       pino-pretty: 9.1.1
       rfdc: 1.3.0
     devDependencies:
+      bindings: 1.5.0
       c8: 7.12.0
       snazzy: 9.0.0
       split2: 4.1.0
@@ -4905,7 +4909,6 @@ packages:
     resolution: {integrity: sha512-p2q/t/mhvuOj/UeLlV6566GD/guowlr0hHxClI0W9m7MWYkL1F0hLo+0Aexs9HSPCtR1SXQ0TD3MMKrXZajbiQ==}
     dependencies:
       file-uri-to-path: 1.0.0
-    optional: true
 
   /bintrees/1.0.2:
     resolution: {integrity: sha512-VOMgTMwjAaUG580SXn3LacVgjurrbMme7ZZNYGSSV7mmtY6QQRh0Eg3pwIcntQ77DErK1L0NxkbetjcoXzVwKw==}
@@ -7041,7 +7044,6 @@ packages:
 
   /file-uri-to-path/1.0.0:
     resolution: {integrity: sha512-0Zt+s3L7Vf1biwWZ29aARiVYLx7iMGnEUl9x33fbB/j3jR81u/O2LbqK+Bm1CDSNDKVtJ/YjwY7TUd5SkeLQLw==}
-    optional: true
 
   /fill-range/4.0.0:
     resolution: {integrity: sha512-VcpLTWqWDiTerugjj8e3+esbg+skS3M9e54UuR3iCeIDMXCLTsAH8hTSzDQU/X6/6t3eYkOKoZSef2PlU6U1XQ==}
@@ -9551,7 +9553,6 @@ packages:
 
   /nan/2.17.0:
     resolution: {integrity: sha512-2ZTgtl0nJsO0KQCjEpxcIr5D+Yv90plTitZt9JBfQvVJDS5seMl3FOvsh3+9CoYWXf/1l5OaZzzF6nDm4cagaQ==}
-    requiresBuild: true
     dev: true
     optional: true
 

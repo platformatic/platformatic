@@ -201,7 +201,7 @@ test('load and reload with the fallback', async ({ teardown, equal, pass, same }
   }
 })
 
-test('load and reload ESM', { skip: true }, async ({ teardown, equal, pass, same }) => {
+test('load and reload ESM', async ({ teardown, equal, pass, same }) => {
   const file = join(os.tmpdir(), `some-plugin-${process.pid}.mjs`)
 
   await writeFile(file, `

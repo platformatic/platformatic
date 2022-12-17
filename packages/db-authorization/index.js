@@ -193,9 +193,9 @@ async function auth (app, opts) {
           return originalFind({ ...restOpts, where, ctx, fields })
         },
 
-        async save (originalSave, { input, ctx, fields, skipAuth }) {
+        async save (originalSave, { input, ctx, fields, skipAuth, ...restOpts }) {
           if (skipAuth || !ctx) {
-            return originalSave({ input, ctx, fields })
+            return originalSave({ ctx, input, fields, ...restOpts })
           }
           const request = getRequestFromContext(ctx)
           const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
@@ -237,15 +237,15 @@ async function auth (app, opts) {
               throw new Unauthorized()
             }
 
-            return originalSave({ input, ctx, fields })
+            return originalSave({ input, ctx, fields, ...restOpts })
           }
 
-          return originalSave({ input, ctx, fields })
+          return originalSave({ input, ctx, fields, ...restOpts })
         },
 
-        async insert (originalInsert, { inputs, ctx, fields, skipAuth }) {
+        async insert (originalInsert, { inputs, ctx, fields, skipAuth, ...restOpts }) {
           if (skipAuth || !ctx) {
-            return originalInsert({ inputs, ctx, fields })
+            return originalInsert({ inputs, ctx, fields, ...restOpts })
           }
           const request = getRequestFromContext(ctx)
           const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
@@ -271,19 +271,19 @@ async function auth (app, opts) {
             }
           }
 
-          return originalInsert({ inputs, ctx, fields })
+          return originalInsert({ inputs, ctx, fields, ...restOpts })
         },
 
-        async delete (originalDelete, { where, ctx, fields, skipAuth }) {
+        async delete (originalDelete, { where, ctx, fields, skipAuth, ...restOpts }) {
           if (skipAuth || !ctx) {
-            return originalDelete({ where, ctx, fields })
+            return originalDelete({ where, ctx, fields, ...restOpts })
           }
           const request = getRequestFromContext(ctx)
           const rule = await findRuleForRequestUser(ctx, rules, roleKey, anonymousRole)
 
           where = await fromRuleToWhere(ctx, rule.delete, where, request.user)
 
-          return originalDelete({ where, ctx, fields })
+          return originalDelete({ where, ctx, fields, ...restOpts })
         },
 
         async updateMany (originalUpdateMany, { where, ctx, fields, skipAuth, ...restOpts }) {

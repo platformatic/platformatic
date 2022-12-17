@@ -8,6 +8,7 @@
     "dashboard:build": "cd packages/db-dashboard && pnpm run build",
     "ra-data-rest": "pnpm -F @platformatic/db-ra-data-rest",
     "cleanall": "rm pnpm-lock.yaml && rm -rf node_modules && rm -rf packages/*/node_modules",
+    "clean": "rm -rf node_modules && rm -rf packages/*/node_modules",
     "postinstall": "node ./scripts/postinstall.js",
     "lint:markdown": "markdownlint-cli2"
   },
