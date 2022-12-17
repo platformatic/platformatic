@@ -45,6 +45,22 @@ async function listConstraints (db, sql, table) {
     })
   }
 
+  const indexes = await db.query(sql`
+    SELECT  *
+    FROM    pragma_index_list(${table}) as il
+    JOIN    pragma_index_info(il.name) as ii
+  `)
+
+  for (const index of indexes) {
+    /* istanbul ignore else */
+    if (index.unique === 1) {
+      constraints.push({
+        column_name: index.name,
+        constraint_type: 'UNIQUE'
+      })
+    }
+  }
+
   const foreignKeys = await db.query(sql`
     SELECT *
     FROM pragma_foreign_key_list(${table})

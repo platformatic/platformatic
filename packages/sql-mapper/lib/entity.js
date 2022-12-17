@@ -362,6 +362,17 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema,
   const constraintsList = await queries.listConstraints(db, sql, table, schema)
   const primaryKeys = new Set()
 
+  /* istanbul ignore next */
+  function checkSQLitePrimaryKey (constraint) {
+    if (db.isSQLite) {
+      const validTypes = ['integer', 'uuid', 'serial']
+      const pkType = fields[constraint.column_name].sqlType.toLowerCase()
+      if (!validTypes.includes(pkType)) {
+        throw new Error(`Invalid Primary Key type. Expected "integer", found "${pkType}"`)
+      }
+    }
+  }
+
   for (const constraint of constraintsList) {
     const field = fields[constraint.column_name]
 
@@ -377,20 +388,40 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema,
     if (constraint.constraint_type === 'PRIMARY KEY') {
       primaryKeys.add(constraint.column_name)
       // Check for SQLite typeless PK
-      /* istanbul ignore next */
-      if (db.isSQLite) {
-        const validTypes = ['integer', 'uuid', 'serial']
-        const pkType = fields[constraint.column_name].sqlType.toLowerCase()
-        if (!validTypes.includes(pkType)) {
-          throw new Error(`Invalid Primary Key type. Expected "integer", found "${pkType}"`)
-        }
-      }
+      checkSQLitePrimaryKey(constraint)
       field.primaryKey = true
     }
 
     if (constraint.constraint_type === 'FOREIGN KEY') {
       field.foreignKey = true
       currentRelations.push(constraint)
+    }
+  }
+
+  if (primaryKeys.size === 0) {
+    let found = false
+    for (const constraint of constraintsList) {
+      const field = fields[constraint.column_name]
+
+      /* istanbul ignore else */
+      if (constraint.constraint_type === 'UNIQUE') {
+        field.unique = true
+
+        /* istanbul ignore else */
+        if (!found) {
+          // Check for SQLite typeless PK
+          /* istanbul ignore next */
+          try {
+            checkSQLitePrimaryKey(constraint)
+          } catch {
+            continue
+          }
+
+          primaryKeys.add(constraint.column_name)
+          field.primaryKey = true
+          found = true
+        }
+      }
     }
   }
 
