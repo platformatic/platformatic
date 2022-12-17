@@ -35,6 +35,31 @@ async function createBasicPages (db, sql) {
   }
 }
 
+async function createBasicGeneratedTests (db, sql) {
+  if (isSQLite) {
+    await db.query(sql`CREATE TABLE generated_test (
+      id INTEGER PRIMARY KEY,
+      test INTEGER,
+      test_stored INTEGER GENERATED ALWAYS AS (test*2) STORED,
+      test_virtual INTEGER GENERATED ALWAYS AS (test*4) VIRTUAL
+    );`)
+  } else if (isPg) {
+    await db.query(sql`CREATE TABLE generated_test (
+      id SERIAL PRIMARY KEY,
+      test INTEGER,
+      test_stored INTEGER GENERATED ALWAYS AS (test*2) STORED
+    );`)
+  } else {
+    await db.query(sql`CREATE TABLE generated_test (
+      id INTEGER UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      test INTEGER,
+      test_stored INTEGER GENERATED ALWAYS AS (test*2) STORED,
+      test_virtual INTEGER GENERATED ALWAYS AS (test*4) VIRTUAL
+    );`)
+    await db.query(sql`INSERT INTO generated_test (test) VALUES(1);`)
+  }
+}
+
 test('simple db, simple rest API', async (t) => {
   const { pass, teardown } = t
 
@@ -113,6 +138,37 @@ test('ignore one field', async (t) => {
     t.same(pageJsonSchema.required, [])
     if (!isSQLite) {
       t.same(pageJsonSchema.properties.type, { type: 'string', nullable: true, enum: ['blank', 'non-blank'] })
+    }
+  }
+})
+
+test('stored and virtual generated columns should be read only', async (t) => {
+  const { pass, teardown } = t
+
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicGeneratedTests(db, sql)
+    }
+  })
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  {
+    const generatedTest = app.platformatic.entities.generatedTest
+    const generatedTestJsonSchema = mapSQLEntityToJSONSchema(generatedTest)
+
+    // as of postgresql 15 virtual generated column is not supported
+    if (isPg) {
+      t.same(generatedTestJsonSchema.properties.testStored, { type: 'integer', nullable: true, readOnly: true })
+    } else {
+      t.same(generatedTestJsonSchema.properties.testStored, { type: 'integer', nullable: true, readOnly: true })
+      t.same(generatedTestJsonSchema.properties.testVirtual, { type: 'integer', nullable: true, readOnly: true })
     }
   }
 })
