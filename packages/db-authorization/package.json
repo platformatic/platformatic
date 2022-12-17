@@ -13,24 +13,24 @@
   },
   "license": "Apache-2.0",
   "devDependencies": {
-    "@fastify/cookie": "^8.0.0",
-    "@fastify/session": "^10.0.0",
+    "@fastify/cookie": "^8.3.0",
+    "@fastify/session": "^10.1.0",
     "@platformatic/db-core": "workspace:*",
-    "fast-jwt": "^2.0.0",
-    "fastify": "^4.6.0",
-    "mercurius": "^11.0.0",
+    "fast-jwt": "^2.0.2",
+    "fastify": "^4.10.2",
+    "mercurius": "^11.4.0",
     "snazzy": "^9.0.0",
     "standard": "^17.0.0",
-    "tap": "^16.0.0",
+    "tap": "^16.3.2",
     "why-is-node-running": "^2.2.2",
-    "ws": "^8.9.0"
+    "ws": "^8.11.0"
   },
   "dependencies": {
-    "@fastify/error": "^3.0.0",
-    "@fastify/jwt": "^6.3.1",
-    "fastify-plugin": "^4.1.0",
-    "get-jwks": "^8.0.0",
-    "leven": "3.x",
-    "undici": "^5.6.1"
+    "@fastify/error": "^3.2.0",
+    "@fastify/jwt": "^6.5.0",
+    "fastify-plugin": "^4.4.0",
+    "get-jwks": "^8.0.2",
+    "leven": "~3.1.0",
+    "undici": "^5.14.0"
   }
 }
