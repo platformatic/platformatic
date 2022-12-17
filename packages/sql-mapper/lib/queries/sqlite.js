@@ -15,8 +15,10 @@ async function listTables (db, sql) {
 module.exports.listTables = listTables
 
 async function listColumns (db, sql, table) {
+  // pragma_table_info is not returning hidden column which tells if the column is generated or not
+  // therefore it is changed to pragma_table_xinfo
   const columns = await db.query(sql`
-    SELECT * FROM pragma_table_info(${table})
+    SELECT * FROM pragma_table_xinfo(${table})
   `)
   for (const column of columns) {
     column.column_name = column.name
@@ -24,6 +26,8 @@ async function listColumns (db, sql, table) {
     column.udt_name = column.type.replace(/^([^(]+).*/, '$1').toLowerCase()
     // convert is_nullable
     column.is_nullable = column.notnull === 0 && column.pk === 0 ? 'YES' : 'NO'
+    // convert hidden to is_generated
+    column.is_generated = (column.hidden === 2 || column.hidden === 3) ? 'YES' : 'NO'
   }
   return columns
 }

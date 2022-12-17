@@ -83,6 +83,9 @@ function mapSQLEntityToJSONSchema (entity, ignore = {}) {
       // we skip the primary key for creation
       required.push(field.camelcase)
     }
+    if (field.isGenerated) {
+      properties[field.camelcase].readOnly = true
+    }
     /* istanbul ignore next */
     if (field.enum) {
       properties[field.camelcase].enum = field.enum

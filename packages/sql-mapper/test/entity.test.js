@@ -717,3 +717,155 @@ test('JSON type', { skip: !(isPg || isMysql8) }, async ({ teardown, same, equal,
     }
   }), [{ id: 2, config: { foo: 'bar', bar: 'foo' } }])
 })
+
+test('stored and virtual generated columns should return for SQLite', { skip: !(isSQLite) }, async ({ teardown, same }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+
+    await db.query(sql`CREATE TABLE generated_test (
+      id INTEGER PRIMARY KEY,
+      test INTEGER,
+      test_stored INTEGER GENERATED ALWAYS AS (test*2) STORED,
+      test_virtual INTEGER GENERATED ALWAYS AS (test*4) VIRTUAL
+    );`)
+  }
+
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+
+  const generatedTest = mapper.entities.generatedTest
+
+  // save - new record
+  same(await generatedTest.save({
+    input: { test: 1 }
+  }), { id: 1, test: 1, testStored: 2, testVirtual: 4 })
+
+  // save - update
+  same(await generatedTest.save({
+    input: { id: 1, test: 2 }
+  }), { id: 1, test: 2, testStored: 4, testVirtual: 8 })
+
+  // insert
+  same(await generatedTest.insert({
+    inputs: [{ test: 4 }]
+  }), [{ id: 2, test: 4, testStored: 8, testVirtual: 16 }])
+
+  // updateMany
+  same(await generatedTest.updateMany({
+    where: {
+      id: {
+        eq: 2
+      }
+    },
+    input: {
+      test: 8
+    }
+  }), [{ id: 2, test: 8, testStored: 16, testVirtual: 32 }])
+})
+
+test('stored generated columns should return for pg', { skip: !(isPg) }, async ({ teardown, same }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+
+    await db.query(sql`CREATE TABLE generated_test (
+      id SERIAL PRIMARY KEY,
+      test INTEGER,
+      test_stored INTEGER GENERATED ALWAYS AS (test*2) STORED
+    );`)
+  }
+
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+
+  const generatedTest = mapper.entities.generatedTest
+
+  // save - new record
+  same(await generatedTest.save({
+    input: { test: 1 }
+  }), { id: 1, test: 1, testStored: 2 })
+
+  // save - update
+  same(await generatedTest.save({
+    input: { id: 1, test: 2 }
+  }), { id: 1, test: 2, testStored: 4 })
+
+  // insert
+  same(await generatedTest.insert({
+    inputs: [{ test: 4 }]
+  }), [{ id: 2, test: 4, testStored: 8 }])
+
+  // updateMany
+  same(await generatedTest.updateMany({
+    where: {
+      id: {
+        eq: 2
+      }
+    },
+    input: {
+      test: 8
+    }
+  }), [{ id: 2, test: 8, testStored: 16 }])
+})
+
+test('stored and virtual generated columns should return for pg', { skip: (isPg || isSQLite) }, async ({ teardown, same }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+
+    await db.query(sql`CREATE TABLE generated_test (
+      id INTEGER UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      test INTEGER,
+      test_stored INTEGER GENERATED ALWAYS AS (test*2) STORED,
+      test_virtual INTEGER GENERATED ALWAYS AS (test*4) VIRTUAL
+    );`)
+  }
+
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+
+  const generatedTest = mapper.entities.generatedTest
+
+  // save - new record
+  same(await generatedTest.save({
+    input: { test: 1 }
+  }), { id: 1, test: 1, testStored: 2, testVirtual: 4 })
+
+  // save - update
+  same(await generatedTest.save({
+    input: { id: 1, test: 2 }
+  }), { id: 1, test: 2, testStored: 4, testVirtual: 8 })
+
+  // insert
+  same(await generatedTest.insert({
+    inputs: [{ test: 4 }]
+  }), [{ id: 2, test: 4, testStored: 8, testVirtual: 16 }])
+
+  // updateMany
+  same(await generatedTest.updateMany({
+    where: {
+      id: {
+        eq: 2
+      }
+    },
+    input: {
+      test: 8
+    }
+  }), [{ id: 2, test: 8, testStored: 16, testVirtual: 32 }])
+})

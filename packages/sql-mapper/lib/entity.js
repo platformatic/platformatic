@@ -342,6 +342,17 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema,
     if (autoTimestamp && (column.column_name === autoTimestamp.createdAt || column.column_name === autoTimestamp.updatedAt)) {
       acc[column.column_name].autoTimestamp = true
     }
+
+    // To get generated information
+    /* istanbul ignore next */
+    if (db.isPg) {
+      acc[column.column_name].isGenerated = column.is_generated !== 'NEVER'
+    } else if (db.isSQLite) {
+      acc[column.column_name].isGenerated = column.is_generated === 'YES'
+    } else {
+      acc[column.column_name].isGenerated = column.is_generated.includes('GENERATED')
+    }
+
     return acc
   }, {})
 
