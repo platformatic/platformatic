@@ -12,7 +12,7 @@ async function createBasicPages (db, sql) {
     await db.query(sql`CREATE TABLE pages (
       id INTEGER PRIMARY KEY,
       title VARCHAR(42) NOT NULL,
-      number NUMERIC,
+      section NUMERIC,
       metadata JSON,
       description TEXT
     );`)
@@ -22,7 +22,7 @@ async function createBasicPages (db, sql) {
       id SERIAL PRIMARY KEY,
       title VARCHAR(42) NOT NULL,
       metadata JSON,
-      number NUMERIC,
+      section NUMERIC,
       description TEXT,
       type pagetype
     );`)
@@ -30,7 +30,7 @@ async function createBasicPages (db, sql) {
     await db.query(sql`CREATE TABLE pages (
       id INTEGER UNSIGNED AUTO_INCREMENT PRIMARY KEY,
       title VARCHAR(42) NOT NULL,
-      number NUMERIC,
+      section NUMERIC,
       metadata JSON,
       description TEXT,
       type ENUM ('blank', 'non-blank')
@@ -91,7 +91,7 @@ test('simple db, simple rest API', async (t) => {
     t.same(pageJsonSchema.properties.id, { type: 'integer' })
     t.same(pageJsonSchema.properties.title, { type: 'string' })
     t.same(pageJsonSchema.properties.description, { type: 'string', nullable: true })
-    t.same(pageJsonSchema.properties.number, { type: 'number', nullable: true })
+    t.same(pageJsonSchema.properties.section, { type: 'number', nullable: true })
     if (isMariaDB) {
       t.same(pageJsonSchema.properties.metadata, { type: 'string', nullable: true })
     } else {
