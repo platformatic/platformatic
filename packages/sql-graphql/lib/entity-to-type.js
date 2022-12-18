@@ -56,7 +56,7 @@ function constructGraph (app, entity, opts, ignore) {
       try {
         meta.type = new graphql.GraphQLEnumType({ name: key, values: enumValues })
       } catch (error) {
-        console.error({ key, enumValues, entityName, table: entity.table, schema: entity.schema })
+        app.log.error({ key, enumValues, entityName, table: entity.table, schema: entity.schema })
         throw new Error('Unable to generate GraphQLEnumType')
       }
     } else {
