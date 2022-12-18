@@ -13,6 +13,7 @@ async function createBasicPages (db, sql) {
       id INTEGER PRIMARY KEY,
       title VARCHAR(42) NOT NULL,
       metadata JSON,
+      section NUMERIC,
       description TEXT
     );`)
   } else if (isPg) {
@@ -21,6 +22,7 @@ async function createBasicPages (db, sql) {
       id SERIAL PRIMARY KEY,
       title VARCHAR(42) NOT NULL,
       metadata JSON,
+      section NUMERIC,
       description TEXT,
       type pagetype
     );`)
@@ -29,6 +31,7 @@ async function createBasicPages (db, sql) {
       id INTEGER UNSIGNED AUTO_INCREMENT PRIMARY KEY,
       title VARCHAR(42) NOT NULL,
       metadata JSON,
+      section NUMERIC,
       description TEXT,
       type ENUM ('blank', 'non-blank')
     );`)
@@ -88,6 +91,7 @@ test('simple db, simple rest API', async (t) => {
     t.same(pageJsonSchema.properties.id, { type: 'integer' })
     t.same(pageJsonSchema.properties.title, { type: 'string' })
     t.same(pageJsonSchema.properties.description, { type: 'string', nullable: true })
+    t.same(pageJsonSchema.properties.section, { type: 'number', nullable: true })
     if (isMariaDB) {
       t.same(pageJsonSchema.properties.metadata, { type: 'string', nullable: true })
     } else {
