@@ -53,7 +53,12 @@ function constructGraph (app, entity, opts, ignore) {
         acc[enumValue] = { value: enumValue }
         return acc
       }, {})
-      meta.type = new graphql.GraphQLEnumType({ name: key, values: enumValues })
+      try {
+        meta.type = new graphql.GraphQLEnumType({ name: key, values: enumValues })
+      } catch (error) {
+        console.error({ key, enumValues, entityName, table: entity.table, schema: entity.schema })
+        throw new Error('Unable to generate GraphQLEnumType')
+      }
     } else {
       meta.type = sqlTypeToGraphQL(field.sqlType)
     }
