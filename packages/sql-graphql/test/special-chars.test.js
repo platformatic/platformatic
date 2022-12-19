@@ -19,15 +19,15 @@ test('should correctly get the special characters', { skip: isSQLite }, async ({
         await db.query(sql`
         CREATE TYPE special_chars AS ENUM ('application/pdf', 'image/jpeg', 'image/png');
         CREATE TABLE enum_tests (
-          id uuid NOT NULL,
+          id INTEGER NOT NULL,
           test_enum special_chars,
           PRIMARY KEY (id)
         );`)
       } else {
         await db.query(sql`
         CREATE TABLE enum_tests (
-          id uuid NOT NULL,
-          test_enum enum('application/pdf', 'image/jpeg', 'image/png'),
+          id INTEGER NOT NULL,
+          test_enum ENUM ('application/pdf', 'image/jpeg', 'image/png'),
           PRIMARY KEY (id)
         );`)
       }
