@@ -258,6 +258,161 @@ test('nested resolver', async ({ pass, teardown, same, equal }) => {
   }
 })
 
+test('nested resolver with more of 10 rows in nested entity', async ({ pass, teardown, same, equal }) => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      if (isMysql) {
+        await db.query(sql`
+          CREATE TABLE categories (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255)
+          );
+          CREATE TABLE pages (
+            id SERIAL PRIMARY KEY,
+            title VARCHAR(42),
+            category_id BIGINT UNSIGNED,
+            FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
+          );
+        `)
+      } else if (isSQLite) {
+        await db.query(sql`
+          CREATE TABLE categories (
+            id INTEGER PRIMARY KEY,
+            name VARCHAR(42)
+          );
+        `)
+        await db.query(sql`
+          CREATE TABLE pages (
+            id INTEGER PRIMARY KEY,
+            title VARCHAR(42),
+            category_id INTEGER REFERENCES categories(id)
+          );
+        `)
+      } else {
+        await db.query(sql`
+          CREATE TABLE categories (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(42)
+          );
+          CREATE TABLE pages (
+            id SERIAL PRIMARY KEY,
+            title VARCHAR(42),
+            category_id INTEGER REFERENCES categories(id)
+          );
+        `)
+      }
+    }
+  })
+  app.register(sqlGraphQL)
+  teardown(app.close.bind(app))
+
+  const categories = [
+    { name: 'Category 01' },
+    { name: 'Category 02' },
+    { name: 'Category 03' },
+    { name: 'Category 04' },
+    { name: 'Category 05' },
+    { name: 'Category 06' },
+    { name: 'Category 07' },
+    { name: 'Category 08' },
+    { name: 'Category 09' },
+    { name: 'Category 10' },
+    { name: 'Category 11' }
+  ]
+  await app.inject({
+    method: 'POST',
+    url: '/graphql',
+    body: {
+      query: `
+            mutation batch($inputs: [CategoryInput]!) {
+              insertCategories(inputs: $inputs) {
+                id
+                name
+              }
+            }
+          `,
+      variables: {
+        inputs: categories
+      }
+    }
+  })
+
+  const pages = [
+    { title: 'Page 01', categoryId: 1 },
+    { title: 'Page 02', categoryId: 2 },
+    { title: 'Page 03', categoryId: 3 },
+    { title: 'Page 04', categoryId: 4 },
+    { title: 'Page 05', categoryId: 5 },
+    { title: 'Page 06', categoryId: 6 },
+    { title: 'Page 07', categoryId: 7 },
+    { title: 'Page 08', categoryId: 8 },
+    { title: 'Page 09', categoryId: 9 },
+    { title: 'Page 10', categoryId: 10 },
+    { title: 'Page 11', categoryId: 11 }
+  ]
+  await app.inject({
+    method: 'POST',
+    url: '/graphql',
+    body: {
+      query: `
+            mutation batch($inputs: [PageInput]!) {
+              insertPages(inputs: $inputs) {
+                id
+                title
+              }
+            }
+          `,
+      variables: {
+        inputs: pages
+      }
+    }
+  })
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+          query {
+            pages(limit: 100) {
+              id
+              title
+              category {
+                id
+              }
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'pages.category status code')
+    same(res.json(), {
+      data: {
+        pages: [
+          { id: 1, title: 'Page 01', category: { id: 1 } },
+          { id: 2, title: 'Page 02', category: { id: 2 } },
+          { id: 3, title: 'Page 03', category: { id: 3 } },
+          { id: 4, title: 'Page 04', category: { id: 4 } },
+          { id: 5, title: 'Page 05', category: { id: 5 } },
+          { id: 6, title: 'Page 06', category: { id: 6 } },
+          { id: 7, title: 'Page 07', category: { id: 7 } },
+          { id: 8, title: 'Page 08', category: { id: 8 } },
+          { id: 9, title: 'Page 09', category: { id: 9 } },
+          { id: 10, title: 'Page 10', category: { id: 10 } },
+          { id: 11, title: 'Page 11', category: { id: 11 } }
+        ]
+      }
+    }, 'pages.category response')
+  }
+})
+
 test('disable one-too-many', async ({ pass, teardown, same, equal, match }) => {
   const app = fastify()
   app.register(sqlMapper, {
