@@ -50,6 +50,11 @@ function constructGraph (app, entity, opts, ignore) {
     /* istanbul ignore next */
     if (field.enum) {
       const enumValues = field.enum.reduce((acc, enumValue) => {
+        const valueStartsWithLetterOrUnderscore = !!enumValue.match(/^[_a-zA-Z]/g)
+        if (!valueStartsWithLetterOrUnderscore) {
+          enumValue = `_${enumValue}`
+        }
+
         acc[enumValue] = { value: enumValue }
         return acc
       }, {})

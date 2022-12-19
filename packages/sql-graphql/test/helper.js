@@ -116,4 +116,14 @@ module.exports.clear = async function (db, sql) {
     await db.query(sql`DROP TABLE generated_test`)
   } catch (err) {
   }
+
+  try {
+    await db.query(sql`DROP TABLE enum_tests`)
+  } catch (err) {
+  }
+
+  try {
+    await db.query(sql`DROP TYPE custom_enum`)
+  } catch (err) {
+  }
 }
