@@ -20,16 +20,16 @@ test('should properly setup the enum types', { skip: isSQLite }, async ({ pass, 
         CREATE TYPE custom_enum AS ENUM('1', '2', '3');
 
         CREATE TABLE enum_tests (
-          "id" uuid NOT NULL,
-          "test_enum" custom_enum,
-          PRIMARY KEY ("id")
+          id INTEGER NOT NULL,
+          test_enum custom_enum,
+          PRIMARY KEY (id)
         );`)
       } else {
         await db.query(sql`
         CREATE TABLE enum_tests (
-          "id" uuid NOT NULL,
-          "test_enum" enum('1', '2', '3') DEFAULT NULL,
-          PRIMARY KEY ("id")
+          id INTEGER NOT NULL,
+          test_enum ENUM ('1', '2', '3') DEFAULT NULL,
+          PRIMARY KEY (id)
         );`)
       }
     }
