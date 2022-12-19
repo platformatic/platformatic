@@ -281,11 +281,14 @@ function constructGraph (app, entity, opts, ignore) {
   async function loadMany (keys, queries, ctx) {
     const fields = getFields(queries)
 
+    let limit = 0
+
     // TODO this is inefficient as it might load
     // more data than needed if there are more than
     // one primary key
     const where = keys.reduce((acc, pairs) => {
       pairs.reduce((acc, { key, value }) => {
+        limit++
         if (acc[key]) {
           acc[key].in.push(value)
         } else {
@@ -301,6 +304,7 @@ function constructGraph (app, entity, opts, ignore) {
     const res = await entity.find({
       where,
       fields,
+      limit,
       ctx
     })
 
