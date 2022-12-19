@@ -9,6 +9,7 @@ function generateConfig () {
   ]
 
   const config = {
+    $schema: './platformatic.service.schema.json',
     server: {
       hostname: '{PLT_SERVER_HOSTNAME}',
       port: '{PORT}',

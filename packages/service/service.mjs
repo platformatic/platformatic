@@ -6,6 +6,7 @@ import isMain from 'es-main'
 import helpMe from 'help-me'
 import { readFile } from 'fs/promises'
 import { join } from 'desm'
+import { generateJsonSchemaConfig } from './lib/gen-schema.js'
 
 import start from './lib/start.mjs'
 import { compile } from './lib/compile.js'
@@ -23,6 +24,8 @@ program.register('help start', help.toStdout.bind(null, ['start']))
 
 program.register('start', start)
 program.register('compile', compile)
+program.register('schema config', generateJsonSchemaConfig)
+program.register('schema', help.toStdout.bind(null, ['schema']))
 
 export async function runService (argv) {
   const args = parseArgs(argv, {
