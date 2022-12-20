@@ -33,7 +33,7 @@ async function listColumns (db, sql, table, schema) {
 
 async function listConstraints (db, sql, table, schema) {
   const query = sql`
-    SELECT TABLE_NAME as table_name, COLUMN_NAME as column_name, CONSTRAINT_TYPE as constraint_type, referenced_table_name AS foreign_table_name, referenced_column_name AS foreign_column_name
+    SELECT TABLE_NAME as table_name, TABLE_SCHEMA as table_schema, COLUMN_NAME as column_name, CONSTRAINT_TYPE as constraint_type, referenced_table_name AS foreign_table_name, referenced_table_schema AS foreign_table_schema, referenced_column_name AS foreign_column_name
     FROM information_schema.table_constraints t
     JOIN information_schema.key_column_usage k
     USING (constraint_name, table_schema, table_name)

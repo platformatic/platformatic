@@ -85,4 +85,26 @@ module.exports.clear = async function (db, sql) {
     await db.query(sql`DROP TABLE generated_test`)
   } catch (err) {
   }
+
+  // Don't change the order of these drops below
+  try {
+    await db.query(sql`DROP TABLE test1.editors`)
+  } catch (err) {
+  }
+  try {
+    await db.query(sql`DROP TABLE test2.users`)
+  } catch (err) {
+  }
+  try {
+    await db.query(sql`DROP TABLE test1.pages`)
+  } catch (err) {
+  }
+  try {
+    await db.query(sql`DROP SCHEMA test2`)
+  } catch (err) {
+  }
+  try {
+    await db.query(sql`DROP SCHEMA test1`)
+  } catch (err) {
+  }
 }

@@ -55,7 +55,7 @@ module.exports.listColumns = listColumns
 
 async function listConstraints (db, sql, table, schema) {
   const query = sql`
-    SELECT constraints.*, usage.*, usage2.table_name AS foreign_table_name, usage2.column_name AS foreign_column_name
+    SELECT constraints.*, usage.*, usage2.table_name AS foreign_table_name, usage2.column_name AS foreign_column_name, usage2.table_schema AS foreign_table_schema
     FROM information_schema.table_constraints constraints
       JOIN information_schema.key_column_usage usage
         ON constraints.constraint_name = usage.constraint_name

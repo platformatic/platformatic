@@ -7,6 +7,12 @@ const {
   tableName,
   sanitizeLimit
 } = require('./utils')
+const { singularize } = require('inflected')
+
+function lowerCaseFirst (str) {
+  str = str.toString()
+  return str.charAt(0).toLowerCase() + str.slice(1)
+}
 
 function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relations, queries, autoTimestamp, schema, useSchemaInName, limitConfig) {
   /* istanbul ignore next */ // Ignoring because this won't be fully covered by DB not supporting schemas (SQLite)
@@ -405,6 +411,17 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema,
 
     if (constraint.constraint_type === 'FOREIGN KEY') {
       field.foreignKey = true
+
+      // we need to ignore for coverage here becasue cannot be covered with sqlite (no schema support)
+      // istanbul ignore next
+      const foreignEntityName = singularize(camelcase(useSchemaInName ? camelcase(`${constraint.foreign_table_schema} ${constraint.foreign_table_name}`) : constraint.foreign_table_name))
+      // istanbul ignore next
+      const entityName = singularize(camelcase(useSchemaInName ? camelcase(`${constraint.table_schema} ${constraint.table_name}`) : constraint.table_name))
+      // istanbul ignore next
+      const loweredTableWithSchemaName = lowerCaseFirst(useSchemaInName ? camelcase(`${constraint.table_schema} ${camelcase(constraint.table_name)}`) : camelcase(constraint.table_name))
+      constraint.loweredTableWithSchemaName = loweredTableWithSchemaName
+      constraint.foreignEntityName = foreignEntityName
+      constraint.entityName = entityName
       currentRelations.push(constraint)
     }
   }

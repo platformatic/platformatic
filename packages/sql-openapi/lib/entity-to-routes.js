@@ -2,14 +2,13 @@
 
 const { mapSQLTypeToOpenAPIType } = require('@platformatic/sql-json-schema-mapper')
 const camelcase = require('camelcase')
-const { singularize } = require('inflected')
 const { generateArgs, rootEntityRoutes, capitalize, getFieldsForEntity } = require('./shared')
 
 const getEntityLinksForEntity = (app, entity) => {
   const entityLinks = {}
   for (const relation of entity.relations) {
     const ownField = camelcase(relation.column_name)
-    const relatedEntity = app.platformatic.entities[camelcase(singularize(relation.foreign_table_name))]
+    const relatedEntity = app.platformatic.entities[relation.foreignEntityName]
     const relatedEntityPrimaryKeyCamelcase = camelcase(relatedEntity.primaryKeys.values().next().value)
     const relatedEntityPrimaryKeyCamelcaseCapitalized = capitalize(relatedEntityPrimaryKeyCamelcase)
     const getEntityById = `Get${relatedEntity.name}By${relatedEntityPrimaryKeyCamelcaseCapitalized}`
@@ -25,7 +24,7 @@ const getEntityLinksForEntity = (app, entity) => {
     const relation = relationship.relation
     const theirField = camelcase(relation.column_name)
     const ownField = camelcase(relation.foreign_column_name)
-    const relatedEntity = app.platformatic.entities[camelcase(singularize(relation.table_name))]
+    const relatedEntity = app.platformatic.entities[relation.entityName]
     if (relatedEntity.primaryKeys.size !== 1) {
       continue
     }
@@ -100,7 +99,7 @@ async function entityPlugin (app, opts) {
 
   // For every reverse relationship we create: entity/:entity_Id/target_entity
   for (const reverseRelationship of entity.reverseRelationships) {
-    const targetEntityName = singularize(camelcase(reverseRelationship.relation.table_name))
+    const targetEntityName = reverseRelationship.relation.entityName
     const targetEntity = app.platformatic.entities[targetEntityName]
     const targetForeignKeyCamelcase = camelcase(reverseRelationship.relation.column_name)
     const targetEntitySchema = {
@@ -169,10 +168,12 @@ async function entityPlugin (app, opts) {
 
   // For every relationship we create: entity/:entity_Id/target_entity
   for (const relation of entity.relations) {
-    const targetEntityName = singularize(camelcase(relation.foreign_table_name))
+    const targetEntityName = relation.foreignEntityName
     const targetEntity = app.platformatic.entities[targetEntityName]
     const targetForeignKeyCamelcase = camelcase(relation.foreign_column_name)
     const targetColumnCamelcase = camelcase(relation.column_name)
+    // In this case, we navigate the relationship so we MUST use the column_name otherwise we will fail in case of recursive relationships
+    // (or multiple relationships between the same entities). We might want to specify this in documentation, because can be confusing
     const targetRelation = relation.column_name.replace(/_id$/, '')
     const targetEntitySchema = {
       $ref: targetEntity.name + '#'

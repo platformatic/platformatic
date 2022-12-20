@@ -3,8 +3,6 @@
 const Swagger = require('@fastify/swagger')
 const SwaggerUI = require('@fastify/swagger-ui')
 const deepmerge = require('@fastify/deepmerge')({ all: true })
-const camelcase = require('camelcase')
-const { singularize } = require('inflected')
 const { mapSQLEntityToJSONSchema } = require('@platformatic/sql-json-schema-mapper')
 const entityPlugin = require('./lib/entity-to-routes')
 const manyToMany = require('./lib/many-to-many')
@@ -51,10 +49,10 @@ async function setupOpenAPI (app, opts) {
     app.addSchema(entitySchema)
 
     for (const relation of Object.values(entity.relations)) {
-      const targetEntityName = singularize(camelcase(relation.foreign_table_name))
+      const targetEntityName = relation.foreignEntityName
       const targetEntity = app.platformatic.entities[targetEntityName]
       const reverseRelationship = {
-        sourceEntity: entity.name,
+        sourceEntity: relation.entityName,
         relation
       }
       /* istanbul ignore next */

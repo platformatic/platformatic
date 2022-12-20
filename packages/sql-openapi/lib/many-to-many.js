@@ -2,7 +2,6 @@
 
 const { mapSQLTypeToOpenAPIType } = require('@platformatic/sql-json-schema-mapper')
 const camelcase = require('camelcase')
-const { singularize } = require('inflected')
 const { generateArgs, capitalize, getFieldsForEntity, rootEntityRoutes } = require('./shared')
 
 async function entityPlugin (app, opts) {
@@ -27,7 +26,7 @@ async function entityPlugin (app, opts) {
     const camelcaseKey = camelcase(key)
     const relation = entity.relations.find((relation) => relation.column_name === key)
     if (relation) {
-      pathWithParams += `/${camelcase(singularize(relation.foreign_table_name))}/:${camelcaseKey}`
+      pathWithParams += `/${relation.foreignEntityName}/:${camelcaseKey}`
     } else {
       pathWithParams += `/${camelcaseKey}/:${camelcaseKey}`
     }

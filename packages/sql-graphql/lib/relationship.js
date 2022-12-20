@@ -9,20 +9,20 @@ const {
 const assert = require('assert')
 
 module.exports = function establishRelations (app, relations, resolvers, loaders, queryTopFields, relationships, metaMap) {
-  const tablesTypeMap = {}
+  const entitiesTypeMap = {}
   const entities = app.platformatic.entities
   for (const key of Object.keys(entities)) {
-    const entity = entities[key]
-    tablesTypeMap[entity.table] = metaMap.get(entity)
+    entitiesTypeMap[key] = metaMap.get(entities[key])
   }
-  for (const { table_name, foreign_table_name, column_name, foreign_column_name } of relations) {
+  for (const relation of relations) {
+    const { table_name, foreign_table_name, column_name, foreign_column_name, entityName, foreignEntityName, loweredTableWithSchemaName } = relation
     const enhanceAssertLogMsg = `(table: "${table_name}", foreign table: "${foreign_table_name}", column: "${column_name}")`
 
     assert(table_name, `table_name is required ${enhanceAssertLogMsg}`)
     assert(foreign_table_name, `foreign_table_name is required ${enhanceAssertLogMsg}`)
 
-    const current = tablesTypeMap[table_name]
-    const foreign = tablesTypeMap[foreign_table_name]
+    const current = entitiesTypeMap[entityName]
+    const foreign = entitiesTypeMap[foreignEntityName]
     assert(foreign !== undefined, `No foreign table named "${foreign_table_name}" was found ${enhanceAssertLogMsg}`)
 
     // current to foreign, we skip this if the foreign table has a composite primary key
@@ -54,7 +54,7 @@ module.exports = function establishRelations (app, relations, resolvers, loaders
     // foreign to current, we skip this if the current table has a composite primary key
     // TODO implement support for this case
     if (current.entity.primaryKeys.size === 1) {
-      const lowered = lowerCaseFirst(camelcase(current.entity.table))
+      const lowered = loweredTableWithSchemaName
       if (!relationships[foreign.type] || relationships[foreign.type][lowered] !== false) {
         foreign.fields[lowered] = queryTopFields[lowered]
         resolvers[foreign.type] = resolvers[foreign.type] || {}
