@@ -417,6 +417,7 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema,
       const foreignEntityName = singularize(camelcase(useSchemaInName ? camelcase(`${constraint.foreign_table_schema} ${constraint.foreign_table_name}`) : constraint.foreign_table_name))
       // istanbul ignore next
       const entityName = singularize(camelcase(useSchemaInName ? camelcase(`${constraint.table_schema} ${constraint.table_name}`) : constraint.table_name))
+      // istanbul ignore next
       const loweredTableWithSchemaName = lowerCaseFirst(useSchemaInName ? camelcase(`${constraint.table_schema} ${camelcase(constraint.table_name)}`) : camelcase(constraint.table_name))
       constraint.loweredTableWithSchemaName = loweredTableWithSchemaName
       constraint.foreignEntityName = foreignEntityName
