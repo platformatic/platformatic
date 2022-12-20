@@ -215,7 +215,7 @@ test('nested routes', async (t) => {
   }
 })
 
-test('nested routes with recursive FK', async (t) => {
+t.only('nested routes with recursive FK', async (t) => {
   const { pass, teardown, same, equal, matchSnapshot } = t
   t.snapshotFile = resolve(__dirname, 'tap-snapshots', 'nested-routes-openapi-recursive.cjs')
   const app = fastify()

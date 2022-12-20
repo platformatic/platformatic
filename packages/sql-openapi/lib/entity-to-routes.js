@@ -172,6 +172,8 @@ async function entityPlugin (app, opts) {
     const targetEntity = app.platformatic.entities[targetEntityName]
     const targetForeignKeyCamelcase = camelcase(relation.foreign_column_name)
     const targetColumnCamelcase = camelcase(relation.column_name)
+    // In this case, we navigate the relationship so we MUST use the column_name otherwise we will fail in case of recursive relationships
+    // (or multiple relationships between the same entities). We might want to specify this in documentation, because can be confusing
     const targetRelation = relation.column_name.replace(/_id$/, '')
     const targetEntitySchema = {
       $ref: targetEntity.name + '#'

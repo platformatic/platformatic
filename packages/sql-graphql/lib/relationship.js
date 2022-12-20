@@ -14,7 +14,8 @@ module.exports = function establishRelations (app, relations, resolvers, loaders
   for (const key of Object.keys(entities)) {
     entitiesTypeMap[key] = metaMap.get(entities[key])
   }
-  for (const { table_name, foreign_table_name, column_name, foreign_column_name, entityName, foreignEntityName } of relations) {
+  for (const relation of relations) {
+    const { table_name, foreign_table_name, column_name, foreign_column_name, entityName, foreignEntityName, loweredTableWithSchemaName } = relation
     const enhanceAssertLogMsg = `(table: "${table_name}", foreign table: "${foreign_table_name}", column: "${column_name}")`
 
     assert(table_name, `table_name is required ${enhanceAssertLogMsg}`)
@@ -53,7 +54,7 @@ module.exports = function establishRelations (app, relations, resolvers, loaders
     // foreign to current, we skip this if the current table has a composite primary key
     // TODO implement support for this case
     if (current.entity.primaryKeys.size === 1) {
-      const lowered = lowerCaseFirst(camelcase(current.entity.table))
+      const lowered = loweredTableWithSchemaName
       if (!relationships[foreign.type] || relationships[foreign.type][lowered] !== false) {
         foreign.fields[lowered] = queryTopFields[lowered]
         resolvers[foreign.type] = resolvers[foreign.type] || {}
