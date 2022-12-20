@@ -17,10 +17,10 @@ test('should correctly get the special characters', { skip: isSQLite }, async ({
 
       if (isPg) {
         await db.query(sql`
-        CREATE TYPE special_chars AS ENUM ('application/pdf', 'image/jpeg', 'image/png');
+        CREATE TYPE custom_enum AS ENUM ('application/pdf', 'image/jpeg', 'image/png');
         CREATE TABLE enum_tests (
           id INTEGER NOT NULL,
-          test_enum special_chars,
+          test_enum custom_enum,
           PRIMARY KEY (id)
         );`)
       } else {
