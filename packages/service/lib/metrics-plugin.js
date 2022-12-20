@@ -87,7 +87,7 @@ module.exports = fp(async function (app, opts) {
   const metricsEndpointOptions = {
     url: '/metrics',
     method: 'GET',
-    logLevel: 'info',
+    logLevel: 'trace',
     handler: async (req, reply) => {
       const promRegistry = app.metrics.client.register
       const accepts = req.accepts()
