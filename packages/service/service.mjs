@@ -17,7 +17,7 @@ const help = helpMe({
   ext: '.txt'
 })
 
-const program = commist({ maxDistance: 4 })
+const program = commist({ maxDistance: 2 })
 
 program.register('help', help.toStdout)
 program.register('help start', help.toStdout.bind(null, ['start']))
@@ -39,11 +39,9 @@ export async function runService (argv) {
     process.exit(0)
   }
 
-  const result = program.parse(argv)
-
-  if (result) {
-    // We did have a command we did not match
-    return start(result)
+  return {
+    output: await program.parseAsync(argv),
+    help
   }
 }
 

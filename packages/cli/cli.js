@@ -12,22 +12,31 @@ import helpMe from 'help-me'
 
 import { logo } from './lib/ascii.js'
 
-const program = commist()
+const program = commist({ maxDistance: 2 })
 const help = helpMe({
   dir: join(import.meta.url, 'help'),
   // the default
   ext: '.txt'
 })
 
-program.register('db', runDB)
-program.register('service', runService)
+const ensureCommand = async ({ output, help }) => {
+  if (!output) {
+    process.exit(0)
+  }
+
+  if (output.length) {
+    console.log('Command not found:', output.join(' '), '\n')
+  }
+
+  await help.toStdout()
+  process.exit(1)
+}
+
+program.register('db', async (args) => ensureCommand(await runDB(args)))
+program.register('service', async (args) => ensureCommand(await runService(args)))
 program.register('help', help.toStdout)
-program.register('help db', function (args) {
-  runDB(['help', ...args])
-})
-program.register('help service', function (args) {
-  runService(['help', ...args])
-})
+program.register('help db', async (args) => runDB(['help', ...args]))
+program.register('help service', async (args) => runService(['help', ...args]))
 program.register({ command: 'login', strict: true }, login)
 
 const args = minimist(process.argv.slice(2), {
@@ -45,19 +54,15 @@ if (args.version) {
 }
 
 if (args.help) {
-  help.toStdout(['help'])
+  await help.toStdout(['help'])
 } else if (process.argv.length > 2) {
-  const result = program.parse(process.argv.slice(2))
-
-  if (result) {
-    console.log('Command not found:', result.join(' '))
-    process.exit(1)
-  }
+  const output = await program.parseAsync(process.argv.slice(2))
+  await ensureCommand({ output, help })
+/* c8 ignore start */
 } else {
-  /* c8 ignore next 3 */
   if (isColorSupported && process.stdout.isTTY) {
     console.log(logo)
   }
-
-  help.toStdout(['help'])
+  await help.toStdout(['help'])
 }
+/* c8 ignore stop */

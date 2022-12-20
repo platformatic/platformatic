@@ -2561,7 +2561,7 @@ packages:
       debug: 4.3.4
       espree: 9.4.1
       globals: 13.19.0
-      ignore: 5.2.1
+      ignore: 5.2.4
       import-fresh: 3.3.0
       js-yaml: 4.1.0
       minimatch: 3.1.2
@@ -6443,7 +6443,7 @@ packages:
       eslint: 8.30.0
       eslint-plugin-es: 4.1.0_eslint@8.30.0
       eslint-utils: 3.0.0_eslint@8.30.0
-      ignore: 5.2.1
+      ignore: 5.2.4
       is-core-module: 2.11.0
       minimatch: 3.1.2
       resolve: 1.22.1
@@ -6572,7 +6572,7 @@ packages:
       glob-parent: 6.0.2
       globals: 13.19.0
       grapheme-splitter: 1.0.4
-      ignore: 5.2.1
+      ignore: 5.2.4
       import-fresh: 3.3.0
       imurmurhash: 0.1.4
       is-glob: 4.0.3
@@ -7525,7 +7525,7 @@ packages:
       array-union: 2.1.0
       dir-glob: 3.0.1
       fast-glob: 3.2.12
-      ignore: 5.2.1
+      ignore: 5.2.4
       merge2: 1.4.1
       slash: 3.0.0
     dev: true
@@ -7536,7 +7536,7 @@ packages:
     dependencies:
       dir-glob: 3.0.1
       fast-glob: 3.2.12
-      ignore: 5.2.1
+      ignore: 5.2.4
       merge2: 1.4.1
       slash: 4.0.0
     dev: true
@@ -7972,8 +7972,8 @@ packages:
     engines: {node: '>= 4'}
     dev: true
 
-  /ignore/5.2.1:
-    resolution: {integrity: sha512-d2qQLzTJ9WxQftPAuEQpSPmKqzxePjzVbpAVv62AQ64NTL+wR4JkrVqR/LqFsFEUsHDAiId52mJteHDFuDkElA==}
+  /ignore/5.2.4:
+    resolution: {integrity: sha512-MAb38BcSbH0eHNBxn7ql2NH/kX33OkB3lZ1BNdh7ENeRChHTYsTvWrMubiIAMNS2llXEEgZ1MUOBtXChP3kaFQ==}
     engines: {node: '>= 4'}
     dev: true
 
@@ -9553,7 +9553,6 @@ packages:
 
   /nan/2.17.0:
     resolution: {integrity: sha512-2ZTgtl0nJsO0KQCjEpxcIr5D+Yv90plTitZt9JBfQvVJDS5seMl3FOvsh3+9CoYWXf/1l5OaZzzF6nDm4cagaQ==}
-    requiresBuild: true
     dev: true
     optional: true
 

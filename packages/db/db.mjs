@@ -7,7 +7,7 @@ import helpMe from 'help-me'
 import { readFile } from 'fs/promises'
 import { join } from 'desm'
 
-import start from './lib/start.mjs'
+import { start } from './lib/start.mjs'
 import { init } from './lib/init.mjs'
 import { compile } from './lib/compile.mjs'
 import { applyMigrations } from './lib/migrate.mjs'
@@ -22,7 +22,7 @@ const help = helpMe({
   ext: '.txt'
 })
 
-const program = commist({ maxDistance: 4 })
+const program = commist({ maxDistance: 2 })
 
 program.register('help', help.toStdout)
 program.register('help init', help.toStdout.bind(null, ['init']))
@@ -58,11 +58,9 @@ export async function runDB (argv) {
     process.exit(0)
   }
 
-  const result = program.parse(argv)
-
-  if (result) {
-    // We did have a command we did not match
-    return start(result)
+  return {
+    output: await program.parseAsync(argv),
+    help
   }
 }
 

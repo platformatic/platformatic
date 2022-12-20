@@ -21,7 +21,7 @@ test('version', async (t) => {
 
 test('db', async (t) => {
   try {
-    await execa('node', [cliPath, 'db'])
+    await execa('node', [cliPath, 'db', 'start'])
     t.fail('bug')
   } catch (err) {
     t.ok(err.stderr.includes('Missing config file'))
@@ -43,6 +43,34 @@ test('command not found', async (t) => {
     t.fail('bug')
   } catch (err) {
     t.ok(err.stdout.includes('Command not found: foo'))
+  }
+})
+
+test('subcommand not found', async (t) => {
+  try {
+    const rv = await execa('node', [cliPath, 'db', 'subfoo'])
+    console.log(rv.stdout)
+    t.fail('bug')
+  } catch (err) {
+    t.ok(err.stdout.includes('Command not found: subfoo'))
+  }
+})
+
+test('allows for minor typos in commands', async (t) => {
+  try {
+    await execa('node', [cliPath, 'dbx', 'start'])
+    t.fail('bug')
+  } catch (err) {
+    t.ok(err.stderr.includes('Missing config file'))
+  }
+})
+
+test('prints the help if command requires a subcommand', async (t) => {
+  try {
+    await execa('node', [cliPath, 'db'])
+    t.fail('bug')
+  } catch (err) {
+    t.equal(err.stdout + EOL, helpDB)
   }
 })
 

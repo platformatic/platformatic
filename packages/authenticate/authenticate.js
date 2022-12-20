@@ -9,8 +9,8 @@ import { print } from './lib/utils.js'
 const program = commist()
 program.register('login', startLogin)
 
-export function login (argv) {
-  const result = program.parse(argv)
+export async function login (argv) {
+  const result = await program.parseAsync(argv)
   if (result) return startLogin(result, print).catch(exit)
 }
 
