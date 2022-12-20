@@ -55,7 +55,7 @@ function constructGraph (app, entity, opts, ignore) {
           enumValue = `_${enumValue}`
         }
 
-        acc[enumValue] = { value: enumValue }
+        acc[enumValue.replace(/[^\w\s]/g, '_')] = { value: enumValue }
         return acc
       }, {})
       try {
