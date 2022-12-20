@@ -10,8 +10,8 @@ const server = await buildServer({
     connectionString: 'sqlite://::memory::'
   },
   migrations: {
-    dir: join(import.meta.url, "./migrations"),
-    table: "versions",
+    dir: join(import.meta.url, './migrations'),
+    table: 'versions',
     autoApply: true
   }
 })
