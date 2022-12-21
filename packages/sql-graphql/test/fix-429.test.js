@@ -4,10 +4,10 @@ const { test } = require('tap')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { connInfo, clear } = require('./helper')
+const { connInfo, clear, isSQLite } = require('./helper')
 const { randomUUID } = require('crypto')
 
-test('saveEntity should have all inputs fields as nullable', async ({ pass, teardown, same, equal }) => {
+test('saveEntity should have all inputs fields as nullable', { skip: isSQLite }, async ({ pass, teardown, same, equal }) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
