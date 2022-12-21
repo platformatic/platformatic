@@ -59,7 +59,8 @@ function constructGraph (app, entity, opts, ignore) {
         return acc
       }, {})
       try {
-        meta.type = new graphql.GraphQLEnumType({ name: `${entityName}${key}`, values: enumValues })
+        const name = camelcase(entityName) + camelcase(key)
+        meta.type = new graphql.GraphQLEnumType({ name, values: enumValues })
       } catch (error) {
         app.log.error({ key, enumValues, entityName, table: entity.table, schema: entity.schema })
         throw new Error('Unable to generate GraphQLEnumType')
