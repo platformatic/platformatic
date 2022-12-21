@@ -119,3 +119,4 @@ playwright-report
 .vscode
 
 packages/service/test/tmp 
+packages/cli/fixtures/sqlite/db

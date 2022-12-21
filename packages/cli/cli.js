@@ -21,7 +21,7 @@ const help = helpMe({
 
 const ensureCommand = async ({ output, help }) => {
   if (!output) {
-    process.exit(0)
+    return
   }
 
   if (output.length) {

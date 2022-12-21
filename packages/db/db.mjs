@@ -58,8 +58,10 @@ export async function runDB (argv) {
     process.exit(0)
   }
 
+  const output = await program.parseAsync(argv) 
+
   return {
-    output: await program.parseAsync(argv),
+    output,
     help
   }
 }
