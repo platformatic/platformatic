@@ -4,6 +4,17 @@ import { readFile } from 'fs/promises'
 import { execa } from 'execa'
 import { cliPath } from './helper.js'
 import { EOL } from 'os'
+import { Agent, setGlobalDispatcher, request } from 'undici'
+import split from 'split2'
+import { on } from 'events'
+
+setGlobalDispatcher(new Agent({
+  keepAliveTimeout: 10,
+  keepAliveMaxTimeout: 10,
+  tls: {
+    rejectUnauthorized: false
+  }
+}))
 
 const version = JSON.parse(await readFile(join(import.meta.url, '..', 'package.json'))).version
 const help = await readFile(join(import.meta.url, '..', 'help', 'help.txt'), 'utf8')
@@ -97,4 +108,65 @@ test('prints the help if not commands are specified', async (t) => {
 test('prints the help of service', async (t) => {
   const { stdout } = await execa('node', [cliPath, 'help', 'service'])
   t.equal(stdout + EOL, helpService)
+})
+
+async function start (...args) {
+  const { execa } = await import('execa')
+  const child = execa('node', [cliPath, ...args])
+  child.stderr.pipe(process.stdout)
+  const output = child.stdout.pipe(split(function (line) {
+    try {
+      const obj = JSON.parse(line)
+      return obj
+    } catch (err) {
+      console.log(line)
+    }
+  }))
+  child.ndj = output
+
+  const errorTimeout = setTimeout(() => {
+    throw new Error('Couldn\'t start server')
+  }, 10000)
+
+  for await (const messages of on(output, 'data')) {
+    for (const message of messages) {
+      const url = message.url
+      if (url !== undefined) {
+        clearTimeout(errorTimeout)
+        return { child, url, output }
+      }
+    }
+  }
+}
+
+test('start the database and do a call', async ({ teardown, equal, match }) => {
+  const config = join(import.meta.url, '..', 'fixtures/sqlite/platformatic.db.json')
+  const { child, url } = await start('db', 'start', '-c', config)
+  teardown(() => {
+    child.kill('SIGINT')
+  })
+
+  const res = await request(`${url}/graphql`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      query: `
+            mutation {
+              saveGraph(input: { name: "Hello" }) {
+                id
+                name
+              }
+            }
+          `
+    })
+  })
+  equal(res.statusCode, 200, 'saveGraph status code')
+  const body = await res.body.json()
+  match(body, {
+    data: {
+      saveGraph: {
+        name: 'Hello'
+      }
+    }
+  }, 'saveGraph response')
 })
