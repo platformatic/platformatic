@@ -144,7 +144,6 @@ test('start the database and do a call', async ({ teardown, equal, match }) => {
   const { child, url } = await start('db', 'start', '-c', config)
   teardown(() => {
     child.kill('SIGINT')
-
   })
 
   const res = await request(`${url}/graphql`, {
