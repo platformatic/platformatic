@@ -63,8 +63,9 @@ const createPlatformaticService = async (_args) => {
 
   const fastifyVersion = await getDependencyVersion('fastify')
 
-  // Create the package.json, .gitignore, readme
-  await createPackageJson('service', version, fastifyVersion, logger, projectDir)
+  // Create the package.json, notes that we don't have the option for TS (yet) so we don't generate
+  // the package.json with the TS build
+  await createPackageJson('service', version, fastifyVersion, logger, projectDir, false)
   await createGitignore(logger, projectDir)
   await createReadme(logger, projectDir)
 
@@ -95,7 +96,8 @@ const createPlatformaticService = async (_args) => {
 `)
   }
 
-  await askCreateGHAction(logger, env, 'service')
+  // We don't have the option for TS (yet) so we don't run build on TS
+  await askCreateGHAction(logger, env, 'service', false)
 }
 
 export default createPlatformaticService
