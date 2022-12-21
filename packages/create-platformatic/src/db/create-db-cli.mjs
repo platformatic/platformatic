@@ -106,7 +106,7 @@ const createPlatformaticDB = async (_args) => {
   const fastifyVersion = await getDependencyVersion('fastify')
 
   // Create the package.json, .gitignore, readme
-  await createPackageJson('db', version, fastifyVersion, logger, projectDir)
+  await createPackageJson('db', version, fastifyVersion, logger, projectDir, useTypescript)
   await createGitignore(logger, projectDir)
   await createReadme(logger, projectDir)
 
@@ -163,7 +163,7 @@ const createPlatformaticDB = async (_args) => {
     await execaNode('./node_modules/@platformatic/db/db.mjs', ['schema', 'config'], { cwd: projectDir })
     logger.info('Configuration schema successfully created.')
   }
-  await askCreateGHAction(logger, env, 'db')
+  await askCreateGHAction(logger, env, 'db', useTypescript)
 
   if (!runPackageManagerInstall) {
     logger.warn(`You must run the following commands in the project folder to complete the setup:

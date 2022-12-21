@@ -1,12 +1,13 @@
 'use strict'
 
 import { test, beforeEach, afterEach } from 'tap'
-import { mkdtemp, rmdir, writeFile } from 'fs/promises'
+import { mkdtemp, rmdir, writeFile, readFile } from 'fs/promises'
 import mkdirp from 'mkdirp'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import { isFileAccessible } from '../src/utils.mjs'
 import { createGHAction } from '../src/ghaction.mjs'
+import { parse } from 'yaml'
 
 let log = []
 let tmpDir
@@ -25,15 +26,41 @@ afterEach(async () => {
 })
 
 const env = {
-  DATABASE_URL: 'mydbconnetionstring',
+  DATABASE_URL: 'mydbconnectionstring',
   PLT_SERVER_LOGGER_LEVEL: 'info'
 }
 
 test('creates gh action', async ({ end, equal }) => {
-  await createGHAction(fakeLogger, env, 'db', tmpDir)
+  await createGHAction(fakeLogger, env, 'db', tmpDir, false)
   equal(log[0], 'Github action successfully created, please add PLATFORMATIC_API_KEY as repository secret.')
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-deploy.yml'))
   equal(accessible, true)
+  const ghFile = await readFile(join(tmpDir, '.github/workflows/platformatic-deploy.yml'), 'utf8')
+  const ghAction = parse(ghFile)
+  const steps = ghAction.jobs.build_and_deploy.steps
+  equal(steps.length, 3)
+  equal(steps[0].name, 'Checkout application project repository')
+  equal(steps[1].name, 'npm install --omit=dev')
+  equal(steps[2].name, 'Deploy project')
+  equal(steps[2].env.DATABASE_URL, 'mydbconnectionstring')
+  equal(steps[2].env.PLT_SERVER_LOGGER_LEVEL, 'info')
+})
+
+test('creates gh action with TS build step', async ({ end, equal }) => {
+  await createGHAction(fakeLogger, env, 'db', tmpDir, true)
+  equal(log[0], 'Github action successfully created, please add PLATFORMATIC_API_KEY as repository secret.')
+  const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-deploy.yml'))
+  equal(accessible, true)
+  const ghFile = await readFile(join(tmpDir, '.github/workflows/platformatic-deploy.yml'), 'utf8')
+  const ghAction = parse(ghFile)
+  const steps = ghAction.jobs.build_and_deploy.steps
+  equal(steps.length, 4)
+  equal(steps[0].name, 'Checkout application project repository')
+  equal(steps[1].name, 'npm install --omit=dev')
+  equal(steps[2].name, 'Build project')
+  equal(steps[3].name, 'Deploy project')
+  equal(steps[3].env.DATABASE_URL, 'mydbconnectionstring')
+  equal(steps[3].env.PLT_SERVER_LOGGER_LEVEL, 'info')
 })
 
 test('do not create gitignore file because already present', async ({ end, equal }) => {

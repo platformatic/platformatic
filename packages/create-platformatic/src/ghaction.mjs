@@ -4,7 +4,7 @@ import inquirer from 'inquirer'
 import { isFileAccessible } from './utils.mjs'
 import { writeFile } from 'fs/promises'
 
-export const ghTemplate = (env, type) => {
+export const ghTemplate = (env, type, buildTS = false) => {
   const envAsStr = Object.keys(env).reduce((acc, key) => {
     acc += `          ${key}: ${env[key]} \n`
     return acc
@@ -24,7 +24,11 @@ jobs:
       - name: Checkout application project repository
         uses: actions/checkout@v3
       - name: npm install --omit=dev
-        run: npm install --omit=dev
+        run: npm install --omit=dev${buildTS
+? `
+      - name: Build project        
+        run: npm run build`
+: ''}
       - name: Deploy project
         uses: platformatic/onestep@latest
         with:
@@ -36,13 +40,13 @@ ${envAsStr}
 `
 }
 
-export const createGHAction = async (logger, env, type, projectDir) => {
+export const createGHAction = async (logger, env, type, projectDir, buildTS) => {
   const ghActionFileName = 'platformatic-deploy.yml'
   const ghActionFilePath = join(projectDir, '.github', 'workflows', ghActionFileName)
   const isGithubActionExists = await isFileAccessible(ghActionFilePath)
   if (!isGithubActionExists) {
     await mkdirp(join(projectDir, '.github', 'workflows'))
-    await writeFile(ghActionFilePath, ghTemplate(env, type))
+    await writeFile(ghActionFilePath, ghTemplate(env, type, buildTS))
     logger.info('Github action successfully created, please add PLATFORMATIC_API_KEY as repository secret.')
     const isGitDir = await isFileAccessible('.git', projectDir)
     if (!isGitDir) {
@@ -54,7 +58,7 @@ export const createGHAction = async (logger, env, type, projectDir) => {
 }
 
 /* c8 ignore next 12 */
-export const askCreateGHAction = async (logger, env, type, projectDir = process.cwd()) => {
+export const askCreateGHAction = async (logger, env, type, buildTS, projectDir = process.cwd()) => {
   const { githubAction } = await inquirer.prompt([{
     type: 'list',
     name: 'githubAction',
@@ -63,6 +67,6 @@ export const askCreateGHAction = async (logger, env, type, projectDir = process.
     choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
   }])
   if (githubAction) {
-    await createGHAction(logger, env, type, projectDir)
+    await createGHAction(logger, env, type, projectDir, buildTS)
   }
 }
