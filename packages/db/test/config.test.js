@@ -389,3 +389,20 @@ test('config reloads from a written file', async ({ teardown, equal, pass, same 
     same(await res.body.text(), 'ciao mondo', 'response')
   }
 })
+
+test('should transform the migrations and typescript outDir to absolute path', async ({ teardown, equal }) => {
+  const configPath = join(__dirname, 'fixtures', 'typescript-config.json')
+  const configFile = await readFile(configPath, 'utf8')
+
+  teardown(() => writeFile(configPath, configFile))
+
+  const cm = new DBConfigManager({
+    source: configPath,
+    schema: {}
+  })
+  await cm.parseAndValidate()
+  const config = cm.current
+
+  equal(config.migrations.dir, join(__dirname, 'fixtures', 'migrations'))
+  equal(config.plugin.typescript.outDir, join(__dirname, 'fixtures', 'dist'))
+})

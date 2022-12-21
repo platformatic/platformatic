@@ -14,6 +14,10 @@ class DBConfigManager extends ConfigManager {
     })
   }
 
+  _fixRelativePath (path) {
+    return resolve(dirname(this.fullPath), path)
+  }
+
   _transformConfig () {
     super._transformConfig.call(this)
     const dirOfConfig = dirname(this.fullPath)
@@ -41,6 +45,10 @@ class DBConfigManager extends ConfigManager {
         [this.current.migrations.table || migrationsTableName]: true
       }, this.current.core.ignore)
     }
+
+    if (this.current.plugin?.typescript?.outDir) {
+      this.current.plugin.typescript.outDir = this._fixRelativePath(this.current.plugin.typescript.outDir)
+    }
   }
 
   _sanitizeConfig () {
@@ -54,7 +62,6 @@ class DBConfigManager extends ConfigManager {
         sanitizedConfig.core.connectionString = 'sqlite://' + originalSqlitePath
       }
     }
-
     // absolute-to-relative migrations path
     if (this.current.migrations && isAbsolute(this.current.migrations.dir)) {
       sanitizedConfig.migrations.dir = relative(dirOfConfig, this.current.migrations.dir)

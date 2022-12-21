@@ -1,0 +1,18 @@
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 3042
+  },
+  "core": {
+    "connectionString": "postgresql://db.antani"
+  },
+  "migrations": {
+    "dir": "./migrations"
+  },
+  "plugin": {
+    "path": "plugin.ts",
+    "typescript": {
+      "outDir": "dist"
+    }
+  }
+}
