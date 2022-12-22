@@ -1,7 +1,7 @@
 'use strict'
 
 const { ConfigManager } = require('@platformatic/service')
-const { dirname, resolve, relative, isAbsolute } = require('path')
+const { resolve } = require('path')
 const { schema } = require('./schema')
 
 class DBConfigManager extends ConfigManager {
@@ -16,15 +16,15 @@ class DBConfigManager extends ConfigManager {
 
   _transformConfig () {
     super._transformConfig.call(this)
-    const dirOfConfig = dirname(this.fullPath)
+    const dirOfConfig = this.dirname
     if (this.current.core && this.current.core.connectionString.indexOf('sqlite') === 0) {
       const originalSqlitePath = this.current.core.connectionString.replace('sqlite://', '')
       const sqliteFullPath = resolve(dirOfConfig, originalSqlitePath)
       this.current.core.connectionString = 'sqlite://' + sqliteFullPath
     }
 
+    /* c8 ignore next 2 */
     const arePostgresqlSchemaDefined = this.current.core?.connectionString.indexOf('postgres') === 0 && this.current.core?.schema?.length > 0
-
     const migrationsTableName = arePostgresqlSchemaDefined ? 'public.versions' : 'versions'
 
     // relative-to-absolute migrations path
@@ -41,26 +41,6 @@ class DBConfigManager extends ConfigManager {
         [this.current.migrations.table || migrationsTableName]: true
       }, this.current.core.ignore)
     }
-  }
-
-  _sanitizeConfig () {
-    const sanitizedConfig = super._sanitizeConfig.call(this)
-
-    const dirOfConfig = dirname(this.fullPath)
-    if (this.current.core && this.current.core.connectionString.indexOf('sqlite') === 0) {
-      const sqliteFullPath = this.current.core.connectionString.replace('sqlite://', '')
-      if (isAbsolute(sqliteFullPath)) {
-        const originalSqlitePath = relative(dirOfConfig, sqliteFullPath)
-        sanitizedConfig.core.connectionString = 'sqlite://' + originalSqlitePath
-      }
-    }
-
-    // absolute-to-relative migrations path
-    if (this.current.migrations && isAbsolute(this.current.migrations.dir)) {
-      sanitizedConfig.migrations.dir = relative(dirOfConfig, this.current.migrations.dir)
-    }
-
-    return sanitizedConfig
   }
 }
 

@@ -1,9 +1,8 @@
 'use strict'
 
 const ConfigManager = require('@platformatic/config')
-const { dirname, resolve, relative } = require('path')
+const { resolve } = require('path')
 const { schema } = require('./schema')
-const clone = require('rfdc')()
 
 class ServiceConfigManager extends ConfigManager {
   constructor (opts) {
@@ -41,33 +40,8 @@ class ServiceConfigManager extends ConfigManager {
     }
   }
 
-  _sanitizeConfig () {
-    const sanitizedConfig = clone(this.current)
-    const dirOfConfig = dirname(this.fullPath)
-
-    const fixPluginPath = (plugin) => {
-      // for some reasons c8 does not detect these
-      /* c8 ignore next 3 */
-      if (typeof plugin === 'string') {
-        plugin = { path: plugin }
-      }
-      plugin.path = relative(dirOfConfig, plugin.path)
-      return plugin
-    }
-
-    // relative-to-absolute plugin path
-    /* c8 ignore next 6 */
-    if (Array.isArray(this.current.plugin)) {
-      sanitizedConfig.plugin = sanitizedConfig.plugin.map(fixPluginPath)
-    } else if (this.current.plugin) {
-      sanitizedConfig.plugin = fixPluginPath(sanitizedConfig.plugin)
-    }
-
-    return sanitizedConfig
-  }
-
   _fixRelativePath (path) {
-    return resolve(dirname(this.fullPath), path)
+    return resolve(this.dirname, path)
   }
 }
 

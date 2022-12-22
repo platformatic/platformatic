@@ -5,7 +5,7 @@ const { test } = require('tap')
 const { buildServer } = require('..')
 const { request } = require('undici')
 const { tmpdir } = require('os')
-const { readFile, writeFile, unlink } = require('fs/promises')
+const { writeFile, unlink } = require('fs/promises')
 const { join, basename } = require('path')
 const os = require('os')
 const DBConfigManager = require('../lib/config')
@@ -145,86 +145,10 @@ test('no need for configFileLocation to return config', async ({ teardown, equal
   })
 })
 
-test('update config file', async ({ teardown, equal, same }) => {
-  const server = await buildServer(buildConfig({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0
-    },
-    core: {
-      ...connInfo
-    },
-    dashboard: true,
-    authorization: {
-      adminSecret: 'secret'
-    }
-  }))
-
-  teardown(server.stop)
-  await server.listen()
-
-  const res = await (request(`${server.url}/_admin/config-file`, {
-    headers: {
-      'content-type': 'application/json',
-      'X-PLATFORMATIC-ADMIN-SECRET': 'secret'
-    },
-    method: 'POST',
-    body: JSON.stringify({
-      foo: 'bar'
-    })
-  }))
-  equal(res.statusCode, 200)
-  const body = await res.body.json()
-  same(body, {
-    success: true
-  })
-})
-
-test('not update config file if unauthorized', { skip: true }, async ({ teardown, equal, same }) => {
-  const targetConfigFile = join(tmpdir(), 'platformatic.json')
-
-  const server = await buildServer(buildConfig({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0
-    },
-    core: {
-      ...connInfo
-    },
-    dashboard: true,
-    authorization: {
-      adminSecret: 'secret'
-    },
-    configFileLocation: targetConfigFile
-  }))
-  teardown(server.stop)
-  await server.listen()
-  const res = await (request(`${server.url}/_admin/config-file`, {
-    headers: {
-      'content-type': 'application/json'
-    },
-    method: 'POST',
-    body: JSON.stringify({
-      foo: 'bar'
-    })
-  }))
-  equal(res.statusCode, 401)
-  const body = await res.body.json()
-  same(body, { success: false, message: 'Unauthorized' })
-})
-
 test('ignore watch sqlite file', async ({ teardown, equal, same, comment }) => {
   {
     // absolute path
-    const config = {
-      server: {
-        hostname: '127.0.0.1',
-        port: 0
-      },
-      core: {
-        connectionString: 'sqlite://db-watchIgnore.sqlite'
-      }
-    }
+    const config = join(__dirname, 'fixtures', 'sqlite', 'ignore-watch-sqlite.json')
     const cm = new DBConfigManager({
       source: config,
       schema: {}
@@ -238,15 +162,7 @@ test('ignore watch sqlite file', async ({ teardown, equal, same, comment }) => {
 
   {
     // Relative Path
-    const config = {
-      server: {
-        hostname: '127.0.0.1',
-        port: 0
-      },
-      core: {
-        connectionString: 'sqlite://./databases/db-watchIgnore.sqlite'
-      }
-    }
+    const config = join(__dirname, 'fixtures', 'sqlite', 'relative.json')
     const cm = new DBConfigManager({
       source: config,
       schema: {}
@@ -257,73 +173,6 @@ test('ignore watch sqlite file', async ({ teardown, equal, same, comment }) => {
     const configFileName = basename(cm.fullPath)
     same(cm.fileWatcher.allowToWatch, ['.env', configFileName])
   }
-})
-
-test('should save config with relative paths', async ({ teardown, equal }) => {
-  const configPath = join(__dirname, 'fixtures', 'config-to-replace.json')
-  const configFile = await readFile(configPath, 'utf8')
-  const config = JSON.parse(configFile)
-
-  teardown(() => writeFile(configPath, configFile))
-
-  const cm = new DBConfigManager({
-    source: configPath,
-    schema: {}
-  })
-  const parseResult = await cm.parse()
-  equal(parseResult, true)
-
-  await cm.save()
-
-  const savedConfigFile = await readFile(configPath, 'utf8')
-  const savedConfig = JSON.parse(savedConfigFile)
-
-  equal(savedConfig.core.connectionString, config.core.connectionString)
-  equal(savedConfig.plugin.path, config.plugin.path)
-  equal(savedConfig.migrations.dir, config.migrations.dir)
-  equal(savedConfig.migrations.table, 'versions')
-})
-
-test('should set migrations table to public.versions if there are postgresql schema', async ({ teardown, equal }) => {
-  const configPath = join(__dirname, 'fixtures', 'postgresql-with-schema.json')
-  const configFile = await readFile(configPath, 'utf8')
-
-  teardown(() => writeFile(configPath, configFile))
-
-  const cm = new DBConfigManager({
-    source: configPath,
-    schema: {}
-  })
-  const parseResult = await cm.parse()
-  equal(parseResult, true)
-
-  await cm.save()
-
-  const savedConfigFile = await readFile(configPath, 'utf8')
-  const savedConfig = JSON.parse(savedConfigFile)
-
-  equal(savedConfig.migrations.table, 'public.versions')
-})
-
-test('should set migrations table to versions if there are no postgresql schema', async ({ teardown, equal }) => {
-  const configPath = join(__dirname, 'fixtures', 'postgresql-without-schema.json')
-  const configFile = await readFile(configPath, 'utf8')
-
-  teardown(() => writeFile(configPath, configFile))
-
-  const cm = new DBConfigManager({
-    source: configPath,
-    schema: {}
-  })
-  const parseResult = await cm.parse()
-  equal(parseResult, true)
-
-  await cm.save()
-
-  const savedConfigFile = await readFile(configPath, 'utf8')
-  const savedConfig = JSON.parse(savedConfigFile)
-
-  equal(savedConfig.migrations.table, 'versions')
 })
 
 test('config reloads from a written file', async ({ teardown, equal, pass, same }) => {

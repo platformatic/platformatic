@@ -96,7 +96,7 @@ const server = {
             enabled: { type: 'boolean' },
             interval: { type: 'integer' }
           },
-          additionalProperties: false
+          additionalProperties: true
         }
       ]
     },

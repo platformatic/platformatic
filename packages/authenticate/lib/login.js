@@ -2,7 +2,7 @@ import parseArgs from 'minimist'
 import { request } from 'undici'
 import open from 'open'
 import { blue, green, underline } from 'colorette'
-import { lstat, mkdir } from 'node:fs/promises'
+import { lstat, mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import ConfigManager from '@platformatic/config'
 import schema from './schema.js'
@@ -86,7 +86,7 @@ export default async function startLogin (_args, print) {
   }
 
   const config = new ConfigManager({
-    source: args.config || path.join(pltDirPath, 'config.yaml'),
+    source: args.config || path.join(pltDirPath, 'config.json'),
     schema
   })
 
@@ -111,6 +111,7 @@ export default async function startLogin (_args, print) {
 
 async function saveTokens (tokens, config) {
   await config.update({ accessToken: tokens.access })
+  await writeFile(config.fullPath, JSON.stringify(config.current, null, 2))
 }
 
 async function registerUser (tokens, invite) {
