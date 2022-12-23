@@ -21,7 +21,8 @@ export async function start (_args) {
 
   if (
     config.plugin?.typescript !== undefined &&
-    config.plugin?.watch !== false
+    config.plugin?.watch !== false &&
+    config.plugin?.typescript?.build !== false
   ) {
     try {
       await compileWatch()

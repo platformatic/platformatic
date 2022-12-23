@@ -19,13 +19,17 @@ async function start (_args) {
 
   if (
     config.plugin?.typescript !== undefined &&
-    config.plugin?.watch !== false
+    config.plugin?.watch !== false &&
+    config.plugin?.typescript?.build !== false
   ) {
     try {
       await compileWatch()
     } catch (error) {
       process.exit(1)
     }
+  } else if (config.plugin?.typescript !== undefined && config.plugin?.typescript?.build === false) {
+    // we don't have the logger here, shall we create one just for this message?
+    console.log(`TS build is disabled, expecting compiled js files in ${config.plugin.typescript.outDir} folder`)
   }
 
   // Set the location of the config

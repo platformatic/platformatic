@@ -1,0 +1,23 @@
+{
+  "server": {
+    "logger": {
+      "level": "info"
+    },
+    "hostname": "127.0.0.1",
+    "port": "3042"
+  },
+  "core": {
+    "connectionString": "sqlite://db.sqlite",
+    "graphql": false,
+    "ignore": {
+      "versions": true
+    }
+  },
+  "plugin": {
+    "path": "plugin.ts",
+    "typescript": {
+      "outDir": "dist",
+      "build": false
+    }
+  }
+}
