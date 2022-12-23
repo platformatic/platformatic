@@ -13,12 +13,12 @@ async function platformaticDB (app, opts) {
     app.log.debug({ migrations: opts.migrations }, 'running migrations')
     const { execute } = await import('./lib/migrate.mjs')
     await execute(app.log, { config: opts.configFileLocation }, opts)
-  }
 
-  if (opts.types && opts.types.autogenerate === true) {
-    app.log.debug({ types: opts.types }, 'generating types')
-    const { execute } = await import('./lib/gen-types.mjs')
-    await execute(app.log, { config: opts.configFileLocation }, opts)
+    if (opts.types && opts.types.autogenerate === true) {
+      app.log.debug({ types: opts.types }, 'generating types')
+      const { execute } = await import('./lib/gen-types.mjs')
+      await execute(app.log, { config: opts.configFileLocation }, opts)
+    }
   }
 
   if (isKeyEnabled('dashboard', opts)) {
