@@ -8,7 +8,7 @@ import login from '../lib/login.js'
 
 let mockAgent
 
-async function makeConfig (config = '', name = 'pltconf.yaml', setHomeDir = false) {
+async function makeConfig (config = '', name = 'pltconf.json', setHomeDir = false) {
   let tmpPath = await mkdtemp(path.join(tmpdir(), 'plt-authenticate-'))
   if (setHomeDir) {
     process.env.PLT_HOME = tmpPath // don't move this line
@@ -73,7 +73,7 @@ test('should be able to login as an existing user immediately', async (t) => {
   await t.resolves(login(args, print))
 
   const actual = await readFile(confPath)
-  t.equal(actual.toString(), 'accessToken: "1234"\n')
+  t.same(JSON.parse(actual), { accessToken: '1234' })
 })
 
 test('should use home directory config', async (t) => {
@@ -102,13 +102,13 @@ test('should use home directory config', async (t) => {
     }
   })
 
-  const confPath = await makeConfig('', 'config.yaml', true)
+  const confPath = await makeConfig('', 'config.json', true)
 
   const print = assertMessages(t, [MSG_VERIFY_AT_URL, MSG_AUTHENTICATED])
   await t.resolves(login([], print))
 
   const actual = await readFile(confPath)
-  t.equal(actual.toString(), 'accessToken: "1234"\n')
+  t.same(JSON.parse(actual), { accessToken: '1234' })
 })
 
 test('should be able to login after a short wait', async (t) => {
@@ -153,7 +153,7 @@ test('should be able to login after a short wait', async (t) => {
   await t.resolves(login(args, print))
 
   const actual = await readFile(confPath)
-  t.equal(actual.toString(), 'accessToken: "1234"\n')
+  t.same(JSON.parse(actual), { accessToken: '1234' })
 })
 
 test('should fail when unable to connect to authproxy', async (t) => {
@@ -260,7 +260,7 @@ test('should claim an invite', async (t) => {
   await t.resolves(login(args, print))
 
   const actual = await readFile(confPath)
-  t.equal(actual.toString(), 'accessToken: "1234"\n')
+  t.same(JSON.parse(actual), { accessToken: '1234' })
 })
 
 test('should fail when unable to claim an invite', async (t) => {

@@ -44,6 +44,35 @@ test('should accept and parse initial config object', async ({ same, equal, plan
   })
 })
 
+test('dirname option', async ({ equal, plan }) => {
+  plan(1)
+  const cm = new ConfigManager({
+    source: {
+      server: {
+        hostname: '127.0.0.1',
+        port: '3042'
+      }
+    },
+    dirname: 'foobar'
+  })
+  await cm.parse()
+  equal(cm.dirname, 'foobar')
+})
+
+test('dirname as cwd', async ({ equal, plan }) => {
+  plan(1)
+  const cm = new ConfigManager({
+    source: {
+      server: {
+        hostname: '127.0.0.1',
+        port: '3042'
+      }
+    }
+  })
+  await cm.parse()
+  equal(cm.dirname, process.cwd())
+})
+
 test('should purge env', ({ plan, same, teardown }) => {
   plan(2)
   {

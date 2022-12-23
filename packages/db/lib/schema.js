@@ -123,7 +123,6 @@ const core = {
       }]
     }
   },
-  additionalProperties: false,
   required: ['connectionString']
 }
 

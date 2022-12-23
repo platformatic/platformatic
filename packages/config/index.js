@@ -1,8 +1,7 @@
 'use strict'
 
 const { basename, extname, join, resolve, dirname } = require('path')
-const { readFile, writeFile, access } = require('fs/promises')
-const { tmpdir } = require('os')
+const { readFile, access } = require('fs/promises')
 const EventEmitter = require('events')
 const Ajv = require('ajv')
 const fastifyPlugin = require('./lib/plugin')
@@ -16,7 +15,6 @@ class ConfigManager extends EventEmitter {
   constructor (opts) {
     super()
     this.pupa = null
-    this._shouldSave = false
     this.envWhitelist = opts.envWhitelist || []
     if (!opts.source) {
       throw new Error('Source missing.')
@@ -25,29 +23,29 @@ class ConfigManager extends EventEmitter {
     this.validationErrors = []
     if (typeof opts.source === 'string') {
       this.fullPath = resolve(opts.source)
+      const allowToWatch = opts.allowToWatch || []
+      allowToWatch.push(basename(this.fullPath))
+      this._parser = this._getParser()
+
+      this.fileWatcher = new FileWatcher({
+        path: dirname(this.fullPath),
+        allowToWatch
+      })
+
+      /* c8 ignore next 3 */
+      if (opts.watch) {
+        this.startWatching()
+      }
+      this.dirname = dirname(this.fullPath)
     } else {
-      this.fullPath = join(tmpdir(), `platformatic-config-${process.pid}-${Date.now()}.json`)
       this.current = opts.source
-      this._shouldSave = true
+      this.dirname = opts.dirname || process.cwd()
     }
 
-    const allowToWatch = opts.allowToWatch || []
-    allowToWatch.push(basename(this.fullPath))
-
-    this.fileWatcher = new FileWatcher({
-      path: dirname(this.fullPath),
-      allowToWatch
-    })
-
-    this.serializer = this.getSerializer()
     this.schema = opts.schema || {}
     this.schemaOptions = opts.schemaOptions || {}
     this._originalEnv = opts.env || {}
     this.env = this.purgeEnv(this._originalEnv)
-    /* c8 ignore next 3 */
-    if (opts.watch) {
-      this.startWatching()
-    }
   }
 
   toFastifyPlugin () {
@@ -77,24 +75,18 @@ class ConfigManager extends EventEmitter {
     this.fileWatcher.startWatching()
   }
 
-  getSerializer () {
+  _getParser () {
     switch (extname(this.fullPath)) {
       case '.yaml':
       case '.yml':
-        return YAML
+        return YAML.parse
       case '.json':
-        return {
-          parse: (json) => JSON.parse(json),
-          stringify: (data) => JSON.stringify(data, null, 2)
-        }
+        return JSON.parse
       case '.json5':
-        return {
-          parse: (json) => JSON5.parse(json),
-          stringify: (data) => JSON5.stringify(data, null, 2)
-        }
+        return JSON5.parse
       case '.toml':
       case '.tml':
-        return TOML
+        return TOML.parse
       default:
         throw new Error('Invalid config file extension. Only yml, yaml, json, json5, toml, tml are supported.')
     }
@@ -150,18 +142,12 @@ class ConfigManager extends EventEmitter {
 
   _transformConfig () {}
 
-  _sanitizeConfig () {
-    return this.current
-  }
-
   async parse () {
     try {
-      if (this._shouldSave) {
-        await this.save()
-        this._shouldSave = false
+      if (this.fullPath) {
+        const configString = await this.load()
+        this.current = this._parser(await this.replaceEnv(configString))
       }
-      const configString = await this.load()
-      this.current = this.serializer.parse(await this.replaceEnv(configString))
       const validationResult = this.validate()
       if (!validationResult) {
         return false
@@ -215,19 +201,12 @@ class ConfigManager extends EventEmitter {
   async update (newConfig) {
     const _old = { ...this.current }
     this.current = newConfig
-    if (this.validate()) {
-      return this.save()
-    }
-    this.current = _old
-    return false
-  }
-
-  async save () {
-    if (!this.current) {
+    if (!this.validate()) {
+      this.current = _old
       return false
     }
-    const sanitizedConfig = this._sanitizeConfig()
-    return await writeFile(this.fullPath, this.serializer.stringify(sanitizedConfig))
+    this.emit('update', this.current)
+    return true
   }
 
   async load () {
