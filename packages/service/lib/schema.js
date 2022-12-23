@@ -174,9 +174,6 @@ const plugin = {
 
 const pluginTypes = {
   $id: 'https://schemas.platformatic.dev/service/pluginTypes',
-  $defs: {
-    plugin
-  },
   anyOf: [{
     type: 'array',
     items: {
@@ -219,6 +216,9 @@ const metrics = {
 
 const platformaticServiceSchema = {
   $id: 'https://schemas.platformatic.dev/service',
+  $defs: {
+    plugin
+  },
   type: 'object',
   properties: {
     server,
