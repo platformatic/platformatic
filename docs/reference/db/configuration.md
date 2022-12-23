@@ -275,6 +275,7 @@ An optional object that defines a plugin loaded by Platformatic DB.
 - **`path`** (**required**, `string`): Relative path to plugin's entry point.
 - **`typescript`** (`object`): TypeScript configuration for the plugin.
   - **`outDir`** (`string`): Relative path to the output directory for compiled JavaScript files.
+  - **`build`** (`boolean`, default: `true`): If `true`, the TS plugin is compiled automatically when Platformatic starts.
 - **`hotReload`** (`boolean`, default: `true`) if `true` or not specified, the plugin is loaded using [`fastify-sandbox`](https://github.com/mcollina/fastify-sandbox), otherwise is loaded directly using `require`/`import` and the hot reload is not enabled
 - **`options`** (`object`): Optional plugin options.
 
