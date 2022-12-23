@@ -59,7 +59,7 @@ function constructGraph (app, entity, opts, ignore) {
         return acc
       }, {})
       try {
-        const name = camelcase(entityName) + camelcase(key)
+        const name = camelcase([entityName, key])
         meta.type = new graphql.GraphQLEnumType({ name, values: enumValues })
       } catch (error) {
         app.log.error({ key, enumValues, entityName, table: entity.table, schema: entity.schema })
