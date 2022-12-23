@@ -31,6 +31,7 @@
     "tsd": "^0.25.0",
     "typescript": "^4.9.4",
     "undici": "^5.14.0",
+    "vscode-json-languageservice": "^5.1.3",
     "why-is-node-running": "^2.2.2",
     "yaml": "^2.1.3"
   },

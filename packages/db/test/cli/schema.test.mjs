@@ -4,6 +4,7 @@ import { join } from 'desm'
 import { execa } from 'execa'
 import fs from 'fs/promises'
 import stripAnsi from 'strip-ansi'
+import jsonLanguageService from 'vscode-json-languageservice'
 
 const dbLocation = join(import.meta.url, '..', 'fixtures', 'sqlite', 'db')
 
@@ -40,9 +41,34 @@ test('generates the json schema config', async (t) => {
   await execa('node', [cliPath, 'schema', 'config'])
 
   const configSchema = await fs.readFile('platformatic.db.schema.json', 'utf8')
-  const { $id, type } = JSON.parse(configSchema)
+  const schema = JSON.parse(configSchema)
+  const { $id, type } = schema
   t.equal($id, 'https://schemas.platformatic.dev/db')
   t.equal(type, 'object')
+
+  const languageservice = jsonLanguageService.getLanguageService({
+    async schemaRequestService (uri) {
+      return configSchema;
+    }
+  })
+
+  languageservice.configure({ allowComments: false, schemas: [{ fileMatch: ["*.data.json"], uri: $id }] });
+
+  const jsonContent = `{
+    "$schema": "https://schemas.platformatic.dev/db",
+    "core": {
+      "connectionString": "sqlite://::memory::"
+    },
+    "server": {
+      "hostname": "127.0.0.1",
+      "port": 3000
+    }
+  }`
+  const jsonContentUri = 'foo://server/example.data.json';
+  const textDocument = jsonLanguageService.TextDocument.create(jsonContentUri, 'json', 1, jsonContent);
+  const jsonDocument = languageservice.parseJSONDocument(textDocument);
+  const diagnostics = await languageservice.doValidation(textDocument, jsonDocument);
+  t.equal(diagnostics.length, 0)
 })
 
 test('print the help if schema type is missing', async ({ match }) => {

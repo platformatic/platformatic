@@ -323,9 +323,6 @@ const types = {
 const platformaticDBschema = {
   $id: 'https://schemas.platformatic.dev/db',
   $schema: 'http://json-schema.org/draft-07/schema#',
-  $defs: {
-    plugin
-  },
   type: 'object',
   properties: {
     server,
