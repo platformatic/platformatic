@@ -37,6 +37,31 @@ t.test('should compile typescript plugin', async (t) => {
   t.pass()
 })
 
+t.test('should compile typescript plugin even if build is `false`', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-2')
+
+  await cp(testDir, cwd, { recursive: true })
+
+  try {
+    const child = await execa('node', [cliPath, 'compile'], { cwd })
+    t.equal(child.stdout.includes('Typescript compilation completed successfully.'), true)
+  } catch (err) {
+    console.log(err.stdout)
+    console.log(err.stderr)
+    t.fail(err.stderr)
+  }
+
+  const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
+  try {
+    await access(jsPluginPath)
+  } catch (err) {
+    t.fail(err)
+  }
+
+  t.pass()
+})
+
 t.test('should compile typescript plugin with start command', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
   const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-3')
@@ -91,7 +116,7 @@ t.test('should not compile bad typescript plugin', async (t) => {
 
 t.test('missing tsconfig file', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-2')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-4')
 
   await cp(testDir, cwd, { recursive: true })
 
@@ -138,7 +163,7 @@ t.test('start command should not compile typescript plugin with errors', async (
 
 t.test('should not compile typescript plugin with start without tsconfig', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-4')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-5')
 
   await cp(testDir, cwd, { recursive: true })
 
@@ -153,5 +178,36 @@ t.test('should not compile typescript plugin with start without tsconfig', async
     t.fail('should not compile typescript plugin with start without tsconfig')
   } catch (err) {
     t.equal(err.stdout.includes('The tsconfig.json file was not found.'), true)
+  }
+})
+
+t.test('start command should not compile typescript if `build` is false', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-6')
+
+  await cp(testDir, cwd, { recursive: true })
+
+  const child = execa('node', [cliPath, 'start'], { cwd })
+  t.teardown(async () => {
+    if (os.platform() === 'win32') {
+      try {
+        await execa('taskkill', ['/pid', child.pid, '/f', '/t'])
+      } catch (err) {
+        console.error(`Failed to kill process ${child.pid})`)
+      }
+    } else {
+      child.kill('SIGINT')
+    }
+  })
+
+  const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
+  try {
+    await access(jsPluginPath)
+    t.fail("should not have created 'dist/plugin.js'")
+  } catch (err) {
+    // cannot start because the plugin is not compiled
+    t.equal(err.code, 'ENOENT')
+    t.equal(err.path, jsPluginPath)
+    t.pass()
   }
 })

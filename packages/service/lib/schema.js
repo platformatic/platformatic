@@ -148,6 +148,10 @@ const plugin = {
       properties: {
         outDir: {
           type: 'string'
+        },
+        build: {
+          type: 'boolean',
+          default: true
         }
       },
       additionalProperties: false,
