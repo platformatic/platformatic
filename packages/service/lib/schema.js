@@ -134,7 +134,7 @@ const watch = {
 }
 
 const plugin = {
-  $id: 'https://schemas.platformatic.dev/service/plugin',
+  $id: '#plugin',
   type: 'object',
   properties: {
     path: {
@@ -181,13 +181,13 @@ const pluginTypes = {
     type: 'array',
     items: {
       anyOf: [{
-        $ref: '#/$defs/plugin'
+        $ref: '#plugin'
       }, {
         type: 'string'
       }]
     }
   }, {
-    $ref: '#/$defs/plugin'
+    $ref: '#plugin'
   }, {
     type: 'string'
   }]
