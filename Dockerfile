@@ -1,4 +1,5 @@
-FROM node:18-alpine
+# stage 1 
+FROM node:18-alpine as builder
 
 ENV HOME=/home
 ENV PLT_HOME=$HOME/platformatic/
@@ -22,6 +23,7 @@ COPY package.json ./
 COPY pnpm-lock.yaml ./
 COPY pnpm-workspace.yaml ./
 
+
 # Fetch all dependencies
 RUN pnpm fetch --prod --frozen-lockfile
 
@@ -40,6 +42,17 @@ WORKDIR $APP_HOME
 # Reduce our permissions from root to a normal user
 RUN chown node:node . 
 USER node
+
+# stage 2 
+FROM node:18-buster-slim
+
+USER node
+
+# Copy files
+COPY . .
+
+# Move to the app directory
+WORKDIR $APP_HOME
 
 ENTRYPOINT ["dumb-init"]
 CMD ["platformatic"]
