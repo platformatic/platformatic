@@ -23,7 +23,6 @@ COPY package.json ./
 COPY pnpm-lock.yaml ./
 COPY pnpm-workspace.yaml ./
 
-
 # Fetch all dependencies
 RUN pnpm fetch --prod --frozen-lockfile
 
