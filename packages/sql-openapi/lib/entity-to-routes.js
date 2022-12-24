@@ -109,7 +109,6 @@ async function entityPlugin (app, opts) {
     // e.g. getQuotesForMovie
     const operationId = `get${capitalize(targetEntity.pluralName)}For${capitalize(entity.singularName)}`
     app.get(`/:${camelcase(primaryKey)}/${targetForeignKeyCamelcase}`, {
-    // app.get(`/:${camelcase(primaryKey)}/${targetEntity.pluralName}`, {  
       schema: {
         operationId,
         params: getPrimaryKeyParams(entity, ignore),
