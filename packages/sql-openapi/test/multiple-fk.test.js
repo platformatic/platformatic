@@ -1,6 +1,6 @@
 'use strict'
 
-const { clear, connInfo, isSQLite, isMysql, isPg } = require('./helper')
+const { clear, connInfo, isPg } = require('./helper')
 const { test } = require('tap')
 const fastify = require('fastify')
 const sqlMapper = require('@platformatic/sql-mapper')
