@@ -43,11 +43,12 @@ RUN chown node:node .
 USER node
 
 # stage 2 
-FROM node:18-buster-slim
+# make image "Distroless" to contain only the app and its runtime dependencies
+FROM gcr.io/distroless/nodejs18-debian11
 
 USER node
 
-# Copy files
+# Copy into base image
 COPY . .
 
 # Move to the app directory
