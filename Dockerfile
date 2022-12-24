@@ -49,10 +49,10 @@ FROM gcr.io/distroless/nodejs18-debian11
 USER node
 
 # Copy into base image
-COPY . .
+COPY $APP_HOME ./
 
 # Move to the app directory
-WORKDIR $APP_HOME
+WORKDIR /root/
 
 ENTRYPOINT ["dumb-init"]
 CMD ["platformatic"]
