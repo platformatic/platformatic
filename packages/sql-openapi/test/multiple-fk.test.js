@@ -1,12 +1,12 @@
 'use strict'
 
-const { clear, connInfo, isPg } = require('./helper')
+const { clear, connInfo, isPg, isSQLite } = require('./helper')
 const { test } = require('tap')
 const fastify = require('fastify')
 const sqlMapper = require('@platformatic/sql-mapper')
 const sqlOpenAPI = require('..')
 
-test('multiple foreign keys pointing the same table', async ({ equal, same, teardown }) => {
+test('multiple foreign keys pointing the same table', { skip: isSQLite }, async ({ equal, same, teardown }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
 
@@ -33,8 +33,6 @@ test('multiple foreign keys pointing the same table', async ({ equal, same, tear
         fk_id varchar(42) NOT NULL,
         custom_id varchar(42) NOT NULL,
         PRIMARY KEY (id),
-        KEY test2_fk_id_foreign_idx (fk_id),
-        KEY test2_custom_id_foreign_idx (custom_id),
         CONSTRAINT test2_custom_id_foreign_idx FOREIGN KEY (custom_id) REFERENCES test1 (id),
         CONSTRAINT test2_fk_id_foreign_idx FOREIGN KEY (fk_id) REFERENCES test1 (id)
       );`)
@@ -91,25 +89,6 @@ test('multiple foreign keys pointing the same table', async ({ equal, same, tear
     same(res.json(), {
       id: 'herbert'
     }, 'POST /test1 response')
-  }
-
-  {
-    const res = await app.inject({
-      method: 'GET',
-      url: '/test1'
-    })
-    equal(res.statusCode, 200, 'GET /test1 status code')
-    same(res.json(), [
-      {
-        id: 'maccio'
-      },
-      {
-        id: 'pino'
-      },
-      {
-        id: 'herbert'
-      }
-    ], 'GET /test1 response')
   }
 
   {
@@ -213,80 +192,5 @@ test('multiple foreign keys pointing the same table', async ({ equal, same, tear
       }
     })
     equal(res.statusCode, 500, 'POST /test2 status code')
-  }
-
-  {
-    const res = await app.inject({
-      method: 'GET',
-      url: '/test2'
-    })
-    equal(res.statusCode, 200, 'GET /test2 status code')
-    same(res.json(), [
-      {
-        id: 'IL LIBRO',
-        fkId: 'maccio',
-        customId: 'pino'
-      },
-      {
-        id: 'IL LIBRO 2!',
-        fkId: 'herbert',
-        customId: 'maccio'
-      },
-      {
-        id: 'capatonda',
-        fkId: 'maccio',
-        customId: 'maccio'
-      },
-      {
-        id: 'cammino',
-        fkId: 'pino',
-        customId: 'pino'
-      },
-      {
-        id: 'ballerina',
-        fkId: 'herbert',
-        customId: 'herbert'
-      }
-    ], 'GET /test2 response')
-  }
-
-  {
-    const res = await app.inject({
-      method: 'GET',
-      url: '/test1/maccio/customId'
-    })
-    equal(res.statusCode, 200, 'GET /test1 status code')
-    same(res.json(), [
-      {
-        id: 'IL LIBRO 2!',
-        fkId: 'herbert',
-        customId: 'maccio'
-      },
-      {
-        id: 'capatonda',
-        fkId: 'maccio',
-        customId: 'maccio'
-      }
-    ], 'GET /test1 response')
-  }
-
-  {
-    const res = await app.inject({
-      method: 'GET',
-      url: '/test1/herbert/fkId'
-    })
-    equal(res.statusCode, 200, 'GET /test1 status code')
-    same(res.json(), [
-      {
-        id: 'IL LIBRO 2!',
-        fkId: 'herbert',
-        customId: 'maccio'
-      },
-      {
-        id: 'ballerina',
-        fkId: 'herbert',
-        customId: 'herbert'
-      }
-    ], 'GET /test1 response')
   }
 })
