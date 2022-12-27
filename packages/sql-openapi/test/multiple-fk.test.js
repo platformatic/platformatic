@@ -11,30 +11,30 @@ test('multiple foreign keys pointing the same table', { skip: isSQLite }, async 
     await clear(db, sql)
 
     if (isPg) {
-      await db.query(sql`CREATE TABLE IF NOT EXISTS test1 (
+      await db.query(sql`CREATE TABLE IF NOT EXISTS owners (
         id VARCHAR(42) PRIMARY KEY
       );`)
 
-      await db.query(sql`CREATE TABLE IF NOT EXISTS test2 (
+      await db.query(sql`CREATE TABLE IF NOT EXISTS editors (
         id VARCHAR(42) NOT NULL,
         fk_id VARCHAR(42) NOT NULL,
         custom_id VARCHAR(42) NOT NULL,
         PRIMARY KEY (id),
-        FOREIGN KEY (custom_id) REFERENCES test1 (id),
-        FOREIGN KEY (fk_id) REFERENCES test1 (id)
+        FOREIGN KEY (custom_id) REFERENCES owners (id),
+        FOREIGN KEY (fk_id) REFERENCES owners (id)
       );`)
     } else {
-      await db.query(sql`CREATE TABLE IF NOT EXISTS test1 (
+      await db.query(sql`CREATE TABLE IF NOT EXISTS owners (
         id VARCHAR(42) PRIMARY KEY
       );`)
 
-      await db.query(sql`CREATE TABLE IF NOT EXISTS test2 (
+      await db.query(sql`CREATE TABLE IF NOT EXISTS editors (
         id varchar(42) NOT NULL,
         fk_id varchar(42) NOT NULL,
         custom_id varchar(42) NOT NULL,
         PRIMARY KEY (id),
-        CONSTRAINT test2_custom_id_foreign_idx FOREIGN KEY (custom_id) REFERENCES test1 (id),
-        CONSTRAINT test2_fk_id_foreign_idx FOREIGN KEY (fk_id) REFERENCES test1 (id)
+        CONSTRAINT editors_custom_id_foreign_idx FOREIGN KEY (custom_id) REFERENCES owners (id),
+        CONSTRAINT editors_fk_id_foreign_idx FOREIGN KEY (fk_id) REFERENCES owners (id)
       );`)
     }
   }
@@ -52,145 +52,145 @@ test('multiple foreign keys pointing the same table', { skip: isSQLite }, async 
   {
     const res = await app.inject({
       method: 'POST',
-      url: '/test1',
+      url: '/owners',
       body: {
         id: 'maccio'
       }
     })
-    equal(res.statusCode, 200, 'POST /test1 status code')
+    equal(res.statusCode, 200, 'POST /owners status code')
     same(res.json(), {
       id: 'maccio'
-    }, 'POST /test1 response')
+    }, 'POST /owners response')
   }
 
   {
     const res = await app.inject({
       method: 'POST',
-      url: '/test1',
+      url: '/owners',
       body: {
         id: 'pino'
       }
     })
-    equal(res.statusCode, 200, 'POST /test1 status code')
+    equal(res.statusCode, 200, 'POST /owners status code')
     same(res.json(), {
       id: 'pino'
-    }, 'POST /test1 response')
+    }, 'POST /owners response')
   }
 
   {
     const res = await app.inject({
       method: 'POST',
-      url: '/test1',
+      url: '/owners',
       body: {
         id: 'herbert'
       }
     })
-    equal(res.statusCode, 200, 'POST /test1 status code')
+    equal(res.statusCode, 200, 'POST /owners status code')
     same(res.json(), {
       id: 'herbert'
-    }, 'POST /test1 response')
+    }, 'POST /owners response')
   }
 
   {
     const res = await app.inject({
       method: 'POST',
-      url: '/test2',
+      url: '/editors',
       body: {
         id: 'IL LIBRO',
         fkId: 'maccio',
         customId: 'pino'
       }
     })
-    equal(res.statusCode, 200, 'POST /test2 status code')
+    equal(res.statusCode, 200, 'POST /editors status code')
     same(res.json(), {
       id: 'IL LIBRO',
       fkId: 'maccio',
       customId: 'pino'
-    }, 'POST /test2 response')
+    }, 'POST /editors response')
   }
 
   {
     const res = await app.inject({
       method: 'POST',
-      url: '/test2',
+      url: '/editors',
       body: {
         id: 'IL LIBRO 2!',
         fkId: 'herbert',
         customId: 'maccio'
       }
     })
-    equal(res.statusCode, 200, 'POST /test2 status code')
+    equal(res.statusCode, 200, 'POST /editors status code')
     same(res.json(), {
       id: 'IL LIBRO 2!',
       fkId: 'herbert',
       customId: 'maccio'
-    }, 'POST /test2 response')
+    }, 'POST /editors response')
   }
 
   {
     const res = await app.inject({
       method: 'POST',
-      url: '/test2',
+      url: '/editors',
       body: {
         id: 'capatonda',
         fkId: 'maccio',
         customId: 'maccio'
       }
     })
-    equal(res.statusCode, 200, 'POST /test2 status code')
+    equal(res.statusCode, 200, 'POST /editors status code')
     same(res.json(), {
       id: 'capatonda',
       fkId: 'maccio',
       customId: 'maccio'
-    }, 'POST /test2 response')
+    }, 'POST /editors response')
   }
 
   {
     const res = await app.inject({
       method: 'POST',
-      url: '/test2',
+      url: '/editors',
       body: {
         id: 'cammino',
         fkId: 'pino',
         customId: 'pino'
       }
     })
-    equal(res.statusCode, 200, 'POST /test2 status code')
+    equal(res.statusCode, 200, 'POST /editors status code')
     same(res.json(), {
       id: 'cammino',
       fkId: 'pino',
       customId: 'pino'
-    }, 'POST /test2 response')
+    }, 'POST /editors response')
   }
 
   {
     const res = await app.inject({
       method: 'POST',
-      url: '/test2',
+      url: '/editors',
       body: {
         id: 'ballerina',
         fkId: 'herbert',
         customId: 'herbert'
       }
     })
-    equal(res.statusCode, 200, 'POST /test2 status code')
+    equal(res.statusCode, 200, 'POST /editors status code')
     same(res.json(), {
       id: 'ballerina',
       fkId: 'herbert',
       customId: 'herbert'
-    }, 'POST /test2 response')
+    }, 'POST /editors response')
   }
 
   {
     const res = await app.inject({
       method: 'POST',
-      url: '/test2',
+      url: '/editors',
       body: {
         id: 'following-not-existing-fk-id',
         fkId: 'ERROREEEEE!',
         customId: 'maccio'
       }
     })
-    equal(res.statusCode, 500, 'POST /test2 status code')
+    equal(res.statusCode, 500, 'POST /editors status code')
   }
 })
