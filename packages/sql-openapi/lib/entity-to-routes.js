@@ -108,7 +108,8 @@ async function entityPlugin (app, opts) {
     const entityLinks = getEntityLinksForEntity(app, targetEntity)
     // e.g. getQuotesForMovie
     const operationId = `get${capitalize(targetEntity.pluralName)}For${capitalize(entity.singularName)}`
-    app.get(`/:${camelcase(primaryKey)}/${targetEntity.pluralName}`, {
+    const routePathName = targetEntity.relations.length > 1 ? targetForeignKeyCamelcase : targetEntity.pluralName
+    app.get(`/:${camelcase(primaryKey)}/${routePathName}`, {
       schema: {
         operationId,
         params: getPrimaryKeyParams(entity, ignore),
