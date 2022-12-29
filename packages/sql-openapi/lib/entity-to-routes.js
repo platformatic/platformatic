@@ -170,8 +170,7 @@ async function entityPlugin (app, opts) {
         }
         return res
       })
-    } catch (error) {
-      /* istanbul ignore */
+    } catch (error) /* istanbul ignore next */ {
       app.log.error(error)
       app.log.info({ routePathName, targetEntityName, targetEntitySchema, operationId })
       throw new Error('Unable to create the route for the reverse relationship')
