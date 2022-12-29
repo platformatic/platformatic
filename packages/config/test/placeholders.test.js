@@ -109,3 +109,29 @@ test('transform placeholders with newlines', async ({ plan, same }) => {
     }
   })
 })
+
+test('transform placeholders with `\\`', async ({ plan, same }) => {
+  const cm = new ConfigManager({
+    source: './file.json',
+    env: {
+      PLT_FOO: 'bar\\.bar2\\.bar3',
+      PLT_USERNAME: 'john\\.john2'
+    }
+  })
+  const config = {
+    server: {
+      hostname: '127.0.0.1',
+      port: '3042',
+      replace: '{PLT_FOO}'
+    }
+  }
+
+  const res = await cm.replaceEnv(JSON.stringify(config))
+  same(JSON.parse(res), {
+    server: {
+      hostname: '127.0.0.1',
+      port: '3042',
+      replace: 'bar\\.bar2\\.bar3'
+    }
+  })
+})
