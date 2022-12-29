@@ -108,63 +108,74 @@ async function entityPlugin (app, opts) {
     const entityLinks = getEntityLinksForEntity(app, targetEntity)
     // e.g. getQuotesForMovie
     const operationId = `get${capitalize(targetEntity.pluralName)}For${capitalize(entity.singularName)}`
-    const routePathName = targetEntity.relations.length > 1 ? targetForeignKeyCamelcase : targetEntity.pluralName
-    app.get(`/:${camelcase(primaryKey)}/${routePathName}`, {
-      schema: {
-        operationId,
-        params: getPrimaryKeyParams(entity, ignore),
-        querystring: {
-          type: 'object',
-          properties: {
-            fields: getFieldsForEntity(targetEntity, ignore)
+
+    const routePathName = targetEntity.relations.length > 1
+      ? camelcase([reverseRelationship.sourceEntity, targetForeignKeyCamelcase])
+      : targetEntity.pluralName
+
+    try {
+      app.get(`/:${camelcase(primaryKey)}/${routePathName}`, {
+        schema: {
+          operationId,
+          params: getPrimaryKeyParams(entity, ignore),
+          querystring: {
+            type: 'object',
+            properties: {
+              fields: getFieldsForEntity(targetEntity, ignore)
+            }
+          },
+          response: {
+            200: {
+              type: 'array',
+              items: targetEntitySchema
+            }
           }
         },
-        response: {
-          200: {
-            type: 'array',
-            items: targetEntitySchema
-          }
+        links: {
+          200: entityLinks
         }
-      },
-      links: {
-        200: entityLinks
-      }
-    }, async function (request, reply) {
-      const ctx = { app: this, reply }
-      // IF we want to have HTTP/404 in case the entity does not exist
-      // we need to do 2 queries. One to check if the entity exists. the other to get the related entities
-      // Improvement: this could be also done with a single query with a join,
+      }, async function (request, reply) {
+        const ctx = { app: this, reply }
+        // IF we want to have HTTP/404 in case the entity does not exist
+        // we need to do 2 queries. One to check if the entity exists. the other to get the related entities
+        // Improvement: this could be also done with a single query with a join,
 
-      // check that the entity exists
-      const resEntity = await entity.count({
-        ctx,
-        where: {
-          [primaryKeyCamelcase]: {
-            eq: request.params[primaryKeyCamelcase]
+        // check that the entity exists
+        const resEntity = await entity.count({
+          ctx,
+          where: {
+            [primaryKeyCamelcase]: {
+              eq: request.params[primaryKeyCamelcase]
+            }
           }
+        })
+        if (resEntity === 0) {
+          return reply.callNotFound()
         }
-      })
-      if (resEntity === 0) {
-        return reply.callNotFound()
-      }
 
-      // get the related entities
-      const res = await targetEntity.find({
-        ctx,
-        where: {
-          [targetForeignKeyCamelcase]: {
-            eq: request.params[primaryKeyCamelcase]
-          }
-        },
-        fields: request.query.fields
+        // get the related entities
+        const res = await targetEntity.find({
+          ctx,
+          where: {
+            [targetForeignKeyCamelcase]: {
+              eq: request.params[primaryKeyCamelcase]
+            }
+          },
+          fields: request.query.fields
 
+        })
+        if (res.length === 0) {
+          // This is a query on a FK, so
+          return []
+        }
+        return res
       })
-      if (res.length === 0) {
-        // This is a query on a FK, so
-        return []
-      }
-      return res
-    })
+    } catch (error) {
+      /* istanbul ignore */
+      app.log.error(error)
+      app.log.info({ routePathName, targetEntityName, targetEntitySchema, operationId })
+      throw new Error('Unable to create the route for the reverse relationship')
+    }
   }
 
   // For every relationship we create: entity/:entity_Id/target_entity
