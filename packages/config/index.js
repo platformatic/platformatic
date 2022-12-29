@@ -132,12 +132,15 @@ class ConfigManager extends EventEmitter {
     }
     this.env = this.purgeEnv(env)
 
-    const escapeNewlines = ({ value }) => {
+    const escapeJSONstring = ({ value }) => {
       if (!value) return value
-      return value.replace(/\n/g, '\\n')
+      // TODO this shoudl handle all the escapes chars
+      // defined in https://www.json.org/json-en.html
+      // but it's good enough for now.
+      return value.replace(/\\/g, '\\\\').replace(/\n/g, '\\n')
     }
 
-    return this.pupa(configString, this.env, { transform: escapeNewlines })
+    return this.pupa(configString, this.env, { transform: escapeJSONstring })
   }
 
   _transformConfig () {}
