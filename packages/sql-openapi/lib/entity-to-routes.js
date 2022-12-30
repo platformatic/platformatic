@@ -98,7 +98,6 @@ async function entityPlugin (app, opts) {
   })
 
   const mapRoutePathNamesReverseRelations = new Map()
-  let idxRoutePathNamesReverseRelations = 1
   // For every reverse relationship we create: entity/:entity_Id/target_entity
   for (const reverseRelationship of entity.reverseRelationships) {
     const targetEntityName = reverseRelationship.relation.entityName
@@ -116,8 +115,7 @@ async function entityPlugin (app, opts) {
       : targetEntity.pluralName
 
     if (mapRoutePathNamesReverseRelations.get(routePathName)) {
-      idxRoutePathNamesReverseRelations++
-      routePathName += idxRoutePathNamesReverseRelations
+      routePathName = camelcase(reverseRelationship.relation.constraint_name)
     } else {
       mapRoutePathNamesReverseRelations.set(routePathName, true)
     }
@@ -187,7 +185,6 @@ async function entityPlugin (app, opts) {
   }
 
   const mapRoutePathNamesRelations = new Map()
-  let idxRoutePathNamesRelations = 1
   // For every relationship we create: entity/:entity_Id/target_entity
   for (const relation of entity.relations) {
     const targetEntityName = relation.foreignEntityName
@@ -198,8 +195,7 @@ async function entityPlugin (app, opts) {
     // (or multiple relationships between the same entities). We might want to specify this in documentation, because can be confusing
     let targetRelation = relation.column_name.replace(/_id$/, '')
     if (mapRoutePathNamesRelations.get(targetRelation)) {
-      idxRoutePathNamesRelations++
-      targetRelation += idxRoutePathNamesRelations
+      targetRelation = camelcase(relation.constraint_name)
     } else {
       mapRoutePathNamesRelations.set(targetRelation, true)
     }
