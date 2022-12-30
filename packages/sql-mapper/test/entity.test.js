@@ -267,6 +267,29 @@ test('[SQLite] throws if PK is not INTEGER', { skip: !isSQLite }, async ({ fail,
   }
 })
 
+test('[SQLite] throws if PK is not VARCHAR(255)', { skip: !isSQLite }, async ({ fail, equal, teardown, rejects }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    await db.query(sql`CREATE TABLE pages (
+      id varchar(255) PRIMARY KEY,
+      title varchar(255) NOT NULL,
+      content text NOT NULL
+    );`)
+  }
+  try {
+    await connect({
+      connectionString: connInfo.connectionString,
+      log: fakeLogger,
+      onDatabaseLoad,
+      ignore: {},
+      hooks: {}
+    })
+    fail()
+  } catch (err) {
+    equal(err.message, 'Invalid Primary Key type. Expected "varchar(255)", found "varchar(255)"')
+  }
+})
+
 test('mixing snake and camel case', async ({ pass, teardown, same, equal }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
