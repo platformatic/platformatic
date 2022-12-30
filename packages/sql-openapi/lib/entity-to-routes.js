@@ -203,7 +203,7 @@ async function entityPlugin (app, opts) {
     } else {
       mapRoutePathNamesRelations.set(targetRelation, true)
     }
-    
+
     const targetEntitySchema = {
       $ref: targetEntity.name + '#'
     }
@@ -262,7 +262,6 @@ async function entityPlugin (app, opts) {
       return res[0]
       })
     } catch (error) /* istanbul ignore next */ {
-      console.log(entity.relations)
       app.log.error(error)
       app.log.info({ primaryKey, targetRelation, targetEntitySchema, targetEntityName, targetEntity, operationId })
       throw new Error('Unable to create the route for the PK col relationship')
