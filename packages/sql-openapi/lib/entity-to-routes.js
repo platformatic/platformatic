@@ -213,53 +213,53 @@ async function entityPlugin (app, opts) {
     // We need to get the relation name from the PK column:
     try {
       app.get(`/:${camelcase(primaryKey)}/${targetRelation}`, {
-      schema: {
-        operationId,
-        params: getPrimaryKeyParams(entity, ignore),
-        querystring: {
-          type: 'object',
-          properties: {
-            fields: getFieldsForEntity(targetEntity, ignore)
+        schema: {
+          operationId,
+          params: getPrimaryKeyParams(entity, ignore),
+          querystring: {
+            type: 'object',
+            properties: {
+              fields: getFieldsForEntity(targetEntity, ignore)
+            }
+          },
+          response: {
+            200: targetEntitySchema
           }
         },
-        response: {
-          200: targetEntitySchema
+        links: {
+          200: entityLinks
         }
-      },
-      links: {
-        200: entityLinks
-      }
-    }, async function (request, reply) {
-      const ctx = { app: this, reply }
-      // check that the entity exists
-      const resEntity = (await entity.find({
-        ctx,
-        where: {
-          [primaryKeyCamelcase]: {
-            eq: request.params[primaryKeyCamelcase]
+      }, async function (request, reply) {
+        const ctx = { app: this, reply }
+        // check that the entity exists
+        const resEntity = (await entity.find({
+          ctx,
+          where: {
+            [primaryKeyCamelcase]: {
+              eq: request.params[primaryKeyCamelcase]
+            }
           }
+        }))[0]
+
+        if (!resEntity) {
+          return reply.callNotFound()
         }
-      }))[0]
 
-      if (!resEntity) {
-        return reply.callNotFound()
-      }
+        // get the related entity
+        const res = await targetEntity.find({
+          ctx,
+          where: {
+            [targetForeignKeyCamelcase]: {
+              eq: resEntity[targetColumnCamelcase]
+            }
+          },
+          fields: request.query.fields
+        })
 
-      // get the related entity
-      const res = await targetEntity.find({
-        ctx,
-        where: {
-          [targetForeignKeyCamelcase]: {
-            eq: resEntity[targetColumnCamelcase]
-          }
-        },
-        fields: request.query.fields
-      })
-
-      if (res.length === 0) {
-        return reply.callNotFound()
-      }
-      return res[0]
+        if (res.length === 0) {
+          return reply.callNotFound()
+        }
+        return res[0]
       })
     } catch (error) /* istanbul ignore next */ {
       app.log.error(error)
