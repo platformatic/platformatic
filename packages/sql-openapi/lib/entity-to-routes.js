@@ -97,6 +97,8 @@ async function entityPlugin (app, opts) {
     return res[0]
   })
 
+  const mapRoutePathNamesReverseRelations = new Map()
+  let idxRoutePathNamesReverseRelations = 1
   // For every reverse relationship we create: entity/:entity_Id/target_entity
   for (const reverseRelationship of entity.reverseRelationships) {
     const targetEntityName = reverseRelationship.relation.entityName
@@ -109,9 +111,16 @@ async function entityPlugin (app, opts) {
     // e.g. getQuotesForMovie
     const operationId = `get${capitalize(targetEntity.pluralName)}For${capitalize(entity.singularName)}`
 
-    const routePathName = targetEntity.relations.length > 1
+    let routePathName = targetEntity.relations.length > 1
       ? camelcase([reverseRelationship.sourceEntity, targetForeignKeyCamelcase])
       : targetEntity.pluralName
+
+    if (mapRoutePathNamesReverseRelations.get(routePathName)) {
+      idxRoutePathNamesReverseRelations++
+      routePathName += idxRoutePathNamesReverseRelations
+    } else {
+      mapRoutePathNamesReverseRelations.set(routePathName, true)
+    }
 
     try {
       app.get(`/:${camelcase(primaryKey)}/${routePathName}`, {
@@ -177,6 +186,8 @@ async function entityPlugin (app, opts) {
     }
   }
 
+  const mapRoutePathNamesRelations = new Map()
+  let idxRoutePathNamesRelations = 1
   // For every relationship we create: entity/:entity_Id/target_entity
   for (const relation of entity.relations) {
     const targetEntityName = relation.foreignEntityName
@@ -185,7 +196,14 @@ async function entityPlugin (app, opts) {
     const targetColumnCamelcase = camelcase(relation.column_name)
     // In this case, we navigate the relationship so we MUST use the column_name otherwise we will fail in case of recursive relationships
     // (or multiple relationships between the same entities). We might want to specify this in documentation, because can be confusing
-    const targetRelation = relation.column_name.replace(/_id$/, '')
+    let targetRelation = relation.column_name.replace(/_id$/, '')
+    if (mapRoutePathNamesRelations.get(targetRelation)) {
+      idxRoutePathNamesRelations++
+      targetRelation += idxRoutePathNamesRelations
+    } else {
+      mapRoutePathNamesRelations.set(targetRelation, true)
+    }
+
     const targetEntitySchema = {
       $ref: targetEntity.name + '#'
     }
@@ -193,55 +211,61 @@ async function entityPlugin (app, opts) {
     // e.g. getMovieForQuote
     const operationId = `get${capitalize(targetEntity.singularName)}For${capitalize(entity.singularName)}`
     // We need to get the relation name from the PK column:
-    app.get(`/:${camelcase(primaryKey)}/${targetRelation}`, {
-      schema: {
-        operationId,
-        params: getPrimaryKeyParams(entity, ignore),
-        querystring: {
-          type: 'object',
-          properties: {
-            fields: getFieldsForEntity(targetEntity, ignore)
+    try {
+      app.get(`/:${camelcase(primaryKey)}/${targetRelation}`, {
+        schema: {
+          operationId,
+          params: getPrimaryKeyParams(entity, ignore),
+          querystring: {
+            type: 'object',
+            properties: {
+              fields: getFieldsForEntity(targetEntity, ignore)
+            }
+          },
+          response: {
+            200: targetEntitySchema
           }
         },
-        response: {
-          200: targetEntitySchema
+        links: {
+          200: entityLinks
         }
-      },
-      links: {
-        200: entityLinks
-      }
-    }, async function (request, reply) {
-      const ctx = { app: this, reply }
-      // check that the entity exists
-      const resEntity = (await entity.find({
-        ctx,
-        where: {
-          [primaryKeyCamelcase]: {
-            eq: request.params[primaryKeyCamelcase]
+      }, async function (request, reply) {
+        const ctx = { app: this, reply }
+        // check that the entity exists
+        const resEntity = (await entity.find({
+          ctx,
+          where: {
+            [primaryKeyCamelcase]: {
+              eq: request.params[primaryKeyCamelcase]
+            }
           }
+        }))[0]
+
+        if (!resEntity) {
+          return reply.callNotFound()
         }
-      }))[0]
 
-      if (!resEntity) {
-        return reply.callNotFound()
-      }
+        // get the related entity
+        const res = await targetEntity.find({
+          ctx,
+          where: {
+            [targetForeignKeyCamelcase]: {
+              eq: resEntity[targetColumnCamelcase]
+            }
+          },
+          fields: request.query.fields
+        })
 
-      // get the related entity
-      const res = await targetEntity.find({
-        ctx,
-        where: {
-          [targetForeignKeyCamelcase]: {
-            eq: resEntity[targetColumnCamelcase]
-          }
-        },
-        fields: request.query.fields
+        if (res.length === 0) {
+          return reply.callNotFound()
+        }
+        return res[0]
       })
-
-      if (res.length === 0) {
-        return reply.callNotFound()
-      }
-      return res[0]
-    })
+    } catch (error) /* istanbul ignore next */ {
+      app.log.error(error)
+      app.log.info({ primaryKey, targetRelation, targetEntitySchema, targetEntityName, targetEntity, operationId })
+      throw new Error('Unable to create the route for the PK col relationship')
+    }
   }
 
   for (const method of ['POST', 'PUT']) {
