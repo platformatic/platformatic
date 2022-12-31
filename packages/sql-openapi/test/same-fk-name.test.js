@@ -223,7 +223,7 @@ test('same foreign keys with different names', async ({ equal, same, teardown })
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors/10/editorsFkClone'
+      url: '/editors/10/field2'
     })
     equal(res.statusCode, 200, 'the foreign key is duplicated, so an index has been automatically added')
     same(res.json(), {
@@ -245,7 +245,7 @@ test('same foreign keys with different names', async ({ equal, same, teardown })
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors/20/editorsFkClone'
+      url: '/editors/20/field2'
     })
     equal(res.statusCode, 200, 'as in the test above, same fk, same result')
     same(res.json(), {
@@ -270,7 +270,7 @@ test('same foreign keys with different names', async ({ equal, same, teardown })
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/owners/1/editorsFkClone'
+      url: '/owners/1/editorField2'
     })
     equal(res.statusCode, 200)
     same(res.json(), [
