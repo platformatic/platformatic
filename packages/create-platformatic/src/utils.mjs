@@ -93,3 +93,29 @@ export const getDependencyVersion = async (dependencyName) => {
   const packageJson = JSON.parse(packageJsonFile)
   return packageJson.version
 }
+
+export const getSupportedNodeVersions = () => {
+  return ['16.17.0', '18.8.0', '19.0.0']
+}
+
+export const isCurrentVersionSupported = (currentVersion) => {
+  const supportedVersions = getSupportedNodeVersions()
+  const getSemanticVersioning = (version) => {
+    return {
+      major: parseInt(version.split('.')[0], 10),
+      minor: parseInt(version.split('.')[1], 10),
+      patch: parseInt(version.split('.')[2], 10)
+    }
+  }
+  const { major: currentMajor, minor: currentMinor, patch: currentPatch } = getSemanticVersioning(currentVersion)
+  for (const version of supportedVersions) {
+    const { major, minor, patch } = getSemanticVersioning(version)
+    if (currentMajor > major) { continue }
+    if (currentMajor < major || currentMinor < minor || currentPatch < patch) {
+      return false
+    }
+    break
+  }
+
+  return true
+}

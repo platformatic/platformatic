@@ -1,6 +1,6 @@
 import { test, beforeEach } from 'tap'
 import { MockAgent, setGlobalDispatcher } from 'undici'
-import { getVersion, randomBetween, sleep, validatePath, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible } from '../src/utils.mjs'
+import { getVersion, randomBetween, sleep, validatePath, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, getSupportedNodeVersions } from '../src/utils.mjs'
 import { mkdtempSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
@@ -179,4 +179,23 @@ test('isFileAccessible', async ({ end, equal, mock }) => {
   const config2 = join(tmpDir1, 'platformatic2.db.yml')
   equal(await isFileAccessible(config2), false)
   rmSync(tmpDir1, { recursive: true, force: true })
+})
+
+test('getSupportedNodeVersions', async ({ equal, not }) => {
+  const supportedVersions = getSupportedNodeVersions()
+  equal(Array.isArray(supportedVersions), true)
+  not(supportedVersions.length, 0)
+})
+
+test('isCurrentVersionSupported', async ({ equal }) => {
+  {
+    const nodeVersion = '16.0.0'
+    const supported = isCurrentVersionSupported(nodeVersion)
+    equal(supported, false)
+  }
+  const supportedVersions = getSupportedNodeVersions()
+  for (const version of supportedVersions) {
+    const supported = isCurrentVersionSupported(version)
+    equal(supported, true)
+  }
 })

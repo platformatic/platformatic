@@ -5,7 +5,7 @@ import inquirer from 'inquirer'
 import createPlatformaticDB from './db/create-db-cli.mjs'
 import createPlatformaticService from './service/create-service-cli.mjs'
 import commist from 'commist'
-import { getUsername, getVersion } from './utils.mjs'
+import { getUsername, getVersion, getSupportedNodeVersions, isCurrentVersionSupported } from './utils.mjs'
 
 const createPlatformatic = async (argv) => {
   const help = helpMe({
@@ -29,6 +29,14 @@ const createPlatformatic = async (argv) => {
     const greeting = username ? `Hello, ${username}` : 'Hello,'
     await say(`${greeting} welcome to ${version ? `Platformatic ${version}!` : 'Platformatic!'}`)
     await say('Let\'s start by creating a new project.')
+
+    const currentVersion = process.versions.node
+    const supported = isCurrentVersionSupported(currentVersion)
+    if (!supported) {
+      const supportedVersions = getSupportedNodeVersions().join(', ')
+      console.warn(`Node.js v${currentVersion} is out of date and unsupported!`)
+      console.warn(`Please use Node.js versions ${supportedVersions} or higher.`)
+    }
 
     const options = await inquirer.prompt({
       type: 'list',
