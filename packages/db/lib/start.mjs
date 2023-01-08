@@ -51,7 +51,10 @@ export async function start (_args) {
   await server.listen()
 
   if (Object.keys(server.app.platformatic.entities).length === 0) {
-    server.app.log.warn('No tables found in the database. Are you connected to the right database? Did you forget to run your migrations?')
+    server.app.log.warn(
+      'No tables found in the database. Are you connected to the right database? Did you forget to run your migrations? ' +
+      'This guide can help with debugging Platformatic DB: https://oss.platformatic.dev/docs/guides/debug-platformatic-db'
+    )
   }
 
   configManager.on('error', function (err) {
