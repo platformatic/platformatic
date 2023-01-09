@@ -47,6 +47,45 @@ test('getUsername from whoami', async ({ end, equal }) => {
   equal(username, name)
 })
 
+test('if getUsername from git failed, it tries whoim', async ({ end, equal }) => {
+  const name = 'lukeskywalker'
+
+  const { getUsername } = await esmock.strict('../src/utils.mjs', {
+    execa: {
+      execa: (command) => {
+        if (command === 'git') {
+          throw new Error('git failed')
+        }
+        if (command === 'whoami') {
+          return { stdout: name }
+        }
+
+        return ''
+      }
+    }
+  })
+  const username = await getUsername()
+  equal(username, name)
+})
+
+test('if both git usern.ame and whoami fail, no username is set', async ({ end, equal }) => {
+  const { getUsername } = await esmock.strict('../src/utils.mjs', {
+    execa: {
+      execa: (command) => {
+        if (command === 'git') {
+          throw new Error('git failed')
+        }
+        if (command === 'whoami') {
+          throw new Error('whoami failed')
+        }
+        return ''
+      }
+    }
+  })
+  const username = await getUsername()
+  equal(username, null)
+})
+
 test('getUsername - no username found', async ({ end, equal }) => {
   const { getUsername } = await esmock.strict('../src/utils.mjs', {
     execa: {
