@@ -188,12 +188,20 @@ test('getSupportedNodeVersions', async ({ equal, not }) => {
 })
 
 test('isCurrentVersionSupported', async ({ equal }) => {
+  const supportedVersions = getSupportedNodeVersions()
+  const { major, minor, patch } = semver.minVersion(supportedVersions[0])
   {
-    const nodeVersion = '16.0.0'
+    // major not supported
+    const nodeVersion = `${major - 1}.${minor}.${patch}`
     const supported = isCurrentVersionSupported(nodeVersion)
     equal(supported, false)
   }
-  const supportedVersions = getSupportedNodeVersions()
+  {
+    // minor not supported
+    const nodeVersion = `${major}.${minor - 1}.${patch}`
+    const supported = isCurrentVersionSupported(nodeVersion)
+    equal(supported, false)
+  }
   for (const version of supportedVersions) {
     const supported = isCurrentVersionSupported(version)
     equal(supported, true)

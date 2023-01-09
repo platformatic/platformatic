@@ -3,6 +3,7 @@ import { request } from 'undici'
 import { access, constants, readFile } from 'fs/promises'
 import { resolve, join, dirname } from 'path'
 import { createRequire } from 'module'
+import semver from 'semver'
 
 export const sleep = ms => new Promise((resolve) => setTimeout(resolve, ms))
 export const randomBetween = (min, max) => Math.floor(Math.random() * (max - min + 1) + min)
@@ -100,22 +101,12 @@ export const getSupportedNodeVersions = () => {
 
 export const isCurrentVersionSupported = (currentVersion) => {
   const supportedVersions = getSupportedNodeVersions()
-  const getSemanticVersioning = (version) => {
-    return {
-      major: parseInt(version.split('.')[0], 10),
-      minor: parseInt(version.split('.')[1], 10),
-      patch: parseInt(version.split('.')[2], 10)
-    }
-  }
-  const { major: currentMajor, minor: currentMinor, patch: currentPatch } = getSemanticVersioning(currentVersion)
   for (const version of supportedVersions) {
-    const { major, minor, patch } = getSemanticVersioning(version)
-    if (currentMajor > major) { continue }
-    if (currentMajor < major || currentMinor < minor || currentPatch < patch) {
+    if (semver.gt(currentVersion, version)) { continue }
+    if (semver.lt(currentVersion, version)) {
       return false
     }
     break
   }
-
   return true
 }
