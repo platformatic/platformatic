@@ -30,12 +30,12 @@
     "ra-core": "^4.6.2"
   },
   "devDependencies": {
-    "@vitest/coverage-c8": "^0.26.0",
+    "@vitest/coverage-c8": "^0.27.0",
     "rimraf": "^3.0.2",
     "snazzy": "^9.0.0",
     "standard": "^17.0.0",
     "vite": "^4.0.1",
-    "vitest": "^0.26.0",
+    "vitest": "^0.27.0",
     "whatwg-fetch": "^3.6.2"
   },
   "standard": {
