@@ -9,6 +9,10 @@ dist
 # dotenv environment variable files
 .env
 
+# database files
+*.sqlite
+*.sqlite3
+
 # Logs
 logs
 *.log
