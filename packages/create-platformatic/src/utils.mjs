@@ -18,16 +18,23 @@ export async function isFileAccessible (filename, directory) {
 }
 
 export const getUsername = async () => {
-  const { stdout } = await execa('git', ['config', 'user.name'])
-  if (stdout?.trim()) {
-    return stdout.trim()
+  try {
+    const { stdout } = await execa('git', ['config', 'user.name'])
+    if (stdout?.trim()) {
+      return stdout.trim()
+    }
+  } catch (err) {
+  // ignore: git failed
   }
-  {
+  try {
     const { stdout } = await execa('whoami')
     if (stdout?.trim()) {
       return stdout.trim()
     }
+  } catch (err) {
+  // ignore: whoami failed
   }
+
   return null
 }
 
