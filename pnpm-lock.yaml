@@ -143,12 +143,12 @@ importers:
       pino: 8.8.0
       pino-pretty: 9.1.1
       pupa: 3.1.0
+      semver: 7.3.8
       undici: 5.14.0
     devDependencies:
       c8: 7.12.0
       dotenv: 16.0.3
       esmock: 2.1.0
-      semver: 7.3.8
       snazzy: 9.0.0
       standard: 17.0.0
       tap: 16.3.2
