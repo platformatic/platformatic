@@ -3,6 +3,7 @@ import { request } from 'undici'
 import { access, constants, readFile } from 'fs/promises'
 import { resolve, join, dirname } from 'path'
 import { createRequire } from 'module'
+import semver from 'semver'
 
 export const sleep = ms => new Promise((resolve) => setTimeout(resolve, ms))
 export const randomBetween = (min, max) => Math.floor(Math.random() * (max - min + 1) + min)
@@ -99,4 +100,20 @@ export const getDependencyVersion = async (dependencyName) => {
   const packageJsonFile = await readFile(pathToPackageJson, 'utf-8')
   const packageJson = JSON.parse(packageJsonFile)
   return packageJson.version
+}
+
+export const getSupportedNodeVersions = () => {
+  return ['16.17.0', '18.8.0', '19.0.0']
+}
+
+export const isCurrentVersionSupported = (currentVersion) => {
+  const supportedVersions = getSupportedNodeVersions()
+  for (const version of supportedVersions) {
+    if (semver.gt(currentVersion, version)) { continue }
+    if (semver.lt(currentVersion, version)) {
+      return false
+    }
+    break
+  }
+  return true
 }
