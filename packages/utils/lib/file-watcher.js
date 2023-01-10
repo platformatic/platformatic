@@ -43,6 +43,8 @@ class FileWatcher extends EventEmitter {
 
     const eventHandler = async () => {
       for await (const { eventType, filename } of fsWatcher) {
+        /* c8 ignore next */
+        if (filename === null) return
         const isTimeoutSet = updateTimeout === null
         const isTrackedEvent = ALLOWED_FS_EVENTS.includes(eventType)
         const isTrackedFile = this.shouldFileBeWatched(filename)
