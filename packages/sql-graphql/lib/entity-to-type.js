@@ -49,13 +49,19 @@ function constructGraph (app, entity, opts, ignore) {
     // sqlite doesn't support enums
     /* istanbul ignore next */
     if (field.enum) {
-      const enumValues = field.enum.reduce((acc, enumValue) => {
-        const valueStartsWithLetterOrUnderscore = !!enumValue.match(/^[_a-zA-Z]/g)
-        if (!valueStartsWithLetterOrUnderscore) {
-          enumValue = `_${enumValue}`
+      const enumValues = field.enum.reduce((acc, enumValue, index) => {
+        let key = enumValue.replace(/[^\w\s]/g, '_')
+
+        const keyStartsWithLetterOrUnderscore = !!key.match(/^[_a-zA-Z]/g)
+        if (!keyStartsWithLetterOrUnderscore) {
+          key = `_${key}`
         }
 
-        acc[enumValue.replace(/[^\w\s]/g, '_')] = { value: enumValue }
+        if (key.startsWith('__')) {
+          key = key.replace('__', `enum${++index}`)
+        }
+
+        acc[key] = { value: enumValue }
         return acc
       }, {})
       try {
