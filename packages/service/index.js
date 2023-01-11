@@ -128,6 +128,25 @@ async function loadPlugin (app, config, pluginOptions) {
 
 platformaticService[Symbol.for('skip-override')] = true
 
+function adjustConfigAfterMerge (options) {
+  // This function is needed because there are edge cases that deepmerge() does
+  // not handle properly. This code does not live in the generic config manager
+  // because that object is not aware of these schema dependent details.
+  const cm = options?.configManager?.current
+
+  /* c8 ignore next 3 */
+  if (!cm) {
+    return
+  }
+
+  // If a pino instance is passed as the logger, it will contain a child
+  // function that is not enumerable. Non-enumerables are not copied by
+  // deepmerge(), so take care of it here.
+  if (typeof cm.server?.logger?.child === 'function') {
+    options.server.logger = cm.server.logger
+  }
+}
+
 async function buildServer (options, app = platformaticService) {
   if (!options.configManager) {
     // instantiate a new config manager from current options
@@ -138,6 +157,7 @@ async function buildServer (options, app = platformaticService) {
     await cm.parseAndValidate()
     options = deepmerge({}, options, cm.current)
     options.configManager = cm
+    adjustConfigAfterMerge(options)
   }
   const serverConfig = createServerConfig(options)
 
