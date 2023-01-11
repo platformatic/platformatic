@@ -142,6 +142,8 @@ function adjustConfigAfterMerge (options) {
   // If a pino instance is passed as the logger, it will contain a child
   // function that is not enumerable. Non-enumerables are not copied by
   // deepmerge(), so take care of it here.
+  // This is covered, but c8 says it is not, so ignore it.
+  /* c8 ignore next 3 */
   if (typeof cm.server?.logger?.child === 'function') {
     options.server.logger = cm.server.logger
   }
