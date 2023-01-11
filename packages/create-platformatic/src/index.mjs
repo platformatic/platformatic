@@ -33,9 +33,9 @@ const createPlatformatic = async (argv) => {
     const currentVersion = process.versions.node
     const supported = isCurrentVersionSupported(currentVersion)
     if (!supported) {
-      const supportedVersions = getSupportedNodeVersions().join(', ')
-      await say(`Node.js v${currentVersion} is out of date and unsupported!`)
-      await say(`Please use Node.js versions ${supportedVersions} or higher.`)
+      const supportedVersions = getSupportedNodeVersions().join(' or >= ')
+      await say(`Platformatic is not supported on Node.js v${currentVersion}.`)
+      await say(`Please use one of the following Node.js versions >= ${supportedVersions}.`)
     }
 
     const options = await inquirer.prompt({
