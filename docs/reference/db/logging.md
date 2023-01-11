@@ -10,12 +10,12 @@ with a level of `info` or above will be output by the logger. See the
 [Pino documentation](https://github.com/pinojs/pino/blob/master/docs/api.md#level-string)
 for details on the supported log levels.
 
-The logger output level can be overriden by adding a `logger` object to the `core`
+The logger output level can be overriden by adding a `logger` object to the `server`
 configuration settings group:
 
 ```json title="platformatic.db.json"
 {
-  "core": {
+  "server": {
     "logger": {
       "level": "error"
     },
@@ -36,36 +36,36 @@ to pretty print the logs and make them easier to read during development.
 
 Example:
 
-```bash 
+```bash
 $ npx platformatic db start
-                                                      
-                                                                                
-                                                                                
-                                                                                
-                           /////////////                                        
-                        /////         /////                                     
-                      ///                 ///                                   
-                    ///                     ///                                 
-                   ///                       ///                                
-               &&  ///                       ///  &&                            
-          &&&&&&   ///                       ///   &&&&&&                       
-        &&&&       ///                      ///        &&&&                     
-      &&&          ///                     ///            &&&&&&&&&&&&          
-     &&&           ///     ///////      ////               &&       &&&&&       
-     &&            ///    ///////////////                               &&&     
-    &&&            ///     ///                                           &&&    
-     &&&           ///      //                                            &&    
-     &&&           ///                                                    &&    
-       &&&         ///                                                   &&&    
-         &&&&      ///                                                 &&&      
-            &&&&&  ///  &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&        
-                   ///                                                          
-                   ///                                                          
-                   ///                                                          
-                   ///                                                          
-                   ///                                                          
-                   ///                                                          
-                                                                                
+
+
+
+
+                           /////////////
+                        /////         /////
+                      ///                 ///
+                    ///                     ///
+                   ///                       ///
+               &&  ///                       ///  &&
+          &&&&&&   ///                       ///   &&&&&&
+        &&&&       ///                      ///        &&&&
+      &&&          ///                     ///            &&&&&&&&&&&&
+     &&&           ///     ///////      ////               &&       &&&&&
+     &&            ///    ///////////////                               &&&
+    &&&            ///     ///                                           &&&
+     &&&           ///      //                                            &&
+     &&&           ///                                                    &&
+       &&&         ///                                                   &&&
+         &&&&      ///                                                 &&&
+            &&&&&  ///  &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+                   ///
+                   ///
+                   ///
+                   ///
+                   ///
+                   ///
+
 
 [11:20:33.466] INFO (337606): server listening
     url: "http://127.0.0.1:3042"
