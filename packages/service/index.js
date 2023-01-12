@@ -146,6 +146,7 @@ async function loadPlugin (app, config, pluginOptions) {
 }
 
 platformaticService[Symbol.for('skip-override')] = true
+platformaticService.schema = schema
 
 function adjustConfigBeforeMerge (cm) {
   // This function and adjustConfigAfterMerge() are needed because there are
@@ -183,7 +184,7 @@ async function buildServer (options, app = platformaticService) {
     // instantiate a new config manager from current options
     const cm = new ConfigManager({
       source: options,
-      schema
+      schema: app?.schema ?? schema
     })
     await cm.parseAndValidate()
     const stash = adjustConfigBeforeMerge(cm.current)

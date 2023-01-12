@@ -4,7 +4,7 @@ const core = require('@platformatic/db-core')
 const auth = require('@platformatic/db-authorization')
 const dashboard = require('@platformatic/db-dashboard')
 const { platformaticService, buildServer } = require('@platformatic/service')
-const { deepmerge, isKeyEnabled } = require('@platformatic/utils')
+const { isKeyEnabled } = require('@platformatic/utils')
 const { schema } = require('./lib/schema')
 const ConfigManager = require('./lib/config.js')
 
@@ -62,18 +62,9 @@ async function platformaticDB (app, opts) {
 }
 
 platformaticDB[Symbol.for('skip-override')] = true
+platformaticDB.schema = schema
 
 async function buildDBServer (options) {
-  if (!options.configManager) {
-    // instantiate a new config manager from current options
-    const cm = new ConfigManager({
-      source: options,
-      schema
-    })
-    await cm.parseAndValidate()
-    options = deepmerge({}, options, cm.current)
-    options.configManager = cm
-  }
   return buildServer(options, platformaticDB)
 }
 
