@@ -4,7 +4,7 @@ const core = require('@platformatic/db-core')
 const auth = require('@platformatic/db-authorization')
 const dashboard = require('@platformatic/db-dashboard')
 const { platformaticService, buildServer } = require('@platformatic/service')
-const { deepmerge, isKeyEnabled } = require('@platformatic/utils')
+const { isKeyEnabled } = require('@platformatic/utils')
 const { schema } = require('./lib/schema')
 const ConfigManager = require('./lib/config.js')
 
