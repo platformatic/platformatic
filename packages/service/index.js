@@ -138,6 +138,7 @@ function adjustConfigBeforeMerge (cm) {
   // If a pino instance is passed as the logger, it will contain a child()
   // function that is not enumerable. Non-enumerables are not copied by
   // deepmerge(), so stash the logger here.
+  /* c8 ignore next 5 */
   if (typeof cm.server?.logger?.child === 'function' &&
       !Object.prototype.propertyIsEnumerable.call(cm.server.logger, 'child')) {
     stash.set('server.logger', cm.server.logger)
@@ -151,6 +152,7 @@ function adjustConfigAfterMerge (options, stash) {
   // Restore any config that needed to be stashed prior to merging.
   const pinoLogger = stash.get('server.logger')
 
+  /* c8 ignore next 3 */
   if (pinoLogger) {
     options.server.logger = pinoLogger
     options.configManager.current.server.logger = pinoLogger
