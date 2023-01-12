@@ -69,7 +69,7 @@ test('CORS with a regexp', async ({ teardown, equal, pass, same }) => {
       port: 0,
       cors: {
         origin: {
-          regexp: "https://[a-z-]*\.deploy\.space|https://platformatic.cloud"
+          regexp: 'https://[a-z-]*.deploy.space|https://platformatic.cloud'
         },
         methods: ['GET', 'POST']
       }
@@ -187,8 +187,8 @@ test('CORS with an array and a regexp', async ({ teardown, equal, pass, same }) 
       port: 0,
       cors: {
         origin: [{
-          regexp: "https://[a-z-]*\.deploy\.space"
-        }, "https://platformatic.cloud"],
+          regexp: 'https://[a-z-]*.deploy.space'
+        }, 'https://platformatic.cloud'],
         methods: ['GET', 'POST']
       }
     },

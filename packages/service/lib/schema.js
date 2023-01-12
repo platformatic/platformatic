@@ -20,7 +20,7 @@ const cors = {
                   type: 'string'
                 }
               },
-              required: ['regexp'] 
+              required: ['regexp']
             }]
           }
         },
@@ -31,7 +31,7 @@ const cors = {
               type: 'string'
             }
           },
-          required: ['regexp'] 
+          required: ['regexp']
         }
       ]
     },

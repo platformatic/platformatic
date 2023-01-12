@@ -26,10 +26,8 @@ function originToRegexp (origin) {
   if (typeof origin === 'object') {
     if (origin.regexp) {
       origin = new RegExp(origin.regexp)
-    } else {
-      throw new Error('Invalid CORS origin: ' + JSON.stringify(origin))
     }
-  } 
+  }
 
   return origin
 }
@@ -79,7 +77,7 @@ async function platformaticService (app, opts, toLoad = []) {
       origin = origin.map(originToRegexp)
     } else {
       origin = originToRegexp(origin)
-    } 
+    }
 
     opts.cors.origin = origin
 
