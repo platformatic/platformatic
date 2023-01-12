@@ -22,6 +22,16 @@ function createServerConfig (config) {
   return serverConfig
 }
 
+function originToRegexp (origin) {
+  if (typeof origin === 'object') {
+    if (origin.regexp) {
+      origin = new RegExp(origin.regexp)
+    }
+  }
+
+  return origin
+}
+
 async function platformaticService (app, opts, toLoad = []) {
   if (isKeyEnabled('metrics', opts)) {
     app.register(require('./lib/metrics-plugin'), opts.metrics)
@@ -62,6 +72,15 @@ async function platformaticService (app, opts, toLoad = []) {
 
   // Enable CORS
   if (opts.cors) {
+    let origin = opts.cors.origin
+    if (Array.isArray(origin)) {
+      origin = origin.map(originToRegexp)
+    } else {
+      origin = originToRegexp(origin)
+    }
+
+    opts.cors.origin = origin
+
     app.register(require('@fastify/cors'), opts.cors)
   }
   if (isKeyEnabled('healthCheck', opts)) {
