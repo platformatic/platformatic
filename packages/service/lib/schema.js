@@ -11,8 +11,27 @@ const cors = {
         {
           type: 'array',
           items: {
-            type: 'string'
+            anyOf: [{
+              type: 'string'
+            }, {
+              type: 'object',
+              properties: {
+                regexp: {
+                  type: 'string'
+                }
+              },
+              required: ['regexp'] 
+            }]
           }
+        },
+        {
+          type: 'object',
+          properties: {
+            regexp: {
+              type: 'string'
+            }
+          },
+          required: ['regexp'] 
         }
       ]
     },
