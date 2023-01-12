@@ -128,24 +128,32 @@ async function loadPlugin (app, config, pluginOptions) {
 
 platformaticService[Symbol.for('skip-override')] = true
 
-function adjustConfigAfterMerge (options) {
-  // This function is needed because there are edge cases that deepmerge() does
-  // not handle properly. This code does not live in the generic config manager
-  // because that object is not aware of these schema dependent details.
-  const cm = options?.configManager?.current
+function adjustConfigBeforeMerge (cm) {
+  // This function and adjustConfigAfterMerge() are needed because there are
+  // edge cases that deepmerge() does not handle properly. This code does not
+  // live in the generic config manager because that object is not aware of
+  // these schema dependent details.
+  const stash = new Map()
 
-  /* c8 ignore next 3 */
-  if (!cm) {
-    return
+  // If a pino instance is passed as the logger, it will contain a child()
+  // function that is not enumerable. Non-enumerables are not copied by
+  // deepmerge(), so stash the logger here.
+  if (typeof cm.server?.logger?.child === 'function' &&
+      !cm.server.logger.propertyIsEnumerable('child')) {
+    stash.set('server.logger', cm.server.logger)
+    cm.server.logger = null
   }
 
-  // If a pino instance is passed as the logger, it will contain a child
-  // function that is not enumerable. Non-enumerables are not copied by
-  // deepmerge(), so take care of it here.
-  // This is covered, but c8 says it is not, so ignore it.
-  /* c8 ignore next 3 */
-  if (typeof cm.server?.logger?.child === 'function') {
-    options.server.logger = cm.server.logger
+  return stash
+}
+
+function adjustConfigAfterMerge (options, stash) {
+  // Restore any config that needed to be stashed prior to merging.
+  const pinoLogger = stash.get('server.logger')
+
+  if (pinoLogger) {
+    options.server.logger = pinoLogger
+    options.configManager.current.server.logger = pinoLogger
   }
 }
 
@@ -157,9 +165,10 @@ async function buildServer (options, app = platformaticService) {
       schema
     })
     await cm.parseAndValidate()
+    const stash = adjustConfigBeforeMerge(cm.current)
     options = deepmerge({}, options, cm.current)
     options.configManager = cm
-    adjustConfigAfterMerge(options)
+    adjustConfigAfterMerge(options, stash)
   }
   const serverConfig = createServerConfig(options)
 
