@@ -139,7 +139,7 @@ function adjustConfigBeforeMerge (cm) {
   // function that is not enumerable. Non-enumerables are not copied by
   // deepmerge(), so stash the logger here.
   if (typeof cm.server?.logger?.child === 'function' &&
-      !cm.server.logger.propertyIsEnumerable('child')) {
+      !Object.prototype.propertyIsEnumerable.call(cm.server.logger, 'child')) {
     stash.set('server.logger', cm.server.logger)
     cm.server.logger = null
   }
