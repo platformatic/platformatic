@@ -152,7 +152,7 @@ function adjustConfigAfterMerge (options, stash) {
   // Restore any config that needed to be stashed prior to merging.
   const pinoLogger = stash.get('server.logger')
 
-  /* c8 ignore next 3 */
+  /* c8 ignore next 4 */
   if (pinoLogger) {
     options.server.logger = pinoLogger
     options.configManager.current.server.logger = pinoLogger
