@@ -184,3 +184,31 @@ test('config reloads from a written file from a route', async ({ teardown, equal
     same(await res.body.text(), 'ciao mondo', 'response')
   }
 })
+
+test('config is adjusted to handle custom loggers', async (t) => {
+  const options = {
+    server: {
+      hostname: '127.0.0.1',
+      port: 0,
+      logger: {
+        info () {},
+        error () {},
+        debug () {},
+        fatal () {},
+        warn () {},
+        trace () {}
+      }
+    }
+  }
+
+  let called = false
+  Object.defineProperty(options.server.logger, 'child', {
+    value: function child () {
+      called = true
+    },
+    enumerable: false
+  })
+
+  await buildServer(options)
+  t.equal(called, true)
+})
