@@ -128,12 +128,32 @@ module.exports.clear = async function (db, sql) {
   }
 
   try {
+    await db.query(sql`DROP TABLE test4.books`)
+  } catch (err) {
+  }
+
+  try {
+    await db.query(sql`DROP TABLE test3.authors`)
+  } catch (err) {
+  }
+
+  try {
     await db.query(sql`DROP TABLE test2.books`)
   } catch (err) {
   }
 
   try {
     await db.query(sql`DROP TABLE test1.authors`)
+  } catch (err) {
+  }
+
+  try {
+    await db.query(sql`DROP SCHEMA test4`)
+  } catch (err) {
+  }
+
+  try {
+    await db.query(sql`DROP SCHEMA test3`)
   } catch (err) {
   }
 
