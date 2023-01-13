@@ -23,7 +23,7 @@ module.exports = function establishRelations (app, relations, resolvers, loaders
 
     const current = entitiesTypeMap[entityName]
     const foreign = entitiesTypeMap[foreignEntityName]
-    assert(foreign !== undefined, `No foreign table named "${foreign_table_name}" was found ${enhanceAssertLogMsg}`)
+    assert(foreign !== undefined, `No foreign table named "${foreign_table_name}" was found ${enhanceAssertLogMsg}. Relation: ${JSON.stringify(relation, null, 2)}`)
 
     // current to foreign, we skip this if the foreign table has a composite primary key
     // TODO implement support for this case

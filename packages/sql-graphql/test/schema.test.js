@@ -4,7 +4,7 @@ const { test } = require('tap')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { isSQLite, connInfo, isMysql, clear } = require('./helper')
+const { isSQLite, isPg, connInfo, isMysql, clear } = require('./helper')
 
 test('should handle relationships with different schemas', { skip: isSQLite }, async ({ pass, teardown, same, equal }) => {
   const app = fastify()
@@ -163,5 +163,126 @@ test('should handle relationships with different schemas', { skip: isSQLite }, a
         }]
       }
     }, 'query authors response')
+  }
+})
+
+test('should not throw if all of the schema with contraint references are loaded on the config', { skip: !isPg }, async ({ pass, teardown, same }) => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    schema: ['test1', 'test2', 'test3', 'test4'],
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      await db.query(sql`CREATE SCHEMA IF NOT EXISTS test1;`)
+      await db.query(sql`CREATE SCHEMA IF NOT EXISTS test2;`)
+      await db.query(sql`CREATE SCHEMA IF NOT EXISTS test3;`)
+      await db.query(sql`CREATE SCHEMA IF NOT EXISTS test4;`)
+      await db.query(sql`
+        CREATE TABLE test1.authors (
+          id INTEGER PRIMARY KEY,
+          name VARCHAR(42)
+        );
+        
+        CREATE TABLE test2.books (
+          id INTEGER PRIMARY KEY,
+          title VARCHAR(42),
+          author_id INTEGER
+        );
+        
+        CREATE TABLE test3.authors (
+          id INTEGER PRIMARY KEY,
+          name VARCHAR(42)
+        );
+        
+        CREATE TABLE test4.books (
+          id INTEGER PRIMARY KEY,
+          title VARCHAR(42),
+          author_id INTEGER
+        );
+        
+        ALTER TABLE ONLY test2.books
+          ADD CONSTRAINT authors_fkey FOREIGN KEY (author_id) REFERENCES test1.authors(id);
+        
+        ALTER TABLE ONLY test4.books
+          ADD CONSTRAINT authors_fkey FOREIGN KEY (author_id) REFERENCES test3.authors(id);
+      `)
+    }
+  })
+  app.register(sqlGraphQL)
+  teardown(app.close.bind(app))
+
+  try {
+    await app.ready()
+  } catch (error) {
+    same(true, false, 'app should not throw')
+  }
+})
+
+test('should throw if some of the schema with contraint references are not passed to the config', { skip: !isPg }, async ({ pass, teardown, same, ok }) => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    schema: ['test1', 'test2'],
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      await db.query(sql`CREATE SCHEMA IF NOT EXISTS test1;`)
+      await db.query(sql`CREATE SCHEMA IF NOT EXISTS test2;`)
+      await db.query(sql`CREATE SCHEMA IF NOT EXISTS test3;`)
+      await db.query(sql`CREATE SCHEMA IF NOT EXISTS test4;`)
+      await db.query(sql`
+        CREATE TABLE test1.authors (
+          id INTEGER PRIMARY KEY,
+          name VARCHAR(42)
+        );
+        
+        CREATE TABLE test2.books (
+          id INTEGER PRIMARY KEY,
+          title VARCHAR(42),
+          author_id INTEGER
+        );
+        
+        CREATE TABLE test3.authors (
+          id INTEGER PRIMARY KEY,
+          name VARCHAR(42)
+        );
+        
+        CREATE TABLE test4.books (
+          id INTEGER PRIMARY KEY,
+          title VARCHAR(42),
+          author_id INTEGER
+        );
+        
+        ALTER TABLE ONLY test2.books
+          ADD CONSTRAINT authors_fkey FOREIGN KEY (author_id) REFERENCES test1.authors(id);
+        
+        ALTER TABLE ONLY test4.books
+          ADD CONSTRAINT authors_fkey FOREIGN KEY (author_id) REFERENCES test3.authors(id);
+      `)
+    }
+  })
+  app.register(sqlGraphQL)
+  teardown(app.close.bind(app))
+
+  try {
+    await app.ready()
+    same(true, false, 'we expect the app to throw')
+  } catch (error) {
+    same(error.name, 'AssertionError')
+    ok(error.message.includes('No foreign table named "authors" was found (table: "books", foreign table: "authors", column: "author_id").'))
+    ok(error.message.includes('"constraint_schema": "test2"'))
+    ok(error.message.includes('"constraint_name": "authors_fkey"'))
+    ok(error.message.includes('"table_schema": "test2"'))
+    ok(error.message.includes('"table_name": "books'))
+    ok(error.message.includes('"table_schema": "test2"'))
+    ok(error.message.includes('"column_name": "author_id"'))
+    ok(error.message.includes('"foreign_table_name": "authors"'))
+    ok(error.message.includes('"foreign_column_name": "id"'))
+    ok(error.message.includes('"foreign_table_schema": "test3"'))
   }
 })
