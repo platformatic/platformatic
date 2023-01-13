@@ -399,7 +399,7 @@ importers:
       '@vitest/coverage-c8': ^0.27.0
       query-string: ^7.1.3
       ra-core: ^4.6.2
-      rimraf: ^3.0.2
+      rimraf: ^4.0.0
       snazzy: ^9.0.0
       standard: ^17.0.0
       vite: ^4.0.1
@@ -410,7 +410,7 @@ importers:
       ra-core: 4.6.2_w55k22b3233o5m7ts74x2pvkni
     devDependencies:
       '@vitest/coverage-c8': 0.27.0
-      rimraf: 3.0.2
+      rimraf: 4.0.4
       snazzy: 9.0.0
       standard: 17.0.0
       vite: 4.0.3
@@ -1167,7 +1167,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.12.9
-      '@babel/helper-plugin-utils': 7.10.4
+      '@babel/helper-plugin-utils': 7.20.2
       '@babel/plugin-syntax-object-rest-spread': 7.8.3_@babel+core@7.12.9
       '@babel/plugin-transform-parameters': 7.20.7_@babel+core@7.12.9
     dev: true
@@ -6626,7 +6626,7 @@ packages:
       eslint-scope: 7.1.1
       eslint-utils: 3.0.0_eslint@8.4.1
       eslint-visitor-keys: 3.3.0
-      espree: 9.2.0
+      espree: 9.4.1
       esquery: 1.4.0
       esutils: 2.0.3
       fast-deep-equal: 3.1.3
@@ -11599,6 +11599,12 @@ packages:
     hasBin: true
     dependencies:
       glob: 7.2.3
+
+  /rimraf/4.0.4:
+    resolution: {integrity: sha512-R0hoVr9xTwemarQjoWlNt/nb5dEGVTBhVdkRmEX2zEkT8T6onH0XKiGjuaC7rNNj/gYzY2p4NVRJ3sjO1ascHQ==}
+    engines: {node: '>=14'}
+    hasBin: true
+    dev: true
 
   /ripemd160/2.0.2:
     resolution: {integrity: sha512-ii4iagi25WusVoiC4B4lq7pbXfAp3D9v5CwfkY33vffw2+pkDjY1D8GaN7spsxvCSx8dkPqOZCEZyfxcmJG2IA==}
