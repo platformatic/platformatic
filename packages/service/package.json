@@ -55,7 +55,7 @@
     "graphql": "^16.6.0",
     "help-me": "^4.2.0",
     "mercurius": "^11.4.0",
-    "minimatch": "^5.1.1",
+    "minimatch": "^6.0.0",
     "minimist": "^1.2.7",
     "pino": "^8.8.0",
     "pino-pretty": "^9.1.1",
