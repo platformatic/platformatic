@@ -122,7 +122,7 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, 
       if (ignore[table] === true) {
         continue
       }
-      const entity = await buildEntity(db, sql, log, table, queries, autoTimestamp, schema, useSchema, ignore[table] || {}, limit)
+      const entity = await buildEntity(db, sql, log, table, queries, autoTimestamp, schema, useSchema, ignore[table] || {}, limit, schemaList)
       // Check for primary key of all entities
       if (entity.primaryKeys.size === 0) {
         log.warn({ table }, 'Cannot find any primary keys for table')
