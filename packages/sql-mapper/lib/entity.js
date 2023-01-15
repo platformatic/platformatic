@@ -330,7 +330,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
   }
 }
 
-async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, useSchemaInName, ignore, limitConfig) {
+async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, useSchemaInName, ignore, limitConfig, schemaList) {
   // Compute the columns
   const columns = (await queries.listColumns(db, sql, table, schema)).filter((c) => !ignore[c.column_name])
   const fields = columns.reduce((acc, column) => {
@@ -409,15 +409,14 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema,
       field.primaryKey = true
     }
 
-    if (constraint.constraint_type === 'FOREIGN KEY') {
+    // we need to ignore for coverage here because cannot be covered with sqlite (no schema support)
+    // istanbul ignore next
+    const isForeignKeySchemaInConfig = schemaList?.length > 0 ? schemaList.includes(constraint.foreign_table_schema) : true
+    /* istanbul ignore if */
+    if (constraint.constraint_type === 'FOREIGN KEY' && isForeignKeySchemaInConfig) {
       field.foreignKey = true
-
-      // we need to ignore for coverage here becasue cannot be covered with sqlite (no schema support)
-      // istanbul ignore next
       const foreignEntityName = singularize(camelcase(useSchemaInName ? camelcase(`${constraint.foreign_table_schema} ${constraint.foreign_table_name}`) : constraint.foreign_table_name))
-      // istanbul ignore next
       const entityName = singularize(camelcase(useSchemaInName ? camelcase(`${constraint.table_schema} ${constraint.table_name}`) : constraint.table_name))
-      // istanbul ignore next
       const loweredTableWithSchemaName = lowerCaseFirst(useSchemaInName ? camelcase(`${constraint.table_schema} ${camelcase(constraint.table_name)}`) : camelcase(constraint.table_name))
       constraint.loweredTableWithSchemaName = loweredTableWithSchemaName
       constraint.foreignEntityName = foreignEntityName

@@ -221,7 +221,7 @@ test('should not throw if all of the schema with contraint references are loaded
   }
 })
 
-test('should throw if some of the schema with contraint references are not passed to the config', { skip: !isPg }, async ({ pass, teardown, same, ok }) => {
+test('should not throw if some of the schema with contraint references are not passed to the config', { skip: !isPg }, async ({ pass, teardown, same }) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -271,18 +271,7 @@ test('should throw if some of the schema with contraint references are not passe
 
   try {
     await app.ready()
-    same(true, false, 'we expect the app to throw')
   } catch (error) {
-    same(error.name, 'AssertionError')
-    ok(error.message.includes('No foreign table named "authors" was found (table: "books", foreign table: "authors", column: "author_id").'))
-    ok(error.message.includes('"constraint_schema": "test2"'))
-    ok(error.message.includes('"constraint_name": "authors_fkey"'))
-    ok(error.message.includes('"table_schema": "test2"'))
-    ok(error.message.includes('"table_name": "books'))
-    ok(error.message.includes('"table_schema": "test2"'))
-    ok(error.message.includes('"column_name": "author_id"'))
-    ok(error.message.includes('"foreign_table_name": "authors"'))
-    ok(error.message.includes('"foreign_column_name": "id"'))
-    ok(error.message.includes('"foreign_table_schema": "test3"'))
+    same(true, false, 'we expect the app to not throw')
   }
 })
