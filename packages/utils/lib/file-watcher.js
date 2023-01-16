@@ -3,7 +3,7 @@
 const { EventEmitter } = require('events')
 const { watch } = require('fs/promises')
 
-const minimatch = require('minimatch')
+const minimatch = require('minimatch').default
 
 const ALLOWED_FS_EVENTS = ['change', 'rename']
 
