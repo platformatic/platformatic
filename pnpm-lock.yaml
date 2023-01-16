@@ -116,7 +116,7 @@ importers:
       inquirer: ^9.1.4
       log-update: ^5.0.1
       minimist: ^1.2.7
-      mkdirp: ^1.0.4
+      mkdirp: ^2.0.0
       ora: ^6.1.2
       pino: ^8.8.0
       pino-pretty: ^9.1.1
@@ -138,7 +138,7 @@ importers:
       inquirer: 9.1.4
       log-update: 5.0.1
       minimist: 1.2.7
-      mkdirp: 1.0.4
+      mkdirp: 2.0.0
       ora: 6.1.2
       pino: 8.8.0
       pino-pretty: 9.1.1
@@ -9477,6 +9477,12 @@ packages:
     resolution: {integrity: sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==}
     engines: {node: '>=10'}
     hasBin: true
+
+  /mkdirp/2.0.0:
+    resolution: {integrity: sha512-M9ecBPkCu6jZ+H19zruhjw/JB97qqVhyi1H2Lxxo2XAoIMdpHKQ8MfQiMzXk9SH/oJXIbM3oSAfLB8qSWJdCLA==}
+    engines: {node: '>=10'}
+    hasBin: true
+    dev: false
 
   /mlly/1.0.0:
     resolution: {integrity: sha512-QL108Hwt+u9bXdWgOI0dhzZfACovn5Aen4Xvc8Jasd9ouRH4NjnrXEiyP3nVvJo91zPlYjVRckta0Nt2zfoR6g==}
