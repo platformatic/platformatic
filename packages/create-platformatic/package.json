@@ -27,7 +27,7 @@
     "inquirer": "^9.1.4",
     "log-update": "^5.0.1",
     "minimist": "^1.2.7",
-    "mkdirp": "^1.0.4",
+    "mkdirp": "^2.0.0",
     "ora": "^6.1.2",
     "pino": "^8.8.0",
     "pino-pretty": "^9.1.1",
