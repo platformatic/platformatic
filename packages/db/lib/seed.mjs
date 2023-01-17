@@ -36,9 +36,6 @@ async function seed (_args) {
 
   try {
     const { configManager, args } = await loadConfig({
-      default: {
-        config: resolve(process.cwd(), 'platformatic.db.json')
-      },
       alias: {
         c: 'config'
       }
