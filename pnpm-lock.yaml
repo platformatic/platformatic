@@ -219,6 +219,7 @@ importers:
       '@platformatic/db-dashboard': link:../db-dashboard
       '@platformatic/service': link:../service
       '@platformatic/sql-json-schema-mapper': link:../sql-json-schema-mapper
+      '@platformatic/sql-mapper': link:../sql-mapper
       '@platformatic/utils': link:../utils
       close-with-grace: 1.1.0
       commist: 3.2.0
@@ -244,7 +245,6 @@ importers:
       '@databases/pg': 5.4.1
       '@databases/sqlite': 4.0.2
       '@platformatic/sql-graphql': link:../sql-graphql
-      '@platformatic/sql-mapper': link:../sql-mapper
       bindings: 1.5.0
       c8: 7.12.0
       snazzy: 9.0.0
@@ -1164,7 +1164,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.12.9
-      '@babel/helper-plugin-utils': 7.10.4
+      '@babel/helper-plugin-utils': 7.20.2
       '@babel/plugin-syntax-object-rest-spread': 7.8.3_@babel+core@7.12.9
       '@babel/plugin-transform-parameters': 7.20.7_@babel+core@7.12.9
     dev: true
@@ -6683,7 +6683,7 @@ packages:
       eslint-scope: 7.1.1
       eslint-utils: 3.0.0_eslint@8.4.1
       eslint-visitor-keys: 3.3.0
-      espree: 9.2.0
+      espree: 9.4.1
       esquery: 1.4.0
       esutils: 2.0.3
       fast-deep-equal: 3.1.3
