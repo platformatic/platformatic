@@ -24,6 +24,12 @@ lerna-debug.log*
 
 # Dependency directories
 node_modules/
+
+# ctags
+tags
+
+# clinicjs
+.clinic/
 `
 
 export const createGitignore = async (logger, dir = '.') => {
