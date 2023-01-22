@@ -269,6 +269,7 @@ importers:
       fast-jwt: ^2.0.2
       fastify: ^4.10.2
       fastify-plugin: ^4.4.0
+      fastify-user: ^0.1.0
       get-jwks: ^8.0.2
       leven: ~3.1.0
       mercurius: ^11.4.0
@@ -282,6 +283,7 @@ importers:
       '@fastify/error': 3.2.0
       '@fastify/jwt': 6.5.0
       fastify-plugin: 4.5.0
+      fastify-user: 0.1.0
       get-jwks: 8.0.3
       leven: 3.1.0
       undici: 5.15.0
@@ -7035,6 +7037,19 @@ packages:
       import-fresh: 3.3.0
     optionalDependencies:
       '@matteo.collina/worker': 3.0.0
+    dev: false
+
+  /fastify-user/0.1.0:
+    resolution: {integrity: sha512-UUSDSJ7YKbf+65/Fuqot3O6AWxv75ahMvgFqI7xPoUYVW2Njs2/b9j9CsZ+/63HQhFQr5Z74zcPqQqqPuql3Ew==}
+    dependencies:
+      '@fastify/error': 3.2.0
+      '@fastify/jwt': 6.5.0
+      fastify: 4.11.0
+      fastify-plugin: 4.5.0
+      get-jwks: 8.0.3
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
     dev: false
 
   /fastify/4.11.0:
