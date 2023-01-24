@@ -1,4 +1,3 @@
-import { resolve } from 'path'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { access } from 'fs/promises'
