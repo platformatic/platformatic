@@ -1,6 +1,6 @@
 import { test, beforeEach } from 'tap'
 import { MockAgent, setGlobalDispatcher } from 'undici'
-import { getVersion, randomBetween, sleep, validatePath, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, getSupportedNodeVersions } from '../src/utils.mjs'
+import { getVersion, randomBetween, sleep, validatePath, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions } from '../src/utils.mjs'
 import { mkdtempSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
@@ -220,15 +220,13 @@ test('isFileAccessible', async ({ end, equal, mock }) => {
   rmSync(tmpDir1, { recursive: true, force: true })
 })
 
-test('getSupportedNodeVersions', async ({ equal, not }) => {
-  const supportedVersions = getSupportedNodeVersions()
-  equal(Array.isArray(supportedVersions), true)
-  not(supportedVersions.length, 0)
+test('minimumSupportedNodeVersions', async ({ equal, not }) => {
+  equal(Array.isArray(minimumSupportedNodeVersions), true)
+  not(minimumSupportedNodeVersions.length, 0)
 })
 
 test('isCurrentVersionSupported', async ({ equal }) => {
-  const supportedVersions = getSupportedNodeVersions()
-  const { major, minor, patch } = semver.minVersion(supportedVersions[0])
+  const { major, minor, patch } = semver.minVersion(minimumSupportedNodeVersions[0])
   {
     // major not supported
     const nodeVersion = `${major - 1}.${minor}.${patch}`
@@ -241,7 +239,7 @@ test('isCurrentVersionSupported', async ({ equal }) => {
     const supported = isCurrentVersionSupported(nodeVersion)
     equal(supported, false)
   }
-  for (const version of supportedVersions) {
+  for (const version of minimumSupportedNodeVersions) {
     const supported = isCurrentVersionSupported(version)
     equal(supported, true)
   }

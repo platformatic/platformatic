@@ -71,10 +71,7 @@ export const validatePath = async projectPath => {
   // if the folder does not exist, check if the parent folder exists:
   const parentDir = dirname(projectDir)
   const canAccessParent = await isDirectoryWriteable(parentDir)
-  if (canAccessParent) {
-    return true
-  }
-  return false
+  return canAccessParent
 }
 
 const findConfigFile = async (directory, type) => {
@@ -102,18 +99,14 @@ export const getDependencyVersion = async (dependencyName) => {
   return packageJson.version
 }
 
-export const getSupportedNodeVersions = () => {
-  return ['16.17.0', '18.8.0', '19.0.0']
-}
+export const minimumSupportedNodeVersions = ['16.17.0', '18.8.0', '19.0.0']
 
 export const isCurrentVersionSupported = (currentVersion) => {
-  const supportedVersions = getSupportedNodeVersions()
-  for (const version of supportedVersions) {
-    if (semver.gt(currentVersion, version)) { continue }
-    if (semver.lt(currentVersion, version)) {
-      return false
+  // TODO: add try/catch if some unsupported node version is passed
+  for (const version of minimumSupportedNodeVersions) {
+    if (semver.major(currentVersion) === semver.major(version) && semver.gte(currentVersion, version)) {
+      return true
     }
-    break
   }
-  return true
+  return false
 }
