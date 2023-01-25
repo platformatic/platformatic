@@ -100,7 +100,6 @@ test('valid config files', async ({ comment }) => {
       await copyFile(path.join(fixturesDir, 'sqlite', 'migrations', '001.do.sql'), path.join(cwd, 'migrations', '001.do.sql'))
       const seed = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite', 'seed.js')
 
-      comment(`dbl ${dbLocation}`)
       const { stdout } = await execa('node', [cliPath, 'seed', seed], {
         cwd
       })
