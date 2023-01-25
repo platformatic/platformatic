@@ -68,6 +68,7 @@
     "pino-pretty": "^9.1.1",
     "postgrator": "^7.1.1",
     "rfdc": "^1.3.0",
+    "rimraf": "^4.0.7",
     "ua-parser-js": "^1.0.32"
   },
   "standard": {

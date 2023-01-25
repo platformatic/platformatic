@@ -1,4 +1,3 @@
-import { resolve } from 'path'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { access } from 'fs/promises'
@@ -36,9 +35,6 @@ async function seed (_args) {
 
   try {
     const { configManager, args } = await loadConfig({
-      default: {
-        config: resolve(process.cwd(), 'platformatic.db.json')
-      },
       alias: {
         c: 'config'
       }
