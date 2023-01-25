@@ -228,16 +228,52 @@ test('minimumSupportedNodeVersions', async ({ equal, not }) => {
 test('isCurrentVersionSupported', async ({ equal }) => {
   const { major, minor, patch } = semver.minVersion(minimumSupportedNodeVersions[0])
   {
-    // major not supported
+    // v15 major not supported
     const nodeVersion = `${major - 1}.${minor}.${patch}`
     const supported = isCurrentVersionSupported(nodeVersion)
     equal(supported, false)
   }
   {
-    // minor not supported
+    // v17 major not supported
+    const nodeVersion = `${major + 1}.${minor}.${patch}`
+    const supported = isCurrentVersionSupported(nodeVersion)
+    equal(supported, false)
+  }
+  {
+    // v16 minor not supported
     const nodeVersion = `${major}.${minor - 1}.${patch}`
     const supported = isCurrentVersionSupported(nodeVersion)
     equal(supported, false)
+  }
+  {
+    // v16 more than minimum is supported
+    const supported = isCurrentVersionSupported(`${major}.${minor + 2}.${patch}`)
+    equal(supported, true)
+  }
+  // node version 18 test, to check greater and lesser major version
+  const { major: major18, minor: minor18, patch: patch18 } = semver.minVersion(minimumSupportedNodeVersions[1])
+  {
+    // v17 major not supported
+    const nodeVersion = `${major18 - 1}.${minor18}.${patch18}`
+    const supported = isCurrentVersionSupported(nodeVersion)
+    equal(supported, false)
+  }
+  {
+    // v19 is supported
+    const nodeVersion = `${major18 + 1}.${minor18}.${patch18}`
+    const supported = isCurrentVersionSupported(nodeVersion)
+    equal(supported, true)
+  }
+  {
+    // v18 minor not supported
+    const nodeVersion = `${major18}.${minor18 - 2}.${patch18}`
+    const supported = isCurrentVersionSupported(nodeVersion)
+    equal(supported, false)
+  }
+  {
+    // v18 supported
+    const supported = isCurrentVersionSupported(`${major18}.${minor18 + 1}.${patch18}`)
+    equal(supported, true)
   }
   for (const version of minimumSupportedNodeVersions) {
     const supported = isCurrentVersionSupported(version)
