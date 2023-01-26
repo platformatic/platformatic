@@ -4,6 +4,7 @@ import pino from 'pino'
 import pretty from 'pino-pretty'
 import loadConfig from './load-config.mjs'
 import { Migrator } from './migrator.mjs'
+import { MigrateError } from './errors.mjs'
 
 async function generateMigration (_args) {
   const logger = pino(pretty({
@@ -15,14 +16,15 @@ async function generateMigration (_args) {
   await configManager.parseAndValidate()
   const config = configManager.current
 
-  const migrationsConfig = config.migrations
-  if (migrationsConfig === undefined) {
-    logger.error('Missing migrations in config file')
-  }
-
-  const migrator = new Migrator(migrationsConfig, config.core, logger)
-
+  let migrator = null
   try {
+    const migrationsConfig = config.migrations
+    if (migrationsConfig === undefined) {
+      throw new MigrateError('Missing "migrations" section in config file')
+    }
+
+    migrator = new Migrator(migrationsConfig, config.core, logger)
+
     const nextMigrationVersion = await migrator.getNextMigrationVersion()
     const nextMigrationVersionStr = migrator.convertVersionToStr(nextMigrationVersion)
 
@@ -41,7 +43,9 @@ async function generateMigration (_args) {
   } catch (error) {
     logger.error(error.message)
   } finally {
-    await migrator.close()
+    if (migrator !== null) {
+      await migrator.close()
+    }
   }
 }
 
