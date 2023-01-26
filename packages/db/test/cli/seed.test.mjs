@@ -141,9 +141,8 @@ test('missing config file', async ({ equal, match }) => {
 test('missing seed file', async ({ equal, match }) => {
   const cwd = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite')
   try {
-    await execa('node', [cliPath, 'seed'], {
-      cwd
-    })
+    await execa('node', [cliPath, 'migrations', 'apply'], { cwd })
+    await execa('node', [cliPath, 'seed'], { cwd })
   } catch (err) {
     equal(err.exitCode, 1)
     match(err.stdout, 'Missing seed file')
