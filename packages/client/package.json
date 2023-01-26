@@ -1,0 +1,25 @@
+{
+  "name": "@platformatic/client",
+  "version": "0.13.1",
+  "description": "A client for all platformatic backends",
+  "main": "index.js",
+  "scripts": {
+    "lint": "standard",
+    "test": "standard | snazzy && tap test/*.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "author": "Matteo Collina <hello@matteocollina.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformatic/platformatic/issues"
+  },
+  "homepage": "https://github.com/platformatic/platformatic#readme",
+  "devDependencies": {
+    "snazzy": "^9.0.0",
+    "standard": "^17.0.0",
+    "tap": "^16.3.2"
+  }
+}

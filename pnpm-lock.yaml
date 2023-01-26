@@ -74,6 +74,16 @@ importers:
       tap: 16.3.4
       undici: 5.15.0
 
+  packages/client:
+    specifiers:
+      snazzy: ^9.0.0
+      standard: ^17.0.0
+      tap: ^16.3.2
+    devDependencies:
+      snazzy: 9.0.0
+      standard: 17.0.0
+      tap: 16.3.4
+
   packages/config:
     specifiers:
       '@iarna/toml': ^2.2.5
