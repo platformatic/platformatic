@@ -88,7 +88,7 @@ test('throws if there is no migrations in the config', async ({ match }) => {
   const child = execa('node', [cliPath, 'migrations', 'create', '-c', configFilePath], { cwd })
   const output = child.stdout.pipe(split())
   const [data] = await once(output, 'data')
-  match(data, /Missing migrations in config file/)
+  match(data, /Missing "migrations" section in config file/)
 })
 
 test('throws if migrations directory does not exist', async ({ match }) => {

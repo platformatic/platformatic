@@ -12,7 +12,7 @@ import { utimesSync } from 'fs'
 async function execute (logger, args, config) {
   const migrationsConfig = config.migrations
   if (migrationsConfig === undefined) {
-    throw new MigrateError('Missing migrations in config file')
+    throw new MigrateError('Missing "migrations" section in config file')
   }
 
   const migrator = new Migrator(migrationsConfig, config.core, logger)
@@ -23,9 +23,6 @@ async function execute (logger, args, config) {
     } else {
       await migrator.applyMigrations(args.to)
     }
-  } catch (error) {
-    logger.error(error)
-    throw error
   } finally {
     await migrator.close()
   }
