@@ -131,6 +131,20 @@ class Migrator {
     return maxMigrationVersion + 1
   }
 
+  async hasMigrationsToApply () {
+    await this.setupPostgrator()
+
+    const migrations = await this.postgrator.getMigrations()
+    const currentVersion = await this.postgrator.getDatabaseVersion()
+
+    for (const migration of migrations) {
+      if (migration.version > currentVersion) {
+        return true
+      }
+    }
+    return false
+  }
+
   async close () {
     if (this.db !== null) {
       await this.db.dispose()
