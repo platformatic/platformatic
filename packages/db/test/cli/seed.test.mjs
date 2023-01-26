@@ -20,13 +20,12 @@ test('seed and start', async ({ comment, equal, match, teardown }) => {
   const seed = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite', 'seed.js')
   comment(`dbl ${dbLocation}`)
   comment(`cwd ${cwd}`)
-  const { stdout } = await execa('node', [cliPath, 'seed', seed], {
-    cwd
-  })
+
+  await execa('node', [cliPath, 'migrations', 'apply'], { cwd })
+  const { stdout } = await execa('node', [cliPath, 'seed', seed], { cwd })
 
   {
     const sanitized = stripAnsi(stdout)
-    match(sanitized, /001\.do\.sql/)
     match(sanitized, /seeding from .*seed\.js/)
     match(sanitized, /seeding complete/)
   }
@@ -84,6 +83,23 @@ test('seed and start', async ({ comment, equal, match, teardown }) => {
   }
 })
 
+test('seed command should throw an error if there are migrations to apply', async ({ comment, equal, match, teardown }) => {
+  await cleanSQLite(dbLocation)
+
+  comment('seeding')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite')
+  const seed = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite', 'seed.js')
+  comment(`dbl ${dbLocation}`)
+  comment(`cwd ${cwd}`)
+
+  try {
+    await execa('node', [cliPath, 'seed', seed], { cwd })
+  } catch (err) {
+    const sanitized = stripAnsi(err.stdout)
+    match(sanitized, /You have migrations to apply. Please run `platformatic db migrations apply` first./)
+  }
+})
+
 test('valid config files', async ({ comment }) => {
   const fixturesDir = path.join(urlDirname(import.meta.url), '..', 'fixtures')
   const validConfigFiles = await readdir(path.join(fixturesDir, 'valid-config-files'))
@@ -100,9 +116,8 @@ test('valid config files', async ({ comment }) => {
       await copyFile(path.join(fixturesDir, 'sqlite', 'migrations', '001.do.sql'), path.join(cwd, 'migrations', '001.do.sql'))
       const seed = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite', 'seed.js')
 
-      const { stdout } = await execa('node', [cliPath, 'seed', seed], {
-        cwd
-      })
+      await execa('node', [cliPath, 'migrations', 'apply'], { cwd })
+      const { stdout } = await execa('node', [cliPath, 'seed', seed], { cwd })
 
       {
         const sanitized = stripAnsi(stdout)
@@ -145,13 +160,12 @@ test('seed and start from cwd', async ({ comment, equal, match, teardown }) => {
   process.chdir(cwd)
   comment(`dbl ${dbLocation}`)
   comment(`cwd ${cwd}`)
-  const { stdout } = await execa('node', [cliPath, 'seed', 'seed.js'], {
-    cwd
-  })
+
+  await execa('node', [cliPath, 'migrations', 'apply'], { cwd })
+  const { stdout } = await execa('node', [cliPath, 'seed', 'seed.js'], { cwd })
 
   {
     const sanitized = stripAnsi(stdout)
-    match(sanitized, /001\.do\.sql/)
     match(sanitized, /seeding from .*seed\.js/)
   }
 
