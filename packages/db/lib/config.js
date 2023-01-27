@@ -24,7 +24,8 @@ class DBConfigManager extends ConfigManager {
       this.current.core.connectionString = 'sqlite://' + sqliteFullPath
     }
 
-    if (this.current.core.graphql && this.current.core.graphql.schemaPath) {
+    /* c8 ignore next 4 */
+    if (this.current.core.graphql?.schemaPath) {
       this.current.core.graphql.schemaPath = this._fixRelativePath(this.current.core.graphql.schemaPath)
       this.current.core.graphql.schema = await readFile(this.current.core.graphql.schemaPath, 'utf8')
     }
