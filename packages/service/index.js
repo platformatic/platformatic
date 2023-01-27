@@ -179,10 +179,10 @@ function adjustConfigAfterMerge (options, stash) {
   }
 }
 
-async function buildServer (options, app = platformaticService) {
+async function buildServer (options, app = platformaticService, ConfigManagerContructor = ConfigManager) {
   if (!options.configManager) {
     // instantiate a new config manager from current options
-    const cm = new ConfigManager({
+    const cm = new ConfigManagerContructor({
       source: options,
       schema: app?.schema ?? schema
     })

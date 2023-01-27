@@ -1,0 +1,21 @@
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "0",
+    "logger": {
+      "level": "trace"
+    }
+  },
+  "core": {
+    "connectionString": "sqlite://:memory:",
+    "graphql": true,
+    "openapi": true
+  },
+  "migrations": {
+    "dir": "./migrations",
+    "autoApply": true
+  },
+  "plugin": {
+    "path": "./plugin.js"
+  }
+}

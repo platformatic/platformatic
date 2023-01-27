@@ -76,10 +76,12 @@ importers:
 
   packages/client:
     specifiers:
+      '@platformatic/db': workspace:*
       snazzy: ^9.0.0
       standard: ^17.0.0
       tap: ^16.3.2
     devDependencies:
+      '@platformatic/db': link:../db
       snazzy: 9.0.0
       standard: 17.0.0
       tap: 16.3.4
