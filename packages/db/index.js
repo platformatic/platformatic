@@ -65,7 +65,7 @@ platformaticDB[Symbol.for('skip-override')] = true
 platformaticDB.schema = schema
 
 async function buildDBServer (options) {
-  return buildServer(options, platformaticDB)
+  return buildServer(options, platformaticDB, ConfigManager)
 }
 
 module.exports.buildServer = buildDBServer
