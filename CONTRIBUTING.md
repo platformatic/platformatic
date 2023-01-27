@@ -128,6 +128,15 @@ fixes #issuenum
 ```
 When all checks are passed and the changes are approved, merge the PR with `squash and merge` option
 
+## Navigating the project via ctags
+
+You can navigate the project using [universal ctags](https://github.com/universal-ctags/ctags). To generate a valid `tags` file use the following command:
+
+```
+ctags --exclude=node_modules --exclude='**/*.test.js' --exclude='**/build' -R *
+```
+
+
 ## Developer Contribution of Origin
 
 ```
@@ -172,4 +181,3 @@ By making a contribution to this project, I certify that:
 
 If you want to know how to retroactively add the DCO to your commits,
 check out [this guide](https://github.com/src-d/guide/blob/master/developer-community/fix-DCO.md).
-
