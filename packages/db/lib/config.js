@@ -3,6 +3,7 @@
 const { ConfigManager } = require('@platformatic/service')
 const { resolve } = require('path')
 const { schema } = require('./schema')
+const { readFile } = require('fs/promises')
 
 class DBConfigManager extends ConfigManager {
   constructor (opts) {
@@ -14,13 +15,18 @@ class DBConfigManager extends ConfigManager {
     })
   }
 
-  _transformConfig () {
+  async _transformConfig () {
     super._transformConfig.call(this)
     const dirOfConfig = this.dirname
     if (this.current.core && this.current.core.connectionString.indexOf('sqlite') === 0 && this.current.core.connectionString !== 'sqlite://:memory:') {
       const originalSqlitePath = this.current.core.connectionString.replace('sqlite://', '')
       const sqliteFullPath = resolve(dirOfConfig, originalSqlitePath)
       this.current.core.connectionString = 'sqlite://' + sqliteFullPath
+    }
+
+    if (this.current.core.graphql && this.current.core.graphql.schemaPath) {
+      this.current.core.graphql.schemaPath = this._fixRelativePath(this.current.core.graphql.schemaPath)
+      this.current.core.graphql.schema = await readFile(this.current.core.graphql.schemaPath, 'utf8')
     }
 
     /* c8 ignore next 2 */
