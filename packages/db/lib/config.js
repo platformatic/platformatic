@@ -17,7 +17,7 @@ class DBConfigManager extends ConfigManager {
   _transformConfig () {
     super._transformConfig.call(this)
     const dirOfConfig = this.dirname
-    if (this.current.core && this.current.core.connectionString.indexOf('sqlite') === 0) {
+    if (this.current.core && this.current.core.connectionString.indexOf('sqlite') === 0 && this.current.core.connectionString !== 'sqlite://:memory:') {
       const originalSqlitePath = this.current.core.connectionString.replace('sqlite://', '')
       const sqliteFullPath = resolve(dirOfConfig, originalSqlitePath)
       this.current.core.connectionString = 'sqlite://' + sqliteFullPath

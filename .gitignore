@@ -121,5 +121,7 @@ playwright-report
 packages/service/test/tmp 
 packages/cli/fixtures/sqlite/db
 
+*.sqlite
+
 # CTAGS
 tags

@@ -330,6 +330,16 @@ test('ignore and sqlite3', async ({ teardown, equal, pass, same }) => {
   }
 })
 
+test('starts a config file on disk with auto-apply', async ({ teardown, equal, pass, same }) => {
+  const server = await buildServer(path.join(__dirname, 'fixtures', 'sqlite', 'no-logger.json'))
+  teardown(server.stop)
+  await server.listen()
+  {
+    const res = await (request(`${server.url}/`))
+    equal(res.statusCode, 200, 'root status code')
+  }
+})
+
 setInterval(() => {
   whyIsNodeRuninng()
 }, 5000).unref()
