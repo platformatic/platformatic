@@ -4,11 +4,7 @@ const { buildConfig, connInfo } = require('./helper')
 const { test } = require('tap')
 const { buildServer } = require('..')
 const { request } = require('undici')
-const { tmpdir } = require('os')
-const { writeFile, unlink } = require('fs/promises')
-const { join, basename } = require('path')
-const os = require('os')
-const DBConfigManager = require('../lib/config')
+const { join } = require('path')
 
 test('extend schema via config', async ({ teardown, equal, same }) => {
   const schema = `
