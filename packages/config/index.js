@@ -155,7 +155,7 @@ class ConfigManager extends EventEmitter {
       if (!validationResult) {
         return false
       }
-      this._transformConfig()
+      await this._transformConfig()
       return true
     } catch (err) {
       if (err.name === 'MissingValueError') {

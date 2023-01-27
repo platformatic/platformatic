@@ -127,6 +127,21 @@ A **required** object with the following settings:
     }
   }
   ```
+
+  It's possible to add a custom GraphQL schema during the startup:
+
+  ```json
+  {
+    "core": {
+      ...
+      "graphql": {
+        "schemaPath": "path/to/schema.graphql"
+        }
+      }
+    }
+  }
+  ```
+
 - **`openapi`** (`boolean` or `object`, default: `true`) — Enables OpenAPI REST support.
   - If value is an object, all [OpenAPI v3](https://swagger.io/specification/) allowed properties can be passed. Also a `prefix` property can be passed to set the OpenAPI prefix.
   - Platformatic DB uses [`@fastify/swagger`](https://github.com/fastify/fastify-swagger) under the hood to manage this configuration.
