@@ -85,67 +85,73 @@ async function listConstraints (db, sql, table) {
 module.exports.listConstraints = listConstraints
 
 async function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve) {
-  const fieldNames = Object.keys(input)
-  const keysToSql = fieldNames.map((key) => sql.ident(key))
-  const valuesToSql = fieldNames.map((key) => sql.value(input[key]))
-
   const primaryKeyValues = {}
-  let useUUID = false
-  const where = []
-  let autoIncrement = 0
+
+  let hasAutoIncrementPK = false
+
   for (const { key, sqlType } of primaryKeys) {
-    keysToSql.push(sql.ident(key))
-    // TODO figure out while this is not covered by tests
+    let primaryKeyValue = input[key]
+
     /* istanbul ignore next */
-    if (sqlType === 'uuid') {
-      useUUID = true
-      primaryKeyValues[key] = randomUUID()
-    } else if (autoIncrement > 1) {
-      throw new Error('SQLite only supports autoIncrement on one column')
-    } else if (input[key]) {
-      primaryKeyValues[key] = input[key]
-    } else {
-      autoIncrement++
-      primaryKeyValues[key] = null
+    if (primaryKeyValue === undefined) {
+      if (sqlType === 'uuid') {
+        primaryKeyValue = randomUUID()
+      } else if (!hasAutoIncrementPK) {
+        primaryKeyValue = null
+        hasAutoIncrementPK = true
+      } else {
+        throw new Error('SQLite only supports autoIncrement on one column')
+      }
+      input[key] = primaryKeyValue
     }
-    valuesToSql.push(sql.value(primaryKeyValues[key]))
+
+    primaryKeyValues[key] = primaryKeyValue
   }
 
-  const keys = sql.join(
-    keysToSql,
-    sql`, `
-  )
+  const insertedKeys = []
+  const insertedValues = []
 
-  const values = sql.join(
-    valuesToSql,
-    sql`, `
-  )
+  for (const [key, value] of Object.entries(input)) {
+    insertedKeys.push(sql.ident(key))
+    insertedValues.push(sql.value(value))
+  }
 
-  const insert = sql`
-    INSERT INTO ${sql.ident(table)} (${keys})
-    VALUES(${values})
+  const insertRawQuery = sql`
+    INSERT INTO ${sql.ident(table)} (${sql.join(insertedKeys, sql`, `)})
+    VALUES(${sql.join(insertedValues, sql`, `)})
   `
-  await db.query(insert)
 
-  if (!useUUID && primaryKeys.length === 1) {
-    const res2 = await db.query(sql`
-      SELECT last_insert_rowid()
-    `)
+  if (fieldsToRetrieve.length === 0) {
+    await db.query(insertRawQuery)
+    return {}
+  } else {
+    return db.tx(async (transaction) => {
+      await transaction.query(insertRawQuery)
 
-    primaryKeyValues[primaryKeys[0].key] = res2[0]['last_insert_rowid()']
+      let selectInsertedRawQuery = null
+      if (hasAutoIncrementPK) {
+        selectInsertedRawQuery = sql`
+          SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
+          FROM ${sql.ident(table)}
+          WHERE _rowid_ = last_insert_rowid()
+        `
+      } else {
+        const where = []
+        for (const [key, value] of Object.entries(primaryKeyValues)) {
+          where.push(sql`${sql.ident(key)} = ${sql.value(value)}`)
+        }
+
+        selectInsertedRawQuery = sql`
+          SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
+          FROM ${sql.ident(table)}
+          WHERE ${sql.join(where, sql` AND `)}
+        `
+      }
+
+      const [insertedRaw] = await transaction.query(selectInsertedRawQuery)
+      return insertedRaw
+    })
   }
-
-  for (const { key } of primaryKeys) {
-    where.push(sql`${sql.ident(key)} = ${sql.value(primaryKeyValues[key])}`)
-  }
-
-  const res = await db.query(sql`
-    SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
-    FROM ${sql.ident(table)}
-    WHERE ${sql.join(where, sql` AND `)}
-  `)
-
-  return res[0]
 }
 
 module.exports.insertOne = insertOne

@@ -168,7 +168,7 @@ test('empty save', async ({ equal, same, teardown, rejects }) => {
   same(insertResult, { id: '1', theTitle: null })
 })
 
-test('insert with explicit PK value', async ({ same, teardown }) => {
+test('insert with explicit integer PK value', async ({ same, teardown }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
     teardown(() => db.dispose())
@@ -189,6 +189,108 @@ test('insert with explicit PK value', async ({ same, teardown }) => {
     fields: ['id', 'title'],
     inputs: [{ id: 13, title: '13th page with explicit id equal to 13' }]
   })
+  same(newPage, {
+    id: '13',
+    title: '13th page with explicit id equal to 13'
+  })
+})
+
+test('insert with explicit uuid PK value', { skip: !isSQLite }, async ({ same, teardown }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+    await db.query(sql`CREATE TABLE pages (
+      id uuid PRIMARY KEY,
+      title varchar(255) NOT NULL
+    );`)
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+
+  const pageEntity = mapper.entities.page
+  const [newPage] = await pageEntity.insert({
+    fields: ['id', 'title'],
+    inputs: [{
+      id: '00000000-0000-0000-0000-000000000013',
+      title: '13th page with explicit id equal to 13'
+    }]
+  })
+  same(newPage, {
+    id: '00000000-0000-0000-0000-000000000013',
+    title: '13th page with explicit id equal to 13'
+  })
+})
+
+test('insert with explicit uuid PK value without rowid', { skip: !isSQLite }, async ({ same, teardown }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+    await db.query(sql`CREATE TABLE pages (
+      id uuid PRIMARY KEY,
+      title varchar(255) NOT NULL
+    ) WITHOUT ROWID;`)
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+
+  const pageEntity = mapper.entities.page
+  const [newPage] = await pageEntity.insert({
+    fields: ['id', 'title'],
+    inputs: [{
+      id: '00000000-0000-0000-0000-000000000013',
+      title: '13th page with explicit id equal to 13'
+    }]
+  })
+  same(newPage, {
+    id: '00000000-0000-0000-0000-000000000013',
+    title: '13th page with explicit id equal to 13'
+  })
+})
+
+test('insert without fields to retrieve', { skip: !isSQLite }, async ({ same, teardown }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+    await db.query(sql`CREATE TABLE pages (
+      id INTEGER PRIMARY KEY,
+      title varchar(255) NOT NULL
+    );`)
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+
+  const pageEntity = mapper.entities.page
+  await pageEntity.insert({
+    fields: [],
+    inputs: [{
+      id: '13',
+      title: '13th page with explicit id equal to 13'
+    }]
+  })
+
+  const [newPage] = await pageEntity.find({
+    where: {
+      id: {
+        eq: '13'
+      }
+    }
+  })
+
   same(newPage, {
     id: '13',
     title: '13th page with explicit id equal to 13'
