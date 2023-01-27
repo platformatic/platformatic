@@ -1,0 +1,18 @@
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0,
+    "logger": {
+      "level": "error"
+    }
+  },
+  "core": {
+    "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres",
+    "graphql": {
+      "schemaPath": "./names.graphql"
+    }
+  },
+  "plugin": {
+    "path": "./name-resolver.js"
+  } 
+}
