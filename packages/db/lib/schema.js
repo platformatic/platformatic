@@ -56,6 +56,12 @@ const core = {
             items: {
               type: 'string'
             }
+          },
+          schema: {
+            type: 'string'
+          },
+          schemaPath: {
+            type: 'string'
           }
         }
       }]

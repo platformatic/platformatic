@@ -1,0 +1,14 @@
+[core]
+connectionString = "sqlite://./db"
+
+[server]
+hostname = "127.0.0.1"
+port = 0
+
+  [server.logger]
+  level = "info"
+
+[migrations]
+dir = "./migrations"
+table = "versions"
+autoApply = true

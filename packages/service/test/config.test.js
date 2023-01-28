@@ -2,7 +2,7 @@
 
 require('./helper')
 const { test } = require('tap')
-const { buildServer, ConfigManager, platformaticService } = require('..')
+const { buildServer, ConfigManager } = require('..')
 const { request } = require('undici')
 const { join } = require('path')
 const os = require('os')
@@ -222,11 +222,7 @@ test('custom ConfigManager', async ({ teardown, equal, pass, same }) => {
     }`)
 
   class MyConfigManager extends ConfigManager {
-    constructor (options) {
-      super(options)
-    }
-
-    _transformConfig() {
+    _transformConfig () {
       super._transformConfig.call(this)
       this.current.plugin = {
         path: file,
@@ -243,7 +239,7 @@ test('custom ConfigManager', async ({ teardown, equal, pass, same }) => {
       port: 0
     },
     metrics: false
-  }, platformaticService, MyConfigManager)
+  }, null, MyConfigManager)
   teardown(server.stop)
   await server.listen()
 
@@ -275,6 +271,7 @@ test('custom ConfigManager', async ({ teardown, equal, pass, same }) => {
     same(await res.body.text(), 'ciao mondo', 'response')
   }
 })
+
 test('config reloads', async ({ teardown, equal, pass, same }) => {
   const file = join(os.tmpdir(), `${process.pid}-1.js`)
 

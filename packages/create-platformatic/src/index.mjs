@@ -5,7 +5,7 @@ import inquirer from 'inquirer'
 import createPlatformaticDB from './db/create-db-cli.mjs'
 import createPlatformaticService from './service/create-service-cli.mjs'
 import commist from 'commist'
-import { getUsername, getVersion, getSupportedNodeVersions, isCurrentVersionSupported } from './utils.mjs'
+import { getUsername, getVersion, minimumSupportedNodeVersions, isCurrentVersionSupported } from './utils.mjs'
 
 const createPlatformatic = async (argv) => {
   const help = helpMe({
@@ -33,7 +33,7 @@ const createPlatformatic = async (argv) => {
     const currentVersion = process.versions.node
     const supported = isCurrentVersionSupported(currentVersion)
     if (!supported) {
-      const supportedVersions = getSupportedNodeVersions().join(' or >= ')
+      const supportedVersions = minimumSupportedNodeVersions.join(' or >= ')
       await say(`Platformatic is not supported on Node.js v${currentVersion}.`)
       await say(`Please use one of the following Node.js versions >= ${supportedVersions}.`)
     }

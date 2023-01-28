@@ -2,6 +2,7 @@
 
 const fp = require('fastify-plugin')
 const leven = require('leven')
+const fastifyUser = require('fastify-user')
 
 const findRule = require('./lib/find-rule')
 const { getRequestFromContext, getRoles } = require('./lib/utils')
@@ -14,36 +15,7 @@ const {
 const PLT_ADMIN_ROLE = 'platformatic-admin'
 
 async function auth (app, opts) {
-  if (opts.jwt) {
-    await app.register(require('./lib/jwt'), opts.jwt)
-  }
-
-  if (opts.webhook) {
-    await app.register(require('./lib/webhook'), opts.webhook)
-  }
-
-  if (opts.jwt && opts.webhook) {
-    app.decorateRequest('createSession', async function () {
-      try {
-        // `createSession` actually exists only if jwt or webhook are enabled
-        // and creates a new `request.user` object
-        await this.createJWTSession()
-      } catch (err) {
-        this.log.trace({ err })
-
-        await this.createWebhookSession()
-      }
-    })
-  } else if (opts.jwt) {
-    app.decorateRequest('createSession', function () {
-      return this.createJWTSession()
-    })
-  } else if (opts.webhook) {
-    app.decorateRequest('createSession', function () {
-      return this.createWebhookSession()
-    })
-  }
-
+  app.register(fastifyUser, opts)
   const adminSecret = opts.adminSecret
   const roleKey = opts.roleKey || 'X-PLATFORMATIC-ROLE'
   const anonymousRole = opts.anonymousRole || 'anonymous'
@@ -51,11 +23,9 @@ async function auth (app, opts) {
   app.decorateRequest('setupDBAuthorizationUser', setupUser)
 
   async function setupUser () {
-    if (this.user) {
-      return
-    }
-
     const request = this
+
+    await request.extractUser()
 
     let forceAdminRole = false
     if (adminSecret && request.headers['x-platformatic-admin-secret'] === adminSecret) {
@@ -79,17 +49,6 @@ async function auth (app, opts) {
             return value
           }
         })
-      }
-    }
-
-    if (typeof request.createSession === 'function') {
-      try {
-        // `createSession` actually exists only if jwt or webhook are enabled
-        // and creates a new `request.user` object
-        await request.createSession()
-        request.log.debug({ user: request.user }, 'logged user in')
-      } catch (err) {
-        request.log.trace({ err })
       }
     }
 

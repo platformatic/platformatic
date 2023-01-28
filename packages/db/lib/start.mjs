@@ -1,15 +1,23 @@
 import { dirname } from 'path'
+import pino from 'pino'
+import pretty from 'pino-pretty'
 import { FileWatcher } from '@platformatic/utils'
 import { buildServer } from '../index.js'
 import close from 'close-with-grace'
 import loadConfig from './load-config.mjs'
 import { compileWatch } from './compile.mjs'
 import { addLoggerToTheConfig } from '@platformatic/service'
+import { MigrateError } from './errors.mjs'
 
 // TODO make sure coverage is reported for Windows
 // Currently C8 is not reporting it
 /* c8 ignore start */
 export async function start (_args) {
+  const logger = pino(pretty({
+    translateTime: 'SYS:HH:MM:ss',
+    ignore: 'hostname,pid'
+  }))
+
   const { configManager } = await loadConfig({
     string: ['to']
   }, _args, { watch: true })
@@ -32,10 +40,17 @@ export async function start (_args) {
   }
 
   // Set the location of the config
-  const server = await buildServer({
-    ...config,
-    configManager
-  })
+
+  let server = null
+  try {
+    server = await buildServer({ ...config, configManager })
+  } catch (error) {
+    if (error instanceof MigrateError) {
+      logger.error(error.message)
+      process.exit(1)
+    }
+    throw error
+  }
 
   configManager.on('update', (newConfig) => onConfigUpdated(newConfig, server))
   server.app.platformatic.configManager = configManager
