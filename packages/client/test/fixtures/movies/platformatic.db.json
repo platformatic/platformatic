@@ -3,11 +3,11 @@
     "hostname": "127.0.0.1",
     "port": "0",
     "logger": {
-      "level": "trace"
+      "level": "error"
     }
   },
   "core": {
-    "connectionString": "sqlite://:memory:",
+    "connectionString": "sqlite://./db.sqlite",
     "graphql": true,
     "openapi": true
   },

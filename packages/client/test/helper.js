@@ -1,12 +1,9 @@
 'use strict'
 
-function buildConfig (options) {
-  const base = {
-    server: {},
-    core: {}
-  }
+const { setGlobalDispatcher, Agent } = require('undici')
 
-  return Object.assign(base, options)
-}
+setGlobalDispatcher(new Agent({
+  keepAliveMaxTimeout: 10,
+  keepAliveTimeout: 10
+}))
 
-module.exports.buildConfig = buildConfig
