@@ -36,7 +36,7 @@
     "@vitejs/plugin-react": "^3.0.0",
     "autoprefixer": "^10.4.13",
     "camelcase": "^6.3.0",
-    "graphiql": "2.2.0",
+    "graphiql": "2.3.0",
     "happy-dom": "^8.1.0",
     "history": "^5.3.0",
     "inflected": "^2.1.0",
