@@ -17,6 +17,7 @@ async function buildOpenAPIClient (options) {
   }
 
   const baseUrl = spec.servers?.[0]?.url || computeURLWithoutPath(options.url)
+  const headers = options.headers
 
   for (const path of Object.keys(spec.paths)) {
     const pathMeta = spec.paths[path]
@@ -33,7 +34,7 @@ async function buildOpenAPIClient (options) {
         operationId = method.toLowerCase() + stringToUpdate.split('/').map(capitalize).join('')
       }
 
-      client[operationId] = buildCallFunction(baseUrl, path, method, methodMeta, operationId)
+      client[operationId] = buildCallFunction(baseUrl, path, method, methodMeta, operationId, headers)
     }
   }
 
@@ -46,7 +47,7 @@ function computeURLWithoutPath (url) {
   return url.toString()
 }
 
-function buildCallFunction (baseUrl, path, method, methodMeta, operationId) {
+function buildCallFunction (baseUrl, path, method, methodMeta, operationId, getHeaders) {
   const url = new URL(baseUrl)
   method = method.toUpperCase()
 
@@ -73,12 +74,15 @@ function buildCallFunction (baseUrl, path, method, methodMeta, operationId) {
       }
     }
 
+    const headers = getHeaders ? await getHeaders() : {}
+
     urlToCall.search = query.toString()
     urlToCall.pathname = pathToCall
 
     const res = await request(urlToCall, {
       method,
       headers: {
+        ...headers,
         'content-type': 'application/json; charset=utf-8'
       },
       body: JSON.stringify(args)
