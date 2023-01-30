@@ -274,7 +274,7 @@ importers:
       fastify-user: ^0.1.0
       get-jwks: ^8.0.2
       leven: ~3.1.0
-      mercurius: ^11.4.0
+      mercurius: ^12.0.0
       snazzy: ^9.0.0
       standard: ^17.0.0
       tap: ^16.3.2
@@ -295,7 +295,7 @@ importers:
       '@platformatic/db-core': link:../db-core
       fast-jwt: 2.1.0
       fastify: 4.12.0
-      mercurius: 11.5.0_graphql@16.6.0
+      mercurius: 12.0.0_graphql@16.6.0
       snazzy: 9.0.0
       standard: 17.0.0
       tap: 16.3.4
@@ -310,7 +310,7 @@ importers:
       '@platformatic/sql-openapi': workspace:*
       fastify: ^4.10.2
       fastify-plugin: ^4.4.0
-      mercurius: ^11.4.0
+      mercurius: ^12.0.0
       snazzy: ^9.0.0
       standard: ^17.0.0
       tap: ^16.3.2
@@ -323,7 +323,7 @@ importers:
       fastify-plugin: 4.5.0
     devDependencies:
       fastify: 4.12.0
-      mercurius: 11.5.0_graphql@16.6.0
+      mercurius: 12.0.0_graphql@16.6.0
       snazzy: 9.0.0
       standard: 17.0.0
       tap: 16.3.4
@@ -446,7 +446,7 @@ importers:
       fastify-sandbox: ^0.11.0
       graphql: ^16.6.0
       help-me: ^4.2.0
-      mercurius: ^11.4.0
+      mercurius: ^12.0.0
       minimist: ^1.2.7
       pino: ^8.8.0
       pino-pretty: ^9.1.1
@@ -485,7 +485,7 @@ importers:
       fastify-sandbox: 0.11.0
       graphql: 16.6.0
       help-me: 4.2.0
-      mercurius: 11.5.0_graphql@16.6.0
+      mercurius: 12.0.0_graphql@16.6.0
       minimist: 1.2.7
       pino: 8.8.0
       pino-pretty: 9.1.1
@@ -540,7 +540,7 @@ importers:
       graphql-scalars: ^1.20.1
       graphql-type-json: ^0.3.2
       inflected: ^2.1.0
-      mercurius: ^11.4.0
+      mercurius: ^12.0.0
       snazzy: ^9.0.0
       standard: ^17.0.0
       tap: ^16.3.2
@@ -553,7 +553,7 @@ importers:
       graphql-scalars: 1.20.1_graphql@16.6.0
       graphql-type-json: 0.3.2_graphql@16.6.0
       inflected: 2.1.0
-      mercurius: 11.5.0_graphql@16.6.0
+      mercurius: 12.0.0_graphql@16.6.0
     devDependencies:
       '@platformatic/sql-events': link:../sql-events
       '@platformatic/sql-mapper': link:../sql-mapper
@@ -618,7 +618,7 @@ importers:
       fastify: ^4.10.2
       fastify-plugin: ^4.4.0
       inflected: ^2.1.0
-      mercurius: ^11.4.0
+      mercurius: ^12.0.0
       openapi-types: ^12.1.0
       snazzy: ^9.0.0
       standard: ^17.0.0
@@ -635,7 +635,7 @@ importers:
     devDependencies:
       '@platformatic/sql-mapper': link:../sql-mapper
       fastify: 4.12.0
-      mercurius: 11.5.0_graphql@16.6.0
+      mercurius: 12.0.0_graphql@16.6.0
       openapi-types: 12.1.0
       snazzy: 9.0.0
       standard: 17.0.0
@@ -1168,7 +1168,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.12.9
-      '@babel/helper-plugin-utils': 7.10.4
+      '@babel/helper-plugin-utils': 7.20.2
       '@babel/plugin-syntax-object-rest-spread': 7.8.3_@babel+core@7.12.9
       '@babel/plugin-transform-parameters': 7.20.7_@babel+core@7.12.9
     dev: true
@@ -3040,20 +3040,6 @@ packages:
   /@mdx-js/util/1.6.22:
     resolution: {integrity: sha512-H1rQc1ZOHANWBvPcW+JpGwr+juXSxM8Q8YCkm3GhZd8REu1fHR3z99CErO1p9pkcfcxZnMdIZdIsXkOHY0NilA==}
     dev: true
-
-  /@mercuriusjs/subscription-client/0.1.0_graphql@16.6.0:
-    resolution: {integrity: sha512-ivqMmSQ4kwroK/uUZVwOnd5QEAsjrEy/EqSsEqhtEObA/Zqkc44Fgi543Mml3XjoGopY1y1rJYQSl/gzfyfgrw==}
-    engines: {node: '>=14.19.3'}
-    peerDependencies:
-      graphql: ^16.0.0
-    dependencies:
-      '@fastify/error': 3.2.0
-      graphql: 16.6.0
-      secure-json-parse: 2.7.0
-      ws: 8.12.0
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
 
   /@mui/base/5.0.0-alpha.115_5ndqzdd6t4rivxsukjv3i3ak2q:
     resolution: {integrity: sha512-OGQ84whT/yNYd6xKCGGS6MxqEfjVjk5esXM7HP6bB2Rim7QICUapxZt4nm8q39fpT08rNDkv3xPVqDDwRdRg1g==}
@@ -6738,7 +6724,7 @@ packages:
       eslint-scope: 7.1.1
       eslint-utils: 3.0.0_eslint@8.4.1
       eslint-visitor-keys: 3.3.0
-      espree: 9.2.0
+      espree: 9.4.1
       esquery: 1.4.0
       esutils: 2.0.3
       fast-deep-equal: 3.1.3
@@ -9373,8 +9359,8 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
-  /mercurius/11.5.0_graphql@16.6.0:
-    resolution: {integrity: sha512-e2ZGC9OyX8eY7Dt/gUrTvzjVDojXECgv4dkjOz7Mux80V0D8ZC7im2cuywsInIQw6pEK1/p8WeVzuIADdWAJag==}
+  /mercurius/12.0.0_graphql@16.6.0:
+    resolution: {integrity: sha512-ORe/0eFuUq5lFMF1c8hdEQz44MdK4A8gMbJr8US3BakHBeYbbFDWGskhHkYmaZkx2ka0NJh+iMasWiL07kAoHg==}
     engines: {node: '>=14.19.3'}
     peerDependencies:
       graphql: ^16.0.0
@@ -9382,7 +9368,6 @@ packages:
       '@fastify/error': 3.2.0
       '@fastify/static': 6.7.0
       '@fastify/websocket': 7.1.2
-      '@mercuriusjs/subscription-client': 0.1.0_graphql@16.6.0
       fastify-plugin: 4.5.0
       graphql: 16.6.0
       graphql-jit: 0.7.4_graphql@16.6.0
@@ -9392,7 +9377,7 @@ packages:
       safe-stable-stringify: 2.4.2
       secure-json-parse: 2.7.0
       single-user-cache: 0.6.0
-      tiny-lru: 8.0.2
+      tiny-lru: 10.0.1
       undici: 5.16.0
       ws: 8.12.0
     transitivePeerDependencies:
@@ -12947,10 +12932,6 @@ packages:
 
   /tiny-lru/10.0.1:
     resolution: {integrity: sha512-Vst+6kEsWvb17Zpz14sRJV/f8bUWKhqm6Dc+v08iShmIJ/WxqWytHzCTd6m88pS33rE2zpX34TRmOpAJPloNCA==}
-    engines: {node: '>=6'}
-
-  /tiny-lru/8.0.2:
-    resolution: {integrity: sha512-ApGvZ6vVvTNdsmt676grvCkUCGwzG9IqXma5Z07xJgiC5L7akUMof5U8G2JTI9Rz/ovtVhJBlY6mNhEvtjzOIg==}
     engines: {node: '>=6'}
 
   /tiny-warning/1.0.3:
