@@ -1,11 +1,15 @@
 'use strict'
 
 const { request } = require('undici')
+const fs = require('fs/promises')
 
 async function buildOpenAPIClient (options) {
   const client = {}
   let spec
-  if (options.url) {
+
+  if (options.file) {
+    spec = JSON.parse(await fs.readFile(options.file, 'utf8'))
+  } else if (options.url) {
     const res = await request(options.url)
     spec = await res.body.json()
   } else {
