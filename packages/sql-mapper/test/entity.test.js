@@ -369,6 +369,39 @@ test('[SQLite] throws if PK is not INTEGER', { skip: !isSQLite }, async ({ fail,
   }
 })
 
+test('[SQLite] allows to have VARCHAR PK', { skip: !isSQLite }, async ({ same, teardown }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+
+    try {
+      await db.query(sql`CREATE TABLE pages (
+        id varchar(255) PRIMARY KEY,
+        title varchar(255) NOT NULL
+      );`)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+  const pageEntity = mapper.entities.page
+  const [newPage] = await pageEntity.insert({
+    fields: ['id', 'title'],
+    inputs: [{ id: 'varchar_id', title: '13th page with explicit id equal to 13' }]
+  })
+  same(newPage, {
+    id: 'varchar_id',
+    title: '13th page with explicit id equal to 13'
+  })
+})
+
+
 test('mixing snake and camel case', async ({ pass, teardown, same, equal }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
