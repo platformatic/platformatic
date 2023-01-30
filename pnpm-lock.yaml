@@ -531,6 +531,8 @@ importers:
 
   packages/sql-graphql:
     specifiers:
+      '@mercuriusjs/federation': ^1.0.0
+      '@mercuriusjs/gateway': ^1.0.0
       '@platformatic/sql-events': workspace:*
       '@platformatic/sql-mapper': workspace:*
       camelcase: ^6.3.0
@@ -540,21 +542,23 @@ importers:
       graphql-scalars: ^1.20.1
       graphql-type-json: ^0.3.2
       inflected: ^2.1.0
-      mercurius: ^11.4.0
+      mercurius: ^12.0.0
       snazzy: ^9.0.0
       standard: ^17.0.0
       tap: ^16.3.2
       tsd: ^0.25.0
       ws: ^8.11.0
     dependencies:
+      '@mercuriusjs/federation': 1.0.0
       camelcase: 6.3.0
       fastify-plugin: 4.5.0
       graphql: 16.6.0
       graphql-scalars: 1.20.1_graphql@16.6.0
       graphql-type-json: 0.3.2_graphql@16.6.0
       inflected: 2.1.0
-      mercurius: 11.5.0_graphql@16.6.0
+      mercurius: 12.0.0_graphql@16.6.0
     devDependencies:
+      '@mercuriusjs/gateway': 1.0.0
       '@platformatic/sql-events': link:../sql-events
       '@platformatic/sql-mapper': link:../sql-mapper
       fastify: 4.12.0
@@ -1168,7 +1172,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.12.9
-      '@babel/helper-plugin-utils': 7.10.4
+      '@babel/helper-plugin-utils': 7.20.2
       '@babel/plugin-syntax-object-rest-spread': 7.8.3_@babel+core@7.12.9
       '@babel/plugin-transform-parameters': 7.20.7_@babel+core@7.12.9
     dev: true
@@ -3041,6 +3045,37 @@ packages:
     resolution: {integrity: sha512-H1rQc1ZOHANWBvPcW+JpGwr+juXSxM8Q8YCkm3GhZd8REu1fHR3z99CErO1p9pkcfcxZnMdIZdIsXkOHY0NilA==}
     dev: true
 
+  /@mercuriusjs/federation/1.0.0:
+    resolution: {integrity: sha512-IAI/F6QhuHrjdti7NN3w/leDFTJDW9fJ/WZA1dcrQj1Fhx5hSxEfjRTNYp/v6u0OuRVQrto8IZd4XcNft5/Q+Q==}
+    dependencies:
+      '@fastify/error': 3.2.0
+      graphql: 16.6.0
+      mercurius: 11.5.0_graphql@16.6.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
+  /@mercuriusjs/gateway/1.0.0:
+    resolution: {integrity: sha512-dKaRegJ9l87e47kNpmLavs2P3tqRPknAb7daTpDi2kHqF65hkLAt1C1Jh/LZAGa4mEYEI3HfDFQCy5hWzrTgsg==}
+    dependencies:
+      '@mercuriusjs/federation': 1.0.0
+      '@mercuriusjs/subscription-client': 1.0.0_graphql@16.6.0
+      fastify-plugin: 4.5.0
+      graphql: 16.6.0
+      graphql-ws: 5.11.2_graphql@16.6.0
+      mercurius: 11.5.0_graphql@16.6.0
+      p-map: 4.0.0
+      single-user-cache: 0.6.0
+      tiny-lru: 8.0.2
+      use-strict: 1.0.1
+      ws: 8.12.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+    dev: true
+
   /@mercuriusjs/subscription-client/0.1.0_graphql@16.6.0:
     resolution: {integrity: sha512-ivqMmSQ4kwroK/uUZVwOnd5QEAsjrEy/EqSsEqhtEObA/Zqkc44Fgi543Mml3XjoGopY1y1rJYQSl/gzfyfgrw==}
     engines: {node: '>=14.19.3'}
@@ -3054,6 +3089,21 @@ packages:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+
+  /@mercuriusjs/subscription-client/1.0.0_graphql@16.6.0:
+    resolution: {integrity: sha512-hIGqNp6FBdcy7ZkrWNk4mHl/Qodtwvbu9/iRl3zQdNRl4UtlVI7xW/FPU+2AJy0qTB567yrpvtQPwtmQLuYHYg==}
+    engines: {node: '>=14.19.3'}
+    peerDependencies:
+      graphql: ^16.0.0
+    dependencies:
+      '@fastify/error': 3.2.0
+      graphql: 16.6.0
+      secure-json-parse: 2.7.0
+      ws: 8.12.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+    dev: true
 
   /@mui/base/5.0.0-alpha.115_5ndqzdd6t4rivxsukjv3i3ak2q:
     resolution: {integrity: sha512-OGQ84whT/yNYd6xKCGGS6MxqEfjVjk5esXM7HP6bB2Rim7QICUapxZt4nm8q39fpT08rNDkv3xPVqDDwRdRg1g==}
@@ -5013,6 +5063,7 @@ packages:
 
   /bluebird/3.7.2:
     resolution: {integrity: sha512-XpNj6GDQzdfW+r2Wnn7xiSAd7TM3jzkxGXBGTtWKuSXv1xUV+azxAm8jdWZN06QTQk+2N2XB9jRDkvbmQmcRtg==}
+    dev: true
 
   /bn.js/4.12.0:
     resolution: {integrity: sha512-c98Bf3tPniI+scsdk237ku1Dc3ujXQTSgyiPUDEOe7tRkhrqridvh8klBv0HCEso1OLOYcHuCv/cS6DNxKH+ZA==}
@@ -5242,7 +5293,7 @@ packages:
       mississippi: 3.0.0
       mkdirp: 0.5.6
       move-concurrently: 1.0.1
-      promise-inflight: 1.0.1_bluebird@3.7.2
+      promise-inflight: 1.0.1
       rimraf: 2.7.1
       ssri: 6.0.2
       unique-filename: 1.1.1
@@ -5266,7 +5317,7 @@ packages:
       minipass-pipeline: 1.2.4
       mkdirp: 1.0.4
       p-map: 4.0.0
-      promise-inflight: 1.0.1_bluebird@3.7.2
+      promise-inflight: 1.0.1
       rimraf: 3.0.2
       ssri: 8.0.1
       tar: 6.1.13
@@ -6738,7 +6789,7 @@ packages:
       eslint-scope: 7.1.1
       eslint-utils: 3.0.0_eslint@8.4.1
       eslint-visitor-keys: 3.3.0
-      espree: 9.2.0
+      espree: 9.4.1
       esquery: 1.4.0
       esutils: 2.0.3
       fast-deep-equal: 3.1.3
@@ -7784,6 +7835,15 @@ packages:
     dependencies:
       graphql: 16.6.0
     dev: false
+
+  /graphql-ws/5.11.2_graphql@16.6.0:
+    resolution: {integrity: sha512-4EiZ3/UXYcjm+xFGP544/yW1+DVI8ZpKASFbzrV5EDTFWJp0ZvLl4Dy2fSZAzz9imKp5pZMIcjB0x/H69Pv/6w==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      graphql: '>=0.11 <=16'
+    dependencies:
+      graphql: 16.6.0
+    dev: true
 
   /graphql/16.6.0:
     resolution: {integrity: sha512-KPIBPDlW7NxrbT/eh4qPXz5FiFdL5UbaA0XUNz2Rp3Z3hqBSkbj0GVjwFDztsWVauZUWsbKHgMg++sk8UX0bkw==}
@@ -9400,6 +9460,33 @@ packages:
       - supports-color
       - utf-8-validate
 
+  /mercurius/12.0.0_graphql@16.6.0:
+    resolution: {integrity: sha512-ORe/0eFuUq5lFMF1c8hdEQz44MdK4A8gMbJr8US3BakHBeYbbFDWGskhHkYmaZkx2ka0NJh+iMasWiL07kAoHg==}
+    engines: {node: '>=14.19.3'}
+    peerDependencies:
+      graphql: ^16.0.0
+    dependencies:
+      '@fastify/error': 3.2.0
+      '@fastify/static': 6.7.0
+      '@fastify/websocket': 7.1.2
+      fastify-plugin: 4.5.0
+      graphql: 16.6.0
+      graphql-jit: 0.7.4_graphql@16.6.0
+      mqemitter: 5.0.0
+      p-map: 4.0.0
+      readable-stream: 4.3.0
+      safe-stable-stringify: 2.4.2
+      secure-json-parse: 2.7.0
+      single-user-cache: 0.6.0
+      tiny-lru: 10.0.1
+      undici: 5.16.0
+      ws: 8.12.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+    dev: false
+
   /merge-descriptors/1.0.1:
     resolution: {integrity: sha512-cCi6g3/Zr1iqQi6ySbseM1Xvooa98N0w31jzUYrXPX2xqObmFGHJ0tQ5u74H3mVh7wLouTseZyYIq39g8cNp1w==}
     dev: true
@@ -10746,15 +10833,13 @@ packages:
       tdigest: 0.1.2
     dev: false
 
-  /promise-inflight/1.0.1_bluebird@3.7.2:
+  /promise-inflight/1.0.1:
     resolution: {integrity: sha512-6zWPyEOFaQBJYcGMHBKTKJ3u6TBsnMFOIZSa6ce1e/ZrrsOlnHRHbabMjLiBYKp+n44X9eUI6VUPaukCXHuG4g==}
     peerDependencies:
       bluebird: '*'
     peerDependenciesMeta:
       bluebird:
         optional: true
-    dependencies:
-      bluebird: 3.7.2
 
   /promise-retry/2.0.1:
     resolution: {integrity: sha512-y+WKFlBR8BGXnsNlIHFGPZmyDf3DFMoLhaflAnyZgV6rG6xu+JwesTo2Q9R6XwYmtmwAFCkAk3e35jEdoeh/3g==}
@@ -13427,6 +13512,10 @@ packages:
       detect-node-es: 1.1.0
       react: 18.2.0
       tslib: 2.5.0
+    dev: true
+
+  /use-strict/1.0.1:
+    resolution: {integrity: sha512-IeiWvvEXfW5ltKVMkxq6FvNf2LojMKvB2OCeja6+ct24S1XOmQw2dGr2JyndwACWAGJva9B7yPHwAmeA9QCqAQ==}
     dev: true
 
   /use/3.1.1:

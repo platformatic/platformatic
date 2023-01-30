@@ -4,6 +4,7 @@ const fp = require('fastify-plugin')
 const constructGraph = require('./lib/entity-to-type')
 const mercurius = require('mercurius')
 const graphql = require('graphql')
+const { mercuriusFederationPlugin } = require('@mercuriusjs/federation')
 const establishRelations = require('./lib/relationship')
 const setupSubscriptions = require('./lib/subscriptions')
 const scalars = require('graphql-scalars')
@@ -156,7 +157,12 @@ async function mapperToGraphql (app, opts) {
 
   opts.graphiql = opts.graphiql !== false
 
-  await app.register(mercurius, {
+  let plugin = mercurius
+  if (opts.federationMetadata) {
+    plugin = mercuriusFederationPlugin
+  }
+
+  await app.register(plugin, {
     ...opts,
     schema: sdl,
     loaders,
