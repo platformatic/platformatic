@@ -129,3 +129,30 @@ test('should exclude the root endpoint from the openapi documentation', async ({
   equal(res.statusCode, 200)
   has(openapi.paths, { '/': undefined })
 })
+
+test('should exclude rootPath from being false', async ({ teardown, equal, same, match }) => {
+  const server = await buildServer(buildConfig({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0,
+      healthCheck: {
+        enabled: true,
+        interval: 2000
+      }
+    },
+    core: {
+      ...connInfo
+    },
+    authorization: {
+      adminSecret: 'secret'
+    },
+    dashboard: {
+      rootPath: false
+    }
+  }))
+  teardown(server.stop)
+
+  await server.listen()
+  const res = await request(`${server.url}/`)
+  equal(res.statusCode, 200)
+})
