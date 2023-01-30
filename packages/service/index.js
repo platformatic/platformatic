@@ -90,6 +90,10 @@ async function platformaticService (app, opts, toLoad = []) {
       healthCheck: opts.healthCheck.fn
     })
   }
+
+  if (!app.hasRoute({ url: '/', method: 'GET' }) && (!Array.isArray(toLoad) || toLoad.length === 0)) {
+    await app.register(require('./lib/root-endpoint'), opts)
+  }
 }
 
 async function loadPlugin (app, config, pluginOptions) {
