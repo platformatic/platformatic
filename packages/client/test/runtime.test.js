@@ -7,7 +7,12 @@ const { join } = require('path')
 const { buildOpenAPIClient } = require('..')
 const fs = require('fs/promises')
 
-test('build basic client from url', async ({ teardown, same }) => {
+test('rejects with no url', async ({ rejects }) => {
+  await rejects(buildOpenAPIClient())
+  await rejects(buildOpenAPIClient({}))
+})
+
+test('build basic client from url', async ({ teardown, same, rejects }) => {
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -57,4 +62,21 @@ test('build basic client from url', async ({ teardown, same }) => {
     id: 1,
     title: 'The Matrix Reloaded'
   })
+
+  await rejects(client.getMovieById())
+
+  {
+    const movies = await client.getMovies({ 'where.title.eq': 'Star Wars' })
+    same(movies, [])
+  }
+
+  {
+    const hello = await client.getHello()
+    same(hello, { hello: 'world' })
+  }
+
+  {
+    const hello = await client.getHelloName({ name: 'Matteo' })
+    same(hello, { hello: 'Matteo' })
+  }
 })

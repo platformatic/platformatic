@@ -19,9 +19,14 @@ async function buildOpenAPIClient (options) {
 
     for (const method of Object.keys(pathMeta)) {
       const methodMeta = pathMeta[method]
-      const operationId = methodMeta.operationId
+      let operationId = methodMeta.operationId
       if (!operationId) {
-        throw new Error(`operationId is required, missing for ${method} ${path}`)
+        const pathParams = methodMeta.parameters?.filter(p => p.in === 'path') || []
+        let stringToUpdate = path
+        for (const param of pathParams) {
+          stringToUpdate = stringToUpdate.replace(`{${param.name}}`, capitalize(param.name))
+        }
+        operationId = method.toLowerCase() + stringToUpdate.split('/').map(capitalize).join('')
       }
 
       client[operationId] = buildCallFunction(baseUrl, path, method, methodMeta, operationId)
@@ -45,12 +50,26 @@ function buildCallFunction (baseUrl, path, method, methodMeta, operationId) {
   const queryParams = methodMeta.parameters?.filter(p => p.in === 'query') || []
 
   return async function (args) {
+    const body = { ...args } // shallow copy
     const urlToCall = new URL(url)
+    const query = new URLSearchParams()
     let pathToCall = path
     for (const param of pathParams) {
-      pathToCall = pathToCall.replace(`{${param.name}}`, args[param.name]) 
+      if (body[param.name] === undefined) {
+        throw new Error('missing required parameter ' + param.name)
+      }
+      pathToCall = pathToCall.replace(`{${param.name}}`, body[param.name])
+      body[param.name] = undefined
     }
 
+    for (const param of queryParams) {
+      if (body[param.name] !== undefined) {
+        query.set(param.name, body[param.name])
+        body[param.name] = undefined
+      }
+    }
+
+    urlToCall.search = query.toString()
     urlToCall.pathname = pathToCall
 
     const res = await request(urlToCall, {
@@ -62,6 +81,10 @@ function buildCallFunction (baseUrl, path, method, methodMeta, operationId) {
     })
     return await res.body.json()
   }
+}
+
+function capitalize (str) {
+  return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
 module.exports.buildOpenAPIClient = buildOpenAPIClient
