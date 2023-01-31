@@ -397,7 +397,6 @@ test('[SQLite] allows to have VARCHAR PK', { skip: !isSQLite }, async ({ same, t
   })
 })
 
-
 test('mixing snake and camel case', async ({ pass, teardown, same, equal }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
