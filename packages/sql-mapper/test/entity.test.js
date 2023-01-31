@@ -374,14 +374,10 @@ test('[SQLite] allows to have VARCHAR PK', { skip: !isSQLite }, async ({ same, t
     await clear(db, sql)
     teardown(() => db.dispose())
 
-    try {
-      await db.query(sql`CREATE TABLE pages (
-        id varchar(255) PRIMARY KEY,
-        title varchar(255) NOT NULL
-      );`)
-    } catch (error) {
-      console.log(error)
-    }
+    await db.query(sql`CREATE TABLE pages (
+      id varchar(255) PRIMARY KEY,
+      title varchar(255) NOT NULL
+    );`)
   }
   const mapper = await connect({
     connectionString: connInfo.connectionString,
