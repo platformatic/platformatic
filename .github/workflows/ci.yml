@@ -114,7 +114,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: pnpm/action-setup@v2.2.4
-    - uses: ikalnytskyi/action-setup-postgres@v3
+    - uses: ikalnytskyi/action-setup-postgres@v4
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
