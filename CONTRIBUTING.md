@@ -108,6 +108,8 @@ If you encounter issues running tests (f.e. failing tests without making a chang
 2. Run `pnpm store path` and remove the folder shown as an output
 3. Run `pnpm install` again
 
+__Before opening a pull request, please ensure that the tests are passing for the specific project you are working on.__
+
 ### Releasing
 
 All platformatic modules share the same release number and are released
