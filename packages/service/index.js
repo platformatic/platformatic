@@ -91,7 +91,7 @@ async function platformaticService (app, opts, toLoad = []) {
     })
   }
 
-  if (!app.hasRoute({ url: '/', method: 'GET' }) && (!Array.isArray(toLoad) || toLoad.length === 0)) {
+  if (!app.hasRoute({ url: '/', method: 'GET' }) && !Array.isArray(toLoad)) {
     await app.register(require('./lib/root-endpoint'), opts)
   }
 }
