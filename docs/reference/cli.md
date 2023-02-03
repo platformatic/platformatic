@@ -8,12 +8,6 @@ import TOCInline from '@theme/TOCInline';
 
 # Platformatic CLI
 
-<!--
-WARNING: THIS DOCUMENTATION IS AUTOMATICALLY GENERATED. DO NOT MANUALLY EDIT IT.
-
-TO UPDATE THIS DOCUMENTATION, RUN: scripts/gen-cli-doc.mjs
--->
-
 ## Installation and usage
 
 Install the Platformatic CLI as a dependency for your project:
