@@ -2,17 +2,17 @@
 
 const { test } = require('tap')
 const Fastify = require('fastify')
-const mercurius = require('mercurius')
+const Gateway = require('@mercuriusjs/gateway')
+const { mercuriusFederationPlugin } = require('@mercuriusjs/federation')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const { clear, connInfo, isSQLite } = require('./helper')
 
 async function createTestService (t, schema, resolvers = {}) {
   const service = Fastify({ logger: { level: 'error' } })
-  service.register(mercurius, {
+  service.register(mercuriusFederationPlugin, {
     schema,
-    resolvers,
-    federationMetadata: true
+    resolvers
   })
   await service.listen({ port: 0 })
   return [service, service.server.address().port]
@@ -155,7 +155,7 @@ async function createTestGatewayServer (t, cacheOpts) {
     await categoryService.close()
     await postService.close()
   })
-  gateway.register(mercurius, {
+  gateway.register(Gateway, {
     gateway: {
       services: [{
         name: 'category',

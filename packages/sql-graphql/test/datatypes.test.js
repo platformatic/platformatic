@@ -723,7 +723,7 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async ({ pass, teardown, same, equa
   }
 })
 
-test('BIGINT!', { skip: isSQLite, only: true }, async ({ pass, teardown, same, equal }) => {
+test('BIGINT!', { skip: isSQLite }, async ({ pass, teardown, same, equal }) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,

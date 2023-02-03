@@ -31,7 +31,9 @@ test('load and reload', async ({ teardown, equal, pass, same }) => {
 
   {
     const res = await request(`${server.url}/`)
-    equal(res.statusCode, 404, 'status code')
+    equal(res.statusCode, 200, 'status code')
+    const data = await res.body.json()
+    same(data, { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
   }
 
   await writeFile(file, `
@@ -97,7 +99,9 @@ test('update config', async ({ teardown, equal, pass, same }) => {
 
   {
     const res = await request(`${server.url}/`)
-    equal(res.statusCode, 404, 'status code')
+    equal(res.statusCode, 200, 'status code')
+    const data = await res.body.json()
+    same(data, { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
   }
 
   const file2 = join(os.tmpdir(), `some-plugin-${process.pid}-2.js`)
@@ -184,7 +188,9 @@ test('load and reload with the fallback', async ({ teardown, equal, pass, same }
 
   {
     const res = await request(`${server.url}/`)
-    equal(res.statusCode, 404, 'status code')
+    equal(res.statusCode, 200, 'status code')
+    const data = await res.body.json()
+    same(data, { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
   }
 
   await writeFile(file, `
@@ -223,7 +229,9 @@ test('load and reload ESM', async ({ teardown, equal, pass, same }) => {
 
   {
     const res = await request(`${server.url}/`)
-    equal(res.statusCode, 404, 'status code')
+    equal(res.statusCode, 200, 'status code')
+    const data = await res.body.json()
+    same(data, { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
   }
 
   await writeFile(file, `
@@ -240,7 +248,7 @@ test('load and reload ESM', async ({ teardown, equal, pass, same }) => {
   }
 })
 
-test('server should be available after reload a compromised plugin', async ({ teardown, equal, pass }) => {
+test('server should be available after reload a compromised plugin', async ({ teardown, equal, pass, same }) => {
   const file = join(os.tmpdir(), `some-plugin-${process.pid}.js`)
 
   const workingModule = `
@@ -271,7 +279,9 @@ test('server should be available after reload a compromised plugin', async ({ te
 
   {
     const res = await request(`${server.url}/`, { method: 'GET' })
-    equal(res.statusCode, 404, 'status code')
+    equal(res.statusCode, 200, 'status code')
+    const data = await res.body.json()
+    same(data, { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
   }
 
   await writeFile(file, workingModule)
@@ -279,7 +289,9 @@ test('server should be available after reload a compromised plugin', async ({ te
 
   {
     const res = await request(`${server.url}/`, { method: 'GET' })
-    equal(res.statusCode, 404, 'add status code')
+    equal(res.statusCode, 200, 'add status code')
+    const data = await res.body.json()
+    same(data, { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
   }
 
   teardown(server.stop)
