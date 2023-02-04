@@ -14,7 +14,7 @@ any user that is not an admin to access the data.
 The use of an `adminSecret` is a simplistic way of securing a system.
 It is a crude way for limiting access and not suitable for production systems.
 Nevertheless it's a good way to learn and experiment with the authorization system.
-Remeber to configure Platformatic DB with JSON Web Token or Web Hooks.
+Remember to configure Platformatic DB with JSON Web Token or Web Hooks.
 :::
 
 ## Configuration
