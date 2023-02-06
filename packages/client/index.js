@@ -17,7 +17,14 @@ async function buildOpenAPIClient (options) {
   }
 
   const baseUrl = spec.servers?.[0]?.url || computeURLWithoutPath(options.url)
-  const headers = options.headers
+  let headers
+  let getHeaders
+
+  if (typeof options.headers === 'function') {
+    getHeaders = options.headers
+  } else {
+    headers = options.headers
+  }
 
   for (const path of Object.keys(spec.paths)) {
     const pathMeta = spec.paths[path]
@@ -34,7 +41,7 @@ async function buildOpenAPIClient (options) {
         operationId = method.toLowerCase() + stringToUpdate.split('/').map(capitalize).join('')
       }
 
-      client[operationId] = buildCallFunction(baseUrl, path, method, methodMeta, operationId, headers)
+      client[operationId] = buildCallFunction(baseUrl, path, method, methodMeta, operationId, getHeaders, headers)
     }
   }
 
@@ -47,7 +54,7 @@ function computeURLWithoutPath (url) {
   return url.toString()
 }
 
-function buildCallFunction (baseUrl, path, method, methodMeta, operationId, getHeaders) {
+function buildCallFunction (baseUrl, path, method, methodMeta, operationId, getHeaders, headers) {
   const url = new URL(baseUrl)
   method = method.toUpperCase()
 
@@ -74,7 +81,9 @@ function buildCallFunction (baseUrl, path, method, methodMeta, operationId, getH
       }
     }
 
-    const headers = getHeaders ? await getHeaders() : {}
+    if (getHeaders) {
+      headers = { ...headers, ...await getHeaders() }
+    }
 
     urlToCall.search = query.toString()
     urlToCall.pathname = pathToCall
@@ -95,4 +104,53 @@ function capitalize (str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
+async function buildGraphQLClient (options) {
+  options = options || {}
+  if (!options.url) {
+    throw new Error('options.url is required')
+  }
+
+  const getHeaders = typeof options.headers === 'function' ? options.headers : null
+
+  async function graphql ({ query, variables, headers }) {
+    if (getHeaders) {
+      headers = { ...options.headers, ...await getHeaders(), ...headers }
+    } else if (options.headers) {
+      headers = { ...options.headers, ...headers }
+    }
+    const res = await request(options.url, {
+      method: 'POST',
+      headers: {
+        ...headers,
+        'content-type': 'application/json; charset=utf-8'
+      },
+      body: JSON.stringify({
+        query,
+        variables
+      })
+    })
+    /* istanbul ignore if */
+    if (res.statusCode !== 200) {
+      throw new Error('invalid status code ' + res.statusCode)
+    }
+    const json = await res.body.json()
+    if (json.errors) {
+      const e = new Error(json.errors.map(e => e.message).join(''))
+      e.errors = json.errors
+      throw e
+    }
+    const keys = Object.keys(json.data)
+    if (keys.length !== 1) {
+      return json.data
+    } else {
+      return json.data[keys[0]]
+    }
+  }
+
+  return {
+    graphql
+  }
+}
+
 module.exports.buildOpenAPIClient = buildOpenAPIClient
+module.exports.buildGraphQLClient = buildGraphQLClient
