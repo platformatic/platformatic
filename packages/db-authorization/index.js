@@ -71,7 +71,7 @@ async function auth (app, opts) {
 
   app.addHook('onReady', function () {
     function findNearestEntity (ruleEntity) {
-      // There is a unknown entity. Let's find out the nearest one for a nice error message
+      // There is an unknown entity. Let's find out the nearest one for a nice error message
       const entities = Object.keys(app.platformatic.entities)
 
       const nearest = entities.reduce((acc, entity) => {
@@ -94,7 +94,7 @@ async function auth (app, opts) {
       if (rule.entity) {
         ruleEntities = [rule.entity]
       } else if (rule.entities) {
-        ruleEntities = rule.entities
+        ruleEntities = [...rule.entities]
       } else {
         throw new Error(`Missing entity in authorization rule ${i}`)
       }

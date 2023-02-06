@@ -219,7 +219,7 @@ test('categories are global, but pages are user specific', async ({ pass, teardo
   }
 })
 
-test('specify multiple entities in a rule', { only: true }, async ({ pass, teardown, same, equal }) => {
+test('specify multiple entities in a rule', async ({ pass, teardown, same, equal }) => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
