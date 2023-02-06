@@ -180,3 +180,26 @@ t.test('generate types on start', async ({ plan, equal, teardown, fail, pass }) 
     fail(err.stderr)
   }
 })
+
+t.test('correctly format entity type names', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'chars-gen-types')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'chars-gen-types-clone')
+
+  await mkdir(cwd)
+  await cp(testDir, cwd, { recursive: true })
+
+  t.teardown(async () => {
+    await rm(cwd, { force: true, recursive: true })
+  })
+
+  try {
+    const child = await execa('node', [cliPath, 'migrations', 'apply'], { cwd })
+    t.equal(child.stdout.includes('Generated type for PltDb entity.'), true)
+  } catch (err) {
+    console.log(err.stdout)
+    console.log(err.stderr)
+    t.fail(err.stderr)
+  }
+
+  t.pass()
+})

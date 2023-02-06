@@ -49,6 +49,7 @@
     "@platformatic/sql-json-schema-mapper": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
+    "camelcase": "^6.3.0",
     "close-with-grace": "^1.1.0",
     "commist": "^3.2.0",
     "create-platformatic": "workspace:*",

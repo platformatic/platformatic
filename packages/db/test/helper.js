@@ -55,6 +55,7 @@ module.exports.clear = async function (db, sql) {
   await db.query(sql`DROP TABLE IF EXISTS posts;`)
   await db.query(sql`DROP TABLE IF EXISTS owners;`)
   await db.query(sql`DROP TABLE IF EXISTS categories;`)
+  await db.query(sql`DROP TABLE IF EXISTS plt_db;`)
 }
 
 async function createBasicPages (db, sql) {

@@ -4,6 +4,7 @@ import { mkdir, writeFile, readFile, readdir, unlink } from 'fs/promises'
 import { join as desmJoin } from 'desm'
 import pino from 'pino'
 import pretty from 'pino-pretty'
+import camelcase from 'camelcase'
 import dtsgenerator, { parseSchema } from 'dtsgenerator'
 import { mapSQLEntityToJSONSchema } from '@platformatic/sql-json-schema-mapper'
 import { setupDB, isFileAccessible } from './utils.js'
@@ -34,6 +35,7 @@ async function generateEntityType (entity) {
   jsonSchema.id = jsonSchema.$id
 
   const tsCode = await dtsgenerator.default({ contents: [parseSchema(jsonSchema)] })
+  entity.name = camelcase(entity.name).replace(/^\w/, c => c.toUpperCase())
   return tsCode + `\nexport { ${entity.name} };\n`
 }
 
@@ -131,7 +133,7 @@ async function writeFileIfChanged (filename, content) {
   return true
 }
 
-async function execute (logger, args, config) {
+async function execute (logger, _, config) {
   const { db, entities } = await setupDB(logger, config.core)
 
   const isTypeFolderExists = await isFileAccessible(TYPES_FOLDER_PATH)
