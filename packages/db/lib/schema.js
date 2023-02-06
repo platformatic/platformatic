@@ -202,6 +202,13 @@ const authorization = {
             type: 'string',
             description: 'the DB entity type to which the rule applies'
           },
+          entities: {
+            type: 'array',
+            description: 'the DB entity types to which the rule applies',
+            items: {
+              type: 'string'
+            }
+          },
           defaults: {
             type: 'object',
             description: 'defaults for entity creation',
@@ -219,7 +226,7 @@ const authorization = {
             $ref: '#crud-operation-auth'
           }
         },
-        required: ['role', 'entity'],
+        required: ['role'],
         additionalProperties: false
       }
     }

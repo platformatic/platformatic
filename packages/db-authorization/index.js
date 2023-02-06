@@ -70,27 +70,47 @@ async function auth (app, opts) {
   }
 
   app.addHook('onReady', function () {
+    function findNearestEntity (ruleEntity) {
+      // There is a unknown entity. Let's find out the nearest one for a nice error message
+      const entities = Object.keys(app.platformatic.entities)
+
+      const nearest = entities.reduce((acc, entity) => {
+        const distance = leven(ruleEntity, entity)
+        if (distance < acc.distance) {
+          acc.distance = distance
+          acc.entity = entity
+        }
+        return acc
+      }, { distance: Infinity, entity: null })
+      return nearest
+    }
+
     const entityRules = {}
     // TODO validate that there is at most a rule for a given role
     for (let i = 0; i < rules.length; i++) {
       const rule = rules[i]
-      if (!app.platformatic.entities[rule.entity]) {
-        // There is a unknown entity. Let's find out the nearest one for a nice error message
-        const entities = Object.keys(app.platformatic.entities)
-        const nearest = entities.reduce((acc, entity) => {
-          const distance = leven(rule.entity, entity)
-          if (distance < acc.distance) {
-            acc.distance = distance
-            acc.entity = entity
-          }
-          return acc
-        }, { distance: Infinity, entity: null })
-        throw new Error(`Unknown entity '${rule.entity}' in authorization rule ${i}. Did you mean '${nearest.entity}'?`)
+
+      let ruleEntities = null
+      if (rule.entity) {
+        ruleEntities = [rule.entity]
+      } else if (rule.entities) {
+        ruleEntities = rule.entities
+      } else if (!rule.entity) {
+        throw new Error(`Missing entity in authorization rule ${i}`)
       }
-      if (!entityRules[rule.entity]) {
-        entityRules[rule.entity] = []
+
+      for (const ruleEntity of ruleEntities) {
+        const newRule = { ...rule, entity: ruleEntity, entities: undefined }
+        if (!app.platformatic.entities[newRule.entity]) {
+          const nearest = findNearestEntity(ruleEntity)
+          throw new Error(`Unknown entity '${ruleEntity}' in authorization rule ${i}. Did you mean '${nearest.entity}'?`)
+        }
+
+        if (!entityRules[ruleEntity]) {
+          entityRules[ruleEntity] = []
+        }
+        entityRules[ruleEntity].push(newRule)
       }
-      entityRules[rule.entity].push(rule)
     }
 
     for (const entityKey of Object.keys(app.platformatic.entities)) {
