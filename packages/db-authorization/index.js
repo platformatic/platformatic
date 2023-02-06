@@ -94,7 +94,7 @@ async function auth (app, opts) {
       if (rule.entity) {
         ruleEntities = [rule.entity]
       } else if (rule.entities) {
-        ruleEntities = rule.entities
+        ruleEntities = [...rule.entities]
       } else {
         throw new Error(`Missing entity in authorization rule ${i}`)
       }
