@@ -132,6 +132,29 @@ const core = {
   required: ['connectionString']
 }
 
+const sharedAuthorizationRule = {
+  role: {
+    type: 'string',
+    description: 'the role name to match the rule'
+  },
+  defaults: {
+    type: 'object',
+    description: 'defaults for entity creation',
+    additionalProperties: {
+      type: 'string'
+    }
+  },
+  find: {
+    $ref: '#crud-operation-auth'
+  },
+  save: {
+    $ref: '#crud-operation-auth'
+  },
+  delete: {
+    $ref: '#crud-operation-auth'
+  }
+}
+
 const authorization = {
   $id: 'https://schemas.platformatic.dev/db/authorization',
   type: 'object',
@@ -193,41 +216,32 @@ const authorization = {
       type: 'array',
       items: {
         type: 'object',
-        properties: {
-          role: {
-            type: 'string',
-            description: 'the role name to match the rule'
+        oneOf: [{
+          type: 'object',
+          properties: {
+            entity: {
+              type: 'string',
+              description: 'the DB entity type to which the rule applies'
+            },
+            ...sharedAuthorizationRule
           },
-          entity: {
-            type: 'string',
-            description: 'the DB entity type to which the rule applies'
+          required: ['role'],
+          additionalProperties: false
+        }, {
+          type: 'object',
+          properties: {
+            entities: {
+              type: 'array',
+              description: 'the DB entity types to which the rule applies',
+              items: {
+                type: 'string'
+              }
+            },
+            ...sharedAuthorizationRule
           },
-          entities: {
-            type: 'array',
-            description: 'the DB entity types to which the rule applies',
-            items: {
-              type: 'string'
-            }
-          },
-          defaults: {
-            type: 'object',
-            description: 'defaults for entity creation',
-            additionalProperties: {
-              type: 'string'
-            }
-          },
-          find: {
-            $ref: '#crud-operation-auth'
-          },
-          save: {
-            $ref: '#crud-operation-auth'
-          },
-          delete: {
-            $ref: '#crud-operation-auth'
-          }
-        },
-        required: ['role'],
-        additionalProperties: false
+          required: ['role'],
+          additionalProperties: false
+        }]
       }
     }
   },
