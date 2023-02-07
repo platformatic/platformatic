@@ -11,10 +11,13 @@ DB app.
 Every rule must specify:
 
 - `role` (required) — A role name. It's a string and must match with the role(s) set by an external authentication service.
-- `entity` (required) — The Platformatic DB entity to apply this rule to.
+- `entity` (optional) — The Platformatic DB entity to apply this rule to.
+- `entities` (optional) — The Platformatic DB entities to apply this rule to.
 - `defaults` (optional) — Configure entity fields that will be
   [automatically set from user data](#set-entity-fields-from-user-metadata).
 - One entry for each supported CRUD operation: `find`, `save`, `delete`
+
+One of `entity` and `entities` must be specified.
 
 ## Operation checks
 
@@ -210,3 +213,25 @@ This is useful for custom plugins for which the authentication is not necessary,
 :::info
 Skip authorization rules is not possible on the automatically generated REST and GraphQL APIs.
 :::
+
+## Avoid repetition of the same rule multiple times
+
+Very often we end up writing the same rules over and over again.
+Instead, it's possible to condense the rule for multiple entities on a single entry:
+
+```js
+ app.register(auth, {
+    jwt: {
+      secret: 'supersecret'
+    },
+    roleKey: 'X-PLATFORMATIC-ROLE',
+    anonymousRole: 'anonymous',
+    rules: [{
+      role: 'anonymous',
+      entities: ['category', 'page'],
+      find: true,
+      delete: false,
+      save: false
+    }]
+})
+```
