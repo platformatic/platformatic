@@ -2,6 +2,7 @@
 
 const { request } = require('undici')
 const fs = require('fs/promises')
+const kHeaders = Symbol('headers')
 
 async function buildOpenAPIClient (options) {
   const client = {}
@@ -17,14 +18,7 @@ async function buildOpenAPIClient (options) {
   }
 
   const baseUrl = spec.servers?.[0]?.url || computeURLWithoutPath(options.url)
-  let headers
-  let getHeaders
-
-  if (typeof options.headers === 'function') {
-    getHeaders = options.headers
-  } else {
-    headers = options.headers
-  }
+  client[kHeaders] = options.headers || {}
 
   for (const path of Object.keys(spec.paths)) {
     const pathMeta = spec.paths[path]
@@ -41,7 +35,7 @@ async function buildOpenAPIClient (options) {
         operationId = method.toLowerCase() + stringToUpdate.split('/').map(capitalize).join('')
       }
 
-      client[operationId] = buildCallFunction(baseUrl, path, method, methodMeta, operationId, getHeaders, headers)
+      client[operationId] = buildCallFunction(baseUrl, path, method, methodMeta, operationId)
     }
   }
 
@@ -54,7 +48,7 @@ function computeURLWithoutPath (url) {
   return url.toString()
 }
 
-function buildCallFunction (baseUrl, path, method, methodMeta, operationId, getHeaders, headers) {
+function buildCallFunction (baseUrl, path, method, methodMeta, operationId) {
   const url = new URL(baseUrl)
   method = method.toUpperCase()
 
@@ -62,6 +56,7 @@ function buildCallFunction (baseUrl, path, method, methodMeta, operationId, getH
   const queryParams = methodMeta.parameters?.filter(p => p.in === 'query') || []
 
   return async function (args) {
+    const headers = this[kHeaders]
     const body = { ...args } // shallow copy
     const urlToCall = new URL(url)
     const query = new URLSearchParams()
@@ -79,10 +74,6 @@ function buildCallFunction (baseUrl, path, method, methodMeta, operationId, getH
         query.set(param.name, body[param.name])
         body[param.name] = undefined
       }
-    }
-
-    if (getHeaders) {
-      headers = { ...headers, ...await getHeaders() }
     }
 
     urlToCall.search = query.toString()
@@ -110,14 +101,8 @@ async function buildGraphQLClient (options) {
     throw new Error('options.url is required')
   }
 
-  const getHeaders = typeof options.headers === 'function' ? options.headers : null
-
-  async function graphql ({ query, variables, headers }) {
-    if (getHeaders) {
-      headers = { ...options.headers, ...await getHeaders(), ...headers }
-    } else if (options.headers) {
-      headers = { ...options.headers, ...headers }
-    }
+  async function graphql ({ query, variables }) {
+    const headers = this[kHeaders]
     const res = await request(options.url, {
       method: 'POST',
       headers: {
@@ -134,6 +119,7 @@ async function buildGraphQLClient (options) {
       throw new Error('invalid status code ' + res.statusCode)
     }
     const json = await res.body.json()
+    /* istanbul ignore if */
     if (json.errors) {
       const e = new Error(json.errors.map(e => e.message).join(''))
       e.errors = json.errors
@@ -148,9 +134,47 @@ async function buildGraphQLClient (options) {
   }
 
   return {
-    graphql
+    graphql,
+    [kHeaders]: options.headers || {}
   }
 }
 
+async function plugin (app, opts) {
+  let client = null
+  let getHeaders = null
+
+  if (typeof opts.getHeaders === 'function') {
+    getHeaders = opts.getHeaders
+    opts = { ...opts }
+    opts.getHeaders = undefined
+  }
+
+  /* istanbul ignore next */
+  if (opts.type === 'openapi') {
+    client = await buildOpenAPIClient(opts)
+  } else if (opts.type === 'graphql') {
+    client = await buildGraphQLClient(opts)
+  } else {
+    throw new Error('opts.type must be either "openapi" or "graphql"')
+  }
+
+  const name = opts.name || 'client'
+
+  app.decorate(name, client)
+  app.decorateRequest(name, null)
+
+  app.addHook('onRequest', async (req, reply) => {
+    const newClient = Object.create(client)
+    newClient[kHeaders] = getHeaders ? await getHeaders(req, reply) : {}
+    req[name] = newClient
+  })
+}
+
+plugin[Symbol.for('skip-override')] = true
+plugin[Symbol.for('plugin-meta')] = {
+  name: '@platformatic/client'
+}
+
+module.exports = plugin
 module.exports.buildOpenAPIClient = buildOpenAPIClient
 module.exports.buildGraphQLClient = buildGraphQLClient
