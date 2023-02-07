@@ -1,0 +1,4 @@
+CREATE TABLE plt_db (
+  id INTEGER PRIMARY KEY,
+  name TEXT
+);
