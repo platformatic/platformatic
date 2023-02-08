@@ -20,7 +20,7 @@ migrations:
   validateChecksums: false
 dashboard:
   enabled: true
-  rootPath: true
+  path: '/'
 authorization:
   adminSecret: "plt-db"
 foobar: "{PLT_FOOBAR}"

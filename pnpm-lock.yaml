@@ -502,6 +502,12 @@ importers:
       why-is-node-running: 2.2.2
       yaml: 2.2.1
 
+  packages/shared:
+    specifiers:
+      '@fastify/error': ^3.0.0
+    dependencies:
+      '@fastify/error': 3.2.0
+
   packages/sql-events:
     specifiers:
       '@platformatic/sql-mapper': workspace:*

@@ -66,7 +66,7 @@ test('return config file', async ({ teardown, equal, same }) => {
       adminSecret: 'secret'
     },
     dashboard: {
-      rootPath: false
+      path: '/'
     }
   }))
   teardown(server.stop)
@@ -92,7 +92,7 @@ test('return config file', async ({ teardown, equal, same }) => {
       anonymousRole: 'anonymous'
     },
     dashboard: {
-      rootPath: false
+      path: '/'
     }
   })
 })

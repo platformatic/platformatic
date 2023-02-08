@@ -303,9 +303,9 @@ const dashboard = {
     {
       type: 'object',
       properties: {
-        rootPath: {
-          type: 'boolean',
-          description: 'Whether the dashboard should be served on / path or not.'
+        path: {
+          type: 'string',
+          description: 'The path where the dashboard should be served.'
         }
       },
       additionalProperties: false

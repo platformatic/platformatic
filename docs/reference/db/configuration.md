@@ -258,7 +258,7 @@ This setting can be a `boolean` or an `object`. If set to `true` the dashboard w
 
 Supported object properties:
 
-- **`rootPath`** (`boolean`, default: `true`) — Make the dashboard available at the root path (`/`).
+- **`path`** (`string`, default: `/`) — Make the dashboard available at the specified path.
 
 ### `metrics`
 
