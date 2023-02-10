@@ -19,6 +19,9 @@ on:
 
 jobs:
   build_and_deploy:
+    permissions:
+      contents: read
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout application project repository

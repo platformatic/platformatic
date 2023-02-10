@@ -37,13 +37,16 @@ test('creates gh action', async ({ end, equal }) => {
   equal(accessible, true)
   const ghFile = await readFile(join(tmpDir, '.github/workflows/platformatic-deploy.yml'), 'utf8')
   const ghAction = parse(ghFile)
-  const steps = ghAction.jobs.build_and_deploy.steps
+  const { steps, permissions } = ghAction.jobs.build_and_deploy
   equal(steps.length, 3)
   equal(steps[0].name, 'Checkout application project repository')
   equal(steps[1].name, 'npm install --omit=dev')
   equal(steps[2].name, 'Deploy project')
   equal(steps[2].env.DATABASE_URL, 'mydbconnectionstring')
   equal(steps[2].env.PLT_SERVER_LOGGER_LEVEL, 'info')
+
+  equal(permissions.contents, 'read')
+  equal(permissions['pull-requests'], 'write')
 })
 
 test('creates gh action with TS build step', async ({ end, equal }) => {
@@ -53,7 +56,7 @@ test('creates gh action with TS build step', async ({ end, equal }) => {
   equal(accessible, true)
   const ghFile = await readFile(join(tmpDir, '.github/workflows/platformatic-deploy.yml'), 'utf8')
   const ghAction = parse(ghFile)
-  const steps = ghAction.jobs.build_and_deploy.steps
+  const { steps, permissions } = ghAction.jobs.build_and_deploy
   equal(steps.length, 4)
   equal(steps[0].name, 'Checkout application project repository')
   equal(steps[1].name, 'npm install --omit=dev')
@@ -61,6 +64,9 @@ test('creates gh action with TS build step', async ({ end, equal }) => {
   equal(steps[3].name, 'Deploy project')
   equal(steps[3].env.DATABASE_URL, 'mydbconnectionstring')
   equal(steps[3].env.PLT_SERVER_LOGGER_LEVEL, 'info')
+
+  equal(permissions.contents, 'read')
+  equal(permissions['pull-requests'], 'write')
 })
 
 test('do not create gitignore file because already present', async ({ end, equal }) => {
