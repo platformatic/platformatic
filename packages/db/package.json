@@ -57,7 +57,7 @@
     "dtsgenerator": "^3.16.2",
     "env-schema": "^5.2.0",
     "es-main": "^1.2.0",
-    "execa": "^6.1.0",
+    "execa": "^7.0.0",
     "fastify": "^4.10.2",
     "fastify-metrics": "^10.0.0",
     "fastify-plugin": "^4.4.0",
