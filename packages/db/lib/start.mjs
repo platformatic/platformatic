@@ -19,7 +19,10 @@ export async function start (_args) {
   }))
 
   const { configManager } = await loadConfig({
-    string: ['to']
+    string: ['to', 'hot-reload'],
+    alias: {
+      hotReload: ['hot-reload']
+    }
   }, _args, { watch: true })
 
   const config = configManager.current
