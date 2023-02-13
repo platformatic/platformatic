@@ -325,7 +325,6 @@ module.exports = async (app) => {
         }
       }
     })
-    if (!post) reply.code(404).send({ error: `Post with id:${id} was not found` })
     
     return reply.send(post)
   })
