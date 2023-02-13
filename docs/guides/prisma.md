@@ -1,10 +1,10 @@
 # Adding Prisma with Platformatic
 
-[Prisma](https://www.prisma.io/) is an open-source ORM for Node.js and TypeScript. It is used as an alternative to writing plain SQL, or using another database access tool such as SQL query builders (like [knex.js](https://knexjs.org/)) or ORMs (like [TypeORM](https://typeorm.io/) and [Sequelize](https://sequelize.org/)). Prisma currently supports PostgreSQL, MySQL, SQL Server, SQLite, MongoDB and CockroachDB.
+[Prisma](https://www.prisma.io/) is an open-source ORM for Node.js and TypeScript. It is used as an alternative to writing SQL, or using another database access tool such as SQL query builders (like [knex.js](https://knexjs.org/)) or ORMs (like [TypeORM](https://typeorm.io/) and [Sequelize](https://sequelize.org/)). Prisma currently supports PostgreSQL, MySQL, SQL Server, SQLite, MongoDB, and CockroachDB.
 
-Prisma can be used with plain JavaScript and it embraces TypeScript and provides a level to type-safety that goes beyond the guarantees other ORMs in the TypeScript ecosystem. You can find an in-depth comparison of Prisma against other ORMs [here](https://www.prisma.io/docs/concepts/more/comparisons).
+Prisma can be used with JavaScript or TypeScript, and provides a level to type-safety that goes beyond the guarantees made by other ORMs in the TypeScript ecosystem. You can find an in-depth comparison of Prisma against other ORMs [here](https://www.prisma.io/docs/concepts/more/comparisons).
 
-If you want to get a quick overview of how Prisma works, you can follow the [Quickstart](https://www.prisma.io/docs/getting-started/quickstart) or read the [Introduction](https://www.prisma.io/docs/understand-prisma/introduction) in the documentation. 
+If you want to get a quick overview of how Prisma works, you can follow the [Quickstart](https://www.prisma.io/docs/getting-started/quickstart) or read the [Introduction](https://www.prisma.io/docs/understand-prisma/introduction) in the Prisma documentation. 
 
 
 ## How Prisma can improve your workflow with Platformatic DB:
@@ -13,10 +13,10 @@ While Platformatic speeds up development of your REST and GraphQL APIs, Prisma c
 
 1. Provides an intuitive data modeling language
 1. Provides auto-generated and customizable SQL migrations
-1. Provides a type-safety and auto-completion for your database queries
+1. Provides type-safety and auto-completion for your database queries
 
 
-You can learn more why Prisma and Platformatic are a great match [this article](https://dev.to/prisma/why-prisma-and-platformatic-are-a-great-match-2dkl).
+You can learn more about why Prisma and Platformatic are a great match [this article](https://dev.to/prisma/why-prisma-and-platformatic-are-a-great-match-2dkl).
 
 ## Prerequisites
 
@@ -53,9 +53,9 @@ npx prisma init --datasource-provider mysql # or sqlite, sqlserver, cockroachdb
 
 Prisma uses the `DATABASE_URL` environment variable to connect to your database to sync your database and Prisma schema. It also uses the variable to connect to your database to run your Prisma Client queries. 
 
-If you're using PostgreSQL, MySQL, SQL Server or CockroachDB, ensure that the `DATABASE_URL` used by Prisma is the same as the one used by Platformatic DB project. 
+If you're using PostgreSQL, MySQL, SQL Server, or CockroachDB, ensure that the `DATABASE_URL` used by Prisma is the same as the one used by Platformatic DB project. 
 
-In case you have an existing project, refer to the [Adding Prisma to an existing Platformatic DB project](#adding-prisma-to-an-existing-project) section. If you're adding Prisma to a new project, refer to the [Adding Prisma to a new project](#adding-prisma-to-an-new-project).
+If you have an existing project, refer to the [Adding Prisma to an existing Platformatic DB project](#adding-prisma-to-an-existing-project) section. If you're adding Prisma to a new project, refer to the [Adding Prisma to a new project](#adding-prisma-to-an-new-project).
 
 ## Adding Prisma to an existing project
 
@@ -80,7 +80,7 @@ model versions {
 }
 ```
 
-To learn how you can evolve your database schema, you can jump to the [Evolving your database schema](#evolving-your-database-schema)section.
+To learn how you can evolve your database schema, you can jump to the [Evolving your database schema](#evolving-your-database-schema) section.
 
 ## Adding Prisma to a new project
 
@@ -106,9 +106,9 @@ model Post {
 }
 ```
 
-The snippet above defines a model called Post with the following fields and properties:
+The snippet above defines a `Post` model with the following fields and properties:
 - `id`: An auto-incrementing integer that will be the primary key for the model.
-- `title`: A non-null `String` field.
+- `title`: A non-nullable `String` field.
 - `content`: A nullable `String` field.
 - `published`: A `Boolean` field with a default value of false.
 - `viewCount`: An `Int` field with a default value of 0.
@@ -120,7 +120,7 @@ Next, run the following command to generate an up and down migration:
 npx db-diff
 ```
 
-The above command  will generate both an `up` and `down` migration based on your schema. The generated migration is stored in your `./migrations` directory. If you're currently using a different path to store the migration, you can provide the `--migrations-dir` flag followed by the path.
+The previous command will generate both an `up` and `down` migration based on your schema. The generated migration is stored in your `./migrations` directory. If you are currently using a different path to store the migration, you can provide the `--migrations-dir` flag followed by the path.
 
 You can then apply the generated migration using the Platformatic DB CLI:
 
@@ -171,7 +171,7 @@ model versions {
 ```
 ### Evolving your database schema
 
-Update your data model in your Prisma schema by adding a model or a field:
+Update the data model in your Prisma schema by adding a model or a field:
 
 ```diff
 // based on the schema in the "Adding Prisma to a new project" section
@@ -203,13 +203,13 @@ model versions {
 }
 ```
 
-Next, use the `@ruheni/db-diff` CLI tool to generate an `up` and `down` migration:
+Next, use the `@ruheni/db-diff` CLI tool to generate `up` and `down` migrations:
 
 ```bash
 npx db-diff
 ```
 
-The command will generate an up and down migration based off your Prisma schema. If you're currently using a different path to store the migration, you can provide the `--migrations-dir` flag followed by the path.
+This command will generate up and down migrations based off of your Prisma schema. If you are currently using a different path to store the migration, you can provide the `--migrations-dir` flag followed by the path.
 
 Next, apply the generated migration using the Platformatic CLI:
 
@@ -277,7 +277,7 @@ module.exports = async (app) => {
 }
 ```
 
-The above snippet does the following:
+The previous snippet does the following:
 
 1. Imports Prisma Client.
 1. Creates a new instance of Prisma Client.
@@ -325,8 +325,6 @@ module.exports = async (app) => {
         }
       }
     })
-
-    
     if (!post) reply.code(404).send({ error: `Post with id:${id} was not found` })
     
     return reply.send(post)
@@ -347,7 +345,7 @@ DATABASE_URL="sqlite://db.sqlite"
 PRISMA_DATABASE_URL="file:../db.sqlite"
 ```
 
-Next, update `url` value the `datasource` block in your Prisma schema with the updated value
+Next, update the `url` value in the `datasource` block in your Prisma schema with the updated value:
 ```groovy
 // ./prisma/schema.prisma
 datasource db {
