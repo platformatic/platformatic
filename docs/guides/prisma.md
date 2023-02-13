@@ -230,7 +230,7 @@ You can use Prisma Client to
 npx prisma generate
 ```
 
-The above
+The above command will generate Prisma Client based off your Prisma schema.
 
 ```js
 // ./plugin.js
