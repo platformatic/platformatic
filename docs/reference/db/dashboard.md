@@ -13,6 +13,13 @@ Create a `./packages/db-dashboard/.env` file with the following content
 VITE_SERVER_URL=http://localhost:3042
 ```
 
+If you set up Platformatic DB with a custom path for dashboard (found in `dashboard.path` config value), you have to add
+```
+VITE_DASHBOARD_PATH=/your-custom-endpoint
+```
+
+Note that this value is configured automatically by the script in `scripts/fix-dashboard-env.js` that is executed before `dashboard:build`.
+
 Or whatever port you are running platformatic DB server on. 
 
 Then run 
