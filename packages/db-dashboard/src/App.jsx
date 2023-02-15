@@ -22,6 +22,7 @@ function App () {
   const [logged, setLogged] = useState(false)
   const [adminSecret, setAdminSecret] = useState(null)
   const urlPrefix = import.meta.env.VITE_SERVER_URL || getCurrentUrl()
+  const dashboardPath = import.meta.env.VITE_DASHBOARD_PATH || '/dashboard'
 
   return (
     <AppContext.Provider
@@ -32,20 +33,21 @@ function App () {
         setUsername,
         adminSecret,
         setAdminSecret,
-        urlPrefix
+        urlPrefix,
+        dashboardPath
       }}
     >
 
       <Layout>
         <Dashboard>
           <Routes>
-            <Route path='/' exact element={<Navigate to='/dashboard' />} />
-            <Route path='/dashboard' element={<Home />} />
-            <Route path='/dashboard/graphiql' element={<GraphiQLPage graphqlEndpoint={`${urlPrefix}/graphql`} />} />
-            <Route path='/dashboard/config-view' element={<ConfigViewer />} />
-            <Route path='/dashboard/openapi' element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
-            <Route path='/dashboard/openapi-admin' element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/_admin/documentation/json`} />} />
-            <Route path='/dashboard/table-view/*' element={<ReactAdmin basename='/dashboard/table-view' apiUrl={`${urlPrefix}`} swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
+            <Route path='/' exact element={<Navigate to={dashboardPath} />} />
+            <Route path={dashboardPath} element={<Home />} />
+            <Route path={dashboardPath + '/graphiql'} element={<GraphiQLPage graphqlEndpoint={`${urlPrefix}/graphql`} />} />
+            <Route path={dashboardPath + '/config-view'} element={<ConfigViewer />} />
+            <Route path={dashboardPath + '/openapi'} element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
+            <Route path={dashboardPath + '/openapi-admin'} element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/_admin/documentation/json`} />} />
+            <Route path={dashboardPath + '/table-view/*'} element={<ReactAdmin basename={dashboardPath +'/table-view'} apiUrl={`${urlPrefix}`} swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
           </Routes>
 
         </Dashboard>

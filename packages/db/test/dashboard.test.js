@@ -4,6 +4,7 @@ const { test } = require('tap')
 const { buildServer } = require('..')
 const { buildConfig, connInfo } = require('./helper')
 const { request } = require('undici')
+const { join } = require('path')
 
 const sharedConfig = {
   server: {
@@ -91,22 +92,32 @@ test('should not serve the dashboard if the dashboard configuration option is di
 })
 
 test('should serve the dashboard on custom endpoint', async ({ teardown, equal, match, notMatch }) => {
+  let dashboardPath = '/my-dashboard'
   const server = await buildServer(buildConfig({
     ...sharedConfig,
     dashboard: {
-      path: '/my-dashboard'
+      path: `/${dashboardPath}`
+    },
+    plugin: {
+      path: join(__dirname, 'fixtures', 'root-endpoint-plugin.js')
     }
   }))
+  
   teardown(server.stop)
-
   await server.listen()
   {
-    const res = await request(`${server.url}/my-dashboard`)
+    const res = await request(`${server.url}/${dashboardPath}`)
     equal(res.statusCode, 200)
     const html = await res.body.text()
     match(html, '<title>Platformatic DB</title>')
     match(html, '<div id="root"></div>') // it's the react app dashboard
     notMatch(html, '<h1>Welcome to Platformatic DB</h1>') // it's not the basic root-endpoint
+  }
+  {
+    // Assets are served from root endpoint
+    const res = await request(`${server.url}/images/favicon.ico`)
+    equal(res.statusCode, 200)
+    equal(res.headers['content-type'], 'image/x-icon')
   }
 
   {
@@ -114,6 +125,6 @@ test('should serve the dashboard on custom endpoint', async ({ teardown, equal, 
     const res = await request(`${server.url}/`)
     const json = await res.body.json()
     equal(res.statusCode, 200)
-    match(json, { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
+    match(json, { message: 'Root Plugin' })
   }
 })
