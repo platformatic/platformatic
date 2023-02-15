@@ -5,7 +5,7 @@ const { readFile, writeFile } = require('fs/promises')
 const { ConfigManager } = require('@platformatic/service')
 const { findConfigFile } = require('@platformatic/service/lib/utils')
 
-async function main() {
+async function main () {
   const ourConfigFiles = [
     'platformatic.db.json',
     'platformatic.db.json5',
@@ -41,10 +41,9 @@ async function main() {
     await writeFile(envFilePath, splitted.join('\n'))
     console.log('New .env file has been written!')
   }
-  
 }
 
-function findEnvFileDashboardPathLine(lines) {
+function findEnvFileDashboardPathLine (lines) {
   let output = null
   lines.find((line, index) => {
     if (line.match(/^VITE_DASHBOARD_PATH/)) {

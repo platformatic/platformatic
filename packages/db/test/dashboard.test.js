@@ -92,7 +92,7 @@ test('should not serve the dashboard if the dashboard configuration option is di
 })
 
 test('should serve the dashboard on custom endpoint', async ({ teardown, equal, match, notMatch }) => {
-  let dashboardPath = '/my-dashboard'
+  const dashboardPath = '/my-dashboard'
   const server = await buildServer(buildConfig({
     ...sharedConfig,
     dashboard: {
@@ -102,7 +102,7 @@ test('should serve the dashboard on custom endpoint', async ({ teardown, equal, 
       path: join(__dirname, 'fixtures', 'root-endpoint-plugin.js')
     }
   }))
-  
+
   teardown(server.stop)
   await server.listen()
   {

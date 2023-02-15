@@ -47,7 +47,7 @@ function App () {
             <Route path={dashboardPath + '/config-view'} element={<ConfigViewer />} />
             <Route path={dashboardPath + '/openapi'} element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
             <Route path={dashboardPath + '/openapi-admin'} element={<SwaggerViewer swaggerDocUrl={`${urlPrefix}/_admin/documentation/json`} />} />
-            <Route path={dashboardPath + '/table-view/*'} element={<ReactAdmin basename={dashboardPath +'/table-view'} apiUrl={`${urlPrefix}`} swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
+            <Route path={dashboardPath + '/table-view/*'} element={<ReactAdmin basename={dashboardPath + '/table-view'} apiUrl={`${urlPrefix}`} swaggerDocUrl={`${urlPrefix}/documentation/json`} />} />
           </Routes>
 
         </Dashboard>

@@ -89,7 +89,7 @@ module.exports = async function app (app, opts) {
     })
   }
   app.register(fastifyStatic, {
-    root: path.join(__dirname, 'build'),
+    root: path.join(__dirname, 'build')
   })
 
   app.get(`${dashboardPath}`, { hide: true }, function (req, reply) {
