@@ -21,7 +21,7 @@ async function main () {
     return
   }
   const configFilePath = join(rootDirectory, configFileName)
-  
+
   const cm = new ConfigManager({
     source: configFilePath
   })
