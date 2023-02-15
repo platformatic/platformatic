@@ -4,7 +4,8 @@
   "description": "Platformatic DB Utils",
   "main": "index.js",
   "scripts": {
-    "test": "standard | snazzy && c8 --100 tap --no-coverage test/*test.js"
+    "test": "standard | snazzy && c8 --100 tap --no-coverage test/*test.js",
+    "lint": "standard | snazzy"
   },
   "repository": {
     "type": "git",

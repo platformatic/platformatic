@@ -10,7 +10,8 @@
     "test:mysql": "DB=mysql tap test/*.test.js",
     "test:mysql8": "DB=mysql8 tap test/*.test.js",
     "test:sqlite": "DB=sqlite tap test/*.test.js",
-    "test:typescript": "tsd"
+    "test:typescript": "tsd",
+    "lint": "standard | snazzy"
   },
   "repository": {
     "type": "git",

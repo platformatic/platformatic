@@ -13,7 +13,8 @@
     "create-platformatic": "./create-platformatic.mjs"
   },
   "scripts": {
-    "test": "standard | snazzy && NODE_OPTIONS=--loader=esmock c8 --100 tap --no-coverage test/*test.mjs test/*/*test.mjs"
+    "test": "standard | snazzy && NODE_OPTIONS=--loader=esmock c8 --100 tap --no-coverage test/*test.mjs test/*/*test.mjs",
+    "lint": "standard | snazzy"
   },
   "author": "Marco Piraccini <marco.piraccini@gmail.com>",
   "dependencies": {
