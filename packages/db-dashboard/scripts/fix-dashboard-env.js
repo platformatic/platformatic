@@ -21,7 +21,7 @@ async function main () {
     source: configFilePath
   })
   await cm.parse()
-  const configDashboardEdnpoint = cm.current.dashboard.path
+  const configDashboardEdnpoint = cm.current.dashboard?.path
   if (configDashboardEdnpoint) {
     const newLine = `VITE_DASHBOARD_PATH=${configDashboardEdnpoint}`
     const envFilePath = join(__dirname, '..', '.env')
@@ -40,6 +40,8 @@ async function main () {
     // Write file
     await writeFile(envFilePath, splitted.join('\n'))
     console.log('New .env file has been written!')
+  } else {
+    console.log('No dashboard custom endpoint found')
   }
 }
 
