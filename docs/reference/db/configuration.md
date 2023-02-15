@@ -260,6 +260,12 @@ Supported object properties:
 
 - **`rootPath`** (`boolean`, default: `true`) — Make the dashboard available at the root path (`/`).
 
+:::tip
+
+Read the [dashboard docs](/docs/reference/db/dashboard) to understand how to create a build or have the Vite's development server up and running.
+
+:::
+
 ### `metrics`
 
 Configuration for a [Prometheus](https://prometheus.io/) server that will export monitoring metrics
