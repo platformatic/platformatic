@@ -16,7 +16,12 @@ async function main () {
   ]
   const rootDirectory = join(__dirname, '..', '..', '..')
   const configFileName = await findConfigFile(rootDirectory, ourConfigFiles)
+  if (!configFileName) {
+    console.log('No config file found, skipping other checks.')
+    return
+  }
   const configFilePath = join(rootDirectory, configFileName)
+  
   const cm = new ConfigManager({
     source: configFilePath
   })
