@@ -4,7 +4,7 @@
   "description": "Map a SQL database to OpenAPI, for Fastify",
   "main": "index.js",
   "scripts": {
-    "lint": "standard",
+    "lint": "standard | snazzy",
     "test": "standard | snazzy && npm run test:typescript && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
     "test:postgresql": "DB=postgresql tap test/*.test.js",
     "test:mariadb": "DB=mariadb tap test/*.test.js",

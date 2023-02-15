@@ -10,7 +10,8 @@
   },
   "homepage": "https://oss.platformatic.dev/",
   "scripts": {
-    "test": "standard | snazzy && c8 --100 tap --no-coverage test/*.test.js"
+    "test": "standard | snazzy && c8 --100 tap --no-coverage test/*.test.js",
+    "lint": "standard | snazzy"
   },
   "author": "Matteo Collina <hello@matteocollina.com>",
   "repository": {
