@@ -2,11 +2,17 @@
 
 The Platformatic DB has a dashboard used to do several actions like see the current configuration and access documentation for your generated API.
 
-It also integrates GraphiQL, to run queries and mutations against Platformatic DB Server.
-
 :::info
 
 Be sure to set `dashboard: true` on your `platformatic.db.json`, as mentioned on the [config docs](/docs/reference/db/configuration/#dashboard).
+
+:::
+
+It also integrates GraphiQL, to run queries and mutations against Platformatic DB Server.
+
+:::tip
+
+As mentioned on the [config docs](/docs/reference/db/configuration#metrics), adding `metrics: true` will allow to add also the Platformatic metrics to the dashboard.
 
 :::
 
