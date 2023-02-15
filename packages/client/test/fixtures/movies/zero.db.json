@@ -1,0 +1,21 @@
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "3042",
+    "logger": {
+      "level": "error"
+    }
+  },
+  "core": {
+    "connectionString": "sqlite://./db.sqlite",
+    "graphql": true,
+    "openapi": true
+  },
+  "migrations": {
+    "dir": "./migrations",
+    "autoApply": true
+  },
+  "plugin": {
+    "path": "./plugin.js"
+  }
+}

@@ -4,6 +4,19 @@ const { request } = require('undici')
 const fs = require('fs/promises')
 const kHeaders = Symbol('headers')
 
+function generateOperationId (path, method, methodMeta) {
+  let operationId = methodMeta.operationId
+  if (!operationId) {
+    const pathParams = methodMeta.parameters?.filter(p => p.in === 'path') || []
+    let stringToUpdate = path
+    for (const param of pathParams) {
+      stringToUpdate = stringToUpdate.replace(`{${param.name}}`, capitalize(param.name))
+    }
+    operationId = method.toLowerCase() + stringToUpdate.split('/').map(capitalize).join('')
+  }
+  return operationId
+}
+
 async function buildOpenAPIClient (options) {
   const client = {}
   let spec
@@ -25,15 +38,7 @@ async function buildOpenAPIClient (options) {
 
     for (const method of Object.keys(pathMeta)) {
       const methodMeta = pathMeta[method]
-      let operationId = methodMeta.operationId
-      if (!operationId) {
-        const pathParams = methodMeta.parameters?.filter(p => p.in === 'path') || []
-        let stringToUpdate = path
-        for (const param of pathParams) {
-          stringToUpdate = stringToUpdate.replace(`{${param.name}}`, capitalize(param.name))
-        }
-        operationId = method.toLowerCase() + stringToUpdate.split('/').map(capitalize).join('')
-      }
+      const operationId = generateOperationId(path, method, methodMeta)
 
       client[operationId] = buildCallFunction(baseUrl, path, method, methodMeta, operationId)
     }
@@ -178,3 +183,4 @@ plugin[Symbol.for('plugin-meta')] = {
 module.exports = plugin
 module.exports.buildOpenAPIClient = buildOpenAPIClient
 module.exports.buildGraphQLClient = buildGraphQLClient
+module.exports.generateOperationId = generateOperationId
