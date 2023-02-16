@@ -334,6 +334,7 @@ module.exports = async (app) => {
 Currently, Prisma doesn't resolve the file path of a SQLite database the same way as Platformatic does. 
 
 If your database is at the root of the project, create a new environment variable that Prisma will use called `PRISMA_DATABASE_URL`:
+
 ```bash
 # .env
 DATABASE_URL="sqlite://db.sqlite"
