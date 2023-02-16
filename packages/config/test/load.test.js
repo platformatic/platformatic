@@ -51,7 +51,7 @@ test('should support YAML format', async ({ same }) => {
       ignore: { versions: true }
     },
     migrations: { dir: './demo/auth/migrations', validateChecksums: false },
-    dashboard: { enabled: true, rootPath: true },
+    dashboard: { enabled: true, path: '/' },
     authorization: { adminSecret: 'plt-db' },
     foobar: 'foobar'
   })
@@ -77,7 +77,7 @@ test('should support TOML format', async ({ same }) => {
       ignore: { versions: true }
     },
     migrations: { dir: './demo/auth/migrations', validateChecksums: false },
-    dashboard: { enabled: true, rootPath: true },
+    dashboard: { enabled: true, path: '/' },
     authorization: { adminSecret: 'plt-db' },
     foobar: 'foobar'
   })
@@ -103,7 +103,7 @@ test('should support JSON5 format', async ({ same }) => {
       ignore: { versions: true }
     },
     migrations: { dir: './demo/auth/migrations', validateChecksums: false },
-    dashboard: { enabled: true, rootPath: true },
+    dashboard: { enabled: true, path: '/' },
     authorization: { adminSecret: 'plt-db' },
     foobar: 'foobar'
   })

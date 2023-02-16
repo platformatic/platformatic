@@ -80,25 +80,27 @@ function transformHttpPromMetrics (httpMetrics = []) {
 
 module.exports = async function app (app, opts) {
   app.log.info('dashboard plugin loaded.')
-  if (opts.dashboardAtRoot !== false) {
+  let dashboardPath = '/dashboard'
+  if (opts.path) {
+    dashboardPath = opts.path
+  } else {
     app.get('/', { hide: true }, function (req, reply) {
-      return reply.redirect(302, '/dashboard')
+      return reply.redirect(302, dashboardPath)
     })
   }
-
   app.register(fastifyStatic, {
     root: path.join(__dirname, 'build')
   })
 
-  app.get('/dashboard', { hide: true }, function (req, reply) {
+  app.get(`${dashboardPath}`, { hide: true }, function (req, reply) {
     return reply.sendFile('index.html')
   })
 
-  app.get('/dashboard/*', { hide: true }, function (req, reply) {
+  app.get(`${dashboardPath}/*`, { hide: true }, function (req, reply) {
     return reply.sendFile('index.html')
   })
 
-  app.get('/dashboard/metrics', { hide: true }, async function (req, reply) {
+  app.get(`${dashboardPath}/metrics`, { hide: true }, async function (req, reply) {
     reply.header('Content-Type', 'application/json')
 
     if (app.metrics === undefined) {

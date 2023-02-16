@@ -28,7 +28,7 @@
   },
   "dashboard": {
     "enabled": true,
-    "rootPath": true
+    "path": "/"
   },
   "authorization": {
     "adminSecret": "plt-db"

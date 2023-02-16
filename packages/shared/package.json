@@ -1,0 +1,21 @@
+{
+  "name": "@platformatic/shared",
+  "version": "0.3.0",
+  "main": "index.js",
+  "description": "Platformatic DB Shared Resources",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/plaformatic/platformatic.git"
+  },
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/plaformatic/platformatic/issues"
+  },
+  "homepage": "https://github.com/plaformatic/platformatic#readme",
+  "scripts": {
+    "test": "standard | snazzy && c8 --100 tap --no-coverage test/*.test.js"
+  },
+  "dependencies": {
+    "@fastify/error": "^3.0.0"
+  }
+}
