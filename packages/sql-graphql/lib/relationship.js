@@ -34,7 +34,7 @@ module.exports = function establishRelations (app, relations, resolvers, loaders
         const originalField = camelcase(column_name)
         delete current.fields[originalField]
         current.fields[lowered] = { type: foreign.type }
-        loaders[current.type] = loaders[current.type] || resolvers[current.type] || {}
+        loaders[current.type] = loaders[current.type] || {}
         const key = camelcase(foreign_column_name)
         loaders[current.type][lowered] = {
           loader (queries, ctx) {
