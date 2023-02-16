@@ -87,14 +87,6 @@ To learn how you can evolve your database schema, you can jump to the [Evolving 
 Define a `Post` model with the following fields at the end of your `schema.prisma` file:
 ```groovy
 // prisma/schema.prisma
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider = "postgres"
-  url      = env("DATABASE_URL")
-}
 
 model Post {
   id        Int      @id @default(autoincrement())
