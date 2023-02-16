@@ -107,7 +107,7 @@ An optional object that defines a plugin loaded by Platformatic DB.
   }
   ```
 
-:::warning:::
+:::warning
 While hot reloading is useful for development, it is not recommended to use it in production.
 To switch if off, set `hotReload` to `false`.
 :::
