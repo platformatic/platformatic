@@ -85,9 +85,7 @@ To learn how you can evolve your database schema, you can jump to the [Evolving 
 ## Adding Prisma to a new project
 
 Define a `Post` model with the following fields at the end of your `schema.prisma` file:
-```groovy
-// prisma/schema.prisma
-
+```groovy title="prisma/schema.prisma"
 model Post {
   id        Int      @id @default(autoincrement())
   title     String
@@ -185,14 +183,6 @@ model Post {
 +  authorId  Int?
 }
 
-model versions {
-  version BigInt    @id
-  name    String?
-  md5     String?
-  run_at  DateTime? @db.Timestamptz(6)
-
-  @@ignore
-}
 ```
 
 Next, use the `@ruheni/db-diff` CLI tool to generate `up` and `down` migrations:
@@ -213,18 +203,26 @@ And you're done!
 
 ## Using Prisma Client in your plugins
 
+Plugins allow you to add custom functionality to your REST and GraphQL API. Refer to the [Add Custom Functionality](/docs/guides/add-custom-functionality/introduction.md) to learn more how you can add custom functionality.
+
+
 :::danger
-The following functionality is only supported on Node v18 
+
+Prisma Client usage with Platformatic is currently only supported in Node v18 
+
 :::
 
-You can use Prisma Client to 
+You can use Prisma Client to interact with your database in your plugin. 
+
+To get started, run the following command:
+
 ```bash
 npx prisma generate
 ```
 
 The above command installs the `@prisma/client` in your project and generates a Prisma Client based off of your Prisma schema.
 
-```js
+```js title="plugin.js"
 // ./plugin.js
 
 // 1. 
@@ -279,9 +277,15 @@ The previous snippet does the following:
 1. Adds error handling in the event a record with the matching id was not found.
 1. Returns the updated post on success.
 
-Once you start your server, the query should be included in your GraphQL schema.
+Start the server: 
 
-You can also use the Prisma Client in your REST API endpoints, for example:
+```bash
+npx platformatic db start
+```
+
+The query should now be included in your GraphQL schema.
+
+You can also use the Prisma Client in your REST API endpoints.
 
 Alternatively, you can use the [`@sabinthedev/fastify-prisma`](https://github.com/sabinadams/fastify-prisma) plugin to query your database using Prisma Client. 
 
@@ -337,7 +341,7 @@ PRISMA_DATABASE_URL="file:../db.sqlite"
 ```
 
 Next, update the `url` value in the `datasource` block in your Prisma schema with the updated value:
-```groovy
+```groovy title="prisma/schema.prisma"
 // ./prisma/schema.prisma
 datasource db {
   provider = "sqlite"
