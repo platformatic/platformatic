@@ -341,6 +341,7 @@ PRISMA_DATABASE_URL="file:../db.sqlite"
 ```
 
 Next, update the `url` value in the `datasource` block in your Prisma schema with the updated value:
+
 ```groovy title="prisma/schema.prisma"
 // ./prisma/schema.prisma
 datasource db {
