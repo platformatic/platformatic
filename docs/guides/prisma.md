@@ -1,4 +1,4 @@
-# Adding Prisma with Platformatic
+# Integrate Prisma with Platformatic DB
 
 [Prisma](https://www.prisma.io/) is an open-source ORM for Node.js and TypeScript. It is used as an alternative to writing SQL, or using another database access tool such as SQL query builders (like [knex.js](https://knexjs.org/)) or ORMs (like [TypeORM](https://typeorm.io/) and [Sequelize](https://sequelize.org/)). Prisma currently supports PostgreSQL, MySQL, SQL Server, SQLite, MongoDB, and CockroachDB.
 
@@ -7,7 +7,7 @@ Prisma can be used with JavaScript or TypeScript, and provides a level to type-s
 If you want to get a quick overview of how Prisma works, you can follow the [Quickstart](https://www.prisma.io/docs/getting-started/quickstart) or read the [Introduction](https://www.prisma.io/docs/understand-prisma/introduction) in the Prisma documentation. 
 
 
-## How Prisma can improve your workflow with Platformatic DB:
+## How Prisma can improve your workflow with Platformatic DB
 
 While Platformatic speeds up development of your REST and GraphQL APIs, Prisma can complement the workflow in several ways:
 
@@ -55,11 +55,11 @@ Prisma uses the `DATABASE_URL` environment variable to connect to your database 
 
 If you're using PostgreSQL, MySQL, SQL Server, or CockroachDB, ensure that the `DATABASE_URL` used by Prisma is the same as the one used by Platformatic DB project. 
 
-If you have an existing project, refer to the [Adding Prisma to an existing Platformatic DB project](#adding-prisma-to-an-existing-project) section. If you're adding Prisma to a new project, refer to the [Adding Prisma to a new project](#adding-prisma-to-an-new-project).
+If you have an existing project, refer to the [Adding Prisma to an existing Platformatic DB project](#adding-prisma-to-an-existing-project) section. If you're adding Prisma to a new project, refer to the [Adding Prisma to a new project](#adding-prisma-to-a-new-project).
 
 ## Adding Prisma to an existing project
 
-If you have a brownfield Platformatic DB project, you can introspect your database and generate the data model in your Prisma schema with the following command:
+If you have an existing Platformatic DB project, you can introspect your database and generate the data model in your Prisma schema with the following command:
 
 ```bash
 npx prisma db pull
@@ -84,7 +84,7 @@ To learn how you can evolve your database schema, you can jump to the [Evolving 
 
 ## Adding Prisma to a new project
 
-Define a `Post` model with the following fields in your `schema.prisma` file:
+Define a `Post` model with the following fields at the end of your `schema.prisma` file:
 ```groovy
 // prisma/schema.prisma
 generator client {
@@ -116,7 +116,7 @@ The snippet above defines a `Post` model with the following fields and propertie
 
 Next, run the following command to generate an up and down migration:
 
-```
+```bash
 npx db-diff
 ```
 
@@ -136,7 +136,7 @@ npx prisma db pull
 
 Introspecting the database to populate the model prevents including the `versions` table in the generated down migrations.
 
-Your Prisma schema should now contain the `versions` model as follows:
+Your Prisma schema should now contain a `versions` model that is similar to this one (it will vary depending on the database system you're using):
 
 ```diff
 model Post {
@@ -219,7 +219,7 @@ npx platformatic db migrations apply
 
 And you're done!
 
-## Extending functionality with Plugins using Prisma Client
+## Using Prisma Client in your plugins
 
 :::danger
 The following functionality is only supported on Node v18 
@@ -230,7 +230,7 @@ You can use Prisma Client to
 npx prisma generate
 ```
 
-The above command will generate Prisma Client based off your Prisma schema.
+The above command installs the `@prisma/client` in your project and generates a Prisma Client based off of your Prisma schema.
 
 ```js
 // ./plugin.js
@@ -289,7 +289,7 @@ The previous snippet does the following:
 
 Once you start your server, the query should be included in your GraphQL schema.
 
-You can also use Prisma Client to define REST API endpoints.
+You can also use the Prisma Client in your REST API endpoints, for example:
 
 Alternatively, you can use the [`@sabinthedev/fastify-prisma`](https://github.com/sabinadams/fastify-prisma) plugin to query your database using Prisma Client. 
 
