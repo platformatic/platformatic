@@ -290,6 +290,7 @@ You can also use the Prisma Client in your REST API endpoints.
 Alternatively, you can use the [`@sabinthedev/fastify-prisma`](https://github.com/sabinadams/fastify-prisma) plugin to query your database using Prisma Client. 
 
 Install the plugin:
+
 ```bash
 npm install @sabinthedev/fastify-prisma
 ```
