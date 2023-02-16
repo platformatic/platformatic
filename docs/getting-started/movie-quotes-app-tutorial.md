@@ -1477,6 +1477,10 @@ npm install fluent-json-schema
 We'll use `fluent-json-schema` to help us generate a JSON Schema. We can then
 use this schema to validate the request path parameters for our route (`id`).
 
+:::tip
+You can use [typebox](https://github.com/sinclairzx81/typebox) if you want to convert your JSON Schema into a Typescript type. See also [this GitHub thread](https://github.com/fastify/fluent-json-schema/issues/78#issuecomment-669059113) to have a better overview about it.
+:::
+
 Now let's add our REST API route in **`plugin.js`**:
 
 ```javascript
