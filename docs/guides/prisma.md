@@ -53,7 +53,7 @@ npx prisma init --datasource-provider postgres # or sqlite, mysql, sqlserver, co
 
 Prisma uses the `DATABASE_URL` environment variable to connect to your database to sync your database and Prisma schema. It also uses the variable to connect to your database to run your Prisma Client queries. 
 
-If you're using PostgreSQL, MySQL, SQL Server, or CockroachDB, ensure that the `DATABASE_URL` used by Prisma is the same as the one used by Platformatic DB project. 
+If you're using PostgreSQL, MySQL, SQL Server, or CockroachDB, ensure that the `DATABASE_URL` used by Prisma is the same as the one used by Platformatic DB project. If you're using SQLite, refer to the [Using Prisma with SQLite](#using-prisma-with-sqlite) section.
 
 If you have an existing project, refer to the [Adding Prisma to an existing Platformatic DB project](#adding-prisma-to-an-existing-project) section. If you're adding Prisma to a new project, refer to the [Adding Prisma to a new project](#adding-prisma-to-a-new-project).
 
