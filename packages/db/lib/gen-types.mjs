@@ -47,10 +47,28 @@ async function generateGlobalTypes (entities, config) {
     globalTypesImports.push('import graphqlPlugin from \'@platformatic/sql-graphql\'')
   }
 
-  for (const [key, entity] of Object.entries(entities)) {
-    globalTypesImports.push(`import { ${entity.name} } from './types/${entity.name}'`)
-    globalTypesInterface.push(`${key}: Entity<${entity.name}>,`)
+  const schemaIdTypes = []
+  for (const [key, { name }] of Object.entries(entities)) {
+    schemaIdTypes.push(name)
+    globalTypesImports.push(`import { ${name} } from './types/${name}'`)
+    globalTypesInterface.push(`${key}: Entity<${name}>,`)
   }
+
+  const schemaIdType = schemaIdTypes.length === 0 ? 'string' : schemaIdTypes.map(type => `'${type}'`).join(' | ')
+
+  globalTypesImports.push(`
+declare module 'fastify' {
+  interface FastifyInstance {
+    getSchema(schemaId: ${schemaIdType}): {
+      '$id': string,
+      title: string,
+      description: string,
+      type: string,
+      properties: object,
+      required: string[]
+    };
+  }
+}`)
 
   return GLOBAL_TYPES_TEMPLATE
     .replace('ENTITIES_IMPORTS_PLACEHOLDER', globalTypesImports.join('\n'))
