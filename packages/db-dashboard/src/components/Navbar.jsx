@@ -11,7 +11,7 @@ export default function Navbar () {
   return (
     <div className={styles.list}>
       <div>
-        <NavLink className={getListItemClass} data-testid='dashboard-link' to={dashboardPath}>Dashboard</NavLink>
+        <NavLink className={getListItemClass} data-testid='dashboard-link' to={dashboardPath + '/'}>Dashboard</NavLink>
       </div>
       <div>
         <NavLink className={getListItemClass} data-testid='graphiql-link' to={dashboardPath + '/graphiql'}>GraphiQL</NavLink>
