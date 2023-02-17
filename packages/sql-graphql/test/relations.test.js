@@ -384,3 +384,200 @@ test('cut out id exactly from ending when forming a name of relation', async ({ 
     }, 'query organization response')
   }
 })
+
+test('should handle reads from save', { only: true }, async ({ pass, teardown, same, equal }) => {
+  const app = fastify({ logger: false })
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      if (isMysql) {
+        await db.query(sql`
+          CREATE TABLE categories (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255)
+          );
+          CREATE TABLE authors (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255),
+            category_id BIGINT UNSIGNED,
+            FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
+          );
+          CREATE TABLE books (
+            id SERIAL PRIMARY KEY,
+            title VARCHAR(42),
+            author_id BIGINT UNSIGNED,
+            category_id BIGINT UNSIGNED,
+            FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
+            FOREIGN KEY (author_id) REFERENCES authors(id) ON DELETE CASCADE
+          );
+        `)
+      } else if (isSQLite) {
+        await db.query(sql`
+          CREATE TABLE categories (
+            id INTEGER PRIMARY KEY,
+            name VARCHAR(255)
+          );
+        `)
+        await db.query(sql`
+          CREATE TABLE authors (
+            id INTEGER PRIMARY KEY,
+            name VARCHAR(255),
+            category_id BIGINT UNSIGNED,
+            FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
+          );
+        `)
+        await db.query(sql`
+          CREATE TABLE books (
+            id INTEGER PRIMARY KEY,
+            title VARCHAR(42),
+            author_id BIGINT UNSIGNED,
+            category_id BIGINT UNSIGNED,
+            FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
+            FOREIGN KEY (author_id) REFERENCES authors(id) ON DELETE CASCADE
+          );
+        `)
+      } else {
+        await db.query(sql`
+          CREATE TABLE categories (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(42)
+          );
+
+          CREATE TABLE authors (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(42),
+            category_id INTEGER REFERENCES categories(id)
+          );
+
+          CREATE TABLE books (
+            id SERIAL PRIMARY KEY,
+            title VARCHAR(42),
+            category_id INTEGER REFERENCES categories(id),
+            author_id INTEGER REFERENCES authors(id)
+          );
+        `)
+      }
+    }
+  })
+  app.register(sqlGraphQL)
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  const categories = [{
+    name: 'Sci-Fi'
+  }]
+
+  const authors = [{
+    name: 'Mark',
+    categoryId: 1
+  }]
+
+  const books = [{
+    title: 'Harry',
+    authorId: 1,
+    categoryId: 1
+  }]
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+            mutation batch($inputs : [CategoryInput]!) {
+              insertCategories(inputs: $inputs) {
+                id
+                name
+              }
+            }
+          `,
+        variables: {
+          inputs: categories
+        }
+      }
+    })
+    equal(res.statusCode, 200, 'categories status code')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+            mutation batch($inputs : [AuthorInput]!) {
+              insertAuthors(inputs: $inputs) {
+                id
+                name
+              }
+            }
+          `,
+        variables: {
+          inputs: authors
+        }
+      }
+    })
+    equal(res.statusCode, 200, 'authors status code')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+            mutation batch($inputs : [BookInput]!) {
+              insertBooks(inputs: $inputs) {
+                id
+                title
+              }
+            }
+          `,
+        variables: {
+          inputs: books
+        }
+      }
+    })
+    equal(res.statusCode, 200, 'books status code')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+            mutation {
+              saveAuthor(input: { id: 1, name: "Mark II" }) {
+                id
+                books {
+                  id
+                  title
+                }
+              }
+            }
+          `,
+        variables: {
+          inputs: books
+        }
+      }
+    })
+    equal(res.statusCode, 200, 'books status code')
+    same(res.json(), {
+      data: {
+        saveAuthor: {
+          id: 1,
+          books: [{
+            id: 1,
+            title: 'Harry'
+          }]
+        }
+      }
+    })
+  }
+})

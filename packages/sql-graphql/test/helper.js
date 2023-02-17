@@ -41,8 +41,17 @@ module.exports.clear = async function (db, sql) {
   }
 
   try {
+    await db.query(sql`DROP TABLE books`)
+  } catch (err) {
+  }
+  try {
+    await db.query(sql`DROP TABLE authors`)
+  } catch (err) {
+  }
+
+  try {
     await db.query(sql`DROP TABLE categories`)
-  } catch {
+  } catch (err) {
   }
 
   try {
@@ -72,15 +81,6 @@ module.exports.clear = async function (db, sql) {
   try {
     await db.query(sql`DROP TABLE graphs`)
   } catch {
-  }
-
-  try {
-    await db.query(sql`DROP TABLE books`)
-  } catch (err) {
-  }
-  try {
-    await db.query(sql`DROP TABLE authors`)
-  } catch (err) {
   }
 
   try {
