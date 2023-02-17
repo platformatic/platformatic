@@ -1,4 +1,4 @@
-# Platformatic Service Programmatic API
+# Programmatic API
 
 In many cases it's useful to start Platformatic Service using an API instead of
 command line, e.g. in tests we want to start and stop our server.
@@ -8,38 +8,43 @@ The `buildServer` function allows that:
 ```js
 import { buildServer } from '@platformatic/service'
 
-const service = await buildServer('path/to/platformatic.service.json')
-
-await service.listen()
-
-const res = await fetch(server.url)
-console.log(await res.json())
-
-// do something
-
-await service.stop()
-```
-
-It is also possible to customize the configuration:
-
-```js
-import { buildServer } from '@platformatic/db'
-
-const service = await buildServer({
+const server = await buildServer('path/to/platformatic.service.json')
   server: {
     hostname: '127.0.0.1',
     port: 0
   }
 })
 
-await service.listen()
+await server.listen()
 
 const res = await fetch(server.url)
 console.log(await res.json())
 
 // do something
 
-await service.stop()
+await server.stop()
+```
+
+It is also possible to customize the configuration:
+
+```js
+import { buildServer } from '@platformatic/service'
+
+const server = await buildServer({
+  server: {
+    hostname: '127.0.0.1',
+    port: 0
+  }
+})
+
+await server.listen()
+
+const res = await fetch(server.url)
+console.log(await res.json())
+
+// do something
+
+await server.stop()
 ```
 
 ## Creating a reusable application on top of Platformatic Service

@@ -1,11 +1,30 @@
-# JavaScript API
+# Programmatic API
 
 It's possible to start an instance of Platformatic DB from JavaScript.
 
 ```js
 import { buildServer } from '@platformatic/db'
 
-await buildServer({
+const server = await buildServer('/path/to/platformatic.db.json')
+
+await server.listen() // this will start our server
+
+console.log('URL', server.url)
+
+const res = await fetch(server.url)
+console.log(await res.json())
+
+// do something
+
+await server.stop()
+```
+
+It is also possible to customize the configuration:
+
+```js
+import { buildServer } from '@platformatic/db'
+
+const server = await buildServer({
   server: {
     hostname: '127.0.0.1',
     port: 0
@@ -24,37 +43,7 @@ console.log(await res.json())
 
 // do something
 
-await db.stop()
-```
-
-It is also possible to customize the configuration:
-
-```js
-import { buildServer } from '@platformatic/db'
-
-const db = await buildServer({
-  server: {
-    hostname: '127.0.0.1',
-    port: 0
-  },
-  core: {
-    // Use an in-memory database for testing purposes
-    connectionString: 'sqlite://:memory:'
-  },
-  dashboard: true,
-  authorization: {
-    adminSecret: 'secret'
-  }
-})
-
-await db.listen()
-
-const res = await fetch(server.url)
-console.log(await res.json())
-
-// do something
-
-await db.stop()
+await server.stop()
 ```
 
 For more details on how this is implemented, read [Platformatic Service Programmatic API](/reference/service/programmatic.md).
@@ -79,3 +68,12 @@ This enables you to do [`server.app.inject()` calls](https://www.fastify.io/docs
 #### .restart(newConfig)
 
 Restart the Fastify application with the new configuration
+
+
+#### .listen()
+
+Listen to the hostname/port combination specified in the config.
+
+#### .stop()
+
+Stops the server.
