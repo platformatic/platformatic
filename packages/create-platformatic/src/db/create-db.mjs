@@ -23,6 +23,8 @@ const moviesMigrationUndo = `
 DROP TABLE movies;
 `
 
+const defaultMigrationsFolderName = 'migrations'
+
 function getTsConfig (outDir) {
   return {
     compilerOptions: {
@@ -61,8 +63,13 @@ function generateConfig (migrations, plugin, types, typescript) {
       connectionString: '{DATABASE_URL}',
       graphql: true,
       openapi: true
-    },
-    migrations: { dir: migrations }
+    }
+  }
+
+  if (migrations === true) {
+    config.migrations = {
+      dir: defaultMigrationsFolderName
+    }
   }
 
   if (plugin === true) {
@@ -129,8 +136,8 @@ async function generatePluginWithTypesSupport (logger, currentDir, isTypescript)
   logger.info(`Plugin file created at ${relative(currentDir, pluginPath)}`)
 }
 
-async function createDB ({ hostname, database = 'sqlite', port, migrations = 'migrations', plugin = true, types = true, typescript = false }, logger, currentDir) {
-  const createMigrations = !!migrations // If we don't define a migrations folder, we don't create it
+async function createDB ({ hostname, database = 'sqlite', port, migrations = true, plugin = true, types = true, typescript = false }, logger, currentDir) {
+  const createMigrations = migrations // If we don't define a migrations folder, we don't create it
   const accessibleConfigFilename = await findDBConfigFile(currentDir)
   if (accessibleConfigFilename === undefined) {
     const config = generateConfig(migrations, plugin, types, typescript)
@@ -145,21 +152,20 @@ async function createDB ({ hostname, database = 'sqlite', port, migrations = 'mi
     logger.info(`Configuration file ${accessibleConfigFilename} found, skipping creation of configuration file.`)
   }
 
-  const migrationsFolderName = migrations
   if (createMigrations) {
-    const isMigrationFolderExists = await isFileAccessible(migrationsFolderName, currentDir)
+    const isMigrationFolderExists = await isFileAccessible(defaultMigrationsFolderName, currentDir)
     if (!isMigrationFolderExists) {
-      await mkdir(join(currentDir, migrationsFolderName))
-      logger.info(`Migrations folder ${migrationsFolderName} successfully created.`)
+      await mkdir(join(currentDir, defaultMigrationsFolderName))
+      logger.info(`Migrations folder ${defaultMigrationsFolderName} successfully created.`)
     } else {
-      logger.info(`Migrations folder ${migrationsFolderName} found, skipping creation of migrations folder.`)
+      logger.info(`Migrations folder ${defaultMigrationsFolderName} found, skipping creation of migrations folder.`)
     }
   }
 
   const migrationFileNameDo = '001.do.sql'
   const migrationFileNameUndo = '001.undo.sql'
-  const migrationFilePathDo = join(currentDir, migrationsFolderName, migrationFileNameDo)
-  const migrationFilePathUndo = join(currentDir, migrationsFolderName, migrationFileNameUndo)
+  const migrationFilePathDo = join(currentDir, defaultMigrationsFolderName, migrationFileNameDo)
+  const migrationFilePathUndo = join(currentDir, defaultMigrationsFolderName, migrationFileNameUndo)
   const isMigrationFileDoExists = await isFileAccessible(migrationFilePathDo)
   const isMigrationFileUndoExists = await isFileAccessible(migrationFilePathUndo)
   if (!isMigrationFileDoExists && createMigrations) {

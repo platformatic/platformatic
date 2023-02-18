@@ -34,7 +34,7 @@ export const parseDBArgs = (_args) => {
       hostname: '127.0.0.1',
       port: 3042,
       database: 'sqlite',
-      migrations: 'migrations',
+      migrations: true,
       plugin: true,
       types: true,
       typescript: false
@@ -65,9 +65,9 @@ const createPlatformaticDB = async (_args) => {
 
   const wizardOptions = await inquirer.prompt([{
     type: 'list',
-    name: 'defaultMigrations',
+    name: 'generateDefaultMigrations',
     message: 'Do you want to create default migrations?',
-    default: true,
+    default: args.migrations,
     choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
   }, {
     type: 'list',
@@ -77,7 +77,6 @@ const createPlatformaticDB = async (_args) => {
     choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
   }, {
     type: 'list',
-    when: !args.typescript,
     name: 'useTypescript',
     message: 'Do you want to use TypeScript?',
     default: args.typescript,
@@ -87,15 +86,14 @@ const createPlatformaticDB = async (_args) => {
   // Create the project directory
   await mkdirp(projectDir)
 
-  const generatePlugin = args.plugin || wizardOptions.generatePlugin
-  const useTypescript = args.typescript || wizardOptions.useTypescript
-  const useTypes = args.types || generatePlugin // we set this always to true if we want to generate a plugin
+  const { generateDefaultMigrations, generatePlugin, useTypescript } = wizardOptions
+  const useTypes = args.types && generatePlugin // we set this always to true if we want to generate a plugin
 
   const params = {
     hostname: args.hostname,
     port: args.port,
     database: args.database,
-    migrations: args.migrations,
+    migrations: generateDefaultMigrations,
     plugin: generatePlugin,
     types: useTypes,
     typescript: useTypescript
