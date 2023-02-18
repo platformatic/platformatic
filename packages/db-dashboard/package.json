@@ -29,7 +29,7 @@
     "@graphiql/toolkit": "0.8.0",
     "@mui/material": "^5.11.0",
     "@platformatic/db-ra-data-rest": "workspace:*",
-    "@platformatic/service": "workspace:^0.15.0",
+    "@platformatic/service": "workspace:*",
     "@platformatic/ui-components": "^0.1.29",
     "@playwright/test": "^1.29.0",
     "@types/react": "^18.0.26",
