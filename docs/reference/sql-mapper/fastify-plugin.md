@@ -11,6 +11,13 @@ The plugin decorates the server with a `platformatic` object that has the follow
 - `entities` — all entity objects with their [API methods](./entities/api)
 - `addEntityHooks` — a function to add a [hook](./entities/hooks) to an entity API method.
 
+The plugin also decorates the Fastify `Request` object with the following:
+
+- `platformaticContext`: an object with the following two properties:
+  * `app`, the Fastify application of the given route
+  * `reply`, the Fastify `Reply`  instance matching that request
+
+
 #### Usage
 
 ```js
@@ -30,8 +37,13 @@ async function main() {
   })
 
   app.get('/all-pages', async (req, reply) => {
+    // Optionally get the platformatic context.
+    // Passing this to all sql-mapper functions allow to apply
+    // authorization rules to the database queries (amongst other things).
+    const ctx = req.platformaticContext
+
     // Will return all rows from 'pages' table
-    const res = await app.platformatic.entities.page.find()
+    const res = await app.platformatic.entities.page.find({ ctx })
     return res
   })
 

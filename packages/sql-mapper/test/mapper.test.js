@@ -193,3 +193,31 @@ test('missing connectionString', async ({ rejects }) => {
 
   await rejects(app.ready(), /connectionString/)
 })
+
+test('platformaticContext', async ({ plan, equal, teardown }) => {
+  plan(3)
+  async function onDatabaseLoad (db, sql) {
+    teardown(async () => await clear(db, sql))
+
+    await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(255) NOT NULL
+    );`)
+  }
+  const app = fastify()
+  teardown(() => app.close())
+  app.register(plugin, {
+    connectionString: connInfo.connectionString,
+    onDatabaseLoad
+  })
+
+  app.get('/', function (req, reply) {
+    const ctx = req.platformaticContext
+    equal(app, ctx.app)
+    equal(reply, ctx.reply)
+    return 'hello world'
+  })
+
+  const res = await app.inject('/')
+  equal(res.statusCode, 200)
+})
