@@ -127,6 +127,7 @@ async function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRe
   } else if (typeof db.tx === 'function') {
     return db.tx(handleAutoIncrement)
   } else {
+    // TODO add a log at trace level if we do this
     // There are not nested transactions in SQLite, so we can just run the query
     // because we are already in a transaction.
     return handleAutoIncrement(db)
