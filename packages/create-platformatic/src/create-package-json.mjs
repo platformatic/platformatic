@@ -6,11 +6,11 @@ import { join } from 'node:path'
 const packageJsonTemplate = (addTSBuild = false) => (`\
 {
   "scripts": {
-    "start": "yarn clean && platformatic {type} start"${addTSBuild
-? `,
+    ${addTSBuild
+? ` "start": "yarn clean && platformatic {type} start",
     "clean": "rm -fr ./dist",
     "build": "npx tsc"`
-: ''}
+: '"start": "platformatic {type} start"'}
   },
   "devDependencies": {
     "fastify": "^{fastifyVersion}"
