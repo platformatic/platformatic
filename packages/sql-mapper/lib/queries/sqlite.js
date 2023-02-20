@@ -124,33 +124,40 @@ async function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRe
   if (fieldsToRetrieve.length === 0) {
     await db.query(insertRawQuery)
     return {}
+  } else if (typeof db.tx === 'function') {
+    return db.tx(handleAutoIncrement)
   } else {
-    return db.tx(async (transaction) => {
-      await transaction.query(insertRawQuery)
+    // TODO add a log at trace level if we do this
+    // There are not nested transactions in SQLite, so we can just run the query
+    // because we are already in a transaction.
+    return handleAutoIncrement(db)
+  }
 
-      let selectInsertedRawQuery = null
-      if (hasAutoIncrementPK) {
-        selectInsertedRawQuery = sql`
+  async function handleAutoIncrement (transaction) {
+    await transaction.query(insertRawQuery)
+
+    let selectInsertedRawQuery = null
+    if (hasAutoIncrementPK) {
+      selectInsertedRawQuery = sql`
           SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
           FROM ${sql.ident(table)}
           WHERE _rowid_ = last_insert_rowid()
         `
-      } else {
-        const where = []
-        for (const [key, value] of Object.entries(primaryKeyValues)) {
-          where.push(sql`${sql.ident(key)} = ${sql.value(value)}`)
-        }
+    } else {
+      const where = []
+      for (const [key, value] of Object.entries(primaryKeyValues)) {
+        where.push(sql`${sql.ident(key)} = ${sql.value(value)}`)
+      }
 
-        selectInsertedRawQuery = sql`
+      selectInsertedRawQuery = sql`
           SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
           FROM ${sql.ident(table)}
           WHERE ${sql.join(where, sql` AND `)}
         `
-      }
+    }
 
-      const [insertedRaw] = await transaction.query(selectInsertedRawQuery)
-      return insertedRaw
-    })
+    const [insertedRaw] = await transaction.query(selectInsertedRawQuery)
+    return insertedRaw
   }
 }
 

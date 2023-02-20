@@ -971,3 +971,37 @@ test('stored and virtual generated columns should return for pg', { skip: (isPg 
     }
   }), [{ id: 2, test: 8, testStored: 16, testVirtual: 32 }])
 })
+
+test('nested transactions', async ({ equal, same, teardown, rejects }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+    if (isSQLite) {
+      await db.query(sql`CREATE TABLE pages (
+        id INTEGER PRIMARY KEY,
+        the_title VARCHAR(42)
+      );`)
+    } else {
+      await db.query(sql`CREATE TABLE pages (
+        id SERIAL PRIMARY KEY,
+        the_title VARCHAR(255)
+      );`)
+    }
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+
+  await mapper.db.tx(async (tx) => {
+    const insertResult = await mapper.entities.page.save({
+      input: {},
+      fields: ['id', 'theTitle'],
+      tx
+    })
+    same(insertResult, { id: '1', theTitle: null })
+  })
+})
