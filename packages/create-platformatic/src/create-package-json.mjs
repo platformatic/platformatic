@@ -6,8 +6,9 @@ import { join } from 'node:path'
 const packageJsonTemplate = (addTSBuild = false) => (`\
 {
   "scripts": {
-    "start": "platformatic {type} start"${addTSBuild
+    "start": "yarn clean && platformatic {type} start"${addTSBuild
 ? `,
+    "clean": "rm -fr ./dist",
     "build": "npx tsc"`
 : ''}
   },
