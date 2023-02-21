@@ -107,8 +107,9 @@ async function loadPlugin (app, config, pluginOptions) {
 
   // if not defined, we defaults to true (which can happen only if config is set programmatically,
   // that's why we ignore the coverage of the `undefined` case, which cannot be covered in cli tests)
+  // all individual plugin hot reload settings will be overloaded by global hot reload
   /* c8 ignore next 35  */
-  const hotReload = pluginOptions.hotReload !== false
+  const hotReload = config.hotReload ?? pluginOptions.hotReload !== false
   const isWatchEnabled = config.watch !== false
   if (isWatchEnabled && hotReload) {
     let options = pluginOptions

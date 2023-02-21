@@ -324,7 +324,8 @@ By sending the SIGUSR2 signal, the server can be reloaded.
 
 Options:
 
-  -c, --config FILE      Specify a configuration file to use
+  * `-c, --config FILE` - Specify a configuration file to use
+  * `--hot-reload <boolean>` - All individual plugin hot reload settings will be overridden by global hot reload
 
 If not specified, the configuration specified will be loaded from `platformatic.db.json`,
 `platformatic.db.yml`, or `platformatic.db.tml` in the current directory. You can find more details about

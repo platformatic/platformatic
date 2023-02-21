@@ -249,6 +249,9 @@ const platformaticServiceSchema = {
       anyOf: [watch, {
         type: 'boolean'
       }]
+    },
+    hotReload: {
+      type: 'boolean'
     }
   },
   required: ['server']
