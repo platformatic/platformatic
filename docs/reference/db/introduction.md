@@ -44,7 +44,7 @@ Get up and running in 2 minutes using our
 
 | Database                                  | Version  |
 |-------------------------------------------|----------|
-| [SQLite](https://www.sqlite.org/)         | 3        |
+| [SQLite](https://www.sqlite.org/)         | 3.        |
 | [PostgreSQL](https://www.postgresql.org/) | >= 15    |
 | [MySQL](https://www.mysql.com/)           | >= 5.7   |
 | [MariaDB](https://mariadb.org/)           | >= 10.11 |
