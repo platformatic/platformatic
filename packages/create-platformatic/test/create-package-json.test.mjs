@@ -20,7 +20,7 @@ afterEach(() => {
   rmSync(tmpDir, { recursive: true, force: true })
 })
 
-test('creates package.json file for db project', async ({ end, equal }) => {
+test('creates package.json file for db project', async ({ equal }) => {
   const version = '1.2.3'
   const fastifyVersion = '4.5.6'
   await createPackageJson('db', version, fastifyVersion, fakeLogger, tmpDir, false)
@@ -34,7 +34,7 @@ test('creates package.json file for db project', async ({ end, equal }) => {
   equal(packageJson.devDependencies.fastify, `^${fastifyVersion}`)
 })
 
-test('creates package.json file for service project', async ({ end, equal }) => {
+test('creates package.json file for service project', async ({ equal }) => {
   const version = '1.2.3'
   const fastifyVersion = '4.5.6'
   await createPackageJson('service', version, fastifyVersion, fakeLogger, tmpDir, false)
@@ -47,7 +47,7 @@ test('creates package.json file for service project', async ({ end, equal }) => 
   equal(packageJson.devDependencies.fastify, `^${fastifyVersion}`)
 })
 
-test('do not create package.json file because already present', async ({ end, equal }) => {
+test('do not create package.json file because already present', async ({ equal }) => {
   const version = '1.2.3'
   const fastifyVersion = '4.5.6'
   const packagejson = join(tmpDir, 'package.json')
@@ -56,7 +56,7 @@ test('do not create package.json file because already present', async ({ end, eq
   equal(log, `${tmpDir}/package.json found, skipping creation of package.json file.`)
 })
 
-test('creates package.json file with TD build', async ({ end, equal }) => {
+test('creates package.json file with TS build', async ({ equal }) => {
   const version = '1.2.3'
   const fastifyVersion = '4.5.6'
   await createPackageJson('db', version, fastifyVersion, fakeLogger, tmpDir, true)
@@ -64,7 +64,8 @@ test('creates package.json file with TD build', async ({ end, equal }) => {
   const accessible = await isFileAccessible(join(tmpDir, 'package.json'))
   equal(accessible, true)
   const packageJson = JSON.parse(readFileSync(join(tmpDir, 'package.json')))
-  equal(packageJson.scripts.start, 'platformatic db start')
+  equal(packageJson.scripts.start, 'yarn clean && platformatic db start')
+  equal(packageJson.scripts.clean, 'rm -fr ./dist')
   equal(packageJson.scripts.build, 'npx tsc')
   equal(packageJson.dependencies.platformatic, `^${version}`)
   equal(packageJson.devDependencies.fastify, `^${fastifyVersion}`)
