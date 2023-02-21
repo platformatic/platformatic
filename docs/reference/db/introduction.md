@@ -42,7 +42,7 @@ Get up and running in 2 minutes using our
 
 ## Supported databases
 
-- [SQLite](https://www.sqlite.org/) >= 5.1.4
+- [SQLite](https://www.sqlite.org/) >= 3
 - [PostgreSQL](https://www.postgresql.org/) >= 15
 - [MySQL](https://www.mysql.com/) >= 5.7
 - [MariaDB](https://mariadb.org/) >= 10.11
