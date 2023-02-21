@@ -95,7 +95,7 @@ const createPlatformaticDB = async (_args) => {
     hostname: args.hostname,
     port: args.port,
     database: args.database,
-    migrations: args.migrations,
+    migrations: wizardOptions.defaultMigrations ? args.migrations : '',
     plugin: generatePlugin,
     types: useTypes,
     typescript: useTypescript
