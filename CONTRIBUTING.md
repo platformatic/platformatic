@@ -26,6 +26,8 @@ On Intel Macs: `docker compose -f docker-compose-mac.yml up`
 
 On Apple Silicon Macs: `docker compose -f docker-compose-apple-silicon.yml up` 
 
+On Windows, execute: `docker-compose up --build`
+
 ### Start platformatic db
 
 Read thorough documentation on the [quick start guide](https://github.com/platformatic/platformatic/blob/main/docs/getting-started/quick-start-guide.md), or
