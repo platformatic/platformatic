@@ -349,7 +349,7 @@ Running migrations should now work smoothly and the path will be resolved correc
 
 ### Foreign keys and table names naming conventions
 
-Foreign key names should use underscores, e.g. `author_id`, or Platformatic DB to correctly map relations.
+Foreign key names should use underscores, e.g. `author_id`, for Platformatic DB to correctly map relations.
 
 Table names should be mapped to use the naming convention expected by Platformatic DB e.g. `@@map("recipes")` (the Prisma convention is Recipe, which corresponds with the model name).
 
