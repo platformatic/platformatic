@@ -163,7 +163,7 @@ const createPlatformaticDB = async (_args) => {
     await execa(pkgManager, ['exec', 'platformatic', 'db', 'schema', 'config'], { cwd: projectDir })
     logger.info('Configuration schema successfully created.')
   }
-  await askCreateGHAction(logger, env, 'db', useTypescript)
+  await askCreateGHAction(logger, env, 'db', useTypescript, projectDir)
 
   if (!runPackageManagerInstall) {
     logger.warn(`You must run the following commands in the project folder to complete the setup:
