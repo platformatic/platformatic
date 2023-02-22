@@ -643,7 +643,7 @@ Then we'll update the component template to display the quotes:
           — {quote.saidBy}, {quote.movie?.name}
         </p>
         <div>
-          <span>Added {new Date(quote.createdAt).toUTCString()}</span>
+          <span>Added {new Date(Number(quote.createdAt)).toUTCString()}</span>
         </div>
       </div>
     )) : (
@@ -762,7 +762,7 @@ Then let's add CSS classes to the component template in **`src/pages/index.astro
 // highlight-next-line
         <div class="flex flex-col mb-6 text-gray-400">
 // highlight-next-line
-          <span class="text-gray-400 italic">Added {new Date(quote.createdAt).toUTCString()}</span>
+          <span class="text-gray-400 italic">Added {new Date(Number(quote.createdAt)).toUTCString()}</span>
         </div>
       </div>
     )) : (
@@ -1225,7 +1225,7 @@ import { quotesApi, gql } from '../lib/quotes-api';
           <span class="flex items-center">
             <QuoteActionEdit id={quote.id} />
           </span>
-          <span class="mt-4 text-gray-400 italic">Added {new Date(quote.createdAt).toUTCString()}</span>
+          <span class="mt-4 text-gray-400 italic">Added {new Date(Number(quote.createdAt)).toUTCString()}</span>
 // highlight-end
         </div>
       </div>
@@ -1285,7 +1285,7 @@ import { quotesApi, gql } from '../lib/quotes-api';
 // highlight-next-line
             <QuoteActionDelete id={quote.id} />
           </span>
-          <span class="mt-4 text-gray-400 italic">Added {new Date(quote.createdAt).toUTCString()}</span>
+          <span class="mt-4 text-gray-400 italic">Added {new Date(Number(quote.createdAt)).toUTCString()}</span>
         </div>
       </div>
 ...
@@ -1760,7 +1760,7 @@ import { quotesApi, gql } from '../lib/quotes-api';
             <QuoteActionEdit id={quote.id} />
             <QuoteActionDelete id={quote.id} />
           </span>
-          <span class="mt-4 text-gray-400 italic">Added {new Date(quote.createdAt).toUTCString()}</span>
+          <span class="mt-4 text-gray-400 italic">Added {new Date(Number(quote.createdAt)).toUTCString()}</span>
         </div>
       </div>
 ...
