@@ -354,7 +354,7 @@ Foreign key names should use underscores, e.g. `author_id`, or Platformatic DB t
 Table names should be mapped to use the naming convention expected by Platformatic DB e.g. `@@map("recipes")` (the Prisma convention is Recipe, which corresponds with the model name).
 
 You can use [`prisma-case-format`](https://github.com/iiian/prisma-case-format) to enforce your own database conventions, i.e., pascal, camel, and snake casing.
-
+ 
 ## Learn more
 
 If you would like to learn more about Prisma, be sure to check out the [Prisma docs](https://www.prisma.io/docs).
