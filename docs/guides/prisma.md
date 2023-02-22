@@ -222,96 +222,33 @@ npx prisma generate
 
 The above command installs the `@prisma/client` in your project and generates a Prisma Client based off of your Prisma schema.
 
-```js title="plugin.js"
-// ./plugin.js
-
-// 1. 
-const { PrismaClient } = require("@prisma/client")
-
-// 2
-const prisma = new PrismaClient()
-
-module.exports = async (app) => {
-  app.log.info('plugin loaded')
-
-  //3.
-  app.graphql.extendSchema(`
-    extend type Mutation {
-      incrementPostViewCount(id: ID): Post
-    }
-  `)
-
-  //4.
-  app.graphql.defineResolvers({
-    Mutation: {
-      incrementPostViewCount: async (_, { id }) => {
-        // 5. 
-        const post = await prisma.post.update({
-          where: {
-            id: Number(id)
-          },
-          data: {
-            viewCount: {
-              increment: 1
-            }
-          }
-        })
-
-        // 6.
-        if (!post) throw new Error(`Post with id:${id} was not found`)
-        // 7.
-        return post
-      }
-    }
-  })
-}
-```
-
-The previous snippet does the following:
-
-1. Imports Prisma Client.
-1. Creates a new instance of Prisma Client.
-1. Defines the `incrementPostViewCount` mutation type definition. It also defines the corresponding argument and the return type.
-1. Defines the resolver for your mutation.
-1. Makes a query to the database on the Post model to increment a post's view count.
-1. Adds error handling in the event a record with the matching id was not found.
-1. Returns the updated post on success.
-
-Start the server: 
-
-```bash
-npx platformatic db start
-```
-
-The query should now be included in your GraphQL schema.
-
-You can also use the Prisma Client in your REST API endpoints.
-
-Alternatively, you can use the [`@sabinthedev/fastify-prisma`](https://github.com/sabinadams/fastify-prisma) plugin to query your database using Prisma Client. 
-
-Install the plugin:
+Install [`@sabinthedev/fastify-prisma`](https://github.com/sabinadams/fastify-prisma) fastify plugin. The plugin takes care of shutting down database connections and makes Prisma Client available as a Fastify plugin.
 
 ```bash
 npm install @sabinthedev/fastify-prisma
 ```
 
-Register the plugin:
+Register the plugin and extend your REST API:
 
 ```js
+// 1. 
 const prismaPlugin = requrie("@sabinthedev/fastify-prisma")
 
 module.exports = async (app) => {
   app.log.info('plugin loaded')
   
+  // 2. 
   app.register(prismaPlugin)
   
   /** 
    * Plugin logic
    */
+    // 3.
     app.put('/post/:id/views', async (req, reply) => {
   
     const { id } = req.params
     
+    // 4.
     const post = await app.prisma.post.update({
       where: {
         id: Number(id)
@@ -323,10 +260,66 @@ module.exports = async (app) => {
       }
     })
     
+    // 5.
     return reply.send(post)
   })
 }
 ```
+
+The snippet does the following:
+1. Imports the plugin
+1. Registers the `@sabinthedev/fastify-prisma`
+1. Defines the endpoint for incrementing the views of a post
+1. Makes a query to the database on the Post model to increment a post's view count
+1. Returns the updated post on success
+
+
+If you would like to extend your GraphQL API, extend the schema and define the corresponding resolver:
+
+```js title="plugin.js"
+// ./plugin.js
+const prismaPlugin = requrie("@sabinthedev/fastify-prisma")
+
+module.exports = async (app) => {
+  app.log.info('plugin loaded')
+
+  app.graphql.extendSchema(`
+    extend type Mutation {
+      incrementPostViewCount(id: ID): Post
+    }
+  `)
+
+  app.graphql.defineResolvers({
+    Mutation: {
+      incrementPostViewCount: async (_, { id }) => {
+        const post = await prisma.post.update({
+          where: {
+            id: Number(id)
+          },
+          data: {
+            viewCount: {
+              increment: 1
+            }
+          }
+        })
+
+        if (!post) throw new Error(`Post with id:${id} was not found`)
+        return post
+      }
+    }
+  })
+}
+```
+
+Start the server: 
+
+```bash
+npx platformatic db start
+```
+
+The query should now be included in your GraphQL schema.
+
+You can also use the Prisma Client in your REST API endpoints.
 
 ## Workarounds
 
@@ -353,6 +346,14 @@ datasource db {
 ```
 
 Running migrations should now work smoothly and the path will be resolved correctly.
+
+### Foreign keys and table names naming conventions
+
+Foreign key names should use underscores, e.g. `author_id`, or Platformatic DB to correctly map relations.
+
+Table names should be mapped to use the naming convention expected by Platformatic DB e.g. `@@map("recipes")` (the Prisma convention is Recipe, which corresponds with the model name).
+
+You can use [`prisma-case-format`](https://github.com/iiian/prisma-case-format) to enforce your own database conventions, i.e., pascal, camel, and snake casing.
 
 ## Learn more
 
