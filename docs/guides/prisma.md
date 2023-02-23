@@ -93,6 +93,8 @@ model Post {
   published Boolean  @default(false)
   viewCount Int      @default(0)
   createdAt DateTime @default(now())
+
+  @@map("posts")
 }
 ```
 
@@ -103,6 +105,8 @@ The snippet above defines a `Post` model with the following fields and propertie
 - `published`: A `Boolean` field with a default value of false.
 - `viewCount`: An `Int` field with a default value of 0.
 - `createdAt`: A `DateTime` field with a timestamp of when the value is created as its default value.
+
+By default, Prisma maps the model name and its format to the table name — which is also used im Prisma Client. Platformatic DB uses a snake casing and pluralized table names to map your table names to the generated API. The `@@map()` attribute in the Prisma schema allows you to define the name and format of your table names to be used in your database. You can also use the `@map()` attribute to define the format for field names to be used in your database. Refer to the [Foreign keys and table names naming conventions](#foreign-keys-and-table-names-naming-conventions) section to learn how you can automate formatting foreign keys and table names.
 
 Next, run the following command to generate an up and down migration:
 
@@ -136,6 +140,8 @@ model Post {
   published Boolean  @default(false)
   viewCount Int      @default(0)
   createdAt DateTime @default(now())
+
+  @@map("posts")
 }
 
 +model versions {
@@ -170,6 +176,8 @@ Update the data model in your Prisma schema by adding a model or a field:
 +  email String  @unique
 +  name  String?
 +  posts Post[]
++
++  @@map("users")
 +}
 
 model Post {
@@ -180,7 +188,9 @@ model Post {
   published Boolean  @default(false)
   viewCount Int      @default(0)
 +  author    User?    @relation(fields: [authorId], references: [id])
-+  authorId  Int?
++  authorId  Int?     @map("author_id")
+
+  @@map("posts")
 }
 
 ```
@@ -347,9 +357,9 @@ datasource db {
 
 Running migrations should now work smoothly and the path will be resolved correctly.
 
-### Foreign keys and table names naming conventions
+### Foreign keys, field, and table names naming conventions
 
-Foreign key names should use underscores, e.g. `author_id`, for Platformatic DB to correctly map relations.
+Foreign key names should use underscores, e.g. `author_id`, for Platformatic DB to correctly map relations. You can use the `@map("")` attribute to define the names of your foreign keys and field names to be defined in the database.
 
 Table names should be mapped to use the naming convention expected by Platformatic DB e.g. `@@map("recipes")` (the Prisma convention is Recipe, which corresponds with the model name).
 
