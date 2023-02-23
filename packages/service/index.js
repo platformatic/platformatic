@@ -97,7 +97,7 @@ async function platformaticService (app, opts, toLoad = []) {
 }
 
 async function loadPlugin (app, config, pluginOptions) {
-  /* c8 ignore next 4 */
+  /* c8 ignore next 5 */
   if (pluginOptions.typescript !== undefined) {
     const configPath = app.platformatic.configManager.fullPath
     const pluginPath = getJSPluginPath(configPath, pluginOptions.path, pluginOptions.typescript.outDir)
