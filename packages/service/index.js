@@ -87,6 +87,7 @@ async function platformaticService (app, opts, toLoad = []) {
     app.register(underPressure, {
       exposeStatusRoute: '/status',
       healthCheckInterval: opts.healthCheck.interval !== undefined ? opts.healthCheck.interval : 5000,
+      ...opts.healthCheck,
       healthCheck: opts.healthCheck.fn
     })
   }
