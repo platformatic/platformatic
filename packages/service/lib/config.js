@@ -38,6 +38,12 @@ class ServiceConfigManager extends ConfigManager {
     } else if (this.current.plugin) {
       this.current.plugin = fixPluginPath(this.current.plugin)
     }
+
+    // TODO: handle arrays
+    if (this.current.plugin?.typescript) {
+      const typescript = this.current.plugin.typescript
+      typescript.outDir = this._fixRelativePath(typescript.outDir)
+    }
   }
 
   _fixRelativePath (path) {

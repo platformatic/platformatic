@@ -7,8 +7,8 @@ const { join, resolve } = require('path')
 test('should get the path of a JS plugin', (t) => {
   t.plan(1)
 
-  const result = getJSPluginPath('plugin.ts', 'dist')
-  const expected = join(process.cwd(), 'dist', 'plugin.js')
+  const result = getJSPluginPath('/something/platformatic.service.json', '/something/plugin.ts', '/something/dist')
+  const expected = join('/something', 'dist', 'plugin.js')
   t.equal(result, expected)
 })
 
