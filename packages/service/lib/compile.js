@@ -53,7 +53,7 @@ async function execute (logger, args, config) {
   }
 }
 
-async function compileWatch () {
+async function compileWatch (cwd) {
   const { execa } = await import('execa')
   const logger = pino(
     pretty({
@@ -61,8 +61,6 @@ async function compileWatch () {
       ignore: 'hostname,pid'
     })
   )
-
-  const cwd = process.cwd()
 
   const tscExecutablePath = await getTSCExecutablePath(cwd)
   /* c8 ignore next 4 */

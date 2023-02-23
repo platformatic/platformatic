@@ -211,3 +211,36 @@ t.test('start command should not compile typescript if `build` is false', async 
     t.pass()
   }
 })
+
+t.test('should compile typescript plugin with start command with different cwd', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
+  const dest = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-4')
+
+  await cp(testDir, dest, { recursive: true })
+
+  const child = execa('node', [cliPath, 'start', '-c', path.join(dest, 'platformatic.service.json')])
+
+  t.teardown(async () => {
+    if (os.platform() === 'win32') {
+      try {
+        await execa('taskkill', ['/pid', child.pid, '/f', '/t'])
+      } catch (err) {
+        console.error(`Failed to kill process ${child.pid})`)
+      }
+    } else {
+      child.kill('SIGINT')
+    }
+  })
+
+  const splitter = split()
+  child.stdout.pipe(splitter)
+
+  for await (const data of splitter) {
+    const sanitized = stripAnsi(data)
+    if (sanitized.includes('Typescript plugin loaded')) {
+      t.pass()
+      return
+    }
+  }
+  t.fail('should compile typescript plugin with start command')
+})

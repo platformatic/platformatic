@@ -36,8 +36,9 @@ export async function start (_args) {
     config.plugin?.typescript?.build !== false
   ) {
     try {
-      await compileWatch()
+      await compileWatch(dirname(configManager.fullPath))
     } catch (error) {
+      console.error(error)
       process.exit(1)
     }
   }
