@@ -152,29 +152,34 @@ const watch = {
   }
 }
 
-const plugin = {
-  $id: '#plugin',
+const plugins = {
+  $id: '#plugins',
   type: 'object',
   properties: {
-    path: {
-      type: 'string'
+    paths: {
+      type: 'array',
+      items: {
+        anyOf: [{
+          type: 'string'
+        }, {
+          type: 'object',
+          properties: {
+            path: {
+              type: 'string'
+            },
+            options: {
+              type: 'object',
+              additionalProperties: true
+            }
+          }
+        }]
+      }
     },
     stopTimeout: {
       type: 'integer'
     },
     typescript: {
-      type: 'object',
-      properties: {
-        outDir: {
-          type: 'string'
-        },
-        build: {
-          type: 'boolean',
-          default: true
-        }
-      },
-      additionalProperties: false,
-      required: ['outDir']
+      type: 'boolean'
     },
     fallback: {
       type: 'boolean'
@@ -182,34 +187,10 @@ const plugin = {
     hotReload: {
       type: 'boolean',
       default: true
-    },
-    options: {
-      type: 'object'
     }
   },
   additionalProperties: false,
-  required: ['path']
-}
-
-const pluginTypes = {
-  $id: 'https://schemas.platformatic.dev/service/pluginTypes',
-  $defs: {
-    plugin
-  },
-  anyOf: [{
-    type: 'array',
-    items: {
-      anyOf: [{
-        $ref: '#plugin'
-      }, {
-        type: 'string'
-      }]
-    }
-  }, {
-    $ref: '#plugin'
-  }, {
-    type: 'string'
-  }]
+  required: ['paths']
 }
 
 const metrics = {
@@ -241,7 +222,7 @@ const platformaticServiceSchema = {
   type: 'object',
   properties: {
     server,
-    plugin: pluginTypes,
+    plugins,
     metrics
   },
   additionalProperties: {
@@ -261,6 +242,5 @@ module.exports.schema = platformaticServiceSchema
 module.exports.metrics = metrics
 module.exports.cors = cors
 module.exports.server = server
-module.exports.plugin = plugin
-module.exports.pluginTypes = pluginTypes
+module.exports.plugins = plugins
 module.exports.watch = watch

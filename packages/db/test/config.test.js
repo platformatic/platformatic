@@ -184,11 +184,13 @@ test('config reloads from a written file', async ({ teardown, equal, pass, same 
       hostname: '127.0.0.1',
       port: 0
     },
-    plugin: {
-      path: file,
-      options: {
-        message: 'hello'
-      }
+    plugins: {
+      paths: [{
+        path: file,
+        options: {
+          message: 'hello'
+        }
+      }]
     },
     dashboard: true,
     core: {
@@ -221,11 +223,13 @@ test('config reloads from a written file', async ({ teardown, equal, pass, same 
       ...connInfo
     },
     dashboard: true,
-    plugin: {
-      path: file,
-      options: {
-        message: 'ciao mondo'
-      }
+    plugins: {
+      paths: [{
+        path: file,
+        options: {
+          message: 'ciao mondo'
+        }
+      }]
     },
     metrics: false
   })

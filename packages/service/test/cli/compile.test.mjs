@@ -177,7 +177,7 @@ t.test('should not compile typescript plugin with start without tsconfig', async
     t.teardown(() => child.kill('SIGINT'))
     t.fail('should not compile typescript plugin with start without tsconfig')
   } catch (err) {
-    t.equal(err.stdout.includes('The tsconfig.json file was not found.'), true)
+    t.equal(err.stderr.includes('tsconfig.json not found'), true)
   }
 })
 

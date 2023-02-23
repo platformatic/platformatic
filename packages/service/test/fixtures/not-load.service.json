@@ -7,8 +7,7 @@
     "port": "3042",
     "pluginTimeout": "10"
   },
-  "plugin": {
-    "path": "./not-load.js",
-    "watch": false
+  "plugins": {
+    "paths": ["./not-load.js"]
   }
 }

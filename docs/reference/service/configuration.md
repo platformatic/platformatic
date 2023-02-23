@@ -35,7 +35,7 @@ Configuration settings are organised into the following groups:
 
 - [`server`](#server) **(required)**
 - [`metrics`](#metrics)
-- [`plugin`](#plugin)
+- [`plugins`](#plugins)
 
 Sensitive configuration settings, such as a database connection URL that contains
 a password, should be set using [configuration placeholders](#configuration-placeholders).
@@ -83,26 +83,28 @@ Supported object properties:
 - **`auth`** (`object`) — Basic Auth configuration. **`username`** and **`password`** are required here
   (use [environment variables](#environment-variables)).
 
-### `plugin`
+### `plugins`
 
-An optional object that defines a plugin loaded by Platformatic DB.
-- **`path`** (**required**, `string`): Relative path to plugin's entry point.
-- **`typescript`** (`object`): TypeScript configuration for the plugin.
-  - **`outDir`** (`string`): Relative path to the output directory for compiled JavaScript files.
-  - **`build`** (`boolean`, default: `true`): If `true`, the TS plugin is compiled automatically when Platformatic starts.
+An optional object that defines the plugins loaded by Platformatic Service.
+- **`paths`** (**required**, `array`): an array of paths (`string`)
+  or an array of objects composed as follows,
+  - `path` (`string`): Relative path to plugin's entry point.
+  - `options` (`object`): Optional plugin options.
+- **`typescript`** (`boolean`): enable typescript compilation. A `tsconfig.json` file is required in the same folder.
 - **`hotReload`** (`boolean`, default: `true`) if `true` or not specified, the plugin is loaded using [`fastify-sandbox`](https://github.com/mcollina/fastify-sandbox), otherwise is loaded directly using `require`/`import` and the hot reload is not enabled
-- **`options`** (`object`): Optional plugin options.
 
   _Example_
 
   ```json
   {
-    "plugin": {
-      "path": "./my-plugin.js",
+    "plugins": {
+      "paths": [{
+        "path": "./my-plugin.js",
+        "options": {
+          "foo": "bar"
+        }
+      }],
       "hotReload": true,
-      "options": {
-        "foo": "bar"
-      }
     }
   }
   ```
@@ -111,18 +113,6 @@ An optional object that defines a plugin loaded by Platformatic DB.
 While hot reloading is useful for development, it is not recommended to use it in production.
 To switch if off, set `hotReload` to `false`.
 :::
-
-`plugin` can also be an array, like so:
-
-  ```json
-  {
-    "plugin": [{
-      "path": "./my-plugin.js"
-    }]
-  }
-  ```
-
-`plugin` can also be a string, or an array of strings.
 
 
 ### `watch`

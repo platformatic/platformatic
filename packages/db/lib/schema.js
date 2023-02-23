@@ -1,6 +1,6 @@
 'use strict'
 
-const { metrics, server, pluginTypes, watch } = require('@platformatic/service').schema
+const { metrics, server, plugins, watch } = require('@platformatic/service').schema
 
 const core = {
   $id: 'https://schemas.platformatic.dev/db/core',
@@ -359,7 +359,7 @@ const platformaticDBschema = {
     migrations,
     metrics,
     types,
-    plugin: pluginTypes
+    plugins
   },
   additionalProperties: {
     watch: {

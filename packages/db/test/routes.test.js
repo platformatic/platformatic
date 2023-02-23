@@ -60,8 +60,8 @@ test('should not overwrite a plugin which define a root endpoint', async ({ tear
     core: {
       ...connInfo
     },
-    plugin: {
-      path: join(__dirname, 'fixtures', 'root-endpoint-plugin.js')
+    plugins: {
+      paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')]
     }
   }))
   teardown(server.stop)

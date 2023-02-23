@@ -14,8 +14,8 @@
     "table": "versions",
     "autoApply": false
   },
-  "plugin": {
-    "path": "./plugin.mjs"
+  "plugins": {
+    "paths": ["./plugin.mjs"]
   },
   "watch": {
     "hotReload": false

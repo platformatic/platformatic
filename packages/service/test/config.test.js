@@ -21,11 +21,13 @@ test('config reloads', async ({ teardown, equal, pass, same }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    plugin: {
-      path: file,
-      options: {
-        message: 'hello'
-      }
+    plugins: {
+      paths: [{
+        path: file,
+        options: {
+          message: 'hello'
+        }
+      }]
     },
     metrics: false
   })
@@ -43,11 +45,13 @@ test('config reloads', async ({ teardown, equal, pass, same }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    plugin: {
-      path: file,
-      options: {
-        message: 'ciao mondo'
-      }
+    plugins: {
+      paths: [{
+        path: file,
+        options: {
+          message: 'ciao mondo'
+        }
+      }]
     },
     metrics: false
   })
@@ -70,11 +74,13 @@ test('config reloads from a written file', async ({ teardown, equal, pass, same 
       hostname: '127.0.0.1',
       port: 0
     },
-    plugin: {
-      path: file,
-      options: {
-        message: 'hello'
-      }
+    plugins: {
+      paths: [{
+        path: file,
+        options: {
+          message: 'hello'
+        }
+      }]
     },
     metrics: false
   }))
@@ -99,11 +105,13 @@ test('config reloads from a written file', async ({ teardown, equal, pass, same 
       hostname: '127.0.0.1',
       port: 0
     },
-    plugin: {
-      path: file,
-      options: {
-        message: 'ciao mondo'
-      }
+    plugins: {
+      paths: [{
+        path: file,
+        options: {
+          message: 'ciao mondo'
+        }
+      }]
     },
     metrics: false
   })
@@ -127,11 +135,13 @@ test('config reloads from a written file from a route', async ({ teardown, equal
       logger: { level: 'error' },
       port: 0
     },
-    plugin: {
-      path: file,
-      options: {
-        message: 'hello'
-      }
+    plugins: {
+      paths: [{
+        path: file,
+        options: {
+          message: 'hello'
+        }
+      }]
     },
     metrics: false
   }))
@@ -146,11 +156,13 @@ test('config reloads from a written file from a route', async ({ teardown, equal
             hostname: '127.0.0.1',
             port: 0
           },
-          plugin: {
-            path: '${file.replace(/\\/g, '\\\\')}',
-            options: {
-              message: 'ciao mondo'
-            }
+          plugins: {
+            paths: [{
+              path: '${file.replace(/\\/g, '\\\\')}',
+              options: {
+                message: 'ciao mondo'
+              }
+            }]
           },
           metrics: false
         })
@@ -224,11 +236,13 @@ test('custom ConfigManager', async ({ teardown, equal, pass, same }) => {
   class MyConfigManager extends ConfigManager {
     _transformConfig () {
       super._transformConfig.call(this)
-      this.current.plugin = {
-        path: file,
-        options: {
-          message: 'hello'
-        }
+      this.current.plugins = {
+        paths: [{
+          path: file,
+          options: {
+            message: 'hello'
+          }
+        }]
       }
     }
   }
@@ -254,11 +268,13 @@ test('custom ConfigManager', async ({ teardown, equal, pass, same }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    plugin: {
-      path: file,
-      options: {
-        message: 'ciao mondo'
-      }
+    plugins: {
+      paths: [{
+        path: file,
+        options: {
+          message: 'ciao mondo'
+        }
+      }]
     },
     metrics: false
   })
@@ -285,11 +301,13 @@ test('config reloads', async ({ teardown, equal, pass, same }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    plugin: {
-      path: file,
-      options: {
-        message: 'hello'
-      }
+    plugins: {
+      paths: [{
+        path: file,
+        options: {
+          message: 'hello'
+        }
+      }]
     },
     metrics: false
   })
@@ -307,11 +325,13 @@ test('config reloads', async ({ teardown, equal, pass, same }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    plugin: {
-      path: file,
-      options: {
-        message: 'ciao mondo'
-      }
+    plugins: {
+      paths: [{
+        path: file,
+        options: {
+          message: 'ciao mondo'
+        }
+      }]
     },
     metrics: false
   })

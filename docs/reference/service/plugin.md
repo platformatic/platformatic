@@ -7,8 +7,8 @@ The config file will specify where the plugin file is located as the example bel
 ```json
 {
   ...
-  "plugin": {
-    "path": "./plugin/index.js"
+  "plugins": {
+    "paths": ["./plugin/index.js"]
   }
 }
 ```
@@ -60,10 +60,12 @@ Multiple plugins can be loaded in parallel by specifying an array:
 ```json
 {
   ...
-  "plugin": [{
-    "path": "./plugin/index.js"
-  }, {
-    "path": "./routes/"
-  }]
+  "plugins": {
+    "paths": [{
+      "path": "./plugin/index.js"
+    }, {
+      "path": "./routes/"
+    }]
+  }
 }
 ```

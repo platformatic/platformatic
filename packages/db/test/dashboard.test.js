@@ -98,8 +98,10 @@ test('should serve the dashboard on custom endpoint', async ({ teardown, equal, 
     dashboard: {
       path: `/${dashboardPath}`
     },
-    plugin: {
-      path: join(__dirname, 'fixtures', 'root-endpoint-plugin.js')
+    plugins: {
+      paths: [{
+        path: join(__dirname, 'fixtures', 'root-endpoint-plugin.js')
+      }]
     }
   }))
 

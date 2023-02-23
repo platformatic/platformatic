@@ -31,9 +31,8 @@ export async function start (_args) {
   addLoggerToTheConfig(config)
 
   if (
-    config.plugin?.typescript !== undefined &&
-    config.plugin?.watch !== false &&
-    config.plugin?.typescript?.build !== false
+    config.plugins?.typescript &&
+    config.plugins?.watch !== false
   ) {
     try {
       await compileWatch(dirname(configManager.fullPath))
@@ -61,7 +60,7 @@ export async function start (_args) {
   server.app.platformatic.config = config
 
   if (
-    config.plugin !== undefined &&
+    config.plugins !== undefined &&
     config.watch !== false
   ) {
     await startFileWatching(server)

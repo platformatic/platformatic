@@ -32,17 +32,8 @@ class ServiceConfigManager extends ConfigManager {
     }
 
     // relative-to-absolute plugin path
-    /* c8 ignore next 3 */
-    if (Array.isArray(this.current.plugin)) {
-      this.current.plugin = this.current.plugin.map(fixPluginPath)
-    } else if (this.current.plugin) {
-      this.current.plugin = fixPluginPath(this.current.plugin)
-    }
-
-    // TODO: handle arrays
-    if (this.current.plugin?.typescript) {
-      const typescript = this.current.plugin.typescript
-      typescript.outDir = this._fixRelativePath(typescript.outDir)
+    if (this.current.plugins && this.current.plugins.paths) {
+      this.current.plugins.paths = this.current.plugins.paths.map(fixPluginPath)
     }
   }
 

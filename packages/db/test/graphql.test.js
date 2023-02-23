@@ -26,8 +26,8 @@ test('extend schema via config', async ({ teardown, equal, same }) => {
     migrations: {
       dir: join(__dirname, 'fixtures', 'migrations')
     },
-    plugin: {
-      path: join(__dirname, 'fixtures', 'name-resolver.js')
+    plugins: {
+      paths: [join(__dirname, 'fixtures', 'name-resolver.js')]
     }
   }))
   teardown(server.stop)

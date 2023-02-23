@@ -72,6 +72,7 @@ async function compileWatch (cwd) {
   const tsconfigPath = resolve(cwd, 'tsconfig.json')
   const tsconfigExists = await isFileAccessible(tsconfigPath)
 
+  /* c8 ignore next 4 */
   if (!tsconfigExists) {
     logger.error('The tsconfig.json file was not found.')
     process.exit(1)
