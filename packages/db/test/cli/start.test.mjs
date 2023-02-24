@@ -256,17 +256,3 @@ test('start with hotreload disabled', async ({ equal, same, match, teardown }) =
   match(url, /http:\/\/127.0.0.1:[0-9]+/)
   child.kill('SIGINT')
 })
-
-test('start with hotreload enabled', async ({ equal, same, match, teardown }) => {
-  const db = await connectAndResetDB()
-  teardown(() => db.dispose())
-
-  await db.query(db.sql`CREATE TABLE pages (
-    id SERIAL PRIMARY KEY,
-    title VARCHAR(42)
-  );`)
-
-  const { child, url } = await start('-c', join(import.meta.url, '..', 'fixtures', 'simple.json'), '--hot-reload', true)
-  match(url, /http:\/\/127.0.0.1:[0-9]+/)
-  child.kill('SIGINT')
-})

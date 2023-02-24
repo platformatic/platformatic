@@ -240,3 +240,45 @@ test('should watch config file', async ({ comment, teardown }) => {
     if (log.msg === 'RESTARTED') break
   }
 })
+
+test('should not hot reload files with `--hot-reload false`', async ({ teardown, equal }) => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'watch-'))
+  const pluginFilePath = join(tmpDir, 'plugin.js')
+  const configFilePath = join(tmpDir, 'platformatic.service.json')
+
+  const config = {
+    server: {
+      logger: {
+        level: 'info'
+      },
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugins: {
+      paths: [pluginFilePath]
+    }
+  }
+
+  await Promise.all([
+    writeFile(configFilePath, JSON.stringify(config)),
+    writeFile(pluginFilePath, createLoggingPlugin('v1'))
+  ])
+
+  const { child, url } = await start('-c', configFilePath, '--hot-reload', 'false')
+  teardown(() => child.kill('SIGINT'))
+
+  {
+    const res = await request(`${url}/version`)
+    const version = await res.body.text()
+    equal(version, 'v1')
+  }
+
+  await writeFile(pluginFilePath, createLoggingPlugin('v2'))
+  await sleep(5000)
+
+  {
+    const res = await request(`${url}/version`)
+    const version = await res.body.text()
+    equal(version, 'v1')
+  }
+})

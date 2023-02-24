@@ -12,7 +12,7 @@ import { addLoggerToTheConfig } from './utils.js'
 
 export function buildStart (_loadConfig, _buildServer) {
   return async function start (_args) {
-    const { configManager } = await _loadConfig({}, _args, { watch: true })
+    const { configManager, args } = await _loadConfig({}, _args, { watch: true })
 
     const config = configManager.current
 
@@ -34,6 +34,11 @@ export function buildStart (_loadConfig, _buildServer) {
 
     let server = null
 
+    // Disable hot reload from the CLI
+    if (args.hotReload === false && configManager.current.plugins) {
+      configManager.current.plugins.hotReload = false
+    }
+
     try {
       // Set the location of the config
       server = await _buildServer({
@@ -48,13 +53,18 @@ export function buildStart (_loadConfig, _buildServer) {
 
     server.app.platformatic.configManager = configManager
     server.app.platformatic.config = config
-    configManager.on('update', (newConfig) => onConfigUpdated(newConfig, server))
+    configManager.on('update', (newConfig) => {
+      if (args.hotReload === false && configManager.current.plugins) {
+        configManager.current.plugins.hotReload = false
+      }
+      onConfigUpdated(newConfig, server)
+    })
 
     if (
       config.plugins !== undefined &&
       config.watch !== false
     ) {
-      await startFileWatching(server)
+      await startFileWatching(server, args.hotReload)
     }
 
     try {
@@ -106,7 +116,7 @@ export function buildStart (_loadConfig, _buildServer) {
 
 const start = buildStart(loadConfig, buildServer)
 
-async function startFileWatching (server) {
+async function startFileWatching (server, hotReload) {
   const configManager = server.app.platformatic.configManager
   const config = configManager.current
 
@@ -116,7 +126,7 @@ async function startFileWatching (server) {
     watchIgnore: config.watch?.ignore
   })
   fileWatcher.on('update', () => {
-    onFilesUpdated(server)
+    onFilesUpdated(server, hotReload)
   })
   fileWatcher.startWatching()
 
@@ -161,13 +171,16 @@ async function onConfigUpdated (newConfig, server) {
   }
 }
 
-async function onFilesUpdated (server) {
+async function onFilesUpdated (server, hotReload) {
   // Reload the config as well, otherwise we will have problems
   // in case the files watcher triggers the config watcher too
   const configManager = server.app.platformatic.configManager
   try {
     server.app.log.debug('files changed')
     await configManager.parse()
+    if (hotReload === false && configManager.current.plugins) {
+      configManager.current.plugins.hotReload = false
+    }
     await server.restart(configManager.current)
   } catch (err) {
     // TODO: test this

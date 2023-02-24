@@ -16,8 +16,7 @@ test('should get the path of a JS plugin', (t) => {
   t.plan(1)
 
   const result = getJSPluginPath('/something/platformatic.service.json', '/something/plugin.js', '/something/dist')
-  const expected = join('/something', 'plugin.js')
-  t.equal(result, expected)
+  t.equal(result, '/something/plugin.js')
 })
 
 test('findConfigFile', async (t) => {

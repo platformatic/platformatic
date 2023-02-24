@@ -89,8 +89,8 @@ async function platformaticService (app, opts, toLoad = []) {
     // that's why we ignore the coverage of the `undefined` case, which cannot be covered in cli tests)
     // all individual plugin hot reload settings will be overloaded by global hot reload
     /* c8 ignore next 1 */
-    const hotReload = opts.plugins.hotReload ?? true
-    const isWatchEnabled = app.platformatic.config.watch ?? true
+    const hotReload = opts.plugins.hotReload !== false
+    const isWatchEnabled = app.platformatic.config.watch !== false
     app.log.debug({ plugins: opts.plugins.path }, 'loading plugin')
 
     if (isWatchEnabled && hotReload) {
