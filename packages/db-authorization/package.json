@@ -15,23 +15,23 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@fastify/cookie": "^8.3.0",
-    "@fastify/session": "^10.1.0",
+    "@fastify/session": "^10.1.1",
     "@platformatic/db-core": "workspace:*",
-    "fast-jwt": "^2.0.2",
-    "fastify": "^4.10.2",
+    "fast-jwt": "^2.2.0",
+    "fastify": "^4.13.0",
     "snazzy": "^9.0.0",
     "standard": "^17.0.0",
-    "tap": "^16.3.2",
+    "tap": "^16.3.4",
     "why-is-node-running": "^2.2.2",
-    "ws": "^8.11.0"
+    "ws": "^8.12.1"
   },
   "dependencies": {
     "@fastify/error": "^3.2.0",
-    "@fastify/jwt": "^6.5.0",
-    "fastify-plugin": "^4.4.0",
-    "fastify-user": "^0.1.0",
-    "get-jwks": "^8.0.2",
+    "@fastify/jwt": "^6.6.0",
+    "fastify-plugin": "^4.5.0",
+    "fastify-user": "^0.1.1",
+    "get-jwks": "^8.0.3",
     "leven": "~3.1.0",
-    "undici": "^5.14.0"
+    "undici": "^5.20.0"
   }
 }

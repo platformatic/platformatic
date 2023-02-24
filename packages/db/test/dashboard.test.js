@@ -117,7 +117,7 @@ test('should serve the dashboard on custom endpoint', async ({ teardown, equal, 
     // Assets are served from root endpoint
     const res = await request(`${server.url}/images/favicon.ico`)
     equal(res.statusCode, 200)
-    equal(res.headers['content-type'], 'image/x-icon')
+    equal(res.headers['content-type'], 'image/vnd.microsoft.icon')
   }
 
   {
