@@ -1,5 +1,8 @@
-# Platformatic
-
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="assets/banner-light.png">
+  <img alt="The Platformatic logo" src="assets/banner-light.png">
+</picture>
 
 <div align="center">
 
@@ -11,24 +14,27 @@
 
 </div>
 
-
-<br />
-
-Platformatic is a set of Open Source tools that you can use to build your own _Internal Developer Platform_.
-
-The first of these tools is **Platformatic DB** — more will follow!
+<p align="center">
+  <br/>
+  <a href="https://platformatic.dev/">Platformatic</a> open-source tools simplify
+	building and
+  <br/>
+  running Node.js applications, with best practices baked in.
+  <br/><br/>
+</p>
 
 ## Install
 
 ```bash
-npm install platformatic
+# Create a new application
+npm create platformatic@latest
 
-# Start a new project
-npx platformatic db init
+# Or install manually:
+npm install platformatic
 ```
 
 Follow our [Quick Start Guide](https://oss.platformatic.dev/docs/getting-started/quick-start-guide)
-guide to get up and running with Platformatic DB.
+guide to get up and running with Platformatic.
 
 ## Documentation
 
