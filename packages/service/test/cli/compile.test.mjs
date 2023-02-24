@@ -104,6 +104,8 @@ t.test('should not compile bad typescript plugin', async (t) => {
     await execa('node', [cliPath, 'compile'], { cwd })
     t.fail('should not compile bad typescript plugin')
   } catch (err) {
+    t.comment(err.stdout)
+    t.comment(err.stderr)
     t.equal(err.stdout.includes('Found 1 error in plugin.ts'), true)
   }
 
@@ -131,6 +133,8 @@ t.test('missing tsconfig file', async (t) => {
     await execa('node', [cliPath, 'compile'], { cwd })
     t.fail('should not compile typescript plugin')
   } catch (err) {
+    t.comment(err.stdout)
+    t.comment(err.stderr)
     t.equal(err.stdout.includes('The tsconfig.json file was not found.'), true)
   }
 

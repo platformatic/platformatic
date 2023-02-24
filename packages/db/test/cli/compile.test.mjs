@@ -18,6 +18,7 @@ t.test('should compile typescript plugin', async (t) => {
     const child = await execa('node', [cliPath, 'compile'], { cwd })
     t.equal(child.stdout.includes('Typescript compilation completed successfully.'), true)
   } catch (err) {
+    console.log(err)
     console.log(err.stdout)
     console.log(err.stderr)
     t.fail(err.stderr)

@@ -1,6 +1,6 @@
 'use strict'
 
-const { resolve, join } = require('path')
+const { resolve, join, dirname } = require('path')
 const pino = require('pino')
 const pretty = require('pino-pretty')
 const loadConfig = require('./load-config.js')
@@ -28,36 +28,7 @@ async function getTSCExecutablePath (cwd) {
   }
 }
 
-async function execute (logger, args, config) {
-  const { execa } = await import('execa')
-  const cwd = process.cwd()
-
-  const tscExecutablePath = await getTSCExecutablePath(cwd)
-  /* c8 ignore next 4 */
-  if (tscExecutablePath === undefined) {
-    throw new Error('The tsc executable was not found.')
-  }
-
-  const tsconfigPath = resolve(cwd, 'tsconfig.json')
-  const tsconfigExists = await isFileAccessible(tsconfigPath)
-
-  if (!tsconfigExists) {
-    throw new Error('The tsconfig.json file was not found.')
-  }
-
-  try {
-    await execa(tscExecutablePath, ['--project', 'tsconfig.json'], { cwd })
-    logger.info('Typescript compilation completed successfully.')
-  } catch (error) {
-    throw new Error('Failed to compile typescript files: ' + error)
-  }
-}
-
-// This path is tested but C8 does not see it that way given it needs to work
-// through execa.
-/* c8 ignore next 40 */
-async function compileWatch (cwd) {
-  const { execa } = await import('execa')
+async function setup (cwd) {
   const logger = pino(
     pretty({
       translateTime: 'SYS:HH:MM:ss',
@@ -65,18 +36,50 @@ async function compileWatch (cwd) {
     })
   )
 
+  const { execa } = await import('execa')
+
   const tscExecutablePath = await getTSCExecutablePath(cwd)
+  /* c8 ignore next 4 */
   if (tscExecutablePath === undefined) {
-    logger.error('The tsc executable was not found.')
-    process.exit(1)
+    const msg = 'The tsc executable was not found.'
+    logger.error(msg)
   }
 
   const tsconfigPath = resolve(cwd, 'tsconfig.json')
   const tsconfigExists = await isFileAccessible(tsconfigPath)
 
   if (!tsconfigExists) {
-    logger.error('The tsconfig.json file was not found.')
-    process.exit(1)
+    const msg = 'The tsconfig.json file was not found.'
+    logger.error(msg)
+  }
+
+  return { execa, logger, tscExecutablePath }
+}
+
+async function compile (cwd) {
+  const { execa, logger, tscExecutablePath } = await setup(cwd)
+  /* c8 ignore next 3 */
+  if (!tscExecutablePath) {
+    return false
+  }
+
+  try {
+    await execa(tscExecutablePath, ['--project', 'tsconfig.json'], { cwd })
+    logger.info('Typescript compilation completed successfully.')
+    return true
+  } catch (error) {
+    logger.error(error.message)
+    return false
+  }
+}
+
+// This path is tested but C8 does not see it that way given it needs to work
+// through execa.
+/* c8 ignore next 20 */
+async function compileWatch (cwd) {
+  const { execa, logger, tscExecutablePath } = await setup(cwd)
+  if (!tscExecutablePath) {
+    return false
   }
 
   try {
@@ -95,27 +98,28 @@ async function compileWatch (cwd) {
   return { child }
 }
 
-async function compile (_args) {
-  const logger = pino(
-    pretty({
-      translateTime: 'SYS:HH:MM:ss',
-      ignore: 'hostname,pid'
-    })
-  )
+function buildCompileCmd (_loadConfig) {
+  return async function compileCmd (_args) {
+    let fullPath = null
+    try {
+      const { configManager } = await _loadConfig({}, _args)
+      await configManager.parseAndValidate()
+      fullPath = dirname(configManager.fullPath)
+      /* c8 ignore next 4 */
+    } catch (err) {
+      console.error(err)
+      process.exit(1)
+    }
 
-  const { configManager, args } = await loadConfig({}, _args)
-  await configManager.parseAndValidate()
-  const config = configManager.current
-
-  try {
-    await execute(logger, args, config)
-    process.exit(0)
-  } catch (error) {
-    logger.error(error.message)
-    process.exit(1)
+    if (!await compile(fullPath)) {
+      process.exit(1)
+    }
   }
 }
 
+const compileCmd = buildCompileCmd(loadConfig)
+
 module.exports.compile = compile
 module.exports.compileWatch = compileWatch
-module.exports.execute = execute
+module.exports.buildCompileCmd = buildCompileCmd
+module.exports.compileCmd = compileCmd
