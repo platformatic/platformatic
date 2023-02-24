@@ -92,6 +92,7 @@ t.test('should compile typescript plugin with start command', async (t) => {
   })
 
   for await (const data of splitter) {
+    console.log(data)
     const sanitized = stripAnsi(data)
     if (sanitized.includes('Typescript plugin loaded')) {
       t.pass()
@@ -249,6 +250,7 @@ t.test('should compile typescript plugin with start command with different cwd',
   })
 
   for await (const data of splitter) {
+    console.log(data)
     const sanitized = stripAnsi(data)
     if (sanitized.includes('Typescript plugin loaded')) {
       t.pass()
