@@ -155,7 +155,7 @@ t.test('should not compile typescript plugin with start without tsconfig', async
   }
 })
 
-t.test('start command should not compile typescript if `build` is false', async (t) => {
+t.test('start command should not compile typescript if `typescript` is false', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
   const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-5')
   await cp(testDir, cwd, { recursive: true })

@@ -37,7 +37,7 @@ t.test('should compile typescript plugin', async (t) => {
   t.pass()
 })
 
-t.test('should compile typescript plugin even if build is `false`', async (t) => {
+t.test('should compile typescript plugin even if typescript is `false`', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
   const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-2')
 
@@ -183,11 +183,12 @@ t.test('should not compile typescript plugin with start without tsconfig', async
     t.teardown(() => child.kill('SIGINT'))
     t.fail('should not compile typescript plugin with start without tsconfig')
   } catch (err) {
-    t.equal(err.stderr.includes('tsconfig.json not found'), true)
+    t.comment(err.stdout)
+    t.equal(err.stdout.includes('The tsconfig.json file was not found.'), true)
   }
 })
 
-t.test('start command should not compile typescript if `build` is false', async (t) => {
+t.test('start command should not compile typescript if `typescript` is false', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
   const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-6')
 
