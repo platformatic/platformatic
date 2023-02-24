@@ -150,7 +150,7 @@ t.test('start command should not compile typescript plugin with errors', async (
     await childProcess
     t.fail('should not compile bad typescript plugin')
   } catch (err) {
-    t.equal(err.stdout.includes('Found 1 error'), true)
+    t.equal(err.stderr.includes('Found 1 error'), true)
     childProcess.kill('SIGINT')
   }
 

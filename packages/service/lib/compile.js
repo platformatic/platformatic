@@ -53,6 +53,9 @@ async function execute (logger, args, config) {
   }
 }
 
+// This path is tested but C8 does not see it that way given it needs to work
+// through execa.
+/* c8 ignore next 40 */
 async function compileWatch (cwd) {
   const { execa } = await import('execa')
   const logger = pino(
@@ -63,7 +66,6 @@ async function compileWatch (cwd) {
   )
 
   const tscExecutablePath = await getTSCExecutablePath(cwd)
-  /* c8 ignore next 4 */
   if (tscExecutablePath === undefined) {
     logger.error('The tsc executable was not found.')
     process.exit(1)
@@ -72,57 +74,25 @@ async function compileWatch (cwd) {
   const tsconfigPath = resolve(cwd, 'tsconfig.json')
   const tsconfigExists = await isFileAccessible(tsconfigPath)
 
-  /* c8 ignore next 4 */
   if (!tsconfigExists) {
     logger.error('The tsconfig.json file was not found.')
     process.exit(1)
   }
 
-  let isCompiled = false
-  return new Promise((resolve, reject) => {
-    const child = execa(tscExecutablePath, ['--project', 'tsconfig.json', '--watch'], { cwd })
-    process.on('SIGINT', () => child.kill('SIGKILL'))
-    process.on('SIGTERM', () => child.kill('SIGKILL'))
+  try {
+    await execa(tscExecutablePath, ['--project', 'tsconfig.json', '--incremental'], { cwd })
+    logger.info('Typescript compilation completed successfully. Starting watch mode.')
+  } catch (error) {
+    throw new Error('Failed to compile typescript files: ' + error)
+  }
 
-    let tsCompilationMessages = []
-
-    child.stdout.on('data', (data) => {
-      let tsCompilerMessage = data.toString().trim()
-      if (tsCompilerMessage.startsWith('\u001bc')) {
-        tsCompilerMessage = tsCompilerMessage.slice(2)
-      }
-
-      if (tsCompilerMessage === '') return
-
-      const startMessage = tsCompilerMessage.match(/.*Starting compilation in watch mode.../)
-      if (startMessage !== null) {
-        logger.info(tsCompilerMessage)
-        return
-      }
-
-      tsCompilationMessages.push(tsCompilerMessage)
-
-      const resultMessage = tsCompilerMessage.match(/.*Found (\d+) error.*/)
-      if (resultMessage !== null) {
-        const errorsCount = parseInt(resultMessage[1])
-        const compilerOutput = tsCompilationMessages.join('\n')
-        /* c8 ignore next 6 */
-        if (errorsCount === 0) {
-          logger.info(compilerOutput)
-          if (!isCompiled) {
-            isCompiled = true
-            resolve()
-          }
-        } else {
-          logger.error(compilerOutput)
-          if (!isCompiled) {
-            reject(new Error('Typescript compilation failed.'))
-          }
-        }
-        tsCompilationMessages = []
-      }
-    })
+  const child = execa(tscExecutablePath, ['--project', 'tsconfig.json', '--watch', '--incremental'], { cwd })
+  child.stdout.resume()
+  child.stderr.on('data', (data) => {
+    logger.error(data.toString())
   })
+
+  return { child }
 }
 
 async function compile (_args) {
