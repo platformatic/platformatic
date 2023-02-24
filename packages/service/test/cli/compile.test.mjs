@@ -82,8 +82,14 @@ t.test('should compile typescript plugin with start command', async (t) => {
     }
   })
 
+  let stderr = ''
   const splitter = split()
   child.stdout.pipe(splitter)
+
+  child.stderr.setEncoding('utf8')
+  child.stderr.on('data', (data) => {
+    stderr += data
+  })
 
   for await (const data of splitter) {
     const sanitized = stripAnsi(data)
@@ -92,6 +98,7 @@ t.test('should compile typescript plugin with start command', async (t) => {
       return
     }
   }
+  console.error(stderr)
   t.fail('should compile typescript plugin with start command')
 })
 
@@ -235,6 +242,12 @@ t.test('should compile typescript plugin with start command with different cwd',
   const splitter = split()
   child.stdout.pipe(splitter)
 
+  let stderr = ''
+  child.stderr.setEncoding('utf8')
+  child.stderr.on('data', (data) => {
+    stderr += data
+  })
+
   for await (const data of splitter) {
     const sanitized = stripAnsi(data)
     if (sanitized.includes('Typescript plugin loaded')) {
@@ -242,5 +255,6 @@ t.test('should compile typescript plugin with start command with different cwd',
       return
     }
   }
+  console.error(stderr)
   t.fail('should compile typescript plugin with start command')
 })
