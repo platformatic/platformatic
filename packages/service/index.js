@@ -85,7 +85,7 @@ async function platformaticService (app, opts, toLoad = []) {
       }
     }
 
-    // if not defined, we defaults to true (which can happen only if config is set programmatically,
+    // if not defined, we default to true (which can happen only if config is set programmatically,
     // that's why we ignore the coverage of the `undefined` case, which cannot be covered in cli tests)
     // all individual plugin hot reload settings will be overloaded by global hot reload
     /* c8 ignore next 1 */
