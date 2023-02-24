@@ -6,8 +6,8 @@
       "level": "info"
     }
   },
-  "plugin": {
-    "path": "./routes"
+  "plugins": {
+    "paths": ["./routes"]
   },
   "metrics": false
 }

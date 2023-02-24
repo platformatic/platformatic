@@ -37,7 +37,7 @@ t.test('should compile typescript plugin', async (t) => {
   t.pass()
 })
 
-t.test('should compile typescript plugin even if build is `false`', async (t) => {
+t.test('should compile typescript plugin even if typescript is `false`', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
   const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-2')
 
@@ -84,8 +84,10 @@ t.test('should compile typescript plugin with start command', async (t) => {
 
   const splitter = split()
   child.stdout.pipe(splitter)
+  child.stderr.pipe(process.stderr)
 
   for await (const data of splitter) {
+    console.log(data)
     const sanitized = stripAnsi(data)
     if (sanitized.includes('Typescript plugin loaded')) {
       t.pass()
@@ -102,6 +104,8 @@ t.test('should not compile bad typescript plugin', async (t) => {
     await execa('node', [cliPath, 'compile'], { cwd })
     t.fail('should not compile bad typescript plugin')
   } catch (err) {
+    t.comment(err.stdout)
+    t.comment(err.stderr)
     t.equal(err.stdout.includes('Found 1 error in plugin.ts'), true)
   }
 
@@ -129,6 +133,8 @@ t.test('missing tsconfig file', async (t) => {
     await execa('node', [cliPath, 'compile'], { cwd })
     t.fail('should not compile typescript plugin')
   } catch (err) {
+    t.comment(err.stdout)
+    t.comment(err.stderr)
     t.equal(err.stdout.includes('The tsconfig.json file was not found.'), true)
   }
 
@@ -148,7 +154,7 @@ t.test('start command should not compile typescript plugin with errors', async (
     await childProcess
     t.fail('should not compile bad typescript plugin')
   } catch (err) {
-    t.equal(err.stdout.includes('Found 1 error'), true)
+    t.equal(err.stderr.includes('Found 1 error'), true)
     childProcess.kill('SIGINT')
   }
 
@@ -177,11 +183,12 @@ t.test('should not compile typescript plugin with start without tsconfig', async
     t.teardown(() => child.kill('SIGINT'))
     t.fail('should not compile typescript plugin with start without tsconfig')
   } catch (err) {
+    t.comment(err.stdout)
     t.equal(err.stdout.includes('The tsconfig.json file was not found.'), true)
   }
 })
 
-t.test('start command should not compile typescript if `build` is false', async (t) => {
+t.test('start command should not compile typescript if `typescript` is false', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
   const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-6')
 
@@ -234,8 +241,10 @@ t.test('should compile typescript plugin with start command with different cwd',
 
   const splitter = split()
   child.stdout.pipe(splitter)
+  child.stderr.pipe(process.stderr)
 
   for await (const data of splitter) {
+    console.log(data)
     const sanitized = stripAnsi(data)
     if (sanitized.includes('Typescript plugin loaded')) {
       t.pass()

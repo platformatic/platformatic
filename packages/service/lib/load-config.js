@@ -18,15 +18,19 @@ const ourConfigFiles = [
 async function loadConfig (minimistConfig, _args, configOpts = {}, Manager = ConfigManager, configFileNames = ourConfigFiles) {
   const args = parseArgs(_args, deepmerge({ all: true })({
     string: ['allow-env'],
+    boolean: ['hotReload'],
     default: {
-      allowEnv: '' // The default is set in ConfigManager
+      allowEnv: '', // The default is set in ConfigManager
+      hotReload: true
     },
     alias: {
       v: 'version',
       c: 'config',
-      allowEnv: ['allow-env', 'E']
+      allowEnv: ['allow-env', 'E'],
+      hotReload: ['hot-reload']
     }
   }, minimistConfig))
+
   try {
     if (!args.config) {
       args.config = await findConfigFile(process.cwd(), configFileNames)

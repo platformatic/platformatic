@@ -9,7 +9,7 @@ import { join } from 'desm'
 import { generateJsonSchemaConfig } from './lib/gen-schema.js'
 
 import start from './lib/start.mjs'
-import { compile } from './lib/compile.js'
+import { compileCmd } from './lib/compile.js'
 
 const help = helpMe({
   dir: join(import.meta.url, 'help'),
@@ -23,7 +23,7 @@ program.register('help', help.toStdout)
 program.register('help start', help.toStdout.bind(null, ['start']))
 
 program.register('start', start)
-program.register('compile', compile)
+program.register('compile', compileCmd)
 program.register('schema config', generateJsonSchemaConfig)
 program.register('schema', help.toStdout.bind(null, ['schema']))
 

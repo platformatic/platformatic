@@ -21,8 +21,8 @@ test('load and reload', async ({ teardown, equal, pass, same }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    plugin: {
-      path: file
+    plugins: {
+      paths: [file]
     },
     metrics: false
   })
@@ -65,8 +65,8 @@ test('error', async ({ teardown, equal, pass, match }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    plugin: {
-      path: file
+    plugins: {
+      paths: [file]
     },
     metrics: false
   })
@@ -111,8 +111,8 @@ test('update config', async ({ teardown, equal, pass, same }) => {
     }`)
 
   await server.restart({
-    plugin: {
-      path: file2
+    plugins: {
+      paths: [file2]
     }
   })
 
@@ -148,8 +148,8 @@ test('mock undici is supported', async ({ teardown, equal, pass, same }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    plugin: {
-      path: join(__dirname, 'fixtures', 'undici-plugin.js')
+    plugins: {
+      paths: [join(__dirname, 'fixtures', 'undici-plugin.js')]
     }
   })
   teardown(server.stop)
@@ -177,8 +177,8 @@ test('load and reload with the fallback', async ({ teardown, equal, pass, same }
       hostname: '127.0.0.1',
       port: 0
     },
-    plugin: {
-      path: file,
+    plugins: {
+      paths: [file],
       stopTimeout: 1000,
       fallback: true
     }
@@ -220,8 +220,8 @@ test('load and reload ESM', async ({ teardown, equal, pass, same }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    plugin: {
-      path: file
+    plugins: {
+      paths: [file]
     }
   })
   teardown(server.stop)
@@ -263,8 +263,8 @@ test('server should be available after reload a compromised plugin', async ({ te
       hostname: '127.0.0.1',
       port: 0
     },
-    plugin: {
-      path: file
+    plugins: {
+      paths: [file]
     }
   }
   const restartConfig = { ...config }
@@ -313,8 +313,8 @@ test('hot reload disabled, CommonJS', async ({ teardown, equal, pass, same }) =>
       hostname: '127.0.0.1',
       port: 0
     },
-    plugin: {
-      path: file,
+    plugins: {
+      paths: [file],
       hotReload: false
     }
   })
@@ -365,8 +365,8 @@ test('hot reload disabled, ESM', async ({ teardown, equal, pass, same }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    plugin: {
-      path: file,
+    plugins: {
+      paths: [file],
       stopTimeout: 1000,
       hotReload: false
     },
@@ -420,8 +420,8 @@ test('hot reload disabled, with default export', async ({ teardown, equal, pass,
       hostname: '127.0.0.1',
       port: 0
     },
-    plugin: {
-      path: file,
+    plugins: {
+      paths: [file],
       stopTimeout: 1000,
       hotReload: false
     },

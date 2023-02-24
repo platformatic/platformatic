@@ -42,6 +42,10 @@ function addLoggerToTheConfig (config) {
 /* c8 ignore stop */
 
 function getJSPluginPath (configPath, tsPluginPath, compileDir) {
+  if (tsPluginPath.endsWith('js')) {
+    return tsPluginPath
+  }
+
   const tsPluginRelativePath = relative(dirname(configPath), tsPluginPath)
   const jsPluginRelativePath = join(
     dirname(tsPluginRelativePath),

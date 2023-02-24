@@ -25,8 +25,8 @@ Create a `platformatic.db.json` file in the root project, it will be loaded auto
     "dir": "./migrations",
     "table": "versions"
   },
-  "plugin": {
-    "path": "plugin.js"
+  "plugins": {
+    "paths": ["plugin.js"]
   }
 }
 ```

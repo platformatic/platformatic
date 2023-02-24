@@ -439,8 +439,8 @@ save the following as `platformatic.service.json`:
       "level": "info"
     }
   },
-  "plugin": {
-    "path": "./plugin.js"
+  "plugins": {
+    "paths": ["./plugin.js"]
   }
 }
 ```

@@ -1431,8 +1431,8 @@ Now let's register our plugin in our API configuration file, **`platformatic.db.
     "dir": "./migrations"
 // highlight-start
   },
-  "plugin": {
-    "path": "./plugin.js"
+  "plugins": {
+    "paths": ["./plugin.js"]
   }
 // highlight-end
 }

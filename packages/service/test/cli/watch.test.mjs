@@ -30,8 +30,8 @@ test('should watch js files by default', async ({ equal, teardown }) => {
       port: 0
     },
     watch: true,
-    plugin: {
-      path: pluginFilePath
+    plugins: {
+      paths: [pluginFilePath]
     }
   }
 
@@ -69,8 +69,8 @@ test('should watch allowed file', async ({ comment, teardown }) => {
     watch: {
       allow: ['*.js', '*.json']
     },
-    plugin: {
-      path: pluginFilePath
+    plugins: {
+      paths: [pluginFilePath]
     }
   }
 
@@ -115,8 +115,8 @@ test('should not watch ignored file', async ({ teardown, equal }) => {
     watch: {
       ignore: [basename(pluginFilePath)]
     },
-    plugin: {
-      path: pluginFilePath
+    plugins: {
+      paths: [pluginFilePath]
     }
   }
 
@@ -152,8 +152,8 @@ test('should not loop forever when doing ESM', async ({ comment, fail }) => {
     watch: {
       ignore: [basename(pluginFilePath)]
     },
-    plugin: {
-      path: pluginFilePath
+    plugins: {
+      paths: [pluginFilePath]
     }
   }
 
@@ -196,8 +196,8 @@ test('should watch config file', async ({ comment, teardown }) => {
     watch: {
       allow: ['*.js', '*.json']
     },
-    plugin: {
-      path: pluginFilePath
+    plugins: {
+      paths: [pluginFilePath]
     }
   }
 
@@ -209,11 +209,13 @@ test('should watch config file', async ({ comment, teardown }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    plugin: {
-      path: pluginFilePath,
-      options: {
-        log: true
-      }
+    plugins: {
+      paths: [{
+        path: pluginFilePath,
+        options: {
+          log: true
+        }
+      }]
     }
   }
 
@@ -236,5 +238,47 @@ test('should watch config file', async ({ comment, teardown }) => {
   writeFile(configFilePath, JSON.stringify(config2))
   for await (const log of child.ndj) {
     if (log.msg === 'RESTARTED') break
+  }
+})
+
+test('should not hot reload files with `--hot-reload false`', async ({ teardown, equal }) => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'watch-'))
+  const pluginFilePath = join(tmpDir, 'plugin.js')
+  const configFilePath = join(tmpDir, 'platformatic.service.json')
+
+  const config = {
+    server: {
+      logger: {
+        level: 'info'
+      },
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugins: {
+      paths: [pluginFilePath]
+    }
+  }
+
+  await Promise.all([
+    writeFile(configFilePath, JSON.stringify(config)),
+    writeFile(pluginFilePath, createLoggingPlugin('v1'))
+  ])
+
+  const { child, url } = await start('-c', configFilePath, '--hot-reload', 'false')
+  teardown(() => child.kill('SIGINT'))
+
+  {
+    const res = await request(`${url}/version`)
+    const version = await res.body.text()
+    equal(version, 'v1')
+  }
+
+  await writeFile(pluginFilePath, createLoggingPlugin('v2'))
+  await sleep(5000)
+
+  {
+    const res = await request(`${url}/version`)
+    const version = await res.body.text()
+    equal(version, 'v1')
   }
 })

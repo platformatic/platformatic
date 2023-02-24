@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const { buildServer } = require('..')
-const { buildConfig, connInfo } = require('./helper')
+const { buildConfig } = require('./helper')
 const { request } = require('undici')
 const { join } = require('path')
 
@@ -15,9 +15,6 @@ test('should respond 200 on root endpoint', async ({ teardown, equal, same }) =>
         enabled: true,
         interval: 2000
       }
-    },
-    core: {
-      ...connInfo
     },
     authorization: {
       adminSecret: 'secret'
@@ -58,15 +55,8 @@ test('should not overwrite a plugin which define a root endpoint', async ({ tear
         interval: 2000
       }
     },
-    core: {
-      ...connInfo
-    },
-    authorization: {
-      adminSecret: 'secret'
-    },
-    dashboard: false,
-    plugin: {
-      path: join(__dirname, 'fixtures', 'root-endpoint-plugin.js')
+    plugins: {
+      paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')]
     }
   }))
   teardown(server.stop)

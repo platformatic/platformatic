@@ -1,6 +1,6 @@
 'use strict'
 
-const { resolve, join } = require('path')
+const { resolve, join, dirname } = require('path')
 const pino = require('pino')
 const pretty = require('pino-pretty')
 const loadConfig = require('./load-config.js')
@@ -28,123 +28,98 @@ async function getTSCExecutablePath (cwd) {
   }
 }
 
-async function execute (logger, args, config) {
+async function setup (cwd) {
+  const logger = pino(
+    pretty({
+      translateTime: 'SYS:HH:MM:ss',
+      ignore: 'hostname,pid'
+    })
+  )
+
   const { execa } = await import('execa')
-  const cwd = process.cwd()
 
   const tscExecutablePath = await getTSCExecutablePath(cwd)
   /* c8 ignore next 4 */
   if (tscExecutablePath === undefined) {
-    throw new Error('The tsc executable was not found.')
+    const msg = 'The tsc executable was not found.'
+    logger.error(msg)
   }
 
   const tsconfigPath = resolve(cwd, 'tsconfig.json')
   const tsconfigExists = await isFileAccessible(tsconfigPath)
 
   if (!tsconfigExists) {
-    throw new Error('The tsconfig.json file was not found.')
+    const msg = 'The tsconfig.json file was not found.'
+    logger.error(msg)
+  }
+
+  return { execa, logger, tscExecutablePath }
+}
+
+async function compile (cwd) {
+  const { execa, logger, tscExecutablePath } = await setup(cwd)
+  /* c8 ignore next 3 */
+  if (!tscExecutablePath) {
+    return false
   }
 
   try {
     await execa(tscExecutablePath, ['--project', 'tsconfig.json'], { cwd })
     logger.info('Typescript compilation completed successfully.')
+    return true
+  } catch (error) {
+    logger.error(error.message)
+    return false
+  }
+}
+
+// This path is tested but C8 does not see it that way given it needs to work
+// through execa.
+/* c8 ignore next 20 */
+async function compileWatch (cwd) {
+  const { execa, logger, tscExecutablePath } = await setup(cwd)
+  if (!tscExecutablePath) {
+    return false
+  }
+
+  try {
+    await execa(tscExecutablePath, ['--project', 'tsconfig.json', '--incremental'], { cwd })
+    logger.info('Typescript compilation completed successfully. Starting watch mode.')
   } catch (error) {
     throw new Error('Failed to compile typescript files: ' + error)
   }
-}
 
-async function compileWatch (cwd) {
-  const { execa } = await import('execa')
-  const logger = pino(
-    pretty({
-      translateTime: 'SYS:HH:MM:ss',
-      ignore: 'hostname,pid'
-    })
-  )
-
-  const tscExecutablePath = await getTSCExecutablePath(cwd)
-  /* c8 ignore next 4 */
-  if (tscExecutablePath === undefined) {
-    logger.error('The tsc executable was not found.')
-    process.exit(1)
-  }
-
-  const tsconfigPath = resolve(cwd, 'tsconfig.json')
-  const tsconfigExists = await isFileAccessible(tsconfigPath)
-
-  if (!tsconfigExists) {
-    logger.error('The tsconfig.json file was not found.')
-    process.exit(1)
-  }
-
-  let isCompiled = false
-  return new Promise((resolve, reject) => {
-    const child = execa(tscExecutablePath, ['--project', 'tsconfig.json', '--watch'], { cwd })
-    process.on('SIGINT', () => child.kill('SIGKILL'))
-    process.on('SIGTERM', () => child.kill('SIGKILL'))
-
-    let tsCompilationMessages = []
-
-    child.stdout.on('data', (data) => {
-      let tsCompilerMessage = data.toString().trim()
-      if (tsCompilerMessage.startsWith('\u001bc')) {
-        tsCompilerMessage = tsCompilerMessage.slice(2)
-      }
-
-      if (tsCompilerMessage === '') return
-
-      const startMessage = tsCompilerMessage.match(/.*Starting compilation in watch mode.../)
-      if (startMessage !== null) {
-        logger.info(tsCompilerMessage)
-        return
-      }
-
-      tsCompilationMessages.push(tsCompilerMessage)
-
-      const resultMessage = tsCompilerMessage.match(/.*Found (\d+) error.*/)
-      if (resultMessage !== null) {
-        const errorsCount = parseInt(resultMessage[1])
-        const compilerOutput = tsCompilationMessages.join('\n')
-        /* c8 ignore next 6 */
-        if (errorsCount === 0) {
-          logger.info(compilerOutput)
-          if (!isCompiled) {
-            isCompiled = true
-            resolve()
-          }
-        } else {
-          logger.error(compilerOutput)
-          if (!isCompiled) {
-            reject(new Error('Typescript compilation failed.'))
-          }
-        }
-        tsCompilationMessages = []
-      }
-    })
+  const child = execa(tscExecutablePath, ['--project', 'tsconfig.json', '--watch', '--incremental'], { cwd })
+  child.stdout.resume()
+  child.stderr.on('data', (data) => {
+    logger.error(data.toString())
   })
+
+  return { child }
 }
 
-async function compile (_args) {
-  const logger = pino(
-    pretty({
-      translateTime: 'SYS:HH:MM:ss',
-      ignore: 'hostname,pid'
-    })
-  )
+function buildCompileCmd (_loadConfig) {
+  return async function compileCmd (_args) {
+    let fullPath = null
+    try {
+      const { configManager } = await _loadConfig({}, _args)
+      await configManager.parseAndValidate()
+      fullPath = dirname(configManager.fullPath)
+      /* c8 ignore next 4 */
+    } catch (err) {
+      console.error(err)
+      process.exit(1)
+    }
 
-  const { configManager, args } = await loadConfig({}, _args)
-  await configManager.parseAndValidate()
-  const config = configManager.current
-
-  try {
-    await execute(logger, args, config)
-    process.exit(0)
-  } catch (error) {
-    logger.error(error.message)
-    process.exit(1)
+    if (!await compile(fullPath)) {
+      process.exit(1)
+    }
   }
 }
+
+const compileCmd = buildCompileCmd(loadConfig)
 
 module.exports.compile = compile
 module.exports.compileWatch = compileWatch
-module.exports.execute = execute
+module.exports.buildCompileCmd = buildCompileCmd
+module.exports.compileCmd = compileCmd

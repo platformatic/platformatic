@@ -7,8 +7,8 @@ The config file will specify where the plugin file is located as the example bel
 ```json
 {
   ...
-  "plugin": {
-    "path": "./plugin/index.js"
+  "plugins": {
+    "paths": ["./plugin/index.js"]
   }
 }
 ```
