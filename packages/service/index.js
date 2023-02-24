@@ -241,6 +241,13 @@ async function buildServer (options, app, ConfigManagerContructor) {
   return handler
 }
 
+// This is for @platformatic/db to use
+/* c8 ignore next 4 */
+async function buildStart (loadConfig, buildServer) {
+  const { buildStart } = await import('./lib/start.mjs')
+  return buildStart(loadConfig, buildServer)
+}
+
 module.exports.buildServer = buildServer
 module.exports.schema = require('./lib/schema')
 module.exports.createServerConfig = createServerConfig
@@ -249,3 +256,4 @@ module.exports.addLoggerToTheConfig = addLoggerToTheConfig
 module.exports.loadConfig = loadConfig
 module.exports.tsCompiler = compiler
 module.exports.ConfigManager = ConfigManager
+module.exports.buildStart = buildStart

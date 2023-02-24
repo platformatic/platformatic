@@ -90,7 +90,8 @@ test('do not validate migration checksums if not configured', async ({ equal, ma
 
 test('throws if migrations directory does not exist', async ({ match }) => {
   const child = execa('node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('invalid-migrations-directory.json')])
-  const output = child.stdout.pipe(split())
+
+  const output = child.stderr.pipe(split())
   const [data] = await once(output, 'data')
   match(data, /Migrations directory (.*) does not exist/)
 })
@@ -107,7 +108,7 @@ test('do not run migrations by default', async ({ equal, teardown }) => {
   const firstOutput = firstChild.stdout.pipe(splitter)
   const [out] = await once(firstOutput, 'data')
   const { msg } = JSON.parse(out)
-  equal(msg, 'server listening')
+  equal(msg, 'No tables found in the database. Are you connected to the right database? Did you forget to run your migrations? This guide can help with debugging Platformatic DB: https://oss.platformatic.dev/docs/guides/debug-platformatic-db')
 
   const [{ exists }] = await db.query(db.sql(
     `SELECT EXISTS (
