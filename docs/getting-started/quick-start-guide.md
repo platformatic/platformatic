@@ -236,6 +236,14 @@ supported configuration options.
 
 :::
 
+#### Apply your migrations
+
+In your project directory, use the Platformatic CLI to apply migrations:
+
+```bash
+npx platformatic db migrations apply
+```
+
 #### Start your API server
 
 In your project directory, use the Platformatic CLI to start your API server:
