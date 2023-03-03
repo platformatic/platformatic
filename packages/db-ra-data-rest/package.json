@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db-ra-data-rest",
-  "version": "0.16.0",
+  "version": "0.17.0-dev",
   "description": "Platformatic DB React-Admin REST data provider",
   "repository": {
     "type": "git",

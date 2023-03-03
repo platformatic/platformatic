@@ -1,9 +1,11 @@
+#! /usr/bin/env node
 'use strict'
 
 const { metrics, server, plugins, watch } = require('@platformatic/service').schema
+const pkg = require('../package.json')
+const version = 'v' + pkg.version
 
 const core = {
-  $id: 'https://schemas.platformatic.dev/db/core',
   type: 'object',
   properties: {
     connectionString: {
@@ -156,7 +158,6 @@ const sharedAuthorizationRule = {
 }
 
 const authorization = {
-  $id: 'https://schemas.platformatic.dev/db/authorization',
   type: 'object',
   properties: {
     adminSecret: {
@@ -297,7 +298,6 @@ const authorization = {
 }
 
 const dashboard = {
-  $id: 'https://schemas.platformatic.dev/db/dashboard',
   anyOf: [
     { type: 'boolean' },
     {
@@ -314,7 +314,6 @@ const dashboard = {
 }
 
 const migrations = {
-  $id: 'https://schemas.platformatic.dev/db/migrations',
   type: 'object',
   properties: {
     dir: {
@@ -337,7 +336,6 @@ const migrations = {
 }
 
 const types = {
-  $id: 'https://schemas.platformatic.dev/db/types',
   type: 'object',
   properties: {
     autogenerate: {
@@ -348,7 +346,7 @@ const types = {
 }
 
 const platformaticDBschema = {
-  $id: 'https://schemas.platformatic.dev/db',
+  $id: `https://platformatic.dev/schemas/${version}/db`,
   $schema: 'http://json-schema.org/draft-07/schema#',
   type: 'object',
   properties: {
@@ -372,3 +370,7 @@ const platformaticDBschema = {
 }
 
 module.exports.schema = platformaticDBschema
+
+if (require.main === module) {
+  console.log(JSON.stringify(platformaticDBschema, null, 2))
+}

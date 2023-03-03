@@ -1,4 +1,10 @@
+#!/usr/bin/env node
+
 'use strict'
+
+const pkg = require('../package.json')
+const version = 'v' + pkg.version
+
 
 const cors = {
   type: 'object',
@@ -90,7 +96,6 @@ const cors = {
 }
 
 const server = {
-  $id: 'https://schemas.platformatic.dev/service/server',
   type: 'object',
   properties: {
     // TODO add support for level
@@ -125,7 +130,6 @@ const server = {
 }
 
 const watch = {
-  $id: 'https://schemas.platformatic.dev/service/watch',
   type: 'object',
   properties: {
     type: 'object',
@@ -194,7 +198,6 @@ const plugins = {
 }
 
 const metrics = {
-  $id: 'https://schemas.platformatic.dev/service/metrics',
   anyOf: [
     { type: 'boolean' },
     {
@@ -218,7 +221,7 @@ const metrics = {
 }
 
 const platformaticServiceSchema = {
-  $id: 'https://schemas.platformatic.dev/service',
+  $id: `https://platformatic.dev/schemas/${version}/service`,
   type: 'object',
   properties: {
     server,
@@ -244,3 +247,7 @@ module.exports.cors = cors
 module.exports.server = server
 module.exports.plugins = plugins
 module.exports.watch = watch
+
+if (require.main === module) {
+  console.log(JSON.stringify(platformaticServiceSchema, null, 2))
+}
