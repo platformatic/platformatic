@@ -5,7 +5,6 @@
 const pkg = require('../package.json')
 const version = 'v' + pkg.version
 
-
 const cors = {
   type: 'object',
   $comment: 'See https://github.com/fastify/fastify-cors',
