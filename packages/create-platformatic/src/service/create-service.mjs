@@ -2,14 +2,14 @@ import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import { findServiceConfigFile, isFileAccessible } from '../utils.mjs'
 
-function generateConfig () {
+function generateConfig (version) {
   const plugin = [
     './plugins',
     './routes'
   ]
 
   const config = {
-    $schema: './platformatic.service.schema.json',
+    $schema: `https://platformatic.dev/schemas/v${version}/service`,
     server: {
       hostname: '{PLT_SERVER_HOSTNAME}',
       port: '{PORT}',
@@ -51,11 +51,11 @@ module.exports = async function (fastify, opts) {
 }
 `
 
-async function createService ({ hostname, port }, logger, currentDir = process.cwd()) {
+async function createService ({ hostname, port }, logger, currentDir = process.cwd(), version) {
   const accessibleConfigFilename = await findServiceConfigFile(currentDir)
 
   if (accessibleConfigFilename === undefined) {
-    const config = generateConfig()
+    const config = generateConfig(version)
     await writeFile(join(currentDir, 'platformatic.service.json'), JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.service.json successfully created.')
 
