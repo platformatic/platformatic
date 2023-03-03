@@ -97,7 +97,7 @@ const createPlatformaticService = async (_args) => {
   }
 
   // We don't have the option for TS (yet) so we don't run build on TS
-  await askCreateGHAction(logger, env, 'service', false)
+  await askCreateGHAction(logger, env, 'service', false, projectDir)
 }
 
 export default createPlatformaticService

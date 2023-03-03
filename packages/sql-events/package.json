@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-events",
-  "version": "0.14.0",
+  "version": "0.16.0",
   "description": "Emit events via MQEmitter",
   "main": "index.js",
   "scripts": {
@@ -10,7 +10,8 @@
     "test:mysql": "DB=mysql tap test/*.test.js",
     "test:mysql8": "DB=mysql8 tap test/*.test.js",
     "test:sqlite": "DB=sqlite tap test/*.test.js",
-    "test:typescript": "tsd"
+    "test:typescript": "tsd",
+    "lint": "standard | snazzy"
   },
   "repository": {
     "type": "git",
@@ -24,15 +25,15 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@platformatic/sql-mapper": "workspace:*",
-    "fastify": "^4.10.2",
-    "ioredis": "^5.2.4",
+    "fastify": "^4.13.0",
+    "ioredis": "^5.3.1",
     "snazzy": "^9.0.0",
     "standard": "^17.0.0",
-    "tap": "^16.3.2",
+    "tap": "^16.3.4",
     "tsd": "^0.25.0"
   },
   "dependencies": {
-    "fastify-plugin": "^4.4.0",
+    "fastify-plugin": "^4.5.0",
     "mqemitter": "^5.0.0",
     "mqemitter-redis": "^5.0.0"
   },

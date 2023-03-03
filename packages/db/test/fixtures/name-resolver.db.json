@@ -12,7 +12,7 @@
       "schemaPath": "./names.graphql"
     }
   },
-  "plugin": {
-    "path": "./name-resolver.js"
+  "plugins": {
+    "paths": ["./name-resolver.js"]
   } 
 }

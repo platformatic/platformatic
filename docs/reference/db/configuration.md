@@ -37,7 +37,7 @@ Configuration settings are organised into the following groups:
 - [`dashboard`](#dashboard)
 - [`metrics`](#metrics)
 - [`migrations`](#migrations)
-- [`plugin`](#plugin)
+- [`plugins`](#plugins)
 - [`server`](#server) **(required)**
 - [`authorization`](#authorization)
 
@@ -258,7 +258,13 @@ This setting can be a `boolean` or an `object`. If set to `true` the dashboard w
 
 Supported object properties:
 
-- **`rootPath`** (`boolean`, default: `true`) — Make the dashboard available at the root path (`/`).
+- **`path`** (`string`, default: `/`) — Make the dashboard available at the specified path.
+
+:::tip
+
+Read the [dashboard docs](/docs/reference/db/dashboard) to understand how to create a build or have the Vite's development server up and running.
+
+:::
 
 ### `metrics`
 
@@ -284,22 +290,24 @@ An optional object with the following settings:
 - **`dir`** (**required**, `string`): Relative path to the migrations directory.
 - **`autoApply`** (`boolean`, default: `false`): Automatically apply migrations when Platformatic DB server starts.
 
-### `plugin`
+### `plugins`
 
-An optional object that defines a plugin loaded by Platformatic DB.
-- **`path`** (**required**, `string`): Relative path to plugin's entry point.
-- **`typescript`** (`object`): TypeScript configuration for the plugin.
-  - **`outDir`** (`string`): Relative path to the output directory for compiled JavaScript files.
-  - **`build`** (`boolean`, default: `true`): If `true`, the TS plugin is compiled automatically when Platformatic starts.
+An optional object that defines the plugins loaded by Platformatic DB.
+- **`paths`** (**required**, `array`): an array of paths (`string`)
+  or an array of objects composed as follows,
+  - `path` (`string`): Relative path to plugin's entry point.
+  - `options` (`object`): Optional plugin options.
+- **`typescript`** (`boolean`): enable typescript compilation. A `tsconfig.json` file is required in the same folder.
 - **`hotReload`** (`boolean`, default: `true`) if `true` or not specified, the plugin is loaded using [`fastify-sandbox`](https://github.com/mcollina/fastify-sandbox), otherwise is loaded directly using `require`/`import` and the hot reload is not enabled
-- **`options`** (`object`): Optional plugin options.
 
   _Example_
 
   ```json
   {
-    "plugin": {
-      "path": "./my-plugin.js",
+    "plugins": {
+      "paths": [{
+        "path": "./my-plugin.js"
+      }],
       "hotReload": true
     }
   }
@@ -309,18 +317,6 @@ An optional object that defines a plugin loaded by Platformatic DB.
 While hot reloading is useful for development, it is not recommended to use it in production.
 To switch if off, set `hotReload` to `false`.
 :::
-
-`plugin` can also be an array, like so:
-
-  ```json
-  {
-    "plugin": [{
-      "path": "./my-plugin.js"
-    }]
-  }
-  ```
-
-`plugin` can also be a string, or an array of strings.
 
 
 ### `watch`

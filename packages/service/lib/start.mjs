@@ -9,88 +9,114 @@ import { addLoggerToTheConfig } from './utils.js'
 // TODO make sure coverage is reported for Windows
 // Currently C8 is not reporting it
 /* c8 ignore start */
-async function start (_args) {
-  const { configManager } = await loadConfig({}, _args, { watch: true })
 
-  const config = configManager.current
+export function buildStart (_loadConfig, _buildServer) {
+  return async function start (_args) {
+    const { configManager, args } = await _loadConfig({}, _args, { watch: true })
 
-  // Set the logger if not present
-  addLoggerToTheConfig(config)
+    const config = configManager.current
 
-  if (
-    config.plugin?.typescript !== undefined &&
-    config.plugin?.watch !== false &&
-    config.plugin?.typescript?.build !== false
-  ) {
+    // Set the logger if not present
+    addLoggerToTheConfig(config)
+
+    if (
+      config.plugins?.typescript &&
+      config.plugins?.watch !== false
+    ) {
+      try {
+        await compileWatch(dirname(configManager.fullPath))
+      } catch (error) {
+        // TODO route this to a logger
+        console.error(error)
+        process.exit(1)
+      }
+    }
+
+    let server = null
+
+    // Disable hot reload from the CLI
+    if (args.hotReload === false && configManager.current.plugins) {
+      configManager.current.plugins.hotReload = false
+    }
+
     try {
-      await compileWatch()
-    } catch (error) {
+      // Set the location of the config
+      server = await _buildServer({
+        ...config,
+        configManager
+      })
+    } catch (err) {
+      // TODO route this to a logger
+      console.error(err)
       process.exit(1)
     }
-  } else if (config.plugin?.typescript !== undefined && config.plugin?.typescript?.build === false) {
-    // we don't have the logger here, shall we create one just for this message?
-    console.log(`TS build is disabled, expecting compiled js files in ${config.plugin.typescript.outDir} folder`)
-  }
 
-  // Set the location of the config
-  const server = await buildServer({
-    ...config,
-    configManager
-  })
+    server.app.platformatic.configManager = configManager
+    server.app.platformatic.config = config
+    configManager.on('update', (newConfig) => {
+      if (args.hotReload === false && configManager.current.plugins) {
+        configManager.current.plugins.hotReload = false
+      }
+      onConfigUpdated(newConfig, server)
+    })
 
-  server.app.platformatic.configManager = configManager
-  server.app.platformatic.config = config
-  configManager.on('update', (newConfig) => onConfigUpdated(newConfig, server))
+    if (
+      config.plugins !== undefined &&
+      config.watch !== false
+    ) {
+      await startFileWatching(server, args.hotReload)
+    }
 
-  if (
-    config.plugin !== undefined &&
-    config.watch !== false
-  ) {
-    await startFileWatching(server)
-  }
+    try {
+      await server.listen()
+    } catch (err) {
+      server.app.log.error({ err })
+      process.exit(1)
+    }
 
-  await server.listen()
+    configManager.on('error', function (err) {
+      server.app.log.error({
+        err
+      }, 'error reloading the configuration')
+    })
 
-  configManager.on('error', function (err) {
-    server.app.log.error({
-      err
-    }, 'error reloading the configuration')
-  })
+    // Ignore from CI because SIGUSR2 is not available
+    // on Windows
+    process.on('SIGUSR2', function () {
+      server.app.log.info('reloading configuration')
+      server.restart()
+        .catch((err) => {
+          server.app.log.error({
+            err: {
+              message: err.message,
+              stack: err.stack
+            }
+          }, 'failed to restart')
+        })
+      return false
+    })
 
-  // Ignore from CI because SIGUSR2 is not available
-  // on Windows
-  process.on('SIGUSR2', function () {
-    server.app.log.info('reloading configuration')
-    server.restart()
-      .catch((err) => {
+    close(async ({ signal, err }) => {
+      // Windows does not support trapping signals
+      if (err) {
         server.app.log.error({
           err: {
             message: err.message,
             stack: err.stack
           }
-        }, 'failed to restart')
-      })
-    return false
-  })
+        }, 'exiting')
+      } else if (signal) {
+        server.app.log.info({ signal }, 'received signal')
+      }
 
-  close(async ({ signal, err }) => {
-    // Windows does not support trapping signals
-    if (err) {
-      server.app.log.error({
-        err: {
-          message: err.message,
-          stack: err.stack
-        }
-      }, 'exiting')
-    } else if (signal) {
-      server.app.log.info({ signal }, 'received signal')
-    }
-
-    await server.stop()
-  })
+      await server.stop()
+    })
+  }
 }
 
-async function startFileWatching (server) {
+const start = buildStart(loadConfig, buildServer)
+
+async function startFileWatching (server, hotReload) {
   const configManager = server.app.platformatic.configManager
   const config = configManager.current
 
@@ -100,7 +126,7 @@ async function startFileWatching (server) {
     watchIgnore: config.watch?.ignore
   })
   fileWatcher.on('update', () => {
-    onFilesUpdated(server)
+    onFilesUpdated(server, hotReload)
   })
   fileWatcher.startWatching()
 
@@ -137,21 +163,24 @@ async function onConfigUpdated (newConfig, server) {
     }, 'failed to reload config')
   } finally {
     if (
-      newConfig.plugin !== undefined &&
-      newConfig.plugin.watch !== false
+      newConfig.plugins !== undefined &&
+      newConfig.plugins.watch !== false
     ) {
       await startFileWatching(server)
     }
   }
 }
 
-async function onFilesUpdated (server) {
+async function onFilesUpdated (server, hotReload) {
   // Reload the config as well, otherwise we will have problems
   // in case the files watcher triggers the config watcher too
   const configManager = server.app.platformatic.configManager
   try {
     server.app.log.debug('files changed')
     await configManager.parse()
+    if (hotReload === false && configManager.current.plugins) {
+      configManager.current.plugins.hotReload = false
+    }
     await server.restart(configManager.current)
   } catch (err) {
     // TODO: test this

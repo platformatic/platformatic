@@ -4,6 +4,7 @@ import { mkdir, writeFile, readFile, readdir, unlink } from 'fs/promises'
 import { join as desmJoin } from 'desm'
 import pino from 'pino'
 import pretty from 'pino-pretty'
+import camelcase from 'camelcase'
 import dtsgenerator, { parseSchema } from 'dtsgenerator'
 import { mapSQLEntityToJSONSchema } from '@platformatic/sql-json-schema-mapper'
 import { setupDB, isFileAccessible } from './utils.js'
@@ -34,21 +35,64 @@ async function generateEntityType (entity) {
   jsonSchema.id = jsonSchema.$id
 
   const tsCode = await dtsgenerator.default({ contents: [parseSchema(jsonSchema)] })
+  entity.name = camelcase(entity.name).replace(/^\w/, c => c.toUpperCase())
   return tsCode + `\nexport { ${entity.name} };\n`
+}
+
+async function generateEntityGroupExport (entities) {
+  const completeTypesImports = []
+  const interfaceRows = []
+  for (const name of entities) {
+    completeTypesImports.push(`import { ${name} } from './${name}'`)
+    interfaceRows.push(`${name}:${name}`)
+  }
+
+  const content = `${completeTypesImports.join('\n')}
+  
+  interface EntityTypes  {
+    ${interfaceRows.join('\n    ')}
+  }
+  
+  export { EntityTypes ,${entities.join(',')} }`
+  return content
 }
 
 async function generateGlobalTypes (entities, config) {
   const globalTypesImports = []
   const globalTypesInterface = []
+  const completeTypesImports = []
 
   if (config.core.graphql) {
     globalTypesImports.push('import graphqlPlugin from \'@platformatic/sql-graphql\'')
   }
 
-  for (const [key, entity] of Object.entries(entities)) {
-    globalTypesImports.push(`import { ${entity.name} } from './types/${entity.name}'`)
-    globalTypesInterface.push(`${key}: Entity<${entity.name}>,`)
+  const schemaIdTypes = []
+  const names = []
+  for (const [key, { name }] of Object.entries(entities)) {
+    schemaIdTypes.push(name)
+    completeTypesImports.push(`import { ${name} } from './${name}'`)
+    globalTypesInterface.push(`${key}: Entity<${name}>,`)
+    names.push(name)
   }
+  globalTypesImports.push(`import { EntityTypes, ${names.join(',')} } from './types'`)
+
+  const schemaIdType = schemaIdTypes.length === 0 ? 'string' : schemaIdTypes.map(type => `'${type}'`).join(' | ')
+
+  globalTypesImports.push(`
+declare module 'fastify' {
+  interface FastifyInstance {
+    getSchema<T extends ${schemaIdType}>(schemaId: T): {
+      '$id': string,
+      title: string,
+      description: string,
+      type: string,
+      properties: {
+        [x in keyof EntityTypes[T]]: { type: string, nullable?: boolean }
+      },
+      required: string[]
+    };
+  }
+}`)
 
   return GLOBAL_TYPES_TEMPLATE
     .replace('ENTITIES_IMPORTS_PLACEHOLDER', globalTypesImports.join('\n'))
@@ -131,7 +175,7 @@ async function writeFileIfChanged (filename, content) {
   return true
 }
 
-async function execute (logger, args, config) {
+async function execute (logger, _, config) {
   const { db, entities } = await setupDB(logger, config.core)
 
   const isTypeFolderExists = await isFileAccessible(TYPES_FOLDER_PATH)
@@ -142,7 +186,9 @@ async function execute (logger, args, config) {
   }
 
   let count = 0
-  for (const entity of Object.values(entities)) {
+  const entitiesValues = Object.values(entities)
+  const entitiesNames = entitiesValues.map(({ name }) => name)
+  for (const entity of entitiesValues) {
     count++
     const types = await generateEntityType(entity)
 
@@ -152,6 +198,13 @@ async function execute (logger, args, config) {
     if (isTypeChanged) {
       logger.info(`Generated type for ${entity.name} entity.`)
     }
+  }
+  const pathToFile = join(TYPES_FOLDER_PATH, 'index.d.ts')
+  // maybe better to check here for changes
+  const content = await generateEntityGroupExport(entitiesNames)
+  const isTypeChanged = await writeFileIfChanged(pathToFile, content)
+  if (isTypeChanged) {
+    logger.info('Regenerating global.d.ts')
   }
   await generateGlobalTypesFile(entities, config)
   await db.dispose()

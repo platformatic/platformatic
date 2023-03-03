@@ -1,18 +1,17 @@
 'use strict'
 
 const { start } = require('@fastify/restartable')
-const autoload = require('@fastify/autoload')
 const sandbox = require('fastify-sandbox')
 const underPressure = require('@fastify/under-pressure')
 const { schema } = require('./lib/schema')
 const ConfigManager = require('./lib/config.js')
-const { addLoggerToTheConfig, getJSPluginPath } = require('./lib/utils')
+const { addLoggerToTheConfig, getJSPluginPath, isFileAccessible } = require('./lib/utils')
 const loadConfig = require('./lib/load-config')
 const { isKeyEnabled, deepmerge } = require('@platformatic/utils')
 const compiler = require('./lib/compile')
-const { stat } = require('fs').promises
-const { join } = require('path')
-const wrapperPath = join(__dirname, 'lib', 'autoload-wrapper.js')
+const { join, dirname, resolve } = require('path')
+const { readFile } = require('fs/promises')
+const wrapperPath = join(__dirname, 'lib', 'sandbox-wrapper.js')
 
 function createServerConfig (config) {
   // convert the config file to a new structure
@@ -59,15 +58,58 @@ async function platformaticService (app, opts, toLoad = []) {
     }
   }
 
-  // TODO apparently c8 is not able to mark
-  // this as covered even if it is
-  /* c8 ignore next 7 */
-  if (Array.isArray(opts.plugin)) {
-    for (const plugin of opts.plugin) {
-      await loadPlugin(app, opts, plugin)
+  if (opts.plugins) {
+    // if we don't have a fullPath, let's assume we are in a test and we can use the current working directory
+    const configPath = app.platformatic.configManager.fullPath || process.cwd()
+    const tsConfigPath = join(dirname(configPath), 'tsconfig.json')
+    /* c8 ignore next 21 */
+    if (await isFileAccessible(tsConfigPath)) {
+      const tsConfig = JSON.parse(await readFile(tsConfigPath, 'utf8'))
+      const outDir = resolve(dirname(tsConfigPath), tsConfig.compilerOptions.outDir)
+      opts.plugins.paths = opts.plugins.paths.map((plugin) => {
+        if (typeof plugin === 'string') {
+          return getJSPluginPath(configPath, plugin, outDir)
+        } else {
+          return {
+            path: getJSPluginPath(configPath, plugin.path, outDir),
+            options: plugin.options
+          }
+        }
+      })
+    } else {
+      for (const plugin of opts.plugins.paths) {
+        const path = typeof plugin === 'string' ? plugin : plugin.path
+        if (path.endsWith('.ts')) {
+          throw new Error(`Cannot load plugin ${path}, tsconfig.json not found`)
+        }
+      }
     }
-  } else if (opts.plugin) {
-    await loadPlugin(app, opts, opts.plugin)
+
+    // if not defined, we default to true (which can happen only if config is set programmatically,
+    // that's why we ignore the coverage of the `undefined` case, which cannot be covered in cli tests)
+    // all individual plugin hot reload settings will be overloaded by global hot reload
+    /* c8 ignore next 1 */
+    const hotReload = opts.plugins.hotReload !== false
+    const isWatchEnabled = app.platformatic.config.watch !== false
+    app.log.debug({ plugins: opts.plugins.path }, 'loading plugin')
+
+    if (isWatchEnabled && hotReload) {
+      await app.register(sandbox, {
+        path: wrapperPath,
+        options: { paths: opts.plugins.paths },
+        customizeGlobalThis (_globalThis) {
+          // Taken from https://github.com/nodejs/undici/blob/fa9fd9066569b6357acacffb806aa804b688c9d8/lib/global.js#L5
+          const globalDispatcher = Symbol.for('undici.globalDispatcher.1')
+          const dispatcher = globalThis[globalDispatcher]
+          /* istanbul ignore else */
+          if (dispatcher) {
+            _globalThis[globalDispatcher] = dispatcher
+          }
+        }
+      })
+    } else {
+      await app.register(require(wrapperPath), { paths: opts.plugins.paths })
+    }
   }
 
   // Enable CORS
@@ -87,65 +129,13 @@ async function platformaticService (app, opts, toLoad = []) {
     app.register(underPressure, {
       exposeStatusRoute: '/status',
       healthCheckInterval: opts.healthCheck.interval !== undefined ? opts.healthCheck.interval : 5000,
+      ...opts.healthCheck,
       healthCheck: opts.healthCheck.fn
     })
   }
 
   if (!app.hasRoute({ url: '/', method: 'GET' }) && !Array.isArray(toLoad)) {
     await app.register(require('./lib/root-endpoint'), opts)
-  }
-}
-
-async function loadPlugin (app, config, pluginOptions) {
-  /* c8 ignore next 4 */
-  if (pluginOptions.typescript !== undefined) {
-    const pluginPath = getJSPluginPath(pluginOptions.path, pluginOptions.typescript.outDir)
-    pluginOptions = { ...pluginOptions, path: pluginPath }
-  }
-
-  app.log.debug({ plugin: pluginOptions }, 'loading plugin')
-
-  // if not defined, we defaults to true (which can happen only if config is set programmatically,
-  // that's why we ignore the coverage of the `undefined` case, which cannot be covered in cli tests)
-  /* c8 ignore next 35  */
-  const hotReload = pluginOptions.hotReload !== false
-  const isWatchEnabled = config.watch !== false
-  if (isWatchEnabled && hotReload) {
-    let options = pluginOptions
-    if ((await stat(pluginOptions.path)).isDirectory()) {
-      options = {
-        path: wrapperPath,
-        options: pluginOptions
-      }
-    }
-    await app.register(sandbox, {
-      ...options,
-      customizeGlobalThis (_globalThis) {
-        // Taken from https://github.com/nodejs/undici/blob/fa9fd9066569b6357acacffb806aa804b688c9d8/lib/global.js#L5
-        const globalDispatcher = Symbol.for('undici.globalDispatcher.1')
-        const dispatcher = globalThis[globalDispatcher]
-        /* istanbul ignore else */
-        if (dispatcher) {
-          _globalThis[globalDispatcher] = dispatcher
-        }
-      }
-    })
-    // c8 fails in reporting the coverage of this else branch, so we ignore it
-  } else {
-    if ((await stat(pluginOptions.path)).isDirectory()) {
-      const options = {
-        ...pluginOptions.options,
-        dir: pluginOptions.path
-      }
-      await app.register(autoload, options)
-    } else {
-      let plugin = await import(`file://${pluginOptions.path}`)
-      if (plugin.__esModule === true) {
-        plugin = plugin.default
-      }
-      /* c8 ignore next 4 */
-      await app.register(plugin, pluginOptions.options)
-    }
   }
 }
 
@@ -252,6 +242,13 @@ async function buildServer (options, app, ConfigManagerContructor) {
   return handler
 }
 
+// This is for @platformatic/db to use
+/* c8 ignore next 4 */
+async function buildStart (loadConfig, buildServer) {
+  const { buildStart } = await import('./lib/start.mjs')
+  return buildStart(loadConfig, buildServer)
+}
+
 module.exports.buildServer = buildServer
 module.exports.schema = require('./lib/schema')
 module.exports.createServerConfig = createServerConfig
@@ -260,3 +257,4 @@ module.exports.addLoggerToTheConfig = addLoggerToTheConfig
 module.exports.loadConfig = loadConfig
 module.exports.tsCompiler = compiler
 module.exports.ConfigManager = ConfigManager
+module.exports.buildStart = buildStart

@@ -7,12 +7,12 @@ The config file will specify where the plugin file is located as the example bel
 ```json
 {
   ...
-  "plugin": {
-    "path": "./plugin/index.js"
+  "plugins": {
+    "paths": ["./plugin/index.js"]
   }
 }
 ```
-The path is relative to the config file path.
+The paths are relative to the config file path.
 
 Since it uses [fastify-sandbox](https://github.com/mcollina/fastify-sandbox) under the hood, all other options of that package may be specified under the `plugin` property.
 
@@ -66,10 +66,12 @@ Multiple plugins can be loaded in parallel by specifying an array:
 ```json
 {
   ...
-  "plugin": [{
-    "path": "./plugin/index.js"
-  }, {
-    "path": "./routes/"
-  }]
+  "plugins": {
+    "paths": [{
+      "path": "./plugin/index.js"
+    }, {
+      "path": "./routes/"
+    }]
+  }
 }
 ```

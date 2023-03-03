@@ -1,10 +1,11 @@
 {
   "name": "@platformatic/db-core",
-  "version": "0.14.0",
+  "version": "0.16.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "standard | snazzy && tap test/*test.js"
+    "test": "standard | snazzy && tap test/*test.js",
+    "lint": "standard | snazzy"
   },
   "repository": {
     "type": "git",
@@ -17,10 +18,10 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "fastify": "^4.10.2",
+    "fastify": "^4.13.0",
     "snazzy": "^9.0.0",
     "standard": "^17.0.0",
-    "tap": "^16.3.2",
+    "tap": "^16.3.4",
     "why-is-node-running": "^2.2.2"
   },
   "dependencies": {
@@ -28,6 +29,6 @@
     "@platformatic/sql-graphql": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
     "@platformatic/sql-openapi": "workspace:*",
-    "fastify-plugin": "^4.4.0"
+    "fastify-plugin": "^4.5.0"
   }
 }

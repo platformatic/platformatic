@@ -24,7 +24,7 @@ async function platformaticDB (app, opts) {
   if (isKeyEnabled('dashboard', opts)) {
     app.register(require('./_admin'), { ...opts, prefix: '_admin' })
     await app.register(dashboard, {
-      dashboardAtRoot: opts.dashboard.rootPath ?? true
+      path: opts.dashboard.path
     })
   }
 
@@ -55,6 +55,13 @@ async function platformaticDB (app, opts) {
   await platformaticService(app, opts, [
     toLoad
   ])
+
+  if (Object.keys(app.platformatic.entities).length === 0) {
+    app.log.warn(
+      'No tables found in the database. Are you connected to the right database? Did you forget to run your migrations? ' +
+      'This guide can help with debugging Platformatic DB: https://oss.platformatic.dev/docs/guides/debug-platformatic-db'
+    )
+  }
 
   if (!app.hasRoute({ url: '/', method: 'GET' })) {
     app.register(require('./lib/root-endpoint'), opts)

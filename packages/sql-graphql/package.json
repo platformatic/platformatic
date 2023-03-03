@@ -1,10 +1,10 @@
 {
   "name": "@platformatic/sql-graphql",
-  "version": "0.14.0",
+  "version": "0.16.0",
   "description": "Map SQL dbs to GraphQL",
   "main": "index.js",
   "scripts": {
-    "lint": "standard",
+    "lint": "standard | snazzy",
     "test": "standard | snazzy && npm run test:typescript && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
     "test:postgresql": "DB=postgresql tap test/*.test.js",
     "test:mariadb": "DB=mariadb tap test/*.test.js",
@@ -24,25 +24,25 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "@mercuriusjs/gateway": "^1.0.0",
+    "@mercuriusjs/gateway": "^1.2.0",
     "@platformatic/sql-events": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
-    "fastify": "^4.10.2",
+    "fastify": "^4.13.0",
     "snazzy": "^9.0.0",
     "standard": "^17.0.0",
-    "tap": "^16.3.2",
+    "tap": "^16.3.4",
     "tsd": "^0.25.0",
-    "ws": "^8.11.0"
+    "ws": "^8.12.1"
   },
   "dependencies": {
-    "@mercuriusjs/federation": "^1.0.0",
+    "@mercuriusjs/federation": "^1.0.1",
     "camelcase": "^6.3.0",
-    "fastify-plugin": "^4.4.0",
+    "fastify-plugin": "^4.5.0",
     "graphql": "^16.6.0",
     "graphql-scalars": "^1.20.1",
     "graphql-type-json": "^0.3.2",
     "inflected": "^2.1.0",
-    "mercurius": "^12.0.0"
+    "mercurius": "^12.2.0"
   },
   "tsd": {
     "directory": "test/types"

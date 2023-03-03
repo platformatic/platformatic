@@ -172,6 +172,15 @@ async function sqlMapper (app, opts) {
   // TODO this would need to be refactored as other plugins
   // would need to use this same namespace
   app.decorate('platformatic', mapper)
+
+  app.decorateRequest('platformaticContext', null)
+  app.addHook('onRequest', function (req, reply, done) {
+    req.platformaticContext = {
+      app: this, // uses the encapsulated fastify instance of the route
+      reply
+    }
+    done()
+  })
 }
 
 module.exports = fp(sqlMapper)

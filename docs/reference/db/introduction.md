@@ -42,10 +42,13 @@ Get up and running in 2 minutes using our
 
 ## Supported databases
 
-- [SQLite](https://www.sqlite.org/)
-- [PostgreSQL](https://www.postgresql.org/)
-- [MySQL](https://www.mysql.com/)
-- [MariaDB](https://mariadb.org/)
+| Database                                  | Version  |
+|-------------------------------------------|----------|
+| [SQLite](https://www.sqlite.org/)         | 3.       |
+| [PostgreSQL](https://www.postgresql.org/) | >= 15    |
+| [MySQL](https://www.mysql.com/)           | >= 5.7   |
+| [MariaDB](https://mariadb.org/)           | >= 10.11 |
+
 
 The required database driver is automatically inferred and loaded based on the
 value of the [`connectionString`](/reference/db/configuration.md#core)

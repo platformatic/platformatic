@@ -36,7 +36,7 @@ const fakeLogger = {
   info: msg => log.push(msg)
 }
 
-test('creates project with no typescript', async ({ end, equal }) => {
+test('creates project with no typescript', async ({ equal }) => {
   const params = {
     hostname: 'myhost',
     port: 6666,
@@ -75,15 +75,15 @@ test('creates project with no typescript', async ({ end, equal }) => {
   equal(core.openapi, true)
   equal(migrations.dir, 'migrations')
 
-  const migrationFileDo = await readFileSync(pathToMigrationFileDo, 'utf8')
+  const migrationFileDo = readFileSync(pathToMigrationFileDo, 'utf8')
   equal(migrationFileDo, moviesMigrationDo)
-  const migrationFileUndo = await readFileSync(pathToMigrationFileUndo, 'utf8')
+  const migrationFileUndo = readFileSync(pathToMigrationFileUndo, 'utf8')
   equal(migrationFileUndo, moviesMigrationUndo)
 
   equal(await isFileAccessible(join(tmpDir, 'plugin.js')), true)
 })
 
-test('creates project with no typescript and no plugin', async ({ end, equal }) => {
+test('creates project with no typescript and no plugin', async ({ equal }) => {
   const params = {
     hostname: 'myhost',
     port: 6666,
@@ -122,15 +122,15 @@ test('creates project with no typescript and no plugin', async ({ end, equal }) 
   equal(core.openapi, true)
   equal(migrations.dir, 'migrations')
 
-  const migrationFileDo = await readFileSync(pathToMigrationFileDo, 'utf8')
+  const migrationFileDo = readFileSync(pathToMigrationFileDo, 'utf8')
   equal(migrationFileDo, moviesMigrationDo)
-  const migrationFileUndo = await readFileSync(pathToMigrationFileUndo, 'utf8')
+  const migrationFileUndo = readFileSync(pathToMigrationFileUndo, 'utf8')
   equal(migrationFileUndo, moviesMigrationUndo)
 
   equal(await isFileAccessible(join(tmpDir, 'plugin.js')), false)
 })
 
-test('creates project with typescript', async ({ end, equal }) => {
+test('creates project with typescript', async ({ equal }) => {
   const params = {
     hostname: 'myhost',
     port: 6666,
@@ -169,9 +169,9 @@ test('creates project with typescript', async ({ end, equal }) => {
   equal(core.openapi, true)
   equal(migrations.dir, 'migrations')
 
-  const migrationFileDo = await readFileSync(pathToMigrationFileDo, 'utf8')
+  const migrationFileDo = readFileSync(pathToMigrationFileDo, 'utf8')
   equal(migrationFileDo, moviesMigrationDo)
-  const migrationFileUndo = await readFileSync(pathToMigrationFileUndo, 'utf8')
+  const migrationFileUndo = readFileSync(pathToMigrationFileUndo, 'utf8')
   equal(migrationFileUndo, moviesMigrationUndo)
 
   equal(plugin.path, 'plugin.ts')
@@ -180,7 +180,7 @@ test('creates project with typescript', async ({ end, equal }) => {
   equal(await isFileAccessible(join(tmpDir, 'tsconfig.json')), true)
 })
 
-test('creates project with configuration already present', async ({ end, equal, ok }) => {
+test('creates project with configuration already present', async ({ ok }) => {
   const pathToDbConfigFileOld = join(tmpDir, 'platformatic.db.json')
   writeFileSync(pathToDbConfigFileOld, JSON.stringify({ test: 'test' }))
   const params = {
@@ -191,7 +191,7 @@ test('creates project with configuration already present', async ({ end, equal, 
   ok(log.includes('Configuration file platformatic.db.json found, skipping creation of configuration file.'))
 })
 
-test('creates project with migration folder already present', async ({ end, equal, ok }) => {
+test('creates project with migration folder already present', async ({ equal }) => {
   const pathToMigrationsOld = join(tmpDir, 'migrations')
   mkdirSync(pathToMigrationsOld)
   const params = {
@@ -202,7 +202,7 @@ test('creates project with migration folder already present', async ({ end, equa
   equal(log.includes('Migrations folder migrations found, skipping creation of migrations folder.'), true)
 })
 
-test('creates project with "do" migration already present', async ({ end, equal, ok }) => {
+test('creates project with "do" migration already present', async ({ ok }) => {
   const pathToMigrationsOld = join(tmpDir, 'migrations')
   mkdirSync(pathToMigrationsOld)
   const pathToMigrationFileDo = join(pathToMigrationsOld, '001.do.sql')
@@ -215,7 +215,7 @@ test('creates project with "do" migration already present', async ({ end, equal,
   ok(log.includes('Migration file 001.do.sql found, skipping creation of migration file.'))
 })
 
-test('creates project with tsconfig already present', async ({ end, equal, ok }) => {
+test('creates project with tsconfig already present', async ({ ok }) => {
   const pathToTsConfig = join(tmpDir, 'tsconfig.json')
   writeFileSync(pathToTsConfig, 'test')
   const params = {
@@ -227,7 +227,7 @@ test('creates project with tsconfig already present', async ({ end, equal, ok })
   ok(log.includes(`Typescript configuration file ${pathToTsConfig} found, skipping creation of typescript configuration file.`))
 })
 
-test('creates project with plugin already present', async ({ end, equal, ok }) => {
+test('creates project with plugin already present', async ({ ok }) => {
   const pathToPlugin = join(tmpDir, 'plugin.js')
   writeFileSync(pathToPlugin, 'test')
   const params = {
@@ -238,4 +238,30 @@ test('creates project with plugin already present', async ({ end, equal, ok }) =
   }
   await createDB(params, fakeLogger, tmpDir)
   ok(log.includes(`Plugin file ${pathToPlugin} found, skipping creation of plugin file.`))
+})
+
+test('creates project with no default migrations', async ({ notOk }) => {
+  const params = {
+    hostname: 'myhost',
+    port: 6666,
+    plugin: false,
+    migrations: ''
+  }
+  await createDB(params, fakeLogger, tmpDir)
+  notOk(log.includes('Migrations folder migrations successfully created.'))
+  notOk(log.includes('Migration file 001.do.sql successfully created.'))
+  notOk(log.includes('Migration file 001.undo.sql successfully created.'))
+})
+
+test('creates project with default migrations', async ({ ok }) => {
+  const params = {
+    hostname: 'myhost',
+    port: 6666,
+    plugin: false,
+    migrations: 'migrations'
+  }
+  await createDB(params, fakeLogger, tmpDir)
+  ok(log.includes('Migrations folder migrations successfully created.'))
+  ok(log.includes('Migration file 001.do.sql successfully created.'))
+  ok(log.includes('Migration file 001.undo.sql successfully created.'))
 })

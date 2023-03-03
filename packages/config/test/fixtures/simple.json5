@@ -30,7 +30,7 @@
   },
   "dashboard": {
     "enabled": true,
-    "rootPath": true
+    "path": "/"
   },
   "authorization": {
     // Single quotes are allowed

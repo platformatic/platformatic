@@ -8,7 +8,7 @@ import inquirer from 'inquirer'
 import { readFile, writeFile } from 'fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
-import { execa, execaNode } from 'execa'
+import { execa } from 'execa'
 import ora from 'ora'
 import createDB from './create-db.mjs'
 import askProjectDir from '../ask-project-dir.mjs'
@@ -95,7 +95,7 @@ const createPlatformaticDB = async (_args) => {
     hostname: args.hostname,
     port: args.port,
     database: args.database,
-    migrations: args.migrations,
+    migrations: wizardOptions.defaultMigrations ? args.migrations : '',
     plugin: generatePlugin,
     types: useTypes,
     typescript: useTypescript
@@ -125,10 +125,10 @@ const createPlatformaticDB = async (_args) => {
   }
 
   if (runPackageManagerInstall) {
-  // We applied package manager install, so we can:
-  // - run the migrations
-  // - generate types
-  // if we don't generate migrations, we don't ask to apply them (the folder might not exist)
+    // We applied package manager install, so we can:
+    // - run the migrations
+    // - generate types
+    // if we don't generate migrations, we don't ask to apply them (the folder might not exist)
     if (wizardOptions.defaultMigrations) {
       const { applyMigrations } = await inquirer.prompt([{
         type: 'list',
@@ -141,7 +141,7 @@ const createPlatformaticDB = async (_args) => {
       if (applyMigrations) {
         const spinner = ora('Applying migrations...').start()
         // We need to apply migrations using the platformatic installed in the project
-        await execaNode('./node_modules/@platformatic/db/db.mjs', ['migrations', 'apply'], { cwd: projectDir })
+        await execa(pkgManager, ['exec', 'platformatic', 'db', 'migrations', 'apply'], { cwd: projectDir })
         spinner.succeed('...done!')
       }
     }
@@ -156,14 +156,14 @@ const createPlatformaticDB = async (_args) => {
 
       if (generateTypes) {
         const spinner = ora('Generating types...').start()
-        await execaNode('./node_modules/@platformatic/db/db.mjs', ['types'], { cwd: projectDir })
+        await execa(pkgManager, ['exec', 'platformatic', 'db', 'types'], { cwd: projectDir })
         spinner.succeed('...done!')
       }
     }
-    await execaNode('./node_modules/@platformatic/db/db.mjs', ['schema', 'config'], { cwd: projectDir })
+    await execa(pkgManager, ['exec', 'platformatic', 'db', 'schema', 'config'], { cwd: projectDir })
     logger.info('Configuration schema successfully created.')
   }
-  await askCreateGHAction(logger, env, 'db', useTypescript)
+  await askCreateGHAction(logger, env, 'db', useTypescript, projectDir)
 
   if (!runPackageManagerInstall) {
     logger.warn(`You must run the following commands in the project folder to complete the setup:

@@ -34,7 +34,7 @@ async function createBasicPages (db, sql) {
   }
 }
 
-test('users can save and update their own pages, read everybody\'s and delete none', async ({ pass, teardown, equal, fail }) => {
+test('wrong entity name', async ({ pass, teardown, equal, fail }) => {
   const app = fastify({
     pluginTimeout: 3000
   })
@@ -82,5 +82,42 @@ test('users can save and update their own pages, read everybody\'s and delete no
     fail('should not be ready')
   } catch (err) {
     equal(err.message, 'Unknown entity \'pages\' in authorization rule 0. Did you mean \'page\'?')
+  }
+})
+
+test('missing entity', async ({ pass, teardown, equal, fail }) => {
+  const app = fastify({
+    pluginTimeout: 3000
+  })
+  app.register(core, {
+    ...connInfo,
+    events: false,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(auth, {
+    jwt: {
+      secret: 'supersecret'
+    },
+    roleKey: 'X-PLATFORMATIC-ROLE',
+    anonymousRole: 'anonymous',
+    rules: [{
+      role: 'anonymous',
+      find: false,
+      delete: false,
+      save: false
+    }]
+  })
+  teardown(app.close.bind(app))
+
+  try {
+    await app.ready()
+    fail('should not be ready')
+  } catch (err) {
+    equal(err.message, 'Missing entity in authorization rule 0')
   }
 })

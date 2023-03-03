@@ -8,9 +8,6 @@ import split from 'split2'
 import { cliPath } from './helper.js'
 import { urlDirname } from '../../lib/utils.js'
 
-t.jobs = 8
-t.plan(8)
-
 t.test('should compile typescript plugin', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
   const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-1')
@@ -21,6 +18,7 @@ t.test('should compile typescript plugin', async (t) => {
     const child = await execa('node', [cliPath, 'compile'], { cwd })
     t.equal(child.stdout.includes('Typescript compilation completed successfully.'), true)
   } catch (err) {
+    console.log(err)
     console.log(err.stdout)
     console.log(err.stderr)
     t.fail(err.stderr)
@@ -58,8 +56,10 @@ t.test('should compile typescript plugin with start command', async (t) => {
 
   const splitter = split()
   child.stdout.pipe(splitter)
+  child.stderr.pipe(process.stderr)
 
   for await (const data of splitter) {
+    console.log(data)
     const sanitized = stripAnsi(data)
     if (sanitized.includes('Typescript plugin loaded')) {
       t.pass()
@@ -122,7 +122,7 @@ t.test('start command should not compile typescript plugin with errors', async (
     await childProcess
     t.fail('should not compile bad typescript plugin')
   } catch (err) {
-    t.equal(err.stdout.includes('Found 1 error'), true)
+    t.equal(err.stderr.includes('Found 1 error'), true)
     childProcess.kill('SIGINT')
   }
 
@@ -155,7 +155,7 @@ t.test('should not compile typescript plugin with start without tsconfig', async
   }
 })
 
-t.test('start command should not compile typescript if `build` is false', async (t) => {
+t.test('start command should not compile typescript if `typescript` is false', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
   const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-5')
   await cp(testDir, cwd, { recursive: true })
