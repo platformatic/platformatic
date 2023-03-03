@@ -330,7 +330,7 @@ importers:
   packages/db-dashboard:
     specifiers:
       '@fastify/static': ^6.9.0
-      '@graphiql/toolkit': 0.8.0
+      '@graphiql/toolkit': 0.8.2
       '@mui/material': ^5.11.10
       '@platformatic/db-ra-data-rest': workspace:*
       '@platformatic/service': workspace:*
@@ -364,7 +364,7 @@ importers:
     dependencies:
       '@fastify/static': 6.9.0
     devDependencies:
-      '@graphiql/toolkit': 0.8.0_graphql@16.6.0
+      '@graphiql/toolkit': 0.8.2_graphql@16.6.0
       '@mui/material': 5.11.10_dl5meo57oqikomakll4aynjcye
       '@platformatic/db-ra-data-rest': link:../db-ra-data-rest
       '@platformatic/service': link:../service
@@ -2840,22 +2840,6 @@ packages:
       - '@types/react'
       - graphql-ws
       - react-is
-    dev: true
-
-  /@graphiql/toolkit/0.8.0_graphql@16.6.0:
-    resolution: {integrity: sha512-DbMFhEKejpPzB6k8W3Mj+Rl8geXiw49USDF9Wdi06EEk1XLVh1iebDqveYY+4lViITsV4+BeGikxlqi8umfP4g==}
-    peerDependencies:
-      graphql: ^15.5.0 || ^16.0.0
-      graphql-ws: '>= 4.5.0'
-    peerDependenciesMeta:
-      graphql-ws:
-        optional: true
-    dependencies:
-      '@n1ru4l/push-pull-async-iterable-iterator': 3.2.0
-      graphql: 16.6.0
-      meros: 1.2.1
-    transitivePeerDependencies:
-      - '@types/node'
     dev: true
 
   /@graphiql/toolkit/0.8.2_graphql@16.6.0:
