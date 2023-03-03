@@ -1,0 +1,38 @@
+name: Publish to Schema Store
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'pnpm'
+      - name: pnpm install
+        run: pnpm install
+      - name: Creates output folder and generate the schemas
+        id: gen-schemas
+        run:  |
+              mkdir output
+              node packages/service/lib/schema.js > output/service
+              node packages/db/lib/schema.js > output/db
+              node -e "console.log('VERSION=v'+ require('./package.json').version)" >> $GITHUB_OUTPUT
+      - name: Pushes to schema store repository
+        id: push_directory
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.SCHEMAS_API_TOKEN_GITHUB }}
+        with:
+          source-directory: output/
+          destination-github-username: 'platformatic'
+          destination-repository-name: 'schemas'
+          user-email: hello@matteocollina.com
+          commit-message: added ${{ steps.gen-schemas.outputs.VERSION }}
+          target-branch: main
+          target-directory: ${{ steps.gen-schemas.outputs.VERSION }}

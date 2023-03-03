@@ -6,6 +6,8 @@ import fs from 'fs/promises'
 import stripAnsi from 'strip-ansi'
 import jsonLanguageService from 'vscode-json-languageservice'
 
+const pkg = JSON.parse(await fs.readFile(join(import.meta.url, '..', '..', 'package.json'), 'utf8'))
+
 const dbLocation = join(import.meta.url, '..', 'fixtures', 'sqlite', 'db')
 
 test('print the graphql schema to stdout', async ({ matchSnapshot }) => {
@@ -43,7 +45,7 @@ test('generates the json schema config', async (t) => {
   const configSchema = await fs.readFile('platformatic.db.schema.json', 'utf8')
   const schema = JSON.parse(configSchema)
   const { $id, type } = schema
-  t.equal($id, 'https://schemas.platformatic.dev/db')
+  t.equal($id, `https://platformatic.dev/schemas/v${pkg.version}/db`)
   t.equal(type, 'object')
 
   const languageservice = jsonLanguageService.getLanguageService({
