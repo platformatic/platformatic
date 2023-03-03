@@ -1,4 +1,4 @@
-  import { writeFile, mkdir } from 'fs/promises'
+import { writeFile, mkdir } from 'fs/promises'
 import { join, relative, resolve } from 'path'
 import { findDBConfigFile, isFileAccessible } from '../utils.mjs'
 
@@ -94,7 +94,7 @@ PORT=${port}
 PLT_SERVER_LOGGER_LEVEL=info
 DATABASE_URL=${connectionString}
 `
-    return env
+  return env
 }
 
 const JS_PLUGIN_WITH_TYPES_SUPPORT = `\
@@ -146,7 +146,7 @@ async function createDB ({ hostname, database = 'sqlite', port, migrations = 'mi
   }
 
   const migrationsFolderName = migrations
-    if (createMigrations) {
+  if (createMigrations) {
     const isMigrationFolderExists = await isFileAccessible(migrationsFolderName, currentDir)
     if (!isMigrationFolderExists) {
       await mkdir(join(currentDir, migrationsFolderName))
