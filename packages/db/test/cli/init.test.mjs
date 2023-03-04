@@ -37,7 +37,7 @@ t.test('run db init with default options', async (t) => {
 
   const { server, core, migrations, $schema } = dbConfig
 
-  t.equal($schema, './platformatic.db.schema.json')
+  t.equal($schema, `https://platformatic.dev/schemas/v${pkg.version}/db`)
 
   t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   t.equal(server.port, '{PORT}')

@@ -4,15 +4,18 @@ import { checkForDependencies, generateGlobalTypesFile } from './gen-types.mjs'
 import loadConfig from './load-config.mjs'
 import { generateJsonSchemaConfig } from './gen-schema.mjs'
 import { createDB, parseDBArgs } from 'create-platformatic'
+import { join } from 'desm'
+import { readFile } from 'fs/promises'
 
 async function init (_args) {
+  const version = JSON.parse(await readFile(join(import.meta.url, '../package.json'))).version
   const logger = pino(pretty({
     translateTime: 'SYS:HH:MM:ss',
     ignore: 'hostname,pid'
   }))
 
   const args = parseDBArgs(_args)
-  await createDB(args, logger, process.cwd())
+  await createDB(args, logger, process.cwd(), version)
 
   // We need to do these here because platformatic-creator has NO dependencies to `db`.
   await generateJsonSchemaConfig()
