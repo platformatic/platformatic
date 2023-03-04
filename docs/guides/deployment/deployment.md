@@ -116,6 +116,19 @@ If you want to use this feature in development, replace the configuration
 values with [environment variable placeholders](/reference/db/configuration.md#environment-variable-placeholders)
 so you can set it to `true` in development and `false` in production.
 
+### Removing the welcome page
+
+If you want to remove the welcome page, you should register an index route.
+
+```js
+module.exports = async function (app) {
+  // removing the welcome page
+  app.get('/', (req, reply) => {
+    return { hello: 'world' }
+  })
+}
+```
+
 ## Databases
 
 ### Applying migrations
