@@ -11,7 +11,8 @@
   "homepage": "https://oss.platformatic.dev/",
   "scripts": {
     "test": "standard | snazzy && c8 --100 tap --no-coverage test/*.test.js",
-    "lint": "standard | snazzy"
+    "lint": "standard | snazzy",
+    "license": "license-checker --production --onlyAllow 'Apache-2.0;MIT;ISC;BSD-2-Clause'"
   },
   "author": "Matteo Collina <hello@matteocollina.com>",
   "repository": {
@@ -33,6 +34,7 @@
   "devDependencies": {
     "c8": "^7.13.0",
     "execa": "^7.0.0",
+    "license-checker": "^25.0.1",
     "snazzy": "^9.0.0",
     "split2": "^4.1.0",
     "standard": "^17.0.0",

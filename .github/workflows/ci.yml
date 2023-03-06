@@ -58,6 +58,9 @@ jobs:
       run: pnpm install --frozen-lockfile
     - name: Run test suite
       run: cd packages/cli && pnpm test
+    - name: License Check
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: cd packages/cli && pnpm run license
 
   ci-db-dashboard:
     needs: setup-node_modules
