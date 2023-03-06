@@ -9,7 +9,7 @@ import inquirer from 'inquirer'
 import { readFile, writeFile } from 'fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
-import { execa, execaNode } from 'execa'
+import { execa } from 'execa'
 import ora from 'ora'
 import createService from './create-service.mjs'
 import askProjectDir from '../ask-project-dir.mjs'
@@ -59,7 +59,7 @@ const createPlatformaticService = async (_args) => {
     port: args.port
   }
 
-  const env = await createService(params, logger, projectDir)
+  const env = await createService(params, logger, projectDir, version)
 
   const fastifyVersion = await getDependencyVersion('fastify')
 
@@ -81,19 +81,6 @@ const createPlatformaticService = async (_args) => {
     const spinner = ora('Installing dependencies...').start()
     await execa(pkgManager, ['install'], { cwd: projectDir })
     spinner.succeed('...done!')
-    try {
-      await execaNode('./node_modules/@platformatic/service/service.mjs', [], { cwd: projectDir })
-    } catch (err) {
-      console.log(err)
-    }
-    logger.info('Configuration schema successfully created.')
-  }
-
-  if (!runPackageManagerInstall) {
-    logger.warn(`You must run the following commands in the project folder to complete the setup:
-    - ${pkgManager} install
-    - npx platformatic service schema config
-`)
   }
 
   // We don't have the option for TS (yet) so we don't run build on TS

@@ -101,7 +101,7 @@ const createPlatformaticDB = async (_args) => {
     typescript: useTypescript
   }
 
-  const env = await createDB(params, logger, projectDir)
+  const env = await createDB(params, logger, projectDir, version)
 
   const fastifyVersion = await getDependencyVersion('fastify')
 
@@ -160,17 +160,8 @@ const createPlatformaticDB = async (_args) => {
         spinner.succeed('...done!')
       }
     }
-    await execa(pkgManager, ['exec', 'platformatic', 'db', 'schema', 'config'], { cwd: projectDir })
-    logger.info('Configuration schema successfully created.')
   }
   await askCreateGHAction(logger, env, 'db', useTypescript, projectDir)
-
-  if (!runPackageManagerInstall) {
-    logger.warn(`You must run the following commands in the project folder to complete the setup:
-    - ${pkgManager} install
-    - npx platformatic db schema config
-`)
-  }
 }
 
 export default createPlatformaticDB
