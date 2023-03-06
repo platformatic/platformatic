@@ -59,7 +59,7 @@ jobs:
     - name: Run test suite
       run: cd packages/cli && pnpm test
     - name: License Check
-      run: pnpm run license
+      run: cd packages/cli && pnpm run license
 
   ci-db-dashboard:
     needs: setup-node_modules
