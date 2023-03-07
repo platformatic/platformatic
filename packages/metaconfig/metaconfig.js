@@ -1,14 +1,23 @@
 'use strict'
 
-const { readFile } = require('fs').promises
+const { readFile, writeFile } = require('fs').promises
+const { extname } = require('path')
+const YAML = require('yaml')
+const TOML = require('@iarna/toml')
+const JSON5 = require('json5')
 
 async function analyze (opts) {
-  if (!opts.config && !opts.file) {
+  let data
+  let format
+  if (opts.config) {
+    data = opts.config
+  } else if (opts.file) {
+    const parser = getParser(opts.file)
+    format = extname(opts.file).slice(1)
+    data = parser(await readFile(opts.file, 'utf8'))
+  } else {
     throw new Error('missing file or config to analyze')
   }
-
-  // TODO support other formats than JSON
-  const data = opts.config || JSON.parse(await readFile(opts.file, 'utf8'))
 
   if (!data.$schema) {
     throw new Error('missing $schema, unable to determine the version')
@@ -53,7 +62,53 @@ async function analyze (opts) {
     }
   }
 
-  return new Handler(data)
+  return new Handler(data, opts.file, format)
 }
 
 module.exports.analyze = analyze
+
+function getParser (path) {
+  switch (extname(path)) {
+    case '.yaml':
+    case '.yml':
+      return YAML.parse
+    case '.json':
+      return JSON.parse
+    case '.json5':
+      return JSON5.parse
+    case '.toml':
+    case '.tml':
+      return TOML.parse
+    default:
+      throw new Error('Invalid config file extension. Only yml, yaml, json, json5, toml, tml are supported.')
+  }
+}
+
+module.exports.getParser = getParser
+
+function getStringifier (path) {
+  switch (extname(path)) {
+    case '.yaml':
+    case '.yml':
+      return YAML.stringify
+    case '.json':
+      return (data) => JSON.stringify(data, null, 2)
+    case '.json5':
+      return (data) => JSON5.stringify(data, null, 2)
+    case '.toml':
+    case '.tml':
+      return TOML.stringify
+    default:
+      throw new Error('Invalid config file extension. Only yml, yaml, json, json5, toml, tml are supported.')
+  }
+}
+
+module.exports.getStringifier = getStringifier
+
+async function write (meta) {
+  const stringifier = getStringifier(meta.path)
+  const toWrite = stringifier(meta.config)
+  await writeFile(meta.path, toWrite)
+}
+
+module.exports.write = write

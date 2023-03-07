@@ -11,13 +11,14 @@ npm install @platformatic/metaconfig
 ## Usage
 
 ```javascript
-import { analyze } from '@platformatic/multiconfig'
+import { analyze, write } from '@platformatic/multiconfig'
 
 const meta = await analyze({ file: 'path/to/platformatic.db.json' }))
 
 console.log(meta.version)
 console.log(meta.kind)
 console.log(meta.config)
+console.log(meta.path)
 
 // Bring it to the next version
 const metaNext = meta.up()
@@ -25,6 +26,10 @@ const metaNext = meta.up()
 console.log(metaNext.version)
 console.log(metaNext.kind)
 console.log(metaNext.config)
+console.log(metaNext.path)
+
+// this will override the old config
+await write(metaNext)
 ```
 
 ## License
