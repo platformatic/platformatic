@@ -185,3 +185,76 @@ test('single string', async (t) => {
     t.equal(meta17FromScratch.kind, 'service')
   }
 })
+
+test('plugin options', async (t) => {
+  const file = join(__dirname, 'fixtures', 'v0.16.0', 'options.service.json')
+  const meta = await analyze({ file })
+  t.equal(meta.version, '0.16.0')
+  t.equal(meta.kind, 'service')
+  t.same(meta.config, JSON.parse(await readFile(file)))
+
+  const meta17 = meta.up()
+  t.equal(meta17.version, '0.17.0')
+  t.equal(meta17.kind, 'service')
+  t.equal(meta17.config.$schema, 'https://platformatic.dev/schemas/v0.17.0/service')
+
+  t.notSame(meta.config, meta17.config)
+
+  t.match(meta17.config.plugins, {
+    paths: [{
+      path: 'plugin.js',
+      options: {
+        something: 'else'
+      }
+    }],
+    hotReload: true,
+    stopTimeout: 10000
+  })
+  t.equal(meta17.config.plugin, undefined)
+
+  {
+    const meta17FromScratch = await analyze({ config: meta17.config })
+    t.equal(meta17FromScratch.version, '0.17.0')
+    t.equal(meta17FromScratch.kind, 'service')
+  }
+})
+
+test('plugin options (array)', async (t) => {
+  const file = join(__dirname, 'fixtures', 'v0.16.0', 'options-array.service.json')
+  const meta = await analyze({ file })
+  t.equal(meta.version, '0.16.0')
+  t.equal(meta.kind, 'service')
+  t.same(meta.config, JSON.parse(await readFile(file)))
+
+  const meta17 = meta.up()
+  t.equal(meta17.version, '0.17.0')
+  t.equal(meta17.kind, 'service')
+  t.equal(meta17.config.$schema, 'https://platformatic.dev/schemas/v0.17.0/service')
+
+  t.notSame(meta.config, meta17.config)
+
+  t.match(meta17.config.plugins, {
+    paths: [{
+      path: 'plugin.ts',
+      options: {
+        something: 'else'
+      }
+    }, {
+      path: 'other.js',
+      options: {
+        foo: 'bar'
+      }
+    }],
+    // We take the values from the first plugin
+    hotReload: true,
+    stopTimeout: 10000,
+    typescript: true
+  })
+  t.equal(meta17.config.plugin, undefined)
+
+  {
+    const meta17FromScratch = await analyze({ config: meta17.config })
+    t.equal(meta17FromScratch.version, '0.17.0')
+    t.equal(meta17FromScratch.kind, 'service')
+  }
+})

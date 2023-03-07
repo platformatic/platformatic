@@ -24,15 +24,53 @@ class ZeroSixteen {
           paths: original.plugin.map((p) => {
             if (typeof p === 'string') {
               return p
+            } else if (p.options) {
+              return {
+                path: p.path,
+                options: p.options
+              }
             } else {
               return p.path
             }
           })
         }
+
+        if (typeof original.plugin[0] === 'object') {
+          if ('hotReload' in original.plugin[0]) {
+            config.plugins.hotReload = original.plugin[0].hotReload
+          }
+          if ('stopTimeout' in original.plugin[0]) {
+            config.plugins.stopTimeout = original.plugin[0].stopTimeout
+          }
+          if ('typescript' in original.plugin[0]) {
+            config.plugins.typescript = !!original.plugin[0].typescript
+          }
+        }
       } else if (typeof original.plugin === 'object') {
-        // add more cases here
-        config.plugins = {
-          paths: [original.plugin.path]
+        if (original.plugin.options) {
+          config.plugins = {
+            paths: [{
+              path: original.plugin.path,
+              options: original.plugin.options
+            }]
+          }
+        } else {
+          config.plugins = {
+            paths: [original.plugin.path]
+          }
+        }
+
+        if ('hotReload' in original.plugin) {
+          config.plugins.hotReload = original.plugin.hotReload
+        }
+
+        if ('stopTimeout' in original.plugin) {
+          config.plugins.stopTimeout = original.plugin.stopTimeout
+        }
+
+        if ('typescript' in  original.plugin) {
+          // typescript is a boolean in 0.17.0
+          config.plugins.typescript = !!original.plugin.typescript
         }
       } else {
         config.plugins = {
@@ -41,9 +79,6 @@ class ZeroSixteen {
       }
 
       config.plugin = undefined
-      if (original.plugin.typescript) {
-        config.plugins.typescript = true
-      }
     }
 
     // TODO missing watch mode and other options
