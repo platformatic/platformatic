@@ -9,6 +9,7 @@ import { readFile } from 'fs/promises'
 import { join } from 'desm'
 import { isColorSupported } from 'colorette'
 import helpMe from 'help-me'
+import { upgrade } from './lib/upgrade.js'
 
 import { logo } from './lib/ascii.js'
 
@@ -34,6 +35,7 @@ const ensureCommand = async ({ output, help }) => {
 
 program.register('db', async (args) => ensureCommand(await runDB(args)))
 program.register('service', async (args) => ensureCommand(await runService(args)))
+program.register('upgrade', upgrade)
 program.register('help', help.toStdout)
 program.register('help db', async (args) => runDB(['help', ...args]))
 program.register('help service', async (args) => runService(['help', ...args]))
