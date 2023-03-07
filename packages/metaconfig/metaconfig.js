@@ -21,15 +21,36 @@ async function analyze (opts) {
     Handler = require('./versions/0.16.0.js')
   } else {
     const url = new URL(data.$schema)
-    const res = url.pathname.match(/^\/schemas\/v(\d+\.\d+\.\d+)\/(.*)$/)
+    const res = url.pathname.match(/^\/schemas\/v(\d+)\.(\d+)\.(\d+)\/(.*)$/)
     if (!res) {
       throw new Error('unable to determine the version')
     }
 
     // The regexp should be tight enough to not worry about path
     // traversal attacks
-    const version = res[1]
-    Handler = require(`./versions/${version}.js`)
+
+    const major = res[1]
+    const minor = res[2]
+    const patch = res[3]
+
+    try {
+      // try to load the exact version
+      Handler = require(`./versions/${major}.${minor}.${patch}.js`)
+    } catch {}
+
+    try {
+      // try to load the path range
+      Handler ||= require(`./versions/${major}.${minor}.x.js`)
+    } catch {}
+
+    try {
+      // try to load the minor range
+      Handler ||= require(`./versions/${major}.x.x.js`)
+    } catch {}
+
+    if (!Handler) {
+      throw new Error('unable to determine the version')
+    }
   }
 
   return new Handler(data)

@@ -85,7 +85,7 @@ class ZeroSixteen {
 
     config.$schema = 'https://platformatic.dev/schemas/v0.17.0/' + this.kind
 
-    const ZeroSeventeen = require('./0.17.0.js')
+    const ZeroSeventeen = require('./0.17.x.js')
 
     return new ZeroSeventeen(config)
   }
