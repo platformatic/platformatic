@@ -24,6 +24,7 @@ async function analyze (opts) {
   }
 
   let Handler
+  let version
 
   if (data.$schema.indexOf('./') === 0) {
     // We assume v0.16
@@ -57,12 +58,14 @@ async function analyze (opts) {
       Handler ||= require(`./versions/${major}.x.x.js`)
     } catch {}
 
+    version = `${major}.${minor}.${patch}`
+
     if (!Handler) {
       throw new Error('unable to determine the version')
     }
   }
 
-  return new Handler(data, opts.file, format)
+  return new Handler({ config: data, path: opts.file, format, version })
 }
 
 module.exports.analyze = analyze

@@ -9,6 +9,7 @@ const JSON5 = require('json5')
 const { tmpdir } = require('os')
 const { join } = require('path')
 const { cp } = require('fs/promises')
+const pkg = require('../package.json')
 
 test('throws if no config or file is provided', async (t) => {
   await t.rejects(analyze({}), new Error('missing file or config to analyze'))
@@ -25,6 +26,7 @@ test('throws if $schema is not a matching URL', async (t) => {
 test('loads the previous semver minor for a patch release', async (t) => {
   const meta = await analyze({ config: { $schema: 'https://platformatic.dev/schemas/v0.17.1/db' } })
   t.type(meta, ZeroSeventeen)
+  t.equal(meta.version, '0.17.1')
 })
 
 test('throws if version is unknown', async (t) => {
@@ -75,4 +77,10 @@ test('writes a config file', async (t) => {
   t.equal(meta2.format, 'yaml')
   t.equal(meta2.path, meta.path)
   t.same(meta2.config, meta.config)
+})
+
+test('current version must be matched', async (t) => {
+  const version = pkg.version.replace('-dev', '')
+  const meta = await analyze({ config: { $schema: `https://platformatic.dev/schemas/v${version}/db` } })
+  t.equal(meta.version, version)
 })

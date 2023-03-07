@@ -1,9 +1,9 @@
 'use strict'
 
 class ZeroSeventeen {
-  constructor (config, path, format) {
+  constructor ({ config, path, format, version }) {
     this.config = config
-    this.version = '0.17.0'
+    this.version = version || '0.17.0'
     this.path = path
     this.format = format || 'json'
 

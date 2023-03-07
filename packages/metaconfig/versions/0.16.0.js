@@ -3,7 +3,7 @@
 const rfdc = require('rfdc')()
 
 class ZeroSixteen {
-  constructor (config, path, format) {
+  constructor ({ config, path, format }) {
     this.config = config
     this.version = '0.16.0'
     this.path = path
@@ -89,7 +89,7 @@ class ZeroSixteen {
 
     const ZeroSeventeen = require('./0.17.x.js')
 
-    return new ZeroSeventeen(config, this.path, this.format)
+    return new ZeroSeventeen({ config, path: this.path, format: this.format })
   }
 }
 
