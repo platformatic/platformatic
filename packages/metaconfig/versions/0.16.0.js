@@ -68,7 +68,7 @@ class ZeroSixteen {
           config.plugins.stopTimeout = original.plugin.stopTimeout
         }
 
-        if ('typescript' in  original.plugin) {
+        if ('typescript' in original.plugin) {
           // typescript is a boolean in 0.17.0
           config.plugins.typescript = !!original.plugin.typescript
         }
