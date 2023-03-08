@@ -45,8 +45,15 @@ async function processGraphQL ({ schema, name, folder }) {
 if (isMain(import.meta)) {
   const { _: [url], ...options } = parseArgs(process.argv.slice(2), {
     string: ['name', 'folder'],
+    boolean: ['typescript'],
     default: {
-      name: 'client'
+      name: 'client',
+      typescript: false
+    },
+    alias: {
+      n: 'name',
+      f: 'folder',
+      t: 'typescript'
     }
   })
   options.folder = options.folder || join(process.cwd(), options.name)

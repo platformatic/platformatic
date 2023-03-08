@@ -43,6 +43,7 @@ function generateImplementationFromOpenAPI ({ schema, name }) {
   writer.writeLine(`${functionName}[Symbol.for('skip-override')] = true`)
   writer.blankLine()
   writer.writeLine(`module.exports = ${functionName}`)
+  writer.writeLine(`module.exports.default = ${functionName}`)
   return writer.toString()
 }
 
@@ -89,11 +90,11 @@ function generateTypesFromOpenAPI ({ schema, name }) {
         const addedProps = new Set()
         if (parameters) {
           for (const parameter of parameters) {
-            const { name, schema } = parameter
+            const { name, schema, required } = parameter
             if (addedProps.has(name)) {
               continue
             }
-            writeProperty(interfaces, name, schema, addedProps)
+            writeProperty(interfaces, name, schema, addedProps, required)
           }
         }
         if (requestBody) {
@@ -192,16 +193,23 @@ function writeObjectProperties (writer, schema, spec, addedProps) {
       if (addedProps.has(key)) {
         continue
       }
-      writeProperty(writer, key, value, addedProps)
+      const required = schema.required && schema.required.includes(key)
+      console.log(key, value, required)
+      writeProperty(writer, key, value, addedProps, required)
     }
   } else if (schema.type === 'array') {
     throw new Error('Array not supported')
   }
 }
 
-function writeProperty (writer, key, value, addedProps) {
+function writeProperty (writer, key, value, addedProps, required = true) {
   addedProps.add(key)
-  writer.quote(key)
+  if (required) {
+    writer.quote(key)
+  } else {
+    writer.quote(key)
+    writer.write('?')
+  }
   if (value.type === 'array') {
     writer.write(`: Array<${JSONSchemaToTsType(value.items.type)}>;`)
   } else {

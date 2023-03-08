@@ -1,9 +1,9 @@
 {
   "server": {
     "hostname": "127.0.0.1",
-    "port": "0",
+    "port": "3042",
     "logger": {
-      "level": "error"
+      "level": "info"
     }
   },
   "core": {
