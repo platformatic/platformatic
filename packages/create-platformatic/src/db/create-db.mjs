@@ -47,9 +47,9 @@ function getTsConfig (outDir) {
 const getPluginName = (isTypescript) => isTypescript === true ? 'plugin.ts' : 'plugin.js'
 const TS_OUT_DIR = 'dist'
 
-function generateConfig (migrations, plugin, types, typescript) {
+function generateConfig (migrations, plugin, types, typescript, version) {
   const config = {
-    $schema: './platformatic.db.schema.json',
+    $schema: `https://platformatic.dev/schemas/v${version}/db`,
     server: {
       hostname: '{PLT_SERVER_HOSTNAME}',
       port: '{PORT}',
@@ -129,11 +129,11 @@ async function generatePluginWithTypesSupport (logger, currentDir, isTypescript)
   logger.info(`Plugin file created at ${relative(currentDir, pluginPath)}`)
 }
 
-async function createDB ({ hostname, database = 'sqlite', port, migrations = 'migrations', plugin = true, types = true, typescript = false }, logger, currentDir) {
+async function createDB ({ hostname, database = 'sqlite', port, migrations = 'migrations', plugin = true, types = true, typescript = false }, logger, currentDir, version) {
   const createMigrations = !!migrations // If we don't define a migrations folder, we don't create it
   const accessibleConfigFilename = await findDBConfigFile(currentDir)
   if (accessibleConfigFilename === undefined) {
-    const config = generateConfig(migrations, plugin, types, typescript)
+    const config = generateConfig(migrations, plugin, types, typescript, version)
     await writeFile(join(currentDir, 'platformatic.db.json'), JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.db.json successfully created.')
 

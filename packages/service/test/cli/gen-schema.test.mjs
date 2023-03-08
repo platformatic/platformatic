@@ -6,6 +6,8 @@ import { generateJsonSchemaConfig } from '../../lib/gen-schema.js'
 import { join } from 'path'
 import jsonLanguageService from 'vscode-json-languageservice'
 
+const pkg = JSON.parse(await fs.readFile('../../package.json', 'utf8'))
+
 test('generateJsonSchemaConfig generates the file', async (t) => {
   const tmpDir = await mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
   process.chdir(tmpDir)
@@ -17,7 +19,7 @@ test('generateJsonSchemaConfig generates the file', async (t) => {
   t.has(required, ['server'])
   t.has(additionalProperties, { watch: {} })
   const { $id, type } = schema
-  t.equal($id, 'https://schemas.platformatic.dev/service')
+  t.equal($id, `https://platformatic.dev/schemas/v${pkg.version}/service`)
   t.equal(type, 'object')
 
   const languageservice = jsonLanguageService.getLanguageService({
@@ -29,7 +31,7 @@ test('generateJsonSchemaConfig generates the file', async (t) => {
   languageservice.configure({ allowComments: false, schemas: [{ fileMatch: ['*.data.json'], uri: $id }] })
 
   const jsonContent = `{
-    "$schema": "https://schemas.platformatic.dev/service",
+    "$schema": "https://platformatic.dev/schemas/v${pkg.version}/service",
     "server": {
       "hostname": "127.0.0.1",
       "port": 3000

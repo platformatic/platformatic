@@ -18,6 +18,8 @@ const moviesMigrationUndo = `
 DROP TABLE movies;
 `
 
+const pkg = JSON.parse(await fs.readFile('../../package.json', 'utf8'))
+
 t.test('run db init with default options', async (t) => {
   const pathToFolder = await fs.mkdtemp(path.join(tmpdir(), 'init-1'))
   const pathToDbConfigFile = path.join(pathToFolder, 'platformatic.db.json')
@@ -35,7 +37,7 @@ t.test('run db init with default options', async (t) => {
 
   const { server, core, migrations, $schema } = dbConfig
 
-  t.equal($schema, './platformatic.db.schema.json')
+  t.equal($schema, `https://platformatic.dev/schemas/v${pkg.version}/db`)
 
   t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   t.equal(server.port, '{PORT}')
@@ -58,7 +60,7 @@ t.test('run db init with default options', async (t) => {
   t.equal(migrationFileUndo, moviesMigrationUndo)
 
   const { $id, type, required } = parseConfigSchema
-  t.equal($id, 'https://schemas.platformatic.dev/db')
+  t.equal($id, `https://platformatic.dev/schemas/v${pkg.version}/db`)
   t.equal(type, 'object')
   t.has(required, ['core', 'server'])
 })

@@ -6,7 +6,7 @@
 
 1. Clone this repository
 2. Install pnpm `npm i pnpm --location=global`
-3. Install dependencies for root project: `pnpm i`
+3. Install dependencies for root project: `pnpm i` (if using `volta` run before `volta install pnpm`)
 4. Install docker with Docker Desktop or [Colima](https://github.com/abiosoft/colima)
 
 The CLI package is now available at **./node_modules/.bin/platformatic**. Use

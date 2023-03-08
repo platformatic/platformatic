@@ -1,6 +1,6 @@
 {
   "name": "create-platformatic",
-  "version": "0.16.0",
+  "version": "0.17.0-dev",
   "description": "Create platformatic-db interactive tool",
   "repository": {
     "type": "git",
@@ -16,6 +16,7 @@
     "test": "standard | snazzy && NODE_OPTIONS=--loader=esmock c8 --100 tap --no-coverage test/*test.mjs test/*/*test.mjs",
     "lint": "standard | snazzy"
   },
+  "license": "Apache-2.0",
   "author": "Marco Piraccini <marco.piraccini@gmail.com>",
   "dependencies": {
     "chalk": "^5.2.0",
