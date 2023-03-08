@@ -8,8 +8,10 @@ import { dirname, join } from 'path'
 
 const pkg = JSON.parse(await readFile(join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8'))
 
+let count = 0
+
 test('writes a config file', async (t) => {
-  const dest = join(tmpdir(), `test-cli-${process.pid}-1`)
+  const dest = join(tmpdir(), `test-cli-${process.pid}-${count++}`)
 
   await cp(
     join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'v0.16.0.db.json'),
@@ -25,7 +27,7 @@ test('writes a config file', async (t) => {
 })
 
 test('writes a config file with a config option', async (t) => {
-  const dest = join(tmpdir(), `test-cli-${process.pid}-1`)
+  const dest = join(tmpdir(), `test-cli-${process.pid}-${count++}`)
 
   await cp(
     join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'v0.16.0.db.json'),
