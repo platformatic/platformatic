@@ -100,7 +100,7 @@ function capitalize (str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
-async function buildGraphQLClient (options) {
+async function buildGraphQLClient (options, logger) {
   options = options || {}
   if (!options.url) {
     throw new Error('options.url is required')
@@ -108,6 +108,7 @@ async function buildGraphQLClient (options) {
 
   async function graphql ({ query, variables }) {
     const headers = this[kHeaders]
+    const log = this.log || logger
     const res = await request(options.url, {
       method: 'POST',
       headers: {
@@ -119,11 +120,12 @@ async function buildGraphQLClient (options) {
         variables
       })
     })
+    const json = await res.body.json()
     /* istanbul ignore if */
     if (res.statusCode !== 200) {
-      throw new Error('invalid status code ' + res.statusCode)
+      log.error({ statusCode: res.statusCode, json }, 'request to client failed')
+      throw new Error('request to client failed')
     }
-    const json = await res.body.json()
     /* istanbul ignore if */
     if (json.errors) {
       const e = new Error(json.errors.map(e => e.message).join(''))
@@ -158,7 +160,7 @@ async function plugin (app, opts) {
   if (opts.type === 'openapi') {
     client = await buildOpenAPIClient(opts)
   } else if (opts.type === 'graphql') {
-    client = await buildGraphQLClient(opts)
+    client = await buildGraphQLClient(opts, app.log)
   } else {
     throw new Error('opts.type must be either "openapi" or "graphql"')
   }

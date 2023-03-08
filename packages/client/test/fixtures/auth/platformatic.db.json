@@ -18,7 +18,7 @@
     "dir": "./migrations",
     "autoApply": true
   },
-  "plugin": {
-    "path": "./plugin.js"
+  "plugins": {
+    "paths": ["./plugin.js"]
   }
 }

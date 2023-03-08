@@ -1,6 +1,7 @@
 import CodeBlockWriter from 'code-block-writer'
 import jsonpointer from 'jsonpointer'
 import { generateOperationId } from '../index.js'
+import { capitalize } from './utils.mjs'
 
 export function processOpenAPI ({ schema, name }) {
   return {
@@ -235,8 +236,4 @@ function JSONSchemaToTsType (type) {
     default:
       return 'any'
   }
-}
-
-function capitalize (str) {
-  return str.charAt(0).toUpperCase() + str.slice(1)
 }

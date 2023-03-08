@@ -1,9 +1,9 @@
 {
   "server": {
     "hostname": "127.0.0.1",
-    "port": "3042",
+    "port": "0",
     "logger": {
-      "level": "info"
+      "level": "error"
     }
   },
   "core": {
@@ -15,7 +15,7 @@
     "dir": "./migrations",
     "autoApply": true
   },
-  "plugin": {
-    "path": "./plugin.js"
+  "plugins": {
+    "paths": ["./plugin.js"]
   }
 }
