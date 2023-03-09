@@ -51,7 +51,7 @@ module.exports = async function (fastify, opts) {
 }
 `
 
-async function createService ({ hostname, port }, logger, currentDir = process.cwd(), version) {
+async function createService ({ hostname, port, typescript = false }, logger, currentDir = process.cwd(), version) {
   const accessibleConfigFilename = await findServiceConfigFile(currentDir)
 
   if (accessibleConfigFilename === undefined) {
