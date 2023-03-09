@@ -1,0 +1,35 @@
+{
+  "$schema": "./platformatic.db.schema.json",
+  "server": {
+    "hostname": "{PLT_SERVER_HOSTNAME}",
+    "port": "{PORT}",
+    "logger": {
+      "level": "{PLT_SERVER_LOGGER_LEVEL}"
+    }
+  },
+  "core": {
+    "connectionString": "{DATABASE_URL}",
+    "graphql": true,
+    "openapi": true,
+    "events": false
+  },
+  "authorization": {
+    "adminSecret": "{PLT_ADMIN_SECRET}",
+    "rules": [{
+      "role": "anonymous",
+      "entity": "queue",
+      "find": false,
+      "save": false,
+      "delete": false
+    }, {
+      "role": "anonymous",
+      "entity": "message",
+      "find": false,
+      "save": false,
+      "delete": false
+    }]
+  },
+  "migrations": {
+    "dir": "migrations"
+  }
+}
