@@ -326,3 +326,23 @@ jobs:
         node ./packages/cli/cli.js db --config=./packages/db-dashboard/test/e2e/fixtures/e2e-test-config.json &
         sleep 5 &&
         cd packages/db-dashboard && pnpm run test:e2e
+
+  dependency-check:
+    needs: setup-node_modules
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        node-version: [18]
+        os: [ubuntu-latest, windows-latest]
+    steps:
+    - uses: actions/checkout@v3
+    - uses: pnpm/action-setup@v2.2.4
+    - uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'pnpm'
+    - name: pnpm install
+      run: pnpm install --production --frozen-lockfile
+    - name: CLI must load
+      run: cd packages/cli && node cli.js
