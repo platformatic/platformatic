@@ -2,6 +2,7 @@
 
 const MQEmitter = require('mqemitter')
 const fp = require('fastify-plugin')
+const camelcase = require('camelcase')
 const { PassThrough } = require('stream')
 const MQEmitterRedis = require('mqemitter-redis')
 const { promisify } = require('util')
@@ -26,7 +27,7 @@ function setupEmitter ({ log, mq, mapper, connectionString }) {
     if (entity.primaryKeys.size !== 1) {
       continue
     }
-    const primaryKey = entity.primaryKeys.values().next().value
+    const primaryKey = camelcase(entity.primaryKeys.values().next().value)
     mapper.addEntityHooks(entityName, {
       async save (original, data) {
         const ctx = data.ctx

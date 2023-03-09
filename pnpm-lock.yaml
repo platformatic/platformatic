@@ -520,6 +520,7 @@ importers:
   packages/sql-events:
     specifiers:
       '@platformatic/sql-mapper': workspace:*
+      camelcase: ^6.3.0
       fastify: ^4.13.0
       fastify-plugin: ^4.5.0
       ioredis: ^5.3.1
@@ -530,6 +531,7 @@ importers:
       tap: ^16.3.4
       tsd: ^0.26.0
     dependencies:
+      camelcase: 6.3.0
       fastify-plugin: 4.5.0
       mqemitter: 5.0.0
       mqemitter-redis: 5.0.0
