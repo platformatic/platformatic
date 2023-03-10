@@ -11,7 +11,7 @@ npm install @platformatic/metaconfig
 ## Usage
 
 ```javascript
-import { analyze, write } from '@platformatic/multiconfig'
+import { analyze, write } from '@platformatic/metaconfig'
 
 const meta = await analyze({ file: 'path/to/platformatic.db.json' }))
 
