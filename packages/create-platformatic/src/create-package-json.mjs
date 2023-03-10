@@ -7,7 +7,7 @@ const packageJsonTemplate = (addTSBuild = false) => (`\
 {
   "scripts": {
     ${addTSBuild
-? ` "start": "yarn clean && platformatic {type} start",
+? `"start": "yarn clean && platformatic {type} start",
     "clean": "rm -fr ./dist",
     "build": "npx tsc"`
 : '"start": "platformatic {type} start"'}
