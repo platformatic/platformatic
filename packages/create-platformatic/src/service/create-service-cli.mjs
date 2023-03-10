@@ -14,6 +14,7 @@ import ora from 'ora'
 import createService from './create-service.mjs'
 import askProjectDir from '../ask-project-dir.mjs'
 import { askCreateGHAction } from '../ghaction.mjs'
+import { getRunPackageManagerInstall, getUseTypescript } from '../cli-options.mjs'
 import mkdirp from 'mkdirp'
 
 export const createReadme = async (logger, dir = '.') => {
@@ -51,20 +52,10 @@ const createPlatformaticService = async (_args) => {
 
   const projectDir = await askProjectDir(logger, '.')
 
-  const { runPackageManagerInstall, useTypescript } = await inquirer.prompt([{
-    type: 'list',
-    name: 'runPackageManagerInstall',
-    message: `Do you want to run ${pkgManager} install?`,
-    default: true,
-    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-  }, {
-    type: 'list',
-    when: !args.typescript,
-    name: 'useTypescript',
-    message: 'Do you want to use TypeScript?',
-    default: args.typescript,
-    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-  }])
+  const { runPackageManagerInstall, useTypescript } = await inquirer.prompt([
+    getRunPackageManagerInstall(pkgManager),
+    getUseTypescript(args.typescript)
+  ])
 
   // Create the project directory
   await mkdirp(projectDir)

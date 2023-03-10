@@ -13,6 +13,7 @@ import ora from 'ora'
 import createDB from './create-db.mjs'
 import askProjectDir from '../ask-project-dir.mjs'
 import { askCreateGHAction } from '../ghaction.mjs'
+import { getRunPackageManagerInstall, getUseTypescript } from '../cli-options.mjs'
 import mkdirp from 'mkdirp'
 
 export const createReadme = async (logger, dir = '.') => {
@@ -75,14 +76,9 @@ const createPlatformaticDB = async (_args) => {
     message: 'Do you want to create a plugin?',
     default: args.plugin,
     choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-  }, {
-    type: 'list',
-    when: !args.typescript,
-    name: 'useTypescript',
-    message: 'Do you want to use TypeScript?',
-    default: args.typescript,
-    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-  }])
+  },
+  getUseTypescript(args.typescript)
+  ])
 
   // Create the project directory
   await mkdirp(projectDir)
@@ -110,13 +106,9 @@ const createPlatformaticDB = async (_args) => {
   await createGitignore(logger, projectDir)
   await createReadme(logger, projectDir)
 
-  const { runPackageManagerInstall } = await inquirer.prompt([{
-    type: 'list',
-    name: 'runPackageManagerInstall',
-    message: `Do you want to run ${pkgManager} install?`,
-    default: true,
-    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-  }])
+  const { runPackageManagerInstall } = await inquirer.prompt([
+    getRunPackageManagerInstall(pkgManager)
+  ])
 
   if (runPackageManagerInstall) {
     const spinner = ora('Installing dependencies...').start()
