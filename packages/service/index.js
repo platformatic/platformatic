@@ -60,7 +60,7 @@ async function platformaticService (app, opts, toLoad = []) {
 
   if (opts.plugins) {
     // if we don't have a fullPath, let's assume we are in a test and we can use the current working directory
-    const configPath = app.platformatic.configManager.fullPath || process.cwd()
+    const configPath = app.platformatic.configManager.fullPath || join(process.cwd(), 'platformatic.db.json')
     const tsConfigPath = join(dirname(configPath), 'tsconfig.json')
     /* c8 ignore next 21 */
     if (await isFileAccessible(tsConfigPath)) {
