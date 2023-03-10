@@ -86,6 +86,7 @@ Welcome to Platformatic. Available commands are:
 * help <command> - shows more information about a command.
 * db - start Platformatic DB; type `platformatic db help` to know more.
 * service - start Platformatic Service; type `platformatic service help` to know more.
+* upgrade - upgrade the Platformatic configuration to the latest version.
 ```
 
 
@@ -324,8 +325,7 @@ By sending the SIGUSR2 signal, the server can be reloaded.
 
 Options:
 
-  * `-c, --config FILE` - Specify a configuration file to use
-  * `--hot-reload <boolean>` - All individual plugin hot reload settings will be overridden by global hot reload
+  -c, --config FILE      Specify a configuration file to use
 
 If not specified, the configuration specified will be loaded from `platformatic.db.json`,
 `platformatic.db.yml`, or `platformatic.db.tml` in the current directory. You can find more details about
@@ -439,8 +439,8 @@ save the following as `platformatic.service.json`:
       "level": "info"
     }
   },
-  "plugins": {
-    "paths": ["./plugin.js"]
+  "plugin": {
+    "path": "./plugin.js"
   }
 }
 ```

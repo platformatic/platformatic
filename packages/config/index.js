@@ -1,15 +1,13 @@
 'use strict'
 
-const { basename, extname, join, resolve, dirname } = require('path')
+const { basename, join, resolve, dirname } = require('path')
 const { readFile, access } = require('fs/promises')
 const EventEmitter = require('events')
 const Ajv = require('ajv')
 const fastifyPlugin = require('./lib/plugin')
-const YAML = require('yaml')
-const TOML = require('@iarna/toml')
-const JSON5 = require('json5')
 const dotenv = require('dotenv')
 const { FileWatcher } = require('@platformatic/utils')
+const { getParser } = require('@platformatic/metaconfig')
 
 class ConfigManager extends EventEmitter {
   constructor (opts) {
@@ -25,7 +23,7 @@ class ConfigManager extends EventEmitter {
       this.fullPath = resolve(opts.source)
       const allowToWatch = opts.allowToWatch || []
       allowToWatch.push(basename(this.fullPath))
-      this._parser = this._getParser()
+      this._parser = getParser(this.fullPath)
 
       this.fileWatcher = new FileWatcher({
         path: dirname(this.fullPath),
@@ -73,23 +71,6 @@ class ConfigManager extends EventEmitter {
       }
     })
     this.fileWatcher.startWatching()
-  }
-
-  _getParser () {
-    switch (extname(this.fullPath)) {
-      case '.yaml':
-      case '.yml':
-        return YAML.parse
-      case '.json':
-        return JSON.parse
-      case '.json5':
-        return JSON5.parse
-      case '.toml':
-      case '.tml':
-        return TOML.parse
-      default:
-        throw new Error('Invalid config file extension. Only yml, yaml, json, json5, toml, tml are supported.')
-    }
   }
 
   purgeEnv (providedEnvironment) {

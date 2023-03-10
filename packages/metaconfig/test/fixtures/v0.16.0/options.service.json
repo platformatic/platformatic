@@ -1,0 +1,18 @@
+{
+  "$schema": "./platformatic.service.schema.json",
+  "server": {
+    "hostname": "{PLT_SERVER_HOSTNAME}",
+    "port": "{PORT}",
+    "logger": {
+      "level": "{PLT_SERVER_LOGGER_LEVEL}"
+    }
+  },
+  "plugin": {
+    "path": "plugin.js",
+    "hotReload": true,
+    "stopTimeout": 10000,
+    "options": {
+      "something": "else"
+    }
+  }
+}

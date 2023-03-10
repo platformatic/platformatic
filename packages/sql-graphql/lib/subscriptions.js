@@ -1,6 +1,7 @@
 'use strict'
 
 const graphql = require('graphql')
+const camelcase = require('camelcase')
 
 function setupSubscriptions (app, metaMap, resolvers, ignores) {
   const fields = {}
@@ -16,7 +17,7 @@ function setupSubscriptions (app, metaMap, resolvers, ignores) {
       continue
     }
     const entity = app.platformatic.entities[field.singularName]
-    const primaryKey = entity.primaryKeys.values().next().value
+    const primaryKey = camelcase(entity.primaryKeys.values().next().value)
     const { type } = meta
     const saved = `${field.singularName}Saved`
     fields[saved] = {

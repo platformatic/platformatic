@@ -1,4 +1,4 @@
-![The Platformatic logo](../../assets/banner-light.png 'The Platformatic logo')
+![The Platformatic logo](https://github.com/platformatic/platformatic/raw/HEAD/assets/banner-light.png 'The Platformatic logo')
 
 <p align="center">
   <br/>
