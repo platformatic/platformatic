@@ -111,11 +111,13 @@ function generateImplementationFromGraqhQL ({ name, url }) {
 
   const functionName = `generate${capitalize(name)}ClientPlugin`
   writer.write(`async function ${functionName} (app, opts)`).block(() => {
+    writer.writeLine('const url = new URL(opts.url)')
+    writer.writeLine(`url.pathname = '${url.pathname}'`)
     writer.write('app.register(pltClient, ').inlineBlock(() => {
       writer.writeLine('type: \'graphql\',')
       writer.writeLine(`name: '${name}',`)
       writer.writeLine(`file: join(__dirname, '${name}.schema.graphql'),`)
-      writer.writeLine(`url: opts.url + '${url.pathname}'`)
+      writer.writeLine('url: url.toString()')
     })
     writer.write(')')
   })
@@ -158,7 +160,14 @@ function writeProperty (writer, key, value, addedProps, required = true) {
   if (value.kind === 'SCALAR') {
     writer.write(`: ${GraphQLScalarToTsType(value.name)};`)
     writer.newLine()
+  } else if (value.kind === 'LIST') {
+    writer.write(`: Array<${capitalize(value.ofType.name)}>;`)
+    writer.newLine()
+  } else if (value.kind === 'OBJECT') {
+    writer.write(`: ${capitalize(value.name)};`)
+    writer.newLine()
   } else {
+    console.log(value)
     throw new Error(`Unknown type ${value.kind}`)
   }
   writer.newLine()
