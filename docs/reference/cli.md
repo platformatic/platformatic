@@ -413,7 +413,7 @@ Update the config schema file:
 * `schema config` - update the JSON schema config available on `platformatic.service.schema.json`
 
 Your configuration on `platformatic.service.json` has a schema defined to improve the developer experience and avoid mistakes when updating the configuration of Platformatic Service.
-When you run `platformatic service init`, a new JSON `$schema` property is added in `platformatic.service.json`. This can allow your IDE to add suggestions (f.e. mandatory/missing fields, types, default values) by opening the config in `platformatic.service.json`.
+When you initialize a new Platformatic service (f.e. running `npm create platformatic@latest`), a new JSON `$schema` property is added in the `platformatic.service.json` config. This can allow your IDE to add suggestions (f.e. mandatory/missing fields, types, default values) by opening the config in `platformatic.service.json`.
 Running `platformatic service schema config` you can update your schema so that it matches well the latest changes available on your config.
 
 
