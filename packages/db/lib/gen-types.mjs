@@ -110,7 +110,12 @@ declare module 'fastify' {
 
 async function generateGlobalTypesFile (entities, config) {
   const globalTypes = await generateGlobalTypes(entities, config)
-  await writeFileIfChanged(join(DEFAULT_TYPES_FOLDER_PATH, '..', 'global.d.ts'), globalTypes)
+
+  const typesPath = getTypesFolderPath(config)
+  const typesRelativePath = relative(typesPath, process.cwd())
+  const fileNameOrThen = join(typesPath, typesRelativePath, 'global.d.ts')
+
+  await writeFileIfChanged(fileNameOrThen, globalTypes)
 }
 
 async function getDependencyVersion (dependencyName) {
