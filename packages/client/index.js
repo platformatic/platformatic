@@ -30,6 +30,7 @@ async function buildOpenAPIClient (options) {
     throw new Error('options.url is required')
   }
 
+  /* c8 ignore next 1 */
   const baseUrl = spec.servers?.[0]?.url || computeURLWithoutPath(options.url)
   client[kHeaders] = options.headers || {}
 

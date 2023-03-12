@@ -237,3 +237,13 @@ test('req decorator with OpenAPI and auth', async ({ teardown, same, rejects }) 
     title: 'The Matrix'
   })
 })
+
+test('wrong type', async ({ teardown, same, rejects }) => {
+  const app = Fastify()
+
+  await rejects(app.register(client, {
+    type: 'foo',
+    url: 'http://localhost:3042/documentation/json',
+    name: 'client'
+  }))
+})

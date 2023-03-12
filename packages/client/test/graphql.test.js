@@ -153,3 +153,22 @@ test('bad query', async ({ teardown, same, rejects }) => {
     query: 'foo'
   }))
 })
+
+test('error within resolver', async ({ teardown, same, rejects }) => {
+  try {
+    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const server = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
+  teardown(server.stop)
+  await server.listen()
+
+  const client = await buildGraphQLClient({
+    url: `${server.url}/graphql`
+  })
+
+  await rejects(client.graphql({
+    query: '{ hello }'
+  }))
+})

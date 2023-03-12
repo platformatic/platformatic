@@ -19,4 +19,18 @@ module.exports = async function (app) {
   }, async (request, reply) => {
     return { hello: request.params.name }
   })
+
+  app.graphql.extendSchema(`
+    extend type Query {
+      hello: String!
+    }
+  `)
+
+  app.graphql.defineResolvers({
+    Query: {
+      hello: async (root, args, context, info) => {
+        throw new Error('hello error')
+      }
+    }
+  })
 }
