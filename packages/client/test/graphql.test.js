@@ -134,3 +134,22 @@ test('build basic client from url with custom headers', async ({ teardown, same,
     }
   })
 })
+
+test('bad query', async ({ teardown, same, rejects }) => {
+  try {
+    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const server = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
+  teardown(server.stop)
+  await server.listen()
+
+  const client = await buildGraphQLClient({
+    url: `${server.url}/graphql`
+  })
+
+  await rejects(client.graphql({
+    query: 'foo'
+  }))
+})

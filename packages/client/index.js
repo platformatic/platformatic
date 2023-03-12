@@ -121,13 +121,12 @@ async function buildGraphQLClient (options, logger) {
       })
     })
     const json = await res.body.json()
-    /* istanbul ignore if */
     if (res.statusCode !== 200) {
-      log.error({ statusCode: res.statusCode, json }, 'request to client failed')
+      log.warn({ statusCode: res.statusCode, json }, 'request to client failed')
       throw new Error('request to client failed')
     }
-    /* istanbul ignore if */
     if (json.errors) {
+      log.warn({ errors: json.errors }, 'errors in graphql response')
       const e = new Error(json.errors.map(e => e.message).join(''))
       e.errors = json.errors
       throw e

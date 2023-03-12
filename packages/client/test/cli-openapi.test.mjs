@@ -233,3 +233,27 @@ app.listen({ port: 0 })
     title: 'foo'
   })
 })
+
+test('no such file', async ({ rejects, teardown }) => {
+  try {
+    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const server = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+
+  await server.listen()
+  teardown(server.stop)
+
+  const dir = join(tmpdir(), `platformatic-client-${process.pid}-${counter++}`)
+  await fs.mkdir(dir)
+  const cwd = process.cwd()
+  process.chdir(dir)
+  teardown(() => process.chdir(cwd))
+  teardown(() => fs.rm(dir, { recursive: true }))
+  await rejects(execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), `${server.url}/foo/bar`, '--name', 'movies']))
+})
+
+test('no such file', async ({ rejects, teardown }) => {
+  await rejects(execa('node', [desm.join(import.meta.url, '..', 'cli.mjs')]))
+})
