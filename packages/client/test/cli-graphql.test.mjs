@@ -174,7 +174,7 @@ app.listen({ port: 0 });
 
 test('graphql client generation with relations (typescript)', async ({ teardown, comment, same, match }) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies-quotes', 'db.sqlite'))
   } catch {
     // noop
   }

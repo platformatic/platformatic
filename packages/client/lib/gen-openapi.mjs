@@ -92,9 +92,8 @@ function generateTypesFromOpenAPI ({ schema, name }) {
         if (parameters) {
           for (const parameter of parameters) {
             const { name, schema, required } = parameter
-            if (addedProps.has(name)) {
-              continue
-            }
+            // We do not check for addedProps here because it's the first
+            // group of properties
             writeProperty(interfaces, name, schema, addedProps, required)
           }
         }
@@ -106,6 +105,9 @@ function generateTypesFromOpenAPI ({ schema, name }) {
       let isResponseArray = false
       interfaces.write(`interface ${operationResponseName}`).block(() => {
         const success = responses['200']
+        // The following block it's impossible to happen with well-formed
+        // OpenAPI.
+        /* c8 ignore next 3 */
         if (!success) {
           throw new Error(`Could not find 200 response for ${operationId}`)
         }
@@ -163,12 +165,18 @@ function generateTypesFromOpenAPI ({ schema, name }) {
 function writeContent (writer, content, spec, addedProps) {
   let isResponseArray = false
   if (content) {
-    let added = false
     for (const [contentType, body] of Object.entries(content)) {
-      if (contentType !== 'application/json') {
+      // We ignore all non-JSON endpoints for now
+      // TODO: support other content types
+      /* c8 ignore next 3 */
+      if (contentType.indexOf('application/json') !== 0) {
         continue
       }
-      added = true
+
+      // This is likely buggy as there can be multiple responses for different
+      // status codes. This is currently not possible with Platformatic DB
+      // services so we skip for now.
+      // TODO: support different schemas for different status codes
       if (body.schema.type === 'array') {
         isResponseArray = true
         writeObjectProperties(writer, body.schema.items, spec, addedProps)
@@ -176,10 +184,6 @@ function writeContent (writer, content, spec, addedProps) {
         writeObjectProperties(writer, body.schema, spec, addedProps)
       }
       break
-    }
-
-    if (!added) {
-      throw new Error('Could not find application/json body')
     }
   }
   return isResponseArray

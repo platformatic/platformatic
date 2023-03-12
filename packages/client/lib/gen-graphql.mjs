@@ -133,6 +133,7 @@ function generateImplementationFromGraqhQL ({ name, url }) {
 }
 
 function GraphQLScalarToTsType (type) {
+  console.log(type)
   switch (type) {
     case 'String':
       return 'string'
@@ -143,7 +144,9 @@ function GraphQLScalarToTsType (type) {
     case 'Float':
       return 'number'
     case 'Date':
-      return 'any'
+      return 'string'
+    case 'DateTime':
+      return 'string'
     default:
       throw new Error(`Unknown type ${type}`)
   }
