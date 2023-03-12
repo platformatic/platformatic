@@ -10,7 +10,7 @@ import { mapSQLEntityToJSONSchema } from '@platformatic/sql-json-schema-mapper'
 import { setupDB, isFileAccessible } from './utils.js'
 import loadConfig from './load-config.mjs'
 
-const TYPES_FOLDER_PATH = resolve(process.cwd(), 'types')
+const DEFAULT_TYPES_FOLDER_PATH = resolve(process.cwd(), 'types')
 
 const GLOBAL_TYPES_TEMPLATE = `\
 import { Entity } from '@platformatic/sql-mapper';
@@ -101,7 +101,7 @@ declare module 'fastify' {
 
 async function generateGlobalTypesFile (entities, config) {
   const globalTypes = await generateGlobalTypes(entities, config)
-  await writeFileIfChanged(join(TYPES_FOLDER_PATH, '..', 'global.d.ts'), globalTypes)
+  await writeFileIfChanged(join(DEFAULT_TYPES_FOLDER_PATH, '..', 'global.d.ts'), globalTypes)
 }
 
 async function getDependencyVersion (dependencyName) {
@@ -178,11 +178,11 @@ async function writeFileIfChanged (filename, content) {
 async function execute (logger, _, config) {
   const { db, entities } = await setupDB(logger, config.core)
 
-  const isTypeFolderExists = await isFileAccessible(TYPES_FOLDER_PATH)
+  const isTypeFolderExists = await isFileAccessible(DEFAULT_TYPES_FOLDER_PATH)
   if (isTypeFolderExists) {
-    await removeUnusedTypeFiles(entities, TYPES_FOLDER_PATH)
+    await removeUnusedTypeFiles(entities, DEFAULT_TYPES_FOLDER_PATH)
   } else {
-    await mkdir(TYPES_FOLDER_PATH)
+    await mkdir(DEFAULT_TYPES_FOLDER_PATH)
   }
 
   let count = 0
@@ -192,14 +192,14 @@ async function execute (logger, _, config) {
     count++
     const types = await generateEntityType(entity)
 
-    const pathToFile = join(TYPES_FOLDER_PATH, entity.name + '.d.ts')
+    const pathToFile = join(DEFAULT_TYPES_FOLDER_PATH, entity.name + '.d.ts')
     const isTypeChanged = await writeFileIfChanged(pathToFile, types)
 
     if (isTypeChanged) {
       logger.info(`Generated type for ${entity.name} entity.`)
     }
   }
-  const pathToFile = join(TYPES_FOLDER_PATH, 'index.d.ts')
+  const pathToFile = join(DEFAULT_TYPES_FOLDER_PATH, 'index.d.ts')
   // maybe better to check here for changes
   const content = await generateEntityGroupExport(entitiesNames)
   const isTypeChanged = await writeFileIfChanged(pathToFile, content)
