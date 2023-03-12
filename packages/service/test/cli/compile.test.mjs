@@ -253,3 +253,18 @@ t.test('should compile typescript plugin with start command with different cwd',
   }
   t.fail('should compile typescript plugin with start command')
 })
+
+t.test('valid tsconfig file inside an inner folder', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-7/inner-folder')
+
+  await cp(testDir, cwd, { recursive: true })
+
+  try {
+    await execa('node', [cliPath, 'compile'], { cwd })
+  } catch (err) {
+    t.fail('should not catch any error')
+  }
+
+  t.pass()
+})
