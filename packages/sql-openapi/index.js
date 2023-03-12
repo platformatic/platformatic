@@ -79,7 +79,7 @@ async function setupOpenAPI (app, opts) {
       app.register(manyToMany, {
         entity,
         prefix: localPrefix,
-        ignore
+        ignore: ignore[entity.pluralName] || {}
       })
     }
   }

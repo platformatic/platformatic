@@ -37,6 +37,16 @@ module.exports.clear = async function (db, sql) {
   }
 
   try {
+    await db.query(sql`DROP TABLE pages_tags`)
+  } catch {
+  }
+
+  try {
+    await db.query(sql`DROP TABLE tags`)
+  } catch {
+  }
+
+  try {
     await db.query(sql`DROP TABLE pages`)
   } catch (err) {
   }
