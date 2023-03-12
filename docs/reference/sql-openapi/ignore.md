@@ -18,7 +18,24 @@ To ignore individual fields:
 app.register(require('@platformatic/sql-openapi'), {
   ignore: {
     categories: {
-      name: true
+      fields: {
+        name: true
+      }
+    }
+  }
+})
+```
+
+To ignore individual routes: 
+
+```javascript
+app.register(require('@platformatic/sql-openapi'), {
+  ignore: {
+    categories: {
+      routes: {
+        GET: ['/categories/'],
+        POST: ['/categories/:id']
+      }
     }
   }
 })

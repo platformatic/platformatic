@@ -90,7 +90,27 @@ const core = {
             type: 'object',
             // TODO add support for column-level ignore
             additionalProperties: {
-              type: 'boolean'
+              oneOf: [{
+                type: 'boolean'
+              }, {
+                type: 'object',
+                properties: {
+                  routes: {
+                    type: 'object',
+                    additionalProperties: {
+                      type: 'array',
+                      items: { type: 'string' }
+                    }
+                  },
+                  fields: {
+                    type: 'object',
+                    additionalProperties: {
+                      type: 'boolean'
+                    }
+                  },
+                  additionalProperties: false
+                }
+              }]
             }
           }
         },

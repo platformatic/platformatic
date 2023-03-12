@@ -41,7 +41,8 @@ async function setupOpenAPI (app, opts) {
   })
 
   for (const entity of Object.values(app.platformatic.entities)) {
-    const entitySchema = mapSQLEntityToJSONSchema(entity, ignore[entity.pluralName])
+    const ignoredFields = ignore[entity.pluralName]?.fields
+    const entitySchema = mapSQLEntityToJSONSchema(entity, ignoredFields)
     // TODO remove reverseRelationships from the entity
     /* istanbul ignore next */
     entity.reverseRelationships = entity.reverseRelationships || []

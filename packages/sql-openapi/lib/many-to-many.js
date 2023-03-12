@@ -6,7 +6,8 @@ const { generateArgs, capitalize, getFieldsForEntity, rootEntityRoutes } = requi
 
 async function entityPlugin (app, opts) {
   const entity = opts.entity
-  const ignore = opts.ignore
+  const ignoredFields = opts.ignore.fields || []
+  const ignoredRoutes = opts.ignore.routes || {}
 
   const entitySchema = {
     $ref: entity.name + '#'
@@ -14,11 +15,11 @@ async function entityPlugin (app, opts) {
   const primaryKeysParams = getPrimaryKeysParams(entity)
   const primaryKeysCamelcase = Array.from(entity.primaryKeys).map((key) => camelcase(key))
 
-  const { whereArgs, orderByArgs } = generateArgs(entity, ignore)
+  const { whereArgs, orderByArgs } = generateArgs(entity, ignoredFields)
 
-  const fields = getFieldsForEntity(entity, ignore)
+  const fields = getFieldsForEntity(entity, ignoredFields)
 
-  rootEntityRoutes(app, entity, whereArgs, orderByArgs, undefined, entitySchema, fields)
+  rootEntityRoutes(app, entity, whereArgs, orderByArgs, undefined, entitySchema, fields, ignoredRoutes)
 
   let pathWithParams = ''
 
@@ -39,37 +40,41 @@ async function entityPlugin (app, opts) {
     return acc + capitalize(key)
   }, '')
 
-  app.get(pathWithParams, {
-    schema: {
-      operationId: `get${entity.name}By${operationName}`,
-      params: primaryKeysParams,
-      querystring: {
-        type: 'object',
-        properties: {
-          fields
+  if (!ignoredRoutes.GET?.includes(app.prefix + pathWithParams)) {
+    app.get(pathWithParams, {
+      schema: {
+        operationId: `get${entity.name}By${operationName}`,
+        params: primaryKeysParams,
+        querystring: {
+          type: 'object',
+          properties: {
+            fields
+          }
+        },
+        response: {
+          200: entitySchema
         }
-      },
-      response: {
-        200: entitySchema
       }
-    }
-  }, async function (request, reply) {
-    const ctx = { app: this, reply }
-    const res = await entity.find({
-      ctx,
-      where: primaryKeysCamelcase.reduce((acc, key) => {
-        acc[key] = { eq: request.params[key] }
-        return acc
-      }, {}),
-      fields: request.query.fields
+    }, async function (request, reply) {
+      const ctx = { app: this, reply }
+      const res = await entity.find({
+        ctx,
+        where: primaryKeysCamelcase.reduce((acc, key) => {
+          acc[key] = { eq: request.params[key] }
+          return acc
+        }, {}),
+        fields: request.query.fields
+      })
+      if (res.length === 0) {
+        return reply.callNotFound()
+      }
+      return res[0]
     })
-    if (res.length === 0) {
-      return reply.callNotFound()
-    }
-    return res[0]
-  })
+  }
 
   for (const method of ['POST', 'PUT']) {
+    if (ignoredRoutes[method]?.includes(app.prefix + pathWithParams)) continue
+
     app.route({
       url: pathWithParams,
       method,
@@ -114,35 +119,37 @@ async function entityPlugin (app, opts) {
     })
   }
 
-  app.delete(pathWithParams, {
-    schema: {
-      params: primaryKeysParams,
-      querystring: {
-        type: 'object',
-        properties: {
-          fields
+  if (!ignoredRoutes.DELETE?.includes(app.prefix + pathWithParams)) {
+    app.delete(pathWithParams, {
+      schema: {
+        params: primaryKeysParams,
+        querystring: {
+          type: 'object',
+          properties: {
+            fields
+          }
+        },
+        response: {
+          200: entitySchema
         }
-      },
-      response: {
-        200: entitySchema
       }
-    }
-  }, async function (request, reply) {
-    const ids = primaryKeysCamelcase.map((key) => { return { key, value: request.params[key] } })
-    const ctx = { app: this, reply }
-    const res = await entity.delete({
-      ctx,
-      where: ids.reduce((acc, { key, value }) => {
-        acc[key] = { eq: value }
-        return acc
-      }, {}),
-      fields: request.query.fields
+    }, async function (request, reply) {
+      const ids = primaryKeysCamelcase.map((key) => { return { key, value: request.params[key] } })
+      const ctx = { app: this, reply }
+      const res = await entity.delete({
+        ctx,
+        where: ids.reduce((acc, { key, value }) => {
+          acc[key] = { eq: value }
+          return acc
+        }, {}),
+        fields: request.query.fields
+      })
+      if (res.length === 0) {
+        return reply.callNotFound()
+      }
+      return res[0]
     })
-    if (res.length === 0) {
-      return reply.callNotFound()
-    }
-    return res[0]
-  })
+  }
 }
 
 function getPrimaryKeysParams (entity) {
