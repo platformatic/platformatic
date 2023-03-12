@@ -203,3 +203,28 @@ t.test('correctly format entity type names', async (t) => {
 
   t.pass()
 })
+
+t.test('Use types directory from config as target folder', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types-dir')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'gen-types-dir-1')
+
+  await mkdir(cwd)
+  await cp(testDir, cwd, { recursive: true })
+
+  t.teardown(async () => {
+    await rm(cwd, { force: true, recursive: true })
+  })
+
+  try {
+    const child = await execa('node', [cliPath, 'migrations', 'apply'], { cwd })
+    t.equal(child.stdout.includes('Generated type for Graph entity.'), true)
+
+    await execa(pathToTSD, { cwd })
+  } catch (err) {
+    console.log(err.stdout)
+    console.log(err.stderr)
+    t.fail(err.stderr)
+  }
+
+  t.pass()
+})

@@ -1,4 +1,4 @@
-import { resolve, join, dirname, basename } from 'path'
+import { resolve, join, dirname, relative, basename } from 'path'
 import { createRequire } from 'module'
 import { mkdir, writeFile, readFile, readdir, unlink } from 'fs/promises'
 import { join as desmJoin } from 'desm'
@@ -28,6 +28,13 @@ async function removeUnusedTypeFiles (entities, dir) {
   const entityNames = Object.values(entities).map((entity) => entity.name)
   const removedEntityNames = entityTypes.filter((file) => !entityNames.includes(basename(file, '.d.ts')))
   await Promise.all(removedEntityNames.map((file) => unlink(join(dir, file))))
+}
+
+function getTypesFolderPath (config) {
+  if (config.types?.dir) {
+    return resolve(process.cwd(), config.types.dir)
+  }
+  return DEFAULT_TYPES_FOLDER_PATH
 }
 
 async function generateEntityType (entity) {
@@ -66,15 +73,17 @@ async function generateGlobalTypes (entities, config) {
     globalTypesImports.push('import graphqlPlugin from \'@platformatic/sql-graphql\'')
   }
 
+  const typesRelativePath = relative(process.cwd(), getTypesFolderPath(config))
+
   const schemaIdTypes = []
   const names = []
   for (const [key, { name }] of Object.entries(entities)) {
     schemaIdTypes.push(name)
-    completeTypesImports.push(`import { ${name} } from './${name}'`)
+    completeTypesImports.push(`import { ${name} } from './${typesRelativePath}/${name}'`)
     globalTypesInterface.push(`${key}: Entity<${name}>,`)
     names.push(name)
   }
-  globalTypesImports.push(`import { EntityTypes, ${names.join(',')} } from './types'`)
+  globalTypesImports.push(`import { EntityTypes, ${names.join(',')} } from './${typesRelativePath}'`)
 
   const schemaIdType = schemaIdTypes.length === 0 ? 'string' : schemaIdTypes.map(type => `'${type}'`).join(' | ')
 
@@ -178,11 +187,12 @@ async function writeFileIfChanged (filename, content) {
 async function execute (logger, _, config) {
   const { db, entities } = await setupDB(logger, config.core)
 
-  const isTypeFolderExists = await isFileAccessible(DEFAULT_TYPES_FOLDER_PATH)
+  const typesFolderPath = getTypesFolderPath(config)
+  const isTypeFolderExists = await isFileAccessible(typesFolderPath)
   if (isTypeFolderExists) {
-    await removeUnusedTypeFiles(entities, DEFAULT_TYPES_FOLDER_PATH)
+    await removeUnusedTypeFiles(entities, typesFolderPath)
   } else {
-    await mkdir(DEFAULT_TYPES_FOLDER_PATH)
+    await mkdir(typesFolderPath, { recursive: true })
   }
 
   let count = 0
@@ -192,14 +202,14 @@ async function execute (logger, _, config) {
     count++
     const types = await generateEntityType(entity)
 
-    const pathToFile = join(DEFAULT_TYPES_FOLDER_PATH, entity.name + '.d.ts')
+    const pathToFile = join(typesFolderPath, entity.name + '.d.ts')
     const isTypeChanged = await writeFileIfChanged(pathToFile, types)
 
     if (isTypeChanged) {
       logger.info(`Generated type for ${entity.name} entity.`)
     }
   }
-  const pathToFile = join(DEFAULT_TYPES_FOLDER_PATH, 'index.d.ts')
+  const pathToFile = join(typesFolderPath, 'index.d.ts')
   // maybe better to check here for changes
   const content = await generateEntityGroupExport(entitiesNames)
   const isTypeChanged = await writeFileIfChanged(pathToFile, content)
