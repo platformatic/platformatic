@@ -340,6 +340,10 @@ const types = {
   properties: {
     autogenerate: {
       type: 'boolean'
+    },
+    dir: {
+      type: 'string',
+      description: 'The path to the directory the types should be generated in.'
     }
   },
   additionalProperties: false
