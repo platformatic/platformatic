@@ -48,7 +48,7 @@ This command does the following:
 You can specify your preferred database provider using the `--datasource-provider` flag, followed by the name of the provider: 
 
 ```bash
-npx prisma init --datasource-provider postgres # or sqlite, mysql, sqlserver, cockroachdb
+npx prisma init --datasource-provider postgresql # or sqlite, mysql, sqlserver, cockroachdb
 ```
 
 Prisma uses the `DATABASE_URL` environment variable to connect to your database to sync your database and Prisma schema. It also uses the variable to connect to your database to run your Prisma Client queries. 
