@@ -203,3 +203,67 @@ t.test('correctly format entity type names', async (t) => {
 
   t.pass()
 })
+
+t.test('use types directory from config as target folder', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types-dir')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'gen-types-dir-1')
+
+  await mkdir(cwd)
+  await cp(testDir, cwd, { recursive: true })
+
+  t.teardown(async () => {
+    await rm(cwd, { force: true, recursive: true })
+  })
+
+  try {
+    const child = await execa('node', [cliPath, 'migrations', 'apply'], { cwd })
+    t.equal(child.stdout.includes('Generated type for Graph entity.'), true)
+
+    await execa(pathToTSD, { cwd })
+  } catch (err) {
+    console.log(err.stdout)
+    console.log(err.stderr)
+    t.fail(err.stderr)
+  }
+
+  t.pass()
+})
+
+t.test('generate types on start while considering types directory', async ({ plan, equal, teardown, fail, pass }) => {
+  plan(2)
+
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types-dir')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'auto-gen-types-clone-5')
+
+  await mkdir(cwd)
+  await cp(testDir, cwd, { recursive: true })
+
+  teardown(async () => {
+    await rm(cwd, { force: true, recursive: true })
+  })
+
+  const child = execa('node', [cliPath, 'start'], { cwd })
+  teardown(() => child.kill('SIGINT'))
+
+  const splitter = split()
+  child.stdout.pipe(splitter)
+
+  let found = false
+  for await (const data of splitter) {
+    const sanitized = stripAnsi(data)
+    if (sanitized.match(/(.*)Generated type for(.*)/)) {
+      found = true
+      break
+    }
+  }
+  equal(found, true)
+
+  try {
+    await execa(pathToTSD, { cwd })
+    pass()
+  } catch (err) {
+    console.log(err.stdout)
+    console.log(err.stderr)
+    fail(err.stderr)
+  }
+})

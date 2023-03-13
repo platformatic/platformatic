@@ -1,0 +1,23 @@
+{
+  "core": {
+    "connectionString": "sqlite://./db"
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0,
+    "logger": {
+      "level": "info"
+    }
+  },
+  "migrations": {
+    "dir": "./migrations",
+    "autoApply": true
+  },
+  "types": {
+    "autogenerate": true,
+    "dir": "./src/types"
+  },
+  "plugins": {
+    "paths": ["./plugin.js"]
+  }
+}
