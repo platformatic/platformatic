@@ -46,10 +46,19 @@ function getJSPluginPath (configPath, tsPluginPath, compileDir) {
     return tsPluginPath
   }
 
+  const isTs = tsPluginPath.endsWith('ts')
+  let newBaseName
+
+  if (isTs) {
+    newBaseName = basename(tsPluginPath, '.ts') + '.js'
+  } else {
+    newBaseName = basename(tsPluginPath)
+  }
+
   const tsPluginRelativePath = relative(dirname(configPath), tsPluginPath)
   const jsPluginRelativePath = join(
     dirname(tsPluginRelativePath),
-    basename(tsPluginRelativePath, '.ts') + '.js'
+    newBaseName
   )
   return join(compileDir, jsPluginRelativePath)
 }

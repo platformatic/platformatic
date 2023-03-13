@@ -268,3 +268,38 @@ t.test('valid tsconfig file inside an inner folder', async (t) => {
 
   t.pass()
 })
+
+t.test('should compile typescript plugin with start command from a folder', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-autoload')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-8')
+
+  await cp(testDir, cwd, { recursive: true })
+
+  const child = execa('node', [cliPath, 'start'], { cwd })
+
+  t.teardown(async () => {
+    if (os.platform() === 'win32') {
+      try {
+        await execa('taskkill', ['/pid', child.pid, '/f', '/t'])
+      } catch (err) {
+        console.error(`Failed to kill process ${child.pid})`)
+      }
+    } else {
+      child.kill('SIGINT')
+    }
+  })
+
+  const splitter = split()
+  child.stdout.pipe(splitter)
+  child.stderr.pipe(process.stderr)
+
+  for await (const data of splitter) {
+    console.log(data)
+    const sanitized = stripAnsi(data)
+    if (sanitized.includes('Typescript plugin loaded')) {
+      t.pass()
+      return
+    }
+  }
+  t.fail('should compile typescript plugin with start command')
+})
