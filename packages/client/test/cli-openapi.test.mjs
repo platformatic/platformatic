@@ -257,3 +257,70 @@ test('no such file', async ({ rejects, teardown }) => {
 test('no such file', async ({ rejects, teardown }) => {
   await rejects(execa('node', [desm.join(import.meta.url, '..', 'cli.mjs')]))
 })
+
+test('datatypes', async ({ teardown, comment, match }) => {
+  try {
+    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies-quotes', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const server = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies-quotes', 'platformatic.db.json'))
+
+  await server.listen()
+
+  const dir = join(tmpdir(), `platformatic-client-${process.pid}-${counter++}`)
+  await fs.mkdir(dir)
+  const cwd = process.cwd()
+  process.chdir(dir)
+  teardown(() => process.chdir(cwd))
+  teardown(() => fs.rm(dir, { recursive: true }))
+
+  comment(`working in ${dir}`)
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), server.url + '/documentation/json', '--name', 'movies'])
+
+  const toWrite = `
+'use strict'
+
+const Fastify = require('fastify')
+const movies = require('./movies')
+const app = Fastify({ logger: true })
+
+app.register(movies, { url: '${server.url}' })
+app.post('/', async (request, reply) => {
+  const res = await app.movies.createMovie({ title: 'foo' })
+  return res 
+})
+app.listen({ port: 0 })
+`
+  await fs.writeFile(join(dir, 'index.js'), toWrite)
+  await fs.mkdir(join(dir, 'node_modules'))
+  await fs.mkdir(join(dir, 'node_modules', '@platformatic'))
+  await fs.symlink(join(cwd, 'node_modules', 'fastify'), join(dir, 'node_modules', 'fastify'))
+  await fs.symlink(desm.join(import.meta.url, '..'), join(dir, 'node_modules', '@platformatic', 'client'))
+
+  const server2 = execa('node', ['index.js'])
+  teardown(() => server2.kill())
+  teardown(server.stop)
+
+  const stream = server2.stdout.pipe(split(JSON.parse))
+
+  // this is unfortuate :(
+  const base = 'Server listening at '
+  let url
+  for await (const line of stream) {
+    const msg = line.msg
+    if (msg.indexOf(base) !== 0) {
+      continue
+    }
+    url = msg.slice(base.length)
+    break
+  }
+  const res = await request(url, {
+    method: 'POST'
+  })
+  const body = await res.body.json()
+  match(body, {
+    id: 1,
+    title: 'foo'
+  })
+})

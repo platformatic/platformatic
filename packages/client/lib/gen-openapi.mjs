@@ -202,8 +202,10 @@ function writeObjectProperties (writer, schema, spec, addedProps) {
       console.log(key, value, required)
       writeProperty(writer, key, value, addedProps, required)
     }
-  } else if (schema.type === 'array') {
-    throw new Error('Array not supported')
+    // This is unlikely to happen with well-formed OpenAPI.
+    /* c8 ignore next 3 */
+  } else {
+    throw new Error(`Type ${schema.type} not supported`)
   }
 }
 
@@ -233,10 +235,8 @@ function JSONSchemaToTsType (type) {
       return 'number'
     case 'boolean':
       return 'boolean'
-    case 'array':
-      throw new Error('Array not supported')
-    case 'object':
-      throw new Error('Object not supported')
+      // TODO what other types should we support here?
+      /* c8 ignore next 2 */
     default:
       return 'any'
   }

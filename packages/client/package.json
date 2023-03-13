@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "standard",
-    "test": "standard | snazzy && c8 tap test/*.test.*js"
+    "test": "standard | snazzy && c8 --100 tap test/*.test.*js"
   },
   "repository": {
     "type": "git",

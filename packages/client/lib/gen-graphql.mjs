@@ -74,7 +74,7 @@ function generateTypesFromGraphQL ({ schema, name }) {
         writer.write(`export interface ${capitalizedName}`).block(() => {
           const addedProps = new Set()
           for (const field of type.fields) {
-            writeProperty(writer, field.name, field.type, addedProps, false)
+            writeProperty(writer, field.name, field.type, addedProps)
           }
         })
       }
@@ -147,19 +147,17 @@ function GraphQLScalarToTsType (type) {
       return 'string'
     case 'DateTime':
       return 'string'
+      // TODO test other scalar types
+      /* c8 ignore next 3 */
     default:
       throw new Error(`Unknown type ${type}`)
   }
 }
 
-function writeProperty (writer, key, value, addedProps, required = true) {
+function writeProperty (writer, key, value, addedProps) {
   addedProps.add(key)
-  if (required) {
-    writer.quote(key)
-  } else {
-    writer.quote(key)
-    writer.write('?')
-  }
+  writer.quote(key)
+  writer.write('?')
   if (value.kind === 'SCALAR') {
     writer.write(`: ${GraphQLScalarToTsType(value.name)};`)
     writer.newLine()
@@ -169,8 +167,9 @@ function writeProperty (writer, key, value, addedProps, required = true) {
   } else if (value.kind === 'OBJECT') {
     writer.write(`: ${capitalize(value.name)};`)
     writer.newLine()
+    // TODO are there other kinds that needs to be handled?
+    /* c8 ignore next 3 */
   } else {
-    console.log(value)
     throw new Error(`Unknown type ${value.kind}`)
   }
   writer.newLine()
