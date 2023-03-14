@@ -12,6 +12,20 @@ function urlDirname (url) {
   return path.dirname(fileURLToPath(url))
 }
 
+function exitOnTeardown (child) {
+  return async () => {
+    if (os.platform() === 'win32') {
+      try {
+        await execa('taskkill', ['/pid', child.pid, '/f', '/t'])
+      } catch (err) {
+        console.error(`Failed to kill process ${child.pid})`)
+      }
+    } else {
+      child.kill('SIGINT')
+    }
+  }
+}
+
 t.test('should compile typescript plugin', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
   const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-1')
@@ -70,17 +84,7 @@ t.test('should compile typescript plugin with start command', async (t) => {
 
   const child = execa('node', [cliPath, 'start'], { cwd })
 
-  t.teardown(async () => {
-    if (os.platform() === 'win32') {
-      try {
-        await execa('taskkill', ['/pid', child.pid, '/f', '/t'])
-      } catch (err) {
-        console.error(`Failed to kill process ${child.pid})`)
-      }
-    } else {
-      child.kill('SIGINT')
-    }
-  })
+  t.teardown(exitOnTeardown(child))
 
   const splitter = split()
   child.stdout.pipe(splitter)
@@ -195,17 +199,7 @@ t.test('start command should not compile typescript if `typescript` is false', a
   await cp(testDir, cwd, { recursive: true })
 
   const child = execa('node', [cliPath, 'start'], { cwd })
-  t.teardown(async () => {
-    if (os.platform() === 'win32') {
-      try {
-        await execa('taskkill', ['/pid', child.pid, '/f', '/t'])
-      } catch (err) {
-        console.error(`Failed to kill process ${child.pid})`)
-      }
-    } else {
-      child.kill('SIGINT')
-    }
-  })
+  t.teardown(exitOnTeardown(child))
 
   const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
   try {
@@ -227,17 +221,7 @@ t.test('should compile typescript plugin with start command with different cwd',
 
   const child = execa('node', [cliPath, 'start', '-c', path.join(dest, 'platformatic.service.json')])
 
-  t.teardown(async () => {
-    if (os.platform() === 'win32') {
-      try {
-        await execa('taskkill', ['/pid', child.pid, '/f', '/t'])
-      } catch (err) {
-        console.error(`Failed to kill process ${child.pid})`)
-      }
-    } else {
-      child.kill('SIGINT')
-    }
-  })
+  t.teardown(exitOnTeardown(child))
 
   const splitter = split()
   child.stdout.pipe(splitter)
@@ -277,24 +261,12 @@ t.test('should compile typescript plugin with start command from a folder', asyn
 
   const child = execa('node', [cliPath, 'start'], { cwd })
 
-  t.teardown(async () => {
-    if (os.platform() === 'win32') {
-      try {
-        await execa('taskkill', ['/pid', child.pid, '/f', '/t'])
-      } catch (err) {
-        console.error(`Failed to kill process ${child.pid})`)
-      }
-    } else {
-      child.kill('SIGINT')
-    }
-  })
+  t.teardown(exitOnTeardown(child))
 
   const splitter = split()
   child.stdout.pipe(splitter)
-  child.stderr.pipe(process.stderr)
 
   for await (const data of splitter) {
-    console.log(data)
     const sanitized = stripAnsi(data)
     if (sanitized.includes('Typescript plugin loaded')) {
       t.pass()
