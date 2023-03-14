@@ -123,6 +123,120 @@ const server = {
         }
       ]
     },
+    ignoreTrailingSlash: {
+      type: 'boolean'
+    },
+    ignoreDuplicateSlashes: {
+      type: 'boolean'
+    },
+    connectionTimeout: {
+      type: 'integer'
+    },
+    keepAliveTimeout: {
+      type: 'integer'
+    },
+    maxRequestsPerSocket: {
+      type: 'integer'
+    },
+    forceCloseConnections: {
+      anyOf: [
+        { type: 'boolean' },
+        { type: 'string', pattern: '^idle$' }
+      ]
+    },
+    requestTimeout: {
+      type: 'integer'
+    },
+    bodyLimit: {
+      type: 'integer'
+    },
+    maxParamLength: {
+      type: 'integer'
+    },
+    disableRequestLogging: {
+      type: 'boolean'
+    },
+    exposeHeadRoutes: {
+      type: 'boolean'
+    },
+    logger: {
+      anyOf: [
+        { type: 'boolean' },
+        {
+          type: 'object',
+          properties: {
+            level: {
+              type: 'string',
+              enum: ['fatal', 'error', 'warn', 'info', 'debug', 'trace']
+            }
+          },
+          additionalProperties: false
+        }
+      ]
+    },
+    serializerOpts: {
+      type: 'object',
+      properties: {
+        schema: {
+          type: 'object'
+        },
+        ajv: {
+          type: 'object'
+        },
+        rounding: {
+          type: 'string',
+          enum: ['floor', 'ceil', 'round', 'trunc'],
+          default: 'trunc'
+        },
+        debugMode: {
+          type: 'boolean'
+        },
+        mode: {
+          type: 'string',
+          enum: ['debug', 'standalone']
+        },
+        largeArraySize: {
+          anyOf: [
+            { type: 'integer' },
+            { type: 'string' }
+          ],
+          default: 20000
+        },
+        largeArrayMechanism: {
+          type: 'string',
+          enum: ['default', 'json-stringify'],
+          default: 'default'
+        }
+      }
+    },
+    caseSensitive: {
+      type: 'boolean'
+    },
+    requestIdHeader: {
+      anyOf: [
+        { type: 'string' },
+        { type: 'boolean', const: false }
+      ]
+    },
+    requestIdLogLabel: {
+      type: 'string'
+    },
+    jsonShorthand: {
+      type: 'boolean'
+    },
+    trustProxy: {
+      anyOf: [
+        { type: 'boolean' },
+        { type: 'string' },
+        {
+          type: 'array',
+          items: {
+            type: 'string'
+          }
+        },
+        { type: 'integer' }
+      ]
+    },
     cors
   },
   required: ['hostname', 'port']

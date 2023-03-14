@@ -364,7 +364,30 @@ A **required** object with the following settings:
     it will be automatically converted
 
 - **`logger`** (`object`) -- the [logger configuration](https://www.fastify.io/docs/latest/Reference/Server/#logger).
-- **`pluginTimeout`** (`integer`) -- the milliseconds to wait for a Fastify plugin to load, see the [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#plugintimeout) for more details.
+- **`pluginTimeout`** (`integer`) -- the milliseconds to wait for a Fastify plugin to load
+- **`bodyLimit`** (`integer`) -- the maximum request body size in bytes
+- **`maxParamLength`** (`integer`) -- the maximum length of a request parameter
+- **`caseSensitive`** (`boolean`) -- if `true`, the router will be case sensitive
+- **`ignoreTrailingSlash`** (`boolean`) -- if `true`, the router will ignore the trailing slash
+- **`ignoreTrailingSlash`** (`boolean`) -- if `true`, the router will ignore the trailing slash
+- **`connectionTimeout`** (`integer`) -- the milliseconds to wait for a new HTTP request
+- **`keepAliveTimeout`** (`integer`) -- the milliseconds to wait for a keep-alive HTTP request
+- **`maxRequestsPerSocket`** (`integer`) -- the maximum number of requests per socket
+- **`forceCloseConnections`** (`boolean` or `"idle"`) -- if `true`, the server will close all connections when it is closed
+- **`requestTimeout`** (`integer`) -- the milliseconds to wait for a request to be completed
+- **`disableRequestLogging`** (`boolean`) -- if `true`, the request logger will be disabled
+- **`exposeHeadRoutes`** (`boolean`) -- if `true`, the router will expose HEAD routes
+- **`serializerOpts`** (`object`) -- the [serializer options](https://www.fastify.io/docs/latest/Reference/Server/#serializeropts)
+- **`requestIdHeader`** (`string` or `false`) -- the name of the header that will contain the request id
+- **`requestIdLogLabel`** (`string`) -- Defines the label used for the request identifier when logging the request. default: `'reqId'`
+- **`jsonShorthand`** (`boolean`) -- default: `true` -- visit [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#jsonshorthand) for more details
+- **`trustProxy`** (`boolean` or `integer` or `string` or `String[]`) -- default: `false` -- visit [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#trustproxy) for more details
+
+:::tip
+
+See the [fastify docs](https://www.fastify.io/docs/latest/Reference/Server) for more details.
+
+:::
 
 ### `authorization`
 
