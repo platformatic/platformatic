@@ -131,28 +131,25 @@ const server = {
 const watch = {
   type: 'object',
   properties: {
-    type: 'object',
-    properties: {
-      allow: {
-        type: 'array',
-        items: {
-          type: 'string'
-        },
-        minItems: 1,
-        nullable: true,
-        default: null
+    allow: {
+      type: 'array',
+      items: {
+        type: 'string'
       },
-      ignore: {
-        type: 'array',
-        items: {
-          type: 'string'
-        },
-        nullable: true,
-        default: null
-      }
+      minItems: 1,
+      nullable: true,
+      default: null
     },
-    additionalProperties: false
-  }
+    ignore: {
+      type: 'array',
+      items: {
+        type: 'string'
+      },
+      nullable: true,
+      default: null
+    }
+  },
+  additionalProperties: false
 }
 
 const plugins = {
@@ -225,9 +222,7 @@ const platformaticServiceSchema = {
   properties: {
     server,
     plugins,
-    metrics
-  },
-  additionalProperties: {
+    metrics,
     watch: {
       anyOf: [watch, {
         type: 'boolean'

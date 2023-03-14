@@ -5,6 +5,8 @@ import { tmpdir } from 'os'
 import { mkdtempSync, rmSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { join } from 'path'
 import dotenv from 'dotenv'
+import Ajv from 'ajv'
+import { schema } from '@platformatic/service'
 
 let tmpDir
 let log = []
@@ -35,6 +37,9 @@ test('creates service with typescript', async ({ equal, same, ok }) => {
   const pathToServiceConfigFile = join(tmpDir, 'platformatic.service.json')
   const serviceConfigFile = readFileSync(pathToServiceConfigFile, 'utf8')
   const serviceConfig = JSON.parse(serviceConfigFile)
+  const ajv = new Ajv()
+  const validate = ajv.compile(schema.schema)
+  equal(validate(serviceConfig), true)
   const { server, plugin } = serviceConfig
 
   equal(server.hostname, '{PLT_SERVER_HOSTNAME}')

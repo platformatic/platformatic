@@ -5,6 +5,8 @@ import { tmpdir } from 'os'
 import { mkdtempSync, rmSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { join } from 'path'
 import dotenv from 'dotenv'
+import { schema } from '@platformatic/db'
+import Ajv from 'ajv'
 
 const moviesMigrationDo = `
 -- Add SQL in this file to create the database tables for your API
@@ -53,6 +55,9 @@ test('creates project with no typescript', async ({ equal }) => {
   const dbConfigFile = readFileSync(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
   const { server, core, migrations } = dbConfig
+  const ajv = new Ajv()
+  const validate = ajv.compile(schema)
+  equal(validate(dbConfig), true)
 
   equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   equal(server.port, '{PORT}')
@@ -130,7 +135,7 @@ test('creates project with no typescript and no plugin', async ({ equal }) => {
   equal(await isFileAccessible(join(tmpDir, 'plugin.js')), false)
 })
 
-test('creates project with typescript', async ({ equal }) => {
+test('creates project with typescript', async ({ equal, same }) => {
   const params = {
     hostname: 'myhost',
     port: 6666,
@@ -146,7 +151,7 @@ test('creates project with typescript', async ({ equal }) => {
 
   const dbConfigFile = readFileSync(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
-  const { server, core, migrations, plugin } = dbConfig
+  const { server, core, migrations, plugins } = dbConfig
 
   equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   equal(server.port, '{PORT}')
@@ -174,8 +179,8 @@ test('creates project with typescript', async ({ equal }) => {
   const migrationFileUndo = readFileSync(pathToMigrationFileUndo, 'utf8')
   equal(migrationFileUndo, moviesMigrationUndo)
 
-  equal(plugin.path, 'plugin.ts')
-  equal(plugin.typescript.outDir, 'dist')
+  same(plugins.paths, ['plugin.ts'])
+  equal(plugins.typescript, true)
   equal(await isFileAccessible(join(tmpDir, 'plugin.ts')), true)
   equal(await isFileAccessible(join(tmpDir, 'tsconfig.json')), true)
 })

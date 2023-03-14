@@ -1,5 +1,6 @@
-import { writeFile, mkdir } from 'fs/promises'
+import { writeFile, mkdir, readFile } from 'fs/promises'
 import { join } from 'path'
+import * as desm from 'desm'
 import { findServiceConfigFile, isFileAccessible } from '../utils.mjs'
 
 function generateConfig (version) {
@@ -100,6 +101,10 @@ async function generateRouteWithTypesSupport (logger, currentDir, isTypescript) 
 }
 
 async function createService ({ hostname, port, typescript = false }, logger, currentDir = process.cwd(), version) {
+  if (!version) {
+    const pkg = await readFile(desm.join(import.meta.url, '..', '..', 'package.json'))
+    version = JSON.parse(pkg).version
+  }
   const accessibleConfigFilename = await findServiceConfigFile(currentDir)
 
   if (accessibleConfigFilename === undefined) {
