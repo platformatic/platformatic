@@ -1,4 +1,4 @@
-import { resolve, join, dirname, relative, basename } from 'path'
+import { resolve, join, dirname, relative, basename, posix, parse } from 'path'
 import { createRequire } from 'module'
 import { mkdir, writeFile, readFile, readdir, unlink } from 'fs/promises'
 import { join as desmJoin } from 'desm'
@@ -73,7 +73,11 @@ async function generateGlobalTypes (entities, config) {
     globalTypesImports.push('import graphqlPlugin from \'@platformatic/sql-graphql\'')
   }
 
-  const typesRelativePath = relative(process.cwd(), getTypesFolderPath(config))
+  let typesRelativePath = relative(process.cwd(), getTypesFolderPath(config))
+  {
+    const parsedPath = parse(typesRelativePath)
+    typesRelativePath = posix.format(parsedPath) 
+  }
 
   const schemaIdTypes = []
   const names = []
