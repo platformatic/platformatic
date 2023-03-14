@@ -76,7 +76,7 @@ async function generateGlobalTypes (entities, config) {
   let typesRelativePath = relative(process.cwd(), getTypesFolderPath(config))
   {
     const parsedPath = parse(typesRelativePath)
-    typesRelativePath = posix.format(parsedPath) 
+    typesRelativePath = posix.format(parsedPath)
   }
 
   const schemaIdTypes = []
