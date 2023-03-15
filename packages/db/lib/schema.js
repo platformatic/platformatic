@@ -361,9 +361,7 @@ const platformaticDBschema = {
     migrations,
     metrics,
     types,
-    plugins
-  },
-  additionalProperties: {
+    plugins,
     watch: {
       anyOf: [watch, {
         type: 'boolean'

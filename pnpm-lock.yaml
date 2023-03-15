@@ -109,6 +109,9 @@ importers:
 
   packages/create-platformatic:
     specifiers:
+      '@platformatic/db': workspace:*
+      '@platformatic/service': workspace:*
+      ajv: ^8.12.0
       c8: ^7.13.0
       chalk: ^5.2.0
       commist: ^3.2.0
@@ -152,6 +155,9 @@ importers:
       semver: 7.3.8
       undici: 5.20.0
     devDependencies:
+      '@platformatic/db': link:../db
+      '@platformatic/service': link:../service
+      ajv: 8.12.0
       c8: 7.13.0
       dotenv: 16.0.3
       esmock: 2.1.0
@@ -179,6 +185,7 @@ importers:
       '@platformatic/sql-json-schema-mapper': workspace:*
       '@platformatic/sql-mapper': workspace:*
       '@platformatic/utils': workspace:*
+      ajv: ^8.12.0
       bindings: ^1.5.0
       c8: ^7.13.0
       camelcase: ^6.3.0
@@ -255,6 +262,7 @@ importers:
       '@databases/pg': 5.4.1
       '@databases/sqlite': 4.0.2
       '@platformatic/sql-graphql': link:../sql-graphql
+      ajv: 8.12.0
       bindings: 1.5.0
       c8: 7.13.0
       snazzy: 9.0.0

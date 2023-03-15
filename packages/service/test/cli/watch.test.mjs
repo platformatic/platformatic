@@ -1,16 +1,19 @@
 import os from 'os'
 import { join, basename } from 'path'
 import { writeFile, mkdtemp } from 'fs/promises'
-import { setTimeout as sleep } from 'timers/promises'
 import t, { test } from 'tap'
 import { request } from 'undici'
+import { setTimeout as sleep } from 'timers/promises'
 import { start } from './helper.mjs'
 
 t.jobs = 5
 
-function createLoggingPlugin (text) {
+function createLoggingPlugin (text, reloaded = false) {
   return `\
     module.exports = async (app) => {
+      if (${reloaded}) {
+        app.log.info('RELOADED')
+      }
       app.get('/version', () => '${text}')
     }
   `
@@ -43,9 +46,11 @@ test('should watch js files by default', async ({ equal, teardown }) => {
   const { child, url } = await start('-c', configFilePath)
   teardown(() => child.kill('SIGINT'))
 
-  await writeFile(pluginFilePath, createLoggingPlugin('v2'))
+  await writeFile(pluginFilePath, createLoggingPlugin('v2', true))
 
-  await sleep(5000)
+  for await (const log of child.ndj) {
+    if (log.msg === 'RELOADED') break
+  }
 
   const res = await request(`${url}/version`)
   const version = await res.body.text()
@@ -128,7 +133,8 @@ test('should not watch ignored file', async ({ teardown, equal }) => {
   const { child, url } = await start('-c', configFilePath)
   teardown(() => child.kill('SIGINT'))
 
-  await writeFile(pluginFilePath, createLoggingPlugin('v2'))
+  await writeFile(pluginFilePath, createLoggingPlugin('v2', true))
+
   await sleep(5000)
 
   const res = await request(`${url}/version`)
@@ -273,7 +279,8 @@ test('should not hot reload files with `--hot-reload false`', async ({ teardown,
     equal(version, 'v1')
   }
 
-  await writeFile(pluginFilePath, createLoggingPlugin('v2'))
+  await writeFile(pluginFilePath, createLoggingPlugin('v2', true))
+
   await sleep(5000)
 
   {

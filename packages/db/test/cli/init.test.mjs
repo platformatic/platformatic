@@ -129,7 +129,7 @@ t.test('run db init --typescript', async (t) => {
   const dbConfigFile = await fs.readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
 
-  const { server, core, migrations, plugin, types } = dbConfig
+  const { server, core, migrations, plugins, types } = dbConfig
 
   t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   t.equal(server.port, '{PORT}')
@@ -146,8 +146,8 @@ t.test('run db init --typescript', async (t) => {
   t.equal(migrations.dir, 'migrations')
   t.equal(types.autogenerate, true)
 
-  t.equal(plugin.path, 'plugin.ts')
-  t.equal(plugin.typescript.outDir, 'dist')
+  t.same(plugins.paths, ['plugin.ts'])
+  t.equal(plugins.typescript, true)
 
   const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
   t.equal(migrationFileDo, moviesMigrationDo)
@@ -168,7 +168,7 @@ t.test('run db init --typescript twice', async (t) => {
   const dbConfigFile = await fs.readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
 
-  const { server, core, migrations, plugin, types } = dbConfig
+  const { server, core, migrations, plugins, types } = dbConfig
 
   t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   t.equal(server.port, '{PORT}')
@@ -185,8 +185,8 @@ t.test('run db init --typescript twice', async (t) => {
   t.equal(migrations.dir, 'migrations')
   t.equal(types.autogenerate, true)
 
-  t.equal(plugin.path, 'plugin.ts')
-  t.equal(plugin.typescript.outDir, 'dist')
+  t.same(plugins.paths, ['plugin.ts'])
+  t.equal(plugins.typescript, true)
 
   const migrationFileDo = await fs.readFile(pathToMigrationFileDo, 'utf8')
   t.equal(migrationFileDo, moviesMigrationDo)
