@@ -1734,15 +1734,17 @@ const platformaticDBschema = {
     migrations,
     metrics,
     types,
-    plugins
-  },
-  additionalProperties: {
+    plugins,
     watch: {
       anyOf: [watch, {
         type: 'boolean'
       }]
+    },
+    $schema: {
+      type: 'string'
     }
   },
+  additionalProperties: false,
   required: ['core', 'server'],
   $defs
 }

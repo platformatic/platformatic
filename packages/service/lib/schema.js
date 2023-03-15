@@ -166,8 +166,7 @@ const server = {
           type: 'object',
           properties: {
             level: {
-              type: 'string',
-              enum: ['fatal', 'error', 'warn', 'info', 'debug', 'trace']
+              type: 'string'
             }
           },
           additionalProperties: true
@@ -245,28 +244,25 @@ const server = {
 const watch = {
   type: 'object',
   properties: {
-    type: 'object',
-    properties: {
-      allow: {
-        type: 'array',
-        items: {
-          type: 'string'
-        },
-        minItems: 1,
-        nullable: true,
-        default: null
+    allow: {
+      type: 'array',
+      items: {
+        type: 'string'
       },
-      ignore: {
-        type: 'array',
-        items: {
-          type: 'string'
-        },
-        nullable: true,
-        default: null
-      }
+      minItems: 1,
+      nullable: true,
+      default: null
     },
-    additionalProperties: false
-  }
+    ignore: {
+      type: 'array',
+      items: {
+        type: 'string'
+      },
+      nullable: true,
+      default: null
+    }
+  },
+  additionalProperties: false
 }
 
 const plugins = {
@@ -339,9 +335,7 @@ const platformaticServiceSchema = {
   properties: {
     server,
     plugins,
-    metrics
-  },
-  additionalProperties: {
+    metrics,
     watch: {
       anyOf: [watch, {
         type: 'boolean'
@@ -349,8 +343,12 @@ const platformaticServiceSchema = {
     },
     hotReload: {
       type: 'boolean'
+    },
+    $schema: {
+      type: 'string'
     }
   },
+  additionalProperties: false,
   required: ['server']
 }
 
