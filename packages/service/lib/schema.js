@@ -170,7 +170,7 @@ const server = {
               enum: ['fatal', 'error', 'warn', 'info', 'debug', 'trace']
             }
           },
-          additionalProperties: false
+          additionalProperties: true
         }
       ]
     },
