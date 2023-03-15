@@ -366,8 +366,12 @@ const platformaticDBschema = {
       anyOf: [watch, {
         type: 'boolean'
       }]
+    },
+    $schema: {
+      type: 'string'
     }
   },
+  additionalProperties: false,
   required: ['core', 'server']
 }
 

@@ -343,8 +343,12 @@ const platformaticServiceSchema = {
     },
     hotReload: {
       type: 'boolean'
+    },
+    $schema: {
+      type: 'string'
     }
   },
+  additionalProperties: false,
   required: ['server']
 }
 
