@@ -48,6 +48,10 @@ class DBConfigManager extends ConfigManager {
         [this.current.migrations.table || migrationsTableName]: true
       }, this.current.core.ignore)
     }
+
+    if (this.current.types?.dir) {
+      this.current.types.dir = this._fixRelativePath(this.current.types.dir)
+    }
   }
 }
 
