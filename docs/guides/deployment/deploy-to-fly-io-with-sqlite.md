@@ -78,7 +78,7 @@ migrations are `autoApply`ing (for `platformatic@^0.4.0`) in **platformatic.db.j
 
 ```json
 {
-  "core": {
+  "db": {
     "connectionString": "{DATABASE_URL}"
   },
   "migrations": {

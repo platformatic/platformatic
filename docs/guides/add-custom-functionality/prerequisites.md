@@ -18,7 +18,7 @@ Create a `platformatic.db.json` file in the root project, it will be loaded auto
       "level": "info"
     }
   },
-  "core": {
+  "db": {
     "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres"
   },
   "migrations": {

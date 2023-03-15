@@ -25,7 +25,7 @@ Note that if we use schemas and migrations, we must specify the schema in the mi
 
 ```json
   ...
-  "core": {
+  "db": {
     "connectionString": "(...)",
     "schema": [
       "test1", "test2"
