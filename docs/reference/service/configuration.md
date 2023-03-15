@@ -34,6 +34,7 @@ Comments are supported by the JSON5, YAML and TOML file formats.
 Configuration settings are organised into the following groups:
 
 - [`server`](#server) **(required)**
+- [`service`](#service)
 - [`metrics`](#metrics)
 - [`plugins`](#plugins)
 
@@ -129,6 +130,80 @@ Disable watching for file changes if set to `false`. It can also be customized w
     "watch": {
       "ignore": ["*.mjs", "**/*.mjs"],
       "allow": ["my-plugin.js", "plugins/*.js"]
+    }
+  }
+  ```
+
+### `service`
+
+Configure `@platformatic/service` specific settings such as `graphql` or `openapi`:
+
+- **`graphql`** (`boolean` or `object`, default: `false`) — Controls the GraphQL API interface, with optional GraphiQL UI.
+
+  _Examples_
+
+  Enables GraphQL support
+
+  ```json
+  {
+    "service": {
+      "graphql": true
+    }
+  }
+  ```
+
+  Enables GraphQL support with GraphiQL
+
+  ```json
+  {
+    "service": {
+      "graphql": {
+        "graphiql": true
+      }
+    }
+  }
+  ```
+
+- **`openapi`** (`boolean` or `object`, default: `false`) — Enables OpenAPI REST support.
+  - If value is an object, all [OpenAPI v3](https://swagger.io/specification/) allowed properties can be passed. Also a `prefix` property can be passed to set the OpenAPI prefix.
+  - Platformatic Service uses [`@fastify/swagger`](https://github.com/fastify/fastify-swagger) under the hood to manage this configuration.
+
+  _Examples_
+
+  Enables OpenAPI
+
+  ```json
+  {
+    "service": {
+      ...
+      "openapi": true
+    }
+  }
+  ```
+
+  Enables OpenAPI with prefix
+
+  ```json
+  {
+    "service": {
+      "openapi": {
+        "prefix": "/api"
+      }
+    }
+  }
+  ```
+
+  Enables OpenAPI with options
+
+  ```json
+  {
+    "service": {
+      "openapi": {
+        "info": {
+          "title": "Platformatic DB",
+          "description": "Exposing a SQL database as REST"
+        }
+      }
     }
   }
   ```
