@@ -185,6 +185,7 @@ importers:
       '@platformatic/sql-json-schema-mapper': workspace:*
       '@platformatic/sql-mapper': workspace:*
       '@platformatic/utils': workspace:*
+      ajv: ^8.12.0
       bindings: ^1.5.0
       c8: ^7.13.0
       camelcase: ^6.3.0
@@ -261,6 +262,7 @@ importers:
       '@databases/pg': 5.4.1
       '@databases/sqlite': 4.0.2
       '@platformatic/sql-graphql': link:../sql-graphql
+      ajv: 8.12.0
       bindings: 1.5.0
       c8: 7.13.0
       snazzy: 9.0.0
