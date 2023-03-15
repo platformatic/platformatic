@@ -52,6 +52,13 @@ class DBConfigManager extends ConfigManager {
     if (this.current.types?.dir) {
       this.current.types.dir = this._fixRelativePath(this.current.types.dir)
     }
+
+    Object.defineProperty(this.current, 'service', {
+      enumerable: false,
+      value: {
+        openapi: false
+      }
+    })
   }
 }
 

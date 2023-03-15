@@ -329,6 +329,44 @@ const metrics = {
   ]
 }
 
+const openapi = {
+  anyOf: [{
+    type: 'object',
+    properties: {
+      info: {
+        type: 'object',
+        properties: {
+          title: { type: 'string' },
+          description: { type: 'string' },
+          version: { type: 'string' },
+          additionalProperties: false
+        }
+      },
+      prefix: {
+        type: 'string',
+        description: 'Base URL for the OpenAPI'
+      },
+      ignore: {
+        type: 'object',
+        // TODO add support for column-level ignore
+        additionalProperties: {
+          type: 'boolean'
+        }
+      }
+    },
+    additionalProperties: false
+  }, {
+    type: 'boolean'
+  }]
+}
+
+const service = {
+  type: 'object',
+  properties: {
+    openapi
+  }
+}
+
 const platformaticServiceSchema = {
   $id: `https://platformatic.dev/schemas/${version}/service`,
   type: 'object',
@@ -346,7 +384,8 @@ const platformaticServiceSchema = {
     },
     $schema: {
       type: 'string'
-    }
+    },
+    service
   },
   additionalProperties: false,
   required: ['server']

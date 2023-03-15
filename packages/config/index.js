@@ -176,6 +176,7 @@ class ConfigManager extends EventEmitter {
   async parseAndValidate () {
     const validationResult = await this.parse()
     if (!validationResult) {
+      console.log(this.validationErrors)
       throw new Error(this.validationErrors.map((err) => {
         return err.message
       }).join('\n'))
@@ -189,6 +190,7 @@ class ConfigManager extends EventEmitter {
       this.current = _old
       return false
     }
+    await this._transformConfig()
     this.emit('update', this.current)
     return true
   }
