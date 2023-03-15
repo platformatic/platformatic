@@ -15,7 +15,7 @@ test('generateJsonSchemaConfig generates the file', async (t) => {
 
   const configSchema = await fs.readFile('platformatic.service.schema.json', 'utf8')
   const schema = JSON.parse(configSchema)
-  const { required, additionalProperties } = schema
+  const { required } = schema
   t.has(required, ['server'])
   const { $id, type } = schema
   t.equal($id, `https://platformatic.dev/schemas/v${pkg.version}/service`)
