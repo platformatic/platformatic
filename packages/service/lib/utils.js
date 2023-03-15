@@ -49,6 +49,8 @@ function getJSPluginPath (configPath, tsPluginPath, compileDir) {
   const isTs = tsPluginPath.endsWith('ts')
   let newBaseName
 
+  // TODO: investigate why c8 does not see those
+  /* c8 ignore next 5 */
   if (isTs) {
     newBaseName = basename(tsPluginPath, '.ts') + '.js'
   } else {

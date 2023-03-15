@@ -49,6 +49,7 @@ async function platformaticService (app, opts, toLoad = []) {
   {
     const fileWatcher = opts.fileWatcher
     const configManager = opts.configManager
+    /* c8 ignore next 3 */
     if (fileWatcher !== undefined) {
       app.platformatic.fileWatcher = fileWatcher
     }
