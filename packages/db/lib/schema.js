@@ -418,8 +418,7 @@ const $defs = {
       'title',
       'version'
     ],
-    $ref: '#/$defs/specification-extensions',
-    unevaluatedProperties: false
+    $ref: '#/$defs/specification-extensions'
   },
   contact: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#contact-object',
@@ -435,8 +434,7 @@ const $defs = {
         type: 'string'
       }
     },
-    $ref: '#/$defs/specification-extensions',
-    unevaluatedProperties: false
+    $ref: '#/$defs/specification-extensions'
   },
   license: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#license-object',
@@ -455,17 +453,7 @@ const $defs = {
     required: [
       'name'
     ],
-    dependentSchemas: {
-      identifier: {
-        not: {
-          required: [
-            'url'
-          ]
-        }
-      }
-    },
-    $ref: '#/$defs/specification-extensions',
-    unevaluatedProperties: false
+    $ref: '#/$defs/specification-extensions'
   },
   server: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#server-object',
@@ -487,8 +475,7 @@ const $defs = {
     required: [
       'url'
     ],
-    $ref: '#/$defs/specification-extensions',
-    unevaluatedProperties: false
+    $ref: '#/$defs/specification-extensions'
   },
   'server-variable': {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#server-variable-object',
@@ -511,8 +498,7 @@ const $defs = {
     required: [
       'default'
     ],
-    $ref: '#/$defs/specification-extensions',
-    unevaluatedProperties: false
+    $ref: '#/$defs/specification-extensions'
   },
   components: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#components-object',
@@ -576,16 +562,7 @@ const $defs = {
         }
       }
     },
-    patternProperties: {
-      '^(schemas|responses|parameters|examples|requestBodies|headers|securitySchemes|links|callbacks|pathItems)$': {
-        $comment: 'Enumerating all of the property names in the regex above is necessary for unevaluatedProperties to work as expected',
-        propertyNames: {
-          pattern: '^[a-zA-Z0-9._-]+$'
-        }
-      }
-    },
-    $ref: '#/$defs/specification-extensions',
-    unevaluatedProperties: false
+    $ref: '#/$defs/specification-extensions'
   },
   paths: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#paths-object',
@@ -595,8 +572,7 @@ const $defs = {
         $ref: '#/$defs/path-item'
       }
     },
-    $ref: '#/$defs/specification-extensions',
-    unevaluatedProperties: false
+    $ref: '#/$defs/specification-extensions'
   },
   'path-item': {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#path-item-object',
@@ -645,8 +621,7 @@ const $defs = {
         $ref: '#/$defs/operation'
       }
     },
-    $ref: '#/$defs/specification-extensions',
-    unevaluatedProperties: false
+    $ref: '#/$defs/specification-extensions'
   },
   'path-item-or-reference': {
     if: {
@@ -719,8 +694,7 @@ const $defs = {
         }
       }
     },
-    $ref: '#/$defs/specification-extensions',
-    unevaluatedProperties: false
+    $ref: '#/$defs/specification-extensions'
   },
   'external-documentation': {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#external-documentation-object',
@@ -736,8 +710,7 @@ const $defs = {
     required: [
       'url'
     ],
-    $ref: '#/$defs/specification-extensions',
-    unevaluatedProperties: false
+    $ref: '#/$defs/specification-extensions'
   },
   parameter: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#parameter-object',
@@ -766,6 +739,7 @@ const $defs = {
         type: 'boolean'
       },
       content: {
+        type: 'object',
         $ref: '#/$defs/content',
         minProperties: 1,
         maxProperties: 1
@@ -788,6 +762,7 @@ const $defs = {
       }
     ],
     if: {
+      type: 'object',
       properties: {
         in: {
           const: 'query'
@@ -798,6 +773,7 @@ const $defs = {
       ]
     },
     then: {
+      type: 'object',
       properties: {
         allowEmptyValue: {
           default: false,
@@ -805,170 +781,7 @@ const $defs = {
         }
       }
     },
-    dependentSchemas: {
-      schema: {
-        properties: {
-          style: {
-            type: 'string'
-          },
-          explode: {
-            type: 'boolean'
-          }
-        },
-        allOf: [
-          {
-            $ref: '#/$defs/examples'
-          },
-          {
-            $ref: '#/$defs/parameter/dependentSchemas/schema/$defs/styles-for-path'
-          },
-          {
-            $ref: '#/$defs/parameter/dependentSchemas/schema/$defs/styles-for-header'
-          },
-          {
-            $ref: '#/$defs/parameter/dependentSchemas/schema/$defs/styles-for-query'
-          },
-          {
-            $ref: '#/$defs/parameter/dependentSchemas/schema/$defs/styles-for-cookie'
-          },
-          {
-            $ref: '#/$defs/parameter/dependentSchemas/schema/$defs/styles-for-form'
-          }
-        ],
-        $defs: {
-          'styles-for-path': {
-            if: {
-              properties: {
-                in: {
-                  const: 'path'
-                }
-              },
-              required: [
-                'in'
-              ]
-            },
-            then: {
-              properties: {
-                name: {
-                  pattern: '[^/#?]+$'
-                },
-                style: {
-                  default: 'simple',
-                  enum: [
-                    'matrix',
-                    'label',
-                    'simple'
-                  ]
-                },
-                required: {
-                  const: true
-                }
-              },
-              required: [
-                'required'
-              ]
-            }
-          },
-          'styles-for-header': {
-            if: {
-              properties: {
-                in: {
-                  const: 'header'
-                }
-              },
-              required: [
-                'in'
-              ]
-            },
-            then: {
-              properties: {
-                style: {
-                  default: 'simple',
-                  const: 'simple'
-                }
-              }
-            }
-          },
-          'styles-for-query': {
-            if: {
-              properties: {
-                in: {
-                  const: 'query'
-                }
-              },
-              required: [
-                'in'
-              ]
-            },
-            then: {
-              properties: {
-                style: {
-                  default: 'form',
-                  enum: [
-                    'form',
-                    'spaceDelimited',
-                    'pipeDelimited',
-                    'deepObject'
-                  ]
-                },
-                allowReserved: {
-                  default: false,
-                  type: 'boolean'
-                }
-              }
-            }
-          },
-          'styles-for-cookie': {
-            if: {
-              properties: {
-                in: {
-                  const: 'cookie'
-                }
-              },
-              required: [
-                'in'
-              ]
-            },
-            then: {
-              properties: {
-                style: {
-                  default: 'form',
-                  const: 'form'
-                }
-              }
-            }
-          },
-          'styles-for-form': {
-            if: {
-              properties: {
-                style: {
-                  const: 'form'
-                }
-              },
-              required: [
-                'style'
-              ]
-            },
-            then: {
-              properties: {
-                explode: {
-                  default: true
-                }
-              }
-            },
-            else: {
-              properties: {
-                explode: {
-                  default: false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    $ref: '#/$defs/specification-extensions',
-    unevaluatedProperties: false
+    $ref: '#/$defs/specification-extensions'
   },
   'parameter-or-reference': {
     if: {
@@ -1002,8 +815,7 @@ const $defs = {
     required: [
       'content'
     ],
-    $ref: '#/$defs/specification-extensions',
-    unevaluatedProperties: false
+    $ref: '#/$defs/specification-extensions'
   },
   'request-body-or-reference': {
     if: {
@@ -1044,8 +856,7 @@ const $defs = {
       {
         $ref: '#/$defs/examples'
       }
-    ],
-    unevaluatedProperties: false
+    ]
   },
   encoding: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#encoding-object',
@@ -1085,10 +896,11 @@ const $defs = {
         $ref: '#/$defs/encoding/$defs/explode-default'
       }
     ],
-    unevaluatedProperties: false,
+
     $defs: {
       'explode-default': {
         if: {
+          type: 'object',
           properties: {
             style: {
               const: 'form'
@@ -1099,6 +911,7 @@ const $defs = {
           ]
         },
         then: {
+          type: 'object',
           properties: {
             explode: {
               default: true
@@ -1106,6 +919,7 @@ const $defs = {
           }
         },
         else: {
+          type: 'object',
           properties: {
             explode: {
               default: false
@@ -1130,9 +944,10 @@ const $defs = {
     },
     minProperties: 1,
     $ref: '#/$defs/specification-extensions',
-    unevaluatedProperties: false,
+
     if: {
       $comment: 'either default, or at least one response code property must exist',
+      type: 'object',
       patternProperties: {
         '^[1-5](?:[0-9]{2}|XX)$': false
       }
@@ -1169,8 +984,7 @@ const $defs = {
     required: [
       'description'
     ],
-    $ref: '#/$defs/specification-extensions',
-    unevaluatedProperties: false
+    $ref: '#/$defs/specification-extensions'
   },
   'response-or-reference': {
     if: {
@@ -1229,8 +1043,7 @@ const $defs = {
         'externalValue'
       ]
     },
-    $ref: '#/$defs/specification-extensions',
-    unevaluatedProperties: false
+    $ref: '#/$defs/specification-extensions'
   },
   'example-or-reference': {
     if: {
@@ -1279,8 +1092,7 @@ const $defs = {
         ]
       }
     ],
-    $ref: '#/$defs/specification-extensions',
-    unevaluatedProperties: false
+    $ref: '#/$defs/specification-extensions'
   },
   'link-or-reference': {
     if: {
@@ -1312,6 +1124,7 @@ const $defs = {
         type: 'boolean'
       },
       content: {
+        type: 'object',
         $ref: '#/$defs/content',
         minProperties: 1,
         maxProperties: 1
@@ -1329,23 +1142,7 @@ const $defs = {
         ]
       }
     ],
-    dependentSchemas: {
-      schema: {
-        properties: {
-          style: {
-            default: 'simple',
-            const: 'simple'
-          },
-          explode: {
-            default: false,
-            type: 'boolean'
-          }
-        },
-        $ref: '#/$defs/examples'
-      }
-    },
-    $ref: '#/$defs/specification-extensions',
-    unevaluatedProperties: false
+    $ref: '#/$defs/specification-extensions'
   },
   'header-or-reference': {
     if: {
@@ -1378,8 +1175,7 @@ const $defs = {
     required: [
       'name'
     ],
-    $ref: '#/$defs/specification-extensions',
-    unevaluatedProperties: false
+    $ref: '#/$defs/specification-extensions'
   },
   reference: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#reference-object',
@@ -1394,8 +1190,7 @@ const $defs = {
       description: {
         type: 'string'
       }
-    },
-    unevaluatedProperties: false
+    }
   },
   schema: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#schema-object',
@@ -1444,10 +1239,10 @@ const $defs = {
         $ref: '#/$defs/security-scheme/$defs/type-oidc'
       }
     ],
-    unevaluatedProperties: false,
     $defs: {
       'type-apikey': {
         if: {
+          type: 'object',
           properties: {
             type: {
               const: 'apiKey'
@@ -1458,6 +1253,7 @@ const $defs = {
           ]
         },
         then: {
+          type: 'object',
           properties: {
             name: {
               type: 'string'
@@ -1478,6 +1274,7 @@ const $defs = {
       },
       'type-http': {
         if: {
+          type: 'object',
           properties: {
             type: {
               const: 'http'
@@ -1488,6 +1285,7 @@ const $defs = {
           ]
         },
         then: {
+          type: 'object',
           properties: {
             scheme: {
               type: 'string'
@@ -1500,6 +1298,7 @@ const $defs = {
       },
       'type-http-bearer': {
         if: {
+          type: 'object',
           properties: {
             type: {
               const: 'http'
@@ -1515,6 +1314,7 @@ const $defs = {
           ]
         },
         then: {
+          type: 'object',
           properties: {
             bearerFormat: {
               type: 'string'
@@ -1524,6 +1324,7 @@ const $defs = {
       },
       'type-oauth2': {
         if: {
+          type: 'object',
           properties: {
             type: {
               const: 'oauth2'
@@ -1534,6 +1335,7 @@ const $defs = {
           ]
         },
         then: {
+          type: 'object',
           properties: {
             flows: {
               $ref: '#/$defs/oauth-flows'
@@ -1546,6 +1348,7 @@ const $defs = {
       },
       'type-oidc': {
         if: {
+          type: 'object',
           properties: {
             type: {
               const: 'openIdConnect'
@@ -1556,6 +1359,7 @@ const $defs = {
           ]
         },
         then: {
+          type: 'object',
           properties: {
             openIdConnectUrl: {
               type: 'string'
@@ -1599,7 +1403,7 @@ const $defs = {
       }
     },
     $ref: '#/$defs/specification-extensions',
-    unevaluatedProperties: false,
+
     $defs: {
       implicit: {
         type: 'object',
@@ -1618,8 +1422,7 @@ const $defs = {
           'authorizationUrl',
           'scopes'
         ],
-        $ref: '#/$defs/specification-extensions',
-        unevaluatedProperties: false
+        $ref: '#/$defs/specification-extensions'
       },
       password: {
         type: 'object',
@@ -1638,8 +1441,7 @@ const $defs = {
           'tokenUrl',
           'scopes'
         ],
-        $ref: '#/$defs/specification-extensions',
-        unevaluatedProperties: false
+        $ref: '#/$defs/specification-extensions'
       },
       'client-credentials': {
         type: 'object',
@@ -1658,8 +1460,7 @@ const $defs = {
           'tokenUrl',
           'scopes'
         ],
-        $ref: '#/$defs/specification-extensions',
-        unevaluatedProperties: false
+        $ref: '#/$defs/specification-extensions'
       },
       'authorization-code': {
         type: 'object',
@@ -1682,8 +1483,7 @@ const $defs = {
           'tokenUrl',
           'scopes'
         ],
-        $ref: '#/$defs/specification-extensions',
-        unevaluatedProperties: false
+        $ref: '#/$defs/specification-extensions'
       }
     }
   },
@@ -1699,11 +1499,13 @@ const $defs = {
   },
   'specification-extensions': {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#specification-extensions',
+    type: 'object',
     patternProperties: {
       '^x-': true
     }
   },
   examples: {
+    type: 'object',
     properties: {
       example: true,
       examples: {
