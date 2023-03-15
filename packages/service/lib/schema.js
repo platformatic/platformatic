@@ -360,11 +360,26 @@ const openapi = {
   }]
 }
 
+const graphql = {
+  anyOf: [{
+    type: 'boolean'
+  }, {
+    type: 'object',
+    properties: {
+      graphiql: {
+        type: 'boolean'
+      }
+    }
+  }]
+}
+
 const service = {
   type: 'object',
   properties: {
-    openapi
-  }
+    openapi,
+    graphql
+  },
+  additionalProperties: false
 }
 
 const platformaticServiceSchema = {

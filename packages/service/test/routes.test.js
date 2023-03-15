@@ -161,7 +161,7 @@ test('openapi disabled', async ({ teardown, equal, same }) => {
   }
 })
 
-test('openapi enabled by default', async ({ teardown, equal, same }) => {
+test('openapi disabled by default', async ({ teardown, equal, same }) => {
   const server = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
@@ -181,12 +181,7 @@ test('openapi enabled by default', async ({ teardown, equal, same }) => {
   {
     // No browser (i.e. curl)
     const res = await (request(`${server.url}/documentation/json`))
-    equal(res.statusCode, 200)
-    const body = await res.body.json()
-
-    equal(body.openapi, '3.0.3')
-    equal(body.info.title, 'Platformatic')
-    equal(body.info.version, '1.0.0')
-    equal(!!body.paths['/'].get, true)
+    equal(res.statusCode, 404)
+    await res.body.text()
   }
 })

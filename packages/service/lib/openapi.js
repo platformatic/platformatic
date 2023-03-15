@@ -6,13 +6,10 @@ const deepmerge = require('@fastify/deepmerge')({ all: true })
 const fp = require('fastify-plugin')
 
 // For some unknown reason, c8 is not detecting any of this
+// pf
 // despite being covered by test/routes.test.js
 /* c8 ignore next 33 */
 async function setupOpenAPI (app, opts) {
-  if (app.hasDecorator('swagger')) {
-    return
-  }
-
   const openapiConfig = deepmerge({
     exposeRoute: true,
     info: {

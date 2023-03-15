@@ -13,6 +13,7 @@ const { join, dirname, resolve } = require('path')
 const { readFile } = require('fs/promises')
 const wrapperPath = join(__dirname, 'lib', 'sandbox-wrapper.js')
 const setupOpenAPI = require('./lib/openapi.js')
+const setupGraphQL = require('./lib/graphql.js')
 
 function createServerConfig (config) {
   // convert the config file to a new structure
@@ -62,11 +63,17 @@ async function platformaticService (app, opts, toLoad = []) {
 
   {
     const serviceConfig = app.platformatic.config?.service
+
     // for some unknown reason, c8 is not detecting any of this
     // despite being covered by test/routes.test.js
     /* c8 ignore next 3 */
-    if (serviceConfig?.openapi || !serviceConfig || serviceConfig.openapi === undefined) {
+    if (serviceConfig?.openapi) {
       await setupOpenAPI(app, app.platformatic.config?.service?.openapi)
+    }
+
+    /* c8 ignore next 3 */
+    if (serviceConfig?.graphql) {
+      await setupGraphQL(app, app.platformatic.config?.service?.graphql)
     }
   }
 
