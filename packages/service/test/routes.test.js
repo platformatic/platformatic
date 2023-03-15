@@ -15,11 +15,7 @@ test('should respond 200 on root endpoint', async ({ teardown, equal, same }) =>
         enabled: true,
         interval: 2000
       }
-    },
-    authorization: {
-      adminSecret: 'secret'
-    },
-    dashboard: false
+    }
   }))
   teardown(server.stop)
 

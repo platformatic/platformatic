@@ -21,8 +21,7 @@ setGlobalDispatcher(agent)
 
 function buildConfig (options) {
   const base = {
-    server: {},
-    core: {}
+    server: {}
   }
 
   return Object.assign(base, options)
