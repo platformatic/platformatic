@@ -36,9 +36,11 @@ jobs:
         with:
           node-version: 18
           cache: 'pnpm'
-      - uses: nick-fields/retry@v2.8.3
+      - name: pnpm fetch
+        uses: nick-fields/retry@v2.8.3
 			  with:
           max_attempts: 3
+          timeout_minutes: 15
           retry_on: error
           command: pnpm fetch --ignore-scripts
 
@@ -61,6 +63,7 @@ jobs:
       uses: nick-fields/retry@v2.8.3
       with:
         max_attempts: 3
+        timeout_minutes: 15
         retry_on: error
         command: pnpm install --frozen-lockfile
     - name: Run test suite
@@ -88,6 +91,7 @@ jobs:
       uses: nick-fields/retry@v2.8.3
       with:
         max_attempts: 3
+        timeout_minutes: 15
         retry_on: error
         command: pnpm install --frozen-lockfile
     - name: Builds the ra-data-rest
@@ -116,6 +120,7 @@ jobs:
       uses: nick-fields/retry@v2.8.3
       with:
         max_attempts: 3
+        timeout_minutes: 15
         retry_on: error
         command: pnpm install --frozen-lockfile
     - name: Run test suite config manager
@@ -143,6 +148,7 @@ jobs:
       uses: nick-fields/retry@v2.8.3
       with:
         max_attempts: 3
+        timeout_minutes: 15
         retry_on: error
         command: pnpm install --frozen-lockfile
     - name: pnpm install -g typescript
@@ -177,6 +183,7 @@ jobs:
       uses: nick-fields/retry@v2.8.3
       with:
         max_attempts: 3
+        timeout_minutes: 15
         retry_on: error
         command: pnpm install --frozen-lockfile
     - name: Run test suite
@@ -202,6 +209,7 @@ jobs:
       uses: nick-fields/retry@v2.8.3
       with:
         max_attempts: 3
+        timeout_minutes: 15
         retry_on: error
         command: pnpm install --frozen-lockfile
     - name: Linting & Typescript for test suite sql-mapper
@@ -248,6 +256,7 @@ jobs:
       uses: nick-fields/retry@v2.8.3
       with:
         max_attempts: 3
+        timeout_minutes: 15
         retry_on: error
         command: pnpm install --frozen-lockfile
     - name: Wait for DB
@@ -287,6 +296,7 @@ jobs:
       uses: nick-fields/retry@v2.8.3
       with:
         max_attempts: 3
+        timeout_minutes: 15
         retry_on: error
         command: pnpm install --frozen-lockfile
     - name: Wait for DB
@@ -314,6 +324,7 @@ jobs:
         uses: nick-fields/retry@v2.8.3
         with:
           max_attempts: 3
+          timeout_minutes: 15
           retry_on: error
           command: pnpm install --frozen-lockfile
       - name: Run test suite
@@ -338,6 +349,7 @@ jobs:
         uses: nick-fields/retry@v2.8.3
         with:
           max_attempts: 3
+          timeout_minutes: 15
           retry_on: error
           command: pnpm install --frozen-lockfile
       - name: Run test suite
