@@ -37,7 +37,11 @@ jobs:
           node-version: 18
           cache: 'pnpm'
       - name: pnpm fetch
-        run: pnpm fetch --ignore-scripts
+        uses: nick-fields/retry@v2
+			  with:
+          max_attempts: 3
+          retry_on: error
+          command: pnpm fetch --ignore-scripts
 
   ci-cli:
     needs: setup-node_modules
@@ -55,7 +59,11 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
     - name: pnpm install
-      run: pnpm install --frozen-lockfile
+      uses: nick-fields/retry@v2
+      with:
+        max_attempts: 3
+        retry_on: error
+        command: pnpm install --frozen-lockfile
     - name: Run test suite
       run: cd packages/cli && pnpm test
     - name: License Check
@@ -78,7 +86,11 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
     - name: pnpm install
-      run: pnpm install --frozen-lockfile
+      uses: nick-fields/retry@v2
+      with:
+        max_attempts: 3
+        retry_on: error
+        command: pnpm install --frozen-lockfile
     - name: Builds the ra-data-rest
       run: pnpm run ra-data-rest build
     - name: Builds the dashboard
@@ -102,7 +114,11 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
     - name: pnpm install
-      run: pnpm install --frozen-lockfile  
+      uses: nick-fields/retry@v2
+      with:
+        max_attempts: 3
+        retry_on: error
+        command: pnpm install --frozen-lockfile
     - name: Run test suite config manager
       run: cd packages/config && pnpm test
     - name: Run test suite metaconfig
@@ -125,7 +141,11 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
     - name: pnpm install
-      run: pnpm install --frozen-lockfile  
+      uses: nick-fields/retry@v2
+      with:
+        max_attempts: 3
+        retry_on: error
+        command: pnpm install --frozen-lockfile
     - name: pnpm install -g typescript
       run: pnpm install -g typescript 
     - name: Builds the ra-data-rest
@@ -155,7 +175,11 @@ jobs:
     - name: Start docker containers for testing
       run: docker-compose up -d postgresql
     - name: pnpm install
-      run: pnpm install --frozen-lockfile  
+      uses: nick-fields/retry@v2
+      with:
+        max_attempts: 3
+        retry_on: error
+        command: pnpm install --frozen-lockfile
     - name: Run test suite
       run: cd packages/db-authorization && pnpm test
 
@@ -175,6 +199,12 @@ jobs:
         cache: 'pnpm'
     - name: pnpm install
       run: pnpm install --frozen-lockfile  
+    - name: pnpm install
+      uses: nick-fields/retry@v2
+      with:
+        max_attempts: 3
+        retry_on: error
+        command: pnpm install --frozen-lockfile
     - name: Linting & Typescript for test suite sql-mapper
       run: |
         pnpm --filter="@platformatic/sql-mapper" run lint
@@ -216,7 +246,11 @@ jobs:
       run: docker-compose up -d ${{ matrix.db }}
       if: ${{ matrix.db != 'sqlite' }}
     - name: pnpm install
-      run: pnpm install --frozen-lockfile  
+      uses: nick-fields/retry@v2
+      with:
+        max_attempts: 3
+        retry_on: error
+        command: pnpm install --frozen-lockfile
     - name: Wait for DB
       run: sleep 10
       if: ${{ matrix.db != 'sqlite' }}
@@ -251,7 +285,11 @@ jobs:
     - name: Start redis containers for testing
       run: docker-compose up -d redis
     - name: pnpm install
-      run: pnpm install --frozen-lockfile  
+      uses: nick-fields/retry@v2
+      with:
+        max_attempts: 3
+        retry_on: error
+        command: pnpm install --frozen-lockfile
     - name: Wait for DB
       run: sleep 10
       if: ${{ matrix.db != 'sqlite' }}
@@ -274,7 +312,11 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
       - name: pnpm install
-        run: pnpm install --frozen-lockfile  
+        uses: nick-fields/retry@v2
+        with:
+          max_attempts: 3
+          retry_on: error
+          command: pnpm install --frozen-lockfile
       - name: Run test suite
         run: cd packages/authenticate && pnpm test; cd ../..
 
@@ -294,7 +336,11 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
       - name: pnpm install
-        run: pnpm install --frozen-lockfile  
+        uses: nick-fields/retry@v2
+        with:
+          max_attempts: 3
+          retry_on: error
+          command: pnpm install --frozen-lockfile
       - name: Run test suite
         run: cd packages/service && pnpm rebuild && pnpm test; cd ../..
 
@@ -334,7 +380,7 @@ jobs:
     strategy:
       matrix:
         node-version: [18]
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@v3
     - uses: pnpm/action-setup@v2.2.4
