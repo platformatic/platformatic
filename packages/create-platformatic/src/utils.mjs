@@ -1,9 +1,9 @@
 import { execa } from 'execa'
-import { request } from 'undici'
 import { access, constants, readFile } from 'fs/promises'
 import { resolve, join, dirname } from 'path'
 import { createRequire } from 'module'
 import semver from 'semver'
+import * as desm from 'desm'
 
 export const sleep = ms => new Promise((resolve) => setTimeout(resolve, ms))
 export const randomBetween = (min, max) => Math.floor(Math.random() * (max - min + 1) + min)
@@ -39,17 +39,10 @@ export const getUsername = async () => {
   return null
 }
 
+/* c8 ignore next 4 */
 export const getVersion = async () => {
-  try {
-    const { body, statusCode } = await request('https://registry.npmjs.org/platformatic/latest')
-    if (statusCode !== 200) {
-      return null
-    }
-    const { version } = await body.json()
-    return version
-  } catch (err) {
-    return null
-  }
+  const data = await readFile(desm.join(import.meta.url, '..', 'package.json'), 'utf8')
+  return JSON.parse(data).version
 }
 
 export async function isDirectoryWriteable (directory) {

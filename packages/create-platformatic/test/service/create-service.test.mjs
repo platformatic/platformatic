@@ -39,7 +39,8 @@ test('creates service with typescript', async ({ equal, same, ok }) => {
   const serviceConfig = JSON.parse(serviceConfigFile)
   const ajv = new Ajv()
   const validate = ajv.compile(schema.schema)
-  equal(validate(serviceConfig), true)
+  const isValid = validate(serviceConfig)
+  equal(isValid, true)
   const { server, plugin } = serviceConfig
 
   equal(server.hostname, '{PLT_SERVER_HOSTNAME}')

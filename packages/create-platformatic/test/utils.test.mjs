@@ -1,19 +1,10 @@
-import { test, beforeEach } from 'tap'
-import { MockAgent, setGlobalDispatcher } from 'undici'
-import { getVersion, randomBetween, sleep, validatePath, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions } from '../src/utils.mjs'
+import { test } from 'tap'
+import { randomBetween, sleep, validatePath, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions } from '../src/utils.mjs'
 import { mkdtempSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import esmock from 'esmock'
 import semver from 'semver'
-
-let mockAgent
-
-beforeEach(() => {
-  mockAgent = new MockAgent()
-  setGlobalDispatcher(mockAgent)
-  mockAgent.disableNetConnect()
-})
 
 test('getUsername from git', async ({ end, equal }) => {
   const name = 'lukeskywalker'
@@ -96,49 +87,6 @@ test('getUsername - no username found', async ({ end, equal }) => {
   })
   const username = await getUsername()
   equal(username, null)
-})
-
-test('Get the version', async ({ end, equal, mock }) => {
-  const client = mockAgent.get('https://registry.npmjs.org')
-  const version = 'v1.2.3'
-
-  client
-    .intercept({
-      path: '/platformatic/latest',
-      method: 'GET'
-    })
-    .reply(200, {
-      version
-    })
-  const versionFromNPM = await getVersion()
-  equal(versionFromNPM, version)
-})
-
-test('Get the version as `null` if something goes wrong ', async ({ end, equal, mock }) => {
-  const client = mockAgent.get('https://registry.npmjs.org')
-  const version = 'v1.2.3'
-  client
-    .intercept({
-      path: '/platformatic/latest',
-      method: 'GET'
-    })
-    .reply(500, {
-      version
-    })
-  const versionFromNPM = await getVersion()
-  equal(versionFromNPM, null)
-})
-
-test('Get the version as `null` if body has no version', async ({ end, equal, mock }) => {
-  const client = mockAgent.get('https://registry.npmjs.org')
-  client
-    .intercept({
-      path: '/platformatic/latest',
-      method: 'GET'
-    })
-    .reply(200, null)
-  const versionFromNPM = await getVersion()
-  equal(versionFromNPM, null)
 })
 
 test('randomBetween', async ({ end, equal }) => {

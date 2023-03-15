@@ -166,8 +166,7 @@ const server = {
           type: 'object',
           properties: {
             level: {
-              type: 'string',
-              enum: ['fatal', 'error', 'warn', 'info', 'debug', 'trace']
+              type: 'string'
             }
           },
           additionalProperties: true
