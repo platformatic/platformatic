@@ -214,7 +214,7 @@ importers:
       standard: ^17.0.0
       strip-ansi: ^7.0.1
       tap: ^16.3.4
-      tsd: ^0.26.0
+      tsd: ^0.27.0
       typescript: ^4.9.5
       ua-parser-js: ^1.0.33
       undici: ^5.20.0
@@ -270,7 +270,7 @@ importers:
       standard: 17.0.0
       strip-ansi: 7.0.1
       tap: 16.3.4_typescript@4.9.5
-      tsd: 0.26.1
+      tsd: 0.27.0
       typescript: 4.9.5
       undici: 5.20.0
       vscode-json-languageservice: 5.3.2
@@ -560,7 +560,7 @@ importers:
       snazzy: ^9.0.0
       standard: ^17.0.0
       tap: ^16.3.4
-      tsd: ^0.26.0
+      tsd: ^0.27.0
     dependencies:
       camelcase: 6.3.0
       fastify-plugin: 4.5.0
@@ -573,7 +573,7 @@ importers:
       snazzy: 9.0.0
       standard: 17.0.0
       tap: 16.3.4
-      tsd: 0.26.1
+      tsd: 0.27.0
 
   packages/sql-graphql:
     specifiers:
@@ -592,7 +592,7 @@ importers:
       snazzy: ^9.0.0
       standard: ^17.0.0
       tap: ^16.3.4
-      tsd: ^0.26.0
+      tsd: ^0.27.0
       ws: ^8.12.1
     dependencies:
       '@mercuriusjs/federation': 1.0.1
@@ -611,7 +611,7 @@ importers:
       snazzy: 9.0.0
       standard: 17.0.0
       tap: 16.3.4
-      tsd: 0.26.1
+      tsd: 0.27.0
       ws: 8.12.1
 
   packages/sql-json-schema-mapper:
@@ -641,7 +641,7 @@ importers:
       snazzy: ^9.0.0
       standard: ^17.0.0
       tap: ^16.3.4
-      tsd: ^0.26.0
+      tsd: ^0.27.0
     dependencies:
       '@databases/mysql': 5.2.1
       '@databases/pg': 5.4.1
@@ -655,7 +655,7 @@ importers:
       snazzy: 9.0.0
       standard: 17.0.0
       tap: 16.3.4
-      tsd: 0.26.1
+      tsd: 0.27.0
 
   packages/sql-openapi:
     specifiers:
@@ -673,7 +673,7 @@ importers:
       snazzy: ^9.0.0
       standard: ^17.0.0
       tap: ^16.3.4
-      tsd: ^0.26.0
+      tsd: ^0.27.0
     dependencies:
       '@fastify/deepmerge': 1.3.0
       '@fastify/swagger': 8.3.1
@@ -690,7 +690,7 @@ importers:
       snazzy: 9.0.0
       standard: 17.0.0
       tap: 16.3.4
-      tsd: 0.26.1
+      tsd: 0.27.0
 
   packages/utils:
     specifiers:
@@ -1219,7 +1219,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.12.9
-      '@babel/helper-plugin-utils': 7.10.4
+      '@babel/helper-plugin-utils': 7.20.2
       '@babel/plugin-syntax-object-rest-spread': 7.8.3_@babel+core@7.12.9
       '@babel/plugin-transform-parameters': 7.20.7_@babel+core@7.12.9
     dev: true
@@ -7228,7 +7228,7 @@ packages:
       eslint-scope: 7.1.1
       eslint-utils: 3.0.0_eslint@8.4.1
       eslint-visitor-keys: 3.3.0
-      espree: 9.2.0
+      espree: 9.4.1
       esquery: 1.5.0
       esutils: 2.0.3
       fast-deep-equal: 3.1.3
@@ -13989,6 +13989,7 @@ packages:
 
   /trim/0.0.1:
     resolution: {integrity: sha512-YzQV+TZg4AxpKxaTHK3c3D+kRDCGVEE7LemdlQZoQXn0iennk10RsIoY6ikzAqJTc9Xjl9C1/waHom/J86ziAQ==}
+    deprecated: Use String.prototype.trim() instead
     dev: true
 
   /trivial-deferred/1.0.1:
@@ -14017,8 +14018,8 @@ packages:
       strip-bom: 3.0.0
     dev: true
 
-  /tsd/0.26.1:
-    resolution: {integrity: sha512-HbYaRQqL7imva6ZbSE/7KSIPN/dhwyoLIwPfbjyE7nwWqjkLUTwvyvyhhOUuMLOKWMo4mIx66KyqlTpEqNngdA==}
+  /tsd/0.27.0:
+    resolution: {integrity: sha512-G/2Sejk9N21TcuWlHwrvVWwIyIl2mpECFPbnJvFMsFN1xQCIbi2QnvG4fkw3VitFhNF6dy38cXxKJ8Paq8kOGQ==}
     engines: {node: '>=14.16'}
     hasBin: true
     dependencies:
