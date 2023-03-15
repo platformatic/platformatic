@@ -64,7 +64,7 @@ async function compile (cwd) {
   }
 
   try {
-    await execa(tscExecutablePath, ['--project', 'tsconfig.json'], { cwd })
+    await execa(tscExecutablePath, ['--project', 'tsconfig.json', '--rootDir', '.'], { cwd })
     logger.info('Typescript compilation completed successfully.')
     return true
   } catch (error) {
@@ -83,7 +83,7 @@ async function compileWatch (cwd) {
   }
 
   try {
-    await execa(tscExecutablePath, ['--project', 'tsconfig.json', '--incremental'], { cwd })
+    await execa(tscExecutablePath, ['--project', 'tsconfig.json', '--incremental', '--rootDir', '.'], { cwd })
     logger.info('Typescript compilation completed successfully. Starting watch mode.')
   } catch (error) {
     throw new Error('Failed to compile typescript files: ' + error)
