@@ -57,7 +57,7 @@ function generateConfig (migrations, plugin, types, typescript, version) {
         level: '{PLT_SERVER_LOGGER_LEVEL}'
       }
     },
-    core: {
+    db: {
       connectionString: '{DATABASE_URL}',
       graphql: true,
       openapi: true

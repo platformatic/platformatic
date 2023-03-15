@@ -6,7 +6,7 @@
       "level": "error"
     }
   },
-  "core": {
+  "db": {
     "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres",
     "graphql": {
       "schemaPath": "./names.graphql"

@@ -13,7 +13,7 @@ test('configure authorizations works even with empty object', async ({ teardown,
       port: 0
     },
     authorization: {},
-    core: {
+    db: {
       ...connInfo,
       async onDatabaseLoad (db, sql) {
         pass('onDatabaseLoad called')

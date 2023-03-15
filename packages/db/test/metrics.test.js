@@ -13,7 +13,7 @@ test('call /dashboard/metrics before any requests', async ({ teardown, equal, sa
     },
     metrics: true,
     dashboard: true,
-    core: {
+    db: {
       ...connInfo,
       async onDatabaseLoad (db, sql) {
         await clear(db, sql)
@@ -49,7 +49,7 @@ test('call /dashboard/metrics after user requests', async ({ teardown, equal, ha
     },
     metrics: true,
     dashboard: true,
-    core: {
+    db: {
       ...connInfo,
       async onDatabaseLoad (db, sql) {
         await clear(db, sql)

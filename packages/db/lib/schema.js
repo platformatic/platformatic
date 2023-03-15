@@ -5,7 +5,7 @@ const { metrics, server, plugins, watch } = require('@platformatic/service').sch
 const pkg = require('../package.json')
 const version = 'v' + pkg.version
 
-const core = {
+const db = {
   type: 'object',
   properties: {
     connectionString: {
@@ -355,7 +355,7 @@ const platformaticDBschema = {
   type: 'object',
   properties: {
     server,
-    core,
+    db,
     dashboard,
     authorization,
     migrations,
@@ -372,7 +372,7 @@ const platformaticDBschema = {
     }
   },
   additionalProperties: false,
-  required: ['core', 'server']
+  required: ['db', 'server']
 }
 
 module.exports.schema = platformaticDBschema

@@ -19,7 +19,7 @@ test('should not throw error if setup migrator twice', async (t) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       connectionString: `sqlite://${join(cwd, 'db.sqlite')}`
     },
     migrations: {
@@ -34,7 +34,7 @@ test('should not throw error if setup migrator twice', async (t) => {
 
   const migrator = new Migrator(
     config.migrations,
-    config.core,
+    config.db,
     logger
   )
 

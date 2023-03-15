@@ -16,7 +16,7 @@ test('should respond 200 on root endpoint', async ({ teardown, equal, same, matc
         interval: 2000
       }
     },
-    core: {
+    db: {
       ...connInfo
     }
   }))
@@ -57,7 +57,7 @@ test('should not overwrite a plugin which define a root endpoint', async ({ tear
         interval: 2000
       }
     },
-    core: {
+    db: {
       ...connInfo
     },
     plugins: {
@@ -83,7 +83,7 @@ test('should not overwrite dashboard endpoint', async ({ teardown, equal, same }
         interval: 2000
       }
     },
-    core: {
+    db: {
       ...connInfo
     },
     authorization: {
@@ -105,7 +105,7 @@ test('should exclude the root endpoint from the openapi documentation', async ({
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       ...connInfo
     },
     authorization: {
