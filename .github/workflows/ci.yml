@@ -38,7 +38,7 @@ jobs:
           cache: 'pnpm'
       - name: pnpm fetch
         uses: "nick-fields/retry@v2.8.3"
-			  with:
+        with:
           max_attempts: 3
           timeout_minutes: 15
           retry_on: error
