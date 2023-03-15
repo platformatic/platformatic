@@ -176,7 +176,6 @@ class ConfigManager extends EventEmitter {
   async parseAndValidate () {
     const validationResult = await this.parse()
     if (!validationResult) {
-      console.log(this.validationErrors)
       throw new Error(this.validationErrors.map((err) => {
         return err.message
       }).join('\n'))
