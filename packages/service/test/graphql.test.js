@@ -55,7 +55,7 @@ test('graphql enabled', async ({ teardown, equal, same }) => {
   }
 })
 
-test('graphql disabled', async ({ teardown, pass, fail }) => {
+test('graphql disabled', async ({ teardown, equal, fail }) => {
   try {
     const server = await buildServer(buildConfig({
       server: {
@@ -75,8 +75,8 @@ test('graphql disabled', async ({ teardown, pass, fail }) => {
     }))
     await server.stop()
     fail('should have errored but did not')
-  } catch {
-    pass('error detected')
+  } catch (err) {
+    equal(err.message, 'Cannot read properties of undefined (reading \'extendSchema\')')
   }
 })
 
@@ -131,7 +131,7 @@ test('disable graphiql', async ({ teardown, equal, same }) => {
   }
 })
 
-test('graphql disabled by default', async ({ teardown, pass, fail }) => {
+test('graphql disabled by default', async ({ teardown, equal, fail }) => {
   try {
     const server = await buildServer(buildConfig({
       server: {
@@ -148,7 +148,7 @@ test('graphql disabled by default', async ({ teardown, pass, fail }) => {
     }))
     await server.stop()
     fail('should have errored but did not')
-  } catch {
-    pass('error detected')
+  } catch (err) {
+    equal(err.message, 'Cannot read properties of undefined (reading \'extendSchema\')')
   }
 })
