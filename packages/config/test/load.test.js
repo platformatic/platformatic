@@ -108,3 +108,25 @@ test('should support JSON5 format', async ({ same }) => {
     foobar: 'foobar'
   })
 })
+
+test('should automatically update', { only: true }, async ({ same }) => {
+  const cm = new ConfigManager({
+    source: resolve(__dirname, './fixtures/db-0.16.0.json'),
+    env: { PLT_FOOBAR: 'foobar' }
+  })
+  await cm.parse()
+  same(cm.current, {
+    $schema: 'https://platformatic.dev/schemas/v0.18.0/db',
+    server: { hostname: '127.0.0.1', port: '3042', logger: { level: 'info' } },
+    metrics: { auth: { username: 'plt-db', password: 'plt-db' } },
+    plugins: { paths: ['./plugin-sum.js'] },
+    db: {
+      connectionString: 'postgres://postgres:postgres@localhost:5432/postgres',
+      graphiql: true,
+      ignore: { versions: true }
+    },
+    migrations: { dir: './demo/migrations', validateChecksums: false },
+    dashboard: { path: '/' },
+    authorization: { adminSecret: 'plt-db' }
+  })
+})

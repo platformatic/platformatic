@@ -1,0 +1,36 @@
+{
+  "$schema": "./platformdb.schema.json",
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "3042",
+    "logger": {
+      "level": "info"
+    }
+  },
+  "metrics": {
+    "auth": {
+      "username": "plt-db",
+      "password": "plt-db"
+    }
+  },
+  "plugin": {
+    "path": "./plugin-sum.js"
+  },
+  "core": {
+    "connectionString": "postgres://postgres:postgres@localhost:5432/postgres",
+    "graphiql": true,
+    "ignore": {
+      "versions": true
+    }
+  },
+  "migrations": {
+    "dir": "./demo/migrations",
+    "validateChecksums": false
+  },
+  "dashboard": {
+    "path": "/"
+  },
+  "authorization": {
+    "adminSecret": "plt-db"
+  }
+}
