@@ -5,8 +5,8 @@
 ### Preparation
 
 1. Clone this repository
-2. Install pnpm `npm i pnpm --location=global`
-3. Install dependencies for root project: `pnpm i` (if using `volta` run before `volta install pnpm`)
+2. Install pnpm `npm i pnpm --location=global` (if you're on Mac, you can use `brew` to install it with `brew install pnpm`)
+3. Install dependencies for root project: `pnpm i`
 4. Install docker with Docker Desktop or [Colima](https://github.com/abiosoft/colima)
 
 The CLI package is now available at **./node_modules/.bin/platformatic**. Use
@@ -14,6 +14,33 @@ The CLI package is now available at **./node_modules/.bin/platformatic**. Use
 ```sh
 (cd packages/cli && pnpm link --global)
 ```
+
+#### Troubleshooting
+If you encounter issues like [this one](https://github.com/platformatic/platformatic/issues/754):
+```
+Error: Cannot find module '/platformatic/node_modules/.pnpm/sqlite3@5.1.4/node_modules/sqlite3/lib/binding/napi-v6-darwin-unknown-arm64/node_sqlite3.node'
+Require stack:
+- /platformatic/node_modules/.pnpm/sqlite3@5.1.4/node_modules/sqlite3/lib/sqlite3-binding.js
+- /platformatic/node_modules/.pnpm/sqlite3@5.1.4/node_modules/sqlite3/lib/sqlite3.js
+- /platformatic/node_modules/.pnpm/@databases+sqlite@4.0.2/node_modules/@databases/sqlite/lib/index.js
+- /platformatic/packages/sql-mapper/mapper.js
+- /platformatic/packages/db-core/index.js
+```
+
+First of all, check that `pnpm` has NOT been installed with `volta`. If so, remove it and install it again with another method.
+
+Remove the `node_modules` folder with `rm -fr ./node_modules`, then delete the pnpm cache with:
+```
+pnpm store prune
+
+# Get the path of the pnpm store
+pnpm store path
+
+# Remove the pnpm store folder
+rm -fr /path/from/the/above/command
+```
+
+Then install again all of the needed packages by running `pnpm i`.
 
 <a id='run-docker'></a>
 ### Start the RDBMS
