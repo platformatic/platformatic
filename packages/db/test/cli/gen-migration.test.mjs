@@ -18,7 +18,7 @@ test('generates next file correctly with empty dir', async ({ equal }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       connectionString: 'sqlite://db.sqlite'
     },
     migrations: {
@@ -47,7 +47,7 @@ test('generates next file correctly with existing files', async ({ equal }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       connectionString: 'sqlite://db.sqlite'
     },
     migrations: {
@@ -78,7 +78,7 @@ test('throws if there is no migrations in the config', async ({ match }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       connectionString: 'sqlite://db.sqlite'
     }
   }
@@ -101,7 +101,7 @@ test('throws if migrations directory does not exist', async ({ match }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       connectionString: 'sqlite://db.sqlite'
     },
     migrations: {

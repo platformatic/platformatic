@@ -217,6 +217,7 @@ test('config is adjusted to handle custom loggers', async (t) => {
   Object.defineProperty(options.server.logger, 'child', {
     value: function child () {
       called = true
+      return this
     },
     enumerable: false
   })
@@ -284,7 +285,7 @@ test('custom ConfigManager', async ({ teardown, equal, pass, same }) => {
   {
     const res = await request(`${server.url}/`)
     equal(res.statusCode, 200, 'add status code')
-    same(await res.body.text(), 'ciao mondo', 'response')
+    same(await res.body.text(), 'hello', 'response')
   }
 })
 

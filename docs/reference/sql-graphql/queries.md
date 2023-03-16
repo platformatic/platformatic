@@ -125,7 +125,7 @@ Limit's values can be customized through configuration:
 ```json
 {
   ...
-  "core": {
+  "db": {
     ...
     "limit": {
       "default": 50,

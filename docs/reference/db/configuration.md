@@ -33,7 +33,7 @@ Comments are supported by the JSON5, YAML and TOML file formats.
 
 Configuration settings are organised into the following groups:
 
-- [`core`](#core) **(required)**
+- [`db`](#db) **(required)**
 - [`dashboard`](#dashboard)
 - [`metrics`](#metrics)
 - [`migrations`](#migrations)
@@ -44,7 +44,7 @@ Configuration settings are organised into the following groups:
 Sensitive configuration settings, such as a database connection URL that contains
 a password, should be set using [configuration placeholders](#configuration-placeholders).
 
-### `core`
+### `db`
 
 A **required** object with the following settings:
 
@@ -56,7 +56,7 @@ A **required** object with the following settings:
  _Examples_
 
 ```json
-  "core": {
+  "db": {
     "connectionString": "(...)",
     "schema": [
       "schema1", "schema2"
@@ -76,7 +76,7 @@ A **required** object with the following settings:
 
   ```json
   {
-    "core": {
+    "db": {
       ...
       "graphql": true
     }
@@ -87,7 +87,7 @@ A **required** object with the following settings:
 
   ```json
   {
-    "core": {
+    "db": {
       ...
       "graphql": {
         "graphiql": true
@@ -100,7 +100,7 @@ A **required** object with the following settings:
 
   ```json
   {
-    "core": {
+    "db": {
       ...
       "graphql": {
         "ignore": {
@@ -115,7 +115,7 @@ A **required** object with the following settings:
 
   ```json
   {
-    "core": {
+    "db": {
       ...
       "graphql": {
         "ignore": {
@@ -132,7 +132,7 @@ A **required** object with the following settings:
 
   ```json
   {
-    "core": {
+    "db": {
       ...
       "graphql": {
         "schemaPath": "path/to/schema.graphql"
@@ -152,7 +152,7 @@ A **required** object with the following settings:
 
   ```json
   {
-    "core": {
+    "db": {
       ...
       "openapi": true
     }
@@ -163,7 +163,7 @@ A **required** object with the following settings:
 
   ```json
   {
-    "core": {
+    "db": {
       ...
       "openapi": {
         "prefix": "/api"
@@ -176,7 +176,7 @@ A **required** object with the following settings:
 
   ```json
   {
-    "core": {
+    "db": {
       ...
       "openapi": {
         "info": {
@@ -187,12 +187,35 @@ A **required** object with the following settings:
     }
   }
   ```
+  
+  You can for example add the `security` section, so that Swagger will allow you to add the authentication header to your requests.
+  In the following code snippet, we're adding a Bearer token in the form of a [JWT](/reference/db/authorization/strategies.md#json-web-token-jwt):
+  ```json
+  {
+    "core": {
+      ...
+      "openapi": {
+        ...
+        "security": [{ "bearerAuth": [] }],
+        "components": {
+          "securitySchemes": {
+            "bearerAuth": {
+              "type": "http",
+              "scheme": "bearer",
+              "bearerFormat": "JWT"
+            }
+          }
+        }
+      }
+    }
+  }
+  ```
 
   It's possible to selectively ignore entites:
 
   ```json
   {
-    "core": {
+    "db": {
       ...
       "openapi": {
         "ignore": {
@@ -207,7 +230,7 @@ A **required** object with the following settings:
 
   ```json
   {
-    "core": {
+    "db": {
       ...
       "openapi": {
         "ignore": {
@@ -226,7 +249,7 @@ A **required** object with the following settings:
 
   ```json
   {
-    "core": {
+    "db": {
       ...
       "ignore": {
         "versions": true // "versions" table will be not mapped with GraphQL/REST APIs
@@ -243,7 +266,7 @@ A **required** object with the following settings:
 
   ```json
   {
-    "core": {
+    "db": {
       ...
       "events": {
         "connectionString": "redis://:password@redishost.com:6380/"
@@ -450,7 +473,7 @@ and must meet the [allowed placeholder name](#allowed-placeholder-names) rules.
 
 ```json title="platformatic.db.json"
 {
-  "core": {
+  "db": {
     "connectionString": "{DATABASE_URL}"
   },
   "server": {
@@ -518,7 +541,7 @@ Server will listen to `http://127.0.0.1:3042`
     "hostname": "127.0.0.1",
     "port": "3042"
   },
-  "core": {
+  "db": {
     "connectionString": "'sqlite://./db.sqlite'",
     "graphiql": true,
     "openapi": true,

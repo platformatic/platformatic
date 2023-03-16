@@ -35,13 +35,13 @@ t.test('run db init with default options', async (t) => {
   const configSchema = await fs.readFile(pathToConfigSchema, 'utf8')
   const parseConfigSchema = JSON.parse(configSchema)
 
-  const { server, core, migrations, $schema } = dbConfig
+  const { server, db, migrations, $schema } = dbConfig
 
   t.equal($schema, `https://platformatic.dev/schemas/v${pkg.version}/db`)
 
   t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   t.equal(server.port, '{PORT}')
-  t.equal(core.connectionString, '{DATABASE_URL}')
+  t.equal(db.connectionString, '{DATABASE_URL}')
 
   const pathToDbEnvFile = path.join(pathToFolder, '.env')
   const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
@@ -50,7 +50,7 @@ t.test('run db init with default options', async (t) => {
   t.equal(dbEnv.PORT, '3042')
   t.equal(dbEnv.DATABASE_URL, 'sqlite://./db.sqlite')
 
-  t.equal(core.graphql, true)
+  t.equal(db.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
 
@@ -62,7 +62,7 @@ t.test('run db init with default options', async (t) => {
   const { $id, type, required } = parseConfigSchema
   t.equal($id, `https://platformatic.dev/schemas/v${pkg.version}/db`)
   t.equal(type, 'object')
-  t.has(required, ['core', 'server'])
+  t.has(required, ['db', 'server'])
 })
 
 t.test('run init with default options twice', async (t) => {
@@ -95,11 +95,11 @@ t.test('run init with default options twice', async (t) => {
   const dbConfigFile = await fs.readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
 
-  const { server, core, migrations } = dbConfig
+  const { server, db, migrations } = dbConfig
 
   t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   t.equal(server.port, '{PORT}')
-  t.equal(core.connectionString, '{DATABASE_URL}')
+  t.equal(db.connectionString, '{DATABASE_URL}')
   const pathToDbEnvFile = path.join(pathToFolder, '.env')
   const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
   const dbEnv = parseEnv(dbEnvFile)
@@ -107,7 +107,7 @@ t.test('run init with default options twice', async (t) => {
   t.equal(dbEnv.PORT, '3042')
   t.equal(dbEnv.DATABASE_URL, 'sqlite://./db.sqlite')
 
-  t.equal(core.graphql, true)
+  t.equal(db.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
 
@@ -129,11 +129,11 @@ t.test('run db init --typescript', async (t) => {
   const dbConfigFile = await fs.readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
 
-  const { server, core, migrations, plugins, types } = dbConfig
+  const { server, db, migrations, plugins, types } = dbConfig
 
   t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   t.equal(server.port, '{PORT}')
-  t.equal(core.connectionString, '{DATABASE_URL}')
+  t.equal(db.connectionString, '{DATABASE_URL}')
   const pathToDbEnvFile = path.join(pathToFolder, '.env')
   const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
   const dbEnv = parseEnv(dbEnvFile)
@@ -141,7 +141,7 @@ t.test('run db init --typescript', async (t) => {
   t.equal(dbEnv.PORT, '3042')
   t.equal(dbEnv.DATABASE_URL, 'sqlite://./db.sqlite')
 
-  t.equal(core.graphql, true)
+  t.equal(db.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
   t.equal(types.autogenerate, true)
@@ -168,11 +168,11 @@ t.test('run db init --typescript twice', async (t) => {
   const dbConfigFile = await fs.readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
 
-  const { server, core, migrations, plugins, types } = dbConfig
+  const { server, db, migrations, plugins, types } = dbConfig
 
   t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   t.equal(server.port, '{PORT}')
-  t.equal(core.connectionString, '{DATABASE_URL}')
+  t.equal(db.connectionString, '{DATABASE_URL}')
 
   const pathToDbEnvFile = path.join(pathToFolder, '.env')
   const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
@@ -180,7 +180,7 @@ t.test('run db init --typescript twice', async (t) => {
   t.equal(dbEnv.PLT_SERVER_HOSTNAME, '127.0.0.1')
   t.equal(dbEnv.PORT, '3042')
   t.equal(dbEnv.DATABASE_URL, 'sqlite://./db.sqlite')
-  t.equal(core.graphql, true)
+  t.equal(db.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
   t.equal(types.autogenerate, true)
@@ -206,11 +206,11 @@ t.test('run db init --database postgres', async (t) => {
   const dbConfigFile = await fs.readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
 
-  const { server, core, migrations } = dbConfig
+  const { server, db, migrations } = dbConfig
 
   t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   t.equal(server.port, '{PORT}')
-  t.equal(core.connectionString, '{DATABASE_URL}')
+  t.equal(db.connectionString, '{DATABASE_URL}')
 
   const pathToDbEnvFile = path.join(pathToFolder, '.env')
   const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
@@ -219,7 +219,7 @@ t.test('run db init --database postgres', async (t) => {
   t.equal(dbEnv.PORT, '3042')
   t.equal(dbEnv.DATABASE_URL, 'postgres://postgres:postgres@localhost:5432/postgres')
 
-  t.equal(core.graphql, true)
+  t.equal(db.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
 
@@ -241,11 +241,11 @@ t.test('run db init --database mysql', async (t) => {
   const dbConfigFile = await fs.readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
 
-  const { server, core, migrations } = dbConfig
+  const { server, db, migrations } = dbConfig
 
   t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   t.equal(server.port, '{PORT}')
-  t.equal(core.connectionString, '{DATABASE_URL}')
+  t.equal(db.connectionString, '{DATABASE_URL}')
 
   const pathToDbEnvFile = path.join(pathToFolder, '.env')
   const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
@@ -254,7 +254,7 @@ t.test('run db init --database mysql', async (t) => {
   t.equal(dbEnv.PORT, '3042')
   t.equal(dbEnv.DATABASE_URL, 'mysql://root@localhost:3306/graph')
 
-  t.equal(core.graphql, true)
+  t.equal(db.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
 
@@ -276,11 +276,11 @@ t.test('run db init --database mariadb', async (t) => {
   const dbConfigFile = await fs.readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
 
-  const { server, core, migrations } = dbConfig
+  const { server, db, migrations } = dbConfig
 
   t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   t.equal(server.port, '{PORT}')
-  t.equal(core.connectionString, '{DATABASE_URL}')
+  t.equal(db.connectionString, '{DATABASE_URL}')
 
   const pathToDbEnvFile = path.join(pathToFolder, '.env')
   const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
@@ -289,7 +289,7 @@ t.test('run db init --database mariadb', async (t) => {
   t.equal(dbEnv.PORT, '3042')
   t.equal(dbEnv.DATABASE_URL, 'mysql://root@localhost:3307/graph')
 
-  t.equal(core.graphql, true)
+  t.equal(db.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
 
@@ -311,11 +311,11 @@ t.test('run db init --database mysql8', async (t) => {
   const dbConfigFile = await fs.readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
 
-  const { server, core, migrations } = dbConfig
+  const { server, db, migrations } = dbConfig
 
   t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   t.equal(server.port, '{PORT}')
-  t.equal(core.connectionString, '{DATABASE_URL}')
+  t.equal(db.connectionString, '{DATABASE_URL}')
 
   const pathToDbEnvFile = path.join(pathToFolder, '.env')
   const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
@@ -324,7 +324,7 @@ t.test('run db init --database mysql8', async (t) => {
   t.equal(dbEnv.PORT, '3042')
   t.equal(dbEnv.DATABASE_URL, 'mysql://root@localhost:3308/graph')
 
-  t.equal(core.graphql, true)
+  t.equal(db.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
 
@@ -346,11 +346,11 @@ t.test('run db init --hostname 127.0.0.5', async (t) => {
   const dbConfigFile = await fs.readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
 
-  const { server, core, migrations } = dbConfig
+  const { server, db, migrations } = dbConfig
 
   t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   t.equal(server.port, '{PORT}')
-  t.equal(core.connectionString, '{DATABASE_URL}')
+  t.equal(db.connectionString, '{DATABASE_URL}')
 
   const pathToDbEnvFile = path.join(pathToFolder, '.env')
   const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
@@ -359,7 +359,7 @@ t.test('run db init --hostname 127.0.0.5', async (t) => {
   t.equal(dbEnv.PORT, '3042')
   t.equal(dbEnv.DATABASE_URL, 'sqlite://./db.sqlite')
 
-  t.equal(core.graphql, true)
+  t.equal(db.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
 
@@ -381,11 +381,11 @@ t.test('run db init --port 3055', async (t) => {
   const dbConfigFile = await fs.readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
 
-  const { server, core, migrations } = dbConfig
+  const { server, db, migrations } = dbConfig
 
   t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   t.equal(server.port, '{PORT}')
-  t.equal(core.connectionString, '{DATABASE_URL}')
+  t.equal(db.connectionString, '{DATABASE_URL}')
 
   const pathToDbEnvFile = path.join(pathToFolder, '.env')
   const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
@@ -394,7 +394,7 @@ t.test('run db init --port 3055', async (t) => {
   t.equal(dbEnv.PORT, '3055')
   t.equal(dbEnv.DATABASE_URL, 'sqlite://./db.sqlite')
 
-  t.equal(core.graphql, true)
+  t.equal(db.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
 
@@ -416,11 +416,11 @@ t.test('run db init --migrations custom-migrations-folder', async (t) => {
   const dbConfigFile = await fs.readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
 
-  const { server, core, migrations } = dbConfig
+  const { server, db, migrations } = dbConfig
 
   t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   t.equal(server.port, '{PORT}')
-  t.equal(core.connectionString, '{DATABASE_URL}')
+  t.equal(db.connectionString, '{DATABASE_URL}')
 
   const pathToDbEnvFile = path.join(pathToFolder, '.env')
   const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
@@ -429,7 +429,7 @@ t.test('run db init --migrations custom-migrations-folder', async (t) => {
   t.equal(dbEnv.PORT, '3042')
   t.equal(dbEnv.DATABASE_URL, 'sqlite://./db.sqlite')
 
-  t.equal(core.graphql, true)
+  t.equal(db.graphql, true)
 
   t.equal(migrations.dir, 'custom-migrations-folder')
 
@@ -451,11 +451,11 @@ t.test('run db init --plugin=false', async (t) => {
   const dbConfigFile = await fs.readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
 
-  const { server, core, migrations, types } = dbConfig
+  const { server, db, migrations, types } = dbConfig
 
   t.equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   t.equal(server.port, '{PORT}')
-  t.equal(core.connectionString, '{DATABASE_URL}')
+  t.equal(db.connectionString, '{DATABASE_URL}')
   const pathToDbEnvFile = path.join(pathToFolder, '.env')
   const dbEnvFile = await fs.readFile(pathToDbEnvFile, 'utf8')
   const dbEnv = parseEnv(dbEnvFile)
@@ -463,7 +463,7 @@ t.test('run db init --plugin=false', async (t) => {
   t.equal(dbEnv.PORT, '3042')
   t.equal(dbEnv.DATABASE_URL, 'sqlite://./db.sqlite')
 
-  t.equal(core.graphql, true)
+  t.equal(db.graphql, true)
 
   t.equal(migrations.dir, 'migrations')
   t.equal(types.autogenerate, true)

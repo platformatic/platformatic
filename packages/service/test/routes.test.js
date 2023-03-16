@@ -63,3 +63,125 @@ test('should not overwrite a plugin which define a root endpoint', async ({ tear
   const body = await res.body.json()
   same(body, { message: 'Root Plugin' })
 })
+
+test('openapi enabled', async ({ teardown, equal, same }) => {
+  const server = await buildServer(buildConfig({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0,
+      healthCheck: {
+        enabled: true,
+        interval: 2000
+      }
+    },
+    service: {
+      openapi: true
+    },
+    plugins: {
+      paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')]
+    }
+  }))
+  teardown(server.stop)
+
+  await server.listen()
+  {
+    // No browser (i.e. curl)
+    const res = await (request(`${server.url}/documentation/json`))
+    equal(res.statusCode, 200)
+    const body = await res.body.json()
+
+    equal(body.openapi, '3.0.3')
+    equal(body.info.title, 'Platformatic')
+    equal(body.info.version, '1.0.0')
+    equal(!!body.paths['/'].get, true)
+  }
+})
+
+test('openapi config', async ({ teardown, equal, same }) => {
+  const server = await buildServer(buildConfig({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    service: {
+      openapi: {
+        info: {
+          title: 'My Service',
+          version: '0.0.42',
+          description: 'My Service is the best service ever'
+        }
+      }
+    },
+    plugins: {
+      paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')]
+    }
+  }))
+  teardown(server.stop)
+
+  await server.listen()
+  {
+    // No browser (i.e. curl)
+    const res = await (request(`${server.url}/documentation/json`))
+    equal(res.statusCode, 200)
+    const body = await res.body.json()
+
+    equal(body.openapi, '3.0.3')
+    equal(body.info.title, 'My Service')
+    equal(body.info.version, '0.0.42')
+    equal(body.info.description, 'My Service is the best service ever')
+    equal(!!body.paths['/'].get, true)
+  }
+})
+
+test('openapi disabled', async ({ teardown, equal, same }) => {
+  const server = await buildServer(buildConfig({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0,
+      healthCheck: {
+        enabled: true,
+        interval: 2000
+      }
+    },
+    service: {
+      openapi: false
+    },
+    plugins: {
+      paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')]
+    }
+  }))
+  teardown(server.stop)
+
+  await server.listen()
+  {
+    // No browser (i.e. curl)
+    const res = await (request(`${server.url}/documentation/json`))
+    equal(res.statusCode, 404)
+    await res.body.text()
+  }
+})
+
+test('openapi disabled by default', async ({ teardown, equal, same }) => {
+  const server = await buildServer(buildConfig({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0,
+      healthCheck: {
+        enabled: true,
+        interval: 2000
+      }
+    },
+    plugins: {
+      paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')]
+    }
+  }))
+  teardown(server.stop)
+
+  await server.listen()
+  {
+    // No browser (i.e. curl)
+    const res = await (request(`${server.url}/documentation/json`))
+    equal(res.statusCode, 404)
+    await res.body.text()
+  }
+})

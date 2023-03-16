@@ -1,5 +1,5 @@
 {
-  "core": {
+  "db": {
     "connectionString": "sqlite://./db",
     "graphql": true
   },

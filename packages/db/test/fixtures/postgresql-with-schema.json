@@ -3,7 +3,7 @@
     "hostname": "127.0.0.1",
     "port": 3042
   },
-  "core": {
+  "db": {
     "connectionString": "postgresql://db.antani",
     "schema": ["pippo", "baudo"]
   },

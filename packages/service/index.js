@@ -12,6 +12,8 @@ const compiler = require('./lib/compile')
 const { join, dirname, resolve } = require('path')
 const { readFile } = require('fs/promises')
 const wrapperPath = join(__dirname, 'lib', 'sandbox-wrapper.js')
+const setupOpenAPI = require('./lib/openapi.js')
+const setupGraphQL = require('./lib/graphql.js')
 
 function createServerConfig (config) {
   // convert the config file to a new structure
@@ -56,6 +58,22 @@ async function platformaticService (app, opts, toLoad = []) {
     if (configManager !== undefined) {
       app.platformatic.configManager = configManager
       app.platformatic.config = configManager.current
+    }
+  }
+
+  {
+    const serviceConfig = app.platformatic.config?.service
+
+    // for some unknown reason, c8 is not detecting any of this
+    // despite being covered by test/routes.test.js
+    /* c8 ignore next 3 */
+    if (serviceConfig?.openapi) {
+      await setupOpenAPI(app, app.platformatic.config?.service?.openapi)
+    }
+
+    /* c8 ignore next 3 */
+    if (serviceConfig?.graphql) {
+      await setupGraphQL(app, app.platformatic.config?.service?.graphql)
     }
   }
 
@@ -126,6 +144,7 @@ async function platformaticService (app, opts, toLoad = []) {
 
     app.register(require('@fastify/cors'), opts.cors)
   }
+
   if (isKeyEnabled('healthCheck', opts)) {
     app.register(underPressure, {
       exposeStatusRoute: '/status',

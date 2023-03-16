@@ -6,7 +6,7 @@
       "level": "info"
     }
   },
-  "core": {
+  "db": {
     "connectionString": "{DATABASE_URL}"
   }
 }

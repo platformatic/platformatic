@@ -69,7 +69,7 @@ async function generateGlobalTypes (entities, config) {
   const globalTypesInterface = []
   const completeTypesImports = []
 
-  if (config.core.graphql) {
+  if (config.db.graphql) {
     globalTypesImports.push('import graphqlPlugin from \'@platformatic/sql-graphql\'')
   }
 
@@ -150,7 +150,7 @@ async function checkForDependencies (logger, args, config) {
   requiredDependencies.fastify = await getDependencyVersion('fastify')
   requiredDependencies['@platformatic/sql-mapper'] = await getPlatformaticPackageVersion('sql-mapper')
 
-  if (config.core.graphql) {
+  if (config.db.graphql) {
     requiredDependencies['@platformatic/sql-graphql'] = await getPlatformaticPackageVersion('sql-graphql')
   }
 
@@ -194,7 +194,7 @@ async function writeFileIfChanged (filename, content) {
 }
 
 async function execute (logger, _, config) {
-  const { db, entities } = await setupDB(logger, config.core)
+  const { db, entities } = await setupDB(logger, config.db)
 
   const typesFolderPath = getTypesFolderPath(config)
   const isTypeFolderExists = await isFileAccessible(typesFolderPath)
