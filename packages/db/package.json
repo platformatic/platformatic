@@ -20,6 +20,7 @@
   "devDependencies": {
     "@databases/pg": "^5.4.1",
     "@databases/sqlite": "^4.0.2",
+    "@matteo.collina/worker": "^3.0.0",
     "@platformatic/sql-graphql": "workspace:*",
     "ajv": "^8.12.0",
     "bindings": "^1.5.0",
