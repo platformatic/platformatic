@@ -27,6 +27,8 @@ Require stack:
 - /platformatic/packages/db-core/index.js
 ```
 
+First of all, check that `pnpm` has NOT been installed with `volta`. If so, remove it and install it again with another method.
+
 Remove the `node_modules` folder with `rm -fr ./node_modules`, then delete the pnpm cache with:
 ```
 pnpm store prune
@@ -38,7 +40,7 @@ pnpm store path
 rm -fr /path/from/the/above/command
 ```
 
-Then install again the `node_module` running `pnpm i`.
+Then install again all of the needed packages by running `pnpm i`.
 
 <a id='run-docker'></a>
 ### Start the RDBMS
