@@ -20,8 +20,11 @@ class ZeroSeventeen {
     const original = this.config
     const config = rfdc(original)
     config.$schema = `https://platformatic.dev/schemas/v0.18.0/${this.kind}`
-    config.db = config.core
-    delete config.core
+
+    if (this.kind === 'db') {
+      config.db = config.core
+      delete config.core
+    }
 
     const NewClass = require('./0.18.x.js')
 
