@@ -4,6 +4,7 @@
 
 const pkg = require('../package.json')
 const version = 'v' + pkg.version
+const openApiDefs = require('./openapi-schema-defs')
 
 const cors = {
   type: 'object',
@@ -329,31 +330,65 @@ const metrics = {
   ]
 }
 
-const openapi = {
-  anyOf: [{
-    type: 'object',
-    properties: {
-      info: {
-        type: 'object',
-        properties: {
-          title: { type: 'string' },
-          description: { type: 'string' },
-          version: { type: 'string' },
-          additionalProperties: false
-        }
+const openApiBase = {
+  type: 'object',
+  properties: {
+    info: {
+      $ref: '#/$defs/info'
+    },
+    jsonSchemaDialect: {
+      type: 'string',
+
+      default: 'https://spec.openapis.org/oas/3.1/dialect/base'
+    },
+    servers: {
+      type: 'array',
+      items: {
+        $ref: '#/$defs/server'
       },
-      prefix: {
-        type: 'string',
-        description: 'Base URL for the OpenAPI'
-      },
-      ignore: {
-        type: 'object',
-        // TODO add support for column-level ignore
-        additionalProperties: {
-          type: 'boolean'
+      default: [
+        {
+          url: '/'
         }
+      ]
+    },
+    paths: {
+      $ref: '#/$defs/paths'
+    },
+    webhooks: {
+      type: 'object',
+      additionalProperties: {
+        $ref: '#/$defs/path-item-or-reference'
       }
     },
+    components: {
+      $ref: '#/$defs/components'
+    },
+    security: {
+      type: 'array',
+      items: {
+        $ref: '#/$defs/security-requirement'
+      }
+    },
+    tags: {
+      type: 'array',
+      items: {
+        $ref: '#/$defs/tag'
+      }
+    },
+    externalDocs: {
+      $ref: '#/$defs/external-documentation'
+    },
+    prefix: {
+      type: 'string',
+      description: 'Base URL for the OpenAPI'
+    }
+  }
+}
+
+const openapi = {
+  anyOf: [{
+    ...openApiBase,
     additionalProperties: false
   }, {
     type: 'boolean'
@@ -403,7 +438,8 @@ const platformaticServiceSchema = {
     service
   },
   additionalProperties: false,
-  required: ['server']
+  required: ['server'],
+  $defs: openApiDefs
 }
 
 module.exports.schema = platformaticServiceSchema
@@ -412,6 +448,8 @@ module.exports.cors = cors
 module.exports.server = server
 module.exports.plugins = plugins
 module.exports.watch = watch
+module.exports.openApiDefs = openApiDefs
+module.exports.openApiBase = openApiBase
 
 if (require.main === module) {
   console.log(JSON.stringify(platformaticServiceSchema, null, 2))
