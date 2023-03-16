@@ -19,7 +19,7 @@ class ZeroSeventeen {
   up () {
     const original = this.config
     const config = rfdc(original)
-    config.$schema = 'https://platformatic.dev/schemas/v0.18.0/db'
+    config.$schema = `https://platformatic.dev/schemas/v0.18.0/${this.kind}`
     config.db = config.core
     delete config.core
 

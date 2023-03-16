@@ -5,7 +5,7 @@ const { analyze } = require('..')
 const { join } = require('path')
 const { readFile } = require('fs').promises
 
-test('up to 18', async (t) => {
+test('up to 18 (db)', async (t) => {
   const file = join(__dirname, 'fixtures', 'v0.17.0', 'db.json')
   const meta = await analyze({ file })
   t.equal(meta.version, '0.17.0')
@@ -30,6 +30,32 @@ test('up to 18', async (t) => {
     const meta18FromScratch = await analyze({ config: meta18.config })
     t.equal(meta18FromScratch.version, '0.18.0')
     t.equal(meta18FromScratch.kind, 'db')
+    t.equal(meta18FromScratch.path, undefined)
+    t.equal(meta18FromScratch.format, 'json')
+  }
+})
+
+test('up to 18 (service)', async (t) => {
+  const file = join(__dirname, 'fixtures', 'v0.17.0', 'service.json')
+  const meta = await analyze({ file })
+  t.equal(meta.version, '0.17.0')
+  t.equal(meta.kind, 'service')
+  t.same(meta.config, JSON.parse(await readFile(file)))
+  t.equal(meta.path, file)
+  t.equal(meta.format, 'json')
+
+  const meta18 = meta.up()
+  t.equal(meta18.version, '0.18.0')
+  t.equal(meta18.kind, 'service')
+  t.equal(meta18.config.$schema, 'https://platformatic.dev/schemas/v0.18.0/service')
+  t.equal(meta18.format, 'json')
+
+  t.notSame(meta.config, meta18.config)
+
+  {
+    const meta18FromScratch = await analyze({ config: meta18.config })
+    t.equal(meta18FromScratch.version, '0.18.0')
+    t.equal(meta18FromScratch.kind, 'service')
     t.equal(meta18FromScratch.path, undefined)
     t.equal(meta18FromScratch.format, 'json')
   }
