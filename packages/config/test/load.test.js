@@ -116,11 +116,11 @@ test('should automatically update', { only: true }, async ({ same }) => {
   })
   await cm.parse()
   same(cm.current, {
-    $schema: 'https://platformatic.dev/schemas/v0.17.0/db',
+    $schema: 'https://platformatic.dev/schemas/v0.18.0/db',
     server: { hostname: '127.0.0.1', port: '3042', logger: { level: 'info' } },
     metrics: { auth: { username: 'plt-db', password: 'plt-db' } },
     plugins: { paths: ['./plugin-sum.js'] },
-    core: {
+    db: {
       connectionString: 'postgres://postgres:postgres@localhost:5432/postgres',
       graphiql: true,
       ignore: { versions: true }
