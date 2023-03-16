@@ -17,7 +17,7 @@ test('extend schema via config', async ({ teardown, equal, same }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       ...connInfo,
       graphql: {
         schema

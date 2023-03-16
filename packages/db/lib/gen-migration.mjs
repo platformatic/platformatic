@@ -23,7 +23,7 @@ async function generateMigration (_args) {
       throw new MigrateError('Missing "migrations" section in config file')
     }
 
-    migrator = new Migrator(migrationsConfig, config.core, logger)
+    migrator = new Migrator(migrationsConfig, config.db, logger)
 
     const nextMigrationVersion = await migrator.getNextMigrationVersion()
     const nextMigrationVersionStr = migrator.convertVersionToStr(nextMigrationVersion)

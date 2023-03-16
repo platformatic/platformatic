@@ -58,7 +58,7 @@ test('generates the json schema config', async (t) => {
 
   const jsonContent = `{
     "$schema": "https://schemas.platformatic.dev/db",
-    "core": {
+    "db": {
       "connectionString": "sqlite://::memory::"
     },
     "server": {

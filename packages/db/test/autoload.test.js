@@ -12,7 +12,7 @@ test('autoload & filesystem based routing / watch disabled', async ({ teardown, 
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       ...connInfo
     },
     plugins: {
@@ -54,7 +54,7 @@ test('autoload & filesystem based routing / watch enabled', async ({ teardown, e
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       ...connInfo
     },
     plugins: {
@@ -96,7 +96,7 @@ test('multiple files', async ({ teardown, equal }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       ...connInfo
     },
     plugins: {
@@ -149,7 +149,7 @@ test('multiple files / watch false', async ({ teardown, equal }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       ...connInfo
     },
     plugins: {
@@ -202,7 +202,7 @@ test('multiple files as strings', async ({ teardown, equal }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       ...connInfo
     },
     plugins: {
@@ -251,7 +251,7 @@ test('autoload & filesystem based routing / watch disabled / no object', async (
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       ...connInfo
     },
     plugins: {

@@ -15,7 +15,7 @@ test('healthcheck route enabled with interval', async ({ teardown, equal, same }
         interval: 2000
       }
     },
-    core: {
+    db: {
       ...connInfo
     },
     authorization: {
@@ -53,7 +53,7 @@ test('healthcheck route enabled without interval', async ({ teardown, equal, sam
       port: 0,
       healthCheck: true
     },
-    core: {
+    db: {
       ...connInfo
     },
     authorization: {
@@ -90,7 +90,7 @@ test('healthcheck route disabled', async ({ teardown, equal, same }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       ...connInfo
     },
     authorization: {
@@ -115,7 +115,7 @@ test('healthcheck route enabled with interval and maxEventLoopUtilization', asyn
         maxEventLoopUtilization: 0.98
       }
     },
-    core: {
+    db: {
       ...connInfo
     },
     authorization: {

@@ -8,7 +8,7 @@ import { pathToFileURL } from 'url'
 import loadConfig from './load-config.mjs'
 
 async function execute (logger, args, config) {
-  const { db, sql, entities } = await setupDB(logger, config.core)
+  const { db, sql, entities } = await setupDB(logger, config.db)
 
   const seedFile = args._[0]
 
@@ -44,7 +44,7 @@ async function seed (_args) {
     const config = configManager.current
 
     if (config.migrations !== undefined) {
-      const migrator = new Migrator(config.migrations, config.core, logger)
+      const migrator = new Migrator(config.migrations, config.db, logger)
 
       try {
         const hasMigrationsToApply = await migrator.hasMigrationsToApply()

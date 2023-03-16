@@ -14,7 +14,7 @@ test('starts the dashboard', async ({ teardown, equal, pass, same }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       ...connInfo
     },
     dashboard: {
@@ -36,7 +36,7 @@ test('should not restart if not authorized', async ({ teardown, equal, same }) =
       port: 0
     },
     dashboard: true,
-    core: {
+    db: {
       ...connInfo
     }
   }))
@@ -61,7 +61,7 @@ test('restarts the server', async ({ teardown, equal, pass, same, match }) => {
       port: 0
     },
     dashboard: true,
-    core: {
+    db: {
       ...connInfo,
       async onDatabaseLoad (db, sql) {
         await dropUsersTable(db, sql)
@@ -135,7 +135,7 @@ test('starts, query and stop', async ({ teardown, equal, pass, same }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       ...connInfo,
       async onDatabaseLoad (db, sql) {
         pass('onDatabaseLoad called')
@@ -259,7 +259,7 @@ test('inject', async ({ teardown, equal, pass, same }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       ...connInfo,
       async onDatabaseLoad (db, sql) {
         pass('onDatabaseLoad called')
@@ -312,7 +312,7 @@ test('ignore and sqlite3', async ({ teardown, equal, pass, same }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       connectionString: `sqlite://${dbLocation}`
     },
     dashboard: {

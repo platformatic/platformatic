@@ -12,7 +12,7 @@ const sharedConfig = {
     logger: { level: 'error' },
     port: 0
   },
-  core: {
+  db: {
     ...connInfo
   },
   authorization: {
@@ -51,7 +51,7 @@ test('should serve the dashboard if any dashboard configuration option is set', 
       logger: { level: 'error' },
       port: 0
     },
-    core: {
+    db: {
       ...connInfo
     },
     authorization: {

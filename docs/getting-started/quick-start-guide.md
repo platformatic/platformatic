@@ -214,7 +214,7 @@ Copy and paste in this configuration:
     "hostname": "127.0.0.1",
     "port": "3042"
   },
-  "core": {
+  "db": {
     "connectionString": "sqlite://./db.sqlite"
   },
   "migrations": {

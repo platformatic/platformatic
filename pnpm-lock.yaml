@@ -462,7 +462,9 @@ importers:
       '@fastify/restartable': ^1.4.0
       '@fastify/static': ^6.9.0
       '@fastify/swagger': ^8.3.1
+      '@fastify/swagger-ui': ^1.4.0
       '@fastify/under-pressure': ^8.2.0
+      '@mercuriusjs/federation': ^1.0.1
       '@platformatic/config': workspace:*
       '@platformatic/utils': workspace:*
       bindings: ^1.5.0
@@ -479,6 +481,7 @@ importers:
       fastify-sandbox: ^0.11.0
       graphql: ^16.6.0
       help-me: ^4.2.0
+      mercurius: ^12.2.0
       minimist: ^1.2.8
       pino: ^8.11.0
       pino-pretty: ^9.3.0
@@ -503,7 +506,9 @@ importers:
       '@fastify/restartable': 1.4.0
       '@fastify/static': 6.9.0
       '@fastify/swagger': 8.3.1
+      '@fastify/swagger-ui': 1.5.0
       '@fastify/under-pressure': 8.2.0
+      '@mercuriusjs/federation': 1.0.1
       '@platformatic/config': link:../config
       '@platformatic/utils': link:../utils
       close-with-grace: 1.1.0
@@ -518,6 +523,7 @@ importers:
       fastify-sandbox: 0.11.0
       graphql: 16.6.0
       help-me: 4.2.0
+      mercurius: 12.2.0_graphql@16.6.0
       minimist: 1.2.8
       pino: 8.11.0
       pino-pretty: 9.4.0

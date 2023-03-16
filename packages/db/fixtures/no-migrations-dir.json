@@ -1,5 +1,5 @@
 {
-  "core": {
+  "db": {
     "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres"
   },
   "migrations": {}

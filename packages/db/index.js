@@ -29,7 +29,7 @@ async function platformaticDB (app, opts) {
   }
 
   async function toLoad (app) {
-    app.register(core, opts.core)
+    app.register(core, opts.db)
     if (opts.authorization) {
       app.register(auth, opts.authorization)
     }

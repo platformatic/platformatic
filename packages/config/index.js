@@ -189,6 +189,7 @@ class ConfigManager extends EventEmitter {
       this.current = _old
       return false
     }
+    await this._transformConfig()
     this.emit('update', this.current)
     return true
   }

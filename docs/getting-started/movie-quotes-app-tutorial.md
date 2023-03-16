@@ -84,7 +84,7 @@ file, **`platformatic.db.json`**:
     "hostname": "{PLT_SERVER_HOSTNAME}",
     "port": "{PORT}"
   },
-  "core": {
+  "db": {
     "connectionString": "{DATABASE_URL}"
   },
   "migrations": {
