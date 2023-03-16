@@ -237,6 +237,67 @@ const server = {
         { type: 'integer' }
       ]
     },
+    https: {
+      type: 'object',
+      properties: {
+        key: {
+          anyOf: [
+            { type: 'string' },
+            {
+              type: 'object',
+              properties: {
+                path: { type: 'string' }
+              },
+              additionalProperties: false
+            },
+            {
+              type: 'array',
+              items: {
+                anyOf: [
+                  { type: 'string' },
+                  {
+                    type: 'object',
+                    properties: {
+                      path: { type: 'string' }
+                    },
+                    additionalProperties: false
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        cert: {
+          anyOf: [
+            { type: 'string' },
+            {
+              type: 'object',
+              properties: {
+                path: { type: 'string' }
+              },
+              additionalProperties: false
+            },
+            {
+              type: 'array',
+              items: {
+                anyOf: [
+                  { type: 'string' },
+                  {
+                    type: 'object',
+                    properties: {
+                      path: { type: 'string' }
+                    },
+                    additionalProperties: false
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      additionalProperties: false,
+      required: ['key', 'cert']
+    },
     cors
   },
   required: ['hostname', 'port']
