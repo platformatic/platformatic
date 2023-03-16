@@ -187,6 +187,29 @@ A **required** object with the following settings:
     }
   }
   ```
+  
+  You can for example add the `security` section, so that Swagger will allow you to add the authentication header to your requests.
+  In the following code snippet, we're adding a Bearer token in the form of a [JWT](/reference/db/authorization/strategies.md#json-web-token-jwt):
+  ```json
+  {
+    "core": {
+      ...
+      "openapi": {
+        ...
+        "security": [{ "bearerAuth": [] }],
+        "components": {
+          "securitySchemes": {
+            "bearerAuth": {
+              "type": "http",
+              "scheme": "bearer",
+              "bearerFormat": "JWT"
+            }
+          }
+        }
+      }
+    }
+  }
+  ```
 
   It's possible to selectively ignore entites:
 
