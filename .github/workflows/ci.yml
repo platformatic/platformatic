@@ -159,7 +159,7 @@ jobs:
     - name: Run test suite core
       run: cd packages/db-core && pnpm test
     - name: Run test suite Platformatic DB
-      run: cd packages/db && pnpm rebuild && pnpm test
+      run: cd packages/db && pnpm test
 
   ci-db-authorization:
     needs: setup-node_modules
@@ -352,7 +352,7 @@ jobs:
           retry_on: error
           command: pnpm install --frozen-lockfile
       - name: Run test suite
-        run: cd packages/service && pnpm rebuild && pnpm test; cd ../..
+        run: cd packages/service && pnpm test; cd ../..
 
   playwright-e2e:
     needs: setup-node_modules
