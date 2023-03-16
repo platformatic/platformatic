@@ -192,7 +192,7 @@ A **required** object with the following settings:
   In the following code snippet, we're adding a Bearer token in the form of a [JWT](/reference/db/authorization/strategies.md#json-web-token-jwt):
   ```json
   {
-    "core": {
+    "db": {
       ...
       "openapi": {
         ...
