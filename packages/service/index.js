@@ -77,6 +77,12 @@ async function platformaticService (app, opts, toLoad = []) {
     }
   }
 
+  for (const plugin of (app.platformatic.config.clients || [])) {
+    app.register(require(plugin.path), {
+      url: plugin.url
+    })
+  }
+
   if (opts.plugins) {
     // if we don't have a fullPath, let's assume we are in a test and we can use the current working directory
     const configPath = app.platformatic.configManager.fullPath || join(process.cwd(), 'platformatic.db.json')

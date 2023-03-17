@@ -9,8 +9,9 @@
   "plugins": {
     "paths": ["./plugin.js"]
   },
-  "service": {
-    "openapi": true
-  },
+  "clients": [{
+    "path": "./hello",
+    "url": "{PLT_CLIENT_URL}"
+  }],
   "metrics": false
 }

@@ -6,7 +6,7 @@
       "level": "error"
     }
   },
-  "core": {
+  "db": {
     "connectionString": "sqlite://./db.sqlite",
     "graphql": true,
     "openapi": true

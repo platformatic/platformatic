@@ -30,7 +30,6 @@ async function buildOpenAPIClient (options) {
     throw new Error('options.url is required')
   }
 
-  /* c8 ignore next 1 */
   const baseUrl = spec.servers?.[0]?.url || computeURLWithoutPath(options.url)
   client[kHeaders] = options.headers || {}
 
@@ -150,13 +149,13 @@ async function plugin (app, opts) {
   let client = null
   let getHeaders = null
 
+  /* c8 ignore next 5 */
   if (typeof opts.getHeaders === 'function') {
     getHeaders = opts.getHeaders
     opts = { ...opts }
     opts.getHeaders = undefined
   }
 
-  /* istanbul ignore next */
   if (opts.type === 'openapi') {
     client = await buildOpenAPIClient(opts)
   } else if (opts.type === 'graphql') {

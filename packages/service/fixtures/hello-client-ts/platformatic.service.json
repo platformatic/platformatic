@@ -7,10 +7,12 @@
     }
   },
   "plugins": {
-    "paths": ["./plugin.js"]
+    "paths": ["./plugin.ts"],
+    "typescript": true
   },
-  "service": {
-    "openapi": true
-  },
+  "clients": [{
+    "path": "./hello",
+    "url": "{PLT_CLIENT_URL}"
+  }],
   "metrics": false
 }

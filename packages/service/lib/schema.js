@@ -417,6 +417,23 @@ const service = {
   additionalProperties: false
 }
 
+const clients = {
+  type: 'array',
+  items: {
+    type: 'object',
+    properties: {
+      path: {
+        type: 'string'
+      },
+      url: {
+        type: 'string'
+      }
+    },
+    additionalProperties: false,
+    required: ['path', 'url']
+  }
+}
+
 const platformaticServiceSchema = {
   $id: `https://platformatic.dev/schemas/${version}/service`,
   type: 'object',
@@ -435,7 +452,8 @@ const platformaticServiceSchema = {
     $schema: {
       type: 'string'
     },
-    service
+    service,
+    clients
   },
   additionalProperties: false,
   required: ['server'],
@@ -450,6 +468,7 @@ module.exports.plugins = plugins
 module.exports.watch = watch
 module.exports.openApiDefs = openApiDefs
 module.exports.openApiBase = openApiBase
+module.exports.clients = clients
 
 if (require.main === module) {
   console.log(JSON.stringify(platformaticServiceSchema, null, 2))

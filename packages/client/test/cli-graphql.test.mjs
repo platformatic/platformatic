@@ -2,6 +2,7 @@ import { request } from './helper.js'
 import { tmpdir } from 'os'
 import { test } from 'tap'
 import { buildServer } from '@platformatic/db'
+import service from '@platformatic/service'
 import { join } from 'path'
 import * as desm from 'desm'
 import { execa } from 'execa'
@@ -96,10 +97,12 @@ test('graphql client generation (typescript)', async ({ teardown, comment, same 
   const cwd = process.cwd()
   process.chdir(dir)
   teardown(() => process.chdir(cwd))
-  teardown(() => fs.rm(dir, { recursive: true }))
+  // teardown(() => fs.rm(dir, { recursive: true }))
 
   comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), server.url + '/graphql', '--name', 'movies'])
+
+  comment(`upstream URL is ${server.url}`)
 
   const toWrite = `
 import Fastify from 'fastify';
@@ -150,6 +153,7 @@ app.listen({ port: 0 });
   teardown(server.stop)
 
   const stream = server2.stdout.pipe(split(JSON.parse))
+  server2.stderr.pipe(process.stderr)
 
   // this is unfortuate :(
   const base = 'Server listening at '
@@ -162,6 +166,7 @@ app.listen({ port: 0 });
     url = msg.slice(base.length)
     break
   }
+  comment(`client URL is ${url}`)
   const res = await request(url, {
     method: 'POST'
   })
@@ -350,6 +355,93 @@ app.listen({ port: 0 })
     break
   }
   const res = await request(url, {
+    method: 'POST'
+  })
+  const body = await res.body.json()
+  same(body, {
+    id: 1,
+    title: 'foo'
+  })
+})
+
+test('adds clients to platformatic service', async ({ teardown, comment, same }) => {
+  try {
+    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const server = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+
+  await server.listen()
+
+  const dir = join(tmpdir(), `platformatic-client-${process.pid}-${counter++}`)
+  await fs.mkdir(dir)
+  const cwd = process.cwd()
+  process.chdir(dir)
+  teardown(() => process.chdir(cwd))
+  teardown(() => fs.rm(dir, { recursive: true }))
+
+  comment(`working in ${dir}`)
+
+  const pltServiceConfig = {
+    $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugins: {
+      paths: ['./plugin.js']
+    }
+  }
+
+  await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
+
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), server.url + '/graphql', '--name', 'movies'])
+
+  {
+    const newConfig = JSON.parse(await fs.readFile('./platformatic.service.json', 'utf8'))
+    same(newConfig, {
+      $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
+      server: {
+        hostname: '127.0.0.1',
+        port: 0
+      },
+      plugins: {
+        paths: ['./plugin.js']
+      },
+      clients: [{
+        path: './movies',
+        url: '{PLT_MOVIES_URL}'
+      }]
+    })
+  }
+
+  comment(`server at ${server.url}`)
+
+  const toWrite = `
+module.exports = async function (app, opts) {
+  app.post('/', async (request, reply) => {
+    const res = await app.movies.graphql({
+      query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
+    })
+    return res 
+  })
+}
+`
+  await fs.writeFile(join(dir, 'plugin.js'), toWrite)
+  await fs.mkdir(join(dir, 'node_modules'))
+  await fs.mkdir(join(dir, 'node_modules', '@platformatic'))
+  await fs.symlink(join(cwd, 'node_modules', 'fastify'), join(dir, 'node_modules', 'fastify'))
+  await fs.symlink(desm.join(import.meta.url, '..'), join(dir, 'node_modules', '@platformatic', 'client'))
+
+  process.env.PLT_MOVIES_URL = server.url
+
+  const server2 = await service.buildServer('./platformatic.service.json')
+  await server2.listen()
+  teardown(server2.stop)
+  teardown(server.stop)
+
+  const res = await request(server2.url, {
     method: 'POST'
   })
   const body = await res.body.json()

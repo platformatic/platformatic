@@ -3,14 +3,39 @@
 import parseArgs from 'minimist'
 import isMain from 'es-main'
 import helpMe from 'help-me'
-import { writeFile, mkdir } from 'fs/promises'
+import { writeFile, mkdir, access } from 'fs/promises'
 import { join } from 'path'
 import { request } from 'undici'
 import { processOpenAPI } from './lib/gen-openapi.mjs'
 import { processGraphQL } from './lib/gen-graphql.mjs'
+import { analyze, write } from '@platformatic/metaconfig'
 import graphql from 'graphql'
 
-async function downloadAndProcess ({ url, name, folder }) {
+async function isFileAccessible (filename) {
+  try {
+    await access(filename)
+    return true
+  } catch (err) {
+    return false
+  }
+}
+
+const configFileNames = [
+  './platformatic.db.json',
+  './platformatic.db.json5',
+  './platformatic.db.yaml',
+  './platformatic.db.yml',
+  './platformatic.db.toml',
+  './platformatic.db.tml',
+  './platformatic.service.json',
+  './platformatic.service.json5',
+  './platformatic.service.yaml',
+  './platformatic.service.yml',
+  './platformatic.service.toml',
+  './platformatic.service.tml'
+]
+
+async function downloadAndProcess ({ url, name, folder, config }) {
   // try OpenAPI first
   let res = await request(url)
   if (res.statusCode === 200) {
@@ -54,6 +79,21 @@ async function downloadAndProcess ({ url, name, folder }) {
     await writeFile(join(folder, `${name}.cjs`), implementation)
     await writeFile(join(folder, 'package.json'), getPackageJSON({ name }))
   }
+
+  if (!config) {
+    const configFilesAccessibility = await Promise.all(configFileNames.map((fileName) => isFileAccessible(fileName)))
+    config = configFileNames.find((value, index) => configFilesAccessibility[index])
+  }
+
+  if (config) {
+    const meta = await analyze({ file: config })
+    meta.config.clients = meta.config.clients || []
+    meta.config.clients.push({
+      path: `./${name}`,
+      url: `{PLT_${name.toUpperCase()}_URL}`
+    })
+    await write(meta)
+  }
 }
 
 function getPackageJSON ({ name }) {
@@ -75,7 +115,8 @@ if (isMain(import.meta)) {
     alias: {
       n: 'name',
       f: 'folder',
-      t: 'typescript'
+      t: 'typescript',
+      c: 'config'
     }
   })
   options.folder = options.folder || join(process.cwd(), options.name)

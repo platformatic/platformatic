@@ -35,6 +35,11 @@ class ServiceConfigManager extends ConfigManager {
     if (this.current.plugins?.paths) {
       this.current.plugins.paths = this.current.plugins.paths.map(fixPluginPath)
     }
+
+    // relative-to-absolute plugin path
+    if (this.current.clients) {
+      this.current.clients = this.current.clients.map(fixPluginPath)
+    }
   }
 
   _fixRelativePath (path) {
