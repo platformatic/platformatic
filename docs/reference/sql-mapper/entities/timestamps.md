@@ -11,7 +11,7 @@ To disable timestamps, you need to set the `autoTimestamp` field to `false` in c
 ```json
 {
 ...
-  "core": {
+  "db": {
     "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres",
     "autoTimestamp": false
   },
@@ -26,7 +26,7 @@ By default, the `created_at` and `updated_at` fields are used. You can customize
 ```json
 {
 ...
-  "core": {
+  "db": {
     "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres",
     "autoTimestamp": {
       "createdAt": "inserted_at",

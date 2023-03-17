@@ -4,14 +4,14 @@ The Platformatic DB OpenAPI plugin automatically starts a REST API server (power
 
 ## Configuration
 
-In the config file, under the `"core"` section, the OpenAPI server is enabled by default. Although you can disable it setting the property `openapi` to `false`.
+In the config file, under the `"db"` section, the OpenAPI server is enabled by default. Although you can disable it setting the property `openapi` to `false`.
 
 _Example_
 
 ```json
 {
   ...
-  "core": {
+  "db": {
     "openapi": false
   }
 }

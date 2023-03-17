@@ -14,6 +14,7 @@ import ora from 'ora'
 import createService from './create-service.mjs'
 import askProjectDir from '../ask-project-dir.mjs'
 import { askCreateGHAction } from '../ghaction.mjs'
+import { getRunPackageManagerInstall, getUseTypescript } from '../cli-options.mjs'
 import mkdirp from 'mkdirp'
 
 export const createReadme = async (logger, dir = '.') => {
@@ -51,12 +52,18 @@ const createPlatformaticService = async (_args) => {
 
   const projectDir = await askProjectDir(logger, '.')
 
+  const { runPackageManagerInstall, useTypescript } = await inquirer.prompt([
+    getRunPackageManagerInstall(pkgManager),
+    getUseTypescript(args.typescript)
+  ])
+
   // Create the project directory
   await mkdirp(projectDir)
 
   const params = {
     hostname: args.hostname,
-    port: args.port
+    port: args.port,
+    typescript: useTypescript
   }
 
   const env = await createService(params, logger, projectDir, version)
@@ -69,22 +76,13 @@ const createPlatformaticService = async (_args) => {
   await createGitignore(logger, projectDir)
   await createReadme(logger, projectDir)
 
-  const { runPackageManagerInstall } = await inquirer.prompt([{
-    type: 'list',
-    name: 'runPackageManagerInstall',
-    message: `Do you want to run ${pkgManager} install?`,
-    default: true,
-    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-  }])
-
   if (runPackageManagerInstall) {
     const spinner = ora('Installing dependencies...').start()
     await execa(pkgManager, ['install'], { cwd: projectDir })
     spinner.succeed('...done!')
   }
 
-  // We don't have the option for TS (yet) so we don't run build on TS
-  await askCreateGHAction(logger, env, 'service', false, projectDir)
+  await askCreateGHAction(logger, env, 'service', useTypescript, projectDir)
 }
 
 export default createPlatformaticService

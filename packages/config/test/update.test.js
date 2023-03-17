@@ -6,7 +6,7 @@ const { saveConfigToFile } = require('./helper')
 const { readFile, unlink } = require('fs/promises')
 
 test('should update valid config without updating the file', async ({ same, teardown, pass, plan }) => {
-  plan(3)
+  plan(5)
   const config = {
     name: 'Platformatic',
     props: {
@@ -34,6 +34,9 @@ test('should update valid config without updating the file', async ({ same, tear
     schema,
     env: { PLT_FOO: 'foobar' }
   })
+  cm._transformConfig = (config) => {
+    pass('transform config')
+  }
   cm.on('update', () => {
     pass('new config available')
   })

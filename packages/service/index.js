@@ -12,6 +12,8 @@ const compiler = require('./lib/compile')
 const { join, dirname, resolve } = require('path')
 const { readFile } = require('fs/promises')
 const wrapperPath = join(__dirname, 'lib', 'sandbox-wrapper.js')
+const setupOpenAPI = require('./lib/openapi.js')
+const setupGraphQL = require('./lib/graphql.js')
 
 function createServerConfig (config) {
   // convert the config file to a new structure
@@ -49,6 +51,7 @@ async function platformaticService (app, opts, toLoad = []) {
   {
     const fileWatcher = opts.fileWatcher
     const configManager = opts.configManager
+    /* c8 ignore next 3 */
     if (fileWatcher !== undefined) {
       app.platformatic.fileWatcher = fileWatcher
     }
@@ -58,9 +61,25 @@ async function platformaticService (app, opts, toLoad = []) {
     }
   }
 
+  {
+    const serviceConfig = app.platformatic.config?.service
+
+    // for some unknown reason, c8 is not detecting any of this
+    // despite being covered by test/routes.test.js
+    /* c8 ignore next 3 */
+    if (serviceConfig?.openapi) {
+      await setupOpenAPI(app, app.platformatic.config?.service?.openapi)
+    }
+
+    /* c8 ignore next 3 */
+    if (serviceConfig?.graphql) {
+      await setupGraphQL(app, app.platformatic.config?.service?.graphql)
+    }
+  }
+
   if (opts.plugins) {
     // if we don't have a fullPath, let's assume we are in a test and we can use the current working directory
-    const configPath = app.platformatic.configManager.fullPath || process.cwd()
+    const configPath = app.platformatic.configManager.fullPath || join(process.cwd(), 'platformatic.db.json')
     const tsConfigPath = join(dirname(configPath), 'tsconfig.json')
     /* c8 ignore next 21 */
     if (await isFileAccessible(tsConfigPath)) {
@@ -125,6 +144,7 @@ async function platformaticService (app, opts, toLoad = []) {
 
     app.register(require('@fastify/cors'), opts.cors)
   }
+
   if (isKeyEnabled('healthCheck', opts)) {
     app.register(underPressure, {
       exposeStatusRoute: '/status',

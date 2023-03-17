@@ -64,7 +64,7 @@ test('creates package.json file with TS build', async ({ equal }) => {
   const accessible = await isFileAccessible(join(tmpDir, 'package.json'))
   equal(accessible, true)
   const packageJson = JSON.parse(readFileSync(join(tmpDir, 'package.json')))
-  equal(packageJson.scripts.start, 'yarn clean && platformatic db start')
+  equal(packageJson.scripts.start, 'npm run clean && platformatic db start')
   equal(packageJson.scripts.clean, 'rm -fr ./dist')
   equal(packageJson.scripts.build, 'npx tsc')
   equal(packageJson.dependencies.platformatic, `^${version}`)

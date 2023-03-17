@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-graphql",
-  "version": "0.17.1",
+  "version": "0.18.0",
   "description": "Map SQL dbs to GraphQL",
   "main": "index.js",
   "scripts": {
@@ -31,7 +31,7 @@
     "snazzy": "^9.0.0",
     "standard": "^17.0.0",
     "tap": "^16.3.4",
-    "tsd": "^0.26.0",
+    "tsd": "^0.27.0",
     "ws": "^8.12.1"
   },
   "dependencies": {

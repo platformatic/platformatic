@@ -57,7 +57,7 @@ function generateConfig (migrations, plugin, types, typescript, version) {
         level: '{PLT_SERVER_LOGGER_LEVEL}'
       }
     },
-    core: {
+    db: {
       connectionString: '{DATABASE_URL}',
       graphql: true,
       openapi: true
@@ -66,8 +66,8 @@ function generateConfig (migrations, plugin, types, typescript, version) {
   }
 
   if (plugin === true) {
-    config.plugin = {
-      path: getPluginName(typescript)
+    config.plugins = {
+      paths: [getPluginName(typescript)]
     }
   }
 
@@ -78,9 +78,7 @@ function generateConfig (migrations, plugin, types, typescript, version) {
   }
 
   if (typescript === true) {
-    config.plugin.typescript = {
-      outDir: TS_OUT_DIR
-    }
+    config.plugins.typescript = true
   }
 
   return config

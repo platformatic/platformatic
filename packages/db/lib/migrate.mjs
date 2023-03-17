@@ -15,7 +15,7 @@ async function execute (logger, args, config) {
     throw new MigrateError('Missing "migrations" section in config file')
   }
 
-  const migrator = new Migrator(migrationsConfig, config.core, logger)
+  const migrator = new Migrator(migrationsConfig, config.db, logger)
 
   try {
     if (args.rollback) {

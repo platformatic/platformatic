@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-mapper",
-  "version": "0.17.1",
+  "version": "0.18.0",
   "description": "A data mapper utility for SQL databases",
   "main": "mapper.js",
   "scripts": {
@@ -28,7 +28,7 @@
     "snazzy": "^9.0.0",
     "standard": "^17.0.0",
     "tap": "^16.3.4",
-    "tsd": "^0.26.0"
+    "tsd": "^0.27.0"
   },
   "dependencies": {
     "@databases/mysql": "^5.2.1",

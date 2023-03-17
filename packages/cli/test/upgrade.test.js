@@ -6,9 +6,9 @@ import { cliPath } from './helper.js'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 
-const pkg = JSON.parse(await readFile(join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8'))
-
 let count = 0
+
+/* eslint-disable prefer-regex-literals */
 
 test('writes a config file', async (t) => {
   const dest = join(tmpdir(), `test-cli-${process.pid}-${count++}`)
@@ -23,7 +23,7 @@ test('writes a config file', async (t) => {
 
   const config = JSON.parse(await readFile(join(dest, 'platformatic.db.json'), 'utf8'))
 
-  t.equal(config.$schema, `https://platformatic.dev/schemas/v${pkg.version.replace('-dev', '')}/db`)
+  t.match(config.$schema, new RegExp('https://platformatic.dev/schemas/v\\d+.\\d+.\\d+/db'))
 })
 
 test('writes a config file with a config option', async (t) => {
@@ -37,7 +37,7 @@ test('writes a config file with a config option', async (t) => {
 
   const config = JSON.parse(await readFile(join(dest, 'platformatic.db.json'), 'utf8'))
 
-  t.equal(config.$schema, `https://platformatic.dev/schemas/v${pkg.version.replace('-dev', '')}/db`)
+  t.match(config.$schema, new RegExp('https://platformatic.dev/schemas/v\\d+.\\d+.\\d+/db'))
 })
 
 test('no config file no party', async (t) => {

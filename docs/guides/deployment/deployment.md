@@ -102,7 +102,7 @@ with the following configuration:
 
 ```json title="platformatic.db.json"
 {
-  "core": {
+  "db": {
     ...
     "graphql": {
       "graphiql": false

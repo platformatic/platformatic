@@ -80,7 +80,7 @@ class ZeroSixteen {
         }
       }
 
-      config.plugin = undefined
+      delete config.plugin
     }
 
     // TODO missing watch mode and other options

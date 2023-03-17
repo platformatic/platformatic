@@ -16,7 +16,7 @@ test('return config with adminSecret', async ({ teardown, equal, same }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       ...connInfo
     },
     dashboard: true,
@@ -40,7 +40,7 @@ test('return config without adminSecret', async ({ teardown, equal, same }) => {
       port: 0
     },
     dashboard: true,
-    core: {
+    db: {
       ...connInfo
     }
   }))
@@ -59,7 +59,7 @@ test('return config file', async ({ teardown, equal, same }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       ...connInfo
     },
     authorization: {
@@ -83,7 +83,7 @@ test('return config file', async ({ teardown, equal, same }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       ...connInfo
     },
     authorization: {
@@ -105,7 +105,7 @@ test('no need for configFileLocation to return config', async ({ teardown, equal
       port: 0
     },
     dashboard: true,
-    core: {
+    db: {
       ...connInfo
     },
     authorization: {
@@ -133,7 +133,7 @@ test('no need for configFileLocation to return config', async ({ teardown, equal
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       ...connInfo
     },
     dashboard: true,
@@ -193,7 +193,7 @@ test('config reloads from a written file', async ({ teardown, equal, pass, same 
       }]
     },
     dashboard: true,
-    core: {
+    db: {
       ...connInfo
     },
     metrics: false
@@ -219,7 +219,7 @@ test('config reloads from a written file', async ({ teardown, equal, pass, same 
       hostname: '127.0.0.1',
       port: 0
     },
-    core: {
+    db: {
       ...connInfo
     },
     dashboard: true,

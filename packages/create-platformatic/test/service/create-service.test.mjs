@@ -5,6 +5,8 @@ import { tmpdir } from 'os'
 import { mkdtempSync, rmSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { join } from 'path'
 import dotenv from 'dotenv'
+import Ajv from 'ajv'
+import { schema } from '@platformatic/service'
 
 let tmpDir
 let log = []
@@ -23,7 +25,44 @@ const fakeLogger = {
   info: msg => log.push(msg)
 }
 
-test('creates service with no typescript', async ({ end, equal, same, ok }) => {
+test('creates service with typescript', async ({ equal, same, ok }) => {
+  const params = {
+    hostname: 'myhost',
+    port: 6666,
+    typescript: true
+  }
+
+  await createService(params, fakeLogger, tmpDir)
+
+  const pathToServiceConfigFile = join(tmpDir, 'platformatic.service.json')
+  const serviceConfigFile = readFileSync(pathToServiceConfigFile, 'utf8')
+  const serviceConfig = JSON.parse(serviceConfigFile)
+  const ajv = new Ajv()
+  const validate = ajv.compile(schema.schema)
+  const isValid = validate(serviceConfig)
+  equal(isValid, true)
+  const { server, plugin } = serviceConfig
+
+  equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
+  equal(server.port, '{PORT}')
+
+  const pathToDbEnvFile = join(tmpDir, '.env')
+  dotenv.config({ path: pathToDbEnvFile })
+  equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
+  equal(process.env.PORT, '6666')
+  process.env = {}
+
+  const pathToDbEnvSampleFile = join(tmpDir, '.env.sample')
+  dotenv.config({ path: pathToDbEnvSampleFile })
+  equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
+  equal(process.env.PORT, '6666')
+
+  same(plugin, ['./plugins', './routes'])
+  ok(await isFileAccessible(join(tmpDir, 'plugins', 'example.ts')))
+  ok(await isFileAccessible(join(tmpDir, 'routes', 'root.ts')))
+})
+
+test('creates service with javascript', async ({ equal, same, ok }) => {
   const params = {
     hostname: 'myhost',
     port: 6666,
@@ -52,11 +91,11 @@ test('creates service with no typescript', async ({ end, equal, same, ok }) => {
   equal(process.env.PORT, '6666')
 
   same(plugin, ['./plugins', './routes'])
-  ok(isFileAccessible(join(tmpDir, 'plugins', 'examples.js')))
-  ok(isFileAccessible(join(tmpDir, 'routes', 'root.js')))
+  ok(await isFileAccessible(join(tmpDir, 'plugins', 'example.js')))
+  ok(await isFileAccessible(join(tmpDir, 'routes', 'root.js')))
 })
 
-test('creates project with configuration already present', async ({ end, equal, ok }) => {
+test('creates project with configuration already present', async ({ ok }) => {
   const pathToServiceConfigFileOld = join(tmpDir, 'platformatic.service.json')
   writeFileSync(pathToServiceConfigFileOld, JSON.stringify({ test: 'test' }))
   const params = {

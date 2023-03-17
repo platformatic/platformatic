@@ -1,11 +1,11 @@
 #! /usr/bin/env node
 'use strict'
 
-const { metrics, server, plugins, watch } = require('@platformatic/service').schema
+const { metrics, server, plugins, watch, openApiDefs, openApiBase } = require('@platformatic/service').schema
 const pkg = require('../package.json')
 const version = 'v' + pkg.version
 
-const core = {
+const db = {
   type: 'object',
   properties: {
     connectionString: {
@@ -74,18 +74,7 @@ const core = {
       }, {
         type: 'object',
         properties: {
-          info: {
-            type: 'object',
-            properties: {
-              title: { type: 'string' },
-              description: { type: 'string' },
-              version: { type: 'string' }
-            }
-          },
-          prefix: {
-            type: 'string',
-            description: 'Base URL for the OpenAPI'
-          },
+          ...(openApiBase.properties),
           ignore: {
             type: 'object',
             // TODO add support for column-level ignore
@@ -340,6 +329,10 @@ const types = {
   properties: {
     autogenerate: {
       type: 'boolean'
+    },
+    dir: {
+      type: 'string',
+      description: 'The path to the directory the types should be generated in.'
     }
   },
   additionalProperties: false
@@ -351,22 +344,25 @@ const platformaticDBschema = {
   type: 'object',
   properties: {
     server,
-    core,
+    db,
     dashboard,
     authorization,
     migrations,
     metrics,
     types,
-    plugins
-  },
-  additionalProperties: {
+    plugins,
     watch: {
       anyOf: [watch, {
         type: 'boolean'
       }]
+    },
+    $schema: {
+      type: 'string'
     }
   },
-  required: ['core', 'server']
+  additionalProperties: false,
+  required: ['db', 'server'],
+  $defs: openApiDefs
 }
 
 module.exports.schema = platformaticDBschema

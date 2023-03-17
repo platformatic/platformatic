@@ -7,7 +7,7 @@ const Ajv = require('ajv')
 const fastifyPlugin = require('./lib/plugin')
 const dotenv = require('dotenv')
 const { FileWatcher } = require('@platformatic/utils')
-const { getParser } = require('@platformatic/metaconfig')
+const { getParser, analyze } = require('@platformatic/metaconfig')
 
 class ConfigManager extends EventEmitter {
   constructor (opts) {
@@ -131,6 +131,16 @@ class ConfigManager extends EventEmitter {
       if (this.fullPath) {
         const configString = await this.load()
         this.current = this._parser(await this.replaceEnv(configString))
+        // try updating the config format to latest
+        try {
+          let meta = await analyze({ config: this.current })
+          while (typeof meta.up === 'function') {
+            meta = meta.up()
+          }
+          this.current = meta.config
+        } catch {
+          // nothing to do
+        }
       }
       const validationResult = this.validate()
       if (!validationResult) {
@@ -189,6 +199,7 @@ class ConfigManager extends EventEmitter {
       this.current = _old
       return false
     }
+    await this._transformConfig()
     this.emit('update', this.current)
     return true
   }
