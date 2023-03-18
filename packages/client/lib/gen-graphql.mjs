@@ -2,7 +2,7 @@ import CodeBlockWriter from 'code-block-writer'
 import { capitalize } from './utils.mjs'
 
 export function processGraphQL ({ schema, name, folder, url }) {
-  schema = JSON.parse(schema).data.__schema
+  schema = schema.__schema
   return {
     types: generateTypesFromGraphQL({ schema, name }),
     implementation: generateImplementationFromGraqhQL({ schema, name, url })

@@ -74,8 +74,11 @@ async function downloadAndProcess ({ url, name, folder, config }) {
     }
 
     await mkdir(folder, { recursive: true })
-    await writeFile(join(folder, `${name}.schema.graphql`), text)
-    const { types, implementation } = processGraphQL({ schema: text, name, folder, url })
+    const { data: schema } = JSON.parse(text)
+    const { types, implementation } = processGraphQL({ schema, name, folder, url })
+    const clientSchema = graphql.buildClientSchema(schema)
+    const sdl = graphql.printSchema(clientSchema)
+    await writeFile(join(folder, `${name}.schema.graphql`), sdl)
     await writeFile(join(folder, `${name}.d.ts`), types)
     await writeFile(join(folder, `${name}.cjs`), implementation)
     await writeFile(join(folder, 'package.json'), getPackageJSON({ name }))

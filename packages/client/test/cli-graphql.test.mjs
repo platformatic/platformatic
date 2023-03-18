@@ -8,10 +8,11 @@ import * as desm from 'desm'
 import { execa } from 'execa'
 import { promises as fs } from 'fs'
 import split from 'split2'
+import graphql from 'graphql'
 
 let counter = 0
 
-test('graphql client generation (javascript)', async ({ teardown, comment, same }) => {
+test('graphql client generation (javascript)', async ({ teardown, comment, same, equal }) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -30,6 +31,13 @@ test('graphql client generation (javascript)', async ({ teardown, comment, same 
 
   comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), server.url + '/graphql', '--name', 'movies'])
+
+  const readSDL = await fs.readFile(join(dir, 'movies', 'movies.schema.graphql'), 'utf8')
+  {
+    const schema = graphql.buildSchema(readSDL)
+    const sdl = graphql.printSchema(schema)
+    equal(sdl, readSDL)
+  }
 
   comment(`server at ${server.url}`)
 
