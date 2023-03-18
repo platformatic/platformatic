@@ -199,6 +199,24 @@ function adjustConfigAfterMerge (options, stash) {
   }
 }
 
+async function adjustHttpsKeyAndCert (arg) {
+  if (typeof arg === 'string') {
+    return arg
+  }
+
+  if (!Array.isArray(arg)) {
+    // { path: pathToKeyOrCert }
+    return readFile(arg.path)
+  }
+
+  // Array of strings or objects.
+  for (let i = 0; i < arg.length; ++i) {
+    arg[i] = await adjustHttpsKeyAndCert(arg[i])
+  }
+
+  return arg
+}
+
 async function buildServer (options, app, ConfigManagerContructor) {
   app = app || platformaticService
   ConfigManagerContructor = ConfigManagerContructor || ConfigManager
@@ -214,6 +232,16 @@ async function buildServer (options, app, ConfigManagerContructor) {
     options = deepmerge({}, options, cm.current)
     options.configManager = cm
     adjustConfigAfterMerge(options, stash)
+
+    if (options.server.https) {
+      options.server.https.key = await adjustHttpsKeyAndCert(options.server.https.key)
+      options.server.https.cert = await adjustHttpsKeyAndCert(options.server.https.cert)
+      options.server = { ...options.server, ...options.server.https }
+      delete options.server.https
+      options.server.protocol = 'https'
+    } else {
+      options.server.protocol = 'http'
+    }
   }
   const serverConfig = createServerConfig(options)
 
@@ -223,9 +251,10 @@ async function buildServer (options, app, ConfigManagerContructor) {
 
   Object.defineProperty(handler, 'url', {
     get () {
+      const protocol = serverConfig.protocol
       const address = handler.address
       const port = handler.port
-      const url = `http://${address}:${port}`
+      const url = `${protocol}://${address}:${port}`
       return url
     }
   })

@@ -40,6 +40,23 @@ class ServiceConfigManager extends ConfigManager {
     if (this.current.clients) {
       this.current.clients = this.current.clients.map(fixPluginPath)
     }
+
+    const fixKeyAndCertPath = (arg) => {
+      if (Array.isArray(arg)) {
+        return arg.map(fixKeyAndCertPath)
+      }
+
+      if (typeof arg === 'object') {
+        arg.path = this._fixRelativePath(arg.path)
+      }
+
+      return arg
+    }
+
+    if (this.current.server?.https) {
+      this.current.server.https.key = fixKeyAndCertPath(this.current.server.https.key)
+      this.current.server.https.cert = fixKeyAndCertPath(this.current.server.https.cert)
+    }
   }
 
   _fixRelativePath (path) {
