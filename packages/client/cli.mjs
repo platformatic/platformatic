@@ -5,6 +5,7 @@ import isMain from 'es-main'
 import helpMe from 'help-me'
 import { writeFile, mkdir, access } from 'fs/promises'
 import { join } from 'path'
+import * as desm from 'desm'
 import { request } from 'undici'
 import { processOpenAPI } from './lib/gen-openapi.mjs'
 import { processGraphQL } from './lib/gen-graphql.mjs'
@@ -104,8 +105,13 @@ function getPackageJSON ({ name }) {
   }, null, 2)
 }
 
-if (isMain(import.meta)) {
-  const { _: [url], ...options } = parseArgs(process.argv.slice(2), {
+export async function command (argv) {
+  const help = helpMe({
+    dir: desm.join(import.meta.url, 'help'),
+    // the default
+    ext: '.txt'
+  })
+  const { _: [url], ...options } = parseArgs(argv, {
     string: ['name', 'folder'],
     boolean: ['typescript'],
     default: {
@@ -121,8 +127,19 @@ if (isMain(import.meta)) {
   })
   options.folder = options.folder || join(process.cwd(), options.name)
   if (!url) {
-    console.error(helpMe())
+    await help.toStdout()
     process.exit(1)
   }
-  downloadAndProcess({ url, ...options })
+  try {
+    await downloadAndProcess({ url, ...options })
+  } catch (err) {
+    console.error(err)
+    console.log('')
+    await help.toStdout()
+    process.exit(1)
+  }
+}
+
+if (isMain(import.meta)) {
+  command(process.argv.slice(2))
 }
