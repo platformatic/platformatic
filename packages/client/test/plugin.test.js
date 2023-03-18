@@ -8,6 +8,52 @@ const client = require('..')
 const fs = require('fs/promises')
 const Fastify = require('fastify')
 
+test('wrong type', async ({ teardown, same, rejects }) => {
+  const app = Fastify()
+
+  await rejects(app.register(client, {
+    type: 'foo',
+    url: 'http://localhost:3042/documentation/json',
+    name: 'client'
+  }), new Error('opts.type must be either "openapi" or "graphql"'))
+})
+
+test('default decorator', async ({ teardown, same, rejects }) => {
+  try {
+    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const server = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
+  teardown(server.stop)
+  await server.listen()
+
+  const app = Fastify()
+
+  await app.register(client, {
+    type: 'openapi',
+    url: `${server.url}/documentation/json`
+  })
+
+  const movie = await app.client.createMovie({
+    title: 'The Matrix'
+  })
+
+  same(movie, {
+    id: 1,
+    title: 'The Matrix'
+  })
+
+  const movies = await app.client.getMovies()
+
+  same(movies, [
+    {
+      id: 1,
+      title: 'The Matrix'
+    }
+  ])
+})
+
 test('app decorator with OpenAPI', async ({ teardown, same, rejects }) => {
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
@@ -236,14 +282,4 @@ test('req decorator with OpenAPI and auth', async ({ teardown, same, rejects }) 
     id: 1,
     title: 'The Matrix'
   })
-})
-
-test('wrong type', async ({ teardown, same, rejects }) => {
-  const app = Fastify()
-
-  await rejects(app.register(client, {
-    type: 'foo',
-    url: 'http://localhost:3042/documentation/json',
-    name: 'client'
-  }))
 })

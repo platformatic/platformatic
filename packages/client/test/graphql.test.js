@@ -6,10 +6,76 @@ const { buildServer } = require('@platformatic/db')
 const { join } = require('path')
 const { buildGraphQLClient } = require('..')
 const fs = require('fs/promises')
+const Fastify = require('fastify')
 
 test('rejects with no url', async ({ rejects }) => {
   await rejects(buildGraphQLClient())
   await rejects(buildGraphQLClient({}))
+})
+
+test('status code !== 200', async ({ teardown, same, rejects }) => {
+  const fastify = Fastify()
+  fastify.post('/graphql', async (request, reply) => {
+    reply.code(500)
+    return {
+      data: {
+        hello: 'world'
+      }
+    }
+  })
+  await fastify.listen({ port: 0 })
+
+  teardown(fastify.close.bind(fastify))
+
+  const client = await buildGraphQLClient({
+    url: `http://localhost:${fastify.server.address().port}/graphql`
+  })
+
+  await rejects(client.graphql({
+    query: `
+      mutation createMovie($title: String!) {
+        saveMovie(input: {title: $title}) {
+          id
+          title
+        }
+      }
+    `,
+    variables: {
+      title: 'The Matrix'
+    }
+  }), new Error('request to client failed'))
+})
+
+test('errors', async ({ teardown, same, rejects }) => {
+  const fastify = Fastify()
+  fastify.post('/graphql', async (request, reply) => {
+    return {
+      errors: [{
+        message: 'hello world'
+      }]
+    }
+  })
+  await fastify.listen({ port: 0 })
+
+  teardown(fastify.close.bind(fastify))
+
+  const client = await buildGraphQLClient({
+    url: `http://localhost:${fastify.server.address().port}/graphql`
+  })
+
+  await rejects(client.graphql({
+    query: `
+      mutation createMovie($title: String!) {
+        saveMovie(input: {title: $title}) {
+          id
+          title
+        }
+      }
+    `,
+    variables: {
+      title: 'The Matrix'
+    }
+  }), new Error('hello world'))
 })
 
 test('build basic client from url', async ({ teardown, same, rejects }) => {

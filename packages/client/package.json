@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@platformatic/metaconfig": "workspace:*",
+    "abstract-logging": "^2.0.1",
     "code-block-writer": "^11.0.3",
     "es-main": "^1.2.0",
     "graphql": "^16.6.0",
