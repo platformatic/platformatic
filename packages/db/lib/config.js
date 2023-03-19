@@ -24,9 +24,8 @@ class DBConfigManager extends ConfigManager {
       this.current.db.connectionString = 'sqlite://' + sqliteFullPath
     }
 
-    /* c8 ignore next 4 */
+    /* c8 ignore next 3 */
     if (this.current.db.graphql?.schemaPath) {
-      this.current.db.graphql.schemaPath = this._fixRelativePath(this.current.db.graphql.schemaPath)
       this.current.db.graphql.schema = await readFile(this.current.db.graphql.schemaPath, 'utf8')
     }
 
@@ -36,7 +35,6 @@ class DBConfigManager extends ConfigManager {
 
     // relative-to-absolute migrations path
     if (this.current.migrations) {
-      this.current.migrations.dir = this._fixRelativePath(this.current.migrations.dir)
       this.current.migrations.table = this.current.migrations.table || migrationsTableName
     }
 
@@ -47,10 +45,6 @@ class DBConfigManager extends ConfigManager {
       this.current.db.ignore = Object.assign({}, {
         [this.current.migrations.table || migrationsTableName]: true
       }, this.current.db.ignore)
-    }
-
-    if (this.current.types?.dir) {
-      this.current.types.dir = this._fixRelativePath(this.current.types.dir)
     }
   }
 }

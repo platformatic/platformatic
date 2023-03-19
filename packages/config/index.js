@@ -167,6 +167,18 @@ class ConfigManager extends EventEmitter {
       return false
     }
     const ajv = new Ajv(this.schemaOptions)
+    ajv.addKeyword({
+      keyword: 'resolvePath',
+      type: 'string',
+      schemaType: 'boolean',
+      // TODO: figure out how to implement this via the new `code`
+      // option in Ajv
+      validate: (schema, path, parentSchema, data) => {
+        const resolved = resolve(this.dirname, path)
+        data.parentData[data.parentDataProperty] = resolved
+        return true
+      }
+    })
     const ajvValidate = ajv.compile(this.schema)
 
     const res = ajvValidate(this.current)

@@ -242,11 +242,16 @@ const server = {
       properties: {
         key: {
           anyOf: [
-            { type: 'string' },
+            {
+              type: 'string'
+            },
             {
               type: 'object',
               properties: {
-                path: { type: 'string' }
+                path: {
+                  type: 'string',
+                  resolvePath: true
+                }
               },
               additionalProperties: false
             },
@@ -254,11 +259,16 @@ const server = {
               type: 'array',
               items: {
                 anyOf: [
-                  { type: 'string' },
+                  {
+                    type: 'string'
+                  },
                   {
                     type: 'object',
                     properties: {
-                      path: { type: 'string' }
+                      path: {
+                        type: 'string',
+                        resolvePath: true
+                      }
                     },
                     additionalProperties: false
                   }
@@ -269,11 +279,16 @@ const server = {
         },
         cert: {
           anyOf: [
-            { type: 'string' },
+            {
+              type: 'string'
+            },
             {
               type: 'object',
               properties: {
-                path: { type: 'string' }
+                path: {
+                  type: 'string',
+                  resolvePath: true
+                }
               },
               additionalProperties: false
             },
@@ -281,11 +296,16 @@ const server = {
               type: 'array',
               items: {
                 anyOf: [
-                  { type: 'string' },
+                  {
+                    type: 'string'
+                  },
                   {
                     type: 'object',
                     properties: {
-                      path: { type: 'string' }
+                      path: {
+                        type: 'string',
+                        resolvePath: true
+                      }
                     },
                     additionalProperties: false
                   }
@@ -335,12 +355,14 @@ const plugins = {
       type: 'array',
       items: {
         anyOf: [{
-          type: 'string'
+          type: 'string',
+          resolvePath: true
         }, {
           type: 'object',
           properties: {
             path: {
-              type: 'string'
+              type: 'string',
+              resolvePath: true
             },
             options: {
               type: 'object',

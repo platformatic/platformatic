@@ -10,6 +10,7 @@ test('generateJsonSchemaConfig generates the file', async (t) => {
 
   const configSchema = JSON.parse(await fs.readFile('platformatic.db.schema.json', 'utf8'))
   const ajv = new Ajv()
+  ajv.addKeyword('resolvePath')
   // this should not throw
   ajv.compile(schema)
   t.same(configSchema, schema)
