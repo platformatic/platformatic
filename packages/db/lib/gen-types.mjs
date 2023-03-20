@@ -174,6 +174,7 @@ async function checkForDependencies (logger, args, config) {
 
   let command = 'npm i --save'
 
+  /* c8 ignore next 3 */
   if (config.plugins?.typescript !== undefined) {
     command += ' @types/node'
   }

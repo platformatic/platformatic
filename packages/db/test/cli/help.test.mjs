@@ -6,7 +6,6 @@ import { readFile } from 'fs/promises'
 import { EOL } from 'os'
 
 const CLI_COMMANDS = [
-  'init',
   'types',
   'start',
   'compile',
