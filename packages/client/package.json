@@ -3,9 +3,6 @@
   "version": "0.18.0",
   "description": "A client for all platformatic backends",
   "main": "index.js",
-  "bin": {
-    "plt-client": "cli.mjs"
-  },
   "scripts": {
     "lint": "standard",
     "test": "tap test/*.test.*js"
