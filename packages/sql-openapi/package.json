@@ -31,7 +31,7 @@
     "snazzy": "^9.0.0",
     "standard": "^17.0.0",
     "tap": "^16.3.4",
-    "tsd": "^0.27.0"
+    "tsd": "^0.28.0"
   },
   "dependencies": {
     "@fastify/deepmerge": "^1.3.0",
