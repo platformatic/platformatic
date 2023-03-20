@@ -45,7 +45,7 @@ Then install again all of the needed packages by running `pnpm i`.
 ##### `env: node: No such file or directory` when using `pnpm`
 * get the `pnpm` path with `which pnpm`, then remove it; it's best to use the package manager you installed `pnpm` with
 * verify that the node version in use [is correct](https://oss.platformatic.dev/docs/getting-started/quick-start-guide/#prerequisites)
-* reinstall it, f.e. if you're on Mac with `brew install pnpm`
+* reinstall it (`npm install pnpm -g`)
 
 <a id='run-docker'></a>
 ### Start the RDBMS
