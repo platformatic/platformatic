@@ -403,4 +403,4 @@ jobs:
     - name: CLI must load
       run: cd packages/cli && node cli.js
     - name: Circular Dependency Check
-      run: pnpm install 2>&1 | grep cyclic && exit 1
+      run: pnpm install 2>&1 | grep cyclic > /dev/null; test $? -ne 0
