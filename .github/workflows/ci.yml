@@ -402,7 +402,9 @@ jobs:
       id: install
       run: |
         pnpm install --production --frozen-lockfile 2>&1 | tee out
-        echo "pnpmoutput=$(cat out)" >> "$GITHUB_OUTPUT"
+        echo "pnpmoutput<<EOF" >> $GITHUB_OUTPUT
+        cat out >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
     - name: CLI must load
       run: cd packages/cli && node cli.js
     - name: Circular Dependency
