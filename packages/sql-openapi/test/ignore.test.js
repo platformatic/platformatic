@@ -145,7 +145,9 @@ test('ignore a column in OpenAPI', async ({ pass, teardown, equal, same }) => {
   app.register(sqlOpenAPI, {
     ignore: {
       categories: {
-        name: true
+        fields: {
+          name: true
+        }
       }
     }
   })
