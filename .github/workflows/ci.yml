@@ -402,3 +402,7 @@ jobs:
       run: pnpm install --production --frozen-lockfile
     - name: CLI must load
       run: cd packages/cli && node cli.js
+    - name: Circular Dependency Check
+      run:
+        | pnpm install &> out
+        | cat out | grep cyclic && exit 1
