@@ -16,7 +16,7 @@ The CLI package is now available at **./node_modules/.bin/platformatic**. Use
 ```
 
 #### Troubleshooting
-If you encounter issues like [this one](https://github.com/platformatic/platformatic/issues/754):
+##### [SQLite module CPU arch incompatibility](https://github.com/platformatic/platformatic/issues/754)
 ```
 Error: Cannot find module '/platformatic/node_modules/.pnpm/sqlite3@5.1.4/node_modules/sqlite3/lib/binding/napi-v6-darwin-unknown-arm64/node_sqlite3.node'
 Require stack:
@@ -41,6 +41,11 @@ rm -fr /path/from/the/above/command
 ```
 
 Then install again all of the needed packages by running `pnpm i`.
+
+##### `env: node: No such file or directory` when using `pnpm`
+* get the `pnpm` path with `which pnpm`, then remove it
+* verify that the node version in use [is correct](https://oss.platformatic.dev/docs/getting-started/quick-start-guide/#prerequisites)
+* reinstall it, fe.e. if you're on Mac with `brew install pnpm`
 
 <a id='run-docker'></a>
 ### Start the RDBMS
