@@ -23,7 +23,6 @@ async function buildOpenAPIClient (options) {
   let spec
 
   // this is tested, not sure why c8 is not picking it up
-  /* c8 ignore next 3 */
   if (options.file) {
     spec = JSON.parse(await fs.readFile(options.file, 'utf8'))
   } else if (options.url) {
@@ -163,7 +162,6 @@ async function plugin (app, opts) {
   let client = null
   let getHeaders = null
 
-  /* c8 ignore next 5 */
   if (typeof opts.getHeaders === 'function') {
     getHeaders = opts.getHeaders
     opts = { ...opts }

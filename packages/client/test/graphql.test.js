@@ -2,7 +2,7 @@
 
 require('./helper')
 const { test } = require('tap')
-const { buildServer } = require('@platformatic/db')
+const { buildServer } = require('../../db')
 const { join } = require('path')
 const { buildGraphQLClient } = require('..')
 const fs = require('fs/promises')
