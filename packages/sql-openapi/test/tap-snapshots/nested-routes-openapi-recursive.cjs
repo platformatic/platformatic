@@ -354,6 +354,7 @@ Object {
         },
       },
       "post": Object {
+        "operationId": "createPerson",
         "requestBody": Object {
           "content": Object {
             "application/json": Object {
@@ -391,6 +392,7 @@ Object {
         },
       },
       "put": Object {
+        "operationId": "updatePeople",
         "parameters": Array [
           Object {
             "in": "query",
@@ -667,6 +669,7 @@ Object {
     },
     "/people/{id}": Object {
       "delete": Object {
+        "operationId": "deletePeople",
         "parameters": Array [
           Object {
             "in": "query",
@@ -762,6 +765,7 @@ Object {
         },
       },
       "post": Object {
+        "operationId": "updatePerson",
         "parameters": Array [
           Object {
             "in": "query",
@@ -825,6 +829,7 @@ Object {
         },
       },
       "put": Object {
+        "operationId": "updatePerson",
         "parameters": Array [
           Object {
             "in": "query",
