@@ -18,15 +18,28 @@ import mkdirp from 'mkdirp'
 
 export const createReadme = async (logger, dir = '.') => {
   const readmeFileName = join(dir, 'README.md')
-  const isReadmeExists = await isFileAccessible(readmeFileName)
-  if (!isReadmeExists) {
-    const readmeFile = new URL('README.md', import.meta.url)
-    const readme = await readFile(readmeFile, 'utf-8')
-    await writeFile(readmeFileName, readme)
-    logger.debug(`${readmeFileName} successfully created.`)
-  } else {
-    logger.debug(`${readmeFileName} found, skipping creation of README.md file.`)
+  let isReadmeExists = await isFileAccessible(readmeFileName)
+  if (isReadmeExists) {
+    logger.debug(`${readmeFileName} found, asking to overwrite it.`)
+    const { shouldReplace } = await inquirer.prompt([{
+      type: 'list',
+      name: 'shouldReplace',
+      message: 'Do you want to overwrite the existing README.md?',
+      default: true,
+      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+    }])
+    isReadmeExists = !shouldReplace
   }
+
+  if (isReadmeExists) {
+    logger.debug(`${readmeFileName} found, skipping creation of README.md file.`)
+    return
+  }
+
+  const readmeFile = new URL('README.md', import.meta.url)
+  const readme = await readFile(readmeFile, 'utf-8')
+  await writeFile(readmeFileName, readme)
+  logger.debug(`${readmeFileName} successfully created.`)
 }
 
 export const parseDBArgs = (_args) => {

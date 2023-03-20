@@ -4,10 +4,12 @@ import * as desm from 'desm'
 import { findServiceConfigFile, isFileAccessible } from '../utils.mjs'
 
 function generateConfig (version) {
-  const plugin = [
-    './plugins',
-    './routes'
-  ]
+  const plugins = {
+    paths: [
+      './plugins',
+      './routes'
+    ]
+  }
 
   const config = {
     $schema: `https://platformatic.dev/schemas/v${version}/service`,
@@ -18,7 +20,7 @@ function generateConfig (version) {
         level: '{PLT_SERVER_LOGGER_LEVEL}'
       }
     },
-    plugin
+    plugins
   }
 
   return config
