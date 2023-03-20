@@ -63,7 +63,8 @@ const db = {
             type: 'string'
           },
           schemaPath: {
-            type: 'string'
+            type: 'string',
+            resolvePath: true
           }
         }
       }]
@@ -307,6 +308,7 @@ const migrations = {
   properties: {
     dir: {
       type: 'string',
+      resolvePath: true,
       description: 'The path to the directory containing the migrations.'
     },
     table: {
@@ -332,6 +334,7 @@ const types = {
     },
     dir: {
       type: 'string',
+      resolvePath: true,
       description: 'The path to the directory the types should be generated in.'
     }
   },

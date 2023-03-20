@@ -3,6 +3,7 @@
 const { test } = require('tap')
 const { resolve } = require('path')
 const ConfigManager = require('..')
+
 test('should throw if file is not found', async ({ match, fail }) => {
   try {
     const cm = new ConfigManager({ source: './invalid-file.json' })
@@ -109,7 +110,7 @@ test('should support JSON5 format', async ({ same }) => {
   })
 })
 
-test('should automatically update', { only: true }, async ({ same }) => {
+test('should automatically update', async ({ same }) => {
   const cm = new ConfigManager({
     source: resolve(__dirname, './fixtures/db-0.16.0.json'),
     env: { PLT_FOOBAR: 'foobar' }
