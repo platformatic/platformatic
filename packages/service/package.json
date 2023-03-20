@@ -3,6 +3,7 @@
   "version": "0.18.0",
   "description": "",
   "main": "index.js",
+  "bin": { "plt-service": "./service.mjs" },
   "scripts": {
     "test": "standard | snazzy && c8 --100 tap test/*test.js test/*/*.test.mjs",
     "lint": "standard | snazzy"
