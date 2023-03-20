@@ -2,7 +2,6 @@ Available commands:
 
 * `help` - show this help message.
 * `help <command>` - shows more information about a command.
-* `init` - initiate default application.
 * `start` - start the server.
 * `compile` - compile typescript plugins.
 * `seed` - run a seed file.

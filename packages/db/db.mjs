@@ -8,7 +8,6 @@ import { readFile } from 'fs/promises'
 import { join } from 'desm'
 
 import { start } from './lib/start.mjs'
-import { init } from './lib/init.mjs'
 import { compile } from './lib/compile.mjs'
 import { applyMigrations } from './lib/migrate.mjs'
 import { seed } from './lib/seed.mjs'
@@ -25,7 +24,6 @@ const help = helpMe({
 const program = commist({ maxDistance: 2 })
 
 program.register('help', help.toStdout)
-program.register('help init', help.toStdout.bind(null, ['init']))
 program.register('help start', help.toStdout.bind(null, ['start']))
 program.register('help compile', help.toStdout.bind(null, ['compile']))
 program.register('help migrations apply', help.toStdout.bind(null, ['migrations apply']))
@@ -33,7 +31,6 @@ program.register({ command: 'help seed', strict: true }, help.toStdout.bind(null
 program.register('help schema', help.toStdout.bind(null, ['schema']))
 
 program.register('start', start)
-program.register('init', init)
 program.register('compile', compile)
 program.register('migrations create', generateMigration)
 program.register('migrations apply', applyMigrations)
