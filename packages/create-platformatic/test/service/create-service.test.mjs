@@ -38,10 +38,11 @@ test('creates service with typescript', async ({ equal, same, ok }) => {
   const serviceConfigFile = readFileSync(pathToServiceConfigFile, 'utf8')
   const serviceConfig = JSON.parse(serviceConfigFile)
   const ajv = new Ajv()
+  ajv.addKeyword('resolvePath')
   const validate = ajv.compile(schema.schema)
   const isValid = validate(serviceConfig)
   equal(isValid, true)
-  const { server, plugin } = serviceConfig
+  const { server, plugins } = serviceConfig
 
   equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   equal(server.port, '{PORT}')
@@ -57,7 +58,7 @@ test('creates service with typescript', async ({ equal, same, ok }) => {
   equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
   equal(process.env.PORT, '6666')
 
-  same(plugin, ['./plugins', './routes'])
+  same(plugins, { paths: ['./plugins', './routes'] })
   ok(await isFileAccessible(join(tmpDir, 'plugins', 'example.ts')))
   ok(await isFileAccessible(join(tmpDir, 'routes', 'root.ts')))
 })
@@ -74,7 +75,7 @@ test('creates service with javascript', async ({ equal, same, ok }) => {
   const pathToServiceConfigFile = join(tmpDir, 'platformatic.service.json')
   const serviceConfigFile = readFileSync(pathToServiceConfigFile, 'utf8')
   const serviceConfig = JSON.parse(serviceConfigFile)
-  const { server, plugin } = serviceConfig
+  const { server, plugins } = serviceConfig
 
   equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   equal(server.port, '{PORT}')
@@ -90,7 +91,7 @@ test('creates service with javascript', async ({ equal, same, ok }) => {
   equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
   equal(process.env.PORT, '6666')
 
-  same(plugin, ['./plugins', './routes'])
+  same(plugins, { paths: ['./plugins', './routes'] })
   ok(await isFileAccessible(join(tmpDir, 'plugins', 'example.js')))
   ok(await isFileAccessible(join(tmpDir, 'routes', 'root.js')))
 })

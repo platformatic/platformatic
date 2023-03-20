@@ -56,6 +56,7 @@ test('creates project with no typescript', async ({ equal }) => {
   const dbConfig = JSON.parse(dbConfigFile)
   const { server, core, migrations } = dbConfig
   const ajv = new Ajv()
+  ajv.addKeyword('relativePath')
   const validate = ajv.compile(schema)
   equal(validate(dbConfig), true)
 
