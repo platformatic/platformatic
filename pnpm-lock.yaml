@@ -42,7 +42,7 @@ importers:
   packages/cli:
     specifiers:
       '@platformatic/authenticate': workspace:*
-      '@platformatic/client': workspace:*
+      '@platformatic/client-cli': workspace:*
       '@platformatic/db': workspace:*
       '@platformatic/metaconfig': workspace:*
       '@platformatic/service': workspace:*
@@ -61,7 +61,7 @@ importers:
       undici: ^5.20.0
     dependencies:
       '@platformatic/authenticate': link:../authenticate
-      '@platformatic/client': link:../client
+      '@platformatic/client-cli': link:../client-cli
       '@platformatic/db': link:../db
       '@platformatic/metaconfig': link:../metaconfig
       '@platformatic/service': link:../service
