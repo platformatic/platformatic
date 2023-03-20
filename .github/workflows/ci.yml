@@ -429,6 +429,14 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
     - name: pnpm install
-      run: pnpm install --production --frozen-lockfile
+      id: install
+      run: |
+        pnpm install --production --frozen-lockfile 2>&1 | tee out
+        echo "pnpmoutput<<EOF" >> $GITHUB_OUTPUT
+        cat out >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
     - name: CLI must load
       run: cd packages/cli && node cli.js
+    - name: Circular Dependency
+      if: contains(steps.install.outputs.pnpmoutput, 'cyclic')
+      run: exit 1

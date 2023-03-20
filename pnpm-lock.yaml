@@ -270,7 +270,6 @@ importers:
       camelcase: ^6.3.0
       close-with-grace: ^1.1.0
       commist: ^3.2.0
-      create-platformatic: workspace:*
       desm: ^1.3.0
       dtsgenerator: ^3.17.0
       env-schema: ^5.2.0
@@ -318,7 +317,6 @@ importers:
       camelcase: 6.3.0
       close-with-grace: 1.1.0
       commist: 3.2.0
-      create-platformatic: link:../create-platformatic
       desm: 1.3.0
       dtsgenerator: 3.18.0
       env-schema: 5.2.0
