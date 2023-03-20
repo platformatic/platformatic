@@ -1,5 +1,4 @@
-import { request } from './helper.js'
-import { tmpdir } from 'os'
+import { request, installDeps, moveToTmpdir } from './helper.js'
 import { test } from 'tap'
 import { buildServer } from '@platformatic/db'
 import { join } from 'path'
@@ -7,8 +6,9 @@ import * as desm from 'desm'
 import { execa } from 'execa'
 import { promises as fs } from 'fs'
 import split from 'split2'
+import { copy } from 'fs-extra'
 
-let counter = 0
+console.log('starting')
 
 test('openapi client generation (javascript)', async ({ teardown, comment, same }) => {
   try {
@@ -20,14 +20,9 @@ test('openapi client generation (javascript)', async ({ teardown, comment, same 
 
   await server.listen()
 
-  const dir = join(tmpdir(), `platformatic-client-${process.pid}-${counter++}`)
-  await fs.mkdir(dir)
-  const cwd = process.cwd()
-  process.chdir(dir)
-  teardown(() => process.chdir(cwd))
-  teardown(() => fs.rm(dir, { recursive: true }))
-
+  const dir = await moveToTmpdir(teardown)
   comment(`working in ${dir}`)
+
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), server.url + '/documentation/json', '--name', 'movies'])
 
   const toWrite = `
@@ -45,10 +40,7 @@ app.post('/', async (request, reply) => {
 app.listen({ port: 0 })
 `
   await fs.writeFile(join(dir, 'index.js'), toWrite)
-  await fs.mkdir(join(dir, 'node_modules'))
-  await fs.mkdir(join(dir, 'node_modules', '@platformatic'))
-  await fs.symlink(join(cwd, 'node_modules', 'fastify'), join(dir, 'node_modules', 'fastify'))
-  await fs.symlink(desm.join(import.meta.url, '..'), join(dir, 'node_modules', '@platformatic', 'client'))
+  await installDeps(dir)
 
   const server2 = execa('node', ['index.js'])
   teardown(() => server2.kill())
@@ -87,12 +79,7 @@ test('openapi client generation (typescript)', async ({ teardown, comment, same 
 
   await server.listen()
 
-  const dir = join(tmpdir(), `platformatic-client-${process.pid}-${counter++}`)
-  await fs.mkdir(dir)
-  const cwd = process.cwd()
-  process.chdir(dir)
-  teardown(() => process.chdir(cwd))
-  teardown(() => fs.rm(dir, { recursive: true }))
+  const dir = await moveToTmpdir(teardown)
 
   comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), server.url + '/documentation/json', '--name', 'movies'])
@@ -129,15 +116,13 @@ app.listen({ port: 0 });
 
   await fs.mkdir(join(dir, 'node_modules'))
   await fs.mkdir(join(dir, 'node_modules', '@platformatic'))
-  await fs.symlink(join(cwd, 'node_modules', 'fastify'), join(dir, 'node_modules', 'fastify'))
-  await fs.symlink(join(cwd, 'node_modules', 'fastify-tsconfig'), join(dir, 'node_modules', 'fastify-tsconfig'))
-  await fs.symlink(desm.join(import.meta.url, '..'), join(dir, 'node_modules', '@platformatic', 'client'))
+  await installDeps(dir)
 
   const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
   await execa(tsc)
 
-  // TODO how can we avoid this symlink?
-  await fs.symlink(join(dir, 'movies'), join(dir, 'build', 'movies'))
+  // TODO how can we avoid this copy?
+  await copy(join(dir, 'movies'), join(dir, 'build', 'movies'))
 
   const server2 = execa('node', ['build/index.js'])
   teardown(() => server2.kill())
@@ -177,12 +162,7 @@ test('openapi client generation (javascript) with slash at the end', async ({ te
 
   await server.listen()
 
-  const dir = join(tmpdir(), `platformatic-client-${process.pid}-${counter++}`)
-  await fs.mkdir(dir)
-  const cwd = process.cwd()
-  process.chdir(dir)
-  teardown(() => process.chdir(cwd))
-  teardown(() => fs.rm(dir, { recursive: true }))
+  const dir = await moveToTmpdir(teardown)
 
   comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), server.url + '/documentation/json', '--name', 'movies'])
@@ -202,10 +182,7 @@ app.post('/', async (request, reply) => {
 app.listen({ port: 0 })
 `
   await fs.writeFile(join(dir, 'index.js'), toWrite)
-  await fs.mkdir(join(dir, 'node_modules'))
-  await fs.mkdir(join(dir, 'node_modules', '@platformatic'))
-  await fs.symlink(join(cwd, 'node_modules', 'fastify'), join(dir, 'node_modules', 'fastify'))
-  await fs.symlink(desm.join(import.meta.url, '..'), join(dir, 'node_modules', '@platformatic', 'client'))
+  await installDeps(dir)
 
   const server2 = execa('node', ['index.js'])
   teardown(() => server2.kill())
@@ -245,12 +222,7 @@ test('no such file', async ({ rejects, teardown }) => {
   await server.listen()
   teardown(server.stop)
 
-  const dir = join(tmpdir(), `platformatic-client-${process.pid}-${counter++}`)
-  await fs.mkdir(dir)
-  const cwd = process.cwd()
-  process.chdir(dir)
-  teardown(() => process.chdir(cwd))
-  teardown(() => fs.rm(dir, { recursive: true }))
+  await moveToTmpdir(teardown)
   await rejects(execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), `${server.url}/foo/bar`, '--name', 'movies']))
 })
 
@@ -268,12 +240,7 @@ test('datatypes', async ({ teardown, comment, match }) => {
 
   await server.listen()
 
-  const dir = join(tmpdir(), `platformatic-client-${process.pid}-${counter++}`)
-  await fs.mkdir(dir)
-  const cwd = process.cwd()
-  process.chdir(dir)
-  teardown(() => process.chdir(cwd))
-  teardown(() => fs.rm(dir, { recursive: true }))
+  const dir = await moveToTmpdir(teardown)
 
   comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), server.url + '/documentation/json', '--name', 'movies'])
@@ -293,10 +260,7 @@ app.post('/', async (request, reply) => {
 app.listen({ port: 0 })
 `
   await fs.writeFile(join(dir, 'index.js'), toWrite)
-  await fs.mkdir(join(dir, 'node_modules'))
-  await fs.mkdir(join(dir, 'node_modules', '@platformatic'))
-  await fs.symlink(join(cwd, 'node_modules', 'fastify'), join(dir, 'node_modules', 'fastify'))
-  await fs.symlink(desm.join(import.meta.url, '..'), join(dir, 'node_modules', '@platformatic', 'client'))
+  await installDeps(dir)
 
   const server2 = execa('node', ['index.js'])
   teardown(() => server2.kill())

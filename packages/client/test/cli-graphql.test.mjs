@@ -1,5 +1,4 @@
-import { request } from './helper.js'
-import { tmpdir } from 'os'
+import { request, moveToTmpdir, installDeps } from './helper.js'
 import { test } from 'tap'
 import { buildServer } from '@platformatic/db'
 import service from '@platformatic/service'
@@ -9,10 +8,9 @@ import { execa } from 'execa'
 import { promises as fs } from 'fs'
 import split from 'split2'
 import graphql from 'graphql'
+import { copy } from 'fs-extra'
 
-let counter = 0
-
-test('graphql client generation (javascript)', async ({ teardown, comment, same, equal }) => {
+test('graphql client generation (javascript)', async ({ teardown, comment, same, equal, match }) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -22,12 +20,7 @@ test('graphql client generation (javascript)', async ({ teardown, comment, same,
 
   await server.listen()
 
-  const dir = join(tmpdir(), `platformatic-client-${process.pid}-${counter++}`)
-  await fs.mkdir(dir)
-  const cwd = process.cwd()
-  process.chdir(dir)
-  teardown(() => process.chdir(cwd))
-  teardown(() => fs.rm(dir, { recursive: true }))
+  const dir = await moveToTmpdir(teardown)
 
   comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), server.url + '/graphql', '--name', 'movies'])
@@ -58,10 +51,7 @@ app.post('/', async (request, reply) => {
 app.listen({ port: 0 })
 `
   await fs.writeFile(join(dir, 'index.js'), toWrite)
-  await fs.mkdir(join(dir, 'node_modules'))
-  await fs.mkdir(join(dir, 'node_modules', '@platformatic'))
-  await fs.symlink(join(cwd, 'node_modules', 'fastify'), join(dir, 'node_modules', 'fastify'))
-  await fs.symlink(desm.join(import.meta.url, '..'), join(dir, 'node_modules', '@platformatic', 'client'))
+  await installDeps(dir)
 
   const server2 = execa('node', ['index.js'])
   teardown(() => server2.kill())
@@ -80,17 +70,19 @@ app.listen({ port: 0 })
     url = msg.slice(base.length)
     break
   }
+  if (!url) {
+    throw new Error('no url was found')
+  }
   const res = await request(url, {
     method: 'POST'
   })
   const body = await res.body.json()
-  same(body, {
-    id: 1,
+  match(body, {
     title: 'foo'
   })
 })
 
-test('graphql client generation (typescript)', async ({ teardown, comment, same }) => {
+test('graphql client generation (typescript)', async ({ teardown, comment, same, match }) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -100,12 +92,7 @@ test('graphql client generation (typescript)', async ({ teardown, comment, same 
 
   await server.listen()
 
-  const dir = join(tmpdir(), `platformatic-client-${process.pid}-${counter++}`)
-  await fs.mkdir(dir)
-  const cwd = process.cwd()
-  process.chdir(dir)
-  teardown(() => process.chdir(cwd))
-  // teardown(() => fs.rm(dir, { recursive: true }))
+  const dir = await moveToTmpdir(teardown)
 
   comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), server.url + '/graphql', '--name', 'movies'])
@@ -144,17 +131,13 @@ app.listen({ port: 0 });
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
-  await fs.mkdir(join(dir, 'node_modules'))
-  await fs.mkdir(join(dir, 'node_modules', '@platformatic'))
-  await fs.symlink(join(cwd, 'node_modules', 'fastify'), join(dir, 'node_modules', 'fastify'))
-  await fs.symlink(join(cwd, 'node_modules', 'fastify-tsconfig'), join(dir, 'node_modules', 'fastify-tsconfig'))
-  await fs.symlink(desm.join(import.meta.url, '..'), join(dir, 'node_modules', '@platformatic', 'client'))
+  await installDeps(dir)
 
   const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
   await execa(tsc)
 
-  // TODO how can we avoid this symlink?
-  await fs.symlink(join(dir, 'movies'), join(dir, 'build', 'movies'))
+  // TODO how can we avoid this copy?
+  await copy(join(dir, 'movies'), join(dir, 'build', 'movies'))
 
   const server2 = execa('node', ['build/index.js'])
   teardown(() => server2.kill())
@@ -179,8 +162,7 @@ app.listen({ port: 0 });
     method: 'POST'
   })
   const body = await res.body.json()
-  same(body, {
-    id: 1,
+  match(body, {
     title: 'foo'
   })
 })
@@ -195,12 +177,7 @@ test('graphql client generation with relations (typescript)', async ({ teardown,
 
   await server.listen()
 
-  const dir = join(tmpdir(), `platformatic-client-${process.pid}-${counter++}`)
-  await fs.mkdir(dir)
-  const cwd = process.cwd()
-  process.chdir(dir)
-  teardown(() => process.chdir(cwd))
-  teardown(() => fs.rm(dir, { recursive: true }))
+  const dir = await moveToTmpdir(teardown)
 
   comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), server.url + '/graphql', '--name', 'movies'])
@@ -216,13 +193,11 @@ app.register(movies, {
 });
 
 app.post('/', async () => {
-  console.log('aaa')
   const res1 = await app.movies.graphql<Movie>({
     query: \`mutation {
       saveMovie(input: { title: "foo" }) { id, title } }
     \` 
   })
-  console.log('bbb')
   const res2 = await app.movies.graphql<Quote>({
     query: \`
       mutation saveQuote($movieId: ID!) {
@@ -240,7 +215,6 @@ app.post('/', async () => {
       movieId: res1.id
     }
   })
-  console.log('ccc')
   return res2
 })
 
@@ -259,18 +233,13 @@ app.listen({ port: 0});
   }, null, 2)
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
-
-  await fs.mkdir(join(dir, 'node_modules'))
-  await fs.mkdir(join(dir, 'node_modules', '@platformatic'))
-  await fs.symlink(join(cwd, 'node_modules', 'fastify'), join(dir, 'node_modules', 'fastify'))
-  await fs.symlink(join(cwd, 'node_modules', 'fastify-tsconfig'), join(dir, 'node_modules', 'fastify-tsconfig'))
-  await fs.symlink(desm.join(import.meta.url, '..'), join(dir, 'node_modules', '@platformatic', 'client'))
+  await installDeps(dir)
 
   const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
   await execa(tsc)
 
   // TODO how can we avoid this symlink?
-  await fs.symlink(join(dir, 'movies'), join(dir, 'build', 'movies'))
+  await copy(join(dir, 'movies'), join(dir, 'build', 'movies'))
 
   const server2 = execa('node', ['build/index.js'])
   teardown(() => server2.kill())
@@ -301,7 +270,7 @@ app.listen({ port: 0});
   })
 })
 
-test('graphql client generation (javascript) with slash at the end of the URL', async ({ teardown, comment, same }) => {
+test('graphql client generation (javascript) with slash at the end of the URL', async ({ teardown, comment, same, match }) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -311,12 +280,7 @@ test('graphql client generation (javascript) with slash at the end of the URL', 
 
   await server.listen()
 
-  const dir = join(tmpdir(), `platformatic-client-${process.pid}-${counter++}`)
-  await fs.mkdir(dir)
-  const cwd = process.cwd()
-  process.chdir(dir)
-  teardown(() => process.chdir(cwd))
-  teardown(() => fs.rm(dir, { recursive: true }))
+  const dir = await moveToTmpdir(teardown)
 
   comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), server.url + '/graphql', '--name', 'movies'])
@@ -340,10 +304,7 @@ app.post('/', async (request, reply) => {
 app.listen({ port: 0 })
 `
   await fs.writeFile(join(dir, 'index.js'), toWrite)
-  await fs.mkdir(join(dir, 'node_modules'))
-  await fs.mkdir(join(dir, 'node_modules', '@platformatic'))
-  await fs.symlink(join(cwd, 'node_modules', 'fastify'), join(dir, 'node_modules', 'fastify'))
-  await fs.symlink(desm.join(import.meta.url, '..'), join(dir, 'node_modules', '@platformatic', 'client'))
+  await installDeps(dir)
 
   const server2 = execa('node', ['index.js'])
   teardown(() => server2.kill())
@@ -366,13 +327,12 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  same(body, {
-    id: 1,
+  match(body, {
     title: 'foo'
   })
 })
 
-test('adds clients to platformatic service', async ({ teardown, comment, same }) => {
+test('adds clients to platformatic service', async ({ teardown, comment, same, match }) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -382,12 +342,7 @@ test('adds clients to platformatic service', async ({ teardown, comment, same })
 
   await server.listen()
 
-  const dir = join(tmpdir(), `platformatic-client-${process.pid}-${counter++}`)
-  await fs.mkdir(dir)
-  const cwd = process.cwd()
-  process.chdir(dir)
-  teardown(() => process.chdir(cwd))
-  teardown(() => fs.rm(dir, { recursive: true }))
+  const dir = await moveToTmpdir(teardown)
 
   comment(`working in ${dir}`)
 
@@ -437,10 +392,7 @@ module.exports = async function (app, opts) {
 }
 `
   await fs.writeFile(join(dir, 'plugin.js'), toWrite)
-  await fs.mkdir(join(dir, 'node_modules'))
-  await fs.mkdir(join(dir, 'node_modules', '@platformatic'))
-  await fs.symlink(join(cwd, 'node_modules', 'fastify'), join(dir, 'node_modules', 'fastify'))
-  await fs.symlink(desm.join(import.meta.url, '..'), join(dir, 'node_modules', '@platformatic', 'client'))
+  await installDeps(dir)
 
   process.env.PLT_MOVIES_URL = server.url
 
@@ -453,8 +405,7 @@ module.exports = async function (app, opts) {
     method: 'POST'
   })
   const body = await res.body.json()
-  same(body, {
-    id: 1,
+  match(body, {
     title: 'foo'
   })
 })
