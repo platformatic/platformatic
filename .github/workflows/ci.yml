@@ -369,8 +369,12 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
-    - name: pnpm install
-      run: pnpm install --frozen-lockfile
+    - uses: "nick-fields/retry@v2.8.3"
+      with:
+        max_attempts: 10
+        timeout_minutes: 15
+        retry_on: error
+        command: pnpm install --frozen-lockfile
     - name: Run test suite with code coverage
       if: matrix.os != 'windows-latest'
       run: cd packages/client && pnpm test
