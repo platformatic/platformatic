@@ -199,7 +199,6 @@ function writeObjectProperties (writer, schema, spec, addedProps) {
         continue
       }
       const required = schema.required && schema.required.includes(key)
-      console.log(key, value, required)
       writeProperty(writer, key, value, addedProps, required)
     }
     // This is unlikely to happen with well-formed OpenAPI.

@@ -133,7 +133,6 @@ function generateImplementationFromGraqhQL ({ name, url }) {
 }
 
 function GraphQLScalarToTsType (type) {
-  console.log(type)
   switch (type) {
     case 'String':
       return 'string'
