@@ -36,6 +36,7 @@ async function installDeps (dir) {
     await fs.symlink(join(__dirname, '..', '..', 'client'), join(dir, 'node_modules', '@platformatic', 'client'))
   } catch (err) {
     if (err.code === 'EPERM') {
+      console.error('EPERM, trying with pnpm')
       const { execa } = await import('execa')
       await fs.writeFile(join(dir, 'package.json'), JSON.stringify({}, null, 2))
       await execa('pnpm', ['add', `fastify@${fastify().version}`, 'fastify-tsconfig'])
