@@ -30,7 +30,7 @@ module.exports.moveToTmpdir = moveToTmpdir
 async function installDeps (dir) {
   const { execa } = await import('execa')
   await fs.writeFile(join(dir, 'package.json'), JSON.stringify({}, null, 2))
-  await execa('pnpm', ['add', `fastify@${fastify().version}`, 'fastify-tsconfig'])
+  await execa('pnpm', ['add', `fastify@${fastify().version}`, 'fastify-tsconfig', '--offline'])
   await execa('pnpm', ['link', join(__dirname, '..', '..', 'client')])
 }
 
