@@ -28,10 +28,21 @@ async function moveToTmpdir (teardown) {
 module.exports.moveToTmpdir = moveToTmpdir
 
 async function installDeps (dir) {
-  const { execa } = await import('execa')
-  await fs.writeFile(join(dir, 'package.json'), JSON.stringify({}, null, 2))
-  await execa('pnpm', ['add', `fastify@${fastify().version}`, 'fastify-tsconfig', '--offline'])
-  await execa('pnpm', ['link', join(__dirname, '..', '..', 'client')])
+  try {
+    await fs.mkdir(join(dir, 'node_modules'))
+    await fs.mkdir(join(dir, 'node_modules', '@platformatic'))
+    await fs.symlink(join(__dirname, '..', 'node_modules', 'fastify'), join(dir, 'node_modules', 'fastify'))
+    await fs.symlink(join(__dirname, '..', 'node_modules', 'fastify-tsconfig'), join(dir, 'node_modules', 'fastify-tsconfig'))
+    await fs.symlink(join(__dirname, '..', '..', 'client'), join(dir, 'node_modules', '@platformatic', 'client'))
+  } catch (err) {
+    if (err.code === 'EPERM') {
+      const { execa } = await import('execa')
+      await fs.writeFile(join(dir, 'package.json'), JSON.stringify({}, null, 2))
+      await execa('pnpm', ['add', `fastify@${fastify().version}`, 'fastify-tsconfig'])
+      await execa('pnpm', ['link', join(__dirname, '..', '..', 'client')])
+    }
+    throw err
+  }
 }
 
 module.exports.installDeps = installDeps

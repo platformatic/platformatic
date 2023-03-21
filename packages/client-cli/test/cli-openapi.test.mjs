@@ -108,14 +108,13 @@ app.listen({ port: 0 });
     compilerOptions: {
       outDir: 'build',
       target: 'es2018',
+      moduleResolution: "node",
       lib: ['es2018']
     }
   }, null, 2)
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
-  await fs.mkdir(join(dir, 'node_modules'))
-  await fs.mkdir(join(dir, 'node_modules', '@platformatic'))
   await installDeps(dir)
 
   const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
