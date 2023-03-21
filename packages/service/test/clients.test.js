@@ -6,6 +6,8 @@ const { buildServer } = require('..')
 const { join } = require('path')
 const { request } = require('undici')
 const ConfigManager = require('../lib/config')
+const { compile } = require('../lib/compile')
+const { rmdir } = require('fs/promises')
 
 class NoLogConfigManager extends ConfigManager {
   _transformConfig () {
@@ -38,7 +40,15 @@ test('client is loaded (ts)', async ({ teardown, equal, pass, same }) => {
 
   process.env.PLT_CLIENT_URL = server1.url
 
-  const server2 = await buildServer(join(__dirname, '..', 'fixtures', 'hello-client-ts', 'platformatic.service.json'), undefined, NoLogConfigManager)
+  const targetDir = join(__dirname, '..', 'fixtures', 'hello-client-ts')
+
+  try {
+    await rmdir(join(targetDir, 'dist'))
+  } catch {}
+
+  await compile(targetDir)
+
+  const server2 = await buildServer(join(targetDir, 'platformatic.service.json'), undefined, NoLogConfigManager)
   teardown(server2.stop)
   await server2.listen()
 
