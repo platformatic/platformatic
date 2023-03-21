@@ -1,4 +1,4 @@
-import { request, moveToTmpdir, installDeps } from './helper.js'
+import { request, moveToTmpdir } from './helper.js'
 import { test } from 'tap'
 import { buildServer } from '@platformatic/db'
 import service from '@platformatic/service'
@@ -51,7 +51,6 @@ app.post('/', async (request, reply) => {
 app.listen({ port: 0 })
 `
   await fs.writeFile(join(dir, 'index.js'), toWrite)
-  await installDeps(dir)
 
   const server2 = execa('node', ['index.js'])
   teardown(() => server2.kill())
@@ -133,8 +132,6 @@ app.listen({ port: 0 });
   }, null, 2)
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
-
-  await installDeps(dir)
 
   const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
   await execa(tsc)
@@ -237,7 +234,6 @@ app.listen({ port: 0});
   }, null, 2)
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
-  await installDeps(dir)
 
   const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
   await execa(tsc)
@@ -308,7 +304,6 @@ app.post('/', async (request, reply) => {
 app.listen({ port: 0 })
 `
   await fs.writeFile(join(dir, 'index.js'), toWrite)
-  await installDeps(dir)
 
   const server2 = execa('node', ['index.js'])
   teardown(() => server2.kill())
@@ -396,7 +391,6 @@ module.exports = async function (app, opts) {
 }
 `
   await fs.writeFile(join(dir, 'plugin.js'), toWrite)
-  await installDeps(dir)
 
   process.env.PLT_MOVIES_URL = server.url
 

@@ -2,7 +2,6 @@
 
 const { setGlobalDispatcher, Agent, request } = require('undici')
 const fs = require('fs/promises')
-const { tmpdir } = require('os')
 const fastify = require('fastify')
 const { join } = require('path')
 
@@ -17,33 +16,16 @@ let counter = 0
 
 async function moveToTmpdir (teardown) {
   const cwd = process.cwd()
-  const dir = join(tmpdir(), `platformatic-client-${process.pid}-${Date.now()}-${counter++}`)
+  const tmp = join(__dirname, 'tmp')
+  try {
+    await fs.mkdir(tmp)
+  } catch {}
+  const dir = join(tmp, `platformatic-client-${process.pid}-${Date.now()}-${counter++}`)
   await fs.mkdir(dir)
   process.chdir(dir)
   teardown(() => process.chdir(cwd))
-  teardown(() => fs.rm(dir, { recursive: true }).catch(() => {}))
+  teardown(() => fs.rm(tmp, { recursive: true }).catch(() => {}))
   return dir
 }
 
 module.exports.moveToTmpdir = moveToTmpdir
-
-async function installDeps (dir) {
-  try {
-    await fs.mkdir(join(dir, 'node_modules'))
-    await fs.mkdir(join(dir, 'node_modules', '@platformatic'))
-    await fs.symlink(join(__dirname, '..', 'node_modules', 'fastify'), join(dir, 'node_modules', 'fastify'))
-    await fs.symlink(join(__dirname, '..', 'node_modules', 'fastify-tsconfig'), join(dir, 'node_modules', 'fastify-tsconfig'))
-    await fs.symlink(join(__dirname, '..', '..', 'client'), join(dir, 'node_modules', '@platformatic', 'client'))
-  } catch (err) {
-    if (err.code === 'EPERM') {
-      console.error('EPERM, trying with pnpm')
-      const { execa } = await import('execa')
-      await fs.writeFile(join(dir, 'package.json'), JSON.stringify({}, null, 2))
-      await execa('pnpm', ['add', `fastify@${fastify().version}`, 'fastify-tsconfig'])
-      await execa('pnpm', ['link', join(__dirname, '..', '..', 'client')])
-    }
-    throw err
-  }
-}
-
-module.exports.installDeps = installDeps

@@ -118,10 +118,13 @@ playwright-report
 # IDE folders
 .vscode
 
-packages/service/test/tmp 
-packages/cli/fixtures/sqlite/db
-
 *.sqlite
 
 # CTAGS
 tags
+
+# tmp filees for packages
+
+packages/service/test/tmp 
+packages/cli/fixtures/sqlite/db
+packages/client-cli/test/tmp 
