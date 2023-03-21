@@ -24,6 +24,7 @@ async function buildServer (_args, onServer) {
 
     const serverConfig = createServerConfig(config)
     serverConfig.originalConfig = config
+    serverConfig.configManager = configManager
 
     const app = Fastify(serverConfig)
     app.register(platformaticDB, serverConfig)
