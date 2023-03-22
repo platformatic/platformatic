@@ -5,7 +5,7 @@
   "main": "index.js",
   "bin": { "plt-service": "./service.mjs" },
   "scripts": {
-    "test": "standard | snazzy && c8 --100 tap test/*test.js test/*/*.test.mjs",
+    "test": "standard | snazzy && c8 --100 tap test/*test.js test/*/*.test.mjs && ./node_modules/.bin/tsd",
     "lint": "standard | snazzy"
   },
   "author": "Matteo Collina <hello@matteocollina.com>",
@@ -29,6 +29,7 @@
     "strip-ansi": "^7.0.1",
     "tap": "^16.3.4",
     "typescript": "^5.0.0",
+    "tsd": "^0.28.0",
     "undici": "^5.20.0",
     "vscode-json-languageservice": "^5.3.0",
     "why-is-node-running": "^2.2.2",
