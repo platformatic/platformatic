@@ -5,7 +5,7 @@
   "main": "index.js",
   "bin": { "plt-service": "./service.mjs" },
   "scripts": {
-    "test": "standard | snazzy && c8 --100 tap test/*test.js test/*/*.test.mjs && ./node_modules/.bin/tsd",
+    "test": "standard | snazzy && c8 --100 tap test/*test.js test/*/*.test.mjs && tsd",
     "lint": "standard | snazzy"
   },
   "author": "Matteo Collina <hello@matteocollina.com>",
