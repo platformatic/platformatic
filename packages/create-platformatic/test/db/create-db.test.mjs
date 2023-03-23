@@ -54,15 +54,15 @@ test('creates project with no typescript', async ({ equal }) => {
 
   const dbConfigFile = readFileSync(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
-  const { server, core, migrations } = dbConfig
-  const ajv = new Ajv()
+  const { server, db, migrations } = dbConfig
+  const ajv = new Ajv({ strict: false })
   ajv.addKeyword('relativePath')
   const validate = ajv.compile(schema)
   equal(validate(dbConfig), true)
 
   equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   equal(server.port, '{PORT}')
-  equal(core.connectionString, '{DATABASE_URL}')
+  equal(db.connectionString, '{DATABASE_URL}')
 
   const pathToDbEnvFile = join(tmpDir, '.env')
   dotenv.config({ path: pathToDbEnvFile })
@@ -77,8 +77,8 @@ test('creates project with no typescript', async ({ equal }) => {
   equal(process.env.PORT, '6666')
   equal(process.env.DATABASE_URL, 'sqlite://./db.sqlite')
 
-  equal(core.graphql, true)
-  equal(core.openapi, true)
+  equal(db.graphql, true)
+  equal(db.openapi, true)
   equal(migrations.dir, 'migrations')
 
   const migrationFileDo = readFileSync(pathToMigrationFileDo, 'utf8')
@@ -105,11 +105,11 @@ test('creates project with no typescript and no plugin', async ({ equal }) => {
 
   const dbConfigFile = readFileSync(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
-  const { server, core, migrations } = dbConfig
+  const { server, db, migrations } = dbConfig
 
   equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   equal(server.port, '{PORT}')
-  equal(core.connectionString, '{DATABASE_URL}')
+  equal(db.connectionString, '{DATABASE_URL}')
 
   const pathToDbEnvFile = join(tmpDir, '.env')
   dotenv.config({ path: pathToDbEnvFile })
@@ -124,8 +124,8 @@ test('creates project with no typescript and no plugin', async ({ equal }) => {
   equal(process.env.PORT, '6666')
   equal(process.env.DATABASE_URL, 'sqlite://./db.sqlite')
 
-  equal(core.graphql, true)
-  equal(core.openapi, true)
+  equal(db.graphql, true)
+  equal(db.openapi, true)
   equal(migrations.dir, 'migrations')
 
   const migrationFileDo = readFileSync(pathToMigrationFileDo, 'utf8')
@@ -152,11 +152,11 @@ test('creates project with typescript', async ({ equal, same }) => {
 
   const dbConfigFile = readFileSync(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
-  const { server, core, migrations, plugins } = dbConfig
+  const { server, db, migrations, plugins } = dbConfig
 
   equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   equal(server.port, '{PORT}')
-  equal(core.connectionString, '{DATABASE_URL}')
+  equal(db.connectionString, '{DATABASE_URL}')
 
   const pathToDbEnvFile = join(tmpDir, '.env')
   dotenv.config({ path: pathToDbEnvFile })
@@ -171,8 +171,8 @@ test('creates project with typescript', async ({ equal, same }) => {
   equal(process.env.PORT, '6666')
   equal(process.env.DATABASE_URL, 'sqlite://./db.sqlite')
 
-  equal(core.graphql, true)
-  equal(core.openapi, true)
+  equal(db.graphql, true)
+  equal(db.openapi, true)
   equal(migrations.dir, 'migrations')
 
   const migrationFileDo = readFileSync(pathToMigrationFileDo, 'utf8')
