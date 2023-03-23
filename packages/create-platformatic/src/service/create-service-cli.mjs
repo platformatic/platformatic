@@ -13,7 +13,7 @@ import { execa } from 'execa'
 import ora from 'ora'
 import createService from './create-service.mjs'
 import askProjectDir from '../ask-project-dir.mjs'
-import { askCreateGHAction } from '../ghaction.mjs'
+import { askDynamicWorkspaceCreateGHAction, askStaticWorkspaceGHAction } from '../ghaction.mjs'
 import { getRunPackageManagerInstall, getUseTypescript } from '../cli-options.mjs'
 import mkdirp from 'mkdirp'
 
@@ -95,7 +95,8 @@ const createPlatformaticService = async (_args) => {
     spinner.succeed('...done!')
   }
 
-  await askCreateGHAction(logger, env, 'service', useTypescript, projectDir)
+  await askDynamicWorkspaceCreateGHAction(logger, env, 'service', useTypescript, projectDir)
+  await askStaticWorkspaceGHAction(logger, env, 'service', useTypescript, projectDir)
 }
 
 export default createPlatformaticService
