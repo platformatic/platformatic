@@ -8,8 +8,11 @@ It is possible to use the Platformatic client without the generator.
 import { buildOpenAPIClient } from '@platformatic/client'
 
 const client = await buildOpenAPIClient({
-  url: `https://yourapi.com/documentation/json`
-  // path: 'path/to/openapi.json'
+  url: `https://yourapi.com/documentation/json`, 
+  // path: 'path/to/openapi.json',
+  headers: {
+    'foo': 'bar'
+  }
 })
 
 const res = await client.yourOperationName({ foo: 'bar' })
@@ -23,7 +26,10 @@ console.log(res)
 import { buildGraphQLClient } from '@platformatic/client'
 
 const client = await buildGraphQLClient({
-  url: `https://yourapi.com/graphql`
+  url: `https://yourapi.com/graphql`,
+  headers: {
+    'foo': 'bar'
+  }
 })
 
 const res = await client.graphql({

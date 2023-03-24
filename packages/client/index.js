@@ -191,6 +191,10 @@ async function plugin (app, opts) {
   app.decorate(name, client)
   app.decorateRequest(name, null)
 
+  app.decorate('configure' + capitalize(name), function (opts) {
+    getHeaders = opts.getHeaders
+  })
+
   app.addHook('onRequest', async (req, reply) => {
     const newClient = Object.create(client)
     if (getHeaders) {
