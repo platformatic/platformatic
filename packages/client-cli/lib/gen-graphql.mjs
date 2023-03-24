@@ -116,7 +116,7 @@ function generateImplementationFromGraqhQL ({ name, url }) {
     writer.write('app.register(pltClient, ').inlineBlock(() => {
       writer.writeLine('type: \'graphql\',')
       writer.writeLine(`name: '${name}',`)
-      writer.writeLine(`file: join(__dirname, '${name}.schema.graphql'),`)
+      writer.writeLine(`path: join(__dirname, '${name}.schema.graphql'),`)
       writer.writeLine('url: url.toString()')
     })
     writer.write(')')

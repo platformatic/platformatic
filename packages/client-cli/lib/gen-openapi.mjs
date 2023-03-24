@@ -32,7 +32,7 @@ function generateImplementationFromOpenAPI ({ schema, name }) {
     writer.write('app.register(pltClient, ').inlineBlock(() => {
       writer.writeLine('type: \'openapi\',')
       writer.writeLine(`name: '${name}',`)
-      writer.writeLine(`file: join(__dirname, '${name}.openapi.json'),`)
+      writer.writeLine(`path: join(__dirname, '${name}.openapi.json'),`)
       writer.writeLine('url: opts.url')
     })
     writer.write(')')

@@ -57,8 +57,6 @@ app.listen({ port: 0 })
   teardown(server.stop)
 
   const stream = server2.stdout.pipe(split(JSON.parse))
-  server2.stderr.pipe(process.stderr)
-  server2.stdout.pipe(process.stdout)
 
   // this is unfortuate :(
   const base = 'Server listening at '
@@ -126,7 +124,7 @@ app.listen({ port: 0 });
     compilerOptions: {
       outDir: 'build',
       target: 'es2018',
-      "moduleResolution": "node",
+      moduleResolution: 'node',
       lib: ['es2018']
     }
   }, null, 2)
@@ -144,7 +142,6 @@ app.listen({ port: 0 });
   teardown(server.stop)
 
   const stream = server2.stdout.pipe(split(JSON.parse))
-  server2.stderr.pipe(process.stderr)
 
   // this is unfortuate :(
   const base = 'Server listening at '
@@ -228,7 +225,7 @@ app.listen({ port: 0});
     compilerOptions: {
       outDir: 'build',
       target: 'es2018',
-      moduleResolution: "node",
+      moduleResolution: 'node',
       lib: ['es2018']
     }
   }, null, 2)

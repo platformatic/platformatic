@@ -93,7 +93,7 @@ test('build basic client from file', async ({ teardown, same, rejects }) => {
 
   const client = await buildOpenAPIClient({
     url: server.url,
-    file: join(__dirname, 'fixtures', 'movies', 'openapi.json')
+    path: join(__dirname, 'fixtures', 'movies', 'openapi.json')
   })
 
   const movie = await client.createMovie({

@@ -2,7 +2,6 @@
 
 const { setGlobalDispatcher, Agent, request } = require('undici')
 const fs = require('fs/promises')
-const fastify = require('fastify')
 const { join } = require('path')
 
 setGlobalDispatcher(new Agent({

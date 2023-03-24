@@ -8,8 +8,6 @@ import { promises as fs } from 'fs'
 import split from 'split2'
 import { copy } from 'fs-extra'
 
-console.log('starting')
-
 test('openapi client generation (javascript)', async ({ teardown, comment, same }) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
@@ -107,7 +105,7 @@ app.listen({ port: 0 });
     compilerOptions: {
       outDir: 'build',
       target: 'es2018',
-      moduleResolution: "node",
+      moduleResolution: 'node',
       lib: ['es2018']
     }
   }, null, 2)

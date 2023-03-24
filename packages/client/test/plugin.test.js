@@ -219,3 +219,57 @@ test('req decorator with OpenAPI', async ({ teardown, same, rejects }) => {
     title: 'The Matrix'
   })
 })
+
+test('req decorator with GraphQL and auth', async ({ teardown, same, rejects }) => {
+  try {
+    await fs.unlink(join(__dirname, 'fixtures', 'auth', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const server = await buildServer(join(__dirname, 'fixtures', 'auth', 'platformatic.db.json'))
+  teardown(server.stop)
+  await server.listen()
+
+  const app = Fastify()
+
+  await app.register(client, {
+    type: 'graphql',
+    url: `${server.url}/graphql`,
+    async getHeaders (req) {
+      return {
+        'x-platformatic-admin-secret': req.headers['x-platformatic-admin-secret']
+      }
+    }
+  })
+
+  app.post('/', async (req) => {
+    const movie = await req.client.graphql({
+      query: `
+        mutation createMovie($title: String!) {
+          saveMovie(input: {title: $title}) {
+            id
+            title
+          }
+        }
+      `,
+      variables: {
+        title: 'The Matrix'
+      }
+    })
+    return movie
+  })
+
+  const res = await app.inject({
+    method: 'POST',
+    url: '/',
+    headers: {
+      'x-platformatic-admin-secret': 'changeme'
+    }
+  })
+
+  same(res.statusCode, 200)
+  same(res.json(), {
+    id: 1,
+    title: 'The Matrix'
+  })
+})

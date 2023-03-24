@@ -7,7 +7,7 @@ async function generateHelloClientPlugin (app, opts) {
   app.register(pltClient, {
     type: 'openapi',
     name: 'hello',
-    file: join(__dirname, 'hello.openapi.json'),
+    path: join(__dirname, 'hello.openapi.json'),
     url: opts.url
   })
 }

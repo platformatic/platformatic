@@ -3,6 +3,7 @@
 const { request } = require('undici')
 const fs = require('fs/promises')
 const kHeaders = Symbol('headers')
+const kGetHeaders = Symbol('getHeaders')
 const abstractLogging = require('abstract-logging')
 
 function generateOperationId (path, method, methodMeta) {
@@ -23,8 +24,8 @@ async function buildOpenAPIClient (options) {
   let spec
 
   // this is tested, not sure why c8 is not picking it up
-  if (options.file) {
-    spec = JSON.parse(await fs.readFile(options.file, 'utf8'))
+  if (options.path) {
+    spec = JSON.parse(await fs.readFile(options.path, 'utf8'))
   } else if (options.url) {
     const res = await request(options.url)
     spec = await res.body.json()
@@ -63,7 +64,10 @@ function buildCallFunction (baseUrl, path, method, methodMeta, operationId) {
   const queryParams = methodMeta.parameters?.filter(p => p.in === 'query') || []
 
   return async function (args) {
-    const headers = this[kHeaders]
+    let headers = this[kHeaders]
+    if (this[kGetHeaders]) {
+      headers = { ...headers, ...(await this[kGetHeaders]()) }
+    }
     const body = { ...args } // shallow copy
     const urlToCall = new URL(url)
     const query = new URLSearchParams()
@@ -138,8 +142,11 @@ async function graphql (url, log, headers, query, variables) {
 }
 
 function wrapGraphQLClient (url, logger) {
-  return function ({ query, variables }) {
-    const headers = this[kHeaders]
+  return async function ({ query, variables }) {
+    let headers = this[kHeaders]
+    if (typeof this[kGetHeaders] === 'function') {
+      headers = { ...headers, ...(await this[kGetHeaders]()) }
+    }
     const log = this.log || logger
 
     return graphql(url, log, headers, query, variables)
@@ -186,7 +193,9 @@ async function plugin (app, opts) {
 
   app.addHook('onRequest', async (req, reply) => {
     const newClient = Object.create(client)
-    newClient[kHeaders] = getHeaders ? await getHeaders(req, reply) : {}
+    if (getHeaders) {
+      newClient[kGetHeaders] = getHeaders.bind(newClient, req, reply)
+    }
     req[name] = newClient
   })
 }
