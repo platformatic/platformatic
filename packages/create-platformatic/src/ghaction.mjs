@@ -107,23 +107,25 @@ export const createDynamicWorkspaceGHAction = async (logger, workspaceId, env, t
   }
 }
 
-/* c8 ignore next 19 */
+/* c8 ignore next 21 */
 export const askDynamicWorkspaceCreateGHAction = async (logger, env, type, buildTS, projectDir = process.cwd()) => {
-  const { githubAction, workspaceId } = await inquirer.prompt([
+  const { githubAction } = await inquirer.prompt([
     {
       type: 'list',
       name: 'githubAction',
       message: 'Do you want to create the github action to deploy this application to Platformatic Cloud dynamic workspace?',
       default: true,
       choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-    },
-    {
-      type: 'input',
-      name: 'workspaceId',
-      message: 'Please enter the workspace ID:'
     }
   ])
   if (githubAction) {
+    const { workspaceId } = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'workspaceId',
+        message: 'Please enter the workspace ID:'
+      }
+    ])
     await createDynamicWorkspaceGHAction(logger, workspaceId, env, type, projectDir, buildTS)
   }
 }
@@ -150,23 +152,25 @@ export const createStaticWorkspaceGHAction = async (logger, workspaceId, env, ty
   }
 }
 
-/* c8 ignore next 19 */
+/* c8 ignore next 21 */
 export const askStaticWorkspaceGHAction = async (logger, env, type, buildTS, projectDir = process.cwd()) => {
-  const { githubAction, workspaceId } = await inquirer.prompt([
+  const { githubAction } = await inquirer.prompt([
     {
       type: 'list',
       name: 'githubAction',
       message: 'Do you want to create the github action to deploy this application to Platformatic Cloud static workspace?',
       default: true,
       choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-    },
-    {
-      type: 'input',
-      name: 'workspaceId',
-      message: 'Please enter the workspace ID:'
     }
   ])
   if (githubAction) {
+    const { workspaceId } = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'workspaceId',
+        message: 'Please enter the workspace ID:'
+      }
+    ])
     await createStaticWorkspaceGHAction(logger, workspaceId, env, type, projectDir, buildTS)
   }
 }
