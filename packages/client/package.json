@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "execa": "^6.1.0",
+    "execa": "^7.0.0",
     "fastify": "^4.10.2",
     "snazzy": "^9.0.0",
     "split2": "^4.1.0",
