@@ -264,6 +264,7 @@ Object {
         },
       },
       "post": Object {
+        "operationId": "createPage",
         "requestBody": Object {
           "content": Object {
             "application/json": Object {
@@ -288,6 +289,7 @@ Object {
         },
       },
       "put": Object {
+        "operationId": "updatePages",
         "parameters": Array [
           Object {
             "in": "query",
@@ -478,6 +480,7 @@ Object {
     },
     "/pages/{id}": Object {
       "delete": Object {
+        "operationId": "deletePages",
         "parameters": Array [
           Object {
             "in": "query",
@@ -558,6 +561,7 @@ Object {
         },
       },
       "post": Object {
+        "operationId": "updatePage",
         "parameters": Array [
           Object {
             "in": "query",
@@ -607,6 +611,7 @@ Object {
         },
       },
       "put": Object {
+        "operationId": "updatePage",
         "parameters": Array [
           Object {
             "in": "query",

@@ -9,5 +9,8 @@
   "plugins": {
     "paths": ["./plugin.js"]
   },
+  "service": {
+    "openapi": true
+  },
   "metrics": false
 }

@@ -146,4 +146,29 @@ ${content}
 `
 }
 
+
+// Command: client
+
+out += `
+### client
+
+\`\`\`bash
+platformatic client <command>
+\`\`\`
+
+`
+
+const clientHelpsDir = join(import.meta.url, '../packages/client/help')
+const clientHelps = await readdir(clientHelpsDir)
+
+for (const clientHelp of clientHelps) {
+  const clientHelpPath = path.join(clientHelpsDir, clientHelp)
+  const content = await readFile(clientHelpPath)
+  out += `
+#### ${clientHelp.replace('.txt', '')}
+
+${content}
+`
+}
+
 await writeFile(join(import.meta.url, '..', 'docs', 'reference', 'cli.md'), out)

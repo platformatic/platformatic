@@ -291,6 +291,7 @@ Object {
         },
       },
       "post": Object {
+        "operationId": "createOwner",
         "requestBody": Object {
           "content": Object {
             "application/json": Object {
@@ -322,6 +323,7 @@ Object {
         },
       },
       "put": Object {
+        "operationId": "updateOwners",
         "parameters": Array [
           Object {
             "in": "query",
@@ -519,6 +521,7 @@ Object {
     },
     "/owners/{id}": Object {
       "delete": Object {
+        "operationId": "deleteOwners",
         "parameters": Array [
           Object {
             "in": "query",
@@ -606,6 +609,7 @@ Object {
         },
       },
       "post": Object {
+        "operationId": "updateOwner",
         "parameters": Array [
           Object {
             "in": "query",
@@ -662,6 +666,7 @@ Object {
         },
       },
       "put": Object {
+        "operationId": "updateOwner",
         "parameters": Array [
           Object {
             "in": "query",
@@ -1260,6 +1265,7 @@ Object {
         },
       },
       "post": Object {
+        "operationId": "createPost",
         "requestBody": Object {
           "content": Object {
             "application/json": Object {
@@ -1291,6 +1297,7 @@ Object {
         },
       },
       "put": Object {
+        "operationId": "updatePosts",
         "parameters": Array [
           Object {
             "in": "query",
@@ -1707,6 +1714,7 @@ Object {
     },
     "/posts/{id}": Object {
       "delete": Object {
+        "operationId": "deletePosts",
         "parameters": Array [
           Object {
             "in": "query",
@@ -1800,6 +1808,7 @@ Object {
         },
       },
       "post": Object {
+        "operationId": "updatePost",
         "parameters": Array [
           Object {
             "in": "query",
@@ -1859,6 +1868,7 @@ Object {
         },
       },
       "put": Object {
+        "operationId": "updatePost",
         "parameters": Array [
           Object {
             "in": "query",

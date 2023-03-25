@@ -425,3 +425,65 @@ save the following as `platformatic.service.json`:
 }
 ```
 
+
+### client
+
+```bash
+platformatic client <command>
+```
+
+
+#### help
+
+Create a Fastify plugin that exposes a client for a remote OpenAPI or GraphQL API.
+
+To create a client for a remote OpenAPI API, you can use the following command:
+
+```bash
+$ platformatic client http://exmaple.com/to/schema/file -n myclient
+```
+
+To create a client for a remote Graphql API, you can use the following command:
+
+```bash
+$ platformatic client http://exmaple.com/grapqhl -n myclient
+```
+
+This will create a Fastify plugin that exposes a client for the remote API in a folder `myclient`
+and a file named myclient.js inside it. 
+
+If platformatic config file is specified, it will be edited and a `clients` section will be added.
+Then, in any part of your Platformatic application you can use the client.
+
+You can use the client in your application in Javascript, calling a GraphQL endpoint:
+
+```js
+module.exports = async function (app, opts) {
+  app.post('/', async (request, reply) => {
+    const res = await app.myclient.graphql({
+      query: 'query { hello }'
+    })
+    return res 
+  })
+}
+```
+
+or in Typescript, calling an OpenAPI endpoint:
+
+
+```ts
+import { FastifyInstance } from 'fastify'
+/// <reference path="./myclient" />
+
+export default async function (app: FastifyInstance) {
+  app.get('/', async () => {
+    return app.myclient.get({})
+  })
+}
+```
+
+Options:
+
+  * `-c, --config <path>`: Path to the configuration file.
+  * `-n, --name <name>`: Name of the client.
+

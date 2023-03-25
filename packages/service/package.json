@@ -49,6 +49,7 @@
     "@mercuriusjs/federation": "^1.0.1",
     "@platformatic/config": "workspace:*",
     "@platformatic/utils": "workspace:*",
+    "@platformatic/client": "workspace:*",
     "close-with-grace": "^1.1.0",
     "commist": "^3.2.0",
     "desm": "^1.3.0",

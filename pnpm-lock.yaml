@@ -42,6 +42,7 @@ importers:
   packages/cli:
     specifiers:
       '@platformatic/authenticate': workspace:*
+      '@platformatic/client-cli': workspace:*
       '@platformatic/db': workspace:*
       '@platformatic/metaconfig': workspace:*
       '@platformatic/service': workspace:*
@@ -64,6 +65,7 @@ importers:
       undici: ^5.20.0
     dependencies:
       '@platformatic/authenticate': link:../authenticate
+      '@platformatic/client-cli': link:../client-cli
       '@platformatic/db': link:../db
       '@platformatic/metaconfig': link:../metaconfig
       '@platformatic/service': link:../service
@@ -85,6 +87,82 @@ importers:
       standard: 17.0.0
       tap: 16.3.4
       undici: 5.21.0
+
+  packages/client:
+    specifiers:
+      abstract-logging: ^2.0.1
+      desm: ^1.3.0
+      execa: ^6.1.0
+      fastify: ^4.10.2
+      snazzy: ^9.0.0
+      split2: ^4.1.0
+      standard: ^17.0.0
+      tap: ^16.3.2
+      typescript: ^4.9.4
+      undici: ^5.14.0
+    dependencies:
+      abstract-logging: 2.0.1
+      undici: 5.21.0
+    devDependencies:
+      desm: 1.3.0
+      execa: 6.1.0
+      fastify: 4.15.0
+      snazzy: 9.0.0
+      split2: 4.1.0
+      standard: 17.0.0
+      tap: 16.3.4_typescript@4.9.5
+      typescript: 4.9.5
+
+  packages/client-cli:
+    specifiers:
+      '@platformatic/client': workspace:*
+      '@platformatic/db': workspace:*
+      '@platformatic/metaconfig': workspace:*
+      '@platformatic/service': workspace:*
+      abstract-logging: ^2.0.1
+      c8: ^7.12.0
+      code-block-writer: ^11.0.3
+      desm: ^1.3.0
+      es-main: ^1.2.0
+      execa: ^6.1.0
+      fastify: ^4.10.2
+      fastify-tsconfig: ^1.0.1
+      fs-extra: ^11.1.0
+      graphql: ^16.6.0
+      help-me: ^4.2.0
+      jsonpointer: ^5.0.1
+      minimist: ^1.2.7
+      snazzy: ^9.0.0
+      split2: ^4.1.0
+      standard: ^17.0.0
+      tap: ^16.3.2
+      typescript: ^4.9.4
+      undici: ^5.14.0
+    dependencies:
+      '@platformatic/client': link:../client
+      '@platformatic/metaconfig': link:../metaconfig
+      abstract-logging: 2.0.1
+      code-block-writer: 11.0.3
+      desm: 1.3.0
+      es-main: 1.2.0
+      graphql: 16.6.0
+      help-me: 4.2.0
+      jsonpointer: 5.0.1
+      minimist: 1.2.8
+      undici: 5.21.0
+    devDependencies:
+      '@platformatic/db': link:../db
+      '@platformatic/service': link:../service
+      c8: 7.13.0
+      execa: 6.1.0
+      fastify: 4.15.0
+      fastify-tsconfig: 1.0.1
+      fs-extra: 11.1.1
+      snazzy: 9.0.0
+      split2: 4.1.0
+      standard: 17.0.0
+      tap: 16.3.4_typescript@4.9.5
+      typescript: 4.9.5
 
   packages/config:
     specifiers:
@@ -474,6 +552,7 @@ importers:
       '@fastify/under-pressure': ^8.2.0
       '@matteo.collina/worker': ^3.0.0
       '@mercuriusjs/federation': ^1.0.1
+      '@platformatic/client': workspace:*
       '@platformatic/config': workspace:*
       '@platformatic/utils': workspace:*
       bindings: ^1.5.0
@@ -520,6 +599,7 @@ importers:
       '@fastify/swagger-ui': 1.5.0
       '@fastify/under-pressure': 8.2.0
       '@mercuriusjs/federation': 1.0.1
+      '@platformatic/client': link:../client
       '@platformatic/config': link:../config
       '@platformatic/utils': link:../utils
       close-with-grace: 1.1.0
@@ -6032,6 +6112,10 @@ packages:
     resolution: {integrity: sha512-RMr0FhtfXemyinomL4hrWcYJxmX6deFdCxpJzhDttxgO1+bcCnkk+9drydLVDmAMG7NE6aN/fl4F7ucU/90gAA==}
     engines: {node: '>=0.10.0'}
 
+  /code-block-writer/11.0.3:
+    resolution: {integrity: sha512-NiujjUFB4SwScJq2bwbYUtXbZhBSlY6vYzm++3Q6oC+U+injTqfPYFK8wS9COOmb2lueqp0ZRB4nK1VYeHgNyw==}
+    dev: false
+
   /code-point-at/1.1.0:
     resolution: {integrity: sha512-RpAVKQA5T63xEj6/giIbUEtZwJ4UFIc3ZtvEkiaUERylqe8xb5IvqcgOurZLahv93CLKfxcw5YI+DZcUBRyLXA==}
     engines: {node: '>=0.10.0'}
@@ -7424,6 +7508,21 @@ packages:
       safe-buffer: 5.2.1
     dev: true
 
+  /execa/6.1.0:
+    resolution: {integrity: sha512-QVWlX2e50heYJcCPG0iWtf8r0xjEYfz/OYLGDYH+IyjWezzPNxz63qNFOu0l4YftGWuizFVZHHs8PrLU5p2IDA==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+    dependencies:
+      cross-spawn: 7.0.3
+      get-stream: 6.0.1
+      human-signals: 3.0.1
+      is-stream: 3.0.0
+      merge-stream: 2.0.0
+      npm-run-path: 5.1.0
+      onetime: 6.0.0
+      signal-exit: 3.0.7
+      strip-final-newline: 3.0.0
+    dev: true
+
   /execa/7.1.1:
     resolution: {integrity: sha512-wH0eMf/UXckdUYnO21+HDztteVv05rq2GXksxT4fCGeHkBhw1DROXh40wcjMcRqDOWE7iPJ4n3M7e2+YFP+76Q==}
     engines: {node: ^14.18.0 || ^16.14.0 || >=18.0.0}
@@ -7654,6 +7753,11 @@ packages:
     optionalDependencies:
       '@matteo.collina/worker': 3.0.0
     dev: false
+
+  /fastify-tsconfig/1.0.1:
+    resolution: {integrity: sha512-BXkTG3JYcjJb3xX5R5FcE9ciscV/h7YtmnkiSaNAONd1g6ooMSN/4GWfhA8hnS6SRZFYBBxsn8719Mj9lbCOtA==}
+    engines: {node: '>=10.4.0'}
+    dev: true
 
   /fastify-user/0.1.1:
     resolution: {integrity: sha512-c3W+erPFMdTBD58Bf7rpp5dEMjw9FW/z2mD3pZ/uRoTJ5JsOPVIBb1wW6MvNAyXQpPJE1z78+YVmU8/qmqpzWg==}
@@ -7997,6 +8101,15 @@ packages:
   /fs-extra/10.1.0:
     resolution: {integrity: sha512-oRXApq54ETRj4eMiFzGnHWGy+zo5raudjuxN0b8H7s/RU2oW0Wvsx9O0ACRN/kRq9E8Vu/ReskGB5o3ji+FzHQ==}
     engines: {node: '>=12'}
+    dependencies:
+      graceful-fs: 4.2.11
+      jsonfile: 6.1.0
+      universalify: 2.0.0
+    dev: true
+
+  /fs-extra/11.1.1:
+    resolution: {integrity: sha512-MGIE4HOvQCeUCzmlHs0vXpih4ysz4wg9qiSAu6cd42lVwPbTM1TjV7RusoyQqMmk/95gdQZX72u+YW+c3eEpFQ==}
+    engines: {node: '>=14.14'}
     dependencies:
       graceful-fs: 4.2.11
       jsonfile: 6.1.0
@@ -8719,6 +8832,11 @@ packages:
       debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
+
+  /human-signals/3.0.1:
+    resolution: {integrity: sha512-rQLskxnM/5OCldHo+wNXbpVgDn5A17CUoKX+7Sokwaknlq7CdSnphy0W39GU8dw59XiCXmFXDg4fRuckQRKewQ==}
+    engines: {node: '>=12.20.0'}
+    dev: true
 
   /human-signals/4.3.1:
     resolution: {integrity: sha512-nZXjEF2nbo7lIw3mgYjItAfgQXog3OjJogSbKa2CQIIvSGWcKgeJnQlNXip6NglNzYH45nSRiEVimMvYL8DDqQ==}
@@ -9518,6 +9636,11 @@ packages:
     optionalDependencies:
       graceful-fs: 4.2.11
     dev: true
+
+  /jsonpointer/5.0.1:
+    resolution: {integrity: sha512-p/nXbhSEcu3pZRdkW1OfJhpsVtW1gd4Wa1fnQc9YLiTfAjn0312eMKimbdIQzuZl9aa9xUGaRlP9T/CJE/ditQ==}
+    engines: {node: '>=0.10.0'}
+    dev: false
 
   /jsonrepair/3.0.2:
     resolution: {integrity: sha512-jf3eC13iGklfXqpER/OV6q24rMhXwNAoMg+zPZgPVHxGLoDaNaKk+9TdsRtGQSIAsbC1xafiIAKSwThhtHCpcw==}
@@ -13838,6 +13961,57 @@ packages:
       - '@isaacs/import-jsx'
       - react
 
+  /tap/16.3.4_typescript@4.9.5:
+    resolution: {integrity: sha512-SAexdt2ZF4XBgye6TPucFI2y7VE0qeFXlXucJIV1XDPCs+iJodk0MYacr1zR6Ycltzz7PYg8zrblDXKbAZM2LQ==}
+    engines: {node: '>=12'}
+    hasBin: true
+    peerDependencies:
+      coveralls: ^3.1.1
+      flow-remove-types: '>=2.112.0'
+      ts-node: '>=8.5.2'
+      typescript: '>=3.7.2'
+    peerDependenciesMeta:
+      coveralls:
+        optional: true
+      flow-remove-types:
+        optional: true
+      ts-node:
+        optional: true
+      typescript:
+        optional: true
+    dependencies:
+      chokidar: 3.5.3
+      findit: 2.0.0
+      foreground-child: 2.0.0
+      fs-exists-cached: 1.0.0
+      glob: 7.2.3
+      isexe: 2.0.0
+      istanbul-lib-processinfo: 2.0.3
+      jackspeak: 1.4.2
+      libtap: 1.4.0
+      minipass: 3.3.6
+      mkdirp: 1.0.4
+      nyc: 15.1.0
+      opener: 1.5.2
+      rimraf: 3.0.2
+      signal-exit: 3.0.7
+      source-map-support: 0.5.21
+      tap-mocha-reporter: 5.0.3
+      tap-parser: 11.0.2
+      tap-yaml: 1.0.2
+      tcompare: 5.0.7
+      typescript: 4.9.5
+      which: 2.0.2
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+    bundledDependencies:
+      - ink
+      - treport
+      - '@types/react'
+      - '@isaacs/import-jsx'
+      - react
+
   /tap/16.3.4_typescript@5.0.2:
     resolution: {integrity: sha512-SAexdt2ZF4XBgye6TPucFI2y7VE0qeFXlXucJIV1XDPCs+iJodk0MYacr1zR6Ycltzz7PYg8zrblDXKbAZM2LQ==}
     engines: {node: '>=12'}
@@ -14304,7 +14478,6 @@ packages:
     resolution: {integrity: sha512-1FXk9E2Hm+QzZQ7z+McJiHL4NW1F2EzMu9Nq9i3zAaGqibafqYwCVU6WyWAuyQRRzOlxou8xZSyXLEN8oKj24g==}
     engines: {node: '>=4.2.0'}
     hasBin: true
-    dev: false
 
   /typescript/5.0.2:
     resolution: {integrity: sha512-wVORMBGO/FAs/++blGNeAVdbNKtIh1rbBL2EyQ1+J9lClJ93KiiKe8PmFIVdXhHcyv44SL9oglmfeSsndo0jRw==}

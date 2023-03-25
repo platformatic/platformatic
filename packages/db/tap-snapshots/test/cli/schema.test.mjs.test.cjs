@@ -350,6 +350,7 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
         }
       },
       "post": {
+        "operationId": "createGraph",
         "requestBody": {
           "content": {
             "application/json": {
@@ -374,6 +375,7 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
         }
       },
       "put": {
+        "operationId": "updateGraphs",
         "requestBody": {
           "content": {
             "application/json": {
@@ -605,6 +607,7 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
         }
       },
       "post": {
+        "operationId": "updateGraph",
         "requestBody": {
           "content": {
             "application/json": {
@@ -654,6 +657,7 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
         }
       },
       "put": {
+        "operationId": "updateGraph",
         "requestBody": {
           "content": {
             "application/json": {
@@ -703,6 +707,7 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
         }
       },
       "delete": {
+        "operationId": "deleteGraphs",
         "parameters": [
           {
             "schema": {

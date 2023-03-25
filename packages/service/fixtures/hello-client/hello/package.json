@@ -1,0 +1,5 @@
+{
+  "name": "hello",
+  "main": "./hello.cjs",
+  "types": "./hello.d.ts"
+}

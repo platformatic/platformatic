@@ -268,11 +268,12 @@ async function entityPlugin (app, opts) {
     }
   }
 
-  for (const method of ['POST', 'PUT']) {
+  for (const { method, opPrefix } of [{ method: 'POST', opPrefix: 'update' }, { method: 'PUT', opPrefix: 'update' }]) {
     app.route({
       url: `/:${primaryKeyCamelcase}`,
       method,
       schema: {
+        operationId: opPrefix + capitalize(entity.singularName),
         body: entitySchema,
         params: primaryKeyParams,
         querystring: {
@@ -312,6 +313,7 @@ async function entityPlugin (app, opts) {
 
   app.delete(`/:${primaryKeyCamelcase}`, {
     schema: {
+      operationId: 'delete' + capitalize(entity.pluralName),
       params: primaryKeyParams,
       querystring: {
         type: 'object',

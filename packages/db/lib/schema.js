@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 'use strict'
 
-const { metrics, server, plugins, watch, openApiDefs, openApiBase } = require('@platformatic/service').schema
+const { metrics, server, plugins, watch, openApiDefs, openApiBase, clients } = require('@platformatic/service').schema
 const pkg = require('../package.json')
 const version = 'v' + pkg.version
 
@@ -354,6 +354,7 @@ const platformaticDBschema = {
     metrics,
     types,
     plugins,
+    clients,
     watch: {
       anyOf: [watch, {
         type: 'boolean'
