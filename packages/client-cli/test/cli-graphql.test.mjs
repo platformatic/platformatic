@@ -404,3 +404,94 @@ module.exports = async function (app, opts) {
     title: 'foo'
   })
 })
+
+test('configureClient (typescript)', async ({ teardown, comment, same, match }) => {
+  try {
+    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const server = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+
+  await server.listen()
+
+  const dir = await moveToTmpdir(teardown)
+
+  comment(`working in ${dir}`)
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), server.url + '/graphql', '--name', 'movies'])
+
+  comment(`upstream URL is ${server.url}`)
+
+  const toWrite = `
+import Fastify from 'fastify';
+import movies from './movies';
+
+const app = Fastify({ logger: true });
+app.register(movies, {
+  url: '${server.url}'
+});
+
+app.register(async function (app) {
+  app.configureMovies({
+    async getHeaders (req, reply) {
+      return { foo: 'bar' }
+    }
+  })
+});
+
+app.post('/', async (req) => {
+  const res = await req.movies.graphql({
+    query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
+  })
+  return res 
+})
+
+app.listen({ port: 0 });
+`
+
+  await fs.writeFile(join(dir, 'index.ts'), toWrite)
+
+  const tsconfig = JSON.stringify({
+    extends: 'fastify-tsconfig',
+    compilerOptions: {
+      outDir: 'build',
+      target: 'es2018',
+      moduleResolution: 'node',
+      lib: ['es2018']
+    }
+  }, null, 2)
+
+  await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
+
+  const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
+  await execa(tsc)
+
+  // TODO how can we avoid this copy?
+  await copy(join(dir, 'movies'), join(dir, 'build', 'movies'))
+
+  const server2 = execa('node', ['build/index.js'])
+  teardown(() => server2.kill())
+  teardown(server.stop)
+
+  const stream = server2.stdout.pipe(split(JSON.parse))
+
+  // this is unfortuate :(
+  const base = 'Server listening at '
+  let url
+  for await (const line of stream) {
+    const msg = line.msg
+    if (msg.indexOf(base) !== 0) {
+      continue
+    }
+    url = msg.slice(base.length)
+    break
+  }
+  comment(`client URL is ${url}`)
+  const res = await request(url, {
+    method: 'POST'
+  })
+  const body = await res.body.json()
+  match(body, {
+    title: 'foo'
+  })
+})

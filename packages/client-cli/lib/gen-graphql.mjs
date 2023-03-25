@@ -47,17 +47,23 @@ function generateTypesFromGraphQL ({ schema, name }) {
       writer.writeLine('graphql<T>(GraphQLQuery): PromiseLike<T>;')
     })
 
+    writer.write(`interface Configure${capitalizedName}`).block(() => {
+      writer.writeLine('async getHeaders(req: FastifyRequest, reply: FastifyReply): Promise<Record<string,string>>;')
+    })
+
     writer.write('interface FastifyInstance').block(() => {
       writer.quote(name)
       writer.writeLine(': GraphQLClient;')
       writer.newLine()
+
+      writer.writeLine(`configure${capitalizedName}(opts: Configure${capitalizedName}): unknown`)
     })
 
     writer.blankLine()
 
     writer.write('interface FastifyRequest').block(() => {
       writer.quote(name)
-      writer.write('<T>(GraphQLQuery): PromiseLike<T>;')
+      writer.writeLine(': GraphQLClient;')
       writer.newLine()
     })
   })

@@ -130,10 +130,15 @@ function generateTypesFromOpenAPI ({ schema, name }) {
 
   writer.blankLine()
   writer.write('declare module \'fastify\'').block(() => {
+    writer.write(`interface Configure${capitalizedName}`).block(() => {
+      writer.writeLine('async getHeaders(req: FastifyRequest, reply: FastifyReply): Promise<Record<string,string>>;')
+    })
     writer.write('interface FastifyInstance').block(() => {
       writer.quote(name)
       writer.write(`: ${capitalizedName};`)
       writer.newLine()
+
+      writer.writeLine(`configure${capitalizedName}(opts: Configure${capitalizedName}): unknown`)
     })
 
     writer.blankLine()
