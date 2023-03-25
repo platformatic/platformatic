@@ -9,7 +9,7 @@ Options:
   -w  --workspace ID     The workspace ID where the service will be deployed
   -t, --type static/dynamic  The type of the workspace. Defaults to static.
   -c, --config FILE      Specify a configuration file to use
-  -b, --build            Build the service before deploying
+  -b, --build            Build the service before deploying (`npm run build`)
 
 If not specified, the configuration will be loaded from `platformatic.db.json`,
 `platformatic.db.yml`, or `platformatic.db.tml`, `platformatic.service.json`,
