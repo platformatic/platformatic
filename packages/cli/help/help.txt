@@ -5,3 +5,4 @@ Welcome to Platformatic. Available commands are:
 * db - start Platformatic DB; type `platformatic db help` to know more.
 * service - start Platformatic Service; type `platformatic service help` to know more.
 * upgrade - upgrade the Platformatic configuration to the latest version.
+* gh - creates a new gh action for Platformatic deployments
