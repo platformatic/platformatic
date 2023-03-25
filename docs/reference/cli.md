@@ -87,6 +87,7 @@ Welcome to Platformatic. Available commands are:
 * db - start Platformatic DB; type `platformatic db help` to know more.
 * service - start Platformatic Service; type `platformatic service help` to know more.
 * upgrade - upgrade the Platformatic configuration to the latest version.
+* gh - creates a new gh action for Platformatic deployments
 ```
 
 
@@ -119,7 +120,6 @@ Available commands:
 
 * `help` - show this help message.
 * `help <command>` - shows more information about a command.
-* `init` - initiate default application.
 * `start` - start the server.
 * `compile` - compile typescript plugins.
 * `seed` - run a seed file.
@@ -127,26 +127,6 @@ Available commands:
 * `schema` - generate and print api schema.
 * `migrations create` - generate do and undo migration files.
 * `migrations apply` - apply migration files.
-
-
-#### init
-
-Initiate default Platformatic DB application:
-``` bash
-  $ platformatic db init
-```
-
-As a result of executing this command, the `platformatic.db.json` configuration
-file and the `migrations` folder with migration examples will be generated.
-
-Options:
-
-  * `-h, --hostname <hostname>`: The hostname where Platformatic DB server will listen for connections.
-  * `-p, --port <port>`: The port where Platformatic DB server will listen for connections.
-  * `-db, --database <database_name>`: The name of the database to use. Default: `sqlite`. 
-  * `-m, --migrations <path>`: Relative path to the migrations folder. Default: `./migrations`.
-  * `-t, --types <boolean>`: Set true to enable type autogeneration. Default: `true`.
-  * `-ts, --typescript <boolean>`: Set true to enable TypeScript plugins. Default: `false`.
 
 
 #### migrations apply
@@ -306,7 +286,7 @@ save the following as `platformatic.db.json`:
         "level": "info"
       }
     },
-    "db": {
+    "core": {
       "connectionString": "sqlite://./db"
     },
     "migrations": {
