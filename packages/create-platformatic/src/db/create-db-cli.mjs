@@ -12,7 +12,7 @@ import { execa } from 'execa'
 import ora from 'ora'
 import createDB from './create-db.mjs'
 import askProjectDir from '../ask-project-dir.mjs'
-import { askCreateGHAction } from '../ghaction.mjs'
+import { askDynamicWorkspaceCreateGHAction, askStaticWorkspaceGHAction } from '../ghaction.mjs'
 import { getRunPackageManagerInstall, getUseTypescript } from '../cli-options.mjs'
 import mkdirp from 'mkdirp'
 
@@ -166,7 +166,8 @@ const createPlatformaticDB = async (_args) => {
       }
     }
   }
-  await askCreateGHAction(logger, env, 'db', useTypescript, projectDir)
+  await askDynamicWorkspaceCreateGHAction(logger, env, 'db', useTypescript, projectDir)
+  await askStaticWorkspaceGHAction(logger, env, 'db', useTypescript, projectDir)
 }
 
 export default createPlatformaticDB
