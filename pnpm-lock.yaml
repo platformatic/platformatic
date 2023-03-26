@@ -430,7 +430,7 @@ importers:
   packages/db-dashboard:
     specifiers:
       '@fastify/static': ^6.9.0
-      '@graphiql/toolkit': 0.8.2
+      '@graphiql/toolkit': 0.8.3
       '@mui/material': ^5.11.10
       '@platformatic/db-ra-data-rest': workspace:*
       '@platformatic/service': workspace:*
@@ -464,7 +464,7 @@ importers:
     dependencies:
       '@fastify/static': 6.9.0
     devDependencies:
-      '@graphiql/toolkit': 0.8.2_graphql@16.6.0
+      '@graphiql/toolkit': 0.8.3_graphql@16.6.0
       '@mui/material': 5.11.13_dl5meo57oqikomakll4aynjcye
       '@platformatic/db-ra-data-rest': link:../db-ra-data-rest
       '@platformatic/service': link:../service
@@ -2968,7 +2968,7 @@ packages:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
     dependencies:
-      '@graphiql/toolkit': 0.8.2_graphql@16.6.0
+      '@graphiql/toolkit': 0.8.3_graphql@16.6.0
       '@reach/combobox': 0.17.0_biqbaboplfbrettd7655fr4n2y
       '@reach/dialog': 0.17.0_zula6vjvt3wdocc4mwcxqa6nzi
       '@reach/listbox': 0.17.0_biqbaboplfbrettd7655fr4n2y
@@ -2993,8 +2993,8 @@ packages:
       - react-is
     dev: true
 
-  /@graphiql/toolkit/0.8.2_graphql@16.6.0:
-    resolution: {integrity: sha512-FGtXBYTzcPuwfpaC+0BGeriLD6kwTdcF5xugGvjutk5J93Dgy2vw+SkBdbi1QGzz/jooETi1kEtFeDuWTzIG7Q==}
+  /@graphiql/toolkit/0.8.3_graphql@16.6.0:
+    resolution: {integrity: sha512-B5WfZlBes/tMmM7TeTTD/F2E1kbtQD6PYmyX76qWrIt1Sx3+lQoCe8NzHbBvNII77F5sr737RASmkhQ1fcdFWQ==}
     peerDependencies:
       graphql: ^15.5.0 || ^16.0.0
       graphql-ws: '>= 4.5.0'
@@ -8439,7 +8439,7 @@ packages:
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
     dependencies:
       '@graphiql/react': 0.17.0_f3oka2flg5wvedns3eoc4vc37u
-      '@graphiql/toolkit': 0.8.2_graphql@16.6.0
+      '@graphiql/toolkit': 0.8.3_graphql@16.6.0
       entities: 2.2.0
       graphql: 16.6.0
       graphql-language-service: 5.1.2_graphql@16.6.0
