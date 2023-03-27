@@ -441,7 +441,7 @@ importers:
       '@vitejs/plugin-react': ^3.1.0
       autoprefixer: ^10.4.13
       camelcase: ^6.3.0
-      graphiql: 2.4.0
+      graphiql: 2.4.1
       happy-dom: ^8.7.2
       history: ^5.3.0
       inflected: ^2.1.0
@@ -475,7 +475,7 @@ importers:
       '@vitejs/plugin-react': 3.1.0_vite@4.2.1
       autoprefixer: 10.4.14_postcss@8.4.21
       camelcase: 6.3.0
-      graphiql: 2.4.0_f3oka2flg5wvedns3eoc4vc37u
+      graphiql: 2.4.1_f3oka2flg5wvedns3eoc4vc37u
       happy-dom: 8.9.0
       history: 5.3.0
       inflected: 2.1.0
@@ -2961,8 +2961,8 @@ packages:
     resolution: {integrity: sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==}
     optional: true
 
-  /@graphiql/react/0.17.0_f3oka2flg5wvedns3eoc4vc37u:
-    resolution: {integrity: sha512-mn8FfucLJzFLQQ5OoJ9U1Dvnva1smOxBL89D2TSM2B6mmDyQIRhFXmjzUTPdsqwpauFiqkDaQZiqX7T/ZPrg/w==}
+  /@graphiql/react/0.17.1_f3oka2flg5wvedns3eoc4vc37u:
+    resolution: {integrity: sha512-p99Vnl3aoQsh/T651pkGiS0wqvn7y65Bv4Q32l990T2IIgEDqeqJxgwRp3F48Ol9dWzk6KzxNkZYqe5IVHEmoA==}
     peerDependencies:
       graphql: ^15.5.0 || ^16.0.0
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
@@ -2977,10 +2977,10 @@ packages:
       '@reach/visually-hidden': 0.17.0_biqbaboplfbrettd7655fr4n2y
       clsx: 1.2.1
       codemirror: 5.65.12
-      codemirror-graphql: 2.0.4_h66uq6p42ukzrtvxtev224ctfe
+      codemirror-graphql: 2.0.5_h66uq6p42ukzrtvxtev224ctfe
       copy-to-clipboard: 3.3.3
       graphql: 16.6.0
-      graphql-language-service: 5.1.2_graphql@16.6.0
+      graphql-language-service: 5.1.3_graphql@16.6.0
       markdown-it: 12.3.2
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
@@ -6123,8 +6123,8 @@ packages:
     dev: true
     optional: true
 
-  /codemirror-graphql/2.0.4_h66uq6p42ukzrtvxtev224ctfe:
-    resolution: {integrity: sha512-u68lfUJv4hESfIZLJUGSWU2+txNrfoT29EEMxNksDBPXjnF41Ivpp/r8rxJBXigNcDOBmjMfKfs1J4L0Jggwrg==}
+  /codemirror-graphql/2.0.5_h66uq6p42ukzrtvxtev224ctfe:
+    resolution: {integrity: sha512-erpJV/hOQe4ScOBNhV+rJAAcsCGyC913VkTp3fbGHh/aZQBshpwxgew4+43+EDl855Gw+df36/+maun+Nj8tKw==}
     peerDependencies:
       '@codemirror/language': 6.0.0
       codemirror: ^5.65.3
@@ -6133,7 +6133,7 @@ packages:
       '@codemirror/language': 6.0.0
       codemirror: 5.65.12
       graphql: 16.6.0
-      graphql-language-service: 5.1.2_graphql@16.6.0
+      graphql-language-service: 5.1.3_graphql@16.6.0
     dev: true
 
   /codemirror/5.65.12:
@@ -8431,18 +8431,17 @@ packages:
     resolution: {integrity: sha512-bzh50DW9kTPM00T8y4o8vQg89Di9oLJVLW/KaOGIXJWP/iqCN6WKYkbNOF04vFLJhwcpYUh9ydh/+5vpOqV4YQ==}
     dev: true
 
-  /graphiql/2.4.0_f3oka2flg5wvedns3eoc4vc37u:
-    resolution: {integrity: sha512-lJ6OYDQkhAMZePrz8g6r9vMVmxa4SY9eEzzyJxsgE+jA+6PFKds2e8/tDAaCYfX0HNv84nc7W/th1vsHIdgYiA==}
+  /graphiql/2.4.1_f3oka2flg5wvedns3eoc4vc37u:
+    resolution: {integrity: sha512-PLTY2KI+FwU6548Bsrip2ptne/t2QzNdARHZwXl/KGJ+KVfSpXjjfryJQBHXiEq4plQnG4orw7dJpm8KfM5iig==}
     peerDependencies:
       graphql: ^15.5.0 || ^16.0.0
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
     dependencies:
-      '@graphiql/react': 0.17.0_f3oka2flg5wvedns3eoc4vc37u
+      '@graphiql/react': 0.17.1_f3oka2flg5wvedns3eoc4vc37u
       '@graphiql/toolkit': 0.8.3_graphql@16.6.0
-      entities: 2.2.0
       graphql: 16.6.0
-      graphql-language-service: 5.1.2_graphql@16.6.0
+      graphql-language-service: 5.1.3_graphql@16.6.0
       markdown-it: 12.3.2
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
@@ -8483,8 +8482,8 @@ packages:
       lodash.merge: 4.6.2
       lodash.mergewith: 4.6.2
 
-  /graphql-language-service/5.1.2_graphql@16.6.0:
-    resolution: {integrity: sha512-oeuztbvd7fwKWZ/GCp0voqgctdIL4BDjTkd/phz1jEyH+pfj6inJWKKIkUJPW5ebWHx+mFsZ00wdE6tiCvW2fA==}
+  /graphql-language-service/5.1.3_graphql@16.6.0:
+    resolution: {integrity: sha512-01KZLExoF53i8a2Jhgt+nVGsm9O2+jmDdwms4THSxCY+gU9FukF6X4pPLO2Gk7qZ6CVcInM8+IQx/ph4AOTOLA==}
     hasBin: true
     peerDependencies:
       graphql: ^15.5.0 || ^16.0.0
