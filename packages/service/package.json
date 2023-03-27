@@ -1,9 +1,11 @@
 {
   "name": "@platformatic/service",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "",
   "main": "index.js",
-  "bin": { "plt-service": "./service.mjs" },
+  "bin": {
+    "plt-service": "./service.mjs"
+  },
   "scripts": {
     "test": "standard | snazzy && c8 --100 tap test/*test.js test/*/*.test.mjs && tsd",
     "lint": "standard | snazzy"
