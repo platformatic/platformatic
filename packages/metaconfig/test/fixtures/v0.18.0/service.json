@@ -1,0 +1,15 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v0.18.0/db",
+  "server": {
+    "hostname": "{PLT_SERVER_HOSTNAME}",
+    "port": "{PORT}",
+    "logger": {
+      "level": "{PLT_SERVER_LOGGER_LEVEL}"
+    }
+  },
+  "plugins": {
+    "paths": [
+      "./plugin/index.js"
+    ]
+  }
+}
