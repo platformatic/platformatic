@@ -319,6 +319,7 @@ importers:
       '@platformatic/db-core': link:../db-core
       '@platformatic/db-dashboard': link:../db-dashboard
       '@platformatic/service': link:../service
+      '@platformatic/sql-graphql': link:../sql-graphql
       '@platformatic/sql-json-schema-mapper': link:../sql-json-schema-mapper
       '@platformatic/sql-mapper': link:../sql-mapper
       '@platformatic/utils': link:../utils
@@ -347,7 +348,6 @@ importers:
       '@databases/pg': 5.4.1
       '@databases/sqlite': 4.0.2
       '@matteo.collina/worker': 3.0.0
-      '@platformatic/sql-graphql': link:../sql-graphql
       ajv: 8.12.0
       bindings: 1.5.0
       c8: 7.13.0
@@ -1319,7 +1319,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.12.9
-      '@babel/helper-plugin-utils': 7.10.4
+      '@babel/helper-plugin-utils': 7.20.2
       '@babel/plugin-syntax-object-rest-spread': 7.8.3_@babel+core@7.12.9
       '@babel/plugin-transform-parameters': 7.21.3_@babel+core@7.12.9
     dev: true
@@ -7375,7 +7375,7 @@ packages:
       eslint-scope: 7.1.1
       eslint-utils: 3.0.0_eslint@8.4.1
       eslint-visitor-keys: 3.4.0
-      espree: 9.2.0
+      espree: 9.5.0
       esquery: 1.5.0
       esutils: 2.0.3
       fast-deep-equal: 3.1.3
@@ -14334,6 +14334,7 @@ packages:
 
   /trim/0.0.1:
     resolution: {integrity: sha512-YzQV+TZg4AxpKxaTHK3c3D+kRDCGVEE7LemdlQZoQXn0iennk10RsIoY6ikzAqJTc9Xjl9C1/waHom/J86ziAQ==}
+    deprecated: Use String.prototype.trim() instead
     dev: true
 
   /trivial-deferred/1.1.2:
