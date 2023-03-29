@@ -16,7 +16,6 @@ export async function appendToEnv (file, key, value) {
 }
 
 export async function appendToBothEnvs (dir, key, value) {
-  console.log(dir, key, value)
   await Promise.all([
     appendToEnv(join(dir, '.env'), key, value),
     appendToEnv(join(dir, '.env.sample'), key, value)
