@@ -9,6 +9,7 @@ import { promises as fs } from 'fs'
 import split from 'split2'
 import graphql from 'graphql'
 import { copy } from 'fs-extra'
+import dotenv from 'dotenv'
 
 test('graphql client generation (javascript)', async ({ teardown, comment, same, equal, match }) => {
   try {
@@ -355,6 +356,9 @@ test('adds clients to platformatic service', async ({ teardown, comment, same, m
 
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
 
+  await fs.writeFile(join(dir, '.env'), 'FOO=bar')
+  await fs.writeFile(join(dir, '.env.sample'), 'FOO=bar')
+
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), server.url + '/graphql', '--name', 'movies'])
 
   {
@@ -403,6 +407,23 @@ module.exports = async function (app, opts) {
   match(body, {
     title: 'foo'
   })
+
+  const url = server.url + '/'
+  {
+    const envs = dotenv.parse(await fs.readFile(join(dir, '.env')))
+    same(envs, {
+      FOO: 'bar',
+      PLT_MOVIES_URL: url
+    })
+  }
+
+  {
+    const envs = dotenv.parse(await fs.readFile(join(dir, '.env.sample')))
+    same(envs, {
+      FOO: 'bar',
+      PLT_MOVIES_URL: url
+    })
+  }
 })
 
 test('configureClient (typescript)', async ({ teardown, comment, same, match }) => {

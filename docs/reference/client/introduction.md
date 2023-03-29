@@ -5,13 +5,13 @@ Create a Fastify plugin that exposes a client for a remote OpenAPI or GraphQL AP
 To create a client for a remote OpenAPI API, you can use the following command:
 
 ```bash
-$ platformatic client http://exmaple.com/to/schema/file
+$ platformatic client http://exmaple.com/to/schema/file --name myclient
 ```
 
 To create a client for a remote Graphql API, you can use the following command:
 
 ```bash
-$ platformatic client http://exmaple.com/grapqhl
+$ platformatic client http://exmaple.com/grapqhl --name myclient
 ```
 
 ## Usage with Platformatic Service or Platformatic DB
@@ -53,6 +53,19 @@ export default async function (app: FastifyInstance) {
   })
 }
 ```
+
+The client configuration in the `platformatic.db.json` and `platformatic.service.json` would look like:
+
+```json
+{
+  "clients": [{
+    "path": "./myclient",
+    "url": "{ PLT_MYCLIENT_URL }"
+  }]
+}
+```
+
+Note that the generator would also have updated the `.env` and `.env.sample` files if they exists.
 
 ## Types Generator
 

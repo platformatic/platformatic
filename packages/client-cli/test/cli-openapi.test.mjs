@@ -7,6 +7,7 @@ import { execa } from 'execa'
 import { promises as fs } from 'fs'
 import split from 'split2'
 import { copy } from 'fs-extra'
+import dotenv from 'dotenv'
 
 test('openapi client generation (javascript)', async ({ teardown, comment, same }) => {
   try {
@@ -367,4 +368,54 @@ app.listen({ port: 0 });
     id: 1,
     title: 'foo'
   })
+})
+
+test('dotenv & config support', async ({ teardown, comment, same }) => {
+  try {
+    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const server = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+
+  await server.listen()
+  teardown(server.stop)
+
+  const dir = await moveToTmpdir(teardown)
+  comment(`working in ${dir}`)
+
+  const pltServiceConfig = {
+    $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugins: {
+      paths: ['./plugin.js']
+    }
+  }
+
+  await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
+
+  await fs.writeFile(join(dir, '.env'), 'FOO=bar')
+  await fs.writeFile(join(dir, '.env.sample'), 'FOO=bar')
+
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), server.url + '/documentation/json', '--name', 'movies'])
+
+  const url = server.url + '/'
+  {
+    const envs = dotenv.parse(await fs.readFile(join(dir, '.env')))
+    same(envs, {
+      FOO: 'bar',
+      PLT_MOVIES_URL: url
+    })
+  }
+
+  {
+    const envs = dotenv.parse(await fs.readFile(join(dir, '.env.sample')))
+    same(envs, {
+      FOO: 'bar',
+      PLT_MOVIES_URL: url
+    })
+  }
 })
