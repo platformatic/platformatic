@@ -616,7 +616,7 @@ test('should handle nullable relation', async ({ pass, teardown, same, equal }) 
             id INTEGER PRIMARY KEY,
             title VARCHAR(42),
             author_id BIGINT UNSIGNED,
-            FOREIGN KEY (another_author_id) REFERENCES authors(id)
+            FOREIGN KEY (author_id) REFERENCES authors(id)
           );
         `)
       } else {
@@ -642,7 +642,11 @@ test('should handle nullable relation', async ({ pass, teardown, same, equal }) 
   const authors = [
     {
       id: 1,
-      name: 'Mark'
+      name: 'Mark 1'
+    },
+    {
+      id: 2,
+      name: 'Mark 2'
     }
   ]
 
@@ -656,6 +660,11 @@ test('should handle nullable relation', async ({ pass, teardown, same, equal }) 
       id: 2,
       title: 'Harry 2',
       authorId: null
+    },
+    {
+      id: 3,
+      title: 'Harry 3',
+      authorId: 2
     }
   ]
 
@@ -708,7 +717,7 @@ test('should handle nullable relation', async ({ pass, teardown, same, equal }) 
       body: {
         query: `
             query {
-              books {
+              books (orderBy: { field: id, direction: ASC }) {
                 id
                 author {
                   id
@@ -731,6 +740,12 @@ test('should handle nullable relation', async ({ pass, teardown, same, equal }) 
           {
             id: 2,
             author: null
+          },
+          {
+            id: 3,
+            author: {
+              id: 2
+            }
           }
         ]
       }
@@ -760,9 +775,11 @@ test('should handle nullable relation', async ({ pass, teardown, same, equal }) 
         authors: [
           {
             id: 1,
-            books: [{
-              id: 1
-            }]
+            books: [{ id: 1 }]
+          },
+          {
+            id: 2,
+            books: [{ id: 3 }]
           }
         ]
       }

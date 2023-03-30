@@ -318,33 +318,24 @@ function constructGraph (app, entity, opts, ignore) {
       return acc
     }, {})
 
-    const res = await entity.find({
+    const rows = await entity.find({
       where,
       fields,
       limit,
       ctx
     })
 
-    const output = []
+    const matchedRaws = []
     // TODO this is extremely inefficient
     // we need a better data structure
     for (const pair of keys) {
-      for (const row of res) {
-        let target = row
-        for (const { key, value } of pair) {
-          if (row[key] !== value) {
-            target = null
-            break
-          }
-        }
-
-        if (target) {
-          output.push(target)
-        }
-      }
+      const matchedRaw = rows.find((raw) =>
+        pair.every(({ key, value }) => raw[key] === value)
+      ) || null
+      matchedRaws.push(matchedRaw)
     }
 
-    return output
+    return matchedRaws
   }
 
   function getFields (queries) {
