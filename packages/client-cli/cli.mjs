@@ -4,13 +4,14 @@ import parseArgs from 'minimist'
 import isMain from 'es-main'
 import helpMe from 'help-me'
 import { writeFile, mkdir, access } from 'fs/promises'
-import { join } from 'path'
+import { join, dirname } from 'path'
 import * as desm from 'desm'
 import { request } from 'undici'
 import { processOpenAPI } from './lib/gen-openapi.mjs'
 import { processGraphQL } from './lib/gen-graphql.mjs'
 import { analyze, write } from '@platformatic/metaconfig'
 import graphql from 'graphql'
+import { appendToBothEnvs } from './lib/utils.mjs'
 
 async function isFileAccessible (filename) {
   try {
@@ -97,6 +98,9 @@ async function downloadAndProcess ({ url, name, folder, config }) {
       url: `{PLT_${name.toUpperCase()}_URL}`
     })
     await write(meta)
+    const toSaveUrl = new URL(url)
+    toSaveUrl.pathname = ''
+    await appendToBothEnvs(join(dirname(config)), `PLT_${name.toUpperCase()}_URL`, toSaveUrl)
   }
 }
 
