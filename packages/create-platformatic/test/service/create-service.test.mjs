@@ -58,7 +58,10 @@ test('creates service with typescript', async ({ equal, same, ok }) => {
   equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
   equal(process.env.PORT, '6666')
 
-  same(plugins, { paths: ['./plugins', './routes'] })
+  same(plugins.paths, ['./plugins', './routes'])
+  equal(plugins.typescript, true)
+
+  ok(await isFileAccessible(join(tmpDir, 'tsconfig.json')))
   ok(await isFileAccessible(join(tmpDir, 'plugins', 'example.ts')))
   ok(await isFileAccessible(join(tmpDir, 'routes', 'root.ts')))
 })
@@ -105,6 +108,18 @@ test('creates project with configuration already present', async ({ ok }) => {
   }
   await createService(params, fakeLogger, tmpDir)
   ok(log.includes('Configuration file platformatic.service.json found, skipping creation of configuration file.'))
+})
+
+test('creates project with tsconfig already present', async ({ ok }) => {
+  const pathToTsConfig = join(tmpDir, 'tsconfig.json')
+  writeFileSync(pathToTsConfig, 'test')
+  const params = {
+    hostname: 'myhost',
+    port: 6666,
+    typescript: true
+  }
+  await createService(params, fakeLogger, tmpDir)
+  ok(log.includes(`Typescript configuration file ${pathToTsConfig} found, skipping creation of typescript configuration file.`))
 })
 
 test('creates project with plugins already present', async ({ ok }) => {

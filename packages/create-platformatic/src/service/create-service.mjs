@@ -3,7 +3,9 @@ import { join } from 'path'
 import * as desm from 'desm'
 import { findServiceConfigFile, isFileAccessible } from '../utils.mjs'
 
-function generateConfig (version) {
+const TS_OUT_DIR = 'dist'
+
+function generateConfig (version, typescript) {
   const plugins = {
     paths: [
       './plugins',
@@ -21,6 +23,10 @@ function generateConfig (version) {
       }
     },
     plugins
+  }
+
+  if (typescript === true) {
+    config.plugins.typescript = true
   }
 
   return config
@@ -78,6 +84,27 @@ export default async function (fastify: FastifyInstance, opts: FastifyPluginOpti
 }
 `
 
+function getTsConfig (outDir) {
+  return {
+    compilerOptions: {
+      module: 'commonjs',
+      esModuleInterop: true,
+      target: 'es6',
+      sourceMap: true,
+      pretty: true,
+      noEmitOnError: true,
+      outDir
+    },
+    watchOptions: {
+      watchFile: 'fixedPollingInterval',
+      watchDirectory: 'fixedPollingInterval',
+      fallbackPolling: 'dynamicPriority',
+      synchronousWatchDirectory: true,
+      excludeDirectories: ['**/node_modules', outDir]
+    }
+  }
+}
+
 async function generatePluginWithTypesSupport (logger, currentDir, isTypescript) {
   await mkdir(join(currentDir, 'plugins'))
   const pluginTemplate = isTypescript
@@ -110,7 +137,7 @@ async function createService ({ hostname, port, typescript = false }, logger, cu
   const accessibleConfigFilename = await findServiceConfigFile(currentDir)
 
   if (accessibleConfigFilename === undefined) {
-    const config = generateConfig(version)
+    const config = generateConfig(version, typescript)
     await writeFile(join(currentDir, 'platformatic.service.json'), JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.service.json successfully created.')
 
@@ -120,6 +147,22 @@ async function createService ({ hostname, port, typescript = false }, logger, cu
     logger.info('Environment file .env successfully created.')
   } else {
     logger.info(`Configuration file ${accessibleConfigFilename} found, skipping creation of configuration file.`)
+  }
+
+  if (typescript === true) {
+    const tsConfigFileName = join(currentDir, 'tsconfig.json')
+    const isTsConfigExists = await isFileAccessible(tsConfigFileName)
+    if (!isTsConfigExists) {
+      const tsConfig = getTsConfig(TS_OUT_DIR)
+      await writeFile(tsConfigFileName, JSON.stringify(tsConfig, null, 2))
+      logger.info(
+        `Typescript configuration file ${tsConfigFileName} successfully created.`
+      )
+    } else {
+      logger.info(
+        `Typescript configuration file ${tsConfigFileName} found, skipping creation of typescript configuration file.`
+      )
+    }
   }
 
   const pluginFolderExists = await isFileAccessible('plugins', currentDir)
