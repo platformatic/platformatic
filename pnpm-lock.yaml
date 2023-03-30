@@ -276,12 +276,11 @@ importers:
       '@platformatic/utils': workspace:*
       ajv: ^8.12.0
       bindings: ^1.5.0
-      c8: ^7.13.0
       camelcase: ^6.3.0
       close-with-grace: ^1.1.0
+      code-block-writer: ^12.0.0
       commist: ^3.2.0
       desm: ^1.3.0
-      dtsgenerator: ^3.17.0
       env-schema: ^5.2.0
       es-main: ^1.2.0
       execa: ^7.0.0
@@ -327,9 +326,9 @@ importers:
       '@platformatic/utils': link:../utils
       camelcase: 6.3.0
       close-with-grace: 1.1.0
+      code-block-writer: 12.0.0
       commist: 3.2.0
       desm: 1.3.0
-      dtsgenerator: 3.18.0
       env-schema: 5.2.0
       es-main: 1.2.0
       execa: 7.1.1
@@ -352,7 +351,6 @@ importers:
       '@matteo.collina/worker': 3.0.0
       ajv: 8.12.0
       bindings: 1.5.0
-      c8: 7.13.0
       snazzy: 9.0.0
       split2: 4.2.0
       standard: 17.0.0
@@ -719,10 +717,17 @@ importers:
   packages/sql-json-schema-mapper:
     specifiers:
       '@platformatic/sql-mapper': workspace:*
+      code-block-writer: '12'
+      dtsgenerator: ^3.18.0
       fastify: ^4.13.0
+      safe-identifier: ^0.4.2
       snazzy: ^9.0.0
       standard: ^17.0.0
       tap: ^16.3.4
+    dependencies:
+      code-block-writer: 12.0.0
+      dtsgenerator: 3.18.0
+      safe-identifier: 0.4.2
     devDependencies:
       '@platformatic/sql-mapper': link:../sql-mapper
       fastify: 4.15.0
@@ -6117,6 +6122,10 @@ packages:
 
   /code-block-writer/11.0.3:
     resolution: {integrity: sha512-NiujjUFB4SwScJq2bwbYUtXbZhBSlY6vYzm++3Q6oC+U+injTqfPYFK8wS9COOmb2lueqp0ZRB4nK1VYeHgNyw==}
+    dev: false
+
+  /code-block-writer/12.0.0:
+    resolution: {integrity: sha512-q4dMFMlXtKR3XNBHyMHt/3pwYNA69EDk00lloMOaaUMKPUXBw6lpXtbu3MMVG6/uOihGnRDOlkyqsONEUj60+w==}
     dev: false
 
   /code-point-at/1.1.0:
@@ -12903,6 +12912,10 @@ packages:
   /safe-buffer/5.2.1:
     resolution: {integrity: sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ==}
 
+  /safe-identifier/0.4.2:
+    resolution: {integrity: sha512-6pNbSMW6OhAi9j+N8V+U715yBQsaWJ7eyEUaOrawX+isg5ZxhUlV1NipNtgaKHmFGiABwt+ZF04Ii+3Xjkg+8w==}
+    dev: false
+
   /safe-regex-test/1.0.0:
     resolution: {integrity: sha512-JBUUzyOgEwXQY1NuPtvcj/qcBDbDmEvWufhlnXZIm75DEHp+afM1r1ujJpJsV/gSM4t59tpDyPi1sd6ZaPFfsA==}
     dependencies:
@@ -14336,7 +14349,6 @@ packages:
 
   /trim/0.0.1:
     resolution: {integrity: sha512-YzQV+TZg4AxpKxaTHK3c3D+kRDCGVEE7LemdlQZoQXn0iennk10RsIoY6ikzAqJTc9Xjl9C1/waHom/J86ziAQ==}
-    deprecated: Use String.prototype.trim() instead
     dev: true
 
   /trivial-deferred/1.1.2:

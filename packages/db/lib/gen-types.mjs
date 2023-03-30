@@ -5,8 +5,7 @@ import { join as desmJoin } from 'desm'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import camelcase from 'camelcase'
-import dtsgenerator, { parseSchema } from 'dtsgenerator'
-import { mapSQLEntityToJSONSchema } from '@platformatic/sql-json-schema-mapper'
+import { mapSQLEntityToJSONSchema, mapOpenAPItoTypes } from '@platformatic/sql-json-schema-mapper'
 import { setupDB, isFileAccessible } from './utils.js'
 import loadConfig from './load-config.mjs'
 
@@ -39,9 +38,7 @@ function getTypesFolderPath (config) {
 
 async function generateEntityType (entity) {
   const jsonSchema = mapSQLEntityToJSONSchema(entity)
-  jsonSchema.id = jsonSchema.$id
-
-  const tsCode = await dtsgenerator.default({ contents: [parseSchema(jsonSchema)] })
+  const tsCode = mapOpenAPItoTypes(jsonSchema)
   entity.name = camelcase(entity.name).replace(/^\w/, c => c.toUpperCase())
   return tsCode + `\nexport { ${entity.name} };\n`
 }

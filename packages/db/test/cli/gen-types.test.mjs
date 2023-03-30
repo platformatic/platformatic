@@ -9,21 +9,31 @@ import { urlDirname } from '../../lib/utils.js'
 
 t.jobs = 1
 
+let counter = 0
+
 const pathToTSD = path.join(urlDirname(import.meta.url), '../../node_modules/.bin/tsd')
 
 t.test('generate ts types', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'gen-types-clone-1')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
+
+  try {
+    await rm(cwd, { recursive: true })
+  } catch {}
 
   await mkdir(cwd)
   await cp(testDir, cwd, { recursive: true })
 
   t.teardown(async () => {
-    await rm(cwd, { force: true, recursive: true })
+    await rm(cwd, { recursive: true })
   })
 
   try {
+    t.comment('running migrations')
+    await execa('node', [cliPath, 'migrations', 'apply'], { cwd })
+    t.comment('generating types')
     await execa('node', [cliPath, 'types'], { cwd })
+    t.comment('running tsd')
     await execa(pathToTSD, { cwd })
   } catch (err) {
     console.log(err.stdout)
@@ -36,18 +46,28 @@ t.test('generate ts types', async (t) => {
 
 t.test('generate ts types twice', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'gen-types-clone-2')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
+  try {
+    await rm(cwd, { recursive: true })
+  } catch {}
+
+  t.comment(cwd)
   await mkdir(cwd)
   await cp(testDir, cwd, { recursive: true })
 
   t.teardown(async () => {
-    await rm(cwd, { force: true, recursive: true })
+    await rm(cwd, { recursive: true })
   })
 
   try {
+    t.comment('running migrations')
+    await execa('node', [cliPath, 'migrations', 'apply'], { cwd })
+    t.comment('first command')
     await execa('node', [cliPath, 'types'], { cwd })
+    t.comment('second command')
     await execa('node', [cliPath, 'types'], { cwd })
+    t.comment('running tsd')
     await execa(pathToTSD, { cwd })
   } catch (err) {
     console.log(err.stdout)
@@ -60,13 +80,16 @@ t.test('generate ts types twice', async (t) => {
 
 t.test('should show warning if there is no entities', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'auto-gen-types-clone-1')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
-  await mkdir(cwd)
+  try {
+    await rm(cwd, { recursive: true })
+  } catch {}
+
   await cp(testDir, cwd, { recursive: true })
 
   t.teardown(async () => {
-    await rm(cwd, { force: true, recursive: true })
+    await rm(cwd, { recursive: true })
   })
 
   try {
@@ -83,13 +106,16 @@ t.test('should show warning if there is no entities', async (t) => {
 
 t.test('run migrate command with type generation', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'auto-gen-types-clone-2')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
-  await mkdir(cwd)
+  try {
+    await rm(cwd, { recursive: true })
+  } catch {}
+
   await cp(testDir, cwd, { recursive: true })
 
   t.teardown(async () => {
-    await rm(cwd, { force: true, recursive: true })
+    await rm(cwd, { recursive: true })
   })
 
   try {
@@ -109,13 +135,16 @@ t.test('run migrate command with type generation', async (t) => {
 
 t.test('run migrate command with type generation without plugin in config', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types-no-plugin')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'auto-gen-types-clone-3')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
-  await mkdir(cwd)
+  try {
+    await rm(cwd, { recursive: true })
+  } catch {}
+
   await cp(testDir, cwd, { recursive: true })
 
   t.teardown(async () => {
-    await rm(cwd, { force: true, recursive: true })
+    await rm(cwd, { recursive: true })
   })
 
   try {
@@ -146,13 +175,16 @@ t.test('generate types on start', async ({ plan, equal, teardown, fail, pass }) 
   plan(2)
 
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'auto-gen-types-clone-4')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
-  await mkdir(cwd)
+  try {
+    await rm(cwd, { recursive: true })
+  } catch {}
+
   await cp(testDir, cwd, { recursive: true })
 
   teardown(async () => {
-    await rm(cwd, { force: true, recursive: true })
+    await rm(cwd, { recursive: true })
   })
 
   const child = execa('node', [cliPath, 'start'], { cwd })
@@ -183,13 +215,15 @@ t.test('generate types on start', async ({ plan, equal, teardown, fail, pass }) 
 
 t.test('correctly format entity type names', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'chars-gen-types')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'chars-gen-types-clone')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
-  await mkdir(cwd)
+  try {
+    await rm(cwd, { recursive: true })
+  } catch {}
   await cp(testDir, cwd, { recursive: true })
 
   t.teardown(async () => {
-    await rm(cwd, { force: true, recursive: true })
+    await rm(cwd, { recursive: true })
   })
 
   try {
@@ -206,13 +240,15 @@ t.test('correctly format entity type names', async (t) => {
 
 t.test('use types directory from config as target folder', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types-dir')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'gen-types-dir-1')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
-  await mkdir(cwd)
+  try {
+    await rm(cwd, { recursive: true })
+  } catch {}
   await cp(testDir, cwd, { recursive: true })
 
   t.teardown(async () => {
-    await rm(cwd, { force: true, recursive: true })
+    await rm(cwd, { recursive: true })
   })
 
   try {
@@ -233,13 +269,15 @@ t.test('generate types on start while considering types directory', async ({ pla
   plan(2)
 
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types-dir')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'auto-gen-types-clone-5')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
-  await mkdir(cwd)
+  try {
+    await rm(cwd, { recursive: true })
+  } catch {}
   await cp(testDir, cwd, { recursive: true })
 
   teardown(async () => {
-    await rm(cwd, { force: true, recursive: true })
+    await rm(cwd, { recursive: true })
   })
 
   const child = execa('node', [cliPath, 'start'], { cwd })

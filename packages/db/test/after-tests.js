@@ -30,3 +30,8 @@ async function cleanTmpDir () {
 }
 
 cleanTmpDir()
+
+setTimeout(() => {
+  console.error('we are not cleaning up everything, took too long')
+  process.exit(0)
+}, 10_000).unref()
