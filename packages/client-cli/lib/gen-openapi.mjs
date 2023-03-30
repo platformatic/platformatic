@@ -12,7 +12,7 @@ export function processOpenAPI ({ schema, name }) {
 
 function generateImplementationFromOpenAPI ({ schema, name }) {
   /* eslint-disable new-cap */
-  const writer = new CodeBlockWriter.default({
+  const writer = new CodeBlockWriter({
     indentNumberOfSpaces: 2,
     useTabs: false,
     useSingleQuote: true
@@ -65,13 +65,13 @@ function generateTypesFromOpenAPI ({ schema, name }) {
     })
   })
   /* eslint-disable new-cap */
-  const writer = new CodeBlockWriter.default({
+  const writer = new CodeBlockWriter({
     indentNumberOfSpaces: 2,
     useTabs: false,
     useSingleQuote: true
   })
 
-  const interfaces = new CodeBlockWriter.default({
+  const interfaces = new CodeBlockWriter({
     indentNumberOfSpaces: 2,
     useTabs: false,
     useSingleQuote: true
