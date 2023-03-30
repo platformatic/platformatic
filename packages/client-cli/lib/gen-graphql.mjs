@@ -20,7 +20,7 @@ const skip = new Set([
 function generateTypesFromGraphQL ({ schema, name }) {
   const capitalizedName = capitalize(name)
   /* eslint-disable new-cap */
-  const writer = new CodeBlockWriter.default({
+  const writer = new CodeBlockWriter({
     indentNumberOfSpaces: 2,
     useTabs: false,
     useSingleQuote: true
@@ -98,7 +98,7 @@ function generateTypesFromGraphQL ({ schema, name }) {
 
 function generateImplementationFromGraqhQL ({ name, url }) {
   /* eslint-disable new-cap */
-  const writer = new CodeBlockWriter.default({
+  const writer = new CodeBlockWriter({
     indentNumberOfSpaces: 2,
     useTabs: false,
     useSingleQuote: true
