@@ -30,7 +30,7 @@
     "tap": "^16.3.4"
   },
   "dependencies": {
-    "code-block-writer": "12",
+    "code-block-writer": "^12.0.0",
     "dtsgenerator": "^3.18.0",
     "safe-identifier": "^0.4.2"
   }

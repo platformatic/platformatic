@@ -108,8 +108,8 @@ function mapSQLEntityToJSONSchema (entity, ignore = {}) {
 
 function mapOpenAPItoTypes (obj, opts = {}) {
   let { writer, addedProps } = opts
-  addedProps ||= new Set()
-  writer ||= new CodeBlockWriter()
+  addedProps ??= new Set()
+  writer ??= new CodeBlockWriter()
   const { title, description, properties, required, additionalProperties } = obj
   writer.write('/**').newLine()
   writer.write(` * ${title}`).newLine()
@@ -192,10 +192,11 @@ function JSONSchemaToTsType (type) {
       return 'number'
     case 'number':
       return 'number'
+    /* istanbul ignore next */
     case 'boolean':
       return 'boolean'
-      // TODO what other types should we support here?
-      /* c8 ignore next 2 */
+    // TODO what other types should we support here?
+    /* istanbul ignore next */
     default:
       return 'any'
   }

@@ -717,7 +717,7 @@ importers:
   packages/sql-json-schema-mapper:
     specifiers:
       '@platformatic/sql-mapper': workspace:*
-      code-block-writer: '12'
+      code-block-writer: ^12.0.0
       dtsgenerator: ^3.18.0
       fastify: ^4.13.0
       safe-identifier: ^0.4.2
