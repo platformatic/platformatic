@@ -581,3 +581,208 @@ test('should handle reads from save', { only: true }, async ({ pass, teardown, s
     })
   }
 })
+
+test('should handle nullable relation', async ({ pass, teardown, same, equal }) => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      if (isMysql) {
+        await db.query(sql`
+          CREATE TABLE authors (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255)
+          );
+          CREATE TABLE books (
+            id SERIAL PRIMARY KEY,
+            title VARCHAR(42),
+            author_id BIGINT UNSIGNED,
+            FOREIGN KEY (author_id) REFERENCES authors(id)
+          );
+        `)
+      } else if (isSQLite) {
+        await db.query(sql`
+          CREATE TABLE authors (
+            id INTEGER PRIMARY KEY,
+            name VARCHAR(255)
+          );
+        `)
+        await db.query(sql`
+          CREATE TABLE books (
+            id INTEGER PRIMARY KEY,
+            title VARCHAR(42),
+            author_id BIGINT UNSIGNED,
+            FOREIGN KEY (author_id) REFERENCES authors(id)
+          );
+        `)
+      } else {
+        await db.query(sql`
+          CREATE TABLE authors (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(42)
+          );
+          CREATE TABLE books (
+            id SERIAL PRIMARY KEY,
+            title VARCHAR(42),
+            author_id INTEGER REFERENCES authors(id)
+          );
+        `)
+      }
+    }
+  })
+  app.register(sqlGraphQL)
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  const authors = [
+    {
+      id: 1,
+      name: 'Mark 1'
+    },
+    {
+      id: 2,
+      name: 'Mark 2'
+    }
+  ]
+
+  const books = [
+    {
+      id: 1,
+      title: 'Harry 1',
+      authorId: 1
+    },
+    {
+      id: 2,
+      title: 'Harry 2',
+      authorId: null
+    },
+    {
+      id: 3,
+      title: 'Harry 3',
+      authorId: 2
+    }
+  ]
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+            mutation batch($inputs : [AuthorInput]!) {
+              insertAuthors(inputs: $inputs) {
+                id
+                name
+              }
+            }
+          `,
+        variables: {
+          inputs: authors
+        }
+      }
+    })
+    equal(res.statusCode, 200, 'authors status code')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+            mutation batch($inputs : [BookInput]!) {
+              insertBooks(inputs: $inputs) {
+                id
+                title
+              }
+            }
+          `,
+        variables: {
+          inputs: books
+        }
+      }
+    })
+    equal(res.statusCode, 200, 'books status code')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+            query {
+              books (orderBy: { field: id, direction: ASC }) {
+                id
+                author {
+                  id
+                }
+              }
+            }
+          `
+      }
+    })
+    equal(res.statusCode, 200, 'query books')
+    same(res.json(), {
+      data: {
+        books: [
+          {
+            id: 1,
+            author: {
+              id: 1
+            }
+          },
+          {
+            id: 2,
+            author: null
+          },
+          {
+            id: 3,
+            author: {
+              id: 2
+            }
+          }
+        ]
+      }
+    }, 'query book response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+            query {
+              authors {
+                id
+                books {
+                  id
+                }
+              }
+            }
+          `
+      }
+    })
+    equal(res.statusCode, 200, 'query authors')
+    same(res.json(), {
+      data: {
+        authors: [
+          {
+            id: 1,
+            books: [{ id: 1 }]
+          },
+          {
+            id: 2,
+            books: [{ id: 3 }]
+          }
+        ]
+      }
+    }, 'query authors response')
+  }
+})
