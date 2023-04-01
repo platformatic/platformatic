@@ -39,11 +39,36 @@ The data will still be available if the `X-PLATFORMATIC-ADMIN-SECRET` HTTP heade
 is specified when making HTTP calls, like so:
 
 ```bash
-$ curl -H 'X-PLATFORMATIC-ADMIN-SECRET: replaceWithSomethingRandomAndSecure' http://127.0.0.1:3042/pages
+curl -H 'X-PLATFORMATIC-ADMIN-SECRET: replaceWithSomethingRandomAndSecure' http://127.0.0.1:3042/pages
 ```
+
 
 :::info
 Configuring JWT or Web Hooks will have the same result of configuring an admin secret.
+:::
+
+## Authorization rules
+
+Rules can be provided based on entity and role in order to restrict access and provide fine grained access.
+To make an admin only query and save the `page` table / `page` entity using `adminSecret` this structure should be used in the `platformatic.db` configuration file:
+
+```
+  ...
+  "authorization": {
+    "adminSecret": "easy",
+    "rules": [{
+      "entity": "movie"
+      "role": "platformatic-admin",
+      "find": true,
+      "save": true,
+      "delete": false,
+      }
+    ]
+  }
+```
+
+:::info
+Note that the role of an admin user from `adminSecret` strategy is `platformatic-admin` by default.
 :::
 
 ## Read-only access to _anonymous_ users
