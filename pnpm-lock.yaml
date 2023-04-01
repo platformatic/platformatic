@@ -444,7 +444,7 @@ importers:
       autoprefixer: ^10.4.13
       camelcase: ^6.3.0
       graphiql: 2.4.1
-      happy-dom: ^8.7.2
+      happy-dom: ^9.0.0
       history: ^5.3.0
       inflected: ^2.1.0
       json-format-highlight: ^1.0.4
@@ -478,7 +478,7 @@ importers:
       autoprefixer: 10.4.14_postcss@8.4.21
       camelcase: 6.3.0
       graphiql: 2.4.1_bq4krgy42hkb2e3cb5gqrqigtu
-      happy-dom: 8.9.0
+      happy-dom: 9.1.0
       history: 5.3.0
       inflected: 2.1.0
       json-format-highlight: 1.0.4
@@ -496,7 +496,7 @@ importers:
       swagger-ui-react: 4.13.0_biqbaboplfbrettd7655fr4n2y
       tailwindcss: 3.2.7_postcss@8.4.21
       vite: 4.2.1
-      vitest: 0.29.7_happy-dom@8.9.0
+      vitest: 0.29.7_happy-dom@9.1.0
 
   packages/db-ra-data-rest:
     specifiers:
@@ -8539,18 +8539,15 @@ packages:
       uglify-js: 3.17.4
     dev: true
 
-  /happy-dom/8.9.0:
-    resolution: {integrity: sha512-JZwJuGdR7ko8L61136YzmrLv7LgTh5b8XaEM3P709mLjyQuXJ3zHTDXvUtBBahRjGlcYW0zGjIiEWizoTUGKfA==}
+  /happy-dom/9.1.0:
+    resolution: {integrity: sha512-Z/oOcAJsZjHFOQ/VK8n0CnZBjWucZNeZwFdlDK234vIBW9IVYGWjSUR9ujK6nwsSzJ6vNdYuSZoiag72AzlD0A==}
     dependencies:
       css.escape: 1.5.1
       he: 1.2.0
       iconv-lite: 0.6.3
-      node-fetch: 2.6.9
       webidl-conversions: 7.0.0
       whatwg-encoding: 2.0.0
       whatwg-mimetype: 3.0.0
-    transitivePeerDependencies:
-      - encoding
     dev: true
 
   /hard-rejection/2.1.0:
@@ -14336,6 +14333,7 @@ packages:
 
   /trim/0.0.1:
     resolution: {integrity: sha512-YzQV+TZg4AxpKxaTHK3c3D+kRDCGVEE7LemdlQZoQXn0iennk10RsIoY6ikzAqJTc9Xjl9C1/waHom/J86ziAQ==}
+    deprecated: Use String.prototype.trim() instead
     dev: true
 
   /trivial-deferred/1.1.2:
@@ -14980,7 +14978,7 @@ packages:
       - terser
     dev: true
 
-  /vitest/0.29.7_happy-dom@8.9.0:
+  /vitest/0.29.7_happy-dom@9.1.0:
     resolution: {integrity: sha512-aWinOSOu4jwTuZHkb+cCyrqQ116Q9TXaJrNKTHudKBknIpR0VplzeaOUuDF9jeZcrbtQKZQt6yrtd+eakbaxHg==}
     engines: {node: '>=v14.16.0'}
     hasBin: true
@@ -15020,7 +15018,7 @@ packages:
       cac: 6.7.14
       chai: 4.3.7
       debug: 4.3.4
-      happy-dom: 8.9.0
+      happy-dom: 9.1.0
       local-pkg: 0.4.3
       pathe: 1.1.0
       picocolors: 1.0.0
