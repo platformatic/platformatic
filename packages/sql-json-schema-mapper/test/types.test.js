@@ -4,6 +4,11 @@ const { test } = require('tap')
 const dtsgenerator = require('dtsgenerator')
 const { mapOpenAPItoTypes } = require('..')
 
+let structuredClone = globalThis.structuredClone
+if (structuredClone === undefined) {
+  structuredClone = (obj) => JSON.parse(JSON.stringify(obj))
+}
+
 function referenceTest (name, obj, opts = {}) {
   const { only } = opts
   test(name, { only }, async t => {
