@@ -24,6 +24,21 @@ You should export an async `function` which receives a parameters
 -
 You can always access Platformatic [data mapper](/reference/sql-mapper/introduction.md) through `app.platformatic` property.
 
+:::info
+To make sure that a user has the appropriate set of permissions to perform any action on an entity the `context` should be passed to the `entity mapper` operation like this:
+
+```js
+app.post('/', async (req, reply) => {
+  const ctx = req.createPlatformaticCtx()
+  
+  await app.platformatic.entities.movies.find({
+    where: { /*...*/ },
+    ctx
+  })
+})
+```
+:::
+
 Check some [examples](/guides/add-custom-functionality/introduction.md).
 
 ## Hot Reload

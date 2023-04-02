@@ -191,6 +191,24 @@ In this example, the `user` role can delete all the posts edited before yesterda
   })
 ```
 
+## Access validation on `entity mapper` for plugins
+
+To assert that a specific user with it's `role(s)` has the correct access rights to use entities on a `platformatic plugin` the context should be passed to the `entity mapper` in order to verify it's permissions like this:
+
+```js
+//plugin.js
+
+app.post('/', async (req, reply) => {
+  const ctx = req.createPlatformaticCtx()
+  
+  await app.platformatic.entities.movie.find({
+    where: { /*...*/ },
+    ctx
+  })
+})
+
+```
+
 
 ## Skip authorization rules
 
