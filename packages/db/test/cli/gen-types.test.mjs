@@ -15,6 +15,11 @@ let counter = 0
 const pathToTSD = path.join(urlDirname(import.meta.url), '../../node_modules/.bin/tsd')
 
 async function safeRm (dir) {
+  // we are running on CI, no need for clean up
+  if (process.env.CI) {
+    return
+  }
+
   let _err = null
   let count = 0
 
