@@ -1,5 +1,8 @@
 'use strict'
 
+const CodeBlockWriter = require('code-block-writer').default
+const { property } = require('safe-identifier')
+
 function mapSQLTypeToOpenAPIType (sqlType) {
   // TODO support more types
   /* istanbul ignore next */
@@ -91,7 +94,7 @@ function mapSQLEntityToJSONSchema (entity, ignore = {}) {
       properties[field.camelcase].enum = field.enum
     }
   }
-  return {
+  const res = {
     $id: entity.name,
     title: entity.name,
     description: `A ${entity.name}`,
@@ -99,6 +102,104 @@ function mapSQLEntityToJSONSchema (entity, ignore = {}) {
     properties,
     required
   }
+
+  return res
 }
 
-module.exports = { mapSQLTypeToOpenAPIType, mapSQLEntityToJSONSchema }
+function mapOpenAPItoTypes (obj, opts = {}) {
+  let { writer, addedProps } = opts
+  addedProps ??= new Set()
+  writer ??= new CodeBlockWriter()
+  const { title, description, properties, required, additionalProperties } = obj
+  writer.write('/**').newLine()
+  writer.write(` * ${title}`).newLine()
+  writer.write(` * ${description}`).newLine()
+  writer.write(' */').newLine()
+  writer.write(`declare interface ${title}`).block(() => {
+    renderProperties(writer, addedProps, properties, additionalProperties, required)
+  })
+  return writer.toString()
+}
+
+function renderProperties (writer, addedProps, properties = {}, additionalProperties, required = []) {
+  for (const name of Object.keys(properties)) {
+    const { type, nullable, items } = properties[name]
+    addedProps.add(name)
+    if (required.indexOf(name) !== -1) {
+      writer.write(property(null, name))
+    } else {
+      writer.write(property(null, name))
+      writer.write('?')
+    }
+
+    let types
+    if (Array.isArray(type)) {
+      types = type
+    } else {
+      types = [type]
+    }
+
+    if (nullable && types.indexOf('null') === -1) {
+      types.push('null')
+    }
+
+    let first = true
+    writer.write(': ')
+    for (const type of types) {
+      if (!first) {
+        writer.write(' | ')
+      }
+      first = false
+      if (type === 'null') {
+        writer.write('null')
+      } else if (type === 'array') {
+        switch (items.type) {
+          case 'object':
+            writer.inlineBlock(() => {
+              const current = items
+              renderProperties(writer, addedProps, current.properties, current.additionalProperties, current.required)
+            })
+            writer.write('[]')
+            break
+            // TODO support arrays in arrays
+          default:
+            writer.write(`${JSONSchemaToTsType(items.type)}[]`)
+        }
+      } else if (type === 'object') {
+        writer.inlineBlock(() => {
+          const current = properties[name]
+          renderProperties(writer, addedProps, current.properties, current.additionalProperties, current.required)
+        })
+      } else {
+        writer.write(JSONSchemaToTsType(type))
+      }
+    }
+
+    writer.write(';')
+    writer.newLine()
+  }
+
+  if (additionalProperties) {
+    writer.write('[name: string]: any;')
+  }
+}
+
+function JSONSchemaToTsType (type) {
+  switch (type) {
+    case 'string':
+      return 'string'
+    case 'integer':
+      return 'number'
+    case 'number':
+      return 'number'
+    /* istanbul ignore next */
+    case 'boolean':
+      return 'boolean'
+    // TODO what other types should we support here?
+    /* istanbul ignore next */
+    default:
+      return 'any'
+  }
+}
+
+module.exports = { mapSQLTypeToOpenAPIType, mapSQLEntityToJSONSchema, mapOpenAPItoTypes }

@@ -59,7 +59,11 @@ test('generates next file correctly with existing files', async ({ equal }) => {
   await mkdir(migrationsDirPath)
 
   await execa('node', [cliPath, 'migrations', 'create', '-c', configFilePath], { cwd })
-  await execa('node', [cliPath, 'migrations', 'create', '-c', configFilePath], { cwd })
+  const child = execa('node', [cliPath, 'migrations', 'create', '-c', configFilePath], { cwd })
+  child.stdout.pipe(process.stderr)
+  child.stderr.pipe(process.stderr)
+
+  await child
   const newMigrations = await readdir(migrationsDirPath)
 
   equal(newMigrations.length, 4)
@@ -86,6 +90,7 @@ test('throws if there is no migrations in the config', async ({ match }) => {
   await writeFile(configFilePath, JSON.stringify(config))
 
   const child = execa('node', [cliPath, 'migrations', 'create', '-c', configFilePath], { cwd })
+  child.stderr.pipe(process.stderr)
   const output = child.stdout.pipe(split())
   const [data] = await once(output, 'data')
   match(data, /Missing "migrations" section in config file/)
@@ -112,6 +117,7 @@ test('throws if migrations directory does not exist', async ({ match }) => {
   await writeFile(configFilePath, JSON.stringify(config))
 
   const child = execa('node', [cliPath, 'migrations', 'create', '-c', configFilePath], { cwd })
+  child.stderr.pipe(process.stderr)
   const output = child.stdout.pipe(split())
   const [data] = await once(output, 'data')
   match(data, /Migrations directory (.*) does not exist/)
