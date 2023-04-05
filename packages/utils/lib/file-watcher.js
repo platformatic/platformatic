@@ -7,6 +7,10 @@ const minimatch = require('minimatch').default
 
 const ALLOWED_FS_EVENTS = ['change', 'rename']
 
+function removeDotSlash (path) {
+  return path.replace(/^\.[/\\]/, '')
+}
+
 class FileWatcher extends EventEmitter {
   constructor (opts) {
     super()
@@ -15,8 +19,8 @@ class FileWatcher extends EventEmitter {
       throw new Error('path option is required')
     }
     this.path = opts.path
-    this.allowToWatch = opts.allowToWatch || null
-    this.watchIgnore = opts.watchIgnore || null
+    this.allowToWatch = opts.allowToWatch?.map(removeDotSlash) || null
+    this.watchIgnore = opts.watchIgnore?.map(removeDotSlash) || null
 
     this.fsWatcher = null
     this.handlePromise = null
