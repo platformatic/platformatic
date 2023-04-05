@@ -85,6 +85,16 @@ async function auth (app, opts) {
       return nearest
     }
 
+    const endpointRules = {}
+    for(const rule of rules) {
+      if (rule.endpoint) {
+        endpointRules[rule.endpoint] = rule;
+        return;
+      }
+    }
+
+    console.error(endpointRules)
+
     const entityRules = {}
     // TODO validate that there is at most a rule for a given role
     for (let i = 0; i < rules.length; i++) {
@@ -112,6 +122,7 @@ async function auth (app, opts) {
         entityRules[ruleEntity].push(newRule)
       }
     }
+
 
     for (const entityKey of Object.keys(app.platformatic.entities)) {
       const rules = entityRules[entityKey] || []
