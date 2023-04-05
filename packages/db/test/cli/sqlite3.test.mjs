@@ -214,5 +214,4 @@ test('do not restart on save', async ({ comment, equal, match, teardown, not }) 
     const parsed = JSON.parse(data)
     not(parsed.msg, 'restarted')
   }
-
 })
