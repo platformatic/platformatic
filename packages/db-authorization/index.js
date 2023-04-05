@@ -85,6 +85,7 @@ async function auth (app, opts) {
       return nearest
     }
 
+    //just a sketch. Not checking permissions yet
     const endpointRules = {}
     for(const rule of rules) {
       if (rule.endpoint) {
@@ -92,8 +93,6 @@ async function auth (app, opts) {
         return;
       }
     }
-
-    console.error(endpointRules)
 
     const entityRules = {}
     // TODO validate that there is at most a rule for a given role
