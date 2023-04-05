@@ -13,5 +13,8 @@
     "dir": "./migrations",
     "table": "versions",
     "autoApply": true
+  },
+  "plugins": {
+    "paths": ["./plugin.js"]
   }
 }

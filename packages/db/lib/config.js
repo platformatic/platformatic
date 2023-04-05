@@ -22,6 +22,11 @@ class DBConfigManager extends ConfigManager {
       const originalSqlitePath = this.current.db.connectionString.replace('sqlite://', '')
       const sqliteFullPath = resolve(dirOfConfig, originalSqlitePath)
       this.current.db.connectionString = 'sqlite://' + sqliteFullPath
+      if (typeof this.current.watch !== 'object') {
+        this.current.watch = {
+          ignore: [originalSqlitePath, originalSqlitePath + '-journal']
+        }
+      }
     }
 
     /* c8 ignore next 3 */
