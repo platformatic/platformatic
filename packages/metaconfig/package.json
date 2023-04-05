@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/metaconfig",
-  "version": "0.19.1",
+  "version": "0.19.2",
   "main": "metaconfig.js",
   "description": "Manage mulitple configuration versions at the same time",
   "repository": {
