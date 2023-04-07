@@ -232,16 +232,16 @@ async function buildServer (options, app, ConfigManagerContructor) {
     options = deepmerge({}, options, cm.current)
     options.configManager = cm
     adjustConfigAfterMerge(options, stash)
+  }
 
-    if (options.server.https) {
-      options.server.https.key = await adjustHttpsKeyAndCert(options.server.https.key)
-      options.server.https.cert = await adjustHttpsKeyAndCert(options.server.https.cert)
-      options.server = { ...options.server, ...options.server.https }
-      delete options.server.https
-      options.server.protocol = 'https'
-    } else {
-      options.server.protocol = 'http'
-    }
+  if (options.server.https) {
+    options.server.https.key = await adjustHttpsKeyAndCert(options.server.https.key)
+    options.server.https.cert = await adjustHttpsKeyAndCert(options.server.https.cert)
+    options.server = { ...options.server, ...options.server.https }
+    delete options.server.https
+    options.server.protocol = 'https'
+  } else {
+    options.server.protocol = 'http'
   }
   const serverConfig = createServerConfig(options)
 

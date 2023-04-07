@@ -385,6 +385,9 @@ A **required** object with the following settings:
 - **`cors`** (`object`) — Configuration for Cross-Origin Resource Sharing (CORS) headers.
   - All options will be passed to the [`@fastify/cors`](https://github.com/fastify/fastify-cors) plugin. In order to specify a `RegExp` object, you can pass `{ regexp: 'yourregexp' }`,
     it will be automatically converted
+- **`https`** (`object`) - Configuration for HTTPS supporting the following options.
+  - `key` (**required**, `string`, `object`, or `array`) - If `key` is a string, it specifies the private key to be used. If `key` is an object, it must have a `path` property specifying the private key file. Multiple keys are supported by passing an array of keys.
+  - `cert` (**required**, `string`, `object`, or `array`) - If `cert` is a string, it specifies the certificate to be used. If `cert` is an object, it must have a `path` property specifying the certificate file. Multiple certificates are supported by passing an array of keys.
 
 - **`logger`** (`object`) -- the [logger configuration](https://www.fastify.io/docs/latest/Reference/Server/#logger).
 - **`pluginTimeout`** (`integer`) -- the milliseconds to wait for a Fastify plugin to load
