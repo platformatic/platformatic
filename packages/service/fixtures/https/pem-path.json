@@ -7,7 +7,7 @@
     },
     "https": {
       "cert": { "path": "./https.crt" },
-      "key": [{ "path": "https.key" }]
+      "key": [{ "path": "./https.key" }]
     }
   },
   "plugins": {
