@@ -49,6 +49,34 @@ test('plugin options', async ({ equal, same, match, teardown }) => {
   child.kill('SIGINT')
 })
 
+test('https embedded pem', async ({ equal, same, match, teardown }) => {
+  const { child, url } = await start('-c', join(import.meta.url, '..', '..', 'fixtures', 'https', 'embedded-pem.json'))
+
+  match(url, /https:\/\//)
+  const res = await request(`${url}`)
+  equal(res.statusCode, 200)
+  const body = await res.body.json()
+  match(body, {
+    hello: 'world'
+  }, 'response')
+
+  child.kill('SIGINT')
+})
+
+test('https pem path', async ({ equal, same, match, teardown }) => {
+  const { child, url } = await start('-c', join(import.meta.url, '..', '..', 'fixtures', 'https', 'pem-path.json'))
+
+  match(url, /https:\/\//)
+  const res = await request(`${url}`)
+  equal(res.statusCode, 200)
+  const body = await res.body.json()
+  match(body, {
+    hello: 'world'
+  }, 'response')
+
+  child.kill('SIGINT')
+})
+
 test('not load', async ({ rejects }) => {
   await rejects(execa('node', [cliPath, 'start', '-c', join(import.meta.url, '..', 'fixtures', 'not-load.service.json')]))
 })

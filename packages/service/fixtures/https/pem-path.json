@@ -1,0 +1,20 @@
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0,
+    "logger": {
+      "level": "info"
+    },
+    "https": {
+      "cert": { "path": "./https.crt" },
+      "key": [{ "path": "https.key" }]
+    }
+  },
+  "plugins": {
+    "paths": ["./plugin.js"]
+  },
+  "service": {
+    "openapi": true
+  },
+  "metrics": false
+}
