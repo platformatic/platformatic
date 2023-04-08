@@ -16,8 +16,6 @@ test('users can\'t find a page if the endpoint is protected by a rule', async ({
       userId: 42
     }
 
-
-  console.error("This is a debug message")
   app.register(core, {
     ...connInfo
   })
@@ -41,17 +39,13 @@ test('users can\'t find a page if the endpoint is protected by a rule', async ({
           userId: 'X-PLATFORMATIC-USER-ID'
         }
       }
-    }, {
-      role: 'anonymous',
-      entity: 'page',
-      find: false,
-      delete: false,
-      save: false
     }]
   })
 
   app.register(function(fastify, opts, done) {
-    fastify.get("/page", function() {
+    fastify.get("/page", function(request) {
+     //const ctx = request.createPlatformaticCtx()
+      request.authorize()
       return response
     });
     done()

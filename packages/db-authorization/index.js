@@ -61,6 +61,21 @@ async function auth (app, opts) {
     }
   }
 
+  app.addHook('onRoute', function() {
+
+    const endpointRules = opts.rules.filter(rule => !! rule?.endpoint)
+
+    app.addHook('onRequest', function(request, reply, done) {
+      request.authorize = () => {
+        console.error("I am running")
+        //const ctx = this.createPlatformaticCtx()
+//        console.error(`this is context: ${ctx}`)
+      }
+      done()
+    })
+
+  });
+
   const rules = opts.rules || []
 
   app.platformatic.addRulesForRoles = (_rules) => {
@@ -85,34 +100,29 @@ async function auth (app, opts) {
       return nearest
     }
 
-    //just a sketch. Not checking permissions yet
-    const endpointRules = {}
-    for(const rule of rules) {
-      if (rule.endpoint) {
-        endpointRules[rule.endpoint] = rule;
-        return;
-      }
-    }
-
     const entityRules = {}
     // TODO validate that there is at most a rule for a given role
     for (let i = 0; i < rules.length; i++) {
       const rule = rules[i]
 
-      let ruleEntities = null
+      let ruleEntities = [] 
       if (rule.entity) {
-        ruleEntities = [rule.entity]
+        ruleEntities.push(rule.entity)
       } else if (rule.entities) {
-        ruleEntities = [...rule.entities]
+        ruleEntities.push(...rule.entities)
       } else {
-        throw new Error(`Missing entity in authorization rule ${i}`)
+        //TODO: provide a better validation mechanism for entity and endpoint rules
+        if (!rule.endpoint) {
+          throw new Error(`Missing entity or endpoint in authorization rule ${i}`)
+        }
       }
 
       for (const ruleEntity of ruleEntities) {
         const newRule = { ...rule, entity: ruleEntity, entities: undefined }
         if (!app.platformatic.entities[newRule.entity]) {
           const nearest = findNearestEntity(ruleEntity)
-          throw new Error(`Unknown entity '${ruleEntity}' in authorization rule ${i}. Did you mean '${nearest.entity}'?`)
+          const errorMessage = nearest.entity? `Did you mean '${nearest.entity}'?` : `No entities found in the app!`
+          throw new Error(`Unknown entity '${ruleEntity}' in authorization rule ${i}. ${errorMessage}`)
         }
 
         if (!entityRules[ruleEntity]) {
