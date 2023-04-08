@@ -6,25 +6,8 @@ const core = require('@platformatic/db-core')
 const { connInfo, clear, isSQLite } = require('./helper')
 const auth = require('..')
 
-/*
-async function createBasicPages (db, sql) {
-  if (isSQLite) {
-    await db.query(sql`CREATE TABLE pages (
-      id INTEGER PRIMARY KEY,
-      title VARCHAR(42),
-      user_id INTEGER
-    );`)
-  } else {
-    await db.query(sql`CREATE TABLE pages (
-      id SERIAL PRIMARY KEY,
-      title VARCHAR(42),
-      user_id INTEGER
-    );`)
-  }
-}
-*/
-
-test('users can save and update their own pages, read everybody\'s and delete none', async ({ pass, teardown, same, equal }) => {
+//TODO: provide a better message
+test('users can\'t find a page if the endpoint is protected by a rule', async ({ pass, teardown, same, equal }) => {
   const app = fastify()
 
   const response = {
@@ -33,18 +16,10 @@ test('users can save and update their own pages, read everybody\'s and delete no
       userId: 42
     }
 
-  app.register(function(fastify, opts, done) {
-    fastify.post("/page", function() {
-      return response
-    });
-    done()
-  });
 
+  console.error("This is a debug message")
   app.register(core, {
-    ...connInfo,
-    async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
-    }
+    ...connInfo
   })
 
   app.register(auth, {
@@ -74,6 +49,13 @@ test('users can save and update their own pages, read everybody\'s and delete no
       save: false
     }]
   })
+
+  app.register(function(fastify, opts, done) {
+    fastify.get("/page", function() {
+      return response
+    });
+    done()
+  });
   teardown(app.close.bind(app))
 
   await app.ready()
@@ -85,7 +67,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
 
   {
     const res = await app.inject({
-      method: 'POST',
+      method: 'GET',
       url: '/page',
       headers: {
         Authorization: `Bearer ${token}`
@@ -94,8 +76,8 @@ test('users can save and update their own pages, read everybody\'s and delete no
         title: 'Hello'
       }
     })
-    equal(res.statusCode, 200, 'POST /pages status code')
-    same(res.json(), response, 'POST /pages response')
+    equal(res.statusCode, 401, 'GET /pages status code')
+    //same(res.json(), response, 'POST /pages response')
   }
 });
 /*
