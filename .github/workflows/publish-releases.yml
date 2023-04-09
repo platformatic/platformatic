@@ -33,7 +33,7 @@ jobs:
           command: pnpm install
       - name: Change version number and sync
         run: |
-          node scripts/update-version.mjs ${{ github.ref_name }}
+          node scripts/update-version.mjs ${{ inputs.version || github.ref_name }}
           sh scripts/sync-version.sh
       - name: update lockfile
         uses: nick-fields/retry@v2.8.3
@@ -46,7 +46,7 @@ jobs:
         run: |
           git config --global user.name "mcollina"
           git config --global user.email "hello@matteocollina.com"
-          git commit -a -m "Bumped ${{ github.ref_name }}"
+          git commit -a -m "Bumped ${{ input.version || github.ref_name }}"
           git push origin HEAD:main
       - run: pnpm -r publish --access public
         env:
@@ -112,6 +112,7 @@ jobs:
   announce-on-discord:
     runs-on: ubuntu-latest
     needs: release-npm
+    if: github.event == 'release'
     steps:
       - name: Send Discord notification
         env:
