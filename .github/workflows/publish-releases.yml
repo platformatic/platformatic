@@ -4,6 +4,13 @@ on:
   release:
     types: [published]
 
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'The version number to tag and release'
+        required: true
+        type: string
+
 jobs:
   release-npm:
     runs-on: ubuntu-latest
@@ -40,7 +47,7 @@ jobs:
           git config --global user.name "mcollina"
           git config --global user.email "hello@matteocollina.com"
           git commit -a -m "Bumped ${{ github.ref_name }}"
-          git push
+          git push origin HEAD:main
       - run: pnpm -r publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
