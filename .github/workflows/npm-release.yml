@@ -1,0 +1,49 @@
+name: Publish Package to the npm registry
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+  permissions:
+    contents: write
+
+  steps:
+    - uses: actions/checkout@v3
+    - uses: pnpm/action-setup@v2.2.4
+    - uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        registry-url: 'https://registry.npmjs.org'
+        cache: 'pnpm'
+    - name: pnpm install
+      uses: nick-fields/retry@v2.8.3
+      with:
+        max_attempts: 10
+        timeout_minutes: 15
+        retry_on: error
+        command: pnpm install
+    - name: Change version number and sync
+      run: |
+        node scripts/update-version.mjs ${{ github.ref_name }}
+        sh scripts/sync-version.sh
+    - name: update lockfile
+      uses: nick-fields/retry@v2.8.3
+      with:
+        max_attempts: 10
+        timeout_minutes: 15
+        retry_on: error
+        command: pnpm install
+    - name: GIT commit and push all changed files
+      env: 
+      run: |
+        git config --global user.name "mcollina"
+        git config --global user.email "hello@matteocollina.com"
+        git commit -a -m "Bumped ${{ github.ref_name }}"
+        git push
+    - run: pnpm -r publish --access public
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
