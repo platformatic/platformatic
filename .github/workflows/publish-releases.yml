@@ -11,9 +11,13 @@ on:
         required: true
         type: string
 
+env:
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
 jobs:
   release-npm:
     runs-on: ubuntu-latest
+    environment: main
     permissions:
       contents: write
     steps:
