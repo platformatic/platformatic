@@ -1,9 +1,6 @@
 name: Publish releases
 
 on:
-  release:
-    types: [published]
-
   workflow_dispatch:
     inputs:
       version:
@@ -37,7 +34,7 @@ jobs:
           command: pnpm install
       - name: Change version number and sync
         run: |
-          node scripts/update-version.mjs ${{ inputs.version || github.ref_name }}
+          node scripts/update-version.mjs ${{ inputs.version }}
           sh scripts/sync-version.sh
       - name: update lockfile
         uses: nick-fields/retry@v2.8.3
@@ -50,7 +47,8 @@ jobs:
         run: |
           git config --global user.name "mcollina"
           git config --global user.email "hello@matteocollina.com"
-          git commit -a -m "Bumped ${{ inputs.version || github.ref_name }}"
+          git commit -a -m "Bumped ${{ inputs.version }}"
+          git tag 
           git push origin HEAD:main
       - run: pnpm -r publish --access public
         env:
@@ -112,15 +110,3 @@ jobs:
           commit-message: added ${{ steps.gen-schemas.outputs.VERSION }}
           target-branch: main
           target-directory: ${{ steps.gen-schemas.outputs.VERSION }}
-
-  announce-on-discord:
-    runs-on: ubuntu-latest
-    needs: release-npm
-    if: github.event == 'release'
-    steps:
-      - name: Send Discord notification
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_RELEASES_WEBHOOK }}
-        uses: Ilshidur/action-discord@master
-        with:
-          args: '📣 Platformatic ${{ github.event.release.tag_name }} has been released! Check it out: ${{ github.event.release.html_url }}.'
