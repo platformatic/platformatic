@@ -61,20 +61,36 @@ async function auth (app, opts) {
     }
   }
 
-  app.addHook('onRoute', function() {
+  app.addHook('onRoute', function () {
+    app.addHook('onRequest', function (request, reply, done) {
+      request.authorize = async () => {
+      // Should validate request based on rules & request metadata
+      // TODO: check for a "path only" based approach instead of url
+        const endpointRules = opts.rules.filter(rule => rule?.endpoint === request.raw.url)
+        const restMapper = {
+          GET: 'find'
+        }
 
-    const endpointRules = opts.rules.filter(rule => !! rule?.endpoint)
+        await request.extractUser()
 
-    app.addHook('onRequest', function(request, reply, done) {
-      request.authorize = () => {
-        console.error("I am running")
-        //const ctx = this.createPlatformaticCtx()
-//        console.error(`this is context: ${ctx}`)
+        // TODO: add custom key for accessing user role from "request.user"
+        // TODO: add cross checking for role arrays in user and roles
+        const authorizationMatch = endpointRules.find(rule => {
+          if (rule.role === request.user['X-PLATFORMATIC-ROLE'] && rule[restMapper[request.method]]) {
+            return true
+          }
+
+          return false
+        })
+
+        if (!authorizationMatch) {
+          throw new Unauthorized()
+        }
       }
+
       done()
     })
-
-  });
+  })
 
   const rules = opts.rules || []
 
@@ -105,13 +121,13 @@ async function auth (app, opts) {
     for (let i = 0; i < rules.length; i++) {
       const rule = rules[i]
 
-      let ruleEntities = [] 
+      const ruleEntities = []
       if (rule.entity) {
         ruleEntities.push(rule.entity)
       } else if (rule.entities) {
         ruleEntities.push(...rule.entities)
       } else {
-        //TODO: provide a better validation mechanism for entity and endpoint rules
+        // TODO: provide a better validation mechanism for entity and endpoint rules
         if (!rule.endpoint) {
           throw new Error(`Missing entity or endpoint in authorization rule ${i}`)
         }
@@ -121,7 +137,7 @@ async function auth (app, opts) {
         const newRule = { ...rule, entity: ruleEntity, entities: undefined }
         if (!app.platformatic.entities[newRule.entity]) {
           const nearest = findNearestEntity(ruleEntity)
-          const errorMessage = nearest.entity? `Did you mean '${nearest.entity}'?` : `No entities found in the app!`
+          const errorMessage = nearest.entity ? `Did you mean '${nearest.entity}'?` : 'No entities found in the app!'
           throw new Error(`Unknown entity '${ruleEntity}' in authorization rule ${i}. ${errorMessage}`)
         }
 
@@ -131,7 +147,6 @@ async function auth (app, opts) {
         entityRules[ruleEntity].push(newRule)
       }
     }
-
 
     for (const entityKey of Object.keys(app.platformatic.entities)) {
       const rules = entityRules[entityKey] || []

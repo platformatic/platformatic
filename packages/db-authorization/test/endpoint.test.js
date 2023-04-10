@@ -1,20 +1,20 @@
 'use strict'
 
-const { test, comment } = require('tap')
+const { test } = require('tap')
 const fastify = require('fastify')
 const core = require('@platformatic/db-core')
-const { connInfo, clear, isSQLite } = require('./helper')
+const { connInfo } = require('./helper')
 const auth = require('..')
 
-//TODO: provide a better message
+// TODO: provide a better message
 test('users can\'t find a page if the endpoint is protected by a rule', async ({ pass, teardown, same, equal }) => {
   const app = fastify()
 
   const response = {
-      id: 1,
-      title: 'Hello',
-      userId: 42
-    }
+    id: 1,
+    title: 'Hello',
+    userId: 42
+  }
 
   app.register(core, {
     ...connInfo
@@ -29,7 +29,7 @@ test('users can\'t find a page if the endpoint is protected by a rule', async ({
     rules: [{
       role: 'user',
       endpoint: '/page',
-      find: true,
+      find: false,
       delete: false,
       defaults: {
         userId: 'X-PLATFORMATIC-USER-ID'
@@ -41,15 +41,14 @@ test('users can\'t find a page if the endpoint is protected by a rule', async ({
       }
     }]
   })
-
-  app.register(function(fastify, opts, done) {
-    fastify.get("/page", function(request) {
-     //const ctx = request.createPlatformaticCtx()
-      request.authorize()
+  app.register(function (fastify, opts, done) {
+    fastify.get('/page', async function (request) {
+      // const ctx = request.createPlatformaticCtx()
+      await request.authorize()
       return response
-    });
+    })
     done()
-  });
+  })
   teardown(app.close.bind(app))
 
   await app.ready()
@@ -71,9 +70,9 @@ test('users can\'t find a page if the endpoint is protected by a rule', async ({
       }
     })
     equal(res.statusCode, 401, 'GET /pages status code')
-    //same(res.json(), response, 'POST /pages response')
+    // same(res.json(), response, 'POST /pages response')
   }
-});
+})
 /*
   {
     const res = await app.inject({
