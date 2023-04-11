@@ -48,11 +48,15 @@ jobs:
           git config --global user.name "mcollina"
           git config --global user.email "hello@matteocollina.com"
           git commit -a -m "Bumped ${{ inputs.version }}"
-          git tag 
           git push origin HEAD:main
       - run: pnpm -r publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+            - name: create release
+      - name: 'Create release notes'
+        run: |
+          npm i @matteo.collina/release-notes -g
+          release-notes -a ${{ secrets.GITHUB_TOKEN }} -t ${{ inputs.version }} -r platformatic -o platformatic
 
   release-docker:
     needs: release-npm
