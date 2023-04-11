@@ -545,7 +545,7 @@ Server will listen to `http://127.0.0.1:3042`
     "port": "3042"
   },
   "db": {
-    "connectionString": "'sqlite://./db.sqlite'",
+    "connectionString": "sqlite://./db.sqlite",
     "graphiql": true,
     "openapi": true,
     "graphql": true
