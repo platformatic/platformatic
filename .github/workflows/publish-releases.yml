@@ -52,7 +52,6 @@ jobs:
       - run: pnpm -r publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-            - name: create release
       - name: 'Create release notes'
         run: |
           npm i @matteo.collina/release-notes -g
