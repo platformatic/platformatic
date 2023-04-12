@@ -1,7 +1,7 @@
 name: "documentation"
 on:
   release:
-    types: [published]
+    types: [released]
 
   push:
     branches:

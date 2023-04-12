@@ -1,7 +1,7 @@
 name: "Announce Release on Discord"
 on:
   release:
-    types: [published]
+    types: [released]
 
 jobs:
   announce-on-discord:
