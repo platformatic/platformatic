@@ -55,4 +55,4 @@ jobs:
       - name: 'Create release notes'
         run: |
           npm i @matteo.collina/release-notes -g
-          release-notes -a ${{ secrets.GITHUB_TOKEN }} -t ${{ inputs.version }} -r platformatic -o platformatic
+          release-notes -a ${{ secrets.GH_RELEASE_TOKEN }} -t ${{ inputs.version }} -r platformatic -o platformatic
