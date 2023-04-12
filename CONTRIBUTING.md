@@ -84,7 +84,7 @@ follow these steps to quickly create and start a platformatic db:
        "hostname": "127.0.0.1",
        "port": "3042"
      },
-     "core": {
+     "db": {
        "connectionString": "sqlite://./pages.db"
      },
      "migrations": {

@@ -286,7 +286,7 @@ save the following as `platformatic.db.json`:
         "level": "info"
       }
     },
-    "core": {
+    "db": {
       "connectionString": "sqlite://./db"
     },
     "migrations": {
