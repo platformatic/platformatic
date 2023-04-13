@@ -7,11 +7,13 @@ const { stat } = require('fs').promises
 module.exports = fp(async function (app, opts) {
   for (let plugin of opts.paths) {
     if (typeof plugin === 'string') {
-      plugin = { path: plugin }
+      plugin = { path: plugin, encapsulate: true }
     }
     if ((await stat(plugin.path)).isDirectory()) {
       app.register(autoload, {
         dir: plugin.path,
+        encapsulate: plugin.encapsulate !== false,
+        maxDepth: plugin.maxDepth,
         options: plugin.options
       })
     } else {
