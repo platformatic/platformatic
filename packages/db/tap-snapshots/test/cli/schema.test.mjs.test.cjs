@@ -40,6 +40,7 @@ enum OrderByDirection {
 input GraphWhereArguments {
   id: GraphWhereArgumentsid
   name: GraphWhereArgumentsname
+  or: [GraphWhereArgumentsOr]
 }
 
 input GraphWhereArgumentsid {
@@ -64,6 +65,11 @@ input GraphWhereArgumentsname {
   like: String
   in: [String]
   nin: [String]
+}
+
+input GraphWhereArgumentsOr {
+  id: GraphWhereArgumentsid
+  name: GraphWhereArgumentsname
 }
 
 type graphsCount {
