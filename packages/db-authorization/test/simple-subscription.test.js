@@ -158,7 +158,7 @@ test('GraphQL subscription authorization (same user)', async ({ pass, teardown, 
 
   {
     const res = await app.inject({
-      method: 'POST',
+      method: 'PUT',
       url: '/pages/1?fields=id,title',
       headers: {
         Authorization: `Bearer ${token}`
@@ -167,11 +167,11 @@ test('GraphQL subscription authorization (same user)', async ({ pass, teardown, 
         title: 'Hello World'
       }
     })
-    equal(res.statusCode, 200, 'POST /pages/1 status code')
+    equal(res.statusCode, 200, 'PUT /pages/1 status code')
     same(res.json(), {
       id: 1,
       title: 'Hello World'
-    }, 'POST /pages/1 response')
+    }, 'PUT /pages/1 response')
   }
 
   // There is a race condition that could lead to the pageDeleted event
@@ -422,7 +422,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
 
   {
     const res = await app.inject({
-      method: 'POST',
+      method: 'PUT',
       url: '/pages/1?fields=id,title',
       headers: {
         Authorization: `Bearer ${token}`
@@ -431,11 +431,11 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
         title: 'Hello World'
       }
     })
-    equal(res.statusCode, 200, 'POST /pages/1 status code')
+    equal(res.statusCode, 200, 'PUT /pages/1 status code')
     same(res.json(), {
       id: 1,
       title: 'Hello World'
-    }, 'POST /pages/1 response')
+    }, 'PUT /pages/1 response')
   }
 
   // There is a race condition that could lead to the pageDeleted event
@@ -699,7 +699,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
 
   {
     const res = await app.inject({
-      method: 'POST',
+      method: 'PUT',
       url: '/pages/1?fields=id,title',
       headers: {
         Authorization: `Bearer ${token}`
@@ -708,11 +708,11 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
         title: 'Hello World'
       }
     })
-    equal(res.statusCode, 200, 'POST /pages/1 status code')
+    equal(res.statusCode, 200, 'PUT /pages/1 status code')
     same(res.json(), {
       id: 1,
       title: 'Hello World'
-    }, 'POST /pages/1 response')
+    }, 'PUT /pages/1 response')
   }
 
   // There is a race condition that could lead to the pageDeleted event
