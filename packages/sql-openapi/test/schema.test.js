@@ -101,13 +101,13 @@ test('Simple rest API with different schemas', { skip: isSQLite }, async (t) => 
 
   {
     const res = await app.inject({
-      method: 'POST',
+      method: 'PUT',
       url: '/test1Pages/1',
       body: {
         title: 'Hello World'
       }
     })
-    equal(res.statusCode, 200, 'POST /test1Pages/1 status code')
+    equal(res.statusCode, 200, 'PUT /test1Pages/1 status code')
     same(res.json(), {
       id: 1,
       title: 'Hello World'

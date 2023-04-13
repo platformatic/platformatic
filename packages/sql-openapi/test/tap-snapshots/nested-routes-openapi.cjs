@@ -608,63 +608,6 @@ Object {
           },
         },
       },
-      "post": Object {
-        "operationId": "updateOwner",
-        "parameters": Array [
-          Object {
-            "in": "query",
-            "name": "fields",
-            "required": false,
-            "schema": Object {
-              "items": Object {
-                "enum": Array [
-                  "id",
-                  "name",
-                ],
-                "type": "string",
-              },
-              "type": "array",
-            },
-          },
-          Object {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": Object {
-              "type": "integer",
-            },
-          },
-        ],
-        "requestBody": Object {
-          "content": Object {
-            "application/json": Object {
-              "schema": Object {
-                "$ref": "#/components/schemas/Owner",
-              },
-            },
-          },
-        },
-        "responses": Object {
-          "200": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "$ref": "#/components/schemas/Owner",
-                },
-              },
-            },
-            "description": "Default Response",
-            "links": Object {
-              "GetPosts": Object {
-                "operationId": "getPosts",
-                "parameters": Object {
-                  "where.ownerId.eq": "$response.body#/id",
-                },
-              },
-            },
-          },
-        },
-      },
       "put": Object {
         "operationId": "updateOwner",
         "parameters": Array [
@@ -1786,66 +1729,6 @@ Object {
             },
           },
         ],
-        "responses": Object {
-          "200": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "$ref": "#/components/schemas/Post",
-                },
-              },
-            },
-            "description": "Default Response",
-            "links": Object {
-              "GetOwnerById": Object {
-                "operationId": "getOwnerById",
-                "parameters": Object {
-                  "id": "$response.body#/ownerId",
-                },
-              },
-            },
-          },
-        },
-      },
-      "post": Object {
-        "operationId": "updatePost",
-        "parameters": Array [
-          Object {
-            "in": "query",
-            "name": "fields",
-            "required": false,
-            "schema": Object {
-              "items": Object {
-                "enum": Array [
-                  "counter",
-                  "id",
-                  "longText",
-                  "ownerId",
-                  "title",
-                ],
-                "type": "string",
-              },
-              "type": "array",
-            },
-          },
-          Object {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": Object {
-              "type": "integer",
-            },
-          },
-        ],
-        "requestBody": Object {
-          "content": Object {
-            "application/json": Object {
-              "schema": Object {
-                "$ref": "#/components/schemas/Post",
-              },
-            },
-          },
-        },
         "responses": Object {
           "200": Object {
             "content": Object {
