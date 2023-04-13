@@ -1,0 +1,20 @@
+name: Update Platformatic Cloud runtime
+
+on:
+  workflow_dispatch:
+  release:
+    types: [released]
+
+jobs:
+  update-cloud-runtime:
+    runs-on: ubuntu-latest
+    env:
+      RELEASED_VERSION: ${{ github.event.name }}
+    steps:
+      - name: Extract Version without the 'v'
+        run: |
+          RAW_VERSION=`echo ${{ env.RELEASED_VERSION }} | sed 's/v//'`
+          echo "RAW_VERSION=$RAW_VERSION" >> $GITHUB_OUTPUT
+      - name: Call infra repository action to update runtime
+        run: |
+          curl -vvv -XPOST -u "${{ secrets.GH_API_USERNAME }}:${{ secrets.GH_API_TOKEN }}" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" https://api.github.com/repos/platformatic/infra/dispatches --data '{ "event_type": "platformatic_release", "client_payload": { "version": "${{ env.RAW_VERSION }}" }' --fail
