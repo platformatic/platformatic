@@ -3,6 +3,7 @@
 const { test } = require('tap')
 const { resolve } = require('path')
 const ConfigManager = require('..')
+const pkg = require('../package.json')
 
 test('should throw if file is not found', async ({ match, fail }) => {
   try {
@@ -117,7 +118,7 @@ test('should automatically update', async ({ same }) => {
   })
   await cm.parse()
   same(cm.current, {
-    $schema: 'https://platformatic.dev/schemas/v0.19.0/db',
+    $schema: `https://platformatic.dev/schemas/v${pkg.version.replace(/\.\d+$/, '.0')}/db`,
     server: { hostname: '127.0.0.1', port: '3042', logger: { level: 'info' } },
     metrics: { auth: { username: 'plt-db', password: 'plt-db' } },
     plugins: { paths: ['./plugin-sum.js'] },
