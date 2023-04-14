@@ -187,3 +187,25 @@ referenceTest('objects in arrays', {
     'title'
   ]
 })
+
+referenceTest('enums', {
+  id: 'Page',
+  title: 'Page',
+  description: 'A Page',
+  type: 'object',
+  properties: {
+    id: {
+      type: 'integer'
+    },
+    title: {
+      type: 'string'
+    },
+    color: {
+      type: 'string',
+      enum: ['amber', 'green', 'red']
+    }
+  },
+  required: [
+    'title'
+  ]
+})
