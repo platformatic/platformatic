@@ -123,7 +123,8 @@ function mapOpenAPItoTypes (obj, opts = {}) {
 
 function renderProperties (writer, addedProps, properties = {}, additionalProperties, required = []) {
   for (const name of Object.keys(properties)) {
-    const { type, nullable, items } = properties[name]
+    const localProperty = properties[name]
+    const { type, nullable, items } = localProperty
     addedProps.add(name)
     if (required.indexOf(name) !== -1) {
       writer.write(property(null, name))
@@ -170,6 +171,8 @@ function renderProperties (writer, addedProps, properties = {}, additionalProper
           const current = properties[name]
           renderProperties(writer, addedProps, current.properties, current.additionalProperties, current.required)
         })
+      } else if (localProperty.enum) {
+        writer.write(localProperty.enum.map((v) => `"${v}"`).join(' | '))
       } else {
         writer.write(JSONSchemaToTsType(type))
       }
