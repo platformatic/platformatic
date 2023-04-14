@@ -301,6 +301,17 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "where.or",
+            "required": false,
+            "schema": Object {
+              "items": Object {
+                "type": "string",
+              },
+              "type": "array",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "orderby.counter",
             "required": false,
             "schema": Object {
@@ -610,6 +621,17 @@ Object {
             "required": false,
             "schema": Object {
               "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.or",
+            "required": false,
+            "schema": Object {
+              "items": Object {
+                "type": "string",
+              },
+              "type": "array",
             },
           },
         ],

@@ -270,4 +270,31 @@ test('list', async ({ pass, teardown, same, equal }) => {
       }
     }, 'posts response')
   }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+          query {
+            posts(where: { or: [ { id: { in: [10, 20] } }, { id: { in: [20, 30] } } ] }) {
+              id
+              title
+              longText
+              counter
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'posts status code')
+    same(res.json(), {
+      data: {
+        posts: [
+          { id: '1', title: 'Dog', longText: 'Foo', counter: 10 }
+        ]
+      }
+    }, 'posts response')
+  }
 })
