@@ -5,6 +5,7 @@ import close from 'close-with-grace'
 import loadConfig from './load-config.js'
 import { compileWatch } from './compile.js'
 import { addLoggerToTheConfig } from './utils.js'
+import schema from './schema.js'
 
 // TODO make sure coverage is reported for Windows
 // Currently C8 is not reporting it
@@ -12,7 +13,15 @@ import { addLoggerToTheConfig } from './utils.js'
 
 export function buildStart (_loadConfig, _buildServer) {
   return async function start (_args) {
-    const { configManager, args } = await _loadConfig({}, _args, { watch: true })
+    const { configManager, args } = await _loadConfig({}, _args, {
+      watch: true,
+      schemaOptions: {
+        useDefaults: true,
+        coerceTypes: true,
+        allErrors: true,
+        strict: false
+      },
+    })
 
     const config = configManager.current
 

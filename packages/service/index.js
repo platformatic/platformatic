@@ -4,7 +4,7 @@ const { start } = require('@fastify/restartable')
 const sandbox = require('fastify-sandbox')
 const underPressure = require('@fastify/under-pressure')
 const { schema } = require('./lib/schema')
-const ConfigManager = require('./lib/config.js')
+const ConfigManager = require('@platformatic/config')
 const { addLoggerToTheConfig, getJSPluginPath, isFileAccessible } = require('./lib/utils')
 const loadConfig = require('./lib/load-config')
 const { isKeyEnabled, deepmerge } = require('@platformatic/utils')
@@ -217,15 +217,22 @@ async function adjustHttpsKeyAndCert (arg) {
   return arg
 }
 
-async function buildServer (options, app, ConfigManagerContructor) {
+async function buildServer (options, app) {
   app = app || platformaticService
-  ConfigManagerContructor = ConfigManagerContructor || ConfigManager
 
   if (!options.configManager) {
     // instantiate a new config manager from current options
-    const cm = new ConfigManagerContructor({
+    const cm = new ConfigManager({
       source: options,
-      schema: app?.schema ?? schema
+      schema: app?.schema ?? schema,
+      schemaOptions: {
+        useDefaults: true,
+        coerceTypes: true,
+        allErrors: true,
+        strict: false
+      },
+      allowToWatch: ['.env', ...(app?.allowToWatch || [])],
+      envWhitelist: ['PORT', ...(app?.envWhitelist || [])]
     })
     await cm.parseAndValidate()
     const stash = adjustConfigBeforeMerge(cm.current)
@@ -311,5 +318,4 @@ module.exports.platformaticService = platformaticService
 module.exports.addLoggerToTheConfig = addLoggerToTheConfig
 module.exports.loadConfig = loadConfig
 module.exports.tsCompiler = compiler
-module.exports.ConfigManager = ConfigManager
 module.exports.buildStart = buildStart

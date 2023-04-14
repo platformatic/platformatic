@@ -2,7 +2,7 @@
 
 const parseArgs = require('minimist')
 const { access } = require('fs/promises')
-const ConfigManager = require('./config.js')
+const ConfigManager = require('@platformatic/config')
 const deepmerge = require('@fastify/deepmerge')
 const { findConfigFile } = require('./utils.js')
 
@@ -15,7 +15,7 @@ const ourConfigFiles = [
   'platformatic.service.tml'
 ]
 
-async function loadConfig (minimistConfig, _args, configOpts = {}, Manager = ConfigManager, configFileNames = ourConfigFiles) {
+async function loadConfig (minimistConfig, _args, configOpts = {}, configFileNames = ourConfigFiles) {
   const args = parseArgs(_args, deepmerge({ all: true })({
     string: ['allow-env'],
     boolean: ['hotReload'],
@@ -46,7 +46,7 @@ Error: ${err}
     process.exit(1)
   }
 
-  const configManager = new Manager({
+  const configManager = new ConfigManager({
     source: args.config,
     envWhitelist: [...args.allowEnv.split(',')],
     ...configOpts
