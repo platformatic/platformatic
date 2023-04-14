@@ -320,7 +320,9 @@ An optional object that defines the plugins loaded by Platformatic DB.
   or an array of objects composed as follows,
   - `path` (`string`): Relative path to plugin's entry point.
   - `options` (`object`): Optional plugin options.
-  - `encapsulate` (`boolean`): if the path is a folder, it instructs Platformatic to not encapsulate those plugins.
+  - `encapsulate` (`boolean`): if the path is a folder, it instruct Platformatic to not
+    [encapsulate](https://www.fastify.io/docs/latest/Reference/Encapsulation/) those plugins,
+    allowing decorators and hooks to be shared across all routes.
   - `maxDepth` (`integer`): if the path is a folder, it limits the depth to load the content from.
 - **`typescript`** (`boolean`): enable typescript compilation. A `tsconfig.json` file is required in the same folder.
 - **`hotReload`** (`boolean`, default: `true`) if `true` or not specified, the plugin is loaded using [`fastify-sandbox`](https://github.com/mcollina/fastify-sandbox), otherwise is loaded directly using `require`/`import` and the hot reload is not enabled
