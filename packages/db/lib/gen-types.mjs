@@ -78,7 +78,9 @@ async function generateGlobalTypes (entities, config) {
 
   const schemaIdTypes = []
   const names = []
-  for (const [key, { name }] of Object.entries(entities)) {
+  const keys = Object.keys(entities).sort()
+  for (const key of keys) {
+    const { name } = entities[key]
     schemaIdTypes.push(name)
     completeTypesImports.push(`import { ${name} } from './${typesRelativePath}/${name}'`)
     globalTypesInterface.push(`${key}: Entity<${name}>,`)
