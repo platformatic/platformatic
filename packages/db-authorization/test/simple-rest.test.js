@@ -106,7 +106,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
 
   {
     const res = await app.inject({
-      method: 'POST',
+      method: 'PUT',
       url: '/pages/1?fields=id,title',
       headers: {
         Authorization: `Bearer ${token}`
@@ -115,11 +115,11 @@ test('users can save and update their own pages, read everybody\'s and delete no
         title: 'Hello World'
       }
     })
-    equal(res.statusCode, 200, 'POST /pages/1 status code')
+    equal(res.statusCode, 200, 'PUT /pages/1 status code')
     same(res.json(), {
       id: 1,
       title: 'Hello World'
-    }, 'POST /pages/1 response')
+    }, 'PUT /pages/1 response')
   }
 
   {
@@ -144,7 +144,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
 
   {
     const res = await app.inject({
-      method: 'POST',
+      method: 'PUT',
       url: '/pages/1',
       headers: {
         Authorization: `Bearer ${token2}`
@@ -153,13 +153,13 @@ test('users can save and update their own pages, read everybody\'s and delete no
         title: 'Hello World2'
       }
     })
-    equal(res.statusCode, 401, 'POST /pages/1 status code (Unauthorized)')
+    equal(res.statusCode, 401, 'PUT /pages/1 status code (Unauthorized)')
     same(res.json(), {
       message: 'operation not allowed',
       code: 'PLT_DB_AUTH_UNAUTHORIZED',
       error: 'Unauthorized',
       statusCode: 401
-    }, 'POST /pages/1 response (Unauthorized)')
+    }, 'PUT/pages/1 response (Unauthorized)')
   }
 
   {
@@ -194,19 +194,19 @@ test('users can save and update their own pages, read everybody\'s and delete no
 
   {
     const res = await app.inject({
-      method: 'POST',
+      method: 'PUT',
       url: '/pages/1',
       body: {
         title: 'Hello World3'
       }
     })
-    equal(res.statusCode, 401, 'POST /pages/1 status code (Anonymous)')
+    equal(res.statusCode, 401, 'PUT /pages/1 status code (Anonymous)')
     same(res.json(), {
       message: 'operation not allowed',
       code: 'PLT_DB_AUTH_UNAUTHORIZED',
       error: 'Unauthorized',
       statusCode: 401
-    }, 'POST /pages/1 response (Anonymous)')
+    }, 'PUT /pages/1 response (Anonymous)')
   }
 
   {

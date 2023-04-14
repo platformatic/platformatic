@@ -73,7 +73,7 @@ test('call /dashboard/metrics after user requests', async ({ teardown, equal, ha
     server.inject({ method: 'GET', url: '/pages', headers: authHeaders }),
     server.inject({ method: 'GET', url: '/pages/0' }),
     server.inject({ method: 'GET', url: '/pages/0', headers: authHeaders }),
-    server.inject({ method: 'POST', url: '/pages/0', body: {} }),
+    server.inject({ method: 'PUT', url: '/pages/0', body: {} }),
     server.inject({ method: 'POST', url: '/graphql', headers: authHeaders, body: {} })
   ])
 
@@ -101,12 +101,14 @@ test('call /dashboard/metrics after user requests', async ({ teardown, equal, ha
           failureRate: 1
         }
       },
-      POST: {
+      PUT: {
         '/pages/:id': {
           reqCountPerStatusCode: { 401: 1 },
           totalReqCount: 1,
           failureRate: 1
-        },
+        }
+      },
+      POST: {
         '/graphql': {
           reqCountPerStatusCode: { 400: 1 },
           totalReqCount: 1,

@@ -88,17 +88,17 @@ test('simple db, simple rest API', async (t) => {
 
   {
     const res = await app.inject({
-      method: 'POST',
+      method: 'PUT',
       url: '/pages/1',
       body: {
         title: 'Hello World'
       }
     })
-    equal(res.statusCode, 200, 'POST /pages/1 status code')
+    equal(res.statusCode, 200, 'PUT /pages/1 status code')
     same(res.json(), {
       id: 1,
       title: 'Hello World'
-    }, 'POST /pages/1 response')
+    }, 'PUT /pages/1 response')
   }
 
   {
@@ -151,7 +151,7 @@ test('simple db, simple rest API', async (t) => {
 
   {
     const res = await app.inject({
-      method: 'POST',
+      method: 'PUT',
       url: '/pages/1?fields=title',
       body: {
         title: 'Hello fields'
@@ -159,7 +159,7 @@ test('simple db, simple rest API', async (t) => {
     })
     same(res.json(), {
       title: 'Hello fields'
-    }, 'POST /pages/1?fields=title response')
+    }, 'PUT /pages/1?fields=title response')
   }
 
   {
@@ -489,7 +489,7 @@ test('not found', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('POST with an Id', async ({ pass, teardown, same, equal }) => {
+test('PUT with an Id', async ({ pass, teardown, same, equal }) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -508,13 +508,13 @@ test('POST with an Id', async ({ pass, teardown, same, equal }) => {
 
   {
     const res = await app.inject({
-      method: 'POST',
+      method: 'PUT',
       url: '/pages/1',
       body: {
         title: 'Hello World'
       }
     })
-    equal(res.statusCode, 200, 'POST /pages/1 status code')
+    equal(res.statusCode, 200, 'PUT /pages/1 status code')
     same(res.json(), {
       id: 1,
       title: 'Hello World'

@@ -724,57 +724,6 @@ Object {
           },
         },
       },
-      "post": Object {
-        "operationId": "updatePage",
-        "parameters": Array [
-          Object {
-            "in": "query",
-            "name": "fields",
-            "required": false,
-            "schema": Object {
-              "items": Object {
-                "enum": Array [
-                  "counter",
-                  "id",
-                  "title",
-                ],
-                "type": "string",
-              },
-              "type": "array",
-            },
-          },
-          Object {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": Object {
-              "type": "integer",
-            },
-          },
-        ],
-        "requestBody": Object {
-          "content": Object {
-            "application/json": Object {
-              "schema": Object {
-                "$ref": "#/components/schemas/Page",
-              },
-            },
-          },
-        },
-        "responses": Object {
-          "200": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "$ref": "#/components/schemas/Page",
-                },
-              },
-            },
-            "description": "Default Response",
-            "links": Object {},
-          },
-        },
-      },
       "put": Object {
         "operationId": "updatePage",
         "parameters": Array [

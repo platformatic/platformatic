@@ -606,56 +606,6 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
           }
         }
       },
-      "post": {
-        "operationId": "updateGraph",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Graph"
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "enum": [
-                  "id",
-                  "name"
-                ]
-              }
-            },
-            "in": "query",
-            "name": "fields",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "integer"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Graph"
-                }
-              }
-            },
-            "links": {}
-          }
-        }
-      },
       "put": {
         "operationId": "updateGraph",
         "requestBody": {

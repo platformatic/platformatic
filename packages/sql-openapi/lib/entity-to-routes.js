@@ -268,48 +268,46 @@ async function entityPlugin (app, opts) {
     }
   }
 
-  for (const { method, opPrefix } of [{ method: 'POST', opPrefix: 'update' }, { method: 'PUT', opPrefix: 'update' }]) {
-    app.route({
-      url: `/:${primaryKeyCamelcase}`,
-      method,
-      schema: {
-        operationId: opPrefix + capitalize(entity.singularName),
-        body: entitySchema,
-        params: primaryKeyParams,
-        querystring: {
-          type: 'object',
-          properties: {
-            fields
-          }
-        },
-        response: {
-          200: entitySchema
+  app.route({
+    url: `/:${primaryKeyCamelcase}`,
+    method: 'PUT',
+    schema: {
+      operationId: 'update' + capitalize(entity.singularName),
+      body: entitySchema,
+      params: primaryKeyParams,
+      querystring: {
+        type: 'object',
+        properties: {
+          fields
         }
       },
-      links: {
-        200: entityLinks
-      },
-      async handler (request, reply) {
-        const id = request.params[primaryKeyCamelcase]
-        const ctx = { app: this, reply }
-        const res = await entity.save({
-          ctx,
-          input: {
-            ...request.body,
-            [primaryKeyCamelcase]: id
-          },
-          where: {
-            [primaryKeyCamelcase]: {
-              eq: id
-            }
-          },
-          fields: request.query.fields
-        })
-        reply.header('location', `${app.prefix}/${res[primaryKeyCamelcase]}`)
-        return res
+      response: {
+        200: entitySchema
       }
-    })
-  }
+    },
+    links: {
+      200: entityLinks
+    },
+    async handler (request, reply) {
+      const id = request.params[primaryKeyCamelcase]
+      const ctx = { app: this, reply }
+      const res = await entity.save({
+        ctx,
+        input: {
+          ...request.body,
+          [primaryKeyCamelcase]: id
+        },
+        where: {
+          [primaryKeyCamelcase]: {
+            eq: id
+          }
+        },
+        fields: request.query.fields
+      })
+      reply.header('location', `${app.prefix}/${res[primaryKeyCamelcase]}`)
+      return res
+    }
+  })
 
   app.delete(`/:${primaryKeyCamelcase}`, {
     schema: {
