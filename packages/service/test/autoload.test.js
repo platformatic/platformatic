@@ -356,3 +356,57 @@ test('multiple files / watch false / no object', async ({ teardown, equal }) => 
     equal(body.hello, 'bar', 'body')
   }
 })
+
+test('nested directories', async ({ teardown, equal, same }) => {
+  const config = {
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    service: {
+      openapi: true
+    },
+    plugins: {
+      paths: [{
+        path: join(__dirname, 'fixtures', 'nested-directories', 'plugins'),
+        encapsulate: false
+      }, {
+        path: join(__dirname, 'fixtures', 'nested-directories', 'modules'),
+        encapsulate: false,
+        maxDepth: 1
+      }]
+    }
+  }
+
+  const server = await buildServer(config)
+  teardown(server.stop)
+  await server.listen()
+
+  {
+    const res = await request(`${server.url}/inventory/product/42`)
+    equal(res.statusCode, 200, 'status code')
+    const body = await res.body.json()
+    same(body, { sku: 42, inStore: 2 }, 'body')
+  }
+
+  {
+    const res = await request(`${server.url}/catalogue/products`)
+    equal(res.statusCode, 200, 'status code')
+    const body = await res.body.json()
+    same(body, [{ sku: 42, name: 'foo', inStore: 2 }, { sku: 43, name: 'bar', inStore: 0 }], 'body')
+  }
+
+  {
+    const res = await request(`${server.url}/foo/baz`)
+    equal(res.statusCode, 404, 'status code')
+    const body = await res.body.text()
+    equal(body, 'I\'m sorry, I couldn\'t find what you were looking for.')
+  }
+
+  {
+    const res = await request(`${server.url}/catalogue/error`)
+    equal(res.statusCode, 500, 'status code')
+    const body = await res.body.text()
+    equal(body, 'I\'m sorry, there was an error processing your request.')
+  }
+})

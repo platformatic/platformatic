@@ -364,6 +364,13 @@ const plugins = {
               type: 'string',
               resolvePath: true
             },
+            encapsulate: {
+              type: 'boolean',
+              default: true
+            },
+            maxDepth: {
+              type: 'integer'
+            },
             options: {
               type: 'object',
               additionalProperties: true
