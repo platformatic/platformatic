@@ -9,7 +9,7 @@ jobs:
   update-cloud-runtime:
     runs-on: ubuntu-latest
     env:
-      RELEASED_VERSION: ${{ github.event.name }}
+      RELEASED_VERSION: ${{ github.event.release.name }}
     steps:
       - name: Extract Version without the 'v'
         run: |
