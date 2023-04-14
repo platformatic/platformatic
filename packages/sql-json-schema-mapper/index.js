@@ -171,8 +171,8 @@ function renderProperties (writer, addedProps, properties = {}, additionalProper
           const current = properties[name]
           renderProperties(writer, addedProps, current.properties, current.additionalProperties, current.required)
         })
-      } else if (localProperty.enum) {
-        writer.write(localProperty.enum.map((v) => `"${v}"`).join(' | '))
+      } else if (type === 'string' && localProperty.enum) {
+        writer.write(localProperty.enum.sort().map((v) => `"${v}"`).join(' | '))
       } else {
         writer.write(JSONSchemaToTsType(type))
       }

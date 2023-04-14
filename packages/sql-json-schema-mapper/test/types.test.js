@@ -202,7 +202,7 @@ referenceTest('enums', {
     },
     color: {
       type: 'string',
-      enum: ['red', 'amber', 'green']
+      enum: ['amber', 'green', 'red']
     }
   },
   required: [
