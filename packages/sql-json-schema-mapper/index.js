@@ -16,7 +16,7 @@ function mapSQLTypeToOpenAPIType (sqlType) {
     case 'smallint':
       return 'integer'
     case 'decimal':
-      return 'number'
+      return 'string'
     case 'bigint':
       return 'string'
     case 'int2':
@@ -42,7 +42,7 @@ function mapSQLTypeToOpenAPIType (sqlType) {
     case 'double precision':
       return 'number'
     case 'numeric':
-      return 'number'
+      return 'string'
     case 'bigint unsigned':
       return 'integer'
     case 'float4':

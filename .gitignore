@@ -119,6 +119,7 @@ playwright-report
 
 # IDE folders
 .vscode
+.idea
 
 *.sqlite
 
@@ -127,6 +128,6 @@ tags
 
 # tmp filees for packages
 
-packages/service/test/tmp 
+packages/service/test/tmp
 packages/cli/fixtures/sqlite/db
-packages/client-cli/test/tmp 
+packages/client-cli/test/tmp

@@ -91,7 +91,7 @@ test('simple db, simple rest API', async (t) => {
     t.same(pageJsonSchema.properties.id, { type: 'integer' })
     t.same(pageJsonSchema.properties.title, { type: 'string' })
     t.same(pageJsonSchema.properties.description, { type: 'string', nullable: true })
-    t.same(pageJsonSchema.properties.section, { type: 'number', nullable: true })
+    t.same(pageJsonSchema.properties.section, { type: 'string', nullable: true })
     if (isMariaDB) {
       t.same(pageJsonSchema.properties.metadata, { type: 'string', nullable: true })
     } else {

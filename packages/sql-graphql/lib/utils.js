@@ -19,7 +19,7 @@ function sqlTypeToGraphQL (sqlType) {
     case 'smallint':
       return graphql.GraphQLInt
     case 'decimal':
-      return graphql.GraphQLInt
+      return graphql.GraphQLString
     case 'bigint':
       return graphql.GraphQLString
     case 'int2':
@@ -43,7 +43,7 @@ function sqlTypeToGraphQL (sqlType) {
     case 'double precision':
       return graphql.GraphQLFloat
     case 'numeric':
-      return graphql.GraphQLFloat
+      return graphql.GraphQLString
     case 'float4':
       return graphql.GraphQLFloat
     case 'date':
