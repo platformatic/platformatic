@@ -62,6 +62,7 @@ function buildCallFunction (baseUrl, path, method, methodMeta, operationId) {
 
   const pathParams = methodMeta.parameters?.filter(p => p.in === 'path') || []
   const queryParams = methodMeta.parameters?.filter(p => p.in === 'query') || []
+  const headerParams = methodMeta.parameters?.filter(p => p.in === 'header') || []
 
   return async function (args) {
     let headers = this[kHeaders]
@@ -83,6 +84,13 @@ function buildCallFunction (baseUrl, path, method, methodMeta, operationId) {
     for (const param of queryParams) {
       if (body[param.name] !== undefined) {
         query.set(param.name, body[param.name])
+        body[param.name] = undefined
+      }
+    }
+
+    for (const param of headerParams) {
+      if (body[param.name] !== undefined) {
+        headers[param.name] = body[param.name]
         body[param.name] = undefined
       }
     }
