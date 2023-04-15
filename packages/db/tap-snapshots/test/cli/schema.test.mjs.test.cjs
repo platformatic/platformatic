@@ -316,6 +316,17 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
           },
           {
             "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "in": "query",
+            "name": "where.or",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string",
               "enum": [
                 "asc",
@@ -549,6 +560,17 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
             },
             "in": "query",
             "name": "where.name.nin",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "in": "query",
+            "name": "where.or",
             "required": false
           }
         ],

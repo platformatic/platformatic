@@ -278,7 +278,7 @@ test('list', async ({ pass, teardown, same, equal }) => {
       body: {
         query: `
           query {
-            posts(where: { or: [ { id: { in: [10, 20] } }, { id: { in: [20, 30] } } ] }) {
+            posts(where: { or: [ { counter: { in: [10, 20] } }, { counter: { in: [20, 30] } } ] }) {
               id
               title
               longText
@@ -292,7 +292,9 @@ test('list', async ({ pass, teardown, same, equal }) => {
     same(res.json(), {
       data: {
         posts: [
-          { id: '1', title: 'Dog', longText: 'Foo', counter: 10 }
+          { id: '1', title: 'Dog', longText: 'Foo', counter: 10 },
+          { id: '2', title: 'Cat', longText: 'Bar', counter: 20 },
+          { id: '3', title: 'Mouse', longText: 'Baz', counter: 30 }
         ]
       }
     }, 'posts response')

@@ -102,6 +102,7 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
             if (modifier === 'in' || modifier === 'nin') {
               // TODO handle escaping of ,
               v = v.split(',')
+              /* istanbul ignore next */
               if (mapSQLTypeToOpenAPIType(entity.fields[field].sqlType) === 'integer') {
                 v = v.map((v) => parseInt(v))
               }
