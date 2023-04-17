@@ -6,9 +6,12 @@ const dashboard = require('@platformatic/db-dashboard')
 const { platformaticService, buildServer } = require('@platformatic/service')
 const { isKeyEnabled } = require('@platformatic/utils')
 const { schema } = require('./lib/schema')
-const ConfigManager = require('./lib/config.js')
+const ConfigManager = require('@platformatic/config')
+const adjustConfig = require('./lib/adjust-config')
 
 async function platformaticDB (app, opts) {
+  await adjustConfig(opts.configManager)
+
   if (opts.migrations && opts.migrations.autoApply === true && !app.restarted) {
     app.log.debug({ migrations: opts.migrations }, 'running migrations')
     const { execute } = await import('./lib/migrate.mjs')
@@ -29,7 +32,7 @@ async function platformaticDB (app, opts) {
   }
 
   async function toLoad (app) {
-    app.register(core, opts.db)
+    app.register(core, opts.configManager.current.db)
     if (opts.authorization) {
       app.register(auth, opts.authorization)
     }
@@ -70,9 +73,10 @@ async function platformaticDB (app, opts) {
 
 platformaticDB[Symbol.for('skip-override')] = true
 platformaticDB.schema = schema
+platformaticDB.envWhitelist = ['DATABASE_URL', ...(platformaticService.envWhitelist)]
 
 async function buildDBServer (options) {
-  return buildServer(options, platformaticDB, ConfigManager)
+  return buildServer(options, platformaticDB)
 }
 
 module.exports.buildServer = buildDBServer

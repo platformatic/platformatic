@@ -28,8 +28,8 @@ function generateDefaultConfig () {
   }
 }
 
-// async function loadConfig (minimistConfig, _args, configOpts = {}, Manager = ConfigManager, configFileNames = ourConfigFiles) {
-async function loadConfig (minimistConfig, _args, defaultConfig = generateDefaultConfig(), configFileNames = ourConfigFiles) {
+async function loadConfig (minimistConfig, _args, defaultConfig, configFileNames = ourConfigFiles) {
+  defaultConfig ??= generateDefaultConfig()
   const args = parseArgs(_args, deepmerge({ all: true })({
     string: ['allow-env'],
     boolean: ['hotReload'],

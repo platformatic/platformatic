@@ -5,9 +5,8 @@ const sandbox = require('fastify-sandbox')
 const underPressure = require('@fastify/under-pressure')
 const { schema } = require('./lib/schema')
 const ConfigManager = require('@platformatic/config')
-const { generateDefaultConfig } = require('./lib/load-config')
+const { loadConfig, generateDefaultConfig } = require('./lib/load-config')
 const { addLoggerToTheConfig, getJSPluginPath, isFileAccessible } = require('./lib/utils')
-const loadConfig = require('./lib/load-config')
 const { isKeyEnabled, deepmerge } = require('@platformatic/utils')
 const compiler = require('./lib/compile')
 const { join, dirname, resolve } = require('path')
@@ -168,6 +167,7 @@ async function platformaticService (app, opts, toLoad = []) {
 
 platformaticService[Symbol.for('skip-override')] = true
 platformaticService.schema = schema
+platformaticService.envWhitelist = ['PORT', 'HOSTNAME']
 
 function adjustConfigBeforeMerge (cm) {
   // This function and adjustConfigAfterMerge() are needed because there are
@@ -219,12 +219,18 @@ async function adjustHttpsKeyAndCert (arg) {
 }
 
 function defaultConfig (app, source) {
-  return {
+  const res = {
     source,
     ...generateDefaultConfig(),
     allowToWatch: ['.env', ...(app?.allowToWatch || [])],
     envWhitelist: ['PORT', ...(app?.envWhitelist || [])]
   }
+
+  if (app.schema) {
+    res.schema = app.schema
+  }
+
+  return res
 }
 
 async function buildServer (options, app) {
@@ -316,5 +322,6 @@ module.exports.createServerConfig = createServerConfig
 module.exports.platformaticService = platformaticService
 module.exports.addLoggerToTheConfig = addLoggerToTheConfig
 module.exports.loadConfig = loadConfig
+module.exports.generateConfigManagerConfig = generateDefaultConfig
 module.exports.tsCompiler = compiler
 module.exports.buildStart = buildStart
