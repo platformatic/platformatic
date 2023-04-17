@@ -2,6 +2,34 @@
 
 /** @param {import('fastify').FastifyInstance} app */
 module.exports = async function (app) {
+  app.put('/movies/:id/:title', {
+    schema: {
+      operationId: 'updateMovieTitle',
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          title: { type: 'string' }
+        },
+        required: ['id', 'title']
+      },
+      responses: {
+        204: {
+          description: 'Successuly updated title'
+        }
+      }
+    }
+  }, async (request, reply) => {
+    await app.platformatic.entities.movie.save({
+      fields: ['id', 'title'],
+      input: {
+        id: request.params.id,
+        title: request.params.title
+      }
+    })
+    reply.status(204)
+  })
+
   app.get('/hello', async (request, reply) => {
     return { hello: 'world' }
   })
