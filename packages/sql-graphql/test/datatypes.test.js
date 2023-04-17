@@ -58,7 +58,7 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async ({ pass, tea
                               uuid: "12345678-1234-1234-1234-123456789012",
                               aReal: 1.2,
                               aSmallint: 42,
-                              aDecimal: 42,
+                              aDecimal: "42",
                               anEnum: value1
                             }) {
               id
@@ -92,7 +92,7 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async ({ pass, tea
           uuid: '12345678-1234-1234-1234-123456789012',
           aReal: 1.2,
           aSmallint: 42,
-          aDecimal: 42,
+          aDecimal: '42',
           anEnum: 'value1'
         }
       }
@@ -303,7 +303,7 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async ({ pas
                               uuid: "12345678-1234-1234-1234-123456789012",
                               aReal: 1.2,
                               aSmallint: 42,
-                              aDecimal: 42,
+                              aDecimal: "42",
                               anEnum: value1
                             }) {
               id
@@ -337,7 +337,7 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async ({ pas
           uuid: '12345678-1234-1234-1234-123456789012',
           aReal: 1.2,
           aSmallint: 42,
-          aDecimal: 42,
+          aDecimal: '42',
           anEnum: 'value1'
         }
       }
@@ -383,7 +383,7 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async ({ pas
           uuid: '12345678-1234-1234-1234-123456789012',
           aReal: 1.2,
           aSmallint: 42,
-          aDecimal: 42,
+          aDecimal: '42',
           anEnum: 'value1'
         }
       }
@@ -546,7 +546,7 @@ test('[SQLite] simple db simple graphql schema', { skip: !isSQLite }, async ({ p
                               uuid: "12345678-1234-1234-1234-123456789012",
                               aReal: 1.2,
                               aSmallint: 42,
-                              aDecimal: 42 }) {
+                              aDecimal: "42" }) {
               id
               published
               current
@@ -573,7 +573,7 @@ test('[SQLite] simple db simple graphql schema', { skip: !isSQLite }, async ({ p
           uuid: '12345678-1234-1234-1234-123456789012',
           aReal: 1.2,
           aSmallint: 42,
-          aDecimal: 42
+          aDecimal: '42'
         }
       }
     }, 'saveSimpleType response')
@@ -613,7 +613,7 @@ test('[SQLite] simple db simple graphql schema', { skip: !isSQLite }, async ({ p
           uuid: '12345678-1234-1234-1234-123456789012',
           aReal: 1.2,
           aSmallint: 42,
-          aDecimal: 42
+          aDecimal: '42'
         }
       }
     }, 'getSimpleTypeById response')
