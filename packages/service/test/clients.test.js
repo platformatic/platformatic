@@ -5,7 +5,7 @@ const { test } = require('tap')
 const { buildServer } = require('..')
 const { join } = require('path')
 const { request } = require('undici')
-const ConfigManager = require('../lib/config')
+const ConfigManager = require('@platformatic/config')
 const { compile } = require('../lib/compile')
 const { rmdir } = require('fs/promises')
 

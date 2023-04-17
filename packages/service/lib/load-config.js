@@ -48,7 +48,6 @@ Error: ${err}
 
   const configManager = new ConfigManager({
     source: args.config,
-    envWhitelist: [...args.allowEnv.split(',')],
     ...configOpts
   })
 
