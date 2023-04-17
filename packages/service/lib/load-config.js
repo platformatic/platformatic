@@ -5,6 +5,7 @@ const { access } = require('fs/promises')
 const ConfigManager = require('@platformatic/config')
 const deepmerge = require('@fastify/deepmerge')
 const { findConfigFile } = require('./utils.js')
+const { schema } = require('./schema.js')
 
 const ourConfigFiles = [
   'platformatic.service.json',
@@ -15,7 +16,20 @@ const ourConfigFiles = [
   'platformatic.service.tml'
 ]
 
-async function loadConfig (minimistConfig, _args, configOpts = {}, configFileNames = ourConfigFiles) {
+function generateDefaultConfig () {
+  return {
+    schema,
+    schemaOptions: {
+      useDefaults: true,
+      coerceTypes: true,
+      allErrors: true,
+      strict: false
+    }
+  }
+}
+
+// async function loadConfig (minimistConfig, _args, configOpts = {}, Manager = ConfigManager, configFileNames = ourConfigFiles) {
+async function loadConfig (minimistConfig, _args, defaultConfig = generateDefaultConfig(), configFileNames = ourConfigFiles) {
   const args = parseArgs(_args, deepmerge({ all: true })({
     string: ['allow-env'],
     boolean: ['hotReload'],
@@ -48,7 +62,7 @@ Error: ${err}
 
   const configManager = new ConfigManager({
     source: args.config,
-    ...configOpts
+    ...defaultConfig
   })
 
   const parsingResult = await configManager.parse()
@@ -70,4 +84,5 @@ function printConfigValidationErrors (configManager) {
   console.table(tabularData, ['path', 'message'])
 }
 
-module.exports = loadConfig
+module.exports.loadConfig = loadConfig
+module.exports.generateDefaultConfig = generateDefaultConfig

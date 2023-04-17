@@ -5,6 +5,7 @@ const sandbox = require('fastify-sandbox')
 const underPressure = require('@fastify/under-pressure')
 const { schema } = require('./lib/schema')
 const ConfigManager = require('@platformatic/config')
+const { generateDefaultConfig } = require('./lib/load-config')
 const { addLoggerToTheConfig, getJSPluginPath, isFileAccessible } = require('./lib/utils')
 const loadConfig = require('./lib/load-config')
 const { isKeyEnabled, deepmerge } = require('@platformatic/utils')
@@ -217,23 +218,21 @@ async function adjustHttpsKeyAndCert (arg) {
   return arg
 }
 
+function defaultConfig (app, source) {
+  return {
+    source,
+    ...generateDefaultConfig(),
+    allowToWatch: ['.env', ...(app?.allowToWatch || [])],
+    envWhitelist: ['PORT', ...(app?.envWhitelist || [])]
+  }
+}
+
 async function buildServer (options, app) {
   app = app || platformaticService
 
   if (!options.configManager) {
     // instantiate a new config manager from current options
-    const cm = new ConfigManager({
-      source: options,
-      schema: app?.schema ?? schema,
-      schemaOptions: {
-        useDefaults: true,
-        coerceTypes: true,
-        allErrors: true,
-        strict: false
-      },
-      allowToWatch: ['.env', ...(app?.allowToWatch || [])],
-      envWhitelist: ['PORT', ...(app?.envWhitelist || [])]
-    })
+    const cm = new ConfigManager(defaultConfig(app, options))
     await cm.parseAndValidate()
     const stash = adjustConfigBeforeMerge(cm.current)
     options = deepmerge({}, options, cm.current)
