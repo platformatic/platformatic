@@ -128,6 +128,7 @@ async function graphql (url, log, headers, query, variables) {
 
   if (res.statusCode !== 200) {
     log.warn({ statusCode: res.statusCode, json }, 'request to client failed')
+    res.body.resume()
     throw new Error('request to client failed')
   }
 

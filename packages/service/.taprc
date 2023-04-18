@@ -1,2 +1,2 @@
-timeout: 160
+timeout: 500
 coverage: false

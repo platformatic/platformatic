@@ -28,6 +28,8 @@ function generateDefaultConfig () {
   }
 }
 
+// Unfortunately c8 does not see those on Windows
+/* c8 ignore next 70 */
 async function loadConfig (minimistConfig, _args, defaultConfig, configFileNames = ourConfigFiles) {
   defaultConfig ??= generateDefaultConfig()
   const args = parseArgs(_args, deepmerge({ all: true })({
