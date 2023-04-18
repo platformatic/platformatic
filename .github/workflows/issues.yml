@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Generate token
         id: generate_token
-        uses: vidavidorra/github-app-token@v1.0.0
+        uses: vidavidorra/github-app-token@v1.0.1
         with:
           appId: ${{ secrets.INTERNAL_GH_APP_ID }}
           privateKey: ${{ secrets.INTERNAL_GH_APP_SECRET }}
