@@ -88,6 +88,7 @@ Welcome to Platformatic. Available commands are:
 * service - start Platformatic Service; type `platformatic service help` to know more.
 * upgrade - upgrade the Platformatic configuration to the latest version.
 * gh - creates a new gh action for Platformatic deployments
+* deploy - deploy a Platformatic application to the cloud
 ```
 
 

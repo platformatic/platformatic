@@ -40,7 +40,8 @@
     "split2": "^4.1.0",
     "standard": "^17.0.0",
     "tap": "^16.3.4",
-    "undici": "^5.20.0"
+    "undici": "^5.20.0",
+    "fastify": "^4.13.0"
   },
   "dependencies": {
     "@platformatic/authenticate": "workspace:*",
@@ -48,6 +49,7 @@
     "@platformatic/metaconfig": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@platformatic/client-cli": "workspace:*",
+    "@platformatic/deploy-client": "^0.1.1",
     "colorette": "^2.0.19",
     "commist": "^3.2.0",
     "create-platformatic": "workspace:*",
@@ -55,6 +57,7 @@
     "help-me": "^4.2.0",
     "minimist": "^1.2.8",
     "pino": "^8.11.0",
-    "pino-pretty": "^10.0.0"
+    "pino-pretty": "^10.0.0",
+    "inquirer": "^9.1.4"
   }
 }
