@@ -286,8 +286,9 @@ containing all the movies in your database:
 
 :::tip
 
-Take a look at the [REST API reference](/docs/reference/sql-openapi/introduction.md) for an
-overview of the REST interface that the API provides.
+If you would like to know more about what routes are automatically available,
+take a look at the [REST API reference](/docs/reference/sql-openapi/introduction.md)
+for an overview of the REST interface that the generated API provides.
 
 :::
 
