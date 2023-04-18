@@ -362,7 +362,7 @@ test('nested directories', async ({ teardown, equal, same }) => {
     server: {
       hostname: '127.0.0.1',
       port: 0,
-      // widows CI is slow
+      // Windows CI is slow
       pluginTimeout: 60 * 1000
     },
     service: {
