@@ -96,8 +96,13 @@ function buildCallFunction (baseUrl, path, method, methodMeta, operationId) {
         ...headers,
         'content-type': 'application/json; charset=utf-8'
       },
-      body: JSON.stringify(args)
+      body: JSON.stringify(body)
     })
+
+    if (res.statusCode === 204) {
+      return await res.body.dump()
+    }
+
     return await res.body.json()
   }
 }
