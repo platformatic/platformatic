@@ -92,6 +92,11 @@ test('build basic client from url', async ({ teardown, same, rejects }) => {
     const hello = await client.getHelloName({ name: 'Matteo' })
     same(hello, { hello: 'Matteo' })
   }
+
+  {
+    const hello = await client.getHelloHeaderName({ name: 'Matteo' })
+    same(hello, { hello: 'Matteo' })
+  }
 })
 
 test('build basic client from file', async ({ teardown, same, rejects }) => {
@@ -160,6 +165,11 @@ test('build basic client from file', async ({ teardown, same, rejects }) => {
 
   {
     const hello = await client.getHelloName({ name: 'Matteo' })
+    same(hello, { hello: 'Matteo' })
+  }
+
+  {
+    const hello = await client.getHelloHeaderName({ name: 'Matteo' })
     same(hello, { hello: 'Matteo' })
   }
 })
@@ -232,6 +242,11 @@ test('build basic client from url with custom headers', async ({ teardown, same,
 
   {
     const hello = await client.getHelloName({ name: 'Matteo' })
+    same(hello, { hello: 'Matteo' })
+  }
+
+  {
+    const hello = await client.getHelloHeaderName({ name: 'Matteo' })
     same(hello, { hello: 'Matteo' })
   }
 })
