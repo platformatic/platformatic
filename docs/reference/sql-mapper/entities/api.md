@@ -70,6 +70,52 @@ The `where` object's key is the field you want to check, the value is a key/valu
 }
 ```
 
+Where clause operations are by default combined with the `AND` operator. To combine them with the `OR` operator, use the `or` key.
+
+#### Select all rows with id 1 or 3
+```
+{
+  ...
+  "where": {
+    or: [
+      {
+        id: {
+          eq: 1
+        }
+      },
+      {
+        id: {
+          eq: 3
+        }
+      }
+    ]
+  }
+}
+```
+### Select all rows with id 1 or 3 and title like 'foo%'
+```
+{
+  ...
+  "where": {
+    or: [
+      {
+        id: {
+          eq: 1
+        }
+      },
+      {
+        id: {
+          eq: 3
+        }
+      }
+    ],
+    title: {
+      like: 'foo%'
+    }
+  }
+}
+```
+
 ## Reference
 
 ### `find`

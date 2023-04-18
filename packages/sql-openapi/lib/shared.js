@@ -34,6 +34,19 @@ function generateArgs (entity, ignore) {
     return acc
   }, {})
 
+  // NOTE: probably not the best way to do this but it works for now
+  // TODO: when OpenAPI supports nested objects in querystring this should be changed
+  const whereOrArrayArgs = {
+    'where.or': {
+      type: 'array',
+      items: {
+        type: 'string'
+      }
+    }
+  }
+
+  Object.assign(whereArgs, whereOrArrayArgs)
+
   return { whereArgs, orderByArgs }
 }
 
@@ -71,6 +84,33 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
 
     for (let i = 0; i < queryKeys.length; i++) {
       const key = queryKeys[i]
+      if (key.startsWith('where.or')) {
+        const orParam = query[key][0]
+        // NOTE: Remove the first and last character which are the brackets
+        // each or condition is separated by a pipe '|'
+        // the conditions inside the or statement are the same as it would normally be in the where statement
+        // except that the field name is not prefixed with 'where.'
+        // e.g. where.or=(name.eq=foo|name.eq=bar)
+        // e.g. where.or=(name.eq=foo|name.eq=bar|name.eq=baz)
+        //
+        // Also, the or statement supports in and nin operators
+        // e.g. where.or=(name.in=foo,bar|name.eq=baz)
+        const parsed = orParam.substring(1, orParam.length - 1).split('|').map((v) => v.split('=')).reduce((acc, [k, v]) => {
+          const [field, modifier] = k.split('.')
+          if (modifier === 'in' || modifier === 'nin') {
+            // TODO handle escaping of ,
+            v = v.split(',')
+            /* istanbul ignore next */
+            if (mapSQLTypeToOpenAPIType(entity.fields[field].sqlType) === 'integer') {
+              v = v.map((v) => parseInt(v))
+            }
+          }
+          acc.push({ [field]: { [modifier]: v } })
+          return acc
+        }, [])
+        where.or = parsed
+        continue
+      }
 
       if (key.startsWith('where.')) {
         const [, field, modifier] = key.split('.')

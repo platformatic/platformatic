@@ -40,6 +40,7 @@ enum OrderByDirection {
 input GraphWhereArguments {
   id: GraphWhereArgumentsid
   name: GraphWhereArgumentsname
+  or: [GraphWhereArgumentsOr]
 }
 
 input GraphWhereArgumentsid {
@@ -64,6 +65,11 @@ input GraphWhereArgumentsname {
   like: String
   in: [String]
   nin: [String]
+}
+
+input GraphWhereArgumentsOr {
+  id: GraphWhereArgumentsid
+  name: GraphWhereArgumentsname
 }
 
 type graphsCount {
@@ -310,6 +316,17 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
           },
           {
             "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "in": "query",
+            "name": "where.or",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string",
               "enum": [
                 "asc",
@@ -543,6 +560,17 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
             },
             "in": "query",
             "name": "where.name.nin",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "in": "query",
+            "name": "where.or",
             "required": false
           }
         ],

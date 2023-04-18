@@ -99,27 +99,39 @@ function constructGraph (app, entity, opts, ignore) {
     return ['and', key]
   }).flat())].join('_'))
 
+  const whereFields = Object.keys(fields).reduce((acc, field) => {
+    acc[field] = {
+      type: new graphql.GraphQLInputObjectType({
+        name: `${entityName}WhereArguments${field}`,
+        fields: {
+          eq: { type: fields[field].type },
+          neq: { type: fields[field].type },
+          gt: { type: fields[field].type },
+          gte: { type: fields[field].type },
+          lt: { type: fields[field].type },
+          lte: { type: fields[field].type },
+          like: { type: fields[field].type },
+          in: { type: new graphql.GraphQLList(fields[field].type) },
+          nin: { type: new graphql.GraphQLList(fields[field].type) }
+        }
+      })
+    }
+    return acc
+  }, {})
+
   const whereArgType = new graphql.GraphQLInputObjectType({
     name: `${entityName}WhereArguments`,
-    fields: Object.keys(fields).reduce((acc, field) => {
-      acc[field] = {
-        type: new graphql.GraphQLInputObjectType({
-          name: `${entityName}WhereArguments${field}`,
+    fields: {
+      ...whereFields,
+      or: {
+        type: new graphql.GraphQLList(new graphql.GraphQLInputObjectType({
+          name: `${entityName}WhereArgumentsOr`,
           fields: {
-            eq: { type: fields[field].type },
-            neq: { type: fields[field].type },
-            gt: { type: fields[field].type },
-            gte: { type: fields[field].type },
-            lt: { type: fields[field].type },
-            lte: { type: fields[field].type },
-            like: { type: fields[field].type },
-            in: { type: new graphql.GraphQLList(fields[field].type) },
-            nin: { type: new graphql.GraphQLList(fields[field].type) }
+            ...whereFields
           }
-        })
+        }))
       }
-      return acc
-    }, {})
+    }
   })
 
   queryTopFields[getBy] = {
