@@ -70,6 +70,21 @@ $ curl -X 'GET' \
   -H 'accept: application/json'
 ```
 
+Where clause operations are by default combined with the `AND` operator. To create an `OR` condition use the `where.or` query param.
+
+Each `where.or` query param can contain multiple conditions separated by a `|` (pipe).
+
+The `where.or` conditions are similar to the `where` conditions, except that they don't have the `where` prefix.
+
+_Example_
+
+If you want to get the `posts` where `counter = 10` `OR` `counter > 30` you can make an HTTP request like this:
+
+```bash
+$ curl -X 'GET' \
+  'http://localhost:3042/pages/?where.or=(counter.eq=10|counter.gte=30)' \
+  -H 'accept: application/json'
+```
 ## OrderBy clause
 
 You can define the ordering of the returned rows within your REST API calls with the `orderby` clause using the following pattern:

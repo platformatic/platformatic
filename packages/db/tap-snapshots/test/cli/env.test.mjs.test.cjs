@@ -40,6 +40,7 @@ enum OrderByDirection {
 input PageWhereArguments {
   id: PageWhereArgumentsid
   title: PageWhereArgumentstitle
+  or: [PageWhereArgumentsOr]
 }
 
 input PageWhereArgumentsid {
@@ -64,6 +65,11 @@ input PageWhereArgumentstitle {
   like: String
   in: [String]
   nin: [String]
+}
+
+input PageWhereArgumentsOr {
+  id: PageWhereArgumentsid
+  title: PageWhereArgumentstitle
 }
 
 type pagesCount {

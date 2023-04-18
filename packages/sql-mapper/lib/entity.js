@@ -206,6 +206,15 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     const where = opts.where || {}
     const criteria = []
     for (const key of Object.keys(where)) {
+      if (key === 'or') {
+        const orCriteria = []
+        for (const orPart of where[key]) {
+          const cret = computeCriteria({ where: orPart })
+          orCriteria.push(sql`(${sql.join(cret, sql` AND `)})`)
+        }
+        criteria.push(sql`(${sql.join(orCriteria, sql` OR `)})`)
+        continue
+      }
       const value = where[key]
       const field = inputToFieldMap[key]
       for (const key of Object.keys(value)) {

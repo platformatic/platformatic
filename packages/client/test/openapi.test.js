@@ -63,6 +63,19 @@ test('build basic client from url', async ({ teardown, same, rejects }) => {
     title: 'The Matrix Reloaded'
   })
 
+  const updatedTitle = await client.updateMovieTitle({ id: 1, title: 'The Matrix Revolutions' })
+
+  same(updatedTitle, undefined)
+
+  const movie3 = await client.getMovieById({
+    id: 1
+  })
+
+  same(movie3, {
+    id: 1,
+    title: 'The Matrix Revolutions'
+  })
+
   await rejects(client.getMovieById())
 
   {
