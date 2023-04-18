@@ -361,7 +361,9 @@ test('nested directories', async ({ teardown, equal, same }) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
+      // Windows CI is slow
+      pluginTimeout: 60 * 1000
     },
     service: {
       openapi: true
