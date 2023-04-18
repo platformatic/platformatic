@@ -10,31 +10,33 @@ const ConfigManager = require('@platformatic/config')
 const adjustConfig = require('./lib/adjust-config')
 
 async function platformaticDB (app, opts) {
+  const configManager = opts.configManager
+  const config = configManager.current
   await adjustConfig(opts.configManager)
 
-  if (opts.migrations && opts.migrations.autoApply === true && !app.restarted) {
-    app.log.debug({ migrations: opts.migrations }, 'running migrations')
+  if (config.migrations && config.migrations.autoApply === true && !app.restarted) {
+    app.log.debug({ migrations: config.migrations }, 'running migrations')
     const { execute } = await import('./lib/migrate.mjs')
-    await execute(app.log, { config: opts.configFileLocation }, opts)
+    await execute(app.log, { config: config.configFileLocation }, config)
 
-    if (opts.types && opts.types.autogenerate === true) {
-      app.log.debug({ types: opts.types }, 'generating types')
+    if (config.types && config.types.autogenerate === true) {
+      app.log.debug({ types: config.types }, 'generating types')
       const { execute } = await import('./lib/gen-types.mjs')
-      await execute(app.log, { config: opts.configFileLocation }, opts)
+      await execute(app.log, { config: config.configFileLocation }, config)
     }
   }
 
   if (isKeyEnabled('dashboard', opts)) {
     app.register(require('./_admin'), { ...opts, prefix: '_admin' })
     await app.register(dashboard, {
-      path: opts.dashboard.path
+      path: config.dashboard.path
     })
   }
 
   async function toLoad (app) {
-    app.register(core, opts.configManager.current.db)
+    app.register(core, config.db)
     if (opts.authorization) {
-      app.register(auth, opts.authorization)
+      app.register(auth, config.authorization)
     }
   }
   toLoad[Symbol.for('skip-override')] = true
@@ -67,7 +69,7 @@ async function platformaticDB (app, opts) {
   }
 
   if (!app.hasRoute({ url: '/', method: 'GET' })) {
-    app.register(require('./lib/root-endpoint'), opts)
+    app.register(require('./lib/root-endpoint'), config)
   }
 }
 

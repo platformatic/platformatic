@@ -58,6 +58,9 @@ async function platformaticService (app, opts, toLoad = []) {
     if (configManager !== undefined) {
       app.platformatic.configManager = configManager
       app.platformatic.config = configManager.current
+      /* c8 ignore next 3 */
+    } else {
+      throw new Error('configManager is required')
     }
   }
 
