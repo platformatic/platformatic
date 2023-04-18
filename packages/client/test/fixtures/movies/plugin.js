@@ -48,6 +48,21 @@ module.exports = async function (app) {
     return { hello: request.params.name }
   })
 
+  app.get('/hello/header/name', {
+    schema: {
+      headers: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          id: { type: 'string' }
+        },
+        required: ['name']
+      }
+    }
+  }, async (request, reply) => {
+    return { hello: request.headers.name }
+  })
+
   app.post('/weird/:name', {
     schema: {
       params: {
