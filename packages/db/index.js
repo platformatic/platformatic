@@ -27,7 +27,7 @@ async function platformaticDB (app, opts) {
   }
 
   if (isKeyEnabled('dashboard', opts)) {
-    app.register(require('./_admin'), { ...opts, prefix: '_admin' })
+    app.register(require('./_admin'), { ...config, configManager, prefix: '_admin' })
     await app.register(dashboard, {
       path: config.dashboard.path
     })

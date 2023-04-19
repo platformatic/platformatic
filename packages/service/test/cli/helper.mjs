@@ -1,17 +1,9 @@
-// import why from 'why-is-node-running'
 import { Agent, setGlobalDispatcher } from 'undici'
 import { on } from 'events'
 import { execa } from 'execa'
 import split from 'split2'
 import { join } from 'desm'
 import tap from 'tap'
-
-// This file must be required/imported as the first file
-// in the test suite. It sets up the global environment
-// to track the open handles via why-is-node-running.
-// setInterval(() => {
-//  why()
-// }, 20000).unref()
 
 setGlobalDispatcher(new Agent({
   keepAliveTimeout: 10,
