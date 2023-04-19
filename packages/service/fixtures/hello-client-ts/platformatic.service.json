@@ -3,16 +3,19 @@
     "hostname": "127.0.0.1",
     "port": 0,
     "logger": {
-      "level": "info"
+      "level": "info",
+      "name": "hello client ts"
     }
   },
   "plugins": {
     "paths": ["./plugin.ts"],
-    "typescript": true
+    "typescript": true,
+    "hotReload": false
   },
   "clients": [{
     "path": "./hello",
     "url": "{PLT_CLIENT_URL}"
   }],
-  "metrics": false
+  "metrics": false,
+  "watch": false
 }

@@ -2,7 +2,7 @@ import { join } from 'path'
 import { writeFile } from 'fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
-import loadConfig from './load-config.mjs'
+import { loadConfig } from './load-config.mjs'
 import { Migrator } from './migrator.mjs'
 import { MigrateError } from './errors.mjs'
 

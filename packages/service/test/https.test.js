@@ -1,6 +1,6 @@
 'use strict'
 
-const { mkdtempSync, writeFileSync } = require('fs')
+const { mkdtemp, writeFile } = require('fs/promises')
 const { tmpdir } = require('os')
 const { isAbsolute, join, relative } = require('path')
 const selfCert = require('self-cert')
@@ -9,17 +9,21 @@ const { Agent, setGlobalDispatcher, request } = require('undici')
 const { buildServer } = require('..')
 const { buildConfig } = require('./helper')
 
-test('supports https options', async ({ teardown, equal, same, plan }) => {
+test('supports https options', async ({ teardown, equal, same, plan, comment }) => {
   plan(7)
 
   const { certificate, privateKey } = selfCert({})
-  const tmpDir = mkdtempSync(join(tmpdir(), 'plt-service-https-test-'))
+  const localDir = tmpdir()
+  comment(`system tmpdir ${localDir}`)
+  const tmpDir = await mkdtemp(join(localDir, 'plt-service-https-test-'))
+  comment(`writing in ${tmpDir}`)
   const privateKeyPath = join(tmpDir, 'plt.key')
   const certificatePath = join(tmpDir, 'plt.cert')
-  const certificateRelativePath = relative(__dirname, certificatePath)
+  const certificateRelativePath = relative(process.cwd(), certificatePath)
+  comment(`certificate relative path ${certificateRelativePath}`)
 
-  writeFileSync(privateKeyPath, privateKey)
-  writeFileSync(certificatePath, certificate)
+  await writeFile(privateKeyPath, privateKey)
+  await writeFile(certificatePath, certificate)
 
   setGlobalDispatcher(new Agent({
     connect: {

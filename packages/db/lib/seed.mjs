@@ -5,7 +5,7 @@ import { setupDB } from './utils.js'
 import { Migrator } from './migrator.mjs'
 import { SeedError } from './errors.mjs'
 import { pathToFileURL } from 'url'
-import loadConfig from './load-config.mjs'
+import { loadConfig } from './load-config.mjs'
 
 async function execute (logger, args, config) {
   const { db, sql, entities } = await setupDB(logger, config.db)

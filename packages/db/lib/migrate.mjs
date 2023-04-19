@@ -5,7 +5,7 @@ import isMain from 'es-main'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { MigrateError } from './errors.mjs'
-import loadConfig from './load-config.mjs'
+import { loadConfig } from './load-config.mjs'
 import { execute as generateTypes, checkForDependencies } from './gen-types.mjs'
 import { utimesSync } from 'fs'
 
@@ -44,9 +44,7 @@ async function applyMigrations (_args) {
       }
     }, _args)
 
-    await configManager.parseAndValidate()
     const config = configManager.current
-
     await execute(logger, args, config)
 
     if (config.types && config.types.autogenerate) {
