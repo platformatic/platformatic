@@ -1,4 +1,4 @@
-import { writeFile, mkdir } from 'fs/promises'
+import { writeFile, mkdir, appendFile } from 'fs/promises'
 import { join, relative, resolve } from 'path'
 import { findDBConfigFile, isFileAccessible } from '../utils.mjs'
 
@@ -136,7 +136,7 @@ async function createDB ({ hostname, database = 'sqlite', port, migrations = 'mi
     logger.info('Configuration file platformatic.db.json successfully created.')
 
     const env = generateEnv(hostname, port, database)
-    await writeFile(join(currentDir, '.env'), env)
+    await appendFile(join(currentDir, '.env'), env)
     await writeFile(join(currentDir, '.env.sample'), env)
     logger.info('Environment file .env successfully created.')
   } else {

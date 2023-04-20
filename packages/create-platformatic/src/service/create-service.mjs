@@ -1,4 +1,4 @@
-import { writeFile, mkdir, readFile } from 'fs/promises'
+import { writeFile, mkdir, readFile, appendFile } from 'fs/promises'
 import { join } from 'path'
 import * as desm from 'desm'
 import { findServiceConfigFile, isFileAccessible } from '../utils.mjs'
@@ -142,7 +142,7 @@ async function createService ({ hostname, port, typescript = false }, logger, cu
     logger.info('Configuration file platformatic.service.json successfully created.')
 
     const env = generateEnv(hostname, port)
-    await writeFile(join(currentDir, '.env'), env)
+    await appendFile(join(currentDir, '.env'), env)
     await writeFile(join(currentDir, '.env.sample'), env)
     logger.info('Environment file .env successfully created.')
   } else {
