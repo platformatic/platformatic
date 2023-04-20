@@ -23,7 +23,8 @@
     "lint": "standard | snazzy"
   },
   "dependencies": {
-    "@fastify/static": "^6.9.0"
+    "@fastify/static": "^6.9.0",
+    "graphql-ws": "^5.12.1"
   },
   "devDependencies": {
     "@graphiql/toolkit": "0.8.3",
