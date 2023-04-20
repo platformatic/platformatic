@@ -2,9 +2,10 @@
 
 const parseArgs = require('minimist')
 const { access } = require('fs/promises')
-const ConfigManager = require('./config.js')
+const ConfigManager = require('@platformatic/config')
 const deepmerge = require('@fastify/deepmerge')
 const { findConfigFile } = require('./utils.js')
+const { schema } = require('./schema.js')
 
 const ourConfigFiles = [
   'platformatic.service.json',
@@ -15,7 +16,22 @@ const ourConfigFiles = [
   'platformatic.service.tml'
 ]
 
-async function loadConfig (minimistConfig, _args, configOpts = {}, Manager = ConfigManager, configFileNames = ourConfigFiles) {
+function generateDefaultConfig () {
+  return {
+    schema,
+    schemaOptions: {
+      useDefaults: true,
+      coerceTypes: true,
+      allErrors: true,
+      strict: false
+    }
+  }
+}
+
+// Unfortunately c8 does not see those on Windows
+/* c8 ignore next 70 */
+async function loadConfig (minimistConfig, _args, defaultConfig, configFileNames = ourConfigFiles) {
+  defaultConfig ??= generateDefaultConfig()
   const args = parseArgs(_args, deepmerge({ all: true })({
     string: ['allow-env'],
     boolean: ['hotReload'],
@@ -46,10 +62,9 @@ Error: ${err}
     process.exit(1)
   }
 
-  const configManager = new Manager({
+  const configManager = new ConfigManager({
     source: args.config,
-    envWhitelist: [...args.allowEnv.split(',')],
-    ...configOpts
+    ...defaultConfig
   })
 
   const parsingResult = await configManager.parse()
@@ -71,4 +86,5 @@ function printConfigValidationErrors (configManager) {
   console.table(tabularData, ['path', 'message'])
 }
 
-module.exports = loadConfig
+module.exports.loadConfig = loadConfig
+module.exports.generateDefaultConfig = generateDefaultConfig

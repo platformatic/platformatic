@@ -1,16 +1,9 @@
-import why from 'why-is-node-running'
 import { Agent, setGlobalDispatcher } from 'undici'
 import { on } from 'events'
 import { execa } from 'execa'
 import split from 'split2'
 import { join } from 'desm'
-
-// This file must be required/imported as the first file
-// in the test suite. It sets up the global environment
-// to track the open handles via why-is-node-running.
-setInterval(() => {
-  why()
-}, 20000).unref()
+import tap from 'tap'
 
 setGlobalDispatcher(new Agent({
   keepAliveTimeout: 10,
@@ -19,6 +12,12 @@ setGlobalDispatcher(new Agent({
     rejectUnauthorized: false
   }
 }))
+
+// This should not be needed, but a weird combination
+// of node-tap, Windows, c8 and ESM makes this necessary.
+tap.teardown(() => {
+  process.exit(0)
+})
 
 export const cliPath = join(import.meta.url, '..', '..', 'service.mjs')
 

@@ -2,7 +2,7 @@ import { dirname } from 'path'
 import { FileWatcher } from '@platformatic/utils'
 import { buildServer } from '../index.js'
 import close from 'close-with-grace'
-import loadConfig from './load-config.js'
+import { loadConfig, generateDefaultConfig } from './load-config.js'
 import { compileWatch } from './compile.js'
 import { addLoggerToTheConfig } from './utils.js'
 
@@ -10,9 +10,18 @@ import { addLoggerToTheConfig } from './utils.js'
 // Currently C8 is not reporting it
 /* c8 ignore start */
 
+function defaultConfig () {
+  const _defaultConfig = generateDefaultConfig()
+  return {
+    watch: true,
+    ..._defaultConfig
+  }
+}
+
 export function buildStart (_loadConfig, _buildServer) {
   return async function start (_args) {
-    const { configManager, args } = await _loadConfig({}, _args, { watch: true })
+    const _defaultConfig = defaultConfig()
+    const { configManager, args } = await _loadConfig({}, _args, _defaultConfig)
 
     const config = configManager.current
 

@@ -1,5 +1,7 @@
-import { loadConfig } from '@platformatic/service'
-import ConfigManager from './config.js'
+import service from '@platformatic/service'
+import { schema } from './schema.js'
+import { platformaticDB } from '../index.js'
+import adjustConfig from './adjust-config.js'
 
 const ourConfigFiles = [
   'platformatic.db.json',
@@ -10,6 +12,17 @@ const ourConfigFiles = [
   'platformatic.db.tml'
 ]
 
-export default async function (a, b, c) {
-  return loadConfig(a, b, c, ConfigManager, ourConfigFiles)
+export function generateConfigManagerConfig () {
+  return {
+    ...service.generateConfigManagerConfig(),
+    schema,
+    allowToWatch: ['.env'],
+    envWhitelist: platformaticDB.envWhitelist
+  }
+}
+
+export async function loadConfig (a, b) {
+  const res = await service.loadConfig(a, b, generateConfigManagerConfig(), ourConfigFiles)
+  await adjustConfig(res.configManager)
+  return res
 }

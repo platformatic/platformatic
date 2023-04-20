@@ -19,8 +19,9 @@ function createLoggingPlugin (text, reloaded = false) {
   `
 }
 
-test('should watch js files by default', async ({ equal, teardown }) => {
+test('should watch js files by default', async ({ equal, teardown, comment }) => {
   const tmpDir = await mkdtemp(join(os.tmpdir(), 'watch-'))
+  comment(`using ${tmpDir}`)
   const pluginFilePath = join(tmpDir, 'plugin.js')
   const configFilePath = join(tmpDir, 'platformatic.service.json')
 
@@ -44,6 +45,8 @@ test('should watch js files by default', async ({ equal, teardown }) => {
   ])
 
   const { child, url } = await start('-c', configFilePath)
+  child.stdout.pipe(process.stderr)
+  child.stderr.pipe(process.stderr)
   teardown(() => child.kill('SIGINT'))
 
   await writeFile(pluginFilePath, createLoggingPlugin('v2', true))

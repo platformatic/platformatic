@@ -34,6 +34,7 @@ export async function runService (argv) {
     }
   })
 
+  /* c8 ignore next 4 */
   if (args.version) {
     console.log('v' + JSON.parse(await readFile(join(import.meta.url, 'package.json'))).version)
     process.exit(0)

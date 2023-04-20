@@ -1,4 +1,4 @@
-import loadConfig from './load-config.mjs'
+import { loadConfig } from './load-config.mjs'
 import { tsCompiler } from '@platformatic/service'
 
 const compile = tsCompiler.buildCompileCmd(loadConfig)

@@ -3,14 +3,17 @@
     "hostname": "127.0.0.1",
     "port": 0,
     "logger": {
-      "level": "info"
+      "level": "info",
+      "name": "hello server"
     }
   },
   "plugins": {
-    "paths": ["./plugin.js"]
+    "paths": ["./plugin.js"],
+    "hotReload": false
   },
   "service": {
     "openapi": true
   },
-  "metrics": false
+  "metrics": false,
+  "watch": false
 }

@@ -1,14 +1,7 @@
 'use strict'
 
-const why = require('why-is-node-running')
 const { Agent, setGlobalDispatcher } = require('undici')
-
-// This file must be required/imported as the first file
-// in the test suite. It sets up the global environment
-// to track the open handles via why-is-node-running.
-setInterval(() => {
-  why()
-}, 20000).unref()
+const tap = require('tap')
 
 const agent = new Agent({
   keepAliveTimeout: 10,
@@ -17,7 +10,14 @@ const agent = new Agent({
     rejectUnauthorized: false
   }
 })
+
 setGlobalDispatcher(agent)
+
+// This should not be needed, but a weird combination
+// of node-tap, Windows, c8 and ESM makes this necessary.
+tap.teardown(() => {
+  process.exit(0)
+})
 
 function buildConfig (options) {
   const base = {

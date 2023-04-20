@@ -36,6 +36,7 @@ test('env white list', async ({ equal, same, match, teardown }) => {
       HOSTNAME: '127.0.0.1'
     }
   })
+  child.stderr.pipe(process.stderr)
   const output = child.stdout.pipe(split(parse))
   const [{ url }] = await once(output, 'data')
 

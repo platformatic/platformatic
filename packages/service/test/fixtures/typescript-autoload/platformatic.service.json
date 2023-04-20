@@ -9,5 +9,6 @@
   "plugins": {
     "paths": ["routes"],
     "typescript": true
-  }
+  },
+  "watch": false
 }
