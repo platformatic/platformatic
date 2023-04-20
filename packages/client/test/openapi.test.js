@@ -102,6 +102,205 @@ test('build basic client from url', async ({ teardown, same, rejects }) => {
   }
 })
 
+test('build full response client from url', async ({ teardown, same, match, rejects }) => {
+  try {
+    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const client = await buildOpenAPIClient({
+    url: `${app.url}/documentation/json`,
+    fullResponse: true
+  })
+
+  const matchDate = /[a-z]{3}, \d{2} [a-z]{3} \d{4} \d{2}:\d{2}:\d{2} GMT/i
+  const matchKeepAlive = /timeout=\d+/
+
+  const movie = await client.createMovie({
+    title: 'The Matrix'
+  })
+
+  match(movie, {
+    statusCode: 200,
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      'content-length': '29',
+      date: matchDate,
+      connection: 'keep-alive',
+      'keep-alive': matchKeepAlive
+    },
+    body: {
+      id: 1,
+      title: 'The Matrix'
+    }
+  })
+
+  const movies = await client.getMovies()
+
+  match(movies, {
+    statusCode: 200,
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      'content-length': '31',
+      date: matchDate,
+      connection: 'keep-alive',
+      'keep-alive': matchKeepAlive
+    },
+    body: [
+      {
+        id: 1,
+        title: 'The Matrix'
+      }
+    ]
+  })
+
+  const updatedMovie = await client.updateMovie({
+    id: 1,
+    title: 'The Matrix Reloaded'
+  })
+
+  match(updatedMovie, {
+    statusCode: 200,
+    headers: {
+      location: '/movies/1',
+      'content-type': 'application/json; charset=utf-8',
+      'content-length': '38',
+      date: matchDate,
+      connection: 'keep-alive',
+      'keep-alive': matchKeepAlive
+    },
+    body: {
+      id: 1,
+      title: 'The Matrix Reloaded'
+    }
+  })
+
+  const movie2 = await client.getMovieById({
+    id: 1
+  })
+
+  match(movie2, {
+    statusCode: 200,
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      'content-length': '38',
+      date: matchDate,
+      connection: 'keep-alive',
+      'keep-alive': matchKeepAlive
+    },
+    body: {
+      id: 1,
+      title: 'The Matrix Reloaded'
+    }
+  })
+
+  const updatedTitle = await client.updateMovieTitle({ id: 1, title: 'The Matrix Revolutions' })
+
+  match(updatedTitle, {
+    statusCode: 204,
+    headers: {
+      date: matchDate,
+      connection: 'keep-alive',
+      'keep-alive': matchKeepAlive
+    },
+    body: undefined
+  })
+
+  const movie3 = await client.getMovieById({
+    id: 1
+  })
+
+  match(movie3, {
+    statusCode: 200,
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      'content-length': '41',
+      date: matchDate,
+      connection: 'keep-alive',
+      'keep-alive': matchKeepAlive
+    },
+    body: {
+      id: 1,
+      title: 'The Matrix Revolutions'
+    }
+  })
+
+  await rejects(client.getMovieById())
+
+  {
+    const movies = await client.getMovies({ 'where.title.eq': 'Star Wars' })
+    match(movies, {
+      statusCode: 200,
+      headers: {
+        'content-type': 'application/json; charset=utf-8',
+        'content-length': '2',
+        date: matchDate,
+        connection: 'keep-alive',
+        'keep-alive': matchKeepAlive
+      },
+      body: []
+    })
+  }
+
+  {
+    const hello = await client.getHello()
+    match(hello, {
+      statusCode: 200,
+      headers: {
+        'content-type': 'application/json; charset=utf-8',
+        'content-length': '17',
+        date: matchDate,
+        connection: 'keep-alive',
+        'keep-alive': matchKeepAlive
+      },
+      body: {
+        hello: 'world'
+      }
+    })
+  }
+
+  {
+    const hello = await client.getHelloName({ name: 'Matteo' })
+    match(hello, {
+      statusCode: 200,
+      headers: {
+        'content-type': 'application/json; charset=utf-8',
+        'content-length': '18',
+        date: matchDate,
+        connection: 'keep-alive',
+        'keep-alive': matchKeepAlive
+      },
+      body: {
+        hello: 'Matteo'
+      }
+    })
+  }
+
+  {
+    const hello = await client.getHelloHeaderName({ name: 'Matteo' })
+    match(hello, {
+      statusCode: 200,
+      headers: {
+        'content-type': 'application/json; charset=utf-8',
+        'content-length': '18',
+        date: matchDate,
+        connection: 'keep-alive',
+        'keep-alive': matchKeepAlive
+      },
+      body: {
+        hello: 'Matteo'
+      }
+    })
+  }
+})
+
 test('build basic client from file', async ({ teardown, same, rejects }) => {
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
