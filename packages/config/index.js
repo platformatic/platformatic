@@ -8,6 +8,8 @@ const fastifyPlugin = require('./lib/plugin')
 const dotenv = require('dotenv')
 const { FileWatcher } = require('@platformatic/utils')
 const { getParser, analyze } = require('@platformatic/metaconfig')
+const semver = require('semver')
+const { version } = require('./package.json')
 
 class ConfigManager extends EventEmitter {
   constructor (opts) {
@@ -135,7 +137,14 @@ class ConfigManager extends EventEmitter {
         try {
           let meta = await analyze({ config: this.current })
           while (typeof meta.up === 'function') {
-            meta = meta.up()
+            // This block is needed to handle our release process
+            // where we bump the version in the config file before
+            // publishing the package.
+            const next = meta.up()
+            if (semver.gt(next.version, version)) {
+              break
+            }
+            meta = next
           }
           this.current = meta.config
         } catch {

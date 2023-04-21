@@ -4,6 +4,7 @@ const { test } = require('tap')
 const { resolve } = require('path')
 const ConfigManager = require('..')
 const pkg = require('../package.json')
+const proxyquire = require('proxyquire')
 
 test('should throw if file is not found', async ({ match, fail }) => {
   try {
@@ -119,6 +120,31 @@ test('should automatically update', async ({ same }) => {
   await cm.parse()
   same(cm.current, {
     $schema: `https://platformatic.dev/schemas/v${pkg.version.replace(/\.\d+$/, '.0')}/db`,
+    server: { hostname: '127.0.0.1', port: '3042', logger: { level: 'info' } },
+    metrics: { auth: { username: 'plt-db', password: 'plt-db' } },
+    plugins: { paths: ['./plugin-sum.js'] },
+    db: {
+      connectionString: 'postgres://postgres:postgres@localhost:5432/postgres',
+      graphiql: true,
+      ignore: { versions: true }
+    },
+    migrations: { dir: './demo/migrations', validateChecksums: false },
+    dashboard: { path: '/' },
+    authorization: { adminSecret: 'plt-db' }
+  })
+})
+
+test('should automatically update but not over the current version', async ({ same }) => {
+  const ConfigManager = proxyquire('../index.js', {
+    './package.json': { version: '0.19.0' }
+  })
+  const cm = new ConfigManager({
+    source: resolve(__dirname, './fixtures/db-0.16.0.json'),
+    env: { PLT_FOOBAR: 'foobar' }
+  })
+  await cm.parse()
+  same(cm.current, {
+    $schema: 'https://platformatic.dev/schemas/v0.19.0/db',
     server: { hostname: '127.0.0.1', port: '3042', logger: { level: 'info' } },
     metrics: { auth: { username: 'plt-db', password: 'plt-db' } },
     plugins: { paths: ['./plugin-sum.js'] },
