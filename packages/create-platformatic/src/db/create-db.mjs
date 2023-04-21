@@ -136,9 +136,14 @@ async function createDB ({ hostname, database = 'sqlite', port, migrations = 'mi
     logger.info('Configuration file platformatic.db.json successfully created.')
 
     const env = generateEnv(hostname, port, database)
+    const envFileExists = await isFileAccessible('.env', currentDir)
     await appendFile(join(currentDir, '.env'), env)
     await writeFile(join(currentDir, '.env.sample'), env)
-    logger.info('Environment file .env successfully created.')
+    if (envFileExists) {
+      logger.info('Environment file .env found, appending new environment variables to existing .env file.')
+    } else {
+      logger.info('Environment file .env successfully created.')
+    }
   } else {
     logger.info(`Configuration file ${accessibleConfigFilename} found, skipping creation of configuration file.`)
   }
