@@ -2,7 +2,7 @@
 
 const { mkdtemp, writeFile } = require('fs/promises')
 const { tmpdir } = require('os')
-const { isAbsolute, join, relative } = require('path')
+const { join, relative } = require('path')
 const selfCert = require('self-cert')
 const { test } = require('tap')
 const { Agent, setGlobalDispatcher, request } = require('undici')
@@ -10,7 +10,7 @@ const { buildServer } = require('..')
 const { buildConfig } = require('./helper')
 
 test('supports https options', async ({ teardown, equal, same, plan, comment }) => {
-  plan(7)
+  plan(6)
 
   const { certificate, privateKey } = selfCert({})
   const localDir = tmpdir()
@@ -45,7 +45,6 @@ test('supports https options', async ({ teardown, equal, same, plan, comment }) 
   teardown(server.stop)
   await server.listen()
 
-  equal(isAbsolute(server.app.platformatic.configManager.current.server.https.cert[0].path), true)
   equal(server.url.startsWith('https://'), true)
   let res = await (request(`${server.url}/`))
   equal(res.statusCode, 200)

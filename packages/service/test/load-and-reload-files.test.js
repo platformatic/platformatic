@@ -111,6 +111,10 @@ test('update config', async ({ teardown, equal, pass, same }) => {
     }`)
 
   await server.restart({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
     plugins: {
       paths: [file2]
     }
@@ -248,7 +252,7 @@ test('load and reload ESM', async ({ teardown, equal, pass, same }) => {
   }
 })
 
-test('server should be available after reload a compromised plugin', async ({ teardown, equal, pass, same }) => {
+test('server should be available after reload a compromised plugin', async ({ teardown, equal, pass, same, rejects }) => {
   const file = join(os.tmpdir(), `some-plugin-${process.pid}.js`)
 
   const workingModule = `
@@ -285,7 +289,7 @@ test('server should be available after reload a compromised plugin', async ({ te
   }
 
   await writeFile(file, workingModule)
-  await server.restart(restartConfig)
+  await rejects(server.restart(restartConfig))
 
   {
     const res = await request(`${server.url}/`, { method: 'GET' })

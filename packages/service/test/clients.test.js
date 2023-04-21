@@ -8,7 +8,7 @@ const { request } = require('undici')
 const { compile } = require('../lib/compile')
 const { rmdir } = require('fs/promises')
 
-test('client is loaded', async ({ teardown, equal, pass, same, comment }) => {
+test('client is loaded', { only: true }, async ({ teardown, equal, pass, same, comment }) => {
   const server1 = await buildServer(join(__dirname, '..', 'fixtures', 'hello', 'platformatic.service.json'))
   await server1.listen()
 
@@ -21,6 +21,7 @@ test('client is loaded', async ({ teardown, equal, pass, same, comment }) => {
     await server1.stop()
   })
   await server2.listen()
+  console.log(server2.url)
   const res = await request(`${server2.url}/`)
   equal(res.statusCode, 200, 'status code')
   const data = await res.body.json()

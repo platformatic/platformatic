@@ -21,13 +21,11 @@ async function isFileAccessible (filename, directory) {
 
 /* c8 ignore start */
 function addLoggerToTheConfig (config) {
-  if (config === undefined || config.server === undefined) return
-
   // Set the logger if not present
-  let logger = config.server.logger
+  let logger = config.logger
   if (!logger) {
-    config.server.logger = { level: 'info' }
-    logger = config.server.logger
+    config.logger = { level: 'info' }
+    logger = config.logger
   }
 
   // If TTY use pino-pretty

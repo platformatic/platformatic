@@ -7,21 +7,13 @@ const { schema } = require('./lib/schema')
 const ConfigManager = require('@platformatic/config')
 const { loadConfig, generateDefaultConfig } = require('./lib/load-config')
 const { addLoggerToTheConfig, getJSPluginPath, isFileAccessible } = require('./lib/utils')
-const { isKeyEnabled, deepmerge } = require('@platformatic/utils')
+const { isKeyEnabled } = require('@platformatic/utils')
 const compiler = require('./lib/compile')
 const { join, dirname, resolve } = require('path')
 const { readFile } = require('fs/promises')
 const wrapperPath = join(__dirname, 'lib', 'sandbox-wrapper.js')
 const setupOpenAPI = require('./lib/openapi.js')
 const setupGraphQL = require('./lib/graphql.js')
-
-function createServerConfig (config) {
-  // convert the config file to a new structure
-  // to make @fastify/restartable happy
-  const serverConfig = Object.assign({ ...config.server }, config)
-  delete serverConfig.server
-  return serverConfig
-}
 
 function originToRegexp (origin) {
   if (typeof origin === 'object') {
@@ -34,67 +26,44 @@ function originToRegexp (origin) {
 }
 
 async function platformaticService (app, opts, toLoad = []) {
-  if (isKeyEnabled('metrics', opts)) {
-    app.register(require('./lib/metrics-plugin'), opts.metrics)
+  const configManager = app.platformatic.configManager
+  const config = configManager.current
+
+  if (isKeyEnabled('metrics', config)) {
+    app.register(require('./lib/metrics-plugin'), config.metrics)
   }
 
   if (Array.isArray(toLoad)) {
     for (const plugin of toLoad) {
-      await app.register(plugin, opts)
+      await app.register(plugin)
     }
   }
 
-  if (!app.hasDecorator('platformatic')) {
-    app.decorate('platformatic', {})
+  const serviceConfig = app.platformatic.config?.service
+
+  if (serviceConfig?.openapi) {
+    await setupOpenAPI(app, serviceConfig.openapi)
   }
 
-  {
-    const fileWatcher = opts.fileWatcher
-    const configManager = opts.configManager
-    /* c8 ignore next 3 */
-    if (fileWatcher !== undefined) {
-      app.platformatic.fileWatcher = fileWatcher
-    }
-    if (configManager !== undefined) {
-      app.platformatic.configManager = configManager
-      app.platformatic.config = configManager.current
-      /* c8 ignore next 3 */
-    } else {
-      throw new Error('configManager is required')
-    }
+  if (serviceConfig?.graphql) {
+    await setupGraphQL(app, serviceConfig.graphql)
   }
 
-  {
-    const serviceConfig = app.platformatic.config?.service
-
-    // for some unknown reason, c8 is not detecting any of this
-    // despite being covered by test/routes.test.js
-    /* c8 ignore next 3 */
-    if (serviceConfig?.openapi) {
-      await setupOpenAPI(app, app.platformatic.config?.service?.openapi)
-    }
-
-    /* c8 ignore next 3 */
-    if (serviceConfig?.graphql) {
-      await setupGraphQL(app, app.platformatic.config?.service?.graphql)
-    }
-  }
-
-  for (const plugin of (app.platformatic.config.clients || [])) {
+  for (const plugin of (config.clients || [])) {
     app.register(require(plugin.path), {
       url: plugin.url
     })
   }
 
-  if (opts.plugins) {
+  if (config.plugins) {
     // if we don't have a fullPath, let's assume we are in a test and we can use the current working directory
-    const configPath = app.platformatic.configManager.fullPath || join(process.cwd(), 'platformatic.db.json')
+    const configPath = configManager.fullPath || join(process.cwd(), 'platformatic.db.json')
     const tsConfigPath = join(dirname(configPath), 'tsconfig.json')
     /* c8 ignore next 21 */
     if (await isFileAccessible(tsConfigPath)) {
       const tsConfig = JSON.parse(await readFile(tsConfigPath, 'utf8'))
       const outDir = resolve(dirname(tsConfigPath), tsConfig.compilerOptions.outDir)
-      opts.plugins.paths = opts.plugins.paths.map((plugin) => {
+      config.plugins.paths = config.plugins.paths.map((plugin) => {
         if (typeof plugin === 'string') {
           return getJSPluginPath(configPath, plugin, outDir)
         } else {
@@ -105,7 +74,7 @@ async function platformaticService (app, opts, toLoad = []) {
         }
       })
     } else {
-      for (const plugin of opts.plugins.paths) {
+      for (const plugin of config.plugins.paths) {
         const path = typeof plugin === 'string' ? plugin : plugin.path
         if (path.endsWith('.ts')) {
           throw new Error(`Cannot load plugin ${path}, tsconfig.json not found`)
@@ -117,14 +86,14 @@ async function platformaticService (app, opts, toLoad = []) {
     // that's why we ignore the coverage of the `undefined` case, which cannot be covered in cli tests)
     // all individual plugin hot reload settings will be overloaded by global hot reload
     /* c8 ignore next 1 */
-    const hotReload = opts.plugins.hotReload !== false
-    const isWatchEnabled = app.platformatic.config.watch !== false
-    app.log.debug({ plugins: opts.plugins.path }, 'loading plugin')
+    const hotReload = config.plugins.hotReload !== false
+    const isWatchEnabled = config.watch !== false
+    app.log.debug({ plugins: config.plugins.path }, 'loading plugin')
 
     if (isWatchEnabled && hotReload) {
       await app.register(sandbox, {
         path: wrapperPath,
-        options: { paths: opts.plugins.paths },
+        options: { paths: config.plugins.paths },
         customizeGlobalThis (_globalThis) {
           // Taken from https://github.com/nodejs/undici/blob/fa9fd9066569b6357acacffb806aa804b688c9d8/lib/global.js#L5
           const globalDispatcher = Symbol.for('undici.globalDispatcher.1')
@@ -136,72 +105,42 @@ async function platformaticService (app, opts, toLoad = []) {
         }
       })
     } else {
-      await app.register(require(wrapperPath), { paths: opts.plugins.paths })
+      await app.register(require(wrapperPath), { paths: config.plugins.paths })
     }
   }
 
   // Enable CORS
-  if (opts.cors) {
-    let origin = opts.cors.origin
+  if (config.server.cors) {
+    let origin = config.server.cors.origin
     if (Array.isArray(origin)) {
       origin = origin.map(originToRegexp)
     } else {
       origin = originToRegexp(origin)
     }
 
-    opts.cors.origin = origin
+    config.server.cors.origin = origin
 
-    app.register(require('@fastify/cors'), opts.cors)
+    app.register(require('@fastify/cors'), config.server.cors)
   }
 
-  if (isKeyEnabled('healthCheck', opts)) {
+  if (isKeyEnabled('healthCheck', config.server)) {
+    const healthCheck = config.server.healthCheck
     app.register(underPressure, {
       exposeStatusRoute: '/status',
-      healthCheckInterval: opts.healthCheck.interval !== undefined ? opts.healthCheck.interval : 5000,
-      ...opts.healthCheck,
-      healthCheck: opts.healthCheck.fn
+      healthCheckInterval: healthCheck.interval !== undefined ? healthCheck.interval : 5000,
+      ...healthCheck,
+      healthCheck: healthCheck.fn
     })
   }
 
   if (!app.hasRoute({ url: '/', method: 'GET' }) && !Array.isArray(toLoad)) {
-    await app.register(require('./lib/root-endpoint'), opts)
+    await app.register(require('./lib/root-endpoint'))
   }
 }
 
 platformaticService[Symbol.for('skip-override')] = true
 platformaticService.schema = schema
 platformaticService.envWhitelist = ['PORT', 'HOSTNAME']
-
-function adjustConfigBeforeMerge (cm) {
-  // This function and adjustConfigAfterMerge() are needed because there are
-  // edge cases that deepmerge() does not handle properly. This code does not
-  // live in the generic config manager because that object is not aware of
-  // these schema dependent details.
-  const stash = new Map()
-
-  // If a pino instance is passed as the logger, it will contain a child()
-  // function that is not enumerable. Non-enumerables are not copied by
-  // deepmerge(), so stash the logger here.
-  /* c8 ignore next 5 */
-  if (typeof cm.server?.logger?.child === 'function' &&
-      !Object.prototype.propertyIsEnumerable.call(cm.server.logger, 'child')) {
-    stash.set('server.logger', cm.server.logger)
-    cm.server.logger = null
-  }
-
-  return stash
-}
-
-function adjustConfigAfterMerge (options, stash) {
-  // Restore any config that needed to be stashed prior to merging.
-  const pinoLogger = stash.get('server.logger')
-
-  /* c8 ignore next 4 */
-  if (pinoLogger) {
-    options.server.logger = pinoLogger
-    options.configManager.current.server.logger = pinoLogger
-  }
-}
 
 async function adjustHttpsKeyAndCert (arg) {
   if (typeof arg === 'string') {
@@ -238,30 +177,52 @@ function defaultConfig (app, source) {
 
 async function buildServer (options, app) {
   app = app || platformaticService
+  let cm
 
   if (!options.configManager) {
     // instantiate a new config manager from current options
-    const cm = new ConfigManager(defaultConfig(app, options))
+    cm = new ConfigManager(defaultConfig(app, options))
     await cm.parseAndValidate()
-    const stash = adjustConfigBeforeMerge(cm.current)
-    options = deepmerge({}, options, cm.current)
-    options.configManager = cm
-    adjustConfigAfterMerge(options, stash)
-  }
-
-  if (options.server.https) {
-    options.server.https.key = await adjustHttpsKeyAndCert(options.server.https.key)
-    options.server.https.cert = await adjustHttpsKeyAndCert(options.server.https.cert)
-    options.server = { ...options.server, ...options.server.https }
-    delete options.server.https
-    options.server.protocol = 'https'
   } else {
-    options.server.protocol = 'http'
+    cm = options.configManager
   }
-  const serverConfig = createServerConfig(options)
 
-  serverConfig.originalConfig = options
-  serverConfig.app = app
+  // options is a path
+  if (typeof options === 'string') {
+    options = cm.current
+  }
+
+  async function jumpApp (root) {
+    root.decorate('platformatic', {})
+
+    const fileWatcher = options.fileWatcher
+    /* c8 ignore next 3 */
+    if (fileWatcher !== undefined) {
+      root.platformatic.fileWatcher = fileWatcher
+    }
+    root.platformatic.configManager = cm
+    root.platformatic.config = cm.current
+    root.register(app)
+  }
+  jumpApp[Symbol.for('skip-override')] = true
+
+  const serverConfig = {
+    ...(options.server),
+    configManager: cm,
+    app: jumpApp
+  }
+
+  if (serverConfig.https) {
+    serverConfig.key = await adjustHttpsKeyAndCert(options.server.https.key)
+    serverConfig.cert = await adjustHttpsKeyAndCert(options.server.https.cert)
+    delete serverConfig.https
+    serverConfig.protocol = 'https'
+  } else if (options.server) {
+    serverConfig.protocol = 'http'
+  }
+
+  addLoggerToTheConfig(serverConfig)
+
   const handler = await start(serverConfig)
 
   Object.defineProperty(handler, 'url', {
@@ -277,29 +238,29 @@ async function buildServer (options, app) {
   const _restart = handler.restart
 
   let debounce = null
-  handler.restart = (opts) => {
+  handler.restart = async (opts) => {
     /* c8 ignore next 3 */
     if (debounce) {
       return debounce
     }
 
-    addLoggerToTheConfig(opts)
-    const configManager = handler.app.platformatic.configManager
-
-    if (!opts) {
-      opts = configManager.current
+    if (opts) {
+      if (!await cm.update(opts)) {
+        const err = new Error('Invalid config')
+        err.validationErrors = cm.validationErrors
+        throw err
+      }
     }
 
-    // Ignore because not tested on Windows
-    // TODO: remove the ignore, we shoduld be testing
-    // this on Windows
-    const fileWatcher = handler.app.platformatic.fileWatcher
-    opts.fileWatcher = fileWatcher
-    opts.configManager = configManager
-    opts = createServerConfig(opts)
-    opts.app = app
+    const restartOpts = {
+      fileWatcher: handler.app.platformatic.fileWatcher,
+      configManager: cm,
+      app: jumpApp
+    }
 
-    debounce = _restart(opts).then(() => {
+    addLoggerToTheConfig(restartOpts)
+
+    debounce = _restart(restartOpts).then(() => {
       handler.app.log.info('restarted')
     }).finally(() => {
       debounce = null
@@ -321,10 +282,9 @@ async function buildStart (loadConfig, buildServer) {
 
 module.exports.buildServer = buildServer
 module.exports.schema = require('./lib/schema')
-module.exports.createServerConfig = createServerConfig
 module.exports.platformaticService = platformaticService
-module.exports.addLoggerToTheConfig = addLoggerToTheConfig
 module.exports.loadConfig = loadConfig
+module.exports.addLoggerToTheConfig = addLoggerToTheConfig
 module.exports.generateConfigManagerConfig = generateDefaultConfig
 module.exports.tsCompiler = compiler
 module.exports.buildStart = buildStart
