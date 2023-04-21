@@ -99,7 +99,7 @@ test('build basic client from url', async ({ teardown, same, rejects }) => {
   }
 })
 
-test('build basic client from file', { only: true }, async ({ teardown, same, rejects }) => {
+test('build basic client from file', async ({ teardown, same, rejects }) => {
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
