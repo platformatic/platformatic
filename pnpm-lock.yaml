@@ -619,9 +619,6 @@ importers:
       '@fastify/static':
         specifier: ^6.9.0
         version: 6.9.0
-      graphql-ws:
-        specifier: ^5.12.1
-        version: 5.12.1(graphql@16.6.0)
     devDependencies:
       '@graphiql/toolkit':
         specifier: 0.8.3
@@ -659,6 +656,9 @@ importers:
       graphiql:
         specifier: 2.4.1
         version: 2.4.1(@codemirror/language@6.0.0)(@types/react@18.0.30)(graphql-ws@5.12.1)(graphql@16.6.0)(react-dom@18.2.0)(react-is@17.0.2)(react@18.2.0)
+      graphql-ws:
+        specifier: ^5.12.1
+        version: 5.12.1(graphql@16.6.0)
       happy-dom:
         specifier: ^9.0.0
         version: 9.1.7
@@ -8820,6 +8820,7 @@ packages:
       graphql: '>=0.11 <=16'
     dependencies:
       graphql: 16.6.0
+    dev: true
 
   /graphql@16.6.0:
     resolution: {integrity: sha512-KPIBPDlW7NxrbT/eh4qPXz5FiFdL5UbaA0XUNz2Rp3Z3hqBSkbj0GVjwFDztsWVauZUWsbKHgMg++sk8UX0bkw==}
