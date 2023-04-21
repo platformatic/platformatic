@@ -1,6 +1,7 @@
 'use strict'
 
 const { request } = require('undici')
+const { join } = require('path')
 const fs = require('fs/promises')
 const kHeaders = Symbol('headers')
 const kGetHeaders = Symbol('getHeaders')
@@ -22,18 +23,20 @@ function generateOperationId (path, method, methodMeta) {
 async function buildOpenAPIClient (options) {
   const client = {}
   let spec
+  let baseUrl
 
   // this is tested, not sure why c8 is not picking it up
   if (options.path) {
     spec = JSON.parse(await fs.readFile(options.path, 'utf8'))
+    baseUrl = options.url.replace(/\/$/, '')
   } else if (options.url) {
     const res = await request(options.url)
     spec = await res.body.json()
+    baseUrl = computeURLWithoutPath(options.url)
   } else {
     throw new Error('options.url or options.file are required')
   }
 
-  const baseUrl = computeURLWithoutPath(options.url)
   client[kHeaders] = options.headers || {}
 
   for (const path of Object.keys(spec.paths)) {
@@ -59,6 +62,7 @@ function computeURLWithoutPath (url) {
 function buildCallFunction (baseUrl, path, method, methodMeta, operationId) {
   const url = new URL(baseUrl)
   method = method.toUpperCase()
+  path = join(url.pathname, path)
 
   const pathParams = methodMeta.parameters?.filter(p => p.in === 'path') || []
   const queryParams = methodMeta.parameters?.filter(p => p.in === 'query') || []
