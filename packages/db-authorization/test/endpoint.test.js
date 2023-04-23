@@ -5,16 +5,10 @@ const fastify = require('fastify')
 const core = require('@platformatic/db-core')
 const { connInfo } = require('./helper')
 const auth = require('..')
+const restPlugins = require('../fixtures/plugin')
 
-// TODO: provide a better message
-test('users can\'t find a page if the endpoint is protected by a rule', async ({ pass, teardown, same, equal }) => {
+test('[REST] users cannot make a requests to /page endpoint if they are not allowed by endpoind authorization rules', async ({ pass, teardown, same, equal }) => {
   const app = fastify()
-
-  const response = {
-    id: 1,
-    title: 'Hello',
-    userId: 42
-  }
 
   app.register(core, {
     ...connInfo
@@ -31,6 +25,8 @@ test('users can\'t find a page if the endpoint is protected by a rule', async ({
       endpoint: '/page',
       find: false,
       delete: false,
+      save: false
+      /*
       defaults: {
         userId: 'X-PLATFORMATIC-USER-ID'
       },
@@ -39,16 +35,15 @@ test('users can\'t find a page if the endpoint is protected by a rule', async ({
           userId: 'X-PLATFORMATIC-USER-ID'
         }
       }
+      */
     }]
   })
-  app.register(function (fastify, opts, done) {
-    fastify.get('/page', async function (request) {
-      // const ctx = request.createPlatformaticCtx()
-      await request.authorize()
-      return response
-    })
+
+  app.register(function (fastify, _opts, done) {
+    restPlugins(fastify)
     done()
   })
+
   teardown(app.close.bind(app))
 
   await app.ready()
@@ -64,13 +59,45 @@ test('users can\'t find a page if the endpoint is protected by a rule', async ({
       url: '/page',
       headers: {
         Authorization: `Bearer ${token}`
+      }
+    })
+    equal(res.statusCode, 401, 'GET /pages status code 401')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/page',
+      headers: {
+        Authorization: `Bearer ${token}`
       },
       body: {
         title: 'Hello'
       }
     })
-    equal(res.statusCode, 401, 'GET /pages status code')
-    // same(res.json(), response, 'POST /pages response')
+    equal(res.statusCode, 401, 'POST /pages status code 401')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/page/pageId',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    equal(res.statusCode, 401, 'PUT /pages status code 401')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/page/pageId',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    equal(res.statusCode, 401, 'DELETE /pages status code 401')
   }
 })
 /*

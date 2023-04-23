@@ -61,36 +61,41 @@ async function auth (app, opts) {
     }
   }
 
-  app.addHook('onRoute', function () {
-    app.addHook('onRequest', function (request, reply, done) {
-      request.authorize = async () => {
-      // Should validate request based on rules & request metadata
-      // TODO: check for a "path only" based approach instead of url
-        const endpointRules = opts.rules.filter(rule => rule?.endpoint === request.raw.url)
-        const restMapper = {
-          GET: 'find'
-        }
+  app.decorateRequest('authorize', endpointAuthorize)
 
-        await request.extractUser()
+  async function endpointAuthorize () {
+    // Should validate request based on rules & request metadata
+    // TODO: check for a "path only" based approach instead of url
+    const request = this
+    const endpointRules = opts.rules.filter(rule => rule?.endpoint === request.raw.url)
+    const restMapper = {
+      GET: 'find',
+      POST: 'save',
+      DELETE: 'delete'
+    }
 
-        // TODO: add custom key for accessing user role from "request.user"
-        // TODO: add cross checking for role arrays in user and roles
-        const authorizationMatch = endpointRules.find(rule => {
-          if (rule.role === request.user['X-PLATFORMATIC-ROLE'] && rule[restMapper[request.method]]) {
-            return true
-          }
+    await request.extractUser()
 
+    // TODO: add custom key for accessing user role from "request.user"
+    // TODO: add cross checking for role arrays in user and roles
+    const authorizationMatch = endpointRules.find(rule => {
+      if (rule.role === request.user['X-PLATFORMATIC-ROLE'] && rule[restMapper[request.method]]) {
+        const endPointRegEx = new RegExp(rule.endPoint)
+        console.error('Tô aqui!!!!!!!*********')
+        if (request.path.match(endPointRegEx)) {
+          return true
+        } else {
           return false
-        })
-
-        if (!authorizationMatch) {
-          throw new Unauthorized()
         }
       }
 
-      done()
+      return false
     })
-  })
+
+    if (!authorizationMatch) {
+      throw new Unauthorized()
+    }
+  }
 
   const rules = opts.rules || []
 
