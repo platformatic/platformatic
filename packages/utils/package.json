@@ -25,6 +25,6 @@
   },
   "dependencies": {
     "@fastify/deepmerge": "^1.3.0",
-    "minimatch": "^8.0.0"
+    "minimatch": "^9.0.0"
   }
 }
