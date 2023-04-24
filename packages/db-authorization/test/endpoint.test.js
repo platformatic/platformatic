@@ -7,7 +7,7 @@ const { connInfo } = require('./helper')
 const auth = require('..')
 const restPlugins = require('../fixtures/plugin')
 
-test('[REST] users cannot make a requests to /page endpoint if they are not allowed by endpoind authorization rules', async ({ pass, teardown, same, equal }) => {
+test('Users cannot make a requests to /page endpoint if they are not allowed by endpoind authorization rules (REST)', async ({ pass, teardown, same, equal }) => {
   const app = fastify()
 
   app.register(core, {
@@ -98,6 +98,99 @@ test('[REST] users cannot make a requests to /page endpoint if they are not allo
       }
     })
     equal(res.statusCode, 401, 'DELETE /pages status code 401')
+  }
+})
+
+test('Users can make a requests to /page endpoint if they are allowed by endpoind authorization rules (REST)', async ({ pass, teardown, same, equal }) => {
+  const app = fastify()
+
+  app.register(core, {
+    ...connInfo
+  })
+
+  app.register(auth, {
+    jwt: {
+      secret: 'supersecret'
+    },
+    roleKey: 'X-PLATFORMATIC-ROLE',
+    anonymousRole: 'anonymous',
+    rules: [{
+      role: 'user',
+      endpoint: '/page',
+      find: true,
+      delete: true,
+      save: true, 
+      /*
+      defaults: {
+        userId: 'X-PLATFORMATIC-USER-ID'
+      },
+      save: {
+        checks: {
+          userId: 'X-PLATFORMATIC-USER-ID'
+        }
+      }
+      */
+    }]
+  })
+
+  app.register(function (fastify, _opts, done) {
+    restPlugins(fastify)
+    done()
+  })
+
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  const token = await app.jwt.sign({
+    'X-PLATFORMATIC-USER-ID': 42,
+    'X-PLATFORMATIC-ROLE': 'user'
+  })
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/page',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    equal(res.statusCode, 200, 'GET /pages status code 200') 
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/page',
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body: {
+        title: 'Hello'
+      }
+    })
+    equal(res.statusCode, 201, 'POST /pages status code 201')
+  }
+  {
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/page/pageId',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    equal(res.statusCode, 200, 'PUT /pages status code 200')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/page/pageId',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    equal(res.statusCode, 200, 'DELETE /pages status code 200')
   }
 })
 /*

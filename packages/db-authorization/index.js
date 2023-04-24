@@ -64,31 +64,29 @@ async function auth (app, opts) {
   app.decorateRequest('authorize', endpointAuthorize)
 
   async function endpointAuthorize () {
-    // Should validate request based on rules & request metadata
-    // TODO: check for a "path only" based approach instead of url
     const request = this
-    const endpointRules = opts.rules.filter(rule => rule?.endpoint === request.raw.url)
+    const endpointRules = opts.rules.filter(rule => {
+      if (rule?.endpoint) {
+        const endPointRegEx = new RegExp(rule.endpoint)
+        return request.raw.url.match(endPointRegEx) ? true : false
+      }
+      return false
+    })
+
     const restMapper = {
       GET: 'find',
       POST: 'save',
+      PUT: 'save',
       DELETE: 'delete'
     }
 
     await request.extractUser()
 
-    // TODO: add custom key for accessing user role from "request.user"
-    // TODO: add cross checking for role arrays in user and roles
     const authorizationMatch = endpointRules.find(rule => {
-      if (rule.role === request.user['X-PLATFORMATIC-ROLE'] && rule[restMapper[request.method]]) {
-        const endPointRegEx = new RegExp(rule.endPoint)
-        console.error('Tô aqui!!!!!!!*********')
-        if (request.path.match(endPointRegEx)) {
-          return true
-        } else {
-          return false
-        }
-      }
 
+      if (rule.role === request.user['X-PLATFORMATIC-ROLE'] && rule[restMapper[request.method]]) {
+          return true
+      }
       return false
     })
 
