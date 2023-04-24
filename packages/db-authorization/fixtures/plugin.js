@@ -1,7 +1,7 @@
 module.exports = async function (app) {
   app.get('/page', async (req, reply) => {
     await req.authorize()
-    return {title: 'hello'}
+    return { title: 'hello' }
   })
 
   app.post('/page', async (req, reply) => {

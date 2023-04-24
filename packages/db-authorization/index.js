@@ -68,7 +68,7 @@ async function auth (app, opts) {
     const endpointRules = opts.rules.filter(rule => {
       if (rule?.endpoint) {
         const endPointRegEx = new RegExp(rule.endpoint)
-        return request.raw.url.match(endPointRegEx) ? true : false
+        return !!request.raw.url.match(endPointRegEx)
       }
       return false
     })
@@ -83,9 +83,8 @@ async function auth (app, opts) {
     await request.extractUser()
 
     const authorizationMatch = endpointRules.find(rule => {
-
       if (rule.role === request.user['X-PLATFORMATIC-ROLE'] && rule[restMapper[request.method]]) {
-          return true
+        return true
       }
       return false
     })

@@ -119,7 +119,7 @@ test('Users can make a requests to /page endpoint if they are allowed by endpoin
       endpoint: '/page',
       find: true,
       delete: true,
-      save: true, 
+      save: true
       /*
       defaults: {
         userId: 'X-PLATFORMATIC-USER-ID'
@@ -155,7 +155,7 @@ test('Users can make a requests to /page endpoint if they are allowed by endpoin
         Authorization: `Bearer ${token}`
       }
     })
-    equal(res.statusCode, 200, 'GET /pages status code 200') 
+    equal(res.statusCode, 200, 'GET /pages status code 200')
   }
 
   {
