@@ -49,7 +49,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4(typescript@5.0.2)
+        version: 16.3.4
 
   packages/cli:
     dependencies:
@@ -63,8 +63,8 @@ importers:
         specifier: workspace:*
         version: link:../db
       '@platformatic/deploy-client':
-        specifier: ^0.1.1
-        version: 0.1.1
+        specifier: ^0.1.2
+        version: 0.1.2
       '@platformatic/metaconfig':
         specifier: workspace:*
         version: link:../metaconfig
@@ -125,7 +125,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4(typescript@5.0.2)
+        version: 16.3.4
       undici:
         specifier: ^5.20.0
         version: 5.21.0
@@ -275,7 +275,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4(typescript@5.0.2)
+        version: 16.3.4
       yaml:
         specifier: ^2.2.1
         version: 2.2.1
@@ -360,7 +360,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4(typescript@5.0.2)
+        version: 16.3.4
       yaml:
         specifier: ^2.2.1
         version: 2.2.1
@@ -572,7 +572,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4(typescript@5.0.2)
+        version: 16.3.4
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
@@ -609,7 +609,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4(typescript@5.0.2)
+        version: 16.3.4
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
@@ -625,7 +625,7 @@ importers:
         version: 0.8.3(graphql-ws@5.12.1)(graphql@16.6.0)
       '@mui/material':
         specifier: ^5.11.10
-        version: 5.11.14(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(@types/react@18.0.30)(react-dom@18.2.0)(react@18.2.0)
+        version: 5.11.14(@emotion/react@11.10.6)(@types/react@18.0.30)(react-dom@18.2.0)(react@18.2.0)
       '@platformatic/db-ra-data-rest':
         specifier: workspace:*
         version: link:../db-ra-data-rest
@@ -712,7 +712,7 @@ importers:
         version: 3.2.7(postcss@8.4.21)
       vite:
         specifier: ^4.1.4
-        version: 4.2.1(@types/node@18.15.10)
+        version: 4.2.1
       vitest:
         specifier: ^0.30.0
         version: 0.30.0(happy-dom@9.1.7)(playwright@1.32.1)
@@ -740,10 +740,10 @@ importers:
         version: 17.0.0
       vite:
         specifier: ^4.1.4
-        version: 4.2.1(@types/node@18.15.10)
+        version: 4.2.1
       vitest:
         specifier: ^0.30.0
-        version: 0.30.0(happy-dom@9.1.7)(playwright@1.32.1)
+        version: 0.30.0
       whatwg-fetch:
         specifier: ^3.6.2
         version: 3.6.2
@@ -771,7 +771,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4(typescript@5.0.2)
+        version: 16.3.4
 
   packages/service:
     dependencies:
@@ -963,7 +963,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4(typescript@5.0.2)
+        version: 16.3.4
       tsd:
         specifier: ^0.28.0
         version: 0.28.1
@@ -1015,7 +1015,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4(typescript@5.0.2)
+        version: 16.3.4
       tsd:
         specifier: ^0.28.0
         version: 0.28.1
@@ -1049,7 +1049,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4(typescript@5.0.2)
+        version: 16.3.4
 
   packages/sql-mapper:
     dependencies:
@@ -1086,7 +1086,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4(typescript@5.0.2)
+        version: 16.3.4
       tsd:
         specifier: ^0.28.0
         version: 0.28.1
@@ -1135,7 +1135,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4(typescript@5.0.2)
+        version: 16.3.4
       tsd:
         specifier: ^0.28.0
         version: 0.28.1
@@ -1160,7 +1160,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4(typescript@5.0.2)
+        version: 16.3.4
 
 packages:
 
@@ -3442,7 +3442,7 @@ packages:
       magic-string: 0.26.7
       react-docgen-typescript: 2.2.2(typescript@5.0.2)
       typescript: 5.0.2
-      vite: 4.2.1(@types/node@18.15.10)
+      vite: 4.2.1
     dev: true
 
   /@jridgewell/gen-mapping@0.1.1:
@@ -3705,6 +3705,41 @@ packages:
       react-transition-group: 4.4.5(react-dom@18.2.0)(react@18.2.0)
     dev: true
 
+  /@mui/material@5.11.14(@emotion/react@11.10.6)(@types/react@18.0.30)(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-uoiUyybmo+M+nYARBygmbXgX6s/hH0NKD56LCAv9XvmdGVoXhEGjOvxI5/Bng6FS3NNybnA8V+rgZW1Z/9OJtA==}
+    engines: {node: '>=12.0.0'}
+    peerDependencies:
+      '@emotion/react': ^11.5.0
+      '@emotion/styled': ^11.3.0
+      '@types/react': ^17.0.0 || ^18.0.0
+      react: ^17.0.0 || ^18.0.0
+      react-dom: ^17.0.0 || ^18.0.0
+    peerDependenciesMeta:
+      '@emotion/react':
+        optional: true
+      '@emotion/styled':
+        optional: true
+      '@types/react':
+        optional: true
+    dependencies:
+      '@babel/runtime': 7.21.0
+      '@emotion/react': 11.10.6(@types/react@18.0.30)(react@18.2.0)
+      '@mui/base': 5.0.0-alpha.122(@types/react@18.0.30)(react-dom@18.2.0)(react@18.2.0)
+      '@mui/core-downloads-tracker': 5.11.14
+      '@mui/system': 5.11.14(@emotion/react@11.10.6)(@types/react@18.0.30)(react@18.2.0)
+      '@mui/types': 7.2.3(@types/react@18.0.30)
+      '@mui/utils': 5.11.13(react@18.2.0)
+      '@types/react': 18.0.30
+      '@types/react-transition-group': 4.4.5
+      clsx: 1.2.1
+      csstype: 3.1.1
+      prop-types: 15.8.1
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+      react-is: 18.2.0
+      react-transition-group: 4.4.5(react-dom@18.2.0)(react@18.2.0)
+    dev: true
+
   /@mui/private-theming@5.11.13(@types/react@18.0.30)(react@18.2.0):
     resolution: {integrity: sha512-PJnYNKzW5LIx3R+Zsp6WZVPs6w5sEKJ7mgLNnUXuYB1zo5aX71FVLtV7geyPXRcaN2tsoRNK7h444ED0t7cIjA==}
     engines: {node: '>=12.0.0'}
@@ -3744,6 +3779,27 @@ packages:
       react: 18.2.0
     dev: true
 
+  /@mui/styled-engine@5.11.11(@emotion/react@11.10.6)(react@18.2.0):
+    resolution: {integrity: sha512-wV0UgW4lN5FkDBXefN8eTYeuE9sjyQdg5h94vtwZCUamGQEzmCOtir4AakgmbWMy0x8OLjdEUESn9wnf5J9MOg==}
+    engines: {node: '>=12.0.0'}
+    peerDependencies:
+      '@emotion/react': ^11.4.1
+      '@emotion/styled': ^11.3.0
+      react: ^17.0.0 || ^18.0.0
+    peerDependenciesMeta:
+      '@emotion/react':
+        optional: true
+      '@emotion/styled':
+        optional: true
+    dependencies:
+      '@babel/runtime': 7.21.0
+      '@emotion/cache': 11.10.5
+      '@emotion/react': 11.10.6(@types/react@18.0.30)(react@18.2.0)
+      csstype: 3.1.1
+      prop-types: 15.8.1
+      react: 18.2.0
+    dev: true
+
   /@mui/system@5.11.14(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(@types/react@18.0.30)(react@18.2.0):
     resolution: {integrity: sha512-/MBv5dUoijJNEKEGi5tppIszGN0o2uejmeISi5vl0CLcaQsI1cd+uBgK+JYUP1VWvI/MtkWRLVSWtF2FWhu5Nw==}
     engines: {node: '>=12.0.0'}
@@ -3765,6 +3821,35 @@ packages:
       '@emotion/styled': 11.10.6(@emotion/react@11.10.6)(@types/react@18.0.30)(react@18.2.0)
       '@mui/private-theming': 5.11.13(@types/react@18.0.30)(react@18.2.0)
       '@mui/styled-engine': 5.11.11(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@18.2.0)
+      '@mui/types': 7.2.3(@types/react@18.0.30)
+      '@mui/utils': 5.11.13(react@18.2.0)
+      '@types/react': 18.0.30
+      clsx: 1.2.1
+      csstype: 3.1.1
+      prop-types: 15.8.1
+      react: 18.2.0
+    dev: true
+
+  /@mui/system@5.11.14(@emotion/react@11.10.6)(@types/react@18.0.30)(react@18.2.0):
+    resolution: {integrity: sha512-/MBv5dUoijJNEKEGi5tppIszGN0o2uejmeISi5vl0CLcaQsI1cd+uBgK+JYUP1VWvI/MtkWRLVSWtF2FWhu5Nw==}
+    engines: {node: '>=12.0.0'}
+    peerDependencies:
+      '@emotion/react': ^11.5.0
+      '@emotion/styled': ^11.3.0
+      '@types/react': ^17.0.0 || ^18.0.0
+      react: ^17.0.0 || ^18.0.0
+    peerDependenciesMeta:
+      '@emotion/react':
+        optional: true
+      '@emotion/styled':
+        optional: true
+      '@types/react':
+        optional: true
+    dependencies:
+      '@babel/runtime': 7.21.0
+      '@emotion/react': 11.10.6(@types/react@18.0.30)(react@18.2.0)
+      '@mui/private-theming': 5.11.13(@types/react@18.0.30)(react@18.2.0)
+      '@mui/styled-engine': 5.11.11(@emotion/react@11.10.6)(react@18.2.0)
       '@mui/types': 7.2.3(@types/react@18.0.30)
       '@mui/utils': 5.11.13(react@18.2.0)
       '@types/react': 18.0.30
@@ -3841,8 +3926,8 @@ packages:
       rimraf: 3.0.2
     optional: true
 
-  /@platformatic/deploy-client@0.1.1:
-    resolution: {integrity: sha512-WG8NYJFXWXJ0m2ByLAM44gIkj7eeU1QXIAuzz5JGKhuxh6zQx0JTqVJPdMqA2/kYOo/I9E3GRyROWGeotaeRbg==}
+  /@platformatic/deploy-client@0.1.2:
+    resolution: {integrity: sha512-gStPJciyVRF6MeUOebI6R8aNnAP+KT+ZRO2wrp39E/ckvuAaHF717vYOG/yteit47ozONm3ydMXgq0Q0kiP2xw==}
     dependencies:
       tar: 6.1.13
       undici: 5.21.0
@@ -4198,7 +4283,7 @@ packages:
       react-docgen: 6.0.0-alpha.3
       slash: 3.0.0
       sveltedoc-parser: 4.2.1
-      vite: 4.2.1(@types/node@18.15.10)
+      vite: 4.2.1
     transitivePeerDependencies:
       - '@babel/core'
       - eslint
@@ -4889,7 +4974,7 @@ packages:
       '@babel/plugin-transform-react-jsx-source': 7.19.6(@babel/core@7.21.3)
       magic-string: 0.26.7
       react-refresh: 0.14.0
-      vite: 4.2.1(@types/node@18.15.10)
+      vite: 4.2.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -4905,7 +4990,7 @@ packages:
       '@babel/plugin-transform-react-jsx-source': 7.19.6(@babel/core@7.21.3)
       magic-string: 0.27.0
       react-refresh: 0.14.0
-      vite: 4.2.1(@types/node@18.15.10)
+      vite: 4.2.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -4918,7 +5003,7 @@ packages:
       c8: 7.13.0
       picocolors: 1.0.0
       std-env: 3.3.2
-      vitest: 0.30.0(happy-dom@9.1.7)(playwright@1.32.1)
+      vitest: 0.30.0
     dev: true
 
   /@vitest/expect@0.30.0:
@@ -13844,7 +13929,7 @@ packages:
       vue: ^3.2.25
     dependencies:
       '@storybook/builder-vite': 0.2.7(@babel/core@7.21.3)(eslint@8.4.1)(react-dom@18.2.0)(react@18.2.0)(typescript@5.0.2)(vite@4.2.1)
-      vite: 4.2.1(@types/node@18.15.10)
+      vite: 4.2.1
       vue: 3.2.47
     dev: true
 
@@ -14229,6 +14314,56 @@ packages:
     dependencies:
       yaml: 1.10.2
     dev: true
+
+  /tap@16.3.4:
+    resolution: {integrity: sha512-SAexdt2ZF4XBgye6TPucFI2y7VE0qeFXlXucJIV1XDPCs+iJodk0MYacr1zR6Ycltzz7PYg8zrblDXKbAZM2LQ==}
+    engines: {node: '>=12'}
+    hasBin: true
+    peerDependencies:
+      coveralls: ^3.1.1
+      flow-remove-types: '>=2.112.0'
+      ts-node: '>=8.5.2'
+      typescript: '>=3.7.2'
+    peerDependenciesMeta:
+      coveralls:
+        optional: true
+      flow-remove-types:
+        optional: true
+      ts-node:
+        optional: true
+      typescript:
+        optional: true
+    dependencies:
+      chokidar: 3.5.3
+      findit: 2.0.0
+      foreground-child: 2.0.0
+      fs-exists-cached: 1.0.0
+      glob: 7.2.3
+      isexe: 2.0.0
+      istanbul-lib-processinfo: 2.0.3
+      jackspeak: 1.4.2
+      libtap: 1.4.0
+      minipass: 3.3.6
+      mkdirp: 1.0.4
+      nyc: 15.1.0
+      opener: 1.5.2
+      rimraf: 3.0.2
+      signal-exit: 3.0.7
+      source-map-support: 0.5.21
+      tap-mocha-reporter: 5.0.3
+      tap-parser: 11.0.2
+      tap-yaml: 1.0.2
+      tcompare: 5.0.7
+      which: 2.0.2
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+    bundledDependencies:
+      - ink
+      - treport
+      - '@types/react'
+      - '@isaacs/import-jsx'
+      - react
 
   /tap@16.3.4(typescript@4.9.5):
     resolution: {integrity: sha512-SAexdt2ZF4XBgye6TPucFI2y7VE0qeFXlXucJIV1XDPCs+iJodk0MYacr1zR6Ycltzz7PYg8zrblDXKbAZM2LQ==}
@@ -15129,6 +15264,39 @@ packages:
       - terser
     dev: true
 
+  /vite@4.2.1:
+    resolution: {integrity: sha512-7MKhqdy0ISo4wnvwtqZkjke6XN4taqQ2TBaTccLIpOKv7Vp2h4Y+NpmWCnGDeSvvn45KxvWgGyb0MkHvY1vgbg==}
+    engines: {node: ^14.18.0 || >=16.0.0}
+    hasBin: true
+    peerDependencies:
+      '@types/node': '>= 14'
+      less: '*'
+      sass: '*'
+      stylus: '*'
+      sugarss: '*'
+      terser: ^5.4.0
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+      less:
+        optional: true
+      sass:
+        optional: true
+      stylus:
+        optional: true
+      sugarss:
+        optional: true
+      terser:
+        optional: true
+    dependencies:
+      esbuild: 0.17.14
+      postcss: 8.4.21
+      resolve: 1.22.1
+      rollup: 3.20.2
+    optionalDependencies:
+      fsevents: 2.3.2
+    dev: true
+
   /vite@4.2.1(@types/node@18.15.10):
     resolution: {integrity: sha512-7MKhqdy0ISo4wnvwtqZkjke6XN4taqQ2TBaTccLIpOKv7Vp2h4Y+NpmWCnGDeSvvn45KxvWgGyb0MkHvY1vgbg==}
     engines: {node: ^14.18.0 || >=16.0.0}
@@ -15161,6 +15329,72 @@ packages:
       rollup: 3.20.2
     optionalDependencies:
       fsevents: 2.3.2
+    dev: true
+
+  /vitest@0.30.0:
+    resolution: {integrity: sha512-2WW4WeTHtrLFeoiuotWvEW6khozx1NvMGYoGsNz2btdddEbqvEdPJIouIdoiC5i61Rl1ctZvm9cn2R9TcPQlzw==}
+    engines: {node: '>=v14.18.0'}
+    hasBin: true
+    peerDependencies:
+      '@edge-runtime/vm': '*'
+      '@vitest/browser': '*'
+      '@vitest/ui': '*'
+      happy-dom: '*'
+      jsdom: '*'
+      playwright: '*'
+      safaridriver: '*'
+      webdriverio: '*'
+    peerDependenciesMeta:
+      '@edge-runtime/vm':
+        optional: true
+      '@vitest/browser':
+        optional: true
+      '@vitest/ui':
+        optional: true
+      happy-dom:
+        optional: true
+      jsdom:
+        optional: true
+      playwright:
+        optional: true
+      safaridriver:
+        optional: true
+      webdriverio:
+        optional: true
+    dependencies:
+      '@types/chai': 4.3.4
+      '@types/chai-subset': 1.3.3
+      '@types/node': 18.15.10
+      '@vitest/expect': 0.30.0
+      '@vitest/runner': 0.30.0
+      '@vitest/snapshot': 0.30.0
+      '@vitest/spy': 0.30.0
+      '@vitest/utils': 0.30.0
+      acorn: 8.8.2
+      acorn-walk: 8.2.0
+      cac: 6.7.14
+      chai: 4.3.7
+      concordance: 5.0.4
+      debug: 4.3.4
+      local-pkg: 0.4.3
+      magic-string: 0.30.0
+      pathe: 1.1.0
+      picocolors: 1.0.0
+      source-map: 0.6.1
+      std-env: 3.3.2
+      strip-literal: 1.0.1
+      tinybench: 2.4.0
+      tinypool: 0.4.0
+      vite: 4.2.1(@types/node@18.15.10)
+      vite-node: 0.30.0(@types/node@18.15.10)
+      why-is-node-running: 2.2.2
+    transitivePeerDependencies:
+      - less
+      - sass
+      - stylus
+      - sugarss
+      - supports-color
+      - terser
     dev: true
 
   /vitest@0.30.0(happy-dom@9.1.7)(playwright@1.32.1):
