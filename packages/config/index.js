@@ -176,7 +176,7 @@ class ConfigManager extends EventEmitter {
       validate: (schema, path, parentSchema, data) => {
         const resolved = resolve(this.dirname, path)
         data.parentData[data.parentDataProperty] = resolved
-        return true
+        return typeof path === 'string' && path.trim() !== ''
       }
     })
     const ajvValidate = ajv.compile(this.schema)
