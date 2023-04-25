@@ -61,8 +61,13 @@ function generateConfig (migrations, plugin, types, typescript, version) {
       connectionString: '{DATABASE_URL}',
       graphql: true,
       openapi: true
-    },
-    migrations: { dir: migrations }
+    }
+  }
+
+  if (migrations) {
+    config.migrations = {
+      dir: migrations
+    }
   }
 
   if (plugin === true) {
