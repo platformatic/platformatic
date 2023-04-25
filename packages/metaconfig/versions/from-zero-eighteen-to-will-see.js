@@ -7,7 +7,7 @@ const semver = require('semver')
 
 class FromZeroEighteenToWillSee extends SimpleZeroConfig {
   constructor (opts) {
-    super({ ...opts })
+    super(opts)
     this.config.$schema = `https://platformatic.dev/schemas/v${this.version}/${this.kind}`
 
     if (semver.satisfies(this.version, '~' + version)) {
