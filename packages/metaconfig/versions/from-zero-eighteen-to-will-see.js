@@ -10,7 +10,7 @@ class FromZeroEighteenToWillSee extends SimpleZeroConfig {
     super(opts)
     this.config.$schema = `https://platformatic.dev/schemas/v${this.version}/${this.kind}`
 
-    if (semver.satisfies(this.version, '~' + version)) {
+    if (semver.satisfies(version, '~' + this.version)) {
       return
     }
 

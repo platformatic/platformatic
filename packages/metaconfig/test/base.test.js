@@ -91,5 +91,6 @@ test('upgrade to latest version', async (t) => {
   const meta = await analyze({ file })
   const upgraded = upgrade(meta)
   const version = pkg.version.replace('-dev', '')
+  t.comment(`upgraded to ${upgraded.version}`)
   t.equal(semver.satisfies(version, '^' + upgraded.version), true)
 })
