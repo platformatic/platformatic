@@ -136,6 +136,23 @@ test('creates project with no typescript and no plugin', async ({ equal }) => {
   equal(await isFileAccessible(join(tmpDir, 'plugin.js')), false)
 })
 
+test('creates project with no migrations', async ({ equal }) => {
+  const params = {
+    hostname: 'myhost',
+    port: 6666,
+    migrations: ''
+  }
+
+  await createDB(params, fakeLogger, tmpDir)
+
+  const pathToDbConfigFile = join(tmpDir, 'platformatic.db.json')
+  const dbConfigFile = readFileSync(pathToDbConfigFile, 'utf8')
+  const dbConfig = JSON.parse(dbConfigFile)
+  const { migrations } = dbConfig
+
+  equal(migrations, undefined)
+})
+
 test('creates project with typescript', async ({ equal, same }) => {
   const params = {
     hostname: 'myhost',

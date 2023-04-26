@@ -172,6 +172,9 @@ class ConfigManager extends EventEmitter {
       // TODO: figure out how to implement this via the new `code`
       // option in Ajv
       validate: (schema, path, parentSchema, data) => {
+        if (typeof path !== 'string' || path.trim() === '') {
+          return false
+        }
         const resolved = resolve(this.dirname, path)
         data.parentData[data.parentDataProperty] = resolved
         return true
