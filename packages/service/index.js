@@ -235,21 +235,28 @@ async function buildServer (options, app) {
     }
   })
 
-  const _restart = handler.restart
+  restarter(handler, cm, jumpApp)
 
+  return handler
+}
+
+function restarter (handler, cm, jumpApp) {
   let debounce = null
-  handler.restart = async (opts) => {
-    /* c8 ignore next 3 */
+  const _restart = handler.restart
+  handler.restart = restart
+  handler.app.restart = restart
+
+  // This is covered by tests but c8 doesn't see it
+  /* c8 ignore next 30 */
+  async function restart (opts) {
     if (debounce) {
       return debounce
     }
 
-    if (opts) {
-      if (!await cm.update(opts)) {
-        const err = new Error('Invalid config')
-        err.validationErrors = cm.validationErrors
-        throw err
-      }
+    if (opts && !await cm.update(opts)) {
+      const err = new Error('Invalid config')
+      err.validationErrors = cm.validationErrors
+      throw err
     }
 
     const restartOpts = {
@@ -267,10 +274,6 @@ async function buildServer (options, app) {
     })
     return debounce
   }
-
-  handler.app.restart = handler.restart
-
-  return handler
 }
 
 // This is for @platformatic/db to use
