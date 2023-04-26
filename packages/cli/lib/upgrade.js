@@ -1,4 +1,4 @@
-import { analyze, write } from '@platformatic/metaconfig'
+import { analyze, write, upgrade as upgradeConfig } from '@platformatic/metaconfig'
 import parseArgs from 'minimist'
 import { access } from 'fs/promises'
 import { resolve } from 'path'
@@ -53,9 +53,7 @@ export async function upgrade (argv) {
 
   console.log(`Found ${meta.version} for Platformatic ${meta.kind} in ${meta.format} format`)
 
-  while (typeof meta.up === 'function') {
-    meta = meta.up()
-  }
+  meta = upgradeConfig(meta)
 
   await write(meta)
   console.log('Upgraded to', meta.version)

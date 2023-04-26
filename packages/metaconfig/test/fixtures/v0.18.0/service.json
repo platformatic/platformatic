@@ -1,5 +1,5 @@
 {
-  "$schema": "https://platformatic.dev/schemas/v0.18.0/db",
+  "$schema": "https://platformatic.dev/schemas/v0.18.0/service",
   "server": {
     "hostname": "{PLT_SERVER_HOSTNAME}",
     "port": "{PORT}",
