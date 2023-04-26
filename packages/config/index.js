@@ -7,7 +7,7 @@ const Ajv = require('ajv')
 const fastifyPlugin = require('./lib/plugin')
 const dotenv = require('dotenv')
 const { FileWatcher } = require('@platformatic/utils')
-const { getParser, analyze } = require('@platformatic/metaconfig')
+const { getParser, analyze, upgrade } = require('@platformatic/metaconfig')
 
 class ConfigManager extends EventEmitter {
   constructor (opts) {
@@ -134,9 +134,7 @@ class ConfigManager extends EventEmitter {
         // try updating the config format to latest
         try {
           let meta = await analyze({ config: this.current })
-          while (typeof meta.up === 'function') {
-            meta = meta.up()
-          }
+          meta = upgrade(meta)
           this.current = meta.config
         } catch {
           // nothing to do
@@ -174,6 +172,9 @@ class ConfigManager extends EventEmitter {
       // TODO: figure out how to implement this via the new `code`
       // option in Ajv
       validate: (schema, path, parentSchema, data) => {
+        if (typeof path !== 'string' || path.trim() === '') {
+          return false
+        }
         const resolved = resolve(this.dirname, path)
         data.parentData[data.parentDataProperty] = resolved
         return true

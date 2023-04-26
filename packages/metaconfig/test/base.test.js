@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('tap')
-const { analyze, getParser, getStringifier, write } = require('..')
+const { analyze, getParser, getStringifier, write, upgrade } = require('..')
 const ZeroSeventeen = require('../versions/0.17.x.js')
 const YAML = require('yaml')
 const TOML = require('@iarna/toml')
@@ -10,6 +10,7 @@ const { tmpdir } = require('os')
 const { join } = require('path')
 const { cp } = require('fs/promises')
 const pkg = require('../package.json')
+const semver = require('semver')
 
 test('throws if no config or file is provided', async (t) => {
   await t.rejects(analyze({}), new Error('missing file or config to analyze'))
@@ -83,4 +84,13 @@ test('current version must be matched', async (t) => {
   const version = pkg.version.replace('-dev', '')
   const meta = await analyze({ config: { $schema: `https://platformatic.dev/schemas/v${version}/db` } })
   t.equal(meta.version, version)
+})
+
+test('upgrade to latest version', async (t) => {
+  const file = join(__dirname, 'fixtures', 'v0.16.0', 'array.db.json')
+  const meta = await analyze({ file })
+  const upgraded = upgrade(meta)
+  const version = pkg.version.replace('-dev', '')
+  t.comment(`upgraded to ${upgraded.version}`)
+  t.equal(semver.satisfies(version, '^' + upgraded.version), true)
 })

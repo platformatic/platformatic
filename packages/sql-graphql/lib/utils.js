@@ -53,7 +53,7 @@ function sqlTypeToGraphQL (sqlType) {
     case 'timestamp':
       return scalars.GraphQLDateTime
     case 'uuid':
-      return graphql.GraphQLString
+      return graphql.GraphQLID
     case 'json':
       return GraphQLJSONObject
     case 'jsonb':

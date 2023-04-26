@@ -1,9 +1,9 @@
 'use strict'
 
-class ZeroNineteen {
+class SimpleZeroConfig {
   constructor ({ config, path, format, version }) {
     this.config = config
-    this.version = version || '0.20.0'
+    this.version = version
     this.path = path
     this.format = format || 'json'
 
@@ -15,4 +15,4 @@ class ZeroNineteen {
   }
 }
 
-module.exports = ZeroNineteen
+module.exports = SimpleZeroConfig

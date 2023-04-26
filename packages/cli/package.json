@@ -1,6 +1,6 @@
 {
   "name": "platformatic",
-  "version": "0.20.1",
+  "version": "0.21.1",
   "description": "Platformatic CLI",
   "main": "cli.js",
   "type": "module",
@@ -49,7 +49,7 @@
     "@platformatic/metaconfig": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@platformatic/client-cli": "workspace:*",
-    "@platformatic/deploy-client": "^0.1.1",
+    "@platformatic/deploy-client": "^0.1.2",
     "colorette": "^2.0.19",
     "commist": "^3.2.0",
     "create-platformatic": "workspace:*",

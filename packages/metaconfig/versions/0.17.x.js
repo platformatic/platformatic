@@ -19,16 +19,15 @@ class ZeroSeventeen {
   up () {
     const original = this.config
     const config = rfdc(original)
-    config.$schema = `https://platformatic.dev/schemas/v0.18.0/${this.kind}`
 
     if (this.kind === 'db') {
       config.db = config.core
       delete config.core
     }
 
-    const NewClass = require('./0.18.x.js')
+    const NewClass = require('./from-zero-eighteen-to-will-see')
 
-    return new NewClass({ config, path: this.path, format: this.format })
+    return new NewClass({ config, path: this.path, format: this.format, version: '0.18.0' })
   }
 }
 

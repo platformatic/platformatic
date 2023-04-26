@@ -5,6 +5,13 @@ const { extname } = require('path')
 const YAML = require('yaml')
 const TOML = require('@iarna/toml')
 const JSON5 = require('json5')
+const semver = require('semver')
+const FromZeroEighteenToWillSee = require('./versions/from-zero-eighteen-to-will-see.js')
+
+const ranges = [{
+  range: '>= 0.18.x < 1.0.0',
+  handler: FromZeroEighteenToWillSee
+}]
 
 async function analyze (opts) {
   let data
@@ -29,7 +36,9 @@ async function analyze (opts) {
   if (data.$schema.indexOf('./') === 0) {
     // We assume v0.16
     Handler = require('./versions/0.16.0.js')
-  } else {
+  }
+
+  if (!Handler) {
     const url = new URL(data.$schema)
     const res = url.pathname.match(/^\/schemas\/v(\d+)\.(\d+)\.(\d+)\/(.*)$/)
     if (!res) {
@@ -43,9 +52,18 @@ async function analyze (opts) {
     const minor = res[2]
     const patch = res[3]
 
+    version = `${major}.${minor}.${patch}`
+
+    for (const { range, handler } of ranges) {
+      if (semver.satisfies(version, range)) {
+        Handler = handler
+        break
+      }
+    }
+
     try {
       // try to load the exact version
-      Handler = require(`./versions/${major}.${minor}.${patch}.js`)
+      Handler ||= require(`./versions/${major}.${minor}.${patch}.js`)
     } catch {}
 
     try {
@@ -57,8 +75,6 @@ async function analyze (opts) {
       // try to load the minor range
       Handler ||= require(`./versions/${major}.x.x.js`)
     } catch {}
-
-    version = `${major}.${minor}.${patch}`
 
     if (!Handler) {
       throw new Error('unable to determine the version')
@@ -115,3 +131,12 @@ async function write (meta) {
 }
 
 module.exports.write = write
+
+function upgrade (meta) {
+  while (typeof meta.up === 'function') {
+    meta = meta.up()
+  }
+  return meta
+}
+
+module.exports.upgrade = upgrade

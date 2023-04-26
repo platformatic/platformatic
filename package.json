@@ -1,6 +1,6 @@
 {
   "name": "platformatic",
-  "version": "0.20.1",
+  "version": "0.21.1",
   "private": true,
   "scripts": {
     "test": "pnpm -r --workspace-concurrency=1 test",
@@ -19,7 +19,7 @@
   "devDependencies": {
     "@fastify/pre-commit": "^2.0.2",
     "desm": "^1.3.0",
-    "markdownlint-cli2": "^0.6.0"
+    "markdownlint-cli2": "^0.7.0"
   },
   "pre-commit": [
     "lint",

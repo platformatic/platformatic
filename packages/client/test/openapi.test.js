@@ -105,12 +105,12 @@ test('build basic client from file', async ({ teardown, same, rejects }) => {
   } catch {
     // noop
   }
-  const server = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
+  const server = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic-prefix.db.json'))
   teardown(server.stop)
   await server.listen()
 
   const client = await buildOpenAPIClient({
-    url: server.url,
+    url: `${server.url}/movies-api/`,
     path: join(__dirname, 'fixtures', 'movies', 'openapi.json')
   })
 
