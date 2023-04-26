@@ -7,9 +7,7 @@ const Ajv = require('ajv')
 const fastifyPlugin = require('./lib/plugin')
 const dotenv = require('dotenv')
 const { FileWatcher } = require('@platformatic/utils')
-const { getParser, analyze } = require('@platformatic/metaconfig')
-const semver = require('semver')
-const { version } = require('./package.json')
+const { getParser, analyze, upgrade } = require('@platformatic/metaconfig')
 
 class ConfigManager extends EventEmitter {
   constructor (opts) {
@@ -136,16 +134,7 @@ class ConfigManager extends EventEmitter {
         // try updating the config format to latest
         try {
           let meta = await analyze({ config: this.current })
-          while (typeof meta.up === 'function') {
-            // This block is needed to handle our release process
-            // where we bump the version in the config file before
-            // publishing the package.
-            const next = meta.up()
-            if (semver.gt(next.version, version)) {
-              break
-            }
-            meta = next
-          }
+          meta = upgrade(meta)
           this.current = meta.config
         } catch {
           // nothing to do

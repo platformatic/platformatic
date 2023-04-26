@@ -7,6 +7,7 @@ const TOML = require('@iarna/toml')
 const JSON5 = require('json5')
 const semver = require('semver')
 const FromZeroEighteenToWillSee = require('./versions/from-zero-eighteen-to-will-see.js')
+const { version } = require('./package.json')
 
 const ranges = [{
   range: '>= 0.18.x < 1.0.0',
@@ -131,3 +132,19 @@ async function write (meta) {
 }
 
 module.exports.write = write
+
+function upgrade (meta) {
+  while (typeof meta.up === 'function') {
+    // This block is needed to handle our release process
+    // where we bump the version in the config file before
+    // publishing the package.
+    const next = meta.up()
+    if (semver.gt(next.version, version)) {
+      break
+    }
+    meta = next
+  }
+  return meta
+}
+
+module.exports.upgrade = upgrade

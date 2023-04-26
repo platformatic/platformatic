@@ -11,7 +11,7 @@ npm install @platformatic/metaconfig
 ## Usage
 
 ```javascript
-import { analyze, write } from '@platformatic/metaconfig'
+import { analyze, write, upgrade } from '@platformatic/metaconfig'
 
 const meta = await analyze({ file: 'path/to/platformatic.db.json' }))
 
@@ -20,8 +20,8 @@ console.log(meta.kind)
 console.log(meta.config)
 console.log(meta.path)
 
-// Bring it to the next version
-const metaNext = meta.up()
+// Bring it to the latest version
+const metaNext = upgrade(meta)
 
 console.log(metaNext.version)
 console.log(metaNext.kind)
