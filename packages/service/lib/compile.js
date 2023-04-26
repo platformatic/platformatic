@@ -28,13 +28,17 @@ async function getTSCExecutablePath (cwd) {
   }
 }
 
-async function setup (cwd) {
+async function setup (cwd, config) {
   const logger = pino(
     pretty({
       translateTime: 'SYS:HH:MM:ss',
       ignore: 'hostname,pid'
     })
   )
+
+  if (config?.server.logger) {
+    logger.level = config.server.logger.level
+  }
 
   const { execa } = await import('execa')
 
@@ -56,8 +60,8 @@ async function setup (cwd) {
   return { execa, logger, tscExecutablePath }
 }
 
-async function compile (cwd) {
-  const { execa, logger, tscExecutablePath } = await setup(cwd)
+async function compile (cwd, config) {
+  const { execa, logger, tscExecutablePath } = await setup(cwd, config)
   /* c8 ignore next 3 */
   if (!tscExecutablePath) {
     return false
@@ -76,8 +80,8 @@ async function compile (cwd) {
 // This path is tested but C8 does not see it that way given it needs to work
 // through execa.
 /* c8 ignore next 20 */
-async function compileWatch (cwd) {
-  const { execa, logger, tscExecutablePath } = await setup(cwd)
+async function compileWatch (cwd, config) {
+  const { execa, logger, tscExecutablePath } = await setup(cwd, config)
   if (!tscExecutablePath) {
     return false
   }

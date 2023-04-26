@@ -9,7 +9,7 @@ const { compile } = require('../lib/compile')
 const { rmdir } = require('fs/promises')
 
 test('client is loaded', async ({ teardown, equal, pass, same, comment }) => {
-  const server1 = await buildServer(join(__dirname, '..', 'fixtures', 'hello', 'platformatic.service.json'))
+  const server1 = await buildServer(join(__dirname, '..', 'fixtures', 'hello', 'warn-log.service.json'))
   await server1.listen()
 
   process.env.PLT_CLIENT_URL = server1.url
@@ -21,7 +21,6 @@ test('client is loaded', async ({ teardown, equal, pass, same, comment }) => {
     await server1.stop()
   })
   await server2.listen()
-  console.log(server2.url)
   const res = await request(`${server2.url}/`)
   equal(res.statusCode, 200, 'status code')
   const data = await res.body.json()
@@ -29,7 +28,7 @@ test('client is loaded', async ({ teardown, equal, pass, same, comment }) => {
 })
 
 test('client is loaded (ts)', async ({ teardown, equal, pass, same }) => {
-  const server1 = await buildServer(join(__dirname, '..', 'fixtures', 'hello', 'platformatic.service.json'))
+  const server1 = await buildServer(join(__dirname, '..', 'fixtures', 'hello', 'warn-log.service.json'))
   await server1.listen()
 
   process.env.PLT_CLIENT_URL = server1.url
@@ -40,7 +39,7 @@ test('client is loaded (ts)', async ({ teardown, equal, pass, same }) => {
     await rmdir(join(targetDir, 'dist'))
   } catch {}
 
-  await compile(targetDir)
+  await compile(targetDir, { server: { logger: { level: 'warn' } } })
 
   const server2 = await buildServer(join(targetDir, 'platformatic.service.json'))
   teardown(async () => {

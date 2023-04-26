@@ -11,6 +11,7 @@ t.jobs = 5
 function createLoggingPlugin (text, reloaded = false) {
   return `\
     module.exports = async (app) => {
+      app.log.info({ reloaded: ${reloaded}, text: '${text}' }, 'debugme')
       if (${reloaded}) {
         app.log.info('RELOADED')
       }

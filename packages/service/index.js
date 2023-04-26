@@ -88,7 +88,8 @@ async function platformaticService (app, opts, toLoad = []) {
     /* c8 ignore next 1 */
     const hotReload = config.plugins.hotReload !== false
     const isWatchEnabled = config.watch !== false
-    app.log.debug({ plugins: config.plugins.path }, 'loading plugin')
+
+    app.log.debug({ plugins: config.plugins.paths, hotReload, isWatchEnabled }, 'loading plugins')
 
     if (isWatchEnabled && hotReload) {
       await app.register(sandbox, {
@@ -221,8 +222,6 @@ async function buildServer (options, app) {
     serverConfig.protocol = 'http'
   }
 
-  addLoggerToTheConfig(serverConfig)
-
   const handler = await start(serverConfig)
 
   Object.defineProperty(handler, 'url', {
@@ -260,12 +259,11 @@ function restarter (handler, cm, jumpApp) {
     }
 
     const restartOpts = {
+      ...(cm.current.server),
       fileWatcher: handler.app.platformatic.fileWatcher,
       configManager: cm,
       app: jumpApp
     }
-
-    addLoggerToTheConfig(restartOpts)
 
     debounce = _restart(restartOpts).then(() => {
       handler.app.log.info('restarted')
