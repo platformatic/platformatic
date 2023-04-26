@@ -1,3 +1,5 @@
+'use strict'
+
 module.exports = async function (app) {
   app.get('/page', async (req, reply) => {
     await req.authorize()
