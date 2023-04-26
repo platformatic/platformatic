@@ -221,3 +221,16 @@ test('platformaticContext', async ({ plan, equal, teardown }) => {
   const res = await app.inject('/')
   equal(res.statusCode, 200)
 })
+
+test('platformatic decorator already present', async ({ teardown }) => {
+  async function onDatabaseLoad (db, sql) {
+  }
+  const app = fastify()
+  app.decorate('platformatic', {})
+  teardown(() => app.close())
+  app.register(plugin, {
+    connectionString: connInfo.connectionString,
+    onDatabaseLoad
+  })
+  await app.ready()
+})

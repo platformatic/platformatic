@@ -27,6 +27,7 @@ async function buildServer (_args, onServer) {
     serverConfig.configManager = configManager
 
     const app = Fastify(serverConfig)
+    app.decorate('platformatic', { configManager, config: configManager.current })
     app.register(platformaticDB, serverConfig)
 
     await app.ready()
