@@ -4,7 +4,6 @@ const { test } = require('tap')
 const { resolve } = require('path')
 const ConfigManager = require('..')
 const pkg = require('../package.json')
-const proxyquire = require('proxyquire')
 
 test('should throw if file is not found', async ({ match, fail }) => {
   try {
