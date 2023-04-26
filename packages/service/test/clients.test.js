@@ -8,7 +8,7 @@ const { request } = require('undici')
 const { compile } = require('../lib/compile')
 const { rmdir } = require('fs/promises')
 
-test('client is loaded', { only: true }, async ({ teardown, equal, pass, same, comment }) => {
+test('client is loaded', async ({ teardown, equal, pass, same, comment }) => {
   const server1 = await buildServer(join(__dirname, '..', 'fixtures', 'hello', 'platformatic.service.json'))
   await server1.listen()
 
