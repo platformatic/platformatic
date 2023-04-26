@@ -10,9 +10,9 @@ const ConfigManager = require('@platformatic/config')
 const adjustConfig = require('./lib/adjust-config')
 
 async function platformaticDB (app, opts) {
-  const configManager = opts.configManager
+  const configManager = app.platformatic.configManager
   const config = configManager.current
-  await adjustConfig(opts.configManager)
+  await adjustConfig(configManager)
 
   if (config.migrations && config.migrations.autoApply === true && !app.restarted) {
     app.log.debug({ migrations: config.migrations }, 'running migrations')
@@ -26,7 +26,7 @@ async function platformaticDB (app, opts) {
     }
   }
 
-  if (isKeyEnabled('dashboard', opts)) {
+  if (isKeyEnabled('dashboard', config)) {
     app.register(require('./_admin'), { ...config, configManager, prefix: '_admin' })
     await app.register(dashboard, {
       path: config.dashboard.path
@@ -35,26 +35,17 @@ async function platformaticDB (app, opts) {
 
   async function toLoad (app) {
     app.register(core, config.db)
-    if (opts.authorization) {
+    if (config.authorization) {
       app.register(auth, config.authorization)
     }
   }
   toLoad[Symbol.for('skip-override')] = true
 
-  if (isKeyEnabled('healthCheck', opts)) {
-    if (typeof opts.healthCheck !== 'object') {
-      opts.healthCheck = {}
+  if (isKeyEnabled('healthCheck', config.server)) {
+    if (typeof config.server.healthCheck !== 'object') {
+      config.server.healthCheck = {}
     }
-    opts.healthCheck.fn = async function (serverInstance) {
-      const { db, sql } = serverInstance.platformatic
-      try {
-        await db.query(sql`SELECT 1`)
-        return true
-      } catch (err) {
-        app.log.warn({ err }, 'Healthcheck failed')
-        return false
-      }
-    }
+    config.server.healthCheck.fn = healthCheck
   }
 
   await platformaticService(app, opts, [
@@ -70,6 +61,17 @@ async function platformaticDB (app, opts) {
 
   if (!app.hasRoute({ url: '/', method: 'GET' })) {
     app.register(require('./lib/root-endpoint'), config)
+  }
+}
+
+async function healthCheck (app) {
+  const { db, sql } = app.platformatic
+  try {
+    await db.query(sql`SELECT 1`)
+    return true
+  } catch (err) {
+    app.log.warn({ err }, 'Healthcheck failed')
+    return false
   }
 }
 

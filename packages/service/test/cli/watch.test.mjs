@@ -11,6 +11,7 @@ t.jobs = 5
 function createLoggingPlugin (text, reloaded = false) {
   return `\
     module.exports = async (app) => {
+      app.log.info({ reloaded: ${reloaded}, text: '${text}' }, 'debugme')
       if (${reloaded}) {
         app.log.info('RELOADED')
       }
@@ -45,8 +46,6 @@ test('should watch js files by default', async ({ equal, teardown, comment }) =>
   ])
 
   const { child, url } = await start('-c', configFilePath)
-  child.stdout.pipe(process.stderr)
-  child.stderr.pipe(process.stderr)
   teardown(() => child.kill('SIGINT'))
 
   await writeFile(pluginFilePath, createLoggingPlugin('v2', true))

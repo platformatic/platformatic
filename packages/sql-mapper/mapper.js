@@ -171,7 +171,11 @@ async function sqlMapper (app, opts) {
   app.onClose(() => mapper.db.dispose())
   // TODO this would need to be refactored as other plugins
   // would need to use this same namespace
-  app.decorate('platformatic', mapper)
+  if (app.hasDecorator('platformatic')) {
+    Object.assign(app.platformatic, mapper)
+  } else {
+    app.decorate('platformatic', mapper)
+  }
 
   app.decorateRequest('platformaticContext', null)
   app.addHook('onRequest', function (req, reply, done) {

@@ -4,17 +4,16 @@
     "port": 0,
     "logger": {
       "level": "warn",
-      "name": "hello client"
+      "name": "hello server"
     }
   },
   "plugins": {
     "paths": ["./plugin.js"],
     "hotReload": false
   },
-  "clients": [{
-    "path": "./hello",
-    "url": "{PLT_CLIENT_URL}"
-  }],
+  "service": {
+    "openapi": true
+  },
   "metrics": false,
   "watch": false
 }

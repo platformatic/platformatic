@@ -33,7 +33,7 @@ export function buildStart (_loadConfig, _buildServer) {
       config.plugins?.watch !== false
     ) {
       try {
-        await compileWatch(dirname(configManager.fullPath))
+        await compileWatch(dirname(configManager.fullPath), config)
       } catch (error) {
         // TODO route this to a logger
         console.error(error)
@@ -190,6 +190,7 @@ async function onFilesUpdated (server, hotReload) {
     if (hotReload === false && configManager.current.plugins) {
       configManager.current.plugins.hotReload = false
     }
+    addLoggerToTheConfig(configManager.current)
     await server.restart(configManager.current)
   } catch (err) {
     // TODO: test this

@@ -38,7 +38,6 @@ test('default logger', async ({ equal, same, match, teardown }) => {
 
 test('plugin options', async ({ equal, same, match, teardown }) => {
   const { child, url } = await start('-c', join(import.meta.url, '..', '..', 'fixtures', 'options', 'platformatic.service.yml'))
-
   const res = await request(`${url}`)
   equal(res.statusCode, 200)
   const body = await res.body.json()

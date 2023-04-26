@@ -40,9 +40,7 @@ async function authRoutes (app, opts) {
     return { success: true }
   })
 
-  if (opts.configManager) {
-    app.register(opts.configManager.toFastifyPlugin())
-  }
+  app.register(app.platformatic.configManager.toFastifyPlugin())
 }
 
 module.exports = authRoutes
