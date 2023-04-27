@@ -221,6 +221,56 @@ class ConfigManager extends EventEmitter {
     const configString = await readFile(this.fullPath, 'utf-8')
     return configString
   }
+
+  static listConfigFiles (type) {
+    if (type) {
+      // A config type (service, db, etc.) was explicitly provided.
+      return [
+        `platformatic.${type}.json`,
+        `platformatic.${type}.json5`,
+        `platformatic.${type}.yaml`,
+        `platformatic.${type}.yml`,
+        `platformatic.${type}.toml`,
+        `platformatic.${type}.tml`
+      ]
+    } else {
+      // A config type was not provided. Search for all known types and
+      // formats. Unfortunately, this means the ConfigManager needs to be
+      // aware of the different application types (but that should be small).
+      return [
+        'platformatic.service.json',
+        'platformatic.service.json5',
+        'platformatic.service.yaml',
+        'platformatic.service.yml',
+        'platformatic.service.toml',
+        'platformatic.service.tml',
+        'platformatic.db.json',
+        'platformatic.db.json5',
+        'platformatic.db.yaml',
+        'platformatic.db.yml',
+        'platformatic.db.toml',
+        'platformatic.db.tml'
+      ]
+    }
+  }
+
+  static async findConfigFile (directory, type) {
+    directory ??= process.cwd()
+    const configFileNames = this.listConfigFiles(type)
+    const configFilesAccessibility = await Promise.all(configFileNames.map((fileName) => isFileAccessible(fileName, directory)))
+    const accessibleConfigFilename = configFileNames.find((value, index) => configFilesAccessibility[index])
+    return accessibleConfigFilename
+  }
+}
+
+async function isFileAccessible (filename, directory) {
+  try {
+    const filePath = resolve(directory, filename)
+    await access(filePath)
+    return true
+  } catch (err) {
+    return false
+  }
 }
 
 module.exports = ConfigManager

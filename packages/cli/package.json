@@ -46,6 +46,7 @@
   "dependencies": {
     "@platformatic/authenticate": "workspace:*",
     "@platformatic/db": "workspace:*",
+    "@platformatic/config": "workspace:*",
     "@platformatic/metaconfig": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@platformatic/client-cli": "workspace:*",

@@ -3,12 +3,6 @@
 const { access } = require('fs/promises')
 const { resolve, join, relative, dirname, basename } = require('path')
 
-async function findConfigFile (directory, configFileNames) {
-  const configFilesAccessibility = await Promise.all(configFileNames.map((fileName) => isFileAccessible(fileName, directory)))
-  const accessibleConfigFilename = configFileNames.find((value, index) => configFilesAccessibility[index])
-  return accessibleConfigFilename
-}
-
 async function isFileAccessible (filename, directory) {
   try {
     const filePath = directory ? resolve(directory, filename) : filename
@@ -64,7 +58,6 @@ function getJSPluginPath (configPath, tsPluginPath, compileDir) {
 }
 
 module.exports = {
-  findConfigFile,
   isFileAccessible,
   getJSPluginPath,
   addLoggerToTheConfig

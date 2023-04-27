@@ -4,6 +4,7 @@ import { resolve, join, dirname } from 'path'
 import { createRequire } from 'module'
 import semver from 'semver'
 import * as desm from 'desm'
+import ConfigManager from '@platformatic/config'
 
 export const sleep = ms => new Promise((resolve) => setTimeout(resolve, ms))
 export const randomBetween = (min, max) => Math.floor(Math.random() * (max - min + 1) + min)
@@ -67,22 +68,8 @@ export const validatePath = async projectPath => {
   return canAccessParent
 }
 
-const findConfigFile = async (directory, type) => {
-  const configFileNames = [
-    `platformatic.${type}.json`,
-    `platformatic.${type}.json5`,
-    `platformatic.${type}.yaml`,
-    `platformatic.${type}.yml`,
-    `platformatic.${type}.toml`,
-    `platformatic.${type}.tml`
-  ]
-  const configFilesAccessibility = await Promise.all(configFileNames.map((fileName) => isFileAccessible(fileName, directory)))
-  const accessibleConfigFilename = configFileNames.find((value, index) => configFilesAccessibility[index])
-  return accessibleConfigFilename
-}
-
-export const findDBConfigFile = async (directory) => (findConfigFile(directory, 'db'))
-export const findServiceConfigFile = async (directory) => (findConfigFile(directory, 'service'))
+export const findDBConfigFile = async (directory) => (ConfigManager.findConfigFile(directory, 'db'))
+export const findServiceConfigFile = async (directory) => (ConfigManager.findConfigFile(directory, 'service'))
 
 export const getDependencyVersion = async (dependencyName) => {
   const require = createRequire(import.meta.url)

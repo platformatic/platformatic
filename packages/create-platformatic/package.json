@@ -19,6 +19,7 @@
   "license": "Apache-2.0",
   "author": "Marco Piraccini <marco.piraccini@gmail.com>",
   "dependencies": {
+    "@platformatic/config": "workspace:*",
     "chalk": "^5.2.0",
     "commist": "^3.2.0",
     "desm": "^1.3.0",

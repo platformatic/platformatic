@@ -7,6 +7,7 @@ import parseArgs from 'minimist'
 import { access } from 'fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
+import ConfigManager from '@platformatic/config'
 
 export const createGHAction = async (logger, workspaceId, env, config, buildTS, type, projectDir = process.cwd()) => {
   if (type === 'static') {
@@ -21,20 +22,7 @@ const logger = pino(pretty({
   ignore: 'hostname,pid'
 }))
 
-const configFileNames = [
-  './platformatic.db.json',
-  './platformatic.db.json5',
-  './platformatic.db.yaml',
-  './platformatic.db.yml',
-  './platformatic.db.toml',
-  './platformatic.db.tml',
-  './platformatic.service.json',
-  './platformatic.service.json5',
-  './platformatic.service.yaml',
-  './platformatic.service.yml',
-  './platformatic.service.toml',
-  './platformatic.service.tml'
-]
+const configFileNames = ConfigManager.listConfigFiles()
 
 async function isFileAccessible (filename) {
   try {

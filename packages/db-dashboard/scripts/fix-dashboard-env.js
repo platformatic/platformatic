@@ -3,19 +3,10 @@
 const { join } = require('path')
 const { readFile, writeFile } = require('fs/promises')
 const { ConfigManager } = require('@platformatic/service')
-const { findConfigFile } = require('@platformatic/service/lib/utils')
 
 async function main () {
-  const ourConfigFiles = [
-    'platformatic.db.json',
-    'platformatic.db.json5',
-    'platformatic.db.yaml',
-    'platformatic.db.yml',
-    'platformatic.db.toml',
-    'platformatic.db.tml'
-  ]
   const rootDirectory = join(__dirname, '..', '..', '..')
-  const configFileName = await findConfigFile(rootDirectory, ourConfigFiles)
+  const configFileName = await ConfigManager.findConfigFile(rootDirectory, 'db')
   if (!configFileName) {
     console.log('No config file found, skipping other checks.')
     return

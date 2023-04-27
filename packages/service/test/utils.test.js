@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('tap')
-const { getJSPluginPath, findConfigFile, isFileAccessible } = require('../lib/utils')
+const { getJSPluginPath, isFileAccessible } = require('../lib/utils')
 const { join, resolve } = require('path')
 
 test('should get the path of a TS plugin', (t) => {
@@ -17,20 +17,6 @@ test('should get the path of a JS plugin', (t) => {
 
   const result = getJSPluginPath('/something/platformatic.service.json', '/something/plugin.js', '/something/dist')
   t.equal(result, '/something/plugin.js')
-})
-
-test('findConfigFile', async (t) => {
-  const result = await findConfigFile(join(__dirname, '..', 'fixtures', 'hello'), [
-    'platformatic.service.json'
-  ])
-  t.equal(result, 'platformatic.service.json')
-})
-
-test('findConfigFile / failure', async (t) => {
-  const result = await findConfigFile(join(__dirname, '..', 'fixtures', 'hello'), [
-    'foobar'
-  ])
-  t.equal(result, undefined)
 })
 
 test('isFileAccessible no dir', async (t) => {
