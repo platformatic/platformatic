@@ -48,7 +48,7 @@
     "@fastify/swagger": "^8.3.1",
     "@fastify/swagger-ui": "^1.4.0",
     "@fastify/under-pressure": "^8.2.0",
-    "@mercuriusjs/federation": "^1.0.1",
+    "@mercuriusjs/federation": "^2.0.0",
     "@platformatic/client": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/utils": "workspace:*",
