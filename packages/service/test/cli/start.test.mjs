@@ -32,7 +32,7 @@ test('start command', async ({ equal, same, match, teardown }) => {
 
 test('allow custom env properties', async ({ equal, same, match, teardown }) => {
   process.env.A_CUSTOM_PORT = '11111'
-  const { child, url } = await start('start', '-c', join(import.meta.url, '..', 'fixtures', 'custom-port-placeholder.json'), '--allow-env=A_CUSTOM_PORT' )
+  const { child, url } = await start('start', '-c', join(import.meta.url, '..', 'fixtures', 'custom-port-placeholder.json'), '--allow-env=A_CUSTOM_PORT')
   equal(url, 'http://127.0.0.1:11111', 'A_CUSTOM_PORT env variable has been used')
   const res = await request(`${url}`)
   equal(res.statusCode, 200)
