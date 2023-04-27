@@ -173,7 +173,7 @@ pnpm add platformatic
 
 #### Add a database schema
 
-In your project directory (`quick-start`), create a file for your sqlite3 database and also, a `migrations` directory to
+In your project directory(`quick-start`), create a file for your sqlite3 database and also, a `migrations` directory to
 store your database migration files: 
 
 ```bash
