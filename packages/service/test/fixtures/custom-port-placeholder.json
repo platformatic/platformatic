@@ -1,0 +1,10 @@
+{
+  "server": {
+    "logger": {
+      "level": "info"
+    },
+    "hostname": "127.0.0.1",
+    "port": "{A_CUSTOM_PORT}",
+    "pluginTimeout": "10"
+  }
+}

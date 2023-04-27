@@ -62,9 +62,11 @@ Error: ${err}
     process.exit(1)
   }
 
+  const envWhitelist = args.allowEnv ? args.allowEnv : defaultConfig.envWhitelist
   const configManager = new ConfigManager({
     source: args.config,
-    ...defaultConfig
+    ...defaultConfig,
+    envWhitelist
   })
 
   const parsingResult = await configManager.parse()
