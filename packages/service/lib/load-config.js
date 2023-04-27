@@ -64,7 +64,8 @@ Error: ${err}
 
   const configManager = new ConfigManager({
     source: args.config,
-    ...defaultConfig
+    ...defaultConfig,
+    envWhiteList: args.allowEnv || []
   })
 
   const parsingResult = await configManager.parse()
