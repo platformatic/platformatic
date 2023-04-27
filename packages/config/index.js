@@ -238,18 +238,8 @@ class ConfigManager extends EventEmitter {
       // formats. Unfortunately, this means the ConfigManager needs to be
       // aware of the different application types (but that should be small).
       return [
-        'platformatic.service.json',
-        'platformatic.service.json5',
-        'platformatic.service.yaml',
-        'platformatic.service.yml',
-        'platformatic.service.toml',
-        'platformatic.service.tml',
-        'platformatic.db.json',
-        'platformatic.db.json5',
-        'platformatic.db.yaml',
-        'platformatic.db.yml',
-        'platformatic.db.toml',
-        'platformatic.db.tml'
+        ...this.listConfigFiles('service'),
+        ...this.listConfigFiles('db')
       ]
     }
   }
