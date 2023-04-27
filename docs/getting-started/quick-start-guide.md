@@ -173,10 +173,12 @@ pnpm add platformatic
 
 #### Add a database schema
 
-In your project directory (`quick-start`), create a `migrations` directory to
-store your database migration files:
+In your project directory (`quick-start`), create a file for your sqlite3 database and also, a `migrations` directory to
+store your database migration files: 
 
 ```bash
+touch db.sqlite
+
 mkdir migrations
 ```
 
@@ -218,7 +220,8 @@ Copy and paste in this configuration:
     "connectionString": "sqlite://./db.sqlite"
   },
   "migrations": {
-    "dir": "./migrations"
+    "dir": "./migrations",
+    "autoApply": "true"
   }
 }
 ```
@@ -227,7 +230,7 @@ This configuration tells Platformatic to:
 
 - Run an API server on `http://127.0.0.1:3042/`
 - Connect to an SQLite database stored in a file named `db.sqlite`
-- Look for database migration files in the `migrations` directory
+- Look for, and apply the database migrations specified in the `migrations` directory
 
 :::tip
 
