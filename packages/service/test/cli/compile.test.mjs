@@ -32,23 +32,28 @@ t.test('should compile typescript plugin', async (t) => {
 
   await cp(testDir, cwd, { recursive: true })
 
-  try {
-    const child = await execa('node', [cliPath, 'compile'], { cwd })
-    t.equal(child.stdout.includes('Typescript compilation completed successfully.'), true)
-  } catch (err) {
-    console.log(err.stdout)
-    console.log(err.stderr)
-    t.fail(err.stderr)
-  }
+  const child = execa('node', [cliPath, 'compile'], { cwd })
 
-  const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
-  try {
-    await access(jsPluginPath)
-  } catch (err) {
-    t.fail(err)
-  }
+  t.teardown(exitOnTeardown(child))
 
-  t.pass()
+  const splitter = split()
+  child.stdout.pipe(splitter)
+
+  for await (const data of splitter) {
+    const sanitized = stripAnsi(data)
+    if (sanitized.includes('Typescript compilation completed successfully.')) {
+      const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
+      try {
+        await access(jsPluginPath)
+      } catch (err) {
+        t.fail(err)
+      }
+
+      t.pass()
+      return
+    }
+  }
+  t.fail('should compile typescript plugin with a compile command')
 })
 
 t.test('should compile typescript plugin even if typescript is `false`', async (t) => {
@@ -57,23 +62,28 @@ t.test('should compile typescript plugin even if typescript is `false`', async (
 
   await cp(testDir, cwd, { recursive: true })
 
-  try {
-    const child = await execa('node', [cliPath, 'compile'], { cwd })
-    t.equal(child.stdout.includes('Typescript compilation completed successfully.'), true)
-  } catch (err) {
-    console.log(err.stdout)
-    console.log(err.stderr)
-    t.fail(err.stderr)
-  }
+  const child = execa('node', [cliPath, 'compile'], { cwd })
 
-  const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
-  try {
-    await access(jsPluginPath)
-  } catch (err) {
-    t.fail(err)
-  }
+  t.teardown(exitOnTeardown(child))
 
-  t.pass()
+  const splitter = split()
+  child.stdout.pipe(splitter)
+
+  for await (const data of splitter) {
+    const sanitized = stripAnsi(data)
+    if (sanitized.includes('Typescript compilation completed successfully.')) {
+      const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
+      try {
+        await access(jsPluginPath)
+      } catch (err) {
+        t.fail(err)
+      }
+
+      t.pass()
+      return
+    }
+  }
+  t.fail('should compile typescript plugin with a compile command')
 })
 
 t.test('should compile typescript plugin with start command', async (t) => {
@@ -83,8 +93,6 @@ t.test('should compile typescript plugin with start command', async (t) => {
   await cp(testDir, cwd, { recursive: true })
 
   const child = execa('node', [cliPath, 'start'], { cwd })
-
-  t.teardown(exitOnTeardown(child))
 
   const splitter = split()
   child.stdout.pipe(splitter)

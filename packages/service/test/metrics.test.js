@@ -10,15 +10,19 @@ const { promisify } = require('util')
 const sleep = promisify(setTimeout)
 
 test('has /metrics endpoint on default prometheus port', async ({ teardown, equal, fail, match }) => {
-  const server = await buildServer({
+  const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0
     },
     metrics: true
   })
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
   // needed to reach 100% code cov, otherwise the ELU check won't run
   await sleep(120)
   const res = await (request('http://127.0.0.1:9090/metrics'))
@@ -29,15 +33,19 @@ test('has /metrics endpoint on default prometheus port', async ({ teardown, equa
 })
 
 test('has /metrics endpoint with accept application/json', async ({ teardown, equal, fail, match }) => {
-  const server = await buildServer({
+  const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0
     },
     metrics: true
   })
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
   const res = await (request(
     'http://127.0.0.1:9090/metrics',
     {
@@ -53,7 +61,7 @@ test('has /metrics endpoint with accept application/json', async ({ teardown, eq
 })
 
 test('has /metrics endpoint on configured port', async ({ teardown, equal, fail, match }) => {
-  const server = await buildServer({
+  const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -62,8 +70,12 @@ test('has /metrics endpoint on configured port', async ({ teardown, equal, fail,
       port: 9999
     }
   })
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
   const res = await (request('http://127.0.0.1:9999/metrics'))
   equal(res.statusCode, 200)
   match(res.headers['content-type'], /^text\/plain/)
@@ -72,7 +84,7 @@ test('has /metrics endpoint on configured port', async ({ teardown, equal, fail,
 })
 
 test('support basic auth', async ({ teardown, equal, fail, match }) => {
-  const server = await buildServer({
+  const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -84,8 +96,12 @@ test('support basic auth', async ({ teardown, equal, fail, match }) => {
       }
     }
   })
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
   {
     const res = await (request('http://127.0.0.1:9090/metrics'))
     equal(res.statusCode, 401)
@@ -116,15 +132,28 @@ test('support basic auth', async ({ teardown, equal, fail, match }) => {
   }
 })
 
-function testPrometheusJsonOutput (output) {
-  for (const metric of output) {
-    equal(typeof metric.help, 'string', 'metric.help is string')
-    equal(typeof metric.name, 'string', 'metric.name is string')
-    equal(typeof metric.type, 'string', 'metric.type is string')
-    equal(typeof metric.aggregator, 'string', 'metric.aggregator is string')
-    equal(Array.isArray(metric.values), true, 'metric.values is array')
-  }
-}
+test('do not error on restart', async ({ teardown, equal, fail, match }) => {
+  const app = await buildServer({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    metrics: true
+  })
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+  await app.restart()
+
+  const res = await (request('http://127.0.0.1:9090/metrics'))
+  equal(res.statusCode, 200)
+  match(res.headers['content-type'], /^text\/plain/)
+  const body = await res.body.text()
+  testPrometheusOutput(body)
+})
+
 function testPrometheusOutput (output) {
   let metricBlock = []
   const lines = output.split('\n')
@@ -157,21 +186,12 @@ function checkMetricBlock (metricBlock) {
   return true
 }
 
-test('do not error on restart', async ({ teardown, equal, fail, match }) => {
-  const server = await buildServer({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0
-    },
-    metrics: true
-  })
-  teardown(server.stop)
-  await server.listen()
-  await server.restart()
-
-  const res = await (request('http://127.0.0.1:9090/metrics'))
-  equal(res.statusCode, 200)
-  match(res.headers['content-type'], /^text\/plain/)
-  const body = await res.body.text()
-  testPrometheusOutput(body)
-})
+function testPrometheusJsonOutput (output) {
+  for (const metric of output) {
+    equal(typeof metric.help, 'string', 'metric.help is string')
+    equal(typeof metric.name, 'string', 'metric.name is string')
+    equal(typeof metric.type, 'string', 'metric.type is string')
+    equal(typeof metric.aggregator, 'string', 'metric.aggregator is string')
+    equal(Array.isArray(metric.values), true, 'metric.values is array')
+  }
+}

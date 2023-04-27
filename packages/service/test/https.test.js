@@ -31,7 +31,7 @@ test('supports https options', async ({ teardown, equal, same, plan, comment }) 
     }
   }))
 
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -42,19 +42,22 @@ test('supports https options', async ({ teardown, equal, same, plan, comment }) 
     }
   }))
 
-  teardown(server.stop)
-  await server.listen()
+  teardown(async () => {
+    await app.close()
+  })
 
-  equal(server.url.startsWith('https://'), true)
-  let res = await (request(`${server.url}/`))
+  await app.start()
+
+  equal(app.url.startsWith('https://'), true)
+  let res = await (request(`${app.url}/`))
   equal(res.statusCode, 200)
   let body = await res.body.json()
   same(body, { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
 
-  await server.restart()
+  await app.restart()
 
-  equal(server.url.startsWith('https://'), true)
-  res = await (request(`${server.url}/`))
+  equal(app.url.startsWith('https://'), true)
+  res = await (request(`${app.url}/`))
   equal(res.statusCode, 200)
   body = await res.body.json()
   same(body, { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })

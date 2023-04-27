@@ -85,7 +85,7 @@ test('do not validate migration checksums if not configured', async ({ equal, ma
   // first output should be a "server listening" message
   // no migration logging is expected
   const [{ msg }] = await once(secondOutput, 'data')
-  equal(msg, 'server listening')
+  match(msg, 'Server listening at http://127.0.0.1:')
 })
 
 test('throws if migrations directory does not exist', async ({ match }) => {

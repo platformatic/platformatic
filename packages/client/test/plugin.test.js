@@ -24,15 +24,17 @@ test('default decorator', async ({ teardown, same, rejects }) => {
   } catch {
     // noop
   }
-  const server = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
-  teardown(server.stop)
-  await server.listen()
+  const targetApp = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
+  teardown(async () => {
+    await targetApp.close()
+  })
+  await targetApp.start()
 
   const app = Fastify()
 
   await app.register(client, {
     type: 'openapi',
-    url: `${server.url}/documentation/json`
+    url: `${targetApp.url}/documentation/json`
   })
 
   const movie = await app.client.createMovie({
@@ -60,15 +62,17 @@ test('req decorator with OpenAPI and auth', async ({ teardown, same, rejects }) 
   } catch {
     // noop
   }
-  const server = await buildServer(join(__dirname, 'fixtures', 'auth', 'platformatic.db.json'))
-  teardown(server.stop)
-  await server.listen()
+  const targetApp = await buildServer(join(__dirname, 'fixtures', 'auth', 'platformatic.db.json'))
+  teardown(async () => {
+    await targetApp.close()
+  })
+  await targetApp.start()
 
   const app = Fastify()
 
   await app.register(client, {
     type: 'openapi',
-    url: `${server.url}/documentation/json`,
+    url: `${targetApp.url}/documentation/json`,
     async getHeaders (req) {
       return {
         'x-platformatic-admin-secret': req.headers['x-platformatic-admin-secret']
@@ -105,15 +109,17 @@ test('app decorator with OpenAPI', async ({ teardown, same, rejects }) => {
   } catch {
     // noop
   }
-  const server = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
-  teardown(server.stop)
-  await server.listen()
+  const targetApp = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
+  teardown(async () => {
+    await targetApp.close()
+  })
+  await targetApp.start()
 
   const app = Fastify()
 
   await app.register(client, {
     type: 'openapi',
-    url: `${server.url}/documentation/json`,
+    url: `${targetApp.url}/documentation/json`,
     name: 'client'
   })
 
@@ -142,15 +148,17 @@ test('req decorator with OpenAPI', async ({ teardown, same, rejects }) => {
   } catch {
     // noop
   }
-  const server = await buildServer(join(__dirname, 'fixtures', 'auth', 'platformatic.db.json'))
-  teardown(server.stop)
-  await server.listen()
+  const targetApp = await buildServer(join(__dirname, 'fixtures', 'auth', 'platformatic.db.json'))
+  teardown(async () => {
+    await targetApp.close()
+  })
+  await targetApp.start()
 
   const app = Fastify()
 
   await app.register(client, {
     type: 'openapi',
-    url: `${server.url}/documentation/json`,
+    url: `${targetApp.url}/documentation/json`,
     name: 'client',
     async getHeaders (req) {
       return {
@@ -188,15 +196,17 @@ test('req decorator with OpenAPI', async ({ teardown, same, rejects }) => {
   } catch {
     // noop
   }
-  const server = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
-  teardown(server.stop)
-  await server.listen()
+  const targetApp = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
+  teardown(async () => {
+    await targetApp.close()
+  })
+  await targetApp.start()
 
   const app = Fastify()
 
   await app.register(client, {
     type: 'openapi',
-    url: `${server.url}/documentation/json`,
+    url: `${targetApp.url}/documentation/json`,
     name: 'movies'
   })
 
@@ -226,15 +236,17 @@ test('req decorator with GraphQL and auth', async ({ teardown, same, rejects }) 
   } catch {
     // noop
   }
-  const server = await buildServer(join(__dirname, 'fixtures', 'auth', 'platformatic.db.json'))
-  teardown(server.stop)
-  await server.listen()
+  const targetApp = await buildServer(join(__dirname, 'fixtures', 'auth', 'platformatic.db.json'))
+  teardown(async () => {
+    await targetApp.close()
+  })
+  await targetApp.start()
 
   const app = Fastify()
 
   await app.register(client, {
     type: 'graphql',
-    url: `${server.url}/graphql`,
+    url: `${targetApp.url}/graphql`,
     async getHeaders (req) {
       return {
         'x-platformatic-admin-secret': req.headers['x-platformatic-admin-secret']
@@ -280,15 +292,17 @@ test('configureClient getHeaders', async ({ teardown, same, rejects }) => {
   } catch {
     // noop
   }
-  const server = await buildServer(join(__dirname, 'fixtures', 'auth', 'platformatic.db.json'))
-  teardown(server.stop)
-  await server.listen()
+  const targetApp = await buildServer(join(__dirname, 'fixtures', 'auth', 'platformatic.db.json'))
+  teardown(async () => {
+    await targetApp.close()
+  })
+  await targetApp.start()
 
   const app = Fastify()
 
   await app.register(client, {
     type: 'openapi',
-    url: `${server.url}/documentation/json`,
+    url: `${targetApp.url}/documentation/json`,
     name: 'movies'
   })
 

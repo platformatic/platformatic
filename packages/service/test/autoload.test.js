@@ -19,26 +19,28 @@ test('autoload & filesystem based routing / watch disabled', async ({ teardown, 
     metrics: false
   }
 
-  const server = await buildServer(config)
-  teardown(server.stop)
-  await server.listen()
+  const app = await buildServer(config)
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from root', 'body')
   }
 
   {
-    const res = await request(`${server.url}/foo/bar`)
+    const res = await request(`${app.url}/foo/bar`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from bar', 'body')
   }
 
   {
-    const res = await request(`${server.url}/foo/baz`)
+    const res = await request(`${app.url}/foo/baz`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from baz', 'body')
@@ -58,26 +60,28 @@ test('autoload & filesystem based routing / watch enabled', async ({ teardown, e
     metrics: false
   }
 
-  const server = await buildServer(config)
-  teardown(server.stop)
-  await server.listen()
+  const app = await buildServer(config)
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from root', 'body')
   }
 
   {
-    const res = await request(`${server.url}/foo/bar`)
+    const res = await request(`${app.url}/foo/bar`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from bar', 'body')
   }
 
   {
-    const res = await request(`${server.url}/foo/baz`)
+    const res = await request(`${app.url}/foo/baz`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from baz', 'body')
@@ -101,33 +105,35 @@ test('multiple files', async ({ teardown, equal }) => {
     metrics: false
   }
 
-  const server = await buildServer(config)
-  teardown(server.stop)
-  await server.listen()
+  const app = await buildServer(config)
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from root', 'body')
   }
 
   {
-    const res = await request(`${server.url}/foo/bar`)
+    const res = await request(`${app.url}/foo/bar`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from bar', 'body')
   }
 
   {
-    const res = await request(`${server.url}/foo/baz`)
+    const res = await request(`${app.url}/foo/baz`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from baz', 'body')
   }
 
   {
-    const res = await request(`${server.url}/foo/with-decorator`)
+    const res = await request(`${app.url}/foo/with-decorator`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'bar', 'body')
@@ -151,33 +157,35 @@ test('multiple files / watch false', async ({ teardown, equal }) => {
     metrics: false
   }
 
-  const server = await buildServer(config)
-  teardown(server.stop)
-  await server.listen()
+  const app = await buildServer(config)
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from root', 'body')
   }
 
   {
-    const res = await request(`${server.url}/foo/bar`)
+    const res = await request(`${app.url}/foo/bar`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from bar', 'body')
   }
 
   {
-    const res = await request(`${server.url}/foo/baz`)
+    const res = await request(`${app.url}/foo/baz`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from baz', 'body')
   }
 
   {
-    const res = await request(`${server.url}/foo/with-decorator`)
+    const res = await request(`${app.url}/foo/with-decorator`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'bar', 'body')
@@ -197,26 +205,28 @@ test('autoload & filesystem based routing / watch disabled / no object', async (
     metrics: false
   }
 
-  const server = await buildServer(config)
-  teardown(server.stop)
-  await server.listen()
+  const app = await buildServer(config)
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from root', 'body')
   }
 
   {
-    const res = await request(`${server.url}/foo/bar`)
+    const res = await request(`${app.url}/foo/bar`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from bar', 'body')
   }
 
   {
-    const res = await request(`${server.url}/foo/baz`)
+    const res = await request(`${app.url}/foo/baz`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from baz', 'body')
@@ -236,26 +246,28 @@ test('autoload & filesystem based routing / watch enabled / no object', async ({
     metrics: false
   }
 
-  const server = await buildServer(config)
-  teardown(server.stop)
-  await server.listen()
+  const app = await buildServer(config)
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from root', 'body')
   }
 
   {
-    const res = await request(`${server.url}/foo/bar`)
+    const res = await request(`${app.url}/foo/bar`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from bar', 'body')
   }
 
   {
-    const res = await request(`${server.url}/foo/baz`)
+    const res = await request(`${app.url}/foo/baz`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from baz', 'body')
@@ -275,33 +287,35 @@ test('multiple files / no object', async ({ teardown, equal }) => {
     metrics: false
   }
 
-  const server = await buildServer(config)
-  teardown(server.stop)
-  await server.listen()
+  const app = await buildServer(config)
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from root', 'body')
   }
 
   {
-    const res = await request(`${server.url}/foo/bar`)
+    const res = await request(`${app.url}/foo/bar`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from bar', 'body')
   }
 
   {
-    const res = await request(`${server.url}/foo/baz`)
+    const res = await request(`${app.url}/foo/baz`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from baz', 'body')
   }
 
   {
-    const res = await request(`${server.url}/foo/with-decorator`)
+    const res = await request(`${app.url}/foo/with-decorator`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'bar', 'body')
@@ -324,33 +338,35 @@ test('multiple files / watch false / no object', async ({ teardown, equal }) => 
     metrics: false
   }
 
-  const server = await buildServer(config)
-  teardown(server.stop)
-  await server.listen()
+  const app = await buildServer(config)
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from root', 'body')
   }
 
   {
-    const res = await request(`${server.url}/foo/bar`)
+    const res = await request(`${app.url}/foo/bar`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from bar', 'body')
   }
 
   {
-    const res = await request(`${server.url}/foo/baz`)
+    const res = await request(`${app.url}/foo/baz`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'from baz', 'body')
   }
 
   {
-    const res = await request(`${server.url}/foo/with-decorator`)
+    const res = await request(`${app.url}/foo/with-decorator`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     equal(body.hello, 'bar', 'body')
@@ -380,33 +396,35 @@ test('nested directories', async ({ teardown, equal, same }) => {
     }
   }
 
-  const server = await buildServer(config)
-  teardown(server.stop)
-  await server.listen()
+  const app = await buildServer(config)
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/inventory/product/42`)
+    const res = await request(`${app.url}/inventory/product/42`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     same(body, { sku: 42, inStore: 2 }, 'body')
   }
 
   {
-    const res = await request(`${server.url}/catalogue/products`)
+    const res = await request(`${app.url}/catalogue/products`)
     equal(res.statusCode, 200, 'status code')
     const body = await res.body.json()
     same(body, [{ sku: 42, name: 'foo', inStore: 2 }, { sku: 43, name: 'bar', inStore: 0 }], 'body')
   }
 
   {
-    const res = await request(`${server.url}/foo/baz`)
+    const res = await request(`${app.url}/foo/baz`)
     equal(res.statusCode, 404, 'status code')
     const body = await res.body.text()
     equal(body, 'I\'m sorry, I couldn\'t find what you were looking for.')
   }
 
   {
-    const res = await request(`${server.url}/catalogue/error`)
+    const res = await request(`${app.url}/catalogue/error`)
     equal(res.statusCode, 500, 'status code')
     const body = await res.body.text()
     equal(body, 'I\'m sorry, there was an error processing your request.')

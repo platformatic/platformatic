@@ -111,9 +111,9 @@ async function cleanSQLite (dbLocation, i = 0) {
   }
 }
 
-async function start (...args) {
+async function start (commandOpts, exacaOpts = {}) {
   const { execa } = await import('execa')
-  const child = execa('node', [cliPath, 'start', ...args])
+  const child = execa('node', [cliPath, 'start', ...commandOpts], exacaOpts)
   child.stderr.pipe(process.stdout)
   const output = child.stdout.pipe(split(function (line) {
     try {

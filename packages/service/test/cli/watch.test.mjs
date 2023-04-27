@@ -291,3 +291,42 @@ test('should not hot reload files with `--hot-reload false`', async ({ teardown,
     equal(version, 'v1')
   }
 })
+
+test('should not fail when updating wrong config', async ({ equal, teardown, comment }) => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'watch-'))
+  comment(`using ${tmpDir}`)
+  const pluginFilePath = join(tmpDir, 'plugin.js')
+  const configFilePath = join(tmpDir, 'platformatic.service.json')
+
+  const defaultConfig = {
+    server: {
+      logger: {
+        level: 'info'
+      },
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugins: {
+      paths: [pluginFilePath]
+    },
+    watch: false
+  }
+
+  await Promise.all([
+    writeFile(configFilePath, JSON.stringify(defaultConfig)),
+    writeFile(pluginFilePath, createLoggingPlugin('v1', true))
+  ])
+
+  const { child, url } = await start('-c', configFilePath)
+  teardown(() => child.kill('SIGINT'))
+
+  writeFile(configFilePath, 'this is not a valid config')
+
+  for await (const log of child.ndj) {
+    if (log.msg === 'error reloading the configuration') break
+  }
+
+  const res = await request(`${url}/version`)
+  const version = await res.body.text()
+  equal(version, 'v1')
+})

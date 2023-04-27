@@ -17,7 +17,7 @@ test('config reloads', async ({ teardown, equal, pass, same }) => {
       app.get('/', () => options.message)
     }`)
 
-  const server = await buildServer({
+  const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -32,16 +32,19 @@ test('config reloads', async ({ teardown, equal, pass, same }) => {
     },
     metrics: false
   })
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'add status code')
     same(await res.body.text(), 'hello', 'response')
   }
 
-  await server.app.platformatic.configManager.update({
+  await app.platformatic.configManager.update({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -57,10 +60,10 @@ test('config reloads', async ({ teardown, equal, pass, same }) => {
     metrics: false
   })
 
-  await server.restart()
+  await app.restart()
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'add status code')
     same(await res.body.text(), 'ciao mondo', 'response')
   }
@@ -91,17 +94,20 @@ test('config reloads from a written file', async ({ teardown, equal, pass, same 
       app.get('/', () => options.message)
     }`)
 
-  const server = await buildServer(config)
-  teardown(server.stop)
-  await server.listen()
+  const app = await buildServer(config)
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'add status code')
     same(await res.body.text(), 'hello', 'response')
   }
 
-  await server.app.platformatic.configManager.update({
+  await app.platformatic.configManager.update({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -117,10 +123,10 @@ test('config reloads from a written file', async ({ teardown, equal, pass, same 
     metrics: false
   })
 
-  await server.restart()
+  await app.restart()
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'add status code')
     same(await res.body.text(), 'ciao mondo', 'response')
   }
@@ -174,25 +180,28 @@ test('config reloads from a written file from a route', async ({ teardown, equal
       })
     }`)
 
-  const server = await buildServer(config)
-  teardown(server.stop)
-  await server.listen()
+  const app = await buildServer(config)
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'add status code')
     same(await res.body.text(), 'hello', 'response')
   }
 
   {
-    const res = await request(`${server.url}/restart`, {
+    const res = await request(`${app.url}/restart`, {
       method: 'POST'
     })
     equal(res.statusCode, 200, 'add status code')
   }
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'add status code')
     same(await res.body.text(), 'ciao mondo', 'response')
   }
@@ -235,7 +244,7 @@ test('config reloads', async ({ teardown, equal, pass, same }) => {
       app.get('/', () => options.message)
     }`)
 
-  const server = await buildServer({
+  const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -250,16 +259,19 @@ test('config reloads', async ({ teardown, equal, pass, same }) => {
     },
     metrics: false
   })
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'add status code')
     same(await res.body.text(), 'hello', 'response')
   }
 
-  await server.app.platformatic.configManager.update({
+  await app.platformatic.configManager.update({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -275,78 +287,10 @@ test('config reloads', async ({ teardown, equal, pass, same }) => {
     metrics: false
   })
 
-  await server.restart()
+  await app.restart()
 
   {
-    const res = await request(`${server.url}/`)
-    equal(res.statusCode, 200, 'add status code')
-    same(await res.body.text(), 'ciao mondo', 'response')
-  }
-})
-
-test('restart throws if config is invalid', async ({ teardown, rejects }) => {
-  const server = await buildServer({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0
-    }
-  })
-  teardown(server.stop)
-  await server.listen()
-
-  await rejects(server.restart({ foo: 'bar' }))
-})
-
-test('config reloads by calling restart', async ({ teardown, equal, pass, same }) => {
-  const file = join(os.tmpdir(), `${process.pid}-1.js`)
-
-  await writeFile(file, `
-    module.exports = async function (app, options) {
-      app.get('/', () => options.message)
-    }`)
-
-  const server = await buildServer({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0
-    },
-    plugins: {
-      paths: [{
-        path: file,
-        options: {
-          message: 'hello'
-        }
-      }]
-    },
-    metrics: false
-  })
-  teardown(server.stop)
-  await server.listen()
-
-  {
-    const res = await request(`${server.url}/`)
-    equal(res.statusCode, 200, 'add status code')
-    same(await res.body.text(), 'hello', 'response')
-  }
-
-  await server.restart({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0
-    },
-    plugins: {
-      paths: [{
-        path: file,
-        options: {
-          message: 'ciao mondo'
-        }
-      }]
-    },
-    metrics: false
-  })
-
-  {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'add status code')
     same(await res.body.text(), 'ciao mondo', 'response')
   }

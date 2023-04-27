@@ -1,16 +1,13 @@
 'use strict'
 
-const { cliPath, connectAndResetDB } = require('./helper.js')
+const { start, connectAndResetDB } = require('./helper.js')
 const { test } = require('tap')
-const split = require('split2')
-const { once } = require('events')
 const { join } = require('path')
 const { request } = require('undici')
 
 const fileTypes = ['yaml', 'yml', 'toml', 'tml', 'json', 'json5']
 for (const fileType of fileTypes) {
   test(`auto config - ${fileType}`, async ({ equal, same, match, teardown }) => {
-    const execa = (await import('execa')).execa
     const db = await connectAndResetDB()
     teardown(() => db.dispose())
 
@@ -19,12 +16,9 @@ for (const fileType of fileTypes) {
       title VARCHAR(42)
     );`)
 
-    const child = execa('node', [cliPath, 'start'], {
-      cwd: join(__dirname, '..', 'fixtures', 'auto-config', fileType)
-    })
-    const output = child.stdout.pipe(split(JSON.parse))
-
-    const [{ url }] = await once(output, 'data')
+    const { child, url } = await start([
+      '-c', join(__dirname, '..', 'fixtures', 'auto-config', fileType, 'platformatic.db.' + fileType)
+    ])
 
     let id
     {

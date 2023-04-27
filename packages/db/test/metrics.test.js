@@ -6,7 +6,7 @@ const { buildConfig, connInfo, createBasicPages, clear } = require('./helper')
 const { request } = require('undici')
 
 test('call /dashboard/metrics before any requests', async ({ teardown, equal, same, fail, match }) => {
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -24,10 +24,13 @@ test('call /dashboard/metrics before any requests', async ({ teardown, equal, sa
       adminSecret: 'secret'
     }
   }))
-  teardown(server.stop)
-  const { port } = await server.listen()
 
-  const res = await (request(`http://127.0.0.1:${port}/dashboard/metrics`))
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const res = await (request(`${app.url}/dashboard/metrics`))
   equal(res.statusCode, 200)
   match(res.headers['content-type'], /^application\/json/)
   try {
@@ -42,7 +45,7 @@ test('call /dashboard/metrics before any requests', async ({ teardown, equal, sa
 })
 
 test('call /dashboard/metrics after user requests', async ({ teardown, equal, has, fail, match }) => {
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -60,24 +63,27 @@ test('call /dashboard/metrics after user requests', async ({ teardown, equal, ha
       adminSecret: 'secret'
     }
   }))
-  teardown(server.stop)
-  const { port } = await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   const authHeaders = {
     'X-PLATFORMATIC-ADMIN-SECRET': 'secret'
   }
 
   await Promise.all([
-    server.inject({ method: 'GET', url: '/pages' }),
-    server.inject({ method: 'GET', url: '/pages', headers: authHeaders }),
-    server.inject({ method: 'GET', url: '/pages', headers: authHeaders }),
-    server.inject({ method: 'GET', url: '/pages/0' }),
-    server.inject({ method: 'GET', url: '/pages/0', headers: authHeaders }),
-    server.inject({ method: 'PUT', url: '/pages/0', body: {} }),
-    server.inject({ method: 'POST', url: '/graphql', headers: authHeaders, body: {} })
+    app.inject({ method: 'GET', url: '/pages' }),
+    app.inject({ method: 'GET', url: '/pages', headers: authHeaders }),
+    app.inject({ method: 'GET', url: '/pages', headers: authHeaders }),
+    app.inject({ method: 'GET', url: '/pages/0' }),
+    app.inject({ method: 'GET', url: '/pages/0', headers: authHeaders }),
+    app.inject({ method: 'PUT', url: '/pages/0', body: {} }),
+    app.inject({ method: 'POST', url: '/graphql', headers: authHeaders, body: {} })
   ])
 
-  const res = await (request(`http://127.0.0.1:${port}/dashboard/metrics`))
+  const res = await (request(`${app.url}/dashboard/metrics`))
   equal(res.statusCode, 200)
   match(res.headers['content-type'], /^application\/json/)
   try {

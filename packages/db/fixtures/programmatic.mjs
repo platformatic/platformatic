@@ -1,7 +1,7 @@
 import { buildServer } from '../index.js'
 import { join } from 'desm'
 
-const server = await buildServer({
+const app = await buildServer({
   server: {
     hostname: '127.0.0.1',
     port: 0
@@ -16,6 +16,6 @@ const server = await buildServer({
   }
 })
 
-await server.listen() // this will start our server
+await app.start() // this will start our server
 
-console.log('URL', server.url)
+console.log('URL', app.url)

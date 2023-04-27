@@ -14,15 +14,19 @@ test('customize service', async ({ teardown, equal }) => {
     }])
   }
 
-  const server = await buildServer({
+  const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0
     }
   }, myApp)
-  teardown(server.stop)
-  await server.listen()
-  const res = await (request(server.url))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const res = await (request(app.url))
   const body = await res.body.text()
   equal(res.statusCode, 200)
   equal(body, 'hello world')

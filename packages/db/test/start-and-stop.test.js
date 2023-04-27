@@ -9,7 +9,7 @@ const { rm } = require('fs/promises')
 const path = require('path')
 
 test('starts the dashboard', async ({ teardown, equal, pass, same }) => {
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -21,16 +21,20 @@ test('starts the dashboard', async ({ teardown, equal, pass, same }) => {
       path: '/dashboard'
     }
   }))
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
   {
-    const res = await (request(`${server.url}/dashboard`))
+    const res = await (request(`${app.url}/dashboard`))
     equal(res.statusCode, 200, 'dashboard status code')
   }
 })
 
 test('should not restart if not authorized', async ({ teardown, equal, same }) => {
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -40,10 +44,13 @@ test('should not restart if not authorized', async ({ teardown, equal, same }) =
       ...connInfo
     }
   }))
-  teardown(server.stop)
 
-  await server.listen()
-  const res = await (request(`${server.url}/_admin/restart`, {
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const res = await (request(`${app.url}/_admin/restart`, {
     method: 'POST'
   }))
   equal(res.statusCode, 400)
@@ -56,7 +63,7 @@ test('should not restart if not authorized', async ({ teardown, equal, same }) =
 })
 
 test('restarts the server', async ({ teardown, equal, pass, same, match }) => {
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -78,12 +85,14 @@ test('restarts the server', async ({ teardown, equal, pass, same, match }) => {
       }]
     }
   }))
-  teardown(server.stop)
 
-  await server.listen()
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await (request(`${server.url}/_admin/restart`, {
+    const res = await (request(`${app.url}/_admin/restart`, {
       method: 'POST',
       headers: {
         'x-platformatic-admin-secret': 'secret'
@@ -97,7 +106,7 @@ test('restarts the server', async ({ teardown, equal, pass, same, match }) => {
 
   {
     // query users and get data
-    const res = await request(`${server.url}/graphql`, {
+    const res = await request(`${app.url}/graphql`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -131,7 +140,7 @@ test('restarts the server', async ({ teardown, equal, pass, same, match }) => {
 })
 
 test('starts, query and stop', async ({ teardown, equal, pass, same }) => {
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -146,11 +155,14 @@ test('starts, query and stop', async ({ teardown, equal, pass, same }) => {
       }
     }
   }))
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/graphql`, {
+    const res = await request(`${app.url}/graphql`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -176,7 +188,7 @@ test('starts, query and stop', async ({ teardown, equal, pass, same }) => {
   }
 
   {
-    const res = await request(`${server.url}/graphql`, {
+    const res = await request(`${app.url}/graphql`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -202,7 +214,7 @@ test('starts, query and stop', async ({ teardown, equal, pass, same }) => {
   }
 
   {
-    const res = await request(`${server.url}/graphql`, {
+    const res = await request(`${app.url}/graphql`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -228,7 +240,7 @@ test('starts, query and stop', async ({ teardown, equal, pass, same }) => {
   }
 
   {
-    const res = await request(`${server.url}/graphql`, {
+    const res = await request(`${app.url}/graphql`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -255,7 +267,7 @@ test('starts, query and stop', async ({ teardown, equal, pass, same }) => {
 })
 
 test('inject', async ({ teardown, equal, pass, same }) => {
-  const { inject, stop } = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -270,10 +282,14 @@ test('inject', async ({ teardown, equal, pass, same }) => {
       }
     }
   }))
-  teardown(stop)
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await inject({
+    const res = await app.inject({
       url: '/graphql',
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -308,7 +324,7 @@ test('ignore and sqlite3', async ({ teardown, equal, pass, same }) => {
   } catch {
     // ignore
   }
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -323,20 +339,28 @@ test('ignore and sqlite3', async ({ teardown, equal, pass, same }) => {
       dir: migrations
     }
   }))
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
   {
-    const res = await (request(`${server.url}/dashboard`))
+    const res = await (request(`${app.url}/dashboard`))
     equal(res.statusCode, 200, 'dashboard status code')
   }
 })
 
 test('starts a config file on disk with auto-apply', async ({ teardown, equal, pass, same }) => {
-  const server = await buildServer(path.join(__dirname, 'fixtures', 'sqlite', 'no-logger.json'))
-  teardown(server.stop)
-  await server.listen()
+  const app = await buildServer(path.join(__dirname, 'fixtures', 'sqlite', 'no-logger.json'))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
   {
-    const res = await (request(`${server.url}/`))
+    const res = await (request(`${app.url}/`))
     equal(res.statusCode, 200, 'root status code')
   }
 })

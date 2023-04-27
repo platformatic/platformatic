@@ -84,12 +84,15 @@ test('build basic client from url', async ({ teardown, same, rejects }) => {
   } catch {
     // noop
   }
-  const server = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
-  teardown(server.stop)
-  await server.listen()
+  const app = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   const client = await buildGraphQLClient({
-    url: `${server.url}/graphql`
+    url: `${app.url}/graphql`
   })
 
   const movie = await client.graphql({
@@ -144,12 +147,15 @@ test('build basic client from url with custom headers', async ({ teardown, same,
   } catch {
     // noop
   }
-  const server = await buildServer(join(__dirname, 'fixtures', 'auth', 'platformatic.db.json'))
-  teardown(server.stop)
-  await server.listen()
+  const app = await buildServer(join(__dirname, 'fixtures', 'auth', 'platformatic.db.json'))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   const client = await buildGraphQLClient({
-    url: `${server.url}/graphql`,
+    url: `${app.url}/graphql`,
     headers: {
       'x-platformatic-admin-secret': 'changeme'
     }
@@ -207,12 +213,15 @@ test('bad query', async ({ teardown, same, rejects }) => {
   } catch {
     // noop
   }
-  const server = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
-  teardown(server.stop)
-  await server.listen()
+  const app = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   const client = await buildGraphQLClient({
-    url: `${server.url}/graphql`
+    url: `${app.url}/graphql`
   })
 
   await rejects(client.graphql({
@@ -226,12 +235,15 @@ test('error within resolver', async ({ teardown, same, rejects }) => {
   } catch {
     // noop
   }
-  const server = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
-  teardown(server.stop)
-  await server.listen()
+  const app = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   const client = await buildGraphQLClient({
-    url: `${server.url}/graphql`
+    url: `${app.url}/graphql`
   })
 
   await rejects(client.graphql({

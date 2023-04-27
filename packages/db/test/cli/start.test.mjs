@@ -12,7 +12,7 @@ test('autostart', async ({ equal, same, match, teardown }) => {
     title VARCHAR(42)
   );`)
 
-  const { child, url } = await start('-c', join(import.meta.url, '..', 'fixtures', 'simple.json'))
+  const { child, url } = await start(['-c', join(import.meta.url, '..', 'fixtures', 'simple.json')])
 
   let id
   {
@@ -132,7 +132,7 @@ test('start command', async ({ equal, same, match, teardown }) => {
     title VARCHAR(42)
   );`)
 
-  const { child, url } = await start('start', '-c', join(import.meta.url, '..', 'fixtures', 'simple.json'))
+  const { child, url } = await start(['-c', join(import.meta.url, '..', 'fixtures', 'simple.json')])
 
   let id
   {
@@ -252,7 +252,7 @@ test('start with hotreload disabled', async ({ equal, same, match, teardown }) =
     title VARCHAR(42)
   );`)
 
-  const { child, url } = await start('-c', join(import.meta.url, '..', 'fixtures', 'no-hotreload.json'))
+  const { child, url } = await start(['-c', join(import.meta.url, '..', 'fixtures', 'no-hotreload.json')])
   match(url, /http:\/\/127.0.0.1:[0-9]+/)
   child.kill('SIGINT')
 })

@@ -14,15 +14,18 @@ test('app decorator with GraphQL', async ({ teardown, same, rejects }) => {
   } catch {
     // noop
   }
-  const server = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
-  teardown(server.stop)
-  await server.listen()
+  const targetApp = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
+
+  teardown(async () => {
+    await targetApp.close()
+  })
+  await targetApp.start()
 
   const app = Fastify()
 
   await app.register(client, {
     type: 'graphql',
-    url: `${server.url}/graphql`,
+    url: `${targetApp.url}/graphql`,
     name: 'client'
   })
 

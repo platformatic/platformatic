@@ -7,7 +7,7 @@ const { request } = require('undici')
 
 test('healthcheck route enabled with interval', async ({ teardown, equal, same }) => {
   let check = true
-  const server = await buildServer({
+  const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -20,11 +20,14 @@ test('healthcheck route enabled with interval', async ({ teardown, equal, same }
     },
     metrics: false
   })
-  teardown(server.stop)
 
-  await server.listen()
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
   {
-    const res = await (request(`${server.url}/status`))
+    const res = await (request(`${app.url}/status`))
     equal(res.statusCode, 200)
     const body = await res.body.json()
     same(body, { status: 'ok' })
@@ -33,7 +36,7 @@ test('healthcheck route enabled with interval', async ({ teardown, equal, same }
   check = false
 
   {
-    const res = await (request(`${server.url}/status`))
+    const res = await (request(`${app.url}/status`))
     equal(res.statusCode, 503)
     const body = await res.body.json()
     same(body, {
@@ -48,7 +51,7 @@ test('healthcheck route enabled with interval', async ({ teardown, equal, same }
 })
 
 test('healthcheck route enabled without interval', async ({ teardown, equal, same }) => {
-  const server = await buildServer({
+  const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -56,11 +59,14 @@ test('healthcheck route enabled without interval', async ({ teardown, equal, sam
     },
     metrics: false
   })
-  teardown(server.stop)
 
-  await server.listen()
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
   {
-    const res = await (request(`${server.url}/status`))
+    const res = await (request(`${app.url}/status`))
     equal(res.statusCode, 200)
     const body = await res.body.json()
     same(body, { status: 'ok' })
@@ -68,16 +74,19 @@ test('healthcheck route enabled without interval', async ({ teardown, equal, sam
 })
 
 test('healthcheck route disabled', async ({ teardown, equal, same }) => {
-  const server = await buildServer({
+  const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0
     },
     metrics: false
   })
-  teardown(server.stop)
 
-  await server.listen()
-  const res = await (request(`${server.url}/status`))
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const res = await (request(`${app.url}/status`))
   equal(res.statusCode, 404)
 })
