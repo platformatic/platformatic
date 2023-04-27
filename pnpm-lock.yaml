@@ -159,10 +159,10 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.2
-        version: 16.3.4(typescript@4.9.4)
+        version: 16.3.4(typescript@5.0.2)
       typescript:
-        specifier: ^4.9.4
-        version: 4.9.4
+        specifier: ^5.0.2
+        version: 5.0.2
 
   packages/client-cli:
     dependencies:
@@ -235,10 +235,10 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.2
-        version: 16.3.4(typescript@4.9.4)
+        version: 16.3.4(typescript@5.0.2)
       typescript:
-        specifier: ^4.9.4
-        version: 4.9.4
+        specifier: ^5.0.2
+        version: 5.0.2
 
   packages/config:
     dependencies:
@@ -14276,57 +14276,6 @@ packages:
       yaml: 1.10.2
     dev: true
 
-  /tap@16.3.4(typescript@4.9.4):
-    resolution: {integrity: sha512-SAexdt2ZF4XBgye6TPucFI2y7VE0qeFXlXucJIV1XDPCs+iJodk0MYacr1zR6Ycltzz7PYg8zrblDXKbAZM2LQ==}
-    engines: {node: '>=12'}
-    hasBin: true
-    peerDependencies:
-      coveralls: ^3.1.1
-      flow-remove-types: '>=2.112.0'
-      ts-node: '>=8.5.2'
-      typescript: '>=3.7.2'
-    peerDependenciesMeta:
-      coveralls:
-        optional: true
-      flow-remove-types:
-        optional: true
-      ts-node:
-        optional: true
-      typescript:
-        optional: true
-    dependencies:
-      chokidar: 3.5.3
-      findit: 2.0.0
-      foreground-child: 2.0.0
-      fs-exists-cached: 1.0.0
-      glob: 7.2.3
-      isexe: 2.0.0
-      istanbul-lib-processinfo: 2.0.3
-      jackspeak: 1.4.2
-      libtap: 1.4.0
-      minipass: 3.3.6
-      mkdirp: 1.0.4
-      nyc: 15.1.0
-      opener: 1.5.2
-      rimraf: 3.0.2
-      signal-exit: 3.0.7
-      source-map-support: 0.5.21
-      tap-mocha-reporter: 5.0.3
-      tap-parser: 11.0.2
-      tap-yaml: 1.0.2
-      tcompare: 5.0.7
-      typescript: 4.9.4
-      which: 2.0.2
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-    bundledDependencies:
-      - ink
-      - treport
-      - '@types/react'
-      - '@isaacs/import-jsx'
-      - react
-
   /tap@16.3.4(typescript@5.0.2):
     resolution: {integrity: sha512-SAexdt2ZF4XBgye6TPucFI2y7VE0qeFXlXucJIV1XDPCs+iJodk0MYacr1zR6Ycltzz7PYg8zrblDXKbAZM2LQ==}
     engines: {node: '>=12'}
@@ -14659,6 +14608,7 @@ packages:
 
   /trim@0.0.1:
     resolution: {integrity: sha512-YzQV+TZg4AxpKxaTHK3c3D+kRDCGVEE7LemdlQZoQXn0iennk10RsIoY6ikzAqJTc9Xjl9C1/waHom/J86ziAQ==}
+    deprecated: Use String.prototype.trim() instead
     dev: true
 
   /trivial-deferred@1.1.2:
@@ -14796,12 +14746,6 @@ packages:
 
   /typedarray@0.0.6:
     resolution: {integrity: sha512-/aCDEGatGvZ2BIk+HmLf4ifCJFwvKFNb9/JeZPMulfgFracn9QFcAf5GO8B/mweUjSoblS5In0cWhqpfs/5PQA==}
-    dev: true
-
-  /typescript@4.9.4:
-    resolution: {integrity: sha512-Uz+dTXYzxXXbsFpM86Wh3dKCxrQqUcVMxwU54orwlJjOpO3ao8L7j5lH+dWfTwgCwIuM9GQ2kvVotzYJMXTBZg==}
-    engines: {node: '>=4.2.0'}
-    hasBin: true
     dev: true
 
   /typescript@4.9.5:
