@@ -2,7 +2,7 @@
 
 const { join } = require('path')
 const { readFile, writeFile } = require('fs/promises')
-const { ConfigManager } = require('@platformatic/service')
+const ConfigManager = require('@platformatic/config')
 
 async function main () {
   const rootDirectory = join(__dirname, '..', '..', '..')
