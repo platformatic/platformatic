@@ -115,6 +115,7 @@ test('one-level order by', async (t) => {
     equal(res.statusCode, 400, 'GET /pages?orderby.counter=desc status code')
     same(res.json(), {
       statusCode: 400,
+      code: 'FST_ERR_VALIDATION',
       error: 'Bad Request',
       message: 'querystring/orderby.counter must be equal to one of the allowed values'
     }

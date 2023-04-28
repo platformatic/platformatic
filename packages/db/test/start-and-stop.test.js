@@ -48,6 +48,7 @@ test('should not restart if not authorized', async ({ teardown, equal, same }) =
   }))
   equal(res.statusCode, 400)
   same(await res.body.json(), {
+    code: 'FST_ERR_VALIDATION',
     statusCode: 400,
     error: 'Bad Request',
     message: 'headers must have required property \'x-platformatic-admin-secret\''

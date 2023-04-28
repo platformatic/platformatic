@@ -19,7 +19,7 @@
   "devDependencies": {
     "@fastify/pre-commit": "^2.0.2",
     "desm": "^1.3.0",
-    "markdownlint-cli2": "^0.7.0"
+    "markdownlint-cli2": "^0.7.1"
   },
   "pre-commit": [
     "lint",
