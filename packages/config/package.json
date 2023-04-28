@@ -19,12 +19,12 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@iarna/toml": "^2.2.5",
-    "fastify": "^4.13.0",
+    "fastify": "^4.17.0",
     "json5": "^2.2.3",
     "snazzy": "^9.0.0",
     "standard": "^17.0.0",
     "tap": "^16.3.4",
-    "yaml": "^2.2.1"
+    "yaml": "^2.2.2"
   },
   "dependencies": {
     "@platformatic/metaconfig": "workspace:*",
@@ -32,6 +32,6 @@
     "ajv": "^8.12.0",
     "dotenv": "^16.0.3",
     "pupa": "^3.1.0",
-    "semver": "^7.3.8"
+    "semver": "^7.5.0"
   }
 }
