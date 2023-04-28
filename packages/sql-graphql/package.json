@@ -42,7 +42,7 @@
     "graphql-scalars": "^1.21.3",
     "graphql-type-json": "^0.3.2",
     "inflected": "^2.1.0",
-    "mercurius": "^12.2.0"
+    "mercurius": "^13.0.0"
   },
   "tsd": {
     "directory": "test/types"
