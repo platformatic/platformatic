@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('tap')
-const { resolve } = require('path')
+const { join, resolve } = require('path')
 const ConfigManager = require('..')
 const path = require('path')
 const { unlink, writeFile, mkdir } = require('fs/promises')
@@ -251,4 +251,72 @@ test('should look for a .env file in process.cwd() too', async ({ same, fail, pl
   same(cm.current, expectedConfig)
   await unlink(file)
   await unlink(envFile)
+})
+
+test('ConfigManager.listConfigFiles() lists possible configs by type', async ({ plan, same }) => {
+  plan(2)
+  same(ConfigManager.listConfigFiles('db'), [
+    'platformatic.db.json',
+    'platformatic.db.json5',
+    'platformatic.db.yaml',
+    'platformatic.db.yml',
+    'platformatic.db.toml',
+    'platformatic.db.tml'
+  ])
+  same(ConfigManager.listConfigFiles('service'), [
+    'platformatic.service.json',
+    'platformatic.service.json5',
+    'platformatic.service.yaml',
+    'platformatic.service.yml',
+    'platformatic.service.toml',
+    'platformatic.service.tml'
+  ])
+})
+
+test('ConfigManager.listConfigFiles() lists all possible configs', async ({ plan, same }) => {
+  plan(1)
+  same(ConfigManager.listConfigFiles(), [
+    'platformatic.service.json',
+    'platformatic.service.json5',
+    'platformatic.service.yaml',
+    'platformatic.service.yml',
+    'platformatic.service.toml',
+    'platformatic.service.tml',
+    'platformatic.db.json',
+    'platformatic.db.json5',
+    'platformatic.db.yaml',
+    'platformatic.db.yml',
+    'platformatic.db.toml',
+    'platformatic.db.tml'
+  ])
+})
+
+test('ConfigManager.findConfigFile() finds configs by type', async ({ plan, same }) => {
+  plan(2)
+  const fixturesDir = join(__dirname, 'fixtures')
+  same(
+    await ConfigManager.findConfigFile(fixturesDir, 'db'),
+    'platformatic.db.json'
+  )
+  same(
+    await ConfigManager.findConfigFile(fixturesDir, 'service'),
+    'platformatic.service.json'
+  )
+})
+
+test('ConfigManager.findConfigFile() finds configs without type', async ({ plan, same }) => {
+  plan(1)
+  const fixturesDir = join(__dirname, 'fixtures')
+  same(
+    await ConfigManager.findConfigFile(fixturesDir),
+    'platformatic.service.json'
+  )
+})
+
+test('ConfigManager.findConfigFile() searches cwd by default', async ({ plan, same }) => {
+  plan(1)
+  same(
+    await ConfigManager.findConfigFile(),
+    undefined
+  )
 })

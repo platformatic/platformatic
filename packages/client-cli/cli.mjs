@@ -9,6 +9,7 @@ import * as desm from 'desm'
 import { request } from 'undici'
 import { processOpenAPI } from './lib/gen-openapi.mjs'
 import { processGraphQL } from './lib/gen-graphql.mjs'
+import ConfigManager from '@platformatic/config'
 import { analyze, write } from '@platformatic/metaconfig'
 import graphql from 'graphql'
 import { appendToBothEnvs } from './lib/utils.mjs'
@@ -22,20 +23,7 @@ async function isFileAccessible (filename) {
   }
 }
 
-const configFileNames = [
-  './platformatic.db.json',
-  './platformatic.db.json5',
-  './platformatic.db.yaml',
-  './platformatic.db.yml',
-  './platformatic.db.toml',
-  './platformatic.db.tml',
-  './platformatic.service.json',
-  './platformatic.service.json5',
-  './platformatic.service.yaml',
-  './platformatic.service.yml',
-  './platformatic.service.toml',
-  './platformatic.service.tml'
-]
+const configFileNames = ConfigManager.listConfigFiles()
 
 async function downloadAndProcess ({ url, name, folder, config }) {
   // try OpenAPI first

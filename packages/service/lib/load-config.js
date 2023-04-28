@@ -4,17 +4,7 @@ const parseArgs = require('minimist')
 const { access } = require('fs/promises')
 const ConfigManager = require('@platformatic/config')
 const deepmerge = require('@fastify/deepmerge')
-const { findConfigFile } = require('./utils.js')
 const { schema } = require('./schema.js')
-
-const ourConfigFiles = [
-  'platformatic.service.json',
-  'platformatic.service.json5',
-  'platformatic.service.yaml',
-  'platformatic.service.yml',
-  'platformatic.service.toml',
-  'platformatic.service.tml'
-]
 
 function generateDefaultConfig () {
   return {
@@ -30,7 +20,7 @@ function generateDefaultConfig () {
 
 // Unfortunately c8 does not see those on Windows
 /* c8 ignore next 70 */
-async function loadConfig (minimistConfig, _args, defaultConfig, configFileNames = ourConfigFiles) {
+async function loadConfig (minimistConfig, _args, defaultConfig, configType = 'service') {
   defaultConfig ??= generateDefaultConfig()
   const args = parseArgs(_args, deepmerge({ all: true })({
     string: ['allow-env'],
@@ -49,13 +39,14 @@ async function loadConfig (minimistConfig, _args, defaultConfig, configFileNames
 
   try {
     if (!args.config) {
-      args.config = await findConfigFile(process.cwd(), configFileNames)
+      args.config = await ConfigManager.findConfigFile(process.cwd(), configType)
     }
     await access(args.config)
   } catch (err) {
+    const configFiles = ConfigManager.listConfigFiles(configType)
     console.error(`
 Missing config file!
-Be sure to have a config file with one of the following names: ${ourConfigFiles.join('\n')}
+Be sure to have a config file with one of the following names: ${configFiles.join('\n')}
 In alternative run "npm create platformatic@latest" to generate a basic plt service config.
 Error: ${err}
 `)

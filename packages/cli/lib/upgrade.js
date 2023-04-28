@@ -1,22 +1,10 @@
+import ConfigManager from '@platformatic/config'
 import { analyze, write, upgrade as upgradeConfig } from '@platformatic/metaconfig'
 import parseArgs from 'minimist'
 import { access } from 'fs/promises'
 import { resolve } from 'path'
 
-const configFileNames = [
-  './platformatic.db.json',
-  './platformatic.db.json5',
-  './platformatic.db.yaml',
-  './platformatic.db.yml',
-  './platformatic.db.toml',
-  './platformatic.db.tml',
-  './platformatic.service.json',
-  './platformatic.service.json5',
-  './platformatic.service.yaml',
-  './platformatic.service.yml',
-  './platformatic.service.toml',
-  './platformatic.service.tml'
-]
+const configFileNames = ConfigManager.listConfigFiles()
 
 async function isFileAccessible (filename) {
   try {

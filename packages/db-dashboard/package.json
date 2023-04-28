@@ -23,7 +23,8 @@
     "lint": "standard | snazzy"
   },
   "dependencies": {
-    "@fastify/static": "^6.9.0"
+    "@fastify/static": "^6.9.0",
+    "@platformatic/config": "workspace:*"
   },
   "devDependencies": {
     "@graphiql/toolkit": "0.8.3",

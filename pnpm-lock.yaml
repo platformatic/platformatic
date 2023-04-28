@@ -59,6 +59,9 @@ importers:
       '@platformatic/client-cli':
         specifier: workspace:*
         version: link:../client-cli
+      '@platformatic/config':
+        specifier: workspace:*
+        version: link:../config
       '@platformatic/db':
         specifier: workspace:*
         version: link:../db
@@ -169,6 +172,9 @@ importers:
       '@platformatic/client':
         specifier: workspace:*
         version: link:../client
+      '@platformatic/config':
+        specifier: workspace:*
+        version: link:../config
       '@platformatic/metaconfig':
         specifier: workspace:*
         version: link:../metaconfig
@@ -285,6 +291,9 @@ importers:
 
   packages/create-platformatic:
     dependencies:
+      '@platformatic/config':
+        specifier: workspace:*
+        version: link:../config
       chalk:
         specifier: ^5.2.0
         version: 5.2.0
@@ -622,6 +631,9 @@ importers:
       '@fastify/static':
         specifier: ^6.9.0
         version: 6.9.0
+      '@platformatic/config':
+        specifier: workspace:*
+        version: link:../config
     devDependencies:
       '@graphiql/toolkit':
         specifier: 0.8.3
