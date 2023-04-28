@@ -125,6 +125,7 @@ test('simple db, simple rest API', async (t) => {
     equal(res.headers.location, undefined, 'no location header')
     same(res.json(), {
       statusCode: 400,
+      code: 'FST_ERR_VALIDATION',
       error: 'Bad Request',
       message: "body must have required property 'title'"
     }, 'POST /pages response')

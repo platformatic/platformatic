@@ -24,11 +24,11 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "fastify": "^4.13.0",
+    "fastify": "^4.17.0",
     "snazzy": "^9.0.0",
     "standard": "^17.0.0",
     "tap": "^16.3.4",
-    "tsd": "^0.28.0"
+    "tsd": "^0.28.1"
   },
   "dependencies": {
     "@databases/mysql": "^5.2.1",

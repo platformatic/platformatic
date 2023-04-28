@@ -27,15 +27,15 @@
   },
   "dependencies": {
     "query-string": "^7.1.3",
-    "ra-core": "^4.8.1"
+    "ra-core": "^4.9.3"
   },
   "devDependencies": {
-    "@vitest/coverage-c8": "^0.30.0",
-    "rimraf": "^4.1.2",
+    "@vitest/coverage-c8": "^0.30.1",
+    "rimraf": "^4.4.1",
     "snazzy": "^9.0.0",
     "standard": "^17.0.0",
-    "vite": "^4.1.4",
-    "vitest": "^0.30.0",
+    "vite": "^4.3.3",
+    "vitest": "^0.30.1",
     "whatwg-fetch": "^3.6.2"
   },
   "standard": {
