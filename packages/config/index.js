@@ -6,6 +6,7 @@ const EventEmitter = require('events')
 const Ajv = require('ajv')
 const fastifyPlugin = require('./lib/plugin')
 const dotenv = require('dotenv')
+const { request } = require('undici')
 const { FileWatcher } = require('@platformatic/utils')
 const { getParser, analyze, upgrade } = require('@platformatic/metaconfig')
 
@@ -42,6 +43,7 @@ class ConfigManager extends EventEmitter {
 
     this.schema = opts.schema || {}
     this.schemaOptions = opts.schemaOptions || {}
+    this._providedSchema = !!opts.schema
     this._originalEnv = opts.env || {}
     this.env = this.purgeEnv(this._originalEnv)
   }
@@ -140,6 +142,19 @@ class ConfigManager extends EventEmitter {
           // nothing to do
         }
       }
+
+      if (!this._providedSchema && this.current.$schema) {
+        // The user did not provide a schema, but we have a link to the schema
+        // in $schema. Try to fetch the schema and ignore anything that goes
+        // wrong.
+        try {
+          const { body } = await request(this.current.$schema)
+          this.schema = await body.json()
+        } catch {
+          // Ignore error.
+        }
+      }
+
       const validationResult = this.validate()
       if (!validationResult) {
         return false

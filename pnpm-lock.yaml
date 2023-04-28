@@ -266,6 +266,9 @@ importers:
       semver:
         specifier: ^7.5.0
         version: 7.5.0
+      undici:
+        specifier: ^5.22.0
+        version: 5.22.0
     devDependencies:
       '@iarna/toml':
         specifier: ^2.2.5
