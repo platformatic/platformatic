@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('tap')
-const { resolve } = require('path')
+const { join, resolve } = require('path')
 const ConfigManager = require('..')
 const pkg = require('../package.json')
 
@@ -112,8 +112,9 @@ test('should support JSON5 format', async ({ same }) => {
 })
 
 test('should automatically update', async ({ same }) => {
+  const fixturesDir = join(__dirname, 'fixtures')
   const cm = new ConfigManager({
-    source: resolve(__dirname, './fixtures/db-0.16.0.json'),
+    source: join(fixturesDir, 'db-0.16.0.json'),
     env: { PLT_FOOBAR: 'foobar' }
   })
   await cm.parse()
@@ -121,13 +122,16 @@ test('should automatically update', async ({ same }) => {
     $schema: `https://platformatic.dev/schemas/v${pkg.version.replace(/\.\d+$/, '.0')}/db`,
     server: { hostname: '127.0.0.1', port: '3042', logger: { level: 'info' } },
     metrics: { auth: { username: 'plt-db', password: 'plt-db' } },
-    plugins: { paths: ['./plugin-sum.js'] },
+    plugins: { paths: [join(fixturesDir, 'plugin-sum.js')] },
     db: {
       connectionString: 'postgres://postgres:postgres@localhost:5432/postgres',
       graphiql: true,
       ignore: { versions: true }
     },
-    migrations: { dir: './demo/migrations', validateChecksums: false },
+    migrations: {
+      dir: join(fixturesDir, 'demo', 'migrations'),
+      validateChecksums: false
+    },
     dashboard: { path: '/' },
     authorization: { adminSecret: 'plt-db' }
   })
