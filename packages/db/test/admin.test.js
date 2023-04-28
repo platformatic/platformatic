@@ -247,6 +247,7 @@ test('login route', async ({ teardown, same, equal }) => {
     equal(res.statusCode, 400)
     same(await res.body.json(), {
       statusCode: 400,
+      code: 'FST_ERR_VALIDATION',
       error: 'Bad Request',
       message: 'body must have required property \'password\''
     })
