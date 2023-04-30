@@ -738,8 +738,8 @@ importers:
         specifier: ^7.1.3
         version: 7.1.3
       ra-core:
-        specifier: ^4.9.3
-        version: 4.9.3(history@5.3.0)(react-dom@18.2.0)(react-hook-form@7.43.9)(react-router-dom@6.10.0)(react-router@6.10.0)(react@18.2.0)
+        specifier: ^4.10.1
+        version: 4.10.1(history@5.3.0)(react-dom@18.2.0)(react-hook-form@7.43.9)(react-router-dom@6.10.0)(react-router@6.10.0)(react@18.2.0)
     devDependencies:
       '@vitest/coverage-c8':
         specifier: ^0.30.1
@@ -12265,7 +12265,7 @@ packages:
       - react-native
     dev: true
 
-  /ra-core@4.9.3(history@5.3.0)(react-dom@18.2.0)(react-hook-form@7.43.9)(react-router-dom@6.10.0)(react-router@6.10.0)(react@18.2.0):
+  /ra-core@4.10.1(history@5.3.0)(react-dom@18.2.0)(react-hook-form@7.43.9)(react-router-dom@6.10.0)(react-router@6.10.0)(react@18.2.0):
     resolution: {integrity: sha512-SZiTLixV68EvqbgCgwxfiu0+2IS00zzAavK8kg9qzohrVhiKnBQK0GvvfXTN9rKdgqNP/6d/anNwuYq+Wk0KbA==}
     peerDependencies:
       history: ^5.1.0
@@ -12323,12 +12323,12 @@ packages:
       - react-router-dom
     dev: true
 
-  /ra-ui-materialui@4.10.1(@mui/icons-material@5.11.16)(@mui/material@5.12.2)(ra-core@4.9.3)(react-dom@18.2.0)(react-hook-form@7.43.9)(react-router-dom@6.10.0)(react-router@6.10.0)(react@18.2.0):
+  /ra-ui-materialui@4.10.1(@mui/icons-material@5.11.16)(@mui/material@5.12.2)(ra-core@4.10.1)(react-dom@18.2.0)(react-hook-form@7.43.9)(react-router-dom@6.10.0)(react-router@6.10.0)(react@18.2.0):
     resolution: {integrity: sha512-wCTsQ2wJmVTOHc/4I/v1UqDP9o12Jyp8SxMid9EEYozd8enFNJNve6TkBfCkTJKM9YoExRmEfQJNByTA4T0aMg==}
     peerDependencies:
       '@mui/icons-material': ^5.0.1
       '@mui/material': ^5.0.2
-      ra-core: ^4.0.0
+      ra-core: ^4.10.1
       react: ^16.9.0 || ^17.0.0 || ^18.0.0
       react-dom: ^16.9.0 || ^17.0.0 || ^18.0.0
       react-hook-form: '*'
@@ -12346,7 +12346,7 @@ packages:
       lodash: 4.17.21
       prop-types: 15.8.1
       query-string: 7.1.3
-      ra-core: 4.9.3(history@5.3.0)(react-dom@18.2.0)(react-hook-form@7.43.9)(react-router-dom@6.10.0)(react-router@6.10.0)(react@18.2.0)
+      ra-core: 4.10.1(history@5.3.0)(react-dom@18.2.0)(react-hook-form@7.43.9)(react-router-dom@6.10.0)(react-router@6.10.0)(react@18.2.0)
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
       react-dropzone: 12.1.0(react@18.2.0)
@@ -12447,10 +12447,10 @@ packages:
       '@mui/icons-material': 5.11.16(@mui/material@5.12.2)(@types/react@18.2.0)(react@18.2.0)
       '@mui/material': 5.12.2(@emotion/react@11.10.8)(@emotion/styled@11.10.8)(@types/react@18.2.0)(react-dom@18.2.0)(react@18.2.0)
       history: 5.3.0
-      ra-core: 4.9.3(history@5.3.0)(react-dom@18.2.0)(react-hook-form@7.43.9)(react-router-dom@6.10.0)(react-router@6.10.0)(react@18.2.0)
+      ra-core: 4.10.1(history@5.3.0)(react-dom@18.2.0)(react-hook-form@7.43.9)(react-router-dom@6.10.0)(react-router@6.10.0)(react@18.2.0)
       ra-i18n-polyglot: 4.10.1(history@5.3.0)(react-dom@18.2.0)(react-hook-form@7.43.9)(react-router-dom@6.10.0)(react-router@6.10.0)(react@18.2.0)
       ra-language-english: 4.10.1(history@5.3.0)(react-dom@18.2.0)(react-hook-form@7.43.9)(react-router-dom@6.10.0)(react-router@6.10.0)(react@18.2.0)
-      ra-ui-materialui: 4.10.1(@mui/icons-material@5.11.16)(@mui/material@5.12.2)(ra-core@4.9.3)(react-dom@18.2.0)(react-hook-form@7.43.9)(react-router-dom@6.10.0)(react-router@6.10.0)(react@18.2.0)
+      ra-ui-materialui: 4.10.1(@mui/icons-material@5.11.16)(@mui/material@5.12.2)(ra-core@4.10.1)(react-dom@18.2.0)(react-hook-form@7.43.9)(react-router-dom@6.10.0)(react-router@6.10.0)(react@18.2.0)
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
       react-hook-form: 7.43.9(react@18.2.0)
