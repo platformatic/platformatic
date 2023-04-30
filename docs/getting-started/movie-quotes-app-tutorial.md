@@ -539,11 +539,12 @@ create a new URQL client:
 ```javascript
 // src/lib/quotes-api.js
 
-import { createClient } from '@urql/core';
+import { createClient, cacheExchange, fetchExchange } from '@urql/core';
 
 const graphqlClient = createClient({
   url: import.meta.env.PUBLIC_GRAPHQL_API_ENDPOINT,
-  requestPolicy: "network-only"
+  requestPolicy: "network-only",
+  exchanges: [cacheExchange, fetchExchange]
 });
 ```
 
