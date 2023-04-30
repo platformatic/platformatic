@@ -13,7 +13,7 @@ import ora from 'ora'
 import createDB from './create-db.mjs'
 import askProjectDir from '../ask-project-dir.mjs'
 import { askDynamicWorkspaceCreateGHAction, askStaticWorkspaceGHAction } from '../ghaction.mjs'
-import { getRunPackageManagerInstall, getUseTypescript } from '../cli-options.mjs'
+import { getCreateDefaultMigrations, getCreatePlugin, getDBToBeUsed, getRunPackageManagerInstall, getUseTypescript } from '../cli-options.mjs'
 import mkdirp from 'mkdirp'
 
 export const createReadme = async (logger, dir = '.') => {
@@ -77,25 +77,17 @@ const createPlatformaticDB = async (_args) => {
   const pkgManager = getPkgManager()
   const projectDir = await askProjectDir(logger, '.')
 
-  const wizardOptions = await inquirer.prompt([{
-    type: 'list',
-    name: 'defaultMigrations',
-    message: 'Do you want to create default migrations?',
-    default: true,
-    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-  }, {
-    type: 'list',
-    name: 'generatePlugin',
-    message: 'Do you want to create a plugin?',
-    default: args.plugin,
-    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-  },
-  getUseTypescript(args.typescript)
+  const wizardOptions = await inquirer.prompt([
+    getCreateDefaultMigrations(),
+    getCreatePlugin(args.plugin),
+    getUseTypescript(args.typescript),
+    getDBToBeUsed(args.database)
   ])
 
   // Create the project directory
   await mkdirp(projectDir)
 
+  const databaseToBeUsed = args.database || wizardOptions.database
   const generatePlugin = args.plugin || wizardOptions.generatePlugin
   const useTypescript = args.typescript || wizardOptions.useTypescript
   const useTypes = args.types || generatePlugin // we set this always to true if we want to generate a plugin
@@ -103,7 +95,7 @@ const createPlatformaticDB = async (_args) => {
   const params = {
     hostname: args.hostname,
     port: args.port,
-    database: args.database,
+    database: databaseToBeUsed,
     migrations: wizardOptions.defaultMigrations ? args.migrations : '',
     plugin: generatePlugin,
     types: useTypes,
