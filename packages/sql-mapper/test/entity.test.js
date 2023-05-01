@@ -226,6 +226,37 @@ test('insert with explicit uuid PK value', { skip: !isSQLite }, async ({ same, t
   })
 })
 
+test('insert with varchar PK value', { skip: !isSQLite }, async ({ same, teardown }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+    await db.query(sql`CREATE TABLE pages (
+      title varchar(200) PRIMARY KEY,
+      random varchar(255) NOT NULL
+    );`)
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+
+  const pageEntity = mapper.entities.page
+  const [newPage] = await pageEntity.insert({
+    fields: ['title', 'random'],
+    inputs: [{
+      title: 'me',
+      random: '13th page with explicit id equal to 13'
+    }]
+  })
+  same(newPage, {
+    title: 'me',
+    random: '13th page with explicit id equal to 13'
+  })
+})
+
 test('insert with explicit uuid PK value without rowid', { skip: !isSQLite }, async ({ same, teardown }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
@@ -346,7 +377,7 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async ({ pass, teardown, same, equa
   }
 })
 
-test('[SQLite] throws if PK is not INTEGER', { skip: !isSQLite }, async ({ fail, equal, teardown, rejects }) => {
+/*test('[SQLite] throws if PK is not INTEGER', { skip: !isSQLite }, async ({ fail, equal, teardown, rejects }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
     await db.query(sql`CREATE TABLE pages (
@@ -368,6 +399,7 @@ test('[SQLite] throws if PK is not INTEGER', { skip: !isSQLite }, async ({ fail,
     equal(err.message, 'Invalid Primary Key type. Expected "integer", found "int"')
   }
 })
+*/
 
 test('mixing snake and camel case', async ({ pass, teardown, same, equal }) => {
   async function onDatabaseLoad (db, sql) {
