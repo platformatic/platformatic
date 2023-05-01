@@ -346,12 +346,12 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async ({ pass, teardown, same, equa
   }
 })
 
-test('[SQLite] throws if PK is not INTEGER', { skip: !isSQLite }, async ({ fail, equal, teardown, rejects }) => {
+test('[SQLite] allows non-integer(varchar) Primary Key', { skip: !isSQLite }, async ({ fail, equal, teardown, rejects }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
     await db.query(sql`CREATE TABLE pages (
-      id int PRIMARY KEY,
-      title varchar(255) NOT NULL,
+      title varchar(255) PRIMARY KEY,
+      id INTEGER NOT NULL,
       content text NOT NULL
     );`)
   }
@@ -365,7 +365,7 @@ test('[SQLite] throws if PK is not INTEGER', { skip: !isSQLite }, async ({ fail,
     })
     fail()
   } catch (err) {
-    equal(err.message, 'Invalid Primary Key type. Expected "integer", found "int"')
+    equal(err.message, 'Invalid Primary Key type(varchar).')
   }
 })
 
