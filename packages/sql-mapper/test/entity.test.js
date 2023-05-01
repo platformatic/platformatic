@@ -377,30 +377,6 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async ({ pass, teardown, same, equa
   }
 })
 
-/*test('[SQLite] throws if PK is not INTEGER', { skip: !isSQLite }, async ({ fail, equal, teardown, rejects }) => {
-  async function onDatabaseLoad (db, sql) {
-    await clear(db, sql)
-    await db.query(sql`CREATE TABLE pages (
-      id int PRIMARY KEY,
-      title varchar(255) NOT NULL,
-      content text NOT NULL
-    );`)
-  }
-  try {
-    await connect({
-      connectionString: connInfo.connectionString,
-      log: fakeLogger,
-      onDatabaseLoad,
-      ignore: {},
-      hooks: {}
-    })
-    fail()
-  } catch (err) {
-    equal(err.message, 'Invalid Primary Key type. Expected "integer", found "int"')
-  }
-})
-*/
-
 test('mixing snake and camel case', async ({ pass, teardown, same, equal }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
