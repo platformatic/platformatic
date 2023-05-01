@@ -391,10 +391,10 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema,
   /* istanbul ignore next */
   function checkSQLitePrimaryKey (constraint) {
     if (db.isSQLite) {
-      const validTypes = ['integer', 'uuid', 'serial']
+      const validTypes = ['varchar', 'integer', 'uuid', 'serial']
       const pkType = fields[constraint.column_name].sqlType.toLowerCase()
       if (!validTypes.includes(pkType)) {
-        throw new Error(`Invalid Primary Key type. Expected "integer", found "${pkType}"`)
+        throw new Error(`Unknown Primary Key Type. Must be one of: "${validTypes.join(', ')}"`)
       }
     }
   }

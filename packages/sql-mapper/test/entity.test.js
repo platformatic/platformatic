@@ -195,6 +195,37 @@ test('insert with explicit integer PK value', async ({ same, teardown }) => {
   })
 })
 
+test('insert with varchar(255) as primary key(sqlite)', { skip: !isSQLite }, async ({ same, teardown }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+    await db.query(sql`CREATE TABLE pages (
+      title varchar(255) PRIMARY KEY,
+      id INTEGER NOT NULL
+    );`)
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+
+  const pageEntity = mapper.entities.page
+  const [newPage] = await pageEntity.insert({
+    fields: ['title', 'id'],
+    inputs: [{
+      title: '54th page with explicit id equal to 54',
+      id: '54'
+    }]
+  })
+  same(newPage, {
+    title: '54th page with explicit id equal to 54',
+    id: '54'
+  })
+})
+
 test('insert with explicit uuid PK value', { skip: !isSQLite }, async ({ same, teardown }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
@@ -343,29 +374,6 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async ({ pass, teardown, same, equa
       id,
       title: 'Hello World'
     })
-  }
-})
-
-test('[SQLite] throws if PK is not INTEGER', { skip: !isSQLite }, async ({ fail, equal, teardown, rejects }) => {
-  async function onDatabaseLoad (db, sql) {
-    await clear(db, sql)
-    await db.query(sql`CREATE TABLE pages (
-      id int PRIMARY KEY,
-      title varchar(255) NOT NULL,
-      content text NOT NULL
-    );`)
-  }
-  try {
-    await connect({
-      connectionString: connInfo.connectionString,
-      log: fakeLogger,
-      onDatabaseLoad,
-      ignore: {},
-      hooks: {}
-    })
-    fail()
-  } catch (err) {
-    equal(err.message, 'Invalid Primary Key type. Expected "integer", found "int"')
   }
 })
 
