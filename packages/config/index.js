@@ -148,8 +148,10 @@ class ConfigManager extends EventEmitter {
         // in $schema. Try to fetch the schema and ignore anything that goes
         // wrong.
         try {
-          const { body } = await request(this.current.$schema)
-          this.schema = await body.json()
+          const { body, statusCode } = await request(this.current.$schema)
+          if (statusCode === 200) {
+            this.schema = await body.json()
+          }
         } catch {
           // Ignore error.
         }

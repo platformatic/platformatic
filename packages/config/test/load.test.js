@@ -4,6 +4,8 @@ const { test } = require('tap')
 const { join, resolve } = require('path')
 const ConfigManager = require('..')
 const pkg = require('../package.json')
+const { MockAgent, setGlobalDispatcher, getGlobalDispatcher } = require('undici')
+const { schema } = require('../../db') // avoid circular dependency on pnpm
 
 test('should throw if file is not found', async ({ match, fail }) => {
   try {
@@ -111,13 +113,85 @@ test('should support JSON5 format', async ({ same }) => {
   })
 })
 
-test('should automatically update', async ({ same }) => {
+test('should automatically update', async ({ same, teardown, pass, plan }) => {
+  plan(2)
+  const _agent = getGlobalDispatcher()
+  const mockAgent = new MockAgent()
+  setGlobalDispatcher(mockAgent)
+  teardown(() => {
+    setGlobalDispatcher(_agent)
+  })
+
+  // Provide the base url to the request
+  const mockPool = mockAgent.get('https://platformatic.dev')
+  mockAgent.disableNetConnect()
+
+  // intercept the request
+  mockPool.intercept({
+    path: `/schemas/v${pkg.version.replace(/\.\d+$/, '.0')}/db`,
+    method: 'GET'
+  }).reply(404, () => {
+    pass('should have called the mock server')
+    return {
+      message: 'not found'
+    }
+  })
+
   const fixturesDir = join(__dirname, 'fixtures')
   const cm = new ConfigManager({
     source: join(fixturesDir, 'db-0.16.0.json'),
     env: { PLT_FOOBAR: 'foobar' }
   })
   await cm.parse()
+
+  same(cm.current, {
+    $schema: `https://platformatic.dev/schemas/v${pkg.version.replace(/\.\d+$/, '.0')}/db`,
+    server: { hostname: '127.0.0.1', port: '3042', logger: { level: 'info' } },
+    metrics: { auth: { username: 'plt-db', password: 'plt-db' } },
+    plugins: { paths: ['./plugin-sum.js'] },
+    db: {
+      connectionString: 'postgres://postgres:postgres@localhost:5432/postgres',
+      graphiql: true,
+      ignore: { versions: true }
+    },
+    migrations: {
+      dir: './demo/migrations',
+      validateChecksums: false
+    },
+    dashboard: { path: '/' },
+    authorization: { adminSecret: 'plt-db' }
+  })
+})
+
+test('should use the remote schema', async ({ same, teardown, pass, plan }) => {
+  plan(2)
+  const _agent = getGlobalDispatcher()
+  const mockAgent = new MockAgent()
+  setGlobalDispatcher(mockAgent)
+  teardown(() => {
+    setGlobalDispatcher(_agent)
+  })
+
+  // Provide the base url to the request
+  const mockPool = mockAgent.get('https://platformatic.dev')
+  mockAgent.disableNetConnect()
+
+  // intercept the request
+  mockPool.intercept({
+    path: `/schemas/v${pkg.version.replace(/\.\d+$/, '.0')}/db`,
+    method: 'GET'
+  }).reply(200, () => {
+    pass('should have called the mock server')
+    return JSON.stringify(schema)
+  })
+
+  const fixturesDir = join(__dirname, 'fixtures')
+  const cm = new ConfigManager({
+    source: join(fixturesDir, 'db-0.16.0.json'),
+    env: { PLT_FOOBAR: 'foobar' }
+  })
+  await cm.parse()
+
   same(cm.current, {
     $schema: `https://platformatic.dev/schemas/v${pkg.version.replace(/\.\d+$/, '.0')}/db`,
     server: { hostname: '127.0.0.1', port: '3042', logger: { level: 'info' } },
