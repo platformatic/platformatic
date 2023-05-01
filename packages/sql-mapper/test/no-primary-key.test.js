@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 
-const { clear, connInfo, isMysql8 } = require('./helper')
+const { clear, connInfo, isMysql8, isSQLite } = require('./helper')
 const { connect } = require('..')
 const fakeLogger = {
   trace: () => {},
@@ -10,7 +10,7 @@ const fakeLogger = {
   error: () => {}
 }
 
-test('unique key', async ({ equal, not, same, teardown }) => {
+test('unique key', { skip: isSQLite }, async ({ equal, not, same, teardown }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
     teardown(() => db.dispose())
