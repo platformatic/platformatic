@@ -678,8 +678,8 @@ importers:
         specifier: ^5.12.1
         version: 5.12.1(graphql@16.6.0)
       happy-dom:
-        specifier: ^9.10.6
-        version: 9.10.6
+        specifier: ^9.10.7
+        version: 9.10.7
       history:
         specifier: ^5.3.0
         version: 5.3.0
@@ -733,7 +733,7 @@ importers:
         version: 4.3.4(@types/node@18.16.3)
       vitest:
         specifier: ^0.30.1
-        version: 0.30.1(happy-dom@9.10.6)(playwright@1.33.0)
+        version: 0.30.1(happy-dom@9.10.7)(playwright@1.33.0)
 
   packages/db-ra-data-rest:
     dependencies:
@@ -761,7 +761,7 @@ importers:
         version: 4.3.4(@types/node@18.16.3)
       vitest:
         specifier: ^0.30.1
-        version: 0.30.1(happy-dom@9.10.6)(playwright@1.33.0)
+        version: 0.30.1(happy-dom@9.10.7)(playwright@1.33.0)
       whatwg-fetch:
         specifier: ^3.6.2
         version: 3.6.2
@@ -821,8 +821,8 @@ importers:
         specifier: ^8.3.1
         version: 8.3.1
       '@fastify/swagger-ui':
-        specifier: ^1.8.0
-        version: 1.8.0
+        specifier: ^1.8.1
+        version: 1.8.1
       '@fastify/under-pressure':
         specifier: ^8.2.0
         version: 8.2.0
@@ -1121,8 +1121,8 @@ importers:
         specifier: ^8.3.1
         version: 8.3.1
       '@fastify/swagger-ui':
-        specifier: ^1.8.0
-        version: 1.8.0
+        specifier: ^1.8.1
+        version: 1.8.1
       '@platformatic/sql-json-schema-mapper':
         specifier: workspace:*
         version: link:../sql-json-schema-mapper
@@ -3255,8 +3255,8 @@ packages:
       p-limit: 3.1.0
       readable-stream: 4.3.0
 
-  /@fastify/swagger-ui@1.8.0:
-    resolution: {integrity: sha512-srgVsAOyj+C7uyya5mcxz9Arrt3fzUM0b1wziJ3uCwk5pMuIRBOG8xDx4ZgjtqPzRzHs+NrRjCdNWqX/RL7qNg==}
+  /@fastify/swagger-ui@1.8.1:
+    resolution: {integrity: sha512-XMfLGZMXi5dl0Gy6R6tlistA4d0XlJJweUfQkPNVeeBq2hO03DmvtM5yrp8adF392Xoi+6rlGHFaneL9EQdsoA==}
     dependencies:
       '@fastify/static': 6.10.1
       fastify-plugin: 4.5.0
@@ -3307,14 +3307,14 @@ packages:
     resolution: {integrity: sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==}
     optional: true
 
-  /@graphiql/react@0.17.1(@codemirror/language@6.0.0)(@types/react@18.2.0)(graphql-ws@5.12.1)(graphql@16.6.0)(react-dom@18.2.0)(react-is@17.0.2)(react@18.2.0):
-    resolution: {integrity: sha512-p99Vnl3aoQsh/T651pkGiS0wqvn7y65Bv4Q32l990T2IIgEDqeqJxgwRp3F48Ol9dWzk6KzxNkZYqe5IVHEmoA==}
+  /@graphiql/react@0.17.2(@codemirror/language@6.0.0)(@types/react@18.2.0)(graphql-ws@5.12.1)(graphql@16.6.0)(react-dom@18.2.0)(react-is@17.0.2)(react@18.2.0):
+    resolution: {integrity: sha512-x8iTeYSq8C520UYGk3f3S+AWOm8nf7x3OuePWg+k0KkMAWJeaeFBLmxBAGQLzK5/8/dPoZfNKblXcLwByeMHew==}
     peerDependencies:
       graphql: ^15.5.0 || ^16.0.0
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
     dependencies:
-      '@graphiql/toolkit': 0.8.3(graphql-ws@5.12.1)(graphql@16.6.0)
+      '@graphiql/toolkit': 0.8.4(graphql-ws@5.12.1)(graphql@16.6.0)
       '@reach/combobox': 0.17.0(react-dom@18.2.0)(react@18.2.0)
       '@reach/dialog': 0.17.0(@types/react@18.2.0)(react-dom@18.2.0)(react@18.2.0)
       '@reach/listbox': 0.17.0(react-dom@18.2.0)(react@18.2.0)
@@ -3323,10 +3323,10 @@ packages:
       '@reach/visually-hidden': 0.17.0(react-dom@18.2.0)(react@18.2.0)
       clsx: 1.2.1
       codemirror: 5.65.13
-      codemirror-graphql: 2.0.5(@codemirror/language@6.0.0)(codemirror@5.65.13)(graphql@16.6.0)
+      codemirror-graphql: 2.0.6(@codemirror/language@6.0.0)(codemirror@5.65.13)(graphql@16.6.0)
       copy-to-clipboard: 3.3.3
       graphql: 16.6.0
-      graphql-language-service: 5.1.3(graphql@16.6.0)
+      graphql-language-service: 5.1.4(graphql@16.6.0)
       markdown-it: 12.3.2
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
@@ -3341,6 +3341,23 @@ packages:
 
   /@graphiql/toolkit@0.8.3(graphql-ws@5.12.1)(graphql@16.6.0):
     resolution: {integrity: sha512-B5WfZlBes/tMmM7TeTTD/F2E1kbtQD6PYmyX76qWrIt1Sx3+lQoCe8NzHbBvNII77F5sr737RASmkhQ1fcdFWQ==}
+    peerDependencies:
+      graphql: ^15.5.0 || ^16.0.0
+      graphql-ws: '>= 4.5.0'
+    peerDependenciesMeta:
+      graphql-ws:
+        optional: true
+    dependencies:
+      '@n1ru4l/push-pull-async-iterable-iterator': 3.2.0
+      graphql: 16.6.0
+      graphql-ws: 5.12.1(graphql@16.6.0)
+      meros: 1.2.1
+    transitivePeerDependencies:
+      - '@types/node'
+    dev: true
+
+  /@graphiql/toolkit@0.8.4(graphql-ws@5.12.1)(graphql@16.6.0):
+    resolution: {integrity: sha512-cFUGqh3Dau+SD3Vq9EFlZrhzYfaHKyOJveFtaCR+U5Cn/S68p7oy+vQBIdwtO6J2J58FncnwBbVRfr+IvVfZqQ==}
     peerDependencies:
       graphql: ^15.5.0 || ^16.0.0
       graphql-ws: '>= 4.5.0'
@@ -4907,7 +4924,7 @@ packages:
       c8: 7.13.0
       picocolors: 1.0.0
       std-env: 3.3.2
-      vitest: 0.30.1(happy-dom@9.10.6)(playwright@1.33.0)
+      vitest: 0.30.1(happy-dom@9.10.7)(playwright@1.33.0)
     dev: true
 
   /@vitest/expect@0.30.1:
@@ -5194,8 +5211,8 @@ packages:
       mime-types: 2.1.35
       negotiator: 0.6.3
 
-  /ace-builds@1.18.0:
-    resolution: {integrity: sha512-ETLeQ3X1XvcWckOZFR+KvTectZyEwDm2p+CckWazS+xsK3THHVxn/PkfkPr37OTNKVY/yJRx29JGERV77YQYXw==}
+  /ace-builds@1.18.1:
+    resolution: {integrity: sha512-rP0C95yEyFbvR2ZlPXfuclwcI62ybwctdIA7p7GH3CRg5Lv/BtWvKbeDNV5v3ylliFKbIunnsyDryOm1voUoOw==}
     dev: true
 
   /acorn-jsx@5.3.2(acorn@8.8.2):
@@ -6377,8 +6394,8 @@ packages:
     dev: true
     optional: true
 
-  /codemirror-graphql@2.0.5(@codemirror/language@6.0.0)(codemirror@5.65.13)(graphql@16.6.0):
-    resolution: {integrity: sha512-erpJV/hOQe4ScOBNhV+rJAAcsCGyC913VkTp3fbGHh/aZQBshpwxgew4+43+EDl855Gw+df36/+maun+Nj8tKw==}
+  /codemirror-graphql@2.0.6(@codemirror/language@6.0.0)(codemirror@5.65.13)(graphql@16.6.0):
+    resolution: {integrity: sha512-ZuvT4+iBYabyLWaqVHdsGyiB2atvu0v1eSnGUuziX7x7tJmo5WziZGvc2j6w6EnL5aUjvYnJU0aCBhTgCdzJVg==}
     peerDependencies:
       '@codemirror/language': 6.0.0
       codemirror: ^5.65.3
@@ -6387,7 +6404,7 @@ packages:
       '@codemirror/language': 6.0.0
       codemirror: 5.65.13
       graphql: 16.6.0
-      graphql-language-service: 5.1.3(graphql@16.6.0)
+      graphql-language-service: 5.1.4(graphql@16.6.0)
     dev: true
 
   /codemirror@5.65.13:
@@ -8719,10 +8736,10 @@ packages:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
     dependencies:
-      '@graphiql/react': 0.17.1(@codemirror/language@6.0.0)(@types/react@18.2.0)(graphql-ws@5.12.1)(graphql@16.6.0)(react-dom@18.2.0)(react-is@17.0.2)(react@18.2.0)
+      '@graphiql/react': 0.17.2(@codemirror/language@6.0.0)(@types/react@18.2.0)(graphql-ws@5.12.1)(graphql@16.6.0)(react-dom@18.2.0)(react-is@17.0.2)(react@18.2.0)
       '@graphiql/toolkit': 0.8.3(graphql-ws@5.12.1)(graphql@16.6.0)
       graphql: 16.6.0
-      graphql-language-service: 5.1.3(graphql@16.6.0)
+      graphql-language-service: 5.1.4(graphql@16.6.0)
       markdown-it: 12.3.2
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
@@ -8748,8 +8765,8 @@ packages:
       lodash.merge: 4.6.2
       lodash.mergewith: 4.6.2
 
-  /graphql-language-service@5.1.3(graphql@16.6.0):
-    resolution: {integrity: sha512-01KZLExoF53i8a2Jhgt+nVGsm9O2+jmDdwms4THSxCY+gU9FukF6X4pPLO2Gk7qZ6CVcInM8+IQx/ph4AOTOLA==}
+  /graphql-language-service@5.1.4(graphql@16.6.0):
+    resolution: {integrity: sha512-i6cYIDL8dFd6e9LqpRFJRoVa+MZ/egMzUERsZlK65S/M7ra9SxKrZuclKgmPOq0KqHypInsEaI4D7dN5a+yEAA==}
     hasBin: true
     peerDependencies:
       graphql: ^15.5.0 || ^16.0.0
@@ -8803,8 +8820,8 @@ packages:
       uglify-js: 3.17.4
     dev: true
 
-  /happy-dom@9.10.6:
-    resolution: {integrity: sha512-jmeFeP3q3voQsoDC2MKdZXX6OPD4URfCSPwLkKtn9RuJQYH9qc6FlTa/D2Ilxm1WRQ83SF+8UfxybJnvDS9/gQ==}
+  /happy-dom@9.10.7:
+    resolution: {integrity: sha512-AF9qCTEDmwY+4Rc+YQ9mHSFuw7dxwhLeSnNMJWGKUsOz3VWsC7O9kniuil5yVgnpx9UIzAjtK9UdbuRKMSGfSQ==}
     dependencies:
       css.escape: 1.5.1
       he: 1.2.0
@@ -9863,7 +9880,7 @@ packages:
   /jsoneditor@9.10.0:
     resolution: {integrity: sha512-vmVSD3ubZ8jwkiDKVW5MB5ESI/MUm4trVUw5WnT4j5FV6m81liA2YfQ0l84PlN4qJ3DCeYWFWfprOUoCjzkDhQ==}
     dependencies:
-      ace-builds: 1.18.0
+      ace-builds: 1.18.1
       ajv: 6.12.6
       javascript-natural-sort: 0.7.1
       jmespath: 0.16.0
@@ -15119,7 +15136,7 @@ packages:
       fsevents: 2.3.2
     dev: true
 
-  /vitest@0.30.1(happy-dom@9.10.6)(playwright@1.33.0):
+  /vitest@0.30.1(happy-dom@9.10.7)(playwright@1.33.0):
     resolution: {integrity: sha512-y35WTrSTlTxfMLttgQk4rHcaDkbHQwDP++SNwPb+7H8yb13Q3cu2EixrtHzF27iZ8v0XCciSsLg00RkPAzB/aA==}
     engines: {node: '>=v14.18.0'}
     hasBin: true
@@ -15164,7 +15181,7 @@ packages:
       chai: 4.3.7
       concordance: 5.0.4
       debug: 4.3.4
-      happy-dom: 9.10.6
+      happy-dom: 9.10.7
       local-pkg: 0.4.3
       magic-string: 0.30.0
       pathe: 1.1.0
