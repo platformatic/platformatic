@@ -16,7 +16,7 @@ async function buildServer (_args, onServer) {
   }))
 
   try {
-    const { configManager } = await loadConfig({}, _args, {})
+    const { configManager } = await loadConfig({}, _args)
 
     await configManager.parseAndValidate()
     const config = configManager.current

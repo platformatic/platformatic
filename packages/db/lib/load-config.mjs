@@ -12,8 +12,15 @@ export function generateConfigManagerConfig () {
   }
 }
 
-export async function loadConfig (a, b) {
-  const res = await service.loadConfig(a, b, generateConfigManagerConfig(), 'db')
+export async function loadConfig (a, b, c) {
+  if (!c) {
+    c = generateConfigManagerConfig()
+  } else if (c?.mergeDefaults) {
+    c = { ...generateConfigManagerConfig(), ...c }
+    c.mergeDefaults = false
+  }
+
+  const res = await service.loadConfig(a, b, c, 'db')
   await adjustConfig(res.configManager)
   return res
 }
