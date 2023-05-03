@@ -34,7 +34,7 @@ const app = Fastify({ logger: true })
 app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
   const res = await app.movies.createMovie({ title: 'foo' })
-  return res 
+  return res
 })
 app.listen({ port: 0 })
 `
@@ -93,7 +93,7 @@ app.register(movies, {
 
 app.post('/', async () => {
   const res = await app.movies.createMovie({ title: 'foo' })
-  return res 
+  return res
 })
 
 app.listen({ port: 0 });
@@ -172,7 +172,7 @@ const app = Fastify({ logger: true })
 app.register(movies, { url: '${app.url}/' })
 app.post('/', async (request, reply) => {
   const res = await app.movies.createMovie({ title: 'foo' })
-  return res 
+  return res
 })
 app.listen({ port: 0 })
 `
@@ -251,7 +251,7 @@ const app = Fastify({ logger: true })
 app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
   const res = await app.movies.createMovie({ title: 'foo' })
-  return res 
+  return res
 })
 app.listen({ port: 0 })
 `
@@ -318,7 +318,7 @@ app.register(async function (app) {
 
 app.post('/', async (req) => {
   const res = await req.movies.createMovie({ title: 'foo' })
-  return res 
+  return res
 })
 
 app.listen({ port: 0 });
@@ -422,4 +422,76 @@ test('dotenv & config support', async ({ teardown, comment, same }) => {
       PLT_MOVIES_URL: url
     })
   }
+})
+
+test('full-response option', async ({ teardown, comment, match }) => {
+  try {
+    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+
+  await app.start()
+
+  const dir = await moveToTmpdir(teardown)
+  comment(`working in ${dir}`)
+
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--full-response'])
+
+  const toWrite = `
+'use strict'
+
+const Fastify = require('fastify')
+const movies = require('./movies')
+const app = Fastify({ logger: true })
+
+app.register(movies, { url: '${app.url}' })
+app.post('/', async (request, reply) => {
+  const res = await app.movies.createMovie({ title: 'foo' })
+  return res
+})
+app.listen({ port: 0 })
+`
+  await fs.writeFile(join(dir, 'index.js'), toWrite)
+
+  const app2 = execa('node', ['index.js'])
+  teardown(() => app2.kill())
+  teardown(async () => { await app.close() })
+
+  const stream = app2.stdout.pipe(split(JSON.parse))
+
+  // this is unfortuate :(
+  const base = 'Server listening at '
+  let url
+  for await (const line of stream) {
+    const msg = line.msg
+    if (msg.indexOf(base) !== 0) {
+      continue
+    }
+    url = msg.slice(base.length)
+    break
+  }
+  const res = await request(url, {
+    method: 'POST'
+  })
+  const body = await res.body.json()
+  const matchDate = /[a-z]{3}, \d{2} [a-z]{3} \d{4} \d{2}:\d{2}:\d{2} GMT/i
+  const matchKeepAlive = /timeout=\d+/
+
+  match(body, {
+    statusCode: 200,
+    headers: {
+      location: '/movies/1',
+      'content-type': 'application/json; charset=utf-8',
+      'content-length': '22',
+      date: matchDate,
+      connection: 'keep-alive',
+      'keep-alive': matchKeepAlive
+    },
+    body: {
+      id: 1,
+      title: 'foo'
+    }
+  })
 })
