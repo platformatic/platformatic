@@ -21,7 +21,7 @@ function generateDefaultConfig () {
 // Unfortunately c8 does not see those on Windows
 /* c8 ignore next 70 */
 async function loadConfig (minimistConfig, _args, defaultConfig, configType = 'service') {
-  if (!defaultConfig) {
+  if (defaultConfig === undefined) {
     defaultConfig = generateDefaultConfig()
   } else if (defaultConfig?.mergeDefaults) {
     defaultConfig = { ...generateDefaultConfig(), ...defaultConfig }
