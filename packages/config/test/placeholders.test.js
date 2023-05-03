@@ -135,3 +135,34 @@ test('transform placeholders with `\\`', async ({ plan, same }) => {
     }
   })
 })
+
+test('support a custom callback for missing env vars', async ({ plan, same }) => {
+  plan(1)
+  const customValue = 'im not missing, youre missing'
+  const cm = new ConfigManager({
+    source: './file.json',
+    env: {
+      PLT_FOO: 'bar',
+      PLT_USERNAME: 'john'
+    },
+    onMissingEnv (key) {
+      if (key === 'PLT_PLUGIN') {
+        return customValue
+      }
+
+      throw new Error(`unexpected key: ${key}`)
+    }
+  })
+
+  const config = {
+    server: {
+      hostname: '127.0.0.1',
+      port: '3042',
+      replace: '{PLT_FOO}'
+    },
+    plugin: '{PLT_PLUGIN}'
+  }
+
+  const result = await cm.replaceEnv(JSON.stringify(config))
+  same(JSON.parse(result).plugin, customValue)
+})

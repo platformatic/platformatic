@@ -46,6 +46,7 @@ class ConfigManager extends EventEmitter {
     this._providedSchema = !!opts.schema
     this._originalEnv = opts.env || {}
     this.env = this.purgeEnv(this._originalEnv)
+    this._onMissingEnv = opts.onMissingEnv
   }
 
   toFastifyPlugin () {
@@ -115,8 +116,15 @@ class ConfigManager extends EventEmitter {
     }
     this.env = this.purgeEnv(env)
 
-    const escapeJSONstring = ({ value }) => {
-      if (!value) return value
+    const escapeJSONstring = ({ key, value }) => {
+      if (!value && this._onMissingEnv) {
+        value = this._onMissingEnv(key)
+      }
+
+      if (!value) {
+        return value
+      }
+
       // TODO this shoudl handle all the escapes chars
       // defined in https://www.json.org/json-en.html
       // but it's good enough for now.
