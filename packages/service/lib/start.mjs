@@ -18,9 +18,9 @@ function defaultConfig () {
   }
 }
 
-export function buildStart (_loadConfig, _buildServer) {
+export function buildStart (_loadConfig, _buildServer, _configManagerConfig) {
   return async function start (_args) {
-    const _defaultConfig = defaultConfig()
+    const _defaultConfig = _configManagerConfig ?? defaultConfig()
     const { configManager, args } = await _loadConfig({}, _args, _defaultConfig)
 
     const config = configManager.current

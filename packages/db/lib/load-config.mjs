@@ -20,7 +20,7 @@ export async function loadConfig (a, b, c) {
     c.mergeDefaults = false
   }
 
-  const res = await service.loadConfig(a, b, generateConfigManagerConfig(), 'db')
+  const res = await service.loadConfig(a, b, c, 'db')
   await adjustConfig(res.configManager)
   return res
 }

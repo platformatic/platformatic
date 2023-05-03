@@ -276,9 +276,9 @@ function restarter (handler, cm, jumpApp) {
 
 // This is for @platformatic/db to use
 /* c8 ignore next 4 */
-async function buildStart (loadConfig, buildServer) {
+async function buildStart (loadConfig, buildServer, configManagerConfig) {
   const { buildStart } = await import('./lib/start.mjs')
-  return buildStart(loadConfig, buildServer)
+  return buildStart(loadConfig, buildServer, configManagerConfig)
 }
 
 module.exports.buildServer = buildServer
