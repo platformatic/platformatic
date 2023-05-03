@@ -21,7 +21,7 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "@matteo.collina/worker": "^3.0.0",
+    "@matteo.collina/worker": "^3.1.0",
     "bindings": "^1.5.0",
     "c8": "^7.13.0",
     "self-cert": "^2.0.0",
@@ -66,7 +66,7 @@
     "help-me": "^4.2.0",
     "mercurius": "^13.0.0",
     "minimist": "^1.2.8",
-    "pino": "^8.11.0",
+    "pino": "^8.12.0",
     "pino-pretty": "^10.0.0",
     "rfdc": "^1.3.0",
     "ua-parser-js": "^1.0.35"
