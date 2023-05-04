@@ -672,8 +672,8 @@ importers:
         specifier: ^6.3.0
         version: 6.3.0
       graphiql:
-        specifier: 2.4.1
-        version: 2.4.1(@codemirror/language@6.0.0)(@types/react@18.2.3)(graphql-ws@5.12.1)(graphql@16.6.0)(react-dom@18.2.0)(react-is@17.0.2)(react@18.2.0)
+        specifier: 2.4.2
+        version: 2.4.2(@codemirror/language@6.0.0)(@types/react@18.2.3)(graphql-ws@5.12.1)(graphql@16.6.0)(react-dom@18.2.0)(react-is@17.0.2)(react@18.2.0)
       graphql-ws:
         specifier: ^5.12.1
         version: 5.12.1(graphql@16.6.0)
@@ -8712,8 +8712,8 @@ packages:
     resolution: {integrity: sha512-bzh50DW9kTPM00T8y4o8vQg89Di9oLJVLW/KaOGIXJWP/iqCN6WKYkbNOF04vFLJhwcpYUh9ydh/+5vpOqV4YQ==}
     dev: true
 
-  /graphiql@2.4.1(@codemirror/language@6.0.0)(@types/react@18.2.3)(graphql-ws@5.12.1)(graphql@16.6.0)(react-dom@18.2.0)(react-is@17.0.2)(react@18.2.0):
-    resolution: {integrity: sha512-PLTY2KI+FwU6548Bsrip2ptne/t2QzNdARHZwXl/KGJ+KVfSpXjjfryJQBHXiEq4plQnG4orw7dJpm8KfM5iig==}
+  /graphiql@2.4.2(@codemirror/language@6.0.0)(@types/react@18.2.3)(graphql-ws@5.12.1)(graphql@16.6.0)(react-dom@18.2.0)(react-is@17.0.2)(react@18.2.0):
+    resolution: {integrity: sha512-oQ1zJAVpOqajKH1oc5WzNIK1FNUI2m8tPgyEeA22ySmR79+/k27FlG4YxRXQOstlWeVcag0FZaqG5VyR6Nc1iw==}
     peerDependencies:
       graphql: ^15.5.0 || ^16.0.0
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
