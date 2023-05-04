@@ -20,7 +20,7 @@
   "devDependencies": {
     "@databases/pg": "^5.4.1",
     "@databases/sqlite": "^4.0.2",
-    "@matteo.collina/worker": "^3.0.0",
+    "@matteo.collina/worker": "^3.1.0",
     "ajv": "^8.12.0",
     "bindings": "^1.5.0",
     "snazzy": "^9.0.0",
@@ -66,7 +66,7 @@
     "graphql": "^16.6.0",
     "help-me": "^4.2.0",
     "minimist": "^1.2.8",
-    "pino": "^8.11.0",
+    "pino": "^8.12.0",
     "pino-pretty": "^10.0.0",
     "postgrator": "^7.1.1",
     "rfdc": "^1.3.0",
