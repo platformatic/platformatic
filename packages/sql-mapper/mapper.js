@@ -46,7 +46,7 @@ const defaultAutoTimestampFields = {
   updatedAt: 'updated_at'
 }
 
-async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, ignore = {}, autoTimestamp = true, hooks = {}, schema, limit = {} }) {
+async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, ignore = {}, autoTimestamp = true, hooks = {}, schema, limit = {}, dbschema }) {
   if (typeof autoTimestamp === 'boolean' && autoTimestamp === true) {
     autoTimestamp = defaultAutoTimestampFields
   }
@@ -110,9 +110,33 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, 
       await onDatabaseLoad(db, sql)
     }
 
-    const tablesWithSchema = await queries.listTables(db, sql, schemaList)
+    if (!dbschema) {
+      dbschema = await queries.listTables(db, sql, schemaList)
 
-    for (const { table, schema } of tablesWithSchema) {
+      // TODO make this parallel or a single query
+      for (const wrap of dbschema) {
+        const { table, schema } = wrap
+        const columns = await queries.listColumns(db, sql, table, schema)
+        wrap.constraints = await queries.listConstraints(db, sql, table, schema)
+        wrap.columns = columns
+
+        // To get enum values in pg
+        /* istanbul ignore next */
+        if (db.isPg) {
+          const enums = await queries.listEnumValues(db, sql, table, schema)
+          for (const enumValue of enums) {
+            const column = columns.find(column => column.column_name === enumValue.column_name)
+            if (!column.enum) {
+              column.enum = [enumValue.enumlabel]
+            } else {
+              column.enum.push(enumValue.enumlabel)
+            }
+          }
+        }
+      }
+    }
+
+    for (const { table, schema, columns, constraints } of dbschema) {
       // The following line is a safety net when developing this module,
       // it should never happen.
       /* istanbul ignore next */
@@ -122,7 +146,7 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, 
       if (ignore[table] === true) {
         continue
       }
-      const entity = await buildEntity(db, sql, log, table, queries, autoTimestamp, schema, useSchema, ignore[table] || {}, limit, schemaList)
+      const entity = buildEntity(db, sql, log, table, queries, autoTimestamp, schema, useSchema, ignore[table] || {}, limit, schemaList, columns, constraints)
       // Check for primary key of all entities
       if (entity.primaryKeys.size === 0) {
         log.warn({ table }, 'Cannot find any primary keys for table')
@@ -137,16 +161,17 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, 
         addEntityHooks(entity.singularName, hooks[entity.singularName])
       }
     }
+
+    return {
+      db,
+      sql,
+      entities,
+      addEntityHooks,
+      dbschema
+    }
   } catch (err) /* istanbul ignore next */ {
     db.dispose()
     throw err
-  }
-
-  return {
-    db,
-    sql,
-    entities,
-    addEntityHooks
   }
 
   function addEntityHooks (entityName, hooks) {
