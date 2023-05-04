@@ -27,7 +27,7 @@
     "@platformatic/config": "workspace:*"
   },
   "devDependencies": {
-    "@graphiql/toolkit": "0.8.3",
+    "@graphiql/toolkit": "0.8.4",
     "@mui/material": "^5.12.3",
     "@platformatic/db-ra-data-rest": "workspace:*",
     "@platformatic/service": "workspace:*",
