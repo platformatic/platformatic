@@ -19,7 +19,7 @@ const packageJsonTemplate = (addTSBuild = false) => (`\
     "platformatic": "^{platVersion}"
   },
   "engines": {
-    "node": "^16.17.0 || ^18.8.0 || >=19"
+    "node": "^18.8.0 || >=19"
   }
 }`)
 

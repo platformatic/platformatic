@@ -79,7 +79,7 @@ export const getDependencyVersion = async (dependencyName) => {
   return packageJson.version
 }
 
-export const minimumSupportedNodeVersions = ['16.17.0', '18.8.0', '19.0.0']
+export const minimumSupportedNodeVersions = ['18.8.0', '19.0.0']
 
 export const isCurrentVersionSupported = (currentVersion) => {
   // TODO: add try/catch if some unsupported node version is passed
