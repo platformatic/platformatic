@@ -36,6 +36,7 @@ async function platformaticDB (app, opts) {
   }
 
   async function toLoad (app) {
+    let createSchemaLock = false
     if (config.db.schemalock) {
       // ignore errors, this is an optimization
       try {
@@ -45,9 +46,20 @@ async function platformaticDB (app, opts) {
         app.log.trace({ dbschema }, 'loaded schema lock')
       } catch (err) {
         app.log.trace({ err }, 'failed to load schema lock')
+        app.log.info('no schema lock found, will create one')
+        createSchemaLock = true
       }
     }
-    app.register(core, config.db)
+    await app.register(core, config.db)
+    if (createSchemaLock) {
+      try {
+        const path = locateSchemaLock(configManager)
+        await fs.writeFile(path, JSON.stringify(app.platformatic.dbschema, null, 2))
+        app.log.info({ path }, 'created schema lock')
+      } catch (err) {
+        app.log.trace({ err }, 'unable to save schema lock')
+      }
+    }
     if (config.authorization) {
       app.register(auth, config.authorization)
     }

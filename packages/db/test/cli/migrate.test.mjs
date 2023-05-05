@@ -184,3 +184,42 @@ test('migrate creates a schema.lock file on a different path', async ({ equal, t
   // Let's just validate this is a valid JSON file
   JSON.parse(data)
 })
+
+test('start creates schema.lock if it is missing', async ({ equal, teardown }) => {
+  const db = await connectAndResetDB()
+  let found = false
+  const configPathWithoutSchemaLock = getFixturesConfigFileLocation('no-auto-apply.json')
+  const configPath = getFixturesConfigFileLocation('schemalock.json')
+  const expectedFile = join(dirname(configPath), 'schema.lock')
+
+  try {
+    await fs.unlink(expectedFile)
+  } catch {}
+
+  await execa('node', [cliPath, 'migrations', 'apply', '-c', configPathWithoutSchemaLock])
+
+  teardown(async function () {
+    try {
+      await fs.unlink(expectedFile)
+    } catch {}
+  })
+  teardown(() => db.dispose())
+
+  const child = execa('node', [cliPath, 'start', '-c', configPath])
+  teardown(() => child.kill('SIGINT'))
+
+  const splitter = split()
+  child.stdout.pipe(splitter)
+  for await (const data of splitter) {
+    const sanitized = stripAnsi(data)
+    if (sanitized.match(/(.*)created schema lock/)) {
+      found = true
+      break
+    }
+  }
+  equal(found, true)
+
+  const data = await fs.readFile(expectedFile)
+  // Let's just validate this is a valid JSON file
+  JSON.parse(data)
+})
