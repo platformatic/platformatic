@@ -275,8 +275,8 @@ A **required** object with the following settings:
   }
   ```
 
-- **`schemalock`** (`boolean` or `object`, default: `false`) — Controls the caching of the database schema on disk;
-  if set to `true` it would store the database schema metadata inside a `schema.lock` file.
+- **`schemalock`** (`boolean` or `object`, default: `false`) — Controls the caching of the database schema on disk.
+  If set to `true` the database schema metadata is stored inside a `schema.lock` file.
   It's also possible to configure the location of that file by specifying a path, like so:
 
   _Examples_
