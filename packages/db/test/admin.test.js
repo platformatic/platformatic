@@ -7,7 +7,7 @@ const { request } = require('undici')
 const yaml = require('yaml')
 
 test('adminSecret', async ({ teardown, equal, pass, same }) => {
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -25,11 +25,14 @@ test('adminSecret', async ({ teardown, equal, pass, same }) => {
       }
     }
   }))
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/graphql`, {
+    const res = await request(`${app.url}/graphql`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -58,7 +61,7 @@ test('adminSecret', async ({ teardown, equal, pass, same }) => {
   }
 
   {
-    const res = await request(`${server.url}/graphql`, {
+    const res = await request(`${app.url}/graphql`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -87,7 +90,7 @@ test('adminSecret', async ({ teardown, equal, pass, same }) => {
   }
 
   {
-    const res = await request(`${server.url}/graphql`, {
+    const res = await request(`${app.url}/graphql`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -116,7 +119,7 @@ test('adminSecret', async ({ teardown, equal, pass, same }) => {
   }
 
   {
-    const res = await request(`${server.url}/graphql`, {
+    const res = await request(`${app.url}/graphql`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -145,7 +148,7 @@ test('adminSecret', async ({ teardown, equal, pass, same }) => {
   }
 
   {
-    const res = await request(`${server.url}/graphql`, {
+    const res = await request(`${app.url}/graphql`, {
       method: 'POST',
       url: '/graphql',
       headers: {
@@ -185,8 +188,9 @@ test('adminSecret', async ({ teardown, equal, pass, same }) => {
     }, 'deletePages response')
   }
 })
+
 test('login route', async ({ teardown, same, equal }) => {
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -199,11 +203,15 @@ test('login route', async ({ teardown, same, equal }) => {
       ...connInfo
     }
   }))
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
   {
     // right password provided
-    const res = await request(`${server.url}/_admin/login`, {
+    const res = await request(`${app.url}/_admin/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -220,7 +228,7 @@ test('login route', async ({ teardown, same, equal }) => {
 
   {
     // bad password provided
-    const res = await request(`${server.url}/_admin/login`, {
+    const res = await request(`${app.url}/_admin/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -237,7 +245,7 @@ test('login route', async ({ teardown, same, equal }) => {
 
   {
     // no password provided
-    const res = await request(`${server.url}/_admin/login`, {
+    const res = await request(`${app.url}/_admin/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -255,7 +263,7 @@ test('login route', async ({ teardown, same, equal }) => {
 })
 
 test('Swagger documentation', async ({ teardown, same, equal }) => {
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -268,12 +276,15 @@ test('Swagger documentation', async ({ teardown, same, equal }) => {
       ...connInfo
     }
   }))
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
     // JSON Documentation
-    const res = await request(`${server.url}/_admin/documentation/json`)
+    const res = await request(`${app.url}/_admin/documentation/json`)
     equal(res.statusCode, 200)
     const body = await res.body.json()
 
@@ -293,7 +304,7 @@ test('Swagger documentation', async ({ teardown, same, equal }) => {
 
   {
     // YAML Documentation
-    const res = await request(`${server.url}/_admin/documentation/yaml`)
+    const res = await request(`${app.url}/_admin/documentation/yaml`)
     equal(res.statusCode, 200)
     const body = yaml.parse(await res.body.text())
 
@@ -313,7 +324,7 @@ test('Swagger documentation', async ({ teardown, same, equal }) => {
 })
 
 test('admin routes are not included in main openapi', async ({ teardown, same, equal }) => {
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -330,12 +341,15 @@ test('admin routes are not included in main openapi', async ({ teardown, same, e
       }
     }
   }))
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
     // JSON Documentation
-    const res = await request(`${server.url}/documentation/json`)
+    const res = await request(`${app.url}/documentation/json`)
     equal(res.statusCode, 200)
     const body = await res.body.json()
 

@@ -18,12 +18,15 @@ test('build basic client from url', async ({ teardown, same, rejects }) => {
   } catch {
     // noop
   }
-  const server = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
-  teardown(server.stop)
-  await server.listen()
+  const app = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   const client = await buildOpenAPIClient({
-    url: `${server.url}/documentation/json`
+    url: `${app.url}/documentation/json`
   })
 
   const movie = await client.createMovie({
@@ -105,12 +108,15 @@ test('build basic client from file', async ({ teardown, same, rejects }) => {
   } catch {
     // noop
   }
-  const server = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic-prefix.db.json'))
-  teardown(server.stop)
-  await server.listen()
+  const app = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic-prefix.db.json'))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   const client = await buildOpenAPIClient({
-    url: `${server.url}/movies-api/`,
+    url: `${app.url}/movies-api/`,
     path: join(__dirname, 'fixtures', 'movies', 'openapi.json')
   })
 
@@ -180,12 +186,15 @@ test('build basic client from url with custom headers', async ({ teardown, same,
   } catch {
     // noop
   }
-  const server = await buildServer(join(__dirname, 'fixtures', 'auth', 'platformatic.db.json'))
-  teardown(server.stop)
-  await server.listen()
+  const app = await buildServer(join(__dirname, 'fixtures', 'auth', 'platformatic.db.json'))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   const client = await buildOpenAPIClient({
-    url: `${server.url}/documentation/json`,
+    url: `${app.url}/documentation/json`,
     headers: {
       'x-platformatic-admin-secret': 'changeme'
     }

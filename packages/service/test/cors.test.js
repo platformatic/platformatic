@@ -6,7 +6,7 @@ const { buildServer, platformaticService } = require('..')
 const { request } = require('undici')
 
 test('CORS is disabled by default', async ({ teardown, equal, pass, same }) => {
-  const server = await buildServer({
+  const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -18,9 +18,12 @@ test('CORS is disabled by default', async ({ teardown, equal, pass, same }) => {
   })
 
   // handles login
-  teardown(server.stop)
-  await server.listen()
-  const res = await (request(`${server.url}/login`, {
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const res = await (request(`${app.url}/login`, {
     method: 'OPTIONS',
     headers: {
       'Access-Control-Request-Method': 'POST',
@@ -31,7 +34,7 @@ test('CORS is disabled by default', async ({ teardown, equal, pass, same }) => {
 })
 
 test('CORS can be enabled', async ({ teardown, equal, pass, same }) => {
-  const server = await buildServer({
+  const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -45,11 +48,14 @@ test('CORS can be enabled', async ({ teardown, equal, pass, same }) => {
     app.register(platformaticService, opts)
     app.post('/login', (req, reply) => {})
   })
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await (request(`${server.url}/_admin/login`, {
+    const res = await (request(`${app.url}/_admin/login`, {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'POST',
@@ -63,7 +69,7 @@ test('CORS can be enabled', async ({ teardown, equal, pass, same }) => {
 })
 
 test('CORS with a regexp', async ({ teardown, equal, pass, same }) => {
-  const server = await buildServer({
+  const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -79,11 +85,14 @@ test('CORS with a regexp', async ({ teardown, equal, pass, same }) => {
     app.register(platformaticService, opts)
     app.post('/login', (req, reply) => {})
   })
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await (request(`${server.url}/_admin/login`, {
+    const res = await (request(`${app.url}/_admin/login`, {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'POST',
@@ -96,7 +105,7 @@ test('CORS with a regexp', async ({ teardown, equal, pass, same }) => {
   }
 
   {
-    const res = await (request(`${server.url}/_admin/login`, {
+    const res = await (request(`${app.url}/_admin/login`, {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'POST',
@@ -109,7 +118,7 @@ test('CORS with a regexp', async ({ teardown, equal, pass, same }) => {
   }
 
   {
-    const res = await (request(`${server.url}/_admin/login`, {
+    const res = await (request(`${app.url}/_admin/login`, {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'POST',
@@ -123,7 +132,7 @@ test('CORS with a regexp', async ({ teardown, equal, pass, same }) => {
 })
 
 test('CORS with an array of strings', async ({ teardown, equal, pass, same }) => {
-  const server = await buildServer({
+  const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -137,11 +146,14 @@ test('CORS with an array of strings', async ({ teardown, equal, pass, same }) =>
     app.register(platformaticService, opts)
     app.post('/login', (req, reply) => {})
   })
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await (request(`${server.url}/_admin/login`, {
+    const res = await (request(`${app.url}/_admin/login`, {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'POST',
@@ -154,7 +166,7 @@ test('CORS with an array of strings', async ({ teardown, equal, pass, same }) =>
   }
 
   {
-    const res = await (request(`${server.url}/_admin/login`, {
+    const res = await (request(`${app.url}/_admin/login`, {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'POST',
@@ -167,7 +179,7 @@ test('CORS with an array of strings', async ({ teardown, equal, pass, same }) =>
   }
 
   {
-    const res = await (request(`${server.url}/_admin/login`, {
+    const res = await (request(`${app.url}/_admin/login`, {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'POST',
@@ -181,7 +193,7 @@ test('CORS with an array of strings', async ({ teardown, equal, pass, same }) =>
 })
 
 test('CORS with an array and a regexp', async ({ teardown, equal, pass, same }) => {
-  const server = await buildServer({
+  const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -197,11 +209,14 @@ test('CORS with an array and a regexp', async ({ teardown, equal, pass, same }) 
     app.register(platformaticService, opts)
     app.post('/login', (req, reply) => {})
   })
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await (request(`${server.url}/_admin/login`, {
+    const res = await (request(`${app.url}/_admin/login`, {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'POST',
@@ -214,7 +229,7 @@ test('CORS with an array and a regexp', async ({ teardown, equal, pass, same }) 
   }
 
   {
-    const res = await (request(`${server.url}/_admin/login`, {
+    const res = await (request(`${app.url}/_admin/login`, {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'POST',
@@ -227,7 +242,7 @@ test('CORS with an array and a regexp', async ({ teardown, equal, pass, same }) 
   }
 
   {
-    const res = await (request(`${server.url}/_admin/login`, {
+    const res = await (request(`${app.url}/_admin/login`, {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'POST',
@@ -241,7 +256,7 @@ test('CORS with an array and a regexp', async ({ teardown, equal, pass, same }) 
 })
 
 test('CORS with a string', async ({ teardown, equal, pass, same }) => {
-  const server = await buildServer({
+  const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -255,11 +270,14 @@ test('CORS with a string', async ({ teardown, equal, pass, same }) => {
     app.register(platformaticService, opts)
     app.post('/login', (req, reply) => {})
   })
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await (request(`${server.url}/_admin/login`, {
+    const res = await (request(`${app.url}/_admin/login`, {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'POST',

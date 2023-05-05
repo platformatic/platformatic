@@ -5,7 +5,8 @@
     "logger": {
       "level": "warn",
       "name": "hello client ts"
-    }
+    },
+    "pluginTimeout": 30000
   },
   "plugins": {
     "paths": ["./plugin.ts"],

@@ -7,7 +7,7 @@ const { request } = require('undici')
 const { join } = require('path')
 
 test('graphql enabled', async ({ teardown, equal, same }) => {
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -23,12 +23,14 @@ test('graphql enabled', async ({ teardown, equal, same }) => {
       paths: [join(__dirname, 'fixtures', 'hello-world-resolver.js')]
     }
   }))
-  teardown(server.stop)
 
-  await server.listen()
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/graphql`, {
+    const res = await request(`${app.url}/graphql`, {
       method: 'POST',
       headers: {
         'content-type': 'application/json'
@@ -50,14 +52,14 @@ test('graphql enabled', async ({ teardown, equal, same }) => {
   }
 
   {
-    const res = await request(`${server.url}/graphiql`)
+    const res = await request(`${app.url}/graphiql`)
     equal(res.statusCode, 200, 'graphiql status code')
   }
 })
 
 test('graphql disabled', async ({ teardown, equal, fail }) => {
   try {
-    const server = await buildServer(buildConfig({
+    const app = await buildServer(buildConfig({
       server: {
         hostname: '127.0.0.1',
         port: 0,
@@ -73,7 +75,7 @@ test('graphql disabled', async ({ teardown, equal, fail }) => {
         paths: [join(__dirname, 'fixtures', 'hello-world-resolver.js')]
       }
     }))
-    await server.stop()
+    await app.close()
     fail('should have errored but did not')
   } catch (err) {
     equal(err.message, 'Cannot read properties of undefined (reading \'extendSchema\')')
@@ -81,7 +83,7 @@ test('graphql disabled', async ({ teardown, equal, fail }) => {
 })
 
 test('disable graphiql', async ({ teardown, equal, same }) => {
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -99,12 +101,14 @@ test('disable graphiql', async ({ teardown, equal, same }) => {
       paths: [join(__dirname, 'fixtures', 'hello-world-resolver.js')]
     }
   }))
-  teardown(server.stop)
 
-  await server.listen()
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/graphql`, {
+    const res = await request(`${app.url}/graphql`, {
       method: 'POST',
       headers: {
         'content-type': 'application/json'
@@ -126,14 +130,14 @@ test('disable graphiql', async ({ teardown, equal, same }) => {
   }
 
   {
-    const res = await request(`${server.url}/graphiql`)
+    const res = await request(`${app.url}/graphiql`)
     equal(res.statusCode, 404, 'graphiql status code')
   }
 })
 
 test('graphql disabled by default', async ({ teardown, equal, fail }) => {
   try {
-    const server = await buildServer(buildConfig({
+    const app = await buildServer(buildConfig({
       server: {
         hostname: '127.0.0.1',
         port: 0,
@@ -146,7 +150,7 @@ test('graphql disabled by default', async ({ teardown, equal, fail }) => {
         paths: [join(__dirname, 'fixtures', 'hello-world-resolver.js')]
       }
     }))
-    await server.stop()
+    await app.close()
     fail('should have errored but did not')
   } catch (err) {
     equal(err.message, 'Cannot read properties of undefined (reading \'extendSchema\')')

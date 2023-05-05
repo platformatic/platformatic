@@ -33,7 +33,7 @@ function addLoggerToTheConfig (config) {
 }
 /* c8 ignore stop */
 
-function getJSPluginPath (configPath, tsPluginPath, compileDir) {
+function getJSPluginPath (workingDir, tsPluginPath, compileDir) {
   if (tsPluginPath.endsWith('js')) {
     return tsPluginPath
   }
@@ -49,7 +49,7 @@ function getJSPluginPath (configPath, tsPluginPath, compileDir) {
     newBaseName = basename(tsPluginPath)
   }
 
-  const tsPluginRelativePath = relative(dirname(configPath), tsPluginPath)
+  const tsPluginRelativePath = relative(workingDir, tsPluginPath)
   const jsPluginRelativePath = join(
     dirname(tsPluginRelativePath),
     newBaseName

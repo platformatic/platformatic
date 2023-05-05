@@ -6,7 +6,7 @@ const { buildConfig, connInfo } = require('./helper')
 const { request } = require('undici')
 
 test('healthcheck route enabled with interval', async ({ teardown, equal, same }) => {
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -22,19 +22,22 @@ test('healthcheck route enabled with interval', async ({ teardown, equal, same }
       adminSecret: 'secret'
     }
   }))
-  teardown(server.stop)
 
-  await server.listen()
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
   {
-    const res = await (request(`${server.url}/status`))
+    const res = await (request(`${app.url}/status`))
     equal(res.statusCode, 200)
     const body = await res.body.json()
     same(body, { status: 'ok' })
   }
 
   {
-    await server.app.platformatic.db.dispose()
-    const res = await (request(`${server.url}/status`))
+    await app.platformatic.db.dispose()
+    const res = await (request(`${app.url}/status`))
     equal(res.statusCode, 503)
     const body = await res.body.json()
     same(body, {
@@ -47,7 +50,7 @@ test('healthcheck route enabled with interval', async ({ teardown, equal, same }
 })
 
 test('healthcheck route enabled without interval', async ({ teardown, equal, same }) => {
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -60,19 +63,22 @@ test('healthcheck route enabled without interval', async ({ teardown, equal, sam
       adminSecret: 'secret'
     }
   }))
-  teardown(server.stop)
 
-  await server.listen()
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
   {
-    const res = await (request(`${server.url}/status`))
+    const res = await (request(`${app.url}/status`))
     equal(res.statusCode, 200)
     const body = await res.body.json()
     same(body, { status: 'ok' })
   }
 
   {
-    await server.app.platformatic.db.dispose()
-    const res = await (request(`${server.url}/status`))
+    await app.platformatic.db.dispose()
+    const res = await (request(`${app.url}/status`))
     equal(res.statusCode, 503)
     const body = await res.body.json()
     same(body, {
@@ -85,7 +91,7 @@ test('healthcheck route enabled without interval', async ({ teardown, equal, sam
 })
 
 test('healthcheck route disabled', async ({ teardown, equal, same }) => {
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -97,15 +103,18 @@ test('healthcheck route disabled', async ({ teardown, equal, same }) => {
       adminSecret: 'secret'
     }
   }))
-  teardown(server.stop)
 
-  await server.listen()
-  const res = await (request(`${server.url}/status`))
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const res = await (request(`${app.url}/status`))
   equal(res.statusCode, 404)
 })
 
 test('healthcheck route enabled with interval and maxEventLoopUtilization', async ({ teardown, equal, same }) => {
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -122,19 +131,22 @@ test('healthcheck route enabled with interval and maxEventLoopUtilization', asyn
       adminSecret: 'secret'
     }
   }))
-  teardown(server.stop)
 
-  await server.listen()
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
   {
-    const res = await (request(`${server.url}/status`))
+    const res = await (request(`${app.url}/status`))
     equal(res.statusCode, 200)
     const body = await res.body.json()
     same(body, { status: 'ok' })
   }
 
   {
-    await server.app.platformatic.db.dispose()
-    const res = await (request(`${server.url}/status`))
+    await app.platformatic.db.dispose()
+    const res = await (request(`${app.url}/status`))
     equal(res.statusCode, 503)
     const body = await res.body.json()
     same(body, {

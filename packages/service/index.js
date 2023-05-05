@@ -1,36 +1,32 @@
 'use strict'
 
-const { start } = require('@fastify/restartable')
-const sandbox = require('fastify-sandbox')
-const underPressure = require('@fastify/under-pressure')
-const { schema } = require('./lib/schema')
-const ConfigManager = require('@platformatic/config')
-const { loadConfig, generateDefaultConfig } = require('./lib/load-config')
-const { addLoggerToTheConfig, getJSPluginPath, isFileAccessible } = require('./lib/utils')
-const { isKeyEnabled } = require('@platformatic/utils')
-const compiler = require('./lib/compile')
-const { join, dirname, resolve } = require('path')
 const { readFile } = require('fs/promises')
-const wrapperPath = join(__dirname, 'lib', 'sandbox-wrapper.js')
-const setupOpenAPI = require('./lib/openapi.js')
-const setupGraphQL = require('./lib/graphql.js')
 
-function originToRegexp (origin) {
-  if (typeof origin === 'object') {
-    if (origin.regexp) {
-      origin = new RegExp(origin.regexp)
-    }
-  }
+const ConfigManager = require('@platformatic/config')
+const { restartable } = require('@fastify/restartable')
+const { isKeyEnabled } = require('@platformatic/utils')
 
-  return origin
-}
+const compiler = require('./lib/compile')
+const setupCors = require('./lib/plugins/cors')
+const setupOpenAPI = require('./lib/plugins/openapi.js')
+const setupGraphQL = require('./lib/plugins/graphql.js')
+const setupClients = require('./lib/plugins/clients')
+const setupMetrics = require('./lib/plugins/metrics')
+const setupTsCompiler = require('./lib/plugins/typescript')
+const setupFileWatcher = require('./lib/plugins/file-watcher')
+const setupHealthCheck = require('./lib/plugins/health-check')
+const loadPlugins = require('./lib/plugins/plugins')
+
+const { schema } = require('./lib/schema')
+const { loadConfig, generateDefaultConfig } = require('./lib/load-config')
+const { addLoggerToTheConfig } = require('./lib/utils')
 
 async function platformaticService (app, opts, toLoad = []) {
   const configManager = app.platformatic.configManager
   const config = configManager.current
 
   if (isKeyEnabled('metrics', config)) {
-    app.register(require('./lib/metrics-plugin'), config.metrics)
+    app.register(setupMetrics, config.metrics)
   }
 
   if (Array.isArray(toLoad)) {
@@ -39,99 +35,37 @@ async function platformaticService (app, opts, toLoad = []) {
     }
   }
 
-  const serviceConfig = app.platformatic.config?.service
+  const serviceConfig = config.service || {}
 
-  if (serviceConfig?.openapi) {
-    await setupOpenAPI(app, serviceConfig.openapi)
+  if (isKeyEnabled('openapi', serviceConfig)) {
+    await app.register(setupOpenAPI, serviceConfig.openapi)
   }
 
-  if (serviceConfig?.graphql) {
-    await setupGraphQL(app, serviceConfig.graphql)
+  if (isKeyEnabled('graphql', serviceConfig)) {
+    await app.register(setupGraphQL, serviceConfig.graphql)
   }
 
-  for (const plugin of (config.clients || [])) {
-    app.register(require(plugin.path), {
-      url: plugin.url
-    })
+  if (isKeyEnabled('clients', config)) {
+    app.register(setupClients, config.clients)
   }
 
   if (config.plugins) {
-    // if we don't have a fullPath, let's assume we are in a test and we can use the current working directory
-    const configPath = configManager.fullPath || join(process.cwd(), 'platformatic.db.json')
-    const tsConfigPath = join(dirname(configPath), 'tsconfig.json')
-    /* c8 ignore next 21 */
-    if (await isFileAccessible(tsConfigPath)) {
-      const tsConfig = JSON.parse(await readFile(tsConfigPath, 'utf8'))
-      const outDir = resolve(dirname(tsConfigPath), tsConfig.compilerOptions.outDir)
-      config.plugins.paths = config.plugins.paths.map((plugin) => {
-        if (typeof plugin === 'string') {
-          return getJSPluginPath(configPath, plugin, outDir)
-        } else {
-          return {
-            path: getJSPluginPath(configPath, plugin.path, outDir),
-            options: plugin.options
-          }
-        }
-      })
-    } else {
-      for (const plugin of config.plugins.paths) {
-        const path = typeof plugin === 'string' ? plugin : plugin.path
-        if (path.endsWith('.ts')) {
-          throw new Error(`Cannot load plugin ${path}, tsconfig.json not found`)
-        }
-      }
+    if (config.plugins.typescript) {
+      await app.register(setupTsCompiler)
     }
-
-    // if not defined, we default to true (which can happen only if config is set programmatically,
-    // that's why we ignore the coverage of the `undefined` case, which cannot be covered in cli tests)
-    // all individual plugin hot reload settings will be overloaded by global hot reload
-    /* c8 ignore next 1 */
-    const hotReload = config.plugins.hotReload !== false
-    const isWatchEnabled = config.watch !== false
-
-    app.log.debug({ plugins: config.plugins.paths, hotReload, isWatchEnabled }, 'loading plugins')
-
-    if (isWatchEnabled && hotReload) {
-      await app.register(sandbox, {
-        path: wrapperPath,
-        options: { paths: config.plugins.paths },
-        customizeGlobalThis (_globalThis) {
-          // Taken from https://github.com/nodejs/undici/blob/fa9fd9066569b6357acacffb806aa804b688c9d8/lib/global.js#L5
-          const globalDispatcher = Symbol.for('undici.globalDispatcher.1')
-          const dispatcher = globalThis[globalDispatcher]
-          /* istanbul ignore else */
-          if (dispatcher) {
-            _globalThis[globalDispatcher] = dispatcher
-          }
-        }
-      })
-    } else {
-      await app.register(require(wrapperPath), { paths: config.plugins.paths })
-    }
+    await app.register(loadPlugins)
   }
 
-  // Enable CORS
+  if (isKeyEnabled('watch', config)) {
+    await app.register(setupFileWatcher, { onFilesUpdated })
+  }
+
   if (config.server.cors) {
-    let origin = config.server.cors.origin
-    if (Array.isArray(origin)) {
-      origin = origin.map(originToRegexp)
-    } else {
-      origin = originToRegexp(origin)
-    }
-
-    config.server.cors.origin = origin
-
-    app.register(require('@fastify/cors'), config.server.cors)
+    app.register(setupCors, config.server.cors)
   }
 
   if (isKeyEnabled('healthCheck', config.server)) {
-    const healthCheck = config.server.healthCheck
-    app.register(underPressure, {
-      exposeStatusRoute: '/status',
-      healthCheckInterval: healthCheck.interval !== undefined ? healthCheck.interval : 5000,
-      ...healthCheck,
-      healthCheck: healthCheck.fn
-    })
+    app.register(setupHealthCheck, config.server.healthCheck)
   }
 
   if (!app.hasRoute({ url: '/', method: 'GET' }) && !Array.isArray(toLoad)) {
@@ -178,99 +112,114 @@ function defaultConfig (app, source) {
 
 async function buildServer (options, app) {
   app = app || platformaticService
-  let cm
 
-  if (!options.configManager) {
+  let configManager = options.configManager
+  if (!configManager) {
     // instantiate a new config manager from current options
-    cm = new ConfigManager(defaultConfig(app, options))
-    await cm.parseAndValidate()
-  } else {
-    cm = options.configManager
+    configManager = new ConfigManager(defaultConfig(app, options))
+    await configManager.parseAndValidate()
   }
 
   // options is a path
   if (typeof options === 'string') {
-    options = cm.current
+    options = configManager.current
   }
 
-  async function jumpApp (root) {
-    root.decorate('platformatic', {})
+  let url = null
 
-    const fileWatcher = options.fileWatcher
-    /* c8 ignore next 3 */
-    if (fileWatcher !== undefined) {
-      root.platformatic.fileWatcher = fileWatcher
-    }
-    root.platformatic.configManager = cm
-    root.platformatic.config = cm.current
+  async function createRestartable (fastify) {
+    const config = configManager.current
+    const root = fastify(config.server)
+
+    root.decorate('platformatic', { configManager, config })
     root.register(app)
-  }
-  jumpApp[Symbol.for('skip-override')] = true
 
-  const serverConfig = {
-    ...(options.server),
-    configManager: cm,
-    app: jumpApp
-  }
+    root.decorate('url', {
+      getter () {
+        return url
+      }
+    })
 
-  if (serverConfig.https) {
-    serverConfig.key = await adjustHttpsKeyAndCert(options.server.https.key)
-    serverConfig.cert = await adjustHttpsKeyAndCert(options.server.https.cert)
-    delete serverConfig.https
-    serverConfig.protocol = 'https'
-  } else if (options.server) {
-    serverConfig.protocol = 'http'
-  }
-
-  const handler = await start(serverConfig)
-
-  Object.defineProperty(handler, 'url', {
-    get () {
-      const protocol = serverConfig.protocol
-      const address = handler.address
-      const port = handler.port
-      const url = `${protocol}://${address}:${port}`
-      return url
+    if (root.restarted) {
+      root.log.info('restarted')
     }
+
+    return root
+  }
+
+  const { port, hostname, ...serverOptions } = options.server
+
+  if (serverOptions.https) {
+    serverOptions.https.key = await adjustHttpsKeyAndCert(serverOptions.https.key)
+    serverOptions.https.cert = await adjustHttpsKeyAndCert(serverOptions.https.cert)
+  }
+
+  const handler = await restartable(createRestartable)
+
+  configManager.on('update', async (newConfig) => {
+    handler.log.debug('config changed')
+    handler.log.trace({ newConfig }, 'new config')
+
+    if (newConfig.watch === false) {
+      /* c8 ignore next 4 */
+      if (handler.tsCompilerWatcher) {
+        handler.tsCompilerWatcher.kill('SIGTERM')
+        handler.log.debug('stop watching typescript files')
+      }
+
+      if (handler.fileWatcher) {
+        await handler.fileWatcher.stopWatching()
+        handler.log.debug('stop watching files')
+      }
+    }
+
+    await safeRestart(handler)
+    /* c8 ignore next 1 */
   })
 
-  restarter(handler, cm, jumpApp)
+  configManager.on('error', function (err) {
+    /* c8 ignore next 1 */
+    handler.log.error({ err }, 'error reloading the configuration')
+  })
+
+  handler.decorate('start', async () => {
+    url = await handler.listen({ host: hostname, port })
+    return url
+  })
 
   return handler
 }
 
-function restarter (handler, cm, jumpApp) {
-  let debounce = null
-  const _restart = handler.restart
-  handler.restart = restart
-  handler.app.restart = restart
+async function onFilesUpdated (app) {
+  // Reload the config as well, otherwise we will have problems
+  // in case the files watcher triggers the config watcher too
+  const configManager = app.platformatic.configManager
+  try {
+    app.log.debug('files changed')
+    await configManager.parse()
+    await app.restart()
+    /* c8 ignore next 8 */
+  } catch (err) {
+    app.log.error({
+      err: {
+        message: err.message,
+        stack: err.stack
+      }
+    }, 'failed to reload server')
+  }
+}
 
-  // This is covered by tests but c8 doesn't see it
-  /* c8 ignore next 30 */
-  async function restart (opts) {
-    if (debounce) {
-      return debounce
-    }
-
-    if (opts && !await cm.update(opts)) {
-      const err = new Error('Invalid config')
-      err.validationErrors = cm.validationErrors
-      throw err
-    }
-
-    const restartOpts = {
-      ...(cm.current.server),
-      fileWatcher: handler.app.platformatic.fileWatcher,
-      configManager: cm,
-      app: jumpApp
-    }
-
-    debounce = _restart(restartOpts).then(() => {
-      handler.app.log.info('restarted')
-    }).finally(() => {
-      debounce = null
-    })
-    return debounce
+async function safeRestart (app) {
+  try {
+    await app.restart()
+    /* c8 ignore next 8 */
+  } catch (err) {
+    app.log.error({
+      err: {
+        message: err.message,
+        stack: err.stack
+      }
+    }, 'failed to reload server')
   }
 }
 

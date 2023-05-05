@@ -8,21 +8,21 @@ The `buildServer` function allows that:
 ```js
 import { buildServer } from '@platformatic/service'
 
-const server = await buildServer('path/to/platformatic.service.json')
+const app = await buildServer('path/to/platformatic.service.json')
   server: {
     hostname: '127.0.0.1',
     port: 0
   }
 })
 
-await server.listen()
+await app.start()
 
-const res = await fetch(server.url)
+const res = await fetch(app.url)
 console.log(await res.json())
 
 // do something
 
-await server.stop()
+await app.close()
 ```
 
 It is also possible to customize the configuration:
@@ -30,21 +30,21 @@ It is also possible to customize the configuration:
 ```js
 import { buildServer } from '@platformatic/service'
 
-const server = await buildServer({
+const app = await buildServer({
   server: {
     hostname: '127.0.0.1',
     port: 0
   }
 })
 
-await server.listen()
+await app.start()
 
-const res = await fetch(server.url)
+const res = await fetch(app.url)
 console.log(await res.json())
 
 // do something
 
-await server.stop()
+await app.close()
 ```
 
 ## Creating a reusable application on top of Platformatic Service
@@ -74,12 +74,12 @@ myPlugin[Symbol.for('skip-override')] = true
 
 const service = await buildServer('path/to/config.json', myPlugin, MyConfigManager)
 
-await service.listen()
+await service.start()
 
-const res = await fetch(server.url)
+const res = await fetch(service.url)
 console.log(await res.json())
 
 // do something
 
-await service.stop()
+await service.close()
 ```

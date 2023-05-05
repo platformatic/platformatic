@@ -7,7 +7,7 @@ const { request } = require('undici')
 const { join } = require('path')
 
 test('should respond 200 on root endpoint', async ({ teardown, equal, same, match }) => {
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -20,12 +20,15 @@ test('should respond 200 on root endpoint', async ({ teardown, equal, same, matc
       ...connInfo
     }
   }))
-  teardown(server.stop)
 
-  await server.listen()
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
   {
     // No browser (i.e. curl)
-    const res = await (request(`${server.url}/`))
+    const res = await (request(`${app.url}/`))
     equal(res.statusCode, 200)
     const body = await res.body.json()
     same(body, { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
@@ -33,7 +36,7 @@ test('should respond 200 on root endpoint', async ({ teardown, equal, same, matc
 
   {
     // browser
-    const res = await (request(`${server.url}/`, {
+    const res = await (request(`${app.url}/`, {
       headers: {
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'
       }
@@ -48,7 +51,7 @@ test('should respond 200 on root endpoint', async ({ teardown, equal, same, matc
 })
 
 test('should not overwrite a plugin which define a root endpoint', async ({ teardown, equal, same }) => {
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -64,17 +67,20 @@ test('should not overwrite a plugin which define a root endpoint', async ({ tear
       paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')]
     }
   }))
-  teardown(server.stop)
 
-  await server.listen()
-  const res = await (request(`${server.url}/`))
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const res = await (request(`${app.url}/`))
   equal(res.statusCode, 200)
   const body = await res.body.json()
   same(body, { message: 'Root Plugin' })
 })
 
 test('should not overwrite dashboard endpoint', async ({ teardown, equal, same }) => {
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -91,16 +97,19 @@ test('should not overwrite dashboard endpoint', async ({ teardown, equal, same }
     },
     dashboard: true
   }))
-  teardown(server.stop)
 
-  await server.listen()
-  const res = await (request(`${server.url}/`))
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const res = await (request(`${app.url}/`))
   equal(res.statusCode, 302)
   equal(res.headers.location, '/dashboard')
 })
 
 test('should exclude the root endpoint from the openapi documentation', async ({ teardown, equal, has }) => {
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -113,10 +122,13 @@ test('should exclude the root endpoint from the openapi documentation', async ({
     },
     dashboard: false
   }))
-  teardown(server.stop)
 
-  await server.listen()
-  const res = await (request(`${server.url}/documentation/json`))
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const res = await (request(`${app.url}/documentation/json`))
   const openapi = await res.body.json()
   equal(res.statusCode, 200)
   has(openapi.paths, { '/': undefined })

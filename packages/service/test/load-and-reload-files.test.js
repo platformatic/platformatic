@@ -16,7 +16,7 @@ test('load and reload', async ({ teardown, equal, pass, same }) => {
     }`
   )
 
-  const server = await buildServer({
+  const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -26,11 +26,14 @@ test('load and reload', async ({ teardown, equal, pass, same }) => {
     },
     metrics: false
   })
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'status code')
     const data = await res.body.json()
     same(data, { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
@@ -38,13 +41,13 @@ test('load and reload', async ({ teardown, equal, pass, same }) => {
 
   await writeFile(file, `
     module.exports = async function (app) {
-      app.get('/', () => "hello world" ) 
+      app.get('/', () => "hello world" )
     }`)
 
-  await server.restart()
+  await app.restart()
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'add status code')
     same(await res.body.text(), 'hello world', 'response')
   }
@@ -60,7 +63,7 @@ test('error', async ({ teardown, equal, pass, match }) => {
       })
     }`)
 
-  const server = await buildServer({
+  const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -70,61 +73,17 @@ test('error', async ({ teardown, equal, pass, match }) => {
     },
     metrics: false
   })
-  teardown(server.stop)
-  await server.listen()
 
-  const res = await request(`${server.url}/`)
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const res = await request(`${app.url}/`)
   equal(res.statusCode, 500, 'add status code')
   match(await res.body.json(), {
     message: 'kaboom'
   })
-})
-
-test('update config', async ({ teardown, equal, pass, same }) => {
-  const file = join(os.tmpdir(), `some-plugin-${process.pid}.js`)
-  await writeFile(file, `
-    module.exports = async function (app) {
-    }`
-  )
-
-  const server = await buildServer({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0
-    },
-    metrics: false
-  })
-  teardown(server.stop)
-  await server.listen()
-
-  {
-    const res = await request(`${server.url}/`)
-    equal(res.statusCode, 200, 'status code')
-    const data = await res.body.json()
-    same(data, { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
-  }
-
-  const file2 = join(os.tmpdir(), `some-plugin-${process.pid}-2.js`)
-  await writeFile(file2, `
-    module.exports = async function (app) {
-      app.get('/', () => "hello world" ) 
-    }`)
-
-  await server.restart({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0
-    },
-    plugins: {
-      paths: [file2]
-    }
-  })
-
-  {
-    const res = await request(`${server.url}/`)
-    equal(res.statusCode, 200, 'add status code')
-    same(await res.body.text(), 'hello world', 'response')
-  }
 })
 
 test('mock undici is supported', async ({ teardown, equal, pass, same }) => {
@@ -147,7 +106,7 @@ test('mock undici is supported', async ({ teardown, equal, pass, same }) => {
     hello: 'world'
   })
 
-  const server = await buildServer({
+  const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -156,10 +115,13 @@ test('mock undici is supported', async ({ teardown, equal, pass, same }) => {
       paths: [join(__dirname, 'fixtures', 'undici-plugin.js')]
     }
   })
-  teardown(server.stop)
-  await server.listen()
 
-  const res = await request(`${server.url}/request`, {
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const res = await request(`${app.url}/request`, {
     method: 'GET'
   })
   equal(res.statusCode, 200)
@@ -176,7 +138,7 @@ test('load and reload with the fallback', async ({ teardown, equal, pass, same }
     }`
   )
 
-  const server = await buildServer({
+  const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -187,11 +149,14 @@ test('load and reload with the fallback', async ({ teardown, equal, pass, same }
       fallback: true
     }
   })
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'status code')
     const data = await res.body.json()
     same(data, { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
@@ -199,13 +164,13 @@ test('load and reload with the fallback', async ({ teardown, equal, pass, same }
 
   await writeFile(file, `
     module.exports = async function (app) {
-      app.get('/', () => "hello world" ) 
+      app.get('/', () => "hello world" )
     }`)
 
-  await server.restart()
+  await app.restart()
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'add status code')
     same(await res.body.text(), 'hello world', 'response')
   }
@@ -219,7 +184,7 @@ test('load and reload ESM', async ({ teardown, equal, pass, same }) => {
     }`
   )
 
-  const server = await buildServer({
+  const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -228,11 +193,14 @@ test('load and reload ESM', async ({ teardown, equal, pass, same }) => {
       paths: [file]
     }
   })
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'status code')
     const data = await res.body.json()
     same(data, { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
@@ -240,13 +208,13 @@ test('load and reload ESM', async ({ teardown, equal, pass, same }) => {
 
   await writeFile(file, `
     export default async function (app) {
-      app.get('/', () => "hello world" ) 
+      app.get('/', () => "hello world" )
     }`)
 
-  await server.restart()
+  await app.restart()
 
   {
-    const res = await request(`${server.url}/`)
+    const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'add status code')
     same(await res.body.text(), 'hello world', 'response')
   }
@@ -271,34 +239,35 @@ test('server should be available after reload a compromised plugin', async ({ te
       paths: [file]
     }
   }
-  const restartConfig = { ...config }
-  delete restartConfig.server
 
-  const server = await buildServer(config)
-  await server.listen()
+  const app = await buildServer(config)
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
   await writeFile(file, compromisedModule)
-  await server.restart(restartConfig).catch(() => {
+  await app.restart().catch(() => {
     pass('plugin reload failed')
   })
 
   {
-    const res = await request(`${server.url}/`, { method: 'GET' })
+    const res = await request(`${app.url}/`, { method: 'GET' })
     equal(res.statusCode, 200, 'status code')
     const data = await res.body.json()
     same(data, { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
   }
 
   await writeFile(file, workingModule)
-  await rejects(server.restart(restartConfig))
+  await app.restart()
 
   {
-    const res = await request(`${server.url}/`, { method: 'GET' })
+    const res = await request(`${app.url}/`, { method: 'GET' })
     equal(res.statusCode, 200, 'add status code')
     const data = await res.body.json()
     same(data, { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
   }
-
-  teardown(server.stop)
 })
 
 test('hot reload disabled, CommonJS', async ({ teardown, equal, pass, same }) => {
@@ -312,7 +281,7 @@ test('hot reload disabled, CommonJS', async ({ teardown, equal, pass, same }) =>
     }`
   )
 
-  const server = await buildServer({
+  const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -322,11 +291,14 @@ test('hot reload disabled, CommonJS', async ({ teardown, equal, pass, same }) =>
       hotReload: false
     }
   })
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/test`, {
+    const res = await request(`${app.url}/test`, {
       method: 'GET'
     })
     equal(res.statusCode, 200)
@@ -341,10 +313,10 @@ test('hot reload disabled, CommonJS', async ({ teardown, equal, pass, same }) =>
     }`
   )
 
-  await server.restart()
+  await app.restart()
 
   {
-    const res = await request(`${server.url}/test`, {
+    const res = await request(`${app.url}/test`, {
       method: 'GET'
     })
     equal(res.statusCode, 200)
@@ -354,9 +326,10 @@ test('hot reload disabled, CommonJS', async ({ teardown, equal, pass, same }) =>
 })
 
 test('hot reload disabled, ESM', async ({ teardown, equal, pass, same }) => {
-  const file = join(os.tmpdir(), `some-plugin-hot-rel-test-${process.pid}.mjs`)
+  const pathToPlugin = join(os.tmpdir(), `some-plugin-hot-rel-test-${process.pid}.mjs`)
+  const pathToConfig = join(os.tmpdir(), `platformatic.service.${process.pid}.json`)
 
-  await writeFile(file, `
+  await writeFile(pathToPlugin, `
     export default async function (app) {
       app.get('/test', {}, async function (request, response) {
         return { res: "plugin, version 1"}
@@ -364,31 +337,36 @@ test('hot reload disabled, ESM', async ({ teardown, equal, pass, same }) => {
     }`
   )
 
-  const server = await buildServer({
+  const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0
     },
     plugins: {
-      paths: [file],
+      paths: [pathToPlugin],
       stopTimeout: 1000,
       hotReload: false
     },
     watch: true,
     metrics: false
+  }
+  await writeFile(pathToConfig, JSON.stringify(config, null, 2))
+  const app = await buildServer(pathToConfig)
+
+  teardown(async () => {
+    await app.close()
   })
-  teardown(server.stop)
-  await server.listen()
+  await app.start()
 
   {
-    const res = await request(`${server.url}/test`, {
+    const res = await request(`${app.url}/test`, {
       method: 'GET'
     })
     equal(res.statusCode, 200)
     same(await res.body.json(), { res: 'plugin, version 1' }, 'get rest plugin')
   }
 
-  await writeFile(file, `
+  await writeFile(pathToPlugin, `
     export default async function (app) {
       app.get('/test', {}, async function (request, response) {
         return { res: "plugin, version 2"}
@@ -396,10 +374,10 @@ test('hot reload disabled, ESM', async ({ teardown, equal, pass, same }) => {
     }`
   )
 
-  await server.restart()
+  await app.restart()
 
   {
-    const res = await request(`${server.url}/test`, {
+    const res = await request(`${app.url}/test`, {
       method: 'GET'
     })
     equal(res.statusCode, 200)
@@ -409,9 +387,10 @@ test('hot reload disabled, ESM', async ({ teardown, equal, pass, same }) => {
 })
 
 test('hot reload disabled, with default export', async ({ teardown, equal, pass, same }) => {
-  const file = join(os.tmpdir(), `some-plugin-hot-rel-test-${process.pid}.js`)
+  const pathToPlugin = join(os.tmpdir(), `some-plugin-hot-rel-test-${process.pid}.js`)
+  const pathToConfig = join(os.tmpdir(), `platformatic.service.${process.pid}.json`)
 
-  await writeFile(file, `
+  await writeFile(pathToPlugin, `
     Object.defineProperty(exports, "__esModule", { value: true })
     exports.default = async function plugin (app) {
       app.get('/test', {}, async function (request, response) {
@@ -419,30 +398,36 @@ test('hot reload disabled, with default export', async ({ teardown, equal, pass,
       })
     }`)
 
-  const server = await buildServer({
+  const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0
     },
     plugins: {
-      paths: [file],
+      paths: [pathToPlugin],
       stopTimeout: 1000,
       hotReload: false
     },
     watch: true,
     metrics: false
+  }
+
+  await writeFile(pathToConfig, JSON.stringify(config, null, 2))
+  const app = await buildServer(pathToConfig)
+
+  teardown(async () => {
+    await app.close()
   })
-  teardown(server.stop)
-  await server.listen()
+  await app.start()
 
   {
-    const res = await request(`${server.url}/test`, {
+    const res = await request(`${app.url}/test`, {
       method: 'GET'
     })
     same(await res.body.json(), { res: 'plugin, version 1' }, 'get rest plugin')
   }
 
-  await writeFile(file, `
+  await writeFile(pathToPlugin, `
     Object.defineProperty(exports, "__esModule", { value: true })
     exports.default = async function plugin (app) {
       app.get('/test', {}, async function (request, response) {
@@ -451,10 +436,10 @@ test('hot reload disabled, with default export', async ({ teardown, equal, pass,
     }`
   )
 
-  await server.restart()
+  await app.restart()
 
   {
-    const res = await request(`${server.url}/test`, {
+    const res = await request(`${app.url}/test`, {
       method: 'GET'
     })
     equal(res.statusCode, 200)

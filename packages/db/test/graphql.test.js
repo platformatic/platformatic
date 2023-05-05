@@ -12,7 +12,7 @@ test('extend schema via config', async ({ teardown, equal, same }) => {
     names: [String]
   }
   `
-  const server = await buildServer(buildConfig({
+  const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -30,11 +30,14 @@ test('extend schema via config', async ({ teardown, equal, same }) => {
       paths: [join(__dirname, 'fixtures', 'name-resolver.js')]
     }
   }))
-  teardown(server.stop)
-  await server.listen()
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/graphql`, {
+    const res = await request(`${app.url}/graphql`, {
       method: 'POST',
       headers: {
         'content-type': 'application/json'
@@ -57,12 +60,15 @@ test('extend schema via config', async ({ teardown, equal, same }) => {
 })
 
 test('extend schema via path', async ({ teardown, equal, same }) => {
-  const server = await buildServer(join(__dirname, 'fixtures', 'name-resolver.db.json'))
-  teardown(server.stop)
-  await server.listen()
+  const app = await buildServer(join(__dirname, 'fixtures', 'name-resolver.db.json'))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
 
   {
-    const res = await request(`${server.url}/graphql`, {
+    const res = await request(`${app.url}/graphql`, {
       method: 'POST',
       headers: {
         'content-type': 'application/json'

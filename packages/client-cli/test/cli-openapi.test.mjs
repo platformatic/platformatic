@@ -15,14 +15,14 @@ test('openapi client generation (javascript)', async ({ teardown, comment, same 
   } catch {
     // noop
   }
-  const server = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
-  await server.listen()
+  await app.start()
 
   const dir = await moveToTmpdir(teardown)
   comment(`working in ${dir}`)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), server.url + '/documentation/json', '--name', 'movies'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
   const toWrite = `
 'use strict'
@@ -31,7 +31,7 @@ const Fastify = require('fastify')
 const movies = require('./movies')
 const app = Fastify({ logger: true })
 
-app.register(movies, { url: '${server.url}' })
+app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
   const res = await app.movies.createMovie({ title: 'foo' })
   return res 
@@ -40,11 +40,11 @@ app.listen({ port: 0 })
 `
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
-  const server2 = execa('node', ['index.js'])
-  teardown(() => server2.kill())
-  teardown(server.stop)
+  const app2 = execa('node', ['index.js'])
+  teardown(() => app2.kill())
+  teardown(async () => { await app.close() })
 
-  const stream = server2.stdout.pipe(split(JSON.parse))
+  const stream = app2.stdout.pipe(split(JSON.parse))
 
   // this is unfortuate :(
   const base = 'Server listening at '
@@ -73,14 +73,14 @@ test('openapi client generation (typescript)', async ({ teardown, comment, same 
   } catch {
     // noop
   }
-  const server = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
-  await server.listen()
+  await app.start()
 
   const dir = await moveToTmpdir(teardown)
 
   comment(`working in ${dir}`)
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), server.url + '/documentation/json', '--name', 'movies'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
   const toWrite = `
 import Fastify from 'fastify';
@@ -88,7 +88,7 @@ import movies from './movies';
 
 const app = Fastify({ logger: true });
 app.register(movies, {
-  url: '${server.url}'
+  url: '${app.url}'
 });
 
 app.post('/', async () => {
@@ -121,7 +121,7 @@ app.listen({ port: 0 });
 
   const server2 = execa('node', ['build/index.js'])
   teardown(() => server2.kill())
-  teardown(server.stop)
+  teardown(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
   server2.stderr.pipe(process.stderr)
@@ -153,14 +153,14 @@ test('openapi client generation (javascript) with slash at the end', async ({ te
   } catch {
     // noop
   }
-  const server = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
-  await server.listen()
+  await app.start()
 
   const dir = await moveToTmpdir(teardown)
 
   comment(`working in ${dir}`)
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), server.url + '/documentation/json', '--name', 'movies'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
   const toWrite = `
 'use strict'
@@ -169,7 +169,7 @@ const Fastify = require('fastify')
 const movies = require('./movies')
 const app = Fastify({ logger: true })
 
-app.register(movies, { url: '${server.url}/' })
+app.register(movies, { url: '${app.url}/' })
 app.post('/', async (request, reply) => {
   const res = await app.movies.createMovie({ title: 'foo' })
   return res 
@@ -180,7 +180,7 @@ app.listen({ port: 0 })
 
   const server2 = execa('node', ['index.js'])
   teardown(() => server2.kill())
-  teardown(server.stop)
+  teardown(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -211,13 +211,15 @@ test('no such file', async ({ rejects, teardown }) => {
   } catch {
     // noop
   }
-  const server = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
-  await server.listen()
-  teardown(server.stop)
+  await app.start()
+  teardown(async () => {
+    await app.close()
+  })
 
   await moveToTmpdir(teardown)
-  await rejects(execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), `${server.url}/foo/bar`, '--name', 'movies']))
+  await rejects(execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), `${app.url}/foo/bar`, '--name', 'movies']))
 })
 
 test('no such file', async ({ rejects, teardown }) => {
@@ -230,14 +232,14 @@ test('datatypes', async ({ teardown, comment, match }) => {
   } catch {
     // noop
   }
-  const server = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies-quotes', 'platformatic.db.json'))
+  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies-quotes', 'platformatic.db.json'))
 
-  await server.listen()
+  await app.start()
 
   const dir = await moveToTmpdir(teardown)
 
   comment(`working in ${dir}`)
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), server.url + '/documentation/json', '--name', 'movies'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
   const toWrite = `
 'use strict'
@@ -246,7 +248,7 @@ const Fastify = require('fastify')
 const movies = require('./movies')
 const app = Fastify({ logger: true })
 
-app.register(movies, { url: '${server.url}' })
+app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
   const res = await app.movies.createMovie({ title: 'foo' })
   return res 
@@ -257,7 +259,7 @@ app.listen({ port: 0 })
 
   const server2 = execa('node', ['index.js'])
   teardown(() => server2.kill())
-  teardown(server.stop)
+  teardown(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -288,14 +290,14 @@ test('configureClient (typescript)', async ({ teardown, comment, same }) => {
   } catch {
     // noop
   }
-  const server = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
-  await server.listen()
+  await app.start()
 
   const dir = await moveToTmpdir(teardown)
 
   comment(`working in ${dir}`)
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), server.url + '/documentation/json', '--name', 'movies'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
   const toWrite = `
 import Fastify from 'fastify';
@@ -303,7 +305,7 @@ import movies from './movies';
 
 const app = Fastify({ logger: true });
 app.register(movies, {
-  url: '${server.url}'
+  url: '${app.url}'
 });
 
 app.register(async function (app) {
@@ -344,7 +346,7 @@ app.listen({ port: 0 });
 
   const server2 = execa('node', ['build/index.js'])
   teardown(() => server2.kill())
-  teardown(server.stop)
+  teardown(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
   server2.stderr.pipe(process.stderr)
@@ -376,10 +378,12 @@ test('dotenv & config support', async ({ teardown, comment, same }) => {
   } catch {
     // noop
   }
-  const server = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
-  await server.listen()
-  teardown(server.stop)
+  await app.start()
+  teardown(async () => {
+    await app.close()
+  })
 
   const dir = await moveToTmpdir(teardown)
   comment(`working in ${dir}`)
@@ -400,9 +404,9 @@ test('dotenv & config support', async ({ teardown, comment, same }) => {
   await fs.writeFile(join(dir, '.env'), 'FOO=bar')
   await fs.writeFile(join(dir, '.env.sample'), 'FOO=bar')
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), server.url + '/documentation/json', '--name', 'movies'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
-  const url = server.url + '/'
+  const url = app.url + '/'
   {
     const envs = dotenv.parse(await fs.readFile(join(dir, '.env')))
     same(envs, {

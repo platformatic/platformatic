@@ -134,7 +134,8 @@ const server = {
       type: 'integer'
     },
     keepAliveTimeout: {
-      type: 'integer'
+      type: 'integer',
+      default: 5000
     },
     maxRequestsPerSocket: {
       type: 'integer'
