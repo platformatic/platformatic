@@ -47,7 +47,7 @@ function urlDirname (url) {
 }
 
 function locateSchemaLock (configManager) {
-  return configManager.current.db.schemalock.path ?? join(dirname(configManager.fullPath), 'schema.lock')
+  return configManager.current.db.schemalock.path ?? join(configManager.dirname, 'schema.lock')
 }
 
 async function updateSchemaLock (logger, configManager) {
