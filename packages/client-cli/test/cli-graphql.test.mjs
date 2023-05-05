@@ -20,9 +20,6 @@ test('graphql client generation (javascript)', async ({ teardown, comment, same,
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
-  teardown(async () => {
-    await app.close()
-  })
 
   const dir = await moveToTmpdir(teardown)
 
@@ -58,6 +55,7 @@ app.listen({ port: 0 })
 
   const server2 = execa('node', ['index.js'])
   teardown(() => server2.kill())
+  teardown(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -93,9 +91,6 @@ test('graphql client generation (typescript)', async ({ teardown, comment, same,
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
-  teardown(async () => {
-    await app.close()
-  })
 
   const dir = await moveToTmpdir(teardown)
 
@@ -145,6 +140,7 @@ app.listen({ port: 0 });
 
   const server2 = execa('node', ['build/index.js'])
   teardown(() => server2.kill())
+  teardown(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -178,9 +174,6 @@ test('graphql client generation with relations (typescript)', async ({ teardown,
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies-quotes', 'platformatic.db.json'))
 
   await app.start()
-  teardown(async () => {
-    await app.close()
-  })
 
   const dir = await moveToTmpdir(teardown)
 
@@ -248,6 +241,7 @@ app.listen({ port: 0});
 
   const server2 = execa('node', ['build/index.js'])
   teardown(() => server2.kill())
+  teardown(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -283,9 +277,6 @@ test('graphql client generation (javascript) with slash at the end of the URL', 
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
-  teardown(async () => {
-    await app.close()
-  })
 
   const dir = await moveToTmpdir(teardown)
 
@@ -314,6 +305,7 @@ app.listen({ port: 0 })
 
   const server2 = execa('node', ['index.js'])
   teardown(() => server2.kill())
+  teardown(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -346,9 +338,6 @@ test('adds clients to platformatic service', async ({ teardown, comment, same, m
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
-  teardown(async () => {
-    await app.close()
-  })
 
   const dir = await moveToTmpdir(teardown)
 
@@ -409,9 +398,8 @@ module.exports = async function (app, opts) {
   const app2 = await service.buildServer('./platformatic.service.json')
 
   await app2.start()
-  teardown(async () => {
-    await app2.close()
-  })
+  teardown(async () => { await app2.close() })
+  teardown(async () => { await app.close() })
 
   const res = await request(app2.url, {
     method: 'POST'
@@ -448,9 +436,6 @@ test('configureClient (typescript)', async ({ teardown, comment, same, match }) 
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
-  teardown(async () => {
-    await app.close()
-  })
 
   const dir = await moveToTmpdir(teardown)
 
@@ -508,6 +493,7 @@ app.listen({ port: 0 });
 
   const server2 = execa('node', ['build/index.js'])
   teardown(() => server2.kill())
+  teardown(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 

@@ -42,9 +42,7 @@ app.listen({ port: 0 })
 
   const app2 = execa('node', ['index.js'])
   teardown(() => app2.kill())
-  teardown(async () => {
-    await app.close()
-  })
+  teardown(async () => { await app.close() })
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
@@ -78,9 +76,6 @@ test('openapi client generation (typescript)', async ({ teardown, comment, same 
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
-  teardown(async () => {
-    await app.close()
-  })
 
   const dir = await moveToTmpdir(teardown)
 
@@ -126,6 +121,7 @@ app.listen({ port: 0 });
 
   const server2 = execa('node', ['build/index.js'])
   teardown(() => server2.kill())
+  teardown(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
   server2.stderr.pipe(process.stderr)
@@ -160,9 +156,6 @@ test('openapi client generation (javascript) with slash at the end', async ({ te
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
-  teardown(async () => {
-    await app.close()
-  })
 
   const dir = await moveToTmpdir(teardown)
 
@@ -187,6 +180,7 @@ app.listen({ port: 0 })
 
   const server2 = execa('node', ['index.js'])
   teardown(() => server2.kill())
+  teardown(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -241,9 +235,6 @@ test('datatypes', async ({ teardown, comment, match }) => {
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies-quotes', 'platformatic.db.json'))
 
   await app.start()
-  teardown(async () => {
-    await app.close()
-  })
 
   const dir = await moveToTmpdir(teardown)
 
@@ -268,6 +259,7 @@ app.listen({ port: 0 })
 
   const server2 = execa('node', ['index.js'])
   teardown(() => server2.kill())
+  teardown(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -301,9 +293,6 @@ test('configureClient (typescript)', async ({ teardown, comment, same }) => {
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
-  teardown(async () => {
-    await app.close()
-  })
 
   const dir = await moveToTmpdir(teardown)
 
@@ -357,6 +346,7 @@ app.listen({ port: 0 });
 
   const server2 = execa('node', ['build/index.js'])
   teardown(() => server2.kill())
+  teardown(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
   server2.stderr.pipe(process.stderr)
