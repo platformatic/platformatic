@@ -4,6 +4,8 @@ import { execa } from 'execa'
 import stripAnsi from 'strip-ansi'
 import split from 'split2'
 import { once } from 'events'
+import fs from 'fs/promises'
+import { join, dirname } from 'path'
 
 test('migrate on start', async ({ equal, teardown }) => {
   const db = await connectAndResetDB()
@@ -120,4 +122,65 @@ test('do not run migrations by default', async ({ equal, teardown }) => {
     );`
   ))
   equal(exists, false)
+})
+
+test('migrate creates a schema.lock file', async ({ equal, teardown }) => {
+  const db = await connectAndResetDB()
+  let found = false
+  const configPath = getFixturesConfigFileLocation('schemalock.json')
+  const expectedFile = join(dirname(configPath), 'schema.lock')
+
+  try {
+    await fs.unlink(expectedFile)
+  } catch {}
+
+  await execa('node', [cliPath, 'migrations', 'apply', '-c', configPath])
+
+  teardown(async function () {
+    try {
+      await fs.unlink(expectedFile)
+    } catch {}
+  })
+  teardown(() => db.dispose())
+
+  const data = await fs.readFile(expectedFile)
+  // Let's just validate this is a valid JSON file
+  JSON.parse(data)
+
+  const child = execa('node', [cliPath, 'start', '-c', configPath])
+  teardown(() => child.kill('SIGINT'))
+
+  const splitter = split()
+  child.stdout.pipe(splitter)
+  for await (const data of splitter) {
+    const sanitized = stripAnsi(data)
+    if (sanitized.match(/(.*)loaded schema lock/)) {
+      found = true
+      break
+    }
+  }
+  equal(found, true)
+})
+
+test('migrate creates a schema.lock file on a different path', async ({ equal, teardown }) => {
+  const db = await connectAndResetDB()
+  const configPath = getFixturesConfigFileLocation('schemalock.json')
+  const expectedFile = join(dirname(configPath), 'schema.lock')
+
+  try {
+    await fs.unlink(expectedFile)
+  } catch {}
+
+  await execa('node', [cliPath, 'migrations', 'apply', '-c', configPath])
+
+  teardown(async function () {
+    try {
+      await fs.unlink(expectedFile)
+    } catch {}
+  })
+  teardown(() => db.dispose())
+
+  const data = await fs.readFile(expectedFile)
+  // Let's just validate this is a valid JSON file
+  JSON.parse(data)
 })

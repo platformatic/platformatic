@@ -17,6 +17,20 @@ const db = {
         type: 'string'
       }
     },
+    schemaLock: {
+      oneOf: [{
+        type: 'boolean',
+        default: false
+      }, {
+        type: 'object',
+        properties: {
+          path: {
+            type: 'string',
+            resolvePath: true
+          }
+        }
+      }]
+    },
     poolSize: {
       type: 'integer'
     },

@@ -1,13 +1,13 @@
 'use strict'
 
-const { dirname } = require('path')
 const { access } = require('fs/promises')
 const { connect } = require('@platformatic/db-core')
-const { resolve } = require('path')
+const { resolve, join, dirname } = require('path')
 const { fileURLToPath } = require('url')
+const fs = require('fs/promises')
 
 async function setupDB (log, config) {
-  const { db, sql, entities } = await connect({ ...config, log })
+  const { db, sql, entities, dbschema } = await connect({ ...config, log })
   let driver = ''
 
   // TODO Add tests for multiple databases
@@ -27,7 +27,8 @@ async function setupDB (log, config) {
     db,
     sql,
     entities,
-    driver
+    driver,
+    dbschema
   }
 }
 
@@ -45,8 +46,25 @@ function urlDirname (url) {
   return dirname(fileURLToPath(url))
 }
 
+function locateSchemaLock (configManager) {
+  return configManager.current.db.schemalock.path ?? join(dirname(configManager.fullPath), 'schema.lock')
+}
+
+async function updateSchemaLock (logger, configManager) {
+  const config = configManager.current
+  if (config.db.schemalock) {
+    const conn = await setupDB(logger, config.db)
+    const schemaLockPath = locateSchemaLock(configManager)
+    await fs.writeFile(schemaLockPath, JSON.stringify(conn.dbschema, null, 2))
+
+    await conn.db.dispose()
+  }
+}
+
 module.exports = {
   setupDB,
   isFileAccessible,
-  urlDirname
+  urlDirname,
+  updateSchemaLock,
+  locateSchemaLock
 }

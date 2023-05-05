@@ -8,6 +8,8 @@ const { isKeyEnabled } = require('@platformatic/utils')
 const { schema } = require('./lib/schema')
 const ConfigManager = require('@platformatic/config')
 const adjustConfig = require('./lib/adjust-config')
+const { locateSchemaLock } = require('./lib/utils')
+const fs = require('fs/promises')
 
 async function platformaticDB (app, opts) {
   const configManager = app.platformatic.configManager
@@ -34,6 +36,17 @@ async function platformaticDB (app, opts) {
   }
 
   async function toLoad (app) {
+    if (config.db.schemalock) {
+      // ignore errors, this is an optimization
+      try {
+        const path = locateSchemaLock(configManager)
+        const dbschema = JSON.parse(await fs.readFile(path, 'utf8'))
+        config.db.dbschema = dbschema
+        app.log.trace({ dbschema }, 'loaded schema lock')
+      } catch (err) {
+        app.log.trace({ err }, 'failed to load schema lock')
+      }
+    }
     app.register(core, config.db)
     if (config.authorization) {
       app.register(auth, config.authorization)
