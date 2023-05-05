@@ -15,7 +15,7 @@ const setupMetrics = require('./lib/plugins/metrics')
 const setupTsCompiler = require('./lib/plugins/typescript')
 const setupFileWatcher = require('./lib/plugins/file-watcher')
 const setupHealthCheck = require('./lib/plugins/health-check')
-const { loadPlugins } = require('./lib/plugins/plugins')
+const loadPlugins = require('./lib/plugins/plugins')
 
 const { schema } = require('./lib/schema')
 const { loadConfig, generateDefaultConfig } = require('./lib/load-config')
@@ -53,7 +53,7 @@ async function platformaticService (app, opts, toLoad = []) {
     if (config.plugins.typescript) {
       await app.register(setupTsCompiler)
     }
-    await loadPlugins(app)
+    await app.register(loadPlugins)
   }
 
   if (isKeyEnabled('watch', config)) {
@@ -178,6 +178,7 @@ async function buildServer (options, app) {
   })
 
   configManager.on('error', function (err) {
+    /* c8 ignore next 1 */
     handler.log.error({ err }, 'error reloading the configuration')
   })
 

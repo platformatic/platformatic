@@ -4,6 +4,7 @@ const { join, resolve } = require('path')
 const { readFile } = require('fs/promises')
 
 const sandbox = require('fastify-sandbox')
+const fp = require('fastify-plugin')
 
 const { getJSPluginPath, isFileAccessible } = require('../utils')
 
@@ -52,4 +53,4 @@ async function loadPlugins (app) {
   }
 }
 
-module.exports = { loadPlugins }
+module.exports = fp(loadPlugins)
