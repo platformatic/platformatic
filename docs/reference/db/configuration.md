@@ -275,6 +275,24 @@ A **required** object with the following settings:
   }
   ```
 
+- **`schemalock`** (`boolean` or `object`, default: `false`) — Controls the caching of the database schema on disk;
+  if set to `true` it would store the database schema metadata inside a `schema.lock` file.
+  It's also possible to configure the location of that file by specifying a path, like so:
+
+  _Examples_
+
+  ```json
+  {
+    "db": {
+      ...
+      "schemalock": {
+        "path": "./dbmetadata"
+      }
+    }
+  }
+  ```
+
+
 ### `dashboard`
 
 This setting can be a `boolean` or an `object`. If set to `true` the dashboard will be served at the root path (`/`).
