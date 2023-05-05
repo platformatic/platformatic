@@ -812,8 +812,8 @@ importers:
         specifier: ^1.3.0
         version: 1.3.0
       '@fastify/restartable':
-        specifier: fastify/restartable#update-restartable-api
-        version: github.com/fastify/restartable/4db477fa870050405878cb361be83723161110ad
+        specifier: ^2.0.0
+        version: 2.0.0
       '@fastify/static':
         specifier: ^6.10.1
         version: 6.10.1
@@ -3224,6 +3224,14 @@ packages:
       cross-spawn: 7.0.3
       which: 2.0.2
     dev: true
+
+  /@fastify/restartable@2.0.0:
+    resolution: {integrity: sha512-lNgGAwsCFv5Ax1hznjhajQZ//z61qqP2LywyBIOe7VPFDFreYBOpRMk5R7lEiMCpYENYEu9F3zRyOGvctaX3tA==}
+    dependencies:
+      fastify: 4.17.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
 
   /@fastify/send@2.1.0:
     resolution: {integrity: sha512-yNYiY6sDkexoJR0D8IDy3aRP3+L4wdqCpvx5WP+VtEU58sn7USmKynBzDQex5X42Zzvw2gNzzYgP90UfWShLFA==}
@@ -15602,13 +15610,3 @@ packages:
   /zwitch@1.0.5:
     resolution: {integrity: sha512-V50KMwwzqJV0NpZIZFwfOD5/lyny3WlSzRiXgA0G7VUnRlqttta1L6UQIHzd6EuBY/cHGfwTIck7w1yH6Q5zUw==}
     dev: true
-
-  github.com/fastify/restartable/4db477fa870050405878cb361be83723161110ad:
-    resolution: {tarball: https://codeload.github.com/fastify/restartable/tar.gz/4db477fa870050405878cb361be83723161110ad}
-    name: '@fastify/restartable'
-    version: 1.4.0
-    dependencies:
-      fastify: 4.17.0
-    transitivePeerDependencies:
-      - supports-color
-    dev: false
