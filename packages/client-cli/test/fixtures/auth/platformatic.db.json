@@ -4,7 +4,8 @@
     "port": "0",
     "logger": {
       "level": "error"
-    }
+    },
+    "keepAliveTimeout": 1
   },
   "db": {
     "connectionString": "sqlite://./db.sqlite",
