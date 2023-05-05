@@ -1,0 +1,21 @@
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0,
+    "logger": {
+      "level": "info"
+    }
+  },
+  "db": {
+    "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres",
+    "schemalock": {
+      "path": "./another-schema.lock"
+    }
+  },
+  "migrations": {
+    "dir": "./migrations",
+    "table": "versions",
+    "autoApply": true
+  },
+  "authorization": {}
+}

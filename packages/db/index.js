@@ -8,6 +8,8 @@ const { isKeyEnabled } = require('@platformatic/utils')
 const { schema } = require('./lib/schema')
 const ConfigManager = require('@platformatic/config')
 const adjustConfig = require('./lib/adjust-config')
+const { locateSchemaLock } = require('./lib/utils')
+const fs = require('fs/promises')
 
 async function platformaticDB (app, opts) {
   const configManager = app.platformatic.configManager
@@ -34,7 +36,30 @@ async function platformaticDB (app, opts) {
   }
 
   async function toLoad (app) {
-    app.register(core, config.db)
+    let createSchemaLock = false
+    if (config.db.schemalock) {
+      // ignore errors, this is an optimization
+      try {
+        const path = locateSchemaLock(configManager)
+        const dbschema = JSON.parse(await fs.readFile(path, 'utf8'))
+        config.db.dbschema = dbschema
+        app.log.trace({ dbschema }, 'loaded schema lock')
+      } catch (err) {
+        app.log.trace({ err }, 'failed to load schema lock')
+        app.log.info('no schema lock found, will create one')
+        createSchemaLock = true
+      }
+    }
+    await app.register(core, config.db)
+    if (createSchemaLock) {
+      try {
+        const path = locateSchemaLock(configManager)
+        await fs.writeFile(path, JSON.stringify(app.platformatic.dbschema, null, 2))
+        app.log.info({ path }, 'created schema lock')
+      } catch (err) {
+        app.log.trace({ err }, 'unable to save schema lock')
+      }
+    }
     if (config.authorization) {
       app.register(auth, config.authorization)
     }

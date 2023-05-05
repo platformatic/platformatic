@@ -8,13 +8,13 @@ import { MigrateError } from './errors.mjs'
 import { loadConfig } from './load-config.mjs'
 import { execute as generateTypes, checkForDependencies } from './gen-types.mjs'
 import { utimesSync } from 'fs'
+import { updateSchemaLock } from './utils.js'
 
 async function execute (logger, args, config) {
   const migrationsConfig = config.migrations
   if (migrationsConfig === undefined) {
     throw new MigrateError('Missing "migrations" section in config file')
   }
-
   const migrator = new Migrator(migrationsConfig, config.db, logger)
 
   try {
@@ -51,6 +51,8 @@ async function applyMigrations (_args) {
       await generateTypes(logger, args, config)
       await checkForDependencies(logger, args, config)
     }
+
+    await updateSchemaLock(logger, configManager)
 
     // touch the platformatic db config to trigger a restart
     const now = new Date()

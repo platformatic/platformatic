@@ -14,7 +14,7 @@ function lowerCaseFirst (str) {
   return str.charAt(0).toLowerCase() + str.slice(1)
 }
 
-function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relations, queries, autoTimestamp, schema, useSchemaInName, limitConfig) {
+function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relations, queries, autoTimestamp, schema, useSchemaInName, limitConfig, columns, constraintsList) {
   /* istanbul ignore next */ // Ignoring because this won't be fully covered by DB not supporting schemas (SQLite)
   const entityName = useSchemaInName ? toUpperFirst(`${schema}${toSingular(table)}`) : toSingular(table)
   /* istanbul ignore next */
@@ -339,9 +339,9 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
   }
 }
 
-async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, useSchemaInName, ignore, limitConfig, schemaList) {
+function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, useSchemaInName, ignore, limitConfig, schemaList, columns, constraintsList) {
   // Compute the columns
-  const columns = (await queries.listColumns(db, sql, table, schema)).filter((c) => !ignore[c.column_name])
+  columns = columns.filter((c) => !ignore[c.column_name])
   const fields = columns.reduce((acc, column) => {
     acc[column.column_name] = {
       sqlType: column.udt_name,
@@ -368,24 +368,17 @@ async function buildEntity (db, sql, log, table, queries, autoTimestamp, schema,
       acc[column.column_name].isGenerated = column.is_generated.includes('GENERATED')
     }
 
+    // To get enum values in pg
+    /* istanbul ignore next */
+    if (column.enum) {
+      acc[column.column_name].enum = column.enum
+    }
+
     return acc
   }, {})
 
-  // To get enum values in pg
-  /* istanbul ignore next */
-  if (db.isPg) {
-    const enums = await queries.listEnumValues(db, sql, table, schema)
-    for (const enumValue of enums) {
-      if (!fields[enumValue.column_name].enum) {
-        fields[enumValue.column_name].enum = [enumValue.enumlabel]
-      } else {
-        fields[enumValue.column_name].enum.push(enumValue.enumlabel)
-      }
-    }
-  }
   const currentRelations = []
 
-  const constraintsList = await queries.listConstraints(db, sql, table, schema)
   const primaryKeys = new Set()
 
   /* istanbul ignore next */

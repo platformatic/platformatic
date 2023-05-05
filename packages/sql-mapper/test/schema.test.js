@@ -61,7 +61,7 @@ test('uses tables from different schemas', { skip: isSQLite }, async ({ pass, te
   pass()
 })
 
-test('find enums correctly using schemas', { skip: isSQLite }, async ({ pass, teardown, equal }) => {
+test('find enums correctly using schemas', { skip: isSQLite }, async ({ pass, teardown, equal, match }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
     teardown(() => db.dispose())
@@ -102,6 +102,31 @@ test('find enums correctly using schemas', { skip: isSQLite }, async ({ pass, te
   equal(pageEntity.name, 'Test1Page')
   equal(pageEntity.singularName, 'test1Page')
   equal(pageEntity.pluralName, 'test1Pages')
+  match(mapper.dbschema, [
+    {
+      schema: 'test1',
+      table: 'pages',
+      constraints: [
+        {
+          constraint_type: isMysql8 ? 'UNIQUE' : 'PRIMARY KEY'
+        }
+      ],
+      columns: [
+        {
+          column_name: 'id',
+          is_nullable: 'NO'
+        },
+        {
+          column_name: 'title',
+          is_nullable: 'NO'
+        },
+        {
+          column_name: 'type',
+          is_nullable: 'YES'
+        }
+      ]
+    }
+  ])
   pass()
 })
 
@@ -377,5 +402,73 @@ test('uses tables from different schemas with FK', { skip: isSQLite }, async ({ 
   const userRelation = userEntity.relations[0]
   equal(userRelation.foreignEntityName, 'test1Page')
   equal(userRelation.entityName, 'test2User')
+  pass()
+})
+
+test('recreate mapper from schema', async ({ pass, teardown, equal, match, fail }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+
+    if (isMysql || isMysql8) {
+      await db.query(sql`
+      CREATE TABLE IF NOT EXISTS \`pages\` (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL
+    );`)
+    } else if (isPg) {
+      await db.query(sql`
+      CREATE TABLE IF NOT EXISTS "pages" (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(255) NOT NULL
+    );`)
+    } else if (isSQLite) {
+      await db.query(sql`
+      CREATE TABLE IF NOT EXISTS "pages" (
+      id INTEGER PRIMARY KEY,
+      title VARCHAR(255) NOT NULL
+    );`)
+    } else {
+      await db.query(sql`CREATE TABLE IF NOT EXISTS "pages" (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+    );`)
+    }
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+  const dbschema = mapper.dbschema
+  const knownQueries = [
+    'SELECT VERSION()'
+  ]
+  const mapper2 = await connect({
+    connectionString: connInfo.connectionString,
+    log: {
+      trace (msg) {
+        if (knownQueries.indexOf(msg.query?.text) < 0) {
+          console.log(msg)
+          fail('no trace')
+        }
+      },
+      error (...msg) {
+        console.log(...msg)
+        fail('no error')
+      }
+    },
+    dbschema,
+    ignore: {},
+    hooks: {}
+  })
+  teardown(() => mapper2.db.dispose())
+
+  const pageEntity = mapper2.entities.page
+  equal(pageEntity.name, 'Page')
+  equal(pageEntity.singularName, 'page')
+  equal(pageEntity.pluralName, 'pages')
   pass()
 })
