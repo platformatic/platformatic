@@ -387,7 +387,7 @@ function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, useSc
       const validTypes = ['integer', 'uuid', 'serial']
       const pkType = fields[constraint.column_name].sqlType.toLowerCase()
       if (!validTypes.includes(pkType)) {
-        throw new Error(`Invalid Primary Key type. Expected "integer", found "${pkType}"`)
+        throw new Error(`Invalid Primary Key type.: "${pkType}." Only ${validTypes.join(', ')} are supported.`)
       }
     }
   }

@@ -195,6 +195,33 @@ test('insert with explicit integer PK value', async ({ same, teardown }) => {
   })
 })
 
+test('insert with varchar PK value', async ({ same, teardown }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+    await db.query(sql`CREATE TABLE pages (
+      title varchar(255) PRIMARY KEY,
+      id INTEGER NOT NULL
+    );`)
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+  const pageEntity = mapper.entities.page
+  const [newPage] = await pageEntity.insert({
+    fields: ['id', 'title'],
+    inputs: [{ id: 13, title: '13th page with explicit id equal to 13' }]
+  })
+  same(newPage, {
+    title: '13th page with explicit id equal to 13',
+    id: '13'
+  })
+})
+
 test('insert with explicit uuid PK value', { skip: !isSQLite }, async ({ same, teardown }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
