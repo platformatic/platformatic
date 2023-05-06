@@ -112,19 +112,22 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
         }
       })
       interfaces.writeLine()
+      let responseType = 'undefined'
       let isResponseArray = false
-      interfaces.write(`interface ${operationResponseName}`).block(() => {
-        const success = responses['200']
-        // The following block it's impossible to happen with well-formed
-        // OpenAPI.
-        /* c8 ignore next 3 */
-        if (!success) {
-          throw new Error(`Could not find 200 response for ${operationId}`)
-        }
-        isResponseArray = writeContent(interfaces, success.content, schema, new Set())
-      })
-      interfaces.writeLine()
-      let responseType = operationResponseName
+      if (!responses['204']) {
+        interfaces.write(`interface ${operationResponseName}`).block(() => {
+          const success = responses['200']
+          // The following block it's impossible to happen with well-formed
+          // OpenAPI.
+          /* c8 ignore next 3 */
+          if (!success) {
+            throw new Error(`Could not find 200 response for ${operationId}`)
+          }
+          responseType = operationResponseName
+          isResponseArray = writeContent(interfaces, success.content, schema, new Set())
+        })
+        interfaces.writeLine()
+      }
       if (isResponseArray) responseType = `Array<${responseType}>`
       if (fullResponse) responseType = `FullResponse<${responseType}>`
       writer.writeLine(`${operationId}(req: ${operationRequestName}): Promise<${responseType}>;`)
@@ -183,7 +186,7 @@ function writeContent (writer, content, spec, addedProps) {
       // We ignore all non-JSON endpoints for now
       // TODO: support other content types
       /* c8 ignore next 3 */
-      if (contentType.indexOf('application/json') !== 0) {
+      if (contentType.indexOf('application/json') !== 0 || !body.schema) {
         continue
       }
 
