@@ -25,7 +25,7 @@ async function isFileAccessible (filename) {
 
 const configFileNames = ConfigManager.listConfigFiles()
 
-async function downloadAndProcess ({ url, name, folder, config, fullResponse }) {
+async function downloadAndProcess ({ url, name, folder, config, r: fullResponse }) {
   // try OpenAPI first
   let res = await request(url)
   if (res.statusCode === 200) {
@@ -106,7 +106,7 @@ export async function command (argv) {
     // the default
     ext: '.txt'
   })
-  const { _: [url], 'full-response': fullResponse, ...options } = parseArgs(argv, {
+  const { _: [url], ...options } = parseArgs(argv, {
     string: ['name', 'folder'],
     boolean: ['typescript', 'full-response'],
     default: {
@@ -127,7 +127,7 @@ export async function command (argv) {
     process.exit(1)
   }
   try {
-    await downloadAndProcess({ url, fullResponse, ...options })
+    await downloadAndProcess({ url, ...options })
   } catch (err) {
     console.error(err)
     console.log('')
