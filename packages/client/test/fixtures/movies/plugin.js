@@ -13,9 +13,10 @@ module.exports = async function (app) {
         },
         required: ['id', 'title']
       },
-      responses: {
+      response: {
         204: {
-          description: 'Successuly updated title'
+          type: 'null',
+          description: 'No Content'
         }
       }
     }

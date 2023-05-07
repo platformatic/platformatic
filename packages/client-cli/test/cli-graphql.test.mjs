@@ -297,7 +297,7 @@ app.post('/', async (request, reply) => {
   const res = await app.movies.graphql({
     query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
   })
-  return res 
+  return res
 })
 app.listen({ port: 0 })
 `

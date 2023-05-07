@@ -1,7 +1,8 @@
 import CodeBlockWriter from 'code-block-writer'
 import jsonpointer from 'jsonpointer'
 import { generateOperationId } from '@platformatic/client'
-import { capitalize } from './utils.mjs'
+import { capitalize, classCase } from './utils.mjs'
+import { STATUS_CODES } from 'node:http'
 
 export function processOpenAPI ({ schema, name, fullResponse }) {
   return {
@@ -112,20 +113,32 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
         }
       })
       interfaces.writeLine()
-      let isResponseArray = false
-      interfaces.write(`interface ${operationResponseName}`).block(() => {
-        const success = responses['200']
-        // The following block it's impossible to happen with well-formed
-        // OpenAPI.
-        /* c8 ignore next 3 */
-        if (!success) {
-          throw new Error(`Could not find 200 response for ${operationId}`)
+
+      // Only dealing with success responses
+      const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
+      // The following block it's impossible to happen with well-formed
+      // OpenAPI.
+      /* c8 ignore next 3 */
+      if (successResponses.length === 0) {
+        throw new Error(`Could not find a 200 level response for ${operationId}`)
+      }
+      const responseTypes = successResponses.map(([statusCode, response]) => {
+        // The client library will always dump bodies for 204 responses
+        // so the type must be undefined
+        if (statusCode === '204') {
+          return 'undefined'
         }
-        isResponseArray = writeContent(interfaces, success.content, schema, new Set())
+        let isResponseArray
+        let type = `${operationResponseName}${classCase(STATUS_CODES[statusCode])}`
+        interfaces.write(`interface ${type}`).block(() => {
+          isResponseArray = writeContent(interfaces, response.content, schema, new Set())
+        })
+        interfaces.blankLine()
+        if (isResponseArray) type = `Array<${type}>`
+        return type
       })
-      interfaces.writeLine()
-      let responseType = operationResponseName
-      if (isResponseArray) responseType = `Array<${responseType}>`
+
+      let responseType = responseTypes.join(' | ')
       if (fullResponse) responseType = `FullResponse<${responseType}>`
       writer.writeLine(`${operationId}(req: ${operationRequestName}): Promise<${responseType}>;`)
     }
@@ -185,6 +198,13 @@ function writeContent (writer, content, spec, addedProps) {
       /* c8 ignore next 3 */
       if (contentType.indexOf('application/json') !== 0) {
         continue
+      }
+
+      // Response body has no schema that can be processed
+      // Should not be possible with well formed OpenAPI
+      /* c8 ignore next 3 */
+      if (!body.schema?.type && !body.schema?.$ref) {
+        break
       }
 
       // This is likely buggy as there can be multiple responses for different
