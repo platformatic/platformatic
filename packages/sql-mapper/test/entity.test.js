@@ -346,27 +346,32 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async ({ pass, teardown, same, equa
   }
 })
 
-test('[SQLite] throws if PK is not INTEGER', { skip: !isSQLite }, async ({ fail, equal, teardown, rejects }) => {
+test('[SQLite] allows to have VARCHAR PK', { skip: !isSQLite }, async ({ same, teardown }) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
+    teardown(() => db.dispose())
+
     await db.query(sql`CREATE TABLE pages (
-      id int PRIMARY KEY,
-      title varchar(255) NOT NULL,
-      content text NOT NULL
+      id varchar(255) PRIMARY KEY,
+      title varchar(255) NOT NULL
     );`)
   }
-  try {
-    await connect({
-      connectionString: connInfo.connectionString,
-      log: fakeLogger,
-      onDatabaseLoad,
-      ignore: {},
-      hooks: {}
-    })
-    fail()
-  } catch (err) {
-    equal(err.message, 'Invalid Primary Key type. Expected "integer", found "int"')
-  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+  const pageEntity = mapper.entities.page
+  const [newPage] = await pageEntity.insert({
+    fields: ['id', 'title'],
+    inputs: [{ id: 'varchar_id', title: '13th page with explicit id equal to 13' }]
+  })
+  same(newPage, {
+    id: 'varchar_id',
+    title: '13th page with explicit id equal to 13'
+  })
 })
 
 test('mixing snake and camel case', async ({ pass, teardown, same, equal }) => {

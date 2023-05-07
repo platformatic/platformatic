@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 
-const { clear, connInfo, isMysql8 } = require('./helper')
+const { clear, connInfo, isMysql8, isSQLite } = require('./helper')
 const { connect } = require('..')
 const fakeLogger = {
   trace: () => {},
@@ -36,7 +36,7 @@ test('unique key', async ({ equal, not, same, teardown }) => {
   equal(pageEntity.name, 'Page')
   equal(pageEntity.singularName, 'page')
   equal(pageEntity.pluralName, 'pages')
-  if (isMysql8) {
+  if (isMysql8 || isSQLite) {
     same(pageEntity.primaryKeys, new Set(['name']))
     equal(pageEntity.camelCasedFields.name.primaryKey, true)
   } else {
