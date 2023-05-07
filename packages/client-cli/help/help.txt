@@ -13,7 +13,7 @@ $ platformatic client http://exmaple.com/grapqhl -n myclient
 ```
 
 This will create a Fastify plugin that exposes a client for the remote API in a folder `myclient`
-and a file named myclient.js inside it. 
+and a file named myclient.js inside it.
 
 If platformatic config file is specified, it will be edited and a `clients` section will be added.
 Then, in any part of your Platformatic application you can use the client.
@@ -26,7 +26,7 @@ module.exports = async function (app, opts) {
     const res = await app.myclient.graphql({
       query: 'query { hello }'
     })
-    return res 
+    return res
   })
 }
 ```
@@ -49,3 +49,6 @@ Options:
 
   * `-c, --config <path>`: Path to the configuration file.
   * `-n, --name <name>`: Name of the client.
+  * `-f, --folder <name>`: Name of the plugin folder, defaults to --name value.
+  * `-t, --typescript`: Generate the client plugin in TypeScript.
+  * `-r, --full-response`: Client will return full response object rather than just the body.

@@ -25,7 +25,7 @@ async function isFileAccessible (filename) {
 
 const configFileNames = ConfigManager.listConfigFiles()
 
-async function downloadAndProcess ({ url, name, folder, config }) {
+async function downloadAndProcess ({ url, name, folder, config, r: fullResponse }) {
   // try OpenAPI first
   let res = await request(url)
   if (res.statusCode === 200) {
@@ -36,7 +36,7 @@ async function downloadAndProcess ({ url, name, folder, config }) {
     // TODO deal with yaml
     const schema = JSON.parse(text)
     await writeFile(join(folder, `${name}.openapi.json`), JSON.stringify(schema, null, 2))
-    const { types, implementation } = processOpenAPI({ schema, name })
+    const { types, implementation } = processOpenAPI({ schema, name, fullResponse })
     await writeFile(join(folder, `${name}.d.ts`), types)
     await writeFile(join(folder, `${name}.cjs`), implementation)
     await writeFile(join(folder, 'package.json'), getPackageJSON({ name }))
@@ -108,7 +108,7 @@ export async function command (argv) {
   })
   const { _: [url], ...options } = parseArgs(argv, {
     string: ['name', 'folder'],
-    boolean: ['typescript'],
+    boolean: ['typescript', 'full-response'],
     default: {
       name: 'client',
       typescript: false
@@ -117,7 +117,8 @@ export async function command (argv) {
       n: 'name',
       f: 'folder',
       t: 'typescript',
-      c: 'config'
+      c: 'config',
+      r: 'full-response'
     }
   })
   options.folder = options.folder || join(process.cwd(), options.name)

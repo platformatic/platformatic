@@ -3,14 +3,14 @@ import jsonpointer from 'jsonpointer'
 import { generateOperationId } from '@platformatic/client'
 import { capitalize } from './utils.mjs'
 
-export function processOpenAPI ({ schema, name }) {
+export function processOpenAPI ({ schema, name, fullResponse }) {
   return {
-    types: generateTypesFromOpenAPI({ schema, name }),
-    implementation: generateImplementationFromOpenAPI({ schema, name })
+    types: generateTypesFromOpenAPI({ schema, name, fullResponse }),
+    implementation: generateImplementationFromOpenAPI({ schema, name, fullResponse })
   }
 }
 
-function generateImplementationFromOpenAPI ({ schema, name }) {
+function generateImplementationFromOpenAPI ({ schema, name, fullResponse }) {
   /* eslint-disable new-cap */
   const writer = new CodeBlockWriter({
     indentNumberOfSpaces: 2,
@@ -33,7 +33,8 @@ function generateImplementationFromOpenAPI ({ schema, name }) {
       writer.writeLine('type: \'openapi\',')
       writer.writeLine(`name: '${name}',`)
       writer.writeLine(`path: join(__dirname, '${name}.openapi.json'),`)
-      writer.writeLine('url: opts.url')
+      writer.writeLine('url: opts.url,')
+      writer.writeLine(`fullResponse: ${fullResponse}`)
     })
     writer.write(')')
   })
@@ -48,7 +49,7 @@ function generateImplementationFromOpenAPI ({ schema, name }) {
   return writer.toString()
 }
 
-function generateTypesFromOpenAPI ({ schema, name }) {
+function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   const capitalizedName = capitalize(name)
   const { paths } = schema
 
@@ -80,6 +81,15 @@ function generateTypesFromOpenAPI ({ schema, name }) {
 
   interfaces.writeLine('import { FastifyPluginAsync } from \'fastify\'')
   interfaces.blankLine()
+
+  if (fullResponse) {
+    interfaces.write('interface FullResponse<T>').block(() => {
+      interfaces.writeLine('\'statusCode\': number;')
+      interfaces.writeLine('\'headers\': object;')
+      interfaces.writeLine('\'body\': T;')
+    })
+    interfaces.blankLine()
+  }
 
   writer.write(`interface ${capitalizedName}`).block(() => {
     for (const operation of operations) {
@@ -114,11 +124,10 @@ function generateTypesFromOpenAPI ({ schema, name }) {
         isResponseArray = writeContent(interfaces, success.content, schema, new Set())
       })
       interfaces.writeLine()
-      if (isResponseArray) {
-        writer.writeLine(`${operationId}(req: ${operationRequestName}): Promise<Array<${operationResponseName}>>;`)
-      } else {
-        writer.writeLine(`${operationId}(req: ${operationRequestName}): Promise<${operationResponseName}>;`)
-      }
+      let responseType = operationResponseName
+      if (isResponseArray) responseType = `Array<${responseType}>`
+      if (fullResponse) responseType = `FullResponse<${responseType}>`
+      writer.writeLine(`${operationId}(req: ${operationRequestName}): Promise<${responseType}>;`)
     }
   })
 
