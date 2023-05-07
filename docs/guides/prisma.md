@@ -242,7 +242,7 @@ Register the plugin and extend your REST API:
 
 ```js
 // 1. 
-const prismaPlugin = requrie("@sabinthedev/fastify-prisma")
+const prismaPlugin = require("@sabinthedev/fastify-prisma")
 
 module.exports = async (app) => {
   app.log.info('plugin loaded')
@@ -288,7 +288,7 @@ If you would like to extend your GraphQL API, extend the schema and define the c
 
 ```js title="plugin.js"
 // ./plugin.js
-const prismaPlugin = requrie("@sabinthedev/fastify-prisma")
+const prismaPlugin = require("@sabinthedev/fastify-prisma")
 
 module.exports = async (app) => {
   app.log.info('plugin loaded')
