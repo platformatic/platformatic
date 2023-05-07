@@ -37,7 +37,7 @@ class Migrator {
       migrationPattern,
       driver,
       database,
-      schemaTable: this.migrationsTable,
+      schemaTable: this.migrationsTable || 'versions',
       execQuery: async (query) => {
         const res = await db.query(sql`${sql.__dangerous__rawValue(query)}`)
         return { rows: res }
