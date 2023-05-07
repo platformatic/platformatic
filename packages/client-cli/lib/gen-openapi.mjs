@@ -83,10 +83,6 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   interfaces.writeLine('import { FastifyPluginAsync } from \'fastify\'')
   interfaces.blankLine()
 
-  // Generic 204 response type
-  interfaces.write('type NoContent = undefined')
-  interfaces.blankLine()
-
   if (fullResponse) {
     interfaces.write('interface FullResponse<T>').block(() => {
       interfaces.writeLine('\'statusCode\': number;')
@@ -118,41 +114,33 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
       })
       interfaces.writeLine()
 
-      const responseTypes = []
-      for (const [statusCode, response] of Object.entries(responses)) {
-        // Only dealing with success responses
-        if (!statusCode.startsWith('2')) {
-          continue
-        }
-        // the client library will always dump bodies for 204 responses
-        // so the type must be undefined
-        if (statusCode === '204') {
-          responseTypes.push('NoContent')
-          continue
-        }
-        const interfaceName = `${operationResponseName}${classCase(STATUS_CODES[statusCode])}`
-        interfaces.write(`interface ${interfaceName}`).block(() => {
-          const isResponseArray = writeContent(interfaces, response.content, schema, new Set())
-          if (isResponseArray) {
-            responseTypes.push(`Array<${interfaceName}>`)
-          } else {
-            responseTypes.push(interfaceName)
-          }
-        })
-        interfaces.writeLine()
-      }
+      // Only dealing with success responses
+      const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
       // The following block it's impossible to happen with well-formed
       // OpenAPI.
       /* c8 ignore next 3 */
-      if (responseTypes.length === 0) {
+      if (successResponses.length === 0) {
         throw new Error(`Could not find a 200 level response for ${operationId}`)
       }
-      const responseType = responseTypes.join(' | ')
-      if (fullResponse) {
-        writer.writeLine(`${operationId}(req: ${operationRequestName}): Promise<FullResponse<${responseType}>>;`)
-      } else {
-        writer.writeLine(`${operationId}(req: ${operationRequestName}): Promise<${responseType}>;`)
-      }
+      const responseTypes = successResponses.map(([statusCode, response]) => {
+        // The client library will always dump bodies for 204 responses
+        // so the type must be undefined
+        if (statusCode === '204') {
+          return 'undefined'
+        }
+        let isResponseArray
+        let type = `${operationResponseName}${classCase(STATUS_CODES[statusCode])}`
+        interfaces.write(`interface ${type}`).block(() => {
+          isResponseArray = writeContent(interfaces, response.content, schema, new Set())
+        })
+        interfaces.blankLine()
+        if (isResponseArray) type = `Array<${type}>`
+        return type
+      })
+
+      let responseType = responseTypes.join(' | ')
+      if (fullResponse) responseType = `FullResponse<${responseType}>`
+      writer.writeLine(`${operationId}(req: ${operationRequestName}): Promise<${responseType}>;`)
     }
   })
 
@@ -208,8 +196,15 @@ function writeContent (writer, content, spec, addedProps) {
       // We ignore all non-JSON endpoints for now
       // TODO: support other content types
       /* c8 ignore next 3 */
-      if (contentType.indexOf('application/json') !== 0 || !body.schema) {
+      if (contentType.indexOf('application/json') !== 0) {
         continue
+      }
+
+      // Response body has no schema that can be processed
+      // Should not be possible with well formed OpenAPI
+      /* c8 ignore next 3 */
+      if (!body.schema?.type && !body.schema?.$ref) {
+        break
       }
 
       // This is likely buggy as there can be multiple responses for different
