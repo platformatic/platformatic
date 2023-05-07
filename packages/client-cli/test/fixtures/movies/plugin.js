@@ -45,11 +45,26 @@ module.exports = async function (app) {
               schema: {}
             }
           }
+        },
+        400: {
+          description: 'Validation error',
+          content: {
+            'application/json': {
+              schema: {
+                statusCode: { type: 'number', const: 400 },
+                error: { type: 'string' },
+                message: { type: 'string' }
+              }
+            }
+          }
         }
       }
     }
   },
   async (request, reply) => {
+    await app.platformatic.entities.movie.save({
+      input: request.body
+    })
     reply.status(201)
     return {}
   })

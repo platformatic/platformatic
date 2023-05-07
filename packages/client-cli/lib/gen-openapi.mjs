@@ -1,7 +1,8 @@
 import CodeBlockWriter from 'code-block-writer'
 import jsonpointer from 'jsonpointer'
 import { generateOperationId } from '@platformatic/client'
-import { capitalize } from './utils.mjs'
+import { capitalize, classCase } from './utils.mjs'
+import { STATUS_CODES } from 'node:http'
 
 export function processOpenAPI ({ schema, name, fullResponse }) {
   return {
@@ -82,6 +83,10 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   interfaces.writeLine('import { FastifyPluginAsync } from \'fastify\'')
   interfaces.blankLine()
 
+  // Generic 204 response type
+  interfaces.write('type NoContent = undefined')
+  interfaces.blankLine()
+
   if (fullResponse) {
     interfaces.write('interface FullResponse<T>').block(() => {
       interfaces.writeLine('\'statusCode\': number;')
@@ -112,25 +117,42 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
         }
       })
       interfaces.writeLine()
-      let responseType = 'undefined'
-      let isResponseArray = false
-      if (!responses['204']) {
-        interfaces.write(`interface ${operationResponseName}`).block(() => {
-          const success = responses['200']
-          // The following block it's impossible to happen with well-formed
-          // OpenAPI.
-          /* c8 ignore next 3 */
-          if (!success) {
-            throw new Error(`Could not find 200 response for ${operationId}`)
+
+      const responseTypes = []
+      for (const [statusCode, response] of Object.entries(responses)) {
+        // Only dealing with success responses
+        if (!statusCode.startsWith('2')) {
+          continue
+        }
+        // the client library will always dump bodies for 204 responses
+        // so the type must be undefined
+        if (statusCode === '204') {
+          responseTypes.push('NoContent')
+          continue
+        }
+        const interfaceName = `${operationResponseName}${classCase(STATUS_CODES[statusCode])}`
+        interfaces.write(`interface ${interfaceName}`).block(() => {
+          const isResponseArray = writeContent(interfaces, response.content, schema, new Set())
+          if (isResponseArray) {
+            responseTypes.push(`Array<${interfaceName}>`)
+          } else {
+            responseTypes.push(interfaceName)
           }
-          responseType = operationResponseName
-          isResponseArray = writeContent(interfaces, success.content, schema, new Set())
         })
         interfaces.writeLine()
       }
-      if (isResponseArray) responseType = `Array<${responseType}>`
-      if (fullResponse) responseType = `FullResponse<${responseType}>`
-      writer.writeLine(`${operationId}(req: ${operationRequestName}): Promise<${responseType}>;`)
+      // The following block it's impossible to happen with well-formed
+      // OpenAPI.
+      /* c8 ignore next 3 */
+      if (responseTypes.length === 0) {
+        throw new Error(`Could not find a 200 level response for ${operationId}`)
+      }
+      const responseType = responseTypes.join(' | ')
+      if (fullResponse) {
+        writer.writeLine(`${operationId}(req: ${operationRequestName}): Promise<FullResponse<${responseType}>>;`)
+      } else {
+        writer.writeLine(`${operationId}(req: ${operationRequestName}): Promise<${responseType}>;`)
+      }
     }
   })
 
