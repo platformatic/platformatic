@@ -314,6 +314,12 @@ const server = {
               }
             }
           ]
+        },
+        requestCert: {
+          type: 'boolean'
+        },
+        rejectUnauthorized: {
+          type: 'boolean'
         }
       },
       additionalProperties: false,
