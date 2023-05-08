@@ -302,19 +302,14 @@ const authorization = {
 }
 
 const dashboard = {
-  anyOf: [
-    { type: 'boolean' },
-    {
-      type: 'object',
-      properties: {
-        path: {
-          type: 'string',
-          description: 'The path where the dashboard should be served.'
-        }
-      },
-      additionalProperties: false
+  type: 'object',
+  properties: {
+    path: {
+      type: 'string',
+      description: 'The path where the dashboard should be served.'
     }
-  ]
+  },
+  additionalProperties: false
 }
 
 const migrations = {

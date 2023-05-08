@@ -295,7 +295,7 @@ A **required** object with the following settings:
 
 ### `dashboard`
 
-This setting can be a `boolean` or an `object`. If set to `true` the dashboard will be served at the root path (`/`).
+This setting will be an `object` that specifies the path to the dashboard.
 
 Supported object properties:
 
@@ -556,7 +556,7 @@ default allow list.
 
 ## Sample Configuration
 
-This is a bare minimum configuration for Platformatic DB. Uses a local `./db.sqlite` SQLite database, with OpenAPI and GraphQL support, and with the dashboard enabled.
+This is a bare minimum configuration for Platformatic DB. Uses a local `./db.sqlite` SQLite database, with OpenAPI and GraphQL support.
 
 Server will listen to `http://127.0.0.1:3042`
 
@@ -571,7 +571,6 @@ Server will listen to `http://127.0.0.1:3042`
     "graphiql": true,
     "openapi": true,
     "graphql": true
-  },
-  "dashboard": true
+  }
 }
 ```

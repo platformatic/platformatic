@@ -263,21 +263,14 @@
     },
     "dashboard": {
       "$id": "https://schemas.platformatic.dev/db/dashboard",
-      "anyOf": [
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "object",
-          "properties": {
-            "rootPath": {
-              "type": "boolean",
-              "description": "Whether the dashboard should be served on / path or not."
-            }
-          },
-          "additionalProperties": false
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path to serve the dashboard."
         }
-      ]
+      },
+      "additionalProperties": false
     },
     "authorization": {
       "$id": "https://schemas.platformatic.dev/db/authorization",

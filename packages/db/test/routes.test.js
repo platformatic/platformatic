@@ -94,8 +94,7 @@ test('should not overwrite dashboard endpoint', async ({ teardown, equal, same }
     },
     authorization: {
       adminSecret: 'secret'
-    },
-    dashboard: true
+    }
   }))
 
   teardown(async () => {
@@ -119,8 +118,7 @@ test('should exclude the root endpoint from the openapi documentation', async ({
     },
     authorization: {
       adminSecret: 'secret'
-    },
-    dashboard: false
+    }
   }))
 
   teardown(async () => {

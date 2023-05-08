@@ -28,12 +28,10 @@ async function platformaticDB (app, opts) {
     }
   }
 
-  if (isKeyEnabled('dashboard', config)) {
-    app.register(require('./_admin'), { ...config, configManager, prefix: '_admin' })
-    await app.register(dashboard, {
-      path: config.dashboard.path
-    })
-  }
+  app.register(require('./_admin'), { ...config, configManager, prefix: '_admin' })
+  await app.register(dashboard, {
+    path: config?.dashboard?.path || '/'
+  })
 
   async function toLoad (app) {
     let createSchemaLock = false

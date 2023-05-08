@@ -19,10 +19,9 @@ const sharedConfig = {
     adminSecret: 'secret'
   }
 }
-test('should serve the dashboard on root endpoint if the dashboard option is enabled', async ({ teardown, equal }) => {
+test('should serve the dashboard on root endpoint', async ({ teardown, equal }) => {
   const app = await buildServer(buildConfig({
-    ...sharedConfig,
-    dashboard: true
+    ...sharedConfig
   }))
 
   teardown(async () => {
@@ -47,7 +46,7 @@ test('should serve the dashboard on root endpoint if the dashboard option is ena
   }
 })
 
-test('should serve the dashboard if any dashboard configuration option is set', async ({ teardown, equal }) => {
+test('should serve the dashboard', async ({ teardown, equal }) => {
   const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
@@ -59,9 +58,6 @@ test('should serve the dashboard if any dashboard configuration option is set', 
     },
     authorization: {
       adminSecret: 'secret'
-    },
-    dashboard: {
-      path: '/'
     }
   }))
 
@@ -72,32 +68,6 @@ test('should serve the dashboard if any dashboard configuration option is set', 
 
   const res = await request(`${app.url}/`)
   equal(res.statusCode, 200)
-})
-
-test('should not serve the dashboard if the dashboard configuration option is disabled or not set', async ({ teardown, equal }) => {
-  const app = await buildServer(buildConfig({
-    ...sharedConfig,
-    dashboard: false
-  }))
-
-  teardown(async () => {
-    await app.close()
-  })
-  await app.start()
-
-  {
-    const res = await request(`${app.url}/dashboard`)
-    equal(res.statusCode, 404)
-  }
-
-  await app.restart({
-    ...sharedConfig,
-    dashboard: undefined
-  })
-  {
-    const res = await request(`${app.url}/dashboard`)
-    equal(res.statusCode, 404)
-  }
 })
 
 test('should serve the dashboard on custom endpoint', async ({ teardown, equal, match, notMatch }) => {

@@ -27,9 +27,6 @@
     "dir": "./demo/migrations",
     "validateChecksums": false
   },
-  "dashboard": {
-    "path": "/"
-  },
   "authorization": {
     "adminSecret": "plt-db"
   }

@@ -25,10 +25,7 @@
     "ignore": {
       "versions": true
     }
-  },
-  "dashboard": {
-    "path": "/"
-  },
+  }
   "authorization": {
     "adminSecret": "basegraph"
   }

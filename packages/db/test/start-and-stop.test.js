@@ -39,7 +39,6 @@ test('should not restart if not authorized', async ({ teardown, equal, same }) =
       hostname: '127.0.0.1',
       port: 0
     },
-    dashboard: true,
     db: {
       ...connInfo
     }
@@ -68,7 +67,6 @@ test('restarts the server', async ({ teardown, equal, pass, same, match }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    dashboard: true,
     db: {
       ...connInfo,
       async onDatabaseLoad (db, sql) {
