@@ -74,6 +74,9 @@ importers:
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
+      '@platformatic/start':
+        specifier: workspace:*
+        version: link:../start
       colorette:
         specifier: ^2.0.20
         version: 2.0.20
@@ -1160,6 +1163,49 @@ importers:
       tsd:
         specifier: ^0.28.1
         version: 0.28.1
+
+  packages/start:
+    dependencies:
+      '@platformatic/config':
+        specifier: workspace:*
+        version: link:../config
+      '@platformatic/db':
+        specifier: workspace:*
+        version: link:../db
+      '@platformatic/service':
+        specifier: workspace:*
+        version: link:../service
+      commist:
+        specifier: ^3.2.0
+        version: 3.2.0
+      desm:
+        specifier: ^1.3.0
+        version: 1.3.0
+      es-main:
+        specifier: ^1.2.0
+        version: 1.2.0
+      help-me:
+        specifier: ^4.2.0
+        version: 4.2.0
+      minimist:
+        specifier: ^1.2.8
+        version: 1.2.8
+    devDependencies:
+      c8:
+        specifier: ^7.13.0
+        version: 7.13.0
+      execa:
+        specifier: ^7.0.0
+        version: 7.1.1
+      snazzy:
+        specifier: ^9.0.0
+        version: 9.0.0
+      split2:
+        specifier: ^4.1.0
+        version: 4.2.0
+      standard:
+        specifier: ^17.0.0
+        version: 17.0.0
 
   packages/utils:
     dependencies:

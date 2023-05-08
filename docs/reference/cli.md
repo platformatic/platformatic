@@ -89,6 +89,7 @@ Welcome to Platformatic. Available commands are:
 * upgrade - upgrade the Platformatic configuration to the latest version.
 * gh - creates a new gh action for Platformatic deployments
 * deploy - deploy a Platformatic application to the cloud
+* start - start a Platformatic application
 ```
 
 
@@ -107,7 +108,7 @@ Compile typescript plugins.
 ```
 
 As a result of executing this command, the Platformatic DB will compile typescript
-plugins in the `outDir` directory. 
+plugins in the `outDir` directory.
 
 If not specified, the configuration specified will be loaded from
 `platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
@@ -369,7 +370,7 @@ Compile typescript plugins.
 ```
 
 As a result of executing this command, the Platformatic DB will compile typescript
-plugins in the `outDir` directory. 
+plugins in the `outDir` directory.
 
 If not specified, the configuration specified will be loaded from
 `platformatic.service.json`, `platformatic.service.yml`, or `platformatic.service.tml` in the current directory.
@@ -451,7 +452,7 @@ $ platformatic client http://exmaple.com/grapqhl -n myclient
 ```
 
 This will create a Fastify plugin that exposes a client for the remote API in a folder `myclient`
-and a file named myclient.js inside it. 
+and a file named myclient.js inside it.
 
 If platformatic config file is specified, it will be edited and a `clients` section will be added.
 Then, in any part of your Platformatic application you can use the client.
@@ -464,7 +465,7 @@ module.exports = async function (app, opts) {
     const res = await app.myclient.graphql({
       query: 'query { hello }'
     })
-    return res 
+    return res
   })
 }
 ```
@@ -488,3 +489,17 @@ Options:
   * `-c, --config <path>`: Path to the configuration file.
   * `-n, --name <name>`: Name of the client.
 
+### start
+
+```bash
+platformatic start
+```
+
+
+#### help
+
+Start a Platformatic application with the following command:
+
+``` bash
+$ platformatic start
+```

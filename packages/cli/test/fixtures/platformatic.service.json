@@ -1,0 +1,13 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v0.22.0/service",
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0,
+    "logger": {
+      "level": "info",
+      "name": "hello server"
+    }
+  },
+  "metrics": false,
+  "watch": false
+}
