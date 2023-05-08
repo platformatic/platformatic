@@ -316,12 +316,10 @@ const server = {
           ]
         },
         requestCert: {
-          type: 'boolean',
-          default: true
+          type: 'boolean'
         },
         rejectUnauthorized: {
-          type: 'boolean',
-          default: true
+          type: 'boolean'
         }
       },
       additionalProperties: false,
