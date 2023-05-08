@@ -147,28 +147,54 @@ test('should fail if invalid workspace type provided', async (t) => {
   }
 })
 
-test('should fail if deploy label does not start with a "cli:" prefix', async (t) => {
+test('should deploy to a dynamic workspace to the cloud', async (t) => {
   const workspaceType = 'dynamic'
   const workspaceId = 'b3d7f7e0-8c03-11e8-9eb6-529269fb1459'
   const workspaceKey = 'b3d7f7e08c0311e89eb6529269fb1459'
   const pathToConfig = join(import.meta.url, './fixtures/app-to-deploy/platformatic.db.json')
-  const label = 'my label'
+  const label = 'cli:deploy-2'
 
-  try {
-    await execa('node', [
-      cliPath, 'deploy',
-      '--type', workspaceType,
-      '--label', label,
-      '--config', pathToConfig,
-      '--workspace-id', workspaceId,
-      '--workspace-key', workspaceKey,
-      '--deploy-service-host', 'http://localhost:5555'
-    ])
-    t.fail('should have failed')
-  } catch (err) {
-    t.ok(err.message.includes(
-      `Invalid deploy label provided: "${label}". ` +
-      'Label must be prefixed with one of: cli, github-pr.'
-    ))
-  }
+  const machineHost = await startMachine(t)
+  const deployServiceHost = await startDeployService(t, {
+    createBundleCallback: (request, reply) => {
+      t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+      t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+      t.match(request.body, {
+        bundle: {
+          appType: 'db',
+          configPath: 'platformatic.db.json'
+        }
+      })
+      t.ok(request.body.bundle.checksum)
+    },
+    createDeploymentCallback: (request, reply) => {
+      t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+      t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+      t.same(
+        request.body,
+        {
+          label,
+          variables: {
+            PLT_ENV_VARIABLE1: 'platformatic_variable1',
+            PLT_ENV_VARIABLE2: 'platformatic_variable2'
+          },
+          secrets: {
+            PLT_SECRET_1: 'platformatic_secret_1',
+            PLT_SECRET_2: 'platformatic_secret_2'
+          }
+        }
+      )
+      reply.code(200).send({ entryPointUrl: machineHost })
+    }
+  })
+
+  await execa('node', [
+    cliPath, 'deploy',
+    '--type', workspaceType,
+    '--label', 'deploy-2',
+    '--config', pathToConfig,
+    '--workspace-id', workspaceId,
+    '--workspace-key', workspaceKey,
+    '--deploy-service-host', deployServiceHost
+  ])
 })
