@@ -896,6 +896,9 @@ importers:
         specifier: ^1.0.35
         version: 1.0.35
     devDependencies:
+      '@fastify/aws-lambda':
+        specifier: ^3.2.0
+        version: 3.2.0
       '@matteo.collina/worker':
         specifier: ^3.1.0
         version: 3.1.0
@@ -3198,6 +3201,10 @@ packages:
     dependencies:
       pkg-up: 3.1.0
     dev: false
+
+  /@fastify/aws-lambda@3.2.0:
+    resolution: {integrity: sha512-C6qfrV5/XF3Lh3tMfV4W8f3yH7SUoNAvrBXs9Vp/Si7r/2Dpn3RDGgvwXrtFxWP+t+AF+wxbKCZbOmrU+m64Dg==}
+    dev: true
 
   /@fastify/basic-auth@5.0.0:
     resolution: {integrity: sha512-SKqJ0z6ziUZ2rfTcI0Y/RTlyvWgLlwATsOC9HSkAUEfIunFUXCTeygijSZRg/CYQkBRjoczwhNvBFr8Pm6agTg==}
@@ -14609,7 +14616,6 @@ packages:
 
   /trim@0.0.1:
     resolution: {integrity: sha512-YzQV+TZg4AxpKxaTHK3c3D+kRDCGVEE7LemdlQZoQXn0iennk10RsIoY6ikzAqJTc9Xjl9C1/waHom/J86ziAQ==}
-    deprecated: Use String.prototype.trim() instead
     dev: true
 
   /trivial-deferred@1.1.2:

@@ -292,6 +292,8 @@ A **required** object with the following settings:
   }
   ```
 
+  Starting Platformatic DB or running a migration will automatically create the schemalock file.
+
 
 ### `dashboard`
 
