@@ -15,33 +15,26 @@ test('starts a server', async ({ teardown }) => {
 
   await cp(src, dest)
 
-  return new Promise((resolve, reject) => {
-    try {
-      const child = spawn(process.execPath, [cliPath, 'start'], {
-        cwd: destDir,
-        timeout: 10_000
-      })
-
-      teardown(async () => {
-        try {
-          child.kill('SIGINT')
-        } catch {} // Ignore error.
-      })
-
-      let stdout = ''
-
-      child.stdout.setEncoding('utf8')
-      child.stdout.on('data', (chunk) => {
-        stdout += chunk
-
-        if (/server listening at/i.test(stdout)) {
-          resolve()
-        }
-      })
-
-      child.on('error', reject)
-    } catch (err) {
-      reject(err)
-    }
+  const child = spawn(process.execPath, [cliPath, 'start'], {
+    cwd: destDir,
+    timeout: 10_000
   })
+
+  teardown(async () => {
+    try {
+      child.kill('SIGINT')
+    } catch {} // Ignore error.
+  })
+
+  let stdout = ''
+
+  child.stdout.setEncoding('utf8')
+
+  for await (const chunk of child.stdout) {
+    stdout += chunk
+
+    if (/server listening at/i.test(stdout)) {
+      break
+    }
+  }
 })
