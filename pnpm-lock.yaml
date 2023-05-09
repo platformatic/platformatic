@@ -812,8 +812,8 @@ importers:
         specifier: ^1.3.0
         version: 1.3.0
       '@fastify/restartable':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.1.0
+        version: 2.1.0
       '@fastify/static':
         specifier: ^6.10.1
         version: 6.10.1
@@ -3225,8 +3225,8 @@ packages:
       which: 2.0.2
     dev: true
 
-  /@fastify/restartable@2.0.0:
-    resolution: {integrity: sha512-lNgGAwsCFv5Ax1hznjhajQZ//z61qqP2LywyBIOe7VPFDFreYBOpRMk5R7lEiMCpYENYEu9F3zRyOGvctaX3tA==}
+  /@fastify/restartable@2.1.0:
+    resolution: {integrity: sha512-zq0g0s0r87b0gUOv+11Mi3D9B2NdkTjKX+QM8s5WK3IhmTKLJ5UfMkJXfqYbqeDOgoGfXfSjyxtfkHbTFlDk/Q==}
     dependencies:
       fastify: 4.17.0
     transitivePeerDependencies:
