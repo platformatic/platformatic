@@ -354,7 +354,7 @@ jobs:
       - name: Run test suite
         run: cd packages/service && pnpm test; cd ../..
 
-  ci-config:
+  ci-start:
     needs: setup-node_modules
     runs-on: ${{matrix.os}}
     timeout-minutes: 15
