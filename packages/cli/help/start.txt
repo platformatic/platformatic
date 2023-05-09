@@ -1,0 +1,5 @@
+Start a Platformatic application with the following command:
+
+``` bash
+$ platformatic start
+```

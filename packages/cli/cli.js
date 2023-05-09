@@ -4,6 +4,7 @@ import commist from 'commist'
 import minimist from 'minimist'
 import { runDB } from '@platformatic/db/db.mjs'
 import { runService } from '@platformatic/service/service.mjs'
+import { startCommand } from '@platformatic/start'
 import { login } from '@platformatic/authenticate/authenticate.js'
 import { command as client } from '@platformatic/client-cli'
 import { readFile } from 'fs/promises'
@@ -38,6 +39,7 @@ const ensureCommand = async ({ output, help }) => {
 
 program.register('db', async (args) => ensureCommand(await runDB(args)))
 program.register('service', async (args) => ensureCommand(await runService(args)))
+program.register('start', startCommand)
 program.register('upgrade', upgrade)
 program.register('client', client)
 program.register('help', help.toStdout)
