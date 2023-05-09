@@ -27,7 +27,7 @@ function tryGetConfigTypeFromSchema (config) {
   return configType
 }
 
-async function getConfigType (args, directory) {
+async function getConfigType (args = [], directory) {
   try {
     // The config type was not specified, so we need to figure it out.
     // Try to get the config file from the provided arguments.

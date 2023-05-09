@@ -48,7 +48,7 @@ test('getConfigType()', async (t) => {
 
   await t.test('gets type from config in provided directory', async () => {
     const configDir = join(fixturesDir, 'serviceApp')
-    const type = await getConfigType([], configDir)
+    const type = await getConfigType(undefined, configDir)
 
     assert.strictEqual(type, 'service')
   })
@@ -62,7 +62,7 @@ test('getConfigType()', async (t) => {
 
     const configDir = join(fixturesDir, 'dbApp')
     process.chdir(configDir)
-    const type = await getConfigType([])
+    const type = await getConfigType()
 
     assert.strictEqual(type, 'db')
   })
