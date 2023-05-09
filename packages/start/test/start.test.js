@@ -1,6 +1,7 @@
 'use strict'
 const assert = require('node:assert')
 const { spawn } = require('node:child_process')
+const { once } = require('node:events')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const {
@@ -142,73 +143,41 @@ test('buildServer()', async (t) => {
 })
 
 test('start()', async (t) => {
-  await t.test('can start a service server', (t) => {
-    return new Promise((resolve, reject) => {
-      const scriptFile = join(fixturesDir, 'starter.js')
-      const configFile = join(fixturesDir, 'serviceApp', 'platformatic.service.json')
-      const child = spawn(process.execPath, [scriptFile, configFile])
+  await t.test('can start a service server', async (t) => {
+    const scriptFile = join(fixturesDir, 'starter.js')
+    const configFile = join(fixturesDir, 'serviceApp', 'platformatic.service.json')
+    const child = spawn(process.execPath, [scriptFile, configFile])
+    const [exitCode] = await once(child, 'exit')
 
-      child.on('error', reject)
-      child.on('exit', (exitCode) => {
-        if (exitCode === 42) {
-          resolve()
-        } else {
-          reject(new Error(`unexpected exit code: ${exitCode}`))
-        }
-      })
-    })
+    assert.strictEqual(exitCode, 42)
   })
 
-  await t.test('can start a db server', (t) => {
-    return new Promise((resolve, reject) => {
-      const scriptFile = join(fixturesDir, 'starter.js')
-      const configFile = join(fixturesDir, 'dbApp', 'platformatic.db.json')
-      const child = spawn(process.execPath, [scriptFile, configFile])
+  await t.test('can start a db server', async (t) => {
+    const scriptFile = join(fixturesDir, 'starter.js')
+    const configFile = join(fixturesDir, 'dbApp', 'platformatic.db.json')
+    const child = spawn(process.execPath, [scriptFile, configFile])
+    const [exitCode] = await once(child, 'exit')
 
-      child.on('error', reject)
-      child.on('exit', (exitCode) => {
-        if (exitCode === 42) {
-          resolve()
-        } else {
-          reject(new Error(`unexpected exit code: ${exitCode}`))
-        }
-      })
-    })
+    assert.strictEqual(exitCode, 42)
   })
 })
 
 test('startCommand()', async (t) => {
-  await t.test('can start a server', (t) => {
-    return new Promise((resolve, reject) => {
-      const scriptFile = join(fixturesDir, 'start-command.js')
-      const configFile = join(fixturesDir, 'serviceApp', 'platformatic.service.json')
-      const child = spawn(process.execPath, [scriptFile, configFile])
+  await t.test('can start a server', async (t) => {
+    const scriptFile = join(fixturesDir, 'start-command.js')
+    const configFile = join(fixturesDir, 'serviceApp', 'platformatic.service.json')
+    const child = spawn(process.execPath, [scriptFile, configFile])
+    const [exitCode] = await once(child, 'exit')
 
-      child.on('error', reject)
-      child.on('exit', (exitCode) => {
-        if (exitCode === 42) {
-          resolve()
-        } else {
-          reject(new Error(`unexpected exit code: ${exitCode}`))
-        }
-      })
-    })
+    assert.strictEqual(exitCode, 42)
   })
 
-  await t.test('exits on error', (t) => {
-    return new Promise((resolve, reject) => {
-      const scriptFile = join(fixturesDir, 'start-command.js')
-      const configFile = join(fixturesDir, 'serviceApp', 'platformatic.not-found.json')
-      const child = spawn(process.execPath, [scriptFile, configFile])
+  await t.test('exits on error', async (t) => {
+    const scriptFile = join(fixturesDir, 'start-command.js')
+    const configFile = join(fixturesDir, 'serviceApp', 'platformatic.not-found.json')
+    const child = spawn(process.execPath, [scriptFile, configFile])
+    const [exitCode] = await once(child, 'exit')
 
-      child.on('error', reject)
-      child.on('exit', (exitCode) => {
-        if (exitCode === 1) {
-          resolve()
-        } else {
-          reject(new Error(`unexpected exit code: ${exitCode}`))
-        }
-      })
-    })
+    assert.strictEqual(exitCode, 1)
   })
 })
