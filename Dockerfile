@@ -1,4 +1,5 @@
-FROM node:18-alpine
+# stage 1 
+FROM node:18-alpine as builder
 
 ENV HOME=/home
 ENV PLT_HOME=$HOME/platformatic/
@@ -15,7 +16,7 @@ WORKDIR $PLT_HOME
 RUN apk update && apk add --no-cache dumb-init python3 libc-dev make g++
 
 # Install pnpm
-RUN npm i pnpm@7 --location=global
+RUN npm i pnpm --location=global
 
 # Copy lock files
 COPY package.json ./
@@ -40,6 +41,18 @@ WORKDIR $APP_HOME
 # Reduce our permissions from root to a normal user
 RUN chown node:node . 
 USER node
+
+# stage 2 
+# make image "Distroless" to contain only the app and its runtime dependencies
+FROM gcr.io/distroless/nodejs18-debian11
+
+USER node
+
+# Copy into base image
+COPY $APP_HOME ./
+
+# Move to the app directory
+WORKDIR /root/
 
 ENTRYPOINT ["dumb-init"]
 CMD ["platformatic"]
