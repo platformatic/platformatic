@@ -3,15 +3,24 @@ const { resolve } = require('node:path')
 const parseArgs = require('minimist')
 const ConfigManager = require('@platformatic/config')
 const {
-  buildServer: dbBuildServer
+  buildServer: dbBuildServer,
+  schema: dbSchema
 } = require('@platformatic/db')
 const {
   buildServer: serviceBuildServer,
-  loadConfig: serviceLoadConfig
+  loadConfig: serviceLoadConfig,
+  schema: serviceSchema
 } = require('@platformatic/service')
 const kSupportedAppTypes = new Set(['service', 'db'])
 
-function tryGetConfigTypeFromSchema (config) {
+async function tryGetConfigTypeFromSchema (config) {
+  if (typeof config === 'string') {
+    // Handle config file paths.
+    const loadedConfig = await loadConfig({}, ['-c', config])
+
+    config = loadedConfig.configManager.current
+  }
+
   const schema = config?.$schema
 
   if (typeof schema !== 'string') {
@@ -51,7 +60,7 @@ async function getConfigType (args = [], directory) {
     const configString = await configManager.load()
     const parsedConfig = configManager._parser(configString)
 
-    return tryGetConfigTypeFromSchema(parsedConfig)
+    return await tryGetConfigTypeFromSchema(parsedConfig)
   } catch (err) {
     const configFiles = ConfigManager.listConfigFiles()
     const msg = `
@@ -64,8 +73,18 @@ Alternatively run "npm create platformatic@latest" to generate a basic plt servi
   }
 }
 
+async function getCurrentSchema (configType) {
+  if (configType === 'service') {
+    return serviceSchema.schema
+  } else if (configType === 'db') {
+    return dbSchema
+  }
+
+  throw new Error(`unknown configuration type: '${configType}'`)
+}
+
 async function buildServer (options) {
-  const configType = tryGetConfigTypeFromSchema(options)
+  const configType = await tryGetConfigTypeFromSchema(options)
   let buildServerFn
 
   if (configType === 'service') {
@@ -128,6 +147,7 @@ async function startCommand (...args) {
 module.exports = {
   buildServer,
   getConfigType,
+  getCurrentSchema,
   loadConfig,
   start,
   startCommand

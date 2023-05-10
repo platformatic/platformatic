@@ -8,12 +8,12 @@ know the application type a priori.
 ## `buildServer()`
 
 The `buildServer` function creates a server from a provided configuration
-object.
+object or configuration filename.
 
 ```js
 import { buildServer } from '@platformatic/start'
 
-// This config can also be obtained via loadConfig().
+// This config can also be a config filename or obtained via loadConfig().
 const config = {
   server: {
     hostname: '127.0.0.1',
@@ -42,6 +42,19 @@ const type = await getConfigType(undefined, '/directory/of/project')
 // Search a the current working directory for a config file and get the type
 // from that file.
 const type = await getConfigType()
+```
+
+## `getCurrentSchema()`
+
+The `getCurrentSchema` function takes a Platformatic application type as input,
+and returns the corresponding configuration file schema for the current version.
+If the input is not a recognized application type, an exception will be thrown.
+
+```js
+import { getCurrentSchema } from '@platformatic/start'
+
+// Get the type from command line arguments.
+const type = await getCurrentSchema('service')
 ```
 
 ## `loadConfig()`

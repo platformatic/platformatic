@@ -7,8 +7,10 @@ const { test } = require('node:test')
 const {
   buildServer,
   getConfigType,
+  getCurrentSchema,
   loadConfig
 } = require('..')
+const { version } = require('../package.json')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
 test('getConfigType()', async (t) => {
@@ -66,6 +68,26 @@ test('getConfigType()', async (t) => {
     const type = await getConfigType()
 
     assert.strictEqual(type, 'db')
+  })
+})
+
+test('getCurrentSchema()', async (t) => {
+  await t.test('gets service schema', async () => {
+    const schema = await getCurrentSchema('service')
+
+    assert(schema.$id.endsWith(`/v${version}/service`))
+  })
+
+  await t.test('gets db schema', async () => {
+    const schema = await getCurrentSchema('db')
+
+    assert(schema.$id.endsWith(`/v${version}/db`))
+  })
+
+  await t.test('throws for unknown types', async () => {
+    await assert.rejects(async () => {
+      await getCurrentSchema('not-a-real-type')
+    }, /unknown configuration type/)
   })
 })
 
@@ -131,6 +153,19 @@ test('buildServer()', async (t) => {
     const configFile = join(fixturesDir, 'dbApp', 'platformatic.db.json')
     const config = await loadConfig({}, ['-c', configFile])
     const server = await buildServer(config.configManager.current)
+
+    t.after(async () => {
+      await server.close()
+    })
+
+    const address = await server.start()
+    // The address should be a valid URL.
+    new URL(address) // eslint-disable-line no-new
+  })
+
+  await t.test('input can be a filename', async (t) => {
+    const configFile = join(fixturesDir, 'serviceApp', 'platformatic.service.json')
+    const server = await buildServer(configFile)
 
     t.after(async () => {
       await server.close()
