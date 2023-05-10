@@ -20,7 +20,7 @@ Platformatic supports macOS, Linux and Windows ([WSL](https://docs.microsoft.com
 
 To follow along with this guide you'll need to have these things installed:
 
-- [Node.js](https://nodejs.org/) >= v16.17.0 or >= v18.8.0
+- [Node.js](https://nodejs.org/) >= vv18.8.0 or >= v19.0.0
 - [npm](https://docs.npmjs.com/cli/) v7 or later
 - A code editor, for example [Visual Studio Code](https://code.visualstudio.com/)
 
@@ -65,7 +65,9 @@ like to set up your new Platformatic project. For this guide, select these optio
 - Do you want to use TypeScript?                => No
 - Do you want to install dependencies?          => Yes (this can take a while)
 - Do you want to apply the migrations?          => Yes
-- Do you want to create the GitHub action to deploy this application to Platformatic Cloud? => No
+- Do you want to generate types?                => Yes
+- Do you want to create the github action to deploy this application to Platformatic Cloud dynamic workspace? => No
+- Do you want to create the github action to deploy this application to Platformatic Cloud static workspace?  => No
 ```
 
 Once the wizard is complete, you'll have a Platformatic app project in the
