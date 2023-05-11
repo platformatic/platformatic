@@ -132,3 +132,4 @@ packages/service/test/tmp
 packages/cli/fixtures/sqlite/db
 packages/client-cli/test/tmp
 packages/db/test/fixtures/schema.lock
+.ccls-cache

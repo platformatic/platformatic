@@ -254,7 +254,7 @@ t.test('valid tsconfig file inside an inner folder', async (t) => {
   await cp(testDir, cwd, { recursive: true })
 
   try {
-    await execa('node', [cliPath, 'compile'], { cwd })
+    await execa('node', [cliPath, 'compile'], { cwd, stdio: 'inherit' })
   } catch (err) {
     t.fail('should not catch any error')
   }

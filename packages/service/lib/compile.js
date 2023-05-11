@@ -102,11 +102,11 @@ async function compileWatch (cwd, config) {
   return { child }
 }
 
-function buildCompileCmd (_loadConfig) {
+function buildCompileCmd (app) {
   return async function compileCmd (_args) {
     let fullPath = null
     try {
-      const { configManager } = await _loadConfig({}, _args)
+      const { configManager } = await loadConfig({}, _args, app)
       await configManager.parseAndValidate()
       fullPath = dirname(configManager.fullPath)
       /* c8 ignore next 4 */
@@ -121,9 +121,6 @@ function buildCompileCmd (_loadConfig) {
   }
 }
 
-const compileCmd = buildCompileCmd(loadConfig)
-
 module.exports.compile = compile
 module.exports.compileWatch = compileWatch
 module.exports.buildCompileCmd = buildCompileCmd
-module.exports.compileCmd = compileCmd

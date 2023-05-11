@@ -36,7 +36,7 @@ class FileWatcher extends EventEmitter {
     this.abortController = new AbortController()
     const signal = this.abortController.signal
 
-    const fsWatcher = watch(this.path, { signal, recursive: true })
+    const fsWatcher = watch(this.path, { signal, recursive: true, persistent: false })
 
     let updateTimeout = null
 
@@ -55,6 +55,7 @@ class FileWatcher extends EventEmitter {
 
         if (isTimeoutSet && isTrackedEvent && isTrackedFile) {
           updateTimeout = setTimeout(() => this.emit('update'), 100)
+          updateTimeout.unref()
         }
       }
     } /* c8 ignore next */

@@ -1,0 +1,176 @@
+'use strict'
+
+const { readFile } = require('fs/promises')
+const close = require('close-with-grace')
+const { loadConfig } = require('./load-config')
+const { addLoggerToTheConfig } = require('./utils.js')
+const ConfigManager = require('@platformatic/config')
+const { restartable } = require('@fastify/restartable')
+
+async function adjustHttpsKeyAndCert (arg) {
+  if (typeof arg === 'string') {
+    return arg
+  }
+
+  if (!Array.isArray(arg)) {
+    // { path: pathToKeyOrCert }
+    return readFile(arg.path)
+  }
+
+  // Array of strings or objects.
+  for (let i = 0; i < arg.length; ++i) {
+    arg[i] = await adjustHttpsKeyAndCert(arg[i])
+  }
+
+  return arg
+}
+
+async function buildServer (options, app) {
+  let configManager = options.configManager
+  if (!configManager) {
+    // instantiate a new config manager from current options
+    configManager = new ConfigManager({ ...app.configManagerConfig, source: options })
+    await configManager.parseAndValidate()
+  }
+
+  // options is a path
+  if (typeof options === 'string') {
+    options = configManager.current
+  }
+
+  let url = null
+
+  async function createRestartable (fastify) {
+    const config = configManager.current
+    const root = fastify(config.server)
+
+    root.decorate('platformatic', { configManager, config })
+    root.register(app)
+
+    root.decorate('url', {
+      getter () {
+        return url
+      }
+    })
+
+    if (root.restarted) {
+      root.log.info('restarted')
+    }
+
+    return root
+  }
+
+  const { port, hostname, ...serverOptions } = options.server
+
+  if (serverOptions.https) {
+    serverOptions.https.key = await adjustHttpsKeyAndCert(serverOptions.https.key)
+    serverOptions.https.cert = await adjustHttpsKeyAndCert(serverOptions.https.cert)
+  }
+
+  const handler = await restartable(createRestartable)
+
+  configManager.on('update', async (newConfig) => {
+    handler.log.debug('config changed')
+    handler.log.trace({ newConfig }, 'new config')
+
+    if (newConfig.watch === false) {
+      /* c8 ignore next 4 */
+      if (handler.tsCompilerWatcher) {
+        handler.tsCompilerWatcher.kill('SIGTERM')
+        handler.log.debug('stop watching typescript files')
+      }
+
+      if (handler.fileWatcher) {
+        await handler.fileWatcher.stopWatching()
+        handler.log.debug('stop watching files')
+      }
+    }
+
+    await safeRestart(handler)
+    /* c8 ignore next 1 */
+  })
+
+  configManager.on('error', function (err) {
+    /* c8 ignore next 1 */
+    handler.log.error({ err }, 'error reloading the configuration')
+  })
+
+  handler.decorate('start', async () => {
+    url = await handler.listen({ host: hostname, port })
+    return url
+  })
+
+  return handler
+}
+
+async function safeRestart (app) {
+  try {
+    await app.restart()
+    /* c8 ignore next 8 */
+  } catch (err) {
+    app.log.error({
+      err: {
+        message: err.message,
+        stack: err.stack
+      }
+    }, 'failed to reload server')
+  }
+}
+
+async function start (appType, _args) {
+  const { configManager } = await loadConfig({}, _args, appType)
+
+  const config = configManager.current
+
+  addLoggerToTheConfig(config)
+
+  const _transformConfig = configManager._transformConfig.bind(configManager)
+  configManager._transformConfig = function () {
+    const config = configManager.current
+    addLoggerToTheConfig(config)
+    return _transformConfig(config)
+  }
+
+  let app = null
+
+  try {
+    // Set the location of the config
+    app = await buildServer({ ...config, configManager }, appType)
+
+    await app.start()
+    // TODO: this log is used in the start command. Should be replaced
+    app.log.info({ url: app.url })
+  } catch (err) {
+    // TODO route this to a logger
+    console.error(err)
+    process.exit(1)
+  }
+
+  // Ignore from CI because SIGUSR2 is not available
+  // on Windows
+  /* c8 ignore next 25 */
+  process.on('SIGUSR2', function () {
+    app.log.info('reloading configuration')
+    safeRestart(app)
+    return false
+  })
+
+  close(async ({ signal, err }) => {
+    // Windows does not support trapping signals
+    if (err) {
+      app.log.error({
+        err: {
+          message: err.message,
+          stack: err.stack
+        }
+      }, 'exiting')
+    } else if (signal) {
+      app.log.info({ signal }, 'received signal')
+    }
+
+    await app.close()
+  })
+}
+
+module.exports.buildServer = buildServer
+module.exports.start = start

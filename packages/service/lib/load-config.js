@@ -4,32 +4,17 @@ const parseArgs = require('minimist')
 const { access } = require('fs/promises')
 const ConfigManager = require('@platformatic/config')
 const deepmerge = require('@fastify/deepmerge')
-const { schema } = require('./schema.js')
-
-function generateDefaultConfig () {
-  return {
-    schema,
-    schemaOptions: {
-      useDefaults: true,
-      coerceTypes: true,
-      allErrors: true,
-      strict: false
-    }
-  }
-}
 
 // Unfortunately c8 does not see those on Windows
 /* c8 ignore next 70 */
-async function loadConfig (minimistConfig, _args, defaultConfig, configType = 'service') {
-  if (defaultConfig === undefined) {
-    defaultConfig = generateDefaultConfig()
-  } else if (defaultConfig?.mergeDefaults) {
-    defaultConfig = { ...generateDefaultConfig(), ...defaultConfig }
+async function loadConfig (minimistConfig, _args, app, configType = 'service', overrides = {}) {
+  const configManagerConfig = {
+    ...app.configManagerConfig,
+    ...overrides
   }
 
   const args = parseArgs(_args, deepmerge({ all: true })({
     string: ['allow-env'],
-    boolean: ['hotReload'],
     default: {
       allowEnv: '', // The default is set in ConfigManager
       hotReload: true
@@ -37,8 +22,7 @@ async function loadConfig (minimistConfig, _args, defaultConfig, configType = 's
     alias: {
       v: 'version',
       c: 'config',
-      allowEnv: ['allow-env', 'E'],
-      hotReload: ['hot-reload']
+      allowEnv: ['allow-env', 'E']
     }
   }, minimistConfig))
 
@@ -58,11 +42,12 @@ Error: ${err}
     process.exit(1)
   }
 
-  const envWhitelist = args.allowEnv ? args.allowEnv : defaultConfig.envWhitelist
+  const envWhitelist = args.allowEnv ? args.allowEnv : configManagerConfig.envWhitelist
   const configManager = new ConfigManager({
     source: args.config,
-    ...defaultConfig,
-    envWhitelist
+    ...configManagerConfig,
+    envWhitelist,
+    watch: true
   })
 
   const parsingResult = await configManager.parse()
@@ -85,4 +70,3 @@ function printConfigValidationErrors (configManager) {
 }
 
 module.exports.loadConfig = loadConfig
-module.exports.generateDefaultConfig = generateDefaultConfig
