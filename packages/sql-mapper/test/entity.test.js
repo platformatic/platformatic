@@ -50,16 +50,18 @@ test('entity API', async ({ equal, same, teardown, rejects }) => {
     if (isSQLite) {
       await db.query(sql`CREATE TABLE pages (
         id INTEGER PRIMARY KEY,
-        the_title VARCHAR(42)
+        the_title VARCHAR(42),
+        is_published BOOLEAN NOT NULL
       );`)
     } else {
       await db.query(sql`CREATE TABLE pages (
         id SERIAL PRIMARY KEY,
-        the_title VARCHAR(255) NOT NULL
+        the_title VARCHAR(255) NOT NULL,
+        is_published BOOLEAN NOT NULL
       );`)
     }
-    await db.query(sql`INSERT INTO pages (the_title) VALUES ('foo')`)
-    await db.query(sql`INSERT INTO pages (the_title) VALUES ('bar')`)
+    await db.query(sql`INSERT INTO pages (the_title, is_published) VALUES ('foo', true)`)
+    await db.query(sql`INSERT INTO pages (the_title, is_published) VALUES ('bar', false)`)
   }
   const mapper = await connect({
     connectionString: connInfo.connectionString,
@@ -70,16 +72,17 @@ test('entity API', async ({ equal, same, teardown, rejects }) => {
   })
   const pageEntity = mapper.entities.page
   // fixInput
-  const fixedInput = pageEntity.fixInput({ id: 42, theTitle: 'Fixme' })
-  same(fixedInput, { id: 42, the_title: 'Fixme' })
+  const fixedInput = pageEntity.fixInput({ id: 42, theTitle: 'Fixme', isPublished: true })
+  same(fixedInput, { id: 42, the_title: 'Fixme', is_published: true })
 
   // fixOutput
   const fixedOutput = pageEntity.fixOutput({
     id: 42,
-    the_title: 'Fixme'
+    the_title: 'Fixme',
+    is_published: true
   })
 
-  same(fixedOutput, { id: 42, theTitle: 'Fixme' })
+  same(fixedOutput, { id: 42, theTitle: 'Fixme', isPublished: true })
 
   // empty fixOutput
   same(pageEntity.fixOutput(undefined), undefined)
@@ -94,29 +97,35 @@ test('entity API', async ({ equal, same, teardown, rejects }) => {
 
   // insert - single
   const insertResult = await pageEntity.insert({
-    inputs: [{ theTitle: 'foobar' }],
-    fields: ['id', 'theTitle']
+    inputs: [{ theTitle: 'foobar', isPublished: false }],
+    fields: ['id', 'theTitle', 'isPublished']
   })
-  same(insertResult, [{ id: '3', theTitle: 'foobar' }])
+  same(insertResult, [{ id: '3', theTitle: 'foobar', isPublished: false }])
 
   // insert - multiple
   const insertMultipleResult = await pageEntity.insert({
-    inputs: [{ theTitle: 'platformatic' }, { theTitle: 'foobar' }],
-    fields: ['id', 'theTitle']
+    inputs: [
+      { theTitle: 'platformatic', isPublished: false },
+      { theTitle: 'foobar', isPublished: true }
+    ],
+    fields: ['id', 'theTitle', 'isPublished']
   })
-  same(insertMultipleResult, [{ id: '4', theTitle: 'platformatic' }, { id: '5', theTitle: 'foobar' }])
+  same(insertMultipleResult, [
+    { id: '4', theTitle: 'platformatic', isPublished: false },
+    { id: '5', theTitle: 'foobar', isPublished: true }
+  ])
 
   // save - new record
   same(await pageEntity.save({
-    input: { theTitle: 'fourth page' },
-    fields: ['id', 'theTitle']
-  }), { id: 6, theTitle: 'fourth page' })
+    input: { theTitle: 'fourth page', isPublished: false },
+    fields: ['id', 'theTitle', 'isPublished']
+  }), { id: 6, theTitle: 'fourth page', isPublished: false })
 
   // save - update record
   same(await pageEntity.save({
-    input: { id: 4, theTitle: 'foofoo' },
-    fields: ['id', 'theTitle']
-  }), { id: '4', theTitle: 'foofoo' })
+    input: { id: 4, theTitle: 'foofoo', isPublished: true },
+    fields: ['id', 'theTitle', 'isPublished']
+  }), { id: '4', theTitle: 'foofoo', isPublished: true })
 
   // save - empty object
   rejects(async () => {
