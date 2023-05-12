@@ -36,7 +36,7 @@ class FileWatcher extends EventEmitter {
     this.abortController = new AbortController()
     const signal = this.abortController.signal
 
-    const fsWatcher = watch(this.path, { signal, recursive: true, persistent: false })
+    const fsWatcher = watch(this.path, { signal, recursive: true })
 
     let updateTimeout = null
 

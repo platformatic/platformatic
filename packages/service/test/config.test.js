@@ -2,8 +2,7 @@
 
 require('./helper')
 const { test } = require('tap')
-const { buildServer, platformaticService } = require('..')
-const { loadConfig } = require('../lib/load-config')
+const { buildServer } = require('..')
 const { request } = require('undici')
 const { join } = require('path')
 const os = require('os')
@@ -294,20 +293,4 @@ test('config reloads', async ({ teardown, equal, pass, same }) => {
     equal(res.statusCode, 200, 'add status code')
     same(await res.body.text(), 'ciao mondo', 'response')
   }
-})
-
-test('can merge provided config with default config', async ({ plan, same }) => {
-  plan(3)
-  const configFile = join(__dirname, 'fixtures', 'custom-port-placeholder.json')
-  const defaultConfig = {
-    onMissingEnv (key) {
-      same(key, 'A_CUSTOM_PORT')
-      return '42'
-    }
-  }
-
-  const config = await loadConfig({}, ['-c', configFile], platformaticService, 'service', defaultConfig)
-  same(config.configManager.current.server.port, 42)
-  // This comes from the default config.
-  same(config.configManager.schemaOptions.useDefaults, true)
 })

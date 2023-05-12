@@ -5,7 +5,8 @@ import { setupDB } from './utils.js'
 import { Migrator } from './migrator.mjs'
 import { SeedError } from './errors.mjs'
 import { pathToFileURL } from 'url'
-import { loadConfig } from './load-config.mjs'
+import { loadConfig } from '@platformatic/service'
+import { platformaticDB } from '../index.js'
 
 async function execute (logger, args, config) {
   const { db, sql, entities } = await setupDB(logger, config.db)
@@ -39,7 +40,7 @@ async function seed (_args) {
       alias: {
         c: 'config'
       }
-    }, _args)
+    }, _args, platformaticDB)
     await configManager.parseAndValidate()
     const config = configManager.current
 

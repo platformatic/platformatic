@@ -106,7 +106,9 @@ function buildCompileCmd (app) {
   return async function compileCmd (_args) {
     let fullPath = null
     try {
-      const { configManager } = await loadConfig({}, _args, app)
+      const { configManager } = await loadConfig({}, _args, app, {
+        watch: false
+      })
       await configManager.parseAndValidate()
       fullPath = dirname(configManager.fullPath)
       /* c8 ignore next 4 */

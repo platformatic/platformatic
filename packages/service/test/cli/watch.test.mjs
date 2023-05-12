@@ -266,7 +266,7 @@ test('should not fail when updating wrong config', async ({ equal, teardown, com
     plugins: {
       paths: [pluginFilePath]
     },
-    watch: false
+    watch: true
   }
 
   await Promise.all([
@@ -280,7 +280,7 @@ test('should not fail when updating wrong config', async ({ equal, teardown, com
   writeFile(configFilePath, 'this is not a valid config')
 
   for await (const log of child.ndj) {
-    if (log.msg === 'error reloading the configuration') break
+    if (log.msg === 'failed to reload server') break
   }
 
   const res = await request(`${url}/version`)

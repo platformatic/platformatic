@@ -91,6 +91,7 @@ async function onFilesUpdated (app) {
 
 platformaticService[Symbol.for('skip-override')] = true
 platformaticService.schema = schema
+platformaticService.configType = 'service'
 platformaticService.configManagerConfig = {
   schema,
   envWhitelist: ['PORT', 'HOSTNAME'],

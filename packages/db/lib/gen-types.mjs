@@ -7,7 +7,8 @@ import pretty from 'pino-pretty'
 import camelcase from 'camelcase'
 import { mapSQLEntityToJSONSchema, mapOpenAPItoTypes } from '@platformatic/sql-json-schema-mapper'
 import { setupDB, isFileAccessible } from './utils.js'
-import { loadConfig } from './load-config.mjs'
+import { loadConfig } from '@platformatic/service'
+import { platformaticDB } from '../index.js'
 
 const DEFAULT_TYPES_FOLDER_PATH = resolve(process.cwd(), 'types')
 
@@ -236,7 +237,7 @@ async function generateTypes (_args) {
     ignore: 'hostname,pid'
   }))
 
-  const { configManager, args } = await loadConfig({}, _args)
+  const { configManager, args } = await loadConfig({}, _args, platformaticDB)
 
   await configManager.parseAndValidate()
   const config = configManager.current

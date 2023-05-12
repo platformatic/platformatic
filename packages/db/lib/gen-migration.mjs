@@ -2,9 +2,10 @@ import { join } from 'path'
 import { writeFile } from 'fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
-import { loadConfig } from './load-config.mjs'
+import { loadConfig } from '@platformatic/service'
 import { Migrator } from './migrator.mjs'
 import { MigrateError } from './errors.mjs'
+import { platformaticDB } from '../index.js'
 
 async function generateMigration (_args) {
   const logger = pino(pretty({
@@ -12,7 +13,7 @@ async function generateMigration (_args) {
     ignore: 'hostname,pid'
   }))
 
-  const { configManager } = await loadConfig({}, _args)
+  const { configManager } = await loadConfig({}, _args, platformaticDB)
   await configManager.parseAndValidate()
   const config = configManager.current
 

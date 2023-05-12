@@ -7,11 +7,13 @@ const deepmerge = require('@fastify/deepmerge')
 
 // Unfortunately c8 does not see those on Windows
 /* c8 ignore next 70 */
-async function loadConfig (minimistConfig, _args, app, configType = 'service', overrides = {}) {
+async function loadConfig (minimistConfig, _args, app, overrides = {}) {
   const configManagerConfig = {
     ...app.configManagerConfig,
     ...overrides
   }
+
+  const configType = app.configType
 
   const args = parseArgs(_args, deepmerge({ all: true })({
     string: ['allow-env'],
@@ -46,8 +48,7 @@ Error: ${err}
   const configManager = new ConfigManager({
     source: args.config,
     ...configManagerConfig,
-    envWhitelist,
-    watch: true
+    envWhitelist
   })
 
   const parsingResult = await configManager.parse()
