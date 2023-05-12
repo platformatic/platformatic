@@ -104,10 +104,7 @@ export async function deploy (argv) {
       const labelPrefix = label.split(':')[0]
       const labelPrefixes = ['cli', 'github-pr']
       if (!labelPrefix || !labelPrefixes.includes(labelPrefix)) {
-        throw new Error(
-          `Invalid deploy label provided: "${label}". ` +
-          `Label must be prefixed with one of: ${labelPrefixes.join(', ')}.`
-        )
+        label = `cli:${label}`
       }
     }
 
