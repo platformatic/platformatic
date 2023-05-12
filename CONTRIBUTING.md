@@ -11,7 +11,7 @@
 5. Install docker with Docker Desktop or [Colima](https://github.com/abiosoft/colima)
 
 To have your global install of `platformatic` resolve to your local copy instead of the version installed via npm, you
-should use [`pnpm link`](https://pnpm.io/cli/link). This will add links so that you can use the `platformatic` and `plt`
+should use [`pnpm link`](https://pnpm.io/cli/link) (`npm link` will also work for this.) This will add links so that you can use the `platformatic` and `plt`
 commands everywhere.
 
 Run from the root folder of the project, execute the following.
