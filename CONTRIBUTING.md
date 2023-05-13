@@ -6,19 +6,22 @@
 
 1. Clone this repository, and enter in the directory (`cd platformatic` on most installations)
 2. Install pnpm `npm i pnpm --location=global` (if you're on Mac, you can use `brew` to install it with `brew install pnpm`)
-3. Install dependencies `pnpm i`
-4. Install docker with Docker Desktop or [Colima](https://github.com/abiosoft/colima)
+3. Make sure to run `pnpm setup` to configure the local path; then close and reopen your terminal.
+4. Install dependencies `pnpm i`
+5. Install docker with Docker Desktop or [Colima](https://github.com/abiosoft/colima)
 
 To have your global install of `platformatic` resolve to your local copy instead of the version installed via npm, you
 should use [`pnpm link`](https://pnpm.io/cli/link). This will add links so that you can use the `platformatic` and `plt`
 commands everywhere.
 
-Run from the root folder 
+Run from the root folder of the project, execute the following.
 
 ```sh
 cd packages/cli
 pnpm link --global
 ```
+This might give you a `pnpm` warning. However, everything should be set up
+correctly anyway. You can verify everything works by running `platformatic`.
 
 <details>
   <summary><b>Troubleshooting</b></summary>
