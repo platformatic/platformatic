@@ -20,11 +20,12 @@ Run from the root folder of the project, execute the following.
 cd packages/cli
 pnpm link --global
 ```
-
 This might give you a `pnpm` warning. However, everything should be set up
 correctly anyway. You can verify everything works by running `platformatic`.
 
-#### Troubleshooting
+<details>
+  <summary><b>Troubleshooting</b></summary>
+
 ##### [SQLite module CPU arch incompatibility](https://github.com/platformatic/platformatic/issues/754)
 ```
 Error: Cannot find module '/platformatic/node_modules/.pnpm/sqlite3@5.1.4/node_modules/sqlite3/lib/binding/napi-v6-darwin-unknown-arm64/node_sqlite3.node'
@@ -56,23 +57,14 @@ Then install again all of the needed packages by running `pnpm i`.
 * verify that the node version in use [is correct](https://oss.platformatic.dev/docs/getting-started/quick-start-guide/#prerequisites)
 * reinstall it (`npm install pnpm -g`)
 
-<a id='run-docker'></a>
-### Start the RDBMS
-
-We use Docker to start all the databases we develop against.
-
-On Linux, execute: `docker compose up`
-
-On Intel Macs: `docker compose -f docker-compose-mac.yml up` 
-
-On Apple Silicon Macs: `docker compose -f docker-compose-apple-silicon.yml up` 
-
-On Windows, execute: `docker-compose up --build`
+</details>
+<br>
 
 ### Start platformatic db
 
-Read thorough documentation on the [quick start guide](https://github.com/platformatic/platformatic/blob/main/docs/getting-started/quick-start-guide.md), or
-follow these steps to quickly create and start a platformatic db:
+Read thorough documentation on the [quick start guide](https://github.com/platformatic/platformatic/blob/main/docs/getting-started/quick-start-guide.md), 
+<details>
+   <summary>or follow these steps to quickly create and start a platformatic db server.</summary>
 
 1. Create directories to work from `mkdir -p my-demo` then `cd my-demo`
 2. Then create a package.json file with the default configs: `npm init --yes`
@@ -105,6 +97,7 @@ follow these steps to quickly create and start a platformatic db:
 5. In your project directory, use the Platformatic CLI to start your API server: `platformatic db start`
 6. Start interacting with the API by opening the following link on your browser http://127.0.0.1:3042/documentation/static/index.html or you can use curl
    to do it. Read the quick start guide to see examples.
+</details>
 
 ### Run dashboard development server
 
@@ -119,7 +112,7 @@ Use the command
 pnpm run dashboard:start
 ```
 
-This will start a webpack server on port `3000` by default, with watcher and hot-reload (as a standard `create-react-app` application).
+This will start a vite server on port `5173` by default, with watcher and hot-reload (as a standard `vite` application).
 
 Note that GraphiQL will _not_ work because platformatic-db has not been started
 yet.
@@ -131,7 +124,7 @@ First build the dashboard for production with the command
 pnpm run dashboard:build
 ```
 
-This will create compressed files and assets under **packages/dashboard/build** directory.
+This will create compressed files and assets under **packages/db-dashboard/build** directory.
 To run the service:
 ```sh
 platformatic db
@@ -142,7 +135,17 @@ If you want to use another config file use the option `--config=/path/to/some.js
 
 ### Testing
 
-1. [Run docker](#run-docker)
+1. Start the RDBMS
+
+   We use Docker to start all the databases we develop against.
+
+   On Linux, execute: `docker compose up`
+
+   On Intel Macs: `docker compose -f docker-compose-mac.yml up` 
+
+   On Apple Silicon Macs: `docker compose -f docker-compose-apple-silicon.yml up` 
+
+   On Windows, execute: `docker-compose up --build`
 1. Run `pnpm run dashboard:build` 
 1. Run tests: `pnpm test`
 
