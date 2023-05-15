@@ -1,5 +1,5 @@
 {
-  "$schema": "https://platformatic.dev/schemas/v0.23.2/db",
+  "$schema": "https://platformatic.dev/schemas/v0.23.1/wrong",
   "server": {
     "hostname": "127.0.0.1",
     "port": 3042

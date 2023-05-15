@@ -66,8 +66,8 @@ importers:
         specifier: workspace:*
         version: link:../db
       '@platformatic/deploy-client':
-        specifier: ^0.1.2
-        version: 0.1.2
+        specifier: workspace:*
+        version: link:../deploy-client
       '@platformatic/metaconfig':
         specifier: workspace:*
         version: link:../metaconfig
@@ -768,6 +768,40 @@ importers:
       whatwg-fetch:
         specifier: ^3.6.2
         version: 3.6.2
+
+  packages/deploy-client:
+    dependencies:
+      '@platformatic/config':
+        specifier: workspace:*
+        version: link:../config
+      '@platformatic/start':
+        specifier: workspace:*
+        version: link:../start
+      tar:
+        specifier: ^6.1.11
+        version: 6.1.14
+      undici:
+        specifier: ^5.11.0
+        version: 5.22.1
+    devDependencies:
+      c8:
+        specifier: ^7.13.0
+        version: 7.13.0
+      fastify:
+        specifier: ^4.11.0
+        version: 4.17.0
+      license-checker:
+        specifier: ^25.0.1
+        version: 25.0.1
+      snazzy:
+        specifier: ^9.0.0
+        version: 9.0.0
+      standard:
+        specifier: ^17.0.0
+        version: 17.0.0
+      tap:
+        specifier: ^16.3.2
+        version: 16.3.4(typescript@5.0.4)
 
   packages/metaconfig:
     dependencies:
@@ -1726,7 +1760,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.12.9
-      '@babel/helper-plugin-utils': 7.10.4
+      '@babel/helper-plugin-utils': 7.21.5
       '@babel/plugin-syntax-object-rest-spread': 7.8.3(@babel/core@7.12.9)
       '@babel/plugin-transform-parameters': 7.21.3(@babel/core@7.12.9)
     dev: true
@@ -3863,13 +3897,6 @@ packages:
       mkdirp: 1.0.4
       rimraf: 3.0.2
     optional: true
-
-  /@platformatic/deploy-client@0.1.2:
-    resolution: {integrity: sha512-gStPJciyVRF6MeUOebI6R8aNnAP+KT+ZRO2wrp39E/ckvuAaHF717vYOG/yteit47ozONm3ydMXgq0Q0kiP2xw==}
-    dependencies:
-      tar: 6.1.14
-      undici: 5.22.1
-    dev: false
 
   /@platformatic/ui-components@0.1.98(@storybook/builder-vite@0.2.7)(@types/react-dom@18.2.4)(@types/react@18.2.6)(vite@4.3.5)(vue@3.3.2):
     resolution: {integrity: sha512-ko0fxLMxNWd0cXPGs3jU9vRm2rT1d74448IYxnKrjXNzVN+PbSDYJRBYcIRkg+UuehvV9O2TjUxI1jg+rvEUzg==}
@@ -7625,7 +7652,7 @@ packages:
       eslint-scope: 7.2.0
       eslint-utils: 3.0.0(eslint@8.4.1)
       eslint-visitor-keys: 3.4.1
-      espree: 9.2.0
+      espree: 9.5.2
       esquery: 1.5.0
       esutils: 2.0.3
       fast-deep-equal: 3.1.3
