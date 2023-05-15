@@ -24,6 +24,10 @@ async function inventory (fastify, opts) {
       prefix: opts.prefix
     }
   })
+
+  fastify.get('/foo', async function (req) {
+    return req.foo
+  })
 }
 
 export default fp(inventory)
