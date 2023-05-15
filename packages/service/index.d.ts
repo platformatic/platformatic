@@ -1,16 +1,13 @@
-import { FastifyInstance, InjectOptions, LightMyRequestResponse } from "fastify"
+import { FastifyInstance } from "fastify"
 
 export type pltServiceHandlerBuildServer = {
   app: FastifyInstance
   address: string
   port: number
-  restart: () => Promise<void>
-  listen: () => Promise<{
-    address: string
-    port: number
-  }>
-  stop: () => Promise<void>
-  inject: (opts: InjectOptions | string) => Promise<LightMyRequestResponse>
+  restart: FastifyInstance['restart']
+  listen: FastifyInstance['listen']
+  close: FastifyInstance['close']
+  inject: FastifyInstance['inject']
 }
 
 declare module '@platformatic/service' {
