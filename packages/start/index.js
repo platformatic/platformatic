@@ -3,12 +3,14 @@ const { resolve } = require('node:path')
 const parseArgs = require('minimist')
 const ConfigManager = require('@platformatic/config')
 const {
-  buildServer: dbBuildServer,
-  schema: dbSchema
+  schema: dbSchema,
+  platformaticDB
 } = require('@platformatic/db')
 const {
-  buildServer: serviceBuildServer,
-  loadConfig: serviceLoadConfig,
+  platformaticService,
+  buildServer,
+  loadConfig,
+  start,
   schema: serviceSchema
 } = require('@platformatic/service')
 const kSupportedAppTypes = new Set(['service', 'db'])
@@ -16,7 +18,7 @@ const kSupportedAppTypes = new Set(['service', 'db'])
 async function tryGetConfigTypeFromSchema (config) {
   if (typeof config === 'string') {
     // Handle config file paths.
-    const loadedConfig = await loadConfig({}, ['-c', config])
+    const loadedConfig = await loadConfig({}, ['-c', config], platformaticService)
 
     config = loadedConfig.configManager.current
   }
@@ -83,55 +85,45 @@ async function getCurrentSchema (configType) {
   throw new Error(`unknown configuration type: '${configType}'`)
 }
 
-async function buildServer (options) {
+async function _buildServer (options) {
   const configType = await tryGetConfigTypeFromSchema(options)
-  let buildServerFn
+  const app = getApp(configType)
 
-  if (configType === 'service') {
-    buildServerFn = serviceBuildServer
-  } else if (configType === 'db') {
-    buildServerFn = dbBuildServer
-  }
-
-  return buildServerFn(options)
+  return buildServer(options, app)
 }
 
-async function loadConfig (minimistConfig, args, defaultConfig, configType) {
+function getApp (configType) {
+  let app
+
+  if (configType === 'service') {
+    app = platformaticService
+  } else if (configType === 'db') {
+    app = platformaticDB
+  } else {
+    throw new Error('unknown kind: ' + configType)
+  }
+
+  return app
+}
+
+async function _loadConfig (minimistConfig, args, configType, overrides) {
   // If the config type was specified, then use that. Otherwise, compute it.
   if (typeof configType !== 'string') {
     configType = await getConfigType(args)
   }
 
-  let configLoader
-
-  if (configType === 'service') {
-    configLoader = serviceLoadConfig
-  } else if (configType === 'db') {
-    const { loadConfig: dbLoadConfig } = await import('@platformatic/db/lib/load-config.mjs')
-    configLoader = dbLoadConfig
-  }
-
-  return configLoader(minimistConfig, args, defaultConfig)
+  return loadConfig(minimistConfig, args, getApp(configType), overrides)
 }
 
-async function start (args) {
+async function _start (args) {
   const configType = await getConfigType(args)
-  let startFn
 
-  if (configType === 'service') {
-    const start = await import('@platformatic/service/lib/start.mjs')
-    startFn = start.default
-  } else if (configType === 'db') {
-    const { start } = await import('@platformatic/db/lib/start.mjs')
-    startFn = start
-  }
-
-  return startFn(args)
+  return start(getApp(configType), args)
 }
 
-async function startCommand (...args) {
+async function startCommand (args) {
   try {
-    await start(...args)
+    await _start(args)
   } catch (err) {
     delete err?.stack
     console.error(err?.message)
@@ -145,10 +137,10 @@ async function startCommand (...args) {
 }
 
 module.exports = {
-  buildServer,
+  buildServer: _buildServer,
   getConfigType,
   getCurrentSchema,
-  loadConfig,
-  start,
+  loadConfig: _loadConfig,
+  start: _start,
   startCommand
 }

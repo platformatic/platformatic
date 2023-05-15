@@ -110,7 +110,7 @@ test('loadConfig()', async (t) => {
     const configFile = join(fixturesDir, 'serviceApp', 'platformatic.service.json')
 
     await assert.rejects(async () => {
-      await loadConfig({}, ['-c', configFile], undefined, 'db')
+      await loadConfig({}, ['-c', configFile], 'kaboom')
     })
   })
 
@@ -182,6 +182,8 @@ test('start()', async (t) => {
     const scriptFile = join(fixturesDir, 'starter.js')
     const configFile = join(fixturesDir, 'serviceApp', 'platformatic.service.json')
     const child = spawn(process.execPath, [scriptFile, configFile])
+    child.stdout.pipe(process.stdout)
+    child.stderr.pipe(process.stderr)
     const [exitCode] = await once(child, 'exit')
 
     assert.strictEqual(exitCode, 42)
@@ -202,6 +204,7 @@ test('startCommand()', async (t) => {
     const scriptFile = join(fixturesDir, 'start-command.js')
     const configFile = join(fixturesDir, 'serviceApp', 'platformatic.service.json')
     const child = spawn(process.execPath, [scriptFile, configFile])
+    child.stderr.pipe(process.stderr)
     const [exitCode] = await once(child, 'exit')
 
     assert.strictEqual(exitCode, 42)
