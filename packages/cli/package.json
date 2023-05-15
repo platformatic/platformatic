@@ -48,7 +48,7 @@
     "@platformatic/client-cli": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/db": "workspace:*",
-    "@platformatic/deploy-client": "^0.1.2",
+    "@platformatic/deploy-client": "^0.2.0",
     "@platformatic/metaconfig": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@platformatic/start": "workspace:*",
