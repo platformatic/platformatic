@@ -10,14 +10,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/platformatic/deploy-client.git"
+    "url": "git+https://github.com/platformatic/platformatic.git"
   },
   "author": "Ivan Tymoshenko <ivan@tymoshenko.me>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/platformatic/deploy-client/issues"
+    "url": "https://github.com/platformatic/platformatic/issues"
   },
-  "homepage": "https://github.com/platformatic/deploy-client#readme",
+  "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "fastify": "^4.11.0",
     "license-checker": "^25.0.1",
