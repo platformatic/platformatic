@@ -903,8 +903,8 @@ importers:
         specifier: ^4.5.0
         version: 4.5.0
       fastify-sandbox:
-        specifier: ^0.11.0
-        version: 0.11.0
+        specifier: ^0.12.0
+        version: 0.12.0
       graphql:
         specifier: ^16.6.0
         version: 16.6.0
@@ -8062,8 +8062,8 @@ packages:
       table: 6.8.1
     dev: false
 
-  /fastify-sandbox@0.11.0:
-    resolution: {integrity: sha512-2SrRTI193or5gwUmP44OBaWTpjADyNjeeWBuZYbVFsGm+M2v84lM4tVUgzQTeg+LEpR8+fXcgVzCfwLyIkdsag==}
+  /fastify-sandbox@0.12.0:
+    resolution: {integrity: sha512-rV13gHurD8u46v7xO6YPcWa9Di8yTIrUa/UDCqSRhusDIXz4tzAfjcL0ewb7XrhnKfc6C4AKPQoz4HKIlvOP+g==}
     dependencies:
       import-fresh: 3.3.0
     optionalDependencies:
