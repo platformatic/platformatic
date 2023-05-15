@@ -1,0 +1,7 @@
+{
+  "server": {
+    "hostname": "{HOSTNAME}",
+    "port": "{PORT}",
+    "pluginTimeout": "10"
+  }
+}

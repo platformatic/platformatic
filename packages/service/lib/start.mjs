@@ -11,7 +11,9 @@ function defaultConfig () {
   const _defaultConfig = generateDefaultConfig()
   return {
     watch: true,
-    ..._defaultConfig
+    ..._defaultConfig,
+    allowToWatch: ['.env'],
+    envWhitelist: ['PORT', 'HOSTNAME']
   }
 }
 
