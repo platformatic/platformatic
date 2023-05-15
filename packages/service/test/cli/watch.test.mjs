@@ -45,7 +45,7 @@ test('should watch js files by default', async ({ equal, teardown, comment }) =>
     writeFile(pluginFilePath, createLoggingPlugin('v1'))
   ])
 
-  const { child, url } = await start('-c', configFilePath)
+  const { child, url } = await start(['-c', configFilePath])
   teardown(() => child.kill('SIGINT'))
 
   await writeFile(pluginFilePath, createLoggingPlugin('v2', true))
@@ -97,7 +97,7 @@ test('should watch allowed file', async ({ comment, teardown }) => {
     writeFile(pluginFilePath, pluginCode)
   ])
 
-  const { child } = await start('-c', configFilePath)
+  const { child } = await start(['-c', configFilePath])
   teardown(() => child.kill('SIGINT'))
 
   writeFile(jsonFilePath, 'RESTARTED')
@@ -132,7 +132,7 @@ test('should not watch ignored file', async ({ teardown, equal }) => {
     writeFile(pluginFilePath, createLoggingPlugin('v1'))
   ])
 
-  const { child, url } = await start('-c', configFilePath)
+  const { child, url } = await start(['-c', configFilePath])
   teardown(() => child.kill('SIGINT'))
 
   await writeFile(pluginFilePath, createLoggingPlugin('v2', true))
@@ -170,7 +170,7 @@ test('should not loop forever when doing ESM', async ({ comment, fail }) => {
     writeFile(pluginFilePath, 'export default async (app) => {}')
   ])
 
-  const { child } = await start('-c', configFilePath)
+  const { child } = await start(['-c', configFilePath])
 
   await sleep(1000)
 
@@ -239,7 +239,7 @@ test('should watch config file', async ({ comment, teardown }) => {
     writeFile(pluginFilePath, pluginCode)
   ])
 
-  const { child } = await start('-c', configFilePath)
+  const { child } = await start(['-c', configFilePath])
   teardown(() => child.kill('SIGINT'))
 
   // We do not await
@@ -272,7 +272,7 @@ test('should not hot reload files with `--hot-reload false`', async ({ teardown,
     writeFile(pluginFilePath, createLoggingPlugin('v1'))
   ])
 
-  const { child, url } = await start('-c', configFilePath, '--hot-reload', 'false')
+  const { child, url } = await start(['-c', configFilePath, '--hot-reload', 'false'])
   teardown(() => child.kill('SIGINT'))
 
   {
@@ -317,7 +317,7 @@ test('should not fail when updating wrong config', async ({ equal, teardown, com
     writeFile(pluginFilePath, createLoggingPlugin('v1', true))
   ])
 
-  const { child, url } = await start('-c', configFilePath)
+  const { child, url } = await start(['-c', configFilePath])
   teardown(() => child.kill('SIGINT'))
 
   writeFile(configFilePath, 'this is not a valid config')
