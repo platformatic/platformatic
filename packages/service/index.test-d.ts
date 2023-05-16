@@ -1,8 +1,5 @@
 import { expectError, expectType } from 'tsd';
-import {
-  FastifyInstance,
-  LightMyRequestResponse,
-} from 'fastify';
+import { FastifyInstance } from 'fastify';
 import { pltServiceHandlerBuildServer } from '.';
 
 const server: pltServiceHandlerBuildServer = {
@@ -10,9 +7,9 @@ const server: pltServiceHandlerBuildServer = {
   address: 'localhost',
   port: 3000,
   restart: async () => {},
-  listen: async () => ({ address: 'localhost', port: 3000 }),
-  stop: async () => {},
-  inject: async () => ({} as LightMyRequestResponse),
+  listen: async () => '',
+  close: (async () => undefined) as unknown as FastifyInstance['close'],
+  inject: (async () => undefined) as unknown as FastifyInstance['inject']
 };
 
 expectType<pltServiceHandlerBuildServer>(server);

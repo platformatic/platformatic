@@ -1,0 +1,35 @@
+{
+  "name": "@platformatic/deploy-client",
+  "version": "0.23.2",
+  "description": "Deploy code to the Platformatic cloud",
+  "main": "index.js",
+  "scripts": {
+    "lint": "standard | snazzy",
+    "test": "standard | snazzy && c8 --100 tap -j1 test/*test.js",
+    "license": "license-checker --production --onlyAllow 'Apache-2.0;MIT;ISC;BSD-2-Clause'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "author": "Ivan Tymoshenko <ivan@tymoshenko.me>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformatic/platformatic/issues"
+  },
+  "homepage": "https://github.com/platformatic/platformatic#readme",
+  "devDependencies": {
+    "fastify": "^4.11.0",
+    "license-checker": "^25.0.1",
+    "c8": "^7.13.0",
+    "snazzy": "^9.0.0",
+    "standard": "^17.0.0",
+    "tap": "^16.3.2"
+  },
+  "dependencies": {
+    "@platformatic/config": "workspace:*",
+    "@platformatic/start": "workspace:*",
+    "tar": "^6.1.11",
+    "undici": "^5.11.0"
+  }
+}
