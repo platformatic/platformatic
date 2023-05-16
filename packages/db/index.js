@@ -107,7 +107,10 @@ platformaticDB.configManagerConfig = {
   schema,
   envWhitelist: ['DATABASE_URL', ...platformaticService.configManagerConfig.envWhitelist],
   allowToWatch: ['.env'],
-  schemaOptions: platformaticService.configManagerConfig.schemaOptions
+  schemaOptions: platformaticService.configManagerConfig.schemaOptions,
+  async transformConfig () {
+    await adjustConfig(this)
+  }
 }
 
 function _buildServer (options) {

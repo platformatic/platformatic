@@ -210,3 +210,29 @@ test('should use the remote schema', async ({ same, teardown, pass, plan }) => {
     authorization: { adminSecret: 'plt-db' }
   })
 })
+
+test('transformConfig option', async ({ same, plan, pass }) => {
+  plan(2)
+  const cm = new ConfigManager({
+    source: resolve(__dirname, './fixtures/simple.toml'),
+    env: { PLT_FOOBAR: 'foobar' },
+    transformConfig: function () {
+      pass('should call transformConfig')
+    }
+  })
+  await cm.parse()
+  same(cm.current, {
+    server: { hostname: '127.0.0.1', port: '3042', logger: { level: 'info' } },
+    metrics: { auth: { username: 'plt-db', password: 'plt-db' } },
+    plugin: { path: './plugin-sum.js' },
+    core: {
+      connectionString: 'postgres://postgres:postgres@localhost:5432/postgres',
+      graphiql: true,
+      ignore: { versions: true }
+    },
+    migrations: { dir: './demo/auth/migrations', validateChecksums: false },
+    dashboard: { enabled: true, path: '/' },
+    authorization: { adminSecret: 'plt-db' },
+    foobar: 'foobar'
+  })
+})

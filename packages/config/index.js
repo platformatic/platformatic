@@ -47,6 +47,9 @@ class ConfigManager extends EventEmitter {
     this._originalEnv = opts.env || {}
     this.env = this.purgeEnv(this._originalEnv)
     this._onMissingEnv = opts.onMissingEnv
+    if (typeof opts.transformConfig === 'function') {
+      this._transformConfig = opts.transformConfig
+    }
   }
 
   toFastifyPlugin () {

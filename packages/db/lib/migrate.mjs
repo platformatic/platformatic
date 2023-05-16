@@ -10,7 +10,6 @@ import { utimesSync } from 'fs'
 import { updateSchemaLock } from './utils.js'
 import { loadConfig } from '@platformatic/service'
 import { platformaticDB } from '../index.js'
-import adjustConfig from './adjust-config.js'
 
 async function execute (logger, args, config) {
   const migrationsConfig = config.migrations
@@ -46,7 +45,6 @@ async function applyMigrations (_args) {
       }
     }, _args, platformaticDB)
 
-    adjustConfig(configManager)
     const config = configManager.current
     await execute(logger, args, config)
 
