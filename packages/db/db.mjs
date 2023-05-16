@@ -6,14 +6,16 @@ import isMain from 'es-main'
 import helpMe from 'help-me'
 import { readFile } from 'fs/promises'
 import { join } from 'desm'
+import { start, tsCompiler } from '@platformatic/service'
+import { platformaticDB } from './index.js'
 
-import { start } from './lib/start.mjs'
-import { compile } from './lib/compile.mjs'
 import { applyMigrations } from './lib/migrate.mjs'
 import { seed } from './lib/seed.mjs'
 import { generateTypes } from './lib/gen-types.mjs'
 import { printGraphQLSchema, printOpenAPISchema, generateJsonSchemaConfig } from './lib/gen-schema.mjs'
 import { generateMigration } from './lib/gen-migration.mjs'
+
+const compile = tsCompiler.buildCompileCmd(platformaticDB)
 
 const help = helpMe({
   dir: join(import.meta.url, 'help'),
@@ -30,7 +32,13 @@ program.register('help migrations apply', help.toStdout.bind(null, ['migrations 
 program.register({ command: 'help seed', strict: true }, help.toStdout.bind(null, ['seed']))
 program.register('help schema', help.toStdout.bind(null, ['schema']))
 
-program.register('start', start)
+program.register('start', (argv) => {
+  start(platformaticDB, argv).catch((err) => {
+    /* c8 ignore next 2 */
+    console.error(err)
+    process.exit(1)
+  })
+})
 program.register('compile', compile)
 program.register('migrations create', generateMigration)
 program.register('migrations apply', applyMigrations)

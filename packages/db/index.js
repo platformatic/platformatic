@@ -102,13 +102,22 @@ async function healthCheck (app) {
 
 platformaticDB[Symbol.for('skip-override')] = true
 platformaticDB.schema = schema
-platformaticDB.envWhitelist = ['DATABASE_URL', ...(platformaticService.envWhitelist)]
+platformaticDB.configType = 'db'
+platformaticDB.configManagerConfig = {
+  schema,
+  envWhitelist: ['DATABASE_URL', ...platformaticService.configManagerConfig.envWhitelist],
+  allowToWatch: ['.env'],
+  schemaOptions: platformaticService.configManagerConfig.schemaOptions,
+  async transformConfig () {
+    await adjustConfig(this)
+  }
+}
 
-async function buildDBServer (options) {
+function _buildServer (options) {
   return buildServer(options, platformaticDB)
 }
 
-module.exports.buildServer = buildDBServer
+module.exports.buildServer = _buildServer
 module.exports.schema = schema
 module.exports.platformaticDB = platformaticDB
 module.exports.ConfigManager = ConfigManager

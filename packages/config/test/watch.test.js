@@ -41,6 +41,7 @@ test('should emit event if config is updated', async ({ same, plan }) => {
       foo: 'foobar'
     }
   }
+
   await Promise.all([
     once(cm, 'update'),
     writeFile(file, JSON.stringify(updatedConfig))

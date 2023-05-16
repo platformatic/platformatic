@@ -1,9 +1,5 @@
 'use strict'
 
-const { readFile } = require('fs/promises')
-
-const ConfigManager = require('@platformatic/config')
-const { restartable } = require('@fastify/restartable')
 const { isKeyEnabled } = require('@platformatic/utils')
 
 const compiler = require('./lib/compile')
@@ -18,8 +14,9 @@ const setupHealthCheck = require('./lib/plugins/health-check')
 const loadPlugins = require('./lib/plugins/plugins')
 
 const { schema } = require('./lib/schema')
-const { loadConfig, generateDefaultConfig } = require('./lib/load-config')
+const { loadConfig } = require('./lib/load-config')
 const { addLoggerToTheConfig } = require('./lib/utils')
+const { start, buildServer } = require('./lib/start')
 
 async function platformaticService (app, opts, toLoad = []) {
   const configManager = app.platformatic.configManager
@@ -84,123 +81,6 @@ async function platformaticService (app, opts, toLoad = []) {
   }
 }
 
-platformaticService[Symbol.for('skip-override')] = true
-platformaticService.schema = schema
-platformaticService.envWhitelist = ['PORT', 'HOSTNAME']
-
-async function adjustHttpsKeyAndCert (arg) {
-  if (typeof arg === 'string') {
-    return arg
-  }
-
-  if (!Array.isArray(arg)) {
-    // { path: pathToKeyOrCert }
-    return readFile(arg.path)
-  }
-
-  // Array of strings or objects.
-  for (let i = 0; i < arg.length; ++i) {
-    arg[i] = await adjustHttpsKeyAndCert(arg[i])
-  }
-
-  return arg
-}
-
-function defaultConfig (app, source) {
-  const res = {
-    source,
-    ...generateDefaultConfig(),
-    allowToWatch: ['.env', ...(app?.allowToWatch || [])],
-    envWhitelist: ['PORT', ...(app?.envWhitelist || [])]
-  }
-
-  if (app.schema) {
-    res.schema = app.schema
-  }
-
-  return res
-}
-
-async function buildServer (options, app) {
-  app = app || platformaticService
-
-  let configManager = options.configManager
-  if (!configManager) {
-    // instantiate a new config manager from current options
-    configManager = new ConfigManager(defaultConfig(app, options))
-    await configManager.parseAndValidate()
-  }
-
-  // options is a path
-  if (typeof options === 'string') {
-    options = configManager.current
-  }
-
-  let url = null
-
-  async function createRestartable (fastify) {
-    const config = configManager.current
-    const root = fastify(config.server)
-
-    root.decorate('platformatic', { configManager, config })
-    root.register(app)
-
-    root.decorate('url', {
-      getter () {
-        return url
-      }
-    })
-
-    if (root.restarted) {
-      root.log.info('restarted')
-    }
-
-    return root
-  }
-
-  const { port, hostname, ...serverOptions } = options.server
-
-  if (serverOptions.https) {
-    serverOptions.https.key = await adjustHttpsKeyAndCert(serverOptions.https.key)
-    serverOptions.https.cert = await adjustHttpsKeyAndCert(serverOptions.https.cert)
-  }
-
-  const handler = await restartable(createRestartable)
-
-  configManager.on('update', async (newConfig) => {
-    handler.log.debug('config changed')
-    handler.log.trace({ newConfig }, 'new config')
-
-    if (newConfig.watch === false) {
-      /* c8 ignore next 4 */
-      if (handler.tsCompilerWatcher) {
-        handler.tsCompilerWatcher.kill('SIGTERM')
-        handler.log.debug('stop watching typescript files')
-      }
-
-      if (handler.fileWatcher) {
-        await handler.fileWatcher.stopWatching()
-        handler.log.debug('stop watching files')
-      }
-    }
-
-    await safeRestart(handler)
-    /* c8 ignore next 1 */
-  })
-
-  configManager.on('error', function (err) {
-    /* c8 ignore next 1 */
-    handler.log.error({ err }, 'error reloading the configuration')
-  })
-
-  handler.decorate('start', async () => {
-    url = await handler.listen({ host: hostname, port })
-    return url
-  })
-
-  return handler
-}
-
 async function onFilesUpdated (app) {
   // Reload the config as well, otherwise we will have problems
   // in case the files watcher triggers the config watcher too
@@ -220,32 +100,29 @@ async function onFilesUpdated (app) {
   }
 }
 
-async function safeRestart (app) {
-  try {
-    await app.restart()
-    /* c8 ignore next 8 */
-  } catch (err) {
-    app.log.error({
-      err: {
-        message: err.message,
-        stack: err.stack
-      }
-    }, 'failed to reload server')
+platformaticService[Symbol.for('skip-override')] = true
+platformaticService.schema = schema
+platformaticService.configType = 'service'
+platformaticService.configManagerConfig = {
+  schema,
+  envWhitelist: ['PORT', 'HOSTNAME'],
+  allowToWatch: ['.env'],
+  schemaOptions: {
+    useDefaults: true,
+    coerceTypes: true,
+    allErrors: true,
+    strict: false
   }
 }
 
-// This is for @platformatic/db to use
-/* c8 ignore next 4 */
-async function buildStart (loadConfig, buildServer, configManagerConfig) {
-  const { buildStart } = await import('./lib/start.mjs')
-  return buildStart(loadConfig, buildServer, configManagerConfig)
+function _buildServer (options, app) {
+  return buildServer(options, app || platformaticService)
 }
 
-module.exports.buildServer = buildServer
+module.exports.buildServer = _buildServer
 module.exports.schema = require('./lib/schema')
 module.exports.platformaticService = platformaticService
 module.exports.loadConfig = loadConfig
 module.exports.addLoggerToTheConfig = addLoggerToTheConfig
-module.exports.generateConfigManagerConfig = generateDefaultConfig
 module.exports.tsCompiler = compiler
-module.exports.buildStart = buildStart
+module.exports.start = start

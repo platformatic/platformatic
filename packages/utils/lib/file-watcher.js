@@ -55,6 +55,7 @@ class FileWatcher extends EventEmitter {
 
         if (isTimeoutSet && isTrackedEvent && isTrackedFile) {
           updateTimeout = setTimeout(() => this.emit('update'), 100)
+          updateTimeout.unref()
         }
       }
     } /* c8 ignore next */

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "standard | snazzy && tap --reporter=terse test/*test.js test/*/*test.mjs",
+    "test": "standard | snazzy && tap --reporter=tap test/*test.js test/*/*test.mjs",
     "lint": "standard | snazzy"
   },
   "author": "Matteo Collina <hello@matteocollina.com>",

@@ -1,7 +1,6 @@
 'use strict'
 
 const { connInfo, clear, createBasicPages, createAndPopulateUsersTable, dropUsersTable, buildConfig } = require('./helper')
-const whyIsNodeRuninng = require('why-is-node-running')
 const { test } = require('tap')
 const { buildServer } = require('..')
 const { request } = require('undici')
@@ -348,6 +347,7 @@ test('ignore and sqlite3', async ({ teardown, equal, pass, same }) => {
   {
     const res = await (request(`${app.url}/dashboard`))
     equal(res.statusCode, 200, 'dashboard status code')
+    res.body.resume()
   }
 })
 
@@ -362,9 +362,6 @@ test('starts a config file on disk with auto-apply', async ({ teardown, equal, p
   {
     const res = await (request(`${app.url}/`))
     equal(res.statusCode, 200, 'root status code')
+    res.body.resume()
   }
 })
-
-setInterval(() => {
-  whyIsNodeRuninng()
-}, 5000).unref()

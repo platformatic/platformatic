@@ -8,8 +8,9 @@ import { readFile } from 'fs/promises'
 import { join } from 'desm'
 import { generateJsonSchemaConfig } from './lib/gen-schema.js'
 
-import start from './lib/start.mjs'
-import { compileCmd } from './lib/compile.js'
+import { buildCompileCmd } from './lib/compile.js'
+
+import { start, platformaticService } from './index.js'
 
 const help = helpMe({
   dir: join(import.meta.url, 'help'),
@@ -22,8 +23,14 @@ const program = commist({ maxDistance: 2 })
 program.register('help', help.toStdout)
 program.register('help start', help.toStdout.bind(null, ['start']))
 
-program.register('start', start)
-program.register('compile', compileCmd)
+program.register('start', (argv) => {
+  start(platformaticService, argv).catch((err) => {
+    /* c8 ignore next 2 */
+    console.error(err)
+    process.exit(1)
+  })
+})
+program.register('compile', buildCompileCmd(platformaticService))
 program.register('schema config', generateJsonSchemaConfig)
 program.register('schema', help.toStdout.bind(null, ['schema']))
 
