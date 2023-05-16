@@ -4,7 +4,7 @@ export type pltServiceHandlerBuildServer = {
   app: FastifyInstance
   address: string
   port: number
-  restart: FastifyInstance['restart']
+  restart: () => Promise<void>
   listen: FastifyInstance['listen']
   close: FastifyInstance['close']
   inject: FastifyInstance['inject']
