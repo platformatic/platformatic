@@ -31,7 +31,7 @@ async function platformaticService (app, opts, toLoad = []) {
 
   app.setErrorHandler(async (err, req, reply) => {
     if (!(err instanceof Error)) {
-      req.log.debug({ err }, 'error encounterated within the sandbox, wrapping it')
+      req.log.debug({ err }, 'error encountered within the sandbox, wrapping it')
       const newError = new Error(err.message)
       newError.cause = err
       newError.statusCode = err.statusCode || 500
