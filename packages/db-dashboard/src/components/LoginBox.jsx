@@ -1,4 +1,5 @@
 import { Button } from '@platformatic/ui-components'
+import { MAIN_GREEN, MAIN_DARK_BLUE, BOX_SHADOW } from '@platformatic/ui-components/src/components/constants'
 import { useContext, useRef, useState } from 'react'
 import { AppContext } from '../App'
 import styles from './LoginBox.module.css'
@@ -34,7 +35,7 @@ export default function LoginBox () {
       <form className={styles.form}>
         <input className={styles.input} type='password' placeholder='Your Password' onChange={(e) => setLoginError(null)} ref={inputPasswordRef} />
         <div className={styles.button}>
-          <Button color='green' primary label='Login' onClick={onLoginButtonClicked} />
+          <Button color={MAIN_DARK_BLUE} backgroundColor={MAIN_GREEN} bordered={false} bold label='Login' onClick={onLoginButtonClicked} hoverEffect={BOX_SHADOW} />
         </div>
       </form>
       {loginError && <p className='help is-danger'>Wrong password.</p>}

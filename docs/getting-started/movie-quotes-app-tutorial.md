@@ -32,7 +32,7 @@ In this tutorial we'll learn how to:
 
 To follow along with this tutorial you'll need to have these things installed:
 
-- [Node.js](https://nodejs.org/) >= v16.17.0 or >= v18.8.0
+- [Node.js](https://nodejs.org/) >= v18.8.0 or >= v19.0.0
 - [npm](https://docs.npmjs.com/cli/) v7 or later
 - A code editor, for example [Visual Studio Code](https://code.visualstudio.com/)
 
@@ -51,62 +51,31 @@ mkdir -p tutorial-movie-quotes-app/apps/movie-quotes-api/
 cd tutorial-movie-quotes-app/apps/movie-quotes-api/
 ```
 
-Then let's create a `package.json` file:
-
 ```bash
-npm init --yes
+npm create platformatic@latest
 ```
 
-Now we can install the [platformatic](https://www.npmjs.com/package/platformatic)
-CLI as a dependency:
-
-```bash
-npm install platformatic
-```
-
-Let's also add some npm run scripts for convenience:
-
-```bash
-npm pkg set scripts.start="platformatic db start"
-
-npm pkg set scripts.dev="npm start"
-```
-
-Now we're going to configure our API. Let's create our Platformatic configuration
-file, **`platformatic.db.json`**:
-
-```json
-{
-  "server": {
-    "logger": {
-      "level": "{PLT_SERVER_LOGGER_LEVEL}"
-    },
-    "hostname": "{PLT_SERVER_HOSTNAME}",
-    "port": "{PORT}"
-  },
-  "db": {
-    "connectionString": "{DATABASE_URL}"
-  },
-  "migrations": {
-    "dir": "./migrations",
-    "autoApply": true
-  }
-}
-```
-
-Now we'll create a **`.env`** file with settings for our configuration to use:
+This interactive command-line tool will ask you some questions about how you'd
+like to set up your new Platformatic project. For this guide, select these options:
 
 ```
-PORT=3042
-PLT_SERVER_HOSTNAME=127.0.0.1
-PLT_SERVER_LOGGER_LEVEL=info
-DATABASE_URL=sqlite://./movie-quotes.sqlite
+- Which kind of project do you want to create?  => DB
+- Where would you like to create your project?  => (.)
+- Do you want to create default migrations?     => No
+- Do you want to create a plugin?               => No
+- Do you want to use TypeScript?                => No
+- Do you want to install dependencies?          => Yes (this can take a while)
+- Do you want to generate types?                => Yes
+- Do you want to create the github action to deploy this application to Platformatic Cloud dynamic workspace? => No
+- Do you want to create the github action to deploy this application to Platformatic Cloud static workspace?  => No
 ```
+Once the wizard is complete, you'll have a Platformatic app project in the
+folder `movie-quotes-api`, with example migration files and a plugin script.
 
 :::info
 
-Take a look at the [Configuration reference](/reference/db/configuration.md)
-to see all the supported configuration settings.
+Make sure you run the `npm/yarn/pnpm install` command manually if you
+didn't ask the wizard to do it for you.
 
 :::
 
@@ -130,17 +99,50 @@ CREATE TABLE quotes (
 );
 ```
 
-Let's also create `.gitignore` so that we avoid accidentally committing our
-SQLite database:
+Now let's setup `migrations` in our Platformatic configuration
+file, **`platformatic.db.json`**:
 
-```bash
-echo '*.sqlite' > .gitignore
+```json
+{
+  "$schema": "https://platformatic.dev/schemas/v0.23.2/db",
+  "server": {
+    "hostname": "{PLT_SERVER_HOSTNAME}",
+    "port": "{PORT}",
+    "logger": {
+      "level": "{PLT_SERVER_LOGGER_LEVEL}"
+    }
+  },
+  "db": {
+    "connectionString": "{DATABASE_URL}",
+    "graphql": true,
+    "openapi": true
+  },
+  "plugins": {
+    "paths": [
+      "plugin.js"
+    ]
+  },
+  "types": {
+    "autogenerate": true
+  },
+  "migrations": {
+    "dir": "migrations",
+    "autoApply": true
+  }
+}
 ```
+
+:::info
+
+Take a look at the [Configuration reference](../reference/db/configuration.md)
+to see all the supported configuration settings.
+
+:::
 
 Now we can start the Platformatic DB server:
 
 ```bash
-npm run dev
+npm run start
 ```
 
 Our Platformatic DB server should start, and we'll see messages like these:
@@ -163,7 +165,7 @@ curl --request POST --header "Content-Type: application/json" \
 We should receive a response like this from the API:
 
 ```json
-{"id":1,"quote":"Toto, I've got a feeling we're not in Kansas anymore.","saidBy":"Dorothy Gale","createdAt":"2022-09-13 10:39:35"}
+{"id":1,"quote":"Toto, I've got a feeling we're not in Kansas anymore.","saidBy":"Dorothy Gale","createdAt":"1684167422600"}
 ```
 
 ### Create an entity relationship
@@ -187,7 +189,7 @@ column to the `quotes` table. This will allow us to store movie data in the
 Let's stop the Platformatic DB server with `Ctrl + C`, and then start it again:
 
 ```bash
-npm run dev
+npm run start
 ```
 
 The new migration should be automatically applied and we'll see the log message
@@ -346,7 +348,7 @@ about how database seeding works with Platformatic DB.
 Let's stop our Platformatic DB server running and remove our SQLite database:
 
 ```
-rm movie-quotes.sqlite
+rm db.sqlite
 ```
 
 Now let's create a fresh SQLite database by running our migrations:
@@ -380,7 +382,7 @@ Astro application.
 
 ### Create an Astro application
 
-In the root of our project, let's create a new directory for our frontent
+In the root `tutorial-movie-quotes-app` of our project, let's create a new directory for our frontent
 application:
 
 ```bash
@@ -389,28 +391,42 @@ mkdir -p apps/movie-quotes-frontend/
 cd apps/movie-quotes-frontend/
 ```
 
-And then we'll create a new `package.json` file:
+And then we'll create a new `Astro` project:
 
 ```bash
-npm init --yes
+npm create astro@latest -- --template basics
 ```
 
-Now we can install [astro](https://www.npmjs.com/package/astro) as a dependency:
+It will ask you some questions about how you'd like to set up 
+your new Astro project. For this guide, select these options:
 
-```bash
-npm install --save-dev astro
+  **Where should we create your new project?**
+```
+   .
+◼  tmpl Using basics as project template
+✔  Template copied
+```
+  **Install dependencies?** (it's buggy, we'll do it afterwards)
+```
+   No
+◼  No problem! Remember to install dependencies after setup.
+```
+  **Do you plan to write TypeScript?**
+```
+   No
+◼  No worries! TypeScript is supported in Astro by default, but you are free to continue writing JavaScript instead.
+```
+  **Initialize a new git repository?**
+```
+   No
+◼  Sounds good! You can always run git init manually.
+
+Liftoff confirmed. Explore your project!
+Run npm dev to start the dev server. CTRL+C to stop.
+Add frameworks like react or tailwind using astro add.
 ```
 
-Then let's set up some npm run scripts for convenience:
-
-```bash
-npm pkg delete scripts.test
-npm pkg set scripts.dev="astro dev --port 3000"
-npm pkg set scripts.start="astro dev --port 3000"
-npm pkg set scripts.build="astro build"
-```
-
-Now we'll create our Astro configuration file, **`astro.config.mjs`** and
+Now we'll edit our Astro configuration file, **`astro.config.mjs`** and
 copy and paste in this code:
 
 ```javascript
@@ -422,7 +438,7 @@ export default defineConfig({
 })
 ```
 
-And we'll also create a **`tsconfig.json`** file and add in this configuration:
+And we'll also edit our **`tsconfig.json`** file and add in this configuration:
 
 ```json
 {
@@ -433,26 +449,14 @@ And we'll also create a **`tsconfig.json`** file and add in this configuration:
 }
 ```
 
-Now let's create the directories where we'll be adding the components for our
-frontend application:
-
-```bash
-mkdir -p src/pages src/layouts src/components
-```
-
-And inside the **`src/pages`** directory let's create our first page, **`index.astro`**:
-
-```astro
-<h1>Movie Quotes</h1>
-```
-
 Now we can start up the Astro development server with:
 
 ```bash
 npm run dev
 ```
-
 And then load up the frontend in our browser at [http://localhost:3000](http://localhost:3000)
+
+Now that everything is working, we'll remove all default `*.astro files` from the `src/` directory, but we'll keep the directory structure. You can delete them now, or override them later.
 
 ### Create a layout
 

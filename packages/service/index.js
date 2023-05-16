@@ -26,6 +26,17 @@ async function platformaticService (app, opts, toLoad = []) {
     app.register(setupMetrics, config.metrics)
   }
 
+  app.setErrorHandler(async (err, req, reply) => {
+    if (!(err instanceof Error)) {
+      req.log.debug({ err }, 'error encountered within the sandbox, wrapping it')
+      const newError = new Error(err.message)
+      newError.cause = err
+      newError.statusCode = err.statusCode || 500
+      err = newError
+    }
+    throw err
+  })
+
   if (Array.isArray(toLoad)) {
     for (const plugin of toLoad) {
       await app.register(plugin)

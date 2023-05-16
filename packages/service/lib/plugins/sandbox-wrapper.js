@@ -19,10 +19,17 @@ module.exports = fp(async function (app, opts) {
     } else {
       let loaded = await import(`file://${plugin.path}`)
       /* c8 ignore next 3 */
-      if (loaded.__esModule === true) {
+      if (loaded.__esModule === true || typeof loaded.default === 'function') {
         loaded = loaded.default
       }
+
+      let skipOverride
+      if (plugin.encapsulate === false) {
+        skipOverride = loaded[Symbol.for('skip-override')]
+        loaded[Symbol.for('skip-override')] = true
+      }
       await app.register(loaded, plugin.options)
+      loaded[Symbol.for('skip-override')] = skipOverride
     }
   }
 })

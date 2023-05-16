@@ -430,3 +430,97 @@ test('nested directories', async ({ teardown, equal, same }) => {
     equal(body, 'I\'m sorry, there was an error processing your request.')
   }
 })
+
+test('disable encapsulation for a single file', async ({ teardown, equal, same }) => {
+  const config = {
+    server: {
+      hostname: '127.0.0.1',
+      port: 0,
+      // Windows CI is slow
+      pluginTimeout: 60 * 1000
+    },
+    service: {
+      openapi: true
+    },
+    plugins: {
+      paths: [{
+        path: join(__dirname, 'fixtures', 'nested-directories', 'plugins', 'decorator.js'),
+        encapsulate: false
+      }, {
+        path: join(__dirname, 'fixtures', 'nested-directories', 'plugins', 'handlers.js'),
+        encapsulate: false
+      }, {
+        path: join(__dirname, 'fixtures', 'nested-directories', 'modules'),
+        encapsulate: false,
+        maxDepth: 1
+      }]
+    }
+  }
+
+  const app = await buildServer(config)
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  {
+    const res = await request(`${app.url}/foo/baz`)
+    equal(res.statusCode, 404, 'status code')
+    const body = await res.body.text()
+    equal(body, 'I\'m sorry, I couldn\'t find what you were looking for.')
+  }
+
+  {
+    const res = await request(`${app.url}/foo`)
+    equal(res.statusCode, 200, 'status code')
+    const body = await res.body.text()
+    equal(body, 'bar')
+  }
+})
+
+test('disable encapsulation for a single file / different order', async ({ teardown, equal, same }) => {
+  const config = {
+    server: {
+      hostname: '127.0.0.1',
+      port: 0,
+      // Windows CI is slow
+      pluginTimeout: 60 * 1000
+    },
+    service: {
+      openapi: true
+    },
+    plugins: {
+      paths: [{
+        path: join(__dirname, 'fixtures', 'nested-directories', 'modules'),
+        encapsulate: false,
+        maxDepth: 1
+      }, {
+        path: join(__dirname, 'fixtures', 'nested-directories', 'plugins', 'decorator.js'),
+        encapsulate: false
+      }, {
+        path: join(__dirname, 'fixtures', 'nested-directories', 'plugins', 'handlers.js'),
+        encapsulate: false
+      }]
+    }
+  }
+
+  const app = await buildServer(config)
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  {
+    const res = await request(`${app.url}/foo/baz`)
+    equal(res.statusCode, 404, 'status code')
+    const body = await res.body.text()
+    equal(body, 'I\'m sorry, I couldn\'t find what you were looking for.')
+  }
+
+  {
+    const res = await request(`${app.url}/foo`)
+    equal(res.statusCode, 200, 'status code')
+    const body = await res.body.text()
+    equal(body, 'bar')
+  }
+})
