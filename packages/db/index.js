@@ -16,15 +16,40 @@ async function platformaticDB (app, opts) {
   const config = configManager.current
   await adjustConfig(configManager)
 
+  let createSchemaLock = false
+  await loadSchemaLock()
+
+  async function loadSchemaLock () {
+    if (config.db.schemalock) {
+      // ignore errors, this is an optimization
+      try {
+        const path = locateSchemaLock(configManager)
+        const dbschema = JSON.parse(await fs.readFile(path, 'utf8'))
+        config.db.dbschema = dbschema
+        app.log.trace({ dbschema }, 'loaded schema lock')
+        createSchemaLock = false
+      } catch (err) {
+        app.log.trace({ err }, 'failed to load schema lock')
+        app.log.info('no schema lock found, will create one')
+        createSchemaLock = true
+      }
+    }
+  }
+
   if (config.migrations && config.migrations.autoApply === true && !app.restarted) {
     app.log.debug({ migrations: config.migrations }, 'running migrations')
     const { execute } = await import('./lib/migrate.mjs')
-    await execute(app.log, { config: config.configFileLocation }, config)
+    const migrationsApplied = await execute({ logger: app.log, config })
+
+    if (migrationsApplied) {
+      // reload schema lock
+      await loadSchemaLock()
+    }
 
     if (config.types && config.types.autogenerate === true) {
       app.log.debug({ types: config.types }, 'generating types')
       const { execute } = await import('./lib/gen-types.mjs')
-      await execute(app.log, { config: config.configFileLocation }, config)
+      await execute({ logger: app.log, config })
     }
   }
 
@@ -36,20 +61,6 @@ async function platformaticDB (app, opts) {
   }
 
   async function toLoad (app) {
-    let createSchemaLock = false
-    if (config.db.schemalock) {
-      // ignore errors, this is an optimization
-      try {
-        const path = locateSchemaLock(configManager)
-        const dbschema = JSON.parse(await fs.readFile(path, 'utf8'))
-        config.db.dbschema = dbschema
-        app.log.trace({ dbschema }, 'loaded schema lock')
-      } catch (err) {
-        app.log.trace({ err }, 'failed to load schema lock')
-        app.log.info('no schema lock found, will create one')
-        createSchemaLock = true
-      }
-    }
     await app.register(core, config.db)
     if (createSchemaLock) {
       try {

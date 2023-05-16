@@ -193,8 +193,9 @@ async function writeFileIfChanged (filename, content) {
   return true
 }
 
-async function execute (logger, _, config) {
-  const { db, entities } = await setupDB(logger, config.db)
+async function execute ({ logger, config }) {
+  const wrap = await setupDB(logger, config.db)
+  const { db, entities } = wrap
 
   const typesFolderPath = getTypesFolderPath(config)
   const isTypeFolderExists = await isFileAccessible(typesFolderPath)
@@ -241,7 +242,7 @@ async function generateTypes (_args) {
   await configManager.parseAndValidate()
   const config = configManager.current
 
-  const count = await execute(logger, args, config)
+  const count = await execute({ logger, config })
   if (count === 0) {
     logger.warn('No table found. Please run `platformatic db migrations apply` to generate types.')
   }
