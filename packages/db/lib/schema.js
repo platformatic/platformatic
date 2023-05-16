@@ -17,7 +17,7 @@ const db = {
         type: 'string'
       }
     },
-    schemaLock: {
+    schemalock: {
       oneOf: [{
         type: 'boolean',
         default: false
