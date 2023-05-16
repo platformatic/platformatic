@@ -11,7 +11,7 @@ import { updateSchemaLock } from './utils.js'
 import { loadConfig } from '@platformatic/service'
 import { platformaticDB } from '../index.js'
 
-async function execute (logger, args, config) {
+async function execute ({ logger, rollback, to, config }) {
   const migrationsConfig = config.migrations
   if (migrationsConfig === undefined) {
     throw new MigrateError('Missing "migrations" section in config file')
@@ -19,11 +19,12 @@ async function execute (logger, args, config) {
   const migrator = new Migrator(migrationsConfig, config.db, logger)
 
   try {
-    if (args.rollback) {
+    if (rollback) {
       await migrator.rollbackMigration()
     } else {
-      await migrator.applyMigrations(args.to)
+      await migrator.applyMigrations(to)
     }
+    return migrator.appliedMigrationsCount > 0
   } finally {
     await migrator.close()
   }
@@ -46,14 +47,16 @@ async function applyMigrations (_args) {
     }, _args, platformaticDB)
 
     const config = configManager.current
-    await execute(logger, args, config)
+    const appliedMigrations = await execute({ logger, ...args, config })
 
     if (config.types && config.types.autogenerate) {
-      await generateTypes(logger, args, config)
+      await generateTypes({ logger, config })
       await checkForDependencies(logger, args, config)
     }
 
-    await updateSchemaLock(logger, configManager)
+    if (appliedMigrations) {
+      await updateSchemaLock(logger, configManager)
+    }
 
     // touch the platformatic db config to trigger a restart
     const now = new Date()

@@ -223,3 +223,30 @@ test('start creates schema.lock if it is missing', async ({ equal, teardown }) =
   // Let's just validate this is a valid JSON file
   JSON.parse(data)
 })
+
+test('migrate does not update an existing schemalock file if no migrations have been applied', async ({ same, teardown }) => {
+  const db = await connectAndResetDB()
+  const configPath = getFixturesConfigFileLocation('schemalock.json')
+  const expectedFile = join(dirname(configPath), 'schema.lock')
+
+  try {
+    await fs.unlink(expectedFile)
+  } catch {}
+
+  await execa('node', [cliPath, 'migrations', 'apply', '-c', configPath])
+
+  teardown(async function () {
+    try {
+      await fs.unlink(expectedFile)
+    } catch {}
+  })
+  teardown(() => db.dispose())
+
+  const stats1 = await fs.stat(expectedFile)
+
+  await execa('node', [cliPath, 'migrations', 'apply', '-c', configPath])
+
+  const stats2 = await fs.stat(expectedFile)
+
+  same(stats1, stats2)
+})

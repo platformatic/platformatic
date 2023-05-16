@@ -15,9 +15,11 @@ class Migrator {
 
     this.db = null
     this.postgrator = null
+    this.appliedMigrationsCount = 0
   }
 
   async setupPostgrator () {
+    this.appliedMigrationsCount = 0
     if (this.postgrator instanceof Postgrator) return
 
     await this.checkMigrationsDirectoryExists()
@@ -65,6 +67,7 @@ class Migrator {
     this.postgrator.on(
       'migration-finished',
       (migration) => {
+        this.appliedMigrationsCount++
         const migrationName = basename(migration.filename)
         this.logger.debug(`completed ${migrationName}`)
       }
