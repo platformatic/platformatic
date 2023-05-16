@@ -17,7 +17,7 @@ export default function Header () {
         <img className={styles.logo} src='/images/00_Platformatic_Squared_Logo_Blue_Transparent_300dpi.png' />
       </a>
       {logged && userName && (
-        <Button color={WHITE} backgroundColor={ERROR_RED} onClick={onLogoutButtonClicked} label={`Logout ${userName}`} bold hoverEffect={BOX_SHADOW} />
+        <Button color={WHITE} backgroundColor={ERROR_RED} onClick={onLogoutButtonClicked} label={`Logout ${userName}`} bold bordered={false} hoverEffect={BOX_SHADOW} />
       )}
     </div>
   )
