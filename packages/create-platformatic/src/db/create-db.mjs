@@ -144,6 +144,7 @@ async function createDB ({ hostname, database = 'sqlite', port, migrations = 'mi
     const envFileExists = await isFileAccessible('.env', currentDir)
     await appendFile(join(currentDir, '.env'), env)
     await writeFile(join(currentDir, '.env.sample'), env)
+    /* c8 ignore next 5 */
     if (envFileExists) {
       logger.info('Environment file .env found, appending new environment variables to existing .env file.')
     } else {
