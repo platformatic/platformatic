@@ -18,7 +18,7 @@ then
   fi
 elif [ $OS = "Linux" ]
 then
-    DOCKEFILE="docker-compose.yml"
+    DOCKERFILE="docker-compose.yml"
 else
     echo "Failed to identify this OS"
     exit 1
