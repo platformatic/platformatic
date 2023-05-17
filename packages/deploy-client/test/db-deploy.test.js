@@ -57,6 +57,9 @@ test('should deploy platformatic project without github metadata', async (t) => 
           request.body,
           {
             label,
+            metadata: {
+              appType: 'db'
+            },
             variables: {
               ...variables,
               FILE_ENV_VARIABLE1: 'platformatic_variable1',
@@ -169,6 +172,9 @@ test('should successfully deploy platformatic project with PR context', async (t
           request.body,
           {
             label,
+            metadata: {
+              appType: 'db'
+            },
             variables: {
               ...variables,
               FILE_ENV_VARIABLE1: 'platformatic_variable1',
@@ -278,6 +284,9 @@ test('should successfully deploy platformatic project with branch context', asyn
           request.body,
           {
             label,
+            metadata: {
+              appType: 'db'
+            },
             variables: {
               ...variables,
               FILE_ENV_VARIABLE1: 'platformatic_variable1',
@@ -369,6 +378,9 @@ test('should successfully deploy platformatic project without github metadata', 
           request.body,
           {
             label,
+            metadata: {
+              appType: 'db'
+            },
             variables: {
               ...variables,
               FILE_ENV_VARIABLE1: 'platformatic_variable1',
@@ -477,6 +489,9 @@ test('should successfully deploy platformatic project with branch context', asyn
           request.body,
           {
             label,
+            metadata: {
+              appType: 'db'
+            },
             variables: {
               ...variables,
               FILE_ENV_VARIABLE1: 'platformatic_variable1',
@@ -586,6 +601,9 @@ test('should not deploy bundle of it already exists', async (t) => {
           request.body,
           {
             label,
+            metadata: {
+              appType: 'db'
+            },
             variables: {
               ...variables,
               FILE_ENV_VARIABLE1: 'platformatic_variable1',
@@ -677,6 +695,9 @@ test('should successfully deploy platformatic project without github metadata', 
           request.body,
           {
             label,
+            metadata: {
+              appType: 'db'
+            },
             variables: {
               ...variables,
               FILE_ENV_VARIABLE1: 'platformatic_variable1',
@@ -744,6 +765,10 @@ test('should show a warning if platformatic dep is not in the dev section', asyn
     SECRET_VARIABLE_1: 'value3'
   }
 
+  const metadata = {
+    appType: 'db'
+  }
+
   await startDeployService(
     t,
     {
@@ -765,7 +790,7 @@ test('should show a warning if platformatic dep is not in the dev section', asyn
         t.equal(request.headers.authorization, `Bearer ${token}`)
         t.same(
           request.body,
-          { label, variables, secrets }
+          { label, metadata, variables, secrets }
         )
         reply.code(200).send({ entryPointUrl })
       },

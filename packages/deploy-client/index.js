@@ -83,7 +83,7 @@ class DeployClient {
     }
   }
 
-  async createDeployment (token, label, variables, secrets) {
+  async createDeployment (token, label, metadata, variables, secrets) {
     const url = this.deployServiceHost + '/deployments'
 
     const { statusCode, body } = await request(url, {
@@ -97,7 +97,7 @@ class DeployClient {
         accept: 'application/json'
       },
 
-      body: JSON.stringify({ label, variables, secrets })
+      body: JSON.stringify({ label, metadata, variables, secrets })
     })
 
     if (statusCode !== 200) {
@@ -241,9 +241,12 @@ async function deploy ({
   const secretsFromFile = await getEnvFileVariables(secretsFilePath)
   const mergedSecrets = { ...secretsFromFile, ...secrets }
 
+  const appMetadata = { appType }
+
   const { entryPointUrl } = await deployClient.createDeployment(
     token,
     label,
+    appMetadata,
     mergedEnvVars,
     mergedSecrets
   )
