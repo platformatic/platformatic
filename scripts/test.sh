@@ -14,7 +14,7 @@ then
   then
     DOCKERFILE="docker-compose-apple-silicon.yml"
   else
-    DOCKEFILE="docker-compose-mac.yml"
+    DOCKERFILE="docker-compose-mac.yml"
   fi
 elif [ $OS = "Linux" ]
 then
