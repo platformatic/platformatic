@@ -518,7 +518,7 @@ app.listen({ port: 0 });
   })
 })
 
-test('graphql client generation errors if the name is not a valid JS identifier', async ({ teardown, comment, same, equal, match, rejects }) => {
+test('graphql client generation errors if the name is not a valid JS identifier', async ({ teardown, comment, rejects }) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
