@@ -555,8 +555,8 @@ importers:
         specifier: ^4.5.0
         version: 4.5.0
       fastify-user:
-        specifier: ^0.1.1
-        version: 0.1.1
+        specifier: ^0.1.2
+        version: 0.1.2
       get-jwks:
         specifier: ^8.0.5
         version: 8.0.6
@@ -8075,8 +8075,8 @@ packages:
     engines: {node: '>=10.4.0'}
     dev: true
 
-  /fastify-user@0.1.1:
-    resolution: {integrity: sha512-c3W+erPFMdTBD58Bf7rpp5dEMjw9FW/z2mD3pZ/uRoTJ5JsOPVIBb1wW6MvNAyXQpPJE1z78+YVmU8/qmqpzWg==}
+  /fastify-user@0.1.2:
+    resolution: {integrity: sha512-9YgrFPG0H7zx5fmx/uRgcAyHMMrFlWQO6fQK82OzL9aoGPeiBt1GvZJr0jw8bYGOa1tPWKbrA2Zd5aLECTuhAA==}
     dependencies:
       '@fastify/error': 3.2.0
       '@fastify/jwt': 6.7.1
@@ -14623,6 +14623,7 @@ packages:
 
   /trim@0.0.1:
     resolution: {integrity: sha512-YzQV+TZg4AxpKxaTHK3c3D+kRDCGVEE7LemdlQZoQXn0iennk10RsIoY6ikzAqJTc9Xjl9C1/waHom/J86ziAQ==}
+    deprecated: Use String.prototype.trim() instead
     dev: true
 
   /trivial-deferred@1.1.2:
