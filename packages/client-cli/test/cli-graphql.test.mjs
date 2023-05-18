@@ -517,3 +517,20 @@ app.listen({ port: 0 });
     title: 'foo'
   })
 })
+
+test('graphql client generation errors if the name is not a valid JS identifier', async ({ teardown, comment, same, equal, match, rejects }) => {
+  try {
+    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+
+  await app.start()
+  teardown(async () => { await app.close() })
+
+  const dir = await moveToTmpdir(teardown)
+
+  comment(`working in ${dir}`)
+  await rejects(execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies-foo']))
+})

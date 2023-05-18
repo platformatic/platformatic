@@ -126,6 +126,12 @@ export async function command (argv) {
     await help.toStdout()
     process.exit(1)
   }
+
+  if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(options.name) === false) {
+    console.error('Invalid client name', options.name, ', allowed characters are a-z, A-Z, 0-9, $ and _')
+    process.exit(1)
+  }
+
   try {
     await downloadAndProcess({ url, ...options })
   } catch (err) {
