@@ -22,7 +22,7 @@ afterEach(() => {
 
 test('creates gitignore file', async ({ end, equal }) => {
   await createGitignore(fakeLogger, tmpDir)
-  equal(log, `Gitignore file ${tmpDir}/.gitignore successfully created.`)
+  equal(log, `Gitignore file ${join(tmpDir, '.gitignore')} successfully created.`)
   const accessible = await isFileAccessible(join(tmpDir, '.gitignore'))
   equal(accessible, true)
 })
@@ -31,5 +31,5 @@ test('do not create gitignore file because already present', async ({ end, equal
   const gitignore = join(tmpDir, '.gitignore')
   writeFileSync(gitignore, 'TEST')
   await createGitignore(fakeLogger, tmpDir)
-  equal(log, `Gitignore file ${tmpDir}/.gitignore found, skipping creation of gitignore file.`)
+  equal(log, `Gitignore file ${join(tmpDir, '.gitignore')} found, skipping creation of gitignore file.`)
 })

@@ -24,7 +24,7 @@ test('creates package.json file for db project', async ({ equal }) => {
   const version = '1.2.3'
   const fastifyVersion = '4.5.6'
   await createPackageJson('db', version, fastifyVersion, fakeLogger, tmpDir, false)
-  equal(log, `${tmpDir}/package.json successfully created.`)
+  equal(log, `${join(tmpDir, 'package.json')} successfully created.`)
   const accessible = await isFileAccessible(join(tmpDir, 'package.json'))
   equal(accessible, true)
   const packageJson = JSON.parse(readFileSync(join(tmpDir, 'package.json')))
@@ -38,7 +38,7 @@ test('creates package.json file for service project', async ({ equal }) => {
   const version = '1.2.3'
   const fastifyVersion = '4.5.6'
   await createPackageJson('service', version, fastifyVersion, fakeLogger, tmpDir, false)
-  equal(log, `${tmpDir}/package.json successfully created.`)
+  equal(log, `${join(tmpDir, 'package.json')} successfully created.`)
   const accessible = await isFileAccessible(join(tmpDir, 'package.json'))
   equal(accessible, true)
   const packageJson = JSON.parse(readFileSync(join(tmpDir, 'package.json')))
@@ -53,14 +53,14 @@ test('do not create package.json file because already present', async ({ equal }
   const packagejson = join(tmpDir, 'package.json')
   writeFileSync(packagejson, 'TEST')
   await createPackageJson('db', version, fastifyVersion, fakeLogger, tmpDir, false)
-  equal(log, `${tmpDir}/package.json found, skipping creation of package.json file.`)
+  equal(log, `${join(tmpDir, 'package.json')} found, skipping creation of package.json file.`)
 })
 
 test('creates package.json file with TS build', async ({ equal }) => {
   const version = '1.2.3'
   const fastifyVersion = '4.5.6'
   await createPackageJson('db', version, fastifyVersion, fakeLogger, tmpDir, true)
-  equal(log, `${tmpDir}/package.json successfully created.`)
+  equal(log, `${join(tmpDir, 'package.json')} successfully created.`)
   const accessible = await isFileAccessible(join(tmpDir, 'package.json'))
   equal(accessible, true)
   const packageJson = JSON.parse(readFileSync(join(tmpDir, 'package.json')))
