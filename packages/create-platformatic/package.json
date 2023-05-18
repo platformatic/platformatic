@@ -13,7 +13,7 @@
     "create-platformatic": "./create-platformatic.mjs"
   },
   "scripts": {
-    "test": "standard | snazzy && NODE_OPTIONS=\"--loader=esmock --no-warnings\" c8 --100 tap --no-coverage test/*test.mjs test/*/*test.mjs",
+    "test": "standard | snazzy && cross-env NODE_OPTIONS=\"--loader=esmock --no-warnings\" c8 --100 tap --no-coverage test/*test.mjs test/*/*test.mjs",
     "lint": "standard | snazzy"
   },
   "license": "Apache-2.0",
@@ -43,6 +43,7 @@
     "@platformatic/service": "workspace:*",
     "ajv": "^8.12.0",
     "c8": "^7.13.0",
+    "cross-env": "^7.0.3",
     "dotenv": "^16.0.3",
     "esmock": "^2.2.1",
     "snazzy": "^9.0.0",
