@@ -17,7 +17,7 @@
     "@fastify/cookie": "^8.3.0",
     "@fastify/session": "^10.3.0",
     "@platformatic/db-core": "workspace:*",
-    "fast-jwt": "^2.2.2",
+    "fast-jwt": "^3.0.0",
     "fastify": "^4.17.0",
     "snazzy": "^9.0.0",
     "standard": "^17.0.0",
