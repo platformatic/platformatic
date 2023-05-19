@@ -159,9 +159,17 @@ async function auth (app, opts) {
       // fields are specified
       checkSaveMandatoryFieldsInRules(type, rules)
 
+      function useOriginal (skipAuth, ctx) {
+        if (skipAuth === false && !ctx) {
+          throw new Error('Cannot set skipAuth to `false` without ctx')
+        }
+
+        return skipAuth || !ctx
+      }
+
       app.platformatic.addEntityHooks(entityKey, {
         async find (originalFind, { where, ctx, fields, skipAuth, ...restOpts } = {}) {
-          if (skipAuth || !ctx) {
+          if (useOriginal(skipAuth, ctx)) {
             return originalFind({ ...restOpts, where, ctx, fields })
           }
           const request = getRequestFromContext(ctx)
@@ -173,7 +181,7 @@ async function auth (app, opts) {
         },
 
         async save (originalSave, { input, ctx, fields, skipAuth, ...restOpts }) {
-          if (skipAuth || !ctx) {
+          if (useOriginal(skipAuth, ctx)) {
             return originalSave({ ctx, input, fields, ...restOpts })
           }
           const request = getRequestFromContext(ctx)
@@ -223,7 +231,7 @@ async function auth (app, opts) {
         },
 
         async insert (originalInsert, { inputs, ctx, fields, skipAuth, ...restOpts }) {
-          if (skipAuth || !ctx) {
+          if (useOriginal(skipAuth, ctx)) {
             return originalInsert({ inputs, ctx, fields, ...restOpts })
           }
           const request = getRequestFromContext(ctx)
@@ -254,7 +262,7 @@ async function auth (app, opts) {
         },
 
         async delete (originalDelete, { where, ctx, fields, skipAuth, ...restOpts }) {
-          if (skipAuth || !ctx) {
+          if (useOriginal(skipAuth, ctx)) {
             return originalDelete({ where, ctx, fields, ...restOpts })
           }
           const request = getRequestFromContext(ctx)
@@ -266,7 +274,7 @@ async function auth (app, opts) {
         },
 
         async updateMany (originalUpdateMany, { where, ctx, fields, skipAuth, ...restOpts }) {
-          if (skipAuth || !ctx) {
+          if (useOriginal(skipAuth, ctx)) {
             return originalUpdateMany({ ...restOpts, where, ctx, fields })
           }
           const request = getRequestFromContext(ctx)
@@ -278,9 +286,9 @@ async function auth (app, opts) {
         },
 
         async getPublishTopic (original, opts) {
-          const request = opts.ctx.reply.request
+          const request = opts.ctx?.reply.request
           const originalTopic = await original(opts)
-          if (userPropToFillForPublish) {
+          if (userPropToFillForPublish && request) {
             return `/${userPropToFillForPublish.key}/${request.user[userPropToFillForPublish.val]}${originalTopic}`
           }
           return originalTopic

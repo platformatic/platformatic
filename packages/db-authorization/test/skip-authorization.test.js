@@ -300,7 +300,7 @@ test('if ctx is not present, skips permission check ', async ({ pass, teardown, 
   const app = fastify()
   app.register(core, {
     ...connInfo,
-    events: false,
+    events: true,
     async onDatabaseLoad (db, sql) {
       pass('onDatabaseLoad called')
 
@@ -380,7 +380,7 @@ test('if ctx is not present, skips permission check ', async ({ pass, teardown, 
     }, 'savePage response')
   }
 
-  // ...but it works if we don't have tthe context
+  // ...but it works if we don't have the context
   {
     const res = await app.platformatic.entities.page.save({
       input: { title: 'page title' }
@@ -537,4 +537,69 @@ test('if ctx is not present, skips permission check ', async ({ pass, teardown, 
     const res = await app.platformatic.entities.page.find()
     same(res, [], 'find')
   }
+})
+
+test('validate that a ctx is needed for skipAuth: false', async ({ pass, teardown, same, equal, rejects }) => {
+  const app = fastify()
+  app.register(core, {
+    ...connInfo,
+    events: false,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(auth, {
+    jwt: {
+      secret: 'supersecret'
+    },
+    roleKey: 'X-PLATFORMATIC-ROLE',
+    anonymousRole: 'anonymous',
+    rules: [{
+      role: 'user',
+      entity: 'page',
+      find: false,
+      delete: false,
+      save: false
+    }, {
+      role: 'anonymous',
+      entity: 'page',
+      find: false,
+      delete: false,
+      save: false
+    }]
+  })
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  await rejects(app.platformatic.entities.page.delete({
+    where: {
+      id: {
+        eq: 1
+      }
+    },
+    skipAuth: false
+  }))
+
+  await rejects(app.platformatic.entities.page.save({
+    input: { title: 'page title' },
+    skipAuth: false
+  }))
+
+  await rejects(app.platformatic.entities.page.insert({
+    inputs: [{ title: 'page title' }],
+    skipAuth: false
+  }))
+
+  await rejects(app.platformatic.entities.page.find({
+    skipAuth: false
+  }))
+
+  await rejects(app.platformatic.entities.page.updateMany({
+    input: { title: 'page title' },
+    skipAuth: false
+  }))
 })
