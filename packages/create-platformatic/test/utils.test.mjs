@@ -1,7 +1,7 @@
 import { test } from 'tap'
 import { randomBetween, sleep, validatePath, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions } from '../src/utils.mjs'
 import { mkdtempSync, rmSync, writeFileSync } from 'fs'
-import { tmpdir } from 'os'
+import { tmpdir, platform } from 'os'
 import { join } from 'path'
 import esmock from 'esmock'
 import semver from 'semver'
@@ -122,7 +122,7 @@ test('validatePath', async ({ end, equal, rejects, ok }) => {
     ok(valid)
   }
 
-  {
+  if (platform().indexOf('win') < 0) {
     // not writeable folder
     const valid = await validatePath('/')
     ok(!valid)

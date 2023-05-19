@@ -8,10 +8,11 @@ import dotenv from 'dotenv'
 import Ajv from 'ajv'
 import { schema } from '@platformatic/service'
 
+const base = tmpdir()
 let tmpDir
 let log = []
 beforeEach(() => {
-  tmpDir = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
+  tmpDir = mkdtempSync(join(base, 'test-create-platformatic-'))
 })
 
 afterEach(() => {
