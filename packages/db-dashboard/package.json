@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db-dashboard",
-  "version": "0.23.2",
+  "version": "0.24.0",
   "main": "index.js",
   "description": "Platformatic DB Dashboard",
   "repository": {
