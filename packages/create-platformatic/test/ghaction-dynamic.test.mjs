@@ -31,9 +31,8 @@ const env = {
 }
 
 test('creates gh action', async ({ end, equal }) => {
-  const workspaceId = '29aa2d07-e1c5-440f-bf3a-cd654d91f7ed'
-  await createDynamicWorkspaceGHAction(fakeLogger, workspaceId, env, 'db', tmpDir, false)
-  equal(log[0], 'Github action successfully created, please add PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY as repository secret.')
+  await createDynamicWorkspaceGHAction(fakeLogger, env, 'db', tmpDir, false)
+  equal(log[0], 'Github action successfully created, please add PLATFORMATIC_DYNAMIC_WORKSPACE_ID and PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY as repository secrets.')
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-dynamic-workspace-deploy.yml'))
   equal(accessible, true)
   const ghFile = await readFile(join(tmpDir, '.github/workflows/platformatic-dynamic-workspace-deploy.yml'), 'utf8')
@@ -51,9 +50,8 @@ test('creates gh action', async ({ end, equal }) => {
 })
 
 test('creates gh action with TS build step', async ({ end, equal }) => {
-  const workspaceId = '29aa2d07-e1c5-440f-bf3a-cd654d91f7ed'
-  await createDynamicWorkspaceGHAction(fakeLogger, workspaceId, env, 'db', tmpDir, true)
-  equal(log[0], 'Github action successfully created, please add PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY as repository secret.')
+  await createDynamicWorkspaceGHAction(fakeLogger, env, 'db', tmpDir, true)
+  equal(log[0], 'Github action successfully created, please add PLATFORMATIC_DYNAMIC_WORKSPACE_ID and PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY as repository secrets.')
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-dynamic-workspace-deploy.yml'))
   equal(accessible, true)
   const ghFile = await readFile(join(tmpDir, '.github/workflows/platformatic-dynamic-workspace-deploy.yml'), 'utf8')
@@ -75,15 +73,13 @@ test('do not create gitignore file because already present', async ({ end, equal
   await mkdirp(join(tmpDir, '.github', 'workflows'))
   const ghaction = join(tmpDir, '.github', 'workflows', 'platformatic-dynamic-workspace-deploy.yml')
   await writeFile(ghaction, 'TEST')
-  const workspaceId = '29aa2d07-e1c5-440f-bf3a-cd654d91f7ed'
-  await createDynamicWorkspaceGHAction(fakeLogger, workspaceId, env, 'db', tmpDir)
+  await createDynamicWorkspaceGHAction(fakeLogger, env, 'db', tmpDir)
   equal(log[0], `Github action file ${join(tmpDir, '.github', 'workflows', 'platformatic-dynamic-workspace-deploy.yml')} found, skipping creation of github action file.`)
 })
 
 test('creates gh action with a warn if a .git folder is not present', async ({ end, equal }) => {
-  const workspaceId = '29aa2d07-e1c5-440f-bf3a-cd654d91f7ed'
-  await createDynamicWorkspaceGHAction(fakeLogger, workspaceId, env, 'db', tmpDir)
-  equal(log[0], 'Github action successfully created, please add PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY as repository secret.')
+  await createDynamicWorkspaceGHAction(fakeLogger, env, 'db', tmpDir)
+  equal(log[0], 'Github action successfully created, please add PLATFORMATIC_DYNAMIC_WORKSPACE_ID and PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY as repository secrets.')
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-dynamic-workspace-deploy.yml'))
   equal(accessible, true)
   equal(log[1], 'No git repository found. The Github action won\'t be triggered.')
@@ -91,20 +87,9 @@ test('creates gh action with a warn if a .git folder is not present', async ({ e
 
 test('creates gh action without a warn if a .git folder is present', async ({ end, equal }) => {
   await mkdirp(join(tmpDir, '.git'))
-  const workspaceId = '29aa2d07-e1c5-440f-bf3a-cd654d91f7ed'
-  await createDynamicWorkspaceGHAction(fakeLogger, workspaceId, env, 'db', tmpDir)
-  equal(log[0], 'Github action successfully created, please add PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY as repository secret.')
+  await createDynamicWorkspaceGHAction(fakeLogger, env, 'db', tmpDir)
+  equal(log[0], 'Github action successfully created, please add PLATFORMATIC_DYNAMIC_WORKSPACE_ID and PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY as repository secrets.')
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-dynamic-workspace-deploy.yml'))
   equal(accessible, true)
-  equal(log.length, 1)
-})
-
-test('do not creates gh action if workspace is empty', async ({ end, equal }) => {
-  await mkdirp(join(tmpDir, '.git'))
-  const workspaceId = ''
-  await createDynamicWorkspaceGHAction(fakeLogger, workspaceId, env, 'db', tmpDir)
-  equal(log[0], 'No workspace ID provided, skipping creation of github action file.')
-  const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-dynamic-workspace-deploy.yml'))
-  equal(accessible, false)
   equal(log.length, 1)
 })

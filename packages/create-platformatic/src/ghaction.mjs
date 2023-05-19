@@ -4,7 +4,7 @@ import inquirer from 'inquirer'
 import { isFileAccessible } from './utils.mjs'
 import { writeFile } from 'fs/promises'
 
-export const dynamicWorkspaceGHTemplate = (workspaceId, env, config, buildTS = false) => {
+export const dynamicWorkspaceGHTemplate = (env, config, buildTS = false) => {
   const envAsStr = Object.keys(env).reduce((acc, key) => {
     acc += `          ${key}: ${env[key]} \n`
     return acc
@@ -36,7 +36,7 @@ jobs:
         uses: platformatic/onestep@latest
         with:
           github_token: \${{ secrets.GITHUB_TOKEN }}
-          platformatic_workspace_id: ${workspaceId}
+          platformatic_workspace_id: \${{ secrets.PLATFORMATIC_DYNAMIC_WORKSPACE_ID }}
           platformatic_workspace_key: \${{ secrets.PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY }}
           platformatic_config_path: ${config}
         env:
@@ -44,7 +44,7 @@ ${envAsStr}
 `
 }
 
-export const staticWorkspaceGHTemplate = (workspaceId, env, config, buildTS = false) => {
+export const staticWorkspaceGHTemplate = (env, config, buildTS = false) => {
   const envAsStr = Object.keys(env).reduce((acc, key) => {
     acc += `          ${key}: ${env[key]} \n`
     return acc
@@ -77,7 +77,7 @@ jobs:
         uses: platformatic/onestep@latest
         with:
           github_token: \${{ secrets.GITHUB_TOKEN }}
-          platformatic_workspace_id: ${workspaceId}
+          platformatic_workspace_id: \${{ secrets.PLATFORMATIC_STATIC_WORKSPACE_ID }}
           platformatic_workspace_key: \${{ secrets.PLATFORMATIC_STATIC_WORKSPACE_API_KEY }}
           platformatic_config_path: ${config}
         env:
@@ -85,19 +85,14 @@ ${envAsStr}
 `
 }
 
-export const createDynamicWorkspaceGHAction = async (logger, workspaceId, env, config, projectDir, buildTS) => {
+export const createDynamicWorkspaceGHAction = async (logger, env, config, projectDir, buildTS) => {
   const ghActionFileName = 'platformatic-dynamic-workspace-deploy.yml'
   const ghActionFilePath = join(projectDir, '.github', 'workflows', ghActionFileName)
   const isGithubActionExists = await isFileAccessible(ghActionFilePath)
   if (!isGithubActionExists) {
-    if (!workspaceId) {
-      logger.info('No workspace ID provided, skipping creation of github action file.')
-      return
-    }
-
     await mkdirp(join(projectDir, '.github', 'workflows'))
-    await writeFile(ghActionFilePath, dynamicWorkspaceGHTemplate(workspaceId, env, config, buildTS))
-    logger.info('Github action successfully created, please add PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY as repository secret.')
+    await writeFile(ghActionFilePath, dynamicWorkspaceGHTemplate(env, config, buildTS))
+    logger.info('Github action successfully created, please add PLATFORMATIC_DYNAMIC_WORKSPACE_ID and PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY as repository secrets.')
     const isGitDir = await isFileAccessible('.git', projectDir)
     if (!isGitDir) {
       logger.warn('No git repository found. The Github action won\'t be triggered.')
@@ -119,32 +114,20 @@ export const askDynamicWorkspaceCreateGHAction = async (logger, env, type, build
     }
   ])
   if (githubAction) {
-    const { workspaceId } = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'workspaceId',
-        message: 'Please enter the workspace ID:'
-      }
-    ])
     const config = `./platformatic.${type}.json`
-    await createDynamicWorkspaceGHAction(logger, workspaceId, env, config, projectDir, buildTS)
+    await createDynamicWorkspaceGHAction(logger, env, config, projectDir, buildTS)
   }
 /* c8 ignore next */
 }
 
-export const createStaticWorkspaceGHAction = async (logger, workspaceId, env, config, projectDir, buildTS) => {
+export const createStaticWorkspaceGHAction = async (logger, env, config, projectDir, buildTS) => {
   const ghActionFileName = 'platformatic-static-workspace-deploy.yml'
   const ghActionFilePath = join(projectDir, '.github', 'workflows', ghActionFileName)
   const isGithubActionExists = await isFileAccessible(ghActionFilePath)
   if (!isGithubActionExists) {
-    if (!workspaceId) {
-      logger.info('No workspace ID provided, skipping creation of github action file.')
-      return
-    }
-
     await mkdirp(join(projectDir, '.github', 'workflows'))
-    await writeFile(ghActionFilePath, staticWorkspaceGHTemplate(workspaceId, env, config, buildTS))
-    logger.info('Github action successfully created, please add PLATFORMATIC_STATIC_WORKSPACE_API_KEY as repository secret.')
+    await writeFile(ghActionFilePath, staticWorkspaceGHTemplate(env, config, buildTS))
+    logger.info('Github action successfully created, please add PLATFORMATIC_STATIC_WORKSPACE_ID and PLATFORMATIC_STATIC_WORKSPACE_API_KEY as repository secret.')
     const isGitDir = await isFileAccessible('.git', projectDir)
     if (!isGitDir) {
       logger.warn('No git repository found. The Github action won\'t be triggered.')
@@ -166,15 +149,8 @@ export const askStaticWorkspaceGHAction = async (logger, env, type, buildTS, pro
     }
   ])
   if (githubAction) {
-    const { workspaceId } = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'workspaceId',
-        message: 'Please enter the workspace ID:'
-      }
-    ])
     const config = `./platformatic.${type}.json`
-    await createStaticWorkspaceGHAction(logger, workspaceId, env, config, projectDir, buildTS)
+    await createStaticWorkspaceGHAction(logger, env, config, projectDir, buildTS)
   }
 /* c8 ignore next */
 }
