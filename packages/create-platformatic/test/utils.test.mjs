@@ -1,7 +1,7 @@
 import { test } from 'tap'
 import { randomBetween, sleep, validatePath, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions } from '../src/utils.mjs'
 import { mkdtempSync, rmSync, writeFileSync } from 'fs'
-import { tmpdir } from 'os'
+import { tmpdir, platform } from 'os'
 import { join } from 'path'
 import esmock from 'esmock'
 import semver from 'semver'
@@ -122,7 +122,7 @@ test('validatePath', async ({ end, equal, rejects, ok }) => {
     ok(valid)
   }
 
-  {
+  if (platform().indexOf('win') < 0) {
     // not writeable folder
     const valid = await validatePath('/')
     ok(!valid)
@@ -176,19 +176,13 @@ test('minimumSupportedNodeVersions', async ({ equal, not }) => {
 test('isCurrentVersionSupported', async ({ equal }) => {
   const { major, minor, patch } = semver.minVersion(minimumSupportedNodeVersions[0])
   {
-    // v15 major not supported
+    // major - 1 not supported
     const nodeVersion = `${major - 1}.${minor}.${patch}`
     const supported = isCurrentVersionSupported(nodeVersion)
     equal(supported, false)
   }
   {
-    // v17 major not supported
-    const nodeVersion = `${major + 1}.${minor}.${patch}`
-    const supported = isCurrentVersionSupported(nodeVersion)
-    equal(supported, false)
-  }
-  {
-    // v16 minor not supported
+    // minor - 1 not supported
     const nodeVersion = `${major}.${minor - 1}.${patch}`
     const supported = isCurrentVersionSupported(nodeVersion)
     equal(supported, false)
@@ -198,29 +192,24 @@ test('isCurrentVersionSupported', async ({ equal }) => {
     const supported = isCurrentVersionSupported(`${major}.${minor + 2}.${patch}`)
     equal(supported, true)
   }
-  // node version 18 test, to check greater and lesser major version
-  const { major: major18, minor: minor18, patch: patch18 } = semver.minVersion(minimumSupportedNodeVersions[1])
+
+  // node version 19 test, to check greater and lesser major version
+  const { major: major19, minor: minor19, patch: patch19 } = semver.minVersion(minimumSupportedNodeVersions[1])
   {
-    // v17 major not supported
-    const nodeVersion = `${major18 - 1}.${minor18}.${patch18}`
+    // v18.0.0 is not supported
+    const nodeVersion = `${major19 - 1}.${minor19}.${patch19}`
     const supported = isCurrentVersionSupported(nodeVersion)
     equal(supported, false)
   }
   {
-    // v19 is supported
-    const nodeVersion = `${major18 + 1}.${minor18}.${patch18}`
-    const supported = isCurrentVersionSupported(nodeVersion)
-    equal(supported, true)
-  }
-  {
-    // v18 minor not supported
-    const nodeVersion = `${major18}.${minor18 - 2}.${patch18}`
+    // v20 is not supported
+    const nodeVersion = `${major19 + 1}.${minor19}.${patch19}`
     const supported = isCurrentVersionSupported(nodeVersion)
     equal(supported, false)
   }
   {
-    // v18 supported
-    const supported = isCurrentVersionSupported(`${major18}.${minor18 + 1}.${patch18}`)
+    // v19 supported
+    const supported = isCurrentVersionSupported(`${major19}.${minor19 + 1}.${patch19}`)
     equal(supported, true)
   }
   for (const version of minimumSupportedNodeVersions) {

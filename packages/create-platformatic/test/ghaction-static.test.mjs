@@ -75,7 +75,7 @@ test('do not create gitignore file because already present', async ({ end, equal
   await writeFile(ghaction, 'TEST')
   const workspaceId = '29aa2d07-e1c5-440f-bf3a-cd654d91f7ed'
   await createStaticWorkspaceGHAction(fakeLogger, workspaceId, env, 'db', tmpDir)
-  equal(log[0], `Github action file ${tmpDir}/.github/workflows/platformatic-static-workspace-deploy.yml found, skipping creation of github action file.`)
+  equal(log[0], `Github action file ${join(tmpDir, '.github', 'workflows', 'platformatic-static-workspace-deploy.yml')} found, skipping creation of github action file.`)
 })
 
 test('creates gh action with a warn if a .git folder is not present', async ({ end, equal }) => {
