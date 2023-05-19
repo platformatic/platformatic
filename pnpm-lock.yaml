@@ -580,8 +580,8 @@ importers:
         specifier: workspace:*
         version: link:../db-core
       fast-jwt:
-        specifier: ^2.2.2
-        version: 2.2.3
+        specifier: ^3.0.0
+        version: 3.0.0
       fastify:
         specifier: ^4.17.0
         version: 4.17.0
@@ -8023,6 +8023,16 @@ packages:
       asn1.js: 5.4.1
       ecdsa-sig-formatter: 1.0.11
       mnemonist: 0.39.5
+    dev: false
+
+  /fast-jwt@3.0.0:
+    resolution: {integrity: sha512-25OVhHf3pym8dgfROhi6/PVFlhjn0RNSWruzbIErXU36SAeDDDFOEEStXwSuYORJpiJh/CFXAMzDk0xa0ktJLQ==}
+    engines: {node: '>=14 <22'}
+    dependencies:
+      asn1.js: 5.4.1
+      ecdsa-sig-formatter: 1.0.11
+      mnemonist: 0.39.5
+    dev: true
 
   /fast-levenshtein@2.0.6:
     resolution: {integrity: sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw==}
