@@ -13,6 +13,7 @@ const workspaceId = 'WORKSPACE-ID-TEST'
 test('creates a deploy config for static workspace', async (t) => {
   const dest = join(tmpdir(), `test-cli-gh-${process.pid}-${count++}`)
 
+  t.comment(`working in ${dest}`)
   await mkdirp(dest)
   await cp(
     join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'v0.16.0.db.json'),

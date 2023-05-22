@@ -29,6 +29,6 @@
   },
   "dependencies": {
     "abstract-logging": "^2.0.1",
-    "undici": "^5.22.0"
+    "undici": "^5.22.1"
   }
 }
