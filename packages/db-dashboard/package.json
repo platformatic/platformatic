@@ -18,7 +18,7 @@
     "prepublish": "npm run build",
     "preview": "vite preview",
     "test": "standard | snazzy && vitest run",
-    "test:e2e": "playwright test",
+    "test:e2e": "node node_modules/@playwright/test/cli.js test",
     "test:watch": "vitest watch",
     "lint": "standard | snazzy"
   },
