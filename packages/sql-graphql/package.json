@@ -39,7 +39,7 @@
     "camelcase": "^6.3.0",
     "fastify-plugin": "^4.5.0",
     "graphql": "^16.6.0",
-    "graphql-scalars": "^1.21.3",
+    "graphql-scalars": "^1.22.0",
     "graphql-type-json": "^0.3.2",
     "inflected": "^2.1.0",
     "mercurius": "^13.0.0"

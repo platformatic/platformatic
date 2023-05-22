@@ -487,7 +487,7 @@ jobs:
       run: sleep 10
     - name: Run Platformatic DB server and E2E tests
       run: |
-        node ./packages/cli/cli.js db --config=./packages/db-dashboard/test/e2e/fixtures/e2e-test-config.json &
+        node ./packages/cli/cli.js db start --config=./packages/db-dashboard/test/e2e/fixtures/e2e-test-config.json &
         sleep 5 &&
         cd packages/db-dashboard && pnpm run test:e2e
 
