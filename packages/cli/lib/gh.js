@@ -9,12 +9,12 @@ import pino from 'pino'
 import pretty from 'pino-pretty'
 import ConfigManager from '@platformatic/config'
 
-export const createGHAction = async (logger, workspaceId, env, config, buildTS, type, projectDir = process.cwd()) => {
+export const createGHAction = async (logger, env, config, buildTS, type, projectDir = process.cwd()) => {
   if (type === 'static') {
-    await createStaticWorkspaceGHAction(logger, workspaceId, env, config, projectDir, buildTS)
+    await createStaticWorkspaceGHAction(logger, env, config, projectDir, buildTS)
     return
   }
-  await createDynamicWorkspaceGHAction(logger, workspaceId, env, config, projectDir, buildTS)
+  await createDynamicWorkspaceGHAction(logger, env, config, projectDir, buildTS)
 }
 
 const logger = pino(pretty({
@@ -43,17 +43,10 @@ export const gh = async (argv) => {
       config: 'c',
       type: 't',
       help: 'h',
-      build: 'b',
-      workspace: 'w'
+      build: 'b'
     },
     boolean: ['build']
   })
-
-  // Validations:
-  if (!args.workspace) {
-    logger.error('Workspace ID is required')
-    process.exit(1)
-  }
 
   if (!['static', 'dynamic'].includes(args.type)) {
     logger.error(`Invalid type: [${args.type}]. Type must be either static or dynamic`)
@@ -80,8 +73,9 @@ export const gh = async (argv) => {
     plt_custom_variable: 'change-me',
     custom_variable1: 'change-me'
   }
-  await createGHAction(logger, args.workspace, env, configFilename, args.build, args.type)
+  await createGHAction(logger, env, configFilename, args.build, args.type)
 
+  const workspaceName = args.type === 'static' ? 'PLATFORMATIC_STATIC_WORKSPACE_ID ' : 'PLATFORMATIC_DYNAMIC_WORKSPACE_ID'
   const secretName = args.type === 'static' ? 'PLATFORMATIC_STATIC_WORKSPACE_API_KEY' : 'PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY'
-  logger.info(`Github action successfully created for workspace ${args.workspace}, please add ${secretName} as repository secret.`)
+  logger.info(`Github action successfully created please add ${workspaceName} and ${secretName} as repository secrets.`)
 }
