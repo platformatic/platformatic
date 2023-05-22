@@ -19,6 +19,7 @@
     "autoApply": true
   },
   "plugins": {
-    "paths": ["./plugin.js"]
+    "paths": ["./plugin.js"],
+    "hotReload": false
   }
 }
