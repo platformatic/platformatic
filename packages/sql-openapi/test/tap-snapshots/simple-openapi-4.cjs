@@ -34,9 +34,491 @@ Object {
   },
   "openapi": "3.0.3",
   "paths": Object {
+    "/api/pages": Object {
+      "head": Object {
+        "operationId": "getPages-head",
+        "parameters": Array [
+          Object {
+            "description": "Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "totalCount",
+            "required": false,
+            "schema": Object {
+              "default": false,
+              "type": "boolean",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": Object {
+              "items": Object {
+                "enum": Array [
+                  "id",
+                  "title",
+                ],
+                "type": "string",
+              },
+              "type": "array",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.eq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.neq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.gt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.gte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.lt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.lte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.like",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.eq",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.neq",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.gt",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.gte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.lt",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.lte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.like",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.or",
+            "required": false,
+            "schema": Object {
+              "items": Object {
+                "type": "string",
+              },
+              "type": "array",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "orderby.id",
+            "required": false,
+            "schema": Object {
+              "enum": Array [
+                "asc",
+                "desc",
+              ],
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "orderby.title",
+            "required": false,
+            "schema": Object {
+              "enum": Array [
+                "asc",
+                "desc",
+              ],
+              "type": "string",
+            },
+          },
+        ],
+        "responses": Object {
+          "200": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "items": Object {
+                    "$ref": "#/components/schemas/Page",
+                  },
+                  "type": "array",
+                },
+              },
+            },
+            "description": "Default Response",
+          },
+        },
+      },
+    },
     "/api/pages/": Object {
       "get": Object {
         "operationId": "getPages",
+        "parameters": Array [
+          Object {
+            "description": "Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "totalCount",
+            "required": false,
+            "schema": Object {
+              "default": false,
+              "type": "boolean",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": Object {
+              "items": Object {
+                "enum": Array [
+                  "id",
+                  "title",
+                ],
+                "type": "string",
+              },
+              "type": "array",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.eq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.neq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.gt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.gte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.lt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.lte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.like",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.eq",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.neq",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.gt",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.gte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.lt",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.lte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.like",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.or",
+            "required": false,
+            "schema": Object {
+              "items": Object {
+                "type": "string",
+              },
+              "type": "array",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "orderby.id",
+            "required": false,
+            "schema": Object {
+              "enum": Array [
+                "asc",
+                "desc",
+              ],
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "orderby.title",
+            "required": false,
+            "schema": Object {
+              "enum": Array [
+                "asc",
+                "desc",
+              ],
+              "type": "string",
+            },
+          },
+        ],
+        "responses": Object {
+          "200": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "items": Object {
+                    "$ref": "#/components/schemas/Page",
+                  },
+                  "type": "array",
+                },
+              },
+            },
+            "description": "Default Response",
+          },
+        },
+      },
+      "head": Object {
+        "operationId": "getPages-head",
         "parameters": Array [
           Object {
             "description": "Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown",
@@ -544,6 +1026,47 @@ Object {
       },
       "get": Object {
         "operationId": "getPageById",
+        "parameters": Array [
+          Object {
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": Object {
+              "items": Object {
+                "enum": Array [
+                  "id",
+                  "title",
+                ],
+                "type": "string",
+              },
+              "type": "array",
+            },
+          },
+          Object {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+        ],
+        "responses": Object {
+          "200": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "$ref": "#/components/schemas/Page",
+                },
+              },
+            },
+            "description": "Default Response",
+            "links": Object {},
+          },
+        },
+      },
+      "head": Object {
+        "operationId": "getPageById-head",
         "parameters": Array [
           Object {
             "in": "query",
