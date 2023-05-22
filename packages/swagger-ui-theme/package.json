@@ -1,0 +1,27 @@
+{
+  "name": "@platformatic/swagger-ui-theme",
+  "version": "0.24.0",
+  "description": "Platformatic's Swagger UI theme for @fastify/swagger-ui",
+  "main": "theme.js",
+  "type": "module",
+  "homepage": "https://oss.platformatic.dev/",
+  "scripts": {
+  },
+  "author": "Matteo Collina <hello@matteocollina.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "license": "Apache-2.0",
+  "keywords": [
+    "platformatic",
+    "GraphQL",
+    "OpenAPI",
+    "SQLite",
+    "PostgreSQL",
+    "MySQL",
+    "MariaDB",
+    "fastify",
+    "mercurius"
+  ]
+}
