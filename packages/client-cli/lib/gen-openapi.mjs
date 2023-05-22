@@ -96,8 +96,8 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
     for (const operation of operations) {
       const operationId = operation.operation.operationId
       const { parameters, responses, requestBody } = operation.operation
-      const operationRequestName = `${capitalize(operationId)}Request`
-      const operationResponseName = `${capitalize(operationId)}Response`
+      const operationRequestName = `${capitalize(operationId.replace('-', ''))}Request`
+      const operationResponseName = `${capitalize(operationId.replace('-', ''))}Response`
       interfaces.write(`interface ${operationRequestName}`).block(() => {
         const addedProps = new Set()
         if (parameters) {
@@ -140,7 +140,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
 
       let responseType = responseTypes.join(' | ')
       if (fullResponse) responseType = `FullResponse<${responseType}>`
-      writer.writeLine(`${operationId}(req: ${operationRequestName}): Promise<${responseType}>;`)
+      writer.writeLine(`${operationId.replace('-', '')}(req: ${operationRequestName}): Promise<${responseType}>;`)
     }
   })
 
