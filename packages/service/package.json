@@ -51,6 +51,7 @@
     "@fastify/under-pressure": "^8.2.0",
     "@mercuriusjs/federation": "^2.0.0",
     "@platformatic/client": "workspace:*",
+    "@platformatic/swagger-ui-theme": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "close-with-grace": "^1.2.0",

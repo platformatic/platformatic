@@ -38,6 +38,7 @@
     "@fastify/swagger": "^8.4.0",
     "@fastify/swagger-ui": "^1.8.1",
     "@platformatic/sql-json-schema-mapper": "workspace:*",
+    "@platformatic/swagger-ui-theme": "workspace:*",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^4.5.0",
     "inflected": "^2.1.0"

@@ -33,7 +33,9 @@ async function setupOpenAPI (app, opts) {
     }
   })
 
+  const { default: theme } = await import('@platformatic/swagger-ui-theme')
   app.register(SwaggerUI, {
+    ...theme,
     ...opts,
     prefix: '/documentation'
   })
