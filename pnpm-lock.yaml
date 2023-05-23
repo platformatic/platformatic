@@ -678,8 +678,8 @@ importers:
         specifier: ^6.3.0
         version: 6.3.0
       graphiql:
-        specifier: 2.4.4
-        version: 2.4.4(@codemirror/language@6.0.0)(@types/react@18.2.6)(graphql-ws@5.13.1)(graphql@16.6.0)(react-dom@18.2.0)(react-is@17.0.2)(react@18.2.0)
+        specifier: 2.4.5
+        version: 2.4.5(@codemirror/language@6.0.0)(@types/react@18.2.6)(graphql-ws@5.13.1)(graphql@16.6.0)(react-dom@18.2.0)(react-is@17.0.2)(react@18.2.0)
       graphql-ws:
         specifier: ^5.13.1
         version: 5.13.1(graphql@16.6.0)
@@ -3401,8 +3401,8 @@ packages:
     resolution: {integrity: sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==}
     optional: true
 
-  /@graphiql/react@0.17.4(@codemirror/language@6.0.0)(@types/react@18.2.6)(graphql-ws@5.13.1)(graphql@16.6.0)(react-dom@18.2.0)(react-is@17.0.2)(react@18.2.0):
-    resolution: {integrity: sha512-m2vOX3hLl2u62t1vve4K4mv0GC0rfmsC5Eb5EAK4CZGQ29pFAPMeU71LqA/b4u6QUXUGYm8N5fgCsDMgaUBgwA==}
+  /@graphiql/react@0.17.5(@codemirror/language@6.0.0)(@types/react@18.2.6)(graphql-ws@5.13.1)(graphql@16.6.0)(react-dom@18.2.0)(react-is@17.0.2)(react@18.2.0):
+    resolution: {integrity: sha512-rITk7pnYu4jPKeW977hp8mHICfHVhMcm14BN9tCdctMvP5kIglNMUx0uGJwMnUYx9mS110UfRoHaKBs6+05kOA==}
     peerDependencies:
       graphql: ^15.5.0 || ^16.0.0
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
@@ -8806,14 +8806,14 @@ packages:
     resolution: {integrity: sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==}
     dev: true
 
-  /graphiql@2.4.4(@codemirror/language@6.0.0)(@types/react@18.2.6)(graphql-ws@5.13.1)(graphql@16.6.0)(react-dom@18.2.0)(react-is@17.0.2)(react@18.2.0):
-    resolution: {integrity: sha512-RL8qv9288oZDZJETKIoZLFAn2XBdPd5aCLksDuVvaEahxrnAP4hCTJ3S8K4FPPUAcH1Jl+pn0nMGWmHauf2EHg==}
+  /graphiql@2.4.5(@codemirror/language@6.0.0)(@types/react@18.2.6)(graphql-ws@5.13.1)(graphql@16.6.0)(react-dom@18.2.0)(react-is@17.0.2)(react@18.2.0):
+    resolution: {integrity: sha512-i+vedgQ9tMJ1uoBgUNS1F2naJODaAGPe7xInIHCscU+xPb4WwjRj9dI9rbAnHCNkcZgCdJNJNz0D6z6tLm1Ucw==}
     peerDependencies:
       graphql: ^15.5.0 || ^16.0.0
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
     dependencies:
-      '@graphiql/react': 0.17.4(@codemirror/language@6.0.0)(@types/react@18.2.6)(graphql-ws@5.13.1)(graphql@16.6.0)(react-dom@18.2.0)(react-is@17.0.2)(react@18.2.0)
+      '@graphiql/react': 0.17.5(@codemirror/language@6.0.0)(@types/react@18.2.6)(graphql-ws@5.13.1)(graphql@16.6.0)(react-dom@18.2.0)(react-is@17.0.2)(react@18.2.0)
       '@graphiql/toolkit': 0.8.4(graphql-ws@5.13.1)(graphql@16.6.0)
       graphql: 16.6.0
       graphql-language-service: 5.1.6(graphql@16.6.0)
@@ -14661,6 +14661,7 @@ packages:
 
   /trim@0.0.1:
     resolution: {integrity: sha512-YzQV+TZg4AxpKxaTHK3c3D+kRDCGVEE7LemdlQZoQXn0iennk10RsIoY6ikzAqJTc9Xjl9C1/waHom/J86ziAQ==}
+    deprecated: Use String.prototype.trim() instead
     dev: true
 
   /trivial-deferred@1.1.2:
