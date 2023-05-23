@@ -46,7 +46,7 @@
     "@fastify/deepmerge": "^1.3.0",
     "@fastify/restartable": "^2.1.0",
     "@fastify/static": "^6.10.1",
-    "@fastify/swagger": "^8.4.0",
+    "@fastify/swagger": "^8.5.1",
     "@fastify/swagger-ui": "^1.8.1",
     "@fastify/under-pressure": "^8.2.0",
     "@mercuriusjs/federation": "^2.0.0",
