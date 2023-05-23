@@ -1,6 +1,6 @@
 # @platformatic/config
 
-Utility to load and update configuration files in Platformatic.
+Check out the full documentation of our website at https://oss.platformatic.dev/
 
 ## Install
 
