@@ -7,7 +7,7 @@ const { deploy } = require('../index')
 const { startMachine, startDeployService } = require('./helper')
 
 test('should deploy platformatic project without github metadata', async (t) => {
-  t.plan(10)
+  t.plan(11)
 
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
@@ -40,13 +40,13 @@ test('should deploy platformatic project without github metadata', async (t) => 
       createBundleCallback: (request, reply) => {
         t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
         t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-        t.match(request.body, {
-          bundle: {
-            appType: 'db',
-            configPath: 'platformatic.db.json'
-          }
-        })
-        t.ok(request.body.bundle.checksum)
+
+        const { bundle } = request.body
+
+        t.equal(bundle.appType, 'db')
+        t.equal(bundle.configPath, pathToConfig)
+        t.ok(bundle.checksum)
+
         reply.code(200).send({ id: bundleId, token, isBundleUploaded: false })
       },
       createDeploymentCallback: (request, reply) => {
@@ -97,7 +97,7 @@ test('should deploy platformatic project without github metadata', async (t) => 
 })
 
 test('should successfully deploy platformatic project with PR context', async (t) => {
-  t.plan(10)
+  t.plan(13)
 
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
@@ -151,13 +151,14 @@ test('should successfully deploy platformatic project with PR context', async (t
       createBundleCallback: (request, reply) => {
         t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
         t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-        t.match(request.body, {
-          bundle: {
-            appType: 'db',
-            configPath: 'platformatic.db.json'
-          },
-          ...githubMetadata
-        })
+
+        const { bundle, ...bundleMetadata } = request.body
+
+        t.equal(bundle.appType, 'db')
+        t.equal(bundle.configPath, pathToConfig)
+        t.ok(bundle.checksum)
+
+        t.same(bundleMetadata, githubMetadata)
         t.ok(request.body.bundle.checksum)
         reply.code(200).send({ id: bundleId, token, isBundleUploaded: false })
       },
@@ -210,7 +211,7 @@ test('should successfully deploy platformatic project with PR context', async (t
 })
 
 test('should successfully deploy platformatic project with branch context', async (t) => {
-  t.plan(10)
+  t.plan(12)
 
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
@@ -260,14 +261,14 @@ test('should successfully deploy platformatic project with branch context', asyn
       createBundleCallback: (request, reply) => {
         t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
         t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-        t.match(request.body, {
-          bundle: {
-            appType: 'db',
-            configPath: 'platformatic.db.json'
-          },
-          ...githubMetadata
-        })
-        t.ok(request.body.bundle.checksum)
+
+        const { bundle, ...bundleMetadata } = request.body
+
+        t.equal(bundle.appType, 'db')
+        t.equal(bundle.configPath, pathToConfig)
+        t.ok(bundle.checksum)
+
+        t.same(bundleMetadata, githubMetadata)
         reply.code(200).send({ id: bundleId, token, isBundleUploaded: false })
       },
       createDeploymentCallback: (request, reply) => {
@@ -319,7 +320,7 @@ test('should successfully deploy platformatic project with branch context', asyn
 })
 
 test('should successfully deploy platformatic project without github metadata', async (t) => {
-  t.plan(10)
+  t.plan(11)
 
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
@@ -352,13 +353,12 @@ test('should successfully deploy platformatic project without github metadata', 
       createBundleCallback: (request, reply) => {
         t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
         t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-        t.match(request.body, {
-          bundle: {
-            appType: 'db',
-            configPath: 'platformatic.db.json'
-          }
-        })
-        t.ok(request.body.bundle.checksum)
+        const { bundle } = request.body
+
+        t.equal(bundle.appType, 'db')
+        t.equal(bundle.configPath, pathToConfig)
+        t.ok(bundle.checksum)
+
         reply.code(200).send({ id: bundleId, token, isBundleUploaded: false })
       },
       createDeploymentCallback: (request, reply) => {
@@ -409,7 +409,7 @@ test('should successfully deploy platformatic project without github metadata', 
 })
 
 test('should successfully deploy platformatic project with branch context', async (t) => {
-  t.plan(10)
+  t.plan(12)
 
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
@@ -459,14 +459,13 @@ test('should successfully deploy platformatic project with branch context', asyn
       createBundleCallback: (request, reply) => {
         t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
         t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-        t.match(request.body, {
-          bundle: {
-            appType: 'db',
-            configPath: 'platformatic.db.json'
-          },
-          ...githubMetadata
-        })
-        t.ok(request.body.bundle.checksum)
+        const { bundle, ...bundleMetadata } = request.body
+
+        t.equal(bundle.appType, 'db')
+        t.equal(bundle.configPath, pathToConfig)
+        t.ok(bundle.checksum)
+
+        t.same(bundleMetadata, githubMetadata)
         reply.code(200).send({ id: bundleId, token, isBundleUploaded: false })
       },
       createDeploymentCallback: (request, reply) => {
@@ -518,7 +517,7 @@ test('should successfully deploy platformatic project with branch context', asyn
 })
 
 test('should not deploy bundle of it already exists', async (t) => {
-  t.plan(9)
+  t.plan(11)
 
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
@@ -568,14 +567,13 @@ test('should not deploy bundle of it already exists', async (t) => {
       createBundleCallback: (request, reply) => {
         t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
         t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-        t.match(request.body, {
-          bundle: {
-            appType: 'db',
-            configPath: 'platformatic.db.json'
-          },
-          ...githubMetadata
-        })
-        t.ok(request.body.bundle.checksum)
+        const { bundle, ...bundleMetadata } = request.body
+
+        t.equal(bundle.appType, 'db')
+        t.equal(bundle.configPath, pathToConfig)
+        t.ok(bundle.checksum)
+
+        t.same(bundleMetadata, githubMetadata)
         reply.code(200).send({ id: bundleId, token, isBundleUploaded: true })
       },
       createDeploymentCallback: (request, reply) => {
@@ -627,7 +625,7 @@ test('should not deploy bundle of it already exists', async (t) => {
 })
 
 test('should successfully deploy platformatic project without github metadata', async (t) => {
-  t.plan(10)
+  t.plan(11)
 
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
@@ -660,13 +658,12 @@ test('should successfully deploy platformatic project without github metadata', 
       createBundleCallback: (request, reply) => {
         t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
         t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-        t.match(request.body, {
-          bundle: {
-            appType: 'db',
-            configPath: 'platformatic.db.json'
-          }
-        })
-        t.ok(request.body.bundle.checksum)
+        const { bundle } = request.body
+
+        t.equal(bundle.appType, 'db')
+        t.equal(bundle.configPath, pathToConfig)
+        t.ok(bundle.checksum)
+
         reply.code(200).send({ id: bundleId, token, isBundleUploaded: false })
       },
       createDeploymentCallback: (request, reply) => {
@@ -717,7 +714,7 @@ test('should successfully deploy platformatic project without github metadata', 
 })
 
 test('should show a warning if platformatic dep is not in the dev section', async (t) => {
-  t.plan(11)
+  t.plan(12)
 
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
@@ -750,13 +747,12 @@ test('should show a warning if platformatic dep is not in the dev section', asyn
       createBundleCallback: (request, reply) => {
         t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
         t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-        t.match(request.body, {
-          bundle: {
-            appType: 'db',
-            configPath: 'platformatic.db.json'
-          }
-        })
-        t.ok(request.body.bundle.checksum)
+        const { bundle } = request.body
+
+        t.equal(bundle.appType, 'db')
+        t.equal(bundle.configPath, pathToConfig)
+        t.ok(bundle.checksum)
+
         reply.code(200).send({ id: bundleId, token, isBundleUploaded: false })
       },
       createDeploymentCallback: (request, reply) => {
