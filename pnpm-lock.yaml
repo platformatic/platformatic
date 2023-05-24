@@ -552,8 +552,8 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0
       '@fastify/jwt':
-        specifier: ^6.7.1
-        version: 6.7.1
+        specifier: ^7.0.0
+        version: 7.0.0
       fastify-plugin:
         specifier: ^4.5.0
         version: 4.5.0
@@ -3290,6 +3290,16 @@ packages:
       '@fastify/error': 3.2.0
       '@lukeed/ms': 2.0.1
       fast-jwt: 2.2.3
+      fastify-plugin: 4.5.0
+      steed: 1.1.3
+    dev: false
+
+  /@fastify/jwt@7.0.0:
+    resolution: {integrity: sha512-y8n7qhBb/U+qWRUJzjZ+SJckv9wmOrA1eC/lM34SnOopt7VlK3hdfox7T3iuurAWVb8HjS9GxmZx+zFZO+Vb5A==}
+    dependencies:
+      '@fastify/error': 3.2.0
+      '@lukeed/ms': 2.0.1
+      fast-jwt: 3.0.0
       fastify-plugin: 4.5.0
       steed: 1.1.3
     dev: false
@@ -8043,7 +8053,6 @@ packages:
       asn1.js: 5.4.1
       ecdsa-sig-formatter: 1.0.11
       mnemonist: 0.39.5
-    dev: true
 
   /fast-levenshtein@2.0.6:
     resolution: {integrity: sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw==}
@@ -14661,6 +14670,7 @@ packages:
 
   /trim@0.0.1:
     resolution: {integrity: sha512-YzQV+TZg4AxpKxaTHK3c3D+kRDCGVEE7LemdlQZoQXn0iennk10RsIoY6ikzAqJTc9Xjl9C1/waHom/J86ziAQ==}
+    deprecated: Use String.prototype.trim() instead
     dev: true
 
   /trivial-deferred@1.1.2:
