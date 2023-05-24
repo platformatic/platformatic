@@ -9,7 +9,7 @@ const tar = require('tar')
 const { request } = require('undici')
 
 const ConfigManager = require('@platformatic/config')
-const { loadConfig, getConfigType } = require('@platformatic/start')
+const { getConfigType } = require('@platformatic/start')
 
 const makePrewarmRequest = require('./lib/prewarm.js')
 
@@ -194,9 +194,6 @@ async function deploy ({
 
   const args = ['-c', join(pathToProject, pathToConfig)]
   const appType = await getConfigType(args, pathToProject)
-  const { configManager } = await loadConfig({}, args, undefined, appType)
-
-  pathToConfig = configManager.fullPath
 
   logger.info(`Found Platformatic config file: ${pathToConfig}`)
 
