@@ -1,12 +1,11 @@
 {
   "name": "@platformatic/swagger-ui-theme",
-  "version": "0.24.0",
+  "version": "0.25.0",
   "description": "Platformatic's Swagger UI theme for @fastify/swagger-ui",
   "main": "theme.js",
   "type": "module",
   "homepage": "https://oss.platformatic.dev/",
-  "scripts": {
-  },
+  "scripts": {},
   "author": "Matteo Collina <hello@matteocollina.com>",
   "repository": {
     "type": "git",

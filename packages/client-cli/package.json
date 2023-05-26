@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/client-cli",
-  "version": "0.24.0",
+  "version": "0.25.0",
   "description": "A client for all platformatic backends",
   "main": "cli.mjs",
   "bin": {
