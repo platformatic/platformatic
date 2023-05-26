@@ -112,6 +112,13 @@ platformaticService.configManagerConfig = {
     coerceTypes: true,
     allErrors: true,
     strict: false
+  },
+  transformConfig () {
+    // Set watch to true by default. This is not possible
+    // to do in the schema, because it is uses an anyOf.
+    if (this.current.watch === undefined) {
+      this.current.watch = true
+    }
   }
 }
 
