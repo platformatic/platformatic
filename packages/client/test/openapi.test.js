@@ -2,6 +2,7 @@
 
 require('./helper')
 const { test } = require('tap')
+const { ResponseStatusCodeError } = require('undici').errors
 const { buildServer } = require('../../db')
 const { join } = require('path')
 const { buildOpenAPIClient } = require('..')
@@ -80,6 +81,13 @@ test('build basic client from url', async ({ teardown, same, rejects }) => {
   })
 
   await rejects(client.getMovieById())
+
+  const notFound = await client.getMovieById({ id: 100 })
+  same(notFound, {
+    message: 'Route GET:/movies/100 not found',
+    error: 'Not Found',
+    statusCode: 404
+  })
 
   {
     const movies = await client.getMovies({ 'where.title.eq': 'Star Wars' })
@@ -234,6 +242,23 @@ test('build full response client from url', async ({ teardown, same, match, reje
 
   await rejects(client.getMovieById())
 
+  const notFound = await client.getMovieById({ id: 100 })
+  match(notFound, {
+    statusCode: 404,
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      'content-length': '82',
+      date: matchDate,
+      connection: 'keep-alive',
+      'keep-alive': matchKeepAlive
+    },
+    body: {
+      message: 'Route GET:/movies/100 not found',
+      error: 'Not Found',
+      statusCode: 404
+    }
+  })
+
   {
     const movies = await client.getMovies({ 'where.title.eq': 'Star Wars' })
     match(movies, {
@@ -301,6 +326,30 @@ test('build full response client from url', async ({ teardown, same, match, reje
   }
 })
 
+test('throw on error level response', async ({ teardown, rejects }) => {
+  try {
+    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic-prefix.db.json'))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const client = await buildOpenAPIClient({
+    url: `${app.url}/movies-api/`,
+    path: join(__dirname, 'fixtures', 'movies', 'openapi.json'),
+    throwOnError: true
+  })
+
+  rejects(client.getMovieById({
+    id: 100
+  }), ResponseStatusCodeError)
+})
+
 test('build basic client from file', async ({ teardown, same, rejects }) => {
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
@@ -357,6 +406,13 @@ test('build basic client from file', async ({ teardown, same, rejects }) => {
   })
 
   await rejects(client.getMovieById())
+
+  const notFound = await client.getMovieById({ id: 100 })
+  same(notFound, {
+    message: 'Route GET:/movies-api/movies/100 not found',
+    error: 'Not Found',
+    statusCode: 404
+  })
 
   {
     const movies = await client.getMovies({ 'where.title.eq': 'Star Wars' })
@@ -437,6 +493,13 @@ test('build basic client from url with custom headers', async ({ teardown, same,
   })
 
   await rejects(client.getMovieById())
+
+  const notFound = await client.getMovieById({ id: 100 })
+  same(notFound, {
+    message: 'Route GET:/movies/100 not found',
+    error: 'Not Found',
+    statusCode: 404
+  })
 
   {
     const movies = await client.getMovies({ 'where.title.eq': 'Star Wars' })

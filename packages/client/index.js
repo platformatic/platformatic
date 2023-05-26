@@ -38,6 +38,7 @@ async function buildOpenAPIClient (options) {
   }
 
   client[kHeaders] = options.headers || {}
+  const { fullResponse, throwOnError } = options
 
   for (const path of Object.keys(spec.paths)) {
     const pathMeta = spec.paths[path]
@@ -46,7 +47,7 @@ async function buildOpenAPIClient (options) {
       const methodMeta = pathMeta[method]
       const operationId = generateOperationId(path, method, methodMeta)
 
-      client[operationId] = buildCallFunction(baseUrl, path, method, methodMeta, options.fullResponse)
+      client[operationId] = buildCallFunction(baseUrl, path, method, methodMeta, fullResponse, throwOnError)
     }
   }
 
@@ -59,7 +60,7 @@ function computeURLWithoutPath (url) {
   return url.toString()
 }
 
-function buildCallFunction (baseUrl, path, method, methodMeta, fullResponse) {
+function buildCallFunction (baseUrl, path, method, methodMeta, fullResponse, throwOnError) {
   const url = new URL(baseUrl)
   method = method.toUpperCase()
   path = join(url.pathname, path)
@@ -108,7 +109,8 @@ function buildCallFunction (baseUrl, path, method, methodMeta, fullResponse) {
         ...headers,
         'content-type': 'application/json; charset=utf-8'
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
+      throwOnError
     })
 
     const responseBody = res.statusCode === 204
