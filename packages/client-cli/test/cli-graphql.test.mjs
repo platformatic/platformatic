@@ -351,7 +351,8 @@ test('adds clients to platformatic service', async ({ teardown, comment, same, m
     },
     plugins: {
       paths: ['./plugin.js']
-    }
+    },
+    watch: false
   }
 
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
@@ -375,7 +376,8 @@ test('adds clients to platformatic service', async ({ teardown, comment, same, m
       clients: [{
         path: './movies',
         url: '{PLT_MOVIES_URL}'
-      }]
+      }],
+      watch: false
     })
   }
 

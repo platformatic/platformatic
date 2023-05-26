@@ -21,5 +21,6 @@
   },
   "plugins": {
     "paths": ["./plugin.js"]
-  }
+  },
+  "watch": false
 }
