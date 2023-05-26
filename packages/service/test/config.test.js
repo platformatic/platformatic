@@ -29,6 +29,7 @@ test('config reloads', async ({ teardown, equal, pass, same }) => {
         }
       }]
     },
+    watch: false,
     metrics: false
   })
 

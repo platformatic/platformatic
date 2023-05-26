@@ -24,6 +24,7 @@ test('load and reload', async ({ teardown, equal, pass, same }) => {
     plugins: {
       paths: [file]
     },
+    watch: false,
     metrics: false
   })
 
@@ -71,6 +72,7 @@ test('error', async ({ teardown, equal, pass, match }) => {
     plugins: {
       paths: [file]
     },
+    watch: false,
     metrics: false
   })
 
