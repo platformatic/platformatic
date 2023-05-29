@@ -1,6 +1,8 @@
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
+import NewApiProjectInstructions from './new-api-project-instructions.md';
+
 # Quick Start Guide
 
 In this guide you'll learn how to create and run your first API with
@@ -20,7 +22,7 @@ Platformatic supports macOS, Linux and Windows ([WSL](https://docs.microsoft.com
 
 To follow along with this guide you'll need to have these things installed:
 
-- [Node.js](https://nodejs.org/) >= vv18.8.0 or >= v19.0.0
+- [Node.js](https://nodejs.org/) >= v18.8.0 or >= v19.0.0
 - [npm](https://docs.npmjs.com/cli/) v7 or later
 - A code editor, for example [Visual Studio Code](https://code.visualstudio.com/)
 
@@ -28,64 +30,14 @@ To follow along with this guide you'll need to have these things installed:
 
 ### Automatic CLI
 
-Run this command in your terminal to start the Platformatic creator wizard:
-
-<Tabs groupId="package-manager-create">
-<TabItem value="npm" label="npm">
-
-```bash
-npm create platformatic@latest
-```
-
-</TabItem>
-<TabItem value="yarn" label="yarn">
-
-```bash
-yarn create platformatic
-```
-
-</TabItem>
-<TabItem value="pnpm" label="pnpm">
-
-```bash
-pnpm create platformatic@latest
-```
-
-</TabItem>
-</Tabs>
-
-This interactive command-line tool will ask you some questions about how you'd
-like to set up your new Platformatic project. For this guide, select these options:
-
-```
-- Which kind of project do you want to create?  => DB
-- Where would you like to create your project?  => quick-start 
-- Do you want to create default migrations?     => Yes
-- Do you want to create a plugin?               => Yes
-- Do you want to use TypeScript?                => No
-- Do you want to install dependencies?          => Yes (this can take a while)
-- Do you want to apply the migrations?          => Yes
-- Do you want to generate types?                => Yes
-- Do you want to create the github action to deploy this application to Platformatic Cloud dynamic workspace? => No
-- Do you want to create the github action to deploy this application to Platformatic Cloud static workspace?  => No
-```
-
-Once the wizard is complete, you'll have a Platformatic app project in the
-folder `quick-start`, with example migration files and a plugin script.
-
-:::info
-
-Make sure you run the npm/yarn/pnpm command `install` command manually if you
-don't ask the wizard to do it for you.
-
-:::
+<NewApiProjectInstructions/>
 
 #### Start your API server
 
 In your project directory, run this command to start your API server:
 
 ```bash
-npm start 
+npm start
 ```
 
 Your Platformatic API is now up and running! 🌟
@@ -176,7 +128,7 @@ pnpm add platformatic
 #### Add a database schema
 
 In your project directory (`quick-start`), create a file for your sqlite3 database and also, a `migrations` directory to
-store your database migration files: 
+store your database migration files:
 
 ```bash
 touch db.sqlite

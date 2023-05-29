@@ -50,6 +50,7 @@
     "@platformatic/composer": "workspace:*",
     "@platformatic/db": "workspace:*",
     "@platformatic/deploy-client": "workspace:*",
+    "@platformatic/frontend-template": "workspace:*",
     "@platformatic/metaconfig": "workspace:*",
     "@platformatic/runtime": "workspace:*",
     "@platformatic/service": "workspace:*",

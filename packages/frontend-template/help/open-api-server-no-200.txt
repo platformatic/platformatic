@@ -1,0 +1,8 @@
+
+The server is running but responded with a non-200 status code. Ensure
+* The passed url is valid and the Platformatic app is running
+* OpenAPI is enabled (`db.openapi` in `platformatic.db.json` is not set to `false`).
+
+You can find more details about
+the db configuration format at:
+https://oss.platformatic.dev/docs/reference/db/configuration/#db

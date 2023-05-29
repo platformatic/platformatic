@@ -536,10 +536,22 @@ jobs:
     - name: Wait for DB
       run: sleep 10
     - name: Run Platformatic DB server and E2E tests
+      id: build
       run: |
         node ./packages/cli/cli.js db start --config=./packages/db-dashboard/test/e2e/fixtures/e2e-test-config.json &
         sleep 5 &&
         cd packages/db-dashboard && pnpm run test:e2e
+    - name: Run Platformatic frontend cli and E2E tests
+      run: |
+        node ./packages/cli/cli.js db migrations apply --config=./packages/frontend-template/test/e2e/fixtures/platformatic.e2e.db.json &&
+        node ./packages/cli/cli.js db start --config=./packages/frontend-template/test/e2e/fixtures/platformatic.e2e.db.json &
+        sleep 2 &&
+        rm -rf packages/frontend-template/src/platformatic-generated-code
+        mkdir -p packages/frontend-template/src/platformatic-generated-code &&
+        cd packages/frontend-template/src/platformatic-generated-code &&
+        node ../../../cli/cli.js frontend http://127.0.0.1:9999 ts &&
+        pnpm run test:types &&
+        pnpm run test:e2e
 
   dependency-check:
     needs: setup-node_modules

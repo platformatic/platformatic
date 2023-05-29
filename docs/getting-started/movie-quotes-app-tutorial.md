@@ -1,3 +1,5 @@
+import NewApiProjectInstructions from '../getting-started/new-api-project-instructions.md';
+
 # Movie Quotes App Tutorial
 
 This tutorial will help you learn how to build a full stack application on top
@@ -51,33 +53,7 @@ mkdir -p tutorial-movie-quotes-app/apps/movie-quotes-api/
 cd tutorial-movie-quotes-app/apps/movie-quotes-api/
 ```
 
-```bash
-npm create platformatic@latest
-```
-
-This interactive command-line tool will ask you some questions about how you'd
-like to set up your new Platformatic project. For this guide, select these options:
-
-```
-- Which kind of project do you want to create?  => DB
-- Where would you like to create your project?  => (.)
-- Do you want to create default migrations?     => No
-- Do you want to create a plugin?               => No
-- Do you want to use TypeScript?                => No
-- Do you want to install dependencies?          => Yes (this can take a while)
-- Do you want to generate types?                => Yes
-- Do you want to create the github action to deploy this application to Platformatic Cloud dynamic workspace? => No
-- Do you want to create the github action to deploy this application to Platformatic Cloud static workspace?  => No
-```
-Once the wizard is complete, you'll have a Platformatic app project in the
-folder `movie-quotes-api`, with example migration files and a plugin script.
-
-:::info
-
-Make sure you run the `npm/yarn/pnpm install` command manually if you
-didn't ask the wizard to do it for you.
-
-:::
+<NewApiProjectInstructions/>
 
 ### Define the database schema
 
@@ -397,7 +373,7 @@ And then we'll create a new `Astro` project:
 npm create astro@latest -- --template basics
 ```
 
-It will ask you some questions about how you'd like to set up 
+It will ask you some questions about how you'd like to set up
 your new Astro project. For this guide, select these options:
 
   **Where should we create your new project?**
@@ -1483,7 +1459,7 @@ We'll use `fluent-json-schema` to help us generate a JSON Schema. We can then
 use this schema to validate the request path parameters for our route (`id`).
 
 :::tip
-You can use [fastify-type-provider-typebox](https://github.com/fastify/fastify-type-provider-typebox) or [typebox](https://github.com/sinclairzx81/typebox) if you want to convert your JSON Schema into a Typescript type. See [this GitHub thread](https://github.com/fastify/fluent-json-schema/issues/78#issuecomment-669059113) to have a better overview about it. Look at the example below to have a better overview. 
+You can use [fastify-type-provider-typebox](https://github.com/fastify/fastify-type-provider-typebox) or [typebox](https://github.com/sinclairzx81/typebox) if you want to convert your JSON Schema into a Typescript type. See [this GitHub thread](https://github.com/fastify/fluent-json-schema/issues/78#issuecomment-669059113) to have a better overview about it. Look at the example below to have a better overview.
 :::
 
 Here you can see in practice of to leverage `typebox` combined with `fastify-type-provider-typebox`:

@@ -1,0 +1,4 @@
+Something went wrong. Ensure the passed language is valid (must be `ts` or `js`).
+
+You can find more details about the available options at:
+https://oss.platformatic.dev/docs/reference/cli
