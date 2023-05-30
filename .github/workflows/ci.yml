@@ -545,7 +545,7 @@ jobs:
       run: |
         node ./packages/cli/cli.js db migrations apply --config=./packages/frontend-template/test/e2e/fixtures/platformatic.e2e.db.json &&
         node ./packages/cli/cli.js db start --config=./packages/frontend-template/test/e2e/fixtures/platformatic.e2e.db.json &
-        sleep 2 &&
+        sleep 5 &&
         rm -rf packages/frontend-template/src/platformatic-generated-code
         mkdir -p packages/frontend-template/src/platformatic-generated-code &&
         cd packages/frontend-template/src/platformatic-generated-code &&
