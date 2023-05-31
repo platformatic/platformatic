@@ -8,6 +8,7 @@ Options:
 
   -t, --type      static/dynamic  The type of the workspace.
   -c, --config    FILE            Specify a configuration file to use
+  -k, --keys      FILE            Specify a path to the workspace keys file
   -l  --label     TEXT            The deploy label. Only for dynamic workspaces.
   -e  --env       FILE            The environment file to use. Default: ".env"
   -s  --secrets   FILE            The secrets file to use. Default: ".secrets.env"
