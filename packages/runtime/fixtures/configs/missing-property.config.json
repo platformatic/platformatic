@@ -1,0 +1,13 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v0.20.0/runtime",
+  "entrypoint": "serviceApp",
+  "autoload": {
+    "exclude": ["docs", "composerApp"],
+    "mappings": {
+      "serviceAppWithMultiplePlugins": {
+        "id": "multi-plugin-service",
+        "config": "platformatic.service.json"
+      }
+    }
+  }
+}

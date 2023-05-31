@@ -16,3 +16,21 @@ test('specified version is bigger than the current version (major)', async (t) =
   const meta = new FromZeroEighteenToWillSee({ version, config: {} })
   t.equal(meta.up, undefined)
 })
+
+test('handles composer apps', async (t) => {
+  const version = semver.inc(pkg.version, 'major')
+  const meta = new FromZeroEighteenToWillSee({
+    version,
+    config: { composer: {} }
+  })
+  t.equal(meta.kind, 'composer')
+})
+
+test('handles runtime apps', async (t) => {
+  const version = semver.inc(pkg.version, 'major')
+  const meta = new FromZeroEighteenToWillSee({
+    version,
+    config: { entrypoint: 'foo' }
+  })
+  t.equal(meta.kind, 'runtime')
+})

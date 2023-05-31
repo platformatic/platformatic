@@ -1,0 +1,580 @@
+'use strict'
+
+const { test } = require('tap')
+const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
+
+const composeOpenApi = require('../../lib/openapi-composer')
+
+const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
+
+test('should merge two basic apis', async (t) => {
+  const schema1 = {
+    openapi: '3.0.0',
+    info: {
+      title: 'API 1',
+      version: '1.0.0'
+    },
+    paths: {
+      '/books': {
+        get: {
+          operationId: 'getBooks',
+          responses: {
+            200: {
+              description: 'OK',
+              content: {
+                'application/json': {
+                  schema: {
+                    $ref: '#/components/schemas/Books'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    components: {
+      schemas: {
+        Books: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string'
+            },
+            title: {
+              type: 'string'
+            }
+          }
+        }
+      }
+    }
+  }
+
+  const schema2 = {
+    openapi: '3.0.0',
+    info: {
+      title: 'API 2',
+      version: '1.0.0'
+    },
+    paths: {
+      '/films': {
+        get: {
+          operationId: 'getFilms',
+          responses: {
+            200: {
+              description: 'OK',
+              content: {
+                'application/json': {
+                  schema: {
+                    $ref: '#/components/schemas/Films'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    components: {
+      schemas: {
+        Films: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string'
+            },
+            title: {
+              type: 'string'
+            }
+          }
+        }
+      }
+    }
+  }
+
+  const composedSchema = composeOpenApi([
+    { id: 'api1', schema: schema1 },
+    { id: 'api2', schema: schema2 }
+  ])
+
+  openApiValidator.validate(composedSchema)
+
+  t.equal(composedSchema.openapi, '3.0.0')
+
+  t.equal(composedSchema.info.title, 'Platformatic Composer')
+  t.equal(composedSchema.info.version, '1.0.0')
+
+  t.same(composedSchema.components.schemas, {
+    api1_Books: {
+      type: 'object',
+      title: 'Books',
+      properties: {
+        id: {
+          type: 'string'
+        },
+        title: {
+          type: 'string'
+        }
+      }
+    },
+    api2_Films: {
+      type: 'object',
+      title: 'Films',
+      properties: {
+        id: {
+          type: 'string'
+        },
+        title: {
+          type: 'string'
+        }
+      }
+    }
+  })
+
+  t.same(composedSchema.paths['/books'], {
+    get: {
+      operationId: 'api1_getBooks',
+      responses: {
+        200: {
+          description: 'OK',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/api1_Books'
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+
+  t.same(composedSchema.paths['/films'], {
+    get: {
+      operationId: 'api2_getFilms',
+      responses: {
+        200: {
+          description: 'OK',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/api2_Films'
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+})
+
+test('should merge two basic apis with path prefixes', async (t) => {
+  const schema1 = {
+    openapi: '3.0.0',
+    info: {
+      title: 'API 1',
+      version: '1.0.0'
+    },
+    paths: {
+      '/books': {
+        get: {
+          operationId: 'getBooks',
+          responses: {
+            200: {
+              description: 'OK',
+              content: {
+                'application/json': {
+                  schema: {
+                    $ref: '#/components/schemas/Books'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    components: {
+      schemas: {
+        Books: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string'
+            },
+            title: {
+              type: 'string'
+            }
+          }
+        }
+      }
+    }
+  }
+
+  const schema2 = {
+    openapi: '3.0.0',
+    info: {
+      title: 'API 2',
+      version: '1.0.0'
+    },
+    paths: {
+      '/films': {
+        get: {
+          operationId: 'getFilms',
+          responses: {
+            200: {
+              description: 'OK',
+              content: {
+                'application/json': {
+                  schema: {
+                    $ref: '#/components/schemas/Films'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    components: {
+      schemas: {
+        Films: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string'
+            },
+            title: {
+              type: 'string'
+            }
+          }
+        }
+      }
+    }
+  }
+
+  const composedSchema = composeOpenApi([
+    { id: 'api1', prefix: '/api1', schema: schema1 },
+    { id: 'api2', prefix: '/api2', schema: schema2 }
+  ])
+
+  openApiValidator.validate(composedSchema)
+
+  t.equal(composedSchema.openapi, '3.0.0')
+
+  t.equal(composedSchema.info.title, 'Platformatic Composer')
+  t.equal(composedSchema.info.version, '1.0.0')
+
+  t.same(composedSchema.components.schemas, {
+    api1_Books: {
+      type: 'object',
+      title: 'Books',
+      properties: {
+        id: {
+          type: 'string'
+        },
+        title: {
+          type: 'string'
+        }
+      }
+    },
+    api2_Films: {
+      type: 'object',
+      title: 'Films',
+      properties: {
+        id: {
+          type: 'string'
+        },
+        title: {
+          type: 'string'
+        }
+      }
+    }
+  })
+
+  t.same(composedSchema.paths['/api1/books'], {
+    get: {
+      operationId: 'api1_getBooks',
+      responses: {
+        200: {
+          description: 'OK',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/api1_Books'
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+
+  t.same(composedSchema.paths['/api2/films'], {
+    get: {
+      operationId: 'api2_getFilms',
+      responses: {
+        200: {
+          description: 'OK',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/api2_Films'
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+})
+
+test('should not overwrite a schema title if exists', async (t) => {
+  const schema1 = {
+    openapi: '3.0.0',
+    info: {
+      title: 'API 1',
+      version: '1.0.0'
+    },
+    paths: {
+      '/books': {
+        get: {
+          operationId: 'getBooks',
+          responses: {
+            200: {
+              description: 'OK',
+              content: {
+                'application/json': {
+                  schema: {
+                    $ref: '#/components/schemas/Books'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    components: {
+      schemas: {
+        Books: {
+          type: 'object',
+          title: 'My Books',
+          properties: {
+            id: {
+              type: 'string'
+            },
+            title: {
+              type: 'string'
+            }
+          }
+        }
+      }
+    }
+  }
+
+  const schema2 = {
+    openapi: '3.0.0',
+    info: {
+      title: 'API 2',
+      version: '1.0.0'
+    },
+    paths: {
+      '/films': {
+        get: {
+          operationId: 'getFilms',
+          responses: {
+            200: {
+              description: 'OK',
+              content: {
+                'application/json': {
+                  schema: {
+                    $ref: '#/components/schemas/Films'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    components: {
+      schemas: {
+        Films: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string'
+            },
+            title: {
+              type: 'string'
+            }
+          }
+        }
+      }
+    }
+  }
+
+  const composedSchema = composeOpenApi([
+    { id: 'api1', prefix: '/api1', schema: schema1 },
+    { id: 'api2', prefix: '/api2', schema: schema2 }
+  ])
+
+  openApiValidator.validate(composedSchema)
+
+  t.equal(composedSchema.openapi, '3.0.0')
+
+  t.equal(composedSchema.info.title, 'Platformatic Composer')
+  t.equal(composedSchema.info.version, '1.0.0')
+
+  t.same(composedSchema.components.schemas, {
+    api1_Books: {
+      type: 'object',
+      title: 'My Books',
+      properties: {
+        id: {
+          type: 'string'
+        },
+        title: {
+          type: 'string'
+        }
+      }
+    },
+    api2_Films: {
+      type: 'object',
+      title: 'Films',
+      properties: {
+        id: {
+          type: 'string'
+        },
+        title: {
+          type: 'string'
+        }
+      }
+    }
+  })
+
+  t.same(composedSchema.paths['/api1/books'], {
+    get: {
+      operationId: 'api1_getBooks',
+      responses: {
+        200: {
+          description: 'OK',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/api1_Books'
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+
+  t.same(composedSchema.paths['/api2/films'], {
+    get: {
+      operationId: 'api2_getFilms',
+      responses: {
+        200: {
+          description: 'OK',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/api2_Films'
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+})
+
+test('should trow an error if there are duplicates paths', async (t) => {
+  const schema1 = {
+    openapi: '3.0.0',
+    info: {
+      title: 'API 1',
+      version: '1.0.0'
+    },
+    paths: {
+      '/books': {
+        get: {
+          operationId: 'getBooks',
+          responses: {}
+        }
+      }
+    }
+  }
+
+  const schema2 = {
+    openapi: '3.0.0',
+    info: {
+      title: 'API 1',
+      version: '1.0.0'
+    },
+    paths: {
+      '/books': {
+        get: {
+          operationId: 'getBooks',
+          responses: {}
+        }
+      }
+    }
+  }
+
+  try {
+    composeOpenApi([
+      { id: 'api1', schema: schema1 },
+      { id: 'api2', schema: schema2 }
+    ])
+    t.fail('should throw an error')
+  } catch (err) {
+    t.equal(err.message, 'Path "/books" already exists')
+  }
+})
+
+test('should trow an error if there are duplicates paths with prefixes', async (t) => {
+  const schema1 = {
+    openapi: '3.0.0',
+    info: {
+      title: 'API 1',
+      version: '1.0.0'
+    },
+    paths: {
+      '/books': {
+        get: {
+          operationId: 'getBooks',
+          responses: {}
+        }
+      }
+    }
+  }
+
+  const schema2 = {
+    openapi: '3.0.0',
+    info: {
+      title: 'API 1',
+      version: '1.0.0'
+    },
+    paths: {
+      '/api1/books': {
+        get: {
+          operationId: 'getBooks',
+          responses: {}
+        }
+      }
+    }
+  }
+
+  try {
+    composeOpenApi([
+      { id: 'api1', prefix: '/api1', schema: schema1 },
+      { id: 'api2', schema: schema2 }
+    ])
+    t.fail('should throw an error')
+  } catch (err) {
+    t.equal(err.message, 'Path "/api1/books" already exists')
+  }
+})

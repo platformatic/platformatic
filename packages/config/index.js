@@ -267,7 +267,9 @@ class ConfigManager extends EventEmitter {
       // aware of the different application types (but that should be small).
       return [
         ...this.listConfigFiles('service'),
-        ...this.listConfigFiles('db')
+        ...this.listConfigFiles('db'),
+        ...this.listConfigFiles('composer'),
+        ...this.listConfigFiles('runtime')
       ]
     }
   }

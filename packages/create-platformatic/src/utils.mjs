@@ -70,6 +70,8 @@ export const validatePath = async projectPath => {
 
 export const findDBConfigFile = async (directory) => (ConfigManager.findConfigFile(directory, 'db'))
 export const findServiceConfigFile = async (directory) => (ConfigManager.findConfigFile(directory, 'service'))
+export const findComposerConfigFile = async (directory) => (ConfigManager.findConfigFile(directory, 'composer'))
+export const findRuntimeConfigFile = async (directory) => (ConfigManager.findConfigFile(directory, 'runtime'))
 
 export const getDependencyVersion = async (dependencyName) => {
   const require = createRequire(import.meta.url)

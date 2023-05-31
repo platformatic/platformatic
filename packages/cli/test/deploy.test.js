@@ -29,6 +29,9 @@ test('should deploy to a static workspace to the cloud', async (t) => {
       t.same(
         request.body,
         {
+          metadata: {
+            appType: 'db'
+          },
           variables: {
             PLT_ENV_VARIABLE1: 'platformatic_variable1',
             PLT_ENV_VARIABLE2: 'platformatic_variable2'
@@ -80,6 +83,9 @@ test('should deploy to a dynamic workspace to the cloud', async (t) => {
         request.body,
         {
           label,
+          metadata: {
+            appType: 'db'
+          },
           variables: {
             PLT_ENV_VARIABLE1: 'platformatic_variable1',
             PLT_ENV_VARIABLE2: 'platformatic_variable2'
@@ -174,6 +180,9 @@ test('should deploy to a dynamic workspace to the cloud', async (t) => {
         request.body,
         {
           label,
+          metadata: {
+            appType: 'db'
+          },
           variables: {
             PLT_ENV_VARIABLE1: 'platformatic_variable1',
             PLT_ENV_VARIABLE2: 'platformatic_variable2'
@@ -225,6 +234,9 @@ test('should deploy to a static workspace with a keys option', async (t) => {
       t.same(
         request.body,
         {
+          metadata: {
+            appType: 'db'
+          },
           variables: {
             PLT_ENV_VARIABLE1: 'platformatic_variable1',
             PLT_ENV_VARIABLE2: 'platformatic_variable2'
@@ -273,6 +285,9 @@ test('should deploy to a static workspace with a keys option', async (t) => {
       t.same(
         request.body,
         {
+          metadata: {
+            appType: 'db'
+          },
           variables: {
             PLT_ENV_VARIABLE1: 'platformatic_variable1',
             PLT_ENV_VARIABLE2: 'platformatic_variable2'
@@ -325,6 +340,9 @@ test('should deploy to a dynamic workspace with a keys option', async (t) => {
         request.body,
         {
           label,
+          metadata: {
+            appType: 'db'
+          },
           variables: {
             PLT_ENV_VARIABLE1: 'platformatic_variable1',
             PLT_ENV_VARIABLE2: 'platformatic_variable2'

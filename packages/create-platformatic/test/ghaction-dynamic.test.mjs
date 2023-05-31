@@ -1,8 +1,7 @@
 'use strict'
 
 import { test, beforeEach, afterEach } from 'tap'
-import { mkdtemp, rmdir, writeFile, readFile } from 'fs/promises'
-import mkdirp from 'mkdirp'
+import { mkdtemp, rmdir, writeFile, readFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import { isFileAccessible } from '../src/utils.mjs'
@@ -70,7 +69,7 @@ test('creates gh action with TS build step', async ({ end, equal }) => {
 })
 
 test('do not create gitignore file because already present', async ({ end, equal }) => {
-  await mkdirp(join(tmpDir, '.github', 'workflows'))
+  await mkdir(join(tmpDir, '.github', 'workflows'), { recursive: true })
   const ghaction = join(tmpDir, '.github', 'workflows', 'platformatic-dynamic-workspace-deploy.yml')
   await writeFile(ghaction, 'TEST')
   await createDynamicWorkspaceGHAction(fakeLogger, env, 'db', tmpDir)
@@ -86,7 +85,7 @@ test('creates gh action with a warn if a .git folder is not present', async ({ e
 })
 
 test('creates gh action without a warn if a .git folder is present', async ({ end, equal }) => {
-  await mkdirp(join(tmpDir, '.git'))
+  await mkdir(join(tmpDir, '.git'), { recursive: true })
   await createDynamicWorkspaceGHAction(fakeLogger, env, 'db', tmpDir)
   equal(log[0], 'Github action successfully created, please add PLATFORMATIC_DYNAMIC_WORKSPACE_ID and PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY as repository secrets.')
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-dynamic-workspace-deploy.yml'))

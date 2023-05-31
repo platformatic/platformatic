@@ -89,7 +89,32 @@ Welcome to Platformatic. Available commands are:
 * upgrade - upgrade the Platformatic configuration to the latest version.
 * gh - creates a new gh action for Platformatic deployments
 * deploy - deploy a Platformatic application to the cloud
+* runtime - start Platformatic Runtime; type `platformatic runtime help` to know more.
 * start - start a Platformatic application
+```
+
+### composer
+
+```bash
+platformatic composer <command>
+```
+
+
+#### help
+
+Available commands:
+
+* `help` - show this help message.
+* `help <command>` - shows more information about a command.
+* `start` - start the composer.
+
+
+#### start
+
+Start the Platformatic Composer with the following command:
+
+``` bash
+$ platformatic composer start
 ```
 
 
@@ -354,6 +379,30 @@ If not specified, the configuration specified will be loaded from
 You can find more details about the configuration format at:
 https://oss.platformatic.dev/docs/reference/db/configuration.
 
+
+### runtime
+
+```bash
+platformatic runtime <command>
+```
+
+
+#### help
+
+Available commands:
+
+* `help` - show this help message.
+* `help <command>` - shows more information about a command.
+* `start` - start the runtime.
+
+
+#### start
+
+Start the Platformatic Runtime with the following command:
+
+``` bash
+$ platformatic runtime start
+```
 
 ### service
 

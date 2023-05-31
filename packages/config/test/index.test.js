@@ -254,7 +254,7 @@ test('should look for a .env file in process.cwd() too', async ({ same, fail, pl
 })
 
 test('ConfigManager.listConfigFiles() lists possible configs by type', async ({ plan, same }) => {
-  plan(2)
+  plan(3)
   same(ConfigManager.listConfigFiles('db'), [
     'platformatic.db.json',
     'platformatic.db.json5',
@@ -270,6 +270,14 @@ test('ConfigManager.listConfigFiles() lists possible configs by type', async ({ 
     'platformatic.service.yml',
     'platformatic.service.toml',
     'platformatic.service.tml'
+  ])
+  same(ConfigManager.listConfigFiles('runtime'), [
+    'platformatic.runtime.json',
+    'platformatic.runtime.json5',
+    'platformatic.runtime.yaml',
+    'platformatic.runtime.yml',
+    'platformatic.runtime.toml',
+    'platformatic.runtime.tml'
   ])
 })
 
@@ -287,7 +295,19 @@ test('ConfigManager.listConfigFiles() lists all possible configs', async ({ plan
     'platformatic.db.yaml',
     'platformatic.db.yml',
     'platformatic.db.toml',
-    'platformatic.db.tml'
+    'platformatic.db.tml',
+    'platformatic.composer.json',
+    'platformatic.composer.json5',
+    'platformatic.composer.yaml',
+    'platformatic.composer.yml',
+    'platformatic.composer.toml',
+    'platformatic.composer.tml',
+    'platformatic.runtime.json',
+    'platformatic.runtime.json5',
+    'platformatic.runtime.yaml',
+    'platformatic.runtime.yml',
+    'platformatic.runtime.toml',
+    'platformatic.runtime.tml'
   ])
 })
 

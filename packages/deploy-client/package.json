@@ -6,7 +6,7 @@
   "scripts": {
     "lint": "standard | snazzy",
     "test": "standard | snazzy && c8 --100 tap -j1 test/*test.js",
-    "license": "license-checker --production --onlyAllow 'Apache-2.0;MIT;ISC;BSD-2-Clause'"
+    "license": "license-checker --production --onlyAllow 'Apache-2.0;MIT;ISC;BSD-2-Clause;BSD-3-Clause'"
   },
   "repository": {
     "type": "git",
@@ -29,6 +29,8 @@
   "dependencies": {
     "@platformatic/config": "workspace:*",
     "@platformatic/start": "workspace:*",
+    "@platformatic/service": "workspace:*",
+    "@platformatic/runtime": "workspace:*",
     "tar": "^6.1.15",
     "undici": "^5.22.1"
   }

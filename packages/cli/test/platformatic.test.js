@@ -22,6 +22,9 @@ const help = await readFile(join(import.meta.url, '..', 'help', 'help.txt'), 'ut
 // This reads a file from packages/db
 const helpDB = await readFile(join(import.meta.url, '..', '..', 'db', 'help', 'help.txt'), 'utf8')
 
+// This reads a file from packages/runtime
+const helpRuntime = await readFile(join(import.meta.url, '..', '..', 'runtime', 'help', 'help.txt'), 'utf8')
+
 // This reads a file from packages/service
 const helpService = await readFile(join(import.meta.url, '..', '..', 'service', 'help', 'help.txt'), 'utf8')
 
@@ -33,6 +36,15 @@ test('version', async (t) => {
 test('db', async (t) => {
   try {
     await execa('node', [cliPath, 'db', 'start'])
+    t.fail('bug')
+  } catch (err) {
+    t.ok(err.stderr.includes('Missing config file'))
+  }
+})
+
+test('runtime', async (t) => {
+  try {
+    await execa('node', [cliPath, 'runtime', 'start'])
     t.fail('bug')
   } catch (err) {
     t.ok(err.stderr.includes('Missing config file'))
@@ -103,6 +115,11 @@ test('prints the help of db', async (t) => {
 test('prints the help if not commands are specified', async (t) => {
   const { stdout } = await execa('node', [cliPath])
   t.equal(stdout + EOL, help)
+})
+
+test('prints the help of runtime', async (t) => {
+  const { stdout } = await execa('node', [cliPath, 'help', 'runtime'])
+  t.equal(stdout + EOL, helpRuntime)
 })
 
 test('prints the help of service', async (t) => {

@@ -1,0 +1,6 @@
+Available commands:
+
+* `help` - show this help message.
+* `help <command>` - shows more information about a command.
+* `start` - start the server.
+* `openapi schemas fetch` - fetch OpenAPI schemas from services.

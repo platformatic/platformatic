@@ -21,8 +21,10 @@ jobs:
         id: gen-schemas
         run:  |
               mkdir output
+              node packages/runtime/lib/schema.js > output/runtime
               node packages/service/lib/schema.js > output/service
               node packages/db/lib/schema.js > output/db
+              node packages/composer/lib/schema.js > output/composer
               node -e "console.log('VERSION=v'+ require('./package.json').version)" >> $GITHUB_OUTPUT
       - name: Pushes to schema store repository
         id: push_directory

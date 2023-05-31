@@ -1,5 +1,5 @@
 import { test } from 'tap'
-import { randomBetween, sleep, validatePath, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions } from '../src/utils.mjs'
+import { randomBetween, sleep, validatePath, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions, findRuntimeConfigFile, findComposerConfigFile } from '../src/utils.mjs'
 import { mkdtempSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir, platform } from 'os'
 import { join } from 'path'
@@ -154,6 +154,28 @@ test('findServiceConfigFile', async ({ end, equal, mock }) => {
   writeFileSync(config, 'TEST')
   equal(await findServiceConfigFile(tmpDir1), 'platformatic.service.toml')
   equal(await findServiceConfigFile(tmpDir2), undefined)
+  rmSync(tmpDir1, { recursive: true, force: true })
+  rmSync(tmpDir2, { recursive: true, force: true })
+})
+
+test('findComposerConfigFile', async ({ end, equal, mock }) => {
+  const tmpDir1 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
+  const tmpDir2 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
+  const config = join(tmpDir1, 'platformatic.composer.yml')
+  writeFileSync(config, 'TEST')
+  equal(await findComposerConfigFile(tmpDir1), 'platformatic.composer.yml')
+  equal(await findComposerConfigFile(tmpDir2), undefined)
+  rmSync(tmpDir1, { recursive: true, force: true })
+  rmSync(tmpDir2, { recursive: true, force: true })
+})
+
+test('findRuntimeConfigFile', async ({ end, equal, mock }) => {
+  const tmpDir1 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
+  const tmpDir2 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
+  const config = join(tmpDir1, 'platformatic.runtime.yml')
+  writeFileSync(config, 'TEST')
+  equal(await findRuntimeConfigFile(tmpDir1), 'platformatic.runtime.yml')
+  equal(await findRuntimeConfigFile(tmpDir2), undefined)
   rmSync(tmpDir1, { recursive: true, force: true })
   rmSync(tmpDir2, { recursive: true, force: true })
 })

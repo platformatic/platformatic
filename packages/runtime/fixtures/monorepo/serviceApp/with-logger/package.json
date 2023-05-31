@@ -1,0 +1,5 @@
+{
+  "name": "with-logger",
+  "main": "./with-logger.cjs",
+  "types": "./with-logger.d.ts"
+}

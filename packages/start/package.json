@@ -21,6 +21,7 @@
     "@platformatic/config": "workspace:*",
     "@platformatic/db": "workspace:*",
     "@platformatic/service": "workspace:*",
+    "@platformatic/composer": "workspace:*",
     "minimist": "^1.2.8"
   },
   "devDependencies": {

@@ -2,11 +2,11 @@ import { validatePath } from './utils.mjs'
 import inquirer from 'inquirer'
 import { resolve } from 'path'
 
-const askProjectDir = async (logger, defaultName) => {
+const askProjectDir = async (logger, defaultName, message = 'Where would you like to create your project?') => {
   const options = await inquirer.prompt({
     type: 'input',
     name: 'dir',
-    message: 'Where would you like to create your project?',
+    message,
     default: defaultName,
     validate: validatePath
   })

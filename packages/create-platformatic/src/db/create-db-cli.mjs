@@ -5,16 +5,16 @@ import { getPkgManager } from '../get-pkg-manager.mjs'
 import parseArgs from 'minimist'
 import { join } from 'path'
 import inquirer from 'inquirer'
-import { readFile, writeFile } from 'fs/promises'
+import which from 'which'
+import { readFile, writeFile, mkdir } from 'fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa } from 'execa'
 import ora from 'ora'
 import createDB from './create-db.mjs'
-import askProjectDir from '../ask-project-dir.mjs'
+import askDir from '../ask-dir.mjs'
 import { askDynamicWorkspaceCreateGHAction, askStaticWorkspaceGHAction } from '../ghaction.mjs'
-import { getRunPackageManagerInstall, getUseTypescript } from '../cli-options.mjs'
-import mkdirp from 'mkdirp'
+import { getRunPackageManagerInstall, getUseTypescript, getPort } from '../cli-options.mjs'
 
 export const createReadme = async (logger, dir = '.') => {
   const readmeFileName = join(dir, 'README.md')
@@ -42,11 +42,10 @@ export const createReadme = async (logger, dir = '.') => {
   logger.debug(`${readmeFileName} successfully created.`)
 }
 
-export const parseDBArgs = (_args) => {
+export function parseDBArgs (_args) {
   return parseArgs(_args, {
     default: {
       hostname: '127.0.0.1',
-      port: 3042,
       database: 'sqlite',
       migrations: 'migrations',
       plugin: true,
@@ -66,8 +65,8 @@ export const parseDBArgs = (_args) => {
   })
 }
 
-const createPlatformaticDB = async (_args) => {
-  const logger = pino(pretty({
+const createPlatformaticDB = async (_args, opts) => {
+  const logger = opts.logger || pino(pretty({
     translateTime: 'SYS:HH:MM:ss',
     ignore: 'hostname,pid'
   }))
@@ -75,7 +74,7 @@ const createPlatformaticDB = async (_args) => {
   const args = parseDBArgs(_args)
   const version = await getVersion()
   const pkgManager = getPkgManager()
-  const projectDir = await askProjectDir(logger, '.')
+  const projectDir = opts.dir || await askDir(logger, '.')
 
   const wizardOptions = await inquirer.prompt([{
     type: 'list',
@@ -90,11 +89,12 @@ const createPlatformaticDB = async (_args) => {
     default: args.plugin,
     choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
   },
-  getUseTypescript(args.typescript)
+  getUseTypescript(args.typescript),
+  getPort(args.port)
   ])
 
   // Create the project directory
-  await mkdirp(projectDir)
+  await mkdir(projectDir, { recursive: true })
 
   const generatePlugin = args.plugin || wizardOptions.generatePlugin
   const useTypescript = args.typescript || wizardOptions.useTypescript
@@ -102,7 +102,7 @@ const createPlatformaticDB = async (_args) => {
 
   const params = {
     hostname: args.hostname,
-    port: args.port,
+    port: wizardOptions.port,
     database: args.database,
     migrations: wizardOptions.defaultMigrations ? args.migrations : '',
     plugin: generatePlugin,
@@ -119,17 +119,35 @@ const createPlatformaticDB = async (_args) => {
   await createGitignore(logger, projectDir)
   await createReadme(logger, projectDir)
 
-  const { runPackageManagerInstall } = await inquirer.prompt([
-    getRunPackageManagerInstall(pkgManager)
-  ])
+  let hasPlatformaticInstalled = false
+  if (!opts.skipPackageJson) {
+    const { runPackageManagerInstall } = await inquirer.prompt([
+      getRunPackageManagerInstall(pkgManager)
+    ])
 
-  if (runPackageManagerInstall) {
-    const spinner = ora('Installing dependencies...').start()
-    await execa(pkgManager, ['install'], { cwd: projectDir })
-    spinner.succeed('...done!')
+    if (runPackageManagerInstall) {
+      const spinner = ora('Installing dependencies...').start()
+      await execa(pkgManager, ['install'], { cwd: projectDir })
+      spinner.succeed('...done!')
+      hasPlatformaticInstalled = true
+    }
   }
 
-  if (runPackageManagerInstall) {
+  if (!hasPlatformaticInstalled) {
+    try {
+      const npmLs = JSON.parse(await execa('npm', ['ls', '--json']))
+      hasPlatformaticInstalled = !!npmLs.dependencies.platformatic
+    } catch {
+      // Ignore all errors, this can fail
+    }
+  }
+
+  if (!hasPlatformaticInstalled) {
+    const exe = await which('platformatic', { noThrow: true })
+    hasPlatformaticInstalled = !!exe
+  }
+
+  if (hasPlatformaticInstalled) {
     // We applied package manager install, so we can:
     // - run the migrations
     // - generate types
@@ -166,8 +184,11 @@ const createPlatformaticDB = async (_args) => {
       }
     }
   }
-  await askDynamicWorkspaceCreateGHAction(logger, env, 'db', useTypescript, projectDir)
-  await askStaticWorkspaceGHAction(logger, env, 'db', useTypescript, projectDir)
+
+  if (!opts.skipGitHubActions) {
+    await askDynamicWorkspaceCreateGHAction(logger, env, 'db', useTypescript, projectDir)
+    await askStaticWorkspaceGHAction(logger, env, 'db', useTypescript, projectDir)
+  }
 }
 
 export default createPlatformaticDB

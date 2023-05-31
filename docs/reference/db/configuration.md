@@ -414,7 +414,7 @@ A **required** object with the following settings:
   - `cert` (**required**, `string`, `object`, or `array`) - If `cert` is a string, it specifies the certificate to be used. If `cert` is an object, it must have a `path` property specifying the certificate file. Multiple certificates are supported by passing an array of keys.
 
 - **`logger`** (`object`) -- the [logger configuration](https://www.fastify.io/docs/latest/Reference/Server/#logger).
-- **`pluginTimeout`** (`integer`) -- the milliseconds to wait for a Fastify plugin to load
+- **`pluginTimeout`** (`integer`) -- the number of milliseconds to wait for a Fastify plugin to load
 - **`bodyLimit`** (`integer`) -- the maximum request body size in bytes
 - **`maxParamLength`** (`integer`) -- the maximum length of a request parameter
 - **`caseSensitive`** (`boolean`) -- if `true`, the router will be case sensitive

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v0.23.0/runtime",
+  "entrypoint": "serviceApp",
+  "services": [
+    {
+      "id": "serviceApp",
+      "path": "../",
+      "config": "platformatic.service.json"
+    }
+  ]
+}

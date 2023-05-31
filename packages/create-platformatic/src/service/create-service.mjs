@@ -22,6 +22,9 @@ function generateConfig (version, typescript) {
         level: '{PLT_SERVER_LOGGER_LEVEL}'
       }
     },
+    service: {
+      openapi: true
+    },
     plugins
   }
 

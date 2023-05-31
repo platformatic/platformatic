@@ -9,11 +9,6 @@ The `buildServer` function allows that:
 import { buildServer } from '@platformatic/service'
 
 const app = await buildServer('path/to/platformatic.service.json')
-  server: {
-    hostname: '127.0.0.1',
-    port: 0
-  }
-})
 
 await app.start()
 

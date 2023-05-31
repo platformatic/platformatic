@@ -18,3 +18,17 @@ export const getUseTypescript = typescript => {
     choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
   }
 }
+
+let port = 3042
+export const getPort = (nextPort) => {
+  if (nextPort === undefined) {
+    nextPort = port++
+  }
+
+  return {
+    type: 'input',
+    name: 'port',
+    message: 'What port do you want to use?',
+    default: nextPort
+  }
+}

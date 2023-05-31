@@ -7,4 +7,5 @@ Welcome to Platformatic. Available commands are:
 * upgrade - upgrade the Platformatic configuration to the latest version.
 * gh - creates a new gh action for Platformatic deployments
 * deploy - deploy a Platformatic application to the cloud
+* runtime - start Platformatic Runtime; type `platformatic runtime help` to know more.
 * start - start a Platformatic application

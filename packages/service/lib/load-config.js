@@ -37,7 +37,10 @@ async function loadConfig (minimistConfig, _args, app, overrides = {}) {
     const configFiles = ConfigManager.listConfigFiles(configType)
     console.error(`
 Missing config file!
-Be sure to have a config file with one of the following names: ${configFiles.join('\n')}
+Be sure to have a config file with one of the following names:
+
+${configFiles.map((s) => ' * ' + s).join('\n')}
+
 In alternative run "npm create platformatic@latest" to generate a basic plt service config.
 Error: ${err}
 `)

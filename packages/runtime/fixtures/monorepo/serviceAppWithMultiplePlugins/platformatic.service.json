@@ -1,0 +1,26 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v0.20.0/service",
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
+  },
+  "service": {
+    "openapi": true
+  },
+  "plugins": {
+    "paths": [
+      {
+        "path": "plugin.js",
+        "options": {
+          "name": "plugin1"
+        }
+      },
+      {
+        "path": "plugin2.mjs",
+        "options": {
+          "name": "plugin2"
+        }
+      }
+    ]
+  }
+}

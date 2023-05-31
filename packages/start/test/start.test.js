@@ -56,7 +56,7 @@ test('getConfigType()', async (t) => {
     assert.strictEqual(type, 'service')
   })
 
-  await t.test('gets type from config in cwd', async (t) => {
+  await t.test('gets db type from config in cwd', async (t) => {
     const cwd = process.cwd()
 
     t.after(() => {
@@ -68,6 +68,20 @@ test('getConfigType()', async (t) => {
     const type = await getConfigType()
 
     assert.strictEqual(type, 'db')
+  })
+
+  await t.test('gets composer type from config in cwd', async (t) => {
+    const cwd = process.cwd()
+
+    t.after(() => {
+      process.chdir(cwd)
+    })
+
+    const configDir = join(fixturesDir, 'composerApp')
+    process.chdir(configDir)
+    const type = await getConfigType()
+
+    assert.strictEqual(type, 'composer')
   })
 })
 
@@ -84,10 +98,22 @@ test('getCurrentSchema()', async (t) => {
     assert(schema.$id.endsWith(`/v${version}/db`))
   })
 
+  await t.test('gets composer schema', async () => {
+    const schema = await getCurrentSchema('composer')
+
+    assert(schema.$id.endsWith(`/v${version}/composer`))
+  })
+
   await t.test('throws for unknown types', async () => {
     await assert.rejects(async () => {
       await getCurrentSchema('not-a-real-type')
     }, /unknown configuration type/)
+  })
+
+  await t.test('throws for Runtime', async () => {
+    await assert.rejects(async () => {
+      await getCurrentSchema('runtime')
+    }, /Use "platformatic runtime start" instead/)
   })
 })
 
@@ -132,6 +158,15 @@ test('loadConfig()', async (t) => {
     assert.strictEqual(config.configManager.fullPath, configFile)
     assert.strictEqual(config.configManager.current.db.graphql, true)
   })
+
+  await t.test('can load a platformatic composer project', async () => {
+    const configFile = join(fixturesDir, 'composerApp', 'platformatic.composer.json')
+    const config = await loadConfig({}, ['-c', configFile])
+
+    assert.strictEqual(config.args.config, configFile)
+    assert.strictEqual(config.configManager.fullPath, configFile)
+    assert.strictEqual(config.configManager.current.composer.refreshTimeout, 1000)
+  })
 })
 
 test('buildServer()', async (t) => {
@@ -151,6 +186,20 @@ test('buildServer()', async (t) => {
 
   await t.test('can build a db server', async (t) => {
     const configFile = join(fixturesDir, 'dbApp', 'platformatic.db.json')
+    const config = await loadConfig({}, ['-c', configFile])
+    const server = await buildServer(config.configManager.current)
+
+    t.after(async () => {
+      await server.close()
+    })
+
+    const address = await server.start()
+    // The address should be a valid URL.
+    new URL(address) // eslint-disable-line no-new
+  })
+
+  await t.test('can build a composer server', async (t) => {
+    const configFile = join(fixturesDir, 'composerApp', 'platformatic.composer.json')
     const config = await loadConfig({}, ['-c', configFile])
     const server = await buildServer(config.configManager.current)
 
@@ -197,6 +246,15 @@ test('start()', async (t) => {
 
     assert.strictEqual(exitCode, 42)
   })
+
+  await t.test('can start a composer server', async () => {
+    const scriptFile = join(fixturesDir, 'starter.js')
+    const configFile = join(fixturesDir, 'composerApp', 'platformatic.composer.json')
+    const child = spawn(process.execPath, [scriptFile, configFile])
+    const [exitCode] = await once(child, 'exit')
+
+    assert.strictEqual(exitCode, 42)
+  })
 })
 
 test('startCommand()', async (t) => {
@@ -216,6 +274,20 @@ test('startCommand()', async (t) => {
     const child = spawn(process.execPath, [scriptFile, configFile])
     const [exitCode] = await once(child, 'exit')
 
+    assert.strictEqual(exitCode, 1)
+  })
+
+  await t.test('redirect to runtime start for runtime apps', async (t) => {
+    const scriptFile = join(fixturesDir, 'start-command.js')
+    const configFile = join(fixturesDir, 'runtime.json')
+    const child = spawn(process.execPath, [scriptFile, configFile])
+    let stderr = ''
+    child.stderr.on('data', (data) => {
+      stderr += data.toString()
+    })
+    const [exitCode] = await once(child, 'exit')
+
+    assert.strictEqual(stderr, 'Use "platformatic runtime start" instead\n')
     assert.strictEqual(exitCode, 1)
   })
 })

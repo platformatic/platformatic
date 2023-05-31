@@ -9,6 +9,10 @@ class SimpleZeroConfig {
 
     if (config.db) {
       this.kind = 'db'
+    } else if (config.composer) {
+      this.kind = 'composer'
+    } else if (config.entrypoint) {
+      this.kind = 'runtime'
     } else {
       this.kind = 'service'
     }

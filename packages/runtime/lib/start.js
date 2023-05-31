@@ -1,0 +1,77 @@
+'use strict'
+const { once } = require('node:events')
+const { join } = require('node:path')
+const { Worker } = require('node:worker_threads')
+const closeWithGrace = require('close-with-grace')
+const { loadConfig } = require('@platformatic/service')
+const { platformaticRuntime } = require('./config')
+const kLoaderFile = join(__dirname, 'loader.mjs')
+const kWorkerFile = join(__dirname, 'worker.js')
+const kWorkerExecArgv = [
+  '--no-warnings',
+  '--experimental-loader',
+  kLoaderFile
+]
+
+async function start (argv) {
+  const { configManager } = await loadConfig({}, argv, platformaticRuntime, {
+    watch: true
+  })
+  const app = await startWithConfig(configManager)
+
+  await app.start()
+  return app
+}
+
+async function startWithConfig (configManager) {
+  const config = configManager.current
+  const worker = new Worker(kWorkerFile, {
+    /* c8 ignore next */
+    execArgv: config.hotReload ? kWorkerExecArgv : [],
+    workerData: { config }
+  })
+
+  worker.on('exit', () => {
+    configManager.fileWatcher?.stopWatching()
+  })
+
+  worker.on('error', (err) => {
+    console.error(err)
+    process.exit(1)
+  })
+
+  /* c8 ignore next 3 */
+  process.on('SIGUSR2', () => {
+    worker.postMessage({ signal: 'SIGUSR2' })
+  })
+
+  closeWithGrace((event) => {
+    worker.postMessage(event)
+  })
+
+  /* c8 ignore next 3 */
+  configManager.on('update', () => {
+    // TODO(cjihrig): Need to clean up and restart the worker.
+  })
+
+  await once(worker, 'message') // plt:init
+
+  return {
+    async start () {
+      worker.postMessage({ msg: 'plt:start' })
+      const [msg] = await once(worker, 'message') // plt:started
+
+      return msg.url
+    },
+    async close () {
+      worker.postMessage({ msg: 'plt:stop' })
+      await once(worker, 'exit')
+    },
+    async restart () {
+      worker.postMessage({ msg: 'plt:restart' })
+      await once(worker, 'message') // plt:restarted
+    }
+  }
+}
+
+module.exports = { start, startWithConfig }

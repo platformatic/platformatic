@@ -1,0 +1,5 @@
+Start the Platformatic Runtime with the following command:
+
+``` bash
+ $ platformatic runtime start
+```

@@ -2,6 +2,7 @@
 
 const { access } = require('fs/promises')
 const { resolve, join, relative, dirname, basename } = require('path')
+const { isatty } = require('tty')
 
 async function isFileAccessible (filename, directory) {
   try {
@@ -23,7 +24,7 @@ function addLoggerToTheConfig (config) {
   }
 
   // If TTY use pino-pretty
-  if (process.stdout.isTTY) {
+  if (isatty(1)) {
     if (!logger.transport) {
       logger.transport = {
         target: 'pino-pretty'

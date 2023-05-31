@@ -1,0 +1,14 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v0.20.0/runtime",
+  "entrypoint": "serviceApp",
+  "autoload": {
+    "path": "./packages",
+    "exclude": ["docs"],
+    "mappings": {
+      "serviceAppWithLogger": {
+        "id": "with-logger",
+        "config": "platformatic.service.json"
+      }
+    }
+  }
+}

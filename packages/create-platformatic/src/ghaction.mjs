@@ -1,8 +1,7 @@
-import mkdirp from 'mkdirp'
 import { join } from 'path'
 import inquirer from 'inquirer'
 import { isFileAccessible } from './utils.mjs'
-import { writeFile } from 'fs/promises'
+import { writeFile, mkdir } from 'fs/promises'
 
 export const dynamicWorkspaceGHTemplate = (env, config, buildTS = false) => {
   const envAsStr = Object.keys(env).reduce((acc, key) => {
@@ -90,7 +89,7 @@ export const createDynamicWorkspaceGHAction = async (logger, env, config, projec
   const ghActionFilePath = join(projectDir, '.github', 'workflows', ghActionFileName)
   const isGithubActionExists = await isFileAccessible(ghActionFilePath)
   if (!isGithubActionExists) {
-    await mkdirp(join(projectDir, '.github', 'workflows'))
+    await mkdir(join(projectDir, '.github', 'workflows'), { recursive: true })
     await writeFile(ghActionFilePath, dynamicWorkspaceGHTemplate(env, config, buildTS))
     logger.info('Github action successfully created, please add PLATFORMATIC_DYNAMIC_WORKSPACE_ID and PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY as repository secrets.')
     const isGitDir = await isFileAccessible('.git', projectDir)
@@ -125,7 +124,7 @@ export const createStaticWorkspaceGHAction = async (logger, env, config, project
   const ghActionFilePath = join(projectDir, '.github', 'workflows', ghActionFileName)
   const isGithubActionExists = await isFileAccessible(ghActionFilePath)
   if (!isGithubActionExists) {
-    await mkdirp(join(projectDir, '.github', 'workflows'))
+    await mkdir(join(projectDir, '.github', 'workflows'), { recursive: true })
     await writeFile(ghActionFilePath, staticWorkspaceGHTemplate(env, config, buildTS))
     logger.info('Github action successfully created, please add PLATFORMATIC_STATIC_WORKSPACE_ID and PLATFORMATIC_STATIC_WORKSPACE_API_KEY as repository secret.')
     const isGitDir = await isFileAccessible('.git', projectDir)

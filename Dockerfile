@@ -29,7 +29,7 @@ RUN pnpm fetch --prod --frozen-lockfile
 COPY . .
 
 # Install all the deps in the source code
-RUN pnpm install --prod --offline
+RUN pnpm install --prod --offline --node-linker=hoisted
 
 # Add platformatic to path
 RUN cd packages/cli && pnpm link --global

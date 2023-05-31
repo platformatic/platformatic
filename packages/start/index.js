@@ -3,17 +3,24 @@ const { resolve } = require('node:path')
 const parseArgs = require('minimist')
 const ConfigManager = require('@platformatic/config')
 const {
-  schema: dbSchema,
-  platformaticDB
-} = require('@platformatic/db')
-const {
   platformaticService,
   buildServer,
   loadConfig,
   start,
   schema: serviceSchema
 } = require('@platformatic/service')
-const kSupportedAppTypes = new Set(['service', 'db'])
+const {
+  schema: dbSchema,
+  platformaticDB
+} = require('@platformatic/db')
+const {
+  schema: composerSchema,
+  platformaticComposer
+} = require('@platformatic/composer')
+
+// We include runtime here even if we will throw an error later to
+// provide a better error message.
+const kSupportedAppTypes = new Set(['service', 'db', 'composer', 'runtime'])
 
 async function tryGetConfigTypeFromSchema (config) {
   if (typeof config === 'string') {
@@ -67,7 +74,8 @@ async function getConfigType (args = [], directory) {
     const configFiles = ConfigManager.listConfigFiles()
     const msg = `
 Missing config file!
-Be sure to have a config file with one of the following names: ${configFiles.join('\n')}
+Be sure to have a config file with one of the following names:
+${configFiles.map((s) => ' * ' + s).join('\n')}
 Alternatively run "npm create platformatic@latest" to generate a basic plt service config.
 `
 
@@ -80,6 +88,12 @@ async function getCurrentSchema (configType) {
     return serviceSchema.schema
   } else if (configType === 'db') {
     return dbSchema
+  } else if (configType === 'composer') {
+    return composerSchema
+  }
+
+  if (configType === 'runtime') {
+    throw new Error('Use "platformatic runtime start" instead')
   }
 
   throw new Error(`unknown configuration type: '${configType}'`)
@@ -93,17 +107,15 @@ async function _buildServer (options) {
 }
 
 function getApp (configType) {
-  let app
-
   if (configType === 'service') {
-    app = platformaticService
+    return platformaticService
   } else if (configType === 'db') {
-    app = platformaticDB
-  } else {
-    throw new Error('unknown kind: ' + configType)
+    return platformaticDB
+  } else if (configType === 'composer') {
+    return platformaticComposer
   }
 
-  return app
+  throw new Error('unknown kind: ' + configType)
 }
 
 async function _loadConfig (minimistConfig, args, configType, overrides) {
@@ -117,6 +129,10 @@ async function _loadConfig (minimistConfig, args, configType, overrides) {
 
 async function _start (args) {
   const configType = await getConfigType(args)
+
+  if (configType === 'runtime') {
+    throw new Error('Use "platformatic runtime start" instead')
+  }
 
   return start(getApp(configType), args)
 }
@@ -142,5 +158,6 @@ module.exports = {
   getCurrentSchema,
   loadConfig: _loadConfig,
   start: _start,
-  startCommand
+  startCommand,
+  getApp
 }

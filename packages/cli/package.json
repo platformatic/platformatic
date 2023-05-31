@@ -12,7 +12,7 @@
   "scripts": {
     "test": "standard | snazzy && c8 --100 tap --no-coverage test/*.test.js",
     "lint": "standard | snazzy",
-    "license": "license-checker --production --onlyAllow 'Apache-2.0;MIT;ISC;BSD-2-Clause'"
+    "license": "license-checker --production --onlyAllow 'Apache-2.0;MIT;ISC;BSD-2-Clause;BSD-3-Clause'"
   },
   "author": "Matteo Collina <hello@matteocollina.com>",
   "repository": {
@@ -47,9 +47,11 @@
     "@platformatic/authenticate": "workspace:*",
     "@platformatic/client-cli": "workspace:*",
     "@platformatic/config": "workspace:*",
+    "@platformatic/composer": "workspace:*",
     "@platformatic/db": "workspace:*",
     "@platformatic/deploy-client": "workspace:*",
     "@platformatic/metaconfig": "workspace:*",
+    "@platformatic/runtime": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@platformatic/start": "workspace:*",
     "colorette": "^2.0.20",

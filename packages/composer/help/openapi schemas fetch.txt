@@ -1,0 +1,9 @@
+Fetch OpenAPI schemas from remote services to use in your Platformatic project.
+
+``` bash
+  $ platformatic composer openapi schemas fetch
+```
+
+It will fetch all the schemas from the remote services and store them by path
+set in the `platformatic.composer.json` file. If the path is not set, it will
+skip fetching the schema.

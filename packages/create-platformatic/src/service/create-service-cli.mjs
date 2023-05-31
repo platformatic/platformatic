@@ -1,4 +1,3 @@
-
 import { getVersion, getDependencyVersion, isFileAccessible } from '../utils.mjs'
 import { createPackageJson } from '../create-package-json.mjs'
 import { createGitignore } from '../create-gitignore.mjs'
@@ -6,16 +5,15 @@ import { getPkgManager } from '../get-pkg-manager.mjs'
 import parseArgs from 'minimist'
 import { join } from 'path'
 import inquirer from 'inquirer'
-import { readFile, writeFile } from 'fs/promises'
+import { readFile, writeFile, mkdir } from 'fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa } from 'execa'
 import ora from 'ora'
 import createService from './create-service.mjs'
-import askProjectDir from '../ask-project-dir.mjs'
+import askDir from '../ask-dir.mjs'
 import { askDynamicWorkspaceCreateGHAction, askStaticWorkspaceGHAction } from '../ghaction.mjs'
-import { getRunPackageManagerInstall, getUseTypescript } from '../cli-options.mjs'
-import mkdirp from 'mkdirp'
+import { getRunPackageManagerInstall, getUseTypescript, getPort } from '../cli-options.mjs'
 
 export const createReadme = async (logger, dir = '.') => {
   const readmeFileName = join(dir, 'README.md')
@@ -43,16 +41,15 @@ export const createReadme = async (logger, dir = '.') => {
   logger.debug(`${readmeFileName} successfully created.`)
 }
 
-const createPlatformaticService = async (_args) => {
-  const logger = pino(pretty({
+const createPlatformaticService = async (_args, opts = {}) => {
+  const logger = opts.logger || pino(pretty({
     translateTime: 'SYS:HH:MM:ss',
     ignore: 'hostname,pid'
   }))
 
   const args = parseArgs(_args, {
     default: {
-      hostname: '127.0.0.1',
-      port: 3042
+      hostname: '127.0.0.1'
     },
     alias: {
       h: 'hostname',
@@ -63,19 +60,22 @@ const createPlatformaticService = async (_args) => {
   const version = await getVersion()
   const pkgManager = getPkgManager()
 
-  const projectDir = await askProjectDir(logger, '.')
+  const projectDir = opts.dir || await askDir(logger, '.')
 
-  const { runPackageManagerInstall, useTypescript } = await inquirer.prompt([
-    getRunPackageManagerInstall(pkgManager),
-    getUseTypescript(args.typescript)
-  ])
+  const toAsk = [getUseTypescript(args.typescript), getPort(args.port)]
+
+  if (!opts.skipPackageJson) {
+    toAsk.unshift(getRunPackageManagerInstall(pkgManager))
+  }
+
+  const { runPackageManagerInstall, useTypescript, port } = await inquirer.prompt(toAsk)
 
   // Create the project directory
-  await mkdirp(projectDir)
+  await mkdir(projectDir, { recursive: true })
 
   const params = {
     hostname: args.hostname,
-    port: args.port,
+    port,
     typescript: useTypescript
   }
 
@@ -83,10 +83,14 @@ const createPlatformaticService = async (_args) => {
 
   const fastifyVersion = await getDependencyVersion('fastify')
 
-  // Create the package.json, notes that we don't have the option for TS (yet) so we don't generate
-  // the package.json with the TS build
-  await createPackageJson('service', version, fastifyVersion, logger, projectDir, false)
-  await createGitignore(logger, projectDir)
+  if (!opts.skipPackageJson) {
+    // Create the package.json, notes that we don't have the option for TS (yet) so we don't generate
+    // the package.json with the TS build
+    await createPackageJson('service', version, fastifyVersion, logger, projectDir, false)
+  }
+  if (!opts.skipGitignore) {
+    await createGitignore(logger, projectDir)
+  }
   await createReadme(logger, projectDir)
 
   if (runPackageManagerInstall) {
@@ -95,8 +99,10 @@ const createPlatformaticService = async (_args) => {
     spinner.succeed('...done!')
   }
 
-  await askDynamicWorkspaceCreateGHAction(logger, env, 'service', useTypescript, projectDir)
-  await askStaticWorkspaceGHAction(logger, env, 'service', useTypescript, projectDir)
+  if (!opts.skipGitHubActions) {
+    await askDynamicWorkspaceCreateGHAction(logger, env, 'service', useTypescript, projectDir)
+    await askStaticWorkspaceGHAction(logger, env, 'service', useTypescript, projectDir)
+  }
 }
 
 export default createPlatformaticService

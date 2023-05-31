@@ -45,8 +45,8 @@ a password, should be set using [configuration placeholders](#configuration-plac
 
 A **required** object with the following settings:
 
-- **`hostname`** (**required**, `string`) — Hostname where Platformatic DB server will listen for connections.
-- **`port`** (**required**, `number`) — Port where Platformatic DB server will listen for connections.
+- **`hostname`** (**required**, `string`) — Hostname where Platformatic Service server will listen for connections.
+- **`port`** (**required**, `number`) — Port where Platformatic Service server will listen for connections.
 - **`healthCheck`** (`boolean` or `object`) — Enables the health check endpoint.
   - Powered by [`@fastify/under-pressure`](https://github.com/fastify/under-pressure).
   - The value can be an object, used to specify the interval between checks in milliseconds (default: `5000`)
@@ -65,9 +65,9 @@ A **required** object with the following settings:
   ```
 - **`cors`** (`object`) — Configuration for Cross-Origin Resource Sharing (CORS) headers.
   - All options will be passed to the [`@fastify/cors`](https://github.com/fastify/fastify-cors) plugin. In order to specify a `RegExp` object, you can pass `{ regexp: 'yourregexp' }`,
-    it will be automatically converted
+    it will be automatically converted.
 - **`logger`** (`object`) -- the [logger configuration](https://www.fastify.io/docs/latest/Reference/Server/#logger).
-- **`pluginTimeout`** (`integer`) -- the milliseconds to wait for a Fastify plugin to load, see the [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#plugintimeout) for more details.
+- **`pluginTimeout`** (`integer`) -- the number of milliseconds to wait for a Fastify plugin to load, see the [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#plugintimeout) for more details.
 - **`https`** (`object`) - Configuration for HTTPS supporting the following options.
   - `key` (**required**, `string`, `object`, or `array`) - If `key` is a string, it specifies the private key to be used. If `key` is an object, it must have a `path` property specifying the private key file. Multiple keys are supported by passing an array of keys.
   - `cert` (**required**, `string`, `object`, or `array`) - If `cert` is a string, it specifies the certificate to be used. If `cert` is an object, it must have a `path` property specifying the certificate file. Multiple certificates are supported by passing an array of keys.
@@ -205,7 +205,7 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
     "service": {
       "openapi": {
         "info": {
-          "title": "Platformatic DB",
+          "title": "Platformatic Service",
           "description": "Exposing a SQL database as REST"
         }
       }

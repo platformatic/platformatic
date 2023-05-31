@@ -1,0 +1,50 @@
+Start the Platformatic Composer server with the following command:
+
+``` bash
+ $ platformatic composer start
+ ```
+
+You will need a configuration file. Here is an example to get you started,
+save the following as `platformatic.composer.json`:
+
+``` json
+  {
+    "server": {
+      "hostname": "127.0.0.1",
+      "port": 0,
+      "logger": {
+        "level": "info"
+      }
+    },
+    "composer": {
+      "services": [
+        {
+          "id": "service1",
+          "origin": "http://127.0.0.1:3051",
+          "openapi": {
+            "url": "/documentation/json"
+          }
+        },
+        {
+          "id": "service2",
+          "origin": "http://127.0.0.1:3052",
+          "openapi": {
+            "file": "./schemas/service2.openapi.json"
+          }
+        }
+      ],
+      "refreshTimeout": 1000
+    }
+  }
+```
+
+By sending the SIGUSR2 signal, the server can be reloaded.
+
+Options:
+
+  -c, --config FILE      Specify a configuration file to use
+
+If not specified, the configuration specified will be loaded from `platformatic.composer.json`,
+`platformatic.composer.yml`, or `platformatic.composer.tml` in the current directory. You can find more details about
+the configuration format at:
+https://oss.platformatic.dev/docs/reference/composer/configuration.

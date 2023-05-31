@@ -9,7 +9,9 @@ const tar = require('tar')
 const { request } = require('undici')
 
 const ConfigManager = require('@platformatic/config')
-const { getConfigType } = require('@platformatic/start')
+const { getConfigType, getApp } = require('@platformatic/start')
+const { loadConfig } = require('@platformatic/service')
+const { platformaticRuntime } = require('@platformatic/runtime')
 
 const makePrewarmRequest = require('./lib/prewarm.js')
 
@@ -83,7 +85,7 @@ class DeployClient {
     }
   }
 
-  async createDeployment (token, label, variables, secrets) {
+  async createDeployment (token, label, metadata, variables, secrets) {
     const url = this.deployServiceHost + '/deployments'
 
     const { statusCode, body } = await request(url, {
@@ -97,7 +99,7 @@ class DeployClient {
         accept: 'application/json'
       },
 
-      body: JSON.stringify({ label, variables, secrets })
+      body: JSON.stringify({ label, metadata, variables, secrets })
     })
 
     if (statusCode !== 200) {
@@ -194,6 +196,10 @@ async function deploy ({
 
   const args = ['-c', join(pathToProject, pathToConfig)]
   const appType = await getConfigType(args, pathToProject)
+  const app = appType === 'runtime' ? platformaticRuntime : getApp(appType)
+
+  const { configManager } = await loadConfig({}, args, app)
+  const config = configManager.current
 
   logger.info(`Found Platformatic config file: ${pathToConfig}`)
 
@@ -238,9 +244,19 @@ async function deploy ({
   const secretsFromFile = await getEnvFileVariables(secretsFilePath)
   const mergedSecrets = { ...secretsFromFile, ...secrets }
 
+  const appMetadata = { appType }
+  if (appType === 'runtime') {
+    const services = config.services.map(service => ({
+      id: service.id,
+      entrypoint: service.entrypoint
+    }))
+    appMetadata.services = services
+  }
+
   const { entryPointUrl } = await deployClient.createDeployment(
     token,
     label,
+    appMetadata,
     mergedEnvVars,
     mergedSecrets
   )
