@@ -198,3 +198,118 @@ test('should deploy to a dynamic workspace to the cloud', async (t) => {
     '--deploy-service-host', deployServiceHost
   ])
 })
+
+test('should deploy to a static workspace with a file option', async (t) => {
+  const workspaceId = 'b3d7f7e0-8c03-11e8-9eb6-529269fb1459'
+  const workspaceKey = 'b3d7f7e08c0311e89eb6529269fb1459'
+
+  const pathToConfig = join(import.meta.url, './fixtures/app-to-deploy/platformatic.db.json')
+  const pathToKeys = join(import.meta.url, './fixtures/app-to-deploy/static.txt')
+
+  const machineHost = await startMachine(t)
+  const deployServiceHost = await startDeployService(t, {
+    createBundleCallback: (request, reply) => {
+      t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+      t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+      t.match(request.body, {
+        bundle: {
+          appType: 'db',
+          configPath: 'platformatic.db.json'
+        }
+      })
+      t.ok(request.body.bundle.checksum)
+    },
+    createDeploymentCallback: (request, reply) => {
+      t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+      t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+      t.same(
+        request.body,
+        {
+          variables: {
+            PLT_ENV_VARIABLE1: 'platformatic_variable1',
+            PLT_ENV_VARIABLE2: 'platformatic_variable2'
+          },
+          secrets: {
+            PLT_SECRET_1: 'platformatic_secret_1',
+            PLT_SECRET_2: 'platformatic_secret_2'
+          }
+        }
+      )
+      reply.code(200).send({ entryPointUrl: machineHost })
+    }
+  })
+
+  await execa('node', [
+    cliPath, 'deploy',
+    '--keys', pathToKeys,
+    '--config', pathToConfig,
+    '--deploy-service-host', deployServiceHost
+  ])
+})
+
+test('should deploy to a dynamic workspace with a file option', async (t) => {
+  const workspaceId = 'b3d7f7e0-8c03-11e8-9eb6-529269fb1459'
+  const workspaceKey = 'b3d7f7e08c0311e89eb6529269fb1459'
+  const label = 'cli:deploy-2'
+
+  const pathToConfig = join(import.meta.url, './fixtures/app-to-deploy/platformatic.db.json')
+  const pathToKeys = join(import.meta.url, './fixtures/app-to-deploy/dynamic.txt')
+
+  const machineHost = await startMachine(t)
+  const deployServiceHost = await startDeployService(t, {
+    createBundleCallback: (request, reply) => {
+      t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+      t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+      t.match(request.body, {
+        bundle: {
+          appType: 'db',
+          configPath: 'platformatic.db.json'
+        }
+      })
+      t.ok(request.body.bundle.checksum)
+    },
+    createDeploymentCallback: (request, reply) => {
+      t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+      t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+      t.same(
+        request.body,
+        {
+          label,
+          variables: {
+            PLT_ENV_VARIABLE1: 'platformatic_variable1',
+            PLT_ENV_VARIABLE2: 'platformatic_variable2'
+          },
+          secrets: {
+            PLT_SECRET_1: 'platformatic_secret_1',
+            PLT_SECRET_2: 'platformatic_secret_2'
+          }
+        }
+      )
+      reply.code(200).send({ entryPointUrl: machineHost })
+    }
+  })
+
+  await execa('node', [
+    cliPath, 'deploy',
+    '--keys', pathToKeys,
+    '--config', pathToConfig,
+    '--label', label,
+    '--deploy-service-host', deployServiceHost
+  ])
+})
+
+test('should throw if workspace env file is wrong', async (t) => {
+  const pathToConfig = join(import.meta.url, './fixtures/app-to-deploy/platformatic.db.json')
+  const pathToKeys = join(import.meta.url, './fixtures/app-to-deploy/wrong.txt')
+
+  try {
+    await execa('node', [
+      cliPath, 'deploy',
+      '--keys', pathToKeys,
+      '--config', pathToConfig
+    ])
+    t.fail('should have failed')
+  } catch (err) {
+    t.ok(err.message.includes('Could not find workspace keys in provided file.'))
+  }
+})
