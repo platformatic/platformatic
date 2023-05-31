@@ -1,6 +1,6 @@
 'use strict'
 
-import { isAbsolute, dirname, relative } from 'path'
+import { isAbsolute, dirname, relative, join } from 'path'
 import { readFile } from 'fs/promises'
 
 import pino from 'pino'
@@ -77,7 +77,7 @@ async function askWorkspaceDetails (args) {
 async function readWorkspaceDetails (workspaceKeysPath) {
   /* c8 ignore next 3 */
   if (!isAbsolute(workspaceKeysPath)) {
-    workspaceKeysPath = relative(process.cwd(), workspaceKeysPath)
+    workspaceKeysPath = join(process.cwd(), workspaceKeysPath)
   }
 
   const workspaceFile = await readFile(workspaceKeysPath, 'utf8')
