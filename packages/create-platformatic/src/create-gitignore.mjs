@@ -3,7 +3,7 @@ import { writeFile } from 'fs/promises'
 import { join } from 'node:path'
 
 const gitignore = `\
-dist 
+dist
 .DS_Store
 
 # dotenv environment variable files
