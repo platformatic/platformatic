@@ -143,7 +143,7 @@ const createPlatformaticDB = async (_args, opts) => {
   }
 
   if (!hasPlatformaticInstalled) {
-    const exe = await which('platformatic', { noThrow: true })
+    const exe = await which('platformatic', { nothrow: true })
     hasPlatformaticInstalled = !!exe
   }
 
