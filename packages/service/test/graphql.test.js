@@ -156,3 +156,64 @@ test('graphql disabled by default', async ({ teardown, equal, fail }) => {
     equal(err.message, 'Cannot read properties of undefined (reading \'extendSchema\')')
   }
 })
+
+test('graphql errors are correctly propagated in custom resolvers', async ({ teardown, equal, same }) => {
+  const app = await buildServer(buildConfig({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0,
+      healthCheck: {
+        enabled: true,
+        interval: 2000
+      }
+    },
+    service: {
+      graphql: true
+    },
+    plugins: {
+      paths: [join(__dirname, 'fixtures', 'throw-resolver.js')]
+    }
+  }))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  {
+    const res = await request(`${app.url}/graphql`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        query: `
+          query {
+            hello
+          }
+        `
+      })
+    })
+    equal(res.statusCode, 200, 'hello status code')
+    same(await res.body.json(), {
+      data: {
+        hello: null
+      },
+      errors: [
+        {
+          message: 'Kaboooooom!!!',
+          locations: [{
+            line: 3,
+            column: 13
+          }],
+          path: ['hello']
+        }
+      ]
+    }, 'hello response')
+  }
+
+  {
+    const res = await request(`${app.url}/graphiql`)
+    equal(res.statusCode, 200, 'graphiql status code')
+  }
+})
