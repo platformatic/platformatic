@@ -1086,8 +1086,8 @@ importers:
         specifier: ^4.5.0
         version: 4.5.0
       fastify-sandbox:
-        specifier: ^0.13.0
-        version: 0.13.0
+        specifier: ^0.13.1
+        version: 0.13.1
       graphql:
         specifier: ^16.6.0
         version: 16.6.0
@@ -8391,8 +8391,8 @@ packages:
       table: 6.8.1
     dev: false
 
-  /fastify-sandbox@0.13.0:
-    resolution: {integrity: sha512-rc3q3luI1U/dXxJzF8JlTBPkI9uW/PnnWlOtc7vgfcqZDEg7RA+ueelnA3pe1TTaAEloUzg026Bcimsn+5NOdQ==}
+  /fastify-sandbox@0.13.1:
+    resolution: {integrity: sha512-0nufHO/MdzKCnS4oUu/tM8gOC+VmOxMutobLnWaU4wJirzBYS9oJyPJVD0YYVZkqXSxsW7dDFGEXvgRdliuGRA==}
     dependencies:
       import-fresh: 3.3.0
     optionalDependencies:
@@ -15015,7 +15015,6 @@ packages:
 
   /trim@0.0.1:
     resolution: {integrity: sha512-YzQV+TZg4AxpKxaTHK3c3D+kRDCGVEE7LemdlQZoQXn0iennk10RsIoY6ikzAqJTc9Xjl9C1/waHom/J86ziAQ==}
-    deprecated: Use String.prototype.trim() instead
     dev: true
 
   /trivial-deferred@1.1.2:
