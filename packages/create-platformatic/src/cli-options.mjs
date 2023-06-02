@@ -19,6 +19,16 @@ export const getUseTypescript = typescript => {
   }
 }
 
+export const getOverwriteReadme = () => {
+  return {
+    type: 'list',
+    name: 'shouldReplace',
+    message: 'Do you want to overwrite the existing README.md?',
+    default: true,
+    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+  }
+}
+
 let port = 3042
 export const getPort = (nextPort) => {
   if (nextPort === undefined) {
