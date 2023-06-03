@@ -13,20 +13,14 @@ import ora from 'ora'
 import createService from './create-service.mjs'
 import askDir from '../ask-dir.mjs'
 import { askDynamicWorkspaceCreateGHAction, askStaticWorkspaceGHAction } from '../ghaction.mjs'
-import { getRunPackageManagerInstall, getUseTypescript, getPort } from '../cli-options.mjs'
+import { getRunPackageManagerInstall, getUseTypescript, getPort, getOverwriteReadme } from '../cli-options.mjs'
 
 export const createReadme = async (logger, dir = '.') => {
   const readmeFileName = join(dir, 'README.md')
   let isReadmeExists = await isFileAccessible(readmeFileName)
   if (isReadmeExists) {
     logger.debug(`${readmeFileName} found, asking to overwrite it.`)
-    const { shouldReplace } = await inquirer.prompt([{
-      type: 'list',
-      name: 'shouldReplace',
-      message: 'Do you want to overwrite the existing README.md?',
-      default: true,
-      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-    }])
+    const { shouldReplace } = await inquirer.prompt([getOverwriteReadme()])
     isReadmeExists = !shouldReplace
   }
 
