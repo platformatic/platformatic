@@ -378,6 +378,39 @@ const plugins = {
             maxDepth: {
               type: 'integer'
             },
+            autoHooks: {
+              type: 'boolean'
+            },
+            autoHooksPattern: {
+              type: 'string'
+            },
+            cascadeHooks: {
+              type: 'boolean'
+            },
+            overwriteHooks: {
+              type: 'boolean'
+            },
+            routeParams: {
+              type: 'boolean'
+            },
+            forceESM: {
+              type: 'boolean'
+            },
+            ignoreFilter: {
+              type: 'string'
+            },
+            matchFilter: {
+              type: 'string'
+            },
+            ignorePattern: {
+              type: 'string'
+            },
+            scriptPattern: {
+              type: 'string'
+            },
+            indexPattern: {
+              type: 'string'
+            },
             options: {
               type: 'object',
               additionalProperties: true
