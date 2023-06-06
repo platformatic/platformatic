@@ -59,6 +59,15 @@ async function composeOpenAPI (app, opts) {
     openapi: {
       info: composedOpenApiSchema.info,
       specification: composedOpenApiSchema
+    },
+    transform: ({ schema, url }) => {
+      const proxyPrefix = opts.proxy?.prefix
+      if (proxyPrefix && url.startsWith(proxyPrefix)) {
+        schema = schema ?? {}
+        schema.hide = true
+      }
+
+      return { schema, url }
     }
   })
 

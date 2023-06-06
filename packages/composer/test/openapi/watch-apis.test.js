@@ -43,6 +43,8 @@ test('should compose openapi with prefixes', async (t) => {
     }
   })
 
+  const composerOrigin = await composer.start()
+
   {
     const { statusCode, body } = await composer.inject({
       method: 'GET',
@@ -53,7 +55,7 @@ test('should compose openapi with prefixes', async (t) => {
     const openApiSchema = JSON.parse(body)
     openApiValidator.validate(openApiSchema)
 
-    await testEntityRoutes(t, composer, ['/api1/users', '/api2/posts'])
+    await testEntityRoutes(t, composerOrigin, ['/api1/users', '/api2/posts'])
   }
 
   await api1.close()
@@ -71,7 +73,7 @@ test('should compose openapi with prefixes', async (t) => {
     const openApiSchema = JSON.parse(body)
     openApiValidator.validate(openApiSchema)
 
-    await testEntityRoutes(t, composer, ['/api2/posts'])
+    await testEntityRoutes(t, composerOrigin, ['/api2/posts'])
 
     const { statusCode: statusCode2 } = await composer.inject({
       method: 'GET',
@@ -112,6 +114,8 @@ test('should watch api only if it has a url', async (t) => {
     }
   })
 
+  const composerOrigin = await composer.start()
+
   {
     const { statusCode, body } = await composer.inject({
       method: 'GET',
@@ -122,7 +126,7 @@ test('should watch api only if it has a url', async (t) => {
     const openApiSchema = JSON.parse(body)
     openApiValidator.validate(openApiSchema)
 
-    await testEntityRoutes(t, composer, ['/api1/users', '/api2/posts'])
+    await testEntityRoutes(t, composerOrigin, ['/api1/users', '/api2/posts'])
   }
 
   await api2.close()
@@ -140,7 +144,7 @@ test('should watch api only if it has a url', async (t) => {
     const openApiSchema = JSON.parse(body)
     openApiValidator.validate(openApiSchema)
 
-    await testEntityRoutes(t, composer, ['/api1/users'])
+    await testEntityRoutes(t, composerOrigin, ['/api1/users'])
 
     const { statusCode: statusCode2 } = await composer.inject({
       method: 'GET',
@@ -184,6 +188,8 @@ test('should compose schema after service restart', async (t) => {
     }
   })
 
+  const composerOrigin = await composer.start()
+
   {
     const { statusCode, body } = await composer.inject({
       method: 'GET',
@@ -194,7 +200,7 @@ test('should compose schema after service restart', async (t) => {
     const openApiSchema = JSON.parse(body)
     openApiValidator.validate(openApiSchema)
 
-    await testEntityRoutes(t, composer, ['/api1/users', '/api2/posts'])
+    await testEntityRoutes(t, composerOrigin, ['/api1/users', '/api2/posts'])
   }
 
   await api1.close()
@@ -212,7 +218,7 @@ test('should compose schema after service restart', async (t) => {
     const openApiSchema = JSON.parse(body)
     openApiValidator.validate(openApiSchema)
 
-    await testEntityRoutes(t, composer, ['/api2/posts'])
+    await testEntityRoutes(t, composerOrigin, ['/api2/posts'])
 
     const { statusCode: statusCode2 } = await composer.inject({
       method: 'GET',
@@ -235,6 +241,6 @@ test('should compose schema after service restart', async (t) => {
     const openApiSchema = JSON.parse(body)
     openApiValidator.validate(openApiSchema)
 
-    await testEntityRoutes(t, composer, ['/api1/users', '/api2/posts'])
+    await testEntityRoutes(t, composerOrigin, ['/api1/users', '/api2/posts'])
   }
 })
