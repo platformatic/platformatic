@@ -20,7 +20,7 @@ Platformatic supports macOS, Linux and Windows ([WSL](https://docs.microsoft.com
 
 To follow along with this guide you'll need to have these things installed:
 
-- [Node.js](https://nodejs.org/) >= vv18.8.0 or >= v19.0.0
+- [Node.js](https://nodejs.org/) >= v18.8.0 or >= v20.0.0
 - [npm](https://docs.npmjs.com/cli/) v7 or later
 - A code editor, for example [Visual Studio Code](https://code.visualstudio.com/)
 
@@ -59,7 +59,7 @@ like to set up your new Platformatic project. For this guide, select these optio
 
 ```
 - Which kind of project do you want to create?  => DB
-- Where would you like to create your project?  => quick-start 
+- Where would you like to create your project?  => quick-start
 - Do you want to create default migrations?     => Yes
 - Do you want to create a plugin?               => Yes
 - Do you want to use TypeScript?                => No
@@ -85,7 +85,7 @@ don't ask the wizard to do it for you.
 In your project directory, run this command to start your API server:
 
 ```bash
-npm start 
+npm start
 ```
 
 Your Platformatic API is now up and running! 🌟
@@ -176,7 +176,7 @@ pnpm add platformatic
 #### Add a database schema
 
 In your project directory (`quick-start`), create a file for your sqlite3 database and also, a `migrations` directory to
-store your database migration files: 
+store your database migration files:
 
 ```bash
 touch db.sqlite

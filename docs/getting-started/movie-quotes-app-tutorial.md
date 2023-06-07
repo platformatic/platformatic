@@ -32,7 +32,7 @@ In this tutorial we'll learn how to:
 
 To follow along with this tutorial you'll need to have these things installed:
 
-- [Node.js](https://nodejs.org/) >= v18.8.0 or >= v19.0.0
+- [Node.js](https://nodejs.org/) >= v18.8.0 or >= v20.0.0
 - [npm](https://docs.npmjs.com/cli/) v7 or later
 - A code editor, for example [Visual Studio Code](https://code.visualstudio.com/)
 
@@ -397,7 +397,7 @@ And then we'll create a new `Astro` project:
 npm create astro@latest -- --template basics
 ```
 
-It will ask you some questions about how you'd like to set up 
+It will ask you some questions about how you'd like to set up
 your new Astro project. For this guide, select these options:
 
   **Where should we create your new project?**
@@ -1483,7 +1483,7 @@ We'll use `fluent-json-schema` to help us generate a JSON Schema. We can then
 use this schema to validate the request path parameters for our route (`id`).
 
 :::tip
-You can use [fastify-type-provider-typebox](https://github.com/fastify/fastify-type-provider-typebox) or [typebox](https://github.com/sinclairzx81/typebox) if you want to convert your JSON Schema into a Typescript type. See [this GitHub thread](https://github.com/fastify/fluent-json-schema/issues/78#issuecomment-669059113) to have a better overview about it. Look at the example below to have a better overview. 
+You can use [fastify-type-provider-typebox](https://github.com/fastify/fastify-type-provider-typebox) or [typebox](https://github.com/sinclairzx81/typebox) if you want to convert your JSON Schema into a Typescript type. See [this GitHub thread](https://github.com/fastify/fluent-json-schema/issues/78#issuecomment-669059113) to have a better overview about it. Look at the example below to have a better overview.
 :::
 
 Here you can see in practice of to leverage `typebox` combined with `fastify-type-provider-typebox`:
