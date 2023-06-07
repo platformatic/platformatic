@@ -27,22 +27,24 @@ const composer = {
               { required: ['file'] }
             ],
             additionalProperties: false
+          },
+          proxy: {
+            oneOf: [
+              { type: 'boolean', const: false },
+              {
+                type: 'object',
+                properties: {
+                  prefix: { type: 'string' }
+                },
+                required: ['prefix'],
+                additionalProperties: false
+              }
+            ]
           }
         },
         required: ['id'],
         additionalProperties: false
       }
-    },
-    proxy: {
-      oneOf: [
-        { type: 'boolean', const: false },
-        {
-          type: 'object',
-          properties: {
-            prefix: { type: 'string', default: '/internal' }
-          }
-        }
-      ]
     },
     openapi: openApiBase,
     refreshTimeout: { type: 'integer', minimum: 1, default: 1000 }

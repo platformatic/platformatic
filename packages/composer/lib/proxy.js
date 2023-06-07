@@ -1,19 +1,19 @@
 'use strict'
 
-const fp = require('fastify-plugin')
 const httpProxy = require('@fastify/http-proxy')
+const fp = require('fastify-plugin')
 
 module.exports = fp(async function (app, opts) {
-  for (const { id, origin } of opts.services) {
-    const prefix = opts.proxy.prefix + '/' + id
+  for (const { proxy, origin } of opts.services) {
+    if (!proxy) continue
+
+    const prefix = proxy.prefix
     app.log.info(`Proxying ${prefix} to ${origin}`)
 
-    app.register(httpProxy, {
+    await app.register(httpProxy, {
       prefix,
       upstream: origin,
       websocket: true
     })
   }
-}, {
-  name: 'service-proxy'
 })

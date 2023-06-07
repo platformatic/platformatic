@@ -36,7 +36,6 @@
     "@platformatic/config": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@platformatic/swagger-ui-theme": "workspace:*",
-    "@platformatic/utils": "workspace:*",
     "commist": "^3.2.0",
     "desm": "^1.3.0",
     "es-main": "^1.2.0",

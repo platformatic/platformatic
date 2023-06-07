@@ -3,7 +3,6 @@
 const deepEqual = require('fast-deep-equal')
 const ConfigManager = require('@platformatic/config')
 const { platformaticService, buildServer } = require('@platformatic/service')
-const { isKeyEnabled } = require('@platformatic/utils')
 
 const { schema } = require('./lib/schema')
 const serviceProxy = require('./lib/proxy')
@@ -22,10 +21,7 @@ async function platformaticComposer (app) {
 
   async function toLoad (app) {
     app.register(composeOpenApi, config.composer)
-
-    if (isKeyEnabled('proxy', config.composer)) {
-      app.register(serviceProxy, config.composer)
-    }
+    app.register(serviceProxy, config.composer)
   }
 
   toLoad[Symbol.for('skip-override')] = true

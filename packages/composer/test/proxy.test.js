@@ -26,6 +26,9 @@ test('should proxy openapi requests', async (t) => {
           origin: origin1,
           openapi: {
             url: '/documentation/json'
+          },
+          proxy: {
+            prefix: '/internal/service1'
           }
         },
         {
@@ -33,12 +36,12 @@ test('should proxy openapi requests', async (t) => {
           origin: origin2,
           openapi: {
             url: '/documentation/json'
+          },
+          proxy: {
+            prefix: '/internal/service2'
           }
         }
       ],
-      proxy: {
-        prefix: '/internal'
-      },
       refreshTimeout: 1000
     }
   }
@@ -56,8 +59,10 @@ test('should proxy openapi requests', async (t) => {
   openApiValidator.validate(openApiSchema)
 
   for (const path in openApiSchema.paths) {
-    if (path.startsWith(config.composer.proxy.prefix)) {
-      t.fail('proxy routes should be removed from openapi schema')
+    for (const service of config.composer.services) {
+      if (path.startsWith(service.proxy.prefix)) {
+        t.fail('proxy routes should be removed from openapi schema')
+      }
     }
   }
 
