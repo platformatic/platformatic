@@ -1,6 +1,6 @@
 import { expectType } from 'tsd'
 import { SQL, SQLQuery } from '@databases/sql'
-import { fastify, FastifyInstance } from 'fastify'
+import { fastify, FastifyInstance, FastifyReply } from 'fastify'
 import {
   connect,
   plugin,
@@ -72,6 +72,13 @@ expectType<SQLMapperPluginInterface>(await connect({
 
 const instance: FastifyInstance = fastify()
 instance.register(plugin, { connectionString: '', autoTimestamp: true })
-instance.register((instance) => { expectType<SQLMapperPluginInterface>(instance.platformatic) })
+instance.register((instance) => { 
+  expectType<SQLMapperPluginInterface>(instance.platformatic)
+  instance.get('/', async (request, reply) => {
+    const ctx = request.platformaticContext
+    expectType<FastifyInstance>(ctx.app)
+    expectType<FastifyReply>(ctx.reply)
+  })
+})
 
 expectType<(str: string) => string>(utils.toSingular)
