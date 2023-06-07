@@ -9,6 +9,6 @@
     "platformatic": "workspace:*"
   },
   "engines": {
-    "node": "^16.17.0 || ^18.8.0 || >=19"
+    "node": "^18.8.0 || >=20.6.0"
   }
 }

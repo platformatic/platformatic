@@ -23,7 +23,7 @@ const packageJsonTemplate = async (addTSBuild, fastifyVersion, platVersion) => {
       platformatic: `^${platVersion}`
     },
     engines: {
-      node: '^18.8.0'
+      node: '^18.8.0 || >=20.6.0'
     }
   }
 
