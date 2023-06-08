@@ -44,11 +44,12 @@ async function composeOpenAPI (app, opts) {
     }
 
     const prefix = openapi.prefix ?? ''
+    const ignore = openapi.ignore ?? []
 
     for (const path in schema.paths) {
       apiByApiRoutes[prefix + path] = { origin, prefix }
     }
-    openApiSchemas.push({ id, prefix, schema })
+    openApiSchemas.push({ id, prefix, ignore, schema })
   }
 
   app.decorate('openApiSchemas', openApiSchemas)

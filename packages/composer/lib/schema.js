@@ -20,7 +20,26 @@ const composer = {
             properties: {
               url: { type: 'string' },
               file: { type: 'string', resolvePath: true },
-              prefix: { type: 'string' }
+              prefix: { type: 'string' },
+              ignore: {
+                type: 'array',
+                items: {
+                  oneOf: [
+                    { type: 'string' },
+                    {
+                      type: 'object',
+                      properties: {
+                        path: { type: 'string' },
+                        methods: {
+                          type: 'array',
+                          items: { type: 'string' },
+                          minItems: 1
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
             },
             anyOf: [
               { required: ['url'] },
