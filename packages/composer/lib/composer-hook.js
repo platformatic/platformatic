@@ -3,18 +3,15 @@
 const fp = require('fastify-plugin')
 
 async function composeOpenAPI (app) {
-  const routesOptions = {}
+  const onRouteHooks = {}
 
   app.addHook('onRoute', (routeOptions) => {
     const method = routeOptions.method
     const openApiPath = routeOptions.config?.openApiPath
 
-    if (routesOptions[method] === undefined) {
-      routesOptions[method] = {}
-    }
-
-    if (openApiPath) {
-      routesOptions[method][openApiPath] = routeOptions
+    const onRouteHook = onRouteHooks[openApiPath]?.[method]
+    if (onRouteHook) {
+      onRouteHook(routeOptions)
     }
   })
 
@@ -30,11 +27,17 @@ async function composeOpenAPI (app) {
       )
     }
 
+    if (onRouteHooks[openApiPath] === undefined) {
+      onRouteHooks[openApiPath] = {}
+    }
+
+    const routeHooks = onRouteHooks[openApiPath]
+
     for (let method of methods) {
       method = method.toUpperCase()
 
-      const routeOptions = routesOptions[method]?.[openApiPath]
-      if (routeOptions) hook(routeOptions)
+      // TODO: check if already exists
+      routeHooks[method] = hook
     }
   })
 }

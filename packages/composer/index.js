@@ -24,13 +24,13 @@ async function platformaticComposer (app) {
   async function toLoad (app) {
     app.register(openapi, config.composer)
     app.register(serviceProxy, config.composer)
-
-    await app.register(composerHook)
-    await app.register(openapiGenerator, config.composer)
+    app.register(composerHook)
   }
 
   toLoad[Symbol.for('skip-override')] = true
   await platformaticService(app, config, [toLoad])
+
+  await app.register(openapiGenerator, config.composer)
 
   if (!app.hasRoute({ url: '/', method: 'GET' })) {
     app.register(require('./lib/root-endpoint'), config)
