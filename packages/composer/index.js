@@ -6,7 +6,9 @@ const { platformaticService, buildServer } = require('@platformatic/service')
 
 const { schema } = require('./lib/schema')
 const serviceProxy = require('./lib/proxy')
-const composeOpenApi = require('./lib/openapi.js')
+const openapi = require('./lib/openapi.js')
+const composerHook = require('./lib/composer-hook')
+const openapiGenerator = require('./lib/openapi-generator.js')
 
 async function platformaticComposer (app) {
   const configManager = app.platformatic.configManager
@@ -20,8 +22,11 @@ async function platformaticComposer (app) {
   }
 
   async function toLoad (app) {
-    app.register(composeOpenApi, config.composer)
+    app.register(openapi, config.composer)
     app.register(serviceProxy, config.composer)
+
+    await app.register(composerHook)
+    await app.register(openapiGenerator, config.composer)
   }
 
   toLoad[Symbol.for('skip-override')] = true

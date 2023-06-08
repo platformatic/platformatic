@@ -304,8 +304,8 @@ importers:
         specifier: ^4.18.0
         version: 4.18.0
       fastify-openapi-glue:
-        specifier: ^4.1.4
-        version: 4.1.4
+        specifier: ^4.2.0
+        version: 4.2.0
       fastify-plugin:
         specifier: ^4.5.0
         version: 4.5.0
@@ -8366,8 +8366,8 @@ packages:
       prom-client: 14.2.0
     dev: false
 
-  /fastify-openapi-glue@4.1.4:
-    resolution: {integrity: sha512-jk10KZNiqmHtlviVu1KvBW2X6yUCgAZ/ExsXo5qb/lQBIf4U6djnEt9jWOGU/7LV6FJtNqydpMWmSlBsssXhtg==}
+  /fastify-openapi-glue@4.2.0:
+    resolution: {integrity: sha512-JRQKdRI6rr5HCk7I1PkT95nhMXjBz5F35BRh2Tf5jmxETEvH2BPfmMsXih+mnfXkWrpf8R37S0QeHj9IwkHsnw==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
