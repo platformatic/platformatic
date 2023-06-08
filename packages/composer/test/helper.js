@@ -1,5 +1,6 @@
 'use strict'
 
+const { request } = require('undici')
 const fastify = require('fastify')
 const Swagger = require('@fastify/swagger')
 const SwaggerUI = require('@fastify/swagger-ui')
@@ -118,64 +119,76 @@ async function createComposer (t, composerConfig) {
   return app
 }
 
-async function testEntityRoutes (t, service, entitiesRoutes) {
+async function testEntityRoutes (t, origin, entitiesRoutes) {
   for (const entityRoute of entitiesRoutes) {
     {
-      const { statusCode } = await service.inject({
+      const { statusCode } = await request(origin, {
         method: 'POST',
-        url: entityRoute,
-        body: { name: 'test' }
+        path: entityRoute,
+        headers: {
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({ name: 'test' })
       })
       t.equal(statusCode, 200)
     }
 
     {
-      const { statusCode } = await service.inject({
+      const { statusCode } = await request(origin, {
         method: 'GET',
-        url: entityRoute
+        path: entityRoute
       })
       t.equal(statusCode, 200)
     }
 
     {
-      const { statusCode } = await service.inject({
+      const { statusCode } = await request(origin, {
         method: 'PUT',
-        url: entityRoute,
-        body: { name: 'test' }
+        path: entityRoute,
+        headers: {
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({ name: 'test' })
       })
       t.equal(statusCode, 200)
     }
 
     {
-      const { statusCode } = await service.inject({
+      const { statusCode } = await request(origin, {
         method: 'GET',
-        url: `${entityRoute}/1`
+        path: `${entityRoute}/1`
       })
       t.equal(statusCode, 200)
     }
 
     {
-      const { statusCode } = await service.inject({
+      const { statusCode } = await request(origin, {
         method: 'POST',
-        url: `${entityRoute}/2`,
-        body: { name: 'test' }
+        path: `${entityRoute}/2`,
+        headers: {
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({ name: 'test' })
       })
       t.equal(statusCode, 200)
     }
 
     {
-      const { statusCode } = await service.inject({
+      const { statusCode } = await request(origin, {
         method: 'PUT',
-        url: `${entityRoute}/3`,
-        body: { name: 'test' }
+        path: `${entityRoute}/3`,
+        headers: {
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({ name: 'test' })
       })
       t.equal(statusCode, 200)
     }
 
     {
-      const { statusCode } = await service.inject({
+      const { statusCode } = await request(origin, {
         method: 'DELETE',
-        url: `${entityRoute}/4`
+        path: `${entityRoute}/4`
       })
       t.equal(statusCode, 200)
     }

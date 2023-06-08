@@ -264,6 +264,9 @@ importers:
 
   packages/composer:
     dependencies:
+      '@fastify/http-proxy':
+        specifier: ^9.1.0
+        version: 9.1.0
       '@fastify/reply-from':
         specifier: ^9.1.0
         version: 9.1.0
@@ -3483,6 +3486,17 @@ packages:
     resolution: {integrity: sha512-aZAXGYo6m22Fk1zZzEUKBvut/CIIQe/BapEORnxiD5Qr0kPHqqI69NtEMCme74h+at72sPhbkb4ZrLd1W3KRLA==}
     dependencies:
       fast-json-stringify: 5.7.0
+
+  /@fastify/http-proxy@9.1.0:
+    resolution: {integrity: sha512-vgHCTDKOqLB437zQJiLWFFnsrYfFZ6Lfwu/xXQoKqRUKIPDt+xG6LBRtf8s5MNqfFVoTE7kw1U/0qdRGDsMp4Q==}
+    dependencies:
+      '@fastify/reply-from': 9.1.0
+      fastify-plugin: 4.5.0
+      ws: 8.13.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+    dev: false
 
   /@fastify/jwt@6.7.1:
     resolution: {integrity: sha512-pvRcGeyF2H1U+HXaxlRBd6s1y99vbSZjhpxTWECIGIhMXKRxBTBSUPRF7LJGONlW1/pZstQ0/Dp/ZxBFlDuEnw==}

@@ -94,7 +94,14 @@
       <img height="256" src="logo-512x512.png"/>
       <h1 style="text-align:center">Welcome to Platformatic Composer</h1>
       <h2><a href="https://oss.platformatic.dev" target="_blank">Documentation</a></h2>
-      <h2><a href="/documentation" target="_blank">OpenAPI Documentation</a></h2>
+      <h2><a id="openapi-link" target="_blank">OpenAPI Documentation</a></h2>
     </div>
+
+    <script>
+      const currentPath = window.location.pathname
+    
+      const openApiLink = document.getElementById('openapi-link')
+      openApiLink.href = currentPath + 'documentation/static/index.html'
+    </script>
   </body>
 </html>

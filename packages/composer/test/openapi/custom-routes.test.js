@@ -34,6 +34,8 @@ test('should add custom composer route to the composed schema', async (t) => {
     }
   )
 
+  const composerOrigin = await composer.start()
+
   const { statusCode, body } = await composer.inject({
     method: 'GET',
     url: '/documentation/json'
@@ -44,7 +46,7 @@ test('should add custom composer route to the composed schema', async (t) => {
   openApiValidator.validate(openApiSchema)
   t.ok(openApiSchema.paths['/custom'])
 
-  await testEntityRoutes(t, composer, ['/users'])
+  await testEntityRoutes(t, composerOrigin, ['/users'])
 
   {
     const { statusCode } = await composer.inject({ method: 'GET', url: '/custom' })

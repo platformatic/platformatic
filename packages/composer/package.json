@@ -30,6 +30,7 @@
   "dependencies": {
     "@fastify/reply-from": "^9.1.0",
     "@fastify/static": "^6.9.0",
+    "@fastify/http-proxy": "^9.1.0",
     "@fastify/swagger": "^8.3.1",
     "@fastify/swagger-ui": "^1.7.0",
     "@platformatic/config": "workspace:*",

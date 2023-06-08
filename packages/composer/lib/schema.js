@@ -27,6 +27,19 @@ const composer = {
               { required: ['file'] }
             ],
             additionalProperties: false
+          },
+          proxy: {
+            oneOf: [
+              { type: 'boolean', const: false },
+              {
+                type: 'object',
+                properties: {
+                  prefix: { type: 'string' }
+                },
+                required: ['prefix'],
+                additionalProperties: false
+              }
+            ]
           }
         },
         required: ['id'],
