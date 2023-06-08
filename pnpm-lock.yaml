@@ -53,7 +53,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4
+        version: 16.3.4(typescript@5.0.4)
 
   packages/cli:
     dependencies:
@@ -147,7 +147,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4
+        version: 16.3.4(typescript@5.0.4)
       undici:
         specifier: ^5.22.1
         version: 5.22.1
@@ -397,7 +397,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4
+        version: 16.3.4(typescript@5.0.4)
       yaml:
         specifier: ^2.2.2
         version: 2.2.2
@@ -491,7 +491,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4
+        version: 16.3.4(typescript@5.0.4)
       yaml:
         specifier: ^2.2.2
         version: 2.2.2
@@ -703,7 +703,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4
+        version: 16.3.4(typescript@5.0.4)
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
@@ -740,7 +740,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4
+        version: 16.3.4(typescript@5.0.4)
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
@@ -920,7 +920,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4
+        version: 16.3.4(typescript@5.0.4)
 
   packages/frontend-template:
     dependencies:
@@ -930,6 +930,9 @@ importers:
       code-block-writer:
         specifier: ^12.0.0
         version: 12.0.0
+      desm:
+        specifier: ^1.3.0
+        version: 1.3.0
       es-main:
         specifier: ^1.2.0
         version: 1.2.0
@@ -945,7 +948,7 @@ importers:
     devDependencies:
       '@playwright/test':
         specifier: ^1.33.0
-        version: 1.34.0
+        version: 1.34.1
       '@types/react':
         specifier: ^18.2.0
         version: 18.2.6
@@ -975,7 +978,7 @@ importers:
         version: 5.0.4
       vite:
         specifier: ^4.3.4
-        version: 4.3.8
+        version: 4.3.8(@types/node@18.15.10)
 
   packages/metaconfig:
     dependencies:
@@ -1003,7 +1006,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4
+        version: 16.3.4(typescript@5.0.4)
 
   packages/runtime:
     dependencies:
@@ -1265,7 +1268,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4
+        version: 16.3.4(typescript@5.0.4)
       tsd:
         specifier: ^0.28.1
         version: 0.28.1
@@ -1317,7 +1320,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4
+        version: 16.3.4(typescript@5.0.4)
       tsd:
         specifier: ^0.28.1
         version: 0.28.1
@@ -1351,7 +1354,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4
+        version: 16.3.4(typescript@5.0.4)
 
   packages/sql-mapper:
     dependencies:
@@ -1388,7 +1391,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4
+        version: 16.3.4(typescript@5.0.4)
       tsd:
         specifier: ^0.28.1
         version: 0.28.1
@@ -1440,7 +1443,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4
+        version: 16.3.4(typescript@5.0.4)
       tsd:
         specifier: ^0.28.1
         version: 0.28.1
@@ -1498,7 +1501,7 @@ importers:
         version: 17.0.0
       tap:
         specifier: ^16.3.4
-        version: 16.3.4
+        version: 16.3.4(typescript@5.0.4)
 
 packages:
 
@@ -4071,41 +4074,6 @@ packages:
       react-transition-group: 4.4.5(react-dom@18.2.0)(react@18.2.0)
     dev: true
 
-  /@mui/material@5.13.2(@emotion/react@11.11.0)(@types/react@18.2.6)(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-Pfke1l0GG2OJb/Nr10aVr8huoBFcBTdWKV5iFSTEHqf9c2C1ZlyYMISn7ui6X3Gix8vr+hP5kVqH1LAWwQSb6w==}
-    engines: {node: '>=12.0.0'}
-    peerDependencies:
-      '@emotion/react': ^11.5.0
-      '@emotion/styled': ^11.3.0
-      '@types/react': ^17.0.0 || ^18.0.0
-      react: ^17.0.0 || ^18.0.0
-      react-dom: ^17.0.0 || ^18.0.0
-    peerDependenciesMeta:
-      '@emotion/react':
-        optional: true
-      '@emotion/styled':
-        optional: true
-      '@types/react':
-        optional: true
-    dependencies:
-      '@babel/runtime': 7.21.5
-      '@emotion/react': 11.11.0(@types/react@18.2.6)(react@18.2.0)
-      '@mui/base': 5.0.0-beta.2(@types/react@18.2.6)(react-dom@18.2.0)(react@18.2.0)
-      '@mui/core-downloads-tracker': 5.13.2
-      '@mui/system': 5.13.2(@emotion/react@11.11.0)(@types/react@18.2.6)(react@18.2.0)
-      '@mui/types': 7.2.4(@types/react@18.2.6)
-      '@mui/utils': 5.13.1(react@18.2.0)
-      '@types/react': 18.2.6
-      '@types/react-transition-group': 4.4.6
-      clsx: 1.2.1
-      csstype: 3.1.2
-      prop-types: 15.8.1
-      react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
-      react-is: 18.2.0
-      react-transition-group: 4.4.5(react-dom@18.2.0)(react@18.2.0)
-    dev: true
-
   /@mui/private-theming@5.13.1(@types/react@18.2.6)(react@18.2.0):
     resolution: {integrity: sha512-HW4npLUD9BAkVppOUZHeO1FOKUJWAwbpy0VQoGe3McUYTlck1HezGHQCfBQ5S/Nszi7EViqiimECVl9xi+/WjQ==}
     engines: {node: '>=12.0.0'}
@@ -4166,35 +4134,6 @@ packages:
       '@emotion/styled': 11.10.6(@emotion/react@11.10.6)(@types/react@18.2.6)(react@18.2.0)
       '@mui/private-theming': 5.13.1(@types/react@18.2.6)(react@18.2.0)
       '@mui/styled-engine': 5.13.2(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@18.2.0)
-      '@mui/types': 7.2.4(@types/react@18.2.6)
-      '@mui/utils': 5.13.1(react@18.2.0)
-      '@types/react': 18.2.6
-      clsx: 1.2.1
-      csstype: 3.1.2
-      prop-types: 15.8.1
-      react: 18.2.0
-    dev: true
-
-  /@mui/system@5.13.2(@emotion/react@11.11.0)(@types/react@18.2.6)(react@18.2.0):
-    resolution: {integrity: sha512-TPyWmRJPt0JPVxacZISI4o070xEJ7ftxpVtu6LWuYVOUOINlhoGOclam4iV8PDT3EMQEHuUrwU49po34UdWLlw==}
-    engines: {node: '>=12.0.0'}
-    peerDependencies:
-      '@emotion/react': ^11.5.0
-      '@emotion/styled': ^11.3.0
-      '@types/react': ^17.0.0 || ^18.0.0
-      react: ^17.0.0 || ^18.0.0
-    peerDependenciesMeta:
-      '@emotion/react':
-        optional: true
-      '@emotion/styled':
-        optional: true
-      '@types/react':
-        optional: true
-    dependencies:
-      '@babel/runtime': 7.21.5
-      '@emotion/react': 11.11.0(@types/react@18.2.6)(react@18.2.0)
-      '@mui/private-theming': 5.13.1(@types/react@18.2.6)(react@18.2.0)
-      '@mui/styled-engine': 5.13.2(@emotion/react@11.11.0)(react@18.2.0)
       '@mui/types': 7.2.4(@types/react@18.2.6)
       '@mui/utils': 5.13.1(react@18.2.0)
       '@types/react': 18.2.6
@@ -6280,7 +6219,6 @@ packages:
 
   /bluebird@3.7.2:
     resolution: {integrity: sha512-XpNj6GDQzdfW+r2Wnn7xiSAd7TM3jzkxGXBGTtWKuSXv1xUV+azxAm8jdWZN06QTQk+2N2XB9jRDkvbmQmcRtg==}
-    dev: true
 
   /blueimp-md5@2.19.0:
     resolution: {integrity: sha512-DRQrD6gJyy8FbiE4s+bDoXS9hiW3Vbx5uCdwvcCf3zLHL+Iv7LtGHLpr+GZV8rHG8tK766FGYBwRbu8pELTt+w==}
@@ -6552,7 +6490,7 @@ packages:
       minipass-pipeline: 1.2.4
       mkdirp: 1.0.4
       p-map: 4.0.0
-      promise-inflight: 1.0.1
+      promise-inflight: 1.0.1(bluebird@3.7.2)
       rimraf: 3.0.2
       ssri: 8.0.1
       tar: 6.1.15
@@ -12561,15 +12499,6 @@ packages:
       tdigest: 0.1.2
     dev: false
 
-  /promise-inflight@1.0.1:
-    resolution: {integrity: sha512-6zWPyEOFaQBJYcGMHBKTKJ3u6TBsnMFOIZSa6ce1e/ZrrsOlnHRHbabMjLiBYKp+n44X9eUI6VUPaukCXHuG4g==}
-    peerDependencies:
-      bluebird: '*'
-    peerDependenciesMeta:
-      bluebird:
-        optional: true
-    optional: true
-
   /promise-inflight@1.0.1(bluebird@3.7.2):
     resolution: {integrity: sha512-6zWPyEOFaQBJYcGMHBKTKJ3u6TBsnMFOIZSa6ce1e/ZrrsOlnHRHbabMjLiBYKp+n44X9eUI6VUPaukCXHuG4g==}
     peerDependencies:
@@ -12579,7 +12508,6 @@ packages:
         optional: true
     dependencies:
       bluebird: 3.7.2
-    dev: true
 
   /promise-retry@2.0.1:
     resolution: {integrity: sha512-y+WKFlBR8BGXnsNlIHFGPZmyDf3DFMoLhaflAnyZgV6rG6xu+JwesTo2Q9R6XwYmtmwAFCkAk3e35jEdoeh/3g==}
@@ -14786,56 +14714,6 @@ packages:
     dependencies:
       yaml: 1.10.2
     dev: true
-
-  /tap@16.3.4:
-    resolution: {integrity: sha512-SAexdt2ZF4XBgye6TPucFI2y7VE0qeFXlXucJIV1XDPCs+iJodk0MYacr1zR6Ycltzz7PYg8zrblDXKbAZM2LQ==}
-    engines: {node: '>=12'}
-    hasBin: true
-    peerDependencies:
-      coveralls: ^3.1.1
-      flow-remove-types: '>=2.112.0'
-      ts-node: '>=8.5.2'
-      typescript: '>=3.7.2'
-    peerDependenciesMeta:
-      coveralls:
-        optional: true
-      flow-remove-types:
-        optional: true
-      ts-node:
-        optional: true
-      typescript:
-        optional: true
-    dependencies:
-      chokidar: 3.5.3
-      findit: 2.0.0
-      foreground-child: 2.0.0
-      fs-exists-cached: 1.0.0
-      glob: 7.2.3
-      isexe: 2.0.0
-      istanbul-lib-processinfo: 2.0.3
-      jackspeak: 1.4.2
-      libtap: 1.4.0
-      minipass: 3.3.6
-      mkdirp: 1.0.4
-      nyc: 15.1.0
-      opener: 1.5.2
-      rimraf: 3.0.2
-      signal-exit: 3.0.7
-      source-map-support: 0.5.21
-      tap-mocha-reporter: 5.0.3
-      tap-parser: 11.0.2
-      tap-yaml: 1.0.2
-      tcompare: 5.0.7
-      which: 2.0.2
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-    bundledDependencies:
-      - ink
-      - treport
-      - '@types/react'
-      - '@isaacs/import-jsx'
-      - react
 
   /tap@16.3.4(typescript@5.0.4):
     resolution: {integrity: sha512-SAexdt2ZF4XBgye6TPucFI2y7VE0qeFXlXucJIV1XDPCs+iJodk0MYacr1zR6Ycltzz7PYg8zrblDXKbAZM2LQ==}
