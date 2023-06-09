@@ -1,4 +1,3 @@
-
 module.exports = async function (app, opts) {
   app.graphql.defineResolvers({
     Query: {

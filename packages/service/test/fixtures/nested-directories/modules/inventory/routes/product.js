@@ -1,4 +1,3 @@
-
 export default async function (fastify, opts) {
   fastify.get('/product/:sku', {
     schema: {
