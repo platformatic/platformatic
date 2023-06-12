@@ -21,6 +21,7 @@ async function composeOpenAPI (app) {
   })
 
   app.decorate('addComposerOnRouteHook', function (openApiPath, methods, hook) {
+    /* c8 ignore next 5 */
     if (isApplicationReady) {
       throw new Error(
         'Fastify instance is already listening. Cannot call "addComposerOnRouteHook"!'
