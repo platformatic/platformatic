@@ -12,9 +12,19 @@ _Example_
 
 ```js
 app.addComposerOnRouteHook('/users/{id}', ['GET'], routeOptions => {
-  routeOptions.onSend = async (req, reply) => {
-    reply.status(304)
-    return null
+  routeOptions.schema.response[200] = {
+    type: 'object',
+    properties: {
+      firstName: { type: 'string' },
+      lastName: { type: 'string' }
+    }
+  }
+
+  routeOptions.preSerialization = async (request, reply, payload) => {
+    return {
+      firstName: payload.first_name,
+      lastName: payload.last_name
+    }
   }
 })
 ```
