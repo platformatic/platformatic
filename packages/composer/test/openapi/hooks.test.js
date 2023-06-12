@@ -7,7 +7,7 @@ const {
   createOpenApiService
 } = require('../helper')
 
-test('should set onSend route hook', async (t) => {
+test('should add onSend route hook', async (t) => {
   const api = await createOpenApiService(t, ['users'])
   await api.listen({ port: 0 })
 
