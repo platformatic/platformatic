@@ -148,6 +148,7 @@ the services managed by the composer. Each service object supports the following
   - **`id`** (**required**, `string`) - A unique identifier for the service.
   - **`origin`** (`string`) - A service origin. Skip this option if the service is executing inside of Platformatic Runtime. In this case, service id will be used instead of origin.
   - **`openapi`** (**required**, `object`) - The configuration file used to compose OpenAPI specification. See the [openapi](#openapi) for details.
+  - **`graphql`** (`object`) - The configuration file used to compose GraphQL schema. See the [graphql](#graphql) for details.
   - **`proxy`** (`object` or `false`) - Service proxy configuration. If `false`, the service proxy is disabled. 
     - `prefix` (**required**, `string`) - Service proxy prefix. All service routes will be prefixed with this value.
   - **`refreshTimeout`** (`number`) - The number of milliseconds to wait for check for changes in the service OpenAPI specification. If not specified, the default value is `1000`.
@@ -159,6 +160,13 @@ the services managed by the composer. Each service object supports the following
 - **`prefix`** (`string`) - A prefix for the OpenAPI specification. All service routes will be prefixed with this value.
 - **`ignore`** (`array`) - A list of routes to ignore when composing the OpenAPI specification. Ignored routes will not be available through composed API. 
 Example: `["/metrics/{id}", { path: "/payment", methods: ["GET", "POST"] }]`.
+
+If you want to compose Platformatic Service or Platformatic DB application, set up `service.openapi` or `db.openapi` configuration option.
+
+#### `graphql`
+- **`url`** (`string`) - A path of the route that exposes the GraphQL schema. If a service is a Platformatic Service or Platformatic DB, use `/graphql` as a value.
+
+If you want to compose Platformatic DB application, set `db.graphql.federationMetadata` configuration option to `true`.
 
 _Examples_
 
@@ -174,6 +182,9 @@ _Examples_
           "openapi": {
             "url": "/documentation/json",
             "prefix": "auth"
+          },
+          "graphql": {
+            "url": "/graphql"
           }
         },
         {

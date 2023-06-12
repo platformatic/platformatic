@@ -95,6 +95,7 @@
       <h1 style="text-align:center">Welcome to Platformatic Composer</h1>
       <h2><a href="https://oss.platformatic.dev" target="_blank">Documentation</a></h2>
       <h2><a id="openapi-link" target="_blank">OpenAPI Documentation</a></h2>
+      <h2><a id="graphql-link" target="_blank">GraphiQL</a></h2>
     </div>
 
     <script>
@@ -102,6 +103,9 @@
     
       const openApiLink = document.getElementById('openapi-link')
       openApiLink.href = currentPath + 'documentation/static/index.html'
+
+      const graphqlLink = document.getElementById('graphql-link')
+      graphqlLink.href = currentPath + 'graphiql'
     </script>
   </body>
 </html>

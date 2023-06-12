@@ -4,6 +4,7 @@ const { request } = require('undici')
 const fastify = require('fastify')
 const Swagger = require('@fastify/swagger')
 const SwaggerUI = require('@fastify/swagger-ui')
+const { mercuriusFederationPlugin } = require('@mercuriusjs/federation')
 
 const { buildServer } = require('..')
 
@@ -154,6 +155,69 @@ async function createOpenApiService (t, entitiesNames = []) {
   return app
 }
 
+async function createGraphqlService (t, entitiesNames = []) {
+  const app = fastify({
+    keepAliveTimeout: 10
+  })
+
+  const entities = {
+    1: {
+      id: '1',
+      name: 'test1'
+    },
+    2: {
+      id: '2',
+      name: 'test2'
+    }
+  }
+
+  const entityName = entitiesNames[0]
+
+  const schema = `
+  extend type Query {
+    get${entityName}s: [${entityName}],
+    get${entityName}ById(id: ID!): ${entityName}
+  }
+
+  type ${entityName} @key(fields: "id") {
+    id: ID!
+    name: String
+  }
+`
+
+  const resolvers = {
+    Query: {
+      [`get${entityName}s`]: () => {
+        return entities
+      },
+      [`get${entityName}ById`]: (source, args, context, info) => {
+        return entities[args.id]
+      }
+    },
+    [entityName]: {
+      __resolveReference: (source, args, context, info) => {
+        return entities[source.id]
+      }
+    }
+  }
+
+  app.register(mercuriusFederationPlugin, {
+    schema,
+    resolvers
+  })
+
+  app.get('/', async function (req, reply) {
+    const query = '{ _service { sdl } }'
+    return app.graphql(query)
+  })
+
+  t.teardown(async () => {
+    await app.close()
+  })
+
+  return app
+}
+
 async function createComposer (t, composerConfig) {
   const defaultConfig = {
     server: {
@@ -258,5 +322,6 @@ async function testEntityRoutes (t, origin, entitiesRoutes) {
 module.exports = {
   createComposer,
   createOpenApiService,
+  createGraphqlService,
   testEntityRoutes
 }

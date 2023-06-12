@@ -47,6 +47,14 @@ const composer = {
             ],
             additionalProperties: false
           },
+          graphql: {
+            type: 'object',
+            properties: {
+              url: { type: 'string' }
+            },
+            required: ['url'],
+            additionalProperties: false
+          },
           proxy: {
             oneOf: [
               { type: 'boolean', const: false },
