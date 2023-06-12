@@ -52,37 +52,97 @@ async function createOpenApiService (t, entitiesNames = []) {
     saveEntity({ name: 'test3' })
     saveEntity({ name: 'test4' })
 
-    app.get(`/${entity}`, async () => {
+    const entitySchema = {
+      type: 'object',
+      properties: {
+        id: { type: 'number' },
+        name: { type: 'string' }
+      }
+    }
+
+    app.get(`/${entity}`, {
+      schema: {
+        response: {
+          200: {
+            type: 'array',
+            items: entitySchema
+          }
+        }
+      }
+    }, async () => {
       return Array.from(storage.values())
     })
 
-    app.post(`/${entity}`, async (req) => {
+    app.post(`/${entity}`, {
+      schema: {
+        body: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' }
+          }
+        },
+        response: {
+          200: entitySchema
+        }
+      }
+    }, async (req) => {
       const entity = req.body
       return saveEntity(entity)
     })
 
-    app.put(`/${entity}`, async (req) => {
+    app.put(`/${entity}`, {
+      schema: {
+        body: entitySchema,
+        response: {
+          200: entitySchema
+        }
+      }
+    }, async (req) => {
       const entity = req.body
       return saveEntity(entity)
     })
 
-    app.get(`/${entity}/:id`, async (req) => {
+    app.get(`/${entity}/:id`, {
+      schema: {
+        response: {
+          200: entitySchema
+        }
+      }
+    }, async (req) => {
       return storage.get(req.params.id)
     })
 
-    app.post(`/${entity}/:id`, async (req) => {
+    app.post(`/${entity}/:id`, {
+      schema: {
+        response: {
+          200: entitySchema
+        }
+      }
+    }, async (req) => {
       const id = req.params.id
       const entity = req.body
       return saveEntity({ ...entity, id })
     })
 
-    app.put(`/${entity}/:id`, async (req) => {
+    app.put(`/${entity}/:id`, {
+      schema: {
+        response: {
+          200: entitySchema
+        }
+      }
+    }, async (req) => {
       const id = req.params.id
       const entity = req.body
       return saveEntity({ ...entity, id })
     })
 
-    app.delete(`/${entity}/:id`, async (req) => {
+    app.delete(`/${entity}/:id`, {
+      schema: {
+        response: {
+          200: entitySchema
+        }
+      }
+    }, async (req) => {
       return storage.delete(req.params.id)
     })
   }
