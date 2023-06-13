@@ -955,15 +955,18 @@ importers:
       '@hapi/topo':
         specifier: ^6.0.2
         version: 6.0.2
+      '@platformatic/composer':
+        specifier: workspace:*
+        version: link:../composer
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
+      '@platformatic/db':
+        specifier: workspace:*
+        version: link:../db
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
-      '@platformatic/start':
-        specifier: workspace:*
-        version: link:../start
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -1392,21 +1395,9 @@ importers:
 
   packages/start:
     dependencies:
-      '@platformatic/composer':
+      '@platformatic/runtime':
         specifier: workspace:*
-        version: link:../composer
-      '@platformatic/config':
-        specifier: workspace:*
-        version: link:../config
-      '@platformatic/db':
-        specifier: workspace:*
-        version: link:../db
-      '@platformatic/service':
-        specifier: workspace:*
-        version: link:../service
-      minimist:
-        specifier: ^1.2.8
-        version: 1.2.8
+        version: link:../runtime
     devDependencies:
       c8:
         specifier: ^7.13.0
