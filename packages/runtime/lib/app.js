@@ -4,11 +4,11 @@ const { dirname } = require('node:path')
 const {
   addLoggerToTheConfig
 } = require('@platformatic/service')
+const { FileWatcher } = require('@platformatic/utils')
 const {
   buildServer,
   loadConfig
-} = require('@platformatic/start')
-const { FileWatcher } = require('@platformatic/utils')
+} = require('./unified-api')
 
 class PlatformaticApp {
   #hotReload
