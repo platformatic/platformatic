@@ -3,5 +3,17 @@ export function capitalize (str) {
 }
 
 export function classCase (str) {
-  return str.split(/[^a-z]+/i).map(s => capitalize(s)).join('')
+  return str
+    .split(/[^a-z]+/i)
+    .map((s) => capitalize(s))
+    .join('')
+}
+
+export function isValidUrl (str) {
+  try {
+    new URL(str) // eslint-disable-line no-new
+    return true
+  } catch {
+    return false
+  }
 }

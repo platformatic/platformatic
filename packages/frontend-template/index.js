@@ -5,6 +5,7 @@ import parseArgs from 'minimist'
 
 import { request } from 'undici'
 import { writeFile } from 'fs/promises'
+import { isValidUrl } from './lib/utils.mjs'
 import { processOpenAPI } from './lib/gen-openapi.mjs'
 
 async function frontendTemplate ({ url, language, name }) {
@@ -42,7 +43,7 @@ async function frontendTemplate ({ url, language, name }) {
 
 export async function command (argv) {
   const {
-    _: [url, language]
+    _: [urlOrLanguage, language]
   } = parseArgs(argv)
 
   const help = helpMe({
@@ -51,22 +52,24 @@ export async function command (argv) {
     ext: '.txt'
   })
 
-  if (!url) {
-    await help.toStdout(['invalid-url'])
+  const missingParams = !urlOrLanguage && !language
+  const onlyLanguageReceived = urlOrLanguage === 'ts' || language === 'js'
+  const missingLanguage = !language || (language !== 'ts' && language !== 'js')
+
+  if (missingParams || onlyLanguageReceived || missingLanguage) {
+    await help.toStdout(['invalid-params'])
     process.exit(1)
   }
 
-  if (!language || (language !== 'ts' && language !== 'js')) {
-    await help.toStdout(['invalid-language'])
+  if (!isValidUrl(urlOrLanguage)) {
+    await help.toStdout(['invalid-url'])
     process.exit(1)
   }
 
   try {
-    await frontendTemplate({ url, language, name: 'api' })
+    await frontendTemplate({ url: urlOrLanguage, language, name: 'api' })
   } catch (err) {
     console.error(err)
-    await help.toStdout(['invalid-url'])
-    process.exit(1)
   }
 }
 
