@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@fastify/error": "^3.2.1",
-    "@fastify/jwt": "^6.7.1",
+    "@fastify/jwt": "^7.0.0",
     "fastify-plugin": "^4.5.0",
     "fastify-user": "^0.1.2",
     "get-jwks": "^8.1.0",

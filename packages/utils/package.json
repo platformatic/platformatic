@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "c8": "^7.14.0",
+    "c8": "^8.0.0",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
     "tap": "^16.3.6"
