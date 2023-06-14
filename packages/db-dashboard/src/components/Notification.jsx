@@ -1,4 +1,3 @@
-
 export default function Notification (props) {
   const { text } = props
   return (

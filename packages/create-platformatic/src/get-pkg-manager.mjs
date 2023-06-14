@@ -1,4 +1,3 @@
-
 export const getPkgManager = () => {
   const userAgent = process.env.npm_config_user_agent
   if (!userAgent) {

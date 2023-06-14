@@ -16,10 +16,10 @@
     "test": "standard | snazzy"
   },
   "dependencies": {
-    "@fastify/error": "^3.2.0"
+    "@fastify/error": "^3.2.1"
   },
   "devDependencies": {
     "snazzy": "^9.0.0",
-    "standard": "^17.0.0"
+    "standard": "^17.1.0"
   }
 }

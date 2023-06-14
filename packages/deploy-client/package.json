@@ -19,18 +19,18 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "c8": "^7.13.0",
-    "fastify": "^4.17.0",
+    "c8": "^7.14.0",
+    "fastify": "^4.18.0",
     "license-checker": "^25.0.1",
     "snazzy": "^9.0.0",
-    "standard": "^17.0.0",
-    "tap": "^16.3.4"
+    "standard": "^17.1.0",
+    "tap": "^16.3.6"
   },
   "dependencies": {
     "@platformatic/config": "workspace:*",
-    "@platformatic/start": "workspace:*",
-    "@platformatic/service": "workspace:*",
     "@platformatic/runtime": "workspace:*",
+    "@platformatic/service": "workspace:*",
+    "@platformatic/start": "workspace:*",
     "tar": "^6.1.15",
     "undici": "^5.22.1"
   }
