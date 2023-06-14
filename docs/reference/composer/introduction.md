@@ -11,6 +11,7 @@ Platformatic Composer is currently in [public beta](#public-beta).
 
 - Command-line interface: [`platformatic composer`](/reference/cli.md#composer)
 - Automatic [OpenApi composition](/reference/composer/configuration.md#composer)
+- [Reverse proxy](/reference/composer/configuration.md#composer) for composed services
 - Add custom functionality in a [Fastify plugin](/reference/composer/plugin.md)
 - Write plugins in JavaScript or [TypeScript](/reference/cli.md#compile)
 

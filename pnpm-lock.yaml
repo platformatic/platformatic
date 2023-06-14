@@ -15,8 +15,8 @@ importers:
         specifier: ^1.3.0
         version: 1.3.0
       markdownlint-cli2:
-        specifier: ^0.7.1
-        version: 0.7.1
+        specifier: ^0.8.0
+        version: 0.8.1
 
   packages/authenticate:
     dependencies:
@@ -264,6 +264,9 @@ importers:
 
   packages/composer:
     dependencies:
+      '@fastify/http-proxy':
+        specifier: ^9.1.0
+        version: 9.1.0
       '@fastify/reply-from':
         specifier: ^9.1.0
         version: 9.1.0
@@ -298,11 +301,11 @@ importers:
         specifier: ^3.1.3
         version: 3.1.3
       fastify:
-        specifier: ^4.15.0
-        version: 4.17.0
+        specifier: ^4.18.0
+        version: 4.18.0
       fastify-openapi-glue:
-        specifier: ^4.1.4
-        version: 4.1.4
+        specifier: ^4.2.0
+        version: 4.2.0
       fastify-plugin:
         specifier: ^4.5.0
         version: 4.5.0
@@ -952,15 +955,18 @@ importers:
       '@hapi/topo':
         specifier: ^6.0.2
         version: 6.0.2
+      '@platformatic/composer':
+        specifier: workspace:*
+        version: link:../composer
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
+      '@platformatic/db':
+        specifier: workspace:*
+        version: link:../db
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
-      '@platformatic/start':
-        specifier: workspace:*
-        version: link:../start
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -1395,21 +1401,9 @@ importers:
 
   packages/start:
     dependencies:
-      '@platformatic/composer':
+      '@platformatic/runtime':
         specifier: workspace:*
-        version: link:../composer
-      '@platformatic/config':
-        specifier: workspace:*
-        version: link:../config
-      '@platformatic/db':
-        specifier: workspace:*
-        version: link:../db
-      '@platformatic/service':
-        specifier: workspace:*
-        version: link:../service
-      minimist:
-        specifier: ^1.2.8
-        version: 1.2.8
+        version: link:../runtime
     devDependencies:
       c8:
         specifier: ^7.13.0
@@ -3490,6 +3484,17 @@ packages:
     dependencies:
       fast-json-stringify: 5.7.0
 
+  /@fastify/http-proxy@9.1.0:
+    resolution: {integrity: sha512-vgHCTDKOqLB437zQJiLWFFnsrYfFZ6Lfwu/xXQoKqRUKIPDt+xG6LBRtf8s5MNqfFVoTE7kw1U/0qdRGDsMp4Q==}
+    dependencies:
+      '@fastify/reply-from': 9.1.0
+      fastify-plugin: 4.5.0
+      ws: 8.13.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+    dev: false
+
   /@fastify/jwt@6.7.1:
     resolution: {integrity: sha512-pvRcGeyF2H1U+HXaxlRBd6s1y99vbSZjhpxTWECIGIhMXKRxBTBSUPRF7LJGONlW1/pZstQ0/Dp/ZxBFlDuEnw==}
     dependencies:
@@ -3523,7 +3528,7 @@ packages:
   /@fastify/restartable@2.1.0:
     resolution: {integrity: sha512-zq0g0s0r87b0gUOv+11Mi3D9B2NdkTjKX+QM8s5WK3IhmTKLJ5UfMkJXfqYbqeDOgoGfXfSjyxtfkHbTFlDk/Q==}
     dependencies:
-      fastify: 4.17.0
+      fastify: 4.18.0
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -8358,8 +8363,8 @@ packages:
       prom-client: 14.2.0
     dev: false
 
-  /fastify-openapi-glue@4.1.4:
-    resolution: {integrity: sha512-jk10KZNiqmHtlviVu1KvBW2X6yUCgAZ/ExsXo5qb/lQBIf4U6djnEt9jWOGU/7LV6FJtNqydpMWmSlBsssXhtg==}
+  /fastify-openapi-glue@4.2.0:
+    resolution: {integrity: sha512-JRQKdRI6rr5HCk7I1PkT95nhMXjBz5F35BRh2Tf5jmxETEvH2BPfmMsXih+mnfXkWrpf8R37S0QeHj9IwkHsnw==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
@@ -8405,7 +8410,7 @@ packages:
     dependencies:
       '@fastify/error': 3.2.0
       '@fastify/jwt': 6.7.1
-      fastify: 4.17.0
+      fastify: 4.18.0
       fastify-plugin: 4.5.0
       get-jwks: 8.0.6
     transitivePeerDependencies:
@@ -8434,6 +8439,29 @@ packages:
       tiny-lru: 11.0.1
     transitivePeerDependencies:
       - supports-color
+
+  /fastify@4.18.0:
+    resolution: {integrity: sha512-L5o/2GEkBastQ3HV0dtKo7SUZ497Z1+q4fcqAoPyq6JCQ/8zdk1JQEoTQwnBWCp+EmA7AQa6mxNqSAEhzP0RwQ==}
+    dependencies:
+      '@fastify/ajv-compiler': 3.5.0
+      '@fastify/error': 3.2.0
+      '@fastify/fast-json-stringify-compiler': 4.3.0
+      abstract-logging: 2.0.1
+      avvio: 8.2.1
+      fast-content-type-parse: 1.0.0
+      fast-json-stringify: 5.7.0
+      find-my-way: 7.6.0
+      light-my-request: 5.9.1
+      pino: 8.14.1
+      process-warning: 2.2.0
+      proxy-addr: 2.0.7
+      rfdc: 1.3.0
+      secure-json-parse: 2.7.0
+      semver: 7.5.1
+      tiny-lru: 11.0.1
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
 
   /fastparallel@2.4.1:
     resolution: {integrity: sha512-qUmhxPgNHmvRjZKBFUNI0oZuuH9OlSIOXmJ98lhKPxMZZ7zS/Fi0wRHOihDSz0R1YiIOjxzOY4bq65YTcdBi2Q==}
@@ -10385,7 +10413,7 @@ packages:
     resolution: {integrity: sha512-UT7pUk8jNCR1wR7w3iWfIjx32DiB2f3hFdQSOwy3/EPQ3n3VocyipUxcyRZR0ahoev+fky69uA+GejPa9KuHKg==}
     dependencies:
       cookie: 0.5.0
-      process-warning: 2.1.0
+      process-warning: 2.2.0
       set-cookie-parser: 2.6.0
 
   /lilconfig@2.1.0:
@@ -10690,38 +10718,38 @@ packages:
       uc.micro: 1.0.6
     dev: true
 
-  /markdownlint-cli2-formatter-default@0.0.4(markdownlint-cli2@0.7.1):
+  /markdownlint-cli2-formatter-default@0.0.4(markdownlint-cli2@0.8.1):
     resolution: {integrity: sha512-xm2rM0E+sWgjpPn1EesPXx5hIyrN2ddUnUwnbCsD/ONxYtw3PX6LydvdH6dciWAoFDpwzbHM1TO7uHfcMd6IYg==}
     peerDependencies:
       markdownlint-cli2: '>=0.0.4'
     dependencies:
-      markdownlint-cli2: 0.7.1
+      markdownlint-cli2: 0.8.1
     dev: true
 
-  /markdownlint-cli2@0.7.1:
-    resolution: {integrity: sha512-N58lw50Ws0WOfCc07B9dPKMnPMbIj6ZCMlszZLVfxBwKN/M+WZqXLdOHyRL2BWCZ3APBxQN9qDEw7Vf1PRqFkg==}
-    engines: {node: '>=14.18.0'}
+  /markdownlint-cli2@0.8.1:
+    resolution: {integrity: sha512-y0Siwt+RApKxSSb0CT9p7z1DcAO+ncjrB9IpC/jflJRIet4namCFmxLTbfBBQdPF6EntPk5yyXKe7vcoPGlnXw==}
+    engines: {node: '>=16'}
     hasBin: true
     dependencies:
       globby: 13.1.4
-      markdownlint: 0.28.2
-      markdownlint-cli2-formatter-default: 0.0.4(markdownlint-cli2@0.7.1)
+      markdownlint: 0.29.0
+      markdownlint-cli2-formatter-default: 0.0.4(markdownlint-cli2@0.8.1)
       micromatch: 4.0.5
       strip-json-comments: 5.0.0
-      yaml: 2.2.2
+      yaml: 2.3.1
     dev: true
 
-  /markdownlint-micromark@0.1.2:
-    resolution: {integrity: sha512-jRxlQg8KpOfM2IbCL9RXM8ZiYWz2rv6DlZAnGv8ASJQpUh6byTBnEsbuMZ6T2/uIgntyf7SKg/mEaEBo1164fQ==}
-    engines: {node: '>=14.18.0'}
+  /markdownlint-micromark@0.1.5:
+    resolution: {integrity: sha512-HvofNU4QCvfUCWnocQP1IAWaqop5wpWrB0mKB6SSh0fcpV0PdmQNS6tdUuFew1utpYlUvYYzz84oDkrD76GB9A==}
+    engines: {node: '>=16'}
     dev: true
 
-  /markdownlint@0.28.2:
-    resolution: {integrity: sha512-yYaQXoKKPV1zgrFsyAuZPEQoe+JrY9GDag9ObKpk09twx4OCU5lut+0/kZPrQ3W7w82SmgKhd7D8m34aG1unVw==}
-    engines: {node: '>=14.18.0'}
+  /markdownlint@0.29.0:
+    resolution: {integrity: sha512-ASAzqpODstu/Qsk0xW5BPgWnK/qjpBQ4e7IpsSvvFXcfYIjanLTdwFRJK1SIEEh0fGSMKXcJf/qhaZYHyME0wA==}
+    engines: {node: '>=16'}
     dependencies:
       markdown-it: 13.0.1
-      markdownlint-micromark: 0.1.2
+      markdownlint-micromark: 0.1.5
     dev: true
 
   /match-sorter@6.3.1:
@@ -12286,7 +12314,7 @@ packages:
     dependencies:
       lilconfig: 2.1.0
       postcss: 8.4.23
-      yaml: 2.2.2
+      yaml: 2.3.1
     dev: true
 
   /postcss-nested@6.0.1(postcss@8.4.23):
@@ -12427,6 +12455,9 @@ packages:
 
   /process-warning@2.1.0:
     resolution: {integrity: sha512-9C20RLxrZU/rFnxWncDkuF6O999NdIf3E1ws4B0ZeY3sRVPzWBMsYDE2lxjxhiXxg464cQTgKUGm8/i6y2YGXg==}
+
+  /process-warning@2.2.0:
+    resolution: {integrity: sha512-/1WZ8+VQjR6avWOgHeEPd7SDQmFQ1B5mC1eRXsCm5TarlNmx/wCsa5GEaxGm05BORRtyG/Ex/3xq3TuRvq57qg==}
 
   /process@0.11.10:
     resolution: {integrity: sha512-cdGef/drWFoydD1JsMzuFf8100nZl+GT+yacc2bEced5f9Rjk4z+WtFUTBu9PhOi9j/jfmBPu0mMEY4wIdAF8A==}
@@ -15960,6 +15991,11 @@ packages:
   /yaml@2.2.2:
     resolution: {integrity: sha512-CBKFWExMn46Foo4cldiChEzn7S7SRV+wqiluAb6xmueD/fGyRHIhX8m14vVGgeFWjN540nKCNVj6P21eQjgTuA==}
     engines: {node: '>= 14'}
+
+  /yaml@2.3.1:
+    resolution: {integrity: sha512-2eHWfjaoXgTBC2jNM1LRef62VQa0umtvRiDSk6HSzW7RvS5YtkabJrwYLLEKWBc8a5U2PTSCs+dJjUTJdlHsWQ==}
+    engines: {node: '>= 14'}
+    dev: true
 
   /yargs-parser@18.1.3:
     resolution: {integrity: sha512-o50j0JeToy/4K6OZcaQmW6lyXXKhq7csREXcDwk2omFPJEwUNOVtJKvmDr9EI1fAJZUyZcRF7kxGBWmRXudrCQ==}

@@ -1,4 +1,3 @@
-
 'use strict'
 
 const { buildConfig, connInfo, clear, createBasicPages } = require('./helper')

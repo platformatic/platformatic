@@ -30,9 +30,10 @@
   },
   "dependencies": {
     "@hapi/topo": "^6.0.2",
+    "@platformatic/composer": "workspace:*",
     "@platformatic/config": "workspace:*",
+    "@platformatic/db": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "@platformatic/start": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "close-with-grace": "^1.2.0",
     "commist": "^3.2.0",

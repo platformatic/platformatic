@@ -1,3 +1,4 @@
+'use strict'
 
 const { writeFile } = require('fs/promises')
 const { schema: platformaticServiceSchema } = require('./schema.js')

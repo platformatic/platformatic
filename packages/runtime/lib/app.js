@@ -1,11 +1,11 @@
 'use strict'
 const { once } = require('node:events')
 const { dirname } = require('node:path')
+const { FileWatcher } = require('@platformatic/utils')
 const {
   buildServer,
   loadConfig
-} = require('@platformatic/start')
-const { FileWatcher } = require('@platformatic/utils')
+} = require('./unified-api')
 
 class PlatformaticApp {
   #hotReload

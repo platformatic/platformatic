@@ -1,7 +1,7 @@
 'use strict'
 
 const os = require('os')
-const { writeFile } = require('fs/promises')
+const { mkdtemp, writeFile } = require('fs/promises')
 const { join } = require('path')
 const { test } = require('tap')
 const { FileWatcher } = require('..')
@@ -53,8 +53,8 @@ test('should not watch not allowed files', async ({ equal, plan }) => {
   equal(false, fileWatcher.shouldFileBeWatched('another.file'))
 })
 
-test('should emit event if file is updated', ({ end }) => {
-  const tmpDir = os.tmpdir()
+test('should emit event if file is updated', async ({ end }) => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
   const filename = join(tmpDir, 'test.file')
   const fileWatcher = new FileWatcher({ path: tmpDir })
 
@@ -67,8 +67,8 @@ test('should emit event if file is updated', ({ end }) => {
   writeFile(filename, 'foobar')
 })
 
-test('should not call fs watch twice', ({ pass, plan, end }) => {
-  const tmpDir = os.tmpdir()
+test('should not call fs watch twice', async ({ pass, plan, end }) => {
+  const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
   const filename = join(tmpDir, 'test.file')
   const fileWatcher = new FileWatcher({ path: tmpDir })
 

@@ -6,11 +6,40 @@ function composeOpenApi (apis, options = {}) {
   const mergedPaths = {}
   const mergedSchemas = {}
 
-  for (const { id, prefix, schema } of apis) {
+  for (const { id, prefix, ignore, schema } of apis) {
     const { paths, components } = clone(schema)
+
+    const ignoreMethods = {}
+    for (const ignoreRule of ignore || []) {
+      if (typeof ignoreRule === 'string') {
+        ignoreMethods[ignoreRule] = true
+        continue
+      }
+      if (!ignoreRule.methods) {
+        ignoreMethods[ignoreRule.path] = true
+        continue
+      }
+      ignoreMethods[ignoreRule.path] = ignoreRule.methods.map(
+        (method) => method.toLowerCase()
+      )
+    }
 
     const apiPrefix = id + '_'
     for (const [path, pathSchema] of Object.entries(paths)) {
+      const pathIgnoreMethods = ignoreMethods[path]
+
+      if (pathIgnoreMethods !== undefined) {
+        if (pathIgnoreMethods === true) continue
+
+        for (let method of Object.keys(pathSchema)) {
+          method = method.toLowerCase()
+          if (pathIgnoreMethods.includes(method)) {
+            delete pathSchema[method]
+          }
+          if (Object.keys(pathSchema).length === 0) continue
+        }
+      }
+
       namespaceSchemaRefs(apiPrefix, pathSchema)
       namespaceSchemaOperationIds(apiPrefix, pathSchema)
 

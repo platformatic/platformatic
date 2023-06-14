@@ -1,4 +1,4 @@
-import { FastifyPluginAsync } from 'fastify'
+import { FastifyPluginAsync, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { SQL, SQLQuery } from '@databases/sql'
 
 interface ILogger {
@@ -306,9 +306,18 @@ export interface SQLMapperPluginInterface {
   addEntityHooks(entityName: string, hooks: EntityHooks): any
 }
 
+export interface PlatformaticContext {
+  app: FastifyInstance,
+  reply: FastifyReply
+}
+
 declare module 'fastify' {
   interface FastifyInstance {
     platformatic: SQLMapperPluginInterface
+  }
+
+  interface FastifyRequest {
+    platformaticContext: PlatformaticContext
   }
 }
 
