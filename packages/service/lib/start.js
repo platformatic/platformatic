@@ -136,10 +136,7 @@ async function start (appType, _args) {
   try {
     // Set the location of the config
     app = await buildServer({ ...config, configManager }, appType)
-
     await app.start()
-    // TODO: this log is used in the start command. Should be replaced
-    app.log.info({ url: app.url })
   } catch (err) {
     // TODO route this to a logger
     console.error(err)

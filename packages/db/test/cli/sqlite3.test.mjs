@@ -1,4 +1,4 @@
-import { cliPath, cleanSQLite } from './helper.js'
+import { cliPath, cleanSQLite, start } from './helper.js'
 import { test } from 'tap'
 import { request } from 'undici'
 import { execa } from 'execa'
@@ -29,24 +29,7 @@ test('migrate and start', async ({ comment, equal, match, teardown }) => {
 
   comment('starting')
 
-  const child = execa('node', [cliPath, 'start'], {
-    cwd
-  })
-  // child.stderr.pipe(process.stderr)
-  const splitter = split()
-  child.stdout.pipe(splitter)
-  let url
-  for await (const data of splitter) {
-    try {
-      const parsed = JSON.parse(data)
-      if (parsed.url) {
-        url = parsed.url
-        break
-      }
-    } catch (err) {
-      // do nothing as the line is not JSON
-    }
-  }
+  const { child, url } = await start([], { cwd })
   teardown(() => child.kill('SIGINT'))
 
   {
@@ -95,22 +78,7 @@ test('no cwd', async ({ comment, equal, match, teardown }) => {
 
   comment('starting')
 
-  const child = execa('node', [cliPath, 'start', '-c', config])
-  child.stderr.pipe(process.stderr)
-  const splitter = split()
-  child.stdout.pipe(splitter)
-  let url
-  for await (const data of splitter) {
-    try {
-      const parsed = JSON.parse(data)
-      if (parsed.url) {
-        url = parsed.url
-        break
-      }
-    } catch (err) {
-      // do nothing as the line is not JSON
-    }
-  }
+  const { child, url } = await start(['-c', config])
   teardown(() => child.kill('SIGINT'))
 
   {
@@ -159,24 +127,10 @@ test('do not restart on save', async ({ comment, equal, match, teardown, not }) 
 
   comment('starting')
 
-  const child = execa('node', [cliPath, 'start'], {
-    cwd
-  })
-  // child.stderr.pipe(process.stderr)
+  const { child, url } = await start([], { cwd })
+
   const splitter = split()
   child.stdout.pipe(splitter)
-  let url
-  for await (const data of splitter.iterator({ destroyOnReturn: false })) {
-    try {
-      const parsed = JSON.parse(data)
-      if (parsed.url) {
-        url = parsed.url
-        break
-      }
-    } catch (err) {
-      // do nothing as the line is not JSON
-    }
-  }
 
   {
     const res = await request(`${url}/graphql`, {

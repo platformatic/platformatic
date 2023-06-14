@@ -147,8 +147,9 @@ async function start (...args) {
 
   for await (const messages of on(output, 'data')) {
     for (const message of messages) {
-      const url = message.url
-      if (url !== undefined) {
+      const text = message.msg
+      if (text && text.includes('Server listening at')) {
+        const url = text.match(/Server listening at (.*)/)[1]
         clearTimeout(errorTimeout)
         return { child, url, output }
       }
