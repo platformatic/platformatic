@@ -21,7 +21,7 @@
     "@platformatic/runtime": "workspace:*"
   },
   "devDependencies": {
-    "c8": "^7.13.0",
+    "c8": "^8.0.0",
     "snazzy": "^9.0.0",
     "split2": "^4.2.0",
     "standard": "^17.0.0"
