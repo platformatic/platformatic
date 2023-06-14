@@ -64,7 +64,8 @@ async function composeOpenAPI (app, opts) {
 
   const { default: theme } = await import('@platformatic/swagger-ui-theme')
   await app.register(require('@fastify/swagger-ui'), {
-    ...theme
+    ...theme,
+    logLevel: 'warn'
   })
 
   const dispatcher = getGlobalDispatcher()
