@@ -1,6 +1,6 @@
 'use strict'
 const { readFile, readdir } = require('node:fs/promises')
-const { join, resolve: pathResolve } = require('node:path')
+const { basename, join, resolve: pathResolve } = require('node:path')
 const Topo = require('@hapi/topo')
 const ConfigManager = require('@platformatic/config')
 const { schema } = require('./schema')
@@ -206,4 +206,27 @@ platformaticRuntime.configManagerConfig = {
   }
 }
 
-module.exports = { platformaticRuntime }
+async function wrapConfigInRuntimeConfig ({ configManager, args }) {
+  /* c8 ignore next */
+  const id = basename(configManager.dirname) || 'main'
+  const wrapperConfig = {
+    $schema: schema.$id,
+    entrypoint: id,
+    allowCycles: false,
+    hotReload: true,
+    services: [
+      {
+        id,
+        path: configManager.dirname,
+        config: configManager.fullPath
+      }
+    ]
+  }
+  const cm = new ConfigManager({ source: wrapperConfig, schema })
+
+  await _transformConfig(cm)
+  await cm.parseAndValidate()
+  return cm
+}
+
+module.exports = { platformaticRuntime, wrapConfigInRuntimeConfig }

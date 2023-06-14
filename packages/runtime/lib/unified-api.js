@@ -18,9 +18,12 @@ const {
   platformaticComposer
 } = require('@platformatic/composer')
 const { buildServer: runtimeBuildServer } = require('./build-server')
-const { platformaticRuntime } = require('./config')
+const { platformaticRuntime, wrapConfigInRuntimeConfig } = require('./config')
 const { schema: runtimeSchema } = require('./schema')
-const { start: runtimeStart } = require('./start')
+const {
+  start: runtimeStart,
+  startWithConfig: runtimeStartWithConfig
+} = require('./start')
 
 const kSupportedAppTypes = new Set(['service', 'db', 'composer', 'runtime'])
 
@@ -149,15 +152,38 @@ async function startCommand (args) {
   try {
     await _start(args)
   } catch (err) {
-    delete err?.stack
-    console.error(err?.message)
+    logErrorAndExit(err)
+  }
+}
 
-    if (err?.cause) {
-      console.error(`${err.cause}`)
+async function startCommandInRuntime (args) {
+  try {
+    const configType = await getConfigType(args)
+    const config = await _loadConfig({}, args, configType)
+    let runtime
+
+    if (configType === 'runtime') {
+      runtime = await runtimeStartWithConfig(config.configManager)
+    } else {
+      const wrappedConfig = await wrapConfigInRuntimeConfig(config)
+      runtime = await runtimeStartWithConfig(wrappedConfig)
     }
 
-    process.exit(1)
+    return await runtime.start()
+  } catch (err) {
+    logErrorAndExit(err)
   }
+}
+
+function logErrorAndExit (err) {
+  delete err?.stack
+  console.error(err?.message)
+
+  if (err?.cause) {
+    console.error(`${err.cause}`)
+  }
+
+  process.exit(1)
 }
 
 module.exports = {
@@ -167,5 +193,6 @@ module.exports = {
   loadConfig: _loadConfig,
   start: _start,
   startCommand,
+  startCommandInRuntime,
   getApp
 }

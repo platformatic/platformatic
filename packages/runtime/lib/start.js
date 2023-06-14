@@ -1,11 +1,12 @@
 'use strict'
 const { once } = require('node:events')
 const { join } = require('node:path')
+const { pathToFileURL } = require('node:url')
 const { Worker } = require('node:worker_threads')
 const closeWithGrace = require('close-with-grace')
 const { loadConfig } = require('@platformatic/service')
 const { platformaticRuntime } = require('./config')
-const kLoaderFile = join(__dirname, 'loader.mjs')
+const kLoaderFile = pathToFileURL(join(__dirname, 'loader.mjs')).href
 const kWorkerFile = join(__dirname, 'worker.js')
 const kWorkerExecArgv = [
   '--no-warnings',
