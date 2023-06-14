@@ -1,9 +1,6 @@
 'use strict'
 const { once } = require('node:events')
 const { dirname } = require('node:path')
-const {
-  addLoggerToTheConfig
-} = require('@platformatic/service')
 const { FileWatcher } = require('@platformatic/utils')
 const {
   buildServer,
@@ -16,8 +13,9 @@ class PlatformaticApp {
   #restarting
   #started
   #originalWatch
+  #logger
 
-  constructor (appConfig, loaderPort) {
+  constructor (appConfig, loaderPort, logger) {
     this.appConfig = appConfig
     this.config = null
     this.#hotReload = false
@@ -26,6 +24,7 @@ class PlatformaticApp {
     this.server = null
     this.#started = false
     this.#originalWatch = null
+    this.#logger = logger
   }
 
   async restart (force) {
@@ -61,6 +60,7 @@ class PlatformaticApp {
 
     this.#originalWatch = config.watch
     config.watch = false
+    this.#setuplogger(configManager)
 
     try {
       // If this is a restart, have the fastify server restart itself. If this
@@ -189,11 +189,7 @@ class PlatformaticApp {
       }
     }
 
-    // Set the logger if not present (and the config supports it).
-    if (configManager.current.server) {
-      addLoggerToTheConfig(configManager.current)
-      configManager.current.server.logger.name = this.appConfig.id
-    }
+    this.#setuplogger(configManager)
 
     this.#hotReload = args.hotReload && this.appConfig.hotReload
 
@@ -217,6 +213,16 @@ class PlatformaticApp {
       /* c8 ignore next */
       this.server.log.error({ err }, 'error reloading the configuration')
     })
+  }
+
+  #setuplogger (configManager) {
+    // Set the logger if not present (and the config supports it).
+    if (configManager.current.server) {
+      const childLogger = this.#logger.child({
+        name: this.appConfig.id
+      }, { level: configManager.current.server.logger?.level || 'info' })
+      configManager.current.server.logger = childLogger
+    }
   }
 
   #startFileWatching () {
@@ -253,7 +259,7 @@ class PlatformaticApp {
 
   #logAndExit (err) {
     this.config?.configManager?.stopWatching()
-    console.error(err)
+    this.#logger.error({ err })
     process.exit(1)
   }
 }

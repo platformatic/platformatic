@@ -23,13 +23,13 @@ async function setupTsCompiler (app) {
     let tsCompilerWatcher = persistentRef.tsCompilerWatcher
     if (!tsCompilerWatcher) {
       /* c8 ignore next 5 */
-      const { child } = await compiler.compileWatch(workingDir, config)
+      const { child } = await compiler.compileWatch(workingDir, config, app.log)
       app.log.debug('start watching typescript files')
       tsCompilerWatcher = child
     }
     app.decorate('tsCompilerWatcher', tsCompilerWatcher)
   } else {
-    await compiler.compile(workingDir, config)
+    await compiler.compile(workingDir, config, app.log)
   }
 
   app.addHook('onClose', async () => {

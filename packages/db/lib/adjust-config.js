@@ -8,7 +8,7 @@ module.exports = async function adjustConfig (configManager) {
     const originalSqlitePath = configManager.current.db.connectionString.replace('sqlite://', '')
     const sqliteFullPath = resolve(dirOfConfig, originalSqlitePath)
     configManager.current.db.connectionString = 'sqlite://' + sqliteFullPath
-    if (typeof configManager.current.watch !== 'object') {
+    if (configManager.current.watch && typeof configManager.current.watch !== 'object') {
       configManager.current.watch = {
         ignore: [originalSqlitePath, originalSqlitePath + '-journal']
       }

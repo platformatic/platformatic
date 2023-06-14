@@ -29,14 +29,14 @@ test('handles startup errors', async (t) => {
   const { execa } = await import('execa')
   const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'service-throws-on-start.json')
   const child = execa(process.execPath, [cliPath, 'start', '-c', config], { encoding: 'utf8' })
-  let stderr = ''
+  let stdout = ''
   let found = false
 
-  for await (const messages of on(child.stderr, 'data')) {
+  for await (const messages of on(child.stdout, 'data')) {
     for (const message of messages) {
-      stderr += message
+      stdout += message
 
-      if (/Error: boom/.test(stderr)) {
+      if (/Error: boom/.test(stdout)) {
         found = true
         break
       }

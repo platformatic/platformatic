@@ -35,8 +35,8 @@ async function startWithConfig (configManager) {
     configManager.fileWatcher?.stopWatching()
   })
 
-  worker.on('error', (err) => {
-    console.error(err)
+  worker.on('error', () => {
+    // the error is logged in the worker
     process.exit(1)
   })
 
