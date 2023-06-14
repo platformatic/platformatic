@@ -10,11 +10,37 @@ const globalDispatcher = new FastifyUndiciDispatcher({
   // setting the domain here allows for fail-fast scenarios
   domain: '.plt.local'
 })
+const pino = require('pino')
+const { isatty } = require('tty')
+
 const applications = new Map()
 let entrypoint
 
 delete globalThis.LOADER_PORT
 setGlobalDispatcher(globalDispatcher)
+
+let transport
+
+/* c8 ignore next 5 */
+if (isatty(1)) {
+  transport = pino.transport({
+    target: 'pino-pretty'
+  })
+}
+
+const logger = pino(transport)
+
+process.once('uncaughtException', (err) => {
+  logger.error({ err }, 'runtime error')
+  throw err
+})
+
+// Tested by test/cli/start.test.mjs by C8 does not see it.
+/* c8 ignore next 4 */
+process.once('unhandledRejection', (err) => {
+  logger.error({ err }, 'runtime error')
+  throw err
+})
 
 parentPort.on('message', async (msg) => {
   for (const app of applications.values()) {
@@ -39,6 +65,7 @@ parentPort.on('message', async (msg) => {
     case 'plt:stop':
       process.exit() // Exit the worker thread.
       break
+      /* c8 ignore next 3 */
     case undefined:
       // Ignore
       break
@@ -52,7 +79,7 @@ async function main () {
 
   for (let i = 0; i < services.length; ++i) {
     const service = services[i]
-    const app = new PlatformaticApp(service, loaderPort)
+    const app = new PlatformaticApp(service, loaderPort, logger)
 
     applications.set(service.id, app)
 

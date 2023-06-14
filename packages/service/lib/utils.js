@@ -39,6 +39,13 @@ function getJSPluginPath (workingDir, tsPluginPath, compileDir) {
     return tsPluginPath
   }
 
+  if (tsPluginPath.indexOf(compileDir) === 0) {
+    // In this case, we passed through this function before and we have adjusted
+    // the path of the plugin to point to the dist/ folder. Then we restarted.
+    // Therefore, we can just return the path as is.
+    return tsPluginPath
+  }
+
   const isTs = tsPluginPath.endsWith('ts')
   let newBaseName
 
@@ -55,6 +62,7 @@ function getJSPluginPath (workingDir, tsPluginPath, compileDir) {
     dirname(tsPluginRelativePath),
     newBaseName
   )
+
   return join(compileDir, jsPluginRelativePath)
 }
 

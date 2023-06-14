@@ -28,3 +28,10 @@ test('isFileAccessible no dir', async (t) => {
   const file = resolve(join(__dirname, '..', 'fixtures', 'hello', 'platformatic.service.json'))
   t.equal(await isFileAccessible(file), true)
 })
+
+test('should return the same plugin folder if it\'s already the compiled one', (t) => {
+  t.plan(1)
+
+  const result = getJSPluginPath('/something', '/something/dist/plugins', '/something/dist')
+  t.equal(result, '/something/dist/plugins')
+})

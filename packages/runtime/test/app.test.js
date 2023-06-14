@@ -5,8 +5,17 @@ const { join } = require('node:path')
 const { test } = require('node:test')
 const { PlatformaticApp } = require('../lib/app')
 const fixturesDir = join(__dirname, '..', 'fixtures')
+const pino = require('pino')
+const split = require('split2')
+
+function getLoggerAndStream () {
+  const stream = split(JSON.parse)
+  const logger = pino(stream)
+  return { logger, stream }
+}
 
 test('logs errors during startup', async (t) => {
+  const { logger, stream } = getLoggerAndStream()
   const appPath = join(fixturesDir, 'serviceAppThrowsOnStart')
   const configFile = join(appPath, 'platformatic.service.json')
   const config = {
@@ -16,9 +25,8 @@ test('logs errors during startup', async (t) => {
     entrypoint: true,
     hotReload: true
   }
-  const app = new PlatformaticApp(config, null)
+  const app = new PlatformaticApp(config, null, logger)
 
-  t.mock.method(console, 'error', () => {})
   t.mock.method(process, 'exit', () => { throw new Error('exited') })
 
   await assert.rejects(async () => {
@@ -26,11 +34,18 @@ test('logs errors during startup', async (t) => {
   }, /exited/)
   assert.strictEqual(process.exit.mock.calls.length, 1)
   assert.strictEqual(process.exit.mock.calls[0].arguments[0], 1)
-  assert.strictEqual(console.error.mock.calls.length, 1)
-  assert.strictEqual(console.error.mock.calls[0].arguments[0].message, 'boom')
+
+  stream.end()
+  const lines = []
+  for await (const line of stream) {
+    lines.push(line)
+  }
+  const lastLine = lines[lines.length - 1]
+  assert.strictEqual(lastLine.msg, 'boom')
 })
 
 test('errors when starting an already started application', async (t) => {
+  const { logger } = getLoggerAndStream()
   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
   const configFile = join(appPath, 'platformatic.service.json')
   const config = {
@@ -43,7 +58,7 @@ test('errors when starting an already started application', async (t) => {
     dependents: [],
     localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
-  const app = new PlatformaticApp(config, null)
+  const app = new PlatformaticApp(config, null, logger)
 
   t.after(app.stop.bind(app))
   await app.start()
@@ -53,6 +68,7 @@ test('errors when starting an already started application', async (t) => {
 })
 
 test('errors when stopping an already stopped application', async (t) => {
+  const { logger } = getLoggerAndStream()
   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
   const configFile = join(appPath, 'platformatic.service.json')
   const config = {
@@ -65,7 +81,7 @@ test('errors when stopping an already stopped application', async (t) => {
     dependents: [],
     localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
-  const app = new PlatformaticApp(config, null)
+  const app = new PlatformaticApp(config, null, logger)
 
   await assert.rejects(async () => {
     await app.stop()
@@ -73,6 +89,7 @@ test('errors when stopping an already stopped application', async (t) => {
 })
 
 test('does not restart while restarting', async (t) => {
+  const { logger } = getLoggerAndStream()
   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
   const configFile = join(appPath, 'platformatic.service.json')
   const config = {
@@ -85,7 +102,7 @@ test('does not restart while restarting', async (t) => {
     dependents: [],
     localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
-  const app = new PlatformaticApp(config, null)
+  const app = new PlatformaticApp(config, null, logger)
 
   t.after(app.stop.bind(app))
   await app.start()
@@ -101,6 +118,7 @@ test('does not restart while restarting', async (t) => {
 })
 
 test('restarts on SIGUSR2', async (t) => {
+  const { logger } = getLoggerAndStream()
   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
   const configFile = join(appPath, 'platformatic.service.json')
   const config = {
@@ -113,7 +131,7 @@ test('restarts on SIGUSR2', async (t) => {
     dependents: [],
     localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
-  const app = new PlatformaticApp(config, null)
+  const app = new PlatformaticApp(config, null, logger)
 
   t.after(app.stop.bind(app))
   await app.start()
@@ -123,6 +141,7 @@ test('restarts on SIGUSR2', async (t) => {
 })
 
 test('stops on signals other than SIGUSR2', async (t) => {
+  const { logger } = getLoggerAndStream()
   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
   const configFile = join(appPath, 'platformatic.service.json')
   const config = {
@@ -135,7 +154,7 @@ test('stops on signals other than SIGUSR2', async (t) => {
     dependents: [],
     localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
-  const app = new PlatformaticApp(config, null)
+  const app = new PlatformaticApp(config, null, logger)
 
   t.after(async () => {
     try {
@@ -151,6 +170,7 @@ test('stops on signals other than SIGUSR2', async (t) => {
 })
 
 test('stops on uncaught exceptions', async (t) => {
+  const { logger } = getLoggerAndStream()
   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
   const configFile = join(appPath, 'platformatic.service.json')
   const config = {
@@ -163,7 +183,7 @@ test('stops on uncaught exceptions', async (t) => {
     dependents: [],
     localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
-  const app = new PlatformaticApp(config, null)
+  const app = new PlatformaticApp(config, null, logger)
 
   t.after(async () => {
     try {
@@ -193,8 +213,9 @@ test('supports configuration overrides', async (t) => {
   }
 
   await t.test('throws on non-string config paths', async (t) => {
+    const { logger } = getLoggerAndStream()
     config._configOverrides = new Map([[null, 5]])
-    const app = new PlatformaticApp(config, null)
+    const app = new PlatformaticApp(config, null, logger)
 
     t.after(async () => {
       try {
@@ -210,8 +231,9 @@ test('supports configuration overrides', async (t) => {
   })
 
   await t.test('ignores invalid config paths', async (t) => {
+    const { logger } = getLoggerAndStream()
     config._configOverrides = new Map([['foo.bar.baz', 5]])
-    const app = new PlatformaticApp(config, null)
+    const app = new PlatformaticApp(config, null, logger)
 
     t.after(async () => {
       try {
@@ -225,11 +247,12 @@ test('supports configuration overrides', async (t) => {
   })
 
   await t.test('sets valid config paths', async (t) => {
+    const { logger } = getLoggerAndStream()
     config._configOverrides = new Map([
       ['server.keepAliveTimeout', 1],
       ['server.port', 0]
     ])
-    const app = new PlatformaticApp(config, null)
+    const app = new PlatformaticApp(config, null, logger)
 
     t.after(async () => {
       try {
