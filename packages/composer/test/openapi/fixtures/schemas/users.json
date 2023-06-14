@@ -1,8 +1,8 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "version": "8.3.1",
-    "title": "@fastify/swagger"
+    "version": "0.1.0",
+    "title": "Test"
   },
   "components": {
     "schemas": {}

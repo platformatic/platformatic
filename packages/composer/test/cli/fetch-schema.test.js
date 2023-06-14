@@ -13,7 +13,7 @@ const { createOpenApiService } = require('../helper.js')
 
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
-test('should start the composer with the start command', async (t) => {
+test('should fetch the schemas', async (t) => {
   const { execa } = await import('execa')
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-test-'))
@@ -58,6 +58,8 @@ test('should start the composer with the start command', async (t) => {
   const openApiSchemaFile = await readFile(pathToSchema, 'utf-8')
   const openApiSchema = JSON.parse(openApiSchemaFile)
   openApiValidator.validate(openApiSchema)
+
+  // console.log(openApiSchema)
 
   const pathToUsersSchema = join(__dirname, '..', 'openapi', 'fixtures', 'schemas', 'users.json')
   const usersOpenApiSchemaFile = await readFile(pathToUsersSchema, 'utf-8')

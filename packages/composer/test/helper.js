@@ -13,14 +13,10 @@ async function createOpenApiService (t, entitiesNames = []) {
   })
 
   await app.register(Swagger, {
-    exposeRoute: true,
     openapi: {
-      specification: {
-        openapi: '3.0.0',
-        info: {
-          title: 'Test',
-          version: '0.1.0'
-        }
+      info: {
+        title: 'Test',
+        version: '0.1.0'
       }
     }
   })
