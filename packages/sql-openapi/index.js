@@ -39,6 +39,7 @@ async function setupOpenAPI (app, opts) {
   app.register(SwaggerUI, {
     ...theme,
     ...opts,
+    logLevel: 'warn',
     prefix: '/documentation'
   })
 
