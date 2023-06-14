@@ -21,8 +21,8 @@
   "devDependencies": {
     "c8": "^8.0.0",
     "snazzy": "^9.0.0",
-    "standard": "^17.0.0",
-    "tap": "^16.3.4"
+    "standard": "^17.1.0",
+    "tap": "^16.3.6"
   },
   "dependencies": {
     "@platformatic/config": "workspace:*",
