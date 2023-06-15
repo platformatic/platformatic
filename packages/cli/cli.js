@@ -42,7 +42,7 @@ const ensureCommand = async ({ output, help }) => {
 program.register('db', async (args) => ensureCommand(await runDB(args)))
 program.register('runtime', async (args) => ensureCommand(await runRuntime(args)))
 program.register('service', async (args) => ensureCommand(await runService(args)))
-program.register('start', platformaticStart.startCommand)
+program.register('start', platformaticStart.startCommandInRuntime)
 program.register('composer', async (args) => ensureCommand(await runComposer(args)))
 program.register('upgrade', upgrade)
 program.register('client', client)

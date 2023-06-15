@@ -319,3 +319,36 @@ test('startCommand()', async (t) => {
     assert.strictEqual(exitCode, 42)
   })
 })
+
+test('startCommandInRuntime()', async (t) => {
+  await t.test('can start a non-runtime application', async (t) => {
+    const scriptFile = join(fixturesDir, 'start-command-in-runtime.js')
+    const configFile = join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'platformatic.service.json')
+    const child = spawn(process.execPath, [scriptFile, configFile])
+    child.stdout.pipe(process.stdout)
+    child.stderr.pipe(process.stderr)
+    const [exitCode] = await once(child, 'exit')
+
+    assert.strictEqual(exitCode, 42)
+  })
+
+  await t.test('can start a runtime application', async (t) => {
+    const scriptFile = join(fixturesDir, 'start-command-in-runtime.js')
+    const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+    const child = spawn(process.execPath, [scriptFile, configFile])
+    child.stdout.pipe(process.stdout)
+    child.stderr.pipe(process.stderr)
+    const [exitCode] = await once(child, 'exit')
+
+    assert.strictEqual(exitCode, 42)
+  })
+
+  await t.test('exits on error', async (t) => {
+    const scriptFile = join(fixturesDir, 'start-command-in-runtime.js')
+    const configFile = join(fixturesDir, 'serviceApp', 'platformatic.not-found.json')
+    const child = spawn(process.execPath, [scriptFile, configFile])
+    const [exitCode] = await once(child, 'exit')
+
+    assert.strictEqual(exitCode, 1)
+  })
+})
