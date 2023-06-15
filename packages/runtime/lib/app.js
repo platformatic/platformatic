@@ -27,10 +27,11 @@ class PlatformaticApp {
     this.#logger = logger
   }
 
-  getState () {
-    return {
-      started: this.#started,
-      restarting: this.#restarting
+  getStatus () {
+    if (this.#started) {
+      return 'started'
+    } else {
+      return 'stopped'
     }
   }
 

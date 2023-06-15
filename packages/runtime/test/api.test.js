@@ -79,15 +79,15 @@ test('should stop service by service id', async (t) => {
   })
 
   {
-    const serviceState = await app.getServiceState('with-logger')
-    assert.strictEqual(serviceState.started, true)
+    const serviceStatus = await app.getServiceStatus('with-logger')
+    assert.strictEqual(serviceStatus, 'started')
   }
 
   await app.stopService('with-logger')
 
   {
-    const serviceState = await app.getServiceState('with-logger')
-    assert.strictEqual(serviceState.started, false)
+    const serviceStatus = await app.getServiceStatus('with-logger')
+    assert.strictEqual(serviceStatus, 'stopped')
   }
 })
 
@@ -105,14 +105,14 @@ test('should start stopped service by service id', async (t) => {
   await app.stopService('with-logger')
 
   {
-    const serviceState = await app.getServiceState('with-logger')
-    assert.strictEqual(serviceState.started, false)
+    const serviceStatus = await app.getServiceStatus('with-logger')
+    assert.strictEqual(serviceStatus, 'stopped')
   }
 
   await app.startService('with-logger')
 
   {
-    const serviceState = await app.getServiceState('with-logger')
-    assert.strictEqual(serviceState.started, true)
+    const serviceStatus = await app.getServiceStatus('with-logger')
+    assert.strictEqual(serviceStatus, 'started')
   }
 })

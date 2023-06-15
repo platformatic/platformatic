@@ -83,8 +83,8 @@ async function startWithConfig (configManager) {
 
       return res
     },
-    async getServiceState (id) {
-      worker.postMessage({ msg: 'plt:get-state', params: { id } })
+    async getServiceStatus (id) {
+      worker.postMessage({ msg: 'plt:get-status', params: { id } })
       const [msg] = await once(worker, 'message')
 
       const res = JSON.parse(msg.res)

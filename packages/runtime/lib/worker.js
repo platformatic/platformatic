@@ -72,12 +72,12 @@ async function executeCommand (command, params) {
     await stopServices()
     process.exit() // Exit the worker thread.
   }
-  if (command === 'plt:get-state') {
+  if (command === 'plt:get-status') {
     const serviceId = params.id
-    const res = getServiceState(serviceId)
+    const res = getServiceStatus(serviceId)
 
     parentPort.postMessage({
-      msg: 'plt:service-state',
+      msg: 'plt:service-status',
       id: serviceId,
       res: JSON.stringify(res)
     })
@@ -192,7 +192,7 @@ async function restartServices () {
   }
 }
 
-function getServiceState (id) {
+function getServiceStatus (id) {
   const application = applications.get(id)
 
   if (!application) {
@@ -202,7 +202,7 @@ function getServiceState (id) {
     }
   }
 
-  return application.getState()
+  return application.getStatus()
 }
 
 function getServiceConfig (id) {
