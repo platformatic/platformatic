@@ -3,7 +3,7 @@
 import parseArgs from 'minimist'
 import isMain from 'es-main'
 import helpMe from 'help-me'
-import { writeFile, mkdir, access } from 'fs/promises'
+import { readFile, writeFile, mkdir, access } from 'fs/promises'
 import { join, dirname } from 'path'
 import * as desm from 'desm'
 import { request } from 'undici'
@@ -25,52 +25,81 @@ async function isFileAccessible (filename) {
 
 const configFileNames = ConfigManager.listConfigFiles()
 
+async function writeOpenAPIClient (folder, name, text, fullResponse) {
+  await mkdir(folder, { recursive: true })
+
+  // TODO deal with yaml
+  const schema = JSON.parse(text)
+  await writeFile(join(folder, `${name}.openapi.json`), JSON.stringify(schema, null, 2))
+  const { types, implementation } = processOpenAPI({ schema, name, fullResponse })
+  await writeFile(join(folder, `${name}.d.ts`), types)
+  await writeFile(join(folder, `${name}.cjs`), implementation)
+  await writeFile(join(folder, 'package.json'), getPackageJSON({ name }))
+}
+
+async function writeGraphQLClient (folder, name, schema, url) {
+  await mkdir(folder, { recursive: true })
+  const { types, implementation } = processGraphQL({ schema, name, folder, url })
+  const clientSchema = graphql.buildClientSchema(schema)
+  const sdl = graphql.printSchema(clientSchema)
+  await writeFile(join(folder, `${name}.schema.graphql`), sdl)
+  await writeFile(join(folder, `${name}.d.ts`), types)
+  await writeFile(join(folder, `${name}.cjs`), implementation)
+  await writeFile(join(folder, 'package.json'), getPackageJSON({ name }))
+}
+
 async function downloadAndProcess ({ url, name, folder, config, r: fullResponse }) {
-  // try OpenAPI first
-  let res = await request(url)
-  if (res.statusCode === 200) {
-    // we are OpenAPI
-    const text = await res.body.text()
-    await mkdir(folder, { recursive: true })
+  try {
+    // try OpenAPI first
+    let res = await request(url)
+    if (res.statusCode === 200) {
+      // we are OpenAPI
+      const text = await res.body.text()
+      await writeOpenAPIClient(folder, name, text, fullResponse)
+    } else {
+      res.body.resume()
 
-    // TODO deal with yaml
-    const schema = JSON.parse(text)
-    await writeFile(join(folder, `${name}.openapi.json`), JSON.stringify(schema, null, 2))
-    const { types, implementation } = processOpenAPI({ schema, name, fullResponse })
-    await writeFile(join(folder, `${name}.d.ts`), types)
-    await writeFile(join(folder, `${name}.cjs`), implementation)
-    await writeFile(join(folder, 'package.json'), getPackageJSON({ name }))
-  } else {
-    res.body.resume()
+      const query = graphql.getIntrospectionQuery()
 
-    const query = graphql.getIntrospectionQuery()
-
-    // try GraphQL
-    res = await request(url, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify({
-        query
+      // try GraphQL
+      res = await request(url, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          query
+        })
       })
-    })
 
-    const text = await res.body.text()
+      const text = await res.body.text()
 
-    if (res.statusCode !== 200) {
-      throw new Error('Could not download file')
+      if (res.statusCode !== 200) {
+        throw new Error('Could not download file')
+      }
+
+      const { data: schema } = JSON.parse(text)
+      await writeGraphQLClient(folder, name, schema, url)
     }
+  } catch (err) {
+    if (err.code !== 'ERR_INVALID_URL') {
+      throw err
+    }
+    
+    const text = await readFile(url, 'utf8')
 
-    await mkdir(folder, { recursive: true })
-    const { data: schema } = JSON.parse(text)
-    const { types, implementation } = processGraphQL({ schema, name, folder, url })
-    const clientSchema = graphql.buildClientSchema(schema)
-    const sdl = graphql.printSchema(clientSchema)
-    await writeFile(join(folder, `${name}.schema.graphql`), sdl)
-    await writeFile(join(folder, `${name}.d.ts`), types)
-    await writeFile(join(folder, `${name}.cjs`), implementation)
-    await writeFile(join(folder, 'package.json'), getPackageJSON({ name }))
+    // try OpenAPI first
+    try {
+      await writeOpenAPIClient(folder, name, text, fullResponse)
+    } catch {
+      // try GraphQL
+      const schema = graphql.buildSchema(text)
+      const introspectionResult = graphql.introspectionFromSchema(schema)
+      console.log(introspectionResult)
+
+      // dummy URL
+      await writeGraphQLClient(folder, name, introspectionResult, 'http://localhost:3042/graphql')
+    }
   }
 
   if (!config) {
