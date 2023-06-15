@@ -116,7 +116,7 @@ class PlatformaticApp {
     this.#started = false
   }
 
-  async handleProcessLevelEvent ({ msg, signal, err }) {
+  async handleProcessLevelEvent ({ signal, err }) {
     if (!this.server) {
       return false
     }

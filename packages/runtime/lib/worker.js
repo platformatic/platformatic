@@ -43,8 +43,9 @@ process.once('unhandledRejection', (err) => {
 })
 
 parentPort.on('message', async (msg) => {
-  if (msg?.msg?.startsWith('plt:')) {
-    await executeCommand(msg.msg, msg.params)
+  const message = msg?.msg
+  if (message) {
+    await executeCommand(message, msg.params)
     return
   }
 
