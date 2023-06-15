@@ -57,7 +57,7 @@ async function startWithConfig (configManager) {
 
   await once(worker, 'message') // plt:init
 
-  return {
+  const runtimeApi = {
     async start () {
       worker.postMessage({ msg: 'plt:start' })
       const [msg] = await once(worker, 'message') // plt:started
@@ -71,8 +71,40 @@ async function startWithConfig (configManager) {
     async restart () {
       worker.postMessage({ msg: 'plt:restart' })
       await once(worker, 'message') // plt:restarted
+    },
+    async getServicesTopology () {
+      worker.postMessage({ msg: 'plt:get-topology' })
+      const [msg] = await once(worker, 'message')
+
+      const res = JSON.parse(msg.res)
+      if (res.error) {
+        throw new Error(res.error)
+      }
+
+      return res
+    },
+    async getServiceConfig (id) {
+      worker.postMessage({ msg: 'plt:get-config', params: { id } })
+      const [msg] = await once(worker, 'message')
+
+      const res = JSON.parse(msg.res)
+      if (res.error) {
+        throw new Error(res.error)
+      }
+
+      return res
+    },
+    async startService (id) {
+      worker.postMessage({ msg: 'plt:start-service', params: { id } })
+      await once(worker, 'message')
+    },
+    async stopService (id) {
+      worker.postMessage({ msg: 'plt:stop-service', params: { id } })
+      await once(worker, 'message')
     }
   }
+
+  return runtimeApi
 }
 
 module.exports = { start, startWithConfig }

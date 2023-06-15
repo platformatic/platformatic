@@ -53,26 +53,69 @@ parentPort.on('message', async (msg) => {
     }
   }
 
-  switch (msg?.msg) {
-    case 'plt:start':
-      configureDispatcher()
-      parentPort.postMessage({ msg: 'plt:started', url: entrypoint.server.url })
-      break
-    case 'plt:restart':
-      configureDispatcher()
-      parentPort.postMessage({ msg: 'plt:restarted', url: entrypoint.server.url })
-      break
-    case 'plt:stop':
-      process.exit() // Exit the worker thread.
-      break
-      /* c8 ignore next 3 */
-    case undefined:
-      // Ignore
-      break
-    default:
-      throw new Error(`unknown message type: '${msg.msg}'`)
-  }
+  await executeCommand(msg?.msg, msg?.params)
 })
+
+async function executeCommand (command, params) {
+  if (command === undefined) return
+
+  if (command === 'plt:start') {
+    configureDispatcher()
+    parentPort.postMessage({ msg: 'plt:started', url: entrypoint.server.url })
+    return
+  }
+  if (command === 'plt:restart') {
+    configureDispatcher()
+    parentPort.postMessage({ msg: 'plt:restarted', url: entrypoint.server.url })
+    return
+  }
+  if (command === 'plt:stop') {
+    process.exit() // Exit the worker thread.
+  }
+  if (command === 'plt:get-config') {
+    const serviceId = params.id
+    const res = getServiceConfig(serviceId)
+
+    parentPort.postMessage({
+      msg: 'plt:config',
+      id: serviceId,
+      res: JSON.stringify(res)
+    })
+    return
+  }
+  if (command === 'plt:start-service') {
+    const serviceId = params.id
+    const res = await startService(serviceId)
+
+    parentPort.postMessage({
+      msg: 'plt:service-started',
+      id: serviceId,
+      res: JSON.stringify(res)
+    })
+    return
+  }
+  if (command === 'plt:stop-service') {
+    const serviceId = params.id
+    const res = await stopService(serviceId)
+
+    parentPort.postMessage({
+      msg: 'plt:service-stopped',
+      id: serviceId,
+      res: JSON.stringify(res)
+    })
+    return
+  }
+  if (command === 'plt:get-topology') {
+    const topology = getServicesTopology()
+
+    parentPort.postMessage({
+      msg: 'plt:service-stopped',
+      res: JSON.stringify(topology)
+    })
+    return
+  }
+  throw new Error(`unknown message type: '${command}'`)
+}
 
 async function main () {
   const { services } = workerData.config
@@ -110,6 +153,78 @@ function configureDispatcher () {
       globalDispatcher.route(depUrl.host, depApp.server)
     }
   }
+}
+
+function getServiceConfig (id) {
+  const application = applications.get(id)
+
+  if (!application) {
+    return {
+      code: 'APPLICATION_NOT_FOUND',
+      error: `Application with id '${id}' not found`
+    }
+  }
+
+  const { config } = application
+  if (!config) {
+    return {
+      code: 'APPLICATION_NOT_STARTED',
+      error: `Application with id '${id}' has not been started`
+    }
+  }
+
+  return config.configManager.current
+}
+
+async function startService (id) {
+  const application = applications.get(id)
+
+  if (!application) {
+    return {
+      code: 'APPLICATION_NOT_FOUND',
+      error: `Application with id '${id}' not found`
+    }
+  }
+
+  try {
+    await application.start()
+  } catch (err) {
+    return {
+      code: 'APPLICATION_START_FAILED',
+      error: `Application with id '${id}' failed to start: ${err.message}`
+    }
+  }
+}
+
+async function stopService (id) {
+  const application = applications.get(id)
+
+  if (!application) {
+    return {
+      code: 'APPLICATION_NOT_FOUND',
+      error: `Application with id '${id}' not found`
+    }
+  }
+
+  try {
+    await application.stop()
+  } catch (err) {
+    return {
+      code: 'APPLICATION_STOP_FAILED',
+      error: `Application with id '${id}' failed to stop: ${err.message}`
+    }
+  }
+}
+
+function getServicesTopology () {
+  const topology = {}
+
+  for (const app of applications.values()) {
+    const { id, dependencies } = app.appConfig
+    topology[id] = dependencies
+  }
+
+  return topology
 }
 
 main()
