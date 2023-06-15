@@ -34,3 +34,46 @@ test('handles runtime apps', async (t) => {
   })
   t.equal(meta.kind, 'runtime')
 })
+
+test('adds watch.ignore if watch is undefined', async (t) => {
+  const version = '0.26.0'
+  const meta = new FromZeroEighteenToWillSee({ version, config: {} })
+  const upped = meta.up()
+  t.same(upped.config.watch, {
+    ignore: ['*.sqlite', '*.sqlite-journal']
+  })
+})
+
+test('adds watch.ignore if watch is an object', async (t) => {
+  const version = '0.26.0'
+  const meta = new FromZeroEighteenToWillSee({ version, config: { watch: {} } })
+  const upped = meta.up()
+  t.same(upped.config.watch, {
+    ignore: ['*.sqlite', '*.sqlite-journal']
+  })
+})
+
+test('does not add watch.ignore if watch.ignore is an array', async (t) => {
+  const version = '0.26.0'
+  const meta = new FromZeroEighteenToWillSee({ version, config: { watch: { ignore: [] } } })
+  const upped = meta.up()
+  t.same(upped.config.watch, {
+    ignore: []
+  })
+})
+
+test('adds watch.ignore if watch is true', async (t) => {
+  const version = '0.26.0'
+  const meta = new FromZeroEighteenToWillSee({ version, config: { watch: true } })
+  const upped = meta.up()
+  t.same(upped.config.watch, {
+    ignore: ['*.sqlite', '*.sqlite-journal']
+  })
+})
+
+test('does not add watch if it is set to false', async (t) => {
+  const version = '0.26.0'
+  const meta = new FromZeroEighteenToWillSee({ version, config: { watch: false } })
+  const upped = meta.up()
+  t.equal(upped.config.watch, false)
+})
