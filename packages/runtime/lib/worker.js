@@ -43,41 +43,52 @@ process.once('unhandledRejection', (err) => {
 })
 
 parentPort.on('message', async (msg) => {
-  for (const app of applications.values()) {
-    await app.handleProcessLevelEvent(msg)
-
-    if (msg?.msg === 'plt:start' || msg?.msg === 'plt:restart') {
-      const serviceUrl = new URL(app.appConfig.localUrl)
-
-      globalDispatcher.route(serviceUrl.host, app.server)
-    }
+  if (msg?.msg?.startsWith('plt:')) {
+    await executeCommand(msg.msg, msg.params)
+    return
   }
 
-  await executeCommand(msg?.msg, msg?.params)
+  for (const app of applications.values()) {
+    await app.handleProcessLevelEvent(msg)
+  }
 })
 
 async function executeCommand (command, params) {
   if (command === undefined) return
 
   if (command === 'plt:start') {
+    await startServices()
     configureDispatcher()
     parentPort.postMessage({ msg: 'plt:started', url: entrypoint.server.url })
     return
   }
   if (command === 'plt:restart') {
+    await restartServices()
     configureDispatcher()
     parentPort.postMessage({ msg: 'plt:restarted', url: entrypoint.server.url })
     return
   }
   if (command === 'plt:stop') {
+    await stopServices()
     process.exit() // Exit the worker thread.
+  }
+  if (command === 'plt:get-state') {
+    const serviceId = params.id
+    const res = getServiceState(serviceId)
+
+    parentPort.postMessage({
+      msg: 'plt:service-state',
+      id: serviceId,
+      res: JSON.stringify(res)
+    })
+    return
   }
   if (command === 'plt:get-config') {
     const serviceId = params.id
     const res = getServiceConfig(serviceId)
 
     parentPort.postMessage({
-      msg: 'plt:config',
+      msg: 'plt:service-config',
       id: serviceId,
       res: JSON.stringify(res)
     })
@@ -153,6 +164,45 @@ function configureDispatcher () {
       globalDispatcher.route(depUrl.host, depApp.server)
     }
   }
+}
+
+async function startServices () {
+  for (const app of applications.values()) {
+    await app.start()
+
+    const serviceUrl = new URL(app.appConfig.localUrl)
+    globalDispatcher.route(serviceUrl.host, app.server)
+  }
+}
+
+async function stopServices () {
+  for (const app of applications.values()) {
+    if (!app.server) continue
+    await app.stop()
+  }
+}
+
+async function restartServices () {
+  for (const app of applications.values()) {
+    if (!app.server) continue
+    await app.restart(true)
+
+    const serviceUrl = new URL(app.appConfig.localUrl)
+    globalDispatcher.route(serviceUrl.host, app.server)
+  }
+}
+
+function getServiceState (id) {
+  const application = applications.get(id)
+
+  if (!application) {
+    return {
+      code: 'APPLICATION_NOT_FOUND',
+      error: `Application with id '${id}' not found`
+    }
+  }
+
+  return application.getState()
 }
 
 function getServiceConfig (id) {
