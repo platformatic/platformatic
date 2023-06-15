@@ -18,7 +18,7 @@ npm install
 2. Apply migrations:
 
 ```bash
-npx platformatic db migrations apply
+npm run migrate
 ```
 
 

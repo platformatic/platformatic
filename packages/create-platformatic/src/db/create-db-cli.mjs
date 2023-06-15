@@ -108,8 +108,12 @@ const createPlatformaticDB = async (_args, opts) => {
 
   const fastifyVersion = await getDependencyVersion('fastify')
 
+  const scripts = {
+    migrate: 'platformatic db migrations apply'
+  }
+
   // Create the package.json, .gitignore, readme
-  await createPackageJson('db', version, fastifyVersion, logger, projectDir, useTypescript)
+  await createPackageJson('db', version, fastifyVersion, logger, projectDir, useTypescript, scripts)
   await createGitignore(logger, projectDir)
   await createReadme(logger, projectDir)
 
