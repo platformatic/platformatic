@@ -45,8 +45,8 @@ test('should respond 200 on root endpoint', async ({ teardown, equal, same, matc
     equal(res.statusCode, 200)
     equal(res.headers['content-type'], 'text/html; charset=UTF-8')
     // has links to OpenAPI/GraphQL docs
-    match(html, '<h2><a id="openapi-link" target="_blank">OpenAPI Documentation</a></h2>')
-    match(html, '<h2><a id="graphql-link" target="_blank">GraphiQL</a></h2>')
+    match(html, '<a id="openapi-link" target="_blank">OpenAPI Documentation</a>')
+    match(html, '<a id="graphql-link" target="_blank">GraphiQL</a>')
   }
 })
 
