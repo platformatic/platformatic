@@ -40,7 +40,7 @@ test('should respond 200 on root endpoint', async (t) => {
     t.equal(statusCode, 200)
     t.equal(headers['content-type'], 'text/html; charset=UTF-8')
     // has links to OpenAPI/GraphQL docs
-    t.match(body, '<h2><a id="openapi-link" target="_blank">OpenAPI Documentation</a></h2>')
+    t.match(body, '<a id="openapi-link" target="_blank" class="button-link">OpenAPI Documentation</a>')
   }
 })
 

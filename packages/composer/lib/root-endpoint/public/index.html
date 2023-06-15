@@ -3,19 +3,37 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/images/favicon.ico" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Platformatic Composer</title>
     <style>
-      :root {
+      body {
         width: 100%;
-        font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+        height: 100vh;
+        overflow-y: hidden;
+        --text-color: #FFFFFF;
+        --bg-color: #001825;
+        --theme-img: url('./light_mode.svg')
+      }
+
+      body.light-theme {
+        --text-color: #001825;
+        --bg-color: #FFFFFF;
+        --theme-img: url('./dark_mode.svg')
+      }
+
+      body {
+        background: var(--bg-color);
+      }
+
+      :root {
+        font-family: Montserrat, Inter, Avenir, Helvetica, Arial, sans-serif;
         font-size: 16px;
         line-height: 24px;
         font-weight: 400;
 
         color-scheme: light dark;
-        color: rgba(255, 255, 255, 0.87);
-        background-color: #092339;
+        color: inherit;
 
         font-synthesis: none;
         text-rendering: optimizeLegibility;
@@ -24,28 +42,48 @@
         -webkit-text-size-adjust: 100%;
       }
 
+
       a {
-        font-weight: 500;
-        color: #21f190;
+        font-weight: 600;
+        color: var(--text-color);
         text-decoration: inherit;
+        width: 100%;
+        text-align: center;
+        padding: 4px 0px;
       }
       a:hover {
-        color: #007B82;
-      }
-
-      body {
-        width: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        margin: auto;
-        min-height: 100vh;
+        text-decoration: underline;
       }
 
       h1 {
-        font-size: 3.2em;
-        line-height: 1.1;
+        font-size: 4.375rem;
+        line-height: 5rem;
+        font-weight: 700;
+        margin: 2rem 0;
+      }
+      h2, h1 {
+        color: var(--text-color);
+      }
+
+      .text-main-green {
+        color: #21FA90;
+      }
+      .text-center {
+        text-align: center;
+      }
+
+      .button-container {
+        display: flex;
+        column-gap: 3rem;
+        justify-content: center;
+        align-items: center;
+        margin: 2rem 0;
+      }
+
+      .button-link {
+        width: 250px;
+        border: 1px solid var(--text-color);
+        border-radius: 2px;
       }
 
       button {
@@ -67,41 +105,132 @@
         outline: 4px auto -webkit-focus-ring-color;
       }
 
-      @media (prefers-color-scheme: light) {
-        :root {
-          color: #213547;
-          background-color: #ffffff;
-        }
-        a:hover {
-          color: #747bff;
-        }
-        button {
-          background-color: #f9f9f9;
-        }
+      #root {
+        width: 100%;
+        min-height: inherit;
+        height: 100%;
+        display: flex;
+        position: relative;
+        z-index: 20;
       }
 
-      #root {
+      #content {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        margin: auto;
+        position: relative;
+        z-index: 20;
       }
 
+      .polygon14 {
+        background-image: url("background_polygon_14.svg");
+        background-repeat: no-repeat;
+        position: fixed;
+        height: 868px;
+        width: 832px;
+        transform-origin: center;
+        animation: rotationClockwise 15s infinite linear;
+        z-index: 0;
+        bottom: -40%;
+        left: -10%;
+
+      }
+
+      .polygon28 {
+        background-image: url("background_polygon_28.svg");
+        background-repeat: no-repeat;
+        position: absolute;
+        height: 212px;
+        width: 246px;
+        transform-origin: 123px 106px;
+        animation: rotationAntiClockwise 15s infinite linear;
+        z-index: 0;
+        top: 20vH;
+        left: 10%;
+      }
+
+      .topFrame {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 50vw;
+        height: auto;
+        z-index: 0;
+      }
+
+      #button-theme-selector {
+        border: none;
+        position: absolute;
+        top: 2rem;
+        right: 3rem;
+        width: 40px;
+        height: 40px;
+        background: var(--theme-img);
+        outline: none;
+      }
+
+
+      @keyframes rotationClockwise {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(359deg);
+        }
+      }
+
+      @keyframes rotationAntiClockwise {
+        from {
+          transform: rotate(-0deg);
+        }
+        to {
+          transform: rotate(-359deg);
+        }
+      }
     </style>
   </head>
   <body>
     <div id="root">
-      <img height="256" src="logo-512x512.png"/>
-      <h1 style="text-align:center">Welcome to Platformatic Composer</h1>
-      <h2><a href="https://oss.platformatic.dev" target="_blank">Documentation</a></h2>
-      <h2><a id="openapi-link" target="_blank">OpenAPI Documentation</a></h2>
+      <div class="polygon14"></div>
+      <div class="polygon28"></div>
+      <img class="topFrame" src="background_frame.svg" />
+      <button id="button-theme-selector" type="button" class="theme-selector" alt="theme selector" onclick="toggleLightMode()"></button>
+      
+      <div id="content">
+        <img id="logo" height="256" />
+        <h1 class="text-center"><span>Welcome to</span><br/><span class="text-main-green">Platformatic Composer</span></h1>
+        <h2 class="text-center">Explore our flexible toolkit for building robust APIs.</h2>
+        <div class="button-container">
+          <a href="https://oss.platformatic.dev" target="_blank" class="button-link">Documentation</a>
+          <a id="openapi-link" target="_blank" class="button-link">OpenAPI Documentation</a>
+        </div>
+      </div>
     </div>
 
     <script>
       const currentPath = window.location.pathname
-    
       const openApiLink = document.getElementById('openapi-link')
       openApiLink.href = currentPath + 'documentation/static/index.html'
+
+      const prefersLightScheme = window.matchMedia('(prefers-color-scheme: light)');
+      if (prefersLightScheme.matches) {
+        document.body.classList.add('light-theme');
+        document.getElementById('logo').src = 'platformatic-logo-light.svg'
+      } else {
+        document.body.classList.remove('light-theme');
+        document.getElementById('logo').src = 'platformatic-logo-dark.svg'
+      }
+      
+      const toggleLightMode = function() {
+        document.body.classList.toggle('light-theme');
+        if (document.body.classList.contains('light-theme')) {
+          document.getElementById('logo').src = 'platformatic-logo-light.svg'
+        } else {
+          document.getElementById('logo').src = 'platformatic-logo-dark.svg'
+        }
+      }
     </script>
   </body>
 </html>
