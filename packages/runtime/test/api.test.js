@@ -55,15 +55,27 @@ test('should get services topology', async (t) => {
   const topology = await app.getServicesTopology()
 
   assert.deepStrictEqual(topology, {
-    serviceApp: [
+    entrypoint: 'serviceApp',
+    services: [
+      {
+        id: 'serviceApp',
+        dependencies: [
+          {
+            id: 'with-logger',
+            url: 'http://with-logger.plt.local',
+            local: true
+          }
+        ]
+      },
       {
         id: 'with-logger',
-        url: 'http://with-logger.plt.local',
-        local: true
+        dependencies: []
+      },
+      {
+        id: 'multi-plugin-service',
+        dependencies: []
       }
-    ],
-    'with-logger': [],
-    'multi-plugin-service': []
+    ]
   })
 })
 

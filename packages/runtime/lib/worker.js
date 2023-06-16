@@ -268,11 +268,14 @@ async function stopService (id) {
 }
 
 function getServicesTopology () {
-  const topology = {}
+  const topology = { services: [] }
 
   for (const app of applications.values()) {
-    const { id, dependencies } = app.appConfig
-    topology[id] = dependencies
+    const { id, entrypoint, dependencies } = app.appConfig
+    if (entrypoint) {
+      topology.entrypoint = id
+    }
+    topology.services.push({ id, dependencies })
   }
 
   return topology
