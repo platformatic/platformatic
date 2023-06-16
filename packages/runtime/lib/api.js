@@ -151,7 +151,7 @@ class RuntimeApi {
     // Return only serializable properties.
     return {
       statusCode: res.statusCode,
-      statusMessage: 'OK',
+      statusMessage: res.statusMessage,
       headers: res.headers,
       body: res.body,
       payload: res.payload
