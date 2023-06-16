@@ -495,3 +495,65 @@ app.listen({ port: 0 })
     }
   })
 })
+
+test('openapi client generation (javascript) from file', async ({ teardown, comment, same }) => {
+  try {
+    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+
+  await app.start()
+
+  const dir = await moveToTmpdir(teardown)
+  comment(`working in ${dir}`)
+
+  const openAPI = app.swagger()
+  const openAPIfile = join(dir, 'movies.schema.json')
+  await fs.writeFile(openAPIfile, JSON.stringify(openAPI, null, 2))
+
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies'])
+
+  const toWrite = `
+'use strict'
+
+const Fastify = require('fastify')
+const movies = require('./movies')
+const app = Fastify({ logger: true })
+
+app.register(movies, { url: '${app.url}' })
+app.post('/', async (request, reply) => {
+  const res = await app.movies.createMovie({ title: 'foo' })
+  return res
+})
+app.listen({ port: 0 })
+`
+  await fs.writeFile(join(dir, 'index.js'), toWrite)
+
+  const app2 = execa('node', ['index.js'])
+  teardown(() => app2.kill())
+  teardown(async () => { await app.close() })
+
+  const stream = app2.stdout.pipe(split(JSON.parse))
+
+  // this is unfortunate :(
+  const base = 'Server listening at '
+  let url
+  for await (const line of stream) {
+    const msg = line.msg
+    if (msg.indexOf(base) !== 0) {
+      continue
+    }
+    url = msg.slice(base.length)
+    break
+  }
+  const res = await request(url, {
+    method: 'POST'
+  })
+  const body = await res.body.json()
+  same(body, {
+    id: 1,
+    title: 'foo'
+  })
+})
