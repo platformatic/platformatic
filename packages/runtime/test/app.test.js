@@ -82,6 +82,7 @@ test('errors when stopping an already stopped application', async (t) => {
     localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
   const app = new PlatformaticApp(config, null, logger)
+
   await assert.rejects(async () => {
     await app.stop()
   }, /application has not been started/)
