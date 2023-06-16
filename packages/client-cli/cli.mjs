@@ -95,7 +95,6 @@ async function downloadAndProcess ({ url, name, folder, config, r: fullResponse 
       // try GraphQL
       const schema = graphql.buildSchema(text)
       const introspectionResult = graphql.introspectionFromSchema(schema)
-      console.log(introspectionResult)
 
       // dummy URL
       await writeGraphQLClient(folder, name, introspectionResult, 'http://localhost:3042/graphql')
