@@ -23,12 +23,14 @@ const packageJsonTemplate = (addTSBuild = false) => (`\
   }
 }`)
 
-export const createPackageJson = async (type, platVersion, fastifyVersion, logger, dir, addTSBuild = false) => {
+export const createPackageJson = async (type, platVersion, fastifyVersion, logger, dir, addTSBuild = false, scripts = {}) => {
   const packageJsonFileName = join(dir, 'package.json')
   const isPackageJsonExists = await isFileAccessible(packageJsonFileName)
   if (!isPackageJsonExists) {
     const packageJson = pupa(packageJsonTemplate(addTSBuild), { platVersion, fastifyVersion, type })
-    await writeFile(packageJsonFileName, packageJson)
+    const parsed = JSON.parse(packageJson)
+    Object.assign(parsed.scripts, scripts)
+    await writeFile(packageJsonFileName, JSON.stringify(parsed, null, 2))
     logger.debug(`${packageJsonFileName} successfully created.`)
   } else {
     logger.debug(`${packageJsonFileName} found, skipping creation of package.json file.`)
