@@ -23,6 +23,7 @@ async function setupFileWatcher (app, opts) {
       watchIgnore: config.watch?.ignore
     })
 
+    /* c8 ignore next 3 */
     fileWatcher.on('update', () => {
       opts.onFilesUpdated(persistentRef)
     })
