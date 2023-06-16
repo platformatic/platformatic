@@ -3,11 +3,15 @@
 const { once, EventEmitter } = require('node:events')
 const { randomUUID } = require('node:crypto')
 
+const MAX_LISTENERS_COUNT = 100
+
 class RuntimeApiClient extends EventEmitter {
   #worker
 
   constructor (worker) {
     super()
+    this.setMaxListeners(MAX_LISTENERS_COUNT)
+
     this.#worker = worker
     this.#worker.on('message', (message) => {
       if (message.operationId) {
@@ -47,6 +51,10 @@ class RuntimeApiClient extends EventEmitter {
 
   async stopService (id) {
     return this.#sendCommand('plt:stop-service', { id })
+  }
+
+  async inject (id, injectParams) {
+    return this.#sendCommand('plt:inject', { id, injectParams })
   }
 
   async #sendCommand (command, params = {}) {
@@ -90,6 +98,7 @@ class RuntimeApi {
   }
 
   async #handleProcessLevelEvent (message) {
+    console.log('Process level event:', message)
     for (const service of this.#services.values()) {
       await service.handleProcessLevelEvent(message)
     }
@@ -107,6 +116,8 @@ class RuntimeApi {
 
   async #runCommandHandler (command, params) {
     switch (command) {
+      case 'plt:inject':
+        return this.#inject(params)
       case 'plt:start':
         return this.#startServices(params)
       case 'plt:restart':
@@ -125,6 +136,25 @@ class RuntimeApi {
         return this.#getServicesTopology(params)
       default:
         throw new Error(`Unknown Runtime API command: '${command}'`)
+    }
+  }
+
+  async #inject ({ id, injectParams }) {
+    const service = this.#getServiceById(id)
+
+    const serviceStatus = service.getStatus()
+    if (serviceStatus !== 'started') {
+      throw new Error(`Service with id '${id}' is not started`)
+    }
+
+    const res = await service.server.inject(injectParams)
+    // Return only serializable properties.
+    return {
+      statusCode: res.statusCode,
+      statusMessage: 'OK',
+      headers: res.headers,
+      body: res.body,
+      payload: res.payload
     }
   }
 
@@ -187,7 +217,7 @@ class RuntimeApi {
 
     const { config } = service
     if (!config) {
-      throw new Error(`Service with id '${id}' has not been started`)
+      throw new Error(`Service with id '${id}' is not started`)
     }
 
     return config.configManager.current
