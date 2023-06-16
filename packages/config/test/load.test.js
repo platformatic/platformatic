@@ -159,7 +159,10 @@ test('should automatically update', async ({ same, teardown, pass, plan }) => {
       validateChecksums: false
     },
     dashboard: { path: '/' },
-    authorization: { adminSecret: 'plt-db' }
+    authorization: { adminSecret: 'plt-db' },
+    watch: {
+      ignore: ['*.sqlite', '*.sqlite-journal']
+    }
   })
 })
 
@@ -207,7 +210,10 @@ test('should use the remote schema', async ({ same, teardown, pass, plan }) => {
       validateChecksums: false
     },
     dashboard: { path: '/' },
-    authorization: { adminSecret: 'plt-db' }
+    authorization: { adminSecret: 'plt-db' },
+    watch: {
+      ignore: ['*.sqlite', '*.sqlite-journal']
+    }
   })
 })
 
