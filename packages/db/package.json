@@ -3,6 +3,9 @@
   "version": "0.27.0",
   "description": "",
   "main": "index.js",
+  "bin": {
+    "plt-db": "./db.mjs"
+  },
   "scripts": {
     "test": "standard | snazzy && tap --reporter=tap test/*test.js test/*/*test.mjs",
     "lint": "standard | snazzy"

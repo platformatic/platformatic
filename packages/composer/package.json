@@ -7,6 +7,9 @@
     "lint": "standard | snazzy",
     "test": "npm run lint && c8 --100 tap test/*.test.js test/*/*.test.js"
   },
+  "bin": {
+    "plt-composer": "./composer.mjs"
+  },
   "author": "Ivan Tymoshenko <ivan@tymoshenko.me>",
   "repository": {
     "type": "git",
