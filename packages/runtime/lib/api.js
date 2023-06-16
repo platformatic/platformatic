@@ -98,7 +98,6 @@ class RuntimeApi {
   }
 
   async #handleProcessLevelEvent (message) {
-    console.log('Process level event:', message)
     for (const service of this.#services.values()) {
       await service.handleProcessLevelEvent(message)
     }
@@ -134,8 +133,8 @@ class RuntimeApi {
         return this.#stopService(params)
       case 'plt:get-topology':
         return this.#getServicesTopology(params)
+      /* c8 ignore next 2 */
       default:
-        /* c8 ignore next */
         throw new Error(`Unknown Runtime API command: '${command}'`)
     }
   }
