@@ -101,7 +101,7 @@ async function parseClientsAndComposer (configManager) {
             }
 
             if (dep.origin === `{${err.key}}`) {
-              service.localServiceEnvVars.set(err.key, `${clientName}.plt.local`)
+              service.localServiceEnvVars.set(err.key, `http://${clientName}.plt.local`)
             }
           }
         }
