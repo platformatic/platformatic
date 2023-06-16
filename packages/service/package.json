@@ -22,7 +22,6 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@fastify/aws-lambda": "^3.2.0",
-    "@matteo.collina/worker": "^3.1.0",
     "bindings": "^1.5.0",
     "c8": "^8.0.0",
     "self-cert": "^2.0.0",

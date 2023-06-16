@@ -613,9 +613,6 @@ importers:
       '@databases/sqlite':
         specifier: ^4.0.2
         version: 4.0.2
-      '@matteo.collina/worker':
-        specifier: ^3.1.0
-        version: 3.1.0
       ajv:
         specifier: ^8.12.0
         version: 8.12.0
@@ -1125,9 +1122,6 @@ importers:
       '@fastify/aws-lambda':
         specifier: ^3.2.0
         version: 3.2.0
-      '@matteo.collina/worker':
-        specifier: ^3.1.0
-        version: 3.1.0
       bindings:
         specifier: ^1.5.0
         version: 1.5.0
@@ -3944,14 +3938,6 @@ packages:
     transitivePeerDependencies:
       - encoding
       - supports-color
-
-  /@matteo.collina/worker@3.1.0:
-    resolution: {integrity: sha512-1LX7rqSABFEPRZGv3KXG38YR2Sj49MLCv+ktkIj7IdfB+CsF4h5h6oIeRFhDL3WvbegoVYVWCzWCoXWlbXDWow==}
-    engines: {node: '>= 15.5.0'}
-    requiresBuild: true
-    dependencies:
-      bindings: 1.5.0
-    dev: true
 
   /@mdx-js/mdx@1.6.22:
     resolution: {integrity: sha512-AMxuLxPz2j5/6TpF/XSdKpQP1NlG0z11dFOlq+2IP/lSgl11GY8ji6S/rgsViN/L0BDvHvUMruRb7ub+24LUYA==}
