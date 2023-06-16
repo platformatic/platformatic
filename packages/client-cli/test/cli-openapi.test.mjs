@@ -537,7 +537,7 @@ app.listen({ port: 0 })
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
-  // this is unfortuate :(
+  // this is unfortunate :(
   const base = 'Server listening at '
   let url
   for await (const line of stream) {
