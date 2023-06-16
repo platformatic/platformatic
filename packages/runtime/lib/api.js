@@ -135,6 +135,7 @@ class RuntimeApi {
       case 'plt:get-topology':
         return this.#getServicesTopology(params)
       default:
+        /* c8 ignore next */
         throw new Error(`Unknown Runtime API command: '${command}'`)
     }
   }
@@ -175,8 +176,10 @@ class RuntimeApi {
 
   async #stopServices () {
     for (const service of this.#services.values()) {
-      if (!service.server) continue
-      await service.stop()
+      const serviceStatus = service.getStatus()
+      if (serviceStatus === 'started') {
+        await service.stop()
+      }
     }
   }
 

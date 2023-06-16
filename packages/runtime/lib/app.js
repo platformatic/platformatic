@@ -106,7 +106,9 @@ class PlatformaticApp {
   }
 
   async stop () {
-    if (!this.#started) return
+    if (!this.#started) {
+      throw new Error('application has not been started')
+    }
 
     if (!this.#restarting) {
       await this.server.close()

@@ -67,7 +67,7 @@ test('errors when starting an already started application', async (t) => {
   }, /application is already started/)
 })
 
-test('does not stop service if it is already stopped', async (t) => {
+test('errors when stopping an already stopped application', async (t) => {
   const { logger } = getLoggerAndStream()
   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
   const configFile = join(appPath, 'platformatic.service.json')
@@ -82,15 +82,9 @@ test('does not stop service if it is already stopped', async (t) => {
     localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
   const app = new PlatformaticApp(config, null, logger)
-  await app.start()
-
-  t.mock.method(app.server, 'close')
-
-  await app.stop()
-  await app.stop()
-  await app.stop()
-
-  assert.strictEqual(app.server.close.mock.calls.length, 1)
+  await assert.rejects(async () => {
+    await app.stop()
+  }, /application has not been started/)
 })
 
 test('does not restart while restarting', async (t) => {
