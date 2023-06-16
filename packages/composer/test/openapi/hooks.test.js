@@ -54,8 +54,7 @@ test('should add multiple onRoute hooks for one route', async (t) => {
         ]
       },
       plugins: {
-        paths: [join(__dirname, './fixtures/plugins/multiple-hooks.js')],
-        hotReload: false
+        paths: [join(__dirname, './fixtures/plugins/multiple-hooks.js')]
       }
     }
   )

@@ -2,8 +2,6 @@
 
 const { join, resolve } = require('path')
 const { readFile } = require('fs/promises')
-
-const sandbox = require('fastify-sandbox')
 const fp = require('fastify-plugin')
 
 const { getJSPluginPath, isFileAccessible } = require('../utils')
@@ -34,23 +32,7 @@ async function loadPlugins (app) {
     })
   }
 
-  if (config.plugins.hotReload !== false) {
-    await app.register(sandbox, {
-      path: wrapperPath,
-      options: { paths: config.plugins.paths },
-      customizeGlobalThis (_globalThis) {
-        // Taken from https://github.com/nodejs/undici/blob/fa9fd9066569b6357acacffb806aa804b688c9d8/lib/global.js#L5
-        const globalDispatcher = Symbol.for('undici.globalDispatcher.1')
-        const dispatcher = globalThis[globalDispatcher]
-        /* istanbul ignore else */
-        if (dispatcher) {
-          _globalThis[globalDispatcher] = dispatcher
-        }
-      }
-    })
-  } else {
-    await app.register(require(wrapperPath), { paths: config.plugins.paths })
-  }
+  await app.register(require(wrapperPath), { paths: config.plugins.paths })
 }
 
 module.exports = fp(loadPlugins)

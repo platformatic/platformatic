@@ -118,6 +118,7 @@ async function safeRestart (app) {
 }
 
 async function start (appType, _args) {
+  /* c8 ignore next 55 */
   const { configManager } = await loadConfig({}, _args, appType)
 
   const config = configManager.current
@@ -145,7 +146,6 @@ async function start (appType, _args) {
 
   // Ignore from CI because SIGUSR2 is not available
   // on Windows
-  /* c8 ignore next 25 */
   process.on('SIGUSR2', function () {
     app.log.info('reloading configuration')
     safeRestart(app)

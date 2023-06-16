@@ -97,7 +97,6 @@ An optional object that defines the plugins loaded by Platformatic Service.
   - `encapsulate` (`boolean`): if the path is a folder, it instruct Platformatic to not encapsulate those plugins.
   - `maxDepth` (`integer`): if the path is a folder, it limits the depth to load the content from.
 - **`typescript`** (`boolean`): enable typescript compilation. A `tsconfig.json` file is required in the same folder.
-- **`hotReload`** (`boolean`, default: `true`) if `true` or not specified, the plugin is loaded using [`fastify-sandbox`](https://github.com/mcollina/fastify-sandbox), otherwise is loaded directly using `require`/`import` and the hot reload is not enabled
 
   _Example_
 
@@ -109,17 +108,10 @@ An optional object that defines the plugins loaded by Platformatic Service.
         "options": {
           "foo": "bar"
         }
-      }],
-      "hotReload": true,
+      }]
     }
   }
   ```
-
-:::warning
-While hot reloading is useful for development, it is not recommended to use it in production.
-To switch if off, set `hotReload` to `false`.
-:::
-
 
 ### `watch`
 

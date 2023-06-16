@@ -14,8 +14,6 @@ The config file will specify where the plugin file is located as the example bel
 ```
 The paths are relative to the config file path.
 
-Since it uses [fastify-sandbox](https://github.com/mcollina/fastify-sandbox) under the hood, all other options of that package may be specified under the `plugin` property.
-
 Once the config file is set up, you can write your plugin to extend Platformatic DB API or write your custom business logic.
 
 You should export an async `function` which receives a parameters
@@ -30,7 +28,7 @@ To make sure that a user has the appropriate set of permissions to perform any a
 ```js
 app.post('/', async (req, reply) => {
   const ctx = req.createPlatformaticCtx()
-  
+
   await app.platformatic.entities.movies.find({
     where: { /*...*/ },
     ctx

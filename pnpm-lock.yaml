@@ -613,9 +613,6 @@ importers:
       '@databases/sqlite':
         specifier: ^4.0.2
         version: 4.0.2
-      '@matteo.collina/worker':
-        specifier: ^3.1.0
-        version: 3.1.0
       ajv:
         specifier: ^8.12.0
         version: 8.12.0
@@ -1097,9 +1094,6 @@ importers:
       fastify-plugin:
         specifier: ^4.5.0
         version: 4.5.0
-      fastify-sandbox:
-        specifier: ^0.13.1
-        version: 0.13.1
       graphql:
         specifier: ^16.6.0
         version: 16.6.0
@@ -1128,9 +1122,6 @@ importers:
       '@fastify/aws-lambda':
         specifier: ^3.2.0
         version: 3.2.0
-      '@matteo.collina/worker':
-        specifier: ^3.1.0
-        version: 3.1.0
       bindings:
         specifier: ^1.5.0
         version: 1.5.0
@@ -3948,13 +3939,6 @@ packages:
       - encoding
       - supports-color
 
-  /@matteo.collina/worker@3.1.0:
-    resolution: {integrity: sha512-1LX7rqSABFEPRZGv3KXG38YR2Sj49MLCv+ktkIj7IdfB+CsF4h5h6oIeRFhDL3WvbegoVYVWCzWCoXWlbXDWow==}
-    engines: {node: '>= 15.5.0'}
-    requiresBuild: true
-    dependencies:
-      bindings: 1.5.0
-
   /@mdx-js/mdx@1.6.22:
     resolution: {integrity: sha512-AMxuLxPz2j5/6TpF/XSdKpQP1NlG0z11dFOlq+2IP/lSgl11GY8ji6S/rgsViN/L0BDvHvUMruRb7ub+24LUYA==}
     dependencies:
@@ -6253,6 +6237,7 @@ packages:
     resolution: {integrity: sha512-p2q/t/mhvuOj/UeLlV6566GD/guowlr0hHxClI0W9m7MWYkL1F0hLo+0Aexs9HSPCtR1SXQ0TD3MMKrXZajbiQ==}
     dependencies:
       file-uri-to-path: 1.0.0
+    dev: true
 
   /bintrees@1.0.2:
     resolution: {integrity: sha512-VOMgTMwjAaUG580SXn3LacVgjurrbMme7ZZNYGSSV7mmtY6QQRh0Eg3pwIcntQ77DErK1L0NxkbetjcoXzVwKw==}
@@ -8503,14 +8488,6 @@ packages:
       table: 6.8.1
     dev: false
 
-  /fastify-sandbox@0.13.1:
-    resolution: {integrity: sha512-0nufHO/MdzKCnS4oUu/tM8gOC+VmOxMutobLnWaU4wJirzBYS9oJyPJVD0YYVZkqXSxsW7dDFGEXvgRdliuGRA==}
-    dependencies:
-      import-fresh: 3.3.0
-    optionalDependencies:
-      '@matteo.collina/worker': 3.1.0
-    dev: false
-
   /fastify-tsconfig@1.0.1:
     resolution: {integrity: sha512-BXkTG3JYcjJb3xX5R5FcE9ciscV/h7YtmnkiSaNAONd1g6ooMSN/4GWfhA8hnS6SRZFYBBxsn8719Mj9lbCOtA==}
     engines: {node: '>=10.4.0'}
@@ -8616,6 +8593,7 @@ packages:
 
   /file-uri-to-path@1.0.0:
     resolution: {integrity: sha512-0Zt+s3L7Vf1biwWZ29aARiVYLx7iMGnEUl9x33fbB/j3jR81u/O2LbqK+Bm1CDSNDKVtJ/YjwY7TUd5SkeLQLw==}
+    dev: true
 
   /fill-range@4.0.0:
     resolution: {integrity: sha512-VcpLTWqWDiTerugjj8e3+esbg+skS3M9e54UuR3iCeIDMXCLTsAH8hTSzDQU/X6/6t3eYkOKoZSef2PlU6U1XQ==}

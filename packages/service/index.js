@@ -70,6 +70,7 @@ async function platformaticService (app, opts, toLoad = []) {
   }
 }
 
+/* c8 ignore next 18 */
 async function onFilesUpdated (app) {
   // Reload the config as well, otherwise we will have problems
   // in case the files watcher triggers the config watcher too
@@ -78,7 +79,6 @@ async function onFilesUpdated (app) {
     app.log.debug('files changed')
     await configManager.parse()
     await app.restart()
-    /* c8 ignore next 8 */
   } catch (err) {
     app.log.error({
       err: {

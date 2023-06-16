@@ -96,7 +96,6 @@ An optional object that defines the plugins loaded by Platformatic Composer.
   - `encapsulate` (`boolean`): if the path is a folder, it instruct Platformatic to not encapsulate those plugins.
   - `maxDepth` (`integer`): if the path is a folder, it limits the depth to load the content from.
 - **`typescript`** (`boolean`): enable typescript compilation. A `tsconfig.json` file is required in the same folder.
-- **`hotReload`** (`boolean`, default: `true`) if `true` or not specified, the plugin is loaded using [`fastify-sandbox`](https://github.com/mcollina/fastify-sandbox), otherwise is loaded directly using `require`/`import` and the hot reload is not enabled
 
   _Example_
 
@@ -108,17 +107,10 @@ An optional object that defines the plugins loaded by Platformatic Composer.
         "options": {
           "foo": "bar"
         }
-      }],
-      "hotReload": true,
+      }]
     }
   }
   ```
-
-:::warning
-While hot reloading is useful for development, it is not recommended to use it in production.
-To switch if off, set `hotReload` to `false`.
-:::
-
 
 ### `watch`
 
@@ -148,7 +140,7 @@ the services managed by the composer. Each service object supports the following
   - **`id`** (**required**, `string`) - A unique identifier for the service.
   - **`origin`** (`string`) - A service origin. Skip this option if the service is executing inside of Platformatic Runtime. In this case, service id will be used instead of origin.
   - **`openapi`** (**required**, `object`) - The configuration file used to compose OpenAPI specification. See the [openapi](#openapi) for details.
-  - **`proxy`** (`object` or `false`) - Service proxy configuration. If `false`, the service proxy is disabled. 
+  - **`proxy`** (`object` or `false`) - Service proxy configuration. If `false`, the service proxy is disabled.
     - `prefix` (**required**, `string`) - Service proxy prefix. All service routes will be prefixed with this value.
   - **`refreshTimeout`** (`number`) - The number of milliseconds to wait for check for changes in the service OpenAPI specification. If not specified, the default value is `1000`.
 
@@ -157,7 +149,7 @@ the services managed by the composer. Each service object supports the following
 - **`url`** (`string`) - A path of the route that exposes the OpenAPI specification. If a service is a Platformatic Service or Platformatic DB, use `/documentation/json` as a value. Use this or `file` option to specify the OpenAPI specification.
 - **`file`** (`string`) - A path to the OpenAPI specification file. Use this or `url` option to specify the OpenAPI specification.
 - **`prefix`** (`string`) - A prefix for the OpenAPI specification. All service routes will be prefixed with this value.
-- **`ignore`** (`array`) - A list of routes to ignore when composing the OpenAPI specification. Ignored routes will not be available through composed API. 
+- **`ignore`** (`array`) - A list of routes to ignore when composing the OpenAPI specification. Ignored routes will not be available through composed API.
 Example: `["/metrics/{id}", { path: "/payment", methods: ["GET", "POST"] }]`.
 
 _Examples_

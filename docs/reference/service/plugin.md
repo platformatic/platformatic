@@ -14,8 +14,6 @@ The config file will specify where the plugin file is located as the example bel
 ```
 The path is relative to the config file path.
 
-Since it uses [fastify-sandbox](https://github.com/mcollina/fastify-sandbox) under the hood, all other options of that package may be specified under the `plugin` property.
-
 You should export an async `function` which receives a parameters
 - `app` (`FastifyInstance`) that is the main fastify [instance](https://www.fastify.io/docs/latest/Reference/Server/#instance)
 - `opts` all the options specified in the config file after `path`
