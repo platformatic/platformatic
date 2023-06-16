@@ -6,6 +6,7 @@ const { Worker } = require('node:worker_threads')
 const closeWithGrace = require('close-with-grace')
 const { loadConfig } = require('@platformatic/service')
 const { platformaticRuntime } = require('./config')
+const { RuntimeApiClient } = require('./api.js')
 const kLoaderFile = pathToFileURL(join(__dirname, 'loader.mjs')).href
 const kWorkerFile = join(__dirname, 'worker.js')
 const kWorkerExecArgv = [
@@ -57,65 +58,8 @@ async function startWithConfig (configManager) {
 
   await once(worker, 'message') // plt:init
 
-  const runtimeApi = {
-    async start () {
-      worker.postMessage({ msg: 'plt:start' })
-      const [msg] = await once(worker, 'message') // plt:started
-
-      return msg.url
-    },
-    async close () {
-      worker.postMessage({ msg: 'plt:stop' })
-      await once(worker, 'exit')
-    },
-    async restart () {
-      worker.postMessage({ msg: 'plt:restart' })
-      await once(worker, 'message') // plt:restarted
-    },
-    async getServicesTopology () {
-      worker.postMessage({ msg: 'plt:get-topology' })
-      const [msg] = await once(worker, 'message')
-
-      const res = JSON.parse(msg.res)
-      if (res.error) {
-        throw new Error(res.error)
-      }
-
-      return res
-    },
-    async getServiceStatus (id) {
-      worker.postMessage({ msg: 'plt:get-status', params: { id } })
-      const [msg] = await once(worker, 'message')
-
-      const res = JSON.parse(msg.res)
-      if (res.error) {
-        throw new Error(res.error)
-      }
-
-      return res
-    },
-    async getServiceConfig (id) {
-      worker.postMessage({ msg: 'plt:get-config', params: { id } })
-      const [msg] = await once(worker, 'message')
-
-      const res = JSON.parse(msg.res)
-      if (res.error) {
-        throw new Error(res.error)
-      }
-
-      return res
-    },
-    async startService (id) {
-      worker.postMessage({ msg: 'plt:start-service', params: { id } })
-      await once(worker, 'message')
-    },
-    async stopService (id) {
-      worker.postMessage({ msg: 'plt:stop-service', params: { id } })
-      await once(worker, 'message')
-    }
-  }
-
-  return runtimeApi
+  const runtimeApiClient = new RuntimeApiClient(worker)
+  return runtimeApiClient
 }
 
 module.exports = { start, startWithConfig }

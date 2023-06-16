@@ -41,6 +41,23 @@ test('should get service config', async (t) => {
   })
 })
 
+test('should fail to get service config if service is not started', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  try {
+    await app.getServiceConfig('with-logger')
+    assert.fail('should have thrown')
+  } catch (err) {
+    assert.strictEqual(err.message, 'Service with id \'with-logger\' has not been started')
+  }
+})
+
 test('should get services topology', async (t) => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
@@ -103,6 +120,23 @@ test('should stop service by service id', async (t) => {
   }
 })
 
+test('should fail to stop service with a wrong id', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  try {
+    await app.stopService('wrong-service-id')
+    assert.fail('should have thrown')
+  } catch (err) {
+    assert.strictEqual(err.message, 'Service with id \'wrong-service-id\' not found')
+  }
+})
+
 test('should start stopped service by service id', async (t) => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
@@ -126,5 +160,41 @@ test('should start stopped service by service id', async (t) => {
   {
     const serviceStatus = await app.getServiceStatus('with-logger')
     assert.strictEqual(serviceStatus, 'started')
+  }
+})
+
+test('should fail to start service with a wrong id', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  try {
+    await app.startService('wrong-service-id')
+    assert.fail('should have thrown')
+  } catch (err) {
+    assert.strictEqual(err.message, 'Service with id \'wrong-service-id\' not found')
+  }
+})
+
+test('should fail to start running service', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  try {
+    await app.startService('with-logger')
+    assert.fail('should have thrown')
+  } catch (err) {
+    assert.strictEqual(err.message, 'application is already started')
   }
 })
