@@ -8,8 +8,7 @@
     }
   },
   "plugins": {
-    "paths": ["./plugin.js"],
-    "hotReload": false
+    "paths": ["./plugin.js"]
   },
   "clients": [{
     "path": "./hello",

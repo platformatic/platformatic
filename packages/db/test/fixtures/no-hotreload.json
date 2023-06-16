@@ -15,8 +15,7 @@
     "autoApply": false
   },
   "plugins": {
-    "paths": ["./plugin.mjs"],
-    "hotReload": false
+    "paths": ["./plugin.mjs"]
   },
   "watch": true
 }

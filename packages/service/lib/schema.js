@@ -391,13 +391,6 @@ const plugins = {
     },
     typescript: {
       type: 'boolean'
-    },
-    fallback: {
-      type: 'boolean'
-    },
-    hotReload: {
-      type: 'boolean',
-      default: true
     }
   },
   additionalProperties: false,
@@ -543,9 +536,6 @@ const platformaticServiceSchema = {
       anyOf: [watch, {
         type: 'boolean'
       }]
-    },
-    hotReload: {
-      type: 'boolean'
     },
     $schema: {
       type: 'string'

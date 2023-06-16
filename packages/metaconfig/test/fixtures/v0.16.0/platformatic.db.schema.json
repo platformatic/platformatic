@@ -547,9 +547,6 @@
                 "outDir"
               ]
             },
-            "fallback": {
-              "type": "boolean"
-            },
             "hotReload": {
               "type": "boolean",
               "default": true

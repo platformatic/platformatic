@@ -10,8 +10,7 @@
   },
   "plugins": {
     "paths": ["./plugin.ts"],
-    "typescript": true,
-    "hotReload": false
+    "typescript": true
   },
   "clients": [{
     "path": "./hello",

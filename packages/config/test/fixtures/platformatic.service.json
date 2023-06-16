@@ -4,7 +4,6 @@
     "port": 0
   },
   "plugins": {
-    "paths": ["./plugin.js"],
-    "hotReload": false
+    "paths": ["./plugin.js"]
   }
 }

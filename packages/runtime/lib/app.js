@@ -161,7 +161,7 @@ class PlatformaticApp {
         return appConfig.localServiceEnvVars.get(key)
       }
     })
-    const { args, configManager } = this.config
+    const { configManager } = this.config
 
     if (appConfig._configOverrides instanceof Map) {
       try {
@@ -190,16 +190,7 @@ class PlatformaticApp {
     }
 
     this.#setuplogger(configManager)
-
-    this.#hotReload = args.hotReload && this.appConfig.hotReload
-
-    if (configManager.current.plugins) {
-      if (this.#hotReload) {
-        this.#hotReload = configManager.current.plugins.hotReload
-      }
-
-      configManager.current.plugins.hotReload = false
-    }
+    this.#hotReload = this.appConfig.hotReload
 
     configManager.on('update', async (newConfig) => {
       /* c8 ignore next 4 */

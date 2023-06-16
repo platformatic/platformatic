@@ -18,8 +18,7 @@ async function loadConfig (minimistConfig, _args, app, overrides = {}) {
   const args = parseArgs(_args, deepmerge({ all: true })({
     string: ['allow-env'],
     default: {
-      allowEnv: '', // The default is set in ConfigManager
-      hotReload: true
+      allowEnv: '' // The default is set in ConfigManager
     },
     alias: {
       v: 'version',

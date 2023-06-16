@@ -187,7 +187,7 @@ A **required** object with the following settings:
     }
   }
   ```
-  
+
   You can for example add the `security` section, so that Swagger will allow you to add the authentication header to your requests.
   In the following code snippet, we're adding a Bearer token in the form of a [JWT](/reference/db/authorization/strategies.md#json-web-token-jwt):
   ```json
@@ -345,7 +345,6 @@ An optional object that defines the plugins loaded by Platformatic DB.
     allowing decorators and hooks to be shared across all routes.
   - `maxDepth` (`integer`): if the path is a folder, it limits the depth to load the content from.
 - **`typescript`** (`boolean`): enable typescript compilation. A `tsconfig.json` file is required in the same folder.
-- **`hotReload`** (`boolean`, default: `true`) if `true` or not specified, the plugin is loaded using [`fastify-sandbox`](https://github.com/mcollina/fastify-sandbox), otherwise is loaded directly using `require`/`import` and the hot reload is not enabled
 
   _Example_
 
@@ -354,17 +353,10 @@ An optional object that defines the plugins loaded by Platformatic DB.
     "plugins": {
       "paths": [{
         "path": "./my-plugin.js"
-      }],
-      "hotReload": true
+      }]
     }
   }
   ```
-
-:::warning
-While hot reloading is useful for development, it is not recommended to use it in production.
-To switch if off, set `hotReload` to `false`.
-:::
-
 
 ### `watch`
 

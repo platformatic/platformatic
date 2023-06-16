@@ -159,8 +159,7 @@ async function createComposer (t, composerConfig) {
     },
     composer: { services: [] },
     plugins: {
-      paths: [],
-      hotReload: false
+      paths: []
     },
     watch: false
   }
