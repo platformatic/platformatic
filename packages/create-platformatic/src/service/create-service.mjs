@@ -8,7 +8,7 @@ const TS_OUT_DIR = 'dist'
 function generateConfig (version, typescript) {
   const plugins = {
     paths: [
-      './plugins',
+      { path: './plugins', encapsulate: false },
       './routes'
     ]
   }
@@ -50,7 +50,6 @@ const JS_PLUGIN_WITH_TYPES_SUPPORT = `\
 module.exports = async function (fastify, opts) {
   fastify.decorate('example', 'foobar')
 }
-module.exports[Symbol.for('skip-override')] = true
 `
 
 const TS_PLUGIN_WITH_TYPES_SUPPORT = `\
