@@ -27,8 +27,6 @@ class FileWatcher extends EventEmitter {
     this.path = opts.path
     this.allowToWatch = opts.allowToWatch?.map(removeDotSlash) || null
     this.watchIgnore = opts.watchIgnore?.map(removeDotSlash) || null
-
-    this.fsWatcher = null
     this.handlePromise = null
     this.abortController = null
 
