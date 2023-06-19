@@ -103,7 +103,7 @@ Remember to adjust the path to `global.d.ts`.
 
 ### Plugin definition with TypeScript
 
-Here is an example of writing a plugin in TyupeScript:
+Here is an example of writing a plugin in TypeScript:
 
 ```ts
 /// <reference types="./global.d.ts" />
