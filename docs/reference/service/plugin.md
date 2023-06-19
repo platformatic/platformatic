@@ -71,7 +71,7 @@ Multiple plugins can be loaded in parallel by specifying an array:
 ## TypeScript and Autocompletion
 
 In order to provide the correct typings of the features added by Platformatic Service to your Fastify instance,
-remmber to add the following at the top of your files:
+add the following at the top of your files:
 
 ```js
 /// <references types="@platformatic/service" />
@@ -79,7 +79,7 @@ remmber to add the following at the top of your files:
 
 ### Plugin definition with TypeScript
 
-Here is an example of writing a plugin in TyupeScript:
+Here is an example of writing a plugin in TypeScript:
 
 ```ts
 /// <reference types="@platformatic/service" />
@@ -89,4 +89,4 @@ export default async function (fastify: FastifyInstance, opts: FastifyPluginOpti
 }
 ```
 
-Note that you would need to add the `"typescript": true` configuration to your `platformatic.service.json`.
+Note that you need to add the `"typescript": true` configuration to your `platformatic.service.json`.

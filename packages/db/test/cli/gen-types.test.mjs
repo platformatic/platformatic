@@ -242,7 +242,6 @@ t.test('generate types on start', async ({ plan, equal, teardown, fail, pass }) 
 
   let found = false
   for await (const data of splitter) {
-    console.log(data)
     const sanitized = stripAnsi(data)
     if (sanitized.match(/(.*)Generated type for(.*)/)) {
       found = true
