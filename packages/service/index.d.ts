@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/triple-slash-reference */
 /// <reference types="@platformatic/types" />
 /// <reference types="mercurius" />
 /// <reference types="@fastify/swagger" />
-import { FastifyInstance } from "fastify"
-import ConfigManager from "@platformatic/config"
+import { FastifyInstance } from 'fastify'
+import ConfigManager from '@platformatic/config'
 
 declare module '@platformatic/types' {
   interface PlatformaticApp {
@@ -11,10 +12,10 @@ declare module '@platformatic/types' {
   }
 }
 
-export function buildServer(opts: object, app?: object, ConfigManagerContructor?: object): Promise<FastifyInstance>
+export function buildServer (opts: object, app?: object, ConfigManagerContructor?: object): Promise<FastifyInstance>
 
 declare module 'fastify' {
   interface FastifyInstance {
-    restart(): Promise<void>
+    restart: () => Promise<void>
   }
 }

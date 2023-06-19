@@ -8,8 +8,8 @@
     "plt-db": "./db.mjs"
   },
   "scripts": {
-    "test": "standard | snazzy && tap --reporter=tap test/*test.js test/*/*test.mjs && tsd",
-    "lint": "standard | snazzy"
+    "test": "pnpm run lint && tap --reporter=tap test/*test.js test/*/*test.mjs && tsd",
+    "lint": "standard | snazzy && ts-standard | snazzy"
   },
   "author": "Matteo Collina <hello@matteocollina.com>",
   "repository": {
@@ -34,6 +34,7 @@
     "standard": "^17.1.0",
     "strip-ansi": "^7.1.0",
     "tap": "^16.3.6",
+    "ts-standard": "^12.0.2",
     "tsd": "^0.28.1",
     "typescript": "^5.1.3",
     "undici": "^5.22.1",
@@ -84,6 +85,11 @@
   "standard": {
     "ignore": [
       "**/dist/*"
+    ]
+  },
+  "ts-standard": {
+    "ignore": [
+      "test/**/*"
     ]
   }
 }
