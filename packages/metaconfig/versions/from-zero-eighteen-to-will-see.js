@@ -28,6 +28,8 @@ class FromZeroEighteenToWillSee extends SimpleZeroConfig {
         }
       }
 
+      delete config.plugins?.hotReload
+
       return new FromZeroEighteenToWillSee({ config, path: this.path, format: this.format, version })
     }
   }

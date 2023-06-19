@@ -77,3 +77,37 @@ test('does not add watch if it is set to false', async (t) => {
   const upped = meta.up()
   t.equal(upped.config.watch, false)
 })
+
+test('removes plugins.hotReload if it exists', async (t) => {
+  const version = '0.26.0'
+
+  {
+    const meta = new FromZeroEighteenToWillSee({
+      version,
+      config: { plugins: { hotReload: true } }
+    })
+    t.equal('hotReload' in meta.config.plugins, true)
+    const upped = meta.up()
+    t.equal('hotReload' in upped.config.plugins, false)
+  }
+
+  {
+    const meta = new FromZeroEighteenToWillSee({
+      version,
+      config: { plugins: { hotReload: false } }
+    })
+    t.equal('hotReload' in meta.config.plugins, true)
+    const upped = meta.up()
+    t.equal('hotReload' in upped.config.plugins, false)
+  }
+
+  {
+    const meta = new FromZeroEighteenToWillSee({
+      version,
+      config: { plugins: {} }
+    })
+    t.equal('hotReload' in meta.config.plugins, false)
+    const upped = meta.up()
+    t.equal('hotReload' in upped.config.plugins, false)
+  }
+})
