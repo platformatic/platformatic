@@ -113,7 +113,7 @@ const createPlatformaticDB = async (_args, opts) => {
   }
 
   // Create the package.json, .gitignore, readme
-  await createPackageJson('db', version, fastifyVersion, logger, projectDir, useTypescript, scripts)
+  await createPackageJson(version, fastifyVersion, logger, projectDir, useTypescript, scripts)
   await createGitignore(logger, projectDir)
   await createReadme(logger, projectDir)
 
