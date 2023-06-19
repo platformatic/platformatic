@@ -1204,6 +1204,9 @@ importers:
 
   packages/sql-events:
     dependencies:
+      '@platformatic/types':
+        specifier: workspace:*
+        version: link:../types
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
