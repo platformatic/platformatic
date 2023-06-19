@@ -58,8 +58,7 @@ test('should get service config', async (t) => {
     plugins: {
       paths: [
         join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'plugin.js')
-      ],
-      hotReload: false
+      ]
     },
     watch: false
   })
