@@ -6,6 +6,7 @@ const { Worker } = require('node:worker_threads')
 const closeWithGrace = require('close-with-grace')
 const { loadConfig } = require('@platformatic/service')
 const { platformaticRuntime } = require('./config')
+const { RuntimeApiClient } = require('./api.js')
 const kLoaderFile = pathToFileURL(join(__dirname, 'loader.mjs')).href
 const kWorkerFile = join(__dirname, 'worker.js')
 const kWorkerExecArgv = [
@@ -57,22 +58,8 @@ async function startWithConfig (configManager) {
 
   await once(worker, 'message') // plt:init
 
-  return {
-    async start () {
-      worker.postMessage({ msg: 'plt:start' })
-      const [msg] = await once(worker, 'message') // plt:started
-
-      return msg.url
-    },
-    async close () {
-      worker.postMessage({ msg: 'plt:stop' })
-      await once(worker, 'exit')
-    },
-    async restart () {
-      worker.postMessage({ msg: 'plt:restart' })
-      await once(worker, 'message') // plt:restarted
-    }
-  }
+  const runtimeApiClient = new RuntimeApiClient(worker)
+  return runtimeApiClient
 }
 
 module.exports = { start, startWithConfig }

@@ -27,6 +27,14 @@ class PlatformaticApp {
     this.#logger = logger
   }
 
+  getStatus () {
+    if (this.#started) {
+      return 'started'
+    } else {
+      return 'stopped'
+    }
+  }
+
   async restart (force) {
     if (this.#restarting) {
       return
@@ -110,24 +118,9 @@ class PlatformaticApp {
     this.#started = false
   }
 
-  async handleProcessLevelEvent ({ msg, signal, err }) {
-    if (msg === 'plt:start') {
-      await this.start()
-      return
-    }
-
+  async handleProcessLevelEvent ({ signal, err }) {
     if (!this.server) {
       return false
-    }
-
-    if (msg === 'plt:restart') {
-      await this.restart(true)
-      return
-    }
-
-    if (msg === 'plt:stop') {
-      await this.stop()
-      return
     }
 
     if (signal === 'SIGUSR2') {
