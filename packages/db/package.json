@@ -3,6 +3,7 @@
   "version": "0.27.0",
   "description": "",
   "main": "index.js",
+  "types": "index.d.ts",
   "bin": {
     "plt-db": "./db.mjs"
   },

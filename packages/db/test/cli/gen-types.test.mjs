@@ -1,5 +1,5 @@
 import path from 'path'
-import { rm, mkdir, cp } from 'fs/promises'
+import { rm, mkdir, cp, readFile, writeFile } from 'fs/promises'
 import { cliPath } from './helper.js'
 import t from 'tap'
 import { execa } from 'execa'
@@ -42,6 +42,12 @@ async function safeRm (dir) {
   }
 }
 
+async function adjustTypeReferenceToAvoidLoops (cwd) {
+  let types = await readFile(path.join(cwd, 'global.d.ts'), 'utf8')
+  types = types.replace('@platformatic/db', '../../../index.d.ts')
+  await writeFile(path.join(cwd, 'global.d.ts'), types, 'utf8')
+}
+
 t.test('generate ts types', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types')
   const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
@@ -62,6 +68,10 @@ t.test('generate ts types', async (t) => {
     await execa('node', [cliPath, 'migrations', 'apply'], { cwd })
     t.comment('generating types')
     await execa('node', [cliPath, 'types'], { cwd })
+
+    t.comment('Adjusting type reference to avoid loops')
+    await adjustTypeReferenceToAvoidLoops(cwd)
+
     t.comment('running tsd')
     await execa(pathToTSD, { cwd })
   } catch (err) {
@@ -96,6 +106,8 @@ t.test('generate ts types twice', async (t) => {
     await execa('node', [cliPath, 'types'], { cwd })
     t.comment('second command')
     await execa('node', [cliPath, 'types'], { cwd })
+    t.comment('Adjusting type reference to avoid loops')
+    await adjustTypeReferenceToAvoidLoops(cwd)
     t.comment('running tsd')
     await execa(pathToTSD, { cwd })
   } catch (err) {
@@ -152,6 +164,9 @@ t.test('run migrate command with type generation', async (t) => {
     t.equal(child.stdout.includes('Generated type for Graph entity.'), true)
     t.equal(child.stdout.includes('Please run `npm i --save'), true)
 
+    t.comment('Adjusting type reference to avoid loops')
+    await adjustTypeReferenceToAvoidLoops(cwd)
+
     await execa(pathToTSD, { cwd })
   } catch (err) {
     console.log(err.stdout)
@@ -180,6 +195,9 @@ t.test('run migrate command with type generation without plugin in config', asyn
     const child = await execa('node', [cliPath, 'migrations', 'apply'], { cwd })
     t.equal(child.stdout.includes('Generated type for Graph entity.'), true)
     t.equal(child.stdout.includes('Please run `npm i --save'), true)
+
+    t.comment('Adjusting type reference to avoid loops')
+    await adjustTypeReferenceToAvoidLoops(cwd)
 
     await execa(pathToTSD, { cwd })
   } catch (err) {
@@ -224,6 +242,7 @@ t.test('generate types on start', async ({ plan, equal, teardown, fail, pass }) 
 
   let found = false
   for await (const data of splitter) {
+    console.log(data)
     const sanitized = stripAnsi(data)
     if (sanitized.match(/(.*)Generated type for(.*)/)) {
       found = true
@@ -233,6 +252,8 @@ t.test('generate types on start', async ({ plan, equal, teardown, fail, pass }) 
   equal(found, true)
 
   try {
+    t.comment('Adjusting type reference to avoid loops')
+    await adjustTypeReferenceToAvoidLoops(cwd)
     await execa(pathToTSD, { cwd })
     pass()
   } catch (err) {
@@ -284,6 +305,8 @@ t.test('use types directory from config as target folder', async (t) => {
     const child = await execa('node', [cliPath, 'migrations', 'apply'], { cwd })
     t.equal(child.stdout.includes('Generated type for Graph entity.'), true)
 
+    t.comment('Adjusting type reference to avoid loops')
+    await adjustTypeReferenceToAvoidLoops(cwd)
     await execa(pathToTSD, { cwd })
   } catch (err) {
     console.log(err.stdout)
@@ -326,6 +349,8 @@ t.test('generate types on start while considering types directory', async ({ pla
   equal(found, true)
 
   try {
+    t.comment('Adjusting type reference to avoid loops')
+    await adjustTypeReferenceToAvoidLoops(cwd)
     await execa(pathToTSD, { cwd })
     pass()
   } catch (err) {
