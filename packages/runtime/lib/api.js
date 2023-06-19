@@ -21,28 +21,28 @@ class RuntimeApiClient extends EventEmitter {
   }
 
   async start () {
-    return this.#sendCommand('plt:start')
+    return this.#sendCommand('plt:start-services')
   }
 
   async close () {
-    await this.#sendCommand('plt:stop')
+    await this.#sendCommand('plt:stop-services')
     await once(this.#worker, 'exit')
   }
 
   async restart () {
-    return this.#sendCommand('plt:restart')
+    return this.#sendCommand('plt:restart-services')
   }
 
-  async getServicesTopology () {
-    return this.#sendCommand('plt:get-topology')
+  async getServices () {
+    return this.#sendCommand('plt:get-services')
   }
 
-  async getServiceStatus (id) {
-    return this.#sendCommand('plt:get-status', { id })
+  async getServiceDetails (id) {
+    return this.#sendCommand('plt:get-service-details', { id })
   }
 
   async getServiceConfig (id) {
-    return this.#sendCommand('plt:get-config', { id })
+    return this.#sendCommand('plt:get-service-config', { id })
   }
 
   async startService (id) {
@@ -88,7 +88,7 @@ class RuntimeApi {
         const res = await this.#executeCommand(message)
         parentPort.postMessage(res)
 
-        if (command === 'plt:stop') {
+        if (command === 'plt:stop-services') {
           process.exit() // Exit the worker thread.
         }
         return
@@ -115,46 +115,27 @@ class RuntimeApi {
 
   async #runCommandHandler (command, params) {
     switch (command) {
-      case 'plt:inject':
-        return this.#inject(params)
-      case 'plt:start':
+      case 'plt:start-services':
         return this.#startServices(params)
-      case 'plt:restart':
-        return this.#restartServices(params)
-      case 'plt:stop':
+      case 'plt:stop-services':
         return this.#stopServices(params)
-      case 'plt:get-status':
-        return this.#getServiceStatus(params)
-      case 'plt:get-config':
+      case 'plt:restart-services':
+        return this.#restartServices(params)
+      case 'plt:get-services':
+        return this.#getServices(params)
+      case 'plt:get-service-details':
+        return this.#getServiceDetails(params)
+      case 'plt:get-service-config':
         return this.#getServiceConfig(params)
       case 'plt:start-service':
         return this.#startService(params)
       case 'plt:stop-service':
         return this.#stopService(params)
-      case 'plt:get-topology':
-        return this.#getServicesTopology(params)
+      case 'plt:inject':
+        return this.#inject(params)
       /* c8 ignore next 2 */
       default:
         throw new Error(`Unknown Runtime API command: '${command}'`)
-    }
-  }
-
-  async #inject ({ id, injectParams }) {
-    const service = this.#getServiceById(id)
-
-    const serviceStatus = service.getStatus()
-    if (serviceStatus !== 'started') {
-      throw new Error(`Service with id '${id}' is not started`)
-    }
-
-    const res = await service.server.inject(injectParams)
-    // Return only serializable properties.
-    return {
-      statusCode: res.statusCode,
-      statusMessage: res.statusMessage,
-      headers: res.headers,
-      body: res.body,
-      payload: res.payload
     }
   }
 
@@ -199,6 +180,21 @@ class RuntimeApi {
     return entrypointUrl
   }
 
+  #getServices () {
+    const services = { services: [] }
+
+    for (const service of this.#services.values()) {
+      const serviceId = service.appConfig.id
+      const serviceDetails = this.#getServiceDetails({ id: serviceId })
+      if (serviceDetails.entrypoint) {
+        services.entrypoint = serviceId
+      }
+      services.services.push(serviceDetails)
+    }
+
+    return services
+  }
+
   #getServiceById (id) {
     const service = this.#services.get(id)
 
@@ -209,9 +205,12 @@ class RuntimeApi {
     return service
   }
 
-  #getServiceStatus ({ id }) {
+  #getServiceDetails ({ id }) {
     const service = this.#getServiceById(id)
-    return service.getStatus()
+    const status = service.getStatus()
+
+    const { entrypoint, dependencies, localUrl } = service.appConfig
+    return { id, status, localUrl, entrypoint, dependencies }
   }
 
   #getServiceConfig ({ id }) {
@@ -235,18 +234,23 @@ class RuntimeApi {
     await service.stop()
   }
 
-  #getServicesTopology () {
-    const topology = { services: [] }
+  async #inject ({ id, injectParams }) {
+    const service = this.#getServiceById(id)
 
-    for (const app of this.#services.values()) {
-      const { id, entrypoint, dependencies } = app.appConfig
-      if (entrypoint) {
-        topology.entrypoint = id
-      }
-      topology.services.push({ id, dependencies })
+    const serviceStatus = service.getStatus()
+    if (serviceStatus !== 'started') {
+      throw new Error(`Service with id '${id}' is not started`)
     }
 
-    return topology
+    const res = await service.server.inject(injectParams)
+    // Return only serializable properties.
+    return {
+      statusCode: res.statusCode,
+      statusMessage: res.statusMessage,
+      headers: res.headers,
+      body: res.body,
+      payload: res.payload
+    }
   }
 }
 

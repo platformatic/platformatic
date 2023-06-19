@@ -11,6 +11,27 @@ const fixturesDir = join(__dirname, '..', 'fixtures')
 // Each test runtime app adds own process listeners
 process.setMaxListeners(100)
 
+test('should get service details', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  const serviceDetails = await app.getServiceDetails('with-logger')
+  assert.deepStrictEqual(serviceDetails, {
+    id: 'with-logger',
+    status: 'started',
+    entrypoint: false,
+    localUrl: 'http://with-logger.plt.local',
+    dependencies: []
+  })
+})
+
 test('should get service config', async (t) => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
@@ -72,13 +93,16 @@ test('should get services topology', async (t) => {
     await app.close()
   })
 
-  const topology = await app.getServicesTopology()
+  const topology = await app.getServices()
 
   assert.deepStrictEqual(topology, {
     entrypoint: 'serviceApp',
     services: [
       {
         id: 'serviceApp',
+        status: 'started',
+        entrypoint: true,
+        localUrl: 'http://serviceApp.plt.local',
         dependencies: [
           {
             id: 'with-logger',
@@ -89,10 +113,16 @@ test('should get services topology', async (t) => {
       },
       {
         id: 'with-logger',
+        status: 'started',
+        entrypoint: false,
+        localUrl: 'http://with-logger.plt.local',
         dependencies: []
       },
       {
         id: 'multi-plugin-service',
+        status: 'started',
+        entrypoint: false,
+        localUrl: 'http://multi-plugin-service.plt.local',
         dependencies: []
       }
     ]
@@ -111,15 +141,15 @@ test('should stop service by service id', async (t) => {
   })
 
   {
-    const serviceStatus = await app.getServiceStatus('with-logger')
-    assert.strictEqual(serviceStatus, 'started')
+    const serviceDetails = await app.getServiceDetails('with-logger')
+    assert.strictEqual(serviceDetails.status, 'started')
   }
 
   await app.stopService('with-logger')
 
   {
-    const serviceStatus = await app.getServiceStatus('with-logger')
-    assert.strictEqual(serviceStatus, 'stopped')
+    const serviceDetails = await app.getServiceDetails('with-logger')
+    assert.strictEqual(serviceDetails.status, 'stopped')
   }
 })
 
@@ -154,15 +184,15 @@ test('should start stopped service by service id', async (t) => {
   await app.stopService('with-logger')
 
   {
-    const serviceStatus = await app.getServiceStatus('with-logger')
-    assert.strictEqual(serviceStatus, 'stopped')
+    const serviceDetails = await app.getServiceDetails('with-logger')
+    assert.strictEqual(serviceDetails.status, 'stopped')
   }
 
   await app.startService('with-logger')
 
   {
-    const serviceStatus = await app.getServiceStatus('with-logger')
-    assert.strictEqual(serviceStatus, 'started')
+    const serviceDetails = await app.getServiceDetails('with-logger')
+    assert.strictEqual(serviceDetails.status, 'started')
   }
 })
 
@@ -258,7 +288,7 @@ test('should handle a lot of runtime api requests', async (t) => {
 
   const promises = []
   for (let i = 0; i < 100; i++) {
-    promises.push(app.getServiceStatus('with-logger'))
+    promises.push(app.getServiceDetails('with-logger'))
   }
 
   await Promise.all(promises)
