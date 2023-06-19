@@ -7,10 +7,10 @@ const packageJsonTemplate = (addTSBuild = false) => (`\
 {
   "scripts": {
     ${addTSBuild
-? `"start": "npm run clean && platformatic {type} start",
+? `"start": "npm run clean && platformatic start",
     "clean": "rm -fr ./dist",
     "build": "npx tsc"`
-: '"start": "platformatic {type} start"'}
+: '"start": "platformatic start"'}
   },
   "devDependencies": {
     "fastify": "^{fastifyVersion}"
@@ -23,11 +23,11 @@ const packageJsonTemplate = (addTSBuild = false) => (`\
   }
 }`)
 
-export const createPackageJson = async (type, platVersion, fastifyVersion, logger, dir, addTSBuild = false, scripts = {}) => {
+export const createPackageJson = async (platVersion, fastifyVersion, logger, dir, addTSBuild = false, scripts = {}) => {
   const packageJsonFileName = join(dir, 'package.json')
   const isPackageJsonExists = await isFileAccessible(packageJsonFileName)
   if (!isPackageJsonExists) {
-    const packageJson = pupa(packageJsonTemplate(addTSBuild), { platVersion, fastifyVersion, type })
+    const packageJson = pupa(packageJsonTemplate(addTSBuild), { platVersion, fastifyVersion })
     const parsed = JSON.parse(packageJson)
     Object.assign(parsed.scripts, scripts)
     await writeFile(packageJsonFileName, JSON.stringify(parsed, null, 2))
