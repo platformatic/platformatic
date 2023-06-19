@@ -82,10 +82,13 @@ async function downloadAndProcess ({ url, name, folder, config, r: fullResponse 
       await writeGraphQLClient(folder, name, schema, url)
     }
   } catch (err) {
-    if (err.code !== 'ERR_INVALID_URL') {
+    if (
+      err.code !== 'ERR_INVALID_URL' &&
+      err.code !== 'UND_ERR_INVALID_ARG'
+    ) {
       throw err
     }
-    
+
     const text = await readFile(url, 'utf8')
 
     // try OpenAPI first
