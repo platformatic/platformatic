@@ -1,4 +1,6 @@
 /// <reference types="@platformatic/types" />
+/// <reference types="mercurius" />
+/// <reference types="@fastify/swagger" />
 import { FastifyInstance } from "fastify"
 import ConfigManager from "@platformatic/config"
 
