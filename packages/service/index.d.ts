@@ -1,15 +1,18 @@
+/// <reference types="@platformatic/types" />
 import { FastifyInstance } from "fastify"
+import ConfigManager from "@platformatic/config"
 
-export type pltServiceHandlerBuildServer = {
-  app: FastifyInstance
-  address: string
-  port: number
-  restart: () => Promise<void>
-  listen: FastifyInstance['listen']
-  close: FastifyInstance['close']
-  inject: FastifyInstance['inject']
+declare module '@platformatic/types' {
+  interface PlatformaticApp {
+    configManager: ConfigManager
+    config: object
+  }
 }
 
-declare module '@platformatic/service' {
-  export function buildServer(opts: object, app?: object, ConfigManagerContructor?: object): Promise<pltServiceHandlerBuildServer>
+export function buildServer(opts: object, app?: object, ConfigManagerContructor?: object): Promise<FastifyInstance>
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    restart(): Promise<void>
+  }
 }

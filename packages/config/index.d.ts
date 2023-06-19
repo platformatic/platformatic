@@ -24,9 +24,11 @@ interface ISerializer {
   parse(src: string): JsonMap
   stringify(obj: JsonMap): string
 }
-export declare class ConfigManager {
+
+export default class ConfigManager {
   constructor(opts: IConfigManagerOptions)
   current: object
+  fullPath: string
   startWatching(): void
   stopWatching(): Promise<void>
   getSerializer(): ISerializer
@@ -34,7 +36,6 @@ export declare class ConfigManager {
   replaceEnv(configString: string): string
   parse(): Promise<void>
   validate(): boolean
-  fixSqliteLocation(): void
   toFastifyPlugin(): FastifyPluginAsync
   update(config: JsonMap): Promise<boolean | undefined>
   save(): Promise<boolean|undefined>

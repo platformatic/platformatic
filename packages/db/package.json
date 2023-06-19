@@ -7,7 +7,7 @@
     "plt-db": "./db.mjs"
   },
   "scripts": {
-    "test": "standard | snazzy && tap --reporter=tap test/*test.js test/*/*test.mjs",
+    "test": "standard | snazzy && tap --reporter=tap test/*test.js test/*/*test.mjs && tsd",
     "lint": "standard | snazzy"
   },
   "author": "Matteo Collina <hello@matteocollina.com>",
@@ -22,9 +22,12 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@databases/pg": "^5.4.1",
+    "@databases/sql": "^3.3.0",
     "@databases/sqlite": "^4.0.2",
     "ajv": "^8.12.0",
     "bindings": "^1.5.0",
+    "mercurius": "^13.0.0",
+    "openapi-types": "^12.1.3",
     "snazzy": "^9.0.0",
     "split2": "^4.2.0",
     "standard": "^17.1.0",
@@ -52,6 +55,8 @@
     "@platformatic/sql-graphql": "workspace:*",
     "@platformatic/sql-json-schema-mapper": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
+    "@platformatic/sql-openapi": "workspace:*",
+    "@platformatic/types": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "camelcase": "^6.3.0",
     "close-with-grace": "^1.2.0",

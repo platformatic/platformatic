@@ -1,0 +1,28 @@
+{
+  "name": "@platformatic/types",
+  "version": "0.27.0",
+  "description": "Shared types for Platformatic",
+  "types": "index.d.ts",
+  "homepage": "https://oss.platformatic.dev/",
+  "scripts": {},
+  "author": "Matteo Collina <hello@matteocollina.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "license": "Apache-2.0",
+  "keywords": [
+    "platformatic",
+    "GraphQL",
+    "OpenAPI",
+    "SQLite",
+    "PostgreSQL",
+    "MySQL",
+    "MariaDB",
+    "fastify",
+    "mercurius"
+  ],
+  "devDependencies": {
+    "fastify": "^4.18.0"
+  }
+}

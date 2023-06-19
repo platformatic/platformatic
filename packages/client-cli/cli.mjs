@@ -85,7 +85,7 @@ async function downloadAndProcess ({ url, name, folder, config, r: fullResponse 
     if (err.code !== 'ERR_INVALID_URL') {
       throw err
     }
-    
+
     const text = await readFile(url, 'utf8')
 
     // try OpenAPI first

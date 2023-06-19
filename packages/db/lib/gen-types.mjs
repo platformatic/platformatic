@@ -13,7 +13,7 @@ import { platformaticDB } from '../index.js'
 const DEFAULT_TYPES_FOLDER_PATH = resolve(process.cwd(), 'types')
 
 const GLOBAL_TYPES_TEMPLATE = `\
-import { Entity } from '@platformatic/sql-mapper';
+/// <reference types="@platformatic/db" />
 ENTITIES_IMPORTS_PLACEHOLDER
 
 declare module '@platformatic/sql-mapper' {
@@ -66,10 +66,6 @@ async function generateGlobalTypes (entities, config) {
   const globalTypesImports = []
   const globalTypesInterface = []
   const completeTypesImports = []
-
-  if (config.db.graphql) {
-    globalTypesImports.push('import graphqlPlugin from \'@platformatic/sql-graphql\'')
-  }
 
   let typesRelativePath = relative(process.cwd(), getTypesFolderPath(config))
   {

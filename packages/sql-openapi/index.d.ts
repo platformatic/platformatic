@@ -1,3 +1,4 @@
+/// <reference types="@fastify/swagger" />
 import { FastifyPluginAsync } from 'fastify'
 import { OpenAPIV3 } from 'openapi-types'
 

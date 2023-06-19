@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -540,6 +540,12 @@ importers:
       '@platformatic/sql-mapper':
         specifier: workspace:*
         version: link:../sql-mapper
+      '@platformatic/sql-openapi':
+        specifier: workspace:*
+        version: link:../sql-openapi
+      '@platformatic/types':
+        specifier: workspace:*
+        version: link:../types
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -610,6 +616,9 @@ importers:
       '@databases/pg':
         specifier: ^5.4.1
         version: 5.4.1
+      '@databases/sql':
+        specifier: ^3.3.0
+        version: 3.3.0
       '@databases/sqlite':
         specifier: ^4.0.2
         version: 4.0.2
@@ -619,6 +628,12 @@ importers:
       bindings:
         specifier: ^1.5.0
         version: 1.5.0
+      mercurius:
+        specifier: ^13.0.0
+        version: 13.0.0(graphql@16.6.0)
+      openapi-types:
+        specifier: ^12.1.3
+        version: 12.1.3
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -722,6 +737,9 @@ importers:
       '@platformatic/sql-openapi':
         specifier: workspace:*
         version: link:../sql-openapi
+      '@platformatic/types':
+        specifier: workspace:*
+        version: link:../types
       fastify-plugin:
         specifier: ^4.5.0
         version: 4.5.0
@@ -1064,6 +1082,9 @@ importers:
       '@platformatic/swagger-ui-theme':
         specifier: workspace:*
         version: link:../swagger-ui-theme
+      '@platformatic/types':
+        specifier: workspace:*
+        version: link:../types
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -1312,6 +1333,9 @@ importers:
       '@databases/sqlite':
         specifier: ^4.0.2
         version: 4.0.2
+      '@platformatic/types':
+        specifier: workspace:*
+        version: link:../types
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -1410,6 +1434,12 @@ importers:
         version: 17.1.0
 
   packages/swagger-ui-theme: {}
+
+  packages/types:
+    devDependencies:
+      fastify:
+        specifier: ^4.18.0
+        version: 4.18.0
 
   packages/utils:
     dependencies:
@@ -15062,7 +15092,6 @@ packages:
 
   /trim@0.0.1:
     resolution: {integrity: sha512-YzQV+TZg4AxpKxaTHK3c3D+kRDCGVEE7LemdlQZoQXn0iennk10RsIoY6ikzAqJTc9Xjl9C1/waHom/J86ziAQ==}
-    deprecated: Use String.prototype.trim() instead
     dev: true
 
   /trivial-deferred@1.1.2:
