@@ -69,27 +69,6 @@ async function buildServer (options, app) {
 
   const handler = await restartable(createRestartable)
 
-  configManager.on('update', async (newConfig) => {
-    handler.log.debug('config changed')
-    handler.log.trace({ newConfig }, 'new config')
-
-    if (newConfig.watch === false) {
-      /* c8 ignore next 4 */
-      if (handler.tsCompilerWatcher) {
-        handler.tsCompilerWatcher.kill('SIGTERM')
-        handler.log.debug('stop watching typescript files')
-      }
-
-      if (handler.fileWatcher) {
-        await handler.fileWatcher.stopWatching()
-        handler.log.debug('stop watching files')
-      }
-    }
-
-    await safeRestart(handler)
-    /* c8 ignore next 1 */
-  })
-
   configManager.on('error', function (err) {
     /* c8 ignore next 1 */
     handler.log.error({ err }, 'error reloading the configuration')
@@ -103,10 +82,10 @@ async function buildServer (options, app) {
   return handler
 }
 
+/* c8 ignore next 12 */
 async function safeRestart (app) {
   try {
     await app.restart()
-    /* c8 ignore next 8 */
   } catch (err) {
     app.log.error({
       err: {

@@ -9,7 +9,6 @@ const setupGraphQL = require('./lib/plugins/graphql.js')
 const setupClients = require('./lib/plugins/clients')
 const setupMetrics = require('./lib/plugins/metrics')
 const setupTsCompiler = require('./lib/plugins/typescript')
-const setupFileWatcher = require('./lib/plugins/file-watcher')
 const setupHealthCheck = require('./lib/plugins/health-check')
 const loadPlugins = require('./lib/plugins/plugins')
 
@@ -54,7 +53,10 @@ async function platformaticService (app, opts, toLoad = []) {
   }
 
   if (isKeyEnabled('watch', config)) {
-    await app.register(setupFileWatcher, { onFilesUpdated })
+    // If file watching is enabled here, that means the service was started
+    // without the runtime because the runtime explicitly disables watching on
+    // services that it starts. Warn the user that things will not go as planned.
+    app.log.warn('service was started with file watching enabled but watching is only available via the runtime')
   }
 
   if (config.server.cors) {
@@ -67,25 +69,6 @@ async function platformaticService (app, opts, toLoad = []) {
 
   if (!app.hasRoute({ url: '/', method: 'GET' }) && !Array.isArray(toLoad)) {
     await app.register(require('./lib/root-endpoint'))
-  }
-}
-
-/* c8 ignore next 18 */
-async function onFilesUpdated (app) {
-  // Reload the config as well, otherwise we will have problems
-  // in case the files watcher triggers the config watcher too
-  const configManager = app.platformatic.configManager
-  try {
-    app.log.debug('files changed')
-    await configManager.parse()
-    await app.restart()
-  } catch (err) {
-    app.log.error({
-      err: {
-        message: err.message,
-        stack: err.stack
-      }
-    }, 'failed to reload server')
   }
 }
 
