@@ -2,7 +2,7 @@ import { getVersion, getDependencyVersion, isFileAccessible } from '../utils.mjs
 import { createPackageJson } from '../create-package-json.mjs'
 import { createGitignore } from '../create-gitignore.mjs'
 import { getPkgManager } from '../get-pkg-manager.mjs'
-import { join } from 'path'
+import { join, relative } from 'path'
 import inquirer from 'inquirer'
 import { readFile, writeFile, mkdir } from 'fs/promises'
 import pino from 'pino'
@@ -46,14 +46,17 @@ export async function createPlatformaticRuntime (_args) {
   const pkgManager = getPkgManager()
 
   const projectDir = await askDir(logger, '.')
-  const servicesDir = await askDir(logger, 'services', 'Where would you like to load your services from?')
+
+  // Create the project directory
+  await mkdir(projectDir, { recursive: true })
+
+  const baseServicesDir = join(relative(process.cwd(), projectDir), 'services')
+  const servicesDir = await askDir(logger, baseServicesDir, 'Where would you like to load your services from?')
 
   const { runPackageManagerInstall } = await inquirer.prompt([
     getRunPackageManagerInstall(pkgManager)
   ])
 
-  // Create the project directory
-  await mkdir(projectDir, { recursive: true })
   await mkdir(servicesDir, { recursive: true })
 
   const fastifyVersion = await getDependencyVersion('fastify')
