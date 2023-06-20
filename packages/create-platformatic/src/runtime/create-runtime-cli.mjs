@@ -124,13 +124,24 @@ export async function createRuntimeService ({ servicesDir, names, logger }) {
     type: 'input',
     name: 'name',
     message: 'What is the name of the service?',
-    default: generateName().dashed
+    default: generateName().dashed,
+    validate: (value) => {
+      if (value.length === 0) {
+        return 'Please enter a name'
+      }
+
+      if (value.includes(' ')) {
+        return 'Please enter a name without spaces'
+      }
+
+      if (names.includes(value)) {
+        return 'This name is already used, please choose another one.'
+      }
+
+      return true
+    }
   })
 
-  if (names.includes(name)) {
-    logger.warn('This name is already used, please choose another one.')
-    return false
-  }
   names.push(name)
 
   const serviceDir = join(servicesDir, name)
