@@ -343,9 +343,13 @@ t.test('generate types on start while considering types directory', async ({ pla
   }
   equal(found, true)
 
+  t.comment('Sleep to the the file system flush the file')
+  await sleep(100)
+
+  t.comment('Adjusting type reference to avoid loops')
+  await adjustTypeReferenceToAvoidLoops(cwd)
+
   try {
-    t.comment('Adjusting type reference to avoid loops')
-    await adjustTypeReferenceToAvoidLoops(cwd)
     await execa(pathToTSD, { cwd })
     pass()
   } catch (err) {
