@@ -197,6 +197,9 @@ importers:
       abstract-logging:
         specifier: ^2.0.1
         version: 2.0.1
+      camelcase:
+        specifier: 6.x
+        version: 6.3.0
       code-block-writer:
         specifier: ^12.0.0
         version: 12.0.0
