@@ -12,6 +12,7 @@
   "dependencies": {
     "@platformatic/sql-mapper": "workspace:*",
     "@platformatic/sql-graphql": "workspace:*",
+    "@platformatic/db": "workspace:*",
     "fastify": "^4.6.0"
   }
 }

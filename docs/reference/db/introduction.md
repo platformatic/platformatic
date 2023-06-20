@@ -33,6 +33,7 @@ Platformatic DB is currently in [public beta](#public-beta).
   - Execute database operations via [mapped entities](/reference/sql-mapper/entities/introduction.md)
   - Write and execute [raw SQL queries](/reference/sql-mapper/introduction.md)
   - Write plugins in JavaScript or [TypeScript](/reference/cli.md#compile)
+  - Automatic generation of types based on the SQL tables
 - Start Platformatic DB [programmatically](/reference/db/programmatic.md) in tests or other applications
 
 :::info

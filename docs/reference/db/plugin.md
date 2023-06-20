@@ -88,3 +88,29 @@ Multiple plugins can be loaded in parallel by specifying an array:
   }
 }
 ```
+fastify.swagger()
+
+## TypeScript and autocompletion
+
+If you want to access any of the types provided by Platformatic DB, generate them using the `platformatic db types` command.
+This will create a `global.d.ts` file that you can now import everywhere, like so:
+
+```js
+/// <references <types="./global.d.ts" />
+```
+
+Remember to adjust the path to `global.d.ts`.
+
+### Plugin definition with TypeScript
+
+Here is an example of writing a plugin in TypeScript:
+
+```ts
+/// <reference types="./global.d.ts" />
+import { FastifyInstance, FastifyPluginOptions } from 'fastify'
+
+export default async function (fastify: FastifyInstance, opts: FastifyPluginOptions) {
+}
+```
+
+Note that you need to add the `"typescript": true` configuration to your `platformatic.service.json`.

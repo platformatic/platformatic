@@ -16,6 +16,7 @@ Platformatic Service is currently in [public beta](#public-beta).
 - Add custom functionality in a [Fastify plugin](/reference/db/plugin.md)
 - Write plugins in JavaScript or [TypeScript](/reference/cli.md#compile)
 - Start Platformatic Service [programmatically](/reference/service/programmatic.md) in tests or other applications
+- Fully typed
 
 ## Public beta
 

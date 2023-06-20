@@ -45,6 +45,7 @@ PLT_SERVER_LOGGER_LEVEL=info
 }
 
 const JS_PLUGIN_WITH_TYPES_SUPPORT = `\
+/// <reference types="@platformatic/service" />
 'use strict'
 /** @param {import('fastify').FastifyInstance} fastify */
 module.exports = async function (fastify, opts) {
@@ -53,6 +54,7 @@ module.exports = async function (fastify, opts) {
 `
 
 const TS_PLUGIN_WITH_TYPES_SUPPORT = `\
+/// <reference types="@platformatic/service" />
 import { FastifyInstance, FastifyPluginOptions } from 'fastify'
 
 export default async function (fastify: FastifyInstance, opts: FastifyPluginOptions) {
@@ -61,6 +63,7 @@ export default async function (fastify: FastifyInstance, opts: FastifyPluginOpti
 `
 
 const JS_ROUTES_WITH_TYPES_SUPPORT = `\
+/// <reference types="@platformatic/service" />
 'use strict'
 /** @param {import('fastify').FastifyInstance} fastify */
 module.exports = async function (fastify, opts) {
@@ -71,6 +74,7 @@ module.exports = async function (fastify, opts) {
 `
 
 const TS_ROUTES_WITH_TYPES_SUPPORT = `\
+/// <reference types="@platformatic/service" />
 import { FastifyInstance, FastifyPluginOptions } from 'fastify'
 
 declare module 'fastify' {
