@@ -79,31 +79,6 @@ async function compile (cwd, config, originalLogger) {
   }
 }
 
-// This path is tested but C8 does not see it that way given it needs to work
-// through execa.
-/* c8 ignore next 20 */
-async function compileWatch (cwd, config, originalLogger) {
-  const { execa, logger, tscExecutablePath } = await setup(cwd, config, originalLogger)
-  if (!tscExecutablePath) {
-    return false
-  }
-
-  try {
-    await execa(tscExecutablePath, ['--project', 'tsconfig.json', '--incremental', '--rootDir', '.'], { cwd })
-    logger.info('Typescript compilation completed successfully. Starting watch mode.')
-  } catch (error) {
-    throw new Error('Failed to compile typescript files: ' + error)
-  }
-
-  const child = execa(tscExecutablePath, ['--project', 'tsconfig.json', '--watch', '--incremental'], { cwd })
-  child.stdout.resume()
-  child.stderr.on('data', (data) => {
-    logger.error(data.toString())
-  })
-
-  return { child }
-}
-
 function buildCompileCmd (app) {
   return async function compileCmd (_args) {
     let fullPath = null
@@ -126,5 +101,4 @@ function buildCompileCmd (app) {
 }
 
 module.exports.compile = compile
-module.exports.compileWatch = compileWatch
 module.exports.buildCompileCmd = buildCompileCmd

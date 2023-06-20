@@ -164,7 +164,7 @@ t.test('start command should not compile typescript plugin with errors', async (
     await childProcess
     t.fail('should not compile bad typescript plugin')
   } catch (err) {
-    if (!err.stderr.includes('Found 1 error')) {
+    if (!err.stdout.includes('Found 1 error')) {
       t.comment(err.stdout)
       t.comment(err.stderr)
       t.fail('should throw one ts error')

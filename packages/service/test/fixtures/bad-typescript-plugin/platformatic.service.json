@@ -12,5 +12,5 @@
     "paths": ["plugin.ts"],
     "typescript": true
   },
-  "watch": true
+  "watch": false
 }
