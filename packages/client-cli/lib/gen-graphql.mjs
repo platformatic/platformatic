@@ -1,5 +1,6 @@
 import CodeBlockWriter from 'code-block-writer'
 import { capitalize } from './utils.mjs'
+import camelcase from 'camelcase'
 
 export function processGraphQL ({ schema, name, folder, url }) {
   schema = schema.__schema
@@ -18,7 +19,8 @@ const skip = new Set([
 ])
 
 function generateTypesFromGraphQL ({ schema, name }) {
-  const capitalizedName = capitalize(name)
+  const camelcasedName = camelcase(name)
+  const capitalizedName = capitalize(camelcasedName)
   /* eslint-disable new-cap */
   const writer = new CodeBlockWriter({
     indentNumberOfSpaces: 2,
@@ -33,7 +35,7 @@ function generateTypesFromGraphQL ({ schema, name }) {
   const pluginname = `${capitalizedName}plugin`
   const optionsname = `${capitalizedName}options`
 
-  writer.write(`type ${pluginname} = FastifyPluginAsync<NonNullable<${name}.${optionsname}>>`)
+  writer.write(`type ${pluginname} = FastifyPluginAsync<NonNullable<${camelcasedName}.${optionsname}>>`)
 
   writer.blankLine()
   writer.write('declare module \'fastify\'').block(() => {
@@ -52,7 +54,7 @@ function generateTypesFromGraphQL ({ schema, name }) {
     })
 
     writer.write('interface FastifyInstance').block(() => {
-      writer.quote(name)
+      writer.quote(camelcasedName)
       writer.writeLine(': GraphQLClient;')
       writer.newLine()
 
@@ -62,14 +64,14 @@ function generateTypesFromGraphQL ({ schema, name }) {
     writer.blankLine()
 
     writer.write('interface FastifyRequest').block(() => {
-      writer.quote(name)
+      writer.quote(camelcasedName)
       writer.writeLine(': GraphQLClient;')
       writer.newLine()
     })
   })
 
   writer.blankLine()
-  writer.write(`declare namespace ${name}`).block(() => {
+  writer.write(`declare namespace ${camelcasedName}`).block(() => {
     writer.write(`export interface ${optionsname}`).block(() => {
       writer.writeLine('url: string')
     })
@@ -86,17 +88,18 @@ function generateTypesFromGraphQL ({ schema, name }) {
       }
     }
 
-    writer.writeLine(`export const ${name}: ${pluginname};`)
-    writer.writeLine(`export { ${name} as default };`)
+    writer.writeLine(`export const ${camelcasedName}: ${pluginname};`)
+    writer.writeLine(`export { ${camelcasedName} as default };`)
   })
 
   writer.blankLine()
-  writer.writeLine(`declare function ${name}(...params: Parameters<${pluginname}>): ReturnType<${pluginname}>;`)
-  writer.writeLine(`export = ${name};`)
+  writer.writeLine(`declare function ${camelcasedName}(...params: Parameters<${pluginname}>): ReturnType<${pluginname}>;`)
+  writer.writeLine(`export = ${camelcasedName};`)
   return writer.toString()
 }
 
 function generateImplementationFromGraqhQL ({ name, url }) {
+  const camelcasedName = camelcase(name)
   /* eslint-disable new-cap */
   const writer = new CodeBlockWriter({
     indentNumberOfSpaces: 2,
@@ -115,13 +118,13 @@ function generateImplementationFromGraqhQL ({ name, url }) {
 
   url = new URL(url)
 
-  const functionName = `generate${capitalize(name)}ClientPlugin`
+  const functionName = `generate${capitalize(camelcasedName)}ClientPlugin`
   writer.write(`async function ${functionName} (app, opts)`).block(() => {
     writer.writeLine('const url = new URL(opts.url)')
     writer.writeLine(`url.pathname = '${url.pathname}'`)
     writer.write('app.register(pltClient, ').inlineBlock(() => {
       writer.writeLine('type: \'graphql\',')
-      writer.writeLine(`name: '${name}',`)
+      writer.writeLine(`name: '${camelcasedName}',`)
       writer.writeLine(`path: join(__dirname, '${name}.schema.graphql'),`)
       writer.writeLine('url: url.toString()')
     })
