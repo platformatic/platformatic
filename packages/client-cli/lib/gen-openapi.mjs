@@ -3,6 +3,7 @@ import jsonpointer from 'jsonpointer'
 import { generateOperationId } from '@platformatic/client'
 import { capitalize, classCase } from './utils.mjs'
 import { STATUS_CODES } from 'node:http'
+import camelcase from 'camelcase'
 
 export function processOpenAPI ({ schema, name, fullResponse }) {
   return {
@@ -12,6 +13,8 @@ export function processOpenAPI ({ schema, name, fullResponse }) {
 }
 
 function generateImplementationFromOpenAPI ({ schema, name, fullResponse }) {
+  const camelcasedName = camelcase(name)
+
   /* eslint-disable new-cap */
   const writer = new CodeBlockWriter({
     indentNumberOfSpaces: 2,
@@ -28,11 +31,11 @@ function generateImplementationFromOpenAPI ({ schema, name, fullResponse }) {
   writer.writeLine('const { join } = require(\'path\')')
   writer.blankLine()
 
-  const functionName = `generate${capitalize(name)}ClientPlugin`
+  const functionName = `generate${capitalize(camelcasedName)}ClientPlugin`
   writer.write(`async function ${functionName} (app, opts)`).block(() => {
     writer.write('app.register(pltClient, ').inlineBlock(() => {
       writer.writeLine('type: \'openapi\',')
-      writer.writeLine(`name: '${name}',`)
+      writer.writeLine(`name: '${camelcasedName}',`)
       writer.writeLine(`path: join(__dirname, '${name}.openapi.json'),`)
       writer.writeLine('url: opts.url,')
       writer.writeLine(`fullResponse: ${fullResponse}`)
@@ -51,7 +54,8 @@ function generateImplementationFromOpenAPI ({ schema, name, fullResponse }) {
 }
 
 function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
-  const capitalizedName = capitalize(name)
+  const camelcasedName = camelcase(name)
+  const capitalizedName = capitalize(camelcasedName)
   const { paths } = schema
 
   const operations = Object.entries(paths).flatMap(([path, methods]) => {
@@ -96,8 +100,8 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
     for (const operation of operations) {
       const operationId = operation.operation.operationId
       const { parameters, responses, requestBody } = operation.operation
-      const operationRequestName = `${capitalize(operationId.replace('-', ''))}Request`
-      const operationResponseName = `${capitalize(operationId.replace('-', ''))}Response`
+      const operationRequestName = `${capitalize(operationId)}Request`
+      const operationResponseName = `${capitalize(operationId)}Response`
       interfaces.write(`interface ${operationRequestName}`).block(() => {
         const addedProps = new Set()
         if (parameters) {
@@ -140,7 +144,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
 
       let responseType = responseTypes.join(' | ')
       if (fullResponse) responseType = `FullResponse<${responseType}>`
-      writer.writeLine(`${operationId.replace('-', '')}(req: ${operationRequestName}): Promise<${responseType}>;`)
+      writer.writeLine(`${operationId}(req: ${operationRequestName}): Promise<${responseType}>;`)
     }
   })
 
@@ -148,7 +152,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   const pluginName = `${capitalizedName}Plugin`
   const optionsName = `${capitalizedName}Options`
 
-  writer.write(`type ${pluginName} = FastifyPluginAsync<NonNullable<${name}.${optionsName}>>`)
+  writer.write(`type ${pluginName} = FastifyPluginAsync<NonNullable<${camelcasedName}.${optionsName}>>`)
 
   writer.blankLine()
   writer.write('declare module \'fastify\'').block(() => {
@@ -156,7 +160,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
       writer.writeLine('async getHeaders(req: FastifyRequest, reply: FastifyReply): Promise<Record<string,string>>;')
     })
     writer.write('interface FastifyInstance').block(() => {
-      writer.quote(name)
+      writer.quote(camelcasedName)
       writer.write(`: ${capitalizedName};`)
       writer.newLine()
 
@@ -166,25 +170,25 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
     writer.blankLine()
 
     writer.write('interface FastifyRequest').block(() => {
-      writer.quote(name)
+      writer.quote(camelcasedName)
       writer.write(`: ${capitalizedName};`)
       writer.newLine()
     })
   })
 
   writer.blankLine()
-  writer.write(`declare namespace ${name}`).block(() => {
+  writer.write(`declare namespace ${camelcasedName}`).block(() => {
     writer.write(`export interface ${optionsName}`).block(() => {
       writer.writeLine('url: string')
     })
 
-    writer.writeLine(`export const ${name}: ${pluginName};`)
-    writer.writeLine(`export { ${name} as default };`)
+    writer.writeLine(`export const ${camelcasedName}: ${pluginName};`)
+    writer.writeLine(`export { ${camelcasedName} as default };`)
   })
 
   writer.blankLine()
-  writer.writeLine(`declare function ${name}(...params: Parameters<${pluginName}>): ReturnType<${pluginName}>;`)
-  writer.writeLine(`export = ${name};`)
+  writer.writeLine(`declare function ${camelcasedName}(...params: Parameters<${pluginName}>): ReturnType<${pluginName}>;`)
+  writer.writeLine(`export = ${camelcasedName};`)
 
   return interfaces.toString() + writer.toString()
 }
