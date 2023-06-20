@@ -118,6 +118,7 @@ async function parseClientsAndComposer (configManager) {
       const promises = parsed.clients.map((client) => {
         // eslint-disable-next-line no-async-promise-executor
         return new Promise(async (resolve, reject) => {
+          let clientName = client.id ?? ''
           let clientUrl
           let missingKey
 
@@ -135,11 +136,15 @@ async function parseClientsAndComposer (configManager) {
           }
 
           const isLocal = missingKey && client.url === `{${missingKey}}`
-          const clientAbsolutePath = pathResolve(service.path, client.path)
-          const clientPackageJson = join(clientAbsolutePath, 'package.json')
-          const clientMetadata = JSON.parse(await readFile(clientPackageJson, 'utf8'))
+
           /* c8 ignore next 20 - unclear why c8 is unhappy for nearly 20 lines here */
-          const clientName = clientMetadata.name ?? ''
+          if (!clientName) {
+            const clientAbsolutePath = pathResolve(service.path, client.path)
+            const clientPackageJson = join(clientAbsolutePath, 'package.json')
+            const clientMetadata = JSON.parse(await readFile(clientPackageJson, 'utf8'))
+
+            clientName = clientMetadata.name ?? ''
+          }
 
           if (clientUrl === undefined) {
             // Combine the service name with the client name to avoid collisions
