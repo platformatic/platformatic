@@ -245,9 +245,13 @@ t.test('generate types on start', async ({ plan, equal, teardown, fail, pass }) 
   }
   equal(found, true)
 
+  t.comment('sleep a bit to allow the fs to write everything down')
+  await sleep(100)
+
+  t.comment('Adjusting type reference to avoid loops')
+  await adjustTypeReferenceToAvoidLoops(cwd)
+
   try {
-    t.comment('Adjusting type reference to avoid loops')
-    await adjustTypeReferenceToAvoidLoops(cwd)
     await execa(pathToTSD, { cwd })
     pass()
   } catch (err) {
