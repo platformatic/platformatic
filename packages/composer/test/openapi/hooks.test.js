@@ -91,7 +91,7 @@ test('should throw an error if addComposerOnRouteHook called when app is ready',
   await composer.ready()
 
   try {
-    composer.addComposerOnRouteHook('/users/{id}', ['GET'], () => {})
+    composer.platformatic.addComposerOnRouteHook('/users/{id}', ['GET'], () => {})
     t.fail('should throw an error')
   } catch (err) {
     t.equal(err.message, 'Fastify instance is already listening. Cannot call "addComposerOnRouteHook"!')

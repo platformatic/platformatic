@@ -22,7 +22,7 @@ async function composeOpenAPI (app) {
     isApplicationReady = true
   })
 
-  app.decorate('addComposerOnRouteHook', function (openApiPath, methods, hook) {
+  function addComposerOnRouteHook (openApiPath, methods, hook) {
     /* c8 ignore next 5 */
     if (isApplicationReady) {
       throw new Error(
@@ -44,6 +44,12 @@ async function composeOpenAPI (app) {
       }
       routeHooks[method].push(hook)
     }
+  }
+
+  Object.defineProperty(app.platformatic, 'addComposerOnRouteHook', {
+    value: addComposerOnRouteHook,
+    writable: false,
+    configurable: false
   })
 }
 

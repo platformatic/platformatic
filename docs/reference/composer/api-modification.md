@@ -11,7 +11,7 @@ If you want to modify automatically generated API, you can use composer custom `
 _Example_
 
 ```js
-app.addComposerOnRouteHook('/users/{id}', ['GET'], routeOptions => {
+app.platformatic.addComposerOnRouteHook('/users/{id}', ['GET'], routeOptions => {
   routeOptions.schema.response[200] = {
     type: 'object',
     properties: {
