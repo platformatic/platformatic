@@ -45,14 +45,14 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
   writer.writeLine('let baseUrl = \'\'')
   if (language === 'ts') {
     writer.writeLine(
-      `export const setBaseUrl = (newUrl: string) : void => { baseUrl = newUrl }`
+      'export const setBaseUrl = (newUrl: string) : void => { baseUrl = newUrl }'
     )
   } else {
     writer.writeLine(
-      `/**  @type {import('./api-types.d.ts').setBaseUrl} */`
+      '/**  @type {import(\'./api-types.d.ts\').setBaseUrl} */'
     )
     writer.writeLine(
-      `export const setBaseUrl = (newUrl) => { baseUrl = newUrl }`
+      'export const setBaseUrl = (newUrl) => { baseUrl = newUrl }'
     )
   }
   writer.blankLine()
@@ -171,9 +171,8 @@ function generateTypesFromOpenAPI ({ schema, name }) {
   })
   /* eslint-enable new-cap */
 
-
   writer.write(`export interface ${capitalizedName}`).block(() => {
-    writer.writeLine(`setBaseUrl(newUrl: string) : void;`)
+    writer.writeLine('setBaseUrl(newUrl: string) : void;')
     for (const operation of operations) {
       const operationId = operation.operation.operationId
       const { parameters, responses, requestBody } = operation.operation
