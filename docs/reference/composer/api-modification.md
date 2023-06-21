@@ -13,9 +13,6 @@ If you want to modify automatically generated API, you can use composer custom `
 If you want to get access to the response payload, you can set `proxyResponsePayload` to `false` in the route options.
 Otherwise, the payload will be proxied as a stream directly to the response.
 
-```js
-
-```js
 _Example_
 
 ```js
