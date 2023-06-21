@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -975,16 +975,16 @@ importers:
     devDependencies:
       '@playwright/test':
         specifier: ^1.33.0
-        version: 1.34.1
+        version: 1.35.0
       '@types/react':
         specifier: ^18.2.0
-        version: 18.2.6
+        version: 18.2.12
       '@types/react-dom':
         specifier: ^18.2.1
-        version: 18.2.4
+        version: 18.2.5
       '@vitejs/plugin-react':
         specifier: ^3.1.0
-        version: 3.1.0(vite@4.3.8)
+        version: 3.1.0(vite@4.3.9)
       react:
         specifier: ^18.2.0
         version: 18.2.0
@@ -996,13 +996,13 @@ importers:
         version: 9.0.0
       standard:
         specifier: ^17.0.0
-        version: 17.0.0
+        version: 17.1.0(@typescript-eslint/parser@5.59.11)
       typescript:
         specifier: ^5.0.4
-        version: 5.0.4
+        version: 5.1.3
       vite:
         specifier: ^4.3.4
-        version: 4.3.8(@types/node@18.15.10)
+        version: 4.3.9(@types/node@20.3.1)
 
   packages/metaconfig:
     dependencies:
@@ -15396,7 +15396,6 @@ packages:
 
   /trim@0.0.1:
     resolution: {integrity: sha512-YzQV+TZg4AxpKxaTHK3c3D+kRDCGVEE7LemdlQZoQXn0iennk10RsIoY6ikzAqJTc9Xjl9C1/waHom/J86ziAQ==}
-    deprecated: Use String.prototype.trim() instead
     dev: true
 
   /trivial-deferred@1.1.2:
