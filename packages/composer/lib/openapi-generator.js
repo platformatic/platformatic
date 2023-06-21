@@ -71,7 +71,14 @@ async function composeOpenAPI (app, opts) {
         config: { openApiPath },
         handler: (req, reply) => {
           const path = req.raw.url.split('?')[0]
-          reply.from(origin + path.slice(prefix.length))
+
+          const replyOptions = {}
+
+          if (req.routeConfig?.onComposerResponse) {
+            replyOptions.onResponse = req.routeConfig.onComposerResponse
+          }
+
+          reply.from(origin + path.slice(prefix.length), replyOptions)
         }
       }
     }
