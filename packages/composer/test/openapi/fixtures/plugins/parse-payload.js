@@ -4,8 +4,6 @@ const fp = require('fastify-plugin')
 
 module.exports = fp(async function (app) {
   app.platformatic.addComposerOnRouteHook('/users/{id}', ['GET'], routeOptions => {
-    routeOptions.config.proxyResponsePayload = false
-
     routeOptions.schema.response[200] = {
       type: 'object',
       properties: {
@@ -14,23 +12,18 @@ module.exports = fp(async function (app) {
       }
     }
 
-    async function onPreSerialization (request, reply, payload) {
-      return {
-        user_id: payload.id,
-        first_name: payload.name
-      }
+    async function onComposerResponse (request, reply, body) {
+      const { id, name } = await body.json()
+      reply.send({ user_id: id, first_name: name })
     }
-
-    routeOptions.preSerialization = [onPreSerialization]
+    routeOptions.config.onComposerResponse = onComposerResponse
   })
 
   app.platformatic.addComposerOnRouteHook('/text', ['GET'], routeOptions => {
-    routeOptions.config.proxyResponsePayload = false
-
-    async function onSend (request, reply, payload) {
-      return 'onSend hook: ' + payload
+    async function onComposerResponse (request, reply, body) {
+      const data = await body.text()
+      reply.send('onSend hook: ' + data)
     }
-
-    routeOptions.onSend = [onSend]
+    routeOptions.config.onComposerResponse = onComposerResponse
   })
 })

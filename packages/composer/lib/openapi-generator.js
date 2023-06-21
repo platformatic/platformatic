@@ -63,20 +63,6 @@ async function composeOpenAPI (app, opts) {
     destroyAgent: false
   })
 
-  async function parseReplyFromPayload (request, reply, res) {
-    const headers = reply.getHeaders()
-    const contentType = headers['content-type']
-
-    let payload = res
-    if (contentType?.includes('application/json')) {
-      payload = await res.json()
-    } else {
-      payload = await res.text()
-    }
-
-    reply.send(payload)
-  }
-
   await app.register(await import('fastify-openapi-glue'), {
     specification: composedOpenApiSchema,
     operationResolver: (operationId, method, openApiPath) => {
@@ -87,8 +73,9 @@ async function composeOpenAPI (app, opts) {
           const path = req.raw.url.split('?')[0]
 
           const replyOptions = {}
-          if (req.routeConfig?.proxyResponsePayload === false) {
-            replyOptions.onResponse = parseReplyFromPayload
+
+          if (req.routeConfig?.onComposerResponse) {
+            replyOptions.onResponse = req.routeConfig.onComposerResponse
           }
 
           reply.from(origin + path.slice(prefix.length), replyOptions)
