@@ -38,7 +38,7 @@ async function frontendTemplate ({ url, language, name }) {
   await writeFile(`${name}-types.d.ts`, types)
   await writeFile(`${name}.${language}`, implementation)
 
-  console.log(`Created the following files: ${name}.d.ts, ${name}.${language}`)
+  console.log(`Created the following files: ${name}-types.d.ts, ${name}.${language}`)
 }
 
 export async function command (argv) {
@@ -53,10 +53,9 @@ export async function command (argv) {
   })
 
   const missingParams = !urlOrLanguage && !language
-  const onlyLanguageReceived = urlOrLanguage === 'ts' || language === 'js'
   const missingLanguage = !language || (language !== 'ts' && language !== 'js')
 
-  if (missingParams || onlyLanguageReceived || missingLanguage) {
+  if (missingParams || missingLanguage) {
     await help.toStdout(['invalid-params'])
     process.exit(1)
   }
