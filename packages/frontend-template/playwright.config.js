@@ -48,24 +48,18 @@ const config = {
       use: {
         ...devices['Desktop Chrome']
       }
-    },
-
-    {
-      name: 'firefox',
-      use: {
-        ...devices['Desktop Firefox']
-      }
     }
-  ]
+  ],
 
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
   // outputDir: 'test-results/',
 
   /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'npx platformatic db --config=./test/e2e/fixtures/e2e-test-config.json',
-  //   port: 3042,
-  // },
+  webServer: {
+    command: 'npm run dev',
+    url: 'http://localhost:5173/',
+    reuseExistingServer: !process.env.CI
+  }
 }
 
 export default config

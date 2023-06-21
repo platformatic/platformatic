@@ -156,6 +156,14 @@ If you encounter issues running tests (f.e. failing tests without making a chang
 
 __Before opening a pull request, please ensure that the tests are passing for the specific project you are working on.__
 
+### Updating the CLI docs
+
+The [cli.md](./docs/reference/cli.md) file is automatically generated through the [gen-cli-doc.mjs](./scripts/gen-cli-doc.mjs) script and you must not manually change it.
+
+To update the CLI docs:
+1. Update/add the txt helpers
+2. run `node scripts/gen-cli-doc.mjs`
+
 ### Releasing
 
 All platformatic modules share the same release number and are released

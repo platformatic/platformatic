@@ -8,6 +8,7 @@ import { runService } from '@platformatic/service/service.mjs'
 import { runComposer } from '@platformatic/composer/composer.mjs'
 import platformaticStart from '@platformatic/start'
 import { login } from '@platformatic/authenticate/authenticate.js'
+import { command as frontend } from '@platformatic/frontend-template'
 import { command as client } from '@platformatic/client-cli'
 import { readFile } from 'fs/promises'
 import { join } from 'desm'
@@ -53,6 +54,7 @@ program.register('help service', async (args) => runService(['help', ...args]))
 program.register({ command: 'login', strict: true }, login)
 program.register('gh', gh)
 program.register('deploy', deploy)
+program.register('frontend', frontend)
 
 const args = minimist(process.argv.slice(2), {
   boolean: ['help', 'version'],
