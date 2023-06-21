@@ -17,6 +17,11 @@ async function readOpenApiSchema (pathToSchema) {
   return JSON.parse(schemaFile)
 }
 
+async function readOpenApiConfig (pathToConfig) {
+  const openapiConfig = await readFile(pathToConfig, 'utf-8')
+  return JSON.parse(openapiConfig)
+}
+
 async function getOpenApiSchema (origin, openapi) {
   if (openapi.url) {
     const openApiUrl = origin + openapi.url
@@ -35,6 +40,15 @@ async function composeOpenAPI (app, opts) {
   for (const { id, origin, openapi } of services) {
     if (!openapi) continue
 
+    let config = null
+    if (openapi.config) {
+      try {
+        config = await readOpenApiConfig(openapi.config)
+      } catch (error) {
+        throw new Error(`Could not read openapi config for "${id}" service`)
+      }
+    }
+
     let schema = null
     try {
       schema = await getOpenApiSchema(origin, openapi)
@@ -44,12 +58,11 @@ async function composeOpenAPI (app, opts) {
     }
 
     const prefix = openapi.prefix ?? ''
-    const ignore = openapi.ignore ?? []
 
     for (const path in schema.paths) {
       apiByApiRoutes[prefix + path] = { origin, prefix }
     }
-    openApiSchemas.push({ id, prefix, ignore, schema })
+    openApiSchemas.push({ id, prefix, schema, config })
   }
 
   app.decorate('openApiSchemas', openApiSchemas)
