@@ -7,6 +7,31 @@ const SwaggerUI = require('@fastify/swagger-ui')
 
 const { buildServer } = require('..')
 
+async function createBasicService (t) {
+  const app = fastify({
+    keepAliveTimeout: 10
+  })
+
+  await app.register(Swagger, {
+    openapi: {
+      info: {
+        title: 'Test',
+        version: '0.1.0'
+      }
+    }
+  })
+  await app.register(SwaggerUI)
+
+  app.get('/text', async () => {
+    return 'Some text'
+  })
+
+  t.teardown(async () => {
+    await app.close()
+  })
+
+  return app
+}
 async function createOpenApiService (t, entitiesNames = []) {
   const app = fastify({
     keepAliveTimeout: 10
@@ -105,7 +130,7 @@ async function createOpenApiService (t, entitiesNames = []) {
         }
       }
     }, async (req) => {
-      return storage.get(req.params.id)
+      return storage.get(parseInt(req.params.id))
     })
 
     app.post(`/${entity}/:id`, {
@@ -139,7 +164,7 @@ async function createOpenApiService (t, entitiesNames = []) {
         }
       }
     }, async (req) => {
-      return storage.delete(req.params.id)
+      return storage.delete(parseInt(req.params.id))
     })
   }
 
@@ -253,5 +278,6 @@ async function testEntityRoutes (t, origin, entitiesRoutes) {
 module.exports = {
   createComposer,
   createOpenApiService,
+  createBasicService,
   testEntityRoutes
 }
