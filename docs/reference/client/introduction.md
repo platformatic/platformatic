@@ -35,7 +35,7 @@ module.exports = async function (app, opts) {
     const res = await app.myclient.graphql({
       query: 'query { movies { title } }'
     })
-    return res 
+    return res
   })
 }
 ```
@@ -66,6 +66,10 @@ The client configuration in the `platformatic.db.json` and `platformatic.service
 ```
 
 Note that the generator would also have updated the `.env` and `.env.sample` files if they exists.
+
+It is possible to add a `serviceId` property each client object shown above.
+This is not required, but if using the Platformatic Runtime, the `serviceId`
+property will be used to identify the service dependency.
 
 ## Types Generator
 
@@ -224,13 +228,13 @@ fastify.post('/', async (request, reply) => {
   const res = await request.movies.graphql({
     query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
   })
-  return res 
+  return res
 })
 
 // OpenAPI
 fastify.post('/', async (request, reply) => {
   const res = await request.movies.createMovie({ title: 'foo' })
-  return res 
+  return res
 })
 
 fastify.listen({ port: 3000 })
@@ -268,7 +272,7 @@ module.exports = async function (app, opts) {
     const res = await app.myclient.graphql({
       query: 'query { movies { title } }'
     })
-    return res 
+    return res
   })
 }
 ```
