@@ -118,7 +118,7 @@ async function parseClientsAndComposer (configManager) {
       const promises = parsed.clients.map((client) => {
         // eslint-disable-next-line no-async-promise-executor
         return new Promise(async (resolve, reject) => {
-          let clientName = client.id ?? ''
+          let clientName = client.serviceId ?? ''
           let clientUrl
           let missingKey
 
