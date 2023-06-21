@@ -163,9 +163,11 @@ async function startCommandInRuntime (args) {
     let runtime
 
     if (configType === 'runtime') {
+      config.configManager.args = config.args
       runtime = await runtimeStartWithConfig(config.configManager)
     } else {
       const wrappedConfig = await wrapConfigInRuntimeConfig(config)
+      wrappedConfig.args = config.args
       runtime = await runtimeStartWithConfig(wrappedConfig)
     }
 

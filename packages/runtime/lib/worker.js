@@ -1,5 +1,6 @@
 'use strict'
 
+const inspector = require('node:inspector')
 const { parentPort, workerData } = require('node:worker_threads')
 const RuntimeApi = require('./api')
 
@@ -34,6 +35,17 @@ process.once('unhandledRejection', (err) => {
 })
 
 function main () {
+  const { inspectorOptions } = workerData.config
+
+  if (inspectorOptions) {
+    /* c8 ignore next 3 */
+    if (inspectorOptions.hotReloadDisabled) {
+      logger.info('debugging flags were detected. hot reloading has been disabled')
+    }
+
+    inspector.open(inspectorOptions.port, inspectorOptions.host, inspectorOptions.breakFirstLine)
+  }
+
   const runtime = new RuntimeApi(workerData.config, logger, loaderPort)
   runtime.startListening(parentPort)
 
