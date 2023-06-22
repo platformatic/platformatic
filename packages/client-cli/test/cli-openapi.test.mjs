@@ -710,6 +710,50 @@ app.listen({ port: 0 });
   })
 })
 
+test('config support with folder', async ({ teardown, comment, match }) => {
+  try {
+    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+
+  await app.start()
+  teardown(async () => {
+    await app.close()
+  })
+
+  const dir = await moveToTmpdir(teardown)
+  comment(`working in ${dir}`)
+
+  const pltServiceConfig = {
+    $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugins: {
+      paths: ['./plugin.js']
+    }
+  }
+
+  await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
+
+  await fs.writeFile(join(dir, '.env'), 'FOO=bar')
+  await fs.writeFile(join(dir, '.env.sample'), 'FOO=bar')
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--folder', 'uncanny'])
+
+  {
+    const config = JSON.parse(await fs.readFile('./platformatic.service.json'))
+    match(config, {
+      clients: [{
+        path: 'uncanny',
+        url: '{PLT_MOVIES_URL}'
+      }]
+    })
+  }
+})
+
 test('name with tilde', async ({ teardown, comment, same }) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
