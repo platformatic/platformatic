@@ -149,8 +149,32 @@ the services managed by the composer. Each service object supports the following
 - **`url`** (`string`) - A path of the route that exposes the OpenAPI specification. If a service is a Platformatic Service or Platformatic DB, use `/documentation/json` as a value. Use this or `file` option to specify the OpenAPI specification.
 - **`file`** (`string`) - A path to the OpenAPI specification file. Use this or `url` option to specify the OpenAPI specification.
 - **`prefix`** (`string`) - A prefix for the OpenAPI specification. All service routes will be prefixed with this value.
-- **`ignore`** (`array`) - A list of routes to ignore when composing the OpenAPI specification. Ignored routes will not be available through composed API.
-Example: `["/metrics/{id}", { path: "/payment", methods: ["GET", "POST"] }]`.
+- **`config`** (`string`) - A path to the OpenAPI configuration file. This file is used to customize the OpenAPI specification. See the [openapi-configuration](#openapi-configuration) for details.
+
+##### `openapi-configuration`
+
+The OpenAPI configuration file is a JSON file that is used to customize the OpenAPI specification. It supports the following options:
+
+- **`ignore`** (`boolean`) - If `true`, the route will be ignored by the composer.
+If you want to ignore a specific method, use the `ignore` option in the nested method object.
+
+  _Example_
+
+  ```json
+  {
+    "paths": {
+      "/users": {
+        "ignore": true
+      },
+      "/users/{id}": {
+        "get": { "ignore": true },
+        "put": { "ignore": true }
+      }
+    }
+  }
+  ```
+
+
 
 _Examples_
 
