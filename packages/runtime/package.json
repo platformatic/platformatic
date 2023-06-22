@@ -7,7 +7,7 @@
     "plt-runtime": "./runtime.mjs"
   },
   "scripts": {
-    "test": "npm run lint && c8 -x fixtures -x test node --test && tsd",
+    "test": "npm run lint && c8 --100 -x fixtures -x test node --test && tsd",
     "lint": "standard | snazzy"
   },
   "author": "Matteo Collina <hello@matteocollina.com>",

@@ -268,7 +268,7 @@ test('supports configuration overrides', async (t) => {
   })
 })
 
-test('restarts on config change without overriding the configManager', async (t) => {
+test('restarts on config change without overriding the configManager', { only: true }, async (t) => {
   const { logger, stream } = getLoggerAndStream()
   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
   const configFile = join(appPath, 'platformatic.service.json')
@@ -294,10 +294,14 @@ test('restarts on config change without overriding the configManager', async (t)
   await app.start()
   const configManager = app.config.configManager
   await utimes(configFile, new Date(), new Date())
+  let first = false
   for await (const log of stream) {
     // Wait for the server to restart, it will print a line containing "Server listening"
     if (log.msg.includes('listening')) {
-      break
+      if (first) {
+        break
+      }
+      first = true
     }
   }
   assert.strictEqual(configManager, app.server.platformatic.configManager)
