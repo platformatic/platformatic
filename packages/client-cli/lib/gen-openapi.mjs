@@ -1,9 +1,8 @@
 import CodeBlockWriter from 'code-block-writer'
 import jsonpointer from 'jsonpointer'
 import { generateOperationId } from '@platformatic/client'
-import { capitalize, classCase } from './utils.mjs'
+import { capitalize, classCase, toJavaScriptName } from './utils.mjs'
 import { STATUS_CODES } from 'node:http'
-import camelcase from 'camelcase'
 
 export function processOpenAPI ({ schema, name, fullResponse }) {
   return {
@@ -13,7 +12,7 @@ export function processOpenAPI ({ schema, name, fullResponse }) {
 }
 
 function generateImplementationFromOpenAPI ({ schema, name, fullResponse }) {
-  const camelcasedName = camelcase(name)
+  const camelcasedName = toJavaScriptName(name)
 
   /* eslint-disable new-cap */
   const writer = new CodeBlockWriter({
@@ -54,7 +53,7 @@ function generateImplementationFromOpenAPI ({ schema, name, fullResponse }) {
 }
 
 function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
-  const camelcasedName = camelcase(name)
+  const camelcasedName = toJavaScriptName(name)
   const capitalizedName = capitalize(camelcasedName)
   const { paths } = schema
 
