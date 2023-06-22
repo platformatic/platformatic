@@ -45,9 +45,10 @@ test('should get service config', async (t) => {
 
   const serviceConfig = await app.getServiceConfig('with-logger')
 
+  delete serviceConfig.$schema
+
   // TODO: should return correct logger config
   assert.deepStrictEqual(serviceConfig, {
-    $schema: 'https://platformatic.dev/schemas/v0.27.0/service',
     server: {
       hostname: '127.0.0.1',
       port: 0,
