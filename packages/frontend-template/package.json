@@ -16,7 +16,6 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "prepublish": "npm run build",
     "preview": "vite preview",
     "test:e2e": "playwright test",
     "test:types": "tsc",
