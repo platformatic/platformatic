@@ -56,3 +56,12 @@ test('performs a topological sort on services depending on allowCycles', async (
     })
   })
 })
+
+test('can resolve service id from client package.json if not provided', async () => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-client-without-id.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const entry = config.configManager.current.serviceMap.get('serviceApp')
+
+  assert.strictEqual(entry.dependencies.length, 1)
+  assert.strictEqual(entry.dependencies[0].id, 'with-logger')
+})

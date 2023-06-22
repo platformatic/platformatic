@@ -512,6 +512,9 @@ const clients = {
   items: {
     type: 'object',
     properties: {
+      serviceId: {
+        type: 'string'
+      },
       path: {
         type: 'string',
         resolvePath: true

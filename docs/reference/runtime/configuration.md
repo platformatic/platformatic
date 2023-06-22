@@ -72,6 +72,11 @@ these default values.
 runtime. Each service object supports the following settings:
 
 - **`id`** (**required**, `string`) - A unique identifier for the microservice.
+When working with the Platformatic Composer, this value corresponds to the `id`
+property of each object in the `services` section of the config file. When
+working with client objects, this corresponds to the optional `serviceId`
+property or the `name` field in the client's `package.json` file if a
+`serviceId` is not explicitly provided.
 - **`path`** (**required**, `string`) - The path to the directory containing
 the microservice.
 - **`config`** (**required**, `string`) - The configuration file used to start
