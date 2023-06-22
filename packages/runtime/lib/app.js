@@ -1,5 +1,5 @@
 'use strict'
-const { once, EventEmitter } = require('node:events')
+const { once } = require('node:events')
 const { dirname, basename } = require('node:path')
 const { FileWatcher } = require('@platformatic/utils')
 const {
@@ -7,7 +7,7 @@ const {
   loadConfig
 } = require('./unified-api')
 
-class PlatformaticApp extends EventEmitter {
+class PlatformaticApp {
   #hotReload
   #loaderPort
   #restarting
@@ -16,7 +16,6 @@ class PlatformaticApp extends EventEmitter {
   #logger
 
   constructor (appConfig, loaderPort, logger) {
-    super()
     this.appConfig = appConfig
     this.config = null
     this.#hotReload = false
@@ -56,7 +55,6 @@ class PlatformaticApp extends EventEmitter {
 
     await this.start()
     this.#restarting = false
-    this.emit('restarted')
   }
 
   async start () {

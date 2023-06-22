@@ -3,7 +3,6 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const { once } = require('node:events')
 const { utimes } = require('node:fs/promises')
 const { PlatformaticApp } = require('../lib/app')
 const fixturesDir = join(__dirname, '..', 'fixtures')
@@ -270,7 +269,7 @@ test('supports configuration overrides', async (t) => {
 })
 
 test('restarts on config change without overriding the configManager', async (t) => {
-  const { logger } = getLoggerAndStream()
+  const { logger, stream } = getLoggerAndStream()
   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
   const configFile = join(appPath, 'platformatic.service.json')
   const config = {
@@ -295,6 +294,11 @@ test('restarts on config change without overriding the configManager', async (t)
   await app.start()
   const configManager = app.config.configManager
   await utimes(configFile, new Date(), new Date())
-  await once(app, 'restarted')
+  for await (const log of stream) {
+    // Wait for the server to restart, it will print a line containing "Server listening"
+    if (log.msg.includes('listening')) {
+      break
+    }
+  }
   assert.strictEqual(configManager, app.server.platformatic.configManager)
 })
