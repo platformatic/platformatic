@@ -225,7 +225,7 @@ class PlatformaticApp extends EventEmitter {
       watchIgnore: [...(this.#originalWatch?.ignore || []), basename(configManager.fullPath)]
     })
 
-    fileWatcher.on('update', async (...args) => {
+    fileWatcher.on('update', async () => {
       this.server.log.debug('files changed')
       this.restart()
     })
