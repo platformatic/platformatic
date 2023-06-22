@@ -1,13 +1,13 @@
 'use strict'
-const { once } = require('node:events')
-const { dirname } = require('node:path')
+const { once, EventEmitter } = require('node:events')
+const { dirname, basename } = require('node:path')
 const { FileWatcher } = require('@platformatic/utils')
 const {
   buildServer,
   loadConfig
 } = require('./unified-api')
 
-class PlatformaticApp {
+class PlatformaticApp extends EventEmitter {
   #hotReload
   #loaderPort
   #restarting
@@ -16,6 +16,7 @@ class PlatformaticApp {
   #logger
 
   constructor (appConfig, loaderPort, logger) {
+    super()
     this.appConfig = appConfig
     this.config = null
     this.#hotReload = false
@@ -55,6 +56,7 @@ class PlatformaticApp {
 
     await this.start()
     this.#restarting = false
+    this.emit('restarted')
   }
 
   async start () {
@@ -62,7 +64,9 @@ class PlatformaticApp {
       throw new Error('application is already started')
     }
 
-    await this.#initializeConfig()
+    if (!this.#restarting) {
+      await this.#initializeConfig()
+    }
     const { configManager } = this.config
     const config = configManager.current
 
@@ -84,9 +88,6 @@ class PlatformaticApp {
     } catch (err) {
       this.#logAndExit(err)
     }
-
-    this.server.platformatic.configManager = configManager
-    this.server.platformatic.config = config
 
     if (config.plugins !== undefined && this.#originalWatch !== false) {
       this.#startFileWatching()
@@ -156,38 +157,41 @@ class PlatformaticApp {
     })
     const { configManager } = this.config
 
-    if (appConfig._configOverrides instanceof Map) {
-      try {
-        appConfig._configOverrides.forEach((value, key) => {
-          if (typeof key !== 'string') {
-            throw new Error('config path must be a string.')
-          }
+    function applyOverrides () {
+      if (appConfig._configOverrides instanceof Map) {
+        try {
+          appConfig._configOverrides.forEach((value, key) => {
+            if (typeof key !== 'string') {
+              throw new Error('config path must be a string.')
+            }
 
-          const parts = key.split('.')
-          let next = configManager.current
-          let obj
+            const parts = key.split('.')
+            let next = configManager.current
+            let obj
 
-          for (let i = 0; next !== undefined && i < parts.length; ++i) {
-            obj = next
-            next = obj[parts[i]]
-          }
+            for (let i = 0; next !== undefined && i < parts.length; ++i) {
+              obj = next
+              next = obj[parts[i]]
+            }
 
-          if (next !== undefined) {
-            obj[parts.at(-1)] = value
-          }
-        })
-      } catch (err) {
-        configManager.stopWatching()
-        throw err
+            if (next !== undefined) {
+              obj[parts.at(-1)] = value
+            }
+          })
+        } catch (err) {
+          configManager.stopWatching()
+          throw err
+        }
       }
     }
 
-    this.#setuplogger(configManager)
+    applyOverrides()
+
     this.#hotReload = this.appConfig.hotReload
 
     configManager.on('update', async (newConfig) => {
-      /* c8 ignore next 4 */
       this.server.platformatic.config = newConfig
+      applyOverrides()
       this.server.log.debug('config changed')
       this.server.log.trace({ newConfig }, 'new config')
       await this.restart()
@@ -212,14 +216,16 @@ class PlatformaticApp {
   #startFileWatching () {
     const server = this.server
     const { configManager } = server.platformatic
+    // TODO FileWatcher and ConfigManager both watch the configuration file
+    // we should remove the watching from the ConfigManager
     const fileWatcher = new FileWatcher({
       path: dirname(configManager.fullPath),
       /* c8 ignore next 2 */
       allowToWatch: this.#originalWatch?.allow,
-      watchIgnore: this.#originalWatch?.ignore
+      watchIgnore: [...(this.#originalWatch?.ignore || []), basename(configManager.fullPath)]
     })
 
-    fileWatcher.on('update', async () => {
+    fileWatcher.on('update', async (...args) => {
       this.server.log.debug('files changed')
       this.restart()
     })

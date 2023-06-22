@@ -32,6 +32,7 @@ if (isatty(1)) {
 
 const logger = pino(transport)
 
+/* c8 ignore next 4 */
 process.once('uncaughtException', (err) => {
   logger.error({ err }, 'runtime error')
   throw err

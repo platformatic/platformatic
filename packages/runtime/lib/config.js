@@ -161,8 +161,8 @@ async function parseClientsAndComposer (configManager) {
 
           const dependency = configManager.current.serviceMap.get(clientName)
 
+          /* c8 ignore next 4 */
           if (dependency === undefined) {
-            /* c8 ignore next 3 */
             reject(new Error(`service '${service.id}' has unknown dependency: '${clientName}'`))
             return
           }
