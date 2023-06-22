@@ -1,4 +1,5 @@
 import { writeFile, access } from 'fs/promises'
+import camelcase from 'camelcase'
 import { join } from 'path'
 
 export function capitalize (str) {
@@ -24,4 +25,8 @@ export async function appendToBothEnvs (dir, key, value) {
     appendToEnv(join(dir, '.env'), key, value),
     appendToEnv(join(dir, '.env.sample'), key, value)
   ])
+}
+
+export function toJavaScriptName (str) {
+  return camelcase(str.replace(/[^a-zA-Z0-9]+/gi, ' '))
 }
