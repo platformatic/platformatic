@@ -1,6 +1,5 @@
 import CodeBlockWriter from 'code-block-writer'
-import { capitalize } from './utils.mjs'
-import camelcase from 'camelcase'
+import { capitalize, toJavaScriptName } from './utils.mjs'
 
 export function processGraphQL ({ schema, name, folder, url }) {
   schema = schema.__schema
@@ -19,7 +18,7 @@ const skip = new Set([
 ])
 
 function generateTypesFromGraphQL ({ schema, name }) {
-  const camelcasedName = camelcase(name)
+  const camelcasedName = toJavaScriptName(name)
   const capitalizedName = capitalize(camelcasedName)
   /* eslint-disable new-cap */
   const writer = new CodeBlockWriter({
@@ -99,7 +98,7 @@ function generateTypesFromGraphQL ({ schema, name }) {
 }
 
 function generateImplementationFromGraqhQL ({ name, url }) {
-  const camelcasedName = camelcase(name)
+  const camelcasedName = toJavaScriptName(name)
   /* eslint-disable new-cap */
   const writer = new CodeBlockWriter({
     indentNumberOfSpaces: 2,
