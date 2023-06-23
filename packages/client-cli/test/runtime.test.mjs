@@ -20,6 +20,12 @@ PLT_SERVER_LOGGER_LEVEL=info
 DATABASE_URL=sqlite://./db.sqlite
 `)
 
+  await writeFile(join(dir, 'services', 'languid-nobleman', '.env'), `
+PLT_SERVER_HOSTNAME=127.0.0.1
+PORT=3004
+PLT_SERVER_LOGGER_LEVEL=info
+`)
+
   process.chdir(join(dir, 'services', 'languid-nobleman'))
 
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
@@ -83,6 +89,12 @@ PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3003
 PLT_SERVER_LOGGER_LEVEL=info
 DATABASE_URL=sqlite://./db.sqlite
+`)
+
+  await writeFile(join(dir, 'services', 'languid-nobleman', '.env'), `
+PLT_SERVER_HOSTNAME=127.0.0.1
+PORT=3004
+PLT_SERVER_LOGGER_LEVEL=info
 `)
 
   process.chdir(join(dir, 'services', 'languid-nobleman'))
