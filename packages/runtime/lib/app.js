@@ -114,6 +114,7 @@ class PlatformaticApp {
       await this.server.close()
     }
 
+    await this.config.configManager.stopWatching()
     await this.#stopFileWatching()
     this.#started = false
   }

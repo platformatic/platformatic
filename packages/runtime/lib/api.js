@@ -1,84 +1,33 @@
 'use strict'
 
-const { once, EventEmitter } = require('node:events')
-const { randomUUID } = require('node:crypto')
-
-const MAX_LISTENERS_COUNT = 100
-
-class RuntimeApiClient extends EventEmitter {
-  #worker
-
-  constructor (worker) {
-    super()
-    this.setMaxListeners(MAX_LISTENERS_COUNT)
-
-    this.#worker = worker
-    this.#worker.on('message', (message) => {
-      if (message.operationId) {
-        this.emit(message.operationId, message)
-      }
-    })
-  }
-
-  async start () {
-    return this.#sendCommand('plt:start-services')
-  }
-
-  async close () {
-    await this.#sendCommand('plt:stop-services')
-    await once(this.#worker, 'exit')
-  }
-
-  async restart () {
-    return this.#sendCommand('plt:restart-services')
-  }
-
-  async getServices () {
-    return this.#sendCommand('plt:get-services')
-  }
-
-  async getServiceDetails (id) {
-    return this.#sendCommand('plt:get-service-details', { id })
-  }
-
-  async getServiceConfig (id) {
-    return this.#sendCommand('plt:get-service-config', { id })
-  }
-
-  async startService (id) {
-    return this.#sendCommand('plt:start-service', { id })
-  }
-
-  async stopService (id) {
-    return this.#sendCommand('plt:stop-service', { id })
-  }
-
-  async inject (id, injectParams) {
-    return this.#sendCommand('plt:inject', { id, injectParams })
-  }
-
-  async #sendCommand (command, params = {}) {
-    const operationId = randomUUID()
-
-    this.#worker.postMessage({ operationId, command, params })
-    const [message] = await once(this, operationId)
-
-    const { error, data } = message
-    if (error !== null) {
-      throw new Error(error)
-    }
-
-    return JSON.parse(data)
-  }
-}
+const FastifyUndiciDispatcher = require('fastify-undici-dispatcher')
+const { Agent, setGlobalDispatcher } = require('undici')
+const { PlatformaticApp } = require('./app')
 
 class RuntimeApi {
   #services
   #dispatcher
+  #loaderPort
 
-  constructor (services, dispatcher) {
-    this.#services = services
-    this.#dispatcher = dispatcher
+  constructor (config, logger, loaderPort) {
+    this.#services = new Map()
+
+    for (let i = 0; i < config.services.length; ++i) {
+      const service = config.services[i]
+      const app = new PlatformaticApp(service, loaderPort, logger)
+
+      this.#services.set(service.id, app)
+    }
+
+    const globalAgent = new Agent()
+    const globalDispatcher = new FastifyUndiciDispatcher({
+      dispatcher: globalAgent,
+      // setting the domain here allows for fail-fast scenarios
+      domain: '.plt.local'
+    })
+
+    setGlobalDispatcher(globalDispatcher)
+    this.#dispatcher = globalDispatcher
   }
 
   async startListening (parentPort) {
@@ -116,9 +65,9 @@ class RuntimeApi {
   async #runCommandHandler (command, params) {
     switch (command) {
       case 'plt:start-services':
-        return this.#startServices(params)
+        return this.startServices(params)
       case 'plt:stop-services':
-        return this.#stopServices(params)
+        return this.stopServices(params)
       case 'plt:restart-services':
         return this.#restartServices(params)
       case 'plt:get-services':
@@ -139,7 +88,7 @@ class RuntimeApi {
     }
   }
 
-  async #startServices () {
+  async startServices () {
     let entrypointUrl = null
     for (const service of this.#services.values()) {
       await service.start()
@@ -154,7 +103,7 @@ class RuntimeApi {
     return entrypointUrl
   }
 
-  async #stopServices () {
+  async stopServices () {
     for (const service of this.#services.values()) {
       const serviceStatus = service.getStatus()
       if (serviceStatus === 'started') {
@@ -254,4 +203,4 @@ class RuntimeApi {
   }
 }
 
-module.exports = { RuntimeApi, RuntimeApiClient }
+module.exports = RuntimeApi

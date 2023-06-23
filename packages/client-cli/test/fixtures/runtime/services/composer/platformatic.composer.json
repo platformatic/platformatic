@@ -1,0 +1,28 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v0.25.0/composer",
+  "server": {
+    "hostname": "{PLT_SERVER_HOSTNAME}",
+    "port": "{PORT}",
+    "logger": {
+      "level": "{PLT_SERVER_LOGGER_LEVEL}"
+    }
+  },
+  "composer": {
+    "services": [
+      {
+        "id": "languid-nobleman",
+        "openapi": {
+          "url": "/documentation/json"
+        }
+      },
+      {
+        "id": "somber-chariot",
+        "openapi": {
+          "url": "/documentation/json"
+        }
+      }
+    ],
+    "refreshTimeout": 1000
+  },
+  "watch": true
+}
