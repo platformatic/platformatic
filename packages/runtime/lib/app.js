@@ -113,7 +113,6 @@ class PlatformaticApp {
       await this.server.close()
     }
 
-    await this.config.configManager.stopWatching()
     await this.#stopFileWatching()
     this.#started = false
   }
@@ -237,12 +236,14 @@ class PlatformaticApp {
 
   async #stopFileWatching () {
     const watcher = this.server.platformatic.fileWatcher
+    // The configManager automatically watches for the config file changes
+    // therefore we need to stop it all the times.
+    await this.config.configManager.stopWatching()
 
     if (watcher) {
-      await watcher.stopWatching()
       this.server.log.debug('stop watching files')
+      await watcher.stopWatching()
       this.server.platformatic.fileWatcher = undefined
-      this.server.platformatic.configManager.stopWatching()
     }
   }
 

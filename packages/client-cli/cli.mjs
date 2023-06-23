@@ -14,6 +14,7 @@ import { analyze, write } from '@platformatic/metaconfig'
 import graphql from 'graphql'
 import { appendToBothEnvs } from './lib/utils.mjs'
 import { RuntimeApi, platformaticRuntime } from '@platformatic/runtime'
+import { loadConfig } from '@platformatic/service'
 import { findUp } from 'find-up'
 import pino from 'pino'
 import pinoPretty from 'pino-pretty'
@@ -150,6 +151,8 @@ async function downloadAndProcess ({ url, name, folder, config, r: fullResponse,
     readFromFileAndWrite.bind(null, logger, url, folder, name, fullResponse)
   ]
 
+  // readFromFileAndWrite is the last one, and it will throw if it cannot read the file
+  // so we don't need to check for running out of options to try
   while (!found) {
     found = await toTry.shift()()
   }
@@ -234,12 +237,7 @@ export async function command (argv) {
   if (options.runtime) {
     const runtimeConfigFile = await findUp('platformatic.runtime.json')
 
-    const configManager = new ConfigManager({
-      source: runtimeConfigFile,
-      ...platformaticRuntime.configManagerConfig
-    })
-
-    await configManager.parseAndValidate()
+    const { configManager } = await loadConfig({}, ['-c', runtimeConfigFile], platformaticRuntime)
 
     configManager.current.hotReload = false
 
