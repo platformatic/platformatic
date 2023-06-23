@@ -15,7 +15,6 @@ export async function appendToEnv (file, key, value) {
   try {
     await access(file)
     await writeFile(file, str, { flag: 'a' })
-    console.log(file, str)
     /* c8 ignore next 1 */
   } catch {}
 }

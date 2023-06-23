@@ -1,25 +1,13 @@
 'use strict'
 
 const { parentPort, workerData } = require('node:worker_threads')
-const FastifyUndiciDispatcher = require('fastify-undici-dispatcher')
-const { Agent, setGlobalDispatcher } = require('undici')
-const { PlatformaticApp } = require('./app')
-const { RuntimeApi } = require('./api')
+const RuntimeApi = require('./api')
 
 const loaderPort = globalThis.LOADER_PORT // Added by loader.mjs.
-const globalAgent = new Agent()
-const globalDispatcher = new FastifyUndiciDispatcher({
-  dispatcher: globalAgent,
-  // setting the domain here allows for fail-fast scenarios
-  domain: '.plt.local'
-})
 const pino = require('pino')
 const { isatty } = require('tty')
 
-const applications = new Map()
-
 delete globalThis.LOADER_PORT
-setGlobalDispatcher(globalDispatcher)
 
 let transport
 
@@ -45,17 +33,8 @@ process.once('unhandledRejection', (err) => {
   throw err
 })
 
-async function main () {
-  const { services } = workerData.config
-
-  for (let i = 0; i < services.length; ++i) {
-    const service = services[i]
-    const app = new PlatformaticApp(service, loaderPort, logger)
-
-    applications.set(service.id, app)
-  }
-
-  const runtime = new RuntimeApi(applications, globalDispatcher)
+function main () {
+  const runtime = new RuntimeApi(workerData.config, logger, loaderPort)
   runtime.startListening(parentPort)
 
   parentPort.postMessage('plt:init')

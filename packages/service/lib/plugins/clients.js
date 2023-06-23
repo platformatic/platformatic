@@ -3,9 +3,8 @@
 const fp = require('fastify-plugin')
 
 async function setupClients (app, opts) {
-  const clientsConfig = opts
-  for (const { path, url } of clientsConfig) {
-    app.register(require(path), { url })
+  for (const { path, url, serviceId } of opts) {
+    app.register(require(path), { url, serviceId })
   }
 }
 

@@ -67,7 +67,47 @@ The client configuration in the `platformatic.db.json` and `platformatic.service
 
 Note that the generator would also have updated the `.env` and `.env.sample` files if they exists.
 
-It is possible to add a `serviceId` property each client object shown above.
+## Generating a client for a service running within Platformatic Runtime
+
+Platformatic Runtime allows you to create a network of services that are not exposed.
+To create a client to invoke one of those services from another, run:
+
+```bash
+$ platformatic client --name <clientname> --runtime <serviceId>
+```
+
+Where `<clientname>` is the name of the client and `<serviceId>` is the id of the given service
+(which correspond in the basic case with the folder name of that service).
+The client generated is identical to the one in the previous section.
+
+Note that this command looks for a `platformatic.runtime.json` in a parent directory.
+
+### Example
+
+As an example, consider a network of three microservices:
+
+- `somber-chariot`, an instance of Platformatic DB;
+- `languid-noblemen`, an instance of Platformatic Service;
+- `pricey-paesant`, an instance of Platformatic Composer, which is also the runtime entrypoint.
+
+From within the `languid-noblemen` folder, we can run:
+
+```bash
+$ platformatic client --name chariot --runtime somber-chariot
+```
+
+The client configuration in the `platformatic.db.json` and `platformatic.service.json` would look like:
+
+```json
+{
+  "clients": [{
+    "path": "./chariot",
+    "serviceId": "somber-chariot"
+  }]
+}
+```
+
+Even if the client is generated from an HTTP endpoint, it is possible to add a `serviceId` property each client object shown above.
 This is not required, but if using the Platformatic Runtime, the `serviceId`
 property will be used to identify the service dependency.
 
