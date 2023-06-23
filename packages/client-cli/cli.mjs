@@ -122,7 +122,7 @@ async function downloadAndWriteGraphQL (logger, url, folder, name) {
 }
 
 async function readFromFileAndWrite (logger, file, folder, name, fullResponse) {
-  logger.info(`Trying to schema from file ${file}`)
+  logger.info(`Trying to read schema from file ${file}`)
   const text = await readFile(file, 'utf8')
 
   // try OpenAPI first
