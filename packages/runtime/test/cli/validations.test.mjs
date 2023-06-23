@@ -1,6 +1,7 @@
 import assert from 'node:assert'
 import { readFile } from 'node:fs/promises'
 import { test } from 'node:test'
+import { stripVTControlCharacters } from 'node:util'
 import { join } from 'desm'
 import { execa } from 'execa'
 import { cliPath } from './helper.mjs'
@@ -42,7 +43,7 @@ test('print validation errors', async () => {
 
   assert(error)
   assert.strictEqual(error.exitCode, 1)
-  assert.strictEqual(error.stdout, `
+  assert.strictEqual(stripVTControlCharacters(error.stdout), `
 ┌─────────┬─────────────┬─────────────────────────────────────────────────────────────────┐
 │ (index) │    path     │                             message                             │
 ├─────────┼─────────────┼─────────────────────────────────────────────────────────────────┤

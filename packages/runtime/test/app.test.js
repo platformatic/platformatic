@@ -268,7 +268,7 @@ test('supports configuration overrides', async (t) => {
   })
 })
 
-test('restarts on config change without overriding the configManager', { only: true }, async (t) => {
+test('restarts on config change without overriding the configManager', async (t) => {
   const { logger, stream } = getLoggerAndStream()
   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
   const configFile = join(appPath, 'platformatic.service.json')
