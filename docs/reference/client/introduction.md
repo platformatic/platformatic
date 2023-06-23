@@ -78,7 +78,7 @@ $ platformatic client --name <clientname> --runtime <serviceId>
 
 Where `<clientname>` is the name of the client and `<serviceId>` is the id of the given service
 (which correspond in the basic case with the folder name of that service).
-The client generated is identical to the one of the previous section.
+The client generated is identical to the one in the previous section.
 
 Note that this command looks for a `platformatic.runtime.json` in a parent directory.
 
@@ -107,7 +107,7 @@ The client configuration in the `platformatic.db.json` and `platformatic.service
 }
 ```
 
-Even if the client is generated from an http endpoint, it is possible to add a `serviceId` property each client object shown above.
+Even if the client is generated from an HTTP endpoint, it is possible to add a `serviceId` property each client object shown above.
 This is not required, but if using the Platformatic Runtime, the `serviceId`
 property will be used to identify the service dependency.
 
