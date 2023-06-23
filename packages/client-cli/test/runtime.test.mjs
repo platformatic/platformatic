@@ -4,10 +4,10 @@ import { join, dirname } from 'path'
 import { fileURLToPath } from 'node:url'
 import * as desm from 'desm'
 import { execa } from 'execa'
-import { cp, writeFile } from 'node:fs/promises'
+import { cp, writeFile, readFile } from 'node:fs/promises'
 import split from 'split2'
 
-test('openapi client generation (javascript) via the runtime', async ({ teardown, comment, same }) => {
+test('openapi client generation (javascript) via the runtime', async ({ teardown, comment, same, match }) => {
   const dir = await moveToTmpdir(teardown)
   comment(`working in ${dir}`)
 
@@ -16,6 +16,14 @@ test('openapi client generation (javascript) via the runtime', async ({ teardown
   process.chdir(join(dir, 'services', 'languid-nobleman'))
 
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
+
+  const read = JSON.parse(await readFile(join(dir, 'services', 'languid-nobleman', 'platformatic.service.json'), 'utf8'))
+  match(read, {
+    clients: [{
+      serviceId: 'somber-chariot',
+      path: 'movies'
+    }]
+  })
 
   const toWrite = `
 'use strict'

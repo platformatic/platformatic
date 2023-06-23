@@ -524,7 +524,7 @@ const clients = {
       }
     },
     additionalProperties: false,
-    required: ['path', 'url']
+    required: ['path']
   }
 }
 

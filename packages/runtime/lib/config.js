@@ -121,21 +121,25 @@ async function parseClientsAndComposer (configManager) {
           let clientName = client.serviceId ?? ''
           let clientUrl
           let missingKey
+          let isLocal = false
 
-          try {
-            clientUrl = await cm.replaceEnv(client.url)
-            /* c8 ignore next 2 - unclear why c8 is unhappy here */
-          } catch (err) {
-            if (err.name !== 'MissingValueError') {
-              /* c8 ignore next 3 */
-              reject(err)
-              return
+          if (clientName === '' || client.url !== undefined) {
+            try {
+              clientUrl = await cm.replaceEnv(client.url)
+              /* c8 ignore next 2 - unclear why c8 is unhappy here */
+            } catch (err) {
+              if (err.name !== 'MissingValueError') {
+                /* c8 ignore next 3 */
+                reject(err)
+                return
+              }
+
+              missingKey = err.key
             }
-
-            missingKey = err.key
+            isLocal = missingKey && client.url === `{${missingKey}}`
+          } else {
+            isLocal = true
           }
-
-          const isLocal = missingKey && client.url === `{${missingKey}}`
 
           /* c8 ignore next 20 - unclear why c8 is unhappy for nearly 20 lines here */
           if (!clientName) {

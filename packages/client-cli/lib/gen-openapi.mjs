@@ -37,6 +37,7 @@ function generateImplementationFromOpenAPI ({ schema, name, fullResponse }) {
       writer.writeLine(`name: '${camelcasedName}',`)
       writer.writeLine(`path: join(__dirname, '${name}.openapi.json'),`)
       writer.writeLine('url: opts.url,')
+      writer.writeLine('serviceId: opts.serviceId,')
       writer.writeLine(`fullResponse: ${fullResponse}`)
     })
     writer.write(')')

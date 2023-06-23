@@ -171,17 +171,20 @@ async function downloadAndProcess ({ url, name, folder, config, r: fullResponse,
       throw new Error(`Client ${runtime} already exists in ${config}`)
     }
     const toPush = {
-      path: `${relative(dirname(resolve(config)), resolve(folder))}`,
-      url: `{PLT_${name.toUpperCase()}_URL}`
+      path: `${relative(dirname(resolve(config)), resolve(folder))}`
     }
     if (runtime) {
       toPush.serviceId = runtime
+    } else {
+      toPush.url = `{PLT_${name.toUpperCase()}_URL}`
     }
     meta.config.clients.push(toPush)
     await write(meta)
-    const toSaveUrl = new URL(url)
-    toSaveUrl.pathname = ''
-    await appendToBothEnvs(join(dirname(config)), `PLT_${name.toUpperCase()}_URL`, toSaveUrl)
+    if (!runtime) {
+      const toSaveUrl = new URL(url)
+      toSaveUrl.pathname = ''
+      await appendToBothEnvs(join(dirname(config)), `PLT_${name.toUpperCase()}_URL`, toSaveUrl)
+    }
   }
 }
 

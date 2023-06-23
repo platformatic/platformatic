@@ -125,6 +125,7 @@ function generateImplementationFromGraqhQL ({ name, url }) {
       writer.writeLine('type: \'graphql\',')
       writer.writeLine(`name: '${camelcasedName}',`)
       writer.writeLine(`path: join(__dirname, '${name}.schema.graphql'),`)
+      writer.writeLine('serviceId: opts.serviceId,')
       writer.writeLine('url: url.toString()')
     })
     writer.write(')')

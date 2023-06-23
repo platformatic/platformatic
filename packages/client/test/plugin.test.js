@@ -7,6 +7,7 @@ const { join } = require('path')
 const client = require('..')
 const fs = require('fs/promises')
 const Fastify = require('fastify')
+const { MockAgent, setGlobalDispatcher, getGlobalDispatcher } = require('undici')
 
 test('wrong type', async ({ teardown, same, rejects }) => {
   const app = Fastify()
@@ -332,6 +333,48 @@ test('configureClient getHeaders', async ({ teardown, same, rejects }) => {
 
   same(res.statusCode, 200)
   same(res.json(), {
+    id: 1,
+    title: 'The Matrix'
+  })
+})
+
+test('serviceId', async ({ teardown, same, rejects }) => {
+  const agent = getGlobalDispatcher()
+  teardown(() => {
+    setGlobalDispatcher(agent)
+  })
+  const mockAgent = new MockAgent()
+  mockAgent.disableNetConnect()
+  setGlobalDispatcher(mockAgent)
+
+  // Provide the base url to the request
+  const mockPool = mockAgent.get('http://movies.plt.local')
+
+  // intercept the request
+  mockPool.intercept({
+    path: '/movies/',
+    method: 'POST',
+    body: JSON.stringify({
+      title: 'The Matrix'
+    })
+  }).reply(200, {
+    id: 1,
+    title: 'The Matrix'
+  })
+
+  const app = Fastify()
+
+  await app.register(client, {
+    type: 'openapi',
+    serviceId: 'movies',
+    path: join(__dirname, 'fixtures', 'movies', 'openapi.json')
+  })
+
+  const movie = await app.client.createMovie({
+    title: 'The Matrix'
+  })
+
+  same(movie, {
     id: 1,
     title: 'The Matrix'
   })

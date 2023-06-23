@@ -200,6 +200,10 @@ async function plugin (app, opts) {
     opts.getHeaders = undefined
   }
 
+  if (opts.serviceId && !opts.url) {
+    opts.url = `http://${opts.serviceId}.plt.local`
+  }
+
   if (opts.type === 'openapi') {
     client = await buildOpenAPIClient(opts)
   } else if (opts.type === 'graphql') {
