@@ -13,6 +13,13 @@ test('openapi client generation (javascript) via the runtime', async ({ teardown
 
   await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
 
+  await writeFile(join(dir, 'services', 'somber-chariot', '.env'), `
+PLT_SERVER_HOSTNAME=127.0.0.1
+PORT=3003
+PLT_SERVER_LOGGER_LEVEL=info
+DATABASE_URL=sqlite://./db.sqlite
+`)
+
   process.chdir(join(dir, 'services', 'languid-nobleman'))
 
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
@@ -70,6 +77,13 @@ test('generate client twice', async ({ teardown, comment, same, rejects }) => {
   comment(`working in ${dir}`)
 
   await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
+
+  await writeFile(join(dir, 'services', 'somber-chariot', '.env'), `
+PLT_SERVER_HOSTNAME=127.0.0.1
+PORT=3003
+PLT_SERVER_LOGGER_LEVEL=info
+DATABASE_URL=sqlite://./db.sqlite
+`)
 
   process.chdir(join(dir, 'services', 'languid-nobleman'))
 
