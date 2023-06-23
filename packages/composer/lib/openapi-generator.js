@@ -1,10 +1,10 @@
 'use strict'
 
 const { readFile } = require('node:fs/promises')
-
 const { request, getGlobalDispatcher } = require('undici')
 const fp = require('fastify-plugin')
 
+const modifyOpenApi = require('./openapi-modifier')
 const composeOpenApi = require('./openapi-composer')
 
 async function fetchOpenApiSchema (openApiUrl) {
@@ -67,6 +67,9 @@ async function composeOpenAPI (app, opts) {
 
   app.decorate('openApiSchemas', openApiSchemas)
 
+  for (const api of openApiSchemas) {
+    api.schema = modifyOpenApi(app, api)
+  }
   const composedOpenApiSchema = composeOpenApi(openApiSchemas, opts.openapi)
 
   const dispatcher = getGlobalDispatcher()

@@ -318,6 +318,9 @@ importers:
       help-me:
         specifier: ^4.2.0
         version: 4.2.0
+      json-schema-traverse:
+        specifier: ^1.0.0
+        version: 1.0.0
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -1964,7 +1967,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.12.9
-      '@babel/helper-plugin-utils': 7.10.4
+      '@babel/helper-plugin-utils': 7.22.5
       '@babel/plugin-syntax-object-rest-spread': 7.8.3(@babel/core@7.12.9)
       '@babel/plugin-transform-parameters': 7.22.5(@babel/core@7.12.9)
     dev: true
@@ -8345,7 +8348,7 @@ packages:
       eslint-scope: 7.2.0
       eslint-utils: 3.0.0(eslint@8.4.1)
       eslint-visitor-keys: 3.4.1
-      espree: 9.2.0
+      espree: 9.5.2
       esquery: 1.5.0
       esutils: 2.0.3
       fast-deep-equal: 3.1.3
