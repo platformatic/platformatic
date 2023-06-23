@@ -13,7 +13,7 @@
     "typescript": true
   },
   "clients": [{
-    "path": "./hello",
+    "path": "hello",
     "url": "{PLT_CLIENT_URL}"
   }],
   "metrics": false,

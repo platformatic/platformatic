@@ -4,7 +4,7 @@ import parseArgs from 'minimist'
 import isMain from 'es-main'
 import helpMe from 'help-me'
 import { readFile, writeFile, mkdir, access } from 'fs/promises'
-import { join, dirname } from 'path'
+import { join, dirname, relative, resolve } from 'path'
 import * as desm from 'desm'
 import { request } from 'undici'
 import { processOpenAPI } from './lib/gen-openapi.mjs'
@@ -171,7 +171,7 @@ async function downloadAndProcess ({ url, name, folder, config, r: fullResponse,
       throw new Error(`Client ${runtime} already exists in ${config}`)
     }
     const toPush = {
-      path: `./${name}`,
+      path: `${relative(dirname(resolve(config)), resolve(folder))}`,
       url: `{PLT_${name.toUpperCase()}_URL}`
     }
     if (runtime) {

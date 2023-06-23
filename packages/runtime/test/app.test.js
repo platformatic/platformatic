@@ -3,6 +3,7 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
+const { utimes } = require('node:fs/promises')
 const { PlatformaticApp } = require('../lib/app')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 const pino = require('pino')
@@ -265,4 +266,43 @@ test('supports configuration overrides', async (t) => {
     await app.start()
     assert.strictEqual(app.config.configManager.current.server.keepAliveTimeout, 1)
   })
+})
+
+test('restarts on config change without overriding the configManager', { only: true }, async (t) => {
+  const { logger, stream } = getLoggerAndStream()
+  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
+  const configFile = join(appPath, 'platformatic.service.json')
+  const config = {
+    id: 'serviceApp',
+    config: configFile,
+    path: appPath,
+    entrypoint: true,
+    hotReload: true,
+    dependencies: [],
+    dependents: [],
+    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
+  }
+  const app = new PlatformaticApp(config, null, logger)
+
+  t.after(async function () {
+    try {
+      await app.stop()
+    } catch (err) {
+      console.error(err)
+    }
+  })
+  await app.start()
+  const configManager = app.config.configManager
+  await utimes(configFile, new Date(), new Date())
+  let first = false
+  for await (const log of stream) {
+    // Wait for the server to restart, it will print a line containing "Server listening"
+    if (log.msg.includes('listening')) {
+      if (first) {
+        break
+      }
+      first = true
+    }
+  }
+  assert.strictEqual(configManager, app.server.platformatic.configManager)
 })
