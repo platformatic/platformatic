@@ -136,7 +136,7 @@ Compile typescript plugins.
 ```
 
 As a result of executing this command, the Platformatic DB will compile typescript
-plugins in the `outDir` directory. 
+plugins in the `outDir` directory.
 
 If not specified, the configuration specified will be loaded from
 `platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
@@ -422,7 +422,7 @@ Compile typescript plugins.
 ```
 
 As a result of executing this command, the Platformatic DB will compile typescript
-plugins in the `outDir` directory. 
+plugins in the `outDir` directory.
 
 If not specified, the configuration specified will be loaded from
 `platformatic.service.json`, `platformatic.service.yml`, or `platformatic.service.tml` in the current directory.
@@ -553,6 +553,11 @@ Start a Platformatic application with the following command:
 $ platformatic start
 ```
 
+Options:
+
+  * `-c, --config <path>`: Path to the configuration file.
+  * `--inspect[=[host:]port]`: Start the Node.js debugger. `host` defaults to `'127.0.0.1'`. `port` defaults to 9229. Use caution when binding to a public host:port combination.
+  * `--inspect-brk[=[host:]port]`: Start the Node.js debugger and block until a client has attached. `host` defaults to `'127.0.0.1'`. `port` defaults to 9229. Use caution when binding to a public host:port combination.
 
 ### frontend
 

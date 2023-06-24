@@ -37,6 +37,7 @@ async function _transformConfig (configManager) {
 
   configManager.current.allowCycles = !!configManager.current.allowCycles
   configManager.current.serviceMap = new Map()
+  configManager.current.inspectorOptions = null
 
   let hasValidEntrypoint = false
 
@@ -238,4 +239,60 @@ async function wrapConfigInRuntimeConfig ({ configManager, args }) {
   return cm
 }
 
-module.exports = { platformaticRuntime, wrapConfigInRuntimeConfig }
+function parseInspectorOptions (configManager) {
+  const { current, args } = configManager
+  const hasInspect = 'inspect' in args
+  const hasInspectBrk = 'inspect-brk' in args
+  let inspectFlag
+
+  if (hasInspect) {
+    inspectFlag = args.inspect
+
+    if (hasInspectBrk) {
+      throw new Error('--inspect and --inspect-brk cannot be used together')
+    }
+  } else if (hasInspectBrk) {
+    inspectFlag = args['inspect-brk']
+  }
+
+  if (inspectFlag !== undefined) {
+    let host = '127.0.0.1'
+    let port = 9229
+
+    if (typeof inspectFlag === 'string' && inspectFlag.length > 0) {
+      const splitAt = inspectFlag.lastIndexOf(':')
+
+      if (splitAt === -1) {
+        port = inspectFlag
+      } else {
+        host = inspectFlag.substring(0, splitAt)
+        port = inspectFlag.substring(splitAt + 1)
+      }
+
+      port = Number.parseInt(port, 10)
+
+      if (!(port === 0 || (port >= 1024 && port <= 65535))) {
+        throw new Error('inspector port must be 0 or in range 1024 to 65535')
+      }
+
+      if (!host) {
+        throw new Error('inspector host cannot be empty')
+      }
+    }
+
+    current.inspectorOptions = {
+      host,
+      port,
+      breakFirstLine: hasInspectBrk,
+      hotReloadDisabled: !!current.hotReload
+    }
+
+    current.hotReload = false
+  }
+}
+
+module.exports = {
+  parseInspectorOptions,
+  platformaticRuntime,
+  wrapConfigInRuntimeConfig
+}
