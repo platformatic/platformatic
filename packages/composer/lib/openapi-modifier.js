@@ -5,18 +5,23 @@ const clone = require('rfdc')()
 
 const MODIFICATION_KEYWORDS = ['rename']
 
-function findDataBySchemaPointer (schemaPointer, schema, data, callback) {
+function findDataBySchemaPointer (schemaPointer, schema, data, parentData, callback) {
   const schemaPointerParts = schemaPointer.split('/').slice(1)
 
-  let parentData = null
   for (const schemaPointerPart of schemaPointerParts) {
-    if (
-      schemaPointerPart === 'properties' ||
-      schemaPointerPart === 'additionalProperties' ||
-      schemaPointerPart === 'patternProperties'
-    ) continue
-
     parentData = data
+    schema = schema[schemaPointerPart]
+
+    if (schemaPointerPart === 'properties') continue
+
+    if (schemaPointerPart === 'items') {
+      for (const item of data) {
+        const newSchemaPointer = '/' + schemaPointerParts.slice(1).join('/')
+        findDataBySchemaPointer(newSchemaPointer, schema, item, parentData, callback)
+      }
+      return
+    }
+
     data = data[schemaPointerPart]
   }
 
@@ -48,6 +53,13 @@ function modifySchema (originSchema, modificationRules) {
     if (modificationRule.rename) {
       parentSchema.properties[modificationRule.rename] = schema
       delete parentSchema.properties[keyIndex]
+
+      if (parentSchema.required) {
+        const index = parentSchema.required.indexOf(keyIndex)
+        if (index !== -1) {
+          parentSchema.required[index] = modificationRule.rename
+        }
+      }
     }
   }
   traverse(originSchema, { cb: modifyOriginSchema })
@@ -61,6 +73,7 @@ function modifyPayload (payload, originSchema, modificationRules) {
       schemaJsonPointer,
       originSchema,
       payload,
+      null,
       (data, parentData) => {
         if (rule.rename) {
           parentData[rule.rename] = data
