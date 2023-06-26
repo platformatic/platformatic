@@ -2,8 +2,7 @@ name: Update Platformatic Cloud runtime
 
 on:
   workflow_dispatch:
-  release:
-    types: [released]
+  workflow_call:
 
 jobs:
   update-cloud-runtime:
