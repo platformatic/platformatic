@@ -3,6 +3,7 @@
 const traverse = require('json-schema-traverse')
 const clone = require('rfdc')()
 
+const originPathSymbol = Symbol('originPath')
 const MODIFICATION_KEYWORDS = ['rename']
 
 function findDataBySchemaPointer (schemaPointer, schema, data, parentData, callback) {
@@ -84,17 +85,22 @@ function modifyPayload (payload, originSchema, modificationRules) {
   }
 }
 
-function modifyOpenSchema (app, api) {
+function modifyOpenApiSchema (app, schema, config) {
   const newSchemaPaths = {}
-
-  const { schema, config } = api
   const { paths } = clone(schema)
 
-  for (const path in paths) {
+  for (let path in paths) {
     const pathConfig = config?.paths?.[path]
+    const pathSchema = paths[path]
+
     if (pathConfig?.ignore) continue
 
-    const pathSchema = paths[path]
+    pathSchema[originPathSymbol] = path
+
+    if (pathConfig?.alias) {
+      path = pathConfig.alias
+    }
+
     for (const method in pathSchema) {
       const routeSchema = pathSchema[method]
       const routeConfig = pathConfig?.[method.toLowerCase()]
@@ -127,4 +133,4 @@ function modifyOpenSchema (app, api) {
   return { ...schema, paths: newSchemaPaths }
 }
 
-module.exports = modifyOpenSchema
+module.exports = { modifyOpenApiSchema, originPathSymbol }

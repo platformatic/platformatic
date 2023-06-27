@@ -174,6 +174,20 @@ If you want to ignore a specific method, use the `ignore` option in the nested m
   }
   ```
 
+- **alias** (`string`) - Use it create an alias for the route path. Original route path will be ignored.
+
+  _Example_
+
+  ```json
+  {
+    "paths": {
+      "/users": {
+        "alias": "/customers"
+      }
+    }
+  }
+  ```
+
 - **`rename`** (`string`) - Use it to rename composed route response fields.
 Use json schema format to describe the response structure. For now it works only for `200` response.
 

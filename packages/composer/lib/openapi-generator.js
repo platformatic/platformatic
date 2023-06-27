@@ -4,7 +4,7 @@ const { readFile } = require('node:fs/promises')
 const { request, getGlobalDispatcher } = require('undici')
 const fp = require('fastify-plugin')
 
-const modifyOpenApi = require('./openapi-modifier')
+const { modifyOpenApiSchema, originPathSymbol } = require('./openapi-modifier')
 const composeOpenApi = require('./openapi-composer')
 const loadOpenApiConfig = require('./load-openapi-config.js')
 
@@ -54,19 +54,22 @@ async function composeOpenAPI (app, opts) {
       continue
     }
 
-    const prefix = openapi.prefix ?? ''
+    schema = modifyOpenApiSchema(app, schema, config)
 
+    const prefix = openapi.prefix ?? ''
     for (const path in schema.paths) {
-      apiByApiRoutes[prefix + path] = { origin, prefix }
+      apiByApiRoutes[prefix + path] = {
+        origin,
+        prefix,
+        schema: schema.paths[path]
+      }
     }
+
     openApiSchemas.push({ id, prefix, schema, config })
   }
 
   app.decorate('openApiSchemas', openApiSchemas)
 
-  for (const api of openApiSchemas) {
-    api.schema = modifyOpenApi(app, api)
-  }
   const composedOpenApiSchema = composeOpenApi(openApiSchemas, opts.openapi)
 
   const dispatcher = getGlobalDispatcher()
@@ -79,23 +82,48 @@ async function composeOpenAPI (app, opts) {
   await app.register(await import('fastify-openapi-glue'), {
     specification: composedOpenApiSchema,
     operationResolver: (operationId, method, openApiPath) => {
-      const { origin, prefix } = apiByApiRoutes[openApiPath]
+      const { origin, prefix, schema } = apiByApiRoutes[openApiPath]
+      const originPath = schema[originPathSymbol]
+
+      const mapRoutePath = createPathMapper(originPath, openApiPath, prefix)
+
       return {
         config: { openApiPath },
         handler: (req, reply) => {
-          const path = req.raw.url.split('?')[0]
+          const routePath = req.raw.url.split('?')[0]
+          const newRoutePath = mapRoutePath(routePath)
 
           const replyOptions = {}
-
           if (req.routeConfig?.onComposerResponse) {
             replyOptions.onResponse = req.routeConfig.onComposerResponse
           }
 
-          reply.from(origin + path.slice(prefix.length), replyOptions)
+          reply.from(origin + newRoutePath, replyOptions)
         }
       }
     }
   })
+}
+
+function createPathMapper (originOpenApiPath, renamedOpenApiPath, prefix) {
+  if (prefix + originOpenApiPath === renamedOpenApiPath) {
+    return (path) => path.slice(prefix.length)
+  }
+
+  const extractParamsRegexp = generateRouteRegex(renamedOpenApiPath)
+  return (path) => {
+    const routeParams = path.match(extractParamsRegexp).slice(1)
+    return generateRenamedPath(originOpenApiPath, routeParams)
+  }
+}
+
+function generateRouteRegex (route) {
+  const regex = route.replace(/{(.*?)}/g, '(.*)')
+  return new RegExp(regex)
+}
+
+function generateRenamedPath (renamedOpenApiPath, routeParams) {
+  return renamedOpenApiPath.replace(/{(.*?)}/g, () => routeParams.shift())
 }
 
 module.exports = fp(composeOpenAPI)
