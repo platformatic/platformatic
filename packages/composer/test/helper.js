@@ -26,12 +26,49 @@ async function createBasicService (t) {
     return 'Some text'
   })
 
+  app.get('/object', {
+    schema: {
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            text: { type: 'string' }
+          },
+          required: ['text']
+        }
+      }
+    }
+  }, async () => {
+    return { text: 'Some text' }
+  })
+
+  app.get('/nested', {
+    schema: {
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            nested: {
+              type: 'object',
+              properties: {
+                text: { type: 'string' }
+              }
+            }
+          }
+        }
+      }
+    }
+  }, async () => {
+    return { nested: { text: 'Some text' } }
+  })
+
   t.teardown(async () => {
     await app.close()
   })
 
   return app
 }
+
 async function createOpenApiService (t, entitiesNames = []) {
   const app = fastify({
     keepAliveTimeout: 10

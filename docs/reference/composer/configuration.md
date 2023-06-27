@@ -174,7 +174,31 @@ If you want to ignore a specific method, use the `ignore` option in the nested m
   }
   ```
 
+- **`rename`** (`string`) - Use it to rename composed route response fields.
+Use json schema format to describe the response structure. For now it works only for `200` response.
 
+  _Example_
+
+  ```json
+  {
+    "paths": {
+      "/users": {
+        "responses": {
+            "200": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "rename": "user_id" },
+                  "name": { "rename": "first_name" }
+                }
+              }
+            }
+          }
+      }
+    }
+  }
+  ```
 
 _Examples_
 
