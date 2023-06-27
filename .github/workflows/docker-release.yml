@@ -27,3 +27,7 @@ jobs:
             platformatic/platformatic:latest
             platformatic/platformatic:${{ github.ref_name }}
           platforms: linux/amd64,linux/arm64
+
+  update-cloud-runtime:
+    needs: buildx
+    uses: platformatic/platformatic/.github/workflows/update-platformatic-runtime.yml@main
