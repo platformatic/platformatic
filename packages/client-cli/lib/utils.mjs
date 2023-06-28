@@ -1,4 +1,4 @@
-import { writeFile, access } from 'fs/promises'
+import { writeFile } from 'fs/promises'
 import camelcase from 'camelcase'
 import { join } from 'path'
 
@@ -13,7 +13,6 @@ export function classCase (str) {
 export async function appendToEnv (file, key, value) {
   const str = `\n${key}=${value}\n`
   try {
-    await access(file)
     await writeFile(file, str, { flag: 'a' })
     /* c8 ignore next 1 */
   } catch {}

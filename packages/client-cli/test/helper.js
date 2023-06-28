@@ -18,7 +18,8 @@ async function moveToTmpdir (teardown) {
   const tmp = join(__dirname, 'tmp')
   try {
     await fs.mkdir(tmp)
-  } catch {}
+  } catch {
+  }
   const dir = join(tmp, `platformatic-client-${process.pid}-${Date.now()}-${counter++}`)
   await fs.mkdir(dir)
   process.chdir(dir)

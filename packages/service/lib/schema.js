@@ -515,7 +515,18 @@ const clients = {
       serviceId: {
         type: 'string'
       },
+      name: {
+        type: 'string'
+      },
+      type: {
+        type: 'string',
+        enum: ['openapi', 'graphql']
+      },
       path: {
+        type: 'string',
+        resolvePath: true
+      },
+      schema: {
         type: 'string',
         resolvePath: true
       },
@@ -523,8 +534,7 @@ const clients = {
         type: 'string'
       }
     },
-    additionalProperties: false,
-    required: ['path']
+    additionalProperties: false
   }
 }
 

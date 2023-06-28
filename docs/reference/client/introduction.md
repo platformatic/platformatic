@@ -59,7 +59,9 @@ The client configuration in the `platformatic.db.json` and `platformatic.service
 ```json
 {
   "clients": [{
-    "path": "./myclient",
+    "schema": "./myclient/myclient.openapi.json" // or ./myclient/myclient.schema.graphl
+    "name": "myclient",
+    "type": "openapi" // or graphql
     "url": "{ PLT_MYCLIENT_URL }"
   }]
 }
@@ -253,7 +255,8 @@ it accordingly.
 
 ## Usage with standalone Fastify
 
-You can know use the client in your Fastify application:
+If a platformatic configuration file is not found, a complete Fastify plugin is generated to be 
+used in your Fastify application like so:
 
 ```js
 const fastify = require('fastify')()
