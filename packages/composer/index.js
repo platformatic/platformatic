@@ -36,7 +36,9 @@ async function platformaticComposer (app) {
     app.register(require('./lib/root-endpoint'), config)
   }
 
-  await watchApis(app, config)
+  if (config.composer.refreshTimeout !== 0) {
+    await watchApis(app, config)
+  }
 }
 
 platformaticComposer[Symbol.for('skip-override')] = true
