@@ -12,7 +12,7 @@ const {
 
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
-test('should compose openapi with prefixes', async (t) => {
+test('should restart composer if api has been changed', async (t) => {
   const api1 = await createOpenApiService(t, ['users'])
   const api2 = await createOpenApiService(t, ['posts'])
 
@@ -243,4 +243,46 @@ test('should compose schema after service restart', async (t) => {
 
     await testEntityRoutes(t, composerOrigin, ['/api1/users', '/api2/posts'])
   }
+})
+
+test('should not watch an api if refreshTimeout equals 0', async (t) => {
+  const api1 = await createOpenApiService(t, ['users'])
+  const api2 = await createOpenApiService(t, ['posts'])
+
+  await api1.listen({ port: 0 })
+  await api2.listen({ port: 0 })
+
+  const composer = await createComposer(t, {
+    composer: {
+      services: [
+        {
+          id: 'api1',
+          origin: 'http://127.0.0.1:' + api1.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            prefix: '/api1'
+          }
+        },
+        {
+          id: 'api2',
+          origin: 'http://127.0.0.1:' + api2.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            prefix: '/api2'
+          }
+        }
+      ],
+      refreshTimeout: 0
+    }
+  })
+
+  await composer.start()
+
+  t.equal(composer.restarted, false)
+
+  await api1.close()
+  await api2.close()
+  await setTimeout(1000)
+
+  t.equal(composer.restarted, false)
 })

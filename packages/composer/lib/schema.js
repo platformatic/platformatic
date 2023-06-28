@@ -48,7 +48,7 @@ const composer = {
       }
     },
     openapi: openApiBase,
-    refreshTimeout: { type: 'integer', minimum: 1, default: 1000 }
+    refreshTimeout: { type: 'integer', minimum: 0, default: 1000 }
   },
   required: ['services'],
   additionalProperties: false
