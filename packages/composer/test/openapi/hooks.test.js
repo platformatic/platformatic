@@ -173,3 +173,44 @@ test('should throw an error if addComposerOnRouteHook called when app is ready',
     t.equal(err.message, 'Fastify instance is already listening. Cannot call "addComposerOnRouteHook"!')
   }
 })
+
+test('should send two different schema objects into different composer hooks', async (t) => {
+  const api = await createOpenApiService(t, ['users'])
+  await api.listen({ port: 0 })
+
+  const composer = await createComposer(t,
+    {
+      composer: {
+        services: [
+          {
+            id: 'api1',
+            origin: 'http://127.0.0.1:' + api.server.address().port,
+            openapi: {
+              file: join(__dirname, './fixtures/schemas/users-with-refs.json')
+            }
+          }
+        ]
+      },
+      plugins: {
+        paths: [join(__dirname, './fixtures/plugins/hooks-with-refs.js')]
+      }
+    }
+  )
+
+  await composer.ready()
+
+  const { statusCode, body } = await composer.inject({
+    method: 'GET',
+    url: '/documentation/json'
+  })
+
+  t.equal(statusCode, 200)
+
+  const openApiSchema = JSON.parse(body)
+
+  const usersSchema = openApiSchema.paths['/users'].get.responses[200].content['application/json'].schema
+  t.equal(usersSchema.items.title, 'users_all')
+
+  const userByIdSchema = openApiSchema.paths['/users/{id}'].get.responses[200].content['application/json'].schema
+  t.equal(userByIdSchema.title, 'users_one')
+})

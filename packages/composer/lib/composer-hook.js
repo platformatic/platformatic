@@ -1,11 +1,16 @@
 'use strict'
 
+const deepClone = require('rfdc')()
 const fp = require('fastify-plugin')
 
 async function composeOpenAPI (app) {
   const onRoutesHooks = {}
 
   app.addHook('onRoute', (routeOptions) => {
+    if (routeOptions.schema) {
+      routeOptions.schema = deepClone(routeOptions.schema)
+    }
+
     const method = routeOptions.method
     const openApiPath = routeOptions.config?.openApiPath
 
