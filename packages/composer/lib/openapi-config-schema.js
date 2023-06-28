@@ -8,6 +8,13 @@ const ignoreSchema = {
   additionalProperties: false
 }
 
+const aliasSchema = {
+  type: 'object',
+  properties: {
+    alias: { type: 'string' }
+  }
+}
+
 const jsonSchemaSchema = {
   $id: 'json-schema',
   type: 'object',
@@ -56,8 +63,9 @@ const openApiConfigSchema = {
     paths: {
       type: 'object',
       additionalProperties: {
-        oneOf: [
+        anyOf: [
           ignoreSchema,
+          aliasSchema,
           {
             type: 'object',
             properties: {
