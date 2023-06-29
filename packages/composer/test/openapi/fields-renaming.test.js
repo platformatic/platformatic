@@ -70,6 +70,7 @@ test('should rename top level object fields', async (t) => {
 
   t.strictSame(responseSchema, {
     type: 'object',
+    title: 'users',
     properties: {
       user_id: { type: 'number' },
       first_name: { type: 'string' }
@@ -297,6 +298,7 @@ test('should rename top level object fields in array', async (t) => {
   t.strictSame(responseSchema, {
     type: 'array',
     items: {
+      title: 'users',
       type: 'object',
       properties: {
         user_id: { type: 'number' },

@@ -110,20 +110,22 @@ async function createOpenApiService (t, entitiesNames = []) {
     saveEntity({ name: 'test3' })
     saveEntity({ name: 'test4' })
 
-    const entitySchema = {
+    app.addSchema({
+      $id: entity,
+      title: entity,
       type: 'object',
       properties: {
         id: { type: 'number' },
         name: { type: 'string' }
       }
-    }
+    })
 
     app.get(`/${entity}`, {
       schema: {
         response: {
           200: {
             type: 'array',
-            items: entitySchema
+            items: { $ref: entity }
           }
         }
       }
@@ -140,7 +142,7 @@ async function createOpenApiService (t, entitiesNames = []) {
           }
         },
         response: {
-          200: entitySchema
+          200: { $ref: entity }
         }
       }
     }, async (req) => {
@@ -150,9 +152,9 @@ async function createOpenApiService (t, entitiesNames = []) {
 
     app.put(`/${entity}`, {
       schema: {
-        body: entitySchema,
+        body: { $ref: entity },
         response: {
-          200: entitySchema
+          200: { $ref: entity }
         }
       }
     }, async (req) => {
@@ -163,7 +165,7 @@ async function createOpenApiService (t, entitiesNames = []) {
     app.get(`/${entity}/:id`, {
       schema: {
         response: {
-          200: entitySchema
+          200: { $ref: entity }
         }
       }
     }, async (req) => {
@@ -173,7 +175,7 @@ async function createOpenApiService (t, entitiesNames = []) {
     app.post(`/${entity}/:id`, {
       schema: {
         response: {
-          200: entitySchema
+          200: { $ref: entity }
         }
       }
     }, async (req) => {
@@ -185,7 +187,7 @@ async function createOpenApiService (t, entitiesNames = []) {
     app.put(`/${entity}/:id`, {
       schema: {
         response: {
-          200: entitySchema
+          200: { $ref: entity }
         }
       }
     }, async (req) => {
@@ -197,7 +199,7 @@ async function createOpenApiService (t, entitiesNames = []) {
     app.delete(`/${entity}/:id`, {
       schema: {
         response: {
-          200: entitySchema
+          200: { $ref: entity }
         }
       }
     }, async (req) => {

@@ -102,7 +102,6 @@ function modifyOpenApiSchema (app, schema, config) {
     }
 
     for (const method in pathSchema) {
-      const routeSchema = pathSchema[method]
       const routeConfig = pathConfig?.[method.toLowerCase()]
 
       if (routeConfig?.ignore) {
@@ -110,14 +109,16 @@ function modifyOpenApiSchema (app, schema, config) {
         continue
       }
 
-      const responseSchema = routeSchema.responses?.['200']?.content?.['application/json']?.schema
       const modificationResponseSchema = routeConfig?.responses?.['200']
-      if (!responseSchema || !modificationResponseSchema) continue
+      if (!modificationResponseSchema) continue
 
       const modificationRules = getModificationRules(modificationResponseSchema)
-      modifySchema(responseSchema, modificationRules)
 
       app.platformatic.addComposerOnRouteHook(path, [method], routeOptions => {
+        const routeSchema = routeOptions.schema
+        const responseSchema = routeSchema.response?.['200']
+        modifySchema(responseSchema, modificationRules)
+
         async function onComposerResponse (request, reply, body) {
           const payload = await body.json()
           modifyPayload(payload, responseSchema, modificationRules)
