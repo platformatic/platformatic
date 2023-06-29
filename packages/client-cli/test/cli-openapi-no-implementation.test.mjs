@@ -1,11 +1,11 @@
 import { request, moveToTmpdir } from './helper.js'
 import { test } from 'tap'
 import { buildServer } from '@platformatic/db'
+import { buildServer as buildService } from '@platformatic/service'
 import { join } from 'path'
 import * as desm from 'desm'
 import { execa } from 'execa'
 import { promises as fs } from 'fs'
-import split from 'split2'
 
 test('openapi client generation (javascript)', async ({ teardown, comment, same }) => {
   try {
@@ -14,6 +14,7 @@ test('openapi client generation (javascript)', async ({ teardown, comment, same 
     // noop
   }
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  teardown(async () => { await app.close() })
 
   await app.start()
 
@@ -21,7 +22,7 @@ test('openapi client generation (javascript)', async ({ teardown, comment, same 
   comment(`working in ${dir}`)
 
   const pltServiceConfig = {
-    $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
+    $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -45,29 +46,15 @@ module.exports = async function (app) {
 
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
-  const app2 = execa(desm.join(import.meta.url, '..', 'node_modules', '.bin', 'plt-service'), ['start'], {
-    env: {
-      PLT_MOVIES_URL: app.url
-    }
+  process.env.PLT_MOVIES_URL = app.url
+
+  const app2 = await buildService('./platformatic.service.json')
+  await app2.start()
+  teardown(async () => {
+    await app2.close()
   })
-  teardown(() => app2.kill())
-  teardown(async () => { await app.close() })
 
-  const stream = app2.stdout.pipe(split(JSON.parse))
-  app2.stderr.pipe(process.stderr)
-
-  // this is unfortuate :(
-  const base = 'Server listening at '
-  let url
-  for await (const line of stream) {
-    const msg = line.msg
-    if (msg.indexOf(base) !== 0) {
-      continue
-    }
-    url = msg.slice(base.length)
-    break
-  }
-  const res = await request(url, {
+  const res = await request(app2.url, {
     method: 'POST'
   })
   const body = await res.body.json()
@@ -133,28 +120,14 @@ export default myPlugin
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
-  const server2 = execa(desm.join(import.meta.url, '..', 'node_modules', '.bin', 'plt-service'), ['start'], {
-    env: {
-      PLT_MOVIES_URL: app.url
-    }
-  })
+  process.env.PLT_MOVIES_URL = app.url
+
+  const app2 = await buildService('./platformatic.service.json')
+  await app2.start()
   teardown(async () => { await app.close() })
-  teardown(async () => { await server2.kill() })
+  teardown(async () => { await app2.close() })
 
-  const stream = server2.stdout.pipe(split(JSON.parse))
-
-  // this is unfortuate :(
-  const base = 'Server listening at '
-  let url
-  for await (const line of stream) {
-    const msg = line.msg
-    if (msg.indexOf(base) !== 0) {
-      continue
-    }
-    url = msg.slice(base.length)
-    break
-  }
-  const res = await request(url, {
+  const res = await request(app2.url, {
     method: 'POST'
   })
   const body = await res.body.json()

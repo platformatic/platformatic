@@ -5,9 +5,9 @@ import { join } from 'path'
 import * as desm from 'desm'
 import { execa } from 'execa'
 import { promises as fs } from 'fs'
-import split from 'split2'
 import graphql from 'graphql'
 import dotenv from 'dotenv'
+import { buildServer as buildService } from '@platformatic/service'
 
 test('graphql client generation (javascript)', async ({ teardown, comment, same, equal, match }) => {
   try {
@@ -57,28 +57,15 @@ module.exports = async function (app) {
     equal(sdl, readSDL)
   }
 
-  const server2 = execa(desm.join(import.meta.url, '..', 'node_modules', '.bin', 'plt-service'), ['start'])
+  process.env.PLT_MOVIES_URL = app.url
 
-  teardown(() => server2.kill())
+  const app2 = await buildService('./platformatic.service.json')
+  await app2.start()
+
+  teardown(async () => { await app2.close() })
   teardown(async () => { await app.close() })
 
-  const stream = server2.stdout.pipe(split(JSON.parse))
-
-  // this is unfortuate :(
-  const base = 'Server listening at '
-  let url
-  for await (const line of stream) {
-    const msg = line.msg
-    if (msg.indexOf(base) !== 0) {
-      continue
-    }
-    url = msg.slice(base.length)
-    break
-  }
-  if (!url) {
-    throw new Error('no url was found')
-  }
-  const res = await request(url, {
+  const res = await request(app2.url, {
     method: 'POST'
   })
   const body = await res.body.json()
@@ -162,26 +149,13 @@ export default myPlugin
 
   comment(`upstream URL is ${app.url}`)
 
-  const server2 = execa(desm.join(import.meta.url, '..', 'node_modules', '.bin', 'plt-service'), ['start'])
+  const app2 = await buildService('./platformatic.service.json')
+  await app2.start()
 
-  teardown(() => server2.kill())
+  teardown(async () => { await app2.close() })
   teardown(async () => { await app.close() })
 
-  const stream = server2.stdout.pipe(split(JSON.parse))
-
-  // this is unfortuate :(
-  const base = 'Server listening at '
-  let url
-  for await (const line of stream) {
-    const msg = line.msg
-    if (msg.indexOf(base) !== 0) {
-      continue
-    }
-    url = msg.slice(base.length)
-    break
-  }
-  comment(`client URL is ${url}`)
-  const res = await request(url, {
+  const res = await request(app2.url, {
     method: 'POST'
   })
   const body = await res.body.json()
