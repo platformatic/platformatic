@@ -59,8 +59,6 @@ test('should fetch the schemas', async (t) => {
   const openApiSchema = JSON.parse(openApiSchemaFile)
   openApiValidator.validate(openApiSchema)
 
-  // console.log(openApiSchema)
-
   const pathToUsersSchema = join(__dirname, '..', 'openapi', 'fixtures', 'schemas', 'users.json')
   const usersOpenApiSchemaFile = await readFile(pathToUsersSchema, 'utf-8')
   const usersOpenApiSchema = JSON.parse(usersOpenApiSchemaFile)
