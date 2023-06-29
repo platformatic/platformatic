@@ -40,7 +40,8 @@ PLT_SERVER_LOGGER_LEVEL=info
   match(read, {
     clients: [{
       serviceId: 'somber-chariot',
-      path: 'movies'
+      type: 'openapi',
+      schema: join('movies', 'movies.openapi.json')
     }]
   })
 

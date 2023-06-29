@@ -1,0 +1,23 @@
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0,
+    "logger": {
+      "level": "warn",
+      "name": "hello client ts"
+    },
+    "pluginTimeout": 30000
+  },
+  "plugins": {
+    "paths": ["./plugin.ts"],
+    "typescript": true
+  },
+  "clients": [{
+    "schema": "./hello.openapi.json",
+    "name": "hello",
+    "type": "openapi",
+    "url": "{PLT_CLIENT_URL}"
+  }],
+  "metrics": false,
+  "watch": false
+}
