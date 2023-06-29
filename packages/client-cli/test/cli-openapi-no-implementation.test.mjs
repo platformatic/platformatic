@@ -199,7 +199,7 @@ test('config support with folder', async ({ teardown, comment, match }) => {
     const config = JSON.parse(await fs.readFile('./platformatic.service.json'))
     match(config, {
       clients: [{
-        schema: 'uncanny/movies.openapi.json',
+        schema: join('uncanny', 'movies.openapi.json'),
         name: 'movies',
         type: 'openapi',
         url: '{PLT_MOVIES_URL}'
