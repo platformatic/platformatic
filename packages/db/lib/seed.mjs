@@ -22,7 +22,7 @@ async function execute (logger, args, config) {
   logger.info(`seeding from ${seedFile}`)
   const { default: seed } = await import(pathToFileURL(seedFile))
 
-  await seed({ db, sql, entities })
+  await seed({ db, sql, entities, logger })
   logger.info('seeding complete')
 
   // Once done seeding, close your connection.
