@@ -26,6 +26,7 @@ test('seed and start', async ({ comment, equal, match, teardown }) => {
   {
     const sanitized = stripAnsi(stdout)
     match(sanitized, /seeding from .*seed\.js/)
+    match(sanitized, /42/) // custom logger.info line from the seed file
     match(sanitized, /seeding complete/)
   }
 
