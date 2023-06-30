@@ -106,7 +106,7 @@ function mapSQLEntityToJSONSchema (entity, ignore = {}) {
   return res
 }
 
-function mapOpenAPItoTypes (obj, opts = {}) {
+function mapOpenAPItoTypes (obj, fieldDefinitions, opts = {}) {
   let { writer, addedProps } = opts
   addedProps ??= new Set()
   writer ??= new CodeBlockWriter()
@@ -116,13 +116,23 @@ function mapOpenAPItoTypes (obj, opts = {}) {
   writer.write(` * ${description}`).newLine()
   writer.write(' */').newLine()
   writer.write(`declare interface ${title}`).block(() => {
-    renderProperties(writer, addedProps, properties, additionalProperties, required)
+    renderProperties(writer, addedProps, properties, additionalProperties, required, fieldDefinitions)
   })
   return writer.toString()
 }
 
-function renderProperties (writer, addedProps, properties = {}, additionalProperties, required = []) {
-  for (const name of Object.keys(properties)) {
+function renderProperties (writer, addedProps, properties = {}, additionalProperties, required = [], fieldDefinitions = {}) {
+  // Since Array.prototype.sort is guaranteed to be stable, we can sort by name first, then apply special sorting rules
+  const keys = Object.keys(properties)
+    .sort()
+    .sort((a, b) => {
+      // Sort PKs first
+      if (fieldDefinitions[a]?.primaryKey === fieldDefinitions[b]?.primaryKey) {
+        return 0
+      }
+      return fieldDefinitions[a]?.primaryKey ? -1 : 1
+    })
+  for (const name of keys) {
     const localProperty = properties[name]
     const { type, nullable, items } = localProperty
     addedProps.add(name)

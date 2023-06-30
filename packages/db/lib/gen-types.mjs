@@ -39,7 +39,8 @@ function getTypesFolderPath (config) {
 
 async function generateEntityType (entity) {
   const jsonSchema = mapSQLEntityToJSONSchema(entity)
-  const tsCode = mapOpenAPItoTypes(jsonSchema)
+  const fieldDefinitions = Object.fromEntries(Object.entries(entity.fields).map(([, value]) => [value.camelcase, value]))
+  const tsCode = mapOpenAPItoTypes(jsonSchema, fieldDefinitions)
   entity.name = camelcase(entity.name).replace(/^\w/, c => c.toUpperCase())
   return tsCode + `\nexport { ${entity.name} };\n`
 }

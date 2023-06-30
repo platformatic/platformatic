@@ -14,7 +14,7 @@ function referenceTest (name, obj, opts = {}) {
   test(name, { only }, async t => {
     const reference = await dtsgenerator.default({ contents: [dtsgenerator.parseSchema(structuredClone(obj))] })
     const cloned = structuredClone(obj)
-    const ours = mapOpenAPItoTypes(cloned)
+    const ours = mapOpenAPItoTypes(cloned, [])
     t.not(cloned, obj)
     t.same(cloned, obj)
     t.same(ours.trim(), reference.trim())
