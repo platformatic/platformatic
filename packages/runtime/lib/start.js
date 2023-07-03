@@ -41,6 +41,7 @@ async function startWithConfig (configManager) {
   const worker = new Worker(kWorkerFile, {
     /* c8 ignore next */
     execArgv: config.hotReload ? kWorkerExecArgv : [],
+    transferList: config.loggingPort ? [config.loggingPort] : [],
     workerData: { config }
   })
 
