@@ -42,7 +42,8 @@ async function startWithConfig (configManager) {
     /* c8 ignore next */
     execArgv: config.hotReload ? kWorkerExecArgv : [],
     transferList: config.loggingPort ? [config.loggingPort] : [],
-    workerData: { config }
+    workerData: { config },
+    env: config.env
   })
 
   worker.on('exit', () => {

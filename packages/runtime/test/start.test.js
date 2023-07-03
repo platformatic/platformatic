@@ -126,3 +126,13 @@ test('supports logging via message port', async (t) => {
     JSON.parse(msg.logs[i])
   }
 })
+
+test('can start with a custom environment', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-custom-env.json')
+  const app = await buildServer(configFile)
+  const entryUrl = await app.start()
+  const res = await request(entryUrl + '/env')
+
+  assert.strictEqual(res.statusCode, 200)
+  assert.deepStrictEqual(await res.body.json(), { A_CUSTOM_ENV_VAR: 'foobar' })
+})

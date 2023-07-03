@@ -22,4 +22,8 @@ module.exports = async function (app) {
 
     return 'ok'
   })
+
+  app.get('/env', () => {
+    return process.env
+  })
 }

@@ -201,3 +201,12 @@ test('parseInspectorOptions()', async (t) => {
     assert.strictEqual(cm.current.inspectorOptions.port, 65535)
   })
 })
+
+test('supports custom environment variables', async () => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-custom-env.json')
+  const loaded = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+
+  assert.deepStrictEqual(loaded.configManager.current.env, {
+    A_CUSTOM_ENV_VAR: 'foobar'
+  })
+})
