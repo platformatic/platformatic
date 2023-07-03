@@ -23,6 +23,15 @@ const packageJsonTemplate = (addTSBuild = false) => (`\
   }
 }`)
 
+/**
+ * Creates a Platformatic app package.json file
+ * @param {string} platVersion Platformatic Version
+ * @param {string} fastifyVersion Fastify Version
+ * @param {import('pino').BaseLogger} logger Logger Interface
+ * @param {string} dir Target directory where to create the file
+ * @param {boolean} addTSBuild Whether to add TS Build or not
+ * @param {object} scripts Package.json scripts list
+ */
 export const createPackageJson = async (platVersion, fastifyVersion, logger, dir, addTSBuild = false, scripts = {}) => {
   const packageJsonFileName = join(dir, 'package.json')
   const isPackageJsonExists = await isFileAccessible(packageJsonFileName)
