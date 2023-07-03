@@ -3,20 +3,28 @@ import { join, relative, resolve } from 'path'
 import { findDBConfigFile, isFileAccessible } from '../utils.mjs'
 
 const connectionStrings = {
-  postgres: 'postgres://postgres:postgres@localhost:5432/postgres',
+  postgres: 'postgres://postgres:postgres@127.0.0.1:5432/postgres',
   sqlite: 'sqlite://./db.sqlite',
-  mysql: 'mysql://root@localhost:3306/graph',
-  mysql8: 'mysql://root@localhost:3308/graph',
-  mariadb: 'mysql://root@localhost:3307/graph'
+  mysql: 'mysql://root@127.0.0.1:3306/platformatic',
+  mariadb: 'mysql://root@127.0.0.1:3306/platformatic'
 }
 
-const moviesMigrationDo = `
+const moviesMigrationDo = (database) => {
+  const key = {
+    postgres: 'SERIAL',
+    sqlite: 'INTEGER',
+    mysql: 'INTEGER UNSIGNED AUTO_INCREMENT',
+    mariadb: 'INTEGER UNSIGNED AUTO_INCREMENT'
+  }
+
+  return `
 -- Add SQL in this file to create the database tables for your API
 CREATE TABLE IF NOT EXISTS movies (
-  id INTEGER PRIMARY KEY,
+  id ${key[database]} PRIMARY KEY,
   title TEXT NOT NULL
 );
 `
+}
 
 const moviesMigrationUndo = `
 -- Add SQL in this file to drop the database tables 
@@ -92,8 +100,7 @@ function generateConfig (migrations, plugin, types, typescript, version) {
   return config
 }
 
-function generateEnv (hostname, port, database) {
-  const connectionString = connectionStrings[database]
+function generateEnv (hostname, port, connectionString) {
   const env = `\
 PLT_SERVER_HOSTNAME=${hostname}
 PORT=${port}
@@ -135,7 +142,12 @@ async function generatePluginWithTypesSupport (logger, currentDir, isTypescript)
   logger.info(`Plugin file created at ${relative(currentDir, pluginPath)}`)
 }
 
-async function createDB ({ hostname, database = 'sqlite', port, migrations = 'migrations', plugin = true, types = true, typescript = false }, logger, currentDir, version) {
+export function getConnectionString (database) {
+  return connectionStrings[database]
+}
+
+export async function createDB ({ hostname, database = 'sqlite', port, migrations = 'migrations', plugin = true, types = true, typescript = false, connectionString }, logger, currentDir, version) {
+  connectionString = connectionString || getConnectionString(database)
   const createMigrations = !!migrations // If we don't define a migrations folder, we don't create it
   const accessibleConfigFilename = await findDBConfigFile(currentDir)
   if (accessibleConfigFilename === undefined) {
@@ -143,7 +155,7 @@ async function createDB ({ hostname, database = 'sqlite', port, migrations = 'mi
     await writeFile(join(currentDir, 'platformatic.db.json'), JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.db.json successfully created.')
 
-    const env = generateEnv(hostname, port, database)
+    const env = generateEnv(hostname, port, connectionString)
     const envFileExists = await isFileAccessible('.env', currentDir)
     await appendFile(join(currentDir, '.env'), env)
     await writeFile(join(currentDir, '.env.sample'), env)
@@ -175,7 +187,7 @@ async function createDB ({ hostname, database = 'sqlite', port, migrations = 'mi
   const isMigrationFileDoExists = await isFileAccessible(migrationFilePathDo)
   const isMigrationFileUndoExists = await isFileAccessible(migrationFilePathUndo)
   if (!isMigrationFileDoExists && createMigrations) {
-    await writeFile(migrationFilePathDo, moviesMigrationDo)
+    await writeFile(migrationFilePathDo, moviesMigrationDo(database))
     logger.info(`Migration file ${migrationFileNameDo} successfully created.`)
     if (!isMigrationFileUndoExists) {
       await writeFile(migrationFilePathUndo, moviesMigrationUndo)
@@ -202,7 +214,7 @@ async function createDB ({ hostname, database = 'sqlite', port, migrations = 'mi
   }
 
   return {
-    DATABASE_URL: connectionStrings[database],
+    DATABASE_URL: connectionString,
     PLT_SERVER_LOGGER_LEVEL: 'info',
     PORT: port,
     PLT_SERVER_HOSTNAME: hostname
