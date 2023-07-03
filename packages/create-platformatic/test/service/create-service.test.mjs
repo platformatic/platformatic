@@ -60,7 +60,7 @@ test('creates service with typescript', async ({ equal, same, ok }) => {
   equal(process.env.PORT, '6666')
 
   same(plugins.paths, [{ path: './plugins', encapsulate: false }, './routes'])
-  equal(plugins.typescript, true)
+  equal(plugins.typescript, '{PLT_TYPESCRIPT}')
 
   ok(await isFileAccessible(join(tmpDir, 'tsconfig.json')))
   ok(await isFileAccessible(join(tmpDir, 'plugins', 'example.ts')))

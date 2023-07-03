@@ -390,7 +390,11 @@ const plugins = {
       type: 'integer'
     },
     typescript: {
-      type: 'boolean'
+      anyOf: [{
+        type: 'boolean'
+      }, {
+        type: 'string'
+      }]
     }
   },
   additionalProperties: false,
@@ -548,6 +552,8 @@ const platformaticServiceSchema = {
     watch: {
       anyOf: [watch, {
         type: 'boolean'
+      }, {
+        type: 'string'
       }]
     },
     $schema: {

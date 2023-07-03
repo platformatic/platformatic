@@ -284,3 +284,100 @@ t.test('should compile typescript plugin with start command from a folder', asyn
   }
   t.fail('should compile typescript plugin with start command')
 })
+
+t.test('should start the service if it was precompiled and typescript is `false`', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-9')
+
+  await cp(testDir, cwd, { recursive: true })
+
+  await execa('node', [cliPath, 'compile'], { cwd })
+
+  const child = execa('node', [cliPath, 'start'], { cwd })
+
+  const splitter = split()
+  child.stdout.pipe(splitter)
+
+  for await (const data of splitter) {
+    const sanitized = stripAnsi(data)
+    if (sanitized.includes('Typescript plugin loaded')) {
+      t.pass()
+      return
+    }
+  }
+  t.fail('should load the typescript plugin without compiling it')
+})
+
+t.test('should not start the service if it was not precompiled and typescript is `false`', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-10')
+
+  await cp(testDir, cwd, { recursive: true })
+
+  const child = execa('node', [cliPath, 'start'], { cwd })
+
+  const splitter = split()
+  child.stdout.pipe(splitter)
+  child.stderr.pipe(splitter)
+
+  for await (const data of splitter) {
+    const sanitized = stripAnsi(data)
+    if (sanitized.includes('Unknown file extension ".ts" for')) {
+      t.pass()
+      return
+    }
+  }
+  t.fail('should load the typescript plugin without compiling it')
+})
+
+t.test('should compile typescript plugin with string config', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-string')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-11')
+
+  await cp(testDir, cwd, { recursive: true })
+
+  const child = execa('node', [cliPath, 'compile'], { cwd })
+
+  t.teardown(exitOnTeardown(child))
+
+  const splitter = split()
+  child.stdout.pipe(splitter)
+
+  for await (const data of splitter) {
+    const sanitized = stripAnsi(data)
+    if (sanitized.includes('Typescript compilation completed successfully.')) {
+      const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
+      try {
+        await access(jsPluginPath)
+      } catch (err) {
+        t.fail(err)
+      }
+
+      t.pass()
+      return
+    }
+  }
+  t.fail('should compile typescript plugin with a compile command')
+})
+
+t.test('should not start the service if it was not precompiled and typescript is `"false"`', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
+  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-12')
+
+  await cp(testDir, cwd, { recursive: true })
+
+  const child = execa('node', [cliPath, 'start'], { cwd })
+
+  const splitter = split()
+  child.stdout.pipe(splitter)
+  child.stderr.pipe(splitter)
+
+  for await (const data of splitter) {
+    const sanitized = stripAnsi(data)
+    if (sanitized.includes('Unknown file extension ".ts" for')) {
+      t.pass()
+      return
+    }
+  }
+  t.fail('should load the typescript plugin without compiling it')
+})
