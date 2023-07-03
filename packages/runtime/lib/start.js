@@ -53,19 +53,21 @@ async function startWithConfig (configManager) {
     process.exit(1)
   })
 
-  /* c8 ignore next 3 */
-  process.on('SIGUSR2', () => {
-    worker.postMessage({ signal: 'SIGUSR2' })
-  })
+  if (config.hotReload) {
+    /* c8 ignore next 3 */
+    process.on('SIGUSR2', () => {
+      worker.postMessage({ signal: 'SIGUSR2' })
+    })
 
-  closeWithGrace((event) => {
-    worker.postMessage(event)
-  })
+    closeWithGrace((event) => {
+      worker.postMessage(event)
+    })
 
-  /* c8 ignore next 3 */
-  configManager.on('update', () => {
-    // TODO(cjihrig): Need to clean up and restart the worker.
-  })
+    /* c8 ignore next 3 */
+    configManager.on('update', () => {
+      // TODO(cjihrig): Need to clean up and restart the worker.
+    })
+  }
 
   await once(worker, 'message') // plt:init
 
