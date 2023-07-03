@@ -65,7 +65,8 @@ class RuntimeApiClient extends EventEmitter {
 
     const { error, data } = message
     if (error !== null) {
-      throw new Error(error)
+      this.emit('error', new Error(error))
+      return
     }
 
     return JSON.parse(data)
