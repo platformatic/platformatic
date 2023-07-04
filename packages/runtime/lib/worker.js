@@ -1,26 +1,33 @@
 'use strict'
 
 const inspector = require('node:inspector')
+const { isatty } = require('node:tty')
 const { parentPort, workerData } = require('node:worker_threads')
 const undici = require('undici')
-const RuntimeApi = require('./api')
-const loaderPort = globalThis.LOADER_PORT // Added by loader.mjs.
 const pino = require('pino')
-const { isatty } = require('tty')
+const RuntimeApi = require('./api')
+const { MessagePortWritable } = require('./message-port-writable')
+const loaderPort = globalThis.LOADER_PORT // Added by loader.mjs.
 
 globalThis.fetch = undici.fetch
 delete globalThis.LOADER_PORT
 
 let transport
+let destination
 
-/* c8 ignore next 5 */
-if (isatty(1)) {
+/* c8 ignore next 10 */
+if (workerData.config.loggingPort) {
+  destination = new MessagePortWritable({
+    metadata: workerData.config.loggingMetadata,
+    port: workerData.config.loggingPort
+  })
+} else if (isatty(1)) {
   transport = pino.transport({
     target: 'pino-pretty'
   })
 }
 
-const logger = pino(transport)
+const logger = pino(transport, destination)
 
 /* c8 ignore next 4 */
 process.once('uncaughtException', (err) => {
