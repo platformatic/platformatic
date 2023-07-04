@@ -69,7 +69,7 @@ async function watchApis (app, opts) {
 
     for (const { id, origin, openapi } of services) {
       if (openapi && openapi.url) {
-        const currentSchema = app.openApiSchemas.find(schema => schema.id === id)?.schema || null
+        const currentSchema = app.openApiSchemas.find(schema => schema.id === id)?.originSchema || null
 
         let fetchedSchema = null
         try {
