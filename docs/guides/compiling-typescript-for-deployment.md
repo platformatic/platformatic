@@ -23,19 +23,19 @@ If you have generated your application using `npx create-platformatic@latest`, y
 }
 ```
 
-Note that the `{PLT_TYPESCRIPT}` will be automatically replaced with the `PLT_TYPESCRIPT` enviornment variable, that configured in your
+Note that the `{PLT_TYPESCRIPT}` will be automatically replaced with the `PLT_TYPESCRIPT` environment variable, that is configured in your
 `.env` (and `.env.sample`) file:
 
 ```
 PLT_TYPESCRIPT=true
 ```
 
-Older Platformatic applications might not have the same layout, and if so you can update your settings to match (after updating your dependencies).
+Older Platformatic applications might not have the same layout, if so you can update your settings to match (after updating your dependencies).
 
 ## Compiling for deployment
 
 Compiling for deployment is then as easy as running `plt service compile` in that same folder.
-Rememeber to set `PLT_TYPESCRIPT=false` in your enviornment variables in the deployed enviornments.
+Rememeber to set `PLT_TYPESCRIPT=false` in your enviornment variables in the deployed environments.
 
 ## Usage with Runtime
 
