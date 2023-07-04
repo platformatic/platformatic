@@ -46,15 +46,15 @@ async function composeOpenAPI (app, opts) {
       }
     }
 
-    let schema = null
+    let originSchema = null
     try {
-      schema = await getOpenApiSchema(origin, openapi)
+      originSchema = await getOpenApiSchema(origin, openapi)
     } catch (error) {
       app.log.error(error, `failed to fetch schema for "${id} service"`)
       continue
     }
 
-    schema = modifyOpenApiSchema(app, schema, config)
+    const schema = modifyOpenApiSchema(app, originSchema, config)
 
     const prefix = openapi.prefix ?? ''
     for (const path in schema.paths) {
@@ -65,7 +65,7 @@ async function composeOpenAPI (app, opts) {
       }
     }
 
-    openApiSchemas.push({ id, prefix, schema, config })
+    openApiSchemas.push({ id, prefix, schema, originSchema, config })
   }
 
   app.decorate('openApiSchemas', openApiSchemas)
