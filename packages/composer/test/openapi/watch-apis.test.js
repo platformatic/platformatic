@@ -1,7 +1,9 @@
 'use strict'
 
-const { setTimeout } = require('node:timers/promises')
 const { join } = require('node:path')
+const { tmpdir } = require('node:os')
+const { setTimeout } = require('node:timers/promises')
+const { writeFile, mkdtemp } = require('node:fs/promises')
 const { test } = require('tap')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 const {
@@ -282,6 +284,44 @@ test('should not watch an api if refreshTimeout equals 0', async (t) => {
 
   await api1.close()
   await api2.close()
+  await setTimeout(1000)
+
+  t.equal(composer.restarted, false)
+})
+
+test('should not restart composer if schema has been changed', async (t) => {
+  const api = await createOpenApiService(t, ['users'])
+  await api.listen({ port: 0 })
+
+  const openapiConfig = {
+    paths: {
+      '/users/{id}': {
+        alias: '/customers/{id}'
+      }
+    }
+  }
+
+  const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
+  const openapiConfigFile = join(cwd, 'openapi.json')
+  await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
+
+  const composer = await createComposer(t, {
+    composer: {
+      services: [
+        {
+          id: 'api1',
+          origin: 'http://127.0.0.1:' + api.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            config: openapiConfigFile
+          }
+        }
+      ],
+      refreshTimeout: 500
+    }
+  })
+
+  await composer.start()
   await setTimeout(1000)
 
   t.equal(composer.restarted, false)
