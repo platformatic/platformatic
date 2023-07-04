@@ -3,11 +3,13 @@
 const inspector = require('node:inspector')
 const { isatty } = require('node:tty')
 const { parentPort, workerData } = require('node:worker_threads')
+const undici = require('undici')
 const pino = require('pino')
 const RuntimeApi = require('./api')
 const { MessagePortWritable } = require('./message-port-writable')
 const loaderPort = globalThis.LOADER_PORT // Added by loader.mjs.
 
+globalThis.fetch = undici.fetch
 delete globalThis.LOADER_PORT
 
 let transport
