@@ -36,3 +36,4 @@ export {
   createStaticWorkspaceGHAction,
   createDynamicWorkspaceGHAction
 } from './src/ghaction.mjs'
+export { createGitignore, createPackageJson, getDependencyVersion, getVersion } from './src/index.mjs'
