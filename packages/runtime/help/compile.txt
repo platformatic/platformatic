@@ -1,0 +1,8 @@
+Compile all typescript plugins for all services.
+
+``` bash
+  $ platformatic runtime compile
+```
+
+As a result of executing this command, it will compile the typescript
+plugins for each services registered in the runtime.

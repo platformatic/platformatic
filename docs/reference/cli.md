@@ -96,6 +96,78 @@ Welcome to Platformatic. Available commands are:
 * frontend - create frontend code to consume the REST APIs
 ```
 
+
+### client
+
+```bash
+platformatic client <command>
+```
+
+
+#### help
+
+Create a Fastify plugin that exposes a client for a remote OpenAPI or GraphQL API.
+
+To create a client for a remote OpenAPI API, you can use the following command:
+
+```bash
+$ platformatic client http://example.com/to/schema/file -n myclient
+```
+
+To create a client for a remote Graphql API, you can use the following command:
+
+```bash
+$ platformatic client http://example.com/graphql -n myclient
+```
+
+Instead of a URL, you can also use a local file:
+
+```bash
+$ platformatic client path/to/schema -n myclient
+```
+
+This will create a Fastify plugin that exposes a client for the remote API in a folder `myclient`
+and a file named myclient.js inside it.
+
+If platformatic config file is specified, it will be edited and a `clients` section will be added.
+Then, in any part of your Platformatic application you can use the client.
+
+You can use the client in your application in Javascript, calling a GraphQL endpoint:
+
+```js
+module.exports = async function (app, opts) {
+  app.post('/', async (request, reply) => {
+    const res = await app.myclient.graphql({
+      query: 'query { hello }'
+    })
+    return res
+  })
+}
+```
+
+or in Typescript, calling an OpenAPI endpoint:
+
+
+```ts
+import { FastifyInstance } from 'fastify'
+/// <reference path="./myclient" />
+
+export default async function (app: FastifyInstance) {
+  app.get('/', async () => {
+    return app.myclient.get({})
+  })
+}
+```
+
+Options:
+
+  * `-c, --config <path>`: Path to the configuration file.
+  * `-n, --name <name>`: Name of the client.
+  * `-f, --folder <name>`: Name of the plugin folder, defaults to --name value.
+  * `-t, --typescript`: Generate the client plugin in TypeScript.
+  * `-r, --full-response`: Client will return full response object rather than just the body.
+
+
 ### composer
 
 ```bash
@@ -109,16 +181,75 @@ Available commands:
 
 * `help` - show this help message.
 * `help <command>` - shows more information about a command.
-* `start` - start the composer.
+* `start` - start the server.
+* `openapi schemas fetch` - fetch OpenAPI schemas from services.
+
+
+#### openapi schemas fetch
+
+Fetch OpenAPI schemas from remote services to use in your Platformatic project.
+
+``` bash
+  $ platformatic composer openapi schemas fetch
+```
+
+It will fetch all the schemas from the remote services and store them by path
+set in the `platformatic.composer.json` file. If the path is not set, it will
+skip fetching the schema.
 
 
 #### start
 
-Start the Platformatic Composer with the following command:
+Start the Platformatic Composer server with the following command:
 
 ``` bash
-$ platformatic composer start
+ $ platformatic composer start
+ ```
+
+You will need a configuration file. Here is an example to get you started,
+save the following as `platformatic.composer.json`:
+
+``` json
+  {
+    "server": {
+      "hostname": "127.0.0.1",
+      "port": 0,
+      "logger": {
+        "level": "info"
+      }
+    },
+    "composer": {
+      "services": [
+        {
+          "id": "service1",
+          "origin": "http://127.0.0.1:3051",
+          "openapi": {
+            "url": "/documentation/json"
+          }
+        },
+        {
+          "id": "service2",
+          "origin": "http://127.0.0.1:3052",
+          "openapi": {
+            "file": "./schemas/service2.openapi.json"
+          }
+        }
+      ],
+      "refreshTimeout": 1000
+    }
+  }
 ```
+
+By sending the SIGUSR2 signal, the server can be reloaded.
+
+Options:
+
+  -c, --config FILE      Specify a configuration file to use
+
+If not specified, the configuration specified will be loaded from `platformatic.composer.json`,
+`platformatic.composer.yml`, or `platformatic.composer.tml` in the current directory. You can find more details about
+the configuration format at:
+https://oss.platformatic.dev/docs/reference/composer/configuration.
 
 
 ### db
@@ -136,7 +267,7 @@ Compile typescript plugins.
 ```
 
 As a result of executing this command, the Platformatic DB will compile typescript
-plugins in the `outDir` directory.
+plugins in the `outDir` directory. 
 
 If not specified, the configuration specified will be loaded from
 `platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
@@ -383,30 +514,6 @@ You can find more details about the configuration format at:
 https://oss.platformatic.dev/docs/reference/db/configuration.
 
 
-### runtime
-
-```bash
-platformatic runtime <command>
-```
-
-
-#### help
-
-Available commands:
-
-* `help` - show this help message.
-* `help <command>` - shows more information about a command.
-* `start` - start the runtime.
-
-
-#### start
-
-Start the Platformatic Runtime with the following command:
-
-``` bash
-$ platformatic runtime start
-```
-
 ### service
 
 ```bash
@@ -417,12 +524,13 @@ platformatic service <command>
 #### compile
 
 Compile typescript plugins.
+
 ``` bash
   $ platformatic service compile
 ```
 
-As a result of executing this command, the Platformatic DB will compile typescript
-plugins in the `outDir` directory.
+As a result of executing this command, Platformatic Service will compile typescript
+plugins in the `outDir` directory. 
 
 If not specified, the configuration specified will be loaded from
 `platformatic.service.json`, `platformatic.service.yml`, or `platformatic.service.tml` in the current directory.
@@ -480,69 +588,72 @@ save the following as `platformatic.service.json`:
 ```
 
 
-### client
+### frontend
 
 ```bash
-platformatic client <command>
+platformatic frontend <url> <language>
 ```
+
+
+
+Create frontend code to consume the REST APIs of a Platformatic application.
+
+From the directory you want the frontend code to be generated (typically `<YOUR_FRONTEND_APP_DIRECTORY>/src/`) run
+```bash
+npx platformatic frontend http://127.0.0.1:3042 ts
+```
+
+(where `http://127.0.0.1:3042` must be replaced with your Platformatic application endpoint and the language can be `ts` or `js`) and then the Platformatic CLI generates
+
+  * `api.d.ts`: A TypeScript module that includes all the OpenAPI-related types
+  * `api.ts` or `api.js`: A module that includes a function for every single REST endpoint
+
+Refer to the [dedicated guide](https://oss.platformatic.dev/docs/guides/generate-frontend-code-to-consume-platformatic-rest-api) where the full process of generating and consuming the frontend code is described.
+
+In case of problems, please check that
+
+  * The Platformatic app URL is valid
+  * The Platformatic app whose URL belongs must be up and running
+  * OpenAPI must be enabled (`db.openapi` in your `platformatic.db.json` is not set to `false`). You can find more details about the db configuration format [here](https://oss.platformatic.dev/docs/reference/db/configuration/#db).
+  * CORS must be managed in your Platformatic app (`server.cors.origin.regexp` in your `platformatic.db.json` is set to `/*/`, for instance)
+  You can find more details about the cors configuration [here](https://oss.platformatic.dev/docs/reference/service/configuration/#server).
+
+
+### runtime
+
+```bash
+platformatic runtime <command>
+```
+
+
+#### compile
+
+Compile all typescript plugins for all services.
+
+``` bash
+  $ platformatic runtime compile
+```
+
+As a result of executing this command, it will compile the typescript
+plugins for each services registered in the runtime.
 
 
 #### help
 
-Create a Fastify plugin that exposes a client for a remote OpenAPI or GraphQL API.
+Available commands:
 
-To create a client for a remote OpenAPI API, you can use the following command:
+* `help` - show this help message.
+* `help <command>` - shows more information about a command.
+* `start` - start the application.
 
-```bash
-$ platformatic client http://exmaple.com/to/schema/file -n myclient
+
+#### start
+
+Start the Platformatic Runtime with the following command:
+
+``` bash
+ $ platformatic runtime start
 ```
-
-To create a client for a remote Graphql API, you can use the following command:
-
-```bash
-$ platformatic client http://exmaple.com/grapqhl -n myclient
-```
-
-This will create a Fastify plugin that exposes a client for the remote API in a folder `myclient`
-and a file named myclient.js inside it.
-
-If platformatic config file is specified, it will be edited and a `clients` section will be added.
-Then, in any part of your Platformatic application you can use the client.
-
-You can use the client in your application in Javascript, calling a GraphQL endpoint:
-
-```js
-module.exports = async function (app, opts) {
-  app.post('/', async (request, reply) => {
-    const res = await app.myclient.graphql({
-      query: 'query { hello }'
-    })
-    return res
-  })
-}
-```
-
-or in Typescript, calling an OpenAPI endpoint:
-
-
-```ts
-import { FastifyInstance } from 'fastify'
-/// <reference path="./myclient" />
-
-export default async function (app: FastifyInstance) {
-  app.get('/', async () => {
-    return app.myclient.get({})
-  })
-}
-```
-
-Options:
-
-  * `-c, --config <path>`: Path to the configuration file.
-  * `-n, --name <name>`: Name of the client.
-  * `-f, --folder <name>`: Name of the plugin folder, defaults to --name value.
-  * `-t, --typescript`: Generate the client plugin in TypeScript.
-  * `-r, --full-response`: Client will return full response object rather than just the body.
 
 
 ### start
@@ -558,34 +669,4 @@ Options:
   * `-c, --config <path>`: Path to the configuration file.
   * `--inspect[=[host:]port]`: Start the Node.js debugger. `host` defaults to `'127.0.0.1'`. `port` defaults to 9229. Use caution when binding to a public host:port combination.
   * `--inspect-brk[=[host:]port]`: Start the Node.js debugger and block until a client has attached. `host` defaults to `'127.0.0.1'`. `port` defaults to 9229. Use caution when binding to a public host:port combination.
-
-### frontend
-
-```bash
-platformatic frontend <url> <language>
-```
-
-
-
-Create frontend code to consume the REST APIs of a Platformatic application.
-
-From the directory you want the client code to be generated (typically `<YOUR_FRONTEND_APP_DIRECTORY>/src/`) run
-```bash
-npx platformatic frontend http://127.0.0.1:3042 ts
-```
-
-(where `http://127.0.0.1:3042` must be replaced with your Platformatic application endpointm and the language can be `ts` or `js`) and then the Platformatic CLI generates
-
-  * `api.d.ts`: A TypeScript module that includes all the OpenAPI-related types
-  * `api.ts` or `api.js`: A module that includes a typed function for every single OpenAPI endpoint
-
-Refer to the [dedicated guide](https://oss.platformatic.dev/docs/guides/generate-frontend-code-to-consume-platformatic-rest-api) where the full process of generating and consuming the frontend code is described.
-
-In case of problems, please check that
-
-  * The Platformatic app URL is valid
-  * The Platformatic app whose URL belongs must be up and running
-  * OpenAPI must be enabled (`db.openapi` in your `platformatic.db.json` is not set to `false`). You can find more details about the db configuration format [here](https://oss.platformatic.dev/docs/reference/db/configuration/#db).
-  * CORS must be managed in your Platformatic app (`server.cors.origin.regexp` in your `platformatic.db.json` is set to `/*/`, for instance)
-  You can find more details about the cors configuration [here](https://oss.platformatic.dev/docs/reference/service/configuration/#server).
 

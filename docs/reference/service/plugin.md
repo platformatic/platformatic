@@ -90,3 +90,9 @@ export default async function (fastify: FastifyInstance, opts: FastifyPluginOpti
 ```
 
 Note that you need to add the `"typescript": true` configuration to your `platformatic.service.json`.
+
+### Load of compiled files
+
+Setting `"typescript": false` but including a `tsconfig.json` with an [`outDir`](https://www.typescriptlang.org/tsconfig#outDir)
+option, will instruct Platformatic Service to try loading your plugins from that folder instead.
+This setup is needed to support pre-compiled sources to reduce cold start time during deployment.

@@ -100,6 +100,54 @@ ${mainCliHelp.trim()}
 
 `;
 
+// Command: client
+
+out += `
+### client
+
+\`\`\`bash
+platformatic client <command>
+\`\`\`
+
+`
+
+const clientHelpsDir = join(import.meta.url, '../packages/client-cli/help')
+const clientHelps = await readdir(clientHelpsDir)
+
+for (const clientHelp of clientHelps) {
+  const clientHelpPath = path.join(clientHelpsDir, clientHelp)
+  const content = await readFile(clientHelpPath)
+  out += `
+#### ${clientHelp.replace('.txt', '')}
+
+${content}
+`
+}
+
+// Command: composer
+
+out += `
+### composer
+
+\`\`\`bash
+platformatic composer <command>
+\`\`\`
+
+`
+
+const composerHelpsDir = join(import.meta.url, '../packages/composer/help')
+const composerHelps = await readdir(composerHelpsDir)
+
+for (const composerHelp of composerHelps) {
+  const composerHelpPath = path.join(composerHelpsDir, composerHelp)
+  const content = await readFile(composerHelpPath)
+  out += `
+#### ${composerHelp.replace('.txt', '')}
+
+${content}
+`
+}
+
 // Command: db
 
 out += `
@@ -148,42 +196,6 @@ ${content}
 `
 }
 
-// Command: client
-
-out += `
-### client
-
-\`\`\`bash
-platformatic client <command>
-\`\`\`
-
-`
-
-const clientHelpsDir = join(import.meta.url, '../packages/client-cli/help')
-const clientHelps = await readdir(clientHelpsDir)
-
-for (const clientHelp of clientHelps) {
-  const clientHelpPath = path.join(clientHelpsDir, clientHelp)
-  const content = await readFile(clientHelpPath)
-  out += `
-#### ${clientHelp.replace('.txt', '')}
-
-${content}
-`
-}
-
-// Command: start
-
-const startHelp = path.join(cliHelpDir, 'start.txt')
-
-const startCliHelp = await readFile(startHelp, 'utf8')
-
-out += `
-### start
-
-${startCliHelp.trim()}
-
-`;
 
 // Command: frontend
 
@@ -207,6 +219,44 @@ ${mainFrontendHelp.trim()}
 
 `;
 
+// Command: runtime
+
+out += `
+### runtime
+
+\`\`\`bash
+platformatic runtime <command>
+\`\`\`
+
+`
+
+const runtimeHelpsDir = join(import.meta.url, '../packages/runtime/help')
+const runtimeHelps = await readdir(runtimeHelpsDir)
+
+for (const runtimeHelp of runtimeHelps) {
+  const runtimeHelpPath = path.join(runtimeHelpsDir, runtimeHelp)
+  const content = await readFile(runtimeHelpPath)
+  out += `
+#### ${runtimeHelp.replace('.txt', '')}
+
+${content}
+`
+}
+
+
+// Command: start
+
+const startHelp = path.join(cliHelpDir, 'start.txt')
+
+const startCliHelp = await readFile(startHelp, 'utf8')
+
+out += `
+### start
+
+${startCliHelp.trim()}
+
+`;
 
 
 await writeFile(join(import.meta.url, '..', 'docs', 'reference', 'cli.md'), out)
+

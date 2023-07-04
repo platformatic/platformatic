@@ -1107,6 +1107,12 @@ importers:
         specifier: ^5.22.1
         version: 5.22.1
     devDependencies:
+      '@platformatic/sql-graphql':
+        specifier: workspace:*
+        version: link:../sql-graphql
+      '@platformatic/sql-mapper':
+        specifier: workspace:*
+        version: link:../sql-mapper
       c8:
         specifier: ^8.0.0
         version: 8.0.0
@@ -1125,6 +1131,9 @@ importers:
       tsd:
         specifier: ^0.28.1
         version: 0.28.1
+      typescript:
+        specifier: ^5.1.6
+        version: 5.1.6
 
   packages/service:
     dependencies:
@@ -3970,7 +3979,7 @@ packages:
       '@sinclair/typebox': 0.25.24
     dev: true
 
-  /@joshwooding/vite-plugin-react-docgen-typescript@0.0.5(typescript@5.1.3)(vite@4.3.9):
+  /@joshwooding/vite-plugin-react-docgen-typescript@0.0.5(typescript@5.1.6)(vite@4.3.9):
     resolution: {integrity: sha512-HwAEj/vAP1+hzBfIv9DTCyg+1O0/LG48Up7j1RmJ+pFwjb/wRxzUBco4LqKFKe7SZ0M6IyASNh1oKP3yHnJElA==}
     peerDependencies:
       typescript: '>= 4.3.x'
@@ -3980,8 +3989,8 @@ packages:
       glob: 7.2.3
       glob-promise: 4.2.2(glob@7.2.3)
       magic-string: 0.26.7
-      react-docgen-typescript: 2.2.2(typescript@5.1.3)
-      typescript: 5.1.3
+      react-docgen-typescript: 2.2.2(typescript@5.1.6)
+      typescript: 5.1.6
       vite: 4.3.9(@types/node@20.3.1)
     dev: true
 
@@ -4689,7 +4698,7 @@ packages:
       util-deprecate: 1.0.2
     dev: true
 
-  /@storybook/builder-vite@0.2.7(@babel/core@7.22.5)(eslint@8.4.1)(react-dom@18.2.0)(react@18.2.0)(typescript@5.1.3)(vite@4.3.9):
+  /@storybook/builder-vite@0.2.7(@babel/core@7.22.5)(eslint@8.4.1)(react-dom@18.2.0)(react@18.2.0)(typescript@5.1.6)(vite@4.3.9):
     resolution: {integrity: sha512-IvgInn1dsL4amHn8IDHWv2KaoWyRWxGQvHvctfHl7ayN8fke6Tzg8lBUxVoGBfqeoO3glo/zsVUUO+aNeUUlxQ==}
     peerDependencies:
       '@storybook/mdx2-csf': ^0.0.3
@@ -4707,8 +4716,8 @@ packages:
       vue-docgen-api:
         optional: true
     dependencies:
-      '@joshwooding/vite-plugin-react-docgen-typescript': 0.0.5(typescript@5.1.3)(vite@4.3.9)
-      '@storybook/core-common': 6.5.16(eslint@8.4.1)(react-dom@18.2.0)(react@18.2.0)(typescript@5.1.3)
+      '@joshwooding/vite-plugin-react-docgen-typescript': 0.0.5(typescript@5.1.6)(vite@4.3.9)
+      '@storybook/core-common': 6.5.16(eslint@8.4.1)(react-dom@18.2.0)(react@18.2.0)(typescript@5.1.6)
       '@storybook/mdx1-csf': 0.0.4(@babel/core@7.22.5)(react@18.2.0)
       '@storybook/node-logger': 6.5.16
       '@storybook/semver': 7.3.2
@@ -4750,7 +4759,7 @@ packages:
       global: 4.4.0
     dev: true
 
-  /@storybook/core-common@6.5.16(eslint@8.4.1)(react-dom@18.2.0)(react@18.2.0)(typescript@5.1.3):
+  /@storybook/core-common@6.5.16(eslint@8.4.1)(react-dom@18.2.0)(react@18.2.0)(typescript@5.1.6):
     resolution: {integrity: sha512-2qtnKP3TTOzt2cp6LXKRTh7XrI9z5VanMnMTgeoFcA5ebnndD4V6BExQUdYPClE/QooLx6blUWNgS9dFEpjSqQ==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
@@ -4794,7 +4803,7 @@ packages:
       express: 4.18.2
       file-system-cache: 1.1.0
       find-up: 5.0.0
-      fork-ts-checker-webpack-plugin: 6.5.3(eslint@8.4.1)(typescript@5.1.3)(webpack@4.46.0)
+      fork-ts-checker-webpack-plugin: 6.5.3(eslint@8.4.1)(typescript@5.1.6)(webpack@4.46.0)
       fs-extra: 9.1.0
       glob: 7.2.3
       handlebars: 4.7.7
@@ -4810,7 +4819,7 @@ packages:
       slash: 3.0.0
       telejson: 6.0.8
       ts-dedent: 2.2.0
-      typescript: 5.1.3
+      typescript: 5.1.6
       util-deprecate: 1.0.2
       webpack: 4.46.0
     transitivePeerDependencies:
@@ -9037,7 +9046,7 @@ packages:
       signal-exit: 3.0.7
     dev: true
 
-  /fork-ts-checker-webpack-plugin@6.5.3(eslint@8.4.1)(typescript@5.1.3)(webpack@4.46.0):
+  /fork-ts-checker-webpack-plugin@6.5.3(eslint@8.4.1)(typescript@5.1.6)(webpack@4.46.0):
     resolution: {integrity: sha512-SbH/l9ikmMWycd5puHJKTkZJKddF4iRLyW3DeZ08HTI7NGyLS38MXd/KGgeWumQO7YNQbW2u/NtPT2YowbPaGQ==}
     engines: {node: '>=10', yarn: '>=1.0.0'}
     peerDependencies:
@@ -9065,7 +9074,7 @@ packages:
       schema-utils: 2.7.0
       semver: 7.5.3
       tapable: 1.1.3
-      typescript: 5.1.3
+      typescript: 5.1.6
       webpack: 4.46.0
     dev: true
 
@@ -13237,12 +13246,12 @@ packages:
       react: 18.2.0
     dev: true
 
-  /react-docgen-typescript@2.2.2(typescript@5.1.3):
+  /react-docgen-typescript@2.2.2(typescript@5.1.6):
     resolution: {integrity: sha512-tvg2ZtOpOi6QDwsb3GZhOjDkkX0h8Z2gipvTg6OVMUyoYoURhEiRNePT8NZItTVCDh39JJHnLdfCOkzoLbFnTg==}
     peerDependencies:
       typescript: '>= 4.3.x'
     dependencies:
-      typescript: 5.1.3
+      typescript: 5.1.6
     dev: true
 
   /react-docgen@6.0.0-alpha.3:
@@ -14648,7 +14657,7 @@ packages:
       vite: ^3.0.4
       vue: ^3.2.25
     dependencies:
-      '@storybook/builder-vite': 0.2.7(@babel/core@7.22.5)(eslint@8.4.1)(react-dom@18.2.0)(react@18.2.0)(typescript@5.1.3)(vite@4.3.9)
+      '@storybook/builder-vite': 0.2.7(@babel/core@7.22.5)(eslint@8.4.1)(react-dom@18.2.0)(react@18.2.0)(typescript@5.1.6)(vite@4.3.9)
       vite: 4.3.9(@types/node@20.3.1)
       vue: 3.3.4
     dev: true
@@ -15392,7 +15401,6 @@ packages:
 
   /trim@0.0.1:
     resolution: {integrity: sha512-YzQV+TZg4AxpKxaTHK3c3D+kRDCGVEE7LemdlQZoQXn0iennk10RsIoY6ikzAqJTc9Xjl9C1/waHom/J86ziAQ==}
-    deprecated: Use String.prototype.trim() instead
     dev: true
 
   /trivial-deferred@1.1.2:
@@ -15580,6 +15588,12 @@ packages:
 
   /typescript@5.1.3:
     resolution: {integrity: sha512-XH627E9vkeqhlZFQuL+UsyAXEnibT0kWR2FWONlr4sTjvxyJYnyefgrkyECLzM5NenmKzRAy2rR/OlYLA1HkZw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+    dev: true
+
+  /typescript@5.1.6:
+    resolution: {integrity: sha512-zaWCozRZ6DLEWAWFrVDz1H6FVXzUSfTy5FUMWsQlU8Ym5JP9eO4xkTIROFCQvhQf61z6O/G6ugw3SgAnvvm+HA==}
     engines: {node: '>=14.17'}
     hasBin: true
     dev: true

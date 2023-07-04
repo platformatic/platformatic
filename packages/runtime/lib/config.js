@@ -138,6 +138,7 @@ async function parseClientsAndComposer (configManager) {
               missingKey = err.key
             }
             isLocal = missingKey && client.url === `{${missingKey}}`
+            /* c8 ignore next 3 */
           } else {
             isLocal = true
           }
