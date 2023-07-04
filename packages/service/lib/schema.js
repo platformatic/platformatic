@@ -403,7 +403,12 @@ const metrics = {
     {
       type: 'object',
       properties: {
-        port: { type: 'integer' },
+        port: {
+          anyOf: [
+            { type: 'integer' },
+            { type: 'string' }
+          ]
+        },
         hostname: { type: 'string' },
         auth: {
           type: 'object',
