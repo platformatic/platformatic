@@ -18,7 +18,10 @@ export async function isFileAccessible (filename, directory) {
     return false
   }
 }
-
+/**
+ * Gets the username from git config or `whoami` command
+ * @returns string | null
+ */
 export const getUsername = async () => {
   try {
     const { stdout } = await execa('git', ['config', 'user.name'])
@@ -39,7 +42,10 @@ export const getUsername = async () => {
 
   return null
 }
-
+/**
+ * Get the platformatic package version from package.json
+ * @returns string
+ */
 /* c8 ignore next 4 */
 export const getVersion = async () => {
   const data = await readFile(desm.join(import.meta.url, '..', 'package.json'), 'utf8')
@@ -73,6 +79,11 @@ export const findServiceConfigFile = async (directory) => (ConfigManager.findCon
 export const findComposerConfigFile = async (directory) => (ConfigManager.findConfigFile(directory, 'composer'))
 export const findRuntimeConfigFile = async (directory) => (ConfigManager.findConfigFile(directory, 'runtime'))
 
+/**
+ * Gets the version of the specified dependency package from package.json
+ * @param {string} dependencyName
+ * @returns string
+ */
 export const getDependencyVersion = async (dependencyName) => {
   const require = createRequire(import.meta.url)
   const pathToPackageJson = join(dirname(require.resolve(dependencyName)), 'package.json')

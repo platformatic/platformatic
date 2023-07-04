@@ -8,7 +8,9 @@ import createPlatformaticService from './service/create-service-cli.mjs'
 import createPlatformaticComposer from './composer/create-composer-cli.mjs'
 import { createPlatformaticRuntime, createRuntimeService } from './runtime/create-runtime-cli.mjs'
 import commist from 'commist'
-import { getUsername, getVersion, minimumSupportedNodeVersions, isCurrentVersionSupported, findRuntimeConfigFile } from './utils.mjs'
+import { getUsername, getVersion, minimumSupportedNodeVersions, isCurrentVersionSupported, findRuntimeConfigFile, getDependencyVersion } from './utils.mjs'
+import { createPackageJson } from './create-package-json.mjs'
+import { createGitignore } from './create-gitignore.mjs'
 
 export async function chooseKind (argv, opts = {}) {
   const skip = opts.skip
@@ -101,3 +103,10 @@ const createPlatformatic = async (argv) => {
 }
 
 export default createPlatformatic
+
+export {
+  createPackageJson,
+  createGitignore,
+  getVersion,
+  getDependencyVersion
+}

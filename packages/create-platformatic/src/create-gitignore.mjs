@@ -31,7 +31,11 @@ tags
 # clinicjs
 .clinic/
 `
-
+/**
+ * Creates a standard Platformatic app .gitignore file
+ * @param {import('pino').BaseLogger} logger Logger Interface
+ * @param {string} dir Target directory
+ */
 export const createGitignore = async (logger, dir = '.') => {
   const gitignoreFileName = join(dir, '.gitignore')
   const isGitignoreExists = await isFileAccessible(gitignoreFileName)
