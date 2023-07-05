@@ -1,7 +1,7 @@
 # Compiling Typescript for Deployment
 
 [Platformatic Service](/reference/service/introduction.md) provides automatic TypeScript compilation during the startup
-of your Node.js server. While this provides amazing developer experience, in production adds additional
+of your Node.js server. While this provides an amazing developer experience, in production it adds additional
 start time and it requires more resources. In this guide, we show how to compile your TypeScript
 source files before shipping to a server.
 
@@ -35,9 +35,9 @@ Older Platformatic applications might not have the same layout, if so you can up
 ## Compiling for deployment
 
 Compiling for deployment is then as easy as running `plt service compile` in that same folder.
-Rememeber to set `PLT_TYPESCRIPT=false` in your enviornment variables in the deployed environments.
+Rememeber to set `PLT_TYPESCRIPT=false` in your environment variables in the deployed environments.
 
 ## Usage with Runtime
 
 If you are building a [Runtime](/reference/runtime/introduction.md)-based application, you will need
-to compile every service independently or with the use of `plt runtime compile`.
+to compile every service independently or use the `plt runtime compile` command.

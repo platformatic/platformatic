@@ -45,5 +45,5 @@ Runtime project. For more details on the configuration file, see the
 
 ## TypeScript Compilation
 
-Platformatic Runtime streamline the compilation of all services built on typescript with the command
-`plt runtime compile`. The TypeScript compiler (`tsc`) is required to be installed seperately.
+Platformatic Runtime streamlines the compilation of all services built on TypeScript with the command
+`plt runtime compile`. The TypeScript compiler (`tsc`) is required to be installed separately.
