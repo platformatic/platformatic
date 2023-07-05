@@ -6,7 +6,7 @@ import { cliPath } from './helper.mjs'
 import { execa } from 'execa'
 import { mkdtemp, rm, cp } from 'node:fs/promises'
 
-const base = join(import.meta.url, '..', '..', 'tmp')
+const base = join(import.meta.url, '..', 'tmp')
 
 test('compile without tsconfigs', async () => {
   const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
