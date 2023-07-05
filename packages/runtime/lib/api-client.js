@@ -6,14 +6,12 @@ const { randomUUID } = require('node:crypto')
 const MAX_LISTENERS_COUNT = 100
 
 class RuntimeApiClient extends EventEmitter {
-  #worker
-
   constructor (worker) {
     super()
     this.setMaxListeners(MAX_LISTENERS_COUNT)
 
-    this.#worker = worker
-    this.#worker.on('message', (message) => {
+    this.worker = worker
+    this.worker.on('message', (message) => {
       if (message.operationId) {
         this.emit(message.operationId, message)
       }
@@ -26,7 +24,7 @@ class RuntimeApiClient extends EventEmitter {
 
   async close () {
     await this.#sendCommand('plt:stop-services')
-    await once(this.#worker, 'exit')
+    await once(this.worker, 'exit')
   }
 
   async restart () {
@@ -60,7 +58,7 @@ class RuntimeApiClient extends EventEmitter {
   async #sendCommand (command, params = {}) {
     const operationId = randomUUID()
 
-    this.#worker.postMessage({ operationId, command, params })
+    this.worker.postMessage({ operationId, command, params })
     const [message] = await once(this, operationId)
 
     const { error, data } = message

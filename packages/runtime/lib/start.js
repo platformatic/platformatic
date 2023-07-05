@@ -51,8 +51,12 @@ async function startWithConfig (configManager, env = process.env) {
   })
 
   worker.on('error', () => {
-    // the error is logged in the worker
-    process.exit(1)
+    // If this is the only 'error' handler, then exit the process as the default
+    // behavior. If anything else is listening for errors, then don't exit.
+    if (worker.listenerCount('error') === 1) {
+      // The error is logged in the worker.
+      process.exit(1)
+    }
   })
 
   if (config.hotReload) {
