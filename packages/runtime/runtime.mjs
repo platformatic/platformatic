@@ -32,6 +32,7 @@ export async function run (argv) {
     process.exit(0)
   }
 
+  /* c8 ignore next 4 */
   return {
     output: await program.parseAsync(argv),
     help

@@ -46,7 +46,7 @@ function main () {
   const { inspectorOptions } = workerData.config
 
   if (inspectorOptions) {
-    /* c8 ignore next 3 */
+    /* c8 ignore next 6 */
     if (inspectorOptions.hotReloadDisabled) {
       logger.info('debugging flags were detected. hot reloading has been disabled')
     }

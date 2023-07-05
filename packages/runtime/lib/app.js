@@ -118,6 +118,7 @@ class PlatformaticApp {
   }
 
   async handleProcessLevelEvent ({ signal, err }) {
+    /* c8 ignore next 3 */
     if (!this.server) {
       return false
     }
@@ -223,6 +224,7 @@ class PlatformaticApp {
       watchIgnore: [...(this.#originalWatch?.ignore || []), basename(configManager.fullPath)]
     })
 
+    /* c8 ignore next 4 */
     fileWatcher.on('update', async () => {
       this.server.log.debug('files changed')
       this.restart()
