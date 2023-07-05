@@ -1,4 +1,14 @@
-CREATE TABLE graphs (
+CREATE TABLE movies (
+  year INTEGER NOT NULL,
   id INTEGER PRIMARY KEY,
-  name TEXT
+  box_office INTEGER,
+  title VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE aggregate_ratings (
+  movie_id INTEGER NOT NULL,
+  rating INTEGER NOT NULL,
+  rating_type VARCHAR(255) NOT NULL,
+  id INTEGER PRIMARY KEY,
+  FOREIGN KEY (movie_id) REFERENCES movies (id)
 );
