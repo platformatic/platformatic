@@ -40,8 +40,4 @@ Rememeber to set `PLT_TYPESCRIPT=false` in your enviornment variables in the dep
 ## Usage with Runtime
 
 If you are building a [Runtime](/reference/runtime/introduction.md)-based application, you will need
-to compile every service independently.
-
-```bash
-for service in `ls services`; do; pushd ./services/$service; plt service compile; popd; done
-```
+to compile every service independently or with the use of `plt runtime compile`.
