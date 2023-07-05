@@ -10,7 +10,6 @@ import { start } from './helper.mjs'
 const fixturesDir = join(desm(import.meta.url), '..', '..', 'fixtures')
 
 const base = join(desm(import.meta.url), '..', 'tmp')
-console.log(base)
 
 try {
   await mkdir(base, { recursive: true })
