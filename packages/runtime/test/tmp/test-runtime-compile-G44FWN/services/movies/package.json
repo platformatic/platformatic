@@ -1,0 +1,17 @@
+{
+  "scripts": {
+    "start": "npm run clean && platformatic start",
+    "clean": "rm -fr ./dist",
+    "build": "npx tsc",
+    "migrate": "platformatic db migrations apply"
+  },
+  "devDependencies": {
+    "fastify": "^4.18.0"
+  },
+  "dependencies": {
+    "platformatic": "^0.28.1"
+  },
+  "engines": {
+    "node": "^18.8.0 || >=19"
+  }
+}

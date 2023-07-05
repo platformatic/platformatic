@@ -1,14 +1,22 @@
 import assert from 'node:assert'
-import { cp, writeFile, mkdtemp } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import { cp, writeFile, mkdtemp, mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import desm from 'desm'
 import { request } from 'undici'
 import { start } from './helper.mjs'
+
 const fixturesDir = join(desm(import.meta.url), '..', '..', 'fixtures')
 const undiciPath = join(desm(import.meta.url), '..', '..', 'node_modules', 'undici')
+
+const base = join(desm(import.meta.url), '..', 'tmp')
+console.log(base)
+
+try {
+  await mkdir(base, { recursive: true })
+} catch {
+}
 
 function createCjsLoggingPlugin (text, reloaded) {
   return `\
@@ -42,7 +50,7 @@ function createEsmLoggingPlugin (text, reloaded) {
 }
 
 test('watches CommonJS files', async (t) => {
-  const tmpDir = await mkdtemp(join(tmpdir(), 'watch-'))
+  const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.diagnostic(`using ${tmpDir}`)
   const configFileSrc = join(fixturesDir, 'configs', 'monorepo.json')
   const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
@@ -54,8 +62,6 @@ test('watches CommonJS files', async (t) => {
     cp(configFileSrc, configFileDst),
     cp(appSrc, appDst, { recursive: true })
   ])
-
-  await cp(undiciPath, join(appDst, 'serviceApp', 'node_modules', 'undici'), { recursive: true })
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
   const { child } = await start('-c', configFileDst)
@@ -73,7 +79,7 @@ test('watches CommonJS files', async (t) => {
 })
 
 test('watches ESM files', async (t) => {
-  const tmpDir = await mkdtemp(join(tmpdir(), 'watch-'))
+  const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.diagnostic(`using ${tmpDir}`)
   const configFileSrc = join(fixturesDir, 'configs', 'monorepo.json')
   const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
@@ -85,8 +91,6 @@ test('watches ESM files', async (t) => {
     cp(configFileSrc, configFileDst),
     cp(appSrc, appDst, { recursive: true })
   ])
-
-  await cp(undiciPath, join(appDst, 'serviceApp', 'node_modules', 'undici'), { recursive: true })
 
   await writeFile(esmPluginFilePath, createEsmLoggingPlugin('v1', false))
   const { child } = await start('-c', configFileDst)
@@ -103,7 +107,7 @@ test('watches ESM files', async (t) => {
 })
 
 test('should not hot reload files with `--hot-reload false', async (t) => {
-  const tmpDir = await mkdtemp(join(tmpdir(), 'watch-'))
+  const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.diagnostic(`using ${tmpDir}`)
   const configFileSrc = join(fixturesDir, 'configs', 'monorepo.json')
   const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
@@ -115,9 +119,7 @@ test('should not hot reload files with `--hot-reload false', async (t) => {
     cp(configFileSrc, configFileDst),
     cp(appSrc, appDst, { recursive: true })
   ])
-
-  await cp(undiciPath, join(appDst, 'serviceApp', 'node_modules', 'undici'), { recursive: true })
-
+  
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
   const { child, url } = await start('-c', configFileDst, '--hot-reload', 'false')
   t.after(() => child.kill('SIGINT'))
