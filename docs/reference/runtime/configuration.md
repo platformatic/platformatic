@@ -115,12 +115,6 @@ not start any applications.
 If `allowCycles` is `true`, the topological sort is skipped, and the
 microservices are started in the order specified in the configuration file.
 
-### `env`
-
-An optional object used to specify the environment variables used by the
-Runtime. All keys and values of the object are expected to be strings. If a
-custon environment is not provided, `process.env` is used by default.
-
 ## Environment variable placeholders
 
 The value for any configuration setting can be replaced with an environment

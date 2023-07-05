@@ -72,12 +72,6 @@ const platformaticRuntimeSchema = {
     allowCycles: {
       type: 'boolean'
     },
-    env: {
-      type: 'object',
-      patternProperties: {
-        '.*': { type: 'string' }
-      }
-    },
     $schema: {
       type: 'string'
     }

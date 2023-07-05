@@ -27,7 +27,7 @@ async function start (argv) {
   return app
 }
 
-async function startWithConfig (configManager) {
+async function startWithConfig (configManager, env = process.env) {
   const config = configManager.current
 
   if (inspector.url()) {
@@ -43,7 +43,7 @@ async function startWithConfig (configManager) {
     execArgv: config.hotReload ? kWorkerExecArgv : [],
     transferList: config.loggingPort ? [config.loggingPort] : [],
     workerData: { config },
-    env: config.env
+    env
   })
 
   worker.on('exit', () => {

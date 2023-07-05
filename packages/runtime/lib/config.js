@@ -38,7 +38,6 @@ async function _transformConfig (configManager) {
   configManager.current.allowCycles = !!configManager.current.allowCycles
   configManager.current.serviceMap = new Map()
   configManager.current.inspectorOptions = null
-  configManager.current.env = configManager.current.env ?? process.env
 
   let hasValidEntrypoint = false
 
