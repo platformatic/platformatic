@@ -7,6 +7,7 @@ const { MessageChannel } = require('node:worker_threads')
 const { request } = require('undici')
 const { loadConfig } = require('@platformatic/service')
 const { buildServer, platformaticRuntime } = require('..')
+const { startWithConfig } = require('../lib/start')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
 test('can start applications programmatically from object', async (t) => {
@@ -125,4 +126,20 @@ test('supports logging via message port', async (t) => {
     // Verify that each log is valid JSON.
     JSON.parse(msg.logs[i])
   }
+})
+
+test('can start with a custom environment', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await startWithConfig(config.configManager, { A_CUSTOM_ENV_VAR: 'foobar' })
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  const entryUrl = await app.start()
+  const res = await request(entryUrl + '/env')
+
+  assert.strictEqual(res.statusCode, 200)
+  assert.deepStrictEqual(await res.body.json(), { A_CUSTOM_ENV_VAR: 'foobar' })
 })
