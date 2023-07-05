@@ -21,12 +21,15 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
+    "@platformatic/sql-mapper": "workspace:*",
+    "@platformatic/sql-graphql": "workspace:*",
     "c8": "^8.0.0",
     "execa": "^7.1.1",
     "snazzy": "^9.0.0",
     "split2": "^4.2.0",
     "standard": "^17.1.0",
-    "tsd": "^0.28.1"
+    "tsd": "^0.28.1",
+    "typescript": "^5.1.6"
   },
   "dependencies": {
     "@hapi/topo": "^6.0.2",

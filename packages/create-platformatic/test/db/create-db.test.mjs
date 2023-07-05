@@ -188,6 +188,7 @@ test('creates project with typescript', async ({ equal, same }) => {
   equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
   equal(process.env.PORT, '6666')
   equal(process.env.DATABASE_URL, 'sqlite://./db.sqlite')
+  equal(process.env.PLT_TYPESCRIPT, 'true')
 
   equal(db.graphql, true)
   equal(db.openapi, true)
@@ -199,7 +200,7 @@ test('creates project with typescript', async ({ equal, same }) => {
   equal(migrationFileUndo, moviesMigrationUndo)
 
   same(plugins.paths, ['plugin.ts'])
-  equal(plugins.typescript, true)
+  equal(plugins.typescript, '{PLT_TYPESCRIPT}')
   equal(await isFileAccessible(join(tmpDir, 'plugin.ts')), true)
   equal(await isFileAccessible(join(tmpDir, 'tsconfig.json')), true)
 })

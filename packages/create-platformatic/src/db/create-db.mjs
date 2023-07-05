@@ -1,6 +1,7 @@
 import { writeFile, mkdir, appendFile } from 'fs/promises'
 import { join, relative, resolve } from 'path'
 import { findDBConfigFile, isFileAccessible } from '../utils.mjs'
+import { getTsConfig } from '../get-tsconfig.mjs'
 
 const connectionStrings = {
   postgres: 'postgres://postgres:postgres@127.0.0.1:5432/postgres',
@@ -30,27 +31,6 @@ const moviesMigrationUndo = `
 -- Add SQL in this file to drop the database tables 
 DROP TABLE movies;
 `
-
-function getTsConfig (outDir) {
-  return {
-    compilerOptions: {
-      module: 'commonjs',
-      esModuleInterop: true,
-      target: 'es6',
-      sourceMap: true,
-      pretty: true,
-      noEmitOnError: true,
-      outDir
-    },
-    watchOptions: {
-      watchFile: 'fixedPollingInterval',
-      watchDirectory: 'fixedPollingInterval',
-      fallbackPolling: 'dynamicPriority',
-      synchronousWatchDirectory: true,
-      excludeDirectories: ['**/node_modules', outDir]
-    }
-  }
-}
 
 const getPluginName = (isTypescript) => isTypescript === true ? 'plugin.ts' : 'plugin.js'
 const TS_OUT_DIR = 'dist'
@@ -94,19 +74,29 @@ function generateConfig (migrations, plugin, types, typescript, version) {
   }
 
   if (typescript === true) {
-    config.plugins.typescript = true
+    config.plugins.typescript = '{PLT_TYPESCRIPT}'
   }
 
   return config
 }
 
-function generateEnv (hostname, port, connectionString) {
-  const env = `\
+function generateEnv (hostname, port, connectionString, typescript) {
+  let env = `\
 PLT_SERVER_HOSTNAME=${hostname}
 PORT=${port}
 PLT_SERVER_LOGGER_LEVEL=info
 DATABASE_URL=${connectionString}
 `
+
+  if (typescript === true) {
+    env += `\
+
+# Set to false to disable automatic typescript compilation.
+# Changing this setting is needed for production
+PLT_TYPESCRIPT=true
+`
+  }
+
   return env
 }
 
@@ -155,7 +145,7 @@ export async function createDB ({ hostname, database = 'sqlite', port, migration
     await writeFile(join(currentDir, 'platformatic.db.json'), JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.db.json successfully created.')
 
-    const env = generateEnv(hostname, port, connectionString)
+    const env = generateEnv(hostname, port, connectionString, typescript)
     const envFileExists = await isFileAccessible('.env', currentDir)
     await appendFile(join(currentDir, '.env'), env)
     await writeFile(join(currentDir, '.env.sample'), env)

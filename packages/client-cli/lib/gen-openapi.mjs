@@ -158,7 +158,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   writer.blankLine()
   writer.write('declare module \'fastify\'').block(() => {
     writer.write(`interface Configure${capitalizedName}`).block(() => {
-      writer.writeLine('async getHeaders(req: FastifyRequest, reply: FastifyReply): Promise<Record<string,string>>;')
+      writer.writeLine('getHeaders(req: FastifyRequest, reply: FastifyReply): Promise<Record<string,string>>;')
     })
     writer.write('interface FastifyInstance').block(() => {
       writer.quote(camelcasedName)

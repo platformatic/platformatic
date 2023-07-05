@@ -42,3 +42,8 @@ Runtime project. For more details on the configuration file, see the
   "entrypoint": "entrypointApp"
 }
 ```
+
+## TypeScript Compilation
+
+Platformatic Runtime streamlines the compilation of all services built on TypeScript with the command
+`plt runtime compile`. The TypeScript compiler (`tsc`) is required to be installed separately.

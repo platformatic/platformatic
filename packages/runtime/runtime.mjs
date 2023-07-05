@@ -7,6 +7,7 @@ import isMain from 'es-main'
 import helpMe from 'help-me'
 import parseArgs from 'minimist'
 import { start } from './lib/start.js'
+import { compile } from './lib/compile.js'
 
 const help = helpMe({
   dir: join(import.meta.url, 'help'),
@@ -18,7 +19,9 @@ const program = commist({ maxDistance: 2 })
 
 program.register('help', help.toStdout)
 program.register('help start', help.toStdout.bind(null, ['start']))
+program.register('help compile', help.toStdout.bind(null, ['compile']))
 program.register('start', start)
+program.register('compile', compile)
 
 export async function run (argv) {
   const args = parseArgs(argv, {

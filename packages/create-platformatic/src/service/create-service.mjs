@@ -2,6 +2,7 @@ import { writeFile, mkdir, readFile, appendFile } from 'fs/promises'
 import { join } from 'path'
 import * as desm from 'desm'
 import { findServiceConfigFile, isFileAccessible } from '../utils.mjs'
+import { getTsConfig } from '../get-tsconfig.mjs'
 
 const TS_OUT_DIR = 'dist'
 
@@ -29,18 +30,28 @@ function generateConfig (version, typescript) {
   }
 
   if (typescript === true) {
-    config.plugins.typescript = true
+    config.plugins.typescript = '{PLT_TYPESCRIPT}'
   }
 
   return config
 }
 
-function generateEnv (hostname, port) {
-  const env = `\
+function generateEnv (hostname, port, typescript) {
+  let env = `\
 PLT_SERVER_HOSTNAME=${hostname}
 PORT=${port}
 PLT_SERVER_LOGGER_LEVEL=info
 `
+
+  if (typescript === true) {
+    env += `\
+
+# Set to false to disable automatic typescript compilation.
+# Changing this setting is needed for production
+PLT_TYPESCRIPT=true
+`
+  }
+
   return env
 }
 
@@ -90,27 +101,6 @@ export default async function (fastify: FastifyInstance, opts: FastifyPluginOpti
 }
 `
 
-function getTsConfig (outDir) {
-  return {
-    compilerOptions: {
-      module: 'commonjs',
-      esModuleInterop: true,
-      target: 'es6',
-      sourceMap: true,
-      pretty: true,
-      noEmitOnError: true,
-      outDir
-    },
-    watchOptions: {
-      watchFile: 'fixedPollingInterval',
-      watchDirectory: 'fixedPollingInterval',
-      fallbackPolling: 'dynamicPriority',
-      synchronousWatchDirectory: true,
-      excludeDirectories: ['**/node_modules', outDir]
-    }
-  }
-}
-
 async function generatePluginWithTypesSupport (logger, currentDir, isTypescript) {
   await mkdir(join(currentDir, 'plugins'))
   const pluginTemplate = isTypescript
@@ -147,7 +137,7 @@ async function createService ({ hostname, port, typescript = false }, logger, cu
     await writeFile(join(currentDir, 'platformatic.service.json'), JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.service.json successfully created.')
 
-    const env = generateEnv(hostname, port)
+    const env = generateEnv(hostname, port, typescript)
     const envFileExists = await isFileAccessible('.env', currentDir)
     await appendFile(join(currentDir, '.env'), env)
     await writeFile(join(currentDir, '.env.sample'), env)
