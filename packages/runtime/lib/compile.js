@@ -1,7 +1,7 @@
 'use strict'
 
 const { loadConfig, tsCompiler } = require('@platformatic/service')
-const { access } = require('fs/promises')
+const { access } = require('node:fs/promises')
 const { join } = require('path')
 const pino = require('pino')
 const pretty = require('pino-pretty')

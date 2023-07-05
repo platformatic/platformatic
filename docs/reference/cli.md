@@ -145,7 +145,7 @@ module.exports = async function (app, opts) {
 }
 ```
 
-or in Typescript, calling an OpenAPI endpoint:
+or in TypeScript, calling an OpenAPI endpoint:
 
 
 ```ts
