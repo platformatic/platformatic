@@ -8,7 +8,6 @@ import { request } from 'undici'
 import { start } from './helper.mjs'
 
 const fixturesDir = join(desm(import.meta.url), '..', '..', 'fixtures')
-const undiciPath = join(desm(import.meta.url), '..', '..', 'node_modules', 'undici')
 
 const base = join(desm(import.meta.url), '..', 'tmp')
 console.log(base)
@@ -119,7 +118,7 @@ test('should not hot reload files with `--hot-reload false', async (t) => {
     cp(configFileSrc, configFileDst),
     cp(appSrc, appDst, { recursive: true })
   ])
-  
+
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
   const { child, url } = await start('-c', configFileDst, '--hot-reload', 'false')
   t.after(() => child.kill('SIGINT'))
