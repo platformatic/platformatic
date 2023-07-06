@@ -1,0 +1,19 @@
+{
+  "server": {
+    "logger": {
+      "level": "info"
+    },
+    "hostname": "127.0.0.1",
+    "port": "0",
+    "pluginTimeout": 60000,
+    "keepAliveTimeout": 1
+  },
+  "plugins": {
+    "paths": ["plugin.ts"],
+    "typescript": {
+      "tsConfig": "./a-config-for-ts.json",
+      "flags": ["-b"]
+    }
+  },
+  "watch": false
+}

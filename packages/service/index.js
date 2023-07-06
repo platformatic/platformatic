@@ -46,7 +46,15 @@ async function platformaticService (app, opts, toLoad = []) {
   }
 
   if (config.plugins) {
-    if (config.plugins.typescript) {
+    let registerTsCompiler = false
+    const typescript = config.plugins.typescript
+    if (typescript === true) {
+      registerTsCompiler = true
+    } else if (typeof typescript === 'object') {
+      registerTsCompiler = typescript.enabled === true || typescript.enabled === undefined
+    }
+
+    if (registerTsCompiler) {
       await app.register(setupTsCompiler)
     }
     await app.register(loadPlugins)

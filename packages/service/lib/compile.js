@@ -48,29 +48,29 @@ async function setup (cwd, config, logger) {
   /* c8 ignore next 4 */
   if (tscExecutablePath === undefined) {
     const msg = 'The tsc executable was not found.'
-    logger.error(msg)
+    logger.warn(msg)
   }
 
-  const tsconfigPath = resolve(cwd, 'tsconfig.json')
-  const tsconfigExists = await isFileAccessible(tsconfigPath)
+  const tsConfigPath = config?.plugins?.typescript?.tsConfig || resolve(cwd, 'tsconfig.json')
+  const tsConfigExists = await isFileAccessible(tsConfigPath)
 
-  if (!tsconfigExists) {
-    const msg = 'The tsconfig.json file was not found.'
-    logger.error(msg)
+  if (!tsConfigExists) {
+    const msg = 'No typescript configuration file was found.'
+    logger.warn(msg)
   }
 
-  return { execa, logger, tscExecutablePath }
+  return { execa, logger, tscExecutablePath, tsConfigPath, tsConfigExists }
 }
 
 async function compile (cwd, config, originalLogger) {
-  const { execa, logger, tscExecutablePath } = await setup(cwd, config, originalLogger)
+  const { execa, logger, tscExecutablePath, tsConfigPath, tsConfigExists } = await setup(cwd, config, originalLogger)
   /* c8 ignore next 3 */
-  if (!tscExecutablePath) {
+  if (!tscExecutablePath || !tsConfigExists) {
     return false
   }
 
   try {
-    await execa(tscExecutablePath, ['--project', 'tsconfig.json', '--rootDir', '.'], { cwd })
+    await execa(tscExecutablePath, ['--project', tsConfigPath, '--rootDir', '.'], { cwd })
     logger.info('Typescript compilation completed successfully.')
     return true
   } catch (error) {
