@@ -156,96 +156,96 @@ test('should watch api only if it has a url', async (t) => {
   }
 })
 
-// test('should compose schema after service restart', async (t) => {
-//   const api1 = await createOpenApiService(t, ['users'])
-//   const api2 = await createOpenApiService(t, ['posts'])
+test('should compose schema after service restart', async (t) => {
+  const api1 = await createOpenApiService(t, ['users'])
+  const api2 = await createOpenApiService(t, ['posts'])
 
-//   await api1.listen({ port: 0 })
-//   await api2.listen({ port: 0 })
+  await api1.listen({ port: 0 })
+  await api2.listen({ port: 0 })
 
-//   const api1Port = api1.server.address().port
-//   const api2Port = api2.server.address().port
+  const api1Port = api1.server.address().port
+  const api2Port = api2.server.address().port
 
-//   const composer = await createComposer(t, {
-//     composer: {
-//       services: [
-//         {
-//           id: 'api1',
-//           origin: 'http://127.0.0.1:' + api1Port,
-//           openapi: {
-//             url: '/documentation/json',
-//             prefix: '/api1'
-//           }
-//         },
-//         {
-//           id: 'api2',
-//           origin: 'http://127.0.0.1:' + api2Port,
-//           openapi: {
-//             url: '/documentation/json',
-//             prefix: '/api2'
-//           }
-//         }
-//       ],
-//       refreshTimeout: 500
-//     }
-//   })
+  const composer = await createComposer(t, {
+    composer: {
+      services: [
+        {
+          id: 'api1',
+          origin: 'http://127.0.0.1:' + api1Port,
+          openapi: {
+            url: '/documentation/json',
+            prefix: '/api1'
+          }
+        },
+        {
+          id: 'api2',
+          origin: 'http://127.0.0.1:' + api2Port,
+          openapi: {
+            url: '/documentation/json',
+            prefix: '/api2'
+          }
+        }
+      ],
+      refreshTimeout: 500
+    }
+  })
 
-//   const composerOrigin = await composer.start()
+  const composerOrigin = await composer.start()
 
-//   {
-//     const { statusCode, body } = await composer.inject({
-//       method: 'GET',
-//       url: '/documentation/json'
-//     })
-//     t.equal(statusCode, 200)
+  {
+    const { statusCode, body } = await composer.inject({
+      method: 'GET',
+      url: '/documentation/json'
+    })
+    t.equal(statusCode, 200)
 
-//     const openApiSchema = JSON.parse(body)
-//     openApiValidator.validate(openApiSchema)
+    const openApiSchema = JSON.parse(body)
+    openApiValidator.validate(openApiSchema)
 
-//     await testEntityRoutes(t, composerOrigin, ['/api1/users', '/api2/posts'])
-//   }
+    await testEntityRoutes(t, composerOrigin, ['/api1/users', '/api2/posts'])
+  }
 
-//   await api1.close()
-//   await setTimeout(1000)
+  await api1.close()
+  await setTimeout(1000)
 
-//   t.equal(composer.restarted, true)
+  t.equal(composer.restarted, true)
 
-//   {
-//     const { statusCode, body } = await composer.inject({
-//       method: 'GET',
-//       url: '/documentation/json'
-//     })
-//     t.equal(statusCode, 200)
+  {
+    const { statusCode, body } = await composer.inject({
+      method: 'GET',
+      url: '/documentation/json'
+    })
+    t.equal(statusCode, 200)
 
-//     const openApiSchema = JSON.parse(body)
-//     openApiValidator.validate(openApiSchema)
+    const openApiSchema = JSON.parse(body)
+    openApiValidator.validate(openApiSchema)
 
-//     await testEntityRoutes(t, composerOrigin, ['/api2/posts'])
+    await testEntityRoutes(t, composerOrigin, ['/api2/posts'])
 
-//     const { statusCode: statusCode2 } = await composer.inject({
-//       method: 'GET',
-//       url: '/api1/users'
-//     })
-//     t.equal(statusCode2, 404)
-//   }
+    const { statusCode: statusCode2 } = await composer.inject({
+      method: 'GET',
+      url: '/api1/users'
+    })
+    t.equal(statusCode2, 404)
+  }
 
-//   const newApi1 = await createOpenApiService(t, ['users'])
-//   await newApi1.listen({ port: api1Port })
-//   await setTimeout(1000)
+  const newApi1 = await createOpenApiService(t, ['users'])
+  await newApi1.listen({ port: api1Port })
+  await setTimeout(1000)
 
-//   {
-//     const { statusCode, body } = await composer.inject({
-//       method: 'GET',
-//       url: '/documentation/json'
-//     })
-//     t.equal(statusCode, 200)
+  {
+    const { statusCode, body } = await composer.inject({
+      method: 'GET',
+      url: '/documentation/json'
+    })
+    t.equal(statusCode, 200)
 
-//     const openApiSchema = JSON.parse(body)
-//     openApiValidator.validate(openApiSchema)
+    const openApiSchema = JSON.parse(body)
+    openApiValidator.validate(openApiSchema)
 
-//     await testEntityRoutes(t, composerOrigin, ['/api1/users', '/api2/posts'])
-//   }
-// })
+    await testEntityRoutes(t, composerOrigin, ['/api1/users', '/api2/posts'])
+  }
+})
 
 // test('should not watch an api if refreshTimeout equals 0', async (t) => {
 //   const api1 = await createOpenApiService(t, ['users'])
