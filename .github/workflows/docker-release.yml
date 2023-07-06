@@ -31,3 +31,8 @@ jobs:
   update-cloud-runtime:
     needs: buildx
     uses: platformatic/platformatic/.github/workflows/update-platformatic-runtime.yml@main
+    with:
+      released-version: github.event.release.name
+    secrets:
+      GH_API_USERNAME: ${{ secrets.GH_API_USERNAME }}
+      GH_API_TOKEN: ${{ secrets.GH_API_TOKEN }}
