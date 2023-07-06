@@ -247,47 +247,47 @@ test('should compose schema after service restart', async (t) => {
   }
 })
 
-// test('should not watch an api if refreshTimeout equals 0', async (t) => {
-//   const api1 = await createOpenApiService(t, ['users'])
-//   const api2 = await createOpenApiService(t, ['posts'])
+test('should not watch an api if refreshTimeout equals 0', async (t) => {
+  const api1 = await createOpenApiService(t, ['users'])
+  const api2 = await createOpenApiService(t, ['posts'])
 
-//   await api1.listen({ port: 0 })
-//   await api2.listen({ port: 0 })
+  await api1.listen({ port: 0 })
+  await api2.listen({ port: 0 })
 
-//   const composer = await createComposer(t, {
-//     composer: {
-//       services: [
-//         {
-//           id: 'api1',
-//           origin: 'http://127.0.0.1:' + api1.server.address().port,
-//           openapi: {
-//             url: '/documentation/json',
-//             prefix: '/api1'
-//           }
-//         },
-//         {
-//           id: 'api2',
-//           origin: 'http://127.0.0.1:' + api2.server.address().port,
-//           openapi: {
-//             url: '/documentation/json',
-//             prefix: '/api2'
-//           }
-//         }
-//       ],
-//       refreshTimeout: 0
-//     }
-//   })
+  const composer = await createComposer(t, {
+    composer: {
+      services: [
+        {
+          id: 'api1',
+          origin: 'http://127.0.0.1:' + api1.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            prefix: '/api1'
+          }
+        },
+        {
+          id: 'api2',
+          origin: 'http://127.0.0.1:' + api2.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            prefix: '/api2'
+          }
+        }
+      ],
+      refreshTimeout: 0
+    }
+  })
 
-//   await composer.start()
+  await composer.start()
 
-//   t.equal(composer.restarted, false)
+  t.equal(composer.restarted, false)
 
-//   await api1.close()
-//   await api2.close()
-//   await setTimeout(1000)
+  await api1.close()
+  await api2.close()
+  await setTimeout(1000)
 
-//   t.equal(composer.restarted, false)
-// })
+  t.equal(composer.restarted, false)
+})
 
 // test('should not restart composer if schema has been changed', async (t) => {
 //   const api = await createOpenApiService(t, ['users'])
