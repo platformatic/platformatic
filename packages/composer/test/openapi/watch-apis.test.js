@@ -1,9 +1,9 @@
 'use strict'
 
 const { join } = require('node:path')
-// const { tmpdir } = require('node:os')
+const { tmpdir } = require('node:os')
 const { setTimeout } = require('node:timers/promises')
-// const { writeFile, mkdtemp } = require('node:fs/promises')
+const { writeFile, mkdtemp } = require('node:fs/promises')
 const { test } = require('tap')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 const {
