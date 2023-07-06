@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db",
-  "version": "0.28.1",
+  "version": "0.29.0",
   "description": "",
   "main": "index.js",
   "types": "index.d.ts",

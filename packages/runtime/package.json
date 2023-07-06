@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/runtime",
-  "version": "0.28.1",
+  "version": "0.29.0",
   "description": "",
   "main": "index.js",
   "bin": {
@@ -52,7 +52,8 @@
   },
   "standard": {
     "ignore": [
-      "**/dist/*"
+      "**/dist/*",
+      "**/test/tmp"
     ]
   }
 }

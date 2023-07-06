@@ -20,6 +20,7 @@ test('compile without tsconfigs', async () => {
 
 test('compile with tsconfig', async (t) => {
   const tmpDir = await mkdtemp(path.join(base, 'test-runtime-compile-'))
+  t.after(() => rm(tmpDir, { recursive: true, force: true }))
 
   const prev = process.cwd()
   process.chdir(tmpDir)
