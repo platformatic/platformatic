@@ -1,5 +1,5 @@
 import assert from 'node:assert'
-import { cp, writeFile, mkdtemp, mkdir } from 'node:fs/promises'
+import { cp, writeFile, mkdtemp, mkdir, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
@@ -49,6 +49,7 @@ function createEsmLoggingPlugin (text, reloaded) {
 
 test('watches CommonJS files', async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
+  t.after(() => rm(tmpDir, { recursive: true, force: true }))
   t.diagnostic(`using ${tmpDir}`)
   const configFileSrc = join(fixturesDir, 'configs', 'monorepo.json')
   const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
@@ -78,6 +79,7 @@ test('watches CommonJS files', async (t) => {
 
 test('watches ESM files', async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
+  t.after(() => rm(tmpDir, { recursive: true, force: true }))
   t.diagnostic(`using ${tmpDir}`)
   const configFileSrc = join(fixturesDir, 'configs', 'monorepo.json')
   const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
@@ -106,6 +108,7 @@ test('watches ESM files', async (t) => {
 
 test('should not hot reload files with `--hot-reload false', async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
+  t.after(() => rm(tmpDir, { recursive: true, force: true }))
   t.diagnostic(`using ${tmpDir}`)
   const configFileSrc = join(fixturesDir, 'configs', 'monorepo.json')
   const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
