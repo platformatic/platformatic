@@ -27,7 +27,7 @@ async function loadPlugins (app) {
   }
 
   if (configManager.current.plugins.typescript?.outDir) {
-    outDir = configManager.current.plugins.typescript?.outDir
+    outDir = configManager.current.plugins.typescript.outDir
   }
 
   if (outDir) {
