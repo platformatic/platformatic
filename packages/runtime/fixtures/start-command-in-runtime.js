@@ -5,7 +5,8 @@ const { startCommandInRuntime } = require('../lib/unified-api')
 
 async function main () {
   const entrypoint = await startCommandInRuntime(['-c', process.argv[2]])
-  const res = await request(entrypoint)
+  const endpoint = process.argv[3] ?? '/'
+  const res = await request(entrypoint + endpoint)
 
   assert.strictEqual(res.statusCode, 200)
   process.exit(42)
