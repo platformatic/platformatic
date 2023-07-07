@@ -147,6 +147,8 @@ t.test('run migrate command with type generation', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
   const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
+  const fieldRegex = /\n\s*(\w+)\??:/g
+
   try {
     await safeRm(cwd)
   } catch {}
@@ -159,11 +161,26 @@ t.test('run migrate command with type generation', async (t) => {
 
   try {
     const child = await execa('node', [cliPath, 'migrations', 'apply'], { cwd })
-    t.equal(child.stdout.includes('Generated type for Graph entity.'), true)
+    t.equal(child.stdout.includes('Generated type for Movie entity.'), true)
     t.equal(child.stdout.includes('Please run `npm i --save'), true)
 
     t.comment('Adjusting type reference to avoid loops')
     await adjustTypeReferenceToAvoidLoops(cwd)
+
+    const globalDTs = await readFile(path.join(cwd, 'global.d.ts'), 'utf8')
+    const indexDTs = await readFile(path.join(cwd, 'types', 'index.d.ts'), 'utf8')
+    t.equal(globalDTs.indexOf('AggregateRating') < globalDTs.indexOf('Movie'), true)
+    t.equal(indexDTs.indexOf('AggregateRating') < indexDTs.indexOf('Movie'), true)
+    const aggregateRatingDTs = await readFile(path.join(cwd, 'types', 'AggregateRating.d.ts'), 'utf8')
+    t.same(
+      [...aggregateRatingDTs.matchAll(fieldRegex)].map(m => m[1]),
+      ['id', 'movieId', 'rating', 'ratingType']
+    )
+    const movieDTs = await readFile(path.join(cwd, 'types', 'Movie.d.ts'), 'utf8')
+    t.same(
+      [...movieDTs.matchAll(fieldRegex)].map(m => m[1]),
+      ['id', 'boxOffice', 'title', 'year']
+    )
 
     await execa(pathToTSD, { cwd })
   } catch (err) {
