@@ -14,7 +14,7 @@ function referenceTest (name, obj, opts = {}) {
   test(name, { only }, async t => {
     const reference = await dtsgenerator.default({ contents: [dtsgenerator.parseSchema(structuredClone(obj))] })
     const cloned = structuredClone(obj)
-    const ours = mapOpenAPItoTypes(cloned)
+    const ours = mapOpenAPItoTypes(cloned, { id: { primaryKey: true } })
     t.not(cloned, obj)
     t.same(cloned, obj)
     t.same(ours.trim(), reference.trim())
@@ -30,8 +30,9 @@ referenceTest('p1', {
     id: {
       type: 'integer'
     },
-    title: {
-      type: 'string'
+    description: {
+      type: 'string',
+      nullable: true
     },
     metadata: {
       type: 'object',
@@ -42,9 +43,8 @@ referenceTest('p1', {
       type: 'number',
       nullable: true
     },
-    description: {
-      type: 'string',
-      nullable: true
+    title: {
+      type: 'string'
     }
   },
   required: [
@@ -61,6 +61,10 @@ referenceTest('p2', {
     id: {
       type: 'integer'
     },
+    description: {
+      type: 'string',
+      nullable: true
+    },
     metadata: {
       type: 'object',
       additionalProperties: true,
@@ -68,10 +72,6 @@ referenceTest('p2', {
     },
     section: {
       type: 'number',
-      nullable: true
-    },
-    description: {
-      type: 'string',
       nullable: true
     }
   },
@@ -114,8 +114,9 @@ referenceTest('multiple types', {
     id: {
       type: ['integer', 'string']
     },
-    title: {
-      type: 'string'
+    description: {
+      type: 'string',
+      nullable: true
     },
     metadata: {
       type: 'object',
@@ -125,9 +126,8 @@ referenceTest('multiple types', {
     section: {
       type: ['number', 'null']
     },
-    description: {
-      type: 'string',
-      nullable: true
+    title: {
+      type: 'string'
     }
   },
   required: [
@@ -144,14 +144,14 @@ referenceTest('arrays', {
     id: {
       type: 'integer'
     },
-    title: {
-      type: 'string'
-    },
     tags: {
       type: 'array',
       items: {
         type: 'string'
       }
+    },
+    title: {
+      type: 'string'
     }
   },
   required: [
@@ -168,9 +168,6 @@ referenceTest('objects in arrays', {
     id: {
       type: 'integer'
     },
-    title: {
-      type: 'string'
-    },
     tags: {
       type: 'array',
       items: {
@@ -181,6 +178,9 @@ referenceTest('objects in arrays', {
           }
         }
       }
+    },
+    title: {
+      type: 'string'
     }
   },
   required: [
@@ -197,12 +197,12 @@ referenceTest('enums', {
     id: {
       type: 'integer'
     },
-    title: {
-      type: 'string'
-    },
     color: {
       type: 'string',
       enum: ['amber', 'green', 'red']
+    },
+    title: {
+      type: 'string'
     }
   },
   required: [
