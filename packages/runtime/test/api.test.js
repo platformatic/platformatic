@@ -275,6 +275,16 @@ test('should fail inject request is service is not started', async (t) => {
   }
 })
 
+test('does not wait forever if worker exits during api operation', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'service-throws-on-start.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+
+  await assert.rejects(async () => {
+    await app.start()
+  }, /The runtime exited before the operation completed/)
+})
+
 test('should handle a lot of runtime api requests', async (t) => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
