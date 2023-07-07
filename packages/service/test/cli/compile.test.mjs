@@ -687,7 +687,7 @@ t.test('should not start the service if it was not precompiled and typescript is
 })
 
 t.test('should compile typescript plugin with start command with custom tsconfig', async (t) => {
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-custom-flags')
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-custom-tsconfig')
   const cwd = await getCWD(t)
 
   await cp(testDir, cwd, { recursive: true })
@@ -745,6 +745,28 @@ t.test('should start without a tsconfig but with a outDir configuration', async 
 
   for await (const data of splitter) {
     console.log(data)
+    const sanitized = stripAnsi(data)
+    if (sanitized.includes('Typescript plugin loaded')) {
+      t.pass()
+      return
+    }
+  }
+  t.fail('should compile typescript plugin with start command')
+})
+
+t.test('should compile typescript plugin with start command with custom flags', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-custom-flags')
+  const cwd = await getCWD(t)
+
+  await cp(testDir, cwd, { recursive: true })
+
+  const child = execa('node', [cliPath, 'start'], { cwd })
+
+  const splitter = split()
+  child.stdout.pipe(splitter)
+  child.stderr.pipe(splitter)
+
+  for await (const data of splitter) {
     const sanitized = stripAnsi(data)
     if (sanitized.includes('Typescript plugin loaded')) {
       t.pass()

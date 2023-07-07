@@ -11,7 +11,7 @@
   "plugins": {
     "paths": ["plugin.ts"],
     "typescript": {
-      "flags": ["-b"]
+      "tsConfig": "./a-config-for-ts.json"
     }
   },
   "watch": false

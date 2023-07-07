@@ -70,7 +70,8 @@ async function compile (cwd, config, originalLogger) {
   }
 
   try {
-    await execa(tscExecutablePath, ['--project', tsConfigPath, '--rootDir', '.'], { cwd })
+    const tsFlags = config?.plugins?.typescript?.flags || ['--project', tsConfigPath, '--rootDir', '.']
+    await execa(tscExecutablePath, tsFlags, { cwd })
     logger.info('Typescript compilation completed successfully.')
     return true
   } catch (error) {
@@ -82,11 +83,13 @@ async function compile (cwd, config, originalLogger) {
 function buildCompileCmd (app) {
   return async function compileCmd (_args) {
     let fullPath = null
+    let config = null
     try {
       const { configManager } = await loadConfig({}, _args, app, {
         watch: false
       })
       await configManager.parseAndValidate()
+      config = configManager.current
       fullPath = dirname(configManager.fullPath)
       /* c8 ignore next 4 */
     } catch (err) {
@@ -94,7 +97,7 @@ function buildCompileCmd (app) {
       process.exit(1)
     }
 
-    if (!await compile(fullPath)) {
+    if (!await compile(fullPath, config)) {
       process.exit(1)
     }
   }
