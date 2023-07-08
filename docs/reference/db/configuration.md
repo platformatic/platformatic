@@ -344,7 +344,7 @@ An optional object that defines the plugins loaded by Platformatic DB.
     [encapsulate](https://www.fastify.io/docs/latest/Reference/Encapsulation/) those plugins,
     allowing decorators and hooks to be shared across all routes.
   - `maxDepth` (`integer`): if the path is a folder, it limits the depth to load the content from.
-- **`typescript`** (`boolean` or `object`): enable typescript compilation. A `tsconfig.json` file is required in the same folder.
+- **`typescript`** (`boolean` or `object`): enable TypeScript compilation. A `tsconfig.json` file is required in the same folder.
 
 ```json
 {
@@ -361,7 +361,7 @@ An optional object that defines the plugins loaded by Platformatic DB.
 
 #### `typescript` compilation options
 
-The `typescript` can also be an object to customize the compilation. Here are the supported options:
+The `typescript` option can also be an object to customize the compilation. Here are the supported options:
 
 * `enabled` (`boolean`): enables compilation
 * `tsConfig` (`string`): path to the `tsconfig.json` file relative to the configuration
@@ -380,7 +380,7 @@ Example:
       "options": {
         "foo": "bar"
       }
-    }].
+    }],
     "typescript": {
       "enabled": false,
       "tsConfig": "./path/to/tsconfig.json",

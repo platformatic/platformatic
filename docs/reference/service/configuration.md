@@ -135,7 +135,7 @@ Example:
       "options": {
         "foo": "bar"
       }
-    }].
+    }],
     "typescript": {
       "enabled": false,
       "tsConfig": "./path/to/tsconfig.json",

@@ -42,10 +42,10 @@ Rememeber to set `PLT_TYPESCRIPT=false` in your environment variables in the dep
 If you are building a [Runtime](/reference/runtime/introduction.md)-based application, you will need
 to compile every service independently or use the `plt runtime compile` command.
 
-## Avoid shipping the TypeScript sources
+## Avoid shipping TypeScript sources
 
-If you want to avoid shipping the TypeScript sources you need to configure Platformatic the location
-where your files have been built, adding an `outDir` option:
+If you want to avoid shipping the TypeScript sources you need to configure Platformatic with the location
+where your files have been built by adding an `outDir` option:
 
 ```json
 {
