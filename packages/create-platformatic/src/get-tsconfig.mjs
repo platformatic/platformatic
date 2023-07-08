@@ -7,6 +7,7 @@ export function getTsConfig (outDir) {
       sourceMap: true,
       pretty: true,
       noEmitOnError: true,
+      incremental: true,
       outDir
     },
     watchOptions: {

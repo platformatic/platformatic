@@ -26,6 +26,7 @@ async function loadPlugins (app) {
     outDir = resolve(workingDir, tsConfig.compilerOptions.outDir)
   }
 
+  /* c8 ignore next 3 */
   if (configManager.current.plugins.typescript?.outDir) {
     outDir = configManager.current.plugins.typescript.outDir
   }

@@ -4,6 +4,7 @@ import { execa } from 'execa'
 import split from 'split2'
 import { join } from 'desm'
 import tap from 'tap'
+import os from 'node:os'
 
 setGlobalDispatcher(new Agent({
   keepAliveTimeout: 10,
@@ -46,6 +47,20 @@ export async function start (commandOpts, exacaOpts = {}) {
         const url = text.match(/Server listening at (.*)/)[1]
         clearTimeout(errorTimeout)
         return { child, url, output }
+      }
+    }
+  }
+}
+
+export async function safeKill (child) {
+  child.kill('SIGINT')
+  if (os.platform() === 'win32') {
+    try {
+      await execa('taskkill', ['/pid', child.pid, '/f', '/t'])
+    } catch (err) {
+      if (err.stderr.indexOf('not found') === 0) {
+        console.error(`Failed to kill process ${child.pid}`)
+        console.error(err)
       }
     }
   }
