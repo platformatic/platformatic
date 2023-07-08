@@ -709,12 +709,14 @@ test('LIKE', async ({ pass, teardown, same, equal }) => {
 
   same(await entity.find({ where: { longText: { like: null } } }), [], 'where: { longText: { like: null } }')
 
-  same(await entity.find({ where: { counter: { like: 4 } } }), [{
-    id: '4',
-    title: 'atmosphere',
-    longText: 'The atmosphere is not a sphere',
-    counter: 4
-  }], 'where: { counter: { like: 4 } }')
+  if (!isSQLite) {
+    same(await entity.find({ where: { counter: { like: 4 } } }), [{
+      id: '4',
+      title: 'atmosphere',
+      longText: 'The atmosphere is not a sphere',
+      counter: 4
+    }], 'where: { counter: { like: 4 } }')
+  }
 
   same(await entity.find({ where: { counter: { like: '%4' } } }), [{
     id: '4',

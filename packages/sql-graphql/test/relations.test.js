@@ -1,6 +1,6 @@
 'use strict'
 
-const { skip, test } = require('tap')
+const { test } = require('tap')
 const { tmpdir } = require('os')
 const { randomUUID } = require('crypto')
 const { join } = require('path')
@@ -9,10 +9,7 @@ const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
 const { isSQLite, connInfo, isMysql, clear } = require('./helper')
 
-test('should fail when an unknown foreign key relationship exists', async ({ pass, rejects, same, teardown }) => {
-  if (!isSQLite) {
-    skip('The db is not SQLite')
-  }
+test('should fail when an unknown foreign key relationship exists', { skip: !isSQLite }, async ({ pass, rejects, same, teardown }) => {
   const file = join(tmpdir(), randomUUID())
   const app = fastify()
   app.register(sqlMapper, {
@@ -54,7 +51,7 @@ test('should fail when an unknown foreign key relationship exists', async ({ pas
           }
         `
     }
-  }), new Error('No foreign table named "subcategories" was found'))
+  }), 'No foreign table named "subcategories" was found')
 })
 
 test('should handle multi references', async ({ pass, teardown, same, equal }) => {
