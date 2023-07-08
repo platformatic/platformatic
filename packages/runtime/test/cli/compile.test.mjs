@@ -5,6 +5,7 @@ import path from 'node:path'
 import { cliPath } from './helper.mjs'
 import { execa } from 'execa'
 import { mkdtemp, rm, cp, mkdir } from 'node:fs/promises'
+import { setTimeout as sleep } from 'node:timers/promises'
 
 const base = join(import.meta.url, '..', 'tmp')
 
@@ -20,8 +21,6 @@ test('compile without tsconfigs', async () => {
 
 test('compile with tsconfig', async (t) => {
   const tmpDir = await mkdtemp(path.join(base, 'test-runtime-compile-'))
-  t.after(() => rm(tmpDir, { recursive: true, force: true }))
-
   const prev = process.cwd()
   process.chdir(tmpDir)
   t.after(() => {
@@ -29,7 +28,20 @@ test('compile with tsconfig', async (t) => {
   })
 
   t.after(async () => {
-    await rm(tmpDir, { recursive: true, force: true })
+    // We give up after 10s.
+    // This is because on Windows, it's very hard to delete files if the file
+    // system is not collaborating.
+    for (let i = 0; i < 10; i++) {
+      try {
+        await rm(tmpDir, { recursive: true, force: true })
+        break
+      } catch (err) {
+        if (err.code === 'EBUSY') {
+          await sleep(1000)
+          continue
+        }
+      }
+    }
   })
 
   const folder = join(import.meta.url, '..', '..', 'fixtures', 'typescript')
