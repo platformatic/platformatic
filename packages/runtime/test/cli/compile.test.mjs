@@ -5,6 +5,7 @@ import path from 'node:path'
 import { cliPath } from './helper.mjs'
 import { execa } from 'execa'
 import { mkdtemp, rm, cp, mkdir } from 'node:fs/promises'
+import { setTimeout as sleep } from 'node:timers/promises'
 
 const base = join(import.meta.url, '..', 'tmp')
 
@@ -20,7 +21,19 @@ test('compile without tsconfigs', async () => {
 
 test('compile with tsconfig', async (t) => {
   const tmpDir = await mkdtemp(path.join(base, 'test-runtime-compile-'))
-  t.after(() => rm(tmpDir, { recursive: true, force: true }))
+  t.after(async () => {
+    while (true) {
+      try {
+        await rm(tmpDir, { recursive: true, force: true })
+        break
+      } catch (err) {
+        if (err.code === 'EBUSY') {
+          await sleep(1000)
+          continue
+        }
+      }
+    }
+  })
 
   const prev = process.cwd()
   process.chdir(tmpDir)
