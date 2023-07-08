@@ -21,8 +21,17 @@ test('compile without tsconfigs', async () => {
 
 test('compile with tsconfig', async (t) => {
   const tmpDir = await mkdtemp(path.join(base, 'test-runtime-compile-'))
+  const prev = process.cwd()
+  process.chdir(tmpDir)
+  t.after(() => {
+    process.chdir(prev)
+  })
+
   t.after(async () => {
-    while (true) {
+    // We give up after 10s.
+    // This is because on Windows, it's very hard to delete files if the file
+    // system is not collaborating.
+    for (let i = 0; i < 10; i++) {
       try {
         await rm(tmpDir, { recursive: true, force: true })
         break
@@ -33,16 +42,6 @@ test('compile with tsconfig', async (t) => {
         }
       }
     }
-  })
-
-  const prev = process.cwd()
-  process.chdir(tmpDir)
-  t.after(() => {
-    process.chdir(prev)
-  })
-
-  t.after(async () => {
-    await rm(tmpDir, { recursive: true, force: true })
   })
 
   const folder = join(import.meta.url, '..', '..', 'fixtures', 'typescript')
