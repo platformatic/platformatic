@@ -721,7 +721,6 @@ t.test('should not start the service if it was not precompiled and typescript is
   child.stderr.pipe(splitter)
 
   for await (const data of splitter) {
-    console.log(data)
     const sanitized = stripAnsi(data)
     if (sanitized.includes('Unknown file extension ".ts" for')) {
       t.pass()
@@ -744,7 +743,6 @@ t.test('should start without a tsconfig but with a outDir configuration', async 
   child.stderr.pipe(splitter)
 
   for await (const data of splitter) {
-    console.log(data)
     const sanitized = stripAnsi(data)
     if (sanitized.includes('Typescript plugin loaded')) {
       t.pass()
