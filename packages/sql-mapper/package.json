@@ -35,7 +35,7 @@
     "@databases/mysql": "^5.2.1",
     "@databases/pg": "^5.4.1",
     "@databases/sql": "^3.3.0",
-    "@databases/sqlite": "^4.0.2",
+    "@matteo.collina/sqlite-pool": "^0.3.0",
     "@platformatic/types": "workspace:*",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^4.5.0",
