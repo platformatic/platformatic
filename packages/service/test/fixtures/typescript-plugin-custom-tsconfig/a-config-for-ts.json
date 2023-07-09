@@ -2,10 +2,10 @@
   "compilerOptions": {
     "module": "commonjs",
     "esModuleInterop": true,
-    "target": "es2020",
+    "target": "es6",
     "moduleResolution": "node",
-    "sourceMap": false,
-    "pretty": false,
+    "sourceMap": true,
+    "pretty": true,
     "noEmitOnError": true,
     "outDir": "dist"
   },

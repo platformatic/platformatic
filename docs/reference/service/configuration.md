@@ -96,22 +96,54 @@ An optional object that defines the plugins loaded by Platformatic Service.
   - `options` (`object`): Optional plugin options.
   - `encapsulate` (`boolean`): if the path is a folder, it instruct Platformatic to not encapsulate those plugins.
   - `maxDepth` (`integer`): if the path is a folder, it limits the depth to load the content from.
-- **`typescript`** (`boolean`): enable typescript compilation. A `tsconfig.json` file is required in the same folder.
+- **`typescript`** (`boolean` or `object`): enable TypeScript compilation. A `tsconfig.json` file is required in the same folder.
 
-  _Example_
 
-  ```json
-  {
-    "plugins": {
-      "paths": [{
-        "path": "./my-plugin.js",
-        "options": {
-          "foo": "bar"
-        }
-      }]
+_Example_
+
+```json
+{
+  "plugins": {
+    "paths": [{
+      "path": "./my-plugin.js",
+      "options": {
+        "foo": "bar"
+      }
+    }]
+  }
+}
+```
+
+#### `typescript` compilation options
+
+The `typescript` can also be an object to customize the compilation. Here are the supported options:
+
+* `enabled` (`boolean`): enables compilation
+* `tsConfig` (`string`): path to the `tsconfig.json` file relative to the configuration
+* `outDir` (`string`): the output directory of `tsconfig.json`, in case `tsconfig.json` is not available
+and and `enabled` is set to `false` (procution build)
+* `flags` (array of `string`): flags to be passed to `tsc`. Overrides `tsConfig`.
+    
+
+Example:
+
+```json
+{
+  "plugins": {
+    "paths": [{
+      "path": "./my-plugin.js",
+      "options": {
+        "foo": "bar"
+      }
+    }],
+    "typescript": {
+      "enabled": false,
+      "tsConfig": "./path/to/tsconfig.json",
+      "outDir": "dist"
     }
   }
-  ```
+}
+```
 
 ### `watch`
 

@@ -3,10 +3,11 @@ export function getTsConfig (outDir) {
     compilerOptions: {
       module: 'commonjs',
       esModuleInterop: true,
-      target: 'es2019',
+      target: 'es2020',
       sourceMap: true,
       pretty: true,
       noEmitOnError: true,
+      incremental: true,
       outDir
     },
     watchOptions: {
