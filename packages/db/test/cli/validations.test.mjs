@@ -3,6 +3,7 @@ import { test } from 'tap'
 import { join } from 'desm'
 import { readFile } from 'fs/promises'
 import { execa } from 'execa'
+import stripAnsi from 'strip-ansi'
 
 const version = JSON.parse(await readFile(join(import.meta.url, '..', '..', 'package.json'))).version
 
@@ -21,7 +22,7 @@ test('print validation errors', async ({ equal, plan }) => {
     await execa('node', [cliPath, 'start', '--config', join(import.meta.url, '..', 'fixtures', 'missing-required-values.json')])
   } catch (err) {
     equal(err.exitCode, 1)
-    equal(err.stdout, `
+    equal(stripAnsi(err.stdout), `
 ┌─────────┬───────────────┬─────────────────────────────────────────────────────────────────────┐
 │ (index) │     path      │                               message                               │
 ├─────────┼───────────────┼─────────────────────────────────────────────────────────────────────┤
