@@ -1,5 +1,9 @@
 lockfileVersion: '6.0'
 
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
 importers:
 
   .:
@@ -627,7 +631,7 @@ importers:
         specifier: ^10.0.0
         version: 10.0.1
       postgrator:
-        specifier: ^7.1.1
+        specifier: ^7.2.0
         version: 7.2.0
       rfdc:
         specifier: ^1.3.0
@@ -11701,7 +11705,3 @@ packages:
   /zenscroll@4.0.2:
     resolution: {integrity: sha512-jEA1znR7b4C/NnaycInCU6h/d15ZzCd1jmsruqOKnZP6WXQSMH3W2GL+OXbkruslU4h+Tzuos0HdswzRUk/Vgg==}
     dev: true
-
-settings:
-  autoInstallPeers: true
-  excludeLinksFromLockfile: false

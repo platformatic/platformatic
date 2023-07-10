@@ -41,12 +41,6 @@ class Migrator {
       database,
       schemaTable: this.migrationsTable || 'versions',
       execQuery: async (query) => {
-        // TODO: this is a hack to fix a bug in postgrator when using better-sqlite3
-        // Remove after https://github.com/rickbergfalk/postgrator/pull/163
-        // lands
-        const regexp = /pragma_table_info\("([^"]+)"\)/
-        query = query.replace(regexp, 'pragma_table_info(\'$1\')')
-
         const res = await db.query(sql`${sql.__dangerous__rawValue(query)}`)
         return { rows: res }
       },
