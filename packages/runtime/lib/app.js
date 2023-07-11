@@ -167,13 +167,14 @@ class PlatformaticApp {
             const parts = key.split('.')
             let next = configManager.current
             let obj
+            let i
 
-            for (let i = 0; next !== undefined && i < parts.length; ++i) {
+            for (i = 0; next !== undefined && i < parts.length; ++i) {
               obj = next
               next = obj[parts[i]]
             }
 
-            if (next !== undefined) {
+            if (i === parts.length) {
               obj[parts.at(-1)] = value
             }
           })

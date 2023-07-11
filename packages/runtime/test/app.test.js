@@ -251,7 +251,8 @@ test('supports configuration overrides', async (t) => {
     const { logger } = getLoggerAndStream()
     config._configOverrides = new Map([
       ['server.keepAliveTimeout', 1],
-      ['server.port', 0]
+      ['server.port', 0],
+      ['server.pluginTimeout', 99]
     ])
     const app = new PlatformaticApp(config, null, logger)
 
@@ -265,6 +266,7 @@ test('supports configuration overrides', async (t) => {
 
     await app.start()
     assert.strictEqual(app.config.configManager.current.server.keepAliveTimeout, 1)
+    assert.strictEqual(app.config.configManager.current.server.pluginTimeout, 99)
   })
 })
 
