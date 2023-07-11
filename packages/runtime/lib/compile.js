@@ -1,8 +1,6 @@
 'use strict'
 
 const { loadConfig, tsCompiler } = require('@platformatic/service')
-const { access } = require('node:fs/promises')
-const { join } = require('path')
 const pino = require('pino')
 const pretty = require('pino-pretty')
 const { isatty } = require('node:tty')
@@ -27,16 +25,16 @@ async function compile (argv) {
   const logger = pino(stream)
 
   for (const service of configManager.current.services) {
-    const tsconfig = join(service.path, 'tsconfig.json')
+    const childLogger = logger.child({ name: service.id })
 
-    try {
-      await access(tsconfig)
-    } catch {
-      logger.trace(`No tsconfig.json found in ${service.path}, skipping...`)
-      continue
+    const serviceConfig = await loadConfig({}, argv, platformaticRuntime, {
+      watch: false
+    })
+
+    const compiled = await tsCompiler.compile(service.path, serviceConfig.config, childLogger)
+    if (!compiled) {
+      logger.trace('No typescript found, skipping compilation')
     }
-
-    await tsCompiler.compile(service.path, {}, logger.child({ name: service.id }))
   }
 }
 

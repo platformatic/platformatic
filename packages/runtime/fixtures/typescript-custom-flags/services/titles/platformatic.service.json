@@ -1,0 +1,33 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v0.30.0/service",
+  "server": {
+    "hostname": "{PLT_SERVER_HOSTNAME}",
+    "port": "{PORT}",
+    "logger": {
+      "level": "{PLT_SERVER_LOGGER_LEVEL}"
+    }
+  },
+  "service": {
+    "openapi": true
+  },
+  "plugins": {
+    "paths": [
+      {
+        "path": "./plugins",
+        "encapsulate": false
+      },
+      "./routes"
+    ],
+    "typescript": {
+      "flags": ["-b"]
+    }
+  },
+  "clients": [
+    {
+      "schema": "client/client.openapi.json",
+      "name": "client",
+      "type": "openapi",
+      "serviceId": "movies"
+    }
+  ]
+}
