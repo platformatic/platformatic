@@ -63,3 +63,48 @@ test('compile with tsconfig', async (t) => {
     assert.deepStrictEqual(lines[i].msg, expected[i].msg)
   }
 })
+
+test('compile with tsconfig custom flags', async (t) => {
+  const tmpDir = await mkdtemp(path.join(base, 'test-runtime-compile-'))
+  const prev = process.cwd()
+  process.chdir(tmpDir)
+  t.after(() => {
+    process.chdir(prev)
+  })
+
+  t.after(async () => {
+    // We give up after 10s.
+    // This is because on Windows, it's very hard to delete files if the file
+    // system is not collaborating.
+    for (let i = 0; i < 10; i++) {
+      try {
+        await rm(tmpDir, { recursive: true, force: true })
+        break
+      } catch (err) {
+        if (err.code === 'EBUSY') {
+          await sleep(1000)
+          continue
+        }
+      }
+    }
+  })
+
+  const folder = join(import.meta.url, '..', '..', 'fixtures', 'typescript-custom-flags')
+  await cp(folder, tmpDir, { recursive: true })
+
+  const { stdout } = await execa(cliPath, ['compile'])
+
+  const lines = stdout.split('\n').map(JSON.parse)
+  const expected = [{
+    name: 'movies',
+    msg: 'Typescript compilation completed successfully.'
+  }, {
+    name: 'titles',
+    msg: 'Typescript compilation completed successfully.'
+  }]
+
+  for (let i = 0; i < expected.length; i++) {
+    assert.deepStrictEqual(lines[i].name, expected[i].name)
+    assert.deepStrictEqual(lines[i].msg, expected[i].msg)
+  }
+})
