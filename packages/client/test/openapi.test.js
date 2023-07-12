@@ -95,7 +95,7 @@ test('build basic client from url', async ({ teardown, same, rejects }) => {
   }
 
   {
-    const hello = await client.getHello()
+    const hello = await client.getHelloWorld()
     same(hello, { hello: 'world' })
   }
 
@@ -275,7 +275,7 @@ test('build full response client from url', async ({ teardown, same, match, reje
   }
 
   {
-    const hello = await client.getHello()
+    const hello = await client.getHelloWorld()
     match(hello, {
       statusCode: 200,
       headers: {
@@ -420,7 +420,7 @@ test('build basic client from file', async ({ teardown, same, rejects }) => {
   }
 
   {
-    const hello = await client.getHello()
+    const hello = await client.getHelloWorld()
     same(hello, { hello: 'world' })
   }
 
