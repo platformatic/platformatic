@@ -65,7 +65,7 @@ const createPlatformatic = async (argv) => {
   if (result) {
     const username = await getUsername()
     const version = await getVersion()
-    const greeting = username ? `Hello, ${username}` : 'Hello,'
+    const greeting = username ? `Hello ${username},` : 'Hello,'
     await say(`${greeting} welcome to ${version ? `Platformatic ${version}!` : 'Platformatic!'}`)
 
     const currentVersion = process.versions.node
