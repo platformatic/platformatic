@@ -78,9 +78,7 @@ const createPlatformaticService = async (_args, opts = {}) => {
   const fastifyVersion = await getDependencyVersion('fastify')
 
   if (!opts.skipPackageJson) {
-    // Create the package.json, notes that we don't have the option for TS (yet) so we don't generate
-    // the package.json with the TS build
-    await createPackageJson(version, fastifyVersion, logger, projectDir, false)
+    await createPackageJson(version, fastifyVersion, logger, projectDir, useTypescript)
   }
   if (!opts.skipGitignore) {
     await createGitignore(logger, projectDir)

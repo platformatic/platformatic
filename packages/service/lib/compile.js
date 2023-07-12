@@ -55,8 +55,8 @@ async function setup (cwd, config, logger) {
   const tsConfigExists = await isFileAccessible(tsConfigPath)
 
   if (!tsConfigExists) {
-    const msg = 'No typescript configuration file was found.'
-    logger.warn(msg)
+    const msg = 'No typescript configuration file was found, skipping compilation.'
+    logger.info(msg)
   }
 
   return { execa, logger, tscExecutablePath, tsConfigPath, tsConfigExists }

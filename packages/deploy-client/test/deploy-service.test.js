@@ -5,9 +5,17 @@ const { test } = require('tap')
 
 const { deploy } = require('../index')
 const { startMachine, startDeployService } = require('./helper')
+const { rm, access } = require('fs/promises')
 
-test('should deploy platformatic composer project without github metadata', async (t) => {
-  t.plan(12)
+test('should deploy platformatic service by compiling typescript', async (t) => {
+  try {
+    await rm(join(__dirname, 'fixtures', 'service-ts', 'dist'), { recursive: true, force: true })
+  } catch {}
+  t.teardown(async () => {
+    try {
+      await rm(join(__dirname, 'fixtures', 'service-ts', 'dist'), { recursive: true, force: true })
+    } catch {}
+  })
 
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
@@ -19,8 +27,8 @@ test('should deploy platformatic composer project without github metadata', asyn
     t.pass('Action should make a prewarm request to the machine')
   })
 
-  const pathToProject = join(__dirname, 'fixtures', 'composer-basic')
-  const pathToConfig = './platformatic.composer.json'
+  const pathToProject = join(__dirname, 'fixtures', 'service-ts')
+  const pathToConfig = './platformatic.service.json'
   const pathToEnvFile = './.env'
 
   const label = 'github-pr:1'
@@ -34,10 +42,6 @@ test('should deploy platformatic composer project without github metadata', asyn
     SECRET_VARIABLE_1: 'value3'
   }
 
-  const metadata = {
-    appType: 'composer'
-  }
-
   await startDeployService(
     t,
     {
@@ -47,11 +51,9 @@ test('should deploy platformatic composer project without github metadata', asyn
 
         const { bundle } = request.body
 
-        t.equal(bundle.appType, 'composer')
+        t.equal(bundle.appType, 'service')
         t.equal(bundle.configPath, pathToConfig)
         t.ok(bundle.checksum)
-
-        t.ok(request.body.bundle.checksum)
 
         reply.code(200).send({ id: bundleId, token, isBundleUploaded: false })
       },
@@ -61,7 +63,23 @@ test('should deploy platformatic composer project without github metadata', asyn
         t.equal(request.headers.authorization, `Bearer ${token}`)
         t.same(
           request.body,
-          { label, metadata, variables, secrets }
+          {
+            label,
+            metadata: {
+              appType: 'service'
+            },
+            variables: {
+              ...variables,
+              FILE_ENV_VARIABLE1: 'platformatic_variable1',
+              FILE_ENV_VARIABLE2: 'platformatic_variable2',
+              PLT_TYPESCRIPT: 'false'
+            },
+            secrets: {
+              ...secrets,
+              FILE_SECRET_VARIABLE1: 'platformatic_secret1',
+              FILE_SECRET_VARIABLE2: 'platformatic_secret2'
+            }
+          }
         )
         reply.code(200).send({ entryPointUrl })
       },
@@ -72,14 +90,13 @@ test('should deploy platformatic composer project without github metadata', asyn
   )
 
   const logger = {
-    trace: () => {},
     info: () => {},
+    trace: () => {},
     warn: () => t.fail('Should not log a warning')
   }
 
   await deploy({
     deployServiceHost: 'http://localhost:3042',
-    compileTypescript: false,
     workspaceId,
     workspaceKey,
     label,
@@ -90,4 +107,6 @@ test('should deploy platformatic composer project without github metadata', asyn
     variables,
     logger
   })
+
+  await access(join(__dirname, 'fixtures', 'service-ts', 'dist', 'plugin.js'))
 })

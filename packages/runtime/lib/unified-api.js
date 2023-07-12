@@ -135,7 +135,12 @@ async function _loadConfig (minimistConfig, args, configType, overrides) {
     configType = await getConfigType(args)
   }
 
-  return loadConfig(minimistConfig, args, getApp(configType), overrides)
+  const app = getApp(configType)
+  const res = await loadConfig(minimistConfig, args, app, overrides)
+  res.configType = configType
+  res.app = app
+
+  return res
 }
 
 async function _start (args) {

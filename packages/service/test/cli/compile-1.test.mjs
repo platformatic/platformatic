@@ -162,7 +162,7 @@ t.test('missing tsconfig file', async (t) => {
   } catch (err) {
     t.comment(err.stdout)
     t.comment(err.stderr)
-    t.equal(err.stdout.includes('No typescript configuration file was found.'), true)
+    t.equal(err.stdout.includes('No typescript configuration file was found, skipping compilation.'), true)
   }
 
   t.pass()
@@ -217,7 +217,7 @@ t.test('should not compile typescript plugin with start without tsconfig', async
     t.fail('should not compile typescript plugin with start without tsconfig')
   } catch (err) {
     t.comment(err.stdout)
-    t.equal(err.stdout.includes('No typescript configuration file was found'), true)
+    t.equal(err.stdout.includes('No typescript configuration file was found, skipping compilation.'), true)
   }
 })
 
@@ -441,7 +441,7 @@ t.test('missing tsconfig file', async (t) => {
   } catch (err) {
     t.comment(err.stdout)
     t.comment(err.stderr)
-    t.equal(err.stdout.includes('No typescript configuration file was found.'), true)
+    t.equal(err.stdout.includes('No typescript configuration file was found, skipping compilation.'), true)
   }
 
   t.pass()
@@ -495,6 +495,6 @@ t.test('should not compile typescript plugin with start without tsconfig', async
     t.fail('should not compile typescript plugin with start without tsconfig')
   } catch (err) {
     t.comment(err.stdout)
-    t.equal(err.stdout.includes('No typescript configuration file was found.'), true)
+    t.equal(err.stdout.includes('No typescript configuration file was found, skipping compilation.'), true)
   }
 })

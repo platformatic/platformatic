@@ -1,0 +1,11 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v0.30.1/service",
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 3042
+  },
+  "plugins": {
+    "paths": ["plugin.ts"],
+    "typescript": "${PLT_TYPESCRIPT}"
+  }
+}

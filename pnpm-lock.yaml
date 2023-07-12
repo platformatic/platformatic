@@ -522,6 +522,9 @@ importers:
       tap:
         specifier: ^16.3.6
         version: 16.3.7(typescript@5.1.6)
+      typescript:
+        specifier: ~5.1.6
+        version: 5.1.6
       yaml:
         specifier: ^2.3.1
         version: 2.3.1
@@ -944,6 +947,9 @@ importers:
       '@platformatic/start':
         specifier: workspace:*
         version: link:../start
+      pretty-bytes:
+        specifier: ^6.1.0
+        version: 6.1.0
       tar:
         specifier: ^6.1.15
         version: 6.1.15
@@ -969,6 +975,9 @@ importers:
       tap:
         specifier: ^16.3.6
         version: 16.3.7(typescript@5.1.6)
+      typescript:
+        specifier: ^5.1.6
+        version: 5.1.6
 
   packages/frontend-template:
     dependencies:
@@ -8985,6 +8994,11 @@ packages:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
     dev: true
+
+  /pretty-bytes@6.1.0:
+    resolution: {integrity: sha512-Rk753HI8f4uivXi4ZCIYdhmG1V+WKzvRMg/X+M42a6t7D07RcmopXJMDNk6N++7Bl75URRGsb40ruvg7Hcp2wQ==}
+    engines: {node: ^14.13.1 || >=16.0.0}
+    dev: false
 
   /pretty-format@29.6.1:
     resolution: {integrity: sha512-7jRj+yXO0W7e4/tSJKoR7HRIHLPPjtNaUGG2xxKQnGvPNRkgWcQ0AZX6P4KBRJN4FcTBWb3sa7DVUJmocYuoog==}

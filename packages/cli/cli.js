@@ -3,7 +3,7 @@
 import commist from 'commist'
 import minimist from 'minimist'
 import { runDB } from '@platformatic/db/db.mjs'
-import { run as runRuntime } from '@platformatic/runtime/runtime.mjs'
+import { run as runRuntime, compile } from '@platformatic/runtime/runtime.mjs'
 import { runService } from '@platformatic/service/service.mjs'
 import { runComposer } from '@platformatic/composer/composer.mjs'
 import platformaticStart from '@platformatic/start'
@@ -47,6 +47,7 @@ program.register('start', platformaticStart.startCommandInRuntime)
 program.register('composer', async (args) => ensureCommand(await runComposer(args)))
 program.register('upgrade', upgrade)
 program.register('client', client)
+program.register('compile', compile)
 program.register('help', help.toStdout)
 program.register('help db', async (args) => runDB(['help', ...args]))
 program.register('help runtime', async (args) => runRuntime(['help', ...args]))
