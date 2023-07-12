@@ -132,7 +132,7 @@ and a file named myclient.js inside it.
 If platformatic config file is specified, it will be edited and a `clients` section will be added.
 Then, in any part of your Platformatic application you can use the client.
 
-You can use the client in your application in JavaScript, calling a GraphQL endpoint:
+You can use the client in your application in Javascript, calling a GraphQL endpoint:
 
 ```js
 module.exports = async function (app, opts) {
@@ -145,7 +145,7 @@ module.exports = async function (app, opts) {
 }
 ```
 
-or in TypeScript, calling an OpenAPI endpoint:
+or in Typescript, calling an OpenAPI endpoint:
 
 
 ```ts
@@ -628,13 +628,13 @@ platformatic runtime <command>
 
 #### compile
 
-Compile all TypeScript plugins for all services.
+Compile all typescript plugins for all services.
 
 ``` bash
   $ platformatic runtime compile
 ```
 
-As a result of executing this command, it will compile the TypeScript
+This command will compile the TypeScript
 plugins for each services registered in the runtime.
 
 

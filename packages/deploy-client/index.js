@@ -1,7 +1,7 @@
 'use strict'
 
 const { tmpdir, EOL } = require('os')
-const { join } = require('path')
+const { join, basename } = require('path')
 const { createHash } = require('crypto')
 const { readFile, access, mkdtemp, rm } = require('fs/promises')
 
@@ -11,12 +11,22 @@ const { request } = require('undici')
 const ConfigManager = require('@platformatic/config')
 const { getConfigType, getApp } = require('@platformatic/start')
 const { loadConfig } = require('@platformatic/service')
-const { platformaticRuntime } = require('@platformatic/runtime')
+const { platformaticRuntime, compile } = require('@platformatic/runtime')
 
 const makePrewarmRequest = require('./lib/prewarm.js')
 
 async function archiveProject (pathToProject, archivePath) {
-  const options = { gzip: false, file: archivePath, cwd: pathToProject }
+  const options = {
+    gzip: false,
+    file: archivePath,
+    cwd: pathToProject,
+    filter: (path, stat) => {
+      if (basename(path) === '.env') {
+        return false
+      }
+      return true
+    }
+  }
   return tar.create(options, ['.'])
 }
 
@@ -175,6 +185,7 @@ async function deploy ({
   secrets,
   variables,
   githubMetadata,
+  compileTypescript,
   logger
 }) {
   if (!workspaceId) {
@@ -203,6 +214,11 @@ async function deploy ({
 
   logger.info(`Found Platformatic config file: ${pathToConfig}`)
 
+  let compiled = false
+  if (compileTypescript !== false) {
+    compiled = await compile(args, logger)
+  }
+
   const deployClient = new DeployClient(
     deployServiceHost,
     workspaceId,
@@ -213,6 +229,7 @@ async function deploy ({
   const bundlePath = join(tmpDir, 'project.tar')
   await archiveProject(pathToProject, bundlePath)
   logger.info('Project has been successfully archived')
+  logger.trace({ bundlePath, tmpdir }, 'Temporary files')
 
   const bundle = await readFile(bundlePath)
   const bundleChecksum = generateMD5Hash(bundle)
@@ -229,7 +246,8 @@ async function deploy ({
   if (isBundleUploaded) {
     logger.info('Bundle has been already uploaded. Skipping upload...')
   } else {
-    logger.info('Uploading bundle to the cloud...')
+    const { default: pretty } = await import('pretty-bytes')
+    logger.info(`Uploading bundle (${pretty(bundleSize)}) to the cloud...`)
     await deployClient.uploadBundle(token, bundleChecksum, bundleSize, bundle)
     logger.info('Bundle has been successfully uploaded')
   }
@@ -239,6 +257,15 @@ async function deploy ({
   const envFilePath = join(pathToProject, pathToEnvFile || '.env')
   const envFileVars = await getEnvFileVariables(envFilePath)
   const mergedEnvVars = { ...envFileVars, ...variables }
+
+  if (compiled) {
+    // By default, the platformatic config uses PLT_TYPESCRIPT to control typescript compilation
+    // therefore, we are setting it to false to avoid running typescript compilation
+    // on the server
+    // TODO(mcollina) we should edit the configuration file on the fly and disable typescript compilation
+    // without relying on the env variable
+    mergedEnvVars.PLT_TYPESCRIPT = 'false'
+  }
 
   const secretsFilePath = join(pathToProject, pathToSecretsFile || '.secrets.env')
   const secretsFromFile = await getEnvFileVariables(secretsFilePath)

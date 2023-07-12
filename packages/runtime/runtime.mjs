@@ -7,7 +7,9 @@ import isMain from 'es-main'
 import helpMe from 'help-me'
 import parseArgs from 'minimist'
 import { start } from './lib/start.js'
-import { compile } from './lib/compile.js'
+import { compile as compileCmd } from './lib/compile.js'
+
+export const compile = compileCmd
 
 const help = helpMe({
   dir: join(import.meta.url, 'help'),

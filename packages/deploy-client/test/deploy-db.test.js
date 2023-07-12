@@ -82,6 +82,7 @@ test('should deploy platformatic project without github metadata', async (t) => 
 
   const logger = {
     info: () => {},
+    trace: () => {},
     warn: () => t.fail('Should not log a warning')
   }
 
@@ -95,6 +96,7 @@ test('should deploy platformatic project without github metadata', async (t) => 
     pathToEnvFile,
     secrets,
     variables,
+    compileTypescript: false,
     logger
   })
 })
@@ -198,11 +200,13 @@ test('should successfully deploy platformatic project with PR context', async (t
 
   const logger = {
     info: () => {},
+    trace: () => {},
     warn: () => t.fail('Should not log a warning')
   }
 
   await deploy({
     deployServiceHost: 'http://localhost:3042',
+    compileTypescript: false,
     workspaceId,
     workspaceKey,
     label,
@@ -309,12 +313,14 @@ test('should successfully deploy platformatic project with branch context', asyn
   )
 
   const logger = {
+    trace: () => {},
     info: () => {},
     warn: () => t.fail('Should not log a warning')
   }
 
   await deploy({
     deployServiceHost: 'http://localhost:3042',
+    compileTypescript: false,
     workspaceId,
     workspaceKey,
     label,
@@ -402,12 +408,14 @@ test('should successfully deploy platformatic project without github metadata', 
   )
 
   const logger = {
+    trace: () => {},
     info: () => {},
     warn: () => t.fail('Should not log a warning')
   }
 
   await deploy({
     deployServiceHost: 'http://localhost:3042',
+    compileTypescript: false,
     workspaceId,
     workspaceKey,
     label,
@@ -512,12 +520,14 @@ test('should successfully deploy platformatic project with branch context', asyn
   )
 
   const logger = {
+    trace: () => {},
     info: () => {},
     warn: () => t.fail('Should not log a warning')
   }
 
   await deploy({
     deployServiceHost: 'http://localhost:3042',
+    compileTypescript: false,
     workspaceId,
     workspaceKey,
     label,
@@ -623,12 +633,14 @@ test('should not deploy bundle of it already exists', async (t) => {
   )
 
   const logger = {
+    trace: () => {},
     info: () => {},
     warn: () => t.fail('Should not log a warning')
   }
 
   await deploy({
     deployServiceHost: 'http://localhost:3042',
+    compileTypescript: false,
     workspaceId,
     workspaceKey,
     label,
@@ -716,12 +728,14 @@ test('should successfully deploy platformatic project without github metadata', 
   )
 
   const logger = {
+    trace: () => {},
     info: () => {},
     warn: () => t.fail('Should not log a warning')
   }
 
   await deploy({
     deployServiceHost: 'http://localhost:3042',
+    compileTypescript: false,
     workspaceId,
     workspaceKey,
     label,
@@ -798,6 +812,7 @@ test('should show a warning if platformatic dep is not in the dev section', asyn
 
   const warningMessage = 'Move platformatic dependency to devDependencies to speed up deployment'
   const logger = {
+    trace: () => {},
     info: () => {},
     warn: (message) => {
       if (message === warningMessage) {
@@ -808,6 +823,7 @@ test('should show a warning if platformatic dep is not in the dev section', asyn
 
   await deploy({
     deployServiceHost: 'http://localhost:3042',
+    compileTypescript: false,
     workspaceId,
     workspaceKey,
     label,
@@ -823,7 +839,9 @@ test('should show a warning if platformatic dep is not in the dev section', asyn
 test('should fail if there is no platformatic_workspace_id input param', async (t) => {
   try {
     await deploy({
+      compileTypescript: false,
       logger: {
+        trace: () => {},
         info: () => {},
         warn: () => t.fail('Should not log a warning')
       }
@@ -837,7 +855,9 @@ test('should fail if there is no platformatic_workspace_id input param', async (
   try {
     await deploy({
       workspaceId: 'test-workspace-id',
+      compileTypescript: false,
       logger: {
+        trace: () => {},
         info: () => {},
         warn: () => t.fail('Should not log a warning')
       }
@@ -863,7 +883,9 @@ test('should fail if platformatic_api_key is wrong', async (t) => {
       workspaceId: 'test-workspace-id',
       workspaceKey: 'test-workspace-key',
       pathToProject: join(__dirname, 'fixtures', 'db-basic'),
+      compileTypescript: false,
       logger: {
+        trace: () => {},
         info: () => {},
         warn: () => t.fail('Should not log a warning')
       }
@@ -889,7 +911,9 @@ test('should fail if it could not create a bundle', async (t) => {
       workspaceId: 'test-workspace-id',
       workspaceKey: 'test-workspace-key',
       pathToProject: join(__dirname, 'fixtures', 'db-basic'),
+      compileTypescript: false,
       logger: {
+        trace: () => {},
         info: () => {},
         warn: () => t.fail('Should not log a warning')
       }
@@ -918,7 +942,9 @@ test('should fail if platformatic_api_key is wrong', async (t) => {
       workspaceId: 'test-workspace-id',
       workspaceKey: 'test-workspace-key',
       pathToProject: join(__dirname, 'fixtures', 'db-basic'),
+      compileTypescript: false,
       logger: {
+        trace: () => {},
         info: () => {},
         warn: () => t.fail('Should not log a warning')
       }
@@ -942,9 +968,11 @@ test('should fail if it could not create a deployment', async (t) => {
     await deploy({
       deployServiceHost: 'http://localhost:3042',
       workspaceId: 'test-workspace-id',
+      compileTypescript: false,
       workspaceKey: 'test-workspace-key',
       pathToProject: join(__dirname, 'fixtures', 'db-basic'),
       logger: {
+        trace: () => {},
         info: () => {},
         warn: () => t.fail('Should not log a warning')
       }
@@ -966,8 +994,10 @@ test('should fail if it could not upload code tarball', async (t) => {
       deployServiceHost: 'http://localhost:3042',
       workspaceId: 'test-workspace-id',
       workspaceKey: 'test-workspace-key',
+      compileTypescript: false,
       pathToProject: join(__dirname, 'fixtures', 'db-basic'),
       logger: {
+        trace: () => {},
         info: () => {},
         warn: () => t.fail('Should not log a warning')
       }
@@ -1002,7 +1032,9 @@ test('should fail if it could not make a prewarm call', async (t) => {
       workspaceId: 'test-workspace-id',
       workspaceKey: 'test-workspace-key',
       pathToProject: join(__dirname, 'fixtures', 'db-basic'),
+      compileTypescript: false,
       logger: {
+        trace: () => {},
         info: () => {},
         warn: (message) => {
           t.equal(message, 'Could not make a prewarm call: Request failed with status code: 500 {"message":"Error"}, retrying...')
@@ -1022,7 +1054,9 @@ test('should fail if there is no config file', async (t) => {
       workspaceKey: 'test-workspace-key',
       pathToProject: join(__dirname, 'fixtures', 'db-basic'),
       pathToConfig: './platformatic1.db.json',
+      compileTypescript: false,
       logger: {
+        trace: () => {},
         info: () => {},
         warn: () => t.fail('Should not log a warning')
       }
@@ -1039,7 +1073,9 @@ test('should fail if there is no config file', async (t) => {
       workspaceId: 'test-workspace-id',
       workspaceKey: 'test-workspace-key',
       pathToProject: join(__dirname, 'fixtures', 'db-wrong-config-ext'),
+      compileTypescript: false,
       logger: {
+        trace: () => {},
         info: () => {},
         warn: () => t.fail('Should not log a warning')
       }
@@ -1057,7 +1093,9 @@ test('should fail if there is no config file', async (t) => {
       workspaceKey: 'test-workspace-key',
       pathToProject: join(__dirname, 'fixtures', 'db-wrong-config-ext'),
       pathToConfig: './platformatic.wrong.json',
+      compileTypescript: false,
       logger: {
+        trace: () => {},
         info: () => {},
         warn: () => t.fail('Should not log a warning')
       }
