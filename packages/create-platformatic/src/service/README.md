@@ -1,6 +1,6 @@
 # Platformatic Service API
 
-This is a generated [Platformatic DB](https://oss.platformatic.dev/docs/reference/service/introduction) application.
+This is a generated [Platformatic Service](https://oss.platformatic.dev/docs/reference/service/introduction) application.
 
 ## Requirements
 
