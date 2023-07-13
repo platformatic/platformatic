@@ -69,7 +69,7 @@ module.exports = async function (app) {
     return {}
   })
 
-  app.get('/hello', async (request, reply) => {
+  app.get('/hello-world', async (request, reply) => {
     return { hello: 'world' }
   })
 

@@ -654,7 +654,7 @@
         }
       }
     },
-    "/hello": {
+    "/hello-world": {
       "get": {
         "responses": {
           "200": {

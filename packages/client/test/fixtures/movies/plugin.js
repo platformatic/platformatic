@@ -31,7 +31,7 @@ module.exports = async function (app) {
     reply.status(204)
   })
 
-  app.get('/hello', async (request, reply) => {
+  app.get('/hello-world', async (request, reply) => {
     return { hello: 'world' }
   })
 

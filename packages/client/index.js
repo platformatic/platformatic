@@ -15,7 +15,7 @@ function generateOperationId (path, method, methodMeta) {
     for (const param of pathParams) {
       stringToUpdate = stringToUpdate.replace(`{${param.name}}`, capitalize(param.name))
     }
-    operationId = method.toLowerCase() + stringToUpdate.split('/').map(capitalize).join('')
+    operationId = method.toLowerCase() + stringToUpdate.split(/[/-]+/).map(capitalize).join('')
   }
   return operationId
 }
