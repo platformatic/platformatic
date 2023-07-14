@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/authenticate",
-  "version": "0.30.1",
+  "version": "0.31.0",
   "description": "",
   "main": "index.js",
   "type": "module",
