@@ -154,6 +154,29 @@ test('do not error on restart', async ({ teardown, equal, fail, match }) => {
   testPrometheusOutput(body)
 })
 
+test('restarting 10 times does not leak', async ({ teardown, equal, fail, match }) => {
+  process.on('warning', (warning) => {
+    fail('warning was raised')
+  })
+  const app = await buildServer({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    metrics: true
+  })
+
+  teardown(async () => {
+    await app.close()
+  })
+
+  await app.start()
+
+  for (let i = 0; i < 10; i++) {
+    await app.restart()
+  }
+})
+
 function testPrometheusOutput (output) {
   let metricBlock = []
   const lines = output.split('\n')
