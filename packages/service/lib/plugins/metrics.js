@@ -12,7 +12,6 @@ const Fastify = require('fastify')
 // prometheus. It's an antipattern, so do
 // not use it elsewhere.
 let server = null
-let handler = null
 
 module.exports = fp(async function (app, opts) {
   let port = 9090
@@ -60,7 +59,6 @@ module.exports = fp(async function (app, opts) {
   if (server && server.address().port !== port) {
     await new Promise((resolve) => server.close(resolve))
     server = null
-    handler = null
   }
 
   if (!server) {
@@ -71,12 +69,10 @@ module.exports = fp(async function (app, opts) {
 
   const promServer = Fastify({
     name: 'Prometheus server',
-    serverFactory: (_handler) => {
-      if (handler) {
-        server.off('request', handler)
-      }
-      server.on('request', _handler)
-      handler = _handler
+    serverFactory: (handler) => {
+      server.removeAllListeners('request')
+      server.removeAllListeners('clientError')
+      server.on('request', handler)
       return server
     },
     logger: app.log.child({ name: 'prometheus' })
