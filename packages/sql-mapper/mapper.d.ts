@@ -242,13 +242,14 @@ export interface Entity<EntityFields = any> {
   count: Count,
 }
 
+type EntityHook<T extends (...args: any) => any> = (original: T, ...options: Parameters<T>) => ReturnType<T>;
 
 export interface EntityHooks<EntityFields = any> {
-  find?: Find<EntityFields>,
-  insert?: Insert<EntityFields>,
-  save?: Save<EntityFields>,
-  delete?: Delete<EntityFields>,
-  count?: Count,
+  find?: EntityHook<Find<EntityFields>>,
+  insert?: EntityHook<Insert<EntityFields>>,
+  save?: EntityHook<Save<EntityFields>>,
+  delete?: EntityHook<Delete<EntityFields>>,
+  count?: EntityHook<Count>,
 }
 
 export interface SQLMapperPluginOptions {

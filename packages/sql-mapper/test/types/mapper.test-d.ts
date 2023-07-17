@@ -42,11 +42,11 @@ expectType<Partial<EntityFields>[]>(await entity.delete())
 expectType<number>(await entity.count())
 
 const entityHooks: EntityHooks = {
-  async find(options: any): Promise<any[]> { return [] },
-  async insert(options: { inputs: any[], fields?: string[] }): Promise<any[]> { return [] },
-  async save(options: { input: any, fields?: string[] }): Promise<any> { return {} },
-  async delete(options?: { where: WhereCondition, fields: string[] }): Promise<any[]> { return [] },
-  async count(options?: { where?: WhereCondition }): Promise<number> { return 0 },
+  async find(originalFind: typeof entity.find, ...options: Parameters<typeof entity.find>): ReturnType<typeof entity.find> { return [] },
+  async insert(originalInsert: typeof entity.insert, ...options: Parameters<typeof entity.insert>): ReturnType<typeof entity.insert> { return [] },
+  async save(originalSave: typeof entity.save, ...options: Parameters<typeof entity.save>): ReturnType<typeof entity.save> { return {} },
+  async delete(originalDelete: typeof entity.delete, ...options: Parameters<typeof entity.delete>): ReturnType<typeof entity.delete> { return [] },
+  async count(originalCount: typeof entity.count, ...options: Parameters<typeof entity.count>): ReturnType<typeof entity.count> { return 0 },
 }
 expectType<EntityHooks>(entityHooks)
 expectType<SQLMapperPluginInterface>(await connect({ connectionString: '' }))
