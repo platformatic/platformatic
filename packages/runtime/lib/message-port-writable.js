@@ -11,6 +11,14 @@ class MessagePortWritable extends Writable {
     this.metadata = opts.metadata
   }
 
+  _write (chunk, encoding, callback) {
+    this.port.postMessage({
+      metadata: this.metadata,
+      logs: [chunk.toString().trim()]
+    })
+    process.nextTick(callback)
+  }
+
   _writev (chunks, callback) {
     // Process the logs here before trying to send them across the thread
     // boundary. Sometimes the chunks have an undocumented method on them
