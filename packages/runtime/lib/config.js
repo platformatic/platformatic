@@ -1,6 +1,7 @@
 'use strict'
 const { readFile, readdir } = require('node:fs/promises')
 const { basename, join, resolve: pathResolve } = require('node:path')
+const { closest } = require('fastest-levenshtein')
 const Topo = require('@hapi/topo')
 const ConfigManager = require('@platformatic/config')
 const { schema } = require('./schema')
@@ -71,6 +72,15 @@ async function _transformConfig (configManager) {
   }
 }
 
+function missingDependencyErrorMessage (clientName, service, configManager) {
+  const closestName = closest(clientName, [...configManager.current.serviceMap.keys()])
+  let errorMsg = `service '${service.id}' has unknown dependency: '${clientName}'.`
+  if (closestName) {
+    errorMsg += ` Did you mean '${closestName}'?`
+  }
+  return errorMsg
+}
+
 async function parseClientsAndComposer (configManager) {
   for (let i = 0; i < configManager.current.services.length; ++i) {
     const service = configManager.current.services[i]
@@ -86,8 +96,7 @@ async function parseClientsAndComposer (configManager) {
         const dependency = configManager.current.serviceMap.get(clientName)
 
         if (dependency === undefined) {
-          /* c8 ignore next 2 */
-          throw new Error(`service '${service.id}' has unknown dependency: '${clientName}'`)
+          throw new Error(missingDependencyErrorMessage(clientName, service, configManager))
         }
 
         dependency.dependents.push(service.id)
@@ -170,7 +179,7 @@ async function parseClientsAndComposer (configManager) {
 
           /* c8 ignore next 4 */
           if (dependency === undefined) {
-            reject(new Error(`service '${service.id}' has unknown dependency: '${clientName}'`))
+            reject(new Error(missingDependencyErrorMessage(clientName, service, configManager)))
             return
           }
 
