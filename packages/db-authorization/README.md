@@ -2,7 +2,7 @@
 
 Fastify plugin that adds role-based authorization hooks to [`@platformatic/sql-mapper`](https://www.npmjs.com/package/@platformatic/sql-mapper).
 
-Check out the full documentation on [our website](https://oss.platformatic.dev/docs/reference/db/authorization/introduction).
+Check out the full documentation on [our website](https://docs.platformatic.dev/docs/reference/db/authorization/introduction).
 
 ## Install
 

@@ -1,6 +1,6 @@
 # Platformatic Composer API
 
-This is a generated [Platformatic Composer](https://oss.platformatic.dev/docs/reference/composer/introduction) application.
+This is a generated [Platformatic Composer](https://docs.platformatic.dev/docs/reference/composer/introduction) application.
 
 ## Requirements
 

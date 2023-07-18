@@ -110,7 +110,7 @@ test('do not run migrations by default', async ({ equal, teardown }) => {
   const firstOutput = firstChild.stdout.pipe(splitter)
   const [out] = await once(firstOutput, 'data')
   const { msg } = JSON.parse(out)
-  equal(msg, 'No tables found in the database. Are you connected to the right database? Did you forget to run your migrations? This guide can help with debugging Platformatic DB: https://oss.platformatic.dev/docs/guides/debug-platformatic-db')
+  equal(msg, 'No tables found in the database. Are you connected to the right database? Did you forget to run your migrations? This guide can help with debugging Platformatic DB: https://docs.platformatic.dev/docs/guides/debug-platformatic-db')
 
   const [{ exists }] = await db.query(db.sql(
     `SELECT EXISTS (

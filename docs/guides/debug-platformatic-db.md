@@ -4,7 +4,7 @@
 
 - Verify your database connection string is correct in your Platformatic DB configuration
   - Make sure the database name is correct
-- Ensure that you have run the migration command `npx platformatic db migrations apply` before starting the server. See the Platformatic DB [Migrations](https://oss.platformatic.dev/docs/reference/db/migrations) documentation for more information on working with migrations.
+- Ensure that you have run the migration command `npx platformatic db migrations apply` before starting the server. See the Platformatic DB [Migrations](https://docs.platformatic.dev/docs/reference/db/migrations) documentation for more information on working with migrations.
 
 ## Logging SQL queries
 

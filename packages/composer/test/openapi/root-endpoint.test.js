@@ -14,7 +14,7 @@ test('should respond 200 on root endpoint', async (t) => {
     // No browser (i.e. curl)
     const { statusCode, body } = await composer.inject({ method: 'GET', url: '/' })
     t.equal(statusCode, 200)
-    t.same(JSON.parse(body), { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
+    t.same(JSON.parse(body), { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
   }
 
   {
@@ -25,7 +25,7 @@ test('should respond 200 on root endpoint', async (t) => {
       headers: { 'user-agent': '' }
     })
     t.equal(statusCode, 200)
-    t.same(JSON.parse(body), { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
+    t.same(JSON.parse(body), { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
   }
 
   {
