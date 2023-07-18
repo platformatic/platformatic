@@ -3,6 +3,7 @@ import { Agent, setGlobalDispatcher } from 'undici'
 import { execa } from 'execa'
 import split from 'split2'
 import { join } from 'desm'
+import { rm } from 'node:fs/promises'
 
 setGlobalDispatcher(new Agent({
   keepAliveTimeout: 10,
@@ -42,5 +43,24 @@ export async function start (...args) {
         return { child, url, output }
       }
     }
+  }
+}
+
+export function delDir (tmpDir) {
+  return async function () {
+    console.time('delDir')
+    // We give up after 10s.
+    // This is because on Windows, it's very hard to delete files if the file
+    // system is not collaborating.
+    try {
+      await rm(tmpDir, { recursive: true, force: true })
+    } catch (err) {
+      if (err.code !== 'EBUSY') {
+        throw err
+      } else {
+        console.log('Could not delete directory, retrying', tmpDir)
+      }
+    }
+    console.timeEnd('delDir')
   }
 }
