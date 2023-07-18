@@ -42,7 +42,7 @@ test('should respond 200 on root endpoint', async ({ teardown, equal, same, ok }
     equal(ret.isBase64Encoded, false)
     ok(ret.headers)
     equal(ret.headers['content-type'], 'application/json; charset=utf-8')
-    equal(ret.headers['content-length'], '80')
+    equal(ret.headers['content-length'], '81')
     ok(ret.headers.date)
     equal(ret.headers.connection, 'keep-alive')
   }
