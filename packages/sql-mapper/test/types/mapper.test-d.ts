@@ -8,7 +8,6 @@ import {
   Entity,
   DBEntityField,
   Database,
-  WhereCondition,
   SQLMapperPluginInterface,
   EntityHooks,
 } from '../../mapper'
@@ -16,7 +15,6 @@ import {
 const pluginOptions: SQLMapperPluginInterface = await connect({ connectionString: '' })
 expectType<Database>(pluginOptions.db)
 expectType<SQL>(pluginOptions.sql)
-expectType<(entityName: string, hooks: EntityHooks) => any>(pluginOptions.addEntityHooks)
 expectType<{ [entityName: string]: Entity }>(pluginOptions.entities)
 
 interface EntityFields {
@@ -74,6 +72,18 @@ const instance: FastifyInstance = fastify()
 instance.register(plugin, { connectionString: '', autoTimestamp: true })
 instance.register((instance) => { 
   expectType<SQLMapperPluginInterface>(instance.platformatic)
+
+  instance.platformatic.addEntityHooks<EntityFields>('something', {
+    async find (originalFind, options) {
+      expectType<Partial<EntityFields>[]>(await originalFind())
+      expectType<Parameters<typeof entity.find>[0]>(options)
+
+      return [{
+        id: 42
+      }]
+    }
+  })
+
   instance.get('/', async (request, reply) => {
     const ctx = request.platformaticContext
     expectType<FastifyInstance>(ctx.app)

@@ -305,7 +305,7 @@ export interface SQLMapperPluginInterface {
   /**
    * Adds hooks to the entity.
    */
-  addEntityHooks(entityName: string, hooks: EntityHooks): any
+  addEntityHooks<EntityFields>(entityName: string, hooks: EntityHooks<EntityFields>): any
 }
 
 // Extend the PlatformaticApp interface,
@@ -327,7 +327,7 @@ declare module '@platformatic/types' {
     /**
      * Adds hooks to the entity.
      */
-    addEntityHooks(entityName: string, hooks: EntityHooks): any
+    addEntityHooks<EntityFields>(entityName: string, hooks: EntityHooks<EntityFields>): any
   }
 }
 
