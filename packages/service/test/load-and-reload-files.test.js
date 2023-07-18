@@ -38,7 +38,7 @@ test('load and reload', async ({ teardown, equal, pass, same }) => {
     const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'status code')
     const data = await res.body.json()
-    same(data, { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
+    same(data, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
   }
 
   await writeFile(file, `
@@ -52,7 +52,7 @@ test('load and reload', async ({ teardown, equal, pass, same }) => {
     const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'add status code')
     // The plugin is in Node's module cache, so the new value is not seen.
-    same(await res.body.json(), { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
+    same(await res.body.json(), { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
   }
 })
 
@@ -161,7 +161,7 @@ test('load and reload ESM', async ({ teardown, equal, pass, same }) => {
     const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'status code')
     const data = await res.body.json()
-    same(data, { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
+    same(data, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
   }
 
   await writeFile(file, `
@@ -175,6 +175,6 @@ test('load and reload ESM', async ({ teardown, equal, pass, same }) => {
     const res = await request(`${app.url}/`)
     equal(res.statusCode, 200, 'add status code')
     // The plugin is in Node's module cache, so the new value is not seen.
-    same(await res.body.json(), { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
+    same(await res.body.json(), { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
   }
 })

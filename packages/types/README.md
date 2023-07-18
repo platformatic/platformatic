@@ -1,6 +1,6 @@
 # @platformatic/types
 
-Shared types for [Platformatic](https://oss.platformatic.dev)
+Shared types for [Platformatic](https://docs.platformatic.dev)
 
 ## Install
 

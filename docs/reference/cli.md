@@ -249,7 +249,7 @@ Options:
 If not specified, the configuration specified will be loaded from `platformatic.composer.json`,
 `platformatic.composer.yml`, or `platformatic.composer.tml` in the current directory. You can find more details about
 the configuration format at:
-https://oss.platformatic.dev/docs/reference/composer/configuration.
+https://docs.platformatic.dev/docs/reference/composer/configuration.
 
 
 ### db
@@ -272,7 +272,7 @@ plugins in the `outDir` directory.
 If not specified, the configuration specified will be loaded from
 `platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
 You can find more details about the configuration format at:
-https://oss.platformatic.dev/docs/reference/db/configuration.
+https://docs.platformatic.dev/docs/reference/db/configuration.
 
 
 #### help
@@ -331,7 +331,7 @@ Options:
 If not specified, the configuration specified will be loaded from
 `platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
 You can find more details about the configuration format at:
-https://oss.platformatic.dev/docs/reference/db/configuration.
+https://docs.platformatic.dev/docs/reference/db/configuration.
 
 
 #### migrations create
@@ -356,7 +356,7 @@ Options:
 If not specified, the configuration specified will be loaded from
 `platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
 You can find more details about the configuration format at:
-https://oss.platformatic.dev/docs/reference/db/configuration.
+https://docs.platformatic.dev/docs/reference/db/configuration.
 
 
 #### migrations
@@ -389,7 +389,7 @@ Options:
 If not specified, the configuration specified will be loaded from
 `platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
 You can find more details about the configuration format at:
-https://oss.platformatic.dev/docs/reference/db/configuration.
+https://docs.platformatic.dev/docs/reference/db/configuration.
 
 
 #### seed
@@ -424,7 +424,7 @@ Options:
 If not specified, the configuration specified will be loaded from
 `platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
 You can find more details about the configuration format at:
-https://oss.platformatic.dev/docs/reference/db/configuration.
+https://docs.platformatic.dev/docs/reference/db/configuration.
 
 
 #### start
@@ -471,7 +471,7 @@ Options:
 If not specified, the configuration specified will be loaded from `platformatic.db.json`,
 `platformatic.db.yml`, or `platformatic.db.tml` in the current directory. You can find more details about
 the configuration format at:
-https://oss.platformatic.dev/docs/reference/db/configuration.
+https://docs.platformatic.dev/docs/reference/db/configuration.
 
 
 #### types
@@ -511,7 +511,7 @@ module.exports = async function (app) {
 If not specified, the configuration specified will be loaded from
 `platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
 You can find more details about the configuration format at:
-https://oss.platformatic.dev/docs/reference/db/configuration.
+https://docs.platformatic.dev/docs/reference/db/configuration.
 
 
 ### service
@@ -535,7 +535,7 @@ plugins in the `outDir` directory.
 If not specified, the configuration specified will be loaded from
 `platformatic.service.json`, `platformatic.service.yml`, or `platformatic.service.tml` in the current directory.
 You can find more details about the configuration format at:
-https://oss.platformatic.dev/docs/reference/service/configuration.
+https://docs.platformatic.dev/docs/reference/service/configuration.
 
 
 #### help
@@ -608,15 +608,15 @@ npx platformatic frontend http://127.0.0.1:3042 ts
   * `api.d.ts`: A TypeScript module that includes all the OpenAPI-related types
   * `api.ts` or `api.js`: A module that includes a function for every single REST endpoint
 
-Refer to the [dedicated guide](https://oss.platformatic.dev/docs/guides/generate-frontend-code-to-consume-platformatic-rest-api) where the full process of generating and consuming the frontend code is described.
+Refer to the [dedicated guide](https://docs.platformatic.dev/docs/guides/generate-frontend-code-to-consume-platformatic-rest-api) where the full process of generating and consuming the frontend code is described.
 
 In case of problems, please check that
 
   * The Platformatic app URL is valid
   * The Platformatic app whose URL belongs must be up and running
-  * OpenAPI must be enabled (`db.openapi` in your `platformatic.db.json` is not set to `false`). You can find more details about the db configuration format [here](https://oss.platformatic.dev/docs/reference/db/configuration/#db).
+  * OpenAPI must be enabled (`db.openapi` in your `platformatic.db.json` is not set to `false`). You can find more details about the db configuration format [here](https://docs.platformatic.dev/docs/reference/db/configuration/#db).
   * CORS must be managed in your Platformatic app (`server.cors.origin.regexp` in your `platformatic.db.json` is set to `/*/`, for instance)
-  You can find more details about the cors configuration [here](https://oss.platformatic.dev/docs/reference/service/configuration/#server).
+  You can find more details about the cors configuration [here](https://docs.platformatic.dev/docs/reference/service/configuration/#server).
 
 
 ### runtime

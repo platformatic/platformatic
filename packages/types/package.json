@@ -1,9 +1,9 @@
 {
   "name": "@platformatic/types",
-  "version": "0.31.0",
+  "version": "0.31.1",
   "description": "Shared types for Platformatic",
   "types": "index.d.ts",
-  "homepage": "https://oss.platformatic.dev/",
+  "homepage": "https://docs.platformatic.dev/",
   "scripts": {},
   "author": "Matteo Collina <hello@matteocollina.com>",
   "repository": {

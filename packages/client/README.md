@@ -1,6 +1,6 @@
 # @platformatic/client
 
-Check out the full documentation for Platformatic Client on [our website](https://oss.platformatic.dev/docs/reference/client).
+Check out the full documentation for Platformatic Client on [our website](https://docs.platformatic.dev/docs/reference/client).
 
 ## Install
 

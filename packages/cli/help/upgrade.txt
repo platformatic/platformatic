@@ -12,5 +12,5 @@ If not specified, the configuration specified will be loaded from `platformatic.
 `platformatic.db.yml`, or `platformatic.db.tml`, `platformatic.service.json`,
 `platformatic.service.yml`, or `platformatic.service.tml` in the current directory. You can find more details about
 the configuration format at:
-https://oss.platformatic.dev/docs/reference/db/configuration and 
-https://oss.platformatic.dev/docs/reference/service/configuration.
+https://docs.platformatic.dev/docs/reference/db/configuration and 
+https://docs.platformatic.dev/docs/reference/service/configuration.

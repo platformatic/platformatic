@@ -178,6 +178,6 @@ These settings are important when using `@fastify/express` in a Platformatic Ser
 
 ## Wrapping up
 
-You can learn more about building Node.js apps with Platformatic service in the [Platformatic Service](https://oss.platformatic.dev/docs/reference/service/introduction) documentation.
+You can learn more about building Node.js apps with Platformatic service in the [Platformatic Service](https://docs.platformatic.dev/docs/reference/service/introduction) documentation.
 
 Once you've migrated your Express app to use Platformatic Service with `@fastify/express`, you might then want to consider fully migrating your Express routes and application code to Fastify. This tutorial shows how you can approach that migration process: [How to migrate your app from Express to Fastify](https://simonplend.com/how-to-migrate-your-app-from-express-to-fastify/) ([video](https://simonplend.com/learning-fastify-how-to-migrate-your-app-from-express-to-fastify/)).
