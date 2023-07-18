@@ -28,7 +28,7 @@ test('should respond 200 on root endpoint', async ({ teardown, equal, same }) =>
     const res = await (request(`${app.url}/`))
     equal(res.statusCode, 200)
     const body = await res.body.json()
-    same(body, { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
+    same(body, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
   }
 
   {

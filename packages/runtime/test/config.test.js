@@ -55,6 +55,14 @@ test('performs a topological sort on services depending on allowCycles', async (
       await loadConfig({}, ['-c', configFile], platformaticRuntime)
     })
   })
+
+  await t.test('throws by adding the most probable service ', async () => {
+    const configFile = join(fixturesDir, 'leven', 'platformatic.runtime.json')
+
+    await assert.rejects(async () => {
+      await loadConfig({}, ['-c', configFile], platformaticRuntime)
+    }, 'service \'rainy-empire\' has unordered dependency: \'deeply-splitte\'. Did you mean \'deeply-spittle\'?')
+  })
 })
 
 test('can resolve service id from client package.json if not provided', async () => {

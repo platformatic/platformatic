@@ -38,11 +38,11 @@ test('should respond 200 on root endpoint', async ({ teardown, equal, same, ok }
 
     const ret = await handler(evt)
 
-    equal(ret.body, JSON.stringify({ message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' }))
+    equal(ret.body, JSON.stringify({ message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' }))
     equal(ret.isBase64Encoded, false)
     ok(ret.headers)
     equal(ret.headers['content-type'], 'application/json; charset=utf-8')
-    equal(ret.headers['content-length'], '80')
+    equal(ret.headers['content-length'], '81')
     ok(ret.headers.date)
     equal(ret.headers.connection, 'keep-alive')
   }

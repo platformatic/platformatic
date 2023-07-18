@@ -5,7 +5,6 @@ import path from 'node:path'
 import { cliPath } from './helper.mjs'
 import { execa } from 'execa'
 import { mkdtemp, rm, cp, mkdir } from 'node:fs/promises'
-import { setTimeout as sleep } from 'node:timers/promises'
 
 const base = join(import.meta.url, '..', 'tmp')
 
@@ -16,20 +15,20 @@ try {
 
 function delDir (tmpDir) {
   return async function () {
+    console.time('delDir')
     // We give up after 10s.
     // This is because on Windows, it's very hard to delete files if the file
     // system is not collaborating.
-    for (let i = 0; i < 10; i++) {
-      try {
-        await rm(tmpDir, { recursive: true, force: true })
-        break
-      } catch (err) {
-        if (err.code === 'EBUSY') {
-          await sleep(1000)
-          continue
-        }
+    try {
+      await rm(tmpDir, { recursive: true, force: true })
+    } catch (err) {
+      if (err.code !== 'EBUSY') {
+        throw err
+      } else {
+        console.log('Could not delete directory, retrying', tmpDir)
       }
     }
+    console.timeEnd('delDir')
   }
 }
 

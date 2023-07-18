@@ -8,7 +8,7 @@
     "platformatic": "cli.js",
     "plt": "cli.js"
   },
-  "homepage": "https://oss.platformatic.dev/",
+  "homepage": "https://docs.platformatic.dev/",
   "scripts": {
     "test": "standard | snazzy && c8 --100 tap --no-coverage test/*.test.js",
     "lint": "standard | snazzy",
