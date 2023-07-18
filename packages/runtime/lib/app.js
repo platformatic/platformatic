@@ -24,7 +24,9 @@ class PlatformaticApp {
     this.server = null
     this.#started = false
     this.#originalWatch = null
-    this.#logger = logger
+    this.#logger = logger.child({
+      name: this.appConfig.id
+    })
   }
 
   getStatus () {
@@ -148,12 +150,19 @@ class PlatformaticApp {
   async #initializeConfig () {
     const appConfig = this.appConfig
 
-    this.config = await loadConfig({}, ['-c', appConfig.config], null, {
-      watch: true,
-      onMissingEnv (key) {
-        return appConfig.localServiceEnvVars.get(key)
-      }
-    })
+    let _config
+    try {
+      _config = await loadConfig({}, ['-c', appConfig.config], null, {
+        watch: true,
+        onMissingEnv (key) {
+          return appConfig.localServiceEnvVars.get(key)
+        }
+      })
+    } catch (err) {
+      this.#logAndExit(err)
+    }
+
+    this.config = _config
     const { configManager } = this.config
 
     function applyOverrides () {
@@ -206,9 +215,7 @@ class PlatformaticApp {
   #setuplogger (configManager) {
     // Set the logger if not present (and the config supports it).
     if (configManager.current.server) {
-      const childLogger = this.#logger.child({
-        name: this.appConfig.id
-      }, { level: configManager.current.server.logger?.level || 'info' })
+      const childLogger = this.#logger.child({}, { level: configManager.current.server.logger?.level || 'info' })
       configManager.current.server.logger = childLogger
     }
   }

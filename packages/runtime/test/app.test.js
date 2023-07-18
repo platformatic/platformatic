@@ -308,3 +308,35 @@ test('restarts on config change without overriding the configManager', async (t)
   }
   assert.strictEqual(configManager, app.server.platformatic.configManager)
 })
+
+test('logs errors if an env variable is missing', async (t) => {
+  const { logger, stream } = getLoggerAndStream()
+  const configFile = join(fixturesDir, 'no-env.service.json')
+  const config = {
+    id: 'no-env',
+    config: configFile,
+    path: fixturesDir,
+    entrypoint: true,
+    hotReload: true
+  }
+  const app = new PlatformaticApp(config, null, logger)
+
+  t.mock.method(process, 'exit', () => {
+    throw new Error('exited')
+  })
+
+  await assert.rejects(async () => {
+    await app.start()
+  }, /exited/)
+  assert.strictEqual(process.exit.mock.calls.length, 1)
+  assert.strictEqual(process.exit.mock.calls[0].arguments[0], 1)
+
+  stream.end()
+  const lines = []
+  for await (const line of stream) {
+    lines.push(line)
+  }
+  const lastLine = lines[lines.length - 1]
+  assert.strictEqual(lastLine.name, 'no-env')
+  assert.strictEqual(lastLine.msg, 'Cannot parse config file. Cannot read properties of undefined (reading \'get\')')
+})
