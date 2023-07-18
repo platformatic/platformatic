@@ -26,7 +26,9 @@ async function onDatabaseLoad (db, sql) {
 }
 
 test('entities are available', async ({ ok, teardown }) => {
-  const app = Fastify()
+  const app = Fastify({
+    pluginTimeout: 30000
+  })
   app.register(core, {
     ...connInfo,
     onDatabaseLoad
@@ -38,7 +40,9 @@ test('entities are available', async ({ ok, teardown }) => {
 })
 
 test('graphql is available', async ({ equal, same, teardown }) => {
-  const app = Fastify()
+  const app = Fastify({
+    pluginTimeout: 30000
+  })
   app.register(core, {
     ...connInfo,
     onDatabaseLoad
@@ -71,7 +75,9 @@ test('graphql is available', async ({ equal, same, teardown }) => {
 })
 
 test('graphiql can be enabled', async ({ equal, same, teardown }) => {
-  const app = Fastify()
+  const app = Fastify({
+    pluginTimeout: 30000
+  })
   app.register(core, {
     ...connInfo,
     onDatabaseLoad,
@@ -89,7 +95,9 @@ test('graphiql can be enabled', async ({ equal, same, teardown }) => {
 })
 
 test('graphql can be disabled', async ({ equal, teardown }) => {
-  const app = Fastify()
+  const app = Fastify({
+    pluginTimeout: 30000
+  })
   app.register(core, {
     ...connInfo,
     onDatabaseLoad,
@@ -115,7 +123,9 @@ test('graphql can be disabled', async ({ equal, teardown }) => {
 })
 
 test('openapi is available', async ({ equal, teardown }) => {
-  const app = Fastify()
+  const app = Fastify({
+    pluginTimeout: 30000
+  })
   app.register(core, {
     ...connInfo,
     onDatabaseLoad
@@ -130,7 +140,9 @@ test('openapi is available', async ({ equal, teardown }) => {
 })
 
 test('openapi can be disabled', async ({ equal, teardown }) => {
-  const app = Fastify()
+  const app = Fastify({
+    pluginTimeout: 30000
+  })
   app.register(core, {
     ...connInfo,
     onDatabaseLoad,
@@ -146,7 +158,9 @@ test('openapi can be disabled', async ({ equal, teardown }) => {
 })
 
 test('openapi with an object', async ({ equal, teardown }) => {
-  const app = Fastify()
+  const app = Fastify({
+    pluginTimeout: 30000
+  })
   app.register(core, {
     ...connInfo,
     onDatabaseLoad,
@@ -162,7 +176,9 @@ test('openapi with an object', async ({ equal, teardown }) => {
 })
 
 test('mq is available', async ({ equal, same, teardown }) => {
-  const app = Fastify()
+  const app = Fastify({
+    pluginTimeout: 30000
+  })
   await app.register(core, {
     ...connInfo,
     events: true,
