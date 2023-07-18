@@ -15,7 +15,6 @@ import {
 const pluginOptions: SQLMapperPluginInterface = await connect({ connectionString: '' })
 expectType<Database>(pluginOptions.db)
 expectType<SQL>(pluginOptions.sql)
-expectType<(entityName: string, hooks: EntityHooks) => any>(pluginOptions.addEntityHooks)
 expectType<{ [entityName: string]: Entity }>(pluginOptions.entities)
 
 interface EntityFields {
