@@ -1,10 +1,10 @@
 'use strict'
 
 const { test } = require('tap')
-
 const { clear, connInfo, isSQLite, isMysql, isPg, isMysql8 } = require('./helper')
 const { connect } = require('..')
 const fakeLogger = {
+  // trace: (...args) => { console.log(JSON.stringify(args, null, 2)) },
   trace: () => {},
   error: () => {}
 }
@@ -1018,4 +1018,87 @@ test('nested transactions', async ({ equal, same, teardown, rejects }) => {
     })
     same(insertResult, { id: '1', theTitle: null })
   })
+})
+
+test('array support (PG)', { skip: !(isPg) }, async ({ teardown, same, rejects }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(() => db.dispose())
+
+    await db.query(sql`CREATE TABLE generated_test (
+      id SERIAL PRIMARY KEY,
+      checkmark BOOLEAN NOT NULL DEFAULT true,
+      test INTEGER[]
+    );`)
+  }
+
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+
+  const generatedTest = mapper.entities.generatedTest
+
+  // save - new record
+  same(await generatedTest.save({
+    input: { test: [1, 2, 3], checkmark: true }
+  }), { id: 1, test: [1, 2, 3], checkmark: true })
+
+  // save - update
+  same(await generatedTest.save({
+    input: { id: 1, test: [4, 5, 6], checkmark: true }
+  }), { id: 1, test: [4, 5, 6], checkmark: true })
+
+  // insert
+  same(await generatedTest.insert({
+    inputs: [{ test: [4], checkmark: true }]
+  }), [{ id: 2, test: [4], checkmark: true }])
+
+  // where any
+  same(await generatedTest.find({
+    where: {
+      test: { any: 4 }
+    }
+  }), [{ id: 1, test: [4, 5, 6], checkmark: true }, { id: 2, test: [4], checkmark: true }])
+
+  // where all
+  same(await generatedTest.find({
+    where: {
+      test: { all: 4 }
+    }
+  }), [{ id: 2, test: [4], checkmark: true }])
+
+  // where eq
+  await rejects(generatedTest.find({
+    where: {
+      test: { eq: 4 }
+    }
+  }))
+
+  // where any to non-array
+  await rejects(generatedTest.find({
+    where: {
+      checkmark: { any: 4 }
+    }
+  }))
+
+  // where any to non-array
+  await rejects(generatedTest.find({
+    where: {
+      checkmark: { all: 4 }
+    }
+  }))
+
+  // updateMany
+  same(await generatedTest.updateMany({
+    where: {
+      checkmark: { eq: true }
+    },
+    input: {
+      test: [8]
+    }
+  }), [{ id: 1, test: [8], checkmark: true }, { id: 2, test: [8], checkmark: true }])
 })
