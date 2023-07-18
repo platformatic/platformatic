@@ -1440,8 +1440,8 @@ importers:
   packages/sql-mapper:
     dependencies:
       '@databases/mysql':
-        specifier: ^5.2.1
-        version: 5.2.1
+        specifier: ^6.0.0
+        version: 6.0.0
       '@databases/pg':
         specifier: ^5.4.1
         version: 5.4.1
@@ -1884,8 +1884,8 @@ packages:
       funtypes: 4.2.0
     dev: false
 
-  /@databases/mysql@5.2.1:
-    resolution: {integrity: sha512-DwH6mJX2K1P2Pf+93BIrhDp89Y/RvmYY74CDcMxj680lk8kV2tUN7udBkMePnDHqRG7wLxQ91deEezMeFMLpJg==}
+  /@databases/mysql@6.0.0:
+    resolution: {integrity: sha512-pfPZYjbW70Sftq4qYdZd3yo9LuXwDoN8A1YQfzzq/QplUMyhpGUdq5De1AiXKFy3DSBGQWpt3QO0WwICTEPuSw==}
     dependencies:
       '@babel/code-frame': 7.22.5
       '@databases/escape-identifier': 1.0.3

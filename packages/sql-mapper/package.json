@@ -32,7 +32,7 @@
     "tsd": "^0.28.1"
   },
   "dependencies": {
-    "@databases/mysql": "^5.2.1",
+    "@databases/mysql": "^6.0.0",
     "@databases/pg": "^5.4.1",
     "@databases/sql": "^3.3.0",
     "@matteo.collina/sqlite-pool": "^0.3.0",
