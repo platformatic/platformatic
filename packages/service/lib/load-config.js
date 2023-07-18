@@ -53,10 +53,14 @@ Error: ${err}
     envWhitelist
   })
 
-  const parsingResult = await configManager.parse()
-  if (!parsingResult) {
-    printConfigValidationErrors(configManager)
-    process.exit(1)
+  try {
+    const parsingResult = await configManager.parse()
+    if (!parsingResult) {
+      printConfigValidationErrors(configManager)
+      process.exit(1)
+    }
+  } finally {
+    configManager.stopWatching()
   }
 
   return { configManager, args }
