@@ -14,11 +14,18 @@ const DEFAULT_TYPES_FOLDER_PATH = resolve(process.cwd(), 'types')
 
 const GLOBAL_TYPES_TEMPLATE = `\
 /// <reference types="@platformatic/db" />
+import { EntityHooks } from '@platformatic/sql-mapper'
 ENTITIES_IMPORTS_PLACEHOLDER
 
 declare module '@platformatic/sql-mapper' {
   interface Entities {
     ENTITIES_DEFINITION_PLACEHOLDER
+  }
+}
+
+declare module '@platformatic/types' {
+  interface PlatformaticApp {
+    HOOKS_DEFINITION_PLACEHOLDER
   }
 }
 `
@@ -66,6 +73,7 @@ async function generateEntityGroupExport (entities) {
 async function generateGlobalTypes (entities, config) {
   const globalTypesImports = []
   const globalTypesInterface = []
+  const globalHooks = []
   const completeTypesImports = []
 
   let typesRelativePath = relative(process.cwd(), getTypesFolderPath(config))
@@ -78,10 +86,11 @@ async function generateGlobalTypes (entities, config) {
   const names = []
   const keys = Object.keys(entities).sort()
   for (const key of keys) {
-    const { name } = entities[key]
+    const { name, singularName } = entities[key]
     schemaIdTypes.push(name)
     completeTypesImports.push(`import { ${name} } from './${typesRelativePath}/${name}'`)
     globalTypesInterface.push(`${key}: Entity<${name}>,`)
+    globalHooks.push(`addEntityHooks(entityName: '${singularName}', hooks: EntityHooks<${name}>): any`)
     names.push(name)
   }
   globalTypesImports.push(`import { EntityTypes, ${names.join(',')} } from './${typesRelativePath}'`)
@@ -107,6 +116,7 @@ declare module 'fastify' {
   return GLOBAL_TYPES_TEMPLATE
     .replace('ENTITIES_IMPORTS_PLACEHOLDER', globalTypesImports.join('\n'))
     .replace('ENTITIES_DEFINITION_PLACEHOLDER', globalTypesInterface.join('\n    '))
+    .replace('HOOKS_DEFINITION_PLACEHOLDER', globalHooks.join('\n    '))
 }
 
 async function generateGlobalTypesFile (entities, config) {
