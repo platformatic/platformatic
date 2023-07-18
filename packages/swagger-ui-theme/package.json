@@ -4,7 +4,7 @@
   "description": "Platformatic's Swagger UI theme for @fastify/swagger-ui",
   "main": "theme.js",
   "type": "module",
-  "homepage": "https://oss.platformatic.dev/",
+  "homepage": "https://docs.platformatic.dev/",
   "scripts": {},
   "author": "Matteo Collina <hello@matteocollina.com>",
   "repository": {

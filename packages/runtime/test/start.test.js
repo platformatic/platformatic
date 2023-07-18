@@ -68,7 +68,7 @@ test('composer', async (t) => {
     const res = await request(entryUrl)
 
     assert.strictEqual(res.statusCode, 200)
-    assert.deepStrictEqual(await res.body.json(), { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
+    assert.deepStrictEqual(await res.body.json(), { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
   }
 
   {

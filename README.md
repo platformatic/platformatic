@@ -33,16 +33,16 @@ npm create platformatic@latest
 npm install platformatic
 ```
 
-Follow our [Quick Start Guide](https://oss.platformatic.dev/docs/getting-started/quick-start-guide)
+Follow our [Quick Start Guide](https://docs.platformatic.dev/docs/getting-started/quick-start-guide)
 guide to get up and running with Platformatic.
 
 ## Documentation
 
-- [Getting Started](https://oss.platformatic.dev/docs/category/getting-started)
-- [Reference](https://oss.platformatic.dev/docs/category/reference)
-- [Guides](https://oss.platformatic.dev/docs/category/guides)
+- [Getting Started](https://docs.platformatic.dev/docs/category/getting-started)
+- [Reference](https://docs.platformatic.dev/docs/category/reference)
+- [Guides](https://docs.platformatic.dev/docs/category/guides)
 
-Check out our full documentation at [oss.platformatic.dev](https://oss.platformatic.dev).
+Check out our full documentation at [docs.platformatic.dev](https://docs.platformatic.dev).
 
 ## Support
 

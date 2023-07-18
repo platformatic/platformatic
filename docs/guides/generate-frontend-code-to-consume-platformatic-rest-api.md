@@ -6,7 +6,7 @@ import NewApiProjectInstructions from '../getting-started/new-api-project-instru
 
 By default, a Platformatic app exposes REST API that provide CRUD (Create, Read,
 Update, Delete) functionality for each entity (see the
-[Introduction to the REST API](https://oss.platformatic.dev/docs/reference/sql-openapi/introduction)
+[Introduction to the REST API](https://docs.platformatic.dev/docs/reference/sql-openapi/introduction)
 documentation for more information on the REST API).
 
 Platformatic CLI allows to auto-generate the front-end code to import in your
@@ -55,7 +55,7 @@ Once the new Platformatic app is ready:
 }
 ```
 
-  You can find more details about the cors configuration [here](https://oss.platformatic.dev/docs/guides/generate-frontend-code-to-consume-platformatic-rest-api).
+  You can find more details about the cors configuration [here](https://docs.platformatic.dev/docs/guides/generate-frontend-code-to-consume-platformatic-rest-api).
 
 * launch Platformatic through `npm start`.
 Then, the Platformatic app should be available at the `http://127.0.0.1:3042/` URL.
@@ -112,7 +112,7 @@ cd rest-api-frontend/src
 npx platformatic frontend http://127.0.0.1:3042 ts
 ```
 
-Refer to the [Platformatic CLI frontend command](https://oss.platformatic.dev/docs/reference/cli#frontend)
+Refer to the [Platformatic CLI frontend command](https://docs.platformatic.dev/docs/reference/cli#frontend)
 documentation to know about the available options.
 
 The Platformatic CLI generates

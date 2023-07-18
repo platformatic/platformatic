@@ -5,4 +5,4 @@ Something went wrong. Ensure
 
 You can find more details about
 the db configuration format at:
-https://oss.platformatic.dev/docs/reference/db/configuration/#db
+https://docs.platformatic.dev/docs/reference/db/configuration/#db
