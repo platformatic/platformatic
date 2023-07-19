@@ -97,6 +97,102 @@ Welcome to Platformatic. Available commands are:
 ```
 
 
+#### compile
+
+Compile all typescript plugins
+
+``` bash
+  $ platformatic compile
+```
+
+This command will compile the TypeScript plugins for each
+platformatic application.
+
+
+#### deploy
+
+Deploys a Platformatic application to the cloud
+
+``` bash
+ $ platformatic deploy
+```
+
+Options:
+
+  -t, --type      static/dynamic  The type of the workspace.
+  -c, --config    FILE            Specify a configuration file to use
+  -k, --keys      FILE            Specify a path to the workspace keys file
+  -l  --label     TEXT            The deploy label. Only for dynamic workspaces.
+  -e  --env       FILE            The environment file to use. Default: ".env"
+  -s  --secrets   FILE            The secrets file to use. Default: ".secrets.env"
+  --workspace-id  uuid            The workspace id where the application will be deployed
+  --workspace-key TEXT            The workspace key where the application will be deployed
+
+To deploy a Platformatic application to the cloud you should go to the 
+Platformatic cloud dashboard and create a workspace. Then you can get your
+workspace id and key from the workspace settings page or download a workspace
+env file and use it with the --keys option.
+
+Tp deploy an application to a dynamic workspace, you will need to specify the
+deploy label. You can get it in you cloud dashboard or specify a new one.
+
+
+#### gh
+
+Creates a gh action to deploy platformatic services on workspaces
+
+``` bash
+ $ platformatic gh -t dynamic
+```
+
+Options:
+
+  -w  --workspace ID     The workspace ID where the service will be deployed
+  -t, --type static/dynamic  The type of the workspace. Defaults to static.
+  -c, --config FILE      Specify a configuration file to use
+  -b, --build            Build the service before deploying (`npm run build`)
+
+If not specified, the configuration will be loaded from `platformatic.db.json`,
+`platformatic.db.yml`, or `platformatic.db.tml`, `platformatic.service.json`,
+`platformatic.service.yml`, or `platformatic.service.tml` in the current directory.
+
+
+
+#### start
+
+Start a Platformatic application with the following command:
+
+```bash
+$ platformatic start
+```
+
+Options:
+
+  * `-c, --config <path>`: Path to the configuration file.
+  * `--inspect[=[host:]port]`: Start the Node.js debugger. `host` defaults to `'127.0.0.1'`. `port` defaults to 9229. Use caution when binding to a public host:port combination.
+  * `--inspect-brk[=[host:]port]`: Start the Node.js debugger and block until a client has attached. `host` defaults to `'127.0.0.1'`. `port` defaults to 9229. Use caution when binding to a public host:port combination.
+
+
+#### upgrade
+
+Upgrade the Platformatic configuration to the latest version.
+
+``` bash
+ $ platformatic upgrade
+```
+
+Options:
+
+  -c, --config FILE      Specify a configuration file to use
+
+If not specified, the configuration specified will be loaded from `platformatic.db.json`,
+`platformatic.db.yml`, or `platformatic.db.tml`, `platformatic.service.json`,
+`platformatic.service.yml`, or `platformatic.service.tml` in the current directory. You can find more details about
+the configuration format at:
+https://docs.platformatic.dev/docs/reference/db/configuration and 
+https://docs.platformatic.dev/docs/reference/service/configuration.
+
+
 ### client
 
 ```bash
