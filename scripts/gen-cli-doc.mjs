@@ -90,6 +90,7 @@ The Platformatic CLI provides the following commands:
 
 const cliHelpDir = join(import.meta.url, '../packages/cli/help')
 const cliHelp = path.join(cliHelpDir, 'help.txt')
+const cliHelps = await readdir(cliHelpDir)
 
 const mainCliHelp = await readFile(cliHelp, 'utf8')
 
@@ -99,6 +100,18 @@ ${mainCliHelp.trim()}
 \`\`\`
 
 `;
+
+for (const cliHelp of cliHelps) {
+  if (cliHelp === 'help.txt') continue
+
+  const cliHelpPath = path.join(cliHelpDir, cliHelp)
+  const content = await readFile(cliHelpPath)
+  out += `
+#### ${cliHelp.replace('.txt', '')}
+
+${content}
+`
+}
 
 // Command: client
 
