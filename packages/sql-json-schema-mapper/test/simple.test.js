@@ -176,3 +176,39 @@ test('stored and virtual generated columns should be read only', async (t) => {
     }
   }
 })
+
+test('PG Arrays', { skip: !isPg }, async (t) => {
+  const { pass, teardown } = t
+
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await db.query(sql`CREATE TABLE pages (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(42) NOT NULL,
+      tags VARCHAR(42)[] NOT NULL
+    );`)
+    }
+  })
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  {
+    const page = app.platformatic.entities.page
+    const pageJsonSchema = mapSQLEntityToJSONSchema(page)
+
+    t.equal(pageJsonSchema.$id, 'Page')
+    t.equal(pageJsonSchema.title, 'Page')
+    t.equal(pageJsonSchema.description, 'A Page')
+    t.equal(pageJsonSchema.type, 'object')
+    t.same(pageJsonSchema.properties.id, { type: 'integer' })
+    t.same(pageJsonSchema.properties.title, { type: 'string' })
+    t.same(pageJsonSchema.properties.tags, { type: 'array', items: { type: 'string' } })
+    t.same(pageJsonSchema.required, ['title', 'tags'])
+  }
+})
