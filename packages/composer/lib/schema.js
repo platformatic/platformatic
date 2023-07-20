@@ -2,6 +2,7 @@
 'use strict'
 
 const { metrics, server, plugins, watch, clients, openApiBase, openApiDefs } = require('@platformatic/service').schema
+const telemetry = require('@platformatic/telemetry').schema
 const pkg = require('../package.json')
 const version = 'v' + pkg.version
 
@@ -81,6 +82,7 @@ const platformaticComposerSchema = {
     types,
     plugins,
     clients,
+    telemetry,
     watch: {
       anyOf: [watch, {
         type: 'boolean'

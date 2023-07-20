@@ -11,6 +11,7 @@ const setupMetrics = require('./lib/plugins/metrics')
 const setupTsCompiler = require('./lib/plugins/typescript')
 const setupHealthCheck = require('./lib/plugins/health-check')
 const loadPlugins = require('./lib/plugins/plugins')
+const { telemetry } = require('@platformatic/telemetry')
 
 const { schema } = require('./lib/schema')
 const { loadConfig } = require('./lib/load-config')
@@ -39,6 +40,10 @@ async function platformaticService (app, opts, toLoad = []) {
 
   if (isKeyEnabled('graphql', serviceConfig)) {
     await app.register(setupGraphQL, serviceConfig.graphql)
+  }
+
+  if (config.telemetry) {
+    app.register(telemetry, config.telemetry)
   }
 
   if (isKeyEnabled('clients', config)) {

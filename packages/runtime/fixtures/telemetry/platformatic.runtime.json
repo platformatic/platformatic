@@ -1,0 +1,19 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v0.31.0/runtime",
+  "entrypoint": "echo",
+  "allowCycles": false,
+  "hotReload": true,
+  "autoload": {
+    "path": "services",
+    "exclude": [
+      "docs"
+    ]
+  },
+  "telemetry": {
+    "serviceName": "test-runtime",
+    "version": "1.0.0",
+    "exporter": {
+      "type": "memory"
+    }
+  }
+}
