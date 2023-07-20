@@ -76,6 +76,37 @@ test('expose arrays', { skip: !isPg }, async (t) => {
 
   {
     const res = await app.inject({
+      method: 'GET',
+      url: '/pages?where.tags.any=foo'
+    })
+    equal(res.statusCode, 200, 'GET /pages/1 status code')
+    same(res.json(), [{
+      id: 1,
+      title: 'Hello',
+      tags: ['foo', 'bar']
+    }], 'GET /pages/1 response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/pages?where.tags.any=baz'
+    })
+    equal(res.statusCode, 200, 'GET /pages/1 status code')
+    same(res.json(), [], 'GET /pages/1 response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/pages?where.tags.all=foo'
+    })
+    equal(res.statusCode, 200, 'GET /pages/1 status code')
+    same(res.json(), [], 'GET /pages/1 response')
+  }
+
+  {
+    const res = await app.inject({
       method: 'PUT',
       url: '/pages/1',
       body: {

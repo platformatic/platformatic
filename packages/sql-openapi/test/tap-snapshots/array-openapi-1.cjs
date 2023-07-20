@@ -5,7 +5,7 @@
  * Make sure to inspect the output below.  Do not ignore changes!
  */
 'use strict'
-exports[`platformatic/db/openapi/array expose arrays > GET /documentation/json response 1`] = `
+exports['platformatic/db/openapi/array expose arrays > GET /documentation/json response 1'] = `
 Object {
   "components": Object {
     "schemas": Object {
@@ -161,7 +161,7 @@ Object {
           },
           Object {
             "in": "query",
-            "name": "where.tags.eq",
+            "name": "where.tags.all",
             "required": false,
             "schema": Object {
               "type": "string",
@@ -169,63 +169,7 @@ Object {
           },
           Object {
             "in": "query",
-            "name": "where.tags.neq",
-            "required": false,
-            "schema": Object {
-              "type": "string",
-            },
-          },
-          Object {
-            "in": "query",
-            "name": "where.tags.gt",
-            "required": false,
-            "schema": Object {
-              "type": "string",
-            },
-          },
-          Object {
-            "in": "query",
-            "name": "where.tags.gte",
-            "required": false,
-            "schema": Object {
-              "type": "string",
-            },
-          },
-          Object {
-            "in": "query",
-            "name": "where.tags.lt",
-            "required": false,
-            "schema": Object {
-              "type": "string",
-            },
-          },
-          Object {
-            "in": "query",
-            "name": "where.tags.lte",
-            "required": false,
-            "schema": Object {
-              "type": "string",
-            },
-          },
-          Object {
-            "in": "query",
-            "name": "where.tags.like",
-            "required": false,
-            "schema": Object {
-              "type": "string",
-            },
-          },
-          Object {
-            "in": "query",
-            "name": "where.tags.in",
-            "required": false,
-            "schema": Object {
-              "type": "string",
-            },
-          },
-          Object {
-            "in": "query",
-            "name": "where.tags.nin",
+            "name": "where.tags.any",
             "required": false,
             "schema": Object {
               "type": "string",
@@ -317,18 +261,6 @@ Object {
           Object {
             "in": "query",
             "name": "orderby.id",
-            "required": false,
-            "schema": Object {
-              "enum": Array [
-                "asc",
-                "desc",
-              ],
-              "type": "string",
-            },
-          },
-          Object {
-            "in": "query",
-            "name": "orderby.tags",
             "required": false,
             "schema": Object {
               "enum": Array [
@@ -485,7 +417,7 @@ Object {
           },
           Object {
             "in": "query",
-            "name": "where.tags.eq",
+            "name": "where.tags.all",
             "required": false,
             "schema": Object {
               "type": "string",
@@ -493,63 +425,7 @@ Object {
           },
           Object {
             "in": "query",
-            "name": "where.tags.neq",
-            "required": false,
-            "schema": Object {
-              "type": "string",
-            },
-          },
-          Object {
-            "in": "query",
-            "name": "where.tags.gt",
-            "required": false,
-            "schema": Object {
-              "type": "string",
-            },
-          },
-          Object {
-            "in": "query",
-            "name": "where.tags.gte",
-            "required": false,
-            "schema": Object {
-              "type": "string",
-            },
-          },
-          Object {
-            "in": "query",
-            "name": "where.tags.lt",
-            "required": false,
-            "schema": Object {
-              "type": "string",
-            },
-          },
-          Object {
-            "in": "query",
-            "name": "where.tags.lte",
-            "required": false,
-            "schema": Object {
-              "type": "string",
-            },
-          },
-          Object {
-            "in": "query",
-            "name": "where.tags.like",
-            "required": false,
-            "schema": Object {
-              "type": "string",
-            },
-          },
-          Object {
-            "in": "query",
-            "name": "where.tags.in",
-            "required": false,
-            "schema": Object {
-              "type": "string",
-            },
-          },
-          Object {
-            "in": "query",
-            "name": "where.tags.nin",
+            "name": "where.tags.any",
             "required": false,
             "schema": Object {
               "type": "string",
