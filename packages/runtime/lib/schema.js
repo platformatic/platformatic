@@ -67,7 +67,14 @@ const platformaticRuntimeSchema = {
       type: 'string'
     },
     hotReload: {
-      type: 'boolean'
+      anyOf: [
+        {
+          type: 'boolean'
+        },
+        {
+          type: 'string'
+        }
+      ]
     },
     allowCycles: {
       type: 'boolean'
