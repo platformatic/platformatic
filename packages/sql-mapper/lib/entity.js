@@ -199,7 +199,9 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     gte: '>=',
     lt: '<',
     lte: '<=',
-    like: 'LIKE'
+    like: 'LIKE',
+    any: 'ANY',
+    all: 'ALL'
   }
 
   function computeCriteria (opts) {
@@ -225,7 +227,17 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
           throw new Error(`Unsupported where clause ${JSON.stringify(where[key])}`)
         }
         const fieldWrap = fields[field]
-        if (operator === '=' && value[key] === null) {
+
+        /* istanbul ignore next */
+        if (fieldWrap.isArray) {
+          if (operator === 'ANY') {
+            criteria.push(sql`${value[key]} = ANY (${sql.ident(field)})`)
+          } else if (operator === 'ALL') {
+            criteria.push(sql`${value[key]} = ALL (${sql.ident(field)})`)
+          } else {
+            throw new Error('Unsupported operator for Array field')
+          }
+        } else if (operator === '=' && value[key] === null) {
           criteria.push(sql`${sql.ident(field)} IS NULL`)
         } else if (operator === '<>' && value[key] === null) {
           criteria.push(sql`${sql.ident(field)} IS NOT NULL`)
@@ -237,6 +249,8 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
             leftHand = sql`TRIM(CAST(${sql.ident(field)} AS CHAR(64)))`
           }
           criteria.push(sql`${leftHand} LIKE ${value[key]}`)
+        } else if (operator === 'ANY' || operator === 'ALL') {
+          throw new Error('Unsupported operator for non Array field')
         } else {
           criteria.push(sql`${sql.ident(field)} ${sql.__dangerous__rawValue(operator)} ${computeCriteriaValue(fieldWrap, value[key])}`)
         }
@@ -292,8 +306,9 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
       query = sql`${query} OFFSET ${opts.offset}`
     }
 
-    const res = await db.query(query)
-    return res.map(fixOutput)
+    const rows = await db.query(query)
+    const res = rows.map(fixOutput)
+    return res
   }
 
   async function count (opts = {}) {
@@ -345,7 +360,8 @@ function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, useSc
   const fields = columns.reduce((acc, column) => {
     acc[column.column_name] = {
       sqlType: column.udt_name,
-      isNullable: column.is_nullable === 'YES'
+      isNullable: column.is_nullable === 'YES',
+      isArray: column.isArray
     }
 
     // To get enum values in mysql and mariadb

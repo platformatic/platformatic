@@ -11,24 +11,33 @@ function generateArgs (entity, ignore) {
     }
     const field = entity.fields[name]
     const baseKey = `where.${field.camelcase}.`
-    for (const modifier of ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like']) {
-      const key = baseKey + modifier
-      acc[key] = { type: mapSQLTypeToOpenAPIType(field.sqlType), enum: field.enum }
-    }
+    /* istanbul ignore next */
+    if (field.isArray) {
+      for (const modifier of ['all', 'any']) {
+        const key = baseKey + modifier
+        acc[key] = { type: mapSQLTypeToOpenAPIType(field.sqlType) }
+      }
+    } else {
+      for (const modifier of ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like']) {
+        const key = baseKey + modifier
+        acc[key] = { type: mapSQLTypeToOpenAPIType(field.sqlType), enum: field.enum }
+      }
 
-    for (const modifier of ['in', 'nin']) {
-      const key = baseKey + modifier
-      acc[key] = { type: 'string' }
+      for (const modifier of ['in', 'nin']) {
+        const key = baseKey + modifier
+        acc[key] = { type: 'string' }
+      }
     }
 
     return acc
   }, {})
 
   const orderByArgs = sortedEntityFields.reduce((acc, name) => {
-    if (ignore[name]) {
+    const field = entity.fields[name]
+
+    if (ignore[name] || field.isArray) {
       return acc
     }
-    const field = entity.fields[name]
     const key = `orderby.${field.camelcase}`
     acc[key] = { type: 'string', enum: ['asc', 'desc'] }
     return acc
