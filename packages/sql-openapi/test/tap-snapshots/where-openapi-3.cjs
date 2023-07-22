@@ -29,7 +29,6 @@ Object {
             "type": "string",
           },
         },
-        "required": Array [],
         "title": "Post",
         "type": "object",
       },

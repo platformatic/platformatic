@@ -120,8 +120,7 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
             "type": "string",
             "nullable": true
           }
-        },
-        "required": []
+        }
       },
       "GraphInput": {
         "title": "GraphInput",
@@ -135,8 +134,7 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
             "type": "string",
             "nullable": true
           }
-        },
-        "required": []
+        }
       }
     }
   },

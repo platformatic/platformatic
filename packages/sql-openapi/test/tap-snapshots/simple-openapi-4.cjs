@@ -21,7 +21,6 @@ Object {
             "type": "string",
           },
         },
-        "required": Array [],
         "title": "Page",
         "type": "object",
       },

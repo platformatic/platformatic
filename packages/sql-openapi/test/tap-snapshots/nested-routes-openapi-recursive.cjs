@@ -25,7 +25,6 @@ Object {
             "type": "integer",
           },
         },
-        "required": Array [],
         "title": "Person",
         "type": "object",
       },
