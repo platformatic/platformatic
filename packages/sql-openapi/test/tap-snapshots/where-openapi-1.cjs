@@ -17,6 +17,7 @@ Object {
             "type": "integer",
           },
           "id": Object {
+            "nullable": true,
             "type": "integer",
           },
           "longText": Object {
@@ -30,6 +31,29 @@ Object {
         },
         "required": Array [],
         "title": "Post",
+        "type": "object",
+      },
+      "PostInput": Object {
+        "description": "A Post",
+        "properties": Object {
+          "counter": Object {
+            "nullable": true,
+            "type": "integer",
+          },
+          "id": Object {
+            "type": "integer",
+          },
+          "longText": Object {
+            "nullable": true,
+            "type": "string",
+          },
+          "title": Object {
+            "nullable": true,
+            "type": "string",
+          },
+        },
+        "required": Array [],
+        "title": "PostInput",
         "type": "object",
       },
     },
@@ -458,7 +482,7 @@ Object {
           "content": Object {
             "application/json": Object {
               "schema": Object {
-                "$ref": "#/components/schemas/Post",
+                "$ref": "#/components/schemas/PostInput",
               },
             },
           },
@@ -801,7 +825,7 @@ Object {
           "content": Object {
             "application/json": Object {
               "schema": Object {
-                "$ref": "#/components/schemas/Post",
+                "$ref": "#/components/schemas/PostInput",
               },
             },
           },
@@ -943,7 +967,7 @@ Object {
           "content": Object {
             "application/json": Object {
               "schema": Object {
-                "$ref": "#/components/schemas/Post",
+                "$ref": "#/components/schemas/PostInput",
               },
             },
           },

@@ -13,6 +13,26 @@ Object {
         "description": "A Person",
         "properties": Object {
           "id": Object {
+            "nullable": true,
+            "type": "integer",
+          },
+          "name": Object {
+            "nullable": true,
+            "type": "string",
+          },
+          "parentId": Object {
+            "nullable": true,
+            "type": "integer",
+          },
+        },
+        "required": Array [],
+        "title": "Person",
+        "type": "object",
+      },
+      "PersonInput": Object {
+        "description": "A Person",
+        "properties": Object {
+          "id": Object {
             "type": "integer",
           },
           "name": Object {
@@ -26,7 +46,7 @@ Object {
         "required": Array [
           "name",
         ],
-        "title": "Person",
+        "title": "PersonInput",
         "type": "object",
       },
     },
@@ -370,7 +390,7 @@ Object {
           "content": Object {
             "application/json": Object {
               "schema": Object {
-                "$ref": "#/components/schemas/Person",
+                "$ref": "#/components/schemas/PersonInput",
               },
             },
           },
@@ -653,7 +673,7 @@ Object {
           "content": Object {
             "application/json": Object {
               "schema": Object {
-                "$ref": "#/components/schemas/Person",
+                "$ref": "#/components/schemas/PersonInput",
               },
             },
           },
@@ -818,7 +838,7 @@ Object {
           "content": Object {
             "application/json": Object {
               "schema": Object {
-                "$ref": "#/components/schemas/Person",
+                "$ref": "#/components/schemas/PersonInput",
               },
             },
           },

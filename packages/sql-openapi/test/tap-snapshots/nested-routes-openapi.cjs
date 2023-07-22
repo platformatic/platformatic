@@ -13,6 +13,7 @@ Object {
         "description": "A Owner",
         "properties": Object {
           "id": Object {
+            "nullable": true,
             "type": "integer",
           },
           "name": Object {
@@ -24,7 +25,50 @@ Object {
         "title": "Owner",
         "type": "object",
       },
+      "OwnerInput": Object {
+        "description": "A Owner",
+        "properties": Object {
+          "id": Object {
+            "type": "integer",
+          },
+          "name": Object {
+            "nullable": true,
+            "type": "string",
+          },
+        },
+        "required": Array [],
+        "title": "OwnerInput",
+        "type": "object",
+      },
       "Post": Object {
+        "description": "A Post",
+        "properties": Object {
+          "counter": Object {
+            "nullable": true,
+            "type": "integer",
+          },
+          "id": Object {
+            "nullable": true,
+            "type": "integer",
+          },
+          "longText": Object {
+            "nullable": true,
+            "type": "string",
+          },
+          "ownerId": Object {
+            "nullable": true,
+            "type": "integer",
+          },
+          "title": Object {
+            "nullable": true,
+            "type": "string",
+          },
+        },
+        "required": Array [],
+        "title": "Post",
+        "type": "object",
+      },
+      "PostInput": Object {
         "description": "A Post",
         "properties": Object {
           "counter": Object {
@@ -48,7 +92,7 @@ Object {
           },
         },
         "required": Array [],
-        "title": "Post",
+        "title": "PostInput",
         "type": "object",
       },
     },
@@ -307,7 +351,7 @@ Object {
           "content": Object {
             "application/json": Object {
               "schema": Object {
-                "$ref": "#/components/schemas/Owner",
+                "$ref": "#/components/schemas/OwnerInput",
               },
             },
           },
@@ -511,7 +555,7 @@ Object {
           "content": Object {
             "application/json": Object {
               "schema": Object {
-                "$ref": "#/components/schemas/Owner",
+                "$ref": "#/components/schemas/OwnerInput",
               },
             },
           },
@@ -661,7 +705,7 @@ Object {
           "content": Object {
             "application/json": Object {
               "schema": Object {
-                "$ref": "#/components/schemas/Owner",
+                "$ref": "#/components/schemas/OwnerInput",
               },
             },
           },
@@ -1246,7 +1290,7 @@ Object {
           "content": Object {
             "application/json": Object {
               "schema": Object {
-                "$ref": "#/components/schemas/Post",
+                "$ref": "#/components/schemas/PostInput",
               },
             },
           },
@@ -1669,7 +1713,7 @@ Object {
           "content": Object {
             "application/json": Object {
               "schema": Object {
-                "$ref": "#/components/schemas/Post",
+                "$ref": "#/components/schemas/PostInput",
               },
             },
           },
@@ -1828,7 +1872,7 @@ Object {
           "content": Object {
             "application/json": Object {
               "schema": Object {
-                "$ref": "#/components/schemas/Post",
+                "$ref": "#/components/schemas/PostInput",
               },
             },
           },

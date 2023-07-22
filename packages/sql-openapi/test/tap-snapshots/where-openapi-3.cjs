@@ -5,16 +5,24 @@
  * Make sure to inspect the output below.  Do not ignore changes!
  */
 'use strict'
-exports['platformatic/db/openapi/simple simple db, simple rest API > GET /documentation/json response 1'] = `
+exports['platformatic/db/openapi/where list with NOT NULL > matches expected OpenAPI defs 1'] = `
 Object {
   "components": Object {
     "schemas": Object {
-      "Page": Object {
-        "description": "A Page",
+      "Post": Object {
+        "description": "A Post",
         "properties": Object {
+          "counter": Object {
+            "nullable": true,
+            "type": "integer",
+          },
           "id": Object {
             "nullable": true,
             "type": "integer",
+          },
+          "longText": Object {
+            "nullable": true,
+            "type": "string",
           },
           "title": Object {
             "nullable": true,
@@ -22,14 +30,20 @@ Object {
           },
         },
         "required": Array [],
-        "title": "Page",
+        "title": "Post",
         "type": "object",
       },
-      "PageInput": Object {
-        "description": "A Page",
+      "PostInput": Object {
+        "description": "A Post",
         "properties": Object {
+          "counter": Object {
+            "type": "integer",
+          },
           "id": Object {
             "type": "integer",
+          },
+          "longText": Object {
+            "type": "string",
           },
           "title": Object {
             "type": "string",
@@ -37,22 +51,24 @@ Object {
         },
         "required": Array [
           "title",
+          "longText",
+          "counter",
         ],
-        "title": "PageInput",
+        "title": "PostInput",
         "type": "object",
       },
     },
   },
   "info": Object {
-    "description": "Simple Description",
-    "title": "Simple Title",
-    "version": "42.42.42",
+    "description": "Exposing a SQL database as REST",
+    "title": "Platformatic DB",
+    "version": "1.0.0",
   },
   "openapi": "3.0.3",
   "paths": Object {
-    "/pages/": Object {
+    "/posts/": Object {
       "get": Object {
-        "operationId": "getPages",
+        "operationId": "getPosts",
         "parameters": Array [
           Object {
             "description": "Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown",
@@ -87,12 +103,86 @@ Object {
             "schema": Object {
               "items": Object {
                 "enum": Array [
+                  "counter",
                   "id",
+                  "longText",
                   "title",
                 ],
                 "type": "string",
               },
               "type": "array",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.eq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.neq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.gt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.gte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.lt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.lte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.like",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
             },
           },
           Object {
@@ -162,6 +252,78 @@ Object {
           Object {
             "in": "query",
             "name": "where.id.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.eq",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.neq",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.gt",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.gte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.lt",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.lte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.like",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.nin",
             "required": false,
             "schema": Object {
               "type": "string",
@@ -252,7 +414,31 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "orderby.counter",
+            "required": false,
+            "schema": Object {
+              "enum": Array [
+                "asc",
+                "desc",
+              ],
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "orderby.id",
+            "required": false,
+            "schema": Object {
+              "enum": Array [
+                "asc",
+                "desc",
+              ],
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "orderby.longText",
             "required": false,
             "schema": Object {
               "enum": Array [
@@ -281,7 +467,7 @@ Object {
               "application/json": Object {
                 "schema": Object {
                   "items": Object {
-                    "$ref": "#/components/schemas/Page",
+                    "$ref": "#/components/schemas/Post",
                   },
                   "type": "array",
                 },
@@ -292,12 +478,12 @@ Object {
         },
       },
       "post": Object {
-        "operationId": "createPage",
+        "operationId": "createPost",
         "requestBody": Object {
           "content": Object {
             "application/json": Object {
               "schema": Object {
-                "$ref": "#/components/schemas/PageInput",
+                "$ref": "#/components/schemas/PostInput",
               },
             },
           },
@@ -307,7 +493,7 @@ Object {
             "content": Object {
               "application/json": Object {
                 "schema": Object {
-                  "$ref": "#/components/schemas/Page",
+                  "$ref": "#/components/schemas/Post",
                 },
               },
             },
@@ -317,7 +503,7 @@ Object {
         },
       },
       "put": Object {
-        "operationId": "updatePages",
+        "operationId": "updatePosts",
         "parameters": Array [
           Object {
             "in": "query",
@@ -326,12 +512,86 @@ Object {
             "schema": Object {
               "items": Object {
                 "enum": Array [
+                  "counter",
                   "id",
+                  "longText",
                   "title",
                 ],
                 "type": "string",
               },
               "type": "array",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.eq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.neq",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.gt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.gte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.lt",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.lte",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.like",
+            "required": false,
+            "schema": Object {
+              "type": "integer",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
             },
           },
           Object {
@@ -401,6 +661,78 @@ Object {
           Object {
             "in": "query",
             "name": "where.id.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.eq",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.neq",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.gt",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.gte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.lt",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.lte",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.like",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.in",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.longText.nin",
             "required": false,
             "schema": Object {
               "type": "string",
@@ -494,7 +826,7 @@ Object {
           "content": Object {
             "application/json": Object {
               "schema": Object {
-                "$ref": "#/components/schemas/PageInput",
+                "$ref": "#/components/schemas/PostInput",
               },
             },
           },
@@ -505,7 +837,7 @@ Object {
               "application/json": Object {
                 "schema": Object {
                   "items": Object {
-                    "$ref": "#/components/schemas/Page",
+                    "$ref": "#/components/schemas/Post",
                   },
                   "type": "array",
                 },
@@ -517,9 +849,9 @@ Object {
         },
       },
     },
-    "/pages/{id}": Object {
+    "/posts/{id}": Object {
       "delete": Object {
-        "operationId": "deletePages",
+        "operationId": "deletePosts",
         "parameters": Array [
           Object {
             "in": "query",
@@ -528,7 +860,9 @@ Object {
             "schema": Object {
               "items": Object {
                 "enum": Array [
+                  "counter",
                   "id",
+                  "longText",
                   "title",
                 ],
                 "type": "string",
@@ -550,7 +884,7 @@ Object {
             "content": Object {
               "application/json": Object {
                 "schema": Object {
-                  "$ref": "#/components/schemas/Page",
+                  "$ref": "#/components/schemas/Post",
                 },
               },
             },
@@ -559,7 +893,7 @@ Object {
         },
       },
       "get": Object {
-        "operationId": "getPageById",
+        "operationId": "getPostById",
         "parameters": Array [
           Object {
             "in": "query",
@@ -568,7 +902,9 @@ Object {
             "schema": Object {
               "items": Object {
                 "enum": Array [
+                  "counter",
                   "id",
+                  "longText",
                   "title",
                 ],
                 "type": "string",
@@ -590,7 +926,7 @@ Object {
             "content": Object {
               "application/json": Object {
                 "schema": Object {
-                  "$ref": "#/components/schemas/Page",
+                  "$ref": "#/components/schemas/Post",
                 },
               },
             },
@@ -600,7 +936,7 @@ Object {
         },
       },
       "put": Object {
-        "operationId": "updatePage",
+        "operationId": "updatePost",
         "parameters": Array [
           Object {
             "in": "query",
@@ -609,7 +945,9 @@ Object {
             "schema": Object {
               "items": Object {
                 "enum": Array [
+                  "counter",
                   "id",
+                  "longText",
                   "title",
                 ],
                 "type": "string",
@@ -630,7 +968,7 @@ Object {
           "content": Object {
             "application/json": Object {
               "schema": Object {
-                "$ref": "#/components/schemas/PageInput",
+                "$ref": "#/components/schemas/PostInput",
               },
             },
           },
@@ -640,7 +978,7 @@ Object {
             "content": Object {
               "application/json": Object {
                 "schema": Object {
-                  "$ref": "#/components/schemas/Page",
+                  "$ref": "#/components/schemas/Post",
                 },
               },
             },

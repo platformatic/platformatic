@@ -5,7 +5,7 @@
  * Make sure to inspect the output below.  Do not ignore changes!
  */
 'use strict'
-exports['test/cli/schema.test.mjs TAP print the graphql schema to stdout > must match snapshot 1'] = `
+exports[`test/cli/schema.test.mjs TAP print the graphql schema to stdout > must match snapshot 1`] = `
 type Query {
   getGraphById(id: ID!): Graph
   graphs(limit: LimitInt, offset: Int, orderBy: [GraphOrderByArguments], where: GraphWhereArguments): [Graph]
@@ -97,7 +97,7 @@ type GraphDeleted {
 }
 `
 
-exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must match snapshot 1'] = `
+exports[`test/cli/schema.test.mjs TAP print the openapi schema to stdout > must match snapshot 1`] = `
 {
   "openapi": "3.0.3",
   "info": {
@@ -109,6 +109,22 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
     "schemas": {
       "Graph": {
         "title": "Graph",
+        "description": "A Graph",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": []
+      },
+      "GraphInput": {
+        "title": "GraphInput",
         "description": "A Graph",
         "type": "object",
         "properties": {
@@ -372,7 +388,7 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Graph"
+                "$ref": "#/components/schemas/GraphInput"
               }
             }
           }
@@ -397,7 +413,7 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Graph"
+                "$ref": "#/components/schemas/GraphInput"
               }
             }
           }
@@ -640,7 +656,7 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Graph"
+                "$ref": "#/components/schemas/GraphInput"
               }
             }
           }

@@ -13,6 +13,22 @@ Object {
         "description": "A Page",
         "properties": Object {
           "id": Object {
+            "nullable": true,
+            "type": "integer",
+          },
+          "title": Object {
+            "nullable": true,
+            "type": "string",
+          },
+        },
+        "required": Array [],
+        "title": "Page",
+        "type": "object",
+      },
+      "PageInput": Object {
+        "description": "A Page",
+        "properties": Object {
+          "id": Object {
             "type": "integer",
           },
           "title": Object {
@@ -22,7 +38,7 @@ Object {
         "required": Array [
           "title",
         ],
-        "title": "Page",
+        "title": "PageInput",
         "type": "object",
       },
     },
@@ -281,7 +297,7 @@ Object {
           "content": Object {
             "application/json": Object {
               "schema": Object {
-                "$ref": "#/components/schemas/Page",
+                "$ref": "#/components/schemas/PageInput",
               },
             },
           },
@@ -478,7 +494,7 @@ Object {
           "content": Object {
             "application/json": Object {
               "schema": Object {
-                "$ref": "#/components/schemas/Page",
+                "$ref": "#/components/schemas/PageInput",
               },
             },
           },
@@ -614,7 +630,7 @@ Object {
           "content": Object {
             "application/json": Object {
               "schema": Object {
-                "$ref": "#/components/schemas/Page",
+                "$ref": "#/components/schemas/PageInput",
               },
             },
           },
