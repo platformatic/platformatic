@@ -5,7 +5,7 @@
  * Make sure to inspect the output below.  Do not ignore changes!
  */
 'use strict'
-exports[`test/cli/schema.test.mjs TAP print the graphql schema to stdout > must match snapshot 1`] = `
+exports['test/cli/schema.test.mjs TAP print the graphql schema to stdout > must match snapshot 1'] = `
 type Query {
   getGraphById(id: ID!): Graph
   graphs(limit: LimitInt, offset: Int, orderBy: [GraphOrderByArguments], where: GraphWhereArguments): [Graph]
@@ -97,7 +97,7 @@ type GraphDeleted {
 }
 `
 
-exports[`test/cli/schema.test.mjs TAP print the openapi schema to stdout > must match snapshot 1`] = `
+exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must match snapshot 1'] = `
 {
   "openapi": "3.0.3",
   "info": {

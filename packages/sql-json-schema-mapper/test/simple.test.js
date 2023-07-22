@@ -138,7 +138,7 @@ test('noRequired = true', async (t) => {
     } else {
       t.same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
     }
-    t.same(pageJsonSchema.required, [])
+    t.equal(pageJsonSchema.required, undefined)
     if (!isSQLite) {
       t.same(pageJsonSchema.properties.type, { type: 'string', nullable: true, enum: ['blank', 'non-blank'] })
     }
@@ -180,7 +180,7 @@ test('ignore one field', async (t) => {
     } else {
       t.same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
     }
-    t.same(pageJsonSchema.required, [])
+    t.same(pageJsonSchema.required, undefined)
     if (!isSQLite) {
       t.same(pageJsonSchema.properties.type, { type: 'string', nullable: true, enum: ['blank', 'non-blank'] })
     }

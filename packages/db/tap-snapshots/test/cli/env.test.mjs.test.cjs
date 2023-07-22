@@ -5,7 +5,7 @@
  * Make sure to inspect the output below.  Do not ignore changes!
  */
 'use strict'
-exports[`test/cli/env.test.mjs TAP env white list schema > must match snapshot 1`] = `
+exports['test/cli/env.test.mjs TAP env white list schema > must match snapshot 1'] = `
 type Query {
   getPageById(id: ID!): Page
   pages(limit: LimitInt, offset: Int, orderBy: [PageOrderByArguments], where: PageWhereArguments): [Page]
