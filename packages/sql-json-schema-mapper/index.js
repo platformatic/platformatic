@@ -87,10 +87,10 @@ function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = false) {
     } else {
       properties[field.camelcase] = { type }
     }
-    if (field.isNullable || noRequired) {
+    if (field.isNullable || noRequired || field.autoTimestamp) {
       properties[field.camelcase].nullable = true
     }
-    if (!field.isNullable && !field.primaryKey && !noRequired) {
+    if (!field.isNullable && !field.primaryKey && !noRequired && !field.autoTimestamp) {
       // we skip the primary key for creation
       required.push(field.camelcase)
     }

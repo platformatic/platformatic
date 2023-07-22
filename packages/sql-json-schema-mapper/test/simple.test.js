@@ -14,6 +14,7 @@ async function createBasicPages (db, sql) {
       title VARCHAR(42) NOT NULL,
       metadata JSON,
       section NUMERIC,
+      created_at TIMESTAMP NOT NULL,
       description TEXT
     );`)
   } else if (isPg) {
@@ -24,6 +25,7 @@ async function createBasicPages (db, sql) {
       metadata JSON,
       section NUMERIC,
       description TEXT,
+      created_at TIMESTAMP NOT NULL,
       type pagetype
     );`)
   } else {
@@ -33,6 +35,7 @@ async function createBasicPages (db, sql) {
       metadata JSON,
       section NUMERIC,
       description TEXT,
+      created_at TIMESTAMP NOT NULL,
       type ENUM ('blank', 'non-blank')
     );`)
   }
