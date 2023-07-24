@@ -96,21 +96,36 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
     })
     interfaces.blankLine()
   }
-
+  function findType (paramDefinition) {
+    if (paramDefinition.schema) {
+      return paramDefinition.schema
+    }
+    return paramDefinition
+  }
   writer.write(`interface ${capitalizedName}`).block(() => {
     for (const operation of operations) {
       const operationId = operation.operation.operationId
       const { parameters, responses, requestBody } = operation.operation
+      // Only dealing with success responses
+      const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
+      // The following block it's impossible to happen with well-formed
+      // OpenAPI.
+      /* c8 ignore next 3 */
+      if (successResponses.length === 0) {
+        // throw new Error(`Could not find a 200 level response for ${operationId}`)
+        continue
+      }
       const operationRequestName = `${capitalize(operationId)}Request`
       const operationResponseName = `${capitalize(operationId)}Response`
       interfaces.write(`interface ${operationRequestName}`).block(() => {
         const addedProps = new Set()
         if (parameters) {
           for (const parameter of parameters) {
-            const { name, schema, required } = parameter
+            const { name, required } = parameter
+            const type = findType(parameter)
             // We do not check for addedProps here because it's the first
             // group of properties
-            writeProperty(interfaces, name, schema, addedProps, required)
+            writeProperty(interfaces, name, type, addedProps, required)
           }
         }
         if (requestBody) {
@@ -119,14 +134,6 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
       })
       interfaces.writeLine()
 
-      // Only dealing with success responses
-      const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
-      // The following block it's impossible to happen with well-formed
-      // OpenAPI.
-      /* c8 ignore next 3 */
-      if (successResponses.length === 0) {
-        throw new Error(`Could not find a 200 level response for ${operationId}`)
-      }
       const responseTypes = successResponses.map(([statusCode, response]) => {
         // The client library will always dump bodies for 204 responses
         // so the type must be undefined
@@ -255,12 +262,33 @@ function writeProperty (writer, key, value, addedProps, required = true) {
     writer.quote(key)
     writer.write('?')
   }
-  if (value.type === 'array') {
-    writer.write(`: Array<${JSONSchemaToTsType(value.items.type)}>;`)
-  } else {
-    writer.write(`: ${JSONSchemaToTsType(value.type)};`)
-  }
+  writer.write(`: ${getType(value)};`)
   writer.newLine()
+}
+
+export function getType (typeDef) {
+  if (typeDef.schema) {
+    return getType(typeDef.schema)
+  }
+  if (typeDef.anyOf) {
+    // recursively call this function
+    return typeDef.anyOf.map((t) => {
+      return getType(t)
+    }).join('|')
+  }
+  if (typeDef.type === 'array') {
+    return `Array<${getType(typeDef.items)}>`
+  }
+  if (typeDef.type === 'object') {
+    let output = '{ '
+    const props = Object.keys(typeDef.properties).map((prop) => {
+      return `${prop}: ${getType(typeDef.properties[prop])}`
+    })
+    output += props.join('; ')
+    output += ' }'
+    return output
+  }
+  return JSONSchemaToTsType(typeDef.type)
 }
 
 function JSONSchemaToTsType (type) {
