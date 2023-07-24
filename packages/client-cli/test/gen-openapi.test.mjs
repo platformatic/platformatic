@@ -3,7 +3,7 @@
 import { test } from 'tap'
 import { getType } from '../lib/gen-openapi.mjs'
 
-test('should get type with schema', async (t) => {
+test('get type with schema', async (t) => {
   const def = {
     schema: {
       type: 'array',
@@ -20,7 +20,7 @@ test('should get type with schema', async (t) => {
   t.equal(type, 'Array<string>')
 })
 
-test('should get type without schema', async (t) => {
+test('get type without schema', async (t) => {
   const arrayStringDef = {
     type: 'array',
     items: {
@@ -38,7 +38,7 @@ test('should get type without schema', async (t) => {
   t.equal(getType(arrayStringDef), 'Array<string>')
 })
 
-test('should support anyOf', async (t) => {
+test('support anyOf', async (t) => {
   const anyOfDef = {
     schema: {
       anyOf: [
@@ -57,10 +57,32 @@ test('should support anyOf', async (t) => {
       ]
     }
   }
-  t.equal(getType(anyOfDef), 'string|Array<string>|number')
+  t.equal(getType(anyOfDef), 'string | Array<string> | number')
 })
 
-test('should support objects', async (t) => {
+test('support allOf', async (t) => {
+  const allOfDef = {
+    schema: {
+      allOf: [
+        {
+          type: 'string'
+        },
+        {
+          items: {
+            type: 'string'
+          },
+          type: 'array'
+        },
+        {
+          type: 'number'
+        }
+      ]
+    }
+  }
+  t.equal(getType(allOfDef), 'string & Array<string> & number')
+})
+
+test('support objects', async (t) => {
   const objectDef = {
     type: 'object',
     properties: {
@@ -71,7 +93,7 @@ test('should support objects', async (t) => {
   t.equal(getType(objectDef), '{ foo: string; bar: number }')
 })
 
-test('should support nested objects', async (t) => {
+test('support nested objects', async (t) => {
   const objectDef = {
     type: 'object',
     properties: {
@@ -102,4 +124,21 @@ test('support array of objects', async (t) => {
     type: 'array'
   }
   t.equal(getType(arrayOfObjectsDef), 'Array<{ attachedAt: string; id: string }>')
+})
+
+test('support array with anyOf', async (t) => {
+  const arrayOfObjectsDef = {
+    items: {
+      anyOf: [
+        {
+          type: 'string'
+        },
+        {
+          type: 'number'
+        }
+      ]
+    },
+    type: 'array'
+  }
+  t.equal(getType(arrayOfObjectsDef), 'Array<string | number>')
 })

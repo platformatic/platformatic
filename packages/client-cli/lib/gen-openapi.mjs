@@ -274,7 +274,14 @@ export function getType (typeDef) {
     // recursively call this function
     return typeDef.anyOf.map((t) => {
       return getType(t)
-    }).join('|')
+    }).join(' | ')
+  }
+
+  if (typeDef.allOf) {
+    // recursively call this function
+    return typeDef.allOf.map((t) => {
+      return getType(t)
+    }).join(' & ')
   }
   if (typeDef.type === 'array') {
     return `Array<${getType(typeDef.items)}>`
