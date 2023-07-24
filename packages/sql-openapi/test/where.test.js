@@ -489,9 +489,9 @@ test('list with NOT NULL', async (t) => {
       } else if (isMysql) {
         await db.query(sql`CREATE TABLE posts (
           id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-          title VARCHAR(42) NOT NULL,
+          counter INTEGER NOT NULL,
           long_text TEXT NOT NULL,
-          counter INTEGER NOT NULL
+          title VARCHAR(42) NOT NULL
         );`)
       } else {
         await db.query(sql`CREATE TABLE posts (

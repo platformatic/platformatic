@@ -49,9 +49,9 @@ Object {
           },
         },
         "required": Array [
-          "title",
-          "longText",
           "counter",
+          "longText",
+          "title",
         ],
         "title": "PostInput",
         "type": "object",

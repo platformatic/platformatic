@@ -149,7 +149,7 @@ test('expose arrays', { skip: !isPg }, async (t) => {
       statusCode: 400,
       code: 'FST_ERR_VALIDATION',
       error: 'Bad Request',
-      message: "body must have required property 'title'"
+      message: "body must have required property 'tags'"
     }, 'POST /pages response')
   }
 

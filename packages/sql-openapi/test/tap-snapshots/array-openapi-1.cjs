@@ -48,8 +48,8 @@ Object {
           },
         },
         "required": Array [
-          "title",
           "tags",
+          "title",
         ],
         "title": "PageInput",
         "type": "object",
