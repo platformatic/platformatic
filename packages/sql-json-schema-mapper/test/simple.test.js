@@ -253,6 +253,6 @@ test('PG Arrays', { skip: !isPg }, async (t) => {
     t.same(pageJsonSchema.properties.id, { type: 'integer' })
     t.same(pageJsonSchema.properties.title, { type: 'string' })
     t.same(pageJsonSchema.properties.tags, { type: 'array', items: { type: 'string' } })
-    t.same(pageJsonSchema.required, ['title', 'tags'])
+    t.same(pageJsonSchema.required, ['tags', 'title'])
   }
 })

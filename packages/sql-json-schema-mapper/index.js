@@ -112,7 +112,7 @@ function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = false) {
   }
 
   if (required.length > 0) {
-    res.required = required
+    res.required = required.sort()
   }
 
   return res
