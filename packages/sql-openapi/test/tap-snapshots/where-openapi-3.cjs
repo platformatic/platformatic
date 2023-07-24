@@ -5,7 +5,7 @@
  * Make sure to inspect the output below.  Do not ignore changes!
  */
 'use strict'
-exports['platformatic/db/openapi/updateMany updateMany > matches expected OpenAPI defs 1'] = `
+exports['platformatic/db/openapi/where list with NOT NULL > matches expected OpenAPI defs 1'] = `
 Object {
   "components": Object {
     "schemas": Object {
@@ -36,21 +36,23 @@ Object {
         "description": "A Post",
         "properties": Object {
           "counter": Object {
-            "nullable": true,
             "type": "integer",
           },
           "id": Object {
             "type": "integer",
           },
           "longText": Object {
-            "nullable": true,
             "type": "string",
           },
           "title": Object {
-            "nullable": true,
             "type": "string",
           },
         },
+        "required": Array [
+          "title",
+          "longText",
+          "counter",
+        ],
         "title": "PostInput",
         "type": "object",
       },

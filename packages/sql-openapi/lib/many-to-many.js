@@ -11,6 +11,10 @@ async function entityPlugin (app, opts) {
   const entitySchema = {
     $ref: entity.name + '#'
   }
+
+  const entitySchemaInput = {
+    $ref: entity.name + 'Input#'
+  }
   const primaryKeysParams = getPrimaryKeysParams(entity)
   const primaryKeysCamelcase = Array.from(entity.primaryKeys).map((key) => camelcase(key))
 
@@ -18,7 +22,7 @@ async function entityPlugin (app, opts) {
 
   const fields = getFieldsForEntity(entity, ignore)
 
-  rootEntityRoutes(app, entity, whereArgs, orderByArgs, undefined, entitySchema, fields)
+  rootEntityRoutes(app, entity, whereArgs, orderByArgs, undefined, entitySchema, fields, entitySchemaInput)
 
   let pathWithParams = ''
 
@@ -74,7 +78,7 @@ async function entityPlugin (app, opts) {
       url: pathWithParams,
       method,
       schema: {
-        body: entitySchema,
+        body: entitySchemaInput,
         params: primaryKeysParams,
         querystring: {
           type: 'object',

@@ -60,7 +60,7 @@ function mapSQLTypeToOpenAPIType (sqlType) {
   }
 }
 
-function mapSQLEntityToJSONSchema (entity, ignore = {}) {
+function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = false) {
   const fields = entity.fields
   const properties = {}
   const required = []
@@ -87,10 +87,10 @@ function mapSQLEntityToJSONSchema (entity, ignore = {}) {
     } else {
       properties[field.camelcase] = { type }
     }
-    if (field.isNullable) {
+    if (field.isNullable || noRequired || field.autoTimestamp) {
       properties[field.camelcase].nullable = true
     }
-    if (!field.isNullable && !field.primaryKey) {
+    if (!field.isNullable && !field.primaryKey && !noRequired && !field.autoTimestamp) {
       // we skip the primary key for creation
       required.push(field.camelcase)
     }
@@ -102,13 +102,17 @@ function mapSQLEntityToJSONSchema (entity, ignore = {}) {
       properties[field.camelcase].enum = field.enum
     }
   }
+
   const res = {
     $id: entity.name,
     title: entity.name,
     description: `A ${entity.name}`,
     type: 'object',
-    properties,
-    required
+    properties
+  }
+
+  if (required.length > 0) {
+    res.required = required
   }
 
   return res

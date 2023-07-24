@@ -61,7 +61,7 @@ function generateArgs (entity, ignore) {
 
 module.exports.generateArgs = generateArgs
 
-function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, entitySchema, fields) {
+function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, entitySchema, fields, entitySchemaInput) {
   app.get('/', {
     schema: {
       operationId: 'get' + capitalize(entity.pluralName),
@@ -160,7 +160,7 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
   app.post('/', {
     schema: {
       operationId: 'create' + capitalize(entity.singularName),
-      body: entitySchema,
+      body: entitySchemaInput,
       response: {
         200: entitySchema
       }
@@ -178,7 +178,7 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
   app.put('/', {
     schema: {
       operationId: 'update' + capitalize(entity.pluralName),
-      body: entitySchema,
+      body: entitySchemaInput,
       querystring: {
         type: 'object',
         properties: {
