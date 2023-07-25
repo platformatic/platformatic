@@ -85,7 +85,7 @@ module.exports = async function (app, opts) {
   })
 })
 
-test('generate client twice', async ({ teardown, comment, same, rejects }) => {
+test('generate client twice', async ({ teardown, comment, same, match }) => {
   const dir = await moveToTmpdir(teardown)
   comment(`working in ${dir}`)
 
@@ -113,5 +113,16 @@ PLT_SERVER_LOGGER_LEVEL=info
   process.chdir(join(dir, 'services', 'languid-nobleman'))
 
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
-  await rejects(execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot']))
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
+
+  const config = JSON.parse(await readFile(join(dir, 'services', 'languid-nobleman', 'platformatic.service.json'), 'utf8'))
+
+  match(config, {
+    clients: [{
+      schema: 'movies/movies.openapi.json',
+      name: 'movies',
+      type: 'openapi',
+      serviceId: 'somber-chariot'
+    }]
+  })
 })
