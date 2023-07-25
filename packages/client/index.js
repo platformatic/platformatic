@@ -50,7 +50,7 @@ async function buildOpenAPIClient (options) {
       const responses = pathMeta[method].responses
       const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
       if (successResponses.length !== 1) {
-        // force fullResponse = true if 
+        // force fullResponse = true if
         // - there is more than 1 responses with 2XX code
         // - there is no responses with 2XX code
         fullResponse = true
@@ -123,8 +123,8 @@ function buildCallFunction (baseUrl, path, method, methodMeta, fullResponse, thr
     let responseBody
     try {
       responseBody = res.statusCode === 204
-      ? await res.body.dump()
-      : await res.body.json()
+        ? await res.body.dump()
+        : await res.body.json()
     } catch (err) {
       // maybe the response is a 302, 301, or anything with empty payload
       responseBody = {}

@@ -7,7 +7,6 @@ const { buildServer } = require('../../db')
 const { join } = require('path')
 const { buildOpenAPIClient } = require('..')
 const fs = require('fs/promises')
-const { request } = require('undici')
 
 test('rejects with no url', async ({ rejects }) => {
   await rejects(buildOpenAPIClient())
@@ -541,20 +540,17 @@ test('302', async ({ teardown, same, rejects }) => {
 
   const client = await buildOpenAPIClient({
     url: `${app.url}/`,
-    path: join(__dirname, 'fixtures', 'movies-no-200', 'openapi.json'),
+    path: join(__dirname, 'fixtures', 'movies-no-200', 'openapi.json')
   })
   {
     const resp = await client.redirectMe()
     same(resp.statusCode, 302)
-    same(resp.headers['location'], 'https://google.com')
-  
+    same(resp.headers.location, 'https://google.com')
   }
-  
+
   {
     const resp = await client.nonStandard()
     same(resp.statusCode, 470)
     console.log(resp)
   }
-  
-
 })
