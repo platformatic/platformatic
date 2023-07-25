@@ -151,13 +151,13 @@ const sharedAuthorizationRule = {
     }
   },
   find: {
-    $ref: '#crud-operation-auth'
+    $ref: '#/$defs/crud-operation-auth'
   },
   save: {
-    $ref: '#crud-operation-auth'
+    $ref: '#/$defs/crud-operation-auth'
   },
   delete: {
-    $ref: '#crud-operation-auth'
+    $ref: '#/$defs/crud-operation-auth'
   }
 }
 
@@ -250,55 +250,7 @@ const authorization = {
       }
     }
   },
-  additionalProperties: false,
-  $defs: {
-    crudOperationAuth: {
-      $id: '#crud-operation-auth',
-      oneOf: [{
-        type: 'object',
-        description: 'CRUD operation authorization config',
-        properties: {
-          checks: {
-            description: 'checks for the operation',
-            type: 'object',
-            additionalProperties: {
-              if: {
-                type: 'object'
-              },
-              then: {
-                type: 'object',
-                properties: {
-                  eq: { type: 'string' },
-                  in: { type: 'string' },
-                  nin: { type: 'string' },
-                  nen: { type: 'string' },
-                  gt: { type: 'string' },
-                  gte: { type: 'string' },
-                  lt: { type: 'string' },
-                  lte: { type: 'string' }
-                },
-                additionalProperties: false
-              },
-              else: {
-                type: 'string'
-              }
-            }
-          },
-          fields: {
-            type: 'array',
-            description: 'array of enabled field for the operation',
-            items: {
-              type: 'string'
-            }
-          }
-        },
-        additionalProperties: false
-      }, {
-        type: 'boolean',
-        description: 'true if enabled (with not authorization constraints enabled)'
-      }]
-    }
-  }
+  additionalProperties: false
 }
 
 const dashboard = {
@@ -358,6 +310,7 @@ const types = {
 const platformaticDBschema = {
   $id: `https://platformatic.dev/schemas/${version}/db`,
   $schema: 'http://json-schema.org/draft-07/schema#',
+  title: 'Platformatic DB',
   type: 'object',
   properties: {
     server,
@@ -380,7 +333,54 @@ const platformaticDBschema = {
   },
   additionalProperties: false,
   required: ['db', 'server'],
-  $defs: openApiDefs
+  $defs: {
+    ...openApiDefs,
+    'crud-operation-auth': {
+      oneOf: [{
+        type: 'object',
+        description: 'CRUD operation authorization config',
+        properties: {
+          checks: {
+            description: 'checks for the operation',
+            type: 'object',
+            additionalProperties: {
+              if: {
+                type: 'object'
+              },
+              then: {
+                type: 'object',
+                properties: {
+                  eq: { type: 'string' },
+                  in: { type: 'string' },
+                  nin: { type: 'string' },
+                  nen: { type: 'string' },
+                  gt: { type: 'string' },
+                  gte: { type: 'string' },
+                  lt: { type: 'string' },
+                  lte: { type: 'string' }
+                },
+                additionalProperties: false
+              },
+              else: {
+                type: 'string'
+              }
+            }
+          },
+          fields: {
+            type: 'array',
+            description: 'array of enabled field for the operation',
+            items: {
+              type: 'string'
+            }
+          }
+        },
+        additionalProperties: false
+      }, {
+        type: 'boolean',
+        description: 'true if enabled (with not authorization constraints enabled)'
+      }]
+    }
+  }
 }
 
 module.exports.schema = platformaticDBschema

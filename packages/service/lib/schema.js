@@ -574,6 +574,7 @@ const clients = {
 
 const platformaticServiceSchema = {
   $id: `https://platformatic.dev/schemas/${version}/service`,
+  title: 'Platformatic Service',
   type: 'object',
   properties: {
     server,

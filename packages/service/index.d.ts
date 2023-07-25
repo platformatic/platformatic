@@ -4,11 +4,12 @@
 /// <reference types="@fastify/swagger" />
 import { FastifyInstance } from 'fastify'
 import ConfigManager from '@platformatic/config'
+import { PlatformaticService } from './config'
 
 declare module '@platformatic/types' {
   interface PlatformaticApp {
-    configManager: ConfigManager
-    config: object
+    configManager: ConfigManager<PlatformaticService>
+    config: PlatformaticService
   }
 }
 

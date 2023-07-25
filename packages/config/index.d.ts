@@ -25,9 +25,9 @@ interface ISerializer {
   stringify(obj: JsonMap): string
 }
 
-export default class ConfigManager {
+export default class ConfigManager<T=object> {
   constructor(opts: IConfigManagerOptions)
-  current: object
+  current: T
   fullPath: string
   startWatching(): void
   stopWatching(): Promise<void>
