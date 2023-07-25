@@ -164,21 +164,3 @@ npx platformatic runtime --allow-env=HOST,SERVER_LOGGER_LEVEL
 
 If `--allow-env` is passed as an option to the CLI, it will be merged with the
 default allow list.
-
-## Interservice communication
-
-The Platformatic Runtime allows multiple microservice applications to run
-within a single process. Only the entrypoint binds to an operating system
-port and can be reached from outside of the runtime.
-
-Within the runtime, all interservice communication happens by injecting HTTP
-requests into the running servers, without binding them to ports. This injection
-is handled by
-[`fastify-undici-dispatcher`](https://www.npmjs.com/package/fastify-undici-dispatcher).
-
-Each microservice is assigned an internal domain name based on its unique ID.
-For example, a microservice with the ID `awesome` is given the internal domain
-of `http://awesome.plt.local`. The `fastify-undici-dispatcher` module maps that
-domain to the Fastify server running the `awesome` microservice. Any Node.js
-APIs based on Undici, such as `fetch()`, will then automatically route requests
-addressed to `awesome.plt.local` to the corresponding Fastify server.

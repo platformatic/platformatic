@@ -12,7 +12,7 @@ Platformatic Runtime is currently in [public beta](#public-beta).
 - Command-line interface: [`platformatic runtime`](/reference/cli.md#runtime)
 - Start Platformatic Runtime [programmatically](/reference/runtime/programmatic.md) in tests or other applications
 - Support for monorepo-based applications.
-- Interservice communication using private message passing.
+- [Interservice communication](#interservice-communication) using private message passing.
 
 ## Public beta
 
@@ -47,3 +47,21 @@ Runtime project. For more details on the configuration file, see the
 
 Platformatic Runtime streamlines the compilation of all services built on TypeScript with the command
 `plt runtime compile`. The TypeScript compiler (`tsc`) is required to be installed separately.
+
+## Interservice communication
+
+The Platformatic Runtime allows multiple microservice applications to run
+within a single process. Only the entrypoint binds to an operating system
+port and can be reached from outside of the runtime.
+
+Within the runtime, all interservice communication happens by injecting HTTP
+requests into the running servers, without binding them to ports. This injection
+is handled by
+[`fastify-undici-dispatcher`](https://www.npmjs.com/package/fastify-undici-dispatcher).
+
+Each microservice is assigned an internal domain name based on its unique ID.
+For example, a microservice with the ID `awesome` is given the internal domain
+of `http://awesome.plt.local`. The `fastify-undici-dispatcher` module maps that
+domain to the Fastify server running the `awesome` microservice. Any Node.js
+APIs based on Undici, such as `fetch()`, will then automatically route requests
+addressed to `awesome.plt.local` to the corresponding Fastify server.
