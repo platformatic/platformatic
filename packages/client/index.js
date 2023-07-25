@@ -26,19 +26,20 @@ async function buildOpenAPIClient (options) {
   let baseUrl
 
   // this is tested, not sure why c8 is not picking it up
+  if (!options.url) {
+    throw new Error('options.url is required')
+  }
   if (options.path) {
     spec = JSON.parse(await fs.readFile(options.path, 'utf8'))
     baseUrl = options.url.replace(/\/$/, '')
-  } else if (options.url) {
+  } else {
     const res = await request(options.url)
     spec = await res.body.json()
     baseUrl = computeURLWithoutPath(options.url)
-  } else {
-    throw new Error('options.url or options.file are required')
   }
 
   client[kHeaders] = options.headers || {}
-  const { fullResponse, throwOnError } = options
+  let { fullResponse, throwOnError } = options
 
   for (const path of Object.keys(spec.paths)) {
     const pathMeta = spec.paths[path]
@@ -46,7 +47,14 @@ async function buildOpenAPIClient (options) {
     for (const method of Object.keys(pathMeta)) {
       const methodMeta = pathMeta[method]
       const operationId = generateOperationId(path, method, methodMeta)
-
+      const responses = pathMeta[method].responses
+      const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
+      if (successResponses.length !== 1) {
+        // force fullResponse = true if 
+        // - there is more than 1 responses with 2XX code
+        // - there is no responses with 2XX code
+        fullResponse = true
+      }
       client[operationId] = buildCallFunction(baseUrl, path, method, methodMeta, fullResponse, throwOnError)
     }
   }
@@ -112,11 +120,15 @@ function buildCallFunction (baseUrl, path, method, methodMeta, fullResponse, thr
       body: JSON.stringify(body),
       throwOnError
     })
-
-    const responseBody = res.statusCode === 204
+    let responseBody
+    try {
+      responseBody = res.statusCode === 204
       ? await res.body.dump()
       : await res.body.json()
-
+    } catch (err) {
+      // maybe the response is a 302, 301, or anything with empty payload
+      responseBody = {}
+    }
     if (fullResponse) {
       return {
         statusCode: res.statusCode,

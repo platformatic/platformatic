@@ -108,8 +108,6 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
       const { parameters, responses, requestBody } = operation.operation
       // Only dealing with success responses
       const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
-      // The following block it's impossible to happen with well-formed
-      // OpenAPI.
       /* c8 ignore next 3 */
       if (successResponses.length === 0) {
         // throw new Error(`Could not find a 200 level response for ${operationId}`)
