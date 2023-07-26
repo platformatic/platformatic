@@ -3,6 +3,7 @@ import jsonpointer from 'jsonpointer'
 import { generateOperationId } from '@platformatic/client'
 import { capitalize, classCase, toJavaScriptName } from './utils.mjs'
 import { STATUS_CODES } from 'node:http'
+import { writeFile } from 'node:fs/promises'
 
 export function processOpenAPI ({ schema, name, fullResponse }) {
   return {
@@ -55,6 +56,7 @@ function generateImplementationFromOpenAPI ({ schema, name, fullResponse }) {
 }
 
 function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
+  writeFile('/tmp/schema.json', JSON.stringify(schema, null, 2))
   const camelcasedName = toJavaScriptName(name)
   const capitalizedName = capitalize(camelcasedName)
   const { paths } = schema
@@ -88,29 +90,24 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   interfaces.writeLine('import { FastifyPluginAsync } from \'fastify\'')
   interfaces.blankLine()
 
-  if (fullResponse) {
-    interfaces.write('interface FullResponse<T>').block(() => {
-      interfaces.writeLine('\'statusCode\': number;')
-      interfaces.writeLine('\'headers\': object;')
-      interfaces.writeLine('\'body\': T;')
-    })
-    interfaces.blankLine()
-  }
-  function findType (paramDefinition) {
-    if (paramDefinition.schema) {
-      return paramDefinition.schema
-    }
-    return paramDefinition
-  }
+  // Add always FullResponse interface because we don't know yet
+  // if we are going to use it
+  interfaces.write('interface FullResponse<T>').block(() => {
+    interfaces.writeLine('\'statusCode\': number;')
+    interfaces.writeLine('\'headers\': object;')
+    interfaces.writeLine('\'body\': T;')
+  })
+  interfaces.blankLine()
+
   writer.write(`interface ${capitalizedName}`).block(() => {
+    const originalFullResponse = fullResponse
+    let currentFullResponse = originalFullResponse
     for (const operation of operations) {
       const operationId = operation.operation.operationId
       const { parameters, responses, requestBody } = operation.operation
-      // Only dealing with success responses
       const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
-      /* c8 ignore next 3 */
-      if (successResponses.length === 0) {
-        continue
+      if (successResponses.length !== 1) {
+        currentFullResponse = true
       }
       const operationRequestName = `${capitalize(operationId)}Request`
       const operationResponseName = `${capitalize(operationId)}Response`
@@ -119,10 +116,9 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
         if (parameters) {
           for (const parameter of parameters) {
             const { name, required } = parameter
-            const type = findType(parameter)
             // We do not check for addedProps here because it's the first
             // group of properties
-            writeProperty(interfaces, name, type, addedProps, required)
+            writeProperty(interfaces, name, parameter, addedProps, required)
           }
         }
         if (requestBody) {
@@ -148,8 +144,9 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
       })
 
       let responseType = responseTypes.join(' | ')
-      if (fullResponse) responseType = `FullResponse<${responseType}>`
+      if (currentFullResponse) responseType = `FullResponse<${responseType}>`
       writer.writeLine(`${operationId}(req: ${operationRequestName}): Promise<${responseType}>;`)
+      currentFullResponse = originalFullResponse
     }
   })
 

@@ -106,7 +106,18 @@ module.exports = async function (app) {
   }, async (request, reply) => {
     return { hello: request.params.name }
   })
-
+  app.get('/redirect-me', {
+    schema: {
+      response: {
+        302: {
+          type: 'object',
+          properties: {}
+        }
+      }
+    }
+  }, async (request, reply) => {
+    return reply.status(302).redirect('https://google.com')
+  })
   app.graphql.extendSchema(`
     extend type Query {
       hello: String!
