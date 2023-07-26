@@ -4,7 +4,7 @@ import parseArgs from 'minimist'
 import isMain from 'es-main'
 import helpMe from 'help-me'
 import { readFile, writeFile, mkdir, access } from 'fs/promises'
-import { join, dirname, relative, resolve } from 'path'
+import { join, dirname, relative, resolve, posix } from 'path'
 import * as desm from 'desm'
 import { request } from 'undici'
 import { processOpenAPI } from './lib/gen-openapi.mjs'
@@ -181,9 +181,9 @@ async function downloadAndProcess ({ url, name, folder, config, r: fullResponse,
     }
     let schema
     if (found === 'openapi') {
-      schema = join(relative(dirname(resolve(config)), resolve(folder)), `${name}.openapi.json`)
+      schema = posix.join(relative(dirname(resolve(config)), resolve(folder)), `${name}.openapi.json`)
     } else if (found === 'graphql') {
-      schema = join(relative(dirname(resolve(config)), resolve(folder)), `${name}.schema.graphql`)
+      schema = posix.join(relative(dirname(resolve(config)), resolve(folder)), `${name}.schema.graphql`)
     }
     const toPush = {
       schema,
