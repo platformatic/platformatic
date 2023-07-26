@@ -4,7 +4,7 @@ import parseArgs from 'minimist'
 import isMain from 'es-main'
 import helpMe from 'help-me'
 import { readFile, writeFile, mkdir, access } from 'fs/promises'
-import { join, dirname, relative, resolve } from 'path'
+import { join, dirname, relative, resolve, posix } from 'path'
 import * as desm from 'desm'
 import { request } from 'undici'
 import { processOpenAPI } from './lib/gen-openapi.mjs'
@@ -58,7 +58,7 @@ async function writeGraphQLClient (folder, name, schema, url, generateImplementa
 }
 
 async function downloadAndWriteOpenAPI (logger, url, folder, name, fullResponse, generateImplementation) {
-  logger.info(`Trying to download OpenAPI schema from ${url}`)
+  logger.debug(`Trying to download OpenAPI schema from ${url}`)
   let res
   try {
     res = await request(url)
@@ -90,7 +90,7 @@ async function downloadAndWriteOpenAPI (logger, url, folder, name, fullResponse,
 }
 
 async function downloadAndWriteGraphQL (logger, url, folder, name, generateImplementation) {
-  logger.info(`Trying to download GraphQL schema from ${url}`)
+  logger.debug(`Trying to download GraphQL schema from ${url}`)
   const query = graphql.getIntrospectionQuery()
   let res
 
@@ -127,7 +127,7 @@ async function downloadAndWriteGraphQL (logger, url, folder, name, generateImple
 }
 
 async function readFromFileAndWrite (logger, file, folder, name, fullResponse, generateImplementation) {
-  logger.info(`Trying to read schema from file ${file}`)
+  logger.debug(`Trying to read schema from file ${file}`)
   const text = await readFile(file, 'utf8')
 
   // try OpenAPI first
@@ -174,14 +174,16 @@ async function downloadAndProcess ({ url, name, folder, config, r: fullResponse,
   if (config) {
     const meta = await analyze({ file: config })
     meta.config.clients = meta.config.clients || []
-    if (meta.config.clients.find((client) => client.serviceId === runtime)) {
-      throw new Error(`Client ${runtime} already exists in ${config}`)
+    if (runtime) {
+      meta.config.clients = meta.config.clients.filter((client) => client.serviceId !== runtime)
+    } else {
+      meta.config.clients = meta.config.clients.filter((client) => client.name !== name)
     }
     let schema
     if (found === 'openapi') {
-      schema = join(relative(dirname(resolve(config)), resolve(folder)), `${name}.openapi.json`)
+      schema = posix.join(relative(dirname(resolve(config)), resolve(folder)), `${name}.openapi.json`)
     } else if (found === 'graphql') {
-      schema = join(relative(dirname(resolve(config)), resolve(folder)), `${name}.schema.graphql`)
+      schema = posix.join(relative(dirname(resolve(config)), resolve(folder)), `${name}.schema.graphql`)
     }
     const toPush = {
       schema,
@@ -245,7 +247,7 @@ export async function command (argv) {
   const stream = pinoPretty({
     translateTime: 'SYS:HH:MM:ss',
     ignore: 'hostname,pid',
-    minimumLevel: 40,
+    minimumLevel: 30,
     sync: true
   })
 
@@ -279,6 +281,8 @@ export async function command (argv) {
 
   try {
     await downloadAndProcess({ url, ...options, logger, runtime: options.runtime })
+    logger.info('Client generated successfully')
+    logger.info('Check out the docs to know more: https://docs.platformatic.dev/docs/reference/client/introduction')
     if (runtime) {
       await runtime.stopServices()
     }

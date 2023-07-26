@@ -1,6 +1,6 @@
 import { request, moveToTmpdir } from './helper.js'
 import { test } from 'tap'
-import { join, dirname } from 'path'
+import { join, dirname, posix } from 'path'
 import { fileURLToPath } from 'node:url'
 import * as desm from 'desm'
 import { execa } from 'execa'
@@ -41,7 +41,7 @@ PLT_SERVER_LOGGER_LEVEL=info
     clients: [{
       serviceId: 'somber-chariot',
       type: 'openapi',
-      schema: join('movies', 'movies.openapi.json')
+      schema: posix.join('movies', 'movies.openapi.json')
     }]
   })
 
@@ -85,7 +85,7 @@ module.exports = async function (app, opts) {
   })
 })
 
-test('generate client twice', async ({ teardown, comment, same, rejects }) => {
+test('generate client twice', async ({ teardown, comment, same, match }) => {
   const dir = await moveToTmpdir(teardown)
   comment(`working in ${dir}`)
 
@@ -113,5 +113,16 @@ PLT_SERVER_LOGGER_LEVEL=info
   process.chdir(join(dir, 'services', 'languid-nobleman'))
 
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
-  await rejects(execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot']))
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
+
+  const config = JSON.parse(await readFile(join(dir, 'services', 'languid-nobleman', 'platformatic.service.json'), 'utf8'))
+
+  match(config, {
+    clients: [{
+      schema: 'movies/movies.openapi.json',
+      name: 'movies',
+      type: 'openapi',
+      serviceId: 'somber-chariot'
+    }]
+  })
 })

@@ -2,7 +2,7 @@ import { request, moveToTmpdir } from './helper.js'
 import { test } from 'tap'
 import { buildServer } from '@platformatic/db'
 import { buildServer as buildService } from '@platformatic/service'
-import { join } from 'path'
+import { join, posix } from 'path'
 import * as desm from 'desm'
 import { execa } from 'execa'
 import { promises as fs } from 'fs'
@@ -172,7 +172,7 @@ test('config support with folder', async ({ teardown, comment, match }) => {
     const config = JSON.parse(await fs.readFile('./platformatic.service.json'))
     match(config, {
       clients: [{
-        schema: join('uncanny', 'movies.openapi.json'),
+        schema: posix.join('uncanny', 'movies.openapi.json'),
         name: 'movies',
         type: 'openapi',
         url: '{PLT_MOVIES_URL}'
