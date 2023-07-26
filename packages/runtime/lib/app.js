@@ -2,7 +2,7 @@
 const { once } = require('node:events')
 const { dirname, basename } = require('node:path')
 const { FileWatcher } = require('@platformatic/utils')
-const { setTimeout: sleep } = require('node:timers/promises')
+const debounce = require('debounce')
 const {
   buildServer,
   loadConfig
@@ -47,9 +47,8 @@ class PlatformaticApp {
       return
     }
 
-    await sleep(50) // Delay restarts to allow multiple changes to be coalesced.
-
     this.#restarting = true
+
     await this.stop()
 
     /* c8 ignore next 4 - tests may not pass in a MessagePort. */
@@ -237,10 +236,11 @@ class PlatformaticApp {
     })
 
     /* c8 ignore next 4 */
-    fileWatcher.on('update', async () => {
+    const restart = debounce(() => {
       this.server.log.debug('files changed')
       this.restart()
-    })
+    }, 100) // debounce restart for 100ms
+    fileWatcher.on('update', restart)
 
     fileWatcher.startWatching()
     server.log.debug('start watching files')
