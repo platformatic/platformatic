@@ -6,6 +6,7 @@ import { SQL } from '@databases/sql'
 import { expectType } from 'tsd'
 import { OpenAPI } from 'openapi-types'
 import type { MercuriusPlugin } from 'mercurius'
+import { PlatformaticDB } from './config'
 
 async function main (): Promise<void> {
   // TODO this configuration is incomplete, type it fully
@@ -19,7 +20,8 @@ async function main (): Promise<void> {
   expectType<PlatformaticApp>(server.platformatic)
   expectType<Database>(server.platformatic.db)
   expectType<SQL>(server.platformatic.sql)
-  expectType<ConfigManager>(server.platformatic.configManager)
+  expectType<ConfigManager<PlatformaticDB>>(server.platformatic.configManager)
+  expectType<PlatformaticDB>(server.platformatic.config)
   expectType<OpenAPI.Document>(server.swagger())
   expectType<MercuriusPlugin>(server.graphql)
 }
