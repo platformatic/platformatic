@@ -132,3 +132,76 @@ test('should not hot reload files with `--hot-reload false', async (t) => {
   const version = await res.body.text()
   assert.strictEqual(version, 'v1')
 })
+
+test('watches CommonJS files with hotreload', async (t) => {
+  const tmpDir = await mkdtemp(join(base, 'watch-'))
+  t.after(() => rm(tmpDir, { recursive: true, force: true }))
+  t.diagnostic(`using ${tmpDir}`)
+  const configFileSrc = join(fixturesDir, 'configs', 'hotreload.json')
+  const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
+  const appSrc = join(fixturesDir, 'monorepo')
+  const appDst = join(tmpDir, 'monorepo')
+  const cjsPluginFilePath = join(appDst, 'serviceAppWithLogger', 'plugin.js')
+
+  await Promise.all([
+    cp(configFileSrc, configFileDst),
+    cp(appSrc, appDst, { recursive: true })
+  ])
+
+  await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
+  const { child } = await start('-c', configFileDst)
+  t.after(() => child.kill('SIGINT'))
+  child.stdout.pipe(process.stderr)
+  child.stderr.pipe(process.stderr)
+
+  await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))
+
+  for await (const log of child.ndj.iterator({ destroyOnReturn: false })) {
+    if (log.msg === 'RELOADED v2') {
+      break
+    }
+  }
+
+  await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v3', true))
+
+  for await (const log of child.ndj) {
+    if (log.msg === 'RELOADED v3') {
+      break
+    }
+  }
+})
+
+test('watches CommonJS files with hotreload on a single service', async (t) => {
+  const tmpDir = await mkdtemp(join(base, 'watch-'))
+  t.after(() => rm(tmpDir, { recursive: true, force: true }))
+  t.diagnostic(`using ${tmpDir}`)
+  const appSrc = join(fixturesDir, 'monorepo', 'serviceAppWithLogger')
+  const appDst = join(tmpDir)
+  const cjsPluginFilePath = join(appDst, 'plugin.js')
+
+  await Promise.all([
+    cp(appSrc, appDst, { recursive: true })
+  ])
+
+  await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
+  const { child } = await start('-c', join(appDst, 'platformatic.service.json'))
+  t.after(() => child.kill('SIGINT'))
+  child.stdout.pipe(process.stderr)
+  child.stderr.pipe(process.stderr)
+
+  await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))
+
+  for await (const log of child.ndj.iterator({ destroyOnReturn: false })) {
+    if (log.msg === 'RELOADED v2') {
+      break
+    }
+  }
+
+  await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v3', true))
+
+  for await (const log of child.ndj) {
+    if (log.msg === 'RELOADED v3') {
+      break
+    }
+  }
+})

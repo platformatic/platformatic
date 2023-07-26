@@ -74,7 +74,7 @@ test('does not start if node inspector flags are provided', async (t) => {
     for (const message of messages) {
       stderr += message
 
-      if (/Error: The Node.js inspector flags are not supported/.test(stderr)) {
+      if (/The Node.js inspector flags are not supported/.test(stderr)) {
         found = true
         break
       }

@@ -66,12 +66,13 @@ class PlatformaticApp {
 
     if (!this.#restarting) {
       await this.#initializeConfig()
+      this.#originalWatch = this.config.configManager.current.watch
+      this.config.configManager.current.watch = false
     }
+
     const { configManager } = this.config
     const config = configManager.current
 
-    this.#originalWatch = config.watch
-    config.watch = false
     this.#setuplogger(configManager)
 
     try {
@@ -110,12 +111,12 @@ class PlatformaticApp {
     if (!this.#started) {
       throw new Error('application has not been started')
     }
+    await this.#stopFileWatching()
 
     if (!this.#restarting) {
       await this.server.close()
     }
 
-    await this.#stopFileWatching()
     this.#started = false
   }
 

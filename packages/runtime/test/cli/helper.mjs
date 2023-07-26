@@ -35,12 +35,14 @@ export async function start (...args) {
 
   for await (const messages of on(output, 'data')) {
     for (const message of messages) {
-      const url = message.url ??
-        message.msg.match(/server listening at (.+)/i)?.[1]
+      if (message.msg) {
+        const url = message.url ??
+          message.msg.match(/server listening at (.+)/i)?.[1]
 
-      if (url !== undefined) {
-        clearTimeout(errorTimeout)
-        return { child, url, output }
+        if (url !== undefined) {
+          clearTimeout(errorTimeout)
+          return { child, url, output }
+        }
       }
     }
   }
