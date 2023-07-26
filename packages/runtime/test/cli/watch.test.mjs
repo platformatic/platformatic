@@ -48,9 +48,13 @@ function createEsmLoggingPlugin (text, reloaded) {
   `
 }
 
+function saferm (path) {
+  return rm(path, { recursive: true, force: true }).catch(() => {})
+}
+
 test('watches CommonJS files', async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
-  t.after(() => rm(tmpDir, { recursive: true, force: true }))
+  t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
   const configFileSrc = join(fixturesDir, 'configs', 'monorepo.json')
   const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
@@ -80,7 +84,7 @@ test('watches CommonJS files', async (t) => {
 
 test('watches ESM files', async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
-  t.after(() => rm(tmpDir, { recursive: true, force: true }))
+  t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
   const configFileSrc = join(fixturesDir, 'configs', 'monorepo.json')
   const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
@@ -109,7 +113,7 @@ test('watches ESM files', async (t) => {
 
 test('should not hot reload files with `--hot-reload false', async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
-  t.after(() => rm(tmpDir, { recursive: true, force: true }))
+  t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
   const configFileSrc = join(fixturesDir, 'configs', 'monorepo.json')
   const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
@@ -136,7 +140,7 @@ test('should not hot reload files with `--hot-reload false', async (t) => {
 
 test('watches CommonJS files with hotreload', { timeout: 30000, skip: linux }, async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
-  t.after(() => rm(tmpDir, { recursive: true, force: true }))
+  t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
   const configFileSrc = join(fixturesDir, 'configs', 'hotreload.json')
   const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
@@ -174,7 +178,7 @@ test('watches CommonJS files with hotreload', { timeout: 30000, skip: linux }, a
 
 test('watches CommonJS files with hotreload on a single service', { timeout: 30000, skip: linux, only: true }, async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
-  t.after(() => rm(tmpDir, { recursive: true, force: true }))
+  t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
   const appSrc = join(fixturesDir, 'monorepo', 'serviceAppWithLogger')
   const appDst = join(tmpDir)
