@@ -2,6 +2,7 @@
 const { once } = require('node:events')
 const { dirname, basename } = require('node:path')
 const { FileWatcher } = require('@platformatic/utils')
+const { setTimeout: sleep } = require('node:timers/promises')
 const {
   buildServer,
   loadConfig
@@ -45,6 +46,8 @@ class PlatformaticApp {
     if (!this.#hotReload && !force) {
       return
     }
+
+    await sleep(50) // Delay restarts to allow multiple changes to be coalesced.
 
     this.#restarting = true
     await this.stop()
