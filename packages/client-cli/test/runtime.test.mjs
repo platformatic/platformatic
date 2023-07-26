@@ -1,6 +1,6 @@
 import { request, moveToTmpdir } from './helper.js'
 import { test } from 'tap'
-import { join, dirname } from 'path'
+import { join, dirname, posix } from 'path'
 import { fileURLToPath } from 'node:url'
 import * as desm from 'desm'
 import { execa } from 'execa'
@@ -41,7 +41,7 @@ PLT_SERVER_LOGGER_LEVEL=info
     clients: [{
       serviceId: 'somber-chariot',
       type: 'openapi',
-      schema: join('movies', 'movies.openapi.json')
+      schema: posix.join('movies', 'movies.openapi.json')
     }]
   })
 
