@@ -11,6 +11,9 @@ const fs = require('fs/promises')
 test('rejects with no url', async ({ rejects }) => {
   await rejects(buildOpenAPIClient())
   await rejects(buildOpenAPIClient({}))
+  await rejects(buildOpenAPIClient({
+    path: join(__dirname, 'fixtures', 'movies', 'openapi.json')
+  }))
 })
 
 test('build basic client from url', async ({ teardown, same, rejects }) => {
@@ -519,5 +522,35 @@ test('build basic client from url with custom headers', async ({ teardown, same,
   {
     const hello = await client.getHelloHeaderName({ name: 'Matteo' })
     same(hello, { hello: 'Matteo' })
+  }
+})
+
+test('302', async ({ teardown, same, rejects }) => {
+  try {
+    await fs.unlink(join(__dirname, 'fixtures', 'movies-no-200', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildServer(join(__dirname, 'fixtures', 'movies-no-200', 'platformatic.db.json'))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const client = await buildOpenAPIClient({
+    url: `${app.url}/`,
+    path: join(__dirname, 'fixtures', 'movies-no-200', 'openapi.json')
+  })
+  {
+    const resp = await client.redirectMe()
+    same(resp.statusCode, 302)
+    same(resp.headers.location, 'https://google.com')
+  }
+
+  {
+    const resp = await client.nonStandard()
+    same(resp.statusCode, 470)
+    console.log(resp)
   }
 })

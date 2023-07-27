@@ -447,14 +447,13 @@ const movies = require('./movies')
 const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}' })
-app.post('/', async (request, reply) => {
+app.post('/', async (request, reply) => {  
   const res = await app.movies.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
 `
   await fs.writeFile(join(dir, 'index.js'), toWrite)
-
   const app2 = execa('node', ['index.js'])
   teardown(() => app2.kill())
   teardown(async () => { await app.close() })
@@ -472,28 +471,36 @@ app.listen({ port: 0 })
     url = msg.slice(base.length)
     break
   }
-  const res = await request(url, {
-    method: 'POST'
-  })
-  const body = await res.body.json()
-  const matchDate = /[a-z]{3}, \d{2} [a-z]{3} \d{4} \d{2}:\d{2}:\d{2} GMT/i
-  const matchKeepAlive = /timeout=\d+/
+  {
+    const res = await request(url, {
+      method: 'POST'
+    })
+    const body = await res.body.json()
+    const matchDate = /[a-z]{3}, \d{2} [a-z]{3} \d{4} \d{2}:\d{2}:\d{2} GMT/i
+    const matchKeepAlive = /timeout=\d+/
 
-  match(body, {
-    statusCode: 200,
-    headers: {
-      location: '/movies/1',
-      'content-type': 'application/json; charset=utf-8',
-      'content-length': '22',
-      date: matchDate,
-      connection: 'keep-alive',
-      'keep-alive': matchKeepAlive
-    },
-    body: {
-      id: 1,
-      title: 'foo'
-    }
-  })
+    match(body, {
+      statusCode: 200,
+      headers: {
+        location: '/movies/1',
+        'content-type': 'application/json; charset=utf-8',
+        'content-length': '22',
+        date: matchDate,
+        connection: 'keep-alive',
+        'keep-alive': matchKeepAlive
+      },
+      body: {
+        id: 1,
+        title: 'foo'
+      }
+    })
+  }
+
+  {
+    const res = await request(`${app.url}/redirect-me`)
+    match(res.statusCode, 302)
+    match(res.headers.location, 'https://google.com')
+  }
 })
 
 test('openapi client generation (javascript) from file', async ({ teardown, comment, same }) => {

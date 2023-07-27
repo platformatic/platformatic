@@ -1,0 +1,47 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Platformatic DB",
+    "description": "Exposing a SQL database as REST",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/redirect-me": {
+      "get": {
+        "operationId": "redirectMe",
+        "responses": {
+          "302": {
+            "description": "Default 302 Response",
+            "headers": {
+              "type": "object",
+              "properties": {
+                "location": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/non-standard": {
+      "get": {
+        "operationId": "nonStandard",
+        "responses": {
+          "470": {
+            "description": "A non standard 2XX response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Foo bar response",
+                  "properties": {
+                    "foo": { "type": "string" },
+                    "bar": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
