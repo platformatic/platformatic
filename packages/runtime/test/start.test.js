@@ -85,11 +85,7 @@ test('can restart the runtime apps', async (t) => {
   const entryUrl = await app.start()
 
   t.after(async () => {
-    try {
-      await app.close()
-    } catch (err) {
-      console.error(err)
-    }
+    await app.close()
   })
 
   {

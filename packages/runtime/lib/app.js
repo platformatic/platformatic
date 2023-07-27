@@ -116,7 +116,7 @@ class PlatformaticApp {
 
   async stop () {
     if (!this.#started) {
-      return
+      throw new Error('application has not been started')
     }
 
     await this.#stopFileWatching()
