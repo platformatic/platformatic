@@ -4,7 +4,8 @@ import { SQL, SQLQuery } from '@databases/sql'
 
 interface ILogger {
   trace(): any,
-  error(): any
+  error(): any,
+  warn(): any
 }
 
 export interface Database {
