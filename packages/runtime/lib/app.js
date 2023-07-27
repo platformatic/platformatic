@@ -42,16 +42,8 @@ class PlatformaticApp {
   }
 
   async restart (force) {
-    if (this.#restarting) {
+    if (this.#restarting || !this.#started || (!this.#hotReload && !force)) {
       return
-    }
-
-    if (!this.#hotReload && !force) {
-      return
-    }
-
-    if (!this.#started) {
-      throw new Error('application was not started')
     }
 
     this.#restarting = true
