@@ -47,9 +47,9 @@ class RuntimeApi {
   }
 
   async #handleProcessLevelEvent (message) {
-    for (const service of this.#services.values()) {
+    await Promise.allSettled(this.#services.values().map(async (service) => {
       await service.handleProcessLevelEvent(message)
-    }
+    }))
   }
 
   async #executeCommand (message) {

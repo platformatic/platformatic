@@ -46,8 +46,12 @@ async function startWithConfig (configManager, env = process.env) {
     env
   })
 
+  let exited = null
   worker.on('exit', () => {
     configManager.fileWatcher?.stopWatching()
+    if (typeof exited === 'function') {
+      exited()
+    }
   })
 
   worker.on('error', () => {
@@ -65,8 +69,9 @@ async function startWithConfig (configManager, env = process.env) {
       worker.postMessage({ signal: 'SIGUSR2' })
     })
 
-    closeWithGrace((event) => {
+    closeWithGrace((event, cb) => {
       worker.postMessage(event)
+      exited = cb
     })
 
     /* c8 ignore next 3 */

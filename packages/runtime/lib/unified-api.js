@@ -155,14 +155,6 @@ async function _start (args) {
 
 async function startCommand (args) {
   try {
-    await _start(args)
-  } catch (err) {
-    logErrorAndExit(err)
-  }
-}
-
-async function startCommandInRuntime (args) {
-  try {
     const configType = await getConfigType(args)
     const config = await _loadConfig({}, args, configType)
     let runtime
@@ -200,6 +192,5 @@ module.exports = {
   loadConfig: _loadConfig,
   start: _start,
   startCommand,
-  startCommandInRuntime,
   getApp
 }
