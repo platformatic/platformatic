@@ -253,9 +253,52 @@ test('should merge two basic apis with path prefixes', async (t) => {
     }
   }
 
+  const schema3 = {
+    openapi: '3.0.0',
+    info: {
+      title: 'API 3',
+      version: '1.0.0'
+    },
+    paths: {
+      '/actors': {
+        get: {
+          operationId: 'getActors',
+          responses: {
+            200: {
+              description: 'OK',
+              content: {
+                'application/json': {
+                  schema: {
+                    $ref: '#/components/schemas/Actors'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    components: {
+      schemas: {
+        Actors: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string'
+            },
+            name: {
+              type: 'string'
+            }
+          }
+        }
+      }
+    }
+  }
+
   const composedSchema = composeOpenApi([
     { id: 'api1', prefix: '/api1', schema: schema1 },
-    { id: 'api2', prefix: '/api2', schema: schema2 }
+    { id: 'api-2', prefix: '/api2', schema: schema2 },
+    { id: '-api-3_', prefix: '/api3', schema: schema3 }
   ])
 
   openApiValidator.validate(composedSchema)
@@ -278,7 +321,7 @@ test('should merge two basic apis with path prefixes', async (t) => {
         }
       }
     },
-    api2_Films: {
+    api_2_Films: {
       type: 'object',
       title: 'Films',
       properties: {
@@ -286,6 +329,18 @@ test('should merge two basic apis with path prefixes', async (t) => {
           type: 'string'
         },
         title: {
+          type: 'string'
+        }
+      }
+    },
+    api_3_Actors: {
+      type: 'object',
+      title: 'Actors',
+      properties: {
+        id: {
+          type: 'string'
+        },
+        name: {
           type: 'string'
         }
       }
@@ -312,14 +367,32 @@ test('should merge two basic apis with path prefixes', async (t) => {
 
   t.same(composedSchema.paths['/api2/films'], {
     get: {
-      operationId: 'api2_getFilms',
+      operationId: 'api_2_getFilms',
       responses: {
         200: {
           description: 'OK',
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/api2_Films'
+                $ref: '#/components/schemas/api_2_Films'
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+
+  t.same(composedSchema.paths['/api3/actors'], {
+    get: {
+      operationId: 'api_3_getActors',
+      responses: {
+        200: {
+          description: 'OK',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/api_3_Actors'
               }
             }
           }
