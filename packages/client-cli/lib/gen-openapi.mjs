@@ -3,7 +3,6 @@ import jsonpointer from 'jsonpointer'
 import { generateOperationId } from '@platformatic/client'
 import { capitalize, classCase, toJavaScriptName } from './utils.mjs'
 import { STATUS_CODES } from 'node:http'
-import { writeFile } from 'node:fs/promises'
 
 export function processOpenAPI ({ schema, name, fullResponse }) {
   return {
@@ -56,7 +55,6 @@ function generateImplementationFromOpenAPI ({ schema, name, fullResponse }) {
 }
 
 function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
-  writeFile('/tmp/schema.json', JSON.stringify(schema, null, 2))
   const camelcasedName = toJavaScriptName(name)
   const capitalizedName = capitalize(camelcasedName)
   const { paths } = schema
