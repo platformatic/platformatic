@@ -9,7 +9,7 @@ function composeOpenApi (apis, options = {}) {
   for (const { id, prefix, schema } of apis) {
     const { paths, components } = clone(schema)
 
-    const apiPrefix = id + '_'
+    const apiPrefix = generateOperationIdApiPrefix(id)
     for (const [path, pathSchema] of Object.entries(paths)) {
       namespaceSchemaRefs(apiPrefix, pathSchema)
       namespaceSchemaOperationIds(apiPrefix, pathSchema)
@@ -44,6 +44,12 @@ function composeOpenApi (apis, options = {}) {
     },
     paths: mergedPaths
   }
+}
+
+function generateOperationIdApiPrefix (operationId) {
+  return operationId.trim()
+    .replace(/[^A-Z0-9]+/ig, '_')
+    .replace(/^_+|_+$/g, '') + '_'
 }
 
 function namespaceSchemaRefs (apiPrefix, schema) {
