@@ -10,7 +10,6 @@ import { start } from './helper.mjs'
 const fixturesDir = join(desm(import.meta.url), '..', '..', 'fixtures')
 
 const base = join(desm(import.meta.url), '..', 'tmp')
-const linux = process.platform === 'linux'
 
 try {
   await mkdir(base, { recursive: true })
@@ -132,7 +131,7 @@ test('should not hot reload files with `--hot-reload false', async (t) => {
   assert.strictEqual(version, 'v1')
 })
 
-test('watches CommonJS files with hotreload', { timeout: 30000, skip: linux }, async (t) => {
+test('watches CommonJS files with hotreload', { timeout: 30000, skip: process.env.CI }, async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
@@ -171,7 +170,7 @@ test('watches CommonJS files with hotreload', { timeout: 30000, skip: linux }, a
   assert.ok(restartedThirdTime)
 })
 
-test('watches CommonJS files with hotreload on a single service', { timeout: 30000, skip: linux }, async (t) => {
+test('watches CommonJS files with hotreload on a single service', { timeout: 30000, skip: process.env.CI }, async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
