@@ -70,8 +70,6 @@ test('watches CommonJS files', async (t) => {
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
   const { child } = await start('-c', configFileDst)
   t.after(() => child.kill('SIGINT'))
-  child.stdout.pipe(process.stderr)
-  child.stderr.pipe(process.stderr)
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))
 
@@ -100,8 +98,6 @@ test('watches ESM files', async (t) => {
   await writeFile(esmPluginFilePath, createEsmLoggingPlugin('v1', false))
   const { child } = await start('-c', configFileDst)
   t.after(() => child.kill('SIGINT'))
-  child.stdout.pipe(process.stderr)
-  child.stderr.pipe(process.stderr)
   await writeFile(esmPluginFilePath, createEsmLoggingPlugin('v2', true))
 
   for await (const log of child.ndj) {
@@ -129,8 +125,6 @@ test('should not hot reload files with `--hot-reload false', async (t) => {
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
   const { child, url } = await start('-c', configFileDst, '--hot-reload', 'false')
   t.after(() => child.kill('SIGINT'))
-  child.stdout.pipe(process.stderr)
-  child.stderr.pipe(process.stderr)
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))
   await sleep(5000)
   const res = await request(`${url}/version`)
@@ -156,27 +150,28 @@ test('watches CommonJS files with hotreload', { timeout: 30000, skip: linux }, a
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
   const { child } = await start('-c', configFileDst)
   t.after(() => child.kill('SIGINT'))
-  child.stdout.pipe(process.stderr)
-  child.stderr.pipe(process.stderr)
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))
 
-  for await (const log of child.ndj.iterator({ destroyOnReturn: false })) {
-    if (log.msg === 'RELOADED v2') {
-      break
-    }
-  }
-
-  await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v3', true))
+  let restartedSecondTime = false
+  let restartedThirdTime = false
 
   for await (const log of child.ndj) {
-    if (log.msg === 'RELOADED v3') {
+    if (log.msg === 'RELOADED v2') {
+      restartedSecondTime = true
+    } else if (log.msg === 'RELOADED v3') {
+      restartedThirdTime = true
       break
+    } else if (log.msg?.match(/watching/)) {
+      await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v3', true))
     }
   }
+
+  assert.ok(restartedSecondTime)
+  assert.ok(restartedThirdTime)
 })
 
-test('watches CommonJS files with hotreload on a single service', { timeout: 30000, skip: linux, only: true }, async (t) => {
+test('watches CommonJS files with hotreload on a single service', { timeout: 30000, skip: linux }, async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)

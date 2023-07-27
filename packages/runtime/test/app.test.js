@@ -90,7 +90,7 @@ test('errors when stopping an already stopped application', async (t) => {
 })
 
 test('does not restart while restarting', async (t) => {
-  const { logger } = getLoggerAndStream()
+  const { logger, stream } = getLoggerAndStream()
   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
   const configFile = join(appPath, 'platformatic.service.json')
   const config = {
@@ -105,17 +105,33 @@ test('does not restart while restarting', async (t) => {
   }
   const app = new PlatformaticApp(config, null, logger)
 
-  t.after(app.stop.bind(app))
+  t.after(async () => {
+    try {
+      await app.stop()
+    } catch {}
+  })
   await app.start()
-  t.mock.method(app, 'stop')
   await Promise.all([
     app.restart(),
     app.restart(),
     app.restart()
   ])
+  await app.stop()
+  stream.end()
+  const lines = []
+  for await (const line of stream) {
+    lines.push(line)
+  }
 
-  // stop() should have only been called once despite three restart() calls.
-  assert.strictEqual(app.stop.mock.calls.length, 1)
+  let count = 0
+  for (const line of lines) {
+    // every time we restart we log listening
+    if (line.msg.match(/listening/)) {
+      count++
+    }
+  }
+
+  assert.strictEqual(count, 2)
 })
 
 test('restarts on SIGUSR2', async (t) => {
@@ -330,6 +346,7 @@ test('logs errors if an env variable is missing', async (t) => {
   }, /exited/)
   assert.strictEqual(process.exit.mock.calls.length, 1)
   assert.strictEqual(process.exit.mock.calls[0].arguments[0], 1)
+  t.mock.reset()
 
   stream.end()
   const lines = []

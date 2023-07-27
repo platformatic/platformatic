@@ -1,5 +1,5 @@
 {
-  "$schema": "https://platformatic.dev/schemas/v0.20.0/runtime",
+  "$schema": "https://platformatic.dev/schemas/v0.32.0/runtime",
   "entrypoint": "serviceApp",
   "allowCycles": true,
   "hotReload": true,

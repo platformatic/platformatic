@@ -1,4 +1,5 @@
 'use strict'
+
 const { once } = require('node:events')
 const { dirname, basename } = require('node:path')
 const { FileWatcher } = require('@platformatic/utils')
@@ -14,6 +15,7 @@ class PlatformaticApp {
   #restarting
   #started
   #originalWatch
+  #fileWatcher
   #logger
 
   constructor (appConfig, loaderPort, logger) {
@@ -25,6 +27,7 @@ class PlatformaticApp {
     this.server = null
     this.#started = false
     this.#originalWatch = null
+    this.#fileWatcher = null
     this.#logger = logger.child({
       name: this.appConfig.id
     })
@@ -47,9 +50,11 @@ class PlatformaticApp {
       return
     }
 
-    this.#restarting = true
+    if (!this.#started) {
+      throw new Error('application was not started')
+    }
 
-    await this.stop()
+    this.#restarting = true
 
     /* c8 ignore next 4 - tests may not pass in a MessagePort. */
     if (this.#loaderPort) {
@@ -57,7 +62,13 @@ class PlatformaticApp {
       await once(this.#loaderPort, 'message')
     }
 
-    await this.start()
+    this.#setuplogger(this.config.configManager)
+    try {
+      await this.server.restart()
+    } catch (err) {
+      this.#logAndExit(err)
+    }
+
     this.#restarting = false
   }
 
@@ -66,11 +77,11 @@ class PlatformaticApp {
       throw new Error('application is already started')
     }
 
-    if (!this.#restarting) {
-      await this.#initializeConfig()
-      this.#originalWatch = this.config.configManager.current.watch
-      this.config.configManager.current.watch = false
-    }
+    this.#started = true
+
+    await this.#initializeConfig()
+    this.#originalWatch = this.config.configManager.current.watch
+    this.config.configManager.current.watch = false
 
     const { configManager } = this.config
     const config = configManager.current
@@ -80,25 +91,19 @@ class PlatformaticApp {
     try {
       // If this is a restart, have the fastify server restart itself. If this
       // is not a restart, then create a new server.
-      if (this.#restarting) {
-        await this.server.restart()
-      } else {
-        this.server = await buildServer({
-          ...config,
-          configManager
-        })
-      }
+      this.server = await buildServer({
+        ...config,
+        configManager
+      })
     } catch (err) {
       this.#logAndExit(err)
     }
 
-    if (config.plugins !== undefined && this.#originalWatch !== false) {
+    if (config.plugins !== undefined) {
       this.#startFileWatching()
     }
 
-    this.#started = true
-
-    if (this.appConfig.entrypoint && !this.#restarting) {
+    if (this.appConfig.entrypoint) {
       try {
         await this.server.start()
         /* c8 ignore next 5 */
@@ -113,11 +118,9 @@ class PlatformaticApp {
     if (!this.#started) {
       throw new Error('application has not been started')
     }
-    await this.#stopFileWatching()
 
-    if (!this.#restarting) {
-      await this.server.close()
-    }
+    await this.#stopFileWatching()
+    await this.server.close()
 
     this.#started = false
   }
@@ -224,6 +227,9 @@ class PlatformaticApp {
   }
 
   #startFileWatching () {
+    if (this.#fileWatcher) {
+      return
+    }
     const server = this.server
     const { configManager } = server.platformatic
     // TODO FileWatcher and ConfigManager both watch the configuration file
@@ -237,7 +243,7 @@ class PlatformaticApp {
 
     /* c8 ignore next 4 */
     const restart = debounce(() => {
-      this.server.log.debug('files changed')
+      this.server.log.info('files changed')
       this.restart()
     }, 100) // debounce restart for 100ms
     fileWatcher.on('update', restart)
@@ -246,18 +252,20 @@ class PlatformaticApp {
     server.log.debug('start watching files')
     server.platformatic.fileWatcher = fileWatcher
     server.platformatic.configManager.startWatching()
+    this.#fileWatcher = fileWatcher
   }
 
   async #stopFileWatching () {
-    const watcher = this.server.platformatic.fileWatcher
     // The configManager automatically watches for the config file changes
     // therefore we need to stop it all the times.
     await this.config.configManager.stopWatching()
 
+    const watcher = this.#fileWatcher
     if (watcher) {
       this.server.log.debug('stop watching files')
       await watcher.stopWatching()
       this.server.platformatic.fileWatcher = undefined
+      this.#fileWatcher = null
     }
   }
 
