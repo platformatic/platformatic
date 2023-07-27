@@ -564,7 +564,7 @@ test('should not overwrite a schema title if exists', async (t) => {
   })
 })
 
-test('should trow an error if there are duplicates paths', async (t) => {
+test('should throw an error if there are duplicates paths', async (t) => {
   const schema1 = {
     openapi: '3.0.0',
     info: {
@@ -608,7 +608,7 @@ test('should trow an error if there are duplicates paths', async (t) => {
   }
 })
 
-test('should trow an error if there are duplicates paths with prefixes', async (t) => {
+test('should throw an error if there are duplicates paths with prefixes', async (t) => {
   const schema1 = {
     openapi: '3.0.0',
     info: {
