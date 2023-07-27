@@ -195,6 +195,7 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 300
     if (log.msg === 'RELOADED v2') {
       restartedSecondTime = true
     } else if (log.msg === 'RELOADED v3') {
+      assert.ok(restartedSecondTime)
       restartedThirdTime = true
       break
     } else if (log.msg?.match(/listening/)) {
@@ -202,6 +203,5 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 300
     }
   }
 
-  assert.ok(restartedSecondTime)
   assert.ok(restartedThirdTime)
 })

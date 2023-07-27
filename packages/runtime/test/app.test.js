@@ -346,7 +346,6 @@ test('logs errors if an env variable is missing', async (t) => {
   }, /exited/)
   assert.strictEqual(process.exit.mock.calls.length, 1)
   assert.strictEqual(process.exit.mock.calls[0].arguments[0], 1)
-  t.mock.reset()
 
   stream.end()
   const lines = []
