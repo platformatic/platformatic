@@ -175,7 +175,11 @@ export interface PlatformaticDB {
            */
           prefix?: string;
           ignore?: {
-            [k: string]: boolean;
+            [k: string]:
+              | boolean
+              | {
+                  [k: string]: boolean;
+                };
           };
         };
     ignore?: {
