@@ -143,7 +143,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
 
       let responseType = responseTypes.join(' | ')
       if (currentFullResponse) responseType = `FullResponse<${responseType}>`
-      writer.writeLine(`${operationId}(req: ${operationRequestName}): Promise<${responseType}>;`)
+      writer.writeLine(`${operationId}(req?: ${operationRequestName}): Promise<${responseType}>;`)
       currentFullResponse = originalFullResponse
     }
   })

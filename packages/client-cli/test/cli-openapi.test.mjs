@@ -91,6 +91,11 @@ app.register(movies, {
   url: '${app.url}'
 });
 
+app.get('/', async () => {
+  const res = await app.movies.getMovies()
+  return res
+})
+
 app.post('/', async () => {
   const res = await app.movies.createMovie({ title: 'foo' })
   return res
