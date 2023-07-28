@@ -9,6 +9,7 @@ const dotenv = require('dotenv')
 const { request } = require('undici')
 const { FileWatcher } = require('@platformatic/utils')
 const { getParser, analyze, upgrade } = require('@platformatic/metaconfig')
+const { Store } = require('./lib/store')
 
 class ConfigManager extends EventEmitter {
   constructor (opts) {
@@ -294,3 +295,5 @@ async function isFileAccessible (filename, directory) {
 }
 
 module.exports = ConfigManager
+module.exports.ConfigManager = ConfigManager
+module.exports.Store = Store
