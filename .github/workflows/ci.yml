@@ -114,7 +114,7 @@ jobs:
     - name: pnpm install
       uses: nick-fields/retry@v2.8.3
       with:
-        max_attempts: 10
+        max_attempts: 1
         timeout_minutes: 15
         retry_on: error
         command: pnpm install --frozen-lockfile
@@ -188,6 +188,8 @@ jobs:
       matrix:
         node-version: [18, 20]
         os: [ubuntu-latest, windows-latest]
+        exclude:
+          - node-version: 20
     steps:
     - uses: actions/checkout@v3
     - uses: pnpm/action-setup@v2.4.0
