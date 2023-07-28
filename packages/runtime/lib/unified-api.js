@@ -1,11 +1,10 @@
 'use strict'
 const { resolve } = require('node:path')
 const parseArgs = require('minimist')
-const ConfigManager = require('@platformatic/config')
+const { ConfigManager, loadConfig } = require('@platformatic/config')
 const {
   platformaticService,
   buildServer,
-  loadConfig,
   start,
   schema: serviceSchema
 } = require('@platformatic/service')

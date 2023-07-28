@@ -4,7 +4,7 @@ import pino from 'pino'
 import pretty from 'pino-pretty'
 import { request } from 'undici'
 
-import { loadConfig } from '@platformatic/service'
+import { loadConfig } from '@platformatic/config'
 import { platformaticComposer } from '../index.js'
 
 async function fetchOpenApiSchema (service) {

@@ -5,7 +5,7 @@ import { setupDB } from './utils.js'
 import { Migrator } from './migrator.mjs'
 import { SeedError } from './errors.mjs'
 import { pathToFileURL } from 'url'
-import { loadConfig } from '@platformatic/service'
+import { loadConfig } from '@platformatic/config'
 import { platformaticDB } from '../index.js'
 
 async function execute (logger, args, config) {

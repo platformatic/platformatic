@@ -2,9 +2,8 @@
 
 const { readFile } = require('fs/promises')
 const close = require('close-with-grace')
-const { loadConfig } = require('./load-config')
+const { loadConfig, ConfigManager } = require('@platformatic/config')
 const { addLoggerToTheConfig } = require('./utils.js')
-const ConfigManager = require('@platformatic/config')
 const { restartable } = require('@fastify/restartable')
 
 async function adjustHttpsKeyAndCert (arg) {

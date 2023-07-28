@@ -8,7 +8,7 @@ import { MigrateError } from './errors.mjs'
 import { execute as generateTypes, checkForDependencies } from './gen-types.mjs'
 import { utimesSync } from 'fs'
 import { updateSchemaLock } from './utils.js'
-import { loadConfig } from '@platformatic/service'
+import { loadConfig } from '@platformatic/config'
 import { platformaticDB } from '../index.js'
 
 async function execute ({ logger, rollback, to, config }) {
