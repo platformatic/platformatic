@@ -5,8 +5,6 @@ const { SpanStatusCode } = require('@opentelemetry/api')
 const { ConsoleSpanExporter, BatchSpanProcessor, SimpleSpanProcessor, InMemorySpanExporter } = require('@opentelemetry/sdk-trace-base')
 const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions')
 const { Resource } = require('@opentelemetry/resources')
-const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-proto')
-const { ZipkinExporter } = require('@opentelemetry/exporter-zipkin')
 const { PlatformaticTracerProvider } = require('./platformatic-trace-provider')
 const { PlatformaticContext } = require('./platformatic-context')
 const { fastifyTextMapGetter, fastifyTextMapSetter } = require('./fastify-text-map')
@@ -73,24 +71,22 @@ const setupProvider = (app, opts) => {
   // Exporter config:
   // https://open-telemetry.github.io/opentelemetry-js/interfaces/_opentelemetry_exporter_zipkin.ExporterConfig.html
   const exporterOptions = { ...exporter.options, serviceName }
+
   let exporterObj
-  switch (exporter.type) {
-    case 'console':
-      exporterObj = new ConsoleSpanExporter(exporterOptions)
-      break
-    case 'otlp':
-      exporterObj = new OTLPTraceExporter(exporterOptions)
-      break
-    case 'zipkin':
-      exporterObj = new ZipkinExporter(exporterOptions)
-      break
-    case 'memory':
-      // This is for testing
-      exporterObj = new InMemorySpanExporter()
-      break
-    default:
-      app.log.warn(`Unknown exporter type: ${exporter.type}, defaulting to console.`)
-      exporterObj = new ConsoleSpanExporter(exporterOptions)
+  if (exporter.type === 'console') {
+    exporterObj = new ConsoleSpanExporter(exporterOptions)
+  } else if (exporter.type === 'otlp') {
+    // We require here because this require (and only the require!) creates some issue with c8 on some mjs tests on other modules. Since we need an assignemet here, we don't use a switch.
+    const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-proto')
+    exporterObj = new OTLPTraceExporter(exporterOptions)
+  } else if (exporter.type === 'zipkin') {
+    const { ZipkinExporter } = require('@opentelemetry/exporter-zipkin')
+    exporterObj = new ZipkinExporter(exporterOptions)
+  } else if (exporter.type === 'memory') {
+    exporterObj = new InMemorySpanExporter()
+  } else {
+    app.log.warn(`Unknown exporter type: ${exporter.type}, defaulting to console.`)
+    exporterObj = new ConsoleSpanExporter(exporterOptions)
   }
 
   // We use a SimpleSpanProcessor for the console/memory exporters and a BatchSpanProcessor for the others.
