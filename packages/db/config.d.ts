@@ -149,7 +149,11 @@ export interface PlatformaticDB {
       | {
           graphiql?: boolean;
           ignore?: {
-            [k: string]: boolean;
+            [k: string]:
+              | boolean
+              | {
+                  [k: string]: boolean;
+                };
           };
           subscriptionIgnore?: string[];
           schema?: string;
