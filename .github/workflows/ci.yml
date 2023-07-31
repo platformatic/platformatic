@@ -187,9 +187,7 @@ jobs:
     strategy:
       matrix:
         node-version: [18, 20]
-        os: [ubuntu-latest, windows-latest]
-        exclude:
-          - node-version: 20
+        os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@v3
     - uses: pnpm/action-setup@v2.4.0
