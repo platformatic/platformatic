@@ -62,9 +62,15 @@ const db = {
           },
           ignore: {
             type: 'object',
-            // TODO add support for column-level ignore
             additionalProperties: {
-              type: 'boolean'
+              anyOf: [{
+                type: 'boolean'
+              }, {
+                type: 'object',
+                additionalProperties: {
+                  type: 'boolean'
+                }
+              }]
             }
           },
           subscriptionIgnore: {
