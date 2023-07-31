@@ -9,6 +9,7 @@ const dotenv = require('dotenv')
 const { request } = require('undici')
 const { FileWatcher } = require('@platformatic/utils')
 const { getParser, analyze, upgrade } = require('@platformatic/metaconfig')
+const { isFileAccessible } = require('./utils')
 
 class ConfigManager extends EventEmitter {
   constructor (opts) {
@@ -280,16 +281,6 @@ class ConfigManager extends EventEmitter {
     const configFilesAccessibility = await Promise.all(configFileNames.map((fileName) => isFileAccessible(fileName, directory)))
     const accessibleConfigFilename = configFileNames.find((value, index) => configFilesAccessibility[index])
     return accessibleConfigFilename
-  }
-}
-
-async function isFileAccessible (filename, directory) {
-  try {
-    const filePath = resolve(directory, filename)
-    await access(filePath)
-    return true
-  } catch (err) {
-    return false
   }
 }
 

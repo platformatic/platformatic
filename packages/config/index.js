@@ -2,7 +2,7 @@
 
 const { ConfigManager } = require('./lib/manager')
 const { Store } = require('./lib/store')
-const loadConfig = require('./lib/load-config')
+const { loadConfig } = require('./lib/load-config')
 
 module.exports = ConfigManager
 module.exports.ConfigManager = ConfigManager

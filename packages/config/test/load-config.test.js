@@ -1,13 +1,19 @@
 'use strict'
 
 const { test } = require('tap')
-const { loadConfig } = require('../')
+const { loadConfig, Store } = require('../')
 const { join } = require('path')
 const { readFile } = require('fs/promises')
 
+function app () {
+}
+app.configType = 'service'
+app.schema = {
+  $id: 'service',
+  type: 'object'
+}
+
 test('happy path', async t => {
-  function app () {
-  }
   const file = join(__dirname, 'fixtures', 'platformatic.service.json')
   const { configManager, args } = await loadConfig({}, ['-c', file, '--boo'], app)
 
@@ -24,10 +30,6 @@ test('happy path', async t => {
 })
 
 test('cwd', async t => {
-  function app () {
-  }
-  app.configType = 'service'
-
   {
     const cwd = process.cwd()
     process.chdir(join(__dirname, 'fixtures'))
@@ -38,9 +40,8 @@ test('cwd', async t => {
   const file = join(__dirname, 'fixtures', 'platformatic.service.json')
   const { configManager, args } = await loadConfig({}, [], app)
 
-  t.same(args, {
+  t.match(args, {
     _: [],
-    config: 'platformatic.service.json',
     allowEnv: '',
     'allow-env': '',
     E: ''
@@ -50,10 +51,6 @@ test('cwd', async t => {
 
 // TODO this must be refactored so that it throws an error
 test('empty kills the process', async t => {
-  function app () {
-  }
-  app.configType = 'service'
-
   const exit = process.exit
   process.exit = code => {
     t.equal(code, 1)
@@ -74,7 +71,9 @@ test('empty kills the process', async t => {
 test('not passing validation kills the process', async t => {
   function app () {
   }
+  app.configType = 'service'
   app.schema = {
+    $id: 'service',
     type: 'object',
     properties: {
       foo: {
@@ -102,8 +101,6 @@ test('not passing validation kills the process', async t => {
 })
 
 test('allow-env', async (t) => {
-  function app () {
-  }
   const file = join(__dirname, 'fixtures', 'bad-placeholder.json')
   process.env.PORT = '3000'
   const { configManager, args } = await loadConfig({}, ['-c', file, '--allow-env', 'PORT'], app)
@@ -119,4 +116,23 @@ test('allow-env', async (t) => {
   const content = JSON.parse(await readFile(file, 'utf8'))
   content.server.port = '3000'
   t.same(configManager.current, content)
+})
+
+test('loadConfig with Store', async t => {
+  const file = join(__dirname, 'fixtures', 'with-store.json')
+
+  const store = new Store()
+  store.add(app)
+  const { configManager, args } = await loadConfig({}, ['-c', file, '--boo'], store)
+
+  t.same(args, {
+    _: [],
+    c: file,
+    config: file,
+    boo: true,
+    allowEnv: '',
+    'allow-env': '',
+    E: ''
+  })
+  t.same(configManager.current, JSON.parse(await readFile(file, 'utf8')))
 })

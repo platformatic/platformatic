@@ -3,6 +3,7 @@
 const { test } = require('tap')
 const { Store } = require('../')
 const { join } = require('path')
+const { ConfigManager } = require('../lib/manager')
 
 test('Store with builtins', async t => {
   function foo () {
@@ -33,7 +34,10 @@ test('Store with builtins', async t => {
 
   t.equal(await store.get({ $schema: 'foo' }), foo, 'should have builtin value')
   await t.rejects(store.get({ $schema: 'bar' }))
-  t.same(store.listConfigFiles(), ['platformatic.foo.json'])
+  t.same(store.listTypes(), [{
+    id: 'foo',
+    configType: 'foo'
+  }])
 })
 
 test('missing schema', async t => {
@@ -193,4 +197,42 @@ test('app must be a function', async t => {
 
   const store = new Store()
   t.throws(store.add.bind(store, foo))
+})
+
+test('loadConfig', async t => {
+  function foo () {
+  }
+
+  foo.schema = {
+    $id: 'foo',
+    type: 'object'
+  }
+
+  foo.configType = 'service'
+  foo.configManagerConfig = {
+    schema: foo.schema,
+    envWhitelist: ['PORT', 'HOSTNAME'],
+    allowToWatch: ['.env'],
+    schemaOptions: {
+      useDefaults: true,
+      coerceTypes: true,
+      allErrors: true,
+      strict: false
+    },
+    transformConfig () {
+    }
+  }
+
+  const cwd = process.cwd()
+  process.chdir(join(__dirname, 'fixtures'))
+
+  const store = new Store()
+  store.add(foo)
+
+  t.teardown(() => {
+    process.chdir(cwd)
+  })
+
+  const configManager = await store.loadConfig()
+  t.equal(configManager instanceof ConfigManager, true, 'should return configManager')
 })

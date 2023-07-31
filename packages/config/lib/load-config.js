@@ -1,18 +1,10 @@
 'use strict'
 
-const { ConfigManager } = require('./manager')
-const { access } = require('fs/promises')
+const { Store } = require('./store')
 const parseArgs = require('minimist')
 const deepmerge = require('@fastify/deepmerge')
 
 async function loadConfig (minimistConfig, _args, app, overrides = {}) {
-  const configManagerConfig = {
-    ...app.configManagerConfig,
-    ...overrides
-  }
-
-  const configType = app.configType
-
   const args = parseArgs(_args, deepmerge({ all: true })({
     string: ['allow-env'],
     default: {
@@ -25,31 +17,43 @@ async function loadConfig (minimistConfig, _args, app, overrides = {}) {
     }
   }, minimistConfig))
 
-  try {
-    if (!args.config) {
-      args.config = await ConfigManager.findConfigFile(process.cwd(), configType)
-    }
-    await access(args.config)
-  } catch (err) {
-    const configFiles = ConfigManager.listConfigFiles(configType)
-    console.error(`
-Missing config file!
-Be sure to have a config file with one of the following names:
-
-${configFiles.map((s) => ' * ' + s).join('\n')}
-
-In alternative run "npm create platformatic@latest" to generate a basic plt service config.
-Error: ${err}
-`)
-    process.exit(1)
+  let store
+  if (app instanceof Store) {
+    store = app
+    app = null
+  } else {
+    store = new Store()
+    store.add(app)
   }
 
-  const envWhitelist = args.allowEnv ? args.allowEnv : configManagerConfig.envWhitelist
-  const configManager = new ConfigManager({
-    source: args.config,
-    ...configManagerConfig,
-    envWhitelist
-  })
+  let configManager
+  try {
+    configManager = await store.loadConfig({
+      app,
+      config: args.config,
+      allowEnv: args.allowEnv,
+      overrides
+    })
+  } catch (err) {
+    // TODO refactor this file to avoid process.exit calls
+    // ignoring for now
+    /* istanbul ignore next */
+    if (err.filenames) {
+      console.error(`
+  Missing config file!
+  Be sure to have a config file with one of the following names:
+
+  ${err.filenames.map((s) => ' * ' + s).join('\n')}
+
+  In alternative run "npm create platformatic@latest" to generate a basic plt service config.
+  Error: ${err}
+  `)
+      process.exit(1)
+    } else {
+      console.error(err)
+      process.exit(1)
+    }
+  }
 
   try {
     const parsingResult = await configManager.parse()
@@ -74,4 +78,4 @@ function printConfigValidationErrors (configManager) {
   console.table(tabularData, ['path', 'message'])
 }
 
-module.exports = loadConfig
+module.exports.loadConfig = loadConfig
