@@ -101,6 +101,60 @@ export default async function (fastify: FastifyInstance, opts: FastifyPluginOpti
 }
 `
 
+const TEST_HELPER_JS = `\
+'use strict'
+
+const { join } = require('node:path')
+const { readFile } = require('node:fs/promises')
+const { buildServer } = require('@platformatic/service')
+
+async function getServer () {
+  const config = JSON.parse(await readFile(join(__dirname, '..', 'platformatic.service.json'), 'utf8'))
+  config.server.logger.level = 'warn'
+  config.watch = false
+  return buildServer(config)
+}
+
+module.exports.getServer = getServer
+`
+
+const TEST_ROUTES_JS = `\
+'use strict'
+
+const test = require('node:test')
+const assert = require('node:assert')
+const { getServer } = require('../helper')
+
+test('root', async (t) => {
+  const server = await getServer()
+  t.after(() => server.close())
+  const res = await server.inject({
+    method: 'GET',
+    url: '/'
+  })
+
+  assert.strictEqual(res.statusCode, 200)
+  assert.deepStrictEqual(res.json(), {
+    hello: 'foobar'
+  })
+})
+`
+
+const TEST_PLUGIN_JS = `\
+'use strict'
+
+const test = require('node:test')
+const assert = require('node:assert')
+const { getServer } = require('../helper')
+
+test('example decorator', async (t) => {
+  const server = await getServer()
+  t.after(() => server.close())
+
+  assert.strictEqual(server.example, 'foobar')
+})
+`
+
 async function generatePluginWithTypesSupport (logger, currentDir, isTypescript) {
   await mkdir(join(currentDir, 'plugins'))
   const pluginTemplate = isTypescript
@@ -123,6 +177,27 @@ async function generateRouteWithTypesSupport (logger, currentDir, isTypescript) 
     : 'root.js'
   await writeFile(join(currentDir, 'routes', routesName), routesTemplate)
   logger.info('Routes folder "routes" successfully created.')
+}
+
+async function generateTests (logger, currentDir, isTypescript) {
+  await mkdir(join(currentDir, 'test'))
+  await mkdir(join(currentDir, 'test', 'plugins'))
+  await mkdir(join(currentDir, 'test', 'routes'))
+
+  await writeFile(join(currentDir, 'test', 'helper.js'), TEST_HELPER_JS)
+  await writeFile(join(currentDir, 'test', 'plugins', 'example.test.js'), TEST_PLUGIN_JS)
+  await writeFile(join(currentDir, 'test', 'routes', 'root.test.js'), TEST_ROUTES_JS)
+
+  /*
+  const testTemplate = isTypescript
+    ? TS_TEST_WITH_TYPES_SUPPORT
+    : JS_TEST_PLUGIN_WITH_TYPES_SUPPORT
+  const testName = isTypescript
+    ? 'example.ts'
+    : 'example.js'
+  await writeFile(join(currentDir, 'plugins', pluginName), pluginTemplate)
+  logger.info('Plugins folder "plugins" successfully created.')
+  */
 }
 
 async function createService ({ hostname, port, typescript = false }, logger, currentDir = process.cwd(), version) {
@@ -179,6 +254,13 @@ async function createService ({ hostname, port, typescript = false }, logger, cu
     await generateRouteWithTypesSupport(logger, currentDir, typescript)
   } else {
     logger.info('Routes folder "routes" found, skipping creation of routes folder.')
+  }
+
+  const testFolderExists = await isFileAccessible('tests', currentDir)
+  if (!testFolderExists) {
+    await generateTests(logger, currentDir, typescript)
+  } else {
+    logger.info('Test folder found, skipping creation of tests.')
   }
 
   return {
