@@ -257,7 +257,11 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
           if (!['text', 'varchar'].includes(fieldWrap.sqlType)) {
             leftHand = sql`TRIM(CAST(${sql.ident(field)} AS CHAR(64)))`
           }
-          criteria.push(sql`${leftHand} ILIKE ${value[key]}`)
+          if (queries.hasIlike) {
+            criteria.push(sql`${leftHand} ILIKE ${value[key]}`)
+          } else {
+            criteria.push(sql`${leftHand} LIKE ${value[key]}`)
+          }
         } else if (operator === 'ANY' || operator === 'ALL') {
           throw new Error('Unsupported operator for non Array field')
         } else {

@@ -115,3 +115,5 @@ module.exports = {
   updateOne,
   updateMany
 }
+
+module.exports.hasIlike = false

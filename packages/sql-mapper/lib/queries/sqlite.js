@@ -245,3 +245,5 @@ async function updateMany (db, sql, table, schema, criteria, input, fieldsToRetr
 }
 
 module.exports.updateMany = updateMany
+
+module.exports.hasIlike = false
