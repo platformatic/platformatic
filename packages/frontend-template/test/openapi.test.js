@@ -24,7 +24,6 @@ test('build basic client from url', async ({ teardown, same, match }) => {
   const res = await request(`${app.url}/documentation/json`)
   const schema = await res.body.json()
   const { types, implementation } = processOpenAPI({ schema, name: 'sample-frontend', url: app.url, language: 'js' })
-  console.log(types, implementation)
 
   // The types interfaces are being created
   match(types, /interface FullResponse<T>/)
