@@ -2,6 +2,7 @@
 
 const { join } = require('node:path')
 const { test } = require('tap')
+const { request } = require('undici')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 const {
   createComposer,
@@ -291,4 +292,31 @@ test('should allow custom title', async (t) => {
   const openApiSchema = JSON.parse(body)
   t.equal(openApiSchema.info.title, 'My API')
   t.equal(openApiSchema.info.version, '1.0.42')
+})
+
+test('should parse array querystring', async (t) => {
+  const api1 = await createOpenApiService(t, ['users'])
+  await api1.listen({ port: 0 })
+
+  const composer = await createComposer(t, {
+    composer: {
+      services: [
+        {
+          id: 'api1',
+          origin: 'http://127.0.0.1:' + api1.server.address().port,
+          openapi: {
+            url: '/documentation/json'
+          }
+        }
+      ]
+    }
+  })
+
+  const composerOrigin = await composer.start()
+
+  const { statusCode } = await request(composerOrigin, {
+    method: 'GET',
+    path: '/users?fields=id,name'
+  })
+  t.equal(statusCode, 200)
 })
