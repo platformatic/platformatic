@@ -319,3 +319,14 @@ module.exports = async function (app, opts) {
   })
 }
 ```
+
+
+## Telemetry propagation
+To correctly propagate telemetry information, be sure to get the client from the request object, e.g.:
+
+```js 
+fastify.post('/', async (request, reply) => {
+  const res = await request.movies.createMovie({ title: 'foo' })
+  return res
+})
+```

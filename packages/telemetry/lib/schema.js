@@ -38,6 +38,7 @@ const TelemetrySchema = {
       }
     }
   },
+  required: ['serviceName'],
   additionalProperties: false
 }
 
