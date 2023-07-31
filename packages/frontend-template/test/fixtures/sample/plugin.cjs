@@ -17,8 +17,8 @@ module.exports = async function (app) {
         }
       }
     }
-  }, 
-    async (request, reply) => {
+  },
+  async (request, reply) => {
     return reply.code(302).redirect('https://google.com')
   })
 }

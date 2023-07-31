@@ -6,9 +6,8 @@ import { join } from 'path'
 import { processOpenAPI } from '../lib/gen-openapi.mjs'
 import fs from 'fs/promises'
 import { request } from 'undici'
-import * as url from 'url';
-const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
-
+import * as url from 'url'
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 
 test('build basic client from url', async ({ teardown, same, match }) => {
   try {
