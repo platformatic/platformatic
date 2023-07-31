@@ -128,4 +128,4 @@ async function listEnumValues (db, sql, table, schema) {
 
 module.exports.listEnumValues = listEnumValues
 
-module.exports.hasIlike = true
+module.exports.hasILIKE = true

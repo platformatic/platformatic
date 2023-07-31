@@ -116,4 +116,4 @@ module.exports = {
   updateMany
 }
 
-module.exports.hasIlike = false
+module.exports.hasILIKE = false
