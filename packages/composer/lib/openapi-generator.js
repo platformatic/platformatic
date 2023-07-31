@@ -103,6 +103,12 @@ async function composeOpenAPI (app, opts) {
       }
     }
   })
+
+  app.addHook('preValidation', async (req) => {
+    if (typeof req.query.fields === 'string') {
+      req.query.fields = req.query.fields.split(',')
+    }
+  })
 }
 
 function createPathMapper (originOpenApiPath, renamedOpenApiPath, prefix) {
