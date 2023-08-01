@@ -23,7 +23,7 @@ In this way we show that the telemetry is propagated from the Composer throughou
 Let's setup all this components:
 
 ### Platformatic DB Service
-Create a folder for DB cd into it:
+Create a folder for DB and cd into it:
 ```bash
 mkdir test-db
 cd test-db
@@ -86,23 +86,13 @@ npx platformatic db start
 ```
 ### Platformatic Service
 Create at the same level of `test-db` another folder for Service and cd into it:
+
 ```bash
 mkdir test-service
 cd test-service
 ```
+
 Then create a `service` on the `5043` port in the folder using `npx create-platformatic@latest`:
-
-```bash
-npx create-platformatic@latest
-```
-
-
-Create a folder for the service:
-```bash
-mkdir test-service-ot
-cd test-service-ot
-```
-Then create a `service` in the folder using `npx create-platformatic@latest`:
 
 ```bash
 ➜ npx create-platformatic@latest
