@@ -14,7 +14,6 @@ const fs = require('fs/promises')
 async function platformaticDB (app, opts) {
   const configManager = app.platformatic.configManager
   const config = configManager.current
-  await adjustConfig(configManager)
 
   let createSchemaLock = false
   await loadSchemaLock()

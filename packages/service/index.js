@@ -98,7 +98,9 @@ platformaticService.configManagerConfig = {
     // to do in the schema, because it is uses an anyOf.
     if (this.current.watch === undefined) {
       this.current.watch = { enabled: false }
-    } else if (typeof this.current.watch !== 'object') {
+    }
+
+    if (typeof this.current.watch !== 'object') {
       this.current.watch = { enabled: this.current.watch || false }
     }
 
@@ -108,8 +110,11 @@ platformaticService.configManagerConfig = {
       if (outDir === undefined) {
         let tsConfigFile = typescript.tsConfigFile || 'tsconfig.json'
         tsConfigFile = join(dirname(this.fullPath), tsConfigFile)
-        const tsConfig = JSON.parse(await readFile(tsConfigFile, 'utf8'))
-        outDir = tsConfig.compilerOptions.outDir || 'dist'
+        try {
+          const tsConfig = JSON.parse(await readFile(tsConfigFile, 'utf8'))
+          outDir = tsConfig.compilerOptions.outDir
+        } catch {}
+        outDir ||= 'dist'
       }
 
       this.current.watch.ignore ||= []
