@@ -220,3 +220,10 @@ test('correctly loads the hotReload value from a string', async () => {
   const loaded = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   assert.strictEqual(loaded.configManager.current.hotReload, true)
 })
+
+test('correctly loads the hotReload value from a string', async () => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-hotreload-env.json')
+  process.env.PLT_HOT_RELOAD = 'false'
+  const loaded = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  assert.strictEqual(loaded.configManager.current.hotReload, false)
+})
