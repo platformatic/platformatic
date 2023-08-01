@@ -200,7 +200,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     lt: '<',
     lte: '<=',
     like: 'LIKE',
-    ilike: queries.hasILIKE ? 'ILIKE' : 'LIKE',
+    ilike: 'ILIKE',
     any: 'ANY',
     all: 'ALL'
   }
@@ -249,7 +249,8 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
           if (!['text', 'varchar'].includes(fieldWrap.sqlType)) {
             leftHand = sql`TRIM(CAST(${sql.ident(field)} AS CHAR(64)))`
           }
-          criteria.push(sql`${leftHand} ${operator} ${value[key]}`)
+          const like = operator === 'LIKE' ? sql`LIKE` : queries.hasILIKE ? sql`ILIKE` : sql`LIKE`
+          criteria.push(sql`${leftHand} ${like} ${value[key]}`)
         } else if (operator === 'ANY' || operator === 'ALL') {
           throw new Error('Unsupported operator for non Array field')
         } else {
