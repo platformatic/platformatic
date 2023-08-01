@@ -1,5 +1,9 @@
 lockfileVersion: '6.0'
 
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
 importers:
 
   .:
@@ -473,8 +477,8 @@ importers:
         specifier: ^1.2.8
         version: 1.2.8
       ora:
-        specifier: ^6.3.1
-        version: 6.3.1
+        specifier: ^7.0.0
+        version: 7.0.0
       pino:
         specifier: ^8.14.1
         version: 8.14.1
@@ -8838,9 +8842,9 @@ packages:
       wcwidth: 1.0.1
     dev: false
 
-  /ora@6.3.1:
-    resolution: {integrity: sha512-ERAyNnZOfqM+Ao3RAvIXkYh5joP220yf59gVe2X/cI6SiCxIdi4c9HZKZD8R6q/RDXEje1THBju6iExiSsgJaQ==}
-    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+  /ora@7.0.0:
+    resolution: {integrity: sha512-jYSRKdGWCA69vNIcpuJwf8zJ8n1wlEyYmT+P5ljsQHAn1stHi+HGXJQWKtCOybQ+7oOekPgIhTdj0xexo2F/Sg==}
+    engines: {node: '>=16'}
     dependencies:
       chalk: 5.3.0
       cli-cursor: 4.0.0
@@ -8850,7 +8854,6 @@ packages:
       log-symbols: 5.1.0
       stdin-discarder: 0.1.0
       strip-ansi: 7.1.0
-      wcwidth: 1.0.1
     dev: false
 
   /os-homedir@1.0.2:
@@ -12144,7 +12147,3 @@ packages:
   /zenscroll@4.0.2:
     resolution: {integrity: sha512-jEA1znR7b4C/NnaycInCU6h/d15ZzCd1jmsruqOKnZP6WXQSMH3W2GL+OXbkruslU4h+Tzuos0HdswzRUk/Vgg==}
     dev: true
-
-settings:
-  autoInstallPeers: true
-  excludeLinksFromLockfile: false
