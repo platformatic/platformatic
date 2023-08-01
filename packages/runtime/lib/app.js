@@ -246,9 +246,7 @@ class PlatformaticApp {
       this.server.log.info('files changed')
       this.restart()
     }, 100) // debounce restart for 100ms
-    fileWatcher.on('update', function (...args) {
-      restart()
-    })
+    fileWatcher.on('update', restart)
 
     fileWatcher.startWatching()
     server.log.debug('start watching files')
