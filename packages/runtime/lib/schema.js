@@ -47,7 +47,6 @@ const platformaticRuntimeSchema = {
     services: {
       type: 'array',
       default: [],
-      minItems: 1,
       items: {
         type: 'object',
         required: ['id', 'path', 'config'],
