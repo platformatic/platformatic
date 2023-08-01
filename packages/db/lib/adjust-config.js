@@ -1,8 +1,11 @@
 'use strict'
 const { resolve } = require('path')
 const { readFile } = require('fs/promises')
+const { platformaticService } = require('@platformatic/service')
 
 module.exports = async function adjustConfig (configManager) {
+  await platformaticService.configManagerConfig.transformConfig.call(configManager)
+
   const dirOfConfig = configManager.dirname
   if (configManager.current.db && configManager.current.db.connectionString.indexOf('sqlite') === 0 && configManager.current.db.connectionString !== 'sqlite://:memory:') {
     const originalSqlitePath = configManager.current.db.connectionString.replace('sqlite://', '')
