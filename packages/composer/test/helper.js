@@ -26,6 +26,10 @@ async function createBasicService (t) {
     return 'Some text'
   })
 
+  app.get('/error', async () => {
+    throw new Error('KA-BOOM!!!')
+  })
+
   app.get('/object', {
     schema: {
       response: {

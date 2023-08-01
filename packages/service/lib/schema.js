@@ -5,6 +5,7 @@
 const pkg = require('../package.json')
 const version = 'v' + pkg.version
 const openApiDefs = require('./openapi-schema-defs')
+const telemetry = require('@platformatic/telemetry').schema
 
 const cors = {
   type: 'object',
@@ -580,6 +581,7 @@ const platformaticServiceSchema = {
     server,
     plugins,
     metrics,
+    telemetry,
     watch: {
       anyOf: [watch, {
         type: 'boolean'

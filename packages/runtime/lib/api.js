@@ -11,10 +11,12 @@ class RuntimeApi {
 
   constructor (config, logger, loaderPort) {
     this.#services = new Map()
+    const telemetryConfig = config.telemetry
 
     for (let i = 0; i < config.services.length; ++i) {
       const service = config.services[i]
-      const app = new PlatformaticApp(service, loaderPort, logger)
+      const serviceTelemetryConfig = telemetryConfig ? { ...telemetryConfig, serviceName: `${telemetryConfig.serviceName}-${service.id}` } : null
+      const app = new PlatformaticApp(service, loaderPort, logger, serviceTelemetryConfig)
 
       this.#services.set(service.id, app)
     }
