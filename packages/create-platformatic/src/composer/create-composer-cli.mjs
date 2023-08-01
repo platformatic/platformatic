@@ -79,7 +79,7 @@ const createPlatformaticComposer = async (_args, opts) => {
   // Create the package.json, notes that we don't have the option for TS (yet) so we don't generate
   // the package.json with the TS build
   if (!opts.skipPackageJson) {
-    await createPackageJson(version, fastifyVersion, logger, projectDir, false)
+    await createPackageJson(version, fastifyVersion, logger, projectDir, 'composer', false)
   }
   if (!opts.skipGitignore) {
     await createGitignore(logger, projectDir)

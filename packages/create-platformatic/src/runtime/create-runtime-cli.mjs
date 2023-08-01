@@ -63,7 +63,7 @@ export async function createPlatformaticRuntime (_args) {
 
   // Create the package.json, notes that we don't have the option for TS (yet) so we don't generate
   // the package.json with the TS build
-  await createPackageJson(version, fastifyVersion, logger, projectDir, false)
+  await createPackageJson(version, fastifyVersion, logger, projectDir, 'runtime', false)
   await createGitignore(logger, projectDir)
   await createReadme(logger, projectDir)
 
