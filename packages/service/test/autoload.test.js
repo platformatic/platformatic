@@ -403,3 +403,35 @@ test('autoload with ignorePattern, indexPattern and autoHooksPattern options', a
     equal(body.hello, 'from auto.hooks.js', 'body')
   }
 })
+
+test('autoload with INVALID ignorePattern, indexPattern and autoHooksPattern options', async ({ teardown, equal }) => {
+  const config = {
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugins: {
+      paths: [
+        {
+          path: join(__dirname, 'fixtures', 'directories', 'routes'),
+          ignorePattern: '***',
+          indexPattern: '***terrible)))_pattern',
+          autoHooksPattern: ''
+        }
+      ]
+    },
+    watch: false,
+    metrics: false
+  }
+
+  const app = await buildServer(config)
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  {
+    const res = await request(`${app.url}/`)
+    equal(res.statusCode, 200, 'status code')
+  }
+})

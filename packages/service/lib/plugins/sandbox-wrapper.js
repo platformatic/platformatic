@@ -54,24 +54,36 @@ module.exports = fp(async function (app, opts) {
 function patternOptionsFromPlugin (plugin) {
   const config = {}
 
-  if (plugin.ignorePattern) {
-    config.ignorePattern = stringPatternToRegExp(plugin.ignorePattern)
-  }
+  // Expected keys for autoload plugin options that expect regexp patterns
+  const patternOptionKeys = ['ignorePattern', 'indexPattern', 'autoHooksPattern']
 
-  if (plugin.indexPattern) {
-    config.indexPattern = stringPatternToRegExp(plugin.indexPattern)
-  }
+  for (const key of patternOptionKeys) {
+    const pattern = plugin[key]
 
-  if (plugin.autoHooksPattern) {
-    config.autoHooksPattern = stringPatternToRegExp(plugin.autoHooksPattern)
+    // If pattern key not found in plugin object, move on
+    if (!pattern) {
+      continue
+    }
+
+    // Build an instance of a RegExp. If this comes back undefined,
+    // then an invalid value was provided. Move on.
+    const regExpPattern = stringPatternToRegExp(pattern)
+    if (!regExpPattern) {
+      continue
+    }
+
+    // We have a valid RegExp so add the option to the config to pass along to
+    // autoload.
+    config[key] = regExpPattern
   }
 
   return config
 }
 
 function stringPatternToRegExp (stringPattern) {
-  if (!stringPattern || (typeof stringPattern !== 'string')) {
+  try {
+    return new RegExp(stringPattern)
+  } catch (err) {
     return undefined
   }
-  return new RegExp(stringPattern)
 }
