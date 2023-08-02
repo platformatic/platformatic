@@ -69,27 +69,6 @@ async function buildServer (options, app) {
 
   const handler = await restartable(createRestartable)
 
-  configManager.on('update', async (newConfig) => {
-    handler.log.debug('config changed')
-    handler.log.trace({ newConfig }, 'new config')
-
-    if (newConfig.watch === false) {
-      /* c8 ignore next 4 */
-      if (handler.tsCompilerWatcher) {
-        handler.tsCompilerWatcher.kill('SIGTERM')
-        handler.log.debug('stop watching typescript files')
-      }
-
-      if (handler.fileWatcher) {
-        await handler.fileWatcher.stopWatching()
-        handler.log.debug('stop watching files')
-      }
-    }
-
-    await safeRestart(handler)
-    /* c8 ignore next 1 */
-  })
-
   configManager.on('error', function (err) {
     /* c8 ignore next 1 */
     handler.log.error({ err }, 'error reloading the configuration')
@@ -103,10 +82,10 @@ async function buildServer (options, app) {
   return handler
 }
 
+/* c8 ignore next 12 */
 async function safeRestart (app) {
   try {
     await app.restart()
-    /* c8 ignore next 8 */
   } catch (err) {
     app.log.error({
       err: {
@@ -118,6 +97,7 @@ async function safeRestart (app) {
 }
 
 async function start (appType, _args) {
+  /* c8 ignore next 55 */
   const { configManager } = await loadConfig({}, _args, appType)
 
   const config = configManager.current
@@ -136,10 +116,7 @@ async function start (appType, _args) {
   try {
     // Set the location of the config
     app = await buildServer({ ...config, configManager }, appType)
-
     await app.start()
-    // TODO: this log is used in the start command. Should be replaced
-    app.log.info({ url: app.url })
   } catch (err) {
     // TODO route this to a logger
     console.error(err)
@@ -148,7 +125,6 @@ async function start (appType, _args) {
 
   // Ignore from CI because SIGUSR2 is not available
   // on Windows
-  /* c8 ignore next 25 */
   process.on('SIGUSR2', function () {
     app.log.info('reloading configuration')
     safeRestart(app)

@@ -1,7 +1,6 @@
 import { request, moveToTmpdir } from './helper.js'
 import { test } from 'tap'
 import { buildServer } from '@platformatic/db'
-import service from '@platformatic/service'
 import { join } from 'path'
 import * as desm from 'desm'
 import { execa } from 'execa'
@@ -9,7 +8,6 @@ import { promises as fs } from 'fs'
 import split from 'split2'
 import graphql from 'graphql'
 import { copy } from 'fs-extra'
-import dotenv from 'dotenv'
 
 test('graphql client generation (javascript)', async ({ teardown, comment, same, equal, match }) => {
   try {
@@ -329,106 +327,6 @@ app.listen({ port: 0 })
   })
 })
 
-test('adds clients to platformatic service', async ({ teardown, comment, same, match }) => {
-  try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
-  } catch {
-    // noop
-  }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
-
-  await app.start()
-
-  const dir = await moveToTmpdir(teardown)
-
-  comment(`working in ${dir}`)
-
-  const pltServiceConfig = {
-    $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
-    server: {
-      hostname: '127.0.0.1',
-      port: 0
-    },
-    plugins: {
-      paths: ['./plugin.js']
-    },
-    watch: false
-  }
-
-  await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
-
-  await fs.writeFile(join(dir, '.env'), 'FOO=bar')
-  await fs.writeFile(join(dir, '.env.sample'), 'FOO=bar')
-
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
-
-  {
-    const newConfig = JSON.parse(await fs.readFile('./platformatic.service.json', 'utf8'))
-    same(newConfig, {
-      $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
-      server: {
-        hostname: '127.0.0.1',
-        port: 0
-      },
-      plugins: {
-        paths: ['./plugin.js']
-      },
-      clients: [{
-        path: './movies',
-        url: '{PLT_MOVIES_URL}'
-      }],
-      watch: false
-    })
-  }
-
-  comment(`server at ${app.url}`)
-
-  const toWrite = `
-module.exports = async function (app, opts) {
-  app.post('/', async (request, reply) => {
-    const res = await app.movies.graphql({
-      query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
-    })
-    return res
-  })
-}
-`
-  await fs.writeFile(join(dir, 'plugin.js'), toWrite)
-
-  process.env.PLT_MOVIES_URL = app.url
-
-  const app2 = await service.buildServer('./platformatic.service.json')
-
-  await app2.start()
-  teardown(async () => { await app2.close() })
-  teardown(async () => { await app.close() })
-
-  const res = await request(app2.url, {
-    method: 'POST'
-  })
-  const body = await res.body.json()
-  match(body, {
-    title: 'foo'
-  })
-
-  const url = app.url + '/'
-  {
-    const envs = dotenv.parse(await fs.readFile(join(dir, '.env')))
-    same(envs, {
-      FOO: 'bar',
-      PLT_MOVIES_URL: url
-    })
-  }
-
-  {
-    const envs = dotenv.parse(await fs.readFile(join(dir, '.env.sample')))
-    same(envs, {
-      FOO: 'bar',
-      PLT_MOVIES_URL: url
-    })
-  }
-})
-
 test('configureClient (typescript)', async ({ teardown, comment, same, match }) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
@@ -520,7 +418,7 @@ app.listen({ port: 0 });
   })
 })
 
-test('graphql client generation errors if the name is not a valid JS identifier', async ({ teardown, comment, rejects }) => {
+test('graphql client generation (javascript) from a file', async ({ teardown, comment, same, equal, match }) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -529,10 +427,64 @@ test('graphql client generation errors if the name is not a valid JS identifier'
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
-  teardown(async () => { await app.close() })
 
   const dir = await moveToTmpdir(teardown)
-
   comment(`working in ${dir}`)
-  await rejects(execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies-foo']))
+
+  const sdl = graphql.printSchema(app.graphql.schema)
+  const sdlFile = join(dir, 'movies.schema.graphql')
+  await fs.writeFile(sdlFile, sdl)
+
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), sdlFile, '--name', 'movies'])
+
+  const readSDL = await fs.readFile(join(dir, 'movies', 'movies.schema.graphql'), 'utf8')
+  equal(sdl, readSDL)
+
+  comment(`server at ${app.url}`)
+
+  const toWrite = `
+'use strict'
+
+const Fastify = require('fastify')
+const movies = require('./movies')
+const app = Fastify({ logger: true })
+
+app.register(movies, { url: '${app.url}' })
+app.post('/', async (request, reply) => {
+  const res = await app.movies.graphql({
+    query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
+  })
+  return res
+})
+app.listen({ port: 0 })
+`
+  await fs.writeFile(join(dir, 'index.js'), toWrite)
+
+  const server2 = execa('node', ['index.js'])
+  teardown(() => server2.kill())
+  teardown(async () => { await app.close() })
+
+  const stream = server2.stdout.pipe(split(JSON.parse))
+
+  // this is unfortuate :(
+  const base = 'Server listening at '
+  let url
+  for await (const line of stream) {
+    const msg = line.msg
+    if (msg.indexOf(base) !== 0) {
+      continue
+    }
+    url = msg.slice(base.length)
+    break
+  }
+  if (!url) {
+    throw new Error('no url was found')
+  }
+  const res = await request(url, {
+    method: 'POST'
+  })
+  const body = await res.body.json()
+  match(body, {
+    title: 'foo'
+  })
 })

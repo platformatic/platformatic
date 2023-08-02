@@ -3,11 +3,12 @@
 import commist from 'commist'
 import minimist from 'minimist'
 import { runDB } from '@platformatic/db/db.mjs'
-import { run as runRuntime } from '@platformatic/runtime/runtime.mjs'
+import { run as runRuntime, compile } from '@platformatic/runtime/runtime.mjs'
 import { runService } from '@platformatic/service/service.mjs'
 import { runComposer } from '@platformatic/composer/composer.mjs'
-import { startCommand } from '@platformatic/start'
+import platformaticStart from '@platformatic/start'
 import { login } from '@platformatic/authenticate/authenticate.js'
+import { command as frontend } from '@platformatic/frontend-template'
 import { command as client } from '@platformatic/client-cli'
 import { readFile } from 'fs/promises'
 import { join } from 'desm'
@@ -42,10 +43,11 @@ const ensureCommand = async ({ output, help }) => {
 program.register('db', async (args) => ensureCommand(await runDB(args)))
 program.register('runtime', async (args) => ensureCommand(await runRuntime(args)))
 program.register('service', async (args) => ensureCommand(await runService(args)))
-program.register('start', startCommand)
+program.register('start', platformaticStart.startCommand)
 program.register('composer', async (args) => ensureCommand(await runComposer(args)))
 program.register('upgrade', upgrade)
 program.register('client', client)
+program.register('compile', compile)
 program.register('help', help.toStdout)
 program.register('help db', async (args) => runDB(['help', ...args]))
 program.register('help runtime', async (args) => runRuntime(['help', ...args]))
@@ -53,6 +55,7 @@ program.register('help service', async (args) => runService(['help', ...args]))
 program.register({ command: 'login', strict: true }, login)
 program.register('gh', gh)
 program.register('deploy', deploy)
+program.register('frontend', frontend)
 
 const args = minimist(process.argv.slice(2), {
   boolean: ['help', 'version'],

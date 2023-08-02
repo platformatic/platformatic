@@ -1,6 +1,7 @@
 'use strict'
 const { readFile, readdir } = require('node:fs/promises')
-const { join, resolve: pathResolve } = require('node:path')
+const { basename, join, resolve: pathResolve } = require('node:path')
+const { closest } = require('fastest-levenshtein')
 const Topo = require('@hapi/topo')
 const ConfigManager = require('@platformatic/config')
 const { schema } = require('./schema')
@@ -37,6 +38,7 @@ async function _transformConfig (configManager) {
 
   configManager.current.allowCycles = !!configManager.current.allowCycles
   configManager.current.serviceMap = new Map()
+  configManager.current.inspectorOptions = null
 
   let hasValidEntrypoint = false
 
@@ -70,6 +72,15 @@ async function _transformConfig (configManager) {
   }
 }
 
+function missingDependencyErrorMessage (clientName, service, configManager) {
+  const closestName = closest(clientName, [...configManager.current.serviceMap.keys()])
+  let errorMsg = `service '${service.id}' has unknown dependency: '${clientName}'.`
+  if (closestName) {
+    errorMsg += ` Did you mean '${closestName}'?`
+  }
+  return errorMsg
+}
+
 async function parseClientsAndComposer (configManager) {
   for (let i = 0; i < configManager.current.services.length; ++i) {
     const service = configManager.current.services[i]
@@ -85,8 +96,7 @@ async function parseClientsAndComposer (configManager) {
         const dependency = configManager.current.serviceMap.get(clientName)
 
         if (dependency === undefined) {
-          /* c8 ignore next 2 */
-          throw new Error(`service '${service.id}' has unknown dependency: '${clientName}'`)
+          throw new Error(missingDependencyErrorMessage(clientName, service, configManager))
         }
 
         dependency.dependents.push(service.id)
@@ -101,7 +111,7 @@ async function parseClientsAndComposer (configManager) {
             }
 
             if (dep.origin === `{${err.key}}`) {
-              service.localServiceEnvVars.set(err.key, `${clientName}.plt.local`)
+              service.localServiceEnvVars.set(err.key, `http://${clientName}.plt.local`)
             }
           }
         }
@@ -118,28 +128,39 @@ async function parseClientsAndComposer (configManager) {
       const promises = parsed.clients.map((client) => {
         // eslint-disable-next-line no-async-promise-executor
         return new Promise(async (resolve, reject) => {
+          let clientName = client.serviceId ?? ''
           let clientUrl
           let missingKey
+          let isLocal = false
 
-          try {
-            clientUrl = await cm.replaceEnv(client.url)
-            /* c8 ignore next 2 - unclear why c8 is unhappy here */
-          } catch (err) {
-            if (err.name !== 'MissingValueError') {
-              /* c8 ignore next 3 */
-              reject(err)
-              return
+          if (clientName === '' || client.url !== undefined) {
+            try {
+              clientUrl = await cm.replaceEnv(client.url)
+              /* c8 ignore next 2 - unclear why c8 is unhappy here */
+            } catch (err) {
+              if (err.name !== 'MissingValueError') {
+                /* c8 ignore next 3 */
+                reject(err)
+                return
+              }
+
+              missingKey = err.key
             }
-
-            missingKey = err.key
+            isLocal = missingKey && client.url === `{${missingKey}}`
+            /* c8 ignore next 3 */
+          } else {
+            /* c8 ignore next 2 */
+            isLocal = true
           }
 
-          const isLocal = missingKey && client.url === `{${missingKey}}`
-          const clientAbsolutePath = pathResolve(service.path, client.path)
-          const clientPackageJson = join(clientAbsolutePath, 'package.json')
-          const clientMetadata = JSON.parse(await readFile(clientPackageJson, 'utf8'))
           /* c8 ignore next 20 - unclear why c8 is unhappy for nearly 20 lines here */
-          const clientName = clientMetadata.name ?? ''
+          if (!clientName) {
+            const clientAbsolutePath = pathResolve(service.path, client.path)
+            const clientPackageJson = join(clientAbsolutePath, 'package.json')
+            const clientMetadata = JSON.parse(await readFile(clientPackageJson, 'utf8'))
+
+            clientName = clientMetadata.name ?? ''
+          }
 
           if (clientUrl === undefined) {
             // Combine the service name with the client name to avoid collisions
@@ -156,9 +177,9 @@ async function parseClientsAndComposer (configManager) {
 
           const dependency = configManager.current.serviceMap.get(clientName)
 
+          /* c8 ignore next 4 */
           if (dependency === undefined) {
-            /* c8 ignore next 3 */
-            reject(new Error(`service '${service.id}' has unknown dependency: '${clientName}'`))
+            reject(new Error(missingDependencyErrorMessage(clientName, service, configManager)))
             return
           }
 
@@ -201,9 +222,103 @@ platformaticRuntime.configType = 'runtime'
 platformaticRuntime.configManagerConfig = {
   schema,
   allowToWatch: ['.env'],
+  schemaOptions: {
+    useDefaults: true,
+    coerceTypes: true,
+    allErrors: true,
+    strict: false
+  },
   async transformConfig () {
     await _transformConfig(this)
   }
 }
 
-module.exports = { platformaticRuntime }
+async function wrapConfigInRuntimeConfig ({ configManager, args }) {
+  /* c8 ignore next */
+  const id = basename(configManager.dirname) || 'main'
+  const wrapperConfig = {
+    $schema: schema.$id,
+    entrypoint: id,
+    allowCycles: false,
+    hotReload: true,
+    services: [
+      {
+        id,
+        path: configManager.dirname,
+        config: configManager.fullPath
+      }
+    ]
+  }
+  const cm = new ConfigManager({
+    source: wrapperConfig,
+    schema,
+    schemaOptions: {
+      useDefaults: true,
+      coerceTypes: true,
+      allErrors: true,
+      strict: false
+    }
+  })
+
+  await _transformConfig(cm)
+  await cm.parseAndValidate()
+  return cm
+}
+
+function parseInspectorOptions (configManager) {
+  const { current, args } = configManager
+  const hasInspect = 'inspect' in args
+  const hasInspectBrk = 'inspect-brk' in args
+  let inspectFlag
+
+  if (hasInspect) {
+    inspectFlag = args.inspect
+
+    if (hasInspectBrk) {
+      throw new Error('--inspect and --inspect-brk cannot be used together')
+    }
+  } else if (hasInspectBrk) {
+    inspectFlag = args['inspect-brk']
+  }
+
+  if (inspectFlag !== undefined) {
+    let host = '127.0.0.1'
+    let port = 9229
+
+    if (typeof inspectFlag === 'string' && inspectFlag.length > 0) {
+      const splitAt = inspectFlag.lastIndexOf(':')
+
+      if (splitAt === -1) {
+        port = inspectFlag
+      } else {
+        host = inspectFlag.substring(0, splitAt)
+        port = inspectFlag.substring(splitAt + 1)
+      }
+
+      port = Number.parseInt(port, 10)
+
+      if (!(port === 0 || (port >= 1024 && port <= 65535))) {
+        throw new Error('inspector port must be 0 or in range 1024 to 65535')
+      }
+
+      if (!host) {
+        throw new Error('inspector host cannot be empty')
+      }
+    }
+
+    current.inspectorOptions = {
+      host,
+      port,
+      breakFirstLine: hasInspectBrk,
+      hotReloadDisabled: !!current.hotReload
+    }
+
+    current.hotReload = false
+  }
+}
+
+module.exports = {
+  parseInspectorOptions,
+  platformaticRuntime,
+  wrapConfigInRuntimeConfig
+}

@@ -1,11 +1,12 @@
 Welcome to Platformatic. Available commands are:
 
-* help - Display this message
-* help <command> - shows more information about a command.
+* help - display this message
+* help <command> - show more information about a command.
 * db - start Platformatic DB; type `platformatic db help` to know more.
 * service - start Platformatic Service; type `platformatic service help` to know more.
 * upgrade - upgrade the Platformatic configuration to the latest version.
-* gh - creates a new gh action for Platformatic deployments
+* gh - create a new gh action for Platformatic deployments
 * deploy - deploy a Platformatic application to the cloud
 * runtime - start Platformatic Runtime; type `platformatic runtime help` to know more.
 * start - start a Platformatic application
+* frontend - create frontend code to consume the REST APIs

@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/config",
-  "version": "0.26.1",
+  "version": "0.33.1",
   "description": "Platformatic DB Config Manager",
   "main": "index.js",
   "scripts": {
@@ -19,18 +19,18 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@iarna/toml": "^2.2.5",
-    "fastify": "^4.17.0",
+    "fastify": "^4.18.0",
     "json5": "^2.2.3",
     "snazzy": "^9.0.0",
-    "standard": "^17.0.0",
-    "tap": "^16.3.4",
-    "yaml": "^2.2.2"
+    "standard": "^17.1.0",
+    "tap": "^16.3.6",
+    "yaml": "^2.3.1"
   },
   "dependencies": {
     "@platformatic/metaconfig": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "ajv": "^8.12.0",
-    "dotenv": "^16.0.3",
+    "dotenv": "^16.1.4",
     "pupa": "^3.1.0",
     "semver": "^7.5.1",
     "undici": "^5.22.1"

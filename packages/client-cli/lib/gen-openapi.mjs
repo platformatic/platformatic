@@ -1,7 +1,7 @@
 import CodeBlockWriter from 'code-block-writer'
 import jsonpointer from 'jsonpointer'
 import { generateOperationId } from '@platformatic/client'
-import { capitalize, classCase } from './utils.mjs'
+import { capitalize, classCase, toJavaScriptName } from './utils.mjs'
 import { STATUS_CODES } from 'node:http'
 
 export function processOpenAPI ({ schema, name, fullResponse }) {
@@ -12,6 +12,8 @@ export function processOpenAPI ({ schema, name, fullResponse }) {
 }
 
 function generateImplementationFromOpenAPI ({ schema, name, fullResponse }) {
+  const camelcasedName = toJavaScriptName(name)
+
   /* eslint-disable new-cap */
   const writer = new CodeBlockWriter({
     indentNumberOfSpaces: 2,
@@ -28,13 +30,15 @@ function generateImplementationFromOpenAPI ({ schema, name, fullResponse }) {
   writer.writeLine('const { join } = require(\'path\')')
   writer.blankLine()
 
-  const functionName = `generate${capitalize(name)}ClientPlugin`
+  const functionName = `generate${capitalize(camelcasedName)}ClientPlugin`
   writer.write(`async function ${functionName} (app, opts)`).block(() => {
     writer.write('app.register(pltClient, ').inlineBlock(() => {
       writer.writeLine('type: \'openapi\',')
-      writer.writeLine(`name: '${name}',`)
+      writer.writeLine(`name: '${camelcasedName}',`)
       writer.writeLine(`path: join(__dirname, '${name}.openapi.json'),`)
       writer.writeLine('url: opts.url,')
+      writer.writeLine('serviceId: opts.serviceId,')
+      writer.writeLine('throwOnError: opts.throwOnError,')
       writer.writeLine(`fullResponse: ${fullResponse}`)
     })
     writer.write(')')
@@ -51,7 +55,8 @@ function generateImplementationFromOpenAPI ({ schema, name, fullResponse }) {
 }
 
 function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
-  const capitalizedName = capitalize(name)
+  const camelcasedName = toJavaScriptName(name)
+  const capitalizedName = capitalize(camelcasedName)
   const { paths } = schema
 
   const operations = Object.entries(paths).flatMap(([path, methods]) => {
@@ -83,29 +88,35 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   interfaces.writeLine('import { FastifyPluginAsync } from \'fastify\'')
   interfaces.blankLine()
 
-  if (fullResponse) {
-    interfaces.write('interface FullResponse<T>').block(() => {
-      interfaces.writeLine('\'statusCode\': number;')
-      interfaces.writeLine('\'headers\': object;')
-      interfaces.writeLine('\'body\': T;')
-    })
-    interfaces.blankLine()
-  }
+  // Add always FullResponse interface because we don't know yet
+  // if we are going to use it
+  interfaces.write('interface FullResponse<T>').block(() => {
+    interfaces.writeLine('\'statusCode\': number;')
+    interfaces.writeLine('\'headers\': object;')
+    interfaces.writeLine('\'body\': T;')
+  })
+  interfaces.blankLine()
 
   writer.write(`interface ${capitalizedName}`).block(() => {
+    const originalFullResponse = fullResponse
+    let currentFullResponse = originalFullResponse
     for (const operation of operations) {
       const operationId = operation.operation.operationId
       const { parameters, responses, requestBody } = operation.operation
-      const operationRequestName = `${capitalize(operationId.replace('-', ''))}Request`
-      const operationResponseName = `${capitalize(operationId.replace('-', ''))}Response`
+      const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
+      if (successResponses.length !== 1) {
+        currentFullResponse = true
+      }
+      const operationRequestName = `${capitalize(operationId)}Request`
+      const operationResponseName = `${capitalize(operationId)}Response`
       interfaces.write(`interface ${operationRequestName}`).block(() => {
         const addedProps = new Set()
         if (parameters) {
           for (const parameter of parameters) {
-            const { name, schema, required } = parameter
+            const { name, required } = parameter
             // We do not check for addedProps here because it's the first
             // group of properties
-            writeProperty(interfaces, name, schema, addedProps, required)
+            writeProperty(interfaces, name, parameter, addedProps, required)
           }
         }
         if (requestBody) {
@@ -114,14 +125,6 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
       })
       interfaces.writeLine()
 
-      // Only dealing with success responses
-      const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
-      // The following block it's impossible to happen with well-formed
-      // OpenAPI.
-      /* c8 ignore next 3 */
-      if (successResponses.length === 0) {
-        throw new Error(`Could not find a 200 level response for ${operationId}`)
-      }
       const responseTypes = successResponses.map(([statusCode, response]) => {
         // The client library will always dump bodies for 204 responses
         // so the type must be undefined
@@ -139,8 +142,9 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
       })
 
       let responseType = responseTypes.join(' | ')
-      if (fullResponse) responseType = `FullResponse<${responseType}>`
-      writer.writeLine(`${operationId.replace('-', '')}(req: ${operationRequestName}): Promise<${responseType}>;`)
+      if (currentFullResponse) responseType = `FullResponse<${responseType}>`
+      writer.writeLine(`${operationId}(req?: ${operationRequestName}): Promise<${responseType}>;`)
+      currentFullResponse = originalFullResponse
     }
   })
 
@@ -148,15 +152,15 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   const pluginName = `${capitalizedName}Plugin`
   const optionsName = `${capitalizedName}Options`
 
-  writer.write(`type ${pluginName} = FastifyPluginAsync<NonNullable<${name}.${optionsName}>>`)
+  writer.write(`type ${pluginName} = FastifyPluginAsync<NonNullable<${camelcasedName}.${optionsName}>>`)
 
   writer.blankLine()
   writer.write('declare module \'fastify\'').block(() => {
     writer.write(`interface Configure${capitalizedName}`).block(() => {
-      writer.writeLine('async getHeaders(req: FastifyRequest, reply: FastifyReply): Promise<Record<string,string>>;')
+      writer.writeLine('getHeaders(req: FastifyRequest, reply: FastifyReply): Promise<Record<string,string>>;')
     })
     writer.write('interface FastifyInstance').block(() => {
-      writer.quote(name)
+      writer.quote(camelcasedName)
       writer.write(`: ${capitalizedName};`)
       writer.newLine()
 
@@ -166,25 +170,25 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
     writer.blankLine()
 
     writer.write('interface FastifyRequest').block(() => {
-      writer.quote(name)
+      writer.quote(camelcasedName)
       writer.write(`: ${capitalizedName};`)
       writer.newLine()
     })
   })
 
   writer.blankLine()
-  writer.write(`declare namespace ${name}`).block(() => {
+  writer.write(`declare namespace ${camelcasedName}`).block(() => {
     writer.write(`export interface ${optionsName}`).block(() => {
       writer.writeLine('url: string')
     })
 
-    writer.writeLine(`export const ${name}: ${pluginName};`)
-    writer.writeLine(`export { ${name} as default };`)
+    writer.writeLine(`export const ${camelcasedName}: ${pluginName};`)
+    writer.writeLine(`export { ${camelcasedName} as default };`)
   })
 
   writer.blankLine()
-  writer.writeLine(`declare function ${name}(...params: Parameters<${pluginName}>): ReturnType<${pluginName}>;`)
-  writer.writeLine(`export = ${name};`)
+  writer.writeLine(`declare function ${camelcasedName}(...params: Parameters<${pluginName}>): ReturnType<${pluginName}>;`)
+  writer.writeLine(`export = ${camelcasedName};`)
 
   return interfaces.toString() + writer.toString()
 }
@@ -250,12 +254,40 @@ function writeProperty (writer, key, value, addedProps, required = true) {
     writer.quote(key)
     writer.write('?')
   }
-  if (value.type === 'array') {
-    writer.write(`: Array<${JSONSchemaToTsType(value.items.type)}>;`)
-  } else {
-    writer.write(`: ${JSONSchemaToTsType(value.type)};`)
-  }
+  writer.write(`: ${getType(value)};`)
   writer.newLine()
+}
+
+export function getType (typeDef) {
+  if (typeDef.schema) {
+    return getType(typeDef.schema)
+  }
+  if (typeDef.anyOf) {
+    // recursively call this function
+    return typeDef.anyOf.map((t) => {
+      return getType(t)
+    }).join(' | ')
+  }
+
+  if (typeDef.allOf) {
+    // recursively call this function
+    return typeDef.allOf.map((t) => {
+      return getType(t)
+    }).join(' & ')
+  }
+  if (typeDef.type === 'array') {
+    return `Array<${getType(typeDef.items)}>`
+  }
+  if (typeDef.type === 'object') {
+    let output = '{ '
+    const props = Object.keys(typeDef.properties).map((prop) => {
+      return `${prop}: ${getType(typeDef.properties[prop])}`
+    })
+    output += props.join('; ')
+    output += ' }'
+    return output
+  }
+  return JSONSchemaToTsType(typeDef.type)
 }
 
 function JSONSchemaToTsType (type) {

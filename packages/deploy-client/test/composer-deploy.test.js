@@ -72,12 +72,14 @@ test('should deploy platformatic composer project without github metadata', asyn
   )
 
   const logger = {
+    trace: () => {},
     info: () => {},
     warn: () => t.fail('Should not log a warning')
   }
 
   await deploy({
     deployServiceHost: 'http://localhost:3042',
+    compileTypescript: false,
     workspaceId,
     workspaceKey,
     label,

@@ -5,7 +5,10 @@ const ConfigManager = require('@platformatic/config')
 const { platformaticService, buildServer } = require('@platformatic/service')
 
 const { schema } = require('./lib/schema')
-const composeOpenApi = require('./lib/openapi.js')
+const serviceProxy = require('./lib/proxy')
+const openapi = require('./lib/openapi.js')
+const composerHook = require('./lib/composer-hook')
+const openapiGenerator = require('./lib/openapi-generator.js')
 
 async function platformaticComposer (app) {
   const configManager = app.platformatic.configManager
@@ -19,17 +22,23 @@ async function platformaticComposer (app) {
   }
 
   async function toLoad (app) {
-    app.register(composeOpenApi, config.composer)
+    app.register(openapi, config.composer)
+    app.register(serviceProxy, config.composer)
+    app.register(composerHook)
   }
 
   toLoad[Symbol.for('skip-override')] = true
   await platformaticService(app, config, [toLoad])
 
+  await app.register(openapiGenerator, config.composer)
+
   if (!app.hasRoute({ url: '/', method: 'GET' })) {
     app.register(require('./lib/root-endpoint'), config)
   }
 
-  await watchApis(app, config)
+  if (config.composer.refreshTimeout !== 0) {
+    await watchApis(app, config)
+  }
 }
 
 platformaticComposer[Symbol.for('skip-override')] = true
@@ -60,7 +69,7 @@ async function watchApis (app, opts) {
 
     for (const { id, origin, openapi } of services) {
       if (openapi && openapi.url) {
-        const currentSchema = app.openApiSchemas.find(schema => schema.id === id)?.schema || null
+        const currentSchema = app.openApiSchemas.find(schema => schema.id === id)?.originSchema || null
 
         let fetchedSchema = null
         try {

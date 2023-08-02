@@ -2,7 +2,7 @@ import { getVersion, getDependencyVersion, isFileAccessible } from '../utils.mjs
 import { createPackageJson } from '../create-package-json.mjs'
 import { createGitignore } from '../create-gitignore.mjs'
 import { getPkgManager } from '../get-pkg-manager.mjs'
-import { join } from 'path'
+import { join, relative } from 'path'
 import inquirer from 'inquirer'
 import { readFile, writeFile, mkdir } from 'fs/promises'
 import pino from 'pino'
@@ -46,21 +46,24 @@ export async function createPlatformaticRuntime (_args) {
   const pkgManager = getPkgManager()
 
   const projectDir = await askDir(logger, '.')
-  const servicesDir = await askDir(logger, 'services', 'Where would you like to load your services from?')
+
+  // Create the project directory
+  await mkdir(projectDir, { recursive: true })
+
+  const baseServicesDir = join(relative(process.cwd(), projectDir), 'library-app/services')
+  const servicesDir = await askDir(logger, baseServicesDir, 'Where would you like to load your services from?')
 
   const { runPackageManagerInstall } = await inquirer.prompt([
     getRunPackageManagerInstall(pkgManager)
   ])
 
-  // Create the project directory
-  await mkdir(projectDir, { recursive: true })
   await mkdir(servicesDir, { recursive: true })
 
   const fastifyVersion = await getDependencyVersion('fastify')
 
   // Create the package.json, notes that we don't have the option for TS (yet) so we don't generate
   // the package.json with the TS build
-  await createPackageJson('runtime', version, fastifyVersion, logger, projectDir, false)
+  await createPackageJson(version, fastifyVersion, logger, projectDir, false)
   await createGitignore(logger, projectDir)
   await createReadme(logger, projectDir)
 
@@ -124,13 +127,24 @@ export async function createRuntimeService ({ servicesDir, names, logger }) {
     type: 'input',
     name: 'name',
     message: 'What is the name of the service?',
-    default: generateName().dashed
+    default: generateName().dashed,
+    validate: (value) => {
+      if (value.length === 0) {
+        return 'Please enter a name'
+      }
+
+      if (value.includes(' ')) {
+        return 'Please enter a name without spaces'
+      }
+
+      if (names.includes(value)) {
+        return 'This name is already used, please choose another one.'
+      }
+
+      return true
+    }
   })
 
-  if (names.includes(name)) {
-    logger.warn('This name is already used, please choose another one.')
-    return false
-  }
   names.push(name)
 
   const serviceDir = join(servicesDir, name)

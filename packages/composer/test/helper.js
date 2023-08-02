@@ -1,10 +1,77 @@
 'use strict'
 
+const { request } = require('undici')
 const fastify = require('fastify')
 const Swagger = require('@fastify/swagger')
 const SwaggerUI = require('@fastify/swagger-ui')
 
 const { buildServer } = require('..')
+
+async function createBasicService (t) {
+  const app = fastify({
+    keepAliveTimeout: 10
+  })
+
+  await app.register(Swagger, {
+    openapi: {
+      info: {
+        title: 'Test',
+        version: '0.1.0'
+      }
+    }
+  })
+  await app.register(SwaggerUI)
+
+  app.get('/text', async () => {
+    return 'Some text'
+  })
+
+  app.get('/error', async () => {
+    throw new Error('KA-BOOM!!!')
+  })
+
+  app.get('/object', {
+    schema: {
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            text: { type: 'string' }
+          },
+          required: ['text']
+        }
+      }
+    }
+  }, async () => {
+    return { text: 'Some text' }
+  })
+
+  app.get('/nested', {
+    schema: {
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            nested: {
+              type: 'object',
+              properties: {
+                text: { type: 'string' }
+              }
+            }
+          }
+        }
+      }
+    }
+  }, async () => {
+    return { nested: { text: 'Some text' } }
+  })
+
+  t.teardown(async () => {
+    await app.close()
+  })
+
+  return app
+}
 
 async function createOpenApiService (t, entitiesNames = []) {
   const app = fastify({
@@ -12,14 +79,10 @@ async function createOpenApiService (t, entitiesNames = []) {
   })
 
   await app.register(Swagger, {
-    exposeRoute: true,
     openapi: {
-      specification: {
-        openapi: '3.0.0',
-        info: {
-          title: 'Test',
-          version: '0.1.0'
-        }
+      info: {
+        title: 'Test',
+        version: '0.1.0'
       }
     }
   })
@@ -51,38 +114,100 @@ async function createOpenApiService (t, entitiesNames = []) {
     saveEntity({ name: 'test3' })
     saveEntity({ name: 'test4' })
 
-    app.get(`/${entity}`, async () => {
+    app.addSchema({
+      $id: entity,
+      title: entity,
+      type: 'object',
+      properties: {
+        id: { type: 'number' },
+        name: { type: 'string' }
+      }
+    })
+
+    app.get(`/${entity}`, {
+      schema: {
+        response: {
+          200: {
+            type: 'array',
+            items: { $ref: entity }
+          }
+        }
+      }
+    }, async () => {
       return Array.from(storage.values())
     })
 
-    app.post(`/${entity}`, async (req) => {
+    app.post(`/${entity}`, {
+      schema: {
+        body: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' }
+          }
+        },
+        response: {
+          200: { $ref: entity }
+        }
+      }
+    }, async (req) => {
       const entity = req.body
       return saveEntity(entity)
     })
 
-    app.put(`/${entity}`, async (req) => {
+    app.put(`/${entity}`, {
+      schema: {
+        body: { $ref: entity },
+        response: {
+          200: { $ref: entity }
+        }
+      }
+    }, async (req) => {
       const entity = req.body
       return saveEntity(entity)
     })
 
-    app.get(`/${entity}/:id`, async (req) => {
-      return storage.get(req.params.id)
+    app.get(`/${entity}/:id`, {
+      schema: {
+        response: {
+          200: { $ref: entity }
+        }
+      }
+    }, async (req) => {
+      return storage.get(parseInt(req.params.id))
     })
 
-    app.post(`/${entity}/:id`, async (req) => {
+    app.post(`/${entity}/:id`, {
+      schema: {
+        response: {
+          200: { $ref: entity }
+        }
+      }
+    }, async (req) => {
       const id = req.params.id
       const entity = req.body
       return saveEntity({ ...entity, id })
     })
 
-    app.put(`/${entity}/:id`, async (req) => {
+    app.put(`/${entity}/:id`, {
+      schema: {
+        response: {
+          200: { $ref: entity }
+        }
+      }
+    }, async (req) => {
       const id = req.params.id
       const entity = req.body
       return saveEntity({ ...entity, id })
     })
 
-    app.delete(`/${entity}/:id`, async (req) => {
-      return storage.delete(req.params.id)
+    app.delete(`/${entity}/:id`, {
+      schema: {
+        response: {
+          200: { $ref: entity }
+        }
+      }
+    }, async (req) => {
+      return storage.delete(parseInt(req.params.id))
     })
   }
 
@@ -102,8 +227,7 @@ async function createComposer (t, composerConfig) {
     },
     composer: { services: [] },
     plugins: {
-      paths: [],
-      hotReload: false
+      paths: []
     },
     watch: false
   }
@@ -118,64 +242,76 @@ async function createComposer (t, composerConfig) {
   return app
 }
 
-async function testEntityRoutes (t, service, entitiesRoutes) {
+async function testEntityRoutes (t, origin, entitiesRoutes) {
   for (const entityRoute of entitiesRoutes) {
     {
-      const { statusCode } = await service.inject({
+      const { statusCode } = await request(origin, {
         method: 'POST',
-        url: entityRoute,
-        body: { name: 'test' }
+        path: entityRoute,
+        headers: {
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({ name: 'test' })
       })
       t.equal(statusCode, 200)
     }
 
     {
-      const { statusCode } = await service.inject({
+      const { statusCode } = await request(origin, {
         method: 'GET',
-        url: entityRoute
+        path: entityRoute
       })
       t.equal(statusCode, 200)
     }
 
     {
-      const { statusCode } = await service.inject({
+      const { statusCode } = await request(origin, {
         method: 'PUT',
-        url: entityRoute,
-        body: { name: 'test' }
+        path: entityRoute,
+        headers: {
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({ name: 'test' })
       })
       t.equal(statusCode, 200)
     }
 
     {
-      const { statusCode } = await service.inject({
+      const { statusCode } = await request(origin, {
         method: 'GET',
-        url: `${entityRoute}/1`
+        path: `${entityRoute}/1`
       })
       t.equal(statusCode, 200)
     }
 
     {
-      const { statusCode } = await service.inject({
+      const { statusCode } = await request(origin, {
         method: 'POST',
-        url: `${entityRoute}/2`,
-        body: { name: 'test' }
+        path: `${entityRoute}/2`,
+        headers: {
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({ name: 'test' })
       })
       t.equal(statusCode, 200)
     }
 
     {
-      const { statusCode } = await service.inject({
+      const { statusCode } = await request(origin, {
         method: 'PUT',
-        url: `${entityRoute}/3`,
-        body: { name: 'test' }
+        path: `${entityRoute}/3`,
+        headers: {
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({ name: 'test' })
       })
       t.equal(statusCode, 200)
     }
 
     {
-      const { statusCode } = await service.inject({
+      const { statusCode } = await request(origin, {
         method: 'DELETE',
-        url: `${entityRoute}/4`
+        path: `${entityRoute}/4`
       })
       t.equal(statusCode, 200)
     }
@@ -185,5 +321,6 @@ async function testEntityRoutes (t, service, entitiesRoutes) {
 module.exports = {
   createComposer,
   createOpenApiService,
+  createBasicService,
   testEntityRoutes
 }

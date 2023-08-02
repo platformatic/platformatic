@@ -1,13 +1,14 @@
 {
   "name": "@platformatic/runtime",
-  "version": "0.26.1",
+  "version": "0.33.1",
   "description": "",
   "main": "index.js",
   "bin": {
     "plt-runtime": "./runtime.mjs"
   },
   "scripts": {
-    "test": "npm run lint && c8 -x fixtures -x test node --test && tsd",
+    "test": "npm run lint && node --test && tsd",
+    "coverage": "npm run lint && c8 -x fixtures -x test node --test && tsd",
     "lint": "standard | snazzy"
   },
   "author": "Matteo Collina <hello@matteocollina.com>",
@@ -21,32 +22,42 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "c8": "^7.13.0",
-    "execa": "^7.0.0",
+    "@platformatic/sql-graphql": "workspace:*",
+    "@platformatic/sql-mapper": "workspace:*",
+    "c8": "^8.0.0",
+    "execa": "^7.1.1",
     "snazzy": "^9.0.0",
-    "split2": "^4.1.0",
-    "standard": "^17.0.0",
-    "tsd": "^0.28.0"
+    "split2": "^4.2.0",
+    "standard": "^17.1.0",
+    "tsd": "^0.28.1",
+    "typescript": "^5.1.6"
   },
   "dependencies": {
     "@hapi/topo": "^6.0.2",
+    "@platformatic/composer": "workspace:*",
     "@platformatic/config": "workspace:*",
+    "@platformatic/db": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "@platformatic/start": "workspace:*",
+    "@platformatic/telemetry": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "close-with-grace": "^1.2.0",
     "commist": "^3.2.0",
+    "debounce": "^1.2.1",
     "desm": "^1.3.0",
     "es-main": "^1.2.0",
-    "fastify": "^4.17.0",
-    "fastify-undici-dispatcher": "^0.4.0",
+    "fastest-levenshtein": "^1.0.16",
+    "fastify": "^4.18.0",
+    "fastify-undici-dispatcher": "^0.4.1",
     "help-me": "^4.2.0",
     "minimist": "^1.2.8",
-    "undici": "^5.20.0"
+    "pino": "^8.14.1",
+    "pino-pretty": "^10.0.0",
+    "undici": "^5.22.1"
   },
   "standard": {
     "ignore": [
-      "**/dist/*"
+      "**/dist/*",
+      "**/test/tmp"
     ]
   }
 }

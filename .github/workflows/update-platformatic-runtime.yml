@@ -2,14 +2,27 @@ name: Update Platformatic Cloud runtime
 
 on:
   workflow_dispatch:
-  release:
-    types: [released]
+    inputs:
+      released-version:
+        description: 'Version number prefixed with v'
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      released-version:
+        required: true
+        type: string
+    secrets:
+      GH_API_USERNAME:
+        required: true
+      GH_API_TOKEN:
+        required: true
 
 jobs:
   update-cloud-runtime:
     runs-on: ubuntu-latest
     env:
-      RELEASED_VERSION: ${{ github.event.release.name }}
+      RELEASED_VERSION: ${{ inputs.released-version }}
     steps:
       - name: Extract Version without the 'v'
         run: |

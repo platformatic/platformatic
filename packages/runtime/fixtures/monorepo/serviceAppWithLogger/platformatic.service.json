@@ -15,5 +15,6 @@
     "paths": [
       "plugin.js"
     ]
-  }
+  },
+  "watch": true
 }

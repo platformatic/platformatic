@@ -39,16 +39,23 @@ async function setupOpenAPI (app, opts) {
   app.register(SwaggerUI, {
     ...theme,
     ...opts,
+    logLevel: 'warn',
     prefix: '/documentation'
   })
 
   for (const entity of Object.values(app.platformatic.entities)) {
-    const entitySchema = mapSQLEntityToJSONSchema(entity, ignore[entity.pluralName])
+    const entitySchema = mapSQLEntityToJSONSchema(entity, ignore[entity.pluralName], true)
     // TODO remove reverseRelationships from the entity
     /* istanbul ignore next */
     entity.reverseRelationships = entity.reverseRelationships || []
 
     app.addSchema(entitySchema)
+
+    const inputEntity = mapSQLEntityToJSONSchema(entity, ignore[entity.pluralName], false)
+    inputEntity.$id = `${entitySchema.$id}Input`
+    inputEntity.title = `${entitySchema.title}Input`
+
+    app.addSchema(inputEntity)
 
     for (const relation of Object.values(entity.relations)) {
       const targetEntityName = relation.foreignEntityName

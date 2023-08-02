@@ -31,7 +31,7 @@ test('should respond 200 on root endpoint', async ({ teardown, equal, same, matc
     const res = await (request(`${app.url}/`))
     equal(res.statusCode, 200)
     const body = await res.body.json()
-    same(body, { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' })
+    same(body, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
   }
 
   {
@@ -45,8 +45,8 @@ test('should respond 200 on root endpoint', async ({ teardown, equal, same, matc
     equal(res.statusCode, 200)
     equal(res.headers['content-type'], 'text/html; charset=UTF-8')
     // has links to OpenAPI/GraphQL docs
-    match(html, '<h2><a href="/documentation" target="_blank">OpenAPI Documentation</a></h2>')
-    match(html, '<h2><a href="/graphiql" target="_blank">GraphiQL</a></h2>')
+    match(html, '<a id="openapi-link" target="_blank" class="button-link">OpenAPI Documentation</a>')
+    match(html, '<a id="graphql-link" target="_blank" class="button-link">GraphiQL</a>')
   }
 })
 

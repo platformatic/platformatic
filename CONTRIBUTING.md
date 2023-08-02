@@ -54,7 +54,7 @@ Then install again all of the needed packages by running `pnpm i`.
 
 ##### `env: node: No such file or directory` when using `pnpm`
 * get the `pnpm` path with `which pnpm`, then remove it; it's best to use the package manager you installed `pnpm` with
-* verify that the node version in use [is correct](https://oss.platformatic.dev/docs/getting-started/quick-start-guide/#prerequisites)
+* verify that the node version in use [is correct](https://docs.platformatic.dev/docs/getting-started/quick-start-guide/#prerequisites)
 * reinstall it (`npm install pnpm -g`)
 
 </details>
@@ -155,6 +155,14 @@ If you encounter issues running tests (f.e. failing tests without making a chang
 3. Run `pnpm install` again
 
 __Before opening a pull request, please ensure that the tests are passing for the specific project you are working on.__
+
+### Updating the CLI docs
+
+The [cli.md](./docs/reference/cli.md) file is automatically generated through the [gen-cli-doc.mjs](./scripts/gen-cli-doc.mjs) script and you must not manually change it.
+
+To update the CLI docs:
+1. Update/add the txt helpers
+2. run `node scripts/gen-cli-doc.mjs`
 
 ### Releasing
 

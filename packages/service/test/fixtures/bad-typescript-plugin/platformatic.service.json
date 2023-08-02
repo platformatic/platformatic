@@ -5,12 +5,12 @@
     },
     "hostname": "127.0.0.1",
     "port": "3042",
-    "pluginTimeout": 30000,
+    "pluginTimeout": 60000,
     "keepAliveTimeout": 1
   },
   "plugins": {
     "paths": ["plugin.ts"],
     "typescript": true
   },
-  "watch": true
+  "watch": false
 }

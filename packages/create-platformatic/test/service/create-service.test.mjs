@@ -59,8 +59,8 @@ test('creates service with typescript', async ({ equal, same, ok }) => {
   equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
   equal(process.env.PORT, '6666')
 
-  same(plugins.paths, ['./plugins', './routes'])
-  equal(plugins.typescript, true)
+  same(plugins.paths, [{ path: './plugins', encapsulate: false }, './routes'])
+  equal(plugins.typescript, '{PLT_TYPESCRIPT}')
 
   ok(await isFileAccessible(join(tmpDir, 'tsconfig.json')))
   ok(await isFileAccessible(join(tmpDir, 'plugins', 'example.ts')))
@@ -95,7 +95,7 @@ test('creates service with javascript', async ({ equal, same, ok }) => {
   equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
   equal(process.env.PORT, '6666')
 
-  same(plugins, { paths: ['./plugins', './routes'] })
+  same(plugins, { paths: [{ path: './plugins', encapsulate: false }, './routes'] })
   ok(await isFileAccessible(join(tmpDir, 'plugins', 'example.js')))
   ok(await isFileAccessible(join(tmpDir, 'routes', 'root.js')))
 })

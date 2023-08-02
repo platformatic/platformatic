@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/deploy-client",
-  "version": "0.26.1",
+  "version": "0.33.1",
   "description": "Deploy code to the Platformatic cloud",
   "main": "index.js",
   "scripts": {
@@ -19,18 +19,20 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "c8": "^7.13.0",
-    "fastify": "^4.17.0",
+    "c8": "^8.0.0",
+    "fastify": "^4.18.0",
     "license-checker": "^25.0.1",
     "snazzy": "^9.0.0",
-    "standard": "^17.0.0",
-    "tap": "^16.3.4"
+    "standard": "^17.1.0",
+    "tap": "^16.3.6",
+    "typescript": "^5.1.6"
   },
   "dependencies": {
     "@platformatic/config": "workspace:*",
-    "@platformatic/start": "workspace:*",
-    "@platformatic/service": "workspace:*",
     "@platformatic/runtime": "workspace:*",
+    "@platformatic/service": "workspace:*",
+    "@platformatic/start": "workspace:*",
+    "pretty-bytes": "^6.1.0",
     "tar": "^6.1.15",
     "undici": "^5.22.1"
   }

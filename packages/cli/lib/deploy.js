@@ -117,8 +117,10 @@ export async function deploy (argv) {
         type: 't',
         label: 'l',
         env: 'e',
-        secrets: 's'
+        secrets: 's',
+        compileTypescript: ['compile', 'C']
       },
+      boolean: ['compileTypescript'],
       string: [
         'type',
         'label',
@@ -129,7 +131,8 @@ export async function deploy (argv) {
         'deploy-service-host'
       ],
       default: {
-        'deploy-service-host': DEPLOY_SERVICE_HOST
+        'deploy-service-host': DEPLOY_SERVICE_HOST,
+        compileTypescript: true
       }
     })
 

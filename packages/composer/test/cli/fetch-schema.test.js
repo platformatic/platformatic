@@ -13,7 +13,7 @@ const { createOpenApiService } = require('../helper.js')
 
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
-test('should start the composer with the start command', async (t) => {
+test('should fetch the schemas', async (t) => {
   const { execa } = await import('execa')
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-test-'))

@@ -20,6 +20,16 @@ class FromZeroEighteenToWillSee extends SimpleZeroConfig {
       const version = semver.inc(this.version, 'minor')
       config.$schema = `https://platformatic.dev/schemas/v${version}/${this.kind}`
 
+      if (config.watch !== false) {
+        config.watch = typeof config.watch === 'object' ? config.watch : {}
+
+        if (config.watch.ignore === undefined) {
+          config.watch.ignore = ['*.sqlite', '*.sqlite-journal']
+        }
+      }
+
+      delete config.plugins?.hotReload
+
       return new FromZeroEighteenToWillSee({ config, path: this.path, format: this.format, version })
     }
   }

@@ -37,6 +37,7 @@ Configuration settings are organised into the following groups:
 - [`composer`](#composer)
 - [`metrics`](#metrics)
 - [`plugins`](#plugins)
+- [`telemetry`](#telemetry)
 
 Sensitive configuration settings containing sensitive data should be set using [configuration placeholders](#configuration-placeholders).
 
@@ -96,7 +97,6 @@ An optional object that defines the plugins loaded by Platformatic Composer.
   - `encapsulate` (`boolean`): if the path is a folder, it instruct Platformatic to not encapsulate those plugins.
   - `maxDepth` (`integer`): if the path is a folder, it limits the depth to load the content from.
 - **`typescript`** (`boolean`): enable typescript compilation. A `tsconfig.json` file is required in the same folder.
-- **`hotReload`** (`boolean`, default: `true`) if `true` or not specified, the plugin is loaded using [`fastify-sandbox`](https://github.com/mcollina/fastify-sandbox), otherwise is loaded directly using `require`/`import` and the hot reload is not enabled
 
   _Example_
 
@@ -108,17 +108,10 @@ An optional object that defines the plugins loaded by Platformatic Composer.
         "options": {
           "foo": "bar"
         }
-      }],
-      "hotReload": true,
+      }]
     }
   }
   ```
-
-:::warning
-While hot reloading is useful for development, it is not recommended to use it in production.
-To switch if off, set `hotReload` to `false`.
-:::
-
 
 ### `watch`
 
@@ -147,16 +140,82 @@ the services managed by the composer. Each service object supports the following
 
   - **`id`** (**required**, `string`) - A unique identifier for the service.
   - **`origin`** (`string`) - A service origin. Skip this option if the service is executing inside of Platformatic Runtime. In this case, service id will be used instead of origin.
-  - **`openapi`** (**required**, `object`) - The configuration file used to compose OpenAPI specification.
-    - **`url`** (`string`) - A path of the route that exposes the OpenAPI specification.
-    If a service is a Platformatic Service or Platformatic DB, use `/documentation/json` as a value.
-    Use this or `file` option to specify the OpenAPI specification.
-    - **`file`** (`string`) - A path to the OpenAPI specification file. Use this 
-    or `url` option to specify the OpenAPI specification.
-    - **`prefix`** (`string`) - A prefix for the OpenAPI specification. All service routes will be prefixed with this value.
+  - **`openapi`** (**required**, `object`) - The configuration file used to compose OpenAPI specification. See the [openapi](#openapi) for details.
+  - **`proxy`** (`object` or `false`) - Service proxy configuration. If `false`, the service proxy is disabled.
+    - `prefix` (**required**, `string`) - Service proxy prefix. All service routes will be prefixed with this value.
   - **`refreshTimeout`** (`number`) - The number of milliseconds to wait for check for changes in the service OpenAPI specification. If not specified, the default value is `1000`.
 
-  _Examples_
+#### `openapi`
+
+- **`url`** (`string`) - A path of the route that exposes the OpenAPI specification. If a service is a Platformatic Service or Platformatic DB, use `/documentation/json` as a value. Use this or `file` option to specify the OpenAPI specification.
+- **`file`** (`string`) - A path to the OpenAPI specification file. Use this or `url` option to specify the OpenAPI specification.
+- **`prefix`** (`string`) - A prefix for the OpenAPI specification. All service routes will be prefixed with this value.
+- **`config`** (`string`) - A path to the OpenAPI configuration file. This file is used to customize the OpenAPI specification. See the [openapi-configuration](#openapi-configuration) for details.
+
+##### `openapi-configuration`
+
+The OpenAPI configuration file is a JSON file that is used to customize the OpenAPI specification. It supports the following options:
+
+- **`ignore`** (`boolean`) - If `true`, the route will be ignored by the composer.
+If you want to ignore a specific method, use the `ignore` option in the nested method object.
+
+  _Example_
+
+  ```json
+  {
+    "paths": {
+      "/users": {
+        "ignore": true
+      },
+      "/users/{id}": {
+        "get": { "ignore": true },
+        "put": { "ignore": true }
+      }
+    }
+  }
+  ```
+
+- **alias** (`string`) - Use it create an alias for the route path. Original route path will be ignored.
+
+  _Example_
+
+  ```json
+  {
+    "paths": {
+      "/users": {
+        "alias": "/customers"
+      }
+    }
+  }
+  ```
+
+- **`rename`** (`string`) - Use it to rename composed route response fields.
+Use json schema format to describe the response structure. For now it works only for `200` response.
+
+  _Example_
+
+  ```json
+  {
+    "paths": {
+      "/users": {
+        "responses": {
+            "200": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "rename": "user_id" },
+                  "name": { "rename": "first_name" }
+                }
+              }
+            }
+          }
+      }
+    }
+  }
+  ```
+
+_Examples_
 
   Composition of two remote services:
 
@@ -206,6 +265,34 @@ the services managed by the composer. Each service object supports the following
         }
       ],
       "refreshTimeout": 1000
+    }
+  }
+  ```
+### `telemetry`
+[Open Telemetry](https://opentelemetry.io/) is optionally supported with these settings:
+
+- **`serviceName`** (**required**, `string`) — Name of the service as will be reported in open telemetry.
+- **`version`** (`string`) — Optional version (free form)
+- **`exporter`** (`object`) — Exporter configuration object. If not defined, the exporter defaults to `console`. This object has the following properties:
+    - **`type`** (`string`) — Exporter type. Supported values are `console`, `otlp`, `zipkin` and `memory` (default: `console`). `memory` is only supported for testing purposes. 
+    - **`options`** (`object`) — These options are supported:
+        - **`url`** (`string`) — The URL to send the telemetry to. Required for `otlp` exporter. This has no effect on `console` and `memory` exporters.
+        - **`headers`** (`object`) — Optional headers to send with the telemetry. This has no effect on `console` and `memory` exporters.
+        
+Note that OTLP traces can be consumed by different solutions, like [Jaeger](https://www.jaegertracing.io/). [Here](https://opentelemetry.io/ecosystem/vendors/) the full list.
+
+  _Example_
+
+  ```json
+  {
+    "telemetry": {
+        "serviceName": "test-service",
+        "exporter": {
+            "type": "otlp",
+            "options": {
+                "url": "http://localhost:4318/v1/traces"
+            }
+        }
     }
   }
   ```

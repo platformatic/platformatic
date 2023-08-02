@@ -1,0 +1,19 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v0.22.0/trickortreat",
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0,
+    "logger": {
+      "level": "info",
+      "name": "hello server"
+    }
+  },
+  "plugins": {
+    "paths": ["./plugin.js"]
+  },
+  "service": {
+    "openapi": true
+  },
+  "metrics": false,
+  "watch": false
+}

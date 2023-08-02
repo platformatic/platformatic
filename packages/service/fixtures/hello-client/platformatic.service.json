@@ -8,11 +8,10 @@
     }
   },
   "plugins": {
-    "paths": ["./plugin.js"],
-    "hotReload": false
+    "paths": ["./plugin.js"]
   },
   "clients": [{
-    "path": "./hello",
+    "path": "hello",
     "url": "{PLT_CLIENT_URL}"
   }],
   "metrics": false,

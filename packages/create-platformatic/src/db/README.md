@@ -1,6 +1,6 @@
 # Platformatic DB API
 
-This is a generated [Platformatic DB](https://oss.platformatic.dev/docs/reference/db/introduction) application.
+This is a generated [Platformatic DB](https://docs.platformatic.dev/docs/reference/db/introduction) application.
 
 ## Requirements
 
@@ -18,7 +18,7 @@ npm install
 2. Apply migrations:
 
 ```bash
-npx platformatic db migrations apply
+npm run migrate
 ```
 
 

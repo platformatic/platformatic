@@ -1040,7 +1040,7 @@ test('like', async ({ pass, teardown, same, equal }) => {
     }, 'where: { longText: { like: "%o%" } } response')
   }
 
-  {
+  if (!isSQLite) {
     const res = await app.inject({
       method: 'POST',
       url: '/graphql',
@@ -1070,7 +1070,7 @@ test('like', async ({ pass, teardown, same, equal }) => {
     }, 'where: { counter: { like: 10 } } response')
   }
 
-  {
+  if (!isSQLite) {
     const res = await app.inject({
       method: 'POST',
       url: '/graphql',

@@ -60,7 +60,7 @@ function mapSQLTypeToOpenAPIType (sqlType) {
   }
 }
 
-function mapSQLEntityToJSONSchema (entity, ignore = {}) {
+function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = false) {
   const fields = entity.fields
   const properties = {}
   const required = []
@@ -70,8 +70,16 @@ function mapSQLEntityToJSONSchema (entity, ignore = {}) {
       continue
     }
     const type = mapSQLTypeToOpenAPIType(field.sqlType)
+
     /* istanbul ignore next */
-    if (field.sqlType === 'json') {
+    if (field.isArray) {
+      properties[field.camelcase] = {
+        type: 'array',
+        items: {
+          type
+        }
+      }
+    } else if (field.sqlType === 'json') {
       properties[field.camelcase] = {
         type: 'object',
         additionalProperties: true
@@ -79,10 +87,10 @@ function mapSQLEntityToJSONSchema (entity, ignore = {}) {
     } else {
       properties[field.camelcase] = { type }
     }
-    if (field.isNullable) {
+    if (field.isNullable || noRequired || field.autoTimestamp) {
       properties[field.camelcase].nullable = true
     }
-    if (!field.isNullable && !field.primaryKey) {
+    if (!field.isNullable && !field.primaryKey && !noRequired && !field.autoTimestamp) {
       // we skip the primary key for creation
       required.push(field.camelcase)
     }
@@ -94,19 +102,23 @@ function mapSQLEntityToJSONSchema (entity, ignore = {}) {
       properties[field.camelcase].enum = field.enum
     }
   }
+
   const res = {
     $id: entity.name,
     title: entity.name,
     description: `A ${entity.name}`,
     type: 'object',
-    properties,
-    required
+    properties
+  }
+
+  if (required.length > 0) {
+    res.required = required.sort()
   }
 
   return res
 }
 
-function mapOpenAPItoTypes (obj, opts = {}) {
+function mapOpenAPItoTypes (obj, fieldDefinitions, opts = {}) {
   let { writer, addedProps } = opts
   addedProps ??= new Set()
   writer ??= new CodeBlockWriter()
@@ -116,13 +128,23 @@ function mapOpenAPItoTypes (obj, opts = {}) {
   writer.write(` * ${description}`).newLine()
   writer.write(' */').newLine()
   writer.write(`declare interface ${title}`).block(() => {
-    renderProperties(writer, addedProps, properties, additionalProperties, required)
+    renderProperties(writer, addedProps, properties, additionalProperties, required, fieldDefinitions)
   })
   return writer.toString()
 }
 
-function renderProperties (writer, addedProps, properties = {}, additionalProperties, required = []) {
-  for (const name of Object.keys(properties)) {
+function renderProperties (writer, addedProps, properties = {}, additionalProperties, required = [], fieldDefinitions = {}) {
+  // Since Array.prototype.sort is guaranteed to be stable, we can sort by name first, then apply special sorting rules
+  const keys = Object.keys(properties)
+    .sort()
+    .sort((a, b) => {
+      // Sort PKs first
+      if (fieldDefinitions[a]?.primaryKey === fieldDefinitions[b]?.primaryKey) {
+        return 0
+      }
+      return fieldDefinitions[a]?.primaryKey ? -1 : 1
+    })
+  for (const name of keys) {
     const localProperty = properties[name]
     const { type, nullable, items } = localProperty
     addedProps.add(name)

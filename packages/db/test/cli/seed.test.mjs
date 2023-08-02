@@ -1,9 +1,8 @@
-import { cliPath, cleanSQLite } from './helper.js'
+import { cliPath, cleanSQLite, start } from './helper.js'
 import { test } from 'tap'
 import { request } from 'undici'
 import { execa } from 'execa'
 import stripAnsi from 'strip-ansi'
-import split from 'split2'
 import path from 'path'
 import rimraf from 'rimraf'
 import { copyFile, mkdir, mkdtemp, readdir } from 'node:fs/promises'
@@ -27,29 +26,13 @@ test('seed and start', async ({ comment, equal, match, teardown }) => {
   {
     const sanitized = stripAnsi(stdout)
     match(sanitized, /seeding from .*seed\.js/)
+    match(sanitized, /42/) // custom logger.info line from the seed file
     match(sanitized, /seeding complete/)
   }
 
   comment('starting')
 
-  const child = execa('node', [cliPath, 'start'], {
-    cwd
-  })
-  // child.stderr.pipe(process.stderr)
-  const splitter = split()
-  child.stdout.pipe(splitter)
-  let url
-  for await (const data of splitter) {
-    try {
-      const parsed = JSON.parse(data)
-      if (parsed.url) {
-        url = parsed.url
-        break
-      }
-    } catch (err) {
-      // do nothing as the line is not JSON
-    }
-  }
+  const { child, url } = await start([], { cwd })
   teardown(() => child.kill('SIGINT'))
 
   {
@@ -170,24 +153,7 @@ test('seed and start from cwd', async ({ comment, equal, match, teardown }) => {
 
   comment('starting')
 
-  const child = execa('node', [cliPath, 'start'], {
-    cwd
-  })
-  // child.stderr.pipe(process.stderr)
-  const splitter = split()
-  child.stdout.pipe(splitter)
-  let url
-  for await (const data of splitter) {
-    try {
-      const parsed = JSON.parse(data)
-      if (parsed.url) {
-        url = parsed.url
-        break
-      }
-    } catch (err) {
-      // do nothing as the line is not JSON
-    }
-  }
+  const { child, url } = await start([], { cwd })
   teardown(() => child.kill('SIGINT'))
 
   {

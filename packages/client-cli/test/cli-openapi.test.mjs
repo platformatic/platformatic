@@ -91,6 +91,11 @@ app.register(movies, {
   url: '${app.url}'
 });
 
+app.get('/', async () => {
+  const res = await app.movies.getMovies()
+  return res
+})
+
 app.post('/', async () => {
   const res = await app.movies.createMovie({ title: 'foo' })
   return res
@@ -447,8 +452,163 @@ const movies = require('./movies')
 const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}' })
+app.post('/', async (request, reply) => {  
+  const res = await app.movies.createMovie({ title: 'foo' })
+  return res
+})
+app.listen({ port: 0 })
+`
+  await fs.writeFile(join(dir, 'index.js'), toWrite)
+  const app2 = execa('node', ['index.js'])
+  teardown(() => app2.kill())
+  teardown(async () => { await app.close() })
+
+  const stream = app2.stdout.pipe(split(JSON.parse))
+
+  // this is unfortuate :(
+  const base = 'Server listening at '
+  let url
+  for await (const line of stream) {
+    const msg = line.msg
+    if (msg.indexOf(base) !== 0) {
+      continue
+    }
+    url = msg.slice(base.length)
+    break
+  }
+  {
+    const res = await request(url, {
+      method: 'POST'
+    })
+    const body = await res.body.json()
+    const matchDate = /[a-z]{3}, \d{2} [a-z]{3} \d{4} \d{2}:\d{2}:\d{2} GMT/i
+    const matchKeepAlive = /timeout=\d+/
+
+    match(body, {
+      statusCode: 200,
+      headers: {
+        location: '/movies/1',
+        'content-type': 'application/json; charset=utf-8',
+        'content-length': '22',
+        date: matchDate,
+        connection: 'keep-alive',
+        'keep-alive': matchKeepAlive
+      },
+      body: {
+        id: 1,
+        title: 'foo'
+      }
+    })
+  }
+
+  {
+    const res = await request(`${app.url}/redirect-me`)
+    match(res.statusCode, 302)
+    match(res.headers.location, 'https://google.com')
+  }
+})
+
+test('openapi client generation (javascript) from file', async ({ teardown, comment, same }) => {
+  try {
+    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+
+  await app.start()
+
+  const dir = await moveToTmpdir(teardown)
+  comment(`working in ${dir}`)
+
+  const openAPI = app.swagger()
+  const openAPIfile = join(dir, 'movies.schema.json')
+  await fs.writeFile(openAPIfile, JSON.stringify(openAPI, null, 2))
+
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies'])
+
+  const toWrite = `
+'use strict'
+
+const Fastify = require('fastify')
+const movies = require('./movies')
+const app = Fastify({ logger: true })
+
+app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
   const res = await app.movies.createMovie({ title: 'foo' })
+  return res
+})
+app.listen({ port: 0 })
+`
+  await fs.writeFile(join(dir, 'index.js'), toWrite)
+
+  const app2 = execa('node', ['index.js'])
+  teardown(() => app2.kill())
+  teardown(async () => { await app.close() })
+
+  const stream = app2.stdout.pipe(split(JSON.parse))
+
+  // this is unfortunate :(
+  const base = 'Server listening at '
+  let url
+  for await (const line of stream) {
+    const msg = line.msg
+    if (msg.indexOf(base) !== 0) {
+      continue
+    }
+    url = msg.slice(base.length)
+    break
+  }
+  const res = await request(url, {
+    method: 'POST'
+  })
+  const body = await res.body.json()
+  same(body, {
+    id: 1,
+    title: 'foo'
+  })
+})
+
+test('name with dashes', async ({ teardown, comment, same }) => {
+  try {
+    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+
+  await app.start()
+
+  const dir = await moveToTmpdir(teardown)
+  comment(`working in ${dir}`)
+
+  try {
+    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'uncanny-movies'])
+  } catch (err) {
+    console.log(err.stderr)
+    throw err
+  }
+
+  {
+    const pkg = JSON.parse(await fs.readFile(join(dir, 'uncanny-movies', 'package.json')))
+    same(pkg, {
+      name: 'uncanny-movies',
+      main: './uncanny-movies.cjs',
+      types: './uncanny-movies.d.ts'
+    })
+  }
+
+  const toWrite = `
+'use strict'
+
+const Fastify = require('fastify')
+const movies = require('./uncanny-movies')
+const app = Fastify({ logger: true })
+
+app.register(movies, { url: '${app.url}' })
+app.post('/', async (request, reply) => {
+  const res = await app.uncannyMovies.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
@@ -476,22 +636,160 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  const matchDate = /[a-z]{3}, \d{2} [a-z]{3} \d{4} \d{2}:\d{2}:\d{2} GMT/i
-  const matchKeepAlive = /timeout=\d+/
+  same(body, {
+    id: 1,
+    title: 'foo'
+  })
+})
 
-  match(body, {
-    statusCode: 200,
-    headers: {
-      location: '/movies/1',
-      'content-type': 'application/json; charset=utf-8',
-      'content-length': '22',
-      date: matchDate,
-      connection: 'keep-alive',
-      'keep-alive': matchKeepAlive
-    },
-    body: {
-      id: 1,
-      title: 'foo'
+test('no dashes typescript', async ({ teardown, comment, same }) => {
+  try {
+    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+
+  await app.start()
+
+  const dir = await moveToTmpdir(teardown)
+
+  comment(`working in ${dir}`)
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'uncanny-movies'])
+
+  const toWrite = `
+import Fastify from 'fastify';
+import movies from './uncanny-movies';
+
+const app = Fastify({ logger: true });
+app.register(movies, {
+  url: '${app.url}'
+});
+
+app.post('/', async () => {
+  const res = await app.uncannyMovies.createMovie({ title: 'foo' })
+  return res
+})
+
+app.listen({ port: 0 });
+`
+
+  await fs.writeFile(join(dir, 'index.ts'), toWrite)
+
+  const tsconfig = JSON.stringify({
+    extends: 'fastify-tsconfig',
+    compilerOptions: {
+      outDir: 'build',
+      target: 'es2018',
+      moduleResolution: 'node',
+      lib: ['es2018']
     }
+  }, null, 2)
+
+  await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
+
+  const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
+  await execa(tsc)
+
+  // TODO how can we avoid this copy?
+  await copy(join(dir, 'uncanny-movies'), join(dir, 'build', 'uncanny-movies'))
+
+  const server2 = execa('node', ['build/index.js'])
+  teardown(() => server2.kill())
+  teardown(async () => { await app.close() })
+
+  const stream = server2.stdout.pipe(split(JSON.parse))
+  server2.stderr.pipe(process.stderr)
+
+  // this is unfortuate :(
+  const base = 'Server listening at '
+  let url
+  for await (const line of stream) {
+    const msg = line.msg
+    if (msg.indexOf(base) !== 0) {
+      continue
+    }
+    url = msg.slice(base.length)
+    break
+  }
+  const res = await request(url, {
+    method: 'POST'
+  })
+  const body = await res.body.json()
+  same(body, {
+    id: 1,
+    title: 'foo'
+  })
+})
+
+test('name with tilde', async ({ teardown, comment, same }) => {
+  try {
+    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+
+  await app.start()
+
+  const dir = await moveToTmpdir(teardown)
+  comment(`working in ${dir}`)
+
+  try {
+    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'uncanny~movies'])
+  } catch (err) {
+    console.log(err.stderr)
+    throw err
+  }
+
+  {
+    const pkg = JSON.parse(await fs.readFile(join(dir, 'uncanny~movies', 'package.json')))
+    same(pkg, {
+      name: 'uncanny~movies',
+      main: './uncanny~movies.cjs',
+      types: './uncanny~movies.d.ts'
+    })
+  }
+
+  const toWrite = `
+'use strict'
+
+const Fastify = require('fastify')
+const movies = require('./uncanny~movies')
+const app = Fastify({ logger: true })
+
+app.register(movies, { url: '${app.url}' })
+app.post('/', async (request, reply) => {
+  const res = await app.uncannyMovies.createMovie({ title: 'foo' })
+  return res
+})
+app.listen({ port: 0 })
+`
+  await fs.writeFile(join(dir, 'index.js'), toWrite)
+
+  const app2 = execa('node', ['index.js'])
+  teardown(() => app2.kill())
+  teardown(async () => { await app.close() })
+
+  const stream = app2.stdout.pipe(split(JSON.parse))
+
+  // this is unfortuate :(
+  const base = 'Server listening at '
+  let url
+  for await (const line of stream) {
+    const msg = line.msg
+    if (msg.indexOf(base) !== 0) {
+      continue
+    }
+    url = msg.slice(base.length)
+    break
+  }
+  const res = await request(url, {
+    method: 'POST'
+  })
+  const body = await res.body.json()
+  same(body, {
+    id: 1,
+    title: 'foo'
   })
 })

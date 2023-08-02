@@ -103,8 +103,7 @@ test('demo', async ({ pass, same, equal, teardown }) => {
           CREATE TABLE categories (
             id INTEGER PRIMARY KEY,
             name TEXT NOT NULL
-          );
-        );`)
+          );`)
 
       await db.query(sql`
           CREATE TABLE pages (
@@ -113,8 +112,7 @@ test('demo', async ({ pass, same, equal, teardown }) => {
             body TEXT,
             category_id INTEGER,
             FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
-          );
-        );`)
+          );`)
     }
   })
   app.register(sqlGraphQL)

@@ -14,8 +14,6 @@ The config file will specify where the plugin file is located as the example bel
 ```
 The path is relative to the config file path.
 
-Since it uses [fastify-sandbox](https://github.com/mcollina/fastify-sandbox) under the hood, all other options of that package may be specified under the `plugin` property.
-
 You should export an async `function` which receives a parameters
 - `app` (`FastifyInstance`) that is the main fastify [instance](https://www.fastify.io/docs/latest/Reference/Server/#instance)
 - `opts` all the options specified in the config file after `path`
@@ -69,3 +67,32 @@ Multiple plugins can be loaded in parallel by specifying an array:
   }
 }
 ```
+
+## TypeScript and Autocompletion
+
+In order to provide the correct typings of the features added by Platformatic Service to your Fastify instance,
+add the following at the top of your files:
+
+```js
+/// <references types="@platformatic/service" />
+```
+
+### Plugin definition with TypeScript
+
+Here is an example of writing a plugin in TypeScript:
+
+```ts
+/// <reference types="@platformatic/service" />
+import { FastifyInstance, FastifyPluginOptions } from 'fastify'
+
+export default async function (fastify: FastifyInstance, opts: FastifyPluginOptions) {
+}
+```
+
+Note that you need to add the `"typescript": true` configuration to your `platformatic.service.json`.
+
+### Loading compiled files
+
+Setting `"typescript": false` but including a `tsconfig.json` with an [`outDir`](https://www.typescriptlang.org/tsconfig#outDir)
+option, will instruct Platformatic Service to try loading your plugins from that folder instead.
+This setup is needed to support pre-compiled sources to reduce cold start time during deployment.

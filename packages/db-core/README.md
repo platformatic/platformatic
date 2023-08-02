@@ -5,7 +5,7 @@ This modules wraps [`@platformatic/sql-mapper`](https://www.npmjs.com/package/@p
 [`@platformatic/sql-openapi`](https://www.npmjs.com/package/@platformatic/sql-openapi) in a convenient [Fastify](https://www.fastify.io/)
 plugin.
 
-Check out the full documentation for Platformatic DB on [our website](https://oss.platformatic.dev/docs/getting-started/quick-start-guide).
+Check out the full documentation for Platformatic DB on [our website](https://docs.platformatic.dev/docs/getting-started/quick-start-guide).
 
 ## Install
 

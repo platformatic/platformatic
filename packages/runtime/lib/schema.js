@@ -1,6 +1,7 @@
 #! /usr/bin/env node
 'use strict'
 
+const telemetry = require('@platformatic/telemetry').schema
 const pkg = require('../package.json')
 const version = 'v' + pkg.version
 const platformaticRuntimeSchema = {
@@ -42,10 +43,10 @@ const platformaticRuntimeSchema = {
         }
       }
     },
+    telemetry,
     services: {
       type: 'array',
       default: [],
-      minItems: 1,
       items: {
         type: 'object',
         required: ['id', 'path', 'config'],
@@ -67,7 +68,14 @@ const platformaticRuntimeSchema = {
       type: 'string'
     },
     hotReload: {
-      type: 'boolean'
+      anyOf: [
+        {
+          type: 'boolean'
+        },
+        {
+          type: 'string'
+        }
+      ]
     },
     allowCycles: {
       type: 'boolean'

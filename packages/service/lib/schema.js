@@ -5,6 +5,7 @@
 const pkg = require('../package.json')
 const version = 'v' + pkg.version
 const openApiDefs = require('./openapi-schema-defs')
+const telemetry = require('@platformatic/telemetry').schema
 
 const cors = {
   type: 'object',
@@ -423,14 +424,36 @@ const plugins = {
       type: 'integer'
     },
     typescript: {
-      type: 'boolean'
-    },
-    fallback: {
-      type: 'boolean'
-    },
-    hotReload: {
-      type: 'boolean',
-      default: true
+      anyOf: [{
+        type: 'object',
+        properties: {
+          enabled: {
+            anyOf: [{
+              type: 'boolean'
+            }, {
+              type: 'string'
+            }]
+          },
+          tsConfig: {
+            type: 'string',
+            resolvePath: true
+          },
+          outDir: {
+            type: 'string',
+            resolvePath: true
+          },
+          flags: {
+            type: 'array',
+            items: {
+              type: 'string'
+            }
+          }
+        }
+      }, {
+        type: 'boolean'
+      }, {
+        type: 'string'
+      }]
     }
   },
   additionalProperties: false,
@@ -443,7 +466,12 @@ const metrics = {
     {
       type: 'object',
       properties: {
-        port: { type: 'integer' },
+        port: {
+          anyOf: [
+            { type: 'integer' },
+            { type: 'string' }
+          ]
+        },
         hostname: { type: 'string' },
         auth: {
           type: 'object',
@@ -552,7 +580,21 @@ const clients = {
   items: {
     type: 'object',
     properties: {
+      serviceId: {
+        type: 'string'
+      },
+      name: {
+        type: 'string'
+      },
+      type: {
+        type: 'string',
+        enum: ['openapi', 'graphql']
+      },
       path: {
+        type: 'string',
+        resolvePath: true
+      },
+      schema: {
         type: 'string',
         resolvePath: true
       },
@@ -560,25 +602,25 @@ const clients = {
         type: 'string'
       }
     },
-    additionalProperties: false,
-    required: ['path', 'url']
+    additionalProperties: false
   }
 }
 
 const platformaticServiceSchema = {
   $id: `https://platformatic.dev/schemas/${version}/service`,
+  title: 'Platformatic Service',
   type: 'object',
   properties: {
     server,
     plugins,
     metrics,
+    telemetry,
     watch: {
       anyOf: [watch, {
         type: 'boolean'
+      }, {
+        type: 'string'
       }]
-    },
-    hotReload: {
-      type: 'boolean'
     },
     $schema: {
       type: 'string'

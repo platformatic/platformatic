@@ -1,9 +1,11 @@
-import { FastifyPluginAsync } from 'fastify'
+import { FastifyPluginAsync, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+import type { PlatformaticApp } from '@platformatic/types'
 import { SQL, SQLQuery } from '@databases/sql'
 
 interface ILogger {
   trace(): any,
-  error(): any
+  error(): any,
+  warn(): any
 }
 
 export interface Database {
@@ -241,13 +243,14 @@ export interface Entity<EntityFields = any> {
   count: Count,
 }
 
+type EntityHook<T extends (...args: any) => any> = (original: T, ...options: Parameters<T>) => ReturnType<T>;
 
 export interface EntityHooks<EntityFields = any> {
-  find?: Find<EntityFields>,
-  insert?: Insert<EntityFields>,
-  save?: Save<EntityFields>,
-  delete?: Delete<EntityFields>,
-  count?: Count,
+  find?: EntityHook<Find<EntityFields>>,
+  insert?: EntityHook<Insert<EntityFields>>,
+  save?: EntityHook<Save<EntityFields>>,
+  delete?: EntityHook<Delete<EntityFields>>,
+  count?: EntityHook<Count>,
 }
 
 export interface SQLMapperPluginOptions {
@@ -303,12 +306,40 @@ export interface SQLMapperPluginInterface {
   /**
    * Adds hooks to the entity.
    */
-  addEntityHooks(entityName: string, hooks: EntityHooks): any
+  addEntityHooks<EntityFields>(entityName: string, hooks: EntityHooks<EntityFields>): any
+}
+
+// Extend the PlatformaticApp interface,
+// Unfortunately we neeed to copy over all the types from SQLMapperPluginInterface
+declare module '@platformatic/types' {
+  interface PlatformaticApp {
+    /**
+     * A Database abstraction layer from [@Databases](https://www.atdatabases.org/)
+     */
+    db: Database,
+    /**
+     * The SQL builder from [@Databases](https://www.atdatabases.org/)
+     */
+    sql: SQL,
+    /**
+     * An object containing a key for each table found in the schema, with basic CRUD operations. See [entity.md](./entity.md) for details.
+     */
+    entities: Entities,
+    /**
+     * Adds hooks to the entity.
+     */
+    addEntityHooks<EntityFields>(entityName: string, hooks: EntityHooks<EntityFields>): any
+  }
+}
+
+export interface PlatformaticContext {
+  app: FastifyInstance,
+  reply: FastifyReply
 }
 
 declare module 'fastify' {
-  interface FastifyInstance {
-    platformatic: SQLMapperPluginInterface
+  interface FastifyRequest {
+    platformaticContext: PlatformaticContext
   }
 }
 
@@ -328,3 +359,4 @@ export default plugin
 export module utils {
   export function toSingular(str: string): string
 }
+

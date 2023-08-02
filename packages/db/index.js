@@ -91,7 +91,7 @@ async function platformaticDB (app, opts) {
   if (Object.keys(app.platformatic.entities).length === 0) {
     app.log.warn(
       'No tables found in the database. Are you connected to the right database? Did you forget to run your migrations? ' +
-      'This guide can help with debugging Platformatic DB: https://oss.platformatic.dev/docs/guides/debug-platformatic-db'
+      'This guide can help with debugging Platformatic DB: https://docs.platformatic.dev/docs/guides/debug-platformatic-db'
     )
   }
 

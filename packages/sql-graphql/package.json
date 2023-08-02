@@ -1,8 +1,9 @@
 {
   "name": "@platformatic/sql-graphql",
-  "version": "0.26.1",
+  "version": "0.33.1",
   "description": "Map SQL dbs to GraphQL",
   "main": "index.js",
+  "types": "index.d.ts",
   "scripts": {
     "lint": "standard | snazzy",
     "test": "standard | snazzy && npm run test:typescript && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
@@ -27,10 +28,10 @@
     "@mercuriusjs/gateway": "^1.2.0",
     "@platformatic/sql-events": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
-    "fastify": "^4.17.0",
+    "fastify": "^4.18.0",
     "snazzy": "^9.0.0",
-    "standard": "^17.0.0",
-    "tap": "^16.3.4",
+    "standard": "^17.1.0",
+    "tap": "^16.3.6",
     "tsd": "^0.28.1",
     "ws": "^8.13.0"
   },
@@ -39,7 +40,7 @@
     "camelcase": "^6.3.0",
     "fastify-plugin": "^4.5.0",
     "graphql": "^16.6.0",
-    "graphql-scalars": "^1.22.0",
+    "graphql-scalars": "^1.22.2",
     "graphql-type-json": "^0.3.2",
     "inflected": "^2.1.0",
     "mercurius": "^13.0.0"

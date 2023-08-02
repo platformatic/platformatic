@@ -38,6 +38,7 @@ Configuration settings are organized into the following groups:
 - [`entrypoint`](#entrypoint) **(required)**
 - [`hotReload`](#hotReload)
 - [`allowCycles`](#allowCycles)
+- [`telemetry`](#telemetry)
 
 Configuration settings containing sensitive data should be set using
 [configuration placeholders](#configuration-placeholders).
@@ -72,6 +73,11 @@ these default values.
 runtime. Each service object supports the following settings:
 
 - **`id`** (**required**, `string`) - A unique identifier for the microservice.
+When working with the Platformatic Composer, this value corresponds to the `id`
+property of each object in the `services` section of the config file. When
+working with client objects, this corresponds to the optional `serviceId`
+property or the `name` field in the client's `package.json` file if a
+`serviceId` is not explicitly provided.
 - **`path`** (**required**, `string`) - The path to the directory containing
 the microservice.
 - **`config`** (**required**, `string`) - The configuration file used to start
@@ -109,6 +115,37 @@ not start any applications.
 
 If `allowCycles` is `true`, the topological sort is skipped, and the
 microservices are started in the order specified in the configuration file.
+
+### `telemetry`
+[Open Telemetry](https://opentelemetry.io/) is optionally supported with these settings:
+
+- **`serviceName`** (**required**, `string`) — Name of the service as will be reported in open telemetry. In the `runtime` case, the name of the services as reported in traces is `${serviceName}-${serviceId}`, where `serviceId` is the id of the service in the runtime.
+- **`version`** (`string`) — Optional version (free form)
+- **`exporter`** (`object`) — Exporter configuration object. If not defined, the exporter defaults to `console`. This object has the following properties:
+    - **`type`** (`string`) — Exporter type. Supported values are `console`, `otlp`, `zipkin` and `memory` (default: `console`). `memory` is only supported for testing purposes. 
+    - **`options`** (`object`) — These options are supported:
+        - **`url`** (`string`) — The URL to send the telemetry to. Required for `otlp` exporter. This has no effect on `console` and `memory` exporters.
+        - **`headers`** (`object`) — Optional headers to send with the telemetry. This has no effect on `console` and `memory` exporters.
+        
+Note that OTLP traces can be consumed by different solutions, like [Jaeger](https://www.jaegertracing.io/). [Here](https://opentelemetry.io/ecosystem/vendors/) the full list.
+
+  _Example_
+
+  ```json
+  {
+    "telemetry": {
+        "serviceName": "test-service",
+        "exporter": {
+            "type": "otlp",
+            "options": {
+                "url": "http://localhost:4318/v1/traces"
+            }
+        }
+    }
+  }
+  ```
+
+
 
 ## Environment variable placeholders
 
@@ -159,21 +196,3 @@ npx platformatic runtime --allow-env=HOST,SERVER_LOGGER_LEVEL
 
 If `--allow-env` is passed as an option to the CLI, it will be merged with the
 default allow list.
-
-## Interservice communication
-
-The Platformatic Runtime allows multiple microservice applications to run
-within a single process. Only the entrypoint binds to an operating system
-port and can be reached from outside of the runtime.
-
-Within the runtime, all interservice communication happens by injecting HTTP
-requests into the running servers, without binding them to ports. This injection
-is handled by
-[`fastify-undici-dispatcher`](https://www.npmjs.com/package/fastify-undici-dispatcher).
-
-Each microservice is assigned an internal domain name based on its unique ID.
-For example, a microservice with the ID `awesome` is given the internal domain
-of `http://awesome.plt.local`. The `fastify-undici-dispatcher` module maps that
-domain to the Fastify server running the `awesome` microservice. Any Node.js
-APIs based on Undici, such as `fetch()`, will then automatically route requests
-addressed to `awesome.plt.local` to the corresponding Fastify server.

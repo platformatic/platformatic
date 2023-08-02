@@ -1,0 +1,28 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v0.28.1/composer",
+  "server": {
+    "hostname": "{PLT_SERVER_HOSTNAME}",
+    "port": "{PORT}",
+    "logger": {
+      "level": "{PLT_SERVER_LOGGER_LEVEL}"
+    }
+  },
+  "composer": {
+    "services": [
+      {
+        "id": "movies",
+        "openapi": {
+          "url": "/documentation/json"
+        }
+      },
+      {
+        "id": "titles",
+        "openapi": {
+          "url": "/documentation/json"
+        }
+      }
+    ],
+    "refreshTimeout": 1000
+  },
+  "watch": true
+}

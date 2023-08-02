@@ -467,3 +467,317 @@ test('nested where', async (t) => {
     }
   }
 })
+
+test('list with NOT NULL', async (t) => {
+  const { pass, teardown, same, equal, matchSnapshot } = t
+  t.snapshotFile = resolve(__dirname, 'tap-snapshots', 'where-openapi-3.cjs')
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      if (isSQLite) {
+        await db.query(sql`CREATE TABLE posts (
+          id INTEGER PRIMARY KEY,
+          title VARCHAR(42) NOT NULL,
+          long_text TEXT NOT NULL,
+          counter INTEGER NOT NULL
+        );`)
+      } else if (isMysql) {
+        await db.query(sql`CREATE TABLE posts (
+          id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+          counter INTEGER NOT NULL,
+          long_text TEXT NOT NULL,
+          title VARCHAR(42) NOT NULL
+        );`)
+      } else {
+        await db.query(sql`CREATE TABLE posts (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(42) NOT NULL,
+          long_text TEXT NOT NULL,
+          counter INTEGER NOT NULL
+        );`)
+      }
+    }
+  })
+  app.register(sqlOpenAPI)
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/documentation/json'
+    })
+    const openapi = res.json()
+    matchSnapshot(openapi, 'matches expected OpenAPI defs')
+  }
+
+  const posts = [{
+    title: 'Dog',
+    longText: 'Foo',
+    counter: 10
+  }, {
+    title: 'Cat',
+    longText: 'Bar',
+    counter: 20
+  }, {
+    title: 'Mouse',
+    longText: 'Baz',
+    counter: 30
+  }, {
+    title: 'Duck',
+    longText: 'A duck tale',
+    counter: 40
+  }]
+
+  for (const body of posts) {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/posts',
+      body
+    })
+    equal(res.statusCode, 200, 'POST /posts status code')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?fields=id,title,longText'
+    })
+    equal(res.statusCode, 200, 'GET /posts?fields=id,title,longText status code')
+    same(res.json(), [{
+      id: '1',
+      title: 'Dog',
+      longText: 'Foo'
+    }, {
+      id: 2,
+      title: 'Cat',
+      longText: 'Bar'
+    }, {
+      id: 3,
+      title: 'Mouse',
+      longText: 'Baz'
+    }, {
+      id: 4,
+      title: 'Duck',
+      longText: 'A duck tale'
+    }], 'GET /posts?fields=id,title,longText response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.title.eq=Dog&fields=id,title,longText'
+    })
+    equal(res.statusCode, 200, 'GET /posts?where.title.eq=Dog status code')
+    same(res.json(), [{
+      id: '1',
+      title: 'Dog',
+      longText: 'Foo'
+    }], 'GET /posts?where.title.eq=Dog response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.title.neq=Dog&fields=id,title,longText'
+    })
+    equal(res.statusCode, 200, 'GET /posts?where.title.neq=Dog status code')
+    same(res.json(), [{
+      id: '2',
+      title: 'Cat',
+      longText: 'Bar'
+    }, {
+      id: '3',
+      title: 'Mouse',
+      longText: 'Baz'
+    }, {
+      id: '4',
+      title: 'Duck',
+      longText: 'A duck tale'
+    }], 'GET /posts?where.title.neq=Dog response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.counter.gt=10&fields=id,title,longText'
+    })
+    equal(res.statusCode, 200, 'GET /posts?where.counter.gt=10 status code')
+    same(res.json(), [{
+      id: '2',
+      title: 'Cat',
+      longText: 'Bar'
+    }, {
+      id: '3',
+      title: 'Mouse',
+      longText: 'Baz'
+    }, {
+      id: '4',
+      title: 'Duck',
+      longText: 'A duck tale'
+    }], 'GET /posts?where.counter.gt=10 response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.counter.lt=40&fields=id,title,longText'
+    })
+    equal(res.statusCode, 200, 'GET /posts?where.counter.lt=40 status code')
+    same(res.json(), [{
+      id: '1',
+      title: 'Dog',
+      longText: 'Foo'
+    }, {
+      id: '2',
+      title: 'Cat',
+      longText: 'Bar'
+    }, {
+      id: '3',
+      title: 'Mouse',
+      longText: 'Baz'
+    }], 'GET /posts?where.counter.lt=40 response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.counter.lte=30&fields=id,title,longText'
+    })
+    equal(res.statusCode, 200, 'GET /posts?where.counter.lte=30 posts status code')
+    same(res.json(), [{
+      id: '1',
+      title: 'Dog',
+      longText: 'Foo'
+    }, {
+      id: '2',
+      title: 'Cat',
+      longText: 'Bar'
+    }, {
+      id: '3',
+      title: 'Mouse',
+      longText: 'Baz'
+    }], 'GET /posts?where.counter.lte=30 response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.counter.gte=20&fields=id,title,longText'
+    })
+    equal(res.statusCode, 200, 'GET /posts?where.counter.gte=20 status code')
+    same(res.json(), [{
+      id: '2',
+      title: 'Cat',
+      longText: 'Bar'
+    }, {
+      id: '3',
+      title: 'Mouse',
+      longText: 'Baz'
+    }, {
+      id: '4',
+      title: 'Duck',
+      longText: 'A duck tale'
+    }], 'GET /posts?where.counter.gte=20 response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.counter.in=20,30&fields=id,title,longText'
+    })
+    equal(res.statusCode, 200, 'posts status code')
+    same(res.json(), [{
+      id: '2',
+      title: 'Cat',
+      longText: 'Bar'
+    }, {
+      id: '3',
+      title: 'Mouse',
+      longText: 'Baz'
+    }], 'posts response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.counter.nin=10,40&fields=id,title,longText'
+    })
+    equal(res.statusCode, 200, '/posts status code')
+    same(res.json(), [{
+      id: '2',
+      title: 'Cat',
+      longText: 'Bar'
+    }, {
+      id: '3',
+      title: 'Mouse',
+      longText: 'Baz'
+    }], '/posts response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.counter.gt=10&where.counter.lt=40&fields=id,title,longText'
+    })
+    equal(res.statusCode, 200, '/posts status code')
+    same(res.json(), [{
+      id: '2',
+      title: 'Cat',
+      longText: 'Bar'
+    }, {
+      id: '3',
+      title: 'Mouse',
+      longText: 'Baz'
+    }], 'posts response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.title.in=Dog,Cat&fields=id,title,longText'
+    })
+    equal(res.statusCode, 200, 'GET /posts?where.title.in=Dog,Cat status code')
+    same(res.json(), [{
+      id: '1',
+      title: 'Dog',
+      longText: 'Foo'
+    }, {
+      id: '2',
+      title: 'Cat',
+      longText: 'Bar'
+    }], 'GET /posts?where.title.in=Dog,Cat response')
+  }
+
+  // Skip unknown properties now
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.foo.in=Dog,Cat&fields=id,title,longText'
+    })
+    equal(res.statusCode, 200, 'GET /posts?where.title.in=Dog,Cat status code')
+    same(res.json(), [{
+      id: '1',
+      title: 'Dog',
+      longText: 'Foo'
+    }, {
+      id: '2',
+      title: 'Cat',
+      longText: 'Bar'
+    }, {
+      id: 3,
+      title: 'Mouse',
+      longText: 'Baz'
+    }, {
+      id: 4,
+      title: 'Duck',
+      longText: 'A duck tale'
+    }], 'GET /posts?where.title.in=Dog,Cat response')
+  }
+})

@@ -59,6 +59,8 @@ test('starts a runtime application', async ({ teardown }) => {
     timeout: 10_000
   })
 
+  child.stderr.pipe(process.stderr)
+
   teardown(async () => {
     try {
       child.kill('SIGKILL')

@@ -43,12 +43,32 @@ async function listTables (db, sql, schemas) {
 module.exports.listTables = listTables
 
 async function listColumns (db, sql, table, schema) {
+  /*
   return db.query(sql`
     SELECT column_name, udt_name, is_nullable, is_generated
     FROM information_schema.columns
     WHERE table_name = ${table}
     AND table_schema = ${schema}
   `)
+  */
+
+  const res = await db.query(sql`
+    SELECT column_name, udt_name, is_nullable, is_generated, data_type
+    FROM information_schema.columns
+    WHERE table_name = ${table}
+    AND table_schema = ${schema}
+  `)
+
+  for (const col of res) {
+    if (col.data_type === 'ARRAY') {
+      col.udt_name = col.udt_name.replace(/^_/, '')
+      col.isArray = true
+    } else {
+      col.isArray = false
+    }
+  }
+
+  return res
 }
 
 module.exports.listColumns = listColumns

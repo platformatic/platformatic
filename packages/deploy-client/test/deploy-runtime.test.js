@@ -82,12 +82,14 @@ test('should deploy platformatic runtime project without github metadata', async
   )
 
   const logger = {
+    trace: () => {},
     info: () => {},
     warn: () => t.fail('Should not log a warning')
   }
 
   await deploy({
     deployServiceHost: 'http://localhost:3042',
+    compileTypescript: false,
     workspaceId,
     workspaceKey,
     label,

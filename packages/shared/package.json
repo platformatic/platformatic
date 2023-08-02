@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/shared",
-  "version": "0.26.1",
+  "version": "0.33.1",
   "main": "index.js",
   "description": "Platformatic DB Shared Resources",
   "repository": {
@@ -16,10 +16,10 @@
     "test": "standard | snazzy"
   },
   "dependencies": {
-    "@fastify/error": "^3.2.0"
+    "@fastify/error": "^3.2.1"
   },
   "devDependencies": {
     "snazzy": "^9.0.0",
-    "standard": "^17.0.0"
+    "standard": "^17.1.0"
   }
 }

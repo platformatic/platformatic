@@ -1,0 +1,28 @@
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "0",
+    "logger": {
+      "level": "error"
+    }
+  },
+  "db": {
+    "connectionString": "sqlite://./db.sqlite",
+    "graphql": true,
+    "openapi": {
+      "prefix": "/movies-api"
+    }
+  },
+  "migrations": {
+    "dir": "./migrations",
+    "autoApply": true
+  },
+  "plugins": {
+    "paths": [{
+      "path": "./plugin.js",
+      "options": {
+        "prefix": "/movies-api"
+      }
+    }]
+  }
+}

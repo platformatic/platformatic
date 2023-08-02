@@ -1,88 +1,63 @@
 'use strict'
+
+const inspector = require('node:inspector')
+const { isatty } = require('node:tty')
 const { parentPort, workerData } = require('node:worker_threads')
-const FastifyUndiciDispatcher = require('fastify-undici-dispatcher')
-const { Agent, setGlobalDispatcher } = require('undici')
-const { PlatformaticApp } = require('./app')
+const undici = require('undici')
+const pino = require('pino')
+const RuntimeApi = require('./api')
+const { MessagePortWritable } = require('./message-port-writable')
 const loaderPort = globalThis.LOADER_PORT // Added by loader.mjs.
-const globalAgent = new Agent()
-const globalDispatcher = new FastifyUndiciDispatcher({
-  dispatcher: globalAgent,
-  // setting the domain here allows for fail-fast scenarios
-  domain: '.plt.local'
-})
-const applications = new Map()
-let entrypoint
 
+globalThis.fetch = undici.fetch
 delete globalThis.LOADER_PORT
-setGlobalDispatcher(globalDispatcher)
 
-parentPort.on('message', async (msg) => {
-  for (const app of applications.values()) {
-    await app.handleProcessLevelEvent(msg)
+let transport
+let destination
 
-    if (msg?.msg === 'plt:start' || msg?.msg === 'plt:restart') {
-      const serviceUrl = new URL(app.appConfig.localUrl)
-
-      globalDispatcher.route(serviceUrl.host, app.server)
-    }
-  }
-
-  switch (msg?.msg) {
-    case 'plt:start':
-      configureDispatcher()
-      parentPort.postMessage({ msg: 'plt:started', url: entrypoint.server.url })
-      break
-    case 'plt:restart':
-      configureDispatcher()
-      parentPort.postMessage({ msg: 'plt:restarted', url: entrypoint.server.url })
-      break
-    case 'plt:stop':
-      process.exit() // Exit the worker thread.
-      break
-    case undefined:
-      // Ignore
-      break
-    default:
-      throw new Error(`unknown message type: '${msg.msg}'`)
-  }
-})
-
-async function main () {
-  const { services } = workerData.config
-
-  for (let i = 0; i < services.length; ++i) {
-    const service = services[i]
-    const app = new PlatformaticApp(service, loaderPort)
-
-    applications.set(service.id, app)
-
-    if (service.entrypoint) {
-      entrypoint = app
-    }
-  }
-
-  parentPort.postMessage('plt:init')
+/* c8 ignore next 10 */
+if (workerData.config.loggingPort) {
+  destination = new MessagePortWritable({
+    metadata: workerData.config.loggingMetadata,
+    port: workerData.config.loggingPort
+  })
+} else if (isatty(1)) {
+  transport = pino.transport({
+    target: 'pino-pretty'
+  })
 }
 
-function configureDispatcher () {
-  const { services } = workerData.config
+const logger = pino(transport, destination)
 
-  // Setup the local services in the global dispatcher.
-  for (let i = 0; i < services.length; ++i) {
-    const service = services[i]
-    const serviceApp = applications.get(service.id)
-    const serviceUrl = new URL(service.localUrl)
+/* c8 ignore next 4 */
+process.once('uncaughtException', (err) => {
+  logger.error({ err }, 'runtime error')
+  throw err
+})
 
-    globalDispatcher.route(serviceUrl.host, serviceApp.server)
+// Tested by test/cli/start.test.mjs by C8 does not see it.
+/* c8 ignore next 4 */
+process.once('unhandledRejection', (err) => {
+  logger.error({ err }, 'runtime error')
+  throw err
+})
 
-    for (let j = 0; j < service.dependencies.length; ++j) {
-      const depConfig = service.dependencies[j]
-      const depApp = applications.get(depConfig.id)
-      const depUrl = new URL(depConfig.url)
+function main () {
+  const { inspectorOptions } = workerData.config
 
-      globalDispatcher.route(depUrl.host, depApp.server)
+  if (inspectorOptions) {
+    /* c8 ignore next 6 */
+    if (inspectorOptions.hotReloadDisabled) {
+      logger.info('debugging flags were detected. hot reloading has been disabled')
     }
+
+    inspector.open(inspectorOptions.port, inspectorOptions.host, inspectorOptions.breakFirstLine)
   }
+
+  const runtime = new RuntimeApi(workerData.config, logger, loaderPort)
+  runtime.startListening(parentPort)
+
+  parentPort.postMessage('plt:init')
 }
 
 main()

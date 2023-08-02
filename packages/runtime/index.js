@@ -1,33 +1,15 @@
 'use strict'
-const ConfigManager = require('@platformatic/config')
+const { buildServer } = require('./lib/build-server')
 const { platformaticRuntime } = require('./lib/config')
-const { start, startWithConfig } = require('./lib/start')
+const { start } = require('./lib/start')
+const unifiedApi = require('./lib/unified-api')
+const RuntimeApi = require('./lib/api')
+const { compile } = require('./lib/compile')
 
-async function buildServer (options = {}) {
-  if (!options.configManager) {
-    // Instantiate a new config manager from the current options.
-    const cm = new ConfigManager({
-      ...platformaticRuntime.configManagerConfig,
-      source: options
-    })
-    await cm.parseAndValidate()
-
-    if (typeof options === 'string') {
-      options = { configManager: cm }
-    } else {
-      options.configManager = cm
-    }
-  }
-
-  // The transformConfig() function can't be sent between threads.
-  delete options.configManager._transformConfig
-
-  return startWithConfig(options.configManager)
-}
-
-module.exports = {
-  buildServer,
-  platformaticRuntime,
-  schema: platformaticRuntime.schema,
-  start
-}
+module.exports.buildServer = buildServer
+module.exports.platformaticRuntime = platformaticRuntime
+module.exports.schema = platformaticRuntime.schema
+module.exports.RuntimeApi = RuntimeApi
+module.exports.start = start
+module.exports.unifiedApi = unifiedApi
+module.exports.compile = compile

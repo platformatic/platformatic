@@ -37,6 +37,7 @@ Configuration settings are organised into the following groups:
 - [`service`](#service)
 - [`metrics`](#metrics)
 - [`plugins`](#plugins)
+- [`telemetry`](#telemetry)
 
 Sensitive configuration settings, such as a database connection URL that contains
 a password, should be set using [configuration placeholders](#configuration-placeholders).
@@ -96,30 +97,54 @@ An optional object that defines the plugins loaded by Platformatic Service.
   - `options` (`object`): Optional plugin options.
   - `encapsulate` (`boolean`): if the path is a folder, it instruct Platformatic to not encapsulate those plugins.
   - `maxDepth` (`integer`): if the path is a folder, it limits the depth to load the content from.
-- **`typescript`** (`boolean`): enable typescript compilation. A `tsconfig.json` file is required in the same folder.
-- **`hotReload`** (`boolean`, default: `true`) if `true` or not specified, the plugin is loaded using [`fastify-sandbox`](https://github.com/mcollina/fastify-sandbox), otherwise is loaded directly using `require`/`import` and the hot reload is not enabled
+- **`typescript`** (`boolean` or `object`): enable TypeScript compilation. A `tsconfig.json` file is required in the same folder.
 
-  _Example_
 
-  ```json
-  {
-    "plugins": {
-      "paths": [{
-        "path": "./my-plugin.js",
-        "options": {
-          "foo": "bar"
-        }
-      }],
-      "hotReload": true,
+_Example_
+
+```json
+{
+  "plugins": {
+    "paths": [{
+      "path": "./my-plugin.js",
+      "options": {
+        "foo": "bar"
+      }
+    }]
+  }
+}
+```
+
+#### `typescript` compilation options
+
+The `typescript` can also be an object to customize the compilation. Here are the supported options:
+
+* `enabled` (`boolean`): enables compilation
+* `tsConfig` (`string`): path to the `tsconfig.json` file relative to the configuration
+* `outDir` (`string`): the output directory of `tsconfig.json`, in case `tsconfig.json` is not available
+and and `enabled` is set to `false` (procution build)
+* `flags` (array of `string`): flags to be passed to `tsc`. Overrides `tsConfig`.
+    
+
+Example:
+
+```json
+{
+  "plugins": {
+    "paths": [{
+      "path": "./my-plugin.js",
+      "options": {
+        "foo": "bar"
+      }
+    }],
+    "typescript": {
+      "enabled": false,
+      "tsConfig": "./path/to/tsconfig.json",
+      "outDir": "dist"
     }
   }
-  ```
-
-:::warning
-While hot reloading is useful for development, it is not recommended to use it in production.
-To switch if off, set `hotReload` to `false`.
-:::
-
+}
+```
 
 ### `watch`
 
@@ -209,6 +234,34 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
           "description": "Exposing a SQL database as REST"
         }
       }
+    }
+  }
+  ```
+### `telemetry`
+[Open Telemetry](https://opentelemetry.io/) is optionally supported with these settings:
+
+- **`serviceName`** (**required**, `string`) — Name of the service as will be reported in open telemetry.
+- **`version`** (`string`) — Optional version (free form)
+- **`exporter`** (`object`) — Exporter configuration object. If not defined, the exporter defaults to `console`. This object has the following properties:
+    - **`type`** (`string`) — Exporter type. Supported values are `console`, `otlp`, `zipkin` and `memory` (default: `console`). `memory` is only supported for testing purposes. 
+    - **`options`** (`object`) — These options are supported:
+        - **`url`** (`string`) — The URL to send the telemetry to. Required for `otlp` exporter. This has no effect on `console` and `memory` exporters.
+        - **`headers`** (`object`) — Optional headers to send with the telemetry. This has no effect on `console` and `memory` exporters.
+        
+Note that OTLP traces can be consumed by different solutions, like [Jaeger](https://www.jaegertracing.io/). [Here](https://opentelemetry.io/ecosystem/vendors/) the full list.
+
+  _Example_
+
+  ```json
+  {
+    "telemetry": {
+        "serviceName": "test-service",
+        "exporter": {
+            "type": "otlp",
+            "options": {
+                "url": "http://localhost:4318/v1/traces"
+            }
+        }
     }
   }
   ```

@@ -11,10 +11,24 @@ import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa } from 'execa'
 import ora from 'ora'
-import createDB from './create-db.mjs'
+import { getConnectionString, createDB } from './create-db.mjs'
 import askDir from '../ask-dir.mjs'
 import { askDynamicWorkspaceCreateGHAction, askStaticWorkspaceGHAction } from '../ghaction.mjs'
 import { getRunPackageManagerInstall, getUseTypescript, getPort, getOverwriteReadme } from '../cli-options.mjs'
+
+const databases = [{
+  value: 'sqlite',
+  name: 'SQLite'
+}, {
+  value: 'postgres',
+  name: 'PostgreSQL'
+}, {
+  value: 'mysql',
+  name: 'MySQL'
+}, {
+  value: 'mariadb',
+  name: 'MariaDB'
+}]
 
 export const createReadme = async (logger, dir = '.') => {
   const readmeFileName = join(dir, 'README.md')
@@ -70,6 +84,48 @@ const createPlatformaticDB = async (_args, opts) => {
   const pkgManager = getPkgManager()
   const projectDir = opts.dir || await askDir(logger, '.')
 
+  const { database } = await inquirer.prompt({
+    type: 'list',
+    name: 'database',
+    message: 'What database do you want to use?',
+    default: args.database,
+    choices: databases
+  })
+
+  let connectionString = getConnectionString(database)
+
+  while (true) {
+    const pickConnectionString = await inquirer.prompt({
+      type: 'expand',
+      name: 'edit',
+      message: `Do you want to use the connection string "${connectionString}"?`,
+      choices: [
+        {
+          key: 'y',
+          name: 'Confirm',
+          value: false
+        },
+        {
+          key: 'e',
+          name: 'Edit',
+          value: true
+        }
+      ]
+    })
+
+    if (pickConnectionString.edit) {
+      const answers = await inquirer.prompt({
+        type: 'editor',
+        name: 'connectionString',
+        message: 'Edit the connection string',
+        default: connectionString
+      })
+      connectionString = answers.connectionString.trim()
+    } else {
+      break
+    }
+  }
+
   const wizardOptions = await inquirer.prompt([{
     type: 'list',
     name: 'defaultMigrations',
@@ -97,7 +153,8 @@ const createPlatformaticDB = async (_args, opts) => {
   const params = {
     hostname: args.hostname,
     port: wizardOptions.port,
-    database: args.database,
+    database,
+    connectionString,
     migrations: wizardOptions.defaultMigrations ? args.migrations : '',
     plugin: generatePlugin,
     types: useTypes,
@@ -108,8 +165,12 @@ const createPlatformaticDB = async (_args, opts) => {
 
   const fastifyVersion = await getDependencyVersion('fastify')
 
+  const scripts = {
+    migrate: 'platformatic db migrations apply'
+  }
+
   // Create the package.json, .gitignore, readme
-  await createPackageJson('db', version, fastifyVersion, logger, projectDir, useTypescript)
+  await createPackageJson(version, fastifyVersion, logger, projectDir, useTypescript, scripts)
   await createGitignore(logger, projectDir)
   await createReadme(logger, projectDir)
 
@@ -158,8 +219,13 @@ const createPlatformaticDB = async (_args, opts) => {
       if (applyMigrations) {
         const spinner = ora('Applying migrations...').start()
         // We need to apply migrations using the platformatic installed in the project
-        await execa(pkgManager, ['exec', 'platformatic', 'db', 'migrations', 'apply'], { cwd: projectDir })
-        spinner.succeed('...done!')
+        try {
+          await execa(pkgManager, ['exec', 'platformatic', 'db', 'migrations', 'apply'], { cwd: projectDir })
+          spinner.succeed('...done!')
+        } catch (err) {
+          logger.trace({ err })
+          spinner.fail('...failed! Try again by running "platformatic db migrations apply"')
+        }
       }
     }
     if (generatePlugin) {
@@ -173,8 +239,13 @@ const createPlatformaticDB = async (_args, opts) => {
 
       if (generateTypes) {
         const spinner = ora('Generating types...').start()
-        await execa(pkgManager, ['exec', 'platformatic', 'db', 'types'], { cwd: projectDir })
-        spinner.succeed('...done!')
+        try {
+          await execa(pkgManager, ['exec', 'platformatic', 'db', 'types'], { cwd: projectDir })
+          spinner.succeed('...done!')
+        } catch (err) {
+          logger.trace({ err })
+          spinner.fail('...failed! Try again by running "platformatic db types"')
+        }
       }
     }
   }

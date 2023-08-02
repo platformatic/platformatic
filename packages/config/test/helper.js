@@ -1,18 +1,15 @@
 'use strict'
 const os = require('os')
 const { join } = require('path')
-const { writeFile } = require('fs/promises')
-function getTempFile (filename = 'platformatic.json') {
-  return join(os.tmpdir(), filename)
-}
+const { mkdtemp, writeFile } = require('fs/promises')
 
-async function saveConfigToFile (config, filename, serializer = JSON) {
-  const targetFile = getTempFile(filename)
+async function saveConfigToFile (config, filename = 'platformatic.json', serializer = JSON) {
+  const tempDir = await mkdtemp(join(os.tmpdir(), 'plt-config-test-'))
+  const targetFile = join(tempDir, filename)
   await writeFile(targetFile, serializer.stringify(config))
   return targetFile
 }
 
 module.exports = {
-  getTempFile,
   saveConfigToFile
 }

@@ -2,6 +2,7 @@
 
 const { join } = require('node:path')
 const { test } = require('tap')
+const { request } = require('undici')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 const {
   createComposer,
@@ -41,6 +42,8 @@ test('should compose openapi with prefixes', async (t) => {
     }
   })
 
+  const composerOrigin = await composer.start()
+
   const { statusCode, body } = await composer.inject({
     method: 'GET',
     url: '/documentation/json'
@@ -50,7 +53,7 @@ test('should compose openapi with prefixes', async (t) => {
   const openApiSchema = JSON.parse(body)
   openApiValidator.validate(openApiSchema)
 
-  await testEntityRoutes(t, composer, ['/api1/users', '/api2/posts'])
+  await testEntityRoutes(t, composerOrigin, ['/api1/users', '/api2/posts'])
 })
 
 test('should compose openapi without prefixes', async (t) => {
@@ -81,6 +84,8 @@ test('should compose openapi without prefixes', async (t) => {
     }
   })
 
+  const composerOrigin = await composer.start()
+
   const { statusCode, body } = await composer.inject({
     method: 'GET',
     url: '/documentation/json'
@@ -90,7 +95,7 @@ test('should compose openapi without prefixes', async (t) => {
   const openApiSchema = JSON.parse(body)
   openApiValidator.validate(openApiSchema)
 
-  await testEntityRoutes(t, composer, ['/users', '/posts'])
+  await testEntityRoutes(t, composerOrigin, ['/users', '/posts'])
 })
 
 test('should read schemas from disk and compose openapi', async (t) => {
@@ -121,6 +126,8 @@ test('should read schemas from disk and compose openapi', async (t) => {
     }
   })
 
+  const composerOrigin = await composer.start()
+
   const { statusCode, body } = await composer.inject({
     method: 'GET',
     url: '/documentation/json'
@@ -130,7 +137,7 @@ test('should read schemas from disk and compose openapi', async (t) => {
   const openApiSchema = JSON.parse(body)
   openApiValidator.validate(openApiSchema)
 
-  await testEntityRoutes(t, composer, ['/users', '/posts'])
+  await testEntityRoutes(t, composerOrigin, ['/users', '/posts'])
 })
 
 test('should not proxy request if it is not in a schema file', async (t) => {
@@ -165,6 +172,8 @@ test('should not proxy request if it is not in a schema file', async (t) => {
     }
   })
 
+  const composerOrigin = await composer.start()
+
   const { statusCode, body } = await composer.inject({
     method: 'GET',
     url: '/documentation/json'
@@ -179,7 +188,7 @@ test('should not proxy request if it is not in a schema file', async (t) => {
     'should not have the path in the schema'
   )
 
-  await testEntityRoutes(t, composer, ['/users', '/posts'])
+  await testEntityRoutes(t, composerOrigin, ['/users', '/posts'])
 
   {
     const { statusCode } = await composer.inject({
@@ -216,6 +225,8 @@ test('should not compose api if there is no openapi config', async (t) => {
     }
   })
 
+  const composerOrigin = await composer.start()
+
   const { statusCode, body } = await composer.inject({
     method: 'GET',
     url: '/documentation/json'
@@ -225,7 +236,7 @@ test('should not compose api if there is no openapi config', async (t) => {
   const openApiSchema = JSON.parse(body)
   openApiValidator.validate(openApiSchema)
 
-  await testEntityRoutes(t, composer, ['/api1/users'])
+  await testEntityRoutes(t, composerOrigin, ['/api1/users'])
 
   {
     const { statusCode } = await composer.inject({
@@ -270,6 +281,8 @@ test('should allow custom title', async (t) => {
     }
   })
 
+  await composer.start()
+
   const { statusCode, body } = await composer.inject({
     method: 'GET',
     url: '/documentation/json'
@@ -279,4 +292,31 @@ test('should allow custom title', async (t) => {
   const openApiSchema = JSON.parse(body)
   t.equal(openApiSchema.info.title, 'My API')
   t.equal(openApiSchema.info.version, '1.0.42')
+})
+
+test('should parse array querystring', async (t) => {
+  const api1 = await createOpenApiService(t, ['users'])
+  await api1.listen({ port: 0 })
+
+  const composer = await createComposer(t, {
+    composer: {
+      services: [
+        {
+          id: 'api1',
+          origin: 'http://127.0.0.1:' + api1.server.address().port,
+          openapi: {
+            url: '/documentation/json'
+          }
+        }
+      ]
+    }
+  })
+
+  const composerOrigin = await composer.start()
+
+  const { statusCode } = await request(composerOrigin, {
+    method: 'GET',
+    path: '/users?fields=id,name'
+  })
+  t.equal(statusCode, 200)
 })

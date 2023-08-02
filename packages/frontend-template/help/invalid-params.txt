@@ -1,0 +1,15 @@
+Url and language parameters are mandatory.
+
+```bash
+npx platformatic frontend <url> <language>
+```
+
+example
+
+```bash
+npx platformatic frontend http://127.0.0.1:3042 ts
+```
+
+where `http://127.0.0.1:3042` must be replaced with your Platformatic application endpoint and the language can be `ts` or `js`.
+
+Refer to the [dedicated guide](https://docs.platformatic.dev/docs/guides/generate-frontend-code-to-consume-platformatic-rest-api) where the full process of generating and consuming the frontend code is described.

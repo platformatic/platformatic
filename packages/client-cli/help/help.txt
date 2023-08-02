@@ -3,13 +3,19 @@ Create a Fastify plugin that exposes a client for a remote OpenAPI or GraphQL AP
 To create a client for a remote OpenAPI API, you can use the following command:
 
 ```bash
-$ platformatic client http://exmaple.com/to/schema/file -n myclient
+$ platformatic client http://example.com/to/schema/file -n myclient
 ```
 
 To create a client for a remote Graphql API, you can use the following command:
 
 ```bash
-$ platformatic client http://exmaple.com/grapqhl -n myclient
+$ platformatic client http://example.com/graphql -n myclient
+```
+
+Instead of a URL, you can also use a local file:
+
+```bash
+$ platformatic client path/to/schema -n myclient
 ```
 
 This will create a Fastify plugin that exposes a client for the remote API in a folder `myclient`

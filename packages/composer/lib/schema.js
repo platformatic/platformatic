@@ -2,6 +2,7 @@
 'use strict'
 
 const { metrics, server, plugins, watch, clients, openApiBase, openApiDefs } = require('@platformatic/service').schema
+const telemetry = require('@platformatic/telemetry').schema
 const pkg = require('../package.json')
 const version = 'v' + pkg.version
 
@@ -20,13 +21,27 @@ const composer = {
             properties: {
               url: { type: 'string' },
               file: { type: 'string', resolvePath: true },
-              prefix: { type: 'string' }
+              prefix: { type: 'string' },
+              config: { type: 'string', resolvePath: true }
             },
             anyOf: [
               { required: ['url'] },
               { required: ['file'] }
             ],
             additionalProperties: false
+          },
+          proxy: {
+            oneOf: [
+              { type: 'boolean', const: false },
+              {
+                type: 'object',
+                properties: {
+                  prefix: { type: 'string' }
+                },
+                required: ['prefix'],
+                additionalProperties: false
+              }
+            ]
           }
         },
         required: ['id'],
@@ -34,7 +49,7 @@ const composer = {
       }
     },
     openapi: openApiBase,
-    refreshTimeout: { type: 'integer', minimum: 1, default: 1000 }
+    refreshTimeout: { type: 'integer', minimum: 0, default: 1000 }
   },
   required: ['services'],
   additionalProperties: false
@@ -67,6 +82,7 @@ const platformaticComposerSchema = {
     types,
     plugins,
     clients,
+    telemetry,
     watch: {
       anyOf: [watch, {
         type: 'boolean'

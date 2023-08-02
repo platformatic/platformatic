@@ -1,0 +1,21 @@
+Create frontend code to consume the REST APIs of a Platformatic application.
+
+From the directory you want the frontend code to be generated (typically `<YOUR_FRONTEND_APP_DIRECTORY>/src/`) run
+```bash
+npx platformatic frontend http://127.0.0.1:3042 ts
+```
+
+(where `http://127.0.0.1:3042` must be replaced with your Platformatic application endpoint and the language can be `ts` or `js`) and then the Platformatic CLI generates
+
+  * `api.d.ts`: A TypeScript module that includes all the OpenAPI-related types
+  * `api.ts` or `api.js`: A module that includes a function for every single REST endpoint
+
+Refer to the [dedicated guide](https://docs.platformatic.dev/docs/guides/generate-frontend-code-to-consume-platformatic-rest-api) where the full process of generating and consuming the frontend code is described.
+
+In case of problems, please check that
+
+  * The Platformatic app URL is valid
+  * The Platformatic app whose URL belongs must be up and running
+  * OpenAPI must be enabled (`db.openapi` in your `platformatic.db.json` is not set to `false`). You can find more details about the db configuration format [here](https://docs.platformatic.dev/docs/reference/db/configuration/#db).
+  * CORS must be managed in your Platformatic app (`server.cors.origin.regexp` in your `platformatic.db.json` is set to `/*/`, for instance)
+  You can find more details about the cors configuration [here](https://docs.platformatic.dev/docs/reference/service/configuration/#server).

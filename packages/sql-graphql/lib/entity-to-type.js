@@ -47,8 +47,12 @@ function constructGraph (app, entity, opts, ignore) {
     const meta = { field }
 
     // sqlite doesn't support enums
+    // PG does support Arrays as columns
     /* istanbul ignore next */
-    if (field.enum) {
+    if (field.isArray) {
+      const listType = sqlTypeToGraphQL(field.sqlType)
+      meta.type = new graphql.GraphQLList(listType)
+    } else if (field.enum) {
       const enumValues = field.enum.reduce((acc, enumValue, index) => {
         let key = enumValue.replace(/[^\w\s]/g, '_')
 
@@ -100,20 +104,30 @@ function constructGraph (app, entity, opts, ignore) {
   }).flat())].join('_'))
 
   const whereFields = Object.keys(fields).reduce((acc, field) => {
+    let graphqlFields
+    /* istanbul ignore else */
+    if (!fields[field].field.isArray) {
+      graphqlFields = {
+        eq: { type: fields[field].type },
+        neq: { type: fields[field].type },
+        gt: { type: fields[field].type },
+        gte: { type: fields[field].type },
+        lt: { type: fields[field].type },
+        lte: { type: fields[field].type },
+        like: { type: fields[field].type },
+        in: { type: new graphql.GraphQLList(fields[field].type) },
+        nin: { type: new graphql.GraphQLList(fields[field].type) }
+      }
+    } else {
+      graphqlFields = {
+        any: { type: fields[field].type.ofType },
+        all: { type: fields[field].type.ofType }
+      }
+    }
     acc[field] = {
       type: new graphql.GraphQLInputObjectType({
         name: `${entityName}WhereArguments${field}`,
-        fields: {
-          eq: { type: fields[field].type },
-          neq: { type: fields[field].type },
-          gt: { type: fields[field].type },
-          gte: { type: fields[field].type },
-          lt: { type: fields[field].type },
-          lte: { type: fields[field].type },
-          like: { type: fields[field].type },
-          in: { type: new graphql.GraphQLList(fields[field].type) },
-          nin: { type: new graphql.GraphQLList(fields[field].type) }
-        }
+        fields: graphqlFields
       })
     }
     return acc
@@ -163,8 +177,11 @@ function constructGraph (app, entity, opts, ignore) {
   const orderByFields = new graphql.GraphQLEnumType({
     name: `${entityName}OrderByField`,
     values: Object.keys(fields).reduce((acc, field) => {
-      acc[field] = {
-        value: field
+      /* istanbul ignore else */
+      if (!fields[field].isArray) {
+        acc[field] = {
+          value: field
+        }
       }
       return acc
     }, {})

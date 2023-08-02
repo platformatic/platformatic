@@ -2,12 +2,36 @@ import { join } from 'path'
 import inquirer from 'inquirer'
 import { isFileAccessible } from './utils.mjs'
 import { writeFile, mkdir } from 'fs/promises'
+import columnify from 'columnify'
+function envAsString (env) {
+  return Object.keys(env).reduce((acc, key) => {
+    if (key === 'DATABASE_URL') {
+      acc += `          ${key}: \${{ secrets.DATABASE_URL }}\n`
+    } else {
+      acc += `          ${key}: ${env[key]} \n`
+    }
 
-export const dynamicWorkspaceGHTemplate = (env, config, buildTS = false) => {
-  const envAsStr = Object.keys(env).reduce((acc, key) => {
-    acc += `          ${key}: ${env[key]} \n`
     return acc
   }, '')
+}
+
+function formatSecretsToAdd (secrets) {
+  const output = columnify(secrets, {
+    showHeaders: false,
+    columnSplitter: ': ',
+    config: {
+      key: {
+        align: 'right'
+      },
+      value: {
+        align: 'left'
+      }
+    }
+  })
+  return output
+}
+export const dynamicWorkspaceGHTemplate = (env, config, buildTS = false) => {
+  const envString = envAsString(env)
 
   return `name: Deploy Platformatic application to the cloud
 on:
@@ -39,15 +63,12 @@ jobs:
           platformatic_workspace_key: \${{ secrets.PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY }}
           platformatic_config_path: ${config}
         env:
-${envAsStr}
+${envString}
 `
 }
 
 export const staticWorkspaceGHTemplate = (env, config, buildTS = false) => {
-  const envAsStr = Object.keys(env).reduce((acc, key) => {
-    acc += `          ${key}: ${env[key]} \n`
-    return acc
-  }, '')
+  const envString = envAsString(env)
 
   return `name: Deploy Platformatic application to the cloud
 on:
@@ -80,7 +101,7 @@ jobs:
           platformatic_workspace_key: \${{ secrets.PLATFORMATIC_STATIC_WORKSPACE_API_KEY }}
           platformatic_config_path: ${config}
         env:
-${envAsStr}
+${envString}
 `
 }
 
@@ -91,7 +112,13 @@ export const createDynamicWorkspaceGHAction = async (logger, env, config, projec
   if (!isGithubActionExists) {
     await mkdir(join(projectDir, '.github', 'workflows'), { recursive: true })
     await writeFile(ghActionFilePath, dynamicWorkspaceGHTemplate(env, config, buildTS))
-    logger.info('Github action successfully created, please add PLATFORMATIC_DYNAMIC_WORKSPACE_ID and PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY as repository secrets.')
+    logger.info('Github action successfully created, please add the following secrets as repository secrets: ')
+    const secretsString = formatSecretsToAdd({
+      PLATFORMATIC_DYNAMIC_WORKSPACE_ID: 'your workspace id',
+      PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY: 'your workspace API key',
+      DATABASE_URL: env.DATABASE_URL
+    })
+    logger.info(`\n ${secretsString}`)
     const isGitDir = await isFileAccessible('.git', projectDir)
     if (!isGitDir) {
       logger.warn('No git repository found. The Github action won\'t be triggered.')
@@ -126,7 +153,13 @@ export const createStaticWorkspaceGHAction = async (logger, env, config, project
   if (!isGithubActionExists) {
     await mkdir(join(projectDir, '.github', 'workflows'), { recursive: true })
     await writeFile(ghActionFilePath, staticWorkspaceGHTemplate(env, config, buildTS))
-    logger.info('Github action successfully created, please add PLATFORMATIC_STATIC_WORKSPACE_ID and PLATFORMATIC_STATIC_WORKSPACE_API_KEY as repository secret.')
+    logger.info('Github action successfully created, please add the following secrets as repository secrets: ')
+    const secretsString = formatSecretsToAdd({
+      PLATFORMATIC_STATIC_WORKSPACE_ID: 'your workspace id',
+      PLATFORMATIC_STATIC_WORKSPACE_API_KEY: 'your workspace API key',
+      DATABASE_URL: env.DATABASE_URL
+    })
+    logger.info(`\n ${secretsString}`)
     const isGitDir = await isFileAccessible('.git', projectDir)
     if (!isGitDir) {
       logger.warn('No git repository found. The Github action won\'t be triggered.')

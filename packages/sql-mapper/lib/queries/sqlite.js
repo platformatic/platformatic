@@ -1,7 +1,15 @@
 'use strict'
 
 const { randomUUID } = require('crypto')
-const shared = require('./shared')
+
+function fixValue (value) {
+  if (value instanceof Date) {
+    return value.toISOString()
+  } else if (typeof value === 'boolean') {
+    return value ? 1 : 0
+  }
+  return value
+}
 
 async function listTables (db, sql) {
   const res = await db.query(sql`
@@ -113,7 +121,7 @@ async function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRe
 
   for (const [key, value] of Object.entries(input)) {
     insertedKeys.push(sql.ident(key))
-    insertedValues.push(sql.value(value))
+    insertedValues.push(sql.value(fixValue(value)))
   }
 
   const insertRawQuery = sql`
@@ -166,7 +174,7 @@ module.exports.insertOne = insertOne
 async function updateOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve) {
   const pairs = Object.keys(input).map((key) => {
     const value = input[key]
-    return sql`${sql.ident(key)} = ${value}`
+    return sql`${sql.ident(key)} = ${fixValue(value)}`
   })
 
   const where = []
@@ -221,4 +229,19 @@ async function deleteAll (db, sql, table, schema, criteria, fieldsToRetrieve) {
 
 module.exports.deleteAll = deleteAll
 
-module.exports.updateMany = shared.updateMany
+async function updateMany (db, sql, table, schema, criteria, input, fieldsToRetrieve) {
+  const pairs = Object.keys(input).map((key) => {
+    const value = input[key]
+    return sql`${sql.ident(key)} = ${fixValue(value)}`
+  })
+  const update = sql`
+    UPDATE ${sql.ident(table)}
+    SET ${sql.join(pairs, sql`, `)}
+    WHERE ${sql.join(criteria, sql` AND `)}
+    RETURNING ${sql.join(fieldsToRetrieve, sql`, `)}
+    `
+  const res = await db.query(update)
+  return res
+}
+
+module.exports.updateMany = updateMany

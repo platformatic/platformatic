@@ -46,6 +46,10 @@ async function entityPlugin (app, opts) {
   const entitySchema = {
     $ref: entity.name + '#'
   }
+
+  const entitySchemaInput = {
+    $ref: entity.name + 'Input#'
+  }
   const primaryKey = entity.primaryKeys.values().next().value
   const primaryKeyParams = getPrimaryKeyParams(entity, ignore)
   const primaryKeyCamelcase = camelcase(primaryKey)
@@ -61,7 +65,7 @@ async function entityPlugin (app, opts) {
 
   const fields = getFieldsForEntity(entity, ignore)
 
-  rootEntityRoutes(app, entity, whereArgs, orderByArgs, entityLinks, entitySchema, fields)
+  rootEntityRoutes(app, entity, whereArgs, orderByArgs, entityLinks, entitySchema, fields, entitySchemaInput)
 
   app.get(`/:${primaryKeyCamelcase}`, {
     schema: {
@@ -273,7 +277,7 @@ async function entityPlugin (app, opts) {
     method: 'PUT',
     schema: {
       operationId: 'update' + capitalize(entity.singularName),
-      body: entitySchema,
+      body: entitySchemaInput,
       params: primaryKeyParams,
       querystring: {
         type: 'object',
@@ -348,12 +352,10 @@ function getPrimaryKeyParams (entity, ignore) {
   const properties = {
     [field.camelcase]: { type: mapSQLTypeToOpenAPIType(field.sqlType, ignore) }
   }
-  const required = [field.camelcase]
 
   return {
     type: 'object',
-    properties,
-    required
+    properties
   }
 }
 

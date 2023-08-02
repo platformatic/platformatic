@@ -20,7 +20,7 @@ module.exports = async (app, opts) => {
           return reply.sendFile('./index.html')
         }
       }
-      return { message: 'Welcome to Platformatic! Please visit https://oss.platformatic.dev' }
+      return { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' }
     }
   })
 }

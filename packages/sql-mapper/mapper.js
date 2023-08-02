@@ -80,15 +80,21 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, 
       queries = queriesFactory.mysql
     }
   } else if (connectionString.indexOf('sqlite') === 0) {
-    const sqlite = require('@databases/sqlite')
+    const sqlite = require('@matteo.collina/sqlite-pool')
     const path = connectionString.replace('sqlite://', '')
-    db = sqlite(connectionString === 'sqlite://:memory:' ? undefined : path)
-    db._database.on('trace', sql => {
-      log.trace({
-        query: {
-          text: sql
-        }
-      }, 'query')
+    db = sqlite.default(connectionString === 'sqlite://:memory:' ? undefined : path, {}, {
+      // TODO make this configurable
+      maxSize: 1,
+      // TODO make this configurable
+      // 10s max time to wait for a connection
+      releaseTimeoutMilliseconds: 10000,
+      onQuery ({ text, values }) {
+        log.trace({
+          query: {
+            text
+          }
+        }, 'query')
+      }
     })
     sql = sqlite.sql
     queries = queriesFactory.sqlite
