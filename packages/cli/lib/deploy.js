@@ -10,7 +10,7 @@ import inquirer from 'inquirer'
 import parseArgs from 'minimist'
 import deployClient from '@platformatic/deploy-client'
 
-export const DEPLOY_SERVICE_HOST = 'https://plt-production-deploy-service.fly.dev'
+export const DEPLOY_SERVICE_HOST = 'https://deploy.platformatic.cloud'
 
 const WORKSPACE_TYPES = ['static', 'dynamic']
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
