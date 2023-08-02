@@ -49,9 +49,18 @@ class RuntimeApi {
   }
 
   async #handleProcessLevelEvent (message) {
-    await Promise.allSettled(this.#services.values().map(async (service) => {
+    const services = [...this.#services.values()]
+    await Promise.allSettled(services.map(async (service) => {
       await service.handleProcessLevelEvent(message)
     }))
+
+    for (const service of services) {
+      if (service.getStatus() === 'started') {
+        return
+      }
+    }
+
+    process.exit() // Exit the worker thread if all services are stopped
   }
 
   async #executeCommand (message) {

@@ -1,6 +1,5 @@
 'use strict'
 
-const { join } = require('path')
 const { test } = require('tap')
 const { platformaticService } = require('@platformatic/service')
 const { platformaticComposer } = require('..')
