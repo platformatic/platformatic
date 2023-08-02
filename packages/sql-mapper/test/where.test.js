@@ -740,3 +740,145 @@ test('LIKE', async ({ pass, teardown, same, equal }) => {
 
   same(await entity.find({ where: { counter: { like: null } } }), [], 'where: { counter: { like: null } }')
 })
+
+test('ILIKE', async ({ pass, teardown, same, equal }) => {
+  const mapper = await connect({
+    ...connInfo,
+    log: fakeLogger,
+    async onDatabaseLoad (db, sql) {
+      teardown(() => db.dispose())
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      if (isSQLite) {
+        await db.query(sql`CREATE TABLE posts (
+          id INTEGER PRIMARY KEY,
+          title VARCHAR(42),
+          long_text TEXT,
+          counter INTEGER
+        );`)
+      } else {
+        await db.query(sql`CREATE TABLE posts (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(42),
+          long_text TEXT,
+          counter INTEGER
+        );`)
+      }
+    }
+  })
+
+  const entity = mapper.entities.post
+
+  const posts = [
+    {
+      title: 'Dog',
+      longText: 'The Dog barks',
+      counter: 1
+    },
+    {
+      title: 'Cat',
+      longText: 'The Cat meows',
+      counter: 2
+    },
+    {
+      title: 'Potato',
+      longText: 'The Potato is vegetable',
+      counter: 3
+    },
+    {
+      title: 'Atmosphere',
+      longText: 'The atmosphere is not a sphere',
+      counter: 4
+    },
+    {
+      title: 'planet',
+      longText: 'The planet have atmosphere',
+      counter: 14
+    }
+  ]
+
+  await entity.insert({
+    inputs: posts
+  })
+
+  same(await entity.find({ where: { title: { ilike: '%at' } } }), [{
+    id: '2',
+    title: 'Cat',
+    longText: 'The Cat meows',
+    counter: 2
+  }], 'where: { title: { like: \'%at\' } }')
+
+  same(await entity.find({ where: { title: { ilike: '%at%' } } }), [{
+    id: '2',
+    title: 'Cat',
+    longText: 'The Cat meows',
+    counter: 2
+  },
+  {
+    id: '3',
+    title: 'Potato',
+    longText: 'The Potato is vegetable',
+    counter: 3
+  },
+  {
+    id: '4',
+    title: 'Atmosphere',
+    longText: 'The atmosphere is not a sphere',
+    counter: 4
+  }], 'where: { title: { ilike: \'%at%\' } }')
+
+  same(await entity.find({ where: { title: { ilike: 'at%' } } }), [{
+    id: '4',
+    title: 'Atmosphere',
+    longText: 'The atmosphere is not a sphere',
+    counter: 4
+  }], 'where: { title: { ilike: \'at%\' } }')
+
+  same(await entity.find({ where: { longText: { ilike: '%is%' } } }), [{
+    id: '3',
+    title: 'Potato',
+    longText: 'The Potato is vegetable',
+    counter: 3
+  },
+  {
+    id: '4',
+    title: 'Atmosphere',
+    longText: 'The atmosphere is not a sphere',
+    counter: 4
+  }], 'where: { longText: { ilike: \'%is%\' } }')
+
+  same(await entity.find({ where: { longText: { ilike: null } } }), [], 'where: { longText: { ilike: null } }')
+
+  if (!isSQLite) {
+    same(await entity.find({ where: { counter: { ilike: 4 } } }), [{
+      id: '4',
+      title: 'Atmosphere',
+      longText: 'The atmosphere is not a sphere',
+      counter: 4
+    }], 'where: { counter: { ilike: 4 } }')
+  }
+
+  same(await entity.find({ where: { counter: { ilike: '%4' } } }), [{
+    id: '4',
+    title: 'Atmosphere',
+    longText: 'The atmosphere is not a sphere',
+    counter: 4
+  },
+  {
+    id: '5',
+    title: 'planet',
+    longText: 'The planet have atmosphere',
+    counter: 14
+  }], 'where: { counter: { ilike: \'%4\' } }')
+
+  same(await entity.find({ where: { counter: { ilike: '4%' } } }), [{
+    id: '4',
+    title: 'Atmosphere',
+    longText: 'The atmosphere is not a sphere',
+    counter: 4
+  }], 'where: { counter: { ilike: \'4%\' } }')
+
+  same(await entity.find({ where: { counter: { ilike: null } } }), [], 'where: { counter: { ilike: null } }')
+})

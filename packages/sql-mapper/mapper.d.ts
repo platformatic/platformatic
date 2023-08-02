@@ -100,6 +100,10 @@ export interface WhereCondition {
      * Like value.
      */
     like?: string
+    /**
+     * Like ignore-case value.
+     */
+    ilike?: string
   }
 }
 
