@@ -23,7 +23,12 @@ afterEach(() => {
 test('creates package.json file for db project', async ({ equal }) => {
   const version = '1.2.3'
   const fastifyVersion = '4.5.6'
-  await createPackageJson(version, fastifyVersion, fakeLogger, tmpDir, false)
+  const addTSBuild = false
+  const scripts = {}
+  const dependencies = {
+    '@platformatic/db': `^${version}`
+  }
+  await createPackageJson(version, fastifyVersion, fakeLogger, tmpDir, addTSBuild, scripts, dependencies)
   equal(log, `${join(tmpDir, 'package.json')} successfully created.`)
   const accessible = await isFileAccessible(join(tmpDir, 'package.json'))
   equal(accessible, true)
@@ -31,13 +36,15 @@ test('creates package.json file for db project', async ({ equal }) => {
   equal(packageJson.scripts.start, 'platformatic start')
   equal(packageJson.scripts.build, undefined)
   equal(packageJson.dependencies.platformatic, `^${version}`)
+  equal(packageJson.dependencies['@platformatic/db'], `^${version}`)
   equal(packageJson.devDependencies.fastify, `^${fastifyVersion}`)
 })
 
 test('creates package.json file for service project', async ({ equal }) => {
   const version = '1.2.3'
   const fastifyVersion = '4.5.6'
-  await createPackageJson(version, fastifyVersion, fakeLogger, tmpDir, false)
+  const addTSBuild = false
+  await createPackageJson(version, fastifyVersion, fakeLogger, tmpDir, addTSBuild)
   equal(log, `${join(tmpDir, 'package.json')} successfully created.`)
   const accessible = await isFileAccessible(join(tmpDir, 'package.json'))
   equal(accessible, true)
@@ -50,16 +57,18 @@ test('creates package.json file for service project', async ({ equal }) => {
 test('do not create package.json file because already present', async ({ equal }) => {
   const version = '1.2.3'
   const fastifyVersion = '4.5.6'
+  const addTSBuild = false
   const packagejson = join(tmpDir, 'package.json')
   writeFileSync(packagejson, 'TEST')
-  await createPackageJson(version, fastifyVersion, fakeLogger, tmpDir, false)
+  await createPackageJson(version, fastifyVersion, fakeLogger, tmpDir, addTSBuild)
   equal(log, `${join(tmpDir, 'package.json')} found, skipping creation of package.json file.`)
 })
 
 test('creates package.json file with TS build', async ({ equal }) => {
   const version = '1.2.3'
   const fastifyVersion = '4.5.6'
-  await createPackageJson(version, fastifyVersion, fakeLogger, tmpDir, true)
+  const addTSBuild = true
+  await createPackageJson(version, fastifyVersion, fakeLogger, tmpDir, addTSBuild)
   equal(log, `${join(tmpDir, 'package.json')} successfully created.`)
   const accessible = await isFileAccessible(join(tmpDir, 'package.json'))
   equal(accessible, true)
