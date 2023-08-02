@@ -6,7 +6,7 @@ const { buildServer } = require('..')
 const { request } = require('undici')
 const { join } = require('path')
 const os = require('os')
-const { writeFile } = require('fs/promises')
+const { writeFile, rm } = require('fs/promises')
 
 test('config reloads', async ({ teardown, equal, pass, same }) => {
   const file = join(os.tmpdir(), `${process.pid}-1.js`)
@@ -294,4 +294,23 @@ test('config reloads', async ({ teardown, equal, pass, same }) => {
     equal(res.statusCode, 200, 'add status code')
     same(await res.body.text(), 'ciao mondo', 'response')
   }
+})
+
+test('do not watch typescript outDir', async ({ teardown, equal, pass, same }) => {
+  process.env.PLT_CLIENT_URL = 'http://localhost:3042'
+  const targetDir = join(__dirname, '..', 'fixtures', 'hello-client-ts')
+
+  try {
+    await rm(join(targetDir, 'dist'), { recursive: true })
+  } catch {}
+
+  const app = await buildServer(join(targetDir, 'platformatic.service.json'))
+  teardown(async () => {
+    await app.close()
+  })
+
+  same(app.platformatic.configManager.current.watch, {
+    enabled: false,
+    ignore: ['dist/**/*']
+  })
 })

@@ -148,6 +148,7 @@ class PlatformaticApp {
 
     if (this.#started) {
       await this.stop()
+      this.server.log.info('server stopped')
     }
   }
 

@@ -334,6 +334,14 @@ const server = {
 const watch = {
   type: 'object',
   properties: {
+    enabled: {
+      default: true,
+      anyOf: [{
+        type: 'boolean'
+      }, {
+        type: 'string'
+      }]
+    },
     allow: {
       type: 'array',
       items: {
