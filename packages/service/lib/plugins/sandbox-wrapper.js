@@ -58,10 +58,6 @@ function patternOptionsFromPlugin (plugin) {
     config.ignorePattern = stringPatternToRegExp(plugin.ignorePattern)
   }
 
-  if (plugin.scriptPattern) {
-    config.scriptPattern = stringPatternToRegExp(plugin.scriptPattern)
-  }
-
   if (plugin.indexPattern) {
     config.indexPattern = stringPatternToRegExp(plugin.indexPattern)
   }

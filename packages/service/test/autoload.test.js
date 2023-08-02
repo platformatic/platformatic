@@ -342,3 +342,64 @@ test('disable encapsulation for a single file / different order', async ({ teard
     equal(body, 'bar')
   }
 })
+
+test('autoload with ignorePattern, indexPattern and autoHooksPattern options', async ({ teardown, equal }) => {
+  const config = {
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugins: {
+      paths: [
+        {
+          path: join(__dirname, 'fixtures', 'directories', 'routes'),
+
+          // Ignore the bar.js which should return a 404 for requests made to /bar
+          ignorePattern: '^.*(?:bar).js$',
+
+          // Set index2.js as the index file which sets the root as /index2
+          indexPattern: '^index2(?:.js)$',
+
+          // Override default autohooks.js with auto.hooks.js which overrides
+          // the response body
+          autoHooksPattern: '^auto.hooks.js$',
+          autoHooks: true
+        }
+      ]
+    },
+    watch: false,
+    metrics: false
+  }
+
+  const app = await buildServer(config)
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  {
+    const res = await request(`${app.url}/`)
+    equal(res.statusCode, 200, 'status code')
+    const body = await res.body.json()
+    equal(body.hello, 'from root', 'body')
+  }
+
+  {
+    const res = await request(`${app.url}/foo/bar`)
+    equal(res.statusCode, 404, 'status code')
+  }
+
+  {
+    const res = await request(`${app.url}/foo/baz/index2`)
+    equal(res.statusCode, 200, 'status code')
+    const body = await res.body.json()
+    equal(body.hello, 'from baz with index2.js', 'body')
+  }
+
+  {
+    const res = await request(`${app.url}/oof`)
+    equal(res.statusCode, 200, 'status code')
+    const body = await res.body.json()
+    equal(body.hello, 'from auto.hooks.js', 'body')
+  }
+})
