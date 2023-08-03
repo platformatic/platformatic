@@ -78,8 +78,9 @@ const createPlatformaticService = async (_args, opts = {}) => {
   const fastifyVersion = await getDependencyVersion('fastify')
 
   if (!opts.skipPackageJson) {
+    const test = useTypescript ? 'tsc && node --test dist/test/*/*.test.js' : 'node --test test/*/*.test.js'
     await createPackageJson(version, fastifyVersion, logger, projectDir, useTypescript, {
-      test: 'node --test test/*/*.test.js'
+      test
     }, {
       '@platformatic/service': `^${version}`
     })
