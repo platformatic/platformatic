@@ -26,40 +26,19 @@ async function loadConfig (minimistConfig, _args, app, overrides = {}) {
     store.add(app)
   }
 
-  let configManager
-  try {
-    configManager = await store.loadConfig({
-      app,
-      config: args.config,
-      allowEnv: args.allowEnv,
-      overrides
-    })
-  } catch (err) {
-    // TODO refactor this file to avoid process.exit calls
-    // ignoring for now
-    /* istanbul ignore next */
-    if (err.filenames) {
-      console.error(`
-  Missing config file!
-  Be sure to have a config file with one of the following names:
-
-  ${err.filenames.map((s) => ' * ' + s).join('\n')}
-
-  In alternative run "npm create platformatic@latest" to generate a basic plt service config.
-  Error: ${err}
-  `)
-      process.exit(1)
-    } else {
-      console.error(err)
-      process.exit(1)
-    }
-  }
+  const configManager = await store.loadConfig({
+    app,
+    config: args.config,
+    allowEnv: args.allowEnv,
+    overrides
+  })
 
   try {
     const parsingResult = await configManager.parse()
     if (!parsingResult) {
-      printConfigValidationErrors(configManager)
-      process.exit(1)
+      const err = new Error('The configuration does not validate against the configuration schema')
+      err.validationErrors = configManager.validationErrors
+      throw err
     }
   } finally {
     configManager.stopWatching()
@@ -68,8 +47,8 @@ async function loadConfig (minimistConfig, _args, app, overrides = {}) {
   return { configManager, args }
 }
 
-function printConfigValidationErrors (configManager) {
-  const tabularData = configManager.validationErrors.map((err) => {
+function printConfigValidationErrors (err) {
+  const tabularData = err.validationErrors.map((err) => {
     return {
       path: err.path,
       message: err.message
@@ -78,4 +57,24 @@ function printConfigValidationErrors (configManager) {
   console.table(tabularData, ['path', 'message'])
 }
 
+function printAndExitLoadConfigError (err) {
+  if (err.filenames) {
+    console.error(`Missing config file!
+Be sure to have a config file with one of the following names:
+
+${err.filenames.map((s) => ' * ' + s).join('\n')}
+
+In alternative run "npm create platformatic@latest" to generate a basic plt service config.`)
+    process.exit(1)
+  } else if (err.validationErrors) {
+    printConfigValidationErrors(err)
+    process.exit(1)
+  } else {
+    console.error(err)
+    process.exit(1)
+  }
+}
+
 module.exports.loadConfig = loadConfig
+module.exports.printConfigValidationErrors = printConfigValidationErrors
+module.exports.printAndExitLoadConfigError = printAndExitLoadConfigError

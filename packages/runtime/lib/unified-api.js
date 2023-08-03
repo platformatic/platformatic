@@ -1,7 +1,7 @@
 'use strict'
 const { resolve } = require('node:path')
 const parseArgs = require('minimist')
-const { ConfigManager, loadConfig } = require('@platformatic/config')
+const { ConfigManager, loadConfig, printConfigValidationErrors } = require('@platformatic/config')
 const {
   platformaticService,
   buildServer,
@@ -174,6 +174,19 @@ async function startCommand (args) {
 }
 
 function logErrorAndExit (err) {
+  if (err.filenames) {
+    console.error(`Missing config file!
+Be sure to have a config file with one of the following names:
+
+${err.filenames.map((s) => ' * ' + s).join('\n')}
+
+In alternative run "npm create platformatic@latest" to generate a basic plt service config.`)
+    process.exit(1)
+  } else if (err.validationErrors) {
+    printConfigValidationErrors(err)
+    process.exit(1)
+  }
+
   delete err?.stack
   console.error(err?.message)
 

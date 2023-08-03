@@ -35,37 +35,28 @@ async function seed (_args) {
     ignore: 'hostname,pid'
   }))
 
-  try {
-    const { configManager, args } = await loadConfig({
-      alias: {
-        c: 'config'
-      }
-    }, _args, platformaticDB)
-    await configManager.parseAndValidate()
-    const config = configManager.current
-
-    if (config.migrations !== undefined) {
-      const migrator = new Migrator(config.migrations, config.db, logger)
-
-      try {
-        const hasMigrationsToApply = await migrator.hasMigrationsToApply()
-        if (hasMigrationsToApply) {
-          throw new SeedError('You have migrations to apply. Please run `platformatic db migrations apply` first.')
-        }
-      } finally {
-        await migrator.close()
-      }
+  const { configManager, args } = await loadConfig({
+    alias: {
+      c: 'config'
     }
+  }, _args, platformaticDB)
+  await configManager.parseAndValidate()
+  const config = configManager.current
 
-    await execute(logger, args, config)
-  } catch (err) {
-    if (err instanceof SeedError) {
-      logger.error(err.message)
-      process.exit(1)
+  if (config.migrations !== undefined) {
+    const migrator = new Migrator(config.migrations, config.db, logger)
+
+    try {
+      const hasMigrationsToApply = await migrator.hasMigrationsToApply()
+      if (hasMigrationsToApply) {
+        throw new SeedError('You have migrations to apply. Please run `platformatic db migrations apply` first.')
+      }
+    } finally {
+      await migrator.close()
     }
-    /* c8 ignore next 2 */
-    throw err
   }
+
+  await execute(logger, args, config)
 }
 
 export { seed, execute }

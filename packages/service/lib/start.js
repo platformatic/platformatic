@@ -2,7 +2,7 @@
 
 const { readFile } = require('fs/promises')
 const close = require('close-with-grace')
-const { loadConfig, ConfigManager } = require('@platformatic/config')
+const { loadConfig, ConfigManager, printConfigValidationErrors } = require('@platformatic/config')
 const { addLoggerToTheConfig } = require('./utils.js')
 const { restartable } = require('@fastify/restartable')
 
@@ -97,7 +97,17 @@ async function safeRestart (app) {
 
 async function start (appType, _args) {
   /* c8 ignore next 55 */
-  const { configManager } = await loadConfig({}, _args, appType)
+  let configManager = null
+  try {
+    configManager = (await loadConfig({}, _args, appType)).configManager
+  } catch (err) {
+    if (err.validationErrors) {
+      printConfigValidationErrors(err)
+      process.exit(1)
+    } else {
+      throw err
+    }
+  }
 
   const config = configManager.current
 
