@@ -33,13 +33,14 @@ module.exports = fp(async function (app, opts) {
         loaded = loaded.default
       }
 
-      let skipOverride
       if (plugin.encapsulate === false) {
-        skipOverride = loaded[Symbol.for('skip-override')]
+        const skipOverride = loaded[Symbol.for('skip-override')]
         loaded[Symbol.for('skip-override')] = true
+        await app.register(loaded, plugin.options)
+        loaded[Symbol.for('skip-override')] = skipOverride
+      } else {
+        await app.register(loaded, plugin.options)
       }
-      await app.register(loaded, plugin.options)
-      loaded[Symbol.for('skip-override')] = skipOverride
     }
   }
 })

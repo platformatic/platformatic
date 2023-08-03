@@ -128,7 +128,7 @@ test('should automatically update', async ({ same, teardown, pass, plan }) => {
 
   // intercept the request
   mockPool.intercept({
-    path: `/schemas/v${pkg.version.replace(/\.\d+$/, '.0')}/db`,
+    path: `/schemas/v${pkg.version}/db`,
     method: 'GET'
   }).reply(404, () => {
     pass('should have called the mock server')
@@ -145,7 +145,7 @@ test('should automatically update', async ({ same, teardown, pass, plan }) => {
   await cm.parse()
 
   same(cm.current, {
-    $schema: `https://platformatic.dev/schemas/v${pkg.version.replace(/\.\d+$/, '.0')}/db`,
+    $schema: `https://platformatic.dev/schemas/v${pkg.version}/db`,
     server: { hostname: '127.0.0.1', port: '3042', logger: { level: 'info' } },
     metrics: { auth: { username: 'plt-db', password: 'plt-db' } },
     plugins: { paths: ['./plugin-sum.js'] },
@@ -181,7 +181,7 @@ test('should use the remote schema', async ({ same, teardown, pass, plan }) => {
 
   // intercept the request
   mockPool.intercept({
-    path: `/schemas/v${pkg.version.replace(/\.\d+$/, '.0')}/db`,
+    path: `/schemas/v${pkg.version}/db`,
     method: 'GET'
   }).reply(200, () => {
     pass('should have called the mock server')
@@ -196,7 +196,7 @@ test('should use the remote schema', async ({ same, teardown, pass, plan }) => {
   await cm.parse()
 
   same(cm.current, {
-    $schema: `https://platformatic.dev/schemas/v${pkg.version.replace(/\.\d+$/, '.0')}/db`,
+    $schema: `https://platformatic.dev/schemas/v${pkg.version}/db`,
     server: { hostname: '127.0.0.1', port: '3042', logger: { level: 'info' } },
     metrics: { auth: { username: 'plt-db', password: 'plt-db' } },
     plugins: { paths: [join(fixturesDir, 'plugin-sum.js')] },

@@ -1,6 +1,6 @@
 {
   "name": "platformatic",
-  "version": "0.33.1",
+  "version": "0.34.0",
   "private": true,
   "scripts": {
     "test": "pnpm -r --workspace-concurrency=1 test",

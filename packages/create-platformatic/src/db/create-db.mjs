@@ -203,12 +203,17 @@ export async function createDB ({ hostname, database = 'sqlite', port, migration
     await generatePluginWithTypesSupport(logger, currentDir, typescript)
   }
 
-  return {
+  const output = {
     DATABASE_URL: connectionString,
     PLT_SERVER_LOGGER_LEVEL: 'info',
     PORT: port,
     PLT_SERVER_HOSTNAME: hostname
   }
+
+  if (typescript) {
+    output.PLT_TYPESCRIPT = true
+  }
+  return output
 }
 
 export default createDB

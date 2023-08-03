@@ -181,6 +181,7 @@ test('creates project with typescript', async ({ equal, same }) => {
   equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
   equal(process.env.PORT, '6666')
   equal(process.env.DATABASE_URL, 'sqlite://./db.sqlite')
+  equal(process.env.PLT_TYPESCRIPT, 'true')
   process.env = {}
 
   const pathToDbEnvSampleFile = join(tmpDir, '.env.sample')
