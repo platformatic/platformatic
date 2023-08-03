@@ -4,6 +4,7 @@ const { test } = require('tap')
 const semver = require('semver')
 const FromZeroEighteenToWillSee = require('../versions/from-zero-eighteen-to-will-see')
 const pkg = require('../package.json')
+const proxyquire = require('proxyquire')
 
 test('specified version is bigger than the current version (minor)', async (t) => {
   const version = semver.inc(pkg.version, 'minor')
@@ -110,4 +111,18 @@ test('removes plugins.hotReload if it exists', async (t) => {
     const upped = meta.up()
     t.equal('hotReload' in upped.config.plugins, false)
   }
+})
+
+test('upgrade patch versions', async (t) => {
+  const FromZeroEighteenToWillSee = proxyquire('../versions/from-zero-eighteen-to-will-see', {
+    '../package.json': {
+      version: '0.33.1'
+    }
+  })
+  const version = '0.33.0'
+  const meta = new FromZeroEighteenToWillSee({ version, config: { } })
+  const upped = meta.up()
+  t.match(upped, {
+    version: '0.33.1'
+  })
 })
