@@ -435,3 +435,52 @@ test('autoload with INVALID ignorePattern, indexPattern and autoHooksPattern opt
     equal(res.statusCode, 200, 'status code')
   }
 })
+
+test('loads encapsulated plugin twice', async ({ teardown, equal, strictSame }) => {
+  const config = {
+    server: {
+      hostname: '127.0.0.1',
+      port: 0,
+      // Windows CI is slow
+      pluginTimeout: 60 * 1000
+    },
+    service: {
+      openapi: true
+    },
+    plugins: {
+      paths: [{
+        path: join(__dirname, 'fixtures', 'directories', 'routes')
+      }, {
+        path: join(__dirname, 'fixtures', 'directories', 'plugins', 'decorator.js')
+      }]
+    }
+  }
+
+  {
+    // First time plugin is loaded from file
+    const app = await buildServer(config)
+    teardown(async () => {
+      await app.close()
+    })
+    await app.start()
+
+    const res = await request(`${app.url}/foo/with-decorator`)
+    equal(res.statusCode, 200, 'status code')
+    const body = await res.body.json()
+    strictSame(body, { hello: 'bar' })
+  }
+
+  {
+    // Second time plugin is loaded from cache
+    const app = await buildServer(config)
+    teardown(async () => {
+      await app.close()
+    })
+    await app.start()
+
+    const res = await request(`${app.url}/foo/with-decorator`)
+    equal(res.statusCode, 200, 'status code')
+    const body = await res.body.json()
+    strictSame(body, { hello: 'bar' })
+  }
+})
