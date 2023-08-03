@@ -3,12 +3,13 @@ import inquirer from 'inquirer'
 import { isFileAccessible } from './utils.mjs'
 import { writeFile, mkdir } from 'fs/promises'
 import columnify from 'columnify'
-function envAsString (env) {
+function envAsString (env, indent) {
+  const spaces = Array(indent * 2).join(' ')
   return Object.keys(env).reduce((acc, key) => {
     if (key === 'DATABASE_URL') {
-      acc += `          ${key}: \${{ secrets.DATABASE_URL }}\n`
+      acc += `${spaces}${key}: \${{ secrets.DATABASE_URL }}\n`
     } else {
-      acc += `          ${key}: ${env[key]} \n`
+      acc += `${spaces}${key}: ${env[key]} \n`
     }
 
     return acc
@@ -31,7 +32,7 @@ function formatSecretsToAdd (secrets) {
   return output
 }
 export const dynamicWorkspaceGHTemplate = (env, config, buildTS = false) => {
-  const envString = envAsString(env)
+  const envString = envAsString(env, 3)
 
   return `name: Deploy Platformatic application to the cloud
 on:
@@ -46,6 +47,8 @@ jobs:
       contents: read
       pull-requests: write
     runs-on: ubuntu-latest
+    env:
+${envString}
     steps:
       - name: Checkout application project repository
         uses: actions/checkout@v3
@@ -62,13 +65,11 @@ jobs:
           platformatic_workspace_id: \${{ secrets.PLATFORMATIC_DYNAMIC_WORKSPACE_ID }}
           platformatic_workspace_key: \${{ secrets.PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY }}
           platformatic_config_path: ${config}
-        env:
-${envString}
 `
 }
 
 export const staticWorkspaceGHTemplate = (env, config, buildTS = false) => {
-  const envString = envAsString(env)
+  const envString = envAsString(env, 3)
 
   return `name: Deploy Platformatic application to the cloud
 on:
@@ -84,6 +85,8 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-latest
+    env:
+${envString}
     steps:
       - name: Checkout application project repository
         uses: actions/checkout@v3
@@ -100,8 +103,6 @@ jobs:
           platformatic_workspace_id: \${{ secrets.PLATFORMATIC_STATIC_WORKSPACE_ID }}
           platformatic_workspace_key: \${{ secrets.PLATFORMATIC_STATIC_WORKSPACE_API_KEY }}
           platformatic_config_path: ${config}
-        env:
-${envString}
 `
 }
 
