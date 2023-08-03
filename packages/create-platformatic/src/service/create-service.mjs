@@ -180,12 +180,15 @@ async function createService ({ hostname, port, typescript = false }, logger, cu
   } else {
     logger.info('Routes folder "routes" found, skipping creation of routes folder.')
   }
-
-  return {
+  const output = {
     PLT_SERVER_LOGGER_LEVEL: 'info',
     PORT: port,
     PLT_SERVER_HOSTNAME: hostname
   }
+  if (typescript) {
+    output.PLT_TYPESCRIPT = true
+  }
+  return output
 }
 
 export default createService
