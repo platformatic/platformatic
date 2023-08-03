@@ -32,14 +32,18 @@ const logger = pino(transport, destination)
 /* c8 ignore next 4 */
 process.once('uncaughtException', (err) => {
   logger.error({ err }, 'runtime error')
-  throw err
+  setImmediate(() => {
+    process.exit(1)
+  })
 })
 
 // Tested by test/cli/start.test.mjs by C8 does not see it.
 /* c8 ignore next 4 */
 process.once('unhandledRejection', (err) => {
   logger.error({ err }, 'runtime error')
-  throw err
+  setImmediate(() => {
+    process.exit(1)
+  })
 })
 
 function main () {

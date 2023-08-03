@@ -38,6 +38,7 @@ Configuration settings are organized into the following groups:
 - [`entrypoint`](#entrypoint) **(required)**
 - [`hotReload`](#hotReload)
 - [`allowCycles`](#allowCycles)
+- [`telemetry`](#telemetry)
 
 Configuration settings containing sensitive data should be set using
 [configuration placeholders](#configuration-placeholders).
@@ -114,6 +115,37 @@ not start any applications.
 
 If `allowCycles` is `true`, the topological sort is skipped, and the
 microservices are started in the order specified in the configuration file.
+
+### `telemetry`
+[Open Telemetry](https://opentelemetry.io/) is optionally supported with these settings:
+
+- **`serviceName`** (**required**, `string`) — Name of the service as will be reported in open telemetry. In the `runtime` case, the name of the services as reported in traces is `${serviceName}-${serviceId}`, where `serviceId` is the id of the service in the runtime.
+- **`version`** (`string`) — Optional version (free form)
+- **`exporter`** (`object`) — Exporter configuration object. If not defined, the exporter defaults to `console`. This object has the following properties:
+    - **`type`** (`string`) — Exporter type. Supported values are `console`, `otlp`, `zipkin` and `memory` (default: `console`). `memory` is only supported for testing purposes. 
+    - **`options`** (`object`) — These options are supported:
+        - **`url`** (`string`) — The URL to send the telemetry to. Required for `otlp` exporter. This has no effect on `console` and `memory` exporters.
+        - **`headers`** (`object`) — Optional headers to send with the telemetry. This has no effect on `console` and `memory` exporters.
+        
+Note that OTLP traces can be consumed by different solutions, like [Jaeger](https://www.jaegertracing.io/). [Here](https://opentelemetry.io/ecosystem/vendors/) the full list.
+
+  _Example_
+
+  ```json
+  {
+    "telemetry": {
+        "serviceName": "test-service",
+        "exporter": {
+            "type": "otlp",
+            "options": {
+                "url": "http://localhost:4318/v1/traces"
+            }
+        }
+    }
+  }
+  ```
+
+
 
 ## Environment variable placeholders
 

@@ -7,6 +7,7 @@ const { test } = require('node:test')
 const { MessageChannel } = require('node:worker_threads')
 const { request } = require('undici')
 const { loadConfig } = require('@platformatic/config')
+const { platformaticDB } = require('@platformatic/db')
 const { buildServer, platformaticRuntime } = require('..')
 const { wrapConfigInRuntimeConfig } = require('../lib/config')
 const { startWithConfig } = require('../lib/start')
@@ -160,7 +161,7 @@ test('handles uncaught exceptions with db app', async (t) => {
 
 test('logs errors during db migrations', async (t) => {
   const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'platformatic.db.json')
-  const config = await loadConfig({}, ['-c', configFile], 'db')
+  const config = await loadConfig({}, ['-c', configFile], platformaticDB)
   const runtimeConfig = await wrapConfigInRuntimeConfig(config)
   const { port1, port2 } = new MessageChannel()
   runtimeConfig.current.loggingPort = port2

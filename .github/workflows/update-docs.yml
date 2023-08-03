@@ -16,8 +16,8 @@ jobs:
       - name: Update docs
         if: ${{ github.event_name == 'release' }}
         run: |
-          curl -vvv -XPOST -u "${{ secrets.GH_API_USERNAME }}:${{ secrets.GH_API_TOKEN }}" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" https://api.github.com/repos/platformatic/oss/dispatches --data '{"event_type": "update_docs"}' --fail
+          curl -vvv -XPOST -u "${{ secrets.GH_API_USERNAME }}:${{ secrets.GH_API_TOKEN }}" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" https://api.github.com/repos/platformatic/docs/dispatches --data '{"event_type": "update_docs"}' --fail
       - name: Force update docs
         if: ${{ github.event_name == 'push' }}
         run: |
-          curl -vvv -XPOST -u "${{ secrets.GH_API_USERNAME }}:${{ secrets.GH_API_TOKEN }}" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" https://api.github.com/repos/platformatic/oss/dispatches --data '{"event_type": "update_docs", "client_payload": { "force": true }}' --fail
+          curl -vvv -XPOST -u "${{ secrets.GH_API_USERNAME }}:${{ secrets.GH_API_TOKEN }}" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" https://api.github.com/repos/platformatic/docs/dispatches --data '{"event_type": "update_docs", "client_payload": { "force": true }}' --fail

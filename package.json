@@ -1,6 +1,6 @@
 {
   "name": "platformatic",
-  "version": "0.32.0",
+  "version": "0.33.1",
   "private": true,
   "scripts": {
     "test": "pnpm -r --workspace-concurrency=1 test",
@@ -15,7 +15,7 @@
     "test:metaconfig": "cd packages/config && pnpm test",
     "lint": "pnpm -r --workspace-concurrency=1 lint"
   },
-  "packageManager": "pnpm@8.6.10",
+  "packageManager": "pnpm@8.6.11",
   "devDependencies": {
     "@fastify/pre-commit": "^2.0.2",
     "desm": "^1.3.0",

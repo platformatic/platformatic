@@ -2,6 +2,7 @@
 'use strict'
 
 const { metrics, server, plugins, watch, openApiDefs, openApiBase, clients } = require('@platformatic/service').schema
+const telemetry = require('@platformatic/telemetry').schema
 const pkg = require('../package.json')
 const version = 'v' + pkg.version
 
@@ -62,9 +63,15 @@ const db = {
           },
           ignore: {
             type: 'object',
-            // TODO add support for column-level ignore
             additionalProperties: {
-              type: 'boolean'
+              anyOf: [{
+                type: 'boolean'
+              }, {
+                type: 'object',
+                additionalProperties: {
+                  type: 'boolean'
+                }
+              }]
             }
           },
           subscriptionIgnore: {
@@ -92,9 +99,15 @@ const db = {
           ...(openApiBase.properties),
           ignore: {
             type: 'object',
-            // TODO add support for column-level ignore
             additionalProperties: {
-              type: 'boolean'
+              anyOf: [{
+                type: 'boolean'
+              }, {
+                type: 'object',
+                additionalProperties: {
+                  type: 'boolean'
+                }
+              }]
             }
           }
         },
@@ -321,6 +334,7 @@ const platformaticDBschema = {
     metrics,
     types,
     plugins,
+    telemetry,
     clients,
     watch: {
       anyOf: [watch, {

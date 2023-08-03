@@ -1,6 +1,6 @@
 {
   "name": "platformatic",
-  "version": "0.32.0",
+  "version": "0.33.1",
   "description": "Platformatic CLI",
   "main": "cli.js",
   "type": "module",
@@ -12,7 +12,7 @@
   "scripts": {
     "test": "standard | snazzy && c8 --100 tap --no-coverage test/*.test.js",
     "lint": "standard | snazzy",
-    "license": "license-checker --production --onlyAllow 'Apache-2.0;MIT;ISC;BSD-2-Clause;BSD-3-Clause'"
+    "license": "license-checker --production --onlyAllow 'Apache-2.0;MIT;ISC;BSD-2-Clause;BSD-3-Clause;CC-BY-4.0'"
   },
   "author": "Matteo Collina <hello@matteocollina.com>",
   "repository": {

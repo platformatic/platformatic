@@ -94,13 +94,38 @@ async function composeOpenAPI (app, opts) {
           const newRoutePath = mapRoutePath(routePath)
 
           const replyOptions = {}
-          if (req.routeConfig?.onComposerResponse) {
-            replyOptions.onResponse = req.routeConfig.onComposerResponse
+          const onResponse = (request, reply, res) => {
+            app.openTelemetry?.endSpanClient(reply.request.proxedCallSpan, { statusCode: reply.statusCode })
+            if (req.routeConfig?.onComposerResponse) {
+              req.routeConfig.onComposerResponse(request, reply, res)
+            } else {
+              reply.send(res)
+            }
           }
+          const rewriteRequestHeaders = (request, headers) => {
+            const targetUrl = `${origin}${request.url}`
+            const context = request.span?.context
+            const { span, telemetryHeaders } = app.openTelemetry?.startSpanClient(targetUrl, request.method, context) || { span: null, telemetryHeaders: {} }
+            // We need to store the span in a different object
+            // to correctly close it in the onResponse hook
+            // Note that we have 2 spans:
+            // - request.span: the span of the request to the proxy
+            // - request.proxedCallSpan: the span of the request to the proxied service
+            request.proxedCallSpan = span
+            return { ...headers, ...telemetryHeaders }
+          }
+          replyOptions.onResponse = onResponse
+          replyOptions.rewriteRequestHeaders = rewriteRequestHeaders
 
           reply.from(origin + newRoutePath, replyOptions)
         }
       }
+    }
+  })
+
+  app.addHook('preValidation', async (req) => {
+    if (typeof req.query.fields === 'string') {
+      req.query.fields = req.query.fields.split(',')
     }
   })
 }

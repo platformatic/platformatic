@@ -17,8 +17,9 @@ class PlatformaticApp {
   #originalWatch
   #fileWatcher
   #logger
+  #telemetryConfig
 
-  constructor (appConfig, loaderPort, logger) {
+  constructor (appConfig, loaderPort, logger, telemetryConfig) {
     this.appConfig = appConfig
     this.config = null
     this.#hotReload = false
@@ -31,6 +32,7 @@ class PlatformaticApp {
     this.#logger = logger.child({
       name: this.appConfig.id
     })
+    this.#telemetryConfig = telemetryConfig
   }
 
   getStatus () {
@@ -76,6 +78,10 @@ class PlatformaticApp {
     this.config.configManager.current.watch = false
 
     const { configManager } = this.config
+    configManager.update({
+      ...configManager.current,
+      telemetry: this.#telemetryConfig
+    })
     const config = configManager.current
 
     this.#setuplogger(configManager)
@@ -142,6 +148,7 @@ class PlatformaticApp {
 
     if (this.#started) {
       await this.stop()
+      this.server.log.info('server stopped')
     }
   }
 
@@ -197,11 +204,13 @@ class PlatformaticApp {
     this.#hotReload = this.appConfig.hotReload
 
     configManager.on('update', async (newConfig) => {
-      this.server.platformatic.config = newConfig
-      applyOverrides()
-      this.server.log.debug('config changed')
-      this.server.log.trace({ newConfig }, 'new config')
-      await this.restart()
+      if (this.server) { // when we setup telemetry on config, we don't have a server yet
+        this.server.platformatic.config = newConfig
+        applyOverrides()
+        this.server.log.debug('config changed')
+        this.server.log.trace({ newConfig }, 'new config')
+        await this.restart()
+      }
     })
 
     configManager.on('error', (err) => {

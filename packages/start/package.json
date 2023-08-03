@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/start",
-  "version": "0.32.0",
+  "version": "0.33.1",
   "description": "",
   "main": "index.js",
   "scripts": {
