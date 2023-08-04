@@ -194,7 +194,7 @@ async function setupTelemetry (app, opts) {
           'server.port': urlObj.port,
           'http.request.method': method,
           'url.full': url,
-          'url.path': urlObj.pathname
+          'url.path': urlObj.path
         }
       : {}
     span.setAttributes(attributes)

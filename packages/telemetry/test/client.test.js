@@ -139,6 +139,7 @@ test('should trace a client request', async ({ equal, same, teardown }) => {
   equal(spanClient.attributes['http.response.status_code'], 200)
   equal(spanClient.attributes['server.port'], 3000)
   equal(spanClient.attributes['server.address'], 'localhost')
+  equal(spanClient.attributes['url.path'], '/test')
 
   // The traceparent header is added to the request and propagated to the server
   equal(receivedHeaders.traceparent, telemetryHeaders.traceparent)
