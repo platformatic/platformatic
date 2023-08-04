@@ -4,6 +4,7 @@ const { test } = require('tap')
 const { loadConfig, Store, printConfigValidationErrors, printAndExitLoadConfigError } = require('../')
 const { join } = require('path')
 const { readFile } = require('fs/promises')
+const { version } = require('../package.json')
 
 function app () {
 }
@@ -15,8 +16,11 @@ app.schema = {
 
 test('happy path', async t => {
   const file = join(__dirname, 'fixtures', 'platformatic.service.json')
-  const { configManager, args } = await loadConfig({}, ['-c', file, '--boo'], app)
+  const res = await loadConfig({}, ['-c', file, '--boo'], app)
+  const { configManager, args } = res
 
+  t.equal(res.app, app)
+  t.equal(res.configType, app.configType)
   t.same(args, {
     _: [],
     c: file,
@@ -257,4 +261,42 @@ test('printAndExitLoadConfigError bare error', async t => {
     process.exit = processExit
   })
   printAndExitLoadConfigError(throwed)
+})
+
+test('auto-upgrades', async t => {
+  const file = join(__dirname, 'fixtures', '$schema.db.json')
+
+  const store = new Store()
+  function app () {
+  }
+  app.configType = 'db'
+  app.schema = {
+    $id: `https://platformatic.dev/schemas/v${version}/db`,
+    type: 'object'
+  }
+  store.add(app)
+  const { configManager, args } = await loadConfig({}, ['-c', file], store)
+
+  t.same(args, {
+    _: [],
+    c: file,
+    config: file,
+    allowEnv: '',
+    'allow-env': '',
+    E: ''
+  })
+  t.same(configManager.current, {
+    $schema: 'https://platformatic.dev/schemas/v0.34.0/db',
+    server: { hostname: '127.0.0.1', port: 0 },
+    db: {
+      connectionString: 'postgres://postgres:postgres@127.0.0.1/postgres'
+    },
+    migrations: {
+      dir: join(__dirname, 'fixtures', 'migrations'),
+      table: 'versions',
+      autoApply: false,
+      validateChecksums: true
+    },
+    watch: { ignore: ['*.sqlite', '*.sqlite-journal'] }
+  })
 })

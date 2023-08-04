@@ -26,12 +26,15 @@ async function loadConfig (minimistConfig, _args, app, overrides = {}) {
     store.add(app)
   }
 
-  const configManager = await store.loadConfig({
+  const loaded = await store.loadConfig({
     app,
     config: args.config,
     allowEnv: args.allowEnv,
     overrides
   })
+
+  app = loaded.app
+  const configManager = loaded.configManager
 
   try {
     const parsingResult = await configManager.parse()
@@ -44,7 +47,7 @@ async function loadConfig (minimistConfig, _args, app, overrides = {}) {
     configManager.stopWatching()
   }
 
-  return { configManager, args }
+  return { configManager, args, app, configType: app.configType }
 }
 
 function printConfigValidationErrors (err) {

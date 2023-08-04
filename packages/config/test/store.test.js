@@ -233,6 +233,7 @@ test('loadConfig', async t => {
     process.chdir(cwd)
   })
 
-  const configManager = await store.loadConfig()
-  t.equal(configManager instanceof ConfigManager, true, 'should return configManager')
+  const res = await store.loadConfig()
+  t.equal(res.configManager instanceof ConfigManager, true, 'should return configManager')
+  t.equal(res.app, foo, 'should return app')
 })

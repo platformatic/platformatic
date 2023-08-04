@@ -90,6 +90,7 @@ class PlatformaticApp {
       // If this is a restart, have the fastify server restart itself. If this
       // is not a restart, then create a new server.
       this.server = await buildServer({
+        app: this.config.app,
         ...config,
         configManager
       })
@@ -157,7 +158,7 @@ class PlatformaticApp {
 
     let _config
     try {
-      _config = await loadConfig({}, ['-c', appConfig.config], null, {
+      _config = await loadConfig({}, ['-c', appConfig.config], {
         watch: true,
         onMissingEnv (key) {
           return appConfig.localServiceEnvVars.get(key)

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v0.20.0/db",
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
+  },
+  "db": {
+    "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres"
+  },
+  "migrations": {
+    "dir": "./migrations",
+    "table": "versions",
+    "autoApply": false,
+    "validateChecksums": true
+  }
+}

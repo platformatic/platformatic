@@ -5,6 +5,7 @@ const { isFileAccessible } = require('./utils')
 const { join } = require('path')
 const { ConfigManager } = require('./manager')
 const { readFile } = require('fs/promises')
+const { getParser, analyze, upgrade } = require('@platformatic/metaconfig')
 
 class Store {
   #map = new Map()
@@ -130,9 +131,11 @@ class Store {
       throw err
     }
 
+    const app = await this.get({ $schema: lookup.get(found.filename).id })
+
     return {
       path: join(this.#cwd, found.filename),
-      app: lookup.get(found.filename)
+      app
     }
   }
 
@@ -150,8 +153,15 @@ class Store {
     // TODO we are reading the file twice here, once to find the app, and once to load the config
     // we should probably refactor this to only read the file once
     if (!app) {
-      const config = JSON.parse(await readFile(configFile, 'utf8'))
-      app = await this.get(config)
+      const parser = getParser(configFile)
+      const parsed = parser(await readFile(configFile))
+      try {
+        const meta = await analyze({ config: parsed })
+        const config = upgrade(meta).config
+        app = await this.get(config)
+      } catch (err) {
+        app = await this.get(parsed)
+      }
     }
 
     const configManagerConfig = {
@@ -167,7 +177,7 @@ class Store {
       envWhitelist
     })
 
-    return configManager
+    return { configManager, app }
   }
 }
 
