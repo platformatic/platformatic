@@ -71,8 +71,7 @@ test('command not found', async (t) => {
 
 test('subcommand not found', async (t) => {
   try {
-    const rv = await execa('node', [cliPath, 'db', 'subfoo'])
-    console.log(rv.stdout)
+    await execa('node', [cliPath, 'db', 'subfoo'])
     t.fail('bug')
   } catch (err) {
     t.ok(err.stdout.includes('Command not found: subfoo'))

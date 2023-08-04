@@ -44,11 +44,7 @@ program.register({ command: 'help seed', strict: true }, help.toStdout.bind(null
 program.register('help schema', help.toStdout.bind(null, ['schema']))
 
 program.register('start', (argv) => {
-  start(platformaticDB, argv).catch((err) => {
-    /* c8 ignore next 2 */
-    console.error(err)
-    process.exit(1)
-  })
+  start(platformaticDB, argv).catch(printAndExitLoadConfigError)
 })
 program.register('compile', wrapCommand(compile))
 program.register('migrations create', wrapCommand(generateMigration))
