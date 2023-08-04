@@ -2,6 +2,7 @@ import { writeFile, mkdir, appendFile } from 'fs/promises'
 import { join, relative, resolve } from 'path'
 import { findDBConfigFile, isFileAccessible } from '../utils.mjs'
 import { getTsConfig } from '../get-tsconfig.mjs'
+import { generatePlugins } from '../create-plugins.mjs'
 
 const connectionStrings = {
   postgres: 'postgres://postgres:postgres@127.0.0.1:5432/postgres',
@@ -32,7 +33,6 @@ const moviesMigrationUndo = `
 DROP TABLE movies;
 `
 
-const getPluginName = (isTypescript) => isTypescript === true ? 'plugin.ts' : 'plugin.js'
 const TS_OUT_DIR = 'dist'
 
 function generateConfig (migrations, plugin, types, typescript, version) {
@@ -63,7 +63,12 @@ function generateConfig (migrations, plugin, types, typescript, version) {
 
   if (plugin === true) {
     config.plugins = {
-      paths: [getPluginName(typescript)]
+      paths: [{
+        path: './plugins',
+        encapsulate: false
+      }, {
+        path: './routes'
+      }]
     }
   }
 
@@ -98,38 +103,6 @@ PLT_TYPESCRIPT=true
   }
 
   return env
-}
-
-const JS_PLUGIN_WITH_TYPES_SUPPORT = `\
-/// <reference path="./global.d.ts" />
-'use strict'
-
-/** @param {import('fastify').FastifyInstance} app */
-module.exports = async function (app) {}
-`
-
-const TS_PLUGIN_WITH_TYPES_SUPPORT = `\
-/// <reference path="./global.d.ts" />
-import { FastifyInstance } from 'fastify'
-
-export default async function (app: FastifyInstance) {}
-`
-
-async function generatePluginWithTypesSupport (logger, currentDir, isTypescript) {
-  const pluginPath = resolve(currentDir, getPluginName(isTypescript))
-
-  const isPluginExists = await isFileAccessible(pluginPath)
-  if (isPluginExists) {
-    logger.info(`Plugin file ${pluginPath} found, skipping creation of plugin file.`)
-    return
-  }
-
-  const pluginTemplate = isTypescript
-    ? TS_PLUGIN_WITH_TYPES_SUPPORT
-    : JS_PLUGIN_WITH_TYPES_SUPPORT
-
-  await writeFile(pluginPath, pluginTemplate)
-  logger.info(`Plugin file created at ${relative(currentDir, pluginPath)}`)
 }
 
 export function getConnectionString (database) {
@@ -200,7 +173,7 @@ export async function createDB ({ hostname, database = 'sqlite', port, migration
   }
 
   if (plugin) {
-    await generatePluginWithTypesSupport(logger, currentDir, typescript)
+    await generatePlugins(logger, currentDir, typescript, 'db')
   }
 
   return {
