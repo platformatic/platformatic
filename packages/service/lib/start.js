@@ -153,6 +153,8 @@ async function start (appType, _args) {
       app.log.info({ signal }, 'received signal')
     }
 
+    // Weird coverage issue in c8
+    /* c8 ignore next 1 */
     await app.close()
   })
 }
