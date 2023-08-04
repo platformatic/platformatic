@@ -1,4 +1,4 @@
-'ues strict'
+'use strict'
 
 const { ConfigManager } = require('./lib/manager')
 const { Store } = require('./lib/store')
