@@ -209,3 +209,30 @@ test('wrong exporter is configured, should default to console', async ({ equal, 
   const { exporter } = app.openTelemetry
   same(exporter.constructor.name, 'ConsoleSpanExporter')
 })
+
+test('should not trace if the operation is skipped', async ({ equal, same, teardown }) => {
+  const handler = async (request, reply) => {
+    return { foo: 'bar' }
+  }
+
+  const app = await setupApp({
+    serviceName: 'test-service',
+    version: '1.0.0',
+    exporter: {
+      type: 'memory'
+    }
+  }, handler, teardown)
+
+  const injectArgs = {
+    method: 'GET',
+    url: '/documentation/json',
+    headers: {
+      host: 'test'
+    }
+  }
+
+  await app.inject(injectArgs)
+  const { exporter } = app.openTelemetry
+  const finishedSpans = exporter.getFinishedSpans()
+  equal(finishedSpans.length, 0)
+})

@@ -117,6 +117,12 @@ async function setupTelemetry (app, opts) {
   app.decorateRequest('span')
 
   const startSpan = async (request) => {
+    const SKIP_OPERATIONS = ['GET/documentation/json']
+    if (SKIP_OPERATIONS.includes(`${request.method}${request.url}`)) {
+      request.log.debug('Skipping telemetry for operation')
+      return
+    }
+
     // We populate the context with the incoming request headers
     let context = propagator.extract(new PlatformaticContext(), request, fastifyTextMapGetter)
 
@@ -139,19 +145,23 @@ async function setupTelemetry (app, opts) {
   }
 
   const injectPropagationHeadersInReply = async (request, reply) => {
-    const context = request.span.context
-    propagator.inject(context, reply, fastifyTextMapSetter)
+    if (request.span) {
+      const context = request.span.context
+      propagator.inject(context, reply, fastifyTextMapSetter)
+    }
   }
 
   const endSpan = async (request, reply) => {
     const span = request.span
-    const spanStatus = { code: SpanStatusCode.OK }
-    if (reply.statusCode >= 400) {
-      spanStatus.code = SpanStatusCode.ERROR
+    if (span) {
+      const spanStatus = { code: SpanStatusCode.OK }
+      if (reply.statusCode >= 400) {
+        spanStatus.code = SpanStatusCode.ERROR
+      }
+      span.setAttributes(formatSpanAttributes.reply(reply))
+      span.setStatus(spanStatus)
+      span.end()
     }
-    span.setAttributes(formatSpanAttributes.reply(reply))
-    span.setStatus(spanStatus)
-    span.end()
   }
 
   app.addHook('onRequest', startSpan)
