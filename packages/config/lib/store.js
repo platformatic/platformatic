@@ -55,7 +55,7 @@ class Store {
       } catch (err) {
         if (err.code === 'ERR_REQUIRE_ESM') {
           const toLoad = this.#require.resolve(module)
-          app = (await import(toLoad)).default
+          app = (await import('file://' + toLoad)).default
         }
       }
     }
