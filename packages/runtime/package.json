@@ -38,7 +38,6 @@
     "@platformatic/config": "workspace:*",
     "@platformatic/db": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "@platformatic/": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "close-with-grace": "^1.2.0",

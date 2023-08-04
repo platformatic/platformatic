@@ -962,9 +962,6 @@ importers:
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
-      '@platformatic/start':
-        specifier: workspace:*
-        version: link:../start
       pretty-bytes:
         specifier: ^6.1.0
         version: 6.1.1
