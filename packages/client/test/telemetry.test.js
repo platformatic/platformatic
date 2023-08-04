@@ -62,8 +62,8 @@ test('telemetry correctly propagates from a service client to a server for an Op
   equal(clientSpan.parentSpanId, postSpan.spanContext().spanId)
   equal(clientSpan.spanContext().traceId, postSpan.spanContext().traceId)
   equal(clientSpan.name, `POST ${targetAppUrl}/movies/`)
-  equal(clientSpan.attributes['server.url'], `${targetAppUrl}/movies/`)
-  equal(clientSpan.attributes['response.statusCode'], 200)
+  equal(clientSpan.attributes['url.full'], `${targetAppUrl}/movies/`)
+  equal(clientSpan.attributes['http.response.status_code'], 200)
   const clientTraceId = clientSpan.spanContext().traceId
   const clientSpanId = clientSpan.spanContext().spanId
 
@@ -139,8 +139,8 @@ test('telemetry correctly propagates from a generic client through a service cli
   equal(clientSpan.parentSpanId, postSpan.spanContext().spanId)
   equal(clientSpan.spanContext().traceId, postSpan.spanContext().traceId)
   equal(clientSpan.name, `POST ${targetAppUrl}/movies/`)
-  equal(clientSpan.attributes['server.url'], `${targetAppUrl}/movies/`)
-  equal(clientSpan.attributes['response.statusCode'], 200)
+  equal(clientSpan.attributes['url.full'], `${targetAppUrl}/movies/`)
+  equal(clientSpan.attributes['http.response.status_code'], 200)
   const clientTraceId = clientSpan.spanContext().traceId
   const clientSpanId = clientSpan.spanContext().spanId
   same(clientTraceId, traceId)
@@ -218,8 +218,8 @@ test('telemetry correctly propagates from a service client to a server for an Gr
   equal(clientSpan.parentSpanId, postSpan.spanContext().spanId)
   equal(clientSpan.spanContext().traceId, postSpan.spanContext().traceId)
   equal(clientSpan.name, `POST ${targetAppUrl}/graphql`)
-  equal(clientSpan.attributes['server.url'], `${targetAppUrl}/graphql`)
-  equal(clientSpan.attributes['response.statusCode'], 200)
+  equal(clientSpan.attributes['url.full'], `${targetAppUrl}/graphql`)
+  equal(clientSpan.attributes['http.response.status_code'], 200)
   const clientTraceId = clientSpan.spanContext().traceId
   const clientSpanId = clientSpan.spanContext().spanId
 

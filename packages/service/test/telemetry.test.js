@@ -81,7 +81,7 @@ test('should setup telemetry if configured', async ({ teardown, equal, pass, sam
   equal(finishedSpans.length, 1)
   const span = finishedSpans[0]
   equal(span.name, 'GET /')
-  equal(span.attributes['req.method'], 'GET')
-  equal(span.attributes['req.url'], '/')
-  equal(span.attributes['reply.statusCode'], 200)
+  equal(span.attributes['http.request.method'], 'GET')
+  equal(span.attributes['url.path'], '/')
+  equal(span.attributes['http.response.status_code'], 200)
 })

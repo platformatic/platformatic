@@ -1612,6 +1612,9 @@ importers:
       '@opentelemetry/semantic-conventions':
         specifier: ^1.15.0
         version: 1.15.1
+      fast-uri:
+        specifier: ^2.2.0
+        version: 2.2.0
       fastify-plugin:
         specifier: ^4.5.0
         version: 4.5.0

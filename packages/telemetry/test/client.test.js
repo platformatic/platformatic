@@ -2,7 +2,7 @@
 
 const { test } = require('tap')
 const fastify = require('fastify')
-const { SpanStatusCode } = require('@opentelemetry/api')
+const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
 const telemetryPlugin = require('../lib/telemetry')
 const { PlatformaticContext } = require('../lib/platformatic-context')
 const { fastifyTextMapGetter } = require('../lib/fastify-text-map')
@@ -29,7 +29,6 @@ test('should add the propagation headers correctly, new propagation started', as
 
   const app = await setupApp({
     serviceName: 'test-service',
-    version: '1.0.0',
     exporter: {
       type: 'memory'
     }
@@ -126,16 +125,21 @@ test('should trace a client request', async ({ equal, same, teardown }) => {
   // We have two one for the client and one for the server
   const spanServer = finishedSpans[0]
   equal(spanServer.name, 'GET /test')
+  equal(spanServer.kind, SpanKind.SERVER)
   equal(spanServer.status.code, SpanStatusCode.OK)
-  equal(spanServer.attributes['req.method'], 'GET')
-  equal(spanServer.attributes['req.url'], '/test')
-  equal(spanServer.attributes['reply.statusCode'], 200)
+  equal(spanServer.attributes['http.request.method'], 'GET')
+  equal(spanServer.attributes['url.path'], '/test')
+  equal(spanServer.attributes['http.response.status_code'], 200)
 
   const spanClient = finishedSpans[1]
   equal(spanClient.name, 'GET http://localhost:3000/test')
+  equal(spanClient.kind, SpanKind.CLIENT)
   equal(spanClient.status.code, SpanStatusCode.OK)
-  equal(spanClient.attributes['server.url'], 'http://localhost:3000/test')
-  equal(spanClient.attributes['response.statusCode'], 200)
+  equal(spanClient.attributes['url.full'], 'http://localhost:3000/test')
+  equal(spanClient.attributes['http.response.status_code'], 200)
+  equal(spanClient.attributes['server.port'], 3000)
+  equal(spanClient.attributes['server.address'], 'localhost')
+  equal(spanClient.attributes['url.path'], '/test')
 
   // The traceparent header is added to the request and propagated to the server
   equal(receivedHeaders.traceparent, telemetryHeaders.traceparent)
@@ -175,16 +179,18 @@ test('should trace a client request failing', async ({ equal, same, teardown }) 
   // We have two one for the client and one for the server
   const spanServer = finishedSpans[0]
   equal(spanServer.name, 'GET')
+  equal(spanServer.kind, SpanKind.SERVER)
   equal(spanServer.status.code, SpanStatusCode.ERROR)
-  equal(spanServer.attributes['req.method'], 'GET')
-  equal(spanServer.attributes['req.url'], '/wrong')
-  equal(spanServer.attributes['reply.statusCode'], 404)
+  equal(spanServer.attributes['http.request.method'], 'GET')
+  equal(spanServer.attributes['url.path'], '/wrong')
+  equal(spanServer.attributes['http.response.status_code'], 404)
 
   const spanClient = finishedSpans[1]
   equal(spanClient.name, 'GET http://localhost:3000/test')
+  equal(spanClient.kind, SpanKind.CLIENT)
   equal(spanClient.status.code, SpanStatusCode.ERROR)
-  equal(spanClient.attributes['server.url'], 'http://localhost:3000/test')
-  equal(spanClient.attributes['response.statusCode'], 404)
+  equal(spanClient.attributes['url.full'], 'http://localhost:3000/test')
+  equal(spanClient.attributes['http.response.status_code'], 404)
 })
 
 test('should trace a client request failing (no HTTP error)', async ({ equal, same, teardown }) => {
@@ -219,7 +225,7 @@ test('should trace a client request failing (no HTTP error)', async ({ equal, sa
   const spanClient = finishedSpans[0]
   equal(spanClient.name, 'GET http://localhost:3000/test')
   equal(spanClient.status.code, SpanStatusCode.ERROR)
-  equal(spanClient.attributes['server.url'], 'http://localhost:3000/test')
+  equal(spanClient.attributes['url.full'], 'http://localhost:3000/test')
   equal(spanClient.attributes['error.name'], 'Error')
   equal(spanClient.attributes['error.message'], 'KABOOM!!!')
   equal(spanClient.attributes['error.stack'].includes('Error: KABOOM!!!'), true)

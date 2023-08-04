@@ -73,7 +73,7 @@ test('should setup telemetry if configured', async ({ teardown, equal, pass, sam
   equal(finishedSpans.length, 1)
   const span = finishedSpans[0]
   equal(span.name, 'POST /graphql')
-  equal(span.attributes['req.method'], 'POST')
-  equal(span.attributes['req.url'], '/graphql')
-  equal(span.attributes['reply.statusCode'], 200)
+  equal(span.attributes['http.request.method'], 'POST')
+  equal(span.attributes['url.path'], '/graphql')
+  equal(span.attributes['http.response.status_code'], 200)
 })
