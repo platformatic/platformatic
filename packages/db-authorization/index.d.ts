@@ -59,6 +59,7 @@ export interface DBAuthorizationPluginInterface {
   addRulesForRoles: AddRulesForRoles
 }
 
+
 declare module '@platformatic/types' {
   interface PlatformaticApp {
     addRulesForRoles: AddRulesForRoles
@@ -70,3 +71,7 @@ declare module 'fastify' {
     setupDBAuthorizationUser: SetupDBAuthorizationUserDecorator
   }
 }
+
+declare const auth: FastifyPluginAsync<DBAuthorizationPluginOptions>
+
+export default auth
