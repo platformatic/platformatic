@@ -749,6 +749,12 @@ importers:
       '@platformatic/db-core':
         specifier: workspace:*
         version: link:../db-core
+      '@platformatic/sql-mapper':
+        specifier: workspace:*
+        version: link:../sql-mapper
+      '@platformatic/types':
+        specifier: workspace:*
+        version: link:../types
       fast-jwt:
         specifier: ^3.1.1
         version: 3.1.1
