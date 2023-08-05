@@ -7,6 +7,7 @@
     "test": "standard | snazzy && tap test/*test.js && tsd",
     "lint": "standard | snazzy"
   },
+  "types": "index.d.ts",
   "author": "Matteo Collina <hello@matteocollina.com>",
   "repository": {
     "type": "git",
