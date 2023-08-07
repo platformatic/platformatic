@@ -5,7 +5,13 @@ import {
 import { type FastifyPluginAsync } from 'fastify'
 import { type FastifyUserPluginOptions } from 'fastify-user'
 
-export type Operation = boolean | {
+export type OperationFunction = (args: {
+  user: any,
+  ctx: PlatformaticContext,
+  where: WhereCondition
+}) => WhereCondition
+
+export type Operation = boolean | OperationFunction | {
   checks: string | Record<string, WhereCondition>
 }
 
@@ -31,14 +37,8 @@ export interface AuthorizationRuleEntities extends AuthorizationRuleBase {
 }
 export type AuthorizationRule = AuthorizationRuleEntity | AuthorizationRuleEntities
 
-export type AuthorizationRuleFunction = (args: {
-  user: any,
-  ctx: PlatformaticContext,
-  where: WhereCondition
-}) => WhereCondition
-
 export type SetupDBAuthorizationUserDecorator = () => Promise<void>
-export type AddRulesForRoles = (rules: Iterable<AuthorizationRuleFunction | AuthorizationRule>) => void
+export type AddRulesForRoles = (rules: Iterable<AuthorizationRule>) => void
 
 export interface DBAuthorizationPluginOptions extends FastifyUserPluginOptions {
   adminSecret?: string
