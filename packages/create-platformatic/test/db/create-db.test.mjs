@@ -94,7 +94,8 @@ test('creates project with no typescript and no plugin', async ({ equal }) => {
   const params = {
     hostname: 'myhost',
     port: 6666,
-    plugin: false
+    plugin: false,
+    connectionString: 'sqlite://./custom/path/to/db.sqlite'
   }
 
   await createDB(params, fakeLogger, tmpDir)
@@ -116,7 +117,7 @@ test('creates project with no typescript and no plugin', async ({ equal }) => {
   dotenv.config({ path: pathToDbEnvFile })
   equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
   equal(process.env.PORT, '6666')
-  equal(process.env.DATABASE_URL, 'sqlite://./db.sqlite')
+  equal(process.env.DATABASE_URL, 'sqlite://./custom/path/to/db.sqlite')
   process.env = {}
 
   const pathToDbEnvSampleFile = join(tmpDir, '.env.sample')
