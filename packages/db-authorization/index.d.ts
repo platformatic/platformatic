@@ -5,12 +5,7 @@ import {
 import { type FastifyPluginAsync } from 'fastify'
 import { type FastifyUserPluginOptions } from 'fastify-user'
 
-export type OperationCheckFunction = (args: {
-  user: any,
-  ctx: PlatformaticContext,
-  where: WhereCondition
-}) => WhereCondition
-export type OperationCheck = boolean | WhereCondition | OperationCheckFunction
+export type OperationCheck = boolean | WhereCondition
 export type OperationChecks = Record<string, OperationCheck>
 export type Operation = boolean | {
   checks: string | OperationChecks
@@ -42,7 +37,7 @@ export type AuthorizationRuleFunction = (args: {
   user: any,
   ctx: PlatformaticContext,
   where: WhereCondition
-}) => AuthorizationRule
+}) => WhereCondition
 
 export type SetupDBAuthorizationUserDecorator = () => Promise<void>
 export type AddRulesForRoles = (rules: Iterable<AuthorizationRuleFunction | AuthorizationRule>) => void
