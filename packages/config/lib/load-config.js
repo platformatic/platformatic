@@ -1,6 +1,7 @@
 'use strict'
 
 const { Store } = require('./store')
+const { dirname } = require('path')
 const parseArgs = require('minimist')
 const deepmerge = require('@fastify/deepmerge')
 
@@ -28,6 +29,7 @@ async function loadConfig (minimistConfig, _args, app, overrides = {}) {
 
   const loaded = await store.loadConfig({
     app,
+    directory: args.config && dirname(args.config),
     config: args.config,
     allowEnv: args.allowEnv,
     overrides

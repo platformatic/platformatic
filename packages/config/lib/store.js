@@ -48,16 +48,21 @@ class Store {
     this.#map.set(app.schema.$id, app)
   }
 
-  async get ({ $schema, module }) {
+  async get ({ $schema, module }, { directory } = {}) {
     let app = this.#map.get($schema)
+    let require = this.#require
+
+    if (directory) {
+      require = createRequire(join(directory, 'noop.js'))
+    }
 
     // try to load module
     if (!app && module) {
       try {
-        app = this.#require(module)
+        app = require(module)
       } catch (err) {
         if (err.code === 'ERR_REQUIRE_ESM') {
-          const toLoad = this.#require.resolve(module)
+          const toLoad = require.resolve(module)
           app = (await import('file://' + toLoad)).default
         }
       }
@@ -167,9 +172,9 @@ class Store {
       try {
         const meta = await analyze({ config: parsed })
         const config = upgrade(meta).config
-        app = await this.get(config)
+        app = await this.get(config, opts)
       } catch (err) {
-        app = await this.get(parsed)
+        app = await this.get(parsed, opts)
       }
     }
 
