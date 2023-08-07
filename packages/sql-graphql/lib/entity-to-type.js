@@ -121,7 +121,10 @@ function constructGraph (app, entity, opts, ignore) {
     } else {
       graphqlFields = {
         any: { type: fields[field].type.ofType },
-        all: { type: fields[field].type.ofType }
+        all: { type: fields[field].type.ofType },
+        contains: { type: fields[field].type.ofType },
+        contained: { type: fields[field].type.ofType },
+        overlaps: { type: fields[field].type.ofType }
       }
     }
     acc[field] = {
