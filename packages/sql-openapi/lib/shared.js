@@ -13,7 +13,7 @@ function generateArgs (entity, ignore) {
     const baseKey = `where.${field.camelcase}.`
     /* istanbul ignore next */
     if (field.isArray) {
-      for (const modifier of ['all', 'any', 'contains', 'contained', 'overlaps']) {
+      for (const modifier of ['all', 'any']) {
         const key = baseKey + modifier
         acc[key] = { type: mapSQLTypeToOpenAPIType(field.sqlType) }
       }
@@ -23,7 +23,7 @@ function generateArgs (entity, ignore) {
         acc[key] = { type: mapSQLTypeToOpenAPIType(field.sqlType), enum: field.enum }
       }
 
-      for (const modifier of ['in', 'nin']) {
+      for (const modifier of ['in', 'nin', 'contains', 'contained', 'overlaps']) {
         const key = baseKey + modifier
         acc[key] = { type: 'string' }
       }
