@@ -11,9 +11,11 @@ export type OperationFunction = (args: {
   where: WhereCondition
 }) => WhereCondition
 
-export type Operation = boolean | OperationFunction | {
+export interface OperationChecks {
   checks: string | Record<string, WhereCondition>
 }
+
+export type Operation = boolean | OperationFunction | OperationChecks
 
 export type DefaultsFunction = (args: {
   user: any,
