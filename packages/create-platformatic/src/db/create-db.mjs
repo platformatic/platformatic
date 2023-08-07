@@ -1,6 +1,6 @@
 import { writeFile, mkdir, appendFile } from 'fs/promises'
 import { join, relative, resolve } from 'path'
-import { findDBConfigFile, isFileAccessible } from '../utils.mjs'
+import { findDBConfigFile, isFileAccessible, purgeEnvString } from '../utils.mjs'
 import { getTsConfig } from '../get-tsconfig.mjs'
 
 const connectionStrings = {
@@ -148,7 +148,7 @@ export async function createDB ({ hostname, database = 'sqlite', port, migration
     const env = generateEnv(hostname, port, connectionString, typescript)
     const envFileExists = await isFileAccessible('.env', currentDir)
     await appendFile(join(currentDir, '.env'), env)
-    await writeFile(join(currentDir, '.env.sample'), env)
+    await writeFile(join(currentDir, '.env.sample'), purgeEnvString(env))
     /* c8 ignore next 5 */
     if (envFileExists) {
       logger.info('Environment file .env found, appending new environment variables to existing .env file.')

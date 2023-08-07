@@ -48,8 +48,8 @@ test('creates composer', async ({ equal, same, ok }) => {
 
   const pathToDbEnvSampleFile = join(tmpDir, '.env.sample')
   dotenv.config({ path: pathToDbEnvSampleFile })
-  equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
-  equal(process.env.PORT, '6666')
+  equal(process.env.PLT_SERVER_HOSTNAME, '')
+  equal(process.env.PORT, '')
 
   same(composer, {
     services: [{

@@ -58,9 +58,9 @@ test('creates service with typescript', async ({ equal, same, ok }) => {
 
   const pathToDbEnvSampleFile = join(tmpDir, '.env.sample')
   dotenv.config({ path: pathToDbEnvSampleFile })
-  equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
-  equal(process.env.PORT, '6666')
-  equal(process.env.PLT_TYPESCRIPT, 'true')
+  equal(process.env.PLT_SERVER_HOSTNAME, '')
+  equal(process.env.PORT, '')
+  equal(process.env.PLT_TYPESCRIPT, '')
 
   same(plugins.paths, [{ path: './plugins', encapsulate: false }, './routes'])
   equal(plugins.typescript, '{PLT_TYPESCRIPT}')
@@ -95,8 +95,8 @@ test('creates service with javascript', async ({ equal, same, ok }) => {
 
   const pathToDbEnvSampleFile = join(tmpDir, '.env.sample')
   dotenv.config({ path: pathToDbEnvSampleFile })
-  equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
-  equal(process.env.PORT, '6666')
+  equal(process.env.PLT_SERVER_HOSTNAME, '')
+  equal(process.env.PORT, '')
 
   same(plugins, { paths: [{ path: './plugins', encapsulate: false }, './routes'] })
   ok(await isFileAccessible(join(tmpDir, 'plugins', 'example.js')))

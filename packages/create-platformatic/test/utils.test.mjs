@@ -1,10 +1,11 @@
 import { test } from 'tap'
-import { randomBetween, sleep, validatePath, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions, findRuntimeConfigFile, findComposerConfigFile } from '../src/utils.mjs'
+import { randomBetween, sleep, validatePath, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions, findRuntimeConfigFile, findComposerConfigFile, purgeEnvString } from '../src/utils.mjs'
 import { mkdtempSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir, platform } from 'os'
 import { join } from 'path'
 import esmock from 'esmock'
 import semver from 'semver'
+import { writeFile } from 'fs/promises'
 
 test('getUsername from git', async ({ end, equal }) => {
   const name = 'lukeskywalker'
@@ -238,4 +239,16 @@ test('isCurrentVersionSupported', async ({ equal }) => {
     const supported = isCurrentVersionSupported(version)
     equal(supported, true)
   }
+})
+
+test('purge env values', async (t) => {
+  const env = `\
+DATABASE_URL=postgres://user:pass@host:5432/dbname
+FOO=123
+`
+  const purged = purgeEnvString(env)
+  t.match(purged, `\
+DATABASE_URL=
+FOO=`)
+  await writeFile('/tmp/envsample', purged)
 })

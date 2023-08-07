@@ -103,3 +103,14 @@ export const isCurrentVersionSupported = (currentVersion) => {
   }
   return false
 }
+
+export function purgeEnvString (env) {
+  const lines = env.split('\n')
+  return lines
+    .filter((line) => line.length > 0)
+    .map((line) => {
+      const [key] = line.split('=')
+      return `${key}=`
+    })
+    .join('\n')
+}

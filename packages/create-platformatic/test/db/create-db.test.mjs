@@ -74,9 +74,9 @@ test('creates project with no typescript', async ({ equal }) => {
 
   const pathToDbEnvSampleFile = join(tmpDir, '.env.sample')
   dotenv.config({ path: pathToDbEnvSampleFile })
-  equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
-  equal(process.env.PORT, '6666')
-  equal(process.env.DATABASE_URL, 'sqlite://./db.sqlite')
+  equal(process.env.PLT_SERVER_HOSTNAME, '')
+  equal(process.env.PORT, '')
+  equal(process.env.DATABASE_URL, '')
 
   equal(db.graphql, true)
   equal(db.openapi, true)
@@ -121,9 +121,9 @@ test('creates project with no typescript and no plugin', async ({ equal }) => {
 
   const pathToDbEnvSampleFile = join(tmpDir, '.env.sample')
   dotenv.config({ path: pathToDbEnvSampleFile })
-  equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
-  equal(process.env.PORT, '6666')
-  equal(process.env.DATABASE_URL, 'sqlite://./db.sqlite')
+  equal(process.env.PLT_SERVER_HOSTNAME, '')
+  equal(process.env.PORT, '')
+  equal(process.env.DATABASE_URL, '')
 
   equal(db.graphql, true)
   equal(db.openapi, true)
@@ -186,10 +186,10 @@ test('creates project with typescript', async ({ equal, same }) => {
 
   const pathToDbEnvSampleFile = join(tmpDir, '.env.sample')
   dotenv.config({ path: pathToDbEnvSampleFile })
-  equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
-  equal(process.env.PORT, '6666')
-  equal(process.env.DATABASE_URL, 'sqlite://./db.sqlite')
-  equal(process.env.PLT_TYPESCRIPT, 'true')
+  equal(process.env.PLT_SERVER_HOSTNAME, '')
+  equal(process.env.PORT, '')
+  equal(process.env.DATABASE_URL, '')
+  equal(process.env.PLT_TYPESCRIPT, '')
 
   equal(db.graphql, true)
   equal(db.openapi, true)
