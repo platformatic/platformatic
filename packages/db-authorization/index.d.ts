@@ -21,7 +21,7 @@ export type DefaultsFunction = (args: {
   user: any,
   ctx: PlatformaticContext,
   input: Object[]
-}) => Record<string, any>
+}) => any
 export type Defaults = DefaultsFunction | Record<string, any>
 
 interface AuthorizationRuleBase {
