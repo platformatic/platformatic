@@ -15,7 +15,10 @@ class Store {
   constructor (opts) {
     opts = opts || {}
     this.#cwd = opts.cwd || process.cwd()
-    this.#require = createRequire(this.#cwd)
+
+    // createRequire accepts a filename, but it's not used,
+    // so we pass a dummy file to make it happy
+    this.#require = createRequire(join(this.#cwd, 'noop.js'))
   }
 
   add (app) {
@@ -131,7 +134,13 @@ class Store {
       throw err
     }
 
-    const app = await this.get({ $schema: lookup.get(found.filename).id })
+    let app
+
+    const matchingType = lookup.get(found.filename)
+    if (matchingType.id) {
+      // This can be null if we are using generic `platformatic.json` files
+      app = await this.get({ $schema: matchingType.id })
+    }
 
     return {
       path: join(this.#cwd, found.filename),
@@ -140,7 +149,7 @@ class Store {
   }
 
   async loadConfig (opts = {}) {
-    const overrides = opts.overrides || {}
+    const overrides = opts.overrides
     let configFile = opts.config
     let app = opts.app
 

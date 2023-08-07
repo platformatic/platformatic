@@ -141,7 +141,7 @@ test('schema with no id', async t => {
 
 test('resolve', async t => {
   const store = new Store({
-    cwd: join(__dirname, 'fixtures', 'app', 'index.js')
+    cwd: join(__dirname, 'fixtures', 'app')
   })
 
   t.equal(await store.get({
@@ -152,7 +152,7 @@ test('resolve', async t => {
 
 test('rejects with missing module', async t => {
   const store = new Store({
-    cwd: join(__dirname, 'fixtures', 'app', 'index.js')
+    cwd: join(__dirname, 'fixtures', 'app')
   })
 
   await t.rejects(store.get({
@@ -163,7 +163,7 @@ test('rejects with missing module', async t => {
 
 test('import', async t => {
   const store = new Store({
-    cwd: join(__dirname, 'fixtures', 'app', 'index.js')
+    cwd: join(__dirname, 'fixtures', 'app')
   })
 
   t.equal(await store.get({
@@ -236,4 +236,52 @@ test('loadConfig', async t => {
   const res = await store.loadConfig()
   t.equal(res.configManager instanceof ConfigManager, true, 'should return configManager')
   t.equal(res.app, foo, 'should return app')
+})
+
+test('loadConfig', async t => {
+  function foo () {
+  }
+
+  foo.schema = {
+    $id: 'foo',
+    type: 'object'
+  }
+
+  foo.configType = 'service'
+  foo.configManagerConfig = {
+    schema: foo.schema,
+    envWhitelist: ['PORT', 'HOSTNAME'],
+    allowToWatch: ['.env'],
+    schemaOptions: {
+      useDefaults: true,
+      coerceTypes: true,
+      allErrors: true,
+      strict: false
+    },
+    transformConfig () {
+    }
+  }
+
+  const cwd = process.cwd()
+  process.chdir(join(__dirname, 'fixtures'))
+
+  const store = new Store()
+  store.add(foo)
+
+  t.teardown(() => {
+    process.chdir(cwd)
+  })
+
+  const res = await store.loadConfig()
+  t.equal(res.configManager instanceof ConfigManager, true, 'should return configManager')
+  t.equal(res.app, foo, 'should return app')
+})
+
+test('loadConfig custom module', async t => {
+  const store = new Store({
+    cwd: join(__dirname, 'fixtures', 'app')
+  })
+
+  const res = await store.loadConfig()
+  t.equal(res.app.schema.$id, 'foo', 'should return app')
 })
