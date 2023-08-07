@@ -12,7 +12,7 @@ export type OperationFunction = (args: {
 }) => WhereCondition
 
 export interface OperationChecks {
-  checks: string | Record<string, WhereCondition>
+  checks: Record<string, any> | WhereCondition
 }
 
 export type Operation = boolean | OperationFunction | OperationChecks
