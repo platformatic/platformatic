@@ -145,7 +145,7 @@ async function readFromFileAndWrite (logger, file, folder, name, fullResponse, g
   }
 }
 
-async function downloadAndProcess ({ url, name, folder, config, r: fullResponse, logger, runtime }) {
+async function downloadAndProcess ({ url, name, folder, config, r: fullResponse, logger, runtime, generateImplementation }) {
   if (!config) {
     const configFilesAccessibility = await Promise.all(configFileNames.map((fileName) => isFileAccessible(fileName)))
     config = configFileNames.find((value, index) => configFilesAccessibility[index])
@@ -153,11 +153,11 @@ async function downloadAndProcess ({ url, name, folder, config, r: fullResponse,
 
   let found = false
   const toTry = [
-    downloadAndWriteOpenAPI.bind(null, logger, url + '/documentation/json', folder, name, fullResponse, !config),
-    downloadAndWriteGraphQL.bind(null, logger, url + '/graphql', folder, name, !config),
-    downloadAndWriteOpenAPI.bind(null, logger, url, folder, name, fullResponse, !config),
-    downloadAndWriteGraphQL.bind(null, logger, url, folder, name, !config),
-    readFromFileAndWrite.bind(null, logger, url, folder, name, fullResponse, !config)
+    downloadAndWriteOpenAPI.bind(null, logger, url + '/documentation/json', folder, name, fullResponse, generateImplementation),
+    downloadAndWriteGraphQL.bind(null, logger, url + '/graphql', folder, name, generateImplementation),
+    downloadAndWriteOpenAPI.bind(null, logger, url, folder, name, fullResponse, generateImplementation),
+    downloadAndWriteGraphQL.bind(null, logger, url, folder, name, generateImplementation),
+    readFromFileAndWrite.bind(null, logger, url, folder, name, fullResponse, generateImplementation)
   ]
 
   // readFromFileAndWrite is the last one, and it will throw if it cannot read the file
@@ -228,7 +228,7 @@ export async function command (argv) {
   })
   let { _: [url], ...options } = parseArgs(argv, {
     string: ['name', 'folder', 'runtime'],
-    boolean: ['typescript', 'full-response'],
+    boolean: ['typescript', 'full-response', 'types-only'],
     default: {
       name: 'client',
       typescript: false
@@ -280,6 +280,11 @@ export async function command (argv) {
   }
 
   try {
+    if (options['types-only']) {
+      options.generateImplementation = false
+    } else {
+      options.generateImplementation = !options.config  
+    }
     await downloadAndProcess({ url, ...options, logger, runtime: options.runtime })
     logger.info('Client generated successfully')
     logger.info('Check out the docs to know more: https://docs.platformatic.dev/docs/reference/client/introduction')

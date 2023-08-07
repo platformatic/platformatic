@@ -177,7 +177,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   })
 
   writer.blankLine()
-  writer.write(`declare namespace ${camelcasedName}`).block(() => {
+  writer.write(`declare namespace ${capitalizedName}`).block(() => {
     writer.write(`export interface ${optionsName}`).block(() => {
       writer.writeLine('url: string')
     })
