@@ -45,7 +45,7 @@ export type AuthorizationRuleFunction = (args: {
 }) => AuthorizationRule
 
 export type SetupDBAuthorizationUserDecorator = () => Promise<void>
-export type AddRulesForRoles = (rule: AuthorizationRuleFunction | AuthorizationRule) => void
+export type AddRulesForRoles = (rules: Iterable<AuthorizationRuleFunction | AuthorizationRule>) => void
 
 export interface DBAuthorizationPluginOptions extends FastifyUserPluginOptions {
   adminSecret?: string
