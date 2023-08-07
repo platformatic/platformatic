@@ -202,7 +202,10 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     like: 'LIKE',
     ilike: 'ILIKE',
     any: 'ANY',
-    all: 'ALL'
+    all: 'ALL',
+    contains: '@>',
+    contained: '<@',
+    overlaps: '&&'
   }
 
   function computeCriteria (opts) {
@@ -235,6 +238,12 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
             criteria.push(sql`${value[key]} = ANY (${sql.ident(field)})`)
           } else if (operator === 'ALL') {
             criteria.push(sql`${value[key]} = ALL (${sql.ident(field)})`)
+          } else if (operator === '@>') {
+            criteria.push(sql`${value[key]} @> ${sql.ident(field)}`)
+          } else if (operator === '<@') {
+            criteria.push(sql`${value[key]} <@ ${sql.ident(field)}`)
+          } else if (operator === '&&') {
+            criteria.push(sql`${value[key]} && ${sql.ident(field)}`)
           } else {
             throw new Error('Unsupported operator for Array field')
           }
@@ -251,7 +260,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
           }
           const like = operator === 'LIKE' ? sql`LIKE` : queries.hasILIKE ? sql`ILIKE` : sql`LIKE`
           criteria.push(sql`${leftHand} ${like} ${value[key]}`)
-        } else if (operator === 'ANY' || operator === 'ALL') {
+        } else if (operator === 'ANY' || operator === 'ALL' || operator === '@>' || operator === '<@' || operator === '&&') {
           throw new Error('Unsupported operator for non Array field')
         } else {
           criteria.push(sql`${sql.ident(field)} ${sql.__dangerous__rawValue(operator)} ${computeCriteriaValue(fieldWrap, value[key])}`)
