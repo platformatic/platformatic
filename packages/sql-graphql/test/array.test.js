@@ -117,7 +117,163 @@ test('array support', { skip: !isPg }, async ({ pass, teardown, same, equal }) =
       body: {
         query: `
           query {
+            pages(where: { tags: { contains: ["foo"] } }) {
+              id
+              title
+              tags
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'pages status code')
+    same(res.json(), {
+      data: {
+        pages: [{
+          id: 1,
+          title: 'Hello',
+          tags: ['foo', 'bar']
+        }]
+      }
+    }, 'pages response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+          query {
+            pages(where: { tags: { contained: ["foo", "bar"] } }) {
+              id
+              title
+              tags
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'pages status code')
+    same(res.json(), {
+      data: {
+        pages: [{
+          id: 1,
+          title: 'Hello',
+          tags: ['foo', 'bar']
+        }]
+      }
+    }, 'pages response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+          query {
+            pages(where: { tags: { overlaps: ["foo"] } }) {
+              id
+              title
+              tags
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'pages status code')
+    same(res.json(), {
+      data: {
+        pages: [{
+          id: 1,
+          title: 'Hello',
+          tags: ['foo', 'bar']
+        }]
+      }
+    }, 'pages response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+          query {
             pages(where: { tags: { any: "baz" } }) {
+              id
+              title,
+              tags
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'pages status code')
+    same(res.json(), {
+      data: {
+        pages: []
+      }
+    }, 'pages response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+          query {
+            pages(where: { tags: { contains: ["baz"] } }) {
+              id
+              title,
+              tags
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'pages status code')
+    same(res.json(), {
+      data: {
+        pages: []
+      }
+    }, 'pages response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+          query {
+            pages(where: { tags: { contained: ["foo"] } }) {
+              id
+              title,
+              tags
+            }
+          }
+        `
+      }
+    })
+    equal(res.statusCode, 200, 'pages status code')
+    same(res.json(), {
+      data: {
+        pages: []
+      }
+    }, 'pages response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/graphql',
+      body: {
+        query: `
+          query {
+            pages(where: { tags: { overlaps: ["baz"] } }) {
               id
               title,
               tags
