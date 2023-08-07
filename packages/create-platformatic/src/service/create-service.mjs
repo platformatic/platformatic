@@ -1,7 +1,7 @@
 import { writeFile, mkdir, readFile, appendFile } from 'fs/promises'
 import { join } from 'path'
 import * as desm from 'desm'
-import { findServiceConfigFile, isFileAccessible, purgeEnvString } from '../utils.mjs'
+import { findServiceConfigFile, isFileAccessible } from '../utils.mjs'
 import { getTsConfig } from '../get-tsconfig.mjs'
 
 const TS_OUT_DIR = 'dist'
@@ -140,7 +140,7 @@ async function createService ({ hostname, port, typescript = false }, logger, cu
     const env = generateEnv(hostname, port, typescript)
     const envFileExists = await isFileAccessible('.env', currentDir)
     await appendFile(join(currentDir, '.env'), env)
-    await writeFile(join(currentDir, '.env.sample'), purgeEnvString(env))
+    await writeFile(join(currentDir, '.env.sample'), env)
     /* c8 ignore next 5 */
     if (envFileExists) {
       logger.info('Environment file .env found, appending new environment variables to existing .env file.')
