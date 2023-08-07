@@ -28,7 +28,7 @@ function generateTypesFromGraphQL ({ schema, name }) {
   })
   /* eslint-enable new-cap */
 
-  writer.writeLine('import { FastifyPluginAsync } from \'fastify\'')
+  writer.writeLine('import { type FastifyPluginAsync } from \'fastify\'')
   writer.blankLine()
 
   const pluginname = `${capitalizedName}plugin`
