@@ -15,7 +15,11 @@ export interface OperationChecks {
   checks: Record<string, any> | WhereCondition
 }
 
-export type Operation = boolean | OperationFunction | OperationChecks
+export interface OperationFields {
+  fields?: string[]
+}
+
+export type Operation = boolean | OperationFields & (OperationFunction | OperationChecks)
 
 export type DefaultsFunction = (args: {
   user: any,
