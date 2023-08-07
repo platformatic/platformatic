@@ -5,7 +5,6 @@ import { tmpdir, platform } from 'os'
 import { join } from 'path'
 import esmock from 'esmock'
 import semver from 'semver'
-import { writeFile } from 'fs/promises'
 
 test('getUsername from git', async ({ end, equal }) => {
   const name = 'lukeskywalker'
@@ -250,5 +249,4 @@ FOO=123
   t.match(purged, `\
 DATABASE_URL=
 FOO=`)
-  await writeFile('/tmp/envsample', purged)
 })
