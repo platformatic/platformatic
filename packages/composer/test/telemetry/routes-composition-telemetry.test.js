@@ -52,8 +52,8 @@ test('should compose openapi with prefixes', async (t) => {
   const proxyCallSpan = finishedSpans[0]
   const composerCallSpan = finishedSpans[1]
   t.equal(proxyCallSpan.name, `GET ${api1Origin}/api1/users`)
-  t.equal(proxyCallSpan.attributes['server.url'], `${api1Origin}/api1/users`)
-  t.equal(proxyCallSpan.attributes['response.statusCode'], 200)
+  t.equal(proxyCallSpan.attributes['url.full'], `${api1Origin}/api1/users`)
+  t.equal(proxyCallSpan.attributes['http.response.status_code'], 200)
   t.equal(proxyCallSpan.parentSpanId, composerCallSpan.spanContext().spanId)
   t.equal(proxyCallSpan.traceId, composerCallSpan.traceId)
 })

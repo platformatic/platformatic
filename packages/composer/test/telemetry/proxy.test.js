@@ -56,8 +56,8 @@ test('should proxy openapi requests with telemetry span', async (t) => {
     const proxyCallSpan = finishedSpans[0]
     const composerCallSpan = finishedSpans[1]
     t.equal(proxyCallSpan.name, `GET ${origin1}/internal/service1/users`)
-    t.equal(proxyCallSpan.attributes['server.url'], `${origin1}/internal/service1/users`)
-    t.equal(proxyCallSpan.attributes['response.statusCode'], 200)
+    t.equal(proxyCallSpan.attributes['url.full'], `${origin1}/internal/service1/users`)
+    t.equal(proxyCallSpan.attributes['http.response.status_code'], 200)
     t.equal(proxyCallSpan.parentSpanId, composerCallSpan.spanContext().spanId)
     t.equal(proxyCallSpan.traceId, composerCallSpan.traceId)
   }
@@ -108,7 +108,7 @@ test('should proxy openapi requests with telemetry, managing errors', async (t) 
     const finishedSpans = exporter.getFinishedSpans()
     const span = finishedSpans[0]
     t.equal(span.name, `GET ${origin1}/internal/service1/error`)
-    t.equal(span.attributes['server.url'], `${origin1}/internal/service1/error`)
-    t.equal(span.attributes['response.statusCode'], 500)
+    t.equal(span.attributes['url.full'], `${origin1}/internal/service1/error`)
+    t.equal(span.attributes['http.response.status_code'], 500)
   }
 })

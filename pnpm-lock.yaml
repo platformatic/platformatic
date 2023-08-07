@@ -734,8 +734,8 @@ importers:
         specifier: ^4.5.0
         version: 4.5.0
       fastify-user:
-        specifier: ^0.2.0
-        version: 0.2.0
+        specifier: ^0.3.0
+        version: 0.3.1
       get-jwks:
         specifier: ^8.1.0
         version: 8.1.1
@@ -755,6 +755,12 @@ importers:
       '@platformatic/db-core':
         specifier: workspace:*
         version: link:../db-core
+      '@platformatic/sql-mapper':
+        specifier: workspace:*
+        version: link:../sql-mapper
+      '@platformatic/types':
+        specifier: workspace:*
+        version: link:../types
       fast-jwt:
         specifier: ^3.1.1
         version: 3.1.1
@@ -770,6 +776,9 @@ importers:
       tap:
         specifier: ^16.3.6
         version: 16.3.7(typescript@5.1.6)
+      tsd:
+        specifier: ^0.28.1
+        version: 0.28.1
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
@@ -1615,6 +1624,9 @@ importers:
       '@opentelemetry/semantic-conventions':
         specifier: ^1.15.0
         version: 1.15.1
+      fast-uri:
+        specifier: ^2.2.0
+        version: 2.2.0
       fastify-plugin:
         specifier: ^4.5.0
         version: 4.5.0
@@ -6277,8 +6289,8 @@ packages:
       undici: 5.22.1
     dev: false
 
-  /fastify-user@0.2.0:
-    resolution: {integrity: sha512-DGyiR8hQsFDu9N0ddVy6SVvBHHQqINzUOvBZArA/bKXN5nfPG+1+7PdPMuA8iqXGx9oHtDLWoZb4PRZWzdAkjA==}
+  /fastify-user@0.3.1:
+    resolution: {integrity: sha512-Gx6FxRjoPWKZMmpAmHmCwhkwgJpdBLXuko09Z6T4rLOw+YR67znjbv35Ec4r0g3L5tsOKc8hDPz6L0tZQlX9Ww==}
     dependencies:
       '@fastify/error': 3.3.0
       '@fastify/jwt': 7.2.0

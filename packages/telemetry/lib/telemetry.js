@@ -1,13 +1,14 @@
 'use strict'
 
 const fp = require('fastify-plugin')
-const { SpanStatusCode } = require('@opentelemetry/api')
+const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
 const { ConsoleSpanExporter, BatchSpanProcessor, SimpleSpanProcessor, InMemorySpanExporter } = require('@opentelemetry/sdk-trace-base')
 const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions')
 const { Resource } = require('@opentelemetry/resources')
 const { PlatformaticTracerProvider } = require('./platformatic-trace-provider')
 const { PlatformaticContext } = require('./platformatic-context')
 const { fastifyTextMapGetter, fastifyTextMapSetter } = require('./fastify-text-map')
+const fastUri = require('fast-uri')
 
 // Platformatic telemetry plugin.
 // Supported Exporters:
@@ -34,14 +35,19 @@ function formatSpanName (request) {
 
 const defaultFormatSpanAttributes = {
   request (request) {
+    const { hostname, method, url, protocol } = request
+    const urlData = fastUri.parse(`${protocol}://${hostname})`)
     return {
-      'req.method': request.raw.method,
-      'req.url': request.raw.url
+      'server.address': hostname,
+      'server.port': urlData.port,
+      'http.request.method': method,
+      'url.path': url,
+      'url.scheme': protocol
     }
   },
   reply (reply) {
     return {
-      'reply.statusCode': reply.statusCode
+      'http.response.status_code': reply.statusCode
     }
   },
   error (error) {
@@ -60,7 +66,7 @@ const setupProvider = (app, opts) => {
     app.log.warn('No exporter configured, defaulting to console.')
     exporter = { type: 'console' }
   }
-  app.log.info(`Setting up telemetry for service: ${serviceName} version: ${version} and exporter of type ${exporter.type}`)
+  app.log.info(`Setting up telemetry for service: ${serviceName}${version ? ' version: ' + version : ''} with exporter of type ${exporter.type}`)
   const provider = new PlatformaticTracerProvider({
     resource: new Resource({
       [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
@@ -119,6 +125,7 @@ async function setupTelemetry (app, opts) {
       {},
       context
     )
+    span.kind = SpanKind.SERVER
     // Next 2 lines are needed by W3CTraceContextPropagator
     context = context.setSpan(span)
     span.setAttributes(formatSpanAttributes.request(request))
@@ -177,8 +184,19 @@ async function setupTelemetry (app, opts) {
     /* istanbul ignore next */
     method = method || ''
     const span = tracer.startSpan(`${method} ${url}`, {}, context)
+    span.kind = SpanKind.CLIENT
+
+    const urlObj = fastUri.parse(url)
     /* istanbul ignore next */
-    const attributes = url ? { 'server.url': url } : {}
+    const attributes = url
+      ? {
+          'server.address': urlObj.host,
+          'server.port': urlObj.port,
+          'http.request.method': method,
+          'url.full': url,
+          'url.path': urlObj.path
+        }
+      : {}
     span.setAttributes(attributes)
 
     // Next 2 lines are needed by W3CTraceContextPropagator
@@ -200,7 +218,7 @@ async function setupTelemetry (app, opts) {
         spanStatus.code = SpanStatusCode.ERROR
       }
       span.setAttributes({
-        'response.statusCode': response.statusCode
+        'http.response.status_code': response.statusCode
       })
       span.setStatus(spanStatus)
     } else {
