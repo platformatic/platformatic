@@ -22,7 +22,7 @@ expectError<PltClientOptions>({
 server.register(pltClient, {
   fullResponse: true,
   throwOnError: true,
-  type: 'graphql' as const,
+  type: 'graphql',
   url: 'localhost'
 })
 
