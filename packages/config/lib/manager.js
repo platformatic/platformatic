@@ -129,7 +129,7 @@ class ConfigManager extends EventEmitter {
         return value
       }
 
-      // TODO this shoudl handle all the escapes chars
+      // TODO this should handle all the escapes chars
       // defined in https://www.json.org/json-en.html
       // but it's good enough for now.
       return value.replace(/\\/g, '\\\\').replace(/\n/g, '\\n')

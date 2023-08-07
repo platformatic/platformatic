@@ -39,7 +39,6 @@ test('print validation errors', async () => {
     await execa(process.execPath, [cliPath, 'start', '--config', config])
   } catch (err) {
     error = err
-    console.error(err)
   }
 
   assert(error)

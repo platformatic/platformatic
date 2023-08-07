@@ -30,8 +30,8 @@ class Store {
       throw new TypeError('schema must be defined')
     }
 
-    if (app.schema.$id === undefined) {
-      throw new TypeError('schema.$id must be defined')
+    if (typeof app.schema.$id !== 'string' || app.schema.$id.length === 0) {
+      throw new TypeError('schema.$id must be a string with length > 0')
     }
 
     if (typeof app.configType !== 'string') {

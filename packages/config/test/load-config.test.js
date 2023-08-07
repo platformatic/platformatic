@@ -105,7 +105,6 @@ test('not passing validation kills the process', async t => {
   const file = join(__dirname, 'fixtures', 'platformatic.service.json')
   try {
     await loadConfig({}, ['-c', file, '--boo'], app)
-    console.log('pass')
   } catch (err) {
     t.equal(err.message, 'The configuration does not validate against the configuration schema')
     t.same(err.validationErrors, [{
@@ -230,7 +229,7 @@ Be sure to have a config file with one of the following names:
  * foo
  * bar
 
-In alternative run "npm create platformatic@latest" to generate a basic plt service config.`)
+In alternative run "npm create platformatic@latest" to generate a basic platformatic service config.`)
   }
   const processExit = process.exit
   process.exit = (code) => {

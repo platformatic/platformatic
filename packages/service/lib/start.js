@@ -2,7 +2,7 @@
 
 const { readFile } = require('fs/promises')
 const close = require('close-with-grace')
-const { loadConfig, ConfigManager, printConfigValidationErrors } = require('@platformatic/config')
+const { loadConfig, ConfigManager, printConfigValidationErrors, printAndExitLoadConfigError } = require('@platformatic/config')
 const { addLoggerToTheConfig } = require('./utils.js')
 const { restartable } = require('@fastify/restartable')
 
@@ -127,9 +127,7 @@ async function start (appType, _args) {
     app = await buildServer({ ...config, configManager }, appType)
     await app.start()
   } catch (err) {
-    // TODO route this to a logger
-    console.error(err)
-    process.exit(1)
+    printAndExitLoadConfigError(err)
   }
 
   // Ignore from CI because SIGUSR2 is not available
