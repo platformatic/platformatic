@@ -105,6 +105,13 @@ export interface WhereCondition {
      */
     ilike?: string,
     /**
+     * All subquery
+     */
+    all?: string,
+    /**
+     * Any subquery
+     */
+    any?: string
     /**
      * Contains values
      */
