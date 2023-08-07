@@ -100,11 +100,15 @@ async function createService ({ hostname, port, typescript = false }, logger, cu
 
   await generatePlugins(logger, currentDir, typescript, 'service')
 
-  return {
+  const output = {
     PLT_SERVER_LOGGER_LEVEL: 'info',
     PORT: port,
     PLT_SERVER_HOSTNAME: hostname
   }
+  if (typescript) {
+    output.PLT_TYPESCRIPT = true
+  }
+  return output
 }
 
 export default createService

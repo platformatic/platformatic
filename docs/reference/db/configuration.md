@@ -40,6 +40,7 @@ Configuration settings are organised into the following groups:
 - [`plugins`](#plugins)
 - [`server`](#server) **(required)**
 - [`authorization`](#authorization)
+- [`telemetry`](#telemetry)
 
 Sensitive configuration settings, such as a database connection URL that contains
 a password, should be set using [configuration placeholders](#configuration-placeholders).
@@ -513,6 +514,35 @@ operations are allowed unless `adminSecret` is passed.
 }
 ```
 
+### `telemetry`
+[Open Telemetry](https://opentelemetry.io/) is optionally supported with these settings:
+
+- **`serviceName`** (**required**, `string`) — Name of the service as will be reported in open telemetry.
+- **`version`** (`string`) — Optional version (free form)
+- **`exporter`** (`object`) — Exporter configuration object. If not defined, the exporter defaults to `console`. This object has the following properties:
+    - **`type`** (`string`) — Exporter type. Supported values are `console`, `otlp`, `zipkin` and `memory` (default: `console`). `memory` is only supported for testing purposes. 
+    - **`options`** (`object`) — These options are supported:
+        - **`url`** (`string`) — The URL to send the telemetry to. Required for `otlp` exporter. This has no effect on `console` and `memory` exporters.
+        - **`headers`** (`object`) — Optional headers to send with the telemetry. This has no effect on `console` and `memory` exporters.
+        
+Note that OTLP traces can be consumed by different solutions, like [Jaeger](https://www.jaegertracing.io/). [Here](https://opentelemetry.io/ecosystem/vendors/) the full list.
+
+  _Example_
+
+  ```json
+  {
+    "telemetry": {
+        "serviceName": "test-service",
+        "exporter": {
+            "type": "otlp",
+            "options": {
+                "url": "http://localhost:4318/v1/traces"
+            }
+        }
+    }
+  }
+  ```
+
 ## Environment variable placeholders
 
 The value for any configuration setting can be replaced with an environment variable
@@ -602,3 +632,6 @@ Server will listen to `http://127.0.0.1:3042`
   "dashboard": true
 }
 ```
+
+
+ 

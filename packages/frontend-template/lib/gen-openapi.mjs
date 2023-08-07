@@ -60,15 +60,13 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
   for (const operation of operations) {
     const { operationId, responses } = operation.operation
     const { method, path } = operation
-
+    let fullResponse = false
     // Only dealing with success responses
     const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
 
-    // The following block it's impossible to happen with well-formed
-    // OpenAPI.
     /* c8 ignore next 3 */
-    if (successResponses.length === 0) {
-      throw new Error(`Could not find a 200 level response for ${operationId}`)
+    if (successResponses.length !== 1) {
+      fullResponse = true
     }
 
     if (language === 'ts') {
@@ -126,14 +124,36 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
       }
 
       writer.blankLine()
+      if (fullResponse) {
+        writer.write('let body = await response.text()')
 
-      writer.write('if (!response.ok)').block(() => {
-        writer.writeLine('throw new Error(await response.text())')
-      })
+        writer.blankLine()
 
-      writer.blankLine()
+        writer.write('try').block(() => {
+          writer.write('body = JSON.parse(await response.json())')
+        })
+        writer.write('catch (err)').block(() => {
+          writer.write('// do nothing and keep original body')
+        })
 
-      writer.writeLine('return await response.json()')
+        writer.blankLine()
+
+        writer.write('return').block(() => {
+          writer.write('statusCode: response.status,')
+          writer.newLine()
+          writer.write('headers: response.headers,')
+          writer.newLine()
+          writer.write('body')
+        })
+      } else {
+        writer.write('if (!response.ok)').block(() => {
+          writer.writeLine('throw new Error(await response.text())')
+        })
+
+        writer.blankLine()
+
+        writer.writeLine('return await response.json()')
+      }
     })
     writer.blankLine()
   }
@@ -170,10 +190,17 @@ function generateTypesFromOpenAPI ({ schema, name }) {
     useSingleQuote: true
   })
   /* eslint-enable new-cap */
+  interfaces.write('interface FullResponse<T>').block(() => {
+    interfaces.writeLine('\'statusCode\': number;')
+    interfaces.writeLine('\'headers\': object;')
+    interfaces.writeLine('\'body\': T;')
+  })
+  interfaces.blankLine()
 
   writer.write(`export interface ${capitalizedName}`).block(() => {
     writer.writeLine('setBaseUrl(newUrl: string) : void;')
     for (const operation of operations) {
+      let fullResponse = false
       const operationId = operation.operation.operationId
       const { parameters, responses, requestBody } = operation.operation
       const operationRequestName = `${capitalize(operationId)}Request`
@@ -192,17 +219,17 @@ function generateTypesFromOpenAPI ({ schema, name }) {
           writeContent(interfaces, requestBody.content, schema, addedProps)
         }
       })
-      interfaces.writeLine()
+      interfaces.blankLine()
 
       // Only dealing with success responses
       const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
       // The following block it's impossible to happen with well-formed
       // OpenAPI.
       /* c8 ignore next 3 */
-      if (successResponses.length === 0) {
-        throw new Error(`Could not find a 200 level response for ${operationId}`)
+      if (successResponses.length !== 1) {
+        fullResponse = true
       }
-      const responseTypes = successResponses.map(([statusCode, response]) => {
+      const responseTypes = Object.entries(responses).map(([statusCode, response]) => {
         // The client library will always dump bodies for 204 responses
         // so the type must be undefined
         if (statusCode === '204') {
@@ -215,6 +242,7 @@ function generateTypesFromOpenAPI ({ schema, name }) {
         })
         interfaces.blankLine()
         if (isResponseArray) type = `Array<${type}>`
+        if (fullResponse) type = `FullResponse<${type}>`
         return type
       })
 
@@ -289,14 +317,41 @@ function writeProperty (writer, key, value, addedProps, required = true) {
     writer.quote(key)
     writer.write('?')
   }
-  if (value.type === 'array') {
-    writer.write(`: Array<${JSONSchemaToTsType(value.items.type)}>;`)
-  } else {
-    writer.write(`: ${JSONSchemaToTsType(value.type)};`)
-  }
+  writer.write(`: ${getType(value)};`)
   writer.newLine()
 }
 
+export function getType (typeDef) {
+  if (typeDef.schema) {
+    return getType(typeDef.schema)
+  }
+  if (typeDef.anyOf) {
+    // recursively call this function
+    return typeDef.anyOf.map((t) => {
+      return getType(t)
+    }).join(' | ')
+  }
+
+  if (typeDef.allOf) {
+    // recursively call this function
+    return typeDef.allOf.map((t) => {
+      return getType(t)
+    }).join(' & ')
+  }
+  if (typeDef.type === 'array') {
+    return `Array<${getType(typeDef.items)}>`
+  }
+  if (typeDef.type === 'object') {
+    let output = '{ '
+    const props = Object.keys(typeDef.properties).map((prop) => {
+      return `${prop}: ${getType(typeDef.properties[prop])}`
+    })
+    output += props.join('; ')
+    output += ' }'
+    return output
+  }
+  return JSONSchemaToTsType(typeDef.type)
+}
 function JSONSchemaToTsType (type) {
   switch (type) {
     case 'string':

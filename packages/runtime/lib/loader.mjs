@@ -20,7 +20,9 @@ function clearCjsCache () {
   // the entire require() cache. See the DEP0144 documentation for how to do
   // it.
   Object.keys(require.cache).forEach((key) => {
-    delete require.cache[key]
+    if (!key.match(/node_modules/)) {
+      delete require.cache[key]
+    }
   })
 }
 
@@ -89,7 +91,7 @@ export async function resolve (specifier, context, nextResolve) {
 
   // If the specifier could not be mapped to a file, or the path is this file,
   // then don't do anything.
-  if (typeof url !== 'string' || url === import.meta.url) {
+  if (typeof url !== 'string' || url === import.meta.url || url.match(/node_modules/)) {
     return nextResolve(specifier, context)
   }
 

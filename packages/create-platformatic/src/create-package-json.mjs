@@ -3,8 +3,15 @@ import { writeFile, readFile } from 'fs/promises'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+/**
+ * Creates a package.json template file
+ * @param {boolean} addTSBuild Whether to add TS Build or not
+ * @param {string} fastifyVersion Fastify Version
+ * @param {string} platVersion Platformatic Version
+ */
 const packageJsonTemplate = async (addTSBuild, fastifyVersion, platVersion) => {
   const __dirname = fileURLToPath(new URL('.', import.meta.url))
+
   const pkg = {
     scripts: {
       start: 'platformatic start'
@@ -38,6 +45,7 @@ const packageJsonTemplate = async (addTSBuild, fastifyVersion, platVersion) => {
  * @param {string} dir Target directory where to create the file
  * @param {boolean} addTSBuild Whether to add TS Build or not
  * @param {object} scripts Package.json scripts list
+ * @param {object} dependencies Package.json dependencies list
  */
 export const createPackageJson = async (platVersion, fastifyVersion, logger, dir, addTSBuild = false, scripts = {}, dependencies = {}) => {
   const packageJsonFileName = join(dir, 'package.json')

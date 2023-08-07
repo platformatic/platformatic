@@ -104,8 +104,8 @@ test('example decorator', async (t) => {
 })
 `
 
-function testHelperTS(mod) {
-    return `\
+function testHelperTS (mod) {
+  return `\
 import { join } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import { buildServer } from '@platformatic/${mod}'
@@ -119,7 +119,6 @@ export async function getServer () {
 }
   `
 }
-
 
 const TEST_ROUTES_TS = `\
 import test from 'node:test'

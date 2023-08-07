@@ -36,13 +36,14 @@ test('creates gh action', async ({ equal, match }) => {
   equal(accessible, true)
   const ghFile = await readFile(join(tmpDir, '.github/workflows/platformatic-static-workspace-deploy.yml'), 'utf8')
   const ghAction = parse(ghFile)
-  const { steps, permissions } = ghAction.jobs.build_and_deploy
+  const { steps, permissions, env: jobEnv } = ghAction.jobs.build_and_deploy
+
   equal(steps.length, 3)
   equal(steps[0].name, 'Checkout application project repository')
   equal(steps[1].name, 'npm install --omit=dev')
   equal(steps[2].name, 'Deploy project')
-  match(steps[2].env.DATABASE_URL, /\$\{\{ secrets.DATABASE_URL \}\}/)
-  equal(steps[2].env.PLT_SERVER_LOGGER_LEVEL, 'info')
+  match(jobEnv.DATABASE_URL, /\$\{\{ secrets.DATABASE_URL \}\}/)
+  equal(jobEnv.PLT_SERVER_LOGGER_LEVEL, 'info')
 
   equal(permissions.contents, 'read')
 })
@@ -54,14 +55,14 @@ test('creates gh action with TS build step', async ({ equal, match }) => {
   equal(accessible, true)
   const ghFile = await readFile(join(tmpDir, '.github/workflows/platformatic-static-workspace-deploy.yml'), 'utf8')
   const ghAction = parse(ghFile)
-  const { steps, permissions } = ghAction.jobs.build_and_deploy
+  const { steps, permissions, env: jobEnv } = ghAction.jobs.build_and_deploy
   equal(steps.length, 4)
   equal(steps[0].name, 'Checkout application project repository')
   equal(steps[1].name, 'npm install --omit=dev')
   equal(steps[2].name, 'Build project')
   equal(steps[3].name, 'Deploy project')
-  match(steps[3].env.DATABASE_URL, /\$\{\{ secrets.DATABASE_URL \}\}/)
-  equal(steps[3].env.PLT_SERVER_LOGGER_LEVEL, 'info')
+  match(jobEnv.DATABASE_URL, /\$\{\{ secrets.DATABASE_URL \}\}/)
+  equal(jobEnv.PLT_SERVER_LOGGER_LEVEL, 'info')
 
   equal(permissions.contents, 'read')
 })

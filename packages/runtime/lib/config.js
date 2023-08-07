@@ -222,6 +222,12 @@ platformaticRuntime.configType = 'runtime'
 platformaticRuntime.configManagerConfig = {
   schema,
   allowToWatch: ['.env'],
+  schemaOptions: {
+    useDefaults: true,
+    coerceTypes: true,
+    allErrors: true,
+    strict: false
+  },
   async transformConfig () {
     await _transformConfig(this)
   }
@@ -243,7 +249,16 @@ async function wrapConfigInRuntimeConfig ({ configManager, args }) {
       }
     ]
   }
-  const cm = new ConfigManager({ source: wrapperConfig, schema })
+  const cm = new ConfigManager({
+    source: wrapperConfig,
+    schema,
+    schemaOptions: {
+      useDefaults: true,
+      coerceTypes: true,
+      allErrors: true,
+      strict: false
+    }
+  })
 
   await _transformConfig(cm)
   await cm.parseAndValidate()

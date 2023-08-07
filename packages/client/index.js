@@ -5,6 +5,7 @@ const { join } = require('path')
 const fs = require('fs/promises')
 const kHeaders = Symbol('headers')
 const kGetHeaders = Symbol('getHeaders')
+const kTelemetryContext = Symbol('telemetry-context')
 const abstractLogging = require('abstract-logging')
 
 function generateOperationId (path, method, methodMeta) {
@@ -20,7 +21,7 @@ function generateOperationId (path, method, methodMeta) {
   return operationId
 }
 
-async function buildOpenAPIClient (options) {
+async function buildOpenAPIClient (options, openTelemetry) {
   const client = {}
   let spec
   let baseUrl
@@ -55,7 +56,7 @@ async function buildOpenAPIClient (options) {
         // - there is no responses with 2XX code
         fullResponse = true
       }
-      client[operationId] = buildCallFunction(baseUrl, path, method, methodMeta, fullResponse, throwOnError)
+      client[operationId] = buildCallFunction(baseUrl, path, method, methodMeta, fullResponse, throwOnError, openTelemetry)
     }
   }
 
@@ -68,7 +69,7 @@ function computeURLWithoutPath (url) {
   return url.toString()
 }
 
-function buildCallFunction (baseUrl, path, method, methodMeta, fullResponse, throwOnError) {
+function buildCallFunction (baseUrl, path, method, methodMeta, fullResponse, throwOnError, openTelemetry) {
   const url = new URL(baseUrl)
   method = method.toUpperCase()
   path = join(url.pathname, path)
@@ -79,8 +80,12 @@ function buildCallFunction (baseUrl, path, method, methodMeta, fullResponse, thr
 
   return async function (args) {
     let headers = this[kHeaders]
+    let telemetryContext = null
     if (this[kGetHeaders]) {
       headers = { ...headers, ...(await this[kGetHeaders]()) }
+    }
+    if (this[kTelemetryContext]) {
+      telemetryContext = this[kTelemetryContext]
     }
     const body = { ...args } // shallow copy
     const urlToCall = new URL(url)
@@ -111,33 +116,43 @@ function buildCallFunction (baseUrl, path, method, methodMeta, fullResponse, thr
     urlToCall.search = query.toString()
     urlToCall.pathname = pathToCall
 
-    const res = await request(urlToCall, {
-      method,
-      headers: {
-        ...headers,
-        'content-type': 'application/json; charset=utf-8'
-      },
-      body: JSON.stringify(body),
-      throwOnError
-    })
-    let responseBody
+    const { span, telemetryHeaders } = openTelemetry?.startSpanClient(urlToCall.toString(), method, telemetryContext) || { span: null, telemetryHeaders: {} }
+    let res
     try {
-      responseBody = res.statusCode === 204
-        ? await res.body.dump()
-        : await res.body.json()
-    } catch (err) {
-      // maybe the response is a 302, 301, or anything with empty payload
-      responseBody = {}
-    }
-    if (fullResponse) {
-      return {
-        statusCode: res.statusCode,
-        headers: res.headers,
-        body: responseBody
+      res = await request(urlToCall, {
+        method,
+        headers: {
+          ...headers,
+          ...telemetryHeaders,
+          'content-type': 'application/json; charset=utf-8'
+        },
+        body: JSON.stringify(body),
+        throwOnError
+      })
+      let responseBody
+      try {
+        responseBody = res.statusCode === 204
+          ? await res.body.dump()
+          : await res.body.json()
+      } catch (err) {
+        // maybe the response is a 302, 301, or anything with empty payload
+        responseBody = {}
       }
-    }
+      if (fullResponse) {
+        return {
+          statusCode: res.statusCode,
+          headers: res.headers,
+          body: responseBody
+        }
+      }
 
-    return responseBody
+      return responseBody
+    } catch (err) {
+      openTelemetry?.setErrorInSpanClient(span, err)
+      throw err
+    } finally {
+      openTelemetry?.endSpanClient(span, res)
+    }
   }
 }
 
@@ -146,60 +161,72 @@ function capitalize (str) {
 }
 
 // TODO: For some unknown reason c8 is not picking up the coverage for this function
-async function graphql (url, log, headers, query, variables) {
-  const res = await request(url, {
-    method: 'POST',
-    headers: {
-      ...headers,
-      'content-type': 'application/json; charset=utf-8'
-    },
-    body: JSON.stringify({
-      query,
-      variables
+async function graphql (url, log, headers, query, variables, openTelemetry, telemetryContext) {
+  const { span, telemetryHeaders } = openTelemetry?.startSpanClient(url.toString(), 'POST', telemetryContext) || { span: null, telemetryHeaders: {} }
+  let res
+  try {
+    res = await request(url, {
+      method: 'POST',
+      headers: {
+        ...headers,
+        ...telemetryHeaders,
+        'content-type': 'application/json; charset=utf-8'
+      },
+      body: JSON.stringify({
+        query,
+        variables
+      })
     })
-  })
-  const json = await res.body.json()
 
-  if (res.statusCode !== 200) {
-    log.warn({ statusCode: res.statusCode, json }, 'request to client failed')
-    throw new Error('request to client failed')
-  }
+    const json = await res.body.json()
 
-  if (json.errors) {
-    log.warn({ errors: json.errors }, 'errors in graphql response')
-    const e = new Error(json.errors.map(e => e.message).join(''))
-    e.errors = json.errors
-    throw e
-  }
+    if (res.statusCode !== 200) {
+      log.warn({ statusCode: res.statusCode, json }, 'request to client failed')
+      throw new Error('request to client failed')
+    }
 
-  const keys = Object.keys(json.data)
-  if (keys.length !== 1) {
-    return json.data
-  } else {
-    return json.data[keys[0]]
+    if (json.errors) {
+      log.warn({ errors: json.errors }, 'errors in graphql response')
+      const e = new Error(json.errors.map(e => e.message).join(''))
+      e.errors = json.errors
+      throw e
+    }
+
+    const keys = Object.keys(json.data)
+    if (keys.length !== 1) {
+      return json.data
+    } else {
+      return json.data[keys[0]]
+    }
+  } catch (err) {
+    openTelemetry?.setErrorInSpanClient(span, err)
+    throw err
+  } finally {
+    openTelemetry?.endSpanClient(span, res)
   }
 }
 
-function wrapGraphQLClient (url, logger) {
+function wrapGraphQLClient (url, openTelemetry, logger) {
   return async function ({ query, variables }) {
     let headers = this[kHeaders]
+    const telemetryContext = this[kTelemetryContext]
     if (typeof this[kGetHeaders] === 'function') {
       headers = { ...headers, ...(await this[kGetHeaders]()) }
     }
     const log = this.log || logger
 
-    return graphql(url, log, headers, query, variables)
+    return graphql(url, log, headers, query, variables, openTelemetry, telemetryContext)
   }
 }
 
-async function buildGraphQLClient (options, logger = abstractLogging) {
+async function buildGraphQLClient (options, openTelemetry, logger = abstractLogging) {
   options = options || {}
   if (!options.url) {
     throw new Error('options.url is required')
   }
 
   return {
-    graphql: wrapGraphQLClient(options.url, logger),
+    graphql: wrapGraphQLClient(options.url, openTelemetry, logger),
     [kHeaders]: options.headers || {}
   }
 }
@@ -219,9 +246,9 @@ async function plugin (app, opts) {
   }
 
   if (opts.type === 'openapi') {
-    client = await buildOpenAPIClient(opts)
+    client = await buildOpenAPIClient(opts, app.openTelemetry)
   } else if (opts.type === 'graphql') {
-    client = await buildGraphQLClient(opts, app.log)
+    client = await buildGraphQLClient(opts, app.openTelemetry, app.log)
   } else {
     throw new Error('opts.type must be either "openapi" or "graphql" ff')
   }
@@ -242,6 +269,9 @@ async function plugin (app, opts) {
     const newClient = Object.create(client)
     if (getHeaders) {
       newClient[kGetHeaders] = getHeaders.bind(newClient, req, reply)
+    }
+    if (req.span) {
+      newClient[kTelemetryContext] = req.span.context
     }
     req[name] = newClient
   })

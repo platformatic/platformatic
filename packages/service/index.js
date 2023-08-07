@@ -1,6 +1,8 @@
 'use strict'
 
 const { isKeyEnabled } = require('@platformatic/utils')
+const { readFile } = require('fs/promises')
+const { dirname, join } = require('path')
 
 const compiler = require('./lib/compile')
 const setupCors = require('./lib/plugins/cors')
@@ -11,6 +13,7 @@ const setupMetrics = require('./lib/plugins/metrics')
 const setupTsCompiler = require('./lib/plugins/typescript')
 const setupHealthCheck = require('./lib/plugins/health-check')
 const loadPlugins = require('./lib/plugins/plugins')
+const { telemetry } = require('@platformatic/telemetry')
 
 const { schema } = require('./lib/schema')
 const { loadConfig } = require('./lib/load-config')
@@ -41,6 +44,10 @@ async function platformaticService (app, opts, toLoad = []) {
     await app.register(setupGraphQL, serviceConfig.graphql)
   }
 
+  if (config.telemetry) {
+    app.register(telemetry, config.telemetry)
+  }
+
   if (isKeyEnabled('clients', config)) {
     app.register(setupClients, config.clients)
   }
@@ -58,13 +65,6 @@ async function platformaticService (app, opts, toLoad = []) {
       await app.register(setupTsCompiler)
     }
     await app.register(loadPlugins)
-  }
-
-  if (isKeyEnabled('watch', config)) {
-    // If file watching is enabled here, that means the service was started
-    // without the runtime because the runtime explicitly disables watching on
-    // services that it starts. Warn the user that things will not go as planned.
-    app.log.warn('service was started with file watching enabled but watching is only available via the runtime')
   }
 
   if (config.server.cors) {
@@ -93,11 +93,32 @@ platformaticService.configManagerConfig = {
     allErrors: true,
     strict: false
   },
-  transformConfig () {
+  async transformConfig () {
     // Set watch to true by default. This is not possible
     // to do in the schema, because it is uses an anyOf.
     if (this.current.watch === undefined) {
-      this.current.watch = true
+      this.current.watch = { enabled: false }
+    }
+
+    if (typeof this.current.watch !== 'object') {
+      this.current.watch = { enabled: this.current.watch || false }
+    }
+
+    const typescript = this.current.plugins?.typescript
+    if (typescript) {
+      let outDir = typescript.outDir
+      if (outDir === undefined) {
+        let tsConfigFile = typescript.tsConfigFile || 'tsconfig.json'
+        tsConfigFile = join(dirname(this.fullPath), tsConfigFile)
+        try {
+          const tsConfig = JSON.parse(await readFile(tsConfigFile, 'utf8'))
+          outDir = tsConfig.compilerOptions.outDir
+        } catch {}
+        outDir ||= 'dist'
+      }
+
+      this.current.watch.ignore ||= []
+      this.current.watch.ignore.push(outDir + '/**/*')
     }
   }
 }

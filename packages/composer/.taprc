@@ -1,2 +1,4 @@
 timeout: 500
 coverage: false
+# having more job messes up c8 in CI, apparently
+jobs: 1

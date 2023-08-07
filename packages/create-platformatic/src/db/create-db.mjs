@@ -1,5 +1,5 @@
 import { writeFile, mkdir, appendFile } from 'fs/promises'
-import { join, relative, resolve } from 'path'
+import { join } from 'path'
 import { findDBConfigFile, isFileAccessible } from '../utils.mjs'
 import { getTsConfig } from '../get-tsconfig.mjs'
 import { generatePlugins } from '../create-plugins.mjs'
@@ -121,7 +121,7 @@ export async function createDB ({ hostname, database = 'sqlite', port, migration
     const env = generateEnv(hostname, port, connectionString, typescript)
     const envFileExists = await isFileAccessible('.env', currentDir)
     await appendFile(join(currentDir, '.env'), env)
-    await writeFile(join(currentDir, '.env.sample'), env)
+    await writeFile(join(currentDir, '.env.sample'), generateEnv(hostname, port, getConnectionString(database), typescript))
     /* c8 ignore next 5 */
     if (envFileExists) {
       logger.info('Environment file .env found, appending new environment variables to existing .env file.')
@@ -176,12 +176,17 @@ export async function createDB ({ hostname, database = 'sqlite', port, migration
     await generatePlugins(logger, currentDir, typescript, 'db')
   }
 
-  return {
+  const output = {
     DATABASE_URL: connectionString,
     PLT_SERVER_LOGGER_LEVEL: 'info',
     PORT: port,
     PLT_SERVER_HOSTNAME: hostname
   }
+
+  if (typescript) {
+    output.PLT_TYPESCRIPT = true
+  }
+  return output
 }
 
 export default createDB

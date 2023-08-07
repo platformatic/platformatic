@@ -52,12 +52,15 @@ test('creates service with typescript', async ({ equal, same, ok }) => {
   dotenv.config({ path: pathToDbEnvFile })
   equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
   equal(process.env.PORT, '6666')
+  equal(process.env.PLT_TYPESCRIPT, 'true')
+
   process.env = {}
 
   const pathToDbEnvSampleFile = join(tmpDir, '.env.sample')
   dotenv.config({ path: pathToDbEnvSampleFile })
   equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
   equal(process.env.PORT, '6666')
+  equal(process.env.PLT_TYPESCRIPT, 'true')
 
   same(plugins.paths, [{ path: './plugins', encapsulate: false }, './routes'])
   equal(plugins.typescript, '{PLT_TYPESCRIPT}')

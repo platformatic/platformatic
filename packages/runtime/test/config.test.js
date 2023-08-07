@@ -3,7 +3,7 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const { loadConfig } = require('@platformatic/service')
+const { loadConfig, platformaticService } = require('@platformatic/service')
 const { parseInspectorOptions, platformaticRuntime } = require('../lib/config')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
@@ -208,4 +208,22 @@ test('parseInspectorOptions()', async (t) => {
     parseInspectorOptions(cm)
     assert.strictEqual(cm.current.inspectorOptions.port, 65535)
   })
+})
+
+test('same schemaOptions as platformatic service', async () => {
+  assert.deepStrictEqual(platformaticRuntime.schemaOptions, platformaticService.schemaOptions)
+})
+
+test('correctly loads the hotReload value from a string', async () => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-hotreload-env.json')
+  process.env.PLT_HOT_RELOAD = 'true'
+  const loaded = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  assert.strictEqual(loaded.configManager.current.hotReload, true)
+})
+
+test('correctly loads the hotReload value from a string', async () => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-hotreload-env.json')
+  process.env.PLT_HOT_RELOAD = 'false'
+  const loaded = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  assert.strictEqual(loaded.configManager.current.hotReload, false)
 })

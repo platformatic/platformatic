@@ -1,0 +1,33 @@
+{
+  "name": "@platformatic/telemetry",
+  "version": "0.34.1",
+  "description": "OpenTelemetry integration for Platformatic",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run lint | snazzy && tap test/*test.js",
+    "lint": "standard | snazzy"
+  },
+  "author": "Marco Piraccini <marco.piraccini@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "fastify": "^4.18.0",
+    "snazzy": "^9.0.0",
+    "standard": "^17.1.0",
+    "tap": "^16.3.6"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.4.1",
+    "@opentelemetry/core": "^1.15.0",
+    "@opentelemetry/exporter-trace-otlp-proto": "^0.41.0",
+    "@opentelemetry/exporter-zipkin": "^1.15.0",
+    "@opentelemetry/resources": "^1.15.0",
+    "@opentelemetry/sdk-trace-base": "^1.15.0",
+    "@opentelemetry/semantic-conventions": "^1.15.0",
+    "fast-uri": "^2.2.0",
+    "fastify-plugin": "^4.5.0"
+  }
+}

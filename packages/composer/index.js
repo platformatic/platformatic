@@ -53,7 +53,8 @@ platformaticComposer.configManagerConfig = {
     coerceTypes: true,
     allErrors: true,
     strict: false
-  }
+  },
+  transformConfig: platformaticService.configManagerConfig.transformConfig
 }
 
 async function buildComposerServer (options) {

@@ -10,14 +10,21 @@ class FromZeroEighteenToWillSee extends SimpleZeroConfig {
     super(opts)
     this.config.$schema = `https://platformatic.dev/schemas/v${this.version}/${this.kind}`
 
-    if (semver.satisfies(version, '~' + this.version) || semver.gt(this.version, version)) {
+    let increment = 'minor'
+    if (semver.satisfies(version, '~' + this.version)) {
+      if (!semver.eq(version, this.version)) {
+        increment = 'patch'
+      } else {
+        return
+      }
+    } else if (semver.gt(this.version, version)) {
       return
     }
 
     this.up = () => {
       const original = this.config
       const config = rfdc(original)
-      const version = semver.inc(this.version, 'minor')
+      const version = semver.inc(this.version, increment)
       config.$schema = `https://platformatic.dev/schemas/v${version}/${this.kind}`
 
       if (config.watch !== false) {
