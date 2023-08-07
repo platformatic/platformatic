@@ -95,9 +95,8 @@ const cliHelps = await readdir(cliHelpDir)
 const mainCliHelp = await readFile(cliHelp, 'utf8')
 
 out += `
-\`\`\`
+
 ${mainCliHelp.trim()}
-\`\`\`
 
 `;
 
