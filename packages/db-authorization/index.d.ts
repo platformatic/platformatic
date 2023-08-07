@@ -5,10 +5,8 @@ import {
 import { type FastifyPluginAsync } from 'fastify'
 import { type FastifyUserPluginOptions } from 'fastify-user'
 
-export type OperationCheck = boolean | WhereCondition
-export type OperationChecks = Record<string, OperationCheck>
 export type Operation = boolean | {
-  checks: string | OperationChecks
+  checks: string | Record<string, WhereCondition>
 }
 
 export type DefaultsFunction = (args: {
