@@ -2,7 +2,6 @@ import {
   type PlatformaticContext,
   type WhereCondition
 } from '@platformatic/sql-mapper'
-import { type PlatformaticApp } from '@platformatic/types'
 import { type FastifyPluginAsync } from 'fastify'
 import { type FastifyUserPluginOptions } from 'fastify-user'
 
@@ -54,11 +53,6 @@ export interface DBAuthorizationPluginOptions extends FastifyUserPluginOptions {
   anonymousRole?: string
   rules: AuthorizationRule[]
 }
-
-export interface DBAuthorizationPluginInterface {
-  addRulesForRoles: AddRulesForRoles
-}
-
 
 declare module '@platformatic/types' {
   interface PlatformaticApp {
