@@ -239,11 +239,11 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
           } else if (operator === 'ALL') {
             criteria.push(sql`${value[key]} = ALL (${sql.ident(field)})`)
           } else if (operator === '@>') {
-            criteria.push(sql`${value[key]} @> ${sql.ident(field)}`)
+            criteria.push(sql`${sql.ident(field)} @> ${value[key]}`)
           } else if (operator === '<@') {
-            criteria.push(sql`${value[key]} <@ ${sql.ident(field)}`)
+            criteria.push(sql`${sql.ident(field)} <@ ${value[key]}`)
           } else if (operator === '&&') {
-            criteria.push(sql`${value[key]} && ${sql.ident(field)}`)
+            criteria.push(sql`${sql.ident(field)} && ${value[key]}`)
           } else {
             throw new Error('Unsupported operator for Array field')
           }
