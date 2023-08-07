@@ -1,32 +1,32 @@
-import { expectType, expectError } from 'tsd' 
+import { expectError } from 'tsd' 
 import fastify from 'fastify'
 import pltClient, { type PltClientOptions } from '.'
 
 const server = await fastify()
 
-const emptyOptions = {} as const
+expectError<PltClientOptions>({})
 
-const missingOptions = {
+expectError<PltClientOptions>({
   fullResponse: true,
   throwOnError: true,
   url: 'localhost'
-} as const
+})
 
-const wrongOptions = {
+expectError<PltClientOptions>({
   fullResponse: true,
   throwOnError: true,
   type: 'WRONG',
   url: 'localhost'
-} as const
+})
 
-const basicOptions = {
+server.register(pltClient, {
   fullResponse: true,
   throwOnError: true,
-  type: 'graphql',
+  type: 'graphql' as const,
   url: 'localhost'
-} as const
+})
 
-const allOptions = {
+const check2 = server.register(pltClient, {
   fullResponse: false,
   throwOnError: false,
   type: 'openapi',
@@ -36,15 +36,4 @@ const allOptions = {
   name: 'Frassica',
   path: 'Fracchia',
   serviceId: 'Fantozzi'
-} as const
-
-
-expectType<PltClientOptions>(basicOptions)
-expectType<PltClientOptions>(allOptions)
-
-expectError<PltClientOptions>(emptyOptions)
-expectError<PltClientOptions>(wrongOptions)
-expectError<PltClientOptions>(missingOptions)
-
-server.register(pltClient, basicOptions)
-server.register(pltClient, allOptions)
+})
