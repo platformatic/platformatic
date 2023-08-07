@@ -4,9 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "standard | snazzy && tap test/*test.js",
+    "test": "standard | snazzy && tap test/*test.js && tsd",
     "lint": "standard | snazzy"
   },
+  "types": "index.d.ts",
   "author": "Matteo Collina <hello@matteocollina.com>",
   "repository": {
     "type": "git",
@@ -17,11 +18,14 @@
     "@fastify/cookie": "^8.3.0",
     "@fastify/session": "^10.3.0",
     "@platformatic/db-core": "workspace:*",
+    "@platformatic/sql-mapper": "workspace:*",
+    "@platformatic/types": "workspace:*",
     "fast-jwt": "^3.1.1",
     "fastify": "^4.18.0",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
     "tap": "^16.3.6",
+    "tsd": "^0.28.1",
     "why-is-node-running": "^2.2.2",
     "ws": "^8.13.0"
   },
@@ -29,9 +33,12 @@
     "@fastify/error": "^3.2.1",
     "@fastify/jwt": "^7.0.0",
     "fastify-plugin": "^4.5.0",
-    "fastify-user": "^0.2.0",
+    "fastify-user": "^0.3.0",
     "get-jwks": "^8.1.0",
     "leven": "~3.1.0",
     "undici": "^5.22.1"
+  },
+  "tsd": {
+    "directory": "test/types"
   }
 }
