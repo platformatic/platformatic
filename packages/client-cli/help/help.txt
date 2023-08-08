@@ -53,8 +53,8 @@ export default async function (app: FastifyInstance) {
 
 Options:
 
-  * `-c, --config <path>`: Path to the configuration file.
-  * `-n, --name <name>`: Name of the client.
-  * `-f, --folder <name>`: Name of the plugin folder, defaults to --name value.
-  * `-t, --typescript`: Generate the client plugin in TypeScript.
-  * `-r, --full-response`: Client will return full response object rather than just the body.
+* `-c, --config <path>` - Path to the configuration file.
+* `-n, --name <name>` - Name of the client.
+* `-f, --folder <name>` - Name of the plugin folder, defaults to --name value.
+* `-t, --typescript` - Generate the client plugin in TypeScript.
+* `-r, --full-response` - Client will return full response object rather than just the body.
