@@ -9,7 +9,7 @@ const {
 
 test('should compose openapi with prefixes', async (t) => {
   const api1 = await createOpenApiService(t, ['users'])
-  const api1Origin = await api1.listen({ port: 0 })
+  const api1Origin = await api1.listen({ host: '127.0.0.1', port: 0 })
 
   const composer = await createComposer(t, {
     composer: {
