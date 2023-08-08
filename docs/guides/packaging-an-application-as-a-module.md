@@ -1,9 +1,9 @@
 # Packaging a Platformatic Application as a module
 
 [Platformatic Service](/docs/reference/db/introduction.md) and [Platformatic DB](/docs/reference/db/introduction.md)
-offer a good starting point to create new applications. However most developers or organization might want to
+offer a good starting point to create new applications. However, most developers or organizations might want to
 create reusable services or applications build on top of Platformatic.
-This is useful to publish the application on the public npm registry (or a private one!), including buildig your own CLI,
+This is useful to publish the application on the public npm registry (or a private one!), including building your own CLI,
 or to create a specialized template for your organization to allow for centralized bugfixes and updates.
 
 This process is the same one we use to maintain Platformatic DB and Platformatic Composer on top of Platformatic Service.
@@ -77,11 +77,11 @@ foo.configManagerConfig = {
 module.exports = foo
 ```
 
-Note that the `$id` property of the schema identify the module in our system,
+Note that the `$id` property of the schema identifies the module in our system,
 allowing us to retrieve the schema correctly.
-Given that this schema is what will be used for the configuration file,
-it's better if this JSON schema is actually published there, so that
-the VSCode language server will provide autocompletion in that case.
+It is recommended, but not required, that the JSON schema is actually
+published in this location. Doing so allows tooling such as the VSCode
+language server to provide autocompletion.
 
 In this example, the `schema` adds a custom top-level `foo` property
 that users can use to configure this specific module.
