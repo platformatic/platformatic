@@ -33,15 +33,16 @@ function formatSpanName (request) {
   return routerPath ? `${method} ${routerPath}` : method
 }
 
-const defaultFormatSpanAttributes = {
+const formatSpanAttributes = {
   request (request) {
     const { hostname, method, url, protocol } = request
-    const urlData = fastUri.parse(`${protocol}://${hostname})`)
+    // Inspired by: https://github.com/fastify/fastify-url-data/blob/master/plugin.js#L11
+    const urlData = fastUri.parse(`${protocol}://${hostname}${url}`)
     return {
       'server.address': hostname,
       'server.port': urlData.port,
       'http.request.method': method,
-      'url.path': url,
+      'url.path': urlData.path,
       'url.scheme': protocol
     }
   },
@@ -107,19 +108,14 @@ async function setupTelemetry (app, opts) {
   // const { serviceName, version } = opts
   const openTelemetryAPIs = setupProvider(app, opts)
   const { tracer, propagator, provider } = openTelemetryAPIs
-
-  const formatSpanAttributes = {
-    ...defaultFormatSpanAttributes,
-    ...(opts.formatSpanAttributes || {})
-  }
+  const skipOperations = opts.skip || []
 
   // expose the span as a request decorator
   app.decorateRequest('span')
 
   const startSpan = async (request) => {
-    const SKIP_OPERATIONS = ['GET/documentation/json']
-    if (SKIP_OPERATIONS.includes(`${request.method}${request.url}`)) {
-      request.log.debug('Skipping telemetry for operation')
+    if (skipOperations.includes(`${request.method}${request.url}`)) {
+      request.log.debug({ operation: `${request.method}${request.url}` }, 'Skipping telemetry')
       return
     }
 
@@ -191,12 +187,20 @@ async function setupTelemetry (app, opts) {
   // - closing the span
   const startSpanClient = (url, method, ctx) => {
     let context = ctx || new PlatformaticContext()
+    const urlObj = fastUri.parse(url)
+
+    if (skipOperations.includes(`${method}${urlObj.path}`)) {
+      app.log.debug({ operation: `${method}${urlObj.path}` }, 'Skipping telemetry')
+      return
+    }
+
     /* istanbul ignore next */
     method = method || ''
-    const span = tracer.startSpan(`${method} ${url}`, {}, context)
+    const name = `${method} ${urlObj.scheme}://${urlObj.host}:${urlObj.port}${urlObj.path}`
+
+    const span = tracer.startSpan(name, {}, context)
     span.kind = SpanKind.CLIENT
 
-    const urlObj = fastUri.parse(url)
     /* istanbul ignore next */
     const attributes = url
       ? {

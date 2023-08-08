@@ -12,6 +12,13 @@ const TelemetrySchema = {
       type: 'string',
       description: 'The version of the service (optional)'
     },
+    skip: {
+      type: 'array',
+      description: 'An array of paths to skip when creating spans. Useful for health checks and other endpoints that do not need to be traced.',
+      items: {
+        type: 'string'
+      }
+    },
     exporter: {
       type: 'object',
       properties: {

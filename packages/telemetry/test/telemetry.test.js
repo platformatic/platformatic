@@ -59,6 +59,45 @@ test('should trace a request not failing', async ({ equal, same, teardown }) => 
   same(resource.attributes['service.version'], '1.0.0')
 })
 
+test('should not put query in `url.path', async ({ equal, same, teardown }) => {
+  const handler = async (request, reply) => {
+    return { foo: 'bar' }
+  }
+
+  const injectArgs = {
+    method: 'GET',
+    url: '/test?foo=bar',
+    headers: {
+      host: 'test'
+    }
+  }
+
+  const app = await setupApp({
+    serviceName: 'test-service',
+    version: '1.0.0',
+    exporter: {
+      type: 'memory'
+    }
+  }, handler, teardown)
+
+  await app.inject(injectArgs)
+  const { exporter } = app.openTelemetry
+  const finishedSpans = exporter.getFinishedSpans()
+  equal(finishedSpans.length, 1)
+  const span = finishedSpans[0]
+  equal(span.kind, SpanKind.SERVER)
+  equal(span.name, 'GET /test')
+  equal(span.status.code, SpanStatusCode.OK)
+  equal(span.attributes['http.request.method'], 'GET')
+  equal(span.attributes['url.path'], '/test')
+  equal(span.attributes['http.response.status_code'], 200)
+  equal(span.attributes['url.scheme'], 'http')
+  equal(span.attributes['server.address'], 'test')
+  const resource = span.resource
+  same(resource.attributes['service.name'], 'test-service')
+  same(resource.attributes['service.version'], '1.0.0')
+})
+
 test('request should add attribute to a span', async ({ equal, same, teardown }) => {
   const handler = async (request, reply) => {
     request.span.setAttribute('foo', 'bar')
@@ -218,6 +257,9 @@ test('should not trace if the operation is skipped', async ({ equal, same, teard
   const app = await setupApp({
     serviceName: 'test-service',
     version: '1.0.0',
+    skip: [
+      'GET/documentation/json'
+    ],
     exporter: {
       type: 'memory'
     }
