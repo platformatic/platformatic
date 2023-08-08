@@ -285,7 +285,7 @@ test('auto-upgrades', async t => {
     E: ''
   })
   t.same(configManager.current, {
-    $schema: 'https://platformatic.dev/schemas/v0.34.0/db',
+    $schema: `https://platformatic.dev/schemas/v${version}/db`,
     server: { hostname: '127.0.0.1', port: 0 },
     db: {
       connectionString: 'postgres://postgres:postgres@127.0.0.1/postgres'
