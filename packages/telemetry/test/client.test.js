@@ -230,3 +230,43 @@ test('should trace a client request failing (no HTTP error)', async ({ equal, sa
   equal(spanClient.attributes['error.message'], 'KABOOM!!!')
   equal(spanClient.attributes['error.stack'].includes('Error: KABOOM!!!'), true)
 })
+
+test('should not add the query in span name', async ({ equal, same, teardown }) => {
+  const handler = async (request, reply) => {
+    return { foo: 'bar' }
+  }
+
+  const app = await setupApp({
+    serviceName: 'test-service',
+    exporter: {
+      type: 'memory'
+    }
+  }, handler, teardown)
+
+  const { startSpanClient } = app.openTelemetry
+
+  const url = 'http://localhost:3000/test?foo=bar'
+  const { span } = startSpanClient(url, 'GET')
+  same(span.name, 'GET http://localhost:3000/test')
+})
+
+test('should ignore the skipped operations', async ({ equal, same, ok, teardown }) => {
+  const handler = async (request, reply) => {
+    return { foo: 'bar' }
+  }
+
+  const app = await setupApp({
+    serviceName: 'test-service',
+    skip: ['POST/skipme'],
+    exporter: {
+      type: 'memory'
+    }
+  }, handler, teardown)
+
+  const { startSpanClient } = app.openTelemetry
+
+  const url = 'http://localhost:3000/skipme'
+  const ret = startSpanClient(url, 'POST')
+  // no spam should be created
+  ok(!ret)
+})
