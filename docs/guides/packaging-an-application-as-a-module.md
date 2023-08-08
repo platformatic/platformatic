@@ -13,17 +13,22 @@ This process is the same one we use to maintain Platformatic DB and Platformatic
 We are creating the module `foo.js` as follows: 
 
 ```js
-const { schema } = require('@platformatic/service')
+const { schema, platformaticService } = require('@platformatic/service')
 
 /**  @type {import('fastify').FastifyPluginAsync<{}>} */
-async function foo (app) {
+async function foo (app, opts) {
   const text = app.platformatic.config.foo.text
   app.get('/foo', async (request, reply) => {
     return text
   })
+
+  await platformaticService(app, opts)
 }
 
 foo.configType = 'foo'
+
+// break Fastify encapsulation
+foo[Symbol.for('skip-override')] = true
 
 // The schema for our configuration file
 foo.schema = {
