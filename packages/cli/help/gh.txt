@@ -1,4 +1,4 @@
-Creates a gh action to deploy platformatic services on workspaces
+Creates a gh action to deploy platformatic services on workspaces.
 
 ``` bash
  $ platformatic gh -t dynamic
@@ -6,12 +6,21 @@ Creates a gh action to deploy platformatic services on workspaces
 
 Options:
 
-  -w  --workspace ID     The workspace ID where the service will be deployed
-  -t, --type static/dynamic  The type of the workspace. Defaults to static.
-  -c, --config FILE      Specify a configuration file to use
-  -b, --build            Build the service before deploying (`npm run build`)
+* `-w  --workspace ID` - The workspace ID where the service will be deployed.
+* `-t, --type static/dynamic` - The type of the workspace. Defaults to static.
+* `-c, --config FILE` - Specify a configuration file to use.
+* `-b, --build` - Build the service before deploying (`npm run build`).
 
-If not specified, the configuration will be loaded from `platformatic.db.json`,
-`platformatic.db.yml`, or `platformatic.db.tml`, `platformatic.service.json`,
-`platformatic.service.yml`, or `platformatic.service.tml` in the current directory.
+If not specified, the configuration will be loaded from any of the following, in the current directory.
+
+* `platformatic.db.json`, or
+* `platformatic.db.yml`, or 
+* `platformatic.db.tml`, or 
+* `platformatic.service.json`, or
+* `platformatic.service.yml`, or 
+* `platformatic.service.tml`
+
+You can find more details about the configuration format here:
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
+* [Platformatic Service Configuration](https://docs.platformatic.dev/docs/reference/service/configuration)
 

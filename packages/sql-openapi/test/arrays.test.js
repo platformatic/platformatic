@@ -107,6 +107,45 @@ test('expose arrays', { skip: !isPg }, async (t) => {
 
   {
     const res = await app.inject({
+      method: 'GET',
+      url: '/pages?where.tags.contains=foo'
+    })
+    equal(res.statusCode, 200, 'GET /pages/1 status code')
+    same(res.json(), [{
+      id: 1,
+      title: 'Hello',
+      tags: ['foo', 'bar']
+    }], 'GET /pages/1 response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/pages?where.tags.contained=foo,bar'
+    })
+    equal(res.statusCode, 200, 'GET /pages/1 status code')
+    same(res.json(), [{
+      id: 1,
+      title: 'Hello',
+      tags: ['foo', 'bar']
+    }], 'GET /pages/1 response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/pages?where.tags.overlaps=foo'
+    })
+    equal(res.statusCode, 200, 'GET /pages/1 status code')
+    same(res.json(), [{
+      id: 1,
+      title: 'Hello',
+      tags: ['foo', 'bar']
+    }], 'GET /pages/1 response')
+  }
+
+  {
+    const res = await app.inject({
       method: 'PUT',
       url: '/pages/1',
       body: {

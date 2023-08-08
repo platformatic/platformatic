@@ -10,7 +10,7 @@ const {
 
 test('should proxy openapi requests with telemetry span', async (t) => {
   const service1 = await createOpenApiService(t, ['users'])
-  const origin1 = await service1.listen({ port: 0 })
+  const origin1 = await service1.listen({ host: '127.0.0.1', port: 0 })
 
   const config = {
     composer: {
@@ -65,7 +65,7 @@ test('should proxy openapi requests with telemetry span', async (t) => {
 
 test('should proxy openapi requests with telemetry, managing errors', async (t) => {
   const service1 = await createBasicService(t)
-  const origin1 = await service1.listen({ port: 0 })
+  const origin1 = await service1.listen({ host: '127.0.0.1', port: 0 })
 
   const config = {
     composer: {

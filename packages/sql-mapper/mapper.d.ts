@@ -103,7 +103,27 @@ export interface WhereCondition {
     /**
      * Like ignore-case value.
      */
-    ilike?: string
+    ilike?: string,
+    /**
+     * All subquery
+     */
+    all?: string,
+    /**
+     * Any subquery
+     */
+    any?: string
+    /**
+     * Contains values
+     */
+    contains?: any[],
+    /**
+     * Contained by values
+     */
+    contained?: any[],
+    /**
+     * Overlaps with values
+     */
+    overlaps?: any[]
   }
 }
 

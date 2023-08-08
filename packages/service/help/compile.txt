@@ -7,7 +7,11 @@ Compile typescript plugins.
 As a result of executing this command, Platformatic Service will compile typescript
 plugins in the `outDir` directory. 
 
-If not specified, the configuration specified will be loaded from
-`platformatic.service.json`, `platformatic.service.yml`, or `platformatic.service.tml` in the current directory.
-You can find more details about the configuration format at:
-https://docs.platformatic.dev/docs/reference/service/configuration.
+If not specified, the configuration will be loaded from any of the following, in the current directory.
+
+* `platformatic.service.json`, or
+* `platformatic.service.yml`, or 
+* `platformatic.service.tml`
+
+You can find more details about the configuration format here:
+* [Platformatic Service Configuration](https://docs.platformatic.dev/docs/reference/service/configuration)

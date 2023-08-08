@@ -328,6 +328,7 @@ const server = {
     },
     cors
   },
+  additionalProperties: false,
   required: ['hostname', 'port']
 }
 

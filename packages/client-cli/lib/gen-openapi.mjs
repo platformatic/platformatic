@@ -85,7 +85,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   })
   /* eslint-enable new-cap */
 
-  interfaces.writeLine('import { FastifyPluginAsync } from \'fastify\'')
+  interfaces.writeLine('import { type FastifyPluginAsync } from \'fastify\'')
   interfaces.blankLine()
 
   // Add always FullResponse interface because we don't know yet

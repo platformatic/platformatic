@@ -261,6 +261,30 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
               "type": "string"
             },
             "in": "query",
+            "name": "where.id.contains",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.id.contained",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.id.overlaps",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
             "name": "where.name.eq",
             "required": false
           },
@@ -326,6 +350,30 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
             },
             "in": "query",
             "name": "where.name.nin",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.name.contains",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.name.contained",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.name.overlaps",
             "required": false
           },
           {
@@ -509,6 +557,30 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
               "type": "string"
             },
             "in": "query",
+            "name": "where.id.contains",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.id.contained",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.id.overlaps",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
             "name": "where.name.eq",
             "required": false
           },
@@ -574,6 +646,30 @@ exports['test/cli/schema.test.mjs TAP print the openapi schema to stdout > must 
             },
             "in": "query",
             "name": "where.name.nin",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.name.contains",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.name.contained",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.name.overlaps",
             "required": false
           },
           {
