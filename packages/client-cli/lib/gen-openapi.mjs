@@ -278,6 +278,9 @@ export function getType (typeDef) {
   if (typeDef.type === 'array') {
     return `Array<${getType(typeDef.items)}>`
   }
+  if (typeDef.enum) {
+    return typeDef.enum.map((en) => `'${en}'`).join(' | ')
+  }
   if (typeDef.type === 'object') {
     let output = '{ '
     const props = Object.keys(typeDef.properties).map((prop) => {

@@ -283,7 +283,7 @@ export async function command (argv) {
     if (options['types-only']) {
       options.generateImplementation = false
     } else {
-      options.generateImplementation = !options.config  
+      options.generateImplementation = !options.config
     }
     await downloadAndProcess({ url, ...options, logger, runtime: options.runtime })
     logger.info('Client generated successfully')

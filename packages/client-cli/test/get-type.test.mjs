@@ -142,3 +142,23 @@ test('support array with anyOf', async (t) => {
   }
   t.equal(getType(arrayOfObjectsDef), 'Array<string | number>')
 })
+
+test('support enum', async (t) => {
+  const enumDef = {
+    properties: {
+      prop1: {
+        enum: [
+          'foo',
+          'bar'
+        ],
+        type: 'string'
+      },
+      prop2: {
+        type: 'string'
+      }
+    },
+    type: 'object'
+  }
+
+  t.equal(getType(enumDef), '{ prop1: \'foo\' | \'bar\'; prop2: string }')
+})
