@@ -1,6 +1,10 @@
-import { type FastifyPluginCallback } from 'fastify'
+import { FastifyPluginAsync } from 'fastify'
 
-export type PltClientOptions = {
+interface Headers {
+  [key: string]: string
+}
+
+interface PlatformaticClientPluginOptions {
   url: string;
   path?: string;
   headers?: object;
@@ -9,8 +13,47 @@ export type PltClientOptions = {
   type: 'openapi' | 'graphql';
   name?: string;
   serviceId?: string;
-  getHeaders?: Function;
+  getHeaders?: () => Headers;
 }
 
-export const pltClient: FastifyPluginCallback<NonNullable<PltClientOptions>>
-export default pltClient
+interface BuildOpenAPIClientOptions {
+  url: string;
+  path: string;
+  headers?: Headers
+}
+
+interface AbstractLogger {
+  fatal: () => void;
+  error: () => void;
+  warn: () => void;
+  info: () => void;
+  debug: () => void;
+  trace: () => void;
+}
+
+interface BuildGraphQLClientOptions {
+  url: string;
+  headers?: Headers;
+}
+
+interface Parameter {
+  in: string;
+  name: string;
+}
+
+interface MethodMetaInterface {
+  operationId?: string,
+  parameters: Parameter[]
+}
+
+interface BuildGraphQLClientOutput {
+  graphql: () => Promise<unkown>;
+  [Symbol('headers')]: Headers; 
+}
+
+export function generateOperationId(path: string, method: string, methodMeta: MethodMetaInterface): string
+export async function buildOpenAPIClient(options: BuildOpenAPIClientOptions, openTelemetry: any): Promise<BuildGraphQLClientOutput>
+export async function buildGraphQLClient(options?: BuildGraphQLClientOptions, openTelemetry: any, logger: AbstractLogger): Promise<BuildGraphQLClientOutput>
+
+export const plugin: FastifyPluginAsync<PlatformaticClientPluginOptions>
+export default plugin
