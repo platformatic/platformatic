@@ -2,7 +2,7 @@
 
 [Platformatic Service](/docs/reference/db/introduction.md) and [Platformatic DB](/docs/reference/db/introduction.md)
 offer a good starting point to create new applications. However, most developers or organizations might want to
-create reusable services or applications build on top of Platformatic.
+create reusable services or applications built on top of Platformatic.
 This is useful to publish the application on the public npm registry (or a private one!), including building your own CLI,
 or to create a specialized template for your organization to allow for centralized bugfixes and updates.
 
