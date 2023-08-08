@@ -152,7 +152,7 @@ async function start (appType, _args) {
     }
 
     // Weird coverage issue in c8
-    /* c8 ignore next 1 */
+    /* c8 ignore next 2 */
     await app.close()
   })
 }
