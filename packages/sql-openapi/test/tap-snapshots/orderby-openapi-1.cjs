@@ -175,6 +175,30 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "where.counter.contains",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.contained",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.overlaps",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "where.id.eq",
             "required": false,
             "schema": Object {
@@ -247,6 +271,30 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "where.id.contains",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.contained",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.overlaps",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "where.title.eq",
             "required": false,
             "schema": Object {
@@ -312,6 +360,30 @@ Object {
           Object {
             "in": "query",
             "name": "where.title.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.contains",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.contained",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.overlaps",
             "required": false,
             "schema": Object {
               "type": "string",
@@ -499,6 +571,30 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "where.counter.contains",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.contained",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.counter.overlaps",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "where.id.eq",
             "required": false,
             "schema": Object {
@@ -571,6 +667,30 @@ Object {
           },
           Object {
             "in": "query",
+            "name": "where.id.contains",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.contained",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.id.overlaps",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "where.title.eq",
             "required": false,
             "schema": Object {
@@ -636,6 +756,30 @@ Object {
           Object {
             "in": "query",
             "name": "where.title.nin",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.contains",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.contained",
+            "required": false,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "where.title.overlaps",
             "required": false,
             "schema": Object {
               "type": "string",
