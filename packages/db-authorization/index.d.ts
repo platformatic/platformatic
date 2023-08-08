@@ -5,53 +5,52 @@ import {
 import { type FastifyPluginAsync } from 'fastify'
 import { type FastifyUserPluginOptions } from 'fastify-user'
 
-export type OperationCheckFunction = (args: {
-  user: any,
+export type OperationFunction<T> = (args: {
+  user: T,
   ctx: PlatformaticContext,
   where: WhereCondition
 }) => WhereCondition
-export type OperationCheck = boolean | WhereCondition | OperationCheckFunction
-export type OperationChecks = Record<string, OperationCheck>
-export type Operation = boolean | {
-  checks: string | OperationChecks
+
+export interface OperationChecks {
+  checks: Record<string, any> | WhereCondition
 }
 
-export type DefaultsFunction = (args: {
-  user: any,
+export interface OperationFields {
+  fields?: string[]
+}
+
+export type Operation<T> = boolean | OperationFields & (OperationFunction<T> | OperationChecks)
+
+export type DefaultsFunction<T> = (args: {
+  user: T,
   ctx: PlatformaticContext,
   input: Object[]
-}) => Record<string, any>
-export type Defaults = DefaultsFunction | Record<string, any>
+}) => any
+export type Defaults<T> = DefaultsFunction<T> | Record<string, any>
 
-interface AuthorizationRuleBase {
+interface AuthorizationRuleBase<T> {
   role: string
-  defaults?: Defaults
-  find?: Operation
-  save?: Operation
-  delete?: Operation
+  defaults?: Defaults<T>
+  find?: Operation<T>
+  save?: Operation<T>
+  delete?: Operation<T>
 }
-export interface AuthorizationRuleEntity extends AuthorizationRuleBase {
+export interface AuthorizationRuleEntity<T> extends AuthorizationRuleBase<T> {
   entity: string
 }
-export interface AuthorizationRuleEntities extends AuthorizationRuleBase {
+export interface AuthorizationRuleEntities<T> extends AuthorizationRuleBase<T> {
   entities: string[]
 }
-export type AuthorizationRule = AuthorizationRuleEntity | AuthorizationRuleEntities
-
-export type AuthorizationRuleFunction = (args: {
-  user: any,
-  ctx: PlatformaticContext,
-  where: WhereCondition
-}) => AuthorizationRule
+export type AuthorizationRule<T> = AuthorizationRuleEntity<T> | AuthorizationRuleEntities<T>
 
 export type SetupDBAuthorizationUserDecorator = () => Promise<void>
-export type AddRulesForRoles = (rule: AuthorizationRuleFunction | AuthorizationRule) => void
+export type AddRulesForRoles = <T>(rules: Iterable<AuthorizationRule<T>>) => void
 
-export interface DBAuthorizationPluginOptions extends FastifyUserPluginOptions {
+export interface DBAuthorizationPluginOptions<T = any> extends FastifyUserPluginOptions {
   adminSecret?: string
   roleKey?: string
   anonymousRole?: string
-  rules: AuthorizationRule[]
+  rules: Array<AuthorizationRule<T>>
 }
 
 declare module '@platformatic/types' {
