@@ -51,8 +51,16 @@ interface BuildGraphQLClientOutput {
   [Symbol('headers')]: Headers; 
 }
 
+interface BuildOpenAPIClientOutput {
+  [key: string]: {
+    statusCode: number;
+    headers: Headers[];
+    body: any
+  } | any
+  [Symbol('headers')]: Headers; 
+}
 export function generateOperationId(path: string, method: string, methodMeta: MethodMetaInterface): string
-export async function buildOpenAPIClient(options: BuildOpenAPIClientOptions, openTelemetry: any): Promise<BuildGraphQLClientOutput>
+export async function buildOpenAPIClient(options: BuildOpenAPIClientOptions, openTelemetry: any): Promise<BuildOpenAPIClientOutput>
 export async function buildGraphQLClient(options?: BuildGraphQLClientOptions, openTelemetry: any, logger: AbstractLogger): Promise<BuildGraphQLClientOutput>
 
 export const plugin: FastifyPluginAsync<PlatformaticClientPluginOptions>
