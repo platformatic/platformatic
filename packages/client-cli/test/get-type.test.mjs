@@ -17,7 +17,7 @@ test('get type with schema', async (t) => {
     }
   }
   const type = getType(def)
-  t.equal(type, 'Array<string>')
+  t.equal(type, 'Array<\'id\' | \'title\'>')
 })
 
 test('get type without schema', async (t) => {
@@ -35,7 +35,7 @@ test('get type without schema', async (t) => {
     type: 'string'
   }
   t.equal(getType(stringDef), 'string')
-  t.equal(getType(arrayStringDef), 'Array<string>')
+  t.equal(getType(arrayStringDef), 'Array<\'id\' | \'title\'>')
 })
 
 test('support anyOf', async (t) => {

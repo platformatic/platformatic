@@ -7,6 +7,63 @@ import * as desm from 'desm'
 import { execa } from 'execa'
 import { promises as fs } from 'fs'
 
+test('openapi client generation (javascript with --types-only flag', async ({ teardown, comment, same }) => {
+  try {
+    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  teardown(async () => { await app.close() })
+
+  await app.start()
+
+  const dir = await moveToTmpdir(teardown)
+  comment(`working in ${dir}`)
+
+  const pltServiceConfig = {
+    $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugins: {
+      paths: ['./plugin.js']
+    }
+  }
+
+  const plugin = `
+module.exports = async function (app) {
+  app.post('/', async (request, reply) => {
+    const res = await app.movies.createMovie({ title: 'foo' })
+    return res
+  })
+}
+  `
+
+  await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
+  await fs.writeFile('./plugin.js', plugin)
+
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--config', 'platformatic.service.json', '--types-only'])
+
+  process.env.PLT_MOVIES_URL = app.url
+
+  const app2 = await buildService('./platformatic.service.json')
+  await app2.start()
+  teardown(async () => {
+    await app2.close()
+  })
+
+  const res = await request(app2.url, {
+    method: 'POST'
+  })
+  const body = await res.body.json()
+  same(body, {
+    id: 1,
+    title: 'foo'
+  })
+})
+
 test('openapi client generation (javascript)', async ({ teardown, comment, same }) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
