@@ -162,3 +162,20 @@ test('support enum', async (t) => {
 
   t.equal(getType(enumDef), '{ prop1: \'foo\' | \'bar\'; prop2: string }')
 })
+
+test('support enum with numbers', async (t) => {
+  const enumDef = {
+    properties: {
+      prop1: {
+        enum: [1, 2],
+        type: 'number'
+      },
+      prop2: {
+        type: 'string'
+      }
+    },
+    type: 'object'
+  }
+
+  t.equal(getType(enumDef), '{ prop1: 1 | 2; prop2: string }')
+})
