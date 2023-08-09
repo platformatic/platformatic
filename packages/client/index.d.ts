@@ -7,7 +7,7 @@ interface Headers {
 interface PlatformaticClientPluginOptions {
   url: string;
   path?: string;
-  headers?: object;
+  headers?: Headers;
   throwOnError: boolean;
   fullResponse: boolean;
   type: 'openapi' | 'graphql';
@@ -48,20 +48,26 @@ interface MethodMetaInterface {
 
 interface BuildGraphQLClientOutput {
   graphql: () => Promise<unkown>;
-  [Symbol('headers')]: Headers; 
 }
 
 interface BuildOpenAPIClientOutput {
   [key: string]: {
     statusCode: number;
     headers: Headers[];
-    body: any
-  } | any
+    body: object
+  } | object
   [Symbol('headers')]: Headers; 
 }
+
+type OpenTelemetry = {
+  startSpanClient?: (urlToCall: URL, method: string, telemetryContext: any) => object
+  endSpanClient?: (span: any, res: any) => void
+  setErrorInSpanClient?: (span: any, err: unknown) => void
+}
+
 export function generateOperationId(path: string, method: string, methodMeta: MethodMetaInterface): string
-export async function buildOpenAPIClient(options: BuildOpenAPIClientOptions, openTelemetry: any): Promise<BuildOpenAPIClientOutput>
-export async function buildGraphQLClient(options?: BuildGraphQLClientOptions, openTelemetry: any, logger: AbstractLogger): Promise<BuildGraphQLClientOutput>
+export async function buildOpenAPIClient(options: BuildOpenAPIClientOptions, openTelemetry: OpenTelemetry): Promise<BuildOpenAPIClientOutput>
+export async function buildGraphQLClient(options?: BuildGraphQLClientOptions, openTelemetry: OpenTelemetry, logger: AbstractLogger): Promise<BuildGraphQLClientOutput>
 
 export const plugin: FastifyPluginAsync<PlatformaticClientPluginOptions>
 export default plugin
