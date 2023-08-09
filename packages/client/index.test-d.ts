@@ -1,18 +1,18 @@
 import { expectError } from 'tsd' 
 import fastify from 'fastify'
-import pltClient, { type PltClientOptions } from '.'
+import pltClient, { type PlatformaticClientPluginOptions } from '.'
 
 const server = await fastify()
 
-expectError<PltClientOptions>({})
+expectError<PlatformaticClientPluginOptions>({})
 
-expectError<PltClientOptions>({
+expectError<PlatformaticClientPluginOptions>({
   fullResponse: true,
   throwOnError: true,
   url: 'localhost'
 })
 
-expectError<PltClientOptions>({
+expectError<PlatformaticClientPluginOptions>({
   fullResponse: true,
   throwOnError: true,
   type: 'WRONG',
@@ -31,7 +31,9 @@ const check2 = server.register(pltClient, {
   throwOnError: false,
   type: 'openapi',
   url: 'http://127.0.0.1/path/42',
-  getHeaders: () => console.log('hey!'),
+  getHeaders: () => { 
+    return { foo: 'bar' }
+  },
   headers: { foo: 'bar' },
   name: 'Frassica',
   path: 'Fracchia',

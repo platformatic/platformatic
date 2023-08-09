@@ -4,7 +4,7 @@ interface Headers {
   [key: string]: string
 }
 
-interface PlatformaticClientPluginOptions {
+export type PlatformaticClientPluginOptions = {
   url: string;
   path?: string;
   headers?: Headers;
@@ -47,7 +47,7 @@ interface MethodMetaInterface {
 }
 
 interface BuildGraphQLClientOutput {
-  graphql: () => Promise<unkown>;
+  graphql: () => Promise<unknown>;
 }
 
 interface BuildOpenAPIClientOutput {
@@ -56,7 +56,6 @@ interface BuildOpenAPIClientOutput {
     headers: Headers[];
     body: object
   } | object
-  [Symbol('headers')]: Headers; 
 }
 
 type OpenTelemetry = {
@@ -66,8 +65,8 @@ type OpenTelemetry = {
 }
 
 export function generateOperationId(path: string, method: string, methodMeta: MethodMetaInterface): string
-export async function buildOpenAPIClient(options: BuildOpenAPIClientOptions, openTelemetry: OpenTelemetry): Promise<BuildOpenAPIClientOutput>
-export async function buildGraphQLClient(options?: BuildGraphQLClientOptions, openTelemetry: OpenTelemetry, logger: AbstractLogger): Promise<BuildGraphQLClientOutput>
+export function buildOpenAPIClient(options: BuildOpenAPIClientOptions, openTelemetry: OpenTelemetry): Promise<BuildOpenAPIClientOutput>
+export function buildGraphQLClient(options: BuildGraphQLClientOptions, openTelemetry: OpenTelemetry, logger: AbstractLogger): Promise<BuildGraphQLClientOutput>
 
 export const plugin: FastifyPluginAsync<PlatformaticClientPluginOptions>
 export default plugin
