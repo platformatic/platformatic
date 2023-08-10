@@ -47,15 +47,7 @@ interface MethodMetaInterface {
 }
 
 interface BuildGraphQLClientOutput {
-  graphql: () => Promise<unknown>;
-}
-
-interface BuildOpenAPIClientOutput {
-  [key: string]: {
-    statusCode: number;
-    headers: Headers[];
-    body: object
-  } | object
+  graphql: <T>() => Promise<T>;
 }
 
 type OpenTelemetry = {
@@ -65,7 +57,7 @@ type OpenTelemetry = {
 }
 
 export function generateOperationId(path: string, method: string, methodMeta: MethodMetaInterface): string
-export function buildOpenAPIClient(options: BuildOpenAPIClientOptions, openTelemetry: OpenTelemetry): Promise<BuildOpenAPIClientOutput>
+export function buildOpenAPIClient<T>(options: BuildOpenAPIClientOptions, openTelemetry: OpenTelemetry): Promise<T>
 export function buildGraphQLClient(options: BuildGraphQLClientOptions, openTelemetry: OpenTelemetry, logger: AbstractLogger): Promise<BuildGraphQLClientOutput>
 
 export const plugin: FastifyPluginAsync<PlatformaticClientPluginOptions>

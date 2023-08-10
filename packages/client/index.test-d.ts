@@ -1,6 +1,6 @@
-import { expectError } from 'tsd' 
+import { expectError, expectType } from 'tsd' 
 import fastify from 'fastify'
-import pltClient, { type PlatformaticClientPluginOptions } from '.'
+import pltClient, { type PlatformaticClientPluginOptions, buildOpenAPIClient} from '.'
 
 const server = await fastify()
 
@@ -39,3 +39,13 @@ const check2 = server.register(pltClient, {
   path: 'Fracchia',
   serviceId: 'Fantozzi'
 })
+
+type MyType = {
+  foo: string
+}
+
+const openTelemetryClient = {}
+expectType<Promise<MyType>>(buildOpenAPIClient<MyType>({
+  url: 'http://foo.bar',
+  path: 'foobar'
+}, openTelemetryClient))
