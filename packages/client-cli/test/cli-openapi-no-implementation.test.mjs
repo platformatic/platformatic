@@ -114,8 +114,8 @@ const myPlugin: FastifyPluginAsync<{}> = async (app, options) => {
     fullResponse: false,
     throwOnError: false,
     type: 'openapi',
-    url: '${app.url}',
-    name: 'movies',
+    url: '${app.url}/documentation/json',
+    name: 'localMovies',
   })
   
   app.post('/', async (request, reply) => {
@@ -126,7 +126,6 @@ const myPlugin: FastifyPluginAsync<{}> = async (app, options) => {
 
 export default myPlugin
   `
-  console.log(plugin)
 
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
   await fs.writeFile('./plugin.ts', plugin)
