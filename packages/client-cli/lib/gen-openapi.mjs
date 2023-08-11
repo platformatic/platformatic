@@ -280,7 +280,7 @@ export function getType (typeDef) {
   }
   if (typeDef.type === 'object') {
     let output = '{ '
-    const props = Object.keys(typeDef.properties).map((prop) => {
+    const props = Object.keys(typeDef.properties || {}).map((prop) => {
       return `${prop}: ${getType(typeDef.properties[prop])}`
     })
     output += props.join('; ')
