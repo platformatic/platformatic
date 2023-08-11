@@ -346,4 +346,14 @@ test('startCommand()', async (t) => {
 
     assert.strictEqual(exitCode, 1)
   })
+
+  await t.test('can start an application with external clients', async (t) => {
+    const scriptFile = join(fixturesDir, 'start-command-in-runtime.js')
+    const configFile = join(fixturesDir, 'external-client', 'platformatic.service.json')
+    const child = spawn(process.execPath, [scriptFile, configFile])
+    child.stderr.pipe(process.stderr)
+    const [exitCode] = await once(child, 'exit')
+
+    assert.strictEqual(exitCode, 42)
+  })
 })
