@@ -106,18 +106,8 @@ test('openapi client generation (typescript)', async ({ teardown, comment, same 
   const plugin = `
 /// <reference types="./movies" />
 import { type FastifyPluginAsync } from 'fastify'
-import pltClient from '@platformatic/client'
 
 const myPlugin: FastifyPluginAsync<{}> = async (app, options) => {
-  
-  app.register(pltClient, {
-    fullResponse: false,
-    throwOnError: false,
-    type: 'openapi',
-    url: '${app.url}/documentation/json',
-    name: 'localMovies',
-  })
-  
   app.post('/', async (request, reply) => {
     const res = await app.movies.createMovie({ title: 'foo' })
     return res
