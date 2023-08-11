@@ -176,7 +176,7 @@ async function downloadAndProcess ({ url, name, folder, config, r: fullResponse,
     throw new Error(`Could not find a valid OpenAPI or GraphQL schema at ${url}`)
   }
 
-  if (config) {
+  if (config && !typesOnly) {
     const meta = await analyze({ file: config })
     meta.config.clients = meta.config.clients || []
     if (runtime) {
