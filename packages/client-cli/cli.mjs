@@ -201,14 +201,17 @@ async function downloadAndProcess ({ url, name, folder, config, r: fullResponse,
       toPush.url = `{PLT_${name.toUpperCase()}_URL}`
     }
     meta.config.clients.push(toPush)
-    console.log(meta)
     await write(meta)
     if (!runtime) {
-      const toSaveUrl = new URL(url)
-      if (found === 'openapi') {
-        toSaveUrl.pathname = ''
+      try {
+        const toSaveUrl = new URL(url)
+        if (found === 'openapi') {
+          toSaveUrl.pathname = ''
+        }
+        await appendToBothEnvs(join(dirname(config)), `PLT_${name.toUpperCase()}_URL`, toSaveUrl)
+      } catch {
+        await appendToBothEnvs(join(dirname(config)), `PLT_${name.toUpperCase()}_URL`, '')
       }
-      await appendToBothEnvs(join(dirname(config)), `PLT_${name.toUpperCase()}_URL`, toSaveUrl)
     }
   }
 }

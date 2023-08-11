@@ -152,7 +152,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   const pluginName = `${capitalizedName}Plugin`
   const optionsName = `${capitalizedName}Options`
 
-  writer.write(`type ${pluginName} = FastifyPluginAsync<NonNullable<${camelcasedName}.${optionsName}>>`)
+  writer.write(`type ${pluginName} = FastifyPluginAsync<NonNullable<${capitalizedName}.${optionsName}>>`)
 
   writer.blankLine()
   writer.write('declare module \'fastify\'').block(() => {
