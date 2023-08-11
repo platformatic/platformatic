@@ -288,6 +288,10 @@ export function getType (typeDef) {
     }).join(' | ')
   }
   if (typeDef.type === 'object') {
+    if (!typeDef.properties || Object.keys(typeDef.properties).length === 0) {
+      // Object without properties
+      return 'object'
+    }
     let output = '{ '
     // TODO: add a test for objects without properties
     /* c8 ignore next 1 */
