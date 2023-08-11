@@ -312,6 +312,6 @@ function JSONSchemaToTsType (type) {
       // TODO what other types should we support here?
       /* c8 ignore next 2 */
     default:
-      return 'any'
+      return 'unknown'
   }
 }
