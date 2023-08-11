@@ -1,3 +1,5 @@
+#! /usr/bin/env node
+
 import parseArgs from 'minimist'
 import isMain from 'es-main'
 import helpMe from 'help-me'
