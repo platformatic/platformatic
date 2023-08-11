@@ -85,7 +85,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   })
   /* eslint-enable new-cap */
 
-  interfaces.writeLine('import { type FastifyPluginAsync } from \'fastify\'')
+  interfaces.writeLine('import { type FastifyReply, type FastifyPluginAsync } from \'fastify\'')
   interfaces.blankLine()
 
   // Add always FullResponse interface because we don't know yet
@@ -141,7 +141,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
         return type
       })
 
-      let responseType = responseTypes.join(' | ')
+      let responseType = responseTypes.join(' | ') || 'unknown'
       if (currentFullResponse) responseType = `FullResponse<${responseType}>`
       writer.writeLine(`${operationId}(req?: ${operationRequestName}): Promise<${responseType}>;`)
       currentFullResponse = originalFullResponse
