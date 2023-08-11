@@ -177,7 +177,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   })
 
   writer.blankLine()
-  writer.write(`declare namespace ${camelcasedName}`).block(() => {
+  writer.write(`declare namespace ${capitalizedName}`).block(() => {
     writer.write(`export interface ${optionsName}`).block(() => {
       writer.writeLine('url: string')
     })
@@ -277,6 +277,15 @@ export function getType (typeDef) {
   }
   if (typeDef.type === 'array') {
     return `Array<${getType(typeDef.items)}>`
+  }
+  if (typeDef.enum) {
+    return typeDef.enum.map((en) => {
+      if (typeDef.type === 'string') {
+        return `'${en}'`
+      } else {
+        return en
+      }
+    }).join(' | ')
   }
   if (typeDef.type === 'object') {
     let output = '{ '

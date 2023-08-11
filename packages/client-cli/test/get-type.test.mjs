@@ -17,7 +17,7 @@ test('get type with schema', async (t) => {
     }
   }
   const type = getType(def)
-  t.equal(type, 'Array<string>')
+  t.equal(type, 'Array<\'id\' | \'title\'>')
 })
 
 test('get type without schema', async (t) => {
@@ -35,7 +35,7 @@ test('get type without schema', async (t) => {
     type: 'string'
   }
   t.equal(getType(stringDef), 'string')
-  t.equal(getType(arrayStringDef), 'Array<string>')
+  t.equal(getType(arrayStringDef), 'Array<\'id\' | \'title\'>')
 })
 
 test('support anyOf', async (t) => {
@@ -141,4 +141,41 @@ test('support array with anyOf', async (t) => {
     type: 'array'
   }
   t.equal(getType(arrayOfObjectsDef), 'Array<string | number>')
+})
+
+test('support enum', async (t) => {
+  const enumDef = {
+    properties: {
+      prop1: {
+        enum: [
+          'foo',
+          'bar'
+        ],
+        type: 'string'
+      },
+      prop2: {
+        type: 'string'
+      }
+    },
+    type: 'object'
+  }
+
+  t.equal(getType(enumDef), '{ prop1: \'foo\' | \'bar\'; prop2: string }')
+})
+
+test('support enum with numbers', async (t) => {
+  const enumDef = {
+    properties: {
+      prop1: {
+        enum: [1, 2],
+        type: 'number'
+      },
+      prop2: {
+        type: 'string'
+      }
+    },
+    type: 'object'
+  }
+
+  t.equal(getType(enumDef), '{ prop1: 1 | 2; prop2: string }')
 })

@@ -20,6 +20,32 @@ const res = await client.yourOperationName({ foo: 'bar' })
 console.log(res)
 ```
 
+If you use Typescript you can take advantage of the generated types file 
+
+```ts
+import { buildOpenAPIClient } from '@platformatic/client'
+import Client from './client'
+//
+// interface Client {
+//   getMovies(req: GetMoviesRequest): Promise<Array<GetMoviesResponse>>;
+//   createMovie(req: CreateMovieRequest): Promise<CreateMovieResponse>;
+//   ...
+// }
+//
+
+const client: Client = await buildOpenAPIClient<Client>({
+  url: `https://yourapi.com/documentation/json`, 
+  // path: 'path/to/openapi.json',
+  headers: {
+    'foo': 'bar'
+  }
+})
+
+const res = await client.getMovies()
+console.log(res)
+```
+
+
 ## GraphQL Client
 
 ```js

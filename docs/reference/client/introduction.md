@@ -117,6 +117,17 @@ property will be used to identify the service dependency.
 
 The types for the client are automatically generated for both OpenAPI and GraphQL schemas.
 
+You can generate only the types with the `--types-only` flag.
+
+For example
+
+```bash
+$ platformatic client http://exmaple.com/to/schema/file --name myclient --types-only
+```
+
+Will create the single `myclient.d.ts` file in current directory
+
+
 ### OpenAPI
 
 We provide a fully typed experience for OpenAPI, Typing both the request and response for
@@ -158,7 +169,7 @@ declare module 'fastify' {
   }
 }
 
-declare namespace client {
+declare namespace Client {
   export interface ClientOptions {
     url: string
   }
