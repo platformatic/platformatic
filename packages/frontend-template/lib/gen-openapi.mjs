@@ -235,6 +235,11 @@ function generateTypesFromOpenAPI ({ schema, name }) {
         if (statusCode === '204') {
           return 'undefined'
         }
+
+        // Unrecognized status code
+        if (STATUS_CODES[statusCode] === undefined) {
+          return 'undefined'
+        }
         let isResponseArray
         let type = `${operationResponseName}${classCase(STATUS_CODES[statusCode])}`
         interfaces.write(`interface ${type}`).block(() => {
@@ -343,7 +348,7 @@ export function getType (typeDef) {
   }
   if (typeDef.type === 'object') {
     let output = '{ '
-    const props = Object.keys(typeDef.properties).map((prop) => {
+    const props = Object.keys(typeDef.properties || {}).map((prop) => {
       return `${prop}: ${getType(typeDef.properties[prop])}`
     })
     output += props.join('; ')
