@@ -105,7 +105,7 @@ test('openapi client generation (typescript)', async ({ teardown, comment, same 
 
   const plugin = `
 /// <reference types="./movies" />
-import { type FastifyReply, type FastifyPluginAsync } from 'fastify'
+import { type FastifyPluginAsync } from 'fastify'
 
 const myPlugin: FastifyPluginAsync<{}> = async (app, options) => {
   app.post('/', async (request, reply) => {
