@@ -85,7 +85,7 @@ module.exports = async function (app, opts) {
   })
 })
 
-test('generate client twice', async ({ teardown, comment, same, match }) => {
+test('generate client twice', async ({ teardown, comment, same, match, equal }) => {
   const dir = await moveToTmpdir(teardown)
   comment(`working in ${dir}`)
 

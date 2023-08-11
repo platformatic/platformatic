@@ -289,6 +289,8 @@ export function getType (typeDef) {
   }
   if (typeDef.type === 'object') {
     let output = '{ '
+    // TODO: add a test for objects without properties
+    /* c8 ignore next 1 */
     const props = Object.keys(typeDef.properties || {}).map((prop) => {
       return `${prop}: ${getType(typeDef.properties[prop])}`
     })
