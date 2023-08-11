@@ -179,3 +179,21 @@ test('support enum with numbers', async (t) => {
 
   t.equal(getType(enumDef), '{ prop1: 1 | 2; prop2: string }')
 })
+
+test('object without properties', async (t) => {
+  const emptyObjectDef = {
+    type: 'object',
+    properties: {
+      prop1: { type: 'string' },
+      prop2: {
+        type: 'object',
+        properties: {}
+      },
+      prop3: {
+        type: 'object'
+      }
+    }
+  }
+
+  t.equal(getType(emptyObjectDef), '{ prop1: string; prop2: object; prop3: object }')
+})

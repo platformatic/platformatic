@@ -152,7 +152,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   const pluginName = `${capitalizedName}Plugin`
   const optionsName = `${capitalizedName}Options`
 
-  writer.write(`type ${pluginName} = FastifyPluginAsync<NonNullable<${camelcasedName}.${optionsName}>>`)
+  writer.write(`type ${pluginName} = FastifyPluginAsync<NonNullable<${capitalizedName}.${optionsName}>>`)
 
   writer.blankLine()
   writer.write('declare module \'fastify\'').block(() => {
@@ -288,7 +288,13 @@ export function getType (typeDef) {
     }).join(' | ')
   }
   if (typeDef.type === 'object') {
+    if (!typeDef.properties || Object.keys(typeDef.properties).length === 0) {
+      // Object without properties
+      return 'object'
+    }
     let output = '{ '
+    // TODO: add a test for objects without properties
+    /* c8 ignore next 1 */
     const props = Object.keys(typeDef.properties || {}).map((prop) => {
       return `${prop}: ${getType(typeDef.properties[prop])}`
     })

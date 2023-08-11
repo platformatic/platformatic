@@ -18,6 +18,7 @@ test('generates only types in target folder with --only-types flag', async ({ te
   // avoid name clash
   const fileContents = await fs.readFile(join(dir, 'movies.d.ts'), 'utf-8')
   match(fileContents, /declare namespace Movies {/)
+  match(fileContents, /type MoviesPlugin = FastifyPluginAsync<NonNullable<Movies.MoviesOptions>>/)
   match(fileContents, /export const movies: MoviesPlugin;/)
 })
 
@@ -275,4 +276,72 @@ export default myPlugin
     id: 1,
     title: 'foo'
   })
+})
+
+test('generate client twice', async ({ teardown, comment, same, equal }) => {
+  try {
+    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+
+  await app.start()
+  teardown(async () => {
+    await app.close()
+  })
+
+  const dir = await moveToTmpdir(teardown)
+  comment(`working in ${dir}`)
+
+  const pltServiceConfig = {
+    $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugins: {
+      paths: ['./plugin.js']
+    }
+  }
+
+  const plugin = `
+module.exports = async function (app) {
+  app.post('/', async (request, reply) => {
+    const res = await app.movies.createMovie({ title: 'foo' })
+    return res
+  })
+}
+  `
+
+  await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
+  await fs.writeFile('./plugin.js', plugin)
+
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
+
+  const envFile = await fs.readFile(join(dir, '.env'), 'utf8')
+  equal(envFile.match(/PLT_MOVIES_URL/g).length, 1)
+})
+
+test('openapi client generation (javascript) from file', async ({ teardown, comment, same }) => {
+  const openapi = desm.join(import.meta.url, 'fixtures', 'movies', 'openapi.json')
+
+  const dir = await moveToTmpdir(teardown)
+  comment(`working in ${dir}`)
+
+  const pltServiceConfig = {
+    $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugins: {
+      paths: ['./plugin.js']
+    }
+  }
+
+  await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
+
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapi, '--name', 'movies'])
 })
