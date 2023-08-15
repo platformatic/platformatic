@@ -7,7 +7,6 @@ const { PlatformaticApp } = require('./app')
 class RuntimeApi {
   #services
   #dispatcher
-  #loaderPort
 
   constructor (config, logger, loaderPort) {
     this.#services = new Map()
@@ -87,6 +86,8 @@ class RuntimeApi {
         return this.#getServiceDetails(params)
       case 'plt:get-service-config':
         return this.#getServiceConfig(params)
+      case 'plt:get-service-openapi-schema':
+        return this.#getServiceOpenapiSchema(params)
       case 'plt:start-service':
         return this.#startService(params)
       case 'plt:stop-service':
@@ -182,6 +183,48 @@ class RuntimeApi {
     }
 
     return config.configManager.current
+  }
+
+  async #getServiceOpenapiSchema ({ id }) {
+    const service = this.#getServiceById(id)
+
+    if (!service.config) {
+      throw new Error(`Service with id '${id}' is not started`)
+    }
+
+    const { configManager, configType } = service.config
+    const config = configManager.current
+
+    let openapiConfig = null
+    switch (configType) {
+      case 'service':
+      case 'composer':
+        openapiConfig = config.service?.openapi
+        break
+      case 'db':
+        openapiConfig = config.db?.openapi
+        break
+      default:
+        throw new Error(`Unknown config type: '${configType}'`)
+    }
+
+    if (!openapiConfig) {
+      throw new Error(`Service with id '${id}' does not expose an OpenAPI schema`)
+    }
+
+    const openapiPath = '/documentation/json'
+
+    const { statusCode, body } = await service.server.inject({
+      method: 'GET',
+      url: openapiPath
+    })
+
+    if (statusCode !== 200) {
+      throw new Error(`Failed to retrieve OpenAPI schema for service with id '${id}'`)
+    }
+
+    const openapiSchema = JSON.parse(body)
+    return openapiSchema
   }
 
   async #startService ({ id }) {
