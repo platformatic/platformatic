@@ -192,39 +192,16 @@ class RuntimeApi {
       throw new Error(`Service with id '${id}' is not started`)
     }
 
-    const { configManager, configType } = service.config
-    const config = configManager.current
-
-    let openapiConfig = null
-    switch (configType) {
-      case 'service':
-      case 'composer':
-        openapiConfig = config.service?.openapi
-        break
-      case 'db':
-        openapiConfig = config.db?.openapi
-        break
-      default:
-        throw new Error(`Unknown config type: '${configType}'`)
-    }
-
-    if (!openapiConfig) {
+    if (typeof service.server.swagger !== 'function') {
       throw new Error(`Service with id '${id}' does not expose an OpenAPI schema`)
     }
 
-    const openapiPath = '/documentation/json'
-
-    const { statusCode, body } = await service.server.inject({
-      method: 'GET',
-      url: openapiPath
-    })
-
-    if (statusCode !== 200) {
-      throw new Error(`Failed to retrieve OpenAPI schema for service with id '${id}'`)
+    try {
+      const openapiSchema = service.server.swagger()
+      return openapiSchema
+    } catch (err) {
+      throw new Error(`Failed to retrieve OpenAPI schema for service with id '${id}': ${err.message}`)
     }
-
-    const openapiSchema = JSON.parse(body)
-    return openapiSchema
   }
 
   async #startService ({ id }) {
