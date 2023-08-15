@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/types",
-  "version": "0.35.3",
+  "version": "0.35.4",
   "description": "Shared types for Platformatic",
   "types": "index.d.ts",
   "homepage": "https://docs.platformatic.dev/",
