@@ -24,7 +24,9 @@ async function moveToTmpdir (teardown) {
   await fs.mkdir(dir)
   process.chdir(dir)
   teardown(() => process.chdir(cwd))
-  teardown(() => fs.rm(tmp, { recursive: true }).catch(() => {}))
+  if (!process.env.SKIP_RM_TMP) {
+    teardown(() => fs.rm(tmp, { recursive: true }).catch(() => {}))
+  }
   return dir
 }
 

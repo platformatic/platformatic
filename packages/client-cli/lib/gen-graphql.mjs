@@ -28,13 +28,13 @@ function generateTypesFromGraphQL ({ schema, name }) {
   })
   /* eslint-enable new-cap */
 
-  writer.writeLine('import { type FastifyPluginAsync } from \'fastify\'')
+  writer.writeLine('import { type FastifyReply, type FastifyPluginAsync } from \'fastify\'')
   writer.blankLine()
 
   const pluginname = `${capitalizedName}plugin`
   const optionsname = `${capitalizedName}options`
 
-  writer.write(`type ${pluginname} = FastifyPluginAsync<NonNullable<${camelcasedName}.${optionsname}>>`)
+  writer.write(`type ${pluginname} = FastifyPluginAsync<NonNullable<${capitalizedName}.${optionsname}>>`)
 
   writer.blankLine()
   writer.write('declare module \'fastify\'').block(() => {

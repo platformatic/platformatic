@@ -112,7 +112,8 @@ app.listen({ port: 0 });
       outDir: 'build',
       target: 'es2018',
       moduleResolution: 'node',
-      lib: ['es2018']
+      lib: ['es2018'],
+      esModuleInterop: true
     }
   }, null, 2)
 
@@ -337,7 +338,8 @@ app.listen({ port: 0 });
       outDir: 'build',
       target: 'es2018',
       moduleResolution: 'node',
-      lib: ['es2018']
+      lib: ['es2018'],
+      esModuleInterop: true
     }
   }, null, 2)
 
@@ -682,7 +684,8 @@ app.listen({ port: 0 });
       outDir: 'build',
       target: 'es2018',
       moduleResolution: 'node',
-      lib: ['es2018']
+      lib: ['es2018'],
+      esModuleInterop: true
     }
   }, null, 2)
 

@@ -551,6 +551,5 @@ test('302', async ({ teardown, same, rejects }) => {
   {
     const resp = await client.nonStandard()
     same(resp.statusCode, 470)
-    console.log(resp)
   }
 })

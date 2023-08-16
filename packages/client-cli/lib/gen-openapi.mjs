@@ -85,7 +85,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   })
   /* eslint-enable new-cap */
 
-  interfaces.writeLine('import { type FastifyPluginAsync } from \'fastify\'')
+  interfaces.writeLine('import { type FastifyReply, type FastifyPluginAsync } from \'fastify\'')
   interfaces.blankLine()
 
   // Add always FullResponse interface because we don't know yet
@@ -141,7 +141,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
         return type
       })
 
-      let responseType = responseTypes.join(' | ')
+      let responseType = responseTypes.join(' | ') || 'unknown'
       if (currentFullResponse) responseType = `FullResponse<${responseType}>`
       writer.writeLine(`${operationId}(req?: ${operationRequestName}): Promise<${responseType}>;`)
       currentFullResponse = originalFullResponse
@@ -152,7 +152,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   const pluginName = `${capitalizedName}Plugin`
   const optionsName = `${capitalizedName}Options`
 
-  writer.write(`type ${pluginName} = FastifyPluginAsync<NonNullable<${camelcasedName}.${optionsName}>>`)
+  writer.write(`type ${pluginName} = FastifyPluginAsync<NonNullable<${capitalizedName}.${optionsName}>>`)
 
   writer.blankLine()
   writer.write('declare module \'fastify\'').block(() => {
@@ -177,7 +177,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   })
 
   writer.blankLine()
-  writer.write(`declare namespace ${camelcasedName}`).block(() => {
+  writer.write(`declare namespace ${capitalizedName}`).block(() => {
     writer.write(`export interface ${optionsName}`).block(() => {
       writer.writeLine('url: string')
     })
@@ -278,9 +278,24 @@ export function getType (typeDef) {
   if (typeDef.type === 'array') {
     return `Array<${getType(typeDef.items)}>`
   }
+  if (typeDef.enum) {
+    return typeDef.enum.map((en) => {
+      if (typeDef.type === 'string') {
+        return `'${en}'`
+      } else {
+        return en
+      }
+    }).join(' | ')
+  }
   if (typeDef.type === 'object') {
+    if (!typeDef.properties || Object.keys(typeDef.properties).length === 0) {
+      // Object without properties
+      return 'object'
+    }
     let output = '{ '
-    const props = Object.keys(typeDef.properties).map((prop) => {
+    // TODO: add a test for objects without properties
+    /* c8 ignore next 1 */
+    const props = Object.keys(typeDef.properties || {}).map((prop) => {
       return `${prop}: ${getType(typeDef.properties[prop])}`
     })
     output += props.join('; ')
@@ -303,6 +318,6 @@ function JSONSchemaToTsType (type) {
       // TODO what other types should we support here?
       /* c8 ignore next 2 */
     default:
-      return 'any'
+      return 'unknown'
   }
 }
