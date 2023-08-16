@@ -26,14 +26,12 @@ server.register(pltClient, {
   url: 'localhost'
 })
 
-const check2 = server.register(pltClient, {
+server.register(pltClient, {
   fullResponse: false,
   throwOnError: false,
   type: 'openapi',
   url: 'http://127.0.0.1/path/42',
-  getHeaders: () => { 
-    return { foo: 'bar' }
-  },
+  getHeaders: ({ url }) => ({ foo: 'bar', url }),
   headers: { foo: 'bar' },
   name: 'Frassica',
   path: 'Fracchia',
