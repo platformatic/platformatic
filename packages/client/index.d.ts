@@ -1,4 +1,4 @@
-import { FastifyPluginAsync } from 'fastify'
+import { FastifyPluginAsync, FastifyRequest } from 'fastify'
 
 interface Headers {
   [key: string]: string
@@ -13,7 +13,7 @@ export type PlatformaticClientPluginOptions = {
   type: 'openapi' | 'graphql';
   name?: string;
   serviceId?: string;
-  getHeaders?: () => Headers;
+  getHeaders?: (request?: FastifyRequest) => Headers;
 }
 
 interface BuildOpenAPIClientOptions {
