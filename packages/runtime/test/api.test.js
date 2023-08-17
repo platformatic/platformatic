@@ -349,9 +349,6 @@ test('should fail to get a service openapi schema if service does not expose it'
     await app.close()
   })
 
-  try {
-    await app.getServiceOpenapiSchema('without-openapi')
-  } catch (err) {
-    assert.strictEqual(err.message, 'Service with id \'without-openapi\' does not expose an OpenAPI schema')
-  }
+  const openapiSchema = await app.getServiceOpenapiSchema('without-openapi')
+  assert.strictEqual(openapiSchema, null)
 })
