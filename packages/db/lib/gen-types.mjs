@@ -7,7 +7,7 @@ import pretty from 'pino-pretty'
 import camelcase from 'camelcase'
 import { mapSQLEntityToJSONSchema, mapOpenAPItoTypes } from '@platformatic/sql-json-schema-mapper'
 import { setupDB, isFileAccessible } from './utils.js'
-import { loadConfig } from '@platformatic/service'
+import { loadConfig } from '@platformatic/config'
 import { platformaticDB } from '../index.js'
 
 const DEFAULT_TYPES_FOLDER_PATH = resolve(process.cwd(), 'types')

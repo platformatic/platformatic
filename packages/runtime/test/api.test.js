@@ -4,7 +4,7 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 
-const { loadConfig } = require('@platformatic/service')
+const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('..')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 

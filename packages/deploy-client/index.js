@@ -9,9 +9,7 @@ const tar = require('tar')
 const { request } = require('undici')
 
 const ConfigManager = require('@platformatic/config')
-const { getConfigType, getApp } = require('@platformatic/start')
-const { loadConfig } = require('@platformatic/service')
-const { platformaticRuntime, compile } = require('@platformatic/runtime')
+const { compile, unifiedApi: { loadConfig } } = require('@platformatic/runtime')
 
 const makePrewarmRequest = require('./lib/prewarm.js')
 
@@ -173,6 +171,18 @@ async function checkPlatformaticDependency (logger, projectPath) {
   }
 }
 
+async function _loadConfig (minimistConfig, args) {
+  try {
+    return await loadConfig(minimistConfig, args)
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      throw new Error('Missing config file!')
+    }
+    /* c8 ignore next 2 */
+    throw err
+  }
+}
+
 async function deploy ({
   deployServiceHost,
   workspaceId,
@@ -206,10 +216,8 @@ async function deploy ({
   }
 
   const args = ['-c', join(pathToProject, pathToConfig)]
-  const appType = await getConfigType(args, pathToProject)
-  const app = appType === 'runtime' ? platformaticRuntime : getApp(appType)
 
-  const { configManager } = await loadConfig({}, args, app)
+  const { configManager, configType: appType } = await _loadConfig({}, args)
   const config = configManager.current
 
   logger.info(`Found Platformatic config file: ${pathToConfig}`)

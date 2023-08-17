@@ -78,7 +78,7 @@ test('seed command should throw an error if there are migrations to apply', asyn
   try {
     await execa('node', [cliPath, 'seed', seed], { cwd })
   } catch (err) {
-    const sanitized = stripAnsi(err.stdout)
+    const sanitized = stripAnsi(err.stderr)
     match(sanitized, /You have migrations to apply. Please run `platformatic db migrations apply` first./)
   }
 })
@@ -128,7 +128,7 @@ test('missing seed file', async ({ equal, match }) => {
     await execa('node', [cliPath, 'seed'], { cwd })
   } catch (err) {
     equal(err.exitCode, 1)
-    match(err.stdout, 'Missing seed file')
+    match(err.stderr, 'Missing seed file')
   }
 })
 
