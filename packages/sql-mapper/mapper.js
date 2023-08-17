@@ -1,6 +1,7 @@
 'use strict'
 
 const buildEntity = require('./lib/entity')
+const buildCleanUp = require('./lib/clean-up')
 const queriesFactory = require('./lib/queries')
 const fp = require('fastify-plugin')
 const { areSchemasSupported } = require('./lib/utils')
@@ -172,6 +173,7 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, 
       db,
       sql,
       entities,
+      cleanUpAllEntities: buildCleanUp(db, sql, log, entities, queries),
       addEntityHooks,
       dbschema
     }

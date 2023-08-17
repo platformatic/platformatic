@@ -331,6 +331,11 @@ export interface SQLMapperPluginInterface {
    * Adds hooks to the entity.
    */
   addEntityHooks<EntityFields>(entityName: string, hooks: EntityHooks<EntityFields>): any
+
+  /**
+   * Clean up all the data in all entities
+   */
+  cleanUpAllEntities(): Promise<void>
 }
 
 // Extend the PlatformaticApp interface,
@@ -353,6 +358,10 @@ declare module '@platformatic/types' {
      * Adds hooks to the entity.
      */
     addEntityHooks<EntityFields>(entityName: string, hooks: EntityHooks<EntityFields>): any
+    /**
+     * Clean up all the data in all entities
+     */
+    cleanUpAllEntities(): Promise<void>
   }
 }
 

@@ -17,6 +17,8 @@ expectType<Database>(pluginOptions.db)
 expectType<SQL>(pluginOptions.sql)
 expectType<{ [entityName: string]: Entity }>(pluginOptions.entities)
 
+expectType<Promise<void>>(pluginOptions.cleanUpAllEntities())
+
 interface EntityFields {
   id: number,
   name: string,
@@ -88,6 +90,7 @@ instance.register((instance) => {
     const ctx = request.platformaticContext
     expectType<FastifyInstance>(ctx.app)
     expectType<FastifyReply>(ctx.reply)
+    await instance.platformatic.cleanUpAllEntities()
   })
 })
 
