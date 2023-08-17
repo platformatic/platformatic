@@ -8,7 +8,7 @@ const { Resource } = require('@opentelemetry/resources')
 const { PlatformaticTracerProvider } = require('./platformatic-trace-provider')
 const { PlatformaticContext } = require('./platformatic-context')
 const { fastifyTextMapGetter, fastifyTextMapSetter } = require('./fastify-text-map')
-const formatParamUrl = require('./formatParamUrl')
+const { formatParamUrl } = require('@fastify/swagger')
 const fastUri = require('fast-uri')
 
 // Platformatic telemetry plugin.
