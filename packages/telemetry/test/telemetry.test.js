@@ -1,6 +1,6 @@
 'use strict'
 
-const { test, only } = require('tap')
+const { test } = require('tap')
 const fastify = require('fastify')
 const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
 const telemetryPlugin = require('../lib/telemetry')
@@ -280,7 +280,7 @@ test('should not trace if the operation is skipped', async ({ equal, same, teard
   equal(finishedSpans.length, 0)
 })
 
-only('should not put the URL param in path', async ({ equal, same, teardown }) => {
+test('should not put the URL param in path', async ({ equal, same, teardown }) => {
   const handler = async (request, reply) => {
     return { foo: 'bar' }
   }
