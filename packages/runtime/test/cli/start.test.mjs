@@ -48,6 +48,10 @@ test('handles startup errors', async (t) => {
   }
 
   assert(found)
+
+  // if we do not await this, the test will crash because the event loop has nothing to do
+  // but there is still a promise waiting
+  await child.catch(() => {})
 })
 
 test('exits on error', async () => {

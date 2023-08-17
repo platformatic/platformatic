@@ -38,15 +38,11 @@ async function loadConfig (minimistConfig, _args, app, overrides = {}) {
   app = loaded.app
   const configManager = loaded.configManager
 
-  try {
-    const parsingResult = await configManager.parse()
-    if (!parsingResult) {
-      const err = new Error('The configuration does not validate against the configuration schema')
-      err.validationErrors = configManager.validationErrors
-      throw err
-    }
-  } finally {
-    configManager.stopWatching()
+  const parsingResult = await configManager.parse()
+  if (!parsingResult) {
+    const err = new Error('The configuration does not validate against the configuration schema')
+    err.validationErrors = configManager.validationErrors
+    throw err
   }
 
   return { configManager, args, app, configType: app.configType }
