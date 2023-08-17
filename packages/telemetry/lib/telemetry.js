@@ -8,6 +8,7 @@ const { Resource } = require('@opentelemetry/resources')
 const { PlatformaticTracerProvider } = require('./platformatic-trace-provider')
 const { PlatformaticContext } = require('./platformatic-context')
 const { fastifyTextMapGetter, fastifyTextMapSetter } = require('./fastify-text-map')
+const { formatParamUrl } = require('./utils')
 const fastUri = require('fast-uri')
 
 // Platformatic telemetry plugin.
@@ -28,9 +29,17 @@ const fastUri = require('fast-uri')
 const { name: moduleName, version: moduleVersion } = require('../package.json')
 
 function formatSpanName (request) {
-  const { method, routerPath } = request
+  const { method, routerPath, url } = request
+
+  let path
+  if (routerPath) {
+    path = formatParamUrl(routerPath)
+  } else {
+    path = url
+  }
+
   /* istanbul ignore next */
-  return routerPath ? `${method} ${routerPath}` : method
+  return routerPath ? `${method} ${path}` : method
 }
 
 const formatSpanAttributes = {
@@ -41,7 +50,12 @@ const formatSpanAttributes = {
 
     // We must user RouterPath, because otherwise `/test/123` will be considered as
     // a different operation than `/test/321`. In case is not set (this should actually happen only for HTTP/404) we fallback to the path.
-    const path = routerPath || urlData.path
+    let path
+    if (routerPath) {
+      path = formatParamUrl(routerPath)
+    } else {
+      path = request.url
+    }
     return {
       'server.address': hostname,
       'server.port': urlData.port,
