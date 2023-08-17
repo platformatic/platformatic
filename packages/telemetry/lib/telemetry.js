@@ -28,34 +28,30 @@ const fastUri = require('fast-uri')
 
 const { name: moduleName, version: moduleVersion } = require('../package.json')
 
-function formatSpanName (request) {
-  const { method, routerPath, url } = request
-
+const extractPath = (request) => {
+  // We must user RouterPath, because otherwise `/test/123` will be considered as
+  // a different operation than `/test/321`. In case is not set (this should actually happen only for HTTP/404) we fallback to the path.
+  const { routerPath, url } = request
   let path
   if (routerPath) {
     path = formatParamUrl(routerPath)
   } else {
     path = url
   }
+  return path
+}
 
+function formatSpanName (request, path) {
+  const { method } = request
   /* istanbul ignore next */
-  return routerPath ? `${method} ${path}` : method
+  return path ? `${method} ${path}` : method
 }
 
 const formatSpanAttributes = {
-  request (request) {
-    const { hostname, method, url, protocol, routerPath } = request
+  request (request, path) {
+    const { hostname, method, url, protocol } = request
     // Inspired by: https://github.com/fastify/fastify-url-data/blob/master/plugin.js#L11
     const urlData = fastUri.parse(`${protocol}://${hostname}${url}`)
-
-    // We must user RouterPath, because otherwise `/test/123` will be considered as
-    // a different operation than `/test/321`. In case is not set (this should actually happen only for HTTP/404) we fallback to the path.
-    let path
-    if (routerPath) {
-      path = formatParamUrl(routerPath)
-    } else {
-      path = request.url
-    }
     return {
       'server.address': hostname,
       'server.port': urlData.port,
@@ -140,15 +136,16 @@ async function setupTelemetry (app, opts) {
     // We populate the context with the incoming request headers
     let context = propagator.extract(new PlatformaticContext(), request, fastifyTextMapGetter)
 
+    const path = extractPath(request)
     const span = tracer.startSpan(
-      formatSpanName(request),
+      formatSpanName(request, path),
       {},
       context
     )
     span.kind = SpanKind.SERVER
     // Next 2 lines are needed by W3CTraceContextPropagator
     context = context.setSpan(span)
-    span.setAttributes(formatSpanAttributes.request(request))
+    span.setAttributes(formatSpanAttributes.request(request, path))
     span.context = context
     request.span = span
   }

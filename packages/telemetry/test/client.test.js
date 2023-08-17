@@ -178,7 +178,7 @@ test('should trace a client request failing', async ({ equal, same, teardown }) 
   equal(finishedSpans.length, 2)
   // We have two one for the client and one for the server
   const spanServer = finishedSpans[0]
-  equal(spanServer.name, 'GET')
+  equal(spanServer.name, 'GET /wrong')
   equal(spanServer.kind, SpanKind.SERVER)
   equal(spanServer.status.code, SpanStatusCode.ERROR)
   equal(spanServer.attributes['http.request.method'], 'GET')
