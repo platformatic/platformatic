@@ -193,7 +193,7 @@ class RuntimeApi {
     }
 
     if (typeof service.server.swagger !== 'function') {
-      throw new Error(`Service with id '${id}' does not expose an OpenAPI schema`)
+      return null
     }
 
     try {
