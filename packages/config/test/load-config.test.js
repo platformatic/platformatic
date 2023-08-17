@@ -291,7 +291,7 @@ test('auto-upgrades', async t => {
       connectionString: 'postgres://postgres:postgres@127.0.0.1/postgres'
     },
     migrations: {
-      dir: join(__dirname, 'fixtures', 'migrations'),
+      dir: './migrations',
       table: 'versions',
       autoApply: false,
       validateChecksums: true

@@ -179,6 +179,7 @@ class Store {
     }
 
     const configManagerConfig = {
+      schema: app.schema,
       ...app.configManagerConfig,
       ...overrides
     }
