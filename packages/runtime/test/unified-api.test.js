@@ -137,6 +137,9 @@ test('buildServer()', async (t) => {
     })
 
     const address = await server.start()
+
+    assert.strictEqual(server.platformatic.configManager.fullPath, configFile)
+
     // The address should be a valid URL.
     new URL(address) // eslint-disable-line no-new
   })

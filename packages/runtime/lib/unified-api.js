@@ -29,6 +29,7 @@ async function _buildServer (options) {
   if (typeof options === 'string') {
     const config = await _loadConfig({}, ['-c', options])
     options = config.configManager.current
+    options.configManager = config.configManager
     options.app = config.app
   }
 
