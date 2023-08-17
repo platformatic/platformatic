@@ -226,13 +226,10 @@ class PlatformaticApp {
     }
     const server = this.server
     const { configManager } = server.platformatic
-    // TODO FileWatcher and ConfigManager both watch the configuration file
-    // we should remove the watching from the ConfigManager
     const fileWatcher = new FileWatcher({
       path: dirname(configManager.fullPath),
       /* c8 ignore next 2 */
       allowToWatch: this.#originalWatch?.allow,
-      // watchIgnore: [...(this.#originalWatch?.ignore || []), basename(configManager.fullPath)]
       watchIgnore: this.#originalWatch?.ignore || []
     })
 
