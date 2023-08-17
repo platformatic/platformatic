@@ -35,14 +35,18 @@ function formatSpanName (request) {
 
 const formatSpanAttributes = {
   request (request) {
-    const { hostname, method, url, protocol } = request
+    const { hostname, method, url, protocol, routerPath } = request
     // Inspired by: https://github.com/fastify/fastify-url-data/blob/master/plugin.js#L11
     const urlData = fastUri.parse(`${protocol}://${hostname}${url}`)
+
+    // We must user RouterPath, because otherwise `/test/123` will be considered as
+    // a different operation than `/test/321`. In case is not set (this should actually happen only for HTTP/404) we fallback to the path.
+    const path = routerPath || urlData.path
     return {
       'server.address': hostname,
       'server.port': urlData.port,
       'http.request.method': method,
-      'url.path': urlData.path,
+      'url.path': path,
       'url.scheme': protocol
     }
   },
