@@ -3,6 +3,8 @@
 // istanbul ignore file
 
 // The above is from: https://github.com/fastify/fastify-swagger/blob/master/lib/util/common.js#L104
+// https://github.com/fastify/fastify-swagger/blob/master/LICENSE
+
 // The function is not exported from that module, so we copy it here.
 // For this reason, we exlude this file from code coverage.
 
@@ -87,6 +89,4 @@ function formatParamUrl (str) {
   return path
 }
 
-module.exports = {
-  formatParamUrl
-}
+module.exports = formatParamUrl
