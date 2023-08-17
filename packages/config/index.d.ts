@@ -29,8 +29,6 @@ export default class ConfigManager<T=object> {
   constructor(opts: IConfigManagerOptions)
   current: T
   fullPath: string
-  startWatching(): void
-  stopWatching(): Promise<void>
   getSerializer(): ISerializer
   purgeEnv(): IEnv
   replaceEnv(configString: string): string
