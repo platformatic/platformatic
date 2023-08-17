@@ -7,7 +7,6 @@ const Ajv = require('ajv')
 const fastifyPlugin = require('./plugin')
 const dotenv = require('dotenv')
 const { request } = require('undici')
-const { FileWatcher } = require('@platformatic/utils')
 const { getParser, analyze, upgrade } = require('@platformatic/metaconfig')
 const { isFileAccessible } = require('./utils')
 
@@ -26,16 +25,6 @@ class ConfigManager extends EventEmitter {
       const allowToWatch = opts.allowToWatch || []
       allowToWatch.push(basename(this.fullPath))
       this._parser = getParser(this.fullPath)
-
-      this.fileWatcher = new FileWatcher({
-        path: dirname(this.fullPath),
-        allowToWatch
-      })
-
-      /* c8 ignore next 3 */
-      if (opts.watch) {
-        this.startWatching()
-      }
       this.dirname = dirname(this.fullPath)
     } else {
       this.current = opts.source
@@ -62,24 +51,6 @@ class ConfigManager extends EventEmitter {
     }
   }
 
-  async stopWatching () {
-    await this.fileWatcher.stopWatching()
-  }
-
-  startWatching () {
-    if (this.fileWatcher.isWatching) return
-
-    this.fileWatcher.on('update', async () => {
-      try {
-        await this.parseAndValidate()
-        this.emit('update', this.current)
-      } catch (err) {
-        this.emit('error', err)
-      }
-    })
-    this.fileWatcher.startWatching()
-  }
-
   purgeEnv (providedEnvironment) {
     const env = {
       ...process.env,
@@ -95,6 +66,7 @@ class ConfigManager extends EventEmitter {
   }
 
   async replaceEnv (configString) {
+    /* istanbul ignore next */
     if (this.pupa === null) {
       this.pupa = (await import('pupa')).default
     }
@@ -225,6 +197,7 @@ class ConfigManager extends EventEmitter {
     return true
   }
 
+  /* istanbul ignore next */
   async parseAndValidate () {
     const validationResult = await this.parse()
     if (!validationResult) {

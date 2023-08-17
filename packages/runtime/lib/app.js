@@ -1,7 +1,7 @@
 'use strict'
 
 const { once } = require('node:events')
-const { dirname, basename } = require('node:path')
+const { dirname } = require('node:path')
 const { FileWatcher } = require('@platformatic/utils')
 const debounce = require('debounce')
 const {
@@ -18,6 +18,7 @@ class PlatformaticApp {
   #fileWatcher
   #logger
   #telemetryConfig
+  #debouncedRestart
 
   constructor (appConfig, loaderPort, logger, telemetryConfig) {
     this.appConfig = appConfig
@@ -33,6 +34,12 @@ class PlatformaticApp {
       name: this.appConfig.id
     })
     this.#telemetryConfig = telemetryConfig
+
+    /* c8 ignore next 4 */
+    this.#debouncedRestart = debounce(() => {
+      this.server.log.info('files changed')
+      this.restart()
+    }, 100) // debounce restart for 100ms
   }
 
   getStatus () {
@@ -56,8 +63,9 @@ class PlatformaticApp {
       await once(this.#loaderPort, 'message')
     }
 
-    this.#setuplogger(this.config.configManager)
     try {
+      await this.config.configManager.parseAndValidate()
+      this.#setuplogger(this.config.configManager)
       await this.server.restart()
     } catch (err) {
       this.#logAndExit(err)
@@ -159,7 +167,6 @@ class PlatformaticApp {
     let _config
     try {
       _config = await loadConfig({}, ['-c', appConfig.config], {
-        watch: true,
         onMissingEnv (key) {
           return appConfig.localServiceEnvVars.get(key)
         }
@@ -173,46 +180,31 @@ class PlatformaticApp {
 
     function applyOverrides () {
       if (appConfig._configOverrides instanceof Map) {
-        try {
-          appConfig._configOverrides.forEach((value, key) => {
-            if (typeof key !== 'string') {
-              throw new Error('config path must be a string.')
-            }
+        appConfig._configOverrides.forEach((value, key) => {
+          if (typeof key !== 'string') {
+            throw new Error('config path must be a string.')
+          }
 
-            const parts = key.split('.')
-            let next = configManager.current
-            let obj
-            let i
+          const parts = key.split('.')
+          let next = configManager.current
+          let obj
+          let i
 
-            for (i = 0; next !== undefined && i < parts.length; ++i) {
-              obj = next
-              next = obj[parts[i]]
-            }
+          for (i = 0; next !== undefined && i < parts.length; ++i) {
+            obj = next
+            next = obj[parts[i]]
+          }
 
-            if (i === parts.length) {
-              obj[parts.at(-1)] = value
-            }
-          })
-        } catch (err) {
-          configManager.stopWatching()
-          throw err
-        }
+          if (i === parts.length) {
+            obj[parts.at(-1)] = value
+          }
+        })
       }
     }
 
     applyOverrides()
 
     this.#hotReload = this.appConfig.hotReload
-
-    configManager.on('update', async (newConfig) => {
-      if (this.server) { // when we setup telemetry on config, we don't have a server yet
-        this.server.platformatic.config = newConfig
-        applyOverrides()
-        this.server.log.debug('config changed')
-        this.server.log.trace({ newConfig }, 'new config')
-        await this.restart()
-      }
-    })
 
     configManager.on('error', (err) => {
       /* c8 ignore next */
@@ -240,28 +232,19 @@ class PlatformaticApp {
       path: dirname(configManager.fullPath),
       /* c8 ignore next 2 */
       allowToWatch: this.#originalWatch?.allow,
-      watchIgnore: [...(this.#originalWatch?.ignore || []), basename(configManager.fullPath)]
+      // watchIgnore: [...(this.#originalWatch?.ignore || []), basename(configManager.fullPath)]
+      watchIgnore: this.#originalWatch?.ignore || []
     })
 
-    /* c8 ignore next 4 */
-    const restart = debounce(() => {
-      this.server.log.info('files changed')
-      this.restart()
-    }, 100) // debounce restart for 100ms
-    fileWatcher.on('update', restart)
+    fileWatcher.on('update', this.#debouncedRestart)
 
     fileWatcher.startWatching()
     server.log.debug('start watching files')
     server.platformatic.fileWatcher = fileWatcher
-    server.platformatic.configManager.startWatching()
     this.#fileWatcher = fileWatcher
   }
 
   async #stopFileWatching () {
-    // The configManager automatically watches for the config file changes
-    // therefore we need to stop it all the times.
-    await this.config.configManager.stopWatching()
-
     const watcher = this.#fileWatcher
     if (watcher) {
       this.server.log.debug('stop watching files')
@@ -272,7 +255,6 @@ class PlatformaticApp {
   }
 
   #logAndExit (err) {
-    this.config?.configManager?.stopWatching()
     this.#logger.error({ err })
     process.exit(1)
   }
