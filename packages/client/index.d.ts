@@ -13,7 +13,7 @@ export type PlatformaticClientPluginOptions = {
   type: 'openapi' | 'graphql';
   name?: string;
   serviceId?: string;
-  getHeaders?: (request: FastifyRequest, reply: FastifyReply) => Headers;
+  getHeaders?: (request: FastifyRequest, reply: FastifyReply, options: { url: URL, method: string, headers: Headers, telemetryHeaders?: Headers, body: object }) => Promise<Headers>;
 }
 
 interface BuildOpenAPIClientOptions {
