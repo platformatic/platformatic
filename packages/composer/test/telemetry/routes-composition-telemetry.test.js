@@ -46,8 +46,8 @@ test('should compose openapi with prefixes', async (t) => {
   t.equal(statusCode, 200)
 
   // Check that the client span is correctly set
-  const { exporter } = composer.openTelemetry
-  const finishedSpans = exporter.getFinishedSpans()
+  const { exporters } = composer.openTelemetry
+  const finishedSpans = exporters[0].getFinishedSpans()
   t.equal(finishedSpans.length, 2)
   const proxyCallSpan = finishedSpans[0]
   const composerCallSpan = finishedSpans[1]
