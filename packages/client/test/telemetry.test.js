@@ -51,8 +51,8 @@ test('telemetry correctly propagates from a service client to a server for an Op
     url: '/'
   })
 
-  const { exporter } = app.openTelemetry
-  const finishedSpans = exporter.getFinishedSpans()
+  const { exporters } = app.openTelemetry
+  const finishedSpans = exporters[0].getFinishedSpans()
   // The first span is the client span, the second (because ended after the first) is the span for the POST that triggers the client
   equal(finishedSpans.length, 2)
   const clientSpan = finishedSpans[0]
@@ -68,9 +68,9 @@ test('telemetry correctly propagates from a service client to a server for an Op
   const clientSpanId = clientSpan.spanContext().spanId
 
   // Target app, we check that propagation works
-  same(targetApp.openTelemetry.exporter.getFinishedSpans().length, 2)
+  same(targetApp.openTelemetry.exporters[0].getFinishedSpans().length, 2)
   // The first span is the client call to `/documentation/json`, the second is the server call to `/movies/
-  const serverSpan = targetApp.openTelemetry.exporter.getFinishedSpans()[1]
+  const serverSpan = targetApp.openTelemetry.exporters[0].getFinishedSpans()[1]
   same(serverSpan.name, 'POST /movies/')
   const serverTraceId = serverSpan.spanContext().traceId
   const serverParentSpanId = serverSpan.parentSpanId
@@ -127,8 +127,8 @@ test('telemetry correctly propagates from a generic client through a service cli
     }
   })
 
-  const { exporter } = app.openTelemetry
-  const finishedSpans = exporter.getFinishedSpans()
+  const { exporters } = app.openTelemetry
+  const finishedSpans = exporters[0].getFinishedSpans()
 
   // The first span is the client span, the second (because ended after the first) is the span for the POST that triggers the client
   equal(finishedSpans.length, 2)
@@ -146,9 +146,9 @@ test('telemetry correctly propagates from a generic client through a service cli
   same(clientTraceId, traceId)
 
   // Target app
-  same(targetApp.openTelemetry.exporter.getFinishedSpans().length, 2)
+  same(targetApp.openTelemetry.exporters[0].getFinishedSpans().length, 2)
   // The first span is the client call to `/documentation/json`, the second is the server call to `/movies/
-  const serverSpan = targetApp.openTelemetry.exporter.getFinishedSpans()[1]
+  const serverSpan = targetApp.openTelemetry.exporters[0].getFinishedSpans()[1]
   same(serverSpan.name, 'POST /movies/')
   const serverTraceId = serverSpan.spanContext().traceId
   const serverParentSpanId = serverSpan.parentSpanId
@@ -207,8 +207,8 @@ test('telemetry correctly propagates from a service client to a server for an Gr
     url: '/'
   })
 
-  const { exporter } = app.openTelemetry
-  const finishedSpans = exporter.getFinishedSpans()
+  const { exporters } = app.openTelemetry
+  const finishedSpans = exporters[0].getFinishedSpans()
   // The first span is the client span, the second (because ended after the first) is the span for the POST that triggers the client
   equal(finishedSpans.length, 2)
   const clientSpan = finishedSpans[0]
@@ -224,8 +224,8 @@ test('telemetry correctly propagates from a service client to a server for an Gr
   const clientSpanId = clientSpan.spanContext().spanId
 
   // Target app, we check that propagation works
-  same(targetApp.openTelemetry.exporter.getFinishedSpans().length, 1)
-  const serverSpan = targetApp.openTelemetry.exporter.getFinishedSpans()[0]
+  same(targetApp.openTelemetry.exporters[0].getFinishedSpans().length, 1)
+  const serverSpan = targetApp.openTelemetry.exporters[0].getFinishedSpans()[0]
   same(serverSpan.name, 'POST /graphql')
   const serverTraceId = serverSpan.spanContext().traceId
   const serverParentSpanId = serverSpan.parentSpanId

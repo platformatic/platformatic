@@ -14,10 +14,12 @@ async function setupApp (pluginOpts, routeHandler, teardown) {
   app.ready()
   teardown(async () => {
     await app.close()
-    const { exporter } = app.openTelemetry
-    if (exporter.constructor.name === 'InMemorySpanExporter') {
-      exporter.reset()
-    }
+    const { exporters } = app.openTelemetry
+    exporters.forEach(exporter => {
+      if (exporter.constructor.name === 'InMemorySpanExporter') {
+        exporter.reset()
+      }
+    })
   })
   return app
 }
@@ -119,7 +121,8 @@ test('should trace a client request', async ({ equal, same, teardown }) => {
   const response = await app.inject(args)
   endSpanClient(span, response)
 
-  const { exporter } = app.openTelemetry
+  const { exporters } = app.openTelemetry
+  const exporter = exporters[0]
   const finishedSpans = exporter.getFinishedSpans()
   equal(finishedSpans.length, 2)
   // We have two one for the client and one for the server
@@ -173,7 +176,9 @@ test('should trace a client request failing', async ({ equal, same, teardown }) 
   const response = await app.inject(args)
   endSpanClient(span, response)
 
-  const { exporter } = app.openTelemetry
+  const { exporters } = app.openTelemetry
+  const exporter = exporters[0]
+
   const finishedSpans = exporter.getFinishedSpans()
   equal(finishedSpans.length, 2)
   // We have two one for the client and one for the server
@@ -218,7 +223,8 @@ test('should trace a client request failing (no HTTP error)', async ({ equal, sa
     endSpanClient(span)
   }
 
-  const { exporter } = app.openTelemetry
+  const { exporters } = app.openTelemetry
+  const exporter = exporters[0]
   const finishedSpans = exporter.getFinishedSpans()
   equal(finishedSpans.length, 1)
 

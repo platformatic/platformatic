@@ -81,7 +81,11 @@ const setupProvider = (app, opts) => {
     app.log.warn('No exporter configured, defaulting to console.')
     exporter = { type: 'console' }
   }
+
+  const exporters = Array.isArray(exporter) ? exporter : [exporter]
+
   app.log.info(`Setting up telemetry for service: ${serviceName}${version ? ' version: ' + version : ''} with exporter of type ${exporter.type}`)
+
   const provider = new PlatformaticTracerProvider({
     resource: new Resource({
       [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
@@ -89,33 +93,40 @@ const setupProvider = (app, opts) => {
     })
   })
 
+  const exporterObjs = []
+  const spanProcessors = []
+  for (const exporter of exporters) {
   // Exporter config:
   // https://open-telemetry.github.io/opentelemetry-js/interfaces/_opentelemetry_exporter_zipkin.ExporterConfig.html
-  const exporterOptions = { ...exporter.options, serviceName }
+    const exporterOptions = { ...exporter.options, serviceName }
 
-  let exporterObj
-  if (exporter.type === 'console') {
-    exporterObj = new ConsoleSpanExporter(exporterOptions)
-  } else if (exporter.type === 'otlp') {
+    let exporterObj
+    if (exporter.type === 'console') {
+      exporterObj = new ConsoleSpanExporter(exporterOptions)
+    } else if (exporter.type === 'otlp') {
     // We require here because this require (and only the require!) creates some issue with c8 on some mjs tests on other modules. Since we need an assignemet here, we don't use a switch.
-    const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-proto')
-    exporterObj = new OTLPTraceExporter(exporterOptions)
-  } else if (exporter.type === 'zipkin') {
-    const { ZipkinExporter } = require('@opentelemetry/exporter-zipkin')
-    exporterObj = new ZipkinExporter(exporterOptions)
-  } else if (exporter.type === 'memory') {
-    exporterObj = new InMemorySpanExporter()
-  } else {
-    app.log.warn(`Unknown exporter type: ${exporter.type}, defaulting to console.`)
-    exporterObj = new ConsoleSpanExporter(exporterOptions)
+      const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-proto')
+      exporterObj = new OTLPTraceExporter(exporterOptions)
+    } else if (exporter.type === 'zipkin') {
+      const { ZipkinExporter } = require('@opentelemetry/exporter-zipkin')
+      exporterObj = new ZipkinExporter(exporterOptions)
+    } else if (exporter.type === 'memory') {
+      exporterObj = new InMemorySpanExporter()
+    } else {
+      app.log.warn(`Unknown exporter type: ${exporter.type}, defaulting to console.`)
+      exporterObj = new ConsoleSpanExporter(exporterOptions)
+    }
+
+    // We use a SimpleSpanProcessor for the console/memory exporters and a BatchSpanProcessor for the others.
+    const spanProcessor = ['memory', 'console'].includes(exporter.type) ? new SimpleSpanProcessor(exporterObj) : new BatchSpanProcessor(exporterObj)
+    spanProcessors.push(spanProcessor)
+    exporterObjs.push(exporterObj)
   }
 
-  // We use a SimpleSpanProcessor for the console/memory exporters and a BatchSpanProcessor for the others.
-  const spanProcessor = ['memory', 'console'].includes(exporter.type) ? new SimpleSpanProcessor(exporterObj) : new BatchSpanProcessor(exporterObj)
-  provider.addSpanProcessor(spanProcessor)
+  provider.addSpanProcessor(spanProcessors)
   const tracer = provider.getTracer(moduleName, moduleVersion)
   const propagator = provider.getPropagator()
-  return { tracer, exporter: exporterObj, propagator, provider }
+  return { tracer, exporters: exporterObjs, propagator, provider }
 }
 
 async function setupTelemetry (app, opts) {
