@@ -1496,6 +1496,9 @@ importers:
       '@databases/sql':
         specifier: ^3.3.0
         version: 3.3.0
+      '@hapi/topo':
+        specifier: ^6.0.2
+        version: 6.0.2
       '@matteo.collina/sqlite-pool':
         specifier: ^0.3.0
         version: 0.3.0
