@@ -31,7 +31,7 @@ server.register(pltClient, {
   throwOnError: false,
   type: 'openapi',
   url: 'http://127.0.0.1/path/42',
-  getHeaders: ({ url }) => ({ foo: 'bar', url }),
+  getHeaders: ({ url }, { sent }) => ({ foo: 'bar', url, baz: sent.toString() }),
   headers: { foo: 'bar' },
   name: 'Frassica',
   path: 'Fracchia',
