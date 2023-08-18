@@ -154,23 +154,6 @@ async function isFileAccessible (path) {
   }
 }
 
-async function checkPlatformaticDependency (logger, projectPath) {
-  const packageJsonPath = join(projectPath, 'package.json')
-  const packageJsonExist = await isFileAccessible(packageJsonPath)
-  if (!packageJsonExist) return
-
-  const packageJsonData = await readFile(packageJsonPath, 'utf8')
-  const packageJson = JSON.parse(packageJsonData)
-
-  const dependencies = packageJson.dependencies
-  if (
-    dependencies !== undefined &&
-    dependencies.platformatic !== undefined
-  ) {
-    logger.warn('Move platformatic dependency to devDependencies to speed up deployment')
-  }
-}
-
 async function _loadConfig (minimistConfig, args) {
   try {
     return await loadConfig(minimistConfig, args)
@@ -206,8 +189,6 @@ async function deploy ({
     throw new Error('platformatic_workspace_key action param is required')
   }
 
-  await checkPlatformaticDependency(logger, pathToProject)
-
   if (!pathToConfig) {
     pathToConfig = await ConfigManager.findConfigFile(pathToProject)
     if (!pathToConfig) {
@@ -224,7 +205,15 @@ async function deploy ({
 
   let compiled = false
   if (compileTypescript !== false) {
-    compiled = await compile(args, logger)
+    try {
+      compiled = await compile(args, logger)
+    } catch (err) {
+      /* c8 ignore next 3 */
+      if (err.code !== 'MODULE_NOT_FOUND') {
+        throw err
+      }
+      logger.trace('TypeScript compiler was not installed, skipping compilation')
+    }
   }
 
   const deployClient = new DeployClient(

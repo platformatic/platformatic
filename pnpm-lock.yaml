@@ -990,6 +990,9 @@ importers:
       license-checker:
         specifier: ^25.0.1
         version: 25.0.1
+      proxyquire:
+        specifier: ^2.1.3
+        version: 2.1.3
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
