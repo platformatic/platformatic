@@ -8,6 +8,7 @@ import isMain from 'es-main'
 import helpMe from 'help-me'
 import { join } from 'desm'
 import { start } from '@platformatic/service'
+import { printAndExitLoadConfigError } from '@platformatic/config'
 
 import { fetchOpenApiSchemas } from './lib/fetch-schemas.mjs'
 import { platformaticComposer } from './index.js'
@@ -21,13 +22,11 @@ const help = helpMe({
 const program = commist({ maxDistance: 2 })
 
 program.register('start', (argv) => {
-  /* c8 ignore next 4 */
-  start(platformaticComposer, argv).catch((err) => {
-    console.error(err)
-    process.exit(1)
-  })
+  start(platformaticComposer, argv).catch(printAndExitLoadConfigError)
 })
-program.register('openapi schemas fetch', fetchOpenApiSchemas)
+program.register('openapi schemas fetch', (argv) => {
+  return fetchOpenApiSchemas(argv).catch(printAndExitLoadConfigError)
+})
 
 export async function runComposer (argv) {
   const args = parseArgs(argv, {

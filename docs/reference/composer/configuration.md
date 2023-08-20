@@ -273,7 +273,8 @@ _Examples_
 
 - **`serviceName`** (**required**, `string`) — Name of the service as will be reported in open telemetry.
 - **`version`** (`string`) — Optional version (free form)
-- **`exporter`** (`object`) — Exporter configuration object. If not defined, the exporter defaults to `console`. This object has the following properties:
+- **`skip`** (`array`). Optional list of operations to skip when exporting telemetry in the form of `${method}/${path}`. e.g.: `GET/documentation/json` 
+- **`exporter`** (`object` or `array`) — Exporter configuration. If not defined, the exporter defaults to `console`. If an array of objects is configured, every object must be a valid exporter object. The exporter object has the following properties:
     - **`type`** (`string`) — Exporter type. Supported values are `console`, `otlp`, `zipkin` and `memory` (default: `console`). `memory` is only supported for testing purposes. 
     - **`options`** (`object`) — These options are supported:
         - **`url`** (`string`) — The URL to send the telemetry to. Required for `otlp` exporter. This has no effect on `console` and `memory` exporters.

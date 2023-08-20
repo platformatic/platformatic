@@ -7,7 +7,6 @@ const { PlatformaticApp } = require('./app')
 class RuntimeApi {
   #services
   #dispatcher
-  #loaderPort
 
   constructor (config, logger, loaderPort) {
     this.#services = new Map()
@@ -87,6 +86,8 @@ class RuntimeApi {
         return this.#getServiceDetails(params)
       case 'plt:get-service-config':
         return this.#getServiceConfig(params)
+      case 'plt:get-service-openapi-schema':
+        return this.#getServiceOpenapiSchema(params)
       case 'plt:start-service':
         return this.#startService(params)
       case 'plt:stop-service':
@@ -182,6 +183,25 @@ class RuntimeApi {
     }
 
     return config.configManager.current
+  }
+
+  async #getServiceOpenapiSchema ({ id }) {
+    const service = this.#getServiceById(id)
+
+    if (!service.config) {
+      throw new Error(`Service with id '${id}' is not started`)
+    }
+
+    if (typeof service.server.swagger !== 'function') {
+      return null
+    }
+
+    try {
+      const openapiSchema = service.server.swagger()
+      return openapiSchema
+    } catch (err) {
+      throw new Error(`Failed to retrieve OpenAPI schema for service with id '${id}': ${err.message}`)
+    }
   }
 
   async #startService ({ id }) {

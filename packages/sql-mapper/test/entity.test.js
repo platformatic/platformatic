@@ -1071,6 +1071,27 @@ test('array support (PG)', { skip: !(isPg) }, async ({ teardown, same, rejects }
     }
   }), [{ id: 2, test: [4], checkmark: true }])
 
+  // where contains
+  same(await generatedTest.find({
+    where: {
+      test: { contains: [4] }
+    }
+  }), [{ id: 1, test: [4, 5, 6], checkmark: true }, { id: 2, test: [4], checkmark: true }])
+
+  // where contained
+  same(await generatedTest.find({
+    where: {
+      test: { contained: [4, 5, 6] }
+    }
+  }), [{ id: 1, test: [4, 5, 6], checkmark: true }, { id: 2, test: [4], checkmark: true }])
+
+  // where overlaps
+  same(await generatedTest.find({
+    where: {
+      test: { overlaps: [4] }
+    }
+  }), [{ id: 1, test: [4, 5, 6], checkmark: true }, { id: 2, test: [4], checkmark: true }])
+
   // where eq
   await rejects(generatedTest.find({
     where: {

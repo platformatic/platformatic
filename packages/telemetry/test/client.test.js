@@ -14,10 +14,12 @@ async function setupApp (pluginOpts, routeHandler, teardown) {
   app.ready()
   teardown(async () => {
     await app.close()
-    const { exporter } = app.openTelemetry
-    if (exporter.constructor.name === 'InMemorySpanExporter') {
-      exporter.reset()
-    }
+    const { exporters } = app.openTelemetry
+    exporters.forEach(exporter => {
+      if (exporter.constructor.name === 'InMemorySpanExporter') {
+        exporter.reset()
+      }
+    })
   })
   return app
 }
@@ -119,7 +121,8 @@ test('should trace a client request', async ({ equal, same, teardown }) => {
   const response = await app.inject(args)
   endSpanClient(span, response)
 
-  const { exporter } = app.openTelemetry
+  const { exporters } = app.openTelemetry
+  const exporter = exporters[0]
   const finishedSpans = exporter.getFinishedSpans()
   equal(finishedSpans.length, 2)
   // We have two one for the client and one for the server
@@ -173,12 +176,14 @@ test('should trace a client request failing', async ({ equal, same, teardown }) 
   const response = await app.inject(args)
   endSpanClient(span, response)
 
-  const { exporter } = app.openTelemetry
+  const { exporters } = app.openTelemetry
+  const exporter = exporters[0]
+
   const finishedSpans = exporter.getFinishedSpans()
   equal(finishedSpans.length, 2)
   // We have two one for the client and one for the server
   const spanServer = finishedSpans[0]
-  equal(spanServer.name, 'GET')
+  equal(spanServer.name, 'GET /wrong')
   equal(spanServer.kind, SpanKind.SERVER)
   equal(spanServer.status.code, SpanStatusCode.ERROR)
   equal(spanServer.attributes['http.request.method'], 'GET')
@@ -218,7 +223,8 @@ test('should trace a client request failing (no HTTP error)', async ({ equal, sa
     endSpanClient(span)
   }
 
-  const { exporter } = app.openTelemetry
+  const { exporters } = app.openTelemetry
+  const exporter = exporters[0]
   const finishedSpans = exporter.getFinishedSpans()
   equal(finishedSpans.length, 1)
 
@@ -229,4 +235,44 @@ test('should trace a client request failing (no HTTP error)', async ({ equal, sa
   equal(spanClient.attributes['error.name'], 'Error')
   equal(spanClient.attributes['error.message'], 'KABOOM!!!')
   equal(spanClient.attributes['error.stack'].includes('Error: KABOOM!!!'), true)
+})
+
+test('should not add the query in span name', async ({ equal, same, teardown }) => {
+  const handler = async (request, reply) => {
+    return { foo: 'bar' }
+  }
+
+  const app = await setupApp({
+    serviceName: 'test-service',
+    exporter: {
+      type: 'memory'
+    }
+  }, handler, teardown)
+
+  const { startSpanClient } = app.openTelemetry
+
+  const url = 'http://localhost:3000/test?foo=bar'
+  const { span } = startSpanClient(url, 'GET')
+  same(span.name, 'GET http://localhost:3000/test')
+})
+
+test('should ignore the skipped operations', async ({ equal, same, ok, teardown }) => {
+  const handler = async (request, reply) => {
+    return { foo: 'bar' }
+  }
+
+  const app = await setupApp({
+    serviceName: 'test-service',
+    skip: ['POST/skipme'],
+    exporter: {
+      type: 'memory'
+    }
+  }, handler, teardown)
+
+  const { startSpanClient } = app.openTelemetry
+
+  const url = 'http://localhost:3000/skipme'
+  const ret = startSpanClient(url, 'POST')
+  // no spam should be created
+  ok(!ret)
 })

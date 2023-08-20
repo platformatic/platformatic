@@ -95,31 +95,38 @@ async function parseClientsAndComposer (configManager) {
         const clientName = dep.id ?? ''
         const dependency = configManager.current.serviceMap.get(clientName)
 
-        if (dependency === undefined) {
-          throw new Error(missingDependencyErrorMessage(clientName, service, configManager))
-        }
+        let isLocal = true
+        let clientUrl = null
 
-        dependency.dependents.push(service.id)
-
-        if (dep.origin) {
+        if (dep.origin !== undefined) {
           try {
-            await cm.replaceEnv(dep.origin)
+            clientUrl = await cm.replaceEnv(dep.origin)
+            isLocal = false
             /* c8 ignore next 4 */
           } catch (err) {
             if (err.name !== 'MissingValueError') {
               throw err
             }
 
-            if (dep.origin === `{${err.key}}`) {
-              service.localServiceEnvVars.set(err.key, `http://${clientName}.plt.local`)
+            if (dependency !== undefined && dep.origin === `{${err.key}}`) {
+              clientUrl = `http://${clientName}.plt.local`
+              service.localServiceEnvVars.set(err.key, clientUrl)
             }
           }
         }
 
+        if (isLocal) {
+          if (dependency === undefined) {
+            throw new Error(missingDependencyErrorMessage(clientName, service, configManager))
+          }
+          clientUrl = `http://${clientName}.plt.local`
+          dependency.dependents.push(service.id)
+        }
+
         service.dependencies.push({
           id: clientName,
-          url: `http://${clientName}.plt.local`,
-          local: true
+          url: clientUrl,
+          local: isLocal
         })
       }
     }
@@ -128,7 +135,7 @@ async function parseClientsAndComposer (configManager) {
       const promises = parsed.clients.map((client) => {
         // eslint-disable-next-line no-async-promise-executor
         return new Promise(async (resolve, reject) => {
-          let clientName = client.serviceId ?? ''
+          let clientName = client.serviceId || ''
           let clientUrl
           let missingKey
           let isLocal = false
@@ -155,11 +162,20 @@ async function parseClientsAndComposer (configManager) {
 
           /* c8 ignore next 20 - unclear why c8 is unhappy for nearly 20 lines here */
           if (!clientName) {
-            const clientAbsolutePath = pathResolve(service.path, client.path)
-            const clientPackageJson = join(clientAbsolutePath, 'package.json')
-            const clientMetadata = JSON.parse(await readFile(clientPackageJson, 'utf8'))
-
-            clientName = clientMetadata.name ?? ''
+            try {
+              const clientAbsolutePath = pathResolve(service.path, client.path)
+              const clientPackageJson = join(clientAbsolutePath, 'package.json')
+              const clientMetadata = JSON.parse(await readFile(clientPackageJson, 'utf8'))
+              clientName = clientMetadata.name ?? ''
+            } catch (err) {
+              if (client.url !== undefined && client.name !== undefined) {
+                // We resolve because this is a remote client
+                resolve()
+              } else {
+                reject(err)
+              }
+              return
+            }
           }
 
           if (clientUrl === undefined) {

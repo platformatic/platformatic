@@ -76,8 +76,8 @@ test('should setup telemetry if configured', async ({ teardown, equal, pass, sam
     })
   })
   equal(res.statusCode, 200, 'savePage status code')
-  const { exporter } = app.openTelemetry
-  const finishedSpans = exporter.getFinishedSpans()
+  const { exporters } = app.openTelemetry
+  const finishedSpans = exporters[0].getFinishedSpans()
   equal(finishedSpans.length, 1)
   const span = finishedSpans[0]
   equal(span.name, 'GET /')

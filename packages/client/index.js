@@ -81,9 +81,6 @@ function buildCallFunction (baseUrl, path, method, methodMeta, fullResponse, thr
   return async function (args) {
     let headers = this[kHeaders]
     let telemetryContext = null
-    if (this[kGetHeaders]) {
-      headers = { ...headers, ...(await this[kGetHeaders]()) }
-    }
     if (this[kTelemetryContext]) {
       telemetryContext = this[kTelemetryContext]
     }
@@ -117,6 +114,12 @@ function buildCallFunction (baseUrl, path, method, methodMeta, fullResponse, thr
     urlToCall.pathname = pathToCall
 
     const { span, telemetryHeaders } = openTelemetry?.startSpanClient(urlToCall.toString(), method, telemetryContext) || { span: null, telemetryHeaders: {} }
+
+    if (this[kGetHeaders]) {
+      const options = { url: urlToCall, method, headers, telemetryHeaders, body }
+      headers = { ...headers, ...(await this[kGetHeaders](options)) }
+    }
+
     let res
     try {
       res = await request(urlToCall, {
@@ -283,6 +286,7 @@ plugin[Symbol.for('plugin-meta')] = {
 }
 
 module.exports = plugin
+module.exports.default = plugin
 module.exports.buildOpenAPIClient = buildOpenAPIClient
 module.exports.buildGraphQLClient = buildGraphQLClient
 module.exports.generateOperationId = generateOperationId

@@ -32,7 +32,11 @@ class PlatformaticTracerProvider {
   }
 
   addSpanProcessor (spanProcessor) {
-    this._registeredSpanProcessors.push(spanProcessor)
+    if (Array.isArray(spanProcessor)) {
+      this._registeredSpanProcessors.push(...spanProcessor)
+    } else {
+      this._registeredSpanProcessors.push(spanProcessor)
+    }
     this.activeSpanProcessor = new MultiSpanProcessor(
       this._registeredSpanProcessors
     )

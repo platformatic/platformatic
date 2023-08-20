@@ -3,7 +3,8 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const { loadConfig, platformaticService } = require('@platformatic/service')
+const { loadConfig } = require('@platformatic/config')
+const { platformaticService } = require('@platformatic/service')
 const { parseInspectorOptions, platformaticRuntime } = require('../lib/config')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 

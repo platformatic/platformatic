@@ -235,3 +235,91 @@ test('platformatic decorator already present', async ({ teardown }) => {
   })
   await app.ready()
 })
+
+test('clean up all tables', async ({ teardown, has, equal, same }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(async () => await clear(db, sql))
+    teardown(() => db.dispose())
+
+    await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(255) NOT NULL
+    );`)
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad
+  })
+
+  const res = await mapper.entities.page.save({ input: { title: 'hello' } })
+
+  same(await mapper.entities.page.find(), [res])
+
+  await mapper.cleanUpAllEntities()
+
+  const pages = await mapper.entities.page.find()
+  equal(pages.length, 0)
+})
+
+test('clean up all tables with foreign keys', async ({ teardown, has, equal, same }) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+    teardown(async () => await clear(db, sql))
+    teardown(() => db.dispose())
+
+    if (db.isSQLite) {
+      await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
+        id INTEGER PRIMARY KEY,
+        title VARCHAR(255) NOT NULL
+      );`)
+      await db.query(sql`CREATE TABLE IF NOT EXISTS comments (
+        id INTEGER PRIMARY KEY,
+        text VARCHAR(255) NOT NULL,
+        page_id INTEGER NOT NULL REFERENCES pages(id)
+      );`)
+    } else if (db.isPg) {
+      await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL
+      );`)
+      await db.query(sql`CREATE TABLE IF NOT EXISTS comments (
+        id SERIAL PRIMARY KEY,
+        text VARCHAR(255) NOT NULL,
+        page_id INTEGER NOT NULL REFERENCES pages(id)
+      );`)
+    } else {
+      await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
+        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        title VARCHAR(255) NOT NULL
+      );`)
+      await db.query(sql`CREATE TABLE IF NOT EXISTS comments (
+        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        text VARCHAR(255) NOT NULL,
+        page_id INTEGER NOT NULL REFERENCES pages(id)
+      );`)
+    }
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad
+  })
+
+  {
+    const p1 = await mapper.entities.page.save({ input: { title: 'hello' } })
+    same(await mapper.entities.page.find(), [p1])
+
+    const c1 = await mapper.entities.comment.save({ input: { text: 'foo', pageId: p1.id } })
+    same(await mapper.entities.comment.find(), [c1])
+  }
+
+  await mapper.cleanUpAllEntities()
+
+  const pages = await mapper.entities.page.find()
+  equal(pages.length, 0)
+
+  const comments = await mapper.entities.comment.find()
+  equal(comments.length, 0)
+})
