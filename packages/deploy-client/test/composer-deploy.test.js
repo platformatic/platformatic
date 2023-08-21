@@ -2,12 +2,13 @@
 
 const { join } = require('path')
 const { test } = require('tap')
+const { randomUUID } = require('crypto')
 
 const { deploy } = require('../index')
 const { startMachine, startDeployService } = require('./helper')
 
 test('should deploy platformatic composer project without github metadata', async (t) => {
-  t.plan(12)
+  t.plan(13)
 
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
@@ -38,6 +39,8 @@ test('should deploy platformatic composer project without github metadata', asyn
     appType: 'composer'
   }
 
+  const deploymentId = randomUUID()
+
   await startDeployService(
     t,
     {
@@ -63,7 +66,10 @@ test('should deploy platformatic composer project without github metadata', asyn
           request.body,
           { label, metadata, variables, secrets }
         )
-        reply.code(200).send({ entryPointUrl })
+        reply.code(200).send({
+          id: deploymentId,
+          entryPointUrl
+        })
       },
       uploadCallback: (request) => {
         t.equal(request.headers.authorization, `Bearer ${token}`)
@@ -77,7 +83,7 @@ test('should deploy platformatic composer project without github metadata', asyn
     warn: () => t.fail('Should not log a warning')
   }
 
-  await deploy({
+  const result = await deploy({
     deployServiceHost: 'http://localhost:3042',
     compileTypescript: false,
     workspaceId,
@@ -89,5 +95,10 @@ test('should deploy platformatic composer project without github metadata', asyn
     secrets,
     variables,
     logger
+  })
+
+  t.strictSame(result, {
+    deploymentId,
+    entryPointUrl
   })
 })

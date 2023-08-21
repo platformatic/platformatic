@@ -277,7 +277,7 @@ async function deploy ({
     appMetadata.services = services
   }
 
-  const { entryPointUrl } = await deployClient.createDeployment(
+  const { id: deploymentId, entryPointUrl } = await deployClient.createDeployment(
     token,
     label,
     appMetadata,
@@ -289,7 +289,10 @@ async function deploy ({
   await makePrewarmRequest(entryPointUrl, logger)
   logger.info('Application has been successfully started')
 
-  return entryPointUrl
+  return {
+    deploymentId,
+    entryPointUrl
+  }
 }
 
 module.exports = { deploy }
