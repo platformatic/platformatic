@@ -2,13 +2,14 @@
 
 const { join } = require('path')
 const { test } = require('tap')
+const { randomUUID } = require('crypto')
 
 const { deploy } = require('../index')
 const { startMachine, startDeployService } = require('./helper')
 const proxyquire = require('proxyquire')
 
 test('should deploy platformatic project without github metadata', async (t) => {
-  t.plan(11)
+  t.plan(12)
 
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
@@ -34,6 +35,8 @@ test('should deploy platformatic project without github metadata', async (t) => 
   const secrets = {
     SECRET_VARIABLE_1: 'value3'
   }
+
+  const deploymentId = randomUUID()
 
   await startDeployService(
     t,
@@ -73,7 +76,10 @@ test('should deploy platformatic project without github metadata', async (t) => 
             }
           }
         )
-        reply.code(200).send({ entryPointUrl })
+        reply.code(200).send({
+          id: deploymentId,
+          entryPointUrl
+        })
       },
       uploadCallback: (request) => {
         t.equal(request.headers.authorization, `Bearer ${token}`)
@@ -87,7 +93,7 @@ test('should deploy platformatic project without github metadata', async (t) => 
     warn: () => t.fail('Should not log a warning')
   }
 
-  await deploy({
+  const result = await deploy({
     deployServiceHost: 'http://localhost:3042',
     workspaceId,
     workspaceKey,
@@ -100,10 +106,15 @@ test('should deploy platformatic project without github metadata', async (t) => 
     compileTypescript: false,
     logger
   })
+
+  t.strictSame(result, {
+    deploymentId,
+    entryPointUrl
+  })
 })
 
 test('should successfully deploy platformatic project with PR context', async (t) => {
-  t.plan(13)
+  t.plan(14)
 
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
@@ -129,6 +140,8 @@ test('should successfully deploy platformatic project with PR context', async (t
   const secrets = {
     SECRET_VARIABLE_1: 'value3'
   }
+
+  const deploymentId = randomUUID()
 
   const githubMetadata = {
     repository: {
@@ -191,7 +204,10 @@ test('should successfully deploy platformatic project with PR context', async (t
             }
           }
         )
-        reply.code(200).send({ entryPointUrl })
+        reply.code(200).send({
+          id: deploymentId,
+          entryPointUrl
+        })
       },
       uploadCallback: (request) => {
         t.equal(request.headers.authorization, `Bearer ${token}`)
@@ -205,7 +221,7 @@ test('should successfully deploy platformatic project with PR context', async (t
     warn: () => t.fail('Should not log a warning')
   }
 
-  await deploy({
+  const result = await deploy({
     deployServiceHost: 'http://localhost:3042',
     compileTypescript: false,
     workspaceId,
@@ -219,10 +235,15 @@ test('should successfully deploy platformatic project with PR context', async (t
     githubMetadata,
     logger
   })
+
+  t.strictSame(result, {
+    deploymentId,
+    entryPointUrl
+  })
 })
 
 test('should successfully deploy platformatic project with branch context', async (t) => {
-  t.plan(12)
+  t.plan(13)
 
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
@@ -248,6 +269,8 @@ test('should successfully deploy platformatic project with branch context', asyn
   const secrets = {
     SECRET_VARIABLE_1: 'value3'
   }
+
+  const deploymentId = randomUUID()
 
   const githubMetadata = {
     repository: {
@@ -305,7 +328,10 @@ test('should successfully deploy platformatic project with branch context', asyn
             }
           }
         )
-        reply.code(200).send({ entryPointUrl })
+        reply.code(200).send({
+          id: deploymentId,
+          entryPointUrl
+        })
       },
       uploadCallback: (request) => {
         t.equal(request.headers.authorization, `Bearer ${token}`)
@@ -319,7 +345,7 @@ test('should successfully deploy platformatic project with branch context', asyn
     warn: () => t.fail('Should not log a warning')
   }
 
-  await deploy({
+  const result = await deploy({
     deployServiceHost: 'http://localhost:3042',
     compileTypescript: false,
     workspaceId,
@@ -333,10 +359,15 @@ test('should successfully deploy platformatic project with branch context', asyn
     githubMetadata,
     logger
   })
+
+  t.strictSame(result, {
+    deploymentId,
+    entryPointUrl
+  })
 })
 
 test('should successfully deploy platformatic project without github metadata', async (t) => {
-  t.plan(11)
+  t.plan(12)
 
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
@@ -362,6 +393,8 @@ test('should successfully deploy platformatic project without github metadata', 
   const secrets = {
     SECRET_VARIABLE_1: 'value3'
   }
+
+  const deploymentId = randomUUID()
 
   await startDeployService(
     t,
@@ -400,7 +433,10 @@ test('should successfully deploy platformatic project without github metadata', 
             }
           }
         )
-        reply.code(200).send({ entryPointUrl })
+        reply.code(200).send({
+          id: deploymentId,
+          entryPointUrl
+        })
       },
       uploadCallback: (request) => {
         t.equal(request.headers.authorization, `Bearer ${token}`)
@@ -414,7 +450,7 @@ test('should successfully deploy platformatic project without github metadata', 
     warn: () => t.fail('Should not log a warning')
   }
 
-  await deploy({
+  const result = await deploy({
     deployServiceHost: 'http://localhost:3042',
     compileTypescript: false,
     workspaceId,
@@ -427,10 +463,15 @@ test('should successfully deploy platformatic project without github metadata', 
     variables,
     logger
   })
+
+  t.strictSame(result, {
+    deploymentId,
+    entryPointUrl
+  })
 })
 
 test('should successfully deploy platformatic project with branch context', async (t) => {
-  t.plan(12)
+  t.plan(13)
 
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
@@ -456,6 +497,8 @@ test('should successfully deploy platformatic project with branch context', asyn
   const secrets = {
     SECRET_VARIABLE_1: 'value3'
   }
+
+  const deploymentId = randomUUID()
 
   const githubMetadata = {
     repository: {
@@ -512,7 +555,10 @@ test('should successfully deploy platformatic project with branch context', asyn
             }
           }
         )
-        reply.code(200).send({ entryPointUrl })
+        reply.code(200).send({
+          id: deploymentId,
+          entryPointUrl
+        })
       },
       uploadCallback: (request) => {
         t.equal(request.headers.authorization, `Bearer ${token}`)
@@ -526,7 +572,7 @@ test('should successfully deploy platformatic project with branch context', asyn
     warn: () => t.fail('Should not log a warning')
   }
 
-  await deploy({
+  const result = await deploy({
     deployServiceHost: 'http://localhost:3042',
     compileTypescript: false,
     workspaceId,
@@ -540,10 +586,15 @@ test('should successfully deploy platformatic project with branch context', asyn
     githubMetadata,
     logger
   })
+
+  t.strictSame(result, {
+    deploymentId,
+    entryPointUrl
+  })
 })
 
 test('should not deploy bundle of it already exists', async (t) => {
-  t.plan(11)
+  t.plan(12)
 
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
@@ -569,6 +620,8 @@ test('should not deploy bundle of it already exists', async (t) => {
   const secrets = {
     SECRET_VARIABLE_1: 'value3'
   }
+
+  const deploymentId = randomUUID()
 
   const githubMetadata = {
     repository: {
@@ -625,7 +678,10 @@ test('should not deploy bundle of it already exists', async (t) => {
             }
           }
         )
-        reply.code(200).send({ entryPointUrl })
+        reply.code(200).send({
+          id: deploymentId,
+          entryPointUrl
+        })
       },
       uploadCallback: (request) => {
         t.fail('Should not upload bundle')
@@ -639,7 +695,7 @@ test('should not deploy bundle of it already exists', async (t) => {
     warn: () => t.fail('Should not log a warning')
   }
 
-  await deploy({
+  const result = await deploy({
     deployServiceHost: 'http://localhost:3042',
     compileTypescript: false,
     workspaceId,
@@ -653,10 +709,15 @@ test('should not deploy bundle of it already exists', async (t) => {
     githubMetadata,
     logger
   })
+
+  t.strictSame(result, {
+    deploymentId,
+    entryPointUrl
+  })
 })
 
 test('should successfully deploy platformatic project without github metadata', async (t) => {
-  t.plan(11)
+  t.plan(12)
 
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
@@ -682,6 +743,8 @@ test('should successfully deploy platformatic project without github metadata', 
   const secrets = {
     SECRET_VARIABLE_1: 'value3'
   }
+
+  const deploymentId = randomUUID()
 
   await startDeployService(
     t,
@@ -720,7 +783,10 @@ test('should successfully deploy platformatic project without github metadata', 
             }
           }
         )
-        reply.code(200).send({ entryPointUrl })
+        reply.code(200).send({
+          id: deploymentId,
+          entryPointUrl
+        })
       },
       uploadCallback: (request) => {
         t.equal(request.headers.authorization, `Bearer ${token}`)
@@ -734,7 +800,7 @@ test('should successfully deploy platformatic project without github metadata', 
     warn: () => t.fail('Should not log a warning')
   }
 
-  await deploy({
+  const result = await deploy({
     deployServiceHost: 'http://localhost:3042',
     compileTypescript: false,
     workspaceId,
@@ -746,6 +812,11 @@ test('should successfully deploy platformatic project without github metadata', 
     secrets,
     variables,
     logger
+  })
+
+  t.strictSame(result, {
+    deploymentId,
+    entryPointUrl
   })
 })
 
@@ -930,12 +1001,17 @@ test('should fail if it could not make a prewarm call', async (t) => {
     reply.status(500).send({ message: 'Error' })
   })
 
+  const deploymentId = randomUUID()
+
   await startDeployService(t, {
     createBundleCallback: (request, reply) => {
       reply.code(200).send({ id: bundleId, token, isBundleUploaded: false })
     },
     createDeploymentCallback: (request, reply) => {
-      reply.code(200).send({ entryPointUrl })
+      reply.code(200).send({
+        id: deploymentId,
+        entryPointUrl
+      })
     }
   })
 
@@ -1019,7 +1095,7 @@ test('should fail if there is no config file', async (t) => {
 })
 
 test('should deploy platformatic project without typescript dep', async (t) => {
-  t.plan(11)
+  t.plan(12)
 
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
@@ -1045,6 +1121,8 @@ test('should deploy platformatic project without typescript dep', async (t) => {
   const secrets = {
     SECRET_VARIABLE_1: 'value3'
   }
+
+  const deploymentId = randomUUID()
 
   await startDeployService(
     t,
@@ -1084,7 +1162,10 @@ test('should deploy platformatic project without typescript dep', async (t) => {
             }
           }
         )
-        reply.code(200).send({ entryPointUrl })
+        reply.code(200).send({
+          id: deploymentId,
+          entryPointUrl
+        })
       },
       uploadCallback: (request) => {
         t.equal(request.headers.authorization, `Bearer ${token}`)
@@ -1112,7 +1193,7 @@ test('should deploy platformatic project without typescript dep', async (t) => {
     }
   })
 
-  await deploy({
+  const result = await deploy({
     deployServiceHost: 'http://localhost:3042',
     workspaceId,
     workspaceKey,
@@ -1123,5 +1204,10 @@ test('should deploy platformatic project without typescript dep', async (t) => {
     secrets,
     variables,
     logger
+  })
+
+  t.strictSame(result, {
+    deploymentId,
+    entryPointUrl
   })
 })

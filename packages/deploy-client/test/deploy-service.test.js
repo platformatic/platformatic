@@ -2,6 +2,7 @@
 
 const { join } = require('path')
 const { test } = require('tap')
+const { randomUUID } = require('crypto')
 
 const { deploy } = require('../index')
 const { startMachine, startDeployService } = require('./helper')
@@ -42,6 +43,8 @@ test('should deploy platformatic service by compiling typescript', async (t) => 
     SECRET_VARIABLE_1: 'value3'
   }
 
+  const deploymentId = randomUUID()
+
   await startDeployService(
     t,
     {
@@ -81,7 +84,10 @@ test('should deploy platformatic service by compiling typescript', async (t) => 
             }
           }
         )
-        reply.code(200).send({ entryPointUrl })
+        reply.code(200).send({
+          id: deploymentId,
+          entryPointUrl
+        })
       },
       uploadCallback: (request) => {
         t.equal(request.headers.authorization, `Bearer ${token}`)
@@ -95,7 +101,7 @@ test('should deploy platformatic service by compiling typescript', async (t) => 
     warn: () => t.fail('Should not log a warning')
   }
 
-  await deploy({
+  const result = await deploy({
     deployServiceHost: 'http://localhost:3042',
     workspaceId,
     workspaceKey,
@@ -106,6 +112,11 @@ test('should deploy platformatic service by compiling typescript', async (t) => 
     secrets,
     variables,
     logger
+  })
+
+  t.strictSame(result, {
+    deploymentId,
+    entryPointUrl
   })
 
   await access(join(__dirname, 'fixtures', 'service-ts', 'dist', 'plugin.js'))
