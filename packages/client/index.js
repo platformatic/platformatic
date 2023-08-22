@@ -35,7 +35,6 @@ function generateOperationId (path, method, methodMeta, all) {
   return operationId
 }
 
-
 async function buildOpenAPIClient (options, openTelemetry) {
   const client = {}
   let spec
