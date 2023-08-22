@@ -14,15 +14,16 @@ export function processOpenAPI ({ schema, name, url, language }) {
 function generateFrontendImplementationFromOpenAPI ({ schema, name, url, language }) {
   const capitalizedName = capitalize(name)
   const { paths } = schema
-
+  const generatedOperationIds = []
   const operations = Object.entries(paths).flatMap(([path, methods]) => {
     return Object.entries(methods).map(([method, operation]) => {
+      const opId = generateOperationId(path, method, operation, generatedOperationIds)
       return {
         path,
         method,
         operation: {
           ...operation,
-          operationId: generateOperationId(path, method, operation)
+          operationId: opId
         }
       }
     })
@@ -164,15 +165,16 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
 function generateTypesFromOpenAPI ({ schema, name }) {
   const capitalizedName = capitalize(name)
   const { paths } = schema
-
+  const generatedOperationIds = []
   const operations = Object.entries(paths).flatMap(([path, methods]) => {
     return Object.entries(methods).map(([method, operation]) => {
+      const opId = generateOperationId(path, method, operation, generatedOperationIds)
       return {
         path,
         method,
         operation: {
           ...operation,
-          operationId: generateOperationId(path, method, operation)
+          operationId: opId
         }
       }
     })

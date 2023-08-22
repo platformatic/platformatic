@@ -56,7 +56,7 @@ type OpenTelemetry = {
   setErrorInSpanClient?: (span: any, err: unknown) => void
 }
 
-export function generateOperationId(path: string, method: string, methodMeta: MethodMetaInterface): string
+export function generateOperationId(path: string, method: string, methodMeta: MethodMetaInterface, all: string[]): string
 export function buildOpenAPIClient<T>(options: BuildOpenAPIClientOptions, openTelemetry: OpenTelemetry): Promise<T>
 export function buildGraphQLClient(options: BuildGraphQLClientOptions, openTelemetry: OpenTelemetry, logger: AbstractLogger): Promise<BuildGraphQLClientOutput>
 

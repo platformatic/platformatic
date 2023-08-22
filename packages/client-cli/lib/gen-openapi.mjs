@@ -58,15 +58,16 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   const camelcasedName = toJavaScriptName(name)
   const capitalizedName = capitalize(camelcasedName)
   const { paths } = schema
-
+  const generatedOperationIds = []
   const operations = Object.entries(paths).flatMap(([path, methods]) => {
     return Object.entries(methods).map(([method, operation]) => {
+      const opId = generateOperationId(path, method, operation, generatedOperationIds)
       return {
         path,
         method,
         operation: {
           ...operation,
-          operationId: generateOperationId(path, method, operation)
+          operationId: opId
         }
       }
     })

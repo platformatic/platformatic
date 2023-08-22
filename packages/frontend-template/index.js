@@ -43,7 +43,7 @@ async function frontendTemplate ({ url, language, name }) {
 
 export async function command (argv) {
   const {
-    _: [urlOrLanguage, language]
+    _: [urlOrLanguage, language, name]
   } = parseArgs(argv)
 
   const help = helpMe({
@@ -64,7 +64,7 @@ export async function command (argv) {
     await help.toStdout(['invalid-url'])
     process.exit(1)
   }
-
+  console.log('@@@@@@ name')
   try {
     await frontendTemplate({ url: urlOrLanguage, language, name: 'api' })
   } catch (err) {
