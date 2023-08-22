@@ -43,7 +43,7 @@ async function frontendTemplate ({ url, language, name }) {
 
 export async function command (argv) {
   const {
-    _: [urlOrLanguage, language]
+    _: [urlOrLanguage, language, name]
   } = parseArgs(argv)
 
   const help = helpMe({

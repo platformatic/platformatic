@@ -389,7 +389,7 @@ test('build basic client from file', async ({ teardown, same, rejects }) => {
     }
   ])
 
-  const updatedMovie = await client.updateMovie({
+  const updatedMovie = await client.putUpdateMovie({
     id: 1,
     title: 'The Matrix Reloaded'
   })

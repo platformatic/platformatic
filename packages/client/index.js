@@ -8,7 +8,7 @@ const kGetHeaders = Symbol('getHeaders')
 const kTelemetryContext = Symbol('telemetry-context')
 const abstractLogging = require('abstract-logging')
 
-function generateOperationId (path, method, methodMeta) {
+function generateOperationId (path, method, methodMeta, all) {
   let operationId = methodMeta.operationId
   if (!operationId) {
     const pathParams = methodMeta.parameters?.filter(p => p.in === 'path') || []
@@ -17,9 +17,24 @@ function generateOperationId (path, method, methodMeta) {
       stringToUpdate = stringToUpdate.replace(`{${param.name}}`, capitalize(param.name))
     }
     operationId = method.toLowerCase() + stringToUpdate.split(/[/-]+/).map(capitalize).join('')
+  } else {
+    let count = 0
+    let candidate = operationId
+    while (all.includes(candidate)) {
+      if (count === 0) {
+        // first try with method name
+        candidate = `${method}${capitalize(operationId)}`
+      } else {
+        candidate = `${method}${capitalize(operationId)}${count}`
+      }
+      count++
+    }
+    operationId = candidate
   }
+  all.push(operationId)
   return operationId
 }
+
 
 async function buildOpenAPIClient (options, openTelemetry) {
   const client = {}
@@ -41,13 +56,13 @@ async function buildOpenAPIClient (options, openTelemetry) {
 
   client[kHeaders] = options.headers || {}
   let { fullResponse, throwOnError } = options
-
+  const generatedOperationIds = []
   for (const path of Object.keys(spec.paths)) {
     const pathMeta = spec.paths[path]
 
     for (const method of Object.keys(pathMeta)) {
       const methodMeta = pathMeta[method]
-      const operationId = generateOperationId(path, method, methodMeta)
+      const operationId = generateOperationId(path, method, methodMeta, generatedOperationIds)
       const responses = pathMeta[method].responses
       const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
       if (successResponses.length !== 1) {
