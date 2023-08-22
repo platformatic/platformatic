@@ -2,7 +2,7 @@ import { join } from 'desm'
 import isMain from 'es-main'
 import helpMe from 'help-me'
 import parseArgs from 'minimist'
-
+import camelcase from 'camelcase'
 import { request } from 'undici'
 import { writeFile } from 'fs/promises'
 import { isValidUrl } from './lib/utils.mjs'
@@ -42,8 +42,8 @@ async function frontendTemplate ({ url, language, name }) {
 }
 
 export async function command (argv) {
-  const {
-    _: [urlOrLanguage, language, name]
+  let {
+    _: [urlOrLanguage, language], name
   } = parseArgs(argv)
 
   const help = helpMe({
@@ -51,7 +51,11 @@ export async function command (argv) {
     // the default
     ext: '.txt'
   })
-
+  if (!name) {
+    name = 'api'
+  } else {
+    name = camelcase(name)
+  }
   const missingParams = !urlOrLanguage && !language
   const missingLanguage = !language || (language !== 'ts' && language !== 'js')
 
@@ -66,7 +70,7 @@ export async function command (argv) {
   }
 
   try {
-    await frontendTemplate({ url: urlOrLanguage, language, name: 'api' })
+    await frontendTemplate({ url: urlOrLanguage, language, name })
   } catch (err) {
     console.error(err)
   }
