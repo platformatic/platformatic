@@ -20,6 +20,9 @@ test('generates only types in target folder with --only-types flag', async ({ te
   match(fileContents, /declare namespace Movies {/)
   match(fileContents, /type MoviesPlugin = FastifyPluginAsync<NonNullable<Movies.MoviesOptions>>/)
   match(fileContents, /export const movies: MoviesPlugin;/)
+  match(fileContents, /export interface GetMoviesRequest {/)
+  match(fileContents, /export interface GetMoviesResponseOK {/)
+  match(fileContents, /export interface Movies {/)
 })
 
 test('openapi client generation (javascript)', async ({ teardown, comment, same }) => {
