@@ -149,7 +149,8 @@ test('support enum', async (t) => {
       prop1: {
         enum: [
           'foo',
-          'bar'
+          'bar',
+          "pippo'Giuseppe_Raimondo_Vittorio'baudo"
         ],
         type: 'string'
       },
@@ -160,7 +161,7 @@ test('support enum', async (t) => {
     type: 'object'
   }
 
-  t.equal(getType(enumDef), '{ prop1: \'foo\' | \'bar\'; prop2: string }')
+  t.equal(getType(enumDef), '{ prop1: \'foo\' | \'bar\' | \'pippo\\\'Giuseppe_Raimondo_Vittorio\\\'baudo\'; prop2: string }')
 })
 
 test('support enum with numbers', async (t) => {
