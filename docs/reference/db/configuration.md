@@ -607,6 +607,8 @@ comma separated list of strings, for example:
 
 ```bash
 npx platformatic db start --allow-env=HOST,SERVER_LOGGER_LEVEL
+# OR
+npx platformatic start --allow-env=HOST,SERVER_LOGGER_LEVEL
 ```
 
 If `--allow-env` is passed as an option to the CLI, it will be merged with the
