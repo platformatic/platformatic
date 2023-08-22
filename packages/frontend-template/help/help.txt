@@ -13,6 +13,15 @@ npx platformatic frontend http://127.0.0.1:3042 ts
 > * `api.d.ts` - A TypeScript module that includes all the OpenAPI-related types.
 > * `api.ts` or `api.js` - A module that includes a function for every single REST endpoint.
 
+If you use the `--name` option it will create custom file names.
+
+```bash
+npx platformatic frontend http://127.0.0.1:3042 ts --name foobar
+```
+
+Will create `foobar.ts` and `foobar-types.d.ts`
+
+
 Refer to the [dedicated guide](https://docs.platformatic.dev/docs/guides/generate-frontend-code-to-consume-platformatic-rest-api) where the full process of generating and consuming the frontend code is described.
 
 In case of problems, please check that:
