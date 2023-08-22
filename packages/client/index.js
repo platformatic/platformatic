@@ -18,13 +18,23 @@ function generateOperationId (path, method, methodMeta, all) {
     }
     operationId = method.toLowerCase() + stringToUpdate.split(/[/-]+/).map(capitalize).join('')
   } else {
-    if (all.includes(operationId)) {
-      operationId = `${method}${capitalize(operationId)}`
+    let count = 0
+    let candidate = operationId
+    while (all.includes(candidate)) {
+      if (count === 0) {
+        // first try with method name
+        candidate = `${method}${capitalize(operationId)}`
+      } else {
+        candidate = `${method}${capitalize(operationId)}${count}`
+      }
+      count++
     }
+    operationId = candidate
   }
   all.push(operationId)
   return operationId
 }
+
 
 async function buildOpenAPIClient (options, openTelemetry) {
   const client = {}

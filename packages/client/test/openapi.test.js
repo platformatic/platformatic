@@ -370,7 +370,7 @@ test('build basic client from file', async ({ teardown, same, rejects }) => {
     url: `${app.url}/movies-api/`,
     path: join(__dirname, 'fixtures', 'movies', 'openapi.json')
   })
-  console.log(client)
+
   const movie = await client.createMovie({
     title: 'The Matrix'
   })
