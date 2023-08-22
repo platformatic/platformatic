@@ -172,6 +172,16 @@ export const createMovie: Api['createMovie'] = async (request) => {
 
 ```
 
+You can add a `--name` option to the command line to provide a custom name for the generated files.
+
+```bash
+cd rest-api-frontend/src
+npx platformatic frontend --name foobar http://127.0.0.1:3042 ts
+```
+
+will generated `foobar.ts` and `foobar-types.d.ts`
+
+
 ## React and Vue.js components that read, create, and update an entity
 
 You can copy/paste the following React or Vue.js components that import the code
