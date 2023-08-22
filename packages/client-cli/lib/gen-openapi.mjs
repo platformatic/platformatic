@@ -281,7 +281,7 @@ export function getType (typeDef) {
   if (typeDef.enum) {
     return typeDef.enum.map((en) => {
       if (typeDef.type === 'string') {
-        return `'${en}'`
+        return `'${en.replace(/'/g, "\\'")}'`
       } else {
         return en
       }
