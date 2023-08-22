@@ -57,16 +57,16 @@ async function generateEntityGroupExport (entities) {
   const interfaceRows = []
   for (const name of entities) {
     completeTypesImports.push(`import { ${name} } from './${name}'`)
-    interfaceRows.push(`${name}:${name}`)
+    interfaceRows.push(`${name}: ${name}`)
   }
 
   const content = `${completeTypesImports.join('\n')}
   
-  interface EntityTypes  {
-    ${interfaceRows.join('\n    ')}
-  }
+interface EntityTypes  {
+  ${interfaceRows.join('\n    ')}
+}
   
-  export { EntityTypes ,${entities.join(',')} }`
+export { EntityTypes, ${entities.join(', ')} }`
   return content
 }
 
