@@ -1010,6 +1010,9 @@ importers:
       '@platformatic/db':
         specifier: workspace:^
         version: link:../db
+      camelcase:
+        specifier: ^8.0.0
+        version: 8.0.0
       code-block-writer:
         specifier: ^12.0.0
         version: 12.0.0
@@ -1019,6 +1022,9 @@ importers:
       es-main:
         specifier: ^1.2.0
         version: 1.2.0
+      execa:
+        specifier: ^8.0.0
+        version: 8.0.1
       help-me:
         specifier: ^4.2.0
         version: 4.2.0
@@ -4904,6 +4910,11 @@ packages:
   /camelcase@6.3.0:
     resolution: {integrity: sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==}
     engines: {node: '>=10'}
+
+  /camelcase@8.0.0:
+    resolution: {integrity: sha512-8WB3Jcas3swSvjIeA2yvCJ+Miyz5l1ZmB6HFb9R1317dt9LCQoswg/BGrmAmkWVEszSrrg4RwmO46qIm2OEnSA==}
+    engines: {node: '>=16'}
+    dev: false
 
   /caniuse-lite@1.0.30001522:
     resolution: {integrity: sha512-TKiyTVZxJGhsTszLuzb+6vUZSjVOAhClszBr2Ta2k9IwtNBT/4dzmL6aywt0HCgEZlmwJzXJd8yNiob6HgwTRg==}
