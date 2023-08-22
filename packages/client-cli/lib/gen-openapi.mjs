@@ -97,7 +97,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   })
   interfaces.blankLine()
 
-  writer.write(`interface ${capitalizedName}`).block(() => {
+  writer.write(`export interface ${capitalizedName}`).block(() => {
     const originalFullResponse = fullResponse
     let currentFullResponse = originalFullResponse
     for (const operation of operations) {
@@ -109,7 +109,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
       }
       const operationRequestName = `${capitalize(operationId)}Request`
       const operationResponseName = `${capitalize(operationId)}Response`
-      interfaces.write(`interface ${operationRequestName}`).block(() => {
+      interfaces.write(`export interface ${operationRequestName}`).block(() => {
         const addedProps = new Set()
         if (parameters) {
           for (const parameter of parameters) {
@@ -133,7 +133,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
         }
         let isResponseArray
         let type = `${operationResponseName}${classCase(STATUS_CODES[statusCode])}`
-        interfaces.write(`interface ${type}`).block(() => {
+        interfaces.write(`export interface ${type}`).block(() => {
           isResponseArray = writeContent(interfaces, response.content, schema, new Set())
         })
         interfaces.blankLine()
