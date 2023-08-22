@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/frontend-template",
-  "version": "0.37.3",
+  "version": "0.37.4",
   "main": "index.js",
   "type": "module",
   "description": "Platformatic Frontend Template",
@@ -21,7 +21,6 @@
     "test:types": "tsc",
     "lint": "standard | snazzy",
     "test": "npm run lint && tap test/*.test.js"
-
   },
   "dependencies": {
     "@platformatic/client": "workspace:*",

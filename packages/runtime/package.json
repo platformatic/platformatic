@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/runtime",
-  "version": "0.37.3",
+  "version": "0.37.4",
   "description": "",
   "main": "index.js",
   "bin": {
