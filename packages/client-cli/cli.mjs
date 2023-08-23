@@ -63,20 +63,7 @@ async function writeGraphQLClient (folder, name, schema, url, generateImplementa
 
 async function downloadAndWriteOpenAPI (logger, url, folder, name, fullResponse, generateImplementation, typesOnly) {
   logger.debug(`Trying to download OpenAPI schema from ${url}`)
-  let res
-  try {
-    res = await request(url)
-  } catch (err) {
-    /* c8 ignore next 6 */
-    if (
-      err.code !== 'ERR_INVALID_URL' &&
-      err.code !== 'UND_ERR_INVALID_ARG'
-    ) {
-      throw err
-    }
-    return false
-  }
-
+  const res = await request(url)
   if (res.statusCode === 200) {
     // we are OpenAPI
     const text = await res.body.text()
@@ -96,28 +83,15 @@ async function downloadAndWriteOpenAPI (logger, url, folder, name, fullResponse,
 async function downloadAndWriteGraphQL (logger, url, folder, name, generateImplementation, typesOnly) {
   logger.debug(`Trying to download GraphQL schema from ${url}`)
   const query = graphql.getIntrospectionQuery()
-  let res
-
-  try {
-    res = await request(url, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify({
-        query
-      })
+  const res = await request(url, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({
+      query
     })
-  } catch (err) {
-    /* c8 ignore next 6 */
-    if (
-      err.code !== 'ERR_INVALID_URL' &&
-      err.code !== 'UND_ERR_INVALID_ARG'
-    ) {
-      throw err
-    }
-    return false
-  }
+  })
 
   const text = await res.body.text()
 
@@ -131,7 +105,7 @@ async function downloadAndWriteGraphQL (logger, url, folder, name, generateImple
 }
 
 async function readFromFileAndWrite (logger, file, folder, name, fullResponse, generateImplementation, typesOnly) {
-  logger.debug(`Trying to read schema from file ${file}`)
+  logger.info(`Trying to read schema from file ${file}`)
   const text = await readFile(file, 'utf8')
 
   // try OpenAPI first
@@ -156,20 +130,26 @@ async function downloadAndProcess ({ url, name, folder, config, r: fullResponse,
   }
 
   let found = false
-  const toTry = [
-    downloadAndWriteOpenAPI.bind(null, logger, url + '/documentation/json', folder, name, fullResponse, generateImplementation, typesOnly),
-    downloadAndWriteGraphQL.bind(null, logger, url + '/graphql', folder, name, generateImplementation, typesOnly),
-    downloadAndWriteOpenAPI.bind(null, logger, url, folder, name, fullResponse, generateImplementation, typesOnly),
-    downloadAndWriteGraphQL.bind(null, logger, url, folder, name, generateImplementation, typesOnly),
-    readFromFileAndWrite.bind(null, logger, url, folder, name, fullResponse, generateImplementation, typesOnly)
-  ]
+  const toTry = []
 
-  // readFromFileAndWrite is the last one, and it will throw if it cannot read the file
-  // so we don't need to check for running out of options to try
-  while (!found) {
-    found = await toTry.shift()()
+  if (url.startsWith('http')) {
+    // add download functions only if it's an URL
+    toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url + '/documentation/json', folder, name, fullResponse, generateImplementation, typesOnly))
+    toTry.push(downloadAndWriteGraphQL.bind(null, logger, url + '/graphql', folder, name, generateImplementation,typesOnly))
+    toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url, folder, name, fullResponse, generateImplementation,typesOnly))
+    toTry.push(downloadAndWriteGraphQL.bind(null, logger, url, folder, name, generateImplementation, typesOnly))
+  } else {
+    // add readFromFileAndWrite to the functions only if it's not an URL
+    toTry.push(
+      readFromFileAndWrite.bind(null, logger, url, folder, name, fullResponse, generateImplementation, typesOnly)
+    )
   }
-
+  for (const fn of toTry) {
+    found = await fn()
+    if (found) {
+      break
+    }
+  }
   /* c8 ignore next 3 */
   if (!found) {
     throw new Error(`Could not find a valid OpenAPI or GraphQL schema at ${url}`)
@@ -255,7 +235,7 @@ export async function command (argv) {
   const stream = pinoPretty({
     translateTime: 'SYS:HH:MM:ss',
     ignore: 'hostname,pid',
-    minimumLevel: 10,
+    minimumLevel: 'debug',
     sync: true
   })
 
