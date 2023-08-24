@@ -135,8 +135,8 @@ async function downloadAndProcess ({ url, name, folder, config, r: fullResponse,
   if (url.startsWith('http')) {
     // add download functions only if it's an URL
     toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url + '/documentation/json', folder, name, fullResponse, generateImplementation, typesOnly))
-    toTry.push(downloadAndWriteGraphQL.bind(null, logger, url + '/graphql', folder, name, generateImplementation,typesOnly))
-    toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url, folder, name, fullResponse, generateImplementation,typesOnly))
+    toTry.push(downloadAndWriteGraphQL.bind(null, logger, url + '/graphql', folder, name, generateImplementation, typesOnly))
+    toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url, folder, name, fullResponse, generateImplementation, typesOnly))
     toTry.push(downloadAndWriteGraphQL.bind(null, logger, url, folder, name, generateImplementation, typesOnly))
   } else {
     // add readFromFileAndWrite to the functions only if it's not an URL
@@ -282,7 +282,7 @@ export async function command (argv) {
       await runtime.stopServices()
     }
   } catch (err) {
-    logger.error({ err })
+    logger.error(err.message)
     process.exit(1)
   }
 }
