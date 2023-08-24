@@ -53,7 +53,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tap:
         specifier: ^16.3.6
-        version: 16.3.8(typescript@5.1.6)
+        version: 16.3.8(typescript@5.2.2)
 
   packages/cli:
     dependencies:
@@ -144,7 +144,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tap:
         specifier: ^16.3.6
-        version: 16.3.8(typescript@5.1.6)
+        version: 16.3.8(typescript@5.2.2)
       undici:
         specifier: ^5.22.1
         version: 5.23.0
@@ -387,7 +387,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tap:
         specifier: ^16.3.6
-        version: 16.3.8(typescript@5.1.6)
+        version: 16.3.8(typescript@5.2.2)
 
   packages/config:
     dependencies:
@@ -436,7 +436,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tap:
         specifier: ^16.3.6
-        version: 16.3.8(typescript@5.1.6)
+        version: 16.3.8(typescript@5.2.2)
       yaml:
         specifier: ^2.3.1
         version: 2.3.1
@@ -533,10 +533,10 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tap:
         specifier: ^16.3.6
-        version: 16.3.8(typescript@5.1.6)
+        version: 16.3.8(typescript@5.2.2)
       typescript:
-        specifier: ~5.1.6
-        version: 5.1.6
+        specifier: ~5.2.0
+        version: 5.2.2
       yaml:
         specifier: ^2.3.1
         version: 2.3.1
@@ -775,7 +775,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tap:
         specifier: ^16.3.6
-        version: 16.3.8(typescript@5.1.6)
+        version: 16.3.8(typescript@5.2.2)
       tsd:
         specifier: ^0.28.1
         version: 0.28.1
@@ -818,7 +818,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tap:
         specifier: ^16.3.6
-        version: 16.3.8(typescript@5.1.6)
+        version: 16.3.8(typescript@5.2.2)
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
@@ -1105,7 +1105,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tap:
         specifier: ^16.3.6
-        version: 16.3.8(typescript@5.1.6)
+        version: 16.3.8(typescript@5.2.2)
 
   packages/runtime:
     dependencies:
@@ -1406,7 +1406,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tap:
         specifier: ^16.3.6
-        version: 16.3.8(typescript@5.1.6)
+        version: 16.3.8(typescript@5.2.2)
       tsd:
         specifier: ^0.28.1
         version: 0.28.1
@@ -1458,7 +1458,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tap:
         specifier: ^16.3.6
-        version: 16.3.8(typescript@5.1.6)
+        version: 16.3.8(typescript@5.2.2)
       tsd:
         specifier: ^0.28.1
         version: 0.28.1
@@ -1492,7 +1492,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tap:
         specifier: ^16.3.6
-        version: 16.3.8(typescript@5.1.6)
+        version: 16.3.8(typescript@5.2.2)
 
   packages/sql-mapper:
     dependencies:
@@ -1535,7 +1535,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tap:
         specifier: ^16.3.6
-        version: 16.3.8(typescript@5.1.6)
+        version: 16.3.8(typescript@5.2.2)
       tsd:
         specifier: ^0.28.1
         version: 0.28.1
@@ -1587,7 +1587,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tap:
         specifier: ^16.3.6
-        version: 16.3.8(typescript@5.1.6)
+        version: 16.3.8(typescript@5.2.2)
       tsd:
         specifier: ^0.28.1
         version: 0.28.1
@@ -1657,7 +1657,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tap:
         specifier: ^16.3.6
-        version: 16.3.8(typescript@5.1.6)
+        version: 16.3.8(typescript@5.2.2)
 
   packages/types:
     devDependencies:
@@ -1685,7 +1685,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tap:
         specifier: ^16.3.6
-        version: 16.3.8(typescript@5.1.6)
+        version: 16.3.8(typescript@5.2.2)
 
 packages:
 
@@ -11381,6 +11381,57 @@ packages:
       - '@isaacs/import-jsx'
       - react
 
+  /tap@16.3.8(typescript@5.2.2):
+    resolution: {integrity: sha512-ARpCLtOFST37MholnZm7JMFikGq0x/T9uBdZH83iuddPNgwDTZQiD8+4x7VABUfVWS0ozKUkmHZ5OOzMI3fLPg==}
+    engines: {node: '>=12'}
+    hasBin: true
+    peerDependencies:
+      coveralls: ^3.1.1
+      flow-remove-types: '>=2.112.0'
+      ts-node: '>=8.5.2'
+      typescript: '>=3.7.2'
+    peerDependenciesMeta:
+      coveralls:
+        optional: true
+      flow-remove-types:
+        optional: true
+      ts-node:
+        optional: true
+      typescript:
+        optional: true
+    dependencies:
+      chokidar: 3.5.3
+      findit: 2.0.0
+      foreground-child: 2.0.0
+      fs-exists-cached: 1.0.0
+      glob: 7.2.3
+      isexe: 2.0.0
+      istanbul-lib-processinfo: 2.0.3
+      jackspeak: 1.4.2
+      libtap: 1.4.1
+      minipass: 3.3.6
+      mkdirp: 1.0.4
+      nyc: 15.1.0
+      opener: 1.5.2
+      rimraf: 3.0.2
+      signal-exit: 3.0.7
+      source-map-support: 0.5.21
+      tap-mocha-reporter: 5.0.3
+      tap-parser: 11.0.2
+      tap-yaml: 1.0.2
+      tcompare: 5.0.7
+      typescript: 5.2.2
+      which: 2.0.2
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+    bundledDependencies:
+      - ink
+      - treport
+      - '@types/react'
+      - '@isaacs/import-jsx'
+      - react
+
   /tar-fs@2.1.1:
     resolution: {integrity: sha512-V0r2Y9scmbDRLCNex/+hYzvp/zyYjvFbHPNgVTKfQvVrb6guiE/fxP+XblDNR011utopbkex2nM4dHNV6GDsng==}
     dependencies:
@@ -11769,6 +11820,12 @@ packages:
     resolution: {integrity: sha512-zaWCozRZ6DLEWAWFrVDz1H6FVXzUSfTy5FUMWsQlU8Ym5JP9eO4xkTIROFCQvhQf61z6O/G6ugw3SgAnvvm+HA==}
     engines: {node: '>=14.17'}
     hasBin: true
+
+  /typescript@5.2.2:
+    resolution: {integrity: sha512-mI4WrpHsbCIcwT9cF4FZvr80QUeKvsUsUvKDoR+X/7XHQH98xYD8YHZg7ANtz2GtZt/CBq2QJ0thkGJMHfqc1w==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+    dev: true
 
   /ua-parser-js@1.0.35:
     resolution: {integrity: sha512-fKnGuqmTBnIE+/KXSzCn4db8RTigUzw1AN0DmdU6hJovUTbYJKyqj+8Mt1c4VfRDnOVJnENmfYkIPZ946UrSAA==}
