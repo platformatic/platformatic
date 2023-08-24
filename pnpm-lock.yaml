@@ -1,9 +1,5 @@
 lockfileVersion: '6.0'
 
-settings:
-  autoInstallPeers: true
-  excludeLinksFromLockfile: false
-
 importers:
 
   .:
@@ -245,6 +241,9 @@ importers:
       undici:
         specifier: ^5.22.1
         version: 5.23.0
+      yaml:
+        specifier: ^2.3.1
+        version: 2.3.1
     devDependencies:
       '@platformatic/db':
         specifier: workspace:*
@@ -12388,3 +12387,7 @@ packages:
   /zenscroll@4.0.2:
     resolution: {integrity: sha512-jEA1znR7b4C/NnaycInCU6h/d15ZzCd1jmsruqOKnZP6WXQSMH3W2GL+OXbkruslU4h+Tzuos0HdswzRUk/Vgg==}
     dev: true
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
