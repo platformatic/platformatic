@@ -242,7 +242,9 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
 
 - **`serviceName`** (**required**, `string`) — Name of the service as will be reported in open telemetry.
 - **`version`** (`string`) — Optional version (free form)
-- **`skip`** (`array`). Optional list of operations to skip when exporting telemetry in the form of `${method}/${path}`. e.g.: `GET/documentation/json` 
+- **`skip`** (`array`). Optional list of operations to skip when exporting telemetry defined `object` with properties: 
+    - `method`: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE
+    - `path`. e.g.: `/documentation/json` 
 - **`exporter`** (`object` or `array`) — Exporter configuration. If not defined, the exporter defaults to `console`. If an array of objects is configured, every object must be a valid exporter object. The exporter object has the following properties:
     - **`type`** (`string`) — Exporter type. Supported values are `console`, `otlp`, `zipkin` and `memory` (default: `console`). `memory` is only supported for testing purposes. 
     - **`options`** (`object`) — These options are supported:
