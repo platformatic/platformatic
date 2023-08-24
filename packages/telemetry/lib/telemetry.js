@@ -133,7 +133,10 @@ async function setupTelemetry (app, opts) {
   // const { serviceName, version } = opts
   const openTelemetryAPIs = setupProvider(app, opts)
   const { tracer, propagator, provider } = openTelemetryAPIs
-  const skipOperations = opts.skip || []
+  const skipOperations = opts?.skip?.map(skip => {
+    const { method, path } = skip
+    return `${method}${path}`
+  }) || []
 
   // expose the span as a request decorator
   app.decorateRequest('span')

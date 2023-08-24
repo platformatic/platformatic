@@ -42,7 +42,21 @@ const TelemetrySchema = {
       type: 'array',
       description: 'An array of paths to skip when creating spans. Useful for health checks and other endpoints that do not need to be traced.',
       items: {
-        type: 'string'
+        type: 'object',
+        properties: {
+          path: {
+            type: 'string',
+            description: 'The path to skip. Can be a string or a regex.'
+          },
+          method: {
+            type: 'array',
+            description: 'An array of HTTP methods to skip. If not specified, all methods will be skipped.',
+            items: {
+              type: 'string',
+              enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']
+            }
+          }
+        }
       }
     },
     exporter: {

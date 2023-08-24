@@ -263,7 +263,12 @@ test('should ignore the skipped operations', async ({ equal, same, ok, teardown 
 
   const app = await setupApp({
     serviceName: 'test-service',
-    skip: ['POST/skipme'],
+    skip: [
+      {
+        path: '/skipme',
+        method: 'POST'
+      }
+    ],
     exporter: {
       type: 'memory'
     }
