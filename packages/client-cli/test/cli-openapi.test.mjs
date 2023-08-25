@@ -8,6 +8,7 @@ import { promises as fs } from 'fs'
 import split from 'split2'
 import { copy } from 'fs-extra'
 import dotenv from 'dotenv'
+import { readFile } from 'fs/promises'
 
 test('openapi client generation (javascript)', async ({ teardown, comment, same }) => {
   try {
@@ -795,4 +796,18 @@ app.listen({ port: 0 })
     id: 1,
     title: 'foo'
   })
+})
+
+test('openapi client generation from YAML file', async ({ teardown, comment, same }) => {
+  const dir = await moveToTmpdir(() => {})
+  const openapiFile = desm.join(import.meta.url, 'fixtures', 'openapi.yaml')
+  comment(`working in ${dir}`)
+  console.log(openapiFile)
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
+
+  // check openapi json file has been created
+  const jsonFile = join(dir, 'movies', 'movies.openapi.json')
+  const data = await readFile(jsonFile, 'utf-8')
+  const json = JSON.parse(data)
+  same(json.openapi, '3.0.3')
 })

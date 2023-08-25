@@ -17,7 +17,20 @@ import { RuntimeApi, platformaticRuntime } from '@platformatic/runtime'
 import { findUp } from 'find-up'
 import pino from 'pino'
 import pinoPretty from 'pino-pretty'
+import YAML from 'yaml'
 
+function parseFile (content) {
+  let parsed = false
+  const toTry = [JSON.parse, YAML.parse]
+  for (const fn of toTry) {
+    try {
+      parsed = fn(content)
+    } catch (err) {
+      // do nothing
+    }
+  }
+  return parsed
+}
 async function isFileAccessible (filename) {
   try {
     await access(filename)
@@ -33,7 +46,10 @@ async function writeOpenAPIClient (folder, name, text, fullResponse, generateImp
   await mkdir(folder, { recursive: true })
 
   // TODO deal with yaml
-  const schema = JSON.parse(text)
+  const schema = parseFile(text)
+  if (!schema) {
+    throw new Error('Cannot parse OpenAPI file. Please make sure is a JSON or a YAML file.')
+  }
   if (!typesOnly) {
     await writeFile(join(folder, `${name}.openapi.json`), JSON.stringify(schema, null, 2))
   }
