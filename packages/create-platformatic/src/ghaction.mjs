@@ -69,6 +69,9 @@ ${envString}
     outputs:
       deployment_id: \${{ steps.deploy-project.outputs.deployment_id }}
   calculate_risk:
+    permissions:
+      contents: read
+      pull-requests: write
     needs: build_and_deploy
     runs-on: ubuntu-latest
     steps:
