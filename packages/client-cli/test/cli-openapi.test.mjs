@@ -802,7 +802,6 @@ test('openapi client generation from YAML file', async ({ teardown, comment, sam
   const dir = await moveToTmpdir(() => {})
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'openapi.yaml')
   comment(`working in ${dir}`)
-  console.log(openapiFile)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
 
   // check openapi json file has been created

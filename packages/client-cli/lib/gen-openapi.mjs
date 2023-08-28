@@ -297,7 +297,10 @@ export function getType (typeDef) {
     // TODO: add a test for objects without properties
     /* c8 ignore next 1 */
     const props = Object.keys(typeDef.properties || {}).map((prop) => {
-      const required = !!typeDef.required.includes(prop)
+      let required = false
+      if (typeDef.required) {
+        required = !!typeDef.required.includes(prop)
+      }
       return `${prop}${required ? '' : '?'}: ${getType(typeDef.properties[prop])}`
     })
     output += props.join('; ')
