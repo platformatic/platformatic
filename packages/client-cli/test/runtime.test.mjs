@@ -32,6 +32,12 @@ PORT=3000
 PLT_SERVER_LOGGER_LEVEL=info
 `)
 
+  await writeFile(join(dir, 'services', 'sample-service', '.env'), `
+PLT_SERVER_HOSTNAME=127.0.0.1
+PORT=3005
+PLT_SERVER_LOGGER_LEVEL=info
+`)
+
   process.chdir(join(dir, 'services', 'languid-nobleman'))
 
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
@@ -109,7 +115,11 @@ PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3000
 PLT_SERVER_LOGGER_LEVEL=info
 `)
-
+  await writeFile(join(dir, 'services', 'sample-service', '.env'), `
+PLT_SERVER_HOSTNAME=127.0.0.1
+PORT=3005
+PLT_SERVER_LOGGER_LEVEL=info
+`)
   process.chdir(join(dir, 'services', 'languid-nobleman'))
 
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
