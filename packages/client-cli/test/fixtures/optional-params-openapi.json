@@ -1,0 +1,44 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Platformatic DB",
+    "description": "Exposing a SQL database as REST",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/movies": {
+      "get": {
+        "operationId": "getMovies",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "foo": { "type": "string" },
+                        "bar": { "type": "string" },
+                        "baz": {
+                          "type": "object",
+                          "properties": {
+                            "nested1": { "type": "string" },
+                            "nested2": { "type": "string" }
+                          },
+                          "required": ["nested2"]
+                        }
+                      },
+                      "required": [ "foo" ]
+                    }
+                  }                  
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

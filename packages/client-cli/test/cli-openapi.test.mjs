@@ -802,7 +802,6 @@ test('openapi client generation from YAML file', async ({ teardown, comment, sam
   const dir = await moveToTmpdir(() => {})
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'openapi.yaml')
   comment(`working in ${dir}`)
-  console.log(openapiFile)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
 
   // check openapi json file has been created
@@ -810,4 +809,20 @@ test('openapi client generation from YAML file', async ({ teardown, comment, sam
   const data = await readFile(jsonFile, 'utf-8')
   const json = JSON.parse(data)
   same(json.openapi, '3.0.3')
+})
+
+test('nested optional parameters are correctly identified', async ({ teardown, comment, match }) => {
+  const dir = await moveToTmpdir(teardown)
+  const openapiFile = desm.join(import.meta.url, 'fixtures', 'optional-params-openapi.json')
+  comment(`working in ${dir}`)
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
+
+  // check the type file has the correct implementation for the request
+  const typeFile = join(dir, 'movies', 'movies.d.ts')
+  const data = await readFile(typeFile, 'utf-8')
+  match(data, `
+export interface GetMoviesResponseOK {
+  'data': { foo: string; bar?: string; baz?: { nested1?: string; nested2: string } };
+}
+`)
 })
