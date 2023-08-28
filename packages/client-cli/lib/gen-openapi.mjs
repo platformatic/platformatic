@@ -110,21 +110,40 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
       }
       const operationRequestName = `${capitalize(operationId)}Request`
       const operationResponseName = `${capitalize(operationId)}Response`
+
       interfaces.write(`export interface ${operationRequestName}`).block(() => {
         const addedProps = new Set()
         if (parameters) {
+          const bodyParams = []
+          const queryParams = []
+          const headersParams = []
+          const pathParams = []
           for (const parameter of parameters) {
-            const { name, required } = parameter
-            // We do not check for addedProps here because it's the first
-            // group of properties
-            writeProperty(interfaces, name, parameter, addedProps, required)
+            switch (parameter.in) {
+              case 'query':
+                queryParams.push(parameter)
+                break
+              case 'body':
+                bodyParams.push(parameter)
+                break
+              case 'path':
+                pathParams.push(parameter)
+                break
+              case 'header':
+                headersParams.push(parameter)
+                break
+            }
           }
+          writeProperties(interfaces, 'body', bodyParams, addedProps)
+          writeProperties(interfaces, 'query', queryParams, addedProps)
+          writeProperties(interfaces, 'headers', headersParams, addedProps)
+          writeProperties(interfaces, 'path', pathParams, addedProps)
         }
         if (requestBody) {
           writeContent(interfaces, requestBody.content, schema, addedProps)
         }
       })
-      interfaces.writeLine()
+      interfaces.blankLine()
 
       const responseTypes = successResponses.map(([statusCode, response]) => {
         // The client library will always dump bodies for 204 responses
@@ -194,6 +213,18 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   return interfaces.toString() + writer.toString()
 }
 
+function writeProperties (writer, blockName, parameters, addedProps) {
+  if (parameters.length > 0) {
+    writer.write(`${blockName}: `).block(() => {
+      for (const parameter of parameters) {
+        const { name, required } = parameter
+        // We do not check for addedProps here because it's the first
+        // group of properties
+        writeProperty(writer, name, parameter, addedProps, required)
+      }
+    })
+  }
+}
 function writeContent (writer, content, spec, addedProps) {
   let isResponseArray = false
   if (content) {
@@ -211,7 +242,6 @@ function writeContent (writer, content, spec, addedProps) {
       if (!body.schema?.type && !body.schema?.$ref) {
         break
       }
-
       // This is likely buggy as there can be multiple responses for different
       // status codes. This is currently not possible with Platformatic DB
       // services so we skip for now.

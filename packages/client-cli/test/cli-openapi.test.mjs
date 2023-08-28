@@ -799,7 +799,7 @@ app.listen({ port: 0 })
 })
 
 test('openapi client generation from YAML file', async ({ teardown, comment, same }) => {
-  const dir = await moveToTmpdir(() => {})
+  const dir = await moveToTmpdir(teardown)
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'openapi.yaml')
   comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
@@ -825,4 +825,27 @@ export interface GetMoviesResponseOK {
   'data': { foo: string; bar?: string; baz?: { nested1?: string; nested2: string } };
 }
 `)
+})
+
+test('request with same parameter name in body/path/header/query', async ({ teardown, comment, match }) => {
+  const dir = await moveToTmpdir(teardown)
+  const openapiFile = desm.join(import.meta.url, 'fixtures', 'same-parameter-name-openapi.json')
+  comment(`working in ${dir}`)
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
+
+  // check the type file has the correct implementation for the request
+  const typeFile = join(dir, 'movies', 'movies.d.ts')
+  const data = await readFile(typeFile, 'utf-8')
+  match(data, `
+export interface GetMoviesRequest {
+  body: {
+    'id': string;
+  }
+  query: {
+    'id': string;
+  }
+  headers: {
+    'id': string;
+  }
+}`)
 })
