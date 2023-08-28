@@ -8,23 +8,9 @@
   "paths": {
     "/movies": {
       "get": {
-        "parameters": [
-          {
-            "name": "id",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "name",
-            "in": "query",
-            "type": "string",
-            "required": true
-          }
-        ],
         "operationId": "getMovies",
         "responses": {
           "200": {
-            "description": "Default 302 Response",
             "content": {
               "application/json": {
                 "schema": {
