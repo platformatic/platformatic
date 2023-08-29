@@ -113,7 +113,7 @@ export const createDynamicWorkspaceGHAction = async (logger, env, config, projec
   if (!isGithubActionExists) {
     await mkdir(join(projectDir, '.github', 'workflows'), { recursive: true })
     await writeFile(ghActionFilePath, dynamicWorkspaceGHTemplate(env, config, buildTS))
-    logger.info('Github action successfully created, please add the following secrets as repository secrets: ')
+    logger.info('PR Previews are enabled for your app and the Github action was successfully created, please add the following secrets as repository secrets: ')
     const secretsString = formatSecretsToAdd({
       PLATFORMATIC_DYNAMIC_WORKSPACE_ID: 'your workspace id',
       PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY: 'your workspace API key',
@@ -135,7 +135,7 @@ export const askDynamicWorkspaceCreateGHAction = async (logger, env, type, build
     {
       type: 'list',
       name: 'githubAction',
-      message: 'Do you want to create the github action to deploy this application to Platformatic Cloud dynamic workspace?',
+      message: 'Do you want to enable PR Previews in your application?',
       default: true,
       choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
     }
