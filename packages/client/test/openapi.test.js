@@ -4,6 +4,7 @@ require('./helper')
 const { test } = require('tap')
 const { ResponseStatusCodeError } = require('undici').errors
 const { buildServer } = require('../../db')
+const { buildServer: buildService } = require('../../service')
 const { join } = require('path')
 const { buildOpenAPIClient } = require('..')
 const fs = require('fs/promises')
@@ -552,4 +553,39 @@ test('302', async ({ teardown, same, rejects }) => {
     const resp = await client.nonStandard()
     same(resp.statusCode, 470)
   }
+})
+
+test('build basic client from file with duplicated parameters', async ({ teardown, same, rejects }) => {
+  try {
+    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildService(join(__dirname, 'fixtures', 'duped-params', 'platformatic.service.json'))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const client = await buildOpenAPIClient({
+    url: `${app.url}`,
+    path: join(__dirname, 'fixtures', 'duped-params', 'openapi.json')
+  })
+
+  const result = await client.postHello({
+    body: {
+      id: 'bodyId'
+    },
+    query: {
+      id: 'queryId'
+    },
+    headers: {
+      id: 'headersId'
+    }
+  })
+
+  same(result.headers.id, 'headersId')
+  same(result.query.id, 'queryId')
+  same(result.body.id, 'bodyId')
 })

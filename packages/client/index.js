@@ -82,7 +82,16 @@ function computeURLWithoutPath (url) {
   url.pathname = ''
   return url.toString()
 }
-
+function hasDuplicatedParameters (methodMeta) {
+  if (methodMeta.parameters.length === 0) {
+    return false
+  }
+  const s = new Set()
+  methodMeta.parameters.forEach((param) => {
+    s.add(param.name)
+  })
+  return s.size !== methodMeta.parameters.length
+}
 function buildCallFunction (baseUrl, path, method, methodMeta, fullResponse, throwOnError, openTelemetry) {
   const url = new URL(baseUrl)
   method = method.toUpperCase()
@@ -91,6 +100,7 @@ function buildCallFunction (baseUrl, path, method, methodMeta, fullResponse, thr
   const pathParams = methodMeta.parameters?.filter(p => p.in === 'path') || []
   const queryParams = methodMeta.parameters?.filter(p => p.in === 'query') || []
   const headerParams = methodMeta.parameters?.filter(p => p.in === 'header') || []
+  const forceFullReqeust = hasDuplicatedParameters(methodMeta)
 
   return async function (args) {
     let headers = this[kHeaders]
@@ -98,29 +108,38 @@ function buildCallFunction (baseUrl, path, method, methodMeta, fullResponse, thr
     if (this[kTelemetryContext]) {
       telemetryContext = this[kTelemetryContext]
     }
-    const body = { ...args } // shallow copy
-    const urlToCall = new URL(url)
+    let body
     const query = new URLSearchParams()
     let pathToCall = path
-    for (const param of pathParams) {
-      if (body[param.name] === undefined) {
-        throw new Error('missing required parameter ' + param.name)
+    const urlToCall = new URL(url)
+    if (forceFullReqeust) {
+      headers = args.headers
+      body = args.body
+      for (const param of queryParams) {
+        query.append(param.name, args.query[param.name])
       }
-      pathToCall = pathToCall.replace(`{${param.name}}`, body[param.name])
-      body[param.name] = undefined
-    }
-
-    for (const param of queryParams) {
-      if (body[param.name] !== undefined) {
-        query.set(param.name, body[param.name])
+    } else {
+      body = { ...args } // shallow copy
+      for (const param of pathParams) {
+        if (body[param.name] === undefined) {
+          throw new Error('missing required parameter ' + param.name)
+        }
+        pathToCall = pathToCall.replace(`{${param.name}}`, body[param.name])
         body[param.name] = undefined
       }
-    }
 
-    for (const param of headerParams) {
-      if (body[param.name] !== undefined) {
-        headers[param.name] = body[param.name]
-        body[param.name] = undefined
+      for (const param of queryParams) {
+        if (body[param.name] !== undefined) {
+          query.set(param.name, body[param.name])
+          body[param.name] = undefined
+        }
+      }
+
+      for (const param of headerParams) {
+        if (body[param.name] !== undefined) {
+          headers[param.name] = body[param.name]
+          body[param.name] = undefined
+        }
       }
     }
 
@@ -162,7 +181,6 @@ function buildCallFunction (baseUrl, path, method, methodMeta, fullResponse, thr
           body: responseBody
         }
       }
-
       return responseBody
     } catch (err) {
       openTelemetry?.setErrorInSpanClient(span, err)
