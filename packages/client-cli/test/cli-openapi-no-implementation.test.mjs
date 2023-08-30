@@ -331,7 +331,7 @@ module.exports = async function (app) {
 test('openapi client generation (javascript) from file', async ({ teardown, comment, same }) => {
   const openapi = desm.join(import.meta.url, 'fixtures', 'movies', 'openapi.json')
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(() => {})
   comment(`working in ${dir}`)
 
   const pltServiceConfig = {

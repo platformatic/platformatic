@@ -1,6 +1,6 @@
 import CodeBlockWriter from 'code-block-writer'
 import jsonpointer from 'jsonpointer'
-import { generateOperationId } from '@platformatic/client'
+import { generateOperationId, hasDuplicatedParameters } from '@platformatic/client'
 import { capitalize, classCase, toJavaScriptName } from './utils.mjs'
 import { STATUS_CODES } from 'node:http'
 
@@ -104,6 +104,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
     for (const operation of operations) {
       const operationId = operation.operation.operationId
       const { parameters, responses, requestBody } = operation.operation
+      const forceFullReqeust = hasDuplicatedParameters(operation.operation)
       const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
       if (successResponses.length !== 1) {
         currentFullResponse = true
@@ -114,30 +115,39 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
       interfaces.write(`export interface ${operationRequestName}`).block(() => {
         const addedProps = new Set()
         if (parameters) {
-          const bodyParams = []
-          const queryParams = []
-          const headersParams = []
-          const pathParams = []
-          for (const parameter of parameters) {
-            switch (parameter.in) {
-              case 'query':
-                queryParams.push(parameter)
-                break
-              case 'body':
-                bodyParams.push(parameter)
-                break
-              case 'path':
-                pathParams.push(parameter)
-                break
-              case 'header':
-                headersParams.push(parameter)
-                break
+          if (forceFullReqeust) {
+            const bodyParams = []
+            const queryParams = []
+            const headersParams = []
+            const pathParams = []
+            for (const parameter of parameters) {
+              switch (parameter.in) {
+                case 'query':
+                  queryParams.push(parameter)
+                  break
+                case 'body':
+                  bodyParams.push(parameter)
+                  break
+                case 'path':
+                  pathParams.push(parameter)
+                  break
+                case 'header':
+                  headersParams.push(parameter)
+                  break
+              }
             }
+            writeProperties(interfaces, 'body', bodyParams, addedProps)
+            writeProperties(interfaces, 'query', queryParams, addedProps)
+            writeProperties(interfaces, 'headers', headersParams, addedProps)
+            writeProperties(interfaces, 'path', pathParams, addedProps)
+          } else {
+            for (const parameter of parameters) {
+              const { name, required } = parameter
+              // We do not check for addedProps here because it's the first
+              // group of properties
+              writeProperty(interfaces, name, parameter, addedProps, required)
+            } 
           }
-          writeProperties(interfaces, 'body', bodyParams, addedProps)
-          writeProperties(interfaces, 'query', queryParams, addedProps)
-          writeProperties(interfaces, 'headers', headersParams, addedProps)
-          writeProperties(interfaces, 'path', pathParams, addedProps)
         }
         if (requestBody) {
           writeContent(interfaces, requestBody.content, schema, addedProps)

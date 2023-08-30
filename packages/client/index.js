@@ -322,3 +322,4 @@ module.exports.default = plugin
 module.exports.buildOpenAPIClient = buildOpenAPIClient
 module.exports.buildGraphQLClient = buildGraphQLClient
 module.exports.generateOperationId = generateOperationId
+module.exports.hasDuplicatedParameters = hasDuplicatedParameters
