@@ -83,6 +83,7 @@ function computeURLWithoutPath (url) {
   return url.toString()
 }
 function hasDuplicatedParameters (methodMeta) {
+  if (!methodMeta.parameters) return false
   if (methodMeta.parameters.length === 0) {
     return false
   }

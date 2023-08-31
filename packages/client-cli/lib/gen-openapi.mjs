@@ -119,7 +119,6 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
             const bodyParams = []
             const queryParams = []
             const headersParams = []
-            const pathParams = []
             for (const parameter of parameters) {
               switch (parameter.in) {
                 case 'query':
@@ -127,9 +126,6 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
                   break
                 case 'body':
                   bodyParams.push(parameter)
-                  break
-                case 'path':
-                  pathParams.push(parameter)
                   break
                 case 'header':
                   headersParams.push(parameter)
@@ -139,7 +135,6 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
             writeProperties(interfaces, 'body', bodyParams, addedProps)
             writeProperties(interfaces, 'query', queryParams, addedProps)
             writeProperties(interfaces, 'headers', headersParams, addedProps)
-            writeProperties(interfaces, 'path', pathParams, addedProps)
           } else {
             for (const parameter of parameters) {
               const { name, required } = parameter
@@ -224,6 +219,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
 }
 
 function writeProperties (writer, blockName, parameters, addedProps) {
+  console.log(`writing properties`, parameters)
   if (parameters.length > 0) {
     writer.write(`${blockName}: `).block(() => {
       for (const parameter of parameters) {
