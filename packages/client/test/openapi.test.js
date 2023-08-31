@@ -555,7 +555,7 @@ test('302', async ({ teardown, same, rejects }) => {
   }
 })
 
-test('build basic client from file with duplicated parameters', async ({ teardown, same, rejects }) => {
+test('build basic client from file with (endpoint with duplicated parameters)', async ({ teardown, same, rejects }) => {
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -588,4 +588,44 @@ test('build basic client from file with duplicated parameters', async ({ teardow
   same(result.headers.id, 'headersId')
   same(result.query.id, 'queryId')
   same(result.body.id, 'bodyId')
+})
+
+test('build basic client from file (enpoint with no parameters)', async ({ teardown, same, notOk }) => {
+  try {
+    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildService(join(__dirname, 'fixtures', 'no-params', 'platformatic.service.json'))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const client = await buildOpenAPIClient({
+    url: `${app.url}`,
+    path: join(__dirname, 'fixtures', 'no-params', 'openapi.json')
+  })
+
+  const bodyPayload = {
+    body: {
+      id: 'bodyId'
+    },
+    query: {
+      id: 'queryId'
+    },
+    headers: {
+      id: 'headersId'
+    }
+  }
+  const postResult = await client.postHello(bodyPayload)
+
+  same(Object.keys(postResult.headers).length, 4) // some headers are returned...
+  notOk(postResult.headers.id) // ...but not the 'id' passed in the request
+  same(postResult.query, {})
+  same(postResult.body, bodyPayload)
+
+  const getResult = await client.getHello()
+  same(getResult.message, 'GET /hello works')
 })
