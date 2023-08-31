@@ -54,7 +54,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
   }
 
   client[kHeaders] = options.headers || {}
-  let { fullResponse, throwOnError } = options
+  let { fullRequest, fullResponse, throwOnError } = options
   const generatedOperationIds = []
   for (const path of Object.keys(spec.paths)) {
     const pathMeta = spec.paths[path]
@@ -70,7 +70,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
         // - there is no responses with 2XX code
         fullResponse = true
       }
-      client[operationId] = buildCallFunction(baseUrl, path, method, methodMeta, fullResponse, throwOnError, openTelemetry)
+      client[operationId] = buildCallFunction(baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse)
     }
   }
 
@@ -93,7 +93,7 @@ function hasDuplicatedParameters (methodMeta) {
   })
   return s.size !== methodMeta.parameters.length
 }
-function buildCallFunction (baseUrl, path, method, methodMeta, fullResponse, throwOnError, openTelemetry) {
+function buildCallFunction (baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse) {
   const url = new URL(baseUrl)
   method = method.toUpperCase()
   path = join(url.pathname, path)
@@ -101,7 +101,7 @@ function buildCallFunction (baseUrl, path, method, methodMeta, fullResponse, thr
   const pathParams = methodMeta.parameters?.filter(p => p.in === 'path') || []
   const queryParams = methodMeta.parameters?.filter(p => p.in === 'query') || []
   const headerParams = methodMeta.parameters?.filter(p => p.in === 'header') || []
-  const forceFullReqeust = hasDuplicatedParameters(methodMeta)
+  const forceFullRequest = fullRequest || hasDuplicatedParameters(methodMeta)
 
   return async function (args) {
     let headers = this[kHeaders]
@@ -113,7 +113,7 @@ function buildCallFunction (baseUrl, path, method, methodMeta, fullResponse, thr
     const query = new URLSearchParams()
     let pathToCall = path
     const urlToCall = new URL(url)
-    if (forceFullReqeust) {
+    if (forceFullRequest) {
       headers = args.headers
       body = args.body
       for (const param of queryParams) {

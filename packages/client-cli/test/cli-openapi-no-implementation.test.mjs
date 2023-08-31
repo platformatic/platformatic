@@ -7,7 +7,7 @@ import * as desm from 'desm'
 import { execa } from 'execa'
 import { promises as fs } from 'fs'
 
-test('generates only types in target folder with --only-types flag', async ({ teardown, comment, same, match }) => {
+test('generates only types in target folder with --types-only flag', async ({ teardown, comment, same, match }) => {
   const dir = await moveToTmpdir(teardown)
   comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), desm.join(import.meta.url, 'fixtures', 'movies', 'openapi.json'), '--name', 'movies', '-f', dir, '--types-only'])

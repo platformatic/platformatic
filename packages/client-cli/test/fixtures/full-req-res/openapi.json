@@ -1,0 +1,47 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Platformatic DB",
+    "description": "Exposing a SQL database as REST",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/hello": {
+      "post": {
+        "parameters": [
+          {
+            "name": "headerId",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "bodyId",
+            "in": "body",
+            "type": "string"
+          },
+          {
+            "name": "queryId",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "operationId": "postHello",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "foo": { "type": "string" },
+                    "bar": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

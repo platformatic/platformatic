@@ -4,14 +4,14 @@ import { generateOperationId, hasDuplicatedParameters } from '@platformatic/clie
 import { capitalize, classCase, toJavaScriptName } from './utils.mjs'
 import { STATUS_CODES } from 'node:http'
 
-export function processOpenAPI ({ schema, name, fullResponse }) {
+export function processOpenAPI ({ schema, name, fullResponse, fullRequest }) {
   return {
-    types: generateTypesFromOpenAPI({ schema, name, fullResponse }),
-    implementation: generateImplementationFromOpenAPI({ schema, name, fullResponse })
+    types: generateTypesFromOpenAPI({ schema, name, fullResponse, fullRequest }),
+    implementation: generateImplementationFromOpenAPI({ schema, name, fullResponse, fullRequest })
   }
 }
 
-function generateImplementationFromOpenAPI ({ schema, name, fullResponse }) {
+function generateImplementationFromOpenAPI ({ schema, name, fullResponse, fullRequest }) {
   const camelcasedName = toJavaScriptName(name)
 
   /* eslint-disable new-cap */
@@ -39,7 +39,8 @@ function generateImplementationFromOpenAPI ({ schema, name, fullResponse }) {
       writer.writeLine('url: opts.url,')
       writer.writeLine('serviceId: opts.serviceId,')
       writer.writeLine('throwOnError: opts.throwOnError,')
-      writer.writeLine(`fullResponse: ${fullResponse}`)
+      writer.writeLine(`fullResponse: ${fullResponse},`)
+      writer.writeLine(`fullRequest: ${fullRequest}`)
     })
     writer.write(')')
   })
@@ -54,7 +55,7 @@ function generateImplementationFromOpenAPI ({ schema, name, fullResponse }) {
   return writer.toString()
 }
 
-function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
+function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest }) {
   const camelcasedName = toJavaScriptName(name)
   const capitalizedName = capitalize(camelcasedName)
   const { paths } = schema
@@ -104,7 +105,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
     for (const operation of operations) {
       const operationId = operation.operation.operationId
       const { parameters, responses, requestBody } = operation.operation
-      const forceFullReqeust = hasDuplicatedParameters(operation.operation)
+      const forceFullReqeust = fullRequest || hasDuplicatedParameters(operation.operation)
       const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
       if (successResponses.length !== 1) {
         currentFullResponse = true
@@ -141,7 +142,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
               // We do not check for addedProps here because it's the first
               // group of properties
               writeProperty(interfaces, name, parameter, addedProps, required)
-            } 
+            }
           }
         }
         if (requestBody) {
@@ -219,7 +220,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
 }
 
 function writeProperties (writer, blockName, parameters, addedProps) {
-  console.log(`writing properties`, parameters)
+  console.log('writing properties', parameters)
   if (parameters.length > 0) {
     writer.write(`${blockName}: `).block(() => {
       for (const parameter of parameters) {
