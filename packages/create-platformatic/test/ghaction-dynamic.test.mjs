@@ -31,7 +31,7 @@ const env = {
 
 test('creates gh action', async ({ equal, match }) => {
   await createDynamicWorkspaceGHAction(fakeLogger, env, 'db', tmpDir, false)
-  equal(log[0], 'Github action successfully created, please add the following secrets as repository secrets: ')
+  equal(log[0], 'PR Previews are enabled for your app and the Github action was successfully created, please add the following secrets as repository secrets: ')
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-dynamic-workspace-deploy.yml'))
   equal(accessible, true)
   const ghFile = await readFile(join(tmpDir, '.github/workflows/platformatic-dynamic-workspace-deploy.yml'), 'utf8')
@@ -50,7 +50,7 @@ test('creates gh action', async ({ equal, match }) => {
 
 test('creates gh action with TS build step', async ({ equal, match }) => {
   await createDynamicWorkspaceGHAction(fakeLogger, env, 'db', tmpDir, true)
-  equal(log[0], 'Github action successfully created, please add the following secrets as repository secrets: ')
+  equal(log[0], 'PR Previews are enabled for your app and the Github action was successfully created, please add the following secrets as repository secrets: ')
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-dynamic-workspace-deploy.yml'))
   equal(accessible, true)
   const ghFile = await readFile(join(tmpDir, '.github/workflows/platformatic-dynamic-workspace-deploy.yml'), 'utf8')
@@ -78,7 +78,7 @@ test('do not create gitignore file because already present', async ({ end, equal
 
 test('creates gh action with a warn if a .git folder is not present', async ({ end, equal }) => {
   await createDynamicWorkspaceGHAction(fakeLogger, env, 'db', tmpDir)
-  equal(log[0], 'Github action successfully created, please add the following secrets as repository secrets: ')
+  equal(log[0], 'PR Previews are enabled for your app and the Github action was successfully created, please add the following secrets as repository secrets: ')
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-dynamic-workspace-deploy.yml'))
   equal(accessible, true)
   const secretsLogLine = log[1].split('\n')
@@ -91,7 +91,7 @@ test('creates gh action with a warn if a .git folder is not present', async ({ e
 test('creates gh action without a warn if a .git folder is present', async ({ end, equal }) => {
   await mkdir(join(tmpDir, '.git'), { recursive: true })
   await createDynamicWorkspaceGHAction(fakeLogger, env, 'db', tmpDir)
-  equal(log[0], 'Github action successfully created, please add the following secrets as repository secrets: ')
+  equal(log[0], 'PR Previews are enabled for your app and the Github action was successfully created, please add the following secrets as repository secrets: ')
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-dynamic-workspace-deploy.yml'))
   equal(accessible, true)
   equal(log.length, 2)
