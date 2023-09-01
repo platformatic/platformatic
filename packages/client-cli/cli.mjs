@@ -42,7 +42,7 @@ async function isFileAccessible (filename) {
 
 const configFileNames = ConfigManager.listConfigFiles()
 
-async function writeOpenAPIClient (folder, name, text, fullResponse, generateImplementation, typesOnly) {
+async function writeOpenAPIClient (folder, name, text, generateImplementation, typesOnly, fullRequest, fullResponse) {
   await mkdir(folder, { recursive: true })
 
   // TODO deal with yaml
@@ -53,7 +53,7 @@ async function writeOpenAPIClient (folder, name, text, fullResponse, generateImp
   if (!typesOnly) {
     await writeFile(join(folder, `${name}.openapi.json`), JSON.stringify(schema, null, 2))
   }
-  const { types, implementation } = processOpenAPI({ schema, name, fullResponse })
+  const { types, implementation } = processOpenAPI({ schema, name, fullResponse, fullRequest })
   await writeFile(join(folder, `${name}.d.ts`), types)
   if (generateImplementation) {
     await writeFile(join(folder, `${name}.cjs`), implementation)
@@ -77,14 +77,14 @@ async function writeGraphQLClient (folder, name, schema, url, generateImplementa
   await writeFile(join(folder, 'package.json'), getPackageJSON({ name, generateImplementation }))
 }
 
-async function downloadAndWriteOpenAPI (logger, url, folder, name, fullResponse, generateImplementation, typesOnly) {
+async function downloadAndWriteOpenAPI (logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse) {
   logger.debug(`Trying to download OpenAPI schema from ${url}`)
   const res = await request(url)
   if (res.statusCode === 200) {
     // we are OpenAPI
     const text = await res.body.text()
     try {
-      await writeOpenAPIClient(folder, name, text, fullResponse, generateImplementation, typesOnly)
+      await writeOpenAPIClient(folder, name, text, generateImplementation, typesOnly, fullRequest, fullResponse)
       /* c8 ignore next 3 */
     } catch (err) {
       return false
@@ -96,7 +96,7 @@ async function downloadAndWriteOpenAPI (logger, url, folder, name, fullResponse,
   return false
 }
 
-async function downloadAndWriteGraphQL (logger, url, folder, name, generateImplementation, typesOnly) {
+async function downloadAndWriteGraphQL (logger, url, folder, name, generateImplementation) {
   logger.debug(`Trying to download GraphQL schema from ${url}`)
   const query = graphql.getIntrospectionQuery()
   const res = await request(url, {
@@ -120,13 +120,12 @@ async function downloadAndWriteGraphQL (logger, url, folder, name, generateImple
   return 'graphql'
 }
 
-async function readFromFileAndWrite (logger, file, folder, name, fullResponse, generateImplementation, typesOnly) {
+async function readFromFileAndWrite (logger, file, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse) {
   logger.info(`Trying to read schema from file ${file}`)
   const text = await readFile(file, 'utf8')
-
   // try OpenAPI first
   try {
-    await writeOpenAPIClient(folder, name, text, fullResponse, generateImplementation, typesOnly)
+    await writeOpenAPIClient(folder, name, text, generateImplementation, typesOnly, fullRequest, fullResponse)
     return 'openapi'
   } catch (err) {
     logger.error(`Error parsing OpenAPI definition: ${err.message} Trying with GraphQL`)
@@ -140,7 +139,19 @@ async function readFromFileAndWrite (logger, file, folder, name, fullResponse, g
   }
 }
 
-async function downloadAndProcess ({ url, name, folder, config, r: fullResponse, logger, runtime, generateImplementation, typesOnly }) {
+async function downloadAndProcess (options) {
+  const {
+    url,
+    name,
+    folder,
+    logger,
+    runtime,
+    generateImplementation,
+    typesOnly,
+    fullRequest,
+    fullResponse
+  } = options
+  let config = options.config
   if (!config) {
     const configFilesAccessibility = await Promise.all(configFileNames.map((fileName) => isFileAccessible(fileName)))
     config = configFileNames.find((value, index) => configFilesAccessibility[index])
@@ -148,17 +159,16 @@ async function downloadAndProcess ({ url, name, folder, config, r: fullResponse,
 
   let found = false
   const toTry = []
-
   if (url.startsWith('http')) {
     // add download functions only if it's an URL
-    toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url + '/documentation/json', folder, name, fullResponse, generateImplementation, typesOnly))
+    toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url + '/documentation/json', folder, name, generateImplementation, typesOnly, fullRequest, fullResponse))
     toTry.push(downloadAndWriteGraphQL.bind(null, logger, url + '/graphql', folder, name, generateImplementation, typesOnly))
-    toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url, folder, name, fullResponse, generateImplementation, typesOnly))
+    toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse))
     toTry.push(downloadAndWriteGraphQL.bind(null, logger, url, folder, name, generateImplementation, typesOnly))
   } else {
     // add readFromFileAndWrite to the functions only if it's not an URL
     toTry.push(
-      readFromFileAndWrite.bind(null, logger, url, folder, name, fullResponse, generateImplementation, typesOnly)
+      readFromFileAndWrite.bind(null, logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse)
     )
   }
   for (const fn of toTry) {
@@ -233,7 +243,7 @@ export async function command (argv) {
   })
   let { _: [url], ...options } = parseArgs(argv, {
     string: ['name', 'folder', 'runtime'],
-    boolean: ['typescript', 'full-response', 'types-only'],
+    boolean: ['typescript', 'full-response', 'types-only', 'full-response', 'full'],
     default: {
       name: 'client',
       typescript: false
@@ -243,12 +253,16 @@ export async function command (argv) {
       f: 'folder',
       t: 'typescript',
       c: 'config',
-      r: 'full-response',
-      R: 'runtime'
+      R: 'runtime',
+      F: 'full'
     }
   })
   options.folder = options.folder || join(process.cwd(), options.name)
-
+  if (options.full || options.F) {
+    // force both fullRequest and fullResponse
+    options['full-request'] = true
+    options['full-response'] = true
+  }
   const stream = pinoPretty({
     translateTime: 'SYS:HH:MM:ss',
     ignore: 'hostname,pid',
@@ -292,6 +306,9 @@ export async function command (argv) {
     } else {
       options.generateImplementation = !options.config
     }
+
+    options.fullRequest  = options['full-request']
+    options.fullResponse = options['full-response']
     await downloadAndProcess({ url, ...options, logger, runtime: options.runtime })
     logger.info('Client generated successfully')
     logger.info('Check out the docs to know more: https://docs.platformatic.dev/docs/reference/client/introduction')

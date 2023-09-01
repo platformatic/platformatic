@@ -54,7 +54,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
   }
 
   client[kHeaders] = options.headers || {}
-  let { fullResponse, throwOnError } = options
+  let { fullRequest, fullResponse, throwOnError } = options
   const generatedOperationIds = []
   for (const path of Object.keys(spec.paths)) {
     const pathMeta = spec.paths[path]
@@ -70,7 +70,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
         // - there is no responses with 2XX code
         fullResponse = true
       }
-      client[operationId] = buildCallFunction(baseUrl, path, method, methodMeta, fullResponse, throwOnError, openTelemetry)
+      client[operationId] = buildCallFunction(baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse)
     }
   }
 
@@ -82,8 +82,18 @@ function computeURLWithoutPath (url) {
   url.pathname = ''
   return url.toString()
 }
-
-function buildCallFunction (baseUrl, path, method, methodMeta, fullResponse, throwOnError, openTelemetry) {
+function hasDuplicatedParameters (methodMeta) {
+  if (!methodMeta.parameters) return false
+  if (methodMeta.parameters.length === 0) {
+    return false
+  }
+  const s = new Set()
+  methodMeta.parameters.forEach((param) => {
+    s.add(param.name)
+  })
+  return s.size !== methodMeta.parameters.length
+}
+function buildCallFunction (baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse) {
   const url = new URL(baseUrl)
   method = method.toUpperCase()
   path = join(url.pathname, path)
@@ -91,6 +101,7 @@ function buildCallFunction (baseUrl, path, method, methodMeta, fullResponse, thr
   const pathParams = methodMeta.parameters?.filter(p => p.in === 'path') || []
   const queryParams = methodMeta.parameters?.filter(p => p.in === 'query') || []
   const headerParams = methodMeta.parameters?.filter(p => p.in === 'header') || []
+  const forceFullRequest = fullRequest || hasDuplicatedParameters(methodMeta)
 
   return async function (args) {
     let headers = this[kHeaders]
@@ -98,32 +109,48 @@ function buildCallFunction (baseUrl, path, method, methodMeta, fullResponse, thr
     if (this[kTelemetryContext]) {
       telemetryContext = this[kTelemetryContext]
     }
-    const body = { ...args } // shallow copy
-    const urlToCall = new URL(url)
+    let body
     const query = new URLSearchParams()
     let pathToCall = path
-    for (const param of pathParams) {
-      if (body[param.name] === undefined) {
-        throw new Error('missing required parameter ' + param.name)
+    const urlToCall = new URL(url)
+    if (forceFullRequest) {
+      headers = args.headers
+      body = args.body
+      for (const param of queryParams) {
+        if (param.type === 'array') {
+          args.query[param.name].forEach((p) => query.append(param.name, p))
+        } else {
+          query.append(param.name, args.query[param.name])
+        }
       }
-      pathToCall = pathToCall.replace(`{${param.name}}`, body[param.name])
-      body[param.name] = undefined
-    }
-
-    for (const param of queryParams) {
-      if (body[param.name] !== undefined) {
-        query.set(param.name, body[param.name])
+    } else {
+      body = { ...args } // shallow copy
+      for (const param of pathParams) {
+        if (body[param.name] === undefined) {
+          throw new Error('missing required parameter ' + param.name)
+        }
+        pathToCall = pathToCall.replace(`{${param.name}}`, body[param.name])
         body[param.name] = undefined
       }
-    }
 
-    for (const param of headerParams) {
-      if (body[param.name] !== undefined) {
-        headers[param.name] = body[param.name]
-        body[param.name] = undefined
+      for (const param of queryParams) {
+        if (body[param.name] !== undefined) {
+          if (param.type === 'array') {
+            body[param.name].forEach((p) => query.append(param.name, p))
+          } else {
+            query.append(param.name, body[param.name])
+          }
+          body[param.name] = undefined
+        }
+      }
+
+      for (const param of headerParams) {
+        if (body[param.name] !== undefined) {
+          headers[param.name] = body[param.name]
+          body[param.name] = undefined
+        }
       }
     }
-
     urlToCall.search = query.toString()
     urlToCall.pathname = pathToCall
 
@@ -162,7 +189,6 @@ function buildCallFunction (baseUrl, path, method, methodMeta, fullResponse, thr
           body: responseBody
         }
       }
-
       return responseBody
     } catch (err) {
       openTelemetry?.setErrorInSpanClient(span, err)
@@ -177,6 +203,9 @@ function capitalize (str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
+// function handleQueryParameters(urlSearchParamObject, parameter) {
+
+// }
 // TODO: For some unknown reason c8 is not picking up the coverage for this function
 async function graphql (url, log, headers, query, variables, openTelemetry, telemetryContext) {
   const { span, telemetryHeaders } = openTelemetry?.startSpanClient(url.toString(), 'POST', telemetryContext) || { span: null, telemetryHeaders: {} }
@@ -304,3 +333,4 @@ module.exports.default = plugin
 module.exports.buildOpenAPIClient = buildOpenAPIClient
 module.exports.buildGraphQLClient = buildGraphQLClient
 module.exports.generateOperationId = generateOperationId
+module.exports.hasDuplicatedParameters = hasDuplicatedParameters

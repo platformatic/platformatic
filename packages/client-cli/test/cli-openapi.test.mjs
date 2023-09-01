@@ -799,7 +799,7 @@ app.listen({ port: 0 })
 })
 
 test('openapi client generation from YAML file', async ({ teardown, comment, same }) => {
-  const dir = await moveToTmpdir(() => {})
+  const dir = await moveToTmpdir(teardown)
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'openapi.yaml')
   comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
@@ -825,4 +825,93 @@ export interface GetMoviesResponseOK {
   'data': { foo: string; bar?: string; baz?: { nested1?: string; nested2: string } };
 }
 `)
+})
+
+test('request with same parameter name in body/path/header/query', async ({ teardown, comment, match }) => {
+  const dir = await moveToTmpdir(teardown)
+  const openapiFile = desm.join(import.meta.url, 'fixtures', 'same-parameter-name-openapi.json')
+  comment(`working in ${dir}`)
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
+
+  // check the type file has the correct implementation for the request
+  const typeFile = join(dir, 'movies', 'movies.d.ts')
+  const data = await readFile(typeFile, 'utf-8')
+  match(data, `
+export interface GetMoviesRequest {
+  body: {
+    'id': string;
+  }
+  query: {
+    'id': string;
+  }
+  headers: {
+    'id': string;
+  }
+}`)
+})
+
+test('openapi client generation (javascript) from file with fullRequest and fullResponse', async ({ teardown, comment, match }) => {
+  const openapi = desm.join(import.meta.url, 'fixtures', 'full-req-res', 'openapi.json')
+  teardown = () => {}
+  const dir = await moveToTmpdir((teardown))
+  comment(`working in ${dir}`)
+
+  const pltServiceConfig = {
+    $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugins: {
+      paths: ['./plugin.js']
+    }
+  }
+
+  await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
+  
+  const fullOptions = [
+    ['--full-request', '--full-response'],
+    ['--full']
+  ]
+  for (const opt of fullOptions) {
+    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapi, '--name', 'full', ...opt])
+
+    // check the type file has the correct implementation for the request and the response
+    const typeFile = join(dir, 'full', 'full.d.ts')
+    const data = await readFile(typeFile, 'utf-8')
+    match(data, `
+export interface PostHelloRequest {
+  body: {
+    'bodyId': string;
+  }
+  query: {
+    'queryId': string;
+  }
+  headers: {
+    'headerId': string;
+  }
+}
+`)
+    match(data, `
+export interface Full {
+  postHello(req?: PostHelloRequest): Promise<FullResponse<PostHelloResponseOK>>;
+}`)
+    const implementationFile = join(dir, 'full', 'full.cjs')
+    const implementationData = await readFile(implementationFile, 'utf-8')
+    // check the implementation instantiate the client with fullRequest and fullResponse
+    match(implementationData, `
+async function generateFullClientPlugin (app, opts) {
+  app.register(pltClient, {
+    type: 'openapi',
+    name: 'full',
+    path: join(__dirname, 'full.openapi.json'),
+    url: opts.url,
+    serviceId: opts.serviceId,
+    throwOnError: opts.throwOnError,
+    fullResponse: true,
+    fullRequest: true
+  })
+}`)
+  }
+  
 })

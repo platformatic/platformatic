@@ -1,17 +1,17 @@
 import CodeBlockWriter from 'code-block-writer'
 import jsonpointer from 'jsonpointer'
-import { generateOperationId } from '@platformatic/client'
+import { generateOperationId, hasDuplicatedParameters } from '@platformatic/client'
 import { capitalize, classCase, toJavaScriptName } from './utils.mjs'
 import { STATUS_CODES } from 'node:http'
 
-export function processOpenAPI ({ schema, name, fullResponse }) {
+export function processOpenAPI ({ schema, name, fullResponse, fullRequest }) {
   return {
-    types: generateTypesFromOpenAPI({ schema, name, fullResponse }),
-    implementation: generateImplementationFromOpenAPI({ schema, name, fullResponse })
+    types: generateTypesFromOpenAPI({ schema, name, fullResponse, fullRequest }),
+    implementation: generateImplementationFromOpenAPI({ schema, name, fullResponse, fullRequest })
   }
 }
 
-function generateImplementationFromOpenAPI ({ schema, name, fullResponse }) {
+function generateImplementationFromOpenAPI ({ schema, name, fullResponse, fullRequest }) {
   const camelcasedName = toJavaScriptName(name)
 
   /* eslint-disable new-cap */
@@ -39,7 +39,8 @@ function generateImplementationFromOpenAPI ({ schema, name, fullResponse }) {
       writer.writeLine('url: opts.url,')
       writer.writeLine('serviceId: opts.serviceId,')
       writer.writeLine('throwOnError: opts.throwOnError,')
-      writer.writeLine(`fullResponse: ${fullResponse}`)
+      writer.writeLine(`fullResponse: ${fullResponse},`)
+      writer.writeLine(`fullRequest: ${fullRequest}`)
     })
     writer.write(')')
   })
@@ -54,7 +55,7 @@ function generateImplementationFromOpenAPI ({ schema, name, fullResponse }) {
   return writer.toString()
 }
 
-function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
+function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest }) {
   const camelcasedName = toJavaScriptName(name)
   const capitalizedName = capitalize(camelcasedName)
   const { paths } = schema
@@ -104,27 +105,51 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
     for (const operation of operations) {
       const operationId = operation.operation.operationId
       const { parameters, responses, requestBody } = operation.operation
+      const forceFullReqeust = fullRequest || hasDuplicatedParameters(operation.operation)
       const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
       if (successResponses.length !== 1) {
         currentFullResponse = true
       }
       const operationRequestName = `${capitalize(operationId)}Request`
       const operationResponseName = `${capitalize(operationId)}Response`
+
       interfaces.write(`export interface ${operationRequestName}`).block(() => {
         const addedProps = new Set()
         if (parameters) {
-          for (const parameter of parameters) {
-            const { name, required } = parameter
-            // We do not check for addedProps here because it's the first
-            // group of properties
-            writeProperty(interfaces, name, parameter, addedProps, required)
+          if (forceFullReqeust) {
+            const bodyParams = []
+            const queryParams = []
+            const headersParams = []
+            for (const parameter of parameters) {
+              switch (parameter.in) {
+                case 'query':
+                  queryParams.push(parameter)
+                  break
+                case 'body':
+                  bodyParams.push(parameter)
+                  break
+                case 'header':
+                  headersParams.push(parameter)
+                  break
+              }
+            }
+            writeProperties(interfaces, 'body', bodyParams, addedProps)
+            writeProperties(interfaces, 'query', queryParams, addedProps)
+            writeProperties(interfaces, 'headers', headersParams, addedProps)
+          } else {
+            for (const parameter of parameters) {
+              const { name, required } = parameter
+              // We do not check for addedProps here because it's the first
+              // group of properties
+              writeProperty(interfaces, name, parameter, addedProps, required)
+            }
           }
         }
         if (requestBody) {
           writeContent(interfaces, requestBody.content, schema, addedProps)
         }
       })
-      interfaces.writeLine()
+      interfaces.blankLine()
 
       const responseTypes = successResponses.map(([statusCode, response]) => {
         // The client library will always dump bodies for 204 responses
@@ -194,6 +219,18 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   return interfaces.toString() + writer.toString()
 }
 
+function writeProperties (writer, blockName, parameters, addedProps) {
+  if (parameters.length > 0) {
+    writer.write(`${blockName}: `).block(() => {
+      for (const parameter of parameters) {
+        const { name, required } = parameter
+        // We do not check for addedProps here because it's the first
+        // group of properties
+        writeProperty(writer, name, parameter, addedProps, required)
+      }
+    })
+  }
+}
 function writeContent (writer, content, spec, addedProps) {
   let isResponseArray = false
   if (content) {
@@ -211,7 +248,6 @@ function writeContent (writer, content, spec, addedProps) {
       if (!body.schema?.type && !body.schema?.$ref) {
         break
       }
-
       // This is likely buggy as there can be multiple responses for different
       // status codes. This is currently not possible with Platformatic DB
       // services so we skip for now.
