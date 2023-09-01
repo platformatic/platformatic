@@ -117,7 +117,11 @@ function buildCallFunction (baseUrl, path, method, methodMeta, throwOnError, ope
       headers = args.headers
       body = args.body
       for (const param of queryParams) {
-        query.append(param.name, args.query[param.name])
+        if (param.type === 'array') {
+          args.query[param.name].forEach((p) => query.append(param.name, p))
+        } else {
+          query.append(param.name, args.query[param.name])
+        }
       }
     } else {
       body = { ...args } // shallow copy
@@ -131,7 +135,11 @@ function buildCallFunction (baseUrl, path, method, methodMeta, throwOnError, ope
 
       for (const param of queryParams) {
         if (body[param.name] !== undefined) {
-          query.set(param.name, body[param.name])
+          if (param.type === 'array') {
+            body[param.name].forEach((p) => query.append(param.name, p))
+          } else {
+            query.append(param.name, body[param.name])
+          }
           body[param.name] = undefined
         }
       }
@@ -143,7 +151,6 @@ function buildCallFunction (baseUrl, path, method, methodMeta, throwOnError, ope
         }
       }
     }
-
     urlToCall.search = query.toString()
     urlToCall.pathname = pathToCall
 
@@ -196,6 +203,9 @@ function capitalize (str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
+// function handleQueryParameters(urlSearchParamObject, parameter) {
+
+// }
 // TODO: For some unknown reason c8 is not picking up the coverage for this function
 async function graphql (url, log, headers, query, variables, openTelemetry, telemetryContext) {
   const { span, telemetryHeaders } = openTelemetry?.startSpanClient(url.toString(), 'POST', telemetryContext) || { span: null, telemetryHeaders: {} }

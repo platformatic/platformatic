@@ -629,3 +629,48 @@ test('build basic client from file (enpoint with no parameters)', async ({ teard
   const getResult = await client.getHello()
   same(getResult.message, 'GET /hello works')
 })
+
+test('build basic client from file (query array parameter)', async ({ teardown, same, match }) => {
+  try {
+    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildService(join(__dirname, 'fixtures', 'array-query-params', 'platformatic.service.json'))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  {
+    // // with fullRequest
+    const client = await buildOpenAPIClient({
+      fullRequest: true,
+      url: `${app.url}`,
+      path: join(__dirname, 'fixtures', 'array-query-params', 'openapi.json')
+    })
+
+    const result = await client.getQuery({
+      query: {
+        ids: ['id1', 'id2']
+      }
+    })
+    same(result.isArray, true)
+    match(result.ids, ['id1', 'id2'])
+  }
+  {
+    // without fullRequest
+    const client = await buildOpenAPIClient({
+      fullRequest: false,
+      url: `${app.url}`,
+      path: join(__dirname, 'fixtures', 'array-query-params', 'openapi.json')
+    })
+
+    const result = await client.getQuery({
+      ids: ['id1', 'id2']
+    })
+    same(result.isArray, true)
+    match(result.ids, ['id1', 'id2'])
+  }
+})
