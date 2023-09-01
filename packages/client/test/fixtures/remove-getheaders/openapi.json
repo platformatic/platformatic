@@ -1,0 +1,51 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Platformatic DB",
+    "description": "Exposing a SQL database as REST",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/remove-getheaders": {
+      "post": {
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "toRemove",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "toRemove",
+            "in": "body",
+            "type": "string"
+          },
+          {
+            "name": "foobar",
+            "in": "body",
+            "type": "foobar"
+          }
+        ],
+        "operationId": "postRemoveGetHeaders",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "body": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

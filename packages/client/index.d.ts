@@ -19,7 +19,9 @@ export type PlatformaticClientPluginOptions = {
 interface BuildOpenAPIClientOptions {
   url: string;
   path: string;
-  headers?: Headers
+  headers?: Headers,
+  fullRequest?: boolean,
+  fullResponse?: boolean
 }
 
 interface AbstractLogger {

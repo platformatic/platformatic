@@ -58,7 +58,6 @@ async function buildOpenAPIClient (options, openTelemetry) {
   const generatedOperationIds = []
   for (const path of Object.keys(spec.paths)) {
     const pathMeta = spec.paths[path]
-
     for (const method of Object.keys(pathMeta)) {
       const methodMeta = pathMeta[method]
       const operationId = generateOperationId(path, method, methodMeta, generatedOperationIds)
@@ -158,7 +157,22 @@ function buildCallFunction (baseUrl, path, method, methodMeta, throwOnError, ope
 
     if (this[kGetHeaders]) {
       const options = { url: urlToCall, method, headers, telemetryHeaders, body }
-      headers = { ...headers, ...(await this[kGetHeaders](options)) }
+      const headersFromFunction = await await this[kGetHeaders](options)
+      headers = { ...headers, ...headersFromFunction }
+      // remove fields from other options
+      const headersKeys = Object.keys(headers)
+      const bodyKeys = Object.keys(body)
+
+      const queryKeys = Array.from(query.keys())
+      bodyKeys
+        .filter((k) => { return headersKeys.includes(k) })
+        .forEach((k) => { delete body[k] })
+      queryKeys
+        .filter((k) => { return headersKeys.includes(k) })
+        .forEach((k) => { query.delete(k) })
+
+      // update search params
+      urlToCall.search = query.toString()
     }
 
     let res

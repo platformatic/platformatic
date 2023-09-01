@@ -8,13 +8,21 @@ const { buildServer: buildService } = require('../../service')
 const { join } = require('path')
 const { buildOpenAPIClient } = require('..')
 const fs = require('fs/promises')
+const Fastify = require('fastify')
+const client = require('..')
+
+const fakeTelemetry = {
+  startSpanClient: () => {},
+  endSpanClient: () => null,
+  setErrorInSpanClient: () => null
+}
 
 test('rejects with no url', async ({ rejects }) => {
   await rejects(buildOpenAPIClient())
   await rejects(buildOpenAPIClient({}))
   await rejects(buildOpenAPIClient({
     path: join(__dirname, 'fixtures', 'movies', 'openapi.json')
-  }))
+  }, fakeTelemetry))
 })
 
 test('build basic client from url', async ({ teardown, same, rejects }) => {
@@ -557,7 +565,7 @@ test('302', async ({ teardown, same, rejects }) => {
 
 test('build basic client from file with (endpoint with duplicated parameters)', async ({ teardown, same, rejects }) => {
   try {
-    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(__dirname, 'fixtures', 'duped-params', 'db.sqlite'))
   } catch {
     // noop
   }
@@ -592,7 +600,7 @@ test('build basic client from file with (endpoint with duplicated parameters)', 
 
 test('build basic client from file (enpoint with no parameters)', async ({ teardown, same, notOk }) => {
   try {
-    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(__dirname, 'fixtures', 'no-params', 'db.sqlite'))
   } catch {
     // noop
   }
@@ -632,7 +640,7 @@ test('build basic client from file (enpoint with no parameters)', async ({ teard
 
 test('build basic client from file (query array parameter)', async ({ teardown, same, match }) => {
   try {
-    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(__dirname, 'fixtures', 'array-query-params', 'db.sqlite'))
   } catch {
     // noop
   }
@@ -665,7 +673,7 @@ test('build basic client from file (query array parameter)', async ({ teardown, 
       fullRequest: false,
       url: `${app.url}`,
       path: join(__dirname, 'fixtures', 'array-query-params', 'openapi.json')
-    })
+    }, fakeTelemetry)
 
     const result = await client.getQuery({
       ids: ['id1', 'id2']
@@ -673,4 +681,62 @@ test('build basic client from file (query array parameter)', async ({ teardown, 
     same(result.isArray, true)
     match(result.ids, ['id1', 'id2'])
   }
+})
+
+test('build basic client from file (remove headers from getHeaders)', async ({ teardown, same, match }) => {
+  try {
+    await fs.unlink(join(__dirname, 'fixtures', 'remove-getheaders', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const targetApp = await buildService(join(__dirname, 'fixtures', 'remove-getheaders', 'platformatic.service.json'))
+
+  teardown(async () => {
+    await targetApp.close()
+  })
+  await targetApp.start()
+
+  const app = Fastify()
+
+  await app.register(client, {
+    type: 'openapi',
+    url: `${targetApp.url}`,
+    path: join(__dirname, 'fixtures', 'remove-getheaders', 'openapi.json'),
+    async getHeaders (req) {
+      return {
+        toRemove: 'this-should-be-in-header-and-not-in-query'
+      }
+    }
+  })
+
+  app.post('/', async (req) => {
+    const output = await req.client.postRemoveGetHeaders({
+      query: {
+        toRemove: 'this-should-not-appear',
+        id: '123'
+      },
+      body: {
+        toRemove: 'do-not-show',
+        foobar: 'fizzbuzz'
+      }
+    })
+
+    return output
+  })
+
+  const res = await app.inject({
+    method: 'POST',
+    url: '/'
+  })
+
+  same(res.statusCode, 200)
+  same(res.json(), {
+    headerValue: 'this-should-be-in-header-and-not-in-query',
+    query: {
+      id: '123'
+    },
+    body: {
+      foobar: 'fizzbuzz'
+    }
+  })
 })

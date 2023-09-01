@@ -2,10 +2,11 @@
 'use strict'
 /** @param {import('fastify').FastifyInstance} fastify */
 module.exports = async function (fastify, opts) {
-  fastify.get('/query', async (req, res) => {
+  fastify.post('/remove-getheaders', async (req, res) => {
     return {
-      isArray: Array.isArray(req.query.ids),
-      ids: req.query.ids
+      headerValue: req.headers.toremove,
+      body: req.body,
+      query: req.query
     }
   })
 }
