@@ -220,7 +220,6 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest }) 
 }
 
 function writeProperties (writer, blockName, parameters, addedProps) {
-  console.log('writing properties', parameters)
   if (parameters.length > 0) {
     writer.write(`${blockName}: `).block(() => {
       for (const parameter of parameters) {
