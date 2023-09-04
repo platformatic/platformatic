@@ -914,3 +914,19 @@ async function generateFullClientPlugin (app, opts) {
 }`)
   }
 })
+
+test('optional-headers option', async ({ teardown, comment, match }) => {
+  const dir = await moveToTmpdir(teardown)
+  comment(`working in ${dir}`)
+
+  const openAPIfile = desm.join(import.meta.url, 'fixtures', 'optional-headers-openapi.json')
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--optional-headers', 'foobar,authorization', '--types-only'])
+
+  const typeFile = join(dir, 'movies.d.ts')
+  const data = await readFile(typeFile, 'utf-8')
+  match(data, `
+export interface PostHelloRequest {
+  'authorization'?: string;
+}
+`)
+})
