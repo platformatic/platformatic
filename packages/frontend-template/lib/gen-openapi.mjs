@@ -14,15 +14,16 @@ export function processOpenAPI ({ schema, name, url, language }) {
 function generateFrontendImplementationFromOpenAPI ({ schema, name, url, language }) {
   const capitalizedName = capitalize(name)
   const { paths } = schema
-
+  const generatedOperationIds = []
   const operations = Object.entries(paths).flatMap(([path, methods]) => {
     return Object.entries(methods).map(([method, operation]) => {
+      const opId = generateOperationId(path, method, operation, generatedOperationIds)
       return {
         path,
         method,
         operation: {
           ...operation,
-          operationId: generateOperationId(path, method, operation)
+          operationId: opId
         }
       }
     })
@@ -164,15 +165,16 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
 function generateTypesFromOpenAPI ({ schema, name }) {
   const capitalizedName = capitalize(name)
   const { paths } = schema
-
+  const generatedOperationIds = []
   const operations = Object.entries(paths).flatMap(([path, methods]) => {
     return Object.entries(methods).map(([method, operation]) => {
+      const opId = generateOperationId(path, method, operation, generatedOperationIds)
       return {
         path,
         method,
         operation: {
           ...operation,
-          operationId: generateOperationId(path, method, operation)
+          operationId: opId
         }
       }
     })
@@ -233,6 +235,11 @@ function generateTypesFromOpenAPI ({ schema, name }) {
         // The client library will always dump bodies for 204 responses
         // so the type must be undefined
         if (statusCode === '204') {
+          return 'undefined'
+        }
+
+        // Unrecognized status code
+        if (STATUS_CODES[statusCode] === undefined) {
           return 'undefined'
         }
         let isResponseArray
@@ -343,7 +350,7 @@ export function getType (typeDef) {
   }
   if (typeDef.type === 'object') {
     let output = '{ '
-    const props = Object.keys(typeDef.properties).map((prop) => {
+    const props = Object.keys(typeDef.properties || {}).map((prop) => {
       return `${prop}: ${getType(typeDef.properties[prop])}`
     })
     output += props.join('; ')

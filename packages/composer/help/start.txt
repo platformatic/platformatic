@@ -42,9 +42,13 @@ By sending the SIGUSR2 signal, the server can be reloaded.
 
 Options:
 
-  -c, --config FILE      Specify a configuration file to use
+* `-c, --config FILE` - Specify a configuration file to use.
 
-If not specified, the configuration specified will be loaded from `platformatic.composer.json`,
-`platformatic.composer.yml`, or `platformatic.composer.tml` in the current directory. You can find more details about
-the configuration format at:
-https://docs.platformatic.dev/docs/reference/composer/configuration.
+If not specified, the configuration will be loaded from any of the following, in the current directory.
+
+* `platformatic.composer.json`, or
+* `platformatic.composer.yml`, or 
+* `platformatic.composer.tml`
+
+You can find more details about the configuration format here:
+* [Platformatic Composer Configuration](https://docs.platformatic.dev/docs/reference/composer/configuration)

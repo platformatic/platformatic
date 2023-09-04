@@ -81,37 +81,35 @@ The Platformatic CLI provides the following commands:
 ### help
 
 
-```
+
 Welcome to Platformatic. Available commands are:
 
-* help - display this message
-* help <command> - show more information about a command.
-* db - start Platformatic DB; type `platformatic db help` to know more.
-* service - start Platformatic Service; type `platformatic service help` to know more.
-* upgrade - upgrade the Platformatic configuration to the latest version.
-* gh - create a new gh action for Platformatic deployments
-* deploy - deploy a Platformatic application to the cloud
-* runtime - start Platformatic Runtime; type `platformatic runtime help` to know more.
-* start - start a Platformatic application
-* frontend - create frontend code to consume the REST APIs
-```
+* `help` - display this message.
+* `help <command>` - show more information about a command.
+* `db` - start Platformatic DB; type `platformatic db help` to know more.
+* `service` - start Platformatic Service; type `platformatic service help` to know more.
+* `upgrade` - upgrade the Platformatic configuration to the latest version.
+* `gh` - create a new gh action for Platformatic deployments.
+* `deploy` - deploy a Platformatic application to the cloud.
+* `runtime` - start Platformatic Runtime; type `platformatic runtime help` to know more.
+* `start` - start a Platformatic application.
+* `frontend`- create frontend code to consume the REST APIs.
 
 
 #### compile
 
-Compile all typescript plugins
+Compile all typescript plugins.
 
 ``` bash
   $ platformatic compile
 ```
 
-This command will compile the TypeScript plugins for each
-platformatic application.
+This command will compile the TypeScript plugins for each platformatic application.
 
 
 #### deploy
 
-Deploys a Platformatic application to the cloud
+Deploys an application to the [Platformatic Cloud](https://docs.platformatic.dev/docs/category/platformatic-cloud).
 
 ``` bash
  $ platformatic deploy
@@ -119,27 +117,26 @@ Deploys a Platformatic application to the cloud
 
 Options:
 
-  -t, --type      static/dynamic  The type of the workspace.
-  -c, --config    FILE            Specify a configuration file to use
-  -k, --keys      FILE            Specify a path to the workspace keys file
-  -l  --label     TEXT            The deploy label. Only for dynamic workspaces.
-  -e  --env       FILE            The environment file to use. Default: ".env"
-  -s  --secrets   FILE            The secrets file to use. Default: ".secrets.env"
-  --workspace-id  uuid            The workspace id where the application will be deployed
-  --workspace-key TEXT            The workspace key where the application will be deployed
+* `-t, --type static/dynamic` - The type of the workspace.
+* `-c, --config FILE` - Specify a configuration file to use.
+* `-k, --keys FILE` - Specify a path to the workspace keys file.
+* `-l  --label TEXT` - The deploy label. Only for dynamic workspaces.
+* `-e  --env FILE` - The environment file to use. Default: ".env"
+* `-s  --secrets FILE` - The secrets file to use. Default: ".secrets.env"
+* `--workspace-id uuid` - The workspace id where the application will be deployed.
+* `--workspace-key TEXT` - The workspace key where the application will be deployed.
 
-To deploy a Platformatic application to the cloud you should go to the 
-Platformatic cloud dashboard and create a workspace. Then you can get your
-workspace id and key from the workspace settings page or download a workspace
-env file and use it with the --keys option.
+1. To deploy a Platformatic application to the cloud, you should go to the Platformatic cloud dashboard and create a workspace.
+2. Once you have created a workspace, retrieve your workspace id and key from the workspace settings page. Optionally, you can download the provided workspace env file, which you can use with the `--keys` option.
 
-Tp deploy an application to a dynamic workspace, you will need to specify the
-deploy label. You can get it in you cloud dashboard or specify a new one.
+> :information_source:
+>
+> When deploying an application to a ***dynamic workspace***, specify the deploy `--label` option. You can find it on your cloud dashboard or you can specify a new one.
 
 
 #### gh
 
-Creates a gh action to deploy platformatic services on workspaces
+Creates a gh action to deploy platformatic services on workspaces.
 
 ``` bash
  $ platformatic gh -t dynamic
@@ -147,14 +144,23 @@ Creates a gh action to deploy platformatic services on workspaces
 
 Options:
 
-  -w  --workspace ID     The workspace ID where the service will be deployed
-  -t, --type static/dynamic  The type of the workspace. Defaults to static.
-  -c, --config FILE      Specify a configuration file to use
-  -b, --build            Build the service before deploying (`npm run build`)
+* `-w  --workspace ID` - The workspace ID where the service will be deployed.
+* `-t, --type static/dynamic` - The type of the workspace. Defaults to static.
+* `-c, --config FILE` - Specify a configuration file to use.
+* `-b, --build` - Build the service before deploying (`npm run build`).
 
-If not specified, the configuration will be loaded from `platformatic.db.json`,
-`platformatic.db.yml`, or `platformatic.db.tml`, `platformatic.service.json`,
-`platformatic.service.yml`, or `platformatic.service.tml` in the current directory.
+If not specified, the configuration will be loaded from any of the following, in the current directory.
+
+* `platformatic.db.json`, or
+* `platformatic.db.yml`, or 
+* `platformatic.db.tml`, or 
+* `platformatic.service.json`, or
+* `platformatic.service.yml`, or 
+* `platformatic.service.tml`
+
+You can find more details about the configuration format here:
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
+* [Platformatic Service Configuration](https://docs.platformatic.dev/docs/reference/service/configuration)
 
 
 
@@ -168,14 +174,14 @@ $ platformatic start
 
 Options:
 
-  * `-c, --config <path>`: Path to the configuration file.
-  * `--inspect[=[host:]port]`: Start the Node.js debugger. `host` defaults to `'127.0.0.1'`. `port` defaults to 9229. Use caution when binding to a public host:port combination.
-  * `--inspect-brk[=[host:]port]`: Start the Node.js debugger and block until a client has attached. `host` defaults to `'127.0.0.1'`. `port` defaults to 9229. Use caution when binding to a public host:port combination.
+* `-c, --config <path>` - Path to the configuration file.
+* `--inspect[=[host:]port]` - Start the Node.js debugger. `host` defaults to `'127.0.0.1'`. `port` defaults to 9229. Use caution when binding to a public host:port combination.
+* `--inspect-brk[=[host:]port]` - Start the Node.js debugger and block until a client has attached. `host` defaults to `'127.0.0.1'`. `port` defaults to 9229. Use caution when binding to a public host:port combination.
 
 
 #### upgrade
 
-Upgrade the Platformatic configuration to the latest version.
+Upgrade the Platformatic schema configuration to the latest version.
 
 ``` bash
  $ platformatic upgrade
@@ -183,14 +189,20 @@ Upgrade the Platformatic configuration to the latest version.
 
 Options:
 
-  -c, --config FILE      Specify a configuration file to use
+* `-c, --config FILE` - Specify a schema configuration file to use.
 
-If not specified, the configuration specified will be loaded from `platformatic.db.json`,
-`platformatic.db.yml`, or `platformatic.db.tml`, `platformatic.service.json`,
-`platformatic.service.yml`, or `platformatic.service.tml` in the current directory. You can find more details about
-the configuration format at:
-https://docs.platformatic.dev/docs/reference/db/configuration and 
-https://docs.platformatic.dev/docs/reference/service/configuration.
+If not specified, the configuration will be loaded from any of the following, in the current directory.
+
+* `platformatic.db.json`, or
+* `platformatic.db.yml`, or 
+* `platformatic.db.tml`, or 
+* `platformatic.service.json`, or
+* `platformatic.service.yml`, or 
+* `platformatic.service.tml`
+
+You can find more details about the configuration format here:
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
+* [Platformatic Service Configuration](https://docs.platformatic.dev/docs/reference/service/configuration)
 
 
 ### client
@@ -257,11 +269,14 @@ export default async function (app: FastifyInstance) {
 
 Options:
 
-  * `-c, --config <path>`: Path to the configuration file.
-  * `-n, --name <name>`: Name of the client.
-  * `-f, --folder <name>`: Name of the plugin folder, defaults to --name value.
-  * `-t, --typescript`: Generate the client plugin in TypeScript.
-  * `-r, --full-response`: Client will return full response object rather than just the body.
+* `-c, --config <path>` - Path to the configuration file.
+* `-n, --name <name>` - Name of the client.
+* `-f, --folder <name>` - Name of the plugin folder, defaults to --name value.
+* `-t, --typescript` - Generate the client plugin in TypeScript.
+* `--full-response` - Client will return full response object rather than just the body.
+* `--full-request` - Client will be called with all parameters wrapped in `body`, `headers` and `query` properties.
+* `--full` - Enables both `--full-request` and `--full-response` overriding them.
+
 
 
 ### composer
@@ -340,12 +355,16 @@ By sending the SIGUSR2 signal, the server can be reloaded.
 
 Options:
 
-  -c, --config FILE      Specify a configuration file to use
+* `-c, --config FILE` - Specify a configuration file to use.
 
-If not specified, the configuration specified will be loaded from `platformatic.composer.json`,
-`platformatic.composer.yml`, or `platformatic.composer.tml` in the current directory. You can find more details about
-the configuration format at:
-https://docs.platformatic.dev/docs/reference/composer/configuration.
+If not specified, the configuration will be loaded from any of the following, in the current directory.
+
+* `platformatic.composer.json`, or
+* `platformatic.composer.yml`, or 
+* `platformatic.composer.tml`
+
+You can find more details about the configuration format here:
+* [Platformatic Composer Configuration](https://docs.platformatic.dev/docs/reference/composer/configuration)
 
 
 ### db
@@ -358,6 +377,7 @@ platformatic db <command>
 #### compile
 
 Compile typescript plugins.
+
 ``` bash
   $ platformatic db compile
 ```
@@ -365,10 +385,14 @@ Compile typescript plugins.
 As a result of executing this command, the Platformatic DB will compile typescript
 plugins in the `outDir` directory. 
 
-If not specified, the configuration specified will be loaded from
-`platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
-You can find more details about the configuration format at:
-https://docs.platformatic.dev/docs/reference/db/configuration.
+If not specified, the configuration will be loaded from any of the following, in the current directory.
+
+* `platformatic.db.json`, or
+* `platformatic.db.yml`, or 
+* `platformatic.db.tml`
+
+You can find more details about the configuration format here:
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
 
 
 #### help
@@ -421,18 +445,23 @@ Use 000 to reset to the initial state.
 
 Options:
 
-  * `-c, --config <path>`: Path to the configuration file.
-  * `-t, --to <version>`: Migrate to a specific version.
+* `-c, --config <path>` - Path to the configuration file.
+* `-t, --to <version>` - Migrate to a specific version.
 
-If not specified, the configuration specified will be loaded from
-`platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
-You can find more details about the configuration format at:
-https://docs.platformatic.dev/docs/reference/db/configuration.
+If not specified, the configuration will be loaded from any of the following, in the current directory.
+
+* `platformatic.db.json`, or
+* `platformatic.db.yml`, or 
+* `platformatic.db.tml`
+
+You can find more details about the configuration format here:
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
+
 
 
 #### migrations create
 
-Create next migration files
+Create next migration files.
 
 ``` bash
   $ platformatic db migrations create
@@ -447,12 +476,16 @@ files will be the next migration number.
 
 Options:
 
-  * `-c, --config <path>`: Path to the configuration file.
+* `-c, --config <path>` - Path to the configuration file.
 
-If not specified, the configuration specified will be loaded from
-`platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
-You can find more details about the configuration format at:
-https://docs.platformatic.dev/docs/reference/db/configuration.
+If not specified, the configuration will be loaded from any of the following, in the current directory.
+
+* `platformatic.db.json`, or
+* `platformatic.db.yml`, or 
+* `platformatic.db.tml`
+
+You can find more details about the configuration format here:
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
 
 
 #### migrations
@@ -480,12 +513,16 @@ Generate a schema from the database and prints it to standard output:
 
 Options:
 
-  -c, --config FILE  Specify a configuration file to use
+* `-c, --config FILE` - Specify a configuration file to use.
 
-If not specified, the configuration specified will be loaded from
-`platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
-You can find more details about the configuration format at:
-https://docs.platformatic.dev/docs/reference/db/configuration.
+If not specified, the configuration will be loaded from any of the following, in the current directory.
+
+* `platformatic.db.json`, or
+* `platformatic.db.yml`, or 
+* `platformatic.db.tml`
+
+You can find more details about the configuration format here:
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
 
 
 #### seed
@@ -515,12 +552,17 @@ You can run this using the `seed` command:
 
 Options:
 
-  * `--config` - Path to the configuration file.
+* `--config` - Path to the configuration file.
 
-If not specified, the configuration specified will be loaded from
-`platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
-You can find more details about the configuration format at:
-https://docs.platformatic.dev/docs/reference/db/configuration.
+If not specified, the configuration will be loaded from any of the following, in the current directory.
+
+* `platformatic.db.json`, or
+* `platformatic.db.yml`, or 
+* `platformatic.db.tml`
+
+You can find more details about the configuration format here:
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
+
 
 
 #### start
@@ -552,7 +594,6 @@ save the following as `platformatic.db.json`:
   }
 ```
 
-
 Remember to create a migration, run the `db help migrate` command to know more.
 
 All outstanding migrations will be applied to the database unless the
@@ -562,12 +603,17 @@ By sending the SIGUSR2 signal, the server can be reloaded.
 
 Options:
 
-  -c, --config FILE      Specify a configuration file to use
+* `-c, --config FILE` - Specify a configuration file to use.
 
-If not specified, the configuration specified will be loaded from `platformatic.db.json`,
-`platformatic.db.yml`, or `platformatic.db.tml` in the current directory. You can find more details about
-the configuration format at:
-https://docs.platformatic.dev/docs/reference/db/configuration.
+If not specified, the configuration will be loaded from any of the following, in the current directory.
+
+* `platformatic.db.json`, or
+* `platformatic.db.yml`, or 
+* `platformatic.db.tml`
+
+You can find more details about the configuration format here:
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
+
 
 
 #### types
@@ -604,10 +650,14 @@ module.exports = async function (app) {
 }
 ```
 
-If not specified, the configuration specified will be loaded from
-`platformatic.db.json`, `platformatic.db.yml`, or `platformatic.db.tml` in the current directory.
-You can find more details about the configuration format at:
-https://docs.platformatic.dev/docs/reference/db/configuration.
+If not specified, the configuration will be loaded from any of the following, in the current directory.
+
+* `platformatic.db.json`, or
+* `platformatic.db.yml`, or 
+* `platformatic.db.tml`
+
+You can find more details about the configuration format here:
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
 
 
 ### service
@@ -628,10 +678,14 @@ Compile typescript plugins.
 As a result of executing this command, Platformatic Service will compile typescript
 plugins in the `outDir` directory. 
 
-If not specified, the configuration specified will be loaded from
-`platformatic.service.json`, `platformatic.service.yml`, or `platformatic.service.tml` in the current directory.
-You can find more details about the configuration format at:
-https://docs.platformatic.dev/docs/reference/service/configuration.
+If not specified, the configuration will be loaded from any of the following, in the current directory.
+
+* `platformatic.service.json`, or
+* `platformatic.service.yml`, or 
+* `platformatic.service.tml`
+
+You can find more details about the configuration format here:
+* [Platformatic Service Configuration](https://docs.platformatic.dev/docs/reference/service/configuration)
 
 
 #### help
@@ -694,25 +748,36 @@ platformatic frontend <url> <language>
 
 Create frontend code to consume the REST APIs of a Platformatic application.
 
-From the directory you want the frontend code to be generated (typically `<YOUR_FRONTEND_APP_DIRECTORY>/src/`) run
+From the directory you want the frontend code to be generated (typically `<YOUR_FRONTEND_APP_DIRECTORY>/src/`) run -
+
 ```bash
 npx platformatic frontend http://127.0.0.1:3042 ts
 ```
 
-(where `http://127.0.0.1:3042` must be replaced with your Platformatic application endpoint and the language can be `ts` or `js`) and then the Platformatic CLI generates
+> :information_source:
+>
+> Where `http://127.0.0.1:3042` must be replaced with your Platformatic application endpoint, and the language can either be `ts` or `js`. When the command is run, the Platformatic CLI generates -
+>
+> * `api.d.ts` - A TypeScript module that includes all the OpenAPI-related types.
+> * `api.ts` or `api.js` - A module that includes a function for every single REST endpoint.
 
-  * `api.d.ts`: A TypeScript module that includes all the OpenAPI-related types
-  * `api.ts` or `api.js`: A module that includes a function for every single REST endpoint
+If you use the `--name` option it will create custom file names.
+
+```bash
+npx platformatic frontend http://127.0.0.1:3042 ts --name foobar
+```
+
+Will create `foobar.ts` and `foobar-types.d.ts`
+
 
 Refer to the [dedicated guide](https://docs.platformatic.dev/docs/guides/generate-frontend-code-to-consume-platformatic-rest-api) where the full process of generating and consuming the frontend code is described.
 
-In case of problems, please check that
+In case of problems, please check that:
 
-  * The Platformatic app URL is valid
-  * The Platformatic app whose URL belongs must be up and running
-  * OpenAPI must be enabled (`db.openapi` in your `platformatic.db.json` is not set to `false`). You can find more details about the db configuration format [here](https://docs.platformatic.dev/docs/reference/db/configuration/#db).
-  * CORS must be managed in your Platformatic app (`server.cors.origin.regexp` in your `platformatic.db.json` is set to `/*/`, for instance)
-  You can find more details about the cors configuration [here](https://docs.platformatic.dev/docs/reference/service/configuration/#server).
+* The Platformatic app URL is valid.
+* The Platformatic app whose URL belongs must be up and running.
+* OpenAPI must be enabled (`db.openapi` in your `platformatic.db.json` is not set to `false`). You can find more details about the db configuration format [here](https://docs.platformatic.dev/docs/reference/db/configuration/#db).
+* CORS must be managed in your Platformatic app (`server.cors.origin.regexp` in your `platformatic.db.json` is set to `/*/`, for instance). You can find more details about the cors configuration [here](https://docs.platformatic.dev/docs/reference/service/configuration/#server).
 
 
 ### runtime
@@ -762,7 +827,7 @@ $ platformatic start
 
 Options:
 
-  * `-c, --config <path>`: Path to the configuration file.
-  * `--inspect[=[host:]port]`: Start the Node.js debugger. `host` defaults to `'127.0.0.1'`. `port` defaults to 9229. Use caution when binding to a public host:port combination.
-  * `--inspect-brk[=[host:]port]`: Start the Node.js debugger and block until a client has attached. `host` defaults to `'127.0.0.1'`. `port` defaults to 9229. Use caution when binding to a public host:port combination.
+* `-c, --config <path>` - Path to the configuration file.
+* `--inspect[=[host:]port]` - Start the Node.js debugger. `host` defaults to `'127.0.0.1'`. `port` defaults to 9229. Use caution when binding to a public host:port combination.
+* `--inspect-brk[=[host:]port]` - Start the Node.js debugger and block until a client has attached. `host` defaults to `'127.0.0.1'`. `port` defaults to 9229. Use caution when binding to a public host:port combination.
 

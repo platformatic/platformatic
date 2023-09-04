@@ -2,9 +2,8 @@
 
 const { readFile } = require('fs/promises')
 const close = require('close-with-grace')
-const { loadConfig } = require('./load-config')
+const { loadConfig, ConfigManager, printConfigValidationErrors, printAndExitLoadConfigError } = require('@platformatic/config')
 const { addLoggerToTheConfig } = require('./utils.js')
-const ConfigManager = require('@platformatic/config')
 const { restartable } = require('@fastify/restartable')
 
 async function adjustHttpsKeyAndCert (arg) {
@@ -98,7 +97,17 @@ async function safeRestart (app) {
 
 async function start (appType, _args) {
   /* c8 ignore next 55 */
-  const { configManager } = await loadConfig({}, _args, appType)
+  let configManager = null
+  try {
+    configManager = (await loadConfig({}, _args, appType)).configManager
+  } catch (err) {
+    if (err.validationErrors) {
+      printConfigValidationErrors(err)
+      process.exit(1)
+    } else {
+      throw err
+    }
+  }
 
   const config = configManager.current
 
@@ -118,9 +127,7 @@ async function start (appType, _args) {
     app = await buildServer({ ...config, configManager }, appType)
     await app.start()
   } catch (err) {
-    // TODO route this to a logger
-    console.error(err)
-    process.exit(1)
+    printAndExitLoadConfigError(err)
   }
 
   // Ignore from CI because SIGUSR2 is not available
@@ -144,6 +151,8 @@ async function start (appType, _args) {
       app.log.info({ signal }, 'received signal')
     }
 
+    // Weird coverage issue in c8
+    /* c8 ignore next 2 */
     await app.close()
   })
 }

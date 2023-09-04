@@ -1,4 +1,4 @@
-Deploys a Platformatic application to the cloud
+Deploys an application to the [Platformatic Cloud](https://docs.platformatic.dev/docs/category/platformatic-cloud).
 
 ``` bash
  $ platformatic deploy
@@ -6,19 +6,18 @@ Deploys a Platformatic application to the cloud
 
 Options:
 
-  -t, --type      static/dynamic  The type of the workspace.
-  -c, --config    FILE            Specify a configuration file to use
-  -k, --keys      FILE            Specify a path to the workspace keys file
-  -l  --label     TEXT            The deploy label. Only for dynamic workspaces.
-  -e  --env       FILE            The environment file to use. Default: ".env"
-  -s  --secrets   FILE            The secrets file to use. Default: ".secrets.env"
-  --workspace-id  uuid            The workspace id where the application will be deployed
-  --workspace-key TEXT            The workspace key where the application will be deployed
+* `-t, --type static/dynamic` - The type of the workspace.
+* `-c, --config FILE` - Specify a configuration file to use.
+* `-k, --keys FILE` - Specify a path to the workspace keys file.
+* `-l  --label TEXT` - The deploy label. Only for dynamic workspaces.
+* `-e  --env FILE` - The environment file to use. Default: ".env"
+* `-s  --secrets FILE` - The secrets file to use. Default: ".secrets.env"
+* `--workspace-id uuid` - The workspace id where the application will be deployed.
+* `--workspace-key TEXT` - The workspace key where the application will be deployed.
 
-To deploy a Platformatic application to the cloud you should go to the 
-Platformatic cloud dashboard and create a workspace. Then you can get your
-workspace id and key from the workspace settings page or download a workspace
-env file and use it with the --keys option.
+1. To deploy a Platformatic application to the cloud, you should go to the Platformatic cloud dashboard and create a workspace.
+2. Once you have created a workspace, retrieve your workspace id and key from the workspace settings page. Optionally, you can download the provided workspace env file, which you can use with the `--keys` option.
 
-Tp deploy an application to a dynamic workspace, you will need to specify the
-deploy label. You can get it in you cloud dashboard or specify a new one.
+> :information_source:
+>
+> When deploying an application to a ***dynamic workspace***, specify the deploy `--label` option. You can find it on your cloud dashboard or you can specify a new one.

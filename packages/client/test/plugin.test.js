@@ -143,7 +143,7 @@ test('app decorator with OpenAPI', async ({ teardown, same, rejects }) => {
   ])
 })
 
-test('req decorator with OpenAPI', async ({ teardown, same, rejects }) => {
+test('req decorator with OpenAPI', async ({ teardown, same }) => {
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'auth', 'db.sqlite'))
   } catch {
@@ -161,7 +161,28 @@ test('req decorator with OpenAPI', async ({ teardown, same, rejects }) => {
     type: 'openapi',
     url: `${targetApp.url}/documentation/json`,
     name: 'client',
-    async getHeaders (req) {
+    async getHeaders (req, reply, options) {
+      same(typeof req, 'object')
+      same(typeof reply, 'object')
+      same(options.url, {
+        href: 'http://127.0.0.1:51363/movies/',
+        origin: 'http://127.0.0.1:51363',
+        protocol: 'http:',
+        username: '',
+        password: '',
+        host: '127.0.0.1:51363',
+        hostname: '127.0.0.1',
+        port: '51363',
+        pathname: '/movies/',
+        search: '',
+        searchParams: {},
+        hash: ''
+      })
+      same(options.method, 'POST')
+      same(options.headers, {})
+      same(options.telemetryHeaders, {})
+      same(options.body, { title: 'The Matrix' })
+
       return {
         'x-platformatic-admin-secret': req.headers['x-platformatic-admin-secret']
       }

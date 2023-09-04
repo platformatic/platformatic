@@ -9,9 +9,7 @@ const tar = require('tar')
 const { request } = require('undici')
 
 const ConfigManager = require('@platformatic/config')
-const { getConfigType, getApp } = require('@platformatic/start')
-const { loadConfig } = require('@platformatic/service')
-const { platformaticRuntime, compile } = require('@platformatic/runtime')
+const { compile, unifiedApi: { loadConfig } } = require('@platformatic/runtime')
 
 const makePrewarmRequest = require('./lib/prewarm.js')
 
@@ -156,20 +154,15 @@ async function isFileAccessible (path) {
   }
 }
 
-async function checkPlatformaticDependency (logger, projectPath) {
-  const packageJsonPath = join(projectPath, 'package.json')
-  const packageJsonExist = await isFileAccessible(packageJsonPath)
-  if (!packageJsonExist) return
-
-  const packageJsonData = await readFile(packageJsonPath, 'utf8')
-  const packageJson = JSON.parse(packageJsonData)
-
-  const dependencies = packageJson.dependencies
-  if (
-    dependencies !== undefined &&
-    dependencies.platformatic !== undefined
-  ) {
-    logger.warn('Move platformatic dependency to devDependencies to speed up deployment')
+async function _loadConfig (minimistConfig, args) {
+  try {
+    return await loadConfig(minimistConfig, args)
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      throw new Error('Missing config file!')
+    }
+    /* c8 ignore next 2 */
+    throw err
   }
 }
 
@@ -196,8 +189,6 @@ async function deploy ({
     throw new Error('platformatic_workspace_key action param is required')
   }
 
-  await checkPlatformaticDependency(logger, pathToProject)
-
   if (!pathToConfig) {
     pathToConfig = await ConfigManager.findConfigFile(pathToProject)
     if (!pathToConfig) {
@@ -206,17 +197,23 @@ async function deploy ({
   }
 
   const args = ['-c', join(pathToProject, pathToConfig)]
-  const appType = await getConfigType(args, pathToProject)
-  const app = appType === 'runtime' ? platformaticRuntime : getApp(appType)
 
-  const { configManager } = await loadConfig({}, args, app)
+  const { configManager, configType: appType } = await _loadConfig({}, args)
   const config = configManager.current
 
   logger.info(`Found Platformatic config file: ${pathToConfig}`)
 
   let compiled = false
   if (compileTypescript !== false) {
-    compiled = await compile(args, logger)
+    try {
+      compiled = await compile(args, logger)
+    } catch (err) {
+      /* c8 ignore next 3 */
+      if (err.code !== 'MODULE_NOT_FOUND') {
+        throw err
+      }
+      logger.trace('TypeScript compiler was not installed, skipping compilation')
+    }
   }
 
   const deployClient = new DeployClient(
@@ -280,7 +277,7 @@ async function deploy ({
     appMetadata.services = services
   }
 
-  const { entryPointUrl } = await deployClient.createDeployment(
+  const { id: deploymentId, entryPointUrl } = await deployClient.createDeployment(
     token,
     label,
     appMetadata,
@@ -292,7 +289,10 @@ async function deploy ({
   await makePrewarmRequest(entryPointUrl, logger)
   logger.info('Application has been successfully started')
 
-  return entryPointUrl
+  return {
+    deploymentId,
+    entryPointUrl
+  }
 }
 
 module.exports = { deploy }

@@ -32,6 +32,12 @@ PORT=3000
 PLT_SERVER_LOGGER_LEVEL=info
 `)
 
+  await writeFile(join(dir, 'services', 'sample-service', '.env'), `
+PLT_SERVER_HOSTNAME=127.0.0.1
+PORT=3005
+PLT_SERVER_LOGGER_LEVEL=info
+`)
+
   process.chdir(join(dir, 'services', 'languid-nobleman'))
 
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
@@ -85,7 +91,53 @@ module.exports = async function (app, opts) {
   })
 })
 
-test('generate client twice', async ({ teardown, comment, same, match }) => {
+test('generate client twice', async ({ teardown, comment, same, match, equal }) => {
+  const dir = await moveToTmpdir(teardown)
+  comment(`working in ${dir}`)
+
+  await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
+
+  await writeFile(join(dir, 'services', 'somber-chariot', '.env'), `
+PLT_SERVER_HOSTNAME=127.0.0.1
+PORT=3003
+PLT_SERVER_LOGGER_LEVEL=info
+DATABASE_URL=sqlite://./db.sqlite
+`)
+
+  await writeFile(join(dir, 'services', 'languid-nobleman', '.env'), `
+PLT_SERVER_HOSTNAME=127.0.0.1
+PORT=3004
+PLT_SERVER_LOGGER_LEVEL=info
+`)
+
+  await writeFile(join(dir, 'services', 'composer', '.env'), `
+PLT_SERVER_HOSTNAME=127.0.0.1
+PORT=3000
+PLT_SERVER_LOGGER_LEVEL=info
+`)
+  await writeFile(join(dir, 'services', 'sample-service', '.env'), `
+PLT_SERVER_HOSTNAME=127.0.0.1
+PORT=3005
+PLT_SERVER_LOGGER_LEVEL=info
+`)
+  process.chdir(join(dir, 'services', 'languid-nobleman'))
+
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
+
+  const config = JSON.parse(await readFile(join(dir, 'services', 'languid-nobleman', 'platformatic.service.json'), 'utf8'))
+
+  match(config, {
+    clients: [{
+      schema: 'movies/movies.openapi.json',
+      name: 'movies',
+      type: 'openapi',
+      serviceId: 'somber-chariot'
+    }]
+  })
+})
+
+test('error if a service does not have openapi enabled', async ({ teardown, comment, match, fail }) => {
   const dir = await moveToTmpdir(teardown)
   comment(`working in ${dir}`)
 
@@ -110,19 +162,20 @@ PORT=3000
 PLT_SERVER_LOGGER_LEVEL=info
 `)
 
-  process.chdir(join(dir, 'services', 'languid-nobleman'))
+  await writeFile(join(dir, 'services', 'sample-service', '.env'), `
+PLT_SERVER_HOSTNAME=127.0.0.1
+PORT=3005
+PLT_SERVER_LOGGER_LEVEL=info
+`)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
+  process.chdir(join(dir))
 
-  const config = JSON.parse(await readFile(join(dir, 'services', 'languid-nobleman', 'platformatic.service.json'), 'utf8'))
-
-  match(config, {
-    clients: [{
-      schema: 'movies/movies.openapi.json',
-      name: 'movies',
-      type: 'openapi',
-      serviceId: 'somber-chariot'
-    }]
-  })
+  try {
+    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'test-client', '--runtime', 'sample-service'])
+    fail()
+  } catch (err) {
+    const split = err.message.split('\n')
+    const lastMessage = split.pop()
+    match(lastMessage, 'Could not find a valid OpenAPI or GraphQL schema at http://sample-service.plt.local')
+  }
 })

@@ -1,17 +1,17 @@
 import CodeBlockWriter from 'code-block-writer'
 import jsonpointer from 'jsonpointer'
-import { generateOperationId } from '@platformatic/client'
+import { generateOperationId, hasDuplicatedParameters } from '@platformatic/client'
 import { capitalize, classCase, toJavaScriptName } from './utils.mjs'
 import { STATUS_CODES } from 'node:http'
 
-export function processOpenAPI ({ schema, name, fullResponse }) {
+export function processOpenAPI ({ schema, name, fullResponse, fullRequest }) {
   return {
-    types: generateTypesFromOpenAPI({ schema, name, fullResponse }),
-    implementation: generateImplementationFromOpenAPI({ schema, name, fullResponse })
+    types: generateTypesFromOpenAPI({ schema, name, fullResponse, fullRequest }),
+    implementation: generateImplementationFromOpenAPI({ schema, name, fullResponse, fullRequest })
   }
 }
 
-function generateImplementationFromOpenAPI ({ schema, name, fullResponse }) {
+function generateImplementationFromOpenAPI ({ schema, name, fullResponse, fullRequest }) {
   const camelcasedName = toJavaScriptName(name)
 
   /* eslint-disable new-cap */
@@ -39,7 +39,8 @@ function generateImplementationFromOpenAPI ({ schema, name, fullResponse }) {
       writer.writeLine('url: opts.url,')
       writer.writeLine('serviceId: opts.serviceId,')
       writer.writeLine('throwOnError: opts.throwOnError,')
-      writer.writeLine(`fullResponse: ${fullResponse}`)
+      writer.writeLine(`fullResponse: ${fullResponse},`)
+      writer.writeLine(`fullRequest: ${fullRequest}`)
     })
     writer.write(')')
   })
@@ -54,19 +55,20 @@ function generateImplementationFromOpenAPI ({ schema, name, fullResponse }) {
   return writer.toString()
 }
 
-function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
+function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest }) {
   const camelcasedName = toJavaScriptName(name)
   const capitalizedName = capitalize(camelcasedName)
   const { paths } = schema
-
+  const generatedOperationIds = []
   const operations = Object.entries(paths).flatMap(([path, methods]) => {
     return Object.entries(methods).map(([method, operation]) => {
+      const opId = generateOperationId(path, method, operation, generatedOperationIds)
       return {
         path,
         method,
         operation: {
           ...operation,
-          operationId: generateOperationId(path, method, operation)
+          operationId: opId
         }
       }
     })
@@ -85,45 +87,69 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   })
   /* eslint-enable new-cap */
 
-  interfaces.writeLine('import { FastifyPluginAsync } from \'fastify\'')
+  interfaces.writeLine('import { type FastifyReply, type FastifyPluginAsync } from \'fastify\'')
   interfaces.blankLine()
 
   // Add always FullResponse interface because we don't know yet
   // if we are going to use it
-  interfaces.write('interface FullResponse<T>').block(() => {
+  interfaces.write('export interface FullResponse<T>').block(() => {
     interfaces.writeLine('\'statusCode\': number;')
     interfaces.writeLine('\'headers\': object;')
     interfaces.writeLine('\'body\': T;')
   })
   interfaces.blankLine()
 
-  writer.write(`interface ${capitalizedName}`).block(() => {
+  writer.write(`export interface ${capitalizedName}`).block(() => {
     const originalFullResponse = fullResponse
     let currentFullResponse = originalFullResponse
     for (const operation of operations) {
       const operationId = operation.operation.operationId
       const { parameters, responses, requestBody } = operation.operation
+      const forceFullReqeust = fullRequest || hasDuplicatedParameters(operation.operation)
       const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
       if (successResponses.length !== 1) {
         currentFullResponse = true
       }
       const operationRequestName = `${capitalize(operationId)}Request`
       const operationResponseName = `${capitalize(operationId)}Response`
-      interfaces.write(`interface ${operationRequestName}`).block(() => {
+
+      interfaces.write(`export interface ${operationRequestName}`).block(() => {
         const addedProps = new Set()
         if (parameters) {
-          for (const parameter of parameters) {
-            const { name, required } = parameter
-            // We do not check for addedProps here because it's the first
-            // group of properties
-            writeProperty(interfaces, name, parameter, addedProps, required)
+          if (forceFullReqeust) {
+            const bodyParams = []
+            const queryParams = []
+            const headersParams = []
+            for (const parameter of parameters) {
+              switch (parameter.in) {
+                case 'query':
+                  queryParams.push(parameter)
+                  break
+                case 'body':
+                  bodyParams.push(parameter)
+                  break
+                case 'header':
+                  headersParams.push(parameter)
+                  break
+              }
+            }
+            writeProperties(interfaces, 'body', bodyParams, addedProps)
+            writeProperties(interfaces, 'query', queryParams, addedProps)
+            writeProperties(interfaces, 'headers', headersParams, addedProps)
+          } else {
+            for (const parameter of parameters) {
+              const { name, required } = parameter
+              // We do not check for addedProps here because it's the first
+              // group of properties
+              writeProperty(interfaces, name, parameter, addedProps, required)
+            }
           }
         }
         if (requestBody) {
           writeContent(interfaces, requestBody.content, schema, addedProps)
         }
       })
-      interfaces.writeLine()
+      interfaces.blankLine()
 
       const responseTypes = successResponses.map(([statusCode, response]) => {
         // The client library will always dump bodies for 204 responses
@@ -133,7 +159,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
         }
         let isResponseArray
         let type = `${operationResponseName}${classCase(STATUS_CODES[statusCode])}`
-        interfaces.write(`interface ${type}`).block(() => {
+        interfaces.write(`export interface ${type}`).block(() => {
           isResponseArray = writeContent(interfaces, response.content, schema, new Set())
         })
         interfaces.blankLine()
@@ -141,7 +167,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
         return type
       })
 
-      let responseType = responseTypes.join(' | ')
+      let responseType = responseTypes.join(' | ') || 'unknown'
       if (currentFullResponse) responseType = `FullResponse<${responseType}>`
       writer.writeLine(`${operationId}(req?: ${operationRequestName}): Promise<${responseType}>;`)
       currentFullResponse = originalFullResponse
@@ -152,7 +178,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   const pluginName = `${capitalizedName}Plugin`
   const optionsName = `${capitalizedName}Options`
 
-  writer.write(`type ${pluginName} = FastifyPluginAsync<NonNullable<${camelcasedName}.${optionsName}>>`)
+  writer.write(`type ${pluginName} = FastifyPluginAsync<NonNullable<${capitalizedName}.${optionsName}>>`)
 
   writer.blankLine()
   writer.write('declare module \'fastify\'').block(() => {
@@ -177,7 +203,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   })
 
   writer.blankLine()
-  writer.write(`declare namespace ${camelcasedName}`).block(() => {
+  writer.write(`declare namespace ${capitalizedName}`).block(() => {
     writer.write(`export interface ${optionsName}`).block(() => {
       writer.writeLine('url: string')
     })
@@ -193,6 +219,18 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   return interfaces.toString() + writer.toString()
 }
 
+function writeProperties (writer, blockName, parameters, addedProps) {
+  if (parameters.length > 0) {
+    writer.write(`${blockName}: `).block(() => {
+      for (const parameter of parameters) {
+        const { name, required } = parameter
+        // We do not check for addedProps here because it's the first
+        // group of properties
+        writeProperty(writer, name, parameter, addedProps, required)
+      }
+    })
+  }
+}
 function writeContent (writer, content, spec, addedProps) {
   let isResponseArray = false
   if (content) {
@@ -210,7 +248,6 @@ function writeContent (writer, content, spec, addedProps) {
       if (!body.schema?.type && !body.schema?.$ref) {
         break
       }
-
       // This is likely buggy as there can be multiple responses for different
       // status codes. This is currently not possible with Platformatic DB
       // services so we skip for now.
@@ -278,10 +315,29 @@ export function getType (typeDef) {
   if (typeDef.type === 'array') {
     return `Array<${getType(typeDef.items)}>`
   }
+  if (typeDef.enum) {
+    return typeDef.enum.map((en) => {
+      if (typeDef.type === 'string') {
+        return `'${en.replace(/'/g, "\\'")}'`
+      } else {
+        return en
+      }
+    }).join(' | ')
+  }
   if (typeDef.type === 'object') {
+    if (!typeDef.properties || Object.keys(typeDef.properties).length === 0) {
+      // Object without properties
+      return 'object'
+    }
     let output = '{ '
-    const props = Object.keys(typeDef.properties).map((prop) => {
-      return `${prop}: ${getType(typeDef.properties[prop])}`
+    // TODO: add a test for objects without properties
+    /* c8 ignore next 1 */
+    const props = Object.keys(typeDef.properties || {}).map((prop) => {
+      let required = false
+      if (typeDef.required) {
+        required = !!typeDef.required.includes(prop)
+      }
+      return `${prop}${required ? '' : '?'}: ${getType(typeDef.properties[prop])}`
     })
     output += props.join('; ')
     output += ' }'
@@ -303,6 +359,6 @@ function JSONSchemaToTsType (type) {
       // TODO what other types should we support here?
       /* c8 ignore next 2 */
     default:
-      return 'any'
+      return 'unknown'
   }
 }

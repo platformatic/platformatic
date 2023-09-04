@@ -8,6 +8,7 @@ const { Resource } = require('@opentelemetry/resources')
 const { PlatformaticTracerProvider } = require('./platformatic-trace-provider')
 const { PlatformaticContext } = require('./platformatic-context')
 const { fastifyTextMapGetter, fastifyTextMapSetter } = require('./fastify-text-map')
+const { formatParamUrl } = require('@fastify/swagger')
 const fastUri = require('fast-uri')
 
 // Platformatic telemetry plugin.
@@ -27,21 +28,35 @@ const fastUri = require('fast-uri')
 
 const { name: moduleName, version: moduleVersion } = require('../package.json')
 
-function formatSpanName (request) {
-  const { method, routerPath } = request
-  /* istanbul ignore next */
-  return routerPath ? `${method} ${routerPath}` : method
+const extractPath = (request) => {
+  // We must user RouterPath, because otherwise `/test/123` will be considered as
+  // a different operation than `/test/321`. In case is not set (this should actually happen only for HTTP/404) we fallback to the path.
+  const { routerPath, url } = request
+  let path
+  if (routerPath) {
+    path = formatParamUrl(routerPath)
+  } else {
+    path = url
+  }
+  return path
 }
 
-const defaultFormatSpanAttributes = {
-  request (request) {
+function formatSpanName (request, path) {
+  const { method } = request
+  /* istanbul ignore next */
+  return path ? `${method} ${path}` : method
+}
+
+const formatSpanAttributes = {
+  request (request, path) {
     const { hostname, method, url, protocol } = request
-    const urlData = fastUri.parse(`${protocol}://${hostname})`)
+    // Inspired by: https://github.com/fastify/fastify-url-data/blob/master/plugin.js#L11
+    const urlData = fastUri.parse(`${protocol}://${hostname}${url}`)
     return {
       'server.address': hostname,
       'server.port': urlData.port,
       'http.request.method': method,
-      'url.path': url,
+      'url.path': path,
       'url.scheme': protocol
     }
   },
@@ -66,7 +81,11 @@ const setupProvider = (app, opts) => {
     app.log.warn('No exporter configured, defaulting to console.')
     exporter = { type: 'console' }
   }
+
+  const exporters = Array.isArray(exporter) ? exporter : [exporter]
+
   app.log.info(`Setting up telemetry for service: ${serviceName}${version ? ' version: ' + version : ''} with exporter of type ${exporter.type}`)
+
   const provider = new PlatformaticTracerProvider({
     resource: new Resource({
       [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
@@ -74,61 +93,73 @@ const setupProvider = (app, opts) => {
     })
   })
 
+  const exporterObjs = []
+  const spanProcessors = []
+  for (const exporter of exporters) {
   // Exporter config:
   // https://open-telemetry.github.io/opentelemetry-js/interfaces/_opentelemetry_exporter_zipkin.ExporterConfig.html
-  const exporterOptions = { ...exporter.options, serviceName }
+    const exporterOptions = { ...exporter.options, serviceName }
 
-  let exporterObj
-  if (exporter.type === 'console') {
-    exporterObj = new ConsoleSpanExporter(exporterOptions)
-  } else if (exporter.type === 'otlp') {
+    let exporterObj
+    if (exporter.type === 'console') {
+      exporterObj = new ConsoleSpanExporter(exporterOptions)
+    } else if (exporter.type === 'otlp') {
     // We require here because this require (and only the require!) creates some issue with c8 on some mjs tests on other modules. Since we need an assignemet here, we don't use a switch.
-    const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-proto')
-    exporterObj = new OTLPTraceExporter(exporterOptions)
-  } else if (exporter.type === 'zipkin') {
-    const { ZipkinExporter } = require('@opentelemetry/exporter-zipkin')
-    exporterObj = new ZipkinExporter(exporterOptions)
-  } else if (exporter.type === 'memory') {
-    exporterObj = new InMemorySpanExporter()
-  } else {
-    app.log.warn(`Unknown exporter type: ${exporter.type}, defaulting to console.`)
-    exporterObj = new ConsoleSpanExporter(exporterOptions)
+      const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-proto')
+      exporterObj = new OTLPTraceExporter(exporterOptions)
+    } else if (exporter.type === 'zipkin') {
+      const { ZipkinExporter } = require('@opentelemetry/exporter-zipkin')
+      exporterObj = new ZipkinExporter(exporterOptions)
+    } else if (exporter.type === 'memory') {
+      exporterObj = new InMemorySpanExporter()
+    } else {
+      app.log.warn(`Unknown exporter type: ${exporter.type}, defaulting to console.`)
+      exporterObj = new ConsoleSpanExporter(exporterOptions)
+    }
+
+    // We use a SimpleSpanProcessor for the console/memory exporters and a BatchSpanProcessor for the others.
+    const spanProcessor = ['memory', 'console'].includes(exporter.type) ? new SimpleSpanProcessor(exporterObj) : new BatchSpanProcessor(exporterObj)
+    spanProcessors.push(spanProcessor)
+    exporterObjs.push(exporterObj)
   }
 
-  // We use a SimpleSpanProcessor for the console/memory exporters and a BatchSpanProcessor for the others.
-  const spanProcessor = ['memory', 'console'].includes(exporter.type) ? new SimpleSpanProcessor(exporterObj) : new BatchSpanProcessor(exporterObj)
-  provider.addSpanProcessor(spanProcessor)
+  provider.addSpanProcessor(spanProcessors)
   const tracer = provider.getTracer(moduleName, moduleVersion)
   const propagator = provider.getPropagator()
-  return { tracer, exporter: exporterObj, propagator, provider }
+  return { tracer, exporters: exporterObjs, propagator, provider }
 }
 
 async function setupTelemetry (app, opts) {
   // const { serviceName, version } = opts
   const openTelemetryAPIs = setupProvider(app, opts)
   const { tracer, propagator, provider } = openTelemetryAPIs
-
-  const formatSpanAttributes = {
-    ...defaultFormatSpanAttributes,
-    ...(opts.formatSpanAttributes || {})
-  }
+  const skipOperations = opts?.skip?.map(skip => {
+    const { method, path } = skip
+    return `${method}${path}`
+  }) || []
 
   // expose the span as a request decorator
   app.decorateRequest('span')
 
   const startSpan = async (request) => {
+    if (skipOperations.includes(`${request.method}${request.url}`)) {
+      request.log.debug({ operation: `${request.method}${request.url}` }, 'Skipping telemetry')
+      return
+    }
+
     // We populate the context with the incoming request headers
     let context = propagator.extract(new PlatformaticContext(), request, fastifyTextMapGetter)
 
+    const path = extractPath(request)
     const span = tracer.startSpan(
-      formatSpanName(request),
+      formatSpanName(request, path),
       {},
       context
     )
     span.kind = SpanKind.SERVER
     // Next 2 lines are needed by W3CTraceContextPropagator
     context = context.setSpan(span)
-    span.setAttributes(formatSpanAttributes.request(request))
+    span.setAttributes(formatSpanAttributes.request(request, path))
     span.context = context
     request.span = span
   }
@@ -139,19 +170,23 @@ async function setupTelemetry (app, opts) {
   }
 
   const injectPropagationHeadersInReply = async (request, reply) => {
-    const context = request.span.context
-    propagator.inject(context, reply, fastifyTextMapSetter)
+    if (request.span) {
+      const context = request.span.context
+      propagator.inject(context, reply, fastifyTextMapSetter)
+    }
   }
 
   const endSpan = async (request, reply) => {
     const span = request.span
-    const spanStatus = { code: SpanStatusCode.OK }
-    if (reply.statusCode >= 400) {
-      spanStatus.code = SpanStatusCode.ERROR
+    if (span) {
+      const spanStatus = { code: SpanStatusCode.OK }
+      if (reply.statusCode >= 400) {
+        spanStatus.code = SpanStatusCode.ERROR
+      }
+      span.setAttributes(formatSpanAttributes.reply(reply))
+      span.setStatus(spanStatus)
+      span.end()
     }
-    span.setAttributes(formatSpanAttributes.reply(reply))
-    span.setStatus(spanStatus)
-    span.end()
   }
 
   app.addHook('onRequest', startSpan)
@@ -181,12 +216,20 @@ async function setupTelemetry (app, opts) {
   // - closing the span
   const startSpanClient = (url, method, ctx) => {
     let context = ctx || new PlatformaticContext()
+    const urlObj = fastUri.parse(url)
+
+    if (skipOperations.includes(`${method}${urlObj.path}`)) {
+      app.log.debug({ operation: `${method}${urlObj.path}` }, 'Skipping telemetry')
+      return
+    }
+
     /* istanbul ignore next */
     method = method || ''
-    const span = tracer.startSpan(`${method} ${url}`, {}, context)
+    const name = `${method} ${urlObj.scheme}://${urlObj.host}:${urlObj.port}${urlObj.path}`
+
+    const span = tracer.startSpan(name, {}, context)
     span.kind = SpanKind.CLIENT
 
-    const urlObj = fastUri.parse(url)
     /* istanbul ignore next */
     const attributes = url
       ? {

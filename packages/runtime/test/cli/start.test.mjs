@@ -48,6 +48,10 @@ test('handles startup errors', async (t) => {
   }
 
   assert(found)
+
+  // if we do not await this, the test will crash because the event loop has nothing to do
+  // but there is still a promise waiting
+  await child.catch(() => {})
 })
 
 test('exits on error', async () => {
@@ -113,5 +117,15 @@ test('starts the inspector', async (t) => {
   }
 
   assert(found)
+  child.kill('SIGINT')
+})
+
+test('stackable', async () => {
+  const config = join(import.meta.url, '..', '..', 'fixtures', 'stackables', 'platformatic.json')
+  const { child, url } = await start('start', '-c', config)
+  const res = await request(url + '/foo')
+
+  assert.strictEqual(res.statusCode, 200)
+  assert.deepStrictEqual(await res.body.text(), 'Hello World')
   child.kill('SIGINT')
 })

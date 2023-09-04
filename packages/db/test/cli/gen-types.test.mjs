@@ -48,7 +48,7 @@ async function adjustTypeReferenceToAvoidLoops (cwd) {
   await writeFile(path.join(cwd, 'global.d.ts'), types, 'utf8')
 }
 
-t.test('generate ts types', { only: true }, async (t) => {
+t.test('generate ts types', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types')
   const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
   t.comment(cwd)

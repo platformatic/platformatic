@@ -4,6 +4,7 @@ require('./helper')
 const { test } = require('tap')
 const { ResponseStatusCodeError } = require('undici').errors
 const { buildServer } = require('../../db')
+const { buildServer: buildService } = require('../../service')
 const { join } = require('path')
 const { buildOpenAPIClient } = require('..')
 const fs = require('fs/promises')
@@ -389,7 +390,7 @@ test('build basic client from file', async ({ teardown, same, rejects }) => {
     }
   ])
 
-  const updatedMovie = await client.updateMovie({
+  const updatedMovie = await client.putUpdateMovie({
     id: 1,
     title: 'The Matrix Reloaded'
   })
@@ -551,6 +552,125 @@ test('302', async ({ teardown, same, rejects }) => {
   {
     const resp = await client.nonStandard()
     same(resp.statusCode, 470)
-    console.log(resp)
+  }
+})
+
+test('build basic client from file with (endpoint with duplicated parameters)', async ({ teardown, same, rejects }) => {
+  try {
+    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildService(join(__dirname, 'fixtures', 'duped-params', 'platformatic.service.json'))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const client = await buildOpenAPIClient({
+    url: `${app.url}`,
+    path: join(__dirname, 'fixtures', 'duped-params', 'openapi.json')
+  })
+
+  const result = await client.postHello({
+    body: {
+      id: 'bodyId'
+    },
+    query: {
+      id: 'queryId'
+    },
+    headers: {
+      id: 'headersId'
+    }
+  })
+
+  same(result.headers.id, 'headersId')
+  same(result.query.id, 'queryId')
+  same(result.body.id, 'bodyId')
+})
+
+test('build basic client from file (enpoint with no parameters)', async ({ teardown, same, notOk }) => {
+  try {
+    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildService(join(__dirname, 'fixtures', 'no-params', 'platformatic.service.json'))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const client = await buildOpenAPIClient({
+    url: `${app.url}`,
+    path: join(__dirname, 'fixtures', 'no-params', 'openapi.json')
+  })
+
+  const bodyPayload = {
+    body: {
+      id: 'bodyId'
+    },
+    query: {
+      id: 'queryId'
+    },
+    headers: {
+      id: 'headersId'
+    }
+  }
+  const postResult = await client.postHello(bodyPayload)
+
+  same(Object.keys(postResult.headers).length, 4) // some headers are returned...
+  notOk(postResult.headers.id) // ...but not the 'id' passed in the request
+  same(postResult.query, {})
+  same(postResult.body, bodyPayload)
+
+  const getResult = await client.getHello()
+  same(getResult.message, 'GET /hello works')
+})
+
+test('build basic client from file (query array parameter)', async ({ teardown, same, match }) => {
+  try {
+    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildService(join(__dirname, 'fixtures', 'array-query-params', 'platformatic.service.json'))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  {
+    // // with fullRequest
+    const client = await buildOpenAPIClient({
+      fullRequest: true,
+      url: `${app.url}`,
+      path: join(__dirname, 'fixtures', 'array-query-params', 'openapi.json')
+    })
+
+    const result = await client.getQuery({
+      query: {
+        ids: ['id1', 'id2']
+      }
+    })
+    same(result.isArray, true)
+    match(result.ids, ['id1', 'id2'])
+  }
+  {
+    // without fullRequest
+    const client = await buildOpenAPIClient({
+      fullRequest: false,
+      url: `${app.url}`,
+      path: join(__dirname, 'fixtures', 'array-query-params', 'openapi.json')
+    })
+
+    const result = await client.getQuery({
+      ids: ['id1', 'id2']
+    })
+    same(result.isArray, true)
+    match(result.ids, ['id1', 'id2'])
   }
 })

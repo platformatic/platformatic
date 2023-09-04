@@ -7,6 +7,7 @@ import helpMe from 'help-me'
 import { readFile } from 'fs/promises'
 import { join } from 'desm'
 import { start, tsCompiler } from '@platformatic/service'
+import { printAndExitLoadConfigError } from '@platformatic/config'
 import { platformaticDB } from './index.js'
 
 import { applyMigrations } from './lib/migrate.mjs'
@@ -23,6 +24,16 @@ const help = helpMe({
   ext: '.txt'
 })
 
+function wrapCommand (fn) {
+  return async function (...args) {
+    try {
+      return await fn(...args)
+    } catch (err) {
+      printAndExitLoadConfigError(err)
+    }
+  }
+}
+
 const program = commist({ maxDistance: 2 })
 
 program.register('help', help.toStdout)
@@ -33,20 +44,16 @@ program.register({ command: 'help seed', strict: true }, help.toStdout.bind(null
 program.register('help schema', help.toStdout.bind(null, ['schema']))
 
 program.register('start', (argv) => {
-  start(platformaticDB, argv).catch((err) => {
-    /* c8 ignore next 2 */
-    console.error(err)
-    process.exit(1)
-  })
+  start(platformaticDB, argv).catch(printAndExitLoadConfigError)
 })
-program.register('compile', compile)
-program.register('migrations create', generateMigration)
-program.register('migrations apply', applyMigrations)
-program.register('seed', seed)
-program.register('types', generateTypes)
-program.register('schema graphql', printGraphQLSchema)
-program.register('schema openapi', printOpenAPISchema)
-program.register('schema config', generateJsonSchemaConfig)
+program.register('compile', wrapCommand(compile))
+program.register('migrations create', wrapCommand(generateMigration))
+program.register('migrations apply', wrapCommand(applyMigrations))
+program.register('seed', wrapCommand(seed))
+program.register('types', wrapCommand(generateTypes))
+program.register('schema graphql', wrapCommand(printGraphQLSchema))
+program.register('schema openapi', wrapCommand(printOpenAPISchema))
+program.register('schema config', wrapCommand(generateJsonSchemaConfig))
 program.register('schema', help.toStdout.bind(null, ['schema']))
 
 // TODO add help command

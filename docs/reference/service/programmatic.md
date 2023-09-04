@@ -48,14 +48,7 @@ await app.close()
 If you want to build a similar kind of tool, follow this example:
 
 ```js
-import { buildServer, ConfigManager, platformaticService } from '@platformatic/service'
-
-class MyConfigManager {
-  _transformConfig () {
-    // Edit this.current at will, it's the current configuration
-    console.log(this.current)
-  }
-}
+import { buildServer, schema } from '@platformatic/service'
 
 async function myPlugin (app, opts) {
   // app.platformatic.configManager contains an instance of the ConfigManager
@@ -66,12 +59,39 @@ async function myPlugin (app, opts) {
 
 // break Fastify encapsulation
 myPlugin[Symbol.for('skip-override')] = true
+myPlugin.configType = 'myPlugin'
 
-const service = await buildServer('path/to/config.json', myPlugin, MyConfigManager)
+// This is the schema for this reusable application configuration file,
+// customize at will but retain the base properties of the schema from
+// @platformatic/service
+myPlugin.schema = schema
 
-await service.start()
+// The configuration of the ConfigManager
+myPlugin.configManagerConfig = {
+  schema: foo.schema,
+  envWhitelist: ['PORT', 'HOSTNAME'],
+  allowToWatch: ['.env'],
+  schemaOptions: {
+    useDefaults: true,
+    coerceTypes: true,
+    allErrors: true,
+    strict: false
+  },
+  async transformConfig () {
+    console.log(this.current) // this is the current config
 
-const res = await fetch(service.url)
+    // In this method you can alter the configuration before the application
+    // is started. It's useful to apply some defaults that cannot be derived
+    // inside the schema, such as resolving paths.
+  }
+}
+
+
+const server = await buildServer('path/to/config.json', myPlugin)
+
+await server.start()
+
+const res = await fetch(server.listeningOrigin)
 console.log(await res.json())
 
 // do something

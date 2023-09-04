@@ -1,4 +1,4 @@
-import { writeFile } from 'fs/promises'
+import { writeFile, readFile } from 'fs/promises'
 import camelcase from 'camelcase'
 import { join } from 'path'
 
@@ -11,6 +11,14 @@ export function classCase (str) {
 }
 
 export async function appendToEnv (file, key, value) {
+  try {
+    const env = await readFile(file, 'utf8')
+    if (env.includes(`${key}=`)) {
+      return
+    }
+  } catch {
+    // ignore error, file does not exist
+  }
   const str = `\n${key}=${value}\n`
   try {
     await writeFile(file, str, { flag: 'a' })

@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/client-cli",
-  "version": "0.34.1",
+  "version": "0.38.1",
   "description": "A client for all platformatic backends",
   "main": "cli.mjs",
   "bin": {
@@ -25,7 +25,7 @@
     "@platformatic/db": "workspace:*",
     "c8": "^8.0.0",
     "dotenv": "^16.1.4",
-    "execa": "^7.1.1",
+    "execa": "^8.0.0",
     "fastify": "^4.18.0",
     "fastify-tsconfig": "^1.0.1",
     "fs-extra": "^11.1.1",
@@ -54,6 +54,7 @@
     "minimist": "^1.2.8",
     "pino": "^8.14.1",
     "pino-pretty": "^10.0.0",
-    "undici": "^5.22.1"
+    "undici": "^5.22.1",
+    "yaml": "^2.3.1"
   }
 }

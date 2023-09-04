@@ -16,7 +16,6 @@ const loadPlugins = require('./lib/plugins/plugins')
 const { telemetry } = require('@platformatic/telemetry')
 
 const { schema } = require('./lib/schema')
-const { loadConfig } = require('./lib/load-config')
 const { addLoggerToTheConfig } = require('./lib/utils')
 const { start, buildServer } = require('./lib/start')
 
@@ -130,7 +129,6 @@ function _buildServer (options, app) {
 module.exports.buildServer = _buildServer
 module.exports.schema = require('./lib/schema')
 module.exports.platformaticService = platformaticService
-module.exports.loadConfig = loadConfig
 module.exports.addLoggerToTheConfig = addLoggerToTheConfig
 module.exports.tsCompiler = compiler
 module.exports.start = start

@@ -9,7 +9,7 @@ const pretty = require('pino-pretty')
 const { isatty } = require('node:tty')
 
 async function compile (argv, logger) {
-  const { configManager, configType } = await loadConfig({}, argv, undefined, {
+  const { configManager, configType } = await loadConfig({}, argv, {
     watch: false
   })
 
@@ -33,7 +33,7 @@ async function compile (argv, logger) {
     for (const service of configManager.current.services) {
       const childLogger = logger.child({ name: service.id })
 
-      const serviceConfig = await loadConfig({}, argv, undefined, {
+      const serviceConfig = await loadConfig({}, argv, {
         watch: false
       })
 

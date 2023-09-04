@@ -1,0 +1,12 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v0.35.0/runtime",
+  "entrypoint": "without-openapi",
+  "hotReload": false,
+  "services": [
+    {
+      "id": "without-openapi",
+      "path": "../monorepo-openapi/serviceAppWithoutOpenapi",
+      "config": "platformatic.service.json"
+    }
+  ]
+}

@@ -3,7 +3,7 @@
 const { resolve, join, dirname } = require('path')
 const pino = require('pino')
 const pretty = require('pino-pretty')
-const { loadConfig } = require('./load-config.js')
+const { loadConfig } = require('@platformatic/config')
 const { isFileAccessible } = require('./utils.js')
 
 async function getTSCExecutablePath (cwd) {
