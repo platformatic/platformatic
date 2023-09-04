@@ -1,16 +1,23 @@
 'use strict'
 
 const { request, setGlobalDispatcher, Agent } = require('undici')
+const { teardown } = require('tap')
 const fastify = require('fastify')
 const Swagger = require('@fastify/swagger')
 const SwaggerUI = require('@fastify/swagger-ui')
 
 const { buildServer } = require('..')
 
-setGlobalDispatcher(new Agent({
+const agent = new Agent({
   keepAliveMaxTimeout: 10,
   keepAliveTimeout: 10
-}))
+})
+
+setGlobalDispatcher(agent)
+
+teardown(async () => {
+  await agent.close()
+})
 
 async function createBasicService (t) {
   const app = fastify({
