@@ -203,3 +203,28 @@ test('openapi disabled by default', async ({ teardown, equal, same }) => {
     await res.body.text()
   }
 })
+
+test('request id is a uuid', async ({ teardown, equal, match }) => {
+  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  const app = await buildServer({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugins: {
+      paths: [join(__dirname, 'fixtures', 'request-id.js')]
+    }
+  })
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const res = await request(`${app.url}/request-id`, {
+    method: 'GET'
+  })
+  equal(res.statusCode, 200)
+  const json = await res.body.json()
+  match(json.request_id, UUID_REGEX)
+})
