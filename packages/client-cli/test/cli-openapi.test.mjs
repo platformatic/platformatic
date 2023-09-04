@@ -868,7 +868,7 @@ test('openapi client generation (javascript) from file with fullRequest and full
   }
 
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
-  
+
   const fullOptions = [
     ['--full-request', '--full-response'],
     ['--full']
@@ -913,5 +913,4 @@ async function generateFullClientPlugin (app, opts) {
   })
 }`)
   }
-  
 })

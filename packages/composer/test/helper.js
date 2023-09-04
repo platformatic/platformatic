@@ -1,11 +1,16 @@
 'use strict'
 
-const { request } = require('undici')
+const { request, setGlobalDispatcher, Agent } = require('undici')
 const fastify = require('fastify')
 const Swagger = require('@fastify/swagger')
 const SwaggerUI = require('@fastify/swagger-ui')
 
 const { buildServer } = require('..')
+
+setGlobalDispatcher(new Agent({
+  keepAliveMaxTimeout: 10,
+  keepAliveTimeout: 10
+}))
 
 async function createBasicService (t) {
   const app = fastify({

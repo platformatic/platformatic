@@ -307,7 +307,7 @@ export async function command (argv) {
       options.generateImplementation = !options.config
     }
 
-    options.fullRequest  = options['full-request']
+    options.fullRequest = options['full-request']
     options.fullResponse = options['full-response']
     await downloadAndProcess({ url, ...options, logger, runtime: options.runtime })
     logger.info('Client generated successfully')
