@@ -4,9 +4,9 @@ import { generateOperationId, hasDuplicatedParameters } from '@platformatic/clie
 import { capitalize, classCase, toJavaScriptName } from './utils.mjs'
 import { STATUS_CODES } from 'node:http'
 
-export function processOpenAPI ({ schema, name, fullResponse, fullRequest }) {
+export function processOpenAPI ({ schema, name, fullResponse, fullRequest, optionalHeaders }) {
   return {
-    types: generateTypesFromOpenAPI({ schema, name, fullResponse, fullRequest }),
+    types: generateTypesFromOpenAPI({ schema, name, fullResponse, fullRequest, optionalHeaders }),
     implementation: generateImplementationFromOpenAPI({ schema, name, fullResponse, fullRequest })
   }
 }
@@ -55,7 +55,7 @@ function generateImplementationFromOpenAPI ({ schema, name, fullResponse, fullRe
   return writer.toString()
 }
 
-function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest }) {
+function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, optionalHeaders }) {
   const camelcasedName = toJavaScriptName(name)
   const capitalizedName = capitalize(camelcasedName)
   const { paths } = schema
@@ -138,7 +138,10 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest }) 
             writeProperties(interfaces, 'headers', headersParams, addedProps)
           } else {
             for (const parameter of parameters) {
-              const { name, required } = parameter
+              let { name, required } = parameter
+              if (optionalHeaders.includes(name)) {
+                required = false
+              }
               // We do not check for addedProps here because it's the first
               // group of properties
               writeProperty(interfaces, name, parameter, addedProps, required)
