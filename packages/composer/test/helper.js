@@ -22,7 +22,8 @@ teardown(async () => {
 
 async function createBasicService (t) {
   const app = fastify({
-    keepAliveTimeout: 10
+    keepAliveTimeout: 10,
+    forceCloseConnections: true
   })
 
   await app.register(Swagger, {
@@ -88,7 +89,8 @@ async function createBasicService (t) {
 
 async function createOpenApiService (t, entitiesNames = []) {
   const app = fastify({
-    keepAliveTimeout: 10
+    keepAliveTimeout: 10,
+    forceCloseConnections: true
   })
 
   await app.register(Swagger, {
@@ -236,7 +238,9 @@ async function createComposer (t, composerConfig) {
     server: {
       logger: false,
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
+      keepAliveTimeout: 10,
+      forceCloseConnections: true
     },
     composer: { services: [] },
     plugins: {
