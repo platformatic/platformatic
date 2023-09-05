@@ -115,7 +115,7 @@ jobs:
       name: development
     steps:
       - name: Checkout application project repository
-        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4
+        uses: actions/checkout@v4
       - name: npm install --omit=dev
         run: npm install --omit=dev
       - name: Get PR number
