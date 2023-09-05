@@ -1,15 +1,29 @@
 'use strict'
 
-const { request } = require('undici')
+const { request, setGlobalDispatcher, Agent } = require('undici')
+const { teardown, comment } = require('tap')
 const fastify = require('fastify')
 const Swagger = require('@fastify/swagger')
 const SwaggerUI = require('@fastify/swagger-ui')
 
 const { buildServer } = require('..')
 
+const agent = new Agent({
+  keepAliveMaxTimeout: 10,
+  keepAliveTimeout: 10
+})
+
+setGlobalDispatcher(agent)
+
+teardown(async () => {
+  await agent.close()
+  comment('agent closed')
+})
+
 async function createBasicService (t) {
   const app = fastify({
-    keepAliveTimeout: 10
+    keepAliveTimeout: 10,
+    forceCloseConnections: true
   })
 
   await app.register(Swagger, {
@@ -75,7 +89,8 @@ async function createBasicService (t) {
 
 async function createOpenApiService (t, entitiesNames = []) {
   const app = fastify({
-    keepAliveTimeout: 10
+    keepAliveTimeout: 10,
+    forceCloseConnections: true
   })
 
   await app.register(Swagger, {
@@ -223,7 +238,9 @@ async function createComposer (t, composerConfig) {
     server: {
       logger: false,
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
+      keepAliveTimeout: 10,
+      forceCloseConnections: true
     },
     composer: { services: [] },
     plugins: {
