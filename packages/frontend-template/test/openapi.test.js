@@ -4,7 +4,7 @@ import { test } from 'tap'
 import { buildServer } from '@platformatic/db'
 import { join } from 'path'
 import { processOpenAPI } from '../lib/gen-openapi.mjs'
-import fs, { readFile } from 'fs/promises'
+import fs, { readFile, writeFile } from 'fs/promises'
 import { request } from 'undici'
 import * as url from 'url'
 import { cliPath, moveToTmpdir } from './helper.js'
@@ -35,8 +35,12 @@ test('build basic client from url', async ({ teardown, same, match }) => {
   match(types, /interface GetRedirectResponseBadRequest/)
 
   // handle non 200 code endpoint
-  const expectedImplementation = `export const getRedirect = async (request) => {
-  const response = await fetch(\`\${baseUrl}/redirect?\${new URLSearchParams(Object.entries(request || {})).toString()}\`)
+  const expectedImplementation = `export const getRedirect = async (url, request) => {
+  if (request === undefined) {
+    request = url
+    url = baseUrl
+  }
+  const response = await fetch(\`\${url}/redirect?\${new URLSearchParams(Object.entries(request || {})).toString()}\`)
 
   let body = await response.text()
 
@@ -56,12 +60,11 @@ test('build basic client from url', async ({ teardown, same, match }) => {
   // create factory
   const factoryImplementation = `
 export default function build (url) {
-  setBaseUrl(url)
   return {
-    getRedirect
+    getRedirect: getRedirect.bind(url, ...arguments),
+    getReturnUrl: getReturnUrl.bind(url, ...arguments)
   }
 }`
-
   // factory type
   const factoryType = `
 type PlatformaticFrontendClient = Omit<Api, 'setBaseUrl'>
@@ -105,4 +108,45 @@ test('generate correct file names', async ({ teardown, ok }) => {
   await execa('node', [cliPath, app.url, 'ts', '--name', 'sample-name'])
   ok(await readFile(join(dir, 'sampleName.ts')))
   ok(await readFile(join(dir, 'sampleName-types.d.ts')))
+})
+
+test('test factory and client', async ({ teardown, equal }) => {
+  try {
+    await fs.unlink(join(__dirname, 'fixtures', 'sample', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+
+  // start 2 services
+  const app = await buildServer(join(__dirname, 'fixtures', 'sample', 'platformatic.db.json'))
+  const app2 = await buildServer(join(__dirname, 'fixtures', 'sample', 'platformatic.db.json'))
+  teardown(async () => {
+    await app.close()
+    await app2.close()
+  })
+
+  await app.start()
+  await app2.start()
+  const dir = await moveToTmpdir(teardown)
+
+  await execa('node', [cliPath, app.url, 'js', '--name', 'foobar'])
+  const testFile = `
+'use strict'
+
+import build, { setBaseUrl, getReturnUrl } from './foobar.js'
+const client = build('${app.url}')
+setBaseUrl('${app2.url}')
+console.log(await client.getReturnUrl({}))
+console.log(await getReturnUrl({}))
+`
+
+  await writeFile(join(dir, 'test.js'), testFile)
+
+  // execute the command
+  const output = await execa('node', [join(dir, 'test.js')])
+  /* eslint-disable no-control-regex */
+  const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n') // remove ANSI colors, if any
+  /* eslint-enable no-control-regex */
+  equal(lines[0], `{ url: '${app.url}' }`) // client, app object
+  equal(lines[1], `{ url: '${app2.url}' }`) // raw, app2 object
 })

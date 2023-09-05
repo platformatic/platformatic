@@ -79,7 +79,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
       // export const getMovies:Api['getMovies'] = async (request) => {
       // ```
       writer.write(
-          `export const ${operationId}: ${capitalizedName}['${operationId}'] = async (request) =>`
+          `export const ${operationId}: ${capitalizedName}['${operationId}'] = async (url, request) =>`
       )
     } else {
       // The JS version uses the JSDoc type format to offer IntelliSense autocompletion to the developer.
@@ -91,7 +91,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
       //
       writer.writeLine(
         `/**  @type {import('./api-types.d.ts').Api['${operationId}']} */`
-      ).write(`export const ${operationId} = async (request) =>`)
+      ).write(`export const ${operationId} = async (url, request) =>`)
     }
 
     writer.block(() => {
@@ -100,15 +100,18 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
       // to
       // /organizations/${request.orgId}/members/${request.memberId}
       const stringLiteralPath = path.replace(/\{/gm, '${request.')
-
+      writer.write('if (request === undefined)').block(() => {
+        writer.writeLine('request = url')
+        writer.writeLine('url = baseUrl')
+      })
       // GET methods need query strings instead of JSON bodies
       if (method === 'get') {
         writer.writeLine(
-          `const response = await fetch(\`\${baseUrl}${stringLiteralPath}?\${new URLSearchParams(Object.entries(request || {})).toString()}\`)`
+          `const response = await fetch(\`\${url}${stringLiteralPath}?\${new URLSearchParams(Object.entries(request || {})).toString()}\`)`
         )
       } else {
         writer
-          .write(`const response = await fetch(\`\${baseUrl}${stringLiteralPath}\`, `)
+          .write(`const response = await fetch(\`\${url}${stringLiteralPath}\`, `)
           .inlineBlock(() => {
             writer.write('method:').quote().write(method).quote().write(',')
             writer.writeLine('body: JSON.stringify(request),')
@@ -162,13 +165,13 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
   }
   // create factory
   writer.write('export default function build (url)').block(() => {
-    writer.writeLine('setBaseUrl(url)')
     writer.write('return').block(() => {
       for (const [idx, op] of allOperations.entries()) {
+        const methodString = `${op}: ${op}.bind(url, ...arguments)`
         if (idx === allOperations.length - 1) {
-          writer.writeLine(`${op}`)
+          writer.writeLine(`${methodString}`)
         } else {
-          writer.writeLine(`${op},`)
+          writer.writeLine(`${methodString},`)
         }
       }
     })
@@ -269,7 +272,7 @@ function generateTypesFromOpenAPI ({ schema, name }) {
       })
 
       const responseType = responseTypes.join(' | ')
-      writer.writeLine(`${operationId}(req: ${operationRequestName}): Promise<${responseType}>;`)
+      writer.writeLine(`${operationId}(url: string, req: ${operationRequestName}): Promise<${responseType}>;`)
     }
   })
 
