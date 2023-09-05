@@ -3,6 +3,7 @@ import jsonpointer from 'jsonpointer'
 import { generateOperationId } from '@platformatic/client'
 import { capitalize, classCase } from './utils.mjs'
 import { STATUS_CODES } from 'node:http'
+import camelcase from 'camelcase'
 
 export function processOpenAPI ({ schema, name, url, language }) {
   return {
@@ -57,9 +58,10 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
     )
   }
   writer.blankLine()
-
+  const allOperations = []
   for (const operation of operations) {
     const { operationId, responses } = operation.operation
+    allOperations.push(operationId)
     const { method, path } = operation
     let fullResponse = false
     // Only dealing with success responses
@@ -158,12 +160,25 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
     })
     writer.blankLine()
   }
+  // create factory
+  writer.write('export default function build (url)').block(() => {
+    writer.writeLine('setBaseUrl(url)')
+    writer.write('return').block(() => {
+      for (const [idx, op] of allOperations.entries()) {
+        if (idx === allOperations.length - 1) {
+          writer.writeLine(`${op}`)
+        } else {
+          writer.writeLine(`${op},`)
+        }
+      }
+    })
+  })
 
   return writer.toString()
 }
 
 function generateTypesFromOpenAPI ({ schema, name }) {
-  const capitalizedName = capitalize(name)
+  const camelCaseName = capitalize(camelcase(name))
   const { paths } = schema
   const generatedOperationIds = []
   const operations = Object.entries(paths).flatMap(([path, methods]) => {
@@ -199,7 +214,7 @@ function generateTypesFromOpenAPI ({ schema, name }) {
   })
   interfaces.blankLine()
 
-  writer.write(`export interface ${capitalizedName}`).block(() => {
+  writer.write(`export interface ${camelCaseName}`).block(() => {
     writer.writeLine('setBaseUrl(newUrl: string) : void;')
     for (const operation of operations) {
       let fullResponse = false
@@ -259,7 +274,8 @@ function generateTypesFromOpenAPI ({ schema, name }) {
   })
 
   writer.blankLine()
-
+  writer.writeLine('type PlatformaticFrontendClient = Omit<Api, \'setBaseUrl\'>')
+  writer.writeLine('export default function build(url: string): PlatformaticFrontendClient')
   return interfaces.toString() + writer.toString()
 }
 

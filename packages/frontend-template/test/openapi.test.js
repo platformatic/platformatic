@@ -14,7 +14,7 @@ const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 
 test('build basic client from url', async ({ teardown, same, match }) => {
   try {
-    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(__dirname, 'fixtures', 'sample', 'db.sqlite'))
   } catch {
     // noop
   }
@@ -53,12 +53,31 @@ test('build basic client from url', async ({ teardown, same, match }) => {
     body
   }
 }`
+  // create factory
+  const factoryImplementation = `
+export default function build (url) {
+  setBaseUrl(url)
+  return {
+    getRedirect
+  }
+}`
+
+  // factory type
+  const factoryType = `
+type PlatformaticFrontendClient = Omit<Api, 'setBaseUrl'>
+export default function build(url: string): PlatformaticFrontendClient`
+
+  // Correct CamelCase name
+  const camelCase = 'export interface SampleFrontend {'
   match(implementation, expectedImplementation)
+  match(implementation, factoryImplementation)
+  match(types, factoryType)
+  match(types, camelCase)
 })
 
 test('generate correct file names', async ({ teardown, ok }) => {
   try {
-    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(__dirname, 'fixtures', 'sample', 'db.sqlite'))
   } catch {
     // noop
   }
