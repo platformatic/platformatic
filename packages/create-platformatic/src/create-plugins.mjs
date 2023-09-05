@@ -48,19 +48,28 @@ export default async function (fastify: FastifyInstance, opts: FastifyPluginOpti
 }
 `
 
-function testHelperJS (mod) {
+function testHelperJS (mod, customization = { pre: '', post: '', config: '' }) {
   return `\
 'use strict'
 
 const { join } = require('node:path')
 const { readFile } = require('node:fs/promises')
 const { buildServer } = require('@platformatic/${mod}')
+${customization.requires}
 
-async function getServer () {
+async function getServer (t) {
+${customization.pre}
   const config = JSON.parse(await readFile(join(__dirname, '..', 'platformatic.${mod}.json'), 'utf8'))
+  // Add your config customizations here. For example you want to set
+  // all things that are set in the config file to read from an env variable
   config.server.logger.level = 'warn'
   config.watch = false
-  return buildServer(config)
+${customization.config}
+  // Add your config customizations here
+  const server = await buildServer(config)
+  t.after(() => server.close())
+${customization.post}
+  return server
 }
 
 module.exports.getServer = getServer
@@ -75,8 +84,7 @@ const assert = require('node:assert')
 const { getServer } = require('../helper')
 
 test('example', async (t) => {
-  const server = await getServer()
-  t.after(() => server.close())
+  const server = await getServer(t)
   const res = await server.inject({
     method: 'GET',
     url: '/example'
@@ -97,25 +105,33 @@ const assert = require('node:assert')
 const { getServer } = require('../helper')
 
 test('example decorator', async (t) => {
-  const server = await getServer()
-  t.after(() => server.close())
+  const server = await getServer(t)
 
   assert.strictEqual(server.example, 'foobar')
 })
 `
 
-function testHelperTS (mod) {
+function testHelperTS (mod, customizations = { pre: '', post: '', config: '', requires: '' }) {
   return `\
 import { join } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import { buildServer } from '@platformatic/${mod}'
+${customizations.requires}
 
 export async function getServer () {
+${customizations.pre}
   // We go up two folder because this files executes in the dist folder
   const config = JSON.parse(await readFile(join(__dirname, '..', '..', 'platformatic.${mod}.json'), 'utf8'))
+  // Add your config customizations here. For example you want to set
+  // all things that are set in the config file to read from an env variable
   config.server.logger.level = 'warn'
   config.watch = false
-  return buildServer(config)
+${customizations.config}
+  // Add your config customizations here
+  const server = await buildServer(config)
+  t.after(() => server.close())
+${customizations.post}
+  return server
 }
   `
 }
@@ -126,8 +142,7 @@ import assert from 'node:assert'
 import { getServer } from '../helper'
 
 test('root', async (t) => {
-  const server = await getServer()
-  t.after(() => server.close())
+  const server = await getServer(t)
   const res = await server.inject({
     method: 'GET',
     url: '/example'
@@ -146,8 +161,7 @@ import assert from 'node:assert'
 import { getServer } from '../helper'
 
 test('example decorator', async (t) => {
-  const server = await getServer()
-  t.after(() => server.close())
+  const server = await getServer(t)
 
   assert.strictEqual(server.example, 'foobar')
 })
@@ -187,7 +201,7 @@ export async function generateRouteWithTypesSupport (logger, currentDir, isTypes
   logger.info('Routes folder "routes" successfully created.')
 }
 
-export async function generateTests (logger, currentDir, isTypescript, mod) {
+export async function generateTests (logger, currentDir, isTypescript, mod, customizations) {
   const accessible = await isFileAccessible('tests', currentDir)
   if (accessible) {
     logger.info('Test folder found, skipping creation of tests.')
@@ -199,11 +213,11 @@ export async function generateTests (logger, currentDir, isTypescript, mod) {
   await mkdir(join(currentDir, 'test', 'routes'))
 
   if (isTypescript) {
-    await writeFile(join(currentDir, 'test', 'helper.ts'), testHelperTS(mod))
+    await writeFile(join(currentDir, 'test', 'helper.ts'), testHelperTS(mod, customizations))
     await writeFile(join(currentDir, 'test', 'plugins', 'example.test.ts'), TEST_PLUGIN_TS)
     await writeFile(join(currentDir, 'test', 'routes', 'root.test.ts'), TEST_ROUTES_TS)
   } else {
-    await writeFile(join(currentDir, 'test', 'helper.js'), testHelperJS(mod))
+    await writeFile(join(currentDir, 'test', 'helper.js'), testHelperJS(mod, customizations))
     await writeFile(join(currentDir, 'test', 'plugins', 'example.test.js'), TEST_PLUGIN_JS)
     await writeFile(join(currentDir, 'test', 'routes', 'root.test.js'), TEST_ROUTES_JS)
   }
@@ -211,8 +225,8 @@ export async function generateTests (logger, currentDir, isTypescript, mod) {
   logger.info('Test folder "tests" successfully created.')
 }
 
-export async function generatePlugins (logger, currentDir, isTypescript, mod) {
+export async function generatePlugins (logger, currentDir, isTypescript, mod, helperCustomization) {
   await generatePluginWithTypesSupport(logger, currentDir, isTypescript)
   await generateRouteWithTypesSupport(logger, currentDir, isTypescript)
-  await generateTests(logger, currentDir, isTypescript, mod)
+  await generateTests(logger, currentDir, isTypescript, mod, helperCustomization)
 }

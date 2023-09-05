@@ -35,6 +35,174 @@ DROP TABLE movies;
 
 const TS_OUT_DIR = 'dist'
 
+const jsHelperSqlite = {
+  requires: `
+const os = require('node:os')
+const path = require('node:path')
+const fs = require('node:fs/promises')
+
+let counter = 0
+`,
+  pre: `
+  const dbPath = join(os.tmpdir(), 'db-' + process.pid + '-' + counter++ + '.sqlite')
+  const connectionString = 'sqlite://' + dbPath
+`,
+  config: `
+  config.migrations.autoApply = true
+  config.types.autoGenerate = false
+  config.db.connectionString = connectionString
+`,
+  post: `
+  t.after(async () => {
+    await fs.unlink(dbPath)
+  })
+`
+}
+
+const jsHelperPostgres = {
+  pre: `
+  const connectionString = '${connectionStrings.postgres}'
+`,
+  config: `
+  config.migrations.autoApply = true
+  config.types.autoGenerate = false
+  config.db.connectionString = connectionString
+`,
+  post: `
+  await server.platformatic.cleanUpAllEntities()
+`
+}
+
+const jsHelperMySQL = {
+  pre: `
+  const connectionString = '${connectionStrings.mysql}'
+`,
+  config: `
+  config.migrations.autoApply = true
+  config.types.autoGenerate = false
+  config.db.connectionString = connectionString
+`,
+  post: `
+  await server.platformatic.cleanUpAllEntities()
+`
+}
+
+const jsHelperMariaDB = {
+  pre: `
+  const connectionString = '${connectionStrings.mariadb}'
+`,
+  config: `
+  config.migrations.autoApply = true
+  config.types.autoGenerate = false
+`,
+  post: `
+  await server.platformatic.cleanUpAllEntities()
+`
+}
+
+const moviesTestJS = `\
+'use strict'
+
+const test = require('node:test')
+const assert = require('node:assert')
+const { getServer } = require('../helper')
+
+test('movies', async (t) => {
+  const server = await getServer(t)
+
+  {
+    const res = await server.inject({
+      method: 'GET',
+      url: '/movies'
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+    assert.deepStrictEqual(res.json(), [])
+  }
+
+  let id
+  {
+    const res = await server.inject({
+      method: 'POST',
+      url: '/movies',
+      body: {
+        title: 'The Matrix'
+      }
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+    const body = res.json()
+    assert.strictEqual(body.title, 'The Matrix')
+    assert.strictEqual(body.id !== undefined, true)
+    id = body.id
+  }
+
+  {
+    const res = await server.inject({
+      method: 'GET',
+      url: '/movies'
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+    assert.deepStrictEqual(res.json(), [{
+      id,
+      title: 'The Matrix'
+    }])
+  }
+})
+`
+
+const moviesTestTS = `\
+import test from 'node:test'
+import assert from 'node:assert'
+import { getServer } from '../helper'
+
+test('movies', async (t) => {
+  const server = await getServer()
+  t.after(() => server.close())
+
+  {
+    const res = await server.inject({
+      method: 'GET',
+      url: '/movies'
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+    assert.deepStrictEqual(res.json(), [])
+  }
+
+  let id : Number
+  {
+    const res = await server.inject({
+      method: 'POST',
+      url: '/movies',
+      body: {
+        title: 'The Matrix'
+      }
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+    const body = res.json()
+    assert.strictEqual(body.title, 'The Matrix')
+    assert.strictEqual(body.id !== undefined, true)
+    id = body.id as Number
+  }
+
+  {
+    const res = await server.inject({
+      method: 'GET',
+      url: '/movies'
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+    assert.deepStrictEqual(res.json(), [{
+      id,
+      title: 'The Matrix'
+    }])
+  }
+})
+`
+
 function generateConfig (migrations, plugin, types, typescript, version) {
   const config = {
     $schema: `https://platformatic.dev/schemas/v${version}/db`,
@@ -173,7 +341,30 @@ export async function createDB ({ hostname, database = 'sqlite', port, migration
   }
 
   if (plugin) {
-    await generatePlugins(logger, currentDir, typescript, 'db')
+    let jsHelper = { pre: '', config: '', post: '' }
+    switch (database) {
+      case 'sqlite':
+        jsHelper = jsHelperSqlite
+        break
+      case 'mysql':
+        jsHelper = jsHelperMySQL
+        break
+      case 'postgres':
+        jsHelper = jsHelperPostgres
+        break
+      case 'mariadb':
+        jsHelper = jsHelperMariaDB
+        break
+    }
+    await generatePlugins(logger, currentDir, typescript, 'db', jsHelper)
+
+    if (createMigrations) {
+      if (typescript) {
+        await writeFile(join(currentDir, 'test', 'routes', 'movies.test.ts'), moviesTestTS)
+      } else {
+        await writeFile(join(currentDir, 'test', 'routes', 'movies.test.js'), moviesTestJS)
+      }
+    }
   }
 
   const output = {

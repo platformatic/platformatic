@@ -166,7 +166,8 @@ const createPlatformaticDB = async (_args, opts) => {
   const fastifyVersion = await getDependencyVersion('fastify')
 
   const scripts = {
-    migrate: 'platformatic db migrations apply'
+    migrate: 'platformatic db migrations apply',
+    test: useTypescript ? 'tsc && node --test dist/test/*/*.test.js' : 'node --test test/*/*.test.js'
   }
 
   const dependencies = {
