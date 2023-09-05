@@ -21,8 +21,6 @@ Take note of the following configuration setting values:
 * The connection string for your `main` branch database, to be stored in a `NEON_DB_URL_PRODUCTION` secret
 * The Project ID (available under the project **Settings**), to be stored in a `NEON_PROJECT_ID` secret
 * Your API key (available by clicking on your user icon > **Account > Developer settings**), to be stored under `NEON_API_KEY`
-* The username specified in your database connection string (available under project **Dashboard > Connection Details**), to be stored in a `DBUSER` secret
-* The password specified in your database connection string (available under project **Dashboard > Connection Details**), to be stored in a `DBPASSWORD` secret
 
 You can learn more about Neon API keys in their [Manage API Keys](https://neon.tech/docs/manage/api-keys) documentation.
 
@@ -40,8 +38,6 @@ Configure the GitHub Environments for your repository to have:
 * `previews` secrets available to all branches:
   - `NEON_PROJECT_ID`
   - `NEON_API_KEY`
-  - `DBUSER`
-  - `DBPASSWORD`
 
 ## Configure the main branch workflow
 
@@ -66,7 +62,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout application project repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: npm install --omit=dev
         run: npm install --omit=dev
       - name: Deploy project
@@ -100,7 +96,7 @@ request is merged.
 Replace the contents of your app's workflow for dynamic workspace deployment:
 
 ```yml title=".github/workflows/platformatic-dynamic-workspace-deploy.yml"
-name: Deploy Platformatic application to the cloud
+name: Deploy to Platformatic cloud
 on:
   pull_request:
     paths-ignore:
@@ -114,48 +110,35 @@ concurrency:
 
 jobs:
   build_and_deploy:
-    environment:
-      name: previews
-    permissions:
-      contents: read
-      pull-requests: write
     runs-on: ubuntu-latest
+    environment: 
+      name: development
     steps:
       - name: Checkout application project repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4
       - name: npm install --omit=dev
         run: npm install --omit=dev
       - name: Get PR number
         id: get_pull_number
         run: |
-          pull_sha=$(jq --raw-output .pull_request.base.sha "$GITHUB_EVENT_PATH")
-          echo "pull_sha=${pull_sha}" >> $GITHUB_OUTPUT
-          echo $pull_sha
-      - uses: neondatabase/delete-branch-by-name-action@8260b587b411ffa0071bf68d0df2e37583aa719a
+          pull_number=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
+          echo "pull_number=${pull_number}" >> $GITHUB_OUTPUT
+          echo $pull_number
+      - uses: neondatabase/create-branch-action@v4
         with:
           project_id: ${{ secrets.NEON_PROJECT_ID }}
-          branch_name: ${{ steps.get_pull_number.outputs.pull_sha }}
+          branch_name: pr-${{ steps.get_pull_number.outputs.pull_number }}
           api_key: ${{ secrets.NEON_API_KEY }}
-      - run: sleep 10
-      - uses: neondatabase/create-branch-action@dc4ce9e0161722f64cedc66bb2aef72d556ccf7c
-        with:
-          project_id: ${{ secrets.NEON_PROJECT_ID }}
-          branch_name: ${{ steps.get_pull_number.outputs.pull_sha }}
-          api_key: ${{ secrets.NEON_API_KEY }}
-          username: ${{ secrets.DBUSER }}
-          Password: ${{ secrets.DBPASSWORD }}
         id: create-branch
-      - name: Get DATABASE_URL
-        run: echo DATABASE_URL=${{ steps.create-branch.outputs.db_url}}/neondb
       - name: Deploy project
         uses: platformatic/onestep@latest
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          platformatic_workspace_id: <YOUR_DYNAMIC_WORKSPACE_ID>
-          platformatic_workspace_key: ${{ secrets.PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY }}
+          platformatic_workspace_id: ${{ secrets.PLATFORMATIC_DYNAMIC_WORKSPACE_ID }}
+          platformatic_workspace_key: ${{ secrets.PLATFORMATIC_DYNAMIC_WORKSPACE_KEY }}
           platformatic_config_path: ./platformatic.db.json
         env:
-          DATABASE_URL: ${{ steps.create-branch.outputs.db_url}}/neondb
+          DATABASE_URL: ${{ steps.create-branch.outputs.db_url }}
           PLT_SERVER_LOGGER_LEVEL: info 
           PORT: 3042 
           PLT_SERVER_HOSTNAME: 127.0.0.1
@@ -171,7 +154,7 @@ Create a new file, `.github/workflows/cleanup-neon-branch-db.yml`, and copy and 
 workflow configuration:
 
 ```yml title=".github/workflows/cleanup-neon-branch-db.yml"
-name: Cleanup Neon branch database
+name: Cleanup Neon Database Branch
 on:
   push:
     branches:
@@ -179,7 +162,7 @@ on:
 jobs:
   delete-branch:
     environment: 
-      name: previews
+      name: development
     permissions: write-all
     runs-on: ubuntu-latest
     steps:
@@ -188,36 +171,14 @@ jobs:
         uses: actions-ecosystem/action-get-merged-pull-request@v1.0.1
         with:
           github_token: ${{secrets.GITHUB_TOKEN}}
-
       - run: |
           echo ${{ steps.get-pr-info.outputs.number}}
-      - name: Get last commit SHA
-        id: get_sha
-        run: |
-          echo "sha=${{ github.event.before }}" >> $GITHUB_OUTPUT
-      - name: Search branch by name
-        id: get_branch_id
-        run: |
-          branch_id=$(curl --silent \
-            "https://console.neon.tech/api/v2/projects/${PROJECT_ID}/branches" \
-            --header "Accept: application/json" \
-            --header "Content-Type: application/json" \
-            --header "Authorization: Bearer ${API_KEY}" \
-            | jq -r .branches \
-            | jq -c '.[] | select(.name | contains("'${SHA}'")) .id' \
-            | jq -r \
-            ) \
-            
-          echo "branch_id=${branch_id}" >> $GITHUB_OUTPUT
-        env:
-          PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
-          API_KEY: ${{ secrets.NEON_API_KEY }}
-          SHA: ${{ steps.get_sha.outputs.sha }}
       - name: Delete Neon Branch
-        uses: neondatabase/delete-branch-action@v2
+        if: ${{ steps.get-pr-info.outputs.number }}
+        uses: neondatabase/delete-branch-action@v3
         with:
           project_id: ${{ secrets.NEON_PROJECT_ID }}
-          branch_id: ${{ steps.get_branch_id.outputs.branch_id }}
+          branch: pr-${{ steps.get-pr-info.outputs.number }}
           api_key: ${{ secrets.NEON_API_KEY }}
 ```
 
