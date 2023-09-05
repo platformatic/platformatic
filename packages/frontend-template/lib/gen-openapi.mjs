@@ -41,6 +41,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
   writer.blankLine()
 
   writer.conditionalWriteLine(language === 'ts', `import type { ${capitalizedName} } from './${name}-types'`)
+  writer.conditionalWriteLine(language === 'ts', `import * as Types from './${name}-types'`)
   writer.blankLineIfLastNot()
 
   writer.writeLine('// The base URL for the API. This can be overridden by calling `setBaseUrl`.')
@@ -51,7 +52,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
     )
   } else {
     writer.writeLine(
-      '/**  @type {import(\'./api-types.d.ts\').setBaseUrl} */'
+      '/**  @type {import(\'./api-types.d.ts\').Api[\'setBaseUrl\']} */'
     )
     writer.writeLine(
       'export const setBaseUrl = (newUrl) => { baseUrl = newUrl }'
@@ -61,6 +62,9 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
   const allOperations = []
   for (const operation of operations) {
     const { operationId, responses } = operation.operation
+    const operationRequestName = `${capitalize(operationId)}Request`
+    const underscoredOperationId = `_${operationId}`
+
     allOperations.push(operationId)
     const { method, path } = operation
     let fullResponse = false
@@ -71,7 +75,6 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
     if (successResponses.length !== 1) {
       fullResponse = true
     }
-
     if (language === 'ts') {
       // Write
       //
@@ -79,19 +82,10 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
       // export const getMovies:Api['getMovies'] = async (request) => {
       // ```
       writer.write(
-          `export const ${operationId}: ${capitalizedName}['${operationId}'] = async (url, request) =>`
+          `const ${underscoredOperationId} = async (url: string, request: Types.${operationRequestName}) =>`
       )
     } else {
-      // The JS version uses the JSDoc type format to offer IntelliSense autocompletion to the developer.
-      //
-      // ```js
-      // /** @type {import('./api-types.d.ts').Api['getMovies']} */
-      // export const getMovies = async (request) => {
-      // ```
-      //
-      writer.writeLine(
-        `/**  @type {import('./api-types.d.ts').Api['${operationId}']} */`
-      ).write(`export const ${operationId} = async (url, request) =>`)
+      writer.write(`async function ${underscoredOperationId} (url, request)`)
     }
 
     writer.block(() => {
@@ -100,10 +94,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
       // to
       // /organizations/${request.orgId}/members/${request.memberId}
       const stringLiteralPath = path.replace(/\{/gm, '${request.')
-      writer.write('if (request === undefined)').block(() => {
-        writer.writeLine('request = url')
-        writer.writeLine('url = baseUrl')
-      })
+      
       // GET methods need query strings instead of JSON bodies
       if (method === 'get') {
         writer.writeLine(
@@ -162,12 +153,36 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
       }
     })
     writer.blankLine()
+    if (language === 'ts') {
+      writer.write(`export const ${operationId}: ${capitalizedName}['${operationId}'] = async (request: Types.${operationRequestName}) =>`).block(() => {
+        writer.write(`return await ${underscoredOperationId}(baseUrl, request)`)
+      })
+    } else {
+      // The JS version uses the JSDoc type format to offer IntelliSense autocompletion to the developer.
+      //
+      // ```js
+      // /** @type {import('./api-types.d.ts').Api['getMovies']} */
+      // export const getMovies = async (request) => {
+      // ```
+      //
+      writer
+        .writeLine(
+          `/**  @type {import('./api-types.d.ts').Api['${operationId}']} */`
+        )
+        .write(`export const ${operationId} = async (request) =>`).block(() => {
+          writer.write(`return await ${underscoredOperationId}(baseUrl, request)`)
+        })
+    }
   }
   // create factory
-  writer.write('export default function build (url)').block(() => {
+  const factoryBuildFunction = language === 'ts'
+    ? 'export default function build (url: string)'
+    : 'export default function build (url)'
+  writer.write(factoryBuildFunction).block(() => {
     writer.write('return').block(() => {
       for (const [idx, op] of allOperations.entries()) {
-        const methodString = `${op}: ${op}.bind(url, ...arguments)`
+        const underscoredOperation = `_${op}`
+        const methodString = `${op}: ${underscoredOperation}.bind(url, ...arguments)`
         if (idx === allOperations.length - 1) {
           writer.writeLine(`${methodString}`)
         } else {
@@ -225,7 +240,7 @@ function generateTypesFromOpenAPI ({ schema, name }) {
       const { parameters, responses, requestBody } = operation.operation
       const operationRequestName = `${capitalize(operationId)}Request`
       const operationResponseName = `${capitalize(operationId)}Response`
-      interfaces.write(`interface ${operationRequestName}`).block(() => {
+      interfaces.write(`export interface ${operationRequestName}`).block(() => {
         const addedProps = new Set()
         if (parameters) {
           for (const parameter of parameters) {
@@ -272,7 +287,8 @@ function generateTypesFromOpenAPI ({ schema, name }) {
       })
 
       const responseType = responseTypes.join(' | ')
-      writer.writeLine(`${operationId}(url: string, req: ${operationRequestName}): Promise<${responseType}>;`)
+      writer.writeLine(`${operationId}(req: ${operationRequestName}): Promise<${responseType}>;`)
+      // writer.writeLine(`${operationId}(url: string, req: ${operationRequestName}): Promise<${responseType}>;`)
     }
   })
 

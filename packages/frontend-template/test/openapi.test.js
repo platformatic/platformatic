@@ -35,11 +35,8 @@ test('build basic client from url', async ({ teardown, same, match }) => {
   match(types, /interface GetRedirectResponseBadRequest/)
 
   // handle non 200 code endpoint
-  const expectedImplementation = `export const getRedirect = async (url, request) => {
-  if (request === undefined) {
-    request = url
-    url = baseUrl
-  }
+  const expectedImplementation = `
+async function _getRedirect (url, request) {
   const response = await fetch(\`\${url}/redirect?\${new URLSearchParams(Object.entries(request || {})).toString()}\`)
 
   let body = await response.text()
@@ -56,13 +53,18 @@ test('build basic client from url', async ({ teardown, same, match }) => {
     headers: response.headers,
     body
   }
+}
+
+/**  @type {import('./api-types.d.ts').Api['getRedirect']} */
+export const getRedirect = async (request) => {
+  return await _getRedirect(baseUrl, request)
 }`
   // create factory
   const factoryImplementation = `
 export default function build (url) {
   return {
-    getRedirect: getRedirect.bind(url, ...arguments),
-    getReturnUrl: getReturnUrl.bind(url, ...arguments)
+    getRedirect: _getRedirect.bind(url, ...arguments),
+    getReturnUrl: _getReturnUrl.bind(url, ...arguments)
   }
 }`
   // factory type
@@ -146,6 +148,7 @@ console.log(await getReturnUrl({}))
   const output = await execa('node', [join(dir, 'test.js')])
   /* eslint-disable no-control-regex */
   const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n') // remove ANSI colors, if any
+  console.log(lines)
   /* eslint-enable no-control-regex */
   equal(lines[0], `{ url: '${app.url}' }`) // client, app object
   equal(lines[1], `{ url: '${app2.url}' }`) // raw, app2 object
