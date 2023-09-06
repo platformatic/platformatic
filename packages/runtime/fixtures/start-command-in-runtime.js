@@ -1,7 +1,7 @@
 'use strict'
 const assert = require('node:assert')
 const { request } = require('undici')
-const { startCommand } = require('../lib/unified-api')
+const { startCommand } = require('..')
 
 async function main () {
   const entrypoint = await startCommand(['-c', process.argv[2]])

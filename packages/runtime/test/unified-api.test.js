@@ -7,7 +7,7 @@ const { test } = require('node:test')
 const {
   buildServer,
   loadConfig
-} = require('../lib/unified-api')
+} = require('..')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
 test('loadConfig()', async (t) => {

@@ -6,7 +6,7 @@ import { join } from 'desm'
 import isMain from 'es-main'
 import helpMe from 'help-me'
 import parseArgs from 'minimist'
-import { startCommand } from './lib/unified-api.js'
+import { startCommand } from './index.js'
 import { compile as compileCmd } from './lib/compile.js'
 
 export const compile = compileCmd

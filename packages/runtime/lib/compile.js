@@ -1,7 +1,7 @@
 'use strict'
 
 const { tsCompiler } = require('@platformatic/service')
-const { loadConfig } = require('./unified-api')
+const { loadConfig } = require('./load-config')
 const { dirname } = require('node:path')
 
 const pino = require('pino')
