@@ -3,7 +3,7 @@ import Postgrator from 'postgrator'
 import { MigrateError } from './errors.mjs'
 import { setupDB } from './utils.js'
 import { stat } from 'fs/promises'
-import { readdirSync } from 'fs'
+import { readdir } from 'fs/promises'
 
 class Migrator {
   constructor (migrationConfig, coreConfig, logger) {
@@ -86,7 +86,7 @@ class Migrator {
   }
 
   async applyMigrations (to) {
-    this.checkIfMigrationFilesExist()
+    await this.checkIfMigrationFilesExist()
     await this.setupPostgrator()
     await this.postgrator.migrate(to)
   }
@@ -150,9 +150,10 @@ class Migrator {
     return false
   }
 
-  checkIfMigrationFilesExist () {
+  async checkIfMigrationFilesExist () {
     try {
-      if (readdirSync(this.migrationDir).length === 0) {
+      const files = await readdir(this.migrationDir)
+      if (files.length === 0) {
         this.logger.warn(`No migration files in ${this.migrationDir}`)
       }
     } catch (err) {
