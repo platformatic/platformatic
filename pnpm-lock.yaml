@@ -875,8 +875,8 @@ importers:
         specifier: ^5.13.1
         version: 5.14.0(graphql@16.8.0)
       happy-dom:
-        specifier: ^9.20.3
-        version: 9.20.3
+        specifier: ^11.0.0
+        version: 11.0.1
       history:
         specifier: ^5.3.0
         version: 5.3.0
@@ -930,7 +930,7 @@ importers:
         version: 4.4.9(@types/node@20.5.9)
       vitest:
         specifier: ^0.33.0
-        version: 0.33.0(happy-dom@9.20.3)(playwright@1.37.1)
+        version: 0.33.0(happy-dom@11.0.1)(playwright@1.37.1)
 
   packages/db-ra-data-rest:
     dependencies:
@@ -958,7 +958,7 @@ importers:
         version: 4.4.9(@types/node@20.5.9)
       vitest:
         specifier: ^0.33.0
-        version: 0.33.0(happy-dom@9.20.3)(playwright@1.37.1)
+        version: 0.33.0(happy-dom@11.0.1)(playwright@1.37.1)
       whatwg-fetch:
         specifier: ^3.6.2
         version: 3.6.18
@@ -4265,7 +4265,7 @@ packages:
       magic-string: 0.30.3
       picocolors: 1.0.0
       std-env: 3.4.3
-      vitest: 0.33.0(happy-dom@9.20.3)(playwright@1.37.1)
+      vitest: 0.33.0(happy-dom@11.0.1)(playwright@1.37.1)
     dev: true
 
   /@vitest/expect@0.33.0:
@@ -5604,6 +5604,7 @@ packages:
   /drange@1.1.1:
     resolution: {integrity: sha512-pYxfDYpued//QpnLIm4Avk7rsNtAtQkUES2cwAYSvD/wd2pKD71gN2Ebj3e7klzXwjocvE8c5vx/1fxwpqmSxA==}
     engines: {node: '>=4'}
+    requiresBuild: true
     dev: true
 
   /dtsgenerator@3.19.1:
@@ -7074,8 +7075,8 @@ packages:
     resolution: {integrity: sha512-0oKGaR+y3qcS5mCu1vb7KG+a89vjn06C7Ihq/dDl3jA+A8B3TKomvi3CiEcVLJQGalbu8F52LxkOym7U5sSfbg==}
     engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
 
-  /happy-dom@9.20.3:
-    resolution: {integrity: sha512-eBsgauT435fXFvQDNcmm5QbGtYzxEzOaX35Ia+h6yP/wwa4xSWZh1CfP+mGby8Hk6Xu59mTkpyf72rUXHNxY7A==}
+  /happy-dom@11.0.1:
+    resolution: {integrity: sha512-3U3kXpTbHQoCxItf5VhdHSSeX7ZKekcEx6hBZ5Ug12MeEASL89upfz6Nefv7pwTc5jWsXPHlVInjB1gID0HkwQ==}
     dependencies:
       css.escape: 1.5.1
       entities: 4.5.0
@@ -12161,7 +12162,7 @@ packages:
       fsevents: 2.3.3
     dev: true
 
-  /vitest@0.33.0(happy-dom@9.20.3)(playwright@1.37.1):
+  /vitest@0.33.0(happy-dom@11.0.1)(playwright@1.37.1):
     resolution: {integrity: sha512-1CxaugJ50xskkQ0e969R/hW47za4YXDUfWJDxip1hwbnhUjYolpfUn2AMOulqG/Dtd9WYAtkHmM/m3yKVrEejQ==}
     engines: {node: '>=v14.18.0'}
     hasBin: true
@@ -12205,7 +12206,7 @@ packages:
       cac: 6.7.14
       chai: 4.3.8
       debug: 4.3.4
-      happy-dom: 9.20.3
+      happy-dom: 11.0.1
       local-pkg: 0.4.3
       magic-string: 0.30.3
       pathe: 1.1.1
