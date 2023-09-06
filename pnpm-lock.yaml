@@ -151,6 +151,9 @@ importers:
       abstract-logging:
         specifier: ^2.0.1
         version: 2.0.1
+      ajv:
+        specifier: ^8.12.0
+        version: 8.12.0
       undici:
         specifier: ^5.22.1
         version: 5.24.0

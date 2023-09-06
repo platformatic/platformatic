@@ -592,7 +592,7 @@ test('build basic client from file with (endpoint with duplicated parameters)', 
 
 test('build basic client from file (enpoint with no parameters)', async ({ teardown, same, notOk }) => {
   try {
-    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(__dirname, 'fixtures', 'no-params', 'db.sqlite'))
   } catch {
     // noop
   }
@@ -632,7 +632,7 @@ test('build basic client from file (enpoint with no parameters)', async ({ teard
 
 test('build basic client from file (query array parameter)', async ({ teardown, same, match }) => {
   try {
-    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(__dirname, 'fixtures', 'array-query-params', 'db.sqlite'))
   } catch {
     // noop
   }
@@ -673,4 +673,58 @@ test('build basic client from file (query array parameter)', async ({ teardown, 
     same(result.isArray, true)
     match(result.ids, ['id1', 'id2'])
   }
+})
+
+test('validate response', async ({ teardown, same, notOk }) => {
+  const fixtureDirectory = 'validate-response'
+  try {
+    await fs.unlink(join(__dirname, 'fixtures', fixtureDirectory, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildService(join(__dirname, 'fixtures', fixtureDirectory, 'platformatic.service.json'))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const client = await buildOpenAPIClient({
+    url: `${app.url}`,
+    path: join(__dirname, 'fixtures', fixtureDirectory, 'openapi.json'),
+    validateResponse: true
+  })
+
+  // invalid response format
+  const invalidResult = await client.getInvalid()
+  same(invalidResult, {
+    statusCode: 500,
+    message: 'Invalid response format'
+  })
+  
+  // no matching route
+  const noMatchingResult = await client.getNoMatching()
+  same(noMatchingResult, {
+    statusCode: 500,
+    message: 'No matching response schema found for status code 404'
+  })
+  
+  // no matching content type
+  const noMatchingContentTypeResult = await client.getNoContentType()
+  same(noMatchingContentTypeResult, {
+    statusCode: 500,
+    message: 'No matching content type schema found for application/json'
+  })
+
+  // another content type
+  const htmlResult = await client.getNoContentType({
+    returnType: 'html'
+  })
+  same(htmlResult, '<h1>Hello World</h1>')
+
+  // valid response
+  const validResult = await client.getValid()
+  same(validResult.message, 'This is a valid response')
+
+  
 })

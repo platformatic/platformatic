@@ -1,0 +1,85 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Platformatic DB",
+    "description": "Exposing a SQL database as REST",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/invalid": {
+      "get": {
+        "operationId": "getInvalid",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "foo": { "type": "string" },
+                    "bar": { "type": "string" }
+                  },
+                  "required": ["foo", "bar"],
+                  "additionalProperties": false
+
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/valid": {
+      "get": {
+        "operationId": "getValid",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/no-matching": {
+      "get": {
+        "operationId": "getNoMatching",
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/no-content-type": {
+      "get": {
+        "operationId": "getNoContentType",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "returnType",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

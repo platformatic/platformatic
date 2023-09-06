@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "abstract-logging": "^2.0.1",
+    "ajv": "^8.12.0",
     "undici": "^5.22.1"
   }
 }
