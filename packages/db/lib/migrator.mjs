@@ -86,9 +86,7 @@ class Migrator {
   }
 
   async applyMigrations (to) {
-    if (this.hasMigrationsFiles() === false) {
-      this.logger.warn(`No migration files in ${this.migrationDir}`)
-    }
+    this.checkIfMigrationFilesExist()
     await this.setupPostgrator()
     await this.postgrator.migrate(to)
   }
@@ -152,8 +150,16 @@ class Migrator {
     return false
   }
 
-  hasMigrationsFiles () {
-    return readdirSync(this.migrationDir).length > 0
+  checkIfMigrationFilesExist () {
+    try {
+      if (readdirSync(this.migrationDir).length === 0) {
+        this.logger.warn(`No migration files in ${this.migrationDir}`)
+      }
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        throw new MigrateError(`Migrations directory ${this.migrationDir} does not exist`)
+      }
+    }
   }
 
   async close () {
