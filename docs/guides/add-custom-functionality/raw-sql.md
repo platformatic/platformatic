@@ -18,8 +18,8 @@ module.exports = async(app, opts) => {
   app.graphql.defineResolvers({
     Query: {
       yearlySales: async(_, { title }) => {
-        const {sql} = app.platformatic;
-        const res = await app.platformatic.db.query(sql(`
+        const { db, sql } = app.platformatic;
+        const res = await db.query(sql(`
           SELECT
             YEAR(created_at) AS year,
             SUM(amount) AS sales
