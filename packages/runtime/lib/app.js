@@ -57,6 +57,10 @@ class PlatformaticApp {
 
     this.#restarting = true
 
+    // The CJS cache should not be cleared from the loader because v20 moved
+    // the loader to a different thread with a different CJS cache.
+    clearCjsCache()
+
     /* c8 ignore next 4 - tests may not pass in a MessagePort. */
     if (this.#loaderPort) {
       this.#loaderPort.postMessage('plt:clear-cache')
@@ -255,6 +259,21 @@ class PlatformaticApp {
     this.#logger.error({ err })
     process.exit(1)
   }
+}
+
+/* c8 ignore next 11 - c8 upgrade marked many existing things as uncovered */
+function clearCjsCache () {
+  // This evicts all of the modules from the require() cache.
+  // Note: This does not clean up children references to the deleted module.
+  // It's likely not a big deal for most cases, but it is a leak. The child
+  // references can be cleaned up, but it is expensive and involves walking
+  // the entire require() cache. See the DEP0144 documentation for how to do
+  // it.
+  Object.keys(require.cache).forEach((key) => {
+    if (!key.match(/node_modules/)) {
+      delete require.cache[key]
+    }
+  })
 }
 
 module.exports = { PlatformaticApp }

@@ -38,6 +38,10 @@ async function startWithConfig (configManager, env = process.env) {
     parseInspectorOptions(configManager)
   }
 
+  if (config.hotReload) {
+    config.loaderFile = kLoaderFile
+  }
+
   const worker = new Worker(kWorkerFile, {
     /* c8 ignore next */
     execArgv: config.hotReload ? kWorkerExecArgv : [],
