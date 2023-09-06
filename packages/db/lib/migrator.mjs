@@ -25,10 +25,6 @@ class Migrator {
 
     await this.checkMigrationsDirectoryExists()
 
-    if (this.hasMigrationsFiles() === false) {
-      this.logger.warn(`No migration files in ${this.migrationDir}`)
-    }
-
     const { db, sql, driver } = await setupDB(this.logger, this.coreConfig)
 
     const database = driver !== 'sqlite3'
@@ -90,6 +86,9 @@ class Migrator {
   }
 
   async applyMigrations (to) {
+    if (this.hasMigrationsFiles() === false) {
+      this.logger.warn(`No migration files in ${this.migrationDir}`)
+    }
     await this.setupPostgrator()
     await this.postgrator.migrate(to)
   }
