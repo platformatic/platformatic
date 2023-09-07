@@ -69,6 +69,7 @@ module.exports = async function (app, opts) {
   teardown(() => app2.kill())
 
   const stream = app2.stdout.pipe(split(JSON.parse))
+  app2.stderr.on('data', (b) => console.log(b.toString()))
 
   // this is unfortuate :(
   const base = 'Server listening at '

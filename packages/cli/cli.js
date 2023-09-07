@@ -4,7 +4,7 @@ import commist from 'commist'
 import minimist from 'minimist'
 import { runDB } from '@platformatic/db/db.mjs'
 import { run as runRuntime, compile } from '@platformatic/runtime/runtime.mjs'
-import { unifiedApi as platformaticStart } from '@platformatic/runtime'
+import { startCommand } from '@platformatic/runtime'
 import { runService } from '@platformatic/service/service.mjs'
 import { runComposer } from '@platformatic/composer/composer.mjs'
 import { login } from '@platformatic/authenticate/authenticate.js'
@@ -43,8 +43,8 @@ const ensureCommand = async ({ output, help }) => {
 program.register('db', async (args) => ensureCommand(await runDB(args)))
 program.register('runtime', async (args) => ensureCommand(await runRuntime(args)))
 program.register('service', async (args) => ensureCommand(await runService(args)))
-program.register('start', platformaticStart.startCommand)
 program.register('composer', async (args) => ensureCommand(await runComposer(args)))
+program.register('start', async (args) => ensureCommand(await startCommand(args)))
 program.register('upgrade', upgrade)
 program.register('client', client)
 program.register('compile', compile)
