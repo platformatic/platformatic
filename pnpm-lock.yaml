@@ -391,6 +391,9 @@ importers:
       tap:
         specifier: ^16.3.6
         version: 16.3.8(typescript@5.2.2)
+      why-is-node-running:
+        specifier: ^2.2.2
+        version: 2.2.2
 
   packages/config:
     dependencies:
