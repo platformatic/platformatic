@@ -94,7 +94,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
       // to
       // /organizations/${request.orgId}/members/${request.memberId}
       const stringLiteralPath = path.replace(/\{/gm, '${request.')
-      
+
       // GET methods need query strings instead of JSON bodies
       if (method === 'get') {
         writer.writeLine(
