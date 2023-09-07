@@ -2,7 +2,7 @@ import { join, basename } from 'path'
 import Postgrator from 'postgrator'
 import { MigrateError } from './errors.mjs'
 import { setupDB } from './utils.js'
-import { stat } from 'fs/promises'
+import { stat, readdir } from 'fs/promises'
 
 class Migrator {
   constructor (migrationConfig, coreConfig, logger) {
@@ -85,6 +85,7 @@ class Migrator {
   }
 
   async applyMigrations (to) {
+    await this.checkIfMigrationFilesExist()
     await this.setupPostgrator()
     await this.postgrator.migrate(to)
   }
@@ -146,6 +147,19 @@ class Migrator {
       }
     }
     return false
+  }
+
+  async checkIfMigrationFilesExist () {
+    try {
+      const files = await readdir(this.migrationDir)
+      if (files.length === 0) {
+        this.logger.warn(`No migration files in ${this.migrationDir}`)
+      }
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        throw new MigrateError(`Migrations directory ${this.migrationDir} does not exist`)
+      }
+    }
   }
 
   async close () {
