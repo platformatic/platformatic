@@ -2,8 +2,7 @@ import { join, basename } from 'path'
 import Postgrator from 'postgrator'
 import { MigrateError } from './errors.mjs'
 import { setupDB } from './utils.js'
-import { stat } from 'fs/promises'
-import { readdir } from 'fs/promises'
+import { stat, readdir } from 'fs/promises'
 
 class Migrator {
   constructor (migrationConfig, coreConfig, logger) {
