@@ -76,7 +76,7 @@ services:
       PLT_SERVER_HOSTNAME: ${PLT_SERVER_HOSTNAME}
       PORT: ${PORT}
       PLT_SERVER_LOGGER_LEVEL: ${PLT_SERVER_LOGGER_LEVEL}
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: postgres://postgres:postgres@postgresql:5432/postgres
 ```
 
 A couple of things to notice:
@@ -84,14 +84,8 @@ A couple of things to notice:
 - The Platformatic app is linked with `postgresql` service. Meaning that inside its container `ping postgresql` will be resolved with the internal ip of the database container.
 - The environment is taken directly from the `.env` file created by the wizard
 
-At this point you can change the `DATABASE_URL` in your `.env` file with this
-```
-DATABASE_URL=postgres://postgres:postgres@postgresql:5432/postgres
-```
+You can now run your containers with
 
-As you can se the hostname is `postgresql`, so this will not work if you start your Platformatic app locally (usually  with `npm start`)
-
-You can now run your containers with 
 ```bash
 $ docker-compose up # (-d if you want to send them in the background)
 ```
