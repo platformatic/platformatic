@@ -216,7 +216,8 @@ function generateConfig (migrations, plugin, types, typescript, version) {
     db: {
       connectionString: '{DATABASE_URL}',
       graphql: true,
-      openapi: true
+      openapi: true,
+      schemalock: true
     },
     watch: {
       ignore: ['*.sqlite', '*.sqlite-journal']

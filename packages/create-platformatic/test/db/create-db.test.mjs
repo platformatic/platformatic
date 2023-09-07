@@ -64,6 +64,7 @@ test('creates project with no typescript', async ({ equal }) => {
   equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   equal(server.port, '{PORT}')
   equal(db.connectionString, '{DATABASE_URL}')
+  equal(db.schemalock, true)
 
   const pathToDbEnvFile = join(tmpDir, '.env')
   dotenv.config({ path: pathToDbEnvFile })

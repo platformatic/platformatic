@@ -7,6 +7,13 @@ const {
   createOpenApiService
 } = require('../helper')
 
+const why = require('why-is-node-running')
+
+setInterval(() => {
+  console.log('--- why is node running?')
+  console.log(why())
+}, 10000).unref()
+
 test('should respond 200 on root endpoint', async (t) => {
   const composer = await createComposer(t)
 
@@ -48,7 +55,7 @@ test('should not expose a default root endpoint if it is composed', async (t) =>
   const api = await createOpenApiService(t)
 
   api.get('/', async (req, reply) => {
-    reply.send({ message: 'Hello World!' })
+    return { message: 'Hello World!' }
   })
 
   await api.listen({ port: 0 })

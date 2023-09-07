@@ -1,7 +1,6 @@
 import { createRequire, isBuiltin } from 'node:module'
 import { dirname, isAbsolute, resolve as pathResolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-const require = createRequire(import.meta.url)
 const isWindows = process.platform === 'win32'
 let timestamp = process.hrtime.bigint()
 let port
@@ -9,21 +8,6 @@ let port
 /* c8 ignore next 3 - c8 upgrade marked many existing things as uncovered */
 function bustEsmCache () {
   timestamp = process.hrtime.bigint()
-}
-
-/* c8 ignore next 11 - c8 upgrade marked many existing things as uncovered */
-function clearCjsCache () {
-  // This evicts all of the modules from the require() cache.
-  // Note: This does not clean up children references to the deleted module.
-  // It's likely not a big deal for most cases, but it is a leak. The child
-  // references can be cleaned up, but it is expensive and involves walking
-  // the entire require() cache. See the DEP0144 documentation for how to do
-  // it.
-  Object.keys(require.cache).forEach((key) => {
-    if (!key.match(/node_modules/)) {
-      delete require.cache[key]
-    }
-  })
 }
 
 function isRelativePath (p) {
@@ -103,9 +87,16 @@ export function globalPreload (context) {
   port.on('message', () => {
     /* c8 ignore next 3 - c8 upgrade marked many existing things as uncovered */
     bustEsmCache()
-    clearCjsCache()
     port.postMessage('plt:cache-cleared')
   })
 
   return 'globalThis.LOADER_PORT = port;'
+}
+
+export async function initialize (data) {
+  port = data.port
+  port.on('message', () => {
+    bustEsmCache()
+    port.postMessage('plt:cache-cleared')
+  })
 }

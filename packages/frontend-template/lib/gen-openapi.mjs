@@ -3,6 +3,7 @@ import jsonpointer from 'jsonpointer'
 import { generateOperationId } from '@platformatic/client'
 import { capitalize, classCase } from './utils.mjs'
 import { STATUS_CODES } from 'node:http'
+import camelcase from 'camelcase'
 
 export function processOpenAPI ({ schema, name, url, language }) {
   return {
@@ -40,6 +41,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
   writer.blankLine()
 
   writer.conditionalWriteLine(language === 'ts', `import type { ${capitalizedName} } from './${name}-types'`)
+  writer.conditionalWriteLine(language === 'ts', `import * as Types from './${name}-types'`)
   writer.blankLineIfLastNot()
 
   writer.writeLine('// The base URL for the API. This can be overridden by calling `setBaseUrl`.')
@@ -50,16 +52,20 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
     )
   } else {
     writer.writeLine(
-      '/**  @type {import(\'./api-types.d.ts\').setBaseUrl} */'
+      '/**  @type {import(\'./api-types.d.ts\').Api[\'setBaseUrl\']} */'
     )
     writer.writeLine(
       'export const setBaseUrl = (newUrl) => { baseUrl = newUrl }'
     )
   }
   writer.blankLine()
-
+  const allOperations = []
   for (const operation of operations) {
     const { operationId, responses } = operation.operation
+    const operationRequestName = `${capitalize(operationId)}Request`
+    const underscoredOperationId = `_${operationId}`
+
+    allOperations.push(operationId)
     const { method, path } = operation
     let fullResponse = false
     // Only dealing with success responses
@@ -69,7 +75,6 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
     if (successResponses.length !== 1) {
       fullResponse = true
     }
-
     if (language === 'ts') {
       // Write
       //
@@ -77,19 +82,10 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
       // export const getMovies:Api['getMovies'] = async (request) => {
       // ```
       writer.write(
-          `export const ${operationId}: ${capitalizedName}['${operationId}'] = async (request) =>`
+          `const ${underscoredOperationId} = async (url: string, request: Types.${operationRequestName}) =>`
       )
     } else {
-      // The JS version uses the JSDoc type format to offer IntelliSense autocompletion to the developer.
-      //
-      // ```js
-      // /** @type {import('./api-types.d.ts').Api['getMovies']} */
-      // export const getMovies = async (request) => {
-      // ```
-      //
-      writer.writeLine(
-        `/**  @type {import('./api-types.d.ts').Api['${operationId}']} */`
-      ).write(`export const ${operationId} = async (request) =>`)
+      writer.write(`async function ${underscoredOperationId} (url, request)`)
     }
 
     writer.block(() => {
@@ -102,11 +98,11 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
       // GET methods need query strings instead of JSON bodies
       if (method === 'get') {
         writer.writeLine(
-          `const response = await fetch(\`\${baseUrl}${stringLiteralPath}?\${new URLSearchParams(Object.entries(request || {})).toString()}\`)`
+          `const response = await fetch(\`\${url}${stringLiteralPath}?\${new URLSearchParams(Object.entries(request || {})).toString()}\`)`
         )
       } else {
         writer
-          .write(`const response = await fetch(\`\${baseUrl}${stringLiteralPath}\`, `)
+          .write(`const response = await fetch(\`\${url}${stringLiteralPath}\`, `)
           .inlineBlock(() => {
             writer.write('method:').quote().write(method).quote().write(',')
             writer.writeLine('body: JSON.stringify(request),')
@@ -157,13 +153,50 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, url, languag
       }
     })
     writer.blankLine()
+    if (language === 'ts') {
+      writer.write(`export const ${operationId}: ${capitalizedName}['${operationId}'] = async (request: Types.${operationRequestName}) =>`).block(() => {
+        writer.write(`return await ${underscoredOperationId}(baseUrl, request)`)
+      })
+    } else {
+      // The JS version uses the JSDoc type format to offer IntelliSense autocompletion to the developer.
+      //
+      // ```js
+      // /** @type {import('./api-types.d.ts').Api['getMovies']} */
+      // export const getMovies = async (request) => {
+      // ```
+      //
+      writer
+        .writeLine(
+          `/**  @type {import('./api-types.d.ts').Api['${operationId}']} */`
+        )
+        .write(`export const ${operationId} = async (request) =>`).block(() => {
+          writer.write(`return await ${underscoredOperationId}(baseUrl, request)`)
+        })
+    }
   }
+  // create factory
+  const factoryBuildFunction = language === 'ts'
+    ? 'export default function build (url: string)'
+    : 'export default function build (url)'
+  writer.write(factoryBuildFunction).block(() => {
+    writer.write('return').block(() => {
+      for (const [idx, op] of allOperations.entries()) {
+        const underscoredOperation = `_${op}`
+        const methodString = `${op}: ${underscoredOperation}.bind(url, ...arguments)`
+        if (idx === allOperations.length - 1) {
+          writer.writeLine(`${methodString}`)
+        } else {
+          writer.writeLine(`${methodString},`)
+        }
+      }
+    })
+  })
 
   return writer.toString()
 }
 
 function generateTypesFromOpenAPI ({ schema, name }) {
-  const capitalizedName = capitalize(name)
+  const camelCaseName = capitalize(camelcase(name))
   const { paths } = schema
   const generatedOperationIds = []
   const operations = Object.entries(paths).flatMap(([path, methods]) => {
@@ -199,7 +232,7 @@ function generateTypesFromOpenAPI ({ schema, name }) {
   })
   interfaces.blankLine()
 
-  writer.write(`export interface ${capitalizedName}`).block(() => {
+  writer.write(`export interface ${camelCaseName}`).block(() => {
     writer.writeLine('setBaseUrl(newUrl: string) : void;')
     for (const operation of operations) {
       let fullResponse = false
@@ -207,7 +240,7 @@ function generateTypesFromOpenAPI ({ schema, name }) {
       const { parameters, responses, requestBody } = operation.operation
       const operationRequestName = `${capitalize(operationId)}Request`
       const operationResponseName = `${capitalize(operationId)}Response`
-      interfaces.write(`interface ${operationRequestName}`).block(() => {
+      interfaces.write(`export interface ${operationRequestName}`).block(() => {
         const addedProps = new Set()
         if (parameters) {
           for (const parameter of parameters) {
@@ -255,11 +288,13 @@ function generateTypesFromOpenAPI ({ schema, name }) {
 
       const responseType = responseTypes.join(' | ')
       writer.writeLine(`${operationId}(req: ${operationRequestName}): Promise<${responseType}>;`)
+      // writer.writeLine(`${operationId}(url: string, req: ${operationRequestName}): Promise<${responseType}>;`)
     }
   })
 
   writer.blankLine()
-
+  writer.writeLine('type PlatformaticFrontendClient = Omit<Api, \'setBaseUrl\'>')
+  writer.writeLine('export default function build(url: string): PlatformaticFrontendClient')
   return interfaces.toString() + writer.toString()
 }
 

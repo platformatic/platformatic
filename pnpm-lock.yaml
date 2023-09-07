@@ -391,6 +391,9 @@ importers:
       tap:
         specifier: ^16.3.6
         version: 16.3.8(typescript@5.2.2)
+      why-is-node-running:
+        specifier: ^2.2.2
+        version: 2.2.2
 
   packages/config:
     dependencies:
@@ -3693,6 +3696,7 @@ packages:
 
   /@swagger-api/apidom-ns-json-schema-draft-4@0.76.0:
     resolution: {integrity: sha512-m7HZxkNZDEpUKIL+3iKzqhhxv/7MuwAarYjZZ9KaHd+642DNAqAr8SmUgurLS0R7iR8tuOrFImJzFLqqiCJ1OQ==}
+    requiresBuild: true
     dependencies:
       '@babel/runtime-corejs3': 7.22.11
       '@swagger-api/apidom-ast': 0.76.0

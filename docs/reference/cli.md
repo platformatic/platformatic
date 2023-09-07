@@ -276,6 +276,7 @@ Options:
 * `--full-response` - Client will return full response object rather than just the body.
 * `--full-request` - Client will be called with all parameters wrapped in `body`, `headers` and `query` properties.
 * `--full` - Enables both `--full-request` and `--full-response` overriding them.
+* `--optional-headers <headers>` - Comma separated string of headers that will be marked as optional in the type file
 
 
 

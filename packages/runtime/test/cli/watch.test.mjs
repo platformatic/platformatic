@@ -132,7 +132,7 @@ test('should not hot reload files with `--hot-reload false', async (t) => {
   assert.strictEqual(version, 'v1')
 })
 
-test('watches CommonJS files with hotreload', { timeout: 30000, skip: process.env.CI }, async (t) => {
+test('watches CommonJS files with hotreload', { timeout: 30000 }, async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
@@ -171,7 +171,7 @@ test('watches CommonJS files with hotreload', { timeout: 30000, skip: process.en
   assert.ok(restartedThirdTime)
 })
 
-test('watches CommonJS files with hotreload on a single service', { timeout: 30000, skip: process.env.CI }, async (t) => {
+test('watches CommonJS files with hotreload on a single service', { timeout: 30000 }, async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
@@ -207,7 +207,7 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 300
   assert.ok(restartedThirdTime)
 })
 
-test('do not hot reload dependencies', { timeout: 30000, skip: process.env.CI }, async (t) => {
+test('do not hot reload dependencies', { timeout: 30000 }, async (t) => {
   process.env.PORT = 0
   const config = join(fixturesDir, 'do-not-reload-dependencies', 'platformatic.service.json')
   const { child, url } = await start('-c', config)
@@ -247,7 +247,7 @@ test('do not hot reload dependencies', { timeout: 30000, skip: process.env.CI },
   assert.strictEqual((await res4.body.json()).hello, plugin2)
 })
 
-test('watches CommonJS files with hotreload on a single service', { timeout: 30000, skip: process.env.CI }, async (t) => {
+test('watches CommonJS files with hotreload on a single service', { timeout: 30000 }, async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
