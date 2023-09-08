@@ -8,7 +8,7 @@ const fakeLogger = {
   error: () => {}
 }
 
-test('list', async ({ pass, teardown, same, equal }) => {
+test('list', async ({ pass, teardown, same, rejects }) => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
@@ -59,6 +59,8 @@ test('list', async ({ pass, teardown, same, equal }) => {
   await entity.insert({
     inputs: posts
   })
+
+  rejects(entity.find.bind(entity, { where: { invalidField: { eq: 'Dog' } } }), 'Unknown field invalidField')
 
   same(await entity.find({ where: { title: { eq: 'Dog' } }, fields: ['id', 'title', 'longText'] }), [{
     id: '1',

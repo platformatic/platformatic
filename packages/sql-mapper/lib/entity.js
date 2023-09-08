@@ -223,6 +223,9 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
       }
       const value = where[key]
       const field = inputToFieldMap[key]
+      if (!field) {
+        throw new Error(`Unknown field ${key}`)
+      }
       for (const key of Object.keys(value)) {
         const operator = whereMap[key]
         /* istanbul ignore next */
@@ -231,11 +234,6 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
           throw new Error(`Unsupported where clause ${JSON.stringify(where[key])}`)
         }
         const fieldWrap = fields[field]
-        
-        if (!fieldWrap) {
-          throw new Error(`Unknown field ${field}`)
-        }
-
         /* istanbul ignore next */
         if (fieldWrap.isArray) {
           if (operator === 'ANY') {
