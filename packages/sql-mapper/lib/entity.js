@@ -231,6 +231,10 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
           throw new Error(`Unsupported where clause ${JSON.stringify(where[key])}`)
         }
         const fieldWrap = fields[field]
+        
+        if(!fieldWrap) {
+          throw new Error(`Unknown field ${field}`)
+        }
 
         /* istanbul ignore next */
         if (fieldWrap.isArray) {
