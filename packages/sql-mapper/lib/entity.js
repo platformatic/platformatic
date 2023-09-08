@@ -232,7 +232,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
         }
         const fieldWrap = fields[field]
         
-        if(!fieldWrap) {
+        if (!fieldWrap) {
           throw new Error(`Unknown field ${field}`)
         }
 
