@@ -701,14 +701,14 @@ test('validate response', async ({ teardown, same, notOk }) => {
     statusCode: 500,
     message: 'Invalid response format'
   })
-  
+
   // no matching route
   const noMatchingResult = await client.getNoMatching()
   same(noMatchingResult, {
     statusCode: 500,
     message: 'No matching response schema found for status code 404'
   })
-  
+
   // no matching content type
   const noMatchingContentTypeResult = await client.getNoContentType()
   same(noMatchingContentTypeResult, {
@@ -726,5 +726,10 @@ test('validate response', async ({ teardown, same, notOk }) => {
   const validResult = await client.getValid()
   same(validResult.message, 'This is a valid response')
 
-  
+  // with refs
+  const refsResult = await client.getWithRefs()
+  same(refsResult, {
+    id: 123,
+    title: 'Harry Potter'
+  })
 })

@@ -24,4 +24,12 @@ module.exports = async function (fastify, opts) {
     }
     return { message: 'This is a JSON' }
   })
+
+  fastify.get('/with-refs', async (req, res) => {
+    const movie = {
+      id: 123,
+      title: 'Harry Potter'
+    }
+    return movie
+  })
 }

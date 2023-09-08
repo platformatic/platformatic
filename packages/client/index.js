@@ -8,6 +8,8 @@ const kGetHeaders = Symbol('getHeaders')
 const kTelemetryContext = Symbol('telemetry-context')
 const abstractLogging = require('abstract-logging')
 const Ajv = require('ajv')
+const jsonpointer = require('jsonpointer')
+
 function generateOperationId (path, method, methodMeta, all) {
   let operationId = methodMeta.operationId
   if (!operationId) {
@@ -70,7 +72,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
         // - there is no responses with 2XX code
         fullResponse = true
       }
-      client[operationId] = buildCallFunction(baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse)
+      client[operationId] = buildCallFunction(spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse)
     }
   }
 
@@ -93,7 +95,8 @@ function hasDuplicatedParameters (methodMeta) {
   })
   return s.size !== methodMeta.parameters.length
 }
-function buildCallFunction (baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse) {
+function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse) {
+  const ajv = new Ajv()
   const url = new URL(baseUrl)
   method = method.toUpperCase()
   path = join(url.pathname, path)
@@ -200,17 +203,17 @@ function buildCallFunction (baseUrl, path, method, methodMeta, throwOnError, ope
         try {
           // validate response first
           const matchingResponse = responses[res.statusCode]
-          
+
           if (matchingResponse === undefined) {
             throw new Error(`No matching response schema found for status code ${res.statusCode}`)
           }
           const matchingContentSchema = matchingResponse.content[contentType]
-          
+
           if (matchingContentSchema === undefined) {
             throw new Error(`No matching content type schema found for ${contentType}`)
           }
-          const bodyIsValid = checkResponseAgainstSchema(responseBody, matchingContentSchema.schema)
-          
+          const bodyIsValid = checkResponseAgainstSchema(responseBody, matchingContentSchema.schema, spec, ajv)
+
           if (!bodyIsValid) {
             throw new Error('Invalid response format')
           }
@@ -227,19 +230,21 @@ function buildCallFunction (baseUrl, path, method, methodMeta, throwOnError, ope
     }
   }
 }
-function createErrorResponse(message) {
+function createErrorResponse (message) {
   return {
     statusCode: 500,
     message
   }
 }
-function sanitizeContentType(contentType) {
+function sanitizeContentType (contentType) {
   if (!contentType) { return false }
   const split = contentType.split(';')
   return split[0]
 }
-function checkResponseAgainstSchema(body, schema) {
-  const ajv = new Ajv()
+function checkResponseAgainstSchema (body, schema, spec, ajv) {
+  if (schema.$ref) {
+    schema = jsonpointer.get(spec, schema.$ref.replace('#', ''))
+  }
   const validate = ajv.compile(schema)
   const valid = validate(body)
   return valid

@@ -5,6 +5,26 @@
     "description": "Exposing a SQL database as REST",
     "version": "1.0.0"
   },
+  "components": {
+    "schemas": {
+      "Movie": {
+        "title": "Movie",
+        "description": "A Movie",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      }
+    }
+  },
   "paths": {
     "/invalid": {
       "get": {
@@ -46,6 +66,23 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/with-refs": {
+      "get": {
+        "operationId": "getWithRefs",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Movie"
+                }
+              }
+            },
+            "links": {}
           }
         }
       }

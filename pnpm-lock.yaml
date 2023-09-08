@@ -154,6 +154,9 @@ importers:
       ajv:
         specifier: ^8.12.0
         version: 8.12.0
+      jsonpointer:
+        specifier: ^5.0.1
+        version: 5.0.1
       undici:
         specifier: ^5.22.1
         version: 5.24.0
