@@ -220,24 +220,39 @@ test('isCurrentVersionSupported', async ({ equal }) => {
     equal(supported, true)
   }
 
-  // node version 19 test, to check greater and lesser major version
-  const { major: major19, minor: minor19, patch: patch19 } = semver.minVersion(minimumSupportedNodeVersions[1])
+  // node version 20 test, to check greater and lesser major version
   {
     // v18.0.0 is not supported
-    const nodeVersion = `${major19 - 1}.${minor19}.${patch19}`
+    const nodeVersion = '18.0.0'
     const supported = isCurrentVersionSupported(nodeVersion)
     equal(supported, false)
   }
   {
-    // v20 is not supported
-    const nodeVersion = `${major19 + 1}.${minor19}.${patch19}`
+    // v18.8.0 is supported
+    const nodeVersion = '18.8.0'
     const supported = isCurrentVersionSupported(nodeVersion)
-    equal(supported, false)
-  }
-  {
-    // v19 supported
-    const supported = isCurrentVersionSupported(`${major19}.${minor19 + 1}.${patch19}`)
     equal(supported, true)
+  }
+  {
+    // v20.5.1 is not supported
+    const supported = isCurrentVersionSupported('20.5.1')
+    equal(supported, false)
+  }
+  {
+    // v20.6.0 is supported
+    const nodeVersion = '20.6.0'
+    const supported = isCurrentVersionSupported(nodeVersion)
+    equal(supported, true)
+  }
+  {
+    // v19.0.0 is not supported
+    const supported = isCurrentVersionSupported('19.0.0')
+    equal(supported, false)
+  }
+  {
+    // v19.9.0 is not supported
+    const supported = isCurrentVersionSupported('19.9.0')
+    equal(supported, false)
   }
   for (const version of minimumSupportedNodeVersions) {
     const supported = isCurrentVersionSupported(version)
