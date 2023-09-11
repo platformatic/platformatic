@@ -277,19 +277,38 @@ export interface EntityHooks<EntityFields = any> {
   count?: EntityHook<Count>,
 }
 
-export interface SQLMapperPluginOptions {
+interface BasePoolOptions {
   /**
    * Database connection string.
    */
   connectionString: string,
+
   /**
-   * Set to true to enable auto timestamping for updated_at and inserted_at fields.
+   * The maximum number of connections to create at once. Default is 10.
+   * @default 10
    */
-  autoTimestamp?: boolean,
+  poolSize?: number
+}
+
+export interface CreateConnectionPoolOptions extends BasePoolOptions {
+  /**
+   * A logger object (like [Pino](https://getpino.io))
+   */
+  log: ILogger
+}
+
+export function createConnectionPool(options: CreateConnectionPoolOptions) : Promise<{ db: Database, sql: SQL }>
+
+export interface SQLMapperPluginOptions extends BasePoolOptions {
   /**
    * A logger object (like [Pino](https://getpino.io))
    */
   log?: ILogger,
+
+  /**
+   * Set to true to enable auto timestamping for updated_at and inserted_at fields.
+   */
+  autoTimestamp?: boolean,
   /**
    * Database table to ignore when mapping to entities.
    */

@@ -8,26 +8,11 @@ const fs = require('fs/promises')
 
 async function setupDB (log, config) {
   const { db, sql, entities, dbschema } = await connect({ ...config, log })
-  let driver = ''
 
-  // TODO Add tests for multiple databases
-  /* c8 ignore next 11 */
-  if (db.isPg) {
-    driver = 'pg'
-  } else if (db.isMySql) {
-    driver = 'mysql'
-  } else if (db.isMariaDB) {
-    driver = 'mysql'
-  } else if (db.isSQLite) {
-    driver = 'sqlite3'
-  } else {
-    throw new Error('unknown database')
-  }
   return {
     db,
     sql,
     entities,
-    driver,
     dbschema
   }
 }

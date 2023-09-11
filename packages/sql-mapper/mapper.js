@@ -47,25 +47,17 @@ const defaultAutoTimestampFields = {
   updatedAt: 'updated_at'
 }
 
-async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, ignore = {}, autoTimestamp = true, hooks = {}, schema, limit = {}, dbschema }) {
-  if (typeof autoTimestamp === 'boolean' && autoTimestamp === true) {
-    autoTimestamp = defaultAutoTimestampFields
-  }
-  // TODO validate config using the schema
-  if (!connectionString) {
-    throw new Error('connectionString is required')
-  }
-
-  let queries
-  let sql
+async function createConnectionPool ({ log, connectionString, poolSize }) {
   let db
+  let sql
+
+  poolSize = poolSize || 10
 
   /* istanbul ignore next */
   if (connectionString.indexOf('postgres') === 0) {
     const createConnectionPoolPg = require('@databases/pg')
     db = await buildConnection(log, createConnectionPoolPg, connectionString, poolSize)
     sql = createConnectionPoolPg.sql
-    queries = queriesFactory.pg
     db.isPg = true
   } else if (connectionString.indexOf('mysql') === 0) {
     const createConnectionPoolMysql = require('@databases/mysql')
@@ -74,11 +66,8 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, 
     const version = (await db.query(sql`SELECT VERSION()`))[0]['VERSION()']
     db.version = version
     db.isMariaDB = version.indexOf('maria') !== -1
-    if (db.isMariaDB) {
-      queries = queriesFactory.mariadb
-    } else {
+    if (!db.isMariaDB) {
       db.isMySql = true
-      queries = queriesFactory.mysql
     }
   } else if (connectionString.indexOf('sqlite') === 0) {
     const sqlite = require('@matteo.collina/sqlite-pool')
@@ -98,10 +87,35 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, 
       }
     })
     sql = sqlite.sql
-    queries = queriesFactory.sqlite
     db.isSQLite = true
   } else {
     throw new Error('You must specify either postgres, mysql or sqlite as protocols')
+  }
+
+  return { db, sql }
+}
+
+async function connect ({ connectionString, log, onDatabaseLoad, poolSize, ignore = {}, autoTimestamp = true, hooks = {}, schema, limit = {}, dbschema }) {
+  if (typeof autoTimestamp === 'boolean' && autoTimestamp === true) {
+    autoTimestamp = defaultAutoTimestampFields
+  }
+  // TODO validate config using the schema
+  if (!connectionString) {
+    throw new Error('connectionString is required')
+  }
+
+  let queries
+  const { db, sql } = await createConnectionPool({ log, connectionString, poolSize })
+
+  /* istanbul ignore next */
+  if (db.isPg) {
+    queries = queriesFactory.pg
+  } else if (db.isMySql) {
+    queries = queriesFactory.mysql
+  } else if (db.isMariaDB) {
+    queries = queriesFactory.mariadb
+  } else if (db.isSQLite) {
+    queries = queriesFactory.sqlite
   }
 
   // Specify an empty array must be the same of specifying no schema
@@ -222,5 +236,6 @@ async function sqlMapper (app, opts) {
 
 module.exports = fp(sqlMapper)
 module.exports.connect = connect
+module.exports.createConnectionPool = createConnectionPool
 module.exports.plugin = module.exports
 module.exports.utils = require('./lib/utils')
