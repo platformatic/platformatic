@@ -3,6 +3,7 @@
 const { test } = require('tap')
 const { connect } = require('..')
 const { clear, connInfo, isMysql, isSQLite } = require('./helper')
+
 const fakeLogger = {
   trace: () => {},
   error: () => {}
