@@ -33,7 +33,6 @@
     "help-me": "^4.2.0",
     "jsonpointer": "^5.0.1",
     "minimist": "^1.2.8",
-    "tap": "^16.3.6",
     "undici": "^5.22.0"
   },
   "devDependencies": {
@@ -42,6 +41,7 @@
     "@types/react-dom": "^18.2.1",
     "@vitejs/plugin-react": "^3.1.0",
     "react": "^18.2.0",
+    "tap": "^16.3.6",
     "react-dom": "^18.2.0",
     "snazzy": "^9.0.0",
     "standard": "^17.0.0",
