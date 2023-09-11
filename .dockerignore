@@ -106,6 +106,10 @@ dist
 packages/db/fixtures/sqlite/db
 packages/db/test/fixtures/sqlite/db
 
+playwright-report
+.DS_Store
+.swp
+
 # Ignore useless stuff
 docs
 signatures
