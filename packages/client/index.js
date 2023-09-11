@@ -8,8 +8,7 @@ const kGetHeaders = Symbol('getHeaders')
 const kTelemetryContext = Symbol('telemetry-context')
 const abstractLogging = require('abstract-logging')
 const Ajv = require('ajv')
-const jsonpointer = require('jsonpointer')
-
+const SwaggerClient = require('swagger-client')
 function generateOperationId (path, method, methodMeta, all) {
   let operationId = methodMeta.operationId
   if (!operationId) {
@@ -96,7 +95,11 @@ function hasDuplicatedParameters (methodMeta) {
   return s.size !== methodMeta.parameters.length
 }
 function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse) {
-  const ajv = new Ajv()
+  // Resolve #ref(s) in schema, returns object { spec: THE_RESOLVED_SCHEMA }
+  const resolvedSchema = SwaggerClient.resolve({ spec })
+  const ajv = new Ajv({
+    strict: false // to avoid error on 'unknown keyword: $$ref' added by SwaggerClient
+  })
   const url = new URL(baseUrl)
   method = method.toUpperCase()
   path = join(url.pathname, path)
@@ -212,7 +215,7 @@ function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnErro
           if (matchingContentSchema === undefined) {
             throw new Error(`No matching content type schema found for ${contentType}`)
           }
-          const bodyIsValid = checkResponseAgainstSchema(responseBody, matchingContentSchema.schema, spec, ajv)
+          const bodyIsValid = checkResponseAgainstSchema(responseBody, matchingContentSchema.schema, resolvedSchema.spec, ajv)
 
           if (!bodyIsValid) {
             throw new Error('Invalid response format')
@@ -242,9 +245,6 @@ function sanitizeContentType (contentType) {
   return split[0]
 }
 function checkResponseAgainstSchema (body, schema, spec, ajv) {
-  if (schema.$ref) {
-    schema = jsonpointer.get(spec, schema.$ref.replace('#', ''))
-  }
   const validate = ajv.compile(schema)
   const valid = validate(body)
   return valid

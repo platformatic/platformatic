@@ -33,6 +33,7 @@
     "abstract-logging": "^2.0.1",
     "ajv": "^8.12.0",
     "jsonpointer": "^5.0.1",
+    "swagger-client": "^3.20.2",
     "undici": "^5.22.1"
   }
 }
