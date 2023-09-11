@@ -4,6 +4,7 @@ const { test } = require('tap')
 const { connect } = require('..')
 const { clear, connInfo, isSQLite, isMysql } = require('./helper')
 const { setTimeout } = require('timers/promises')
+
 const fakeLogger = {
   trace: () => {},
   error: () => {}
