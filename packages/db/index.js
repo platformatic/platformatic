@@ -2,7 +2,6 @@
 
 const core = require('@platformatic/db-core')
 const auth = require('@platformatic/db-authorization')
-const dashboard = require('@platformatic/db-dashboard')
 const { platformaticService, buildServer } = require('@platformatic/service')
 const { isKeyEnabled } = require('@platformatic/utils')
 const { schema } = require('./lib/schema')
@@ -50,13 +49,6 @@ async function platformaticDB (app, opts) {
       const { execute } = await import('./lib/gen-types.mjs')
       await execute({ logger: app.log, config })
     }
-  }
-
-  if (isKeyEnabled('dashboard', config)) {
-    app.register(require('./_admin'), { ...config, configManager, prefix: '_admin' })
-    await app.register(dashboard, {
-      path: config.dashboard.path
-    })
   }
 
   async function toLoad (app) {

@@ -201,17 +201,9 @@ export interface PlatformaticDB {
         };
     [k: string]: unknown;
   };
-  dashboard?:
-    | boolean
-    | {
-        /**
-         * The path where the dashboard should be served.
-         */
-        path?: string;
-      };
   authorization?: {
     /**
-     * The password should be used to login dashboard and to access routes under /_admin prefix and for admin access to REST and GraphQL endpoints with X-PLATFORMATIC-ADMIN-SECRET header.
+     * The password should be used to access routes under /_admin prefix and for admin access to REST and GraphQL endpoints with X-PLATFORMATIC-ADMIN-SECRET header.
      */
     adminSecret?: string;
     /**

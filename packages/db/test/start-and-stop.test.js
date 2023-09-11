@@ -7,38 +7,12 @@ const { request } = require('undici')
 const { rm } = require('fs/promises')
 const path = require('path')
 
-test('starts the dashboard', async ({ teardown, equal, pass, same }) => {
-  const app = await buildServer(buildConfig({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0
-    },
-    db: {
-      ...connInfo
-    },
-    dashboard: {
-      path: '/dashboard'
-    }
-  }))
-
-  teardown(async () => {
-    await app.close()
-  })
-  await app.start()
-
-  {
-    const res = await (request(`${app.url}/dashboard`))
-    equal(res.statusCode, 200, 'dashboard status code')
-  }
-})
-
 test('should not restart if not authorized', async ({ teardown, equal, same }) => {
   const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
       port: 0
     },
-    dashboard: true,
     db: {
       ...connInfo
     }
@@ -67,7 +41,6 @@ test('restarts the server', async ({ teardown, equal, pass, same, match }) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    dashboard: true,
     db: {
       ...connInfo,
       async onDatabaseLoad (db, sql) {
@@ -331,9 +304,6 @@ test('ignore and sqlite3', async ({ teardown, equal, pass, same }) => {
     db: {
       connectionString: `sqlite://${dbLocation}`
     },
-    dashboard: {
-      path: '/dashboard'
-    },
     migrations: {
       dir: migrations
     }
@@ -345,8 +315,8 @@ test('ignore and sqlite3', async ({ teardown, equal, pass, same }) => {
   await app.start()
 
   {
-    const res = await (request(`${app.url}/dashboard`))
-    equal(res.statusCode, 200, 'dashboard status code')
+    const res = await (request(`${app.url}/`))
+    equal(res.statusCode, 200, 'root status code')
     res.body.resume()
   }
 })

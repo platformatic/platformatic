@@ -6,7 +6,7 @@ const AuthSchema = {
   properties: {
     adminSecret: {
       type: 'string',
-      description: 'The password should be used to login dashboard and to access routes under /_admin prefix.'
+      description: 'The password should be used to access routes under /_admin prefix.'
     }
   },
   additionalProperties: true // TODO remove and add proper validation for the rules

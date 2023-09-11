@@ -106,12 +106,6 @@ dist
 packages/db/fixtures/sqlite/db
 packages/db/test/fixtures/sqlite/db
 
-# packages/dashboard specific rules
-packages/db-dashboard/build/
-playwright-report
-.DS_Store
-.swp
-
 # Ignore useless stuff
 docs
 signatures
