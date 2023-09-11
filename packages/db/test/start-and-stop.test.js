@@ -7,7 +7,8 @@ const { request } = require('undici')
 const { rm } = require('fs/promises')
 const path = require('path')
 
-test('should not restart if not authorized', async ({ teardown, equal, same }) => {
+// Skipped because depreacted db-dashboard
+test('should not restart if not authorized', { skip: true }, async ({ teardown, equal, same }) => {
   const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
@@ -35,7 +36,8 @@ test('should not restart if not authorized', async ({ teardown, equal, same }) =
   })
 })
 
-test('restarts the server', async ({ teardown, equal, pass, same, match }) => {
+// Skipped because deprecated db-dashboard
+test('restarts the server', { skip: true }, async ({ teardown, equal, pass, same, match }) => {
   const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
