@@ -1,4 +1,4 @@
-# Fastify Plugin
+# sql-mapper Fastify Plugin
 
 The `@platformatic/sql-mapper` package exports a [Fastify](https://fastify.io) plugin that can be used out-of the box in a server application.
 

@@ -10,9 +10,16 @@ import {
   Database,
   SQLMapperPluginInterface,
   EntityHooks,
+  createConnectionPool
 } from '../../mapper'
 
-const pluginOptions: SQLMapperPluginInterface = await connect({ connectionString: '' })
+const log = {
+  trace() {},
+  error() {},
+  warn() {}
+}
+
+const pluginOptions: SQLMapperPluginInterface = await connect({ connectionString: '', log })
 expectType<Database>(pluginOptions.db)
 expectType<SQL>(pluginOptions.sql)
 expectType<{ [entityName: string]: Entity }>(pluginOptions.entities)
@@ -49,17 +56,18 @@ const entityHooks: EntityHooks = {
   async count(originalCount: typeof entity.count, ...options: Parameters<typeof entity.count>): ReturnType<typeof entity.count> { return 0 },
 }
 expectType<EntityHooks>(entityHooks)
-expectType<SQLMapperPluginInterface>(await connect({ connectionString: '' }))
-expectType<SQLMapperPluginInterface>(await connect({ connectionString: '', autoTimestamp: true }))
-expectType<SQLMapperPluginInterface>(await connect({ connectionString: '', hooks: {} }))
+expectType<SQLMapperPluginInterface>(await connect({ connectionString: '', log }))
+expectType<SQLMapperPluginInterface>(await connect({ connectionString: '', autoTimestamp: true, log }))
+expectType<SQLMapperPluginInterface>(await connect({ connectionString: '', hooks: {}, log }))
 expectType<SQLMapperPluginInterface>(await connect({
   connectionString: '', hooks: {
     Page: entityHooks
-  }
+  },
+  log
 }))
-expectType<SQLMapperPluginInterface>(await connect({ connectionString: '', ignore: {} }))
+expectType<SQLMapperPluginInterface>(await connect({ connectionString: '', ignore: {}, log }))
 expectType<SQLMapperPluginInterface>(await connect({
-  connectionString: '', onDatabaseLoad(db: Database, sql: SQL) {
+  connectionString: '', log, onDatabaseLoad(db: Database, sql: SQL) {
     expectType<(query: SQLQuery) => Promise<any[]>>(db.query)
     expectType<() => Promise<void>>(db.dispose)
     expectType<boolean | undefined>(pluginOptions.db.isMySql)
@@ -95,3 +103,5 @@ instance.register((instance) => {
 })
 
 expectType<(str: string) => string>(utils.toSingular)
+
+expectType<Promise<{ db: Database, sql: SQL }>>(createConnectionPool({ connectionString: '', log }))

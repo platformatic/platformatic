@@ -1,7 +1,7 @@
 import { join, basename } from 'path'
 import Postgrator from 'postgrator'
 import { MigrateError } from './errors.mjs'
-import { setupDB } from './utils.js'
+import { createConnectionPool } from '@platformatic/sql-mapper'
 import { stat, readdir } from 'fs/promises'
 
 class Migrator {
@@ -24,7 +24,25 @@ class Migrator {
 
     await this.checkMigrationsDirectoryExists()
 
-    const { db, sql, driver } = await setupDB(this.logger, this.coreConfig)
+    const { db, sql } = await createConnectionPool({
+      ...this.coreConfig,
+      log: this.logger
+    })
+
+    let driver
+
+    /* c8 ignore next 11 */
+    if (db.isPg) {
+      driver = 'pg'
+    } else if (db.isMySql) {
+      driver = 'mysql'
+    } else if (db.isMariaDB) {
+      driver = 'mysql'
+    } else if (db.isSQLite) {
+      driver = 'sqlite3'
+    } else {
+      throw new Error('unknown database')
+    }
 
     const database = driver !== 'sqlite3'
       ? new URL(this.coreConfig.connectionString).pathname.replace(/^\//, '')
