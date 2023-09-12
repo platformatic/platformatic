@@ -9,6 +9,7 @@ const kTelemetryContext = Symbol('telemetry-context')
 const abstractLogging = require('abstract-logging')
 const Ajv = require('ajv')
 const SwaggerClient = require('swagger-client')
+const RefResolver = require('./ref-resolver')
 function generateOperationId (path, method, methodMeta, all) {
   let operationId = methodMeta.operationId
   if (!operationId) {
@@ -96,6 +97,7 @@ function hasDuplicatedParameters (methodMeta) {
 }
 function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse) {
   // Resolve #ref(s) in schema, returns object { spec: THE_RESOLVED_SCHEMA }
+  
   const resolvedSchema = SwaggerClient.resolve({ spec })
   const ajv = new Ajv({
     strict: false // to avoid error on 'unknown keyword: $$ref' added by SwaggerClient
