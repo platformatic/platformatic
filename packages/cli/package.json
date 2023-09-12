@@ -53,7 +53,6 @@
     "@platformatic/metaconfig": "workspace:*",
     "@platformatic/runtime": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "@platformatic/start": "workspace:*",
     "colorette": "^2.0.20",
     "commist": "^3.2.0",
     "create-platformatic": "workspace:*",

@@ -4,10 +4,8 @@ const { once } = require('node:events')
 const { dirname } = require('node:path')
 const { FileWatcher } = require('@platformatic/utils')
 const debounce = require('debounce')
-const {
-  buildServer,
-  loadConfig
-} = require('./unified-api')
+const { buildServer } = require('./build-server')
+const { loadConfig } = require('./load-config')
 
 class PlatformaticApp {
   #hotReload

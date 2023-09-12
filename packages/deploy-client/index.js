@@ -9,7 +9,7 @@ const tar = require('tar')
 const { request } = require('undici')
 
 const ConfigManager = require('@platformatic/config')
-const { compile, unifiedApi: { loadConfig } } = require('@platformatic/runtime')
+const { compile, loadConfig } = require('@platformatic/runtime')
 
 const makePrewarmRequest = require('./lib/prewarm.js')
 
