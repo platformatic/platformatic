@@ -1,6 +1,6 @@
 'use strict'
 
-const { connInfo, clear, createBasicPages, createAndPopulateUsersTable, dropUsersTable, buildConfig } = require('./helper')
+const { connInfo, clear, createBasicPages, buildConfig } = require('./helper')
 const { test } = require('tap')
 const { buildServer } = require('..')
 const { request } = require('undici')
