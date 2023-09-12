@@ -6,7 +6,15 @@ export interface SQLOpenApiPluginOptions extends Partial<OpenAPIV3.Document> {
   /**
    * Set true to expose documentation route.
    */
-  exposeRoute?: boolean
+  exposeRoute?: boolean,
+  /**
+   * Entity/field names to ignore when mapping to routes.
+   */
+  ignore?: {
+    [entityName: string]: {
+      [fieldName: string]: boolean
+    } | boolean
+  },
 }
 
 declare const plugin: FastifyPluginAsync<SQLOpenApiPluginOptions>
