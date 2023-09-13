@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
     "test": "pnpm -r --workspace-concurrency=1 test",
-    "ra-data-rest": "pnpm -F @platformatic/db-ra-data-rest",
     "cleanall": "rm pnpm-lock.yaml && rm -rf node_modules && rm -rf packages/*/node_modules",
     "clean": "rm -rf node_modules && rm -rf packages/*/node_modules",
     "postinstall": "node ./scripts/postinstall.js",
