@@ -36,6 +36,7 @@ class FromZeroEighteenToWillSee extends SimpleZeroConfig {
       }
 
       delete config.plugins?.hotReload
+      delete config.db?.dashboard
 
       return new FromZeroEighteenToWillSee({ config, path: this.path, format: this.format, version })
     }
