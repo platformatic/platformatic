@@ -35,7 +35,7 @@
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
     "vite": "^4.3.9",
-    "vitest": "^0.33.0",
+    "vitest": "^0.34.0",
     "whatwg-fetch": "^3.6.2"
   },
   "standard": {
