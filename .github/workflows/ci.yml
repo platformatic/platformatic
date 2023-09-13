@@ -201,8 +201,6 @@ jobs:
         command: pnpm install --frozen-lockfile
     - name: pnpm install -g typescript
       run: pnpm install -g typescript
-    - name: Builds the ra-data-rest
-      run: pnpm run ra-data-rest build
     - name: Run test suite core
       run: cd packages/db-core && pnpm test
     - name: Run test suite Platformatic DB
@@ -496,8 +494,6 @@ jobs:
       run: docker-compose up -d postgresql
     - name: pnpm install
       run: pnpm install --frozen-lockfile
-    - name: Builds the ra-data-rest
-      run: pnpm run ra-data-rest build
     - name: Install Playwright browsers
       run: cd packages/frontend-template && pnpm exec playwright install
     - name: Run Platformatic frontend cli and E2E tests
