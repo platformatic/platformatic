@@ -179,7 +179,7 @@ const authorization = {
   properties: {
     adminSecret: {
       type: 'string',
-      description: 'The password should be used to login dashboard and to access routes under /_admin prefix and for admin access to REST and GraphQL endpoints with X-PLATFORMATIC-ADMIN-SECRET header.'
+      description: 'The password should be used to access routes under /_admin prefix and for admin access to REST and GraphQL endpoints with X-PLATFORMATIC-ADMIN-SECRET header.'
     },
     roleKey: {
       type: 'string',
@@ -266,22 +266,6 @@ const authorization = {
   additionalProperties: false
 }
 
-const dashboard = {
-  anyOf: [
-    { type: 'boolean' },
-    {
-      type: 'object',
-      properties: {
-        path: {
-          type: 'string',
-          description: 'The path where the dashboard should be served.'
-        }
-      },
-      additionalProperties: false
-    }
-  ]
-}
-
 const migrations = {
   type: 'object',
   properties: {
@@ -328,7 +312,6 @@ const platformaticDBschema = {
   properties: {
     server,
     db,
-    dashboard,
     authorization,
     migrations,
     metrics,

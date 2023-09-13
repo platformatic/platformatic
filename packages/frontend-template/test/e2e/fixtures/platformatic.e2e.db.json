@@ -23,6 +23,5 @@
 
   "types": {
     "autogenerate": false
-  },
-  "dashboard": true
+  }
 }

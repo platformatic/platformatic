@@ -74,27 +74,6 @@ async function createBasicPages (db, sql) {
 }
 module.exports.createBasicPages = createBasicPages
 
-async function createAndPopulateUsersTable (db, sql) {
-  await db.query(sql`
-      CREATE TABLE users (
-        "id" int4 NOT NULL PRIMARY KEY,
-        "name" varchar(10),
-        "age" numeric
-    );
-  `)
-  await db.query(sql`
-    INSERT INTO users ("id", "name", "age") VALUES
-    (1, 'Leonardo', 40),
-    (2, 'Matteo', 37);
-  `)
-}
-module.exports.createAndPopulateUsersTable = createAndPopulateUsersTable
-
-async function dropUsersTable (db, sql) {
-  await db.query(sql`DROP TABLE IF EXISTS users;`)
-}
-module.exports.dropUsersTable = dropUsersTable
-
 function buildConfig (options) {
   const base = {
     server: {},

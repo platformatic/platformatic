@@ -28,10 +28,6 @@
     "dir": "./demo/auth/migrations",
     "validateChecksums": false
   },
-  "dashboard": {
-    "enabled": true,
-    "path": "/"
-  },
   "authorization": {
     // Single quotes are allowed
     "adminSecret": 'plt-db'

@@ -49,7 +49,6 @@ function buildConfig (options) {
     server: {},
     core: {},
     cli: {},
-    dashboard: {},
     authorization: {}
   }
 
