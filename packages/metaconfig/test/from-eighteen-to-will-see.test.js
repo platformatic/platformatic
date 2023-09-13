@@ -113,6 +113,40 @@ test('removes plugins.hotReload if it exists', async (t) => {
   }
 })
 
+test('removes db.dashboard if it exists', async (t) => {
+  const version = '0.40.0'
+
+  {
+    const meta = new FromZeroEighteenToWillSee({
+      version,
+      config: { db: { dashboard: true } }
+    })
+    t.equal('dashboard' in meta.config.db, true)
+    const upped = meta.up()
+    t.equal('dashboard' in upped.config.db, false)
+  }
+
+  {
+    const meta = new FromZeroEighteenToWillSee({
+      version,
+      config: { db: { dashboard: false } }
+    })
+    t.equal('dashboard' in meta.config.db, true)
+    const upped = meta.up()
+    t.equal('dashboard' in upped.config.db, false)
+  }
+
+  {
+    const meta = new FromZeroEighteenToWillSee({
+      version,
+      config: { db: {} }
+    })
+    t.equal('dashboard' in meta.config.db, false)
+    const upped = meta.up()
+    t.equal('dashboard' in upped.config.db, false)
+  }
+})
+
 test('upgrade patch versions', async (t) => {
   const FromZeroEighteenToWillSee = proxyquire('../versions/from-zero-eighteen-to-will-see', {
     '../package.json': {
