@@ -38,7 +38,7 @@
     "pupa": "^3.1.0",
     "semver": "^7.5.1",
     "undici": "^5.22.1",
-    "which": "^3.0.1"
+    "which": "^4.0.0"
   },
   "devDependencies": {
     "@platformatic/db": "workspace:*",
