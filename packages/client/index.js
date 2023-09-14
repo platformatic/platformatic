@@ -8,8 +8,9 @@ const kGetHeaders = Symbol('getHeaders')
 const kTelemetryContext = Symbol('telemetry-context')
 const abstractLogging = require('abstract-logging')
 const Ajv = require('ajv')
-const SwaggerClient = require('swagger-client')
 const RefResolver = require('./ref-resolver')
+const $RefParser = require('@apidevtools/json-schema-ref-parser')
+
 function generateOperationId (path, method, methodMeta, all) {
   let operationId = methodMeta.operationId
   if (!operationId) {
@@ -72,7 +73,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
         // - there is no responses with 2XX code
         fullResponse = true
       }
-      client[operationId] = buildCallFunction(spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse)
+      client[operationId] = await buildCallFunction(spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse)
     }
   }
 
@@ -95,13 +96,9 @@ function hasDuplicatedParameters (methodMeta) {
   })
   return s.size !== methodMeta.parameters.length
 }
-function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse) {
-  // Resolve #ref(s) in schema, returns object { spec: THE_RESOLVED_SCHEMA }
-  
-  const resolvedSchema = SwaggerClient.resolve({ spec })
-  const ajv = new Ajv({
-    strict: false // to avoid error on 'unknown keyword: $$ref' added by SwaggerClient
-  })
+async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse) {
+  const resolvedSchema = await $RefParser.dereference(spec)
+  const ajv = new Ajv()
   const url = new URL(baseUrl)
   method = method.toUpperCase()
   path = join(url.pathname, path)
