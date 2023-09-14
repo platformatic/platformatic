@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/shared",
-  "version": "0.41.2",
+  "version": "0.41.3",
   "main": "index.js",
   "description": "Platformatic DB Shared Resources",
   "repository": {
