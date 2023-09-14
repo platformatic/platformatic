@@ -110,7 +110,7 @@ class PlatformaticApp {
 
     if (
       config.plugins !== undefined &&
-      config.watch?.enabled !== false
+      this.#originalWatch?.enabled !== false
     ) {
       this.#startFileWatching()
     }
