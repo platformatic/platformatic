@@ -98,10 +98,8 @@ function hasDuplicatedParameters (methodMeta) {
   return s.size !== methodMeta.parameters.length
 }
 async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse) {
-  const resolvedSchema = await $RefParser.dereference(spec)
-  const ajv = new Ajv({
-    strict: false
-  })
+  await $RefParser.dereference(spec)
+  const ajv = new Ajv()
   const url = new URL(baseUrl)
   method = method.toUpperCase()
   path = join(url.pathname, path)
