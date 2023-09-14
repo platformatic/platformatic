@@ -11,6 +11,7 @@ class Store {
   #map = new Map()
   #cwd
   #require
+  #currentVersion
 
   constructor (opts) {
     opts = opts || {}
@@ -19,6 +20,8 @@ class Store {
     // createRequire accepts a filename, but it's not used,
     // so we pass a dummy file to make it happy
     this.#require = createRequire(join(this.#cwd, 'noop.js'))
+
+    this.#currentVersion = null
   }
 
   add (app) {
@@ -44,7 +47,9 @@ class Store {
     } else {
       app.configManagerConfig.schema = app.schema
     }
-
+    if (!this.#currentVersion) {
+      this.#currentVersion = this.getVersionFromSchema(app.schema.$id)
+    }
     this.#map.set(app.schema.$id, app)
   }
 
@@ -69,10 +74,20 @@ class Store {
     }
 
     if (app === undefined) {
-      throw new Error(`no application found for ${$schema}`)
+      const attemptedToRunVersion = this.getVersionFromSchema($schema)
+
+      throw new Error(`Version mismatch. You are running Platformatic ${this.#currentVersion} but your app requires ${attemptedToRunVersion}`)
     }
 
     return app
+  }
+
+  getVersionFromSchema (schema) {
+    const match = schema.match(/\/schemas\/(.*)\//)
+    if (match) {
+      return match[1]
+    }
+    return null
   }
 
   listTypes () {
