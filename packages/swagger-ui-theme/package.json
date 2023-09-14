@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/swagger-ui-theme",
-  "version": "0.41.1",
+  "version": "0.41.2",
   "description": "Platformatic's Swagger UI theme for @fastify/swagger-ui",
   "main": "theme.js",
   "type": "module",
