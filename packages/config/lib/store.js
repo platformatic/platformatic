@@ -47,9 +47,8 @@ class Store {
     } else {
       app.configManagerConfig.schema = app.schema
     }
-    if (!this.#currentVersion) {
-      this.#currentVersion = this.getVersionFromSchema(app.schema.$id)
-    }
+
+    this.#currentVersion = this.getVersionFromSchema(app.schema.$id)
     this.#map.set(app.schema.$id, app)
   }
 
