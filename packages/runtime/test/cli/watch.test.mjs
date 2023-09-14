@@ -282,3 +282,28 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 300
 
   assert.ok(restartedThirdTime)
 })
+
+test('should not watch files if watch = false', async (t) => {
+  const tmpDir = await mkdtemp(join(base, 'watch-'))
+  t.after(() => saferm(tmpDir))
+  t.diagnostic(`using ${tmpDir}`)
+  const configFileSrc = join(fixturesDir, 'configs', 'monorepo-watch.json')
+  const configFileDst = join(tmpDir, 'configs', 'monorepo-watch.json')
+  const appSrc = join(fixturesDir, 'monorepo-watch')
+  const appDst = join(tmpDir, 'monorepo-watch')
+  const cjsPluginFilePath = join(appDst, 'service1', 'plugin.js')
+
+  await Promise.all([
+    cp(configFileSrc, configFileDst),
+    cp(appSrc, appDst, { recursive: true })
+  ])
+
+  await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
+  const { child, url } = await start('-c', configFileDst)
+  t.after(() => child.kill('SIGINT'))
+  await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))
+  await sleep(5000)
+  const res = await request(`${url}/version`)
+  const version = await res.body.text()
+  assert.strictEqual(version, 'v1')
+})
