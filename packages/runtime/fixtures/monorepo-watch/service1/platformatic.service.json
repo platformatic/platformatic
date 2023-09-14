@@ -9,5 +9,5 @@
       "plugin.js"
     ]
   },
-  "watch": true
+  "watch": false
 }
