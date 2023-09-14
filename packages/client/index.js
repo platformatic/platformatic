@@ -8,8 +8,9 @@ const kGetHeaders = Symbol('getHeaders')
 const kTelemetryContext = Symbol('telemetry-context')
 const abstractLogging = require('abstract-logging')
 const Ajv = require('ajv')
-const RefResolver = require('./ref-resolver')
 const $RefParser = require('@apidevtools/json-schema-ref-parser')
+const { createHash } = require('node:crypto')
+const validateFunctionCache = {}
 
 function generateOperationId (path, method, methodMeta, all) {
   let operationId = methodMeta.operationId
@@ -98,7 +99,9 @@ function hasDuplicatedParameters (methodMeta) {
 }
 async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse) {
   const resolvedSchema = await $RefParser.dereference(spec)
-  const ajv = new Ajv()
+  const ajv = new Ajv({
+    strict: false
+  })
   const url = new URL(baseUrl)
   method = method.toUpperCase()
   path = join(url.pathname, path)
@@ -214,7 +217,7 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
           if (matchingContentSchema === undefined) {
             throw new Error(`No matching content type schema found for ${contentType}`)
           }
-          const bodyIsValid = checkResponseAgainstSchema(responseBody, matchingContentSchema.schema, resolvedSchema.spec, ajv)
+          const bodyIsValid = checkResponseAgainstSchema(responseBody, matchingContentSchema.schema, ajv)
 
           if (!bodyIsValid) {
             throw new Error('Invalid response format')
@@ -243,10 +246,18 @@ function sanitizeContentType (contentType) {
   const split = contentType.split(';')
   return split[0]
 }
-function checkResponseAgainstSchema (body, schema, spec, ajv) {
-  const validate = ajv.compile(schema)
+function checkResponseAgainstSchema (body, schema, ajv) {
+  const validate = getValidateFunction(schema, ajv)
   const valid = validate(body)
   return valid
+}
+
+function getValidateFunction (schema, ajvInstance) {
+  const hash = createHash('md5').update(JSON.stringify(schema)).digest('hex')
+  if (!validateFunctionCache[hash]) {
+    validateFunctionCache[hash] = ajvInstance.compile(schema)
+  }
+  return validateFunctionCache[hash]
 }
 function capitalize (str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
