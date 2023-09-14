@@ -1,0 +1,12 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v0.35.0/runtime",
+  "entrypoint": "service1",
+  "hotReload": true,
+  "services": [
+    {
+      "id": "service1",
+      "path": "../monorepo-watch/service1",
+      "config": "platformatic.service.json"
+    }
+  ]
+}

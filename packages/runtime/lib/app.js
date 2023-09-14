@@ -85,7 +85,7 @@ class PlatformaticApp {
 
     await this.#initializeConfig()
     this.#originalWatch = this.config.configManager.current.watch
-    this.config.configManager.current.watch = false
+    this.config.configManager.current.watch = { enabled: false }
 
     const { configManager } = this.config
     configManager.update({
@@ -108,7 +108,10 @@ class PlatformaticApp {
       this.#logAndExit(err)
     }
 
-    if (config.plugins !== undefined) {
+    if (
+      config.plugins !== undefined &&
+      config.watch?.enabled !== false
+    ) {
       this.#startFileWatching()
     }
 
