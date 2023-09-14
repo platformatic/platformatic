@@ -732,4 +732,10 @@ test('validate response', async ({ teardown, same, notOk }) => {
     id: 123,
     title: 'Harry Potter'
   })
+
+  // second call to make coverage happy about caching functions
+  same(await client.getWithRefs(), {
+    id: 123,
+    title: 'Harry Potter'
+  })
 })
