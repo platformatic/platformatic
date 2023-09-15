@@ -17,8 +17,8 @@ test('generates only types in target folder with --types-only flag', async ({ te
 
   // avoid name clash
   const fileContents = await fs.readFile(join(dir, 'movies.d.ts'), 'utf-8')
-  match(fileContents, /declare namespace Movies {/)
-  match(fileContents, /type MoviesPlugin = FastifyPluginAsync<NonNullable<Movies.MoviesOptions>>/)
+  match(fileContents, /declare namespace movies {/)
+  match(fileContents, /type MoviesPlugin = FastifyPluginAsync<NonNullable<movies.MoviesOptions>>/)
   match(fileContents, /export const movies: MoviesPlugin;/)
   match(fileContents, /export interface FullResponse<T> {/)
   match(fileContents, /export interface GetMoviesRequest {/)
