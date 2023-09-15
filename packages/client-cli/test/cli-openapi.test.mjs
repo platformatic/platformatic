@@ -821,9 +821,9 @@ test('nested optional parameters are correctly identified', async ({ teardown, c
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
   match(data, `
-export interface GetMoviesResponseOK {
-  'data': { foo: string; bar?: string; baz?: { nested1?: string; nested2: string } };
-}
+  export interface GetMoviesResponseOK {
+    'data': { foo: string; bar?: string; baz?: { nested1?: string; nested2: string } };
+  }
 `)
 })
 
@@ -837,17 +837,17 @@ test('request with same parameter name in body/path/header/query', async ({ tear
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
   match(data, `
-export interface GetMoviesRequest {
-  body: {
-    'id': string;
-  }
-  query: {
-    'id': string;
-  }
-  headers: {
-    'id': string;
-  }
-}`)
+  export interface GetMoviesRequest {
+    body: {
+      'id': string;
+    }
+    query: {
+      'id': string;
+    }
+    headers: {
+      'id': string;
+    }
+  }`)
 })
 
 test('openapi client generation (javascript) from file with fullRequest, fullResponse and validateResponse', async ({ teardown, comment, match }) => {
@@ -880,22 +880,22 @@ test('openapi client generation (javascript) from file with fullRequest, fullRes
     const typeFile = join(dir, 'full', 'full.d.ts')
     const data = await readFile(typeFile, 'utf-8')
     match(data, `
-export interface PostHelloRequest {
-  body: {
-    'bodyId': string;
+  export interface PostHelloRequest {
+    body: {
+      'bodyId': string;
+    }
+    query: {
+      'queryId': string;
+    }
+    headers: {
+      'headerId': string;
+    }
   }
-  query: {
-    'queryId': string;
-  }
-  headers: {
-    'headerId': string;
-  }
-}
 `)
     match(data, `
-export interface Full {
-  postHello(req?: PostHelloRequest): Promise<FullResponse<PostHelloResponseOK>>;
-}`)
+  export interface Full {
+    postHello(req?: PostHelloRequest): Promise<FullResponse<PostHelloResponseOK>>;
+  }`)
     const implementationFile = join(dir, 'full', 'full.cjs')
     const implementationData = await readFile(implementationFile, 'utf-8')
     // check the implementation instantiate the client with fullRequest and fullResponse
@@ -926,8 +926,8 @@ test('optional-headers option', async ({ teardown, comment, match }) => {
   const typeFile = join(dir, 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
   match(data, `
-export interface PostHelloRequest {
-  'authorization'?: string;
-}
+  export interface PostHelloRequest {
+    'authorization'?: string;
+  }
 `)
 })

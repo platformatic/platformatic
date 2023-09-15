@@ -31,8 +31,8 @@ function generateTypesFromGraphQL ({ schema, name }) {
   writer.writeLine('import { type FastifyReply, type FastifyPluginAsync } from \'fastify\'')
   writer.blankLine()
 
-  const pluginname = `${capitalizedName}plugin`
-  const optionsname = `${capitalizedName}options`
+  const pluginname = `${capitalizedName}Plugin`
+  const optionsname = `${capitalizedName}Options`
 
   writer.write(`type ${pluginname} = FastifyPluginAsync<NonNullable<${capitalizedName}.${optionsname}>>`)
 
