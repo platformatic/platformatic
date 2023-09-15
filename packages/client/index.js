@@ -121,8 +121,8 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
     let pathToCall = path
     const urlToCall = new URL(url)
     if (forceFullRequest) {
-      headers = args.headers
-      body = args.body
+      headers = args?.headers
+      body = args?.body
       for (const param of queryParams) {
         if (args.query[param.name] !== undefined) {
           if (isArrayQueryParam(param)) {
