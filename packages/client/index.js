@@ -124,10 +124,13 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
       headers = args.headers
       body = args.body
       for (const param of queryParams) {
-        if (isArrayQueryParam(param)) {
-          args.query[param.name]?.forEach((p) => query.append(param.name, p))
-        } else {
-          query.append(param.name, args.query[param.name])
+        if (args.query[param.name] !== undefined) {
+          if (isArrayQueryParam(param)) {
+            args.query[param.name].forEach((p) => query.append(param.name, p))
+          } else {
+            query.append(param.name, args.query[param.name])
+          }
+          args.query[param.name] = undefined
         }
       }
     } else {
