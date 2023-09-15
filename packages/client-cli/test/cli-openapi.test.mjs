@@ -850,7 +850,7 @@ export interface GetMoviesRequest {
 }`)
 })
 
-test('openapi client generation (javascript) from file with fullRequest and fullResponse', async ({ teardown, comment, match }) => {
+test('openapi client generation (javascript) from file with fullRequest, fullResponse and validateResponse', async ({ teardown, comment, match }) => {
   const openapi = desm.join(import.meta.url, 'fixtures', 'full-req-res', 'openapi.json')
   teardown = () => {}
   const dir = await moveToTmpdir((teardown))
@@ -874,7 +874,7 @@ test('openapi client generation (javascript) from file with fullRequest and full
     ['--full']
   ]
   for (const opt of fullOptions) {
-    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapi, '--name', 'full', ...opt])
+    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapi, '--name', 'full', '--validate-response', ...opt])
 
     // check the type file has the correct implementation for the request and the response
     const typeFile = join(dir, 'full', 'full.d.ts')
@@ -909,7 +909,8 @@ async function generateFullClientPlugin (app, opts) {
     serviceId: opts.serviceId,
     throwOnError: opts.throwOnError,
     fullResponse: true,
-    fullRequest: true
+    fullRequest: true,
+    validateResponse: true
   })
 }`)
   }

@@ -4,14 +4,14 @@ import { generateOperationId, hasDuplicatedParameters } from '@platformatic/clie
 import { capitalize, classCase, toJavaScriptName } from './utils.mjs'
 import { STATUS_CODES } from 'node:http'
 
-export function processOpenAPI ({ schema, name, fullResponse, fullRequest, optionalHeaders }) {
+export function processOpenAPI ({ schema, name, fullResponse, fullRequest, optionalHeaders, validateResponse }) {
   return {
     types: generateTypesFromOpenAPI({ schema, name, fullResponse, fullRequest, optionalHeaders }),
-    implementation: generateImplementationFromOpenAPI({ schema, name, fullResponse, fullRequest })
+    implementation: generateImplementationFromOpenAPI({ schema, name, fullResponse, fullRequest, validateResponse })
   }
 }
 
-function generateImplementationFromOpenAPI ({ schema, name, fullResponse, fullRequest }) {
+function generateImplementationFromOpenAPI ({ schema, name, fullResponse, fullRequest, validateResponse }) {
   const camelcasedName = toJavaScriptName(name)
 
   /* eslint-disable new-cap */
@@ -40,7 +40,8 @@ function generateImplementationFromOpenAPI ({ schema, name, fullResponse, fullRe
       writer.writeLine('serviceId: opts.serviceId,')
       writer.writeLine('throwOnError: opts.throwOnError,')
       writer.writeLine(`fullResponse: ${fullResponse},`)
-      writer.writeLine(`fullRequest: ${fullRequest}`)
+      writer.writeLine(`fullRequest: ${fullRequest},`)
+      writer.writeLine(`validateResponse: ${validateResponse}`)
     })
     writer.write(')')
   })
