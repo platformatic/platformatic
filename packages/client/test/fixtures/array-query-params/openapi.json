@@ -10,16 +10,38 @@
       "get": {
         "parameters": [
           {
-            "name": "ids",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
             "in": "query",
-            "type": "array",
-            "items": "string"
-
+            "name": "ids"
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1
+                }
+              ]
+            },
+            "in": "query",
+            "name": "stringArrayUnion"
           }
         ],
         "operationId": "getQuery",
         "responses": {
           "200": {
+            "description": "This field is required",
             "content": {
               "application/json": {
                 "schema": {

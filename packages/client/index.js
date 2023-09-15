@@ -124,7 +124,7 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
       headers = args.headers
       body = args.body
       for (const param of queryParams) {
-        if (param.type === 'array') {
+        if (isArrayQueryParam(param)) {
           args.query[param.name].forEach((p) => query.append(param.name, p))
         } else {
           query.append(param.name, args.query[param.name])
@@ -142,7 +142,7 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
 
       for (const param of queryParams) {
         if (body[param.name] !== undefined) {
-          if (param.type === 'array') {
+          if (isArrayQueryParam(param)) {
             body[param.name].forEach((p) => query.append(param.name, p))
           } else {
             query.append(param.name, body[param.name])
@@ -261,9 +261,10 @@ function capitalize (str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
-// function handleQueryParameters(urlSearchParamObject, parameter) {
+function isArrayQueryParam ({ schema }) {
+  return schema?.type === 'array' || schema?.anyOf?.some(({ type }) => type === 'array')
+}
 
-// }
 // TODO: For some unknown reason c8 is not picking up the coverage for this function
 async function graphql (url, log, headers, query, variables, openTelemetry, telemetryContext) {
   const { span, telemetryHeaders } = openTelemetry?.startSpanClient(url.toString(), 'POST', telemetryContext) || { span: null, telemetryHeaders: {} }

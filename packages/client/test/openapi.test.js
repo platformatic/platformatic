@@ -653,11 +653,13 @@ test('build basic client from file (query array parameter)', async ({ teardown, 
 
     const result = await client.getQuery({
       query: {
-        ids: ['id1', 'id2']
+        ids: ['id1', 'id2'],
+        stringArrayUnion: ['foo', 'bar', 'baz']
       }
     })
     same(result.isArray, true)
     match(result.ids, ['id1', 'id2'])
+    match(result.stringArrayUnion, ['foo', 'bar', 'baz'])
   }
   {
     // without fullRequest
@@ -668,10 +670,12 @@ test('build basic client from file (query array parameter)', async ({ teardown, 
     })
 
     const result = await client.getQuery({
-      ids: ['id1', 'id2']
+      ids: ['id1', 'id2'],
+      stringArrayUnion: ['foo', 'bar', 'baz']
     })
     same(result.isArray, true)
     match(result.ids, ['id1', 'id2'])
+    match(result.stringArrayUnion, ['foo', 'bar', 'baz'])
   }
 })
 
