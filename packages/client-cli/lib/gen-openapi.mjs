@@ -97,90 +97,90 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
   writer.write(`declare namespace ${capitalizedName}`).block(() => {
     // Add always FullResponse interface because we don't know yet
   // if we are going to use it
-  interfaces.write('export interface FullResponse<T>').block(() => {
-    interfaces.writeLine('\'statusCode\': number;')
-    interfaces.writeLine('\'headers\': object;')
-    interfaces.writeLine('\'body\': T;')
-  })
-  interfaces.blankLine()
+    interfaces.write('export interface FullResponse<T>').block(() => {
+      interfaces.writeLine('\'statusCode\': number;')
+      interfaces.writeLine('\'headers\': object;')
+      interfaces.writeLine('\'body\': T;')
+    })
+    interfaces.blankLine()
 
-  writer.write(`export interface ${capitalizedName}`).block(() => {
-    const originalFullResponse = fullResponse
-    let currentFullResponse = originalFullResponse
-    for (const operation of operations) {
-      const operationId = operation.operation.operationId
-      const { parameters, responses, requestBody } = operation.operation
-      const forceFullReqeust = fullRequest || hasDuplicatedParameters(operation.operation)
-      const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
-      if (successResponses.length !== 1) {
-        currentFullResponse = true
-      }
-      const operationRequestName = `${capitalize(operationId)}Request`
-      const operationResponseName = `${capitalize(operationId)}Response`
+    writer.write(`export interface ${capitalizedName}`).block(() => {
+      const originalFullResponse = fullResponse
+      let currentFullResponse = originalFullResponse
+      for (const operation of operations) {
+        const operationId = operation.operation.operationId
+        const { parameters, responses, requestBody } = operation.operation
+        const forceFullReqeust = fullRequest || hasDuplicatedParameters(operation.operation)
+        const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
+        if (successResponses.length !== 1) {
+          currentFullResponse = true
+        }
+        const operationRequestName = `${capitalize(operationId)}Request`
+        const operationResponseName = `${capitalize(operationId)}Response`
 
-      interfaces.write(`export interface ${operationRequestName}`).block(() => {
-        const addedProps = new Set()
-        if (parameters) {
-          if (forceFullReqeust) {
-            const bodyParams = []
-            const queryParams = []
-            const headersParams = []
-            for (const parameter of parameters) {
-              switch (parameter.in) {
-                case 'query':
-                  queryParams.push(parameter)
-                  break
-                case 'body':
-                  bodyParams.push(parameter)
-                  break
-                case 'header':
-                  headersParams.push(parameter)
-                  break
+        interfaces.write(`export interface ${operationRequestName}`).block(() => {
+          const addedProps = new Set()
+          if (parameters) {
+            if (forceFullReqeust) {
+              const bodyParams = []
+              const queryParams = []
+              const headersParams = []
+              for (const parameter of parameters) {
+                switch (parameter.in) {
+                  case 'query':
+                    queryParams.push(parameter)
+                    break
+                  case 'body':
+                    bodyParams.push(parameter)
+                    break
+                  case 'header':
+                    headersParams.push(parameter)
+                    break
+                }
               }
-            }
-            writeProperties(interfaces, 'body', bodyParams, addedProps)
-            writeProperties(interfaces, 'query', queryParams, addedProps)
-            writeProperties(interfaces, 'headers', headersParams, addedProps)
-          } else {
-            for (const parameter of parameters) {
-              let { name, required } = parameter
-              if (optionalHeaders.includes(name)) {
-                required = false
+              writeProperties(interfaces, 'body', bodyParams, addedProps)
+              writeProperties(interfaces, 'query', queryParams, addedProps)
+              writeProperties(interfaces, 'headers', headersParams, addedProps)
+            } else {
+              for (const parameter of parameters) {
+                let { name, required } = parameter
+                if (optionalHeaders.includes(name)) {
+                  required = false
+                }
+                // We do not check for addedProps here because it's the first
+                // group of properties
+                writeProperty(interfaces, name, parameter, addedProps, required)
               }
-              // We do not check for addedProps here because it's the first
-              // group of properties
-              writeProperty(interfaces, name, parameter, addedProps, required)
             }
           }
-        }
-        if (requestBody) {
-          writeContent(interfaces, requestBody.content, schema, addedProps)
-        }
-      })
-      interfaces.blankLine()
-
-      const responseTypes = successResponses.map(([statusCode, response]) => {
-        // The client library will always dump bodies for 204 responses
-        // so the type must be undefined
-        if (statusCode === '204') {
-          return 'undefined'
-        }
-        let isResponseArray
-        let type = `${operationResponseName}${classCase(STATUS_CODES[statusCode])}`
-        interfaces.write(`export interface ${type}`).block(() => {
-          isResponseArray = writeContent(interfaces, response.content, schema, new Set())
+          if (requestBody) {
+            writeContent(interfaces, requestBody.content, schema, addedProps)
+          }
         })
         interfaces.blankLine()
-        if (isResponseArray) type = `Array<${type}>`
-        return type
-      })
 
-      let responseType = responseTypes.join(' | ') || 'unknown'
-      if (currentFullResponse) responseType = `FullResponse<${responseType}>`
-      writer.writeLine(`${operationId}(req?: ${operationRequestName}): Promise<${responseType}>;`)
-      currentFullResponse = originalFullResponse
-    }
-  })
+        const responseTypes = successResponses.map(([statusCode, response]) => {
+        // The client library will always dump bodies for 204 responses
+        // so the type must be undefined
+          if (statusCode === '204') {
+            return 'undefined'
+          }
+          let isResponseArray
+          let type = `${operationResponseName}${classCase(STATUS_CODES[statusCode])}`
+          interfaces.write(`export interface ${type}`).block(() => {
+            isResponseArray = writeContent(interfaces, response.content, schema, new Set())
+          })
+          interfaces.blankLine()
+          if (isResponseArray) type = `Array<${type}>`
+          return type
+        })
+
+        let responseType = responseTypes.join(' | ') || 'unknown'
+        if (currentFullResponse) responseType = `FullResponse<${responseType}>`
+        writer.writeLine(`${operationId}(req?: ${operationRequestName}): Promise<${responseType}>;`)
+        currentFullResponse = originalFullResponse
+      }
+    })
 
     writer.write(`export interface ${optionsName}`).block(() => {
       writer.writeLine('url: string')
@@ -188,7 +188,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
 
     writer.writeLine(`export const ${camelcasedName}: ${pluginName};`)
     writer.writeLine(`export { ${camelcasedName} as default };`)
-    
+
     writer.write(interfaces.toString())
   })
 
