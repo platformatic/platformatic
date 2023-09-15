@@ -841,6 +841,9 @@ test('request with same parameter name in body/path/header/query', async ({ tear
     body: {
       'id': string;
     }
+    path: {
+      'id': string;
+    }
     query: {
       'id': string;
     }

@@ -24,6 +24,12 @@
             "in": "query",
             "type": "string"
           }
+          ,
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string"
+          }
         ],
         "operationId": "getMovies",
         "responses": {
