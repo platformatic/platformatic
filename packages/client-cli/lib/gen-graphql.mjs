@@ -93,7 +93,7 @@ function generateTypesFromGraphQL ({ schema, name }) {
 
   writer.blankLine()
   writer.writeLine(`declare function ${camelcasedName}(...params: Parameters<${pluginname}>): ReturnType<${pluginname}>;`)
-  writer.writeLine(`export = ${camelcasedName};`)
+  writer.writeLine(`export default ${camelcasedName};`)
   return writer.toString()
 }
 

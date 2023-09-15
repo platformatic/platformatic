@@ -218,7 +218,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
 
   writer.blankLine()
   writer.writeLine(`declare function ${camelcasedName}(...params: Parameters<${pluginName}>): ReturnType<${pluginName}>;`)
-  writer.writeLine(`export = ${camelcasedName};`)
+  writer.writeLine(`export default ${camelcasedName};`)
 
   return interfaces.toString() + writer.toString()
 }
