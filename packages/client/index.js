@@ -123,6 +123,14 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
     if (forceFullRequest) {
       headers = args?.headers
       body = args?.body
+      path = args?.path
+      for (const param of pathParams) {
+        if (path[param.name] === undefined) {
+          throw new Error('missing required parameter ' + param.name)
+        }
+        pathToCall = pathToCall.replace(`{${param.name}}`, path[param.name])
+        path[param.name] = undefined
+      }
       for (const param of queryParams) {
         if (args.query[param.name] !== undefined) {
           if (isArrayQueryParam(param)) {
