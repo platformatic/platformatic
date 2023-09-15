@@ -88,10 +88,14 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
   })
   /* eslint-enable new-cap */
 
-  interfaces.writeLine('import { type FastifyReply, type FastifyPluginAsync } from \'fastify\'')
-  interfaces.blankLine()
+  writer.writeLine('import { type FastifyReply, type FastifyPluginAsync } from \'fastify\'')
+  writer.blankLine()
 
-  // Add always FullResponse interface because we don't know yet
+  const pluginName = `${capitalizedName}Plugin`
+  const optionsName = `${capitalizedName}Options`
+
+  writer.write(`declare namespace ${capitalizedName}`).block(() => {
+    // Add always FullResponse interface because we don't know yet
   // if we are going to use it
   interfaces.write('export interface FullResponse<T>').block(() => {
     interfaces.writeLine('\'statusCode\': number;')
@@ -178,10 +182,17 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
     }
   })
 
-  writer.blankLine()
-  const pluginName = `${capitalizedName}Plugin`
-  const optionsName = `${capitalizedName}Options`
+    writer.write(`export interface ${optionsName}`).block(() => {
+      writer.writeLine('url: string')
+    })
 
+    writer.writeLine(`export const ${camelcasedName}: ${pluginName};`)
+    writer.writeLine(`export { ${camelcasedName} as default };`)
+    
+    writer.write(interfaces.toString())
+  })
+
+  writer.blankLine()
   writer.write(`type ${pluginName} = FastifyPluginAsync<NonNullable<${capitalizedName}.${optionsName}>>`)
 
   writer.blankLine()
@@ -191,7 +202,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
     })
     writer.write('interface FastifyInstance').block(() => {
       writer.quote(camelcasedName)
-      writer.write(`: ${capitalizedName};`)
+      writer.write(`: ${capitalizedName}.${capitalizedName};`)
       writer.newLine()
 
       writer.writeLine(`configure${capitalizedName}(opts: Configure${capitalizedName}): unknown`)
@@ -201,26 +212,19 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
 
     writer.write('interface FastifyRequest').block(() => {
       writer.quote(camelcasedName)
-      writer.write(`: ${capitalizedName};`)
+      writer.write(`: ${capitalizedName}.${capitalizedName};`)
       writer.newLine()
     })
   })
 
   writer.blankLine()
-  writer.write(`declare namespace ${capitalizedName}`).block(() => {
-    writer.write(`export interface ${optionsName}`).block(() => {
-      writer.writeLine('url: string')
-    })
-
-    writer.writeLine(`export const ${camelcasedName}: ${pluginName};`)
-    writer.writeLine(`export { ${camelcasedName} as default };`)
-  })
+  console.log(interfaces.toString())
 
   writer.blankLine()
   writer.writeLine(`declare function ${camelcasedName}(...params: Parameters<${pluginName}>): ReturnType<${pluginName}>;`)
   writer.writeLine(`export = ${camelcasedName};`)
 
-  return interfaces.toString() + writer.toString()
+  return writer.toString()
 }
 
 function writeProperties (writer, blockName, parameters, addedProps) {
