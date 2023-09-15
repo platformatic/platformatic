@@ -9,6 +9,7 @@ export type PlatformaticClientPluginOptions = {
   path?: string;
   headers?: Headers;
   throwOnError: boolean;
+  fullRequest: boolean;
   fullResponse: boolean;
   type: 'openapi' | 'graphql';
   name?: string;
