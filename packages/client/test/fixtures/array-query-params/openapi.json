@@ -41,7 +41,7 @@
         "operationId": "getQuery",
         "responses": {
           "200": {
-            "description": "Fantozzi",
+            "description": "This field is required",
             "content": {
               "application/json": {
                 "schema": {

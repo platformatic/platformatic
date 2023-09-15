@@ -262,7 +262,7 @@ function capitalize (str) {
 }
 
 function isArrayQueryParam ({ schema }) {
-  return (schema?.type === 'array') || schema?.anyOf?.some(({ type }) => type === 'array')
+  return schema?.type === 'array' || schema?.anyOf?.some(({ type }) => type === 'array')
 }
 
 // function handleQueryParameters(urlSearchParamObject, parameter) {
