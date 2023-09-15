@@ -265,9 +265,6 @@ function isArrayQueryParam ({ schema }) {
   return schema?.type === 'array' || schema?.anyOf?.some(({ type }) => type === 'array')
 }
 
-// function handleQueryParameters(urlSearchParamObject, parameter) {
-
-// }
 // TODO: For some unknown reason c8 is not picking up the coverage for this function
 async function graphql (url, log, headers, query, variables, openTelemetry, telemetryContext) {
   const { span, telemetryHeaders } = openTelemetry?.startSpanClient(url.toString(), 'POST', telemetryContext) || { span: null, telemetryHeaders: {} }
