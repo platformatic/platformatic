@@ -324,24 +324,28 @@ export function getConnectionString (database) {
   return connectionStrings[database]
 }
 
-export async function createDB ({ hostname, database = 'sqlite', port, migrations = 'migrations', plugin = true, types = true, typescript = false, connectionString }, logger, currentDir, version) {
+export async function createDB ({ hostname, database = 'sqlite', port, migrations = 'migrations', plugin = true, types = true, typescript = false, connectionString, isRuntime = false }, logger, currentDir, version) {
   connectionString = connectionString || getConnectionString(database)
   const createMigrations = !!migrations // If we don't define a migrations folder, we don't create it
   const accessibleConfigFilename = await findDBConfigFile(currentDir)
   if (accessibleConfigFilename === undefined) {
     const config = generateConfig(migrations, plugin, types, typescript, version)
+    if (isRuntime) {
+      delete config.server
+    }
     await writeFile(join(currentDir, 'platformatic.db.json'), JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.db.json successfully created.')
-
-    const env = generateEnv(hostname, port, connectionString, typescript)
-    const envFileExists = await isFileAccessible('.env', currentDir)
-    await appendFile(join(currentDir, '.env'), env)
-    await writeFile(join(currentDir, '.env.sample'), generateEnv(hostname, port, getConnectionString(database), typescript))
-    /* c8 ignore next 5 */
-    if (envFileExists) {
-      logger.info('Environment file .env found, appending new environment variables to existing .env file.')
-    } else {
-      logger.info('Environment file .env successfully created.')
+    if (!isRuntime) {
+      const env = generateEnv(hostname, port, connectionString, typescript)
+      const envFileExists = await isFileAccessible('.env', currentDir)
+      await appendFile(join(currentDir, '.env'), env)
+      await writeFile(join(currentDir, '.env.sample'), generateEnv(hostname, port, getConnectionString(database), typescript))
+      /* c8 ignore next 5 */
+      if (envFileExists) {
+        logger.info('Environment file .env found, appending new environment variables to existing .env file.')
+      } else {
+        logger.info('Environment file .env successfully created.')
+      }
     }
   } else {
     logger.info(`Configuration file ${accessibleConfigFilename} found, skipping creation of configuration file.`)

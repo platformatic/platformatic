@@ -638,7 +638,6 @@ const platformaticServiceSchema = {
     clients
   },
   additionalProperties: false,
-  required: ['server'],
   $defs: openApiDefs
 }
 

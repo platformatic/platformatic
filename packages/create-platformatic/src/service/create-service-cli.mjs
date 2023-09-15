@@ -70,7 +70,8 @@ const createPlatformaticService = async (_args, opts = {}) => {
   const params = {
     hostname: args.hostname,
     port,
-    typescript: useTypescript
+    typescript: useTypescript,
+    isRuntime: opts.isRuntime
   }
 
   const env = await createService(params, logger, projectDir, version)

@@ -158,7 +158,8 @@ const createPlatformaticDB = async (_args, opts) => {
     migrations: wizardOptions.defaultMigrations ? args.migrations : '',
     plugin: generatePlugin,
     types: useTypes,
-    typescript: useTypescript
+    typescript: useTypescript,
+    isRuntime: opts.isRuntime
   }
 
   const env = await createDB(params, logger, projectDir, version)
