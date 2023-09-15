@@ -110,7 +110,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
       for (const operation of operations) {
         const operationId = operation.operation.operationId
         const { parameters, responses, requestBody } = operation.operation
-        const forceFullReqeust = fullRequest || hasDuplicatedParameters(operation.operation)
+        const forceFullRequest = fullRequest || hasDuplicatedParameters(operation.operation)
         const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
         if (successResponses.length !== 1) {
           currentFullResponse = true
@@ -121,7 +121,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
         interfaces.write(`export interface ${operationRequestName}`).block(() => {
           const addedProps = new Set()
           if (parameters) {
-            if (forceFullReqeust) {
+            if (forceFullRequest) {
               const bodyParams = []
               const queryParams = []
               const headersParams = []
