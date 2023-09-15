@@ -123,12 +123,16 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
           if (parameters) {
             if (forceFullRequest) {
               const bodyParams = []
+              const pathParams = []
               const queryParams = []
               const headersParams = []
               for (const parameter of parameters) {
                 switch (parameter.in) {
                   case 'query':
                     queryParams.push(parameter)
+                    break
+                  case 'path':
+                    pathParams.push(parameter)
                     break
                   case 'body':
                     bodyParams.push(parameter)
@@ -139,6 +143,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
                 }
               }
               writeProperties(interfaces, 'body', bodyParams, addedProps)
+              writeProperties(interfaces, 'path', pathParams, addedProps)
               writeProperties(interfaces, 'query', queryParams, addedProps)
               writeProperties(interfaces, 'headers', headersParams, addedProps)
             } else {
