@@ -121,24 +121,36 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
     let pathToCall = path
     const urlToCall = new URL(url)
     if (forceFullRequest) {
-      headers = args?.headers
       body = args?.body
-      path = args?.path
       for (const param of pathParams) {
-        if (path[param.name] === undefined) {
-          throw new Error('missing required parameter ' + param.name)
-        }
-        pathToCall = pathToCall.replace(`{${param.name}}`, path[param.name])
-        path[param.name] = undefined
-      }
-      for (const param of queryParams) {
-        if (args.query[param.name] !== undefined) {
-          if (isArrayQueryParam(param)) {
-            args.query[param.name].forEach((p) => query.append(param.name, p))
-          } else {
-            query.append(param.name, args.query[param.name])
+        if (args?.path) {
+          if (args.path[param.name] === undefined) {
+            throw new Error('missing required parameter ' + param.name)
           }
-          args.query[param.name] = undefined
+          pathToCall = pathToCall.replace(`{${param.name}}`, args.path[param.name])
+          args.path[param.name] = undefined
+        }
+      }
+
+      for (const param of queryParams) {
+        if (args?.query) {
+          if (args.query[param.name] !== undefined) {
+            if (isArrayQueryParam(param)) {
+              args.query[param.name].forEach((p) => query.append(param.name, p))
+            } else {
+              query.append(param.name, args.query[param.name])
+            }
+            args.query[param.name] = undefined
+          }
+        }
+      }
+
+      for (const param of headerParams) {
+        if (args?.headers) {
+          if (args.headers[param.name] !== undefined) {
+            headers[param.name] = args.headers[param.name]
+            args.headers[param.name] = undefined
+          }
         }
       }
     } else {
