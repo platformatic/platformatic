@@ -121,13 +121,24 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
     let pathToCall = path
     const urlToCall = new URL(url)
     if (forceFullRequest) {
-      headers = args.headers
-      body = args.body
+      headers = args?.headers
+      body = args?.body
+      for (const param of pathParams) {
+        if (args?.path[param.name] === undefined) {
+          throw new Error('missing required parameter ' + param.name)
+        }
+        pathToCall = pathToCall.replace(`{${param.name}}`, args.path[param.name])
+        args.path[param.name] = undefined
+      }
+
       for (const param of queryParams) {
-        if (isArrayQueryParam(param)) {
-          args.query[param.name].forEach((p) => query.append(param.name, p))
-        } else {
-          query.append(param.name, args.query[param.name])
+        if (args?.query[param.name] !== undefined) {
+          if (isArrayQueryParam(param)) {
+            args.query[param.name].forEach((p) => query.append(param.name, p))
+          } else {
+            query.append(param.name, args.query[param.name])
+          }
+          args.query[param.name] = undefined
         }
       }
     } else {
