@@ -3,7 +3,7 @@ services:
   postgresql:
     ports:
       - "5432:5432"
-    image: "arm64v8/postgres:15-alpine"
+    image: "arm64v8/postgres:16-alpine"
     environment:
       - POSTGRES_PASSWORD=postgres
   mariadb:
