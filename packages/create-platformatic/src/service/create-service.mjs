@@ -191,6 +191,10 @@ async function createService ({ hostname, port, typescript = false }, logger, cu
   } else {
     logger.info('Routes folder "routes" found, skipping creation of routes folder.')
   }
+
+  await writeFile(join(currentDir, 'global.d.ts'), TS_GLOBAL_TYPES)
+  logger.info('global.d.ts successfully created.;')
+
   const output = {
     PLT_SERVER_LOGGER_LEVEL: 'info',
     PORT: port,
