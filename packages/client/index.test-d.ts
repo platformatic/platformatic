@@ -7,17 +7,23 @@ const server = await fastify()
 expectError<PlatformaticClientPluginOptions>({})
 
 expectError<PlatformaticClientPluginOptions>({
+  fullRequest: true,
+  fullResponse: true,
   throwOnError: true,
   url: 'localhost'
 })
 
 expectError<PlatformaticClientPluginOptions>({
+  fullRequest: true,
+  fullResponse: true,
   throwOnError: true,
   type: 'WRONG',
   url: 'localhost'
 })
 
 server.register(pltClient, {
+  fullRequest: true,
+  fullResponse: true,
   throwOnError: true,
   type: 'graphql',
   url: 'localhost'
