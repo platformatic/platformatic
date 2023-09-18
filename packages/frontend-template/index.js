@@ -17,11 +17,14 @@ async function frontendTemplate ({ source, language, name }) {
   if (source.startsWith('http')) {
     // Load the OpenAPI spec
     let res
-
-    const apiUrl = source.endsWith('/') ? source.replace(/\/$/, '') : source // Remove the trailing slash
+    // let documentationUrl
+    // const apiUrl = source.endsWith('/') ? source.replace(/\/$/, '') : source // Remove the trailing slash
     try {
-      const documentationUrl = `${apiUrl}/documentation/json`
-      res = await request(documentationUrl)
+      const apiUrl = new URL(source)
+      if (apiUrl.pathname === '/') {
+        apiUrl.pathname = '/documentation/json'
+      }
+      res = await request(apiUrl)
     } catch (err) {
       await help.toStdout(['open-api-server-error'])
       process.exit(1)
