@@ -14,7 +14,6 @@ async function frontendTemplate ({ source, language, name }) {
     ext: '.txt'
   })
   let schema
-  console.log(source, '@@@@@')
   if (source.startsWith('http')) {
     // Load the OpenAPI spec
     let res
