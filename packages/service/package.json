@@ -56,7 +56,6 @@
     "@platformatic/client": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/swagger-ui-theme": "workspace:*",
-    "@platformatic/types": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "close-with-grace": "^1.2.0",

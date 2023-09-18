@@ -1,12 +1,9 @@
-/// <reference types="@platformatic/types" />
 import { FastifyPluginAsync } from 'fastify'
 import { Readable } from 'stream'
 import { SQLMapperPluginInterface } from '@platformatic/sql-mapper'
 
-declare module '@platformatic/types' {
-  interface PlatformaticApp {
-    subscribe: (topic: string | string[]) => Promise<Readable>
-  }
+export interface SQLEventsPluginInterface {
+  subscribe: (topic: string | string[]) => Promise<Readable>
 }
 
 export interface SQLEventsPluginOptions {

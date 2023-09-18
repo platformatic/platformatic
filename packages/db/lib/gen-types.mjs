@@ -13,19 +13,22 @@ import { platformaticDB } from '../index.js'
 const DEFAULT_TYPES_FOLDER_PATH = resolve(process.cwd(), 'types')
 
 const GLOBAL_TYPES_TEMPLATE = `\
-/// <reference types="@platformatic/db" />
-import { EntityHooks } from '@platformatic/sql-mapper'
+import { PlatformaticApp, PlatformaticDBMixin, PlatformaticDBConfig } from '@platformatic/db'
 ENTITIES_IMPORTS_PLACEHOLDER
 
-declare module '@platformatic/sql-mapper' {
-  interface Entities {
-    ENTITIES_DEFINITION_PLACEHOLDER
-  }
+interface Entities {
+  ENTITIES_DEFINITION_PLACEHOLDER
 }
 
-declare module '@platformatic/types' {
-  interface PlatformaticApp {
-    HOOKS_DEFINITION_PLACEHOLDER
+interface AppEntityHooks {
+  HOOKS_DEFINITION_PLACEHOLDER
+}
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    platformatic: PlatformaticApp<PlatformaticDBConfig> &
+      PlatformaticDBMixin<Entities> &
+      AppEntityHooks
   }
 }
 `

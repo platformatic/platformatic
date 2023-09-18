@@ -588,6 +588,9 @@ importers:
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
+      '@platformatic/sql-events':
+        specifier: workspace:*
+        version: link:../sql-events
       '@platformatic/sql-graphql':
         specifier: workspace:*
         version: link:../sql-graphql
@@ -603,9 +606,6 @@ importers:
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
-      '@platformatic/types':
-        specifier: workspace:*
-        version: link:../types
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -767,9 +767,6 @@ importers:
       '@platformatic/sql-mapper':
         specifier: workspace:*
         version: link:../sql-mapper
-      '@platformatic/types':
-        specifier: workspace:*
-        version: link:../types
       fast-jwt:
         specifier: ^3.1.1
         version: 3.2.0
@@ -809,9 +806,6 @@ importers:
       '@platformatic/sql-openapi':
         specifier: workspace:*
         version: link:../sql-openapi
-      '@platformatic/types':
-        specifier: workspace:*
-        version: link:../types
       fastify-plugin:
         specifier: ^4.5.0
         version: 4.5.1
@@ -1117,9 +1111,6 @@ importers:
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
-      '@platformatic/types':
-        specifier: workspace:*
-        version: link:../types
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -1245,9 +1236,6 @@ importers:
 
   packages/sql-events:
     dependencies:
-      '@platformatic/types':
-        specifier: workspace:*
-        version: link:../types
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -1383,9 +1371,6 @@ importers:
       '@matteo.collina/sqlite-pool':
         specifier: ^0.3.0
         version: 0.3.0
-      '@platformatic/types':
-        specifier: workspace:*
-        version: link:../types
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -1511,12 +1496,6 @@ importers:
       tap:
         specifier: ^16.3.6
         version: 16.3.8(typescript@5.2.2)
-
-  packages/types:
-    devDependencies:
-      fastify:
-        specifier: ^4.18.0
-        version: 4.23.2
 
   packages/utils:
     dependencies:

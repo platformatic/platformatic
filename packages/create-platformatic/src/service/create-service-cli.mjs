@@ -78,7 +78,9 @@ const createPlatformaticService = async (_args, opts = {}) => {
   const fastifyVersion = await getDependencyVersion('fastify')
 
   if (!opts.skipPackageJson) {
-    await createPackageJson(version, fastifyVersion, logger, projectDir, useTypescript)
+    await createPackageJson(version, fastifyVersion, logger, projectDir, useTypescript, {}, {
+      '@platformatic/service': '^' + version
+    })
   }
   if (!opts.skipGitignore) {
     await createGitignore(logger, projectDir)

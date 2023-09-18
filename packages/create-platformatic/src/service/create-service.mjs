@@ -56,7 +56,7 @@ PLT_TYPESCRIPT=true
 }
 
 const JS_PLUGIN_WITH_TYPES_SUPPORT = `\
-/// <reference types="@platformatic/service" />
+/// <reference types="../global.d.ts" />
 'use strict'
 /** @param {import('fastify').FastifyInstance} fastify */
 module.exports = async function (fastify, opts) {
@@ -65,7 +65,7 @@ module.exports = async function (fastify, opts) {
 `
 
 const TS_PLUGIN_WITH_TYPES_SUPPORT = `\
-/// <reference types="@platformatic/service" />
+/// <reference types="../global.d.ts" />
 import { FastifyInstance, FastifyPluginOptions } from 'fastify'
 
 export default async function (fastify: FastifyInstance, opts: FastifyPluginOptions) {
@@ -74,7 +74,7 @@ export default async function (fastify: FastifyInstance, opts: FastifyPluginOpti
 `
 
 const JS_ROUTES_WITH_TYPES_SUPPORT = `\
-/// <reference types="@platformatic/service" />
+/// <reference types="../global.d.ts" />
 'use strict'
 /** @param {import('fastify').FastifyInstance} fastify */
 module.exports = async function (fastify, opts) {
@@ -85,7 +85,7 @@ module.exports = async function (fastify, opts) {
 `
 
 const TS_ROUTES_WITH_TYPES_SUPPORT = `\
-/// <reference types="@platformatic/service" />
+/// <reference types="../global.d.ts" />
 import { FastifyInstance, FastifyPluginOptions } from 'fastify'
 
 declare module 'fastify' {
@@ -98,6 +98,17 @@ export default async function (fastify: FastifyInstance, opts: FastifyPluginOpti
   fastify.get('/', async (request, reply) => {
     return { hello: fastify.example }
   })
+}
+`
+
+const TS_GLOBAL_TYPES = `\
+import { FastifyInstance } from 'fastify'
+import { PlatformaticApp, PlatformaticServiceConfig } from '@platformatic/service'
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    platformatic: PlatformaticApp<PlatformaticServiceConfig>
+  }
 }
 `
 

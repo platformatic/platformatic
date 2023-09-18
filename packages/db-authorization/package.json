@@ -19,7 +19,6 @@
     "@fastify/session": "^10.3.0",
     "@platformatic/db-core": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
-    "@platformatic/types": "workspace:*",
     "fast-jwt": "^3.1.1",
     "fastify": "^4.18.0",
     "snazzy": "^9.0.0",

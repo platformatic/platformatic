@@ -2,7 +2,14 @@ import { expectType } from 'tsd'
 import { fastify, FastifyInstance } from 'fastify'
 import plugin, { setupEmitter } from '../../index'
 import { Readable } from 'stream'
-import {SQLMapperPluginInterface} from '@platformatic/sql-mapper'
+import { SQLMapperPluginInterface } from '@platformatic/sql-mapper'
+import { SQLEventsPluginInterface } from '../../index'
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    platformatic: SQLMapperPluginInterface & SQLEventsPluginInterface
+  }
+}
 
 const instance: FastifyInstance = fastify()
 instance.register(plugin)

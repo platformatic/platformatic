@@ -19,6 +19,12 @@ const log = {
   warn() {}
 }
 
+declare module 'fastify' {
+  interface FastifyInstance {
+    platformatic: SQLMapperPluginInterface
+  }
+}
+
 const pluginOptions: SQLMapperPluginInterface = await connect({ connectionString: '', log })
 expectType<Database>(pluginOptions.db)
 expectType<SQL>(pluginOptions.sql)
