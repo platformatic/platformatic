@@ -6,10 +6,12 @@ import { PlatformaticDB } from './config'
 import { PlatformaticApp as _PlatformaticApp } from '@platformatic/service'
 import { SQLMapperPluginInterface, Entities as _Entities, EntityHooks as _EntityHooks, Entity as _Entity } from '@platformatic/sql-mapper'
 import { SQLEventsPluginInterface } from '@platformatic/sql-events'
+import { DBAuthorizationPluginInterface } from '@platformatic/db-authorization'
 
 export type PlatformaticDBMixin<T extends Entities> =
   SQLMapperPluginInterface<T> &
-  SQLEventsPluginInterface
+  SQLEventsPluginInterface &
+  DBAuthorizationPluginInterface
 
 export type Entities = _Entities
 export type EntityHooks<T> = _EntityHooks<T>
