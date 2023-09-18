@@ -13,10 +13,10 @@ import { platformaticDB } from '../index.js'
 const DEFAULT_TYPES_FOLDER_PATH = resolve(process.cwd(), 'types')
 
 const GLOBAL_TYPES_TEMPLATE = `\
-import { PlatformaticApp, PlatformaticDBMixin, PlatformaticDBConfig } from '@platformatic/db'
+import type { PlatformaticApp, PlatformaticDBMixin, PlatformaticDBConfig, Entity, Entities, EntityHooks } from '@platformatic/db'
 ENTITIES_IMPORTS_PLACEHOLDER
 
-interface Entities {
+interface AppEntities extends Entities {
   ENTITIES_DEFINITION_PLACEHOLDER
 }
 
@@ -27,7 +27,7 @@ interface AppEntityHooks {
 declare module 'fastify' {
   interface FastifyInstance {
     platformatic: PlatformaticApp<PlatformaticDBConfig> &
-      PlatformaticDBMixin<Entities> &
+      PlatformaticDBMixin<AppEntities> &
       AppEntityHooks
   }
 }
