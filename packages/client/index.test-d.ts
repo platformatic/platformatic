@@ -32,6 +32,7 @@ server.register(pltClient, {
 server.register(pltClient, {
   fullRequest: false,
   fullResponse: false,
+  validateResponse: false,
   throwOnError: false,
   type: 'openapi',
   url: 'http://127.0.0.1/path/42',

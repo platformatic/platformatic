@@ -11,6 +11,7 @@ export type PlatformaticClientPluginOptions = {
   throwOnError: boolean;
   fullRequest: boolean;
   fullResponse: boolean;
+  validateResponse?: boolean;
   type: 'openapi' | 'graphql';
   name?: string;
   serviceId?: string;
