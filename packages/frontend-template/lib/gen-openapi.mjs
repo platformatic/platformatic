@@ -5,14 +5,15 @@ import { capitalize, classCase } from './utils.mjs'
 import { STATUS_CODES } from 'node:http'
 import camelcase from 'camelcase'
 
-export function processOpenAPI ({ schema, name, url, language }) {
+export function processOpenAPI ({ schema, name, language }) {
+  console.log(name, language)
   return {
     types: generateTypesFromOpenAPI({ schema, name }),
-    implementation: generateFrontendImplementationFromOpenAPI({ schema, name, url, language })
+    implementation: generateFrontendImplementationFromOpenAPI({ schema, name, language })
   }
 }
 
-function generateFrontendImplementationFromOpenAPI ({ schema, name, url, language }) {
+function generateFrontendImplementationFromOpenAPI ({ schema, name, language }) {
   const capitalizedName = capitalize(name)
   const { paths } = schema
   const generatedOperationIds = []

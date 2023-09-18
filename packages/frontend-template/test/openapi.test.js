@@ -148,8 +148,31 @@ console.log(await getReturnUrl({}))
   const output = await execa('node', [join(dir, 'test.js')])
   /* eslint-disable no-control-regex */
   const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n') // remove ANSI colors, if any
-  console.log(lines)
   /* eslint-enable no-control-regex */
   equal(lines[0], `{ url: '${app.url}' }`) // client, app object
   equal(lines[1], `{ url: '${app2.url}' }`) // raw, app2 object
+})
+
+test('generate frontend client from path', async ({ teardown, ok, match }) => {
+  const dir = await moveToTmpdir(teardown)
+
+  const fileName = join(__dirname, 'fixtures', 'openapi.json')
+  await execa('node', [cliPath, fileName, 'ts'])
+  const implementation = await readFile(join(dir, 'api.ts'), 'utf8')
+  const types = await readFile(join(dir, 'api-types.d.ts'), 'utf8')
+
+  const tsImplementationTemplate = `
+export const getHello: Api['getHello'] = async (request: Types.GetHelloRequest) => {
+  return await _getHello(baseUrl, request)
+}`
+  const typesTemplate = `
+export interface Api {
+  setBaseUrl(newUrl: string) : void;
+  getHello(req: GetHelloRequest): Promise<GetHelloResponseOK>;
+}`
+
+  ok(implementation)
+  ok(types)
+  match(implementation, tsImplementationTemplate)
+  match(types, typesTemplate)
 })
