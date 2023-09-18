@@ -15,26 +15,25 @@ async function frontendTemplate ({ source, language, name }) {
   })
   let schema
   if (source.startsWith('http')) {
-    // Load the OpenAPI spec
-    let res
-
-    const apiUrl = source.endsWith('/') ? source.replace(/\/$/, '') : source // Remove the trailing slash
     try {
-      const documentationUrl = `${apiUrl}/documentation/json`
-      res = await request(documentationUrl)
+      // Load the OpenAPI spec
+      const apiUrl = new URL(source)
+      if (apiUrl.pathname === '/') {
+        apiUrl.pathname = '/documentation/json'
+      }
+      const res = await request(apiUrl)
+
+      if (res.statusCode !== 200) {
+        await help.toStdout(['open-api-server-no-200'])
+        process.exit(1)
+      }
+
+      const text = await res.body.text()
+      schema = JSON.parse(text)
     } catch (err) {
       await help.toStdout(['open-api-server-error'])
       process.exit(1)
     }
-
-    if (res.statusCode !== 200) {
-      await help.toStdout(['open-api-server-no-200'])
-      process.exit(1)
-    }
-
-    const text = await res.body.text()
-
-    schema = JSON.parse(text)
   } else {
     // source is a file
     schema = JSON.parse(await readFile(source, 'utf-8'))

@@ -12,7 +12,7 @@ import { execa } from 'execa'
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 
-test('build basic client from url', async ({ teardown, same, match }) => {
+test('build basic client from url', async ({ teardown, ok, match }) => {
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'sample', 'db.sqlite'))
   } catch {
@@ -63,6 +63,7 @@ export const getRedirect = async (request) => {
   const factoryImplementation = `
 export default function build (url) {
   return {
+    getCustomSwagger: _getCustomSwagger.bind(url, ...arguments),
     getRedirect: _getRedirect.bind(url, ...arguments),
     getReturnUrl: _getReturnUrl.bind(url, ...arguments)
   }
@@ -78,6 +79,32 @@ export default function build(url: string): PlatformaticFrontendClient`
   match(implementation, factoryImplementation)
   match(types, factoryType)
   match(types, camelCase)
+
+  {
+    // Support custom url in cli
+    const dir = await moveToTmpdir(teardown)
+    await execa('node', [cliPath, `${app.url}/custom-swagger`, 'js'])
+    const implementation = await readFile(join(dir, 'api.js'), 'utf8')
+    const types = await readFile(join(dir, 'api-types.d.ts'), 'utf8')
+
+    const jsImplementationTemplate = `
+/**  @type {import('./api-types.d.ts').Api['getCustomSwagger']} */
+export const getCustomSwagger = async (request) => {
+  return await _getCustomSwagger(baseUrl, request)
+}`
+    const typesTemplate = `
+export interface Api {
+  setBaseUrl(newUrl: string) : void;
+  getCustomSwagger(req: GetCustomSwaggerRequest): Promise<GetCustomSwaggerResponseOK>;
+  getRedirect(req: GetRedirectRequest): Promise<FullResponse<GetRedirectResponseFound> | FullResponse<GetRedirectResponseBadRequest>>;
+  getReturnUrl(req: GetReturnUrlRequest): Promise<GetReturnUrlResponseOK>;
+}`
+
+    ok(implementation)
+    ok(types)
+    match(implementation, jsImplementationTemplate)
+    match(types, typesTemplate)
+  }
 })
 
 test('generate correct file names', async ({ teardown, ok }) => {
