@@ -31,3 +31,7 @@ If you run into a bug or have a suggestion for improvement, please
 If you're only interested in the features available in Platformatic Service, you can simply switch `platformatic` with `@platformatic/service` in the `dependencies` of your `package.json`, so that you'll only import fewer deps.
 
 You can use the `plt-service` command, it's the equivalent of `plt service`.
+
+## TypeScript
+
+To generate the types for the application, run `platformatic db types`.
