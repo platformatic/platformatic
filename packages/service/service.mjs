@@ -24,6 +24,7 @@ function wrapCommand (fn) {
   return async function (...args) {
     try {
       return await fn(...args)
+      /* c8 ignore next 3 */
     } catch (err) {
       printAndExitLoadConfigError(err)
     }

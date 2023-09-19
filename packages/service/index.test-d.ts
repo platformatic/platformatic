@@ -1,10 +1,16 @@
 import { expectType } from 'tsd'
 import { FastifyInstance } from 'fastify'
-import { buildServer } from '.'
+import { buildServer, PlatformaticApp } from '.'
 import ConfigManager from '@platformatic/config'
 import { OpenAPI } from 'openapi-types'
 import type { MercuriusPlugin } from 'mercurius'
 import { PlatformaticService } from './config'
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    platformatic: PlatformaticApp<PlatformaticService>
+  }
+}
 
 const server = await buildServer({
 })
