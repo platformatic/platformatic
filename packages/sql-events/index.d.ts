@@ -1,4 +1,4 @@
-import { FastifyPluginAsync } from 'fastify'
+import { FastifyInstance } from 'fastify'
 import { Readable } from 'stream'
 import { SQLMapperPluginInterface, Entities } from '@platformatic/sql-mapper'
 
@@ -17,6 +17,6 @@ export interface SQLEventsPluginOptions<T extends Entities> {
 /**
  * Fastify plugin that add events capabilities to registered sql-mapper 
  */
-export default function plugin<T extends Entities>(options: SQLEventsPluginOptions<T>): Promise<SQLEventsPluginInterface>
+export default function plugin<T extends Entities>(app: FastifyInstance, options: SQLEventsPluginOptions<T>): Promise<SQLEventsPluginInterface>
 
 export function setupEmitter<T extends Entities>(options: SQLEventsPluginOptions<T>): void
