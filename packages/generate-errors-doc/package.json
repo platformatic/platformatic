@@ -1,0 +1,32 @@
+{
+  "name": "@platformatic/generate-errors-doc",
+  "version": "0.42.3",
+  "description": "",
+  "main": "generate.js",
+  "scripts": {
+    "lint": "standard | snazzy",
+    "generate-doc": "node generate.js"
+  },
+  "author": "Marco Piraccini <marco@platformatic.dev>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformatic/platformatic/issues"
+  },
+  "homepage": "https://github.com/platformatic/platformatic#readme",
+  "devDependencies": {
+    "@platformatic/sql-graphql": "workspace:*",
+    "@platformatic/sql-mapper": "workspace:*",
+    "snazzy": "^9.0.0",
+    "standard": "^17.1.0"
+  },
+  "standard": {
+    "ignore": [
+      "**/test/tmp"
+    ]
+  }
+}
+

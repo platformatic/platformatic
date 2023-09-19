@@ -1,3 +1,5 @@
+'use strict'
+
 const createError = require('@fastify/error')
 
 const ERROR_PREFIX = 'PLT_SQL_MAPPER'

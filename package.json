@@ -10,7 +10,8 @@
     "lint:markdown": "markdownlint-cli2",
     "test:config": "cd packages/config && pnpm test",
     "test:metaconfig": "cd packages/config && pnpm test",
-    "lint": "pnpm -r --workspace-concurrency=1 lint"
+    "lint": "pnpm -r --workspace-concurrency=1 lint",
+    "generate-errors-doc": "cd packages/generate-errors-doc && pnpm run generate-doc"
   },
   "packageManager": "pnpm@8.7.6",
   "devDependencies": {
