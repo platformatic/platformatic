@@ -1509,6 +1509,9 @@ importers:
       c8:
         specifier: ^8.0.0
         version: 8.0.1
+      fastify:
+        specifier: ^4.18.0
+        version: 4.23.2
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0

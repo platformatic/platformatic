@@ -6,7 +6,9 @@ import isMain from 'es-main'
 import helpMe from 'help-me'
 import { readFile } from 'fs/promises'
 import { join } from 'desm'
+import { printAndExitLoadConfigError } from '@platformatic/config'
 import { generateJsonSchemaConfig } from './lib/gen-schema.js'
+import { generateTypes } from './lib/gen-types.mjs'
 
 import { buildCompileCmd } from './lib/compile.js'
 
@@ -18,20 +20,29 @@ const help = helpMe({
   ext: '.txt'
 })
 
+function wrapCommand (fn) {
+  return async function (...args) {
+    try {
+      return await fn(...args)
+    } catch (err) {
+      printAndExitLoadConfigError(err)
+    }
+  }
+}
+
 const program = commist({ maxDistance: 2 })
 
 program.register('help', help.toStdout)
 program.register('help start', help.toStdout.bind(null, ['start']))
 
 program.register('start', (argv) => {
-  start(platformaticService, argv).catch((err) => {
-    /* c8 ignore next 2 */
-    console.error(err)
-    process.exit(1)
-  })
+  /* c8 ignore next 1 */
+  start(platformaticService, argv).catch(printAndExitLoadConfigError)
 })
+
 program.register('compile', buildCompileCmd(platformaticService))
-program.register('schema config', generateJsonSchemaConfig)
+program.register('types', wrapCommand(generateTypes))
+program.register('schema config', wrapCommand(generateJsonSchemaConfig))
 program.register('schema', help.toStdout.bind(null, ['schema']))
 
 export async function runService (argv) {

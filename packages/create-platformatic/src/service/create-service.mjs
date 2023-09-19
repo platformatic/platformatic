@@ -101,17 +101,6 @@ export default async function (fastify: FastifyInstance, opts: FastifyPluginOpti
 }
 `
 
-const TS_GLOBAL_TYPES = `\
-import { FastifyInstance } from 'fastify'
-import { PlatformaticApp, PlatformaticServiceConfig } from '@platformatic/service'
-
-declare module 'fastify' {
-  interface FastifyInstance {
-    platformatic: PlatformaticApp<PlatformaticServiceConfig>
-  }
-}
-`
-
 async function generatePluginWithTypesSupport (logger, currentDir, isTypescript) {
   await mkdir(join(currentDir, 'plugins'))
   const pluginTemplate = isTypescript
@@ -191,9 +180,6 @@ async function createService ({ hostname, port, typescript = false }, logger, cu
   } else {
     logger.info('Routes folder "routes" found, skipping creation of routes folder.')
   }
-
-  await writeFile(join(currentDir, 'global.d.ts'), TS_GLOBAL_TYPES)
-  logger.info('global.d.ts successfully created.;')
 
   const output = {
     PLT_SERVER_LOGGER_LEVEL: 'info',

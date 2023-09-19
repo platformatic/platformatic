@@ -5,7 +5,9 @@ import isMain from 'es-main'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { MigrateError } from './errors.mjs'
-import { execute as generateTypes, checkForDependencies } from './gen-types.mjs'
+import { checkForDependencies } from '@platformatic/utils'
+import { createRequire } from 'node:module'
+import { execute as generateTypes } from './gen-types.mjs'
 import { utimesSync } from 'fs'
 import { updateSchemaLock } from './utils.js'
 import { loadConfig } from '@platformatic/config'
@@ -51,7 +53,7 @@ async function applyMigrations (_args) {
 
     if (config.types && config.types.autogenerate) {
       await generateTypes({ logger, config })
-      await checkForDependencies(logger, args, config)
+      await checkForDependencies(logger, args, createRequire(import.meta.url), config, ['@platformatic/db', 'typescript'])
     }
 
     if (appliedMigrations) {
