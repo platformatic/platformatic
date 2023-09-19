@@ -10,7 +10,8 @@ import {
   Database,
   SQLMapperPluginInterface,
   EntityHooks,
-  createConnectionPool
+  createConnectionPool,
+  Entities
 } from '../../mapper'
 
 const log = {
@@ -21,11 +22,11 @@ const log = {
 
 declare module 'fastify' {
   interface FastifyInstance {
-    platformatic: SQLMapperPluginInterface
+    platformatic: SQLMapperPluginInterface<Entities>
   }
 }
 
-const pluginOptions: SQLMapperPluginInterface = await connect({ connectionString: '', log })
+const pluginOptions: SQLMapperPluginInterface<Entities> = await connect<Entities>({ connectionString: '', log })
 expectType<Database>(pluginOptions.db)
 expectType<SQL>(pluginOptions.sql)
 expectType<{ [entityName: string]: Entity }>(pluginOptions.entities)
@@ -62,17 +63,17 @@ const entityHooks: EntityHooks = {
   async count(originalCount: typeof entity.count, ...options: Parameters<typeof entity.count>): ReturnType<typeof entity.count> { return 0 },
 }
 expectType<EntityHooks>(entityHooks)
-expectType<SQLMapperPluginInterface>(await connect({ connectionString: '', log }))
-expectType<SQLMapperPluginInterface>(await connect({ connectionString: '', autoTimestamp: true, log }))
-expectType<SQLMapperPluginInterface>(await connect({ connectionString: '', hooks: {}, log }))
-expectType<SQLMapperPluginInterface>(await connect({
+expectType<SQLMapperPluginInterface<Entities>>(await connect<Entities>({ connectionString: '', log }))
+expectType<SQLMapperPluginInterface<Entities>>(await connect<Entities>({ connectionString: '', autoTimestamp: true, log }))
+expectType<SQLMapperPluginInterface<Entities>>(await connect<Entities>({ connectionString: '', hooks: {}, log }))
+expectType<SQLMapperPluginInterface<Entities>>(await connect<Entities>({
   connectionString: '', hooks: {
     Page: entityHooks
   },
   log
 }))
-expectType<SQLMapperPluginInterface>(await connect({ connectionString: '', ignore: {}, log }))
-expectType<SQLMapperPluginInterface>(await connect({
+expectType<SQLMapperPluginInterface<Entities>>(await connect<Entities>({ connectionString: '', ignore: {}, log }))
+expectType<SQLMapperPluginInterface<Entities>>(await connect<Entities>({
   connectionString: '', log, onDatabaseLoad(db: Database, sql: SQL) {
     expectType<(query: SQLQuery) => Promise<any[]>>(db.query)
     expectType<() => Promise<void>>(db.dispose)
@@ -87,7 +88,7 @@ expectType<SQLMapperPluginInterface>(await connect({
 const instance: FastifyInstance = fastify()
 instance.register(plugin, { connectionString: '', autoTimestamp: true })
 instance.register((instance) => { 
-  expectType<SQLMapperPluginInterface>(instance.platformatic)
+  expectType<SQLMapperPluginInterface<Entities>>(instance.platformatic)
 
   instance.platformatic.addEntityHooks<EntityFields>('something', {
     async find (originalFind, options) {
