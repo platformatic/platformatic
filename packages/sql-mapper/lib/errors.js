@@ -20,6 +20,6 @@ module.exports = {
   ParamLimitNotAllowedError: function (limit, max) { return createError(`${ERROR_PREFIX}_PARAM_LIMIT_NOT_ALLOWED`, 'Param limit=%s not allowed. Max accepted value %s.')(limit, max) },
   ParamLimitMustBeNotNegativeError: function (limit) { return createError(`${ERROR_PREFIX}_PARAM_LIMIT_MUST_BE_NOT_NEGATIVE`, 'Param limit=%s not allowed. It must be a not negative value.')(limit) },
   MissingValueForPrimaryKeyError: function (key) { return createError(`${ERROR_PREFIX}_MISSING_VALUE_FOR_PRIMARY_KEY`, 'Missing value for primary key %s')(key) },
-  SQLiteOnlySupportsAutoIncrementOnOneColumnError: function () { return createError(`${ERROR_PREFIX}_SQLITE_ONLY_SUPPORTS_AUTO_INCREMENT_ON_ONE_COLUMN`, 'SQLite only supports autoIncrement on one column') }
+  SQLiteOnlySupportsAutoIncrementOnOneColumnError: function () { return createError(`${ERROR_PREFIX}_SQLITE_ONLY_SUPPORTS_AUTO_INCREMENT_ON_ONE_COLUMN`, 'SQLite only supports autoIncrement on one column')() }
 
 }
