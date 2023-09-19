@@ -35,6 +35,7 @@
     "@databases/mysql": "^6.0.0",
     "@databases/pg": "^5.4.1",
     "@databases/sql": "^3.3.0",
+    "@fastify/error": "^3.2.1",
     "@hapi/topo": "^6.0.2",
     "@matteo.collina/sqlite-pool": "^0.3.0",
     "@platformatic/types": "workspace:*",

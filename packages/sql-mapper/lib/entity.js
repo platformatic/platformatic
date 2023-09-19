@@ -8,6 +8,7 @@ const {
   sanitizeLimit
 } = require('./utils')
 const { singularize } = require('inflected')
+const errors = require('./errors')
 
 function lowerCaseFirst (str) {
   str = str.toString()
@@ -49,7 +50,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
         if (fields[key] !== undefined) {
           newKey = key
         } else {
-          throw new Error(`Unknown field ${key}`)
+          throw new errors.UnknownFieldError(key)
         }
       }
       newInput[newKey] = value
@@ -76,7 +77,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
   async function save (args) {
     const db = args.tx || defaultDb
     if (args.input === undefined) {
-      throw new Error('Input not provided.')
+      throw new errors.InputNotProvidedError()
     }
     // args.input is not array
     const fieldsToRetrieve = computeFields(args.fields).map((f) => sql.ident(f))
@@ -154,7 +155,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     const db = args.tx || defaultDb
     const fieldsToRetrieve = computeFields(args.fields).map((f) => sql.ident(f))
     if (args.input === undefined) {
-      throw new Error('Input not provided.')
+      throw new errors.InputNotProvidedError()
     }
     const input = fixInput(args.input)
     if (autoTimestamp && fields[autoTimestamp.updatedAt]) {
@@ -224,14 +225,14 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
       const value = where[key]
       const field = inputToFieldMap[key]
       if (!field) {
-        throw new Error(`Unknown field ${key}`)
+        throw new errors.UnknownFieldError(key)
       }
       for (const key of Object.keys(value)) {
         const operator = whereMap[key]
         /* istanbul ignore next */
         if (!operator) {
           // This should never happen
-          throw new Error(`Unsupported where clause ${JSON.stringify(where[key])}`)
+          throw new errors.UnsupportedWhereClauseError(JSON.stringify(where[key]))
         }
         const fieldWrap = fields[field]
         /* istanbul ignore next */
@@ -247,7 +248,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
           } else if (operator === '&&') {
             criteria.push(sql`${sql.ident(field)} && ${value[key]}`)
           } else {
-            throw new Error('Unsupported operator for Array field')
+            throw new errors.UnsupportedOperatorForArrayFieldError()
           }
         } else if (operator === '=' && value[key] === null) {
           criteria.push(sql`${sql.ident(field)} IS NULL`)
@@ -263,7 +264,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
           const like = operator === 'LIKE' ? sql`LIKE` : queries.hasILIKE ? sql`ILIKE` : sql`LIKE`
           criteria.push(sql`${leftHand} ${like} ${value[key]}`)
         } else if (operator === 'ANY' || operator === 'ALL' || operator === '@>' || operator === '<@' || operator === '&&') {
-          throw new Error('Unsupported operator for non Array field')
+          throw new errors.UnsupportedOperatorForNonArrayFieldError()
         } else {
           criteria.push(sql`${sql.ident(field)} ${sql.__dangerous__rawValue(operator)} ${computeCriteriaValue(fieldWrap, value[key])}`)
         }
@@ -314,7 +315,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     query = sql`${query} LIMIT ${sanitizeLimit(opts.limit, limitConfig)}`
     if (opts.offset !== undefined) {
       if (opts.offset < 0) {
-        throw new Error(`Param offset=${opts.offset} not allowed. It must be not negative value.`)
+        throw new errors.ParamNotAllowedError(opts.offset)
       }
       query = sql`${query} OFFSET ${opts.offset}`
     }
@@ -416,7 +417,7 @@ function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, useSc
       const validTypes = ['varchar', 'integer', 'uuid', 'serial']
       const pkType = fields[constraint.column_name].sqlType.toLowerCase()
       if (!validTypes.includes(pkType)) {
-        throw new Error(`Invalid Primary Key type: "${pkType}". We support the following: ${validTypes.join(', ')}.`)
+        throw new errors.InvalidPrimaryKeyTypeError(pkType, validTypes.join(', '))
       }
     }
   }

@@ -452,7 +452,8 @@ test('limit should be 10 by default 100 at max', async ({ pass, teardown, same, 
     await entity.find({ limit: -1 })
     fail('Expected error for limit not allowed value')
   } catch (e) {
-    match(e, new Error('Param limit=-1 not allowed. It must be not negative value.'))
+    match(e.message, 'Param limit=-1 not allowed. It must be a not negative value.')
+    match(e.code, 'PLT_SQL_MAPPER_PARAM_LIMIT_MUST_BE_NOT_NEGATIVE')
   }
 
   same(await (await entity.find({ limit: 1, offset: 0 })).length, 1)
@@ -535,7 +536,8 @@ test('limit must accept custom configuration', async ({ pass, teardown, same, fa
     await entity.find({ limit: -1 })
     fail('Expected error for limit not allowed value')
   } catch (e) {
-    match(e, new Error('Param limit=-1 not allowed. It must be not negative value.'))
+    match(e.message, 'Param limit=-1 not allowed. It must be a not negative value.')
+    match(e.code, 'PLT_SQL_MAPPER_PARAM_LIMIT_MUST_BE_NOT_NEGATIVE')
   }
 
   same(await (await entity.find({ limit: 1, offset: 0 })).length, 1)

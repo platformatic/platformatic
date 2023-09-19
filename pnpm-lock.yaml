@@ -1377,6 +1377,9 @@ importers:
       '@databases/sql':
         specifier: ^3.3.0
         version: 3.3.0
+      '@fastify/error':
+        specifier: ^3.2.1
+        version: 3.3.0
       '@hapi/topo':
         specifier: ^6.0.2
         version: 6.0.2
