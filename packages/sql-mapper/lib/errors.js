@@ -6,7 +6,6 @@ const ERROR_PREFIX = 'PLT_SQL_MAPPER'
 
 // We need to ignore this because some of the errors are actually not thrown
 // in tests (but coverage is still 100% because in "ignored" code).
-/* istanbul ignore next */
 module.exports = {
   CannotFindEntityError: createError(`${ERROR_PREFIX}_CANNOT_FIND_ENTITY`, 'Cannot find entity %s'),
   SpecifyProtocolError: createError(`${ERROR_PREFIX}_SPECIFY_PROTOCOLS`, 'You must specify either postgres, mysql or sqlite as protocols'),
