@@ -123,6 +123,9 @@ class PlatformaticApp {
         this.server.log.error({ err })
         process.exit(1)
       }
+    } else {
+      // Make sure the server has run all the onReady hooks before returning.
+      await this.server.ready()
     }
   }
 
