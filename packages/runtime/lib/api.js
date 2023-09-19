@@ -197,6 +197,7 @@ class RuntimeApi {
     }
 
     try {
+      await service.server.ready()
       const openapiSchema = service.server.swagger()
       return openapiSchema
     } catch (err) {
