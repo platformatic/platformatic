@@ -1,6 +1,7 @@
 import { FastifyPluginAsync, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import type { PlatformaticApp } from '@platformatic/types'
 import { SQL, SQLQuery } from '@databases/sql'
+import { FastifyError } from '@fastify/error'
 
 interface ILogger {
   trace(): any,
@@ -297,7 +298,7 @@ export interface CreateConnectionPoolOptions extends BasePoolOptions {
   log: ILogger
 }
 
-export function createConnectionPool(options: CreateConnectionPoolOptions) : Promise<{ db: Database, sql: SQL }>
+export function createConnectionPool(options: CreateConnectionPoolOptions): Promise<{ db: Database, sql: SQL }>
 
 export interface SQLMapperPluginOptions extends BasePoolOptions {
   /**
@@ -411,4 +412,26 @@ export default plugin
 export module utils {
   export function toSingular(str: string): string
 }
+
+/**
+ * All the errors thrown by the plugin.
+ */
+export module errors {
+  export const CannotFindEntityError: (entityName: string) => FastifyError
+  export const SpecifyProtocolError: () => FastifyError
+  export const ConnectionStringRequiredError: () => FastifyError
+  export const TableMustBeAStringError: (table: any) => FastifyError
+  export const UnknownFieldError: (key: string) => FastifyError
+  export const InputNotProvidedError: () => FastifyError
+  export const UnsupportedWhereClauseError: (where: string) => FastifyError
+  export const UnsupportedOperatorForArrayFieldError: () => FastifyError
+  export const UnsupportedOperatorForNonArrayFieldError: () => FastifyError
+  export const ParamNotAllowedError: (offset: string) => FastifyError
+  export const InvalidPrimaryKeyTypeError: (pkType: string, validTypes: string) => FastifyError
+  export const ParamLimitNotAllowedError: (limit: string, max: string) => FastifyError
+  export const ParamLimitMustBeNotNegativeError: (limit: string) => FastifyError
+  export const MissingValueForPrimaryKeyError: (key: string) => FastifyError
+  export const SQLiteOnlySupportsAutoIncrementOnOneColumnError: () => FastifyError
+}
+
 
