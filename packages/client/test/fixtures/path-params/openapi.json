@@ -6,43 +6,37 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/movies": {
+    "/path/{id}": {
       "get": {
         "parameters": [
           {
-            "name": "id",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "id",
-            "in": "body",
-            "type": "string"
-          },
-          {
-            "name": "id",
-            "in": "query",
-            "type": "string"
-          }
-          ,
-          {
-            "name": "id",
+            "schema": {
+              "type": "string"
+            },
             "in": "path",
-            "type": "string"
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "name",
+            "required": false
           }
         ],
-        "operationId": "getMovies",
+        "operationId": "getPath",
         "responses": {
           "200": {
-            "description": "Default 302 Response",
+            "description": "This field is required",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "description": "Foo bar response",
                   "properties": {
-                    "foo": { "type": "string" },
-                    "bar": { "type": "string" }
+                    "type": { "type": "string" },
+                    "path": { "type": "object" }
                   }
                 }
               }

@@ -8,12 +8,3 @@ export function classCase (str) {
     .map((s) => capitalize(s))
     .join('')
 }
-
-export function isValidUrl (str) {
-  try {
-    new URL(str) // eslint-disable-line no-new
-    return true
-  } catch {
-    return false
-  }
-}

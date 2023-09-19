@@ -102,7 +102,9 @@
           {
             "in": "query",
             "name": "returnType",
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {

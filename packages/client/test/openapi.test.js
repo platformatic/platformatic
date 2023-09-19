@@ -679,6 +679,63 @@ test('build basic client from file (query array parameter)', async ({ teardown, 
   }
 })
 
+test('build basic client from file (path parameter)', async ({ teardown, same, match }) => {
+  try {
+    await fs.unlink(join(__dirname, 'fixtures', 'path-params', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildService(join(__dirname, 'fixtures', 'path-params', 'platformatic.service.json'))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  {
+    // with fullRequest
+    const client = await buildOpenAPIClient({
+      fullRequest: true,
+      url: `${app.url}`,
+      path: join(__dirname, 'fixtures', 'path-params', 'openapi.json')
+    })
+
+    const result = await client.getPath({
+      path: { id: 'baz' },
+      query: { name: 'bar' }
+    })
+    match(result.id, 'baz')
+    match(result.name, 'bar')
+
+    const { id, name } = await client.getPath({ path: { id: 'ok' }, query: { name: undefined } })
+    match(id, 'ok')
+    match(name, undefined)
+
+    let error
+    try {
+      await client.getPath({ path: { id: undefined }, query: { name: 'bar' } })
+    } catch (err) {
+      error = err
+    }
+    match(error instanceof Error, true, 'when no path param is passed')
+  }
+  {
+    // without fullRequest
+    const client = await buildOpenAPIClient({
+      fullRequest: false,
+      url: `${app.url}`,
+      path: join(__dirname, 'fixtures', 'path-params', 'openapi.json')
+    })
+
+    const result = await client.getPath({
+      id: 'baz',
+      name: 'foo'
+    })
+    match(result.id, 'baz')
+    match(result.name, 'foo')
+  }
+})
+
 test('validate response', async ({ teardown, same, notOk }) => {
   const fixtureDirectory = 'validate-response'
   try {

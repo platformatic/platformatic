@@ -232,6 +232,7 @@ import pltClient from '@platformatic/client'
 
 const myPlugin: FastifyPluginAsync<{}> = async (app, options) => {
   app.register(pltClient, {
+    fullRequest: false,
     fullResponse: false,
     throwOnError: false,
     type: 'openapi',

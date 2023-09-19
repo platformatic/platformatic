@@ -7,12 +7,14 @@ const server = await fastify()
 expectError<PlatformaticClientPluginOptions>({})
 
 expectError<PlatformaticClientPluginOptions>({
+  fullRequest: true,
   fullResponse: true,
   throwOnError: true,
   url: 'localhost'
 })
 
 expectError<PlatformaticClientPluginOptions>({
+  fullRequest: true,
   fullResponse: true,
   throwOnError: true,
   type: 'WRONG',
@@ -20,6 +22,7 @@ expectError<PlatformaticClientPluginOptions>({
 })
 
 server.register(pltClient, {
+  fullRequest: true,
   fullResponse: true,
   throwOnError: true,
   type: 'graphql',
@@ -27,7 +30,9 @@ server.register(pltClient, {
 })
 
 server.register(pltClient, {
+  fullRequest: false,
   fullResponse: false,
+  validateResponse: false,
   throwOnError: false,
   type: 'openapi',
   url: 'http://127.0.0.1/path/42',
