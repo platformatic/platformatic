@@ -504,7 +504,7 @@ jobs:
         rm -rf packages/frontend-template/src/platformatic-generated-code
         mkdir -p packages/frontend-template/src/platformatic-generated-code &&
         cd packages/frontend-template/src/platformatic-generated-code &&
-        node ../../../cli/cli.js frontend http://127.0.0.1:9999 ts &&
+        node ../../../client-cil/cli.mjs http://127.0.0.1:9999 --frontend --language ts &&
         pnpm run test:types &&
         pnpm run test:e2e
 
