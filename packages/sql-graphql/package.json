@@ -36,6 +36,7 @@
     "ws": "^8.13.0"
   },
   "dependencies": {
+    "@fastify/error": "^3.2.1",
     "@mercuriusjs/federation": "^2.0.0",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^4.5.0",

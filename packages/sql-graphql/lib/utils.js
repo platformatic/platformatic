@@ -3,6 +3,7 @@
 const graphql = require('graphql')
 const scalars = require('graphql-scalars')
 const { GraphQLJSONObject } = require('graphql-type-json')
+const errors = require('./errors')
 
 // The sqlTypeToGraphQL is shared between
 // all database adapters.
@@ -71,7 +72,7 @@ function fromSelectionSet (selectionSet, fields = new Set()) {
     } else if (s.kind === 'InlineFragment') {
       fromSelectionSet(s.selectionSet, fields)
     } else {
-      throw new Error('Unsupported kind: ' + s.kind)
+      throw new errors.UnsupportedKindError(s.kind)
     }
   }
   return fields

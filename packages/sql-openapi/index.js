@@ -7,6 +7,7 @@ const { mapSQLEntityToJSONSchema } = require('@platformatic/sql-json-schema-mapp
 const entityPlugin = require('./lib/entity-to-routes')
 const manyToMany = require('./lib/many-to-many')
 const fp = require('fastify-plugin')
+const errors = require('./lib/errors')
 
 async function setupOpenAPI (app, opts) {
   const prefix = opts.prefix || ''
@@ -94,3 +95,4 @@ async function setupOpenAPI (app, opts) {
 }
 
 module.exports = fp(setupOpenAPI)
+module.exports.errors = errors
