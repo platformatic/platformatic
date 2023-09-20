@@ -1,6 +1,7 @@
 /// <reference types="@fastify/swagger" />
 import { FastifyPluginAsync } from 'fastify'
 import { OpenAPIV3 } from 'openapi-types'
+import { FastifyError } from '@fastify/error'
 
 export interface SQLOpenApiPluginOptions extends Partial<OpenAPIV3.Document> {
   /**
@@ -17,5 +18,14 @@ export interface SQLOpenApiPluginOptions extends Partial<OpenAPIV3.Document> {
   },
 }
 
+
 declare const plugin: FastifyPluginAsync<SQLOpenApiPluginOptions>
 export default plugin
+
+/**
+ * All the errors thrown by the plugin.
+ */
+export module errors {
+  export const UnableToCreateTheRouteForTheReverseRelationshipError: () => FastifyError
+  export const UnableToCreateTheRouteForThePKColRelationshipError: () => FastifyError
+}

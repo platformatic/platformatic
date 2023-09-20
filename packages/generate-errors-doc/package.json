@@ -19,6 +19,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@platformatic/sql-graphql": "workspace:*",
+    "@platformatic/sql-openapi": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0"

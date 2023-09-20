@@ -6,6 +6,7 @@ const {
   sqlTypeToGraphQL,
   fromSelectionSet
 } = require('./utils')
+const errors = require('./errors')
 
 const ascDesc = new graphql.GraphQLEnumType({
   name: 'OrderByDirection',
@@ -73,7 +74,7 @@ function constructGraph (app, entity, opts, ignore) {
         meta.type = new graphql.GraphQLEnumType({ name, values: enumValues })
       } catch (error) {
         app.log.error({ key, enumValues, entityName, table: entity.table, schema: entity.schema })
-        throw new Error('Unable to generate GraphQLEnumType')
+        throw new errors.UnableToGenerateGraphQLEnumTypeError()
       }
     } else {
       meta.type = sqlTypeToGraphQL(field.sqlType)

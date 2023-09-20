@@ -1,8 +1,6 @@
-# Platformatic Errors
+# Platformatic Errors 
 
-
-## @platformatic/sql-mapper
-
+## @platformatic/sql-mapper 
 
 ### PLT_SQL_MAPPER_CANNOT_FIND_ENTITY
 **Message:** Cannot find entity %s 
@@ -48,3 +46,22 @@
 
 ### PLT_SQL_MAPPER_SQLITE_ONLY_SUPPORTS_AUTO_INCREMENT_ON_ONE_COLUMN
 **Message:** SQLite only supports autoIncrement on one column 
+
+## @platformatic/sql-openapi 
+
+### PLT_SQL_OPENAPI_UNABLE_CREATE_ROUTE_FOR_REVERSE_RELATIONSHIP
+**Message:** Unable to create the route for the reverse relationship 
+
+### PLT_SQL_OPENAPI_UNABLE_CREATE_ROUTE_FOR_PK_COL_RELATIONSHIP
+**Message:** Unable to create the route for the PK col relationship 
+
+## @platformatic/sql-graphql 
+
+### PLT_SQL_GRAPHQL_UNABLE_GENERATE_GRAPHQL_ENUM_TYPE
+**Message:** Unable to generate GraphQLEnumType 
+
+### PLT_SQL_GRAPHQL_UNSUPPORTED_KIND
+**Message:** Unsupported kind: %s 
+
+### PLT_SQL_GRAPHQL_ERROR_PRINTING_GRAPHQL_SCHEMA
+**Message:** Error printing the GraphQL schema 

@@ -5,7 +5,9 @@ const { join } = require('path')
 
 // Add the modules here. Remember to add the dependency to package.json
 const modules = [
-  '@platformatic/sql-mapper'
+  '@platformatic/sql-mapper',
+  '@platformatic/sql-openapi',
+  '@platformatic/sql-graphql'
 ]
 
 const extractErrors = (module) => {
@@ -24,18 +26,15 @@ const extractErrors = (module) => {
 
 const createErrorsMD = (errorsByModule) => {
   const md = []
-  md.push('# Platformatic Errors')
-  md.push('\n')
+  md.push('# Platformatic Errors \n')
   for (const module in errorsByModule) {
-    md.push(`## ${module}`)
-    md.push('\n')
+    md.push(`## ${module} \n`)
     const errors = errorsByModule[module]
     for (const error of errors) {
       const { code, message } = error
       md.push(`### ${code}`)
       md.push(`**Message:** ${message} \n`)
     }
-    md.join('\n')
   }
   return md.join('\n')
 }

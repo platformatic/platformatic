@@ -8,6 +8,7 @@ const { mercuriusFederationPlugin } = require('@mercuriusjs/federation')
 const establishRelations = require('./lib/relationship')
 const setupSubscriptions = require('./lib/subscriptions')
 const scalars = require('graphql-scalars')
+const errors = require('./lib/errors')
 
 async function mapperToGraphql (app, opts) {
   const mapper = app.platformatic
@@ -128,7 +129,7 @@ async function mapperToGraphql (app, opts) {
     /* istanbul ignore next */
     app.log.debug({ query, mutation, subscription }, 'GraphQL input schema')
     /* istanbul ignore next */
-    const newError = new Error('Error printing the GraphQL schema')
+    const newError = new errors.ErrorPrintingGraphQLSchema()
     /* istanbul ignore next */
     newError.cause = error
     /* istanbul ignore next */
@@ -173,3 +174,4 @@ async function mapperToGraphql (app, opts) {
 }
 
 module.exports = fp(mapperToGraphql)
+module.exports.errors = errors
