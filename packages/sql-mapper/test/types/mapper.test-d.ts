@@ -89,7 +89,7 @@ expectType<SQLMapperPluginInterface<Entities>>(await connect<Entities>({
 
 const instance: FastifyInstance = fastify()
 instance.register(plugin, { connectionString: '', autoTimestamp: true })
-instance.register((instance) => { 
+instance.register((instance) => {
   expectType<SQLMapperPluginInterface<Entities>>(instance.platformatic)
 
   instance.platformatic.addEntityHooks<EntityFields>('something', {

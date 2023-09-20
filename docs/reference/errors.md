@@ -1,5 +1,55 @@
 # Platformatic Errors 
 
+## @platformatic/runtime 
+
+### PLT_SQL_RUNTIME_RUNTIME_EXIT
+**Message:** The runtime exited before the operation completed 
+
+### PLT_SQL_RUNTIME_UNKNOWN_RUNTIME_API_COMMAND
+**Message:** Unknown Runtime API command "%s" 
+
+### PLT_SQL_RUNTIME_SERVICE_NOT_FOUND
+**Message:** Service with id '%s' not found 
+
+### PLT_SQL_RUNTIME_SERVICE_NOT_STARTED
+**Message:** Service with id '%s' is not started 
+
+### PLT_SQL_RUNTIME_FAILED_TO_RETRIEVE_OPENAPI_SCHEMA
+**Message:** Failed to retrieve OpenAPI schema for service with id "%s": %s 
+
+### PLT_SQL_RUNTIME_APPLICATION_ALREADY_STARTED
+**Message:** Application is already started 
+
+### PLT_SQL_RUNTIME_APPLICATION_NOT_STARTED
+**Message:** Application has not been started 
+
+### PLT_SQL_RUNTIME_CONFIG_PATH_MUST_BE_STRING
+**Message:** Config path must be a string 
+
+### PLT_SQL_RUNTIME_NO_CONFIG_FILE_FOUND
+**Message:** No config file found for service '%s' 
+
+### PLT_SQL_RUNTIME_INVALID_ENTRYPOINT
+**Message:** Invalid entrypoint: '%s' does not exist 
+
+### PLT_SQL_RUNTIME_MISSING_DEPENDENCY
+**Message:** Missing dependency: "%s" 
+
+### PLT_SQL_RUNTIME_INSPECT_AND_INSPECT_BRK
+**Message:** --inspect and --inspect-brk cannot be used together 
+
+### PLT_SQL_RUNTIME_INSPECTOR_PORT
+**Message:** Inspector port must be 0 or in range 1024 to 65535 
+
+### PLT_SQL_RUNTIME_INSPECTOR_HOST
+**Message:** Inspector host cannot be empty 
+
+### PLT_SQL_RUNTIME_CANNOT_MAP_SPECIFIER_TO_ABSOLUTE_PATH
+**Message:** Cannot map "%s" to an absolute path 
+
+### PLT_SQL_RUNTIME_NODE_INSPECTOR_FLAGS_NOT_SUPPORTED
+**Message:** The Node.js inspector flags are not supported. Please use 'platformatic start --inspect' instead. 
+
 ## @platformatic/service 
 
 **No errors defined** 

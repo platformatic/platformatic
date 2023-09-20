@@ -6,6 +6,7 @@ const { FileWatcher } = require('@platformatic/utils')
 const debounce = require('debounce')
 const { buildServer } = require('./build-server')
 const { loadConfig } = require('./load-config')
+const errors = require('./errors')
 
 class PlatformaticApp {
   #hotReload
@@ -78,7 +79,7 @@ class PlatformaticApp {
 
   async start () {
     if (this.#started) {
-      throw new Error('application is already started')
+      throw new errors.ApplicationAlreadyStartedError()
     }
 
     this.#started = true
@@ -131,7 +132,7 @@ class PlatformaticApp {
 
   async stop () {
     if (!this.#started) {
-      throw new Error('application has not been started')
+      throw new errors.ApplicationNotStartedError()
     }
 
     await this.#stopFileWatching()
@@ -190,7 +191,7 @@ class PlatformaticApp {
       if (appConfig._configOverrides instanceof Map) {
         appConfig._configOverrides.forEach((value, key) => {
           if (typeof key !== 'string') {
-            throw new Error('config path must be a string.')
+            throw new errors.ConfigPathMustBeStringError()
           }
 
           const parts = key.split('.')
