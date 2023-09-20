@@ -53,10 +53,8 @@ export interface DBAuthorizationPluginOptions<T = any> extends FastifyUserPlugin
   rules: Array<AuthorizationRule<T>>
 }
 
-declare module '@platformatic/types' {
-  interface PlatformaticApp {
-    addRulesForRoles: AddRulesForRoles
-  }
+export interface DBAuthorizationPluginInterface {
+  addRulesForRoles: AddRulesForRoles
 }
 
 declare module 'fastify' {

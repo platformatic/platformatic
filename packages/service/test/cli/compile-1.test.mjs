@@ -498,3 +498,34 @@ t.test('should not compile typescript plugin with start without tsconfig', async
     t.equal(err.stdout.includes('No typescript configuration file was found, skipping compilation.'), true)
   }
 })
+
+t.test('should compile ts app with config', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'hello-ts-with-config')
+  const cwd = await getCWD(t)
+
+  await cp(testDir, cwd, { recursive: true })
+
+  const child = execa('node', [cliPath, 'compile'], { cwd })
+
+  t.teardown(exitOnTeardown(child))
+
+  const splitter = split()
+  child.stdout.pipe(splitter)
+
+  for await (const data of splitter) {
+    const sanitized = stripAnsi(data)
+    if (sanitized.includes('Typescript compilation completed successfully.')) {
+      const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
+      try {
+        await access(jsPluginPath)
+      } catch (err) {
+        t.fail(err)
+      }
+
+      t.pass()
+      return
+    }
+  }
+
+  t.fail('should compile typescript plugin with a compile command')
+})

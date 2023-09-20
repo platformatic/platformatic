@@ -4,9 +4,16 @@ import fastify, {
 import { expectType } from 'tsd'
 import auth, {
   AddRulesForRoles,
+  DBAuthorizationPluginInterface,
   DBAuthorizationPluginOptions,
   SetupDBAuthorizationUserDecorator
 } from '../..'
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    platformatic: DBAuthorizationPluginInterface
+  }
+}
 
 expectType<FastifyPluginAsync<DBAuthorizationPluginOptions>>(auth)
 

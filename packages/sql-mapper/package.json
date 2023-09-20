@@ -38,7 +38,6 @@
     "@fastify/error": "^3.2.1",
     "@hapi/topo": "^6.0.2",
     "@matteo.collina/sqlite-pool": "^0.3.0",
-    "@platformatic/types": "workspace:*",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^4.5.0",
     "inflected": "^2.1.0"

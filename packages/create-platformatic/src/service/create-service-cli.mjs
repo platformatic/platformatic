@@ -78,12 +78,23 @@ const createPlatformaticService = async (_args, opts = {}) => {
   const fastifyVersion = await getDependencyVersion('fastify')
 
   if (!opts.skipPackageJson) {
-    await createPackageJson(version, fastifyVersion, logger, projectDir, useTypescript)
+    await createPackageJson(version, fastifyVersion, logger, projectDir, useTypescript, {}, {
+      '@platformatic/service': '^' + version
+    })
   }
   if (!opts.skipGitignore) {
     await createGitignore(logger, projectDir)
   }
   await createReadme(logger, projectDir)
+
+  const spinner = ora('Generating types...').start()
+  try {
+    await execa(pkgManager, ['exec', 'platformatic', 'service', 'types'], { cwd: projectDir })
+    spinner.succeed('...done!')
+  } catch (err) {
+    logger.trace({ err })
+    spinner.fail('...failed! Try again by running "platformatic service types"')
+  }
 
   if (runPackageManagerInstall) {
     const spinner = ora('Installing dependencies...').start()

@@ -1,5 +1,4 @@
 import { FastifyPluginAsync, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import type { PlatformaticApp } from '@platformatic/types'
 import { SQL, SQLQuery } from '@databases/sql'
 import { FastifyError } from '@fastify/error'
 
@@ -334,7 +333,7 @@ export interface Entities {
   [entityName: string]: Entity
 }
 
-export interface SQLMapperPluginInterface {
+export interface SQLMapperPluginInterface<T extends Entities> {
   /**
    * A Database abstraction layer from [@Databases](https://www.atdatabases.org/)
    */
@@ -346,7 +345,7 @@ export interface SQLMapperPluginInterface {
   /**
    * An object containing a key for each table found in the schema, with basic CRUD operations. See [entity.md](./entity.md) for details.
    */
-  entities: Entities,
+  entities: T,
   /**
    * Adds hooks to the entity.
    */
@@ -356,33 +355,6 @@ export interface SQLMapperPluginInterface {
    * Clean up all the data in all entities
    */
   cleanUpAllEntities(): Promise<void>
-}
-
-// Extend the PlatformaticApp interface,
-// Unfortunately we neeed to copy over all the types from SQLMapperPluginInterface
-declare module '@platformatic/types' {
-  interface PlatformaticApp {
-    /**
-     * A Database abstraction layer from [@Databases](https://www.atdatabases.org/)
-     */
-    db: Database,
-    /**
-     * The SQL builder from [@Databases](https://www.atdatabases.org/)
-     */
-    sql: SQL,
-    /**
-     * An object containing a key for each table found in the schema, with basic CRUD operations. See [entity.md](./entity.md) for details.
-     */
-    entities: Entities,
-    /**
-     * Adds hooks to the entity.
-     */
-    addEntityHooks<EntityFields>(entityName: string, hooks: EntityHooks<EntityFields>): any
-    /**
-     * Clean up all the data in all entities
-     */
-    cleanUpAllEntities(): Promise<void>
-  }
 }
 
 export interface PlatformaticContext {
@@ -399,7 +371,7 @@ declare module 'fastify' {
 /**
  * Connects to the database and maps the tables to entities.
  */
-export function connect(options: SQLMapperPluginOptions): Promise<SQLMapperPluginInterface>
+export function connect<T extends Entities>(options: SQLMapperPluginOptions): Promise<SQLMapperPluginInterface<T>>
 /**
  * Fastify plugin that connects to the database and maps the tables to entities.
  */

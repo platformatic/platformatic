@@ -233,23 +233,13 @@ const createPlatformaticDB = async (_args, opts) => {
       }
     }
     if (generatePlugin) {
-      const { generateTypes } = await inquirer.prompt([{
-        type: 'list',
-        name: 'generateTypes',
-        message: 'Do you want to generate types?',
-        default: true,
-        choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-      }])
-
-      if (generateTypes) {
-        const spinner = ora('Generating types...').start()
-        try {
-          await execa(pkgManager, ['exec', 'platformatic', 'db', 'types'], { cwd: projectDir })
-          spinner.succeed('...done!')
-        } catch (err) {
-          logger.trace({ err })
-          spinner.fail('...failed! Try again by running "platformatic db types"')
-        }
+      const spinner = ora('Generating types...').start()
+      try {
+        await execa(pkgManager, ['exec', 'platformatic', 'db', 'types'], { cwd: projectDir })
+        spinner.succeed('...done!')
+      } catch (err) {
+        logger.trace({ err })
+        spinner.fail('...failed! Try again by running "platformatic db types"')
       }
     }
   }
