@@ -5,6 +5,7 @@ const buildCleanUp = require('./lib/clean-up')
 const queriesFactory = require('./lib/queries')
 const fp = require('fastify-plugin')
 const { areSchemasSupported } = require('./lib/utils')
+const errors = require('./lib/errors')
 
 // Ignore the function as it is only used only for MySQL and PostgreSQL
 /* istanbul ignore next */
@@ -89,7 +90,7 @@ async function createConnectionPool ({ log, connectionString, poolSize }) {
     sql = sqlite.sql
     db.isSQLite = true
   } else {
-    throw new Error('You must specify either postgres, mysql or sqlite as protocols')
+    throw new errors.SpecifyProtocolError()
   }
 
   return { db, sql }
@@ -101,7 +102,7 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize, ignor
   }
   // TODO validate config using the schema
   if (!connectionString) {
-    throw new Error('connectionString is required')
+    throw new errors.ConnectionStringRequiredError()
   }
 
   let queries
@@ -162,7 +163,7 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize, ignor
       // it should never happen.
       /* istanbul ignore next */
       if (typeof table !== 'string') {
-        throw new Error(`Table must be a string, got '${table}'`)
+        throw new errors.TableMustBeAStringError(table)
       }
       if (ignore[table] === true) {
         continue
@@ -199,7 +200,7 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize, ignor
   function addEntityHooks (entityName, hooks) {
     const entity = entities[entityName]
     if (!entity) {
-      throw new Error('Cannot find entity ' + entityName)
+      throw new errors.CannotFindEntityError(entityName)
     }
     for (const key of Object.keys(hooks)) {
       if (hooks[key] && entity[key]) {
@@ -239,3 +240,4 @@ module.exports.connect = connect
 module.exports.createConnectionPool = createConnectionPool
 module.exports.plugin = module.exports
 module.exports.utils = require('./lib/utils')
+module.exports.errors = errors

@@ -3,6 +3,7 @@
 const { insertPrep } = require('./shared')
 const shared = require('./mysql-shared')
 const { tableName } = require('../utils')
+const errors = require('../errors')
 
 function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve) {
   const keysToSql = Object.keys(input).map((key) => sql.ident(key))
@@ -48,7 +49,7 @@ function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRetrieve
       // TODO write a test that cover this
       /* istanbul ignore next */
       if (!input[key]) {
-        throw new Error(`Missing value for primary key ${key}`)
+        throw new errors.MissingValueForPrimaryKeyError(key)
       }
       where.push(sql`${sql.ident(key)} = ${input[key]}`)
     }

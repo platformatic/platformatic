@@ -942,6 +942,21 @@ importers:
         specifier: ^4.3.4
         version: 4.4.9
 
+  packages/generate-errors-doc:
+    devDependencies:
+      '@platformatic/sql-graphql':
+        specifier: workspace:*
+        version: link:../sql-graphql
+      '@platformatic/sql-mapper':
+        specifier: workspace:*
+        version: link:../sql-mapper
+      snazzy:
+        specifier: ^9.0.0
+        version: 9.0.0
+      standard:
+        specifier: ^17.1.0
+        version: 17.1.0(@typescript-eslint/parser@5.62.0)
+
   packages/metaconfig:
     dependencies:
       '@iarna/toml':
@@ -1364,6 +1379,9 @@ importers:
         version: 5.4.1(typescript@5.2.2)
       '@databases/sql':
         specifier: ^3.3.0
+        version: 3.3.0
+      '@fastify/error':
+        specifier: ^3.2.1
         version: 3.3.0
       '@hapi/topo':
         specifier: ^6.0.2
