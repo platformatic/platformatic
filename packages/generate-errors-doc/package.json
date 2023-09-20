@@ -18,9 +18,14 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
+    "@platformatic/service": "workspace:*",
     "@platformatic/sql-graphql": "workspace:*",
     "@platformatic/sql-openapi": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
+    "@platformatic/sql-events": "workspace:*",
+    "@platformatic/sql-json-schema-mapper": "workspace:*",
+    "@platformatic/telemetry": "workspace:*",
+    "@platformatic/utils": "workspace:*",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0"
   },

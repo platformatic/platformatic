@@ -1,5 +1,9 @@
 # Platformatic Errors 
 
+## @platformatic/service 
+
+**No errors defined** 
+
 ## @platformatic/sql-mapper 
 
 ### PLT_SQL_MAPPER_CANNOT_FIND_ENTITY
@@ -65,3 +69,27 @@
 
 ### PLT_SQL_GRAPHQL_ERROR_PRINTING_GRAPHQL_SCHEMA
 **Message:** Error printing the GraphQL schema 
+
+## @platformatic/sql-events 
+
+### PLT_SQL_EVENTS_OBJECT_IS_REQUIRED_UNDER_THE_DATA_PROPERTY
+**Message:** The object that will be published is required under the data property 
+
+### PLT_SQL_EVENTS_PRIMARY_KEY_IS_NECESSARY_INSIDE_DATA
+**Message:** The primaryKey is necessary inside data 
+
+### PLT_SQL_EVENTS_NO_SUCH_ACTION
+**Message:** No such action %s 
+
+## @platformatic/sql-json-schema-mapper 
+
+**No errors defined** 
+
+## @platformatic/telemetry 
+
+**No errors defined** 
+
+## @platformatic/utils 
+
+### PLT_SQL_UTILS_PATH_OPTION_REQUIRED
+**Message:** path option is required 

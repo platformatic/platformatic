@@ -5,9 +5,14 @@ const { join } = require('path')
 
 // Add the modules here. Remember to add the dependency to package.json
 const modules = [
+  '@platformatic/service',
   '@platformatic/sql-mapper',
   '@platformatic/sql-openapi',
-  '@platformatic/sql-graphql'
+  '@platformatic/sql-graphql',
+  '@platformatic/sql-events',
+  '@platformatic/sql-json-schema-mapper',
+  '@platformatic/telemetry',
+  '@platformatic/utils'
 ]
 
 const extractErrors = (module) => {
@@ -30,6 +35,10 @@ const createErrorsMD = (errorsByModule) => {
   for (const module in errorsByModule) {
     md.push(`## ${module} \n`)
     const errors = errorsByModule[module]
+    if (errors.length === 0) {
+      md.push('**No errors defined** \n')
+      continue
+    }
     for (const error of errors) {
       const { code, message } = error
       md.push(`### ${code}`)
