@@ -1,9 +1,10 @@
 import { expectType } from 'tsd'
 import { fastify, FastifyInstance } from 'fastify'
-import plugin, { setupEmitter } from '../../index'
+import plugin, { setupEmitter, errors } from '../../index'
 import { Readable } from 'stream'
 import { SQLMapperPluginInterface, Entities } from '@platformatic/sql-mapper'
 import { SQLEventsPluginInterface } from '../../index'
+import { FastifyError } from '@fastify/error'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -22,3 +23,11 @@ instance.register(async (instance) => {
 setupEmitter({ mapper: {} as SQLMapperPluginInterface<Entities> })
 setupEmitter({ mapper: {} as SQLMapperPluginInterface<Entities>, connectionString: 'redis://localhost:6379' })
 setupEmitter({ mapper: {} as SQLMapperPluginInterface<Entities>, mq: {} })
+
+// Errors
+type ErrorWithNoParams = () => FastifyError
+type ErrorWithOneParam = (param: string) => FastifyError
+
+expectType<ErrorWithOneParam>(errors.NoSuchActionError)
+expectType<ErrorWithNoParams>(errors.ObjectRequiredUnderTheDataProperty)
+expectType<ErrorWithNoParams>(errors.PrimaryKeyIsNecessaryInsideData)

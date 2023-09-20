@@ -944,15 +944,30 @@ importers:
 
   packages/generate-errors-doc:
     devDependencies:
+      '@platformatic/service':
+        specifier: workspace:*
+        version: link:../service
+      '@platformatic/sql-events':
+        specifier: workspace:*
+        version: link:../sql-events
       '@platformatic/sql-graphql':
         specifier: workspace:*
         version: link:../sql-graphql
+      '@platformatic/sql-json-schema-mapper':
+        specifier: workspace:*
+        version: link:../sql-json-schema-mapper
       '@platformatic/sql-mapper':
         specifier: workspace:*
         version: link:../sql-mapper
       '@platformatic/sql-openapi':
         specifier: workspace:*
         version: link:../sql-openapi
+      '@platformatic/telemetry':
+        specifier: workspace:*
+        version: link:../telemetry
+      '@platformatic/utils':
+        specifier: workspace:*
+        version: link:../utils
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -1239,21 +1254,11 @@ importers:
         specifier: ^2.3.1
         version: 2.3.2
 
-  packages/shared:
+  packages/sql-events:
     dependencies:
       '@fastify/error':
         specifier: ^3.2.1
         version: 3.3.0
-    devDependencies:
-      snazzy:
-        specifier: ^9.0.0
-        version: 9.0.0
-      standard:
-        specifier: ^17.1.0
-        version: 17.1.0(@typescript-eslint/parser@5.62.0)
-
-  packages/sql-events:
-    dependencies:
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -1529,6 +1534,9 @@ importers:
       '@fastify/deepmerge':
         specifier: ^1.3.0
         version: 1.3.0
+      '@fastify/error':
+        specifier: ^3.2.1
+        version: 3.3.0
       minimatch:
         specifier: ^8.0.4
         version: 8.0.4
