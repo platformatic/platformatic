@@ -132,7 +132,7 @@ export default myPlugin
     compilerOptions: {
       outDir: 'build',
       target: 'es2018',
-      moduleResolution: 'node',
+      moduleResolution: 'NodeNext',
       lib: ['es2018']
     }
   }, null, 2)
@@ -259,7 +259,7 @@ export default myPlugin
     compilerOptions: {
       outDir: 'build',
       target: 'es2018',
-      moduleResolution: 'node',
+      moduleResolution: 'NodeNext',
       lib: ['es2018']
     }
   }, null, 2)
