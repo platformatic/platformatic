@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/generate-errors-doc",
-  "version": "0.42.3",
+  "version": "0.44.0",
   "description": "",
   "main": "generate.js",
   "scripts": {
@@ -29,4 +29,3 @@
     ]
   }
 }
-
