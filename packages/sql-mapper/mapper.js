@@ -1,5 +1,6 @@
 'use strict'
 
+const { findNearestString } = require('@platformatic/utils')
 const buildEntity = require('./lib/entity')
 const buildCleanUp = require('./lib/clean-up')
 const queriesFactory = require('./lib/queries')
@@ -155,6 +156,14 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize, ignor
             }
           }
         }
+      }
+    }
+
+    const schemaTables = dbschema.map(table => table.table)
+    for (const ignoreTable of Object.keys(ignore)) {
+      if (!schemaTables.includes(ignoreTable)) {
+        const nearestTable = findNearestString(schemaTables, ignoreTable)
+        throw new errors.IgnoredTableNotFound(ignoreTable, nearestTable)
       }
     }
 

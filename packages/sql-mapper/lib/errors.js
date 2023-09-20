@@ -19,5 +19,7 @@ module.exports = {
   ParamLimitNotAllowedError: createError(`${ERROR_PREFIX}_PARAM_LIMIT_NOT_ALLOWED`, 'Param limit=%s not allowed. Max accepted value %s.'),
   ParamLimitMustBeNotNegativeError: createError(`${ERROR_PREFIX}_PARAM_LIMIT_MUST_BE_NOT_NEGATIVE`, 'Param limit=%s not allowed. It must be a not negative value.'),
   MissingValueForPrimaryKeyError: createError(`${ERROR_PREFIX}_MISSING_VALUE_FOR_PRIMARY_KEY`, 'Missing value for primary key %s'),
-  SQLiteOnlySupportsAutoIncrementOnOneColumnError: createError(`${ERROR_PREFIX}_SQLITE_ONLY_SUPPORTS_AUTO_INCREMENT_ON_ONE_COLUMN`, 'SQLite only supports autoIncrement on one column')
+  SQLiteOnlySupportsAutoIncrementOnOneColumnError: createError(`${ERROR_PREFIX}_SQLITE_ONLY_SUPPORTS_AUTO_INCREMENT_ON_ONE_COLUMN`, 'SQLite only supports autoIncrement on one column'),
+  IgnoredTableNotFound: createError(`${ERROR_PREFIX}_IGNORED_TABLE_NOT_FOUND`, 'Ignored table "%s" not found. Did you mean "%s"?'),
+  IgnoredColumnNotFound: createError(`${ERROR_PREFIX}_IGNORED_COLUMN_NOT_FOUND`, 'Ignored column "%s" not found. Did you mean "%s"?')
 }

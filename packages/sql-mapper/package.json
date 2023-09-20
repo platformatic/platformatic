@@ -32,6 +32,7 @@
     "tsd": "^0.29.0"
   },
   "dependencies": {
+    "@platformatic/utils": "workspace:*",
     "@databases/mysql": "^6.0.0",
     "@databases/pg": "^5.4.1",
     "@databases/sql": "^3.3.0",

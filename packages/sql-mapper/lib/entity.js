@@ -8,6 +8,7 @@ const {
   sanitizeLimit
 } = require('./utils')
 const { singularize } = require('inflected')
+const { findNearestString } = require('@platformatic/utils')
 const errors = require('./errors')
 
 function lowerCaseFirst (str) {
@@ -369,6 +370,14 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
 }
 
 function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, useSchemaInName, ignore, limitConfig, schemaList, columns, constraintsList) {
+  const columnsNames = columns.map(c => c.column_name)
+  for (const ignoredColumn of Object.keys(ignore)) {
+    if (!columnsNames.includes(ignoredColumn)) {
+      const nearestColumn = findNearestString(columnsNames, ignoredColumn)
+      throw new errors.IgnoredColumnNotFound(ignoredColumn, nearestColumn)
+    }
+  }
+
   // Compute the columns
   columns = columns.filter((c) => !ignore[c.column_name])
   const fields = columns.reduce((acc, column) => {
