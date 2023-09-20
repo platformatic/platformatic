@@ -87,6 +87,12 @@ const createPlatformaticService = async (_args, opts = {}) => {
   }
   await createReadme(logger, projectDir)
 
+  if (runPackageManagerInstall) {
+    const spinner = ora('Installing dependencies...').start()
+    await execa(pkgManager, ['install'], { cwd: projectDir })
+    spinner.succeed('...done!')
+  }
+
   const spinner = ora('Generating types...').start()
   try {
     await execa(pkgManager, ['exec', 'platformatic', 'service', 'types'], { cwd: projectDir })
@@ -94,12 +100,6 @@ const createPlatformaticService = async (_args, opts = {}) => {
   } catch (err) {
     logger.trace({ err })
     spinner.fail('...failed! Try again by running "platformatic service types"')
-  }
-
-  if (runPackageManagerInstall) {
-    const spinner = ora('Installing dependencies...').start()
-    await execa(pkgManager, ['install'], { cwd: projectDir })
-    spinner.succeed('...done!')
   }
 
   if (!opts.skipGitHubActions) {

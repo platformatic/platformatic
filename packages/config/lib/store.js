@@ -68,6 +68,8 @@ class Store {
         if (err.code === 'ERR_REQUIRE_ESM') {
           const toLoad = require.resolve(module)
           app = (await import('file://' + toLoad)).default
+        } else {
+          throw err
         }
       }
     }
@@ -75,7 +77,11 @@ class Store {
     if (app === undefined) {
       const attemptedToRunVersion = this.getVersionFromSchema($schema)
 
-      throw new Error(`Version mismatch. You are running Platformatic ${this.#currentVersion} but your app requires ${attemptedToRunVersion}`)
+      if (attemptedToRunVersion === null) {
+        throw new Error('Add a module property to the config or add a known $schema.')
+      } else {
+        throw new Error(`Version mismatch. You are running Platformatic ${this.#currentVersion} but your app requires ${attemptedToRunVersion}`)
+      }
     }
 
     return app
