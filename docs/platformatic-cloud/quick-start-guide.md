@@ -242,3 +242,26 @@ you should receive a response from the endpoint that you just added to
 your application.
 
 ![Screenshot of a JSON response from an API endpoint](./images/quick-start-guide/hello-json-response.png)
+
+## Calculate the risk of a pull request
+
+You can use the Platformatic Cloud API to calculate the risk of a pull request
+being merged into your production environment. The risk score is calculated
+based on the potential breaking changes in the application API. For example, if a
+pull request adds a new endpoint, it will not be considered a breaking change
+and will not increase the risk score. However, if a pull request changes the
+open API specification for an existing endpoint, it will be considered a
+breaking change and will increase the risk score.
+
+To calculate the risk score for a pull request, you can use the Platformatic Risk
+Calculation GitHub Action. If you are using the latest version of the Platformatic
+app creator, this action will already be set up for you. If not, here is an [example](https://github.com/platformatic/onestep#deploy-app-to-the-dynamic-workspace-and-calculate-the-risk)
+of how to set it up.
+
+When a Platformatic Deploy Action is finished, the Platformatic Risk Calculation
+Action will be triggered. The risk score will be calculated for each production
+workspace that exists for your app. Besides the risk score, the action will also
+return a list of breaking changes that were detected in the pull request and show
+the graph of services that are affected by the changes.
+
+![Screenshot of a risk calculation comment on a GitHub pull request](./images/quick-start-guide/github-pr-risk-calculation-comment.png)
