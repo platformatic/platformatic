@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-openapi",
-  "version": "0.44.0",
+  "version": "0.45.0",
   "description": "Map a SQL database to OpenAPI, for Fastify",
   "main": "index.js",
   "types": "index.d.ts",
