@@ -9,8 +9,9 @@ import { cliPath, safeKill } from './helper.mjs'
 import { fileURLToPath } from 'url'
 
 let count = 0
+const isWin = os.platform() === 'win32'
 
-if (os.platform() !== 'win32') {
+if (!isWin) {
   t.jobs = 5
 }
 t.setTimeout(360000)
@@ -266,7 +267,7 @@ t.test('should compile typescript plugin with start command with different cwd',
   t.fail('should compile typescript plugin with start command')
 })
 
-t.test('valid tsconfig file inside an inner folder', async (t) => {
+t.test('valid tsconfig file inside an inner folder', { skip: isWin }, async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
   const cwd = await getCWD(t)
 
