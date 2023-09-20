@@ -60,11 +60,9 @@ t.test('generate ts types', async (t) => {
   await mkdir(cwd)
   await cp(testDir, cwd, { recursive: true })
 
-  /*
   t.teardown(async () => {
     await safeRm(cwd)
   })
-  */
 
   try {
     t.comment('running migrations')
