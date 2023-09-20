@@ -3,7 +3,7 @@
 import { test } from 'tap'
 import { buildServer } from '@platformatic/db'
 import { join } from 'path'
-import { processOpenAPI } from '../lib/gen-openapi.mjs'
+import { processFrontendOpenAPI } from '../lib/frontend-openapi-generator.mjs'
 import fs, { readFile, writeFile } from 'fs/promises'
 import { request } from 'undici'
 import * as url from 'url'
@@ -26,7 +26,7 @@ test('build basic client from url', async ({ teardown, ok, match }) => {
   await app.start()
   const res = await request(`${app.url}/documentation/json`)
   const schema = await res.body.json()
-  const { types, implementation } = processOpenAPI({ schema, name: 'sample-frontend', url: app.url, language: 'js' })
+  const { types, implementation } = processFrontendOpenAPI({ schema, name: 'sample', language: 'js', fullResponse: false })
 
   // The types interfaces are being created
   match(types, /interface FullResponse<T>/)
@@ -55,7 +55,7 @@ async function _getRedirect (url, request) {
   }
 }
 
-/**  @type {import('./api-types.d.ts').Api['getRedirect']} */
+/**  @type {import('./sample-types.d.ts').Sample['getRedirect']} */
 export const getRedirect = async (request) => {
   return await _getRedirect(baseUrl, request)
 }`
@@ -70,11 +70,11 @@ export default function build (url) {
 }`
   // factory type
   const factoryType = `
-type PlatformaticFrontendClient = Omit<Api, 'setBaseUrl'>
+type PlatformaticFrontendClient = Omit<Sample, 'setBaseUrl'>
 export default function build(url: string): PlatformaticFrontendClient`
 
   // Correct CamelCase name
-  const camelCase = 'export interface SampleFrontend {'
+  const camelCase = 'export interface Sample {'
   match(implementation, expectedImplementation)
   match(implementation, factoryImplementation)
   match(types, factoryType)
@@ -83,17 +83,17 @@ export default function build(url: string): PlatformaticFrontendClient`
   {
     // Support custom url in cli
     const dir = await moveToTmpdir(teardown)
-    await execa('node', [cliPath, `${app.url}/custom-swagger`, 'js'])
-    const implementation = await readFile(join(dir, 'api.js'), 'utf8')
-    const types = await readFile(join(dir, 'api-types.d.ts'), 'utf8')
+    await execa('node', [cliPath, `${app.url}/custom-swagger`, '--frontend', '--name', 'sample'])
+    const implementation = await readFile(join(dir, 'sample', 'sample.mjs'), 'utf8')
+    const types = await readFile(join(dir, 'sample', 'sample-types.d.ts'), 'utf8')
 
     const jsImplementationTemplate = `
-/**  @type {import('./api-types.d.ts').Api['getCustomSwagger']} */
+/**  @type {import('./sample-types.d.ts').Sample['getCustomSwagger']} */
 export const getCustomSwagger = async (request) => {
   return await _getCustomSwagger(baseUrl, request)
 }`
     const typesTemplate = `
-export interface Api {
+export interface Sample {
   setBaseUrl(newUrl: string) : void;
   getCustomSwagger(req?: GetCustomSwaggerRequest): Promise<GetCustomSwaggerResponseOK>;
   getRedirect(req?: GetRedirectRequest): Promise<FullResponse<GetRedirectResponseFound> | FullResponse<GetRedirectResponseBadRequest>>;
@@ -124,19 +124,19 @@ test('generate correct file names', async ({ teardown, ok }) => {
   const dir = await moveToTmpdir(teardown)
 
   // With --name will create foobar.ts and foobar-types.d.ts
-  await execa('node', [cliPath, app.url, 'ts', '--name', 'foobar'])
-  ok(await readFile(join(dir, 'foobar.ts')))
-  ok(await readFile(join(dir, 'foobar-types.d.ts')))
+  await execa('node', [cliPath, app.url, '--language', 'ts', '--name', 'foobar', '--frontend'])
+  ok(await readFile(join(dir, 'foobar', 'foobar.ts')))
+  ok(await readFile(join(dir, 'foobar', 'foobar-types.d.ts')))
 
   // Without --name will create api.ts and api-types.d.ts
-  await execa('node', [cliPath, app.url, 'ts'])
-  ok(await readFile(join(dir, 'api.ts')))
-  ok(await readFile(join(dir, 'api-types.d.ts')))
+  await execa('node', [cliPath, app.url, '--language', 'ts', '--frontend'])
+  ok(await readFile(join(dir, 'api', 'api.ts')))
+  ok(await readFile(join(dir, 'api', 'api-types.d.ts')))
 
   // Convert dashes to camelCase
-  await execa('node', [cliPath, app.url, 'ts', '--name', 'sample-name'])
-  ok(await readFile(join(dir, 'sampleName.ts')))
-  ok(await readFile(join(dir, 'sampleName-types.d.ts')))
+  await execa('node', [cliPath, app.url, '--language', 'ts', '--name', 'sample-name', '--frontend'])
+  ok(await readFile(join(dir, 'sample-name', 'sample-name.ts')))
+  ok(await readFile(join(dir, 'sample-name', 'sample-name-types.d.ts')))
 })
 
 test('test factory and client', async ({ teardown, equal }) => {
@@ -158,21 +158,21 @@ test('test factory and client', async ({ teardown, equal }) => {
   await app2.start()
   const dir = await moveToTmpdir(teardown)
 
-  await execa('node', [cliPath, app.url, 'js', '--name', 'foobar'])
+  await execa('node', [cliPath, app.url, '--name', 'foobar', '--frontend'])
   const testFile = `
 'use strict'
 
-import build, { setBaseUrl, getReturnUrl } from './foobar.js'
+import build, { setBaseUrl, getReturnUrl } from './foobar.mjs'
 const client = build('${app.url}')
 setBaseUrl('${app2.url}')
 console.log(await client.getReturnUrl({}))
 console.log(await getReturnUrl({}))
 `
 
-  await writeFile(join(dir, 'test.js'), testFile)
+  await writeFile(join(dir, 'foobar', 'test.mjs'), testFile)
 
   // execute the command
-  const output = await execa('node', [join(dir, 'test.js')])
+  const output = await execa('node', [join(dir, 'foobar', 'test.mjs')])
   /* eslint-disable no-control-regex */
   const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n') // remove ANSI colors, if any
   /* eslint-enable no-control-regex */
@@ -183,10 +183,10 @@ console.log(await getReturnUrl({}))
 test('generate frontend client from path', async ({ teardown, ok, match }) => {
   const dir = await moveToTmpdir(teardown)
 
-  const fileName = join(__dirname, 'fixtures', 'openapi.json')
-  await execa('node', [cliPath, fileName, 'ts'])
-  const implementation = await readFile(join(dir, 'api.ts'), 'utf8')
-  const types = await readFile(join(dir, 'api-types.d.ts'), 'utf8')
+  const fileName = join(__dirname, 'fixtures', 'frontend-openapi.json')
+  await execa('node', [cliPath, fileName, '--language', 'ts', '--frontend'])
+  const implementation = await readFile(join(dir, 'api', 'api.ts'), 'utf8')
+  const types = await readFile(join(dir, 'api', 'api-types.d.ts'), 'utf8')
 
   const tsImplementationTemplate = `
 export const getHello: Api['getHello'] = async (request: Types.GetHelloRequest) => {

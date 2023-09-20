@@ -4,7 +4,7 @@ import { capitalize } from './utils.mjs'
 import camelcase from 'camelcase'
 import { writeOperations } from '../../client-cli/lib/openapi-common.mjs'
 
-export function processOpenAPI ({ schema, name, language, fullResponse }) {
+export function processFrontendOpenAPI ({ schema, name, language, fullResponse }) {
   return {
     types: generateTypesFromOpenAPI({ schema, name, fullResponse }),
     implementation: generateFrontendImplementationFromOpenAPI({ schema, name, language })
@@ -51,7 +51,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language }) 
     )
   } else {
     writer.writeLine(
-      '/**  @type {import(\'./api-types.d.ts\').Api[\'setBaseUrl\']} */'
+      `/**  @type {import(\'./${name}-types.d.ts\').${capitalizedName}[\'setBaseUrl\']} */`
     )
     writer.writeLine(
       'export const setBaseUrl = (newUrl) => { baseUrl = newUrl }'
@@ -128,11 +128,9 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language }) 
         writer.blankLine()
 
         writer.write('return').block(() => {
-          writer.write('statusCode: response.status,')
-          writer.newLine()
-          writer.write('headers: response.headers,')
-          writer.newLine()
-          writer.write('body')
+          writer.writeLine('statusCode: response.status,')
+          writer.writeLine('headers: response.headers,')
+          writer.writeLine('body')
         })
       } else {
         writer.write('if (!response.ok)').block(() => {
@@ -159,7 +157,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language }) 
       //
       writer
         .writeLine(
-          `/**  @type {import('./api-types.d.ts').Api['${operationId}']} */`
+          `/**  @type {import('./${name}-types.d.ts').${capitalizedName}['${operationId}']} */`
         )
         .write(`export const ${operationId} = async (request) =>`).block(() => {
           writer.write(`return await ${underscoredOperationId}(baseUrl, request)`)
@@ -232,7 +230,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   })
 
   writer.blankLine()
-  writer.writeLine('type PlatformaticFrontendClient = Omit<Api, \'setBaseUrl\'>')
+  writer.writeLine(`type PlatformaticFrontendClient = Omit<${capitalize(name)}, 'setBaseUrl'>`)
   writer.writeLine('export default function build(url: string): PlatformaticFrontendClient')
   return interfaces.toString() + writer.toString()
 }
