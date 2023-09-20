@@ -10,6 +10,7 @@ const { loadConfig } = require('./load-config')
 const { parseInspectorOptions, wrapConfigInRuntimeConfig } = require('./config')
 const RuntimeApiClient = require('./api-client.js')
 const { printConfigValidationErrors } = require('@platformatic/config')
+const errors = require('./errors')
 
 const kLoaderFile = pathToFileURL(join(__dirname, 'loader.mjs')).href
 const kWorkerFile = join(__dirname, 'worker.js')
@@ -23,7 +24,7 @@ async function startWithConfig (configManager, env = process.env) {
   const config = configManager.current
 
   if (inspector.url()) {
-    throw new Error('The Node.js inspector flags are not supported. Please use \'platformatic start --inspect\' instead.')
+    throw new errors.NodeInspectorFlagsNotSupportedError()
   }
 
   if (configManager.args) {

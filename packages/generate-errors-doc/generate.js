@@ -5,6 +5,7 @@ const { join } = require('path')
 
 // Add the modules here. Remember to add the dependency to package.json
 const modules = [
+  '@platformatic/runtime',
   '@platformatic/service',
   '@platformatic/sql-mapper',
   '@platformatic/sql-openapi',

@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
+    "@platformatic/runtime": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@platformatic/sql-graphql": "workspace:*",
     "@platformatic/sql-openapi": "workspace:*",

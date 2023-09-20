@@ -944,6 +944,9 @@ importers:
 
   packages/generate-errors-doc:
     devDependencies:
+      '@platformatic/runtime':
+        specifier: workspace:*
+        version: link:../runtime
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
@@ -1008,6 +1011,9 @@ importers:
 
   packages/runtime:
     dependencies:
+      '@fastify/error':
+        specifier: ^3.2.1
+        version: 3.3.0
       '@hapi/topo':
         specifier: ^6.0.2
         version: 6.0.2

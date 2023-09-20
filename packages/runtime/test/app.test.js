@@ -65,7 +65,7 @@ test('errors when starting an already started application', async (t) => {
   await app.start()
   await assert.rejects(async () => {
     await app.start()
-  }, /application is already started/)
+  }, /Application is already started/)
 })
 
 test('errors when stopping an already stopped application', async (t) => {
@@ -86,7 +86,7 @@ test('errors when stopping an already stopped application', async (t) => {
 
   await assert.rejects(async () => {
     await app.stop()
-  }, /application has not been started/)
+  }, /Application has not been started/)
 })
 
 test('does not restart while restarting', async (t) => {
@@ -244,7 +244,7 @@ test('supports configuration overrides', async (t) => {
 
     await assert.rejects(async () => {
       await app.start()
-    }, /config path must be a string/)
+    }, /Config path must be a string/)
   })
 
   await t.test('ignores invalid config paths', async (t) => {
