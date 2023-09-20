@@ -1,6 +1,7 @@
 'use strict'
 
 const { tableName } = require('../utils')
+const errors = require('../errors')
 
 /* istanbul ignore file */
 
@@ -71,7 +72,7 @@ function insertPrep (inputs, inputToFieldMap, fields, sql) {
       let newKey = key
       if (inputToFieldMap[key] === undefined) {
         if (fields[key] === undefined) {
-          throw new Error('Unknown field ' + key)
+          throw new errors.UnknownFieldError(key)
         }
       } else {
         newKey = inputToFieldMap[key]

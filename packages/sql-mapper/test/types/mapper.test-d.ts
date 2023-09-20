@@ -1,6 +1,7 @@
 import { expectType } from 'tsd'
 import { SQL, SQLQuery } from '@databases/sql'
 import { fastify, FastifyInstance, FastifyReply } from 'fastify'
+import { FastifyError } from '@fastify/error'
 import {
   connect,
   plugin,
@@ -10,13 +11,14 @@ import {
   Database,
   SQLMapperPluginInterface,
   EntityHooks,
-  createConnectionPool
+  createConnectionPool,
+  errors
 } from '../../mapper'
 
 const log = {
-  trace() {},
-  error() {},
-  warn() {}
+  trace() { },
+  error() { },
+  warn() { }
 }
 
 const pluginOptions: SQLMapperPluginInterface = await connect({ connectionString: '', log })
@@ -80,11 +82,11 @@ expectType<SQLMapperPluginInterface>(await connect({
 
 const instance: FastifyInstance = fastify()
 instance.register(plugin, { connectionString: '', autoTimestamp: true })
-instance.register((instance) => { 
+instance.register((instance) => {
   expectType<SQLMapperPluginInterface>(instance.platformatic)
 
   instance.platformatic.addEntityHooks<EntityFields>('something', {
-    async find (originalFind, options) {
+    async find(originalFind, options) {
       expectType<Partial<EntityFields>[]>(await originalFind())
       expectType<Parameters<typeof entity.find>[0]>(options)
 
@@ -105,3 +107,26 @@ instance.register((instance) => {
 expectType<(str: string) => string>(utils.toSingular)
 
 expectType<Promise<{ db: Database, sql: SQL }>>(createConnectionPool({ connectionString: '', log }))
+
+// Errors
+type ErrorWithNoParams = () => FastifyError
+type ErrorWithOneParam = (param: string) => FastifyError
+type ErrorWithOneAnyParam = (param: any) => FastifyError
+type ErrorWithTwoParams = (param1: string, param2: string) => FastifyError
+
+expectType<ErrorWithOneParam>(errors.CannotFindEntityError)
+expectType<ErrorWithNoParams>(errors.SpecifyProtocolError)
+expectType<ErrorWithNoParams>(errors.ConnectionStringRequiredError)
+expectType<ErrorWithOneAnyParam>(errors.TableMustBeAStringError)
+expectType<ErrorWithOneParam>(errors.UnknownFieldError)
+expectType<ErrorWithNoParams>(errors.InputNotProvidedError)
+expectType<ErrorWithOneParam>(errors.UnsupportedWhereClauseError)
+expectType<ErrorWithNoParams>(errors.UnsupportedOperatorForArrayFieldError)
+expectType<ErrorWithNoParams>(errors.UnsupportedOperatorForNonArrayFieldError)
+expectType<ErrorWithOneParam>(errors.ParamNotAllowedError)
+expectType<ErrorWithTwoParams>(errors.InvalidPrimaryKeyTypeError)
+expectType<ErrorWithTwoParams>(errors.ParamLimitNotAllowedError)
+expectType<ErrorWithOneParam>(errors.ParamLimitMustBeNotNegativeError)
+expectType<ErrorWithOneParam>(errors.MissingValueForPrimaryKeyError)
+expectType<ErrorWithNoParams>(errors.SQLiteOnlySupportsAutoIncrementOnOneColumnError)
+
