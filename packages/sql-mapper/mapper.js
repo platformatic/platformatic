@@ -163,7 +163,11 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize, ignor
     for (const ignoredTable of Object.keys(ignore)) {
       if (!schemaTables.includes(ignoredTable)) {
         const nearestTable = findNearestString(schemaTables, ignoredTable)
-        log.warn(`Ignored table "${ignoredTable}" not found. Did you mean "${nearestTable}"?`)
+        let warningMessage = `Ignored table "${ignoredTable}" not found.`
+        if (nearestTable) {
+          warningMessage += ` Did you mean "${nearestTable}"?`
+        }
+        log.warn(warningMessage)
       }
     }
 

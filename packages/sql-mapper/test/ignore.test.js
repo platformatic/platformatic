@@ -92,6 +92,34 @@ test('show a warning if there is no ignored table', async ({ plan, pass, teardow
   equal(categoryEntity.name, 'Category')
 })
 
+test('show a warning if the database is empty', async ({ plan, pass, teardown, equal }) => {
+  // plan(4)
+
+  async function onDatabaseLoad (db, sql) {
+    pass('onDatabaseLoad called')
+    teardown(() => db.dispose())
+
+    await clear(db, sql)
+  }
+
+  const logger = {
+    trace: () => {},
+    error: () => {},
+    warn: (msg) => {
+      equal(msg, 'Ignored table "missing_table_pages" not found.')
+    }
+  }
+
+  await connect({
+    ...connInfo,
+    log: logger,
+    onDatabaseLoad,
+    ignore: {
+      missing_table_pages: true
+    }
+  })
+})
+
 test('ignore a column', async ({ pass, teardown, equal }) => {
   async function onDatabaseLoad (db, sql) {
     pass('onDatabaseLoad called')
