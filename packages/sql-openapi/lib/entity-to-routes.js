@@ -1,6 +1,7 @@
 'use strict'
 
 const { mapSQLTypeToOpenAPIType } = require('@platformatic/sql-json-schema-mapper')
+const { findNearestString } = require('@platformatic/utils')
 const camelcase = require('camelcase')
 const { generateArgs, rootEntityRoutes, capitalize, getFieldsForEntity } = require('./shared')
 const errors = require('./errors')
@@ -51,6 +52,20 @@ async function entityPlugin (app, opts) {
   const entitySchemaInput = {
     $ref: entity.name + 'Input#'
   }
+
+  const entityFieldsNames = Object.values(entity.fields)
+    .map(field => field.camelcase)
+
+  for (const ignoredField of Object.keys(ignore)) {
+    if (!entityFieldsNames.includes(ignoredField)) {
+      const nearestField = findNearestString(entityFieldsNames, ignoredField)
+      app.log.warn(
+        `Ignored openapi field "${ignoredField}" not found in entity "${entity.singularName}".` +
+        ` Did you mean "${nearestField}"?`
+      )
+    }
+  }
+
   const primaryKey = entity.primaryKeys.values().next().value
   const primaryKeyParams = getPrimaryKeyParams(entity, ignore)
   const primaryKeyCamelcase = camelcase(primaryKey)

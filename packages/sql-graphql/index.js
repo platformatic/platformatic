@@ -5,6 +5,7 @@ const constructGraph = require('./lib/entity-to-type')
 const mercurius = require('mercurius')
 const graphql = require('graphql')
 const { mercuriusFederationPlugin } = require('@mercuriusjs/federation')
+const { findNearestString } = require('@platformatic/utils')
 const establishRelations = require('./lib/relationship')
 const setupSubscriptions = require('./lib/subscriptions')
 const scalars = require('graphql-scalars')
@@ -37,12 +38,26 @@ async function mapperToGraphql (app, opts) {
       hello: () => 'Hello Platformatic!'
     }
   } else {
+    const entitiesNames = Object.values(mapper.entities)
+      .map(entity => entity.singularName)
+
+    for (const ignoredEntity of Object.keys(ignore)) {
+      if (!entitiesNames.includes(ignoredEntity)) {
+        const nearestEntity = findNearestString(entitiesNames, ignoredEntity)
+        let warningMessage = `Ignored graphql entity "${ignoredEntity}" not found.`
+        if (nearestEntity) {
+          warningMessage += ` Did you mean "${nearestEntity}"?`
+        }
+        app.log.warn(warningMessage)
+      }
+    }
+
     for (const entity of Object.values(mapper.entities)) {
-      if (ignore[entity.pluralName] === true) {
+      if (ignore[entity.singularName] === true) {
         continue
       }
       relations.push(...entity.relations)
-      const meta = constructGraph(app, entity, graphOpts, ignore[entity.pluralName] || {})
+      const meta = constructGraph(app, entity, graphOpts, ignore[entity.singularName] || {})
       metaMap.set(entity, meta)
     }
 
