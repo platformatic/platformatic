@@ -245,8 +245,8 @@ const createPlatformaticDB = async (_args, opts) => {
   }
 
   if (!opts.skipGitHubActions) {
-    await askDynamicWorkspaceCreateGHAction(logger, env, 'db', useTypescript, projectDir)
     await askStaticWorkspaceGHAction(logger, env, 'db', useTypescript, projectDir)
+    await askDynamicWorkspaceCreateGHAction(logger, env, 'db', useTypescript, projectDir)
   }
 }
 
