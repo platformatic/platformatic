@@ -1406,6 +1406,9 @@ importers:
       '@matteo.collina/sqlite-pool':
         specifier: ^0.3.0
         version: 0.3.0
+      '@platformatic/utils':
+        specifier: workspace:*
+        version: link:../utils
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -1543,6 +1546,9 @@ importers:
       '@fastify/error':
         specifier: ^3.2.1
         version: 3.3.0
+      leven:
+        specifier: ~3.1.0
+        version: 3.1.0
       minimatch:
         specifier: ^8.0.4
         version: 8.0.4
@@ -2858,6 +2864,7 @@ packages:
 
   /@swagger-api/apidom-ns-json-schema-draft-4@0.76.2:
     resolution: {integrity: sha512-0Y32CQE6tIt4IPsoCzWAUskZSyGkfw87IIsH5Bcm3D1qIlAhPAokQbe1212MmZoLVUvqrXDqZHXnOxxMaHZvYw==}
+    requiresBuild: true
     dependencies:
       '@babel/runtime-corejs3': 7.22.15
       '@swagger-api/apidom-ast': 0.76.2

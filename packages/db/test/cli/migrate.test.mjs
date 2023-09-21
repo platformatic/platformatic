@@ -107,10 +107,19 @@ test('do not run migrations by default', async ({ equal, teardown }) => {
   teardown(() => db.dispose())
 
   const splitter = split()
-  const firstOutput = firstChild.stdout.pipe(splitter)
-  const [out] = await once(firstOutput, 'data')
-  const { msg } = JSON.parse(out)
-  equal(msg, 'No tables found in the database. Are you connected to the right database? Did you forget to run your migrations? This guide can help with debugging Platformatic DB: https://docs.platformatic.dev/docs/guides/debug-platformatic-db')
+  const output = firstChild.stdout.pipe(splitter)
+
+  {
+    const [out] = await once(output, 'data')
+    const { msg } = JSON.parse(out)
+    equal(msg, 'Ignored table "versions" not found.')
+  }
+
+  {
+    const [out] = await once(output, 'data')
+    const { msg } = JSON.parse(out)
+    equal(msg, 'No tables found in the database. Are you connected to the right database? Did you forget to run your migrations? This guide can help with debugging Platformatic DB: https://docs.platformatic.dev/docs/guides/debug-platformatic-db')
+  }
 
   const [{ exists }] = await db.query(db.sql(
     `SELECT EXISTS (

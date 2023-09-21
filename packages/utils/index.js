@@ -1,6 +1,7 @@
 'use strict'
 
 const FileWatcher = require('./lib/file-watcher')
+const findNearestString = require('./lib/find-nearest-string')
 const deepmerge = require('./lib/deepmerge')
 const isKeyEnabled = require('./lib/is-key-enabled')
 const createServerConfig = require('./lib/create-server-config')
@@ -9,6 +10,7 @@ const packages = require('./lib/packages')
 const errors = require('./lib/errors')
 
 module.exports.FileWatcher = FileWatcher
+module.exports.findNearestString = findNearestString
 module.exports.deepmerge = deepmerge
 module.exports.isKeyEnabled = isKeyEnabled
 module.exports.isFileAccessible = isFileAccessible

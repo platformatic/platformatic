@@ -136,4 +136,3 @@ expectType<ErrorWithTwoParams>(errors.ParamLimitNotAllowedError)
 expectType<ErrorWithOneParam>(errors.ParamLimitMustBeNotNegativeError)
 expectType<ErrorWithOneParam>(errors.MissingValueForPrimaryKeyError)
 expectType<ErrorWithNoParams>(errors.SQLiteOnlySupportsAutoIncrementOnOneColumnError)
-
