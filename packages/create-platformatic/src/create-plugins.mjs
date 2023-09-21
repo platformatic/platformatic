@@ -116,7 +116,6 @@ function testHelperTS (mod, customizations = { pre: '', post: '', config: '', re
 import { join } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import { buildServer } from '@platformatic/${mod}'
-import type { FastifyInstance } from 'fastify'
 ${customizations.requires}
 
 export async function getServer (t) {

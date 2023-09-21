@@ -126,4 +126,4 @@ module.exports.schema = schema
 module.exports.platformaticDB = platformaticDB
 module.exports.ConfigManager = ConfigManager
 module.exports.errors = errors
-module.export.createConnectionPool = createConnectionPool
+module.exports.createConnectionPool = createConnectionPool

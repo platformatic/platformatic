@@ -67,7 +67,7 @@ const { createConnectionPool } = require('@platformatic/sql-mapper')
 const connectionString = '${connectionString}'
 let counter = 0
 `,
-    pre:`
+    pre: `
   const { db, sql } = await createConnectionPool({
     log: {
       debug: () => {},
@@ -111,7 +111,7 @@ const { createConnectionPool } = require('@platformatic/sql-mapper')
 const connectionString = '${connectionString}'
 let counter = 0
 `,
-    pre:`
+    pre: `
   const { db, sql } = await createConnectionPool({
     log: {
       debug: () => {},
@@ -205,8 +205,7 @@ import assert from 'node:assert'
 import { getServer } from '../helper'
 
 test('movies', async (t) => {
-  const server = await getServer()
-  t.after(() => server.close())
+  const server = await getServer(t)
 
   {
     const res = await server.inject({

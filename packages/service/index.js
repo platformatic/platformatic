@@ -2,7 +2,7 @@
 
 const { isKeyEnabled } = require('@platformatic/utils')
 const { readFile } = require('fs/promises')
-const { dirname, join } = require('path')
+const { join } = require('path')
 
 const compiler = require('./lib/compile')
 const setupCors = require('./lib/plugins/cors')
@@ -108,7 +108,7 @@ platformaticService.configManagerConfig = {
       let outDir = typescript.outDir
       if (outDir === undefined) {
         let tsConfigFile = typescript.tsConfigFile || 'tsconfig.json'
-        tsConfigFile = join(dirname(this.dirname), tsConfigFile)
+        tsConfigFile = join(this.dirname, tsConfigFile)
         try {
           const tsConfig = JSON.parse(await readFile(tsConfigFile, 'utf8'))
           outDir = tsConfig.compilerOptions.outDir
