@@ -969,7 +969,7 @@ importers:
   packages/generate-errors-doc:
     devDependencies:
       '@platformatic/authenticate':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../authenticate
       '@platformatic/client':
         specifier: workspace:*
