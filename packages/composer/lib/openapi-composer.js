@@ -1,6 +1,7 @@
 'use strict'
 
 const clone = require('rfdc')()
+const errors = require('./errors')
 
 function composeOpenApi (apis, options = {}) {
   const mergedPaths = {}
@@ -17,7 +18,7 @@ function composeOpenApi (apis, options = {}) {
       const mergedPath = prefix ? prefix + path : path
 
       if (mergedPaths[mergedPath]) {
-        throw new Error('Path "' + mergedPath + '" already exists')
+        throw new errors.PathAlreadyExistsError(mergedPath)
       }
       mergedPaths[mergedPath] = pathSchema
     }

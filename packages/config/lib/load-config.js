@@ -4,6 +4,7 @@ const { Store } = require('./store')
 const { dirname } = require('path')
 const parseArgs = require('minimist')
 const deepmerge = require('@fastify/deepmerge')
+const errors = require('./errors')
 
 async function loadConfig (minimistConfig, _args, app, overrides = {}) {
   const args = parseArgs(_args, deepmerge({ all: true })({
@@ -40,7 +41,7 @@ async function loadConfig (minimistConfig, _args, app, overrides = {}) {
 
   const parsingResult = await configManager.parse()
   if (!parsingResult) {
-    const err = new Error('The configuration does not validate against the configuration schema')
+    const err = new errors.ConfigurationDoesNotValidateAgainstSchemaError()
     err.validationErrors = configManager.validationErrors
     throw err
   }

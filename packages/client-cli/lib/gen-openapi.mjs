@@ -3,6 +3,7 @@ import jsonpointer from 'jsonpointer'
 import { generateOperationId, hasDuplicatedParameters } from '@platformatic/client'
 import { capitalize, classCase, toJavaScriptName } from './utils.mjs'
 import { STATUS_CODES } from 'node:http'
+import errors from './errors.mjs'
 
 export function processOpenAPI ({ schema, name, fullResponse, fullRequest, optionalHeaders, validateResponse }) {
   return {
@@ -289,7 +290,7 @@ function writeObjectProperties (writer, schema, spec, addedProps) {
     // This is unlikely to happen with well-formed OpenAPI.
     /* c8 ignore next 3 */
   } else {
-    throw new Error(`Type ${schema.type} not supported`)
+    throw new errors.TypeNotSupportedError(schema.type)
   }
 }
 

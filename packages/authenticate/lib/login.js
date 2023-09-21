@@ -6,6 +6,7 @@ import { lstat, mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import ConfigManager from '@platformatic/config'
 import schema from './schema.js'
+import errors from './errors.js'
 
 const AP_HOST = process.env.PLT_AUTH_PROXY_HOST || 'https://auth-proxy.fly.dev'
 
@@ -18,7 +19,9 @@ async function triggerAuthentication () {
     }
   })
 
-  if (statusCode !== 200) throw new Error('Unable to contact login service')
+  if (statusCode !== 200) {
+    throw new errors.UnableToContactLoginServiceError()
+  }
 
   return body.json()
 }
@@ -33,7 +36,7 @@ async function getTokens (id) {
   } else if (statusCode === 200) {
     return { state: 'complete', data }
   } else {
-    throw new Error('Unable to retrieve tokens')
+    throw new errors.UnableToRetrieveTokensError()
   }
 }
 
@@ -51,7 +54,7 @@ async function poll (id, timeout, interval) {
     const { state, data } = result
 
     if (Date.now() > expiresAt) {
-      reject(new Error('User did not authenticate before expiry'))
+      reject(new errors.UserDidNotAuthenticateBeforeExpiryError())
     } else if (state === 'pending') {
       setTimeout(check, interval, resolve, reject)
     } else if (state === 'complete') {
@@ -74,8 +77,7 @@ export default async function startLogin (_args, print) {
   let pltDirPath = path.join(process.env.PLT_HOME, '.platformatic')
   if (args.config) {
     const stats = await lstat(args.config)
-    if (stats.isDirectory()) throw new Error('--config option requires path to a file')
-
+    if (stats.isDirectory()) throw new errors.ConfigOptionRequiresPathToFileError()
     pltDirPath = path.dirname(args.config)
   }
 
@@ -124,7 +126,7 @@ async function registerUser (tokens, invite) {
   })
 
   if (userInfoRes.statusCode !== 200) {
-    throw new Error('Unable to get user data')
+    throw new errors.UnableToGetUserDataError()
   }
 
   const { username, fromProvider } = await userInfoRes.body.json()
@@ -149,11 +151,11 @@ async function registerUser (tokens, invite) {
     })
 
     if (claimRes.statusCode !== 200) {
-      throw new Error('Unable to claim invite')
+      throw new errors.UnableToClaimInviteError()
     }
 
     return { state: 'registered' }
   }
 
-  throw new Error('Missing invite')
+  throw new errors.MissingInviteError()
 }

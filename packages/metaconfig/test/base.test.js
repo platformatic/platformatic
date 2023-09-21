@@ -11,6 +11,7 @@ const { join } = require('path')
 const { cp } = require('fs/promises')
 const pkg = require('../package.json')
 const semver = require('semver')
+const createError = require('@fastify/error')
 
 test('throws if no config or file is provided', async (t) => {
   await t.rejects(analyze({}), new Error('missing file or config to analyze'))
@@ -59,11 +60,13 @@ test('gets the stringify for a given format', async (t) => {
 })
 
 test('throws if the stringifier is unknown', async (t) => {
-  t.throws(() => { getStringifier('file.foo') }, new Error('Invalid config file extension. Only yml, yaml, json, json5, toml, tml are supported.'))
+  const expectedError = new (createError('PLT_SQL_METACONFIG_INVALID_CONFIG_FILE_EXTENSION', 'Invalid config file extension. Only yml, yaml, json, json5, toml, tml are supported.'))()
+  t.throws(() => { getStringifier('file.foo') }, expectedError)
 })
 
 test('throws if the parser is unknown', async (t) => {
-  t.throws(() => { getParser('file.foo') }, new Error('Invalid config file extension. Only yml, yaml, json, json5, toml, tml are supported.'))
+  const expectedError = new (createError('PLT_SQL_METACONFIG_INVALID_CONFIG_FILE_EXTENSION', 'Invalid config file extension. Only yml, yaml, json, json5, toml, tml are supported.'))()
+  t.throws(() => { getParser('file.foo') }, expectedError)
 })
 
 test('writes a config file', async (t) => {

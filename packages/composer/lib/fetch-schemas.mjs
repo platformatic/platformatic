@@ -6,6 +6,7 @@ import { request } from 'undici'
 
 import { loadConfig } from '@platformatic/config'
 import { platformaticComposer } from '../index.js'
+import errors from '../lib/errors.js'
 
 async function fetchOpenApiSchema (service) {
   const { origin, openapi } = service
@@ -14,7 +15,7 @@ async function fetchOpenApiSchema (service) {
   const { statusCode, body } = await request(openApiUrl)
 
   if (statusCode !== 200 && statusCode !== 201) {
-    throw new Error(`Failed to fetch OpenAPI schema from ${openApiUrl}`)
+    throw new errors.FailedToFetchOpenAPISchemaError(openApiUrl)
   }
   const schema = await body.json()
 

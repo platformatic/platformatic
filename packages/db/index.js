@@ -8,6 +8,7 @@ const { schema } = require('./lib/schema')
 const ConfigManager = require('@platformatic/config')
 const adjustConfig = require('./lib/adjust-config')
 const { locateSchemaLock } = require('./lib/utils')
+const errors = require('./lib/errors')
 const fs = require('fs/promises')
 
 async function platformaticDB (app, opts) {
@@ -123,3 +124,4 @@ module.exports.buildServer = _buildServer
 module.exports.schema = schema
 module.exports.platformaticDB = platformaticDB
 module.exports.ConfigManager = ConfigManager
+module.exports.errors = errors

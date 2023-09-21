@@ -37,6 +37,7 @@
     "why-is-node-running": "^2.2.2"
   },
   "dependencies": {
+    "@fastify/error": "^3.2.1",
     "@platformatic/client": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/metaconfig": "workspace:*",

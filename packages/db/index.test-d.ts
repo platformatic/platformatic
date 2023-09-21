@@ -1,10 +1,11 @@
-import { buildServer, PlatformaticApp, PlatformaticDBMixin, PlatformaticDBConfig, Entities } from '.'
+import { buildServer, PlatformaticApp, PlatformaticDBMixin, PlatformaticDBConfig, Entities, errors } from '.'
 import ConfigManager from '@platformatic/config'
 import type { Database } from '@platformatic/sql-mapper'
 import { SQL } from '@databases/sql'
 import { expectType } from 'tsd'
 import { OpenAPI } from 'openapi-types'
 import type { MercuriusPlugin } from 'mercurius'
+import { FastifyError } from '@fastify/error'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -30,3 +31,13 @@ async function main (): Promise<void> {
 }
 
 main().catch(console.error)
+
+// Errors
+type ErrorWithNoParams = () => FastifyError
+type ErrorWithOneParam = (param: string) => FastifyError
+
+expectType<ErrorWithNoParams>(errors.MigrateMissingMigrationsError)
+expectType<ErrorWithNoParams>(errors.UknonwnDatabaseError)
+expectType<ErrorWithOneParam>(errors.MigrateMissingMigrationsDirError)
+expectType<ErrorWithNoParams>(errors.MissingSeedFileError)
+expectType<ErrorWithNoParams>(errors.MigrationsToApplyError)

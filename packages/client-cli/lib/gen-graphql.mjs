@@ -1,5 +1,6 @@
 import CodeBlockWriter from 'code-block-writer'
 import { capitalize, toJavaScriptName } from './utils.mjs'
+import errors from './errors.mjs'
 
 export function processGraphQL ({ schema, name, folder, url }) {
   schema = schema.__schema
@@ -158,7 +159,7 @@ function GraphQLScalarToTsType (type) {
       // TODO test other scalar types
       /* c8 ignore next 3 */
     default:
-      throw new Error(`Unknown type ${type}`)
+      throw new errors.UknonwnTypeError(type)
   }
 }
 
@@ -178,7 +179,7 @@ function writeProperty (writer, key, value, addedProps) {
     // TODO are there other kinds that needs to be handled?
     /* c8 ignore next 3 */
   } else {
-    throw new Error(`Unknown type ${value.kind}`)
+    throw new errors.UknonwnTypeError(value.kind)
   }
   writer.newLine()
 }

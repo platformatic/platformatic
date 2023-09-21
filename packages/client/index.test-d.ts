@@ -1,6 +1,7 @@
-import { expectError, expectType } from 'tsd' 
+import { expectError, expectType } from 'tsd'
 import fastify from 'fastify'
-import pltClient, { type PlatformaticClientPluginOptions, buildOpenAPIClient} from '.'
+import pltClient, { type PlatformaticClientPluginOptions, buildOpenAPIClient, errors } from '.'
+import { FastifyError } from '@fastify/error'
 
 const server = await fastify()
 
@@ -52,3 +53,6 @@ expectType<Promise<MyType>>(buildOpenAPIClient<MyType>({
   url: 'http://foo.bar',
   path: 'foobar'
 }, openTelemetryClient))
+
+expectType<() => FastifyError>(errors.OptionsUrlRequiredError)
+

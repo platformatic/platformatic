@@ -18,6 +18,7 @@ import { findUp } from 'find-up'
 import pino from 'pino'
 import pinoPretty from 'pino-pretty'
 import YAML from 'yaml'
+import errors from './lib/errors.mjs'
 
 function parseFile (content) {
   let parsed = false
@@ -332,3 +333,5 @@ export async function command (argv) {
 if (isMain(import.meta)) {
   command(process.argv.slice(2))
 }
+
+export { errors }

@@ -11,6 +11,7 @@ const Ajv = require('ajv')
 const $RefParser = require('@apidevtools/json-schema-ref-parser')
 const { createHash } = require('node:crypto')
 const validateFunctionCache = {}
+const errors = require('./errors')
 
 function generateOperationId (path, method, methodMeta, all) {
   let operationId = methodMeta.operationId
@@ -46,7 +47,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
   const { validateResponse } = options
   // this is tested, not sure why c8 is not picking it up
   if (!options.url) {
-    throw new Error('options.url is required')
+    throw new errors.OptionsUrlRequiredError()
   }
   if (options.path) {
     spec = JSON.parse(await fs.readFile(options.path, 'utf8'))
@@ -404,3 +405,4 @@ module.exports.buildOpenAPIClient = buildOpenAPIClient
 module.exports.buildGraphQLClient = buildGraphQLClient
 module.exports.generateOperationId = generateOperationId
 module.exports.hasDuplicatedParameters = hasDuplicatedParameters
+module.exports.errors = errors

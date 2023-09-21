@@ -4,7 +4,6 @@ import { Migrator } from './migrator.mjs'
 import isMain from 'es-main'
 import pino from 'pino'
 import pretty from 'pino-pretty'
-import { MigrateError } from './errors.mjs'
 import { checkForDependencies } from '@platformatic/utils'
 import { createRequire } from 'node:module'
 import { execute as generateTypes } from './gen-types.mjs'
@@ -12,11 +11,12 @@ import { utimesSync } from 'fs'
 import { updateSchemaLock } from './utils.js'
 import { loadConfig } from '@platformatic/config'
 import { platformaticDB } from '../index.js'
+import errors from './errors.js'
 
 async function execute ({ logger, rollback, to, config }) {
   const migrationsConfig = config.migrations
   if (migrationsConfig === undefined) {
-    throw new MigrateError('Missing "migrations" section in config file')
+    throw new errors.MigrateMissingMigrationsError()
   }
   const migrator = new Migrator(migrationsConfig, config.db, logger)
 
@@ -66,7 +66,7 @@ async function applyMigrations (_args) {
     const configPath = configManager.fullPath
     utimesSync(configPath, now, now)
   } catch (err) {
-    if (err instanceof MigrateError) {
+    if (err.code === 'PTL_DB_MIGRATE_ERROR') {
       logger.error(err.message)
       process.exit(1)
     }

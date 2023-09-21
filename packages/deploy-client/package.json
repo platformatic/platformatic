@@ -29,6 +29,7 @@
     "typescript": "^5.1.6"
   },
   "dependencies": {
+    "@fastify/error": "^3.2.1",
     "@platformatic/config": "workspace:*",
     "@platformatic/runtime": "workspace:*",
     "@platformatic/service": "workspace:*",

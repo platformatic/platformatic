@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@fastify/deepmerge": "^1.3.0",
+    "@fastify/error": "^3.2.1",
     "@platformatic/metaconfig": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "ajv": "^8.12.0",

@@ -5,6 +5,16 @@ const { join } = require('path')
 
 // Add the modules here. Remember to add the dependency to package.json
 const modules = [
+  '@platformatic/authenticate',
+  '@platformatic/client',
+  '@platformatic/client-cli',
+  '@platformatic/composer',
+  '@platformatic/config',
+  '@platformatic/db',
+  '@platformatic/db-authorization',
+  '@platformatic/db-core',
+  '@platformatic/deploy-client',
+  '@platformatic/metaconfig',
   '@platformatic/runtime',
   '@platformatic/service',
   '@platformatic/sql-mapper',
@@ -56,11 +66,28 @@ const generateErrorsMDFile = async (errorsByModule) => {
   console.log(`Errors documentation file generated at ${mdPath}`)
 }
 
-const errorsByModule = {}
-for (const module of modules) {
-  const mod = require(module)
-  const errors = extractErrors(mod)
-  errorsByModule[module] = errors
+const getErrorsByModule = async (modules) => {
+  const errorsByModule = {}
+  for (const module of modules) {
+    let mod
+    try {
+      mod = require(module)
+    } catch (err) {
+      if (err.code === 'ERR_REQUIRE_ESM') {
+        mod = await await import(module)
+      } else {
+        throw err
+      }
+    }
+    const errors = extractErrors(mod)
+    errorsByModule[module] = errors
+  }
+  return errorsByModule
 }
 
-generateErrorsMDFile(errorsByModule)
+const generate = async (modules) => {
+  const errorsByModule = await getErrorsByModule(modules)
+  await generateErrorsMDFile(errorsByModule)
+}
+
+generate(modules)
