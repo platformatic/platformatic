@@ -832,7 +832,6 @@ test('request with same parameter name in body/path/header/query', async ({ tear
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'same-parameter-name-openapi.json')
   comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
-
   // check the type file has the correct implementation for the request
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
@@ -853,7 +852,7 @@ test('request with same parameter name in body/path/header/query', async ({ tear
   }`)
 })
 
-test('openapi client generation (javascript) from file with fullRequest, fullResponse and validateResponse', async ({ teardown, comment, match }) => {
+test('openapi client generation (javascript) from file with fullRequest, fullResponse, validateResponse and optionalHeaders', async ({ teardown, comment, match }) => {
   const openapi = desm.join(import.meta.url, 'fixtures', 'full-req-res', 'openapi.json')
   teardown = () => {}
   const dir = await moveToTmpdir((teardown))
@@ -877,7 +876,7 @@ test('openapi client generation (javascript) from file with fullRequest, fullRes
     ['--full']
   ]
   for (const opt of fullOptions) {
-    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapi, '--name', 'full', '--validate-response', ...opt])
+    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapi, '--name', 'full', '--validate-response', '--optional-headers', 'headerId', ...opt])
 
     // check the type file has the correct implementation for the request and the response
     const typeFile = join(dir, 'full', 'full.d.ts')
@@ -891,7 +890,7 @@ test('openapi client generation (javascript) from file with fullRequest, fullRes
       'queryId': string;
     }
     headers: {
-      'headerId': string;
+      'headerId'?: string;
     }
   }
 `)
