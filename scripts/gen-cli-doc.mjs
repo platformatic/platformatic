@@ -215,7 +215,7 @@ out += `
 ### frontend
 
 \`\`\`bash
-platformatic frontend <url> <language>
+platformatic client <url> --frontend --language <language>
 \`\`\`
 
 `

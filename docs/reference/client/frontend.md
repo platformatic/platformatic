@@ -5,7 +5,7 @@ Create implementation and type files that exposes a client for a remote OpenAPI 
 To create a client for a remote OpenAPI API, you can use the following command:
 
 ```bash
-$ platformatic frontend http://exmaple.com/to/schema/file <language> --name <clientname>
+$ platformatic client http://exmaple.com/to/schema/file --frontend --language <language> --name <clientname>
 ```
 
 where `<language>` can be either `js` or `ts`.
