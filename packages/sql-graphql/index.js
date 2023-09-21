@@ -45,6 +45,7 @@ async function mapperToGraphql (app, opts) {
       if (!entitiesNames.includes(ignoredEntity)) {
         const nearestEntity = findNearestString(entitiesNames, ignoredEntity)
         let warningMessage = `Ignored graphql entity "${ignoredEntity}" not found.`
+        /* istanbul ignore next */
         if (nearestEntity) {
           warningMessage += ` Did you mean "${nearestEntity}"?`
         }

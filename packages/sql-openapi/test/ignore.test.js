@@ -171,6 +171,45 @@ test('show a warning if there is no ignored entity', async ({ plan, pass, teardo
   await app.ready()
 })
 
+test('show a warning if database is empty', async ({ plan, pass, teardown }) => {
+  plan(2)
+
+  const app = fastify({
+    logger: {
+      info () {},
+      debug () {},
+      trace () {},
+      fatal () {},
+      error () {},
+      child () {
+        return this
+      },
+      warn (msg) {
+        if (msg === 'Ignored openapi entity "missingEntityPages" not found.') {
+          pass('warning message is shown')
+        }
+      }
+    }
+  })
+
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+    }
+  })
+  app.register(sqlOpenAPI, {
+    ignore: {
+      missingEntityPages: true
+    }
+  })
+  teardown(app.close.bind(app))
+
+  await app.ready()
+})
+
 test('ignore a column in OpenAPI', async ({ pass, teardown, equal, same }) => {
   const app = fastify()
   app.register(sqlMapper, {
