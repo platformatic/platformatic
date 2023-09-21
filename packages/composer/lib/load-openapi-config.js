@@ -3,6 +3,7 @@
 const { readFile } = require('node:fs/promises')
 const Ajv = require('ajv')
 const openApiConfigSchema = require('./openapi-config-schema')
+const errors = require('./errors')
 
 const ajv = new Ajv()
 const ajvValidate = ajv.compile(openApiConfigSchema)
@@ -19,7 +20,7 @@ async function loadOpenApiConfig (pathToConfig) {
         message: err.message + ' ' + JSON.stringify(err.params)
       }
     })
-    throw new Error(validationErrors.map((err) => {
+    throw new errors.ValidationErrors(validationErrors.map((err) => {
       return err.message
     }).join('\n'))
   }

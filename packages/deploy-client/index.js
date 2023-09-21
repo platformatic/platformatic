@@ -4,6 +4,7 @@ const { tmpdir, EOL } = require('os')
 const { join, basename } = require('path')
 const { createHash } = require('crypto')
 const { readFile, access, mkdtemp, rm } = require('fs/promises')
+const errors = require('./lib/errors')
 
 const tar = require('tar')
 const { request } = require('undici')
@@ -66,9 +67,9 @@ class DeployClient {
 
     if (statusCode !== 200) {
       if (statusCode === 401) {
-        throw new Error('Invalid platformatic_workspace_key provided')
+        throw new errors.InvalidPlatformaticWorkspaceKeyError()
       }
-      throw new Error(`Could not create a bundle: ${statusCode}`)
+      throw new errors.CouldNotCreateBundleError(statusCode)
     }
 
     return body.json()
@@ -89,7 +90,7 @@ class DeployClient {
     })
 
     if (statusCode !== 200) {
-      throw new Error(`Failed to upload code archive: ${statusCode}`)
+      throw new errors.FailedToUploadCodeArchiveError(statusCode)
     }
   }
 
@@ -112,9 +113,9 @@ class DeployClient {
 
     if (statusCode !== 200) {
       if (statusCode === 401) {
-        throw new Error('Invalid platformatic_workspace_key provided')
+        throw new errors.InvalidPlatformaticWorkspaceKeyError()
       }
-      throw new Error(`Could not create a deployment: ${statusCode}`)
+      throw new errors.CouldNotCreateDeploymentError(statusCode)
     }
 
     return body.json()
@@ -159,7 +160,7 @@ async function _loadConfig (minimistConfig, args) {
     return await loadConfig(minimistConfig, args)
   } catch (err) {
     if (err.code === 'ENOENT') {
-      throw new Error('Missing config file!')
+      throw new errors.MissingConfigFileError()
     }
     /* c8 ignore next 2 */
     throw err
@@ -295,4 +296,4 @@ async function deploy ({
   }
 }
 
-module.exports = { deploy }
+module.exports = { deploy, errors }

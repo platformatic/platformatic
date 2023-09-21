@@ -1,4 +1,5 @@
 import { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyError } from '@fastify/error'
 
 interface Headers {
   [key: string]: string
@@ -66,3 +67,11 @@ export function hasDuplicatedParameters(methodMeta: MethodMetaInterface): boolea
 
 export const plugin: FastifyPluginAsync<PlatformaticClientPluginOptions>
 export default plugin
+
+/**
+ * All the errors thrown by the plugin.
+ */
+export module errors {
+  export const OptionsUrlRequiredError: () => FastifyError
+}
+

@@ -3,10 +3,10 @@ import pretty from 'pino-pretty'
 import { access } from 'fs/promises'
 import { setupDB } from './utils.js'
 import { Migrator } from './migrator.mjs'
-import { SeedError } from './errors.mjs'
 import { pathToFileURL } from 'url'
 import { loadConfig } from '@platformatic/config'
 import { platformaticDB } from '../index.js'
+import errors from './errors.js'
 
 async function execute (logger, args, config) {
   const { db, sql, entities } = await setupDB(logger, config.db)
@@ -14,7 +14,7 @@ async function execute (logger, args, config) {
   const seedFile = args._[0]
 
   if (!seedFile) {
-    throw new SeedError('Missing seed file')
+    throw new errors.MissingSeedFileError()
   }
 
   await access(seedFile)
@@ -49,7 +49,7 @@ async function seed (_args) {
     try {
       const hasMigrationsToApply = await migrator.hasMigrationsToApply()
       if (hasMigrationsToApply) {
-        throw new SeedError('You have migrations to apply. Please run `platformatic db migrations apply` first.')
+        throw new errors.MigrationsToApplyError()
       }
     } finally {
       await migrator.close()

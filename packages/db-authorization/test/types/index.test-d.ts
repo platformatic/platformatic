@@ -6,8 +6,10 @@ import auth, {
   AddRulesForRoles,
   DBAuthorizationPluginInterface,
   DBAuthorizationPluginOptions,
-  SetupDBAuthorizationUserDecorator
+  SetupDBAuthorizationUserDecorator,
+  errors
 } from '../..'
+import { FastifyError } from '@fastify/error'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -39,3 +41,13 @@ app.register(async (instance) => {
     expectType<SetupDBAuthorizationUserDecorator>(request.setupDBAuthorizationUser)
   })
 })
+
+// Errors
+type ErrorWithNoParams = () => FastifyError
+type ErrorWithOneParam = (param: string) => FastifyError
+type ErrorWithOneAnyParam = (param: any) => FastifyError
+type ErrorWithTwoParams = (param1: string, param2: string) => FastifyError
+
+expectType<ErrorWithNoParams>(errors.Unauthorized)
+expectType<ErrorWithOneParam>(errors.UnauthorizedField)
+expectType<ErrorWithTwoParams>(errors.MissingNotNullableError)

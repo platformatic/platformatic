@@ -1,8 +1,8 @@
 import { join, basename } from 'path'
 import Postgrator from 'postgrator'
-import { MigrateError } from './errors.mjs'
 import { createConnectionPool } from '@platformatic/sql-mapper'
 import { stat, readdir } from 'fs/promises'
+import errors from './errors.js'
 
 class Migrator {
   constructor (migrationConfig, coreConfig, logger) {
@@ -41,7 +41,7 @@ class Migrator {
     } else if (db.isSQLite) {
       driver = 'sqlite3'
     } else {
-      throw new Error('unknown database')
+      throw new errors.MigrateUnknownDatabaseError()
     }
 
     const database = driver !== 'sqlite3'
@@ -97,7 +97,7 @@ class Migrator {
       await stat(this.migrationDir)
     } catch (err) {
       if (err.code === 'ENOENT') {
-        throw new MigrateError(`Migrations directory ${this.migrationDir} does not exist`)
+        throw new errors.MigrateMissingMigrationsDirError(this.migrationDir)
       }
     }
   }
@@ -175,7 +175,7 @@ class Migrator {
       }
     } catch (err) {
       if (err.code === 'ENOENT') {
-        throw new MigrateError(`Migrations directory ${this.migrationDir} does not exist`)
+        throw new errors.MigrateMissingMigrationsDirError(this.migrationDir)
       }
     }
   }
