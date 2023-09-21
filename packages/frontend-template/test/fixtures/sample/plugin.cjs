@@ -2,6 +2,14 @@
 
 /** @param {import('fastify').FastifyInstance} app */
 module.exports = async function (app) {
+  app.get('/custom-swagger', async (req, res) => {
+    const docs = await app.inject({
+      url: '/documentation/json',
+      method: 'GET'
+    })
+    return await docs.json()
+  })
+
   app.get('/redirect', {
     schema: {
       response: {

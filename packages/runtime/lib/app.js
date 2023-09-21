@@ -4,10 +4,9 @@ const { once } = require('node:events')
 const { dirname } = require('node:path')
 const { FileWatcher } = require('@platformatic/utils')
 const debounce = require('debounce')
-const {
-  buildServer,
-  loadConfig
-} = require('./unified-api')
+const { buildServer } = require('./build-server')
+const { loadConfig } = require('./load-config')
+const errors = require('./errors')
 
 class PlatformaticApp {
   #hotReload
@@ -80,14 +79,14 @@ class PlatformaticApp {
 
   async start () {
     if (this.#started) {
-      throw new Error('application is already started')
+      throw new errors.ApplicationAlreadyStartedError()
     }
 
     this.#started = true
 
     await this.#initializeConfig()
     this.#originalWatch = this.config.configManager.current.watch
-    this.config.configManager.current.watch = false
+    this.config.configManager.current.watch = { enabled: false }
 
     const { configManager } = this.config
     configManager.update({
@@ -110,7 +109,10 @@ class PlatformaticApp {
       this.#logAndExit(err)
     }
 
-    if (config.plugins !== undefined) {
+    if (
+      config.plugins !== undefined &&
+      this.#originalWatch?.enabled !== false
+    ) {
       this.#startFileWatching()
     }
 
@@ -122,12 +124,15 @@ class PlatformaticApp {
         this.server.log.error({ err })
         process.exit(1)
       }
+    } else {
+      // Make sure the server has run all the onReady hooks before returning.
+      await this.server.ready()
     }
   }
 
   async stop () {
     if (!this.#started) {
-      throw new Error('application has not been started')
+      throw new errors.ApplicationNotStartedError()
     }
 
     await this.#stopFileWatching()
@@ -186,7 +191,7 @@ class PlatformaticApp {
       if (appConfig._configOverrides instanceof Map) {
         appConfig._configOverrides.forEach((value, key) => {
           if (typeof key !== 'string') {
-            throw new Error('config path must be a string.')
+            throw new errors.ConfigPathMustBeStringError()
           }
 
           const parts = key.split('.')

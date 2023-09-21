@@ -33,7 +33,8 @@ test('Store with builtins', async t => {
   store.add(foo)
 
   t.equal(await store.get({ $schema: 'foo' }), foo, 'should have builtin value')
-  await t.rejects(store.get({ $schema: 'bar' }))
+  await t.rejects(store.get({ $schema: 'bar' }), new Error('Add a module property to the config or add a known $schema'))
+  await t.rejects(store.get({ $schema: 'https://platformatic.dev/schemas/v0.99.0/something.json' }), new Error('Version mismatch. You are running Platformatic null but your app requires v0.99.0'))
   t.same(store.listTypes(), [{
     id: 'foo',
     configType: 'foo'
@@ -284,4 +285,34 @@ test('loadConfig custom module', async t => {
 
   const res = await store.loadConfig()
   t.equal(res.app.schema.$id, 'foo', 'should return app')
+})
+
+test('Version mismatch', async t => {
+  function foo () {
+  }
+
+  foo.schema = {
+    $id: 'https://platformatic.dev/schemas/v0.42.0/something.json',
+    type: 'object'
+  }
+
+  foo.configType = 'foo'
+  foo.configManagerConfig = {
+    schema: foo.schema,
+    envWhitelist: ['PORT', 'HOSTNAME'],
+    allowToWatch: ['.env'],
+    schemaOptions: {
+      useDefaults: true,
+      coerceTypes: true,
+      allErrors: true,
+      strict: false
+    },
+    transformConfig () {
+    }
+  }
+
+  const store = new Store()
+  store.add(foo)
+
+  await t.rejects(store.get({ $schema: 'https://platformatic.dev/schemas/v0.99.0/something.json' }), new Error('Version mismatch. You are running Platformatic v0.42.0 but your app requires v0.99.0'))
 })

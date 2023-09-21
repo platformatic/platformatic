@@ -1,6 +1,6 @@
 {
   "name": "platformatic",
-  "version": "0.40.0",
+  "version": "0.45.1",
   "description": "Platformatic CLI",
   "main": "cli.js",
   "type": "module",
@@ -43,6 +43,7 @@
     "undici": "^5.22.1"
   },
   "dependencies": {
+    "@fastify/error": "^3.2.1",
     "@platformatic/authenticate": "workspace:*",
     "@platformatic/client-cli": "workspace:*",
     "@platformatic/composer": "workspace:*",
@@ -53,7 +54,6 @@
     "@platformatic/metaconfig": "workspace:*",
     "@platformatic/runtime": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "@platformatic/start": "workspace:*",
     "colorette": "^2.0.20",
     "commist": "^3.2.0",
     "create-platformatic": "workspace:*",

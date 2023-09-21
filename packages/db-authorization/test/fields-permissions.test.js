@@ -198,7 +198,7 @@ test('users can find only the authorized fields', async ({ pass, teardown, same,
     same(res.json(), {
       statusCode: 401,
       error: 'Unauthorized',
-      code: 'PLT_DB_AUTH_UNAUTHORIZED',
+      code: 'PLT_DB_AUTH_FIELD_UNAUTHORIZED',
       message: 'field not allowed: author'
     }, 'GET /pages status response (Unauthorized)')
   }

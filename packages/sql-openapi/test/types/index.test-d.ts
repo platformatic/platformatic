@@ -4,6 +4,12 @@ import plugin, { SQLOpenApiPluginOptions } from '../../index'
 const instance: FastifyInstance = fastify()
 const document: SQLOpenApiPluginOptions = {
   exposeRoute: true,
+  ignore: {
+    testEntity1: true,
+    testEntity2: {
+      fieldName: true
+    }
+  },
   info: {
     title: 'Test swagger',
     description: 'testing the fastify swagger api',

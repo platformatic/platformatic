@@ -61,7 +61,9 @@ test('should get service config', async (t) => {
         join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'plugin.js')
       ]
     },
-    watch: false
+    watch: {
+      enabled: false
+    }
   })
 })
 
@@ -228,7 +230,7 @@ test('should fail to start running service', async (t) => {
     await app.startService('with-logger')
     assert.fail('should have thrown')
   } catch (err) {
-    assert.strictEqual(err.message, 'application is already started')
+    assert.strictEqual(err.message, 'Application is already started')
   }
 })
 

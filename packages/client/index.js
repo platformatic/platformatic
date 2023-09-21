@@ -7,6 +7,11 @@ const kHeaders = Symbol('headers')
 const kGetHeaders = Symbol('getHeaders')
 const kTelemetryContext = Symbol('telemetry-context')
 const abstractLogging = require('abstract-logging')
+const Ajv = require('ajv')
+const $RefParser = require('@apidevtools/json-schema-ref-parser')
+const { createHash } = require('node:crypto')
+const validateFunctionCache = {}
+const errors = require('./errors')
 
 function generateOperationId (path, method, methodMeta, all) {
   let operationId = methodMeta.operationId
@@ -39,10 +44,10 @@ async function buildOpenAPIClient (options, openTelemetry) {
   const client = {}
   let spec
   let baseUrl
-
+  const { validateResponse } = options
   // this is tested, not sure why c8 is not picking it up
   if (!options.url) {
-    throw new Error('options.url is required')
+    throw new errors.OptionsUrlRequiredError()
   }
   if (options.path) {
     spec = JSON.parse(await fs.readFile(options.path, 'utf8'))
@@ -70,7 +75,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
         // - there is no responses with 2XX code
         fullResponse = true
       }
-      client[operationId] = buildCallFunction(baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse)
+      client[operationId] = await buildCallFunction(spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse)
     }
   }
 
@@ -93,7 +98,9 @@ function hasDuplicatedParameters (methodMeta) {
   })
   return s.size !== methodMeta.parameters.length
 }
-function buildCallFunction (baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse) {
+async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse) {
+  await $RefParser.dereference(spec)
+  const ajv = new Ajv()
   const url = new URL(baseUrl)
   method = method.toUpperCase()
   path = join(url.pathname, path)
@@ -103,6 +110,7 @@ function buildCallFunction (baseUrl, path, method, methodMeta, throwOnError, ope
   const headerParams = methodMeta.parameters?.filter(p => p.in === 'header') || []
   const forceFullRequest = fullRequest || hasDuplicatedParameters(methodMeta)
 
+  const responses = methodMeta.responses
   return async function (args) {
     let headers = this[kHeaders]
     let telemetryContext = null
@@ -114,13 +122,24 @@ function buildCallFunction (baseUrl, path, method, methodMeta, throwOnError, ope
     let pathToCall = path
     const urlToCall = new URL(url)
     if (forceFullRequest) {
-      headers = args.headers
-      body = args.body
+      headers = args?.headers
+      body = args?.body
+      for (const param of pathParams) {
+        if (args?.path[param.name] === undefined) {
+          throw new Error('missing required parameter ' + param.name)
+        }
+        pathToCall = pathToCall.replace(`{${param.name}}`, args.path[param.name])
+        args.path[param.name] = undefined
+      }
+
       for (const param of queryParams) {
-        if (param.type === 'array') {
-          args.query[param.name].forEach((p) => query.append(param.name, p))
-        } else {
-          query.append(param.name, args.query[param.name])
+        if (args?.query[param.name] !== undefined) {
+          if (isArrayQueryParam(param)) {
+            args.query[param.name].forEach((p) => query.append(param.name, p))
+          } else {
+            query.append(param.name, args.query[param.name])
+          }
+          args.query[param.name] = undefined
         }
       }
     } else {
@@ -135,7 +154,7 @@ function buildCallFunction (baseUrl, path, method, methodMeta, throwOnError, ope
 
       for (const param of queryParams) {
         if (body[param.name] !== undefined) {
-          if (param.type === 'array') {
+          if (isArrayQueryParam(param)) {
             body[param.name].forEach((p) => query.append(param.name, p))
           } else {
             query.append(param.name, body[param.name])
@@ -174,10 +193,15 @@ function buildCallFunction (baseUrl, path, method, methodMeta, throwOnError, ope
         throwOnError
       })
       let responseBody
+      const contentType = sanitizeContentType(res.headers['content-type']) || 'application/json'
       try {
-        responseBody = res.statusCode === 204
-          ? await res.body.dump()
-          : await res.body.json()
+        if (res.statusCode === 204) {
+          responseBody = await res.body.dump()
+        } else if (contentType === 'application/json') {
+          responseBody = await res.body.json()
+        } else {
+          responseBody = await res.body.text()
+        }
       } catch (err) {
         // maybe the response is a 302, 301, or anything with empty payload
         responseBody = {}
@@ -189,6 +213,29 @@ function buildCallFunction (baseUrl, path, method, methodMeta, throwOnError, ope
           body: responseBody
         }
       }
+
+      if (validateResponse) {
+        try {
+          // validate response first
+          const matchingResponse = responses[res.statusCode]
+
+          if (matchingResponse === undefined) {
+            throw new Error(`No matching response schema found for status code ${res.statusCode}`)
+          }
+          const matchingContentSchema = matchingResponse.content[contentType]
+
+          if (matchingContentSchema === undefined) {
+            throw new Error(`No matching content type schema found for ${contentType}`)
+          }
+          const bodyIsValid = checkResponseAgainstSchema(responseBody, matchingContentSchema.schema, ajv)
+
+          if (!bodyIsValid) {
+            throw new Error('Invalid response format')
+          }
+        } catch (err) {
+          responseBody = createErrorResponse(err.message)
+        }
+      }
       return responseBody
     } catch (err) {
       openTelemetry?.setErrorInSpanClient(span, err)
@@ -198,14 +245,38 @@ function buildCallFunction (baseUrl, path, method, methodMeta, throwOnError, ope
     }
   }
 }
+function createErrorResponse (message) {
+  return {
+    statusCode: 500,
+    message
+  }
+}
+function sanitizeContentType (contentType) {
+  if (!contentType) { return false }
+  const split = contentType.split(';')
+  return split[0]
+}
+function checkResponseAgainstSchema (body, schema, ajv) {
+  const validate = getValidateFunction(schema, ajv)
+  const valid = validate(body)
+  return valid
+}
 
+function getValidateFunction (schema, ajvInstance) {
+  const hash = createHash('md5').update(JSON.stringify(schema)).digest('hex')
+  if (!validateFunctionCache[hash]) {
+    validateFunctionCache[hash] = ajvInstance.compile(schema)
+  }
+  return validateFunctionCache[hash]
+}
 function capitalize (str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
-// function handleQueryParameters(urlSearchParamObject, parameter) {
+function isArrayQueryParam ({ schema }) {
+  return schema?.type === 'array' || schema?.anyOf?.some(({ type }) => type === 'array')
+}
 
-// }
 // TODO: For some unknown reason c8 is not picking up the coverage for this function
 async function graphql (url, log, headers, query, variables, openTelemetry, telemetryContext) {
   const { span, telemetryHeaders } = openTelemetry?.startSpanClient(url.toString(), 'POST', telemetryContext) || { span: null, telemetryHeaders: {} }
@@ -334,3 +405,4 @@ module.exports.buildOpenAPIClient = buildOpenAPIClient
 module.exports.buildGraphQLClient = buildGraphQLClient
 module.exports.generateOperationId = generateOperationId
 module.exports.hasDuplicatedParameters = hasDuplicatedParameters
+module.exports.errors = errors

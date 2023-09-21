@@ -125,7 +125,6 @@ export interface PlatformaticDB {
       strictPreflight?: boolean;
       hideOptionsRoute?: boolean;
     };
-    [k: string]: unknown;
   };
   db: {
     connectionString: string;
@@ -201,17 +200,9 @@ export interface PlatformaticDB {
         };
     [k: string]: unknown;
   };
-  dashboard?:
-    | boolean
-    | {
-        /**
-         * The path where the dashboard should be served.
-         */
-        path?: string;
-      };
   authorization?: {
     /**
-     * The password should be used to login dashboard and to access routes under /_admin prefix and for admin access to REST and GraphQL endpoints with X-PLATFORMATIC-ADMIN-SECRET header.
+     * The password should be used to access routes under /_admin prefix and for admin access to REST and GraphQL endpoints with X-PLATFORMATIC-ADMIN-SECRET header.
      */
     adminSecret?: string;
     /**
@@ -316,6 +307,7 @@ export interface PlatformaticDB {
     dir?: string;
   };
   plugins?: Plugins;
+  telemetry?: OpenTelemetry;
   clients?: {
     serviceId?: string;
     name?: string;
@@ -326,6 +318,7 @@ export interface PlatformaticDB {
   }[];
   watch?:
     | {
+        enabled?: boolean | string;
         /**
          * @minItems 1
          */
@@ -435,7 +428,6 @@ export interface Operation {
   callbacks?: {
     [k: string]: CallbacksOrReference;
   };
-  deprecated?: boolean;
   security?: SecurityRequirement[];
   servers?: Server[];
   /**
@@ -537,6 +529,17 @@ export interface Plugins {
         path?: string;
         encapsulate?: boolean;
         maxDepth?: number;
+        autoHooks?: boolean;
+        autoHooksPattern?: string;
+        cascadeHooks?: boolean;
+        overwriteHooks?: boolean;
+        routeParams?: boolean;
+        forceESM?: boolean;
+        ignoreFilter?: string;
+        matchFilter?: string;
+        ignorePattern?: string;
+        scriptPattern?: string;
+        indexPattern?: string;
         options?: {
           [k: string]: unknown;
         };
@@ -554,4 +557,71 @@ export interface Plugins {
       }
     | boolean
     | string;
+}
+export interface OpenTelemetry {
+  /**
+   * The name of the service. Defaults to the folder name if not specified.
+   */
+  serviceName: string;
+  /**
+   * The version of the service (optional)
+   */
+  version?: string;
+  /**
+   * An array of paths to skip when creating spans. Useful for health checks and other endpoints that do not need to be traced.
+   */
+  skip?: {
+    /**
+     * The path to skip. Can be a string or a regex.
+     */
+    path?: string;
+    /**
+     * HTTP method to skip
+     */
+    method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS";
+    [k: string]: unknown;
+  }[];
+  exporter?:
+    | {
+        type?: "console" | "otlp" | "zipkin" | "memory";
+        /**
+         * Options for the exporter. These are passed directly to the exporter.
+         */
+        options?: {
+          /**
+           * The URL to send the traces to. Not used for console or memory exporters.
+           */
+          url?: string;
+          /**
+           * Headers to send to the exporter. Not used for console or memory exporters.
+           */
+          headers?: {
+            [k: string]: unknown;
+          };
+          [k: string]: unknown;
+        };
+        additionalProperties?: never;
+        [k: string]: unknown;
+      }[]
+    | {
+        type?: "console" | "otlp" | "zipkin" | "memory";
+        /**
+         * Options for the exporter. These are passed directly to the exporter.
+         */
+        options?: {
+          /**
+           * The URL to send the traces to. Not used for console or memory exporters.
+           */
+          url?: string;
+          /**
+           * Headers to send to the exporter. Not used for console or memory exporters.
+           */
+          headers?: {
+            [k: string]: unknown;
+          };
+          [k: string]: unknown;
+        };
+        additionalProperties?: never;
+        [k: string]: unknown;
+      };
 }

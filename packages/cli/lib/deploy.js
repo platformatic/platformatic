@@ -9,6 +9,7 @@ import dotenv from 'dotenv'
 import inquirer from 'inquirer'
 import parseArgs from 'minimist'
 import deployClient from '@platformatic/deploy-client'
+import errors from './errors.js'
 
 export const DEPLOY_SERVICE_HOST = 'https://deploy.platformatic.cloud'
 
@@ -34,10 +35,7 @@ async function askWorkspaceDetails (args) {
   }
 
   if (!WORKSPACE_TYPES.includes(workspaceType)) {
-    throw new Error(
-      `Invalid workspace type provided: "${workspaceType}". ` +
-      `Type must be one of: ${WORKSPACE_TYPES.join(', ')}.`
-    )
+    throw new errors.InvalidWorkspaceTypeError(workspaceType, WORKSPACE_TYPES.join(', '))
   }
 
   let workspaceId = args['workspace-id']
@@ -52,7 +50,7 @@ async function askWorkspaceDetails (args) {
   }
 
   if (!UUID_REGEX.test(workspaceId)) {
-    throw new Error('Invalid workspace id provided. Workspace id must be a valid uuid.')
+    throw new errors.InvalidWorkspaceIdError()
   }
 
   let workspaceKey = args['workspace-key']
@@ -105,7 +103,7 @@ async function readWorkspaceDetails (workspaceKeysPath) {
     }
   }
 
-  throw new Error('Could not find workspace keys in provided file.')
+  throw new errors.CouldNotFindWorkspaceKeysError()
 }
 
 export async function deploy (argv) {

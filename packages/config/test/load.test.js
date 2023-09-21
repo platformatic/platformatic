@@ -55,7 +55,6 @@ test('should support YAML format', async ({ same }) => {
       ignore: { versions: true }
     },
     migrations: { dir: './demo/auth/migrations', validateChecksums: false },
-    dashboard: { enabled: true, path: '/' },
     authorization: { adminSecret: 'plt-db' },
     foobar: 'foobar'
   })
@@ -81,7 +80,6 @@ test('should support TOML format', async ({ same }) => {
       ignore: { versions: true }
     },
     migrations: { dir: './demo/auth/migrations', validateChecksums: false },
-    dashboard: { enabled: true, path: '/' },
     authorization: { adminSecret: 'plt-db' },
     foobar: 'foobar'
   })
@@ -107,7 +105,6 @@ test('should support JSON5 format', async ({ same }) => {
       ignore: { versions: true }
     },
     migrations: { dir: './demo/auth/migrations', validateChecksums: false },
-    dashboard: { enabled: true, path: '/' },
     authorization: { adminSecret: 'plt-db' },
     foobar: 'foobar'
   })
@@ -158,7 +155,6 @@ test('should automatically update', async ({ same, teardown, pass, plan }) => {
       dir: './demo/migrations',
       validateChecksums: false
     },
-    dashboard: { path: '/' },
     authorization: { adminSecret: 'plt-db' },
     watch: {
       ignore: ['*.sqlite', '*.sqlite-journal']
@@ -209,7 +205,6 @@ test('should use the remote schema', async ({ same, teardown, pass, plan }) => {
       dir: join(fixturesDir, 'demo', 'migrations'),
       validateChecksums: false
     },
-    dashboard: { path: '/' },
     authorization: { adminSecret: 'plt-db' },
     watch: {
       ignore: ['*.sqlite', '*.sqlite-journal']
@@ -237,7 +232,6 @@ test('transformConfig option', async ({ same, plan, pass }) => {
       ignore: { versions: true }
     },
     migrations: { dir: './demo/auth/migrations', validateChecksums: false },
-    dashboard: { enabled: true, path: '/' },
     authorization: { adminSecret: 'plt-db' },
     foobar: 'foobar'
   })

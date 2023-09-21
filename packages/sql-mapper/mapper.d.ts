@@ -1,6 +1,6 @@
 import { FastifyPluginAsync, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import type { PlatformaticApp } from '@platformatic/types'
 import { SQL, SQLQuery } from '@databases/sql'
+import { FastifyError } from '@fastify/error'
 
 interface ILogger {
   trace(): any,
@@ -277,19 +277,38 @@ export interface EntityHooks<EntityFields = any> {
   count?: EntityHook<Count>,
 }
 
-export interface SQLMapperPluginOptions {
+interface BasePoolOptions {
   /**
    * Database connection string.
    */
   connectionString: string,
+
   /**
-   * Set to true to enable auto timestamping for updated_at and inserted_at fields.
+   * The maximum number of connections to create at once. Default is 10.
+   * @default 10
    */
-  autoTimestamp?: boolean,
+  poolSize?: number
+}
+
+export interface CreateConnectionPoolOptions extends BasePoolOptions {
+  /**
+   * A logger object (like [Pino](https://getpino.io))
+   */
+  log: ILogger
+}
+
+export function createConnectionPool(options: CreateConnectionPoolOptions): Promise<{ db: Database, sql: SQL }>
+
+export interface SQLMapperPluginOptions extends BasePoolOptions {
   /**
    * A logger object (like [Pino](https://getpino.io))
    */
   log?: ILogger,
+
+  /**
+   * Set to true to enable auto timestamping for updated_at and inserted_at fields.
+   */
+  autoTimestamp?: boolean,
   /**
    * Database table to ignore when mapping to entities.
    */
@@ -314,7 +333,7 @@ export interface Entities {
   [entityName: string]: Entity
 }
 
-export interface SQLMapperPluginInterface {
+export interface SQLMapperPluginInterface<T extends Entities> {
   /**
    * A Database abstraction layer from [@Databases](https://www.atdatabases.org/)
    */
@@ -326,7 +345,7 @@ export interface SQLMapperPluginInterface {
   /**
    * An object containing a key for each table found in the schema, with basic CRUD operations. See [entity.md](./entity.md) for details.
    */
-  entities: Entities,
+  entities: T,
   /**
    * Adds hooks to the entity.
    */
@@ -336,33 +355,6 @@ export interface SQLMapperPluginInterface {
    * Clean up all the data in all entities
    */
   cleanUpAllEntities(): Promise<void>
-}
-
-// Extend the PlatformaticApp interface,
-// Unfortunately we neeed to copy over all the types from SQLMapperPluginInterface
-declare module '@platformatic/types' {
-  interface PlatformaticApp {
-    /**
-     * A Database abstraction layer from [@Databases](https://www.atdatabases.org/)
-     */
-    db: Database,
-    /**
-     * The SQL builder from [@Databases](https://www.atdatabases.org/)
-     */
-    sql: SQL,
-    /**
-     * An object containing a key for each table found in the schema, with basic CRUD operations. See [entity.md](./entity.md) for details.
-     */
-    entities: Entities,
-    /**
-     * Adds hooks to the entity.
-     */
-    addEntityHooks<EntityFields>(entityName: string, hooks: EntityHooks<EntityFields>): any
-    /**
-     * Clean up all the data in all entities
-     */
-    cleanUpAllEntities(): Promise<void>
-  }
 }
 
 export interface PlatformaticContext {
@@ -379,7 +371,7 @@ declare module 'fastify' {
 /**
  * Connects to the database and maps the tables to entities.
  */
-export function connect(options: SQLMapperPluginOptions): Promise<SQLMapperPluginInterface>
+export function connect<T extends Entities>(options: SQLMapperPluginOptions): Promise<SQLMapperPluginInterface<T>>
 /**
  * Fastify plugin that connects to the database and maps the tables to entities.
  */
@@ -392,4 +384,26 @@ export default plugin
 export module utils {
   export function toSingular(str: string): string
 }
+
+/**
+ * All the errors thrown by the plugin.
+ */
+export module errors {
+  export const CannotFindEntityError: (entityName: string) => FastifyError
+  export const SpecifyProtocolError: () => FastifyError
+  export const ConnectionStringRequiredError: () => FastifyError
+  export const TableMustBeAStringError: (table: any) => FastifyError
+  export const UnknownFieldError: (key: string) => FastifyError
+  export const InputNotProvidedError: () => FastifyError
+  export const UnsupportedWhereClauseError: (where: string) => FastifyError
+  export const UnsupportedOperatorForArrayFieldError: () => FastifyError
+  export const UnsupportedOperatorForNonArrayFieldError: () => FastifyError
+  export const ParamNotAllowedError: (offset: string) => FastifyError
+  export const InvalidPrimaryKeyTypeError: (pkType: string, validTypes: string) => FastifyError
+  export const ParamLimitNotAllowedError: (limit: string, max: string) => FastifyError
+  export const ParamLimitMustBeNotNegativeError: (limit: string) => FastifyError
+  export const MissingValueForPrimaryKeyError: (key: string) => FastifyError
+  export const SQLiteOnlySupportsAutoIncrementOnOneColumnError: () => FastifyError
+}
+
 

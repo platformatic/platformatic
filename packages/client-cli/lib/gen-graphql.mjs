@@ -1,5 +1,6 @@
 import CodeBlockWriter from 'code-block-writer'
 import { capitalize, toJavaScriptName } from './utils.mjs'
+import errors from './errors.mjs'
 
 export function processGraphQL ({ schema, name, folder, url }) {
   schema = schema.__schema
@@ -31,8 +32,8 @@ function generateTypesFromGraphQL ({ schema, name }) {
   writer.writeLine('import { type FastifyReply, type FastifyPluginAsync } from \'fastify\'')
   writer.blankLine()
 
-  const pluginname = `${capitalizedName}plugin`
-  const optionsname = `${capitalizedName}options`
+  const pluginname = `${capitalizedName}Plugin`
+  const optionsname = `${capitalizedName}Options`
 
   writer.write(`type ${pluginname} = FastifyPluginAsync<NonNullable<${capitalizedName}.${optionsname}>>`)
 
@@ -158,7 +159,7 @@ function GraphQLScalarToTsType (type) {
       // TODO test other scalar types
       /* c8 ignore next 3 */
     default:
-      throw new Error(`Unknown type ${type}`)
+      throw new errors.UknonwnTypeError(type)
   }
 }
 
@@ -178,7 +179,7 @@ function writeProperty (writer, key, value, addedProps) {
     // TODO are there other kinds that needs to be handled?
     /* c8 ignore next 3 */
   } else {
-    throw new Error(`Unknown type ${value.kind}`)
+    throw new errors.UknonwnTypeError(value.kind)
   }
   writer.newLine()
 }

@@ -1,8 +1,8 @@
 {
   "name": "@platformatic/authenticate",
-  "version": "0.40.0",
+  "version": "0.45.1",
   "description": "",
-  "main": "index.js",
+  "main": "authenticate.js",
   "type": "module",
   "scripts": {
     "test": "standard | snazzy && c8 --100 tap --no-coverage test/*test.js",
@@ -25,6 +25,7 @@
     "tap": "^16.3.6"
   },
   "dependencies": {
+    "@fastify/error": "^3.2.1",
     "@platformatic/config": "workspace:*",
     "colorette": "^2.0.20",
     "commist": "^3.2.0",

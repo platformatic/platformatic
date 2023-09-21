@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/deploy-client",
-  "version": "0.40.0",
+  "version": "0.45.1",
   "description": "Deploy code to the Platformatic cloud",
   "main": "index.js",
   "scripts": {
@@ -29,6 +29,7 @@
     "typescript": "^5.1.6"
   },
   "dependencies": {
+    "@fastify/error": "^3.2.1",
     "@platformatic/config": "workspace:*",
     "@platformatic/runtime": "workspace:*",
     "@platformatic/service": "workspace:*",

@@ -5,6 +5,7 @@ const { closest } = require('fastest-levenshtein')
 const Topo = require('@hapi/topo')
 const ConfigManager = require('@platformatic/config')
 const { schema } = require('./schema')
+const errors = require('./errors')
 
 async function _transformConfig (configManager) {
   const config = configManager.current
@@ -27,7 +28,7 @@ async function _transformConfig (configManager) {
       const configFilename = mapping.config ?? await ConfigManager.findConfigFile(entryPath)
 
       if (typeof configFilename !== 'string') {
-        throw new Error(`no config file found for service '${id}'`)
+        throw new errors.NoConfigFileFoundError(id)
       }
 
       const config = join(entryPath, configFilename)
@@ -61,7 +62,7 @@ async function _transformConfig (configManager) {
   }
 
   if (!hasValidEntrypoint) {
-    throw new Error(`invalid entrypoint: '${config.entrypoint}' does not exist`)
+    throw new errors.InvalidEntrypointError(config.entrypoint)
   }
 
   configManager.current.services = services
@@ -104,6 +105,8 @@ async function parseClientsAndComposer (configManager) {
             isLocal = false
             /* c8 ignore next 4 */
           } catch (err) {
+            // The MissingValueError is an error coming from pupa: https://github.com/sindresorhus/pupa#missingvalueerror
+            // All other errors are simply rethrown.
             if (err.name !== 'MissingValueError') {
               throw err
             }
@@ -117,7 +120,7 @@ async function parseClientsAndComposer (configManager) {
 
         if (isLocal) {
           if (dependency === undefined) {
-            throw new Error(missingDependencyErrorMessage(clientName, service, configManager))
+            throw new errors.MissingDependencyError(missingDependencyErrorMessage(clientName, service, configManager))
           }
           clientUrl = `http://${clientName}.plt.local`
           dependency.dependents.push(service.id)
@@ -195,8 +198,7 @@ async function parseClientsAndComposer (configManager) {
 
           /* c8 ignore next 4 */
           if (dependency === undefined) {
-            reject(new Error(missingDependencyErrorMessage(clientName, service, configManager)))
-            return
+            throw new errors.MissingDependencyError(missingDependencyErrorMessage(clientName, service, configManager))
           }
 
           dependency.dependents.push(service.id)
@@ -291,7 +293,7 @@ function parseInspectorOptions (configManager) {
     inspectFlag = args.inspect
 
     if (hasInspectBrk) {
-      throw new Error('--inspect and --inspect-brk cannot be used together')
+      throw new errors.InspectAndInspectBrkError()
     }
   } else if (hasInspectBrk) {
     inspectFlag = args['inspect-brk']
@@ -314,11 +316,11 @@ function parseInspectorOptions (configManager) {
       port = Number.parseInt(port, 10)
 
       if (!(port === 0 || (port >= 1024 && port <= 65535))) {
-        throw new Error('inspector port must be 0 or in range 1024 to 65535')
+        throw new errors.InspectorPortError()
       }
 
       if (!host) {
-        throw new Error('inspector host cannot be empty')
+        throw new errors.InspectorHostError()
       }
     }
 

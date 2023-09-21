@@ -99,40 +99,6 @@ Read thorough documentation on the [quick start guide](https://github.com/platfo
    to do it. Read the quick start guide to see examples.
 </details>
 
-### Run dashboard development server
-
-Create a `./packages/db-dashboard/.env` file with the following content
-```
-VITE_SERVER_URL=http://localhost:3042
-```
-Or whatever port you are running platformatic DB server on. 
-
-Use the command 
-```sh
-pnpm run dashboard:start
-```
-
-This will start a vite server on port `5173` by default, with watcher and hot-reload (as a standard `vite` application).
-
-Note that GraphiQL will _not_ work because platformatic-db has not been started
-yet.
-
-### Run platformatic-db service
-
-First build the dashboard for production with the command
-```sh
-pnpm run dashboard:build
-```
-
-This will create compressed files and assets under **packages/db-dashboard/build** directory.
-To run the service:
-```sh
-platformatic db
-```
-This will load config from local directory (i.e using config file **platformatic.db.json**).
-
-If you want to use another config file use the option `--config=/path/to/some.json`.
-
 ### Testing
 
 1. Start the RDBMS
@@ -146,8 +112,7 @@ If you want to use another config file use the option `--config=/path/to/some.js
    On Apple Silicon Macs: `docker compose -f docker-compose-apple-silicon.yml up` 
 
    On Windows, execute: `docker-compose up --build`
-1. Run `pnpm run dashboard:build` 
-1. Run tests: `pnpm test`
+2. Run tests: `pnpm test`
 
 If you encounter issues running tests (f.e. failing tests without making a change to the codebase), try to:
 1. Run `pnpm cleanall`

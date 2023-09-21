@@ -44,7 +44,7 @@ async function safeRm (dir) {
 
 async function adjustTypeReferenceToAvoidLoops (cwd) {
   let types = await readFile(path.join(cwd, 'global.d.ts'), 'utf8')
-  types = types.replace('@platformatic/db', '../../../index.d.ts')
+  types = types.replace('@platformatic/db', '../../../index')
   await writeFile(path.join(cwd, 'global.d.ts'), types, 'utf8')
 }
 

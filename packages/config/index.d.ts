@@ -1,7 +1,8 @@
-import { type InstanceOptions } from 'ajv' 
+import { type InstanceOptions } from 'ajv'
 import { type FastifyPluginAsync } from 'fastify'
+import { FastifyError } from '@fastify/error'
 interface IEnv {
-  [key: string]: string 
+  [key: string]: string
 }
 interface IConfigManagerOptions {
   source: string | JsonMap
@@ -25,7 +26,7 @@ interface ISerializer {
   stringify(obj: JsonMap): string
 }
 
-export default class ConfigManager<T=object> {
+export default class ConfigManager<T = object> {
   constructor(opts: IConfigManagerOptions)
   current: T
   fullPath: string
@@ -36,6 +37,28 @@ export default class ConfigManager<T=object> {
   validate(): boolean
   toFastifyPlugin(): FastifyPluginAsync
   update(config: JsonMap): Promise<boolean | undefined>
-  save(): Promise<boolean|undefined>
+  save(): Promise<boolean | undefined>
   load(): Promise<string>
 }
+
+/**
+ * All the errors thrown by the plugin.
+ */
+export module errors {
+  export const CannotFindEntityError: (entityName: string) => FastifyError
+
+  export const ConfigurationDoesNotValidateAgainstSchemaError: FastifyError
+  export const SourceMissingError: FastifyError
+  export const InvalidPlaceholderError: (placeholder: string, suggestion: string) => FastifyError
+  export const EnvVarMissingError: (envVarName: string) => FastifyError
+  export const CannotParseConfigFileError: (error: string) => FastifyError
+  export const ValidationErrors: (errors: string) => FastifyError
+  export const AppMustBeAFunctionError: FastifyError
+  export const SchemaMustBeDefinedError: FastifyError
+  export const SchemaIdMustBeAStringError: FastifyError
+  export const ConfigTypeMustBeAStringError: FastifyError
+  export const AddAModulePropertyToTheConfigOrAddAKnownSchemaError: FastifyError
+  export const VersionMismatchError: (currentVersion: string, requiredVersion: string) => FastifyError
+  export const NoConfigFileFoundError: FastifyError
+}
+

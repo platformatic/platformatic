@@ -25,9 +25,5 @@ graphiql = true
 dir = "./demo/auth/migrations"
 validateChecksums = false
 
-[dashboard]
-enabled = true
-path = "/"
-
 [authorization]
 adminSecret = "plt-db"

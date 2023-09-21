@@ -1,6 +1,6 @@
 {
   "name": "create-platformatic",
-  "version": "0.40.0",
+  "version": "0.45.1",
   "description": "Create platformatic-db interactive tool",
   "repository": {
     "type": "git",

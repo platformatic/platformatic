@@ -212,7 +212,7 @@ test('req decorator with OpenAPI', async ({ teardown, same }) => {
   })
 })
 
-test('req decorator with OpenAPI', async ({ teardown, same, rejects }) => {
+test('validate response', async ({ teardown, same, rejects }) => {
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -229,7 +229,8 @@ test('req decorator with OpenAPI', async ({ teardown, same, rejects }) => {
   await app.register(client, {
     type: 'openapi',
     url: `${targetApp.url}/documentation/json`,
-    name: 'movies'
+    name: 'movies',
+    validateResponse: true
   })
 
   app.post('/', async (req) => {
@@ -240,16 +241,26 @@ test('req decorator with OpenAPI', async ({ teardown, same, rejects }) => {
     return movie
   })
 
-  const res = await app.inject({
+  app.get('/allMovies', async (req) => {
+    const movies = await req.movies.getMovies({})
+    return movies
+  })
+
+  await app.inject({
     method: 'POST',
     url: '/'
   })
 
+  const res = await app.inject({
+    method: 'GET',
+    url: '/allMovies'
+  })
+
   same(res.statusCode, 200)
-  same(res.json(), {
+  same(res.json(), [{
     id: 1,
     title: 'The Matrix'
-  })
+  }])
 })
 
 test('req decorator with GraphQL and auth', async ({ teardown, same, rejects }) => {

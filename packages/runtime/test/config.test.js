@@ -15,7 +15,7 @@ test('throws if no entrypoint is found', async (t) => {
 
   await assert.rejects(async () => {
     await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  }, /invalid entrypoint: 'invalid' does not exist/)
+  }, /Invalid entrypoint: 'invalid' does not exist/)
 })
 
 test('throws if a config file is not found for an individual service', async (t) => {
@@ -23,7 +23,7 @@ test('throws if a config file is not found for an individual service', async (t)
 
   await assert.rejects(async () => {
     await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  }, /no config file found for service 'docs'/)
+  }, /No config file found for service 'docs'/)
 })
 
 test('performs a topological sort on services depending on allowCycles', async (t) => {
@@ -173,7 +173,7 @@ test('parseInspectorOptions()', async (t) => {
       }
 
       parseInspectorOptions(cm)
-    }, /inspector host cannot be empty/)
+    }, /Inspector host cannot be empty/)
   })
 
   await t.test('differentiates valid and invalid ports', () => {
@@ -185,7 +185,7 @@ test('parseInspectorOptions()', async (t) => {
         }
 
         parseInspectorOptions(cm)
-      }, /inspector port must be 0 or in range 1024 to 65535/)
+      }, /Inspector port must be 0 or in range 1024 to 65535/)
     })
 
     const cm = {

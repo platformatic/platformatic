@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/composer",
-  "version": "0.40.0",
+  "version": "0.45.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -32,6 +32,7 @@
     "why-is-node-running": "^2.2.2"
   },
   "dependencies": {
+    "@fastify/error": "^3.2.1",
     "@fastify/http-proxy": "^9.2.0",
     "@fastify/reply-from": "^9.3.0",
     "@fastify/static": "^6.10.2",

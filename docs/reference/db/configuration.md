@@ -34,7 +34,6 @@ Comments are supported by the JSON5, YAML and TOML file formats.
 Configuration settings are organised into the following groups:
 
 - [`db`](#db) **(required)**
-- [`dashboard`](#dashboard)
 - [`metrics`](#metrics)
 - [`migrations`](#migrations)
 - [`plugins`](#plugins)
@@ -296,20 +295,6 @@ A **required** object with the following settings:
   Starting Platformatic DB or running a migration will automatically create the schemalock file.
 
 
-### `dashboard`
-
-This setting can be a `boolean` or an `object`. If set to `true` the dashboard will be served at the root path (`/`).
-
-Supported object properties:
-
-- **`path`** (`string`, default: `/`) — Make the dashboard available at the specified path.
-
-:::tip
-
-Read the [dashboard docs](/docs/reference/db/dashboard) to understand how to create a build or have the Vite's development server up and running.
-
-:::
-
 ### `metrics`
 
 Configuration for a [Prometheus](https://prometheus.io/) server that will export monitoring metrics
@@ -469,8 +454,7 @@ See the [fastify docs](https://www.fastify.io/docs/latest/Reference/Server) for 
 
 An optional object with the following settings:
 
-- `adminSecret` (`string`): A secret that will be required as a password to
-access the Platformatic DB dashboard. This secret can also be sent in an
+- `adminSecret` (`string`): A secret that should be sent in an
 `x-platformatic-admin-secret` HTTP header when performing GraphQL/REST API
 calls. Use an [environment variable placeholder](#environment-variable-placeholders)
 to securely provide the value for this setting.
@@ -618,7 +602,7 @@ default allow list.
 
 ## Sample Configuration
 
-This is a bare minimum configuration for Platformatic DB. Uses a local `./db.sqlite` SQLite database, with OpenAPI and GraphQL support, and with the dashboard enabled.
+This is a bare minimum configuration for Platformatic DB. Uses a local `./db.sqlite` SQLite database, with OpenAPI and GraphQL support.
 
 Server will listen to `http://127.0.0.1:3042`
 
@@ -633,8 +617,7 @@ Server will listen to `http://127.0.0.1:3042`
     "graphiql": true,
     "openapi": true,
     "graphql": true
-  },
-  "dashboard": true
+  }
 }
 ```
 

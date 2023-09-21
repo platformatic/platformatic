@@ -112,7 +112,7 @@ app.listen({ port: 0 });
     compilerOptions: {
       outDir: 'build',
       target: 'es2018',
-      moduleResolution: 'node',
+      moduleResolution: 'NodeNext',
       lib: ['es2018'],
       esModuleInterop: true
     }
@@ -338,7 +338,7 @@ app.listen({ port: 0 });
     compilerOptions: {
       outDir: 'build',
       target: 'es2018',
-      moduleResolution: 'node',
+      moduleResolution: 'NodeNext',
       lib: ['es2018'],
       esModuleInterop: true
     }
@@ -684,7 +684,7 @@ app.listen({ port: 0 });
     compilerOptions: {
       outDir: 'build',
       target: 'es2018',
-      moduleResolution: 'node',
+      moduleResolution: 'NodeNext',
       lib: ['es2018'],
       esModuleInterop: true
     }
@@ -821,9 +821,9 @@ test('nested optional parameters are correctly identified', async ({ teardown, c
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
   match(data, `
-export interface GetMoviesResponseOK {
-  'data': { foo: string; bar?: string; baz?: { nested1?: string; nested2: string } };
-}
+  export interface GetMoviesResponseOK {
+    'data': { foo: string; bar?: string; baz?: { nested1?: string; nested2: string } };
+  }
 `)
 })
 
@@ -837,20 +837,23 @@ test('request with same parameter name in body/path/header/query', async ({ tear
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
   match(data, `
-export interface GetMoviesRequest {
-  body: {
-    'id': string;
-  }
-  query: {
-    'id': string;
-  }
-  headers: {
-    'id': string;
-  }
-}`)
+  export interface GetMoviesRequest {
+    body: {
+      'id': string;
+    }
+    path: {
+      'id': string;
+    }
+    query: {
+      'id': string;
+    }
+    headers: {
+      'id': string;
+    }
+  }`)
 })
 
-test('openapi client generation (javascript) from file with fullRequest and fullResponse', async ({ teardown, comment, match }) => {
+test('openapi client generation (javascript) from file with fullRequest, fullResponse and validateResponse', async ({ teardown, comment, match }) => {
   const openapi = desm.join(import.meta.url, 'fixtures', 'full-req-res', 'openapi.json')
   teardown = () => {}
   const dir = await moveToTmpdir((teardown))
@@ -874,28 +877,28 @@ test('openapi client generation (javascript) from file with fullRequest and full
     ['--full']
   ]
   for (const opt of fullOptions) {
-    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapi, '--name', 'full', ...opt])
+    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapi, '--name', 'full', '--validate-response', ...opt])
 
     // check the type file has the correct implementation for the request and the response
     const typeFile = join(dir, 'full', 'full.d.ts')
     const data = await readFile(typeFile, 'utf-8')
     match(data, `
-export interface PostHelloRequest {
-  body: {
-    'bodyId': string;
+  export interface PostHelloRequest {
+    body: {
+      'bodyId': string;
+    }
+    query: {
+      'queryId': string;
+    }
+    headers: {
+      'headerId': string;
+    }
   }
-  query: {
-    'queryId': string;
-  }
-  headers: {
-    'headerId': string;
-  }
-}
 `)
     match(data, `
-export interface Full {
-  postHello(req?: PostHelloRequest): Promise<FullResponse<PostHelloResponseOK>>;
-}`)
+  export interface Full {
+    postHello(req?: PostHelloRequest): Promise<FullResponse<PostHelloResponseOK>>;
+  }`)
     const implementationFile = join(dir, 'full', 'full.cjs')
     const implementationData = await readFile(implementationFile, 'utf-8')
     // check the implementation instantiate the client with fullRequest and fullResponse
@@ -909,7 +912,8 @@ async function generateFullClientPlugin (app, opts) {
     serviceId: opts.serviceId,
     throwOnError: opts.throwOnError,
     fullResponse: true,
-    fullRequest: true
+    fullRequest: true,
+    validateResponse: true
   })
 }`)
   }
@@ -925,8 +929,8 @@ test('optional-headers option', async ({ teardown, comment, match }) => {
   const typeFile = join(dir, 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
   match(data, `
-export interface PostHelloRequest {
-  'authorization'?: string;
-}
+  export interface PostHelloRequest {
+    'authorization'?: string;
+  }
 `)
 })

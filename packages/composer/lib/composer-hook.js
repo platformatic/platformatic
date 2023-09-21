@@ -2,6 +2,7 @@
 
 const deepClone = require('rfdc')()
 const fp = require('fastify-plugin')
+const errors = require('./errors')
 
 async function composeOpenAPI (app) {
   const onRoutesHooks = {}
@@ -30,9 +31,7 @@ async function composeOpenAPI (app) {
   function addComposerOnRouteHook (openApiPath, methods, hook) {
     /* c8 ignore next 5 */
     if (isApplicationReady) {
-      throw new Error(
-        'Fastify instance is already listening. Cannot call "addComposerOnRouteHook"!'
-      )
+      throw new errors.FastifyInstanceIsAlreadyListeningError()
     }
 
     if (onRoutesHooks[openApiPath] === undefined) {

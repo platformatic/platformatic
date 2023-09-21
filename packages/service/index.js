@@ -108,7 +108,7 @@ platformaticService.configManagerConfig = {
       let outDir = typescript.outDir
       if (outDir === undefined) {
         let tsConfigFile = typescript.tsConfigFile || 'tsconfig.json'
-        tsConfigFile = join(dirname(this.fullPath), tsConfigFile)
+        tsConfigFile = join(dirname(this.dirname), tsConfigFile)
         try {
           const tsConfig = JSON.parse(await readFile(tsConfigFile, 'utf8'))
           outDir = tsConfig.compilerOptions.outDir

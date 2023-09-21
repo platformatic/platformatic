@@ -4,37 +4,41 @@ import helpMe from 'help-me'
 import parseArgs from 'minimist'
 import camelcase from 'camelcase'
 import { request } from 'undici'
-import { writeFile } from 'fs/promises'
-import { isValidUrl } from './lib/utils.mjs'
+import { readFile, writeFile } from 'fs/promises'
 import { processOpenAPI } from './lib/gen-openapi.mjs'
 
-async function frontendTemplate ({ url, language, name }) {
+async function frontendTemplate ({ source, language, name }) {
   const help = helpMe({
     dir: join(import.meta.url, 'help'),
     // the default
     ext: '.txt'
   })
+  let schema
+  if (source.startsWith('http')) {
+    try {
+      // Load the OpenAPI spec
+      const apiUrl = new URL(source)
+      if (apiUrl.pathname === '/') {
+        apiUrl.pathname = '/documentation/json'
+      }
+      const res = await request(apiUrl)
 
-  // Load the OpenAPI spec
-  let res
-  const apiUrl = url.endsWith('/') ? url.replace(/\/$/, '') : url // Remove the trailing slash
-  try {
-    const documentationUrl = `${apiUrl}/documentation/json`
-    res = await request(documentationUrl)
-  } catch (err) {
-    await help.toStdout(['open-api-server-error'])
-    process.exit(1)
+      if (res.statusCode !== 200) {
+        await help.toStdout(['open-api-server-no-200'])
+        process.exit(1)
+      }
+
+      const text = await res.body.text()
+      schema = JSON.parse(text)
+    } catch (err) {
+      await help.toStdout(['open-api-server-error'])
+      process.exit(1)
+    }
+  } else {
+    // source is a file
+    schema = JSON.parse(await readFile(source, 'utf-8'))
   }
-
-  if (res.statusCode !== 200) {
-    await help.toStdout(['open-api-server-no-200'])
-    process.exit(1)
-  }
-
-  const text = await res.body.text()
-
-  const schema = JSON.parse(text)
-  const { types, implementation } = processOpenAPI({ schema, name, url: apiUrl, language })
+  const { types, implementation } = processOpenAPI({ schema, name, language })
   await writeFile(`${name}-types.d.ts`, types)
   await writeFile(`${name}.${language}`, implementation)
 
@@ -43,7 +47,7 @@ async function frontendTemplate ({ url, language, name }) {
 
 export async function command (argv) {
   let {
-    _: [urlOrLanguage, language], name
+    _: [source, language], name
   } = parseArgs(argv)
 
   const help = helpMe({
@@ -56,7 +60,7 @@ export async function command (argv) {
   } else {
     name = camelcase(name)
   }
-  const missingParams = !urlOrLanguage && !language
+  const missingParams = !source && !language
   const missingLanguage = !language || (language !== 'ts' && language !== 'js')
 
   if (missingParams || missingLanguage) {
@@ -64,13 +68,8 @@ export async function command (argv) {
     process.exit(1)
   }
 
-  if (!isValidUrl(urlOrLanguage)) {
-    await help.toStdout(['invalid-url'])
-    process.exit(1)
-  }
-
   try {
-    await frontendTemplate({ url: urlOrLanguage, language, name })
+    await frontendTemplate({ source, language, name })
   } catch (err) {
     console.error(err)
   }

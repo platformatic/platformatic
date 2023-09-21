@@ -49,7 +49,7 @@ let counter = 0
 `,
   config: `
   config.migrations.autoApply = true
-  config.types.autoGenerate = false
+  config.types.autogenerate = false
   config.db.connectionString = connectionString
 `,
   post: `
@@ -59,45 +59,92 @@ let counter = 0
 `
 }
 
-const jsHelperPostgres = {
-  pre: `
-  const connectionString = '${connectionStrings.postgres}'
+function jsHelperPostgres (connectionString) {
+  return {
+    // TODO(mcollina): replace sql-mapper
+    requires: `
+const { createConnectionPool } = require('@platformatic/sql-mapper')
+const connectionString = '${connectionString}'
+let counter = 0
 `,
-  config: `
+    pre:`
+  const { db, sql } = await createConnectionPool({
+    log: {
+      debug: () => {},
+      info: () => {},
+      trace: () => {}
+    },
+    connectionString,
+    poolSize: 1
+  })
+
+  const newDB = \`t-\${process.pid}-\${counter++}\`
+  t.diagnostic('Creating database ' + newDB)
+
+  await db.query(sql\`
+    CREATE DATABASE \${sql.ident(newDB)}
+  \`)
+`,
+    config: `
   config.migrations.autoApply = true
-  config.types.autoGenerate = false
-  config.db.connectionString = connectionString
+  config.types.autogenerate = false
+  config.db.connectionString = connectionString.replace(/\\/[a-zA-Z0-9\\-_]+$/, '/' + newDB)
+  config.db.schemalock = false
 `,
-  post: `
-  await server.platformatic.cleanUpAllEntities()
+    post: `
+  t.after(async () => {
+    t.diagnostic('Disposing test database ' + newDB)
+    await db.query(sql\`
+      DROP DATABASE \${sql.ident(newDB)}
+    \`)
+    await db.dispose()
+  })
 `
+  }
 }
 
-const jsHelperMySQL = {
-  pre: `
-  const connectionString = '${connectionStrings.mysql}'
+function jsHelperMySQL (connectionString) {
+  return {
+    // TODO(mcollina): replace sql-mapper
+    requires: `
+const { createConnectionPool } = require('@platformatic/sql-mapper')
+const connectionString = '${connectionString}'
+let counter = 0
 `,
-  config: `
-  config.migrations.autoApply = true
-  config.types.autoGenerate = false
-  config.db.connectionString = connectionString
-`,
-  post: `
-  await server.platformatic.cleanUpAllEntities()
-`
-}
+    pre:`
+  const { db, sql } = await createConnectionPool({
+    log: {
+      debug: () => {},
+      info: () => {},
+      trace: () => {}
+    },
+    connectionString,
+    poolSize: 1
+  })
 
-const jsHelperMariaDB = {
-  pre: `
-  const connectionString = '${connectionStrings.mariadb}'
+  const newDB = \`t-\${process.pid}-\${counter++}\`
+  t.diagnostic('Creating database ' + newDB)
+
+  await db.query(sql\`
+    CREATE DATABASE \${sql.ident(newDB)}
+  \`)
 `,
-  config: `
+    config: `
   config.migrations.autoApply = true
-  config.types.autoGenerate = false
+  config.types.autogenerate = false
+  config.db.connectionString = connectionString.replace(/\\/[a-zA-Z0-9\\-_]+$/, '/' + newDB)
+  config.db.schemalock = false
 `,
-  post: `
-  await server.platformatic.cleanUpAllEntities()
+    post: `
+  t.after(async () => {
+    t.diagnostic('Disposing test database ' + newDB)
+    await db.query(sql\`
+      DROP DATABASE \${sql.ident(newDB)}
+    \`)
+    await db.dispose()
+  })
 `
+  }
 }
 
 const moviesTestJS = `\
@@ -348,13 +395,13 @@ export async function createDB ({ hostname, database = 'sqlite', port, migration
         jsHelper = jsHelperSqlite
         break
       case 'mysql':
-        jsHelper = jsHelperMySQL
+        jsHelper = jsHelperMySQL(connectionString)
         break
       case 'postgres':
-        jsHelper = jsHelperPostgres
+        jsHelper = jsHelperPostgres(connectionString)
         break
       case 'mariadb':
-        jsHelper = jsHelperMariaDB
+        jsHelper = jsHelperMySQL(connectionString)
         break
     }
     await generatePlugins(logger, currentDir, typescript, 'db', jsHelper)

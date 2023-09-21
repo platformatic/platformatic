@@ -124,35 +124,6 @@ jobs:
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: cd packages/cli && pnpm run license
 
-  ci-db-dashboard:
-    needs: setup-node_modules
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 15
-    strategy:
-      matrix:
-        node-version: [18, 20]
-        os: [ubuntu-latest]
-    steps:
-    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4
-    - uses: pnpm/action-setup@v2.4.0
-    - uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'pnpm'
-    - name: pnpm install
-      uses: nick-fields/retry@v2.8.3
-      with:
-        max_attempts: 10
-        timeout_minutes: 15
-        retry_on: error
-        command: pnpm install --frozen-lockfile
-    - name: Builds the ra-data-rest
-      run: pnpm run ra-data-rest build
-    - name: Builds the dashboard
-      run: pnpm run dashboard:build
-    - name: Run test suite Dashboard
-      run: cd packages/db-dashboard && pnpm test
-
   ci-config:
     needs: setup-node_modules
     runs-on: ${{matrix.os}}
@@ -230,10 +201,6 @@ jobs:
         command: pnpm install --frozen-lockfile
     - name: pnpm install -g typescript
       run: pnpm install -g typescript
-    - name: Builds the ra-data-rest
-      run: pnpm run ra-data-rest build
-    - name: Builds the dashboard
-      run: pnpm run dashboard:build
     - name: Run test suite core
       run: cd packages/db-core && pnpm test
     - name: Run test suite Platformatic DB
@@ -457,31 +424,6 @@ jobs:
       - name: Run test suite
         run: cd packages/service && pnpm test; cd ../..
 
-  ci-start:
-    needs: setup-node_modules
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 15
-    strategy:
-      matrix:
-        node-version: [18, 20]
-        os: [ubuntu-latest, windows-latest]
-    steps:
-    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4
-    - uses: pnpm/action-setup@v2.4.0
-    - uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'pnpm'
-    - name: pnpm install
-      uses: nick-fields/retry@v2.8.3
-      with:
-        max_attempts: 10
-        timeout_minutes: 15
-        retry_on: error
-        command: pnpm install --frozen-lockfile
-    - name: Run start package test suite
-      run: cd packages/start && pnpm test
-
   ci-utils:
     needs: setup-node_modules
     runs-on: ${{matrix.os}}
@@ -552,20 +494,8 @@ jobs:
       run: docker-compose up -d postgresql
     - name: pnpm install
       run: pnpm install --frozen-lockfile
-    - name: Builds the ra-data-rest
-      run: pnpm run ra-data-rest build
-    - name: Builds the dashboard
-      run: pnpm run dashboard:build
     - name: Install Playwright browsers
-      run: cd packages/db-dashboard && pnpm exec playwright install
-    - name: Wait for DB
-      run: sleep 10
-    - name: Run Platformatic DB server and E2E tests
-      id: build
-      run: |
-        node ./packages/cli/cli.js db start --config=./packages/db-dashboard/test/e2e/fixtures/e2e-test-config.json &
-        sleep 5 &&
-        cd packages/db-dashboard && pnpm run test:e2e
+      run: cd packages/frontend-template && pnpm exec playwright install
     - name: Run Platformatic frontend cli and E2E tests
       run: |
         node ./packages/cli/cli.js db migrations apply --config=./packages/frontend-template/test/e2e/fixtures/platformatic.e2e.db.json &&

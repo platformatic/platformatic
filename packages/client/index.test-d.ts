@@ -1,18 +1,21 @@
-import { expectError, expectType } from 'tsd' 
+import { expectError, expectType } from 'tsd'
 import fastify from 'fastify'
-import pltClient, { type PlatformaticClientPluginOptions, buildOpenAPIClient} from '.'
+import pltClient, { type PlatformaticClientPluginOptions, buildOpenAPIClient, errors } from '.'
+import { FastifyError } from '@fastify/error'
 
 const server = await fastify()
 
 expectError<PlatformaticClientPluginOptions>({})
 
 expectError<PlatformaticClientPluginOptions>({
+  fullRequest: true,
   fullResponse: true,
   throwOnError: true,
   url: 'localhost'
 })
 
 expectError<PlatformaticClientPluginOptions>({
+  fullRequest: true,
   fullResponse: true,
   throwOnError: true,
   type: 'WRONG',
@@ -20,6 +23,7 @@ expectError<PlatformaticClientPluginOptions>({
 })
 
 server.register(pltClient, {
+  fullRequest: true,
   fullResponse: true,
   throwOnError: true,
   type: 'graphql',
@@ -27,7 +31,9 @@ server.register(pltClient, {
 })
 
 server.register(pltClient, {
+  fullRequest: false,
   fullResponse: false,
+  validateResponse: false,
   throwOnError: false,
   type: 'openapi',
   url: 'http://127.0.0.1/path/42',
@@ -47,3 +53,6 @@ expectType<Promise<MyType>>(buildOpenAPIClient<MyType>({
   url: 'http://foo.bar',
   path: 'foobar'
 }, openTelemetryClient))
+
+expectType<() => FastifyError>(errors.OptionsUrlRequiredError)
+

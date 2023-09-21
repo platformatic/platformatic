@@ -1,10 +1,12 @@
 'use strict'
 
+const { findNearestString } = require('@platformatic/utils')
 const buildEntity = require('./lib/entity')
 const buildCleanUp = require('./lib/clean-up')
 const queriesFactory = require('./lib/queries')
 const fp = require('fastify-plugin')
 const { areSchemasSupported } = require('./lib/utils')
+const errors = require('./lib/errors')
 
 // Ignore the function as it is only used only for MySQL and PostgreSQL
 /* istanbul ignore next */
@@ -47,25 +49,17 @@ const defaultAutoTimestampFields = {
   updatedAt: 'updated_at'
 }
 
-async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, ignore = {}, autoTimestamp = true, hooks = {}, schema, limit = {}, dbschema }) {
-  if (typeof autoTimestamp === 'boolean' && autoTimestamp === true) {
-    autoTimestamp = defaultAutoTimestampFields
-  }
-  // TODO validate config using the schema
-  if (!connectionString) {
-    throw new Error('connectionString is required')
-  }
-
-  let queries
-  let sql
+async function createConnectionPool ({ log, connectionString, poolSize }) {
   let db
+  let sql
+
+  poolSize = poolSize || 10
 
   /* istanbul ignore next */
   if (connectionString.indexOf('postgres') === 0) {
     const createConnectionPoolPg = require('@databases/pg')
     db = await buildConnection(log, createConnectionPoolPg, connectionString, poolSize)
     sql = createConnectionPoolPg.sql
-    queries = queriesFactory.pg
     db.isPg = true
   } else if (connectionString.indexOf('mysql') === 0) {
     const createConnectionPoolMysql = require('@databases/mysql')
@@ -74,11 +68,8 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, 
     const version = (await db.query(sql`SELECT VERSION()`))[0]['VERSION()']
     db.version = version
     db.isMariaDB = version.indexOf('maria') !== -1
-    if (db.isMariaDB) {
-      queries = queriesFactory.mariadb
-    } else {
+    if (!db.isMariaDB) {
       db.isMySql = true
-      queries = queriesFactory.mysql
     }
   } else if (connectionString.indexOf('sqlite') === 0) {
     const sqlite = require('@matteo.collina/sqlite-pool')
@@ -98,10 +89,35 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, 
       }
     })
     sql = sqlite.sql
-    queries = queriesFactory.sqlite
     db.isSQLite = true
   } else {
-    throw new Error('You must specify either postgres, mysql or sqlite as protocols')
+    throw new errors.SpecifyProtocolError()
+  }
+
+  return { db, sql }
+}
+
+async function connect ({ connectionString, log, onDatabaseLoad, poolSize, ignore = {}, autoTimestamp = true, hooks = {}, schema, limit = {}, dbschema }) {
+  if (typeof autoTimestamp === 'boolean' && autoTimestamp === true) {
+    autoTimestamp = defaultAutoTimestampFields
+  }
+  // TODO validate config using the schema
+  if (!connectionString) {
+    throw new errors.ConnectionStringRequiredError()
+  }
+
+  let queries
+  const { db, sql } = await createConnectionPool({ log, connectionString, poolSize })
+
+  /* istanbul ignore next */
+  if (db.isPg) {
+    queries = queriesFactory.pg
+  } else if (db.isMySql) {
+    queries = queriesFactory.mysql
+  } else if (db.isMariaDB) {
+    queries = queriesFactory.mariadb
+  } else if (db.isSQLite) {
+    queries = queriesFactory.sqlite
   }
 
   // Specify an empty array must be the same of specifying no schema
@@ -143,12 +159,24 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, 
       }
     }
 
+    const schemaTables = dbschema.map(table => table.table)
+    for (const ignoredTable of Object.keys(ignore)) {
+      if (!schemaTables.includes(ignoredTable)) {
+        const nearestTable = findNearestString(schemaTables, ignoredTable)
+        let warningMessage = `Ignored table "${ignoredTable}" not found.`
+        if (nearestTable) {
+          warningMessage += ` Did you mean "${nearestTable}"?`
+        }
+        log.warn(warningMessage)
+      }
+    }
+
     for (const { table, schema, columns, constraints } of dbschema) {
       // The following line is a safety net when developing this module,
       // it should never happen.
       /* istanbul ignore next */
       if (typeof table !== 'string') {
-        throw new Error(`Table must be a string, got '${table}'`)
+        throw new errors.TableMustBeAStringError(table)
       }
       if (ignore[table] === true) {
         continue
@@ -185,7 +213,7 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize = 10, 
   function addEntityHooks (entityName, hooks) {
     const entity = entities[entityName]
     if (!entity) {
-      throw new Error('Cannot find entity ' + entityName)
+      throw new errors.CannotFindEntityError(entityName)
     }
     for (const key of Object.keys(hooks)) {
       if (hooks[key] && entity[key]) {
@@ -222,5 +250,7 @@ async function sqlMapper (app, opts) {
 
 module.exports = fp(sqlMapper)
 module.exports.connect = connect
+module.exports.createConnectionPool = createConnectionPool
 module.exports.plugin = module.exports
 module.exports.utils = require('./lib/utils')
+module.exports.errors = errors

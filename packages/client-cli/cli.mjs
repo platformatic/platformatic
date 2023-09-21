@@ -18,6 +18,7 @@ import { findUp } from 'find-up'
 import pino from 'pino'
 import pinoPretty from 'pino-pretty'
 import YAML from 'yaml'
+import errors from './lib/errors.mjs'
 
 function parseFile (content) {
   let parsed = false
@@ -42,7 +43,7 @@ async function isFileAccessible (filename) {
 
 const configFileNames = ConfigManager.listConfigFiles()
 
-async function writeOpenAPIClient (folder, name, text, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders) {
+async function writeOpenAPIClient (folder, name, text, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse) {
   await mkdir(folder, { recursive: true })
 
   // TODO deal with yaml
@@ -53,7 +54,7 @@ async function writeOpenAPIClient (folder, name, text, generateImplementation, t
   if (!typesOnly) {
     await writeFile(join(folder, `${name}.openapi.json`), JSON.stringify(schema, null, 2))
   }
-  const { types, implementation } = processOpenAPI({ schema, name, fullResponse, fullRequest, optionalHeaders })
+  const { types, implementation } = processOpenAPI({ schema, name, fullResponse, fullRequest, optionalHeaders, validateResponse })
   await writeFile(join(folder, `${name}.d.ts`), types)
   if (generateImplementation) {
     await writeFile(join(folder, `${name}.cjs`), implementation)
@@ -77,14 +78,14 @@ async function writeGraphQLClient (folder, name, schema, url, generateImplementa
   await writeFile(join(folder, 'package.json'), getPackageJSON({ name, generateImplementation }))
 }
 
-async function downloadAndWriteOpenAPI (logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders) {
+async function downloadAndWriteOpenAPI (logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse) {
   logger.debug(`Trying to download OpenAPI schema from ${url}`)
   const res = await request(url)
   if (res.statusCode === 200) {
     // we are OpenAPI
     const text = await res.body.text()
     try {
-      await writeOpenAPIClient(folder, name, text, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders)
+      await writeOpenAPIClient(folder, name, text, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse)
       /* c8 ignore next 3 */
     } catch (err) {
       logger.error(err)
@@ -121,12 +122,12 @@ async function downloadAndWriteGraphQL (logger, url, folder, name, generateImple
   return 'graphql'
 }
 
-async function readFromFileAndWrite (logger, file, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders) {
+async function readFromFileAndWrite (logger, file, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse) {
   logger.info(`Trying to read schema from file ${file}`)
   const text = await readFile(file, 'utf8')
   // try OpenAPI first
   try {
-    await writeOpenAPIClient(folder, name, text, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders)
+    await writeOpenAPIClient(folder, name, text, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse)
     return 'openapi'
   } catch (err) {
     logger.error(`Error parsing OpenAPI definition: ${err.message} Trying with GraphQL`)
@@ -151,7 +152,8 @@ async function downloadAndProcess (options) {
     typesOnly,
     fullRequest,
     fullResponse,
-    optionalHeaders
+    optionalHeaders,
+    validateResponse
   } = options
   let config = options.config
   if (!config) {
@@ -163,14 +165,14 @@ async function downloadAndProcess (options) {
   const toTry = []
   if (url.startsWith('http')) {
     // add download functions only if it's an URL
-    toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url + '/documentation/json', folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders))
+    toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url + '/documentation/json', folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse))
     toTry.push(downloadAndWriteGraphQL.bind(null, logger, url + '/graphql', folder, name, generateImplementation, typesOnly))
-    toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders))
+    toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse))
     toTry.push(downloadAndWriteGraphQL.bind(null, logger, url, folder, name, generateImplementation, typesOnly))
   } else {
     // add readFromFileAndWrite to the functions only if it's not an URL
     toTry.push(
-      readFromFileAndWrite.bind(null, logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders)
+      readFromFileAndWrite.bind(null, logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse)
     )
   }
   for (const fn of toTry) {
@@ -245,7 +247,7 @@ export async function command (argv) {
   })
   let { _: [url], ...options } = parseArgs(argv, {
     string: ['name', 'folder', 'runtime', 'optional-headers'],
-    boolean: ['typescript', 'full-response', 'types-only', 'full-response', 'full'],
+    boolean: ['typescript', 'full-response', 'types-only', 'full-response', 'full', 'validate-response'],
     default: {
       name: 'client',
       typescript: false
@@ -315,6 +317,7 @@ export async function command (argv) {
       ? options['optional-headers'].split(',').map((h) => h.trim())
       : []
 
+    options.validateResponse = options['validate-response']
     await downloadAndProcess({ url, ...options, logger, runtime: options.runtime })
     logger.info('Client generated successfully')
     logger.info('Check out the docs to know more: https://docs.platformatic.dev/docs/reference/client/introduction')
@@ -330,3 +333,5 @@ export async function command (argv) {
 if (isMain(import.meta)) {
   command(process.argv.slice(2))
 }
+
+export { errors }

@@ -1,25 +1,23 @@
 {
   "name": "platformatic",
-  "version": "0.40.0",
+  "version": "0.45.1",
   "private": true,
   "scripts": {
     "test": "pnpm -r --workspace-concurrency=1 test",
-    "dashboard:start": "cd packages/db-dashboard && pnpm run dev",
-    "dashboard:build": "cd packages/db-dashboard && node scripts/fix-dashboard-env.js && pnpm run build",
-    "ra-data-rest": "pnpm -F @platformatic/db-ra-data-rest",
     "cleanall": "rm pnpm-lock.yaml && rm -rf node_modules && rm -rf packages/*/node_modules",
     "clean": "rm -rf node_modules && rm -rf packages/*/node_modules",
     "postinstall": "node ./scripts/postinstall.js",
     "lint:markdown": "markdownlint-cli2",
     "test:config": "cd packages/config && pnpm test",
     "test:metaconfig": "cd packages/config && pnpm test",
-    "lint": "pnpm -r --workspace-concurrency=1 lint"
+    "lint": "pnpm -r --workspace-concurrency=1 lint",
+    "generate-errors-doc": "cd packages/generate-errors-doc && pnpm run generate-doc"
   },
-  "packageManager": "pnpm@8.7.4",
+  "packageManager": "pnpm@8.7.6",
   "devDependencies": {
     "@fastify/pre-commit": "^2.0.2",
     "desm": "^1.3.0",
-    "markdownlint-cli2": "^0.9.0"
+    "markdownlint-cli2": "^0.10.0"
   },
   "pre-commit": [
     "lint",

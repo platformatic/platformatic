@@ -96,6 +96,15 @@ const createPlatformaticService = async (_args, opts = {}) => {
     spinner.succeed('...done!')
   }
 
+  const spinner = ora('Generating types...').start()
+  try {
+    await execa(pkgManager, ['exec', 'platformatic', 'service', 'types'], { cwd: projectDir })
+    spinner.succeed('...done!')
+  } catch (err) {
+    logger.trace({ err })
+    spinner.fail('...failed! Try again by running "platformatic service types"')
+  }
+
   if (!opts.skipGitHubActions) {
     await askDynamicWorkspaceCreateGHAction(logger, env, 'service', useTypescript, projectDir)
     await askStaticWorkspaceGHAction(logger, env, 'service', useTypescript, projectDir)

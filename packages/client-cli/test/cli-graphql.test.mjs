@@ -123,7 +123,7 @@ app.listen({ port: 0 });
     compilerOptions: {
       outDir: 'build',
       target: 'es2018',
-      moduleResolution: 'node',
+      moduleResolution: 'NodeNext',
       lib: ['es2018']
     }
   }, null, 2)
@@ -224,7 +224,7 @@ app.listen({ port: 0});
     compilerOptions: {
       outDir: 'build',
       target: 'es2018',
-      moduleResolution: 'node',
+      moduleResolution: 'NodeNext',
       lib: ['es2018']
     }
   }, null, 2)
@@ -378,7 +378,7 @@ app.listen({ port: 0 });
     compilerOptions: {
       outDir: 'build',
       target: 'es2018',
-      moduleResolution: 'node',
+      moduleResolution: 'NodeNext',
       lib: ['es2018']
     }
   }, null, 2)

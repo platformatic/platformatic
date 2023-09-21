@@ -3,7 +3,7 @@ import { writeFile, mkdir } from 'fs/promises'
 import { isFileAccessible } from './utils.mjs'
 
 const JS_PLUGIN_WITH_TYPES_SUPPORT = `\
-/// <reference types="@platformatic/service" />
+/// <reference path="../global.d.ts" />
 'use strict'
 /** @param {import('fastify').FastifyInstance} fastify */
 module.exports = async function (fastify, opts) {
@@ -12,7 +12,7 @@ module.exports = async function (fastify, opts) {
 `
 
 const TS_PLUGIN_WITH_TYPES_SUPPORT = `\
-/// <reference types="@platformatic/service" />
+/// <reference path="../global.d.ts" />
 import { FastifyInstance, FastifyPluginOptions } from 'fastify'
 
 export default async function (fastify: FastifyInstance, opts: FastifyPluginOptions) {
@@ -21,7 +21,7 @@ export default async function (fastify: FastifyInstance, opts: FastifyPluginOpti
 `
 
 const JS_ROUTES_WITH_TYPES_SUPPORT = `\
-/// <reference types="@platformatic/service" />
+/// <reference path="../global.d.ts" />
 'use strict'
 /** @param {import('fastify').FastifyInstance} fastify */
 module.exports = async function (fastify, opts) {
@@ -32,7 +32,7 @@ module.exports = async function (fastify, opts) {
 `
 
 const TS_ROUTES_WITH_TYPES_SUPPORT = `\
-/// <reference types="@platformatic/service" />
+/// <reference path="../global.d.ts" />
 import { FastifyInstance, FastifyPluginOptions } from 'fastify'
 
 declare module 'fastify' {
@@ -55,20 +55,20 @@ function testHelperJS (mod, customization = { pre: '', post: '', config: '' }) {
 const { join } = require('node:path')
 const { readFile } = require('node:fs/promises')
 const { buildServer } = require('@platformatic/${mod}')
-${customization.requires}
+${customization.requires || ''}
 
 async function getServer (t) {
-${customization.pre}
+${customization.pre || ''}
   const config = JSON.parse(await readFile(join(__dirname, '..', 'platformatic.${mod}.json'), 'utf8'))
   // Add your config customizations here. For example you want to set
   // all things that are set in the config file to read from an env variable
   config.server.logger.level = 'warn'
   config.watch = false
-${customization.config}
+${customization.config || ''}
   // Add your config customizations here
   const server = await buildServer(config)
   t.after(() => server.close())
-${customization.post}
+${customization.post || ''}
   return server
 }
 
@@ -116,9 +116,10 @@ function testHelperTS (mod, customizations = { pre: '', post: '', config: '', re
 import { join } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import { buildServer } from '@platformatic/${mod}'
+import type { FastifyInstance } from 'fastify'
 ${customizations.requires}
 
-export async function getServer () {
+export async function getServer (t) {
 ${customizations.pre}
   // We go up two folder because this files executes in the dist folder
   const config = JSON.parse(await readFile(join(__dirname, '..', '..', 'platformatic.${mod}.json'), 'utf8'))

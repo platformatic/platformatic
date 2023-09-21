@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-events",
-  "version": "0.40.0",
+  "version": "0.45.1",
   "description": "Emit events via MQEmitter",
   "main": "index.js",
   "scripts": {
@@ -30,10 +30,10 @@
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
     "tap": "^16.3.6",
-    "tsd": "^0.28.1"
+    "tsd": "^0.29.0"
   },
   "dependencies": {
-    "@platformatic/types": "workspace:*",
+    "@fastify/error": "^3.2.1",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^4.5.0",
     "mqemitter": "^5.0.0",

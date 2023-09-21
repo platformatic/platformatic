@@ -34,7 +34,7 @@ In this tutorial we'll learn how to:
 
 To follow along with this tutorial you'll need to have these things installed:
 
-- [Node.js](https://nodejs.org/) >= v18.8.0 or >= v19.0.0
+- [Node.js](https://nodejs.org/) >= v18.8.0 or >= v20.6.0
 - [npm](https://docs.npmjs.com/cli/) v7 or later
 - A code editor, for example [Visual Studio Code](https://code.visualstudio.com/)
 

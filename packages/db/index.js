@@ -2,13 +2,14 @@
 
 const core = require('@platformatic/db-core')
 const auth = require('@platformatic/db-authorization')
-const dashboard = require('@platformatic/db-dashboard')
+const { createConnectionPool } = require('@platformatic/sql-mapper')
 const { platformaticService, buildServer } = require('@platformatic/service')
 const { isKeyEnabled } = require('@platformatic/utils')
 const { schema } = require('./lib/schema')
 const ConfigManager = require('@platformatic/config')
 const adjustConfig = require('./lib/adjust-config')
 const { locateSchemaLock } = require('./lib/utils')
+const errors = require('./lib/errors')
 const fs = require('fs/promises')
 
 async function platformaticDB (app, opts) {
@@ -50,13 +51,6 @@ async function platformaticDB (app, opts) {
       const { execute } = await import('./lib/gen-types.mjs')
       await execute({ logger: app.log, config })
     }
-  }
-
-  if (isKeyEnabled('dashboard', config)) {
-    app.register(require('./_admin'), { ...config, configManager, prefix: '_admin' })
-    await app.register(dashboard, {
-      path: config.dashboard.path
-    })
   }
 
   async function toLoad (app) {
@@ -131,3 +125,5 @@ module.exports.buildServer = _buildServer
 module.exports.schema = schema
 module.exports.platformaticDB = platformaticDB
 module.exports.ConfigManager = ConfigManager
+module.exports.errors = errors
+module.export.createConnectionPool = createConnectionPool

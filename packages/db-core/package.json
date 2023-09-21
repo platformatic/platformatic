@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db-core",
-  "version": "0.40.0",
+  "version": "0.45.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -29,7 +29,6 @@
     "@platformatic/sql-graphql": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
     "@platformatic/sql-openapi": "workspace:*",
-    "@platformatic/types": "workspace:*",
     "fastify-plugin": "^4.5.0"
   }
 }

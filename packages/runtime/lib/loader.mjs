@@ -1,6 +1,7 @@
 import { createRequire, isBuiltin } from 'node:module'
 import { dirname, isAbsolute, resolve as pathResolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import errors from './errors.js'
 const isWindows = process.platform === 'win32'
 let timestamp = process.hrtime.bigint()
 let port
@@ -54,7 +55,7 @@ function specifierToFileUrl (specifier, referencingModuleId) {
 
   /* c8 ignore next 3 */
   if (!referencingModuleId) {
-    throw new Error(`cannot map '${specifier}' to an absolute path`)
+    throw new errors.CannotMapSpecifierToAbsolutePathError(specifier)
   }
 
   /* c8 ignore next 5 - c8 upgrade marked many existing things as uncovered */

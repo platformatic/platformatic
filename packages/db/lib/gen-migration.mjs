@@ -4,8 +4,8 @@ import pino from 'pino'
 import pretty from 'pino-pretty'
 import { loadConfig } from '@platformatic/config'
 import { Migrator } from './migrator.mjs'
-import { MigrateError } from './errors.mjs'
 import { platformaticDB } from '../index.js'
+import errors from './errors.js'
 
 async function generateMigration (_args) {
   const logger = pino(pretty({
@@ -21,7 +21,7 @@ async function generateMigration (_args) {
   try {
     const migrationsConfig = config.migrations
     if (migrationsConfig === undefined) {
-      throw new MigrateError('Missing "migrations" section in config file')
+      throw new errors.MigrateMissingMigrationsError()
     }
 
     migrator = new Migrator(migrationsConfig, config.db, logger)

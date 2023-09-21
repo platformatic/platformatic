@@ -6,6 +6,7 @@ const camelcase = require('camelcase')
 const { PassThrough } = require('stream')
 const MQEmitterRedis = require('mqemitter-redis')
 const { promisify } = require('util')
+const errors = require('./errors')
 
 async function fastifySqlEvents (app, opts) {
   setupEmitter({ ...opts, mapper: app.platformatic, log: app.log })
@@ -83,11 +84,11 @@ function setupEmitter ({ log, mq, mapper, connectionString }) {
     // getPublishTopic is async because it could be overridden to be asynchronous
     entity.getPublishTopic = async function ({ action, data }) {
       if (!data) {
-        throw new Error('The object that will be published is required under the data property')
+        throw new errors.ObjectRequiredUnderTheDataProperty()
       }
 
       if (!data[primaryKey]) {
-        throw new Error('The primaryKey is necessary inside data')
+        throw new errors.PrimaryKeyIsNecessaryInsideData()
       }
 
       switch (action) {
@@ -108,7 +109,7 @@ function setupEmitter ({ log, mq, mapper, connectionString }) {
         case 'delete':
           return `/entity/${entityName}/delete/+`
         default:
-          throw new Error(`no such action ${action}`)
+          throw new errors.NoSuchActionError(action)
       }
     }
   }
@@ -135,3 +136,4 @@ function noop () {}
 
 module.exports = fp(fastifySqlEvents)
 module.exports.setupEmitter = setupEmitter
+module.exports.errors = errors

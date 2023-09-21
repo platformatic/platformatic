@@ -592,7 +592,7 @@ test('build basic client from file with (endpoint with duplicated parameters)', 
 
 test('build basic client from file (enpoint with no parameters)', async ({ teardown, same, notOk }) => {
   try {
-    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(__dirname, 'fixtures', 'no-params', 'db.sqlite'))
   } catch {
     // noop
   }
@@ -632,7 +632,7 @@ test('build basic client from file (enpoint with no parameters)', async ({ teard
 
 test('build basic client from file (query array parameter)', async ({ teardown, same, match }) => {
   try {
-    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(__dirname, 'fixtures', 'array-query-params', 'db.sqlite'))
   } catch {
     // noop
   }
@@ -653,11 +653,13 @@ test('build basic client from file (query array parameter)', async ({ teardown, 
 
     const result = await client.getQuery({
       query: {
-        ids: ['id1', 'id2']
+        ids: ['id1', 'id2'],
+        stringArrayUnion: ['foo', 'bar', 'baz']
       }
     })
     same(result.isArray, true)
     match(result.ids, ['id1', 'id2'])
+    match(result.stringArrayUnion, ['foo', 'bar', 'baz'])
   }
   {
     // without fullRequest
@@ -668,9 +670,133 @@ test('build basic client from file (query array parameter)', async ({ teardown, 
     })
 
     const result = await client.getQuery({
-      ids: ['id1', 'id2']
+      ids: ['id1', 'id2'],
+      stringArrayUnion: ['foo', 'bar', 'baz']
     })
     same(result.isArray, true)
     match(result.ids, ['id1', 'id2'])
+    match(result.stringArrayUnion, ['foo', 'bar', 'baz'])
   }
+})
+
+test('build basic client from file (path parameter)', async ({ teardown, same, match }) => {
+  try {
+    await fs.unlink(join(__dirname, 'fixtures', 'path-params', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildService(join(__dirname, 'fixtures', 'path-params', 'platformatic.service.json'))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  {
+    // with fullRequest
+    const client = await buildOpenAPIClient({
+      fullRequest: true,
+      url: `${app.url}`,
+      path: join(__dirname, 'fixtures', 'path-params', 'openapi.json')
+    })
+
+    const result = await client.getPath({
+      path: { id: 'baz' },
+      query: { name: 'bar' }
+    })
+    match(result.id, 'baz')
+    match(result.name, 'bar')
+
+    const { id, name } = await client.getPath({ path: { id: 'ok' }, query: { name: undefined } })
+    match(id, 'ok')
+    match(name, undefined)
+
+    let error
+    try {
+      await client.getPath({ path: { id: undefined }, query: { name: 'bar' } })
+    } catch (err) {
+      error = err
+    }
+    match(error instanceof Error, true, 'when no path param is passed')
+  }
+  {
+    // without fullRequest
+    const client = await buildOpenAPIClient({
+      fullRequest: false,
+      url: `${app.url}`,
+      path: join(__dirname, 'fixtures', 'path-params', 'openapi.json')
+    })
+
+    const result = await client.getPath({
+      id: 'baz',
+      name: 'foo'
+    })
+    match(result.id, 'baz')
+    match(result.name, 'foo')
+  }
+})
+
+test('validate response', async ({ teardown, same, notOk }) => {
+  const fixtureDirectory = 'validate-response'
+  try {
+    await fs.unlink(join(__dirname, 'fixtures', fixtureDirectory, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildService(join(__dirname, 'fixtures', fixtureDirectory, 'platformatic.service.json'))
+
+  teardown(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const client = await buildOpenAPIClient({
+    url: `${app.url}`,
+    path: join(__dirname, 'fixtures', fixtureDirectory, 'openapi.json'),
+    validateResponse: true
+  })
+
+  // invalid response format
+  const invalidResult = await client.getInvalid()
+  same(invalidResult, {
+    statusCode: 500,
+    message: 'Invalid response format'
+  })
+
+  // no matching route
+  const noMatchingResult = await client.getNoMatching()
+  same(noMatchingResult, {
+    statusCode: 500,
+    message: 'No matching response schema found for status code 404'
+  })
+
+  // no matching content type
+  const noMatchingContentTypeResult = await client.getNoContentType()
+  same(noMatchingContentTypeResult, {
+    statusCode: 500,
+    message: 'No matching content type schema found for application/json'
+  })
+
+  // another content type
+  const htmlResult = await client.getNoContentType({
+    returnType: 'html'
+  })
+  same(htmlResult, '<h1>Hello World</h1>')
+
+  // valid response
+  const validResult = await client.getValid()
+  same(validResult.message, 'This is a valid response')
+
+  // with refs
+  const refsResult = await client.getWithRefs()
+  same(refsResult, {
+    id: 123,
+    title: 'Harry Potter'
+  })
+
+  // second call to make coverage happy about caching functions
+  same(await client.getWithRefs(), {
+    id: 123,
+    title: 'Harry Potter'
+  })
 })

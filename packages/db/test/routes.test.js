@@ -79,35 +79,6 @@ test('should not overwrite a plugin which define a root endpoint', async ({ tear
   same(body, { message: 'Root Plugin' })
 })
 
-test('should not overwrite dashboard endpoint', async ({ teardown, equal, same }) => {
-  const app = await buildServer(buildConfig({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0,
-      healthCheck: {
-        enabled: true,
-        interval: 2000
-      }
-    },
-    db: {
-      ...connInfo
-    },
-    authorization: {
-      adminSecret: 'secret'
-    },
-    dashboard: true
-  }))
-
-  teardown(async () => {
-    await app.close()
-  })
-  await app.start()
-
-  const res = await (request(`${app.url}/`))
-  equal(res.statusCode, 302)
-  equal(res.headers.location, '/dashboard')
-})
-
 test('should exclude the root endpoint from the openapi documentation', async ({ teardown, equal, has }) => {
   const app = await buildServer(buildConfig({
     server: {
@@ -119,8 +90,7 @@ test('should exclude the root endpoint from the openapi documentation', async ({
     },
     authorization: {
       adminSecret: 'secret'
-    },
-    dashboard: false
+    }
   }))
 
   teardown(async () => {
