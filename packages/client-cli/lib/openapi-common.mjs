@@ -87,23 +87,8 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
       if (currentFullResponse) type = `FullResponse<${type}>`
       return type
     })
-    // const responseTypes = successResponses.map(([statusCode, response]) => {
-    // // The client library will always dump bodies for 204 responses
-    // // so the type must be undefined
-    //   if (statusCode === '204') {
-    //     return 'undefined'
-    //   }
-    //   let isResponseArray
-    //   let type = `${operationResponseName}${classCase(STATUS_CODES[statusCode])}`
-    //   interfacesWriter.write(`export interface ${type}`).block(() => {
-    //     isResponseArray = writeContent(interfacesWriter, response.content, schema, new Set())
-    //   })
-    //   interfacesWriter.blankLine()
-    //   if (isResponseArray) type = `Array<${type}>`
-    //   return type
-    // })
 
-    const responseType = responseTypes.join(' | ') || 'unknown'
+    const responseType = responseTypes.join(' | ')
     mainWriter.writeLine(`${operationId}(req?: ${operationRequestName}): Promise<${responseType}>;`)
     currentFullResponse = originalFullResponse
   }

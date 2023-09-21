@@ -42,7 +42,7 @@ async function _getRedirect (url, request) {
   let body = await response.text()
 
   try {
-    body = JSON.parse(await response.json())
+    body = JSON.parse(body)
   }
   catch (err) {
     // do nothing and keep original body
@@ -65,7 +65,8 @@ export default function build (url) {
   return {
     getCustomSwagger: _getCustomSwagger.bind(url, ...arguments),
     getRedirect: _getRedirect.bind(url, ...arguments),
-    getReturnUrl: _getReturnUrl.bind(url, ...arguments)
+    getReturnUrl: _getReturnUrl.bind(url, ...arguments),
+    postFoobar: _postFoobar.bind(url, ...arguments)
   }
 }`
   // factory type
@@ -98,6 +99,7 @@ export interface Sample {
   getCustomSwagger(req?: GetCustomSwaggerRequest): Promise<GetCustomSwaggerResponseOK>;
   getRedirect(req?: GetRedirectRequest): Promise<FullResponse<GetRedirectResponseFound> | FullResponse<GetRedirectResponseBadRequest>>;
   getReturnUrl(req?: GetReturnUrlRequest): Promise<GetReturnUrlResponseOK>;
+  postFoobar(req?: PostFoobarRequest): Promise<PostFoobarResponseOK>;
 }`
 
     ok(implementation)
@@ -122,6 +124,15 @@ test('generate correct file names', async ({ teardown, ok }) => {
   await app.start()
 
   const dir = await moveToTmpdir(teardown)
+
+  // Without --name will create api/client filenames
+  await execa('node', [cliPath, app.url, '--language', 'ts', '--frontend'])
+  ok(await readFile(join(dir, 'api', 'api.ts')))
+  ok(await readFile(join(dir, 'api', 'api-types.d.ts')))
+
+  await execa('node', [cliPath, app.url])
+  ok(await readFile(join(dir, 'client', 'client.cjs')))
+  ok(await readFile(join(dir, 'client', 'client.d.ts')))
 
   // With --name will create foobar.ts and foobar-types.d.ts
   await execa('node', [cliPath, app.url, '--language', 'ts', '--name', 'foobar', '--frontend'])
