@@ -93,8 +93,8 @@ const createPlatformaticComposer = async (_args, opts) => {
   }
 
   if (!opts.skipGitHubActions) {
-    await askDynamicWorkspaceCreateGHAction(logger, env, 'composer', false, projectDir)
     await askStaticWorkspaceGHAction(logger, env, 'composer', false, projectDir)
+    await askDynamicWorkspaceCreateGHAction(logger, env, 'composer', false, projectDir)
   }
 }
 

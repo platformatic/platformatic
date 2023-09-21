@@ -176,7 +176,7 @@ export const askStaticWorkspaceGHAction = async (logger, env, type, buildTS, pro
     {
       type: 'list',
       name: 'githubAction',
-      message: 'Do you want to create the github action to deploy this application to Platformatic Cloud static workspace?',
+      message: 'Do you want to create the github action to deploy this application to Platformatic Cloud?',
       default: true,
       choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
     }

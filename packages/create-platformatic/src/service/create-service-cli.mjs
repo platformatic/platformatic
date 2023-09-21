@@ -103,8 +103,8 @@ const createPlatformaticService = async (_args, opts = {}) => {
   }
 
   if (!opts.skipGitHubActions) {
-    await askDynamicWorkspaceCreateGHAction(logger, env, 'service', useTypescript, projectDir)
     await askStaticWorkspaceGHAction(logger, env, 'service', useTypescript, projectDir)
+    await askDynamicWorkspaceCreateGHAction(logger, env, 'service', useTypescript, projectDir)
   }
 }
 

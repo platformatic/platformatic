@@ -114,8 +114,8 @@ export async function createPlatformaticRuntime (_args) {
 
   const env = await createRuntime(logger, projectDir, version, servicesDir, entrypoint)
 
-  await askDynamicWorkspaceCreateGHAction(logger, env, 'service', false, projectDir)
   await askStaticWorkspaceGHAction(logger, env, 'service', false, projectDir)
+  await askDynamicWorkspaceCreateGHAction(logger, env, 'service', false, projectDir)
 }
 
 export async function createRuntimeService ({ servicesDir, names, logger }) {
