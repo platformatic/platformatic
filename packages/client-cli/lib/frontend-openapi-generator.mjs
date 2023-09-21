@@ -7,11 +7,11 @@ import { writeOperations } from '../../client-cli/lib/openapi-common.mjs'
 export function processFrontendOpenAPI ({ schema, name, language, fullResponse }) {
   return {
     types: generateTypesFromOpenAPI({ schema, name, fullResponse }),
-    implementation: generateFrontendImplementationFromOpenAPI({ schema, name, language })
+    implementation: generateFrontendImplementationFromOpenAPI({ schema, name, language, fullResponse })
   }
 }
 
-function generateFrontendImplementationFromOpenAPI ({ schema, name, language }) {
+function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fullResponse }) {
   const capitalizedName = capitalize(name)
   const { paths } = schema
   const generatedOperationIds = []
@@ -51,7 +51,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language }) 
     )
   } else {
     writer.writeLine(
-      `/**  @type {import(\'./${name}-types.d.ts\').${capitalizedName}[\'setBaseUrl\']} */`
+      `/**  @type {import('./${name}-types.d.ts').${capitalizedName}['setBaseUrl']} */`
     )
     writer.writeLine(
       'export const setBaseUrl = (newUrl) => { baseUrl = newUrl }'
@@ -59,6 +59,8 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language }) 
   }
   writer.blankLine()
   const allOperations = []
+  const originalFullResponse = fullResponse
+  let currentFullResponse = originalFullResponse
   for (const operation of operations) {
     const { operationId, responses } = operation.operation
     const operationRequestName = `${capitalize(operationId)}Request`
@@ -66,13 +68,13 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language }) 
 
     allOperations.push(operationId)
     const { method, path } = operation
-    let fullResponse = false
+
     // Only dealing with success responses
     const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
 
     /* c8 ignore next 3 */
     if (successResponses.length !== 1) {
-      fullResponse = true
+      currentFullResponse = true
     }
     if (language === 'ts') {
       // Write
@@ -103,7 +105,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language }) 
         writer
           .write(`const response = await fetch(\`\${url}${stringLiteralPath}\`, `)
           .inlineBlock(() => {
-            writer.write('method:').quote().write(method).quote().write(',')
+            writer.write('method: ').quote().write(method.toUpperCase()).quote().write(',')
             writer.writeLine('body: JSON.stringify(request),')
             writer.write('headers:').block(() => {
               writer.writeLine('\'Content-type\': \'application/json\'')
@@ -113,13 +115,13 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language }) 
       }
 
       writer.blankLine()
-      if (fullResponse) {
+      if (currentFullResponse) {
         writer.write('let body = await response.text()')
 
         writer.blankLine()
 
         writer.write('try').block(() => {
-          writer.write('body = JSON.parse(await response.json())')
+          writer.write('body = JSON.parse(body)')
         })
         writer.write('catch (err)').block(() => {
           writer.write('// do nothing and keep original body')
@@ -163,6 +165,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language }) 
           writer.write(`return await ${underscoredOperationId}(baseUrl, request)`)
         })
     }
+    currentFullResponse = originalFullResponse
   }
   // create factory
   const factoryBuildFunction = language === 'ts'

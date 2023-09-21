@@ -272,7 +272,7 @@ export async function command (argv) {
       F: 'full'
     }
   })
-  
+
   if (options.full || options.F) {
     // force both fullRequest and fullResponse
     options['full-request'] = true
