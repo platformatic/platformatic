@@ -57,7 +57,9 @@ test('ignore a table', async ({ pass, teardown, equal }) => {
   equal(categoryEntity, undefined, 'category entity is ignored')
 })
 
-test('throw an error if there is no ignored table', async ({ pass, teardown, equal, fail }) => {
+test('show a warning if there is no ignored table', async ({ plan, pass, teardown, equal }) => {
+  plan(4)
+
   async function onDatabaseLoad (db, sql) {
     pass('onDatabaseLoad called')
     teardown(() => db.dispose())
@@ -66,20 +68,28 @@ test('throw an error if there is no ignored table', async ({ pass, teardown, equ
     await createBasicPages(db, sql)
   }
 
-  try {
-    await connect({
-      ...connInfo,
-      log: fakeLogger,
-      onDatabaseLoad,
-      ignore: {
-        missing_table_pages: true
-      }
-    })
-    fail('should throw an error')
-  } catch (err) {
-    equal(err.code, 'PLT_SQL_MAPPER_IGNORED_TABLE_NOT_FOUND')
-    equal(err.message, 'Ignored table "missing_table_pages" not found. Did you mean "pages"?')
+  const logger = {
+    trace: () => {},
+    error: () => {},
+    warn: (msg) => {
+      equal(msg, 'Ignored table "missing_table_pages" not found. Did you mean "pages"?')
+    }
   }
+
+  const mapper = await connect({
+    ...connInfo,
+    log: logger,
+    onDatabaseLoad,
+    ignore: {
+      missing_table_pages: true
+    }
+  })
+
+  const pageEntity = mapper.entities.page
+  equal(pageEntity.name, 'Page')
+
+  const categoryEntity = mapper.entities.category
+  equal(categoryEntity.name, 'Category')
 })
 
 test('ignore a column', async ({ pass, teardown, equal }) => {
@@ -111,7 +121,9 @@ test('ignore a column', async ({ pass, teardown, equal }) => {
   equal(categoryEntity.fields.name, undefined, 'name column is ignored')
 })
 
-test('throw an error if there is no ignored column', async ({ pass, teardown, equal, fail }) => {
+test('shows a warning if there is no ignored column', async ({ plan, pass, teardown, equal }) => {
+  plan(4)
+
   async function onDatabaseLoad (db, sql) {
     pass('onDatabaseLoad called')
     teardown(() => db.dispose())
@@ -120,20 +132,28 @@ test('throw an error if there is no ignored column', async ({ pass, teardown, eq
     await createBasicPages(db, sql)
   }
 
-  try {
-    await connect({
-      ...connInfo,
-      log: fakeLogger,
-      onDatabaseLoad,
-      ignore: {
-        categories: {
-          missing_column_name: true
-        }
-      }
-    })
-    fail('should throw an error')
-  } catch (err) {
-    equal(err.code, 'PLT_SQL_MAPPER_IGNORED_COLUMN_NOT_FOUND')
-    equal(err.message, 'Ignored column "missing_column_name" not found. Did you mean "name"?')
+  const logger = {
+    trace: () => {},
+    error: () => {},
+    warn: (msg) => {
+      equal(msg, 'Ignored column "missing_column_name" not found. Did you mean "name"?')
+    }
   }
+
+  const mapper = await connect({
+    ...connInfo,
+    log: logger,
+    onDatabaseLoad,
+    ignore: {
+      categories: {
+        missing_column_name: true
+      }
+    }
+  })
+
+  const pageEntity = mapper.entities.page
+  equal(pageEntity.name, 'Page')
+
+  const categoryEntity = mapper.entities.category
+  equal(categoryEntity.name, 'Category')
 })

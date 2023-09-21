@@ -374,7 +374,7 @@ function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, useSc
   for (const ignoredColumn of Object.keys(ignore)) {
     if (!columnsNames.includes(ignoredColumn)) {
       const nearestColumn = findNearestString(columnsNames, ignoredColumn)
-      throw new errors.IgnoredColumnNotFound(ignoredColumn, nearestColumn)
+      log.warn(`Ignored column "${ignoredColumn}" not found. Did you mean "${nearestColumn}"?`)
     }
   }
 

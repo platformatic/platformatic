@@ -404,8 +404,6 @@ export module errors {
   export const ParamLimitMustBeNotNegativeError: (limit: string) => FastifyError
   export const MissingValueForPrimaryKeyError: (key: string) => FastifyError
   export const SQLiteOnlySupportsAutoIncrementOnOneColumnError: () => FastifyError
-  export const IgnoredTableNotFound: (tableName: string, nearestFoundTableName: string) => FastifyError
-  export const IgnoredColumnNotFound: (columnName: string, nearestFoundColumnName: string) => FastifyError
 }
 
 

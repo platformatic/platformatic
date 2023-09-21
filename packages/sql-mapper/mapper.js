@@ -160,10 +160,10 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize, ignor
     }
 
     const schemaTables = dbschema.map(table => table.table)
-    for (const ignoreTable of Object.keys(ignore)) {
-      if (!schemaTables.includes(ignoreTable)) {
-        const nearestTable = findNearestString(schemaTables, ignoreTable)
-        throw new errors.IgnoredTableNotFound(ignoreTable, nearestTable)
+    for (const ignoredTable of Object.keys(ignore)) {
+      if (!schemaTables.includes(ignoredTable)) {
+        const nearestTable = findNearestString(schemaTables, ignoredTable)
+        log.warn(`Ignored table "${ignoredTable}" not found. Did you mean "${nearestTable}"?`)
       }
     }
 
