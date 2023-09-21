@@ -93,7 +93,6 @@ Welcome to Platformatic. Available commands are:
 * `deploy` - deploy a Platformatic application to the cloud.
 * `runtime` - start Platformatic Runtime; type `platformatic runtime help` to know more.
 * `start` - start a Platformatic application.
-* `frontend`- create frontend code to consume the REST APIs.
 
 
 #### compile
@@ -273,11 +272,13 @@ Options:
 * `-n, --name <name>` - Name of the client.
 * `-f, --folder <name>` - Name of the plugin folder, defaults to --name value.
 * `-t, --typescript` - Generate the client plugin in TypeScript.
+* `--frontend` - Generated a browser-compatible client that uses `fetch`
 * `--full-response` - Client will return full response object rather than just the body.
-* `--full-request` - Client will be called with all parameters wrapped in `body`, `headers` and `query` properties.
+* `--full-request` - Client will be called with all parameters wrapped in `body`, `headers` and `query` properties. Ignored if `--frontend`
 * `--full` - Enables both `--full-request` and `--full-response` overriding them.
-* `--optional-headers <headers>` - Comma separated string of headers that will be marked as optional in the type file
-* `--validate-response` - If set, will validate the response body against the schema.
+* `--optional-headers <headers>` - Comma separated string of headers that will be marked as optional in the type file. Ignored if `--frontend`
+* `--validate-response` - If set, will validate the response body against the schema. Ignored if `--frontend`
+* `--language js|ts` - Generate a Javascript or Typescript frontend client. Only works if `--frontend`
 
 
 
@@ -743,7 +744,7 @@ save the following as `platformatic.service.json`:
 ### frontend
 
 ```bash
-platformatic frontend <url> <language>
+platformatic client <url> --frontend --language <language>
 ```
 
 

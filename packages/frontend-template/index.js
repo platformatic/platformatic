@@ -7,7 +7,7 @@ import { request } from 'undici'
 import { readFile, writeFile } from 'fs/promises'
 import { processOpenAPI } from './lib/gen-openapi.mjs'
 
-async function frontendTemplate ({ source, language, name }) {
+async function frontendTemplate ({ source, language, name, fullResponse }) {
   const help = helpMe({
     dir: join(import.meta.url, 'help'),
     // the default
@@ -38,7 +38,7 @@ async function frontendTemplate ({ source, language, name }) {
     // source is a file
     schema = JSON.parse(await readFile(source, 'utf-8'))
   }
-  const { types, implementation } = processOpenAPI({ schema, name, language })
+  const { types, implementation } = processOpenAPI({ schema, name, language, fullResponse })
   await writeFile(`${name}-types.d.ts`, types)
   await writeFile(`${name}.${language}`, implementation)
 
@@ -47,9 +47,8 @@ async function frontendTemplate ({ source, language, name }) {
 
 export async function command (argv) {
   let {
-    _: [source, language], name
+    _: [source, language], name, 'full-response': fullResponse
   } = parseArgs(argv)
-
   const help = helpMe({
     dir: join(import.meta.url, 'help'),
     // the default
@@ -69,7 +68,7 @@ export async function command (argv) {
   }
 
   try {
-    await frontendTemplate({ source, language, name })
+    await frontendTemplate({ source, language, name, fullResponse })
   } catch (err) {
     console.error(err)
   }

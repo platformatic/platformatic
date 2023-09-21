@@ -25,12 +25,15 @@ module.exports = async function (app) {
         }
       }
     }
-  },
-  async (request, reply) => {
+  }, async (request, reply) => {
     return reply.code(302).redirect('https://google.com')
   })
 
   app.get('/returnUrl', async (req, reply) => {
     return { url: `http://${req.headers.host}` }
+  })
+
+  app.post('/foobar', async (req, res) => {
+    return { message: 'POST ok' }
   })
 }

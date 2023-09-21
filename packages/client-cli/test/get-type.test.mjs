@@ -1,7 +1,7 @@
 'use strict'
 
 import { test } from 'tap'
-import { getType } from '../lib/gen-openapi.mjs'
+import { getType } from '../lib/openapi-common.mjs'
 
 test('get type with schema', async (t) => {
   const def = {

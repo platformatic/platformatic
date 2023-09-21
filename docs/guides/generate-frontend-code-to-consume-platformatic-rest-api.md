@@ -109,7 +109,7 @@ Now that either the Platformatic app and the front-end app are running, go to th
 
 ```bash
 cd rest-api-frontend/src
-npx platformatic frontend http://127.0.0.1:3042 ts
+npx platformatic client http://127.0.0.1:3042 --frontend --language ts
 ```
 
 Refer to the [Platformatic CLI frontend command](https://docs.platformatic.dev/docs/reference/cli#frontend)
@@ -176,7 +176,7 @@ You can add a `--name` option to the command line to provide a custom name for t
 
 ```bash
 cd rest-api-frontend/src
-npx platformatic frontend --name foobar http://127.0.0.1:3042 ts
+npx platformatic client http://127.0.0.1:3042 --frontend --name foobar --language ts
 ```
 
 will generated `foobar.ts` and `foobar-types.d.ts`
