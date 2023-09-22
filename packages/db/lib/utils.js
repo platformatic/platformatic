@@ -28,7 +28,7 @@ function locateSchemaLock (configManager) {
 async function updateSchemaLock (logger, configManager) {
   const config = configManager.current
   if (config.db.schemalock) {
-    const conn = await setupDB(logger, config.db)
+    const conn = await setupDB(logger, { ...config.db, dbschema: null })
     const schemaLockPath = locateSchemaLock(configManager)
     await fs.writeFile(schemaLockPath, JSON.stringify(conn.dbschema, null, 2))
 

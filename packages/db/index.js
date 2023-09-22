@@ -8,7 +8,7 @@ const { isKeyEnabled } = require('@platformatic/utils')
 const { schema } = require('./lib/schema')
 const ConfigManager = require('@platformatic/config')
 const adjustConfig = require('./lib/adjust-config')
-const { locateSchemaLock } = require('./lib/utils')
+const { locateSchemaLock, updateSchemaLock } = require('./lib/utils')
 const errors = require('./lib/errors')
 const fs = require('fs/promises')
 
@@ -40,9 +40,9 @@ async function platformaticDB (app, opts) {
     app.log.debug({ migrations: config.migrations }, 'running migrations')
     const { execute } = await import('./lib/migrate.mjs')
     const migrationsApplied = await execute({ logger: app.log, config })
-
     if (migrationsApplied) {
       // reload schema lock
+      await updateSchemaLock(app.log, configManager)
       await loadSchemaLock()
     }
 
