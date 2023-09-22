@@ -479,6 +479,24 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: cd packages/client-cli && pnpm run nocov
 
+  ci-telemetry:
+    needs: setup-node_modules
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 5
+    strategy:
+      matrix:
+        node-version: [18, 20]
+        os: [ubuntu-latest]
+    steps:
+    - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4
+    - uses: pnpm/action-setup@v2.4.0
+    - uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'pnpm'
+    - name: Run test suite
+      run: cd packages/telemetry && pnpm test
+
   playwright-e2e:
     needs: setup-node_modules
     runs-on: ubuntu-latest
