@@ -34,13 +34,6 @@ RUN pnpm install --prod --offline --node-linker=hoisted
 # Add platformatic to path
 RUN cd packages/cli && pnpm link --global
 
-# Move to the app directory
-WORKDIR $APP_HOME
-
-# Reduce our permissions from root to a normal user
-RUN chown node:node . 
-USER node
-
 # No pnpm/build tools install here, we just copy the files from the previous stage
 FROM node:18-alpine 
 
