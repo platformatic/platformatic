@@ -5,8 +5,7 @@
     "target": "es2019",
     "sourceMap": true,
     "pretty": true,
-    "noEmitOnError": true,
-    "outDir": "dist"
+    "noEmitOnError": true
   },
   "watchOptions": {
     "watchFile": "fixedPollingInterval",

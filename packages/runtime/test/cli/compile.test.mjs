@@ -4,7 +4,7 @@ import { join } from 'desm'
 import path from 'node:path'
 import { cliPath, delDir } from './helper.mjs'
 import { execa } from 'execa'
-import { mkdtemp, cp, mkdir } from 'node:fs/promises'
+import { mkdtemp, cp, mkdir, access } from 'node:fs/promises'
 
 const base = join(import.meta.url, '..', 'tmp')
 
@@ -71,6 +71,12 @@ test('compile with tsconfig custom flags', async (t) => {
     name: 'titles',
     msg: 'Typescript compilation completed successfully.'
   }]
+
+  const outDir = path.join(tmpDir, 'services', 'movies', 'custom')
+
+  await access(outDir)
+  await access(path.join(outDir, 'plugin.js'))
+  await access(path.join(outDir, 'plugin.js.map'))
 
   for (let i = 0; i < expected.length; i++) {
     assert.deepStrictEqual(lines[i].name, expected[i].name)
