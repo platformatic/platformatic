@@ -31,8 +31,9 @@ const { name: moduleName, version: moduleVersion } = require('../package.json')
 const extractPath = (request) => {
   // We must user RouterPath, because otherwise `/test/123` will be considered as
   // a different operation than `/test/321`. In case is not set (this should actually happen only for HTTP/404) we fallback to the path.
-  const { routerPath, url } = request
+  const { routeOptions, url } = request
   let path
+  const routerPath = routeOptions && routeOptions.url
   if (routerPath) {
     path = formatParamUrl(routerPath)
   } else {
