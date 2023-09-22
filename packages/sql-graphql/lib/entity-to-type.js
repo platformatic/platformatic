@@ -2,6 +2,7 @@
 
 const graphql = require('graphql')
 const camelcase = require('camelcase')
+const { findNearestString } = require('@platformatic/utils')
 const {
   sqlTypeToGraphQL,
   fromSelectionSet
@@ -36,6 +37,19 @@ function constructGraph (app, entity, opts, ignore) {
     federationMetadata,
     loaders
   } = opts
+
+  const entityFieldsNames = Object.values(entity.fields)
+    .map(field => field.camelcase)
+
+  for (const ignoredField of Object.keys(ignore)) {
+    if (!entityFieldsNames.includes(ignoredField)) {
+      const nearestField = findNearestString(entityFieldsNames, ignoredField)
+      app.log.warn(
+      `Ignored graphql field "${ignoredField}" not found in entity "${entity.singularName}".` +
+      ` Did you mean "${nearestField}"?`
+      )
+    }
+  }
 
   const fields = {}
 

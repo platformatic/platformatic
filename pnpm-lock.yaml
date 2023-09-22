@@ -1368,6 +1368,9 @@ importers:
       '@mercuriusjs/federation':
         specifier: ^2.0.0
         version: 2.0.0
+      '@platformatic/utils':
+        specifier: workspace:*
+        version: link:../utils
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -1515,6 +1518,9 @@ importers:
       '@platformatic/swagger-ui-theme':
         specifier: workspace:*
         version: link:../swagger-ui-theme
+      '@platformatic/utils':
+        specifier: workspace:*
+        version: link:../utils
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0

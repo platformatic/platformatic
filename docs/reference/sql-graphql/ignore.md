@@ -7,7 +7,7 @@ To ignore types:
 ```javascript
 app.register(require('@platformatic/sql-graphql'), {
   ignore: {
-    categories: true
+    category: true
   }
 })
 ```
@@ -17,7 +17,7 @@ To ignore individual fields:
 ```javascript
 app.register(require('@platformatic/sql-graphql'), {
   ignore: {
-    categories: {
+    category: {
       name: true
     }
   }
