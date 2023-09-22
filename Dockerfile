@@ -15,7 +15,7 @@ WORKDIR $PLT_HOME
 RUN apk update && apk add --no-cache python3 libc-dev make g++
 
 # Install pnpm
-RUN npm i pnpm@7 --location=global
+RUN npm i pnpm@8 --location=global
 
 # Copy lock files
 COPY package.json ./
