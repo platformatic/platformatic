@@ -60,7 +60,7 @@ RUN cd $PLT_HOME/packages/cli && npm link
 WORKDIR $APP_HOME
 
 # Reduce our permissions from root to a normal user
-RUN chown node:node . 
+RUN chown node:node .
 USER node
 
 ENTRYPOINT ["dumb-init"]
