@@ -233,6 +233,46 @@ test('start creates schema.lock if it is missing', async ({ equal, teardown }) =
   JSON.parse(data)
 })
 
+test('start updates schema.lock with migrations autoApply', async ({ equal, ok, teardown }) => {
+  const db = await connectAndResetDB()
+  const configPath = getFixturesConfigFileLocation(
+    'platformatic.db.json', ['update-schema-lock']
+  )
+  const schemaLockPath = join(dirname(configPath), 'schema.lock')
+  await fs.writeFile(schemaLockPath, '[]')
+
+  teardown(() => fs.rm(schemaLockPath, { force: true }))
+
+  const child = execa('node', [cliPath, 'start', '-c', configPath])
+
+  teardown(() => child.kill('SIGINT'))
+  teardown(() => db.dispose())
+
+  let found = false
+  const splitter = split()
+  child.stdout.pipe(splitter)
+  for await (const data of splitter) {
+    const sanitized = stripAnsi(data)
+    if (sanitized.match(/(.*)running 001\.do\.sql/)) {
+      found = true
+    }
+    if (sanitized.match(/(.*)Server listening at/)) {
+      break
+    }
+  }
+
+  equal(found, true)
+
+  const schemaLockFile = await fs.readFile(schemaLockPath, 'utf8')
+  const schemaLock = JSON.parse(schemaLockFile)
+
+  const versionsTableSchema = schemaLock.find(s => s.table === 'versions')
+  ok(versionsTableSchema)
+
+  const graphsTableSchema = schemaLock.find(s => s.table === 'graphs')
+  ok(graphsTableSchema)
+})
+
 test('migrate does not update an existing schemalock file if no migrations have been applied', async ({ same, teardown }) => {
   const db = await connectAndResetDB()
   const configPath = getFixturesConfigFileLocation('schemalock.json')
