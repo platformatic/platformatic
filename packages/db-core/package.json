@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db-core",
-  "version": "0.46.0",
+  "version": "0.46.1",
   "description": "",
   "main": "index.js",
   "scripts": {
