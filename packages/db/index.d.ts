@@ -8,7 +8,7 @@ import { SQLEventsPluginInterface } from '@platformatic/sql-events'
 import { DBAuthorizationPluginInterface } from '@platformatic/db-authorization'
 import { FastifyError } from '@fastify/error'
 
-export { Entities, EntityHooks, Entity } from '@platformatic/sql-mapper'
+export { Entities, EntityHooks, Entity, createConnectionPool } from '@platformatic/sql-mapper'
 export { PlatformaticApp } from '@platformatic/service'
 
 export type PlatformaticDBMixin<T extends Entities> =

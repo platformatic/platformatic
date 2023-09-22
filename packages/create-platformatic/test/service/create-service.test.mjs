@@ -68,6 +68,10 @@ test('creates service with typescript', async ({ equal, same, ok }) => {
   ok(await isFileAccessible(join(tmpDir, 'tsconfig.json')))
   ok(await isFileAccessible(join(tmpDir, 'plugins', 'example.ts')))
   ok(await isFileAccessible(join(tmpDir, 'routes', 'root.ts')))
+
+  ok(await isFileAccessible(join(tmpDir, 'test', 'plugins', 'example.test.ts')))
+  ok(await isFileAccessible(join(tmpDir, 'test', 'routes', 'root.test.ts')))
+  ok(await isFileAccessible(join(tmpDir, 'test', 'helper.ts')))
 })
 
 test('creates service with javascript', async ({ equal, same, ok }) => {
@@ -101,6 +105,10 @@ test('creates service with javascript', async ({ equal, same, ok }) => {
   same(plugins, { paths: [{ path: './plugins', encapsulate: false }, './routes'] })
   ok(await isFileAccessible(join(tmpDir, 'plugins', 'example.js')))
   ok(await isFileAccessible(join(tmpDir, 'routes', 'root.js')))
+
+  ok(await isFileAccessible(join(tmpDir, 'test', 'plugins', 'example.test.js')))
+  ok(await isFileAccessible(join(tmpDir, 'test', 'routes', 'root.test.js')))
+  ok(await isFileAccessible(join(tmpDir, 'test', 'helper.js')))
 })
 
 test('creates project with configuration already present', async ({ ok }) => {

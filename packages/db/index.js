@@ -2,6 +2,7 @@
 
 const core = require('@platformatic/db-core')
 const auth = require('@platformatic/db-authorization')
+const { createConnectionPool } = require('@platformatic/sql-mapper')
 const { platformaticService, buildServer } = require('@platformatic/service')
 const { isKeyEnabled } = require('@platformatic/utils')
 const { schema } = require('./lib/schema')
@@ -125,3 +126,4 @@ module.exports.schema = schema
 module.exports.platformaticDB = platformaticDB
 module.exports.ConfigManager = ConfigManager
 module.exports.errors = errors
+module.exports.createConnectionPool = createConnectionPool

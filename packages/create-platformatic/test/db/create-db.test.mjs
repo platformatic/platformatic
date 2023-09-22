@@ -88,7 +88,8 @@ test('creates project with no typescript', async ({ equal }) => {
   const migrationFileUndo = readFileSync(pathToMigrationFileUndo, 'utf8')
   equal(migrationFileUndo, moviesMigrationUndo)
 
-  equal(await isFileAccessible(join(tmpDir, 'plugin.js')), true)
+  equal(await isFileAccessible(join(tmpDir, 'routes', 'root.js')), true)
+  equal(await isFileAccessible(join(tmpDir, 'plugins', 'example.js')), true)
 })
 
 test('creates project with no typescript and no plugin', async ({ equal }) => {
@@ -202,9 +203,15 @@ test('creates project with typescript', async ({ equal, same }) => {
   const migrationFileUndo = readFileSync(pathToMigrationFileUndo, 'utf8')
   equal(migrationFileUndo, moviesMigrationUndo)
 
-  same(plugins.paths, ['plugin.ts'])
+  same(plugins.paths, [{
+    path: './plugins',
+    encapsulate: false
+  }, {
+    path: './routes'
+  }])
   equal(plugins.typescript, '{PLT_TYPESCRIPT}')
-  equal(await isFileAccessible(join(tmpDir, 'plugin.ts')), true)
+  equal(await isFileAccessible(join(tmpDir, 'plugins', 'example.ts')), true)
+  equal(await isFileAccessible(join(tmpDir, 'routes', 'root.ts')), true)
   equal(await isFileAccessible(join(tmpDir, 'tsconfig.json')), true)
 })
 
@@ -256,7 +263,8 @@ test('creates project with tsconfig already present', async ({ ok }) => {
 })
 
 test('creates project with plugin already present', async ({ ok }) => {
-  const pathToPlugin = join(tmpDir, 'plugin.js')
+  const pathToPlugin = join(tmpDir, 'routes', 'root.js')
+  mkdirSync(join(tmpDir, 'routes'))
   writeFileSync(pathToPlugin, 'test')
   const params = {
     hostname: 'myhost',
@@ -265,7 +273,7 @@ test('creates project with plugin already present', async ({ ok }) => {
     types: true
   }
   await createDB(params, fakeLogger, tmpDir)
-  ok(log.includes(`Plugin file ${pathToPlugin} found, skipping creation of plugin file.`))
+  ok(log.includes('Routes folder "routes" found, skipping creation of routes folder.'))
 })
 
 test('creates project with no default migrations', async ({ notOk }) => {
