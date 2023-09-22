@@ -35,7 +35,7 @@ RUN pnpm install --prod --offline --node-linker=hoisted
 RUN cd packages/cli && pnpm link --global
 
 # No pnpm/build tools install here, we just copy the files from the previous stage
-FROM node:18-alpine 
+FROM node:18-alpine
 
 # We don't need the build tools anymore
 RUN apk update && apk add --no-cache dumb-init
@@ -46,8 +46,8 @@ ENV PLT_HOME=$HOME/platformatic/
 
 COPY --from=base $PLT_HOME $PLT_HOME
 
-# Add platformatic to path 
-RUN cd $PLT_HOME/packages/cli && npm link 
+# Add platformatic to path
+RUN cd $PLT_HOME/packages/cli && npm link
 
 # Move to the app directory
 WORKDIR $APP_HOME
@@ -58,5 +58,3 @@ USER node
 
 ENTRYPOINT ["dumb-init"]
 CMD ["platformatic"]
-
-
