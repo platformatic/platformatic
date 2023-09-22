@@ -29,6 +29,9 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
           const queryParams = []
           const headersParams = []
           for (const parameter of parameters) {
+            if (optionalHeaders.includes(parameter.name)) {
+              parameter.required = false
+            }
             switch (parameter.in) {
               case 'query':
                 queryParams.push(parameter)
