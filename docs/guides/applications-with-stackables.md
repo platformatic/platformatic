@@ -1,8 +1,10 @@
-# Packaging a Platformatic Application as a module
+# Use Stackables to build Platformatic applications
 
 [Platformatic Service](/docs/reference/db/introduction.md) and [Platformatic DB](/docs/reference/db/introduction.md)
 offer a good starting point to create new applications. However, most developers or organizations might want to
 create reusable services or applications built on top of Platformatic.
+We call these reusable services "Stackables" because you can create an application by stacking services on top of them.
+
 This is useful to publish the application on the public npm registry (or a private one!), including building your own CLI,
 or to create a specialized template for your organization to allow for centralized bugfixes and updates.
 
@@ -114,16 +116,21 @@ Consuming `foo.js` is simple. We can create a `platformatic.json` file as follow
 Note that we __must__ specify both the `$schema` property and `module`.
 Module can also be any modules published on npm and installed via your package manager.
 
+:::note
+The `module` is the name of the module we are actually "stacking" on top of.
+:::
+
 ## Building your own CLI
+If you want to create your own CLI for your service on top of a Stackable you can just importing the base module and then start it, e.g.:
 
-It is possible to build your own CLI with the following `cli.mjs` file:
-
-```
-import foo from './foo.js'
+```js
+import base from 'mybasemodule' // Import here your base module
 import { start } from '@platformatic/service'
 import { printAndExitLoadConfigError } from '@platformatic/config'
 
-await start(foo, process.argv.splice(2)).catch(printConfigValidationErrors)
+await start(base, process.argv.splice(2)).catch(printAndExitLoadConfigError)
 ```
 
-This will also load `platformatic.foo.json` files.
+This is the same as running with platformatic CLI, the `platformatic.json` file will be loaded from the current directory.
+
+
