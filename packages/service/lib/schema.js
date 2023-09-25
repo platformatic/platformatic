@@ -429,9 +429,6 @@ const plugins = {
         }]
       }
     },
-    stopTimeout: {
-      type: 'integer'
-    },
     typescript: {
       anyOf: [{
         type: 'object',
