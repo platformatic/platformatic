@@ -151,12 +151,17 @@ export async function createRuntimeService ({ servicesDir, names, logger }) {
 
   await chooseKind([], {
     skip: 'runtime',
+    serviceName: name,
     dir: serviceDir,
     logger,
     skipGitHubActions: true,
     skipPackageJson: true,
     skipGitignore: true,
-    port: '0'
+    port: '0',
+    isRuntimeContext: true,
+    runtimeContext: {
+      servicesNames: names
+    }
   })
 
   return true
