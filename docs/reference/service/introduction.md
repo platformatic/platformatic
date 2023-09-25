@@ -3,7 +3,7 @@
 Platformatic Service is an HTTP server that provides a developer tools for
 building robust APIs with Node.js.
 
-For a high level overview of how Platformatic DB works, please reference the
+For a high level overview of how Platformatic Service works, please reference the
 [Architecture](/getting-started/architecture.md) guide.
 
 ## Features
