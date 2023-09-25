@@ -54,7 +54,7 @@ test('openapi client generation (javascript)', async ({ teardown, comment, same 
   const plugin = `
 module.exports = async function (app) {
   app.post('/', async (request, reply) => {
-    const res = await app.movies.createMovie({ title: 'foo' })
+    const res = await request.movies.createMovie({ title: 'foo' })
     return res
   })
 }
@@ -114,7 +114,7 @@ import { type FastifyPluginAsync } from 'fastify'
 
 const myPlugin: FastifyPluginAsync<{}> = async (app, options) => {
   app.post('/', async (request, reply) => {
-    const res = await app.movies.createMovie({ title: 'foo' })
+    const res = await request.movies.createMovie({ title: 'foo' })
     return res
   })
 }
@@ -241,7 +241,7 @@ const myPlugin: FastifyPluginAsync<{}> = async (app, options) => {
   })
   
   app.post('/', async (request, reply) => {
-    const res = await app.movies.createMovie({ title: 'foo' })
+    const res = await request.movies.createMovie({ title: 'foo' })
     return res
   })
 }
@@ -313,7 +313,7 @@ test('generate client twice', async ({ teardown, comment, same, equal }) => {
   const plugin = `
 module.exports = async function (app) {
   app.post('/', async (request, reply) => {
-    const res = await app.movies.createMovie({ title: 'foo' })
+    const res = await request.movies.createMovie({ title: 'foo' })
     return res
   })
 }

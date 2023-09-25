@@ -42,7 +42,7 @@ const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
-  const res = await app.uncannyMovies.graphql({
+  const res = await request.uncannyMovies.graphql({
     query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
   })
   return res
@@ -106,8 +106,8 @@ app.register(movies, {
   url: '${app.url}'
 });
 
-app.post('/', async () => {
-  const res = await app.uncannyMovies.graphql({
+app.post('/', async (req) => {
+  const res = await req.uncannyMovies.graphql({
     query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
   })
   return res
@@ -196,7 +196,7 @@ const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
-  const res = await app.movies.graphql({
+  const res = await request.movies.graphql({
     query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
   })
   return res
@@ -267,7 +267,7 @@ const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
-  const res = await app.uncannyMovies.graphql({
+  const res = await request.uncannyMovies.graphql({
     query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
   })
   return res

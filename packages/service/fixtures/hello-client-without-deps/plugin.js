@@ -2,7 +2,7 @@
 
 /**  @type {import('fastify').FastifyPluginAsync<{ optionA: boolean, optionB: string }>} */
 module.exports = async function (app) {
-  app.get('/', async () => {
-    return app.hello.get()
+  app.get('/', async (req) => {
+    return req.hello.get()
   })
 }

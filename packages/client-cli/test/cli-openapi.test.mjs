@@ -34,7 +34,7 @@ const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
-  const res = await app.movies.createMovie({ title: 'foo' })
+  const res = await request.movies.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
@@ -92,13 +92,13 @@ app.register(movies, {
   url: '${app.url}'
 });
 
-app.get('/', async () => {
-  const res = await app.movies.getMovies()
+app.get('/', async (req) => {
+  const res = await req.movies.getMovies()
   return res
 })
 
-app.post('/', async () => {
-  const res = await app.movies.createMovie({ title: 'foo' })
+app.post('/', async (req) => {
+  const res = await req.movies.createMovie({ title: 'foo' })
   return res
 })
 
@@ -178,7 +178,7 @@ const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}/' })
 app.post('/', async (request, reply) => {
-  const res = await app.movies.createMovie({ title: 'foo' })
+  const res = await request.movies.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
@@ -257,7 +257,7 @@ const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
-  const res = await app.movies.createMovie({ title: 'foo' })
+  const res = await request.movies.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
@@ -456,7 +456,7 @@ const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {  
-  const res = await app.movies.createMovie({ title: 'foo' })
+  const res = await request.movies.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
@@ -539,7 +539,7 @@ const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
-  const res = await app.movies.createMovie({ title: 'foo' })
+  const res = await request.movies.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
@@ -611,7 +611,7 @@ const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
-  const res = await app.uncannyMovies.createMovie({ title: 'foo' })
+  const res = await request.uncannyMovies.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
@@ -669,8 +669,8 @@ app.register(movies, {
   url: '${app.url}'
 });
 
-app.post('/', async () => {
-  const res = await app.uncannyMovies.createMovie({ title: 'foo' })
+app.post('/', async (req) => {
+  const res = await req.uncannyMovies.createMovie({ title: 'foo' })
   return res
 })
 
@@ -764,7 +764,7 @@ const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
-  const res = await app.uncannyMovies.createMovie({ title: 'foo' })
+  const res = await request.uncannyMovies.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })

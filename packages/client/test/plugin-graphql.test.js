@@ -29,41 +29,55 @@ test('app decorator with GraphQL', async ({ teardown, same, rejects }) => {
     name: 'client'
   })
 
-  const movie = await app.client.graphql({
-    query: `
-      mutation createMovie($title: String!) {
-        saveMovie(input: {title: $title}) {
+  app.post('/movies', async (req, res) => {
+    return await req.client.graphql({
+      query: `
+        mutation createMovie($title: String!) {
+          saveMovie(input: {title: $title}) {
+            id
+            title
+          }
+        }
+      `,
+      variables: {
+        title: 'The Matrix'
+      }
+    })
+  })
+
+  app.get('/movies', async (req, res) => {
+    return await req.client.graphql({
+      query: `
+      query getMovies {
+        movies {
+          id
+          title
+        }
+        getMovieById(id: 1) {
           id
           title
         }
       }
-    `,
-    variables: {
-      title: 'The Matrix'
-    }
+      `
+    })
   })
 
-  same(movie, {
+  const movie = await app.inject({
+    method: 'POST',
+    path: '/movies'
+  })
+
+  same(movie.json(), {
     id: 1,
     title: 'The Matrix'
   })
 
-  const movies = await app.client.graphql({
-    query: `
-    query getMovies {
-      movies {
-        id
-        title
-      }
-      getMovieById(id: 1) {
-        id
-        title
-      }
-    }
-    `
+  const movies = await app.inject({
+    method: 'GET',
+    path: 'movies'
   })
 
-  same(movies, {
+  same(movies.json(), {
     movies: [{
       id: 1,
       title: 'The Matrix'
