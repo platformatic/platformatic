@@ -3,7 +3,7 @@ import { findComposerConfigFile, isFileAccessible } from '../utils.mjs'
 import { join } from 'path'
 import * as desm from 'desm'
 
-function generateConfig (version) {
+function generateConfig (version, isRuntimeContext, servicesToCompose) {
   const config = {
     $schema: `https://platformatic.dev/schemas/v${version}/composer`,
     server: {
@@ -26,21 +26,45 @@ function generateConfig (version) {
     watch: true
   }
 
+  if (isRuntimeContext) {
+    config.composer.services = servicesToCompose.map((serviceName) => {
+      return {
+        id: serviceName,
+        openapi: {
+          url: '/documentation/json',
+          prefix: `/${serviceName}`
+        }
+      }
+    })
+  }
+
   return config
 }
 
-function generateEnv (hostname, port) {
-  const env = `\
+function generateEnv (isRuntimeContext, hostname, port) {
+  let env = `\
 PLT_SERVER_HOSTNAME=${hostname}
 PORT=${port}
 PLT_SERVER_LOGGER_LEVEL=info
+`
+
+  if (!isRuntimeContext) {
+    env += `\
 PLT_EXAMPLE_ORIGIN=
 `
+  }
 
   return env
 }
 
-async function createComposer ({ hostname, port }, logger, currentDir = process.cwd(), version) {
+async function createComposer (
+  { hostname, port },
+  logger,
+  currentDir = process.cwd(),
+  version,
+  isRuntimeContext = false,
+  servicesToCompose = []
+) {
   if (!version) {
     const pkg = await readFile(desm.join(import.meta.url, '..', '..', 'package.json'))
     version = JSON.parse(pkg).version
@@ -48,11 +72,11 @@ async function createComposer ({ hostname, port }, logger, currentDir = process.
   const accessibleConfigFilename = await findComposerConfigFile(currentDir)
 
   if (accessibleConfigFilename === undefined) {
-    const config = generateConfig(version)
+    const config = generateConfig(version, isRuntimeContext, servicesToCompose)
     await writeFile(join(currentDir, 'platformatic.composer.json'), JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.composer.json successfully created.')
 
-    const env = generateEnv(hostname, port)
+    const env = generateEnv(isRuntimeContext, hostname, port)
     const envFileExists = await isFileAccessible('.env', currentDir)
     await appendFile(join(currentDir, '.env'), env)
     await writeFile(join(currentDir, '.env.sample'), env)

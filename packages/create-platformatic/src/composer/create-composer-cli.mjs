@@ -35,6 +35,16 @@ export const createReadme = async (logger, dir = '.') => {
   logger.debug(`${readmeFileName} successfully created.`)
 }
 
+export const getServicesToCompose = (servicesNames) => {
+  return {
+    type: 'checkbox',
+    name: 'servicesToCompose',
+    message: 'Which services do you want to expose via Platformatic Composer?',
+    choices: servicesNames,
+    default: []
+  }
+}
+
 const createPlatformaticComposer = async (_args, opts) => {
   const logger = opts.logger || pino(pretty({
     translateTime: 'SYS:HH:MM:ss',
@@ -55,14 +65,26 @@ const createPlatformaticComposer = async (_args, opts) => {
   const pkgManager = getPkgManager()
 
   const projectDir = opts.dir || await askDir(logger, '.')
+  const isRuntimeContext = opts.isRuntimeContext || false
 
   const toAsk = [getPort(args.port)]
+
+  if (isRuntimeContext) {
+    const servicesNames = opts.runtimeContext.servicesNames.filter(
+      (serviceName) => serviceName !== opts.serviceName
+    )
+    toAsk.push(getServicesToCompose(servicesNames))
+  }
 
   if (!opts.skipPackageJson) {
     toAsk.push(getRunPackageManagerInstall(pkgManager))
   }
 
-  const { runPackageManagerInstall, port } = await inquirer.prompt(toAsk)
+  const {
+    runPackageManagerInstall,
+    servicesToCompose,
+    port
+  } = await inquirer.prompt(toAsk)
 
   // Create the project directory
   await mkdir(projectDir, { recursive: true })
@@ -72,7 +94,14 @@ const createPlatformaticComposer = async (_args, opts) => {
     port
   }
 
-  const env = await createComposer(params, logger, projectDir, version)
+  const env = await createComposer(
+    params,
+    logger,
+    projectDir,
+    version,
+    isRuntimeContext,
+    servicesToCompose
+  )
 
   const fastifyVersion = await getDependencyVersion('fastify')
 
