@@ -59,12 +59,29 @@ ${envString}
         run: npm run build`
 : ''}
       - name: Deploy project
+        id: deploy-project
         uses: platformatic/onestep@latest
         with:
           github_token: \${{ secrets.GITHUB_TOKEN }}
           platformatic_workspace_id: \${{ secrets.PLATFORMATIC_DYNAMIC_WORKSPACE_ID }}
           platformatic_workspace_key: \${{ secrets.PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY }}
           platformatic_config_path: ${config}
+    outputs:
+      deployment_id: \${{ steps.deploy-project.outputs.deployment_id }}
+  calculate_risk:
+    permissions:
+      contents: read
+      pull-requests: write
+    needs: build_and_deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Calculate risk
+        uses: platformatic/onestep/actions/calculate-risk@latest
+        with:
+          github_token: \${{ secrets.GITHUB_TOKEN }}
+          platformatic_workspace_id: \${{ secrets.PLATFORMATIC_DYNAMIC_WORKSPACE_ID }}
+          platformatic_workspace_key: \${{ secrets.PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY }}
+          platformatic_deployment_id: \${{ needs.build_and_deploy.outputs.deployment_id }}
 `
 }
 
