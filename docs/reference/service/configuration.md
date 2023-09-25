@@ -299,7 +299,7 @@ Note that OTLP traces can be consumed by different solutions, like [Jaeger](http
 
 An array of [Platformatic Client](/reference/client/introduction.md) configurations that will be loaded by Platformatic Service.
 
-- **`serviceId`** (`string`) - The ID of Platformatic Service inside the Platformatic Runtime. Used only in Platformatic Runtime context.
+- **`serviceId`** (`string`) - The ID of Platformatic Service inside the Platformatic Runtime. Used only in [Platformatic Runtime context](/docs/reference/runtime/introduction.md#platformatic-runtime-context).
 - **`name`** (`string`) - The name of the client.
 - **`type`** (`string`) - The type of the client. Supported values are `graphql` and `openapi`.
 - **`schema`** (`string`) - Path to the generated client schema file.
@@ -340,7 +340,7 @@ PORT=8080
 The `.env` file must be located in the same folder as the Platformatic configuration
 file or in the current working directory.
 
-Environment variables can also be set directly on the commmand line, for example:
+Environment variables can also be set directly on the command line, for example:
 
 ```bash
 PLT_SERVER_LOGGER_LEVEL=debug npx platformatic service

@@ -48,6 +48,15 @@ Runtime project. For more details on the configuration file, see the
 Platformatic Runtime streamlines the compilation of all services built on TypeScript with the command
 `plt runtime compile`. The TypeScript compiler (`tsc`) is required to be installed separately.
 
+## Platformatic Runtime context
+
+Every Platformatic Runtime application can be run as a standalone application
+or as a Platformatic Runtime service. In a second case, you can use Platformatic
+Runtime features to archive some compile and runtime optimizations. For example,
+see [Interservice communication](#interservice-communication). Looking through the
+Platformatic documentation, you can find some features that are available only
+if you run your application as a Platformatic Runtime service.
+
 ## Interservice communication
 
 The Platformatic Runtime allows multiple microservice applications to run
