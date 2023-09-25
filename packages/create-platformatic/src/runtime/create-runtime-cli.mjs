@@ -50,7 +50,7 @@ export async function createPlatformaticRuntime (_args) {
   // Create the project directory
   await mkdir(projectDir, { recursive: true })
 
-  const baseServicesDir = join(relative(process.cwd(), projectDir), 'library-app/services')
+  const baseServicesDir = join(relative(process.cwd(), projectDir), 'services')
   const servicesDir = await askDir(logger, baseServicesDir, 'Where would you like to load your services from?')
 
   const { runPackageManagerInstall } = await inquirer.prompt([

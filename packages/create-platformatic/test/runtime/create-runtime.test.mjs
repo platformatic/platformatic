@@ -23,7 +23,7 @@ const fakeLogger = {
 }
 
 test('creates runtime', async ({ equal, same, ok }) => {
-  await createRuntime(fakeLogger, tmpDir, undefined, 'library-app/services', 'foobar')
+  await createRuntime(fakeLogger, tmpDir, undefined, 'services', 'foobar')
 
   const pathToRuntimeConfigFile = join(tmpDir, 'platformatic.runtime.json')
   const runtimeConfigFile = readFileSync(pathToRuntimeConfigFile, 'utf8')
@@ -36,7 +36,7 @@ test('creates runtime', async ({ equal, same, ok }) => {
     allowCycles: false,
     hotReload: true,
     autoload: {
-      path: 'library-app/services',
+      path: 'services',
       exclude: ['docs']
     }
   })
