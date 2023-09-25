@@ -1,4 +1,4 @@
-import { readFile, readdir, unlink, writeFile } from 'fs/promises'
+import { readFile, readdir, stat, unlink, writeFile } from 'fs/promises'
 import { findRuntimeConfigFile } from '../utils.mjs'
 import { join, relative, isAbsolute } from 'path'
 import * as desm from 'desm'
@@ -33,10 +33,18 @@ async function createRuntime (logger, currentDir = process.cwd(), version, servi
   } else {
     logger.info(`Configuration file ${accessibleConfigFilename} found, skipping creation of configuration file.`)
   }
+  if (servicesDir) {
+    const servicesDirFullPath = join(currentDir, servicesDir)
 
-  await cleanServicesConfig(logger, servicesDir, entrypoint)
+    try {
+      await stat(servicesDirFullPath)
+      await cleanServicesConfig(logger, servicesDirFullPath, entrypoint)
+      await manageServicesEnvFiles(servicesDirFullPath, currentDir, entrypoint)
+    } catch (err) {
+      // do nothing. There are no services to manage, somehow.
+    }
+  }
 
-  await manageServicesEnvFiles(servicesDir, currentDir, entrypoint)
   return {}
 }
 /**
@@ -70,9 +78,6 @@ async function cleanServicesConfig (logger, servicesDir, entrypoint) {
 }
 
 async function manageServicesEnvFiles (servicesDir, runtimeDir, entrypoint) {
-  // read main env file
-
-  // let mainEnvFile = await readFile(join(runtimeDir, '.env'), 'utf8')
   let mainEnvFile = ''
   const services = await getAllServices(servicesDir)
   for (const svc of services) {
