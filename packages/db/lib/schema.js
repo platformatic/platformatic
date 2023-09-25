@@ -310,7 +310,16 @@ const platformaticDBschema = {
   title: 'Platformatic DB',
   type: 'object',
   properties: {
-    server,
+    server: {
+      ...server,
+      properties: {
+        ...server.properties,
+        pluginTimeout: {
+          ...server.properties.pluginTimeout,
+          default: 60 * 1000
+        }
+      }
+    },
     db,
     authorization,
     migrations,
