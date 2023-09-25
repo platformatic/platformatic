@@ -1,4 +1,3 @@
-import { validatePath } from './utils.mjs'
 import inquirer from 'inquirer'
 import { resolve } from 'path'
 
@@ -7,8 +6,7 @@ const askProjectDir = async (logger, defaultName, message = 'Where would you lik
     type: 'input',
     name: 'dir',
     message,
-    default: defaultName,
-    validate: validatePath
+    default: defaultName
   })
 
   const projectDir = resolve(process.cwd(), options.dir)

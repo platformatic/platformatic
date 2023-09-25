@@ -351,7 +351,7 @@ export async function createDB ({ hostname, database = 'sqlite', port, migration
   if (createMigrations) {
     const isMigrationFolderExists = await isFileAccessible(migrationsFolderName, currentDir)
     if (!isMigrationFolderExists) {
-      await mkdir(join(currentDir, migrationsFolderName))
+      await mkdir(join(currentDir, migrationsFolderName), { recursive: true })
       logger.info(`Migrations folder ${migrationsFolderName} successfully created.`)
     } else {
       logger.info(`Migrations folder ${migrationsFolderName} found, skipping creation of migrations folder.`)

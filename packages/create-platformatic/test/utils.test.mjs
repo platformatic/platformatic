@@ -1,7 +1,7 @@
 import { test } from 'tap'
-import { randomBetween, sleep, validatePath, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions, findRuntimeConfigFile, findComposerConfigFile } from '../src/utils.mjs'
+import { randomBetween, sleep, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions, findRuntimeConfigFile, findComposerConfigFile } from '../src/utils.mjs'
 import { mkdtempSync, rmSync, writeFileSync } from 'fs'
-import { tmpdir, platform } from 'os'
+import { tmpdir } from 'os'
 import { join } from 'path'
 import esmock from 'esmock'
 import semver from 'semver'
@@ -106,32 +106,6 @@ test('sleep', async ({ equal }) => {
   await sleep(100)
   const end = Date.now()
   equal(end - start >= 100, true)
-})
-
-test('validatePath', async ({ end, equal, rejects, ok }) => {
-  {
-    // new folder
-    const valid = await validatePath('new-project')
-    ok(valid)
-  }
-
-  {
-    // existing folder
-    const valid = await validatePath('test')
-    ok(valid)
-  }
-
-  {
-    // current folder
-    const valid = await validatePath('.')
-    ok(valid)
-  }
-
-  if (platform().indexOf('win') < 0) {
-    // not writeable folder
-    const valid = await validatePath('/')
-    ok(!valid)
-  }
 })
 
 test('getDependencyVersion', async ({ equal }) => {

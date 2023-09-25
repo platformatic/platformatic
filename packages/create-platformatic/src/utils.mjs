@@ -61,19 +61,6 @@ export async function isDirectoryWriteable (directory) {
   }
 }
 
-export const validatePath = async projectPath => {
-  // if the folder exists, is OK:
-  const projectDir = resolve(projectPath)
-  const canAccess = await isDirectoryWriteable(projectDir)
-  if (canAccess) {
-    return true
-  }
-  // if the folder does not exist, check if the parent folder exists:
-  const parentDir = dirname(projectDir)
-  const canAccessParent = await isDirectoryWriteable(parentDir)
-  return canAccessParent
-}
-
 export const findDBConfigFile = async (directory) => (ConfigManager.findConfigFile(directory, 'db'))
 export const findServiceConfigFile = async (directory) => (ConfigManager.findConfigFile(directory, 'service'))
 export const findComposerConfigFile = async (directory) => (ConfigManager.findConfigFile(directory, 'composer'))
