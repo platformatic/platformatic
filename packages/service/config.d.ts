@@ -193,7 +193,6 @@ export interface Plugins {
         [k: string]: unknown;
       }
   )[];
-  stopTimeout?: number;
   typescript?:
     | {
         enabled?: boolean | string;
