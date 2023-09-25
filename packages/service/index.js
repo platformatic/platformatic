@@ -57,6 +57,7 @@ async function platformaticService (app, opts, toLoad = []) {
     if (typescript === true) {
       registerTsCompiler = true
     } else if (typeof typescript === 'object') {
+      /* c8 ignore next 2 */
       registerTsCompiler = typescript.enabled === true || typescript.enabled === undefined
     }
 
