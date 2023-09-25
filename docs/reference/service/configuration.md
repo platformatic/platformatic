@@ -38,6 +38,8 @@ Configuration settings are organised into the following groups:
 - [`metrics`](#metrics)
 - [`plugins`](#plugins)
 - [`telemetry`](#telemetry)
+- [`watch`](#watch)
+- [`clients`](#clients)
 
 Sensitive configuration settings, such as a database connection URL that contains
 a password, should be set using [configuration placeholders](#configuration-placeholders).
@@ -47,7 +49,7 @@ a password, should be set using [configuration placeholders](#configuration-plac
 A **required** object with the following settings:
 
 - **`hostname`** (**required**, `string`) — Hostname where Platformatic Service server will listen for connections.
-- **`port`** (**required**, `number`) — Port where Platformatic Service server will listen for connections.
+- **`port`** (**required**, `number` or `string`) — Port where Platformatic Service server will listen for connections.
 - **`healthCheck`** (`boolean` or `object`) — Enables the health check endpoint.
   - Powered by [`@fastify/under-pressure`](https://github.com/fastify/under-pressure).
   - The value can be an object, used to specify the interval between checks in milliseconds (default: `5000`)
@@ -84,7 +86,7 @@ This setting can be a `boolean` or an `object`. If set to `true` the Prometheus 
 Supported object properties:
 
 - **`hostname`** (`string`) — The hostname where Prometheus server will listen for connections.
-- **`port`** (`number`) — The port where Prometheus server will listen for connections.
+- **`port`** (`number` or `string`) — The port where Prometheus server will listen for connections.
 - **`auth`** (`object`) — Basic Auth configuration. **`username`** and **`password`** are required here
   (use [environment variables](#environment-variables)).
 
@@ -97,8 +99,7 @@ An optional object that defines the plugins loaded by Platformatic Service.
   - `options` (`object`): Optional plugin options.
   - `encapsulate` (`boolean`): if the path is a folder, it instruct Platformatic to not encapsulate those plugins.
   - `maxDepth` (`integer`): if the path is a folder, it limits the depth to load the content from.
-- **`typescript`** (`boolean` or `object`): enable TypeScript compilation. A `tsconfig.json` file is required in the same folder.
-
+- **`typescript`** (`boolean` or `object`): enable TypeScript compilation. A `tsconfig.json` file is required in the same folder. See [TypeScript compilation options](#typescript-compilation-options) for more details.
 
 _Example_
 
@@ -124,7 +125,7 @@ The `typescript` can also be an object to customize the compilation. Here are th
 * `outDir` (`string`): the output directory of `tsconfig.json`, in case `tsconfig.json` is not available
 and and `enabled` is set to `false` (procution build)
 * `flags` (array of `string`): flags to be passed to `tsc`. Overrides `tsConfig`.
-    
+
 
 Example:
 
@@ -268,6 +269,18 @@ Note that OTLP traces can be consumed by different solutions, like [Jaeger](http
     }
   }
   ```
+
+
+### `clients`
+
+An array of [Platformatic Client](/reference/client/introduction.md) configurations that will be loaded by Platformatic Service.
+
+- **`serviceId`** (`string`) - The ID of Platformatic Service inside the Platformatic Runtime. Used only in Platformatic Runtime context.
+- **`name`** (`string`) - The name of the client.
+- **`type`** (`string`) - The type of the client. Supported values are `graphql` and `openapi`.
+- **`schema`** (`string`) - Path to the generated client schema file.
+- **`path`** (`string`) - Path to the generated client folder.
+- **`url`** (`string`) - The URL of the service that the client will connect to.
 
 ## Environment variable placeholders
 
