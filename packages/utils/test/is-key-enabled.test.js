@@ -15,4 +15,5 @@ test('isKeyEnabled', async (t) => {
   t.equal(isKeyEnabled('bar', a), true)
   t.equal(isKeyEnabled('baz', a), false)
   t.equal(isKeyEnabled('nope', a), false)
+  t.equal(isKeyEnabled('something', undefined), false)
 })
