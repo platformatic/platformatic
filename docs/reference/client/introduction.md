@@ -16,7 +16,7 @@ $ platformatic client http://exmaple.com/grapqhl --name myclient
 
 ## Usage with Platformatic Service or Platformatic DB
 
-If you run the generator in in a Platformatic application, and it will
+If you run the generator in a Platformatic application, and it will
 automatically extend it to load your client by editing the configuration file
 and adding a `clients` section.
 Then, in any part of your Platformatic application you can use the client.

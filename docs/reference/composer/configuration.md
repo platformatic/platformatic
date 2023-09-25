@@ -138,8 +138,8 @@ Configure `@platformatic/composer` specific settings such as `services` or `refr
 - **`services`** (`array`, default: `[]`) — is an array of objects that defines
 the services managed by the composer. Each service object supports the following settings:
 
-  - **`id`** (**required**, `string`) - A unique identifier for the service.
-  - **`origin`** (`string`) - A service origin. Skip this option if the service is executing inside of Platformatic Runtime. In this case, service id will be used instead of origin.
+  - **`id`** (**required**, `string`) - A unique identifier for the service. Use a Platformatic Runtime service id if the service is executing inside of [Platformatic Runtime context](/docs/reference/runtime/introduction.md#platformatic-runtime-context).
+  - **`origin`** (`string`) - A service origin. Skip this option if the service is executing inside of [Platformatic Runtime context](/docs/reference/runtime/introduction.md#platformatic-runtime-context). In this case, service id will be used instead of origin.
   - **`openapi`** (**required**, `object`) - The configuration file used to compose OpenAPI specification. See the [openapi](#openapi) for details.
   - **`proxy`** (`object` or `false`) - Service proxy configuration. If `false`, the service proxy is disabled.
     - `prefix` (**required**, `string`) - Service proxy prefix. All service routes will be prefixed with this value.
