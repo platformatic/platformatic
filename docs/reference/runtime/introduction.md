@@ -3,10 +3,6 @@
 Platformatic Runtime is an environment for running multiple Platformatic
 microservices as a single monolithic deployment unit.
 
-:::info
-Platformatic Runtime is currently in [public beta](#public-beta).
-:::
-
 ## Features
 
 - Command-line interface: [`platformatic runtime`](/reference/cli.md#runtime)
@@ -14,10 +10,7 @@ Platformatic Runtime is currently in [public beta](#public-beta).
 - Support for monorepo-based applications.
 - [Interservice communication](#interservice-communication) using private message passing.
 
-## Public beta
-
-Platformatic Runtime is in public beta. You can use it in production, but it's quite
-likely that you'll encounter significant bugs.
+## Issues
 
 If you run into a bug or have a suggestion for improvement, please
 [raise an issue on GitHub](https://github.com/platformatic/platformatic/issues/new).
