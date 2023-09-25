@@ -61,24 +61,25 @@ async function buildServer (options, app) {
 
     return root
   }
-
-  const { port, hostname, ...serverOptions } = options.server
-
-  if (serverOptions.https) {
-    serverOptions.https.key = await adjustHttpsKeyAndCert(serverOptions.https.key)
-    serverOptions.https.cert = await adjustHttpsKeyAndCert(serverOptions.https.cert)
-  }
-
   const handler = await restartable(createRestartable)
+
+  if (options.server) {
+    const { port, hostname, ...serverOptions } = options.server
+
+    if (serverOptions.https) {
+      serverOptions.https.key = await adjustHttpsKeyAndCert(serverOptions.https.key)
+      serverOptions.https.cert = await adjustHttpsKeyAndCert(serverOptions.https.cert)
+    }
+
+    handler.decorate('start', async () => {
+      url = await handler.listen({ host: hostname, port })
+      return url
+    })
+  }
 
   configManager.on('error', function (err) {
     /* c8 ignore next 1 */
     handler.log.error({ err }, 'error reloading the configuration')
-  })
-
-  handler.decorate('start', async () => {
-    url = await handler.listen({ host: hostname, port })
-    return url
   })
 
   return handler

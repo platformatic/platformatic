@@ -65,23 +65,18 @@ async function createService ({ hostname, port, typescript = false }, logger, cu
 
   if (accessibleConfigFilename === undefined) {
     const config = generateConfig(version, typescript)
-    if (isRuntime) {
-      delete config.server
-    }
     await writeFile(join(currentDir, 'platformatic.service.json'), JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.service.json successfully created.')
 
-    if (!isRuntime) {
-      const env = generateEnv(hostname, port, typescript)
-      const envFileExists = await isFileAccessible('.env', currentDir)
-      await appendFile(join(currentDir, '.env'), env)
-      await writeFile(join(currentDir, '.env.sample'), env)
-      /* c8 ignore next 5 */
-      if (envFileExists) {
-        logger.info('Environment file .env found, appending new environment variables to existing .env file.')
-      } else {
-        logger.info('Environment file .env successfully created.')
-      }
+    const env = generateEnv(hostname, port, typescript)
+    const envFileExists = await isFileAccessible('.env', currentDir)
+    await appendFile(join(currentDir, '.env'), env)
+    await writeFile(join(currentDir, '.env.sample'), env)
+    /* c8 ignore next 5 */
+    if (envFileExists) {
+      logger.info('Environment file .env found, appending new environment variables to existing .env file.')
+    } else {
+      logger.info('Environment file .env successfully created.')
     }
   } else {
     logger.info(`Configuration file ${accessibleConfigFilename} found, skipping creation of configuration file.`)
