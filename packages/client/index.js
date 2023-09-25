@@ -375,7 +375,6 @@ async function plugin (app, opts) {
     name = 'client'
   }
 
-  app.decorate(name, client)
   app.decorateRequest(name, null)
 
   app.decorate('configure' + capitalize(name), function (opts) {

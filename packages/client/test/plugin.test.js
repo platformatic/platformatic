@@ -38,18 +38,33 @@ test('default decorator', async ({ teardown, same, rejects }) => {
     url: `${targetApp.url}/documentation/json`
   })
 
-  const movie = await app.client.createMovie({
-    title: 'The Matrix'
+  app.post('/movies', async (req, res) => {
+    const movie = await req.client.createMovie({
+      title: 'The Matrix'
+    })
+    return movie
   })
 
-  same(movie, {
+  app.get('/movies', async (req, res) => {
+    return await req.client.getMovies()
+  })
+
+  const movie = await app.inject({
+    method: 'POST',
+    path: '/movies'
+  })
+
+  same(movie.json(), {
     id: 1,
     title: 'The Matrix'
   })
 
-  const movies = await app.client.getMovies()
+  const movies = await app.inject({
+    method: 'GET',
+    path: '/movies'
+  })
 
-  same(movies, [
+  same(movies.json(), [
     {
       id: 1,
       title: 'The Matrix'
@@ -124,18 +139,33 @@ test('app decorator with OpenAPI', async ({ teardown, same, rejects }) => {
     name: 'client'
   })
 
-  const movie = await app.client.createMovie({
-    title: 'The Matrix'
+  app.post('/movies', async (req, res) => {
+    const movie = await req.client.createMovie({
+      title: 'The Matrix'
+    })
+    return movie
   })
 
-  same(movie, {
+  app.get('/movies', async (req, res) => {
+    return await req.client.getMovies()
+  })
+
+  const movie = await app.inject({
+    method: 'POST',
+    path: '/movies'
+  })
+
+  same(movie.json(), {
     id: 1,
     title: 'The Matrix'
   })
 
-  const movies = await app.client.getMovies()
+  const movies = await app.inject({
+    method: 'GET',
+    path: '/movies'
+  })
 
-  same(movies, [
+  same(movies.json(), [
     {
       id: 1,
       title: 'The Matrix'
@@ -402,11 +432,19 @@ test('serviceId', async ({ teardown, same, rejects }) => {
     path: join(__dirname, 'fixtures', 'movies', 'openapi.json')
   })
 
-  const movie = await app.client.createMovie({
-    title: 'The Matrix'
+  app.post('/movies', async (req, res) => {
+    const movie = await req.client.createMovie({
+      title: 'The Matrix'
+    })
+    return movie
   })
 
-  same(movie, {
+  const movie = await app.inject({
+    method: 'POST',
+    path: '/movies'
+  })
+
+  same(movie.json(), {
     id: 1,
     title: 'The Matrix'
   })
