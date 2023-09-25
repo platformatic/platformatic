@@ -4,10 +4,10 @@ import { FastifyError } from '@fastify/error'
 interface IEnv {
   [key: string]: string
 }
-interface IConfigManagerOptions {
+export interface IConfigManagerOptions {
   source: string | JsonMap
   schema?: object
-  schemaOptions?: InstanceOptions
+  schemaOptions?: Partial<InstanceOptions>
   env?: IEnv
   envWhitelist?: string[]
   watch?: boolean
@@ -26,10 +26,11 @@ interface ISerializer {
   stringify(obj: JsonMap): string
 }
 
-export default class ConfigManager<T = object> {
+export class ConfigManager<T = object> {
   constructor(opts: IConfigManagerOptions)
   current: T
   fullPath: string
+  dirname: string
   getSerializer(): ISerializer
   purgeEnv(): IEnv
   replaceEnv(configString: string): string
@@ -40,6 +41,8 @@ export default class ConfigManager<T = object> {
   save(): Promise<boolean | undefined>
   load(): Promise<string>
 }
+
+export default ConfigManager
 
 /**
  * All the errors thrown by the plugin.
