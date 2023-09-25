@@ -37,7 +37,7 @@ test('graphql client generation (javascript)', async ({ teardown, comment, same,
   const plugin = `
 module.exports = async function (app) {
   app.post('/', async (request, reply) => {
-    const res = await app.movies.graphql({
+    const res = await request.movies.graphql({
       query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
     })
     return res
@@ -120,7 +120,7 @@ import { type FastifyPluginAsync } from 'fastify'
 
 const myPlugin: FastifyPluginAsync<{}> = async (app, options) => {
   app.post('/', async (request, reply) => {
-    const res = await app.movies.graphql({
+    const res = await request.movies.graphql({
       query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
     })
     return res

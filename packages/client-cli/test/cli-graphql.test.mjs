@@ -42,7 +42,7 @@ const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
-  const res = await app.movies.graphql({
+  const res = await request.movies.graphql({
     query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
   })
   return res
@@ -106,8 +106,8 @@ app.register(movies, {
   url: '${app.url}'
 });
 
-app.post('/', async () => {
-  const res = await app.movies.graphql({
+app.post('/', async (req) => {
+  const res = await req.movies.graphql({
     query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
   })
   return res
@@ -188,13 +188,13 @@ app.register(movies, {
   url: '${app.url}'
 });
 
-app.post('/', async () => {
-  const res1 = await app.movies.graphql<Movie>({
+app.post('/', async (req) => {
+  const res1 = await req.movies.graphql<Movie>({
     query: \`mutation {
       saveMovie(input: { title: "foo" }) { id, title } }
     \`
   })
-  const res2 = await app.movies.graphql<Quote>({
+  const res2 = await req.movies.graphql<Quote>({
     query: \`
       mutation saveQuote($movieId: ID!) {
         saveQuote(input: { movieId: $movieId, quote: "foo"}) {
@@ -292,7 +292,7 @@ const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}/' })
 app.post('/', async (request, reply) => {
-  const res = await app.movies.graphql({
+  const res = await request.movies.graphql({
     query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
   })
   return res
@@ -451,7 +451,7 @@ const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
-  const res = await app.movies.graphql({
+  const res = await request.movies.graphql({
     query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
   })
   return res

@@ -56,7 +56,7 @@ PLT_SERVER_LOGGER_LEVEL=info
 
 module.exports = async function (app, opts) {
   app.post('/', async (request, reply) => {
-    const res = await app.movies.createMovie({ title: 'foo' })
+    const res = await request.movies.createMovie({ title: 'foo' })
     return res
   })
 }
