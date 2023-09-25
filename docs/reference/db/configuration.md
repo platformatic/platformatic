@@ -322,7 +322,6 @@ A **required** object with the following settings:
 
 ### `metrics`
 
-Configuration for a [Prometheus](https://prometheus.io/) server that will export monitoring metrics for the current server instance.
 See [Platformatic Service metrics](/docs/reference/service/configuration.md#metrics) for more details.
 
 ### `migrations`
@@ -336,7 +335,6 @@ An optional object with the following settings:
 
 ### `plugins`
 
-An optional object that defines the plugins loaded by Platformatic DB.
 See [Platformatic Service plugins](/docs/reference/service/configuration.md#plugins) for more details.
 
 ### `watch`
