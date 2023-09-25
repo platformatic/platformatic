@@ -3,10 +3,6 @@
 Platformatic Composer is an HTTP server that automatically aggregates multiple
 services APIs into a single API.
 
-:::info
-Platformatic Composer is currently in [public beta](#public-beta).
-:::
-
 ## Features
 
 - Command-line interface: [`platformatic composer`](/reference/cli.md#composer)
@@ -15,10 +11,7 @@ Platformatic Composer is currently in [public beta](#public-beta).
 - Add custom functionality in a [Fastify plugin](/reference/composer/plugin.md)
 - Write plugins in JavaScript or [TypeScript](/reference/cli.md#compile)
 
-## Public beta
-
-Platformatic Composer is in public beta. You can use it in production, but it's quite
-likely that you'll encounter significant bugs.
+## Issues
 
 If you run into a bug or have a suggestion for improvement, please
 [raise an issue on GitHub](https://github.com/platformatic/platformatic/issues/new).

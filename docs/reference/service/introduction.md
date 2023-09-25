@@ -6,10 +6,6 @@ building robust APIs with Node.js.
 For a high level overview of how Platformatic DB works, please reference the
 [Architecture](/getting-started/architecture.md) guide.
 
-:::info
-Platformatic Service is currently in [public beta](#public-beta).
-:::
-
 ## Features
 
 - Command-line interface: [`platformatic service`](/reference/cli.md#service)
@@ -18,13 +14,10 @@ Platformatic Service is currently in [public beta](#public-beta).
 - Start Platformatic Service [programmatically](/reference/service/programmatic.md) in tests or other applications
 - Fully typed
 
-## Public beta
-
-Platformatic Service is in public beta. You can use it in production, but it's quite
-likely that you'll encounter significant bugs.
+## Issues
 
 If you run into a bug or have a suggestion for improvement, please
-[raise an issue on GitHub](https://github.com/platformatic/platformatic/issues/new). 
+[raise an issue on GitHub](https://github.com/platformatic/platformatic/issues/new).
 
 ## Standalone usage
 
