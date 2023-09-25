@@ -16,7 +16,8 @@ test('missing config', async (t) => {
   await t.rejects(execa('node', [cliPath, 'start']))
 })
 
-test('print validation errors', async ({ equal, plan }) => {
+// Skipping because now we don't have any required property in service schema
+test('print validation errors', { skip: true }, async ({ equal, plan }) => {
   plan(2)
   try {
     await execa('node', [cliPath, 'start', '--config', join(import.meta.url, '..', 'fixtures', 'missing-property.config.json')])

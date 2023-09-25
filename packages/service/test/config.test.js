@@ -314,3 +314,11 @@ test('do not watch typescript outDir', async ({ teardown, equal, pass, same }) =
     ignore: ['dist/**/*']
   })
 })
+
+test('returns null if no server field is provided', async ({ equal }) => {
+  const app = await buildServer({
+    watch: false,
+    metrics: false
+  })
+  equal(app, null)
+})
