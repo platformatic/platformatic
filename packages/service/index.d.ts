@@ -3,7 +3,9 @@
 /// <reference types="@fastify/swagger" />
 import { FastifyInstance } from 'fastify'
 import ConfigManager from '@platformatic/config'
+import type { IConfigManagerOptions } from '@platformatic/config'
 import { PlatformaticService } from './config'
+import type { JSONSchemaType } from 'ajv'
 
 export interface PlatformaticApp<T> {
   configManager: ConfigManager<T>
@@ -19,3 +21,26 @@ declare module 'fastify' {
     restart: () => Promise<void>
   }
 }
+
+export interface ConfigManagerConfig<T> extends Omit<IConfigManagerOptions, 'source' | 'watch' | 'schema'> {
+  transformConfig: (this: ConfigManager<T>) => Promise<void>
+  schema: object
+}
+
+export interface Stackable<ConfigType> {
+  (app: FastifyInstance, opts: object): Promise<void>
+
+  configType: string
+  configManagerConfig: ConfigManagerConfig<ConfigType>
+  schema: object
+}
+
+interface SchemaExport {
+  schema: JSONSchemaType<PlatformaticServiceConfig>
+}
+
+export const schema: SchemaExport
+
+export declare const platformaticService: Stackable<PlatformaticServiceConfig>
+
+export default platformaticService

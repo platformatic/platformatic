@@ -1210,6 +1210,12 @@ importers:
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
+      '@types/ws':
+        specifier: ^8.5.5
+        version: 8.5.5
+      ajv:
+        specifier: ^8.12.0
+        version: 8.12.0
       close-with-grace:
         specifier: ^1.2.0
         version: 1.2.0
@@ -1235,7 +1241,7 @@ importers:
         specifier: ^10.3.0
         version: 10.3.2(fastify@4.23.2)
       fastify-plugin:
-        specifier: ^4.5.0
+        specifier: ^4.5.1
         version: 4.5.1
       graphql:
         specifier: ^16.6.0
@@ -1316,6 +1322,12 @@ importers:
       yaml:
         specifier: ^2.3.1
         version: 2.3.2
+
+  packages/service/fixtures/acme-base-ts:
+    dependencies:
+      fastify-plugin:
+        specifier: ^4.5.0
+        version: 4.5.1
 
   packages/sql-events:
     dependencies:
@@ -2944,6 +2956,12 @@ packages:
   /@types/semver@7.5.2:
     resolution: {integrity: sha512-7aqorHYgdNO4DM36stTiGO3DvKoex9TQRwsJU6vMaFGyqpBA1MNZkz+PG3gaNUPpTAOYhT1WR7M1JyA3fbS9Cw==}
     dev: true
+
+  /@types/ws@8.5.5:
+    resolution: {integrity: sha512-lwhs8hktwxSjf9UaZ9tG5M03PGogvFaH8gUgLNbN9HKIg0dvv6q+gkSuJ8HN4/VbyxkuLzCjlN7GquQ0gUJfIg==}
+    dependencies:
+      '@types/node': 20.6.5
+    dev: false
 
   /@typescript-eslint/eslint-plugin@5.62.0(@typescript-eslint/parser@5.62.0)(eslint@8.50.0)(typescript@5.2.2):
     resolution: {integrity: sha512-TiZzBSJja/LbhNPvk6yc0JrX9XqhQ0hdh6M2svYfsHGejaKFIAGd9MQ+ERIMzLGlN/kZoYIgdxFV0PuljTKXag==}
