@@ -76,32 +76,32 @@ test('creates project with configuration already present', async ({ ok }) => {
 
 test('creates composer in a runtime context', async ({ equal, same, ok }) => {
   const params = {
+    isRuntimeContext: true,
+    servicesToCompose: ['service1', 'service2'],
     hostname: 'myhost',
     port: 6666,
     typescript: false
   }
 
-  const composedServices = ['service1', 'service2']
-  await createComposer(params, fakeLogger, tmpDir, undefined, true, composedServices)
+  await createComposer(params, fakeLogger, tmpDir, undefined)
 
   const pathToComposerConfigFile = join(tmpDir, 'platformatic.composer.json')
   const composerConfigFile = readFileSync(pathToComposerConfigFile, 'utf8')
   const composerConfig = JSON.parse(composerConfigFile)
   const { server, composer } = composerConfig
 
-  equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
-  equal(server.port, '{PORT}')
+  equal(server, undefined)
 
-  const pathToDbEnvFile = join(tmpDir, '.env')
-  dotenv.config({ path: pathToDbEnvFile })
-  equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
-  equal(process.env.PORT, '6666')
+  const pathToEnvFile = join(tmpDir, '.env')
+  dotenv.config({ path: pathToEnvFile })
+  equal(process.env.PLT_SERVER_HOSTNAME, undefined)
+  equal(process.env.PORT, undefined)
   process.env = {}
 
-  const pathToDbEnvSampleFile = join(tmpDir, '.env.sample')
-  dotenv.config({ path: pathToDbEnvSampleFile })
-  equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
-  equal(process.env.PORT, '6666')
+  const pathToEnvSampleFile = join(tmpDir, '.env.sample')
+  dotenv.config({ path: pathToEnvSampleFile })
+  equal(process.env.PLT_SERVER_HOSTNAME, undefined)
+  equal(process.env.PORT, undefined)
 
   same(composer, {
     services: [

@@ -153,3 +153,40 @@ test('creates project with routes already present', async ({ ok }) => {
   await createService(params, fakeLogger, tmpDir)
   ok(log.includes('Routes folder "routes" found, skipping creation of routes folder.'))
 })
+
+test('creates service in a runtime context', async ({ equal, same, ok }) => {
+  const params = {
+    isRuntimeContext: true,
+    hostname: 'myhost',
+    port: 6666,
+    typescript: false
+  }
+
+  await createService(params, fakeLogger, tmpDir)
+
+  const pathToServiceConfigFile = join(tmpDir, 'platformatic.service.json')
+  const serviceConfigFile = readFileSync(pathToServiceConfigFile, 'utf8')
+  const serviceConfig = JSON.parse(serviceConfigFile)
+  const { server, plugins } = serviceConfig
+
+  equal(server, undefined)
+
+  const pathToDbEnvFile = join(tmpDir, '.env')
+  dotenv.config({ path: pathToDbEnvFile })
+  equal(process.env.PLT_SERVER_HOSTNAME, undefined)
+  equal(process.env.PORT, undefined)
+  process.env = {}
+
+  const pathToDbEnvSampleFile = join(tmpDir, '.env.sample')
+  dotenv.config({ path: pathToDbEnvSampleFile })
+  equal(process.env.PLT_SERVER_HOSTNAME, undefined)
+  equal(process.env.PORT, undefined)
+
+  same(plugins, { paths: [{ path: './plugins', encapsulate: false }, './routes'] })
+  ok(await isFileAccessible(join(tmpDir, 'plugins', 'example.js')))
+  ok(await isFileAccessible(join(tmpDir, 'routes', 'root.js')))
+
+  ok(await isFileAccessible(join(tmpDir, 'test', 'plugins', 'example.test.js')))
+  ok(await isFileAccessible(join(tmpDir, 'test', 'routes', 'root.test.js')))
+  ok(await isFileAccessible(join(tmpDir, 'test', 'helper.js')))
+})

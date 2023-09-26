@@ -61,6 +61,7 @@ export async function isDirectoryWriteable (directory) {
   }
 }
 
+export const findConfigFile = async (directory) => (ConfigManager.findConfigFile(directory))
 export const findDBConfigFile = async (directory) => (ConfigManager.findConfigFile(directory, 'db'))
 export const findServiceConfigFile = async (directory) => (ConfigManager.findConfigFile(directory, 'service'))
 export const findComposerConfigFile = async (directory) => (ConfigManager.findConfigFile(directory, 'composer'))

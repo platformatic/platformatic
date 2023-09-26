@@ -7,7 +7,7 @@ import { generatePlugins } from '../create-plugins.mjs'
 
 const TS_OUT_DIR = 'dist'
 
-function generateConfig (version, typescript) {
+function generateConfig (isRuntimeContext, version, typescript) {
   const plugins = {
     paths: [
       { path: './plugins', encapsulate: false },
@@ -17,17 +17,20 @@ function generateConfig (version, typescript) {
 
   const config = {
     $schema: `https://platformatic.dev/schemas/v${version}/service`,
-    server: {
+    service: {
+      openapi: true
+    },
+    plugins
+  }
+
+  if (!isRuntimeContext) {
+    config.server = {
       hostname: '{PLT_SERVER_HOSTNAME}',
       port: '{PORT}',
       logger: {
         level: '{PLT_SERVER_LOGGER_LEVEL}'
       }
-    },
-    service: {
-      openapi: true
-    },
-    plugins
+    }
   }
 
   if (typescript === true) {
@@ -37,12 +40,16 @@ function generateConfig (version, typescript) {
   return config
 }
 
-function generateEnv (hostname, port, typescript) {
-  let env = `\
+function generateEnv (isRuntimeContext, hostname, port, typescript) {
+  let env = ''
+
+  if (!isRuntimeContext) {
+    env += `\
 PLT_SERVER_HOSTNAME=${hostname}
 PORT=${port}
 PLT_SERVER_LOGGER_LEVEL=info
 `
+  }
 
   if (typescript === true) {
     env += `\
@@ -56,7 +63,9 @@ PLT_TYPESCRIPT=true
   return env
 }
 
-async function createService ({ hostname, port, typescript = false }, logger, currentDir = process.cwd(), version) {
+async function createService (params, logger, currentDir = process.cwd(), version) {
+  const { isRuntimeContext, hostname, port, typescript = false } = params
+
   if (!version) {
     const pkg = await readFile(desm.join(import.meta.url, '..', '..', 'package.json'))
     version = JSON.parse(pkg).version
@@ -64,11 +73,11 @@ async function createService ({ hostname, port, typescript = false }, logger, cu
   const accessibleConfigFilename = await findServiceConfigFile(currentDir)
 
   if (accessibleConfigFilename === undefined) {
-    const config = generateConfig(version, typescript)
+    const config = generateConfig(isRuntimeContext, version, typescript)
     await writeFile(join(currentDir, 'platformatic.service.json'), JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.service.json successfully created.')
 
-    const env = generateEnv(hostname, port, typescript)
+    const env = generateEnv(isRuntimeContext, hostname, port, typescript)
     const envFileExists = await isFileAccessible('.env', currentDir)
     await appendFile(join(currentDir, '.env'), env)
     await writeFile(join(currentDir, '.env.sample'), env)

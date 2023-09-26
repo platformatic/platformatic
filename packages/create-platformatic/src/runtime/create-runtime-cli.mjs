@@ -12,7 +12,7 @@ import ora from 'ora'
 import createRuntime from './create-runtime.mjs'
 import askDir from '../ask-dir.mjs'
 import { askDynamicWorkspaceCreateGHAction, askStaticWorkspaceGHAction } from '../ghaction.mjs'
-import { getOverwriteReadme, getRunPackageManagerInstall } from '../cli-options.mjs'
+import { getPort, getOverwriteReadme, getRunPackageManagerInstall } from '../cli-options.mjs'
 import generateName from 'boring-name-generator'
 import { chooseKind } from '../index.mjs'
 
@@ -112,7 +112,15 @@ export async function createPlatformaticRuntime (_args) {
     entrypoint = names[0]
   }
 
-  const env = await createRuntime(logger, projectDir, version, servicesDir, entrypoint)
+  const { port: entrypointPort } = await inquirer.prompt([getPort()])
+
+  const params = {
+    servicesDir,
+    entrypoint,
+    entrypointPort
+  }
+
+  const env = await createRuntime(params, logger, projectDir, version)
 
   await askStaticWorkspaceGHAction(logger, env, 'service', false, projectDir)
   await askDynamicWorkspaceCreateGHAction(logger, env, 'service', false, projectDir)
