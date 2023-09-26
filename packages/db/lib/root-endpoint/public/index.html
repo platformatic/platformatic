@@ -13,13 +13,13 @@
         overflow-y: hidden;
         --text-color: #FFFFFF;
         --bg-color: #001825;
-        --theme-img: url('./light_mode.svg')
+        --theme-img: url('./images/light_mode.svg')
       }
 
       body.light-theme {
         --text-color: #001825;
         --bg-color: #FFFFFF;
-        --theme-img: url('./dark_mode.svg')
+        --theme-img: url('./images/dark_mode.svg')
       }
 
       body {
@@ -125,7 +125,7 @@
       }
 
       .polygon14 {
-        background-image: url("background_polygon_14.svg");
+        background-image: url("images/background_polygon_14.svg");
         background-repeat: no-repeat;
         position: fixed;
         height: 868px;
@@ -138,7 +138,7 @@
       }
 
       .polygon28 {
-        background-image: url("background_polygon_28.svg");
+        background-image: url("images/background_polygon_28.svg");
         background-repeat: no-repeat;
         position: absolute;
         height: 212px;
@@ -194,7 +194,7 @@
     <div id="root">
       <div class="polygon14"></div>
       <div class="polygon28"></div>
-      <img class="topFrame" src="background_frame.svg" />
+      <img class="topFrame" src="images/background_frame.svg" />
       <button id="button-theme-selector" type="button" class="theme-selector" alt="theme selector" onclick="toggleLightMode()"></button>
       
       <div id="content">
@@ -221,18 +221,18 @@
       const prefersLightScheme = window.matchMedia('(prefers-color-scheme: light)');
       if (prefersLightScheme.matches) {
         document.body.classList.add('light-theme');
-        document.getElementById('logo').src = 'platformatic-logo-light.svg'
+        document.getElementById('logo').src = 'images/platformatic-logo-light.svg'
       } else {
         document.body.classList.remove('light-theme');
-        document.getElementById('logo').src = 'platformatic-logo-dark.svg'
+        document.getElementById('logo').src = 'images/platformatic-logo-dark.svg'
       }
       
       const toggleLightMode = function() {
         document.body.classList.toggle('light-theme');
         if (document.body.classList.contains('light-theme')) {
-          document.getElementById('logo').src = 'platformatic-logo-light.svg'
+          document.getElementById('logo').src = 'images/platformatic-logo-light.svg'
         } else {
-          document.getElementById('logo').src = 'platformatic-logo-dark.svg'
+          document.getElementById('logo').src = 'images/platformatic-logo-dark.svg'
         }
       }
     </script>
