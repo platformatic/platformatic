@@ -55,8 +55,13 @@ const createPlatformaticService = async (_args, opts = {}) => {
   const pkgManager = getPkgManager()
 
   const projectDir = opts.dir || await askDir(logger, '.')
+  const isRuntimeContext = opts.isRuntimeContext || false
 
-  const toAsk = [getUseTypescript(args.typescript), getPort(args.port)]
+  const toAsk = [getUseTypescript(args.typescript)]
+
+  if (!isRuntimeContext) {
+    toAsk.push(getPort(args.port))
+  }
 
   if (!opts.skipPackageJson) {
     toAsk.unshift(getRunPackageManagerInstall(pkgManager))
@@ -68,10 +73,10 @@ const createPlatformaticService = async (_args, opts = {}) => {
   await mkdir(projectDir, { recursive: true })
 
   const params = {
+    isRuntimeContext,
     hostname: args.hostname,
     port,
-    typescript: useTypescript,
-    isRuntime: opts.isRuntime
+    typescript: useTypescript
   }
 
   const env = await createService(params, logger, projectDir, version)

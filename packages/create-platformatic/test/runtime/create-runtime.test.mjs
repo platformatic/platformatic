@@ -23,7 +23,12 @@ const fakeLogger = {
 }
 
 test('creates runtime', async ({ equal, same, ok }) => {
-  await createRuntime(fakeLogger, tmpDir, undefined, 'services', 'foobar')
+  const params = {
+    servicesDir: 'services',
+    entrypoint: 'foobar'
+  }
+
+  await createRuntime(params, fakeLogger, tmpDir, undefined)
 
   const pathToRuntimeConfigFile = join(tmpDir, 'platformatic.runtime.json')
   const runtimeConfigFile = readFileSync(pathToRuntimeConfigFile, 'utf8')
@@ -43,7 +48,12 @@ test('creates runtime', async ({ equal, same, ok }) => {
 })
 
 test('with a full path for autoload', async ({ equal, same, ok }) => {
-  await createRuntime(fakeLogger, tmpDir, undefined, join(tmpDir, 'services'), 'foobar')
+  const params = {
+    servicesDir: join(tmpDir, 'services'),
+    entrypoint: 'foobar'
+  }
+
+  await createRuntime(params, fakeLogger, tmpDir, undefined)
 
   const pathToRuntimeConfigFile = join(tmpDir, 'platformatic.runtime.json')
   const runtimeConfigFile = readFileSync(pathToRuntimeConfigFile, 'utf8')
@@ -63,8 +73,12 @@ test('with a full path for autoload', async ({ equal, same, ok }) => {
 })
 
 test('creates project with configuration already present', async ({ ok }) => {
+  const params = {
+    entrypoint: 'foobar'
+  }
+
   const pathToRuntimeConfigFileOld = join(tmpDir, 'platformatic.runtime.json')
   writeFileSync(pathToRuntimeConfigFileOld, JSON.stringify({ test: 'test' }))
-  await createRuntime(fakeLogger, tmpDir, 'foobar')
+  await createRuntime(params, fakeLogger, tmpDir, 'foobar')
   ok(log.includes('Configuration file platformatic.runtime.json found, skipping creation of configuration file.'))
 })

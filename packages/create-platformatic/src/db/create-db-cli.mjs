@@ -83,6 +83,7 @@ const createPlatformaticDB = async (_args, opts) => {
   const version = await getVersion()
   const pkgManager = getPkgManager()
   const projectDir = opts.dir || await askDir(logger, '.')
+  const isRuntimeContext = opts.isRuntimeContext || false
 
   const { database } = await inquirer.prompt({
     type: 'list',
@@ -139,9 +140,13 @@ const createPlatformaticDB = async (_args, opts) => {
     default: args.plugin,
     choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
   },
-  getUseTypescript(args.typescript),
-  getPort(args.port)
+  getUseTypescript(args.typescript)
   ])
+
+  if (!isRuntimeContext) {
+    const { port } = await inquirer.prompt([getPort(args.port)])
+    wizardOptions.port = port
+  }
 
   // Create the project directory
   await mkdir(projectDir, { recursive: true })
@@ -151,6 +156,7 @@ const createPlatformaticDB = async (_args, opts) => {
   const useTypes = args.types || generatePlugin // we set this always to true if we want to generate a plugin
 
   const params = {
+    isRuntimeContext,
     hostname: args.hostname,
     port: wizardOptions.port,
     database,
@@ -158,8 +164,7 @@ const createPlatformaticDB = async (_args, opts) => {
     migrations: wizardOptions.defaultMigrations ? args.migrations : '',
     plugin: generatePlugin,
     types: useTypes,
-    typescript: useTypescript,
-    isRuntime: opts.isRuntime
+    typescript: useTypescript
   }
 
   const env = await createDB(params, logger, projectDir, version)

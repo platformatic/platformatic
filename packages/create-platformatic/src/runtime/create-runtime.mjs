@@ -1,5 +1,5 @@
-import { readFile, readdir, stat, unlink, writeFile } from 'fs/promises'
-import { findRuntimeConfigFile } from '../utils.mjs'
+import { readFile, appendFile, writeFile } from 'fs/promises'
+import { findConfigFile, findRuntimeConfigFile } from '../utils.mjs'
 import { join, relative, isAbsolute } from 'path'
 import * as desm from 'desm'
 
@@ -18,7 +18,9 @@ function generateConfig (version, path, entrypoint) {
   return config
 }
 
-async function createRuntime (logger, currentDir = process.cwd(), version, servicesDir, entrypoint) {
+async function createRuntime (params, logger, currentDir = process.cwd(), version) {
+  const { servicesDir, entrypoint, entrypointPort } = params
+
   if (!version) {
     const pkg = await readFile(desm.join(import.meta.url, '..', '..', 'package.json'))
     version = JSON.parse(pkg).version
@@ -33,83 +35,50 @@ async function createRuntime (logger, currentDir = process.cwd(), version, servi
   } else {
     logger.info(`Configuration file ${accessibleConfigFilename} found, skipping creation of configuration file.`)
   }
-  if (servicesDir) {
-    const servicesDirFullPath = isAbsolute(servicesDir) ? servicesDir : join(currentDir, servicesDir)
 
-    try {
-      await stat(servicesDirFullPath)
-      await cleanServicesConfig(logger, servicesDirFullPath, entrypoint)
-      await manageServicesEnvFiles(servicesDirFullPath, currentDir, entrypoint)
-    } catch (err) {
-      // do nothing. There are no services to manage, somehow.
-    }
+  if (servicesDir && entrypoint && entrypointPort) {
+    const servicesDirFullPath = isAbsolute(servicesDir)
+      ? servicesDir
+      : join(currentDir, servicesDir)
+
+    const entrypointPath = join(servicesDirFullPath, entrypoint)
+    await updateEntrypointConfig(logger, entrypointPath)
+    await updateEntrypointEnv(entrypointPort, logger, entrypointPath)
   }
 
   return {}
 }
-/**
- *
- * @param {string} servicesDir the services dir
- * @param {string | null} entrypoint the entrypoint. If specified the function will filter it out
- * @returns {Promise}
- */
-async function getAllServices (servicesDir, entrypoint = null) {
-  const services = (await readdir(servicesDir))
-  if (entrypoint) {
-    return services.filter(dir => dir !== entrypoint)
+
+async function updateEntrypointConfig (logger, currentDir) {
+  const accessibleConfigFilename = await findConfigFile(currentDir)
+  if (accessibleConfigFilename === undefined) {
+    logger.error('Cannot find an entrypoint configuration file.')
+    return
   }
-  return services
-}
-async function cleanServicesConfig (logger, servicesDir, entrypoint) {
-  const services = await getAllServices(servicesDir, entrypoint)
-  for (const svc of services) {
-    const serviceDir = join(servicesDir, svc)
-    const configFile = await findConfigFile(serviceDir)
-    if (!configFile) {
-      logger.warn(`Cannot find config file in ${serviceDir}`)
-    } else {
-      console.log(`Found config file ${configFile}`)
-      const configFilePath = join(serviceDir, configFile)
-      const config = JSON.parse(await readFile(configFilePath, 'utf8'))
-      delete config.server
-      await writeFile(configFilePath, JSON.stringify(config, null, 2))
+
+  const configPath = join(currentDir, accessibleConfigFilename)
+  const config = JSON.parse(await readFile(configPath, 'utf8'))
+
+  config.server = {
+    hostname: '{PLT_SERVER_HOSTNAME}',
+    port: '{PORT}',
+    logger: {
+      level: '{PLT_SERVER_LOGGER_LEVEL}'
     }
   }
+
+  await writeFile(configPath, JSON.stringify(config, null, 2))
 }
 
-async function manageServicesEnvFiles (servicesDir, runtimeDir, entrypoint) {
-  let mainEnvFile = ''
-  const services = await getAllServices(servicesDir)
-  for (const svc of services) {
-    const envFile = await readFile(join(servicesDir, svc, '.env'), 'utf8')
-    if (svc === entrypoint) {
-      // copy the whole file
-      mainEnvFile += `\n${envFile}`
-    } else {
-      // read .env file
-      const lines = envFile.split('\n')
-      lines.forEach((line) => {
-        // copy to main env file only if line _doesn't_ match
-        // i.e any other config or comments
-        if (!line.match(/(PLT_LOGGER_LEVEL|PORT|PLT_SERVER_HOSTNAME)=/)) {
-          mainEnvFile += `\n${line}`
-        }
-      })
-    }
-    try {
-      await unlink(join(servicesDir, svc, '.env.sample'))
-    } catch (err) {
-      // do nothing
-    }
-  }
-  await writeFile(join(runtimeDir, '.env'), mainEnvFile)
-}
+async function updateEntrypointEnv (port, logger, currentDir) {
+  const env = `\
+PLT_SERVER_HOSTNAME=127.0.0.1
+PORT=${port}
+PLT_SERVER_LOGGER_LEVEL=info
+  `
 
-async function findConfigFile (dir) {
-  const allFiles = await readdir(dir)
-  return allFiles.find((file) => {
-    return file.match(/platformatic\.(.*)\.json/)
-  })
+  await appendFile(join(currentDir, '.env'), env)
+  await writeFile(join(currentDir, '.env.sample'), env)
 }
 
 export default createRuntime

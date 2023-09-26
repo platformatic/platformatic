@@ -301,3 +301,56 @@ test('creates project with default migrations', async ({ ok }) => {
   ok(log.includes('Migration file 001.do.sql successfully created.'))
   ok(log.includes('Migration file 001.undo.sql successfully created.'))
 })
+
+test('creates project in a runtime context', async ({ equal }) => {
+  const params = {
+    isRuntimeContext: true,
+    hostname: 'myhost',
+    port: 6666,
+    plugin: true
+  }
+
+  await createDB(params, fakeLogger, tmpDir)
+
+  const pathToDbConfigFile = join(tmpDir, 'platformatic.db.json')
+  const pathToMigrationFolder = join(tmpDir, 'migrations')
+  const pathToMigrationFileDo = join(pathToMigrationFolder, '001.do.sql')
+  const pathToMigrationFileUndo = join(pathToMigrationFolder, '001.undo.sql')
+
+  const dbConfigFile = readFileSync(pathToDbConfigFile, 'utf8')
+  const dbConfig = JSON.parse(dbConfigFile)
+  const { server, db, migrations } = dbConfig
+  const ajv = new Ajv({ strict: false })
+  ajv.addKeyword('relativePath')
+  const validate = ajv.compile(schema)
+  equal(validate(dbConfig), true)
+
+  equal(server, undefined)
+  equal(db.connectionString, '{DATABASE_URL}')
+  equal(db.schemalock, true)
+
+  const pathToDbEnvFile = join(tmpDir, '.env')
+  dotenv.config({ path: pathToDbEnvFile })
+  equal(process.env.PLT_SERVER_HOSTNAME, undefined)
+  equal(process.env.PORT, undefined)
+  equal(process.env.DATABASE_URL, 'sqlite://./db.sqlite')
+  process.env = {}
+
+  const pathToDbEnvSampleFile = join(tmpDir, '.env.sample')
+  dotenv.config({ path: pathToDbEnvSampleFile })
+  equal(process.env.PLT_SERVER_HOSTNAME, undefined)
+  equal(process.env.PORT, undefined)
+  equal(process.env.DATABASE_URL, 'sqlite://./db.sqlite')
+
+  equal(db.graphql, true)
+  equal(db.openapi, true)
+  equal(migrations.dir, 'migrations')
+
+  const migrationFileDo = readFileSync(pathToMigrationFileDo, 'utf8')
+  equal(migrationFileDo, moviesMigrationDo)
+  const migrationFileUndo = readFileSync(pathToMigrationFileUndo, 'utf8')
+  equal(migrationFileUndo, moviesMigrationUndo)
+
+  equal(await isFileAccessible(join(tmpDir, 'routes', 'root.js')), true)
+  equal(await isFileAccessible(join(tmpDir, 'plugins', 'example.js')), true)
+})

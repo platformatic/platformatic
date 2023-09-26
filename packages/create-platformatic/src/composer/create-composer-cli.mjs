@@ -67,13 +67,19 @@ const createPlatformaticComposer = async (_args, opts) => {
   const projectDir = opts.dir || await askDir(logger, '.')
   const isRuntimeContext = opts.isRuntimeContext || false
 
-  const toAsk = [getPort(args.port)]
+  const toAsk = []
+
+  if (!isRuntimeContext) {
+    toAsk.push(getPort(args.port))
+  }
 
   if (isRuntimeContext) {
     const servicesNames = opts.runtimeContext.servicesNames.filter(
       (serviceName) => serviceName !== opts.serviceName
     )
-    toAsk.push(getServicesToCompose(servicesNames))
+    if (servicesNames.length > 0) {
+      toAsk.push(getServicesToCompose(servicesNames))
+    }
   }
 
   if (!opts.skipPackageJson) {
@@ -90,18 +96,17 @@ const createPlatformaticComposer = async (_args, opts) => {
   await mkdir(projectDir, { recursive: true })
 
   const params = {
+    isRuntimeContext,
     hostname: args.hostname,
     port,
-    isRuntime: opts.isRuntime
+    servicesToCompose
   }
 
   const env = await createComposer(
     params,
     logger,
     projectDir,
-    version,
-    isRuntimeContext,
-    servicesToCompose
+    version
   )
 
   const fastifyVersion = await getDependencyVersion('fastify')

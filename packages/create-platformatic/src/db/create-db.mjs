@@ -249,16 +249,9 @@ test('movies', async (t) => {
 })
 `
 
-function generateConfig (migrations, plugin, types, typescript, version) {
+function generateConfig (isRuntimeContext, migrations, plugin, types, typescript, version) {
   const config = {
     $schema: `https://platformatic.dev/schemas/v${version}/db`,
-    server: {
-      hostname: '{PLT_SERVER_HOSTNAME}',
-      port: '{PORT}',
-      logger: {
-        level: '{PLT_SERVER_LOGGER_LEVEL}'
-      }
-    },
     db: {
       connectionString: '{DATABASE_URL}',
       graphql: true,
@@ -267,6 +260,16 @@ function generateConfig (migrations, plugin, types, typescript, version) {
     },
     watch: {
       ignore: ['*.sqlite', '*.sqlite-journal']
+    }
+  }
+
+  if (!isRuntimeContext) {
+    config.server = {
+      hostname: '{PLT_SERVER_HOSTNAME}',
+      port: '{PORT}',
+      logger: {
+        level: '{PLT_SERVER_LOGGER_LEVEL}'
+      }
     }
   }
 
@@ -300,20 +303,27 @@ function generateConfig (migrations, plugin, types, typescript, version) {
   return config
 }
 
-function generateEnv (hostname, port, connectionString, typescript) {
+function generateEnv (isRuntimeContext, hostname, port, connectionString, typescript) {
   let env = `\
+DATABASE_URL=${connectionString}
+
+`
+
+  if (!isRuntimeContext) {
+    env += `\
 PLT_SERVER_HOSTNAME=${hostname}
 PORT=${port}
 PLT_SERVER_LOGGER_LEVEL=info
-DATABASE_URL=${connectionString}
-`
+
+  `
+  }
 
   if (typescript === true) {
     env += `\
-
 # Set to false to disable automatic typescript compilation.
 # Changing this setting is needed for production
 PLT_TYPESCRIPT=true
+
 `
   }
 
@@ -324,18 +334,31 @@ export function getConnectionString (database) {
   return connectionStrings[database]
 }
 
-export async function createDB ({ hostname, database = 'sqlite', port, migrations = 'migrations', plugin = true, types = true, typescript = false, connectionString }, logger, currentDir, version) {
+export async function createDB (params, logger, currentDir, version) {
+  let {
+    isRuntimeContext,
+    hostname,
+    port,
+    database = 'sqlite',
+    migrations = 'migrations',
+    plugin = true,
+    types = true,
+    typescript = false,
+    connectionString
+  } = params
+
   connectionString = connectionString || getConnectionString(database)
   const createMigrations = !!migrations // If we don't define a migrations folder, we don't create it
   const accessibleConfigFilename = await findDBConfigFile(currentDir)
   if (accessibleConfigFilename === undefined) {
-    const config = generateConfig(migrations, plugin, types, typescript, version)
+    const config = generateConfig(isRuntimeContext, migrations, plugin, types, typescript, version)
     await writeFile(join(currentDir, 'platformatic.db.json'), JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.db.json successfully created.')
-    const env = generateEnv(hostname, port, connectionString, typescript)
+    const env = generateEnv(isRuntimeContext, hostname, port, connectionString, typescript)
+    const envSample = generateEnv(isRuntimeContext, hostname, port, getConnectionString(database), typescript)
     const envFileExists = await isFileAccessible('.env', currentDir)
     await appendFile(join(currentDir, '.env'), env)
-    await writeFile(join(currentDir, '.env.sample'), generateEnv(hostname, port, getConnectionString(database), typescript))
+    await writeFile(join(currentDir, '.env.sample'), envSample)
     /* c8 ignore next 5 */
     if (envFileExists) {
       logger.info('Environment file .env found, appending new environment variables to existing .env file.')
