@@ -93,7 +93,7 @@ const platformaticComposerSchema = {
     }
   },
   additionalProperties: false,
-  required: ['composer', 'server'],
+  required: ['composer'],
   $defs: openApiDefs
 }
 
