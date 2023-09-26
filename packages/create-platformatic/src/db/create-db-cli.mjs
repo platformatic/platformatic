@@ -152,7 +152,7 @@ const createPlatformaticDB = async (_args, opts) => {
   const generatePlugin = args.plugin || wizardOptions.generatePlugin
   const useTypescript = args.typescript || wizardOptions.useTypescript
   const useTypes = args.types || generatePlugin // we set this always to true if we want to generate a plugin
-  console.log({ generatePlugin, useTypescript, useTypes })
+
   const params = {
     isRuntimeContext,
     hostname: args.hostname,
