@@ -12,6 +12,9 @@ const errors = require('./errors.js')
 const ranges = [{
   range: '>= 0.18.x < 1.0.0',
   handler: FromZeroEighteenToWillSee
+}, {
+  range: '>= 1.0.0 < 2.0.0',
+  handler: require('./versions/1.x.x.js')
 }]
 
 async function analyze (opts) {

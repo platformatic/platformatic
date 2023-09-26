@@ -4,6 +4,7 @@ const SimpleZeroConfig = require('./simple-zero-config.js')
 const { version } = require('../package.json')
 const rfdc = require('rfdc')()
 const semver = require('semver')
+const OneSeries = require('./1.x.x.js')
 
 class FromZeroEighteenToWillSee extends SimpleZeroConfig {
   constructor (opts) {
@@ -19,6 +20,9 @@ class FromZeroEighteenToWillSee extends SimpleZeroConfig {
       }
     } else if (semver.gt(this.version, version)) {
       return
+    } else if (semver.gte(this.version, '0.47.6')) {
+      // the latest version is over 1.0.0, change class
+      increment = 'major'
     }
 
     this.up = () => {
@@ -38,7 +42,11 @@ class FromZeroEighteenToWillSee extends SimpleZeroConfig {
       delete config.plugins?.hotReload
       delete config.db?.dashboard
 
-      return new FromZeroEighteenToWillSee({ config, path: this.path, format: this.format, version })
+      if (increment === 'major') {
+        return new OneSeries({ config, path: this.path, format: this.format, version })
+      } else {
+        return new FromZeroEighteenToWillSee({ config, path: this.path, format: this.format, version })
+      }
     }
   }
 }
