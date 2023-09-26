@@ -315,11 +315,15 @@ test('do not watch typescript outDir', async ({ teardown, equal, pass, same }) =
   })
 })
 
-test('returns not null if no server field is provided', async ({ equal, not }) => {
+test('start without server config', async ({ equal, same }) => {
   const app = await buildServer({
     watch: false,
     metrics: false
   })
-  equal(app.start, undefined) // does not have server-specific method
-  not(app, null)
+  const url = await app.start()
+  const res = await request(url)
+  equal(res.statusCode, 200, 'add status code')
+  same(await res.body.json(), {
+    message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev'
+  })
 })

@@ -338,7 +338,7 @@ const platformaticDBschema = {
     }
   },
   additionalProperties: false,
-  required: ['db', 'server'],
+  required: ['db'],
   $defs: {
     ...openApiDefs,
     'crud-operation-auth': {

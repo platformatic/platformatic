@@ -328,8 +328,7 @@ const server = {
     },
     cors
   },
-  additionalProperties: false,
-  required: ['hostname', 'port']
+  additionalProperties: false
 }
 
 const watch = {

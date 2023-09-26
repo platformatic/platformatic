@@ -73,12 +73,10 @@ async function buildServer (options, app) {
     }
   }
   const handler = await restartable(createRestartable)
-  if (options.server) {
-    handler.decorate('start', async () => {
-      url = await handler.listen({ host: options.server.hostname, port: options.server.port })
-      return url
-    })
-  }
+  handler.decorate('start', async () => {
+    url = await handler.listen({ host: options.server?.hostname || '127.0.0.1', port: options.server?.port || 0 })
+    return url
+  })
   configManager.on('error', function (err) {
     /* c8 ignore next 1 */
     handler.log.error({ err }, 'error reloading the configuration')
