@@ -1,15 +1,16 @@
 'use strict'
 
-require('./helper')
-const { test } = require('tap')
-const { buildServer } = require('..')
+const os = require('node:os')
+const assert = require('assert')
+const { test } = require('node:test')
+const { join } = require('node:path')
+const { randomUUID } = require('node:crypto')
+const { writeFile } = require('node:fs/promises')
 const { request, setGlobalDispatcher, getGlobalDispatcher, MockAgent } = require('undici')
-const { randomUUID } = require('crypto')
-const { join } = require('path')
-const os = require('os')
-const { writeFile } = require('fs/promises')
+const { buildServer } = require('..')
+// require('./helper')
 
-test('load and reload', async ({ teardown, equal, pass, same }) => {
+test('load and reload', async (t) => {
   const file = join(os.tmpdir(), `some-plugin-${randomUUID()}.js`)
 
   await writeFile(file, `
@@ -29,16 +30,16 @@ test('load and reload', async ({ teardown, equal, pass, same }) => {
     metrics: false
   })
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
 
   {
     const res = await request(`${app.url}/`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const data = await res.body.json()
-    same(data, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
+    assert.deepStrictEqual(data, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
   }
 
   await writeFile(file, `
@@ -50,13 +51,13 @@ test('load and reload', async ({ teardown, equal, pass, same }) => {
 
   {
     const res = await request(`${app.url}/`)
-    equal(res.statusCode, 200, 'add status code')
+    assert.strictEqual(res.statusCode, 200, 'add status code')
     // The plugin is in Node's module cache, so the new value is not seen.
-    same(await res.body.json(), { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
+    assert.deepStrictEqual(await res.body.json(), { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
   }
 })
 
-test('error', async ({ teardown, equal, pass, match }) => {
+test('error', async (t) => {
   const file = join(os.tmpdir(), `some-plugin-${randomUUID()}.js`)
 
   await writeFile(file, `
@@ -78,21 +79,21 @@ test('error', async ({ teardown, equal, pass, match }) => {
     metrics: false
   })
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
 
   const res = await request(`${app.url}/`)
-  equal(res.statusCode, 500, 'add status code')
-  match(await res.body.json(), {
-    message: 'kaboom'
-  })
+  assert.strictEqual(res.statusCode, 500, 'add status code')
+
+  const data = await res.body.json()
+  assert.strictEqual(data.message, 'kaboom')
 })
 
-test('mock undici is supported', async ({ teardown, equal, pass, same }) => {
+test('mock undici is supported', async (t) => {
   const previousAgent = getGlobalDispatcher()
-  teardown(() => setGlobalDispatcher(previousAgent))
+  t.after(() => setGlobalDispatcher(previousAgent))
 
   const mockAgent = new MockAgent({
     keepAliveTimeout: 10,
@@ -120,7 +121,7 @@ test('mock undici is supported', async ({ teardown, equal, pass, same }) => {
     }
   })
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
@@ -128,13 +129,13 @@ test('mock undici is supported', async ({ teardown, equal, pass, same }) => {
   const res = await request(`${app.url}/request`, {
     method: 'GET'
   })
-  equal(res.statusCode, 200)
-  same(await res.body.json(), {
+  assert.strictEqual(res.statusCode, 200)
+  assert.deepStrictEqual(await res.body.json(), {
     hello: 'world'
   })
 })
 
-test('load and reload ESM', async ({ teardown, equal, pass, same }) => {
+test('load and reload ESM', async (t) => {
   const file = join(os.tmpdir(), `some-plugin-${process.pid}.mjs`)
 
   await writeFile(file, `
@@ -152,16 +153,16 @@ test('load and reload ESM', async ({ teardown, equal, pass, same }) => {
     }
   })
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
 
   {
     const res = await request(`${app.url}/`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const data = await res.body.json()
-    same(data, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
+    assert.deepStrictEqual(data, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
   }
 
   await writeFile(file, `
@@ -173,8 +174,8 @@ test('load and reload ESM', async ({ teardown, equal, pass, same }) => {
 
   {
     const res = await request(`${app.url}/`)
-    equal(res.statusCode, 200, 'add status code')
+    assert.strictEqual(res.statusCode, 200, 'add status code')
     // The plugin is in Node's module cache, so the new value is not seen.
-    same(await res.body.json(), { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
+    assert.deepStrictEqual(await res.body.json(), { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
   }
 })

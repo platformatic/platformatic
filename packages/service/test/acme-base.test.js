@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const assert = require('node:assert')
+const { test } = require('node:test')
 const { join } = require('node:path')
 
 test('stackable example', async t => {
@@ -14,7 +15,7 @@ test('stackable example', async t => {
   const tsd = (await import('tsd')).default
 
   const diagnostics = await tsd.default()
-  t.equal(diagnostics.length, 0, 'no type errors')
+  assert.strictEqual(diagnostics.length, 0, 'no type errors')
 })
 
 test('stackable in typescript', async t => {

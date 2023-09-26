@@ -1,34 +1,30 @@
-import path from 'path'
-import os from 'os'
-import { access, rename, cp, rm, mkdir } from 'fs/promises'
-import t from 'tap'
+import assert from 'node:assert'
+import path from 'node:path'
+import { test } from 'node:test'
+import { access, rename, cp, rm, mkdir } from 'node:fs/promises'
 import { execa } from 'execa'
 import stripAnsi from 'strip-ansi'
 import split from 'split2'
-import { cliPath, safeKill } from './helper.mjs'
 import { fileURLToPath } from 'url'
+import { cliPath, safeKill } from './helper.mjs'
+
+process.setMaxListeners(100)
 
 let count = 0
-const isWin = os.platform() === 'win32'
-
-if (!isWin) {
-  t.jobs = 5
-}
-t.setTimeout(360000)
 
 function urlDirname (url) {
   return path.dirname(fileURLToPath(url))
 }
 
 async function getCWD (t) {
-  const dir = path.join(urlDirname(import.meta.url), '..', 'tmp', `typescript-plugin-clone-${count++}`)
+  const dir = path.join(urlDirname(import.meta.url), '..', 'tmp', `typescript-plugin-clone-1-${count++}`)
   try {
     await rm(dir, { recursive: true })
   } catch {}
 
   await mkdir(dir, { recursive: true })
 
-  t.teardown(async () => {
+  t.after(async () => {
     try {
       await rm(dir, { recursive: true })
     } catch {}
@@ -42,111 +38,131 @@ function exitOnTeardown (child) {
   }
 }
 
-t.test('should compile typescript plugin', async (t) => {
+test('should compile typescript plugin', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
   const cwd = await getCWD(t)
 
   await cp(testDir, cwd, { recursive: true })
 
   const child = execa('node', [cliPath, 'compile'], { cwd })
-
-  t.teardown(exitOnTeardown(child))
+  t.after(exitOnTeardown(child))
 
   const splitter = split()
   child.stdout.pipe(splitter)
+  child.stderr.pipe(splitter)
+
+  let output = ''
+
+  const timeout = setTimeout(() => {
+    console.log(output)
+    assert.fail('should not start the service if it was not precompiled and typescript is `false`')
+  }, 30000)
 
   for await (const data of splitter) {
     const sanitized = stripAnsi(data)
+    output += sanitized
     if (sanitized.includes('Typescript compilation completed successfully.')) {
+      clearTimeout(timeout)
       const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
       try {
         await access(jsPluginPath)
       } catch (err) {
-        t.fail(err)
+        assert.fail(err)
       }
-
-      t.pass()
       return
     }
   }
-  t.fail('should compile typescript plugin with a compile command')
+  assert.fail('should compile typescript plugin with a compile command')
 })
 
-t.test('should compile typescript plugin even if typescript is `false`', async (t) => {
+test('should compile typescript plugin even if typescript is `false`', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
   const cwd = await getCWD(t)
 
   await cp(testDir, cwd, { recursive: true })
 
   const child = execa('node', [cliPath, 'compile'], { cwd })
-
-  t.teardown(exitOnTeardown(child))
+  t.after(exitOnTeardown(child))
 
   const splitter = split()
   child.stdout.pipe(splitter)
+  child.stderr.pipe(splitter)
+
+  let output = ''
+
+  const timeout = setTimeout(() => {
+    console.log(output)
+    assert.fail('should not start the service if it was not precompiled and typescript is `false`')
+  }, 30000)
 
   for await (const data of splitter) {
     const sanitized = stripAnsi(data)
+    output += sanitized
     if (sanitized.includes('Typescript compilation completed successfully.')) {
+      clearTimeout(timeout)
       const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
       try {
         await access(jsPluginPath)
       } catch (err) {
-        t.fail(err)
+        assert.fail(err)
       }
-
-      t.pass()
       return
     }
   }
-  t.fail('should compile typescript plugin with a compile command')
+  assert.fail('should compile typescript plugin with a compile command')
 })
 
-t.test('should compile typescript plugin with start command', async (t) => {
+test('should compile typescript plugin with start command', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
   const cwd = await getCWD(t)
 
   await cp(testDir, cwd, { recursive: true })
 
   const child = execa('node', [cliPath, 'start'], { cwd })
+  t.after(exitOnTeardown(child))
 
   const splitter = split()
   child.stdout.pipe(splitter)
+  child.stderr.pipe(splitter)
+
+  let output = ''
+
+  const timeout = setTimeout(() => {
+    console.log(output)
+    assert.fail('should not start the service if it was not precompiled and typescript is `false`')
+  }, 15000)
 
   for await (const data of splitter) {
     const sanitized = stripAnsi(data)
+    output += sanitized
     if (sanitized.includes('Typescript plugin loaded')) {
-      t.pass()
+      clearTimeout(timeout)
       return
     }
   }
-  t.fail('should compile typescript plugin with start command')
+  assert.fail('should compile typescript plugin with start command')
 })
 
-t.test('should not compile bad typescript plugin', async (t) => {
+test('should not compile bad typescript plugin', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'bad-typescript-plugin')
   const cwd = await getCWD(t)
   await cp(testDir, cwd, { recursive: true })
 
   try {
     await execa('node', [cliPath, 'compile'], { cwd })
-    t.fail('should not compile bad typescript plugin')
+    assert.fail('should not compile bad typescript plugin')
   } catch (err) {
-    t.comment(err.stdout)
-    t.comment(err.stderr)
-    t.equal(err.stdout.includes('Found 1 error in plugin.ts'), true)
+    assert.equal(err.stdout.includes('Found 1 error in plugin.ts'), true)
   }
 
   const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
   try {
     await access(jsPluginPath)
-    t.fail('should not compile bad typescript plugin')
-  } catch (err) {
-    t.pass(err)
-  }
+    assert.fail('should not compile bad typescript plugin')
+  } catch (err) {}
 })
 
-t.test('missing tsconfig file', async (t) => {
+test('missing tsconfig file', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
   const cwd = await getCWD(t)
 
@@ -159,35 +175,32 @@ t.test('missing tsconfig file', async (t) => {
 
   try {
     await execa('node', [cliPath, 'compile'], { cwd })
-    t.fail('should not compile typescript plugin')
+    assert.fail('should not compile typescript plugin')
   } catch (err) {
-    t.comment(err.stdout)
-    t.comment(err.stderr)
-    t.equal(err.stdout.includes('No typescript configuration file was found, skipping compilation.'), true)
+    t.diagnostic(err.stdout)
+    t.diagnostic(err.stderr)
+    assert.strictEqual(err.stdout.includes('No typescript configuration file was found, skipping compilation.'), true)
   }
-
-  t.pass()
 })
 
-t.test('start command should not compile typescript plugin with errors', async (t) => {
+test('start command should not compile typescript plugin with errors', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'bad-typescript-plugin')
   const cwd = await getCWD(t)
 
   await cp(testDir, cwd, { recursive: true })
 
   const childProcess = execa('node', [cliPath, 'start'], { cwd })
-
-  t.teardown(exitOnTeardown(childProcess))
+  t.after(exitOnTeardown(childProcess))
 
   try {
     await childProcess
-    t.fail('should not compile bad typescript plugin')
+    assert.fail('should not compile bad typescript plugin')
   } catch (err) {
     if (!err.stdout.includes('Found 1 error')) {
-      t.comment(err.stdout)
-      t.comment(err.stderr)
+      t.diagnostic(err.stdout)
+      t.diagnostic(err.stderr)
       console.error(err)
-      t.fail('should throw one ts error')
+      assert.fail('should throw one ts error')
     }
     await safeKill(childProcess)
   }
@@ -195,13 +208,11 @@ t.test('start command should not compile typescript plugin with errors', async (
   const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
   try {
     await access(jsPluginPath)
-    t.fail('should not compile bad typescript plugin')
-  } catch (err) {
-    t.pass(err)
-  }
+    assert.fail('should not compile bad typescript plugin')
+  } catch (err) {}
 })
 
-t.test('should not compile typescript plugin with start without tsconfig', async (t) => {
+test('should not compile typescript plugin with start without tsconfig', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
   const cwd = await getCWD(t)
 
@@ -214,38 +225,34 @@ t.test('should not compile typescript plugin with start without tsconfig', async
 
   try {
     const child = await execa('node', [cliPath, 'start'], { cwd })
-    t.teardown(exitOnTeardown(child))
-    t.fail('should not compile typescript plugin with start without tsconfig')
+    t.after(exitOnTeardown(child))
+    assert.fail('should not compile typescript plugin with start without tsconfig')
   } catch (err) {
-    t.comment(err.stdout)
-    t.equal(err.stdout.includes('No typescript configuration file was found, skipping compilation.'), true)
+    t.diagnostic(err.stdout)
+    assert.strictEqual(err.stdout.includes('No typescript configuration file was found, skipping compilation.'), true)
   }
 })
 
-t.test('should not compile bad typescript plugin', async (t) => {
+test('should not compile bad typescript plugin', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'bad-typescript-plugin')
   const cwd = await getCWD(t)
   await cp(testDir, cwd, { recursive: true })
 
   try {
     await execa('node', [cliPath, 'compile'], { cwd })
-    t.fail('should not compile bad typescript plugin')
+    assert.fail('should not compile bad typescript plugin')
   } catch (err) {
-    t.comment(err.stdout)
-    t.comment(err.stderr)
-    t.equal(err.stdout.includes('Found 1 error in plugin.ts'), true)
+    assert.strictEqual(err.stdout.includes('Found 1 error in plugin.ts'), true)
   }
 
   const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
   try {
     await access(jsPluginPath)
-    t.fail('should not compile bad typescript plugin')
-  } catch (err) {
-    t.pass(err)
-  }
+    assert.fail('should not compile bad typescript plugin')
+  } catch (err) {}
 })
 
-t.test('missing tsconfig file', async (t) => {
+test('missing tsconfig file', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
   const cwd = await getCWD(t)
 
@@ -258,34 +265,31 @@ t.test('missing tsconfig file', async (t) => {
 
   try {
     await execa('node', [cliPath, 'compile'], { cwd })
-    t.fail('should not compile typescript plugin')
+    assert.fail('should not compile typescript plugin')
   } catch (err) {
-    t.comment(err.stdout)
-    t.comment(err.stderr)
-    t.equal(err.stdout.includes('No typescript configuration file was found, skipping compilation.'), true)
+    t.diagnostic(err.stdout)
+    t.diagnostic(err.stderr)
+    assert.strictEqual(err.stdout.includes('No typescript configuration file was found, skipping compilation.'), true)
   }
-
-  t.pass()
 })
 
-t.test('start command should not compile typescript plugin with errors', async (t) => {
+test('start command should not compile typescript plugin with errors', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'bad-typescript-plugin')
   const cwd = await getCWD(t)
   await cp(testDir, cwd, { recursive: true })
 
   const childProcess = execa('node', [cliPath, 'start'], { cwd })
-
-  t.teardown(exitOnTeardown(childProcess))
+  t.after(exitOnTeardown(childProcess))
 
   try {
     await childProcess
-    t.fail('should not compile bad typescript plugin')
+    assert.fail('should not compile bad typescript plugin')
   } catch (err) {
     if (!err.stdout.includes('Found 1 error')) {
-      t.comment(err.stdout)
-      t.comment(err.stderr)
+      t.diagnostic(err.stdout)
+      t.diagnostic(err.stderr)
       console.error(err)
-      t.fail('should throw one ts error')
+      assert.fail('should throw one ts error')
     }
     safeKill(childProcess)
   }
@@ -293,13 +297,11 @@ t.test('start command should not compile typescript plugin with errors', async (
   const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
   try {
     await access(jsPluginPath)
-    t.fail('should not compile bad typescript plugin')
-  } catch (err) {
-    t.pass(err)
-  }
+    assert.fail('should not compile bad typescript plugin')
+  } catch (err) {}
 })
 
-t.test('should not compile typescript plugin with start without tsconfig', async (t) => {
+test('should not compile typescript plugin with start without tsconfig', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
   const cwd = await getCWD(t)
 
@@ -312,41 +314,48 @@ t.test('should not compile typescript plugin with start without tsconfig', async
 
   try {
     const child = await execa('node', [cliPath, 'start'], { cwd })
-    t.teardown(exitOnTeardown(child))
-    t.fail('should not compile typescript plugin with start without tsconfig')
+    t.after(exitOnTeardown(child))
+    assert.fail('should not compile typescript plugin with start without tsconfig')
   } catch (err) {
-    t.comment(err.stdout)
-    t.equal(err.stdout.includes('No typescript configuration file was found, skipping compilation.'), true)
+    t.diagnostic(err.stdout)
+    assert.strictEqual(err.stdout.includes('No typescript configuration file was found, skipping compilation.'), true)
   }
 })
 
-t.test('should compile ts app with config', async (t) => {
+test('should compile ts app with config', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'hello-ts-with-config')
   const cwd = await getCWD(t)
 
   await cp(testDir, cwd, { recursive: true })
 
   const child = execa('node', [cliPath, 'compile'], { cwd })
-
-  t.teardown(exitOnTeardown(child))
+  t.after(exitOnTeardown(child))
 
   const splitter = split()
   child.stdout.pipe(splitter)
+  child.stderr.pipe(splitter)
+
+  let output = ''
+
+  const timeout = setTimeout(() => {
+    console.log(output)
+    assert.fail('should not start the service if it was not precompiled and typescript is `false`')
+  }, 30000)
 
   for await (const data of splitter) {
     const sanitized = stripAnsi(data)
+    output += sanitized
     if (sanitized.includes('Typescript compilation completed successfully.')) {
+      clearTimeout(timeout)
       const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
       try {
         await access(jsPluginPath)
       } catch (err) {
-        t.fail(err)
+        assert.fail(err)
       }
-
-      t.pass()
       return
     }
   }
 
-  t.fail('should compile typescript plugin with a compile command')
+  assert.fail('should compile typescript plugin with a compile command')
 })

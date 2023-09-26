@@ -1,12 +1,13 @@
 'use strict'
 
-const { test } = require('tap')
+const assert = require('node:assert')
+const { test } = require('node:test')
+const { join } = require('node:path')
+const { request } = require('undici')
 const { buildServer } = require('..')
 const { buildConfig } = require('./helper')
-const { request } = require('undici')
-const { join } = require('path')
 
-test('should respond 200 on root endpoint', async ({ teardown, equal, same }) => {
+test('should respond 200 on root endpoint', async (t) => {
   const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
@@ -18,7 +19,7 @@ test('should respond 200 on root endpoint', async ({ teardown, equal, same }) =>
     }
   }))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
@@ -26,9 +27,9 @@ test('should respond 200 on root endpoint', async ({ teardown, equal, same }) =>
   {
     // No browser (i.e. curl)
     const res = await (request(`${app.url}/`))
-    equal(res.statusCode, 200)
+    assert.strictEqual(res.statusCode, 200)
     const body = await res.body.json()
-    same(body, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
+    assert.deepStrictEqual(body, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
   }
 
   {
@@ -39,12 +40,12 @@ test('should respond 200 on root endpoint', async ({ teardown, equal, same }) =>
       }
     }))
 
-    equal(res.statusCode, 200)
-    equal(res.headers['content-type'], 'text/html; charset=UTF-8')
+    assert.strictEqual(res.statusCode, 200)
+    assert.strictEqual(res.headers['content-type'], 'text/html; charset=UTF-8')
   }
 })
 
-test('should not overwrite a plugin which define a root endpoint', async ({ teardown, equal, same }) => {
+test('should not overwrite a plugin which define a root endpoint', async (t) => {
   const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
@@ -59,18 +60,18 @@ test('should not overwrite a plugin which define a root endpoint', async ({ tear
     }
   }))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
 
   const res = await (request(`${app.url}/`))
-  equal(res.statusCode, 200)
+  assert.strictEqual(res.statusCode, 200)
   const body = await res.body.json()
-  same(body, { message: 'Root Plugin' })
+  assert.deepStrictEqual(body, { message: 'Root Plugin' })
 })
 
-test('openapi enabled', async ({ teardown, equal, same }) => {
+test('openapi enabled', async (t) => {
   const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
@@ -88,7 +89,7 @@ test('openapi enabled', async ({ teardown, equal, same }) => {
     }
   }))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
@@ -96,17 +97,17 @@ test('openapi enabled', async ({ teardown, equal, same }) => {
   {
     // No browser (i.e. curl)
     const res = await (request(`${app.url}/documentation/json`))
-    equal(res.statusCode, 200)
+    assert.strictEqual(res.statusCode, 200)
     const body = await res.body.json()
 
-    equal(body.openapi, '3.0.3')
-    equal(body.info.title, 'Platformatic')
-    equal(body.info.version, '1.0.0')
-    equal(!!body.paths['/'].get, true)
+    assert.strictEqual(body.openapi, '3.0.3')
+    assert.strictEqual(body.info.title, 'Platformatic')
+    assert.strictEqual(body.info.version, '1.0.0')
+    assert.strictEqual(!!body.paths['/'].get, true)
   }
 })
 
-test('openapi config', async ({ teardown, equal, same }) => {
+test('openapi config', async (t) => {
   const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
@@ -126,7 +127,7 @@ test('openapi config', async ({ teardown, equal, same }) => {
     }
   }))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
@@ -134,18 +135,18 @@ test('openapi config', async ({ teardown, equal, same }) => {
   {
     // No browser (i.e. curl)
     const res = await (request(`${app.url}/documentation/json`))
-    equal(res.statusCode, 200)
+    assert.strictEqual(res.statusCode, 200)
     const body = await res.body.json()
 
-    equal(body.openapi, '3.0.3')
-    equal(body.info.title, 'My Service')
-    equal(body.info.version, '0.0.42')
-    equal(body.info.description, 'My Service is the best service ever')
-    equal(!!body.paths['/'].get, true)
+    assert.strictEqual(body.openapi, '3.0.3')
+    assert.strictEqual(body.info.title, 'My Service')
+    assert.strictEqual(body.info.version, '0.0.42')
+    assert.strictEqual(body.info.description, 'My Service is the best service ever')
+    assert.strictEqual(!!body.paths['/'].get, true)
   }
 })
 
-test('openapi disabled', async ({ teardown, equal, same }) => {
+test('openapi disabled', async (t) => {
   const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
@@ -163,7 +164,7 @@ test('openapi disabled', async ({ teardown, equal, same }) => {
     }
   }))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
@@ -171,12 +172,12 @@ test('openapi disabled', async ({ teardown, equal, same }) => {
   {
     // No browser (i.e. curl)
     const res = await (request(`${app.url}/documentation/json`))
-    equal(res.statusCode, 404)
+    assert.strictEqual(res.statusCode, 404)
     await res.body.text()
   }
 })
 
-test('openapi disabled by default', async ({ teardown, equal, same }) => {
+test('openapi disabled by default', async (t) => {
   const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
@@ -191,7 +192,7 @@ test('openapi disabled by default', async ({ teardown, equal, same }) => {
     }
   }))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
@@ -199,12 +200,12 @@ test('openapi disabled by default', async ({ teardown, equal, same }) => {
   {
     // No browser (i.e. curl)
     const res = await (request(`${app.url}/documentation/json`))
-    equal(res.statusCode, 404)
+    assert.strictEqual(res.statusCode, 404)
     await res.body.text()
   }
 })
 
-test('request id is a uuid', async ({ teardown, equal, match }) => {
+test('request id is a uuid', async (t) => {
   const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   const app = await buildServer({
     server: {
@@ -216,7 +217,7 @@ test('request id is a uuid', async ({ teardown, equal, match }) => {
     }
   })
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
@@ -224,7 +225,7 @@ test('request id is a uuid', async ({ teardown, equal, match }) => {
   const res = await request(`${app.url}/request-id`, {
     method: 'GET'
   })
-  equal(res.statusCode, 200)
+  assert.strictEqual(res.statusCode, 200)
   const json = await res.body.json()
-  match(json.request_id, UUID_REGEX)
+  assert.match(json.request_id, UUID_REGEX)
 })

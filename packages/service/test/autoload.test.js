@@ -1,12 +1,15 @@
 'use strict'
 
-require('./helper')
-const { test } = require('tap')
-const { buildServer } = require('..')
+const assert = require('node:assert')
+const { test } = require('node:test')
+const { join } = require('node:path')
 const { request } = require('undici')
-const { join } = require('path')
+const { buildServer } = require('..')
 
-test('autoload & filesystem based routing / watch disabled', async ({ teardown, equal }) => {
+// TODO: check if it's still needed
+// require('./helper')
+
+test('autoload & filesystem based routing / watch disabled', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
@@ -20,34 +23,34 @@ test('autoload & filesystem based routing / watch disabled', async ({ teardown, 
   }
 
   const app = await buildServer(config)
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
 
   {
     const res = await request(`${app.url}/`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.json()
-    equal(body.hello, 'from root', 'body')
+    assert.strictEqual(body.hello, 'from root', 'body')
   }
 
   {
     const res = await request(`${app.url}/foo/bar`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.json()
-    equal(body.hello, 'from bar', 'body')
+    assert.strictEqual(body.hello, 'from bar', 'body')
   }
 
   {
     const res = await request(`${app.url}/foo/baz`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.json()
-    equal(body.hello, 'from baz', 'body')
+    assert.strictEqual(body.hello, 'from baz', 'body')
   }
 })
 
-test('multiple files / watch false', async ({ teardown, equal }) => {
+test('multiple files / watch false', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
@@ -65,41 +68,41 @@ test('multiple files / watch false', async ({ teardown, equal }) => {
   }
 
   const app = await buildServer(config)
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
 
   {
     const res = await request(`${app.url}/`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.json()
-    equal(body.hello, 'from root', 'body')
+    assert.strictEqual(body.hello, 'from root', 'body')
   }
 
   {
     const res = await request(`${app.url}/foo/bar`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.json()
-    equal(body.hello, 'from bar', 'body')
+    assert.strictEqual(body.hello, 'from bar', 'body')
   }
 
   {
     const res = await request(`${app.url}/foo/baz`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.json()
-    equal(body.hello, 'from baz', 'body')
+    assert.strictEqual(body.hello, 'from baz', 'body')
   }
 
   {
     const res = await request(`${app.url}/foo/with-decorator`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.json()
-    equal(body.hello, 'bar', 'body')
+    assert.strictEqual(body.hello, 'bar', 'body')
   }
 })
 
-test('autoload & filesystem based routing / watch disabled / no object', async ({ teardown, equal }) => {
+test('autoload & filesystem based routing / watch disabled / no object', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
@@ -113,34 +116,34 @@ test('autoload & filesystem based routing / watch disabled / no object', async (
   }
 
   const app = await buildServer(config)
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
 
   {
     const res = await request(`${app.url}/`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.json()
-    equal(body.hello, 'from root', 'body')
+    assert.strictEqual(body.hello, 'from root', 'body')
   }
 
   {
     const res = await request(`${app.url}/foo/bar`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.json()
-    equal(body.hello, 'from bar', 'body')
+    assert.strictEqual(body.hello, 'from bar', 'body')
   }
 
   {
     const res = await request(`${app.url}/foo/baz`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.json()
-    equal(body.hello, 'from baz', 'body')
+    assert.strictEqual(body.hello, 'from baz', 'body')
   }
 })
 
-test('multiple files / watch false / no object', async ({ teardown, equal }) => {
+test('multiple files / watch false / no object', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
@@ -157,41 +160,41 @@ test('multiple files / watch false / no object', async ({ teardown, equal }) => 
   }
 
   const app = await buildServer(config)
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
 
   {
     const res = await request(`${app.url}/`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.json()
-    equal(body.hello, 'from root', 'body')
+    assert.strictEqual(body.hello, 'from root', 'body')
   }
 
   {
     const res = await request(`${app.url}/foo/bar`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.json()
-    equal(body.hello, 'from bar', 'body')
+    assert.strictEqual(body.hello, 'from bar', 'body')
   }
 
   {
     const res = await request(`${app.url}/foo/baz`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.json()
-    equal(body.hello, 'from baz', 'body')
+    assert.strictEqual(body.hello, 'from baz', 'body')
   }
 
   {
     const res = await request(`${app.url}/foo/with-decorator`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.json()
-    equal(body.hello, 'bar', 'body')
+    assert.strictEqual(body.hello, 'bar', 'body')
   }
 })
 
-test('nested directories', async ({ teardown, equal, same }) => {
+test('nested directories', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
@@ -215,41 +218,41 @@ test('nested directories', async ({ teardown, equal, same }) => {
   }
 
   const app = await buildServer(config)
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
 
   {
     const res = await request(`${app.url}/inventory/product/42`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.json()
-    same(body, { sku: 42, inStore: 2 }, 'body')
+    assert.deepStrictEqual(body, { sku: 42, inStore: 2 }, 'body')
   }
 
   {
     const res = await request(`${app.url}/catalogue/products`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.json()
-    same(body, [{ sku: 42, name: 'foo', inStore: 2 }, { sku: 43, name: 'bar', inStore: 0 }], 'body')
+    assert.deepStrictEqual(body, [{ sku: 42, name: 'foo', inStore: 2 }, { sku: 43, name: 'bar', inStore: 0 }], 'body')
   }
 
   {
     const res = await request(`${app.url}/foo/baz`)
-    equal(res.statusCode, 404, 'status code')
+    assert.strictEqual(res.statusCode, 404, 'status code')
     const body = await res.body.text()
-    equal(body, 'I\'m sorry, I couldn\'t find what you were looking for.')
+    assert.strictEqual(body, 'I\'m sorry, I couldn\'t find what you were looking for.')
   }
 
   {
     const res = await request(`${app.url}/catalogue/error`)
-    equal(res.statusCode, 500, 'status code')
+    assert.strictEqual(res.statusCode, 500, 'status code')
     const body = await res.body.text()
-    equal(body, 'I\'m sorry, there was an error processing your request.')
+    assert.strictEqual(body, 'I\'m sorry, there was an error processing your request.')
   }
 })
 
-test('disable encapsulation for a single file', async ({ teardown, equal, same }) => {
+test('disable encapsulation for a single file', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
@@ -276,27 +279,27 @@ test('disable encapsulation for a single file', async ({ teardown, equal, same }
   }
 
   const app = await buildServer(config)
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
 
   {
     const res = await request(`${app.url}/foo/baz`)
-    equal(res.statusCode, 404, 'status code')
+    assert.strictEqual(res.statusCode, 404, 'status code')
     const body = await res.body.text()
-    equal(body, 'I\'m sorry, I couldn\'t find what you were looking for.')
+    assert.strictEqual(body, 'I\'m sorry, I couldn\'t find what you were looking for.')
   }
 
   {
     const res = await request(`${app.url}/foo`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.text()
-    equal(body, 'bar')
+    assert.strictEqual(body, 'bar')
   }
 })
 
-test('disable encapsulation for a single file / different order', async ({ teardown, equal, same }) => {
+test('disable encapsulation for a single file / different order', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
@@ -323,27 +326,27 @@ test('disable encapsulation for a single file / different order', async ({ teard
   }
 
   const app = await buildServer(config)
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
 
   {
     const res = await request(`${app.url}/foo/baz`)
-    equal(res.statusCode, 404, 'status code')
+    assert.strictEqual(res.statusCode, 404, 'status code')
     const body = await res.body.text()
-    equal(body, 'I\'m sorry, I couldn\'t find what you were looking for.')
+    assert.strictEqual(body, 'I\'m sorry, I couldn\'t find what you were looking for.')
   }
 
   {
     const res = await request(`${app.url}/foo`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.text()
-    equal(body, 'bar')
+    assert.strictEqual(body, 'bar')
   }
 })
 
-test('autoload with ignorePattern, indexPattern and autoHooksPattern options', async ({ teardown, equal }) => {
+test('autoload with ignorePattern, indexPattern and autoHooksPattern options', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
@@ -372,39 +375,39 @@ test('autoload with ignorePattern, indexPattern and autoHooksPattern options', a
   }
 
   const app = await buildServer(config)
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
 
   {
     const res = await request(`${app.url}/`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.json()
-    equal(body.hello, 'from root', 'body')
+    assert.strictEqual(body.hello, 'from root', 'body')
   }
 
   {
     const res = await request(`${app.url}/foo/bar`)
-    equal(res.statusCode, 404, 'status code')
+    assert.strictEqual(res.statusCode, 404, 'status code')
   }
 
   {
     const res = await request(`${app.url}/foo/baz/index2`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.json()
-    equal(body.hello, 'from baz with index2.js', 'body')
+    assert.strictEqual(body.hello, 'from baz with index2.js', 'body')
   }
 
   {
     const res = await request(`${app.url}/oof`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.json()
-    equal(body.hello, 'from auto.hooks.js', 'body')
+    assert.strictEqual(body.hello, 'from auto.hooks.js', 'body')
   }
 })
 
-test('autoload with INVALID ignorePattern, indexPattern and autoHooksPattern options', async ({ teardown, equal }) => {
+test('autoload with INVALID ignorePattern, indexPattern and autoHooksPattern options', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
@@ -425,18 +428,18 @@ test('autoload with INVALID ignorePattern, indexPattern and autoHooksPattern opt
   }
 
   const app = await buildServer(config)
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
 
   {
     const res = await request(`${app.url}/`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
   }
 })
 
-test('loads encapsulated plugin twice', async ({ teardown, equal, strictSame }) => {
+test('loads encapsulated plugin twice', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
@@ -459,28 +462,28 @@ test('loads encapsulated plugin twice', async ({ teardown, equal, strictSame }) 
   {
     // First time plugin is loaded from file
     const app = await buildServer(config)
-    teardown(async () => {
+    t.after(async () => {
       await app.close()
     })
     await app.start()
 
     const res = await request(`${app.url}/foo/with-decorator`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.json()
-    strictSame(body, { hello: 'bar' })
+    assert.deepStrictEqual(body, { hello: 'bar' })
   }
 
   {
     // Second time plugin is loaded from cache
     const app = await buildServer(config)
-    teardown(async () => {
+    t.after(async () => {
       await app.close()
     })
     await app.start()
 
     const res = await request(`${app.url}/foo/with-decorator`)
-    equal(res.statusCode, 200, 'status code')
+    assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.json()
-    strictSame(body, { hello: 'bar' })
+    assert.deepStrictEqual(body, { hello: 'bar' })
   }
 })

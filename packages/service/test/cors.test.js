@@ -1,11 +1,12 @@
 'use strict'
 
-require('./helper')
-const { test } = require('tap')
-const { buildServer, platformaticService } = require('..')
+const assert = require('assert')
+const { test } = require('node:test')
 const { request } = require('undici')
+const { buildServer, platformaticService } = require('..')
+// require('./helper')
 
-test('CORS is disabled by default', async ({ teardown, equal, pass, same }) => {
+test('CORS is disabled by default', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
@@ -18,7 +19,7 @@ test('CORS is disabled by default', async ({ teardown, equal, pass, same }) => {
   })
 
   // handles login
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
@@ -30,10 +31,10 @@ test('CORS is disabled by default', async ({ teardown, equal, pass, same }) => {
       Origin: 'https://foo.bar.org'
     }
   }))
-  equal(res.statusCode, 404)
+  assert.strictEqual(res.statusCode, 404)
 })
 
-test('CORS can be enabled', async ({ teardown, equal, pass, same }) => {
+test('CORS can be enabled', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
@@ -49,7 +50,7 @@ test('CORS can be enabled', async ({ teardown, equal, pass, same }) => {
     app.post('/login', (req, reply) => {})
   })
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
@@ -62,13 +63,13 @@ test('CORS can be enabled', async ({ teardown, equal, pass, same }) => {
         Origin: 'https://foo.bar.org'
       }
     }))
-    equal(res.statusCode, 204)
-    equal(res.headers['access-control-allow-origin'], 'https://foo.bar.org')
-    equal(res.headers['access-control-allow-methods'], 'GET, POST')
+    assert.strictEqual(res.statusCode, 204)
+    assert.strictEqual(res.headers['access-control-allow-origin'], 'https://foo.bar.org')
+    assert.strictEqual(res.headers['access-control-allow-methods'], 'GET, POST')
   }
 })
 
-test('CORS with a regexp', async ({ teardown, equal, pass, same }) => {
+test('CORS with a regexp', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
@@ -86,7 +87,7 @@ test('CORS with a regexp', async ({ teardown, equal, pass, same }) => {
     app.post('/login', (req, reply) => {})
   })
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
@@ -99,9 +100,9 @@ test('CORS with a regexp', async ({ teardown, equal, pass, same }) => {
         Origin: 'https://platformatic.cloud'
       }
     }))
-    equal(res.statusCode, 204)
-    equal(res.headers['access-control-allow-origin'], 'https://platformatic.cloud')
-    equal(res.headers['access-control-allow-methods'], 'GET, POST')
+    assert.strictEqual(res.statusCode, 204)
+    assert.strictEqual(res.headers['access-control-allow-origin'], 'https://platformatic.cloud')
+    assert.strictEqual(res.headers['access-control-allow-methods'], 'GET, POST')
   }
 
   {
@@ -112,9 +113,9 @@ test('CORS with a regexp', async ({ teardown, equal, pass, same }) => {
         Origin: 'https://foo.deploy.space'
       }
     }))
-    equal(res.statusCode, 204)
-    equal(res.headers['access-control-allow-origin'], 'https://foo.deploy.space')
-    equal(res.headers['access-control-allow-methods'], 'GET, POST')
+    assert.strictEqual(res.statusCode, 204)
+    assert.strictEqual(res.headers['access-control-allow-origin'], 'https://foo.deploy.space')
+    assert.strictEqual(res.headers['access-control-allow-methods'], 'GET, POST')
   }
 
   {
@@ -125,13 +126,13 @@ test('CORS with a regexp', async ({ teardown, equal, pass, same }) => {
         Origin: 'https://foo.space'
       }
     }))
-    equal(res.statusCode, 204)
-    equal(res.headers['access-control-allow-origin'], undefined)
-    equal(res.headers['access-control-allow-methods'], 'GET, POST')
+    assert.strictEqual(res.statusCode, 204)
+    assert.strictEqual(res.headers['access-control-allow-origin'], undefined)
+    assert.strictEqual(res.headers['access-control-allow-methods'], 'GET, POST')
   }
 })
 
-test('CORS with an array of strings', async ({ teardown, equal, pass, same }) => {
+test('CORS with an array of strings', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
@@ -147,7 +148,7 @@ test('CORS with an array of strings', async ({ teardown, equal, pass, same }) =>
     app.post('/login', (req, reply) => {})
   })
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
@@ -160,9 +161,9 @@ test('CORS with an array of strings', async ({ teardown, equal, pass, same }) =>
         Origin: 'https://platformatic.cloud'
       }
     }))
-    equal(res.statusCode, 204)
-    equal(res.headers['access-control-allow-origin'], 'https://platformatic.cloud')
-    equal(res.headers['access-control-allow-methods'], 'GET, POST')
+    assert.strictEqual(res.statusCode, 204)
+    assert.strictEqual(res.headers['access-control-allow-origin'], 'https://platformatic.cloud')
+    assert.strictEqual(res.headers['access-control-allow-methods'], 'GET, POST')
   }
 
   {
@@ -173,9 +174,9 @@ test('CORS with an array of strings', async ({ teardown, equal, pass, same }) =>
         Origin: 'https://foo.deploy.space'
       }
     }))
-    equal(res.statusCode, 204)
-    equal(res.headers['access-control-allow-origin'], 'https://foo.deploy.space')
-    equal(res.headers['access-control-allow-methods'], 'GET, POST')
+    assert.strictEqual(res.statusCode, 204)
+    assert.strictEqual(res.headers['access-control-allow-origin'], 'https://foo.deploy.space')
+    assert.strictEqual(res.headers['access-control-allow-methods'], 'GET, POST')
   }
 
   {
@@ -186,13 +187,13 @@ test('CORS with an array of strings', async ({ teardown, equal, pass, same }) =>
         Origin: 'https://foo.cloud'
       }
     }))
-    equal(res.statusCode, 204)
-    equal(res.headers['access-control-allow-origin'], undefined)
-    equal(res.headers['access-control-allow-methods'], 'GET, POST')
+    assert.strictEqual(res.statusCode, 204)
+    assert.strictEqual(res.headers['access-control-allow-origin'], undefined)
+    assert.strictEqual(res.headers['access-control-allow-methods'], 'GET, POST')
   }
 })
 
-test('CORS with an array and a regexp', async ({ teardown, equal, pass, same }) => {
+test('CORS with an array and a regexp', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
@@ -210,7 +211,7 @@ test('CORS with an array and a regexp', async ({ teardown, equal, pass, same }) 
     app.post('/login', (req, reply) => {})
   })
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
@@ -223,9 +224,9 @@ test('CORS with an array and a regexp', async ({ teardown, equal, pass, same }) 
         Origin: 'https://platformatic.cloud'
       }
     }))
-    equal(res.statusCode, 204)
-    equal(res.headers['access-control-allow-origin'], 'https://platformatic.cloud')
-    equal(res.headers['access-control-allow-methods'], 'GET, POST')
+    assert.strictEqual(res.statusCode, 204)
+    assert.strictEqual(res.headers['access-control-allow-origin'], 'https://platformatic.cloud')
+    assert.strictEqual(res.headers['access-control-allow-methods'], 'GET, POST')
   }
 
   {
@@ -236,9 +237,9 @@ test('CORS with an array and a regexp', async ({ teardown, equal, pass, same }) 
         Origin: 'https://foo.deploy.space'
       }
     }))
-    equal(res.statusCode, 204)
-    equal(res.headers['access-control-allow-origin'], 'https://foo.deploy.space')
-    equal(res.headers['access-control-allow-methods'], 'GET, POST')
+    assert.strictEqual(res.statusCode, 204)
+    assert.strictEqual(res.headers['access-control-allow-origin'], 'https://foo.deploy.space')
+    assert.strictEqual(res.headers['access-control-allow-methods'], 'GET, POST')
   }
 
   {
@@ -249,13 +250,13 @@ test('CORS with an array and a regexp', async ({ teardown, equal, pass, same }) 
         Origin: 'https://foo.cloud'
       }
     }))
-    equal(res.statusCode, 204)
-    equal(res.headers['access-control-allow-origin'], undefined)
-    equal(res.headers['access-control-allow-methods'], 'GET, POST')
+    assert.strictEqual(res.statusCode, 204)
+    assert.strictEqual(res.headers['access-control-allow-origin'], undefined)
+    assert.strictEqual(res.headers['access-control-allow-methods'], 'GET, POST')
   }
 })
 
-test('CORS with a string', async ({ teardown, equal, pass, same }) => {
+test('CORS with a string', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
@@ -271,7 +272,7 @@ test('CORS with a string', async ({ teardown, equal, pass, same }) => {
     app.post('/login', (req, reply) => {})
   })
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
@@ -284,8 +285,8 @@ test('CORS with a string', async ({ teardown, equal, pass, same }) => {
         Origin: 'https://foo.cloud'
       }
     }))
-    equal(res.statusCode, 204)
-    equal(res.headers['access-control-allow-origin'], 'https://platformatic.cloud')
-    equal(res.headers['access-control-allow-methods'], 'GET, POST')
+    assert.strictEqual(res.statusCode, 204)
+    assert.strictEqual(res.headers['access-control-allow-origin'], 'https://platformatic.cloud')
+    assert.strictEqual(res.headers['access-control-allow-methods'], 'GET, POST')
   }
 })
