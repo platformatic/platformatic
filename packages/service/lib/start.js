@@ -83,6 +83,7 @@ async function buildServer (options, app) {
     /* c8 ignore next 1 */
     handler.log.error({ err }, 'error reloading the configuration')
   })
+
   return handler
 }
 
