@@ -55,10 +55,7 @@ export function parseDBArgs (_args) {
     default: {
       hostname: '127.0.0.1',
       database: 'sqlite',
-      migrations: 'migrations',
-      plugin: true,
-      types: true,
-      typescript: false
+      migrations: 'migrations'
     },
     alias: {
       h: 'hostname',
@@ -126,23 +123,24 @@ const createPlatformaticDB = async (_args, opts) => {
       break
     }
   }
-
-  const wizardOptions = await inquirer.prompt([{
+  const wizardPrompts = [{
     type: 'list',
     name: 'defaultMigrations',
     message: 'Do you want to create default migrations?',
     default: true,
     choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-  }, {
-    type: 'list',
-    name: 'generatePlugin',
-    message: 'Do you want to create a plugin?',
-    default: args.plugin,
-    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-  },
-  getUseTypescript(args.typescript)
-  ])
+  }]
 
+  if (args.plugin === false) {
+    wizardPrompts.push({
+      type: 'list',
+      name: 'generatePlugin',
+      message: 'Do you want to create a plugin?',
+      default: true,
+      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+    })
+  }
+  const wizardOptions = await inquirer.prompt(wizardPrompts, getUseTypescript(args.typescript))
   if (!isRuntimeContext) {
     const { port } = await inquirer.prompt([getPort(args.port)])
     wizardOptions.port = port
@@ -154,7 +152,7 @@ const createPlatformaticDB = async (_args, opts) => {
   const generatePlugin = args.plugin || wizardOptions.generatePlugin
   const useTypescript = args.typescript || wizardOptions.useTypescript
   const useTypes = args.types || generatePlugin // we set this always to true if we want to generate a plugin
-
+  console.log({ generatePlugin, useTypescript, useTypes })
   const params = {
     isRuntimeContext,
     hostname: args.hostname,
