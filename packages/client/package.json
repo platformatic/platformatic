@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/client",
-  "version": "0.47.4",
+  "version": "0.47.5",
   "description": "A client for all platformatic backends",
   "main": "index.js",
   "scripts": {
