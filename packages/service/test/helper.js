@@ -1,7 +1,6 @@
 'use strict'
 
 const { Agent, setGlobalDispatcher } = require('undici')
-const tap = require('tap')
 
 const agent = new Agent({
   keepAliveTimeout: 10,
@@ -12,12 +11,6 @@ const agent = new Agent({
 })
 
 setGlobalDispatcher(agent)
-
-// This should not be needed, but a weird combination
-// of node-tap, Windows, c8 and ESM makes this necessary.
-tap.teardown(() => {
-  process.exit(0)
-})
 
 function buildConfig (options) {
   const base = {

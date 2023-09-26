@@ -1,12 +1,13 @@
 'use strict'
 
-const { test } = require('tap')
+const assert = require('node:assert')
+const { test } = require('node:test')
+const { join } = require('node:path')
+const { request } = require('undici')
 const { buildServer } = require('..')
 const { buildConfig } = require('./helper')
-const { request } = require('undici')
-const { join } = require('path')
 
-test('graphql enabled', async ({ teardown, equal, same }) => {
+test('graphql enabled', async (t) => {
   const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
@@ -24,7 +25,7 @@ test('graphql enabled', async ({ teardown, equal, same }) => {
     }
   }))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
@@ -43,8 +44,8 @@ test('graphql enabled', async ({ teardown, equal, same }) => {
         `
       })
     })
-    equal(res.statusCode, 200, 'hello status code')
-    same(await res.body.json(), {
+    assert.strictEqual(res.statusCode, 200, 'hello status code')
+    assert.deepStrictEqual(await res.body.json(), {
       data: {
         hello: 'world'
       }
@@ -53,11 +54,11 @@ test('graphql enabled', async ({ teardown, equal, same }) => {
 
   {
     const res = await request(`${app.url}/graphiql`)
-    equal(res.statusCode, 200, 'graphiql status code')
+    assert.strictEqual(res.statusCode, 200, 'graphiql status code')
   }
 })
 
-test('graphql disabled', async ({ teardown, equal, fail }) => {
+test('graphql disabled', async (t) => {
   try {
     const app = await buildServer(buildConfig({
       server: {
@@ -76,13 +77,13 @@ test('graphql disabled', async ({ teardown, equal, fail }) => {
       }
     }))
     await app.close()
-    fail('should have errored but did not')
+    assert.fail('should have errored but did not')
   } catch (err) {
-    equal(err.message, 'Cannot read properties of undefined (reading \'extendSchema\')')
+    assert.strictEqual(err.message, 'Cannot read properties of undefined (reading \'extendSchema\')')
   }
 })
 
-test('disable graphiql', async ({ teardown, equal, same }) => {
+test('disable graphiql', async (t) => {
   const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
@@ -102,7 +103,7 @@ test('disable graphiql', async ({ teardown, equal, same }) => {
     }
   }))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
@@ -121,8 +122,8 @@ test('disable graphiql', async ({ teardown, equal, same }) => {
         `
       })
     })
-    equal(res.statusCode, 200, 'hello status code')
-    same(await res.body.json(), {
+    assert.strictEqual(res.statusCode, 200, 'hello status code')
+    assert.deepStrictEqual(await res.body.json(), {
       data: {
         hello: 'world'
       }
@@ -131,11 +132,11 @@ test('disable graphiql', async ({ teardown, equal, same }) => {
 
   {
     const res = await request(`${app.url}/graphiql`)
-    equal(res.statusCode, 404, 'graphiql status code')
+    assert.strictEqual(res.statusCode, 404, 'graphiql status code')
   }
 })
 
-test('graphql disabled by default', async ({ teardown, equal, fail }) => {
+test('graphql disabled by default', async (t) => {
   try {
     const app = await buildServer(buildConfig({
       server: {
@@ -151,13 +152,13 @@ test('graphql disabled by default', async ({ teardown, equal, fail }) => {
       }
     }))
     await app.close()
-    fail('should have errored but did not')
+    assert.fail('should have errored but did not')
   } catch (err) {
-    equal(err.message, 'Cannot read properties of undefined (reading \'extendSchema\')')
+    assert.strictEqual(err.message, 'Cannot read properties of undefined (reading \'extendSchema\')')
   }
 })
 
-test('graphql errors are correctly propagated in custom resolvers', async ({ teardown, equal, same }) => {
+test('graphql errors are correctly propagated in custom resolvers', async (t) => {
   const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
@@ -175,7 +176,7 @@ test('graphql errors are correctly propagated in custom resolvers', async ({ tea
     }
   }))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
@@ -194,8 +195,8 @@ test('graphql errors are correctly propagated in custom resolvers', async ({ tea
         `
       })
     })
-    equal(res.statusCode, 200, 'hello status code')
-    same(await res.body.json(), {
+    assert.strictEqual(res.statusCode, 200, 'hello status code')
+    assert.deepStrictEqual(await res.body.json(), {
       data: {
         hello: null
       },
@@ -214,6 +215,6 @@ test('graphql errors are correctly propagated in custom resolvers', async ({ tea
 
   {
     const res = await request(`${app.url}/graphiql`)
-    equal(res.statusCode, 200, 'graphiql status code')
+    assert.strictEqual(res.statusCode, 200, 'graphiql status code')
   }
 })

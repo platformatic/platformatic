@@ -3,7 +3,6 @@ import { on } from 'events'
 import { execa } from 'execa'
 import split from 'split2'
 import { join } from 'desm'
-import tap from 'tap'
 import os from 'node:os'
 
 setGlobalDispatcher(new Agent({
@@ -13,12 +12,6 @@ setGlobalDispatcher(new Agent({
     rejectUnauthorized: false
   }
 }))
-
-// This should not be needed, but a weird combination
-// of node-tap, Windows, c8 and ESM makes this necessary.
-tap.teardown(() => {
-  process.exit(0)
-})
 
 export const cliPath = join(import.meta.url, '..', '..', 'service.mjs')
 

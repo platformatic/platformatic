@@ -1,11 +1,12 @@
 'use strict'
 
-const { test } = require('tap')
-const { buildServer } = require('..')
-require('./helper')
+const assert = require('node:assert')
+const { test } = require('node:test')
 const { request } = require('undici')
+const { buildServer } = require('..')
+// require('./helper')
 
-test('healthcheck route enabled with interval', async ({ teardown, equal, same }) => {
+test('healthcheck route enabled with interval', async (t) => {
   let check = true
   const app = await buildServer({
     server: {
@@ -21,25 +22,25 @@ test('healthcheck route enabled with interval', async ({ teardown, equal, same }
     metrics: false
   })
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
 
   {
     const res = await (request(`${app.url}/status`))
-    equal(res.statusCode, 200)
+    assert.strictEqual(res.statusCode, 200)
     const body = await res.body.json()
-    same(body, { status: 'ok' })
+    assert.deepStrictEqual(body, { status: 'ok' })
   }
 
   check = false
 
   {
     const res = await (request(`${app.url}/status`))
-    equal(res.statusCode, 503)
+    assert.strictEqual(res.statusCode, 503)
     const body = await res.body.json()
-    same(body, {
+    assert.deepStrictEqual(body, {
       statusCode: 503,
       code: 'FST_UNDER_PRESSURE',
       error: 'Service Unavailable',
@@ -50,7 +51,7 @@ test('healthcheck route enabled with interval', async ({ teardown, equal, same }
   check = true
 })
 
-test('healthcheck route enabled without interval', async ({ teardown, equal, same }) => {
+test('healthcheck route enabled without interval', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
@@ -60,20 +61,20 @@ test('healthcheck route enabled without interval', async ({ teardown, equal, sam
     metrics: false
   })
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
 
   {
     const res = await (request(`${app.url}/status`))
-    equal(res.statusCode, 200)
+    assert.strictEqual(res.statusCode, 200)
     const body = await res.body.json()
-    same(body, { status: 'ok' })
+    assert.deepStrictEqual(body, { status: 'ok' })
   }
 })
 
-test('healthcheck route disabled', async ({ teardown, equal, same }) => {
+test('healthcheck route disabled', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
@@ -82,11 +83,11 @@ test('healthcheck route disabled', async ({ teardown, equal, same }) => {
     metrics: false
   })
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
 
   const res = await (request(`${app.url}/status`))
-  equal(res.statusCode, 404)
+  assert.strictEqual(res.statusCode, 404)
 })

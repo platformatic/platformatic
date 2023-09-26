@@ -1,8 +1,9 @@
-import { cliPath } from './helper.mjs'
-import { test } from 'tap'
+import assert from 'node:assert'
+import { test } from 'node:test'
+import { readFile, unlink } from 'node:fs/promises'
 import { join } from 'desm'
 import { execa } from 'execa'
-import { readFile, unlink } from 'fs/promises'
+import { cliPath } from './helper.mjs'
 
 const GLOBAL_TYPES_TEMPLATE = `
 import { FastifyInstance } from 'fastify'
@@ -15,7 +16,7 @@ declare module 'fastify' {
 }
 `
 
-test('generate global.d.ts', async ({ equal }) => {
+test('generate global.d.ts', async (t) => {
   const fileNameOrThen = join(import.meta.url, '..', '..', 'fixtures', 'hello', 'global.d.ts')
   try {
     await unlink(fileNameOrThen)
@@ -26,5 +27,5 @@ test('generate global.d.ts', async ({ equal }) => {
   const data = await readFile(fileNameOrThen, 'utf-8')
   await unlink(fileNameOrThen)
 
-  equal(data, GLOBAL_TYPES_TEMPLATE)
+  assert.strictEqual(data, GLOBAL_TYPES_TEMPLATE)
 })

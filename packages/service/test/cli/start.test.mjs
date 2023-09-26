@@ -1,36 +1,33 @@
-import { start, cliPath } from './helper.mjs'
-import { test } from 'tap'
+import assert from 'node:assert'
+import { test } from 'node:test'
 import { join } from 'desm'
 import { request } from 'undici'
 import { execa } from 'execa'
+import { start, cliPath } from './helper.mjs'
 
-test('autostart', async ({ equal, same, match, teardown }) => {
+test('autostart', async (t) => {
   const { child, url } = await start(['-c', join(import.meta.url, '..', '..', 'fixtures', 'hello', 'platformatic.service.json')])
 
   const res = await request(`${url}`)
-  equal(res.statusCode, 200)
+  assert.strictEqual(res.statusCode, 200)
   const body = await res.body.json()
-  match(body, {
-    hello: 'world'
-  }, 'response')
+  assert.strictEqual(body.hello, 'world')
 
   child.kill('SIGINT')
 })
 
-test('start command', async ({ equal, same, match, teardown }) => {
+test('start command', async (t) => {
   const { child, url } = await start(['-c', join(import.meta.url, '..', '..', 'fixtures', 'hello', 'platformatic.service.json')])
 
   const res = await request(`${url}`)
-  equal(res.statusCode, 200)
+  assert.strictEqual(res.statusCode, 200)
   const body = await res.body.json()
-  match(body, {
-    hello: 'world'
-  }, 'response')
+  assert.strictEqual(body.hello, 'world')
 
   child.kill('SIGINT')
 })
 
-test('allow custom env properties', async ({ equal, same, match, teardown }) => {
+test('allow custom env properties', async (t) => {
   const { child, url } = await start(
     [
       '-c', join(import.meta.url, '..', 'fixtures', 'custom-port-placeholder.json'),
@@ -42,17 +39,20 @@ test('allow custom env properties', async ({ equal, same, match, teardown }) => 
       }
     }
   )
-  equal(url, 'http://127.0.0.1:11111', 'A_CUSTOM_PORT env variable has been used')
-  const res = await request(`${url}`)
-  equal(res.statusCode, 200)
-  const body = await res.body.json()
-  match(body, {}, 'response')
+  t.after(() => {
+    child.kill('SIGINT')
+    delete process.env.A_CUSTOM_PORT
+  })
 
-  child.kill('SIGINT')
-  delete process.env.A_CUSTOM_PORT
+  assert.strictEqual(url, 'http://127.0.0.1:11111', 'A_CUSTOM_PORT env variable has been used')
+  const res = await request(`${url}`)
+  assert.strictEqual(res.statusCode, 200)
+
+  const body = await res.body.json()
+  assert.strictEqual(body.message, 'Welcome to Platformatic! Please visit https://docs.platformatic.dev')
 })
 
-test('use default env variables names', async ({ equal, match }) => {
+test('use default env variables names', async (t) => {
   const { child, url } = await start(
     [
       '-c', join(import.meta.url, '..', 'fixtures', 'default-env-var-names.json')
@@ -64,65 +64,62 @@ test('use default env variables names', async ({ equal, match }) => {
       }
     }
   )
+  t.after(() => {
+    child.kill('SIGINT')
+    delete process.env.A_CUSTOM_PORT
+  })
 
-  equal(url, 'http://127.0.0.1:11111', 'default env variable names has been used')
+  assert.strictEqual(url, 'http://127.0.0.1:11111', 'default env variable names has been used')
   const res = await request(`${url}`)
-  equal(res.statusCode, 200)
-  const body = await res.body.json()
-  match(body, {}, 'response')
-
-  child.kill('SIGINT')
-  delete process.env.A_CUSTOM_PORT
+  assert.strictEqual(res.statusCode, 200)
 })
 
-test('default logger', async ({ equal, same, match, teardown }) => {
+test('default logger', async (t) => {
   const { child, url } = await start(['-c', join(import.meta.url, '..', '..', 'fixtures', 'hello', 'no-server-logger.json')])
-  match(url, /http:\/\/127.0.0.1:[0-9]+/)
+  assert.match(url, /http:\/\/127.0.0.1:[0-9]+/)
   child.kill('SIGINT')
 })
 
-test('plugin options', async ({ equal, same, match, teardown }) => {
+test('plugin options', async (t) => {
   const { child, url } = await start(['-c', join(import.meta.url, '..', '..', 'fixtures', 'options', 'platformatic.service.yml')])
   const res = await request(`${url}`)
-  equal(res.statusCode, 200)
+  assert.strictEqual(res.statusCode, 200)
   const body = await res.body.json()
-  match(body, {
-    something: 'else'
-  }, 'response')
+  assert.strictEqual(body.something, 'else')
 
   child.kill('SIGINT')
 })
 
-test('https embedded pem', async ({ equal, same, match, teardown }) => {
+test('https embedded pem', async (t) => {
   const { child, url } = await start(['-c', join(import.meta.url, '..', '..', 'fixtures', 'https', 'embedded-pem.json')])
 
-  match(url, /https:\/\//)
+  assert.match(url, /https:\/\//)
   const res = await request(`${url}`)
-  equal(res.statusCode, 200)
+  assert.strictEqual(res.statusCode, 200)
   const body = await res.body.json()
-  match(body, {
+  assert.deepStrictEqual(body, {
     hello: 'world'
   }, 'response')
 
   child.kill('SIGINT')
 })
 
-test('https pem path', async ({ equal, same, match, teardown }) => {
+test('https pem path', async (t) => {
   const { child, url } = await start(['-c', join(import.meta.url, '..', '..', 'fixtures', 'https', 'pem-path.json')])
 
-  match(url, /https:\/\//)
+  assert.match(url, /https:\/\//)
   const res = await request(`${url}`)
-  equal(res.statusCode, 200)
+  assert.strictEqual(res.statusCode, 200)
   const body = await res.body.json()
-  match(body, {
+  assert.deepStrictEqual(body, {
     hello: 'world'
   }, 'response')
 
   child.kill('SIGINT')
 })
 
-test('not load', async ({ rejects }) => {
-  await rejects(execa('node', [cliPath, 'start', '-c', join(import.meta.url, '..', 'fixtures', 'not-load.service.json')]))
+test('not load', async (t) => {
+  await assert.rejects(execa('node', [cliPath, 'start', '-c', join(import.meta.url, '..', 'fixtures', 'not-load.service.json')]))
 })
 
 test('no server', async ({ equal, same, match, teardown }) => {
