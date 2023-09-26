@@ -1,6 +1,7 @@
 'use strict'
 
 function isKeyEnabled (key, config) {
+  if (config === undefined) return false
   if (typeof config[key] === 'boolean') {
     return config[key]
   }

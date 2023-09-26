@@ -91,7 +91,8 @@ const createPlatformaticComposer = async (_args, opts) => {
 
   const params = {
     hostname: args.hostname,
-    port
+    port,
+    isRuntime: opts.isRuntime
   }
 
   const env = await createComposer(

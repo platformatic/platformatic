@@ -67,7 +67,7 @@ async function platformaticService (app, opts, toLoad = []) {
     await app.register(loadPlugins)
   }
 
-  if (config.server.cors) {
+  if (isKeyEnabled('cors', config.server)) {
     app.register(setupCors, config.server.cors)
   }
 

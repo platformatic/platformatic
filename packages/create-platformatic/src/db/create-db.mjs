@@ -332,7 +332,6 @@ export async function createDB ({ hostname, database = 'sqlite', port, migration
     const config = generateConfig(migrations, plugin, types, typescript, version)
     await writeFile(join(currentDir, 'platformatic.db.json'), JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.db.json successfully created.')
-
     const env = generateEnv(hostname, port, connectionString, typescript)
     const envFileExists = await isFileAccessible('.env', currentDir)
     await appendFile(join(currentDir, '.env'), env)
