@@ -56,6 +56,11 @@ expectType<Partial<EntityFields>[]>(await entity.insert({ inputs: [{ id: 1, name
 expectType<Partial<EntityFields>>(await entity.save({ input: { id: 1, name: 'test' } }))
 expectType<Partial<EntityFields>[]>(await entity.delete())
 expectType<number>(await entity.count())
+expectType<Partial<EntityFields>[]>(await entity.find({ tx: pluginOptions.db }))
+expectType<Partial<EntityFields>[]>(await entity.insert({ inputs: [{ id: 1, name: 'test' }], tx: pluginOptions.db }))
+expectType<Partial<EntityFields>>(await entity.save({ input: { id: 1, name: 'test' }, tx: pluginOptions.db }))
+expectType<Partial<EntityFields>[]>(await entity.delete({ tx: pluginOptions.db }))
+expectType<number>(await entity.count({ tx: pluginOptions.db }))
 
 const entityHooks: EntityHooks = {
   async find(originalFind: typeof entity.find, ...options: Parameters<typeof entity.find>): ReturnType<typeof entity.find> { return [] },
@@ -79,6 +84,7 @@ expectType<SQLMapperPluginInterface<Entities>>(await connect<Entities>({
   connectionString: '', log, onDatabaseLoad(db: Database, sql: SQL) {
     expectType<(query: SQLQuery) => Promise<any[]>>(db.query)
     expectType<() => Promise<void>>(db.dispose)
+    expectType<(fn: (tx: Database) => Promise<EntityFields>, options?: any) => Promise<EntityFields>>(db.tx<EntityFields>)
     expectType<boolean | undefined>(pluginOptions.db.isMySql)
     expectType<boolean | undefined>(pluginOptions.db.isMariaDB)
     expectType<boolean | undefined>(pluginOptions.db.isSQLite)
