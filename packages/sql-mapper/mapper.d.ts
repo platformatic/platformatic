@@ -32,7 +32,11 @@ export interface Database {
   /**
    * Dispose the connection. Once this is called, any subsequent queries will fail.
    */
-  dispose(): Promise<void>
+  dispose(): Promise<void>,
+  /**
+   * Begin new transaction
+   */
+  tx<T = any>(fn: (tx: Database) => Promise<T>, options?: any): Promise<T>
 }
 
 export interface DBEntityField {
@@ -150,8 +154,8 @@ interface Find<EntityFields> {
      */
     offset?: number,
     /**
-     * If present, the entity partecipates in transaction
-    */
+     * If present, the entity participates in transaction
+     */
     tx?: Database
   }): Promise<Partial<EntityFields>[]>
 }
@@ -162,6 +166,10 @@ interface Count {
      * SQL where condition.
      */
     where?: WhereCondition,
+    /**
+     * If present, the entity participates in transaction
+     */
+    tx?: Database
   }): Promise<number>
 }
 
@@ -174,7 +182,11 @@ interface Insert<EntityFields> {
     /**
      * List of fields to be returned for each object
      */
-    fields?: string[]
+    fields?: string[],
+    /**
+     * If present, the entity participates in transaction
+     */
+    tx?: Database
   }): Promise<Partial<EntityFields>[]>
 }
 
@@ -187,7 +199,11 @@ interface Save<EntityFields> {
     /**
      * List of fields to be returned for each object
      */
-    fields?: string[]
+    fields?: string[],
+    /**
+     * If present, the entity participates in transaction
+     */
+    tx?: Database
   }): Promise<Partial<EntityFields>>
 }
 
@@ -196,11 +212,15 @@ interface Delete<EntityFields> {
     /**
      * SQL where condition.
      */
-    where: WhereCondition,
+    where?: WhereCondition,
     /**
      * List of fields to be returned for each object
      */
-    fields: string[]
+    fields?: string[],
+    /**
+     * If present, the entity participates in transaction
+     */
+    tx?: Database
   }): Promise<Partial<EntityFields>[]>,
 }
 
