@@ -34,7 +34,7 @@ async function createRuntime (logger, currentDir = process.cwd(), version, servi
     logger.info(`Configuration file ${accessibleConfigFilename} found, skipping creation of configuration file.`)
   }
   if (servicesDir) {
-    const servicesDirFullPath = join(currentDir, servicesDir)
+    const servicesDirFullPath = isAbsolute(servicesDir) ? servicesDir : join(currentDir, servicesDir)
 
     try {
       await stat(servicesDirFullPath)
