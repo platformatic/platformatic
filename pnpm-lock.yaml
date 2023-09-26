@@ -155,8 +155,8 @@ importers:
   packages/client:
     dependencies:
       '@apidevtools/json-schema-ref-parser':
-        specifier: ^10.1.0
-        version: 10.1.0
+        specifier: ^11.0.0
+        version: 11.1.0
       '@fastify/error':
         specifier: ^3.2.1
         version: 3.3.0
@@ -1653,8 +1653,8 @@ packages:
       '@jridgewell/trace-mapping': 0.3.19
     dev: true
 
-  /@apidevtools/json-schema-ref-parser@10.1.0:
-    resolution: {integrity: sha512-3e+viyMuXdrcK8v5pvP+SDoAQ77FH6OyRmuK48SZKmdHJRFm87RsSs8qm6kP39a/pOPURByJw+OXzQIqcfmKtA==}
+  /@apidevtools/json-schema-ref-parser@11.1.0:
+    resolution: {integrity: sha512-g/VW9ZQEFJAOwAyUb8JFf7MLiLy2uEB4rU270rGzDwICxnxMlPy0O11KVePSgS36K1NI29gSlK84n5INGhd4Ag==}
     engines: {node: '>= 16'}
     dependencies:
       '@jsdevtools/ono': 7.1.3
