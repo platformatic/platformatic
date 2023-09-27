@@ -5,6 +5,7 @@ import { cp, readFile } from 'fs/promises'
 import { cliPath } from './helper.js'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
+import { compareVersions } from '../lib/upgrade.js'
 
 let count = 0
 
@@ -42,4 +43,14 @@ test('writes a config file with a config option', async (t) => {
 
 test('no config file no party', async (t) => {
   await t.rejects(execa('node', [cliPath, 'upgrade']))
+})
+
+test('compare versions', async ({ equal }) => {
+  equal(compareVersions('1.0.0', '0.49.12'), 1)
+  equal(compareVersions('0.49.12', '1.0.0'), -1)
+  equal(compareVersions('1.2.3', '1.2.3'), 0)
+  equal(compareVersions('1.2.3', '1.2.4'), -1)
+  equal(compareVersions('1.2.4', '1.2.3'), 1)
+  equal(compareVersions('1.3.3', '1.2.3'), 1)
+  equal(compareVersions('1.2.3', '1.3.3'), -1)
 })
