@@ -32,7 +32,6 @@
     "mercurius"
   ],
   "devDependencies": {
-    "execa": "^8.0.1",
     "fastify": "^4.18.0",
     "license-checker": "^25.0.1",
     "mkdirp": "^2.1.6",
@@ -58,6 +57,7 @@
     "create-platformatic": "workspace:*",
     "desm": "^1.3.0",
     "dotenv": "^16.1.4",
+    "execa": "^8.0.1",
     "help-me": "^4.2.0",
     "inquirer": "^9.2.7",
     "minimist": "^1.2.8",
