@@ -149,7 +149,7 @@ importers:
         specifier: ^16.3.6
         version: 16.3.8(typescript@5.2.2)
       undici:
-        specifier: ^5.22.1
+        specifier: ^5.25.2
         version: 5.25.2
 
   packages/client:
