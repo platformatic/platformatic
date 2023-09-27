@@ -128,7 +128,7 @@ importers:
         version: 5.25.2
     devDependencies:
       execa:
-        specifier: ^8.0.0
+        specifier: ^8.0.1
         version: 8.0.1
       fastify:
         specifier: ^4.18.0
