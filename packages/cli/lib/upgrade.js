@@ -4,6 +4,7 @@ import parseArgs from 'minimist'
 import { access } from 'fs/promises'
 import { resolve } from 'path'
 import { request } from 'undici'
+import { execa } from 'execa'
 const configFileNames = ConfigManager.listConfigFiles()
 
 async function isFileAccessible (filename) {
@@ -21,8 +22,12 @@ export async function upgrade (argv) {
       config: 'c'
     }
   })
+  await upgradeApp(args.config)
+  await upgradeSystem()
+}
 
-  let accessibleConfigFilename = args.config
+async function upgradeApp (config) {
+  let accessibleConfigFilename = config
 
   if (!accessibleConfigFilename) {
     const configFilesAccessibility = await Promise.all(configFileNames.map((fileName) => isFileAccessible(fileName)))
@@ -44,17 +49,20 @@ export async function upgrade (argv) {
   meta = upgradeConfig(meta)
 
   await write(meta)
-  console.log('Upgraded to', meta.version)
+  console.log('App Upgraded to', meta.version)
+}
 
+async function upgradeSystem () {
   console.log('Checking latest platformatic version on npm registry...')
+  const currentRunningVersion = await checkSystemPlatformaticVersion()
   const latestNpmVersion = await checkNpmVersion()
   if (latestNpmVersion) {
-    const compareResult = compareVersions(meta.kind, latestNpmVersion)
+    const compareResult = compareVersions(currentRunningVersion, latestNpmVersion)
     switch (compareResult) {
       case 0:
-        console.log('✅ You are running the latest Platformatic version!')
+        console.log(`✅ You are running the latest Platformatic version v${latestNpmVersion}!`)
         break
-      case 1:
+      case -1:
         console.log(`✨ Version ${latestNpmVersion} of Platformatic has been released, please update with "npm update -g platformatic"`)
         break
     }
@@ -87,4 +95,12 @@ export function compareVersions (first, second) {
   if (firstPatch > secondPatch) return 1
 
   return 0
+}
+
+async function checkSystemPlatformaticVersion () {
+  const { stdout } = await execa('platformatic', ['--version'])
+  if (stdout.match(/v\d+\.\d+\.\d+/)) {
+    return stdout.substring(1)
+  }
+  return '0.0.0'
 }
