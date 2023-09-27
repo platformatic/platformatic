@@ -4,6 +4,7 @@ import { tmpdir } from 'os'
 import { mkdtempSync, rmSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import dotenv from 'dotenv'
+import { stat } from 'fs/promises'
 
 const base = tmpdir()
 let tmpDir
@@ -61,6 +62,20 @@ test('creates composer', async ({ equal, same, ok }) => {
     }],
     refreshTimeout: 1000
   })
+
+  // plugins and routes config is there
+  same(composerConfig.plugins, {
+    paths: [
+      { path: './plugins', encapsulate: false },
+      './routes'
+    ]
+  })
+  // plugins and routes are created
+  const directoriesToCheck = ['plugins', 'routes']
+  for (const d of directoriesToCheck) {
+    const meta = await stat(join(tmpDir, d))
+    equal(meta.isDirectory(), true)
+  }
 })
 
 test('creates project with configuration already present', async ({ ok }) => {

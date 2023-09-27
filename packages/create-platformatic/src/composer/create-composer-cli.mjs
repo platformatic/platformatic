@@ -99,7 +99,8 @@ const createPlatformaticComposer = async (_args, opts) => {
     isRuntimeContext,
     hostname: args.hostname,
     port,
-    servicesToCompose
+    servicesToCompose,
+    skipGitHubActions: opts.skipGitHubActions
   }
 
   const env = await createComposer(
