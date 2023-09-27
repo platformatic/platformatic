@@ -2,6 +2,7 @@ import { readFile, writeFile, appendFile } from 'fs/promises'
 import { findComposerConfigFile, isFileAccessible } from '../utils.mjs'
 import { join } from 'path'
 import * as desm from 'desm'
+import { generatePlugins, generateRouteWithTypesSupport } from '../create-plugins.mjs'
 
 function generateConfig (isRuntimeContext, version, servicesToCompose) {
   const config = {
@@ -16,7 +17,13 @@ function generateConfig (isRuntimeContext, version, servicesToCompose) {
       }],
       refreshTimeout: 1000
     },
-    watch: true
+    watch: true,
+    plugins: {
+      paths: [
+        { path: './plugins', encapsulate: false },
+        './routes'
+      ]
+    }
   }
 
   if (!isRuntimeContext) {
@@ -91,12 +98,16 @@ async function createComposer (
   } else {
     logger.info(`Configuration file ${accessibleConfigFilename} found, skipping creation of configuration file.`)
   }
+  await generatePlugins(logger, currentDir, false, 'composer')
+  await generateRouteWithTypesSupport(logger, currentDir, false)
 
-  return {
+  const env = {
     PLT_SERVER_LOGGER_LEVEL: 'info',
     PORT: port,
     PLT_SERVER_HOSTNAME: hostname
   }
+
+  return env
 }
 
 export default createComposer

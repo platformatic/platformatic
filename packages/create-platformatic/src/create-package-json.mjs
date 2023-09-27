@@ -14,7 +14,8 @@ const packageJsonTemplate = async (addTSBuild, fastifyVersion, platVersion) => {
 
   const pkg = {
     scripts: {
-      start: 'platformatic start'
+      start: 'platformatic start',
+      test: 'node --test test/**'
     },
     devDependencies: {
       fastify: `^${fastifyVersion}`
