@@ -22,8 +22,12 @@ export async function upgrade (argv) {
       config: 'c'
     }
   })
-  await upgradeApp(args.config)
-  await upgradeSystem()
+  try {
+    await upgradeApp(args.config)
+    await upgradeSystem()
+  } catch (err) {
+    console.error(`Error during upgrade: ${err.message}`)
+  }
 }
 
 async function upgradeApp (config) {
