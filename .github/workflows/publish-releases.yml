@@ -26,7 +26,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v2.8.3
+        uses: nick-fields/retry@v2.9.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -37,7 +37,7 @@ jobs:
           node scripts/update-version.mjs ${{ inputs.version }}
           sh scripts/sync-version.sh
       - name: update lockfile
-        uses: nick-fields/retry@v2.8.3
+        uses: nick-fields/retry@v2.9.0
         with:
           max_attempts: 10
           timeout_minutes: 15

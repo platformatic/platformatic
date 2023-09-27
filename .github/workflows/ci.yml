@@ -36,7 +36,7 @@ jobs:
         with:
           node-version: 20
           cache: 'pnpm'
-      - uses: "nick-fields/retry@v2.8.3"
+      - uses: "nick-fields/retry@v2.9.0"
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -59,7 +59,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
     - name: pnpm install
-      uses: nick-fields/retry@v2.8.3
+      uses: nick-fields/retry@v2.9.0
       with:
         max_attempts: 10
         timeout_minutes: 15
@@ -87,7 +87,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
     - name: pnpm install
-      uses: nick-fields/retry@v2.8.3
+      uses: nick-fields/retry@v2.9.0
       with:
         max_attempts: 10
         timeout_minutes: 15
@@ -112,7 +112,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
     - name: pnpm install
-      uses: nick-fields/retry@v2.8.3
+      uses: nick-fields/retry@v2.9.0
       with:
         max_attempts: 1
         timeout_minutes: 15
@@ -140,7 +140,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
     - name: pnpm install
-      uses: nick-fields/retry@v2.8.3
+      uses: nick-fields/retry@v2.9.0
       with:
         max_attempts: 10
         timeout_minutes: 15
@@ -167,7 +167,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
     - name: pnpm install
-      uses: nick-fields/retry@v2.8.3
+      uses: nick-fields/retry@v2.9.0
       with:
         max_attempts: 10
         timeout_minutes: 15
@@ -193,7 +193,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
     - name: pnpm install
-      uses: nick-fields/retry@v2.8.3
+      uses: nick-fields/retry@v2.9.0
       with:
         max_attempts: 10
         timeout_minutes: 15
@@ -224,7 +224,7 @@ jobs:
     - name: Start docker containers for testing
       run: docker-compose up -d postgresql
     - name: pnpm install
-      uses: nick-fields/retry@v2.8.3
+      uses: nick-fields/retry@v2.9.0
       with:
         max_attempts: 10
         timeout_minutes: 15
@@ -250,7 +250,7 @@ jobs:
     - name: pnpm install
       run: pnpm install --frozen-lockfile
     - name: pnpm install
-      uses: nick-fields/retry@v2.8.3
+      uses: nick-fields/retry@v2.9.0
       with:
         max_attempts: 10
         timeout_minutes: 15
@@ -297,7 +297,7 @@ jobs:
       run: docker-compose up -d ${{ matrix.db }}
       if: ${{ matrix.db != 'sqlite' }}
     - name: pnpm install
-      uses: nick-fields/retry@v2.8.3
+      uses: nick-fields/retry@v2.9.0
       with:
         max_attempts: 10
         timeout_minutes: 15
@@ -337,7 +337,7 @@ jobs:
     - name: Start redis containers for testing
       run: docker-compose up -d redis
     - name: pnpm install
-      uses: nick-fields/retry@v2.8.3
+      uses: nick-fields/retry@v2.9.0
       with:
         max_attempts: 10
         timeout_minutes: 15
@@ -365,7 +365,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v2.8.3
+        uses: nick-fields/retry@v2.9.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -390,7 +390,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
     - name: pnpm install
-      uses: nick-fields/retry@v2.8.3
+      uses: nick-fields/retry@v2.9.0
       with:
         max_attempts: 10
         timeout_minutes: 15
@@ -415,7 +415,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v2.8.3
+        uses: nick-fields/retry@v2.9.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -440,7 +440,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
     - name: pnpm install
-      uses: nick-fields/retry@v2.8.3
+      uses: nick-fields/retry@v2.9.0
       with:
         max_attempts: 10
         timeout_minutes: 15
@@ -464,7 +464,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
-      - uses: "nick-fields/retry@v2.8.3"
+      - uses: "nick-fields/retry@v2.9.0"
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -494,7 +494,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
-    - uses: "nick-fields/retry@v2.8.3"
+    - uses: "nick-fields/retry@v2.9.0"
       with:
         max_attempts: 10
         timeout_minutes: 15
