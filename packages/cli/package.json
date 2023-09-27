@@ -39,8 +39,7 @@
     "snazzy": "^9.0.0",
     "split2": "^4.2.0",
     "standard": "^17.1.0",
-    "tap": "^16.3.6",
-    "undici": "^5.25.2"
+    "tap": "^16.3.6"
   },
   "dependencies": {
     "@fastify/error": "^3.2.1",
@@ -63,6 +62,7 @@
     "inquirer": "^9.2.7",
     "minimist": "^1.2.8",
     "pino": "^8.14.1",
-    "pino-pretty": "^10.0.0"
+    "pino-pretty": "^10.0.0",
+    "undici": "^5.25.2"
   }
 }
