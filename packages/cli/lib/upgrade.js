@@ -26,7 +26,7 @@ export async function upgrade (argv) {
     await upgradeApp(args.config)
     await upgradeSystem()
   } catch (err) {
-    console.error(`Error during upgrade: ${err.message}`)
+    // silently ignore errors
   }
 }
 
