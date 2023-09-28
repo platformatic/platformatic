@@ -20,15 +20,19 @@ async function getCWD (t) {
   const dir = path.join(urlDirname(import.meta.url), '..', 'tmp', `typescript-plugin-clone-2-${count++}`)
   try {
     await rm(dir, { recursive: true })
-  } catch {}
+  } catch (error) {
+    console.log(error)
+  }
 
   await mkdir(dir, { recursive: true })
 
-  t.after(async () => {
-    try {
-      await rm(dir, { recursive: true })
-    } catch {}
-  })
+  // t.after(async () => {
+  //   try {
+  //     await rm(dir, { recursive: true })
+  //   } catch (error) {
+  //     console.log(error)
+  //   }
+  // })
   return dir
 }
 
