@@ -7,8 +7,8 @@ import { execa } from 'execa'
 // import stripAnsi from 'strip-ansi'
 // import split from 'split2'
 import { fileURLToPath } from 'url'
-import { cliPath } from './helper.mjs'
-// import { cliPath, safeKill } from './helper.mjs'
+// import { cliPath } from './helper.mjs'
+import { cliPath, safeKill } from './helper.mjs'
 
 process.setMaxListeners(100)
 
@@ -114,7 +114,10 @@ test('valid tsconfig file inside an inner folder', async (t) => {
     console.log('5')
     child.stdout.pipe(process.stdout)
     child.stderr.pipe(process.stderr)
-    await child
+    // await child
+
+    safeKill(child.pid)
+
     console.log('6')
   } catch (err) {
     console.log('7')
