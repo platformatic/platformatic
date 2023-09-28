@@ -39,6 +39,7 @@ Configuration settings are organized into the following groups:
 - [`hotReload`](#hotReload)
 - [`allowCycles`](#allowCycles)
 - [`telemetry`](#telemetry)
+- [`server`](#server)
 
 Configuration settings containing sensitive data should be set using
 [configuration placeholders](#configuration-placeholders).
@@ -147,6 +148,62 @@ Note that OTLP traces can be consumed by different solutions, like [Jaeger](http
     }
   }
   ```
+
+### `server`
+
+A object with the following settings:
+
+- **`hostname`** (**required**, `string`) — Hostname where Platformatic Runtime entrypoint server will listen for connections.
+- **`port`** (**required**, `number` or `string`) — Port where Platformatic Runtime etnrypoint server will listen for connections.
+- **`healthCheck`** (`boolean` or `object`) — Enables the health check endpoint.
+  - Powered by [`@fastify/under-pressure`](https://github.com/fastify/under-pressure).
+  - The value can be an object, used to specify the interval between checks in milliseconds (default: `5000`)
+
+  _Example_
+
+  ```json
+  {
+    "server": {
+      ...
+      "healthCheck": {
+        "interval": 2000
+      }
+    }
+  }
+  ```
+- **`cors`** (`object`) — Configuration for Cross-Origin Resource Sharing (CORS) headers.
+  - All options will be passed to the [`@fastify/cors`](https://github.com/fastify/fastify-cors) plugin. In order to specify a `RegExp` object, you can pass `{ regexp: 'yourregexp' }`,
+    it will be automatically converted
+- **`https`** (`object`) - Configuration for HTTPS supporting the following options.
+  - `key` (**required**, `string`, `object`, or `array`) - If `key` is a string, it specifies the private key to be used. If `key` is an object, it must have a `path` property specifying the private key file. Multiple keys are supported by passing an array of keys.
+  - `cert` (**required**, `string`, `object`, or `array`) - If `cert` is a string, it specifies the certificate to be used. If `cert` is an object, it must have a `path` property specifying the certificate file. Multiple certificates are supported by passing an array of keys.
+
+- **`logger`** (`object`) -- the [logger configuration](https://www.fastify.io/docs/latest/Reference/Server/#logger).
+- **`pluginTimeout`** (`integer`) -- the number of milliseconds to wait for a Fastify plugin to load
+- **`bodyLimit`** (`integer`) -- the maximum request body size in bytes
+- **`maxParamLength`** (`integer`) -- the maximum length of a request parameter
+- **`caseSensitive`** (`boolean`) -- if `true`, the router will be case sensitive
+- **`ignoreTrailingSlash`** (`boolean`) -- if `true`, the router will ignore the trailing slash
+- **`ignoreTrailingSlash`** (`boolean`) -- if `true`, the router will ignore the trailing slash
+- **`connectionTimeout`** (`integer`) -- the milliseconds to wait for a new HTTP request
+- **`keepAliveTimeout`** (`integer`) -- the milliseconds to wait for a keep-alive HTTP request
+- **`maxRequestsPerSocket`** (`integer`) -- the maximum number of requests per socket
+- **`forceCloseConnections`** (`boolean` or `"idle"`) -- if `true`, the server will close all connections when it is closed
+- **`requestTimeout`** (`integer`) -- the milliseconds to wait for a request to be completed
+- **`disableRequestLogging`** (`boolean`) -- if `true`, the request logger will be disabled
+- **`exposeHeadRoutes`** (`boolean`) -- if `true`, the router will expose HEAD routes
+- **`serializerOpts`** (`object`) -- the [serializer options](https://www.fastify.io/docs/latest/Reference/Server/#serializeropts)
+- **`requestIdHeader`** (`string` or `false`) -- the name of the header that will contain the request id
+- **`requestIdLogLabel`** (`string`) -- Defines the label used for the request identifier when logging the request. default: `'reqId'`
+- **`jsonShorthand`** (`boolean`) -- default: `true` -- visit [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#jsonshorthand) for more details
+- **`trustProxy`** (`boolean` or `integer` or `string` or `String[]`) -- default: `false` -- visit [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#trustproxy) for more details
+
+:::tip
+
+See the [fastify docs](https://www.fastify.io/docs/latest/Reference/Server) for more details.
+
+:::
+
 
 
 
