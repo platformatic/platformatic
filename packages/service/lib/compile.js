@@ -94,6 +94,8 @@ async function compile (cwd, config, originalLogger) {
 
     // await child
 
+    await require('node:timers/promises').setTimeout(5000)
+
     console.log('Typescript compilation completed successfully.')
     return true
   } catch (error) {
