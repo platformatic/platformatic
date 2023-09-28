@@ -1,9 +1,9 @@
 'use strict'
 
-// const { resolve, join } = require('path')
+const { dirname } = require('path')
 // const pino = require('pino')
 // const pretty = require('pino-pretty')
-// const { loadConfig } = require('@platformatic/config')
+const { loadConfig } = require('@platformatic/config')
 // const { isFileAccessible } = require('./utils.js')
 
 // async function getTSCExecutablePath (cwd) {
@@ -64,6 +64,7 @@
 
 async function compile (cwd, config, originalLogger) {
   // const { execa, logger, tscExecutablePath, tsConfigPath, tsConfigExists } = await setup(cwd, config, originalLogger)
+  // const { execa, logger, tscExecutablePath, tsConfigPath, tsConfigExists } = await setup(cwd, config, originalLogger)
   /* c8 ignore next 3 */
   // if (!tscExecutablePath || !tsConfigExists) {
   //   return false
@@ -102,20 +103,20 @@ async function compile (cwd, config, originalLogger) {
 
 function buildCompileCmd (app) {
   return async function compileCmd (_args) {
-    const fullPath = null
-    const config = null
-    // try {
-    //   // const { configManager } = await loadConfig({}, _args, app, {
-    //   //   watch: false
-    //   // })
-    //   // await configManager.parseAndValidate()
-    //   // config = configManager.current
-    //   // fullPath = dirname(configManager.fullPath)
-    //   /* c8 ignore next 4 */
-    // } catch (err) {
-    //   console.error(err)
-    //   process.exit(1)
-    // }
+    let fullPath = null
+    let config = null
+    try {
+      const { configManager } = await loadConfig({}, _args, app, {
+        watch: false
+      })
+      await configManager.parseAndValidate()
+      config = configManager.current
+      fullPath = dirname(configManager.fullPath)
+      /* c8 ignore next 4 */
+    } catch (err) {
+      console.error(err)
+      process.exit(1)
+    }
 
     if (!await compile(fullPath, config)) {
       process.exit(1)
