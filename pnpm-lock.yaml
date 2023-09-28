@@ -1264,6 +1264,9 @@ importers:
       rfdc:
         specifier: ^1.3.0
         version: 1.3.0
+      tree-kill:
+        specifier: ^1.2.2
+        version: 1.2.2
       ua-parser-js:
         specifier: ^1.0.35
         version: 1.0.36
@@ -1301,9 +1304,6 @@ importers:
       strip-ansi:
         specifier: ^7.1.0
         version: 7.1.0
-      tree-kill:
-        specifier: ^1.2.2
-        version: 1.2.2
       ts-standard:
         specifier: ^12.0.2
         version: 12.0.2(typescript@5.2.2)
@@ -8628,7 +8628,7 @@ packages:
   /tree-kill@1.2.2:
     resolution: {integrity: sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A==}
     hasBin: true
-    dev: true
+    dev: false
 
   /treeify@1.1.0:
     resolution: {integrity: sha512-1m4RA7xVAJrSGrrXGs0L3YTwyvBs2S8PbRHaLZAkFw7JR8oIFwYtysxlBZhYIa7xSyiYJKZ3iGrrk55cGA3i9A==}
