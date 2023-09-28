@@ -131,10 +131,21 @@ test('valid tsconfig file inside an inner folder', async (t) => {
       }
 
       if (new Date() - start > 2 * 60 * 1000) {
+        for (const p of level2) {
+          console.log('killing', p.pid)
+          // child.kill('SIGKILL')
+          // await safeKill(p.pid)
+          // await execa('kill', ['-9', p.pid])
+          // await execa('taskkill', ['/pid', p.pid, '/f', '/t'])
+          await execa('wmic', ['process', 'where', `ProcessId=${p.pid}`, 'terminate'])
+        }
+      }
+
+      if (new Date() - start > 3 * 60 * 1000) {
         console.log(processes.filter((p) => p.name !== 'svchost.exe'))
 
-        for (const p of level2) {
-          // console.log('killing', p.pid)
+        for (const p of level1) {
+          console.log('killing', p.pid)
           // child.kill('SIGKILL')
           // await safeKill(p.pid)
           // await execa('kill', ['-9', p.pid])
