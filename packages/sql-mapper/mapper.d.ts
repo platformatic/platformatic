@@ -1,6 +1,9 @@
 import { FastifyPluginAsync, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { SQL, SQLQuery } from '@databases/sql'
 import { FastifyError } from '@fastify/error'
+import { createCache } from 'async-cache-dedupe'
+
+type cacheOptions = (Parameters<typeof createCache>[0]) | boolean
 
 interface ILogger {
   trace(): any,
@@ -347,6 +350,11 @@ export interface SQLMapperPluginOptions extends BasePoolOptions {
    * An async function that is called after the connection is established.
    */
   onDatabaseLoad?(db: Database, sql: SQL): any,
+  /**
+   * Query caching Configuration
+   * @default false
+   */
+  cache?: cacheOptions
 }
 
 export interface Entities {

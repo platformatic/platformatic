@@ -35,6 +35,30 @@ expectType<{ [entityName: string]: Entity }>(pluginOptions.entities)
 
 expectType<Promise<void>>(pluginOptions.cleanUpAllEntities())
 
+{
+  const pluginOptions2: SQLMapperPluginInterface<Entities> = await connect<Entities>({
+    connectionString: '',
+    cache: false
+  })
+}
+
+{
+  const pluginOptions2: SQLMapperPluginInterface<Entities> = await connect<Entities>({
+    connectionString: '',
+    cache: true
+  })
+}
+
+{
+  const pluginOptions2: SQLMapperPluginInterface<Entities> = await connect<Entities>({
+    connectionString: '',
+    cache: {
+      ttl: 1000,
+      stale: 10
+    }
+  })
+}
+
 interface EntityFields {
   id: number,
   name: string,

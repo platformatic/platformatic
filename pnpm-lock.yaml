@@ -1475,6 +1475,9 @@ importers:
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
+      async-cache-dedupe:
+        specifier: ^1.12.0
+        version: 1.12.0
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -3379,6 +3382,13 @@ packages:
   /astral-regex@2.0.0:
     resolution: {integrity: sha512-Z7tMw1ytTXt5jqMcOP+OQteU1VuNK9Y02uuJtKQ1Sv69jXQKKg5cibLwGJow8yzZP+eAc18EmLGPal0bp36rvQ==}
     engines: {node: '>=8'}
+    dev: false
+
+  /async-cache-dedupe@1.12.0:
+    resolution: {integrity: sha512-LKumaBNhzvZrbrRi3DtIf0ETgjqcGOa/M2U+0DpTp8f+RzIiWubiQmBjuYUaihxetR3cWWC6hQj/uDVBuYajRA==}
+    dependencies:
+      mnemonist: 0.39.5
+      safe-stable-stringify: 2.4.3
     dev: false
 
   /async-hook-domain@2.0.4:
