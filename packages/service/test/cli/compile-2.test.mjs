@@ -9,6 +9,7 @@ import { execa } from 'execa'
 import { fileURLToPath } from 'url'
 import { cliPath } from './helper.mjs'
 // import { cliPath, safeKill } from './helper.mjs'
+import psList from 'ps-list'
 
 process.setMaxListeners(100)
 
@@ -116,6 +117,17 @@ test('valid tsconfig file inside an inner folder', async (t) => {
     })
     console.log('5')
 
+    {
+      const processes = await psList()
+      const level1 = processes.filter((p) => p.pid === child.pid)
+      const level2 = processes.filter((p) => level1.includes(p.ppid))
+      const level3 = processes.filter((p) => level2.includes(p.ppid))
+
+      console.log(level1)
+      console.log(level2)
+      console.log(level3)
+    }
+
     child.stdout.pipe(process.stdout)
     child.stderr.pipe(process.stderr)
     await child
@@ -123,6 +135,17 @@ test('valid tsconfig file inside an inner folder', async (t) => {
     // safeKill(parseInt(child.pid))
 
     console.log('6')
+
+    {
+      const processes = await psList()
+      const level1 = processes.filter((p) => p.pid === child.pid)
+      const level2 = processes.filter((p) => level1.includes(p.ppid))
+      const level3 = processes.filter((p) => level2.includes(p.ppid))
+
+      console.log(level1)
+      console.log(level2)
+      console.log(level3)
+    }
   } catch (err) {
     console.log('7')
     console.log(err)
