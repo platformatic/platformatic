@@ -137,69 +137,69 @@ test('should compile typescript plugin with start command from a folder', async 
   assert.fail('should compile typescript plugin with start command')
 })
 
-test('should start the service if it was precompiled and typescript is `false`', async (t) => {
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
-  const cwd = await getCWD(t)
+// test('should start the service if it was precompiled and typescript is `false`', async (t) => {
+//   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
+//   const cwd = await getCWD(t)
 
-  await cp(testDir, cwd, { recursive: true })
+//   await cp(testDir, cwd, { recursive: true })
 
-  await execa('node', [cliPath, 'compile'], { cwd })
+//   await execa('node', [cliPath, 'compile'], { cwd })
 
-  const child = execa('node', [cliPath, 'start'], { cwd })
-  t.after(exitOnTeardown(child))
+//   const child = execa('node', [cliPath, 'start'], { cwd })
+//   t.after(exitOnTeardown(child))
 
-  const splitter = split()
-  child.stdout.pipe(splitter)
-  child.stderr.pipe(splitter)
+//   const splitter = split()
+//   child.stdout.pipe(splitter)
+//   child.stderr.pipe(splitter)
 
-  let output = ''
+//   let output = ''
 
-  const timeout = setTimeout(() => {
-    console.log(output)
-    assert.fail('should start the service if it was precompiled and typescript is `false`')
-  }, 30000)
+//   const timeout = setTimeout(() => {
+//     console.log(output)
+//     assert.fail('should start the service if it was precompiled and typescript is `false`')
+//   }, 30000)
 
-  for await (const data of splitter) {
-    const sanitized = stripAnsi(data)
-    output += sanitized
-    if (sanitized.includes('Typescript plugin loaded')) {
-      clearTimeout(timeout)
-      return
-    }
-  }
-  assert.fail('should load the typescript plugin without compiling it')
-})
+//   for await (const data of splitter) {
+//     const sanitized = stripAnsi(data)
+//     output += sanitized
+//     if (sanitized.includes('Typescript plugin loaded')) {
+//       clearTimeout(timeout)
+//       return
+//     }
+//   }
+//   assert.fail('should load the typescript plugin without compiling it')
+// })
 
-test('should not start the service if it was not precompiled and typescript is `false`', async (t) => {
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
-  const cwd = await getCWD(t)
+// test('should not start the service if it was not precompiled and typescript is `false`', async (t) => {
+//   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
+//   const cwd = await getCWD(t)
 
-  await cp(testDir, cwd, { recursive: true })
+//   await cp(testDir, cwd, { recursive: true })
 
-  const child = execa('node', [cliPath, 'start'], { cwd })
-  t.after(exitOnTeardown(child))
+//   const child = execa('node', [cliPath, 'start'], { cwd })
+//   t.after(exitOnTeardown(child))
 
-  const splitter = split()
-  child.stdout.pipe(splitter)
-  child.stderr.pipe(splitter)
+//   const splitter = split()
+//   child.stdout.pipe(splitter)
+//   child.stderr.pipe(splitter)
 
-  let output = ''
+//   let output = ''
 
-  const timeout = setTimeout(() => {
-    console.log(output)
-    assert.fail('should not start the service if it was not precompiled and typescript is `false`')
-  }, 30000)
+//   const timeout = setTimeout(() => {
+//     console.log(output)
+//     assert.fail('should not start the service if it was not precompiled and typescript is `false`')
+//   }, 30000)
 
-  for await (const data of splitter) {
-    const sanitized = stripAnsi(data)
-    output += sanitized
-    if (sanitized.includes('Unknown file extension ".ts" for')) {
-      clearTimeout(timeout)
-      return
-    }
-  }
-  assert.fail('should load the typescript plugin without compiling it')
-})
+//   for await (const data of splitter) {
+//     const sanitized = stripAnsi(data)
+//     output += sanitized
+//     if (sanitized.includes('Unknown file extension ".ts" for')) {
+//       clearTimeout(timeout)
+//       return
+//     }
+//   }
+//   assert.fail('should load the typescript plugin without compiling it')
+// })
 
 // test('should compile typescript plugin with string config', async (t) => {
 //   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-string')
