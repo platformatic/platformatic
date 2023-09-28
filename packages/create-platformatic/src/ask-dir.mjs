@@ -1,3 +1,5 @@
+'use strict'
+
 import inquirer from 'inquirer'
 import { resolve } from 'path'
 

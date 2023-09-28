@@ -91,3 +91,7 @@ export const isCurrentVersionSupported = (currentVersion) => {
   }
   return false
 }
+
+export function convertServiceNameToPrefix (serviceName) {
+  return serviceName.replace(/-/g, '_').toUpperCase()
+}

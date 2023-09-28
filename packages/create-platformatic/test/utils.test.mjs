@@ -1,5 +1,5 @@
 import { test } from 'tap'
-import { randomBetween, sleep, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions, findRuntimeConfigFile, findComposerConfigFile } from '../src/utils.mjs'
+import { randomBetween, sleep, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions, findRuntimeConfigFile, findComposerConfigFile, convertServiceNameToPrefix } from '../src/utils.mjs'
 import { mkdtempSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
@@ -232,4 +232,18 @@ test('isCurrentVersionSupported', async ({ equal }) => {
     const supported = isCurrentVersionSupported(version)
     equal(supported, true)
   }
+})
+
+test('should convert service name to env prefix', async (t) => {
+  const expectations = {
+    'my-service': 'MY_SERVICE',
+    a: 'A',
+    MY_SERVICE: 'MY_SERVICE',
+    asderas123: 'ASDERAS123'
+  }
+
+  Object.entries(expectations).forEach((exp) => {
+    const converted = convertServiceNameToPrefix(exp[0])
+    t.equal(exp[1], converted)
+  })
 })

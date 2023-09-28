@@ -1,4 +1,4 @@
-import { getVersion, getDependencyVersion, isFileAccessible } from '../utils.mjs'
+import { getVersion, getDependencyVersion, isFileAccessible, convertServiceNameToPrefix } from '../utils.mjs'
 import { createPackageJson } from '../create-package-json.mjs'
 import { createGitignore } from '../create-gitignore.mjs'
 import { getPkgManager } from '../get-pkg-manager.mjs'
@@ -168,7 +168,8 @@ export async function createRuntimeService ({ servicesDir, names, logger }) {
     port: '0',
     isRuntimeContext: true,
     runtimeContext: {
-      servicesNames: names
+      servicesNames: names,
+      envPrefix: convertServiceNameToPrefix(name)
     }
   })
 
