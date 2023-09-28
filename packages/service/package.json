@@ -7,7 +7,7 @@
     "plt-service": "./service.mjs"
   },
   "scripts": {
-    "test": "pnpm run lint && c8 -x fixtures -x test node --test $(glob \"test/**/*.test.{js,mjs}\") && tsd",
+    "test": "pnpm run lint && c8 -x fixtures -x test node ./test/runner.js && tsd",
     "build": "node lib/schema.js | json2ts > config.d.ts",
     "lint": "standard | snazzy && ts-standard | snazzy"
   },

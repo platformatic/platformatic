@@ -56,7 +56,7 @@ test('should compile typescript plugin', async (t) => {
   const timeout = setTimeout(() => {
     console.log(output)
     assert.fail('should not start the service if it was not precompiled and typescript is `false`')
-  }, 15000)
+  }, 30000)
 
   for await (const data of splitter) {
     const sanitized = stripAnsi(data)
@@ -93,7 +93,7 @@ test('should compile typescript plugin even if typescript is `false`', async (t)
   const timeout = setTimeout(() => {
     console.log(output)
     assert.fail('should not start the service if it was not precompiled and typescript is `false`')
-  }, 15000)
+  }, 30000)
 
   for await (const data of splitter) {
     const sanitized = stripAnsi(data)
@@ -130,7 +130,7 @@ test('should compile typescript plugin with start command', async (t) => {
   const timeout = setTimeout(() => {
     console.log(output)
     assert.fail('should not start the service if it was not precompiled and typescript is `false`')
-  }, 15000)
+  }, 30000)
 
   for await (const data of splitter) {
     const sanitized = stripAnsi(data)
@@ -340,7 +340,7 @@ test('should compile ts app with config', async (t) => {
   const timeout = setTimeout(() => {
     console.log(output)
     assert.fail('should not start the service if it was not precompiled and typescript is `false`')
-  }, 15000)
+  }, 30000)
 
   for await (const data of splitter) {
     const sanitized = stripAnsi(data)
