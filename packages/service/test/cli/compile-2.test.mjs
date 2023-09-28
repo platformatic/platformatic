@@ -96,14 +96,24 @@ async function getCWD (t) {
 // })
 
 test('valid tsconfig file inside an inner folder', async (t) => {
+  console.log('1')
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
+  console.log('2')
   const cwd = await getCWD(t)
+  console.log('3')
 
   await cp(testDir, cwd, { recursive: true })
 
+  t.after(async () => {
+    console.log('after')
+  })
+
+  console.log('4')
   try {
     await execa('node', [cliPath, 'compile'], { cwd, stdio: 'inherit' })
+    console.log('5')
   } catch (err) {
+    console.log('6')
     assert.fail('should not catch any error')
   }
 })
