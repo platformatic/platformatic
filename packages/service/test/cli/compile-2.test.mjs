@@ -121,6 +121,7 @@ test('valid tsconfig file inside an inner folder', async (t) => {
 
       if (level1.length === 0) {
         clearInterval(timeout)
+        return
       }
 
       for (const p of level1) {
