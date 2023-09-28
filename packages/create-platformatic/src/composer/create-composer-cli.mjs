@@ -12,7 +12,7 @@ import { execa } from 'execa'
 import ora from 'ora'
 import createComposer from './create-composer.mjs'
 import askDir from '../ask-dir.mjs'
-import { askDynamicWorkspaceCreateGHAction, askStaticWorkspaceGHAction } from '../ghaction.mjs'
+// import { askDynamicWorkspaceCreateGHAction, askStaticWorkspaceGHAction } from '../ghaction.mjs'
 import { getRunPackageManagerInstall, getPort, getOverwriteReadme } from '../cli-options.mjs'
 
 export const createReadme = async (logger, dir = '.') => {

@@ -1,20 +1,20 @@
-import { getVersion, getDependencyVersion, isFileAccessible } from '../utils.mjs'
+import { getVersion, getDependencyVersion } from '../utils.mjs'
 import { createPackageJson } from '../create-package-json.mjs'
 import { createGitignore } from '../create-gitignore.mjs'
 import { getPkgManager } from '../get-pkg-manager.mjs'
 import parseArgs from 'minimist'
-import { join } from 'path'
 import inquirer from 'inquirer'
 import which from 'which'
-import { readFile, writeFile, mkdir } from 'fs/promises'
+import { mkdir, stat } from 'fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa } from 'execa'
 import ora from 'ora'
 import { getConnectionString, createDB } from './create-db.mjs'
 import askDir from '../ask-dir.mjs'
-import { askDynamicWorkspaceCreateGHAction, askStaticWorkspaceGHAction } from '../ghaction.mjs'
-import { getRunPackageManagerInstall, getUseTypescript, getPort, getOverwriteReadme } from '../cli-options.mjs'
+import { getRunPackageManagerInstall, getUseTypescript, getPort } from '../cli-options.mjs'
+import { createReadme } from '../create-readme.mjs'
+import { join } from 'node:path'
 
 const databases = [{
   value: 'sqlite',
@@ -29,26 +29,6 @@ const databases = [{
   value: 'mariadb',
   name: 'MariaDB'
 }]
-
-export const createReadme = async (logger, dir = '.') => {
-  const readmeFileName = join(dir, 'README.md')
-  let isReadmeExists = await isFileAccessible(readmeFileName)
-  if (isReadmeExists) {
-    logger.debug(`${readmeFileName} found, asking to overwrite it.`)
-    const { shouldReplace } = await inquirer.prompt([getOverwriteReadme()])
-    isReadmeExists = !shouldReplace
-  }
-
-  if (isReadmeExists) {
-    logger.debug(`${readmeFileName} found, skipping creation of README.md file.`)
-    return
-  }
-
-  const readmeFile = new URL('README.md', import.meta.url)
-  const readme = await readFile(readmeFile, 'utf-8')
-  await writeFile(readmeFileName, readme)
-  logger.debug(`${readmeFileName} successfully created.`)
-}
 
 export function parseDBArgs (_args) {
   return parseArgs(_args, {
@@ -79,8 +59,27 @@ const createPlatformaticDB = async (_args, opts) => {
   const args = parseDBArgs(_args)
   const version = await getVersion()
   const pkgManager = getPkgManager()
-  const projectDir = opts.dir || await askDir(logger, '.')
+  const projectDir = opts.dir || await askDir(logger, join('.', 'platformatic-db'))
+
+  // Create the project directory
+  try {
+    await stat(projectDir)
+    logger.error(`Directory ${projectDir} already exists. Please choose another path.`)
+    process.exit(1)
+  } catch (err) {}
+
   const isRuntimeContext = opts.isRuntimeContext || false
+  const toAsk = []
+
+  // Ask for port if not in runtime context
+  const portQuestion = getPort(args.port)
+  portQuestion.when = !isRuntimeContext
+  toAsk.push(portQuestion)
+
+  // Ask to install deps
+  const installDepsQuestion = getRunPackageManagerInstall(pkgManager)
+  installDepsQuestion.when = !opts.skipPackageJson
+  toAsk.push(installDepsQuestion)
 
   const { database } = await inquirer.prompt({
     type: 'list',
@@ -123,16 +122,27 @@ const createPlatformaticDB = async (_args, opts) => {
       break
     }
   }
-  const wizardPrompts = [{
+
+  toAsk.push({
     type: 'list',
     name: 'defaultMigrations',
     message: 'Do you want to create default migrations?',
     default: true,
     choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-  }]
+  })
+  toAsk.push({
+    type: 'list',
+    name: 'applyMigrations',
+    message: 'Do you want to apply migrations?',
+    default: true,
+    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }],
+    when: (answers) => {
+      return answers.defaultMigrations
+    }
+  })
 
   if (args.plugin === false) {
-    wizardPrompts.push({
+    toAsk.push({
       type: 'list',
       name: 'generatePlugin',
       message: 'Do you want to create a plugin?',
@@ -140,13 +150,29 @@ const createPlatformaticDB = async (_args, opts) => {
       choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
     })
   }
-  const wizardOptions = await inquirer.prompt(wizardPrompts, getUseTypescript(args.typescript))
-  if (!isRuntimeContext) {
-    const { port } = await inquirer.prompt([getPort(args.port)])
-    wizardOptions.port = port
-  }
 
-  // Create the project directory
+  toAsk.push(getUseTypescript(args.typescript))
+
+  toAsk.push({
+    type: 'list',
+    name: 'staticWorkspaceGitHubAction',
+    message: 'Do you want to create the github action to deploy this application to Platformatic Cloud?',
+    default: true,
+    when: !opts.skipGitHubActions,
+    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+  },
+  {
+    type: 'list',
+    name: 'dynamicWorkspaceGitHubAction',
+    message: 'Do you want to enable PR Previews in your application?',
+    default: true,
+    when: !opts.skipGitHubActions,
+    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+  })
+
+  // Promtp for questions
+  const wizardOptions = await inquirer.prompt(toAsk)
+
   await mkdir(projectDir, { recursive: true })
 
   const generatePlugin = args.plugin || wizardOptions.generatePlugin
@@ -162,10 +188,12 @@ const createPlatformaticDB = async (_args, opts) => {
     migrations: wizardOptions.defaultMigrations ? args.migrations : '',
     plugin: generatePlugin,
     types: useTypes,
-    typescript: useTypescript
+    typescript: useTypescript,
+    staticWorkspaceGitHubAction: wizardOptions.staticWorkspaceGitHubAction,
+    dynamicWorkspaceGitHubAction: wizardOptions.dynamicWorkspaceGitHubAction
   }
 
-  const env = await createDB(params, logger, projectDir, version)
+  await createDB(params, logger, projectDir, version)
 
   const fastifyVersion = await getDependencyVersion('fastify')
 
@@ -181,25 +209,19 @@ const createPlatformaticDB = async (_args, opts) => {
   // Create the package.json, .gitignore, readme
   await createPackageJson(version, fastifyVersion, logger, projectDir, useTypescript, scripts, dependencies)
   await createGitignore(logger, projectDir)
-  await createReadme(logger, projectDir)
+  await createReadme(logger, projectDir, 'db')
 
   let hasPlatformaticInstalled = false
-  if (!opts.skipPackageJson) {
-    const { runPackageManagerInstall } = await inquirer.prompt([
-      getRunPackageManagerInstall(pkgManager)
-    ])
-
-    if (runPackageManagerInstall) {
-      const spinner = ora('Installing dependencies...').start()
-      await execa(pkgManager, ['install'], { cwd: projectDir })
-      spinner.succeed('...done!')
-      hasPlatformaticInstalled = true
-    }
+  if (wizardOptions.runPackageManagerInstall) {
+    const spinner = ora('Installing dependencies...').start()
+    await execa(pkgManager, ['install'], { cwd: projectDir })
+    spinner.succeed()
+    hasPlatformaticInstalled = true
   }
 
   if (!hasPlatformaticInstalled) {
     try {
-      const npmLs = JSON.parse(await execa('npm', ['ls', '--json']))
+      const npmLs = JSON.parse(await execa('npm', ['ls', '--json']).toString())
       hasPlatformaticInstalled = !!npmLs.dependencies.platformatic
     } catch {
       // Ignore all errors, this can fail
@@ -216,42 +238,27 @@ const createPlatformaticDB = async (_args, opts) => {
     // - run the migrations
     // - generate types
     // if we don't generate migrations, we don't ask to apply them (the folder might not exist)
-    if (wizardOptions.defaultMigrations) {
-      const { applyMigrations } = await inquirer.prompt([{
-        type: 'list',
-        name: 'applyMigrations',
-        message: 'Do you want to apply migrations?',
-        default: true,
-        choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-      }])
-
-      if (applyMigrations) {
-        const spinner = ora('Applying migrations...').start()
-        // We need to apply migrations using the platformatic installed in the project
-        try {
-          await execa(pkgManager, ['exec', 'platformatic', 'db', 'migrations', 'apply'], { cwd: projectDir })
-          spinner.succeed('...done!')
-        } catch (err) {
-          logger.trace({ err })
-          spinner.fail('...failed! Try again by running "platformatic db migrations apply"')
-        }
+    if (wizardOptions.defaultMigrations && wizardOptions.applyMigrations) {
+      const spinner = ora('Applying migrations...').start()
+      // We need to apply migrations using the platformatic installed in the project
+      try {
+        await execa(pkgManager, ['exec', 'platformatic', 'db', 'migrations', 'apply'], { cwd: projectDir })
+        spinner.succeed()
+      } catch (err) {
+        logger.trace({ err })
+        spinner.fail('Failed applying migrations! Try again by running "platformatic db migrations apply"')
       }
     }
     if (generatePlugin) {
       const spinner = ora('Generating types...').start()
       try {
         await execa(pkgManager, ['exec', 'platformatic', 'db', 'types'], { cwd: projectDir })
-        spinner.succeed('...done!')
+        spinner.succeed()
       } catch (err) {
         logger.trace({ err })
-        spinner.fail('...failed! Try again by running "platformatic db types"')
+        spinner.fail('Failed to generate Types. Try again by running "platformatic service types"')
       }
     }
-  }
-
-  if (!opts.skipGitHubActions) {
-    await askStaticWorkspaceGHAction(logger, env, 'db', useTypescript, projectDir)
-    await askDynamicWorkspaceCreateGHAction(logger, env, 'db', useTypescript, projectDir)
   }
 }
 

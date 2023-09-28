@@ -5,7 +5,7 @@ import { getPkgManager } from '../get-pkg-manager.mjs'
 import parseArgs from 'minimist'
 import { join } from 'path'
 import inquirer from 'inquirer'
-import { readFile, writeFile, mkdir, stat } from 'fs/promises'
+import { mkdir, stat } from 'fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa } from 'execa'
@@ -13,14 +13,7 @@ import ora from 'ora'
 import createService from './create-service.mjs'
 import askDir from '../ask-dir.mjs'
 import { getRunPackageManagerInstall, getUseTypescript, getPort } from '../cli-options.mjs'
-
-export const createReadme = async (logger, dir = '.') => {
-  const readmeFileName = join(dir, 'README.md')
-  const readmeFile = new URL('README.md', import.meta.url)
-  const readme = await readFile(readmeFile, 'utf-8')
-  await writeFile(readmeFileName, readme)
-  logger.debug(`${readmeFileName} successfully created.`)
-}
+import { createReadme } from '../create-readme.mjs'
 
 const createPlatformaticService = async (_args, opts = {}) => {
   const logger = opts.logger || pino(pretty({
@@ -113,7 +106,7 @@ const createPlatformaticService = async (_args, opts = {}) => {
   if (!opts.skipGitignore) {
     await createGitignore(logger, projectDir)
   }
-  await createReadme(logger, projectDir)
+  await createReadme(logger, projectDir, 'service')
 
   if (runPackageManagerInstall) {
     const spinner = ora('Installing dependencies...').start()

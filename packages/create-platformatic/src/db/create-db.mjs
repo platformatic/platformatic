@@ -3,6 +3,7 @@ import { join } from 'path'
 import { findDBConfigFile, isFileAccessible } from '../utils.mjs'
 import { getTsConfig } from '../get-tsconfig.mjs'
 import { generatePlugins } from '../create-plugins.mjs'
+import { createDynamicWorkspaceGHAction, createStaticWorkspaceGHAction } from '../ghaction.mjs'
 
 const connectionStrings = {
   postgres: 'postgres://postgres:postgres@127.0.0.1:5432/postgres',
@@ -344,9 +345,21 @@ export async function createDB (params, logger, currentDir, version) {
     plugin = true,
     types = true,
     typescript = false,
-    connectionString
+    connectionString,
+    staticWorkspaceGitHubAction,
+    dynamicWorkspaceGitHubAction
   } = params
 
+  const dbEnv = {
+    DATABASE_URL: connectionString,
+    PLT_SERVER_LOGGER_LEVEL: 'info',
+    PORT: port,
+    PLT_SERVER_HOSTNAME: hostname
+  }
+
+  if (typescript) {
+    dbEnv.PLT_TYPESCRIPT = true
+  }
   connectionString = connectionString || getConnectionString(database)
   const createMigrations = !!migrations // If we don't define a migrations folder, we don't create it
   const accessibleConfigFilename = await findDBConfigFile(currentDir)
@@ -436,17 +449,14 @@ export async function createDB (params, logger, currentDir, version) {
     }
   }
 
-  const output = {
-    DATABASE_URL: connectionString,
-    PLT_SERVER_LOGGER_LEVEL: 'info',
-    PORT: port,
-    PLT_SERVER_HOSTNAME: hostname
+  if (staticWorkspaceGitHubAction) {
+    await createStaticWorkspaceGHAction(logger, dbEnv, './platformatic.db.json', currentDir, typescript)
+  }
+  if (dynamicWorkspaceGitHubAction) {
+    await createDynamicWorkspaceGHAction(logger, dbEnv, './platformatic.db.json', currentDir, typescript)
   }
 
-  if (typescript) {
-    output.PLT_TYPESCRIPT = true
-  }
-  return output
+  return dbEnv
 }
 
 export default createDB
