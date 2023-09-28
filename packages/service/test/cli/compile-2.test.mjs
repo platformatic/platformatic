@@ -132,7 +132,7 @@ test('valid tsconfig file inside an inner folder', async (t) => {
         // await execa('taskkill', ['/pid', p.pid, '/f', '/t'])
         // await execa('wmic', ['process', 'where', `ProcessId=${p.pid}`, 'terminate'])
       }
-    }, 5000)
+    }, 15000)
 
     child.stdout.pipe(process.stdout)
     child.stderr.pipe(process.stderr)

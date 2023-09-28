@@ -79,23 +79,7 @@ async function compile (cwd, config, originalLogger) {
     child.stdout.pipe(process.stdout)
     child.stderr.pipe(process.stderr)
 
-    const res = await child
-    logger.info(res.stdout)
-
-    logger.info(res.exitCode)
-    logger.info(res.isCanceled)
-    logger.info(res.killed)
-    logger.info(res.all)
-
-    // if (child.pid) {
-    //   killTree(child.pid, (error) => {
-    //     /* c8 ignore next 3 */
-    //     if (error) {
-    //       logger.error('Failed to kill child process.')
-    //       logger.error(error.message)
-    //     }
-    //   })
-    // }
+    await child
 
     logger.info('Typescript compilation completed successfully.')
     return true
