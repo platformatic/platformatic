@@ -106,7 +106,8 @@ test('valid tsconfig file inside an inner folder', async (t) => {
     const start = new Date()
     const child = execa('node', [cliPath, 'compile'], {
       cwd,
-      killSignal: 'SIGKILL'
+      killSignal: 'SIGKILL',
+      windowsHide: true
     })
     console.log('5')
 
@@ -132,7 +133,7 @@ test('valid tsconfig file inside an inner folder', async (t) => {
       if (new Date() - start > 2 * 60 * 1000) {
         console.log(processes.filter((p) => p.name !== 'svchost.exe'))
 
-        for (const p of level1) {
+        for (const p of level2) {
           console.log('killing', p.pid)
           child.kill('SIGKILL')
           // await safeKill(p.pid)
