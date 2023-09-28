@@ -124,3 +124,9 @@ test('https pem path', async ({ equal, same, match, teardown }) => {
 test('not load', async ({ rejects }) => {
   await rejects(execa('node', [cliPath, 'start', '-c', join(import.meta.url, '..', 'fixtures', 'not-load.service.json')]))
 })
+
+test('no server', async ({ equal, same, match, teardown }) => {
+  const { child, url } = await start(['-c', join(import.meta.url, '..', '..', 'fixtures', 'no-server', 'platformatic.service.json')])
+  match(url, /http:\/\/127.0.0.1:[0-9]+/)
+  child.kill('SIGINT')
+})
