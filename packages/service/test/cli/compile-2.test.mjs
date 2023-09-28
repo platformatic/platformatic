@@ -110,7 +110,7 @@ test('valid tsconfig file inside an inner folder', async (t) => {
 
   console.log('4')
   try {
-    const child = execa('node', [cliPath, 'compile'], { cwd, stdio: 'inherit' })
+    const child = execa('node', [cliPath, 'compile'], { cwd })
     console.log('5')
     child.stdout.pipe(process.stdout)
     child.stderr.pipe(process.stderr)
@@ -118,6 +118,7 @@ test('valid tsconfig file inside an inner folder', async (t) => {
     console.log('6')
   } catch (err) {
     console.log('7')
+    console.log(err)
     assert.fail('should not catch any error')
   }
 })
