@@ -8,6 +8,8 @@ import split from 'split2'
 import { fileURLToPath } from 'url'
 import { cliPath, safeKill } from './helper.mjs'
 
+process.setMaxListeners(100)
+
 let count = 0
 
 function urlDirname (url) {
@@ -15,7 +17,7 @@ function urlDirname (url) {
 }
 
 async function getCWD (t) {
-  const dir = path.join(urlDirname(import.meta.url), '..', 'tmp', `typescript-plugin-clone-${count++}`)
+  const dir = path.join(urlDirname(import.meta.url), '..', 'tmp', `typescript-plugin-clone-1-${count++}`)
   try {
     await rm(dir, { recursive: true })
   } catch {}
@@ -47,10 +49,20 @@ test('should compile typescript plugin', async (t) => {
 
   const splitter = split()
   child.stdout.pipe(splitter)
+  child.stderr.pipe(splitter)
+
+  let output = ''
+
+  const timeout = setTimeout(() => {
+    console.log(output)
+    assert.fail('should not start the service if it was not precompiled and typescript is `false`')
+  }, 15000)
 
   for await (const data of splitter) {
     const sanitized = stripAnsi(data)
+    output += sanitized
     if (sanitized.includes('Typescript compilation completed successfully.')) {
+      clearTimeout(timeout)
       const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
       try {
         await access(jsPluginPath)
@@ -74,10 +86,20 @@ test('should compile typescript plugin even if typescript is `false`', async (t)
 
   const splitter = split()
   child.stdout.pipe(splitter)
+  child.stderr.pipe(splitter)
+
+  let output = ''
+
+  const timeout = setTimeout(() => {
+    console.log(output)
+    assert.fail('should not start the service if it was not precompiled and typescript is `false`')
+  }, 15000)
 
   for await (const data of splitter) {
     const sanitized = stripAnsi(data)
+    output += sanitized
     if (sanitized.includes('Typescript compilation completed successfully.')) {
+      clearTimeout(timeout)
       const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
       try {
         await access(jsPluginPath)
@@ -101,10 +123,20 @@ test('should compile typescript plugin with start command', async (t) => {
 
   const splitter = split()
   child.stdout.pipe(splitter)
+  child.stderr.pipe(splitter)
+
+  let output = ''
+
+  const timeout = setTimeout(() => {
+    console.log(output)
+    assert.fail('should not start the service if it was not precompiled and typescript is `false`')
+  }, 15000)
 
   for await (const data of splitter) {
     const sanitized = stripAnsi(data)
+    output += sanitized
     if (sanitized.includes('Typescript plugin loaded')) {
+      clearTimeout(timeout)
       return
     }
   }
@@ -301,10 +333,20 @@ test('should compile ts app with config', async (t) => {
 
   const splitter = split()
   child.stdout.pipe(splitter)
+  child.stderr.pipe(splitter)
+
+  let output = ''
+
+  const timeout = setTimeout(() => {
+    console.log(output)
+    assert.fail('should not start the service if it was not precompiled and typescript is `false`')
+  }, 15000)
 
   for await (const data of splitter) {
     const sanitized = stripAnsi(data)
+    output += sanitized
     if (sanitized.includes('Typescript compilation completed successfully.')) {
+      clearTimeout(timeout)
       const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
       try {
         await access(jsPluginPath)

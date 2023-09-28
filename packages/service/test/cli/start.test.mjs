@@ -3,28 +3,28 @@ import { test } from 'node:test'
 import { join } from 'desm'
 import { request } from 'undici'
 import { execa } from 'execa'
-import { start, cliPath } from './helper.mjs'
+import { start, cliPath, safeKill } from './helper.mjs'
+
+process.setMaxListeners(100)
 
 test('autostart', async (t) => {
   const { child, url } = await start(['-c', join(import.meta.url, '..', '..', 'fixtures', 'hello', 'platformatic.service.json')])
+  t.after(() => safeKill(child))
 
   const res = await request(`${url}`)
   assert.strictEqual(res.statusCode, 200)
   const body = await res.body.json()
   assert.strictEqual(body.hello, 'world')
-
-  child.kill('SIGINT')
 })
 
 test('start command', async (t) => {
   const { child, url } = await start(['-c', join(import.meta.url, '..', '..', 'fixtures', 'hello', 'platformatic.service.json')])
+  t.after(() => safeKill(child))
 
   const res = await request(`${url}`)
   assert.strictEqual(res.statusCode, 200)
   const body = await res.body.json()
   assert.strictEqual(body.hello, 'world')
-
-  child.kill('SIGINT')
 })
 
 test('allow custom env properties', async (t) => {
@@ -40,7 +40,7 @@ test('allow custom env properties', async (t) => {
     }
   )
   t.after(() => {
-    child.kill('SIGINT')
+    safeKill(child)
     delete process.env.A_CUSTOM_PORT
   })
 
@@ -65,7 +65,7 @@ test('use default env variables names', async (t) => {
     }
   )
   t.after(() => {
-    child.kill('SIGINT')
+    safeKill(child)
     delete process.env.A_CUSTOM_PORT
   })
 
@@ -76,22 +76,22 @@ test('use default env variables names', async (t) => {
 
 test('default logger', async (t) => {
   const { child, url } = await start(['-c', join(import.meta.url, '..', '..', 'fixtures', 'hello', 'no-server-logger.json')])
+  t.after(() => safeKill(child))
   assert.match(url, /http:\/\/127.0.0.1:[0-9]+/)
-  child.kill('SIGINT')
 })
 
 test('plugin options', async (t) => {
   const { child, url } = await start(['-c', join(import.meta.url, '..', '..', 'fixtures', 'options', 'platformatic.service.yml')])
+  t.after(() => safeKill(child))
   const res = await request(`${url}`)
   assert.strictEqual(res.statusCode, 200)
   const body = await res.body.json()
   assert.strictEqual(body.something, 'else')
-
-  child.kill('SIGINT')
 })
 
 test('https embedded pem', async (t) => {
   const { child, url } = await start(['-c', join(import.meta.url, '..', '..', 'fixtures', 'https', 'embedded-pem.json')])
+  t.after(() => safeKill(child))
 
   assert.match(url, /https:\/\//)
   const res = await request(`${url}`)
@@ -100,12 +100,11 @@ test('https embedded pem', async (t) => {
   assert.deepStrictEqual(body, {
     hello: 'world'
   }, 'response')
-
-  child.kill('SIGINT')
 })
 
 test('https pem path', async (t) => {
   const { child, url } = await start(['-c', join(import.meta.url, '..', '..', 'fixtures', 'https', 'pem-path.json')])
+  t.after(() => safeKill(child))
 
   assert.match(url, /https:\/\//)
   const res = await request(`${url}`)
@@ -114,8 +113,6 @@ test('https pem path', async (t) => {
   assert.deepStrictEqual(body, {
     hello: 'world'
   }, 'response')
-
-  child.kill('SIGINT')
 })
 
 test('not load', async (t) => {

@@ -3,7 +3,7 @@ import { on } from 'events'
 import { execa } from 'execa'
 import split from 'split2'
 import { join } from 'desm'
-import os from 'node:os'
+import kill from 'tree-kill'
 
 setGlobalDispatcher(new Agent({
   keepAliveTimeout: 10,
@@ -46,15 +46,5 @@ export async function start (commandOpts, exacaOpts = {}) {
 }
 
 export async function safeKill (child) {
-  child.kill('SIGINT')
-  if (os.platform() === 'win32') {
-    try {
-      await execa('taskkill', ['/pid', child.pid, '/f', '/t'])
-    } catch (err) {
-      if (err.stderr.indexOf('not found') === 0) {
-        console.error(`Failed to kill process ${child.pid}`)
-        console.error(err)
-      }
-    }
-  }
+  kill(child.pid)
 }
