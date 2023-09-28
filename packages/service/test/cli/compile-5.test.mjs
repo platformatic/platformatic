@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 import test from 'node:test'
 import path from 'node:path'
-import { access, cp, rm, mkdir } from 'node:fs/promises'
+import { cp, rm, mkdir } from 'node:fs/promises'
 import { execa } from 'execa'
 import stripAnsi from 'strip-ansi'
 import split from 'split2'
@@ -42,33 +42,13 @@ function exitOnTeardown (child) {
   }
 }
 
-test('start command should not compile typescript if `typescript` is false', async (t) => {
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
+test('should start without a tsconfig but with a outDir configuration', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-compiled')
   const cwd = await getCWD(t)
 
   await cp(testDir, cwd, { recursive: true })
 
   const child = execa('node', [cliPath, 'start'], { cwd })
-  t.after(exitOnTeardown(child))
-
-  const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
-  try {
-    await access(jsPluginPath)
-    assert.fail("should not have created 'dist/plugin.js'")
-  } catch (err) {
-    // cannot start because the plugin is not compiled
-    assert.strictEqual(err.code, 'ENOENT')
-    assert.strictEqual(err.path, jsPluginPath)
-  }
-})
-
-test('should compile typescript plugin with start command with different cwd', async (t) => {
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
-  const dest = path.join(urlDirname(import.meta.url), '..', 'tmp', `typescript-plugin-clone2-${count++}`)
-
-  await cp(testDir, dest, { recursive: true })
-
-  const child = execa('node', [cliPath, 'start', '-c', path.join(dest, 'platformatic.service.json')])
   t.after(exitOnTeardown(child))
 
   const splitter = split()
@@ -79,7 +59,7 @@ test('should compile typescript plugin with start command with different cwd', a
 
   const timeout = setTimeout(() => {
     console.log(output)
-    assert.fail('should compile typescript plugin with start command')
+    assert.fail('should start without a tsconfig but with a outDir configuration')
   }, 30000)
 
   for await (const data of splitter) {
@@ -93,21 +73,8 @@ test('should compile typescript plugin with start command with different cwd', a
   assert.fail('should compile typescript plugin with start command')
 })
 
-test('valid tsconfig file inside an inner folder', async (t) => {
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
-  const cwd = await getCWD(t)
-
-  await cp(testDir, cwd, { recursive: true })
-
-  try {
-    await execa('node', [cliPath, 'compile'], { cwd, stdio: 'inherit' })
-  } catch (err) {
-    assert.fail('should not catch any error')
-  }
-})
-
-test('should compile typescript plugin with start command from a folder', async (t) => {
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-autoload')
+test('should compile typescript plugin with start command with custom flags', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-custom-flags')
   const cwd = await getCWD(t)
 
   await cp(testDir, cwd, { recursive: true })
@@ -123,7 +90,7 @@ test('should compile typescript plugin with start command from a folder', async 
 
   const timeout = setTimeout(() => {
     console.log(output)
-    assert.fail('should compile typescript plugin with start command')
+    assert.fail('should compile typescript plugin with start command with custom flags')
   }, 30000)
 
   for await (const data of splitter) {
