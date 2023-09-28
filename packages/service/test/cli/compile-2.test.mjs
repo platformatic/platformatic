@@ -9,7 +9,7 @@ import { execa } from 'execa'
 import { fileURLToPath } from 'url'
 import { cliPath } from './helper.mjs'
 // import { cliPath, safeKill } from './helper.mjs'
-import psList from 'ps-list'
+// import psList from 'ps-list'
 
 process.setMaxListeners(100)
 
