@@ -73,6 +73,9 @@ async function compile (cwd, config, originalLogger) {
   try {
     const tsFlags = config?.plugins?.typescript?.flags || ['--project', tsConfigPath, '--rootDir', '.']
     const child = execa(tscExecutablePath, tsFlags, { cwd })
+    child.stdout.pipe(process.stdout)
+    child.stderr.pipe(process.stderr)
+
     await child
 
     // if (child.pid) {
