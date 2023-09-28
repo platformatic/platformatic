@@ -7,8 +7,8 @@ import { execa } from 'execa'
 // import stripAnsi from 'strip-ansi'
 // import split from 'split2'
 import { fileURLToPath } from 'url'
-import { cliPath } from './helper.mjs'
-// import { cliPath, safeKill } from './helper.mjs'
+// import { cliPath } from './helper.mjs'
+import { cliPath, safeKill } from './helper.mjs'
 import psList from 'ps-list'
 
 process.setMaxListeners(100)
@@ -97,19 +97,11 @@ async function getCWD (t) {
 // })
 
 test('valid tsconfig file inside an inner folder', async (t) => {
-  console.log('1')
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
-  console.log('2')
   const cwd = await getCWD(t)
-  console.log('3')
 
   await cp(testDir, cwd, { recursive: true })
 
-  t.after(async () => {
-    console.log('after')
-  })
-
-  console.log('4')
   try {
     const child = execa('node', [cliPath, 'compile'], {
       cwd,
@@ -130,6 +122,10 @@ test('valid tsconfig file inside an inner folder', async (t) => {
       if (level1.length === 0) {
         clearInterval(timeout)
       }
+
+      for (const p of level1) {
+        await safeKill(p.pid)
+      }
     }, 5000)
 
     child.stdout.pipe(process.stdout)
@@ -141,7 +137,6 @@ test('valid tsconfig file inside an inner folder', async (t) => {
 
     console.log('6')
   } catch (err) {
-    console.log('7')
     console.log(err)
     assert.fail('should not catch any error')
   }
