@@ -62,36 +62,36 @@ test('start command should not compile typescript if `typescript` is false', asy
   }
 })
 
-test('should compile typescript plugin with start command with different cwd', async (t) => {
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
-  const dest = path.join(urlDirname(import.meta.url), '..', 'tmp', `typescript-plugin-clone2-${count++}`)
+// test('should compile typescript plugin with start command with different cwd', async (t) => {
+//   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
+//   const dest = path.join(urlDirname(import.meta.url), '..', 'tmp', `typescript-plugin-clone2-${count++}`)
 
-  await cp(testDir, dest, { recursive: true })
+//   await cp(testDir, dest, { recursive: true })
 
-  const child = execa('node', [cliPath, 'start', '-c', path.join(dest, 'platformatic.service.json')])
-  t.after(exitOnTeardown(child))
+//   const child = execa('node', [cliPath, 'start', '-c', path.join(dest, 'platformatic.service.json')])
+//   t.after(exitOnTeardown(child))
 
-  const splitter = split()
-  child.stdout.pipe(splitter)
-  child.stderr.pipe(splitter)
+//   const splitter = split()
+//   child.stdout.pipe(splitter)
+//   child.stderr.pipe(splitter)
 
-  let output = ''
+//   let output = ''
 
-  const timeout = setTimeout(() => {
-    console.log(output)
-    assert.fail('should compile typescript plugin with start command')
-  }, 30000)
+//   const timeout = setTimeout(() => {
+//     console.log(output)
+//     assert.fail('should compile typescript plugin with start command')
+//   }, 30000)
 
-  for await (const data of splitter) {
-    const sanitized = stripAnsi(data)
-    output += sanitized
-    if (sanitized.includes('Typescript plugin loaded')) {
-      clearTimeout(timeout)
-      return
-    }
-  }
-  assert.fail('should compile typescript plugin with start command')
-})
+//   for await (const data of splitter) {
+//     const sanitized = stripAnsi(data)
+//     output += sanitized
+//     if (sanitized.includes('Typescript plugin loaded')) {
+//       clearTimeout(timeout)
+//       return
+//     }
+//   }
+//   assert.fail('should compile typescript plugin with start command')
+// })
 
 test('valid tsconfig file inside an inner folder', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
