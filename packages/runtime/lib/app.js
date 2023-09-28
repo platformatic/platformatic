@@ -96,7 +96,6 @@ class PlatformaticApp {
       telemetry: this.#telemetryConfig
     })
 
-    /* istanbul ignore else */
     if (this.#serverConfig) {
       configManager.update({
         ...configManager.current,
