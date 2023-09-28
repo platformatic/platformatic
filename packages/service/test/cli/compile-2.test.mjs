@@ -93,49 +93,49 @@ test('should compile typescript plugin with start command with different cwd', a
   assert.fail('should compile typescript plugin with start command')
 })
 
-// test('valid tsconfig file inside an inner folder', async (t) => {
-//   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
-//   const cwd = await getCWD(t)
-
-//   await cp(testDir, cwd, { recursive: true })
-
-//   try {
-//     await execa('node', [cliPath, 'compile'], { cwd, stdio: 'inherit' })
-//   } catch (err) {
-//     assert.fail('should not catch any error')
-//   }
-// })
-
-test('should compile typescript plugin with start command from a folder', async (t) => {
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-autoload')
+test('valid tsconfig file inside an inner folder', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
   const cwd = await getCWD(t)
 
   await cp(testDir, cwd, { recursive: true })
 
-  const child = execa('node', [cliPath, 'start'], { cwd })
-  t.after(exitOnTeardown(child))
-
-  const splitter = split()
-  child.stdout.pipe(splitter)
-  child.stderr.pipe(splitter)
-
-  let output = ''
-
-  const timeout = setTimeout(() => {
-    console.log(output)
-    assert.fail('should compile typescript plugin with start command')
-  }, 30000)
-
-  for await (const data of splitter) {
-    const sanitized = stripAnsi(data)
-    output += sanitized
-    if (sanitized.includes('Typescript plugin loaded')) {
-      clearTimeout(timeout)
-      return
-    }
+  try {
+    await execa('node', [cliPath, 'compile'], { cwd, stdio: 'inherit' })
+  } catch (err) {
+    assert.fail('should not catch any error')
   }
-  assert.fail('should compile typescript plugin with start command')
 })
+
+// test('should compile typescript plugin with start command from a folder', async (t) => {
+//   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-autoload')
+//   const cwd = await getCWD(t)
+
+//   await cp(testDir, cwd, { recursive: true })
+
+//   const child = execa('node', [cliPath, 'start'], { cwd })
+//   t.after(exitOnTeardown(child))
+
+//   const splitter = split()
+//   child.stdout.pipe(splitter)
+//   child.stderr.pipe(splitter)
+
+//   let output = ''
+
+//   const timeout = setTimeout(() => {
+//     console.log(output)
+//     assert.fail('should compile typescript plugin with start command')
+//   }, 30000)
+
+//   for await (const data of splitter) {
+//     const sanitized = stripAnsi(data)
+//     output += sanitized
+//     if (sanitized.includes('Typescript plugin loaded')) {
+//       clearTimeout(timeout)
+//       return
+//     }
+//   }
+//   assert.fail('should compile typescript plugin with start command')
+// })
 
 // test('should start the service if it was precompiled and typescript is `false`', async (t) => {
 //   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
