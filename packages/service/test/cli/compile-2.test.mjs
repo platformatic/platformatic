@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 import test from 'node:test'
 import path from 'node:path'
-import { cp, rm, mkdir } from 'node:fs/promises'
+// import { rm, mkdir } from 'node:fs/promises'
 // import { access, cp, rm, mkdir } from 'node:fs/promises'
 import { execa } from 'execa'
 // import stripAnsi from 'strip-ansi'
@@ -13,31 +13,31 @@ import psList from 'ps-list'
 
 process.setMaxListeners(100)
 
-let count = 0
+// const count = 0
 
 function urlDirname (url) {
   return path.dirname(fileURLToPath(url))
 }
 
-async function getCWD (t) {
-  const dir = path.join(urlDirname(import.meta.url), '..', 'tmp', `typescript-plugin-clone-2-${count++}`)
-  try {
-    await rm(dir, { recursive: true })
-  } catch (error) {
-    // console.log(error)
-  }
+// async function getCWD (t) {
+//   const dir = path.join(urlDirname(import.meta.url), '..', 'tmp', `typescript-plugin-clone-2-${count++}`)
+//   try {
+//     await rm(dir, { recursive: true })
+//   } catch (error) {
+//     // console.log(error)
+//   }
 
-  await mkdir(dir, { recursive: true })
+//   await mkdir(dir, { recursive: true })
 
-  // t.after(async () => {
-  //   try {
-  //     await rm(dir, { recursive: true })
-  //   } catch (error) {
-  //     console.log(error)
-  //   }
-  // })
-  return dir
-}
+//   // t.after(async () => {
+//   //   try {
+//   //     await rm(dir, { recursive: true })
+//   //   } catch (error) {
+//   //     console.log(error)
+//   //   }
+//   // })
+//   return dir
+// }
 
 // function exitOnTeardown (child) {
 //   return async () => {
@@ -98,9 +98,10 @@ async function getCWD (t) {
 
 test('valid tsconfig file inside an inner folder', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
-  const cwd = await getCWD(t)
+  // const cwd = await getCWD(t)
+  const cwd = testDir
 
-  await cp(testDir, cwd, { recursive: true })
+  // await cp(testDir, cwd, { recursive: true })
 
   try {
     const start = new Date()
