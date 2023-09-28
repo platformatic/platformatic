@@ -2,7 +2,7 @@ import { readFile, appendFile, writeFile } from 'fs/promises'
 import { findConfigFile, findRuntimeConfigFile } from '../utils.mjs'
 import { join, relative, isAbsolute } from 'path'
 import * as desm from 'desm'
-import { createDynamicWorkspaceGHAction, createStaticWorkspaceGHAction } from '../ghaction.mjs'
+// import { createDynamicWorkspaceGHAction, createStaticWorkspaceGHAction } from '../ghaction.mjs'
 
 function generateConfig (version, path, entrypoint) {
   const config = {
@@ -23,9 +23,9 @@ async function createRuntime (params, logger, currentDir = process.cwd(), versio
   const {
     servicesDir,
     entrypoint,
-    entrypointPort,
-    staticWorkspaceGitHubAction,
-    dynamicWorkspaceGitHubAction
+    entrypointPort
+    // staticWorkspaceGitHubAction,
+    // dynamicWorkspaceGitHubAction
   } = params
 
   if (!version) {
@@ -53,12 +53,12 @@ async function createRuntime (params, logger, currentDir = process.cwd(), versio
     await updateEntrypointEnv(entrypointPort, logger, entrypointPath)
   }
 
-  if (staticWorkspaceGitHubAction) {
-    await createStaticWorkspaceGHAction(logger, serviceEnv, './platformatic.service.json', currentDir, false)
-  }
-  if (dynamicWorkspaceGitHubAction) {
-    await createDynamicWorkspaceGHAction(logger, serviceEnv, './platformatic.service.json', currentDir, false)
-  }
+  // if (staticWorkspaceGitHubAction) {
+  //   await createStaticWorkspaceGHAction(logger, serviceEnv, './platformatic.service.json', currentDir, false)
+  // }
+  // if (dynamicWorkspaceGitHubAction) {
+  //   await createDynamicWorkspaceGHAction(logger, serviceEnv, './platformatic.service.json', currentDir, false)
+  // }
 
   return {}
 }
