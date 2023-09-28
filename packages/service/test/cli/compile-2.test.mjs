@@ -21,7 +21,7 @@ async function getCWD (t) {
   try {
     await rm(dir, { recursive: true })
   } catch (error) {
-    console.log(error)
+    // console.log(error)
   }
 
   await mkdir(dir, { recursive: true })
