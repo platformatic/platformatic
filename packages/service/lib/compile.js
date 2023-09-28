@@ -80,7 +80,7 @@ async function compile (cwd, config, originalLogger) {
     // })
 
     const child = execa('pwd', [], {
-      cwd,
+      // cwd,
       killSignal: 'SIGKILL'
     })
 
