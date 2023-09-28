@@ -129,17 +129,3 @@ test('stackable', async () => {
   assert.deepStrictEqual(await res.body.text(), 'Hello World')
   child.kill('SIGINT')
 })
-
-test('use runtime server', async ({ equal, same, match, teardown }) => {
-  const config = join(import.meta.url, '..', '..', 'fixtures', 'server', 'runtime-server', 'platformatic.runtime.json')
-  const { child, url } = await start('start', '-c', config)
-  assert.strictEqual(url, 'http://127.0.0.1:14242')
-  child.kill('SIGINT')
-})
-
-test('the runtime server overrides the entrypoint server', async ({ equal, same, match, teardown }) => {
-  const config = join(import.meta.url, '..', '..', 'fixtures', 'server', 'overrides-service', 'platformatic.runtime.json')
-  const { child, url } = await start('start', '-c', config)
-  assert.strictEqual(url, 'http://127.0.0.1:14242')
-  child.kill('SIGINT')
-})

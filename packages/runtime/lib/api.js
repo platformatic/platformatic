@@ -16,7 +16,13 @@ class RuntimeApi {
     for (let i = 0; i < config.services.length; ++i) {
       const service = config.services[i]
       const serviceTelemetryConfig = telemetryConfig ? { ...telemetryConfig, serviceName: `${telemetryConfig.serviceName}-${service.id}` } : null
-      const app = new PlatformaticApp(service, loaderPort, logger, serviceTelemetryConfig)
+
+      // If the service is an entrypoint and runtime server config is defined, use it.
+      let serverConfig = null
+      if (config.server && service.entrypoint) {
+        serverConfig = config.server
+      }
+      const app = new PlatformaticApp(service, loaderPort, logger, serviceTelemetryConfig, serverConfig)
 
       this.#services.set(service.id, app)
     }

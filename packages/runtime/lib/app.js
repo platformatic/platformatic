@@ -17,9 +17,10 @@ class PlatformaticApp {
   #fileWatcher
   #logger
   #telemetryConfig
+  #serverConfig
   #debouncedRestart
 
-  constructor (appConfig, loaderPort, logger, telemetryConfig) {
+  constructor (appConfig, loaderPort, logger, telemetryConfig, serverConfig) {
     this.appConfig = appConfig
     this.config = null
     this.#hotReload = false
@@ -33,6 +34,7 @@ class PlatformaticApp {
       name: this.appConfig.id
     })
     this.#telemetryConfig = telemetryConfig
+    this.#serverConfig = serverConfig
 
     /* c8 ignore next 4 */
     this.#debouncedRestart = debounce(() => {
@@ -93,6 +95,15 @@ class PlatformaticApp {
       ...configManager.current,
       telemetry: this.#telemetryConfig
     })
+
+    /* istanbul ignore else */
+    if (this.#serverConfig) {
+      configManager.update({
+        ...configManager.current,
+        server: this.#serverConfig
+      })
+    }
+
     const config = configManager.current
 
     this.#setuplogger(configManager)

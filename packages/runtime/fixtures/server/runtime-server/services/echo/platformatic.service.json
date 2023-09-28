@@ -1,0 +1,12 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v0.28.1/service", 
+  "service": {
+    "openapi": true
+  },
+  "plugins": {
+    "paths": [
+      "./routes"
+    ],
+    "typescript": false
+  }
+}
