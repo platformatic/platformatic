@@ -117,8 +117,8 @@ test('valid tsconfig file inside an inner folder', async (t) => {
     const timeout = setInterval(async () => {
       const processes = await psList()
       const level1 = processes.filter((p) => p.pid === childPid)
-      const level2 = processes.filter((p) => level1.includes(p.ppid))
-      const level3 = processes.filter((p) => level2.includes(p.ppid))
+      const level2 = processes.filter((p) => level1.map((pp) => pp.pid).includes(p.ppid))
+      const level3 = processes.filter((p) => level2.map((pp) => pp.pid).includes(p.ppid))
 
       console.log('level1', level1)
       console.log('level2', level2)
