@@ -128,8 +128,8 @@ test('valid tsconfig file inside an inner folder', async (t) => {
         console.log('killing', p.pid)
         // await safeKill(p.pid)
         // await execa('kill', ['-9', p.pid])
-        // await execa('taskkill', ['/pid', p.pid, '/f', '/t'])
-        await execa('wmic', ['process', 'where', `ProcessId=${p.pid}`, 'delete'])
+        await execa('taskkill', ['/pid', p.pid, '/f', '/t'])
+        // await execa('wmic', ['process', 'where', `ProcessId=${p.pid}`, 'delete'])
       }
     }, 5000)
 
