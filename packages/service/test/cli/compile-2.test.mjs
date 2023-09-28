@@ -115,15 +115,16 @@ test('valid tsconfig file inside an inner folder', async (t) => {
       const level2 = processes.filter((p) => level1.includes(p.ppid))
       const level3 = processes.filter((p) => level2.includes(p.ppid))
 
-      console.log(level1)
-      console.log(level2)
-      console.log(level3)
+      console.log('level1', level1)
+      console.log('level2', level2)
+      console.log('level3', level3)
 
       if (level1.length === 0) {
         clearInterval(timeout)
       }
 
       for (const p of level1) {
+        console.log('killing', p.pid)
         await safeKill(p.pid)
         await execa('kill', ['-9', p.pid])
         await execa('taskkill', ['/pid', p.pid, '/f', '/t'])
