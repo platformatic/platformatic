@@ -81,18 +81,18 @@ async function compile (cwd, config, originalLogger) {
     //   killSignal: 'SIGKILL'
     // })
 
-    const { execa } = await import('execa')
-    const child = execa('pwd', [], {
-      // cwd,
-      killSignal: 'SIGKILL'
-    })
+    // const { execa } = await import('execa')
+    // const child = execa('pwd', [], {
+    //   // cwd,
+    //   killSignal: 'SIGKILL'
+    // })
 
-    console.log('ts process pid', child.pid)
+    // console.log('ts process pid', child.pid)
 
-    child.stdout.pipe(process.stdout)
-    child.stderr.pipe(process.stderr)
+    // child.stdout.pipe(process.stdout)
+    // child.stderr.pipe(process.stderr)
 
-    await child
+    // await child
 
     console.log('Typescript compilation completed successfully.')
     return true
