@@ -72,11 +72,15 @@ async function compile (cwd, config, originalLogger) {
 
   try {
     const tsFlags = config?.plugins?.typescript?.flags || ['--project', tsConfigPath, '--rootDir', '.']
+    console.log('compile 1')
     const child = execa(tscExecutablePath, tsFlags, { cwd })
     child.stdout.pipe(process.stdout)
     child.stderr.pipe(process.stderr)
+    console.log('compile 2')
 
     await child
+
+    console.log('compile 3')
 
     // if (child.pid) {
     //   killTree(child.pid, (error) => {

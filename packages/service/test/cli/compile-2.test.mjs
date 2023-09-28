@@ -112,11 +112,12 @@ test('valid tsconfig file inside an inner folder', async (t) => {
   try {
     const child = execa('node', [cliPath, 'compile'], { cwd })
     console.log('5')
+
     child.stdout.pipe(process.stdout)
     child.stderr.pipe(process.stderr)
-    // await child
+    await child
 
-    safeKill(child.pid)
+    // safeKill(child.pid)
 
     console.log('6')
   } catch (err) {
