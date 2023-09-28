@@ -107,7 +107,7 @@ test('valid tsconfig file inside an inner folder', async (t) => {
     const child = execa('node', [cliPath, 'compile'], {
       cwd,
       killSignal: 'SIGKILL',
-      windowsHide: true
+      windowsHide: false
     })
     console.log('5')
 
