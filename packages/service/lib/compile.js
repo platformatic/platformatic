@@ -3,7 +3,6 @@
 const { resolve, join, dirname } = require('path')
 const pino = require('pino')
 const pretty = require('pino-pretty')
-// const killTree = require('tree-kill')
 const { loadConfig } = require('@platformatic/config')
 const { isFileAccessible } = require('./utils.js')
 
@@ -72,15 +71,17 @@ async function compile (cwd, config, originalLogger) {
 
   try {
     const tsFlags = config?.plugins?.typescript?.flags || ['--project', tsConfigPath, '--rootDir', '.']
-    console.log('compile 1')
     const child = execa(tscExecutablePath, tsFlags, { cwd })
     child.stdout.pipe(process.stdout)
     child.stderr.pipe(process.stderr)
-    console.log('compile 2')
 
-    await child
+    const res = await child
+    logger.info(res.stdout)
 
-    console.log('compile 3')
+    logger.info(res.exitCode)
+    logger.info(res.isCanceled)
+    logger.info(res.killed)
+    logger.info(res.all)
 
     // if (child.pid) {
     //   killTree(child.pid, (error) => {

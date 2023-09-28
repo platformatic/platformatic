@@ -117,7 +117,7 @@ test('valid tsconfig file inside an inner folder', async (t) => {
     child.stderr.pipe(process.stderr)
     await child
 
-    // safeKill(child.pid)
+    // safeKill(parseInt(child.pid))
 
     console.log('6')
   } catch (err) {
