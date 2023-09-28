@@ -1,34 +1,21 @@
-import { getVersion, getDependencyVersion, isFileAccessible } from '../utils.mjs'
+import { getVersion, getDependencyVersion } from '../utils.mjs'
 import { createPackageJson } from '../create-package-json.mjs'
 import { createGitignore } from '../create-gitignore.mjs'
 import { getPkgManager } from '../get-pkg-manager.mjs'
 import parseArgs from 'minimist'
 import { join } from 'path'
 import inquirer from 'inquirer'
-import { readFile, writeFile, mkdir } from 'fs/promises'
+import { readFile, writeFile, mkdir, stat } from 'fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa } from 'execa'
 import ora from 'ora'
 import createService from './create-service.mjs'
 import askDir from '../ask-dir.mjs'
-import { askDynamicWorkspaceCreateGHAction, askStaticWorkspaceGHAction } from '../ghaction.mjs'
-import { getRunPackageManagerInstall, getUseTypescript, getPort, getOverwriteReadme } from '../cli-options.mjs'
+import { getRunPackageManagerInstall, getUseTypescript, getPort } from '../cli-options.mjs'
 
 export const createReadme = async (logger, dir = '.') => {
   const readmeFileName = join(dir, 'README.md')
-  let isReadmeExists = await isFileAccessible(readmeFileName)
-  if (isReadmeExists) {
-    logger.debug(`${readmeFileName} found, asking to overwrite it.`)
-    const { shouldReplace } = await inquirer.prompt([getOverwriteReadme()])
-    isReadmeExists = !shouldReplace
-  }
-
-  if (isReadmeExists) {
-    logger.debug(`${readmeFileName} found, skipping creation of README.md file.`)
-    return
-  }
-
   const readmeFile = new URL('README.md', import.meta.url)
   const readme = await readFile(readmeFile, 'utf-8')
   await writeFile(readmeFileName, readme)
@@ -54,10 +41,18 @@ const createPlatformaticService = async (_args, opts = {}) => {
   const version = await getVersion()
   const pkgManager = getPkgManager()
 
-  const projectDir = opts.dir || await askDir(logger, '.')
+  const projectDir = opts.dir || await askDir(logger, join('.', 'platformatic-service'))
   const isRuntimeContext = opts.isRuntimeContext || false
 
-  const toAsk = [getUseTypescript(args.typescript)]
+  // checks directory
+  try {
+    await stat(projectDir)
+    logger.error(`Directory ${projectDir} already exists. Please choose another path.`)
+    process.exit(1)
+  } catch (err) {}
+
+  const toAsk = []
+  toAsk.push(getUseTypescript(args.typescript))
 
   if (!isRuntimeContext) {
     toAsk.push(getPort(args.port))
@@ -67,7 +62,29 @@ const createPlatformaticService = async (_args, opts = {}) => {
     toAsk.unshift(getRunPackageManagerInstall(pkgManager))
   }
 
-  const { runPackageManagerInstall, useTypescript, port } = await inquirer.prompt(toAsk)
+  if (!opts.skipGitHubActions) {
+    toAsk.push({
+      type: 'list',
+      name: 'staticWorkspaceGitHubAction',
+      message: 'Do you want to create the github action to deploy this application to Platformatic Cloud?',
+      default: true,
+      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+    },
+    {
+      type: 'list',
+      name: 'dynamicWorkspaceGitHubAction',
+      message: 'Do you want to enable PR Previews in your application?',
+      default: true,
+      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+    })
+  }
+  const {
+    runPackageManagerInstall,
+    useTypescript,
+    port,
+    staticWorkspaceGitHubAction,
+    dynamicWorkspaceGitHubAction
+  } = await inquirer.prompt(toAsk)
 
   // Create the project directory
   await mkdir(projectDir, { recursive: true })
@@ -76,10 +93,12 @@ const createPlatformaticService = async (_args, opts = {}) => {
     isRuntimeContext,
     hostname: args.hostname,
     port,
-    typescript: useTypescript
+    typescript: useTypescript,
+    staticWorkspaceGitHubAction,
+    dynamicWorkspaceGitHubAction
   }
 
-  const env = await createService(params, logger, projectDir, version)
+  await createService(params, logger, projectDir, version)
 
   const fastifyVersion = await getDependencyVersion('fastify')
 
@@ -99,22 +118,16 @@ const createPlatformaticService = async (_args, opts = {}) => {
   if (runPackageManagerInstall) {
     const spinner = ora('Installing dependencies...').start()
     await execa(pkgManager, ['install'], { cwd: projectDir })
-    spinner.succeed('...done!')
+    spinner.succeed()
   }
 
   const spinner = ora('Generating types...').start()
   try {
     await execa(pkgManager, ['exec', 'platformatic', 'service', 'types'], { cwd: projectDir })
-    spinner.succeed('...done!')
+    spinner.succeed('Types generated!')
   } catch (err) {
     logger.trace({ err })
-    spinner.fail('...failed! Try again by running "platformatic service types"')
-  }
-
-  if (!opts.skipGitHubActions) {
-    await askStaticWorkspaceGHAction(logger, env, 'service', useTypescript, projectDir)
-    await askDynamicWorkspaceCreateGHAction(logger, env, 'service', useTypescript, projectDir)
+    spinner.fail('Failed to generate Types. Try again by running "platformatic service types"')
   }
 }
-
 export default createPlatformaticService

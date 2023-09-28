@@ -1,5 +1,4 @@
 import { join } from 'path'
-import inquirer from 'inquirer'
 import { isFileAccessible } from './utils.mjs'
 import { writeFile, mkdir } from 'fs/promises'
 import columnify from 'columnify'
@@ -147,22 +146,13 @@ export const createDynamicWorkspaceGHAction = async (logger, env, config, projec
 }
 
 /* c8 ignore next 21 */
-export const askDynamicWorkspaceCreateGHAction = async (logger, env, type, buildTS, projectDir = process.cwd()) => {
-  const { githubAction } = await inquirer.prompt([
-    {
-      type: 'list',
-      name: 'githubAction',
-      message: 'Do you want to enable PR Previews in your application?',
-      default: true,
-      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-    }
-  ])
-  if (githubAction) {
-    const config = `./platformatic.${type}.json`
-    await createDynamicWorkspaceGHAction(logger, env, config, projectDir, buildTS)
-  }
+// export const askDynamicWorkspaceCreateGHAction = async (logger, env, type, buildTS, projectDir = process.cwd()) => {
+//   if (githubAction) {
+//     const config = `./platformatic.${type}.json`
+//     await createDynamicWorkspaceGHAction(logger, env, config, projectDir, buildTS)
+//   }
 /* c8 ignore next */
-}
+// }
 
 export const createStaticWorkspaceGHAction = async (logger, env, config, projectDir, buildTS) => {
   const ghActionFileName = 'platformatic-static-workspace-deploy.yml'
@@ -188,19 +178,10 @@ export const createStaticWorkspaceGHAction = async (logger, env, config, project
 }
 
 /* c8 ignore next 21 */
-export const askStaticWorkspaceGHAction = async (logger, env, type, buildTS, projectDir = process.cwd()) => {
-  const { githubAction } = await inquirer.prompt([
-    {
-      type: 'list',
-      name: 'githubAction',
-      message: 'Do you want to create the github action to deploy this application to Platformatic Cloud?',
-      default: true,
-      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-    }
-  ])
-  if (githubAction) {
-    const config = `./platformatic.${type}.json`
-    await createStaticWorkspaceGHAction(logger, env, config, projectDir, buildTS)
-  }
+// export const askStaticWorkspaceGHAction = async (logger, env, type, buildTS, projectDir = process.cwd()) => {
+//   if (githubAction) {
+//     const config = `./platformatic.${type}.json`
+//     await createStaticWorkspaceGHAction(logger, env, config, projectDir, buildTS)
+//   }
 /* c8 ignore next */
-}
+// }

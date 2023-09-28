@@ -4,6 +4,7 @@ import * as desm from 'desm'
 import { findServiceConfigFile, isFileAccessible } from '../utils.mjs'
 import { getTsConfig } from '../get-tsconfig.mjs'
 import { generatePlugins } from '../create-plugins.mjs'
+import { createDynamicWorkspaceGHAction, createStaticWorkspaceGHAction } from '../ghaction.mjs'
 
 const TS_OUT_DIR = 'dist'
 
@@ -64,7 +65,23 @@ PLT_TYPESCRIPT=true
 }
 
 async function createService (params, logger, currentDir = process.cwd(), version) {
-  const { isRuntimeContext, hostname, port, typescript = false } = params
+  const {
+    isRuntimeContext,
+    hostname,
+    port,
+    typescript = false,
+    staticWorkspaceGitHubAction,
+    dynamicWorkspaceGitHubAction
+  } = params
+
+  const serviceEnv = {
+    PLT_SERVER_LOGGER_LEVEL: 'info',
+    PORT: port,
+    PLT_SERVER_HOSTNAME: hostname
+  }
+  if (typescript) {
+    serviceEnv.PLT_TYPESCRIPT = true
+  }
 
   if (!version) {
     const pkg = await readFile(desm.join(import.meta.url, '..', '..', 'package.json'))
@@ -105,19 +122,18 @@ async function createService (params, logger, currentDir = process.cwd(), versio
         `Typescript configuration file ${tsConfigFileName} found, skipping creation of typescript configuration file.`
       )
     }
+
+    if (staticWorkspaceGitHubAction) {
+      await createStaticWorkspaceGHAction(logger, serviceEnv, './platformatic.service.json', currentDir, typescript)
+    }
+    if (dynamicWorkspaceGitHubAction) {
+      await createDynamicWorkspaceGHAction(logger, serviceEnv, './platformatic.service.json', currentDir, typescript)
+    }
   }
 
   await generatePlugins(logger, currentDir, typescript, 'service')
 
-  const output = {
-    PLT_SERVER_LOGGER_LEVEL: 'info',
-    PORT: port,
-    PLT_SERVER_HOSTNAME: hostname
-  }
-  if (typescript) {
-    output.PLT_TYPESCRIPT = true
-  }
-  return output
+  return serviceEnv
 }
 
 export default createService
