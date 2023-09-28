@@ -405,7 +405,7 @@ jobs:
     permissions:
       actions: read
       contents: read
-    timeout-minutes: 10
+    timeout-minutes: 15
     strategy:
       matrix:
         node-version: [18, 20]
