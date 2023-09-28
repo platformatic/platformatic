@@ -3,6 +3,7 @@ import { findComposerConfigFile, isFileAccessible } from '../utils.mjs'
 import { join } from 'path'
 import * as desm from 'desm'
 import { generatePlugins, generateRouteWithTypesSupport } from '../create-plugins.mjs'
+import { createDynamicWorkspaceGHAction, createStaticWorkspaceGHAction } from '../ghaction.mjs'
 
 function generateConfig (isRuntimeContext, version, servicesToCompose) {
   const config = {
@@ -70,10 +71,17 @@ async function createComposer (
   params,
   logger,
   currentDir = process.cwd(),
-  version
+  version,
+  staticWorkspaceGitHubAction,
+  dynamicWorkspaceGitHubAction
 ) {
   const { isRuntimeContext, hostname, port, servicesToCompose = [] } = params
 
+  const composerEnv = {
+    PLT_SERVER_LOGGER_LEVEL: 'info',
+    PORT: port,
+    PLT_SERVER_HOSTNAME: hostname
+  }
   if (!version) {
     const pkg = await readFile(desm.join(import.meta.url, '..', '..', 'package.json'))
     version = JSON.parse(pkg).version
@@ -101,13 +109,14 @@ async function createComposer (
   await generatePlugins(logger, currentDir, false, 'composer')
   await generateRouteWithTypesSupport(logger, currentDir, false)
 
-  const env = {
-    PLT_SERVER_LOGGER_LEVEL: 'info',
-    PORT: port,
-    PLT_SERVER_HOSTNAME: hostname
+  if (staticWorkspaceGitHubAction) {
+    await createStaticWorkspaceGHAction(logger, composerEnv, './platformatic.service.json', currentDir, false)
   }
-
-  return env
+  if (dynamicWorkspaceGitHubAction) {
+    await createDynamicWorkspaceGHAction(logger, composerEnv, './platformatic.service.json', currentDir, false)
+  }
+  
+  return composerEnv
 }
 
 export default createComposer

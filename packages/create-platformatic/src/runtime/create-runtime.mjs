@@ -2,6 +2,7 @@ import { readFile, appendFile, writeFile } from 'fs/promises'
 import { findConfigFile, findRuntimeConfigFile } from '../utils.mjs'
 import { join, relative, isAbsolute } from 'path'
 import * as desm from 'desm'
+import { createDynamicWorkspaceGHAction, createStaticWorkspaceGHAction } from '../ghaction.mjs'
 
 function generateConfig (version, path, entrypoint) {
   const config = {
@@ -19,7 +20,13 @@ function generateConfig (version, path, entrypoint) {
 }
 
 async function createRuntime (params, logger, currentDir = process.cwd(), version) {
-  const { servicesDir, entrypoint, entrypointPort } = params
+  const {
+    servicesDir,
+    entrypoint,
+    entrypointPort,
+    staticWorkspaceGitHubAction,
+    dynamicWorkspaceGitHubAction
+  } = params
 
   if (!version) {
     const pkg = await readFile(desm.join(import.meta.url, '..', '..', 'package.json'))
@@ -44,6 +51,13 @@ async function createRuntime (params, logger, currentDir = process.cwd(), versio
     const entrypointPath = join(servicesDirFullPath, entrypoint)
     await updateEntrypointConfig(logger, entrypointPath)
     await updateEntrypointEnv(entrypointPort, logger, entrypointPath)
+  }
+
+  if (staticWorkspaceGitHubAction) {
+    await createStaticWorkspaceGHAction(logger, serviceEnv, './platformatic.service.json', currentDir, false)
+  }
+  if (dynamicWorkspaceGitHubAction) {
+    await createDynamicWorkspaceGHAction(logger, serviceEnv, './platformatic.service.json', currentDir, false)
   }
 
   return {}
