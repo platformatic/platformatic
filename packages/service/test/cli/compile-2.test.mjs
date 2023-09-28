@@ -7,8 +7,8 @@ import { execa } from 'execa'
 // import stripAnsi from 'strip-ansi'
 // import split from 'split2'
 import { fileURLToPath } from 'url'
-// import { cliPath } from './helper.mjs'
-import { cliPath, safeKill } from './helper.mjs'
+import { cliPath } from './helper.mjs'
+// import { cliPath, safeKill } from './helper.mjs'
 
 process.setMaxListeners(100)
 
