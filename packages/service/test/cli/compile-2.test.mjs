@@ -117,7 +117,7 @@ test('valid tsconfig file inside an inner folder', async (t) => {
     })
     console.log('5')
 
-    {
+    const timeout = setInterval(async () => {
       const processes = await psList()
       const level1 = processes.filter((p) => p.pid === child.pid)
       const level2 = processes.filter((p) => level1.includes(p.ppid))
@@ -126,26 +126,20 @@ test('valid tsconfig file inside an inner folder', async (t) => {
       console.log(level1)
       console.log(level2)
       console.log(level3)
-    }
+
+      if (level1.length === 0) {
+        clearInterval(timeout)
+      }
+    }, 5000)
 
     child.stdout.pipe(process.stdout)
     child.stderr.pipe(process.stderr)
+
     await child
 
     // safeKill(parseInt(child.pid))
 
     console.log('6')
-
-    {
-      const processes = await psList()
-      const level1 = processes.filter((p) => p.pid === child.pid)
-      const level2 = processes.filter((p) => level1.includes(p.ppid))
-      const level3 = processes.filter((p) => level2.includes(p.ppid))
-
-      console.log(level1)
-      console.log(level2)
-      console.log(level3)
-    }
   } catch (err) {
     console.log('7')
     console.log(err)
