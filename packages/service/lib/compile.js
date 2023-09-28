@@ -81,7 +81,6 @@ async function compile (cwd, config, originalLogger) {
         if (error) {
           logger.error('Failed to kill child process.')
           logger.error(error.message)
-          throw error
         }
       })
     }
