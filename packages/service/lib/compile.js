@@ -1,7 +1,7 @@
 'use strict'
 
 const { dirname } = require('path')
-// const pino = require('pino')
+const pino = require('pino')
 // const pretty = require('pino-pretty')
 const { loadConfig } = require('@platformatic/config')
 // const { isFileAccessible } = require('./utils.js')
@@ -29,18 +29,18 @@ const { loadConfig } = require('@platformatic/config')
 // }
 
 async function setup (cwd, config, logger) {
-  // if (!logger) {
-  //   logger = pino(
-  //     pretty({
-  //       translateTime: 'SYS:HH:MM:ss',
-  //       ignore: 'hostname,pid'
-  //     })
-  //   )
+  if (!logger) {
+    logger = pino(
+      //     pretty({
+      //       translateTime: 'SYS:HH:MM:ss',
+      //       ignore: 'hostname,pid'
+      //     })
+    )
 
   //   if (config?.server.logger) {
   //     logger.level = config.server.logger.level
   //   }
-  // }
+  }
 
   // const { execa } = await import('execa')
 
