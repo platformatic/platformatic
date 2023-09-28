@@ -1,8 +1,8 @@
 'use strict'
 
 const { dirname } = require('path')
-// const pino = require('pino')
-// const pretty = require('pino-pretty')
+const pino = require('pino')
+const pretty = require('pino-pretty')
 const { loadConfig } = require('@platformatic/config')
 // const { isFileAccessible } = require('./utils.js')
 
@@ -28,43 +28,44 @@ const { loadConfig } = require('@platformatic/config')
 //   }
 // }
 
-// async function setup (cwd, config, logger) {
-//   if (!logger) {
-//     logger = pino(
-//       pretty({
-//         translateTime: 'SYS:HH:MM:ss',
-//         ignore: 'hostname,pid'
-//       })
-//     )
+async function setup (cwd, config, logger) {
+  if (!logger) {
+    logger = pino(
+      pretty({
+        translateTime: 'SYS:HH:MM:ss',
+        ignore: 'hostname,pid'
+      })
+    )
 
-//     if (config?.server.logger) {
-//       logger.level = config.server.logger.level
-//     }
-//   }
+    if (config?.server.logger) {
+      logger.level = config.server.logger.level
+    }
+  }
 
-//   const { execa } = await import('execa')
+  // const { execa } = await import('execa')
 
-//   const tscExecutablePath = await getTSCExecutablePath(cwd)
-//   /* c8 ignore next 4 */
-//   if (tscExecutablePath === undefined) {
-//     const msg = 'The tsc executable was not found.'
-//     logger.warn(msg)
-//   }
+  // const tscExecutablePath = await getTSCExecutablePath(cwd)
+  // /* c8 ignore next 4 */
+  // if (tscExecutablePath === undefined) {
+  //   const msg = 'The tsc executable was not found.'
+  //   logger.warn(msg)
+  // }
 
-//   const tsConfigPath = config?.plugins?.typescript?.tsConfig || resolve(cwd, 'tsconfig.json')
-//   const tsConfigExists = await isFileAccessible(tsConfigPath)
+  // const tsConfigPath = config?.plugins?.typescript?.tsConfig || resolve(cwd, 'tsconfig.json')
+  // const tsConfigExists = await isFileAccessible(tsConfigPath)
 
-//   if (!tsConfigExists) {
-//     const msg = 'No typescript configuration file was found, skipping compilation.'
-//     logger.info(msg)
-//   }
+  // if (!tsConfigExists) {
+  //   const msg = 'No typescript configuration file was found, skipping compilation.'
+  //   logger.info(msg)
+  // }
 
-//   return { execa, logger, tscExecutablePath, tsConfigPath, tsConfigExists }
-// }
+  // return { execa, logger, tscExecutablePath, tsConfigPath, tsConfigExists }
+  return { logger }
+}
 
 async function compile (cwd, config, originalLogger) {
   // const { execa, logger, tscExecutablePath, tsConfigPath, tsConfigExists } = await setup(cwd, config, originalLogger)
-  // const { execa, logger, tscExecutablePath, tsConfigPath, tsConfigExists } = await setup(cwd, config, originalLogger)
+  await setup(cwd, config, originalLogger)
   /* c8 ignore next 3 */
   // if (!tscExecutablePath || !tsConfigExists) {
   //   return false
