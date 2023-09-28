@@ -32,9 +32,14 @@ async function buildServer (options, app) {
     await configManager.parseAndValidate()
   }
 
+  const config = configManager.current
+
+  // The server now can be not present, so we might need to add logger
+  addLoggerToTheConfig(config)
+
   // options is a path
   if (typeof options === 'string') {
-    options = configManager.current
+    options = config
   }
 
   let url = null
@@ -114,8 +119,6 @@ async function start (appType, _args) {
   }
 
   const config = configManager.current
-
-  addLoggerToTheConfig(config)
 
   const _transformConfig = configManager._transformConfig.bind(configManager)
   configManager._transformConfig = function () {
