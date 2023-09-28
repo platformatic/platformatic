@@ -125,6 +125,8 @@ test('valid tsconfig file inside an inner folder', async (t) => {
 
       for (const p of level1) {
         await safeKill(p.pid)
+        await execa('kill', ['-9', p.pid])
+        await execa('taskkill', ['/pid', p.pid, '/f', '/t'])
       }
     }, 5000)
 
