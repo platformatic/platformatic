@@ -1,3 +1,5 @@
+'use strict'
+
 import { test } from 'tap'
 import { getRunPackageManagerInstall, getUseTypescript, getPort, getOverwriteReadme } from '../src/cli-options.mjs'
 
