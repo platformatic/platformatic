@@ -1,8 +1,8 @@
 'use strict'
 
 const { dirname } = require('path')
-const pino = require('pino')
-const pretty = require('pino-pretty')
+// const pino = require('pino')
+// const pretty = require('pino-pretty')
 const { loadConfig } = require('@platformatic/config')
 // const { isFileAccessible } = require('./utils.js')
 
