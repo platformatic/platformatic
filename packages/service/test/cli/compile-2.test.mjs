@@ -109,36 +109,40 @@ test('valid tsconfig file inside an inner folder', async (t) => {
     })
     console.log('5')
 
-    const childPid = child.pid
+    // const childPid = child.pid
     child.stdout.pipe(process.stdout)
     child.stderr.pipe(process.stderr)
 
     await child
 
-    const timeout = setInterval(async () => {
-      const processes = await psList()
-      const level1 = processes.filter((p) => p.pid === childPid)
-      const level2 = processes.filter((p) => level1.includes(p.ppid))
-      const level3 = processes.filter((p) => level2.includes(p.ppid))
+    t.after(async () => {
+      child.kill('SIGKILL')
+    })
 
-      console.log('level1', level1)
-      console.log('level2', level2)
-      console.log('level3', level3)
+    // const timeout = setInterval(async () => {
+    //   const processes = await psList()
+    //   const level1 = processes.filter((p) => p.pid === childPid)
+    //   const level2 = processes.filter((p) => level1.includes(p.ppid))
+    //   const level3 = processes.filter((p) => level2.includes(p.ppid))
 
-      if (level1.length === 0) {
-        clearInterval(timeout)
-        return
-      }
+    //   console.log('level1', level1)
+    //   console.log('level2', level2)
+    //   console.log('level3', level3)
 
-      for (const p of level1) {
-        console.log('killing', p.pid)
-        child.kill('SIGKILL')
-        // await safeKill(p.pid)
-        // await execa('kill', ['-9', p.pid])
-        // await execa('taskkill', ['/pid', p.pid, '/f', '/t'])
-        // await execa('wmic', ['process', 'where', `ProcessId=${p.pid}`, 'terminate'])
-      }
-    }, 15000)
+    //   if (level1.length === 0) {
+    //     clearInterval(timeout)
+    //     return
+    //   }
+
+    //   for (const p of level1) {
+    //     console.log('killing', p.pid)
+    //     child.kill('SIGKILL')
+    //     // await safeKill(p.pid)
+    //     // await execa('kill', ['-9', p.pid])
+    //     // await execa('taskkill', ['/pid', p.pid, '/f', '/t'])
+    //     // await execa('wmic', ['process', 'where', `ProcessId=${p.pid}`, 'terminate'])
+    //   }
+    // }, 15000)
 
     // safeKill(parseInt(child.pid))
 
