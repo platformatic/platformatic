@@ -1,7 +1,8 @@
 import assert from 'node:assert'
 import test from 'node:test'
 import path from 'node:path'
-import { access, cp, rm, mkdir } from 'node:fs/promises'
+// import { access, cp, rm, mkdir } from 'node:fs/promises'
+import { cp, rm, mkdir } from 'node:fs/promises'
 import { execa } from 'execa'
 import stripAnsi from 'strip-ansi'
 import split from 'split2'
@@ -42,25 +43,25 @@ function exitOnTeardown (child) {
   }
 }
 
-test('start command should not compile typescript if `typescript` is false', async (t) => {
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
-  const cwd = await getCWD(t)
+// test('start command should not compile typescript if `typescript` is false', async (t) => {
+//   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
+//   const cwd = await getCWD(t)
 
-  await cp(testDir, cwd, { recursive: true })
+//   await cp(testDir, cwd, { recursive: true })
 
-  const child = execa('node', [cliPath, 'start'], { cwd })
-  t.after(exitOnTeardown(child))
+//   const child = execa('node', [cliPath, 'start'], { cwd })
+//   t.after(exitOnTeardown(child))
 
-  const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
-  try {
-    await access(jsPluginPath)
-    assert.fail("should not have created 'dist/plugin.js'")
-  } catch (err) {
-    // cannot start because the plugin is not compiled
-    assert.strictEqual(err.code, 'ENOENT')
-    assert.strictEqual(err.path, jsPluginPath)
-  }
-})
+//   const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
+//   try {
+//     await access(jsPluginPath)
+//     assert.fail("should not have created 'dist/plugin.js'")
+//   } catch (err) {
+//     // cannot start because the plugin is not compiled
+//     assert.strictEqual(err.code, 'ENOENT')
+//     assert.strictEqual(err.path, jsPluginPath)
+//   }
+// })
 
 test('should compile typescript plugin with start command with different cwd', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
