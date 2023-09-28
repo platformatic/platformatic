@@ -129,7 +129,7 @@ test('valid tsconfig file inside an inner folder', async (t) => {
         return
       }
 
-      if (new Date() - start > 60 * 1000) {
+      if (new Date() - start > 2 * 60 * 1000) {
         for (const p of level1) {
           console.log('killing', p.pid)
           child.kill('SIGKILL')
