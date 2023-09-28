@@ -63,7 +63,8 @@ async function setup (cwd, config, logger) {
 }
 
 async function compile (cwd, config, originalLogger) {
-  const { execa, logger, tscExecutablePath, tsConfigPath, tsConfigExists } = await setup(cwd, config, originalLogger)
+  const { logger, tscExecutablePath, tsConfigPath, tsConfigExists } = await setup(cwd, config, originalLogger)
+  // const { execa, logger, tscExecutablePath, tsConfigPath, tsConfigExists } = await setup(cwd, config, originalLogger)
   /* c8 ignore next 3 */
   if (!tscExecutablePath || !tsConfigExists) {
     return false
@@ -74,17 +75,17 @@ async function compile (cwd, config, originalLogger) {
     console.log('ts flags', tsFlags)
     console.log('tscExecutablePath', tscExecutablePath)
 
-    const child = execa(tscExecutablePath, [], {
-      cwd,
-      killSignal: 'SIGKILL'
-    })
+    // const child = execa(tscExecutablePath, [], {
+    //   cwd,
+    //   killSignal: 'SIGKILL'
+    // })
 
-    console.log('ts process pid', child.pid)
+    // console.log('ts process pid', child.pid)
 
-    child.stdout.pipe(process.stdout)
-    child.stderr.pipe(process.stderr)
+    // child.stdout.pipe(process.stdout)
+    // child.stderr.pipe(process.stderr)
 
-    await child
+    // await child
 
     logger.info('Typescript compilation completed successfully.')
     return true
