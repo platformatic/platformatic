@@ -71,7 +71,9 @@ async function compile (cwd, config, originalLogger) {
 
   try {
     const tsFlags = config?.plugins?.typescript?.flags || ['--project', tsConfigPath, '--rootDir', '.']
-    const child = execa(tscExecutablePath, tsFlags, {
+    console.log('ts flags', tsFlags)
+
+    const child = execa(tscExecutablePath, [], {
       cwd,
       killSignal: 'SIGKILL'
     })
