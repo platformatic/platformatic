@@ -32,7 +32,7 @@ async function setup (cwd, config, logger) {
   if (!logger) {
     logger = pino(pino.destination({
       dest: 1,
-      sync: true
+      sync: false
     }))
 
   //   if (config?.server.logger) {
