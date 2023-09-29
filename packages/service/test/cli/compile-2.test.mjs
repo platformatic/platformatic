@@ -88,7 +88,7 @@ import psList from 'ps-list'
 //   assert.fail('should compile typescript plugin with start command')
 // })
 
-// import v8 from 'node:v8'
+import v8 from 'node:v8'
 // import log from 'why-is-node-running'
 
 process.setMaxListeners(100)
@@ -99,16 +99,20 @@ function urlDirname (url) {
   return path.dirname(fileURLToPath(url))
 }
 
-// process.on('exit', function () {
-//   console.log('stopping coverage')
-//   v8.stopCoverage()
-// })
+process.on('exit', function () {
+  console.log('stopping coverage')
+  v8.takeCoverage()
+  v8.stopCoverage()
+})
 
 test('valid tsconfig file inside an inner folder', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
   // const cwd = await getCWD(t)
   const cwd = testDir
 
+  for (const key in process.env) {
+    console.log(key, process.env[key])
+  }
   // await cp(testDir, cwd, { recursive: true })
 
   try {

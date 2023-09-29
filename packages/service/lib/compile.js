@@ -75,10 +75,11 @@ async function setup (cwd, config, logger) {
   return { logger, destination }
 }
 
-// process.on('exit', function () {
-//   console.log('stopping coverage')
-//   require('node:v8').stopCoverage()
-// })
+process.on('exit', function () {
+  console.log('stopping coverage')
+  require('node:v8').takeCoverage()
+  require('node:v8').stopCoverage()
+})
 
 async function compile (cwd, config, originalLogger) {
   // const { execa, logger, tscExecutablePath, tsConfigPath, tsConfigExists } = await setup(cwd, config, originalLogger)
@@ -87,6 +88,10 @@ async function compile (cwd, config, originalLogger) {
   // if (!tscExecutablePath || !tsConfigExists) {
   //   return false
   // }
+
+  for (const key in process.env) {
+    console.log(key, process.env[key])
+  }
 
   try {
     // const tsFlags = config?.plugins?.typescript?.flags || ['--project', tsConfigPath, '--rootDir', '.']
