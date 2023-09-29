@@ -29,11 +29,13 @@ const { loadConfig } = require('@platformatic/config')
 // }
 
 async function setup (cwd, config, logger) {
+  const destination = pino.destination({
+    dest: 1,
+    sync: false
+  })
+
   if (!logger) {
-    logger = pino(pino.destination({
-      dest: 1,
-      sync: false
-    }))
+    logger = pino(destination)
 
   //   if (config?.server.logger) {
   //     logger.level = config.server.logger.level
@@ -58,12 +60,12 @@ async function setup (cwd, config, logger) {
   // }
 
   // return { execa, logger, tscExecutablePath, tsConfigPath, tsConfigExists }
-  return { logger }
+  return { logger, destination }
 }
 
 async function compile (cwd, config, originalLogger) {
   // const { execa, logger, tscExecutablePath, tsConfigPath, tsConfigExists } = await setup(cwd, config, originalLogger)
-  await setup(cwd, config, originalLogger)
+  const { destination } = await setup(cwd, config, originalLogger)
   /* c8 ignore next 3 */
   // if (!tscExecutablePath || !tsConfigExists) {
   //   return false
@@ -91,6 +93,8 @@ async function compile (cwd, config, originalLogger) {
     // child.stderr.pipe(process.stderr)
 
     await child
+
+    destination.end()
 
     console.log('Typescript compilation completed successfully.')
     return true
