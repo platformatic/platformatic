@@ -1256,8 +1256,8 @@ importers:
         specifier: ^1.2.8
         version: 1.2.8
       pino:
-        specifier: 8.15.1
-        version: 8.15.1
+        specifier: pinojs/pino#sonic-boom-update
+        version: github.com/pinojs/pino/e984f35193b813a59be82705ebd7c909b818226c
       pino-pretty:
         specifier: ^10.0.0
         version: 10.2.0
@@ -9203,3 +9203,32 @@ packages:
   /yocto-queue@1.0.0:
     resolution: {integrity: sha512-9bnSc/HEW2uRy67wc+T8UwauLuPJVn28jb+GtJY16iiKWyvmYJRXVT4UamsAEGQfPohgr2q4Tq0sQbQlxTfi1g==}
     engines: {node: '>=12.20'}
+
+  github.com/pinojs/pino/e984f35193b813a59be82705ebd7c909b818226c:
+    resolution: {tarball: https://codeload.github.com/pinojs/pino/tar.gz/e984f35193b813a59be82705ebd7c909b818226c}
+    name: pino
+    version: 8.15.1
+    hasBin: true
+    dependencies:
+      atomic-sleep: 1.0.0
+      fast-redact: 3.3.0
+      on-exit-leak-free: 2.1.0
+      pino-abstract-transport: 1.1.0
+      pino-std-serializers: 6.2.2
+      process-warning: 2.2.0
+      quick-format-unescaped: 4.0.4
+      real-require: 0.2.0
+      safe-stable-stringify: 2.4.3
+      sonic-boom: github.com/pinojs/sonic-boom/89036bbda9632b078f2f476628691460ca2f3b70
+      thread-stream: 2.4.0
+    dev: false
+
+  github.com/pinojs/sonic-boom/89036bbda9632b078f2f476628691460ca2f3b70:
+    resolution: {tarball: https://codeload.github.com/pinojs/sonic-boom/tar.gz/89036bbda9632b078f2f476628691460ca2f3b70}
+    name: sonic-boom
+    version: 3.4.0
+    prepare: true
+    requiresBuild: true
+    dependencies:
+      atomic-sleep: 1.0.0
+    dev: false

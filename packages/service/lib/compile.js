@@ -65,7 +65,7 @@ async function setup (cwd, config, logger) {
 
 async function compile (cwd, config, originalLogger) {
   // const { execa, logger, tscExecutablePath, tsConfigPath, tsConfigExists } = await setup(cwd, config, originalLogger)
-  const { destination } = await setup(cwd, config, originalLogger)
+  await setup(cwd, config, originalLogger)
   /* c8 ignore next 3 */
   // if (!tscExecutablePath || !tsConfigExists) {
   //   return false
@@ -93,8 +93,6 @@ async function compile (cwd, config, originalLogger) {
     // child.stderr.pipe(process.stderr)
 
     await child
-
-    destination.end()
 
     console.log('Typescript compilation completed successfully.')
     return true
