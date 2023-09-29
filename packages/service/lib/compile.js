@@ -4,6 +4,7 @@ const { dirname } = require('path')
 const pino = require('pino')
 // const pretty = require('pino-pretty')
 const { loadConfig } = require('@platformatic/config')
+// const log = require('why-is-node-running')
 // const { isFileAccessible } = require('./utils.js')
 
 // async function getTSCExecutablePath (cwd) {
@@ -82,6 +83,11 @@ async function compile (cwd, config, originalLogger) {
   //   return false
   // }
 
+  // setTimeout(function () {
+  //   console.log('why is node running?')
+  //   log()
+  // }, 1000)
+
   try {
     // const tsFlags = config?.plugins?.typescript?.flags || ['--project', tsConfigPath, '--rootDir', '.']
     // console.log('ts flags', tsFlags)
@@ -104,6 +110,9 @@ async function compile (cwd, config, originalLogger) {
     child.stderr.pipe(process.stderr)
 
     await child
+
+    // console.log('why is node running? child')
+    // log()
 
     console.log('Typescript compilation completed successfully.')
     return true

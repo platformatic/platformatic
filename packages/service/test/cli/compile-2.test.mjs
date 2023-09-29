@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url'
 import { cliPath } from './helper.mjs'
 // import { cliPath, safeKill } from './helper.mjs'
 import psList from 'ps-list'
+import log from 'why-is-node-running'
 
 process.setMaxListeners(100)
 
@@ -117,10 +118,10 @@ test('valid tsconfig file inside an inner folder', async (t) => {
     console.log('5')
 
     const childPid = child.pid
-    child.stdout.pipe(process.stdout)
-    child.stderr.pipe(process.stderr)
 
     const timeout = setInterval(async () => {
+      log()
+
       const processes = await psList()
       const level1 = processes.filter((p) => p.pid === childPid)
       const level2 = processes.filter((p) => level1.map((pp) => pp.pid).includes(p.ppid))
