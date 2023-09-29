@@ -4,7 +4,7 @@ const { dirname } = require('path')
 const pino = require('pino')
 // const pretty = require('pino-pretty')
 const { loadConfig } = require('@platformatic/config')
-// const log = require('why-is-node-running')
+const log = require('why-is-node-running')
 // const { isFileAccessible } = require('./utils.js')
 
 // async function getTSCExecutablePath (cwd) {
@@ -111,8 +111,12 @@ async function compile (cwd, config, originalLogger) {
 
     await child
 
-    // console.log('why is node running? child')
-    // log()
+    console.log('why is node running? child')
+
+    setTimeout(function () {
+      log()
+      process.kill(process.pid, 'SIGUSR1')
+    }, 5000)
 
     console.log('Typescript compilation completed successfully.')
     return true
