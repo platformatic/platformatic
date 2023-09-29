@@ -1256,8 +1256,8 @@ importers:
         specifier: ^1.2.8
         version: 1.2.8
       pino:
-        specifier: pinojs/pino#ead8cca4f7c11122da73b912f6e5ffca459ff64d
-        version: github.com/pinojs/pino/ead8cca4f7c11122da73b912f6e5ffca459ff64d
+        specifier: pinojs/pino#defc6ecbd37d7243cc948286947f5a14feecbc18
+        version: github.com/pinojs/pino/defc6ecbd37d7243cc948286947f5a14feecbc18
       pino-pretty:
         specifier: ^10.0.0
         version: 10.2.0
@@ -9208,8 +9208,8 @@ packages:
     resolution: {integrity: sha512-9bnSc/HEW2uRy67wc+T8UwauLuPJVn28jb+GtJY16iiKWyvmYJRXVT4UamsAEGQfPohgr2q4Tq0sQbQlxTfi1g==}
     engines: {node: '>=12.20'}
 
-  github.com/pinojs/pino/ead8cca4f7c11122da73b912f6e5ffca459ff64d:
-    resolution: {tarball: https://codeload.github.com/pinojs/pino/tar.gz/ead8cca4f7c11122da73b912f6e5ffca459ff64d}
+  github.com/pinojs/pino/defc6ecbd37d7243cc948286947f5a14feecbc18:
+    resolution: {tarball: https://codeload.github.com/pinojs/pino/tar.gz/defc6ecbd37d7243cc948286947f5a14feecbc18}
     name: pino
     version: 8.15.1
     hasBin: true
