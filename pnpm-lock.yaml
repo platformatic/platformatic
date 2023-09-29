@@ -1256,8 +1256,8 @@ importers:
         specifier: ^1.2.8
         version: 1.2.8
       pino:
-        specifier: 8.8.0
-        version: 8.8.0
+        specifier: 8.6.1
+        version: 8.6.1
       pino-pretty:
         specifier: ^10.0.0
         version: 10.2.0
@@ -7354,8 +7354,8 @@ packages:
       sonic-boom: 3.3.0
       thread-stream: 2.4.0
 
-  /pino@8.8.0:
-    resolution: {integrity: sha512-cF8iGYeu2ODg2gIwgAHcPrtR63ILJz3f7gkogaHC/TXVVXxZgInmNYiIpDYEwgEkxZti2Se6P2W2DxlBIZe6eQ==}
+  /pino@8.6.1:
+    resolution: {integrity: sha512-fi+V2K98eMZjQ/uEHHSiMALNrz7HaFdKNYuyA3ZUrbH0f1e8sPFDmeRGzg7ZH2q4QDxGnJPOswmqlEaTAZeDPA==}
     hasBin: true
     dependencies:
       atomic-sleep: 1.0.0
