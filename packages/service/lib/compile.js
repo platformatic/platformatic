@@ -30,12 +30,10 @@ const { loadConfig } = require('@platformatic/config')
 
 async function setup (cwd, config, logger) {
   if (!logger) {
-    logger = pino(
-      //     pretty({
-      //       translateTime: 'SYS:HH:MM:ss',
-      //       ignore: 'hostname,pid'
-      //     })
-    )
+    logger = pino(pino.destination({
+      dest: 1,
+      sync: true
+    }))
 
   //   if (config?.server.logger) {
   //     logger.level = config.server.logger.level
