@@ -1256,8 +1256,8 @@ importers:
         specifier: ^1.2.8
         version: 1.2.8
       pino:
-        specifier: 8.2.0
-        version: 8.2.0
+        specifier: 8.5.0
+        version: 8.5.0
       pino-pretty:
         specifier: ^10.0.0
         version: 10.2.0
@@ -7354,8 +7354,8 @@ packages:
       sonic-boom: 3.3.0
       thread-stream: 2.4.0
 
-  /pino@8.2.0:
-    resolution: {integrity: sha512-HS7+vUpOYEJcNZkyb2ujN2sSayXLyz5XEvDZw4vrxlxHDe34qIDiNf2s+0dD/q/eqEubfxwAItYhY6zCNVZBVw==}
+  /pino@8.5.0:
+    resolution: {integrity: sha512-PuD6sOti8Y+p9zRoNB5dibmfjfM/OU2tEtJFICxw5ulXi1d0qnq/Rt3CsR6aBEAOeyCXP+ZUfiNWW+tt55pNzg==}
     hasBin: true
     dependencies:
       atomic-sleep: 1.0.0
@@ -7365,7 +7365,7 @@ packages:
       pino-std-serializers: 6.2.2
       process-warning: 2.2.0
       quick-format-unescaped: 4.0.4
-      real-require: 0.1.0
+      real-require: 0.2.0
       safe-stable-stringify: 2.4.3
       sonic-boom: 3.3.0
       thread-stream: 2.4.0
@@ -7754,6 +7754,7 @@ packages:
   /real-require@0.1.0:
     resolution: {integrity: sha512-r/H9MzAWtrv8aSVjPCMFpDMl5q66GqtmmRkRjpHTsp4zBAa+snZyiQNlMONiUmEJcsnaw0wCauJ2GWODr/aFkg==}
     engines: {node: '>= 12.13.0'}
+    dev: true
 
   /real-require@0.2.0:
     resolution: {integrity: sha512-57frrGM/OCTLqLOAh0mhVA9VBMHd+9U7Zb2THMGdBUoZVOtGbJzjxsYGDJ3A9AYYCP4hn6y1TVbaOfzWtm5GFg==}
