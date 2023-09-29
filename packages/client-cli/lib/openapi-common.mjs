@@ -100,11 +100,11 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
 export function writeProperties (writer, blockName, parameters, addedProps) {
   if (parameters.length > 0) {
     let allOptionalParams = true
-    parameters.forEach(({ required }) => {
+    for (const { required } of parameters) {
       if (required !== false) {
         allOptionalParams = false
       }
-    })
+    }
     const nameToWrite = allOptionalParams ? `${blockName}?: ` : `${blockName}: `
     writer.write(nameToWrite).block(() => {
       for (const parameter of parameters) {
