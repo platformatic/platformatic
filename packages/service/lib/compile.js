@@ -4,7 +4,7 @@ const { dirname } = require('path')
 const pino = require('pino')
 // const pretty = require('pino-pretty')
 const { loadConfig } = require('@platformatic/config')
-const log = require('why-is-node-running')
+// const log = require('why-is-node-running')
 // const { isFileAccessible } = require('./utils.js')
 
 // async function getTSCExecutablePath (cwd) {
@@ -77,16 +77,11 @@ async function setup (cwd, config, logger) {
 
 async function compile (cwd, config, originalLogger) {
   // const { execa, logger, tscExecutablePath, tsConfigPath, tsConfigExists } = await setup(cwd, config, originalLogger)
-  await setup(cwd, config, originalLogger)
+  const { destination } = await setup(cwd, config, originalLogger)
   /* c8 ignore next 3 */
   // if (!tscExecutablePath || !tsConfigExists) {
   //   return false
   // }
-
-  // setTimeout(function () {
-  //   console.log('why is node running?')
-  //   log()
-  // }, 1000)
 
   try {
     // const tsFlags = config?.plugins?.typescript?.flags || ['--project', tsConfigPath, '--rootDir', '.']
@@ -111,11 +106,31 @@ async function compile (cwd, config, originalLogger) {
 
     await child
 
-    console.log('why is node running? child')
-
     setTimeout(function () {
-      log()
-      process.kill(process.pid, 'SIGUSR1')
+      // console.log('why is node running? child')
+      // log()
+      console.log('-----------BEFORE DESTROY-----------')
+      for (const key in destination) {
+        const value = destination[key]
+        if (typeof value === 'function') {
+          continue
+        }
+        console.log(key, value)
+      }
+
+      destination.flushSync()
+      destination.end()
+      destination.destroy()
+
+      console.log('-----------AFTER DESTROY-----------')
+
+      for (const key in destination) {
+        const value = destination[key]
+        if (typeof value === 'function') {
+          continue
+        }
+        console.log(key, value)
+      }
     }, 5000)
 
     console.log('Typescript compilation completed successfully.')
