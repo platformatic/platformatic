@@ -38,7 +38,7 @@ async function setup (cwd, config, logger) {
   //   process._rawDebug('drain')
   // })
 
-  console.log('v2')
+  console.log('v3')
 
   const destination = pino.destination({
     dest: 1,
