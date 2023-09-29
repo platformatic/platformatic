@@ -1,9 +1,9 @@
 'use strict'
 
-const { dirname } = require('path')
+// const { dirname } = require('path')
 const pino = require('pino')
 // const pretty = require('pino-pretty')
-const { loadConfig } = require('@platformatic/config')
+// const { loadConfig } = require('@platformatic/config')
 // const log = require('why-is-node-running')
 // const { isFileAccessible } = require('./utils.js')
 
@@ -121,15 +121,15 @@ async function compile (cwd, config, originalLogger) {
 
 function buildCompileCmd (app) {
   return async function compileCmd (_args) {
-    let fullPath = null
-    let config = null
+    const fullPath = null
+    const config = null
     try {
-      const { configManager } = await loadConfig({}, _args, app, {
-        watch: false
-      })
-      await configManager.parseAndValidate()
-      config = configManager.current
-      fullPath = dirname(configManager.fullPath)
+      // const { configManager } = await loadConfig({}, _args, app, {
+      //   watch: false
+      // })
+      // await configManager.parseAndValidate()
+      // config = configManager.current
+      // fullPath = dirname(configManager.fullPath)
       /* c8 ignore next 4 */
     } catch (err) {
       console.error(err)
