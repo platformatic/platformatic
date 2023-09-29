@@ -75,6 +75,11 @@ async function setup (cwd, config, logger) {
   return { logger, destination }
 }
 
+// process.on('exit', function () {
+//   console.log('stopping coverage')
+//   require('node:v8').stopCoverage()
+// })
+
 async function compile (cwd, config, originalLogger) {
   // const { execa, logger, tscExecutablePath, tsConfigPath, tsConfigExists } = await setup(cwd, config, originalLogger)
   await setup(cwd, config, originalLogger)
@@ -124,13 +129,10 @@ function buildCompileCmd (app) {
     const fullPath = null
     const config = null
     try {
-      await loadConfig({}, _args, app, {
+      const { configManager } = await loadConfig({}, _args, app, {
         watch: false
       })
-      // const { configManager } = await loadConfig({}, _args, app, {
-      //   watch: false
-      // })
-      // await configManager.parseAndValidate()
+      await configManager.parseAndValidate()
       // config = configManager.current
       // fullPath = dirname(configManager.fullPath)
       /* c8 ignore next 4 */

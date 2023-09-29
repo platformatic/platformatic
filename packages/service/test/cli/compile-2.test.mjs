@@ -10,15 +10,6 @@ import { fileURLToPath } from 'url'
 import { cliPath } from './helper.mjs'
 // import { cliPath, safeKill } from './helper.mjs'
 import psList from 'ps-list'
-// import log from 'why-is-node-running'
-
-process.setMaxListeners(100)
-
-// const count = 0
-
-function urlDirname (url) {
-  return path.dirname(fileURLToPath(url))
-}
 
 // async function getCWD (t) {
 //   const dir = path.join(urlDirname(import.meta.url), '..', 'tmp', `typescript-plugin-clone-2-${count++}`)
@@ -97,7 +88,21 @@ function urlDirname (url) {
 //   assert.fail('should compile typescript plugin with start command')
 // })
 
-process.env.NODE_V8_COVERAGE = '1'
+// import v8 from 'node:v8'
+// import log from 'why-is-node-running'
+
+process.setMaxListeners(100)
+
+// const count = 0
+
+function urlDirname (url) {
+  return path.dirname(fileURLToPath(url))
+}
+
+// process.on('exit', function () {
+//   console.log('stopping coverage')
+//   v8.stopCoverage()
+// })
 
 test('valid tsconfig file inside an inner folder', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
@@ -111,10 +116,7 @@ test('valid tsconfig file inside an inner folder', async (t) => {
     const child = execa('node', [cliPath, 'compile'], {
       cwd,
       killSignal: 'SIGKILL',
-      windowsHide: false,
-      env: {
-        NODE_V8_COVERAGE: process.env.NODE_V8_COVERAGE
-      }
+      windowsHide: false
     })
 
     child.stdout.pipe(process.stdout)
