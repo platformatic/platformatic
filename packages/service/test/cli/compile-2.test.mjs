@@ -110,6 +110,10 @@ test('valid tsconfig file inside an inner folder', async (t) => {
       killSignal: 'SIGKILL',
       windowsHide: false
     })
+
+    child.stdout.pipe(process.stdout)
+    child.stderr.pipe(process.stderr)
+
     console.log('5')
 
     const childPid = child.pid

@@ -91,8 +91,8 @@ async function compile (cwd, config, originalLogger) {
 
     console.log('ts process pid', child.pid)
 
-    // child.stdout.pipe(process.stdout)
-    // child.stderr.pipe(process.stderr)
+    child.stdout.pipe(process.stdout)
+    child.stderr.pipe(process.stderr)
 
     await child
 
