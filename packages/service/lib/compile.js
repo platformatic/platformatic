@@ -29,7 +29,7 @@ const { loadConfig } = require('@platformatic/config')
 // }
 
 async function setup (cwd, config, logger) {
-  console.log('v1')
+  console.log('v2')
 
   const destination = pino.destination({
     dest: 1,
