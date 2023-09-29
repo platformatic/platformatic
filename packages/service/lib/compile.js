@@ -29,11 +29,20 @@ const { loadConfig } = require('@platformatic/config')
 // }
 
 async function setup (cwd, config, logger) {
+  // const SonicBoom = require('../../../node_modules/.pnpm/github.com+pinojs+sonic-boom@fe52c0c196fa628c91ab74dcf138ad730b2b0389/node_modules/sonic-boom')
+
+  // const boom = new SonicBoom({ fd: 1 })
+
+  // boom.flush()
+  // boom.on('drain', () => {
+  //   process._rawDebug('drain')
+  // })
+
   console.log('v2')
 
   const destination = pino.destination({
     dest: 1,
-    sync: true
+    sync: false
   })
 
   if (!logger) {
