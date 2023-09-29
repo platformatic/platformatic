@@ -3,7 +3,7 @@
 // const { dirname } = require('path')
 const pino = require('pino')
 // const pretty = require('pino-pretty')
-// const { loadConfig } = require('@platformatic/config')
+const { loadConfig } = require('@platformatic/config')
 // const log = require('why-is-node-running')
 // const { isFileAccessible } = require('./utils.js')
 
@@ -124,6 +124,9 @@ function buildCompileCmd (app) {
     const fullPath = null
     const config = null
     try {
+      await loadConfig({}, _args, app, {
+        watch: false
+      })
       // const { configManager } = await loadConfig({}, _args, app, {
       //   watch: false
       // })

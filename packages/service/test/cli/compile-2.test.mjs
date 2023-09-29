@@ -97,6 +97,8 @@ function urlDirname (url) {
 //   assert.fail('should compile typescript plugin with start command')
 // })
 
+process.env.NODE_V8_COVERAGE = '1'
+
 test('valid tsconfig file inside an inner folder', async (t) => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
   // const cwd = await getCWD(t)
@@ -109,7 +111,10 @@ test('valid tsconfig file inside an inner folder', async (t) => {
     const child = execa('node', [cliPath, 'compile'], {
       cwd,
       killSignal: 'SIGKILL',
-      windowsHide: false
+      windowsHide: false,
+      env: {
+        NODE_V8_COVERAGE: process.env.NODE_V8_COVERAGE
+      }
     })
 
     child.stdout.pipe(process.stdout)
