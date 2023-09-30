@@ -46,7 +46,7 @@ a password, should be set using [configuration placeholders](#configuration-plac
 
 ### `server`
 
-A **required** object with the following settings:
+A object with the following settings:
 
 - **`hostname`** (**required**, `string`) — Hostname where Platformatic Service server will listen for connections.
 - **`port`** (**required**, `number` or `string`) — Port where Platformatic Service server will listen for connections.

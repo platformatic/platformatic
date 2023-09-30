@@ -39,6 +39,7 @@ Configuration settings are organized into the following groups:
 - [`hotReload`](#hotReload)
 - [`allowCycles`](#allowCycles)
 - [`telemetry`](#telemetry)
+- [`server`](#server)
 
 Configuration settings containing sensitive data should be set using
 [configuration placeholders](#configuration-placeholders).
@@ -148,7 +149,11 @@ Note that OTLP traces can be consumed by different solutions, like [Jaeger](http
   }
   ```
 
+### `server`
 
+This configures the Platformatic Runtime entrypoint `server`. If the entrypoint has also a `server` configured, when the runtime is started, this configuration is used. 
+
+See [Platformatic Service server](/docs/reference/service/configuration.md#server) for more details.
 
 ## Environment variable placeholders
 
