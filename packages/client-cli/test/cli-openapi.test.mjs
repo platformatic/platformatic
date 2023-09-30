@@ -889,7 +889,7 @@ test('openapi client generation (javascript) from file with fullRequest, fullRes
     query: {
       'queryId': string;
     }
-    headers: {
+    headers?: {
       'headerId'?: string;
     }
   }
