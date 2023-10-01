@@ -25,17 +25,17 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@platformatic/sql-mapper": "workspace:*",
-    "fastify": "^4.18.0",
+    "fastify": "^4.23.2",
     "ioredis": "^5.3.2",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "tap": "^16.3.6",
+    "tap": "^16.3.9",
     "tsd": "^0.29.0"
   },
   "dependencies": {
-    "@fastify/error": "^3.2.1",
+    "@fastify/error": "^3.3.0",
     "camelcase": "^6.3.0",
-    "fastify-plugin": "^4.5.0",
+    "fastify-plugin": "^4.5.1",
     "mqemitter": "^5.0.0",
     "mqemitter-redis": "^5.0.0"
   },

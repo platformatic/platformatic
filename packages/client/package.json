@@ -20,21 +20,21 @@
   "devDependencies": {
     "@platformatic/telemetry": "workspace:*",
     "desm": "^1.3.0",
-    "execa": "^8.0.0",
-    "fastify": "^4.18.0",
+    "execa": "^8.0.1",
+    "fastify": "^4.23.2",
     "snazzy": "^9.0.0",
     "split2": "^4.2.0",
     "standard": "^17.1.0",
-    "tap": "^16.3.6",
+    "tap": "^16.3.9",
     "tsd": "^0.29.0",
-    "typescript": "^5.1.3"
+    "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@apidevtools/json-schema-ref-parser": "^11.0.0",
-    "@fastify/error": "^3.2.1",
+    "@apidevtools/json-schema-ref-parser": "^11.1.0",
+    "@fastify/error": "^3.3.0",
     "abstract-logging": "^2.0.1",
     "ajv": "^8.12.0",
     "jsonpointer": "^5.0.1",
-    "undici": "^5.22.1"
+    "undici": "^5.25.3"
   }
 }
