@@ -42,8 +42,8 @@ importers:
         specifier: ^8.4.2
         version: 8.4.2
       undici:
-        specifier: ^5.25.2
-        version: 5.25.2
+        specifier: ^5.25.3
+        version: 5.25.3
     devDependencies:
       c8:
         specifier: ^8.0.1
@@ -127,8 +127,8 @@ importers:
         specifier: ^10.2.0
         version: 10.2.0
       undici:
-        specifier: ^5.25.2
-        version: 5.25.2
+        specifier: ^5.25.3
+        version: 5.25.3
     devDependencies:
       fastify:
         specifier: ^4.23.2
@@ -170,8 +170,8 @@ importers:
         specifier: ^5.0.1
         version: 5.0.1
       undici:
-        specifier: ^5.25.2
-        version: 5.25.2
+        specifier: ^5.25.3
+        version: 5.25.3
     devDependencies:
       '@platformatic/telemetry':
         specifier: workspace:*
@@ -261,8 +261,8 @@ importers:
         specifier: ^10.2.0
         version: 10.2.0
       undici:
-        specifier: ^5.25.2
-        version: 5.25.2
+        specifier: ^5.25.3
+        version: 5.25.3
       yaml:
         specifier: ^2.3.2
         version: 2.3.2
@@ -385,8 +385,8 @@ importers:
         specifier: ^1.0.36
         version: 1.0.36
       undici:
-        specifier: ^5.25.2
-        version: 5.25.2
+        specifier: ^5.25.3
+        version: 5.25.3
     devDependencies:
       '@platformatic/client':
         specifier: workspace:*
@@ -446,8 +446,8 @@ importers:
         specifier: ^7.5.4
         version: 7.5.4
       undici:
-        specifier: ^5.25.2
-        version: 5.25.2
+        specifier: ^5.25.3
+        version: 5.25.3
     devDependencies:
       '@iarna/toml':
         specifier: ^2.2.5
@@ -528,8 +528,8 @@ importers:
         specifier: ^7.5.4
         version: 7.5.4
       undici:
-        specifier: ^5.25.2
-        version: 5.25.2
+        specifier: ^5.25.3
+        version: 5.25.3
       which:
         specifier: ^3.0.1
         version: 3.0.1
@@ -737,8 +737,8 @@ importers:
         specifier: ^5.2.2
         version: 5.2.2
       undici:
-        specifier: ^5.25.2
-        version: 5.25.2
+        specifier: ^5.25.3
+        version: 5.25.3
       vscode-json-languageservice:
         specifier: ^5.3.6
         version: 5.3.6
@@ -770,8 +770,8 @@ importers:
         specifier: ~3.1.0
         version: 3.1.0
       undici:
-        specifier: ^5.25.2
-        version: 5.25.2
+        specifier: ^5.25.3
+        version: 5.25.3
     devDependencies:
       '@fastify/cookie':
         specifier: ^8.3.0
@@ -865,8 +865,8 @@ importers:
         specifier: ^6.2.0
         version: 6.2.0
       undici:
-        specifier: ^5.25.2
-        version: 5.25.2
+        specifier: ^5.25.3
+        version: 5.25.3
     devDependencies:
       c8:
         specifier: ^8.0.1
@@ -926,8 +926,8 @@ importers:
         specifier: ^1.2.8
         version: 1.2.8
       undici:
-        specifier: ^5.25.2
-        version: 5.25.2
+        specifier: ^5.25.3
+        version: 5.25.3
     devDependencies:
       '@playwright/test':
         specifier: ^1.38.1
@@ -1129,8 +1129,8 @@ importers:
         specifier: ^10.2.0
         version: 10.2.0
       undici:
-        specifier: ^5.25.2
-        version: 5.25.2
+        specifier: ^5.25.3
+        version: 5.25.3
     devDependencies:
       '@platformatic/sql-graphql':
         specifier: workspace:*
@@ -1311,8 +1311,8 @@ importers:
         specifier: ^5.2.2
         version: 5.2.2
       undici:
-        specifier: ^5.25.2
-        version: 5.25.2
+        specifier: ^5.25.3
+        version: 5.25.3
       vscode-json-languageservice:
         specifier: ^5.3.6
         version: 5.3.6
@@ -2282,6 +2282,10 @@ packages:
       fastify-plugin: 4.5.1
     dev: false
 
+  /@fastify/busboy@2.0.0:
+    resolution: {integrity: sha512-JUFJad5lv7jxj926GPgymrWQxxjPYuJNiNjNMzqT+HiuP6Vl3dk5xzG+8sTX96np0ZAluvaMzPsjhHZ5rNuNQQ==}
+    engines: {node: '>=14'}
+
   /@fastify/cookie@8.3.0:
     resolution: {integrity: sha512-P9hY9GO11L20TnZ33XN3i0bt+3x0zaT7S0ohAzWO950E9PB2xnNhLYzPFJIGFi5AVN0yr5+/iZhWxeYvR6KCzg==}
     dependencies:
@@ -2345,7 +2349,7 @@ packages:
       fastify-plugin: 4.5.1
       pump: 3.0.0
       tiny-lru: 11.2.0
-      undici: 5.25.2
+      undici: 5.25.3
     dev: false
 
   /@fastify/restartable@2.1.1:
@@ -3536,12 +3540,6 @@ packages:
     dependencies:
       semver: 7.5.4
     dev: true
-
-  /busboy@1.6.0:
-    resolution: {integrity: sha512-8SFQbg/0hQ9xy3UNTB0YEnsNBbWfhf7RtnzpL7TkBiTBRfrQ9Fxcnz7VJsleJpyp6rVLvXiuORqjlHi5q+PYuA==}
-    engines: {node: '>=10.16.0'}
-    dependencies:
-      streamsearch: 1.1.0
 
   /c8@8.0.1:
     resolution: {integrity: sha512-EINpopxZNH1mETuI0DzRA4MZpAUH+IFiRhnmFD3vFr3vdrgxqi3VfE3KL0AIL+zDq8rC9bZqwM/VDmmoe04y7w==}
@@ -4875,7 +4873,7 @@ packages:
   /fastify-undici-dispatcher@0.4.2:
     resolution: {integrity: sha512-7uUdlbUsuta3U8DKYeLsMnTAg0GBhiYzdEWyqzga6nLrtCNFfZ0ephzfQvHPe/VLGhlzvKCDBnXBURC+shMbBQ==}
     dependencies:
-      undici: 5.25.2
+      undici: 5.25.3
     dev: false
 
   /fastify-user@0.3.1:
@@ -6440,7 +6438,7 @@ packages:
       secure-json-parse: 2.7.0
       single-user-cache: 0.6.0
       tiny-lru: 10.4.1
-      undici: 5.25.2
+      undici: 5.25.3
       ws: 8.14.2
     transitivePeerDependencies:
       - bufferutil
@@ -6466,7 +6464,7 @@ packages:
       secure-json-parse: 2.7.0
       single-user-cache: 0.6.0
       tiny-lru: 11.2.0
-      undici: 5.25.2
+      undici: 5.25.3
       ws: 8.14.2
     transitivePeerDependencies:
       - bufferutil
@@ -8262,10 +8260,6 @@ packages:
     resolution: {integrity: sha512-AiisoFqQ0vbGcZgQPY1cdP2I76glaVA/RauYR4G4thNFgkTqr90yXTo4LYX60Jl+sIlPNHHdGSwo01AvbKUSVQ==}
     dev: true
 
-  /streamsearch@1.1.0:
-    resolution: {integrity: sha512-Mcc5wHehp9aXz1ax6bZUyY5afg9u2rv5cqQI3mRrYkGC8rW2hM02jWuwjtL++LS5qinSyhj2QfLyNsuc+VsExg==}
-    engines: {node: '>=10.0.0'}
-
   /string-width@4.2.3:
     resolution: {integrity: sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==}
     engines: {node: '>=8'}
@@ -8832,11 +8826,11 @@ packages:
       which-boxed-primitive: 1.0.2
     dev: true
 
-  /undici@5.25.2:
-    resolution: {integrity: sha512-tch8RbCfn1UUH1PeVCXva4V8gDpGAud/w0WubD6sHC46vYQ3KDxL+xv1A2UxK0N6jrVedutuPHxe1XIoqerwMw==}
+  /undici@5.25.3:
+    resolution: {integrity: sha512-7lmhlz3K1+IKB6IUjkdzV2l0jKY8/0KguEMdEpzzXCug5pEGIp3DxUg0DEN65DrVoxHiRKpPORC/qzX+UglSkQ==}
     engines: {node: '>=14.0'}
     dependencies:
-      busboy: 1.6.0
+      '@fastify/busboy': 2.0.0
 
   /unicode-length@2.1.0:
     resolution: {integrity: sha512-4bV582zTV9Q02RXBxSUMiuN/KHo5w4aTojuKTNT96DIKps/SIawFp7cS5Mu25VuY1AioGXrmYyzKZUzh8OqoUw==}

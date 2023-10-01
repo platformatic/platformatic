@@ -33,7 +33,7 @@
     "help-me": "^4.2.0",
     "jsonpointer": "^5.0.1",
     "minimist": "^1.2.8",
-    "undici": "^5.25.2"
+    "undici": "^5.25.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.38.1",
