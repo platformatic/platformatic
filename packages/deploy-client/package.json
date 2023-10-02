@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "standard | snazzy",
-    "test": "standard | snazzy && c8 --100 tap -j1 test/*test.js",
+    "test": "pnpm run lint && c8 --100 node ./test/runner.js",
     "license": "license-checker --production --onlyAllow 'Apache-2.0;MIT;ISC;BSD-2-Clause;BSD-3-Clause'"
   },
   "repository": {
@@ -20,6 +20,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "c8": "^8.0.1",
+    "glob": "^10.3.10",
     "fastify": "^4.23.2",
     "license-checker": "^25.0.1",
     "proxyquire": "^2.1.3",

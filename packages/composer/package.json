@@ -23,6 +23,7 @@
   "devDependencies": {
     "@platformatic/client": "workspace:*",
     "c8": "^8.0.1",
+    "glob": "^10.3.10",
     "execa": "^8.0.1",
     "openapi-schema-validator": "^12.1.3",
     "snazzy": "^9.0.0",

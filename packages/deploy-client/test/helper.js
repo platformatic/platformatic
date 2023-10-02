@@ -32,11 +32,11 @@ async function startDeployService (t, options) {
     await uploadCallback(request, reply)
   })
 
-  t.teardown(async () => {
+  t.after(async () => {
     await deployService.close()
   })
 
-  await deployService.listen({ port: 3042 })
+  await deployService.listen({ port: 0 })
   return deployService
 }
 
@@ -47,7 +47,7 @@ async function startMachine (t, callback = () => {}) {
     await callback(request, reply)
   })
 
-  t.teardown(async () => {
+  t.after(async () => {
     await machine.close()
   })
 
