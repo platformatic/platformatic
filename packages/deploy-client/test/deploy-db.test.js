@@ -1,24 +1,24 @@
 'use strict'
 
-const { join } = require('path')
-const { test } = require('tap')
-const { randomUUID } = require('crypto')
+const assert = require('node:assert/strict')
+const { test } = require('node:test')
+const { join } = require('node:path')
+const { randomUUID } = require('node:crypto')
 
+const proxyquire = require('proxyquire')
 const { deploy } = require('../index')
 const { startMachine, startDeployService } = require('./helper')
-const proxyquire = require('proxyquire')
 
 test('should deploy platformatic project without github metadata', async (t) => {
-  t.plan(12)
-
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
 
   const workspaceId = 'test-workspace-id'
   const workspaceKey = 'test-workspace-key'
 
+  let isMachinePreWarmed = false
   const entryPointUrl = await startMachine(t, () => {
-    t.pass('Action should make a prewarm request to the machine')
+    isMachinePreWarmed = true
   })
 
   const pathToProject = join(__dirname, 'fixtures', 'db-basic')
@@ -38,26 +38,26 @@ test('should deploy platformatic project without github metadata', async (t) => 
 
   const deploymentId = randomUUID()
 
-  await startDeployService(
+  const deployService = await startDeployService(
     t,
     {
       createBundleCallback: (request, reply) => {
-        t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-        t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+        assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+        assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
 
         const { bundle } = request.body
 
-        t.equal(bundle.appType, 'db')
-        t.equal(bundle.configPath, pathToConfig)
-        t.ok(bundle.checksum)
+        assert.equal(bundle.appType, 'db')
+        assert.equal(bundle.configPath, pathToConfig)
+        assert.ok(bundle.checksum)
 
         reply.code(200).send({ id: bundleId, token, isBundleUploaded: false })
       },
       createDeploymentCallback: (request, reply) => {
-        t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-        t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-        t.equal(request.headers.authorization, `Bearer ${token}`)
-        t.same(
+        assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+        assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+        assert.equal(request.headers.authorization, `Bearer ${token}`)
+        assert.deepEqual(
           request.body,
           {
             label,
@@ -82,7 +82,7 @@ test('should deploy platformatic project without github metadata', async (t) => 
         })
       },
       uploadCallback: (request) => {
-        t.equal(request.headers.authorization, `Bearer ${token}`)
+        assert.equal(request.headers.authorization, `Bearer ${token}`)
       }
     }
   )
@@ -90,11 +90,14 @@ test('should deploy platformatic project without github metadata', async (t) => 
   const logger = {
     info: () => {},
     trace: () => {},
-    warn: () => t.fail('Should not log a warning')
+    warn: () => assert.fail('Should not log a warning')
   }
 
+  const deployServicePort = deployService.server.address().port
+  const deployServiceHost = `http://localhost:${deployServicePort}`
+
   const result = await deploy({
-    deployServiceHost: 'http://localhost:3042',
+    deployServiceHost,
     workspaceId,
     workspaceKey,
     label,
@@ -107,23 +110,23 @@ test('should deploy platformatic project without github metadata', async (t) => 
     logger
   })
 
-  t.strictSame(result, {
+  assert.equal(isMachinePreWarmed, true)
+  assert.deepEqual(result, {
     deploymentId,
     entryPointUrl
   })
 })
 
 test('should successfully deploy platformatic project with PR context', async (t) => {
-  t.plan(14)
-
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
 
   const workspaceId = 'test-workspace-id'
   const workspaceKey = 'test-workspace-key'
 
+  let isMachinePreWarmed = false
   const entryPointUrl = await startMachine(t, () => {
-    t.pass('Action should make a prewarm request to the machine')
+    isMachinePreWarmed = true
   })
 
   const pathToProject = join(__dirname, 'fixtures', 'db-basic')
@@ -164,28 +167,28 @@ test('should successfully deploy platformatic project with PR context', async (t
     }
   }
 
-  await startDeployService(
+  const deployService = await startDeployService(
     t,
     {
       createBundleCallback: (request, reply) => {
-        t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-        t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+        assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+        assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
 
         const { bundle, ...bundleMetadata } = request.body
 
-        t.equal(bundle.appType, 'db')
-        t.equal(bundle.configPath, pathToConfig)
-        t.ok(bundle.checksum)
+        assert.equal(bundle.appType, 'db')
+        assert.equal(bundle.configPath, pathToConfig)
+        assert.ok(bundle.checksum)
 
-        t.same(bundleMetadata, githubMetadata)
-        t.ok(request.body.bundle.checksum)
+        assert.deepEqual(bundleMetadata, githubMetadata)
+        assert.ok(request.body.bundle.checksum)
         reply.code(200).send({ id: bundleId, token, isBundleUploaded: false })
       },
       createDeploymentCallback: (request, reply) => {
-        t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-        t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-        t.equal(request.headers.authorization, `Bearer ${token}`)
-        t.same(
+        assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+        assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+        assert.equal(request.headers.authorization, `Bearer ${token}`)
+        assert.deepEqual(
           request.body,
           {
             label,
@@ -210,7 +213,7 @@ test('should successfully deploy platformatic project with PR context', async (t
         })
       },
       uploadCallback: (request) => {
-        t.equal(request.headers.authorization, `Bearer ${token}`)
+        assert.equal(request.headers.authorization, `Bearer ${token}`)
       }
     }
   )
@@ -218,11 +221,14 @@ test('should successfully deploy platformatic project with PR context', async (t
   const logger = {
     info: () => {},
     trace: () => {},
-    warn: () => t.fail('Should not log a warning')
+    warn: () => assert.fail('Should not log a warning')
   }
 
+  const deployServicePort = deployService.server.address().port
+  const deployServiceHost = `http://localhost:${deployServicePort}`
+
   const result = await deploy({
-    deployServiceHost: 'http://localhost:3042',
+    deployServiceHost,
     compileTypescript: false,
     workspaceId,
     workspaceKey,
@@ -236,23 +242,23 @@ test('should successfully deploy platformatic project with PR context', async (t
     logger
   })
 
-  t.strictSame(result, {
+  assert.equal(isMachinePreWarmed, true)
+  assert.deepEqual(result, {
     deploymentId,
     entryPointUrl
   })
 })
 
 test('should successfully deploy platformatic project with branch context', async (t) => {
-  t.plan(13)
-
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
 
   const workspaceId = 'test-workspace-id'
   const workspaceKey = 'test-workspace-key'
 
+  let isMachinePreWarmed = false
   const entryPointUrl = await startMachine(t, () => {
-    t.pass('Action should make a prewarm request to the machine')
+    isMachinePreWarmed = true
   })
 
   const pathToProject = join(__dirname, 'fixtures', 'db-basic')
@@ -289,27 +295,27 @@ test('should successfully deploy platformatic project with branch context', asyn
     }
   }
 
-  await startDeployService(
+  const deployService = await startDeployService(
     t,
     {
       createBundleCallback: (request, reply) => {
-        t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-        t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+        assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+        assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
 
         const { bundle, ...bundleMetadata } = request.body
 
-        t.equal(bundle.appType, 'db')
-        t.equal(bundle.configPath, pathToConfig)
-        t.ok(bundle.checksum)
+        assert.equal(bundle.appType, 'db')
+        assert.equal(bundle.configPath, pathToConfig)
+        assert.ok(bundle.checksum)
 
-        t.same(bundleMetadata, githubMetadata)
+        assert.deepEqual(bundleMetadata, githubMetadata)
         reply.code(200).send({ id: bundleId, token, isBundleUploaded: false })
       },
       createDeploymentCallback: (request, reply) => {
-        t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-        t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-        t.equal(request.headers.authorization, `Bearer ${token}`)
-        t.same(
+        assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+        assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+        assert.equal(request.headers.authorization, `Bearer ${token}`)
+        assert.deepEqual(
           request.body,
           {
             label,
@@ -334,7 +340,7 @@ test('should successfully deploy platformatic project with branch context', asyn
         })
       },
       uploadCallback: (request) => {
-        t.equal(request.headers.authorization, `Bearer ${token}`)
+        assert.equal(request.headers.authorization, `Bearer ${token}`)
       }
     }
   )
@@ -342,11 +348,14 @@ test('should successfully deploy platformatic project with branch context', asyn
   const logger = {
     trace: () => {},
     info: () => {},
-    warn: () => t.fail('Should not log a warning')
+    warn: () => assert.fail('Should not log a warning')
   }
 
+  const deployServicePort = deployService.server.address().port
+  const deployServiceHost = `http://localhost:${deployServicePort}`
+
   const result = await deploy({
-    deployServiceHost: 'http://localhost:3042',
+    deployServiceHost,
     compileTypescript: false,
     workspaceId,
     workspaceKey,
@@ -360,23 +369,23 @@ test('should successfully deploy platformatic project with branch context', asyn
     logger
   })
 
-  t.strictSame(result, {
+  assert.equal(isMachinePreWarmed, true)
+  assert.deepEqual(result, {
     deploymentId,
     entryPointUrl
   })
 })
 
 test('should successfully deploy platformatic project without github metadata', async (t) => {
-  t.plan(12)
-
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
 
   const workspaceId = 'test-workspace-id'
   const workspaceKey = 'test-workspace-key'
 
+  let isMachinePreWarmed = false
   const entryPointUrl = await startMachine(t, () => {
-    t.pass('Action should make a prewarm request to the machine')
+    isMachinePreWarmed = true
   })
 
   const pathToProject = join(__dirname, 'fixtures', 'db-basic')
@@ -396,25 +405,25 @@ test('should successfully deploy platformatic project without github metadata', 
 
   const deploymentId = randomUUID()
 
-  await startDeployService(
+  const deployService = await startDeployService(
     t,
     {
       createBundleCallback: (request, reply) => {
-        t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-        t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+        assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+        assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
         const { bundle } = request.body
 
-        t.equal(bundle.appType, 'db')
-        t.equal(bundle.configPath, pathToConfig)
-        t.ok(bundle.checksum)
+        assert.equal(bundle.appType, 'db')
+        assert.equal(bundle.configPath, pathToConfig)
+        assert.ok(bundle.checksum)
 
         reply.code(200).send({ id: bundleId, token, isBundleUploaded: false })
       },
       createDeploymentCallback: (request, reply) => {
-        t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-        t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-        t.equal(request.headers.authorization, `Bearer ${token}`)
-        t.same(
+        assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+        assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+        assert.equal(request.headers.authorization, `Bearer ${token}`)
+        assert.deepEqual(
           request.body,
           {
             label,
@@ -439,7 +448,7 @@ test('should successfully deploy platformatic project without github metadata', 
         })
       },
       uploadCallback: (request) => {
-        t.equal(request.headers.authorization, `Bearer ${token}`)
+        assert.equal(request.headers.authorization, `Bearer ${token}`)
       }
     }
   )
@@ -447,11 +456,14 @@ test('should successfully deploy platformatic project without github metadata', 
   const logger = {
     trace: () => {},
     info: () => {},
-    warn: () => t.fail('Should not log a warning')
+    warn: () => assert.fail('Should not log a warning')
   }
 
+  const deployServicePort = deployService.server.address().port
+  const deployServiceHost = `http://localhost:${deployServicePort}`
+
   const result = await deploy({
-    deployServiceHost: 'http://localhost:3042',
+    deployServiceHost,
     compileTypescript: false,
     workspaceId,
     workspaceKey,
@@ -464,23 +476,23 @@ test('should successfully deploy platformatic project without github metadata', 
     logger
   })
 
-  t.strictSame(result, {
+  assert.equal(isMachinePreWarmed, true)
+  assert.deepEqual(result, {
     deploymentId,
     entryPointUrl
   })
 })
 
 test('should successfully deploy platformatic project with branch context', async (t) => {
-  t.plan(13)
-
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
 
   const workspaceId = 'test-workspace-id'
   const workspaceKey = 'test-workspace-key'
 
+  let isMachinePreWarmed = false
   const entryPointUrl = await startMachine(t, () => {
-    t.pass('Action should make a prewarm request to the machine')
+    isMachinePreWarmed = true
   })
 
   const pathToProject = join(__dirname, 'fixtures', 'db-basic')
@@ -517,26 +529,26 @@ test('should successfully deploy platformatic project with branch context', asyn
     }
   }
 
-  await startDeployService(
+  const deployService = await startDeployService(
     t,
     {
       createBundleCallback: (request, reply) => {
-        t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-        t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+        assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+        assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
         const { bundle, ...bundleMetadata } = request.body
 
-        t.equal(bundle.appType, 'db')
-        t.equal(bundle.configPath, pathToConfig)
-        t.ok(bundle.checksum)
+        assert.equal(bundle.appType, 'db')
+        assert.equal(bundle.configPath, pathToConfig)
+        assert.ok(bundle.checksum)
 
-        t.same(bundleMetadata, githubMetadata)
+        assert.deepEqual(bundleMetadata, githubMetadata)
         reply.code(200).send({ id: bundleId, token, isBundleUploaded: false })
       },
       createDeploymentCallback: (request, reply) => {
-        t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-        t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-        t.equal(request.headers.authorization, `Bearer ${token}`)
-        t.same(
+        assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+        assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+        assert.equal(request.headers.authorization, `Bearer ${token}`)
+        assert.deepEqual(
           request.body,
           {
             label,
@@ -561,7 +573,7 @@ test('should successfully deploy platformatic project with branch context', asyn
         })
       },
       uploadCallback: (request) => {
-        t.equal(request.headers.authorization, `Bearer ${token}`)
+        assert.equal(request.headers.authorization, `Bearer ${token}`)
       }
     }
   )
@@ -569,11 +581,14 @@ test('should successfully deploy platformatic project with branch context', asyn
   const logger = {
     trace: () => {},
     info: () => {},
-    warn: () => t.fail('Should not log a warning')
+    warn: () => assert.fail('Should not log a warning')
   }
 
+  const deployServicePort = deployService.server.address().port
+  const deployServiceHost = `http://localhost:${deployServicePort}`
+
   const result = await deploy({
-    deployServiceHost: 'http://localhost:3042',
+    deployServiceHost,
     compileTypescript: false,
     workspaceId,
     workspaceKey,
@@ -587,23 +602,23 @@ test('should successfully deploy platformatic project with branch context', asyn
     logger
   })
 
-  t.strictSame(result, {
+  assert.equal(isMachinePreWarmed, true)
+  assert.deepEqual(result, {
     deploymentId,
     entryPointUrl
   })
 })
 
 test('should not deploy bundle of it already exists', async (t) => {
-  t.plan(12)
-
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
 
   const workspaceId = 'test-workspace-id'
   const workspaceKey = 'test-workspace-key'
 
+  let isMachinePreWarmed = false
   const entryPointUrl = await startMachine(t, () => {
-    t.pass('Action should make a prewarm request to the machine')
+    isMachinePreWarmed = true
   })
 
   const pathToProject = join(__dirname, 'fixtures', 'db-basic')
@@ -640,26 +655,26 @@ test('should not deploy bundle of it already exists', async (t) => {
     }
   }
 
-  await startDeployService(
+  const deployService = await startDeployService(
     t,
     {
       createBundleCallback: (request, reply) => {
-        t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-        t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+        assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+        assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
         const { bundle, ...bundleMetadata } = request.body
 
-        t.equal(bundle.appType, 'db')
-        t.equal(bundle.configPath, pathToConfig)
-        t.ok(bundle.checksum)
+        assert.equal(bundle.appType, 'db')
+        assert.equal(bundle.configPath, pathToConfig)
+        assert.ok(bundle.checksum)
 
-        t.same(bundleMetadata, githubMetadata)
+        assert.deepEqual(bundleMetadata, githubMetadata)
         reply.code(200).send({ id: bundleId, token, isBundleUploaded: true })
       },
       createDeploymentCallback: (request, reply) => {
-        t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-        t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-        t.equal(request.headers.authorization, `Bearer ${token}`)
-        t.same(
+        assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+        assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+        assert.equal(request.headers.authorization, `Bearer ${token}`)
+        assert.deepEqual(
           request.body,
           {
             label,
@@ -684,7 +699,7 @@ test('should not deploy bundle of it already exists', async (t) => {
         })
       },
       uploadCallback: (request) => {
-        t.fail('Should not upload bundle')
+        assert.fail('Should not upload bundle')
       }
     }
   )
@@ -692,11 +707,14 @@ test('should not deploy bundle of it already exists', async (t) => {
   const logger = {
     trace: () => {},
     info: () => {},
-    warn: () => t.fail('Should not log a warning')
+    warn: () => assert.fail('Should not log a warning')
   }
 
+  const deployServicePort = deployService.server.address().port
+  const deployServiceHost = `http://localhost:${deployServicePort}`
+
   const result = await deploy({
-    deployServiceHost: 'http://localhost:3042',
+    deployServiceHost,
     compileTypescript: false,
     workspaceId,
     workspaceKey,
@@ -710,23 +728,23 @@ test('should not deploy bundle of it already exists', async (t) => {
     logger
   })
 
-  t.strictSame(result, {
+  assert.equal(isMachinePreWarmed, true)
+  assert.deepEqual(result, {
     deploymentId,
     entryPointUrl
   })
 })
 
 test('should successfully deploy platformatic project without github metadata', async (t) => {
-  t.plan(12)
-
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
 
   const workspaceId = 'test-workspace-id'
   const workspaceKey = 'test-workspace-key'
 
+  let isMachinePreWarmed = false
   const entryPointUrl = await startMachine(t, () => {
-    t.pass('Action should make a prewarm request to the machine')
+    isMachinePreWarmed = true
   })
 
   const pathToProject = join(__dirname, 'fixtures', 'db-basic')
@@ -746,25 +764,25 @@ test('should successfully deploy platformatic project without github metadata', 
 
   const deploymentId = randomUUID()
 
-  await startDeployService(
+  const deployService = await startDeployService(
     t,
     {
       createBundleCallback: (request, reply) => {
-        t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-        t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+        assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+        assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
         const { bundle } = request.body
 
-        t.equal(bundle.appType, 'db')
-        t.equal(bundle.configPath, pathToConfig)
-        t.ok(bundle.checksum)
+        assert.equal(bundle.appType, 'db')
+        assert.equal(bundle.configPath, pathToConfig)
+        assert.ok(bundle.checksum)
 
         reply.code(200).send({ id: bundleId, token, isBundleUploaded: false })
       },
       createDeploymentCallback: (request, reply) => {
-        t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-        t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-        t.equal(request.headers.authorization, `Bearer ${token}`)
-        t.same(
+        assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+        assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+        assert.equal(request.headers.authorization, `Bearer ${token}`)
+        assert.deepEqual(
           request.body,
           {
             label,
@@ -789,7 +807,7 @@ test('should successfully deploy platformatic project without github metadata', 
         })
       },
       uploadCallback: (request) => {
-        t.equal(request.headers.authorization, `Bearer ${token}`)
+        assert.equal(request.headers.authorization, `Bearer ${token}`)
       }
     }
   )
@@ -797,11 +815,14 @@ test('should successfully deploy platformatic project without github metadata', 
   const logger = {
     trace: () => {},
     info: () => {},
-    warn: () => t.fail('Should not log a warning')
+    warn: () => assert.fail('Should not log a warning')
   }
 
+  const deployServicePort = deployService.server.address().port
+  const deployServiceHost = `http://localhost:${deployServicePort}`
+
   const result = await deploy({
-    deployServiceHost: 'http://localhost:3042',
+    deployServiceHost,
     compileTypescript: false,
     workspaceId,
     workspaceKey,
@@ -814,7 +835,8 @@ test('should successfully deploy platformatic project without github metadata', 
     logger
   })
 
-  t.strictSame(result, {
+  assert.equal(isMachinePreWarmed, true)
+  assert.deepEqual(result, {
     deploymentId,
     entryPointUrl
   })
@@ -827,11 +849,11 @@ test('should fail if there is no platformatic_workspace_id input param', async (
       logger: {
         trace: () => {},
         info: () => {},
-        warn: () => t.fail('Should not log a warning')
+        warn: () => assert.fail('Should not log a warning')
       }
     })
   } catch (err) {
-    t.equal(err.message, 'platformatic_workspace_id action param is required')
+    assert.equal(err.message, 'platformatic_workspace_id action param is required')
   }
 })
 
@@ -843,16 +865,16 @@ test('should fail if there is no platformatic_workspace_id input param', async (
       logger: {
         trace: () => {},
         info: () => {},
-        warn: () => t.fail('Should not log a warning')
+        warn: () => assert.fail('Should not log a warning')
       }
     })
   } catch (err) {
-    t.equal(err.message, 'platformatic_workspace_key action param is required')
+    assert.equal(err.message, 'platformatic_workspace_key action param is required')
   }
 })
 
 test('should fail if platformatic_api_key is wrong', async (t) => {
-  await startDeployService(
+  const deployService = await startDeployService(
     t,
     {
       createBundleCallback: (request, reply) => {
@@ -862,8 +884,11 @@ test('should fail if platformatic_api_key is wrong', async (t) => {
   )
 
   try {
+    const deployServicePort = deployService.server.address().port
+    const deployServiceHost = `http://localhost:${deployServicePort}`
+
     await deploy({
-      deployServiceHost: 'http://localhost:3042',
+      deployServiceHost,
       workspaceId: 'test-workspace-id',
       workspaceKey: 'test-workspace-key',
       pathToProject: join(__dirname, 'fixtures', 'db-basic'),
@@ -871,16 +896,16 @@ test('should fail if platformatic_api_key is wrong', async (t) => {
       logger: {
         trace: () => {},
         info: () => {},
-        warn: () => t.fail('Should not log a warning')
+        warn: () => assert.fail('Should not log a warning')
       }
     })
   } catch (err) {
-    t.equal(err.message, 'Invalid platformatic_workspace_key provided')
+    assert.equal(err.message, 'Invalid platformatic_workspace_key provided')
   }
 })
 
 test('should fail if it could not create a bundle', async (t) => {
-  await startDeployService(
+  const deployService = await startDeployService(
     t,
     {
       createBundleCallback: (request, reply) => {
@@ -890,8 +915,11 @@ test('should fail if it could not create a bundle', async (t) => {
   )
 
   try {
+    const deployServicePort = deployService.server.address().port
+    const deployServiceHost = `http://localhost:${deployServicePort}`
+
     await deploy({
-      deployServiceHost: 'http://localhost:3042',
+      deployServiceHost,
       workspaceId: 'test-workspace-id',
       workspaceKey: 'test-workspace-key',
       pathToProject: join(__dirname, 'fixtures', 'db-basic'),
@@ -899,30 +927,31 @@ test('should fail if it could not create a bundle', async (t) => {
       logger: {
         trace: () => {},
         info: () => {},
-        warn: () => t.fail('Should not log a warning')
+        warn: () => assert.fail('Should not log a warning')
       }
     })
   } catch (err) {
-    t.equal(err.message, 'Could not create a bundle: 500')
+    assert.equal(err.message, 'Could not create a bundle: 500')
   }
 })
 
 test('should fail if platformatic_api_key is wrong', async (t) => {
-  await startDeployService(
+  const deployService = await startDeployService(
     t,
     {
       createDeploymentCallback: (request, reply) => {
         reply.status(401).send({ message: 'Unauthorized' })
       },
-      uploadCallback: () => {
-        t.pass('should upload code')
-      }
+      uploadCallback: () => {}
     }
   )
 
   try {
+    const deployServicePort = deployService.server.address().port
+    const deployServiceHost = `http://localhost:${deployServicePort}`
+
     await deploy({
-      deployServiceHost: 'http://localhost:3042',
+      deployServiceHost,
       workspaceId: 'test-workspace-id',
       workspaceKey: 'test-workspace-key',
       pathToProject: join(__dirname, 'fixtures', 'db-basic'),
@@ -930,16 +959,16 @@ test('should fail if platformatic_api_key is wrong', async (t) => {
       logger: {
         trace: () => {},
         info: () => {},
-        warn: () => t.fail('Should not log a warning')
+        warn: () => assert.fail('Should not log a warning')
       }
     })
   } catch (err) {
-    t.equal(err.message, 'Invalid platformatic_workspace_key provided')
+    assert.equal(err.message, 'Invalid platformatic_workspace_key provided')
   }
 })
 
 test('should fail if it could not create a deployment', async (t) => {
-  await startDeployService(
+  const deployService = await startDeployService(
     t,
     {
       createDeploymentCallback: (request, reply) => {
@@ -949,8 +978,11 @@ test('should fail if it could not create a deployment', async (t) => {
   )
 
   try {
+    const deployServicePort = deployService.server.address().port
+    const deployServiceHost = `http://localhost:${deployServicePort}`
+
     await deploy({
-      deployServiceHost: 'http://localhost:3042',
+      deployServiceHost,
       workspaceId: 'test-workspace-id',
       compileTypescript: false,
       workspaceKey: 'test-workspace-key',
@@ -958,24 +990,27 @@ test('should fail if it could not create a deployment', async (t) => {
       logger: {
         trace: () => {},
         info: () => {},
-        warn: () => t.fail('Should not log a warning')
+        warn: () => assert.fail('Should not log a warning')
       }
     })
   } catch (err) {
-    t.equal(err.message, 'Could not create a deployment: 500')
+    assert.equal(err.message, 'Could not create a deployment: 500')
   }
 })
 
 test('should fail if it could not upload code tarball', async (t) => {
-  await startDeployService(t, {
+  const deployService = await startDeployService(t, {
     uploadCallback: (request, reply) => {
       reply.status(500).send({ message: 'Error' })
     }
   })
 
   try {
+    const deployServicePort = deployService.server.address().port
+    const deployServiceHost = `http://localhost:${deployServicePort}`
+
     await deploy({
-      deployServiceHost: 'http://localhost:3042',
+      deployServiceHost,
       workspaceId: 'test-workspace-id',
       workspaceKey: 'test-workspace-key',
       compileTypescript: false,
@@ -983,17 +1018,15 @@ test('should fail if it could not upload code tarball', async (t) => {
       logger: {
         trace: () => {},
         info: () => {},
-        warn: () => t.fail('Should not log a warning')
+        warn: () => assert.fail('Should not log a warning')
       }
     })
   } catch (err) {
-    t.equal(err.message, 'Failed to upload code archive: 500')
+    assert.equal(err.message, 'Failed to upload code archive: 500')
   }
 })
 
 test('should fail if it could not make a prewarm call', async (t) => {
-  t.plan(5)
-
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
 
@@ -1003,7 +1036,7 @@ test('should fail if it could not make a prewarm call', async (t) => {
 
   const deploymentId = randomUUID()
 
-  await startDeployService(t, {
+  const deployService = await startDeployService(t, {
     createBundleCallback: (request, reply) => {
       reply.code(200).send({ id: bundleId, token, isBundleUploaded: false })
     },
@@ -1016,8 +1049,11 @@ test('should fail if it could not make a prewarm call', async (t) => {
   })
 
   try {
+    const deployServicePort = deployService.server.address().port
+    const deployServiceHost = `http://localhost:${deployServicePort}`
+
     await deploy({
-      deployServiceHost: 'http://localhost:3042',
+      deployServiceHost,
       workspaceId: 'test-workspace-id',
       workspaceKey: 'test-workspace-key',
       pathToProject: join(__dirname, 'fixtures', 'db-basic'),
@@ -1026,12 +1062,12 @@ test('should fail if it could not make a prewarm call', async (t) => {
         trace: () => {},
         info: () => {},
         warn: (message) => {
-          t.equal(message, 'Could not make a prewarm call: Request failed with status code: 500 {"message":"Error"}, retrying...')
+          assert.equal(message, 'Could not make a prewarm call: Request failed with status code: 500 {"message":"Error"}, retrying...')
         }
       }
     })
   } catch (err) {
-    t.equal(err.message, 'Could not make a prewarm call: Request failed with status code: 500 {"message":"Error"}')
+    assert.equal(err.message, 'Could not make a prewarm call: Request failed with status code: 500 {"message":"Error"}')
   }
 })
 
@@ -1047,11 +1083,11 @@ test('should fail if there is no config file', async (t) => {
       logger: {
         trace: () => {},
         info: () => {},
-        warn: () => t.fail('Should not log a warning')
+        warn: () => assert.fail('Should not log a warning')
       }
     })
   } catch (err) {
-    t.match(err.message, /Missing config file!/)
+    assert.match(err.message, /Missing config file!/)
   }
 })
 
@@ -1066,11 +1102,11 @@ test('should fail if there is no config file', async (t) => {
       logger: {
         trace: () => {},
         info: () => {},
-        warn: () => t.fail('Should not log a warning')
+        warn: () => assert.fail('Should not log a warning')
       }
     })
   } catch (err) {
-    t.equal(err.message, 'Could not find Platformatic config file')
+    assert.equal(err.message, 'Could not find Platformatic config file')
   }
 })
 
@@ -1086,25 +1122,24 @@ test('should fail if there is no config file', async (t) => {
       logger: {
         trace: () => {},
         info: () => {},
-        warn: () => t.fail('Should not log a warning')
+        warn: () => assert.fail('Should not log a warning')
       }
     })
   } catch (err) {
-    t.match(err.message, /Missing config file!/)
+    assert.match(err.message, /Missing config file!/)
   }
 })
 
 test('should deploy platformatic project without typescript dep', async (t) => {
-  t.plan(12)
-
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
 
   const workspaceId = 'test-workspace-id'
   const workspaceKey = 'test-workspace-key'
 
+  let isMachinePreWarmed = false
   const entryPointUrl = await startMachine(t, () => {
-    t.pass('Action should make a prewarm request to the machine')
+    isMachinePreWarmed = true
   })
 
   const pathToProject = join(__dirname, 'fixtures', 'db-basic')
@@ -1124,26 +1159,26 @@ test('should deploy platformatic project without typescript dep', async (t) => {
 
   const deploymentId = randomUUID()
 
-  await startDeployService(
+  const deployService = await startDeployService(
     t,
     {
       createBundleCallback: (request, reply) => {
-        t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-        t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+        assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+        assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
 
         const { bundle } = request.body
 
-        t.equal(bundle.appType, 'db')
-        t.equal(bundle.configPath, pathToConfig)
-        t.ok(bundle.checksum)
+        assert.equal(bundle.appType, 'db')
+        assert.equal(bundle.configPath, pathToConfig)
+        assert.ok(bundle.checksum)
 
         reply.code(200).send({ id: bundleId, token, isBundleUploaded: false })
       },
       createDeploymentCallback: (request, reply) => {
-        t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-        t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-        t.equal(request.headers.authorization, `Bearer ${token}`)
-        t.same(
+        assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+        assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+        assert.equal(request.headers.authorization, `Bearer ${token}`)
+        assert.deepEqual(
           request.body,
           {
             label,
@@ -1168,7 +1203,7 @@ test('should deploy platformatic project without typescript dep', async (t) => {
         })
       },
       uploadCallback: (request) => {
-        t.equal(request.headers.authorization, `Bearer ${token}`)
+        assert.equal(request.headers.authorization, `Bearer ${token}`)
       }
     }
   )
@@ -1176,7 +1211,7 @@ test('should deploy platformatic project without typescript dep', async (t) => {
   const logger = {
     info: () => {},
     trace: () => {},
-    warn: () => t.fail('Should not log a warning')
+    warn: () => assert.fail('Should not log a warning')
   }
 
   const runtime = require('@platformatic/runtime')
@@ -1193,8 +1228,11 @@ test('should deploy platformatic project without typescript dep', async (t) => {
     }
   })
 
+  const deployServicePort = deployService.server.address().port
+  const deployServiceHost = `http://localhost:${deployServicePort}`
+
   const result = await deploy({
-    deployServiceHost: 'http://localhost:3042',
+    deployServiceHost,
     workspaceId,
     workspaceKey,
     label,
@@ -1206,7 +1244,8 @@ test('should deploy platformatic project without typescript dep', async (t) => {
     logger
   })
 
-  t.strictSame(result, {
+  assert.equal(isMachinePreWarmed, true)
+  assert.deepEqual(result, {
     deploymentId,
     entryPointUrl
   })

@@ -1,23 +1,23 @@
 'use strict'
 
-const { join } = require('path')
-const { test } = require('tap')
-const { randomUUID } = require('crypto')
+const assert = require('node:assert/strict')
+const { test } = require('node:test')
+const { join } = require('node:path')
+const { randomUUID } = require('node:crypto')
 
 const { deploy } = require('../index')
 const { startMachine, startDeployService } = require('./helper')
 
 test('should deploy platformatic composer project without github metadata', async (t) => {
-  t.plan(13)
-
   const bundleId = 'test-bundle-id'
   const token = 'test-upload-token'
 
   const workspaceId = 'test-workspace-id'
   const workspaceKey = 'test-workspace-key'
 
+  let isMachinePreWarmed = false
   const entryPointUrl = await startMachine(t, () => {
-    t.pass('Action should make a prewarm request to the machine')
+    isMachinePreWarmed = true
   })
 
   const pathToProject = join(__dirname, 'fixtures', 'composer-basic')
@@ -41,28 +41,28 @@ test('should deploy platformatic composer project without github metadata', asyn
 
   const deploymentId = randomUUID()
 
-  await startDeployService(
+  const deployService = await startDeployService(
     t,
     {
       createBundleCallback: (request, reply) => {
-        t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-        t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+        assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+        assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
 
         const { bundle } = request.body
 
-        t.equal(bundle.appType, 'composer')
-        t.equal(bundle.configPath, pathToConfig)
-        t.ok(bundle.checksum)
+        assert.equal(bundle.appType, 'composer')
+        assert.equal(bundle.configPath, pathToConfig)
+        assert.ok(bundle.checksum)
 
-        t.ok(request.body.bundle.checksum)
+        assert.ok(request.body.bundle.checksum)
 
         reply.code(200).send({ id: bundleId, token, isBundleUploaded: false })
       },
       createDeploymentCallback: (request, reply) => {
-        t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-        t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-        t.equal(request.headers.authorization, `Bearer ${token}`)
-        t.same(
+        assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+        assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+        assert.equal(request.headers.authorization, `Bearer ${token}`)
+        assert.deepEqual(
           request.body,
           { label, metadata, variables, secrets }
         )
@@ -72,7 +72,7 @@ test('should deploy platformatic composer project without github metadata', asyn
         })
       },
       uploadCallback: (request) => {
-        t.equal(request.headers.authorization, `Bearer ${token}`)
+        assert.equal(request.headers.authorization, `Bearer ${token}`)
       }
     }
   )
@@ -80,11 +80,14 @@ test('should deploy platformatic composer project without github metadata', asyn
   const logger = {
     trace: () => {},
     info: () => {},
-    warn: () => t.fail('Should not log a warning')
+    warn: () => assert.fail('Should not log a warning')
   }
 
+  const deployServicePort = deployService.server.address().port
+  const deployServiceHost = `http://localhost:${deployServicePort}`
+
   const result = await deploy({
-    deployServiceHost: 'http://localhost:3042',
+    deployServiceHost,
     compileTypescript: false,
     workspaceId,
     workspaceKey,
@@ -97,7 +100,8 @@ test('should deploy platformatic composer project without github metadata', asyn
     logger
   })
 
-  t.strictSame(result, {
+  assert.equal(isMachinePreWarmed, true)
+  assert.deepEqual(result, {
     deploymentId,
     entryPointUrl
   })

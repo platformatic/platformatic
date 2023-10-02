@@ -397,6 +397,9 @@ importers:
       execa:
         specifier: ^8.0.1
         version: 8.0.1
+      glob:
+        specifier: ^10.3.10
+        version: 10.3.10
       openapi-schema-validator:
         specifier: ^12.1.3
         version: 12.1.3
@@ -868,6 +871,9 @@ importers:
       fastify:
         specifier: ^4.23.2
         version: 4.23.2
+      glob:
+        specifier: ^10.3.10
+        version: 10.3.10
       license-checker:
         specifier: ^25.0.1
         version: 25.0.1
