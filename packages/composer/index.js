@@ -102,7 +102,7 @@ async function watchApis (app, opts) {
         }, 'failed to reload server')
       }
     }
-  }, refreshTimeout)
+  }, refreshTimeout).unref()
 
   app.addHook('onClose', async () => {
     clearInterval(timeout)

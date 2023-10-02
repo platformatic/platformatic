@@ -62,7 +62,7 @@ test('should restart composer if api has been changed', async (t) => {
   }
 
   await api1.close()
-  await setTimeout(1000)
+  await setTimeout(3000)
 
   assert.equal(composer.restarted, true)
 
@@ -133,7 +133,7 @@ test('should watch api only if it has a url', async (t) => {
   }
 
   await api2.close()
-  await setTimeout(1000)
+  await setTimeout(3000)
 
   assert.equal(composer.restarted, false)
 
@@ -207,7 +207,7 @@ test('should compose schema after service restart', async (t) => {
   }
 
   await api1.close()
-  await setTimeout(1000)
+  await setTimeout(3000)
 
   assert.equal(composer.restarted, true)
 
@@ -232,7 +232,7 @@ test('should compose schema after service restart', async (t) => {
 
   const newApi1 = await createOpenApiService(t, ['users'])
   await newApi1.listen({ port: api1Port })
-  await setTimeout(1000)
+  await setTimeout(3000)
 
   {
     const { statusCode, body } = await composer.inject({
@@ -285,7 +285,7 @@ test('should not watch an api if refreshTimeout equals 0', async (t) => {
 
   await api1.close()
   await api2.close()
-  await setTimeout(1000)
+  await setTimeout(3000)
 
   assert.equal(composer.restarted, false)
 })
@@ -323,7 +323,7 @@ test('should not restart composer if schema has been changed', async (t) => {
   })
 
   await composer.start()
-  await setTimeout(1000)
+  await setTimeout(3000)
 
   assert.equal(composer.restarted, false)
 })
