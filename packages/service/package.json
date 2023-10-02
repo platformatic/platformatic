@@ -7,7 +7,7 @@
     "plt-service": "./service.mjs"
   },
   "scripts": {
-    "test": "pnpm run lint && c8 --100 tap test/*test.js test/*/*.test.mjs && tsd",
+    "test": "pnpm run lint && c8 --merge-async --100 tap test/*test.js test/*/*.test.mjs && tsd",
     "build": "node lib/schema.js | json2ts > config.d.ts",
     "lint": "standard | snazzy && ts-standard | snazzy"
   },

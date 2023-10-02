@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "standard | snazzy",
-    "test": "standard | snazzy && c8 --100 tap -j1 test/*test.js",
+    "test": "standard | snazzy && c8 --merge-async --100 tap -j1 test/*test.js",
     "license": "license-checker --production --onlyAllow 'Apache-2.0;MIT;ISC;BSD-2-Clause;BSD-3-Clause'"
   },
   "repository": {
