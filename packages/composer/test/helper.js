@@ -1,7 +1,7 @@
 'use strict'
 
+const assert = require('node:assert/strict')
 const { request, setGlobalDispatcher, Agent } = require('undici')
-const { teardown, comment } = require('tap')
 const fastify = require('fastify')
 const Swagger = require('@fastify/swagger')
 const SwaggerUI = require('@fastify/swagger-ui')
@@ -15,13 +15,9 @@ const agent = new Agent({
 
 setGlobalDispatcher(agent)
 
-teardown(async () => {
-  await agent.close()
-  comment('agent closed')
-})
-
 async function createBasicService (t) {
   const app = fastify({
+    logger: false,
     keepAliveTimeout: 10,
     forceCloseConnections: true
   })
@@ -80,7 +76,7 @@ async function createBasicService (t) {
     return { nested: { text: 'Some text' } }
   })
 
-  t.teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
 
@@ -89,6 +85,7 @@ async function createBasicService (t) {
 
 async function createOpenApiService (t, entitiesNames = []) {
   const app = fastify({
+    logger: false,
     keepAliveTimeout: 10,
     forceCloseConnections: true
   })
@@ -226,7 +223,7 @@ async function createOpenApiService (t, entitiesNames = []) {
     })
   }
 
-  t.teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
 
@@ -252,14 +249,14 @@ async function createComposer (t, composerConfig) {
   const config = Object.assign({}, defaultConfig, composerConfig)
   const app = await buildServer(config)
 
-  t.teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
 
   return app
 }
 
-async function testEntityRoutes (t, origin, entitiesRoutes) {
+async function testEntityRoutes (origin, entitiesRoutes) {
   for (const entityRoute of entitiesRoutes) {
     {
       const { statusCode } = await request(origin, {
@@ -270,7 +267,7 @@ async function testEntityRoutes (t, origin, entitiesRoutes) {
         },
         body: JSON.stringify({ name: 'test' })
       })
-      t.equal(statusCode, 200)
+      assert.equal(statusCode, 200)
     }
 
     {
@@ -278,7 +275,7 @@ async function testEntityRoutes (t, origin, entitiesRoutes) {
         method: 'GET',
         path: entityRoute
       })
-      t.equal(statusCode, 200)
+      assert.equal(statusCode, 200)
     }
 
     {
@@ -290,7 +287,7 @@ async function testEntityRoutes (t, origin, entitiesRoutes) {
         },
         body: JSON.stringify({ name: 'test' })
       })
-      t.equal(statusCode, 200)
+      assert.equal(statusCode, 200)
     }
 
     {
@@ -298,7 +295,7 @@ async function testEntityRoutes (t, origin, entitiesRoutes) {
         method: 'GET',
         path: `${entityRoute}/1`
       })
-      t.equal(statusCode, 200)
+      assert.equal(statusCode, 200)
     }
 
     {
@@ -310,7 +307,7 @@ async function testEntityRoutes (t, origin, entitiesRoutes) {
         },
         body: JSON.stringify({ name: 'test' })
       })
-      t.equal(statusCode, 200)
+      assert.equal(statusCode, 200)
     }
 
     {
@@ -322,7 +319,7 @@ async function testEntityRoutes (t, origin, entitiesRoutes) {
         },
         body: JSON.stringify({ name: 'test' })
       })
-      t.equal(statusCode, 200)
+      assert.equal(statusCode, 200)
     }
 
     {
@@ -330,7 +327,7 @@ async function testEntityRoutes (t, origin, entitiesRoutes) {
         method: 'DELETE',
         path: `${entityRoute}/4`
       })
-      t.equal(statusCode, 200)
+      assert.equal(statusCode, 200)
     }
   }
 }

@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const assert = require('assert')
+const { test } = require('node:test')
 const { request } = require('undici')
 const {
   createComposer,
@@ -46,20 +47,20 @@ test('should proxy openapi requests with telemetry span', async (t) => {
       }
     })
     const statusCode = res.statusCode
-    t.equal(statusCode, 200)
+    assert.equal(statusCode, 200)
 
     // Check that the client span is correctly set
     const { exporters } = composer.openTelemetry
     const finishedSpans = exporters[0].getFinishedSpans()
-    t.equal(finishedSpans.length, 2)
+    assert.equal(finishedSpans.length, 2)
 
     const proxyCallSpan = finishedSpans[0]
     const composerCallSpan = finishedSpans[1]
-    t.equal(proxyCallSpan.name, `GET ${origin1}/internal/service1/users`)
-    t.equal(proxyCallSpan.attributes['url.full'], `${origin1}/internal/service1/users`)
-    t.equal(proxyCallSpan.attributes['http.response.status_code'], 200)
-    t.equal(proxyCallSpan.parentSpanId, composerCallSpan.spanContext().spanId)
-    t.equal(proxyCallSpan.traceId, composerCallSpan.traceId)
+    assert.equal(proxyCallSpan.name, `GET ${origin1}/internal/service1/users`)
+    assert.equal(proxyCallSpan.attributes['url.full'], `${origin1}/internal/service1/users`)
+    assert.equal(proxyCallSpan.attributes['http.response.status_code'], 200)
+    assert.equal(proxyCallSpan.parentSpanId, composerCallSpan.spanContext().spanId)
+    assert.equal(proxyCallSpan.traceId, composerCallSpan.traceId)
   }
 })
 
@@ -101,14 +102,14 @@ test('should proxy openapi requests with telemetry, managing errors', async (t) 
       }
     })
     const statusCode = res.statusCode
-    t.equal(statusCode, 500)
+    assert.equal(statusCode, 500)
 
     // Check that the client span is correctly set
     const { exporters } = composer.openTelemetry
     const finishedSpans = exporters[0].getFinishedSpans()
     const span = finishedSpans[0]
-    t.equal(span.name, `GET ${origin1}/internal/service1/error`)
-    t.equal(span.attributes['url.full'], `${origin1}/internal/service1/error`)
-    t.equal(span.attributes['http.response.status_code'], 500)
+    assert.equal(span.name, `GET ${origin1}/internal/service1/error`)
+    assert.equal(span.attributes['url.full'], `${origin1}/internal/service1/error`)
+    assert.equal(span.attributes['http.response.status_code'], 500)
   }
 })

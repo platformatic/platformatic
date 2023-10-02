@@ -1,11 +1,12 @@
 'use strict'
 
-const { tmpdir } = require('os')
-const { join } = require('path')
-const { writeFile, readFile, mkdtemp, rm } = require('fs/promises')
+const assert = require('assert/strict')
+const { tmpdir } = require('node:os')
+const { test } = require('node:test')
+const { join } = require('node:path')
+const { writeFile, readFile, mkdtemp, rm } = require('node:fs/promises')
 
 const fastify = require('fastify')
-const { test } = require('tap')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 
 const { cliPath } = require('./helper.js')
@@ -17,7 +18,7 @@ test('should fetch the schemas', async (t) => {
   const { execa } = await import('execa')
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-test-'))
-  t.teardown(async () => {
+  t.after(async () => {
     await rm(cwd, { recursive: true, force: true })
   })
 
@@ -62,14 +63,14 @@ test('should fetch the schemas', async (t) => {
   const pathToUsersSchema = join(__dirname, '..', 'openapi', 'fixtures', 'schemas', 'users.json')
   const usersOpenApiSchemaFile = await readFile(pathToUsersSchema, 'utf-8')
   const usersOpenApiSchema = JSON.parse(usersOpenApiSchemaFile)
-  t.same(openApiSchema, usersOpenApiSchema)
+  assert.deepEqual(openApiSchema, usersOpenApiSchema)
 })
 
 test('should throw if api is not available', async (t) => {
   const { execa } = await import('execa')
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-test-'))
-  t.teardown(async () => {
+  t.after(async () => {
     await rm(cwd, { recursive: true, force: true })
   })
 
@@ -78,6 +79,10 @@ test('should throw if api is not available', async (t) => {
 
   const api1 = fastify()
   await api1.listen({ port: 0 })
+
+  t.after(async () => {
+    await api1.close()
+  })
 
   const config = {
     server: {
@@ -108,8 +113,8 @@ test('should throw if api is not available', async (t) => {
 
   try {
     await execa('node', [cliPath, 'openapi', 'schemas', 'fetch', '-c', pathToConfig])
-    t.fail('should throw')
+    assert.fail('should throw')
   } catch (err) {
-    t.match(err.stdout, /Failed to fetch OpenAPI schema/)
+    assert.match(err.stdout, /Failed to fetch OpenAPI schema/)
   }
 })

@@ -1,10 +1,11 @@
 'use strict'
 
-const { tmpdir } = require('os')
-const { join } = require('path')
-const { writeFile } = require('fs/promises')
+const assert = require('node:assert/strict')
+const { tmpdir } = require('node:os')
+const { test } = require('node:test')
+const { join } = require('node:path')
+const { writeFile } = require('node:fs/promises')
 
-const { test } = require('tap')
 const { request } = require('undici')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 
@@ -59,7 +60,7 @@ test('should start the composer with the start command', async (t) => {
   const { child, url } = await start('-c', configFilePath)
 
   const { statusCode, body } = await request(`${url}/documentation/json`)
-  t.equal(statusCode, 200)
+  assert.equal(statusCode, 200)
 
   const openApiSchema = await body.json()
   openApiValidator.validate(openApiSchema)

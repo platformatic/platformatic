@@ -10,5 +10,4 @@ module.exports = {
   ValidationErrors: createError(`${ERROR_PREFIX}_VALIDATION_ERRORS`, 'Validation errors: %s'),
   PathAlreadyExistsError: createError(`${ERROR_PREFIX}_PATH_ALREADY_EXISTS`, 'Path "%s" already exists'),
   CouldNotReadOpenAPIConfigError: createError(`${ERROR_PREFIX}_COULD_NOT_READ_OPENAPI_CONFIG`, 'Could not read openapi config for "%s" service')
-
 }

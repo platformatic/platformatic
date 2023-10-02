@@ -1,18 +1,11 @@
 'use strict'
 
-const { test } = require('tap')
-
+const assert = require('node:assert/strict')
+const { test } = require('node:test')
 const {
   createComposer,
   createOpenApiService
 } = require('../helper')
-
-const why = require('why-is-node-running')
-
-setInterval(() => {
-  console.log('--- why is node running?')
-  console.log(why())
-}, 10000).unref()
 
 test('should respond 200 on root endpoint', async (t) => {
   const composer = await createComposer(t)
@@ -20,8 +13,8 @@ test('should respond 200 on root endpoint', async (t) => {
   {
     // No browser (i.e. curl)
     const { statusCode, body } = await composer.inject({ method: 'GET', url: '/' })
-    t.equal(statusCode, 200)
-    t.same(JSON.parse(body), { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
+    assert.equal(statusCode, 200)
+    assert.deepEqual(JSON.parse(body), { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
   }
 
   {
@@ -31,8 +24,8 @@ test('should respond 200 on root endpoint', async (t) => {
       url: '/',
       headers: { 'user-agent': '' }
     })
-    t.equal(statusCode, 200)
-    t.same(JSON.parse(body), { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
+    assert.equal(statusCode, 200)
+    assert.deepEqual(JSON.parse(body), { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
   }
 
   {
@@ -44,10 +37,10 @@ test('should respond 200 on root endpoint', async (t) => {
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'
       }
     })
-    t.equal(statusCode, 200)
-    t.equal(headers['content-type'], 'text/html; charset=UTF-8')
+    assert.equal(statusCode, 200)
+    assert.equal(headers['content-type'], 'text/html; charset=UTF-8')
     // has links to OpenAPI/GraphQL docs
-    t.match(body, '<a id="openapi-link" target="_blank" class="button-link">OpenAPI Documentation</a>')
+    assert.ok(body.includes('<a id="openapi-link" target="_blank" class="button-link">OpenAPI Documentation</a>'))
   }
 })
 
@@ -75,6 +68,6 @@ test('should not expose a default root endpoint if it is composed', async (t) =>
   })
 
   const { statusCode, body } = await composer.inject({ method: 'GET', url: '/' })
-  t.equal(statusCode, 200)
-  t.same(JSON.parse(body), { message: 'Hello World!' })
+  assert.equal(statusCode, 200)
+  assert.deepEqual(JSON.parse(body), { message: 'Hello World!' })
 })
