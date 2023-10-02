@@ -5,13 +5,13 @@ import * as desm from 'desm'
 import { generatePlugins, generateRouteWithTypesSupport } from '../create-plugins.mjs'
 import { createDynamicWorkspaceGHAction, createStaticWorkspaceGHAction } from '../ghaction.mjs'
 
-function generateConfig (isRuntimeContext, version, servicesToCompose) {
+function generateConfig (isRuntimeContext, version, servicesToCompose, envPrefix) {
   const config = {
     $schema: `https://platformatic.dev/schemas/v${version}/composer`,
     composer: {
       services: [{
         id: 'example',
-        origin: '{PLT_EXAMPLE_ORIGIN}',
+        origin: `{${envPrefix}PLT_EXAMPLE_ORIGIN}`,
         openapi: {
           url: '/documentation/json'
         }
@@ -52,18 +52,18 @@ function generateConfig (isRuntimeContext, version, servicesToCompose) {
   return config
 }
 
-function generateEnv (isRuntimeContext, hostname, port) {
+function generateEnv (isRuntimeContext, hostname, port, envPrefix) {
   let env = ''
 
   if (!isRuntimeContext) {
     env += `\
 PLT_SERVER_HOSTNAME=${hostname}
 PORT=${port}
-PLT_SERVER_LOGGER_LEVEL=info
-PLT_EXAMPLE_ORIGIN=
-`
+PLT_SERVER_LOGGER_LEVEL=info`
   }
-
+  env += `
+${envPrefix}PLT_EXAMPLE_ORIGIN=
+`
   return env
 }
 
@@ -73,9 +73,9 @@ async function createComposer (
   currentDir = process.cwd(),
   version,
   staticWorkspaceGitHubAction,
-  dynamicWorkspaceGitHubAction
+  dynamicWorkspaceGitHubAction,
 ) {
-  const { isRuntimeContext, hostname, port, servicesToCompose = [] } = params
+  const { isRuntimeContext, hostname, port, servicesToCompose = [], runtimeContext } = params
 
   const composerEnv = {
     PLT_SERVER_LOGGER_LEVEL: 'info',
@@ -89,11 +89,13 @@ async function createComposer (
   const accessibleConfigFilename = await findComposerConfigFile(currentDir)
 
   if (accessibleConfigFilename === undefined) {
-    const config = generateConfig(isRuntimeContext, version, servicesToCompose)
+    const envPrefix = runtimeContext !== undefined ? `${runtimeContext.envPrefix}_` : ''
+
+    const config = generateConfig(isRuntimeContext, version, servicesToCompose, envPrefix)
     await writeFile(join(currentDir, 'platformatic.composer.json'), JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.composer.json successfully created.')
 
-    const env = generateEnv(isRuntimeContext, hostname, port)
+    const env = generateEnv(isRuntimeContext, hostname, port, envPrefix)
     const envFileExists = await isFileAccessible('.env', currentDir)
     await appendFile(join(currentDir, '.env'), env)
     await writeFile(join(currentDir, '.env.sample'), env)

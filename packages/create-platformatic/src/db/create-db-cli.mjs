@@ -190,7 +190,8 @@ const createPlatformaticDB = async (_args, opts) => {
     types: useTypes,
     typescript: useTypescript,
     staticWorkspaceGitHubAction: wizardOptions.staticWorkspaceGitHubAction,
-    dynamicWorkspaceGitHubAction: wizardOptions.dynamicWorkspaceGitHubAction
+    dynamicWorkspaceGitHubAction: wizardOptions.dynamicWorkspaceGitHubAction,
+    runtimeContext: opts.runtimeContext
   }
 
   await createDB(params, logger, projectDir, version)

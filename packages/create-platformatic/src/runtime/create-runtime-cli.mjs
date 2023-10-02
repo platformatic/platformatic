@@ -122,7 +122,8 @@ export async function createPlatformaticRuntime (_args) {
     entrypoint,
     entrypointPort,
     staticWorkspaceGitHubAction,
-    dynamicWorkspaceGitHubAction
+    dynamicWorkspaceGitHubAction,
+    serviceNames: names
   }
 
   await createRuntime(params, logger, projectDir, version)

@@ -250,7 +250,7 @@ test('movies', async (t) => {
 })
 `
 
-function generateConfig (isRuntimeContext, migrations, plugin, types, typescript, version) {
+function generateConfig (isRuntimeContext, migrations, plugin, types, typescript, version, envPrefix) {
   const config = {
     $schema: `https://platformatic.dev/schemas/v${version}/db`,
     db: {
@@ -266,10 +266,10 @@ function generateConfig (isRuntimeContext, migrations, plugin, types, typescript
 
   if (!isRuntimeContext) {
     config.server = {
-      hostname: '{PLT_SERVER_HOSTNAME}',
-      port: '{PORT}',
+      hostname: `{${envPrefix}PLT_SERVER_HOSTNAME}`,
+      port: `{${envPrefix}PORT}`,
       logger: {
-        level: '{PLT_SERVER_LOGGER_LEVEL}'
+        level: `{${envPrefix}PLT_SERVER_LOGGER_LEVEL}`
       }
     }
   }
@@ -298,15 +298,15 @@ function generateConfig (isRuntimeContext, migrations, plugin, types, typescript
   }
 
   if (typescript === true) {
-    config.plugins.typescript = '{PLT_TYPESCRIPT}'
+    config.plugins.typescript = `{${envPrefix}PLT_TYPESCRIPT}`
   }
 
   return config
 }
 
-function generateEnv (isRuntimeContext, hostname, port, connectionString, typescript) {
+function generateEnv (isRuntimeContext, hostname, port, connectionString, typescript, envPrefix) {
   let env = `\
-DATABASE_URL=${connectionString}
+${envPrefix}DATABASE_URL=${connectionString}
 
 `
 
@@ -323,7 +323,7 @@ PLT_SERVER_LOGGER_LEVEL=info
     env += `\
 # Set to false to disable automatic typescript compilation.
 # Changing this setting is needed for production
-PLT_TYPESCRIPT=true
+${envPrefix}PLT_TYPESCRIPT=true
 
 `
   }
@@ -347,7 +347,8 @@ export async function createDB (params, logger, currentDir, version) {
     typescript = false,
     connectionString,
     staticWorkspaceGitHubAction,
-    dynamicWorkspaceGitHubAction
+    dynamicWorkspaceGitHubAction,
+    runtimeContext
   } = params
 
   const dbEnv = {
@@ -364,10 +365,13 @@ export async function createDB (params, logger, currentDir, version) {
   const createMigrations = !!migrations // If we don't define a migrations folder, we don't create it
   const accessibleConfigFilename = await findDBConfigFile(currentDir)
   if (accessibleConfigFilename === undefined) {
-    const config = generateConfig(isRuntimeContext, migrations, plugin, types, typescript, version)
+    const envPrefix = runtimeContext !== undefined ? `${runtimeContext.envPrefix}_` : ''
+    
+    const config = generateConfig(isRuntimeContext, migrations, plugin, types, typescript, version, envPrefix)
     await writeFile(join(currentDir, 'platformatic.db.json'), JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.db.json successfully created.')
-    const env = generateEnv(isRuntimeContext, hostname, port, connectionString, typescript)
+    
+    const env = generateEnv(isRuntimeContext, hostname, port, connectionString, typescript, envPrefix)
     const envSample = generateEnv(isRuntimeContext, hostname, port, getConnectionString(database), typescript)
     const envFileExists = await isFileAccessible('.env', currentDir)
     await appendFile(join(currentDir, '.env'), env)

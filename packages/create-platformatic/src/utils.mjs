@@ -95,3 +95,10 @@ export const isCurrentVersionSupported = (currentVersion) => {
 export function convertServiceNameToPrefix (serviceName) {
   return serviceName.replace(/-/g, '_').toUpperCase()
 }
+export function addPrefixToEnv(env, prefix) {
+  const output = {}
+  Object.entries(env).forEach(([key, value]) => {
+    output[`${prefix}_${key}`] = value
+  })
+  return output
+}

@@ -88,7 +88,8 @@ const createPlatformaticService = async (_args, opts = {}) => {
     port,
     typescript: useTypescript,
     staticWorkspaceGitHubAction,
-    dynamicWorkspaceGitHubAction
+    dynamicWorkspaceGitHubAction,
+    runtimeContext: opts.runtimeContext
   }
 
   await createService(params, logger, projectDir, version)

@@ -1,17 +1,14 @@
+'use strict'
+
 import { test } from 'tap'
-import { randomBetween, sleep, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions, findRuntimeConfigFile, findComposerConfigFile, convertServiceNameToPrefix } from '../src/utils.mjs'
+import { randomBetween, sleep, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions, findRuntimeConfigFile, findComposerConfigFile, convertServiceNameToPrefix, addPrefixToEnv, getUsername } from '../src/utils.mjs'
 import { mkdtempSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import esmock from 'esmock'
 import semver from 'semver'
 
-// esmock is broken on Node v20.6.0+
-// Resolve once https://github.com/iambumblehead/esmock/issues/234 is fixed.
-
-const skip = semver.gte(process.version, '20.6.0')
-
-test('getUsername from git', { skip }, async ({ end, equal }) => {
+test('getUsername from git', async ({ end, equal }) => {
   const name = 'lukeskywalker'
   const { getUsername } = await esmock.strict('../src/utils.mjs', {
     execa: {
@@ -27,7 +24,7 @@ test('getUsername from git', { skip }, async ({ end, equal }) => {
   equal(username, name)
 })
 
-test('getUsername from whoami', { skip }, async ({ end, equal }) => {
+test('getUsername from whoami', async ({ end, equal }) => {
   const name = 'hansolo'
   const { getUsername } = await esmock.strict('../src/utils.mjs', {
     execa: {
@@ -43,7 +40,7 @@ test('getUsername from whoami', { skip }, async ({ end, equal }) => {
   equal(username, name)
 })
 
-test('if getUsername from git failed, it tries whoim', { skip }, async ({ end, equal }) => {
+test('if getUsername from git failed, it tries whoim', async ({ end, equal }) => {
   const name = 'lukeskywalker'
 
   const { getUsername } = await esmock.strict('../src/utils.mjs', {
@@ -64,7 +61,7 @@ test('if getUsername from git failed, it tries whoim', { skip }, async ({ end, e
   equal(username, name)
 })
 
-test('if both git usern.ame and whoami fail, no username is set', { skip }, async ({ end, equal }) => {
+test('if both git usern.ame and whoami fail, no username is set', async ({ end, equal }) => {
   const { getUsername } = await esmock.strict('../src/utils.mjs', {
     execa: {
       execa: (command) => {
@@ -82,7 +79,7 @@ test('if both git usern.ame and whoami fail, no username is set', { skip }, asyn
   equal(username, null)
 })
 
-test('getUsername - no username found', { skip }, async ({ end, equal }) => {
+test('getUsername - no username found', async ({ end, equal }) => {
   const { getUsername } = await esmock.strict('../src/utils.mjs', {
     execa: {
       execa: (command) => {
@@ -245,5 +242,18 @@ test('should convert service name to env prefix', async (t) => {
   Object.entries(expectations).forEach((exp) => {
     const converted = convertServiceNameToPrefix(exp[0])
     t.equal(exp[1], converted)
+  })
+})
+
+
+test('should add prefix to a key/value object', async (t) => {
+  const prefix = 'MY_PREFIX'
+  const env = {
+    PLT_HOSTNAME: 'myhost',
+    PORT: '3042'
+  }
+  t.same(addPrefixToEnv(env, prefix), {
+    MY_PREFIX_PLT_HOSTNAME: 'myhost',
+    MY_PREFIX_PORT: '3042'
   })
 })
