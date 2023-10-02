@@ -1,9 +1,10 @@
 'use strict'
 
-const { tmpdir } = require('os')
-const { join } = require('path')
+const assert = require('node:assert/strict')
+const { tmpdir } = require('node:os')
+const { join } = require('node:path')
+const { test } = require('node:test')
 const { writeFile, mkdtemp } = require('fs/promises')
-const { test } = require('tap')
 const {
   createComposer,
   createOpenApiService
@@ -33,9 +34,9 @@ test('should throw an error if can not read openapi config file', async (t) => {
         }
       }
     )
-    t.fail('should throw error')
+    assert.fail('should throw error')
   } catch (err) {
-    t.equal(err.message, 'Could not read openapi config for "api1" service')
+    assert.equal(err.message, 'Could not read openapi config for "api1" service')
   }
 })
 
@@ -68,8 +69,8 @@ test('should throw an error if openapi config is not valid', async (t) => {
         }
       }
     )
-    t.fail('should throw error')
+    assert.fail('should throw error')
   } catch (err) {
-    t.equal(err.message, 'Could not read openapi config for "api1" service')
+    assert.equal(err.message, 'Could not read openapi config for "api1" service')
   }
 })

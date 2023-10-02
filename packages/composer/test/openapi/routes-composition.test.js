@@ -1,7 +1,8 @@
 'use strict'
 
+const assert = require('node:assert/strict')
+const { test } = require('node:test')
 const { join } = require('node:path')
-const { test } = require('tap')
 const { request } = require('undici')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 const {
@@ -48,12 +49,12 @@ test('should compose openapi with prefixes', async (t) => {
     method: 'GET',
     url: '/documentation/json'
   })
-  t.equal(statusCode, 200)
+  assert.equal(statusCode, 200)
 
   const openApiSchema = JSON.parse(body)
   openApiValidator.validate(openApiSchema)
 
-  await testEntityRoutes(t, composerOrigin, ['/api1/users', '/api2/posts'])
+  await testEntityRoutes(composerOrigin, ['/api1/users', '/api2/posts'])
 })
 
 test('should compose openapi without prefixes', async (t) => {
@@ -90,12 +91,12 @@ test('should compose openapi without prefixes', async (t) => {
     method: 'GET',
     url: '/documentation/json'
   })
-  t.equal(statusCode, 200)
+  assert.equal(statusCode, 200)
 
   const openApiSchema = JSON.parse(body)
   openApiValidator.validate(openApiSchema)
 
-  await testEntityRoutes(t, composerOrigin, ['/users', '/posts'])
+  await testEntityRoutes(composerOrigin, ['/users', '/posts'])
 })
 
 test('should read schemas from disk and compose openapi', async (t) => {
@@ -132,12 +133,12 @@ test('should read schemas from disk and compose openapi', async (t) => {
     method: 'GET',
     url: '/documentation/json'
   })
-  t.equal(statusCode, 200)
+  assert.equal(statusCode, 200)
 
   const openApiSchema = JSON.parse(body)
   openApiValidator.validate(openApiSchema)
 
-  await testEntityRoutes(t, composerOrigin, ['/users', '/posts'])
+  await testEntityRoutes(composerOrigin, ['/users', '/posts'])
 })
 
 test('should not proxy request if it is not in a schema file', async (t) => {
@@ -145,7 +146,7 @@ test('should not proxy request if it is not in a schema file', async (t) => {
   const api2 = await createOpenApiService(t, ['posts'])
 
   api1.get('/not-in-the-schema', async () => {
-    t.fail('should not proxy request')
+    assert.fail('should not proxy request')
   })
 
   await api1.listen({ port: 0 })
@@ -178,24 +179,24 @@ test('should not proxy request if it is not in a schema file', async (t) => {
     method: 'GET',
     url: '/documentation/json'
   })
-  t.equal(statusCode, 200)
+  assert.equal(statusCode, 200)
 
   const openApiSchema = JSON.parse(body)
   openApiValidator.validate(openApiSchema)
 
-  t.ok(
+  assert.ok(
     !openApiSchema.paths['/not-in-the-schema'],
     'should not have the path in the schema'
   )
 
-  await testEntityRoutes(t, composerOrigin, ['/users', '/posts'])
+  await testEntityRoutes(composerOrigin, ['/users', '/posts'])
 
   {
     const { statusCode } = await composer.inject({
       method: 'GET',
       url: '/not-in-the-schema'
     })
-    t.equal(statusCode, 404)
+    assert.equal(statusCode, 404)
   }
 })
 
@@ -231,19 +232,19 @@ test('should not compose api if there is no openapi config', async (t) => {
     method: 'GET',
     url: '/documentation/json'
   })
-  t.equal(statusCode, 200)
+  assert.equal(statusCode, 200)
 
   const openApiSchema = JSON.parse(body)
   openApiValidator.validate(openApiSchema)
 
-  await testEntityRoutes(t, composerOrigin, ['/api1/users'])
+  await testEntityRoutes(composerOrigin, ['/api1/users'])
 
   {
     const { statusCode } = await composer.inject({
       method: 'GET',
       url: '/api2/posts'
     })
-    t.equal(statusCode, 404)
+    assert.equal(statusCode, 404)
   }
 })
 
@@ -287,11 +288,11 @@ test('should allow custom title', async (t) => {
     method: 'GET',
     url: '/documentation/json'
   })
-  t.equal(statusCode, 200)
+  assert.equal(statusCode, 200)
 
   const openApiSchema = JSON.parse(body)
-  t.equal(openApiSchema.info.title, 'My API')
-  t.equal(openApiSchema.info.version, '1.0.42')
+  assert.equal(openApiSchema.info.title, 'My API')
+  assert.equal(openApiSchema.info.version, '1.0.42')
 })
 
 test('should parse array querystring', async (t) => {
@@ -318,5 +319,5 @@ test('should parse array querystring', async (t) => {
     method: 'GET',
     path: '/users?fields=id,name'
   })
-  t.equal(statusCode, 200)
+  assert.equal(statusCode, 200)
 })

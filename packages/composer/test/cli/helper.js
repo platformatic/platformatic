@@ -3,7 +3,6 @@
 const { on } = require('events')
 const { join } = require('node:path')
 
-const tap = require('tap')
 const split = require('split2')
 const { Agent, setGlobalDispatcher } = require('undici')
 
@@ -14,12 +13,6 @@ setGlobalDispatcher(new Agent({
     rejectUnauthorized: false
   }
 }))
-
-// This should not be needed, but a weird combination
-// of node-tap, Windows, c8 and ESM makes this necessary.
-tap.teardown(() => {
-  process.exit(0)
-})
 
 const cliPath = join(__dirname, '..', '..', 'composer.mjs')
 

@@ -1,10 +1,11 @@
 'use strict'
 
-const { join } = require('node:path')
+const assert = require('node:assert/strict')
 const { tmpdir } = require('node:os')
+const { test } = require('node:test')
+const { join } = require('node:path')
 const { setTimeout } = require('node:timers/promises')
 const { writeFile, mkdtemp } = require('node:fs/promises')
-const { test } = require('tap')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 const {
   createComposer,
@@ -52,36 +53,36 @@ test('should restart composer if api has been changed', async (t) => {
       method: 'GET',
       url: '/documentation/json'
     })
-    t.equal(statusCode, 200)
+    assert.equal(statusCode, 200)
 
     const openApiSchema = JSON.parse(body)
     openApiValidator.validate(openApiSchema)
 
-    await testEntityRoutes(t, composerOrigin, ['/api1/users', '/api2/posts'])
+    await testEntityRoutes(composerOrigin, ['/api1/users', '/api2/posts'])
   }
 
   await api1.close()
   await setTimeout(1000)
 
-  t.equal(composer.restarted, true)
+  assert.equal(composer.restarted, true)
 
   {
     const { statusCode, body } = await composer.inject({
       method: 'GET',
       url: '/documentation/json'
     })
-    t.equal(statusCode, 200)
+    assert.equal(statusCode, 200)
 
     const openApiSchema = JSON.parse(body)
     openApiValidator.validate(openApiSchema)
 
-    await testEntityRoutes(t, composerOrigin, ['/api2/posts'])
+    await testEntityRoutes(composerOrigin, ['/api2/posts'])
 
     const { statusCode: statusCode2 } = await composer.inject({
       method: 'GET',
       url: '/api1/users'
     })
-    t.equal(statusCode2, 404)
+    assert.equal(statusCode2, 404)
   }
 })
 
@@ -123,36 +124,36 @@ test('should watch api only if it has a url', async (t) => {
       method: 'GET',
       url: '/documentation/json'
     })
-    t.equal(statusCode, 200)
+    assert.equal(statusCode, 200)
 
     const openApiSchema = JSON.parse(body)
     openApiValidator.validate(openApiSchema)
 
-    await testEntityRoutes(t, composerOrigin, ['/api1/users', '/api2/posts'])
+    await testEntityRoutes(composerOrigin, ['/api1/users', '/api2/posts'])
   }
 
   await api2.close()
   await setTimeout(1000)
 
-  t.equal(composer.restarted, false)
+  assert.equal(composer.restarted, false)
 
   {
     const { statusCode, body } = await composer.inject({
       method: 'GET',
       url: '/documentation/json'
     })
-    t.equal(statusCode, 200)
+    assert.equal(statusCode, 200)
 
     const openApiSchema = JSON.parse(body)
     openApiValidator.validate(openApiSchema)
 
-    await testEntityRoutes(t, composerOrigin, ['/api1/users'])
+    await testEntityRoutes(composerOrigin, ['/api1/users'])
 
     const { statusCode: statusCode2 } = await composer.inject({
       method: 'GET',
       url: '/api2/posts'
     })
-    t.equal(statusCode2, 500)
+    assert.equal(statusCode2, 500)
   }
 })
 
@@ -197,36 +198,36 @@ test('should compose schema after service restart', async (t) => {
       method: 'GET',
       url: '/documentation/json'
     })
-    t.equal(statusCode, 200)
+    assert.equal(statusCode, 200)
 
     const openApiSchema = JSON.parse(body)
     openApiValidator.validate(openApiSchema)
 
-    await testEntityRoutes(t, composerOrigin, ['/api1/users', '/api2/posts'])
+    await testEntityRoutes(composerOrigin, ['/api1/users', '/api2/posts'])
   }
 
   await api1.close()
   await setTimeout(1000)
 
-  t.equal(composer.restarted, true)
+  assert.equal(composer.restarted, true)
 
   {
     const { statusCode, body } = await composer.inject({
       method: 'GET',
       url: '/documentation/json'
     })
-    t.equal(statusCode, 200)
+    assert.equal(statusCode, 200)
 
     const openApiSchema = JSON.parse(body)
     openApiValidator.validate(openApiSchema)
 
-    await testEntityRoutes(t, composerOrigin, ['/api2/posts'])
+    await testEntityRoutes(composerOrigin, ['/api2/posts'])
 
     const { statusCode: statusCode2 } = await composer.inject({
       method: 'GET',
       url: '/api1/users'
     })
-    t.equal(statusCode2, 404)
+    assert.equal(statusCode2, 404)
   }
 
   const newApi1 = await createOpenApiService(t, ['users'])
@@ -238,12 +239,12 @@ test('should compose schema after service restart', async (t) => {
       method: 'GET',
       url: '/documentation/json'
     })
-    t.equal(statusCode, 200)
+    assert.equal(statusCode, 200)
 
     const openApiSchema = JSON.parse(body)
     openApiValidator.validate(openApiSchema)
 
-    await testEntityRoutes(t, composerOrigin, ['/api1/users', '/api2/posts'])
+    await testEntityRoutes(composerOrigin, ['/api1/users', '/api2/posts'])
   }
 })
 
@@ -280,13 +281,13 @@ test('should not watch an api if refreshTimeout equals 0', async (t) => {
 
   await composer.start()
 
-  t.equal(composer.restarted, false)
+  assert.equal(composer.restarted, false)
 
   await api1.close()
   await api2.close()
   await setTimeout(1000)
 
-  t.equal(composer.restarted, false)
+  assert.equal(composer.restarted, false)
 })
 
 test('should not restart composer if schema has been changed', async (t) => {
@@ -324,5 +325,5 @@ test('should not restart composer if schema has been changed', async (t) => {
   await composer.start()
   await setTimeout(1000)
 
-  t.equal(composer.restarted, false)
+  assert.equal(composer.restarted, false)
 })

@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const assert = require('assert/strict')
+const { test } = require('node:test')
 const { request } = require('undici')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 const {
@@ -53,7 +54,7 @@ test('should proxy openapi requests', async (t) => {
     method: 'GET',
     path: '/documentation/json'
   })
-  t.equal(statusCode, 200)
+  assert.equal(statusCode, 200)
 
   const openApiSchema = await body.json()
   openApiValidator.validate(openApiSchema)
@@ -61,7 +62,7 @@ test('should proxy openapi requests', async (t) => {
   for (const path in openApiSchema.paths) {
     for (const service of config.composer.services) {
       if (path.startsWith(service.proxy.prefix)) {
-        t.fail('proxy routes should be removed from openapi schema')
+        assert.fail('proxy routes should be removed from openapi schema')
       }
     }
   }
@@ -71,13 +72,13 @@ test('should proxy openapi requests', async (t) => {
       method: 'GET',
       path: '/internal/service1/documentation/json'
     })
-    t.equal(statusCode, 200)
+    assert.equal(statusCode, 200)
 
     const openApiSchema = await body.json()
     openApiValidator.validate(openApiSchema)
 
-    await testEntityRoutes(t, composerOrigin, ['/users'])
-    await testEntityRoutes(t, composerOrigin, ['/internal/service1/users'])
+    await testEntityRoutes(composerOrigin, ['/users'])
+    await testEntityRoutes(composerOrigin, ['/internal/service1/users'])
   }
 
   {
@@ -85,12 +86,12 @@ test('should proxy openapi requests', async (t) => {
       method: 'GET',
       path: '/internal/service2/documentation/json'
     })
-    t.equal(statusCode, 200)
+    assert.equal(statusCode, 200)
 
     const openApiSchema = await body.json()
     openApiValidator.validate(openApiSchema)
 
-    await testEntityRoutes(t, composerOrigin, ['/posts'])
-    await testEntityRoutes(t, composerOrigin, ['/internal/service2/posts'])
+    await testEntityRoutes(composerOrigin, ['/posts'])
+    await testEntityRoutes(composerOrigin, ['/internal/service2/posts'])
   }
 })

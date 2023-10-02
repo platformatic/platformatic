@@ -1,7 +1,8 @@
 'use strict'
 
+const assert = require('node:assert/strict')
 const { join } = require('node:path')
-const { test } = require('tap')
+const { test } = require('node:test')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 const {
   createComposer,
@@ -40,16 +41,16 @@ test('should add custom composer route to the composed schema', async (t) => {
     method: 'GET',
     url: '/documentation/json'
   })
-  t.equal(statusCode, 200)
+  assert.equal(statusCode, 200)
 
   const openApiSchema = JSON.parse(body)
   openApiValidator.validate(openApiSchema)
-  t.ok(openApiSchema.paths['/custom'])
+  assert.ok(openApiSchema.paths['/custom'])
 
-  await testEntityRoutes(t, composerOrigin, ['/users'])
+  await testEntityRoutes(composerOrigin, ['/users'])
 
   {
     const { statusCode } = await composer.inject({ method: 'GET', url: '/custom' })
-    t.equal(statusCode, 200)
+    assert.equal(statusCode, 200)
   }
 })

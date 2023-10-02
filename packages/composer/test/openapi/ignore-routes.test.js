@@ -1,9 +1,10 @@
 'use strict'
 
-const { tmpdir } = require('os')
-const { join } = require('path')
-const { writeFile, mkdtemp } = require('fs/promises')
-const { test } = require('tap')
+const assert = require('node:assert/strict')
+const { tmpdir } = require('node:os')
+const { test } = require('node:test')
+const { join } = require('node:path')
+const { writeFile, mkdtemp } = require('node:fs/promises')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 const {
   createComposer,
@@ -49,21 +50,21 @@ test('should ignore static routes', async (t) => {
     method: 'GET',
     url: '/documentation/json'
   })
-  t.equal(statusCode, 200)
+  assert.equal(statusCode, 200)
 
   const openApiSchema = JSON.parse(body)
   openApiValidator.validate(openApiSchema)
 
-  t.ok(openApiSchema.paths['/users'] === undefined)
-  t.ok(openApiSchema.paths['/users/{id}'])
+  assert.ok(openApiSchema.paths['/users'] === undefined)
+  assert.ok(openApiSchema.paths['/users/{id}'])
 
   {
     const { statusCode } = await composer.inject({ method: 'GET', url: '/users' })
-    t.equal(statusCode, 404)
+    assert.equal(statusCode, 404)
   }
   {
     const { statusCode } = await composer.inject({ method: 'GET', url: '/users/1' })
-    t.equal(statusCode, 200)
+    assert.equal(statusCode, 200)
   }
 })
 
@@ -104,21 +105,21 @@ test('should ignore parametric routes', async (t) => {
     method: 'GET',
     url: '/documentation/json'
   })
-  t.equal(statusCode, 200)
+  assert.equal(statusCode, 200)
 
   const openApiSchema = JSON.parse(body)
   openApiValidator.validate(openApiSchema)
 
-  t.ok(openApiSchema.paths['/users'])
-  t.ok(openApiSchema.paths['/users/{id}'] === undefined)
+  assert.ok(openApiSchema.paths['/users'])
+  assert.ok(openApiSchema.paths['/users/{id}'] === undefined)
 
   {
     const { statusCode } = await composer.inject({ method: 'GET', url: '/users' })
-    t.equal(statusCode, 200)
+    assert.equal(statusCode, 200)
   }
   {
     const { statusCode } = await composer.inject({ method: 'GET', url: '/users/1' })
-    t.equal(statusCode, 404)
+    assert.equal(statusCode, 404)
   }
 })
 
@@ -182,21 +183,21 @@ test('should ignore routes for only for one service', async (t) => {
     method: 'GET',
     url: '/documentation/json'
   })
-  t.equal(statusCode, 200)
+  assert.equal(statusCode, 200)
 
   const openApiSchema = JSON.parse(body)
   openApiValidator.validate(openApiSchema)
 
-  t.ok(openApiSchema.paths['/users'])
-  t.ok(openApiSchema.paths['/users/{id}'])
+  assert.ok(openApiSchema.paths['/users'])
+  assert.ok(openApiSchema.paths['/users/{id}'])
 
   {
     const { statusCode } = await composer.inject({ method: 'GET', url: '/users' })
-    t.equal(statusCode, 200)
+    assert.equal(statusCode, 200)
   }
   {
     const { statusCode } = await composer.inject({ method: 'GET', url: '/users/1' })
-    t.equal(statusCode, 200)
+    assert.equal(statusCode, 200)
   }
 })
 
@@ -241,19 +242,19 @@ test('should ignore only specified methods', async (t) => {
     method: 'GET',
     url: '/documentation/json'
   })
-  t.equal(statusCode, 200)
+  assert.equal(statusCode, 200)
 
   const openApiSchema = JSON.parse(body)
   openApiValidator.validate(openApiSchema)
 
-  t.ok(openApiSchema.paths['/users'].get)
-  t.ok(openApiSchema.paths['/users'].put)
-  t.ok(openApiSchema.paths['/users'].post === undefined)
+  assert.ok(openApiSchema.paths['/users'].get)
+  assert.ok(openApiSchema.paths['/users'].put)
+  assert.ok(openApiSchema.paths['/users'].post === undefined)
 
-  t.ok(openApiSchema.paths['/users/{id}'].post)
-  t.ok(openApiSchema.paths['/users/{id}'].put)
-  t.ok(openApiSchema.paths['/users/{id}'].get === undefined)
-  t.ok(openApiSchema.paths['/users/{id}'].delete === undefined)
+  assert.ok(openApiSchema.paths['/users/{id}'].post)
+  assert.ok(openApiSchema.paths['/users/{id}'].put)
+  assert.ok(openApiSchema.paths['/users/{id}'].get === undefined)
+  assert.ok(openApiSchema.paths['/users/{id}'].delete === undefined)
 })
 
 test('should ignore all routes if methods array is not specified', async (t) => {
@@ -291,21 +292,21 @@ test('should ignore all routes if methods array is not specified', async (t) => 
     method: 'GET',
     url: '/documentation/json'
   })
-  t.equal(statusCode, 200)
+  assert.equal(statusCode, 200)
 
   const openApiSchema = JSON.parse(body)
   openApiValidator.validate(openApiSchema)
 
-  t.ok(openApiSchema.paths['/users'] === undefined)
-  t.ok(openApiSchema.paths['/users/{id}'])
+  assert.ok(openApiSchema.paths['/users'] === undefined)
+  assert.ok(openApiSchema.paths['/users/{id}'])
 
   {
     const { statusCode } = await composer.inject({ method: 'GET', url: '/users' })
-    t.equal(statusCode, 404)
+    assert.equal(statusCode, 404)
   }
   {
     const { statusCode } = await composer.inject({ method: 'GET', url: '/users/1' })
-    t.equal(statusCode, 200)
+    assert.equal(statusCode, 200)
   }
 })
 
@@ -348,20 +349,20 @@ test('should skip route if all routes are ignored', async (t) => {
     method: 'GET',
     url: '/documentation/json'
   })
-  t.equal(statusCode, 200)
+  assert.equal(statusCode, 200)
 
   const openApiSchema = JSON.parse(body)
   openApiValidator.validate(openApiSchema)
 
-  t.ok(openApiSchema.paths['/users'] === undefined)
-  t.ok(openApiSchema.paths['/users/{id}'])
+  assert.ok(openApiSchema.paths['/users'] === undefined)
+  assert.ok(openApiSchema.paths['/users/{id}'])
 
   {
     const { statusCode } = await composer.inject({ method: 'GET', url: '/users' })
-    t.equal(statusCode, 404)
+    assert.equal(statusCode, 404)
   }
   {
     const { statusCode } = await composer.inject({ method: 'GET', url: '/users/1' })
-    t.equal(statusCode, 200)
+    assert.equal(statusCode, 200)
   }
 })
