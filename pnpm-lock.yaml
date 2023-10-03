@@ -42,8 +42,8 @@ importers:
         specifier: ^8.4.2
         version: 8.4.2
       undici:
-        specifier: ^5.25.3
-        version: 5.25.3
+        specifier: ^5.25.4
+        version: 5.25.4
     devDependencies:
       c8:
         specifier: ^8.0.1
@@ -125,10 +125,10 @@ importers:
         version: 8.15.4
       pino-pretty:
         specifier: ^10.2.0
-        version: 10.2.0
+        version: 10.2.2
       undici:
-        specifier: ^5.25.3
-        version: 5.25.3
+        specifier: ^5.25.4
+        version: 5.25.4
     devDependencies:
       fastify:
         specifier: ^4.23.2
@@ -170,8 +170,8 @@ importers:
         specifier: ^5.0.1
         version: 5.0.1
       undici:
-        specifier: ^5.25.3
-        version: 5.25.3
+        specifier: ^5.25.4
+        version: 5.25.4
     devDependencies:
       '@platformatic/telemetry':
         specifier: workspace:*
@@ -262,10 +262,10 @@ importers:
         version: 8.15.4
       pino-pretty:
         specifier: ^10.2.0
-        version: 10.2.0
+        version: 10.2.2
       undici:
-        specifier: ^5.25.3
-        version: 5.25.3
+        specifier: ^5.25.4
+        version: 5.25.4
       yaml:
         specifier: ^2.3.2
         version: 2.3.2
@@ -380,7 +380,7 @@ importers:
         version: 8.15.4
       pino-pretty:
         specifier: ^10.2.0
-        version: 10.2.0
+        version: 10.2.2
       rfdc:
         specifier: ^1.3.0
         version: 1.3.0
@@ -388,8 +388,8 @@ importers:
         specifier: ^1.0.36
         version: 1.0.36
       undici:
-        specifier: ^5.25.3
-        version: 5.25.3
+        specifier: ^5.25.4
+        version: 5.25.4
     devDependencies:
       '@platformatic/client':
         specifier: workspace:*
@@ -446,8 +446,8 @@ importers:
         specifier: ^7.5.4
         version: 7.5.4
       undici:
-        specifier: ^5.25.3
-        version: 5.25.3
+        specifier: ^5.25.4
+        version: 5.25.4
     devDependencies:
       '@iarna/toml':
         specifier: ^2.2.5
@@ -520,7 +520,7 @@ importers:
         version: 8.15.4
       pino-pretty:
         specifier: ^10.2.0
-        version: 10.2.0
+        version: 10.2.2
       pupa:
         specifier: ^3.1.0
         version: 3.1.0
@@ -528,8 +528,8 @@ importers:
         specifier: ^7.5.4
         version: 7.5.4
       undici:
-        specifier: ^5.25.3
-        version: 5.25.3
+        specifier: ^5.25.4
+        version: 5.25.4
       which:
         specifier: ^3.0.1
         version: 3.0.1
@@ -677,7 +677,7 @@ importers:
         version: 8.15.4
       pino-pretty:
         specifier: ^10.2.0
-        version: 10.2.0
+        version: 10.2.2
       postgrator:
         specifier: ^7.2.0
         version: 7.2.0
@@ -737,8 +737,8 @@ importers:
         specifier: ^5.2.2
         version: 5.2.2
       undici:
-        specifier: ^5.25.3
-        version: 5.25.3
+        specifier: ^5.25.4
+        version: 5.25.4
       vscode-json-languageservice:
         specifier: ^5.3.6
         version: 5.3.6
@@ -770,8 +770,8 @@ importers:
         specifier: ~3.1.0
         version: 3.1.0
       undici:
-        specifier: ^5.25.3
-        version: 5.25.3
+        specifier: ^5.25.4
+        version: 5.25.4
     devDependencies:
       '@fastify/cookie':
         specifier: ^8.3.0
@@ -865,8 +865,8 @@ importers:
         specifier: ^6.2.0
         version: 6.2.0
       undici:
-        specifier: ^5.25.3
-        version: 5.25.3
+        specifier: ^5.25.4
+        version: 5.25.4
     devDependencies:
       c8:
         specifier: ^8.0.1
@@ -929,8 +929,8 @@ importers:
         specifier: ^1.2.8
         version: 1.2.8
       undici:
-        specifier: ^5.25.3
-        version: 5.25.3
+        specifier: ^5.25.4
+        version: 5.25.4
     devDependencies:
       '@playwright/test':
         specifier: ^1.38.1
@@ -1130,10 +1130,10 @@ importers:
         version: 8.15.4
       pino-pretty:
         specifier: ^10.2.0
-        version: 10.2.0
+        version: 10.2.2
       undici:
-        specifier: ^5.25.3
-        version: 5.25.3
+        specifier: ^5.25.4
+        version: 5.25.4
     devDependencies:
       '@platformatic/sql-graphql':
         specifier: workspace:*
@@ -1263,7 +1263,7 @@ importers:
         version: 8.15.4
       pino-pretty:
         specifier: ^10.2.0
-        version: 10.2.0
+        version: 10.2.2
       rfdc:
         specifier: ^1.3.0
         version: 1.3.0
@@ -1314,8 +1314,8 @@ importers:
         specifier: ^5.2.2
         version: 5.2.2
       undici:
-        specifier: ^5.25.3
-        version: 5.25.3
+        specifier: ^5.25.4
+        version: 5.25.4
       vscode-json-languageservice:
         specifier: ^5.3.6
         version: 5.3.6
@@ -2352,7 +2352,7 @@ packages:
       fastify-plugin: 4.5.1
       pump: 3.0.0
       tiny-lru: 11.2.0
-      undici: 5.25.3
+      undici: 5.25.4
     dev: false
 
   /@fastify/restartable@2.1.1:
@@ -4876,7 +4876,7 @@ packages:
   /fastify-undici-dispatcher@0.4.2:
     resolution: {integrity: sha512-7uUdlbUsuta3U8DKYeLsMnTAg0GBhiYzdEWyqzga6nLrtCNFfZ0ephzfQvHPe/VLGhlzvKCDBnXBURC+shMbBQ==}
     dependencies:
-      undici: 5.25.3
+      undici: 5.25.4
     dev: false
 
   /fastify-user@0.3.1:
@@ -6441,7 +6441,7 @@ packages:
       secure-json-parse: 2.7.0
       single-user-cache: 0.6.0
       tiny-lru: 10.4.1
-      undici: 5.25.3
+      undici: 5.25.4
       ws: 8.14.2
     transitivePeerDependencies:
       - bufferutil
@@ -6467,7 +6467,7 @@ packages:
       secure-json-parse: 2.7.0
       single-user-cache: 0.6.0
       tiny-lru: 11.2.0
-      undici: 5.25.3
+      undici: 5.25.4
       ws: 8.14.2
     transitivePeerDependencies:
       - bufferutil
@@ -7287,8 +7287,8 @@ packages:
       readable-stream: 4.4.2
       split2: 4.2.0
 
-  /pino-pretty@10.2.0:
-    resolution: {integrity: sha512-tRvpyEmGtc2D+Lr3FulIZ+R1baggQ4S3xD2Ar93KixFEDx6SEAUP3W5aYuEw1C73d6ROrNcB2IXLteW8itlwhA==}
+  /pino-pretty@10.2.2:
+    resolution: {integrity: sha512-RvAdCQAU51MdVsJdvXX4Bipb52wwldXtOzlva1NT8q2d7tmgYWFIMLhoSnfx2Sr+Hi7BLGpR/n8wgrcq5G/ykA==}
     hasBin: true
     dependencies:
       colorette: 2.0.20
@@ -7345,7 +7345,7 @@ packages:
       real-require: 0.2.0
       safe-stable-stringify: 2.4.3
       sonic-boom: 3.5.0
-      thread-stream: 2.4.0
+      thread-stream: 2.4.1
 
   /pkg-conf@3.1.0:
     resolution: {integrity: sha512-m0OTbR/5VPNPqO1ph6Fqbj7Hv6QU7gR/tQW40ZqrL1rjgCU85W6C1bJn0BItuJqnR98PWzw7Z8hHeChD1WrgdQ==}
@@ -8568,8 +8568,8 @@ packages:
       real-require: 0.1.0
     dev: true
 
-  /thread-stream@2.4.0:
-    resolution: {integrity: sha512-xZYtOtmnA63zj04Q+F9bdEay5r47bvpo1CaNqsKi7TpoJHcotUez8Fkfo2RJWpW91lnnaApdpRbVwCWsy+ifcw==}
+  /thread-stream@2.4.1:
+    resolution: {integrity: sha512-d/Ex2iWd1whipbT681JmTINKw0ZwOUBZm7+Gjs64DHuX34mmw8vJL2bFAaNacaW72zYiTJxSHi5abUuOi5nsfg==}
     dependencies:
       real-require: 0.2.0
 
@@ -8830,8 +8830,8 @@ packages:
       which-boxed-primitive: 1.0.2
     dev: true
 
-  /undici@5.25.3:
-    resolution: {integrity: sha512-7lmhlz3K1+IKB6IUjkdzV2l0jKY8/0KguEMdEpzzXCug5pEGIp3DxUg0DEN65DrVoxHiRKpPORC/qzX+UglSkQ==}
+  /undici@5.25.4:
+    resolution: {integrity: sha512-450yJxT29qKMf3aoudzFpIciqpx6Pji3hEWaXqXmanbXF58LTAGCKxcJjxMXWu3iG+Mudgo3ZUfDB6YDFd/dAw==}
     engines: {node: '>=14.0'}
     dependencies:
       '@fastify/busboy': 2.0.0
