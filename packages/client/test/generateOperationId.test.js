@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const assert = require('node:assert/strict')
+const { test } = require('node:test')
 const { generateOperationId } = require('..')
 
 test('generates name from different path with same method and opeartionId', async (t) => {
@@ -20,8 +21,8 @@ test('generates name from different path with same method and opeartionId', asyn
   const fourth = generateOperationId('sample-path4', 'get', {
     operationId: 'sampleOperationId'
   }, bucket)
-  t.equal(first, 'sampleOperationId')
-  t.equal(second, 'getSampleOperationId')
-  t.equal(third, 'getSampleOperationId1')
-  t.equal(fourth, 'getSampleOperationId2')
+  assert.equal(first, 'sampleOperationId')
+  assert.equal(second, 'getSampleOperationId')
+  assert.equal(third, 'getSampleOperationId1')
+  assert.equal(fourth, 'getSampleOperationId2')
 })

@@ -475,7 +475,11 @@ jobs:
           retry_on: error
           command: pnpm install --frozen-lockfile
       - name: Run test suite with code coverage
+        if: matrix.node-version != 20
         run: cd packages/client && pnpm test
+      - name: Run test suite without code coverage
+        if: matrix.node-version == 20
+        run: cd packages/client && pnpm run nocov
       - name: Run test suite with code coverage for generator
         if: matrix.os != 'windows-latest'
         run: cd packages/client-cli && pnpm test
