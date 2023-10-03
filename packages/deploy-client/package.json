@@ -36,6 +36,6 @@
     "@platformatic/service": "workspace:*",
     "pretty-bytes": "^6.1.1",
     "tar": "^6.2.0",
-    "undici": "^5.25.3"
+    "undici": "^5.25.4"
   }
 }
