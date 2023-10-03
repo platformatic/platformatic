@@ -82,9 +82,24 @@ PLT_SERVER_LOGGER_LEVEL=info
   }
 
   await writeFile(join(runtimeDir, '.env'), globalEnvContents)
+  await writeFile(join(runtimeDir, '.env.sample'), stripEnvFileValues(globalEnvContents))
   return envStringToObject(globalEnvContents)
 }
 
+function stripEnvFileValues (envString) {
+  const lines = envString.split('\n')
+  const output = []
+  for (const line of lines) {
+    const match = line.match(/^(.*)=(.*)/)
+    if (match) {
+      const key = match[1]
+      output.push(`${key}=`)
+    } else {
+      output.push(line)
+    }
+  }
+  return output.join('\n')
+}
 function envStringToObject (envString) {
   const lines = envString.split('\n')
   const output = {}
