@@ -310,7 +310,7 @@ function generateEnv (isRuntimeContext, hostname, port, connectionString, typesc
   if (envPrefix) {
     env += `PLT_${envPrefix}`
   }
-  env += `DATABASE_URL=${connectionString}`
+  env += `DATABASE_URL=${connectionString}\n`
 
   if (!isRuntimeContext) {
     env += `\

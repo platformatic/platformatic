@@ -184,20 +184,11 @@ test('creates service in a runtime context', async ({ equal, same, ok, notOk }) 
   equal(server, undefined)
 
   const pathToServiceEnvFile = join(tmpDir, '.env')
-  same(await readFile(pathToServiceEnvFile, 'utf8'), `
-SERVICE_PREFIX_PLT_SERVER_LOGGER_LEVEL=info
-SERVICE_PREFIX_PORT=6666
-SERVICE_PREFIX_PLT_SERVER_HOSTNAME=myhost
-`)
+  same(await readFile(pathToServiceEnvFile, 'utf8'), '') // file is empty
   const pathToServiceEnvSampleFile = join(tmpDir, '.env.sample')
-  same(await readFile(pathToServiceEnvSampleFile, 'utf8'), `
-SERVICE_PREFIX_PLT_SERVER_LOGGER_LEVEL=info
-SERVICE_PREFIX_PORT=6666
-SERVICE_PREFIX_PLT_SERVER_HOSTNAME=myhost
-`)
+  same(await readFile(pathToServiceEnvSampleFile, 'utf8'), '') // file is empty
+
   same(plugins, { paths: [{ path: './plugins', encapsulate: false }, './routes'] })
-  // notOk(await isFileAccessible(join(tmpDir, '.env')))
-  // notOk(await isFileAccessible(join(tmpDir, '.env.sample')))
   notOk(await isFileAccessible(join(tmpDir, '.github', 'workflows', 'platformatic-static-workspace-deploy.yml')))
   notOk(await isFileAccessible(join(tmpDir, '.github', 'workflows', 'platformatic-dynamic-workspace-deploy.yml')))
   ok(await isFileAccessible(join(tmpDir, 'plugins', 'example.js')))

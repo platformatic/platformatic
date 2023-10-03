@@ -124,6 +124,7 @@ async function createService (params, logger, currentDir = process.cwd(), versio
       )
     }
   }
+
   if (!isRuntimeContext) {
     if (staticWorkspaceGitHubAction) {
       await createStaticWorkspaceGHAction(logger, serviceEnv, './platformatic.service.json', currentDir, typescript)
