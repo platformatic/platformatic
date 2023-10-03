@@ -100,10 +100,6 @@ async function start (args) {
 
 async function startCommand (args) {
   try {
-    // adds default allow env vars to runtime
-    if (!args.includes('--allow-env')) {
-      args.push('--allow-env', 'PORT,HOSTNAME,DATABASE_URL')
-    }
     const config = await loadConfig({}, args)
     let runtime
 
