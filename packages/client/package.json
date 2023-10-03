@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "lint": "standard",
-    "test": "tap test/*.test.*js && tsd"
+    "test": "pnpm run lint && c8 node ./test/runner.js && tsd",
+    "nocov": "pnpm run lint && node ./test/runner.js && tsd"
   },
   "repository": {
     "type": "git",
@@ -19,13 +20,14 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@platformatic/telemetry": "workspace:*",
+    "c8": "^8.0.1",
+    "glob": "^10.3.10",
     "desm": "^1.3.0",
     "execa": "^8.0.1",
     "fastify": "^4.23.2",
     "snazzy": "^9.0.0",
     "split2": "^4.2.0",
     "standard": "^17.1.0",
-    "tap": "^16.3.9",
     "tsd": "^0.29.0",
     "typescript": "^5.2.2"
   },

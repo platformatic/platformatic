@@ -1,19 +1,21 @@
 'user strict'
 
-require('./helper')
-const { test } = require('tap')
-const { buildServer } = require('../../db')
-const { join } = require('path')
-const { buildGraphQLClient } = require('..')
-const fs = require('fs/promises')
+const assert = require('node:assert/strict')
+const { tmpdir } = require('node:os')
+const { test } = require('node:test')
+const { join } = require('node:path')
+const { mkdtemp, cp, unlink, rm } = require('node:fs/promises')
 const Fastify = require('fastify')
+const { buildServer } = require('../../db')
+const { buildGraphQLClient } = require('..')
+require('./helper')
 
-test('rejects with no url', async ({ rejects }) => {
-  await rejects(buildGraphQLClient())
-  await rejects(buildGraphQLClient({}))
+test('rejects with no url', async (t) => {
+  await assert.rejects(buildGraphQLClient())
+  await assert.rejects(buildGraphQLClient({}))
 })
 
-test('status code !== 200', async ({ teardown, same, rejects }) => {
+test('status code !== 200', async (t) => {
   const fastify = Fastify()
   fastify.post('/graphql', async (request, reply) => {
     reply.code(500)
@@ -25,13 +27,15 @@ test('status code !== 200', async ({ teardown, same, rejects }) => {
   })
   await fastify.listen({ port: 0 })
 
-  teardown(fastify.close.bind(fastify))
+  t.after(async () => {
+    await fastify.close()
+  })
 
   const client = await buildGraphQLClient({
     url: `http://localhost:${fastify.server.address().port}/graphql`
   })
 
-  await rejects(client.graphql({
+  await assert.rejects(client.graphql({
     query: `
       mutation createMovie($title: String!) {
         saveMovie(input: {title: $title}) {
@@ -46,7 +50,7 @@ test('status code !== 200', async ({ teardown, same, rejects }) => {
   }), new Error('request to client failed'))
 })
 
-test('errors', async ({ teardown, same, rejects }) => {
+test('errors', async (t) => {
   const fastify = Fastify()
   fastify.post('/graphql', async (request, reply) => {
     return {
@@ -57,13 +61,15 @@ test('errors', async ({ teardown, same, rejects }) => {
   })
   await fastify.listen({ port: 0 })
 
-  teardown(fastify.close.bind(fastify))
+  t.after(async () => {
+    await fastify.close()
+  })
 
   const client = await buildGraphQLClient({
     url: `http://localhost:${fastify.server.address().port}/graphql`
   })
 
-  await rejects(client.graphql({
+  await assert.rejects(client.graphql({
     query: `
       mutation createMovie($title: String!) {
         saveMovie(input: {title: $title}) {
@@ -78,16 +84,21 @@ test('errors', async ({ teardown, same, rejects }) => {
   }), new Error('hello world'))
 })
 
-test('build basic client from url', async ({ teardown, same, rejects }) => {
+test('build basic client from url', async (t) => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
   try {
-    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
+  const app = await buildServer(join(tmpDir, 'platformatic.db.json'))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
+    await rm(tmpDir, { recursive: true })
   })
   await app.start()
 
@@ -109,8 +120,8 @@ test('build basic client from url', async ({ teardown, same, rejects }) => {
     }
   })
 
-  same(movie, {
-    id: 1,
+  assert.deepEqual(movie, {
+    id: '1',
     title: 'The Matrix'
   })
 
@@ -129,28 +140,33 @@ test('build basic client from url', async ({ teardown, same, rejects }) => {
     `
   })
 
-  same(movies, {
+  assert.deepEqual(movies, {
     movies: [{
-      id: 1,
+      id: '1',
       title: 'The Matrix'
     }],
     getMovieById: {
-      id: 1,
+      id: '1',
       title: 'The Matrix'
     }
   })
 })
 
-test('build basic client from url with custom headers', async ({ teardown, same, rejects }) => {
+test('build basic client from url with custom headers', async (t) => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'auth')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
   try {
-    await fs.unlink(join(__dirname, 'fixtures', 'auth', 'db.sqlite'))
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(join(__dirname, 'fixtures', 'auth', 'platformatic.db.json'))
+  const app = await buildServer(join(tmpDir, 'platformatic.db.json'))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
+    await rm(tmpDir, { recursive: true })
   })
   await app.start()
 
@@ -175,8 +191,8 @@ test('build basic client from url with custom headers', async ({ teardown, same,
     }
   })
 
-  same(movie, {
-    id: 1,
+  assert.deepEqual(movie, {
+    id: '1',
     title: 'The Matrix'
   })
 
@@ -195,28 +211,33 @@ test('build basic client from url with custom headers', async ({ teardown, same,
     `
   })
 
-  same(movies, {
+  assert.deepEqual(movies, {
     movies: [{
-      id: 1,
+      id: '1',
       title: 'The Matrix'
     }],
     getMovieById: {
-      id: 1,
+      id: '1',
       title: 'The Matrix'
     }
   })
 })
 
-test('bad query', async ({ teardown, same, rejects }) => {
+test('bad query', async (t) => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
   try {
-    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
+  const app = await buildServer(join(tmpDir, 'platformatic.db.json'))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
+    await rm(tmpDir, { recursive: true })
   })
   await app.start()
 
@@ -224,21 +245,26 @@ test('bad query', async ({ teardown, same, rejects }) => {
     url: `${app.url}/graphql`
   })
 
-  await rejects(client.graphql({
+  await assert.rejects(client.graphql({
     query: 'foo'
   }))
 })
 
-test('error within resolver', async ({ teardown, same, rejects }) => {
+test('error within resolver', async (t) => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
   try {
-    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
+  const app = await buildServer(join(tmpDir, 'platformatic.db.json'))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
+    await rm(tmpDir, { recursive: true })
   })
   await app.start()
 
@@ -246,7 +272,7 @@ test('error within resolver', async ({ teardown, same, rejects }) => {
     url: `${app.url}/graphql`
   })
 
-  await rejects(client.graphql({
+  await assert.rejects(client.graphql({
     query: '{ hello }'
   }))
 })

@@ -1,23 +1,30 @@
 'use strict'
 
-require('./helper')
-const { test } = require('tap')
-const { buildServer } = require('../../db')
-const { join } = require('path')
-const client = require('..')
-const fs = require('fs/promises')
+const assert = require('node:assert/strict')
+const { tmpdir } = require('node:os')
+const { test } = require('node:test')
+const { join } = require('node:path')
+const { mkdtemp, cp, unlink, rm } = require('node:fs/promises')
 const Fastify = require('fastify')
+const { buildServer } = require('../../db')
+const client = require('..')
+require('./helper')
 
-test('app decorator with GraphQL', async ({ teardown, same, rejects }) => {
+test('app decorator with GraphQL', async (t) => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
   try {
-    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
   } catch {
     // noop
   }
-  const targetApp = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
+  const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
 
-  teardown(async () => {
+  t.after(async () => {
     await targetApp.close()
+    await rm(tmpDir, { recursive: true })
   })
   await targetApp.start()
 
@@ -67,8 +74,8 @@ test('app decorator with GraphQL', async ({ teardown, same, rejects }) => {
     path: '/movies'
   })
 
-  same(movie.json(), {
-    id: 1,
+  assert.deepEqual(movie.json(), {
+    id: '1',
     title: 'The Matrix'
   })
 
@@ -77,13 +84,13 @@ test('app decorator with GraphQL', async ({ teardown, same, rejects }) => {
     path: 'movies'
   })
 
-  same(movies.json(), {
+  assert.deepEqual(movies.json(), {
     movies: [{
-      id: 1,
+      id: '1',
       title: 'The Matrix'
     }],
     getMovieById: {
-      id: 1,
+      id: '1',
       title: 'The Matrix'
     }
   })

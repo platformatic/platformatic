@@ -367,7 +367,7 @@ async function plugin (app, opts) {
   } else if (opts.type === 'graphql') {
     client = await buildGraphQLClient(opts, app.openTelemetry, app.log)
   } else {
-    throw new Error('opts.type must be either "openapi" or "graphql" ff')
+    throw new Error('opts.type must be either "openapi" or "graphql"')
   }
 
   let name = opts.name
