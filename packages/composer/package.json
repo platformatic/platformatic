@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "lint": "standard | snazzy",
-    "test": "pnpm run lint && c8 --100 node ./test/runner.js"
+    "test": "pnpm run lint && c8 --100 node ./test/runner.js",
+    "nocov": "pnpm run lint && node ./test/runner.js"
   },
   "bin": {
     "plt-composer": "./composer.mjs"
