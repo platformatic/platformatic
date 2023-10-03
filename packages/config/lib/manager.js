@@ -85,6 +85,16 @@ class ConfigManager extends EventEmitter {
         currentPath = join(currentPath, '..')
       }
     }
+    // try at last process.cwd()
+    if (!dotEnvPath) {
+      try {
+        const cwdPath = join(process.cwd(), '.env')
+        await access(cwdPath)
+        dotEnvPath = cwdPath
+      } catch {
+        // do nothing, again
+      }
+    }
     let env = { ...this._originalEnv }
     if (dotEnvPath) {
       const data = await readFile(dotEnvPath, 'utf-8')
