@@ -185,7 +185,7 @@ class PlatformaticApp {
 
     let _config
     try {
-      _config = await loadConfig({}, ['-c', appConfig.config], {
+      _config = await loadConfig({}, ['-c', appConfig.config, '--allow-env', 'PORT'], {
         onMissingEnv (key) {
           return appConfig.localServiceEnvVars.get(key)
         }

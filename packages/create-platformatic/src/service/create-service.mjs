@@ -26,16 +26,16 @@ function generateConfig (isRuntimeContext, version, typescript, envPrefix) {
 
   if (!isRuntimeContext) {
     config.server = {
-      hostname: `{${envPrefix}PLT_SERVER_HOSTNAME}`,
-      port: `{${envPrefix}PORT}`,
+      hostname: '{PLT_SERVER_HOSTNAME}',
+      port: '{PORT}',
       logger: {
-        level: `{${envPrefix}PLT_SERVER_LOGGER_LEVEL}`
+        level: '{PLT_SERVER_LOGGER_LEVEL}'
       }
     }
   }
 
   if (typescript === true) {
-    config.plugins.typescript = `{${envPrefix}PLT_TYPESCRIPT}`
+    config.plugins.typescript = `{PLT_${envPrefix}TYPESCRIPT}`
   }
 
   return config
@@ -57,7 +57,7 @@ PLT_SERVER_LOGGER_LEVEL=info
 
 # Set to false to disable automatic typescript compilation.
 # Changing this setting is needed for production
-${envPrefix}PLT_TYPESCRIPT=true
+PLT_${envPrefix}TYPESCRIPT=true
 `
   }
 
@@ -130,15 +130,15 @@ async function createService (params, logger, currentDir = process.cwd(), versio
     }
     if (dynamicWorkspaceGitHubAction) {
       await createDynamicWorkspaceGHAction(logger, serviceEnv, './platformatic.service.json', currentDir, typescript)
-    }  
+    }
   }
 
   await generatePlugins(logger, currentDir, typescript, 'service')
-  
+
   if (isRuntimeContext) {
     return addPrefixToEnv(serviceEnv, runtimeContext.envPrefix)
   }
-  
+
   return serviceEnv
 }
 

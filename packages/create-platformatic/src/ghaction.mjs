@@ -5,8 +5,8 @@ import columnify from 'columnify'
 function envAsString (env, indent) {
   const spaces = Array(indent * 2).join(' ')
   return Object.keys(env).reduce((acc, key) => {
-    if (key === 'DATABASE_URL') {
-      acc += `${spaces}${key}: \${{ secrets.DATABASE_URL }}\n`
+    if (key.match('DATABASE_URL')) {
+      acc += `${spaces}${key}: \${{ secrets.${key} }}\n`
     } else {
       acc += `${spaces}${key}: ${env[key]} \n`
     }
@@ -130,10 +130,12 @@ export const createDynamicWorkspaceGHAction = async (logger, env, config, projec
     await mkdir(join(projectDir, '.github', 'workflows'), { recursive: true })
     await writeFile(ghActionFilePath, dynamicWorkspaceGHTemplate(env, config, buildTS))
     logger.info('PR Previews are enabled for your app and the Github action was successfully created, please add the following secrets as repository secrets: ')
+    const envToBeAdded = { ...env }
+    delete envToBeAdded.PORT
     const secretsString = formatSecretsToAdd({
       PLATFORMATIC_DYNAMIC_WORKSPACE_ID: 'your workspace id',
       PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY: 'your workspace API key',
-      DATABASE_URL: env.DATABASE_URL
+      ...envToBeAdded
     })
     logger.info(`\n ${secretsString}`)
     const isGitDir = await isFileAccessible('.git', projectDir)
@@ -144,15 +146,6 @@ export const createDynamicWorkspaceGHAction = async (logger, env, config, projec
     logger.info(`Github action file ${ghActionFilePath} found, skipping creation of github action file.`)
   }
 }
-
-/* c8 ignore next 21 */
-// export const askDynamicWorkspaceCreateGHAction = async (logger, env, type, buildTS, projectDir = process.cwd()) => {
-//   if (githubAction) {
-//     const config = `./platformatic.${type}.json`
-//     await createDynamicWorkspaceGHAction(logger, env, config, projectDir, buildTS)
-//   }
-/* c8 ignore next */
-// }
 
 export const createStaticWorkspaceGHAction = async (logger, env, config, projectDir, buildTS) => {
   const ghActionFileName = 'platformatic-static-workspace-deploy.yml'
@@ -162,10 +155,12 @@ export const createStaticWorkspaceGHAction = async (logger, env, config, project
     await mkdir(join(projectDir, '.github', 'workflows'), { recursive: true })
     await writeFile(ghActionFilePath, staticWorkspaceGHTemplate(env, config, buildTS))
     logger.info('Github action successfully created, please add the following secrets as repository secrets: ')
+    const envToBeAdded = { ...env }
+    delete envToBeAdded.PORT
     const secretsString = formatSecretsToAdd({
       PLATFORMATIC_STATIC_WORKSPACE_ID: 'your workspace id',
       PLATFORMATIC_STATIC_WORKSPACE_API_KEY: 'your workspace API key',
-      DATABASE_URL: env.DATABASE_URL
+      ...envToBeAdded
     })
     logger.info(`\n ${secretsString}`)
     const isGitDir = await isFileAccessible('.git', projectDir)
@@ -176,12 +171,3 @@ export const createStaticWorkspaceGHAction = async (logger, env, config, project
     logger.info(`Github action file ${ghActionFilePath} found, skipping creation of github action file.`)
   }
 }
-
-/* c8 ignore next 21 */
-// export const askStaticWorkspaceGHAction = async (logger, env, type, buildTS, projectDir = process.cwd()) => {
-//   if (githubAction) {
-//     const config = `./platformatic.${type}.json`
-//     await createStaticWorkspaceGHAction(logger, env, config, projectDir, buildTS)
-//   }
-/* c8 ignore next */
-// }

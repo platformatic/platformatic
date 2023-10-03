@@ -2,7 +2,7 @@ import { getVersion, getDependencyVersion, convertServiceNameToPrefix } from '..
 import { createPackageJson } from '../create-package-json.mjs'
 import { createGitignore } from '../create-gitignore.mjs'
 import { getPkgManager } from '../get-pkg-manager.mjs'
-import { join, relative } from 'path'
+import { join, relative, resolve } from 'path'
 import inquirer from 'inquirer'
 import { mkdir, stat } from 'fs/promises'
 import pino from 'pino'
@@ -39,6 +39,13 @@ export async function createPlatformaticRuntime (_args) {
 
   const baseServicesDir = join(relative(process.cwd(), projectDir), 'services')
   const servicesDir = await askDir(logger, baseServicesDir, 'Where would you like to load your services from?')
+
+  // checks services dir is subdirectory
+  const resolvedDir = resolve(projectDir, servicesDir)
+  if (!resolvedDir.startsWith(projectDir)) {
+    logger.error(`Services directory must be a subdirectory of ${projectDir}. Found: ${resolvedDir}.`)
+    process.exit(1)
+  }
 
   toAsk.push(getRunPackageManagerInstall(pkgManager))
   // const { runPackageManagerInstall } = await inquirer.prompt([

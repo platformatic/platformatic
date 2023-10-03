@@ -11,7 +11,7 @@ function generateConfig (isRuntimeContext, version, servicesToCompose, envPrefix
     composer: {
       services: [{
         id: 'example',
-        origin: `{${envPrefix}PLT_EXAMPLE_ORIGIN}`,
+        origin: `{PLT_${envPrefix}EXAMPLE_ORIGIN}`,
         openapi: {
           url: '/documentation/json'
         }
@@ -62,7 +62,7 @@ PORT=${port}
 PLT_SERVER_LOGGER_LEVEL=info`
   }
   env += `
-${envPrefix}PLT_EXAMPLE_ORIGIN=
+PLT_${envPrefix}EXAMPLE_ORIGIN=
 `
   return env
 }
@@ -73,7 +73,7 @@ async function createComposer (
   currentDir = process.cwd(),
   version,
   staticWorkspaceGitHubAction,
-  dynamicWorkspaceGitHubAction,
+  dynamicWorkspaceGitHubAction
 ) {
   const { isRuntimeContext, hostname, port, servicesToCompose = [], runtimeContext } = params
 
@@ -117,7 +117,7 @@ async function createComposer (
   if (dynamicWorkspaceGitHubAction) {
     await createDynamicWorkspaceGHAction(logger, composerEnv, './platformatic.service.json', currentDir, false)
   }
-  
+
   return composerEnv
 }
 

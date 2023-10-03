@@ -107,7 +107,8 @@ const createPlatformaticComposer = async (_args, opts) => {
     port,
     servicesToCompose,
     staticWorkspaceGitHubAction,
-    dynamicWorkspaceGitHubAction
+    dynamicWorkspaceGitHubAction,
+    runtimeContext: opts.runtimeContext
   }
 
   await createComposer(

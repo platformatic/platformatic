@@ -1,6 +1,6 @@
 import { writeFile, mkdir, appendFile } from 'fs/promises'
 import { join } from 'path'
-import { findDBConfigFile, isFileAccessible } from '../utils.mjs'
+import { addPrefixToEnv, findDBConfigFile, isFileAccessible } from '../utils.mjs'
 import { getTsConfig } from '../get-tsconfig.mjs'
 import { generatePlugins } from '../create-plugins.mjs'
 import { createDynamicWorkspaceGHAction, createStaticWorkspaceGHAction } from '../ghaction.mjs'
@@ -251,10 +251,11 @@ test('movies', async (t) => {
 `
 
 function generateConfig (isRuntimeContext, migrations, plugin, types, typescript, version, envPrefix) {
+  const connectionStringValue = envPrefix ? `PLT_${envPrefix}DATABASE_URL` : 'DATABASE_URL'
   const config = {
     $schema: `https://platformatic.dev/schemas/v${version}/db`,
     db: {
-      connectionString: '{DATABASE_URL}',
+      connectionString: `{${connectionStringValue}}`,
       graphql: true,
       openapi: true,
       schemalock: true
@@ -266,10 +267,10 @@ function generateConfig (isRuntimeContext, migrations, plugin, types, typescript
 
   if (!isRuntimeContext) {
     config.server = {
-      hostname: `{${envPrefix}PLT_SERVER_HOSTNAME}`,
-      port: `{${envPrefix}PORT}`,
+      hostname: '{PLT_SERVER_HOSTNAME}',
+      port: '{PORT}',
       logger: {
-        level: `{${envPrefix}PLT_SERVER_LOGGER_LEVEL}`
+        level: '{PLT_SERVER_LOGGER_LEVEL}'
       }
     }
   }
@@ -298,17 +299,18 @@ function generateConfig (isRuntimeContext, migrations, plugin, types, typescript
   }
 
   if (typescript === true) {
-    config.plugins.typescript = `{${envPrefix}PLT_TYPESCRIPT}`
+    config.plugins.typescript = `{PLT_${envPrefix}TYPESCRIPT}`
   }
 
   return config
 }
 
 function generateEnv (isRuntimeContext, hostname, port, connectionString, typescript, envPrefix) {
-  let env = `\
-${envPrefix}DATABASE_URL=${connectionString}
-
-`
+  let env = ''
+  if (envPrefix) {
+    env += `PLT_${envPrefix}`
+  }
+  env += `DATABASE_URL=${connectionString}`
 
   if (!isRuntimeContext) {
     env += `\
@@ -323,8 +325,7 @@ PLT_SERVER_LOGGER_LEVEL=info
     env += `\
 # Set to false to disable automatic typescript compilation.
 # Changing this setting is needed for production
-${envPrefix}PLT_TYPESCRIPT=true
-
+PLT_${envPrefix}TYPESCRIPT=true
 `
   }
 
@@ -364,15 +365,16 @@ export async function createDB (params, logger, currentDir, version) {
   connectionString = connectionString || getConnectionString(database)
   const createMigrations = !!migrations // If we don't define a migrations folder, we don't create it
   const accessibleConfigFilename = await findDBConfigFile(currentDir)
+
   if (accessibleConfigFilename === undefined) {
     const envPrefix = runtimeContext !== undefined ? `${runtimeContext.envPrefix}_` : ''
-    
+
     const config = generateConfig(isRuntimeContext, migrations, plugin, types, typescript, version, envPrefix)
     await writeFile(join(currentDir, 'platformatic.db.json'), JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.db.json successfully created.')
-    
+
     const env = generateEnv(isRuntimeContext, hostname, port, connectionString, typescript, envPrefix)
-    const envSample = generateEnv(isRuntimeContext, hostname, port, getConnectionString(database), typescript)
+    const envSample = generateEnv(isRuntimeContext, hostname, port, getConnectionString(database), typescript, envPrefix)
     const envFileExists = await isFileAccessible('.env', currentDir)
     await appendFile(join(currentDir, '.env'), env)
     await writeFile(join(currentDir, '.env.sample'), envSample)
@@ -460,6 +462,9 @@ export async function createDB (params, logger, currentDir, version) {
     await createDynamicWorkspaceGHAction(logger, dbEnv, './platformatic.db.json', currentDir, typescript)
   }
 
+  if (isRuntimeContext) {
+    return addPrefixToEnv(isRuntimeContext)
+  }
   return dbEnv
 }
 

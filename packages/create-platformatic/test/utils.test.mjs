@@ -1,7 +1,7 @@
 'use strict'
 
 import { test } from 'tap'
-import { randomBetween, sleep, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions, findRuntimeConfigFile, findComposerConfigFile, convertServiceNameToPrefix, addPrefixToEnv, getUsername } from '../src/utils.mjs'
+import { randomBetween, sleep, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions, findRuntimeConfigFile, findComposerConfigFile, convertServiceNameToPrefix, addPrefixToEnv } from '../src/utils.mjs'
 import { mkdtempSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
@@ -244,7 +244,6 @@ test('should convert service name to env prefix', async (t) => {
     t.equal(exp[1], converted)
   })
 })
-
 
 test('should add prefix to a key/value object', async (t) => {
   const prefix = 'MY_PREFIX'
