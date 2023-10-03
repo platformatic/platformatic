@@ -1,6 +1,6 @@
 'use strict'
 
-const { basename, join, resolve, dirname } = require('path')
+const { basename, join, resolve, dirname, parse } = require('path')
 const { readFile, access } = require('fs/promises')
 const EventEmitter = require('events')
 const Ajv = require('ajv')
@@ -71,18 +71,28 @@ class ConfigManager extends EventEmitter {
     if (this.pupa === null) {
       this.pupa = (await import('pupa')).default
     }
-    const paths = [
-      join(dirname(this.fullPath), '.env'),
-      join(process.cwd(), '.env')
-    ]
     let dotEnvPath
-    for (const p of paths) {
+    let currentPath = this.fullPath
+    const rootPath = parse(this.fullPath).root
+    while (currentPath !== rootPath) {
       try {
-        await access(p)
-        dotEnvPath = p
+        const candidatePath = join(currentPath, '.env')
+        await access(candidatePath)
+        dotEnvPath = candidatePath
         break
       } catch {
         // Nothing to do
+        currentPath = join(currentPath, '..')
+      }
+    }
+    // try at last process.cwd()
+    if (!dotEnvPath) {
+      try {
+        const cwdPath = join(process.cwd(), '.env')
+        await access(cwdPath)
+        dotEnvPath = cwdPath
+      } catch {
+        // do nothing, again
       }
     }
     let env = { ...this._originalEnv }
