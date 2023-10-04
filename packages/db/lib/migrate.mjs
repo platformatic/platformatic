@@ -54,7 +54,7 @@ async function applyMigrations (_args) {
     if (config.types && config.types.autogenerate) {
       await generateTypes({ logger, config })
       const modules = ['@platformatic/db']
-      if (config.plugins.typescript) {
+      if (config.plugins?.typescript) {
         modules.push('typescript')
       }
       await checkForDependencies(logger, args, createRequire(import.meta.url), config, modules)
