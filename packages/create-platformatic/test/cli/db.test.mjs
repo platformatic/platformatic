@@ -15,7 +15,6 @@ afterEach(() => {
 })
 
 test('Creates a Platformatic DB service with no migrations and no plugin', async ({ equal, same, match, teardown }) => {
-  console.log('Creating Platformatic in ', tmpDir)
   // The actions must match IN ORDER
   const actions = [{
     match: 'Which kind of project do you want to create?',
