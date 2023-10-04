@@ -1,4 +1,4 @@
-import { test, beforeEach, afterEach, only } from 'tap'
+import { test, beforeEach, afterEach } from 'tap'
 import { executeCreatePlatformatic, keys, walk } from './helper.mjs'
 import { mkdtempSync, rmSync } from 'fs'
 import { isFileAccessible } from '../../src/utils.mjs'
@@ -59,7 +59,7 @@ test('Creates a Platformatic DB service with no migrations and no plugin', async
 
   const baseProjectDir = join(tmpDir, 'platformatic-db')
   const files = await walk(baseProjectDir)
-  console.log('==> files', files)
+  console.log('==> created files', files)
   equal(await isFileAccessible(join(baseProjectDir, '.gitignore')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env.sample')), true)
@@ -67,7 +67,7 @@ test('Creates a Platformatic DB service with no migrations and no plugin', async
   equal(await isFileAccessible(join(baseProjectDir, 'README.md')), true)
 })
 
-only('Creates a Platformatic DB service with migrations and plugin', async ({ equal, same, match, teardown }) => {
+test('Creates a Platformatic DB service with migrations and plugin', async ({ equal, same, match, teardown }) => {
   // The actions must match IN ORDER
   const actions = [{
     match: 'Which kind of project do you want to create?',
@@ -115,7 +115,7 @@ only('Creates a Platformatic DB service with migrations and plugin', async ({ eq
 
   const baseProjectDir = join(tmpDir, 'platformatic-db')
   const files = await walk(baseProjectDir)
-  console.log('==> files', files)
+  console.log('==> created files', files)
   equal(await isFileAccessible(join(baseProjectDir, '.gitignore')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env.sample')), true)
@@ -177,7 +177,7 @@ test('Creates a Platformatic DB service with plugin using typescript, creating a
 
   const baseProjectDir = join(tmpDir, 'platformatic-db')
   const files = await walk(baseProjectDir)
-  console.log('==> files', files)
+  console.log('==> created files', files)
   equal(await isFileAccessible(join(baseProjectDir, '.gitignore')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env.sample')), true)
