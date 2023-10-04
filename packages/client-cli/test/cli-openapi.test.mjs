@@ -896,7 +896,7 @@ test('openapi client generation (javascript) from file with fullRequest, fullRes
 `)
     match(data, `
   export interface Full {
-    postHello(req?: PostHelloRequest): Promise<FullResponse<PostHelloResponseOK>>;
+    postHello(req?: PostHelloRequest): Promise<PostHelloResponses>;
   }`)
     const implementationFile = join(dir, 'full', 'full.cjs')
     const implementationData = await readFile(implementationFile, 'utf-8')

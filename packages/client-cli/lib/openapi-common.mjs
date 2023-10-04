@@ -77,22 +77,31 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
       }
 
       // Unrecognized status code
-      if (STATUS_CODES[statusCode] === undefined) {
-        return 'undefined'
+      const statusCodeName = STATUS_CODES[statusCode]
+      let type
+      if (statusCodeName === undefined) {
+        type = `${operationResponseName}${statusCode}Response`
+      } else {
+        type = `${operationResponseName}${classCase(STATUS_CODES[statusCode])}`
       }
       let isResponseArray
-      let type = `${operationResponseName}${classCase(STATUS_CODES[statusCode])}`
       interfacesWriter.write(`export interface ${type}`).block(() => {
         isResponseArray = writeContent(interfacesWriter, response.content, schema, new Set())
       })
       interfacesWriter.blankLine()
       if (isResponseArray) type = `Array<${type}>`
-      if (currentFullResponse) type = `FullResponse<${type}>`
+      if (currentFullResponse) type = `FullResponse<${type}, ${statusCode}>`
       return type
     })
 
-    const responseType = responseTypes.join(' | ')
-    mainWriter.writeLine(`${operationId}(req?: ${operationRequestName}): Promise<${responseType}>;`)
+    // write response unions
+    const allResponsesName = `${capitalize(operationId)}Responses`
+    interfacesWriter.writeLine(`type ${allResponsesName} = `)
+    interfacesWriter.indent(() => {
+      interfacesWriter.write(responseTypes.join('\n| '))
+    })
+    interfacesWriter.blankLine()
+    mainWriter.writeLine(`${operationId}(req?: ${operationRequestName}): Promise<${allResponsesName}>;`)
     currentFullResponse = originalFullResponse
   }
 }

@@ -98,6 +98,7 @@ async function downloadAndWriteOpenAPI (logger, url, folder, name, generateImple
       await writeOpenAPIClient(folder, name, text, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language)
       /* c8 ignore next 3 */
     } catch (err) {
+      console.log(err)
       logger.error(err)
       return false
     }
