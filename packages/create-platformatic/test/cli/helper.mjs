@@ -3,6 +3,8 @@ import { execaNode, execa } from 'execa'
 import { join } from 'desm'
 import stripAnsi from 'strip-ansi'
 import { promisify } from 'node:util'
+import { promises as fs } from 'node:fs'
+import path from 'node:path'
 
 const sleep = promisify(setTimeout)
 
@@ -20,6 +22,17 @@ const match = (str, match) => {
     return match.some((m) => str.includes(m))
   }
   return str.includes(match)
+}
+
+export const walk = async (dir) => {
+  let files = await fs.readdir(dir)
+  files = await Promise.all(files.map(async file => {
+    const filePath = path.join(dir, file)
+    const stats = await fs.stat(filePath)
+    if (stats.isDirectory()) return walk(filePath)
+    else if (stats.isFile()) return filePath
+  }))
+  return files.reduce((all, folderContents) => all.concat(folderContents), [])
 }
 
 // Actions are in the form:
