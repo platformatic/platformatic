@@ -18,7 +18,7 @@ const seed = [
 ]
 
 t.test('dedupe', async t => {
-  t.test('should not dedupe find method', async t => {
+  t.test('should dedupe find method', async t => {
     let dedupes = 0
     let hits = 0
     let misses = 0
