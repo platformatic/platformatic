@@ -11,7 +11,11 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  rmSync(tmpDir, { recursive: true, force: true })
+  try {
+    rmSync(tmpDir, { recursive: true, force: true })
+  } catch (e) {
+    // on purpose, in win the resource might be still "busy"
+  }
 })
 
 test('Creates a Platformatic DB service with no migrations and no plugin', async ({ equal, same, match, teardown }) => {
