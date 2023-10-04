@@ -257,8 +257,8 @@ export async function command (argv) {
     ext: '.txt'
   })
   let { _: [url], ...options } = parseArgs(argv, {
-    string: ['name', 'folder', 'runtime', 'optional-headers', 'lannguage'],
-    boolean: ['typescript', 'full-response', 'types-only', 'full-response', 'full', 'frontend', 'validate-response'],
+    string: ['name', 'folder', 'runtime', 'optional-headers', 'language'],
+    boolean: ['typescript', 'full-response', 'types-only', 'full-request', 'full', 'frontend', 'validate-response'],
     default: {
       typescript: false,
       language: 'js'
