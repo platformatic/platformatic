@@ -19,5 +19,5 @@ module.exports.hasDependency = packages.hasDependency
 module.exports.getDependencyVersion = packages.getDependencyVersion
 module.exports.getPlatformaticVersion = packages.getPlatformaticVersion
 module.exports.checkForDependencies = packages.checkForDependencies
-
+module.exports.getLatestNpmVersion = packages.getLatestNpmVersion
 module.exports.errors = errors

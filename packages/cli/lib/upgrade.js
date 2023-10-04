@@ -3,8 +3,9 @@ import { analyze, write, upgrade as upgradeConfig } from '@platformatic/metaconf
 import parseArgs from 'minimist'
 import { access } from 'fs/promises'
 import { resolve } from 'path'
-import { request } from 'undici'
 import { execa } from 'execa'
+import { getLatestNpmVersion } from '@platformatic/utils'
+
 const configFileNames = ConfigManager.listConfigFiles()
 
 async function isFileAccessible (filename) {
@@ -59,7 +60,7 @@ async function upgradeApp (config) {
 async function upgradeSystem () {
   console.log('Checking latest platformatic version on npm registry...')
   const currentRunningVersion = await checkSystemPlatformaticVersion()
-  const latestNpmVersion = await checkNpmVersion()
+  const latestNpmVersion = await getLatestNpmVersion('platformatic')
   if (latestNpmVersion) {
     const compareResult = compareVersions(currentRunningVersion, latestNpmVersion)
     switch (compareResult) {
@@ -71,16 +72,6 @@ async function upgradeSystem () {
         break
     }
   }
-}
-
-async function checkNpmVersion () {
-  const res = await request('https://registry.npmjs.org/platformatic')
-
-  if (res.statusCode === 200) {
-    const json = await res.body.json()
-    return json['dist-tags'].latest
-  }
-  return null
 }
 
 export function compareVersions (first, second) {

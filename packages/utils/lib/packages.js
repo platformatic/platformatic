@@ -3,6 +3,7 @@
 const { join, dirname, resolve } = require('node:path')
 const { readFile } = require('node:fs/promises')
 const isFileAccessible = require('./is-file-accessible')
+const { request } = require('undici')
 
 async function getDependencyVersion (require, dependencyName) {
   const pathToPackageJson = join(dirname(require.resolve(dependencyName)), 'package.json')
@@ -38,7 +39,16 @@ async function checkForDependencies (logger, args, require, config, modules) {
   const requiredDependencies = {}
   requiredDependencies.fastify = await getDependencyVersion(require, 'fastify')
   for (const m of modules) {
-    requiredDependencies[m] = await getPlatformaticVersion()
+    if (m.startsWith('@platformatic')) {
+      requiredDependencies[m] = await getPlatformaticVersion()
+    } else {
+      const externalModuleVersion = await getLatestNpmVersion(m)
+      if (externalModuleVersion === null) {
+        logger.error(`Cannot find latest version on npm for package ${m}`)
+      } else {
+        requiredDependencies[m] = externalModuleVersion
+      }
+    }
   }
 
   const packageJsonPath = resolve(process.cwd(), 'package.json')
@@ -71,7 +81,20 @@ async function checkForDependencies (logger, args, require, config, modules) {
   logger.warn(`Please run \`${command}\` to install types dependencies.`)
 }
 
-module.exports.getDependencyVersion = getDependencyVersion
-module.exports.getPlatformaticVersion = getPlatformaticVersion
-module.exports.hasDependency = hasDependency
-module.exports.checkForDependencies = checkForDependencies
+async function getLatestNpmVersion (pkg) {
+  const res = await request(`https://registry.npmjs.org/${pkg}`)
+
+  if (res.statusCode === 200) {
+    const json = await res.body.json()
+    return json['dist-tags'].latest
+  }
+  return null
+}
+
+module.exports = {
+  getDependencyVersion,
+  getPlatformaticVersion,
+  hasDependency,
+  checkForDependencies,
+  getLatestNpmVersion
+}
