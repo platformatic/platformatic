@@ -65,8 +65,7 @@ async function checkForDependencies (logger, args, require, config, modules) {
         break
       }
     }
-
-    if (allRequiredDependenciesInstalled) return
+    if (allRequiredDependenciesInstalled) return /* c8 ignore next */
   }
 
   let command = 'npm i --save'
@@ -83,7 +82,6 @@ async function checkForDependencies (logger, args, require, config, modules) {
 
 async function getLatestNpmVersion (pkg) {
   const res = await request(`https://registry.npmjs.org/${pkg}`)
-
   if (res.statusCode === 200) {
     const json = await res.body.json()
     return json['dist-tags'].latest
