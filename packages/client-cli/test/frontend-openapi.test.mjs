@@ -29,7 +29,7 @@ test('build basic client from url', async ({ teardown, ok, match }) => {
   const { types, implementation } = processFrontendOpenAPI({ schema, name: 'sample', language: 'js', fullResponse: false })
 
   // The types interfaces are being created
-  match(types, /interface FullResponse<T>/)
+  match(types, /interface FullResponse<T, U extends number>/)
   match(types, /interface GetRedirectRequest/)
   match(types, /interface GetRedirectResponseFound/)
   match(types, /interface GetRedirectResponseBadRequest/)
@@ -96,16 +96,21 @@ export const getCustomSwagger = async (request) => {
     const typesTemplate = `
 export interface Sample {
   setBaseUrl(newUrl: string) : void;
-  getCustomSwagger(req?: GetCustomSwaggerRequest): Promise<GetCustomSwaggerResponseOK>;
-  getRedirect(req?: GetRedirectRequest): Promise<FullResponse<GetRedirectResponseFound> | FullResponse<GetRedirectResponseBadRequest>>;
-  getReturnUrl(req?: GetReturnUrlRequest): Promise<GetReturnUrlResponseOK>;
-  postFoobar(req?: PostFoobarRequest): Promise<PostFoobarResponseOK>;
+  getCustomSwagger(req?: GetCustomSwaggerRequest): Promise<GetCustomSwaggerResponses>;
+  getRedirect(req?: GetRedirectRequest): Promise<GetRedirectResponses>;
+  getReturnUrl(req?: GetReturnUrlRequest): Promise<GetReturnUrlResponses>;
+  postFoobar(req?: PostFoobarRequest): Promise<PostFoobarResponses>;
 }`
 
+    const unionTypesTemplate = `type GetRedirectResponses = 
+  FullResponse<GetRedirectResponseFound, 302>
+  | FullResponse<GetRedirectResponseBadRequest, 400>
+`
     ok(implementation)
     ok(types)
     match(implementation, jsImplementationTemplate)
     match(types, typesTemplate)
+    match(types, unionTypesTemplate)
   }
 })
 
@@ -206,7 +211,7 @@ export const getHello: Api['getHello'] = async (request: Types.GetHelloRequest) 
   const typesTemplate = `
 export interface Api {
   setBaseUrl(newUrl: string) : void;
-  getHello(req?: GetHelloRequest): Promise<GetHelloResponseOK>;
+  getHello(req?: GetHelloRequest): Promise<GetHelloResponses>;
 }`
 
   ok(implementation)

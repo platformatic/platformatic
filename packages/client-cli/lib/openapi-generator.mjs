@@ -96,8 +96,8 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
   writer.write(`declare namespace ${camelcasedName}`).block(() => {
     // Add always FullResponse interface because we don't know yet
   // if we are going to use it
-    interfaces.write('export interface FullResponse<T>').block(() => {
-      interfaces.writeLine('\'statusCode\': number;')
+    interfaces.write('export interface FullResponse<T, U extends number>').block(() => {
+      interfaces.writeLine('\'statusCode\': U;')
       interfaces.writeLine('\'headers\': Record<string, string>;')
       interfaces.writeLine('\'body\': T;')
     })

@@ -218,13 +218,14 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
     useSingleQuote: true
   })
   /* eslint-enable new-cap */
-  interfaces.write('interface FullResponse<T>').block(() => {
-    interfaces.writeLine('\'statusCode\': number;')
+  interfaces.write('export interface FullResponse<T, U extends number>').block(() => {
+    interfaces.writeLine('\'statusCode\': U;')
     interfaces.writeLine('\'headers\': object;')
     interfaces.writeLine('\'body\': T;')
   })
   interfaces.blankLine()
 
+  writer.blankLine()
   writer.write(`export interface ${camelCaseName}`).block(() => {
     writer.writeLine('setBaseUrl(newUrl: string) : void;')
     writeOperations(interfaces, writer, operations, {
@@ -232,7 +233,6 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
     })
   })
 
-  writer.blankLine()
   writer.writeLine(`type PlatformaticFrontendClient = Omit<${capitalize(name)}, 'setBaseUrl'>`)
   writer.writeLine('export default function build(url: string): PlatformaticFrontendClient')
   return interfaces.toString() + writer.toString()
