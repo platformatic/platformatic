@@ -15,6 +15,13 @@ export const keys = {
 
 export const createPath = join(import.meta.url, '..', '..', 'create-platformatic.mjs')
 
+const match = (str, match) => {
+  if (Array.isArray(match)) {
+    return match.some((m) => str.includes(m))
+  }
+  return str.includes(match)
+}
+
 // Actions are in the form:
 // {
 //    match: 'Server listening at',
@@ -52,7 +59,7 @@ export async function executeCreatePlatformatic (dir, actions = [], done = 'All 
             safeKill(child)
             return
           }
-        } else if (lastPrompt.includes(expectedQuestion.match)) {
+        } else if (match(lastPrompt, expectedQuestion.match)) {
           lastPrompt = ''
           for (const key of expectedQuestion.do) {
             child.stdin.write(key)
