@@ -32,6 +32,7 @@ The valid options are:
 - `ignore` — Object used to ignore some tables from building entities. (i.e. `{ 'versions': true }` will ignore `versions` table)
 - `autoTimestamp` — Generate timestamp automatically when inserting/updating records.
 - `hooks` — For each entity name (like `Page`) you can customize any of the entity API function. Your custom function will receive the original function as first parameter, and then all the other parameters passed to it.
+- `cache` — enable cache and dedupe features - currently supported `dedupe` on entities `find` method only. Boolean, default is disabled.
 
 ### `createConnectionPool(opts) : Promise`
 
@@ -77,7 +78,8 @@ const mapper = await connect({
         return await _find(opts)
       }
     }
-  }
+  },
+  cache: true
 })
 const pageEntity = mapper.entities.page
 
