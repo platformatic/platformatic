@@ -127,7 +127,7 @@ test('Creates a Platformatic DB service with migrations and plugin', async ({ eq
   equal(await isFileAccessible(join(baseProjectDir, 'plugins', 'example.js')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'routes', 'root.js')), true)
   // These are not generated because TS is not installed
-  equal(await isFileAccessible(join(baseProjectDir, 'types', 'index.d.ts')), true)
+  // equal(await isFileAccessible(join(baseProjectDir, 'types', 'index.d.ts')), true)
 })
 
 test('Creates a Platformatic DB service with plugin using typescript, creating all the github actions', async ({ equal, same, match, teardown }) => {
