@@ -60,7 +60,7 @@ export async function executeCreatePlatformatic (dir, actions = [], done = 'All 
             return
           }
         } else if (match(lastPrompt, expectedQuestion.match)) {
-          console.log("==> MATCH", expectedQuestion.match)
+          console.log('==> MATCH', expectedQuestion.match)
           lastPrompt = ''
           for (const key of expectedQuestion.do) {
             child.stdin.write(key)

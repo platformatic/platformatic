@@ -66,7 +66,6 @@ test('Creates a Platformatic DB service with no migrations and no plugin', async
 })
 
 test('Creates a Platformatic DB service with migrations and plugin', async ({ equal, same, match, teardown }) => {
-  console.log("==> DIR", tmpDir)
   // The actions must match IN ORDER
   const actions = [{
     match: 'Which kind of project do you want to create?',
@@ -127,7 +126,6 @@ test('Creates a Platformatic DB service with migrations and plugin', async ({ eq
 })
 
 test('Creates a Platformatic DB service with plugin using typescript, creating all the github actions', async ({ equal, same, match, teardown }) => {
-  console.log("==> DIR", tmpDir)
   // The actions must match IN ORDER
   const actions = [{
     match: 'Which kind of project do you want to create?',
