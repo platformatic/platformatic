@@ -69,8 +69,6 @@ export async function executeCreatePlatformatic (dir, actions = [], done = 'All 
           // We processed all expected questions, so now we wait for the process to be done.
           // If the "done" string is not printed, the test will timeout
           if (lastPrompt && lastPrompt.includes(done)) {
-            console.log('==> DONE, received:', lastPrompt)
-            await sleep(500)
             safeKill(child)
             return
           }
