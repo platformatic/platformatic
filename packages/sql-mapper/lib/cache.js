@@ -7,6 +7,7 @@ function setupCache (res, opts) {
   for (const entity of Object.values(entities)) {
     const fnName = `${entity.name}Find`
     const originalFn = entity.find
+
     cache.define(fnName, {
       serialize (query) {
         const serialized = {

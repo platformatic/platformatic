@@ -1,5 +1,7 @@
 'use strict'
 
+const { connect } = require('..')
+
 // Needed to work with dates & postgresql
 // See https://node-postgres.com/features/types/
 process.env.TZ = 'UTC'
@@ -109,4 +111,28 @@ module.exports.clear = async function (db, sql) {
     await db.query(sql`DROP TABLE generated_test`)
   } catch (err) {
   }
+}
+
+const fakeLogger = {
+  trace: () => { },
+  error: () => { }
+}
+
+module.exports.fakeLogger = fakeLogger
+
+module.exports.setupDatabase = async function ({ seed, cache, t }) {
+  return connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad: async (db, sql) => {
+      t.teardown(() => db.dispose())
+
+      for (const query of seed) {
+        await db.query(sql(query))
+      }
+    },
+    ignore: {},
+    hooks: {},
+    cache
+  })
 }
