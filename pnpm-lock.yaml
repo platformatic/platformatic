@@ -530,6 +530,9 @@ importers:
       semver:
         specifier: ^7.5.4
         version: 7.5.4
+      strip-ansi:
+        specifier: ^7.1.0
+        version: 7.1.0
       undici:
         specifier: ^5.25.4
         version: 5.25.4

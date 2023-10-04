@@ -298,7 +298,7 @@ function generateConfig (isRuntimeContext, migrations, plugin, types, typescript
     }
   }
 
-  if (typescript === true) {
+  if (typescript === true && config.plugins) {
     config.plugins.typescript = `{PLT_${envPrefix}TYPESCRIPT}`
   }
 
