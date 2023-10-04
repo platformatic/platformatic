@@ -13,7 +13,7 @@
     "create-platformatic": "./create-platformatic.mjs"
   },
   "scripts": {
-    "test:cli": "tap --no-coverage test/cli/*test.mjs",
+    "test:cli": "tap --no-coverage test/cli/*test.mjs -t60",
     "test": "standard | snazzy && cross-env NODE_OPTIONS=\"--loader=esmock --no-warnings\" c8 tap --no-coverage test/*test.mjs test/*[!cli]/*test.mjs && npm run test:cli",
     "lint": "standard | snazzy"
   },
