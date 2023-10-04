@@ -98,7 +98,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
   // if we are going to use it
     interfaces.write('export interface FullResponse<T>').block(() => {
       interfaces.writeLine('\'statusCode\': number;')
-      interfaces.writeLine('\'headers\': object;')
+      interfaces.writeLine('\'headers\': Record<string, string>;')
       interfaces.writeLine('\'body\': T;')
     })
     interfaces.blankLine()
