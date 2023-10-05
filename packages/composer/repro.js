@@ -2,7 +2,7 @@
 
 const { spawn } = require('node:child_process')
 
-spawn('sh', ['-c', 'node --test test/proxy.test.js'], {
+spawn('sh', ['-c', process.execPath + ' --test test/proxy.test.js'], {
   cwd: __dirname,
   shell: false,
   stdio: 'inherit',
