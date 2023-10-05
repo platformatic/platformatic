@@ -39,6 +39,8 @@ function setupCache (res, opts) {
       }
     })
   }
+
+  return cache
 }
 
 module.exports = setupCache

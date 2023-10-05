@@ -208,7 +208,7 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize, ignor
     }
 
     if (cache) {
-      setupCache(res, cache)
+      res.cache = setupCache(res, cache)
     }
 
     return res

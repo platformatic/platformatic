@@ -17,32 +17,15 @@ const seed = [
   'INSERT INTO movies (title) VALUES (\'Jurassic Park\'), (\'The Dark Knight\'), (\'Memento\')'
 ]
 
-t.test('dedupe', async t => {
-  t.test('should dedupe with default settings', async t => {
-    let dedupes = 0
-    let hits = 0
-    let misses = 0
-    let errors = 0
-    const cache = {
-      onDedupe: () => { dedupes++ },
-      onHit: () => { hits++ },
-      onMiss: () => { misses++ },
-      onError: () => { errors++ }
-    }
-    const mapper = await setupDatabase({ seed, cache, t })
-    const concurrency = 10
+t.test('setup', async t => {
+  t.test('should setup cache with default settings', async t => {
+    const mapper = await setupDatabase({ seed, cache: true, t })
 
-    const tasks = new Array(concurrency).fill().map(_ => mapper.entities.movie.find({ fields: ['title'] }))
-    const results = await Promise.allSettled(tasks)
-
-    t.equal(results.length, concurrency)
-    results.forEach(r => t.same(r.value, [{ title: 'Jurassic Park' }, { title: 'The Dark Knight' }, { title: 'Memento' }]))
-    t.equal(dedupes, concurrency - 1)
-    t.equal(hits, 0)
-    t.equal(misses, 0)
-    t.equal(errors, 0)
+    t.type(mapper.cache.MovieFind, 'function')
   })
+})
 
+t.test('dedupe', async t => {
   t.test('should dedupe find method', async t => {
     let dedupes = 0
     let hits = 0
