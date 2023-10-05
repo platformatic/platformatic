@@ -94,7 +94,7 @@ jobs:
         retry_on: error
         command: pnpm install --frozen-lockfile
     - name: platformatic cli global link
-      run: cd packages/cli && pnpm link && cd ../..
+      run: cd packages/cli && pnpm link --global && cd ../..
     - name: Run test suite
       run: cd packages/create-platformatic && pnpm test
 
