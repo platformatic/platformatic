@@ -53,7 +53,9 @@ class Store {
     this.#map.set(app.schema.$id, app)
   }
 
-  async get ({ $schema, module }, { directory } = {}) {
+  async get ({ $schema, module, extends: _extends }, { directory } = {}) {
+    // We support both 'module' and 'extends'. Note that we have to rename the veriable, because "extends" is a reserved word
+    const extendedModule = _extends || module
     let app = this.#map.get($schema)
     let require = this.#require
 
@@ -62,12 +64,12 @@ class Store {
     }
 
     // try to load module
-    if (!app && module) {
+    if (!app && extendedModule) {
       try {
-        app = require(module)
+        app = require(extendedModule)
       } catch (err) {
         if (err.code === 'ERR_REQUIRE_ESM') {
-          const toLoad = require.resolve(module)
+          const toLoad = require.resolve(extendedModule)
           app = (await import('file://' + toLoad)).default
         } else {
           throw err

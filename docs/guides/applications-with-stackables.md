@@ -12,7 +12,7 @@ This process is the same one we use to maintain Platformatic DB and Platformatic
 
 ## Creating a custom Service
 
-We are creating the module `foo.js` as follows: 
+We are creating the stackable `foo.js` as follows: 
 
 ```js
 const { schema, platformaticService } = require('@platformatic/service')
@@ -51,7 +51,7 @@ foo.schema = {
     $schema: {
       type: 'string'
     },
-    module: {
+    extends: {
       type: 'string'
     },
     foo: {
@@ -102,7 +102,7 @@ Consuming `foo.js` is simple. We can create a `platformatic.json` file as follow
 ```json
 {
   "$schema": "https://example.com/schemas/foo.json",
-  "module": "./foo",
+  "extends": "./foo",
   "server": {
     "port": 0,
     "hostname": "127.0.0.1"
@@ -113,11 +113,12 @@ Consuming `foo.js` is simple. We can create a `platformatic.json` file as follow
 }
 ```
 
-Note that we __must__ specify both the `$schema` property and `module`.
-Module can also be any modules published on npm and installed via your package manager.
+Note that we __must__ specify both the `$schema` property and `extends`.
+The module specified with `extends` can also be any modules published on npm and installed via your package manager.
 
 :::note
-The `module` is the name of the module we are actually "stacking" on top of.
+`extends` is the name of the module we are actually "stacking" (extending) on top of. 
+The property `module` can also be used, but it is deprecated. In both cases, be sure that the property is allowed in the stackable schema (in this example in `foo.schema`)
 :::
 
 ## Building your own CLI
