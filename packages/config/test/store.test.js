@@ -140,7 +140,7 @@ test('schema with no id', async t => {
   t.throws(store.add.bind(store, foo))
 })
 
-test('resolve', async t => {
+test('resolve with module', async t => {
   const store = new Store({
     cwd: join(__dirname, 'fixtures', 'app')
   })
@@ -151,14 +151,25 @@ test('resolve', async t => {
   }), require('./fixtures/app/node_modules/foo'), 'should resolve module')
 })
 
-test('rejects with missing module', async t => {
+test('resolve with extends', async t => {
+  const store = new Store({
+    cwd: join(__dirname, 'fixtures', 'app')
+  })
+
+  t.equal(await store.get({
+    $schema: 'http://something/foo',
+    extends: 'foo'
+  }), require('./fixtures/app/node_modules/foo'), 'should resolve module')
+})
+
+test('rejects with missing extended module', async t => {
   const store = new Store({
     cwd: join(__dirname, 'fixtures', 'app')
   })
 
   await t.rejects(store.get({
     $schema: 'http://something/foo',
-    module: 'baz'
+    extends: 'baz'
   }))
 })
 
@@ -169,7 +180,7 @@ test('import', async t => {
 
   t.equal(await store.get({
     $schema: 'http://something/foo',
-    module: 'foom'
+    extends: 'foom'
   }), (await import('./fixtures/app/node_modules/foom/foo.js')).default, 'should resolve module')
 })
 

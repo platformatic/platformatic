@@ -168,8 +168,8 @@ export const schema = structuredClone(baseSchema)
 schema.$id = 'https://raw.githubusercontent.com/platformatic/acme-base/main/schemas/1.json'
 schema.title = 'Acme Base'
 
-// Needed to allow module loading
-schema.properties.module = {
+// Needed to specify the extended module 
+schema.properties.extends = {
   type: 'string'
 }
 
