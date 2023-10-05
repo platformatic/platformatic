@@ -18,7 +18,7 @@ afterEach(() => {
   }
 })
 
-test('Creates a Platformatic Composer with one Service', async ({ equal, same, match, teardown }) => {
+test('Creates a Platformatic Runtime with one Service', async ({ equal, same, match, teardown }) => {
   // The actions must match IN ORDER
   const actions = [{
     match: 'Which kind of project do you want to create?',
@@ -82,7 +82,7 @@ test('Creates a Platformatic Composer with one Service', async ({ equal, same, m
   equal(await isFileAccessible(join(baseServiceDir, 'global.d.ts')), true)
 })
 
-test('Creates a Platformatic Composer with two Services', async ({ equal, same, match, teardown }) => {
+test('Creates a Platformatic Runtime with two Services', async ({ equal, same, match, teardown }) => {
   // The actions must match IN ORDER
   const actions = [{
     match: 'Which kind of project do you want to create?',

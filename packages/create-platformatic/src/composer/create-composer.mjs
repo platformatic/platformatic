@@ -83,11 +83,19 @@ async function createComposer (
   params,
   logger,
   currentDir = process.cwd(),
-  version,
-  staticWorkspaceGitHubAction,
-  dynamicWorkspaceGitHubAction
+  version
 ) {
-  const { isRuntimeContext, hostname, port, servicesToCompose = [], runtimeContext, typescript } = params
+  const {
+    isRuntimeContext,
+    hostname,
+    port,
+    servicesToCompose = [],
+    runtimeContext,
+    typescript,
+    staticWorkspaceGitHubAction,
+    dynamicWorkspaceGitHubAction
+  } = params
+
   const composerEnv = {
     PLT_SERVER_LOGGER_LEVEL: 'info',
     PORT: port,
