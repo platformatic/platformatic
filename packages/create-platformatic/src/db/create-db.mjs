@@ -418,14 +418,9 @@ export async function createDB (params, logger, currentDir, version) {
 
   if (typescript === true) {
     const tsConfigFileName = join(currentDir, 'tsconfig.json')
-    const isTsConfigExists = await isFileAccessible(tsConfigFileName)
-    if (!isTsConfigExists) {
-      const tsConfig = getTsConfig(TS_OUT_DIR)
-      await writeFile(tsConfigFileName, JSON.stringify(tsConfig, null, 2))
-      logger.info(`Typescript configuration file ${tsConfigFileName} successfully created.`)
-    } else {
-      logger.info(`Typescript configuration file ${tsConfigFileName} found, skipping creation of typescript configuration file.`)
-    }
+    const tsConfig = getTsConfig(TS_OUT_DIR)
+    await writeFile(tsConfigFileName, JSON.stringify(tsConfig, null, 2))
+    logger.info(`Typescript configuration file ${tsConfigFileName} successfully created.`)
   }
 
   if (plugin) {
