@@ -23,9 +23,9 @@ export type CrudOperationAuth =
   | boolean;
 
 export interface PlatformaticDB {
-  server: {
-    hostname: string;
-    port: number | string;
+  server?: {
+    hostname?: string;
+    port?: number | string;
     pluginTimeout?: number;
     healthCheck?:
       | boolean
@@ -198,6 +198,7 @@ export interface PlatformaticDB {
       | {
           connectionString?: string;
         };
+    cache?: boolean;
     [k: string]: unknown;
   };
   authorization?: {

@@ -6,9 +6,9 @@
  */
 
 export interface PlatformaticService {
-  server: {
-    hostname: string;
-    port: number | string;
+  server?: {
+    hostname?: string;
+    port?: number | string;
     pluginTimeout?: number;
     healthCheck?:
       | boolean
