@@ -4,7 +4,7 @@
   "description": "Platformatic DB Config Manager",
   "main": "index.js",
   "scripts": {
-    "test": "standard | snazzy && tap test/*test.js",
+    "test": "standard | snazzy && c8 node ./test/runner.js",
     "lint": "standard | snazzy"
   },
   "repository": {
@@ -19,11 +19,12 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@iarna/toml": "^2.2.5",
+    "c8": "^8.0.1",
+    "glob": "^10.3.10",
     "fastify": "^4.23.2",
     "json5": "^2.2.3",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "tap": "^16.3.9",
     "yaml": "^2.3.2"
   },
   "dependencies": {

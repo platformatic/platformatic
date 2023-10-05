@@ -1,10 +1,10 @@
 'use strict'
 
+const assert = require('node:assert/strict')
+const { test } = require('node:test')
 const ConfigManager = require('..')
-const { test } = require('tap')
 
-test('transform placeholders', async ({ plan, same }) => {
-  plan(2)
+test('transform placeholders', async (t) => {
   {
     const cm = new ConfigManager({
       source: './file.json',
@@ -22,7 +22,7 @@ test('transform placeholders', async ({ plan, same }) => {
     }
 
     const res = await cm.replaceEnv(JSON.stringify(config))
-    same(JSON.parse(res), {
+    assert.deepEqual(JSON.parse(res), {
       server: {
         hostname: '127.0.0.1',
         port: '3042',
@@ -49,7 +49,7 @@ test('transform placeholders', async ({ plan, same }) => {
     }
 
     const res = await cm.replaceEnv(JSON.stringify(config))
-    same(JSON.parse(res), {
+    assert.deepEqual(JSON.parse(res), {
       server: {
         hostname: '127.0.0.1',
         port: '3042'
@@ -58,8 +58,7 @@ test('transform placeholders', async ({ plan, same }) => {
   }
 })
 
-test('throws if not all placeholders are defined', async ({ plan, same, throws }) => {
-  plan(2)
+test('throws if not all placeholders are defined', async (t) => {
   const cm = new ConfigManager({
     source: './file.json',
     env: {
@@ -79,12 +78,12 @@ test('throws if not all placeholders are defined', async ({ plan, same, throws }
   try {
     await cm.replaceEnv(JSON.stringify(config))
   } catch (err) {
-    same(err.name, 'MissingValueError')
-    same(err.message, 'Missing a value for the placeholder: PLT_PLUGIN')
+    assert.deepEqual(err.name, 'MissingValueError')
+    assert.deepEqual(err.message, 'Missing a value for the placeholder: PLT_PLUGIN')
   }
 })
 
-test('transform placeholders with newlines', async ({ plan, same }) => {
+test('transform placeholders with newlines', async (t) => {
   const cm = new ConfigManager({
     source: './file.json',
     env: {
@@ -101,7 +100,7 @@ test('transform placeholders with newlines', async ({ plan, same }) => {
   }
 
   const res = await cm.replaceEnv(JSON.stringify(config))
-  same(JSON.parse(res), {
+  assert.deepEqual(JSON.parse(res), {
     server: {
       hostname: '127.0.0.1',
       port: '3042',
@@ -110,7 +109,7 @@ test('transform placeholders with newlines', async ({ plan, same }) => {
   })
 })
 
-test('transform placeholders with `\\`', async ({ plan, same }) => {
+test('transform placeholders with `\\`', async (t) => {
   const cm = new ConfigManager({
     source: './file.json',
     env: {
@@ -127,7 +126,7 @@ test('transform placeholders with `\\`', async ({ plan, same }) => {
   }
 
   const res = await cm.replaceEnv(JSON.stringify(config))
-  same(JSON.parse(res), {
+  assert.deepEqual(JSON.parse(res), {
     server: {
       hostname: '127.0.0.1',
       port: '3042',
@@ -136,8 +135,7 @@ test('transform placeholders with `\\`', async ({ plan, same }) => {
   })
 })
 
-test('support a custom callback for missing env vars', async ({ plan, same }) => {
-  plan(1)
+test('support a custom callback for missing env vars', async (t) => {
   const customValue = 'im not missing, youre missing'
   const cm = new ConfigManager({
     source: './file.json',
@@ -164,5 +162,5 @@ test('support a custom callback for missing env vars', async ({ plan, same }) =>
   }
 
   const result = await cm.replaceEnv(JSON.stringify(config))
-  same(JSON.parse(result).plugin, customValue)
+  assert.deepEqual(JSON.parse(result).plugin, customValue)
 })
