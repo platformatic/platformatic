@@ -22,6 +22,7 @@ const help = helpMe({
 const program = commist({ maxDistance: 2 })
 
 program.register('start', (argv) => {
+  /* c8 ignore next 1 */
   start(platformaticComposer, argv).catch(printAndExitLoadConfigError)
 })
 program.register('openapi schemas fetch', (argv) => {
