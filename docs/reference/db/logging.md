@@ -79,3 +79,29 @@ formatted as newline-delimited JSON:
 $ npx platformatic db start | head
 {"level":30,"time":1665566628973,"pid":338365,"hostname":"darkav2","url":"http://127.0.0.1:3042","msg":"server listening"}
 ```
+
+## Query Logging
+
+To enable query logging, set the log level to `trace`. This will show all queries executed against your database as shown in the example
+
+```bash
+[12:09:13.810] INFO (platformatic-db/9695): incoming request
+    reqId: "133cd235-e61a-4bb5-a4e3-220e06b2f640"
+    req: {
+      "method": "GET",
+      "url": "/movies/?totalCount=false",
+      "hostname": "127.0.0.1:3042",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 58254
+    }
+[12:09:13.819] TRACE (platformatic-db/9695): query
+    query: {
+      "text": "SELECT \"id\", \"title\"\n FROM \"movies\"\nLIMIT ?"
+    }
+[12:09:13.820] INFO (platformatic-db/9695): request completed
+    reqId: "133cd235-e61a-4bb5-a4e3-220e06b2f640"
+    res: {
+      "statusCode": 200
+    }
+    responseTime: 10.350167274475098
+```
