@@ -2,7 +2,16 @@
 const { createCache } = require('async-cache-dedupe')
 
 function setupCache (res, opts) {
+  // TODO validate opts
+  if (opts === true) {
+    opts = { ttl: 0 }
+  } else {
+    // ttl=0 means dedupe only
+    // TODO remove it to implement full cache features
+    opts.ttl = 0
+  }
   const { entities, addEntityHooks } = res
+
   const cache = createCache(opts)
   for (const entity of Object.values(entities)) {
     const fnName = `${entity.name}Find`

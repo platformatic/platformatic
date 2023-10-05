@@ -146,6 +146,9 @@ const db = {
         },
         additionalProperties: false
       }]
+    },
+    cache: {
+      type: 'boolean'
     }
   },
   required: ['connectionString']

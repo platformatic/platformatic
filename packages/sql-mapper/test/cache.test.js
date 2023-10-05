@@ -18,13 +18,37 @@ const seed = [
 ]
 
 t.test('dedupe', async t => {
+  t.test('should dedupe with default settings', async t => {
+    let dedupes = 0
+    let hits = 0
+    let misses = 0
+    let errors = 0
+    const cache = {
+      onDedupe: () => { dedupes++ },
+      onHit: () => { hits++ },
+      onMiss: () => { misses++ },
+      onError: () => { errors++ }
+    }
+    const mapper = await setupDatabase({ seed, cache, t })
+    const concurrency = 10
+
+    const tasks = new Array(concurrency).fill().map(_ => mapper.entities.movie.find({ fields: ['title'] }))
+    const results = await Promise.allSettled(tasks)
+
+    t.equal(results.length, concurrency)
+    results.forEach(r => t.same(r.value, [{ title: 'Jurassic Park' }, { title: 'The Dark Knight' }, { title: 'Memento' }]))
+    t.equal(dedupes, concurrency - 1)
+    t.equal(hits, 0)
+    t.equal(misses, 0)
+    t.equal(errors, 0)
+  })
+
   t.test('should dedupe find method', async t => {
     let dedupes = 0
     let hits = 0
     let misses = 0
     let errors = 0
     const cache = {
-      ttl: 0,
       onDedupe: () => { dedupes++ },
       onHit: () => { hits++ },
       onMiss: () => { misses++ },
@@ -50,7 +74,6 @@ t.test('dedupe', async t => {
     let misses = 0
     let errors = 0
     const cache = {
-      ttl: 0,
       onDedupe: () => { dedupes++ },
       onHit: () => { hits++ },
       onMiss: () => { misses++ },
