@@ -49,7 +49,7 @@ test('Creates a Platformatic DB service with no migrations and no plugin', async
     match: 'Do you want to create a plugin',
     do: [keys.DOWN, keys.ENTER]
   }, {
-    // NOTE THAT HERE THE DEFAULT OPTION IS "NO", so just sending ENTER we won't have TS
+    // NOTE THAT HERE THE DEFAULT OPTION FOR DB IS "NO", so just sending ENTER we won't have TS
     match: 'Do you want to use TypeScript',
     do: [keys.ENTER]
   }, {
@@ -105,7 +105,7 @@ test('Creates a Platformatic DB service with migrations and plugin', async ({ eq
     match: 'Do you want to create a plugin',
     do: [keys.ENTER]
   }, {
-    // NOTE THAT HERE THE DEFAULT OPTION IS "NO", so just sending ENTER we won't have TS
+    // NOTE THAT HERE THE DEFAULT OPTION FOR DB IS "NO", so just sending ENTER we won't have TS
     match: 'Do you want to use TypeScript',
     do: [keys.ENTER]
   }, {
@@ -130,8 +130,7 @@ test('Creates a Platformatic DB service with migrations and plugin', async ({ eq
   equal(await isFileAccessible(join(baseProjectDir, 'migrations', '001.undo.sql')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'plugins', 'example.js')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'routes', 'root.js')), true)
-  // These are not generated because TS is not installed
-  // equal(await isFileAccessible(join(baseProjectDir, 'types', 'index.d.ts')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'types', 'index.d.ts')), true)
 })
 
 test('Creates a Platformatic DB service with plugin using typescript, creating all the github actions', async ({ equal, same, match, teardown }) => {
@@ -168,7 +167,7 @@ test('Creates a Platformatic DB service with plugin using typescript, creating a
     match: 'Do you want to create a plugin',
     do: [keys.ENTER]
   }, {
-    // NOTE THAT HERE THE DEFAULT OPTION IS "NO"
+    // NOTE THAT HERE THE DEFAULT OPTION FOR DB IS "NO"
     match: 'Do you want to use TypeScript',
     do: [keys.UP, keys.ENTER]
   }, {
@@ -193,9 +192,8 @@ test('Creates a Platformatic DB service with plugin using typescript, creating a
   equal(await isFileAccessible(join(baseProjectDir, 'migrations', '001.undo.sql')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'plugins', 'example.ts')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'routes', 'root.ts')), true)
-  // These are not generated because TS is not installed
-  // equal(await isFileAccessible(join(baseProjectDir, 'types', 'index.d.ts')), true)
-  // equal(await isFileAccessible(join(baseProjectDir, 'global.d.ts')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'types', 'index.d.ts')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'global.d.ts')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'tsconfig.json')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.github', 'workflows', 'platformatic-dynamic-workspace-deploy.yml')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.github', 'workflows', 'platformatic-static-workspace-deploy.yml')), true)
