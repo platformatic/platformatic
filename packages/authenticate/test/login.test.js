@@ -1,7 +1,8 @@
+import assert from 'node:assert/strict'
 import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { beforeEach, test } from 'tap'
+import { beforeEach, test } from 'node:test'
 import { MockAgent, setGlobalDispatcher } from 'undici'
 import { blue, green, underline } from 'colorette'
 import login from '../lib/login.js'
@@ -28,7 +29,7 @@ const MSG_GETTING_STARTED = `Visit our Getting Started guide at ${blue(underline
 
 // Ordered message assertions
 function assertMessages (t, expecting) {
-  return message => t.equal(message, expecting.shift())
+  return message => assert.equal(message, expecting.shift())
 }
 
 beforeEach(() => {
@@ -70,10 +71,10 @@ test('should be able to login as an existing user immediately', async (t) => {
   const args = ['--config', confPath]
 
   const print = assertMessages(t, [MSG_VERIFY_AT_URL, MSG_AUTHENTICATED])
-  await t.resolves(login(args, print))
+  await login(args, print)
 
   const actual = await readFile(confPath)
-  t.same(JSON.parse(actual), { accessToken: '1234' })
+  assert.deepEqual(JSON.parse(actual), { accessToken: '1234' })
 })
 
 test('should use home directory config', async (t) => {
@@ -105,10 +106,10 @@ test('should use home directory config', async (t) => {
   const confPath = await makeConfig('', 'config.json', true)
 
   const print = assertMessages(t, [MSG_VERIFY_AT_URL, MSG_AUTHENTICATED])
-  await t.resolves(login([], print))
+  await login([], print)
 
   const actual = await readFile(confPath)
-  t.same(JSON.parse(actual), { accessToken: '1234' })
+  assert.deepEqual(JSON.parse(actual), { accessToken: '1234' })
 })
 
 test('should be able to login after a short wait', async (t) => {
@@ -150,10 +151,10 @@ test('should be able to login after a short wait', async (t) => {
   const args = ['--config', confPath]
 
   const print = assertMessages(t, [MSG_VERIFY_AT_URL, MSG_AUTHENTICATED])
-  await t.resolves(login(args, print))
+  await login(args, print)
 
   const actual = await readFile(confPath)
-  t.same(JSON.parse(actual), { accessToken: '1234' })
+  assert.deepEqual(JSON.parse(actual), { accessToken: '1234' })
 })
 
 test('should fail when unable to connect to authproxy', async (t) => {
@@ -166,10 +167,15 @@ test('should fail when unable to connect to authproxy', async (t) => {
   const confPath = await makeConfig()
   const args = ['--config', confPath]
 
-  const print = () => { t.fail('Should not hit the print function') }
-  await t.rejects(login(args, print), new Error('Unable to contact login service'))
+  const print = () => { assert.fail('Should not hit the print function') }
+  try {
+    await login(args, print)
+  } catch (err) {
+    assert.equal(err.message, 'Unable to contact login service')
+  }
+
   const actual = await readFile(confPath)
-  t.equal(actual.toString(), '')
+  assert.equal(actual.toString(), '')
 })
 
 test('should fail if there is a problem getting tokens', async (t) => {
@@ -192,9 +198,14 @@ test('should fail if there is a problem getting tokens', async (t) => {
   const args = ['--config', confPath]
 
   const print = assertMessages(t, [MSG_VERIFY_AT_URL])
-  await t.rejects(login(args, print), new Error('Unable to retrieve tokens'))
+  try {
+    await login(args, print)
+  } catch (err) {
+    assert.equal(err.message, 'Unable to retrieve tokens')
+  }
+
   const actual = await readFile(confPath)
-  t.equal(actual.toString(), '')
+  assert.equal(actual.toString(), '')
 })
 
 test('should fail if user does not authenticate before link expires', async (t) => {
@@ -219,9 +230,14 @@ test('should fail if user does not authenticate before link expires', async (t) 
   const args = ['--config', confPath]
 
   const print = assertMessages(t, [MSG_VERIFY_AT_URL])
-  await t.rejects(login(args, print), new Error('User did not authenticate before expiry'))
+  try {
+    await login(args, print)
+  } catch (err) {
+    assert.equal(err.message, 'User did not authenticate before expiry')
+  }
+
   const actual = await readFile(confPath)
-  t.equal(actual.toString(), '')
+  assert.equal(actual.toString(), '')
 })
 
 test('should claim an invite', async (t) => {
@@ -257,10 +273,10 @@ test('should claim an invite', async (t) => {
   const args = ['--config', confPath, '--claim', 'best.token.ever']
 
   const print = assertMessages(t, [MSG_VERIFY_AT_URL, MSG_REGISTERED, MSG_GETTING_STARTED])
-  await t.resolves(login(args, print))
+  await login(args, print)
 
   const actual = await readFile(confPath)
-  t.same(JSON.parse(actual), { accessToken: '1234' })
+  assert.deepEqual(JSON.parse(actual), { accessToken: '1234' })
 })
 
 test('should fail when unable to claim an invite', async (t) => {
@@ -291,10 +307,14 @@ test('should fail when unable to claim an invite', async (t) => {
   const args = ['--config', confPath, '--claim', 'best.token.ever']
 
   const print = assertMessages(t, [MSG_VERIFY_AT_URL])
-  await t.rejects(login(args, print), new Error('Unable to claim invite'))
+  try {
+    await login(args, print)
+  } catch (err) {
+    assert.equal(err.message, 'Unable to claim invite')
+  }
 
   const actual = await readFile(confPath)
-  t.equal(actual.toString(), '')
+  assert.equal(actual.toString(), '')
 })
 
 test('should fail when unable to get any user details', async (t) => {
@@ -321,10 +341,14 @@ test('should fail when unable to get any user details', async (t) => {
   const args = ['--config', confPath]
 
   const print = assertMessages(t, [MSG_VERIFY_AT_URL])
-  await t.rejects(login(args, print), new Error('Unable to get user data'))
+  try {
+    await login(args, print)
+  } catch (err) {
+    assert.equal(err.message, 'Unable to get user data')
+  }
 
   const actual = await readFile(confPath)
-  t.equal(actual.toString(), '')
+  assert.equal(actual.toString(), '')
 })
 
 test('should fail when not registered and no invite to be claimed', async (t) => {
@@ -351,16 +375,24 @@ test('should fail when not registered and no invite to be claimed', async (t) =>
   const args = ['--config', confPath]
 
   const print = assertMessages(t, [MSG_VERIFY_AT_URL])
-  await t.rejects(login(args, print), new Error('Missing invite'))
+  try {
+    await login(args, print)
+  } catch (err) {
+    assert.equal(err.message, 'Missing invite')
+  }
 
   const actual = await readFile(confPath)
-  t.equal(actual.toString(), '')
+  assert.equal(actual.toString(), '')
 })
 
 test('should fail if no file name is set', async (t) => {
   const confPath = await makeConfig()
   const args = ['--config', path.dirname(confPath)]
 
-  const print = () => t.fail('Should not hit print')
-  await t.rejects(login(args, print), new Error('--config option requires path to a file'))
+  const print = () => assert.fail('Should not hit print')
+  try {
+    await login(args, print)
+  } catch (err) {
+    assert.equal(err.message, '--config option requires path to a file')
+  }
 })

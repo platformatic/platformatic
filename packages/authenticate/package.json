@@ -5,7 +5,7 @@
   "main": "authenticate.js",
   "type": "module",
   "scripts": {
-    "test": "standard | snazzy && c8 --100 tap --no-coverage test/*test.js",
+    "test": "standard | snazzy && c8 --100 node --test",
     "lint": "standard | snazzy"
   },
   "author": "Platformatic.dev",
@@ -21,8 +21,7 @@
   "devDependencies": {
     "c8": "^8.0.1",
     "snazzy": "^9.0.0",
-    "standard": "^17.1.0",
-    "tap": "^16.3.9"
+    "standard": "^17.1.0"
   },
   "dependencies": {
     "@fastify/error": "^3.3.0",
