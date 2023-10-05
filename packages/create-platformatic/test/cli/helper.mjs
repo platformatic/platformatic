@@ -62,6 +62,7 @@ export async function executeCreatePlatformatic (dir, actions = [], done = 'All 
       child.stdout.on('data', (chunk) => {
         const str = stripAnsi(chunk.toString()).trim()
         if (str) {
+          console.log("======> STDOUT", str)
           lastPrompt = str
         }
       })
