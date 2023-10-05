@@ -54,9 +54,6 @@ importers:
       standard:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
-      tap:
-        specifier: ^16.3.9
-        version: 16.3.9(typescript@5.2.2)
 
   packages/cli:
     dependencies:
