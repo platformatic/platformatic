@@ -170,7 +170,7 @@ const createPlatformaticDB = async (_args, opts) => {
     choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
   })
 
-  // Promtp for questions
+  // Prompt for questions
   const wizardOptions = await inquirer.prompt(toAsk)
 
   await mkdir(projectDir, { recursive: true })
