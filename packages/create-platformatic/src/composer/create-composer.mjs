@@ -73,7 +73,8 @@ async function createComposer (
   currentDir = process.cwd(),
   version,
   staticWorkspaceGitHubAction,
-  dynamicWorkspaceGitHubAction
+  dynamicWorkspaceGitHubAction,
+  typescript
 ) {
   const { isRuntimeContext, hostname, port, servicesToCompose = [], runtimeContext } = params
 
