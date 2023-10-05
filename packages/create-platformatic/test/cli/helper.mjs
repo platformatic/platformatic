@@ -35,6 +35,15 @@ export const walk = async (dir) => {
   return files.reduce((all, folderContents) => all.concat(folderContents), [])
 }
 
+export const getServices = async (dir) => {
+  const files = await fs.readdir(dir)
+  const services = []
+  for (const file of files) {
+    services.push(file)
+  }
+  return services
+}
+
 // Actions are in the form:
 // {
 //    match: 'Server listening at',
@@ -77,7 +86,8 @@ export async function executeCreatePlatformatic (dir, actions = [], done = 'All 
           lastPrompt = ''
           for (const key of expectedQuestion.do) {
             child.stdin.write(key)
-            await sleep(200)
+            const waitAfter = expectedQuestion.waitAfter || 200
+            await sleep(waitAfter)
           }
           expectedQuestion = questions.shift()
         } else {
