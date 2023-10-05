@@ -93,6 +93,8 @@ jobs:
         timeout_minutes: 15
         retry_on: error
         command: pnpm install --frozen-lockfile
+    - name: platformatic cli global link
+      run: cd packages/cli && pnpm link && cd ../..
     - name: Run test suite
       run: cd packages/create-platformatic && pnpm test
 

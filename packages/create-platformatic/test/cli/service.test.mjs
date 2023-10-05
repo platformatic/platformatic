@@ -58,7 +58,7 @@ test('Creates a Platformatic Service with no typescript', async ({ equal, same, 
   equal(await isFileAccessible(join(baseProjectDir, 'plugins', 'example.js')), true)
 })
 
-test('Creates a Platformatic Service with no typescript', async ({ equal, same, match, teardown }) => {
+test('Creates a Platformatic Service with typescript', async ({ equal, same, match, teardown }) => {
   // The actions must match IN ORDER
   const actions = [{
     match: 'Which kind of project do you want to create?',
