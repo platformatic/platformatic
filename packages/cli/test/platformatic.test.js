@@ -1,9 +1,10 @@
-import { test } from 'tap'
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { EOL } from 'node:os'
+import { readFile } from 'node:fs/promises'
 import { join } from 'desm'
-import { readFile } from 'fs/promises'
 import { execa } from 'execa'
 import { cliPath } from './helper.js'
-import { EOL } from 'os'
 import { Agent, setGlobalDispatcher, request } from 'undici'
 import split from 'split2'
 import { on } from 'events'
@@ -30,100 +31,100 @@ const helpService = await readFile(join(import.meta.url, '..', '..', 'service', 
 
 test('version', async (t) => {
   const { stdout } = await execa('node', [cliPath, '--version'])
-  t.ok(stdout.includes('v' + version))
+  assert.ok(stdout.includes('v' + version))
 })
 
 test('db', async (t) => {
   try {
     await execa('node', [cliPath, 'db', 'start'])
-    t.fail('bug')
+    assert.fail('bug')
   } catch (err) {
-    t.ok(err.stderr.includes('Missing config file'))
+    assert.ok(err.stderr.includes('Missing config file'))
   }
 })
 
 test('runtime', async (t) => {
   try {
     await execa('node', [cliPath, 'runtime', 'start'])
-    t.fail('bug')
+    assert.fail('bug')
   } catch (err) {
-    t.ok(err.stderr.includes('Missing config file'))
+    assert.ok(err.stderr.includes('Missing config file'))
   }
 })
 
 test('login', async (t) => {
   try {
     await execa('node', [cliPath, 'login'])
-    t.fail('bug')
+    assert.fail('bug')
   } catch (err) {
-    t.ok(err.stderr.includes('Unable to authenticate:'))
+    assert.ok(err.stderr.includes('Unable to authenticate:'))
   }
 })
 
 test('command not found', async (t) => {
   try {
     await execa('node', [cliPath, 'foo'])
-    t.fail('bug')
+    assert.fail('bug')
   } catch (err) {
-    t.ok(err.stdout.includes('Command not found: foo'))
+    assert.ok(err.stdout.includes('Command not found: foo'))
   }
 })
 
 test('subcommand not found', async (t) => {
   try {
     await execa('node', [cliPath, 'db', 'subfoo'])
-    t.fail('bug')
+    assert.fail('bug')
   } catch (err) {
-    t.ok(err.stdout.includes('Command not found: subfoo'))
+    assert.ok(err.stdout.includes('Command not found: subfoo'))
   }
 })
 
 test('allows for minor typos in commands', async (t) => {
   try {
     await execa('node', [cliPath, 'dbx', 'start'])
-    t.fail('bug')
+    assert.fail('bug')
   } catch (err) {
-    t.ok(err.stderr.includes('Missing config file'))
+    assert.ok(err.stderr.includes('Missing config file'))
   }
 })
 
 test('prints the help if command requires a subcommand', async (t) => {
   try {
     await execa('node', [cliPath, 'db'])
-    t.fail('bug')
+    assert.fail('bug')
   } catch (err) {
-    t.equal(err.stdout + EOL, helpDB)
+    assert.equal(err.stdout + EOL, helpDB)
   }
 })
 
 test('prints the help with help command', async (t) => {
   const { stdout } = await execa('node', [cliPath, 'help'])
-  t.equal(stdout + EOL, help)
+  assert.equal(stdout + EOL, help)
 })
 
 test('prints the help with help flag', async (t) => {
   const { stdout } = await execa('node', [cliPath, '--help'])
-  t.equal(stdout + EOL, help)
+  assert.equal(stdout + EOL, help)
 })
 
 test('prints the help of db', async (t) => {
   const { stdout } = await execa('node', [cliPath, 'help', 'db'])
-  t.equal(stdout + EOL, helpDB)
+  assert.equal(stdout + EOL, helpDB)
 })
 
 test('prints the help if not commands are specified', async (t) => {
   const { stdout } = await execa('node', [cliPath])
-  t.equal(stdout + EOL, help)
+  assert.equal(stdout + EOL, help)
 })
 
 test('prints the help of runtime', async (t) => {
   const { stdout } = await execa('node', [cliPath, 'help', 'runtime'])
-  t.equal(stdout + EOL, helpRuntime)
+  assert.equal(stdout + EOL, helpRuntime)
 })
 
 test('prints the help of service', async (t) => {
   const { stdout } = await execa('node', [cliPath, 'help', 'service'])
-  t.equal(stdout + EOL, helpService)
+  assert.equal(stdout + EOL, helpService)
 })
 
 async function start (...args) {
@@ -156,10 +157,10 @@ async function start (...args) {
   }
 }
 
-test('start the database and do a call', async ({ teardown, equal, match }) => {
+test('start the database and do a call', async (t) => {
   const config = join(import.meta.url, '..', 'fixtures/sqlite/platformatic.db.json')
   const { child, url } = await start('db', 'start', '-c', config)
-  teardown(() => {
+  t.after(() => {
     child.kill('SIGINT')
   })
 
@@ -177,13 +178,7 @@ test('start the database and do a call', async ({ teardown, equal, match }) => {
           `
     })
   })
-  equal(res.statusCode, 200, 'saveGraph status code')
+  assert.equal(res.statusCode, 200, 'saveGraph status code')
   const body = await res.body.json()
-  match(body, {
-    data: {
-      saveGraph: {
-        name: 'Hello'
-      }
-    }
-  }, 'saveGraph response')
+  assert.equal(body.data.saveGraph.name, 'Hello')
 })
