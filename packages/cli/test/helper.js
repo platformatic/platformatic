@@ -33,7 +33,7 @@ async function startDeployService (t, options = {}) {
     await uploadCallback(request, reply)
   })
 
-  t.teardown(async () => {
+  t.after(async () => {
     await deployService.close()
   })
 
@@ -47,7 +47,7 @@ async function startMachine (t, callback = () => {}) {
     await callback(request, reply)
   })
 
-  t.teardown(async () => {
+  t.after(async () => {
     await machine.close()
   })
 

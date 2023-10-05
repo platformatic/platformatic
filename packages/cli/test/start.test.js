@@ -1,15 +1,15 @@
 import assert from 'node:assert'
+import { test } from 'node:test'
 import { spawn } from 'node:child_process'
 import { cp } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { test } from 'tap'
 import { cliPath } from './helper.js'
 
 let count = 0
 
-test('starts a server', async ({ teardown }) => {
+test('starts a server', async (t) => {
   const src = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'platformatic.service.json')
   const destDir = join(tmpdir(), `test-cli-${process.pid}-${count++}`)
   const dest = join(destDir, 'platformatic.service.json')
@@ -21,7 +21,7 @@ test('starts a server', async ({ teardown }) => {
     timeout: 10_000
   })
 
-  teardown(async () => {
+  t.after(async () => {
     try {
       child.kill('SIGINT')
     } catch {} // Ignore error.
@@ -40,7 +40,7 @@ test('starts a server', async ({ teardown }) => {
   }
 })
 
-test('starts a runtime application', async ({ teardown }) => {
+test('starts a runtime application', async (t) => {
   const srcDir = join(dirname(fileURLToPath(import.meta.url)), 'fixtures')
   const destDir = join(tmpdir(), `test-cli-${process.pid}-${count++}`)
   let found = false
@@ -61,7 +61,7 @@ test('starts a runtime application', async ({ teardown }) => {
 
   child.stderr.pipe(process.stderr)
 
-  teardown(async () => {
+  t.after(async () => {
     try {
       child.kill('SIGKILL')
     } catch {} // Ignore error.

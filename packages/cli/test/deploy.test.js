@@ -1,4 +1,5 @@
-import { test } from 'tap'
+import assert from 'assert/strict'
+import { test } from 'node:test'
 import { join } from 'desm'
 import { execa } from 'execa'
 
@@ -13,20 +14,16 @@ test('should deploy to a static workspace to the cloud', async (t) => {
   const machineHost = await startMachine(t)
   const deployServiceHost = await startDeployService(t, {
     createBundleCallback: (request, reply) => {
-      t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-      t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-      t.match(request.body, {
-        bundle: {
-          appType: 'db',
-          configPath: 'platformatic.db.json'
-        }
-      })
-      t.ok(request.body.bundle.checksum)
+      assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+      assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+      assert.equal(request.body.bundle.appType, 'db')
+      assert.equal(request.body.bundle.configPath, 'platformatic.db.json')
+      assert.ok(request.body.bundle.checksum)
     },
     createDeploymentCallback: (request, reply) => {
-      t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-      t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-      t.same(
+      assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+      assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+      assert.deepEqual(
         request.body,
         {
           metadata: {
@@ -66,20 +63,16 @@ test('should deploy to a dynamic workspace to the cloud', async (t) => {
   const machineHost = await startMachine(t)
   const deployServiceHost = await startDeployService(t, {
     createBundleCallback: (request, reply) => {
-      t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-      t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-      t.match(request.body, {
-        bundle: {
-          appType: 'db',
-          configPath: 'platformatic.db.json'
-        }
-      })
-      t.ok(request.body.bundle.checksum)
+      assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+      assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+      assert.equal(request.body.bundle.appType, 'db')
+      assert.equal(request.body.bundle.configPath, 'platformatic.db.json')
+      assert.ok(request.body.bundle.checksum)
     },
     createDeploymentCallback: (request, reply) => {
-      t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-      t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-      t.same(
+      assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+      assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+      assert.deepEqual(
         request.body,
         {
           label,
@@ -126,9 +119,9 @@ test('should fail if workspace id is not a uuid', async (t) => {
       '--workspace-key', workspaceKey,
       '--deploy-service-host', 'http://localhost:5555'
     ])
-    t.fail('should have failed')
+    assert.fail('should have failed')
   } catch (err) {
-    t.ok(err.message.includes('Invalid workspace id provided. Workspace id must be a valid uuid.'))
+    assert.ok(err.message.includes('Invalid workspace id provided. Workspace id must be a valid uuid.'))
   }
 })
 
@@ -147,9 +140,9 @@ test('should fail if invalid workspace type provided', async (t) => {
       '--workspace-key', workspaceKey,
       '--deploy-service-host', 'http://localhost:5555'
     ])
-    t.fail('should have failed')
+    assert.fail('should have failed')
   } catch (err) {
-    t.ok(err.message.includes('Invalid workspace type provided'))
+    assert.ok(err.message.includes('Invalid workspace type provided'))
   }
 })
 
@@ -163,20 +156,16 @@ test('should deploy to a dynamic workspace to the cloud', async (t) => {
   const machineHost = await startMachine(t)
   const deployServiceHost = await startDeployService(t, {
     createBundleCallback: (request, reply) => {
-      t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-      t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-      t.match(request.body, {
-        bundle: {
-          appType: 'db',
-          configPath: 'platformatic.db.json'
-        }
-      })
-      t.ok(request.body.bundle.checksum)
+      assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+      assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+      assert.equal(request.body.bundle.appType, 'db')
+      assert.equal(request.body.bundle.configPath, 'platformatic.db.json')
+      assert.ok(request.body.bundle.checksum)
     },
     createDeploymentCallback: (request, reply) => {
-      t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-      t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-      t.same(
+      assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+      assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+      assert.deepEqual(
         request.body,
         {
           label,
@@ -218,20 +207,16 @@ test('should deploy to a static workspace with a keys option', async (t) => {
   const machineHost = await startMachine(t)
   const deployServiceHost = await startDeployService(t, {
     createBundleCallback: (request, reply) => {
-      t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-      t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-      t.match(request.body, {
-        bundle: {
-          appType: 'db',
-          configPath: 'platformatic.db.json'
-        }
-      })
-      t.ok(request.body.bundle.checksum)
+      assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+      assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+      assert.equal(request.body.bundle.appType, 'db')
+      assert.equal(request.body.bundle.configPath, 'platformatic.db.json')
+      assert.ok(request.body.bundle.checksum)
     },
     createDeploymentCallback: (request, reply) => {
-      t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-      t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-      t.same(
+      assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+      assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+      assert.deepEqual(
         request.body,
         {
           metadata: {
@@ -269,20 +254,16 @@ test('should deploy to a static workspace with a keys option', async (t) => {
   const machineHost = await startMachine(t)
   const deployServiceHost = await startDeployService(t, {
     createBundleCallback: (request, reply) => {
-      t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-      t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-      t.match(request.body, {
-        bundle: {
-          appType: 'db',
-          configPath: 'platformatic.db.json'
-        }
-      })
-      t.ok(request.body.bundle.checksum)
+      assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+      assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+      assert.equal(request.body.bundle.appType, 'db')
+      assert.equal(request.body.bundle.configPath, 'platformatic.db.json')
+      assert.ok(request.body.bundle.checksum)
     },
     createDeploymentCallback: (request, reply) => {
-      t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-      t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-      t.same(
+      assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+      assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+      assert.deepEqual(
         request.body,
         {
           metadata: {
@@ -323,20 +304,16 @@ test('should deploy to a dynamic workspace with a keys option', async (t) => {
   const machineHost = await startMachine(t)
   const deployServiceHost = await startDeployService(t, {
     createBundleCallback: (request, reply) => {
-      t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-      t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-      t.match(request.body, {
-        bundle: {
-          appType: 'db',
-          configPath: 'platformatic.db.json'
-        }
-      })
-      t.ok(request.body.bundle.checksum)
+      assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+      assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+      assert.equal(request.body.bundle.appType, 'db')
+      assert.equal(request.body.bundle.configPath, 'platformatic.db.json')
+      assert.ok(request.body.bundle.checksum)
     },
     createDeploymentCallback: (request, reply) => {
-      t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-      t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-      t.same(
+      assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+      assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+      assert.deepEqual(
         request.body,
         {
           label,
@@ -376,8 +353,8 @@ test('should throw if workspace env file is wrong', async (t) => {
       '--keys', pathToKeys,
       '--config', pathToConfig
     ])
-    t.fail('should have failed')
+    assert.fail('should have failed')
   } catch (err) {
-    t.ok(err.message.includes('Could not find workspace keys in provided file.'))
+    assert.ok(err.message.includes('Could not find workspace keys in provided file.'))
   }
 })
