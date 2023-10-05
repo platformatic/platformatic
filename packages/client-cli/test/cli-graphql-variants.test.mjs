@@ -1,15 +1,16 @@
-import { request, moveToTmpdir } from './helper.js'
-import { test } from 'tap'
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { join } from 'node:path'
+import fs from 'node:fs/promises'
 import { buildServer } from '@platformatic/db'
-import { join } from 'path'
 import * as desm from 'desm'
 import { execa } from 'execa'
-import { promises as fs } from 'fs'
 import split from 'split2'
 import graphql from 'graphql'
 import { copy } from 'fs-extra'
+import { request, moveToTmpdir } from './helper.js'
 
-test('dashes in name', async ({ teardown, comment, same, equal, match }) => {
+test('dashes in name', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -19,19 +20,16 @@ test('dashes in name', async ({ teardown, comment, same, equal, match }) => {
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(t)
 
-  comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'uncanny-movies'])
 
   const readSDL = await fs.readFile(join(dir, 'uncanny-movies', 'uncanny-movies.schema.graphql'), 'utf8')
   {
     const schema = graphql.buildSchema(readSDL)
     const sdl = graphql.printSchema(schema)
-    equal(sdl, readSDL)
+    assert.equal(sdl, readSDL)
   }
-
-  comment(`server at ${app.url}`)
 
   const toWrite = `
 'use strict'
@@ -52,8 +50,8 @@ app.listen({ port: 0 })
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
   const server2 = execa('node', ['index.js'])
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -75,12 +73,10 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  match(body, {
-    title: 'foo'
-  })
+  assert.equal(body.title, 'foo')
 })
 
-test('dashes in name (typescript)', async ({ teardown, comment, same, match }) => {
+test('dashes in name (typescript)', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -90,12 +86,9 @@ test('dashes in name (typescript)', async ({ teardown, comment, same, match }) =
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(t)
 
-  comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'uncanny-movies'])
-
-  comment(`upstream URL is ${app.url}`)
 
   const toWrite = `
 import Fastify from 'fastify';
@@ -137,8 +130,8 @@ app.listen({ port: 0 });
   await copy(join(dir, 'uncanny-movies'), join(dir, 'build', 'uncanny-movies'))
 
   const server2 = execa('node', ['build/index.js'])
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -153,17 +146,14 @@ app.listen({ port: 0 });
     url = msg.slice(base.length)
     break
   }
-  comment(`client URL is ${url}`)
   const res = await request(url, {
     method: 'POST'
   })
   const body = await res.body.json()
-  match(body, {
-    title: 'foo'
-  })
+  assert.equal(body.title, 'foo')
 })
 
-test('different folder name', async ({ teardown, comment, same, equal, match }) => {
+test('different folder name', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -173,19 +163,16 @@ test('different folder name', async ({ teardown, comment, same, equal, match }) 
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(t)
 
-  comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies', '--folder', 'uncanny'])
 
   const readSDL = await fs.readFile(join(dir, 'uncanny', 'movies.schema.graphql'), 'utf8')
   {
     const schema = graphql.buildSchema(readSDL)
     const sdl = graphql.printSchema(schema)
-    equal(sdl, readSDL)
+    assert.equal(sdl, readSDL)
   }
-
-  comment(`server at ${app.url}`)
 
   const toWrite = `
 'use strict'
@@ -206,8 +193,8 @@ app.listen({ port: 0 })
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
   const server2 = execa('node', ['index.js'])
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -229,12 +216,10 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  match(body, {
-    title: 'foo'
-  })
+  assert.equal(body.title, 'foo')
 })
 
-test('tilde in name', async ({ teardown, comment, same, equal, match }) => {
+test('tilde in name', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -244,19 +229,16 @@ test('tilde in name', async ({ teardown, comment, same, equal, match }) => {
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(t)
 
-  comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'uncanny~movies'])
 
   const readSDL = await fs.readFile(join(dir, 'uncanny~movies', 'uncanny~movies.schema.graphql'), 'utf8')
   {
     const schema = graphql.buildSchema(readSDL)
     const sdl = graphql.printSchema(schema)
-    equal(sdl, readSDL)
+    assert.equal(sdl, readSDL)
   }
-
-  comment(`server at ${app.url}`)
 
   const toWrite = `
 'use strict'
@@ -277,8 +259,8 @@ app.listen({ port: 0 })
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
   const server2 = execa('node', ['index.js'])
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -300,7 +282,5 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  match(body, {
-    title: 'foo'
-  })
+  assert.equal(body.title, 'foo')
 })

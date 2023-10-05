@@ -1,18 +1,18 @@
-import { request, moveToTmpdir } from './helper.js'
-import { test } from 'tap'
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { join } from 'node:path'
+import { readFile, writeFile, unlink } from 'node:fs/promises'
 import { buildServer } from '@platformatic/db'
-import { join } from 'path'
 import * as desm from 'desm'
 import { execa } from 'execa'
-import { promises as fs } from 'fs'
 import split from 'split2'
 import { copy } from 'fs-extra'
 import dotenv from 'dotenv'
-import { readFile } from 'fs/promises'
+import { request, moveToTmpdir } from './helper.js'
 
-test('openapi client generation (javascript)', async ({ teardown, comment, same }) => {
+test('openapi client generation (javascript)', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
@@ -20,8 +20,7 @@ test('openapi client generation (javascript)', async ({ teardown, comment, same 
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+  const dir = await moveToTmpdir(t)
 
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
@@ -39,11 +38,11 @@ app.post('/', async (request, reply) => {
 })
 app.listen({ port: 0 })
 `
-  await fs.writeFile(join(dir, 'index.js'), toWrite)
+  await writeFile(join(dir, 'index.js'), toWrite)
 
   const app2 = execa('node', ['index.js'])
-  teardown(() => app2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => app2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
@@ -62,15 +61,15 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  same(body, {
+  assert.deepEqual(body, {
     id: 1,
     title: 'foo'
   })
 })
 
-test('openapi client generation (typescript)', async ({ teardown, comment, same }) => {
+test('openapi client generation (typescript)', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
@@ -78,9 +77,8 @@ test('openapi client generation (typescript)', async ({ teardown, comment, same 
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(t)
 
-  comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
   const toWrite = `
@@ -105,7 +103,7 @@ app.post('/', async (req) => {
 app.listen({ port: 0 });
 `
 
-  await fs.writeFile(join(dir, 'index.ts'), toWrite)
+  await writeFile(join(dir, 'index.ts'), toWrite)
 
   const tsconfig = JSON.stringify({
     extends: 'fastify-tsconfig',
@@ -118,7 +116,7 @@ app.listen({ port: 0 });
     }
   }, null, 2)
 
-  await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
+  await writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
   const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
   await execa(tsc)
@@ -127,8 +125,8 @@ app.listen({ port: 0 });
   await copy(join(dir, 'movies'), join(dir, 'build', 'movies'))
 
   const server2 = execa('node', ['build/index.js'])
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
   server2.stderr.pipe(process.stderr)
@@ -148,15 +146,15 @@ app.listen({ port: 0 });
     method: 'POST'
   })
   const body = await res.body.json()
-  same(body, {
+  assert.deepEqual(body, {
     id: 1,
     title: 'foo'
   })
 })
 
-test('openapi client generation (javascript) with slash at the end', async ({ teardown, comment, same }) => {
+test('openapi client generation (javascript) with slash at the end', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
@@ -164,9 +162,8 @@ test('openapi client generation (javascript) with slash at the end', async ({ te
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(t)
 
-  comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
   const toWrite = `
@@ -183,11 +180,11 @@ app.post('/', async (request, reply) => {
 })
 app.listen({ port: 0 })
 `
-  await fs.writeFile(join(dir, 'index.js'), toWrite)
+  await writeFile(join(dir, 'index.js'), toWrite)
 
   const server2 = execa('node', ['index.js'])
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -206,36 +203,36 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  same(body, {
+  assert.deepEqual(body, {
     id: 1,
     title: 'foo'
   })
 })
 
-test('no such file', async ({ rejects, teardown }) => {
+test('no such file', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
 
-  await moveToTmpdir(teardown)
-  await rejects(execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), `${app.url}/foo/bar`, '--name', 'movies']))
+  await moveToTmpdir(t)
+  await assert.rejects(execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), `${app.url}/foo/bar`, '--name', 'movies']))
 })
 
-test('no such file', async ({ rejects, teardown }) => {
-  await rejects(execa('node', [desm.join(import.meta.url, '..', 'cli.mjs')]))
+test('no such file', async (t) => {
+  await assert.rejects(execa('node', [desm.join(import.meta.url, '..', 'cli.mjs')]))
 })
 
-test('datatypes', async ({ teardown, comment, match }) => {
+test('datatypes', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies-quotes', 'db.sqlite'))
+    await unlink(desm.join(import.meta.url, 'fixtures', 'movies-quotes', 'db.sqlite'))
   } catch {
     // noop
   }
@@ -243,9 +240,8 @@ test('datatypes', async ({ teardown, comment, match }) => {
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(t)
 
-  comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
   const toWrite = `
@@ -262,11 +258,11 @@ app.post('/', async (request, reply) => {
 })
 app.listen({ port: 0 })
 `
-  await fs.writeFile(join(dir, 'index.js'), toWrite)
+  await writeFile(join(dir, 'index.js'), toWrite)
 
   const server2 = execa('node', ['index.js'])
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -285,15 +281,13 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  match(body, {
-    id: 1,
-    title: 'foo'
-  })
+  assert.equal(body.id, 1)
+  assert.equal(body.title, 'foo')
 })
 
-test('configureClient (typescript)', async ({ teardown, comment, same }) => {
+test('configureClient (typescript)', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
@@ -301,9 +295,8 @@ test('configureClient (typescript)', async ({ teardown, comment, same }) => {
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(t)
 
-  comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
   const toWrite = `
@@ -331,7 +324,7 @@ app.post('/', async (req) => {
 app.listen({ port: 0 });
 `
 
-  await fs.writeFile(join(dir, 'index.ts'), toWrite)
+  await writeFile(join(dir, 'index.ts'), toWrite)
 
   const tsconfig = JSON.stringify({
     extends: 'fastify-tsconfig',
@@ -344,7 +337,7 @@ app.listen({ port: 0 });
     }
   }, null, 2)
 
-  await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
+  await writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
   const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
   await execa(tsc)
@@ -353,8 +346,8 @@ app.listen({ port: 0 });
   await copy(join(dir, 'movies'), join(dir, 'build', 'movies'))
 
   const server2 = execa('node', ['build/index.js'])
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
   server2.stderr.pipe(process.stderr)
@@ -374,27 +367,26 @@ app.listen({ port: 0 });
     method: 'POST'
   })
   const body = await res.body.json()
-  same(body, {
+  assert.deepEqual(body, {
     id: 1,
     title: 'foo'
   })
 })
 
-test('dotenv & config support', async ({ teardown, comment, same }) => {
+test('dotenv & config support', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
 
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+  const dir = await moveToTmpdir(t)
 
   const pltServiceConfig = {
     $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
@@ -407,34 +399,34 @@ test('dotenv & config support', async ({ teardown, comment, same }) => {
     }
   }
 
-  await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
+  await writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
 
-  await fs.writeFile(join(dir, '.env'), 'FOO=bar')
-  await fs.writeFile(join(dir, '.env.sample'), 'FOO=bar')
+  await writeFile(join(dir, '.env'), 'FOO=bar')
+  await writeFile(join(dir, '.env.sample'), 'FOO=bar')
 
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
   const url = app.url + '/'
   {
-    const envs = dotenv.parse(await fs.readFile(join(dir, '.env')))
-    same(envs, {
+    const envs = dotenv.parse(await readFile(join(dir, '.env')))
+    assert.deepEqual(envs, {
       FOO: 'bar',
       PLT_MOVIES_URL: url
     })
   }
 
   {
-    const envs = dotenv.parse(await fs.readFile(join(dir, '.env.sample')))
-    same(envs, {
+    const envs = dotenv.parse(await readFile(join(dir, '.env.sample')))
+    assert.deepEqual(envs, {
       FOO: 'bar',
       PLT_MOVIES_URL: url
     })
   }
 })
 
-test('full-response option', async ({ teardown, comment, match }) => {
+test('full-response option', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
@@ -442,8 +434,7 @@ test('full-response option', async ({ teardown, comment, match }) => {
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+  const dir = await moveToTmpdir(t)
 
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--full-response'])
 
@@ -455,16 +446,16 @@ const movies = require('./movies')
 const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}' })
-app.post('/', async (request, reply) => {  
+app.post('/', async (request, reply) => {
   const res = await request.movies.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
 `
-  await fs.writeFile(join(dir, 'index.js'), toWrite)
+  await writeFile(join(dir, 'index.js'), toWrite)
   const app2 = execa('node', ['index.js'])
-  teardown(() => app2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => app2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
@@ -487,33 +478,28 @@ app.listen({ port: 0 })
     const matchDate = /[a-z]{3}, \d{2} [a-z]{3} \d{4} \d{2}:\d{2}:\d{2} GMT/i
     const matchKeepAlive = /timeout=\d+/
 
-    match(body, {
-      statusCode: 200,
-      headers: {
-        location: '/movies/1',
-        'content-type': 'application/json; charset=utf-8',
-        'content-length': '22',
-        date: matchDate,
-        connection: 'keep-alive',
-        'keep-alive': matchKeepAlive
-      },
-      body: {
-        id: 1,
-        title: 'foo'
-      }
+    assert.equal(body.statusCode, 200)
+    assert.equal(body.headers['content-type'], 'application/json; charset=utf-8')
+    assert.equal(body.headers['content-length'], '22')
+    assert.equal(body.headers.location, '/movies/1')
+    assert.match(body.headers.date, matchDate)
+    assert.equal(body.headers.connection, 'keep-alive')
+    assert.match(body.headers['keep-alive'], matchKeepAlive)
+    assert.deepEqual(body.body, {
+      id: 1,
+      title: 'foo'
     })
   }
-
   {
     const res = await request(`${app.url}/redirect-me`)
-    match(res.statusCode, 302)
-    match(res.headers.location, 'https://google.com')
+    assert.equal(res.statusCode, 302)
+    assert.equal(res.headers.location, 'https://google.com')
   }
 })
 
-test('openapi client generation (javascript) from file', async ({ teardown, comment, same }) => {
+test('openapi client generation (javascript) from file', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
@@ -521,12 +507,11 @@ test('openapi client generation (javascript) from file', async ({ teardown, comm
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+  const dir = await moveToTmpdir(t)
 
   const openAPI = app.swagger()
   const openAPIfile = join(dir, 'movies.schema.json')
-  await fs.writeFile(openAPIfile, JSON.stringify(openAPI, null, 2))
+  await writeFile(openAPIfile, JSON.stringify(openAPI, null, 2))
 
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies'])
 
@@ -544,11 +529,11 @@ app.post('/', async (request, reply) => {
 })
 app.listen({ port: 0 })
 `
-  await fs.writeFile(join(dir, 'index.js'), toWrite)
+  await writeFile(join(dir, 'index.js'), toWrite)
 
   const app2 = execa('node', ['index.js'])
-  teardown(() => app2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => app2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
@@ -567,15 +552,15 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  same(body, {
+  assert.deepEqual(body, {
     id: 1,
     title: 'foo'
   })
 })
 
-test('name with dashes', async ({ teardown, comment, same }) => {
+test('name with dashes', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
@@ -583,8 +568,7 @@ test('name with dashes', async ({ teardown, comment, same }) => {
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+  const dir = await moveToTmpdir(t)
 
   try {
     await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'uncanny-movies'])
@@ -594,8 +578,8 @@ test('name with dashes', async ({ teardown, comment, same }) => {
   }
 
   {
-    const pkg = JSON.parse(await fs.readFile(join(dir, 'uncanny-movies', 'package.json')))
-    same(pkg, {
+    const pkg = JSON.parse(await readFile(join(dir, 'uncanny-movies', 'package.json')))
+    assert.deepEqual(pkg, {
       name: 'uncanny-movies',
       main: './uncanny-movies.cjs',
       types: './uncanny-movies.d.ts'
@@ -616,11 +600,11 @@ app.post('/', async (request, reply) => {
 })
 app.listen({ port: 0 })
 `
-  await fs.writeFile(join(dir, 'index.js'), toWrite)
+  await writeFile(join(dir, 'index.js'), toWrite)
 
   const app2 = execa('node', ['index.js'])
-  teardown(() => app2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => app2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
@@ -639,15 +623,15 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  same(body, {
+  assert.deepEqual(body, {
     id: 1,
     title: 'foo'
   })
 })
 
-test('no dashes typescript', async ({ teardown, comment, same }) => {
+test('no dashes typescript', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
@@ -655,9 +639,8 @@ test('no dashes typescript', async ({ teardown, comment, same }) => {
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(t)
 
-  comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'uncanny-movies'])
 
   const toWrite = `
@@ -677,7 +660,7 @@ app.post('/', async (req) => {
 app.listen({ port: 0 });
 `
 
-  await fs.writeFile(join(dir, 'index.ts'), toWrite)
+  await writeFile(join(dir, 'index.ts'), toWrite)
 
   const tsconfig = JSON.stringify({
     extends: 'fastify-tsconfig',
@@ -690,7 +673,7 @@ app.listen({ port: 0 });
     }
   }, null, 2)
 
-  await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
+  await writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
   const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
   await execa(tsc)
@@ -699,8 +682,8 @@ app.listen({ port: 0 });
   await copy(join(dir, 'uncanny-movies'), join(dir, 'build', 'uncanny-movies'))
 
   const server2 = execa('node', ['build/index.js'])
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
   server2.stderr.pipe(process.stderr)
@@ -720,15 +703,15 @@ app.listen({ port: 0 });
     method: 'POST'
   })
   const body = await res.body.json()
-  same(body, {
+  assert.deepEqual(body, {
     id: 1,
     title: 'foo'
   })
 })
 
-test('name with tilde', async ({ teardown, comment, same }) => {
+test('name with tilde', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
@@ -736,8 +719,7 @@ test('name with tilde', async ({ teardown, comment, same }) => {
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+  const dir = await moveToTmpdir(t)
 
   try {
     await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'uncanny~movies'])
@@ -747,8 +729,8 @@ test('name with tilde', async ({ teardown, comment, same }) => {
   }
 
   {
-    const pkg = JSON.parse(await fs.readFile(join(dir, 'uncanny~movies', 'package.json')))
-    same(pkg, {
+    const pkg = JSON.parse(await readFile(join(dir, 'uncanny~movies', 'package.json')))
+    assert.deepEqual(pkg, {
       name: 'uncanny~movies',
       main: './uncanny~movies.cjs',
       types: './uncanny~movies.d.ts'
@@ -769,11 +751,11 @@ app.post('/', async (request, reply) => {
 })
 app.listen({ port: 0 })
 `
-  await fs.writeFile(join(dir, 'index.js'), toWrite)
+  await writeFile(join(dir, 'index.js'), toWrite)
 
   const app2 = execa('node', ['index.js'])
-  teardown(() => app2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => app2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
@@ -792,50 +774,47 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  same(body, {
+  assert.deepEqual(body, {
     id: 1,
     title: 'foo'
   })
 })
 
-test('openapi client generation from YAML file', async ({ teardown, comment, same }) => {
-  const dir = await moveToTmpdir(teardown)
+test('openapi client generation from YAML file', async (t) => {
+  const dir = await moveToTmpdir(t)
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'openapi.yaml')
-  comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
 
   // check openapi json file has been created
   const jsonFile = join(dir, 'movies', 'movies.openapi.json')
   const data = await readFile(jsonFile, 'utf-8')
   const json = JSON.parse(data)
-  same(json.openapi, '3.0.3')
+  assert.deepEqual(json.openapi, '3.0.3')
 })
 
-test('nested optional parameters are correctly identified', async ({ teardown, comment, match }) => {
-  const dir = await moveToTmpdir(teardown)
+test('nested optional parameters are correctly identified', async (t) => {
+  const dir = await moveToTmpdir(t)
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'optional-params-openapi.json')
-  comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
 
   // check the type file has the correct implementation for the request
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
-  match(data, `
+  assert.equal(data.includes(`
   export interface GetMoviesResponseOK {
     'data': { foo: string; bar?: string; baz?: { nested1?: string; nested2: string } };
   }
-`)
+`), true)
 })
 
-test('request with same parameter name in body/path/header/query', async ({ teardown, comment, match }) => {
-  const dir = await moveToTmpdir(teardown)
+test('request with same parameter name in body/path/header/query', async (t) => {
+  const dir = await moveToTmpdir(t)
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'same-parameter-name-openapi.json')
-  comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
   // check the type file has the correct implementation for the request
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
-  match(data, `
+  assert.equal(data.includes(`
   export interface GetMoviesRequest {
     body: {
       'id': string;
@@ -849,14 +828,12 @@ test('request with same parameter name in body/path/header/query', async ({ tear
     headers: {
       'id': string;
     }
-  }`)
+  }`), true)
 })
 
-test('openapi client generation (javascript) from file with fullRequest, fullResponse, validateResponse and optionalHeaders', async ({ teardown, comment, match }) => {
+test('openapi client generation (javascript) from file with fullRequest, fullResponse, validateResponse and optionalHeaders', async (t) => {
   const openapi = desm.join(import.meta.url, 'fixtures', 'full-req-res', 'openapi.json')
-  teardown = () => {}
-  const dir = await moveToTmpdir((teardown))
-  comment(`working in ${dir}`)
+  const dir = await moveToTmpdir(t)
 
   const pltServiceConfig = {
     $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
@@ -869,7 +846,7 @@ test('openapi client generation (javascript) from file with fullRequest, fullRes
     }
   }
 
-  await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
+  await writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
 
   const fullOptions = [
     ['--full-request', '--full-response'],
@@ -881,7 +858,7 @@ test('openapi client generation (javascript) from file with fullRequest, fullRes
     // check the type file has the correct implementation for the request and the response
     const typeFile = join(dir, 'full', 'full.d.ts')
     const data = await readFile(typeFile, 'utf-8')
-    match(data, `
+    assert.equal(data.includes(`
   export interface PostHelloRequest {
     body: {
       'bodyId': string;
@@ -893,15 +870,15 @@ test('openapi client generation (javascript) from file with fullRequest, fullRes
       'headerId'?: string;
     }
   }
-`)
-    match(data, `
+`), true)
+    assert.equal(data.includes(`
   export interface Full {
     postHello(req?: PostHelloRequest): Promise<PostHelloResponses>;
-  }`)
+  }`), true)
     const implementationFile = join(dir, 'full', 'full.cjs')
     const implementationData = await readFile(implementationFile, 'utf-8')
     // check the implementation instantiate the client with fullRequest and fullResponse
-    match(implementationData, `
+    assert.equal(implementationData.includes(`
 async function generateFullClientPlugin (app, opts) {
   app.register(pltClient, {
     type: 'openapi',
@@ -914,22 +891,21 @@ async function generateFullClientPlugin (app, opts) {
     fullRequest: true,
     validateResponse: true
   })
-}`)
+}`), true)
   }
 })
 
-test('optional-headers option', async ({ teardown, comment, match }) => {
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+test('optional-headers option', async (t) => {
+  const dir = await moveToTmpdir(t)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'optional-headers-openapi.json')
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--optional-headers', 'foobar,authorization', '--types-only'])
 
   const typeFile = join(dir, 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
-  match(data, `
+  assert.equal(data.includes(`
   export interface PostHelloRequest {
     'authorization'?: string;
   }
-`)
+`), true)
 })

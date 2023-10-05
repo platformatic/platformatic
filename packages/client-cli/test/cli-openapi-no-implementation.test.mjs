@@ -1,47 +1,46 @@
-import { request, moveToTmpdir } from './helper.js'
-import { test } from 'tap'
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { join, posix } from 'node:path'
+import { promises as fs } from 'node:fs'
 import { buildServer } from '@platformatic/db'
 import { buildServer as buildService } from '@platformatic/service'
-import { join, posix } from 'path'
 import * as desm from 'desm'
 import { execa } from 'execa'
-import { promises as fs } from 'fs'
+import { request, moveToTmpdir } from './helper.js'
 
-test('generates only types in target folder with --types-only flag', async ({ teardown, comment, same, match }) => {
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+test('generates only types in target folder with --types-only flag', async (t) => {
+  const dir = await moveToTmpdir(t)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), desm.join(import.meta.url, 'fixtures', 'movies', 'openapi.json'), '--name', 'movies', '-f', dir, '--types-only'])
   const files = await fs.readdir(dir)
-  same(files.length, 1)
-  same(files[0], 'movies.d.ts')
+  assert.equal(files.length, 1)
+  assert.equal(files[0], 'movies.d.ts')
 
   // avoid name clash
   const fileContents = await fs.readFile(join(dir, 'movies.d.ts'), 'utf-8')
-  match(fileContents, /declare namespace movies {/)
-  match(fileContents, /type MoviesPlugin = FastifyPluginAsync<NonNullable<movies.MoviesOptions>>/)
-  match(fileContents, /export const movies: MoviesPlugin;/)
-  match(fileContents, /export interface FullResponse<T, U extends number> {/)
-  match(fileContents, /'statusCode': U;/)
-  match(fileContents, /'headers': Record<string, string>;/)
-  match(fileContents, /'body': T;/)
-  match(fileContents, /export interface GetMoviesRequest {/)
-  match(fileContents, /export interface GetMoviesResponseOK {/)
-  match(fileContents, /export interface Movies {/)
+  assert.match(fileContents, /declare namespace movies {/)
+  assert.match(fileContents, /type MoviesPlugin = FastifyPluginAsync<NonNullable<movies.MoviesOptions>>/)
+  assert.match(fileContents, /export const movies: MoviesPlugin;/)
+  assert.match(fileContents, /export interface FullResponse<T, U extends number> {/)
+  assert.match(fileContents, /'statusCode': U;/)
+  assert.match(fileContents, /'headers': Record<string, string>;/)
+  assert.match(fileContents, /'body': T;/)
+  assert.match(fileContents, /export interface GetMoviesRequest {/)
+  assert.match(fileContents, /export interface GetMoviesResponseOK {/)
+  assert.match(fileContents, /export interface Movies {/)
 })
 
-test('openapi client generation (javascript)', async ({ teardown, comment, same }) => {
+test('openapi client generation (javascript)', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
-  teardown(async () => { await app.close() })
+  t.after(async () => { await app.close() })
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+  await moveToTmpdir(t)
 
   const pltServiceConfig = {
     $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
@@ -72,7 +71,7 @@ module.exports = async function (app) {
 
   const app2 = await buildService('./platformatic.service.json')
   await app2.start()
-  teardown(async () => {
+  t.after(async () => {
     await app2.close()
   })
 
@@ -80,13 +79,13 @@ module.exports = async function (app) {
     method: 'POST'
   })
   const body = await res.body.json()
-  same(body, {
+  assert.deepEqual(body, {
     id: 1,
     title: 'foo'
   })
 })
 
-test('openapi client generation (typescript)', async ({ teardown, comment, same }) => {
+test('openapi client generation (typescript)', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -96,9 +95,8 @@ test('openapi client generation (typescript)', async ({ teardown, comment, same 
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(t)
 
-  comment(`working in ${dir}`)
   const pltServiceConfig = {
     $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
     server: {
@@ -146,20 +144,20 @@ export default myPlugin
 
   const app2 = await buildService('./platformatic.service.json')
   await app2.start()
-  teardown(async () => { await app.close() })
-  teardown(async () => { await app2.close() })
+  t.after(async () => { await app.close() })
+  t.after(async () => { await app2.close() })
 
   const res = await request(app2.url, {
     method: 'POST'
   })
   const body = await res.body.json()
-  same(body, {
+  assert.deepEqual(body, {
     id: 1,
     title: 'foo'
   })
 })
 
-test('config support with folder', async ({ teardown, comment, match }) => {
+test('config support with folder', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -168,12 +166,11 @@ test('config support with folder', async ({ teardown, comment, match }) => {
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
 
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+  await moveToTmpdir(t)
 
   const pltServiceConfig = {
     $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
@@ -192,18 +189,18 @@ test('config support with folder', async ({ teardown, comment, match }) => {
 
   {
     const config = JSON.parse(await fs.readFile('./platformatic.service.json'))
-    match(config, {
-      clients: [{
+    assert.deepEqual(config.clients,
+      [{
         schema: posix.join('uncanny', 'movies.openapi.json'),
         name: 'movies',
         type: 'openapi',
         url: '{PLT_MOVIES_URL}'
       }]
-    })
+    )
   }
 })
 
-test('openapi client generation (typescript) with --types-only', async ({ teardown, comment, same }) => {
+test('openapi client generation (typescript) with --types-only', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -213,9 +210,8 @@ test('openapi client generation (typescript) with --types-only', async ({ teardo
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(t)
 
-  comment(`working in ${dir}`)
   const pltServiceConfig = {
     $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
     server: {
@@ -273,20 +269,20 @@ export default myPlugin
 
   const app2 = await buildService('./platformatic.service.json')
   await app2.start()
-  teardown(async () => { await app.close() })
-  teardown(async () => { await app2.close() })
+  t.after(async () => { await app.close() })
+  t.after(async () => { await app2.close() })
 
   const res = await request(app2.url, {
     method: 'POST'
   })
   const body = await res.body.json()
-  same(body, {
+  assert.deepEqual(body, {
     id: 1,
     title: 'foo'
   })
 })
 
-test('generate client twice', async ({ teardown, comment, same, equal }) => {
+test('generate client twice', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -295,12 +291,11 @@ test('generate client twice', async ({ teardown, comment, same, equal }) => {
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
 
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+  const dir = await moveToTmpdir(t)
 
   const pltServiceConfig = {
     $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
@@ -329,14 +324,13 @@ module.exports = async function (app) {
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
   const envFile = await fs.readFile(join(dir, '.env'), 'utf8')
-  equal(envFile.match(/PLT_MOVIES_URL/g).length, 1)
+  assert.equal(envFile.match(/PLT_MOVIES_URL/g).length, 1)
 })
 
-test('openapi client generation (javascript) from file', async ({ teardown, comment, same }) => {
+test('openapi client generation (javascript) from file', async (t) => {
   const openapi = desm.join(import.meta.url, 'fixtures', 'movies', 'openapi.json')
 
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+  await moveToTmpdir(t)
 
   const pltServiceConfig = {
     $schema: 'https://platformatic.dev/schemas/v0.28.0/service',

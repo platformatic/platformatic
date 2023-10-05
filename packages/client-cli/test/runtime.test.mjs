@@ -1,15 +1,15 @@
-import { request, moveToTmpdir } from './helper.js'
-import { test } from 'tap'
-import { join, dirname, posix } from 'path'
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { join, dirname, posix } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import * as desm from 'desm'
-import { execa } from 'execa'
 import { cp, writeFile, readFile } from 'node:fs/promises'
+import { execa } from 'execa'
+import * as desm from 'desm'
 import split from 'split2'
+import { request, moveToTmpdir } from './helper.js'
 
-test('openapi client generation (javascript) via the runtime', async ({ teardown, comment, same, match }) => {
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+test('openapi client generation (javascript) via the runtime', async (t) => {
+  const dir = await moveToTmpdir(t)
 
   await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
 
@@ -43,13 +43,13 @@ PLT_SERVER_LOGGER_LEVEL=info
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
 
   const read = JSON.parse(await readFile(join(dir, 'services', 'languid-nobleman', 'platformatic.service.json'), 'utf8'))
-  match(read, {
-    clients: [{
-      serviceId: 'somber-chariot',
-      type: 'openapi',
-      schema: posix.join('movies', 'movies.openapi.json')
-    }]
-  })
+  assert.deepEqual(read.clients, [{
+    name: 'movies',
+    serviceId: 'somber-chariot',
+    type: 'openapi',
+    schema: posix.join('movies', 'movies.openapi.json')
+  }]
+  )
 
   const toWrite = `
 'use strict'
@@ -66,7 +66,7 @@ module.exports = async function (app, opts) {
   process.chdir(dir)
 
   const app2 = execa('node', [desm.join(import.meta.url, '..', '..', 'cli', 'cli.js'), 'start'])
-  teardown(() => app2.kill())
+  t.after(() => app2.kill())
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
@@ -85,15 +85,14 @@ module.exports = async function (app, opts) {
     method: 'POST'
   })
   const body = await res.body.json()
-  same(body, {
+  assert.deepEqual(body, {
     id: 1,
     title: 'foo'
   })
 })
 
-test('generate client twice', async ({ teardown, comment, same, match, equal }) => {
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+test('generate client twice', async (t) => {
+  const dir = await moveToTmpdir(t)
 
   await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
 
@@ -127,19 +126,18 @@ PLT_SERVER_LOGGER_LEVEL=info
 
   const config = JSON.parse(await readFile(join(dir, 'services', 'languid-nobleman', 'platformatic.service.json'), 'utf8'))
 
-  match(config, {
-    clients: [{
+  assert.deepEqual(config.clients,
+    [{
       schema: 'movies/movies.openapi.json',
       name: 'movies',
       type: 'openapi',
       serviceId: 'somber-chariot'
     }]
-  })
+  )
 })
 
-test('error if a service does not have openapi enabled', async ({ teardown, comment, match, fail }) => {
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+test('error if a service does not have openapi enabled', async (t) => {
+  const dir = await moveToTmpdir(t)
 
   await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
 
@@ -172,10 +170,10 @@ PLT_SERVER_LOGGER_LEVEL=info
 
   try {
     await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'test-client', '--runtime', 'sample-service'])
-    fail()
+    assert.fail()
   } catch (err) {
     const split = err.message.split('\n')
     const lastMessage = split.pop()
-    match(lastMessage, 'Could not find a valid OpenAPI or GraphQL schema at http://sample-service.plt.local')
+    assert.ok(lastMessage.includes('Could not find a valid OpenAPI or GraphQL schema at http://sample-service.plt.local'))
   }
 })

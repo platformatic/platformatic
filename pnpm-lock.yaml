@@ -294,6 +294,9 @@ importers:
       fs-extra:
         specifier: ^11.1.1
         version: 11.1.1
+      glob:
+        specifier: ^10.3.10
+        version: 10.3.10
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -303,9 +306,6 @@ importers:
       standard:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
-      tap:
-        specifier: ^16.3.9
-        version: 16.3.9(typescript@5.2.2)
       typescript:
         specifier: ^5.2.2
         version: 5.2.2

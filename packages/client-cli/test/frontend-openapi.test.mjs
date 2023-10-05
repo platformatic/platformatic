@@ -1,18 +1,17 @@
-'use strict'
-
-import { test } from 'tap'
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { join } from 'node:path'
+import * as url from 'node:url'
+import fs, { readFile, writeFile } from 'node:fs/promises'
 import { buildServer } from '@platformatic/db'
-import { join } from 'path'
-import { processFrontendOpenAPI } from '../lib/frontend-openapi-generator.mjs'
-import fs, { readFile, writeFile } from 'fs/promises'
 import { request } from 'undici'
-import * as url from 'url'
-import { cliPath, moveToTmpdir } from './helper.js'
 import { execa } from 'execa'
+import { processFrontendOpenAPI } from '../lib/frontend-openapi-generator.mjs'
+import { cliPath, moveToTmpdir } from './helper.js'
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 
-test('build basic client from url', async ({ teardown, ok, match }) => {
+test('build basic client from url', async (t) => {
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'sample', 'db.sqlite'))
   } catch {
@@ -20,7 +19,7 @@ test('build basic client from url', async ({ teardown, ok, match }) => {
   }
   const app = await buildServer(join(__dirname, 'fixtures', 'sample', 'platformatic.db.json'))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
@@ -29,10 +28,10 @@ test('build basic client from url', async ({ teardown, ok, match }) => {
   const { types, implementation } = processFrontendOpenAPI({ schema, name: 'sample', language: 'js', fullResponse: false })
 
   // The types interfaces are being created
-  match(types, /interface FullResponse<T, U extends number>/)
-  match(types, /interface GetRedirectRequest/)
-  match(types, /interface GetRedirectResponseFound/)
-  match(types, /interface GetRedirectResponseBadRequest/)
+  assert.match(types, /interface FullResponse<T, U extends number>/)
+  assert.match(types, /interface GetRedirectRequest/)
+  assert.match(types, /interface GetRedirectResponseFound/)
+  assert.match(types, /interface GetRedirectResponseBadRequest/)
 
   // handle non 200 code endpoint
   const expectedImplementation = `
@@ -76,14 +75,14 @@ export default function build(url: string): PlatformaticFrontendClient`
 
   // Correct CamelCase name
   const camelCase = 'export interface Sample {'
-  match(implementation, expectedImplementation)
-  match(implementation, factoryImplementation)
-  match(types, factoryType)
-  match(types, camelCase)
+  assert.ok(implementation.includes(expectedImplementation))
+  assert.ok(implementation.includes(factoryImplementation))
+  assert.ok(types.includes(factoryType))
+  assert.ok(types.includes(camelCase))
 
   {
     // Support custom url in cli
-    const dir = await moveToTmpdir(teardown)
+    const dir = await moveToTmpdir(t)
     await execa('node', [cliPath, `${app.url}/custom-swagger`, '--frontend', '--name', 'sample'])
     const implementation = await readFile(join(dir, 'sample', 'sample.mjs'), 'utf8')
     const types = await readFile(join(dir, 'sample', 'sample-types.d.ts'), 'utf8')
@@ -106,15 +105,15 @@ export interface Sample {
   FullResponse<GetRedirectResponseFound, 302>
   | FullResponse<GetRedirectResponseBadRequest, 400>
 `
-    ok(implementation)
-    ok(types)
-    match(implementation, jsImplementationTemplate)
-    match(types, typesTemplate)
-    match(types, unionTypesTemplate)
+    assert.ok(implementation)
+    assert.ok(types)
+    assert.ok(implementation.includes(jsImplementationTemplate))
+    assert.ok(types.includes(typesTemplate))
+    assert.ok(types.includes(unionTypesTemplate))
   }
 })
 
-test('generate correct file names', async ({ teardown, ok }) => {
+test('generate correct file names', async (t) => {
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'sample', 'db.sqlite'))
   } catch {
@@ -122,40 +121,40 @@ test('generate correct file names', async ({ teardown, ok }) => {
   }
   const app = await buildServer(join(__dirname, 'fixtures', 'sample', 'platformatic.db.json'))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(t)
 
   // Without --name will create api/client filenames
   await execa('node', [cliPath, app.url, '--language', 'ts', '--frontend'])
-  ok(await readFile(join(dir, 'api', 'api.ts')))
-  ok(await readFile(join(dir, 'api', 'api-types.d.ts')))
+  assert.ok(await readFile(join(dir, 'api', 'api.ts')))
+  assert.ok(await readFile(join(dir, 'api', 'api-types.d.ts')))
 
   await execa('node', [cliPath, app.url])
-  ok(await readFile(join(dir, 'client', 'client.cjs')))
-  ok(await readFile(join(dir, 'client', 'client.d.ts')))
+  assert.ok(await readFile(join(dir, 'client', 'client.cjs')))
+  assert.ok(await readFile(join(dir, 'client', 'client.d.ts')))
 
   // With --name will create foobar.ts and foobar-types.d.ts
   await execa('node', [cliPath, app.url, '--language', 'ts', '--name', 'foobar', '--frontend'])
-  ok(await readFile(join(dir, 'foobar', 'foobar.ts')))
-  ok(await readFile(join(dir, 'foobar', 'foobar-types.d.ts')))
+  assert.ok(await readFile(join(dir, 'foobar', 'foobar.ts')))
+  assert.ok(await readFile(join(dir, 'foobar', 'foobar-types.d.ts')))
 
   // Without --name will create api.ts and api-types.d.ts
   await execa('node', [cliPath, app.url, '--language', 'ts', '--frontend'])
-  ok(await readFile(join(dir, 'api', 'api.ts')))
-  ok(await readFile(join(dir, 'api', 'api-types.d.ts')))
+  assert.ok(await readFile(join(dir, 'api', 'api.ts')))
+  assert.ok(await readFile(join(dir, 'api', 'api-types.d.ts')))
 
   // Convert dashes to camelCase
   await execa('node', [cliPath, app.url, '--language', 'ts', '--name', 'sample-name', '--frontend'])
-  ok(await readFile(join(dir, 'sample-name', 'sample-name.ts')))
-  ok(await readFile(join(dir, 'sample-name', 'sample-name-types.d.ts')))
+  assert.ok(await readFile(join(dir, 'sample-name', 'sample-name.ts')))
+  assert.ok(await readFile(join(dir, 'sample-name', 'sample-name-types.d.ts')))
 })
 
-test('test factory and client', async ({ teardown, equal }) => {
+test('test factory and client', async (t) => {
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'sample', 'db.sqlite'))
   } catch {
@@ -165,14 +164,14 @@ test('test factory and client', async ({ teardown, equal }) => {
   // start 2 services
   const app = await buildServer(join(__dirname, 'fixtures', 'sample', 'platformatic.db.json'))
   const app2 = await buildServer(join(__dirname, 'fixtures', 'sample', 'platformatic.db.json'))
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
     await app2.close()
   })
 
   await app.start()
   await app2.start()
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(t)
 
   await execa('node', [cliPath, app.url, '--name', 'foobar', '--frontend'])
   const testFile = `
@@ -192,12 +191,12 @@ console.log(await getReturnUrl({}))
   /* eslint-disable no-control-regex */
   const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n') // remove ANSI colors, if any
   /* eslint-enable no-control-regex */
-  equal(lines[0], `{ url: '${app.url}' }`) // client, app object
-  equal(lines[1], `{ url: '${app2.url}' }`) // raw, app2 object
+  assert.equal(lines[0], `{ url: '${app.url}' }`) // client, app object
+  assert.equal(lines[1], `{ url: '${app2.url}' }`) // raw, app2 object
 })
 
-test('generate frontend client from path', async ({ teardown, ok, match }) => {
-  const dir = await moveToTmpdir(teardown)
+test('generate frontend client from path', async (t) => {
+  const dir = await moveToTmpdir(t)
 
   const fileName = join(__dirname, 'fixtures', 'frontend-openapi.json')
   await execa('node', [cliPath, fileName, '--language', 'ts', '--frontend'])
@@ -214,8 +213,8 @@ export interface Api {
   getHello(req?: GetHelloRequest): Promise<GetHelloResponses>;
 }`
 
-  ok(implementation)
-  ok(types)
-  match(implementation, tsImplementationTemplate)
-  match(types, typesTemplate)
+  assert.ok(implementation)
+  assert.ok(types)
+  assert.ok(implementation.includes(tsImplementationTemplate))
+  assert.ok(types.includes(typesTemplate))
 })

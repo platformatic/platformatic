@@ -1,8 +1,8 @@
 'use strict'
 
+const { join } = require('node:path')
+const fs = require('node:fs/promises')
 const { setGlobalDispatcher, Agent, request } = require('undici')
-const fs = require('fs/promises')
-const { join } = require('path')
 
 setGlobalDispatcher(new Agent({
   keepAliveMaxTimeout: 1,
@@ -13,7 +13,7 @@ module.exports.request = request
 
 let counter = 0
 
-async function moveToTmpdir (teardown) {
+async function moveToTmpdir (t) {
   const cwd = process.cwd()
   const tmp = join(__dirname, 'tmp')
   try {
@@ -23,9 +23,9 @@ async function moveToTmpdir (teardown) {
   const dir = join(tmp, `platformatic-client-${process.pid}-${Date.now()}-${counter++}`)
   await fs.mkdir(dir)
   process.chdir(dir)
-  teardown(() => process.chdir(cwd))
+  t.after(() => process.chdir(cwd))
   if (!process.env.SKIP_RM_TMP) {
-    teardown(() => fs.rm(tmp, { recursive: true }).catch(() => {}))
+    t.after(() => fs.rm(tmp, { recursive: true }).catch(() => {}))
   }
   return dir
 }
