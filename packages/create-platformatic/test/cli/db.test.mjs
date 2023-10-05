@@ -49,7 +49,7 @@ test('Creates a Platformatic DB service with no migrations and no plugin', async
     match: 'Do you want to create a plugin',
     do: [keys.DOWN, keys.ENTER]
   }, {
-    // NOTE THAT HERE THE DEFAULT OPTION IS "NO", so just sending ENTER we won't have TS
+    // NOTE THAT HERE THE DEFAULT OPTION FOR DB IS "NO", so just sending ENTER we won't have TS
     match: 'Do you want to use TypeScript',
     do: [keys.ENTER]
   }, {
@@ -105,7 +105,7 @@ test('Creates a Platformatic DB service with migrations and plugin', async ({ eq
     match: 'Do you want to create a plugin',
     do: [keys.ENTER]
   }, {
-    // NOTE THAT HERE THE DEFAULT OPTION IS "NO", so just sending ENTER we won't have TS
+    // NOTE THAT HERE THE DEFAULT OPTION FOR DB IS "NO", so just sending ENTER we won't have TS
     match: 'Do you want to use TypeScript',
     do: [keys.ENTER]
   }, {
@@ -168,7 +168,7 @@ test('Creates a Platformatic DB service with plugin using typescript, creating a
     match: 'Do you want to create a plugin',
     do: [keys.ENTER]
   }, {
-    // NOTE THAT HERE THE DEFAULT OPTION IS "NO"
+    // NOTE THAT HERE THE DEFAULT OPTION FOR DB IS "NO"
     match: 'Do you want to use TypeScript',
     do: [keys.UP, keys.ENTER]
   }, {
