@@ -69,7 +69,7 @@ function constructGraph (app, entity, opts, ignore) {
       meta.type = new graphql.GraphQLList(listType)
     } else if (field.enum) {
       const enumValues = field.enum.reduce((acc, enumValue, index) => {
-        let key = enumValue.replace(/[^\w\s]/g, '_')
+        let key = enumValue.replace(/[^\w]/g, '_')
 
         const keyStartsWithLetterOrUnderscore = !!key.match(/^[_a-zA-Z]/g)
         if (!keyStartsWithLetterOrUnderscore) {
