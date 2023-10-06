@@ -1,12 +1,13 @@
 'use strict'
 
+const fp = require('fastify-plugin')
 const { findNearestString } = require('@platformatic/utils')
 const buildEntity = require('./lib/entity')
 const buildCleanUp = require('./lib/clean-up')
 const queriesFactory = require('./lib/queries')
-const fp = require('fastify-plugin')
 const { areSchemasSupported } = require('./lib/utils')
 const errors = require('./lib/errors')
+const setupCache = require('./lib/cache')
 
 // Ignore the function as it is only used only for MySQL and PostgreSQL
 /* istanbul ignore next */
@@ -97,7 +98,7 @@ async function createConnectionPool ({ log, connectionString, poolSize }) {
   return { db, sql }
 }
 
-async function connect ({ connectionString, log, onDatabaseLoad, poolSize, ignore = {}, autoTimestamp = true, hooks = {}, schema, limit = {}, dbschema }) {
+async function connect ({ connectionString, log, onDatabaseLoad, poolSize, ignore = {}, autoTimestamp = true, hooks = {}, schema, limit = {}, dbschema, cache }) {
   if (typeof autoTimestamp === 'boolean' && autoTimestamp === true) {
     autoTimestamp = defaultAutoTimestampFields
   }
@@ -197,7 +198,7 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize, ignor
       }
     }
 
-    return {
+    const res = {
       db,
       sql,
       entities,
@@ -205,6 +206,12 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize, ignor
       addEntityHooks,
       dbschema
     }
+
+    if (cache) {
+      res.cache = setupCache(res, cache)
+    }
+
+    return res
   } catch (err) /* istanbul ignore next */ {
     db.dispose()
     throw err
