@@ -117,11 +117,9 @@ const createPlatformaticService = async (_args, opts = {}) => {
 
   const spinner = ora('Generating types...').start()
   try {
-    const child = await execa(pkgManager, ['exec', 'platformatic', 'service', 'types'], { cwd: projectDir })
-    console.log('Created service returned', child.stdout, child.stderr)
+    await execa(pkgManager, ['exec', 'platformatic', 'service', 'types'], { cwd: projectDir })
     spinner.succeed('Types generated!')
   } catch (err) {
-    console.log('Created service returned', err)
     logger.trace({ err })
     spinner.fail('Failed to generate Types. Try again by running "platformatic service types"')
   }

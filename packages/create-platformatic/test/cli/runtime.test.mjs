@@ -49,7 +49,7 @@ test('Creates a Platformatic Runtime with one Service', async ({ equal, same, ma
     // NOTE THAT HERE THE DEFAULT OPTION FOR SERVICE IS "YES"
     match: 'Do you want to use TypeScript',
     do: [keys.DOWN, keys.ENTER], // no
-    waitAfter: 7000 // here generates teh types for the service, so we need to wait more
+    waitAfter: 5000 // here generates teh types for the service, so we need to wait more
   }, {
     match: 'Do you want to create another service?',
     do: [keys.DOWN, keys.ENTER] // no
@@ -113,7 +113,7 @@ test('Creates a Platformatic Runtime with two Services', async ({ equal, same, m
   }, {
     match: 'Do you want to use TypeScript',
     do: [keys.DOWN, keys.ENTER], // no
-    waitAfter: 7000 // here generates teh types for the service, so we need to wait more
+    waitAfter: 5000 // here generates teh types for the service, so we need to wait more
   }, {
     match: 'Do you want to create another service?',
     do: [keys.ENTER] // yes
@@ -128,7 +128,7 @@ test('Creates a Platformatic Runtime with two Services', async ({ equal, same, m
     // NOTE THAT HERE THE DEFAULT OPTION FOR SERVICE IS "YES"
     match: 'Do you want to use TypeScript',
     do: [keys.DOWN, keys.ENTER], // no
-    waitAfter: 7000 // here generates teh types for the service, so we need to wait more
+    waitAfter: 5000 // here generates teh types for the service, so we need to wait more
   }, {
     match: 'Do you want to create another service?',
     do: [keys.DOWN, keys.ENTER] // no
