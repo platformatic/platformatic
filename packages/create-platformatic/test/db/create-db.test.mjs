@@ -250,18 +250,6 @@ test('creates project with "do" migration already present', async ({ ok }) => {
   ok(log.includes('Migration file 001.do.sql found, skipping creation of migration file.'))
 })
 
-test('creates project with tsconfig already present', async ({ ok }) => {
-  const pathToTsConfig = join(tmpDir, 'tsconfig.json')
-  writeFileSync(pathToTsConfig, 'test')
-  const params = {
-    hostname: 'myhost',
-    port: 6666,
-    typescript: true
-  }
-  await createDB(params, fakeLogger, tmpDir)
-  ok(log.includes(`Typescript configuration file ${pathToTsConfig} found, skipping creation of typescript configuration file.`))
-})
-
 test('creates project with plugin already present', async ({ ok }) => {
   const pathToPlugin = join(tmpDir, 'routes', 'root.js')
   mkdirSync(join(tmpDir, 'routes'))

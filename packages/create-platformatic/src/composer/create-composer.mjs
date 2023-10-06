@@ -4,8 +4,11 @@ import { join } from 'path'
 import * as desm from 'desm'
 import { generatePlugins, generateRouteWithTypesSupport } from '../create-plugins.mjs'
 import { createDynamicWorkspaceGHAction, createStaticWorkspaceGHAction } from '../ghaction.mjs'
+import { getTsConfig } from '../get-tsconfig.mjs'
 
-function generateConfig (isRuntimeContext, version, servicesToCompose, envPrefix) {
+const TS_OUT_DIR = 'dist'
+
+function generateConfig (isRuntimeContext, version, servicesToCompose, typescript, envPrefix) {
   const config = {
     $schema: `https://platformatic.dev/schemas/v${version}/composer`,
     composer: {
@@ -35,9 +38,7 @@ function generateConfig (isRuntimeContext, version, servicesToCompose, envPrefix
         level: '{PLT_SERVER_LOGGER_LEVEL}'
       }
     }
-  }
-
-  if (isRuntimeContext) {
+  } else {
     config.composer.services = servicesToCompose.map((serviceName) => {
       return {
         id: serviceName,
@@ -49,10 +50,14 @@ function generateConfig (isRuntimeContext, version, servicesToCompose, envPrefix
     })
   }
 
+  if (typescript === true && config.plugins) {
+    config.plugins.typescript = `{PLT_${envPrefix}TYPESCRIPT}`
+  }
+
   return config
 }
 
-function generateEnv (isRuntimeContext, hostname, port, envPrefix) {
+function generateEnv (isRuntimeContext, hostname, port, typescript, envPrefix) {
   let env = ''
 
   if (!isRuntimeContext) {
@@ -64,6 +69,13 @@ PLT_SERVER_LOGGER_LEVEL=info`
   env += `
 PLT_${envPrefix}EXAMPLE_ORIGIN=
 `
+  if (typescript === true) {
+    env += `\
+# Set to false to disable automatic typescript compilation.
+# Changing this setting is needed for production
+PLT_${envPrefix}TYPESCRIPT=true
+`
+  }
   return env
 }
 
@@ -71,11 +83,18 @@ async function createComposer (
   params,
   logger,
   currentDir = process.cwd(),
-  version,
-  staticWorkspaceGitHubAction,
-  dynamicWorkspaceGitHubAction
+  version
 ) {
-  const { isRuntimeContext, hostname, port, servicesToCompose = [], runtimeContext } = params
+  const {
+    isRuntimeContext,
+    hostname,
+    port,
+    servicesToCompose = [],
+    runtimeContext,
+    typescript,
+    staticWorkspaceGitHubAction,
+    dynamicWorkspaceGitHubAction
+  } = params
 
   const composerEnv = {
     PLT_SERVER_LOGGER_LEVEL: 'info',
@@ -91,11 +110,11 @@ async function createComposer (
   if (accessibleConfigFilename === undefined) {
     const envPrefix = runtimeContext !== undefined ? `${runtimeContext.envPrefix}_` : ''
 
-    const config = generateConfig(isRuntimeContext, version, servicesToCompose, envPrefix)
+    const config = generateConfig(isRuntimeContext, version, servicesToCompose, typescript, envPrefix)
     await writeFile(join(currentDir, 'platformatic.composer.json'), JSON.stringify(config, null, 2))
     logger.info('Configuration file platformatic.composer.json successfully created.')
 
-    const env = generateEnv(isRuntimeContext, hostname, port, envPrefix)
+    const env = generateEnv(isRuntimeContext, hostname, port, typescript, envPrefix)
     const envFileExists = await isFileAccessible('.env', currentDir)
     await appendFile(join(currentDir, '.env'), env)
     await writeFile(join(currentDir, '.env.sample'), env)
@@ -108,14 +127,24 @@ async function createComposer (
   } else {
     logger.info(`Configuration file ${accessibleConfigFilename} found, skipping creation of configuration file.`)
   }
-  await generatePlugins(logger, currentDir, false, 'composer')
-  await generateRouteWithTypesSupport(logger, currentDir, false)
+  await generatePlugins(logger, currentDir, typescript, 'composer')
+  await generateRouteWithTypesSupport(logger, currentDir, true)
+
+  if (typescript === true) {
+    const tsConfigFileName = join(currentDir, 'tsconfig.json')
+    const tsConfig = getTsConfig(TS_OUT_DIR)
+    await writeFile(tsConfigFileName, JSON.stringify(tsConfig, null, 2))
+    logger.info(`Typescript configuration file ${tsConfigFileName} successfully created.`)
+
+    // TODO: global.d.ts is needed to compile the project. Still need to populate it
+    await writeFile(join(currentDir, 'global.d.ts'), '')
+  }
 
   if (staticWorkspaceGitHubAction) {
-    await createStaticWorkspaceGHAction(logger, composerEnv, './platformatic.service.json', currentDir, false)
+    await createStaticWorkspaceGHAction(logger, composerEnv, './platformatic.service.json', currentDir, typescript)
   }
   if (dynamicWorkspaceGitHubAction) {
-    await createDynamicWorkspaceGHAction(logger, composerEnv, './platformatic.service.json', currentDir, false)
+    await createDynamicWorkspaceGHAction(logger, composerEnv, './platformatic.service.json', currentDir, typescript)
   }
 
   return composerEnv

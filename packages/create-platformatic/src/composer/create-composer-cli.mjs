@@ -11,7 +11,7 @@ import { execa } from 'execa'
 import ora from 'ora'
 import createComposer from './create-composer.mjs'
 import askDir from '../ask-dir.mjs'
-import { getRunPackageManagerInstall, getPort } from '../cli-options.mjs'
+import { getRunPackageManagerInstall, getPort, getUseTypescript } from '../cli-options.mjs'
 import { createReadme } from '../create-readme.mjs'
 import { stat } from 'node:fs/promises'
 import { join } from 'path'
@@ -61,6 +61,7 @@ const createPlatformaticComposer = async (_args, opts) => {
   const portQuestion = getPort(args.port)
   portQuestion.when = !isRuntimeContext
   toAsk.push(portQuestion)
+  toAsk.push(getUseTypescript(args.typescript))
 
   if (isRuntimeContext) {
     const servicesNames = opts.runtimeContext.servicesNames.filter(
@@ -95,7 +96,8 @@ const createPlatformaticComposer = async (_args, opts) => {
     servicesToCompose,
     port,
     staticWorkspaceGitHubAction,
-    dynamicWorkspaceGitHubAction
+    dynamicWorkspaceGitHubAction,
+    useTypescript
   } = await inquirer.prompt(toAsk)
 
   // Create the project directory
@@ -108,7 +110,8 @@ const createPlatformaticComposer = async (_args, opts) => {
     servicesToCompose,
     staticWorkspaceGitHubAction,
     dynamicWorkspaceGitHubAction,
-    runtimeContext: opts.runtimeContext
+    runtimeContext: opts.runtimeContext,
+    typescript: useTypescript
   }
 
   await createComposer(
@@ -123,7 +126,7 @@ const createPlatformaticComposer = async (_args, opts) => {
   // Create the package.json, notes that we don't have the option for TS (yet) so we don't generate
   // the package.json with the TS build
   if (!opts.skipPackageJson) {
-    await createPackageJson(version, fastifyVersion, logger, projectDir, false)
+    await createPackageJson(version, fastifyVersion, logger, projectDir, useTypescript)
   }
   if (!opts.skipGitignore) {
     await createGitignore(logger, projectDir)
