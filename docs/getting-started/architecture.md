@@ -9,7 +9,8 @@ The base services are:
 
 These micro-services can be developed and deployed independently or aggregated into a single API using [Platformatic Composer](#platformatic-composer) or deployed as a single unit using [Platformatic Runtime](#platformatic-runtime).
 
-Finally, platformatic components can be reused with [stackables](#platformatic-stackbles)
+All platformatic components can be reused with [Stackables](#platformatic-stackbles).
+And finally, all Platformatic components can be deployed on [Platformatic Cloud](#platformatic-cloud).
 
 ## Platformatic Service
 
@@ -70,10 +71,18 @@ Platformatic Stackables are reusable components that can be used to build Platfo
 
 This is useful to publish the application on the public npm registry (or a private one!), including building your own CLI, or to create a specialized template for your organization to allow for centralized bugfixes and updates.
 
+## Platformatic Cloud 
+[Platformatic Cloud](https://platformatic.cloud) allows to deploy Platformatic Applications on our cloud for both static deployments and PR reviews. 
+The deployment on the cloud can be done:
+- Automatically using the GitHub actions created with `create-platformatic` 
+- Using the Platformatic CLI (see https://docs.platformatic.dev/docs/reference/cli#deploy)
+
+If you configure the GitHub actions, you can deploy your application on the cloud by simply pushing to the main branch or creating a PR. For a guide about how to do a deploy on Platformatic Cloud, please check the [Platformatic Cloud Quick Start Guide](https://docs.platformatic.dev/docs/platformatic-cloud/quick-start-guide).
 
 
-
-
-
+:::info
+If you create a PR, we calculate automatically the "risk score" for that PR. For more info about this, 
+see [Calculate the risk of a pull request](https://docs.platformatic.dev/docs/platformatic-cloud/quick-start-guide/#calculate-the-risk-of-a-pull-request).
+:::
 
 
