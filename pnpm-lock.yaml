@@ -455,9 +455,15 @@ importers:
       '@iarna/toml':
         specifier: ^2.2.5
         version: 2.2.5
+      c8:
+        specifier: ^8.0.1
+        version: 8.0.1
       fastify:
         specifier: ^4.23.2
         version: 4.23.2
+      glob:
+        specifier: ^10.3.10
+        version: 10.3.10
       json5:
         specifier: ^2.2.3
         version: 2.2.3
@@ -467,9 +473,6 @@ importers:
       standard:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
-      tap:
-        specifier: ^16.3.9
-        version: 16.3.9(typescript@5.2.2)
       yaml:
         specifier: ^2.3.2
         version: 2.3.2

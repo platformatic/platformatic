@@ -1,10 +1,11 @@
 'use strict'
 
-const { test } = require('tap')
-const { loadConfig, Store, printConfigValidationErrors, printAndExitLoadConfigError } = require('../')
-const { join } = require('path')
-const { readFile } = require('fs/promises')
+const assert = require('node:assert/strict')
+const { test } = require('node:test')
+const { join } = require('node:path')
+const { readFile } = require('node:fs/promises')
 const { version } = require('../package.json')
+const { loadConfig, Store, printConfigValidationErrors, printAndExitLoadConfigError } = require('../')
 
 function app () {
 }
@@ -19,9 +20,9 @@ test('happy path', async t => {
   const res = await loadConfig({}, ['-c', file, '--boo'], app)
   const { configManager, args } = res
 
-  t.equal(res.app, app)
-  t.equal(res.configType, app.configType)
-  t.same(args, {
+  assert.equal(res.app, app)
+  assert.equal(res.configType, app.configType)
+  assert.deepEqual(args, {
     _: [],
     c: file,
     config: file,
@@ -30,42 +31,41 @@ test('happy path', async t => {
     'allow-env': '',
     E: ''
   })
-  t.same(configManager.current, JSON.parse(await readFile(file, 'utf8')))
+  assert.deepEqual(configManager.current, JSON.parse(await readFile(file, 'utf8')))
 })
 
 test('cwd', async t => {
   {
     const cwd = process.cwd()
     process.chdir(join(__dirname, 'fixtures'))
-    t.teardown(() => {
+    t.after(() => {
       process.chdir(cwd)
     })
   }
   const file = join(__dirname, 'fixtures', 'platformatic.service.json')
   const { configManager, args } = await loadConfig({}, [], app)
 
-  t.match(args, {
+  assert.deepEqual(args, {
     _: [],
     allowEnv: '',
     'allow-env': '',
     E: ''
   })
-  t.same(configManager.current, JSON.parse(await readFile(file, 'utf8')))
+  assert.deepEqual(configManager.current, JSON.parse(await readFile(file, 'utf8')))
 })
 
 test('empty rejects with an error', async t => {
-  t.plan(2)
   const cwd = process.cwd()
   process.chdir(join(__dirname, 'fixtures', 'empty'))
-  t.teardown(() => {
+  t.after(() => {
     process.chdir(cwd)
   })
 
   try {
     await loadConfig({}, [], app)
   } catch (err) {
-    t.equal(err.message, 'no config file found')
-    t.same(err.filenames, [
+    assert.equal(err.message, 'no config file found')
+    assert.deepEqual(err.filenames, [
       'platformatic.service.json',
       'platformatic.service.json5',
       'platformatic.service.yaml',
@@ -83,7 +83,6 @@ test('empty rejects with an error', async t => {
 })
 
 test('not passing validation kills the process', async t => {
-  t.plan(2)
   function app () {
   }
   app.configType = 'service'
@@ -106,8 +105,8 @@ test('not passing validation kills the process', async t => {
   try {
     await loadConfig({}, ['-c', file, '--boo'], app)
   } catch (err) {
-    t.equal(err.message, 'The configuration does not validate against the configuration schema')
-    t.same(err.validationErrors, [{
+    assert.equal(err.message, 'The configuration does not validate against the configuration schema')
+    assert.deepEqual(err.validationErrors, [{
       path: '/',
       message: 'must have required property \'foo\' {"missingProperty":"foo"}'
     }])
@@ -119,7 +118,7 @@ test('allow-env', async (t) => {
   process.env.PORT = '3000'
   const { configManager, args } = await loadConfig({}, ['-c', file, '--allow-env', 'PORT'], app)
 
-  t.same(args, {
+  assert.deepEqual(args, {
     _: [],
     c: file,
     config: file,
@@ -129,7 +128,7 @@ test('allow-env', async (t) => {
   })
   const content = JSON.parse(await readFile(file, 'utf8'))
   content.server.port = '3000'
-  t.same(configManager.current, content)
+  assert.deepEqual(configManager.current, content)
 })
 
 test('loadConfig with Store', async t => {
@@ -139,7 +138,7 @@ test('loadConfig with Store', async t => {
   store.add(app)
   const { configManager, args } = await loadConfig({}, ['-c', file, '--boo'], store)
 
-  t.same(args, {
+  assert.deepEqual(args, {
     _: [],
     c: file,
     config: file,
@@ -148,19 +147,18 @@ test('loadConfig with Store', async t => {
     'allow-env': '',
     E: ''
   })
-  t.same(configManager.current, JSON.parse(await readFile(file, 'utf8')))
+  assert.deepEqual(configManager.current, JSON.parse(await readFile(file, 'utf8')))
 })
 
 test('printConfigValidationErrors', async t => {
-  t.plan(1)
   const table = console.table
   console.table = (data) => {
-    t.same(data, [{
+    assert.deepEqual(data, [{
       path: '/',
       message: 'must have required property \'foo\' {"missingProperty":"foo"}'
     }])
   }
-  t.teardown(() => {
+  t.after(() => {
     console.table = table
   })
   printConfigValidationErrors({
@@ -173,15 +171,14 @@ test('printConfigValidationErrors', async t => {
 })
 
 test('printAndExitLoadConfigError', async t => {
-  t.plan(1)
   const table = console.table
   console.table = (data) => {
-    t.same(data, [{
+    assert.deepEqual(data, [{
       path: '/',
       message: 'must have required property \'foo\' {"missingProperty":"foo"}'
     }])
   }
-  t.teardown(() => {
+  t.after(() => {
     console.table = table
   })
   printConfigValidationErrors({
@@ -194,19 +191,18 @@ test('printAndExitLoadConfigError', async t => {
 })
 
 test('printAndExitLoadConfigError validationErrors', async t => {
-  t.plan(2)
   const table = console.table
   console.table = (data) => {
-    t.same(data, [{
+    assert.deepEqual(data, [{
       path: '/',
       message: 'must have required property \'foo\' {"missingProperty":"foo"}'
     }])
   }
   const processExit = process.exit
   process.exit = (code) => {
-    t.equal(code, 1)
+    assert.equal(code, 1)
   }
-  t.teardown(() => {
+  t.after(() => {
     console.table = table
     process.exit = processExit
   })
@@ -220,10 +216,9 @@ test('printAndExitLoadConfigError validationErrors', async t => {
 })
 
 test('printAndExitLoadConfigError filenames', async t => {
-  t.plan(2)
   const error = console.error
   console.error = (data) => {
-    t.equal(data, `Missing config file!
+    assert.equal(data, `Missing config file!
 Be sure to have a config file with one of the following names:
 
  * foo
@@ -233,9 +228,9 @@ In alternative run "npm create platformatic@latest" to generate a basic platform
   }
   const processExit = process.exit
   process.exit = (code) => {
-    t.equal(code, 1)
+    assert.equal(code, 1)
   }
-  t.teardown(() => {
+  t.after(() => {
     console.error = error
     process.exit = processExit
   })
@@ -245,17 +240,16 @@ In alternative run "npm create platformatic@latest" to generate a basic platform
 })
 
 test('printAndExitLoadConfigError bare error', async t => {
-  t.plan(2)
   const throwed = new Error('foo')
   const error = console.error
   console.error = (data) => {
-    t.equal(data, throwed)
+    assert.equal(data, throwed)
   }
   const processExit = process.exit
   process.exit = (code) => {
-    t.equal(code, 1)
+    assert.equal(code, 1)
   }
-  t.teardown(() => {
+  t.after(() => {
     console.error = error
     process.exit = processExit
   })
@@ -276,7 +270,7 @@ test('auto-upgrades', async t => {
   store.add(app)
   const { configManager, args } = await loadConfig({}, ['-c', file], store)
 
-  t.same(args, {
+  assert.deepEqual(args, {
     _: [],
     c: file,
     config: file,
@@ -284,7 +278,7 @@ test('auto-upgrades', async t => {
     'allow-env': '',
     E: ''
   })
-  t.same(configManager.current, {
+  assert.deepEqual(configManager.current, {
     $schema: `https://platformatic.dev/schemas/v${version}/db`,
     server: { hostname: '127.0.0.1', port: 0 },
     db: {

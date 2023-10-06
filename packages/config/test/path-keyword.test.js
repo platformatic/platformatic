@@ -1,11 +1,12 @@
 'use strict'
 
-const { test } = require('tap')
+const assert = require('node:assert/strict')
+const { test } = require('node:test')
+const { join, isAbsolute } = require('node:path')
 const ConfigManager = require('..')
-const path = require('path')
 
-test('do not emit event for not allowed files', async ({ equal }) => {
-  const configFile = path.join(__dirname, 'fixtures', 'onepath.json')
+test('do not emit event for not allowed files', async (t) => {
+  const configFile = join(__dirname, 'fixtures', 'onepath.json')
   const cm = new ConfigManager({
     source: configFile,
     schema: {
@@ -20,12 +21,12 @@ test('do not emit event for not allowed files', async ({ equal }) => {
   })
 
   const parseResult = await cm.parse()
-  equal(parseResult, true)
+  assert.equal(parseResult, true)
 
-  equal(path.isAbsolute(cm.current.path), true)
+  assert.equal(isAbsolute(cm.current.path), true)
 })
 
-test('do not emit event for empty paths', async ({ equal }) => {
+test('do not emit event for empty paths', async (t) => {
   const cm = new ConfigManager({
     source: { path: '' },
     schema: {
@@ -40,5 +41,5 @@ test('do not emit event for empty paths', async ({ equal }) => {
   })
 
   const parseResult = await cm.parse()
-  equal(parseResult, false)
+  assert.equal(parseResult, false)
 })
