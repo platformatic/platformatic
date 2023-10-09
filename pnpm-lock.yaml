@@ -224,12 +224,6 @@ importers:
       '@platformatic/metaconfig':
         specifier: workspace:*
         version: link:../metaconfig
-      '@platformatic/runtime':
-        specifier: workspace:*
-        version: link:../runtime
-      '@platformatic/service':
-        specifier: workspace:*
-        version: link:../service
       abstract-logging:
         specifier: ^2.0.1
         version: 2.0.1
@@ -276,6 +270,12 @@ importers:
       '@platformatic/db':
         specifier: workspace:*
         version: link:../db
+      '@platformatic/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+      '@platformatic/service':
+        specifier: workspace:*
+        version: link:../service
       c8:
         specifier: ^8.0.1
         version: 8.0.1
