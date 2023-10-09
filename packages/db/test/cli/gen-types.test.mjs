@@ -1,18 +1,17 @@
-import path from 'path'
-import { rm, mkdir, cp, readFile, writeFile } from 'fs/promises'
-import { cliPath } from './helper.js'
-import t from 'tap'
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { join } from 'node:path'
+import { setTimeout } from 'node:timers/promises'
+import { rm, mkdir, cp, readFile, writeFile } from 'node:fs/promises'
 import { execa } from 'execa'
 import stripAnsi from 'strip-ansi'
 import split from 'split2'
 import { urlDirname } from '../../lib/utils.js'
-import { setTimeout as sleep } from 'timers/promises'
-
-t.jobs = 1
+import { cliPath } from './helper.js'
 
 let counter = 0
 
-const pathToTSD = path.join(urlDirname(import.meta.url), '../../node_modules/.bin/tsd')
+const pathToTSD = join(urlDirname(import.meta.url), '../../node_modules/.bin/tsd')
 
 async function safeRm (dir) {
   // we are running on CI, no need for clean up
@@ -30,7 +29,7 @@ async function safeRm (dir) {
     } catch (err) {
       _err = err
       if (err.code === 'EBUSY') {
-        await sleep(count * 100)
+        await setTimeout(count * 100)
       } else {
         break
       }
@@ -43,15 +42,14 @@ async function safeRm (dir) {
 }
 
 async function adjustTypeReferenceToAvoidLoops (cwd) {
-  let types = await readFile(path.join(cwd, 'global.d.ts'), 'utf8')
+  let types = await readFile(join(cwd, 'global.d.ts'), 'utf8')
   types = types.replace('@platformatic/db', '../../../index')
-  await writeFile(path.join(cwd, 'global.d.ts'), types, 'utf8')
+  await writeFile(join(cwd, 'global.d.ts'), types, 'utf8')
 }
 
-t.test('generate ts types', async (t) => {
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
-  t.comment(cwd)
+test('generate ts types', async (t) => {
+  const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types')
+  const cwd = join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
   try {
     await safeRm(cwd)
@@ -60,68 +58,64 @@ t.test('generate ts types', async (t) => {
   await mkdir(cwd)
   await cp(testDir, cwd, { recursive: true })
 
-  t.teardown(async () => {
+  t.after(async () => {
     await safeRm(cwd)
   })
 
   try {
-    t.comment('running migrations')
+    t.diagnostic('running migrations')
     await execa('node', [cliPath, 'migrations', 'apply'], { cwd })
-    t.comment('generating types')
+    t.diagnostic('generating types')
     await execa('node', [cliPath, 'types'], { cwd })
 
-    t.comment('Adjusting type reference to avoid loops')
+    t.diagnostic('Adjusting type reference to avoid loops')
     await adjustTypeReferenceToAvoidLoops(cwd)
 
-    t.comment('running tsd')
+    t.diagnostic('running tsd')
     await execa(pathToTSD, { cwd })
   } catch (err) {
     console.log(err)
-    t.fail('Failed to generate types')
+    assert.fail('Failed to generate types')
   }
-
-  t.pass()
 })
 
-t.test('generate ts types twice', async (t) => {
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
+test('generate ts types twice', async (t) => {
+  const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types')
+  const cwd = join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
   try {
     await safeRm(cwd)
   } catch {}
 
-  t.comment(cwd)
+  t.diagnostic(cwd)
   await mkdir(cwd)
   await cp(testDir, cwd, { recursive: true })
 
-  t.teardown(async () => {
+  t.after(async () => {
     await safeRm(cwd)
   })
 
   try {
-    t.comment('running migrations')
+    t.diagnostic('running migrations')
     await execa('node', [cliPath, 'migrations', 'apply'], { cwd })
-    t.comment('first command')
+    t.diagnostic('first command')
     await execa('node', [cliPath, 'types'], { cwd })
-    t.comment('second command')
+    t.diagnostic('second command')
     await execa('node', [cliPath, 'types'], { cwd })
-    t.comment('Adjusting type reference to avoid loops')
+    t.diagnostic('Adjusting type reference to avoid loops')
     await adjustTypeReferenceToAvoidLoops(cwd)
-    t.comment('running tsd')
+    t.diagnostic('running tsd')
     await execa(pathToTSD, { cwd })
   } catch (err) {
     console.log(err.stdout)
     console.log(err.stderr)
-    t.fail(err.stderr)
+    assert.fail(err.stderr)
   }
-
-  t.pass()
 })
 
-t.test('should show warning if there is no entities', async (t) => {
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
+test('should show warning if there is no entities', async (t) => {
+  const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
+  const cwd = join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
   try {
     await safeRm(cwd)
@@ -129,24 +123,22 @@ t.test('should show warning if there is no entities', async (t) => {
 
   await cp(testDir, cwd, { recursive: true })
 
-  t.teardown(async () => {
+  t.after(async () => {
     await safeRm(cwd)
   })
 
   try {
     const { stdout } = await execa('node', [cliPath, 'types'], { cwd })
-    t.match(stdout, /(.*)No table found. Please run `platformatic db migrations apply` to generate types./)
+    assert.match(stdout, /(.*)No table found. Please run `platformatic db migrations apply` to generate types./)
   } catch (err) {
     console.log(err)
-    t.fail('Failed to generate types')
+    assert.fail('Failed to generate types')
   }
-
-  t.pass()
 })
 
-t.test('run migrate command with type generation', async (t) => {
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
+test('run migrate command with type generation', async (t) => {
+  const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
+  const cwd = join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
   const fieldRegex = /\n\s*(\w+)\??:/g
 
@@ -156,44 +148,42 @@ t.test('run migrate command with type generation', async (t) => {
 
   await cp(testDir, cwd, { recursive: true })
 
-  t.teardown(async () => {
+  t.after(async () => {
     await safeRm(cwd)
   })
 
   try {
     const child = await execa('node', [cliPath, 'migrations', 'apply'], { cwd })
-    t.equal(child.stdout.includes('Generated type for Movie entity.'), true)
-    t.equal(child.stdout.includes('Please run `npm i --save'), true)
+    assert.equal(child.stdout.includes('Generated type for Movie entity.'), true)
+    assert.equal(child.stdout.includes('Please run `npm i --save'), true)
 
-    t.comment('Adjusting type reference to avoid loops')
+    t.diagnostic('Adjusting type reference to avoid loops')
     await adjustTypeReferenceToAvoidLoops(cwd)
 
-    const globalDTs = await readFile(path.join(cwd, 'global.d.ts'), 'utf8')
-    const indexDTs = await readFile(path.join(cwd, 'types', 'index.d.ts'), 'utf8')
-    t.equal(globalDTs.indexOf('AggregateRating') < globalDTs.indexOf('Movie'), true)
-    t.equal(indexDTs.indexOf('AggregateRating') < indexDTs.indexOf('Movie'), true)
-    const aggregateRatingDTs = await readFile(path.join(cwd, 'types', 'AggregateRating.d.ts'), 'utf8')
-    t.same(
+    const globalDTs = await readFile(join(cwd, 'global.d.ts'), 'utf8')
+    const indexDTs = await readFile(join(cwd, 'types', 'index.d.ts'), 'utf8')
+    assert.equal(globalDTs.indexOf('AggregateRating') < globalDTs.indexOf('Movie'), true)
+    assert.equal(indexDTs.indexOf('AggregateRating') < indexDTs.indexOf('Movie'), true)
+    const aggregateRatingDTs = await readFile(join(cwd, 'types', 'AggregateRating.d.ts'), 'utf8')
+    assert.deepEqual(
       [...aggregateRatingDTs.matchAll(fieldRegex)].map(m => m[1]),
       ['id', 'movieId', 'rating', 'ratingType']
     )
-    const movieDTs = await readFile(path.join(cwd, 'types', 'Movie.d.ts'), 'utf8')
-    t.same(
+    const movieDTs = await readFile(join(cwd, 'types', 'Movie.d.ts'), 'utf8')
+    assert.deepEqual(
       [...movieDTs.matchAll(fieldRegex)].map(m => m[1]),
       ['id', 'boxOffice', 'title', 'year']
     )
 
     await execa(pathToTSD, { cwd })
   } catch (err) {
-    t.fail('Failed to generate types')
+    assert.fail('Failed to generate types')
   }
-
-  t.pass()
 })
 
-t.test('run migrate command with type generation without plugin in config', async (t) => {
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types-no-plugin')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
+test('run migrate command with type generation without plugin in config', async (t) => {
+  const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types-no-plugin')
+  const cwd = join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
   try {
     await safeRm(cwd)
@@ -201,41 +191,37 @@ t.test('run migrate command with type generation without plugin in config', asyn
 
   await cp(testDir, cwd, { recursive: true })
 
-  t.teardown(async () => {
+  t.after(async () => {
     await safeRm(cwd)
   })
 
   try {
     const child = await execa('node', [cliPath, 'migrations', 'apply'], { cwd })
-    t.equal(child.stdout.includes('Generated type for Graph entity.'), true)
-    t.equal(child.stdout.includes('Please run `npm i --save'), true)
+    assert.equal(child.stdout.includes('Generated type for Graph entity.'), true)
+    assert.equal(child.stdout.includes('Please run `npm i --save'), true)
 
-    t.comment('Adjusting type reference to avoid loops')
+    t.diagnostic('Adjusting type reference to avoid loops')
     await adjustTypeReferenceToAvoidLoops(cwd)
 
     await execa(pathToTSD, { cwd })
   } catch (err) {
     console.log(err)
-    t.fail('Failed to generate types')
+    assert.fail('Failed to generate types')
   }
-
-  t.pass()
 })
 
-t.test('missing config file', async ({ equal, match }) => {
+test('missing config file', async (t) => {
   try {
     await execa('node', [cliPath, 'seed'])
   } catch (err) {
-    equal(err.exitCode, 1)
-    match(err.stderr, 'Missing config file')
+    assert.equal(err.exitCode, 1)
+    assert.ok(err.stderr.includes('Missing config file'))
   }
 })
 
-t.test('generate types on start', async ({ plan, equal, teardown, fail, pass }) => {
-  plan(2)
-
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
+test('generate types on start', async (t) => {
+  const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
+  const cwd = join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
   try {
     await safeRm(cwd)
@@ -243,12 +229,11 @@ t.test('generate types on start', async ({ plan, equal, teardown, fail, pass }) 
 
   await cp(testDir, cwd, { recursive: true })
 
-  teardown(async () => {
+  const child = execa('node', [cliPath, 'start'], { cwd })
+  t.after(async () => {
+    child.kill('SIGINT')
     await safeRm(cwd)
   })
-
-  const child = execa('node', [cliPath, 'start'], { cwd })
-  teardown(() => child.kill('SIGINT'))
 
   const splitter = split()
   child.stdout.pipe(splitter)
@@ -261,92 +246,84 @@ t.test('generate types on start', async ({ plan, equal, teardown, fail, pass }) 
       break
     }
   }
-  equal(found, true)
+  assert.equal(found, true)
 
-  t.comment('sleep a bit to allow the fs to write everything down')
-  await sleep(100)
+  t.diagnostic('sleep a bit to allow the fs to write everything down')
+  await setTimeout(100)
 
-  t.comment('Adjusting type reference to avoid loops')
+  t.diagnostic('Adjusting type reference to avoid loops')
   await adjustTypeReferenceToAvoidLoops(cwd)
 
   try {
     await execa(pathToTSD, { cwd })
-    pass()
   } catch (err) {
     console.log(err)
-    fail('Failed to generate types')
+    assert.fail('Failed to generate types')
   }
 })
 
-t.test('correctly format entity type names', async (t) => {
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'chars-gen-types')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
+test('correctly format entity type names', async (t) => {
+  const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'chars-gen-types')
+  const cwd = join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
   try {
     await safeRm(cwd)
   } catch {}
   await cp(testDir, cwd, { recursive: true })
 
-  t.teardown(async () => {
+  t.after(async () => {
     await safeRm(cwd)
   })
 
   try {
     const child = await execa('node', [cliPath, 'migrations', 'apply'], { cwd })
-    t.equal(child.stdout.includes('Generated type for PltDb entity.'), true)
+    assert.equal(child.stdout.includes('Generated type for PltDb entity.'), true)
   } catch (err) {
     console.log(err)
-    t.fail('Failed to generate types')
+    assert.fail('Failed to generate types')
   }
-
-  t.pass()
 })
 
-t.test('use types directory from config as target folder', async (t) => {
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types-dir')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
+test('use types directory from config as target folder', async (t) => {
+  const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types-dir')
+  const cwd = join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
   try {
     await safeRm(cwd)
   } catch {}
   await cp(testDir, cwd, { recursive: true })
 
-  t.teardown(async () => {
+  t.after(async () => {
     await safeRm(cwd)
   })
 
   try {
     const child = await execa('node', [cliPath, 'migrations', 'apply'], { cwd })
-    t.equal(child.stdout.includes('Generated type for Graph entity.'), true)
+    assert.equal(child.stdout.includes('Generated type for Graph entity.'), true)
 
-    t.comment('Adjusting type reference to avoid loops')
+    t.diagnostic('Adjusting type reference to avoid loops')
     await adjustTypeReferenceToAvoidLoops(cwd)
     await execa(pathToTSD, { cwd })
   } catch (err) {
     console.log(err)
-    t.fail('Failed to generate types')
+    assert.fail('Failed to generate types')
   }
-
-  t.pass()
 })
 
-t.test('generate types on start while considering types directory', async ({ plan, equal, teardown, fail, pass }) => {
-  plan(2)
-
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types-dir')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
+test('generate types on start while considering types directory', async (t) => {
+  const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types-dir')
+  const cwd = join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
   try {
     await safeRm(cwd)
   } catch {}
   await cp(testDir, cwd, { recursive: true })
 
-  teardown(async () => {
+  const child = execa('node', [cliPath, 'start'], { cwd })
+  t.after(async () => {
+    child.kill('SIGINT')
     await safeRm(cwd)
   })
-
-  const child = execa('node', [cliPath, 'start'], { cwd })
-  teardown(() => child.kill('SIGINT'))
 
   const splitter = split()
   child.stdout.pipe(splitter)
@@ -359,19 +336,18 @@ t.test('generate types on start while considering types directory', async ({ pla
       break
     }
   }
-  equal(found, true)
+  assert.equal(found, true)
 
-  t.comment('Sleep to the the file system flush the file')
-  await sleep(100)
+  t.diagnostic('Sleep to the the file system flush the file')
+  await setTimeout(100)
 
-  t.comment('Adjusting type reference to avoid loops')
+  t.diagnostic('Adjusting type reference to avoid loops')
   await adjustTypeReferenceToAvoidLoops(cwd)
 
   try {
     await execa(pathToTSD, { cwd })
-    pass()
   } catch (err) {
     console.log(err)
-    fail('Failed to generate types')
+    assert.fail('Failed to generate types')
   }
 })

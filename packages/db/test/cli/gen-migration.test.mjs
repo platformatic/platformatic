@@ -1,14 +1,14 @@
-import { join } from 'path'
-import { tmpdir } from 'os'
-import { writeFile, mkdir, readdir, mkdtemp } from 'fs/promises'
-
+import assert from 'node:assert/strict'
+import { tmpdir } from 'node:os'
+import { test } from 'node:test'
+import { join } from 'node:path'
+import { writeFile, mkdir, readdir, mkdtemp } from 'node:fs/promises'
 import split from 'split2'
 import { once } from 'events'
 import { execa } from 'execa'
-import { test } from 'tap'
 import { cliPath } from './helper.js'
 
-test('generates next file correctly with empty dir', async ({ equal }) => {
+test('generates next file correctly with empty dir', async (t) => {
   const cwd = await mkdtemp(join(tmpdir(), 'gen-migration-test-'))
   const configFilePath = join(cwd, 'gen-migration.json')
   const migrationsDirPath = join(cwd, 'migrations')
@@ -32,12 +32,12 @@ test('generates next file correctly with empty dir', async ({ equal }) => {
   await execa('node', [cliPath, 'migrations', 'create', '-c', configFilePath], { cwd })
   const newMigrations = await readdir(migrationsDirPath)
 
-  equal(newMigrations.length, 2)
-  equal(newMigrations[0], '001.do.sql')
-  equal(newMigrations[1], '001.undo.sql')
+  assert.equal(newMigrations.length, 2)
+  assert.equal(newMigrations[0], '001.do.sql')
+  assert.equal(newMigrations[1], '001.undo.sql')
 })
 
-test('generates next file correctly with existing files', async ({ equal }) => {
+test('generates next file correctly with existing files', async (t) => {
   const cwd = await mkdtemp(join(tmpdir(), 'gen-migration-test-'))
   const configFilePath = join(cwd, 'gen-migration.json')
   const migrationsDirPath = join(cwd, 'migrations')
@@ -66,14 +66,14 @@ test('generates next file correctly with existing files', async ({ equal }) => {
   await child
   const newMigrations = await readdir(migrationsDirPath)
 
-  equal(newMigrations.length, 4)
-  equal(newMigrations[0], '001.do.sql')
-  equal(newMigrations[1], '001.undo.sql')
-  equal(newMigrations[2], '002.do.sql')
-  equal(newMigrations[3], '002.undo.sql')
+  assert.equal(newMigrations.length, 4)
+  assert.equal(newMigrations[0], '001.do.sql')
+  assert.equal(newMigrations[1], '001.undo.sql')
+  assert.equal(newMigrations[2], '002.do.sql')
+  assert.equal(newMigrations[3], '002.undo.sql')
 })
 
-test('throws if there is no migrations in the config', async ({ match }) => {
+test('throws if there is no migrations in the config', async (t) => {
   const cwd = await mkdtemp(join(tmpdir(), 'gen-migration-test-'))
   const configFilePath = join(cwd, 'gen-migration.json')
 
@@ -93,10 +93,10 @@ test('throws if there is no migrations in the config', async ({ match }) => {
   child.stderr.pipe(process.stderr)
   const output = child.stdout.pipe(split())
   const [data] = await once(output, 'data')
-  match(data, /Missing "migrations" section in config file/)
+  assert.match(data, /Missing "migrations" section in config file/)
 })
 
-test('throws if migrations directory does not exist', async ({ match }) => {
+test('throws if migrations directory does not exist', async (t) => {
   const cwd = await mkdtemp(join(tmpdir(), 'gen-migration-test-'))
   const configFilePath = join(cwd, 'gen-migration.json')
   const migrationsDirPath = join(cwd, 'migrations')
@@ -120,5 +120,5 @@ test('throws if migrations directory does not exist', async ({ match }) => {
   child.stderr.pipe(process.stderr)
   const output = child.stdout.pipe(split())
   const [data] = await once(output, 'data')
-  match(data, /Migrations directory (.*) does not exist/)
+  assert.match(data, /Migrations directory (.*) does not exist/)
 })

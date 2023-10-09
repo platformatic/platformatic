@@ -1,24 +1,28 @@
 'use strict'
 
-const { buildConfig, connInfo } = require('./helper')
-const { test } = require('tap')
-const { buildServer } = require('..')
+const assert = require('node:assert/strict')
+const { test } = require('node:test')
+const { join } = require('node:path')
 const { request } = require('undici')
-const { join } = require('path')
+const { buildServer } = require('..')
+const { buildConfigManager, getConnectionInfo } = require('./helper')
 
-test('extend schema via config', async ({ teardown, equal, same }) => {
+test('extend schema via config', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
+
   const schema = `
   extend type Query {
     names: [String]
   }
   `
-  const app = await buildServer(buildConfig({
+
+  const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0
     },
     db: {
-      ...connInfo,
+      ...connectionInfo,
       graphql: {
         schema
       }
@@ -29,10 +33,14 @@ test('extend schema via config', async ({ teardown, equal, same }) => {
     plugins: {
       paths: [join(__dirname, 'fixtures', 'name-resolver.js')]
     }
-  }))
+  }
 
-  teardown(async () => {
+  const configManager = await buildConfigManager(config)
+  const app = await buildServer({ configManager })
+
+  t.after(async () => {
     await app.close()
+    await dropTestDB()
   })
   await app.start()
 
@@ -50,8 +58,8 @@ test('extend schema via config', async ({ teardown, equal, same }) => {
         `
       })
     })
-    equal(res.statusCode, 200, 'names status code')
-    same(await res.body.json(), {
+    assert.equal(res.statusCode, 200, 'names status code')
+    assert.deepEqual(await res.body.json(), {
       data: {
         names: ['John', 'Jane']
       }
@@ -59,11 +67,34 @@ test('extend schema via config', async ({ teardown, equal, same }) => {
   }
 })
 
-test('extend schema via path', async ({ teardown, equal, same }) => {
-  const app = await buildServer(join(__dirname, 'fixtures', 'name-resolver.db.json'))
+test('extend schema via path', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  teardown(async () => {
+  const config = {
+    server: {
+      hostname: '127.0.0.1',
+      port: 0,
+      logger: {
+        level: 'error'
+      }
+    },
+    db: {
+      ...connectionInfo,
+      graphql: {
+        schemaPath: join(__dirname, 'fixtures', 'names.graphql')
+      }
+    },
+    plugins: {
+      paths: [join(__dirname, 'fixtures', 'name-resolver.js')]
+    }
+  }
+
+  const configManager = await buildConfigManager(config)
+  const app = await buildServer({ configManager })
+
+  t.after(async () => {
     await app.close()
+    await dropTestDB()
   })
   await app.start()
 
@@ -81,8 +112,8 @@ test('extend schema via path', async ({ teardown, equal, same }) => {
         `
       })
     })
-    equal(res.statusCode, 200, 'names status code')
-    same(await res.body.json(), {
+    assert.equal(res.statusCode, 200, 'names status code')
+    assert.deepEqual(await res.body.json(), {
       data: {
         names: ['John', 'Jane']
       }

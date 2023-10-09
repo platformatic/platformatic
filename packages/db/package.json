@@ -8,7 +8,10 @@
     "plt-db": "./db.mjs"
   },
   "scripts": {
-    "test": "pnpm run lint && tap --reporter=tap test/*test.js test/*/*test.mjs && tsd",
+    "test": "pnpm run lint && c8 node ./test/runner.js && tsd ",
+    "test:postgresql": "DB=postgresql node ./test/runner.js",
+    "test:mariadb": "DB=mariadb node ./test/runner.js",
+    "test:mysql": "DB=mysql node ./test/runner.js",
     "build": "node lib/schema.js | json2ts > config.d.ts",
     "lint": "standard | snazzy && ts-standard | snazzy"
   },
@@ -25,6 +28,8 @@
   "devDependencies": {
     "@databases/pg": "^5.4.1",
     "@databases/sql": "^3.3.0",
+    "c8": "^8.0.1",
+    "glob": "^10.3.10",
     "ajv": "^8.12.0",
     "bindings": "^1.5.0",
     "json-schema-to-typescript": "^13.1.1",
