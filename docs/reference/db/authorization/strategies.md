@@ -99,7 +99,7 @@ library can be specified in the `authorization.jwt.jwks` object.
 
 JWT claims can be namespaced to avoid name collisions. If so, we will receive tokens
 with custom claims such as: `https://platformatic.dev/X-PLATFORMATIC-ROLE`
-(where `https://platformatic.cloud/` is the namespace).
+(where `https://platformatic.dev/` is the namespace).
 If we want to map these claims to user metadata removing our namespace, we can
 specify the namespace in the JWT options:
 
