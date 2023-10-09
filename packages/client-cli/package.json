@@ -23,6 +23,8 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@platformatic/db": "workspace:*",
+    "@platformatic/runtime": "workspace:*",
+    "@platformatic/service": "workspace:*",
     "c8": "^8.0.1",
     "dotenv": "^16.3.1",
     "execa": "^8.0.1",
@@ -41,8 +43,6 @@
     "@platformatic/client": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/metaconfig": "workspace:*",
-    "@platformatic/runtime": "workspace:*",
-    "@platformatic/service": "workspace:*",
     "abstract-logging": "^2.0.1",
     "camelcase": "~6.3.0",
     "code-block-writer": "^12.0.0",

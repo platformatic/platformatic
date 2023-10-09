@@ -14,7 +14,6 @@ import { ConfigManager, loadConfig } from '@platformatic/config'
 import { analyze, write } from '@platformatic/metaconfig'
 import graphql from 'graphql'
 import { appendToBothEnvs } from './lib/utils.mjs'
-import { RuntimeApi, platformaticRuntime } from '@platformatic/runtime'
 import { findUp } from 'find-up'
 import pino from 'pino'
 import pinoPretty from 'pino-pretty'
@@ -290,6 +289,26 @@ export async function command (argv) {
   let runtime
 
   if (options.runtime) {
+    let RuntimeApi
+    let platformaticRuntime
+
+    try {
+      const imported = await import('@platformatic/runtime')
+      RuntimeApi = imported.RuntimeApi
+      platformaticRuntime = imported.platformaticRuntime
+
+      // Ignoring the catch block.
+      // TODO(mcollina): we would need to setup ESM import
+      // mocking.
+      /* c8 ignore next 7 */
+    } catch (err) {
+      if (err.code === 'ERR_MODULE_NOT_FOUND') {
+        logger.error('Impossible to create a runtime client outside of a runtime app')
+        process.exit(1)
+      }
+      throw err
+    }
+
     const runtimeConfigFile = await findUp('platformatic.runtime.json')
 
     const { configManager } = await loadConfig({}, ['-c', runtimeConfigFile], platformaticRuntime)
