@@ -303,7 +303,7 @@ export async function command (argv) {
       /* c8 ignore next 7 */
     } catch (err) {
       if (err.code === 'ERR_MODULE_NOT_FOUND') {
-        logger.error('Impossible to create a runtime client outside of a runtime app')
+        logger.error('We couldn\'t find the @platformatic/runtime package, make sure you have it installed.')
         process.exit(1)
       }
       throw err
