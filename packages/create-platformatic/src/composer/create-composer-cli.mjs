@@ -15,6 +15,7 @@ import { getRunPackageManagerInstall, getPort, getUseTypescript } from '../cli-o
 import { createReadme } from '../create-readme.mjs'
 import { stat } from 'node:fs/promises'
 import { join } from 'path'
+import { createGitRepository } from '../create-git-repository.mjs'
 
 export const getServicesToCompose = (servicesNames) => {
   return {
@@ -131,7 +132,10 @@ const createPlatformaticComposer = async (_args, opts) => {
   if (!opts.skipGitignore) {
     await createGitignore(logger, projectDir)
   }
-  await createReadme(logger, projectDir, 'composer')
+  await createReadme(logger, projectDir)
+  if (!opts.skipGitRepository) {
+    await createGitRepository(logger, projectDir)
+  }
 
   if (runPackageManagerInstall) {
     const spinner = ora('Installing dependencies...').start()
