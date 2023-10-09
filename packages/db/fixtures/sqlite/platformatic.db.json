@@ -7,7 +7,7 @@
     }
   },
   "db": {
-    "connectionString": "sqlite://./db"
+    "connectionString": "{DATABASE_URL}"
   },
   "migrations": {
     "dir": "./migrations",

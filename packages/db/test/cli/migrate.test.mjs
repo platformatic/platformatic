@@ -1,19 +1,33 @@
-import { cliPath, connectAndResetDB, getFixturesConfigFileLocation } from './helper.js'
-import { test } from 'tap'
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { join, dirname } from 'node:path'
+import { readFile, writeFile, unlink, stat } from 'node:fs/promises'
 import { execa } from 'execa'
 import stripAnsi from 'strip-ansi'
 import split from 'split2'
 import { once } from 'events'
-import fs from 'fs/promises'
-import { join, dirname } from 'path'
+import { getConnectionInfo } from '../helper.js'
+import { cliPath, connectDB, getFixturesConfigFileLocation } from './helper.js'
 
-test('migrate on start', async ({ equal, teardown }) => {
-  const db = await connectAndResetDB()
+test('migrate on start', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
+  const db = await connectDB(connectionInfo)
+
   let found = false
-  const child = execa('node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('auto-apply.json')])
+  const child = execa(
+    'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('auto-apply.json')],
+    {
+      env: {
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    }
+  )
 
-  teardown(() => child.kill('SIGINT'))
-  teardown(() => db.dispose())
+  t.after(async () => {
+    child.kill('SIGINT')
+    await db.dispose()
+    await dropTestDB()
+  })
 
   const splitter = split()
   child.stdout.pipe(splitter)
@@ -24,34 +38,52 @@ test('migrate on start', async ({ equal, teardown }) => {
       break
     }
   }
-  equal(found, true)
+  assert.equal(found, true)
 })
 
-test('validate migration checksums', async ({ equal, teardown }) => {
-  const db = await connectAndResetDB()
+test('validate migration checksums', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
+  const db = await connectDB(connectionInfo)
+
   let firstFound = false
 
-  const firstChild = execa('node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('validate-migrations-checksums.json')])
-
-  teardown(() => firstChild.kill('SIGINT'))
-  teardown(() => db.dispose())
+  const firstChild = execa(
+    'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('validate-migrations-checksums.json')],
+    {
+      env: {
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    }
+  )
 
   const splitter = split()
   firstChild.stdout.pipe(splitter)
   for await (const data of splitter) {
+    console.log(data)
     const sanitized = stripAnsi(data)
     if (sanitized.match(/(.*)running 001\.do\.sql/)) {
       firstFound = true
       break
     }
   }
-  equal(firstFound, true)
+  assert.equal(firstFound, true)
 
   let secondFound = false
-  const secondChild = execa('node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('validate-migrations-checksums.json')])
+  const secondChild = execa(
+    'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('validate-migrations-checksums.json')],
+    {
+      env: {
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    }
+  )
 
-  teardown(() => secondChild.kill('SIGINT'))
-  teardown(() => db.dispose())
+  t.after(async () => {
+    secondChild.kill('SIGINT')
+    firstChild.kill('SIGINT')
+    await db.dispose()
+    await dropTestDB()
+  })
 
   const secondSplitter = split()
   secondChild.stdout.pipe(secondSplitter)
@@ -62,49 +94,91 @@ test('validate migration checksums', async ({ equal, teardown }) => {
       break
     }
   }
-  equal(secondFound, true)
+  assert.equal(secondFound, true)
 })
 
-test('do not validate migration checksums if not configured', async ({ equal, match, teardown }) => {
-  const db = await connectAndResetDB()
+test('do not validate migration checksums if not configured', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
+  const db = await connectDB(connectionInfo)
 
-  const firstChild = execa('node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('auto-apply.json')])
-
-  teardown(() => firstChild.kill('SIGINT'))
-  teardown(() => db.dispose())
+  const firstChild = execa(
+    'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('auto-apply.json')],
+    {
+      env: {
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    }
+  )
 
   const splitter = split()
   const firstOutput = firstChild.stdout.pipe(splitter)
   const [message] = await once(firstOutput, 'data')
-  match(stripAnsi(message), /(.*)running(.*)(001\.do\.sql)/)
+  assert.match(stripAnsi(message), /(.*)running(.*)(001\.do\.sql)/)
 
-  const secondChild = execa('node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('auto-apply.json')])
+  const secondChild = execa(
+    'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('auto-apply.json')],
+    {
+      env: {
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    }
+  )
   secondChild.stderr.pipe(process.stderr)
 
-  teardown(() => secondChild.kill('SIGINT'))
+  t.after(async () => {
+    secondChild.kill('SIGINT')
+    firstChild.kill('SIGINT')
+    await db.dispose()
+    await dropTestDB()
+  })
 
   const secondOutput = secondChild.stdout.pipe(split(JSON.parse))
   // first output should be a "server listening" message
   // no migration logging is expected
   const [{ msg }] = await once(secondOutput, 'data')
-  match(msg, 'Server listening at http://127.0.0.1:')
+  assert.ok(msg.includes('Server listening at http://127.0.0.1:'))
 })
 
-test('throws if migrations directory does not exist', async ({ match }) => {
-  const child = execa('node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('invalid-migrations-directory.json')])
+test('throws if migrations directory does not exist', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
+
+  const child = execa(
+    'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('invalid-migrations-directory.json')],
+    {
+      env: {
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    }
+  )
 
   const output = child.stderr.pipe(split())
   const [data] = await once(output, 'data')
-  match(data, /Migrations directory (.*) does not exist/)
+
+  t.after(async () => {
+    await dropTestDB()
+  })
+
+  assert.match(data, /Migrations directory (.*) does not exist/)
 })
 
-test('do not run migrations by default', async ({ equal, teardown }) => {
-  const db = await connectAndResetDB()
+test('do not run migrations by default', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
+  const db = await connectDB(connectionInfo)
 
-  const firstChild = execa('node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('no-auto-apply.json')])
+  const firstChild = execa(
+    'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('no-auto-apply.json')],
+    {
+      env: {
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    }
+  )
 
-  teardown(() => firstChild.kill('SIGINT'))
-  teardown(() => db.dispose())
+  t.after(async () => {
+    firstChild.kill('SIGINT')
+    await db.dispose()
+    await dropTestDB()
+  })
 
   const splitter = split()
   const output = firstChild.stdout.pipe(splitter)
@@ -112,13 +186,13 @@ test('do not run migrations by default', async ({ equal, teardown }) => {
   {
     const [out] = await once(output, 'data')
     const { msg } = JSON.parse(out)
-    equal(msg, 'Ignored table "versions" not found.')
+    assert.equal(msg, 'Ignored table "versions" not found.')
   }
 
   {
     const [out] = await once(output, 'data')
     const { msg } = JSON.parse(out)
-    equal(msg, 'No tables found in the database. Are you connected to the right database? Did you forget to run your migrations? This guide can help with debugging Platformatic DB: https://docs.platformatic.dev/docs/guides/debug-platformatic-db')
+    assert.equal(msg, 'No tables found in the database. Are you connected to the right database? Did you forget to run your migrations? This guide can help with debugging Platformatic DB: https://docs.platformatic.dev/docs/guides/debug-platformatic-db')
   }
 
   const [{ exists }] = await db.query(db.sql(
@@ -130,34 +204,52 @@ test('do not run migrations by default', async ({ equal, teardown }) => {
         tablename  = 'graphs'
     );`
   ))
-  equal(exists, false)
+  assert.equal(exists, false)
 })
 
-test('migrate creates a schema.lock file', async ({ equal, teardown }) => {
-  const db = await connectAndResetDB()
+test('migrate creates a schema.lock file', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
+  const db = await connectDB(connectionInfo)
+
   let found = false
   const configPath = getFixturesConfigFileLocation('schemalock.json')
   const expectedFile = join(dirname(configPath), 'schema.lock')
 
   try {
-    await fs.unlink(expectedFile)
+    await unlink(expectedFile)
   } catch {}
 
-  await execa('node', [cliPath, 'migrations', 'apply', '-c', configPath])
+  await execa(
+    'node', [cliPath, 'migrations', 'apply', '-c', configPath],
+    {
+      env: {
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    }
+  )
 
-  teardown(async function () {
-    try {
-      await fs.unlink(expectedFile)
-    } catch {}
-  })
-  teardown(() => db.dispose())
-
-  const data = await fs.readFile(expectedFile)
+  const data = await readFile(expectedFile)
   // Let's just validate this is a valid JSON file
   JSON.parse(data)
 
-  const child = execa('node', [cliPath, 'start', '-c', configPath])
-  teardown(() => child.kill('SIGINT'))
+  const child = execa(
+    'node', [cliPath, 'start', '-c', configPath],
+    {
+      env: {
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    }
+  )
+
+  t.after(async () => {
+    child.kill('SIGINT')
+    await db.dispose()
+    await dropTestDB()
+
+    try {
+      await unlink(expectedFile)
+    } catch {}
+  })
 
   const splitter = split()
   child.stdout.pipe(splitter)
@@ -168,54 +260,78 @@ test('migrate creates a schema.lock file', async ({ equal, teardown }) => {
       break
     }
   }
-  equal(found, true)
+  assert.equal(found, true)
 })
 
-test('migrate creates a schema.lock file on a different path', async ({ equal, teardown }) => {
-  const db = await connectAndResetDB()
+test('migrate creates a schema.lock file on a different path', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
+  const db = await connectDB(connectionInfo)
+
   const configPath = getFixturesConfigFileLocation('schemalock.json')
   const expectedFile = join(dirname(configPath), 'schema.lock')
 
   try {
-    await fs.unlink(expectedFile)
+    await unlink(expectedFile)
   } catch {}
 
-  await execa('node', [cliPath, 'migrations', 'apply', '-c', configPath])
+  await execa(
+    'node', [cliPath, 'migrations', 'apply', '-c', configPath],
+    {
+      env: {
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    }
+  )
 
-  teardown(async function () {
+  t.after(async () => {
+    await db.dispose()
+    await dropTestDB()
+
     try {
-      await fs.unlink(expectedFile)
+      await unlink(expectedFile)
     } catch {}
   })
-  teardown(() => db.dispose())
 
-  const data = await fs.readFile(expectedFile)
+  const data = await readFile(expectedFile)
   // Let's just validate this is a valid JSON file
   JSON.parse(data)
 })
 
-test('start creates schema.lock if it is missing', async ({ equal, teardown }) => {
-  const db = await connectAndResetDB()
+test('start creates schema.lock if it is missing', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
+  const db = await connectDB(connectionInfo)
+
   let found = false
   const configPathWithoutSchemaLock = getFixturesConfigFileLocation('no-auto-apply.json')
   const configPath = getFixturesConfigFileLocation('schemalock.json')
   const expectedFile = join(dirname(configPath), 'schema.lock')
 
-  try {
-    await fs.unlink(expectedFile)
-  } catch {}
+  await unlink(expectedFile).catch(() => {})
 
-  await execa('node', [cliPath, 'migrations', 'apply', '-c', configPathWithoutSchemaLock])
+  await execa(
+    'node', [cliPath, 'migrations', 'apply', '-c', configPathWithoutSchemaLock],
+    {
+      env: {
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    }
+  )
 
-  teardown(async function () {
-    try {
-      await fs.unlink(expectedFile)
-    } catch {}
+  const child = execa(
+    'node', [cliPath, 'start', '-c', configPath],
+    {
+      env: {
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    }
+  )
+
+  t.after(async () => {
+    child.kill('SIGINT')
+    await db.dispose()
+    await dropTestDB()
+    await unlink(expectedFile).catch(() => {})
   })
-  teardown(() => db.dispose())
-
-  const child = execa('node', [cliPath, 'start', '-c', configPath])
-  teardown(() => child.kill('SIGINT'))
 
   const splitter = split()
   child.stdout.pipe(splitter)
@@ -226,27 +342,38 @@ test('start creates schema.lock if it is missing', async ({ equal, teardown }) =
       break
     }
   }
-  equal(found, true)
+  assert.equal(found, true)
 
-  const data = await fs.readFile(expectedFile)
+  const data = await readFile(expectedFile)
   // Let's just validate this is a valid JSON file
   JSON.parse(data)
 })
 
-test('start updates schema.lock with migrations autoApply', async ({ equal, ok, teardown }) => {
-  const db = await connectAndResetDB()
+test('start updates schema.lock with migrations autoApply', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
+  const db = await connectDB(connectionInfo)
+
   const configPath = getFixturesConfigFileLocation(
     'platformatic.db.json', ['update-schema-lock']
   )
   const schemaLockPath = join(dirname(configPath), 'schema.lock')
-  await fs.writeFile(schemaLockPath, '[]')
+  await writeFile(schemaLockPath, '[]')
 
-  teardown(() => fs.rm(schemaLockPath, { force: true }))
+  const child = execa(
+    'node', [cliPath, 'start', '-c', configPath],
+    {
+      env: {
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    }
+  )
 
-  const child = execa('node', [cliPath, 'start', '-c', configPath])
-
-  teardown(() => child.kill('SIGINT'))
-  teardown(() => db.dispose())
+  t.after(async () => {
+    child.kill('SIGINT')
+    await db.dispose()
+    await dropTestDB()
+    await unlink(schemaLockPath).catch(() => {})
+  })
 
   let found = false
   const splitter = split()
@@ -261,41 +388,54 @@ test('start updates schema.lock with migrations autoApply', async ({ equal, ok, 
     }
   }
 
-  equal(found, true)
+  assert.equal(found, true)
 
-  const schemaLockFile = await fs.readFile(schemaLockPath, 'utf8')
+  const schemaLockFile = await readFile(schemaLockPath, 'utf8')
   const schemaLock = JSON.parse(schemaLockFile)
 
   const versionsTableSchema = schemaLock.find(s => s.table === 'versions')
-  ok(versionsTableSchema)
+  assert.ok(versionsTableSchema)
 
   const graphsTableSchema = schemaLock.find(s => s.table === 'graphs')
-  ok(graphsTableSchema)
+  assert.ok(graphsTableSchema)
 })
 
-test('migrate does not update an existing schemalock file if no migrations have been applied', async ({ same, teardown }) => {
-  const db = await connectAndResetDB()
+test('migrate does not update an existing schemalock file if no migrations have been applied', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
+  const db = await connectDB(connectionInfo)
+
   const configPath = getFixturesConfigFileLocation('schemalock.json')
   const expectedFile = join(dirname(configPath), 'schema.lock')
 
-  try {
-    await fs.unlink(expectedFile)
-  } catch {}
+  await unlink(expectedFile).catch(() => {})
 
-  await execa('node', [cliPath, 'migrations', 'apply', '-c', configPath])
+  await execa(
+    'node', [cliPath, 'migrations', 'apply', '-c', configPath],
+    {
+      env: {
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    }
+  )
 
-  teardown(async function () {
-    try {
-      await fs.unlink(expectedFile)
-    } catch {}
+  t.after(async () => {
+    await db.dispose()
+    await dropTestDB()
+    await unlink(expectedFile).catch(() => {})
   })
-  teardown(() => db.dispose())
 
-  const stats1 = await fs.stat(expectedFile)
+  const stats1 = await stat(expectedFile)
 
-  await execa('node', [cliPath, 'migrations', 'apply', '-c', configPath])
+  await execa(
+    'node', [cliPath, 'migrations', 'apply', '-c', configPath],
+    {
+      env: {
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    }
+  )
 
-  const stats2 = await fs.stat(expectedFile)
+  const stats2 = await stat(expectedFile)
 
-  same(stats1, stats2)
+  assert.deepEqual(stats1, stats2)
 })

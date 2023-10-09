@@ -1,26 +1,55 @@
-import { test } from 'tap'
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
 import { execa } from 'execa'
-import { cliPath, connectAndResetDB, getFixturesConfigFileLocation } from './helper.mjs'
+import { getConnectionInfo } from '../helper.js'
+import { cliPath, getFixturesConfigFileLocation } from './helper.mjs'
 
 test('missing config', async (t) => {
-  await t.rejects(execa('node', [cliPath, 'start']))
+  await assert.rejects(execa('node', [cliPath, 'start']))
 })
 
 test('missing connectionString', async (t) => {
-  await t.rejects(execa('node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('no-connectionString.json')]))
+  await assert.rejects(execa('node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('no-connectionString.json')]))
 })
 
 test('missing migrations', async (t) => {
-  await t.rejects(execa('node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('no-migrations.json')]))
+  const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
+  t.after(async () => { await dropTestDB() })
+
+  await assert.rejects(execa(
+    'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('no-migrations.json')],
+    {
+      env: {
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    }
+  ))
 })
 
 test('missing migrations.dir', async (t) => {
-  await t.rejects(execa('node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('no-migrations-dir.json')]))
+  const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
+  t.after(async () => { await dropTestDB() })
+
+  await assert.rejects(execa(
+    'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('no-migrations-dir.json')],
+    {
+      env: {
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    }
+  ))
 })
 
 test('not applied migrations', async (t) => {
-  const db = await connectAndResetDB()
-  t.teardown(() => db.dispose())
+  const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
+  t.after(async () => { await dropTestDB() })
 
-  await t.rejects(execa('node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('bad-migrations.json')]))
+  await assert.rejects(execa(
+    'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('bad-migrations.json')],
+    {
+      env: {
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    }
+  ))
 })

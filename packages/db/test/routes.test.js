@@ -1,13 +1,16 @@
 'use strict'
 
-const { test } = require('tap')
-const { buildServer } = require('..')
-const { buildConfig, connInfo } = require('./helper')
+const assert = require('node:assert/strict')
+const { test } = require('node:test')
+const { join } = require('node:path')
 const { request } = require('undici')
-const { join } = require('path')
+const { buildServer } = require('..')
+const { buildConfigManager, getConnectionInfo } = require('./helper')
 
-test('should respond 200 on root endpoint', async ({ teardown, equal, same, match }) => {
-  const app = await buildServer(buildConfig({
+test('should respond 200 on root endpoint', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
+
+  const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -17,21 +20,25 @@ test('should respond 200 on root endpoint', async ({ teardown, equal, same, matc
       }
     },
     db: {
-      ...connInfo
+      ...connectionInfo
     }
-  }))
+  }
 
-  teardown(async () => {
+  const configManager = await buildConfigManager(config)
+  const app = await buildServer({ configManager })
+
+  t.after(async () => {
     await app.close()
+    await dropTestDB()
   })
   await app.start()
 
   {
     // No browser (i.e. curl)
     const res = await (request(`${app.url}/`))
-    equal(res.statusCode, 200)
+    assert.equal(res.statusCode, 200)
     const body = await res.body.json()
-    same(body, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
+    assert.deepEqual(body, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
   }
 
   {
@@ -42,16 +49,18 @@ test('should respond 200 on root endpoint', async ({ teardown, equal, same, matc
       }
     }))
     const html = await res.body.text()
-    equal(res.statusCode, 200)
-    equal(res.headers['content-type'], 'text/html; charset=UTF-8')
+    assert.equal(res.statusCode, 200)
+    assert.equal(res.headers['content-type'], 'text/html; charset=UTF-8')
     // has links to OpenAPI/GraphQL docs
-    match(html, '<a id="openapi-link" target="_blank" class="button-link">OpenAPI Documentation</a>')
-    match(html, '<a id="graphql-link" target="_blank" class="button-link">GraphiQL</a>')
+    assert.ok(html.includes('<a id="openapi-link" target="_blank" class="button-link">OpenAPI Documentation</a>'))
+    assert.ok(html.includes('<a id="graphql-link" target="_blank" class="button-link">GraphiQL</a>'))
   }
 })
 
-test('should not overwrite a plugin which define a root endpoint', async ({ teardown, equal, same }) => {
-  const app = await buildServer(buildConfig({
+test('should not overwrite a plugin which define a root endpoint', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
+
+  const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -61,45 +70,55 @@ test('should not overwrite a plugin which define a root endpoint', async ({ tear
       }
     },
     db: {
-      ...connInfo
+      ...connectionInfo
     },
     plugins: {
       paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')]
     }
-  }))
+  }
 
-  teardown(async () => {
+  const configManager = await buildConfigManager(config)
+  const app = await buildServer({ configManager })
+
+  t.after(async () => {
     await app.close()
+    await dropTestDB()
   })
   await app.start()
 
   const res = await (request(`${app.url}/`))
-  equal(res.statusCode, 200)
+  assert.equal(res.statusCode, 200)
   const body = await res.body.json()
-  same(body, { message: 'Root Plugin' })
+  assert.deepEqual(body, { message: 'Root Plugin' })
 })
 
-test('should exclude the root endpoint from the openapi documentation', async ({ teardown, equal, has }) => {
-  const app = await buildServer(buildConfig({
+test('should exclude the root endpoint from the openapi documentation', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
+
+  const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0
     },
     db: {
-      ...connInfo
+      ...connectionInfo
     },
     authorization: {
       adminSecret: 'secret'
     }
-  }))
+  }
 
-  teardown(async () => {
+  const configManager = await buildConfigManager(config)
+  const app = await buildServer({ configManager })
+
+  t.after(async () => {
     await app.close()
+    await dropTestDB()
   })
   await app.start()
 
   const res = await (request(`${app.url}/documentation/json`))
   const openapi = await res.body.json()
-  equal(res.statusCode, 200)
-  has(openapi.paths, { '/': undefined })
+  assert.equal(res.statusCode, 200)
+  assert.equal(openapi.paths['/'], undefined)
 })

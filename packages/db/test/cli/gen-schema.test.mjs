@@ -1,17 +1,25 @@
-import { test } from 'tap'
-import fs from 'fs/promises'
-import { generateJsonSchemaConfig } from '../../lib/gen-schema.mjs'
+import assert from 'node:assert/strict'
+import { tmpdir } from 'node:os'
+import { test } from 'node:test'
+import { join } from 'node:path'
+import { readFile, mkdtemp, rm } from 'node:fs/promises'
 import Ajv from 'ajv'
+import { execa } from 'execa'
 import { schema } from '../../lib/schema.js'
+import { cliPath } from './helper.js'
 
 test('generateJsonSchemaConfig generates the file', async (t) => {
-  process.chdir('./test/tmp')
-  await generateJsonSchemaConfig()
+  const cwd = await mkdtemp(join(tmpdir(), 'gen-schema-test-'))
+  t.after(async () => {
+    await rm(cwd, { recursive: true, force: true })
+  })
 
-  const configSchema = JSON.parse(await fs.readFile('platformatic.db.schema.json', 'utf8'))
+  await execa('node', [cliPath, 'schema', 'config'], { cwd })
+
+  const configSchema = JSON.parse(await readFile(join(cwd, 'platformatic.db.schema.json'), 'utf8'))
   const ajv = new Ajv()
   ajv.addKeyword('resolvePath')
   // this should not throw
   ajv.compile(schema)
-  t.same(configSchema, schema)
+  assert.deepEqual(configSchema, schema)
 })

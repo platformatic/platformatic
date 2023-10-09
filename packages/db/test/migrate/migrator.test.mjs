@@ -1,12 +1,11 @@
-import { join } from 'path'
-import { tmpdir } from 'os'
-import { mkdtemp, mkdir } from 'fs/promises'
-
+import assert from 'node:assert/strict'
+import { tmpdir } from 'node:os'
+import { test } from 'node:test'
+import { join } from 'node:path'
+import { mkdtemp, mkdir } from 'node:fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import Postgrator from 'postgrator'
-
-import { test } from 'tap'
 import { Migrator } from '../../lib/migrator.mjs'
 
 test('should not throw error if setup migrator twice', async (t) => {
@@ -38,9 +37,9 @@ test('should not throw error if setup migrator twice', async (t) => {
     logger
   )
 
-  t.teardown(() => migrator.close())
+  t.after(() => migrator.close())
   await migrator.setupPostgrator()
   await migrator.setupPostgrator()
 
-  t.ok(migrator.postgrator instanceof Postgrator)
+  assert.ok(migrator.postgrator instanceof Postgrator)
 })

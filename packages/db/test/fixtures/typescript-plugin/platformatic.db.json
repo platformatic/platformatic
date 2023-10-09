@@ -7,7 +7,7 @@
     "port": "3042"
   },
   "db": {
-    "connectionString": "sqlite://db.sqlite",
+    "connectionString": "{DATABASE_URL}",
     "graphql": true,
     "ignore": {
       "versions": true

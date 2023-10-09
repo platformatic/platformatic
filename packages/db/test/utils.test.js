@@ -1,18 +1,19 @@
 'use strict'
 
-const { test } = require('tap')
+const assert = require('node:assert/strict')
+const os = require('node:os')
+const { test } = require('node:test')
 const { urlDirname } = require('../lib/utils')
-const os = require('os')
+
 const isWindows = os.platform() === 'win32'
 
-test('urlDirname', ({ same, plan }) => {
-  plan(1)
+test('urlDirname', (t) => {
   let filePath
   if (isWindows) {
     filePath = 'file://C:\\Users\\matteo\\path\\to\\file.json'
-    same(urlDirname(filePath), 'C:\\Users\\matteo\\path\\to')
+    assert.equal(urlDirname(filePath), 'C:\\Users\\matteo\\path\\to')
   } else {
     filePath = 'file:///path/to/file.json'
-    same(urlDirname(filePath), '/path/to')
+    assert.equal(urlDirname(filePath), '/path/to')
   }
 })

@@ -1,6 +1,6 @@
 {
   "db": {
-    "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres",
+    "connectionString": "{DATABASE_URL}",
     "schemalock": true
   },
   "server": {

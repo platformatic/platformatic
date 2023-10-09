@@ -1,48 +1,65 @@
-import path from 'path'
-import os from 'os'
-import { access, cp } from 'fs/promises'
-import t from 'tap'
+import os from 'node:os'
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { join } from 'node:path'
+import { access, cp } from 'node:fs/promises'
 import { execa } from 'execa'
 import stripAnsi from 'strip-ansi'
 import split from 'split2'
-import { cliPath } from './helper.js'
 import { urlDirname } from '../../lib/utils.js'
+import { getConnectionInfo } from '../helper.js'
+import { cliPath } from './helper.js'
 
-t.test('should compile typescript plugin', async (t) => {
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-1')
+test('should compile typescript plugin', async (t) => {
+  const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
+  const cwd = join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-1')
 
   await cp(testDir, cwd, { recursive: true })
 
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
+  t.after(async () => {
+    await dropTestDB()
+  })
+
   try {
-    const child = await execa('node', [cliPath, 'compile'], { cwd })
-    t.equal(child.stdout.includes('Typescript compilation completed successfully.'), true)
+    const child = await execa('node', [cliPath, 'compile'], {
+      cwd,
+      env: {
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    })
+    assert.equal(child.stdout.includes('Typescript compilation completed successfully.'), true)
   } catch (err) {
     console.log(err)
     console.log(err.stdout)
     console.log(err.stderr)
-    t.fail(err.stderr)
+    assert.fail(err.stderr)
   }
 
-  const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
+  const jsPluginPath = join(cwd, 'dist', 'plugin.js')
   try {
     await access(jsPluginPath)
   } catch (err) {
-    t.fail(err)
+    assert.fail(err)
   }
-
-  t.pass()
 })
 
-t.test('should compile typescript plugin with start command', async (t) => {
-  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-3')
+test('should compile typescript plugin with start command', async (t) => {
+  const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
+  const cwd = join(urlDirname(import.meta.url), '..', 'tmp', 'typescript-plugin-clone-3')
 
   await cp(testDir, cwd, { recursive: true })
 
-  const child = execa('node', [cliPath, 'start'], { cwd })
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  t.teardown(async () => {
+  const child = execa('node', [cliPath, 'start'], {
+    cwd,
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
+    }
+  })
+
+  t.after(async () => {
     if (os.platform() === 'win32') {
       try {
         await execa('taskkill', ['/pid', child.pid, '/f', '/t'])
@@ -52,6 +69,7 @@ t.test('should compile typescript plugin with start command', async (t) => {
     } else {
       child.kill('SIGINT')
     }
+    await dropTestDB()
   })
 
   const splitter = split()
@@ -62,9 +80,8 @@ t.test('should compile typescript plugin with start command', async (t) => {
     console.log(data)
     const sanitized = stripAnsi(data)
     if (sanitized.includes('Typescript plugin loaded')) {
-      t.pass()
       return
     }
   }
-  t.fail('should compile typescript plugin with start command')
+  assert.fail('should compile typescript plugin with start command')
 })

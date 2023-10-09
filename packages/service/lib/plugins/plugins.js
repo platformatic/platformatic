@@ -38,9 +38,11 @@ async function loadPlugins (app) {
   if (isOutDirAccessible) {
     config.plugins.paths = config.plugins.paths.map((plugin) => {
       /* c8 ignore next 3 */
-      return typeof plugin === 'string'
+      const tmp = typeof plugin === 'string'
         ? getJSPluginPath(workingDir, plugin, outDir)
         : { ...plugin, path: getJSPluginPath(workingDir, plugin.path, outDir) }
+      console.log('tmp', workingDir)
+      return tmp
     })
   }
 

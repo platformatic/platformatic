@@ -1,31 +1,35 @@
 'use strict'
 
-const { connInfo, clear, createBasicPages, buildConfig } = require('./helper')
-const { test } = require('tap')
-const { buildServer } = require('..')
+const assert = require('node:assert/strict')
+const { test } = require('node:test')
+const { join } = require('node:path')
+const { rm } = require('node:fs/promises')
 const { request } = require('undici')
-const { rm } = require('fs/promises')
-const path = require('path')
+const { buildServer } = require('..')
+const { buildConfigManager, getConnectionInfo, createBasicPages } = require('./helper')
 
-test('starts, query and stop', async ({ teardown, equal, pass, same }) => {
-  const app = await buildServer(buildConfig({
+test('starts, query and stop', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
+
+  const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0
     },
     db: {
-      ...connInfo,
+      ...connectionInfo,
       async onDatabaseLoad (db, sql) {
-        pass('onDatabaseLoad called')
-
-        await clear(db, sql)
         await createBasicPages(db, sql)
       }
     }
-  }))
+  }
 
-  teardown(async () => {
+  const configManager = await buildConfigManager(config)
+  const app = await buildServer({ configManager })
+
+  t.after(async () => {
     await app.close()
+    await dropTestDB()
   })
   await app.start()
 
@@ -44,11 +48,13 @@ test('starts, query and stop', async ({ teardown, equal, pass, same }) => {
         `
       })
     })
-    equal(res.statusCode, 200, 'savePage status code')
-    same(await res.body.json(), {
+    assert.equal(res.statusCode, 200, 'savePage status code')
+
+    const data = await res.body.json()
+    assert.deepEqual(data, {
       data: {
         savePage: {
-          id: 1,
+          id: '1',
           title: 'Hello'
         }
       }
@@ -70,11 +76,11 @@ test('starts, query and stop', async ({ teardown, equal, pass, same }) => {
         `
       })
     })
-    equal(res.statusCode, 200, 'pages status code')
-    same(await res.body.json(), {
+    assert.equal(res.statusCode, 200, 'pages status code')
+    assert.deepEqual(await res.body.json(), {
       data: {
         getPageById: {
-          id: 1,
+          id: '1',
           title: 'Hello'
         }
       }
@@ -96,11 +102,11 @@ test('starts, query and stop', async ({ teardown, equal, pass, same }) => {
         `
       })
     })
-    equal(res.statusCode, 200, 'savePage status code')
-    same(await res.body.json(), {
+    assert.equal(res.statusCode, 200, 'savePage status code')
+    assert.deepEqual(await res.body.json(), {
       data: {
         savePage: {
-          id: 1,
+          id: '1',
           title: 'Hello World'
         }
       }
@@ -122,11 +128,11 @@ test('starts, query and stop', async ({ teardown, equal, pass, same }) => {
         `
       })
     })
-    equal(res.statusCode, 200, 'pages status code')
-    same(await res.body.json(), {
+    assert.equal(res.statusCode, 200, 'pages status code')
+    assert.deepEqual(await res.body.json(), {
       data: {
         getPageById: {
-          id: 1,
+          id: '1',
           title: 'Hello World'
         }
       }
@@ -134,25 +140,28 @@ test('starts, query and stop', async ({ teardown, equal, pass, same }) => {
   }
 })
 
-test('inject', async ({ teardown, equal, pass, same }) => {
-  const app = await buildServer(buildConfig({
+test('inject', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
+
+  const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0
     },
     db: {
-      ...connInfo,
+      ...connectionInfo,
       async onDatabaseLoad (db, sql) {
-        pass('onDatabaseLoad called')
-
-        await clear(db, sql)
         await createBasicPages(db, sql)
       }
     }
-  }))
+  }
 
-  teardown(async () => {
+  const configManager = await buildConfigManager(config)
+  const app = await buildServer({ configManager })
+
+  t.after(async () => {
     await app.close()
+    await dropTestDB()
   })
   await app.start()
 
@@ -172,11 +181,11 @@ test('inject', async ({ teardown, equal, pass, same }) => {
         `
       })
     })
-    equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    assert.equal(res.statusCode, 200, 'savePage status code')
+    assert.deepEqual(res.json(), {
       data: {
         savePage: {
-          id: 1,
+          id: '1',
           title: 'Hello'
         }
       }
@@ -184,15 +193,17 @@ test('inject', async ({ teardown, equal, pass, same }) => {
   }
 })
 
-test('ignore and sqlite3', async ({ teardown, equal, pass, same }) => {
-  const dbLocation = path.join(__dirname, '..', 'fixtures', 'sqlite', 'db')
-  const migrations = path.join(__dirname, '..', 'fixtures', 'sqlite', 'migrations')
+test('ignore and sqlite3', async (t) => {
+  const dbLocation = join(__dirname, '..', 'fixtures', 'sqlite', 'db-ignore-and-sqlite3')
+  const migrations = join(__dirname, '..', 'fixtures', 'sqlite', 'migrations')
+
   try {
     await rm(dbLocation)
   } catch {
     // ignore
   }
-  const app = await buildServer(buildConfig({
+
+  const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -203,31 +214,36 @@ test('ignore and sqlite3', async ({ teardown, equal, pass, same }) => {
     migrations: {
       dir: migrations
     }
-  }))
+  }
 
-  teardown(async () => {
+  const configManager = await buildConfigManager(config)
+  const app = await buildServer({ configManager })
+
+  t.after(async () => {
     await app.close()
+    await rm(dbLocation)
   })
   await app.start()
 
   {
     const res = await (request(`${app.url}/`))
-    equal(res.statusCode, 200, 'root status code')
+    assert.equal(res.statusCode, 200, 'root status code')
     res.body.resume()
   }
 })
 
-test('starts a config file on disk with auto-apply', async ({ teardown, equal, pass, same }) => {
-  const app = await buildServer(path.join(__dirname, 'fixtures', 'sqlite', 'no-logger.json'))
+test('starts a config file on disk with auto-apply', async (t) => {
+  const app = await buildServer(join(__dirname, 'fixtures', 'sqlite', 'no-logger.json'))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
+    await rm(join(__dirname, 'fixtures', 'sqlite', 'db-no-logger'))
   })
   await app.start()
 
   {
     const res = await (request(`${app.url}/`))
-    equal(res.statusCode, 200, 'root status code')
+    assert.equal(res.statusCode, 200, 'root status code')
     res.body.resume()
   }
 })

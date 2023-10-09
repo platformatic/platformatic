@@ -1,12 +1,15 @@
 'use strict'
 
-const { test } = require('tap')
-const { buildServer } = require('..')
-const { buildConfig, connInfo } = require('./helper')
+const assert = require('node:assert/strict')
+const { test } = require('node:test')
 const { request } = require('undici')
+const { buildServer } = require('..')
+const { buildConfigManager, getConnectionInfo } = require('./helper')
 
-test('healthcheck route enabled with interval', async ({ teardown, equal, same }) => {
-  const app = await buildServer(buildConfig({
+test('healthcheck route enabled with interval', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
+
+  const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -16,31 +19,35 @@ test('healthcheck route enabled with interval', async ({ teardown, equal, same }
       }
     },
     db: {
-      ...connInfo
+      ...connectionInfo
     },
     authorization: {
       adminSecret: 'secret'
     }
-  }))
+  }
 
-  teardown(async () => {
+  const configManager = await buildConfigManager(config)
+  const app = await buildServer({ configManager })
+
+  t.after(async () => {
     await app.close()
+    await dropTestDB()
   })
   await app.start()
 
   {
     const res = await (request(`${app.url}/status`))
-    equal(res.statusCode, 200)
+    assert.equal(res.statusCode, 200)
     const body = await res.body.json()
-    same(body, { status: 'ok' })
+    assert.deepEqual(body, { status: 'ok' })
   }
 
   {
     await app.platformatic.db.dispose()
     const res = await (request(`${app.url}/status`))
-    equal(res.statusCode, 503)
+    assert.equal(res.statusCode, 503)
     const body = await res.body.json()
-    same(body, {
+    assert.deepEqual(body, {
       statusCode: 503,
       code: 'FST_UNDER_PRESSURE',
       error: 'Service Unavailable',
@@ -49,39 +56,45 @@ test('healthcheck route enabled with interval', async ({ teardown, equal, same }
   }
 })
 
-test('healthcheck route enabled without interval', async ({ teardown, equal, same }) => {
-  const app = await buildServer(buildConfig({
+test('healthcheck route enabled without interval', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
+
+  const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0,
       healthCheck: true
     },
     db: {
-      ...connInfo
+      ...connectionInfo
     },
     authorization: {
       adminSecret: 'secret'
     }
-  }))
+  }
 
-  teardown(async () => {
+  const configManager = await buildConfigManager(config)
+  const app = await buildServer({ configManager })
+
+  t.after(async () => {
     await app.close()
+    await dropTestDB()
   })
   await app.start()
 
   {
     const res = await (request(`${app.url}/status`))
-    equal(res.statusCode, 200)
+    assert.equal(res.statusCode, 200)
     const body = await res.body.json()
-    same(body, { status: 'ok' })
+    assert.deepEqual(body, { status: 'ok' })
   }
 
   {
     await app.platformatic.db.dispose()
     const res = await (request(`${app.url}/status`))
-    equal(res.statusCode, 503)
+    assert.equal(res.statusCode, 503)
     const body = await res.body.json()
-    same(body, {
+    assert.deepEqual(body, {
       statusCode: 503,
       code: 'FST_UNDER_PRESSURE',
       error: 'Service Unavailable',
@@ -90,31 +103,39 @@ test('healthcheck route enabled without interval', async ({ teardown, equal, sam
   }
 })
 
-test('healthcheck route disabled', async ({ teardown, equal, same }) => {
-  const app = await buildServer(buildConfig({
+test('healthcheck route disabled', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
+
+  const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0
     },
     db: {
-      ...connInfo
+      ...connectionInfo
     },
     authorization: {
       adminSecret: 'secret'
     }
-  }))
+  }
 
-  teardown(async () => {
+  const configManager = await buildConfigManager(config)
+  const app = await buildServer({ configManager })
+
+  t.after(async () => {
     await app.close()
+    await dropTestDB()
   })
   await app.start()
 
   const res = await (request(`${app.url}/status`))
-  equal(res.statusCode, 404)
+  assert.equal(res.statusCode, 404)
 })
 
-test('healthcheck route enabled with interval and maxEventLoopUtilization', async ({ teardown, equal, same }) => {
-  const app = await buildServer(buildConfig({
+test('healthcheck route enabled with interval and maxEventLoopUtilization', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
+
+  const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -125,31 +146,35 @@ test('healthcheck route enabled with interval and maxEventLoopUtilization', asyn
       }
     },
     db: {
-      ...connInfo
+      ...connectionInfo
     },
     authorization: {
       adminSecret: 'secret'
     }
-  }))
+  }
 
-  teardown(async () => {
+  const configManager = await buildConfigManager(config)
+  const app = await buildServer({ configManager })
+
+  t.after(async () => {
     await app.close()
+    await dropTestDB()
   })
   await app.start()
 
   {
     const res = await (request(`${app.url}/status`))
-    equal(res.statusCode, 200)
+    assert.equal(res.statusCode, 200)
     const body = await res.body.json()
-    same(body, { status: 'ok' })
+    assert.deepEqual(body, { status: 'ok' })
   }
 
   {
     await app.platformatic.db.dispose()
     const res = await (request(`${app.url}/status`))
-    equal(res.statusCode, 503)
+    assert.equal(res.statusCode, 503)
     const body = await res.body.json()
-    same(body, {
+    assert.deepEqual(body, {
       statusCode: 503,
       code: 'FST_UNDER_PRESSURE',
       error: 'Service Unavailable',
