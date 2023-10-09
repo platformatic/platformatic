@@ -26,7 +26,7 @@ setGlobalDispatcher(new Agent({
 const cliPath = join(__dirname, '..', '..', 'db.mjs')
 
 async function connectDB (connectionInfo) {
-  const db = await createConnectionPool({
+  const { db } = await createConnectionPool({
     log: {
       debug: () => {},
       info: () => {},
