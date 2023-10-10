@@ -97,8 +97,8 @@ jobs:
       run: cd packages/cli && pnpm link --global && cd ../..
     - name: Setup local git user and email
       run: |
-        git config user.name 'Platformatic Github Actions'
-        git config user.email 'info@platformatic.dev'
+        git config --global user.name 'Platformatic Github Actions'
+        git config --global user.email 'info@platformatic.dev'
     - name: Run test suite
       run: cd packages/create-platformatic && pnpm test
 
