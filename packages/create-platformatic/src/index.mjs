@@ -11,6 +11,7 @@ import commist from 'commist'
 import { getUsername, getVersion, minimumSupportedNodeVersions, isCurrentVersionSupported, findRuntimeConfigFile, getDependencyVersion } from './utils.mjs'
 import { createPackageJson } from './create-package-json.mjs'
 import { createGitignore } from './create-gitignore.mjs'
+import { createGitRepository } from './create-git-repository.mjs'
 
 export async function chooseKind (argv, opts = {}) {
   const skip = opts.skip
@@ -107,6 +108,7 @@ export default createPlatformatic
 export {
   createPackageJson,
   createGitignore,
+  createGitRepository,
   getVersion,
   getDependencyVersion
 }

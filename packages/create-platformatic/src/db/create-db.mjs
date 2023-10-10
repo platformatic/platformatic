@@ -4,6 +4,7 @@ import { addPrefixToEnv, findDBConfigFile, isFileAccessible } from '../utils.mjs
 import { getTsConfig } from '../get-tsconfig.mjs'
 import { generatePlugins } from '../create-plugins.mjs'
 import { createDynamicWorkspaceGHAction, createStaticWorkspaceGHAction } from '../ghaction.mjs'
+import { createGitRepository } from '../create-git-repository.mjs'
 
 const connectionStrings = {
   postgres: 'postgres://postgres:postgres@127.0.0.1:5432/postgres',
@@ -349,7 +350,8 @@ export async function createDB (params, logger, currentDir, version) {
     connectionString,
     staticWorkspaceGitHubAction,
     dynamicWorkspaceGitHubAction,
-    runtimeContext
+    runtimeContext,
+    initGitRepository
   } = params
 
   const dbEnv = {
@@ -457,9 +459,14 @@ export async function createDB (params, logger, currentDir, version) {
     await createDynamicWorkspaceGHAction(logger, dbEnv, './platformatic.db.json', currentDir, typescript)
   }
 
+  if (initGitRepository) {
+    await createGitRepository(logger, currentDir)
+  }
+
   if (isRuntimeContext) {
     return addPrefixToEnv(isRuntimeContext)
   }
+
   return dbEnv
 }
 

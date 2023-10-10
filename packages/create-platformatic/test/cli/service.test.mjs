@@ -43,6 +43,9 @@ test('Creates a Platformatic Service with no typescript', async ({ equal, same, 
   }, {
     match: 'Do you want to enable PR Previews in your application',
     do: [keys.DOWN, keys.ENTER]
+  }, {
+    match: 'Do you want to init the git repository',
+    do: [keys.DOWN, keys.ENTER] // yes
   }]
   await executeCreatePlatformatic(tmpDir, actions, 'All done!')
 
@@ -56,6 +59,7 @@ test('Creates a Platformatic Service with no typescript', async ({ equal, same, 
   equal(await isFileAccessible(join(baseProjectDir, 'README.md')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'routes', 'root.js')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'plugins', 'example.js')), true)
+  equal(await isFileAccessible(join(baseProjectDir, '.git', 'config')), true)
 })
 
 test('Creates a Platformatic Service with typescript', async ({ equal, same, match, teardown }) => {
@@ -83,6 +87,9 @@ test('Creates a Platformatic Service with typescript', async ({ equal, same, mat
   }, {
     match: 'Do you want to enable PR Previews in your application',
     do: [keys.ENTER] // yes
+  }, {
+    match: 'Do you want to init the git repository',
+    do: [keys.ENTER] // no
   }]
   await executeCreatePlatformatic(tmpDir, actions, 'All done!')
 
@@ -99,4 +106,5 @@ test('Creates a Platformatic Service with typescript', async ({ equal, same, mat
   equal(await isFileAccessible(join(baseProjectDir, 'global.d.ts')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.github', 'workflows', 'platformatic-dynamic-workspace-deploy.yml')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.github', 'workflows', 'platformatic-static-workspace-deploy.yml')), true)
+  equal(await isFileAccessible(join(baseProjectDir, '.git', 'config')), false)
 })

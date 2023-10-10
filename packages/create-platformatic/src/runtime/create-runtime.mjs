@@ -3,6 +3,7 @@ import { findRuntimeConfigFile } from '../utils.mjs'
 import { join, relative, isAbsolute } from 'path'
 import * as desm from 'desm'
 import { createDynamicWorkspaceGHAction, createStaticWorkspaceGHAction } from '../ghaction.mjs'
+import { createGitRepository } from '../create-git-repository.mjs'
 
 function generateConfig (version, path, entrypoint) {
   const config = {
@@ -25,9 +26,10 @@ async function createRuntime (params, logger, currentDir = process.cwd(), versio
     entrypoint,
     entrypointPort,
     staticWorkspaceGitHubAction,
-    dynamicWorkspaceGitHubAction
+    dynamicWorkspaceGitHubAction,
+    initGitRepository
   } = params
-
+  console.log('@@@@@@@@@@@@@@@@', params)
   if (!version) {
     const pkg = await readFile(desm.join(import.meta.url, '..', '..', 'package.json'))
     version = JSON.parse(pkg).version
@@ -59,6 +61,9 @@ async function createRuntime (params, logger, currentDir = process.cwd(), versio
     await createDynamicWorkspaceGHAction(logger, runtimeEnv, './platformatic.runtime.json', currentDir, false)
   }
 
+  if (initGitRepository) {
+    await createGitRepository(logger, currentDir)
+  }
   return {}
 }
 /**

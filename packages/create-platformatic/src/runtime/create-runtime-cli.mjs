@@ -11,7 +11,7 @@ import { execa } from 'execa'
 import ora from 'ora'
 import createRuntime from './create-runtime.mjs'
 import askDir from '../ask-dir.mjs'
-import { getPort, getRunPackageManagerInstall } from '../cli-options.mjs'
+import { getInitGitRepository, getPort, getRunPackageManagerInstall } from '../cli-options.mjs'
 import generateName from 'boring-name-generator'
 import { chooseKind } from '../index.mjs'
 import { createReadme } from '../create-readme.mjs'
@@ -67,10 +67,12 @@ export async function createPlatformaticRuntime (_args) {
     choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
   })
 
+  toAsk.push(getInitGitRepository())
   const {
     runPackageManagerInstall,
     staticWorkspaceGitHubAction,
-    dynamicWorkspaceGitHubAction
+    dynamicWorkspaceGitHubAction,
+    initGitRepository
   } = await inquirer.prompt(toAsk)
 
   await mkdir(servicesDir, { recursive: true })
@@ -130,7 +132,8 @@ export async function createPlatformaticRuntime (_args) {
     entrypointPort,
     staticWorkspaceGitHubAction,
     dynamicWorkspaceGitHubAction,
-    serviceNames: names
+    serviceNames: names,
+    initGitRepository
   }
 
   await createRuntime(params, logger, projectDir, version)
@@ -180,6 +183,7 @@ export async function createRuntimeService ({ servicesDir, names, logger }) {
     skipGitHubActions: true,
     skipPackageJson: true,
     skipGitignore: true,
+    skipGitRepository: true,
     port: '0',
     isRuntimeContext: true,
     runtimeContext: {

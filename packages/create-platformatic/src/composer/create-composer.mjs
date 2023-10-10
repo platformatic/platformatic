@@ -5,6 +5,7 @@ import * as desm from 'desm'
 import { generatePlugins, generateRouteWithTypesSupport } from '../create-plugins.mjs'
 import { createDynamicWorkspaceGHAction, createStaticWorkspaceGHAction } from '../ghaction.mjs'
 import { getTsConfig } from '../get-tsconfig.mjs'
+import { createGitRepository } from '../create-git-repository.mjs'
 
 const TS_OUT_DIR = 'dist'
 
@@ -93,7 +94,8 @@ async function createComposer (
     runtimeContext,
     typescript,
     staticWorkspaceGitHubAction,
-    dynamicWorkspaceGitHubAction
+    dynamicWorkspaceGitHubAction,
+    initGitRepository
   } = params
 
   const composerEnv = {
@@ -145,6 +147,10 @@ async function createComposer (
   }
   if (dynamicWorkspaceGitHubAction) {
     await createDynamicWorkspaceGHAction(logger, composerEnv, './platformatic.service.json', currentDir, typescript)
+  }
+
+  if (initGitRepository) {
+    await createGitRepository(logger, currentDir)
   }
 
   return composerEnv

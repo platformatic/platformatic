@@ -58,6 +58,9 @@ test('Creates a Platformatic DB service with no migrations and no plugin', async
   }, {
     match: 'Do you want to enable PR Previews in your application',
     do: [keys.DOWN, keys.ENTER]
+  }, {
+    match: 'Do you want to init the git repository',
+    do: [keys.DOWN, keys.ENTER] // yes
   }]
   await executeCreatePlatformatic(tmpDir, actions, 'All done!')
 
@@ -69,6 +72,7 @@ test('Creates a Platformatic DB service with no migrations and no plugin', async
   equal(await isFileAccessible(join(baseProjectDir, '.env.sample')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'platformatic.db.json')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'README.md')), true)
+  equal(await isFileAccessible(join(baseProjectDir, '.git', 'config')), true)
 })
 
 test('Creates a Platformatic DB service with migrations and plugin', async ({ equal, same, match, teardown }) => {
@@ -114,6 +118,9 @@ test('Creates a Platformatic DB service with migrations and plugin', async ({ eq
   }, {
     match: 'Do you want to enable PR Previews in your application',
     do: [keys.DOWN, keys.ENTER]
+  }, {
+    match: 'Do you want to init the git repository',
+    do: [keys.ENTER] // no
   }]
   await executeCreatePlatformatic(tmpDir, actions, 'All done!')
 
@@ -131,6 +138,7 @@ test('Creates a Platformatic DB service with migrations and plugin', async ({ eq
   equal(await isFileAccessible(join(baseProjectDir, 'plugins', 'example.js')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'routes', 'root.js')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'types', 'index.d.ts')), true)
+  equal(await isFileAccessible(join(baseProjectDir, '.git', 'config')), false)
 })
 
 test('Creates a Platformatic DB service with plugin using typescript, creating all the github actions', async ({ equal, same, match, teardown }) => {
@@ -175,6 +183,9 @@ test('Creates a Platformatic DB service with plugin using typescript, creating a
     do: [keys.ENTER]
   }, {
     match: 'Do you want to enable PR Previews in your application',
+    do: [keys.ENTER]
+  }, {
+    match: 'Do you want to init the git repository',
     do: [keys.ENTER]
   }]
   await executeCreatePlatformatic(tmpDir, actions, 'All done!')

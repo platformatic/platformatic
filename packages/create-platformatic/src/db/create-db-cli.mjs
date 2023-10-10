@@ -12,7 +12,7 @@ import { execa } from 'execa'
 import ora from 'ora'
 import { getConnectionString, createDB } from './create-db.mjs'
 import askDir from '../ask-dir.mjs'
-import { getRunPackageManagerInstall, getUseTypescript, getPort } from '../cli-options.mjs'
+import { getRunPackageManagerInstall, getUseTypescript, getPort, getInitGitRepository } from '../cli-options.mjs'
 import { createReadme } from '../create-readme.mjs'
 import { join } from 'node:path'
 
@@ -169,7 +169,9 @@ const createPlatformaticDB = async (_args, opts) => {
     when: !opts.skipGitHubActions,
     choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
   })
-
+  if (!opts.skipGitRepository) {
+    toAsk.push(getInitGitRepository())
+  }
   // Prompt for questions
   const wizardOptions = await inquirer.prompt(toAsk)
 
@@ -191,7 +193,8 @@ const createPlatformaticDB = async (_args, opts) => {
     typescript: useTypescript,
     staticWorkspaceGitHubAction: wizardOptions.staticWorkspaceGitHubAction,
     dynamicWorkspaceGitHubAction: wizardOptions.dynamicWorkspaceGitHubAction,
-    runtimeContext: opts.runtimeContext
+    runtimeContext: opts.runtimeContext,
+    initGitRepository: wizardOptions.initGitRepository
   }
 
   await createDB(params, logger, projectDir, version)

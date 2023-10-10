@@ -5,6 +5,7 @@ import { addPrefixToEnv, findServiceConfigFile, isFileAccessible } from '../util
 import { getTsConfig } from '../get-tsconfig.mjs'
 import { generatePlugins } from '../create-plugins.mjs'
 import { createDynamicWorkspaceGHAction, createStaticWorkspaceGHAction } from '../ghaction.mjs'
+import { createGitRepository } from '../create-git-repository.mjs'
 
 const TS_OUT_DIR = 'dist'
 
@@ -72,7 +73,8 @@ async function createService (params, logger, currentDir = process.cwd(), versio
     typescript = false,
     staticWorkspaceGitHubAction,
     dynamicWorkspaceGitHubAction,
-    runtimeContext
+    runtimeContext,
+    initGitRepository
   } = params
 
   const serviceEnv = {
@@ -139,7 +141,9 @@ async function createService (params, logger, currentDir = process.cwd(), versio
   if (isRuntimeContext) {
     return addPrefixToEnv(serviceEnv, runtimeContext.envPrefix)
   }
-
+  if (initGitRepository) {
+    await createGitRepository(logger, currentDir)
+  }
   return serviceEnv
 }
 

@@ -12,7 +12,7 @@ import { execa } from 'execa'
 import ora from 'ora'
 import createService from './create-service.mjs'
 import askDir from '../ask-dir.mjs'
-import { getRunPackageManagerInstall, getUseTypescript, getPort } from '../cli-options.mjs'
+import { getRunPackageManagerInstall, getUseTypescript, getPort, getInitGitRepository } from '../cli-options.mjs'
 import { createReadme } from '../create-readme.mjs'
 
 const createPlatformaticService = async (_args, opts = {}) => {
@@ -71,12 +71,16 @@ const createPlatformaticService = async (_args, opts = {}) => {
       choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
     })
   }
+  if (!opts.skipGitRepository) {
+    toAsk.push(getInitGitRepository())
+  }
   const {
     runPackageManagerInstall,
     useTypescript,
     port,
     staticWorkspaceGitHubAction,
-    dynamicWorkspaceGitHubAction
+    dynamicWorkspaceGitHubAction,
+    initGitRepository
   } = await inquirer.prompt(toAsk)
 
   // Create the project directory
@@ -89,7 +93,8 @@ const createPlatformaticService = async (_args, opts = {}) => {
     typescript: useTypescript,
     staticWorkspaceGitHubAction,
     dynamicWorkspaceGitHubAction,
-    runtimeContext: opts.runtimeContext
+    runtimeContext: opts.runtimeContext,
+    initGitRepository
   }
 
   await createService(params, logger, projectDir, version)
