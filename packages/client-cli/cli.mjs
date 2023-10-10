@@ -14,7 +14,6 @@ import { ConfigManager, loadConfig } from '@platformatic/config'
 import { analyze, write } from '@platformatic/metaconfig'
 import graphql from 'graphql'
 import { appendToBothEnvs } from './lib/utils.mjs'
-import { RuntimeApi, platformaticRuntime } from '@platformatic/runtime'
 import { findUp } from 'find-up'
 import pino from 'pino'
 import pinoPretty from 'pino-pretty'
@@ -290,7 +289,33 @@ export async function command (argv) {
   let runtime
 
   if (options.runtime) {
+    // TODO add flag to allow specifying a runtime config file
     const runtimeConfigFile = await findUp('platformatic.runtime.json')
+
+    if (!runtimeConfigFile) {
+      logger.error('Could not find a platformatic.runtime.json file in this or any parent directory.')
+      process.exit(1)
+    }
+
+    let RuntimeApi
+    let platformaticRuntime
+
+    try {
+      const imported = await import('@platformatic/runtime')
+      RuntimeApi = imported.RuntimeApi
+      platformaticRuntime = imported.platformaticRuntime
+
+      // Ignoring the catch block.
+      // TODO(mcollina): we would need to setup ESM import
+      // mocking.
+      /* c8 ignore next 7 */
+    } catch (err) {
+      if (err.code === 'ERR_MODULE_NOT_FOUND') {
+        logger.error('We couldn\'t find the @platformatic/runtime package, make sure you have it installed.')
+        process.exit(1)
+      }
+      throw err
+    }
 
     const { configManager } = await loadConfig({}, ['-c', runtimeConfigFile], platformaticRuntime)
 
