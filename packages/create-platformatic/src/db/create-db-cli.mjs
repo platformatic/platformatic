@@ -12,8 +12,9 @@ import { execa } from 'execa'
 import ora from 'ora'
 import { getConnectionString, createDB } from './create-db.mjs'
 import askDir from '../ask-dir.mjs'
-import { getRunPackageManagerInstall, getUseTypescript, getPort } from '../cli-options.mjs'
+import { getRunPackageManagerInstall, getUseTypescript, getPort, getInitGitRepository } from '../cli-options.mjs'
 import { createReadme } from '../create-readme.mjs'
+import { createGitRepository } from '../create-git-repository.mjs'
 import { join } from 'node:path'
 
 const databases = [{
@@ -169,6 +170,7 @@ const createPlatformaticDB = async (_args, opts) => {
     when: !opts.skipGitHubActions,
     choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
   })
+  toAsk.push(getInitGitRepository())
 
   // Prompt for questions
   const wizardOptions = await inquirer.prompt(toAsk)
@@ -178,6 +180,7 @@ const createPlatformaticDB = async (_args, opts) => {
   const generatePlugin = args.plugin || wizardOptions.generatePlugin
   const useTypescript = args.typescript || wizardOptions.useTypescript
   const useTypes = args.types || generatePlugin // we set this always to true if we want to generate a plugin
+  const initGitRepository = args.initGitRepository || wizardOptions.initGitRepository
 
   const params = {
     isRuntimeContext,
@@ -191,7 +194,8 @@ const createPlatformaticDB = async (_args, opts) => {
     typescript: useTypescript,
     staticWorkspaceGitHubAction: wizardOptions.staticWorkspaceGitHubAction,
     dynamicWorkspaceGitHubAction: wizardOptions.dynamicWorkspaceGitHubAction,
-    runtimeContext: opts.runtimeContext
+    runtimeContext: opts.runtimeContext,
+    GitRepository: initGitRepository
   }
 
   await createDB(params, logger, projectDir, version)
@@ -207,10 +211,11 @@ const createPlatformaticDB = async (_args, opts) => {
     '@platformatic/db': `^${version}`
   }
 
-  // Create the package.json, .gitignore, readme
+  // Create the package.json, .gitignore, readme and init git repository
   await createPackageJson(version, fastifyVersion, logger, projectDir, useTypescript, scripts, dependencies)
   await createGitignore(logger, projectDir)
   await createReadme(logger, projectDir, 'db')
+  await createGitRepository(logger, projectDir)
 
   let hasPlatformaticInstalled = false
   if (wizardOptions.runPackageManagerInstall) {

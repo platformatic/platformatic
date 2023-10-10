@@ -12,8 +12,9 @@ import { execa } from 'execa'
 import ora from 'ora'
 import createService from './create-service.mjs'
 import askDir from '../ask-dir.mjs'
-import { getRunPackageManagerInstall, getUseTypescript, getPort } from '../cli-options.mjs'
+import { getRunPackageManagerInstall, getUseTypescript, getPort, getInitGitRepository } from '../cli-options.mjs'
 import { createReadme } from '../create-readme.mjs'
+import { createGitRepository } from '../create-git-repository.mjs'
 
 const createPlatformaticService = async (_args, opts = {}) => {
   const logger = opts.logger || pino(pretty({
@@ -71,6 +72,8 @@ const createPlatformaticService = async (_args, opts = {}) => {
       choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
     })
   }
+  toAsk.push(getInitGitRepository())
+
   const {
     runPackageManagerInstall,
     useTypescript,
@@ -108,6 +111,9 @@ const createPlatformaticService = async (_args, opts = {}) => {
     await createGitignore(logger, projectDir)
   }
   await createReadme(logger, projectDir, 'service')
+  if (!opts.skipGitRepository) {
+    await createGitRepository(logger, projectDir)
+  }
 
   if (runPackageManagerInstall) {
     const spinner = ora('Installing dependencies...').start()

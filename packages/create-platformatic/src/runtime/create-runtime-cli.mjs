@@ -15,6 +15,7 @@ import { getPort, getRunPackageManagerInstall } from '../cli-options.mjs'
 import generateName from 'boring-name-generator'
 import { chooseKind } from '../index.mjs'
 import { createReadme } from '../create-readme.mjs'
+import { createGitRepository } from '../create-git-repository.mjs'
 
 export async function createPlatformaticRuntime (_args) {
   const logger = pino(pretty({
@@ -82,6 +83,7 @@ export async function createPlatformaticRuntime (_args) {
   await createPackageJson(version, fastifyVersion, logger, projectDir, false)
   await createGitignore(logger, projectDir)
   await createReadme(logger, projectDir, 'runtime')
+  await createGitRepository(logger, projectDir)
 
   logger.info('Let\'s create a first service!')
 
@@ -180,6 +182,7 @@ export async function createRuntimeService ({ servicesDir, names, logger }) {
     skipGitHubActions: true,
     skipPackageJson: true,
     skipGitignore: true,
+    skipGitRepository: true,
     port: '0',
     isRuntimeContext: true,
     runtimeContext: {
