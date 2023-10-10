@@ -34,7 +34,7 @@ t.test('should create the git repo', async t => {
   writeFileSync(join(tmpDir, 'README.md'), '')
 
   await createGitRepository(loggerSpy, tmpDir)
-
+  console.log(loggerSpy)
   t.equal(loggerSpy._debug[0][0], 'Git repository initialized.')
   t.equal(loggerSpy._debug[1][0], 'Git commit done.')
   t.equal(loggerSpy._info[0][0], 'Git repository initialized.')
