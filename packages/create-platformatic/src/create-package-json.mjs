@@ -1,4 +1,3 @@
-import { isFileAccessible } from './utils.mjs'
 import { writeFile, readFile } from 'fs/promises'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -50,14 +49,9 @@ const packageJsonTemplate = async (addTSBuild, fastifyVersion, platVersion) => {
  */
 export const createPackageJson = async (platVersion, fastifyVersion, logger, dir, addTSBuild = false, scripts = {}, dependencies = {}) => {
   const packageJsonFileName = join(dir, 'package.json')
-  const isPackageJsonExists = await isFileAccessible(packageJsonFileName)
-  if (!isPackageJsonExists) {
-    const pkg = await packageJsonTemplate(addTSBuild, fastifyVersion, platVersion)
-    Object.assign(pkg.scripts, scripts)
-    Object.assign(pkg.dependencies, dependencies)
-    await writeFile(packageJsonFileName, JSON.stringify(pkg, null, 2))
-    logger.debug(`${packageJsonFileName} successfully created.`)
-  } else {
-    logger.debug(`${packageJsonFileName} found, skipping creation of package.json file.`)
-  }
+  const pkg = await packageJsonTemplate(addTSBuild, fastifyVersion, platVersion)
+  Object.assign(pkg.scripts, scripts)
+  Object.assign(pkg.dependencies, dependencies)
+  await writeFile(packageJsonFileName, JSON.stringify(pkg, null, 2))
+  logger.debug(`${packageJsonFileName} successfully created.`)
 }

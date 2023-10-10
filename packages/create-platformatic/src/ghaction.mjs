@@ -1,6 +1,6 @@
 import { join } from 'path'
-import { isFileAccessible } from './utils.mjs'
-import { writeFile, mkdir } from 'fs/promises'
+import { isFileAccessible, safeMkdir } from './utils.mjs'
+import { writeFile } from 'fs/promises'
 import columnify from 'columnify'
 function envAsString (env, indent) {
   const spaces = Array(indent * 2).join(' ')
@@ -125,49 +125,39 @@ ${envString}
 export const createDynamicWorkspaceGHAction = async (logger, env, config, projectDir, buildTS) => {
   const ghActionFileName = 'platformatic-dynamic-workspace-deploy.yml'
   const ghActionFilePath = join(projectDir, '.github', 'workflows', ghActionFileName)
-  const isGithubActionExists = await isFileAccessible(ghActionFilePath)
-  if (!isGithubActionExists) {
-    await mkdir(join(projectDir, '.github', 'workflows'), { recursive: true })
-    await writeFile(ghActionFilePath, dynamicWorkspaceGHTemplate(env, config, buildTS))
-    logger.info('PR Previews are enabled for your app and the Github action was successfully created, please add the following secrets as repository secrets: ')
-    const envToBeAdded = { ...env }
-    delete envToBeAdded.PORT
-    const secretsString = formatSecretsToAdd({
-      PLATFORMATIC_DYNAMIC_WORKSPACE_ID: 'your workspace id',
-      PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY: 'your workspace API key',
-      ...envToBeAdded
-    })
-    logger.info(`\n ${secretsString}`)
-    const isGitDir = await isFileAccessible('.git', projectDir)
-    if (!isGitDir) {
-      logger.warn('No git repository found. The Github action won\'t be triggered.')
-    }
-  } else {
-    logger.info(`Github action file ${ghActionFilePath} found, skipping creation of github action file.`)
+  await safeMkdir(join(projectDir, '.github', 'workflows'), { recursive: true })
+  await writeFile(ghActionFilePath, dynamicWorkspaceGHTemplate(env, config, buildTS))
+  logger.info('PR Previews are enabled for your app and the Github action was successfully created, please add the following secrets as repository secrets: ')
+  const envToBeAdded = { ...env }
+  delete envToBeAdded.PORT
+  const secretsString = formatSecretsToAdd({
+    PLATFORMATIC_DYNAMIC_WORKSPACE_ID: 'your workspace id',
+    PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY: 'your workspace API key',
+    ...envToBeAdded
+  })
+  logger.info(`\n ${secretsString}`)
+  const isGitDir = await isFileAccessible('.git', projectDir)
+  if (!isGitDir) {
+    logger.warn('No git repository found. The Github action won\'t be triggered.')
   }
 }
 
 export const createStaticWorkspaceGHAction = async (logger, env, config, projectDir, buildTS) => {
   const ghActionFileName = 'platformatic-static-workspace-deploy.yml'
   const ghActionFilePath = join(projectDir, '.github', 'workflows', ghActionFileName)
-  const isGithubActionExists = await isFileAccessible(ghActionFilePath)
-  if (!isGithubActionExists) {
-    await mkdir(join(projectDir, '.github', 'workflows'), { recursive: true })
-    await writeFile(ghActionFilePath, staticWorkspaceGHTemplate(env, config, buildTS))
-    logger.info('Github action successfully created, please add the following secrets as repository secrets: ')
-    const envToBeAdded = { ...env }
-    delete envToBeAdded.PORT
-    const secretsString = formatSecretsToAdd({
-      PLATFORMATIC_STATIC_WORKSPACE_ID: 'your workspace id',
-      PLATFORMATIC_STATIC_WORKSPACE_API_KEY: 'your workspace API key',
-      ...envToBeAdded
-    })
-    logger.info(`\n ${secretsString}`)
-    const isGitDir = await isFileAccessible('.git', projectDir)
-    if (!isGitDir) {
-      logger.warn('No git repository found. The Github action won\'t be triggered.')
-    }
-  } else {
-    logger.info(`Github action file ${ghActionFilePath} found, skipping creation of github action file.`)
+  await safeMkdir(join(projectDir, '.github', 'workflows'), { recursive: true })
+  await writeFile(ghActionFilePath, staticWorkspaceGHTemplate(env, config, buildTS))
+  logger.info('Github action successfully created, please add the following secrets as repository secrets: ')
+  const envToBeAdded = { ...env }
+  delete envToBeAdded.PORT
+  const secretsString = formatSecretsToAdd({
+    PLATFORMATIC_STATIC_WORKSPACE_ID: 'your workspace id',
+    PLATFORMATIC_STATIC_WORKSPACE_API_KEY: 'your workspace API key',
+    ...envToBeAdded
+  })
+  logger.info(`\n ${secretsString}`)
+  const isGitDir = await isFileAccessible('.git', projectDir)
+  if (!isGitDir) {
+    logger.warn('No git repository found. The Github action won\'t be triggered.')
   }
 }

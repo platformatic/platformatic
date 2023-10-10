@@ -1,11 +1,11 @@
-import { getVersion, getDependencyVersion } from '../utils.mjs'
+import { getVersion, getDependencyVersion, safeMkdir } from '../utils.mjs'
 import { createPackageJson } from '../create-package-json.mjs'
 import { createGitignore } from '../create-gitignore.mjs'
 import { getPkgManager } from '../get-pkg-manager.mjs'
 import parseArgs from 'minimist'
 import { join } from 'path'
 import inquirer from 'inquirer'
-import { mkdir, stat } from 'fs/promises'
+import { stat } from 'fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa } from 'execa'
@@ -84,7 +84,7 @@ const createPlatformaticService = async (_args, opts = {}) => {
   } = await inquirer.prompt(toAsk)
 
   // Create the project directory
-  await mkdir(projectDir, { recursive: true })
+  await safeMkdir(projectDir)
 
   const params = {
     isRuntimeContext,
@@ -121,18 +121,15 @@ const createPlatformaticService = async (_args, opts = {}) => {
   }
 
   const spinner = ora('Generating types...').start()
-  let child
   try {
-    debugger
     const options = ['exec', 'platformatic', 'service', 'types']
     if (isRuntimeContext) {
       options.unshift('-C', projectDir)
     }
-    child = await execa('pnpm', options)
-    
+    await execa('pnpm', options)
+
     spinner.succeed('Types generated!')
   } catch (err) {
-    console.log(err, child)
     logger.trace({ err })
     spinner.fail('Failed to generate Types. Try again by running "platformatic service types"')
   }

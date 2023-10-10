@@ -1,10 +1,10 @@
-import { getVersion, getDependencyVersion, convertServiceNameToPrefix } from '../utils.mjs'
+import { getVersion, getDependencyVersion, convertServiceNameToPrefix, safeMkdir } from '../utils.mjs'
 import { createPackageJson } from '../create-package-json.mjs'
 import { createGitignore } from '../create-gitignore.mjs'
 import { getPkgManager } from '../get-pkg-manager.mjs'
 import { join, relative, resolve } from 'path'
 import inquirer from 'inquirer'
-import { mkdir, stat } from 'fs/promises'
+import { stat } from 'fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa } from 'execa'
@@ -35,7 +35,7 @@ export async function createPlatformaticRuntime (_args) {
   } catch (err) {}
   const toAsk = []
   // Create the project directory
-  await mkdir(projectDir, { recursive: true })
+  await safeMkdir(projectDir)
 
   const baseServicesDir = join(relative(process.cwd(), projectDir), 'services')
   const servicesDir = await askDir(logger, baseServicesDir, 'Where would you like to load your services from?')
@@ -75,7 +75,7 @@ export async function createPlatformaticRuntime (_args) {
     initGitRepository
   } = await inquirer.prompt(toAsk)
 
-  await mkdir(servicesDir, { recursive: true })
+  await safeMkdir(servicesDir)
 
   const fastifyVersion = await getDependencyVersion('fastify')
 

@@ -1,5 +1,5 @@
 import { execa } from 'execa'
-import { access, constants, readFile } from 'fs/promises'
+import { access, constants, mkdir, readFile } from 'fs/promises'
 import { resolve, join, dirname } from 'path'
 import { createRequire } from 'module'
 import semver from 'semver'
@@ -101,4 +101,12 @@ export function addPrefixToEnv (env, prefix) {
     output[`${prefix}_${key}`] = value
   })
   return output
+}
+
+export async function safeMkdir (dir) {
+  try {
+    await mkdir(dir, { recursive: true })
+  } catch (err) {
+    // do nothing
+  }
 }

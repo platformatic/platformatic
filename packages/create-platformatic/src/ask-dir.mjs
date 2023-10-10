@@ -16,7 +16,6 @@ const askProjectDir = async (logger, defaultName, message = 'Where would you lik
 
   try {
     await stat(projectDir)
-    console.log('asdasd', projectDir)
     logger.warn(`Directory ${projectDir} is not empty. Smoe files may be overwritten without confirmation.`)
     const confirmation = await inquirer.prompt({
       type: 'list',
@@ -26,11 +25,10 @@ const askProjectDir = async (logger, defaultName, message = 'Where would you lik
       choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
     })
     if (!confirmation.confirmExistingDirectory) {
-      logger.error(`Please choose another directory.`)
+      logger.error('Please choose another directory.')
       process.exit(1)
     }
   } catch (err) {
-    console.log(err)
     // directory is empty, we can proceed
   }
   return projectDir
