@@ -21,6 +21,8 @@ concurrency:
 
 env:
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+  GIT_AUTHOR_NAME: Platformatic Github Actions
+  GIT_AUTHOR_EMAIL: info@platformatic.dev
 
 jobs:
   setup-node_modules:
