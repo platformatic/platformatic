@@ -92,7 +92,6 @@ export async function executeCreatePlatformatic (dir, actions = [], done = 'All 
           }
           expectedQuestion = questions.shift()
         } else {
-          console.log(lastPrompt.length)
           throw new Error(`Expected ${expectedQuestion.match}, got ${lastPrompt}`)
         }
       }
