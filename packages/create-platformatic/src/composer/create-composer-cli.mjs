@@ -137,7 +137,7 @@ const createPlatformaticComposer = async (_args, opts) => {
   if (!opts.skipGitignore) {
     await createGitignore(logger, projectDir)
   }
-  await createReadme(logger, projectDir)
+  await createReadme(logger, projectDir, 'composer')
 
   if (runPackageManagerInstall) {
     const spinner = ora('Installing dependencies...').start()

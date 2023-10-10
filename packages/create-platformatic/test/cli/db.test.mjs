@@ -60,7 +60,7 @@ test('Creates a Platformatic DB service with no migrations and no plugin', async
     do: [keys.DOWN, keys.ENTER]
   }, {
     match: 'Do you want to init the git repository',
-    do: [keys.DOWN, keys.ENTER] // no
+    do: [keys.DOWN, keys.ENTER] // yes
   }]
   await executeCreatePlatformatic(tmpDir, actions, 'All done!')
 
