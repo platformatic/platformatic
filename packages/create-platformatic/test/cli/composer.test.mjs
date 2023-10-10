@@ -44,6 +44,9 @@ test('Creates a Platformatic Composer', async ({ equal, same, match, teardown })
   }, {
     match: 'Do you want to enable PR Previews in your application',
     do: [keys.DOWN, keys.ENTER] // no
+  }, {
+    match: 'Do you want to init the git repository',
+    do: [keys.ENTER] // no
   }]
   await executeCreatePlatformatic(tmpDir, actions, 'All done!')
 
@@ -59,6 +62,7 @@ test('Creates a Platformatic Composer', async ({ equal, same, match, teardown })
   equal(await isFileAccessible(join(baseProjectDir, 'plugins', 'example.js')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.github', 'workflows', 'platformatic-dynamic-workspace-deploy.yml')), false)
   equal(await isFileAccessible(join(baseProjectDir, '.github', 'workflows', 'platformatic-static-workspace-deploy.yml')), false)
+  equal(await isFileAccessible(join(baseProjectDir, '.git', 'config')), false)
 })
 
 test('Creates a Platformatic Composer with typescript support adn GitHub Actions', async ({ equal, same, match, teardown }) => {

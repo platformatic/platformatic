@@ -40,6 +40,9 @@ test('Creates a Platformatic Runtime with one Service', async ({ equal, same, ma
     match: 'Do you want to enable PR Previews in your application',
     do: [keys.DOWN, keys.ENTER] // no
   }, {
+    match: 'Do you want to init the git repository',
+    do: [keys.ENTER] // no
+  }, {
     match: 'What is the name of the service?',
     do: [keys.ENTER]
   }, {
@@ -69,6 +72,7 @@ test('Creates a Platformatic Runtime with one Service', async ({ equal, same, ma
   equal(await isFileAccessible(join(baseProjectDir, 'README.md')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.github', 'workflows', 'platformatic-dynamic-workspace-deploy.yml')), false)
   equal(await isFileAccessible(join(baseProjectDir, '.github', 'workflows', 'platformatic-static-workspace-deploy.yml')), false)
+  equal(await isFileAccessible(join(baseProjectDir, '.git', 'config')), false)
 
   // Here check the generated service
   const services = await getServices(join(baseProjectDir, 'services'))
@@ -104,6 +108,9 @@ test('Creates a Platformatic Runtime with two Services', async ({ equal, same, m
   }, {
     match: 'Do you want to enable PR Previews in your application',
     do: [keys.DOWN, keys.ENTER] // no
+  }, {
+    match: 'Do you want to init the git repository',
+    do: [keys.DOWN, keys.ENTER] // yes
   }, {
     // FIRST SERVICE
     match: 'What is the name of the service?',
@@ -152,6 +159,7 @@ test('Creates a Platformatic Runtime with two Services', async ({ equal, same, m
   equal(await isFileAccessible(join(baseProjectDir, 'README.md')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.github', 'workflows', 'platformatic-dynamic-workspace-deploy.yml')), false)
   equal(await isFileAccessible(join(baseProjectDir, '.github', 'workflows', 'platformatic-static-workspace-deploy.yml')), false)
+  equal(await isFileAccessible(join(baseProjectDir, '.git', 'config')), true)
 
   // Here check the generated services
   const services = await getServices(join(baseProjectDir, 'services'))
