@@ -79,9 +79,6 @@ jobs:
       matrix:
         node-version: [18, 20]
         os: [ubuntu-latest, windows-latest]
-    env:
-      GIT_AUTHOR_NAME: Platformatic Github Actions
-      GIT_AUTHOR_EMAIL: info@platformatic.dev
     steps:
     - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
     - uses: pnpm/action-setup@v2.4.0
@@ -98,6 +95,10 @@ jobs:
         command: pnpm install --frozen-lockfile
     - name: platformatic cli global link
       run: cd packages/cli && pnpm link --global && cd ../..
+    - name: Setup local git user and email
+      run: |
+        git config user.name 'Platformatic Github Actions'
+        git config user.email 'info@platformatic.dev'
     - name: Run test suite
       run: cd packages/create-platformatic && pnpm test
 
