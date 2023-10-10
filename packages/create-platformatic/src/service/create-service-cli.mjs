@@ -121,10 +121,18 @@ const createPlatformaticService = async (_args, opts = {}) => {
   }
 
   const spinner = ora('Generating types...').start()
+  let child
   try {
-    await execa(pkgManager, ['exec', 'platformatic', 'service', 'types'], { cwd: projectDir })
+    debugger
+    const options = ['exec', 'platformatic', 'service', 'types']
+    if (isRuntimeContext) {
+      options.unshift('-C', projectDir)
+    }
+    child = await execa('pnpm', options)
+    
     spinner.succeed('Types generated!')
   } catch (err) {
+    console.log(err, child)
     logger.trace({ err })
     spinner.fail('Failed to generate Types. Try again by running "platformatic service types"')
   }
