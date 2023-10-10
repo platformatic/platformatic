@@ -12,7 +12,6 @@ import createComposer from './create-composer.mjs'
 import askDir from '../ask-dir.mjs'
 import { getRunPackageManagerInstall, getPort, getUseTypescript, getInitGitRepository } from '../cli-options.mjs'
 import { createReadme } from '../create-readme.mjs'
-import { stat } from 'node:fs/promises'
 import { join } from 'path'
 
 export const getServicesToCompose = (servicesNames) => {
@@ -45,13 +44,6 @@ const createPlatformaticComposer = async (_args, opts) => {
   const pkgManager = getPkgManager()
 
   const projectDir = opts.dir || await askDir(logger, join('.', 'platformatic-composer'))
-  // checks directory
-  try {
-    await stat(projectDir)
-    logger.error(`Directory ${projectDir} already exists. Please choose another path.`)
-    process.exit(1)
-  } catch (err) {}
-
   const isRuntimeContext = opts.isRuntimeContext || false
 
   const toAsk = []

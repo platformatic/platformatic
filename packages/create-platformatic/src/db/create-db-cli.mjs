@@ -60,13 +60,6 @@ const createPlatformaticDB = async (_args, opts) => {
   const pkgManager = getPkgManager()
   const projectDir = opts.dir || await askDir(logger, join('.', 'platformatic-db'))
 
-  // Create the project directory
-  // try {
-  //   await stat(projectDir)
-  //   logger.error(`Directory ${projectDir} already exists. Please choose another path.`)
-  //   process.exit(1)
-  // } catch (err) {}
-
   const isRuntimeContext = opts.isRuntimeContext || false
   const toAsk = []
 

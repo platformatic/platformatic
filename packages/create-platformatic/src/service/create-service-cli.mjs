@@ -5,7 +5,6 @@ import { getPkgManager } from '../get-pkg-manager.mjs'
 import parseArgs from 'minimist'
 import { join } from 'path'
 import inquirer from 'inquirer'
-import { stat } from 'fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa } from 'execa'
@@ -36,13 +35,6 @@ const createPlatformaticService = async (_args, opts = {}) => {
 
   const projectDir = opts.dir || await askDir(logger, join('.', 'platformatic-service'))
   const isRuntimeContext = opts.isRuntimeContext || false
-
-  // checks directory
-  try {
-    await stat(projectDir)
-    logger.error(`Directory ${projectDir} already exists. Please choose another path.`)
-    process.exit(1)
-  } catch (err) {}
 
   const toAsk = []
   toAsk.push(getUseTypescript(args.typescript))

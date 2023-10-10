@@ -84,13 +84,15 @@ export async function executeCreatePlatformatic (dir, actions = [], done = 'All 
         } else if (match(lastPrompt, expectedQuestion.match)) {
           console.log('==> MATCH', expectedQuestion.match)
           lastPrompt = ''
+
           for (const key of expectedQuestion.do) {
-            child.stdin.write(key)
+            child.stdin?.write(key)
             const waitAfter = expectedQuestion.waitAfter || 500
             await sleep(waitAfter)
           }
           expectedQuestion = questions.shift()
         } else {
+          console.log(lastPrompt.length)
           throw new Error(`Expected ${expectedQuestion.match}, got ${lastPrompt}`)
         }
       }

@@ -16,7 +16,7 @@ const askProjectDir = async (logger, defaultName, message = 'Where would you lik
 
   try {
     await stat(projectDir)
-    logger.warn(`Directory ${projectDir} is not empty. Smoe files may be overwritten without confirmation.`)
+    logger.warn(`Directory ${projectDir} is not empty. Some files may be overwritten without confirmation.`)
     const confirmation = await inquirer.prompt({
       type: 'list',
       name: 'confirmExistingDirectory',
