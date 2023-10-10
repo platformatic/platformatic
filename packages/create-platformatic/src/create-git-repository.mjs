@@ -99,7 +99,6 @@ async function gitCommit (logger, dir) {
     logger.debug('Git commit done.')
     return true
   } catch (err) {
-    console.log(err)
     logger.error('Git commit failed.', err)
     return false
   }
