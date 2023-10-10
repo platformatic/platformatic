@@ -11,11 +11,10 @@ import { execa } from 'execa'
 import ora from 'ora'
 import createComposer from './create-composer.mjs'
 import askDir from '../ask-dir.mjs'
-import { getRunPackageManagerInstall, getPort, getUseTypescript } from '../cli-options.mjs'
+import { getRunPackageManagerInstall, getPort, getUseTypescript, getInitGitRepository } from '../cli-options.mjs'
 import { createReadme } from '../create-readme.mjs'
 import { stat } from 'node:fs/promises'
 import { join } from 'path'
-import { createGitRepository } from '../create-git-repository.mjs'
 
 export const getServicesToCompose = (servicesNames) => {
   return {
@@ -92,13 +91,18 @@ const createPlatformaticComposer = async (_args, opts) => {
       choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
     })
   }
+
+  if (!opts.skipGitRepository) {
+    toAsk.push(getInitGitRepository())
+  }
   const {
     runPackageManagerInstall,
     servicesToCompose,
     port,
     staticWorkspaceGitHubAction,
     dynamicWorkspaceGitHubAction,
-    useTypescript
+    useTypescript,
+    initGitRepository
   } = await inquirer.prompt(toAsk)
 
   // Create the project directory
@@ -112,7 +116,8 @@ const createPlatformaticComposer = async (_args, opts) => {
     staticWorkspaceGitHubAction,
     dynamicWorkspaceGitHubAction,
     runtimeContext: opts.runtimeContext,
-    typescript: useTypescript
+    typescript: useTypescript,
+    initGitRepository
   }
 
   await createComposer(
@@ -133,9 +138,6 @@ const createPlatformaticComposer = async (_args, opts) => {
     await createGitignore(logger, projectDir)
   }
   await createReadme(logger, projectDir)
-  if (!opts.skipGitRepository) {
-    await createGitRepository(logger, projectDir)
-  }
 
   if (runPackageManagerInstall) {
     const spinner = ora('Installing dependencies...').start()
