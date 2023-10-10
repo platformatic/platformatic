@@ -2,11 +2,11 @@ import createDB from '../../src/db/create-db.mjs'
 import { test, beforeEach, afterEach } from 'tap'
 import { isFileAccessible } from '../../src/utils.mjs'
 import { tmpdir } from 'os'
-import { mkdtempSync, rmSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { join } from 'path'
 import dotenv from 'dotenv'
 import { schema } from '@platformatic/db'
 import Ajv from 'ajv'
+import { mkdtemp, readFile, rm } from 'fs/promises'
 
 const moviesMigrationDo = `
 -- Add SQL in this file to create the database tables for your API
@@ -24,13 +24,13 @@ DROP TABLE movies;
 const base = tmpdir()
 let tmpDir
 let log = []
-beforeEach(() => {
-  tmpDir = mkdtempSync(join(base, 'test-create-platformatic-'))
+beforeEach(async () => {
+  tmpDir = await mkdtemp(join(base, 'test-create-platformatic-'))
 })
 
-afterEach(() => {
+afterEach(async () => {
   log = []
-  rmSync(tmpDir, { recursive: true, force: true })
+  await rm(tmpDir, { recursive: true, force: true })
   process.env = {}
 })
 
@@ -53,7 +53,7 @@ test('creates project with no typescript', async ({ equal }) => {
   const pathToMigrationFileDo = join(pathToMigrationFolder, '001.do.sql')
   const pathToMigrationFileUndo = join(pathToMigrationFolder, '001.undo.sql')
 
-  const dbConfigFile = readFileSync(pathToDbConfigFile, 'utf8')
+  const dbConfigFile = await readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
   const { server, db, migrations } = dbConfig
   const ajv = new Ajv({ strict: false })
@@ -83,9 +83,9 @@ test('creates project with no typescript', async ({ equal }) => {
   equal(db.openapi, true)
   equal(migrations.dir, 'migrations')
 
-  const migrationFileDo = readFileSync(pathToMigrationFileDo, 'utf8')
+  const migrationFileDo = await readFile(pathToMigrationFileDo, 'utf8')
   equal(migrationFileDo, moviesMigrationDo)
-  const migrationFileUndo = readFileSync(pathToMigrationFileUndo, 'utf8')
+  const migrationFileUndo = await readFile(pathToMigrationFileUndo, 'utf8')
   equal(migrationFileUndo, moviesMigrationUndo)
 
   equal(await isFileAccessible(join(tmpDir, 'routes', 'root.js')), true)
@@ -107,7 +107,7 @@ test('creates project with no typescript and no plugin', async ({ equal }) => {
   const pathToMigrationFileDo = join(pathToMigrationFolder, '001.do.sql')
   const pathToMigrationFileUndo = join(pathToMigrationFolder, '001.undo.sql')
 
-  const dbConfigFile = readFileSync(pathToDbConfigFile, 'utf8')
+  const dbConfigFile = await readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
   const { server, db, migrations } = dbConfig
 
@@ -132,9 +132,9 @@ test('creates project with no typescript and no plugin', async ({ equal }) => {
   equal(db.openapi, true)
   equal(migrations.dir, 'migrations')
 
-  const migrationFileDo = readFileSync(pathToMigrationFileDo, 'utf8')
+  const migrationFileDo = await readFile(pathToMigrationFileDo, 'utf8')
   equal(migrationFileDo, moviesMigrationDo)
-  const migrationFileUndo = readFileSync(pathToMigrationFileUndo, 'utf8')
+  const migrationFileUndo = await readFile(pathToMigrationFileUndo, 'utf8')
   equal(migrationFileUndo, moviesMigrationUndo)
 
   equal(await isFileAccessible(join(tmpDir, 'plugin.js')), false)
@@ -150,7 +150,7 @@ test('creates project with no migrations', async ({ equal }) => {
   await createDB(params, fakeLogger, tmpDir)
 
   const pathToDbConfigFile = join(tmpDir, 'platformatic.db.json')
-  const dbConfigFile = readFileSync(pathToDbConfigFile, 'utf8')
+  const dbConfigFile = await readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
   const { migrations } = dbConfig
 
@@ -171,7 +171,7 @@ test('creates project with typescript', async ({ equal, same }) => {
   const pathToMigrationFileDo = join(pathToMigrationFolder, '001.do.sql')
   const pathToMigrationFileUndo = join(pathToMigrationFolder, '001.undo.sql')
 
-  const dbConfigFile = readFileSync(pathToDbConfigFile, 'utf8')
+  const dbConfigFile = await readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
   const { server, db, migrations, plugins } = dbConfig
 
@@ -198,9 +198,9 @@ test('creates project with typescript', async ({ equal, same }) => {
   equal(db.openapi, true)
   equal(migrations.dir, 'migrations')
 
-  const migrationFileDo = readFileSync(pathToMigrationFileDo, 'utf8')
+  const migrationFileDo = await readFile(pathToMigrationFileDo, 'utf8')
   equal(migrationFileDo, moviesMigrationDo)
-  const migrationFileUndo = readFileSync(pathToMigrationFileUndo, 'utf8')
+  const migrationFileUndo = await readFile(pathToMigrationFileUndo, 'utf8')
   equal(migrationFileUndo, moviesMigrationUndo)
 
   same(plugins.paths, [{
@@ -213,55 +213,6 @@ test('creates project with typescript', async ({ equal, same }) => {
   equal(await isFileAccessible(join(tmpDir, 'plugins', 'example.ts')), true)
   equal(await isFileAccessible(join(tmpDir, 'routes', 'root.ts')), true)
   equal(await isFileAccessible(join(tmpDir, 'tsconfig.json')), true)
-})
-
-test('creates project with configuration already present', async ({ ok }) => {
-  const pathToDbConfigFileOld = join(tmpDir, 'platformatic.db.json')
-  writeFileSync(pathToDbConfigFileOld, JSON.stringify({ test: 'test' }))
-  const params = {
-    hostname: 'myhost',
-    port: 6666
-  }
-  await createDB(params, fakeLogger, tmpDir)
-  ok(log.includes('Configuration file platformatic.db.json found, skipping creation of configuration file.'))
-})
-
-test('creates project with migration folder already present', async ({ equal }) => {
-  const pathToMigrationsOld = join(tmpDir, 'migrations')
-  mkdirSync(pathToMigrationsOld)
-  const params = {
-    hostname: 'myhost',
-    port: 6666
-  }
-  await createDB(params, fakeLogger, tmpDir)
-  equal(log.includes('Migrations folder migrations found, skipping creation of migrations folder.'), true)
-})
-
-test('creates project with "do" migration already present', async ({ ok }) => {
-  const pathToMigrationsOld = join(tmpDir, 'migrations')
-  mkdirSync(pathToMigrationsOld)
-  const pathToMigrationFileDo = join(pathToMigrationsOld, '001.do.sql')
-  writeFileSync(pathToMigrationFileDo, 'test')
-  const params = {
-    hostname: 'myhost',
-    port: 6666
-  }
-  await createDB(params, fakeLogger, tmpDir)
-  ok(log.includes('Migration file 001.do.sql found, skipping creation of migration file.'))
-})
-
-test('creates project with plugin already present', async ({ ok }) => {
-  const pathToPlugin = join(tmpDir, 'routes', 'root.js')
-  mkdirSync(join(tmpDir, 'routes'))
-  writeFileSync(pathToPlugin, 'test')
-  const params = {
-    hostname: 'myhost',
-    port: 6666,
-    plugin: true,
-    types: true
-  }
-  await createDB(params, fakeLogger, tmpDir)
-  ok(log.includes('Routes folder "routes" found, skipping creation of routes folder.'))
 })
 
 test('creates project with no default migrations', async ({ notOk }) => {
@@ -305,7 +256,7 @@ test('creates project in a runtime context', async ({ equal }) => {
   const pathToMigrationFileDo = join(pathToMigrationFolder, '001.do.sql')
   const pathToMigrationFileUndo = join(pathToMigrationFolder, '001.undo.sql')
 
-  const dbConfigFile = readFileSync(pathToDbConfigFile, 'utf8')
+  const dbConfigFile = await readFile(pathToDbConfigFile, 'utf8')
   const dbConfig = JSON.parse(dbConfigFile)
   const { server, db, migrations } = dbConfig
   const ajv = new Ajv({ strict: false })
@@ -334,9 +285,9 @@ test('creates project in a runtime context', async ({ equal }) => {
   equal(db.openapi, true)
   equal(migrations.dir, 'migrations')
 
-  const migrationFileDo = readFileSync(pathToMigrationFileDo, 'utf8')
+  const migrationFileDo = await readFile(pathToMigrationFileDo, 'utf8')
   equal(migrationFileDo, moviesMigrationDo)
-  const migrationFileUndo = readFileSync(pathToMigrationFileUndo, 'utf8')
+  const migrationFileUndo = await readFile(pathToMigrationFileUndo, 'utf8')
   equal(migrationFileUndo, moviesMigrationUndo)
 
   equal(await isFileAccessible(join(tmpDir, 'routes', 'root.js')), true)

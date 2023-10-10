@@ -1,11 +1,11 @@
 import { tmpdir } from 'os'
-import { mkdirSync, rmSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { execa } from 'execa'
 import t from 'tap'
 
 import { isFileAccessible } from '../src/utils.mjs'
 import { createGitRepository, GIT_FIRST_COMMIT_MESSAGE, GIT_MAIN_BRANCH } from '../src/create-git-repository.mjs'
+import { mkdir, rm, writeFile } from 'fs/promises'
 
 const loggerSpy = {
   _debug: [],
@@ -24,14 +24,14 @@ const loggerSpy = {
 }
 
 const tmpDir = join(tmpdir(), 'test-create-platformatic-git-repo')
-t.beforeEach(() => {
+t.beforeEach(async () => {
   loggerSpy.reset()
-  rmSync(tmpDir, { recursive: true, force: true })
-  mkdirSync(tmpDir, { recursive: true })
+  await rm(tmpDir, { recursive: true, force: true })
+  await mkdir(tmpDir, { recursive: true })
 })
 
 t.test('should create the git repo', async t => {
-  writeFileSync(join(tmpDir, 'README.md'), '')
+  await writeFile(join(tmpDir, 'README.md'), '')
 
   await createGitRepository(loggerSpy, tmpDir)
 

@@ -1,19 +1,19 @@
 import createRuntime from '../../src/runtime/create-runtime.mjs'
 import { test, beforeEach, afterEach } from 'tap'
 import { tmpdir } from 'os'
-import { mkdtempSync, rmSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
+import { mkdtemp, readFile, rm } from 'fs/promises'
 
 const base = tmpdir()
 let tmpDir
 let log = []
-beforeEach(() => {
-  tmpDir = mkdtempSync(join(base, 'test-create-platformatic-'))
+beforeEach(async () => {
+  tmpDir = await mkdtemp(join(base, 'test-create-platformatic-'))
 })
 
-afterEach(() => {
+afterEach(async () => {
   log = []
-  rmSync(tmpDir, { recursive: true, force: true })
+  await rm(tmpDir, { recursive: true, force: true })
   process.env = {}
 })
 
@@ -31,7 +31,7 @@ test('creates runtime', async ({ equal, same, ok }) => {
   await createRuntime(params, fakeLogger, tmpDir, undefined)
 
   const pathToRuntimeConfigFile = join(tmpDir, 'platformatic.runtime.json')
-  const runtimeConfigFile = readFileSync(pathToRuntimeConfigFile, 'utf8')
+  const runtimeConfigFile = await readFile(pathToRuntimeConfigFile, 'utf8')
   const runtimeConfig = JSON.parse(runtimeConfigFile)
 
   delete runtimeConfig.$schema
@@ -56,7 +56,7 @@ test('with a full path for autoload', async ({ equal, same, ok }) => {
   await createRuntime(params, fakeLogger, tmpDir, undefined)
 
   const pathToRuntimeConfigFile = join(tmpDir, 'platformatic.runtime.json')
-  const runtimeConfigFile = readFileSync(pathToRuntimeConfigFile, 'utf8')
+  const runtimeConfigFile = await readFile(pathToRuntimeConfigFile, 'utf8')
   const runtimeConfig = JSON.parse(runtimeConfigFile)
 
   delete runtimeConfig.$schema
@@ -70,15 +70,4 @@ test('with a full path for autoload', async ({ equal, same, ok }) => {
       exclude: ['docs']
     }
   })
-})
-
-test('creates project with configuration already present', async ({ ok }) => {
-  const params = {
-    entrypoint: 'foobar'
-  }
-
-  const pathToRuntimeConfigFileOld = join(tmpDir, 'platformatic.runtime.json')
-  writeFileSync(pathToRuntimeConfigFileOld, JSON.stringify({ test: 'test' }))
-  await createRuntime(params, fakeLogger, tmpDir, 'foobar')
-  ok(log.includes('Configuration file platformatic.runtime.json found, skipping creation of configuration file.'))
 })

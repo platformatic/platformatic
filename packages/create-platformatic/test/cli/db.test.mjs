@@ -1,18 +1,18 @@
 import { test, beforeEach, afterEach } from 'tap'
 import { executeCreatePlatformatic, keys, walk } from './helper.mjs'
-import { mkdtempSync, rmSync } from 'fs'
 import { isFileAccessible } from '../../src/utils.mjs'
 import { join } from 'node:path'
 import { tmpdir } from 'os'
+import { mkdtemp, rm } from 'fs/promises'
 
 let tmpDir
-beforeEach(() => {
-  tmpDir = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
+beforeEach(async () => {
+  tmpDir = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
 })
 
-afterEach(() => {
+afterEach(async () => {
   try {
-    rmSync(tmpDir, { recursive: true, force: true })
+    await rm(tmpDir, { recursive: true, force: true })
   } catch (e) {
     // on purpose, in win the resource might be still "busy"
   }

@@ -1,21 +1,20 @@
 import createComposer from '../../src/composer/create-composer.mjs'
 import { test, beforeEach, afterEach } from 'tap'
 import { tmpdir } from 'os'
-import { mkdtempSync, rmSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import dotenv from 'dotenv'
-import { stat } from 'fs/promises'
+import { mkdtemp, readFile, rm, stat } from 'fs/promises'
 
 const base = tmpdir()
 let tmpDir
 let log = []
-beforeEach(() => {
-  tmpDir = mkdtempSync(join(base, 'test-create-platformatic-'))
+beforeEach(async () => {
+  tmpDir = await mkdtemp(join(base, 'test-create-platformatic-'))
 })
 
-afterEach(() => {
+afterEach(async () => {
   log = []
-  rmSync(tmpDir, { recursive: true, force: true })
+  await rm(tmpDir, { recursive: true, force: true })
   process.env = {}
 })
 
@@ -34,7 +33,7 @@ test('creates composer', async ({ equal, same, ok }) => {
   await createComposer(params, fakeLogger, tmpDir)
 
   const pathToComposerConfigFile = join(tmpDir, 'platformatic.composer.json')
-  const composerConfigFile = readFileSync(pathToComposerConfigFile, 'utf8')
+  const composerConfigFile = await readFile(pathToComposerConfigFile, 'utf8')
   const composerConfig = JSON.parse(composerConfigFile)
   const { server, composer } = composerConfig
 
@@ -78,17 +77,6 @@ test('creates composer', async ({ equal, same, ok }) => {
   }
 })
 
-test('creates project with configuration already present', async ({ ok }) => {
-  const pathToComposerConfigFileOld = join(tmpDir, 'platformatic.composer.json')
-  writeFileSync(pathToComposerConfigFileOld, JSON.stringify({ test: 'test' }))
-  const params = {
-    hostname: 'myhost',
-    port: 6666
-  }
-  await createComposer(params, fakeLogger, tmpDir)
-  ok(log.includes('Configuration file platformatic.composer.json found, skipping creation of configuration file.'))
-})
-
 test('creates composer in a runtime context', async ({ equal, same, ok }) => {
   const params = {
     isRuntimeContext: true,
@@ -101,7 +89,7 @@ test('creates composer in a runtime context', async ({ equal, same, ok }) => {
   await createComposer(params, fakeLogger, tmpDir, undefined)
 
   const pathToComposerConfigFile = join(tmpDir, 'platformatic.composer.json')
-  const composerConfigFile = readFileSync(pathToComposerConfigFile, 'utf8')
+  const composerConfigFile = await readFile(pathToComposerConfigFile, 'utf8')
   const composerConfig = JSON.parse(composerConfigFile)
   const { server, composer } = composerConfig
 

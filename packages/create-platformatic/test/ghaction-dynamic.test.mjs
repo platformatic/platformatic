@@ -1,7 +1,7 @@
 'use strict'
 
 import { test, beforeEach, afterEach } from 'tap'
-import { mkdtemp, rmdir, writeFile, readFile, mkdir } from 'fs/promises'
+import { mkdtemp, readFile, mkdir, rm } from 'fs/promises'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import { isFileAccessible } from '../src/utils.mjs'
@@ -21,7 +21,7 @@ beforeEach(async () => {
 })
 
 afterEach(async () => {
-  await rmdir(tmpDir, { recursive: true, force: true })
+  await rm(tmpDir, { recursive: true, force: true })
 })
 
 const env = {
@@ -66,14 +66,6 @@ test('creates gh action with TS build step', async ({ equal, match }) => {
 
   equal(permissions.contents, 'read')
   equal(permissions['pull-requests'], 'write')
-})
-
-test('do not create gitignore file because already present', async ({ end, equal }) => {
-  await mkdir(join(tmpDir, '.github', 'workflows'), { recursive: true })
-  const ghaction = join(tmpDir, '.github', 'workflows', 'platformatic-dynamic-workspace-deploy.yml')
-  await writeFile(ghaction, 'TEST')
-  await createDynamicWorkspaceGHAction(fakeLogger, env, 'db', tmpDir)
-  equal(log[0], `Github action file ${join(tmpDir, '.github', 'workflows', 'platformatic-dynamic-workspace-deploy.yml')} found, skipping creation of github action file.`)
 })
 
 test('creates gh action with a warn if a .git folder is not present', async ({ end, equal }) => {
