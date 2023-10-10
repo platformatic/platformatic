@@ -289,6 +289,14 @@ export async function command (argv) {
   let runtime
 
   if (options.runtime) {
+    // TODO add flag to allow specifying a runtime config file
+    const runtimeConfigFile = await findUp('platformatic.runtime.json')
+
+    if (!runtimeConfigFile) {
+      logger.error('Could not find a platformatic.runtime.json file in this or any parent directory.')
+      process.exit(1)
+    }
+
     let RuntimeApi
     let platformaticRuntime
 
@@ -308,8 +316,6 @@ export async function command (argv) {
       }
       throw err
     }
-
-    const runtimeConfigFile = await findUp('platformatic.runtime.json')
 
     const { configManager } = await loadConfig({}, ['-c', runtimeConfigFile], platformaticRuntime)
 

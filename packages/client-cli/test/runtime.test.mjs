@@ -6,6 +6,7 @@ import * as desm from 'desm'
 import { execa } from 'execa'
 import { cp, writeFile, readFile } from 'node:fs/promises'
 import split from 'split2'
+import { once } from 'node:events'
 
 test('openapi client generation (javascript) via the runtime', async ({ teardown, comment, same, match }) => {
   const dir = await moveToTmpdir(teardown)
@@ -178,4 +179,25 @@ PLT_SERVER_LOGGER_LEVEL=info
     const lastMessage = split.pop()
     match(lastMessage, 'Could not find a valid OpenAPI or GraphQL schema at http://sample-service.plt.local')
   }
+})
+
+test('no platformatic.runtime.json', async ({ teardown, comment, match, plan, equal }) => {
+  plan(2)
+  const dir = await moveToTmpdir(teardown)
+  comment(`working in ${dir}`)
+
+  process.chdir(dir)
+
+  const app = execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
+
+  const onExit = once(app, 'exit')
+
+  const stream = app.stdout.pipe(split())
+
+  for await (const line of stream) {
+    match(line, 'Could not find a platformatic.runtime.json file in this or any parent directory.')
+  }
+
+  const [code] = await onExit
+  equal(code, 1)
 })
