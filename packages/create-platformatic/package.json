@@ -1,6 +1,6 @@
 {
   "name": "create-platformatic",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Create platformatic-db interactive tool",
   "repository": {
     "type": "git",
@@ -15,7 +15,7 @@
   "scripts": {
     "test:cli": "tap --no-coverage test/cli/*test.mjs -t120",
     "test:unit": "standard | snazzy && cross-env NODE_OPTIONS=\"--loader=esmock --no-warnings\" c8 tap --no-coverage test/*test.mjs test/*[!cli]/*test.mjs",
-    "test":  "npm run test:unit && npm run test:cli",
+    "test": "npm run test:unit && npm run test:cli",
     "lint": "standard | snazzy"
   },
   "license": "Apache-2.0",
