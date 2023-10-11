@@ -8,6 +8,7 @@ const { mercuriusFederationPlugin } = require('@mercuriusjs/federation')
 const { findNearestString } = require('@platformatic/utils')
 const establishRelations = require('./lib/relationship')
 const setupSubscriptions = require('./lib/subscriptions')
+const setupTelemetry = require('./lib/telemetry')
 const scalars = require('graphql-scalars')
 const errors = require('./lib/errors')
 
@@ -185,6 +186,10 @@ async function mapperToGraphql (app, opts) {
     loaders,
     resolvers
   })
+
+  if (app.openTelemetry) {
+    setupTelemetry(app)
+  }
 
   app.log.debug({ schema: sdl }, 'computed schema')
 }
