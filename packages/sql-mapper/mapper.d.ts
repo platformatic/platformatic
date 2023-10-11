@@ -82,7 +82,7 @@ export interface WhereCondition {
     /**
      * Greater than value.
      */
-    gr?: any,
+    gt?: any,
     /**
      * Greater than or equal to value.
      */

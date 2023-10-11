@@ -13,7 +13,8 @@ import {
   EntityHooks,
   createConnectionPool,
   Entities,
-  errors
+  errors,
+  WhereCondition
 } from '../../mapper'
 
 const log = {
@@ -85,6 +86,27 @@ expectType<Partial<EntityFields>[]>(await entity.insert({ inputs: [{ id: 1, name
 expectType<Partial<EntityFields>>(await entity.save({ input: { id: 1, name: 'test' }, tx: pluginOptions.db }))
 expectType<Partial<EntityFields>[]>(await entity.delete({ tx: pluginOptions.db }))
 expectType<number>(await entity.count({ tx: pluginOptions.db }))
+
+const whereCondition: WhereCondition = {
+  eq: {eq: ""},
+  neq: {neq: ""},
+  gt: {gt: ""},
+  gte: {gte: ""},
+  lt: {lt: ""},
+  lte: {lte: ""},
+  in: {in: []},
+  nin: {nin: []},
+  like: {like: ""},
+  ilike: {ilike: ""},
+  all: {all: ""},
+  any: {any: ""},
+  contains: {contains: []},
+  contained: {contained: []},
+  overlaps: {overlaps: []},
+}
+await entity.find({ where: whereCondition })
+await entity.delete({ where: whereCondition })
+await entity.count({ where: whereCondition })
 
 const entityHooks: EntityHooks = {
   async find(originalFind: typeof entity.find, ...options: Parameters<typeof entity.find>): ReturnType<typeof entity.find> { return [] },
