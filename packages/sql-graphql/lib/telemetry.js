@@ -18,7 +18,8 @@ const telemetryWrapper = (app, fn, operationType, operationName) => async (...ar
     const result = await fn(...args)
     endInternalSpan(span)
     return result
-  } catch (err) {
+  // We ignore this because in sqlite it's HARD to have a resolver exception without a schema validation exception first.
+  } catch (err) /* istanbul ignore next */ {
     endInternalSpan(span, err)
     throw err
   }

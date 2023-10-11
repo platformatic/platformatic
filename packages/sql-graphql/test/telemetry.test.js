@@ -1,22 +1,24 @@
 'use strict'
 
-const { test, skip } = require('tap')
+const { test } = require('tap')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const { telemetry } = require('@platformatic/telemetry')
 const fastify = require('fastify')
 const { clear, connInfo, isSQLite, isPg } = require('./helper')
 
-if (isSQLite) {
-  skip('The db is not SQLite')
-  process.exit(0)
-}
-
 async function createBasicPages (db, sql) {
-  await db.query(sql`CREATE TABLE pages (
-    id SERIAL PRIMARY KEY,
-    title VARCHAR(10)
-  );`)
+  if (isSQLite) {
+    await db.query(sql`CREATE TABLE pages (
+      id INTEGER PRIMARY KEY,
+      title VARCHAR(10)
+    );`)
+  } else {
+    await db.query(sql`CREATE TABLE pages (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(10)
+    );`)
+  }
 }
 
 test('creates the spans for the graphql mutation', async ({ pass, teardown, same, equal }) => {
@@ -96,7 +98,8 @@ test('creates the spans for the graphql mutation', async ({ pass, teardown, same
         `)
 })
 
-test('creates the spans for errors', async ({ pass, teardown, same, equal }) => {
+// We skip this for sqllite because in sqlite it's HARD to have a resolver exception without a schema validation exception first.
+test('creates the spans for errors', { skip: isSQLite }, async ({ pass, teardown, same, equal }) => {
   const app = fastify()
 
   await app.register(telemetry, {
