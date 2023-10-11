@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/triple-slash-reference */
 /// <reference types="mercurius" />
 /// <reference types="@fastify/swagger" />
-import { FastifyInstance } from 'fastify'
+import { FastifyInstance, FastifyBaseLogger } from 'fastify'
 import ConfigManager from '@platformatic/config'
 import type { IConfigManagerOptions } from '@platformatic/config'
 import { PlatformaticService } from './config'
 import type { JSONSchemaType } from 'ajv'
-
 export interface PlatformaticApp<T> {
   configManager: ConfigManager<T>
   config: T
@@ -39,8 +38,13 @@ interface SchemaExport {
   schema: JSONSchemaType<PlatformaticServiceConfig>
 }
 
+interface TSCompiler {
+  compile: (cwd: string, config: object, originalLogger: FastifyBaseLogger) => Promise<boolean>
+}
 export const schema: SchemaExport
 
 export declare const platformaticService: Stackable<PlatformaticServiceConfig>
 
 export default platformaticService
+
+export const tsCompiler: TSCompiler
