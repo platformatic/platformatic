@@ -60,7 +60,6 @@ async function seed (_args) {
     await tsCompiler.compile(process.cwd(), configManager.current, logger)
     const tsConfigPath = config?.plugins?.typescript?.tsConfig || resolve(process.cwd(), 'tsconfig.json')
     const tsConfig = JSON.parse(await readFile(tsConfigPath, 'utf8'))
-    console.log(tsConfig)
     const outDir = tsConfig.compilerOptions.outDir
     seedFile = join(outDir, seedFile.replace('.ts', '.js'))
   }
