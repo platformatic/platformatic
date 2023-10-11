@@ -104,9 +104,9 @@ const whereCondition: WhereCondition = {
   contained: {contained: []},
   overlaps: {overlaps: []},
 }
-entity.find({ where: whereCondition })
-entity.delete({ where: whereCondition })
-entity.count({ where: whereCondition })
+await entity.find({ where: whereCondition })
+await entity.delete({ where: whereCondition })
+await entity.count({ where: whereCondition })
 
 const entityHooks: EntityHooks = {
   async find(originalFind: typeof entity.find, ...options: Parameters<typeof entity.find>): ReturnType<typeof entity.find> { return [] },
