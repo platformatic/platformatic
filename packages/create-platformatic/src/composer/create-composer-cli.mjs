@@ -1,10 +1,9 @@
-import { getVersion, getDependencyVersion } from '../utils.mjs'
+import { getVersion, getDependencyVersion, safeMkdir } from '../utils.mjs'
 import { createPackageJson } from '../create-package-json.mjs'
 import { createGitignore } from '../create-gitignore.mjs'
 import { getPkgManager } from '../get-pkg-manager.mjs'
 import parseArgs from 'minimist'
 import inquirer from 'inquirer'
-import { mkdir } from 'fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa } from 'execa'
@@ -13,7 +12,6 @@ import createComposer from './create-composer.mjs'
 import askDir from '../ask-dir.mjs'
 import { getRunPackageManagerInstall, getPort, getUseTypescript, getInitGitRepository } from '../cli-options.mjs'
 import { createReadme } from '../create-readme.mjs'
-import { stat } from 'node:fs/promises'
 import { join } from 'path'
 
 export const getServicesToCompose = (servicesNames) => {
@@ -46,13 +44,6 @@ const createPlatformaticComposer = async (_args, opts) => {
   const pkgManager = getPkgManager()
 
   const projectDir = opts.dir || await askDir(logger, join('.', 'platformatic-composer'))
-  // checks directory
-  try {
-    await stat(projectDir)
-    logger.error(`Directory ${projectDir} already exists. Please choose another path.`)
-    process.exit(1)
-  } catch (err) {}
-
   const isRuntimeContext = opts.isRuntimeContext || false
 
   const toAsk = []
@@ -106,7 +97,7 @@ const createPlatformaticComposer = async (_args, opts) => {
   } = await inquirer.prompt(toAsk)
 
   // Create the project directory
-  await mkdir(projectDir, { recursive: true })
+  await safeMkdir(projectDir)
 
   const params = {
     isRuntimeContext,

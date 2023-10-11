@@ -2,7 +2,7 @@ import createService from '../../src/service/create-service.mjs'
 import { isFileAccessible } from '../../src/utils.mjs'
 import { test, beforeEach, afterEach } from 'tap'
 import { tmpdir } from 'os'
-import { readFile, writeFile, rm, mkdir, mkdtemp } from 'fs/promises'
+import { readFile, rm, mkdtemp } from 'fs/promises'
 import { join } from 'path'
 import dotenv from 'dotenv'
 import Ajv from 'ajv'
@@ -110,49 +110,6 @@ test('creates service with javascript', async ({ equal, same, ok }) => {
   ok(await isFileAccessible(join(tmpDir, 'test', 'plugins', 'example.test.js')))
   ok(await isFileAccessible(join(tmpDir, 'test', 'routes', 'root.test.js')))
   ok(await isFileAccessible(join(tmpDir, 'test', 'helper.js')))
-})
-
-test('creates project with configuration already present', async ({ ok }) => {
-  const pathToServiceConfigFileOld = join(tmpDir, 'platformatic.service.json')
-  await writeFile(pathToServiceConfigFileOld, JSON.stringify({ test: 'test' }))
-  const params = {
-    hostname: 'myhost',
-    port: 6666
-  }
-  await createService(params, fakeLogger, tmpDir)
-  ok(log.includes('Configuration file platformatic.service.json found, skipping creation of configuration file.'))
-})
-
-test('creates project with tsconfig already present', async ({ ok }) => {
-  const pathToTsConfig = join(tmpDir, 'tsconfig.json')
-  await writeFile(pathToTsConfig, 'test')
-  const params = {
-    hostname: 'myhost',
-    port: 6666,
-    typescript: true
-  }
-  await createService(params, fakeLogger, tmpDir)
-  ok(log.includes(`Typescript configuration file ${pathToTsConfig} found, skipping creation of typescript configuration file.`))
-})
-
-test('creates project with plugins already present', async ({ ok }) => {
-  const pathToPlugins = join(tmpDir, 'plugins')
-  await mkdir(pathToPlugins)
-  const params = {
-    hostname: 'myhost'
-  }
-  await createService(params, fakeLogger, tmpDir)
-  ok(log.includes('Plugins folder "plugins" found, skipping creation of plugins folder.'))
-})
-
-test('creates project with routes already present', async ({ ok }) => {
-  const pathToPlugins = join(tmpDir, 'routes')
-  await mkdir(pathToPlugins)
-  const params = {
-    hostname: 'myhost'
-  }
-  await createService(params, fakeLogger, tmpDir)
-  ok(log.includes('Routes folder "routes" found, skipping creation of routes folder.'))
 })
 
 test('creates service in a runtime context', async ({ equal, same, ok, notOk }) => {

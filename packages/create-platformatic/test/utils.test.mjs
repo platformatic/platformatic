@@ -1,12 +1,12 @@
 'use strict'
 
 import { test } from 'tap'
-import { randomBetween, sleep, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions, findRuntimeConfigFile, findComposerConfigFile, convertServiceNameToPrefix, addPrefixToEnv } from '../src/utils.mjs'
-import { mkdtempSync, rmSync, writeFileSync } from 'fs'
+import { randomBetween, sleep, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions, findRuntimeConfigFile, findComposerConfigFile, convertServiceNameToPrefix, addPrefixToEnv, safeMkdir } from '../src/utils.mjs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import esmock from 'esmock'
 import semver from 'semver'
+import { mkdir, mkdtemp, rm, writeFile } from 'fs/promises'
 
 test('getUsername from git', async ({ end, equal }) => {
   const name = 'lukeskywalker'
@@ -113,57 +113,57 @@ test('getDependencyVersion', async ({ equal }) => {
 })
 
 test('findDBConfigFile', async ({ end, equal, mock }) => {
-  const tmpDir1 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
-  const tmpDir2 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
+  const tmpDir1 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
+  const tmpDir2 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
   const config = join(tmpDir1, 'platformatic.db.yml')
-  writeFileSync(config, 'TEST')
+  await writeFile(config, 'TEST')
   equal(await findDBConfigFile(tmpDir1), 'platformatic.db.yml')
   equal(await findDBConfigFile(tmpDir2), undefined)
-  rmSync(tmpDir1, { recursive: true, force: true })
-  rmSync(tmpDir2, { recursive: true, force: true })
+  await rm(tmpDir1, { recursive: true, force: true })
+  await rm(tmpDir2, { recursive: true, force: true })
 })
 
 test('findServiceConfigFile', async ({ end, equal, mock }) => {
-  const tmpDir1 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
-  const tmpDir2 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
+  const tmpDir1 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
+  const tmpDir2 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
   const config = join(tmpDir1, 'platformatic.service.toml')
-  writeFileSync(config, 'TEST')
+  await writeFile(config, 'TEST')
   equal(await findServiceConfigFile(tmpDir1), 'platformatic.service.toml')
   equal(await findServiceConfigFile(tmpDir2), undefined)
-  rmSync(tmpDir1, { recursive: true, force: true })
-  rmSync(tmpDir2, { recursive: true, force: true })
+  await rm(tmpDir1, { recursive: true, force: true })
+  await rm(tmpDir2, { recursive: true, force: true })
 })
 
 test('findComposerConfigFile', async ({ end, equal, mock }) => {
-  const tmpDir1 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
-  const tmpDir2 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
+  const tmpDir1 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
+  const tmpDir2 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
   const config = join(tmpDir1, 'platformatic.composer.yml')
-  writeFileSync(config, 'TEST')
+  await writeFile(config, 'TEST')
   equal(await findComposerConfigFile(tmpDir1), 'platformatic.composer.yml')
   equal(await findComposerConfigFile(tmpDir2), undefined)
-  rmSync(tmpDir1, { recursive: true, force: true })
-  rmSync(tmpDir2, { recursive: true, force: true })
+  await rm(tmpDir1, { recursive: true, force: true })
+  await rm(tmpDir2, { recursive: true, force: true })
 })
 
 test('findRuntimeConfigFile', async ({ end, equal, mock }) => {
-  const tmpDir1 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
-  const tmpDir2 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
+  const tmpDir1 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
+  const tmpDir2 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
   const config = join(tmpDir1, 'platformatic.runtime.yml')
-  writeFileSync(config, 'TEST')
+  await writeFile(config, 'TEST')
   equal(await findRuntimeConfigFile(tmpDir1), 'platformatic.runtime.yml')
   equal(await findRuntimeConfigFile(tmpDir2), undefined)
-  rmSync(tmpDir1, { recursive: true, force: true })
-  rmSync(tmpDir2, { recursive: true, force: true })
+  await rm(tmpDir1, { recursive: true, force: true })
+  await rm(tmpDir2, { recursive: true, force: true })
 })
 
 test('isFileAccessible', async ({ end, equal, mock }) => {
-  const tmpDir1 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
+  const tmpDir1 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
   const config = join(tmpDir1, 'platformatic.db.yml')
-  writeFileSync(config, 'TEST')
+  await writeFile(config, 'TEST')
   equal(await isFileAccessible(config), true)
   const config2 = join(tmpDir1, 'platformatic2.db.yml')
   equal(await isFileAccessible(config2), false)
-  rmSync(tmpDir1, { recursive: true, force: true })
+  await rm(tmpDir1, { recursive: true, force: true })
 })
 
 test('minimumSupportedNodeVersions', async ({ equal, not }) => {
@@ -254,5 +254,17 @@ test('should add prefix to a key/value object', async (t) => {
   t.same(addPrefixToEnv(env, prefix), {
     MY_PREFIX_PLT_HOSTNAME: 'myhost',
     MY_PREFIX_PORT: '3042'
+  })
+})
+
+test('safeMkdir should not throw if dir already exists', async (t) => {
+  const tempDirectory = join(tmpdir(), 'safeMkdirTest')
+  t.teardown(async () => {
+    await rm(tempDirectory, { recursive: true })
+  })
+  await mkdir(tempDirectory)
+
+  t.doesNotThrow(async () => {
+    await safeMkdir(tempDirectory)
   })
 })

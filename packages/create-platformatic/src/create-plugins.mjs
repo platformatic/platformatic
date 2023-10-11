@@ -1,6 +1,6 @@
 import { join } from 'path'
-import { writeFile, mkdir } from 'fs/promises'
-import { isFileAccessible } from './utils.mjs'
+import { writeFile } from 'fs/promises'
+import { safeMkdir } from './utils.mjs'
 
 const JS_PLUGIN_WITH_TYPES_SUPPORT = `\
 /// <reference path="../global.d.ts" />
@@ -168,12 +168,7 @@ test('example decorator', async (t) => {
 `
 
 export async function generatePluginWithTypesSupport (logger, currentDir, isTypescript) {
-  const accessible = await isFileAccessible('plugins', currentDir)
-  if (accessible) {
-    logger.info('Plugins folder "plugins" found, skipping creation of plugins folder.')
-    return
-  }
-  await mkdir(join(currentDir, 'plugins'))
+  await safeMkdir(join(currentDir, 'plugins'))
   const pluginTemplate = isTypescript
     ? TS_PLUGIN_WITH_TYPES_SUPPORT
     : JS_PLUGIN_WITH_TYPES_SUPPORT
@@ -185,12 +180,7 @@ export async function generatePluginWithTypesSupport (logger, currentDir, isType
 }
 
 export async function generateRouteWithTypesSupport (logger, currentDir, isTypescript) {
-  const accessible = await isFileAccessible('routes', currentDir)
-  if (accessible) {
-    logger.info('Routes folder "routes" found, skipping creation of routes folder.')
-    return
-  }
-  await mkdir(join(currentDir, 'routes'))
+  await safeMkdir(join(currentDir, 'routes'))
   const routesTemplate = isTypescript
     ? TS_ROUTES_WITH_TYPES_SUPPORT
     : JS_ROUTES_WITH_TYPES_SUPPORT
@@ -202,15 +192,9 @@ export async function generateRouteWithTypesSupport (logger, currentDir, isTypes
 }
 
 export async function generateTests (logger, currentDir, isTypescript, mod, customizations) {
-  const accessible = await isFileAccessible('tests', currentDir)
-  if (accessible) {
-    logger.info('Test folder found, skipping creation of tests.')
-    return
-  }
-
-  await mkdir(join(currentDir, 'test'))
-  await mkdir(join(currentDir, 'test', 'plugins'))
-  await mkdir(join(currentDir, 'test', 'routes'))
+  await safeMkdir(join(currentDir, 'test'))
+  await safeMkdir(join(currentDir, 'test', 'plugins'))
+  await safeMkdir(join(currentDir, 'test', 'routes'))
 
   if (isTypescript) {
     await writeFile(join(currentDir, 'test', 'helper.ts'), testHelperTS(mod, customizations))

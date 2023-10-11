@@ -1,11 +1,10 @@
-import { getVersion, getDependencyVersion } from '../utils.mjs'
+import { getVersion, getDependencyVersion, safeMkdir } from '../utils.mjs'
 import { createPackageJson } from '../create-package-json.mjs'
 import { createGitignore } from '../create-gitignore.mjs'
 import { getPkgManager } from '../get-pkg-manager.mjs'
 import parseArgs from 'minimist'
 import inquirer from 'inquirer'
 import which from 'which'
-import { mkdir, stat } from 'fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa } from 'execa'
@@ -60,13 +59,6 @@ const createPlatformaticDB = async (_args, opts) => {
   const version = await getVersion()
   const pkgManager = getPkgManager()
   const projectDir = opts.dir || await askDir(logger, join('.', 'platformatic-db'))
-
-  // Create the project directory
-  try {
-    await stat(projectDir)
-    logger.error(`Directory ${projectDir} already exists. Please choose another path.`)
-    process.exit(1)
-  } catch (err) {}
 
   const isRuntimeContext = opts.isRuntimeContext || false
   const toAsk = []
@@ -175,7 +167,7 @@ const createPlatformaticDB = async (_args, opts) => {
   // Prompt for questions
   const wizardOptions = await inquirer.prompt(toAsk)
 
-  await mkdir(projectDir, { recursive: true })
+  await safeMkdir(projectDir)
 
   const generatePlugin = args.plugin || wizardOptions.generatePlugin
   const useTypescript = args.typescript || wizardOptions.useTypescript

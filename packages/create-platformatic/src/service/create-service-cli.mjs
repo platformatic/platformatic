@@ -1,11 +1,10 @@
-import { getVersion, getDependencyVersion } from '../utils.mjs'
+import { getVersion, getDependencyVersion, safeMkdir } from '../utils.mjs'
 import { createPackageJson } from '../create-package-json.mjs'
 import { createGitignore } from '../create-gitignore.mjs'
 import { getPkgManager } from '../get-pkg-manager.mjs'
 import parseArgs from 'minimist'
 import { join } from 'path'
 import inquirer from 'inquirer'
-import { mkdir, stat } from 'fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa } from 'execa'
@@ -36,13 +35,6 @@ const createPlatformaticService = async (_args, opts = {}) => {
 
   const projectDir = opts.dir || await askDir(logger, join('.', 'platformatic-service'))
   const isRuntimeContext = opts.isRuntimeContext || false
-
-  // checks directory
-  try {
-    await stat(projectDir)
-    logger.error(`Directory ${projectDir} already exists. Please choose another path.`)
-    process.exit(1)
-  } catch (err) {}
 
   const toAsk = []
   toAsk.push(getUseTypescript(args.typescript))
@@ -84,7 +76,7 @@ const createPlatformaticService = async (_args, opts = {}) => {
   } = await inquirer.prompt(toAsk)
 
   // Create the project directory
-  await mkdir(projectDir, { recursive: true })
+  await safeMkdir(projectDir)
 
   const params = {
     isRuntimeContext,
@@ -122,7 +114,9 @@ const createPlatformaticService = async (_args, opts = {}) => {
 
   const spinner = ora('Generating types...').start()
   try {
-    await execa(pkgManager, ['exec', 'platformatic', 'service', 'types'], { cwd: projectDir })
+    const options = ['exec', 'platformatic', 'service', 'types']
+    await execa(pkgManager, options, { cwd: projectDir })
+
     spinner.succeed('Types generated!')
   } catch (err) {
     logger.trace({ err })

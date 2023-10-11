@@ -1,5 +1,4 @@
 import { readFile, writeFile, readdir, unlink } from 'fs/promises'
-import { findRuntimeConfigFile } from '../utils.mjs'
 import { join, relative, isAbsolute } from 'path'
 import * as desm from 'desm'
 import { createDynamicWorkspaceGHAction, createStaticWorkspaceGHAction } from '../ghaction.mjs'
@@ -29,21 +28,14 @@ async function createRuntime (params, logger, currentDir = process.cwd(), versio
     dynamicWorkspaceGitHubAction,
     initGitRepository
   } = params
-  console.log('@@@@@@@@@@@@@@@@', params)
   if (!version) {
     const pkg = await readFile(desm.join(import.meta.url, '..', '..', 'package.json'))
     version = JSON.parse(pkg).version
   }
-  const accessibleConfigFilename = await findRuntimeConfigFile(currentDir)
-
-  if (accessibleConfigFilename === undefined) {
-    const path = isAbsolute(servicesDir) ? relative(currentDir, servicesDir) : servicesDir
-    const config = generateConfig(version, path, entrypoint)
-    await writeFile(join(currentDir, 'platformatic.runtime.json'), JSON.stringify(config, null, 2))
-    logger.info('Configuration file platformatic.runtime.json successfully created.')
-  } else {
-    logger.info(`Configuration file ${accessibleConfigFilename} found, skipping creation of configuration file.`)
-  }
+  const path = isAbsolute(servicesDir) ? relative(currentDir, servicesDir) : servicesDir
+  const config = generateConfig(version, path, entrypoint)
+  await writeFile(join(currentDir, 'platformatic.runtime.json'), JSON.stringify(config, null, 2))
+  logger.info('Configuration file platformatic.runtime.json successfully created.')
   let runtimeEnv = {}
   if (servicesDir && entrypoint && entrypointPort) {
     const servicesDirFullPath = isAbsolute(servicesDir)

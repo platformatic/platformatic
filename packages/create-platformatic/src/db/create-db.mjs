@@ -1,6 +1,6 @@
-import { writeFile, mkdir, appendFile } from 'fs/promises'
+import { writeFile, appendFile } from 'fs/promises'
 import { join } from 'path'
-import { addPrefixToEnv, findDBConfigFile, isFileAccessible } from '../utils.mjs'
+import { addPrefixToEnv, safeMkdir } from '../utils.mjs'
 import { getTsConfig } from '../get-tsconfig.mjs'
 import { generatePlugins } from '../create-plugins.mjs'
 import { createDynamicWorkspaceGHAction, createStaticWorkspaceGHAction } from '../ghaction.mjs'
@@ -366,56 +366,33 @@ export async function createDB (params, logger, currentDir, version) {
   }
   connectionString = connectionString || getConnectionString(database)
   const createMigrations = !!migrations // If we don't define a migrations folder, we don't create it
-  const accessibleConfigFilename = await findDBConfigFile(currentDir)
+  const envPrefix = runtimeContext !== undefined ? `${runtimeContext.envPrefix}_` : ''
 
-  if (accessibleConfigFilename === undefined) {
-    const envPrefix = runtimeContext !== undefined ? `${runtimeContext.envPrefix}_` : ''
+  const config = generateConfig(isRuntimeContext, migrations, plugin, types, typescript, version, envPrefix)
+  await writeFile(join(currentDir, 'platformatic.db.json'), JSON.stringify(config, null, 2))
+  logger.info('Configuration file platformatic.db.json successfully created.')
 
-    const config = generateConfig(isRuntimeContext, migrations, plugin, types, typescript, version, envPrefix)
-    await writeFile(join(currentDir, 'platformatic.db.json'), JSON.stringify(config, null, 2))
-    logger.info('Configuration file platformatic.db.json successfully created.')
-
-    const env = generateEnv(isRuntimeContext, hostname, port, connectionString, typescript, envPrefix)
-    const envSample = generateEnv(isRuntimeContext, hostname, port, getConnectionString(database), typescript, envPrefix)
-    const envFileExists = await isFileAccessible('.env', currentDir)
-    await appendFile(join(currentDir, '.env'), env)
-    await writeFile(join(currentDir, '.env.sample'), envSample)
-    /* c8 ignore next 5 */
-    if (envFileExists) {
-      logger.info('Environment file .env found, appending new environment variables to existing .env file.')
-    } else {
-      logger.info('Environment file .env successfully created.')
-    }
-  } else {
-    logger.info(`Configuration file ${accessibleConfigFilename} found, skipping creation of configuration file.`)
-  }
+  const env = generateEnv(isRuntimeContext, hostname, port, connectionString, typescript, envPrefix)
+  const envSample = generateEnv(isRuntimeContext, hostname, port, getConnectionString(database), typescript, envPrefix)
+  await appendFile(join(currentDir, '.env'), env)
+  await writeFile(join(currentDir, '.env.sample'), envSample)
+  logger.info('Environment file .env found, appending new environment variables to existing .env file.')
 
   const migrationsFolderName = migrations
   if (createMigrations) {
-    const isMigrationFolderExists = await isFileAccessible(migrationsFolderName, currentDir)
-    if (!isMigrationFolderExists) {
-      await mkdir(join(currentDir, migrationsFolderName), { recursive: true })
-      logger.info(`Migrations folder ${migrationsFolderName} successfully created.`)
-    } else {
-      logger.info(`Migrations folder ${migrationsFolderName} found, skipping creation of migrations folder.`)
-    }
+    await safeMkdir(join(currentDir, migrationsFolderName))
+    logger.info(`Migrations folder ${migrationsFolderName} successfully created.`)
   }
 
   const migrationFileNameDo = '001.do.sql'
   const migrationFileNameUndo = '001.undo.sql'
   const migrationFilePathDo = join(currentDir, migrationsFolderName, migrationFileNameDo)
   const migrationFilePathUndo = join(currentDir, migrationsFolderName, migrationFileNameUndo)
-  const isMigrationFileDoExists = await isFileAccessible(migrationFilePathDo)
-  const isMigrationFileUndoExists = await isFileAccessible(migrationFilePathUndo)
-  if (!isMigrationFileDoExists && createMigrations) {
+  if (createMigrations) {
     await writeFile(migrationFilePathDo, moviesMigrationDo(database))
     logger.info(`Migration file ${migrationFileNameDo} successfully created.`)
-    if (!isMigrationFileUndoExists) {
-      await writeFile(migrationFilePathUndo, moviesMigrationUndo)
-      logger.info(`Migration file ${migrationFileNameUndo} successfully created.`)
-    }
-  } else {
-    logger.info(`Migration file ${migrationFileNameDo} found, skipping creation of migration file.`)
+    await writeFile(migrationFilePathUndo, moviesMigrationUndo)
+    logger.info(`Migration file ${migrationFileNameUndo} successfully created.`)
   }
 
   if (typescript === true) {

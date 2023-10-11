@@ -1,5 +1,4 @@
 import { readFile, writeFile, appendFile } from 'fs/promises'
-import { findComposerConfigFile, isFileAccessible } from '../utils.mjs'
 import { join } from 'path'
 import * as desm from 'desm'
 import { generatePlugins, generateRouteWithTypesSupport } from '../create-plugins.mjs'
@@ -107,28 +106,17 @@ async function createComposer (
     const pkg = await readFile(desm.join(import.meta.url, '..', '..', 'package.json'))
     version = JSON.parse(pkg).version
   }
-  const accessibleConfigFilename = await findComposerConfigFile(currentDir)
+  const envPrefix = runtimeContext !== undefined ? `${runtimeContext.envPrefix}_` : ''
 
-  if (accessibleConfigFilename === undefined) {
-    const envPrefix = runtimeContext !== undefined ? `${runtimeContext.envPrefix}_` : ''
+  const config = generateConfig(isRuntimeContext, version, servicesToCompose, typescript, envPrefix)
+  await writeFile(join(currentDir, 'platformatic.composer.json'), JSON.stringify(config, null, 2))
+  logger.info('Configuration file platformatic.composer.json successfully created.')
 
-    const config = generateConfig(isRuntimeContext, version, servicesToCompose, typescript, envPrefix)
-    await writeFile(join(currentDir, 'platformatic.composer.json'), JSON.stringify(config, null, 2))
-    logger.info('Configuration file platformatic.composer.json successfully created.')
-
-    const env = generateEnv(isRuntimeContext, hostname, port, typescript, envPrefix)
-    const envFileExists = await isFileAccessible('.env', currentDir)
-    await appendFile(join(currentDir, '.env'), env)
-    await writeFile(join(currentDir, '.env.sample'), env)
-    /* c8 ignore next 5 */
-    if (envFileExists) {
-      logger.info('Environment file .env found, appending new environment variables to existing .env file.')
-    } else {
-      logger.info('Environment file .env successfully created.')
-    }
-  } else {
-    logger.info(`Configuration file ${accessibleConfigFilename} found, skipping creation of configuration file.`)
-  }
+  const env = generateEnv(isRuntimeContext, hostname, port, typescript, envPrefix)
+  await appendFile(join(currentDir, '.env'), env)
+  await writeFile(join(currentDir, '.env.sample'), env)
+  /* c8 ignore next 5 */
+  logger.info('Environment file .env successfully created.')
   await generatePlugins(logger, currentDir, typescript, 'composer')
   await generateRouteWithTypesSupport(logger, currentDir, true)
 
