@@ -44,7 +44,7 @@ const setupTelemetry = app => {
     const schemaTypeName = schemaType.name.toLowerCase() // query, mutation, subscription
     if (typeof schemaType.getFields === 'function') {
       for (const [fieldName, field] of Object.entries(schemaType.getFields())) {
-        if (typeof field.resolve === 'function') {
+        if (typeof field.resolve === 'function' && !schemaTypeName.startsWith('__')) {
           field.resolve = telemetryWrapper(app, field.resolve, schemaTypeName, fieldName)
         }
       }
