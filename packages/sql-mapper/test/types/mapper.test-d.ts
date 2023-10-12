@@ -39,6 +39,16 @@ expectType<Promise<void>>(pluginOptions.cleanUpAllEntities())
 {
   const pluginOptions2: SQLMapperPluginInterface<Entities> = await connect<Entities>({
     connectionString: '',
+    poolSize: 2,
+    queueTimeoutMilliseconds: 42,
+    idleTimeoutMilliseconds: 42,
+    acquireLockTimeoutMilliseconds: 42
+  })
+}
+
+{
+  const pluginOptions2: SQLMapperPluginInterface<Entities> = await connect<Entities>({
+    connectionString: '',
     cache: false
   })
 }

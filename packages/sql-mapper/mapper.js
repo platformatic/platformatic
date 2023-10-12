@@ -62,12 +62,12 @@ async function createConnectionPool ({ log, connectionString, poolSize, idleTime
   /* istanbul ignore next */
   if (connectionString.indexOf('postgres') === 0) {
     const createConnectionPoolPg = require('@databases/pg')
-    db = await buildConnection(log, createConnectionPoolPg, connectionString, poolSize, idleTimeoutMilliseconds, queueTimeoutMilliseconds, acquireLockTimeoutMilliseconds)
+    db = await buildConnection(log, createConnectionPoolPg, connectionString, poolSize, null, idleTimeoutMilliseconds, queueTimeoutMilliseconds, acquireLockTimeoutMilliseconds)
     sql = createConnectionPoolPg.sql
     db.isPg = true
   } else if (connectionString.indexOf('mysql') === 0) {
     const createConnectionPoolMysql = require('@databases/mysql')
-    db = await buildConnection(log, createConnectionPoolMysql, connectionString, poolSize, idleTimeoutMilliseconds, queueTimeoutMilliseconds, acquireLockTimeoutMilliseconds)
+    db = await buildConnection(log, createConnectionPoolMysql, connectionString, poolSize, null, idleTimeoutMilliseconds, queueTimeoutMilliseconds, acquireLockTimeoutMilliseconds)
     sql = createConnectionPoolMysql.sql
     const version = (await db.query(sql`SELECT VERSION()`))[0]['VERSION()']
     db.version = version
@@ -101,7 +101,7 @@ async function createConnectionPool ({ log, connectionString, poolSize, idleTime
   return { db, sql }
 }
 
-async function connect ({ connectionString, log, onDatabaseLoad, poolSize, ignore = {}, autoTimestamp = true, hooks = {}, schema, limit = {}, dbschema, cache }) {
+async function connect ({ connectionString, log, onDatabaseLoad, poolSize, ignore = {}, autoTimestamp = true, hooks = {}, schema, limit = {}, dbschema, cache, idleTimeoutMilliseconds, queueTimeoutMilliseconds, acquireLockTimeoutMilliseconds }) {
   if (typeof autoTimestamp === 'boolean' && autoTimestamp === true) {
     autoTimestamp = defaultAutoTimestampFields
   }
@@ -111,7 +111,7 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize, ignor
   }
 
   let queries
-  const { db, sql } = await createConnectionPool({ log, connectionString, poolSize })
+  const { db, sql } = await createConnectionPool({ log, connectionString, poolSize, queueTimeoutMilliseconds, acquireLockTimeoutMilliseconds, idleTimeoutMilliseconds })
 
   /* istanbul ignore next */
   if (db.isPg) {
