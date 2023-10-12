@@ -35,6 +35,15 @@ const db = {
     poolSize: {
       type: 'integer'
     },
+    idleTimeoutMilliseconds: {
+      type: 'integer'
+    },
+    queueTimeoutMilliseconds: {
+      type: 'integer'
+    },
+    acquireLockTimeoutMilliseconds: {
+      type: 'integer'
+    },
     autoTimestamp: {
       oneOf: [{
         type: 'object',

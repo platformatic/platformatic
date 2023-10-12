@@ -11,11 +11,14 @@ const setupCache = require('./lib/cache')
 
 // Ignore the function as it is only used only for MySQL and PostgreSQL
 /* istanbul ignore next */
-async function buildConnection (log, createConnectionPool, connectionString, poolSize, schema) {
+async function buildConnection (log, createConnectionPool, connectionString, poolSize, schema, idleTimeoutMilliseconds, queueTimeoutMilliseconds, acquireLockTimeoutMilliseconds) {
   const db = await createConnectionPool({
     connectionString,
     bigIntMode: 'string',
     poolSize,
+    idleTimeoutMilliseconds,
+    queueTimeoutMilliseconds,
+    acquireLockTimeoutMilliseconds,
     onQueryStart: (_query, { text, values }) => {
       log.trace({
         query: {
@@ -50,7 +53,7 @@ const defaultAutoTimestampFields = {
   updatedAt: 'updated_at'
 }
 
-async function createConnectionPool ({ log, connectionString, poolSize }) {
+async function createConnectionPool ({ log, connectionString, poolSize, idleTimeoutMilliseconds, queueTimeoutMilliseconds, acquireLockTimeoutMilliseconds }) {
   let db
   let sql
 
@@ -59,12 +62,12 @@ async function createConnectionPool ({ log, connectionString, poolSize }) {
   /* istanbul ignore next */
   if (connectionString.indexOf('postgres') === 0) {
     const createConnectionPoolPg = require('@databases/pg')
-    db = await buildConnection(log, createConnectionPoolPg, connectionString, poolSize)
+    db = await buildConnection(log, createConnectionPoolPg, connectionString, poolSize, idleTimeoutMilliseconds, queueTimeoutMilliseconds, acquireLockTimeoutMilliseconds)
     sql = createConnectionPoolPg.sql
     db.isPg = true
   } else if (connectionString.indexOf('mysql') === 0) {
     const createConnectionPoolMysql = require('@databases/mysql')
-    db = await buildConnection(log, createConnectionPoolMysql, connectionString, poolSize)
+    db = await buildConnection(log, createConnectionPoolMysql, connectionString, poolSize, idleTimeoutMilliseconds, queueTimeoutMilliseconds, acquireLockTimeoutMilliseconds)
     sql = createConnectionPoolMysql.sql
     const version = (await db.query(sql`SELECT VERSION()`))[0]['VERSION()']
     db.version = version

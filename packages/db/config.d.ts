@@ -136,6 +136,9 @@ export interface PlatformaticDB {
           [k: string]: unknown;
         };
     poolSize?: number;
+    idleTimeoutMilliseconds?: number;
+    queueTimeoutMilliseconds?: number;
+    acquireLockTimeoutMilliseconds?: number;
     autoTimestamp?:
       | {
           createdAt?: string;
