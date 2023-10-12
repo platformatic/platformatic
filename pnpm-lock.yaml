@@ -351,6 +351,9 @@ importers:
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
+      '@platformatic/graphql-composer':
+        specifier: git+ssh://github.com/platformatic/graphql-composer.git
+        version: github.com/platformatic/graphql-composer/d8ee94ec1cce3c7d384a0c8639d6da99c216e0ae
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
@@ -2864,7 +2867,6 @@ packages:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
-    dev: true
 
   /@nodelib/fs.scandir@2.1.5:
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -9917,3 +9919,16 @@ packages:
   /yocto-queue@1.0.0:
     resolution: {integrity: sha512-9bnSc/HEW2uRy67wc+T8UwauLuPJVn28jb+GtJY16iiKWyvmYJRXVT4UamsAEGQfPohgr2q4Tq0sQbQlxTfi1g==}
     engines: {node: '>=12.20'}
+
+  github.com/platformatic/graphql-composer/d8ee94ec1cce3c7d384a0c8639d6da99c216e0ae:
+    resolution: {tarball: https://codeload.github.com/platformatic/graphql-composer/tar.gz/d8ee94ec1cce3c7d384a0c8639d6da99c216e0ae}
+    name: '@platformatic/graphql-composer'
+    version: 0.2.0
+    dependencies:
+      '@mercuriusjs/subscription-client': 1.0.0(graphql@16.8.1)
+      graphql: 16.8.1
+      undici: 5.25.4
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+    dev: false
