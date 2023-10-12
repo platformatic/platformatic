@@ -311,6 +311,27 @@ interface BasePoolOptions {
    * @default 10
    */
   poolSize?: number
+
+  /**
+   * Max milliseconds a client can go unused before it is removed from the pool and destroyed
+   * Default is 30_000ms
+   * @default 30000
+   */
+  idleTimeoutMilliseconds?: number
+
+  /**
+   * Number of milliseconds to wait for a connection from the connection pool before throwing a timeout error
+   * Default is 60_000ms
+   * @default 60000
+   */
+  queueTimeoutMilliseconds?: number
+
+  /**
+   * Number of milliseconds to wait for a lock on a connection/transaction.
+   * Default is 60_000ms
+   * @default 60000
+   */
+  acquireLockTimeoutMilliseconds?: number
 }
 
 export interface CreateConnectionPoolOptions extends BasePoolOptions {
