@@ -1,28 +1,10 @@
 'use strict'
 
 const { test } = require('tap')
-const fastify = require('fastify')
 const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
-const telemetryPlugin = require('../lib/telemetry')
 const { PlatformaticContext } = require('../lib/platformatic-context')
 const { fastifyTextMapGetter } = require('../lib/fastify-text-map')
-
-async function setupApp (pluginOpts, routeHandler, teardown) {
-  const app = fastify()
-  await app.register(telemetryPlugin, pluginOpts)
-  app.get('/test', routeHandler)
-  app.ready()
-  teardown(async () => {
-    await app.close()
-    const { exporters } = app.openTelemetry
-    exporters.forEach(exporter => {
-      if (exporter.constructor.name === 'InMemorySpanExporter') {
-        exporter.reset()
-      }
-    })
-  })
-  return app
-}
+const { setupApp } = require('./helper')
 
 test('start and ends an internal span', async ({ equal, same, teardown }) => {
   const traceId = '5e994e8fb53b27c91dcd2fec22771d15'
