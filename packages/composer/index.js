@@ -60,12 +60,12 @@ async function buildComposerServer (options) {
 
 async function watchApis (app, opts) {
   const { services, refreshTimeout } = opts.composer
-  const { fetchOpenApiSchema } = await import('./lib/fetch-schemas.mjs')
+  const { fetchOpenApiSchema } = await import('./lib/openapi-fetch-schemas.mjs')
 
   const timeout = setInterval(async () => {
     let isSchemasChanged = false
 
-    for (const { id, origin, openapi } of services) {
+    for (const { id, origin, openapi, graphql } of services) {
       if (openapi && openapi.url) {
         const currentSchema = app.openApiSchemas.find(schema => schema.id === id)?.originSchema || null
 
@@ -81,6 +81,11 @@ async function watchApis (app, opts) {
           clearInterval(timeout)
           break
         }
+      }
+
+      if (graphql) {
+        // TODO
+        // fetch graphql
       }
     }
 

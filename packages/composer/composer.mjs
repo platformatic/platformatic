@@ -10,7 +10,8 @@ import { join } from 'desm'
 import { start } from '@platformatic/service'
 import { printAndExitLoadConfigError } from '@platformatic/config'
 
-import { fetchOpenApiSchemas } from './lib/fetch-schemas.mjs'
+import { fetchOpenApiSchemas } from './lib/openapi-fetch-schemas.mjs'
+import { fetchGraphqlSubgraphs } from './lib/graphql-fetch-subgraphs.mjs'
 import { platformaticComposer } from './index.js'
 
 const help = helpMe({
@@ -26,6 +27,9 @@ program.register('start', (argv) => {
 })
 program.register('openapi schemas fetch', (argv) => {
   return fetchOpenApiSchemas(argv).catch(printAndExitLoadConfigError)
+})
+program.register('grapqhl subgraphs fetch', (argv) => {
+  return fetchGraphqlSubgraphs(argv).catch(printAndExitLoadConfigError)
 })
 
 export async function runComposer (argv) {

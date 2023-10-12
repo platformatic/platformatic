@@ -1,10 +1,45 @@
 #! /usr/bin/env node
 'use strict'
 
-const { metrics, server, plugins, watch, clients, openApiBase, openApiDefs } = require('@platformatic/service').schema
+const { metrics, server, plugins, watch, clients, openApiBase, openApiDefs, graphqlBase } = require('@platformatic/service').schema
 const telemetry = require('@platformatic/telemetry').schema
 const pkg = require('../package.json')
 const version = 'v' + pkg.version
+
+const openApiService = {
+  type: 'object',
+  properties: {
+    url: { type: 'string' },
+    file: { type: 'string', resolvePath: true },
+    prefix: { type: 'string' },
+    config: { type: 'string', resolvePath: true }
+  },
+  anyOf: [
+    { required: ['url'] },
+    { required: ['file'] }
+  ],
+  additionalProperties: false
+}
+
+const graphqlService = {
+  anyOf: [
+    { type: 'boolean' },
+    {
+      type: 'object',
+      properties: {
+        // TODO? url: { type: 'string' },
+        // TODO? file: { type: 'string', resolvePath: true },
+        // TODO? prefix: { type: 'string' },
+        // TODO? config: { type: 'string', resolvePath: true }
+      },
+      // TODO? anyOf: [
+      //   { required: ['url'] },
+      //   { required: ['file'] }
+      // ],
+      additionalProperties: false
+    }
+  ]
+}
 
 const composer = {
   type: 'object',
@@ -16,20 +51,8 @@ const composer = {
         properties: {
           id: { type: 'string' },
           origin: { type: 'string' },
-          openapi: {
-            type: 'object',
-            properties: {
-              url: { type: 'string' },
-              file: { type: 'string', resolvePath: true },
-              prefix: { type: 'string' },
-              config: { type: 'string', resolvePath: true }
-            },
-            anyOf: [
-              { required: ['url'] },
-              { required: ['file'] }
-            ],
-            additionalProperties: false
-          },
+          openapi: openApiService,
+          graphql: graphqlService,
           proxy: {
             oneOf: [
               { type: 'boolean', const: false },
@@ -49,6 +72,7 @@ const composer = {
       }
     },
     openapi: openApiBase,
+    graphql: graphqlBase,
     refreshTimeout: { type: 'integer', minimum: 0, default: 1000 }
   },
   required: ['services'],
