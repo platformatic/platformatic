@@ -1,3 +1,5 @@
+'use strict'
+
 const telemetryWrapper = (app, fn, operationType, operationName) => async (...args) => {
   const { startInternalSpan, endInternalSpan } = app.openTelemetry
   const context = args[2]
