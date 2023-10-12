@@ -131,7 +131,6 @@ const setupProvider = (app, opts) => {
 }
 
 async function setupTelemetry (app, opts) {
-  // const { serviceName, version } = opts
   const openTelemetryAPIs = setupProvider(app, opts)
   const { tracer, propagator, provider } = openTelemetryAPIs
   const skipOperations = opts?.skip?.map(skip => {
@@ -282,11 +281,40 @@ async function setupTelemetry (app, opts) {
     span.setAttributes(formatSpanAttributes.error(error))
   }
 
+  // The attributes are specific for the "internal" usage, so they must be set by the caller
+  const startInternalSpan = (name, ctx, attributes = {}) => {
+    const context = ctx || new PlatformaticContext()
+    const span = tracer.startSpan(name, {}, context)
+    span.kind = SpanKind.INTERNAL
+    span.setAttributes(attributes)
+    span.context = context
+    return span
+  }
+
+  const endInternalSpan = (span, error) => {
+    /* istanbul ignore next */
+    if (!span) {
+      return
+    }
+    if (error) {
+      span.setStatus({
+        code: SpanStatusCode.ERROR,
+        message: error.message
+      })
+    } else {
+      const spanStatus = { code: SpanStatusCode.OK }
+      span.setStatus(spanStatus)
+    }
+    span.end()
+  }
+
   app.decorate('openTelemetry', {
     ...openTelemetryAPIs,
     startSpanClient,
     endSpanClient,
-    setErrorInSpanClient
+    setErrorInSpanClient,
+    startInternalSpan,
+    endInternalSpan
   })
 }
 

@@ -28,6 +28,7 @@
     "@mercuriusjs/gateway": "^1.2.0",
     "@platformatic/sql-events": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
+    "@platformatic/telemetry": "workspace:*",
     "fastify": "^4.23.2",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",

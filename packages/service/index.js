@@ -27,6 +27,12 @@ async function platformaticService (app, opts, toLoad = []) {
     app.register(setupMetrics, config.metrics)
   }
 
+  // This must be done before loading the plugins, so they can inspect if the
+  // openTelemetry decoretor exists and then configure accordingly.
+  if (isKeyEnabled('telemetry', config)) {
+    await app.register(telemetry, config.telemetry)
+  }
+
   if (Array.isArray(toLoad)) {
     for (const plugin of toLoad) {
       await app.register(plugin)
@@ -41,10 +47,6 @@ async function platformaticService (app, opts, toLoad = []) {
 
   if (isKeyEnabled('graphql', serviceConfig)) {
     await app.register(setupGraphQL, serviceConfig.graphql)
-  }
-
-  if (config.telemetry) {
-    app.register(telemetry, config.telemetry)
   }
 
   if (isKeyEnabled('clients', config)) {

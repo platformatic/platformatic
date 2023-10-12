@@ -241,13 +241,17 @@ test('telemetry correctly propagates from a service client to a server for an Gr
   const clientSpanId = clientSpan.spanContext().spanId
 
   // Target app, we check that propagation works
-  assert.equal(targetApp.openTelemetry.exporters[0].getFinishedSpans().length, 1)
-  const serverSpan = targetApp.openTelemetry.exporters[0].getFinishedSpans()[0]
+  assert.equal(targetApp.openTelemetry.exporters[0].getFinishedSpans().length, 2)
+  const serverSpan = targetApp.openTelemetry.exporters[0].getFinishedSpans()[1]
   assert.equal(serverSpan.name, 'POST /graphql')
   const serverTraceId = serverSpan.spanContext().traceId
   const serverParentSpanId = serverSpan.parentSpanId
-
   // The propagation works
   assert.equal(serverParentSpanId, clientSpanId)
   assert.equal(serverTraceId, clientTraceId)
+
+  const graphqlSpan = targetApp.openTelemetry.exporters[0].getFinishedSpans()[0]
+  assert.equal(graphqlSpan.name, 'mutation saveMovie')
+  assert.equal(graphqlSpan.spanContext().traceId, clientTraceId)
+  assert.equal(graphqlSpan.parentSpanId, serverSpan.spanContext().spanId)
 })
