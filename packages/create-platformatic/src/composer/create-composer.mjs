@@ -118,7 +118,6 @@ async function createComposer (
   /* c8 ignore next 5 */
   logger.info('Environment file .env successfully created.')
   await generatePlugins(logger, currentDir, typescript, 'composer')
-  await generateRouteWithTypesSupport(logger, currentDir, true)
 
   if (typescript === true) {
     const tsConfigFileName = join(currentDir, 'tsconfig.json')
