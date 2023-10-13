@@ -1,7 +1,7 @@
 import { readFile, writeFile, appendFile } from 'fs/promises'
 import { join } from 'path'
 import * as desm from 'desm'
-import { generatePlugins, generateRouteWithTypesSupport } from '../create-plugins.mjs'
+import { generatePlugins } from '../create-plugins.mjs'
 import { createDynamicWorkspaceGHAction, createStaticWorkspaceGHAction } from '../ghaction.mjs'
 import { getTsConfig } from '../get-tsconfig.mjs'
 import { createGitRepository } from '../create-git-repository.mjs'
@@ -118,7 +118,6 @@ async function createComposer (
   /* c8 ignore next 5 */
   logger.info('Environment file .env successfully created.')
   await generatePlugins(logger, currentDir, typescript, 'composer')
-  await generateRouteWithTypesSupport(logger, currentDir, true)
 
   if (typescript === true) {
     const tsConfigFileName = join(currentDir, 'tsconfig.json')
