@@ -1,0 +1,9 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v1.3.0/service",
+  "plugins": {
+    "paths": [{
+      "path": "plugin.js",
+      "encapsulate": false
+    }]
+  }
+}
