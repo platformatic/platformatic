@@ -126,7 +126,7 @@ class PlatformaticApp {
       this.#startFileWatching()
     }
 
-    if (this.appConfig.entrypoint) {
+    if (this.appConfig.entrypoint || this.appConfig.useHttp) {
       try {
         await this.server.start()
         /* c8 ignore next 5 */
@@ -232,11 +232,10 @@ class PlatformaticApp {
   }
 
   #setuplogger (configManager) {
-    // Set the logger if not present (and the config supports it).
-    if (configManager.current.server) {
-      const childLogger = this.#logger.child({}, { level: configManager.current.server.logger?.level || 'info' })
-      configManager.current.server.logger = childLogger
-    }
+    // Set the logger if not present
+    configManager.current.server = configManager.current.server || {}
+    const childLogger = this.#logger.child({}, { level: configManager.current.server.logger?.level || 'info' })
+    configManager.current.server.logger = childLogger
   }
 
   #startFileWatching () {

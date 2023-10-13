@@ -38,6 +38,9 @@ const platformaticRuntimeSchema = {
               },
               config: {
                 type: 'string'
+              },
+              useHttp: {
+                type: 'boolean'
               }
             }
           }
@@ -62,6 +65,9 @@ const platformaticRuntimeSchema = {
           },
           config: {
             type: 'string'
+          },
+          useHttp: {
+            type: 'boolean'
           }
         }
       }
