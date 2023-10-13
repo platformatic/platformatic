@@ -1129,8 +1129,8 @@ importers:
         specifier: ^4.23.2
         version: 4.24.0
       fastify-undici-dispatcher:
-        specifier: ^0.4.2
-        version: 0.4.2
+        specifier: ^0.5.0
+        version: 0.5.0
       help-me:
         specifier: ^4.2.0
         version: 4.2.0
@@ -4087,6 +4087,7 @@ packages:
   /drange@1.1.1:
     resolution: {integrity: sha512-pYxfDYpued//QpnLIm4Avk7rsNtAtQkUES2cwAYSvD/wd2pKD71gN2Ebj3e7klzXwjocvE8c5vx/1fxwpqmSxA==}
     engines: {node: '>=4'}
+    requiresBuild: true
     dev: true
     optional: true
 
@@ -4903,8 +4904,8 @@ packages:
     engines: {node: '>=18.0.0'}
     dev: true
 
-  /fastify-undici-dispatcher@0.4.2:
-    resolution: {integrity: sha512-7uUdlbUsuta3U8DKYeLsMnTAg0GBhiYzdEWyqzga6nLrtCNFfZ0ephzfQvHPe/VLGhlzvKCDBnXBURC+shMbBQ==}
+  /fastify-undici-dispatcher@0.5.0:
+    resolution: {integrity: sha512-6ASeYGg0tGIUhlX+dzDTw2kjqQDzVvOwkk5SQ/MRClrXq8RPpO6pQFUwBjJygiL6MueQpsCIkyLMdICl0Xed6Q==}
     dependencies:
       undici: 5.26.0
     dev: false
