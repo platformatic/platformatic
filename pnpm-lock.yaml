@@ -1159,6 +1159,9 @@ importers:
       execa:
         specifier: ^8.0.1
         version: 8.0.1
+      glob:
+        specifier: ^10.3.10
+        version: 10.3.10
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
