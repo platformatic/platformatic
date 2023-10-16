@@ -39,6 +39,12 @@ on:
     paths-ignore:
       - 'docs/**'
       - '**.md'
+  workflow_dispatch:
+    inputs:
+      label:
+        description: "Preview Label"
+        required: true
+        default: ""
 
 jobs:
   build_and_deploy:
@@ -65,6 +71,7 @@ ${envString}
           platformatic_workspace_id: \${{ secrets.PLATFORMATIC_DYNAMIC_WORKSPACE_ID }}
           platformatic_workspace_key: \${{ secrets.PLATFORMATIC_DYNAMIC_WORKSPACE_API_KEY }}
           platformatic_config_path: ${config}
+          label: \${{ github.event.inputs.label }}
     outputs:
       deployment_id: \${{ steps.deploy-project.outputs.deployment_id }}
   calculate_risk:
@@ -76,6 +83,7 @@ ${envString}
     steps:
       - name: Calculate risk
         uses: platformatic/onestep/actions/calculate-risk@latest
+        if: github.event_name == 'pull_request'
         with:
           github_token: \${{ secrets.GITHUB_TOKEN }}
           platformatic_workspace_id: \${{ secrets.PLATFORMATIC_DYNAMIC_WORKSPACE_ID }}
@@ -95,6 +103,8 @@ on:
     paths-ignore:
       - 'docs/**'
       - '**.md'
+  workflow_dispatch:
+    inputs:
 
 jobs:
   build_and_deploy:
