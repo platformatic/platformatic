@@ -128,10 +128,6 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
       writer.writeLine('getHeaders(req: FastifyRequest, reply: FastifyReply): Promise<Record<string,string>>;')
     })
     writer.write('interface FastifyInstance').block(() => {
-      writer.quote(camelcasedName)
-      writer.write(`: ${camelcasedName}.${capitalizedName};`)
-      writer.newLine()
-
       writer.writeLine(`configure${capitalizedName}(opts: Configure${capitalizedName}): unknown`)
     })
 
