@@ -164,17 +164,47 @@ Edit your app's `platformatic.service.json` to load your root plugin:
     "paths": [{
       "path": "./root-plugin.js",
       "encapsulate": false
-    }],
-    "hotReload": false
-  },
-  "watch": false
+    }]
+  }
 }
 ```
 
 These settings are important when using `@fastify/express` in a Platformatic Service app:
 
 - `encapsulate` — You'll need to disable encapsulation for any Fastify plugin which mounts Express routes. This is due to the way that `@fastify/express` works.
-- `hotReload` and `watch` — You'll need to disable hot reloading and watching for your app, as they don't currently work when using `@fastify/express`. This is a known issue that we're working to fix.
+
+### Using @fastify/express with Platformatic Runtime
+
+If you are using [Platformatic Runtime](/referece/runtime/introduction.md), you must configure your other services to connect to this one using an actual TCP socket
+instead of the virtual network.
+
+Edit your app's `platformatic.runtime.json` and add the `useHttp` option:
+
+```json
+{
+  "$schema": "https://platformatic.dev/schemas/v1.3.0/runtime",
+  "entrypoint": "b",
+  "autoload": {
+    "path": "./services",
+    "mappings": {
+      "myexpressservice": {
+        "id": "a",
+        "config": "platformatic.service.json",
+        "useHttp": true
+      }
+    }
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 3000,
+    "logger": {
+      "level": "info"
+    }
+  }
+}
+```
+
+Where the Platformatic Service using express is located at `./services/myexpressservice`.
 
 ## Wrapping up
 
