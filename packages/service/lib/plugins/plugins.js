@@ -41,7 +41,6 @@ async function loadPlugins (app) {
       const tmp = typeof plugin === 'string'
         ? getJSPluginPath(workingDir, plugin, outDir)
         : { ...plugin, path: getJSPluginPath(workingDir, plugin.path, outDir) }
-      console.log('tmp', workingDir)
       return tmp
     })
   }
