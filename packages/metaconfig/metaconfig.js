@@ -7,10 +7,14 @@ const TOML = require('@iarna/toml')
 const JSON5 = require('json5')
 const semver = require('semver')
 const FromZeroEighteenToWillSee = require('./versions/from-zero-eighteen-to-will-see.js')
+const errors = require('./errors.js')
 
 const ranges = [{
   range: '>= 0.18.x < 1.0.0',
   handler: FromZeroEighteenToWillSee
+}, {
+  range: '>= 1.0.0 < 2.0.0',
+  handler: require('./versions/1.x.x.js')
 }]
 
 async function analyze (opts) {
@@ -23,11 +27,11 @@ async function analyze (opts) {
     format = extname(opts.file).slice(1)
     data = parser(await readFile(opts.file, 'utf8'))
   } else {
-    throw new Error('missing file or config to analyze')
+    throw new errors.MissingFileOrConfigError()
   }
 
   if (!data.$schema) {
-    throw new Error('missing $schema, unable to determine the version')
+    throw new errors.MissingSchemaError()
   }
 
   let Handler
@@ -42,7 +46,7 @@ async function analyze (opts) {
     const url = new URL(data.$schema)
     const res = url.pathname.match(/^\/schemas\/v(\d+)\.(\d+)\.(\d+)\/(.*)$/)
     if (!res) {
-      throw new Error('unable to determine the version')
+      throw new errors.UnableToDetermineVersionError()
     }
 
     // The regexp should be tight enough to not worry about path
@@ -77,7 +81,7 @@ async function analyze (opts) {
     } catch {}
 
     if (!Handler) {
-      throw new Error('unable to determine the version')
+      throw new errors.UnableToDetermineVersionError()
     }
   }
 
@@ -99,7 +103,7 @@ function getParser (path) {
     case '.tml':
       return TOML.parse
     default:
-      throw new Error('Invalid config file extension. Only yml, yaml, json, json5, toml, tml are supported.')
+      throw new errors.InvalidConfigFileExtensionError()
   }
 }
 
@@ -118,7 +122,7 @@ function getStringifier (path) {
     case '.tml':
       return TOML.stringify
     default:
-      throw new Error('Invalid config file extension. Only yml, yaml, json, json5, toml, tml are supported.')
+      throw new errors.InvalidConfigFileExtensionError()
   }
 }
 
@@ -140,3 +144,4 @@ function upgrade (meta) {
 }
 
 module.exports.upgrade = upgrade
+module.exports.errors = errors

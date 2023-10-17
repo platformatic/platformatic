@@ -1,12 +1,17 @@
-import { start, cliPath, connectAndResetDB } from './helper.js'
-import { test } from 'tap'
+import assert from 'node:assert'
+import { test } from 'node:test'
 import { join } from 'desm'
 import { request } from 'undici'
 import { execa } from 'execa'
+import { getConnectionInfo } from '../helper.js'
+import { start, cliPath, connectDB } from './helper.js'
 
-test('env white list', async ({ equal, same, match, teardown }) => {
-  const db = await connectAndResetDB()
-  teardown(() => db.dispose())
+test('env white list', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
+  const db = await connectDB(connectionInfo)
+
+  t.after(() => db.dispose())
+  t.after(() => dropTestDB())
 
   await db.query(db.sql`CREATE TABLE pages (
     id SERIAL PRIMARY KEY,
@@ -20,7 +25,7 @@ test('env white list', async ({ equal, same, match, teardown }) => {
     ],
     {
       env: {
-        DATABASE_URL: 'postgres://postgres:postgres@127.0.0.1/postgres',
+        DATABASE_URL: connectionInfo.connectionString,
         HOSTNAME: '127.0.0.1'
       }
     }
@@ -42,23 +47,20 @@ test('env white list', async ({ equal, same, match, teardown }) => {
             `
       })
     })
-    equal(res.statusCode, 200, 'savePage status code')
+    assert.equal(res.statusCode, 200, 'savePage status code')
     const body = await res.body.json()
-    match(body, {
-      data: {
-        savePage: {
-          title: 'Hello'
-        }
-      }
-    }, 'savePage response')
+    assert.equal(body.data.savePage.title, 'Hello')
   }
 
   child.kill('SIGINT')
 })
 
-test('env white list default values', async ({ equal, same, match, teardown }) => {
-  const db = await connectAndResetDB()
-  teardown(() => db.dispose())
+test('env white list default values', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
+  const db = await connectDB(connectionInfo)
+
+  t.after(() => db.dispose())
+  t.after(() => dropTestDB())
 
   await db.query(db.sql`CREATE TABLE pages (
     id SERIAL PRIMARY KEY,
@@ -71,13 +73,13 @@ test('env white list default values', async ({ equal, same, match, teardown }) =
     ],
     {
       env: {
-        DATABASE_URL: 'postgres://postgres:postgres@127.0.0.1/postgres',
+        DATABASE_URL: connectionInfo.connectionString,
         PORT: 10555
       }
     }
   )
 
-  equal(url, 'http://127.0.0.1:10555')
+  assert.equal(url, 'http://127.0.0.1:10555')
   {
     // should connect to db and query it.
     const res = await request(`${url}/graphql`, {
@@ -94,23 +96,20 @@ test('env white list default values', async ({ equal, same, match, teardown }) =
             `
       })
     })
-    equal(res.statusCode, 200, 'savePage status code')
+    assert.equal(res.statusCode, 200, 'savePage status code')
     const body = await res.body.json()
-    match(body, {
-      data: {
-        savePage: {
-          title: 'Hello'
-        }
-      }
-    }, 'savePage response')
+    assert.equal(body.data.savePage.title, 'Hello')
   }
 
   child.kill('SIGINT')
 })
 
-test('env white list schema', async ({ matchSnapshot, teardown }) => {
-  const db = await connectAndResetDB()
-  teardown(() => db.dispose())
+test('env white list schema', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
+  const db = await connectDB(connectionInfo)
+
+  t.after(() => db.dispose())
+  t.after(() => dropTestDB())
 
   await db.query(db.sql`CREATE TABLE pages (
     id SERIAL PRIMARY KEY,
@@ -127,9 +126,11 @@ test('env white list schema', async ({ matchSnapshot, teardown }) => {
     'DATABASE_URL,HOSTNAME'
   ], {
     env: {
-      DATABASE_URL: 'postgres://postgres:postgres@127.0.0.1/postgres',
+      DATABASE_URL: connectionInfo.connectionString,
       HOSTNAME: '127.0.0.1'
     }
   })
-  matchSnapshot(stdout)
+
+  const snapshot = await import('../../snapshots/test/cli/env.test.mjs')
+  assert.equal(stdout, snapshot.default)
 })

@@ -1,7 +1,7 @@
 'use strict'
 
 import { test } from 'tap'
-import { getType } from '../lib/gen-openapi.mjs'
+import { getType } from '../lib/openapi-common.mjs'
 
 test('get type with schema', async (t) => {
   const def = {
@@ -90,7 +90,7 @@ test('support objects', async (t) => {
       bar: { type: 'number' }
     }
   }
-  t.equal(getType(objectDef), '{ foo: string; bar: number }')
+  t.equal(getType(objectDef), '{ foo?: string; bar?: number }')
 })
 
 test('support nested objects', async (t) => {
@@ -110,7 +110,7 @@ test('support nested objects', async (t) => {
       }
     }
   }
-  t.equal(getType(objectDef), '{ foo: string; bar: { prop1: string; prop2: Array<string> } }')
+  t.equal(getType(objectDef), '{ foo?: string; bar?: { prop1?: string; prop2?: Array<string> } }')
 })
 
 test('support array of objects', async (t) => {
@@ -123,7 +123,7 @@ test('support array of objects', async (t) => {
     },
     type: 'array'
   }
-  t.equal(getType(arrayOfObjectsDef), 'Array<{ attachedAt: string; id: string }>')
+  t.equal(getType(arrayOfObjectsDef), 'Array<{ attachedAt?: string; id: string }>')
 })
 
 test('support array with anyOf', async (t) => {
@@ -149,7 +149,8 @@ test('support enum', async (t) => {
       prop1: {
         enum: [
           'foo',
-          'bar'
+          'bar',
+          "pippo'Giuseppe_Raimondo_Vittorio'baudo"
         ],
         type: 'string'
       },
@@ -157,10 +158,11 @@ test('support enum', async (t) => {
         type: 'string'
       }
     },
-    type: 'object'
+    type: 'object',
+    required: ['prop1', 'prop2']
   }
 
-  t.equal(getType(enumDef), '{ prop1: \'foo\' | \'bar\'; prop2: string }')
+  t.equal(getType(enumDef), '{ prop1: \'foo\' | \'bar\' | \'pippo\\\'Giuseppe_Raimondo_Vittorio\\\'baudo\'; prop2: string }')
 })
 
 test('support enum with numbers', async (t) => {
@@ -177,7 +179,7 @@ test('support enum with numbers', async (t) => {
     type: 'object'
   }
 
-  t.equal(getType(enumDef), '{ prop1: 1 | 2; prop2: string }')
+  t.equal(getType(enumDef), '{ prop1?: 1 | 2; prop2?: string }')
 })
 
 test('object without properties', async (t) => {
@@ -195,5 +197,5 @@ test('object without properties', async (t) => {
     }
   }
 
-  t.equal(getType(emptyObjectDef), '{ prop1: string; prop2: object; prop3: object }')
+  t.equal(getType(emptyObjectDef), '{ prop1?: string; prop2?: object; prop3?: object }')
 })

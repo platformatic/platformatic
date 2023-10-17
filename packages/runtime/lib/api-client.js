@@ -2,6 +2,7 @@
 
 const { once, EventEmitter } = require('node:events')
 const { randomUUID } = require('node:crypto')
+const errors = require('./errors')
 
 const MAX_LISTENERS_COUNT = 100
 
@@ -72,7 +73,7 @@ class RuntimeApiClient extends EventEmitter {
     )
 
     if (this.#exitCode !== undefined) {
-      throw new Error('The runtime exited before the operation completed')
+      throw new errors.RuntimeExitedError()
     }
 
     const { error, data } = message

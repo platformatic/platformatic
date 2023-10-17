@@ -65,7 +65,7 @@ test('errors when starting an already started application', async (t) => {
   await app.start()
   await assert.rejects(async () => {
     await app.start()
-  }, /application is already started/)
+  }, /Application is already started/)
 })
 
 test('errors when stopping an already stopped application', async (t) => {
@@ -86,7 +86,7 @@ test('errors when stopping an already stopped application', async (t) => {
 
   await assert.rejects(async () => {
     await app.stop()
-  }, /application has not been started/)
+  }, /Application has not been started/)
 })
 
 test('does not restart while restarting', async (t) => {
@@ -244,7 +244,7 @@ test('supports configuration overrides', async (t) => {
 
     await assert.rejects(async () => {
       await app.start()
-    }, /config path must be a string/)
+    }, /Config path must be a string/)
   })
 
   await t.test('ignores invalid config paths', async (t) => {
@@ -355,4 +355,50 @@ test('logs errors if an env variable is missing', async (t) => {
   const lastLine = lines[lines.length - 1]
   assert.strictEqual(lastLine.name, 'no-env')
   assert.strictEqual(lastLine.msg, 'Cannot parse config file. Cannot read properties of undefined (reading \'get\')')
+})
+
+test('Uses the server config if passed', async (t) => {
+  const { logger, stream } = getLoggerAndStream()
+  const appPath = join(fixturesDir, 'server', 'runtime-server', 'services', 'echo')
+  const configFile = join(appPath, 'platformatic.service.json')
+  const config = {
+    id: 'serviceApp',
+    config: configFile,
+    path: appPath,
+    entrypoint: true,
+    hotReload: true,
+    dependencies: [],
+    dependents: [],
+    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
+  }
+  const serverConfig = {
+    hostname: '127.0.0.1',
+    port: '14242',
+    logger: {
+      level: 'info'
+    }
+  }
+  const app = new PlatformaticApp(config, null, logger, null, serverConfig)
+
+  t.after(async function () {
+    try {
+      await app.stop()
+    } catch (err) {
+      console.error(err)
+    }
+  })
+  await app.start()
+  const configManager = app.config.configManager
+  await utimes(configFile, new Date(), new Date())
+  for await (const log of stream) {
+    // Wait for the server to restart, it will print a line containing "Server listening"
+    if (log.msg.includes('listening')) {
+      if (log.msg.includes(serverConfig.port)) {
+        break
+      } else {
+        throw new Error('wrong port')
+      }
+    }
+  }
+  assert.strictEqual(configManager, app.server.platformatic.configManager)
 })

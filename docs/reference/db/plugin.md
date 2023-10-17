@@ -113,4 +113,5 @@ export default async function (fastify: FastifyInstance, opts: FastifyPluginOpti
 }
 ```
 
-Note that you need to add the `"typescript": true` configuration to your `platformatic.service.json`.
+Note that you need to add the `"plugins": { "typescript": true }` configuration to your `platformatic.service.json`.
+

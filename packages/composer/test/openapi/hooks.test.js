@@ -1,7 +1,8 @@
 'use strict'
 
-const { join } = require('path')
-const { test } = require('tap')
+const assert = require('node:assert/strict')
+const { test } = require('node:test')
+const { join } = require('node:path')
 const { request } = require('undici')
 const {
   createComposer,
@@ -34,7 +35,7 @@ test('should add onSend route hook', async (t) => {
 
   {
     const { statusCode } = await composer.inject({ method: 'GET', url: '/users/1' })
-    t.equal(statusCode, 304)
+    assert.equal(statusCode, 304)
   }
 })
 
@@ -63,10 +64,10 @@ test('should add multiple onRoute hooks for one route', async (t) => {
 
   {
     const { statusCode, body } = await composer.inject({ method: 'GET', url: '/users/1' })
-    t.equal(statusCode, 200)
+    assert.equal(statusCode, 200)
 
     const routeSchema = JSON.parse(body)
-    t.equal(routeSchema.response[200].description, 'This is a test')
+    assert.equal(routeSchema.response[200].description, 'This is a test')
   }
 })
 
@@ -100,10 +101,10 @@ test('should parse json response payload', async (t) => {
       path: '/users/1'
     })
 
-    t.equal(statusCode, 200)
+    assert.equal(statusCode, 200)
 
     const data = await body.json()
-    t.strictSame(data, { user_id: 1, first_name: 'test1' })
+    assert.deepEqual(data, { user_id: 1, first_name: 'test1' })
   }
 })
 
@@ -137,10 +138,10 @@ test('should parse text response payload', async (t) => {
       path: '/text'
     })
 
-    t.equal(statusCode, 200)
+    assert.equal(statusCode, 200)
 
     const data = await body.text()
-    t.strictSame(data, 'onSend hook: Some text')
+    assert.deepEqual(data, 'onSend hook: Some text')
   }
 })
 
@@ -168,9 +169,9 @@ test('should throw an error if addComposerOnRouteHook called when app is ready',
 
   try {
     composer.platformatic.addComposerOnRouteHook('/users/{id}', ['GET'], () => {})
-    t.fail('should throw an error')
+    assert.fail('should throw an error')
   } catch (err) {
-    t.equal(err.message, 'Fastify instance is already listening. Cannot call "addComposerOnRouteHook"!')
+    assert.equal(err.message, 'Fastify instance is already listening. Cannot call "addComposerOnRouteHook"!')
   }
 })
 
@@ -204,13 +205,13 @@ test('should send two different schema objects into different composer hooks', a
     url: '/documentation/json'
   })
 
-  t.equal(statusCode, 200)
+  assert.equal(statusCode, 200)
 
   const openApiSchema = JSON.parse(body)
 
   const usersSchema = openApiSchema.paths['/users'].get.responses[200].content['application/json'].schema
-  t.equal(usersSchema.items.title, 'users_all')
+  assert.equal(usersSchema.items.title, 'users_all')
 
   const userByIdSchema = openApiSchema.paths['/users/{id}'].get.responses[200].content['application/json'].schema
-  t.equal(userByIdSchema.title, 'users_one')
+  assert.equal(userByIdSchema.title, 'users_one')
 })

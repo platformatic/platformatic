@@ -1,5 +1,7 @@
+'use strict'
+
 import { test } from 'tap'
-import { getRunPackageManagerInstall, getUseTypescript, getPort, getOverwriteReadme } from '../src/cli-options.mjs'
+import { getRunPackageManagerInstall, getUseTypescript, getPort } from '../src/cli-options.mjs'
 
 test('getRunPackageManagerInstall', async ({ same }) => {
   same(
@@ -22,19 +24,6 @@ test('getUseTypescript', async ({ same }) => {
       when: false,
       name: 'useTypescript',
       message: 'Do you want to use TypeScript?',
-      default: true,
-      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-    }
-  )
-})
-
-test('getOverwriteReadme', async ({ same }) => {
-  same(
-    getOverwriteReadme(),
-    {
-      type: 'list',
-      name: 'shouldReplace',
-      message: 'Do you want to overwrite the existing README.md?',
       default: true,
       choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
     }

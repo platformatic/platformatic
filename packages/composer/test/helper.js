@@ -1,15 +1,25 @@
 'use strict'
 
-const { request } = require('undici')
+const assert = require('node:assert/strict')
+const { request, setGlobalDispatcher, Agent } = require('undici')
 const fastify = require('fastify')
 const Swagger = require('@fastify/swagger')
 const SwaggerUI = require('@fastify/swagger-ui')
 
 const { buildServer } = require('..')
 
+const agent = new Agent({
+  keepAliveMaxTimeout: 10,
+  keepAliveTimeout: 10
+})
+
+setGlobalDispatcher(agent)
+
 async function createBasicService (t) {
   const app = fastify({
-    keepAliveTimeout: 10
+    logger: false,
+    keepAliveTimeout: 10,
+    forceCloseConnections: true
   })
 
   await app.register(Swagger, {
@@ -66,7 +76,7 @@ async function createBasicService (t) {
     return { nested: { text: 'Some text' } }
   })
 
-  t.teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
 
@@ -75,7 +85,9 @@ async function createBasicService (t) {
 
 async function createOpenApiService (t, entitiesNames = []) {
   const app = fastify({
-    keepAliveTimeout: 10
+    logger: false,
+    keepAliveTimeout: 10,
+    forceCloseConnections: true
   })
 
   await app.register(Swagger, {
@@ -211,7 +223,7 @@ async function createOpenApiService (t, entitiesNames = []) {
     })
   }
 
-  t.teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
 
@@ -223,7 +235,9 @@ async function createComposer (t, composerConfig) {
     server: {
       logger: false,
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
+      keepAliveTimeout: 10,
+      forceCloseConnections: true
     },
     composer: { services: [] },
     plugins: {
@@ -235,17 +249,17 @@ async function createComposer (t, composerConfig) {
   const config = Object.assign({}, defaultConfig, composerConfig)
   const app = await buildServer(config)
 
-  t.teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
 
   return app
 }
 
-async function testEntityRoutes (t, origin, entitiesRoutes) {
+async function testEntityRoutes (origin, entitiesRoutes) {
   for (const entityRoute of entitiesRoutes) {
     {
-      const { statusCode } = await request(origin, {
+      const { statusCode, body } = await request(origin, {
         method: 'POST',
         path: entityRoute,
         headers: {
@@ -253,19 +267,21 @@ async function testEntityRoutes (t, origin, entitiesRoutes) {
         },
         body: JSON.stringify({ name: 'test' })
       })
-      t.equal(statusCode, 200)
+      await body.text()
+      assert.equal(statusCode, 200)
     }
 
     {
-      const { statusCode } = await request(origin, {
+      const { statusCode, body } = await request(origin, {
         method: 'GET',
         path: entityRoute
       })
-      t.equal(statusCode, 200)
+      await body.text()
+      assert.equal(statusCode, 200)
     }
 
     {
-      const { statusCode } = await request(origin, {
+      const { statusCode, body } = await request(origin, {
         method: 'PUT',
         path: entityRoute,
         headers: {
@@ -273,19 +289,21 @@ async function testEntityRoutes (t, origin, entitiesRoutes) {
         },
         body: JSON.stringify({ name: 'test' })
       })
-      t.equal(statusCode, 200)
+      await body.text()
+      assert.equal(statusCode, 200)
     }
 
     {
-      const { statusCode } = await request(origin, {
+      const { statusCode, body } = await request(origin, {
         method: 'GET',
         path: `${entityRoute}/1`
       })
-      t.equal(statusCode, 200)
+      await body.text()
+      assert.equal(statusCode, 200)
     }
 
     {
-      const { statusCode } = await request(origin, {
+      const { statusCode, body } = await request(origin, {
         method: 'POST',
         path: `${entityRoute}/2`,
         headers: {
@@ -293,11 +311,12 @@ async function testEntityRoutes (t, origin, entitiesRoutes) {
         },
         body: JSON.stringify({ name: 'test' })
       })
-      t.equal(statusCode, 200)
+      await body.text()
+      assert.equal(statusCode, 200)
     }
 
     {
-      const { statusCode } = await request(origin, {
+      const { statusCode, body } = await request(origin, {
         method: 'PUT',
         path: `${entityRoute}/3`,
         headers: {
@@ -305,15 +324,17 @@ async function testEntityRoutes (t, origin, entitiesRoutes) {
         },
         body: JSON.stringify({ name: 'test' })
       })
-      t.equal(statusCode, 200)
+      await body.text()
+      assert.equal(statusCode, 200)
     }
 
     {
-      const { statusCode } = await request(origin, {
+      const { statusCode, body } = await request(origin, {
         method: 'DELETE',
         path: `${entityRoute}/4`
       })
-      t.equal(statusCode, 200)
+      await body.text()
+      assert.equal(statusCode, 200)
     }
   }
 }

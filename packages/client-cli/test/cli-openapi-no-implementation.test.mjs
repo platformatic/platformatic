@@ -7,7 +7,7 @@ import * as desm from 'desm'
 import { execa } from 'execa'
 import { promises as fs } from 'fs'
 
-test('generates only types in target folder with --only-types flag', async ({ teardown, comment, same, match }) => {
+test('generates only types in target folder with --types-only flag', async ({ teardown, comment, same, match }) => {
   const dir = await moveToTmpdir(teardown)
   comment(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), desm.join(import.meta.url, 'fixtures', 'movies', 'openapi.json'), '--name', 'movies', '-f', dir, '--types-only'])
@@ -17,9 +17,16 @@ test('generates only types in target folder with --only-types flag', async ({ te
 
   // avoid name clash
   const fileContents = await fs.readFile(join(dir, 'movies.d.ts'), 'utf-8')
-  match(fileContents, /declare namespace Movies {/)
-  match(fileContents, /type MoviesPlugin = FastifyPluginAsync<NonNullable<Movies.MoviesOptions>>/)
+  match(fileContents, /declare namespace movies {/)
+  match(fileContents, /type MoviesPlugin = FastifyPluginAsync<NonNullable<movies.MoviesOptions>>/)
   match(fileContents, /export const movies: MoviesPlugin;/)
+  match(fileContents, /export interface FullResponse<T, U extends number> {/)
+  match(fileContents, /'statusCode': U;/)
+  match(fileContents, /'headers': Record<string, string>;/)
+  match(fileContents, /'body': T;/)
+  match(fileContents, /export interface GetMoviesRequest {/)
+  match(fileContents, /export interface GetMoviesResponseOK {/)
+  match(fileContents, /export interface Movies {/)
 })
 
 test('openapi client generation (javascript)', async ({ teardown, comment, same }) => {
@@ -50,7 +57,7 @@ test('openapi client generation (javascript)', async ({ teardown, comment, same 
   const plugin = `
 module.exports = async function (app) {
   app.post('/', async (request, reply) => {
-    const res = await app.movies.createMovie({ title: 'foo' })
+    const res = await request.movies.createMovie({ title: 'foo' })
     return res
   })
 }
@@ -110,7 +117,7 @@ import { type FastifyPluginAsync } from 'fastify'
 
 const myPlugin: FastifyPluginAsync<{}> = async (app, options) => {
   app.post('/', async (request, reply) => {
-    const res = await app.movies.createMovie({ title: 'foo' })
+    const res = await request.movies.createMovie({ title: 'foo' })
     return res
   })
 }
@@ -128,7 +135,7 @@ export default myPlugin
     compilerOptions: {
       outDir: 'build',
       target: 'es2018',
-      moduleResolution: 'node',
+      moduleResolution: 'NodeNext',
       lib: ['es2018']
     }
   }, null, 2)
@@ -228,6 +235,7 @@ import pltClient from '@platformatic/client'
 
 const myPlugin: FastifyPluginAsync<{}> = async (app, options) => {
   app.register(pltClient, {
+    fullRequest: false,
     fullResponse: false,
     throwOnError: false,
     type: 'openapi',
@@ -236,7 +244,7 @@ const myPlugin: FastifyPluginAsync<{}> = async (app, options) => {
   })
   
   app.post('/', async (request, reply) => {
-    const res = await app.movies.createMovie({ title: 'foo' })
+    const res = await request.movies.createMovie({ title: 'foo' })
     return res
   })
 }
@@ -254,7 +262,7 @@ export default myPlugin
     compilerOptions: {
       outDir: 'build',
       target: 'es2018',
-      moduleResolution: 'node',
+      moduleResolution: 'NodeNext',
       lib: ['es2018']
     }
   }, null, 2)
@@ -308,7 +316,7 @@ test('generate client twice', async ({ teardown, comment, same, equal }) => {
   const plugin = `
 module.exports = async function (app) {
   app.post('/', async (request, reply) => {
-    const res = await app.movies.createMovie({ title: 'foo' })
+    const res = await request.movies.createMovie({ title: 'foo' })
     return res
   })
 }

@@ -1,9 +1,13 @@
 'use strict'
 
-const { test } = require('tap')
+const assert = require('assert/strict')
+const { test } = require('node:test')
 const { platformaticService } = require('@platformatic/service')
 const { platformaticComposer } = require('..')
 
 test('configManagerConfig.transformConfig', async (t) => {
-  t.same(platformaticComposer.configManagerConfig.transformConfig, platformaticService.configManagerConfig.transformConfig)
+  assert.deepEqual(
+    platformaticComposer.configManagerConfig.transformConfig,
+    platformaticService.configManagerConfig.transformConfig
+  )
 })

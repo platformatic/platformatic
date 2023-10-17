@@ -1,6 +1,6 @@
 'use strict'
 
-const { basename, join, resolve, dirname } = require('path')
+const { basename, join, resolve, dirname, parse } = require('path')
 const { readFile, access } = require('fs/promises')
 const EventEmitter = require('events')
 const Ajv = require('ajv')
@@ -9,6 +9,7 @@ const dotenv = require('dotenv')
 const { request } = require('undici')
 const { getParser, analyze, upgrade } = require('@platformatic/metaconfig')
 const { isFileAccessible } = require('./utils')
+const errors = require('./errors')
 
 class ConfigManager extends EventEmitter {
   constructor (opts) {
@@ -16,7 +17,7 @@ class ConfigManager extends EventEmitter {
     this.pupa = null
     this.envWhitelist = opts.envWhitelist || []
     if (!opts.source) {
-      throw new Error('Source missing.')
+      throw new errors.SourceMissingError()
     }
 
     this.validationErrors = []
@@ -70,18 +71,28 @@ class ConfigManager extends EventEmitter {
     if (this.pupa === null) {
       this.pupa = (await import('pupa')).default
     }
-    const paths = [
-      join(dirname(this.fullPath), '.env'),
-      join(process.cwd(), '.env')
-    ]
     let dotEnvPath
-    for (const p of paths) {
+    let currentPath = this.fullPath
+    const rootPath = parse(this.fullPath).root
+    while (currentPath !== rootPath) {
       try {
-        await access(p)
-        dotEnvPath = p
+        const candidatePath = join(currentPath, '.env')
+        await access(candidatePath)
+        dotEnvPath = candidatePath
         break
       } catch {
         // Nothing to do
+        currentPath = join(currentPath, '..')
+      }
+    }
+    // try at last process.cwd()
+    if (!dotEnvPath) {
+      try {
+        const cwdPath = join(process.cwd(), '.env')
+        await access(cwdPath)
+        dotEnvPath = cwdPath
+      } catch {
+        // do nothing, again
       }
     }
     let env = { ...this._originalEnv }
@@ -150,12 +161,12 @@ class ConfigManager extends EventEmitter {
     } catch (err) {
       if (err.name === 'MissingValueError') {
         if (!err.key.match(/^PLT_/) && !this.envWhitelist.includes(err.key)) {
-          throw new Error(`${err.key} is an invalid placeholder. All placeholders must be prefixed with PLT_.\nDid you mean PLT_${err.key}?`)
+          throw new errors.InvalidPlaceholderError(err.key, err.key)
         } else {
-          throw new Error(`${err.key} env variable is missing.`)
+          throw new errors.EnvVarMissingError(err.key)
         }
       }
-      const newerr = new Error(`Cannot parse config file. ${err.message}`)
+      const newerr = new errors.CannotParseConfigFileError(err.message)
       newerr.cause = err
       throw newerr
     }
@@ -201,7 +212,7 @@ class ConfigManager extends EventEmitter {
   async parseAndValidate () {
     const validationResult = await this.parse()
     if (!validationResult) {
-      throw new Error(this.validationErrors.map((err) => {
+      throw new errors.ValidationErrors(this.validationErrors.map((err) => {
         return err.message
       }).join('\n'))
     }

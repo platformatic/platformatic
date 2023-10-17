@@ -1,17 +1,19 @@
 'use strict'
 
-require('./helper')
-const { test } = require('tap')
-const { buildServer } = require('..')
-const { join } = require('path')
+const assert = require('node:assert')
+const { test } = require('node:test')
+const { join } = require('node:path')
+const { rm } = require('node:fs/promises')
 const { request } = require('undici')
 const { compile } = require('../lib/compile')
-const { rm } = require('fs/promises')
+const { buildServer } = require('..')
 
-test('client is loaded', async ({ teardown, equal, same }) => {
+// require('./helper')
+
+test('client is loaded', async (t) => {
   const app1 = await buildServer(join(__dirname, '..', 'fixtures', 'hello', 'warn-log.service.json'))
 
-  teardown(async () => {
+  t.after(async () => {
     await app1.close()
   })
   await app1.start()
@@ -20,21 +22,21 @@ test('client is loaded', async ({ teardown, equal, same }) => {
 
   const app2 = await buildServer(join(__dirname, '..', 'fixtures', 'hello-client', 'platformatic.service.json'))
 
-  teardown(async () => {
+  t.after(async () => {
     await app2.close()
   })
   await app2.start()
 
   const res = await request(`${app2.url}/`)
-  equal(res.statusCode, 200, 'status code')
+  assert.strictEqual(res.statusCode, 200, 'status code')
   const data = await res.body.json()
-  same(data, { hello: 'world' })
+  assert.deepStrictEqual(data, { hello: 'world' })
 })
 
-test('client is loaded (ts)', async ({ teardown, equal, pass, same }) => {
+test('client is loaded (ts)', async (t) => {
   const app1 = await buildServer(join(__dirname, '..', 'fixtures', 'hello', 'warn-log.service.json'))
 
-  teardown(async () => {
+  t.after(async () => {
     await app1.close()
   })
   await app1.start()
@@ -52,21 +54,21 @@ test('client is loaded (ts)', async ({ teardown, equal, pass, same }) => {
   console.timeEnd('compile')
 
   const app2 = await buildServer(join(targetDir, 'platformatic.service.json'))
-  teardown(async () => {
+  t.after(async () => {
     await app2.close()
   })
   await app2.start()
 
   const res = await request(`${app2.url}/`)
-  equal(res.statusCode, 200, 'status code')
+  assert.strictEqual(res.statusCode, 200, 'status code')
   const data = await res.body.json()
-  same(data, { hello: 'world' })
+  assert.deepStrictEqual(data, { hello: 'world' })
 })
 
-test('client is loaded dependencyless', async ({ teardown, equal, same }) => {
+test('client is loaded dependencyless', async (t) => {
   const app1 = await buildServer(join(__dirname, '..', 'fixtures', 'hello', 'warn-log.service.json'))
 
-  teardown(async () => {
+  t.after(async () => {
     await app1.close()
   })
   await app1.start()
@@ -75,13 +77,13 @@ test('client is loaded dependencyless', async ({ teardown, equal, same }) => {
 
   const app2 = await buildServer(join(__dirname, '..', 'fixtures', 'hello-client-without-deps', 'platformatic.service.json'))
 
-  teardown(async () => {
+  t.after(async () => {
     await app2.close()
   })
   await app2.start()
 
   const res = await request(`${app2.url}/`)
-  equal(res.statusCode, 200, 'status code')
+  assert.strictEqual(res.statusCode, 200, 'status code')
   const data = await res.body.json()
-  same(data, { hello: 'world' })
+  assert.deepStrictEqual(data, { hello: 'world' })
 })

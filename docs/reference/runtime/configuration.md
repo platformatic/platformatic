@@ -39,6 +39,7 @@ Configuration settings are organized into the following groups:
 - [`hotReload`](#hotReload)
 - [`allowCycles`](#allowCycles)
 - [`telemetry`](#telemetry)
+- [`server`](#server)
 
 Configuration settings containing sensitive data should be set using
 [configuration placeholders](#configuration-placeholders).
@@ -121,7 +122,9 @@ microservices are started in the order specified in the configuration file.
 
 - **`serviceName`** (**required**, `string`) — Name of the service as will be reported in open telemetry. In the `runtime` case, the name of the services as reported in traces is `${serviceName}-${serviceId}`, where `serviceId` is the id of the service in the runtime.
 - **`version`** (`string`) — Optional version (free form)
-- **`skip`** (`array`). Optional list of operations to skip when exporting telemetry in the form of `${method}/${path}`. e.g.: `GET/documentation/json` 
+- **`skip`** (`array`). Optional list of operations to skip when exporting telemetry defined `object` with properties: 
+    - `method`: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE
+    - `path`. e.g.: `/documentation/json` 
 - **`exporter`** (`object` or `array`) — Exporter configuration. If not defined, the exporter defaults to `console`. If an array of objects is configured, every object must be a valid exporter object. The exporter object has the following properties:
     - **`type`** (`string`) — Exporter type. Supported values are `console`, `otlp`, `zipkin` and `memory` (default: `console`). `memory` is only supported for testing purposes. 
     - **`options`** (`object`) — These options are supported:
@@ -146,7 +149,11 @@ Note that OTLP traces can be consumed by different solutions, like [Jaeger](http
   }
   ```
 
+### `server`
 
+This configures the Platformatic Runtime entrypoint `server`. If the entrypoint has also a `server` configured, when the runtime is started, this configuration is used. 
+
+See [Platformatic Service server](/docs/reference/service/configuration.md#server) for more details.
 
 ## Environment variable placeholders
 

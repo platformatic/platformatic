@@ -1,5 +1,5 @@
 import { execa } from 'execa'
-import { access, constants, readFile } from 'fs/promises'
+import { access, constants, mkdir, readFile } from 'fs/promises'
 import { resolve, join, dirname } from 'path'
 import { createRequire } from 'module'
 import semver from 'semver'
@@ -61,19 +61,7 @@ export async function isDirectoryWriteable (directory) {
   }
 }
 
-export const validatePath = async projectPath => {
-  // if the folder exists, is OK:
-  const projectDir = resolve(projectPath)
-  const canAccess = await isDirectoryWriteable(projectDir)
-  if (canAccess) {
-    return true
-  }
-  // if the folder does not exist, check if the parent folder exists:
-  const parentDir = dirname(projectDir)
-  const canAccessParent = await isDirectoryWriteable(parentDir)
-  return canAccessParent
-}
-
+export const findConfigFile = async (directory) => (ConfigManager.findConfigFile(directory))
 export const findDBConfigFile = async (directory) => (ConfigManager.findConfigFile(directory, 'db'))
 export const findServiceConfigFile = async (directory) => (ConfigManager.findConfigFile(directory, 'service'))
 export const findComposerConfigFile = async (directory) => (ConfigManager.findConfigFile(directory, 'composer'))
@@ -92,7 +80,7 @@ export const getDependencyVersion = async (dependencyName) => {
   return packageJson.version
 }
 
-export const minimumSupportedNodeVersions = ['18.8.0', '19.0.0']
+export const minimumSupportedNodeVersions = ['18.8.0', '20.6.0']
 
 export const isCurrentVersionSupported = (currentVersion) => {
   // TODO: add try/catch if some unsupported node version is passed
@@ -102,4 +90,23 @@ export const isCurrentVersionSupported = (currentVersion) => {
     }
   }
   return false
+}
+
+export function convertServiceNameToPrefix (serviceName) {
+  return serviceName.replace(/-/g, '_').toUpperCase()
+}
+export function addPrefixToEnv (env, prefix) {
+  const output = {}
+  Object.entries(env).forEach(([key, value]) => {
+    output[`${prefix}_${key}`] = value
+  })
+  return output
+}
+
+export async function safeMkdir (dir) {
+  try {
+    await mkdir(dir, { recursive: true })
+  } catch (err) {
+    // do nothing
+  }
 }

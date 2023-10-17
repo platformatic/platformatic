@@ -1,14 +1,15 @@
 'use strict'
 
-const { buildConfig } = require('./helper')
-const { test } = require('tap')
-const { buildServer } = require('..')
+const os = require('node:os')
+const assert = require('node:assert')
+const { test } = require('node:test')
+const { join } = require('node:path')
+const { writeFile } = require('node:fs/promises')
 const { request } = require('undici')
-const { join } = require('path')
-const os = require('os')
-const { writeFile } = require('fs/promises')
+const { buildServer } = require('..')
+const { buildConfig } = require('./helper')
 
-test('should not configure telemetry if not configured', async ({ teardown, equal, pass, same }) => {
+test('should not configure telemetry if not configured', async () => {
   const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
@@ -16,14 +17,14 @@ test('should not configure telemetry if not configured', async ({ teardown, equa
     }
   }))
 
-  teardown(async () => {
+  test.after(async () => {
     await app.close()
   })
   await app.start()
-  equal(app.openTelemetry, undefined)
+  assert.strictEqual(app.openTelemetry, undefined)
 })
 
-test('should setup telemetry if configured', async ({ teardown, equal, pass, same }) => {
+test('should setup telemetry if configured', async (t) => {
   const file = join(os.tmpdir(), `${process.pid}-1.js`)
 
   await writeFile(file, `
@@ -54,7 +55,7 @@ test('should setup telemetry if configured', async ({ teardown, equal, pass, sam
     }
   }))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
@@ -75,13 +76,13 @@ test('should setup telemetry if configured', async ({ teardown, equal, pass, sam
         `
     })
   })
-  equal(res.statusCode, 200, 'savePage status code')
+  assert.strictEqual(res.statusCode, 200, 'savePage status code')
   const { exporters } = app.openTelemetry
   const finishedSpans = exporters[0].getFinishedSpans()
-  equal(finishedSpans.length, 1)
+  assert.strictEqual(finishedSpans.length, 1)
   const span = finishedSpans[0]
-  equal(span.name, 'GET /')
-  equal(span.attributes['http.request.method'], 'GET')
-  equal(span.attributes['url.path'], '/')
-  equal(span.attributes['http.response.status_code'], 200)
+  assert.strictEqual(span.name, 'GET /')
+  assert.strictEqual(span.attributes['http.request.method'], 'GET')
+  assert.strictEqual(span.attributes['url.path'], '/')
+  assert.strictEqual(span.attributes['http.response.status_code'], 200)
 })

@@ -4,6 +4,7 @@ import {
 } from '@platformatic/sql-mapper'
 import { type FastifyPluginAsync } from 'fastify'
 import { type FastifyUserPluginOptions } from 'fastify-user'
+import { FastifyError } from '@fastify/error'
 
 export type OperationFunction<T> = (args: {
   user: T,
@@ -53,10 +54,8 @@ export interface DBAuthorizationPluginOptions<T = any> extends FastifyUserPlugin
   rules: Array<AuthorizationRule<T>>
 }
 
-declare module '@platformatic/types' {
-  interface PlatformaticApp {
-    addRulesForRoles: AddRulesForRoles
-  }
+export interface DBAuthorizationPluginInterface {
+  addRulesForRoles: AddRulesForRoles
 }
 
 declare module 'fastify' {
@@ -68,3 +67,13 @@ declare module 'fastify' {
 declare const auth: FastifyPluginAsync<DBAuthorizationPluginOptions>
 
 export default auth
+
+/**
+ * All the errors thrown by the plugin.
+ */
+export module errors {
+  export const Unauthorized: () => FastifyError
+  export const UnauthorizedField: (field: string) => FastifyError
+  export const MissingNotNullableError: (field: string, entity: string) => FastifyError
+}
+

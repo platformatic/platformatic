@@ -1,17 +1,19 @@
 'use strict'
 
-const { join } = require('path')
-const { test } = require('tap')
+const assert = require('node:assert/strict')
+const { test } = require('node:test')
+const { join } = require('node:path')
+const { randomUUID } = require('node:crypto')
+const { rm, access } = require('node:fs/promises')
 
 const { deploy } = require('../index')
 const { startMachine, startDeployService } = require('./helper')
-const { rm, access } = require('fs/promises')
 
 test('should deploy platformatic service by compiling typescript', async (t) => {
   try {
     await rm(join(__dirname, 'fixtures', 'service-ts', 'dist'), { recursive: true, force: true })
   } catch {}
-  t.teardown(async () => {
+  t.after(async () => {
     try {
       await rm(join(__dirname, 'fixtures', 'service-ts', 'dist'), { recursive: true, force: true })
     } catch {}
@@ -23,8 +25,9 @@ test('should deploy platformatic service by compiling typescript', async (t) => 
   const workspaceId = 'test-workspace-id'
   const workspaceKey = 'test-workspace-key'
 
+  let isMachinePreWarmed = false
   const entryPointUrl = await startMachine(t, () => {
-    t.pass('Action should make a prewarm request to the machine')
+    isMachinePreWarmed = true
   })
 
   const pathToProject = join(__dirname, 'fixtures', 'service-ts')
@@ -42,26 +45,28 @@ test('should deploy platformatic service by compiling typescript', async (t) => 
     SECRET_VARIABLE_1: 'value3'
   }
 
-  await startDeployService(
+  const deploymentId = randomUUID()
+
+  const deployService = await startDeployService(
     t,
     {
       createBundleCallback: (request, reply) => {
-        t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-        t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+        assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+        assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
 
         const { bundle } = request.body
 
-        t.equal(bundle.appType, 'service')
-        t.equal(bundle.configPath, pathToConfig)
-        t.ok(bundle.checksum)
+        assert.equal(bundle.appType, 'service')
+        assert.equal(bundle.configPath, pathToConfig)
+        assert.ok(bundle.checksum)
 
         reply.code(200).send({ id: bundleId, token, isBundleUploaded: false })
       },
       createDeploymentCallback: (request, reply) => {
-        t.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
-        t.equal(request.headers['x-platformatic-api-key'], workspaceKey)
-        t.equal(request.headers.authorization, `Bearer ${token}`)
-        t.same(
+        assert.equal(request.headers['x-platformatic-workspace-id'], workspaceId)
+        assert.equal(request.headers['x-platformatic-api-key'], workspaceKey)
+        assert.equal(request.headers.authorization, `Bearer ${token}`)
+        assert.deepEqual(
           request.body,
           {
             label,
@@ -81,10 +86,13 @@ test('should deploy platformatic service by compiling typescript', async (t) => 
             }
           }
         )
-        reply.code(200).send({ entryPointUrl })
+        reply.code(200).send({
+          id: deploymentId,
+          entryPointUrl
+        })
       },
       uploadCallback: (request) => {
-        t.equal(request.headers.authorization, `Bearer ${token}`)
+        assert.equal(request.headers.authorization, `Bearer ${token}`)
       }
     }
   )
@@ -92,11 +100,14 @@ test('should deploy platformatic service by compiling typescript', async (t) => 
   const logger = {
     info: () => {},
     trace: () => {},
-    warn: () => t.fail('Should not log a warning')
+    warn: () => assert.fail('Should not log a warning')
   }
 
-  await deploy({
-    deployServiceHost: 'http://localhost:3042',
+  const deployServicePort = deployService.server.address().port
+  const deployServiceHost = `http://localhost:${deployServicePort}`
+
+  const result = await deploy({
+    deployServiceHost,
     workspaceId,
     workspaceKey,
     label,
@@ -106,6 +117,12 @@ test('should deploy platformatic service by compiling typescript', async (t) => 
     secrets,
     variables,
     logger
+  })
+
+  assert.equal(isMachinePreWarmed, true)
+  assert.deepEqual(result, {
+    deploymentId,
+    entryPointUrl
   })
 
   await access(join(__dirname, 'fixtures', 'service-ts', 'dist', 'plugin.js'))

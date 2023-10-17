@@ -1,39 +1,47 @@
 'use strict'
 
-const { buildConfig, connInfo, clear, createBasicPages } = require('./helper')
-const { test } = require('tap')
-const { buildServer } = require('..')
+const assert = require('node:assert/strict')
+const { test } = require('node:test')
 const { request } = require('undici')
+const { buildServer } = require('..')
+const { buildConfigManager, getConnectionInfo, createBasicPages } = require('./helper')
 
-test('should not configure telemetry if not configured', async ({ teardown, equal, pass, same }) => {
-  const app = await buildServer(buildConfig({
+test('should not configure telemetry if not configured', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
+
+  const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0
     },
     db: {
-      ...connInfo
+      ...connectionInfo
     }
-  }))
+  }
 
-  teardown(async () => {
+  const configManager = await buildConfigManager(config)
+  const app = await buildServer({ configManager })
+
+  t.after(async () => {
     await app.close()
+    await dropTestDB()
   })
   await app.start()
-  equal(app.openTelemetry, undefined)
+
+  assert.equal(app.openTelemetry, undefined)
 })
 
-test('should setup telemetry if configured', async ({ teardown, equal, pass, same }) => {
-  const app = await buildServer(buildConfig({
+test('should setup telemetry if configured', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
+
+  const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0
     },
     db: {
-      ...connInfo,
+      ...connectionInfo,
       async onDatabaseLoad (db, sql) {
-        pass('onDatabaseLoad called')
-        await clear(db, sql)
         await createBasicPages(db, sql)
       }
     },
@@ -44,10 +52,14 @@ test('should setup telemetry if configured', async ({ teardown, equal, pass, sam
         type: 'memory'
       }
     }
-  }))
+  }
 
-  teardown(async () => {
+  const configManager = await buildConfigManager(config)
+  const app = await buildServer({ configManager })
+
+  t.after(async () => {
     await app.close()
+    await dropTestDB()
   })
   await app.start()
 
@@ -67,13 +79,13 @@ test('should setup telemetry if configured', async ({ teardown, equal, pass, sam
         `
     })
   })
-  equal(res.statusCode, 200, 'savePage status code')
+  assert.equal(res.statusCode, 200, 'savePage status code')
   const { exporters } = app.openTelemetry
   const finishedSpans = exporters[0].getFinishedSpans()
-  equal(finishedSpans.length, 1)
+  assert.equal(finishedSpans.length, 1)
   const span = finishedSpans[0]
-  equal(span.name, 'POST /graphql')
-  equal(span.attributes['http.request.method'], 'POST')
-  equal(span.attributes['url.path'], '/graphql')
-  equal(span.attributes['http.response.status_code'], 200)
+  assert.equal(span.name, 'POST /graphql')
+  assert.equal(span.attributes['http.request.method'], 'POST')
+  assert.equal(span.attributes['url.path'], '/graphql')
+  assert.equal(span.attributes['http.response.status_code'], 200)
 })

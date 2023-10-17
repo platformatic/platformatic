@@ -1,9 +1,10 @@
 'use strict'
 
-const { join } = require('path')
-const { readFile } = require('fs/promises')
+const assert = require('node:assert/strict')
+const { test } = require('node:test')
+const { join } = require('node:path')
+const { readFile } = require('node:fs/promises')
 
-const { test } = require('tap')
 const { cliPath } = require('./helper.js')
 
 test('version', async (t) => {
@@ -11,5 +12,5 @@ test('version', async (t) => {
   const { stdout } = await execa('node', [cliPath, '--version'])
 
   const version = JSON.parse(await readFile(join(__dirname, '..', '..', 'package.json'))).version
-  t.ok(stdout.includes('v' + version))
+  assert.ok(stdout.includes('v' + version))
 })

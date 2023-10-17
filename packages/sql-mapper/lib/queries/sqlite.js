@@ -1,6 +1,7 @@
 'use strict'
 
 const { randomUUID } = require('crypto')
+const errors = require('../errors')
 
 function fixValue (value) {
   if (value instanceof Date) {
@@ -108,7 +109,7 @@ async function insertOne (db, sql, table, schema, input, primaryKeys, fieldsToRe
         primaryKeyValue = null
         hasAutoIncrementPK = true
       } else {
-        throw new Error('SQLite only supports autoIncrement on one column')
+        throw new errors.SQLiteOnlySupportsAutoIncrementOnOneColumnError()
       }
       input[key] = primaryKeyValue
     }

@@ -2,10 +2,12 @@
 
 const graphql = require('graphql')
 const camelcase = require('camelcase')
+const { findNearestString } = require('@platformatic/utils')
 const {
   sqlTypeToGraphQL,
   fromSelectionSet
 } = require('./utils')
+const errors = require('./errors')
 
 const ascDesc = new graphql.GraphQLEnumType({
   name: 'OrderByDirection',
@@ -36,6 +38,19 @@ function constructGraph (app, entity, opts, ignore) {
     loaders
   } = opts
 
+  const entityFieldsNames = Object.values(entity.fields)
+    .map(field => field.camelcase)
+
+  for (const ignoredField of Object.keys(ignore)) {
+    if (!entityFieldsNames.includes(ignoredField)) {
+      const nearestField = findNearestString(entityFieldsNames, ignoredField)
+      app.log.warn(
+      `Ignored graphql field "${ignoredField}" not found in entity "${entity.singularName}".` +
+      ` Did you mean "${nearestField}"?`
+      )
+    }
+  }
+
   const fields = {}
 
   for (const key of Object.keys(entity.fields)) {
@@ -54,7 +69,7 @@ function constructGraph (app, entity, opts, ignore) {
       meta.type = new graphql.GraphQLList(listType)
     } else if (field.enum) {
       const enumValues = field.enum.reduce((acc, enumValue, index) => {
-        let key = enumValue.replace(/[^\w\s]/g, '_')
+        let key = enumValue.replace(/[^\w]/g, '_')
 
         const keyStartsWithLetterOrUnderscore = !!key.match(/^[_a-zA-Z]/g)
         if (!keyStartsWithLetterOrUnderscore) {
@@ -73,7 +88,7 @@ function constructGraph (app, entity, opts, ignore) {
         meta.type = new graphql.GraphQLEnumType({ name, values: enumValues })
       } catch (error) {
         app.log.error({ key, enumValues, entityName, table: entity.table, schema: entity.schema })
-        throw new Error('Unable to generate GraphQLEnumType')
+        throw new errors.UnableToGenerateGraphQLEnumTypeError()
       }
     } else {
       meta.type = sqlTypeToGraphQL(field.sqlType)

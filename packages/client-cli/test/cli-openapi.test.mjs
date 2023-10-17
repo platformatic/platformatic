@@ -8,6 +8,7 @@ import { promises as fs } from 'fs'
 import split from 'split2'
 import { copy } from 'fs-extra'
 import dotenv from 'dotenv'
+import { readFile } from 'fs/promises'
 
 test('openapi client generation (javascript)', async ({ teardown, comment, same }) => {
   try {
@@ -33,7 +34,7 @@ const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
-  const res = await app.movies.createMovie({ title: 'foo' })
+  const res = await request.movies.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
@@ -91,13 +92,13 @@ app.register(movies, {
   url: '${app.url}'
 });
 
-app.get('/', async () => {
-  const res = await app.movies.getMovies()
+app.get('/', async (req) => {
+  const res = await req.movies.getMovies()
   return res
 })
 
-app.post('/', async () => {
-  const res = await app.movies.createMovie({ title: 'foo' })
+app.post('/', async (req) => {
+  const res = await req.movies.createMovie({ title: 'foo' })
   return res
 })
 
@@ -111,7 +112,7 @@ app.listen({ port: 0 });
     compilerOptions: {
       outDir: 'build',
       target: 'es2018',
-      moduleResolution: 'node',
+      moduleResolution: 'NodeNext',
       lib: ['es2018'],
       esModuleInterop: true
     }
@@ -177,7 +178,7 @@ const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}/' })
 app.post('/', async (request, reply) => {
-  const res = await app.movies.createMovie({ title: 'foo' })
+  const res = await request.movies.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
@@ -256,7 +257,7 @@ const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
-  const res = await app.movies.createMovie({ title: 'foo' })
+  const res = await request.movies.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
@@ -337,7 +338,7 @@ app.listen({ port: 0 });
     compilerOptions: {
       outDir: 'build',
       target: 'es2018',
-      moduleResolution: 'node',
+      moduleResolution: 'NodeNext',
       lib: ['es2018'],
       esModuleInterop: true
     }
@@ -455,7 +456,7 @@ const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {  
-  const res = await app.movies.createMovie({ title: 'foo' })
+  const res = await request.movies.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
@@ -538,7 +539,7 @@ const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
-  const res = await app.movies.createMovie({ title: 'foo' })
+  const res = await request.movies.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
@@ -610,7 +611,7 @@ const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
-  const res = await app.uncannyMovies.createMovie({ title: 'foo' })
+  const res = await request.uncannyMovies.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
@@ -668,8 +669,8 @@ app.register(movies, {
   url: '${app.url}'
 });
 
-app.post('/', async () => {
-  const res = await app.uncannyMovies.createMovie({ title: 'foo' })
+app.post('/', async (req) => {
+  const res = await req.uncannyMovies.createMovie({ title: 'foo' })
   return res
 })
 
@@ -683,7 +684,7 @@ app.listen({ port: 0 });
     compilerOptions: {
       outDir: 'build',
       target: 'es2018',
-      moduleResolution: 'node',
+      moduleResolution: 'NodeNext',
       lib: ['es2018'],
       esModuleInterop: true
     }
@@ -763,7 +764,7 @@ const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}' })
 app.post('/', async (request, reply) => {
-  const res = await app.uncannyMovies.createMovie({ title: 'foo' })
+  const res = await request.uncannyMovies.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
@@ -795,4 +796,140 @@ app.listen({ port: 0 })
     id: 1,
     title: 'foo'
   })
+})
+
+test('openapi client generation from YAML file', async ({ teardown, comment, same }) => {
+  const dir = await moveToTmpdir(teardown)
+  const openapiFile = desm.join(import.meta.url, 'fixtures', 'openapi.yaml')
+  comment(`working in ${dir}`)
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
+
+  // check openapi json file has been created
+  const jsonFile = join(dir, 'movies', 'movies.openapi.json')
+  const data = await readFile(jsonFile, 'utf-8')
+  const json = JSON.parse(data)
+  same(json.openapi, '3.0.3')
+})
+
+test('nested optional parameters are correctly identified', async ({ teardown, comment, match }) => {
+  const dir = await moveToTmpdir(teardown)
+  const openapiFile = desm.join(import.meta.url, 'fixtures', 'optional-params-openapi.json')
+  comment(`working in ${dir}`)
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
+
+  // check the type file has the correct implementation for the request
+  const typeFile = join(dir, 'movies', 'movies.d.ts')
+  const data = await readFile(typeFile, 'utf-8')
+  match(data, `
+  export interface GetMoviesResponseOK {
+    'data': { foo: string; bar?: string; baz?: { nested1?: string; nested2: string } };
+  }
+`)
+})
+
+test('request with same parameter name in body/path/header/query', async ({ teardown, comment, match }) => {
+  const dir = await moveToTmpdir(teardown)
+  const openapiFile = desm.join(import.meta.url, 'fixtures', 'same-parameter-name-openapi.json')
+  comment(`working in ${dir}`)
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
+  // check the type file has the correct implementation for the request
+  const typeFile = join(dir, 'movies', 'movies.d.ts')
+  const data = await readFile(typeFile, 'utf-8')
+  match(data, `
+  export interface GetMoviesRequest {
+    body: {
+      'id': string;
+    }
+    path: {
+      'id': string;
+    }
+    query: {
+      'id': string;
+    }
+    headers: {
+      'id': string;
+    }
+  }`)
+})
+
+test('openapi client generation (javascript) from file with fullRequest, fullResponse, validateResponse and optionalHeaders', async ({ teardown, comment, match }) => {
+  const openapi = desm.join(import.meta.url, 'fixtures', 'full-req-res', 'openapi.json')
+  teardown = () => {}
+  const dir = await moveToTmpdir((teardown))
+  comment(`working in ${dir}`)
+
+  const pltServiceConfig = {
+    $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugins: {
+      paths: ['./plugin.js']
+    }
+  }
+
+  await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
+
+  const fullOptions = [
+    ['--full-request', '--full-response'],
+    ['--full']
+  ]
+  for (const opt of fullOptions) {
+    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapi, '--name', 'full', '--validate-response', '--optional-headers', 'headerId', ...opt])
+
+    // check the type file has the correct implementation for the request and the response
+    const typeFile = join(dir, 'full', 'full.d.ts')
+    const data = await readFile(typeFile, 'utf-8')
+    match(data, `
+  export interface PostHelloRequest {
+    body: {
+      'bodyId': string;
+    }
+    query: {
+      'queryId': string;
+    }
+    headers?: {
+      'headerId'?: string;
+    }
+  }
+`)
+    match(data, `
+  export interface Full {
+    postHello(req?: PostHelloRequest): Promise<PostHelloResponses>;
+  }`)
+    const implementationFile = join(dir, 'full', 'full.cjs')
+    const implementationData = await readFile(implementationFile, 'utf-8')
+    // check the implementation instantiate the client with fullRequest and fullResponse
+    match(implementationData, `
+async function generateFullClientPlugin (app, opts) {
+  app.register(pltClient, {
+    type: 'openapi',
+    name: 'full',
+    path: join(__dirname, 'full.openapi.json'),
+    url: opts.url,
+    serviceId: opts.serviceId,
+    throwOnError: opts.throwOnError,
+    fullResponse: true,
+    fullRequest: true,
+    validateResponse: true
+  })
+}`)
+  }
+})
+
+test('optional-headers option', async ({ teardown, comment, match }) => {
+  const dir = await moveToTmpdir(teardown)
+  comment(`working in ${dir}`)
+
+  const openAPIfile = desm.join(import.meta.url, 'fixtures', 'optional-headers-openapi.json')
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--optional-headers', 'foobar,authorization', '--types-only'])
+
+  const typeFile = join(dir, 'movies.d.ts')
+  const data = await readFile(typeFile, 'utf-8')
+  match(data, `
+  export interface PostHelloRequest {
+    'authorization'?: string;
+  }
+`)
 })

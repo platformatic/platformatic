@@ -1,37 +1,32 @@
 'use strict'
 
-const { test } = require('tap')
+const assert = require('node:assert')
+const { test } = require('node:test')
+const { join, resolve } = require('node:path')
 const { getJSPluginPath, isFileAccessible } = require('../lib/utils')
-const { join, resolve } = require('path')
 
 test('should get the path of a TS plugin', (t) => {
-  t.plan(1)
-
   const result = getJSPluginPath('/something', '/something/plugin.ts', '/something/dist')
   const expected = join('/something', 'dist', 'plugin.js')
-  t.equal(result, expected)
+  assert.strictEqual(result, expected)
 })
 
 test('should get the path of a JS plugin', (t) => {
-  t.plan(1)
-
   const result = getJSPluginPath('/something', '/something/plugin.js', '/something/dist')
-  t.equal(result, '/something/plugin.js')
+  assert.strictEqual(result, '/something/plugin.js')
 })
 
 test('isFileAccessible with dir', async (t) => {
   const dir = resolve(join(__dirname, '..', 'fixtures', 'hello'))
-  t.equal(await isFileAccessible('platformatic.service.json', dir), true)
+  assert.strictEqual(await isFileAccessible('platformatic.service.json', dir), true)
 })
 
 test('isFileAccessible no dir', async (t) => {
   const file = resolve(join(__dirname, '..', 'fixtures', 'hello', 'platformatic.service.json'))
-  t.equal(await isFileAccessible(file), true)
+  assert.strictEqual(await isFileAccessible(file), true)
 })
 
 test('should return the same plugin folder if it\'s already the compiled one', (t) => {
-  t.plan(1)
-
   const result = getJSPluginPath('/something', '/something/dist/plugins', '/something/dist')
-  t.equal(result, '/something/dist/plugins')
+  assert.strictEqual(result, '/something/dist/plugins')
 })

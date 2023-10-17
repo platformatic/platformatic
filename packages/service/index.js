@@ -2,7 +2,7 @@
 
 const { isKeyEnabled } = require('@platformatic/utils')
 const { readFile } = require('fs/promises')
-const { dirname, join } = require('path')
+const { join } = require('path')
 
 const compiler = require('./lib/compile')
 const setupCors = require('./lib/plugins/cors')
@@ -27,6 +27,12 @@ async function platformaticService (app, opts, toLoad = []) {
     app.register(setupMetrics, config.metrics)
   }
 
+  // This must be done before loading the plugins, so they can inspect if the
+  // openTelemetry decoretor exists and then configure accordingly.
+  if (isKeyEnabled('telemetry', config)) {
+    await app.register(telemetry, config.telemetry)
+  }
+
   if (Array.isArray(toLoad)) {
     for (const plugin of toLoad) {
       await app.register(plugin)
@@ -43,10 +49,6 @@ async function platformaticService (app, opts, toLoad = []) {
     await app.register(setupGraphQL, serviceConfig.graphql)
   }
 
-  if (config.telemetry) {
-    app.register(telemetry, config.telemetry)
-  }
-
   if (isKeyEnabled('clients', config)) {
     app.register(setupClients, config.clients)
   }
@@ -54,6 +56,7 @@ async function platformaticService (app, opts, toLoad = []) {
   if (config.plugins) {
     let registerTsCompiler = false
     const typescript = config.plugins.typescript
+    /* c8 ignore next 6 */
     if (typescript === true) {
       registerTsCompiler = true
     } else if (typeof typescript === 'object') {
@@ -66,7 +69,7 @@ async function platformaticService (app, opts, toLoad = []) {
     await app.register(loadPlugins)
   }
 
-  if (config.server.cors) {
+  if (isKeyEnabled('cors', config.server)) {
     app.register(setupCors, config.server.cors)
   }
 
@@ -108,7 +111,7 @@ platformaticService.configManagerConfig = {
       let outDir = typescript.outDir
       if (outDir === undefined) {
         let tsConfigFile = typescript.tsConfigFile || 'tsconfig.json'
-        tsConfigFile = join(dirname(this.fullPath), tsConfigFile)
+        tsConfigFile = join(this.dirname, tsConfigFile)
         try {
           const tsConfig = JSON.parse(await readFile(tsConfigFile, 'utf8'))
           outDir = tsConfig.compilerOptions.outDir

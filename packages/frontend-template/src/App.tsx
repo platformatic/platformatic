@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import './App.css'
 
 // Note: this import works only after generating the frontend code through the Platformatic CLI
-import { getMovies, createMovie, updateMovie, setBaseUrl } from './platformatic-generated-code/api'
+import { getMovies, createMovie, updateMovie, setBaseUrl } from './platformatic-generated-code/api/api'
 
 setBaseUrl('http://localhost:9999')
 

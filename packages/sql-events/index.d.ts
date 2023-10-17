@@ -1,16 +1,14 @@
-/// <reference types="@platformatic/types" />
-import { FastifyPluginAsync } from 'fastify'
+import { FastifyInstance } from 'fastify'
 import { Readable } from 'stream'
-import { SQLMapperPluginInterface } from '@platformatic/sql-mapper'
+import { SQLMapperPluginInterface, Entities } from '@platformatic/sql-mapper'
+import { FastifyError } from '@fastify/error'
 
-declare module '@platformatic/types' {
-  interface PlatformaticApp {
-    subscribe: (topic: string | string[]) => Promise<Readable>
-  }
+export interface SQLEventsPluginInterface {
+  subscribe: (topic: string | string[]) => Promise<Readable>
 }
 
-export interface SQLEventsPluginOptions {
-  mapper: SQLMapperPluginInterface
+export interface SQLEventsPluginOptions<T extends Entities> {
+  mapper: SQLMapperPluginInterface<T>
 
   // TODO mqemitter has no types
   mq?: any
@@ -20,8 +18,15 @@ export interface SQLEventsPluginOptions {
 /**
  * Fastify plugin that add events capabilities to registered sql-mapper 
  */
-declare const plugin: FastifyPluginAsync<SQLEventsPluginOptions>
+export default function plugin<T extends Entities>(app: FastifyInstance, options: SQLEventsPluginOptions<T>): Promise<SQLEventsPluginInterface>
 
-export default plugin
+export function setupEmitter<T extends Entities>(options: SQLEventsPluginOptions<T>): void
 
-export function setupEmitter(options: SQLEventsPluginOptions): void
+/**
+ * All the errors thrown by the plugin.
+ */
+export module errors {
+  export const ObjectRequiredUnderTheDataProperty: () => FastifyError
+  export const PrimaryKeyIsNecessaryInsideData: () => FastifyError
+  export const NoSuchActionError: (actions: string) => FastifyError
+}

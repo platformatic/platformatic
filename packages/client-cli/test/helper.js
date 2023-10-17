@@ -31,3 +31,4 @@ async function moveToTmpdir (teardown) {
 }
 
 module.exports.moveToTmpdir = moveToTmpdir
+module.exports.cliPath = join(__dirname, '..', 'cli.mjs')

@@ -5,7 +5,7 @@ const close = require('close-with-grace')
 const { loadConfig, ConfigManager, printConfigValidationErrors, printAndExitLoadConfigError } = require('@platformatic/config')
 const { addLoggerToTheConfig } = require('./utils.js')
 const { restartable } = require('@fastify/restartable')
-
+const { randomUUID } = require('crypto')
 async function adjustHttpsKeyAndCert (arg) {
   if (typeof arg === 'string') {
     return arg
@@ -32,17 +32,29 @@ async function buildServer (options, app) {
     await configManager.parseAndValidate()
   }
 
+  const config = configManager.current
+
+  // The server now can be not present, so we might need to add logger
+  addLoggerToTheConfig(config)
+
   // options is a path
   if (typeof options === 'string') {
-    options = configManager.current
+    options = config
   }
 
   let url = null
 
   async function createRestartable (fastify) {
     const config = configManager.current
-    const root = fastify(config.server)
+    let fastifyOptions = {}
+    if (config.server) {
+      fastifyOptions = {
+        ...config.server
+      }
+    }
+    fastifyOptions.genReqId = function (req) { return randomUUID() }
 
+    const root = fastify(fastifyOptions)
     root.decorate('platformatic', { configManager, config })
     root.register(app)
 
@@ -59,23 +71,20 @@ async function buildServer (options, app) {
     return root
   }
 
-  const { port, hostname, ...serverOptions } = options.server
-
-  if (serverOptions.https) {
-    serverOptions.https.key = await adjustHttpsKeyAndCert(serverOptions.https.key)
-    serverOptions.https.cert = await adjustHttpsKeyAndCert(serverOptions.https.cert)
+  if (options.server) {
+    if (options.server.https) {
+      options.server.https.key = await adjustHttpsKeyAndCert(options.server.https.key)
+      options.server.https.cert = await adjustHttpsKeyAndCert(options.server.https.cert)
+    }
   }
-
   const handler = await restartable(createRestartable)
-
+  handler.decorate('start', async () => {
+    url = await handler.listen({ host: options.server?.hostname || '127.0.0.1', port: options.server?.port || 0 })
+    return url
+  })
   configManager.on('error', function (err) {
     /* c8 ignore next 1 */
     handler.log.error({ err }, 'error reloading the configuration')
-  })
-
-  handler.decorate('start', async () => {
-    url = await handler.listen({ host: hostname, port })
-    return url
   })
 
   return handler
@@ -110,8 +119,6 @@ async function start (appType, _args) {
   }
 
   const config = configManager.current
-
-  addLoggerToTheConfig(config)
 
   const _transformConfig = configManager._transformConfig.bind(configManager)
   configManager._transformConfig = function () {

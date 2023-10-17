@@ -24,7 +24,7 @@ if (isMain(import.meta)) {
   })
 
   if (args.version) {
-    console.log('v' + JSON.parse(await readFile(join(import.meta.url, 'package.json'))).version)
+    console.log('v' + JSON.parse(await readFile(join(import.meta.url, 'package.json'), 'utf8')).version)
     process.exit(0)
   }
   await createPlatformatic(_args)
@@ -37,5 +37,5 @@ export {
   createDynamicWorkspaceGHAction
 } from './src/ghaction.mjs'
 
-export { createGitignore, createPackageJson, getDependencyVersion, getVersion } from './src/index.mjs'
+export { createGitignore, createGitRepository, createPackageJson, getDependencyVersion, getVersion } from './src/index.mjs'
 export { default as createService } from './src/service/create-service.mjs'

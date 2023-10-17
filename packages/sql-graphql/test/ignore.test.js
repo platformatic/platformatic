@@ -129,7 +129,7 @@ test('ignore a table via sql-graphql option', async ({ pass, teardown, equal }) 
   })
   app.register(sqlGraphQL, {
     ignore: {
-      categories: true
+      category: true
     }
   })
   teardown(app.close.bind(app))
@@ -158,6 +158,46 @@ test('ignore a table via sql-graphql option', async ({ pass, teardown, equal }) 
   }
 })
 
+test('show a warning if there is no ignored entity', async ({ plan, pass, teardown }) => {
+  plan(2)
+
+  const app = fastify({
+    logger: {
+      info () {},
+      debug () {},
+      trace () {},
+      fatal () {},
+      error () {},
+      child () {
+        return this
+      },
+      warn (msg) {
+        if (msg === 'Ignored graphql entity "missingEntityPages" not found. Did you mean "page"?') {
+          pass('warning message is shown')
+        }
+      }
+    }
+  })
+
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(sqlGraphQL, {
+    ignore: {
+      missingEntityPages: true
+    }
+  })
+  teardown(app.close.bind(app))
+
+  await app.ready()
+})
+
 test('ignore a column via sql-graphql option', async ({ pass, teardown, equal }) => {
   const app = fastify()
   app.register(sqlMapper, {
@@ -171,7 +211,7 @@ test('ignore a column via sql-graphql option', async ({ pass, teardown, equal })
   })
   app.register(sqlGraphQL, {
     ignore: {
-      categories: {
+      category: {
         name: true
       }
     }
@@ -204,4 +244,46 @@ test('ignore a column via sql-graphql option', async ({ pass, teardown, equal })
     const Category = data.__schema.types.find((t) => t.name === 'Category')
     equal(Category.fields.find((f) => f.name === 'name'), undefined, 'name column is ignored')
   }
+})
+
+test('show a warning if there is no ignored entity field', async ({ plan, pass, teardown }) => {
+  plan(2)
+
+  const app = fastify({
+    logger: {
+      info () {},
+      debug () {},
+      trace () {},
+      fatal () {},
+      error () {},
+      child () {
+        return this
+      },
+      warn (msg) {
+        if (msg === 'Ignored graphql field "missingFieldName" not found in entity "category". Did you mean "name"?') {
+          pass('warning message is shown')
+        }
+      }
+    }
+  })
+
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(sqlGraphQL, {
+    ignore: {
+      category: {
+        missingFieldName: true
+      }
+    }
+  })
+  teardown(app.close.bind(app))
+
+  await app.ready()
 })

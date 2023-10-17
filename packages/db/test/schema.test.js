@@ -1,12 +1,13 @@
 'use strict'
 
-const { test } = require('tap')
-const { join } = require('path')
+const assert = require('node:assert/strict')
+const { test } = require('node:test')
+const { join } = require('node:path')
 const { schema } = require('../lib/schema')
 
 test('schema output', async (t) => {
   const { execa } = await import('execa')
   const { stdout } = await execa(process.execPath, [join(__dirname, '..', 'lib', 'schema.js')])
 
-  t.same(stdout, JSON.stringify(schema, null, 2))
+  assert.deepEqual(stdout, JSON.stringify(schema, null, 2))
 })

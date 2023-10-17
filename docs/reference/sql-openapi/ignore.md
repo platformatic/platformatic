@@ -7,7 +7,7 @@ To ignore entites:
 ```javascript
 app.register(require('@platformatic/sql-openapi'), {
   ignore: {
-    categories: true
+    category: true
   }
 })
 ```
@@ -17,7 +17,7 @@ To ignore individual fields:
 ```javascript
 app.register(require('@platformatic/sql-openapi'), {
   ignore: {
-    categories: {
+    category: {
       name: true
     }
   }

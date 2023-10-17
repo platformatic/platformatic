@@ -1,18 +1,32 @@
-import { connectAndResetDB, start } from './helper.js'
-import { test } from 'tap'
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
 import { join } from 'desm'
 import { request } from 'undici'
+import { getConnectionInfo } from '../helper.js'
+import { connectDB, start } from './helper.js'
 
-test('autostart', async ({ equal, same, match, teardown }) => {
-  const db = await connectAndResetDB()
-  teardown(() => db.dispose())
+test('autostart', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
+  const db = await connectDB(connectionInfo)
 
   await db.query(db.sql`CREATE TABLE pages (
     id SERIAL PRIMARY KEY,
     title VARCHAR(42)
   );`)
 
-  const { child, url } = await start(['-c', join(import.meta.url, '..', 'fixtures', 'simple.json')])
+  t.after(async () => {
+    await db.dispose()
+    await dropTestDB()
+  })
+
+  const { child, url } = await start(
+    ['-c', join(import.meta.url, '..', 'fixtures', 'simple.json')],
+    {
+      env: {
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    }
+  )
 
   let id
   {
@@ -30,15 +44,9 @@ test('autostart', async ({ equal, same, match, teardown }) => {
             `
       })
     })
-    equal(res.statusCode, 200, 'savePage status code')
+    assert.equal(res.statusCode, 200, 'savePage status code')
     const body = await res.body.json()
-    match(body, {
-      data: {
-        savePage: {
-          title: 'Hello'
-        }
-      }
-    }, 'savePage response')
+    assert.equal(body.data.savePage.title, 'Hello')
     id = body.data.savePage.id
   }
 
@@ -57,8 +65,8 @@ test('autostart', async ({ equal, same, match, teardown }) => {
             `
       })
     })
-    equal(res.statusCode, 200, 'pages status code')
-    same(await res.body.json(), {
+    assert.equal(res.statusCode, 200, 'pages status code')
+    assert.deepEqual(await res.body.json(), {
       data: {
         getPageById: {
           id,
@@ -83,8 +91,8 @@ test('autostart', async ({ equal, same, match, teardown }) => {
             `
       })
     })
-    equal(res.statusCode, 200, 'savePage status code')
-    same(await res.body.json(), {
+    assert.equal(res.statusCode, 200, 'savePage status code')
+    assert.deepEqual(await res.body.json(), {
       data: {
         savePage: {
           id,
@@ -109,8 +117,8 @@ test('autostart', async ({ equal, same, match, teardown }) => {
             `
       })
     })
-    equal(res.statusCode, 200, 'pages status code')
-    same(await res.body.json(), {
+    assert.equal(res.statusCode, 200, 'pages status code')
+    assert.deepEqual(await res.body.json(), {
       data: {
         getPageById: {
           id,
@@ -123,16 +131,28 @@ test('autostart', async ({ equal, same, match, teardown }) => {
   child.kill('SIGINT')
 })
 
-test('start command', async ({ equal, same, match, teardown }) => {
-  const db = await connectAndResetDB()
-  teardown(() => db.dispose())
+test('start command', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
+  const db = await connectDB(connectionInfo)
 
   await db.query(db.sql`CREATE TABLE pages (
     id SERIAL PRIMARY KEY,
     title VARCHAR(42)
   );`)
 
-  const { child, url } = await start(['-c', join(import.meta.url, '..', 'fixtures', 'simple.json')])
+  t.after(async () => {
+    await db.dispose()
+    await dropTestDB()
+  })
+
+  const { child, url } = await start(
+    ['-c', join(import.meta.url, '..', 'fixtures', 'simple.json')],
+    {
+      env: {
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    }
+  )
 
   let id
   {
@@ -150,15 +170,9 @@ test('start command', async ({ equal, same, match, teardown }) => {
             `
       })
     })
-    equal(res.statusCode, 200, 'savePage status code')
+    assert.equal(res.statusCode, 200, 'savePage status code')
     const body = await res.body.json()
-    match(body, {
-      data: {
-        savePage: {
-          title: 'Hello'
-        }
-      }
-    }, 'savePage response')
+    assert.deepEqual(body.data.savePage.title, 'Hello', 'savePage response')
     id = body.data.savePage.id
   }
 
@@ -177,8 +191,8 @@ test('start command', async ({ equal, same, match, teardown }) => {
             `
       })
     })
-    equal(res.statusCode, 200, 'pages status code')
-    same(await res.body.json(), {
+    assert.equal(res.statusCode, 200, 'pages status code')
+    assert.deepEqual(await res.body.json(), {
       data: {
         getPageById: {
           id,
@@ -203,8 +217,8 @@ test('start command', async ({ equal, same, match, teardown }) => {
             `
       })
     })
-    equal(res.statusCode, 200, 'savePage status code')
-    same(await res.body.json(), {
+    assert.equal(res.statusCode, 200, 'savePage status code')
+    assert.deepEqual(await res.body.json(), {
       data: {
         savePage: {
           id,
@@ -229,8 +243,8 @@ test('start command', async ({ equal, same, match, teardown }) => {
             `
       })
     })
-    equal(res.statusCode, 200, 'pages status code')
-    same(await res.body.json(), {
+    assert.equal(res.statusCode, 200, 'pages status code')
+    assert.deepEqual(await res.body.json(), {
       data: {
         getPageById: {
           id,

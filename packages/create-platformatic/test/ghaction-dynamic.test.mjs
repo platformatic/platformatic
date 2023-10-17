@@ -1,7 +1,7 @@
 'use strict'
 
 import { test, beforeEach, afterEach } from 'tap'
-import { mkdtemp, rmdir, writeFile, readFile, mkdir } from 'fs/promises'
+import { mkdtemp, readFile, mkdir, rm } from 'fs/promises'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import { isFileAccessible } from '../src/utils.mjs'
@@ -21,7 +21,7 @@ beforeEach(async () => {
 })
 
 afterEach(async () => {
-  await rmdir(tmpDir, { recursive: true, force: true })
+  await rm(tmpDir, { recursive: true, force: true })
 })
 
 const env = {
@@ -31,7 +31,7 @@ const env = {
 
 test('creates gh action', async ({ equal, match }) => {
   await createDynamicWorkspaceGHAction(fakeLogger, env, 'db', tmpDir, false)
-  equal(log[0], 'Github action successfully created, please add the following secrets as repository secrets: ')
+  equal(log[0], 'PR Previews are enabled for your app and the Github action was successfully created, please add the following secrets as repository secrets: ')
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-dynamic-workspace-deploy.yml'))
   equal(accessible, true)
   const ghFile = await readFile(join(tmpDir, '.github/workflows/platformatic-dynamic-workspace-deploy.yml'), 'utf8')
@@ -50,7 +50,7 @@ test('creates gh action', async ({ equal, match }) => {
 
 test('creates gh action with TS build step', async ({ equal, match }) => {
   await createDynamicWorkspaceGHAction(fakeLogger, env, 'db', tmpDir, true)
-  equal(log[0], 'Github action successfully created, please add the following secrets as repository secrets: ')
+  equal(log[0], 'PR Previews are enabled for your app and the Github action was successfully created, please add the following secrets as repository secrets: ')
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-dynamic-workspace-deploy.yml'))
   equal(accessible, true)
   const ghFile = await readFile(join(tmpDir, '.github/workflows/platformatic-dynamic-workspace-deploy.yml'), 'utf8')
@@ -68,17 +68,9 @@ test('creates gh action with TS build step', async ({ equal, match }) => {
   equal(permissions['pull-requests'], 'write')
 })
 
-test('do not create gitignore file because already present', async ({ end, equal }) => {
-  await mkdir(join(tmpDir, '.github', 'workflows'), { recursive: true })
-  const ghaction = join(tmpDir, '.github', 'workflows', 'platformatic-dynamic-workspace-deploy.yml')
-  await writeFile(ghaction, 'TEST')
-  await createDynamicWorkspaceGHAction(fakeLogger, env, 'db', tmpDir)
-  equal(log[0], `Github action file ${join(tmpDir, '.github', 'workflows', 'platformatic-dynamic-workspace-deploy.yml')} found, skipping creation of github action file.`)
-})
-
 test('creates gh action with a warn if a .git folder is not present', async ({ end, equal }) => {
   await createDynamicWorkspaceGHAction(fakeLogger, env, 'db', tmpDir)
-  equal(log[0], 'Github action successfully created, please add the following secrets as repository secrets: ')
+  equal(log[0], 'PR Previews are enabled for your app and the Github action was successfully created, please add the following secrets as repository secrets: ')
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-dynamic-workspace-deploy.yml'))
   equal(accessible, true)
   const secretsLogLine = log[1].split('\n')
@@ -91,7 +83,7 @@ test('creates gh action with a warn if a .git folder is not present', async ({ e
 test('creates gh action without a warn if a .git folder is present', async ({ end, equal }) => {
   await mkdir(join(tmpDir, '.git'), { recursive: true })
   await createDynamicWorkspaceGHAction(fakeLogger, env, 'db', tmpDir)
-  equal(log[0], 'Github action successfully created, please add the following secrets as repository secrets: ')
+  equal(log[0], 'PR Previews are enabled for your app and the Github action was successfully created, please add the following secrets as repository secrets: ')
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-dynamic-workspace-deploy.yml'))
   equal(accessible, true)
   equal(log.length, 2)

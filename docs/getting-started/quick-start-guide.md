@@ -22,7 +22,7 @@ Platformatic supports macOS, Linux and Windows ([WSL](https://docs.microsoft.com
 
 To follow along with this guide you'll need to have these things installed:
 
-- [Node.js](https://nodejs.org/) >= v18.8.0 or >= v19.0.0
+- [Node.js](https://nodejs.org/) >= v18.8.0 or >= v20.6.0
 - [npm](https://docs.npmjs.com/cli/) v7 or later
 - A code editor, for example [Visual Studio Code](https://code.visualstudio.com/)
 

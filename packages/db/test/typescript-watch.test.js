@@ -1,11 +1,12 @@
 'use strict'
 
-const { test } = require('tap')
-const { join } = require('path')
-const { rm } = require('fs/promises')
+const assert = require('node:assert/strict')
+const { test } = require('node:test')
+const { join } = require('node:path')
+const { rm } = require('node:fs/promises')
+const { buildServer } = require('..')
 
-test('ignore watch dist/**/*', async ({ teardown, same }) => {
-  const { buildServer } = require('..')
+test('ignore watch dist/**/*', async (t) => {
   const targetDir = join(__dirname, 'fixtures', 'typescript-plugin')
   const app = await buildServer(join(targetDir, 'platformatic.db.json'))
 
@@ -13,11 +14,11 @@ test('ignore watch dist/**/*', async ({ teardown, same }) => {
     await rm(join(targetDir, 'dist'), { recursive: true })
   } catch {}
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
 
-  same(app.platformatic.configManager.current.watch, {
+  assert.deepEqual(app.platformatic.configManager.current.watch, {
     enabled: false,
     ignore: ['dist/**/*']
   })

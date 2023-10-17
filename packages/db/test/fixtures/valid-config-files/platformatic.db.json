@@ -1,6 +1,6 @@
 {
   "db": {
-    "connectionString": "sqlite://./db"
+    "connectionString": "{DATABASE_URL}"
   },
   "server": {
     "hostname": "127.0.0.1",

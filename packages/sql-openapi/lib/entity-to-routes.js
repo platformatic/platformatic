@@ -1,8 +1,10 @@
 'use strict'
 
 const { mapSQLTypeToOpenAPIType } = require('@platformatic/sql-json-schema-mapper')
+const { findNearestString } = require('@platformatic/utils')
 const camelcase = require('camelcase')
 const { generateArgs, rootEntityRoutes, capitalize, getFieldsForEntity } = require('./shared')
+const errors = require('./errors')
 
 const getEntityLinksForEntity = (app, entity) => {
   const entityLinks = {}
@@ -50,6 +52,20 @@ async function entityPlugin (app, opts) {
   const entitySchemaInput = {
     $ref: entity.name + 'Input#'
   }
+
+  const entityFieldsNames = Object.values(entity.fields)
+    .map(field => field.camelcase)
+
+  for (const ignoredField of Object.keys(ignore)) {
+    if (!entityFieldsNames.includes(ignoredField)) {
+      const nearestField = findNearestString(entityFieldsNames, ignoredField)
+      app.log.warn(
+        `Ignored openapi field "${ignoredField}" not found in entity "${entity.singularName}".` +
+        ` Did you mean "${nearestField}"?`
+      )
+    }
+  }
+
   const primaryKey = entity.primaryKeys.values().next().value
   const primaryKeyParams = getPrimaryKeyParams(entity, ignore)
   const primaryKeyCamelcase = camelcase(primaryKey)
@@ -186,7 +202,7 @@ async function entityPlugin (app, opts) {
     } catch (error) /* istanbul ignore next */ {
       app.log.error(error)
       app.log.info({ routePathName, targetEntityName, targetEntitySchema, operationId })
-      throw new Error('Unable to create the route for the reverse relationship')
+      throw new errors.UnableToCreateTheRouteForTheReverseRelationshipError()
     }
   }
 
@@ -268,7 +284,7 @@ async function entityPlugin (app, opts) {
     } catch (error) /* istanbul ignore next */ {
       app.log.error(error)
       app.log.info({ primaryKey, targetRelation, targetEntitySchema, targetEntityName, targetEntity, operationId })
-      throw new Error('Unable to create the route for the PK col relationship')
+      throw new errors.UnableToCreateTheRouteForThePKColRelationshipError()
     }
   }
 

@@ -31,8 +31,9 @@ const { name: moduleName, version: moduleVersion } = require('../package.json')
 const extractPath = (request) => {
   // We must user RouterPath, because otherwise `/test/123` will be considered as
   // a different operation than `/test/321`. In case is not set (this should actually happen only for HTTP/404) we fallback to the path.
-  const { routerPath, url } = request
+  const { routeOptions, url } = request
   let path
+  const routerPath = routeOptions && routeOptions.url
   if (routerPath) {
     path = formatParamUrl(routerPath)
   } else {
@@ -130,10 +131,12 @@ const setupProvider = (app, opts) => {
 }
 
 async function setupTelemetry (app, opts) {
-  // const { serviceName, version } = opts
   const openTelemetryAPIs = setupProvider(app, opts)
   const { tracer, propagator, provider } = openTelemetryAPIs
-  const skipOperations = opts.skip || []
+  const skipOperations = opts?.skip?.map(skip => {
+    const { method, path } = skip
+    return `${method}${path}`
+  }) || []
 
   // expose the span as a request decorator
   app.decorateRequest('span')
@@ -278,11 +281,40 @@ async function setupTelemetry (app, opts) {
     span.setAttributes(formatSpanAttributes.error(error))
   }
 
+  // The attributes are specific for the "internal" usage, so they must be set by the caller
+  const startInternalSpan = (name, ctx, attributes = {}) => {
+    const context = ctx || new PlatformaticContext()
+    const span = tracer.startSpan(name, {}, context)
+    span.kind = SpanKind.INTERNAL
+    span.setAttributes(attributes)
+    span.context = context
+    return span
+  }
+
+  const endInternalSpan = (span, error) => {
+    /* istanbul ignore next */
+    if (!span) {
+      return
+    }
+    if (error) {
+      span.setStatus({
+        code: SpanStatusCode.ERROR,
+        message: error.message
+      })
+    } else {
+      const spanStatus = { code: SpanStatusCode.OK }
+      span.setStatus(spanStatus)
+    }
+    span.end()
+  }
+
   app.decorate('openTelemetry', {
     ...openTelemetryAPIs,
     startSpanClient,
     endSpanClient,
-    setErrorInSpanClient
+    setErrorInSpanClient,
+    startInternalSpan,
+    endInternalSpan
   })
 }
 

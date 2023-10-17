@@ -16,6 +16,10 @@ async function isFileAccessible (filename, directory) {
 
 /* c8 ignore start */
 function addLoggerToTheConfig (config) {
+  // We might have a config with no server
+  if (!config.server) {
+    config.server = {}
+  }
   // Set the logger if not present
   let logger = config.server.logger
   if (!logger) {

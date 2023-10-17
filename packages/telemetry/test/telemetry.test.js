@@ -268,9 +268,10 @@ test('should not trace if the operation is skipped', async ({ equal, same, teard
   const app = await setupApp({
     serviceName: 'test-service',
     version: '1.0.0',
-    skip: [
-      'GET/documentation/json'
-    ],
+    skip: [{
+      path: '/documentation/json',
+      method: 'GET'
+    }],
     exporter: {
       type: 'memory'
     }

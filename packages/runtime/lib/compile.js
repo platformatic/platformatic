@@ -1,7 +1,7 @@
 'use strict'
 
 const { tsCompiler } = require('@platformatic/service')
-const { loadConfig } = require('./unified-api')
+const { loadConfig } = require('./load-config')
 const { dirname } = require('node:path')
 
 const pino = require('pino')
@@ -33,11 +33,15 @@ async function compile (argv, logger) {
     for (const service of configManager.current.services) {
       const childLogger = logger.child({ name: service.id })
 
-      const serviceConfig = await loadConfig({}, argv, {
+      const serviceConfigPath = service.config
+      const { configManager } = await loadConfig({}, ['-c', serviceConfigPath], {
+        onMissingEnv (key) {
+          return service.localServiceEnvVars.get(key)
+        },
         watch: false
       })
 
-      const serviceWasCompiled = await tsCompiler.compile(service.path, serviceConfig.config, childLogger)
+      const serviceWasCompiled = await tsCompiler.compile(service.path, configManager.current, childLogger)
       compiled ||= serviceWasCompiled
     }
   } else {

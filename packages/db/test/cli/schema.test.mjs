@@ -1,52 +1,56 @@
-import { cliPath } from './helper.js'
-import { test } from 'tap'
-import { join } from 'desm'
+import assert from 'node:assert/strict'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { readFile, mkdtemp } from 'node:fs/promises'
+import * as desm from 'desm'
 import { execa } from 'execa'
-import fs from 'fs/promises'
 import stripAnsi from 'strip-ansi'
 import jsonLanguageService from 'vscode-json-languageservice'
+import { getConnectionInfo } from '../helper.js'
+import { cliPath } from './helper.js'
 
-const pkg = JSON.parse(await fs.readFile(join(import.meta.url, '..', '..', 'package.json'), 'utf8'))
+const pkg = JSON.parse(await readFile(desm.join(import.meta.url, '..', '..', 'package.json'), 'utf8'))
 
-const dbLocation = join(import.meta.url, '..', 'fixtures', 'sqlite', 'db')
-
-test('print the graphql schema to stdout', async ({ matchSnapshot }) => {
-  try {
-    await fs.rm(dbLocation)
-  } catch {
-    // ignore
-  }
+test('print the graphql schema to stdout', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
+  t.after(() => dropTestDB())
 
   const { stdout } = await execa('node', [cliPath, 'schema', 'graphql'], {
-    cwd: join(import.meta.url, '..', 'fixtures', 'sqlite')
+    cwd: desm.join(import.meta.url, '..', 'fixtures', 'sqlite'),
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
+    }
   })
 
-  matchSnapshot(stdout)
+  const snapshot = await import('../../snapshots/test/cli/schema1.test.mjs')
+  assert.equal(stdout, snapshot.default)
 })
 
-test('print the openapi schema to stdout', async ({ matchSnapshot }) => {
-  try {
-    await fs.rm(dbLocation)
-  } catch {
-    // ignore
-  }
+test('print the openapi schema to stdout', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
+  t.after(() => dropTestDB())
 
   const { stdout } = await execa('node', [cliPath, 'schema', 'openapi'], {
-    cwd: join(import.meta.url, '..', 'fixtures', 'sqlite')
+    cwd: desm.join(import.meta.url, '..', 'fixtures', 'sqlite'),
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
+    }
   })
 
-  matchSnapshot(stdout)
+  const snapshot = await import('../../snapshots/test/cli/schema2.test.mjs')
+  assert.equal(stdout, snapshot.default)
 })
 
 test('generates the json schema config', async (t) => {
-  process.chdir('./test/tmp')
-  await execa('node', [cliPath, 'schema', 'config'])
+  const cwd = await mkdtemp(join(tmpdir(), 'platformatic-schema-'))
+  await execa('node', [cliPath, 'schema', 'config'], { cwd })
 
-  const configSchema = await fs.readFile('platformatic.db.schema.json', 'utf8')
+  const configSchema = await readFile(join(cwd, 'platformatic.db.schema.json'), 'utf8')
   const schema = JSON.parse(configSchema)
   const { $id, type } = schema
-  t.equal($id, `https://platformatic.dev/schemas/v${pkg.version}/db`)
-  t.equal(type, 'object')
+  assert.equal($id, `https://platformatic.dev/schemas/v${pkg.version}/db`)
+  assert.equal(type, 'object')
 
   const languageservice = jsonLanguageService.getLanguageService({
     async schemaRequestService (uri) {
@@ -70,20 +74,13 @@ test('generates the json schema config', async (t) => {
   const textDocument = jsonLanguageService.TextDocument.create(jsonContentUri, 'json', 1, jsonContent)
   const jsonDocument = languageservice.parseJSONDocument(textDocument)
   const diagnostics = await languageservice.doValidation(textDocument, jsonDocument)
-  t.equal(diagnostics.length, 0)
+  assert.equal(diagnostics.length, 0)
 })
 
-test('print the help if schema type is missing', async ({ match }) => {
-  try {
-    await fs.rm(dbLocation)
-  } catch {
-    // ignore
-  }
-
-  const { stdout } = await execa('node', [cliPath, 'schema'], {
-  })
+test('print the help if schema type is missing', async (t) => {
+  const { stdout } = await execa('node', [cliPath, 'schema'], {})
   const sanitized = stripAnsi(stdout)
-  match(sanitized, 'Generate a schema from the database and prints it to standard output:')
-  match(sanitized, '`schema graphql` - generate the GraphQL schema')
-  match(sanitized, '`schema openapi` - generate the OpenAPI schema')
+  assert.ok(sanitized.includes('Generate a schema from the database and prints it to standard output:'))
+  assert.ok(sanitized.includes('`schema graphql` - generate the GraphQL schema'))
+  assert.ok(sanitized.includes('`schema openapi` - generate the OpenAPI schema'))
 })

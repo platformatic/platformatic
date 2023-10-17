@@ -1,20 +1,20 @@
 import createComposer from '../../src/composer/create-composer.mjs'
 import { test, beforeEach, afterEach } from 'tap'
 import { tmpdir } from 'os'
-import { mkdtempSync, rmSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import dotenv from 'dotenv'
+import { mkdtemp, readFile, rm, stat } from 'fs/promises'
 
 const base = tmpdir()
 let tmpDir
 let log = []
-beforeEach(() => {
-  tmpDir = mkdtempSync(join(base, 'test-create-platformatic-'))
+beforeEach(async () => {
+  tmpDir = await mkdtemp(join(base, 'test-create-platformatic-'))
 })
 
-afterEach(() => {
+afterEach(async () => {
   log = []
-  rmSync(tmpDir, { recursive: true, force: true })
+  await rm(tmpDir, { recursive: true, force: true })
   process.env = {}
 })
 
@@ -33,7 +33,7 @@ test('creates composer', async ({ equal, same, ok }) => {
   await createComposer(params, fakeLogger, tmpDir)
 
   const pathToComposerConfigFile = join(tmpDir, 'platformatic.composer.json')
-  const composerConfigFile = readFileSync(pathToComposerConfigFile, 'utf8')
+  const composerConfigFile = await readFile(pathToComposerConfigFile, 'utf8')
   const composerConfig = JSON.parse(composerConfigFile)
   const { server, composer } = composerConfig
 
@@ -61,15 +61,68 @@ test('creates composer', async ({ equal, same, ok }) => {
     }],
     refreshTimeout: 1000
   })
+
+  // plugins and routes config is there
+  same(composerConfig.plugins, {
+    paths: [
+      { path: './plugins', encapsulate: false },
+      './routes'
+    ]
+  })
+  // plugins and routes are created
+  const directoriesToCheck = ['plugins', 'routes']
+  for (const d of directoriesToCheck) {
+    const meta = await stat(join(tmpDir, d))
+    equal(meta.isDirectory(), true)
+  }
 })
 
-test('creates project with configuration already present', async ({ ok }) => {
-  const pathToComposerConfigFileOld = join(tmpDir, 'platformatic.composer.json')
-  writeFileSync(pathToComposerConfigFileOld, JSON.stringify({ test: 'test' }))
+test('creates composer in a runtime context', async ({ equal, same, ok }) => {
   const params = {
+    isRuntimeContext: true,
+    servicesToCompose: ['service1', 'service2'],
     hostname: 'myhost',
-    port: 6666
+    port: 6666,
+    typescript: false
   }
-  await createComposer(params, fakeLogger, tmpDir)
-  ok(log.includes('Configuration file platformatic.composer.json found, skipping creation of configuration file.'))
+
+  await createComposer(params, fakeLogger, tmpDir, undefined)
+
+  const pathToComposerConfigFile = join(tmpDir, 'platformatic.composer.json')
+  const composerConfigFile = await readFile(pathToComposerConfigFile, 'utf8')
+  const composerConfig = JSON.parse(composerConfigFile)
+  const { server, composer } = composerConfig
+
+  equal(server, undefined)
+
+  const pathToEnvFile = join(tmpDir, '.env')
+  dotenv.config({ path: pathToEnvFile })
+  equal(process.env.PLT_SERVER_HOSTNAME, undefined)
+  equal(process.env.PORT, undefined)
+  process.env = {}
+
+  const pathToEnvSampleFile = join(tmpDir, '.env.sample')
+  dotenv.config({ path: pathToEnvSampleFile })
+  equal(process.env.PLT_SERVER_HOSTNAME, undefined)
+  equal(process.env.PORT, undefined)
+
+  same(composer, {
+    services: [
+      {
+        id: 'service1',
+        openapi: {
+          url: '/documentation/json',
+          prefix: '/service1'
+        }
+      },
+      {
+        id: 'service2',
+        openapi: {
+          url: '/documentation/json',
+          prefix: '/service2'
+        }
+      }
+    ],
+    refreshTimeout: 1000
+  })
 })

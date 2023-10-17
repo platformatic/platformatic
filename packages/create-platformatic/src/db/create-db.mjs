@@ -1,7 +1,10 @@
-import { writeFile, mkdir, appendFile } from 'fs/promises'
-import { join, relative, resolve } from 'path'
-import { findDBConfigFile, isFileAccessible } from '../utils.mjs'
+import { writeFile, appendFile } from 'fs/promises'
+import { join } from 'path'
+import { addPrefixToEnv, safeMkdir } from '../utils.mjs'
 import { getTsConfig } from '../get-tsconfig.mjs'
+import { generatePlugins } from '../create-plugins.mjs'
+import { createDynamicWorkspaceGHAction, createStaticWorkspaceGHAction } from '../ghaction.mjs'
+import { createGitRepository } from '../create-git-repository.mjs'
 
 const connectionStrings = {
   postgres: 'postgres://postgres:postgres@127.0.0.1:5432/postgres',
@@ -32,26 +35,244 @@ const moviesMigrationUndo = `
 DROP TABLE movies;
 `
 
-const getPluginName = (isTypescript) => isTypescript === true ? 'plugin.ts' : 'plugin.js'
 const TS_OUT_DIR = 'dist'
 
-function generateConfig (migrations, plugin, types, typescript, version) {
+const jsHelperSqlite = {
+  requires: `
+const os = require('node:os')
+const path = require('node:path')
+const fs = require('node:fs/promises')
+
+let counter = 0
+`,
+  pre: `
+  const dbPath = join(os.tmpdir(), 'db-' + process.pid + '-' + counter++ + '.sqlite')
+  const connectionString = 'sqlite://' + dbPath
+`,
+  config: `
+  config.migrations.autoApply = true
+  config.types.autogenerate = false
+  config.db.connectionString = connectionString
+`,
+  post: `
+  t.after(async () => {
+    await fs.unlink(dbPath)
+  })
+`
+}
+
+function jsHelperPostgres (connectionString) {
+  return {
+    // TODO(mcollina): replace sql-mapper
+    requires: `
+const { createConnectionPool } = require('@platformatic/sql-mapper')
+const connectionString = '${connectionString}'
+let counter = 0
+`,
+    pre: `
+  const { db, sql } = await createConnectionPool({
+    log: {
+      debug: () => {},
+      info: () => {},
+      trace: () => {}
+    },
+    connectionString,
+    poolSize: 1
+  })
+
+  const newDB = \`t-\${process.pid}-\${counter++}\`
+  t.diagnostic('Creating database ' + newDB)
+
+  await db.query(sql\`
+    CREATE DATABASE \${sql.ident(newDB)}
+  \`)
+`,
+    config: `
+  config.migrations.autoApply = true
+  config.types.autogenerate = false
+  config.db.connectionString = connectionString.replace(/\\/[a-zA-Z0-9\\-_]+$/, '/' + newDB)
+  config.db.schemalock = false
+`,
+    post: `
+  t.after(async () => {
+    t.diagnostic('Disposing test database ' + newDB)
+    await db.query(sql\`
+      DROP DATABASE \${sql.ident(newDB)}
+    \`)
+    await db.dispose()
+  })
+`
+  }
+}
+
+function jsHelperMySQL (connectionString) {
+  return {
+    // TODO(mcollina): replace sql-mapper
+    requires: `
+const { createConnectionPool } = require('@platformatic/sql-mapper')
+const connectionString = '${connectionString}'
+let counter = 0
+`,
+    pre: `
+  const { db, sql } = await createConnectionPool({
+    log: {
+      debug: () => {},
+      info: () => {},
+      trace: () => {}
+    },
+    connectionString,
+    poolSize: 1
+  })
+
+  const newDB = \`t-\${process.pid}-\${counter++}\`
+  t.diagnostic('Creating database ' + newDB)
+
+  await db.query(sql\`
+    CREATE DATABASE \${sql.ident(newDB)}
+  \`)
+`,
+    config: `
+  config.migrations.autoApply = true
+  config.types.autogenerate = false
+  config.db.connectionString = connectionString.replace(/\\/[a-zA-Z0-9\\-_]+$/, '/' + newDB)
+  config.db.schemalock = false
+`,
+    post: `
+  t.after(async () => {
+    t.diagnostic('Disposing test database ' + newDB)
+    await db.query(sql\`
+      DROP DATABASE \${sql.ident(newDB)}
+    \`)
+    await db.dispose()
+  })
+`
+  }
+}
+
+const moviesTestJS = `\
+'use strict'
+
+const test = require('node:test')
+const assert = require('node:assert')
+const { getServer } = require('../helper')
+
+test('movies', async (t) => {
+  const server = await getServer(t)
+
+  {
+    const res = await server.inject({
+      method: 'GET',
+      url: '/movies'
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+    assert.deepStrictEqual(res.json(), [])
+  }
+
+  let id
+  {
+    const res = await server.inject({
+      method: 'POST',
+      url: '/movies',
+      body: {
+        title: 'The Matrix'
+      }
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+    const body = res.json()
+    assert.strictEqual(body.title, 'The Matrix')
+    assert.strictEqual(body.id !== undefined, true)
+    id = body.id
+  }
+
+  {
+    const res = await server.inject({
+      method: 'GET',
+      url: '/movies'
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+    assert.deepStrictEqual(res.json(), [{
+      id,
+      title: 'The Matrix'
+    }])
+  }
+})
+`
+
+const moviesTestTS = `\
+import test from 'node:test'
+import assert from 'node:assert'
+import { getServer } from '../helper'
+
+test('movies', async (t) => {
+  const server = await getServer(t)
+
+  {
+    const res = await server.inject({
+      method: 'GET',
+      url: '/movies'
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+    assert.deepStrictEqual(res.json(), [])
+  }
+
+  let id : Number
+  {
+    const res = await server.inject({
+      method: 'POST',
+      url: '/movies',
+      body: {
+        title: 'The Matrix'
+      }
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+    const body = res.json()
+    assert.strictEqual(body.title, 'The Matrix')
+    assert.strictEqual(body.id !== undefined, true)
+    id = body.id as Number
+  }
+
+  {
+    const res = await server.inject({
+      method: 'GET',
+      url: '/movies'
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+    assert.deepStrictEqual(res.json(), [{
+      id,
+      title: 'The Matrix'
+    }])
+  }
+})
+`
+
+function generateConfig (isRuntimeContext, migrations, plugin, types, typescript, version, envPrefix) {
+  const connectionStringValue = envPrefix ? `PLT_${envPrefix}DATABASE_URL` : 'DATABASE_URL'
   const config = {
     $schema: `https://platformatic.dev/schemas/v${version}/db`,
-    server: {
+    db: {
+      connectionString: `{${connectionStringValue}}`,
+      graphql: true,
+      openapi: true,
+      schemalock: true
+    },
+    watch: {
+      ignore: ['*.sqlite', '*.sqlite-journal']
+    }
+  }
+
+  if (!isRuntimeContext) {
+    config.server = {
       hostname: '{PLT_SERVER_HOSTNAME}',
       port: '{PORT}',
       logger: {
         level: '{PLT_SERVER_LOGGER_LEVEL}'
       }
-    },
-    db: {
-      connectionString: '{DATABASE_URL}',
-      graphql: true,
-      openapi: true
-    },
-    watch: {
-      ignore: ['*.sqlite', '*.sqlite-journal']
     }
   }
 
@@ -63,7 +284,12 @@ function generateConfig (migrations, plugin, types, typescript, version) {
 
   if (plugin === true) {
     config.plugins = {
-      paths: [getPluginName(typescript)]
+      paths: [{
+        path: './plugins',
+        encapsulate: false
+      }, {
+        path: './routes'
+      }]
     }
   }
 
@@ -73,137 +299,62 @@ function generateConfig (migrations, plugin, types, typescript, version) {
     }
   }
 
-  if (typescript === true) {
-    config.plugins.typescript = '{PLT_TYPESCRIPT}'
+  if (typescript === true && config.plugins) {
+    config.plugins.typescript = `{PLT_${envPrefix}TYPESCRIPT}`
   }
 
   return config
 }
 
-function generateEnv (hostname, port, connectionString, typescript) {
-  let env = `\
+function generateEnv (isRuntimeContext, hostname, port, connectionString, typescript, envPrefix) {
+  let env = ''
+  if (envPrefix) {
+    env += `PLT_${envPrefix}`
+  }
+  env += `DATABASE_URL=${connectionString}\n`
+
+  if (!isRuntimeContext) {
+    env += `\
 PLT_SERVER_HOSTNAME=${hostname}
 PORT=${port}
 PLT_SERVER_LOGGER_LEVEL=info
-DATABASE_URL=${connectionString}
-`
+
+  `
+  }
 
   if (typescript === true) {
     env += `\
-
 # Set to false to disable automatic typescript compilation.
 # Changing this setting is needed for production
-PLT_TYPESCRIPT=true
+PLT_${envPrefix}TYPESCRIPT=true
 `
   }
 
   return env
 }
 
-const JS_PLUGIN_WITH_TYPES_SUPPORT = `\
-/// <reference path="./global.d.ts" />
-'use strict'
-
-/** @param {import('fastify').FastifyInstance} app */
-module.exports = async function (app) {}
-`
-
-const TS_PLUGIN_WITH_TYPES_SUPPORT = `\
-/// <reference path="./global.d.ts" />
-import { FastifyInstance } from 'fastify'
-
-export default async function (app: FastifyInstance) {}
-`
-
-async function generatePluginWithTypesSupport (logger, currentDir, isTypescript) {
-  const pluginPath = resolve(currentDir, getPluginName(isTypescript))
-
-  const isPluginExists = await isFileAccessible(pluginPath)
-  if (isPluginExists) {
-    logger.info(`Plugin file ${pluginPath} found, skipping creation of plugin file.`)
-    return
-  }
-
-  const pluginTemplate = isTypescript
-    ? TS_PLUGIN_WITH_TYPES_SUPPORT
-    : JS_PLUGIN_WITH_TYPES_SUPPORT
-
-  await writeFile(pluginPath, pluginTemplate)
-  logger.info(`Plugin file created at ${relative(currentDir, pluginPath)}`)
-}
-
 export function getConnectionString (database) {
   return connectionStrings[database]
 }
 
-export async function createDB ({ hostname, database = 'sqlite', port, migrations = 'migrations', plugin = true, types = true, typescript = false, connectionString }, logger, currentDir, version) {
-  connectionString = connectionString || getConnectionString(database)
-  const createMigrations = !!migrations // If we don't define a migrations folder, we don't create it
-  const accessibleConfigFilename = await findDBConfigFile(currentDir)
-  if (accessibleConfigFilename === undefined) {
-    const config = generateConfig(migrations, plugin, types, typescript, version)
-    await writeFile(join(currentDir, 'platformatic.db.json'), JSON.stringify(config, null, 2))
-    logger.info('Configuration file platformatic.db.json successfully created.')
+export async function createDB (params, logger, currentDir, version) {
+  let {
+    isRuntimeContext,
+    hostname,
+    port,
+    database = 'sqlite',
+    migrations = 'migrations',
+    plugin = true,
+    types = true,
+    typescript = false,
+    connectionString,
+    staticWorkspaceGitHubAction,
+    dynamicWorkspaceGitHubAction,
+    runtimeContext,
+    initGitRepository
+  } = params
 
-    const env = generateEnv(hostname, port, connectionString, typescript)
-    const envFileExists = await isFileAccessible('.env', currentDir)
-    await appendFile(join(currentDir, '.env'), env)
-    await writeFile(join(currentDir, '.env.sample'), generateEnv(hostname, port, getConnectionString(database), typescript))
-    /* c8 ignore next 5 */
-    if (envFileExists) {
-      logger.info('Environment file .env found, appending new environment variables to existing .env file.')
-    } else {
-      logger.info('Environment file .env successfully created.')
-    }
-  } else {
-    logger.info(`Configuration file ${accessibleConfigFilename} found, skipping creation of configuration file.`)
-  }
-
-  const migrationsFolderName = migrations
-  if (createMigrations) {
-    const isMigrationFolderExists = await isFileAccessible(migrationsFolderName, currentDir)
-    if (!isMigrationFolderExists) {
-      await mkdir(join(currentDir, migrationsFolderName))
-      logger.info(`Migrations folder ${migrationsFolderName} successfully created.`)
-    } else {
-      logger.info(`Migrations folder ${migrationsFolderName} found, skipping creation of migrations folder.`)
-    }
-  }
-
-  const migrationFileNameDo = '001.do.sql'
-  const migrationFileNameUndo = '001.undo.sql'
-  const migrationFilePathDo = join(currentDir, migrationsFolderName, migrationFileNameDo)
-  const migrationFilePathUndo = join(currentDir, migrationsFolderName, migrationFileNameUndo)
-  const isMigrationFileDoExists = await isFileAccessible(migrationFilePathDo)
-  const isMigrationFileUndoExists = await isFileAccessible(migrationFilePathUndo)
-  if (!isMigrationFileDoExists && createMigrations) {
-    await writeFile(migrationFilePathDo, moviesMigrationDo(database))
-    logger.info(`Migration file ${migrationFileNameDo} successfully created.`)
-    if (!isMigrationFileUndoExists) {
-      await writeFile(migrationFilePathUndo, moviesMigrationUndo)
-      logger.info(`Migration file ${migrationFileNameUndo} successfully created.`)
-    }
-  } else {
-    logger.info(`Migration file ${migrationFileNameDo} found, skipping creation of migration file.`)
-  }
-
-  if (typescript === true) {
-    const tsConfigFileName = join(currentDir, 'tsconfig.json')
-    const isTsConfigExists = await isFileAccessible(tsConfigFileName)
-    if (!isTsConfigExists) {
-      const tsConfig = getTsConfig(TS_OUT_DIR)
-      await writeFile(tsConfigFileName, JSON.stringify(tsConfig, null, 2))
-      logger.info(`Typescript configuration file ${tsConfigFileName} successfully created.`)
-    } else {
-      logger.info(`Typescript configuration file ${tsConfigFileName} found, skipping creation of typescript configuration file.`)
-    }
-  }
-
-  if (plugin) {
-    await generatePluginWithTypesSupport(logger, currentDir, typescript)
-  }
-
-  const output = {
+  const dbEnv = {
     DATABASE_URL: connectionString,
     PLT_SERVER_LOGGER_LEVEL: 'info',
     PORT: port,
@@ -211,9 +362,89 @@ export async function createDB ({ hostname, database = 'sqlite', port, migration
   }
 
   if (typescript) {
-    output.PLT_TYPESCRIPT = true
+    dbEnv.PLT_TYPESCRIPT = true
   }
-  return output
+  connectionString = connectionString || getConnectionString(database)
+  const createMigrations = !!migrations // If we don't define a migrations folder, we don't create it
+  const envPrefix = runtimeContext !== undefined ? `${runtimeContext.envPrefix}_` : ''
+
+  const config = generateConfig(isRuntimeContext, migrations, plugin, types, typescript, version, envPrefix)
+  await writeFile(join(currentDir, 'platformatic.db.json'), JSON.stringify(config, null, 2))
+  logger.info('Configuration file platformatic.db.json successfully created.')
+
+  const env = generateEnv(isRuntimeContext, hostname, port, connectionString, typescript, envPrefix)
+  const envSample = generateEnv(isRuntimeContext, hostname, port, getConnectionString(database), typescript, envPrefix)
+  await appendFile(join(currentDir, '.env'), env)
+  await writeFile(join(currentDir, '.env.sample'), envSample)
+  logger.info('Environment file .env found, appending new environment variables to existing .env file.')
+
+  const migrationsFolderName = migrations
+  if (createMigrations) {
+    await safeMkdir(join(currentDir, migrationsFolderName))
+    logger.info(`Migrations folder ${migrationsFolderName} successfully created.`)
+  }
+
+  const migrationFileNameDo = '001.do.sql'
+  const migrationFileNameUndo = '001.undo.sql'
+  const migrationFilePathDo = join(currentDir, migrationsFolderName, migrationFileNameDo)
+  const migrationFilePathUndo = join(currentDir, migrationsFolderName, migrationFileNameUndo)
+  if (createMigrations) {
+    await writeFile(migrationFilePathDo, moviesMigrationDo(database))
+    logger.info(`Migration file ${migrationFileNameDo} successfully created.`)
+    await writeFile(migrationFilePathUndo, moviesMigrationUndo)
+    logger.info(`Migration file ${migrationFileNameUndo} successfully created.`)
+  }
+
+  if (typescript === true) {
+    const tsConfigFileName = join(currentDir, 'tsconfig.json')
+    const tsConfig = getTsConfig(TS_OUT_DIR)
+    await writeFile(tsConfigFileName, JSON.stringify(tsConfig, null, 2))
+    logger.info(`Typescript configuration file ${tsConfigFileName} successfully created.`)
+  }
+
+  if (plugin) {
+    let jsHelper = { pre: '', config: '', post: '' }
+    switch (database) {
+      case 'sqlite':
+        jsHelper = jsHelperSqlite
+        break
+      case 'mysql':
+        jsHelper = jsHelperMySQL(connectionString)
+        break
+      case 'postgres':
+        jsHelper = jsHelperPostgres(connectionString)
+        break
+      case 'mariadb':
+        jsHelper = jsHelperMySQL(connectionString)
+        break
+    }
+    await generatePlugins(logger, currentDir, typescript, 'db', jsHelper)
+
+    if (createMigrations) {
+      if (typescript) {
+        await writeFile(join(currentDir, 'test', 'routes', 'movies.test.ts'), moviesTestTS)
+      } else {
+        await writeFile(join(currentDir, 'test', 'routes', 'movies.test.js'), moviesTestJS)
+      }
+    }
+  }
+
+  if (staticWorkspaceGitHubAction) {
+    await createStaticWorkspaceGHAction(logger, dbEnv, './platformatic.db.json', currentDir, typescript)
+  }
+  if (dynamicWorkspaceGitHubAction) {
+    await createDynamicWorkspaceGHAction(logger, dbEnv, './platformatic.db.json', currentDir, typescript)
+  }
+
+  if (initGitRepository) {
+    await createGitRepository(logger, currentDir)
+  }
+
+  if (isRuntimeContext) {
+    return addPrefixToEnv(isRuntimeContext)
+  }
+
+  return dbEnv
 }
 
 export default createDB

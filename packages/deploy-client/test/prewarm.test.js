@@ -1,7 +1,7 @@
 'use strict'
 
 const assert = require('node:assert')
-const { beforeEach, test } = require('tap')
+const { beforeEach, test } = require('node:test')
 const { MockAgent, setGlobalDispatcher } = require('undici')
 const makePrewarmRequest = require('../lib/prewarm')
 
@@ -43,8 +43,6 @@ test('prewarm request passes on second try', async (t) => {
 })
 
 test('prewarm throws error when all retries attempted', async (t) => {
-  t.plan(4)
-
   const svc = 'https://name-name-name-name.deploy.space'
   const warmMe = mockAgent.get(svc)
   warmMe.intercept({
@@ -53,7 +51,7 @@ test('prewarm throws error when all retries attempted', async (t) => {
   }).reply(500, {})
 
   const logger = {
-    warn: (message) => t.match(message, /Could not make a prewarm call/)
+    warn: (message) => assert.match(message, /Could not make a prewarm call/)
   }
 
   await assert.rejects(

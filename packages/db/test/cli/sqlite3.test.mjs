@@ -1,36 +1,48 @@
-import { cliPath, cleanSQLite, start } from './helper.js'
-import { test } from 'tap'
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { join } from 'node:path'
+import { setTimeout } from 'timers/promises'
 import { request } from 'undici'
 import { execa } from 'execa'
 import stripAnsi from 'strip-ansi'
-import { access } from 'fs/promises'
 import split from 'split2'
-import path from 'path'
 import { urlDirname } from '../../lib/utils.js'
-import { setTimeout as sleep } from 'timers/promises'
+import { getConnectionInfo } from '../helper.js'
+import { cliPath, start } from './helper.js'
 
-const dbLocation = path.resolve(path.join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite', 'db'))
+test('migrate and start', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
 
-test('migrate and start', async ({ comment, equal, match, teardown }) => {
-  await cleanSQLite(dbLocation)
+  t.diagnostic('migrating')
+  const cwd = join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite')
+  t.diagnostic(`dbl ${connectionInfo.connectionString}`)
+  t.diagnostic(`cwd ${cwd}`)
 
-  comment('migrating')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite')
-  comment(`dbl ${dbLocation}`)
-  comment(`cwd ${cwd}`)
   const { stdout } = await execa('node', [cliPath, 'migrations', 'apply'], {
-    cwd
+    cwd,
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
+    }
   })
 
   {
     const sanitized = stripAnsi(stdout)
-    match(sanitized, /001\.do\.sql/)
+    assert.match(sanitized, /001\.do\.sql/)
   }
 
-  comment('starting')
+  t.diagnostic('starting')
 
-  const { child, url } = await start([], { cwd })
-  teardown(() => child.kill('SIGINT'))
+  const { child, url } = await start([], {
+    cwd,
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
+    }
+  })
+
+  t.after(async () => {
+    child.kill('SIGINT')
+    await dropTestDB()
+  })
 
   {
     const res = await request(`${url}/graphql`, {
@@ -47,12 +59,12 @@ test('migrate and start', async ({ comment, equal, match, teardown }) => {
             `
       })
     })
-    equal(res.statusCode, 200, 'saveGraph status code')
+    assert.equal(res.statusCode, 200, 'saveGraph status code')
     const body = await res.body.json()
-    match(body, {
+    assert.deepEqual(body, {
       data: {
         saveGraph: {
-          id: 1,
+          id: '1',
           name: 'Hello'
         }
       }
@@ -60,26 +72,40 @@ test('migrate and start', async ({ comment, equal, match, teardown }) => {
   }
 })
 
-test('no cwd', async ({ comment, equal, match, teardown }) => {
-  await cleanSQLite(dbLocation)
-  comment('migrating')
+test('no cwd', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
+  t.diagnostic('migrating')
 
-  const config = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite', 'platformatic.db.json')
-  comment(`dbl ${dbLocation}`)
-  comment(`cfg ${config}`)
-  const { stdout } = await execa('node', [cliPath, 'migrations', 'apply', '-c', config])
+  const config = join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite', 'platformatic.db.json')
+  t.diagnostic(`dbl ${connectionInfo.connectionString}`)
+  t.diagnostic(`cfg ${config}`)
+
+  const { stdout } = await execa(
+    'node', [cliPath, 'migrations', 'apply', '-c', config],
+    {
+      env: {
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    }
+  )
 
   {
     const sanitized = stripAnsi(stdout)
-    match(sanitized, '001.do.sql')
+    assert.ok(sanitized.includes('001.do.sql'))
   }
 
-  await access(dbLocation)
+  t.diagnostic('starting')
 
-  comment('starting')
+  const { child, url } = await start(['-c', config], {
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
+    }
+  })
 
-  const { child, url } = await start(['-c', config])
-  teardown(() => child.kill('SIGINT'))
+  t.after(async () => {
+    child.kill('SIGINT')
+    await dropTestDB()
+  })
 
   {
     const res = await request(`${url}/graphql`, {
@@ -96,12 +122,12 @@ test('no cwd', async ({ comment, equal, match, teardown }) => {
             `
       })
     })
-    equal(res.statusCode, 200, 'saveGraph status code')
+    assert.equal(res.statusCode, 200, 'saveGraph status code')
     const body = await res.body.json()
-    match(body, {
+    assert.deepEqual(body, {
       data: {
         saveGraph: {
-          id: 1,
+          id: '1',
           name: 'Hello'
         }
       }
@@ -109,25 +135,38 @@ test('no cwd', async ({ comment, equal, match, teardown }) => {
   }
 })
 
-test('do not restart on save', async ({ comment, equal, match, teardown, not }) => {
-  await cleanSQLite(dbLocation)
+test('do not restart on save', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
 
-  comment('migrating')
-  const cwd = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite')
-  comment(`dbl ${dbLocation}`)
-  comment(`cwd ${cwd}`)
+  t.diagnostic('migrating')
+  const cwd = join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite')
+  t.diagnostic(`dbl ${connectionInfo.connectionString}`)
+  t.diagnostic(`cwd ${cwd}`)
+
   const { stdout } = await execa('node', [cliPath, 'migrations', 'apply'], {
-    cwd
+    cwd,
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
+    }
   })
 
   {
     const sanitized = stripAnsi(stdout)
-    match(sanitized, /001\.do\.sql/)
+    assert.match(sanitized, /001\.do\.sql/)
   }
 
-  comment('starting')
+  t.diagnostic('starting')
 
-  const { child, url } = await start([], { cwd })
+  const { child, url } = await start([], {
+    cwd,
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
+    }
+  })
+
+  t.after(async () => {
+    await dropTestDB()
+  })
 
   const splitter = split()
   child.stdout.pipe(splitter)
@@ -147,12 +186,12 @@ test('do not restart on save', async ({ comment, equal, match, teardown, not }) 
             `
       })
     })
-    equal(res.statusCode, 200, 'saveGraph status code')
+    assert.equal(res.statusCode, 200, 'saveGraph status code')
     const body = await res.body.json()
-    match(body, {
+    assert.deepEqual(body, {
       data: {
         saveGraph: {
-          id: 1,
+          id: '1',
           name: 'Hello'
         }
       }
@@ -160,12 +199,12 @@ test('do not restart on save', async ({ comment, equal, match, teardown, not }) 
   }
 
   // We need this timer to allow the debounce logic to run its course
-  await sleep(1000)
+  await setTimeout(1000)
 
   child.kill('SIGINT')
 
   for await (const data of splitter) {
     const parsed = JSON.parse(data)
-    not(parsed.msg, 'restarted')
+    assert.ok(!parsed.msg.includes('restarted'))
   }
 })

@@ -3,6 +3,7 @@
 const fp = require('fastify-plugin')
 const leven = require('leven')
 const fastifyUser = require('fastify-user')
+const errors = require('./lib/errors')
 
 const findRule = require('./lib/find-rule')
 const { getRequestFromContext, getRoles } = require('./lib/utils')
@@ -429,3 +430,4 @@ function checkSaveMandatoryFieldsInRules (type, rules) {
 }
 
 module.exports = fp(auth)
+module.exports.errors = errors

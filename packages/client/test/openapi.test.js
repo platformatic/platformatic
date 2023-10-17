@@ -1,31 +1,40 @@
 'use strict'
 
-require('./helper')
-const { test } = require('tap')
+const assert = require('node:assert/strict')
+const { tmpdir } = require('node:os')
+const { test } = require('node:test')
+const { join } = require('node:path')
+const { unlink, mkdtemp, cp, rm } = require('node:fs/promises')
 const { ResponseStatusCodeError } = require('undici').errors
 const { buildServer } = require('../../db')
-const { join } = require('path')
+const { buildServer: buildService } = require('../../service')
 const { buildOpenAPIClient } = require('..')
-const fs = require('fs/promises')
+require('./helper')
 
-test('rejects with no url', async ({ rejects }) => {
-  await rejects(buildOpenAPIClient())
-  await rejects(buildOpenAPIClient({}))
-  await rejects(buildOpenAPIClient({
+test('rejects with no url', async (t) => {
+  await assert.rejects(buildOpenAPIClient())
+  await assert.rejects(buildOpenAPIClient({}))
+  await assert.rejects(buildOpenAPIClient({
     path: join(__dirname, 'fixtures', 'movies', 'openapi.json')
   }))
 })
 
-test('build basic client from url', async ({ teardown, same, rejects }) => {
+test('build basic client from url', async (t) => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
   try {
-    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
 
-  teardown(async () => {
+  const app = await buildServer(join(tmpDir, 'platformatic.db.json'))
+
+  t.after(async () => {
     await app.close()
+    await rm(tmpDir, { recursive: true })
   })
   await app.start()
 
@@ -37,14 +46,14 @@ test('build basic client from url', async ({ teardown, same, rejects }) => {
     title: 'The Matrix'
   })
 
-  same(movie, {
+  assert.deepEqual(movie, {
     id: 1,
     title: 'The Matrix'
   })
 
   const movies = await client.getMovies()
 
-  same(movies, [
+  assert.deepEqual(movies, [
     {
       id: 1,
       title: 'The Matrix'
@@ -56,7 +65,7 @@ test('build basic client from url', async ({ teardown, same, rejects }) => {
     title: 'The Matrix Reloaded'
   })
 
-  same(updatedMovie, {
+  assert.deepEqual(updatedMovie, {
     id: 1,
     title: 'The Matrix Reloaded'
   })
@@ -65,28 +74,28 @@ test('build basic client from url', async ({ teardown, same, rejects }) => {
     id: 1
   })
 
-  same(movie2, {
+  assert.deepEqual(movie2, {
     id: 1,
     title: 'The Matrix Reloaded'
   })
 
   const updatedTitle = await client.updateMovieTitle({ id: 1, title: 'The Matrix Revolutions' })
 
-  same(updatedTitle, undefined)
+  assert.deepEqual(updatedTitle, undefined)
 
   const movie3 = await client.getMovieById({
     id: 1
   })
 
-  same(movie3, {
+  assert.deepEqual(movie3, {
     id: 1,
     title: 'The Matrix Revolutions'
   })
 
-  await rejects(client.getMovieById())
+  await assert.rejects(client.getMovieById())
 
   const notFound = await client.getMovieById({ id: 100 })
-  same(notFound, {
+  assert.deepEqual(notFound, {
     message: 'Route GET:/movies/100 not found',
     error: 'Not Found',
     statusCode: 404
@@ -94,35 +103,40 @@ test('build basic client from url', async ({ teardown, same, rejects }) => {
 
   {
     const movies = await client.getMovies({ 'where.title.eq': 'Star Wars' })
-    same(movies, [])
+    assert.deepEqual(movies, [])
   }
 
   {
     const hello = await client.getHelloWorld()
-    same(hello, { hello: 'world' })
+    assert.deepEqual(hello, { hello: 'world' })
   }
 
   {
     const hello = await client.getHelloName({ name: 'Matteo' })
-    same(hello, { hello: 'Matteo' })
+    assert.deepEqual(hello, { hello: 'Matteo' })
   }
 
   {
     const hello = await client.getHelloHeaderName({ name: 'Matteo' })
-    same(hello, { hello: 'Matteo' })
+    assert.deepEqual(hello, { hello: 'Matteo' })
   }
 })
 
-test('build full response client from url', async ({ teardown, same, match, rejects }) => {
+test('build full response client from url', async (t) => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
   try {
-    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic.db.json'))
+  const app = await buildServer(join(tmpDir, 'platformatic.db.json'))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
+    await rm(tmpDir, { recursive: true })
   })
   await app.start()
 
@@ -137,208 +151,146 @@ test('build full response client from url', async ({ teardown, same, match, reje
   const movie = await client.createMovie({
     title: 'The Matrix'
   })
-
-  match(movie, {
-    statusCode: 200,
-    headers: {
-      'content-type': 'application/json; charset=utf-8',
-      'content-length': '29',
-      date: matchDate,
-      connection: 'keep-alive',
-      'keep-alive': matchKeepAlive
-    },
-    body: {
-      id: 1,
-      title: 'The Matrix'
-    }
-  })
+  assert.equal(movie.statusCode, 200)
+  assert.equal(movie.headers.location, '/movies/1')
+  assert.equal(movie.headers['content-type'], 'application/json; charset=utf-8')
+  assert.equal(movie.headers['content-length'], '29')
+  assert.equal(movie.headers.connection, 'keep-alive')
+  assert.match(movie.headers.date, matchDate)
+  assert.match(movie.headers['keep-alive'], matchKeepAlive)
+  assert.deepEqual(movie.body, { id: 1, title: 'The Matrix' })
 
   const movies = await client.getMovies()
-
-  match(movies, {
-    statusCode: 200,
-    headers: {
-      'content-type': 'application/json; charset=utf-8',
-      'content-length': '31',
-      date: matchDate,
-      connection: 'keep-alive',
-      'keep-alive': matchKeepAlive
-    },
-    body: [
-      {
-        id: 1,
-        title: 'The Matrix'
-      }
-    ]
-  })
+  assert.equal(movies.statusCode, 200)
+  assert.equal(movies.headers['content-type'], 'application/json; charset=utf-8')
+  assert.equal(movies.headers['content-length'], '31')
+  assert.equal(movies.headers.connection, 'keep-alive')
+  assert.match(movies.headers.date, matchDate)
+  assert.match(movies.headers['keep-alive'], matchKeepAlive)
+  assert.deepEqual(movies.body, [{ id: 1, title: 'The Matrix' }])
 
   const updatedMovie = await client.updateMovie({
     id: 1,
     title: 'The Matrix Reloaded'
   })
-
-  match(updatedMovie, {
-    statusCode: 200,
-    headers: {
-      location: '/movies/1',
-      'content-type': 'application/json; charset=utf-8',
-      'content-length': '38',
-      date: matchDate,
-      connection: 'keep-alive',
-      'keep-alive': matchKeepAlive
-    },
-    body: {
-      id: 1,
-      title: 'The Matrix Reloaded'
-    }
+  assert.equal(updatedMovie.statusCode, 200)
+  assert.equal(updatedMovie.headers.location, '/movies/1')
+  assert.equal(updatedMovie.headers['content-type'], 'application/json; charset=utf-8')
+  assert.equal(updatedMovie.headers['content-length'], '38')
+  assert.equal(updatedMovie.headers.connection, 'keep-alive')
+  assert.match(updatedMovie.headers.date, matchDate)
+  assert.match(updatedMovie.headers['keep-alive'], matchKeepAlive)
+  assert.deepEqual(updatedMovie.body, {
+    id: 1,
+    title: 'The Matrix Reloaded'
   })
 
-  const movie2 = await client.getMovieById({
-    id: 1
-  })
-
-  match(movie2, {
-    statusCode: 200,
-    headers: {
-      'content-type': 'application/json; charset=utf-8',
-      'content-length': '38',
-      date: matchDate,
-      connection: 'keep-alive',
-      'keep-alive': matchKeepAlive
-    },
-    body: {
-      id: 1,
-      title: 'The Matrix Reloaded'
-    }
+  const movie2 = await client.getMovieById({ id: 1 })
+  assert.equal(movie2.statusCode, 200)
+  assert.equal(movie2.headers['content-type'], 'application/json; charset=utf-8')
+  assert.equal(movie2.headers['content-length'], '38')
+  assert.equal(movie2.headers.connection, 'keep-alive')
+  assert.match(movie2.headers.date, matchDate)
+  assert.match(movie2.headers['keep-alive'], matchKeepAlive)
+  assert.deepEqual(movie2.body, {
+    id: 1,
+    title: 'The Matrix Reloaded'
   })
 
   const updatedTitle = await client.updateMovieTitle({ id: 1, title: 'The Matrix Revolutions' })
+  assert.equal(updatedTitle.statusCode, 204)
+  assert.equal(updatedTitle.headers.connection, 'keep-alive')
+  assert.match(updatedTitle.headers.date, matchDate)
+  assert.match(updatedTitle.headers['keep-alive'], matchKeepAlive)
+  assert.equal(updatedTitle.body, undefined)
 
-  match(updatedTitle, {
-    statusCode: 204,
-    headers: {
-      date: matchDate,
-      connection: 'keep-alive',
-      'keep-alive': matchKeepAlive
-    },
-    body: undefined
+  const movie3 = await client.getMovieById({ id: 1 })
+  assert.equal(movie3.statusCode, 200)
+  assert.equal(movie3.headers['content-type'], 'application/json; charset=utf-8')
+  assert.equal(movie3.headers['content-length'], '41')
+  assert.equal(movie3.headers.connection, 'keep-alive')
+  assert.match(movie3.headers.date, matchDate)
+  assert.match(movie3.headers['keep-alive'], matchKeepAlive)
+  assert.deepEqual(movie3.body, {
+    id: 1,
+    title: 'The Matrix Revolutions'
   })
 
-  const movie3 = await client.getMovieById({
-    id: 1
-  })
-
-  match(movie3, {
-    statusCode: 200,
-    headers: {
-      'content-type': 'application/json; charset=utf-8',
-      'content-length': '41',
-      date: matchDate,
-      connection: 'keep-alive',
-      'keep-alive': matchKeepAlive
-    },
-    body: {
-      id: 1,
-      title: 'The Matrix Revolutions'
-    }
-  })
-
-  await rejects(client.getMovieById())
+  await assert.rejects(client.getMovieById())
 
   const notFound = await client.getMovieById({ id: 100 })
-  match(notFound, {
-    statusCode: 404,
-    headers: {
-      'content-type': 'application/json; charset=utf-8',
-      'content-length': '82',
-      date: matchDate,
-      connection: 'keep-alive',
-      'keep-alive': matchKeepAlive
-    },
-    body: {
-      message: 'Route GET:/movies/100 not found',
-      error: 'Not Found',
-      statusCode: 404
-    }
+  assert.equal(notFound.statusCode, 404)
+  assert.equal(notFound.headers['content-type'], 'application/json; charset=utf-8')
+  assert.equal(notFound.headers['content-length'], '82')
+  assert.equal(notFound.headers.connection, 'keep-alive')
+  assert.match(notFound.headers.date, matchDate)
+  assert.match(notFound.headers['keep-alive'], matchKeepAlive)
+  assert.deepEqual(notFound.body, {
+    message: 'Route GET:/movies/100 not found',
+    error: 'Not Found',
+    statusCode: 404
   })
 
   {
     const movies = await client.getMovies({ 'where.title.eq': 'Star Wars' })
-    match(movies, {
-      statusCode: 200,
-      headers: {
-        'content-type': 'application/json; charset=utf-8',
-        'content-length': '2',
-        date: matchDate,
-        connection: 'keep-alive',
-        'keep-alive': matchKeepAlive
-      },
-      body: []
-    })
+    assert.equal(movies.statusCode, 200)
+    assert.equal(movies.headers['content-type'], 'application/json; charset=utf-8')
+    assert.equal(movies.headers['content-length'], '2')
+    assert.equal(movies.headers.connection, 'keep-alive')
+    assert.match(movies.headers.date, matchDate)
+    assert.match(movies.headers['keep-alive'], matchKeepAlive)
+    assert.deepEqual(movies.body, [])
   }
 
   {
     const hello = await client.getHelloWorld()
-    match(hello, {
-      statusCode: 200,
-      headers: {
-        'content-type': 'application/json; charset=utf-8',
-        'content-length': '17',
-        date: matchDate,
-        connection: 'keep-alive',
-        'keep-alive': matchKeepAlive
-      },
-      body: {
-        hello: 'world'
-      }
-    })
+    assert.equal(hello.statusCode, 200)
+    assert.equal(hello.headers['content-type'], 'application/json; charset=utf-8')
+    assert.equal(hello.headers['content-length'], '17')
+    assert.equal(hello.headers.connection, 'keep-alive')
+    assert.match(hello.headers.date, matchDate)
+    assert.match(hello.headers['keep-alive'], matchKeepAlive)
+    assert.deepEqual(hello.body, { hello: 'world' })
   }
 
   {
     const hello = await client.getHelloName({ name: 'Matteo' })
-    match(hello, {
-      statusCode: 200,
-      headers: {
-        'content-type': 'application/json; charset=utf-8',
-        'content-length': '18',
-        date: matchDate,
-        connection: 'keep-alive',
-        'keep-alive': matchKeepAlive
-      },
-      body: {
-        hello: 'Matteo'
-      }
-    })
+    assert.equal(hello.statusCode, 200)
+    assert.equal(hello.headers['content-type'], 'application/json; charset=utf-8')
+    assert.equal(hello.headers['content-length'], '18')
+    assert.equal(hello.headers.connection, 'keep-alive')
+    assert.match(hello.headers.date, matchDate)
+    assert.match(hello.headers['keep-alive'], matchKeepAlive)
+    assert.deepEqual(hello.body, { hello: 'Matteo' })
   }
 
   {
     const hello = await client.getHelloHeaderName({ name: 'Matteo' })
-    match(hello, {
-      statusCode: 200,
-      headers: {
-        'content-type': 'application/json; charset=utf-8',
-        'content-length': '18',
-        date: matchDate,
-        connection: 'keep-alive',
-        'keep-alive': matchKeepAlive
-      },
-      body: {
-        hello: 'Matteo'
-      }
-    })
+    assert.equal(hello.statusCode, 200)
+    assert.equal(hello.headers['content-type'], 'application/json; charset=utf-8')
+    assert.equal(hello.headers['content-length'], '18')
+    assert.equal(hello.headers.connection, 'keep-alive')
+    assert.match(hello.headers.date, matchDate)
+    assert.match(hello.headers['keep-alive'], matchKeepAlive)
+    assert.deepEqual(hello.body, { hello: 'Matteo' })
   }
 })
 
-test('throw on error level response', async ({ teardown, rejects }) => {
+test('throw on error level response', async (t) => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
   try {
-    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic-prefix.db.json'))
+  const app = await buildServer(join(tmpDir, 'platformatic-prefix.db.json'))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
+    await rm(tmpDir, { recursive: true })
   })
   await app.start()
 
@@ -348,21 +300,26 @@ test('throw on error level response', async ({ teardown, rejects }) => {
     throwOnError: true
   })
 
-  rejects(client.getMovieById({
+  await assert.rejects(client.getMovieById({
     id: 100
   }), ResponseStatusCodeError)
 })
 
-test('build basic client from file', async ({ teardown, same, rejects }) => {
+test('build basic client from file', async (t) => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
   try {
-    await fs.unlink(join(__dirname, 'fixtures', 'movies', 'db.sqlite'))
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(join(__dirname, 'fixtures', 'movies', 'platformatic-prefix.db.json'))
+  const app = await buildServer(join(tmpDir, 'platformatic-prefix.db.json'))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
+    await rm(tmpDir, { recursive: true })
   })
   await app.start()
 
@@ -375,26 +332,26 @@ test('build basic client from file', async ({ teardown, same, rejects }) => {
     title: 'The Matrix'
   })
 
-  same(movie, {
+  assert.deepEqual(movie, {
     id: 1,
     title: 'The Matrix'
   })
 
   const movies = await client.getMovies()
 
-  same(movies, [
+  assert.deepEqual(movies, [
     {
       id: 1,
       title: 'The Matrix'
     }
   ])
 
-  const updatedMovie = await client.updateMovie({
+  const updatedMovie = await client.putUpdateMovie({
     id: 1,
     title: 'The Matrix Reloaded'
   })
 
-  same(updatedMovie, {
+  assert.deepEqual(updatedMovie, {
     id: 1,
     title: 'The Matrix Reloaded'
   })
@@ -403,15 +360,15 @@ test('build basic client from file', async ({ teardown, same, rejects }) => {
     id: 1
   })
 
-  same(movie2, {
+  assert.deepEqual(movie2, {
     id: 1,
     title: 'The Matrix Reloaded'
   })
 
-  await rejects(client.getMovieById())
+  await assert.rejects(client.getMovieById())
 
   const notFound = await client.getMovieById({ id: 100 })
-  same(notFound, {
+  assert.deepEqual(notFound, {
     message: 'Route GET:/movies-api/movies/100 not found',
     error: 'Not Found',
     statusCode: 404
@@ -419,35 +376,40 @@ test('build basic client from file', async ({ teardown, same, rejects }) => {
 
   {
     const movies = await client.getMovies({ 'where.title.eq': 'Star Wars' })
-    same(movies, [])
+    assert.deepEqual(movies, [])
   }
 
   {
     const hello = await client.getHelloWorld()
-    same(hello, { hello: 'world' })
+    assert.deepEqual(hello, { hello: 'world' })
   }
 
   {
     const hello = await client.getHelloName({ name: 'Matteo' })
-    same(hello, { hello: 'Matteo' })
+    assert.deepEqual(hello, { hello: 'Matteo' })
   }
 
   {
     const hello = await client.getHelloHeaderName({ name: 'Matteo' })
-    same(hello, { hello: 'Matteo' })
+    assert.deepEqual(hello, { hello: 'Matteo' })
   }
 })
 
-test('build basic client from url with custom headers', async ({ teardown, same, rejects }) => {
+test('build basic client from url with custom headers', async (t) => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'auth')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
   try {
-    await fs.unlink(join(__dirname, 'fixtures', 'auth', 'db.sqlite'))
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(join(__dirname, 'fixtures', 'auth', 'platformatic.db.json'))
+  const app = await buildServer(join(tmpDir, 'platformatic.db.json'))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
+    await rm(tmpDir, { recursive: true })
   })
   await app.start()
 
@@ -462,14 +424,14 @@ test('build basic client from url with custom headers', async ({ teardown, same,
     title: 'The Matrix'
   })
 
-  same(movie, {
+  assert.deepEqual(movie, {
     id: 1,
     title: 'The Matrix'
   })
 
   const movies = await client.getMovies()
 
-  same(movies, [
+  assert.deepEqual(movies, [
     {
       id: 1,
       title: 'The Matrix'
@@ -481,7 +443,7 @@ test('build basic client from url with custom headers', async ({ teardown, same,
     title: 'The Matrix Reloaded'
   })
 
-  same(updatedMovie, {
+  assert.deepEqual(updatedMovie, {
     id: 1,
     title: 'The Matrix Reloaded'
   })
@@ -490,15 +452,15 @@ test('build basic client from url with custom headers', async ({ teardown, same,
     id: 1
   })
 
-  same(movie2, {
+  assert.deepEqual(movie2, {
     id: 1,
     title: 'The Matrix Reloaded'
   })
 
-  await rejects(client.getMovieById())
+  await assert.rejects(client.getMovieById())
 
   const notFound = await client.getMovieById({ id: 100 })
-  same(notFound, {
+  assert.deepEqual(notFound, {
     message: 'Route GET:/movies/100 not found',
     error: 'Not Found',
     statusCode: 404
@@ -506,50 +468,325 @@ test('build basic client from url with custom headers', async ({ teardown, same,
 
   {
     const movies = await client.getMovies({ 'where.title.eq': 'Star Wars' })
-    same(movies, [])
+    assert.deepEqual(movies, [])
   }
 
   {
     const hello = await client.getHello()
-    same(hello, { hello: 'world' })
+    assert.deepEqual(hello, { hello: 'world' })
   }
 
   {
     const hello = await client.getHelloName({ name: 'Matteo' })
-    same(hello, { hello: 'Matteo' })
+    assert.deepEqual(hello, { hello: 'Matteo' })
   }
 
   {
     const hello = await client.getHelloHeaderName({ name: 'Matteo' })
-    same(hello, { hello: 'Matteo' })
+    assert.deepEqual(hello, { hello: 'Matteo' })
   }
 })
 
-test('302', async ({ teardown, same, rejects }) => {
+test('302', async (t) => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'movies-no-200')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
   try {
-    await fs.unlink(join(__dirname, 'fixtures', 'movies-no-200', 'db.sqlite'))
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(join(__dirname, 'fixtures', 'movies-no-200', 'platformatic.db.json'))
+  const app = await buildServer(join(tmpDir, 'platformatic.db.json'))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
+    await rm(tmpDir, { recursive: true })
   })
   await app.start()
 
   const client = await buildOpenAPIClient({
     url: `${app.url}/`,
-    path: join(__dirname, 'fixtures', 'movies-no-200', 'openapi.json')
+    path: join(tmpDir, 'openapi.json')
   })
   {
     const resp = await client.redirectMe()
-    same(resp.statusCode, 302)
-    same(resp.headers.location, 'https://google.com')
+    assert.deepEqual(resp.statusCode, 302)
+    assert.deepEqual(resp.headers.location, 'https://google.com')
   }
 
   {
     const resp = await client.nonStandard()
-    same(resp.statusCode, 470)
+    assert.deepEqual(resp.statusCode, 470)
   }
+})
+
+test('build basic client from file with (endpoint with duplicated parameters)', async (t) => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'duped-params')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
+  try {
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildService(join(tmpDir, 'platformatic.service.json'))
+
+  t.after(async () => {
+    await app.close()
+    await rm(tmpDir, { recursive: true })
+  })
+  await app.start()
+
+  const client = await buildOpenAPIClient({
+    url: `${app.url}`,
+    path: join(tmpDir, 'openapi.json')
+  })
+
+  const result = await client.postHello({
+    body: {
+      id: 'bodyId'
+    },
+    query: {
+      id: 'queryId'
+    },
+    headers: {
+      id: 'headersId'
+    }
+  })
+
+  assert.deepEqual(result.headers.id, 'headersId')
+  assert.deepEqual(result.query.id, 'queryId')
+  assert.deepEqual(result.body.id, 'bodyId')
+})
+
+test('build basic client from file (enpoint with no parameters)', async (t) => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'no-params')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
+  try {
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildService(join(tmpDir, 'platformatic.service.json'))
+
+  t.after(async () => {
+    await app.close()
+    await rm(tmpDir, { recursive: true })
+  })
+  await app.start()
+
+  const client = await buildOpenAPIClient({
+    url: `${app.url}`,
+    path: join(tmpDir, 'openapi.json')
+  })
+
+  const bodyPayload = {
+    body: {
+      id: 'bodyId'
+    },
+    query: {
+      id: 'queryId'
+    },
+    headers: {
+      id: 'headersId'
+    }
+  }
+  const postResult = await client.postHello(bodyPayload)
+
+  assert.deepEqual(Object.keys(postResult.headers).length, 4) // some headers are returned...
+  assert.equal(postResult.headers.id, undefined) // ...but not the 'id' passed in the request
+  assert.deepEqual(postResult.query, {})
+  assert.deepEqual(postResult.body, bodyPayload)
+
+  const getResult = await client.getHello()
+  assert.equal(getResult.message, 'GET /hello works')
+})
+
+test('build basic client from file (query array parameter)', async (t) => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'array-query-params')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
+  try {
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildService(join(tmpDir, 'platformatic.service.json'))
+
+  t.after(async () => {
+    await app.close()
+    await rm(tmpDir, { recursive: true })
+  })
+  await app.start()
+
+  {
+    // // with fullRequest
+    const client = await buildOpenAPIClient({
+      fullRequest: true,
+      url: `${app.url}`,
+      path: join(tmpDir, 'openapi.json')
+    })
+
+    const result = await client.getQuery({
+      query: {
+        ids: ['id1', 'id2'],
+        stringArrayUnion: ['foo', 'bar', 'baz']
+      }
+    })
+    assert.deepEqual(result.isArray, true)
+    assert.deepEqual(result.ids, ['id1', 'id2'])
+    assert.deepEqual(result.stringArrayUnion, ['foo', 'bar', 'baz'])
+  }
+  {
+    // without fullRequest
+    const client = await buildOpenAPIClient({
+      fullRequest: false,
+      url: `${app.url}`,
+      path: join(__dirname, 'fixtures', 'array-query-params', 'openapi.json')
+    })
+
+    const result = await client.getQuery({
+      ids: ['id1', 'id2'],
+      stringArrayUnion: ['foo', 'bar', 'baz']
+    })
+    assert.deepEqual(result.isArray, true)
+    assert.deepEqual(result.ids, ['id1', 'id2'])
+    assert.deepEqual(result.stringArrayUnion, ['foo', 'bar', 'baz'])
+  }
+})
+
+test('build basic client from file (path parameter)', async (t) => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'path-params')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
+  try {
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildService(join(tmpDir, 'platformatic.service.json'))
+
+  t.after(async () => {
+    await app.close()
+    await rm(tmpDir, { recursive: true })
+  })
+  await app.start()
+
+  {
+    // with fullRequest
+    const client = await buildOpenAPIClient({
+      fullRequest: true,
+      url: `${app.url}`,
+      path: join(__dirname, 'fixtures', 'path-params', 'openapi.json')
+    })
+
+    const result = await client.getPath({
+      path: { id: 'baz' },
+      query: { name: 'bar' }
+    })
+    assert.equal(result.id, 'baz')
+    assert.equal(result.name, 'bar')
+
+    const { id, name } = await client.getPath({ path: { id: 'ok' }, query: { name: undefined } })
+    assert.equal(id, 'ok')
+    assert.equal(name, undefined)
+
+    let error
+    try {
+      await client.getPath({ path: { id: undefined }, query: { name: 'bar' } })
+    } catch (err) {
+      error = err
+    }
+    assert.equal(error instanceof Error, true, 'when no path param is passed')
+  }
+  {
+    // without fullRequest
+    const client = await buildOpenAPIClient({
+      fullRequest: false,
+      url: `${app.url}`,
+      path: join(__dirname, 'fixtures', 'path-params', 'openapi.json')
+    })
+
+    const result = await client.getPath({
+      id: 'baz',
+      name: 'foo'
+    })
+    assert.equal(result.id, 'baz')
+    assert.equal(result.name, 'foo')
+  }
+})
+
+test('validate response', async (t) => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'validate-response')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
+  try {
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildService(join(tmpDir, 'platformatic.service.json'))
+
+  t.after(async () => {
+    await app.close()
+    await rm(tmpDir, { recursive: true })
+  })
+  await app.start()
+
+  const client = await buildOpenAPIClient({
+    url: `${app.url}`,
+    path: join(tmpDir, 'openapi.json'),
+    validateResponse: true
+  })
+
+  // invalid response format
+  const invalidResult = await client.getInvalid()
+  assert.deepEqual(invalidResult, {
+    statusCode: 500,
+    message: 'Invalid response format'
+  })
+
+  // no matching route
+  const noMatchingResult = await client.getNoMatching()
+  assert.deepEqual(noMatchingResult, {
+    statusCode: 500,
+    message: 'No matching response schema found for status code 404'
+  })
+
+  // no matching content type
+  const noMatchingContentTypeResult = await client.getNoContentType()
+  assert.deepEqual(noMatchingContentTypeResult, {
+    statusCode: 500,
+    message: 'No matching content type schema found for application/json'
+  })
+
+  // another content type
+  const htmlResult = await client.getNoContentType({
+    returnType: 'html'
+  })
+  assert.deepEqual(htmlResult, '<h1>Hello World</h1>')
+
+  // valid response
+  const validResult = await client.getValid()
+  assert.deepEqual(validResult.message, 'This is a valid response')
+
+  // with refs
+  const refsResult = await client.getWithRefs()
+  assert.deepEqual(refsResult, {
+    id: 123,
+    title: 'Harry Potter'
+  })
+
+  // second call to make coverage happy about caching functions
+  assert.deepEqual(await client.getWithRefs(), {
+    id: 123,
+    title: 'Harry Potter'
+  })
 })

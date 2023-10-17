@@ -5,7 +5,7 @@ This is a generated [Platformatic DB](https://docs.platformatic.dev/docs/referen
 ## Requirements
 
 Platformatic supports macOS, Linux and Windows ([WSL](https://docs.microsoft.com/windows/wsl/) recommended).
-You'll need to have [Node.js](https://nodejs.org/) >= v18.8.0
+You'll need to have [Node.js](https://nodejs.org/) >= v18.8.0 or >= v20.6.0
 
 ## Setup
 

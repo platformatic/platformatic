@@ -1,5 +1,5 @@
 'use strict'
-const { start } = require('../lib/unified-api')
+const { start } = require('..')
 
 async function main () {
   await start(['-c', process.argv[2]])

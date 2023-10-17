@@ -132,7 +132,7 @@ test('should not hot reload files with `--hot-reload false', async (t) => {
   assert.strictEqual(version, 'v1')
 })
 
-test('watches CommonJS files with hotreload', { timeout: 30000, skip: process.env.CI }, async (t) => {
+test('watches CommonJS files with hotreload', { timeout: 30000 }, async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
@@ -171,7 +171,7 @@ test('watches CommonJS files with hotreload', { timeout: 30000, skip: process.en
   assert.ok(restartedThirdTime)
 })
 
-test('watches CommonJS files with hotreload on a single service', { timeout: 30000, skip: process.env.CI }, async (t) => {
+test('watches CommonJS files with hotreload on a single service', { timeout: 30000 }, async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
@@ -207,7 +207,7 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 300
   assert.ok(restartedThirdTime)
 })
 
-test('do not hot reload dependencies', { timeout: 30000, skip: process.env.CI }, async (t) => {
+test('do not hot reload dependencies', { timeout: 30000 }, async (t) => {
   process.env.PORT = 0
   const config = join(fixturesDir, 'do-not-reload-dependencies', 'platformatic.service.json')
   const { child, url } = await start('-c', config)
@@ -247,7 +247,7 @@ test('do not hot reload dependencies', { timeout: 30000, skip: process.env.CI },
   assert.strictEqual((await res4.body.json()).hello, plugin2)
 })
 
-test('watches CommonJS files with hotreload on a single service', { timeout: 30000, skip: process.env.CI }, async (t) => {
+test('watches CommonJS files with hotreload on a single service', { timeout: 30000 }, async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
@@ -281,4 +281,29 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 300
   }
 
   assert.ok(restartedThirdTime)
+})
+
+test('should not watch files if watch = false', async (t) => {
+  const tmpDir = await mkdtemp(join(base, 'watch-'))
+  t.after(() => saferm(tmpDir))
+  t.diagnostic(`using ${tmpDir}`)
+  const configFileSrc = join(fixturesDir, 'configs', 'monorepo-watch.json')
+  const configFileDst = join(tmpDir, 'configs', 'monorepo-watch.json')
+  const appSrc = join(fixturesDir, 'monorepo-watch')
+  const appDst = join(tmpDir, 'monorepo-watch')
+  const cjsPluginFilePath = join(appDst, 'service1', 'plugin.js')
+
+  await Promise.all([
+    cp(configFileSrc, configFileDst),
+    cp(appSrc, appDst, { recursive: true })
+  ])
+
+  await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
+  const { child, url } = await start('-c', configFileDst)
+  t.after(() => child.kill('SIGINT'))
+  await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))
+  await sleep(5000)
+  const res = await request(`${url}/version`)
+  const version = await res.body.text()
+  assert.strictEqual(version, 'v1')
 })

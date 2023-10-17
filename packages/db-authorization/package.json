@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db-authorization",
-  "version": "0.37.2",
+  "version": "1.4.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -16,27 +16,26 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@fastify/cookie": "^8.3.0",
-    "@fastify/session": "^10.3.0",
+    "@fastify/session": "^10.5.0",
     "@platformatic/db-core": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
-    "@platformatic/types": "workspace:*",
-    "fast-jwt": "^3.1.1",
-    "fastify": "^4.18.0",
+    "fast-jwt": "^3.3.0",
+    "fastify": "^4.23.2",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "tap": "^16.3.6",
-    "tsd": "^0.28.1",
+    "tap": "^16.3.9",
+    "tsd": "^0.29.0",
     "why-is-node-running": "^2.2.2",
-    "ws": "^8.13.0"
+    "ws": "^8.14.2"
   },
   "dependencies": {
-    "@fastify/error": "^3.2.1",
-    "@fastify/jwt": "^7.0.0",
-    "fastify-plugin": "^4.5.0",
-    "fastify-user": "^0.3.0",
-    "get-jwks": "^8.1.0",
+    "@fastify/error": "^3.3.0",
+    "@fastify/jwt": "^7.2.1",
+    "fastify-plugin": "^4.5.1",
+    "fastify-user": "^0.3.1",
+    "get-jwks": "^8.3.1",
     "leven": "~3.1.0",
-    "undici": "^5.22.1"
+    "undici": "^5.25.4"
   },
   "tsd": {
     "directory": "test/types"

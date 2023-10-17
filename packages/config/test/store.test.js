@@ -1,8 +1,9 @@
 'use strict'
 
-const { test } = require('tap')
+const assert = require('node:assert/strict')
+const { test } = require('node:test')
+const { join } = require('node:path')
 const { Store } = require('../')
-const { join } = require('path')
 const { ConfigManager } = require('../lib/manager')
 
 test('Store with builtins', async t => {
@@ -32,9 +33,20 @@ test('Store with builtins', async t => {
   const store = new Store()
   store.add(foo)
 
-  t.equal(await store.get({ $schema: 'foo' }), foo, 'should have builtin value')
-  await t.rejects(store.get({ $schema: 'bar' }))
-  t.same(store.listTypes(), [{
+  assert.equal(await store.get({ $schema: 'foo' }), foo, 'should have builtin value')
+  try {
+    await store.get({ $schema: 'bar' })
+    assert.fail()
+  } catch (err) {
+    assert.equal(err.message, 'Add a module property to the config or add a known $schema.')
+  }
+  try {
+    await store.get({ $schema: 'https://platformatic.dev/schemas/v0.99.0/something.json' })
+    assert.fail()
+  } catch (err) {
+    assert.equal(err.message, 'Version mismatch. You are running Platformatic null but your app requires v0.99.0')
+  }
+  assert.deepEqual(store.listTypes(), [{
     id: 'foo',
     configType: 'foo'
   }])
@@ -48,7 +60,7 @@ test('missing schema', async t => {
   foo.configManagerConfig = {}
 
   const store = new Store()
-  t.throws(store.add.bind(store, foo))
+  assert.throws(store.add.bind(store, foo))
 })
 
 test('missing configType', async t => {
@@ -75,7 +87,7 @@ test('missing configType', async t => {
   }
 
   const store = new Store()
-  t.throws(store.add.bind(store, foo))
+  assert.throws(store.add.bind(store, foo))
 })
 
 test('no configManagerConfig', async t => {
@@ -92,8 +104,13 @@ test('no configManagerConfig', async t => {
   const store = new Store()
   store.add(foo)
 
-  t.equal(await store.get({ $schema: 'foo' }), foo, 'should have builtin value')
-  await t.rejects(store.get({ $schema: 'bar' }))
+  assert.equal(await store.get({ $schema: 'foo' }), foo, 'should have builtin value')
+  try {
+    await store.get({ $schema: 'bar' })
+    assert.fail()
+  } catch (err) {
+    assert.equal(err.message, 'Add a module property to the config or add a known $schema.')
+  }
 })
 
 test('add schema to configManagerConfig', async t => {
@@ -122,9 +139,14 @@ test('add schema to configManagerConfig', async t => {
   const store = new Store()
   store.add(foo)
 
-  t.equal(await store.get({ $schema: 'foo' }), foo, 'should have builtin value')
-  await t.rejects(store.get({ $schema: 'bar' }))
-  t.equal((await store.get({ $schema: 'foo' })).configManagerConfig.schema, foo.schema, 'should have schema')
+  assert.equal(await store.get({ $schema: 'foo' }), foo, 'should have builtin value')
+  try {
+    await store.get({ $schema: 'bar' })
+    assert.fail()
+  } catch (err) {
+    assert.equal(err.message, 'Add a module property to the config or add a known $schema.')
+  }
+  assert.equal((await store.get({ $schema: 'foo' })).configManagerConfig.schema, foo.schema, 'should have schema')
 })
 
 test('schema with no id', async t => {
@@ -136,29 +158,40 @@ test('schema with no id', async t => {
   foo.configManagerConfig = {}
 
   const store = new Store()
-  t.throws(store.add.bind(store, foo))
+  assert.throws(store.add.bind(store, foo))
 })
 
-test('resolve', async t => {
+test('resolve with module', async t => {
   const store = new Store({
     cwd: join(__dirname, 'fixtures', 'app')
   })
 
-  t.equal(await store.get({
+  assert.equal(await store.get({
     $schema: 'http://something/foo',
     module: 'foo'
   }), require('./fixtures/app/node_modules/foo'), 'should resolve module')
 })
 
-test('rejects with missing module', async t => {
+test('resolve with extends', async t => {
   const store = new Store({
     cwd: join(__dirname, 'fixtures', 'app')
   })
 
-  await t.rejects(store.get({
+  assert.equal(await store.get({
     $schema: 'http://something/foo',
-    module: 'baz'
-  }))
+    extends: 'foo'
+  }), require('./fixtures/app/node_modules/foo'), 'should resolve module')
+})
+
+test('rejects with missing extended module', async t => {
+  const store = new Store({
+    cwd: join(__dirname, 'fixtures', 'app')
+  })
+
+  try {
+    await store.get({ $schema: 'http://something/foo', extends: 'baz' })
+    assert.fail()
+  } catch (err) {}
 })
 
 test('import', async t => {
@@ -166,9 +199,9 @@ test('import', async t => {
     cwd: join(__dirname, 'fixtures', 'app')
   })
 
-  t.equal(await store.get({
+  assert.equal(await store.get({
     $schema: 'http://something/foo',
-    module: 'foom'
+    extends: 'foom'
   }), (await import('./fixtures/app/node_modules/foom/foo.js')).default, 'should resolve module')
 })
 
@@ -196,7 +229,7 @@ test('app must be a function', async t => {
   }
 
   const store = new Store()
-  t.throws(store.add.bind(store, foo))
+  assert.throws(store.add.bind(store, foo))
 })
 
 test('loadConfig', async t => {
@@ -229,13 +262,13 @@ test('loadConfig', async t => {
   const store = new Store()
   store.add(foo)
 
-  t.teardown(() => {
+  t.after(() => {
     process.chdir(cwd)
   })
 
   const res = await store.loadConfig()
-  t.equal(res.configManager instanceof ConfigManager, true, 'should return configManager')
-  t.equal(res.app, foo, 'should return app')
+  assert.equal(res.configManager instanceof ConfigManager, true, 'should return configManager')
+  assert.equal(res.app, foo, 'should return app')
 })
 
 test('loadConfig', async t => {
@@ -268,13 +301,13 @@ test('loadConfig', async t => {
   const store = new Store()
   store.add(foo)
 
-  t.teardown(() => {
+  t.after(() => {
     process.chdir(cwd)
   })
 
   const res = await store.loadConfig()
-  t.equal(res.configManager instanceof ConfigManager, true, 'should return configManager')
-  t.equal(res.app, foo, 'should return app')
+  assert.equal(res.configManager instanceof ConfigManager, true, 'should return configManager')
+  assert.equal(res.app, foo, 'should return app')
 })
 
 test('loadConfig custom module', async t => {
@@ -283,5 +316,40 @@ test('loadConfig custom module', async t => {
   })
 
   const res = await store.loadConfig()
-  t.equal(res.app.schema.$id, 'foo', 'should return app')
+  assert.equal(res.app.schema.$id, 'foo', 'should return app')
+})
+
+test('Version mismatch', async t => {
+  function foo () {
+  }
+
+  foo.schema = {
+    $id: 'https://platformatic.dev/schemas/v0.42.0/something.json',
+    type: 'object'
+  }
+
+  foo.configType = 'foo'
+  foo.configManagerConfig = {
+    schema: foo.schema,
+    envWhitelist: ['PORT', 'HOSTNAME'],
+    allowToWatch: ['.env'],
+    schemaOptions: {
+      useDefaults: true,
+      coerceTypes: true,
+      allErrors: true,
+      strict: false
+    },
+    transformConfig () {
+    }
+  }
+
+  const store = new Store()
+  store.add(foo)
+
+  try {
+    await store.get({ $schema: 'https://platformatic.dev/schemas/v0.99.0/something.json' })
+    assert.fail()
+  } catch (err) {
+    assert.equal(err.message, 'Version mismatch. You are running Platformatic v0.42.0 but your app requires v0.99.0')
+  }
 })

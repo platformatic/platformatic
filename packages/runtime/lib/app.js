@@ -4,10 +4,9 @@ const { once } = require('node:events')
 const { dirname } = require('node:path')
 const { FileWatcher } = require('@platformatic/utils')
 const debounce = require('debounce')
-const {
-  buildServer,
-  loadConfig
-} = require('./unified-api')
+const { buildServer } = require('./build-server')
+const { loadConfig } = require('./load-config')
+const errors = require('./errors')
 
 class PlatformaticApp {
   #hotReload
@@ -18,9 +17,10 @@ class PlatformaticApp {
   #fileWatcher
   #logger
   #telemetryConfig
+  #serverConfig
   #debouncedRestart
 
-  constructor (appConfig, loaderPort, logger, telemetryConfig) {
+  constructor (appConfig, loaderPort, logger, telemetryConfig, serverConfig) {
     this.appConfig = appConfig
     this.config = null
     this.#hotReload = false
@@ -34,6 +34,7 @@ class PlatformaticApp {
       name: this.appConfig.id
     })
     this.#telemetryConfig = telemetryConfig
+    this.#serverConfig = serverConfig
 
     /* c8 ignore next 4 */
     this.#debouncedRestart = debounce(() => {
@@ -57,6 +58,10 @@ class PlatformaticApp {
 
     this.#restarting = true
 
+    // The CJS cache should not be cleared from the loader because v20 moved
+    // the loader to a different thread with a different CJS cache.
+    clearCjsCache()
+
     /* c8 ignore next 4 - tests may not pass in a MessagePort. */
     if (this.#loaderPort) {
       this.#loaderPort.postMessage('plt:clear-cache')
@@ -76,20 +81,28 @@ class PlatformaticApp {
 
   async start () {
     if (this.#started) {
-      throw new Error('application is already started')
+      throw new errors.ApplicationAlreadyStartedError()
     }
 
     this.#started = true
 
     await this.#initializeConfig()
     this.#originalWatch = this.config.configManager.current.watch
-    this.config.configManager.current.watch = false
+    this.config.configManager.current.watch = { enabled: false }
 
     const { configManager } = this.config
     configManager.update({
       ...configManager.current,
       telemetry: this.#telemetryConfig
     })
+
+    if (this.#serverConfig) {
+      configManager.update({
+        ...configManager.current,
+        server: this.#serverConfig
+      })
+    }
+
     const config = configManager.current
 
     this.#setuplogger(configManager)
@@ -106,7 +119,10 @@ class PlatformaticApp {
       this.#logAndExit(err)
     }
 
-    if (config.plugins !== undefined) {
+    if (
+      config.plugins !== undefined &&
+      this.#originalWatch?.enabled !== false
+    ) {
       this.#startFileWatching()
     }
 
@@ -118,12 +134,15 @@ class PlatformaticApp {
         this.server.log.error({ err })
         process.exit(1)
       }
+    } else {
+      // Make sure the server has run all the onReady hooks before returning.
+      await this.server.ready()
     }
   }
 
   async stop () {
     if (!this.#started) {
-      throw new Error('application has not been started')
+      throw new errors.ApplicationNotStartedError()
     }
 
     await this.#stopFileWatching()
@@ -182,7 +201,7 @@ class PlatformaticApp {
       if (appConfig._configOverrides instanceof Map) {
         appConfig._configOverrides.forEach((value, key) => {
           if (typeof key !== 'string') {
-            throw new Error('config path must be a string.')
+            throw new errors.ConfigPathMustBeStringError()
           }
 
           const parts = key.split('.')
@@ -255,6 +274,21 @@ class PlatformaticApp {
     this.#logger.error({ err })
     process.exit(1)
   }
+}
+
+/* c8 ignore next 11 - c8 upgrade marked many existing things as uncovered */
+function clearCjsCache () {
+  // This evicts all of the modules from the require() cache.
+  // Note: This does not clean up children references to the deleted module.
+  // It's likely not a big deal for most cases, but it is a leak. The child
+  // references can be cleaned up, but it is expensive and involves walking
+  // the entire require() cache. See the DEP0144 documentation for how to do
+  // it.
+  Object.keys(require.cache).forEach((key) => {
+    if (!key.match(/node_modules/)) {
+      delete require.cache[key]
+    }
+  })
 }
 
 module.exports = { PlatformaticApp }

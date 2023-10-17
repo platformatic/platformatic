@@ -290,10 +290,6 @@ const $defs = {
           $ref: '#/$defs/callbacks-or-reference'
         }
       },
-      deprecated: {
-        default: false,
-        type: 'boolean'
-      },
       security: {
         type: 'array',
         items: {
@@ -344,10 +340,6 @@ const $defs = {
         type: 'string'
       },
       required: {
-        default: false,
-        type: 'boolean'
-      },
-      deprecated: {
         default: false,
         type: 'boolean'
       },
@@ -709,10 +701,6 @@ const $defs = {
         type: 'string'
       },
       required: {
-        default: false,
-        type: 'boolean'
-      },
-      deprecated: {
         default: false,
         type: 'boolean'
       },

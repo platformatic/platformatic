@@ -3,10 +3,12 @@
 const { readFile } = require('node:fs/promises')
 const { request, getGlobalDispatcher } = require('undici')
 const fp = require('fastify-plugin')
+const errors = require('./errors')
 
 const { modifyOpenApiSchema, originPathSymbol } = require('./openapi-modifier')
 const composeOpenApi = require('./openapi-composer')
 const loadOpenApiConfig = require('./load-openapi-config.js')
+const { prefixWithSlash } = require('./utils.js')
 
 async function fetchOpenApiSchema (openApiUrl) {
   const { body } = await request(openApiUrl)
@@ -20,7 +22,7 @@ async function readOpenApiSchema (pathToSchema) {
 
 async function getOpenApiSchema (origin, openapi) {
   if (openapi.url) {
-    const openApiUrl = origin + openapi.url
+    const openApiUrl = origin + prefixWithSlash(openapi.url)
     return fetchOpenApiSchema(openApiUrl)
   }
 
@@ -42,7 +44,7 @@ async function composeOpenAPI (app, opts) {
         config = await loadOpenApiConfig(openapi.config)
       } catch (error) {
         app.log.error(error)
-        throw new Error(`Could not read openapi config for "${id}" service`)
+        throw new errors.CouldNotReadOpenAPIConfigError(id)
       }
     }
 
@@ -56,7 +58,7 @@ async function composeOpenAPI (app, opts) {
 
     const schema = modifyOpenApiSchema(app, originSchema, config)
 
-    const prefix = openapi.prefix ?? ''
+    const prefix = openapi.prefix ? prefixWithSlash(openapi.prefix) : ''
     for (const path in schema.paths) {
       apiByApiRoutes[prefix + path] = {
         origin,

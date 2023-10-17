@@ -9,7 +9,7 @@ services:
   mariadb:
     ports:
       - "3307:3306"
-    image: "arm64v8/mariadb:11.0"
+    image: "arm64v8/mariadb:11.1"
     environment:
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
       - MYSQL_DATABASE=graph

@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:18-alpine as base
 
 ENV HOME=/home
 ENV PLT_HOME=$HOME/platformatic/
@@ -12,10 +12,10 @@ RUN mkdir $PNPM_HOME
 WORKDIR $PLT_HOME
 
 # Install required packages
-RUN apk update && apk add --no-cache dumb-init python3 libc-dev make g++
+RUN apk update && apk add --no-cache python3 libc-dev make g++
 
 # Install pnpm
-RUN npm i pnpm@7 --location=global
+RUN npm i pnpm@8 --location=global
 
 # Copy lock files
 COPY package.json ./
@@ -34,11 +34,26 @@ RUN pnpm install --prod --offline --node-linker=hoisted
 # Add platformatic to path
 RUN cd packages/cli && pnpm link --global
 
+# No pnpm/build tools install here, we just copy the files from the previous stage
+FROM node:18-alpine
+
+# We don't need the build tools anymore
+RUN apk update && apk add --no-cache dumb-init
+
+ENV HOME=/home
+ENV APP_HOME=$HOME/app
+ENV PLT_HOME=$HOME/platformatic/
+
+COPY --from=base $PLT_HOME $PLT_HOME
+
+# Add platformatic to path
+RUN cd $PLT_HOME/packages/cli && npm link
+
 # Move to the app directory
 WORKDIR $APP_HOME
 
 # Reduce our permissions from root to a normal user
-RUN chown node:node . 
+RUN chown node:node .
 USER node
 
 ENTRYPOINT ["dumb-init"]

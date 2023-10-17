@@ -3,13 +3,13 @@
 // setup the undici agent
 require('./helper')
 
-const { test, equal } = require('tap')
-const { buildServer } = require('..')
+const assert = require('node:assert')
+const { test } = require('node:test')
+const { setTimeout } = require('node:timers/promises')
 const { request } = require('undici')
-const { promisify } = require('util')
-const sleep = promisify(setTimeout)
+const { buildServer } = require('..')
 
-test('has /metrics endpoint on default prometheus port', async ({ teardown, equal, fail, match }) => {
+test('has /metrics endpoint on default prometheus port', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
@@ -18,21 +18,21 @@ test('has /metrics endpoint on default prometheus port', async ({ teardown, equa
     metrics: true
   })
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
 
   // needed to reach 100% code cov, otherwise the ELU check won't run
-  await sleep(120)
+  await setTimeout(120)
   const res = await (request('http://127.0.0.1:9090/metrics'))
   const body = await res.body.text()
-  equal(res.statusCode, 200)
-  match(res.headers['content-type'], /^text\/plain/)
+  assert.strictEqual(res.statusCode, 200)
+  assert.match(res.headers['content-type'], /^text\/plain/)
   testPrometheusOutput(body)
 })
 
-test('has /metrics endpoint with accept application/json', async ({ teardown, equal, fail, match }) => {
+test('has /metrics endpoint with accept application/json', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
@@ -41,7 +41,7 @@ test('has /metrics endpoint with accept application/json', async ({ teardown, eq
     metrics: true
   })
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
@@ -54,13 +54,13 @@ test('has /metrics endpoint with accept application/json', async ({ teardown, eq
       }
     }
   ))
-  match(res.headers['content-type'], /^application\/json/)
+  assert.match(res.headers['content-type'], /^application\/json/)
   const json = await res.body.json()
-  equal(res.statusCode, 200)
+  assert.strictEqual(res.statusCode, 200)
   testPrometheusJsonOutput(json)
 })
 
-test('has /metrics endpoint on configured port', async ({ teardown, equal, fail, match }) => {
+test('has /metrics endpoint on configured port', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
@@ -71,19 +71,19 @@ test('has /metrics endpoint on configured port', async ({ teardown, equal, fail,
     }
   })
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
 
   const res = await (request('http://127.0.0.1:9999/metrics'))
-  equal(res.statusCode, 200)
-  match(res.headers['content-type'], /^text\/plain/)
+  assert.strictEqual(res.statusCode, 200)
+  assert.match(res.headers['content-type'], /^text\/plain/)
   const body = await res.body.text()
   testPrometheusOutput(body)
 })
 
-test('support basic auth', async ({ teardown, equal, fail, match }) => {
+test('support basic auth', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
@@ -97,15 +97,15 @@ test('support basic auth', async ({ teardown, equal, fail, match }) => {
     }
   })
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
 
   {
     const res = await (request('http://127.0.0.1:9090/metrics'))
-    equal(res.statusCode, 401)
-    match(res.headers['content-type'], /^application\/json/)
+    assert.strictEqual(res.statusCode, 401)
+    assert.match(res.headers['content-type'], /^application\/json/)
   }
 
   {
@@ -115,8 +115,8 @@ test('support basic auth', async ({ teardown, equal, fail, match }) => {
         authorization: `Basic ${Buffer.from('bar:foo').toString('base64')}`
       }
     }))
-    equal(res.statusCode, 401)
-    match(res.headers['content-type'], /^application\/json/)
+    assert.strictEqual(res.statusCode, 401)
+    assert.match(res.headers['content-type'], /^application\/json/)
   }
 
   {
@@ -125,14 +125,14 @@ test('support basic auth', async ({ teardown, equal, fail, match }) => {
         authorization: `Basic ${Buffer.from('foo:bar').toString('base64')}`
       }
     }))
-    equal(res.statusCode, 200)
-    match(res.headers['content-type'], /^text\/plain/)
+    assert.strictEqual(res.statusCode, 200)
+    assert.match(res.headers['content-type'], /^text\/plain/)
     const body = await res.body.text()
     testPrometheusOutput(body)
   }
 })
 
-test('do not error on restart', async ({ teardown, equal, fail, match }) => {
+test('do not error on restart', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
@@ -141,22 +141,22 @@ test('do not error on restart', async ({ teardown, equal, fail, match }) => {
     metrics: true
   })
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
   await app.restart()
 
   const res = await (request('http://127.0.0.1:9090/metrics'))
-  equal(res.statusCode, 200)
-  match(res.headers['content-type'], /^text\/plain/)
+  assert.strictEqual(res.statusCode, 200)
+  assert.match(res.headers['content-type'], /^text\/plain/)
   const body = await res.body.text()
   testPrometheusOutput(body)
 })
 
-test('restarting 10 times does not leak', async ({ teardown, equal, fail, match }) => {
+test('restarting 10 times does not leak', async (t) => {
   process.on('warning', (warning) => {
-    fail('warning was raised')
+    assert.fail('warning was raised')
   })
   const app = await buildServer({
     server: {
@@ -166,7 +166,7 @@ test('restarting 10 times does not leak', async ({ teardown, equal, fail, match 
     metrics: true
   })
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
 
@@ -211,10 +211,10 @@ function checkMetricBlock (metricBlock) {
 
 function testPrometheusJsonOutput (output) {
   for (const metric of output) {
-    equal(typeof metric.help, 'string', 'metric.help is string')
-    equal(typeof metric.name, 'string', 'metric.name is string')
-    equal(typeof metric.type, 'string', 'metric.type is string')
-    equal(typeof metric.aggregator, 'string', 'metric.aggregator is string')
-    equal(Array.isArray(metric.values), true, 'metric.values is array')
+    assert.strictEqual(typeof metric.help, 'string', 'metric.help is string')
+    assert.strictEqual(typeof metric.name, 'string', 'metric.name is string')
+    assert.strictEqual(typeof metric.type, 'string', 'metric.type is string')
+    assert.strictEqual(typeof metric.aggregator, 'string', 'metric.aggregator is string')
+    assert.strictEqual(Array.isArray(metric.values), true, 'metric.values is array')
   }
 }

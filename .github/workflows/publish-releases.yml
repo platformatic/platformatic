@@ -18,7 +18,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
       - uses: pnpm/action-setup@v2.4.0
       - uses: actions/setup-node@v3
         with:
@@ -26,7 +26,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
       - name: pnpm install
-        uses: nick-fields/retry@v2.8.3
+        uses: nick-fields/retry@v2.9.0
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -37,7 +37,7 @@ jobs:
           node scripts/update-version.mjs ${{ inputs.version }}
           sh scripts/sync-version.sh
       - name: update lockfile
-        uses: nick-fields/retry@v2.8.3
+        uses: nick-fields/retry@v2.9.0
         with:
           max_attempts: 10
           timeout_minutes: 15

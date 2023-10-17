@@ -19,12 +19,12 @@ export const getUseTypescript = typescript => {
   }
 }
 
-export const getOverwriteReadme = () => {
+export const getInitGitRepository = () => {
   return {
     type: 'list',
-    name: 'shouldReplace',
-    message: 'Do you want to overwrite the existing README.md?',
-    default: true,
+    name: 'initGitRepository',
+    message: 'Do you want to init the git repository?',
+    default: false,
     choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
   }
 }

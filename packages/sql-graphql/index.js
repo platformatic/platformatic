@@ -5,9 +5,12 @@ const constructGraph = require('./lib/entity-to-type')
 const mercurius = require('mercurius')
 const graphql = require('graphql')
 const { mercuriusFederationPlugin } = require('@mercuriusjs/federation')
+const { findNearestString } = require('@platformatic/utils')
 const establishRelations = require('./lib/relationship')
 const setupSubscriptions = require('./lib/subscriptions')
+const setupTelemetry = require('./lib/telemetry')
 const scalars = require('graphql-scalars')
+const errors = require('./lib/errors')
 
 async function mapperToGraphql (app, opts) {
   const mapper = app.platformatic
@@ -36,12 +39,27 @@ async function mapperToGraphql (app, opts) {
       hello: () => 'Hello Platformatic!'
     }
   } else {
+    const entitiesNames = Object.values(mapper.entities)
+      .map(entity => entity.singularName)
+
+    for (const ignoredEntity of Object.keys(ignore)) {
+      if (!entitiesNames.includes(ignoredEntity)) {
+        const nearestEntity = findNearestString(entitiesNames, ignoredEntity)
+        let warningMessage = `Ignored graphql entity "${ignoredEntity}" not found.`
+        /* istanbul ignore next */
+        if (nearestEntity) {
+          warningMessage += ` Did you mean "${nearestEntity}"?`
+        }
+        app.log.warn(warningMessage)
+      }
+    }
+
     for (const entity of Object.values(mapper.entities)) {
-      if (ignore[entity.pluralName] === true) {
+      if (ignore[entity.singularName] === true) {
         continue
       }
       relations.push(...entity.relations)
-      const meta = constructGraph(app, entity, graphOpts, ignore[entity.pluralName] || {})
+      const meta = constructGraph(app, entity, graphOpts, ignore[entity.singularName] || {})
       metaMap.set(entity, meta)
     }
 
@@ -128,7 +146,7 @@ async function mapperToGraphql (app, opts) {
     /* istanbul ignore next */
     app.log.debug({ query, mutation, subscription }, 'GraphQL input schema')
     /* istanbul ignore next */
-    const newError = new Error('Error printing the GraphQL schema')
+    const newError = new errors.ErrorPrintingGraphQLSchema()
     /* istanbul ignore next */
     newError.cause = error
     /* istanbul ignore next */
@@ -169,7 +187,12 @@ async function mapperToGraphql (app, opts) {
     resolvers
   })
 
+  if (app.openTelemetry) {
+    setupTelemetry(app)
+  }
+
   app.log.debug({ schema: sdl }, 'computed schema')
 }
 
 module.exports = fp(mapperToGraphql)
+module.exports.errors = errors

@@ -1,40 +1,19 @@
-import { getVersion, getDependencyVersion, isFileAccessible } from '../utils.mjs'
+import { getVersion, getDependencyVersion, convertServiceNameToPrefix, safeMkdir } from '../utils.mjs'
 import { createPackageJson } from '../create-package-json.mjs'
 import { createGitignore } from '../create-gitignore.mjs'
 import { getPkgManager } from '../get-pkg-manager.mjs'
-import { join, relative } from 'path'
+import { join, relative, resolve } from 'path'
 import inquirer from 'inquirer'
-import { readFile, writeFile, mkdir } from 'fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa } from 'execa'
 import ora from 'ora'
 import createRuntime from './create-runtime.mjs'
 import askDir from '../ask-dir.mjs'
-import { askDynamicWorkspaceCreateGHAction, askStaticWorkspaceGHAction } from '../ghaction.mjs'
-import { getOverwriteReadme, getRunPackageManagerInstall } from '../cli-options.mjs'
+import { getInitGitRepository, getPort, getRunPackageManagerInstall } from '../cli-options.mjs'
 import generateName from 'boring-name-generator'
 import { chooseKind } from '../index.mjs'
-
-export const createReadme = async (logger, dir = '.') => {
-  const readmeFileName = join(dir, 'README.md')
-  let isReadmeExists = await isFileAccessible(readmeFileName)
-  if (isReadmeExists) {
-    logger.debug(`${readmeFileName} found, asking to overwrite it.`)
-    const { shouldReplace } = await inquirer.prompt([getOverwriteReadme()])
-    isReadmeExists = !shouldReplace
-  }
-
-  if (isReadmeExists) {
-    logger.debug(`${readmeFileName} found, skipping creation of README.md file.`)
-    return
-  }
-
-  const readmeFile = new URL('README.md', import.meta.url)
-  const readme = await readFile(readmeFile, 'utf-8')
-  await writeFile(readmeFileName, readme)
-  logger.debug(`${readmeFileName} successfully created.`)
-}
+import { createReadme } from '../create-readme.mjs'
 
 export async function createPlatformaticRuntime (_args) {
   const logger = pino(pretty({
@@ -45,19 +24,51 @@ export async function createPlatformaticRuntime (_args) {
   const version = await getVersion()
   const pkgManager = getPkgManager()
 
-  const projectDir = await askDir(logger, '.')
+  const projectDir = await askDir(logger, join('.', 'platformatic-runtime'))
 
+  const toAsk = []
   // Create the project directory
-  await mkdir(projectDir, { recursive: true })
+  await safeMkdir(projectDir)
 
-  const baseServicesDir = join(relative(process.cwd(), projectDir), 'library-app/services')
+  const baseServicesDir = join(relative(process.cwd(), projectDir), 'services')
   const servicesDir = await askDir(logger, baseServicesDir, 'Where would you like to load your services from?')
 
-  const { runPackageManagerInstall } = await inquirer.prompt([
-    getRunPackageManagerInstall(pkgManager)
-  ])
+  // checks services dir is subdirectory
+  const resolvedDir = resolve(projectDir, servicesDir)
+  if (!resolvedDir.startsWith(projectDir)) {
+    logger.error(`Services directory must be a subdirectory of ${projectDir}. Found: ${resolvedDir}.`)
+    process.exit(1)
+  }
 
-  await mkdir(servicesDir, { recursive: true })
+  toAsk.push(getRunPackageManagerInstall(pkgManager))
+  // const { runPackageManagerInstall } = await inquirer.prompt([
+  //   getRunPackageManagerInstall(pkgManager)
+  // ])
+
+  toAsk.push({
+    type: 'list',
+    name: 'staticWorkspaceGitHubAction',
+    message: 'Do you want to create the github action to deploy this application to Platformatic Cloud?',
+    default: true,
+    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+  },
+  {
+    type: 'list',
+    name: 'dynamicWorkspaceGitHubAction',
+    message: 'Do you want to enable PR Previews in your application?',
+    default: true,
+    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+  })
+
+  toAsk.push(getInitGitRepository())
+  const {
+    runPackageManagerInstall,
+    staticWorkspaceGitHubAction,
+    dynamicWorkspaceGitHubAction,
+    initGitRepository
+  } = await inquirer.prompt(toAsk)
+
+  await safeMkdir(servicesDir)
 
   const fastifyVersion = await getDependencyVersion('fastify')
 
@@ -65,13 +76,7 @@ export async function createPlatformaticRuntime (_args) {
   // the package.json with the TS build
   await createPackageJson(version, fastifyVersion, logger, projectDir, false)
   await createGitignore(logger, projectDir)
-  await createReadme(logger, projectDir)
-
-  if (runPackageManagerInstall) {
-    const spinner = ora('Installing dependencies...').start()
-    await execa(pkgManager, ['install'], { cwd: projectDir })
-    spinner.succeed('...done!')
-  }
+  await createReadme(logger, projectDir, 'runtime')
 
   logger.info('Let\'s create a first service!')
 
@@ -112,10 +117,24 @@ export async function createPlatformaticRuntime (_args) {
     entrypoint = names[0]
   }
 
-  const env = await createRuntime(logger, projectDir, version, servicesDir, entrypoint)
+  const { port: entrypointPort } = await inquirer.prompt([getPort()])
 
-  await askDynamicWorkspaceCreateGHAction(logger, env, 'service', false, projectDir)
-  await askStaticWorkspaceGHAction(logger, env, 'service', false, projectDir)
+  const params = {
+    servicesDir,
+    entrypoint,
+    entrypointPort,
+    staticWorkspaceGitHubAction,
+    dynamicWorkspaceGitHubAction,
+    serviceNames: names,
+    initGitRepository
+  }
+
+  await createRuntime(params, logger, projectDir, version)
+  if (runPackageManagerInstall) {
+    const spinner = ora('Installing dependencies...').start()
+    await execa(pkgManager, ['install'], { cwd: projectDir })
+    spinner.succeed()
+  }
 }
 
 export async function createRuntimeService ({ servicesDir, names, logger }) {
@@ -151,12 +170,19 @@ export async function createRuntimeService ({ servicesDir, names, logger }) {
 
   await chooseKind([], {
     skip: 'runtime',
+    serviceName: name,
     dir: serviceDir,
     logger,
     skipGitHubActions: true,
     skipPackageJson: true,
     skipGitignore: true,
-    port: '0'
+    skipGitRepository: true,
+    port: '0',
+    isRuntimeContext: true,
+    runtimeContext: {
+      servicesNames: names,
+      envPrefix: convertServiceNameToPrefix(name)
+    }
   })
 
   return true

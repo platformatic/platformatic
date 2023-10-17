@@ -1,0 +1,19 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v0.31.0/runtime",
+  "entrypoint": "echo",
+  "allowCycles": false,
+  "hotReload": true,
+  "autoload": {
+    "path": "services",
+    "exclude": [
+      "docs"
+    ]
+  },
+   "server": {
+    "hostname": "127.0.0.1",
+    "port": "14242",
+    "logger": {
+      "level": "info"
+    }
+  }
+}

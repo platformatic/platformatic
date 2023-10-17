@@ -6,11 +6,13 @@ const { join } = require('path')
 const { ConfigManager } = require('./manager')
 const { readFile } = require('fs/promises')
 const { getParser, analyze, upgrade } = require('@platformatic/metaconfig')
+const errors = require('./errors')
 
 class Store {
   #map = new Map()
   #cwd
   #require
+  #currentVersion
 
   constructor (opts) {
     opts = opts || {}
@@ -19,23 +21,25 @@ class Store {
     // createRequire accepts a filename, but it's not used,
     // so we pass a dummy file to make it happy
     this.#require = createRequire(join(this.#cwd, 'noop.js'))
+
+    this.#currentVersion = null
   }
 
   add (app) {
     if (typeof app !== 'function') {
-      throw new TypeError('app must be a function')
+      throw new errors.AppMustBeAFunctionError()
     }
 
     if (app.schema === undefined) {
-      throw new TypeError('schema must be defined')
+      throw new errors.SchemaMustBeDefinedError()
     }
 
     if (typeof app.schema.$id !== 'string' || app.schema.$id.length === 0) {
-      throw new TypeError('schema.$id must be a string with length > 0')
+      throw new errors.SchemaIdMustBeAStringError()
     }
 
     if (typeof app.configType !== 'string') {
-      throw new TypeError('configType must be a string')
+      throw new errors.ConfigTypeMustBeAStringError()
     }
     // TODO validate configType being unique
 
@@ -45,10 +49,13 @@ class Store {
       app.configManagerConfig.schema = app.schema
     }
 
+    this.#currentVersion = this.getVersionFromSchema(app.schema.$id)
     this.#map.set(app.schema.$id, app)
   }
 
-  async get ({ $schema, module }, { directory } = {}) {
+  async get ({ $schema, module, extends: _extends }, { directory } = {}) {
+    // We support both 'module' and 'extends'. Note that we have to rename the veriable, because "extends" is a reserved word
+    const extendedModule = _extends || module
     let app = this.#map.get($schema)
     let require = this.#require
 
@@ -57,22 +64,38 @@ class Store {
     }
 
     // try to load module
-    if (!app && module) {
+    if (!app && extendedModule) {
       try {
-        app = require(module)
+        app = require(extendedModule)
       } catch (err) {
         if (err.code === 'ERR_REQUIRE_ESM') {
-          const toLoad = require.resolve(module)
+          const toLoad = require.resolve(extendedModule)
           app = (await import('file://' + toLoad)).default
+        } else {
+          throw err
         }
       }
     }
 
     if (app === undefined) {
-      throw new Error(`no application found for ${$schema}`)
+      const attemptedToRunVersion = this.getVersionFromSchema($schema)
+
+      if (attemptedToRunVersion === null) {
+        throw new errors.AddAModulePropertyToTheConfigOrAddAKnownSchemaError()
+      } else {
+        throw new errors.VersionMismatchError(this.#currentVersion, attemptedToRunVersion)
+      }
     }
 
     return app
+  }
+
+  getVersionFromSchema (schema) {
+    const match = schema.match(/\/schemas\/(.*)\//)
+    if (match) {
+      return match[1]
+    }
+    return null
   }
 
   listTypes () {
@@ -134,7 +157,7 @@ class Store {
     })
 
     if (!found) {
-      const err = new Error('no config file found')
+      const err = new errors.NoConfigFileFoundError()
       err.filenames = filenames
       throw err
     }

@@ -1,7 +1,0 @@
-.container {
-  @apply flex flex-col gap-y-4;
-}
-
-.sidebar {
-  @apply w-60;
-}

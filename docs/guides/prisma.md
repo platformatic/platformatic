@@ -4,7 +4,7 @@
 
 Prisma can be used with JavaScript or TypeScript, and provides a level to type-safety that goes beyond the guarantees made by other ORMs in the TypeScript ecosystem. You can find an in-depth comparison of Prisma against other ORMs [here](https://www.prisma.io/docs/concepts/more/comparisons).
 
-If you want to get a quick overview of how Prisma works, you can follow the [Quickstart](https://www.prisma.io/docs/getting-started/quickstart) or read the [Introduction](https://www.prisma.io/docs/understand-prisma/introduction) in the Prisma documentation. 
+If you want to get a quick overview of how Prisma works, you can follow the [Quickstart](https://www.prisma.io/docs/getting-started/quickstart) or read the [Introduction](https://www.prisma.io/docs/understand-prisma/introduction) in the Prisma documentation.
 
 
 ## How Prisma can improve your workflow with Platformatic DB
@@ -21,7 +21,7 @@ You can learn more about why Prisma and Platformatic are a great match [this art
 ## Prerequisites
 
 To follow along with this guide, you will need to have the following:
-- [Node.js](https://nodejs.org/) >= v16.17.0 or >= v18.8.0
+- [Node.js](https://nodejs.org/) >= v18.8.0 or >= v20.6.0
 - [npm](https://docs.npmjs.com/cli/) v7 or later
 - A code editor, for example [Visual Studio Code](https://code.visualstudio.com/)
 - A Platformatic DB project
@@ -45,13 +45,13 @@ This command does the following:
 - Creates a new directory called `prisma` which contains a file called `schema.prisma`. This file defines your database connection and the Prisma Client generator.
 - Creates a `.env` file at the root of your project if it doesn't exist. This defines your environment variables (used for your database connection).
 
-You can specify your preferred database provider using the `--datasource-provider` flag, followed by the name of the provider: 
+You can specify your preferred database provider using the `--datasource-provider` flag, followed by the name of the provider:
 
 ```bash
 npx prisma init --datasource-provider postgresql # or sqlite, mysql, sqlserver, cockroachdb
 ```
 
-Prisma uses the `DATABASE_URL` environment variable to connect to your database to sync your database and Prisma schema. It also uses the variable to connect to your database to run your Prisma Client queries. 
+Prisma uses the `DATABASE_URL` environment variable to connect to your database to sync your database and Prisma schema. It also uses the variable to connect to your database to run your Prisma Client queries.
 
 If you're using PostgreSQL, MySQL, SQL Server, or CockroachDB, ensure that the `DATABASE_URL` used by Prisma is the same as the one used by Platformatic DB project. If you're using SQLite, refer to the [Using Prisma with SQLite](#using-prisma-with-sqlite) section.
 
@@ -218,11 +218,11 @@ Plugins allow you to add custom functionality to your REST and GraphQL API. Refe
 
 :::danger
 
-Prisma Client usage with Platformatic is currently only supported in Node v18 
+Prisma Client usage with Platformatic is currently only supported in Node v18
 
 :::
 
-You can use Prisma Client to interact with your database in your plugin. 
+You can use Prisma Client to interact with your database in your plugin.
 
 To get started, run the following command:
 
@@ -241,23 +241,23 @@ npm install @sabinthedev/fastify-prisma
 Register the plugin and extend your REST API:
 
 ```js
-// 1. 
+// 1.
 const prismaPlugin = require("@sabinthedev/fastify-prisma")
 
 module.exports = async (app) => {
   app.log.info('plugin loaded')
-  
-  // 2. 
+
+  // 2.
   app.register(prismaPlugin)
-  
-  /** 
+
+  /**
    * Plugin logic
    */
     // 3.
     app.put('/post/:id/views', async (req, reply) => {
-  
+
     const { id } = req.params
-    
+
     // 4.
     const post = await app.prisma.post.update({
       where: {
@@ -269,7 +269,7 @@ module.exports = async (app) => {
         }
       }
     })
-    
+
     // 5.
     return reply.send(post)
   })
@@ -321,7 +321,7 @@ module.exports = async (app) => {
 }
 ```
 
-Start the server: 
+Start the server:
 
 ```bash
 npx platformatic db start
@@ -335,7 +335,7 @@ You can also use the Prisma Client in your REST API endpoints.
 
 ### Using Prisma with SQLite
 
-Currently, Prisma doesn't resolve the file path of a SQLite database the same way as Platformatic does. 
+Currently, Prisma doesn't resolve the file path of a SQLite database the same way as Platformatic does.
 
 If your database is at the root of the project, create a new environment variable that Prisma will use called `PRISMA_DATABASE_URL`:
 
@@ -364,7 +364,7 @@ Foreign key names should use underscores, e.g. `author_id`, for Platformatic DB 
 Table names should be mapped to use the naming convention expected by Platformatic DB e.g. `@@map("recipes")` (the Prisma convention is Recipe, which corresponds with the model name).
 
 You can use [`prisma-case-format`](https://github.com/iiian/prisma-case-format) to enforce your own database conventions, i.e., pascal, camel, and snake casing.
- 
+
 ## Learn more
 
 If you would like to learn more about Prisma, be sure to check out the [Prisma docs](https://www.prisma.io/docs).

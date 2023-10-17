@@ -2,8 +2,10 @@
 const ConfigManager = require('@platformatic/config')
 const { platformaticRuntime } = require('./config')
 const { startWithConfig } = require('./start')
+const { buildServer: buildServerService } = require('@platformatic/service')
+const { loadConfig } = require('./load-config')
 
-async function buildServer (options = {}) {
+async function buildServerRuntime (options = {}) {
   if (!options.configManager) {
     // Instantiate a new config manager from the current options.
     const cm = new ConfigManager({
@@ -19,10 +21,26 @@ async function buildServer (options = {}) {
     }
   }
 
-  // The transformConfig() function can't be sent between threads.
-  delete options.configManager._transformConfig
-
   return startWithConfig(options.configManager)
+}
+
+async function buildServer (options) {
+  if (typeof options === 'string') {
+    const config = await loadConfig({}, ['-c', options])
+    options = config.configManager.current
+    options.configManager = config.configManager
+    options.app = config.app
+  }
+
+  const app = options.app
+
+  delete options.app
+
+  if (app === platformaticRuntime || !app) {
+    return buildServerRuntime(options)
+  }
+
+  return buildServerService(options, app)
 }
 
 module.exports = { buildServer }

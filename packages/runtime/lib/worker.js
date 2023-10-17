@@ -1,16 +1,32 @@
 'use strict'
 
 const inspector = require('node:inspector')
+const { register } = require('node:module')
 const { isatty } = require('node:tty')
-const { parentPort, workerData } = require('node:worker_threads')
+const {
+  MessageChannel,
+  parentPort,
+  workerData
+} = require('node:worker_threads')
 const undici = require('undici')
 const pino = require('pino')
 const RuntimeApi = require('./api')
 const { MessagePortWritable } = require('./message-port-writable')
-const loaderPort = globalThis.LOADER_PORT // Added by loader.mjs.
+let loaderPort
+
+if (typeof register === 'function' && workerData.config.loaderFile) {
+  const { port1, port2 } = new MessageChannel()
+  register(workerData.config.loaderFile, {
+    data: { port: port2 },
+    transferList: [port2]
+  })
+  loaderPort = port1
+} else if (globalThis.LOADER_PORT) {
+  loaderPort = globalThis.LOADER_PORT
+  delete globalThis.LOADER_PORT
+}
 
 globalThis.fetch = undici.fetch
-delete globalThis.LOADER_PORT
 
 let transport
 let destination

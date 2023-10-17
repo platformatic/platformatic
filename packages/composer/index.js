@@ -9,6 +9,7 @@ const serviceProxy = require('./lib/proxy')
 const openapi = require('./lib/openapi.js')
 const composerHook = require('./lib/composer-hook')
 const openapiGenerator = require('./lib/openapi-generator.js')
+const errors = require('./lib/errors')
 
 async function platformaticComposer (app) {
   const configManager = app.platformatic.configManager
@@ -101,7 +102,7 @@ async function watchApis (app, opts) {
         }, 'failed to reload server')
       }
     }
-  }, refreshTimeout)
+  }, refreshTimeout).unref()
 
   app.addHook('onClose', async () => {
     clearInterval(timeout)
@@ -112,5 +113,6 @@ module.exports = {
   schema,
   ConfigManager,
   platformaticComposer,
-  buildServer: buildComposerServer
+  buildServer: buildComposerServer,
+  errors
 }

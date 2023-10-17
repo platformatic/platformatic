@@ -1,7 +1,13 @@
 'use strict'
 
+const { tmpdir } = require('node:os')
+const { join } = require('node:path')
+const { rm } = require('node:fs/promises')
+const { randomUUID } = require('node:crypto')
 const why = require('why-is-node-running')
+const { createConnectionPool } = require('@platformatic/sql-mapper')
 const { Agent, setGlobalDispatcher } = require('undici')
+const { platformaticDB, ConfigManager } = require('..')
 
 // This file must be required/imported as the first file
 // in the test suite. It sets up the global environment
@@ -23,41 +29,61 @@ setGlobalDispatcher(agent)
 // See https://node-postgres.com/features/types/
 process.env.TZ = 'UTC'
 
-const connInfo = {}
+async function getConnectionInfo (dbType) {
+  dbType = dbType || process.env.DB || 'postgresql'
 
-if (!process.env.DB || process.env.DB === 'postgresql') {
-  connInfo.connectionString = 'postgres://postgres:postgres@127.0.0.1/postgres'
-  module.exports.isPg = true
-} else if (process.env.DB === 'mariadb') {
-  connInfo.connectionString = 'mysql://root@127.0.0.1:3307/graph'
-  connInfo.poolSize = 10
-  module.exports.isMysql = true
-} else if (process.env.DB === 'mysql') {
-  connInfo.connectionString = 'mysql://root@127.0.0.1/graph'
-  connInfo.poolSize = 10
-  module.exports.isMysql = true
-} else if (process.env.DB === 'mysql8') {
-  connInfo.connectionString = 'mysql://root@127.0.0.1:3308/graph'
-  connInfo.poolSize = 10
-  module.exports.isMysql = true
-} else if (process.env.DB === 'sqlite') {
-  connInfo.connectionString = 'sqlite://:memory:'
-  module.exports.isSQLite = true
+  if (dbType === 'sqlite') {
+    const pathToSqlite = join(tmpdir(), randomUUID())
+    const connectionString = `sqlite://${pathToSqlite}`
+
+    return {
+      connectionInfo: {
+        connectionString
+      },
+      async dropTestDB () {
+        await rm(pathToSqlite).catch(() => {})
+      }
+    }
+  }
+
+  let baseConnectionString = null
+  if (dbType === 'postgresql') {
+    baseConnectionString = 'postgres://postgres:postgres@127.0.0.1/'
+  } else if (dbType === 'mariadb') {
+    baseConnectionString = 'mysql://root@127.0.0.1:3307/'
+  } else if (dbType === 'mysql') {
+    baseConnectionString = 'mysql://root@127.0.0.1/'
+  } else if (dbType === 'mysql8') {
+    baseConnectionString = 'mysql://root@localhost:3308/'
+  }
+
+  const { db, sql } = await createConnectionPool({
+    log: {
+      debug: () => {},
+      info: () => {},
+      trace: () => {},
+      error: () => {}
+    },
+    connectionString: baseConnectionString,
+    poolSize: 1
+  })
+
+  const connectionInfo = {}
+  const testDBName = 'test_db_' + randomUUID().replace(/-/g, '')
+
+  await db.query(sql`CREATE DATABASE ${sql.ident(testDBName)};`)
+  connectionInfo.connectionString = baseConnectionString + testDBName
+
+  return {
+    connectionInfo,
+    async dropTestDB () {
+      await db.query(sql`DROP DATABASE ${sql.ident(testDBName)};`)
+      await db.dispose()
+    }
+  }
 }
 
-module.exports.connInfo = connInfo
-
-module.exports.clear = async function (db, sql) {
-  await db.query(sql`DROP TABLE IF EXISTS versions;`)
-  await db.query(sql`DROP TABLE IF EXISTS graphs;`)
-  await db.query(sql`DROP TABLE IF EXISTS users;`)
-  await db.query(sql`DROP TABLE IF EXISTS pages;`)
-  await db.query(sql`DROP TABLE IF EXISTS posts;`)
-  await db.query(sql`DROP TABLE IF EXISTS owners;`)
-  await db.query(sql`DROP TABLE IF EXISTS categories;`)
-  await db.query(sql`DROP TABLE IF EXISTS plt_db;`)
-  await db.query(sql`DROP TABLE IF EXISTS generated_test;`)
-}
+module.exports.getConnectionInfo = getConnectionInfo
 
 async function createBasicPages (db, sql) {
   if (module.exports.isSQLite) {
@@ -74,34 +100,25 @@ async function createBasicPages (db, sql) {
 }
 module.exports.createBasicPages = createBasicPages
 
-async function createAndPopulateUsersTable (db, sql) {
-  await db.query(sql`
-      CREATE TABLE users (
-        "id" int4 NOT NULL PRIMARY KEY,
-        "name" varchar(10),
-        "age" numeric
-    );
-  `)
-  await db.query(sql`
-    INSERT INTO users ("id", "name", "age") VALUES
-    (1, 'Leonardo', 40),
-    (2, 'Matteo', 37);
-  `)
-}
-module.exports.createAndPopulateUsersTable = createAndPopulateUsersTable
-
-async function dropUsersTable (db, sql) {
-  await db.query(sql`DROP TABLE IF EXISTS users;`)
-}
-module.exports.dropUsersTable = dropUsersTable
-
-function buildConfig (options) {
+async function buildConfigManager (source, dirname) {
   const base = {
     server: {},
     db: {}
   }
+  source = Object.assign(base, source)
 
-  return Object.assign(base, options)
+  if (!dirname) {
+    dirname = join(__dirname, 'fixtures')
+  }
+
+  const configManager = new ConfigManager({
+    ...platformaticDB.configManagerConfig,
+    source,
+    dirname
+  })
+
+  await configManager.parseAndValidate()
+  return configManager
 }
 
-module.exports.buildConfig = buildConfig
+module.exports.buildConfigManager = buildConfigManager

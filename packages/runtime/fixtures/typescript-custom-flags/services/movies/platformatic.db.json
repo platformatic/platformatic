@@ -26,7 +26,7 @@
       "plugin.ts"
     ],
     "typescript": {
-      "flags": ["-b"]
+      "flags": ["--outDir", "custom"]
     }
   },
   "types": {

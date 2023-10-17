@@ -3,10 +3,6 @@
 Platformatic Runtime is an environment for running multiple Platformatic
 microservices as a single monolithic deployment unit.
 
-:::info
-Platformatic Runtime is currently in [public beta](#public-beta).
-:::
-
 ## Features
 
 - Command-line interface: [`platformatic runtime`](/reference/cli.md#runtime)
@@ -14,10 +10,7 @@ Platformatic Runtime is currently in [public beta](#public-beta).
 - Support for monorepo-based applications.
 - [Interservice communication](#interservice-communication) using private message passing.
 
-## Public beta
-
-Platformatic Runtime is in public beta. You can use it in production, but it's quite
-likely that you'll encounter significant bugs.
+## Issues
 
 If you run into a bug or have a suggestion for improvement, please
 [raise an issue on GitHub](https://github.com/platformatic/platformatic/issues/new).
@@ -47,6 +40,15 @@ Runtime project. For more details on the configuration file, see the
 
 Platformatic Runtime streamlines the compilation of all services built on TypeScript with the command
 `plt runtime compile`. The TypeScript compiler (`tsc`) is required to be installed separately.
+
+## Platformatic Runtime context
+
+Every Platformatic Runtime application can be run as a standalone application
+or as a Platformatic Runtime service. In a second case, you can use Platformatic
+Runtime features to archive some compile and runtime optimizations. For example,
+see [Interservice communication](#interservice-communication). Looking through the
+Platformatic documentation, you can find some features that are available only
+if you run your application as a Platformatic Runtime service.
 
 ## Interservice communication
 

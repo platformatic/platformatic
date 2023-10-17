@@ -6,6 +6,7 @@ import * as desm from 'desm'
 import { execa } from 'execa'
 import { cp, writeFile, readFile } from 'node:fs/promises'
 import split from 'split2'
+import { once } from 'node:events'
 
 test('openapi client generation (javascript) via the runtime', async ({ teardown, comment, same, match }) => {
   const dir = await moveToTmpdir(teardown)
@@ -32,6 +33,12 @@ PORT=3000
 PLT_SERVER_LOGGER_LEVEL=info
 `)
 
+  await writeFile(join(dir, 'services', 'sample-service', '.env'), `
+PLT_SERVER_HOSTNAME=127.0.0.1
+PORT=3005
+PLT_SERVER_LOGGER_LEVEL=info
+`)
+
   process.chdir(join(dir, 'services', 'languid-nobleman'))
 
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
@@ -50,7 +57,7 @@ PLT_SERVER_LOGGER_LEVEL=info
 
 module.exports = async function (app, opts) {
   app.post('/', async (request, reply) => {
-    const res = await app.movies.createMovie({ title: 'foo' })
+    const res = await request.movies.createMovie({ title: 'foo' })
     return res
   })
 }
@@ -109,7 +116,11 @@ PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3000
 PLT_SERVER_LOGGER_LEVEL=info
 `)
-
+  await writeFile(join(dir, 'services', 'sample-service', '.env'), `
+PLT_SERVER_HOSTNAME=127.0.0.1
+PORT=3005
+PLT_SERVER_LOGGER_LEVEL=info
+`)
   process.chdir(join(dir, 'services', 'languid-nobleman'))
 
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
@@ -125,4 +136,68 @@ PLT_SERVER_LOGGER_LEVEL=info
       serviceId: 'somber-chariot'
     }]
   })
+})
+
+test('error if a service does not have openapi enabled', async ({ teardown, comment, match, fail }) => {
+  const dir = await moveToTmpdir(teardown)
+  comment(`working in ${dir}`)
+
+  await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
+
+  await writeFile(join(dir, 'services', 'somber-chariot', '.env'), `
+PLT_SERVER_HOSTNAME=127.0.0.1
+PORT=3003
+PLT_SERVER_LOGGER_LEVEL=info
+DATABASE_URL=sqlite://./db.sqlite
+`)
+
+  await writeFile(join(dir, 'services', 'languid-nobleman', '.env'), `
+PLT_SERVER_HOSTNAME=127.0.0.1
+PORT=3004
+PLT_SERVER_LOGGER_LEVEL=info
+`)
+
+  await writeFile(join(dir, 'services', 'composer', '.env'), `
+PLT_SERVER_HOSTNAME=127.0.0.1
+PORT=3000
+PLT_SERVER_LOGGER_LEVEL=info
+`)
+
+  await writeFile(join(dir, 'services', 'sample-service', '.env'), `
+PLT_SERVER_HOSTNAME=127.0.0.1
+PORT=3005
+PLT_SERVER_LOGGER_LEVEL=info
+`)
+
+  process.chdir(join(dir))
+
+  try {
+    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'test-client', '--runtime', 'sample-service'])
+    fail()
+  } catch (err) {
+    const split = err.message.split('\n')
+    const lastMessage = split.pop()
+    match(lastMessage, 'Could not find a valid OpenAPI or GraphQL schema at http://sample-service.plt.local')
+  }
+})
+
+test('no platformatic.runtime.json', async ({ teardown, comment, match, plan, equal }) => {
+  plan(2)
+  const dir = await moveToTmpdir(teardown)
+  comment(`working in ${dir}`)
+
+  process.chdir(dir)
+
+  const app = execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
+
+  const onExit = once(app, 'exit')
+
+  const stream = app.stdout.pipe(split())
+
+  for await (const line of stream) {
+    match(line, 'Could not find a platformatic.runtime.json file in this or any parent directory.')
+  }
+
+  const [code] = await onExit
+  equal(code, 1)
 })

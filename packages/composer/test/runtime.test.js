@@ -1,7 +1,8 @@
 'use strict'
 
-const { join } = require('path')
-const { test } = require('tap')
+const assert = require('assert/strict')
+const { test } = require('node:test')
+const { join } = require('node:path')
 
 const { createComposer } = require('./helper')
 
@@ -28,11 +29,11 @@ test('should resolve service ids to the origin', async (t) => {
   )
 
   const services = composer.platformatic.config.composer.services
-  t.equal(services.length, 2)
+  assert.equal(services.length, 2)
 
-  t.equal(services[0].id, 'service1')
-  t.equal(services[0].origin, 'http://service1.plt.local')
+  assert.equal(services[0].id, 'service1')
+  assert.equal(services[0].origin, 'http://service1.plt.local')
 
-  t.equal(services[1].id, 'service2')
-  t.equal(services[1].origin, 'http://service2.plt.local')
+  assert.equal(services[1].id, 'service2')
+  assert.equal(services[1].origin, 'http://service2.plt.local')
 })

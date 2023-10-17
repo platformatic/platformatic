@@ -106,8 +106,6 @@ dist
 packages/db/fixtures/sqlite/db
 packages/db/test/fixtures/sqlite/db
 
-# packages/dashboard specific rules
-packages/db-dashboard/build/
 playwright-report
 .DS_Store
 .swp
@@ -119,3 +117,10 @@ signatures
 demo
 packages/*/test
 packages/*/fixtures
+
+.git 
+
+packages/**/coverage
+
+# nyc test coverage
+packages/**/.nyc_output

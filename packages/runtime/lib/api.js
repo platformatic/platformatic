@@ -3,6 +3,7 @@
 const FastifyUndiciDispatcher = require('fastify-undici-dispatcher')
 const { Agent, setGlobalDispatcher } = require('undici')
 const { PlatformaticApp } = require('./app')
+const errors = require('./errors')
 
 class RuntimeApi {
   #services
@@ -15,7 +16,13 @@ class RuntimeApi {
     for (let i = 0; i < config.services.length; ++i) {
       const service = config.services[i]
       const serviceTelemetryConfig = telemetryConfig ? { ...telemetryConfig, serviceName: `${telemetryConfig.serviceName}-${service.id}` } : null
-      const app = new PlatformaticApp(service, loaderPort, logger, serviceTelemetryConfig)
+
+      // If the service is an entrypoint and runtime server config is defined, use it.
+      let serverConfig = null
+      if (config.server && service.entrypoint) {
+        serverConfig = config.server
+      }
+      const app = new PlatformaticApp(service, loaderPort, logger, serviceTelemetryConfig, serverConfig)
 
       this.#services.set(service.id, app)
     }
@@ -96,7 +103,7 @@ class RuntimeApi {
         return this.#inject(params)
       /* c8 ignore next 2 */
       default:
-        throw new Error(`Unknown Runtime API command: '${command}'`)
+        throw new errors.UnknownRuntimeAPICommandError(command)
     }
   }
 
@@ -160,7 +167,7 @@ class RuntimeApi {
     const service = this.#services.get(id)
 
     if (!service) {
-      throw new Error(`Service with id '${id}' not found`)
+      throw new errors.ServiceNotFoundError(id)
     }
 
     return service
@@ -179,7 +186,7 @@ class RuntimeApi {
 
     const { config } = service
     if (!config) {
-      throw new Error(`Service with id '${id}' is not started`)
+      throw new errors.ServiceNotStartedError(id)
     }
 
     return config.configManager.current
@@ -189,7 +196,7 @@ class RuntimeApi {
     const service = this.#getServiceById(id)
 
     if (!service.config) {
-      throw new Error(`Service with id '${id}' is not started`)
+      throw new errors.ServiceNotStartedError(id)
     }
 
     if (typeof service.server.swagger !== 'function') {
@@ -197,10 +204,11 @@ class RuntimeApi {
     }
 
     try {
+      await service.server.ready()
       const openapiSchema = service.server.swagger()
       return openapiSchema
     } catch (err) {
-      throw new Error(`Failed to retrieve OpenAPI schema for service with id '${id}': ${err.message}`)
+      throw new errors.FailedToRetrieveOpenAPISchemaError(id, err.message)
     }
   }
 
@@ -219,7 +227,7 @@ class RuntimeApi {
 
     const serviceStatus = service.getStatus()
     if (serviceStatus !== 'started') {
-      throw new Error(`Service with id '${id}' is not started`)
+      throw new errors.ServiceNotStartedError(id)
     }
 
     const res = await service.server.inject(injectParams)

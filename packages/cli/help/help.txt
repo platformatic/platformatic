@@ -9,4 +9,3 @@ Welcome to Platformatic. Available commands are:
 * `deploy` - deploy a Platformatic application to the cloud.
 * `runtime` - start Platformatic Runtime; type `platformatic runtime help` to know more.
 * `start` - start a Platformatic application.
-* `frontend`- create frontend code to consume the REST APIs.

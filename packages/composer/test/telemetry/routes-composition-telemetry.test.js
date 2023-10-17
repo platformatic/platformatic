@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const assert = require('assert/strict')
+const { test } = require('node:test')
 const { request } = require('undici')
 const {
   createComposer,
@@ -43,17 +44,17 @@ test('should compose openapi with prefixes', async (t) => {
     }
   })
   const statusCode = res.statusCode
-  t.equal(statusCode, 200)
+  assert.equal(statusCode, 200)
 
   // Check that the client span is correctly set
   const { exporters } = composer.openTelemetry
   const finishedSpans = exporters[0].getFinishedSpans()
-  t.equal(finishedSpans.length, 2)
+  assert.equal(finishedSpans.length, 2)
   const proxyCallSpan = finishedSpans[0]
   const composerCallSpan = finishedSpans[1]
-  t.equal(proxyCallSpan.name, `GET ${api1Origin}/api1/users`)
-  t.equal(proxyCallSpan.attributes['url.full'], `${api1Origin}/api1/users`)
-  t.equal(proxyCallSpan.attributes['http.response.status_code'], 200)
-  t.equal(proxyCallSpan.parentSpanId, composerCallSpan.spanContext().spanId)
-  t.equal(proxyCallSpan.traceId, composerCallSpan.traceId)
+  assert.equal(proxyCallSpan.name, `GET ${api1Origin}/api1/users`)
+  assert.equal(proxyCallSpan.attributes['url.full'], `${api1Origin}/api1/users`)
+  assert.equal(proxyCallSpan.attributes['http.response.status_code'], 200)
+  assert.equal(proxyCallSpan.parentSpanId, composerCallSpan.spanContext().spanId)
+  assert.equal(proxyCallSpan.traceId, composerCallSpan.traceId)
 })

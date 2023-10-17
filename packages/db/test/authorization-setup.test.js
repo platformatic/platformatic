@@ -1,29 +1,34 @@
 'use strict'
 
-const { buildConfig, connInfo, clear, createBasicPages } = require('./helper')
-const { test } = require('tap')
-const { buildServer } = require('..')
+const assert = require('node:assert/strict')
+const { test } = require('node:test')
 const { request } = require('undici')
+const { buildServer } = require('..')
+const { buildConfigManager, getConnectionInfo, createBasicPages } = require('./helper')
 
-test('configure authorizations works even with empty object', async ({ teardown, equal, pass, same }) => {
-  const app = await buildServer(buildConfig({
+test('configure authorizations works even with empty object', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
+
+  const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0
     },
     authorization: {},
     db: {
-      ...connInfo,
+      ...connectionInfo,
       async onDatabaseLoad (db, sql) {
-        pass('onDatabaseLoad called')
-        await clear(db, sql)
         await createBasicPages(db, sql)
       }
     }
-  }))
+  }
 
-  teardown(async () => {
+  const configManager = await buildConfigManager(config)
+  const app = await buildServer({ configManager })
+
+  t.after(async () => {
     await app.close()
+    await dropTestDB()
   })
   await app.start()
 
@@ -46,9 +51,9 @@ test('configure authorizations works even with empty object', async ({ teardown,
         `
       })
     })
-    equal(res.statusCode, 200, 'savePage status code')
+    assert.equal(res.statusCode, 200, 'savePage status code')
 
-    same(await res.body.json(), {
+    assert.deepEqual(await res.body.json(), {
       data: {
         savePage: null
       },

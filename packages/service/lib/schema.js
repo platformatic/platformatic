@@ -328,8 +328,7 @@ const server = {
     },
     cors
   },
-  additionalProperties: false,
-  required: ['hostname', 'port']
+  additionalProperties: false
 }
 
 const watch = {
@@ -428,9 +427,6 @@ const plugins = {
           }
         }]
       }
-    },
-    stopTimeout: {
-      type: 'integer'
     },
     typescript: {
       anyOf: [{
@@ -638,7 +634,6 @@ const platformaticServiceSchema = {
     clients
   },
   additionalProperties: false,
-  required: ['server'],
   $defs: openApiDefs
 }
 

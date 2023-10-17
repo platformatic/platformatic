@@ -1,10 +1,12 @@
+'use strict'
+
 import { test } from 'tap'
-import { randomBetween, sleep, validatePath, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions, findRuntimeConfigFile, findComposerConfigFile } from '../src/utils.mjs'
-import { mkdtempSync, rmSync, writeFileSync } from 'fs'
-import { tmpdir, platform } from 'os'
+import { randomBetween, sleep, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions, findRuntimeConfigFile, findComposerConfigFile, convertServiceNameToPrefix, addPrefixToEnv, safeMkdir } from '../src/utils.mjs'
+import { tmpdir } from 'os'
 import { join } from 'path'
 import esmock from 'esmock'
 import semver from 'semver'
+import { mkdir, mkdtemp, rm, writeFile } from 'fs/promises'
 
 test('getUsername from git', async ({ end, equal }) => {
   const name = 'lukeskywalker'
@@ -103,32 +105,6 @@ test('sleep', async ({ equal }) => {
   equal(end - start >= 100, true)
 })
 
-test('validatePath', async ({ end, equal, rejects, ok }) => {
-  {
-    // new folder
-    const valid = await validatePath('new-project')
-    ok(valid)
-  }
-
-  {
-    // existing folder
-    const valid = await validatePath('test')
-    ok(valid)
-  }
-
-  {
-    // current folder
-    const valid = await validatePath('.')
-    ok(valid)
-  }
-
-  if (platform().indexOf('win') < 0) {
-    // not writeable folder
-    const valid = await validatePath('/')
-    ok(!valid)
-  }
-})
-
 test('getDependencyVersion', async ({ equal }) => {
   const fastifyVersion = await getDependencyVersion('fastify')
   // We cannot assert the exact version because it changes
@@ -137,57 +113,57 @@ test('getDependencyVersion', async ({ equal }) => {
 })
 
 test('findDBConfigFile', async ({ end, equal, mock }) => {
-  const tmpDir1 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
-  const tmpDir2 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
+  const tmpDir1 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
+  const tmpDir2 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
   const config = join(tmpDir1, 'platformatic.db.yml')
-  writeFileSync(config, 'TEST')
+  await writeFile(config, 'TEST')
   equal(await findDBConfigFile(tmpDir1), 'platformatic.db.yml')
   equal(await findDBConfigFile(tmpDir2), undefined)
-  rmSync(tmpDir1, { recursive: true, force: true })
-  rmSync(tmpDir2, { recursive: true, force: true })
+  await rm(tmpDir1, { recursive: true, force: true })
+  await rm(tmpDir2, { recursive: true, force: true })
 })
 
 test('findServiceConfigFile', async ({ end, equal, mock }) => {
-  const tmpDir1 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
-  const tmpDir2 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
+  const tmpDir1 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
+  const tmpDir2 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
   const config = join(tmpDir1, 'platformatic.service.toml')
-  writeFileSync(config, 'TEST')
+  await writeFile(config, 'TEST')
   equal(await findServiceConfigFile(tmpDir1), 'platformatic.service.toml')
   equal(await findServiceConfigFile(tmpDir2), undefined)
-  rmSync(tmpDir1, { recursive: true, force: true })
-  rmSync(tmpDir2, { recursive: true, force: true })
+  await rm(tmpDir1, { recursive: true, force: true })
+  await rm(tmpDir2, { recursive: true, force: true })
 })
 
 test('findComposerConfigFile', async ({ end, equal, mock }) => {
-  const tmpDir1 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
-  const tmpDir2 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
+  const tmpDir1 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
+  const tmpDir2 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
   const config = join(tmpDir1, 'platformatic.composer.yml')
-  writeFileSync(config, 'TEST')
+  await writeFile(config, 'TEST')
   equal(await findComposerConfigFile(tmpDir1), 'platformatic.composer.yml')
   equal(await findComposerConfigFile(tmpDir2), undefined)
-  rmSync(tmpDir1, { recursive: true, force: true })
-  rmSync(tmpDir2, { recursive: true, force: true })
+  await rm(tmpDir1, { recursive: true, force: true })
+  await rm(tmpDir2, { recursive: true, force: true })
 })
 
 test('findRuntimeConfigFile', async ({ end, equal, mock }) => {
-  const tmpDir1 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
-  const tmpDir2 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
+  const tmpDir1 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
+  const tmpDir2 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
   const config = join(tmpDir1, 'platformatic.runtime.yml')
-  writeFileSync(config, 'TEST')
+  await writeFile(config, 'TEST')
   equal(await findRuntimeConfigFile(tmpDir1), 'platformatic.runtime.yml')
   equal(await findRuntimeConfigFile(tmpDir2), undefined)
-  rmSync(tmpDir1, { recursive: true, force: true })
-  rmSync(tmpDir2, { recursive: true, force: true })
+  await rm(tmpDir1, { recursive: true, force: true })
+  await rm(tmpDir2, { recursive: true, force: true })
 })
 
 test('isFileAccessible', async ({ end, equal, mock }) => {
-  const tmpDir1 = mkdtempSync(join(tmpdir(), 'test-create-platformatic-'))
+  const tmpDir1 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
   const config = join(tmpDir1, 'platformatic.db.yml')
-  writeFileSync(config, 'TEST')
+  await writeFile(config, 'TEST')
   equal(await isFileAccessible(config), true)
   const config2 = join(tmpDir1, 'platformatic2.db.yml')
   equal(await isFileAccessible(config2), false)
-  rmSync(tmpDir1, { recursive: true, force: true })
+  await rm(tmpDir1, { recursive: true, force: true })
 })
 
 test('minimumSupportedNodeVersions', async ({ equal, not }) => {
@@ -215,27 +191,80 @@ test('isCurrentVersionSupported', async ({ equal }) => {
     equal(supported, true)
   }
 
-  // node version 19 test, to check greater and lesser major version
-  const { major: major19, minor: minor19, patch: patch19 } = semver.minVersion(minimumSupportedNodeVersions[1])
+  // node version 20 test, to check greater and lesser major version
   {
     // v18.0.0 is not supported
-    const nodeVersion = `${major19 - 1}.${minor19}.${patch19}`
+    const nodeVersion = '18.0.0'
     const supported = isCurrentVersionSupported(nodeVersion)
     equal(supported, false)
   }
   {
-    // v20 is not supported
-    const nodeVersion = `${major19 + 1}.${minor19}.${patch19}`
+    // v18.8.0 is supported
+    const nodeVersion = '18.8.0'
     const supported = isCurrentVersionSupported(nodeVersion)
-    equal(supported, false)
-  }
-  {
-    // v19 supported
-    const supported = isCurrentVersionSupported(`${major19}.${minor19 + 1}.${patch19}`)
     equal(supported, true)
+  }
+  {
+    // v20.5.1 is not supported
+    const supported = isCurrentVersionSupported('20.5.1')
+    equal(supported, false)
+  }
+  {
+    // v20.6.0 is supported
+    const nodeVersion = '20.6.0'
+    const supported = isCurrentVersionSupported(nodeVersion)
+    equal(supported, true)
+  }
+  {
+    // v19.0.0 is not supported
+    const supported = isCurrentVersionSupported('19.0.0')
+    equal(supported, false)
+  }
+  {
+    // v19.9.0 is not supported
+    const supported = isCurrentVersionSupported('19.9.0')
+    equal(supported, false)
   }
   for (const version of minimumSupportedNodeVersions) {
     const supported = isCurrentVersionSupported(version)
     equal(supported, true)
   }
+})
+
+test('should convert service name to env prefix', async (t) => {
+  const expectations = {
+    'my-service': 'MY_SERVICE',
+    a: 'A',
+    MY_SERVICE: 'MY_SERVICE',
+    asderas123: 'ASDERAS123'
+  }
+
+  Object.entries(expectations).forEach((exp) => {
+    const converted = convertServiceNameToPrefix(exp[0])
+    t.equal(exp[1], converted)
+  })
+})
+
+test('should add prefix to a key/value object', async (t) => {
+  const prefix = 'MY_PREFIX'
+  const env = {
+    PLT_HOSTNAME: 'myhost',
+    PORT: '3042'
+  }
+  t.same(addPrefixToEnv(env, prefix), {
+    MY_PREFIX_PLT_HOSTNAME: 'myhost',
+    MY_PREFIX_PORT: '3042'
+  })
+})
+
+test('safeMkdir should not throw if dir already exists', async (t) => {
+  const tempDirectory = join(tmpdir(), 'safeMkdirTest')
+  t.teardown(async () => {
+    await rm(tempDirectory, { recursive: true })
+  })
+  await mkdir(tempDirectory)
+
+  t.doesNotThrow(async () => {
+    await safeMkdir(tempDirectory)
+  })
 })

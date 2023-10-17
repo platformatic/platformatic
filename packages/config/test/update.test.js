@@ -1,12 +1,12 @@
 'use strict'
 
-const { test } = require('tap')
+const assert = require('node:assert/strict')
+const { test } = require('node:test')
+const { readFile, unlink } = require('node:fs/promises')
 const ConfigManager = require('..')
 const { saveConfigToFile } = require('./helper')
-const { readFile, unlink } = require('fs/promises')
 
-test('should update valid config without updating the file', async ({ same, teardown, pass, plan }) => {
-  plan(5)
+test('should update valid config without updating the file', async (t) => {
   const config = {
     name: 'Platformatic',
     props: {
@@ -28,17 +28,19 @@ test('should update valid config without updating the file', async ({ same, tear
   }
 
   const file = await saveConfigToFile(config, 'to-replace.json')
-  teardown(async () => await unlink(file))
+  t.after(async () => await unlink(file))
   const cm = new ConfigManager({
     source: file,
     schema,
     env: { PLT_FOO: 'foobar' }
   })
+  let isConfigTransformed = false
   cm._transformConfig = (config) => {
-    pass('transform config')
+    isConfigTransformed = true
   }
+  let isConfigUpdated = false
   cm.on('update', () => {
-    pass('new config available')
+    isConfigUpdated = true
   })
   await cm.parse()
   const original = cm.current
@@ -50,12 +52,15 @@ test('should update valid config without updating the file', async ({ same, tear
     }
   }
   await cm.update(newConfig)
-  same(cm.current, newConfig)
+  assert.deepEqual(cm.current, newConfig)
   const configData = JSON.parse(await readFile(file))
-  same(configData, original)
+  assert.deepEqual(configData, original)
+
+  assert.equal(isConfigTransformed, true)
+  assert.equal(isConfigUpdated, true)
 })
 
-test('should not update with invalid config', async ({ same, teardown }) => {
+test('should not update with invalid config', async (t) => {
   const config = {
     name: 'Platformatic',
     props: {
@@ -77,7 +82,7 @@ test('should not update with invalid config', async ({ same, teardown }) => {
   }
 
   const file = await saveConfigToFile(config, 'do-not-update.json')
-  teardown(async () => await unlink(file))
+  t.after(async () => await unlink(file))
   const cm = new ConfigManager({
     source: file,
     schema,
@@ -92,8 +97,8 @@ test('should not update with invalid config', async ({ same, teardown }) => {
     }
   }
   const updateRes = await cm.update(newConfig)
-  same(updateRes, false)
-  same(cm.current, config)
+  assert.deepEqual(updateRes, false)
+  assert.deepEqual(cm.current, config)
   const configData = JSON.parse(await readFile(file))
-  same(configData, config)
+  assert.deepEqual(configData, config)
 })
