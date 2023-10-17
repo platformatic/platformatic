@@ -1,5 +1,10 @@
 {
   "$schema": "https://platformatic.dev/schemas/v1.3.0/service",
+  "server": {
+    "logger": {
+      "level": "warn"
+    }
+  },
   "plugins": {
     "paths": [{
       "path": "plugin.js",

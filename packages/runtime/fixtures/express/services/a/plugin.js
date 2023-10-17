@@ -14,7 +14,6 @@ module.exports = async function (app) {
   router.get('/hello', (req, res) => {
     res.status(200)
     res.json({ hello: 'world' })
-    process._rawDebug('hello')
   })
 
   await app.register(fastifyExpress)
