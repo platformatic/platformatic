@@ -63,6 +63,10 @@ function shouldRegister (opts, configKey) {
     return false
   }
 
+  if (config === 'false' || opts[configKey][enabledKey] === 'false') {
+    return false
+  }
+
   // For everything else, register away!
   // {
   //  "graphql": {},

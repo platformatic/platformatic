@@ -74,7 +74,7 @@ test('graphql is available', async ({ equal, same, teardown }) => {
   }, 'savePage response')
 })
 
-test('graphql is available via the enabled flag', async ({ equal, same, teardown }) => {
+test('graphql is available via the boolean enabled flag', async ({ equal, same, teardown }) => {
   const app = Fastify({
     pluginTimeout: 30000
   })
@@ -83,6 +83,44 @@ test('graphql is available via the enabled flag', async ({ equal, same, teardown
     onDatabaseLoad,
     graphql: {
       enabled: true
+    }
+  })
+  teardown(() => app.close())
+
+  const res = await app.inject({
+    method: 'POST',
+    url: '/graphql',
+    body: {
+      query: `
+          mutation {
+            savePage(input: { title: "Hello" }) {
+              id
+              title
+            }
+          }
+        `
+    }
+  })
+  equal(res.statusCode, 200, 'savePage status code')
+  same(res.json(), {
+    data: {
+      savePage: {
+        id: 1,
+        title: 'Hello'
+      }
+    }
+  }, 'savePage response')
+})
+
+test('graphql is available via the string enabled flag', async ({ equal, same, teardown }) => {
+  const app = Fastify({
+    pluginTimeout: 30000
+  })
+  app.register(core, {
+    ...connInfo,
+    onDatabaseLoad,
+    graphql: {
+      enabled: 'true'
     }
   })
   teardown(() => app.close())
@@ -160,7 +198,7 @@ test('graphql can be disabled', async ({ equal, teardown }) => {
   equal(res.statusCode, 404, '/graphql not found')
 })
 
-test('graphql can be disabled via enabled flag', async ({ equal, teardown }) => {
+test('graphql can be disabled via boolean enabled flag', async ({ equal, teardown }) => {
   const app = Fastify({
     pluginTimeout: 30000
   })
@@ -169,6 +207,36 @@ test('graphql can be disabled via enabled flag', async ({ equal, teardown }) => 
     onDatabaseLoad,
     graphql: {
       enabled: false
+    }
+  })
+  teardown(() => app.close())
+
+  const res = await app.inject({
+    method: 'POST',
+    url: '/graphql',
+    body: {
+      query: `
+          mutation {
+            savePage(input: { title: "Hello" }) {
+              id
+              title
+            }
+          }
+        `
+    }
+  })
+  equal(res.statusCode, 404, '/graphql not found')
+})
+
+test('graphql can be disabled via string enabled flag', async ({ equal, teardown }) => {
+  const app = Fastify({
+    pluginTimeout: 30000
+  })
+  app.register(core, {
+    ...connInfo,
+    onDatabaseLoad,
+    graphql: {
+      enabled: 'false'
     }
   })
   teardown(() => app.close())
