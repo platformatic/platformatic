@@ -97,7 +97,10 @@ const db = {
             resolvePath: true
           },
           enabled: {
-            type: 'boolean'
+            anyOf: [
+              { type: 'boolean' },
+              { type: 'string' }
+            ]
           }
         }
       }]
@@ -123,7 +126,10 @@ const db = {
             }
           },
           enabled: {
-            type: 'boolean'
+            anyOf: [
+              { type: 'boolean' },
+              { type: 'string' }
+            ]
           }
         },
         additionalProperties: false
