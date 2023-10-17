@@ -165,7 +165,10 @@ const db = {
             type: 'string'
           },
           enabled: {
-            type: 'boolean'
+            anyOf: [
+              { type: 'boolean' },
+              { type: 'string' }
+            ]
           }
         },
         additionalProperties: false
