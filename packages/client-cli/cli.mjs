@@ -32,7 +32,7 @@ function parseFile (content) {
   }
   return parsed
 }
-async function isFileAccessible (filename) {
+export async function isFileAccessible (filename) {
   try {
     await access(filename)
     return true
@@ -156,7 +156,6 @@ async function downloadAndProcess (options) {
     folder,
     logger,
     runtime,
-    generateImplementation,
     typesOnly,
     fullRequest,
     fullResponse,
@@ -165,12 +164,19 @@ async function downloadAndProcess (options) {
     isFrontend,
     language
   } = options
+
+  let generateImplementation = options.generateImplementation
   let config = options.config
   if (!config) {
     const configFilesAccessibility = await Promise.all(configFileNames.map((fileName) => isFileAccessible(fileName)))
     config = configFileNames.find((value, index) => configFilesAccessibility[index])
   }
 
+  if (config) {
+    // if config file is found, no implementation is needed because from the 'clients' section
+    // of the config file, Platformatic will register automatically the client
+    generateImplementation = false
+  }
   let found = false
   const toTry = []
   if (url.startsWith('http')) {

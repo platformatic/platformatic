@@ -13,6 +13,7 @@ test('autostart', async () => {
   assert.strictEqual(res.statusCode, 200)
   assert.deepStrictEqual(await res.body.json(), { hello: 'hello123' })
   child.kill('SIGINT')
+  await child.catch(() => {})
 })
 
 test('start command', async () => {
@@ -23,6 +24,7 @@ test('start command', async () => {
   assert.strictEqual(res.statusCode, 200)
   assert.deepStrictEqual(await res.body.json(), { hello: 'hello123' })
   child.kill('SIGINT')
+  await child.catch(() => {})
 })
 
 test('handles startup errors', async (t) => {
@@ -90,6 +92,8 @@ test('does not start if node inspector flags are provided', async (t) => {
   }
 
   assert(found)
+
+  await child.catch(() => {})
 })
 
 test('starts the inspector', async (t) => {
@@ -118,6 +122,7 @@ test('starts the inspector', async (t) => {
 
   assert(found)
   child.kill('SIGINT')
+  await child.catch(() => {})
 })
 
 test('stackable', async () => {
@@ -128,6 +133,7 @@ test('stackable', async () => {
   assert.strictEqual(res.statusCode, 200)
   assert.deepStrictEqual(await res.body.text(), 'Hello World')
   child.kill('SIGINT')
+  await child.catch(() => {})
 })
 
 test('use runtime server', async ({ equal, same, match, teardown }) => {

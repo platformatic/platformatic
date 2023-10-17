@@ -1,6 +1,6 @@
 {
   "name": "platformatic",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "private": true,
   "scripts": {
     "test": "pnpm -r --workspace-concurrency=1 test",
@@ -13,7 +13,7 @@
     "lint": "pnpm -r --workspace-concurrency=1 lint",
     "generate-errors-doc": "cd packages/generate-errors-doc && pnpm run generate-doc"
   },
-  "packageManager": "pnpm@8.9.0",
+  "packageManager": "pnpm@8.9.2",
   "devDependencies": {
     "@fastify/pre-commit": "^2.0.2",
     "desm": "^1.3.0",

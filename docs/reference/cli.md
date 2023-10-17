@@ -227,14 +227,18 @@ To create a client for a remote Graphql API, you can use the following command:
 $ platformatic client http://example.com/graphql -n myclient
 ```
 
-Instead of a URL, you can also use a local file:
+Instead of an URL, you can also use a local file:
 
 ```bash
 $ platformatic client path/to/schema -n myclient
 ```
 
-This will create a Fastify plugin that exposes a client for the remote API in a folder `myclient`
-and a file named myclient.js inside it.
+To create a client for a service running in a Platformatic runime use the following command:
+```bash
+$ platformatic client --runtime SERVICE_NAME -n myclient
+```
+
+All the above commands will create a Fastify plugin that exposes a client in the `request` object for the remote API in a folder `myclient` and a file named myclient.js inside it.
 
 If platformatic config file is specified, it will be edited and a `clients` section will be added.
 Then, in any part of your Platformatic application you can use the client.
@@ -244,7 +248,7 @@ You can use the client in your application in Javascript, calling a GraphQL endp
 ```js
 module.exports = async function (app, opts) {
   app.post('/', async (request, reply) => {
-    const res = await app.myclient.graphql({
+    const res = await request.myclient.graphql({
       query: 'query { hello }'
     })
     return res
@@ -260,8 +264,8 @@ import { FastifyInstance } from 'fastify'
 /// <reference path="./myclient" />
 
 export default async function (app: FastifyInstance) {
-  app.get('/', async () => {
-    return app.myclient.get({})
+  app.get('/', async (request, reply) => {
+    return request.myclient.get({})
   })
 }
 ```
@@ -272,6 +276,7 @@ Options:
 * `-n, --name <name>` - Name of the client.
 * `-f, --folder <name>` - Name of the plugin folder, defaults to --name value.
 * `-t, --typescript` - Generate the client plugin in TypeScript.
+* `-R, --runtime <serviceId>` - Generate the client for the `serviceId` running in the current runtime
 * `--frontend` - Generated a browser-compatible client that uses `fetch`
 * `--full-response` - Client will return full response object rather than just the body.
 * `--full-request` - Client will be called with all parameters wrapped in `body`, `headers` and `query` properties. Ignored if `--frontend`

@@ -1,14 +1,14 @@
 {
   "name": "@platformatic/runtime",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "",
   "main": "index.js",
   "bin": {
     "plt-runtime": "./runtime.mjs"
   },
   "scripts": {
-    "test": "npm run lint && node --test && tsd",
-    "coverage": "npm run lint && c8 -x fixtures -x test node --test && tsd",
+    "test": "npm run lint && node test.js test/cli/*.test.mjs && tsd",
+    "coverage": "npm run lint && c8 -x fixtures -x test node test.js && tsd",
     "lint": "standard | snazzy"
   },
   "author": "Matteo Collina <hello@matteocollina.com>",
@@ -28,6 +28,7 @@
     "c8": "^8.0.1",
     "execa": "^8.0.1",
     "express": "^4.18.2",
+    "glob": "^10.3.10",
     "snazzy": "^9.0.0",
     "split2": "^4.2.0",
     "standard": "^17.1.0",

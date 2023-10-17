@@ -95,6 +95,12 @@ const db = {
           schemaPath: {
             type: 'string',
             resolvePath: true
+          },
+          enabled: {
+            anyOf: [
+              { type: 'boolean' },
+              { type: 'string' }
+            ]
           }
         }
       }]
@@ -118,6 +124,12 @@ const db = {
                 }
               }]
             }
+          },
+          enabled: {
+            anyOf: [
+              { type: 'boolean' },
+              { type: 'string' }
+            ]
           }
         },
         additionalProperties: false
@@ -151,6 +163,12 @@ const db = {
         properties: {
           connectionString: {
             type: 'string'
+          },
+          enabled: {
+            anyOf: [
+              { type: 'boolean' },
+              { type: 'string' }
+            ]
           }
         },
         additionalProperties: false
