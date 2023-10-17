@@ -67,6 +67,10 @@ these default values.
   microservice ID.
   - **`config` (**required**, `string`) - The overridden configuration file
   name. This is the file that will be used when starting the microservice.
+  - **`useHttp`** (`boolean`) - The service will be started on a random HTTP port
+  on `127.0.0.1`, and exposed to the other services via that port; set it to `true`
+  if you are using [@fastify/express](https://github.com/fastify/fastify-express).
+  Default: `false`.
 
 ### `services`
 
@@ -83,6 +87,10 @@ property or the `name` field in the client's `package.json` file if a
 the microservice.
 - **`config`** (**required**, `string`) - The configuration file used to start
 the microservice.
+- **`useHttp`** (`boolean`) - The service will be started on a random HTTP port
+on `127.0.0.1`, and exposed to the other services via that port; set it to `true`
+if you are using [@fastify/express](https://github.com/fastify/fastify-express).
+Default: `false`.
 
 ### `entrypoint`
 

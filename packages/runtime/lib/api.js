@@ -21,6 +21,12 @@ class RuntimeApi {
       let serverConfig = null
       if (config.server && service.entrypoint) {
         serverConfig = config.server
+      } else if (service.useHttp) {
+        serverConfig = {
+          port: 0,
+          host: '127.0.0.1',
+          keepAliveTimeout: 5000
+        }
       }
       const app = new PlatformaticApp(service, loaderPort, logger, serviceTelemetryConfig, serverConfig)
 
