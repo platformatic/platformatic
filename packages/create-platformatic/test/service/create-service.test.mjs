@@ -44,10 +44,11 @@ test('creates service with typescript', async ({ equal, same, ok }) => {
   const validate = ajv.compile(schema.schema)
   const isValid = validate(serviceConfig)
   equal(isValid, true)
-  const { server, plugins } = serviceConfig
+  const { server, plugins, watch } = serviceConfig
 
   equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   equal(server.port, '{PORT}')
+  equal(watch, true)
 
   const pathToServiceEnvFile = join(tmpDir, '.env')
   dotenv.config({ path: pathToServiceEnvFile })
@@ -87,10 +88,11 @@ test('creates service with javascript', async ({ equal, same, ok }) => {
   const pathToServiceConfigFile = join(tmpDir, 'platformatic.service.json')
   const serviceConfigFile = await readFile(pathToServiceConfigFile, 'utf8')
   const serviceConfig = JSON.parse(serviceConfigFile)
-  const { server, plugins } = serviceConfig
+  const { server, plugins, watch } = serviceConfig
 
   equal(server.hostname, '{PLT_SERVER_HOSTNAME}')
   equal(server.port, '{PORT}')
+  equal(watch, true)
 
   const pathToServiceEnvFile = join(tmpDir, '.env')
   dotenv.config({ path: pathToServiceEnvFile })
