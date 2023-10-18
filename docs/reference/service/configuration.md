@@ -123,6 +123,16 @@ An optional object that defines the plugins loaded by Platformatic Service.
   - `options` (`object`): Optional plugin options.
   - `encapsulate` (`boolean`): if the path is a folder, it instruct Platformatic to not encapsulate those plugins.
   - `maxDepth` (`integer`): if the path is a folder, it limits the depth to load the content from.
+  - `autoHooks` (`boolean`): Apply hooks from autohooks.js file(s) to plugins found in folder.
+  - `autoHooksPattern` (`string`): Regex to override the autohooks naming convention.
+  - `cascadeHooks` (`boolean`): If using autoHooks, cascade hooks to all children. Ignored if autoHooks is false.
+  - `overwriteHooks` (`boolean`): If using cascadeHooks, cascade will be reset when a new autohooks.js file is encountered. Ignored if autoHooks is false.
+  - `routeParams` (`boolean`): Folders prefixed with _ will be turned into route parameters.
+  - `forceESM` (`boolean`): If set to 'true' it always use await import to load plugins or hooks.
+  - `ignoreFilter` (`string`): Filter matching any path that should not be loaded. Can be a RegExp, a string or a function returning a boolean.
+  - `matchFilter` (`string`): Filter matching any path that should be loaded. Can be a RegExp, a string or a function returning a boolean.
+  - `ignorePattern` (`string`): RegExp matching any file or folder that should not be loaded.
+  - `indexPattern` (`string`): Regex to override the index.js naming convention
 - **`typescript`** (`boolean` or `object`): enable TypeScript compilation. A `tsconfig.json` file is required in the same folder. See [TypeScript compilation options](#typescript-compilation-options) for more details.
 
 _Example_
