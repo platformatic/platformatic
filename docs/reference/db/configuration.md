@@ -89,6 +89,20 @@ A **required** object with the following settings:
   }
   ```
 
+  Enables GraphQL support with the `enabled` option
+
+  ```json
+  {
+    "db": {
+      ...
+      "graphql": {
+        ...
+        "enabled": true
+      }
+    }
+  }
+  ```
+
   Enables GraphQL support with GraphiQL
 
   ```json
@@ -161,6 +175,20 @@ A **required** object with the following settings:
     "db": {
       ...
       "openapi": true
+    }
+  }
+  ```
+
+  Enables OpenAPI using the `enabled` option
+
+  ```json
+  {
+    "db": {
+      ...
+      "openapi": {
+        ...
+        "enabled": true
+      }
     }
   }
   ```
@@ -294,6 +322,20 @@ A **required** object with the following settings:
   It's possible to configure it to use Redis instead.
 
   _Examples_
+
+  Enable events using the `enabled` option.
+
+  ```json
+  {
+    "db": {
+      ...
+      "events": {
+        ...
+        "enabled": true
+      }
+    }
+  }
+  ```
 
   ```json
   {
