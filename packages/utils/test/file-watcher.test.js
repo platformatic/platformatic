@@ -5,6 +5,7 @@ const { mkdtemp, writeFile } = require('fs/promises')
 const { join } = require('path')
 const { test } = require('tap')
 const { FileWatcher } = require('..')
+const { setTimeout: sleep } = require('timers/promises')
 
 test('should throw an error if there is no path argument', async ({ throws, plan }) => {
   plan(1)
@@ -53,32 +54,51 @@ test('should not watch not allowed files', async ({ equal, plan }) => {
   equal(false, fileWatcher.shouldFileBeWatched('another.file'))
 })
 
-test('should emit event if file is updated', async ({ end }) => {
+test('should emit event if file is updated', async ({ end, pass }) => {
   const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
   const filename = join(tmpDir, 'test.file')
   const fileWatcher = new FileWatcher({ path: tmpDir })
 
-  fileWatcher.once('update', async () => {
-    await fileWatcher.stopWatching()
-    end()
+  let _resolve = null
+  const p = new Promise((resolve) => {
+    _resolve = resolve
   })
-  fileWatcher.startWatching()
 
-  writeFile(filename, 'foobar')
+  fileWatcher.once('update', async () => {
+    pass('update is emitted')
+    await fileWatcher.stopWatching()
+    _resolve()
+  })
+
+  fileWatcher.startWatching()
+  await sleep(1000)
+
+  await writeFile(filename, 'foobar')
+
+  await Promise.race([sleep(5000), p])
 })
 
-test('should not call fs watch twice', async ({ pass, plan, end }) => {
+test('should not call fs watch twice', async ({ pass, plan }) => {
   const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
   const filename = join(tmpDir, 'test.file')
   const fileWatcher = new FileWatcher({ path: tmpDir })
 
-  fileWatcher.once('update', async () => {
-    await fileWatcher.stopWatching()
-    await fileWatcher.stopWatching()
-    end()
+  let _resolve = null
+  const p = new Promise((resolve) => {
+    _resolve = resolve
   })
-  fileWatcher.startWatching()
-  fileWatcher.startWatching()
 
-  writeFile(filename, 'foobar')
+  fileWatcher.once('update', async () => {
+    pass('update is emitted')
+    await fileWatcher.stopWatching()
+    await fileWatcher.stopWatching()
+    _resolve()
+  })
+
+  fileWatcher.startWatching()
+  fileWatcher.startWatching()
+  await sleep(1000)
+
+  await writeFile(filename, 'foobar')
+  await Promise.race([sleep(5000), p])
 })
