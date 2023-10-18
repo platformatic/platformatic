@@ -8,12 +8,6 @@ const minimatch = require('minimatch').default
 
 const ALLOWED_FS_EVENTS = ['change', 'rename']
 
-// Recursive watch is unreliable on platforms besides macOS and Windows.
-// See: https://github.com/nodejs/node/issues/48437
-/* c8 ignore next 2 */
-const useRecursiveWatch = process.platform === 'darwin' ||
-  process.platform === 'win32'
-
 function removeDotSlash (path) {
   return path.replace(/^\.[/\\]/, '')
 }
@@ -41,7 +35,12 @@ class FileWatcher extends EventEmitter {
     this.abortController = new AbortController()
     const signal = this.abortController.signal
 
-    const fsWatcher = watch(this.path, { signal, recursive: useRecursiveWatch })
+    // Recursive watch is unreliable on platforms besides macOS and Windows.
+    // See: https://github.com/nodejs/node/issues/48437
+    const fsWatcher = watch(this.path, {
+      signal,
+      recursive: true
+    })
 
     let updateTimeout = null
 
