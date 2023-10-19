@@ -88,6 +88,23 @@ const platformaticRuntimeSchema = {
     allowCycles: {
       type: 'boolean'
     },
+    inspectorOptions: {
+      type: 'object',
+      properties: {
+        host: {
+          type: 'string'
+        },
+        port: {
+          type: 'number'
+        },
+        breakFirstLine: {
+          type: 'boolean'
+        },
+        hotReloadDisabled: {
+          type: 'boolean'
+        }
+      }
+    },
     $schema: {
       type: 'string'
     }
@@ -95,7 +112,8 @@ const platformaticRuntimeSchema = {
   anyOf: [
     { required: ['autoload', 'entrypoint'] },
     { required: ['services', 'entrypoint'] }
-  ]
+  ],
+  additionalProperties: false
 }
 
 module.exports.schema = platformaticRuntimeSchema

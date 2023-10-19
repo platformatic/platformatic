@@ -27,6 +27,10 @@ class OneSeries extends SimpleZeroConfig {
       const version = semver.inc(this.version, increment)
       config.$schema = `https://platformatic.dev/schemas/v${version}/${this.kind}`
 
+      if (this.kind === 'runtime' && config.watch !== undefined) {
+        delete config.watch
+      }
+
       return new OneSeries({ config, path: this.path, format: this.format, version })
     }
   }

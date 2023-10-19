@@ -39,7 +39,7 @@ async function _transformConfig (configManager) {
 
   configManager.current.allowCycles = !!configManager.current.allowCycles
   configManager.current.serviceMap = new Map()
-  configManager.current.inspectorOptions = null
+  configManager.current.inspectorOptions = undefined
 
   let hasValidEntrypoint = false
 
@@ -276,10 +276,10 @@ async function wrapConfigInRuntimeConfig ({ configManager, args }) {
       coerceTypes: true,
       allErrors: true,
       strict: false
-    }
+    },
+    transformConfig () { return _transformConfig(this) }
   })
 
-  await _transformConfig(cm)
   await cm.parseAndValidate()
   return cm
 }

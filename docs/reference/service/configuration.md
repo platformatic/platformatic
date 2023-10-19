@@ -154,7 +154,7 @@ _Example_
 
 The `typescript` can also be an object to customize the compilation. Here are the supported options:
 
-* `enabled` (`boolean`): enables compilation
+* `enabled` (`boolean` or `string`): enables compilation
 * `tsConfig` (`string`): path to the `tsconfig.json` file relative to the configuration
 * `outDir` (`string`): the output directory of `tsconfig.json`, in case `tsconfig.json` is not available
 and and `enabled` is set to `false` (procution build)
@@ -183,10 +183,12 @@ Example:
 
 ### `watch`
 
-Disable watching for file changes if set to `false`. It can also be customized with the following options:
+Enables watching for file changes if set to `true`  or `"true"`. It can also be customized with the following options:
 
+* **`enabled`** (`boolean` or `string`): enables watching.
 - **`ignore`** (`string[]`, default: `null`): List of glob patterns to ignore when watching for changes. If `null` or not specified, ignore rule is not applied. Ignore option doesn't work for typescript files.
 - **`allow`** (`string[]`, default: `['*.js', '**/*.js']`): List of glob patterns to allow when watching for changes. If `null` or not specified, allow rule is not applied. Allow option doesn't work for typescript files.
+-
 
   _Example_
 

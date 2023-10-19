@@ -86,6 +86,8 @@ const platformaticComposerSchema = {
     watch: {
       anyOf: [watch, {
         type: 'boolean'
+      }, {
+        type: 'string'
       }]
     },
     $schema: {
