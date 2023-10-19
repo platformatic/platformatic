@@ -131,7 +131,8 @@ app.listen({ port: 0 });
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
   const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
-  await execa(tsc)
+  const env = { ...process.env, NODE_V8_COVERAGE: undefined }
+  await execa(tsc, { env })
 
   // TODO how can we avoid this copy?
   await copy(join(dir, 'uncanny-movies'), join(dir, 'build', 'uncanny-movies'))
