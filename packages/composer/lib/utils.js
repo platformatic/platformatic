@@ -16,8 +16,10 @@ function prefixWithSlash (url) {
  * @returns {boolean}
 */
 function isFetchable (service) {
-  return (service.openapi && service.openapi.url) ||
-  (service.graphql && !service.graphql.file)
+  return Boolean(
+    (service?.openapi && service.openapi.url) ||
+    (service?.graphql && !service.graphql.file)
+  )
 }
 
 module.exports = {

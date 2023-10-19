@@ -9,8 +9,7 @@ function isSameGraphqlSchema (a, b) {
 }
 
 function serviceToSubgraphConfig (service) {
-  if (!service.graphql || service.graphql.file) { return }
-
+  if (!(service.graphql && !service.graphql.file)) { return }
   return {
     server: {
       host: service.graphql.url || service.origin,
