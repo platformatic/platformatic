@@ -22,6 +22,7 @@ function generateConfig (isRuntimeContext, version, typescript, envPrefix) {
     service: {
       openapi: true
     },
+    watch: true,
     plugins
   }
 
