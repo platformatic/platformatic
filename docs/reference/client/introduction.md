@@ -32,7 +32,7 @@ You can use the client in your application in Javascript, calling a GraphQL endp
 /**  @type {import('fastify').FastifyPluginAsync<{} */
 module.exports = async function (app, opts) {
   app.post('/', async (request, reply) => {
-    const res = await app.myclient.graphql({
+    const res = await request.myclient.graphql({
       query: 'query { movies { title } }'
     })
     return res
@@ -48,8 +48,8 @@ import { FastifyInstance } from 'fastify'
 /// <reference path="./myclient" />
 
 export default async function (app: FastifyInstance) {
-  app.get('/', async () => {
-    return app.myclient.get({})
+  app.get('/', async (request, reply) => {
+    return requests.myclient.get({})
   })
 }
 ```
@@ -323,7 +323,7 @@ module.exports = async function (app, opts) {
   })
 
   app.post('/', async (request, reply) => {
-    const res = await app.myclient.graphql({
+    const res = await request.myclient.graphql({
       query: 'query { movies { title } }'
     })
     return res
