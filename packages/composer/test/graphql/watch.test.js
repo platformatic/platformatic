@@ -215,7 +215,7 @@ test('should not restart if services did not change', async (t) => {
   assert.equal(composer.restarted, false)
 })
 
-test('should not watch if refreshTimeout equals 0', async (t) => {
+test('should not watch when refreshTimeout is 0', async (t) => {
   const graphql1 = await createGraphqlService(t, {
     schema: 'type Query { cheatingDice: Int }',
     resolvers: { Query: { cheatingDice: () => 3 } }
