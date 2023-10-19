@@ -91,6 +91,9 @@ class Store {
   }
 
   getVersionFromSchema (schema) {
+    if (!schema) {
+      return null
+    }
     const match = schema.match(/\/schemas\/(.*)\//)
     if (match) {
       return match[1]
