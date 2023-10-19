@@ -353,3 +353,9 @@ test('Version mismatch', async t => {
     assert.equal(err.message, 'Version mismatch. You are running Platformatic v0.42.0 but your app requires v0.99.0')
   }
 })
+
+test('schema null', async (t) => {
+  const store = new Store()
+  assert.equal(store.getVersionFromSchema(undefined), null)
+  assert.equal(store.getVersionFromSchema(null), null)
+})

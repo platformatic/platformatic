@@ -63,9 +63,18 @@ async function buildOpenAPIClient (options, openTelemetry) {
   const generatedOperationIds = []
   for (const path of Object.keys(spec.paths)) {
     const pathMeta = spec.paths[path]
-
+    let commonParameters = []
+    if (pathMeta.parameters) {
+      commonParameters = pathMeta.parameters
+      delete pathMeta.parameters
+    }
     for (const method of Object.keys(pathMeta)) {
       const methodMeta = pathMeta[method]
+      if (methodMeta.parameters) {
+        methodMeta.parameters = [...methodMeta.parameters, ...commonParameters]
+      } else {
+        methodMeta.parameters = commonParameters
+      }
       const operationId = generateOperationId(path, method, methodMeta, generatedOperationIds)
       const responses = pathMeta[method].responses
       const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
@@ -78,7 +87,6 @@ async function buildOpenAPIClient (options, openTelemetry) {
       client[operationId] = await buildCallFunction(spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse)
     }
   }
-
   return client
 }
 
@@ -123,7 +131,7 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
     const urlToCall = new URL(url)
     if (forceFullRequest) {
       headers = args?.headers
-      body = args?.body
+      body = args?.body || ''
       for (const param of pathParams) {
         if (args?.path[param.name] === undefined) {
           throw new Error('missing required parameter ' + param.name)
@@ -143,7 +151,7 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
         }
       }
     } else {
-      body = { ...args } // shallow copy
+      body = { ...args } || '' // shallow copy
       for (const param of pathParams) {
         if (body[param.name] === undefined) {
           throw new Error('missing required parameter ' + param.name)
@@ -383,6 +391,7 @@ async function plugin (app, opts) {
 
   app.addHook('onRequest', async (req, reply) => {
     const newClient = Object.create(client)
+
     if (getHeaders) {
       newClient[kGetHeaders] = getHeaders.bind(newClient, req, reply)
     }
