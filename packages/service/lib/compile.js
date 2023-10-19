@@ -71,7 +71,12 @@ async function compile (cwd, config, originalLogger) {
 
   try {
     const tsFlags = config?.plugins?.typescript?.flags || ['--project', tsConfigPath, '--rootDir', '.']
-    await execa(tscExecutablePath, tsFlags, { cwd })
+    const env = {
+      ...process.env
+    }
+    delete env.NODE_V8_COVERAGE
+
+    await execa(tscExecutablePath, tsFlags, { cwd, env })
     logger.info('Typescript compilation completed successfully.')
     return true
   } catch (error) {

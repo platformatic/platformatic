@@ -9,6 +9,8 @@ import split from 'split2'
 import graphql from 'graphql'
 import { copy } from 'fs-extra'
 
+const env = { ...process.env, NODE_V8_COVERAGE: undefined }
+
 test('dashes in name', async ({ teardown, comment, same, equal, match }) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
@@ -51,7 +53,7 @@ app.listen({ port: 0 })
 `
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
-  const server2 = execa('node', ['index.js'])
+  const server2 = execa('node', ['index.js'], { env })
   teardown(() => server2.kill())
   teardown(async () => { await app.close() })
 
@@ -131,12 +133,12 @@ app.listen({ port: 0 });
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
   const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
-  await execa(tsc)
+  await execa(tsc, [], { env })
 
   // TODO how can we avoid this copy?
   await copy(join(dir, 'uncanny-movies'), join(dir, 'build', 'uncanny-movies'))
 
-  const server2 = execa('node', ['build/index.js'])
+  const server2 = execa('node', ['build/index.js'], { env })
   teardown(() => server2.kill())
   teardown(async () => { await app.close() })
 
@@ -205,7 +207,7 @@ app.listen({ port: 0 })
 `
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
-  const server2 = execa('node', ['index.js'])
+  const server2 = execa('node', ['index.js'], { env })
   teardown(() => server2.kill())
   teardown(async () => { await app.close() })
 

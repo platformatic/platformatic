@@ -180,11 +180,7 @@ jobs:
         retry_on: error
         command: pnpm install --frozen-lockfile
     - name: Run test suite with code coverage
-      if: matrix.node-version != 20
-      run: cd packages/service && pnpm run test; cd ../..
-    - name: Run test suite without code coverage
-      if: matrix.node-version == 20
-      run: cd packages/service && pnpm run nocov; cd ../..
+      run: cd packages/composer && pnpm run test; cd ../..
 
   ci-db:
     needs: setup-node_modules
@@ -432,11 +428,7 @@ jobs:
           retry_on: error
           command: pnpm install --frozen-lockfile
       - name: Run test suite with code coverage
-        if: matrix.os != 'windows-latest' && matrix.node-version != 20
         run: cd packages/service && pnpm run test; cd ../..
-      - name: Run test suite without code coverage
-        if: matrix.os == 'windows-latest' || matrix.node-version == 20
-        run: cd packages/service && pnpm run nocov; cd ../..
 
   ci-utils:
     needs: setup-node_modules
@@ -485,17 +477,9 @@ jobs:
           retry_on: error
           command: pnpm install --frozen-lockfile
       - name: Run test suite with code coverage
-        if: matrix.node-version != 20
         run: cd packages/client && pnpm test
-      - name: Run test suite without code coverage
-        if: matrix.node-version == 20
-        run: cd packages/client && pnpm run nocov
       - name: Run test suite with code coverage for generator
-        if: matrix.os != 'windows-latest'
         run: cd packages/client-cli && pnpm test
-      - name: Run test suite without code coverage for generator
-        if: matrix.os == 'windows-latest'
-        run: cd packages/client-cli && pnpm run nocov
 
   ci-telemetry:
     needs: setup-node_modules

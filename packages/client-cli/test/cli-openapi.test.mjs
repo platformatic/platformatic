@@ -11,6 +11,8 @@ import dotenv from 'dotenv'
 import { readFile } from 'fs/promises'
 import { isFileAccessible } from '../cli.mjs'
 
+const env = { ...process.env, NODE_V8_COVERAGE: undefined }
+
 test('openapi client generation (javascript)', async ({ teardown, comment, same }) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
@@ -42,7 +44,7 @@ app.listen({ port: 0 })
 `
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
-  const app2 = execa('node', ['index.js'])
+  const app2 = execa('node', ['index.js'], { env })
   teardown(() => app2.kill())
   teardown(async () => { await app.close() })
 
@@ -122,12 +124,12 @@ app.listen({ port: 0 });
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
   const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
-  await execa(tsc)
+  await execa(tsc, [], { env })
 
   // TODO how can we avoid this copy?
   await copy(join(dir, 'movies'), join(dir, 'build', 'movies'))
 
-  const server2 = execa('node', ['build/index.js'])
+  const server2 = execa('node', ['build/index.js'], { env })
   teardown(() => server2.kill())
   teardown(async () => { await app.close() })
 
@@ -186,7 +188,7 @@ app.listen({ port: 0 })
 `
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
-  const server2 = execa('node', ['index.js'])
+  const server2 = execa('node', ['index.js'], { env })
   teardown(() => server2.kill())
   teardown(async () => { await app.close() })
 
@@ -265,7 +267,7 @@ app.listen({ port: 0 })
 `
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
-  const server2 = execa('node', ['index.js'])
+  const server2 = execa('node', ['index.js'], { env })
   teardown(() => server2.kill())
   teardown(async () => { await app.close() })
 
@@ -348,7 +350,7 @@ app.listen({ port: 0 });
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
   const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
-  await execa(tsc)
+  await execa(tsc, [], { env })
 
   // TODO how can we avoid this copy?
   await copy(join(dir, 'movies'), join(dir, 'build', 'movies'))
@@ -694,7 +696,7 @@ app.listen({ port: 0 });
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
   const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
-  await execa(tsc)
+  await execa(tsc, [], { env })
 
   // TODO how can we avoid this copy?
   await copy(join(dir, 'uncanny-movies'), join(dir, 'build', 'uncanny-movies'))

@@ -9,6 +9,8 @@ import split from 'split2'
 import graphql from 'graphql'
 import { copy } from 'fs-extra'
 
+const env = { ...process.env, NODE_V8_COVERAGE: undefined }
+
 test('graphql client generation (javascript)', async ({ teardown, comment, same, equal, match }) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
@@ -131,7 +133,7 @@ app.listen({ port: 0 });
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
   const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
-  await execa(tsc)
+  await execa(tsc, [], { env })
 
   // TODO how can we avoid this copy?
   await copy(join(dir, 'movies'), join(dir, 'build', 'movies'))
@@ -232,7 +234,7 @@ app.listen({ port: 0});
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
   const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
-  await execa(tsc)
+  await execa(tsc, [], { env })
 
   // TODO how can we avoid this symlink?
   await copy(join(dir, 'movies'), join(dir, 'build', 'movies'))
@@ -386,7 +388,7 @@ app.listen({ port: 0 });
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
   const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
-  await execa(tsc)
+  await execa(tsc, [], { env })
 
   // TODO how can we avoid this copy?
   await copy(join(dir, 'movies'), join(dir, 'build', 'movies'))
