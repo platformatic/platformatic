@@ -11,6 +11,8 @@ import dotenv from 'dotenv'
 import { readFile } from 'fs/promises'
 import { isFileAccessible } from '../cli.mjs'
 
+const env = { ...process.env, NODE_V8_COVERAGE: undefined }
+
 test('openapi client generation (javascript)', async ({ teardown, comment, same }) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
@@ -122,8 +124,7 @@ app.listen({ port: 0 });
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
   const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
-  const env = { ...process.env, NODE_V8_COVERAGE: undefined }
-  await execa(tsc, { env })
+  await execa(tsc, [], { env })
 
   // TODO how can we avoid this copy?
   await copy(join(dir, 'movies'), join(dir, 'build', 'movies'))
@@ -349,7 +350,7 @@ app.listen({ port: 0 });
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
   const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
-  await execa(tsc)
+  await execa(tsc, [], env)
 
   // TODO how can we avoid this copy?
   await copy(join(dir, 'movies'), join(dir, 'build', 'movies'))
@@ -695,7 +696,7 @@ app.listen({ port: 0 });
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
   const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
-  await execa(tsc)
+  await execa(tsc, [], { env })
 
   // TODO how can we avoid this copy?
   await copy(join(dir, 'uncanny-movies'), join(dir, 'build', 'uncanny-movies'))
