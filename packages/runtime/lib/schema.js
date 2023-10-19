@@ -95,7 +95,8 @@ const platformaticRuntimeSchema = {
   anyOf: [
     { required: ['autoload', 'entrypoint'] },
     { required: ['services', 'entrypoint'] }
-  ]
+  ],
+  additionalProperties: false
 }
 
 module.exports.schema = platformaticRuntimeSchema

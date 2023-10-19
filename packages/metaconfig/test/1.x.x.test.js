@@ -45,3 +45,19 @@ test('upgrade patch versions', async (t) => {
     version: '1.0.2'
   })
 })
+
+test('deletes watch', async (t) => {
+  const OneXX = proxyquire('../versions/1.x.x.js', {
+    '../package.json': {
+      version: '1.1.0'
+    }
+  })
+  const version = '1.0.1'
+  const meta = new OneXX({ version, config: { watch: true, entrypoint: 'foo' } })
+  const upped = meta.up()
+  t.match(upped, {
+    version: '1.1.0'
+  })
+
+  t.equal(upped.config.watch, undefined)
+})

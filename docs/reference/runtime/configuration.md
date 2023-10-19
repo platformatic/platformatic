@@ -111,6 +111,8 @@ While hot reloading is useful for development, it is not recommended for use in
 production.
 :::
 
+Note that `watch` should be enabled for each individual service in the runtime.
+
 ### `allowCycles`
 
 An optional boolean, defaulting to `false`, indicating if dependency cycles
