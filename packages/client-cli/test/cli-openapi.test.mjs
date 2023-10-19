@@ -1,6 +1,6 @@
 import { request, moveToTmpdir } from './helper.js'
 import { test } from 'tap'
-import { buildServer } from '@platformatic/db'
+import { buildServer } from '@platformatic/runtime'
 import { join } from 'path'
 import * as desm from 'desm'
 import { execa } from 'execa'
@@ -969,4 +969,109 @@ test('optional-headers option', async ({ teardown, comment, match }) => {
     'authorization'?: string;
   }
 `)
+})
+
+test('common parameters in paths', async ({ teardown, comment, match }) => {
+  const dir = await moveToTmpdir(teardown)
+  comment(`working in ${dir}`)
+
+  const openAPIfile = desm.join(import.meta.url, 'fixtures', 'common-parameters', 'openapi.json')
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--full-request'])
+
+  const typeFile = join(dir, 'movies', 'movies.d.ts')
+  const data = await readFile(typeFile, 'utf-8')
+  match(data, `
+  export interface GetPathWithFieldIdRequest {
+    path: {
+      'fieldId': string;
+    }
+    query: {
+      'movieId': string;
+    }
+  }
+`)
+  match(data, `
+  export interface GetSampleRequest {
+    query: {
+      'movieId': string;
+    }
+  }
+`)
+  match(data, `
+  export interface PostPathWithFieldIdRequest {
+    path: {
+      'fieldId': string;
+    }
+  }
+`)
+  // test implementation
+  try {
+    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'common-parameters', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'common-parameters', 'platformatic.service.json'))
+
+  await app.start()
+
+  comment(`working in ${dir}`)
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'commonparams', '--full-request'])
+
+  const toWrite = `
+'use strict'
+
+const Fastify = require('fastify')
+const commonparams = require('./commonparams')
+const app = Fastify({ logger: true })
+
+app.register(commonparams, { url: '${app.url}' })
+app.get('/', async (request, reply) => {
+  const res = await request.commonparams.getPathWithFieldId({
+    path: { fieldId: 'foo' },
+    query: { movieId: '123' }
+  })
+  return res
+})
+
+app.post('/', async (request, reply) => {
+  const res = await request.commonparams.postPathWithFieldId({
+    path: { fieldId: 'foo' }
+  })
+  return res
+})
+app.listen({ port: 0 })
+`
+  await fs.writeFile(join(dir, 'index.js'), toWrite)
+
+  const server2 = execa('node', ['index.js'])
+  teardown(() => server2.kill())
+  teardown(async () => { await app.close() })
+
+  const stream = server2.stdout.pipe(split(JSON.parse))
+
+  // this is unfortuate :(
+  const base = 'Server listening at '
+  let url
+  for await (const line of stream) {
+    const msg = line.msg
+    if (msg.indexOf(base) !== 0) {
+      continue
+    }
+    url = msg.slice(base.length)
+    break
+  }
+  {
+    const res = await request(url, {
+      method: 'GET'
+    })
+    const body = await res.body.json()
+    match(body, { query: { movieId: '123' }, path: { fieldId: 'foo' } })
+  }
+  {
+    const res = await request(url, {
+      method: 'POST'
+    })
+    const body = await res.body.json()
+    match(body, { path: { fieldId: 'foo' } })
+  }
 })

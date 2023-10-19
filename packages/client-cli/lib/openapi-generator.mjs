@@ -61,7 +61,18 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
   const { paths } = schema
   const generatedOperationIds = []
   const operations = Object.entries(paths).flatMap(([path, methods]) => {
+    let commonParameters = []
+    if (methods.parameters) {
+      // common parameters for all operations
+      commonParameters = methods.parameters
+      delete methods.parameters
+    }
     return Object.entries(methods).map(([method, operation]) => {
+      if (operation.parameters) {
+        operation.parameters = [...operation.parameters, ...commonParameters]
+      } else {
+        operation.parameters = commonParameters
+      }
       const opId = generateOperationId(path, method, operation, generatedOperationIds)
       return {
         path,
@@ -102,7 +113,6 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
       interfaces.writeLine('\'body\': T;')
     })
     interfaces.blankLine()
-
     writer.write(`export interface ${capitalizedName}`).block(() => {
       writeOperations(interfaces, writer, operations, {
         fullRequest, fullResponse, optionalHeaders, schema
