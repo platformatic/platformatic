@@ -27,15 +27,15 @@ const graphqlService = {
     {
       type: 'object',
       properties: {
-        // TODO? url: { type: 'string' },
-        // TODO? file: { type: 'string', resolvePath: true },
-        // TODO? prefix: { type: 'string' },
-        // TODO? config: { type: 'string', resolvePath: true }
+        url: { type: 'string' },
+        graphqlEndpoint: { type: 'string', default: '/graphql' },
+        composeEndpoint: { type: 'string', default: '/.well-known/graphql-composition' },
+        file: { type: 'string', resolvePath: true }
       },
-      // TODO? anyOf: [
-      //   { required: ['url'] },
-      //   { required: ['file'] }
-      // ],
+      anyOf: [
+        { required: ['url'] },
+        { required: ['file'] }
+      ],
       additionalProperties: false
     }
   ]

@@ -5,6 +5,8 @@ const { request, setGlobalDispatcher, Agent } = require('undici')
 const fastify = require('fastify')
 const Swagger = require('@fastify/swagger')
 const SwaggerUI = require('@fastify/swagger-ui')
+const mercurius = require('mercurius')
+const { getIntrospectionQuery } = require('graphql')
 
 const { buildServer } = require('..')
 
@@ -230,10 +232,49 @@ async function createOpenApiService (t, entitiesNames = []) {
   return app
 }
 
-async function createComposer (t, composerConfig) {
+async function createGraphqlService (t, { schema, resolvers, extend, file, exposeIntrospection = true }) {
+  const app = fastify({ logger: false, port: 0 })
+  t.after(async () => {
+    await app.close()
+  })
+
+  if (file) {
+    await app.register(mercurius, require(file))
+  } else {
+    await app.register(mercurius, { schema, resolvers })
+  }
+
+  if (extend) {
+    if (extend.file) {
+      const { schema, resolvers } = require(extend.file)
+      if (schema) {
+        app.graphql.extendSchema(schema)
+      }
+      if (resolvers) {
+        app.graphql.defineResolvers(resolvers)
+      }
+    }
+    if (extend.schema) {
+      app.graphql.extendSchema(extend.schema)
+    }
+    if (extend.resolvers) {
+      app.graphql.defineResolvers(extend.resolvers)
+    }
+  }
+
+  if (exposeIntrospection) {
+    app.get('/.well-known/graphql-composition', async function (req, reply) {
+      return reply.graphql(getIntrospectionQuery())
+    })
+  }
+
+  return app
+}
+
+async function createComposer (t, composerConfig, logger = false) {
   const defaultConfig = {
     server: {
-      logger: false,
+      logger,
       hostname: '127.0.0.1',
       port: 0,
       keepAliveTimeout: 10,
@@ -339,9 +380,26 @@ async function testEntityRoutes (origin, entitiesRoutes) {
   }
 }
 
+async function graphqlRequest ({ query, variables, url, host }) {
+  const { body, statusCode } = await request(url || host + '/graphql', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ query, variables })
+  })
+
+  const content = await body.json()
+  if (statusCode !== 200) { console.log(statusCode, content) }
+
+  return content.errors ? content.errors : content.data
+}
+
 module.exports = {
   createComposer,
   createOpenApiService,
+  createGraphqlService,
   createBasicService,
-  testEntityRoutes
+  testEntityRoutes,
+  graphqlRequest
 }
