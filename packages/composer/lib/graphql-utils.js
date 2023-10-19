@@ -1,7 +1,6 @@
 'use strict'
 
 function createSupergraph ({ sdl = null, schema = {}, resolvers = {} } = {}) {
-  // TODO validate?
   return { sdl, schema, resolvers }
 }
 

@@ -39,7 +39,7 @@ async function composeGraphql (app, opts) {
   await app.register(mercurius, graphqlConfig)
 
   for (const service of fromFiles) {
-    // TODO dataloaders? subscriptions?
+    // TODO subscriptions?
     const { schema, resolvers } = require(service.graphql.file)
 
     // TODO documentation, test

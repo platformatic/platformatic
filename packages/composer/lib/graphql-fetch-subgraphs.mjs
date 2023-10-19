@@ -22,7 +22,6 @@ export async function fetchGraphqlSubgraphs (services) {
     schema,
     resolvers: composer.resolvers
     // TODO subscription
-    // TODO dataloaders?
   })
 }
 
