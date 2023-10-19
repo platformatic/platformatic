@@ -128,7 +128,10 @@ importers:
         version: 4.2.0
       inquirer:
         specifier: ^9.2.11
-        version: 9.2.12
+        version: 9.2.11
+      mercurius:
+        specifier: ^13.1.0
+        version: 13.1.0(graphql@16.8.1)
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
