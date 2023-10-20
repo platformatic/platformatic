@@ -3,7 +3,7 @@
 import commist from 'commist'
 import isMain from 'es-main'
 import { red } from 'colorette'
-import startLogin from './lib/login.js'
+import { startLogin, getUserApiKey } from './lib/login.js'
 import { print } from './lib/utils.js'
 import errors from './lib/errors.js'
 
@@ -26,4 +26,4 @@ if (isMain(import.meta)) {
   await login(process.argv.splice(2))
 }
 
-export { errors }
+export { errors, getUserApiKey }

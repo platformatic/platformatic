@@ -30,10 +30,26 @@ async function archiveProject (pathToProject, archivePath) {
 }
 
 class DeployClient {
-  constructor (deployServiceHost, workspaceId, workspaceKey) {
+  constructor ({
+    deployServiceHost,
+    workspaceId,
+    workspaceKey,
+    userApiKey
+  }) {
     this.deployServiceHost = deployServiceHost
     this.workspaceId = workspaceId
-    this.workspaceKey = workspaceKey
+    this.workspaceKey = workspaceKey || null
+    this.userApiKey = userApiKey || null
+
+    this.authHeaders = {
+      'x-platformatic-workspace-id': workspaceId
+    }
+    if (workspaceKey) {
+      this.authHeaders['x-platformatic-api-key'] = workspaceKey
+    }
+    if (userApiKey) {
+      this.authHeaders['x-platformatic-user-api-key'] = userApiKey
+    }
   }
 
   async createBundle (
@@ -48,8 +64,7 @@ class DeployClient {
     const { statusCode, body } = await request(url, {
       method: 'POST',
       headers: {
-        'x-platformatic-workspace-id': this.workspaceId,
-        'x-platformatic-api-key': this.workspaceKey,
+        ...this.authHeaders,
         'content-type': 'application/json',
         'accept-encoding': '*',
         accept: 'application/json'
@@ -100,8 +115,7 @@ class DeployClient {
     const { statusCode, body } = await request(url, {
       method: 'POST',
       headers: {
-        'x-platformatic-workspace-id': this.workspaceId,
-        'x-platformatic-api-key': this.workspaceKey,
+        ...this.authHeaders,
         'content-type': 'application/json',
         'accept-encoding': '*',
         authorization: `Bearer ${token}`,
@@ -171,6 +185,7 @@ async function deploy ({
   deployServiceHost,
   workspaceId,
   workspaceKey,
+  userApiKey,
   label,
   pathToProject,
   pathToConfig,
@@ -186,8 +201,8 @@ async function deploy ({
     throw new Error('platformatic_workspace_id action param is required')
   }
 
-  if (!workspaceKey) {
-    throw new Error('platformatic_workspace_key action param is required')
+  if (!workspaceKey && !userApiKey) {
+    throw new Error('platformatic workspace key or user api key is required')
   }
 
   if (!pathToConfig) {
@@ -217,11 +232,12 @@ async function deploy ({
     }
   }
 
-  const deployClient = new DeployClient(
+  const deployClient = new DeployClient({
     deployServiceHost,
     workspaceId,
-    workspaceKey
-  )
+    workspaceKey,
+    userApiKey
+  })
 
   const tmpDir = await mkdtemp(join(tmpdir(), 'plt-deploy-'))
   const bundlePath = join(tmpDir, 'project.tar')
