@@ -5,7 +5,10 @@
   "hotReload": false,
   "autoload": {
     "path": "../monorepo",
-    "exclude": ["docs", "composerApp"],
+    "exclude": [
+      "docs",
+      "composerApp"
+    ],
     "mappings": {
       "serviceAppWithLogger": {
         "id": "with-logger",
@@ -14,6 +17,10 @@
       "serviceAppWithMultiplePlugins": {
         "id": "multi-plugin-service",
         "config": "platformatic.service.json"
+      },
+      "dbApp": {
+        "id": "db-app",
+        "config": "platformatic.db.json"
       }
     }
   }

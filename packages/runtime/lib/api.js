@@ -3,6 +3,7 @@
 const FastifyUndiciDispatcher = require('fastify-undici-dispatcher')
 const { Agent, setGlobalDispatcher } = require('undici')
 const { PlatformaticApp } = require('./app')
+const { printSchemaWithDirectives } = require('@graphql-tools/utils')
 const errors = require('./errors')
 
 class RuntimeApi {
@@ -101,6 +102,8 @@ class RuntimeApi {
         return this.#getServiceConfig(params)
       case 'plt:get-service-openapi-schema':
         return this.#getServiceOpenapiSchema(params)
+      case 'plt:get-service-graphql-schema':
+        return this.#getServiceGraphqlSchema(params)
       case 'plt:start-service':
         return this.#startService(params)
       case 'plt:stop-service':
@@ -215,6 +218,26 @@ class RuntimeApi {
       return openapiSchema
     } catch (err) {
       throw new errors.FailedToRetrieveOpenAPISchemaError(id, err.message)
+    }
+  }
+
+  async #getServiceGraphqlSchema ({ id }) {
+    const service = this.#getServiceById(id)
+
+    if (!service.config) {
+      throw new errors.ServiceNotStartedError(id)
+    }
+
+    if (typeof service.server.graphql !== 'function') {
+      return null
+    }
+
+    try {
+      await service.server.ready()
+      const graphqlSchema = printSchemaWithDirectives(service.server.graphql.schema)
+      return graphqlSchema
+    } catch (err) {
+      throw new errors.FailedToRetrieveGraphQLSchemaError(id, err.message)
     }
   }
 

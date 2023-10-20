@@ -10,6 +10,7 @@ module.exports = {
   ServiceNotFoundError: createError(`${ERROR_PREFIX}_SERVICE_NOT_FOUND`, "Service with id '%s' not found"),
   ServiceNotStartedError: createError(`${ERROR_PREFIX}_SERVICE_NOT_STARTED`, "Service with id '%s' is not started"),
   FailedToRetrieveOpenAPISchemaError: createError(`${ERROR_PREFIX}_FAILED_TO_RETRIEVE_OPENAPI_SCHEMA`, 'Failed to retrieve OpenAPI schema for service with id "%s": %s'),
+  FailedToRetrieveGraphQLSchemaError: createError(`${ERROR_PREFIX}_FAILED_TO_RETRIEVE_GRAPHQL_SCHEMA`, 'Failed to retrieve GraphQL schema for service with id "%s": %s'),
   ApplicationAlreadyStartedError: createError(`${ERROR_PREFIX}_APPLICATION_ALREADY_STARTED`, 'Application is already started'),
   ApplicationNotStartedError: createError(`${ERROR_PREFIX}_APPLICATION_NOT_STARTED`, 'Application has not been started'),
   ConfigPathMustBeStringError: createError(`${ERROR_PREFIX}_CONFIG_PATH_MUST_BE_STRING`, 'Config path must be a string'),

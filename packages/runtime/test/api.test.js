@@ -47,12 +47,15 @@ test('should get service config', async (t) => {
 
   delete serviceConfig.$schema
 
-  // TODO: should return correct logger config
   assert.deepStrictEqual(serviceConfig, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
-      logger: {},
+      logger: {
+        transport: {
+          target: 'pino-pretty'
+        }
+      },
       keepAliveTimeout: 5000
     },
     service: { openapi: true },
@@ -100,6 +103,13 @@ test('should get services topology', async (t) => {
   assert.deepStrictEqual(topology, {
     entrypoint: 'serviceApp',
     services: [
+      {
+        id: 'db-app',
+        status: 'started',
+        entrypoint: false,
+        localUrl: 'http://db-app.plt.local',
+        dependencies: []
+      },
       {
         id: 'serviceApp',
         status: 'started',
@@ -353,4 +363,36 @@ test('should fail to get a service openapi schema if service does not expose it'
 
   const openapiSchema = await app.getServiceOpenapiSchema('without-openapi')
   assert.strictEqual(openapiSchema, null)
+})
+
+test('should get a service graphql schema', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  const graphqlSchema = await app.getServiceGraphqlSchema('db-app')
+  assert.deepStrictEqual(graphqlSchema,
+    'schema {\n  query: Query\n}\n\ntype Query {\n  hello: String\n}'
+  )
+})
+
+test('should fail to get a service graphql schema if service does not expose it', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  const graphqlSchema = await app.getServiceGraphqlSchema('with-logger')
+  assert.strictEqual(graphqlSchema, null)
 })
