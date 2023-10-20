@@ -374,7 +374,7 @@ test('should get a service graphql schema', async (t) => {
   })
 
   const graphqlSchema = await app.getServiceGraphqlSchema('db-app')
-  assert.equal(graphqlSchema._queryType, 'Query')
+  assert.deepStrictEqual(graphqlSchema, 'type Query {\n  hello: String\n}')
 })
 
 test('should fail to get a service graphql schema if service does not expose it', async (t) => {

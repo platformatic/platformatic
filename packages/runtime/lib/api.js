@@ -4,6 +4,7 @@ const FastifyUndiciDispatcher = require('fastify-undici-dispatcher')
 const { Agent, setGlobalDispatcher } = require('undici')
 const { PlatformaticApp } = require('./app')
 const errors = require('./errors')
+const { printSchema } = require('graphql')
 
 class RuntimeApi {
   #services
@@ -233,7 +234,7 @@ class RuntimeApi {
 
     try {
       await service.server.ready()
-      const graphqlSchema = service.server.graphql.schema
+      const graphqlSchema = printSchema(service.server.graphql.schema)
       return graphqlSchema
     } catch (err) {
       throw new errors.FailedToRetrieveGraphQLSchemaError(id, err.message)
