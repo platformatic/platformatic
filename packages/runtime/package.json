@@ -37,7 +37,6 @@
   },
   "dependencies": {
     "@fastify/error": "^3.4.0",
-    "@graphql-tools/utils": "^10.0.7",
     "@hapi/topo": "^6.0.2",
     "@platformatic/composer": "workspace:*",
     "@platformatic/config": "workspace:*",

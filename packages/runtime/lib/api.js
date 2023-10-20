@@ -3,7 +3,6 @@
 const FastifyUndiciDispatcher = require('fastify-undici-dispatcher')
 const { Agent, setGlobalDispatcher } = require('undici')
 const { PlatformaticApp } = require('./app')
-const { printSchemaWithDirectives } = require('@graphql-tools/utils')
 const errors = require('./errors')
 
 class RuntimeApi {
@@ -234,7 +233,7 @@ class RuntimeApi {
 
     try {
       await service.server.ready()
-      const graphqlSchema = printSchemaWithDirectives(service.server.graphql.schema)
+      const graphqlSchema = service.server.graphql.schema
       return graphqlSchema
     } catch (err) {
       throw new errors.FailedToRetrieveGraphQLSchemaError(id, err.message)
