@@ -5,7 +5,13 @@ const camelcase = require('camelcase')
 const errors = require('./errors')
 
 function toUpperFirst (str) {
+  str = str.toString()
   return str[0].toUpperCase() + str.slice(1)
+}
+
+function toLowerFirst (str) {
+  str = str.toString()
+  return str.charAt(0).toLowerCase() + str.slice(1)
 }
 
 function toSingular (str) {
@@ -46,6 +52,7 @@ function areSchemasSupported (sql) {
 module.exports = {
   toSingular,
   toUpperFirst,
+  toLowerFirst,
   sanitizeLimit,
   tableName,
   areSchemasSupported
