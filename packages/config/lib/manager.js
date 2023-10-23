@@ -1,8 +1,9 @@
 'use strict'
 
-const { basename, join, resolve, dirname, parse } = require('path')
-const { readFile, access } = require('fs/promises')
-const EventEmitter = require('events')
+const { basename, join, resolve, dirname, parse } = require('node:path')
+const { readFile, access } = require('node:fs/promises')
+const EventEmitter = require('node:events')
+const { createRequire } = require('node:module')
 const Ajv = require('ajv')
 const fastifyPlugin = require('./plugin')
 const dotenv = require('dotenv')
@@ -147,6 +148,7 @@ class ConfigManager extends EventEmitter {
           if (statusCode === 200) {
             this.schema = await body.json()
           }
+          /* c8 ignore next 3 */
         } catch {
           // Ignore error.
         }
@@ -192,6 +194,27 @@ class ConfigManager extends EventEmitter {
         return true
       }
     })
+    ajv.addKeyword({
+      keyword: 'resolveModule',
+      type: 'string',
+      schemaType: 'boolean',
+      // TODO: figure out how to implement this via the new `code`
+      // option in Ajv
+      validate: (schema, path, parentSchema, data) => {
+        if (typeof path !== 'string' || path.trim() === '') {
+          return false
+        }
+        const toRequire = this.fullPath || join(this.dirname, 'foo')
+        const _require = createRequire(toRequire)
+        try {
+          const resolved = _require.resolve(path)
+          data.parentData[data.parentDataProperty] = resolved
+          return true
+        } catch {
+          return false
+        }
+      }
+    })
     const ajvValidate = ajv.compile(this.schema)
 
     const res = ajvValidate(this.current)
@@ -208,7 +231,7 @@ class ConfigManager extends EventEmitter {
     return true
   }
 
-  /* istanbul ignore next */
+  /* c8 ignore next 8 */
   async parseAndValidate () {
     const validationResult = await this.parse()
     if (!validationResult) {

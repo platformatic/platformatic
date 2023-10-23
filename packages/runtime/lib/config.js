@@ -41,10 +41,6 @@ async function _transformConfig (configManager) {
   configManager.current.serviceMap = new Map()
   configManager.current.inspectorOptions = null
 
-  if (config.server?.logger?.transport?.target) {
-    config.server.logger.transport.target = pathResolve(configManager.dirname, config.server.logger.transport.target)
-  }
-
   let hasValidEntrypoint = false
 
   for (let i = 0; i < services.length; ++i) {
