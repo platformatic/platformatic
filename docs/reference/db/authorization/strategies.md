@@ -176,3 +176,18 @@ that presented the `adminSecret` to perform any operation on any entity:
   "save": false
 }
 ```
+
+## Custom authorization strategies
+
+You can create your own authorization strategy using a `addAuthStrategy` function. `addAuthStrategy` accepts a strategy `name` and a `createSession` function as a params. `createSession` function should set `request.user` object. All custom strategies will be executed after `jwt` and `webhook` default strategies.
+
+_Example_
+
+```js
+app.addAuthStrategy({
+  name: 'custom-auth-strategy',
+  createSession: async (req, reply) => {
+    req.user = { id: 42, role: 'admin' }
+  }
+})
+```
