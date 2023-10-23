@@ -5,20 +5,22 @@ import { capitalize, classCase } from './utils.mjs'
 import { hasDuplicatedParameters } from '@platformatic/client'
 import jsonpointer from 'jsonpointer'
 import errors from './errors.mjs'
+import camelcase from 'camelcase'
 
 export function writeOperations (interfacesWriter, mainWriter, operations, { fullRequest, fullResponse, optionalHeaders, schema }) {
   const originalFullResponse = fullResponse
   let currentFullResponse = originalFullResponse
   for (const operation of operations) {
     const operationId = operation.operation.operationId
+    const camelCaseOperationId = camelcase(operationId)
     const { parameters, responses, requestBody } = operation.operation
     const forceFullRequest = fullRequest || hasDuplicatedParameters(operation.operation)
     const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
     if (successResponses.length !== 1) {
       currentFullResponse = true
     }
-    const operationRequestName = `${capitalize(operationId)}Request`
-    const operationResponseName = `${capitalize(operationId)}Response`
+    const operationRequestName = `${capitalize(camelCaseOperationId)}Request`
+    const operationResponseName = `${capitalize(camelCaseOperationId)}Response`
 
     interfacesWriter.write(`export interface ${operationRequestName}`).block(() => {
       const addedProps = new Set()
@@ -95,13 +97,13 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
     })
 
     // write response unions
-    const allResponsesName = `${capitalize(operationId)}Responses`
+    const allResponsesName = `${capitalize(camelCaseOperationId)}Responses`
     interfacesWriter.writeLine(`type ${allResponsesName} = `)
     interfacesWriter.indent(() => {
       interfacesWriter.write(responseTypes.join('\n| '))
     })
     interfacesWriter.blankLine()
-    mainWriter.writeLine(`${operationId}(req?: ${operationRequestName}): Promise<${allResponsesName}>;`)
+    mainWriter.writeLine(`${camelCaseOperationId}(req?: ${operationRequestName}): Promise<${allResponsesName}>;`)
     currentFullResponse = originalFullResponse
   }
 }

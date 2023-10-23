@@ -801,7 +801,7 @@ app.listen({ port: 0 })
   })
 })
 
-test('openapi client generation from YAML file', async ({ teardown, comment, same }) => {
+test('openapi client generation from YAML file', async ({ teardown, comment, same, match }) => {
   const dir = await moveToTmpdir(teardown)
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'openapi.yaml')
   comment(`working in ${dir}`)
@@ -812,6 +812,11 @@ test('openapi client generation from YAML file', async ({ teardown, comment, sam
   const data = await readFile(jsonFile, 'utf-8')
   const json = JSON.parse(data)
   same(json.openapi, '3.0.3')
+
+  // Check operation names are correctly capitalized
+  const typeFile = join(dir, 'movies', 'movies.d.ts')
+  const typeData = await readFile(typeFile, 'utf-8')
+  match(typeData, 'getMovies(req?: GetMoviesRequest): Promise<GetMoviesResponses>;')
 })
 
 test('nested optional parameters are correctly identified', async ({ teardown, comment, match }) => {
