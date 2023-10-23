@@ -1,0 +1,16 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v0.22.0/db",
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
+  },
+  "db": {
+    "connectionString": "sqlite://db.sqlite",
+    "graphql": true,
+    "openapi": false,
+    "ignore": {
+      "versions": true
+    },
+    "events": false
+  }
+}

@@ -52,6 +52,10 @@ class RuntimeApiClient extends EventEmitter {
     return this.#sendCommand('plt:get-service-openapi-schema', { id })
   }
 
+  async getServiceGraphqlSchema (id) {
+    return this.#sendCommand('plt:get-service-graphql-schema', { id })
+  }
+
   async startService (id) {
     return this.#sendCommand('plt:start-service', { id })
   }

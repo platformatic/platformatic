@@ -101,6 +101,13 @@ test('should get services topology', async (t) => {
     entrypoint: 'serviceApp',
     services: [
       {
+        id: 'db-app',
+        status: 'started',
+        entrypoint: false,
+        localUrl: 'http://db-app.plt.local',
+        dependencies: []
+      },
+      {
         id: 'serviceApp',
         status: 'started',
         entrypoint: true,
@@ -353,4 +360,34 @@ test('should fail to get a service openapi schema if service does not expose it'
 
   const openapiSchema = await app.getServiceOpenapiSchema('without-openapi')
   assert.strictEqual(openapiSchema, null)
+})
+
+test('should get a service graphql schema', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  const graphqlSchema = await app.getServiceGraphqlSchema('db-app')
+  assert.deepStrictEqual(graphqlSchema, 'type Query {\n  hello: String\n}')
+})
+
+test('should fail to get a service graphql schema if service does not expose it', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  const graphqlSchema = await app.getServiceGraphqlSchema('with-logger')
+  assert.strictEqual(graphqlSchema, null)
 })
