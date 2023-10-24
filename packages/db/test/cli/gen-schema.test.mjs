@@ -19,6 +19,7 @@ test('generateJsonSchemaConfig generates the file', async (t) => {
   const configSchema = JSON.parse(await readFile(join(cwd, 'platformatic.db.schema.json'), 'utf8'))
   const ajv = new Ajv()
   ajv.addKeyword('resolvePath')
+  ajv.addKeyword('resolveModule')
   // this should not throw
   ajv.compile(schema)
   assert.deepEqual(configSchema, schema)
