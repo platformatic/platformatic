@@ -28,26 +28,40 @@ if (typeof register === 'function' && workerData.config.loaderFile) {
 
 globalThis.fetch = undici.fetch
 
-let transport
+const config = workerData.config
+
+let loggerConfig = config.server?.logger
 let destination
 
-/* c8 ignore next 10 */
-if (workerData.config.loggingPort) {
-  destination = new MessagePortWritable({
-    metadata: workerData.config.loggingMetadata,
-    port: workerData.config.loggingPort
-  })
-} else if (isatty(1)) {
-  transport = pino.transport({
-    target: 'pino-pretty'
-  })
+if (loggerConfig) {
+  loggerConfig = { ...loggerConfig }
+} else {
+  loggerConfig = {}
 }
 
-const logger = pino(transport, destination)
+/* c8 ignore next 10 */
+if (config.loggingPort) {
+  destination = new MessagePortWritable({
+    metadata: config.loggingMetadata,
+    port: config.loggingPort
+  })
+  delete loggerConfig.transport
+} else if (!loggerConfig.transport && isatty(1)) {
+  loggerConfig.transport = {
+    target: 'pino-pretty'
+  }
+}
+
+const logger = pino(loggerConfig, destination)
+
+if (config.server) {
+  config.server.logger = logger
+}
 
 /* c8 ignore next 4 */
 process.once('uncaughtException', (err) => {
   logger.error({ err }, 'runtime error')
+  logger[pino.symbols.streamSym].flushSync?.()
   setImmediate(() => {
     process.exit(1)
   })
@@ -57,6 +71,7 @@ process.once('uncaughtException', (err) => {
 /* c8 ignore next 4 */
 process.once('unhandledRejection', (err) => {
   logger.error({ err }, 'runtime error')
+  logger[pino.symbols.streamSym].flushSync?.()
   setImmediate(() => {
     process.exit(1)
   })

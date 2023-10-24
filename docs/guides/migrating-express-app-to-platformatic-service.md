@@ -175,7 +175,7 @@ These settings are important when using `@fastify/express` in a Platformatic Ser
 
 ### Using @fastify/express with Platformatic Runtime
 
-If you are using [Platformatic Runtime](/referece/runtime/introduction.md), you must configure your other services to connect to this one using an actual TCP socket
+If you are using [Platformatic Runtime](/reference/runtime/introduction.md), you must configure your other services to connect to this one using an actual TCP socket
 instead of the virtual network.
 
 Edit your app's `platformatic.runtime.json` and add the `useHttp` option:
