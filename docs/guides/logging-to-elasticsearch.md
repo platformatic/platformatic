@@ -87,19 +87,18 @@ its API.
 ## Configure Kibana
 
 1. Open `http://localhost:5601` in your browser
+2. Click on the hamburger menu on top left, and then "Discover"
 
 ![Kibana start page](./images/kibana-1.png)
 
-2. Click on the hamburger menu on top left, and then "Discover"
+3. Click on the "Create Data View"
 
 ![Create a Data View](./images/kibana-2.png)
 
-3. Click on the "Create Data View"
+4. Write `pino*` as `name` and select `time` as timestamp field
 
 ![Select an index](./images/kibana-3.png)
 
-4. Write `pino*` as `name` and select `time` as timestamp field
+5. Enjoy your logs
 
 ![Browse logs](./images/kibana-4.png)
-
-5. Enjoy your logs
