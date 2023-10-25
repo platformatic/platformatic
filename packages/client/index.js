@@ -12,10 +12,9 @@ const $RefParser = require('@apidevtools/json-schema-ref-parser')
 const { createHash } = require('node:crypto')
 const validateFunctionCache = {}
 const errors = require('./errors')
+const camelCase = require('camelcase')
 
-async function generateOperationId (path, method, methodMeta, all) {
-  const camelCase = (await import('camelcase')).default
-
+function generateOperationId (path, method, methodMeta, all) {
   let operationId = methodMeta.operationId
   if (!operationId) {
     const pathParams = methodMeta.parameters?.filter(p => p.in === 'path') || []
@@ -78,7 +77,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
       } else {
         methodMeta.parameters = commonParameters
       }
-      const operationId = await generateOperationId(path, method, methodMeta, generatedOperationIds)
+      const operationId = generateOperationId(path, method, methodMeta, generatedOperationIds)
       const responses = pathMeta[method].responses
       const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
       if (successResponses.length !== 1) {
