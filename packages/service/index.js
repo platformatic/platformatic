@@ -18,6 +18,7 @@ const { telemetry } = require('@platformatic/telemetry')
 const { schema } = require('./lib/schema')
 const { addLoggerToTheConfig } = require('./lib/utils')
 const { start, buildServer } = require('./lib/start')
+const ServiceGenerator = require('./lib/generator/service-generator.js')
 
 async function platformaticService (app, opts, toLoad = []) {
   const configManager = app.platformatic.configManager
@@ -135,3 +136,4 @@ module.exports.platformaticService = platformaticService
 module.exports.addLoggerToTheConfig = addLoggerToTheConfig
 module.exports.tsCompiler = compiler
 module.exports.start = start
+module.exports.Generator = ServiceGenerator

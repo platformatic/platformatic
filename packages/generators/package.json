@@ -1,0 +1,27 @@
+{
+  "name": "@platformatic/generators",
+  "version": "1.10.0",
+  "description": "Main classes and utils for generators.",
+  "main": "index.js",
+  "scripts": {
+    "lint": "standard | snazzy",
+    "test": "pnpm run lint && c8 --100 -x fixtures -x test node ./test/runner.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@fastify/error": "^3.4.1",
+    "boring-name-generator": "^1.0.3",
+    "fastify": "^4.24.3",
+    "pino": "^8.16.1"
+  },
+  "devDependencies": {
+    "c8": "^8.0.1",
+    "glob": "^10.3.10",
+    "inquirer": "^9.2.11",
+    "snazzy": "^9.0.0",
+    "standard": "^17.1.0",
+    "typescript": "^5.2.2"
+  }
+}
