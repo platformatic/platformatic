@@ -1,5 +1,21 @@
 Start the Platformatic Runtime with the following command:
 
-``` bash
+```bash
  $ platformatic runtime start
+```
+
+You can also specify a custom routes file, for example:
+
+```bash
+ $ platformatic runtime start routes.js
+```
+
+Where `routes.js` is:
+
+```javascript
+module.exports = async function (app) {
+  app.get('/hello', async () => {
+    return { hello: 'hello123' }
+  })
+}
 ```

@@ -1,6 +1,7 @@
 import assert from 'node:assert'
 import { on, once } from 'node:events'
 import { test } from 'node:test'
+import fs from 'node:fs/promises'
 import { join } from 'desm'
 import { request } from 'undici'
 import { cliPath, start } from './helper.mjs'
@@ -18,7 +19,7 @@ test('autostart', async () => {
 
 test('start command', async () => {
   const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
-  const { child, url } = await start('start', '-c', config)
+  const { child, url } = await start('-c', config)
   const res = await request(url)
 
   assert.strictEqual(res.statusCode, 200)
@@ -58,7 +59,7 @@ test('handles startup errors', async (t) => {
 
 test('exits on error', async () => {
   const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
-  const { child, url } = await start('start', '-c', config)
+  const { child, url } = await start('-c', config)
   const res = await request(url + '/crash')
   const [exitCode] = await once(child, 'exit')
 
@@ -127,7 +128,7 @@ test('starts the inspector', async (t) => {
 
 test('stackable', async () => {
   const config = join(import.meta.url, '..', '..', 'fixtures', 'stackables', 'platformatic.json')
-  const { child, url } = await start('start', '-c', config)
+  const { child, url } = await start('-c', config)
   const res = await request(url + '/foo')
 
   assert.strictEqual(res.statusCode, 200)
@@ -136,16 +137,35 @@ test('stackable', async () => {
   await child.catch(() => {})
 })
 
-test('use runtime server', async ({ equal, same, match, teardown }) => {
+test('use runtime server', async () => {
   const config = join(import.meta.url, '..', '..', 'fixtures', 'server', 'runtime-server', 'platformatic.runtime.json')
-  const { child, url } = await start('start', '-c', config)
+  const { child, url } = await start('-c', config)
   assert.strictEqual(url, 'http://127.0.0.1:14242')
   child.kill('SIGINT')
 })
 
-test('the runtime server overrides the entrypoint server', async ({ equal, same, match, teardown }) => {
+test('the runtime server overrides the entrypoint server', async () => {
   const config = join(import.meta.url, '..', '..', 'fixtures', 'server', 'overrides-service', 'platformatic.runtime.json')
-  const { child, url } = await start('start', '-c', config)
+  const { child, url } = await start('-c', config)
   assert.strictEqual(url, 'http://127.0.0.1:14242')
   child.kill('SIGINT')
+})
+
+test('start command with js file', async (t) => {
+  const file = join(import.meta.url, '..', '..', 'fixtures', 'empty', 'hello.js')
+  const config = join(import.meta.url, '..', '..', 'fixtures', 'empty', 'platformatic.service.json')
+  try {
+    await fs.unlink(config)
+  } catch {}
+  t.after(async () => {
+    await fs.unlink(config)
+  })
+
+  const { child, url } = await start(file)
+  const res = await request(url + '/hello')
+
+  assert.strictEqual(res.statusCode, 200)
+  assert.deepStrictEqual(await res.body.json(), { hello: 'hello123' })
+  child.kill('SIGINT')
+  await child.catch(() => {})
 })
