@@ -21,10 +21,10 @@
   "devDependencies": {
     "@platformatic/telemetry": "workspace:*",
     "c8": "^8.0.1",
-    "glob": "^10.3.10",
     "desm": "^1.3.0",
     "execa": "^8.0.1",
     "fastify": "^4.23.2",
+    "glob": "^10.3.10",
     "snazzy": "^9.0.0",
     "split2": "^4.2.0",
     "standard": "^17.1.0",
@@ -36,6 +36,7 @@
     "@fastify/error": "^3.3.0",
     "abstract-logging": "^2.0.1",
     "ajv": "^8.12.0",
+    "camelcase": "^8.0.0",
     "jsonpointer": "^5.0.1",
     "undici": "^5.25.4"
   }

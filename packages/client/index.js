@@ -13,7 +13,9 @@ const { createHash } = require('node:crypto')
 const validateFunctionCache = {}
 const errors = require('./errors')
 
-function generateOperationId (path, method, methodMeta, all) {
+async function generateOperationId (path, method, methodMeta, all) {
+  const camelCase = (await import('camelcase')).default
+
   let operationId = methodMeta.operationId
   if (!operationId) {
     const pathParams = methodMeta.parameters?.filter(p => p.in === 'path') || []
@@ -36,6 +38,7 @@ function generateOperationId (path, method, methodMeta, all) {
     }
     operationId = candidate
   }
+  operationId = camelCase(operationId)
   all.push(operationId)
   return operationId
 }
@@ -75,7 +78,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
       } else {
         methodMeta.parameters = commonParameters
       }
-      const operationId = generateOperationId(path, method, methodMeta, generatedOperationIds)
+      const operationId = await generateOperationId(path, method, methodMeta, generatedOperationIds)
       const responses = pathMeta[method].responses
       const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
       if (successResponses.length !== 1) {
