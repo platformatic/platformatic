@@ -28,7 +28,7 @@
   "paths": {
     "/movies/": {
       "get": {
-        "operationId": "getMovies",
+        "operationId": "get-movies",
         "parameters": [
           {
             "schema": {

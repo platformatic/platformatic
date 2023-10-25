@@ -9,6 +9,7 @@ const { ResponseStatusCodeError } = require('undici').errors
 const { buildServer } = require('../../db')
 const { buildServer: buildService } = require('../../service')
 const { buildOpenAPIClient } = require('..')
+const Fastify = require('fastify')
 require('./helper')
 
 test('rejects with no url', async (t) => {
@@ -789,4 +790,37 @@ test('validate response', async (t) => {
     id: 123,
     title: 'Harry Potter'
   })
+})
+
+test('build client with common parameters', async (t) => {
+  const app = Fastify()
+
+  app.get('/path/with/:fieldId', async (req, res) => {
+    return {
+      pathParam: req.params.fieldId,
+      queryParam: req.query.movieId
+    }
+  })
+
+  const clientUrl = await app.listen({
+    port: 0
+  })
+  t.after(() => {
+    app.close()
+  })
+  const specPath = join(__dirname, 'fixtures', 'common-parameters-openapi.json')
+  const client = await buildOpenAPIClient({
+    url: clientUrl,
+    path: specPath
+  })
+
+  const output = await client.getPathWithFieldId({
+    fieldId: 'foo',
+    movieId: '123'
+  })
+
+  assert.deepEqual({
+    pathParam: 'foo',
+    queryParam: '123'
+  }, output)
 })

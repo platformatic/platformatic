@@ -12,6 +12,7 @@ const $RefParser = require('@apidevtools/json-schema-ref-parser')
 const { createHash } = require('node:crypto')
 const validateFunctionCache = {}
 const errors = require('./errors')
+const camelCase = require('camelcase')
 
 function generateOperationId (path, method, methodMeta, all) {
   let operationId = methodMeta.operationId
@@ -36,6 +37,7 @@ function generateOperationId (path, method, methodMeta, all) {
     }
     operationId = candidate
   }
+  operationId = camelCase(operationId)
   all.push(operationId)
   return operationId
 }
