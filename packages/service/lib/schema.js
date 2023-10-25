@@ -170,6 +170,61 @@ const server = {
           properties: {
             level: {
               type: 'string'
+            },
+            transport: {
+              anyOf: [{
+                type: 'object',
+                properties: {
+                  target: {
+                    type: 'string',
+                    resolveModule: true
+                  },
+                  options: {
+                    type: 'object'
+                  }
+                },
+                additionalProperties: false
+              }, {
+                type: 'object',
+                properties: {
+                  targets: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        target: {
+                          type: 'string',
+                          resolveModule: true
+                        },
+                        options: {
+                          type: 'object'
+                        },
+                        level: {
+                          type: 'string'
+                        },
+                        additionalProperties: false
+                      }
+                    }
+                  },
+                  options: {
+                    type: 'object'
+                  }
+                },
+                additionalProperties: false
+              }]
+            },
+            pipeline: {
+              type: 'object',
+              properties: {
+                target: {
+                  type: 'string',
+                  resolveModule: true
+                },
+                options: {
+                  type: 'object'
+                }
+              },
+              additionalProperties: false
             }
           },
           additionalProperties: true

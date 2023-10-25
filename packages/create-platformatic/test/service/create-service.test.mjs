@@ -41,6 +41,7 @@ test('creates service with typescript', async ({ equal, same, ok }) => {
   const serviceConfig = JSON.parse(serviceConfigFile)
   const ajv = new Ajv()
   ajv.addKeyword('resolvePath')
+  ajv.addKeyword('resolveModule')
   const validate = ajv.compile(schema.schema)
   const isValid = validate(serviceConfig)
   equal(isValid, true)

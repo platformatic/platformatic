@@ -1,10 +1,10 @@
 {
   "name": "@platformatic/config",
-  "version": "1.5.2",
+  "version": "1.6.0",
   "description": "Platformatic DB Config Manager",
   "main": "index.js",
   "scripts": {
-    "test": "standard | snazzy && c8 node ./test/runner.js",
+    "test": "standard | snazzy && c8 --100 node ./test/runner.js",
     "lint": "standard | snazzy"
   },
   "repository": {
