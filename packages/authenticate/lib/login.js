@@ -1,161 +1,112 @@
 import parseArgs from 'minimist'
-import { request } from 'undici'
 import open from 'open'
 import { blue, green, underline } from 'colorette'
 import { lstat, mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import { WebSocket } from 'ws'
 import ConfigManager from '@platformatic/config'
 import schema from './schema.js'
 import errors from './errors.js'
 
-const AP_HOST = process.env.PLT_AUTH_PROXY_HOST || 'https://auth-proxy.fly.dev'
+const PLT_HOME = process.env.PLT_HOME || process.env.HOME
+const PLT_DASHBOARD_HOST = process.env.PLT_DASHBOARD_HOST || 'https://platformatic.cloud'
+const PLT_AUTH_PROXY_HOST = process.env.PLT_AUTH_PROXY_HOST || 'https://plt-production-auth-proxy.fly.dev'
 
-async function triggerAuthentication () {
-  // call auth-proxy to get code
-  const { statusCode, body } = await request(`${AP_HOST}/login`, {
-    method: 'GET',
-    headers: {
-      'content-type': 'application/json'
-    }
+function connectToAuthService (authProxyHost, opts) {
+  const authProxyWsHost = authProxyHost.replace('http', 'ws')
+  const ws = new WebSocket(authProxyWsHost + '/user-api-key')
+
+  ws.on('open', async () => {
+    ws.send(JSON.stringify({ type: 'CREATE_USER_API_KEY' }))
   })
 
-  if (statusCode !== 200) {
-    throw new errors.UnableToContactLoginServiceError()
-  }
+  ws.on('message', async (message) => {
+    message = JSON.parse(message.toString())
 
-  return body.json()
-}
-
-async function getTokens (id) {
-  const { statusCode, body } = await request(`${AP_HOST}/login/ready/${id}`)
-
-  const data = await body.json()
-
-  if (data.error && data.error === 'pending') {
-    return { state: 'pending', data: { id } }
-  } else if (statusCode === 200) {
-    return { state: 'complete', data }
-  } else {
-    throw new errors.UnableToRetrieveTokensError()
-  }
-}
-
-async function poll (id, timeout, interval) {
-  const expiresAt = Date.now() + timeout
-
-  async function check (resolve, reject) {
-    let result
-    try {
-      result = await getTokens(id)
-    } catch (err) {
-      return reject(err)
+    if (message.type === 'CREATE_USER_API_KEY_REQ_ID') {
+      const { reqId } = message.data
+      await opts.onReqId(reqId)
+      return
     }
 
-    const { state, data } = result
+    if (message.type === 'CREATE_USER_API_KEY_RESULT') {
+      const { userApiKey } = message.data
+      await opts.onUserApiKey(userApiKey)
 
-    if (Date.now() > expiresAt) {
-      reject(new errors.UserDidNotAuthenticateBeforeExpiryError())
-    } else if (state === 'pending') {
-      setTimeout(check, interval, resolve, reject)
-    } else if (state === 'complete') {
-      resolve(data)
-    /* c8 ignore next 3 */
-    } else {
-      // do nothing, never get here
+      ws.close()
+      return
     }
-  }
+    /* c8 ignore next 1 */
+    throw new errors.UnknownMessageTypeError(message.type)
+  })
 
-  return new Promise(check)
+  ws.on('error', function error (err) {
+    opts.onError(err)
+    ws.close()
+  })
+}
+
+function generateVerifyUrl (dashboardHost, reqId) {
+  return `${dashboardHost}/#/?reqId=${reqId}`
 }
 
 export default async function startLogin (_args, print) {
   const args = parseArgs(_args, {
     boolean: 'browser',
-    string: ['claim', 'config']
+    string: ['config', 'auth-proxy-host', 'dashboard-host', 'platformatic-home'],
+    default: {
+      browser: process.stdout.isTTY
+    }
   })
 
-  let pltDirPath = path.join(process.env.PLT_HOME, '.platformatic')
+  /* c8 ignore next 2 */
+  const dashboardHost = args['dashboard-host'] || PLT_DASHBOARD_HOST
+  const authProxyHost = args['auth-proxy-host'] || PLT_AUTH_PROXY_HOST
+  const platformaticHome = args['platformatic-home'] || PLT_HOME
+
+  let pltDirPath = path.join(platformaticHome, '.platformatic')
   if (args.config) {
     const stats = await lstat(args.config)
-    if (stats.isDirectory()) throw new errors.ConfigOptionRequiresPathToFileError()
+    if (stats.isDirectory()) {
+      throw new errors.ConfigOptionRequiresPathToFileError()
+    }
     pltDirPath = path.dirname(args.config)
   }
 
-  try {
-    await mkdir(pltDirPath)
-  /* c8 ignore next 2 */
-  } catch {
-  }
+  await mkdir(pltDirPath).catch(() => {})
 
   const config = new ConfigManager({
+    /* c8 ignore next 1 */
     source: args.config || path.join(pltDirPath, 'config.json'),
     schema
   })
 
-  const { verifyAt, expiresInSeconds, id, intervalSeconds } = await triggerAuthentication()
+  return new Promise((resolve, reject) => {
+    connectToAuthService(authProxyHost, {
+      async onReqId (reqId) {
+        const verifyAt = generateVerifyUrl(dashboardHost, reqId)
+        print(`Open ${blue(underline(verifyAt))} in your browser to continue logging in.`)
 
-  // print browser url
-  print(`Open ${blue(underline(verifyAt))} in your browser to continue logging in.`)
+        // open browser if requested
+        /* c8 ignore next 1 */
+        if (args.browser) await open(verifyAt)
+      },
+      async onUserApiKey (userApiKey) {
+        await saveUserApiKey(config, userApiKey)
 
-  // open browser if requested
-  /* c8 ignore next 1 */
-  if (args.browser) await open(verifyAt)
+        print(`${green('User api key was successfully generated!')}`)
+        print(`Visit our Getting Started guide at ${blue(underline('https://docs.platforamtic.dev/getting-started'))} to build your first application`)
 
-  const { tokens } = await poll(id, expiresInSeconds * 1000, intervalSeconds * 1000)
-  const { state } = await registerUser(tokens, args.claim)
-  await saveTokens(tokens, config)
-
-  print(`${green(`Success, you have ${state}!`)}`)
-  if (state === 'registered') {
-    print(`Visit our Getting Started guide at ${blue(underline('https://docs.platforamtic.dev/getting-started'))} to build your first application`)
-  }
-}
-
-async function saveTokens (tokens, config) {
-  await config.update({ accessToken: tokens.access })
-  await writeFile(config.fullPath, JSON.stringify(config.current, null, 2))
-}
-
-async function registerUser (tokens, invite) {
-  // try to load user
-  const userInfoRes = await request(`${AP_HOST}/users/self`, {
-    method: 'GET',
-    headers: {
-      authorization: `Bearer ${tokens.access}`
-    }
-  })
-
-  if (userInfoRes.statusCode !== 200) {
-    throw new errors.UnableToGetUserDataError()
-  }
-
-  const { username, fromProvider } = await userInfoRes.body.json()
-  if (username) {
-    // user is already registered
-    return { state: 'authenticated' }
-  }
-
-  // if no user but is claiming, do claim
-  if (invite && fromProvider.sub) {
-    const claimRes = await request(`${AP_HOST}/claim`, {
-      method: 'POST',
-      body: JSON.stringify({
-        username: fromProvider.nickname,
-        externalId: fromProvider.sub,
-        invite
-      }),
-      headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${tokens.access}`
+        resolve(userApiKey)
+      },
+      onError (err) {
+        reject(new errors.UnableToContactLoginServiceError(err))
       }
     })
+  })
+}
 
-    if (claimRes.statusCode !== 200) {
-      throw new errors.UnableToClaimInviteError()
-    }
-
-    return { state: 'registered' }
-  }
-
-  throw new errors.MissingInviteError()
+async function saveUserApiKey (config, userApiKey) {
+  await config.update({ $schema: config.schema.$id, userApiKey })
+  await writeFile(config.fullPath, JSON.stringify(config.current, null, 2))
 }

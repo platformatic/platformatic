@@ -93,6 +93,7 @@ Welcome to Platformatic. Available commands are:
 * `deploy` - deploy a Platformatic application to the cloud.
 * `runtime` - start Platformatic Runtime; type `platformatic runtime help` to know more.
 * `start` - start a Platformatic application.
+* `login` - generate a Platformatic login api key.
 
 
 #### compile
@@ -202,6 +203,20 @@ You can find more details about the configuration format here:
 * [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
 * [Platformatic Service Configuration](https://docs.platformatic.dev/docs/reference/service/configuration)
 
+
+
+#### login
+
+Generate a Platformatic login api key.
+
+``` bash
+ $ platformatic deploy
+```
+
+Options:
+
+* `-c, --config FILE` - Specify a path to a global platformatic config file. Defaults to `~/.platformatic/config.json`.
+* `--browser` - Automatically open default browser. If process stdout is a TTY, the default is `true`. Otherwise, the default is `false`.
 
 
 #### start

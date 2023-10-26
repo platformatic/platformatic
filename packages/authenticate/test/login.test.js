@@ -1,398 +1,108 @@
 import assert from 'node:assert/strict'
-import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import path from 'node:path'
-import { beforeEach, test } from 'node:test'
-import { MockAgent, setGlobalDispatcher } from 'undici'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { blue, green, underline } from 'colorette'
 import login from '../lib/login.js'
+import { createAuthProxy } from './helper.js'
 
-let mockAgent
-
-async function makeConfig (config = '', name = 'pltconf.json', setHomeDir = false) {
-  let tmpPath = await mkdtemp(path.join(tmpdir(), 'plt-authenticate-'))
-  if (setHomeDir) {
-    process.env.PLT_HOME = tmpPath // don't move this line
-    tmpPath = path.join(tmpPath, '.platformatic')
-    await mkdir(tmpPath)
-  }
-
-  const filename = path.join(tmpPath, name)
-  await writeFile(filename, config)
-  return filename
-}
-
-const MSG_VERIFY_AT_URL = `Open ${blue(underline('https://some-auth.pro/vider'))} in your browser to continue logging in.`
-const MSG_REGISTERED = `${green('Success, you have registered!')}`
-const MSG_AUTHENTICATED = `${green('Success, you have authenticated!')}`
+const MSG_VERIFY_AT_URL = /^Open .*https:\/\/platformatic.cloud\/#\/\?reqId=.*? in your browser to continue logging in.$/
+const MSG_API_KEY_GENERATED = `${green('User api key was successfully generated!')}`
 const MSG_GETTING_STARTED = `Visit our Getting Started guide at ${blue(underline('https://docs.platforamtic.dev/getting-started'))} to build your first application`
 
 // Ordered message assertions
-function assertMessages (t, expecting) {
-  return message => assert.equal(message, expecting.shift())
+function assertMessages (expecting) {
+  return message => {
+    const expectingMessage = expecting.shift()
+    if (expectingMessage === undefined) {
+      assert.fail(`Unexpected message: ${message}`)
+    }
+    if (typeof expectingMessage === 'string') {
+      assert.equal(message, expectingMessage)
+    } else {
+      assert.match(message, expectingMessage)
+    }
+  }
 }
 
-beforeEach(() => {
-  mockAgent = new MockAgent()
-  setGlobalDispatcher(mockAgent)
-  mockAgent.disableNetConnect()
+test('should generate a user api key', async (t) => {
+  const platformaticDir = await mkdtemp(join(tmpdir(), 'plt-authenticate-'))
+  const configPath = join(platformaticDir, 'config.json')
+  await writeFile(configPath, '')
 
-  process.env.PLT_AUTH_PROXY_HOST = 'http://127.0.0.1:3000'
-  process.env.PLT_HOME = ''
-})
-
-test('should be able to login as an existing user immediately', async (t) => {
-  const authproxy = mockAgent.get('https://auth-proxy.fly.dev')
-  authproxy.intercept({
-    method: 'GET',
-    path: '/login'
-  }).reply(200, {
-    verifyAt: 'https://some-auth.pro/vider',
-    expiresInSeconds: 900,
-    id: 'abc123',
-    intervalSeconds: 5
-  })
-  authproxy.intercept({
-    method: 'GET',
-    path: '/login/ready/abc123'
-  }).reply(200, { tokens: { access: '1234' } })
-  authproxy.intercept({
-    method: 'GET',
-    path: '/users/self'
-  }).reply(200, {
-    username: 'person',
-    role: 'invitee',
-    fromProvider: {
-      sub: 'github|16238872'
+  let userApiKey = null
+  const authProxy = await createAuthProxy(t, {
+    onReqId (reqId) {
+      assert.match(reqId, /^[a-z0-9-]{32}$/)
+    },
+    onUserApiKey (key) {
+      userApiKey = key
+      assert.match(key, /^[a-z0-9-]{32}$/)
     }
   })
+  const authProxyPort = authProxy.server.address().port
 
-  const confPath = await makeConfig()
-  const args = ['--config', confPath]
+  const args = [
+    '--config', configPath,
+    '--auth-proxy-host', `http://127.0.0.1:${authProxyPort}`
+  ]
 
-  const print = assertMessages(t, [MSG_VERIFY_AT_URL, MSG_AUTHENTICATED])
+  const print = assertMessages([
+    MSG_VERIFY_AT_URL,
+    MSG_API_KEY_GENERATED,
+    MSG_GETTING_STARTED
+  ])
+
   await login(args, print)
 
-  const actual = await readFile(confPath)
-  assert.deepEqual(JSON.parse(actual), { accessToken: '1234' })
+  const config = await readFile(configPath, 'utf-8')
+
+  const packageFile = await readFile(new URL('../package.json', import.meta.url), 'utf-8')
+  const pkg = JSON.parse(packageFile)
+  const version = 'v' + pkg.version
+
+  assert.deepStrictEqual(JSON.parse(config), {
+    $schema: `https://platformatic.dev/schemas/${version}/login`,
+    userApiKey
+  })
 })
 
-test('should use home directory config', async (t) => {
-  const authproxy = mockAgent.get('https://auth-proxy.fly.dev')
-  authproxy.intercept({
-    method: 'GET',
-    path: '/login'
-  }).reply(200, {
-    verifyAt: 'https://some-auth.pro/vider',
-    expiresInSeconds: 900,
-    id: 'abc123',
-    intervalSeconds: 5
-  })
-  authproxy.intercept({
-    method: 'GET',
-    path: '/login/ready/abc123'
-  }).reply(200, { tokens: { access: '1234' } })
-  authproxy.intercept({
-    method: 'GET',
-    path: '/users/self'
-  }).reply(200, {
-    username: 'person',
-    role: 'invitee',
-    fromProvider: {
-      sub: 'github|16238872'
-    }
-  })
+test('should fail if an auth proxy is unavailable', async (t) => {
+  const platformaticDir = await mkdtemp(join(tmpdir(), 'plt-authenticate-'))
+  const configPath = join(platformaticDir, 'config.json')
+  await writeFile(configPath, '')
 
-  const confPath = await makeConfig('', 'config.json', true)
+  const args = [
+    '--config', configPath,
+    '--auth-proxy-host', 'http://127.0.0.1:9999'
+  ]
 
-  const print = assertMessages(t, [MSG_VERIFY_AT_URL, MSG_AUTHENTICATED])
-  await login([], print)
-
-  const actual = await readFile(confPath)
-  assert.deepEqual(JSON.parse(actual), { accessToken: '1234' })
-})
-
-test('should be able to login after a short wait', async (t) => {
-  const authproxy = mockAgent.get('https://auth-proxy.fly.dev')
-  authproxy.intercept({
-    method: 'GET',
-    path: '/login'
-  }).reply(200, {
-    verifyAt: 'https://some-auth.pro/vider',
-    expiresInSeconds: 5,
-    id: 'abc123',
-    intervalSeconds: 1
-  })
-
-  // pending user auth
-  authproxy.intercept({
-    method: 'GET',
-    path: '/login/ready/abc123'
-  }).reply(200, { error: 'pending' })
-
-  // user has authenticated
-  authproxy.intercept({
-    method: 'GET',
-    path: '/login/ready/abc123'
-  }).reply(200, { tokens: { access: '1234' } })
-
-  authproxy.intercept({
-    method: 'GET',
-    path: '/users/self'
-  }).reply(200, {
-    username: 'person',
-    role: 'invitee',
-    fromProvider: {
-      sub: 'github|16238872'
-    }
-  })
-
-  const confPath = await makeConfig()
-  const args = ['--config', confPath]
-
-  const print = assertMessages(t, [MSG_VERIFY_AT_URL, MSG_AUTHENTICATED])
-  await login(args, print)
-
-  const actual = await readFile(confPath)
-  assert.deepEqual(JSON.parse(actual), { accessToken: '1234' })
-})
-
-test('should fail when unable to connect to authproxy', async (t) => {
-  const authproxy = mockAgent.get('https://auth-proxy.fly.dev')
-  authproxy.intercept({
-    method: 'GET',
-    path: '/login'
-  }).reply(500, {})
-
-  const confPath = await makeConfig()
-  const args = ['--config', confPath]
-
-  const print = () => { assert.fail('Should not hit the print function') }
+  const print = assertMessages([])
   try {
     await login(args, print)
   } catch (err) {
-    assert.equal(err.message, 'Unable to contact login service')
+    assert.match(err.message, /Unable to contact login service/)
   }
 
-  const actual = await readFile(confPath)
-  assert.equal(actual.toString(), '')
+  const config = await readFile(configPath, 'utf-8')
+  assert.strictEqual(config, '')
 })
 
-test('should fail if there is a problem getting tokens', async (t) => {
-  const authproxy = mockAgent.get('https://auth-proxy.fly.dev')
-  authproxy.intercept({
-    method: 'GET',
-    path: '/login'
-  }).reply(200, {
-    verifyAt: 'https://some-auth.pro/vider',
-    expiresInSeconds: 5,
-    id: 'abc123',
-    intervalSeconds: 1
-  })
-  authproxy.intercept({
-    method: 'GET',
-    path: '/login/ready/abc123'
-  }).reply(500, {})
+test('should fail if config path is a dir', async (t) => {
+  const platformaticDir = await mkdtemp(join(tmpdir(), 'plt-authenticate-'))
+  const configPath = join(platformaticDir, 'config.json')
+  await writeFile(configPath, '')
 
-  const confPath = await makeConfig()
-  const args = ['--config', confPath]
+  const args = [
+    '--config', platformaticDir,
+    '--auth-proxy-host', 'http://127.0.0.1:9999'
+  ]
 
-  const print = assertMessages(t, [MSG_VERIFY_AT_URL])
+  const print = assertMessages([])
   try {
     await login(args, print)
   } catch (err) {
-    assert.equal(err.message, 'Unable to retrieve tokens')
-  }
-
-  const actual = await readFile(confPath)
-  assert.equal(actual.toString(), '')
-})
-
-test('should fail if user does not authenticate before link expires', async (t) => {
-  const authproxy = mockAgent.get('https://auth-proxy.fly.dev')
-  authproxy.intercept({
-    method: 'GET',
-    path: '/login'
-  }).reply(200, {
-    verifyAt: 'https://some-auth.pro/vider',
-    expiresInSeconds: 2,
-    id: 'abc123',
-    intervalSeconds: 1
-  })
-
-  // pending user auth
-  authproxy.intercept({
-    method: 'GET',
-    path: '/login/ready/abc123'
-  }).reply(200, { error: 'pending' }).persist()
-
-  const confPath = await makeConfig()
-  const args = ['--config', confPath]
-
-  const print = assertMessages(t, [MSG_VERIFY_AT_URL])
-  try {
-    await login(args, print)
-  } catch (err) {
-    assert.equal(err.message, 'User did not authenticate before expiry')
-  }
-
-  const actual = await readFile(confPath)
-  assert.equal(actual.toString(), '')
-})
-
-test('should claim an invite', async (t) => {
-  const authproxy = mockAgent.get('https://auth-proxy.fly.dev')
-  authproxy.intercept({
-    method: 'GET',
-    path: '/login'
-  }).reply(200, {
-    verifyAt: 'https://some-auth.pro/vider',
-    expiresInSeconds: 10,
-    id: 'abc123',
-    intervalSeconds: 1
-  })
-  authproxy.intercept({
-    method: 'GET',
-    path: '/login/ready/abc123'
-  }).reply(200, { tokens: { access: '1234' } })
-  authproxy.intercept({
-    method: 'GET',
-    path: '/users/self'
-  }).reply(200, { username: '', fromProvider: { sub: 'github|def567', nickname: 'bobby' } })
-  authproxy.intercept({
-    method: 'POST',
-    path: '/claim',
-    body: JSON.stringify({
-      username: 'bobby',
-      externalId: 'github|def567',
-      invite: 'best.token.ever'
-    })
-  }).reply(200, {})
-
-  const confPath = await makeConfig()
-  const args = ['--config', confPath, '--claim', 'best.token.ever']
-
-  const print = assertMessages(t, [MSG_VERIFY_AT_URL, MSG_REGISTERED, MSG_GETTING_STARTED])
-  await login(args, print)
-
-  const actual = await readFile(confPath)
-  assert.deepEqual(JSON.parse(actual), { accessToken: '1234' })
-})
-
-test('should fail when unable to claim an invite', async (t) => {
-  const authproxy = mockAgent.get('https://auth-proxy.fly.dev')
-  authproxy.intercept({
-    method: 'GET',
-    path: '/login'
-  }).reply(200, {
-    verifyAt: 'https://some-auth.pro/vider',
-    expiresInSeconds: 10,
-    id: 'abc123',
-    intervalSeconds: 1
-  })
-  authproxy.intercept({
-    method: 'GET',
-    path: '/login/ready/abc123'
-  }).reply(200, { tokens: { access: '1234' } })
-  authproxy.intercept({
-    method: 'GET',
-    path: '/users/self'
-  }).reply(200, { username: '', fromProvider: { sub: 'github|def567', nickname: 'bobby' } })
-  authproxy.intercept({
-    method: 'POST',
-    path: '/claim'
-  }).reply(400, {})
-
-  const confPath = await makeConfig()
-  const args = ['--config', confPath, '--claim', 'best.token.ever']
-
-  const print = assertMessages(t, [MSG_VERIFY_AT_URL])
-  try {
-    await login(args, print)
-  } catch (err) {
-    assert.equal(err.message, 'Unable to claim invite')
-  }
-
-  const actual = await readFile(confPath)
-  assert.equal(actual.toString(), '')
-})
-
-test('should fail when unable to get any user details', async (t) => {
-  const authproxy = mockAgent.get('https://auth-proxy.fly.dev')
-  authproxy.intercept({
-    method: 'GET',
-    path: '/login'
-  }).reply(200, {
-    verifyAt: 'https://some-auth.pro/vider',
-    expiresInSeconds: 10,
-    id: 'abc123',
-    intervalSeconds: 1
-  })
-  authproxy.intercept({
-    method: 'GET',
-    path: '/login/ready/abc123'
-  }).reply(200, { tokens: { access: '1234' } })
-  authproxy.intercept({
-    method: 'GET',
-    path: '/users/self'
-  }).reply(400, {})
-
-  const confPath = await makeConfig()
-  const args = ['--config', confPath]
-
-  const print = assertMessages(t, [MSG_VERIFY_AT_URL])
-  try {
-    await login(args, print)
-  } catch (err) {
-    assert.equal(err.message, 'Unable to get user data')
-  }
-
-  const actual = await readFile(confPath)
-  assert.equal(actual.toString(), '')
-})
-
-test('should fail when not registered and no invite to be claimed', async (t) => {
-  const authproxy = mockAgent.get('https://auth-proxy.fly.dev')
-  authproxy.intercept({
-    method: 'GET',
-    path: '/login'
-  }).reply(200, {
-    verifyAt: 'https://some-auth.pro/vider',
-    expiresInSeconds: 10,
-    id: 'abc123',
-    intervalSeconds: 1
-  })
-  authproxy.intercept({
-    method: 'GET',
-    path: '/login/ready/abc123'
-  }).reply(200, { tokens: { access: '1234' } })
-  authproxy.intercept({
-    method: 'GET',
-    path: '/users/self'
-  }).reply(200, { username: '', fromProvider: {} })
-
-  const confPath = await makeConfig()
-  const args = ['--config', confPath]
-
-  const print = assertMessages(t, [MSG_VERIFY_AT_URL])
-  try {
-    await login(args, print)
-  } catch (err) {
-    assert.equal(err.message, 'Missing invite')
-  }
-
-  const actual = await readFile(confPath)
-  assert.equal(actual.toString(), '')
-})
-
-test('should fail if no file name is set', async (t) => {
-  const confPath = await makeConfig()
-  const args = ['--config', path.dirname(confPath)]
-
-  const print = () => assert.fail('Should not hit print')
-  try {
-    await login(args, print)
-  } catch (err) {
-    assert.equal(err.message, '--config option requires path to a file')
+    assert.match(err.message, /--config option requires path to a file/)
   }
 })
