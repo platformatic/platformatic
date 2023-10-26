@@ -22,7 +22,14 @@ function generateOperationId (path, method, methodMeta, all) {
     for (const param of pathParams) {
       stringToUpdate = stringToUpdate.replace(`{${param.name}}`, capitalize(param.name))
     }
-    operationId = method.toLowerCase() + stringToUpdate.split(/[/-]+/).map(capitalize).join('')
+    operationId =
+      method.toLowerCase() +
+      stringToUpdate
+        .split(/[/-]+/)
+        .map((token) => {
+          const sanitized = token.replace(/[^a-zA-z0-9]/, '')
+          return capitalize(sanitized)
+        }).join('')
   } else {
     let count = 0
     let candidate = operationId
