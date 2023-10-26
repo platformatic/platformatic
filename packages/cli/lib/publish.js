@@ -55,8 +55,20 @@ async function getUserOrgs (publishServiceHost, userApiKey) {
 }
 
 async function publishStackable (publishServiceHost, userApiKey, orgId, npmPackageName) {
-  console.log('Publishing stackable...')
-  console.log(publishServiceHost, userApiKey, orgId, npmPackageName)
+  const url = publishServiceHost + '/publish'
+  const { statusCode, body } = await request(url, {
+    method: 'GET',
+    headers: {
+      'content-type': 'application/json',
+      'x-platformatic-user-api-key': userApiKey
+    }
+  })
+
+  if (statusCode !== 200) {
+    // throw new errors.UnableToContactLoginServiceError()
+  }
+
+  return body.json()
 }
 
 export async function publish (argv) {
