@@ -1,6 +1,6 @@
 'use strict'
 
-const { test } = require('tap')
+const { test, only } = require('tap')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const { telemetry } = require('@platformatic/telemetry')
@@ -178,4 +178,47 @@ test('creates the spans for errors', { skip: isSQLite }, async ({ pass, teardown
     expectedMessage = "Data too long for column 'title' at row 1"
   }
   equal(graphqlSpan.status.message, expectedMessage)
+})
+
+only('don\'t wrap the schema types starting with __', async ({ pass, teardown, same, equal, fail }) => {
+  const app = fastify()
+
+  await app.register(telemetry, {
+    serviceName: 'test-service',
+    version: '1.0.0',
+    exporter: {
+      type: 'memory'
+    }
+  })
+
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+
+  app.register(sqlGraphQL)
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  const schema = app.graphql.schema
+  const schemaTypeMap = schema.getTypeMap()
+  const types = Object.values(schemaTypeMap)
+  const schemaTypes = types.filter(
+    type => typeof type.getFields === 'function'
+  )
+
+  for (const schemaType of schemaTypes) {
+    for (const [fieldName, field] of Object.entries(schemaType.getFields())) {
+      if (field?.resolve?.__wrapped) {
+        if (schemaType.name.startsWith('__')) {
+          fail(`schemaType should not be wrapped ${schemaType.name}, ${fieldName}`)
+        }
+      }
+    }
+  }
 })

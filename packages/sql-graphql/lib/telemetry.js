@@ -46,6 +46,7 @@ const setupTelemetry = app => {
       for (const [fieldName, field] of Object.entries(schemaType.getFields())) {
         if (typeof field.resolve === 'function' && !schemaTypeName.startsWith('__')) {
           field.resolve = telemetryWrapper(app, field.resolve, schemaTypeName, fieldName)
+          field.resolve.__wrapped = true
         }
       }
     }
