@@ -32,10 +32,11 @@ test('performs a topological sort on services depending on allowCycles', async (
     const loaded = await loadConfig({}, ['-c', configFile], platformaticRuntime)
     const services = loaded.configManager.current.services
 
-    assert.strictEqual(services.length, 3)
-    assert.strictEqual(services[0].id, 'serviceApp')
-    assert.strictEqual(services[1].id, 'with-logger')
-    assert.strictEqual(services[2].id, 'multi-plugin-service')
+    assert.strictEqual(services.length, 4)
+    assert.strictEqual(services[0].id, 'db-app')
+    assert.strictEqual(services[1].id, 'serviceApp')
+    assert.strictEqual(services[2].id, 'with-logger')
+    assert.strictEqual(services[3].id, 'multi-plugin-service')
   })
 
   await t.test('sorts if allowCycles is false', async () => {
@@ -43,10 +44,11 @@ test('performs a topological sort on services depending on allowCycles', async (
     const loaded = await loadConfig({}, ['-c', configFile], platformaticRuntime)
     const services = loaded.configManager.current.services
 
-    assert.strictEqual(services.length, 3)
-    assert.strictEqual(services[0].id, 'with-logger')
-    assert.strictEqual(services[1].id, 'serviceApp')
-    assert.strictEqual(services[2].id, 'multi-plugin-service')
+    assert.strictEqual(services.length, 4)
+    assert.strictEqual(services[0].id, 'dbApp')
+    assert.strictEqual(services[1].id, 'with-logger')
+    assert.strictEqual(services[2].id, 'serviceApp')
+    assert.strictEqual(services[3].id, 'multi-plugin-service')
   })
 
   await t.test('throws if a cycle is present when not allowed', async () => {
