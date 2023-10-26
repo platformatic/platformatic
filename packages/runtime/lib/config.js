@@ -1,6 +1,6 @@
 'use strict'
 const { readFile, readdir } = require('node:fs/promises')
-const { basename, join, resolve: pathResolve } = require('node:path')
+const { join, resolve: pathResolve } = require('node:path')
 const { closest } = require('fastest-levenshtein')
 const Topo = require('@hapi/topo')
 const ConfigManager = require('@platformatic/config')
@@ -253,16 +253,26 @@ platformaticRuntime.configManagerConfig = {
 }
 
 async function wrapConfigInRuntimeConfig ({ configManager, args }) {
+  let serviceId = 'main'
+  try {
+    const packageJson = join(configManager.dirname, 'package.json')
+    serviceId = require(packageJson).name
+    if (serviceId.startsWith('@')) {
+      serviceId = serviceId.split('/')[1]
+    }
+  } catch (err) {
+    // on purpose, the package.json might be missing
+  }
+
   /* c8 ignore next */
-  const id = basename(configManager.dirname) || 'main'
   const wrapperConfig = {
     $schema: schema.$id,
-    entrypoint: id,
+    entrypoint: serviceId,
     allowCycles: false,
     hotReload: true,
     services: [
       {
-        id,
+        id: serviceId,
         path: configManager.dirname,
         config: configManager.fullPath
       }

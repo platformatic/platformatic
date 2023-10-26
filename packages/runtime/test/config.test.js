@@ -5,7 +5,8 @@ const { join } = require('node:path')
 const { test } = require('node:test')
 const { loadConfig } = require('@platformatic/config')
 const { platformaticService } = require('@platformatic/service')
-const { parseInspectorOptions, platformaticRuntime } = require('../lib/config')
+const { platformaticDB } = require('@platformatic/db')
+const { parseInspectorOptions, platformaticRuntime, wrapConfigInRuntimeConfig } = require('../lib/config')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
 test('throws if no entrypoint is found', async (t) => {
@@ -229,4 +230,33 @@ test('correctly loads the hotReload value from a string', async () => {
   process.env.PLT_HOT_RELOAD = 'false'
   const loaded = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   assert.strictEqual(loaded.configManager.current.hotReload, false)
+})
+
+test('defaults the service name to `main`', async (t) => {
+  const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'platformatic.db.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticDB)
+  const runtimeConfig = await wrapConfigInRuntimeConfig(config)
+  const conf = runtimeConfig.current
+  assert.strictEqual(conf.services.length, 1)
+  assert.strictEqual(conf.services[0].id, 'main')
+})
+
+test('uses the name in package.json', async (t) => {
+  const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'platformatic.db.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticDB)
+  const runtimeConfig = await wrapConfigInRuntimeConfig(config)
+  const conf = runtimeConfig.current
+  assert.strictEqual(conf.services.length, 1)
+  assert.strictEqual(conf.services[0].id, 'mysimplename')
+  console.log(conf)
+})
+
+test('uses the name in package.json, removing the scope', async (t) => {
+  const configFile = join(fixturesDir, 'dbApp', 'platformatic.db.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticDB)
+  const runtimeConfig = await wrapConfigInRuntimeConfig(config)
+  const conf = runtimeConfig.current
+  assert.strictEqual(conf.services.length, 1)
+  assert.strictEqual(conf.services[0].id, 'myname')
+  console.log(conf)
 })
