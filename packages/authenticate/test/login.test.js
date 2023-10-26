@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { blue, green, underline } from 'colorette'
-import login from '../lib/login.js'
+import { startLogin } from '../lib/login.js'
 import { createAuthProxy } from './helper.js'
 
 const MSG_VERIFY_AT_URL = /^Open .*https:\/\/platformatic.cloud\/#\/\?reqId=.*? in your browser to continue logging in.$/
@@ -54,7 +54,7 @@ test('should generate a user api key', async (t) => {
     MSG_GETTING_STARTED
   ])
 
-  await login(args, print)
+  await startLogin(args, print)
 
   const config = await readFile(configPath, 'utf-8')
 
@@ -80,7 +80,7 @@ test('should fail if an auth proxy is unavailable', async (t) => {
 
   const print = assertMessages([])
   try {
-    await login(args, print)
+    await startLogin(args, print)
   } catch (err) {
     assert.match(err.message, /Unable to contact login service/)
   }
@@ -101,7 +101,7 @@ test('should fail if config path is a dir', async (t) => {
 
   const print = assertMessages([])
   try {
-    await login(args, print)
+    await startLogin(args, print)
   } catch (err) {
     assert.match(err.message, /--config option requires path to a file/)
   }

@@ -8,7 +8,7 @@ import ConfigManager from '@platformatic/config'
 import schema from './schema.js'
 import errors from './errors.js'
 
-const PLT_HOME = process.env.PLT_HOME || process.env.HOME
+const PLT_HOME = process.env.HOME
 const PLT_DASHBOARD_HOST = process.env.PLT_DASHBOARD_HOST || 'https://platformatic.cloud'
 const PLT_AUTH_PROXY_HOST = process.env.PLT_AUTH_PROXY_HOST || 'https://plt-production-auth-proxy.fly.dev'
 
@@ -50,7 +50,7 @@ function generateVerifyUrl (dashboardHost, reqId) {
   return `${dashboardHost}/#/?reqId=${reqId}`
 }
 
-export default async function startLogin (_args, print) {
+export async function startLogin (_args, print) {
   const args = parseArgs(_args, {
     boolean: 'browser',
     string: ['config', 'auth-proxy-host', 'dashboard-host', 'platformatic-home'],
@@ -104,6 +104,17 @@ export default async function startLogin (_args, print) {
       }
     })
   })
+}
+
+export async function getUserApiKey (configPath) {
+  /* c8 ignore next 3 */
+  if (!configPath) {
+    configPath = path.join(PLT_HOME, '.platformatic', 'config.json')
+  }
+  const config = new ConfigManager({ source: configPath, schema })
+  await config.parse()
+
+  return config.current.userApiKey
 }
 
 async function saveUserApiKey (config, userApiKey) {
