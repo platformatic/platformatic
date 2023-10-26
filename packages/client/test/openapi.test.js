@@ -824,3 +824,12 @@ test('build client with common parameters', async (t) => {
     queryParam: '123'
   }, output)
 })
+
+test('edge cases', async (t) => {
+  const specPath = join(__dirname, 'fixtures', 'misc', 'openapi.json')
+  const client = await buildOpenAPIClient({
+    url: 'http://127.0.0.1:3000',
+    path: specPath
+  })
+  assert.equal(typeof client.getTestWithWeirdCharacters, 'function')
+})
