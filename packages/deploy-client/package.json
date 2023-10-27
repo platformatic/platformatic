@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/deploy-client",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "description": "Deploy code to the Platformatic cloud",
   "main": "index.js",
   "scripts": {
