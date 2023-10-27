@@ -114,7 +114,7 @@ The *typescript* implementation will look like this
 
 ```ts
 import type { Api } from './api-types'
-import * as Types from './api-types'
+import type * as Types from './api-types'
 
 let baseUrl = ''
 export const setBaseUrl = (newUrl: string) : void => { baseUrl = newUrl }

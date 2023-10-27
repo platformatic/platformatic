@@ -219,3 +219,31 @@ export interface Api {
   match(implementation, tsImplementationTemplate)
   match(types, typesTemplate)
 })
+
+test('generate frontend client from path (name with dashes)', async ({ teardown, ok, match }) => {
+  const dir = await moveToTmpdir(teardown)
+
+  const fileName = join(__dirname, 'fixtures', 'frontend-openapi.json')
+  await execa('node', [cliPath, fileName, '--language', 'ts', '--frontend', '--name', 'a-custom-name'])
+  const implementation = await readFile(join(dir, 'a-custom-name', 'a-custom-name.ts'), 'utf8')
+  const types = await readFile(join(dir, 'a-custom-name', 'a-custom-name-types.d.ts'), 'utf8')
+
+  const importTemplate = `import type { ACustomName } from './a-custom-name-types'
+import type * as Types from './a-custom-name-types'
+`
+  const tsImplementationTemplate = `
+export const getHello: ACustomName['getHello'] = async (request: Types.GetHelloRequest) => {
+  return await _getHello(baseUrl, request)
+}`
+  const typesTemplate = `
+export interface ACustomName {
+  setBaseUrl(newUrl: string) : void;
+  getHello(req?: GetHelloRequest): Promise<GetHelloResponses>;
+}`
+
+  ok(implementation)
+  ok(types)
+  match(implementation, tsImplementationTemplate)
+  match(types, typesTemplate)
+  match(implementation, importTemplate)
+})
