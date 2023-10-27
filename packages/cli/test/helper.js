@@ -33,6 +33,16 @@ async function startDeployService (t, options = {}) {
     await uploadCallback(request, reply)
   })
 
+  deployService.get('/organisations', async (request, reply) => {
+    const getOrganizationsCallback = options.getOrganizationsCallback
+    await getOrganizationsCallback(request, reply)
+  })
+
+  deployService.post('/publish', async (request, reply) => {
+    const publishCallback = options.publishCallback || (() => {})
+    await publishCallback(request, reply)
+  })
+
   t.after(async () => {
     await deployService.close()
   })

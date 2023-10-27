@@ -111,10 +111,15 @@ export async function getUserApiKey (configPath) {
   if (!configPath) {
     configPath = path.join(PLT_HOME, '.platformatic', 'config.json')
   }
-  const config = new ConfigManager({ source: configPath, schema })
-  await config.parse()
 
-  return config.current.userApiKey
+  try {
+    const config = new ConfigManager({ source: configPath, schema })
+    await config.parse()
+
+    return config.current.userApiKey
+  } catch (err) {
+    throw new errors.FailedToReadUserApiKeyError(err)
+  }
 }
 
 async function saveUserApiKey (config, userApiKey) {

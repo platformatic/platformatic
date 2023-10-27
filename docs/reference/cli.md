@@ -94,6 +94,7 @@ Welcome to Platformatic. Available commands are:
 * `runtime` - start Platformatic Runtime; type `platformatic runtime help` to know more.
 * `start` - start a Platformatic application.
 * `login` - generate a Platformatic login api key.
+* `publish` - publish a Platformatic stackable package.
 
 
 #### compile
@@ -217,6 +218,23 @@ Options:
 
 * `-c, --config FILE` - Specify a path to a global platformatic config file. Defaults to `~/.platformatic/config.json`.
 * `--browser` - Automatically open default browser. If process stdout is a TTY, the default is `true`. Otherwise, the default is `false`.
+
+
+#### publish
+
+Publishes platformatic stackable package to the cloud.
+
+``` bash
+ $ platformatic publish
+```
+
+Options:
+
+* `-o, --org-name uuid` - The organization name to publish to.
+* `-n --npm-package-name TEXT` - The name of the stackable npm package.
+* `--plt-config FILE` - The path to the platformatic global config file. Default is `~/.platformatic/config.json`.
+
+
 
 
 #### start
@@ -876,8 +894,24 @@ Available commands:
 
 Start the Platformatic Runtime with the following command:
 
-``` bash
+```bash
  $ platformatic runtime start
+```
+
+You can also specify a custom routes file, for example:
+
+```bash
+ $ platformatic runtime start routes.js
+```
+
+Where `routes.js` is:
+
+```javascript
+module.exports = async function (app) {
+  app.get('/hello', async () => {
+    return { hello: 'hello123' }
+  })
+}
 ```
 
 

@@ -1,0 +1,11 @@
+Publishes platformatic stackable package to the cloud.
+
+``` bash
+ $ platformatic publish
+```
+
+Options:
+
+* `-o, --org-name uuid` - The organization name to publish to.
+* `-n --npm-package-name TEXT` - The name of the stackable npm package.
+* `--plt-config FILE` - The path to the platformatic global config file. Default is `~/.platformatic/config.json`.

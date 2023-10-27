@@ -17,3 +17,15 @@ test('should read user api key', async (t) => {
   const userApiKey = await getUserApiKey(configPath)
   assert.equal(userApiKey, config.userApiKey)
 })
+
+test('should throw if plt config file does not exist', async (t) => {
+  const platformaticDir = await mkdtemp(join(tmpdir(), 'plt-authenticate-'))
+  const configPath = join(platformaticDir, 'config.json')
+
+  try {
+    await getUserApiKey(configPath)
+    assert.fail('should have thrown')
+  } catch (err) {
+    assert.ok(err.message.includes('Failed to read user api key from config file'))
+  }
+})
