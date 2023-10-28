@@ -256,7 +256,7 @@ async function wrapConfigInRuntimeConfig ({ configManager, args }) {
   let serviceId = 'main'
   try {
     const packageJson = join(configManager.dirname, 'package.json')
-    serviceId = require(packageJson).name
+    serviceId = require(packageJson).name || 'main'
     if (serviceId.startsWith('@')) {
       serviceId = serviceId.split('/')[1]
     }
