@@ -134,6 +134,8 @@ export async function publish (argv) {
     }
 
     await publishStackable(publishServiceHost, userApiKey, orgId, npmPackageName)
+
+    logger.info('Stackable package was published successfully!')
   } catch (err) {
     logger.error(err.message)
     process.exit(1)
