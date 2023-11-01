@@ -23,6 +23,7 @@ async function createBasicPages (db, sql) {
       id SERIAL PRIMARY KEY,
       title VARCHAR(42) NOT NULL,
       metadata JSON,
+      metadata_b JSONB,
       section NUMERIC,
       description TEXT,
       created_at TIMESTAMP NOT NULL,
@@ -100,6 +101,9 @@ test('simple db, simple rest API', async (t) => {
     } else {
       t.same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
     }
+    if (isPg) {
+      t.same(pageJsonSchema.properties.metadataB, { type: 'object', additionalProperties: true, nullable: true })
+    }
     t.same(pageJsonSchema.required, ['title'])
     if (!isSQLite) {
       t.same(pageJsonSchema.properties.type, { type: 'string', nullable: true, enum: ['blank', 'non-blank'] })
@@ -140,6 +144,9 @@ test('noRequired = true', async (t) => {
       t.same(pageJsonSchema.properties.metadata, { type: 'string', nullable: true })
     } else {
       t.same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
+    }
+    if (isPg) {
+      t.same(pageJsonSchema.properties.metadataB, { type: 'object', additionalProperties: true, nullable: true })
     }
     t.equal(pageJsonSchema.required, undefined)
     if (!isSQLite) {
@@ -182,6 +189,9 @@ test('ignore one field', async (t) => {
       t.same(pageJsonSchema.properties.metadata, { type: 'string', nullable: true })
     } else {
       t.same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
+    }
+    if (isPg) {
+      t.same(pageJsonSchema.properties.metadataB, { type: 'object', additionalProperties: true, nullable: true })
     }
     t.same(pageJsonSchema.required, undefined)
     if (!isSQLite) {
