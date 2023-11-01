@@ -9,7 +9,8 @@ const errors = {
   InvalidWorkspaceIdError: createError(`${ERROR_PREFIX}_INVALID_WORKSPACE_ID`, 'Invalid workspace id provided. Workspace id must be a valid uuid.'),
   CouldNotFindWorkspaceKeysError: createError(`${ERROR_PREFIX}_COULD_NOT_FIND_WORKSPACE_KEYS`, 'Could not find workspace keys in provided file.'),
   CouldNotFetchUserApplicationsError: createError(`${ERROR_PREFIX}_COULD_NOT_FETCH_USER_APPLICATIONS`, 'Could not fetch user applications'),
-  CouldNotFetchDeployLabelsError: createError(`${ERROR_PREFIX}_COULD_NOT_FETCH_DEPLOY_LABELS`, 'Could not fetch deploy labels')
+  CouldNotFetchDeployLabelsError: createError(`${ERROR_PREFIX}_COULD_NOT_FETCH_DEPLOY_LABELS`, 'Could not fetch deploy labels'),
+  CouldNotCreateWorkspaceError: createError(`${ERROR_PREFIX}_COULD_NOT_CREATE_WORKSPACE`, 'Could not create workspace')
 }
 
 export default errors

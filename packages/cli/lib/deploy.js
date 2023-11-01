@@ -4,6 +4,7 @@ import { isAbsolute, dirname, relative, join } from 'path'
 import { readFile } from 'fs/promises'
 
 import { request } from 'undici'
+import { bold } from 'colorette'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import dotenv from 'dotenv'
@@ -17,6 +18,8 @@ export const DEPLOY_SERVICE_HOST = 'https://deploy.platformatic.cloud'
 
 const WORKSPACE_TYPES = ['static', 'dynamic']
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+const CREATE_NEW_WORKSPACE_CHOICE = Symbol('CREATE_NEW_WORKSPACE_CHOICE')
 
 const logger = pino(pretty({
   translateTime: 'SYS:HH:MM:ss',
@@ -85,7 +88,7 @@ async function askToChooseApplication (applications) {
     }
   })
   applicationChoices.push({
-    name: 'Deploy to another application',
+    name: bold('Deploy to another application'),
     value: null
   })
 
@@ -93,7 +96,8 @@ async function askToChooseApplication (applications) {
     type: 'list',
     name: 'application',
     message: 'Select application to deploy:',
-    choices: applicationChoices
+    choices: applicationChoices,
+    loop: false
   })
 
   const chosenApplication = answer.application
@@ -113,7 +117,11 @@ async function askToChooseWorkspace (workspaces) {
     }
   })
   workspaceChoices.push({
-    name: 'Deploy to another workspace',
+    name: bold('Create new workspace'),
+    value: CREATE_NEW_WORKSPACE_CHOICE
+  })
+  workspaceChoices.push({
+    name: bold('Deploy to another workspace'),
     value: null
   })
 
@@ -121,15 +129,33 @@ async function askToChooseWorkspace (workspaces) {
     type: 'list',
     name: 'workspace',
     message: 'Select workspace to deploy:',
-    choices: workspaceChoices
+    choices: workspaceChoices,
+    loop: false
   })
 
   const chosenWorkspace = answer.workspace
-  if (chosenWorkspace === null) {
-    return null
-  }
-
   return chosenWorkspace
+}
+
+async function askNewWorkspaceDetails () {
+  const answer = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'workspaceName',
+      message: 'Enter workspace name:'
+    },
+    {
+      type: 'list',
+      name: 'workspaceType',
+      message: 'Select workspace type:',
+      choices: WORKSPACE_TYPES
+    }
+  ])
+
+  return {
+    workspaceName: answer.workspaceName,
+    workspaceType: answer.workspaceType
+  }
 }
 
 /* c8 ignore next 19 */
@@ -236,6 +262,36 @@ async function getWorkspaceLabels (deployServiceHost, workspaceId, userApiKey) {
   return entryPoints.map((entryPoint) => entryPoint.label)
 }
 
+async function createWorkspace (
+  deployServiceHost,
+  userApiKey,
+  appId,
+  workspaceName,
+  workspaceType
+) {
+  const { statusCode, body } = await request(`${deployServiceHost}/workspaces`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-platformatic-user-api-key': userApiKey
+    },
+    body: JSON.stringify({
+      appId,
+      name: workspaceName,
+      type: workspaceType
+    })
+  })
+
+  if (statusCode !== 200) {
+    const error = await body.text()
+    console.error(error)
+    throw new errors.CouldNotCreateWorkspaceError()
+  }
+
+  const { id: workspaceId } = await body.json()
+  return workspaceId
+}
+
 /* c8 ignore next 19 */
 async function getUserWorkspaceDetails (deployServiceHost, userApiKey) {
   const applications = await getUserApplications(deployServiceHost, userApiKey)
@@ -248,11 +304,22 @@ async function getUserWorkspaceDetails (deployServiceHost, userApiKey) {
   if (workspaces.length === 0) return null
 
   const workspaceDetails = await askToChooseWorkspace(workspaces)
-  if (workspaceDetails === null) return null
+
+  if (workspaceDetails === CREATE_NEW_WORKSPACE_CHOICE) {
+    const { workspaceName, workspaceType } = await askNewWorkspaceDetails()
+    const workspaceId = await createWorkspace(
+      deployServiceHost,
+      userApiKey,
+      application.id,
+      workspaceName,
+      workspaceType
+    )
+    return { workspaceId, workspaceType }
+  }
 
   return {
-    workspaceType: workspaceDetails.type,
-    workspaceId: workspaceDetails.id
+    workspaceId: workspaceDetails.id,
+    workspaceType: workspaceDetails.type
   }
 }
 
