@@ -20,6 +20,7 @@ const WORKSPACE_TYPES = ['static', 'dynamic']
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 const CREATE_NEW_WORKSPACE_CHOICE = Symbol('CREATE_NEW_WORKSPACE_CHOICE')
+const CREATE_NEW_APPLICATION_CHOICE = Symbol('CREATE_NEW_APPLICATION_CHOICE')
 
 const logger = pino(pretty({
   translateTime: 'SYS:HH:MM:ss',
@@ -79,13 +80,17 @@ async function askMissingWorkspaceDetails (
   }
 }
 
-/* c8 ignore next 26 */
+/* c8 ignore next 27 */
 async function askToChooseApplication (applications) {
   const applicationChoices = applications.map((application) => {
     return {
       name: application.name,
       value: application
     }
+  })
+  applicationChoices.push({
+    name: bold('Create new application'),
+    value: CREATE_NEW_APPLICATION_CHOICE
   })
   applicationChoices.push({
     name: bold('Deploy to another application'),
@@ -101,10 +106,6 @@ async function askToChooseApplication (applications) {
   })
 
   const chosenApplication = answer.application
-  if (chosenApplication === null) {
-    return null
-  }
-
   return chosenApplication
 }
 
@@ -137,6 +138,23 @@ async function askToChooseWorkspace (workspaces) {
   return chosenWorkspace
 }
 
+/* c8 ignore next 14 */
+async function askToChooseOrg (orgs) {
+  const orgsChoices = orgs.map((org) => {
+    return { name: org.name, value: org.id }
+  })
+
+  const answer = await inquirer.prompt({
+    type: 'list',
+    name: 'orgId',
+    message: 'Select organisation to publish to:',
+    choices: orgsChoices
+  })
+
+  return answer.orgId
+}
+
+/* c8 ignore next 21 */
 async function askNewWorkspaceDetails () {
   const answer = await inquirer.prompt([
     {
@@ -155,6 +173,19 @@ async function askNewWorkspaceDetails () {
   return {
     workspaceName: answer.workspaceName,
     workspaceType: answer.workspaceType
+  }
+}
+
+/* c8 ignore next 12 */
+async function askNewApplicationDetails () {
+  const answer = await inquirer.prompt({
+    type: 'input',
+    name: 'applicationName',
+    message: 'Enter application name:'
+  })
+
+  return {
+    applicationName: answer.applicationName
   }
 }
 
@@ -243,6 +274,25 @@ async function getUserApplications (deployServiceHost, userApiKey) {
 }
 
 /* c8 ignore next 18 */
+async function getUserOrgs (deployServiceHost, userApiKey) {
+  const url = deployServiceHost + '/organisations'
+  const { statusCode, body } = await request(url, {
+    method: 'GET',
+    headers: {
+      'content-type': 'application/json',
+      'x-platformatic-user-api-key': userApiKey
+    }
+  })
+
+  if (statusCode !== 200) {
+    throw new errors.CouldNotFetchUserOrgsError()
+  }
+
+  const { orgs } = await body.json()
+  return orgs
+}
+
+/* c8 ignore next 18 */
 async function getWorkspaceLabels (deployServiceHost, workspaceId, userApiKey) {
   const { statusCode, body } = await request(`${deployServiceHost}/entrypoints`, {
     headers: {
@@ -262,6 +312,7 @@ async function getWorkspaceLabels (deployServiceHost, workspaceId, userApiKey) {
   return entryPoints.map((entryPoint) => entryPoint.label)
 }
 
+/* c8 ignore next 30 */
 async function createWorkspace (
   deployServiceHost,
   userApiKey,
@@ -292,18 +343,82 @@ async function createWorkspace (
   return workspaceId
 }
 
-/* c8 ignore next 19 */
-async function getUserWorkspaceDetails (deployServiceHost, userApiKey) {
+/* c8 ignore next 25 */
+async function createApplication (
+  deployServiceHost,
+  userApiKey,
+  orgId,
+  applicationName
+) {
+  const { statusCode, body } = await request(`${deployServiceHost}/applications`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-platformatic-user-api-key': userApiKey
+    },
+    body: JSON.stringify({ orgId, name: applicationName })
+  })
+
+  if (statusCode !== 200) {
+    const error = await body.text()
+    console.error(error)
+    throw new errors.CouldNotCreateApplicationError()
+  }
+
+  const { id: applicationId } = await body.json()
+  return applicationId
+}
+
+/* c8 ignore next 16 */
+async function getUserOrgDetails (deployServiceHost, userApiKey) {
+  const userOrgs = await getUserOrgs(deployServiceHost, userApiKey)
+  if (userOrgs.length === 0) {
+    throw new errors.NoUserOrgsError()
+  }
+
+  let orgId = null
+  if (userOrgs.length === 1) {
+    orgId = userOrgs[0].id
+  } else {
+    orgId = await askToChooseOrg(userOrgs)
+  }
+
+  return { id: orgId }
+}
+
+/* c8 ignore next 26 */
+async function getUserApplicationDetails (deployServiceHost, userApiKey) {
   const applications = await getUserApplications(deployServiceHost, userApiKey)
   if (applications.length === 0) return null
 
   const application = await askToChooseApplication(applications)
   if (application === null) return null
 
-  const workspaces = application.workspaces
-  if (workspaces.length === 0) return null
+  if (application === CREATE_NEW_APPLICATION_CHOICE) {
+    const { id: orgId } = await getUserOrgDetails(deployServiceHost, userApiKey)
+    const { applicationName } = await askNewApplicationDetails()
+    const applicationId = await createApplication(
+      deployServiceHost,
+      userApiKey,
+      orgId,
+      applicationName
+    )
+    return { id: applicationId, name: applicationName, workspaces: [] }
+  }
+  return {
+    id: application.id,
+    name: application.name,
+    workspaces: application.workspaces
+  }
+}
 
-  const workspaceDetails = await askToChooseWorkspace(workspaces)
+/* c8 ignore next 24 */
+async function getUserWorkspaceDetails (deployServiceHost, userApiKey) {
+  const application = await getUserApplicationDetails(deployServiceHost, userApiKey)
+  if (application === null) return null
+
+  const workspaceDetails = await askToChooseWorkspace(application.workspaces)
+  if (workspaceDetails === null) return null
 
   if (workspaceDetails === CREATE_NEW_WORKSPACE_CHOICE) {
     const { workspaceName, workspaceType } = await askNewWorkspaceDetails()
