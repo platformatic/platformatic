@@ -4,7 +4,7 @@ import { isAbsolute, dirname, relative, join } from 'path'
 import { readFile } from 'fs/promises'
 
 import { request } from 'undici'
-import { bold } from 'colorette'
+import { bold, green } from 'colorette'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import dotenv from 'dotenv'
@@ -439,6 +439,7 @@ async function getUserWorkspaceDetails (deployServiceHost, userApiKey) {
 }
 
 export async function deploy (argv) {
+  console.log('This application will be deployed to ' + bold(green('Platformatic Cloud')) + '. To change the target use the --deploy-service-host flag')
   try {
     const args = parseArgs(argv, {
       alias: {
