@@ -8,7 +8,7 @@ function envAsString (env, indent) {
     if (key.match('DATABASE_URL')) {
       acc += `${spaces}${key}: \${{ secrets.${key} }}\n`
     } else {
-      acc += `${spaces}${key}: ${env[key]} \n`
+      acc += `${spaces}${key}: ${env[key]}\n`
     }
 
     return acc
