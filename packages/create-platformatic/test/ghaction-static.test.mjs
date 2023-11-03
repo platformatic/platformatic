@@ -46,6 +46,11 @@ test('creates gh action', async ({ equal, match }) => {
   equal(jobEnv.PLT_SERVER_LOGGER_LEVEL, 'info')
 
   equal(permissions.contents, 'read')
+  // check env indentation is correct
+  match(ghFile, `
+    env:
+      DATABASE_URL: \${{ secrets.DATABASE_URL }}
+      PLT_SERVER_LOGGER_LEVEL: info`)
 })
 
 test('creates gh action with TS build step', async ({ equal, match }) => {

@@ -3,7 +3,7 @@ import { isFileAccessible, safeMkdir } from './utils.mjs'
 import { writeFile } from 'fs/promises'
 import columnify from 'columnify'
 function envAsString (env, indent) {
-  const spaces = Array(indent * 2).join(' ')
+  const spaces = ' '.repeat(indent * 2)
   return Object.keys(env).reduce((acc, key) => {
     if (key.match('DATABASE_URL')) {
       acc += `${spaces}${key}: \${{ secrets.${key} }}\n`
