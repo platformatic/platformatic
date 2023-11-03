@@ -159,7 +159,7 @@ function GraphQLScalarToTsType (type) {
       // TODO test other scalar types
       /* c8 ignore next 3 */
     default:
-      throw new errors.UknonwnTypeError(type)
+      throw new errors.UnknownTypeError(type)
   }
 }
 
@@ -179,7 +179,7 @@ function writeProperty (writer, key, value, addedProps) {
     // TODO are there other kinds that needs to be handled?
     /* c8 ignore next 3 */
   } else {
-    throw new errors.UknonwnTypeError(value.kind)
+    throw new errors.UnknownTypeError(value.kind)
   }
   writer.newLine()
 }
