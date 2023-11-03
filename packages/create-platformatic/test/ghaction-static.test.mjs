@@ -46,6 +46,19 @@ test('creates gh action', async ({ equal, match }) => {
   equal(jobEnv.PLT_SERVER_LOGGER_LEVEL, 'info')
 
   equal(permissions.contents, 'read')
+  // check env indentation is correct
+  match(ghFile, `
+    env:
+      DATABASE_URL: \${{ secrets.DATABASE_URL }}
+      PLT_SERVER_LOGGER_LEVEL: info`)
+})
+
+test('env block is not created with empty env', async ({ equal, match }) => {
+  await createStaticWorkspaceGHAction(fakeLogger, {}, 'db', tmpDir, false)
+  const ghFile = await readFile(join(tmpDir, '.github/workflows/platformatic-static-workspace-deploy.yml'), 'utf8')
+  const ghAction = parse(ghFile)
+  const { env } = ghAction.jobs.build_and_deploy
+  match(env, undefined)
 })
 
 test('creates gh action with TS build step', async ({ equal, match }) => {

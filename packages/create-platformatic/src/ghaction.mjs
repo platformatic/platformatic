@@ -3,12 +3,12 @@ import { isFileAccessible, safeMkdir } from './utils.mjs'
 import { writeFile } from 'fs/promises'
 import columnify from 'columnify'
 function envAsString (env, indent) {
-  const spaces = Array(indent * 2).join(' ')
+  const spaces = ' '.repeat(indent * 2)
   return Object.keys(env).reduce((acc, key) => {
     if (key.match('DATABASE_URL')) {
       acc += `${spaces}${key}: \${{ secrets.${key} }}\n`
     } else {
-      acc += `${spaces}${key}: ${env[key]} \n`
+      acc += `${spaces}${key}: ${env[key]}\n`
     }
 
     return acc
@@ -32,7 +32,13 @@ function formatSecretsToAdd (secrets) {
 }
 export const dynamicWorkspaceGHTemplate = (env, config, buildTS = false) => {
   const envString = envAsString(env, 3)
-
+  let envBlock = ''
+  if (envString.length) {
+    envBlock = `
+    env:
+${envString}
+    `
+  }
   return `name: Deploy Platformatic application to the cloud
 on:
   pull_request:
@@ -52,8 +58,7 @@ jobs:
       contents: read
       pull-requests: write
     runs-on: ubuntu-latest
-    env:
-${envString}
+${envBlock}
     steps:
       - name: Checkout application project repository
         uses: actions/checkout@v3
