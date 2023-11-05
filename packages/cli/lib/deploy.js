@@ -483,7 +483,7 @@ export async function deploy (argv) {
         workspaceKey = workspaceDetails.workspaceKey
       /* c8 ignore next 10 */
       } else {
-        userApiKey = await getUserApiKey()
+        userApiKey = await getUserApiKey().catch(() => {})
         if (userApiKey) {
           const workspaceDetails = await getUserWorkspaceDetails(deployServiceHost, userApiKey)
           if (workspaceDetails) {
@@ -509,7 +509,7 @@ export async function deploy (argv) {
     if (workspaceType === 'dynamic') {
       /* c8 ignore next 17 */
       if (!label) {
-        userApiKey = userApiKey || await getUserApiKey()
+        userApiKey = userApiKey || await getUserApiKey().catch(() => {})
 
         if (userApiKey) {
           const workspaceLabels = await getWorkspaceLabels(
