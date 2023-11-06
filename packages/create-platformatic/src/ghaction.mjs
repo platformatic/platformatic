@@ -99,6 +99,13 @@ ${envBlock}
 
 export const staticWorkspaceGHTemplate = (env, config, buildTS = false) => {
   const envString = envAsString(env, 3)
+  let envBlock = ''
+  if (envString.length) {
+    envBlock = `
+    env:
+${envString}
+    `
+  }
 
   return `name: Deploy Platformatic application to the cloud
 on:
@@ -116,8 +123,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-latest
-    env:
-${envString}
+${envBlock}
     steps:
       - name: Checkout application project repository
         uses: actions/checkout@v3

@@ -53,12 +53,12 @@ test('creates gh action', async ({ equal, match }) => {
       PLT_SERVER_LOGGER_LEVEL: info`)
 })
 
-test('env block is not created with empty env', async ({ equal, match }) => {
+test('env block is not created with empty env', async ({ equal }) => {
   await createStaticWorkspaceGHAction(fakeLogger, {}, 'db', tmpDir, false)
   const ghFile = await readFile(join(tmpDir, '.github/workflows/platformatic-static-workspace-deploy.yml'), 'utf8')
   const ghAction = parse(ghFile)
   const { env } = ghAction.jobs.build_and_deploy
-  match(env, undefined)
+  equal(env, undefined)
 })
 
 test('creates gh action with TS build step', async ({ equal, match }) => {
