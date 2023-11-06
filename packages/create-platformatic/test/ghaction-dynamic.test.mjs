@@ -59,7 +59,7 @@ test('env block is not created with empty env', async ({ equal, match }) => {
   const ghFile = await readFile(join(tmpDir, '.github/workflows/platformatic-dynamic-workspace-deploy.yml'), 'utf8')
   const ghAction = parse(ghFile)
   const { env } = ghAction.jobs.build_and_deploy
-  match(env, undefined)
+  equal(env, undefined)
 })
 
 test('creates gh action with TS build step', async ({ equal, match }) => {
