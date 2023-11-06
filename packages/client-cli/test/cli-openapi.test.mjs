@@ -906,7 +906,8 @@ async function generateFullClientPlugin (app, opts) {
     throwOnError: opts.throwOnError,
     fullResponse: true,
     fullRequest: true,
-    validateResponse: true
+    validateResponse: true,
+    getHeaders: opts.getHeaders
   })
 }`)
   }
