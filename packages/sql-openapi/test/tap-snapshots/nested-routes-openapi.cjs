@@ -388,6 +388,9 @@ Object {
             "description": "Default Response",
           },
         },
+        "tags": Array [
+          "owners",
+        ],
       },
       "post": Object {
         "operationId": "createOwner",
@@ -420,6 +423,9 @@ Object {
             },
           },
         },
+        "tags": Array [
+          "owners",
+        ],
       },
       "put": Object {
         "operationId": "updateOwners",
@@ -675,6 +681,9 @@ Object {
             },
           },
         },
+        "tags": Array [
+          "owners",
+        ],
       },
     },
     "/owners/{id}": Object {
@@ -717,6 +726,9 @@ Object {
             "description": "Default Response",
           },
         },
+        "tags": Array [
+          "owners",
+        ],
       },
       "get": Object {
         "operationId": "getOwnerById",
@@ -765,6 +777,9 @@ Object {
             },
           },
         },
+        "tags": Array [
+          "owners",
+        ],
       },
       "put": Object {
         "operationId": "updateOwner",
@@ -822,6 +837,9 @@ Object {
             },
           },
         },
+        "tags": Array [
+          "owners",
+        ],
       },
     },
     "/owners/{id}/posts": Object {
@@ -878,6 +896,9 @@ Object {
             },
           },
         },
+        "tags": Array [
+          "owners",
+        ],
       },
     },
     "/posts/": Object {
@@ -1495,6 +1516,9 @@ Object {
             "description": "Default Response",
           },
         },
+        "tags": Array [
+          "posts",
+        ],
       },
       "post": Object {
         "operationId": "createPost",
@@ -1527,6 +1551,9 @@ Object {
             },
           },
         },
+        "tags": Array [
+          "posts",
+        ],
       },
       "put": Object {
         "operationId": "updatePosts",
@@ -2073,6 +2100,9 @@ Object {
             },
           },
         },
+        "tags": Array [
+          "posts",
+        ],
       },
     },
     "/posts/{id}": Object {
@@ -2118,6 +2148,9 @@ Object {
             "description": "Default Response",
           },
         },
+        "tags": Array [
+          "posts",
+        ],
       },
       "get": Object {
         "operationId": "getPostById",
@@ -2169,6 +2202,9 @@ Object {
             },
           },
         },
+        "tags": Array [
+          "posts",
+        ],
       },
       "put": Object {
         "operationId": "updatePost",
@@ -2229,6 +2265,9 @@ Object {
             },
           },
         },
+        "tags": Array [
+          "posts",
+        ],
       },
     },
     "/posts/{id}/owner": Object {
@@ -2279,6 +2318,9 @@ Object {
             },
           },
         },
+        "tags": Array [
+          "posts",
+        ],
       },
     },
   },

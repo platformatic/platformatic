@@ -571,6 +571,9 @@ Object {
             "description": "Default Response",
           },
         },
+        "tags": Array [
+          "posts",
+        ],
       },
       "post": Object {
         "operationId": "createPost",
@@ -596,6 +599,9 @@ Object {
             "links": Object {},
           },
         },
+        "tags": Array [
+          "posts",
+        ],
       },
       "put": Object {
         "operationId": "updatePosts",
@@ -1038,6 +1044,9 @@ Object {
             "links": Object {},
           },
         },
+        "tags": Array [
+          "posts",
+        ],
       },
     },
     "/posts/{id}": Object {
@@ -1082,6 +1091,9 @@ Object {
             "description": "Default Response",
           },
         },
+        "tags": Array [
+          "posts",
+        ],
       },
       "get": Object {
         "operationId": "getPostById",
@@ -1125,6 +1137,9 @@ Object {
             "links": Object {},
           },
         },
+        "tags": Array [
+          "posts",
+        ],
       },
       "put": Object {
         "operationId": "updatePost",
@@ -1177,6 +1192,9 @@ Object {
             "links": Object {},
           },
         },
+        "tags": Array [
+          "posts",
+        ],
       },
     },
   },

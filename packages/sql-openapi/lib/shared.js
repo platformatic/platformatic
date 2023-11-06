@@ -65,6 +65,7 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
   app.get('/', {
     schema: {
       operationId: 'get' + capitalize(entity.pluralName),
+      tags: [entity.table],
       querystring: {
         type: 'object',
         properties: {
@@ -161,6 +162,7 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
     schema: {
       operationId: 'create' + capitalize(entity.singularName),
       body: entitySchemaInput,
+      tags: [entity.table],
       response: {
         200: entitySchema
       }
@@ -179,6 +181,7 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
     schema: {
       operationId: 'update' + capitalize(entity.pluralName),
       body: entitySchemaInput,
+      tags: [entity.table],
       querystring: {
         type: 'object',
         properties: {
