@@ -452,6 +452,9 @@ Object {
             "description": "Default Response",
           },
         },
+        "tags": Array [
+          "pages",
+        ],
       },
       "post": Object {
         "operationId": "createPage",
@@ -477,6 +480,9 @@ Object {
             "links": Object {},
           },
         },
+        "tags": Array [
+          "pages",
+        ],
       },
       "put": Object {
         "operationId": "updatePages",
@@ -822,6 +828,9 @@ Object {
             "links": Object {},
           },
         },
+        "tags": Array [
+          "pages",
+        ],
       },
     },
     "/pages/{id}": Object {
@@ -865,6 +874,9 @@ Object {
             "description": "Default Response",
           },
         },
+        "tags": Array [
+          "pages",
+        ],
       },
       "get": Object {
         "operationId": "getPageById",
@@ -907,6 +919,9 @@ Object {
             "links": Object {},
           },
         },
+        "tags": Array [
+          "pages",
+        ],
       },
       "put": Object {
         "operationId": "updatePage",
@@ -958,6 +973,9 @@ Object {
             "links": Object {},
           },
         },
+        "tags": Array [
+          "pages",
+        ],
       },
     },
   },

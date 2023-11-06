@@ -454,6 +454,9 @@ Object {
             "description": "Default Response",
           },
         },
+        "tags": Array [
+          "people",
+        ],
       },
       "post": Object {
         "operationId": "createPerson",
@@ -492,6 +495,9 @@ Object {
             },
           },
         },
+        "tags": Array [
+          "people",
+        ],
       },
       "put": Object {
         "operationId": "updatePeople",
@@ -850,6 +856,9 @@ Object {
             },
           },
         },
+        "tags": Array [
+          "people",
+        ],
       },
     },
     "/people/{id}": Object {
@@ -893,6 +902,9 @@ Object {
             "description": "Default Response",
           },
         },
+        "tags": Array [
+          "people",
+        ],
       },
       "get": Object {
         "operationId": "getPersonById",
@@ -948,6 +960,9 @@ Object {
             },
           },
         },
+        "tags": Array [
+          "people",
+        ],
       },
       "put": Object {
         "operationId": "updatePerson",
@@ -1012,6 +1027,9 @@ Object {
             },
           },
         },
+        "tags": Array [
+          "people",
+        ],
       },
     },
     "/people/{id}/parent": Object {
@@ -1069,6 +1087,9 @@ Object {
             },
           },
         },
+        "tags": Array [
+          "people",
+        ],
       },
     },
     "/people/{id}/people": Object {
@@ -1129,6 +1150,9 @@ Object {
             },
           },
         },
+        "tags": Array [
+          "people",
+        ],
       },
     },
   },

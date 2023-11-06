@@ -87,6 +87,7 @@ async function entityPlugin (app, opts) {
     schema: {
       operationId: `get${entity.name}By${capitalize(primaryKeyCamelcase)}`,
       params: primaryKeyParams,
+      tags: [entity.table],
       querystring: {
         type: 'object',
         properties: {
@@ -147,6 +148,7 @@ async function entityPlugin (app, opts) {
         schema: {
           operationId,
           params: getPrimaryKeyParams(entity, ignore),
+          tags: [entity.table],
           querystring: {
             type: 'object',
             properties: {
@@ -236,6 +238,7 @@ async function entityPlugin (app, opts) {
         schema: {
           operationId,
           params: getPrimaryKeyParams(entity, ignore),
+          tags: [entity.table],
           querystring: {
             type: 'object',
             properties: {
@@ -295,6 +298,7 @@ async function entityPlugin (app, opts) {
       operationId: 'update' + capitalize(entity.singularName),
       body: entitySchemaInput,
       params: primaryKeyParams,
+      tags: [entity.table],
       querystring: {
         type: 'object',
         properties: {
@@ -333,6 +337,7 @@ async function entityPlugin (app, opts) {
     schema: {
       operationId: 'delete' + capitalize(entity.pluralName),
       params: primaryKeyParams,
+      tags: [entity.table],
       querystring: {
         type: 'object',
         properties: {

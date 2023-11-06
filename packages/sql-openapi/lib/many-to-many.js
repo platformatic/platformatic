@@ -47,6 +47,7 @@ async function entityPlugin (app, opts) {
     schema: {
       operationId: `get${entity.name}By${operationName}`,
       params: primaryKeysParams,
+      tags: [entity.table],
       querystring: {
         type: 'object',
         properties: {
@@ -80,6 +81,7 @@ async function entityPlugin (app, opts) {
       schema: {
         body: entitySchemaInput,
         params: primaryKeysParams,
+        tags: [entity.table],
         querystring: {
           type: 'object',
           properties: {
@@ -121,6 +123,7 @@ async function entityPlugin (app, opts) {
   app.delete(pathWithParams, {
     schema: {
       params: primaryKeysParams,
+      tags: [entity.table],
       querystring: {
         type: 'object',
         properties: {
