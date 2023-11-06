@@ -43,6 +43,9 @@ export default `\
     "/graphs/": {
       "get": {
         "operationId": "getGraphs",
+        "tags": [
+          "graphs"
+        ],
         "parameters": [
           {
             "schema": {
@@ -331,6 +334,9 @@ export default `\
       },
       "post": {
         "operationId": "createGraph",
+        "tags": [
+          "graphs"
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -356,6 +362,9 @@ export default `\
       },
       "put": {
         "operationId": "updateGraphs",
+        "tags": [
+          "graphs"
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -606,6 +615,9 @@ export default `\
     "/graphs/{id}": {
       "get": {
         "operationId": "getGraphById",
+        "tags": [
+          "graphs"
+        ],
         "parameters": [
           {
             "schema": {
@@ -647,6 +659,9 @@ export default `\
       },
       "put": {
         "operationId": "updateGraph",
+        "tags": [
+          "graphs"
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -697,6 +712,9 @@ export default `\
       },
       "delete": {
         "operationId": "deleteGraphs",
+        "tags": [
+          "graphs"
+        ],
         "parameters": [
           {
             "schema": {
