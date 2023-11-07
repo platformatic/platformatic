@@ -116,9 +116,13 @@ function testHelperTS (mod, customizations = { pre: '', post: '', config: '', re
 import { join } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import { buildServer } from '@platformatic/${mod}'
+import { test } from 'node:test'
 ${customizations.requires}
 
-export async function getServer (t) {
+type testfn = Parameters<typeof test>[0]
+type TestContext = Parameters<Exclude<testfn, undefined>>[0]
+
+export async function getServer (t: TestContext) {
 ${customizations.pre}
   // We go up two folder because this files executes in the dist folder
   const config = JSON.parse(await readFile(join(__dirname, '..', '..', 'platformatic.${mod}.json'), 'utf8'))
