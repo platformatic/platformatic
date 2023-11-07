@@ -169,7 +169,7 @@ test('telemetry correctly propagates from a generic client through a service cli
   assert.equal(serverTraceId, traceId)
 })
 
-test('telemetry correctly propagates from a service client to a server for an GraphQL endpoint', async (t) => {
+test('telemetry correctly propagates from a service client to a server for a GraphQL endpoint', async (t) => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'telemetry')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
