@@ -26,7 +26,7 @@ async function createRuntime (params, logger, currentDir = process.cwd(), versio
     entrypointPort,
     staticWorkspaceGitHubAction,
     dynamicWorkspaceGitHubAction,
-    initGitRepository,
+    initGitRepository
   } = params
   if (!version) {
     const pkg = await readFile(desm.join(import.meta.url, '..', '..', 'package.json'))
