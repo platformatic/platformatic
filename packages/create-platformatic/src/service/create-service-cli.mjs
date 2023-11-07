@@ -122,5 +122,9 @@ const createPlatformaticService = async (_args, opts = {}) => {
     logger.trace({ err })
     spinner.fail('Failed to generate Types. Try again by running "platformatic service types"')
   }
+  // returns metadata that can be used to make some further actions
+  return {
+    typescript: useTypescript
+  }
 }
 export default createPlatformaticService

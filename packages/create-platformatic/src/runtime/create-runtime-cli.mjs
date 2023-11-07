@@ -72,20 +72,15 @@ export async function createPlatformaticRuntime (_args) {
 
   const fastifyVersion = await getDependencyVersion('fastify')
 
-  // Create the package.json, notes that we don't have the option for TS (yet) so we don't generate
-  // the package.json with the TS build
-  await createPackageJson(version, fastifyVersion, logger, projectDir, false)
-  await createGitignore(logger, projectDir)
-  await createReadme(logger, projectDir, 'runtime')
-
   logger.info('Let\'s create a first service!')
 
   const names = []
+  let addTypescriptDevDep = false
   while (true) {
-    if (!await createRuntimeService({ servicesDir, names, logger })) {
-      continue
+    const serviceData = await createRuntimeService({ servicesDir, names, logger })
+    if (!addTypescriptDevDep && serviceData.typescript) {
+      addTypescriptDevDep = true
     }
-
     const { shouldBreak } = await inquirer.prompt([
       {
         type: 'list',
@@ -100,6 +95,18 @@ export async function createPlatformaticRuntime (_args) {
       break
     }
   }
+  const devDependencies = {}
+  if (addTypescriptDevDep) {
+    const typescriptVersion = await getDependencyVersion('typescript')
+    devDependencies.typescript = `^${typescriptVersion}`
+    devDependencies['@types/node'] = 'latest'
+  }
+
+  // Create the package.json, notes that we don't have the option for TS (yet) so we don't generate
+  // the package.json with the TS build
+  await createPackageJson(version, fastifyVersion, logger, projectDir, false, {}, {}, devDependencies)
+  await createGitignore(logger, projectDir)
+  await createReadme(logger, projectDir, 'runtime')
 
   let entrypoint = ''
 
@@ -126,7 +133,8 @@ export async function createPlatformaticRuntime (_args) {
     staticWorkspaceGitHubAction,
     dynamicWorkspaceGitHubAction,
     serviceNames: names,
-    initGitRepository
+    initGitRepository,
+    typescript: addTypescriptDevDep
   }
 
   await createRuntime(params, logger, projectDir, version)
@@ -168,7 +176,7 @@ export async function createRuntimeService ({ servicesDir, names, logger }) {
 
   const serviceDir = join(servicesDir, name)
 
-  await chooseKind([], {
+  const serviceData = await chooseKind([], {
     skip: 'runtime',
     serviceName: name,
     dir: serviceDir,
@@ -185,5 +193,5 @@ export async function createRuntimeService ({ servicesDir, names, logger }) {
     }
   })
 
-  return true
+  return serviceData
 }

@@ -135,6 +135,11 @@ const createPlatformaticComposer = async (_args, opts) => {
     await execa(pkgManager, ['install'], { cwd: projectDir })
     spinner.succeed()
   }
+
+  // returns metadata that can be used to make some further actions
+  return {
+    typescript: useTypescript
+  }
 }
 
 export default createPlatformaticComposer

@@ -47,11 +47,12 @@ const packageJsonTemplate = async (addTSBuild, fastifyVersion, platVersion) => {
  * @param {object} scripts Package.json scripts list
  * @param {object} dependencies Package.json dependencies list
  */
-export const createPackageJson = async (platVersion, fastifyVersion, logger, dir, addTSBuild = false, scripts = {}, dependencies = {}) => {
+export const createPackageJson = async (platVersion, fastifyVersion, logger, dir, addTSBuild = false, scripts = {}, dependencies = {}, devDependencies = {}) => {
   const packageJsonFileName = join(dir, 'package.json')
   const pkg = await packageJsonTemplate(addTSBuild, fastifyVersion, platVersion)
   Object.assign(pkg.scripts, scripts)
   Object.assign(pkg.dependencies, dependencies)
+  Object.assign(pkg.devDependencies, devDependencies)
   await writeFile(packageJsonFileName, JSON.stringify(pkg, null, 2))
   logger.debug(`${packageJsonFileName} successfully created.`)
 }
