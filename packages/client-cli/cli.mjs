@@ -203,6 +203,7 @@ async function downloadAndProcess (options) {
   }
 
   if (config && !typesOnly) {
+    console.log('@@@@@@@', config)
     const meta = await analyze({ file: config })
     meta.config.clients = meta.config.clients || []
     if (runtime) {
@@ -297,6 +298,12 @@ export async function command (argv) {
   if (options.runtime) {
     // TODO add flag to allow specifying a runtime config file
     const runtimeConfigFile = await findUp('platformatic.runtime.json')
+
+    // check we are **not** into the runtime root
+    if (runtimeConfigFile?.replace(`${process.cwd()}/`, '') === 'platformatic.runtime.json') {
+      logger.error('Could not create a client runtime from the runtime root.')
+      process.exit(1)
+    }
 
     if (!runtimeConfigFile) {
       logger.error('Could not find a platformatic.runtime.json file in this or any parent directory.')
