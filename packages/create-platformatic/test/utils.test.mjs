@@ -115,6 +115,11 @@ test('getDependencyVersion', async ({ equal }) => {
   // We cannot assert the exact version because it changes
   equal(semver.valid(typescriptVersion), typescriptVersion)
   equal(semver.gt(typescriptVersion, '5.0.0'), true)
+
+  const platformaticConfig = await getDependencyVersion('@platformatic/config')
+  // We cannot assert the exact version because it changes
+  equal(semver.valid(platformaticConfig), platformaticConfig)
+  equal(semver.gt(platformaticConfig, '1.0.0'), true)
 })
 
 test('findDBConfigFile', async ({ end, equal, mock }) => {
