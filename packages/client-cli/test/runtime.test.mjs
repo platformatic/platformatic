@@ -286,7 +286,7 @@ PORT=3005
 PLT_SERVER_LOGGER_LEVEL=info
 `)
 
-  process.chdir(join(dir))
+  process.chdir(join(dir, 'services', 'composer'))
 
   try {
     await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'test-client', '--runtime', 'sample-service'])
