@@ -31,14 +31,11 @@ export async function chooseKind (argv, opts = {}) {
 
   switch (options.type) {
     case 'db':
-      await createPlatformaticDB(argv, opts)
-      break
+      return await createPlatformaticDB(argv, opts)
     case 'service':
-      await createPlatformaticService(argv, opts)
-      break
+      return await createPlatformaticService(argv, opts)
     case 'composer':
-      await createPlatformaticComposer(argv, opts)
-      break
+      return await createPlatformaticComposer(argv, opts)
     case 'runtime':
       await createPlatformaticRuntime(argv, opts)
       break

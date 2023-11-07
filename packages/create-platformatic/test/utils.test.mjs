@@ -110,6 +110,11 @@ test('getDependencyVersion', async ({ equal }) => {
   // We cannot assert the exact version because it changes
   equal(semver.valid(fastifyVersion), fastifyVersion)
   equal(semver.gt(fastifyVersion, '4.10.0'), true)
+
+  const typescriptVersion = await getDependencyVersion('typescript')
+  // We cannot assert the exact version because it changes
+  equal(semver.valid(typescriptVersion), typescriptVersion)
+  equal(semver.gt(typescriptVersion, '5.0.0'), true)
 })
 
 test('findDBConfigFile', async ({ end, equal, mock }) => {

@@ -1,6 +1,6 @@
 import { execa } from 'execa'
 import { access, constants, mkdir, readFile } from 'fs/promises'
-import { resolve, join, dirname } from 'path'
+import { resolve, join, dirname, basename } from 'path'
 import { createRequire } from 'module'
 import semver from 'semver'
 import * as desm from 'desm'
@@ -74,7 +74,14 @@ export const findRuntimeConfigFile = async (directory) => (ConfigManager.findCon
  */
 export const getDependencyVersion = async (dependencyName) => {
   const require = createRequire(import.meta.url)
-  const pathToPackageJson = join(dirname(require.resolve(dependencyName)), 'package.json')
+  let dependencyPath = dirname(require.resolve(dependencyName))
+  // some deps are resolved not at their root level
+  // for instance 'typescript' will be risolved in its own ./lib directory
+  // next loop is to find the nearest parent directory with the same name of the dependency
+  while (basename(dependencyPath) !== dependencyName) {
+    dependencyPath = join(dependencyPath, '..')
+  }
+  const pathToPackageJson = join(dependencyPath, 'package.json')
   const packageJsonFile = await readFile(pathToPackageJson, 'utf-8')
   const packageJson = JSON.parse(packageJsonFile)
   return packageJson.version

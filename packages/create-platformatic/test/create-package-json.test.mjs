@@ -44,7 +44,10 @@ test('creates package.json file for service project', async ({ equal }) => {
   const version = '1.2.3'
   const fastifyVersion = '4.5.6'
   const addTSBuild = false
-  await createPackageJson(version, fastifyVersion, fakeLogger, tmpDir, addTSBuild)
+  const devDependencies = {
+    typescript: '^5.2.2'
+  }
+  await createPackageJson(version, fastifyVersion, fakeLogger, tmpDir, addTSBuild, {}, {}, devDependencies)
   equal(log, `${join(tmpDir, 'package.json')} successfully created.`)
   const accessible = await isFileAccessible(join(tmpDir, 'package.json'))
   equal(accessible, true)
@@ -52,6 +55,7 @@ test('creates package.json file for service project', async ({ equal }) => {
   equal(packageJson.scripts.start, 'platformatic start')
   equal(packageJson.dependencies.platformatic, `^${version}`)
   equal(packageJson.devDependencies.fastify, `^${fastifyVersion}`)
+  equal(packageJson.devDependencies.typescript, '^5.2.2')
 })
 
 test('creates package.json file with TS build', async ({ equal }) => {

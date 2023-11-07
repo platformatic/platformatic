@@ -256,6 +256,10 @@ const createPlatformaticDB = async (_args, opts) => {
       }
     }
   }
+  // returns metadata that can be used to make some further actions
+  return {
+    typescript: useTypescript
+  }
 }
 
 export default createPlatformaticDB
