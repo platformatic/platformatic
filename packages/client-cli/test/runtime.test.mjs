@@ -91,6 +91,22 @@ module.exports = async function (app, opts) {
     title: 'foo'
   })
 })
+test('should return error if in the runtime root', async ({ teardown, comment, fail, match }) => {
+  const dir = await moveToTmpdir(teardown)
+  comment(`working in ${dir}`)
+
+  await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
+
+  process.chdir(dir)
+
+  try {
+    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
+
+    fail()
+  } catch (err) {
+    match(err.message, 'Could not create a client runtime from the runtime root.')
+  }
+})
 
 test('graphql client generation (javascript) via the runtime', async ({ teardown, comment, same, match }) => {
   const dir = await moveToTmpdir(teardown)
