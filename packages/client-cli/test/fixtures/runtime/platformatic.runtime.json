@@ -1,5 +1,5 @@
 {
-  "$schema": "https://platformatic.dev/schemas/v0.25.0/runtime",
+  "$schema": "https://platformatic.dev/schemas/v1.10.0/runtime",
   "entrypoint": "composer",
   "allowCycles": false,
   "hotReload": true,
