@@ -99,7 +99,7 @@ export async function createPlatformaticRuntime (_args) {
   if (addTypescriptDevDep) {
     const typescriptVersion = await getDependencyVersion('typescript')
     devDependencies.typescript = `^${typescriptVersion}`
-    devDependencies['@types/node'] = 'latest'
+    devDependencies['@types/node'] = await getDependencyVersion('@types/node')
   }
 
   // Create the package.json, notes that we don't have the option for TS (yet) so we don't generate
