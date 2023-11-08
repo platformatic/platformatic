@@ -257,10 +257,10 @@ test('append query parameters to url in non-GET requests', async ({ teardown, ok
 
   const tsImplementationTemplate = `
 const _postRoot = async (url: string, request: Types.PostRootRequest) => {
-  const queryParameters = ['level']
+  const queryParameters: (keyof Types.PostRootRequest)[] = ['level']
   const searchParams = new URLSearchParams()
   queryParameters.forEach((qp) =>{
-    searchParams.append(qp, request[qp])
+    searchParams.append(qp, request[qp]?.toString() || '')
     delete request[qp]
   })
 `

@@ -114,10 +114,14 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
         if (queryParams.length) {
           // query parameters should be appended to the url
           const quotedParams = queryParams.map((qp) => `'${qp}'`)
-          writer.writeLine(`const queryParameters = [${quotedParams.join(', ')}]`)
+          let queryParametersType = ''
+          if (language === 'ts') {
+            queryParametersType = `: (keyof Types.${operationRequestName})[] `
+          }
+          writer.writeLine(`const queryParameters${queryParametersType}= [${quotedParams.join(', ')}]`)
           writer.writeLine('const searchParams = new URLSearchParams()')
           writer.write('queryParameters.forEach((qp) =>').inlineBlock(() => {
-            writer.writeLine('searchParams.append(qp, request[qp])')
+            writer.writeLine('searchParams.append(qp, request[qp]?.toString() || \'\')')
             writer.writeLine('delete request[qp]')
           })
           writer.write(')')
