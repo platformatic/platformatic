@@ -26,7 +26,7 @@ test('openapi client generation (javascript)', async ({ teardown, comment, same 
   const dir = await moveToTmpdir(teardown)
   comment(`working in ${dir}`)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url, '--name', 'movies', '--type', 'openapi'])
 
   const toWrite = `
 'use strict'

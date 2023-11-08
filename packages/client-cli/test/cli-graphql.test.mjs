@@ -24,7 +24,7 @@ test('graphql client generation (javascript)', async ({ teardown, comment, same,
   const dir = await moveToTmpdir(teardown)
 
   comment(`working in ${dir}`)
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url, '--name', 'movies', '--type', 'graphql'])
 
   const readSDL = await fs.readFile(join(dir, 'movies', 'movies.schema.graphql'), 'utf8')
   {

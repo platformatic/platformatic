@@ -162,7 +162,8 @@ async function downloadAndProcess (options) {
     optionalHeaders,
     validateResponse,
     isFrontend,
-    language
+    language,
+    type
   } = options
 
   let generateImplementation = options.generateImplementation
@@ -180,11 +181,19 @@ async function downloadAndProcess (options) {
   let found = false
   const toTry = []
   if (url.startsWith('http')) {
-    // add download functions only if it's an URL
-    toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url + '/documentation/json', folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language))
-    toTry.push(downloadAndWriteGraphQL.bind(null, logger, url + '/graphql', folder, name, generateImplementation, typesOnly))
-    toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language))
-    toTry.push(downloadAndWriteGraphQL.bind(null, logger, url, folder, name, generateImplementation, typesOnly))
+    if (type === 'openapi') {
+      toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url + '/documentation/json', folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language))
+      toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language))
+    } else if (options.type === 'graphql') {
+      toTry.push(downloadAndWriteGraphQL.bind(null, logger, url + '/graphql', folder, name, generateImplementation, typesOnly))
+      toTry.push(downloadAndWriteGraphQL.bind(null, logger, url, folder, name, generateImplementation, typesOnly))
+    } else {
+      // add download functions only if it's an URL
+      toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url + '/documentation/json', folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language))
+      toTry.push(downloadAndWriteGraphQL.bind(null, logger, url + '/graphql', folder, name, generateImplementation, typesOnly))
+      toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language))
+      toTry.push(downloadAndWriteGraphQL.bind(null, logger, url, folder, name, generateImplementation, typesOnly))
+    }
   } else {
     // add readFromFileAndWrite to the functions only if it's not an URL
     toTry.push(
@@ -263,7 +272,7 @@ export async function command (argv) {
     ext: '.txt'
   })
   let { _: [url], ...options } = parseArgs(argv, {
-    string: ['name', 'folder', 'runtime', 'optional-headers', 'language'],
+    string: ['name', 'folder', 'runtime', 'optional-headers', 'language', 'type'],
     boolean: ['typescript', 'full-response', 'types-only', 'full-request', 'full', 'frontend', 'validate-response'],
     default: {
       typescript: false,
