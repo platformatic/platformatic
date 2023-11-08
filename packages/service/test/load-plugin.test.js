@@ -66,3 +66,33 @@ test('catch errors from the other side', async (t) => {
     message: 'kaboom'
   })
 })
+
+test('accept modules', async (t) => {
+  async function myApp (app, opts) {
+    await platformaticService(app, opts, [async function (app) {
+      app.get('/', () => 'hello world')
+    }])
+  }
+
+  const app = await buildServer({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugins: {
+      paths: [{
+        module: '@fastify/compress'
+      }]
+    }
+  }, myApp)
+
+  t.after(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const res = await (request(app.url))
+  const body = await res.body.text()
+  assert.strictEqual(res.statusCode, 200)
+  assert.strictEqual(body, 'hello world')
+})

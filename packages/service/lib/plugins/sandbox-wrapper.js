@@ -9,7 +9,7 @@ module.exports = fp(async function (app, opts) {
     if (typeof plugin === 'string') {
       plugin = { path: plugin, encapsulate: true }
     }
-    if ((await stat(plugin.path)).isDirectory()) {
+    if (plugin.path && (await stat(plugin.path)).isDirectory()) {
       const patternOptions = patternOptionsFromPlugin(plugin)
 
       app.register(autoload, {
@@ -27,7 +27,13 @@ module.exports = fp(async function (app, opts) {
         ...patternOptions
       })
     } else {
-      let loaded = await import(`file://${plugin.path}`)
+      let url = ''
+      if (plugin.path) {
+        url = `file://${plugin.path}`
+      } else {
+        url = plugin.module
+      }
+      let loaded = await import(url)
       /* c8 ignore next 3 */
       if (loaded.__esModule === true || typeof loaded.default === 'function') {
         loaded = loaded.default
@@ -56,7 +62,11 @@ function patternOptionsFromPlugin (plugin) {
   const config = {}
 
   // Expected keys for autoload plugin options that expect regexp patterns
-  const patternOptionKeys = ['ignorePattern', 'indexPattern', 'autoHooksPattern']
+  const patternOptionKeys = [
+    'ignorePattern',
+    'indexPattern',
+    'autoHooksPattern'
+  ]
 
   for (const key of patternOptionKeys) {
     const pattern = plugin[key]
