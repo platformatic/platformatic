@@ -61,11 +61,20 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
   const allOperations = []
   const originalFullResponse = fullResponse
   let currentFullResponse = originalFullResponse
+  function getQueryParamsString (operationParams) {
+    return operationParams
+      .filter((p) => p.in === 'query')
+      .map((p) => p.name)
+  }
   for (const operation of operations) {
     const { operationId, responses } = operation.operation
     const operationRequestName = `${capitalize(operationId)}Request`
     const underscoredOperationId = `_${operationId}`
+    let queryParams = []
 
+    if (operation.operation.parameters) {
+      queryParams = getQueryParamsString(operation.operation.parameters)
+    }
     allOperations.push(operationId)
     const { method, path } = operation
 
@@ -102,8 +111,28 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
           `const response = await fetch(\`\${url}${stringLiteralPath}?\${new URLSearchParams(Object.entries(request || {})).toString()}\`)`
         )
       } else {
+        if (queryParams.length) {
+          // query parameters should be appended to the url
+          const quotedParams = queryParams.map((qp) => `'${qp}'`)
+          let queryParametersType = ''
+          if (language === 'ts') {
+            queryParametersType = `: (keyof Types.${operationRequestName})[] `
+          }
+          writer.writeLine(`const queryParameters${queryParametersType}= [${quotedParams.join(', ')}]`)
+          writer.writeLine('const searchParams = new URLSearchParams()')
+          writer.write('queryParameters.forEach((qp) =>').inlineBlock(() => {
+            writer.write('if (request[qp]) ').block(() => {
+              writer.writeLine('searchParams.append(qp, request[qp]?.toString() || \'\')')
+              writer.writeLine('delete request[qp]')
+            })
+          })
+          writer.write(')')
+          writer.blankLine()
+        }
+
         writer
-          .write(`const response = await fetch(\`\${url}${stringLiteralPath}\`, `)
+          .conditionalWrite(queryParams.length > 0, `const response = await fetch(\`\${url}${stringLiteralPath}?\${searchParams.toString()}\`, `)
+          .conditionalWrite(queryParams.length === 0, `const response = await fetch(\`\${url}${stringLiteralPath}\`, `)
           .inlineBlock(() => {
             writer.write('method: ').quote().write(method.toUpperCase()).quote().write(',')
             writer.writeLine('body: JSON.stringify(request),')

@@ -247,3 +247,27 @@ export interface ACustomName {
   match(types, typesTemplate)
   match(implementation, importTemplate)
 })
+
+test('append query parameters to url in non-GET requests', async ({ teardown, ok, match }) => {
+  const dir = await moveToTmpdir(teardown)
+
+  const fileName = join(__dirname, 'fixtures', 'append-query-params-frontend.openapi.json')
+  await execa('node', [cliPath, fileName, '--language', 'ts', '--frontend', '--name', 'fontend'])
+  const implementation = await readFile(join(dir, 'fontend', 'fontend.ts'), 'utf8')
+
+  const tsImplementationTemplate = `
+const _postRoot = async (url: string, request: Types.PostRootRequest) => {
+  const queryParameters: (keyof Types.PostRootRequest)[] = ['level']
+  const searchParams = new URLSearchParams()
+  queryParameters.forEach((qp) =>{
+    if (request[qp]) {
+      searchParams.append(qp, request[qp]?.toString() || '')
+      delete request[qp]
+    }
+  })
+
+  const response = await fetch(\`\${url}/?\${searchParams.toString()}\`, {
+`
+  ok(implementation)
+  match(implementation, tsImplementationTemplate)
+})
