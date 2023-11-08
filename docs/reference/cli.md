@@ -94,6 +94,7 @@ Welcome to Platformatic. Available commands are:
 * `runtime` - start Platformatic Runtime; type `platformatic runtime help` to know more.
 * `start` - start a Platformatic application.
 * `login` - generate a Platformatic login api key.
+* `client` - generate a Platformatic client.
 
 
 #### compile
@@ -876,8 +877,24 @@ Available commands:
 
 Start the Platformatic Runtime with the following command:
 
-``` bash
+```bash
  $ platformatic runtime start
+```
+
+You can also specify a custom routes file, for example:
+
+```bash
+ $ platformatic runtime start routes.js
+```
+
+Where `routes.js` is:
+
+```javascript
+module.exports = async function (app) {
+  app.get('/hello', async () => {
+    return { hello: 'hello123' }
+  })
+}
 ```
 
 

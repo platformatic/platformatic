@@ -28,8 +28,6 @@ async function generateTypes (_args) {
     ignore: 'hostname,pid'
   }))
   const { configManager, args } = await loadConfig({}, _args, platformaticService)
-
-  console.log('antanis', new Error().stack)
   await configManager.parseAndValidate()
   const config = configManager.current
 
