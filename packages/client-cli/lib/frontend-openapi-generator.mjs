@@ -121,15 +121,17 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
           writer.writeLine(`const queryParameters${queryParametersType}= [${quotedParams.join(', ')}]`)
           writer.writeLine('const searchParams = new URLSearchParams()')
           writer.write('queryParameters.forEach((qp) =>').inlineBlock(() => {
-            writer.writeLine('searchParams.append(qp, request[qp]?.toString() || \'\')')
-            writer.writeLine('delete request[qp]')
+            writer.write('if (request[qp]) ').block(() => {
+              writer.writeLine('searchParams.append(qp, request[qp]?.toString() || \'\')')
+              writer.writeLine('delete request[qp]')
+            })
           })
           writer.write(')')
           writer.blankLine()
         }
 
         writer
-          .conditionalWrite(queryParams.length > 0, `const response = await fetch(\`\${url}${stringLiteralPath}\${searchParams.toString()}\`, `)
+          .conditionalWrite(queryParams.length > 0, `const response = await fetch(\`\${url}${stringLiteralPath}?\${searchParams.toString()}\`, `)
           .conditionalWrite(queryParams.length === 0, `const response = await fetch(\`\${url}${stringLiteralPath}\`, `)
           .inlineBlock(() => {
             writer.write('method: ').quote().write(method.toUpperCase()).quote().write(',')
