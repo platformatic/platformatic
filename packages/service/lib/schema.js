@@ -600,6 +600,11 @@ const openApiBase = {
     prefix: {
       type: 'string',
       description: 'Base URL for the OpenAPI'
+    },
+    path: {
+      type: 'string',
+      description: 'Path to an OpenAPI spec file',
+      resolvePath: true
     }
   }
 }
