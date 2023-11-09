@@ -601,9 +601,10 @@ const openApiBase = {
       type: 'string',
       description: 'Base URL for the OpenAPI'
     },
-    file: {
+    path: {
       type: 'string',
-      description: 'Path to an OpenAPI spec file'
+      description: 'Path to an OpenAPI spec file',
+      resolvePath: true
     }
   }
 }

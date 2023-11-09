@@ -33,10 +33,10 @@ async function setupOpenAPI (app, opts) {
     }
   }
 
-  if (opts.file) {
+  if (opts.path) {
     swaggerOptions.mode = 'static'
     swaggerOptions.specification = {
-      path: opts.file
+      path: opts.path
     }
   }
   await app.register(Swagger, swaggerOptions)

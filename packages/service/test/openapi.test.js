@@ -14,7 +14,7 @@ test('provide openapi spec from a file', async (t) => {
     },
     service: {
       openapi: {
-        file: join(__dirname, 'fixtures', 'openapi-spec-test.json')
+        path: join(__dirname, 'fixtures', 'openapi-spec-test.json')
       }
     },
     watch: false,
