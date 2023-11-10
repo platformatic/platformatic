@@ -16,7 +16,7 @@ And finally, all Platformatic components can be deployed on [Platformatic Cloud]
 
 A Platformatic Service is an HTTP server based on [Fastify](https://www.fastify.io/) that allows developers to build robust APIs with Node.js.
 With Platformatic Service you can:
-- Add custom functionality in a [Fastify plugin](https://www.fastify.io/docs/latest/Plugins/)
+- Add custom functionality in a [Fastify plugin](https://fastify.dev/docs/latest/Reference/Plugins)
 - Write plugins in JavaScript or [TypeScript](https://www.typescriptlang.org/)
 - Optionally user TypeScript to write your application code
 
