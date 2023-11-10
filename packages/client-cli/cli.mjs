@@ -139,7 +139,7 @@ async function readFromFileAndWrite (logger, file, folder, name, generateImpleme
     await writeOpenAPIClient(folder, name, text, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language)
     return 'openapi'
   } catch (err) {
-    logger.error(`Error parsing OpenAPI definition: ${err.message} Trying with GraphQL`)
+    logger.error(err, `Error parsing OpenAPI definition: ${err.message} Trying with GraphQL`)
     // try GraphQL
     const schema = graphql.buildSchema(text)
     const introspectionResult = graphql.introspectionFromSchema(schema)
