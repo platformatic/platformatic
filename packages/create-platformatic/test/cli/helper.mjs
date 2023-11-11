@@ -49,11 +49,11 @@ export const getServices = async (dir) => {
 //    match: 'Server listening at',
 //    do: [keys.DOWN, keys.ENTER]
 // }
-export async function executeCreatePlatformatic (dir, actions = [], done = 'All done!') {
+export async function executeCreatePlatformatic (dir, actions = [], done = 'All done!', pkgMgrInstall = false) {
   const runCreatePlatformatic = async () => {
     const questions = [...actions]
     try {
-      const child = execaNode(createPath, { cwd: dir })
+      const child = execaNode(createPath + ` --install=${pkgMgrInstall}`, { cwd: dir })
 
       // We just need the "lastPrompt" printed before the process stopped to wait for an answer
       // If we don't have any outptu from process for more than 500ms, we assume it's waiting for an answer

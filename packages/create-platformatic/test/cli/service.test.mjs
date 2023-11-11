@@ -27,10 +27,6 @@ test('Creates a Platformatic Service with no typescript', async ({ equal, same, 
     match: 'Where would you like to create your project?',
     do: [keys.ENTER]
   }, {
-    // create-platformatic uses pnpm in CI, so we need to match both options
-    match: ['Do you want to run npm install?', 'Do you want to run pnpm install?'],
-    do: [keys.DOWN, keys.ENTER] // no
-  }, {
     // NOTE THAT HERE THE DEFAULT OPTION FOR SERVICE IS "YES"
     match: 'Do you want to use TypeScript',
     do: [keys.DOWN, keys.ENTER] // no
@@ -70,10 +66,6 @@ test('Creates a Platformatic Service with typescript', async ({ equal, same, mat
   }, {
     match: 'Where would you like to create your project?',
     do: [keys.ENTER]
-  }, {
-    // create-platformatic uses pnpm in CI, so we need to match both options
-    match: ['Do you want to run npm install?', 'Do you want to run pnpm install?'],
-    do: [keys.DOWN, keys.ENTER] // no
   }, {
     // NOTE THAT HERE THE DEFAULT OPTION FOR SERVICE IS "YES"
     match: 'Do you want to use TypeScript',
@@ -138,10 +130,6 @@ test('Creates a Platformatic Service in a non empty directory', async ({ equal, 
   }, {
     match: 'Confirm you want to use',
     do: [keys.ENTER] // confirm use existing directory
-  }, {
-    // create-platformatic uses pnpm in CI, so we need to match both options
-    match: ['Do you want to run npm install?', 'Do you want to run pnpm install?'],
-    do: [keys.DOWN, keys.ENTER] // no
   }, {
     // NOTE THAT HERE THE DEFAULT OPTION FOR SERVICE IS "YES"
     match: 'Do you want to use TypeScript',

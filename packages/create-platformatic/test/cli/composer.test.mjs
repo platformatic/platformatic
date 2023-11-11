@@ -33,11 +33,6 @@ test('Creates a Platformatic Composer', async ({ equal, same, match, teardown })
     // NOTE THAT HERE THE DEFAULT OPTION FOR SERVICE IS "YES"
     match: 'Do you want to use TypeScript',
     do: [keys.DOWN, keys.ENTER] // no
-  },
-  {
-    // create-platformatic uses pnpm in CI, so we need to match both options
-    match: ['Do you want to run npm install?', 'Do you want to run pnpm install?'],
-    do: [keys.DOWN, keys.ENTER] // no
   }, {
     match: 'Do you want to create the github action to deploy',
     do: [keys.DOWN, keys.ENTER] // no
@@ -80,10 +75,6 @@ test('Creates a Platformatic Composer with typescript support adn GitHub Actions
   }, {
     match: 'Do you want to use TypeScript',
     do: [keys.ENTER] // yes
-  }, {
-    // create-platformatic uses pnpm in CI, so we need to match both options
-    match: ['Do you want to run npm install?', 'Do you want to run pnpm install?'],
-    do: [keys.DOWN, keys.ENTER] // no
   }, {
     match: 'Do you want to create the github action to deploy',
     do: [keys.ENTER] // yes
