@@ -12,7 +12,7 @@ const files = [
   ...glob(path.join(__dirname, '*.test.js')),
   ...glob(path.join(__dirname, 'openapi', '*.test.js')),
   ...glob(path.join(__dirname, 'telemetry', '*.test.js')),
-  ...glob(path.join(__dirname, 'cli', '*.test.mjs'))
+  ...glob(path.join(__dirname, 'cli', '*.test.js'))
 ]
 
 run({
