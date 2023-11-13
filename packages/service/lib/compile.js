@@ -5,6 +5,7 @@ const pino = require('pino')
 const pretty = require('pino-pretty')
 const { loadConfig } = require('@platformatic/config')
 const { isFileAccessible } = require('./utils.js')
+const { readFile, rm } = require('fs/promises')
 
 async function getTSCExecutablePath (cwd) {
   const typescriptPath = require.resolve('typescript')
@@ -62,7 +63,7 @@ async function setup (cwd, config, logger) {
   return { execa, logger, tscExecutablePath, tsConfigPath, tsConfigExists }
 }
 
-async function compile (cwd, config, originalLogger) {
+async function compile (cwd, config, originalLogger, options) {
   const { execa, logger, tscExecutablePath, tsConfigPath, tsConfigExists } = await setup(cwd, config, originalLogger)
   /* c8 ignore next 3 */
   if (!tscExecutablePath || !tsConfigExists) {
@@ -75,7 +76,18 @@ async function compile (cwd, config, originalLogger) {
       ...process.env
     }
     delete env.NODE_V8_COVERAGE
-
+    // somehow c8 does not pick up these lines even if there is a specific test
+    /* c8 ignore 10 */
+    if (options.clean) {
+      // delete outdir directory
+      const tsConfigContents = JSON.parse(await readFile(tsConfigPath, 'utf8'))
+      const outDir = tsConfigContents.compilerOptions.outDir
+      if (outDir) {
+        const outDirFullPath = join(dirname(tsConfigPath), outDir)
+        originalLogger.info(`Removing build directory ${outDirFullPath}`)
+        await rm(outDirFullPath, { recursive: true })
+      }
+    }
     await execa(tscExecutablePath, tsFlags, { cwd, env })
     logger.info('Typescript compilation completed successfully.')
     return true
@@ -101,8 +113,17 @@ function buildCompileCmd (app) {
       console.error(err)
       process.exit(1)
     }
+    const compileOptions = {
+      clean: _args.includes('--clean')
+    }
+    const logger = pino(
+      pretty({
+        translateTime: 'SYS:HH:MM:ss',
+        ignore: 'hostname,pid'
+      })
+    )
 
-    if (!await compile(fullPath, config)) {
+    if (!await compile(fullPath, config, logger, compileOptions)) {
       process.exit(1)
     }
   }
