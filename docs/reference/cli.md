@@ -745,6 +745,8 @@ Compile typescript plugins.
 As a result of executing this command, Platformatic Service will compile typescript
 plugins in the `outDir` directory. 
 
+Using the  `--clean` flag, the outDir directory will be removed before the new compilation process starts.
+
 If not specified, the configuration will be loaded from any of the following, in the current directory.
 
 * `platformatic.service.json`, or
