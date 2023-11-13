@@ -8,8 +8,10 @@ It will generate do and undo sql files in the migrations folder. The name of the
 files will be the next migration number.
 
 ``` bash
-  $ platformatic db migrations create --name "create_users_table"
+  $ platformatic db migrations create
 ```
+
+The migration files are named `001.<do|undo>.sql`, `002.<do|undo>.sql` etc...
 
 Options:
 
