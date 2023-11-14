@@ -128,10 +128,10 @@ importers:
         version: 4.2.0
       inquirer:
         specifier: ^9.2.11
-        version: 9.2.11
+        version: 9.2.12
       mercurius:
         specifier: ^13.1.0
-        version: 13.1.0(graphql@16.8.1)
+        version: 13.3.1(graphql@16.8.1)
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -359,7 +359,7 @@ importers:
         version: link:../generators
       '@platformatic/graphql-composer':
         specifier: git+ssh://github.com/platformatic/graphql-composer
-        version: github.com/platformatic/graphql-composer/bde7b29c43f205152b81fe87537eb22f83d23794
+        version: github.com/platformatic/graphql-composer/b6e96a45e6735ff040672fe382ef78d9afec421e
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
@@ -402,6 +402,9 @@ importers:
       json-schema-traverse:
         specifier: ^1.0.0
         version: 1.0.0
+      mercurius:
+        specifier: ^13.1.0
+        version: 13.3.1(graphql@16.8.1)
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -418,12 +421,15 @@ importers:
         specifier: ^1.0.36
         version: 1.0.37
       undici:
-        specifier: ^5.25.4
+        specifier: ^5.26.5
         version: 5.28.2
     devDependencies:
       '@platformatic/client':
         specifier: workspace:*
         version: link:../client
+      '@platformatic/db':
+        specifier: workspace:*
+        version: link:../db
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -439,9 +445,6 @@ importers:
       json-schema-to-typescript:
         specifier: ^13.1.1
         version: 13.1.1
-      mercurius:
-        specifier: ^13.1.0
-        version: 13.1.0(graphql@16.8.1)
       openapi-schema-validator:
         specifier: ^12.1.3
         version: 12.1.3
@@ -9944,14 +9947,14 @@ packages:
     resolution: {integrity: sha512-9bnSc/HEW2uRy67wc+T8UwauLuPJVn28jb+GtJY16iiKWyvmYJRXVT4UamsAEGQfPohgr2q4Tq0sQbQlxTfi1g==}
     engines: {node: '>=12.20'}
 
-  github.com/platformatic/graphql-composer/bde7b29c43f205152b81fe87537eb22f83d23794:
-    resolution: {tarball: https://codeload.github.com/platformatic/graphql-composer/tar.gz/bde7b29c43f205152b81fe87537eb22f83d23794}
+  github.com/platformatic/graphql-composer/b6e96a45e6735ff040672fe382ef78d9afec421e:
+    resolution: {tarball: https://codeload.github.com/platformatic/graphql-composer/tar.gz/b6e96a45e6735ff040672fe382ef78d9afec421e}
     name: '@platformatic/graphql-composer'
-    version: 0.2.0
+    version: 0.3.0
     dependencies:
       '@mercuriusjs/subscription-client': 1.0.0(graphql@16.8.1)
       graphql: 16.8.1
-      undici: 5.26.3
+      undici: 5.28.2
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate

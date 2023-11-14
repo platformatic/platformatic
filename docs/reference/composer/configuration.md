@@ -64,11 +64,19 @@ the services managed by the composer. Each service object supports the following
 
   - **`id`** (**required**, `string`) - A unique identifier for the service. Use a Platformatic Runtime service id if the service is executing inside of [Platformatic Runtime context](/docs/reference/runtime/introduction.md#platformatic-runtime-context).
   - **`origin`** (`string`) - A service origin. Skip this option if the service is executing inside of [Platformatic Runtime context](/docs/reference/runtime/introduction.md#platformatic-runtime-context). In this case, service id will be used instead of origin.
-  - **`openapi`** (**required**, `object`) - The configuration file used to compose OpenAPI specification. See the [openapi](#openapi) for details.
+  - **`openapi`** (`object`) - The configuration file used to compose OpenAPI specification. See the [openapi](#openapi) for details.
+  - **`graphql`** (`object`) - The configuration for the GraphQL service. See the [graphql](#graphql) for details.
   - **`proxy`** (`object` or `false`) - Service proxy configuration. If `false`, the service proxy is disabled.
     - `prefix` (**required**, `string`) - Service proxy prefix. All service routes will be prefixed with this value.
 
 - **`openapi`** (`object`) - See the Platformatic Service [service](/docs/reference/service/configuration.md#service) openapi option for details.
+- **`graphql`** (`object`) - Has the Platformatic Service [service](/docs/reference/service/configuration.md#service) graphql options, plus
+  - **`defaultArgsAdapter`** (`number`) - The default `argsAdapter` function for the entities, for example
+  ```js
+  graphql: {
+    defaultArgsAdapter: (partialResults) => ({ where: { id: { in: partialResults.map(r => r.id) } } })
+  }
+  ```
 
 - **`refreshTimeout`** (`number`) - The number of milliseconds to wait for check for changes in the service OpenAPI specification. If not specified, the default value is `1000`.
 
@@ -195,6 +203,28 @@ _Examples_
     }
   }
   ```
+
+#### `graphql`
+
+- **`host`** (`string`) - service host; if not specified, the `service.origin` is used.
+- **`name`** (`string`) - name to identify the service. If not specified, the `service.origin` is used.
+- **`graphqlEndpoint`** (`string`) - The graphql endpoint path, the default value is the common `'/graphql'`.
+- **`composeEndpoint`** (`string`) - The endpoint to retrieve the introspection query from, default is `'/.well-known/graphql-composition'`. In case the endpoint is not available, a second call with introspection query will be sent to the `graphqlEndpoint`.
+- **`entities`** (`Object`) - Configuration object for working with entities in the service. Each key in this object is the name of an entity data type. This is required if the service contains any entities. The values are objects with the the following schema:
+  - `referenceListResolverName` (`string`) - The name of the resolver used to retrieve a list of objects by their keys. Can be optional if the entity doesn't have a resolver because its keys are nested in another entity (see the [example](./examples/with-nested-keys.js)).
+  - `argsAdapter (partialResults)` (`function`) - When resolving an entity across multiple services, an initial query is made to one service followed by one or more followup queries to other services. The initial query must return enough information to identify the corresponding data in the other services. This function is invoked with the result of the initial query. It should return an object to be used as argument for `referenceListResolverName` query.
+  **Default:** if missing, the `defaultArgsAdapter` function will be used.
+  - `keys` (**required**, `Object[]`) - The keys of the entity, to identify itself or refered to other entities. The key format is `[{ field, type }]`, for example `[{ field: 'id', type: 'Book' }]`. `type` can be omitted referring to the entity itself.
+  ```js
+  entities: {
+    Book: {
+      referenceListResolverName: 'books',
+      keys: [{ field: 'id' }, { field: 'authorId', type: 'Author' }]
+      argsAdapter: (partialResults) => ({ where: { id: { in: partialResults.map(r => r.id) } } })
+    }
+  }
+  ```
+
 ### `telemetry`
 
 See [Platformatic Service telemetry](/docs/reference/service/configuration.md#telemetry) for more details.

@@ -1,11 +1,10 @@
 'use strict'
 
-const path = require('path')
 const assert = require('assert/strict')
 const { test } = require('node:test')
 const { request } = require('undici')
 
-const { createComposer, createGraphqlService, graphqlRequest } = require('../helper')
+const { createComposer, createGraphqlService, createLoggerSpy } = require('../helper')
 
 function createSampleGraphqlService (t) {
   return createGraphqlService(t, {
@@ -23,8 +22,10 @@ function createSampleGraphqlService (t) {
   })
 }
 
-test('should start composer with two graphql services, from service and from file', async t => {
+test('should get a warning using graphql services', async t => {
   const graphql1 = await createSampleGraphqlService(t)
+  const logger = createLoggerSpy()
+
   const graphql1Host = await graphql1.listen()
 
   const composer = await createComposer(t,
@@ -33,34 +34,18 @@ test('should start composer with two graphql services, from service and from fil
         services: [
           {
             id: 'graphql1',
-            graphql: {
-              url: graphql1Host
-            }
-          },
-          {
-            id: 'graphql2',
-            graphql: {
-              file: path.join(__dirname, 'fixtures', 'hello.js')
-            }
+            origin: graphql1Host,
+            graphql: true
           }
         ]
       }
-    }
+    },
+    logger
   )
 
-  const composerHost = await composer.listen()
+  await composer.start()
 
-  {
-    const query = '{ add (x: 3, y: 4) }'
-    const response = await graphqlRequest({ query, host: composerHost })
-    assert.deepEqual(response, { add: 7 })
-  }
-
-  {
-    const query = '{ hello }'
-    const response = await graphqlRequest({ query, host: composerHost })
-    assert.deepEqual(response, { hello: 'world' })
-  }
+  assert.ok(logger._warn.find(l => l[0] === 'graphql composer is an experimental feature'))
 })
 
 test('should enable graphiql on composer', async t => {

@@ -1,0 +1,20 @@
+{
+  "server":{
+    "logger": {
+      "level": "warn"
+    }
+  },
+  "db": {
+    "connectionString": "sqlite://./db.sqlite",
+    "graphql": true
+  },
+  "migrations": {
+    "dir": "./migrations",
+    "autoApply": true
+  },
+  "plugins": {
+    "paths": [
+      "./extends.js"
+    ]
+  }
+}

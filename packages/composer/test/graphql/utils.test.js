@@ -28,6 +28,6 @@ test('serviceToSubgraphConfig unit test', t => {
   ]
 
   for (const c of cases) {
-    assert.deepEqual(serviceToSubgraphConfig(c.params), c.expected, c.label)
+    assert.deepEqual(serviceToSubgraphConfig(c.service), c.expected, c.label)
   }
 })

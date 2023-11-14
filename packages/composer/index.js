@@ -11,9 +11,11 @@ const graphql = require('./lib/graphql')
 const composerHook = require('./lib/composer-hook')
 const openapiGenerator = require('./lib/openapi-generator')
 const graphqlGenerator = require('./lib/graphql-generator')
-const { isSameGraphqlSchema } = require('./lib/graphql-utils')
+const { isSameGraphqlSchema, fetchGraphqlSubgraphs } = require('./lib/graphql-fetch')
 const errors = require('./lib/errors')
 const { isFetchable } = require('./lib/utils')
+
+const EXPERIMENTAL_GRAPHQL_COMPOSER_FEATURE_MESSAGE = 'graphql composer is an experimental feature'
 
 async function platformaticComposer (app) {
   const configManager = app.platformatic.configManager
@@ -39,6 +41,8 @@ async function platformaticComposer (app) {
       app.register(openapi, config.composer)
     }
     if (hasGraphqlServices) {
+      app.log.warn(EXPERIMENTAL_GRAPHQL_COMPOSER_FEATURE_MESSAGE)
+
       app.register(graphql, config.composer)
     }
     app.register(serviceProxy, config.composer)
@@ -110,7 +114,7 @@ async function detectServicesUpdate ({ app, services, fetchOpenApiSchema, fetchG
 
   if (!changed && graphqlServices.length > 0) {
     try {
-      const graphqlSupergraph = await fetchGraphqlSubgraphs(graphqlServices)
+      const graphqlSupergraph = await fetchGraphqlSubgraphs(graphqlServices, app.graphqlComposerOptions)
       if (!isSameGraphqlSchema(graphqlSupergraph, app.graphqlSupergraph)) {
         changed = true
         app.graphqlSupergraph = graphqlSupergraph
@@ -141,7 +145,6 @@ async function watchServices (app, opts) {
   }
 
   const { fetchOpenApiSchema } = await import('./lib/openapi-fetch-schemas.mjs')
-  const { fetchGraphqlSubgraphs } = await import('./lib/graphql-fetch-subgraphs.mjs')
 
   app.log.info({ services: watching }, 'start watching services')
 

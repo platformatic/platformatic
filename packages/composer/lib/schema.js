@@ -27,18 +27,47 @@ const graphqlService = {
     {
       type: 'object',
       properties: {
-        url: { type: 'string' },
+        host: { type: 'string' },
+        name: { type: 'string' },
         graphqlEndpoint: { type: 'string', default: '/graphql' },
         composeEndpoint: { type: 'string', default: '/.well-known/graphql-composition' },
-        file: { type: 'string', resolvePath: true }
+        entities: {
+          type: 'object'
+          // TODO
+          // patternProperties: {
+          //   '^.*$': {
+          //     type: 'object',
+          //     properties: {
+          //       referenceListResolverName: { type: 'string' },
+          //       keys: {
+          //         type: 'array',
+          //         items: {
+          //           type: 'object',
+          //           properties: {
+          //             field: { type: 'string' },
+          //             type: { type: 'string' }
+          //           }
+          //         }
+          //       },
+          //       argsAdapter: { type: 'function' }
+          //     }
+          //   }
+          // }
+        }
       },
-      anyOf: [
-        { required: ['url'] },
-        { required: ['file'] }
-      ],
       additionalProperties: false
     }
   ]
+}
+
+const graphqlComposerOptions = {
+  type: 'object',
+  properties: {
+    ...graphqlBase.properties
+    // TODO
+    // defaultArgsAdapter: { type: 'function' }
+  }
+  // additionalProperties: false
 }
 
 const composer = {
@@ -72,7 +101,7 @@ const composer = {
       }
     },
     openapi: openApiBase,
-    graphql: graphqlBase,
+    graphql: graphqlComposerOptions,
     refreshTimeout: { type: 'integer', minimum: 0, default: 1000 }
   },
   required: ['services'],
