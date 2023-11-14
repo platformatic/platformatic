@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { deepEqual } = require('node:assert')
 const { deepmerge } = require('..')
 
 test('deepmerge', async (t) => {
@@ -15,7 +16,7 @@ test('deepmerge', async (t) => {
     }]
   }
   const result = deepmerge(first, second)
-  t.same(result, {
+  deepEqual(result, {
     b: [{
       a: 'foo',
       b: 'bar'

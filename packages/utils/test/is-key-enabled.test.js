@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { equal } = require('node:assert')
 const { isKeyEnabled } = require('..')
 
 test('isKeyEnabled', async (t) => {
@@ -11,9 +12,9 @@ test('isKeyEnabled', async (t) => {
     },
     baz: false
   }
-  t.equal(isKeyEnabled('foo', a), true)
-  t.equal(isKeyEnabled('bar', a), true)
-  t.equal(isKeyEnabled('baz', a), false)
-  t.equal(isKeyEnabled('nope', a), false)
-  t.equal(isKeyEnabled('something', undefined), false)
+  equal(isKeyEnabled('foo', a), true)
+  equal(isKeyEnabled('bar', a), true)
+  equal(isKeyEnabled('baz', a), false)
+  equal(isKeyEnabled('nope', a), false)
+  equal(isKeyEnabled('something', undefined), false)
 })
