@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { deepEqual, equal, ok } = require('node:assert')
 const fastify = require('fastify')
 const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
 const telemetryPlugin = require('../lib/telemetry')
@@ -31,7 +32,7 @@ const injectArgs = {
   }
 }
 
-test('should trace a request not failing', async ({ equal, same, teardown }) => {
+test('should trace a request not failing', async () => {
   const handler = async (request, reply) => {
     return { foo: 'bar' }
   }
@@ -42,7 +43,7 @@ test('should trace a request not failing', async ({ equal, same, teardown }) => 
     exporter: {
       type: 'memory'
     }
-  }, handler, teardown)
+  }, handler, test.after)
 
   await app.inject(injectArgs)
   const { exporters } = app.openTelemetry
@@ -59,11 +60,11 @@ test('should trace a request not failing', async ({ equal, same, teardown }) => 
   equal(span.attributes['url.scheme'], 'http')
   equal(span.attributes['server.address'], 'test')
   const resource = span.resource
-  same(resource.attributes['service.name'], 'test-service')
-  same(resource.attributes['service.version'], '1.0.0')
+  deepEqual(resource.attributes['service.name'], 'test-service')
+  deepEqual(resource.attributes['service.version'], '1.0.0')
 })
 
-test('should not put query in `url.path', async ({ equal, same, teardown }) => {
+test('should not put query in `url.path', async () => {
   const handler = async (request, reply) => {
     return { foo: 'bar' }
   }
@@ -82,7 +83,7 @@ test('should not put query in `url.path', async ({ equal, same, teardown }) => {
     exporter: {
       type: 'memory'
     }
-  }, handler, teardown)
+  }, handler, test.after)
 
   await app.inject(injectArgs)
   const { exporters } = app.openTelemetry
@@ -99,11 +100,11 @@ test('should not put query in `url.path', async ({ equal, same, teardown }) => {
   equal(span.attributes['url.scheme'], 'http')
   equal(span.attributes['server.address'], 'test')
   const resource = span.resource
-  same(resource.attributes['service.name'], 'test-service')
-  same(resource.attributes['service.version'], '1.0.0')
+  deepEqual(resource.attributes['service.name'], 'test-service')
+  deepEqual(resource.attributes['service.version'], '1.0.0')
 })
 
-test('request should add attribute to a span', async ({ equal, same, teardown }) => {
+test('request should add attribute to a span', async () => {
   const handler = async (request, reply) => {
     request.span.setAttribute('foo', 'bar')
     return { foo: 'bar' }
@@ -115,7 +116,7 @@ test('request should add attribute to a span', async ({ equal, same, teardown })
     exporter: {
       type: 'memory'
     }
-  }, handler, teardown)
+  }, handler, test.after)
 
   await app.inject(injectArgs)
   const { exporters } = app.openTelemetry
@@ -131,11 +132,11 @@ test('request should add attribute to a span', async ({ equal, same, teardown })
   // This is the attribute we added
   equal(span.attributes.foo, 'bar')
   const resource = span.resource
-  same(resource.attributes['service.name'], 'test-service')
-  same(resource.attributes['service.version'], '1.0.0')
+  deepEqual(resource.attributes['service.name'], 'test-service')
+  deepEqual(resource.attributes['service.version'], '1.0.0')
 })
 
-test('should be able to set the W3C trace context', async ({ equal, same, teardown, ok }) => {
+test('should be able to set the W3C trace context', async () => {
   const handler = async (request, reply) => {
     const context = request.openTelemetry().span.context
     const newContext = context.setValue('foo', 'bar')
@@ -149,14 +150,14 @@ test('should be able to set the W3C trace context', async ({ equal, same, teardo
     exporter: {
       type: 'memory'
     }
-  }, handler, teardown)
+  }, handler, test.after)
 
   const response = await app.inject(injectArgs)
   // see: https://www.w3.org/TR/trace-context/#design-overview
   ok(response.headers.traceparent)
 })
 
-test('should trace a request that fails', async ({ equal, same, teardown }) => {
+test('should trace a request that fails', async () => {
   const handler = async (request, reply) => {
     throw new Error('booooom!!!')
   }
@@ -166,7 +167,7 @@ test('should trace a request that fails', async ({ equal, same, teardown }) => {
     exporter: {
       type: 'memory'
     }
-  }, handler, teardown)
+  }, handler, test.after)
 
   await app.inject(injectArgs)
   const { exporters } = app.openTelemetry
@@ -181,26 +182,26 @@ test('should trace a request that fails', async ({ equal, same, teardown }) => {
   equal(span.attributes['http.response.status_code'], 500)
   equal(span.attributes['error.message'], 'booooom!!!')
   const resource = span.resource
-  same(resource.attributes['service.name'], 'test-service')
-  same(resource.attributes['service.version'], '1.0.0')
+  equal(resource.attributes['service.name'], 'test-service')
+  equal(resource.attributes['service.version'], '1.0.0')
 })
 
-test('if no exporter is configured, should default to console', async ({ equal, same, teardown }) => {
+test('if no exporter is configured, should default to console', async () => {
   const handler = async (request, reply) => {
     return {}
   }
   const app = await setupApp({
     serviceName: 'test-service',
     version: '1.0.0'
-  }, handler, teardown)
+  }, handler, test.after)
 
   await app.inject(injectArgs)
   const { exporters } = app.openTelemetry
   const exporter = exporters[0]
-  same(exporter.constructor.name, 'ConsoleSpanExporter')
+  equal(exporter.constructor.name, 'ConsoleSpanExporter')
 })
 
-test('should configure OTLP correctly', async ({ equal, same, teardown }) => {
+test('should configure OTLP correctly', async () => {
   const handler = async (request, reply) => {
     return {}
   }
@@ -213,15 +214,15 @@ test('should configure OTLP correctly', async ({ equal, same, teardown }) => {
         url: 'http://localhost:4317'
       }
     }
-  }, handler, teardown)
+  }, handler, test.after)
 
   const { exporters } = app.openTelemetry
   const exporter = exporters[0]
-  same(exporter.constructor.name, 'OTLPTraceExporter')
-  same(exporter.url, 'http://localhost:4317')
+  equal(exporter.constructor.name, 'OTLPTraceExporter')
+  equal(exporter.url, 'http://localhost:4317')
 })
 
-test('should configure Zipkin correctly', async ({ equal, same, teardown }) => {
+test('should configure Zipkin correctly', async () => {
   const handler = async (request, reply) => {
     return {}
   }
@@ -234,15 +235,15 @@ test('should configure Zipkin correctly', async ({ equal, same, teardown }) => {
         url: 'http://localhost:9876'
       }
     }
-  }, handler, teardown)
+  }, handler, test.after)
 
   const { exporters } = app.openTelemetry
   const exporter = exporters[0]
-  same(exporter.constructor.name, 'ZipkinExporter')
-  same(exporter._urlStr, 'http://localhost:9876')
+  equal(exporter.constructor.name, 'ZipkinExporter')
+  equal(exporter._urlStr, 'http://localhost:9876')
 })
 
-test('wrong exporter is configured, should default to console', async ({ equal, same, teardown }) => {
+test('wrong exporter is configured, should default to console', async () => {
   const handler = async (request, reply) => {
     return {}
   }
@@ -252,15 +253,15 @@ test('wrong exporter is configured, should default to console', async ({ equal, 
     exporter: {
       type: 'wrong-exporter'
     }
-  }, handler, teardown)
+  }, handler, test.after)
 
   await app.inject(injectArgs)
   const { exporters } = app.openTelemetry
   const exporter = exporters[0]
-  same(exporter.constructor.name, 'ConsoleSpanExporter')
+  equal(exporter.constructor.name, 'ConsoleSpanExporter')
 })
 
-test('should not trace if the operation is skipped', async ({ equal, same, teardown }) => {
+test('should not trace if the operation is skipped', async () => {
   const handler = async (request, reply) => {
     return { foo: 'bar' }
   }
@@ -275,7 +276,7 @@ test('should not trace if the operation is skipped', async ({ equal, same, teard
     exporter: {
       type: 'memory'
     }
-  }, handler, teardown)
+  }, handler, test.after)
 
   const injectArgs = {
     method: 'GET',
@@ -292,7 +293,7 @@ test('should not trace if the operation is skipped', async ({ equal, same, teard
   equal(finishedSpans.length, 0)
 })
 
-test('should not put the URL param in path', async ({ equal, same, teardown }) => {
+test('should not put the URL param in path', async () => {
   const handler = async (request, reply) => {
     return { foo: 'bar' }
   }
@@ -311,7 +312,7 @@ test('should not put the URL param in path', async ({ equal, same, teardown }) =
     exporter: {
       type: 'memory'
     }
-  }, handler, teardown)
+  }, handler, test.after)
 
   await app.inject(injectArgs)
   const { exporters } = app.openTelemetry
@@ -328,11 +329,11 @@ test('should not put the URL param in path', async ({ equal, same, teardown }) =
   equal(span.attributes['url.scheme'], 'http')
   equal(span.attributes['server.address'], 'test')
   const resource = span.resource
-  same(resource.attributes['service.name'], 'test-service')
-  same(resource.attributes['service.version'], '1.0.0')
+  equal(resource.attributes['service.name'], 'test-service')
+  equal(resource.attributes['service.version'], '1.0.0')
 })
 
-test('should configure an exporter as an array', async ({ equal, same, teardown }) => {
+test('should configure an exporter as an array', async () => {
   const handler = async (request, reply) => {
     return {}
   }
@@ -345,14 +346,14 @@ test('should configure an exporter as an array', async ({ equal, same, teardown 
         url: 'http://localhost:4317'
       }
     }]
-  }, handler, teardown)
+  }, handler, test.after)
   const { exporters } = app.openTelemetry
   const exporter = exporters[0]
-  same(exporter.constructor.name, 'OTLPTraceExporter')
-  same(exporter.url, 'http://localhost:4317')
+  equal(exporter.constructor.name, 'OTLPTraceExporter')
+  equal(exporter.url, 'http://localhost:4317')
 })
 
-test('should use multiple exporters and sent traces to all the exporters', async ({ equal, same, teardown }) => {
+test('should use multiple exporters and sent traces to all the exporters', async () => {
   const handler = async (request, reply) => {
     return {}
   }
@@ -364,7 +365,7 @@ test('should use multiple exporters and sent traces to all the exporters', async
     }, {
       type: 'memory'
     }]
-  }, handler, teardown)
+  }, handler, test.after)
   const { exporters } = app.openTelemetry
 
   await app.inject(injectArgs)

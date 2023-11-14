@@ -1,9 +1,10 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { equal } = require('node:assert')
 const { MultiSpanProcessor } = require('../lib/multispan-processor')
 
-test('should add multiple processors', async ({ equal, same, teardown }) => {
+test('should add multiple processors', async () => {
   const mockSpanProcessor = {
     onStart: () => {},
     onEnd: () => {},
@@ -19,7 +20,7 @@ test('should add multiple processors', async ({ equal, same, teardown }) => {
   }
 })
 
-test('should call onStart on every processor', async ({ equal, same, teardown }) => {
+test('should call onStart on every processor', async () => {
   let called1 = false
   let called2 = false
   const mockSpanProcessor1 = {
@@ -35,7 +36,7 @@ test('should call onStart on every processor', async ({ equal, same, teardown })
   equal(called2, true)
 })
 
-test('should call onEnd on every processor', async ({ equal, same, teardown }) => {
+test('should call onEnd on every processor', async () => {
   let called1 = false
   let called2 = false
   const mockSpanProcessor1 = {
@@ -50,7 +51,7 @@ test('should call onEnd on every processor', async ({ equal, same, teardown }) =
   equal(called2, true)
 })
 
-test('should call shutdown on every processor', async ({ equal, same, teardown }) => {
+test('should call shutdown on every processor', async () => {
   let called1 = false
   let called2 = false
   const mockSpanProcessor1 = {
@@ -65,7 +66,7 @@ test('should call shutdown on every processor', async ({ equal, same, teardown }
   equal(called2, true)
 })
 
-test('should call forceFlush on every processor', async ({ equal, same, teardown }) => {
+test('should call forceFlush on every processor', async () => {
   let called1 = false
   let called2 = false
   const mockSpanProcessor1 = {
