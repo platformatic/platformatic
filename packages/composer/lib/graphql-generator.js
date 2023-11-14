@@ -18,15 +18,10 @@ async function composeGraphql (app, opts) {
     graphiql: opts.graphql?.graphiql
   }
   if (services.length > 0) {
-    try {
-      const graphqlSupergraph = await fetchGraphqlSubgraphs(services, opts.graphql)
-      graphqlConfig.schema = graphqlSupergraph.sdl
-      graphqlConfig.resolvers = graphqlSupergraph.resolvers
-      app.graphqlSupergraph = graphqlSupergraph
-    } catch (err) {
-      // TODO spy test
-      app.log.error({ err }, 'failed to fetch graphql services from origin')
-    }
+    const graphqlSupergraph = await fetchGraphqlSubgraphs(services, opts.graphql)
+    graphqlConfig.schema = graphqlSupergraph.sdl
+    graphqlConfig.resolvers = graphqlSupergraph.resolvers
+    app.graphqlSupergraph = graphqlSupergraph
   }
 
   await app.register(mercurius, graphqlConfig)

@@ -282,58 +282,49 @@ test('should not watch when refreshTimeout is 0', async (t) => {
   assert.equal(composer.graphqlSupergraph.sdl, supergraph1)
 })
 
-test('should watch remote services only', async (t) => {
-  const logger = createLoggerSpy()
-  const graphql1 = await createGraphqlService(t, {
-    schema: 'type Query { dice: Int }',
-    resolvers: { Query: { dice: () => Math.floor(Math.random() * 6) + 1 } }
-  })
-  const graphql1Origin = await graphql1.listen()
-  const remoteService = {
-    id: 'games',
-    origin: 'games.service.local',
-    graphql: { url: graphql1Origin }
-  }
-
-  const composer = await createComposer(t, {
-    composer: {
-      services: [
-        remoteService,
-        {
-          id: 'greetings',
-          graphql: { file: path.join(__dirname, 'fixtures', 'hello.js') }
-        }
-      ]
-    }
-  },
-  logger
-  )
-  await composer.start()
-
-  await setTimeout(REFRESH_TIMEOUT * 2)
-
-  const { services } = logger._info.find(l => l[1] === 'start watching services')[0]
-  assert.deepEqual(services, [remoteService])
-})
-
 test('should not watch if there are no fetchable services', async (t) => {
   const logger = createLoggerSpy()
 
   const composer = await createComposer(t, {
-    composer: {
-      services: [
-        {
-          id: 'greetings',
-          graphql: { file: path.join(__dirname, 'fixtures', 'hello.js') }
-        }
-      ]
-    }
-  },
-  logger
-  )
+    composer: { services: [] }
+  }, logger)
   await composer.start()
 
   await setTimeout(REFRESH_TIMEOUT * 3)
 
   assert.ok(!logger._info.find(l => l[1] === 'start watching services'))
+})
+
+test('should handle errors watching services', async (t) => {
+  const logger = createLoggerSpy()
+
+  const graphql1 = await createGraphqlService(t, {
+    schema: 'type Query { cheatingDice: Int }',
+    resolvers: { Query: { cheatingDice: () => 3 } }
+  })
+
+  const graphql1Origin = await graphql1.listen()
+
+  const composer = await createComposer(t,
+    {
+      composer: {
+        services: [
+          {
+            id: 'graphql1',
+            origin: graphql1Origin,
+            graphql: true
+          }
+        ],
+        refreshTimeout: REFRESH_TIMEOUT
+      }
+    }, logger
+  )
+
+  await composer.start()
+  await setTimeout(REFRESH_TIMEOUT)
+  await graphql1.close()
+
+  await setTimeout(REFRESH_TIMEOUT * 2)
+
+  assert.ok(logger._error.find(l => l[1] === 'failed to get services info'))
 })

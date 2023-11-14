@@ -59,7 +59,7 @@ test('should enable graphiql on composer', async t => {
           {
             id: 'graphql1',
             graphql: {
-              url: graphql1Host
+              host: graphql1Host
             }
           }
         ],
@@ -85,7 +85,7 @@ test('graphiql should be disabled on composer by default', async t => {
           {
             id: 'graphql1',
             graphql: {
-              url: graphql1Host
+              host: graphql1Host
             }
           }
         ]
@@ -97,4 +97,56 @@ test('graphiql should be disabled on composer by default', async t => {
 
   const res = await request(`${composerHost}/graphiql`)
   assert.strictEqual(res.statusCode, 404, '/graphiql response')
+})
+
+test('should throw an error on invalid config / defaultArgsAdapter', async t => {
+  assert.rejects(async () => {
+    await createComposer(t,
+      {
+        composer: {
+          graphql: {
+            defaultArgsAdapter: 'not-a-function'
+          },
+          services: [
+            {
+              id: 'graphql1',
+              graphql: true
+            }
+          ]
+        }
+      }
+    )
+  }, (err) => {
+    assert.strictEqual(err.message, 'Validation errors: "defaultArgsAdapter" shoud be a function. {"defaultArgsAdapter":"not-a-function"}')
+    return true
+  })
+})
+
+test('should throw an error on invalid config / entities', async t => {
+  assert.rejects(async () => {
+    await createComposer(t,
+      {
+        composer: {
+          services: [
+            {
+              id: 'graphql1',
+              graphql: {
+                entities: {
+                  any: {
+                    referenceListResolverName: ['theResolver'],
+                    keys: [{ field: -1, type: 1 }],
+                    argsAdapter: 'not-a-function'
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    )
+  }, (err) => {
+    assert.match(err.message, /Validation errors:/)
+    assert.match(err.message, /"argsAdapter" shoud be a function/)
+    return true
+  })
 })

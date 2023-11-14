@@ -113,15 +113,10 @@ async function detectServicesUpdate ({ app, services, fetchOpenApiSchema, fetchG
   }
 
   if (!changed && graphqlServices.length > 0) {
-    try {
-      const graphqlSupergraph = await fetchGraphqlSubgraphs(graphqlServices, app.graphqlComposerOptions)
-      if (!isSameGraphqlSchema(graphqlSupergraph, app.graphqlSupergraph)) {
-        changed = true
-        app.graphqlSupergraph = graphqlSupergraph
-      }
-    } catch (err) {
-      // TODO spy test
-      app.log.error({ err }, 'failed to fetch graphql subgraphs (watch) from services')
+    const graphqlSupergraph = await fetchGraphqlSubgraphs(graphqlServices, app.graphqlComposerOptions)
+    if (!isSameGraphqlSchema(graphqlSupergraph, app.graphqlSupergraph)) {
+      changed = true
+      app.graphqlSupergraph = graphqlSupergraph
     }
   }
 

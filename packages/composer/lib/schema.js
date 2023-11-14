@@ -32,27 +32,26 @@ const graphqlService = {
         graphqlEndpoint: { type: 'string', default: '/graphql' },
         composeEndpoint: { type: 'string', default: '/.well-known/graphql-composition' },
         entities: {
-          type: 'object'
-          // TODO
-          // patternProperties: {
-          //   '^.*$': {
-          //     type: 'object',
-          //     properties: {
-          //       referenceListResolverName: { type: 'string' },
-          //       keys: {
-          //         type: 'array',
-          //         items: {
-          //           type: 'object',
-          //           properties: {
-          //             field: { type: 'string' },
-          //             type: { type: 'string' }
-          //           }
-          //         }
-          //       },
-          //       argsAdapter: { type: 'function' }
-          //     }
-          //   }
-          // }
+          type: 'object',
+          patternProperties: {
+            '^.*$': {
+              type: 'object',
+              properties: {
+                referenceListResolverName: { type: 'string' },
+                keys: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      field: { type: 'string' },
+                      type: { type: 'string' }
+                    }
+                  }
+                },
+                argsAdapter: { typeof: 'function' }
+              }
+            }
+          }
         }
       },
       additionalProperties: false
@@ -63,11 +62,10 @@ const graphqlService = {
 const graphqlComposerOptions = {
   type: 'object',
   properties: {
-    ...graphqlBase.properties
-    // TODO
-    // defaultArgsAdapter: { type: 'function' }
-  }
-  // additionalProperties: false
+    ...graphqlBase.properties,
+    defaultArgsAdapter: { typeof: 'function' }
+  },
+  additionalProperties: false
 }
 
 const composer = {

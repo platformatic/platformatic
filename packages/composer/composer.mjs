@@ -10,7 +10,7 @@ import { join } from 'desm'
 import { start } from '@platformatic/service'
 import { printAndExitLoadConfigError } from '@platformatic/config'
 
-import { fetchOpenApiSchemasCli } from './lib/openapi-fetch-schemas.mjs'
+import { fetchOpenApiSchemas } from './lib/openapi-fetch-schemas.mjs'
 import { platformaticComposer } from './index.js'
 
 const help = helpMe({
@@ -25,7 +25,7 @@ program.register('start', (argv) => {
   start(platformaticComposer, argv).catch(printAndExitLoadConfigError)
 })
 program.register('openapi schemas fetch', (argv) => {
-  return fetchOpenApiSchemasCli(argv).catch(printAndExitLoadConfigError)
+  return fetchOpenApiSchemas(argv).catch(printAndExitLoadConfigError)
 })
 
 export async function runComposer (argv) {

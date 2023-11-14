@@ -12,10 +12,6 @@ function isSameGraphqlSchema (a, b) {
 }
 
 function serviceToSubgraphConfig (service) {
-  if (!service?.graphql) { return }
-
-  console.log(service)
-
   return {
     name: service.graphql.name || service.origin,
     entities: service.graphql.entities,
