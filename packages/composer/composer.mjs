@@ -11,7 +11,6 @@ import { start } from '@platformatic/service'
 import { printAndExitLoadConfigError } from '@platformatic/config'
 
 import { fetchOpenApiSchemasCli } from './lib/openapi-fetch-schemas.mjs'
-import { fetchGraphqlSubgraphsCli } from './lib/graphql-fetch-subgraphs.mjs'
 import { platformaticComposer } from './index.js'
 
 const help = helpMe({
@@ -27,9 +26,6 @@ program.register('start', (argv) => {
 })
 program.register('openapi schemas fetch', (argv) => {
   return fetchOpenApiSchemasCli(argv).catch(printAndExitLoadConfigError)
-})
-program.register('grapqhl subgraphs fetch', (argv) => {
-  return fetchGraphqlSubgraphsCli(argv).catch(printAndExitLoadConfigError)
 })
 
 export async function runComposer (argv) {

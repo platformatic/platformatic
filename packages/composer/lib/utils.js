@@ -17,8 +17,7 @@ function prefixWithSlash (url) {
 */
 function isFetchable (service) {
   return Boolean(
-    (service?.openapi && service.openapi.url) ||
-    (service?.graphql && !service.graphql.file)
+    (service?.openapi && service.openapi.url) || service?.graphql
   )
 }
 

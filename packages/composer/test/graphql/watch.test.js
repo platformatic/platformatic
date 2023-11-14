@@ -337,17 +337,3 @@ test('should not watch if there are no fetchable services', async (t) => {
 
   assert.ok(!logger._info.find(l => l[1] === 'start watching services'))
 })
-
-test('composer should restart if a service with openapi and graphql has been changed one of them', { skip: true }, async (t) => {
-  test('add graphql to an openapi service', { skip: true }, async (t) => {
-  })
-
-  test('add openapi to a graphql service', { skip: true }, async (t) => {
-  })
-
-  test('remove openapi to a openapi+graphql service', { skip: true }, async (t) => {
-  })
-
-  test('remove graphql to a openapi+graphql service', { skip: true }, async (t) => {
-  })
-})

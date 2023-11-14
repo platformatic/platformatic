@@ -128,10 +128,10 @@ importers:
         version: 4.2.0
       inquirer:
         specifier: ^9.2.11
-        version: 9.2.11
+        version: 9.2.12
       mercurius:
         specifier: ^13.1.0
-        version: 13.1.0(graphql@16.8.1)
+        version: 13.3.1(graphql@16.8.1)
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -350,7 +350,7 @@ importers:
         version: 8.12.0
       '@fastify/swagger-ui':
         specifier: ^2.0.0
-        version: 2.0.0
+        version: 2.0.1
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
@@ -359,7 +359,7 @@ importers:
         version: link:../generators
       '@platformatic/graphql-composer':
         specifier: git+ssh://github.com/platformatic/graphql-composer
-        version: github.com/platformatic/graphql-composer/bde7b29c43f205152b81fe87537eb22f83d23794
+        version: github.com/platformatic/graphql-composer/eb32c6e550855332bd55da22a82cf1671af130fb
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
@@ -402,6 +402,9 @@ importers:
       json-schema-traverse:
         specifier: ^1.0.0
         version: 1.0.0
+      mercurius:
+        specifier: ^13.1.0
+        version: 13.3.1(graphql@16.8.1)
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -424,6 +427,9 @@ importers:
       '@platformatic/client':
         specifier: workspace:*
         version: link:../client
+      '@platformatic/db':
+        specifier: workspace:*
+        version: link:../db
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -439,9 +445,6 @@ importers:
       json-schema-to-typescript:
         specifier: ^13.1.1
         version: 13.1.1
-      mercurius:
-        specifier: ^13.1.0
-        version: 13.1.0(graphql@16.8.1)
       openapi-schema-validator:
         specifier: ^12.1.3
         version: 12.1.3
@@ -1415,7 +1418,7 @@ importers:
         version: 8.12.0
       '@fastify/swagger-ui':
         specifier: ^2.0.0
-        version: 2.0.0
+        version: 2.0.1
       '@fastify/under-pressure':
         specifier: ^8.3.0
         version: 8.3.0
@@ -1756,7 +1759,7 @@ importers:
         version: 8.12.0
       '@fastify/swagger-ui':
         specifier: ^2.0.0
-        version: 2.0.0
+        version: 2.0.1
       '@platformatic/sql-json-schema-mapper':
         specifier: workspace:*
         version: link:../sql-json-schema-mapper
@@ -2645,8 +2648,8 @@ packages:
       glob: 8.1.0
       p-limit: 3.1.0
 
-  /@fastify/swagger-ui@2.0.0:
-    resolution: {integrity: sha512-n50C5WA478wDf3dQl1bzBTPpBITiXPLajNCRPO27WqaI4/pDe3j+Suu+rF4rwRRcDoG/ipQneME8WHixjkKvkA==}
+  /@fastify/swagger-ui@2.0.1:
+    resolution: {integrity: sha512-sQnufSdQ5kJxaTxBisWYQjkunECuRymYRZYEZEEPpmLUzzZoS22tDLVumb3c1TV4MAlD3L1LTLpxLSXcFL+OZw==}
     dependencies:
       '@fastify/static': 6.12.0
       fastify-plugin: 4.5.1
@@ -7047,6 +7050,12 @@ packages:
     engines: {node: '>= 8'}
     dev: true
 
+  /metaline@1.1.0:
+    resolution: {integrity: sha512-VBgxP9mZx8FHvCyKe6Nla32xgImEj4zAyf/BtIdkLKqfkMWtcekIeB5fL24/EZi/u7PbbJNsVqL7R2bV3cUh/Q==}
+    dependencies:
+      '@fastify/deepmerge': 1.3.0
+    dev: false
+
   /methods@1.1.2:
     resolution: {integrity: sha512-iclAHeNqNm68zFtnZ0e+1L2yUIdvzNoauKU4WBA3VvH/vPFieF7qfRlwUZU+DA9P9bPXIS90ulxoUoCH23sV2w==}
     engines: {node: '>= 0.6'}
@@ -9950,15 +9959,19 @@ packages:
     resolution: {integrity: sha512-9bnSc/HEW2uRy67wc+T8UwauLuPJVn28jb+GtJY16iiKWyvmYJRXVT4UamsAEGQfPohgr2q4Tq0sQbQlxTfi1g==}
     engines: {node: '>=12.20'}
 
-  github.com/platformatic/graphql-composer/bde7b29c43f205152b81fe87537eb22f83d23794:
-    resolution: {tarball: https://codeload.github.com/platformatic/graphql-composer/tar.gz/bde7b29c43f205152b81fe87537eb22f83d23794}
+  github.com/platformatic/graphql-composer/eb32c6e550855332bd55da22a82cf1671af130fb:
+    resolution: {tarball: https://codeload.github.com/platformatic/graphql-composer/tar.gz/eb32c6e550855332bd55da22a82cf1671af130fb}
     name: '@platformatic/graphql-composer'
-    version: 0.2.0
+    version: 0.5.1
     dependencies:
       '@mercuriusjs/subscription-client': 1.0.0(graphql@16.8.1)
+      fastify: 4.24.3
       graphql: 16.8.1
-      undici: 5.26.3
+      mercurius: 13.3.1(graphql@16.8.1)
+      metaline: 1.1.0
+      undici: 6.0.0
     transitivePeerDependencies:
       - bufferutil
+      - supports-color
       - utf-8-validate
     dev: false
