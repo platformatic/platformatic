@@ -1,24 +1,41 @@
 'use strict'
 
-// TODO move to utility, export
-// TODO check fragments, alias
-function selectionFields (info, name) {
-  let nodes = info.fieldNodes
-  let node
-  while (nodes) {
-    node = nodes.find(node => node.name.value === name)
-    if (node) {
-      return node.selectionSet.selections.map(selection => selection.name.value)
-    }
-    nodes = nodes.map(n => n.selectionSet.selections).flat()
-  }
-}
+const { Factory } = require('single-user-cache')
+const cache = new Factory()
 
 module.exports = async (app, opts) => {
+  // TODO move to utility, export
+  cache.add('songs', { cache: true },
+    async (queries, context) => {
+      const ids = new Set()
+      // TODO fixed fields + info const fields = new Set(['singerId'])
+      for (let i = 0; i < queries.length; i++) {
+        queries[i].singerId = String(queries[i].singerId)
+        ids.add(queries[i].singerId)
+      }
+
+      // TODO remove limit
+      const songs = await app.platformatic.entities.song.find({
+        where: { singerId: { in: Array.from(ids) } },
+        // fields: Array.from(fields),
+        limit: 100,
+        ctx: null
+      })
+
+      const results = new Map(queries.map(q => [String(q.singerId), []]))
+      for (let i = 0; i < songs.length; i++) {
+        results.get(String(songs[i].singerId)).push(songs[i])
+      }
+
+      return Array.from(results.values())
+    }) // TODO custom serializer
+
+  const loader = cache.create()
+
   app.graphql.extendSchema(`
     type Artist {
       id: ID
-      songs: [Song]
+      songs: [Song]!
     }
 
     extend type Song {
@@ -26,7 +43,7 @@ module.exports = async (app, opts) => {
     }
 
     extend type Query {
-      songArtists (ids: [ID!]!): [Artist]
+      songArtists (ids: [ID!]!): [Artist]!
     }
   `)
   app.graphql.defineResolvers({
@@ -36,14 +53,13 @@ module.exports = async (app, opts) => {
       }
     },
     Artist: {
-      // TODO dataloader here
       songs: async (parent, args, context, info) => {
-        const songs = await app.platformatic.entities.song.find({
-          where: { singerId: { eq: parent.id } },
-          fields: selectionFields(info, 'songs'),
-          ctx: null
-        })
-        return songs
+        const s = await loader.songs({ singerId: String(parent.id) })
+
+        console.log('\n\n\n**Artist.songs', parent.id, typeof parent.id)
+        console.log('>>>', s)
+
+        return s ?? []
       }
     },
     Query: {
