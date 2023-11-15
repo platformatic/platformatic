@@ -47,7 +47,7 @@
     "@platformatic/utils": "workspace:*",
     "close-with-grace": "^1.2.0",
     "commist": "^3.2.0",
-    "debounce": "^1.2.1",
+    "debounce": "^2.0.0",
     "desm": "^1.3.0",
     "es-main": "^1.3.0",
     "fastest-levenshtein": "^1.0.16",
