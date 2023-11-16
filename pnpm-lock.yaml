@@ -1685,6 +1685,9 @@ importers:
         specifier: ^5.25.4
         version: 5.27.2
     devDependencies:
+      '@matteo.collina/tspl':
+        specifier: ^0.1.0
+        version: 0.1.0
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -1697,9 +1700,6 @@ importers:
       standard:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
-      tap:
-        specifier: ^16.3.9
-        version: 16.3.9(typescript@5.2.2)
 
 packages:
 
@@ -2631,6 +2631,10 @@ packages:
       '@databases/sql': 3.3.0
       '@databases/sqlite-sync': 1.1.0
     dev: false
+
+  /@matteo.collina/tspl@0.1.0:
+    resolution: {integrity: sha512-2aMJfoKtuOBosiDEqwJEjjfbfm1q4A621bn8jkuZth6Z6c3AfAp4sS2Y+MnzPEAp7YhiHAvyLp488VB84p3w5A==}
+    dev: true
 
   /@mercuriusjs/federation@1.0.1:
     resolution: {integrity: sha512-aski6H8SRfjK73Bruzh5kQ20OS0s0pkbFvcOex46Qm17bYWoJ3daMrbTw4caOSkru7R8pIA/bvAjSq97xkDJkQ==}
