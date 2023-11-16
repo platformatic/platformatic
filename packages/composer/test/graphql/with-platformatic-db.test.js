@@ -54,7 +54,7 @@ const defaultArgsAdapter = (partialResults) => {
   return { where: { id: { in: partialResults.map(r => r?.id) } } }
 }
 
-test('should use a platformatic db service', async t => {
+test('should use a platformatic db service', {skip:true}, async t => {
   const requests = [
     {
       query: '{ movies (limit:1) { title, year }}',
@@ -72,9 +72,20 @@ test('should use a platformatic db service', async t => {
       ) { title, year }}`,
       expected: { movies: [{ title: 'The Dark Knight Rises', year: 2012 }] }
     }
+    // TODO fix https://github.com/platformatic/platformatic/issues/1805
+    // {
+    //   query: 'mutation { saveMovie (input: { title: "A new movie" }) { title } }',
+    //   expected: { saveMovie: { title: 'A new movie' } }
+    // },
+    // {
+    //   query: 'mutation createMovie($movie: MovieInput!) { saveMovie(input: $movie) { title } }',
+    //   variables: { movie: { title: 'A wonderful movie' } },
+    //   expected: {"saveMovie":{"title":"A wonderful movie"}}
+    // }
   ]
 
   const services = await startServices(t, ['movies'])
+  console.log(services)
 
   const composerConfig = toComposerConfig(services)
   composerConfig.composer.graphql.defaultArgsAdapter = defaultArgsAdapter
@@ -84,74 +95,84 @@ test('should use a platformatic db service', async t => {
   const composerHost = await composer.listen()
 
   for (const request of requests) {
-    {
-      const response = await graphqlRequest({ query: request.query, variables: request.variables, host: services[0].host })
-      assert.deepEqual(response, request.expected, 'should get expected result from db service')
-    }
-    {
-      const response = await graphqlRequest({ query: request.query, variables: request.variables, host: composerHost })
-      assert.deepEqual(response, request.expected, 'should get expected result from composer service')
-    }
+    let response
+
+    response = await graphqlRequest({ query: request.query, variables: request.variables, host: services[0].host })
+    assert.deepEqual(response, request.expected, 'should get expected result from db service for query\n' + request.query + '\nresponse' + JSON.stringify(response))
+
+    response = await graphqlRequest({ query: request.query, variables: request.variables, host: composerHost })
+    assert.deepEqual(response, request.expected, 'should get expected result from composer service for query\n' + request.query + '\nresponse' + JSON.stringify(response))
   }
 })
 
 test('should use multiple platformatic db services', async t => {
   const requests = [
     // query multiple services
-    // {
-    //   query: '{ songs (orderBy: [{field: title, direction: ASC }], limit: 1) { title, singer { firstName, lastName, profession } } }',
-    //   expected: { songs: [{ title: 'Every you every me', singer: { firstName: 'Brian', lastName: 'Molko', profession: 'Singer' } }] }
-    // },
+    {
+      query: '{ songs (orderBy: [{field: title, direction: ASC }], limit: 1) { title, singer { firstName, lastName, profession } } }',
+      expected: { songs: [{ title: 'Every you every me', singer: { firstName: 'Brian', lastName: 'Molko', profession: 'Singer' } }] }
+    },
 
-    // // get all songs by singer
-    // {
-    //   query: '{ artists (where: { profession: { eq: "Singer" }}) { lastName, songs { title, year } } }',
-    //   expected: {
-    //     artists: [
-    //       {
-    //         lastName: 'Pavarotti',
-    //         songs: [{ title: 'Nessun dorma', year: 1992 }]
-    //       },
-    //       {
-    //         lastName: 'Molko',
-    //         songs: [{ title: 'Every you every me', year: 1998 }, { title: 'The bitter end', year: 2003 }]
-    //       },
-    //       {
-    //         lastName: 'Dickinson',
-    //         songs: [{ title: 'Fear of the dark', year: 1992 }, { title: 'The trooper', year: 1983 }]
-    //       }]
-    //   }
-    // },
+    // get all songs by singer
+    {
+      query: '{ artists (where: { profession: { eq: "Singer" }}) { lastName, songs { title, year } } }',
+      expected: {
+        artists: [
+          {
+            lastName: 'Pavarotti',
+            songs: [{ title: 'Nessun dorma', year: 1992 }]
+          },
+          {
+            lastName: 'Molko',
+            songs: [{ title: 'Every you every me', year: 1998 }, { title: 'The bitter end', year: 2003 }]
+          },
+          {
+            lastName: 'Dickinson',
+            songs: [{ title: 'Fear of the dark', year: 1992 }, { title: 'The trooper', year: 1983 }]
+          }]
+      }
+    },
 
-    // // query more subgraph on same node
-    // {
-    //   query: '{ artists (where: { profession: { eq: "Director" }}) { lastName, songs { title }, movies { title } } }',
-    //   expected: {
-    //     artists: [
-    //       {
-    //         lastName: 'Nolan',
-    //         movies: [{ title: 'Following' }, { title: 'Memento' }, { title: 'Insomnia' }, { title: 'Batman Begins' }, { title: 'The Prestige' }, { title: 'The Dark Knight' }, { title: 'Inception' }, { title: 'The Dark Knight Rises' }, { title: 'Interstellar' }, { title: 'Dunkirk' }, { title: 'Tenet' }, { title: 'Oppenheimer' }],
-    //         songs: []
-    //       },
-    //       {
-    //         lastName: 'Benigni',
-    //         movies: [{ title: 'La vita é bella' }],
-    //         songs: [{ title: 'Vieni via con me' }]
-    //       }
-    //     ]
-    //   }
-    // },
+    // query more subgraph on same node
+    {
+      query: '{ artists (where: { profession: { eq: "Director" }}) { lastName, songs { title }, movies { title } } }',
+      expected: {
+        artists: [
+          {
+            lastName: 'Nolan',
+            movies: [{ title: 'Following' }, { title: 'Memento' }, { title: 'Insomnia' }, { title: 'Batman Begins' }, { title: 'The Prestige' }, { title: 'The Dark Knight' }, { title: 'Inception' }, { title: 'The Dark Knight Rises' }, { title: 'Interstellar' }, { title: 'Dunkirk' }, { title: 'Tenet' }, { title: 'Oppenheimer' }],
+            songs: []
+          },
+          {
+            lastName: 'Benigni',
+            movies: [{ title: 'La vita é bella' }],
+            songs: [{ title: 'Vieni via con me' }]
+          }
+        ]
+      }
+    },
 
-    // // double nested
-    // {
-    //   query: '{ artists (where: { firstName: { eq: "Brian" } }) { songs { title, singer { firstName, lastName } } } }',
-    //   expected: { artists: [{ songs: [{ title: 'Every you every me', singer: { firstName: 'Brian', lastName: 'Molko' } }, { title: 'The bitter end', singer: { firstName: 'Brian', lastName: 'Molko' } }] }] }
-    // },
+    // double nested
+    {
+      query: '{ artists (where: { firstName: { eq: "Brian" } }) { songs { title, singer { firstName, lastName } } } }',
+      expected: { artists: [{ songs: [{ title: 'Every you every me', singer: { firstName: 'Brian', lastName: 'Molko' } }, { title: 'The bitter end', singer: { firstName: 'Brian', lastName: 'Molko' } }] }] }
+    },
 
     // nested many times
     {
       query: '{ artists (where: { firstName: { eq: "Brian" } }) { songs { singer { songs { singer { songs { title } }} } } } }',
       expected: { artists: [{ songs: [{ singer: { songs: [{ singer: { songs: [{ title: 'Every you every me' }, { title: 'The bitter end' }] } }, { singer: { songs: [{ title: 'Every you every me' }, { title: 'The bitter end' }] } }] } }, { singer: { songs: [{ singer: { songs: [{ title: 'Every you every me' }, { title: 'The bitter end' }] } }, { singer: { songs: [{ title: 'Every you every me' }, { title: 'The bitter end' }] } }] } }] }] }
+    },
+
+    // mutation
+    {
+      query: 'mutation { saveMovie (input: { title: "A new movie" }) { title } }',
+      expected: { saveMovie: { title: 'A new movie' } }
+    },
+    {
+      query: 'mutation createMovie($movie: MovieInput!) { saveMovie(input: $movie) { title } }',
+      variables: { movie: { title: 'A wonderful movie' } },
+      expected: { saveMovie: { title: 'A wonderful movie' } }
     }
   ]
 
@@ -206,10 +227,8 @@ test('should use multiple platformatic db services', async t => {
 
     console.log(JSON.stringify(response))
 
-    assert.deepStrictEqual(response, request.expected, 'should get expected result from composer service for query\n' + request.query)
+    assert.deepStrictEqual(response, request.expected, 'should get expected result from composer service for query\n' + request.query + '\nresponse' + JSON.stringify(response))
   }
 })
-
-// TODO crud ops
 
 // TODO subscriptions

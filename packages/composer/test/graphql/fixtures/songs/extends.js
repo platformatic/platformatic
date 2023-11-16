@@ -54,13 +54,8 @@ module.exports = async (app, opts) => {
     },
     Artist: {
       songs: async (parent, args, context, info) => {
-        console.log('\n\n\n**Artist.songs', parent.id)
-
-        const s = await loader.songs({ singerId: String(parent.id) })
-
-        console.log('>>>', s)
-
-        return s
+        const r = await loader.songs({ singerId: String(parent.id) })
+        return r ?? []
       }
     },
     Query: {
