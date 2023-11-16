@@ -3,37 +3,18 @@
 const { Factory } = require('single-user-cache')
 const cache = new Factory()
 
-// TODO move to utility, export
-// TODO check fragments, alias
-function selectionFields (info, name) {
-  let nodes = info.fieldNodes
-  let node
-  while (nodes) {
-    node = nodes.find(node => node.name.value === name)
-    if (node) {
-      return node.selectionSet.selections.map(selection => selection.name.value)
-    }
-    nodes = nodes.map(n => n.selectionSet.selections).flat()
-  }
-}
-
 module.exports = async (app, opts) => {
   // TODO move to utility, export
   cache.add('movies', { cache: false },
     async (queries, context) => {
       const ids = new Set()
-      const fields = new Set(['directorId'])
       for (let i = 0; i < queries.length; i++) {
         ids.add(queries[i].directorId)
-        for (let j = 0; j < queries[i].fields.length; j++) {
-          fields.add(queries[i].fields[j])
-        }
       }
 
       // TODO remove limit
       const movies = await app.platformatic.entities.movie.find({
         where: { directorId: { in: Array.from(ids) } },
-        fields: Array.from(fields),
         limit: 100,
         ctx: null
       })
@@ -70,8 +51,8 @@ module.exports = async (app, opts) => {
     },
     Artist: {
       movies: async (parent, args, context, info) => {
-        const fields = selectionFields(info, 'movies')
-        return (await loader.movies({ directorId: String(parent.id), fields })) ?? []
+        const r = await loader.movies({ directorId: String(parent.id) })
+        return r ?? []
       }
     },
     Query: {
