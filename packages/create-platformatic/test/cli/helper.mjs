@@ -1,5 +1,5 @@
 import os from 'node:os'
-import { execaNode, execa } from 'execa'
+import { execa } from 'execa'
 import { join } from 'desm'
 import stripAnsi from 'strip-ansi'
 import { promisify } from 'node:util'
