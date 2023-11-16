@@ -1,12 +1,13 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { deepEqual, equal } = require('node:assert')
 const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
 const { PlatformaticContext } = require('../lib/platformatic-context')
 const { fastifyTextMapGetter } = require('../lib/fastify-text-map')
 const { setupApp } = require('./helper')
 
-test('start and ends an internal span', async ({ equal, same, teardown }) => {
+test('start and ends an internal span', async () => {
   const traceId = '5e994e8fb53b27c91dcd2fec22771d15'
   const spanId = '166f3ab30f21800b'
   const traceparent = `00-${traceId}-${spanId}-01`
@@ -21,7 +22,7 @@ test('start and ends an internal span', async ({ equal, same, teardown }) => {
     exporter: {
       type: 'memory'
     }
-  }, handler, teardown)
+  }, handler, test.after)
 
   const { startInternalSpan, endInternalSpan } = app.openTelemetry
 
@@ -36,23 +37,23 @@ test('start and ends an internal span', async ({ equal, same, teardown }) => {
     'test-attribute': 'test-value'
   }
   const span = startInternalSpan('TEST', context, attributes)
-  same(span._spanContext.traceId, traceId)
-  same(span._ended, false)
-  same(span.attributes, attributes)
+  deepEqual(span._spanContext.traceId, traceId)
+  equal(span._ended, false)
+  deepEqual(span.attributes, attributes)
   endInternalSpan(span)
-  same(span._ended, true)
+  equal(span._ended, true)
 
   const { exporters } = app.openTelemetry
   const exporter = exporters[0]
   const finishedSpans = exporter.getFinishedSpans()
   equal(finishedSpans.length, 1)
   const [finishedSpan] = finishedSpans
-  same(finishedSpan.name, 'TEST')
-  same(finishedSpan.kind, SpanKind.INTERNAL)
-  same(finishedSpan.status.code, SpanStatusCode.OK)
+  deepEqual(finishedSpan.name, 'TEST')
+  deepEqual(finishedSpan.kind, SpanKind.INTERNAL)
+  deepEqual(finishedSpan.status.code, SpanStatusCode.OK)
 })
 
-test('start and ends an internal span with no parent context and no attributes', async ({ equal, same, teardown }) => {
+test('start and ends an internal span with no parent context and no attributes', async () => {
   const handler = async (request, reply) => {
     return { foo: 'bar' }
   }
@@ -63,27 +64,27 @@ test('start and ends an internal span with no parent context and no attributes',
     exporter: {
       type: 'memory'
     }
-  }, handler, teardown)
+  }, handler, test.after)
 
   const { startInternalSpan, endInternalSpan } = app.openTelemetry
 
   const span = startInternalSpan('TEST')
-  same(span._ended, false)
-  same(span.attributes, {})
+  equal(span._ended, false)
+  deepEqual(span.attributes, {})
   endInternalSpan(span)
-  same(span._ended, true)
+  equal(span._ended, true)
 
   const { exporters } = app.openTelemetry
   const exporter = exporters[0]
   const finishedSpans = exporter.getFinishedSpans()
   equal(finishedSpans.length, 1)
   const [finishedSpan] = finishedSpans
-  same(finishedSpan.name, 'TEST')
-  same(finishedSpan.kind, SpanKind.INTERNAL)
-  same(finishedSpan.status.code, SpanStatusCode.OK)
+  deepEqual(finishedSpan.name, 'TEST')
+  deepEqual(finishedSpan.kind, SpanKind.INTERNAL)
+  deepEqual(finishedSpan.status.code, SpanStatusCode.OK)
 })
 
-test('start and ends an internal span with error', async ({ equal, same, teardown }) => {
+test('start and ends an internal span with error', async () => {
   const traceId = '5e994e8fb53b27c91dcd2fec22771d15'
   const spanId = '166f3ab30f21800b'
   const traceparent = `00-${traceId}-${spanId}-01`
@@ -98,7 +99,7 @@ test('start and ends an internal span with error', async ({ equal, same, teardow
     exporter: {
       type: 'memory'
     }
-  }, handler, teardown)
+  }, handler, test.after)
 
   const { startInternalSpan, endInternalSpan } = app.openTelemetry
 
@@ -113,20 +114,20 @@ test('start and ends an internal span with error', async ({ equal, same, teardow
     'test-attribute': 'test-value'
   }
   const span = startInternalSpan('TEST', context, attributes)
-  same(span._spanContext.traceId, traceId)
-  same(span._ended, false)
-  same(span.attributes, attributes)
+  deepEqual(span._spanContext.traceId, traceId)
+  deepEqual(span._ended, false)
+  deepEqual(span.attributes, attributes)
   const error = new Error('test error')
   endInternalSpan(span, error)
-  same(span._ended, true)
+  deepEqual(span._ended, true)
 
   const { exporters } = app.openTelemetry
   const exporter = exporters[0]
   const finishedSpans = exporter.getFinishedSpans()
-  equal(finishedSpans.length, 1)
+  deepEqual(finishedSpans.length, 1)
   const [finishedSpan] = finishedSpans
-  same(finishedSpan.name, 'TEST')
-  same(finishedSpan.kind, SpanKind.INTERNAL)
-  same(finishedSpan.status.code, SpanStatusCode.ERROR)
-  same(finishedSpan.status.message, 'test error')
+  deepEqual(finishedSpan.name, 'TEST')
+  deepEqual(finishedSpan.kind, SpanKind.INTERNAL)
+  deepEqual(finishedSpan.status.code, SpanStatusCode.ERROR)
+  deepEqual(finishedSpan.status.message, 'test error')
 })
