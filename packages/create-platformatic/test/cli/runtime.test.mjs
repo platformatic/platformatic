@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import { equal } from 'node:assert'
 import { executeCreatePlatformatic, keys, walk, getServices } from './helper.mjs'
-import { timeout } from '../timeout.mjs'
+import { timeout } from './timeout.mjs'
 import { isFileAccessible } from '../../src/utils.mjs'
 import { join } from 'node:path'
 import { tmpdir } from 'os'
