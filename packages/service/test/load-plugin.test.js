@@ -5,6 +5,8 @@ require('./helper')
 
 const assert = require('node:assert')
 const { test } = require('node:test')
+const { createGunzip } = require('node:zlib')
+const { pipeline } = require('node:stream/promises')
 const { request } = require('undici')
 const { buildServer, platformaticService } = require('..')
 
@@ -68,12 +70,6 @@ test('catch errors from the other side', async (t) => {
 })
 
 test('accept modules', async (t) => {
-  async function myApp (app, opts) {
-    await platformaticService(app, opts, [async function (app) {
-      app.get('/', () => 'hello world')
-    }])
-  }
-
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
@@ -81,18 +77,31 @@ test('accept modules', async (t) => {
     },
     plugins: {
       paths: [{
-        module: '@fastify/compress'
+        module: '@fastify/compress',
+        options: {
+          threshold: 1 // 1 byte
+        }
       }]
     }
-  }, myApp)
+  })
 
   t.after(async () => {
     await app.close()
   })
   await app.start()
 
-  const res = await (request(app.url))
-  const body = await res.body.text()
+  const res = await (request(app.url, {
+    headers: {
+      'accept-encoding': 'gzip'
+    }
+  }))
   assert.strictEqual(res.statusCode, 200)
-  assert.strictEqual(body, 'hello world')
+  let body = ''
+  await pipeline(res.body, createGunzip(), async function * (stream) {
+    stream.setEncoding('utf8')
+    for await (const chunk of stream) {
+      body += chunk
+    }
+  })
+  assert.deepStrictEqual(JSON.parse(body), 'Welcome to Platformatic! Please visit https://docs.platformatic.dev')
 })
