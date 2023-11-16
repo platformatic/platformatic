@@ -5,7 +5,7 @@ const cache = new Factory()
 
 module.exports = async (app, opts) => {
   // TODO move to utility, export
-  cache.add('songs', { cache: true },
+  cache.add('songs', { cache: false },
     async (queries, context) => {
       const ids = new Set()
       // TODO fixed fields + info const fields = new Set(['singerId'])
@@ -54,12 +54,13 @@ module.exports = async (app, opts) => {
     },
     Artist: {
       songs: async (parent, args, context, info) => {
+        console.log('\n\n\n**Artist.songs', parent.id)
+
         const s = await loader.songs({ singerId: String(parent.id) })
 
-        console.log('\n\n\n**Artist.songs', parent.id, typeof parent.id)
         console.log('>>>', s)
 
-        return s ?? []
+        return s
       }
     },
     Query: {
