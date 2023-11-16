@@ -10,7 +10,7 @@ import { execa } from 'execa'
 import ora from 'ora'
 import createComposer from './create-composer.mjs'
 import askDir from '../ask-dir.mjs'
-import { getRunPackageManagerInstall, getPort, getUseTypescript, getInitGitRepository } from '../cli-options.mjs'
+import { getPort, getUseTypescript, getInitGitRepository } from '../cli-options.mjs'
 import { createReadme } from '../create-readme.mjs'
 import { join } from 'path'
 
@@ -32,12 +32,14 @@ const createPlatformaticComposer = async (_args, opts) => {
 
   const args = parseArgs(_args, {
     default: {
-      hostname: '127.0.0.1'
+      hostname: '127.0.0.1',
+      install: true
     },
     alias: {
       h: 'hostname',
       p: 'port'
-    }
+    },
+    boolean: ['install']
   })
 
   const version = await getVersion()
@@ -63,9 +65,6 @@ const createPlatformaticComposer = async (_args, opts) => {
     }
   }
 
-  if (!opts.skipPackageJson) {
-    toAsk.push(getRunPackageManagerInstall(pkgManager))
-  }
   if (!opts.skipGitHubActions) {
     toAsk.push({
       type: 'list',
@@ -87,7 +86,6 @@ const createPlatformaticComposer = async (_args, opts) => {
     toAsk.push(getInitGitRepository())
   }
   const {
-    runPackageManagerInstall,
     servicesToCompose,
     port,
     staticWorkspaceGitHubAction,
@@ -130,7 +128,7 @@ const createPlatformaticComposer = async (_args, opts) => {
   }
   await createReadme(logger, projectDir, 'composer')
 
-  if (runPackageManagerInstall) {
+  if (args.install && !opts.skipPackageJson) {
     const spinner = ora('Installing dependencies...').start()
     await execa(pkgManager, ['install'], { cwd: projectDir })
     spinner.succeed()

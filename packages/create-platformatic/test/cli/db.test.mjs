@@ -39,10 +39,6 @@ test('Creates a Platformatic DB service with no migrations and no plugin', async
     match: 'What port do you want to use?',
     do: [keys.ENTER]
   }, {
-    // create-platformatic uses pnpm in CI, so we need to match both options
-    match: ['Do you want to run npm install?', 'Do you want to run pnpm install?'],
-    do: [keys.DOWN, keys.ENTER]
-  }, {
     match: 'Do you want to create default migrations',
     do: [keys.DOWN, keys.ENTER]
   }, {
@@ -95,10 +91,6 @@ test('Creates a Platformatic DB service with migrations and plugin', async ({ eq
   }, {
     match: 'What port do you want to use?',
     do: [keys.ENTER]
-  }, {
-    // create-platformatic uses pnpm in CI, so we need to match both options
-    match: ['Do you want to run npm install?', 'Do you want to run pnpm install?'],
-    do: [keys.DOWN, keys.ENTER]
   }, {
     match: 'Do you want to create default migrations',
     do: [keys.ENTER]
@@ -161,10 +153,6 @@ test('Creates a Platformatic DB service with plugin using typescript, creating a
   }, {
     match: 'What port do you want to use?',
     do: [keys.ENTER]
-  }, {
-    // create-platformatic uses pnpm in CI, so we need to match both options
-    match: ['Do you want to run npm install?', 'Do you want to run pnpm install?'],
-    do: [keys.DOWN, keys.ENTER]
   }, {
     match: 'Do you want to create default migrations',
     do: [keys.ENTER]

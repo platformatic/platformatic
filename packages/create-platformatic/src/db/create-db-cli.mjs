@@ -11,7 +11,7 @@ import { execa } from 'execa'
 import ora from 'ora'
 import { getConnectionString, createDB } from './create-db.mjs'
 import askDir from '../ask-dir.mjs'
-import { getRunPackageManagerInstall, getUseTypescript, getPort, getInitGitRepository } from '../cli-options.mjs'
+import { getUseTypescript, getPort, getInitGitRepository } from '../cli-options.mjs'
 import { createReadme } from '../create-readme.mjs'
 import { join } from 'node:path'
 
@@ -34,7 +34,8 @@ export function parseDBArgs (_args) {
     default: {
       hostname: '127.0.0.1',
       database: 'sqlite',
-      migrations: 'migrations'
+      migrations: 'migrations',
+      install: true
     },
     alias: {
       h: 'hostname',
@@ -45,7 +46,7 @@ export function parseDBArgs (_args) {
       t: 'types',
       ts: 'typescript'
     },
-    boolean: ['plugin', 'types', 'typescript']
+    boolean: ['plugin', 'types', 'typescript', 'install']
   })
 }
 
@@ -67,11 +68,6 @@ const createPlatformaticDB = async (_args, opts) => {
   const portQuestion = getPort(args.port)
   portQuestion.when = !isRuntimeContext
   toAsk.push(portQuestion)
-
-  // Ask to install deps
-  const installDepsQuestion = getRunPackageManagerInstall(pkgManager)
-  installDepsQuestion.when = !opts.skipPackageJson
-  toAsk.push(installDepsQuestion)
 
   const { database } = await inquirer.prompt({
     type: 'list',
@@ -208,7 +204,7 @@ const createPlatformaticDB = async (_args, opts) => {
   await createReadme(logger, projectDir, 'db')
 
   let hasPlatformaticInstalled = false
-  if (wizardOptions.runPackageManagerInstall) {
+  if (args.install && !opts.skipPackageJson) {
     const spinner = ora('Installing dependencies...').start()
     await execa(pkgManager, ['install'], { cwd: projectDir })
     spinner.succeed()

@@ -11,7 +11,7 @@ import { execa } from 'execa'
 import ora from 'ora'
 import createService from './create-service.mjs'
 import askDir from '../ask-dir.mjs'
-import { getRunPackageManagerInstall, getUseTypescript, getPort, getInitGitRepository } from '../cli-options.mjs'
+import { getUseTypescript, getPort, getInitGitRepository } from '../cli-options.mjs'
 import { createReadme } from '../create-readme.mjs'
 
 const createPlatformaticService = async (_args, opts = {}) => {
@@ -22,12 +22,14 @@ const createPlatformaticService = async (_args, opts = {}) => {
 
   const args = parseArgs(_args, {
     default: {
-      hostname: '127.0.0.1'
+      hostname: '127.0.0.1',
+      install: true
     },
     alias: {
       h: 'hostname',
       p: 'port'
-    }
+    },
+    boolean: ['install']
   })
 
   const version = await getVersion()
@@ -41,10 +43,6 @@ const createPlatformaticService = async (_args, opts = {}) => {
 
   if (!isRuntimeContext) {
     toAsk.push(getPort(args.port))
-  }
-
-  if (!opts.skipPackageJson) {
-    toAsk.unshift(getRunPackageManagerInstall(pkgManager))
   }
 
   if (!opts.skipGitHubActions) {
@@ -67,7 +65,6 @@ const createPlatformaticService = async (_args, opts = {}) => {
     toAsk.push(getInitGitRepository())
   }
   const {
-    runPackageManagerInstall,
     useTypescript,
     port,
     staticWorkspaceGitHubAction,
@@ -106,7 +103,7 @@ const createPlatformaticService = async (_args, opts = {}) => {
   }
   await createReadme(logger, projectDir, 'service')
 
-  if (runPackageManagerInstall) {
+  if (args.install && !opts.skipPackageJson) {
     const spinner = ora('Installing dependencies...').start()
     await execa(pkgManager, ['install'], { cwd: projectDir })
     spinner.succeed()
