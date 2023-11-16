@@ -19,7 +19,7 @@ function selectionFields (info, name) {
 
 module.exports = async (app, opts) => {
   // TODO move to utility, export
-  cache.add('movies', { cache: true },
+  cache.add('movies', { cache: false },
     async (queries, context) => {
       const ids = new Set()
       const fields = new Set(['directorId'])
