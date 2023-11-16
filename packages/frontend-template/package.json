@@ -46,7 +46,7 @@
     "standard": "^17.1.0",
     "tap": "^16.3.9",
     "typescript": "^5.2.2",
-    "vite": "^4.4.9"
+    "vite": "^5.0.0"
   },
   "standard": {
     "globals": [
