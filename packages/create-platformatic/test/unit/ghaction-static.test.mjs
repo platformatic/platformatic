@@ -1,11 +1,12 @@
 'use strict'
 
-import { test, beforeEach, afterEach } from 'tap'
+import { test } from 'node:test'
+import { equal, match, ok } from 'node:assert'
 import { mkdtemp, readFile, mkdir, rm } from 'fs/promises'
 import { join } from 'path'
 import { tmpdir } from 'os'
-import { isFileAccessible } from '../src/utils.mjs'
-import { createStaticWorkspaceGHAction } from '../src/ghaction.mjs'
+import { isFileAccessible } from '../../src/utils.mjs'
+import { createStaticWorkspaceGHAction } from '../../src/ghaction.mjs'
 import { parse } from 'yaml'
 
 let log = []
@@ -15,12 +16,12 @@ const fakeLogger = {
   warn: msg => { log.push(msg) }
 }
 
-beforeEach(async () => {
+test.beforeEach(async () => {
   log = []
   tmpDir = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
 })
 
-afterEach(async () => {
+test.afterEach(async () => {
   await rm(tmpDir, { recursive: true, force: true })
 })
 
@@ -29,7 +30,7 @@ const env = {
   PLT_SERVER_LOGGER_LEVEL: 'info'
 }
 
-test('creates gh action', async ({ equal, match }) => {
+test('creates gh action', async () => {
   await createStaticWorkspaceGHAction(fakeLogger, env, 'db', tmpDir, false)
   equal(log[0], 'Github action successfully created, please add the following secrets as repository secrets: ')
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-static-workspace-deploy.yml'))
@@ -47,13 +48,13 @@ test('creates gh action', async ({ equal, match }) => {
 
   equal(permissions.contents, 'read')
   // check env indentation is correct
-  match(ghFile, `
+  ok(ghFile.includes(`
     env:
       DATABASE_URL: \${{ secrets.DATABASE_URL }}
-      PLT_SERVER_LOGGER_LEVEL: info`)
+      PLT_SERVER_LOGGER_LEVEL: info`))
 })
 
-test('env block is not created with empty env', async ({ equal }) => {
+test('env block is not created with empty env', async () => {
   await createStaticWorkspaceGHAction(fakeLogger, {}, 'db', tmpDir, false)
   const ghFile = await readFile(join(tmpDir, '.github/workflows/platformatic-static-workspace-deploy.yml'), 'utf8')
   const ghAction = parse(ghFile)
@@ -61,7 +62,7 @@ test('env block is not created with empty env', async ({ equal }) => {
   equal(env, undefined)
 })
 
-test('creates gh action with TS build step', async ({ equal, match }) => {
+test('creates gh action with TS build step', async () => {
   await createStaticWorkspaceGHAction(fakeLogger, env, 'db', tmpDir, true)
   equal(log[0], 'Github action successfully created, please add the following secrets as repository secrets: ')
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-static-workspace-deploy.yml'))
@@ -80,7 +81,7 @@ test('creates gh action with TS build step', async ({ equal, match }) => {
   equal(permissions.contents, 'read')
 })
 
-test('creates gh action with a warn if a .git folder is not present', async ({ end, equal }) => {
+test('creates gh action with a warn if a .git folder is not present', async () => {
   await createStaticWorkspaceGHAction(fakeLogger, env, 'db', tmpDir)
   equal(log[0], 'Github action successfully created, please add the following secrets as repository secrets: ')
   const accessible = await isFileAccessible(join(tmpDir, '.github/workflows/platformatic-static-workspace-deploy.yml'))
@@ -92,7 +93,7 @@ test('creates gh action with a warn if a .git folder is not present', async ({ e
   equal(log[2], 'No git repository found. The Github action won\'t be triggered.')
 })
 
-test('creates gh action without a warn if a .git folder is present', async ({ end, equal }) => {
+test('creates gh action without a warn if a .git folder is present', async () => {
   await mkdir(join(tmpDir, '.git'), { recursive: true })
   await createStaticWorkspaceGHAction(fakeLogger, env, 'db', tmpDir)
   equal(log[0], 'Github action successfully created, please add the following secrets as repository secrets: ')

@@ -1,5 +1,6 @@
-import createComposer from '../../src/composer/create-composer.mjs'
-import { test, beforeEach, afterEach } from 'tap'
+import createComposer from '../../../src/composer/create-composer.mjs'
+import { test } from 'node:test'
+import { deepEqual, equal } from 'node:assert'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import dotenv from 'dotenv'
@@ -8,11 +9,11 @@ import { mkdtemp, readFile, rm, stat } from 'fs/promises'
 const base = tmpdir()
 let tmpDir
 let log = []
-beforeEach(async () => {
+test.beforeEach(async () => {
   tmpDir = await mkdtemp(join(base, 'test-create-platformatic-'))
 })
 
-afterEach(async () => {
+test.afterEach(async () => {
   log = []
   await rm(tmpDir, { recursive: true, force: true })
   process.env = {}
@@ -23,7 +24,7 @@ const fakeLogger = {
   info: msg => log.push(msg)
 }
 
-test('creates composer', async ({ equal, same, ok }) => {
+test('creates composer', async () => {
   const params = {
     hostname: 'myhost',
     port: 6666,
@@ -51,7 +52,7 @@ test('creates composer', async ({ equal, same, ok }) => {
   equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
   equal(process.env.PORT, '6666')
 
-  same(composer, {
+  deepEqual(composer, {
     services: [{
       id: 'example',
       origin: '{PLT_EXAMPLE_ORIGIN}',
@@ -63,7 +64,7 @@ test('creates composer', async ({ equal, same, ok }) => {
   })
 
   // plugins and routes config is there
-  same(composerConfig.plugins, {
+  deepEqual(composerConfig.plugins, {
     paths: [
       { path: './plugins', encapsulate: false },
       './routes'
@@ -77,7 +78,7 @@ test('creates composer', async ({ equal, same, ok }) => {
   }
 })
 
-test('creates composer in a runtime context', async ({ equal, same, ok }) => {
+test('creates composer in a runtime context', async () => {
   const params = {
     isRuntimeContext: true,
     servicesToCompose: ['service1', 'service2'],
@@ -106,7 +107,7 @@ test('creates composer in a runtime context', async ({ equal, same, ok }) => {
   equal(process.env.PLT_SERVER_HOSTNAME, undefined)
   equal(process.env.PORT, undefined)
 
-  same(composer, {
+  deepEqual(composer, {
     services: [
       {
         id: 'service1',

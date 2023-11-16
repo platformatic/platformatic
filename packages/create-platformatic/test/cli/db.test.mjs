@@ -1,16 +1,18 @@
-import { test, beforeEach, afterEach } from 'tap'
+import { test } from 'node:test'
+import { equal } from 'node:assert'
 import { executeCreatePlatformatic, keys, walk } from './helper.mjs'
+import { timeout } from '../timeout.mjs'
 import { isFileAccessible } from '../../src/utils.mjs'
 import { join } from 'node:path'
 import { tmpdir } from 'os'
 import { mkdtemp, rm } from 'fs/promises'
 
 let tmpDir
-beforeEach(async () => {
+test.beforeEach(async () => {
   tmpDir = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
 })
 
-afterEach(async () => {
+test.afterEach(async () => {
   try {
     await rm(tmpDir, { recursive: true, force: true })
   } catch (e) {
@@ -18,7 +20,7 @@ afterEach(async () => {
   }
 })
 
-test('Creates a Platformatic DB service with no migrations and no plugin', async ({ equal, same, match, teardown }) => {
+test('Creates a Platformatic DB service with no migrations and no plugin', { timeout }, async () => {
   // The actions must match IN ORDER
   const actions = [{
     match: 'Which kind of project do you want to create?',
@@ -71,7 +73,7 @@ test('Creates a Platformatic DB service with no migrations and no plugin', async
   equal(await isFileAccessible(join(baseProjectDir, '.git', 'config')), true)
 })
 
-test('Creates a Platformatic DB service with migrations and plugin', async ({ equal, same, match, teardown }) => {
+test('Creates a Platformatic DB service with migrations and plugin', { timeout }, async () => {
   // The actions must match IN ORDER
   const actions = [{
     match: 'Which kind of project do you want to create?',
@@ -133,7 +135,7 @@ test('Creates a Platformatic DB service with migrations and plugin', async ({ eq
   equal(await isFileAccessible(join(baseProjectDir, '.git', 'config')), false)
 })
 
-test('Creates a Platformatic DB service with plugin using typescript, creating all the github actions', async ({ equal, same, match, teardown }) => {
+test('Creates a Platformatic DB service with plugin using typescript, creating all the github actions', { timeout }, async () => {
   // The actions must match IN ORDER
   const actions = [{
     match: 'Which kind of project do you want to create?',

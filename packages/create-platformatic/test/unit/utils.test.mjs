@@ -1,16 +1,17 @@
 'use strict'
 
-import { test } from 'tap'
-import { randomBetween, sleep, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions, findRuntimeConfigFile, findComposerConfigFile, convertServiceNameToPrefix, addPrefixToEnv, safeMkdir } from '../src/utils.mjs'
+import { test } from 'node:test'
+import { equal, deepEqual, notEqual, doesNotThrow } from 'node:assert'
+import { randomBetween, sleep, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions, findRuntimeConfigFile, findComposerConfigFile, convertServiceNameToPrefix, addPrefixToEnv, safeMkdir } from '../../src/utils.mjs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import esmock from 'esmock'
 import semver from 'semver'
 import { mkdir, mkdtemp, rm, writeFile } from 'fs/promises'
 
-test('getUsername from git', async ({ end, equal }) => {
+test('getUsername from git', async () => {
   const name = 'lukeskywalker'
-  const { getUsername } = await esmock.strict('../src/utils.mjs', {
+  const { getUsername } = await esmock.strict('../../src/utils.mjs', {
     execa: {
       execa: (command) => {
         if (command === 'git') {
@@ -24,9 +25,9 @@ test('getUsername from git', async ({ end, equal }) => {
   equal(username, name)
 })
 
-test('getUsername from whoami', async ({ end, equal }) => {
+test('getUsername from whoami', async () => {
   const name = 'hansolo'
-  const { getUsername } = await esmock.strict('../src/utils.mjs', {
+  const { getUsername } = await esmock.strict('../../src/utils.mjs', {
     execa: {
       execa: (command) => {
         if (command === 'whoami') {
@@ -40,10 +41,10 @@ test('getUsername from whoami', async ({ end, equal }) => {
   equal(username, name)
 })
 
-test('if getUsername from git failed, it tries whoim', async ({ end, equal }) => {
+test('if getUsername from git failed, it tries whoim', async () => {
   const name = 'lukeskywalker'
 
-  const { getUsername } = await esmock.strict('../src/utils.mjs', {
+  const { getUsername } = await esmock.strict('../../src/utils.mjs', {
     execa: {
       execa: (command) => {
         if (command === 'git') {
@@ -61,8 +62,8 @@ test('if getUsername from git failed, it tries whoim', async ({ end, equal }) =>
   equal(username, name)
 })
 
-test('if both git usern.ame and whoami fail, no username is set', async ({ end, equal }) => {
-  const { getUsername } = await esmock.strict('../src/utils.mjs', {
+test('if both git usern.ame and whoami fail, no username is set', async () => {
+  const { getUsername } = await esmock.strict('../../src/utils.mjs', {
     execa: {
       execa: (command) => {
         if (command === 'git') {
@@ -79,8 +80,8 @@ test('if both git usern.ame and whoami fail, no username is set', async ({ end, 
   equal(username, null)
 })
 
-test('getUsername - no username found', async ({ end, equal }) => {
-  const { getUsername } = await esmock.strict('../src/utils.mjs', {
+test('getUsername - no username found', async () => {
+  const { getUsername } = await esmock.strict('../../src/utils.mjs', {
     execa: {
       execa: (command) => {
         return ''
@@ -91,21 +92,21 @@ test('getUsername - no username found', async ({ end, equal }) => {
   equal(username, null)
 })
 
-test('randomBetween', async ({ end, equal }) => {
+test('randomBetween', async () => {
   const min = 1
   const max = 10
   const random = randomBetween(min, max)
   equal(random >= min && random <= max, true)
 })
 
-test('sleep', async ({ equal }) => {
+test('sleep', async () => {
   const start = Date.now()
   await sleep(100)
   const end = Date.now()
   equal(end - start >= 100, true)
 })
 
-test('getDependencyVersion', async ({ equal }) => {
+test('getDependencyVersion', async () => {
   const fastifyVersion = await getDependencyVersion('fastify')
   // We cannot assert the exact version because it changes
   equal(semver.valid(fastifyVersion), fastifyVersion)
@@ -130,7 +131,7 @@ test('getDependencyVersion', async ({ equal }) => {
   equal(unkownVersion, undefined)
 })
 
-test('findDBConfigFile', async ({ end, equal, mock }) => {
+test('findDBConfigFile', async () => {
   const tmpDir1 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
   const tmpDir2 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
   const config = join(tmpDir1, 'platformatic.db.yml')
@@ -141,7 +142,7 @@ test('findDBConfigFile', async ({ end, equal, mock }) => {
   await rm(tmpDir2, { recursive: true, force: true })
 })
 
-test('findServiceConfigFile', async ({ end, equal, mock }) => {
+test('findServiceConfigFile', async () => {
   const tmpDir1 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
   const tmpDir2 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
   const config = join(tmpDir1, 'platformatic.service.toml')
@@ -152,7 +153,7 @@ test('findServiceConfigFile', async ({ end, equal, mock }) => {
   await rm(tmpDir2, { recursive: true, force: true })
 })
 
-test('findComposerConfigFile', async ({ end, equal, mock }) => {
+test('findComposerConfigFile', async () => {
   const tmpDir1 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
   const tmpDir2 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
   const config = join(tmpDir1, 'platformatic.composer.yml')
@@ -163,7 +164,7 @@ test('findComposerConfigFile', async ({ end, equal, mock }) => {
   await rm(tmpDir2, { recursive: true, force: true })
 })
 
-test('findRuntimeConfigFile', async ({ end, equal, mock }) => {
+test('findRuntimeConfigFile', async () => {
   const tmpDir1 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
   const tmpDir2 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
   const config = join(tmpDir1, 'platformatic.runtime.yml')
@@ -174,7 +175,7 @@ test('findRuntimeConfigFile', async ({ end, equal, mock }) => {
   await rm(tmpDir2, { recursive: true, force: true })
 })
 
-test('isFileAccessible', async ({ end, equal, mock }) => {
+test('isFileAccessible', async () => {
   const tmpDir1 = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
   const config = join(tmpDir1, 'platformatic.db.yml')
   await writeFile(config, 'TEST')
@@ -184,12 +185,12 @@ test('isFileAccessible', async ({ end, equal, mock }) => {
   await rm(tmpDir1, { recursive: true, force: true })
 })
 
-test('minimumSupportedNodeVersions', async ({ equal, not }) => {
+test('minimumSupportedNodeVersions', async () => {
   equal(Array.isArray(minimumSupportedNodeVersions), true)
-  not(minimumSupportedNodeVersions.length, 0)
+  notEqual(minimumSupportedNodeVersions.length, 0)
 })
 
-test('isCurrentVersionSupported', async ({ equal }) => {
+test('isCurrentVersionSupported', async () => {
   const { major, minor, patch } = semver.minVersion(minimumSupportedNodeVersions[0])
   {
     // major - 1 not supported
@@ -249,7 +250,7 @@ test('isCurrentVersionSupported', async ({ equal }) => {
   }
 })
 
-test('should convert service name to env prefix', async (t) => {
+test('should convert service name to env prefix', async () => {
   const expectations = {
     'my-service': 'MY_SERVICE',
     a: 'A',
@@ -259,30 +260,30 @@ test('should convert service name to env prefix', async (t) => {
 
   Object.entries(expectations).forEach((exp) => {
     const converted = convertServiceNameToPrefix(exp[0])
-    t.equal(exp[1], converted)
+    equal(exp[1], converted)
   })
 })
 
-test('should add prefix to a key/value object', async (t) => {
+test('should add prefix to a key/value object', async () => {
   const prefix = 'MY_PREFIX'
   const env = {
     PLT_HOSTNAME: 'myhost',
     PORT: '3042'
   }
-  t.same(addPrefixToEnv(env, prefix), {
+  deepEqual(addPrefixToEnv(env, prefix), {
     MY_PREFIX_PLT_HOSTNAME: 'myhost',
     MY_PREFIX_PORT: '3042'
   })
 })
 
-test('safeMkdir should not throw if dir already exists', async (t) => {
+test('safeMkdir should not throw if dir already exists', async () => {
   const tempDirectory = join(tmpdir(), 'safeMkdirTest')
-  t.teardown(async () => {
+  test.after(async () => {
     await rm(tempDirectory, { recursive: true })
   })
   await mkdir(tempDirectory)
 
-  t.doesNotThrow(async () => {
+  doesNotThrow(async () => {
     await safeMkdir(tempDirectory)
   })
 })
