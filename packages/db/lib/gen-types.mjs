@@ -147,7 +147,10 @@ async function writeFileIfChanged (filename, content) {
 async function execute ({ logger, config }) {
   const wrap = await setupDB(logger, config.db)
   const { db, entities } = wrap
-
+  if (Object.keys(entities).length === 0) {
+    // do not generate types if no schema is found
+    return 0
+  }
   const typesFolderPath = getTypesFolderPath(config)
   const isTypeFolderExists = await isFileAccessible(typesFolderPath)
   if (isTypeFolderExists) {
@@ -195,7 +198,8 @@ async function generateTypes (_args) {
 
   const count = await execute({ logger, config })
   if (count === 0) {
-    logger.warn('No table found. Please run `platformatic db migrations apply` to generate types.')
+    logger.warn('No entities found in your schema. Types were NOT generated.')
+    logger.warn('Please run `platformatic db migrations apply` to generate types.')
   }
   await checkForDependencies(logger, args, createRequire(import.meta.url), config, ['@platformatic/db'])
 }
