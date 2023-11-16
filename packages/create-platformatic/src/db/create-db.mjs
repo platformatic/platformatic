@@ -376,7 +376,6 @@ export async function createDB (params, logger, currentDir, version) {
   const envSample = generateEnv(isRuntimeContext, hostname, port, getConnectionString(database), typescript, envPrefix)
   await appendFile(join(currentDir, '.env'), env)
   await writeFile(join(currentDir, '.env.sample'), envSample)
-  logger.info('Environment file .env found, appending new environment variables to existing .env file.')
 
   const migrationsFolderName = migrations
   if (createMigrations) {
