@@ -132,7 +132,6 @@ test('should show warning if there is no entities', async (t) => {
     assert.ok(stdout.includes('WARN: No entities found in your schema. Types were NOT generated.'))
     assert.ok(stdout.includes('WARN: Please run `platformatic db migrations apply` to generate types.'))
   } catch (err) {
-    console.log(err)
     assert.fail('Failed to generate types')
   }
 })
