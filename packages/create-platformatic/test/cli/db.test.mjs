@@ -204,10 +204,11 @@ test('Creates a Platformatic DB service with plugin using typescript, creating a
   equal(await isFileAccessible(join(baseProjectDir, 'migrations', '001.undo.sql')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'plugins', 'example.ts')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'routes', 'root.ts')), true)
-  equal(await isFileAccessible(join(baseProjectDir, 'global.d.ts')), true)
+
   equal(await isFileAccessible(join(baseProjectDir, 'tsconfig.json')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.github', 'workflows', 'platformatic-dynamic-workspace-deploy.yml')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.github', 'workflows', 'platformatic-static-workspace-deploy.yml')), true)
   // types are not generated if migrations are not applied
   equal(!await isFileAccessible(join(baseProjectDir, 'types', 'index.d.ts')), true)
+  equal(!await isFileAccessible(join(baseProjectDir, 'global.d.ts')), true)
 })
