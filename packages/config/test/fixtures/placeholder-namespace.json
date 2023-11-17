@@ -1,0 +1,18 @@
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "logger": {
+      "level": "info"
+    },
+    "port": "{MY_NS_PORT}"
+  },
+  "core": {
+    "connectionString": "sqlite://./db.sqlite"
+  },
+  "migrations": {
+    "dir": "./migrations"
+  },
+  "plugin": {
+    "path": "./plugin-sum.js"
+  }
+}

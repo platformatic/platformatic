@@ -16,7 +16,12 @@ class ConfigManager extends EventEmitter {
   constructor (opts) {
     super()
     this.pupa = null
+
     this.envWhitelist = opts.envWhitelist || []
+    if (typeof this.envWhitelist === 'string') {
+      this.envWhitelist = opts.envWhitelist.split(',')
+    }
+
     if (!opts.source) {
       throw new errors.SourceMissingError()
     }
@@ -60,7 +65,7 @@ class ConfigManager extends EventEmitter {
     }
     const purged = {}
     for (const key in env) {
-      if (key.match(/^PLT_/) || this.envWhitelist.includes(key)) {
+      if (this.#isEnvVariable(key)) {
         purged[key] = env[key]
       }
     }
@@ -122,6 +127,19 @@ class ConfigManager extends EventEmitter {
     return this.pupa(configString, this.env, { transform: escapeJSONstring })
   }
 
+  /**
+   * Checks if a key starts with `PLT_` or is in the whitelist.
+   * With respect for wildcard ala `MY_NS_*`
+   * @param {string} key
+   */
+  #isEnvVariable (key) {
+    const isInWhitelist = this.envWhitelist.some((whitelisted) =>
+      (whitelisted.endsWith('*') && key.startsWith(whitelisted.slice(0, -1))) || whitelisted === key
+    )
+
+    return key.startsWith('PLT_') || isInWhitelist
+  }
+
   _transformConfig () {}
 
   async parse () {
@@ -162,7 +180,7 @@ class ConfigManager extends EventEmitter {
       return true
     } catch (err) {
       if (err.name === 'MissingValueError') {
-        if (!err.key.match(/^PLT_/) && !this.envWhitelist.includes(err.key)) {
+        if (!this.#isEnvVariable(err.key)) {
           throw new errors.InvalidPlaceholderError(err.key, err.key)
         } else {
           throw new errors.EnvVarMissingError(err.key)
