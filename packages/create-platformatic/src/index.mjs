@@ -97,6 +97,7 @@ const createPlatformatic = async (argv) => {
     }
 
     await say('\nAll done! Please open the project directory and check the README.')
+    await say('\nTo start your application run \'npm start\'')
   }
 }
 
