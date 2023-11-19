@@ -4,29 +4,13 @@ const { test } = require('node:test')
 const { equal, deepEqual, ok, rejects } = require('node:assert')
 const fastify = require('fastify')
 const core = require('@platformatic/db-core')
-const { connInfo, clear, isSQLite } = require('./helper')
+const { connInfo, clear, createBasicPages } = require('./helper')
 const auth = require('..')
 const WebSocket = require('ws')
 const { once } = require('events')
 const { PassThrough } = require('stream')
 const { promisify } = require('util')
 const sleep = promisify(setTimeout)
-
-async function createBasicPages (db, sql) {
-  if (isSQLite) {
-    await db.query(sql`CREATE TABLE pages (
-      id INTEGER PRIMARY KEY,
-      title VARCHAR(42),
-      user_id INTEGER
-    );`)
-  } else {
-    await db.query(sql`CREATE TABLE pages (
-      id SERIAL PRIMARY KEY,
-      title VARCHAR(42),
-      user_id INTEGER
-    );`)
-  }
-}
 
 function createWebSocketClient (app) {
   const ws = new WebSocket('ws://localhost:' + (app.server.address()).port + '/graphql', 'graphql-ws')

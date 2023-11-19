@@ -4,24 +4,8 @@ const { test } = require('node:test')
 const { equal, deepEqual, ok } = require('node:assert')
 const fastify = require('fastify')
 const core = require('@platformatic/db-core')
-const { connInfo, clear, isSQLite } = require('./helper')
+const { connInfo, clear, createBasicPages } = require('./helper')
 const auth = require('..')
-
-async function createBasicPages (db, sql) {
-  if (isSQLite) {
-    await db.query(sql`CREATE TABLE pages (
-      id INTEGER PRIMARY KEY,
-      title VARCHAR(42),
-      user_id INTEGER
-    );`)
-  } else {
-    await db.query(sql`CREATE TABLE pages (
-      id SERIAL PRIMARY KEY,
-      title VARCHAR(42),
-      user_id INTEGER
-    );`)
-  }
-}
 
 test('moderators can delete user pages', async () => {
   const app = fastify()

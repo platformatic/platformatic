@@ -5,7 +5,7 @@ const auth = require('..')
 const { test } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
 const core = require('@platformatic/db-core')
-const { connInfo, clear, isSQLite } = require('./helper')
+const { connInfo, clear, createBasicPages } = require('./helper')
 const { request, Agent, setGlobalDispatcher } = require('undici')
 
 const agent = new Agent({
@@ -45,22 +45,6 @@ async function buildAuthorizer (opts = {}) {
   await app.listen({ port: 0 })
 
   return app
-}
-
-async function createBasicPages (db, sql) {
-  if (isSQLite) {
-    await db.query(sql`CREATE TABLE pages (
-      id INTEGER PRIMARY KEY,
-      title VARCHAR(42),
-      user_id INTEGER
-    );`)
-  } else {
-    await db.query(sql`CREATE TABLE pages (
-      id SERIAL PRIMARY KEY,
-      title VARCHAR(42),
-      user_id INTEGER
-    );`)
-  }
 }
 
 test('users can save and update their own pages, read everybody\'s and delete none', async (t) => {

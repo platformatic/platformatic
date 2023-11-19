@@ -5,25 +5,9 @@ const auth = require('..')
 const { test } = require('node:test')
 const { equal, deepEqual, ok } = require('node:assert')
 const core = require('@platformatic/db-core')
-const { connInfo, clear, isSQLite } = require('./helper')
+const { connInfo, clear, createBasicPages } = require('./helper')
 const { createPublicKey, generateKeyPairSync } = require('crypto')
 const { createSigner } = require('fast-jwt')
-
-async function createBasicPages (db, sql) {
-  if (isSQLite) {
-    await db.query(sql`CREATE TABLE pages (
-      id INTEGER PRIMARY KEY,
-      title VARCHAR(42),
-      user_id INTEGER
-    );`)
-  } else {
-    await db.query(sql`CREATE TABLE pages (
-      id SERIAL PRIMARY KEY,
-      title VARCHAR(42),
-      user_id INTEGER
-    );`)
-  }
-}
 
 // creates a RSA key pair for the test
 const { publicKey, privateKey } = generateKeyPairSync('rsa', {
