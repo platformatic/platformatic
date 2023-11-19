@@ -22,6 +22,7 @@
     "@platformatic/sql-mapper": "workspace:*",
     "fast-jwt": "^3.3.0",
     "fastify": "^4.23.2",
+    "glob": "^10.3.10",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
     "tsd": "^0.29.0",

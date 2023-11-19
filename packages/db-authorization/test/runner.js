@@ -1,17 +1,19 @@
 'use strict'
 
-const { spec: SpecReporter } = require('node:test/reporters')
+const { spec: SpecReporter, tap } = require('node:test/reporters')
 const { run } = require('node:test')
 const process = require('node:process')
-const fs = require('fs')
+const { globSync } = require('glob')
 const path = require('path')
 
-const testDirectory = './test'
-const testFilePattern = /\.test\.js$/
-const reporter = new SpecReporter()
+const reporter = process.stdout.isTTY ? new SpecReporter() : tap
 
-const files = fs.readdirSync(testDirectory)
-  .filter(file => testFilePattern.test(file))
-  .map(file => path.resolve(testDirectory, file))
+const files = [
+  ...globSync(path.join(__dirname, '*.test.js'))
+]
 
-run({ files }).compose(reporter).pipe(process.stdout)
+run({
+  files,
+  concurrency: 1,
+  timeout: 30000
+}).compose(reporter).pipe(process.stdout)
