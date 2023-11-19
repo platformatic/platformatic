@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { equal, deepEqual, ok, rejects } = require('node:assert')
 const fastify = require('fastify')
 const core = require('@platformatic/db-core')
 const { connInfo, clear, isSQLite } = require('./helper')
@@ -34,13 +35,13 @@ function createWebSocketClient (app) {
   return { client, ws }
 }
 
-test('GraphQL subscription authorization (same user)', async ({ pass, teardown, same, equal }) => {
+test('GraphQL subscription authorization (same user)', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
     subscriptions: true,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -77,12 +78,14 @@ test('GraphQL subscription authorization (same user)', async ({ pass, teardown, 
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.listen({ port: 0 })
 
   const { client } = createWebSocketClient(app)
-  teardown(() => { client.destroy() })
+  test.after(() => { client.destroy() })
 
   const token = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 42,
@@ -149,7 +152,7 @@ test('GraphQL subscription authorization (same user)', async ({ pass, teardown, 
       }
     })
     equal(res.statusCode, 200, 'POST /pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       id: 1,
       title: 'Hello',
       userId: 42
@@ -168,7 +171,7 @@ test('GraphQL subscription authorization (same user)', async ({ pass, teardown, 
       }
     })
     equal(res.statusCode, 200, 'PUT /pages/1 status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       id: 1,
       title: 'Hello World'
     }, 'PUT /pages/1 response')
@@ -187,7 +190,7 @@ test('GraphQL subscription authorization (same user)', async ({ pass, teardown, 
       }
     })
     equal(res.statusCode, 200, 'DELETE /pages/1 status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       id: 1,
       title: 'Hello World',
       userId: 42
@@ -201,7 +204,7 @@ test('GraphQL subscription authorization (same user)', async ({ pass, teardown, 
     }
   }
 
-  same(events, [{
+  deepEqual(events, [{
     id: 1,
     type: 'data',
     payload: {
@@ -236,13 +239,13 @@ test('GraphQL subscription authorization (same user)', async ({ pass, teardown, 
   }], 'events')
 })
 
-test('GraphQL subscription authorization (two users, they can\' see each other data)', async ({ pass, teardown, same, equal }) => {
+test('GraphQL subscription authorization (two users, they can\' see each other data)', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
     subscriptions: true,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -283,12 +286,14 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.listen({ port: 0 })
 
   const client1 = createWebSocketClient(app).client
-  teardown(() => { client1.destroy() })
+  test.after(() => { client1.destroy() })
 
   {
     const token = await app.jwt.sign({
@@ -351,7 +356,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
   })
 
   const client2 = createWebSocketClient(app).client
-  teardown(() => { client2.destroy() })
+  test.after(() => { client2.destroy() })
 
   client2.write(JSON.stringify({
     type: 'connection_init',
@@ -413,7 +418,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
       }
     })
     equal(res.statusCode, 200, 'POST /pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       id: 1,
       title: 'Hello',
       userId: 43
@@ -432,7 +437,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
       }
     })
     equal(res.statusCode, 200, 'PUT /pages/1 status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       id: 1,
       title: 'Hello World'
     }, 'PUT /pages/1 response')
@@ -451,7 +456,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
       }
     })
     equal(res.statusCode, 200, 'DELETE /pages/1 status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       id: 1,
       title: 'Hello World',
       userId: 43
@@ -467,7 +472,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
     }
   }
 
-  same(events1, [], 'events')
+  deepEqual(events1, [], 'events')
 
   for await (const data of wrap2) {
     events2.push(data)
@@ -476,7 +481,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
     }
   }
 
-  same(events2, [{
+  deepEqual(events2, [{
     type: 'data',
     id: 1,
     payload: {
@@ -511,13 +516,13 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
   }], 'events')
 })
 
-test('GraphQL subscription authorization (two users, they can\' see each other data) - full eq check', async ({ pass, teardown, same, equal }) => {
+test('GraphQL subscription authorization (two users, they can\' see each other data) - full eq check', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
     subscriptions: true,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -560,12 +565,14 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.listen({ port: 0 })
 
   const client1 = createWebSocketClient(app).client
-  teardown(() => { client1.destroy() })
+  test.after(() => { client1.destroy() })
 
   {
     const token = await app.jwt.sign({
@@ -628,7 +635,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
   })
 
   const client2 = createWebSocketClient(app).client
-  teardown(() => { client2.destroy() })
+  test.after(() => { client2.destroy() })
 
   client2.write(JSON.stringify({
     type: 'connection_init',
@@ -690,7 +697,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
       }
     })
     equal(res.statusCode, 200, 'POST /pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       id: 1,
       title: 'Hello',
       userId: 43
@@ -709,7 +716,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
       }
     })
     equal(res.statusCode, 200, 'PUT /pages/1 status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       id: 1,
       title: 'Hello World'
     }, 'PUT /pages/1 response')
@@ -728,7 +735,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
       }
     })
     equal(res.statusCode, 200, 'DELETE /pages/1 status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       id: 1,
       title: 'Hello World',
       userId: 43
@@ -744,7 +751,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
     }
   }
 
-  same(events1, [], 'events')
+  deepEqual(events1, [], 'events')
 
   for await (const data of wrap2) {
     events2.push(data)
@@ -753,7 +760,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
     }
   }
 
-  same(events2, [{
+  deepEqual(events2, [{
     type: 'data',
     id: 1,
     payload: {
@@ -788,7 +795,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
   }], 'events')
 })
 
-test('GraphQL subscription authorization (two users, they can\' see each other data) - only one check for now', async ({ pass, teardown, same, equal, rejects }) => {
+test('GraphQL subscription authorization (two users, they can\' see each other data) - only one check for now', async () => {
   const app = fastify({
     // TODO(mcollina) fix in avvio
     // There is an odd bug in avvio that keeps a timeout around, preventing
@@ -799,7 +806,7 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
     ...connInfo,
     subscriptions: true,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -845,12 +852,14 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await rejects(app.ready(), new Error('Subscription requires that the role "user" has only one check in the find rule for entity "page"'))
 })
 
-test('GraphQL subscription authorization - contrasting rules', async ({ pass, teardown, same, equal, rejects }) => {
+test('GraphQL subscription authorization - contrasting rules', async () => {
   const app = fastify({
     // TODO(mcollina) fix in avvio
     // There is an odd bug in avvio that keeps a timeout around, preventing
@@ -861,7 +870,7 @@ test('GraphQL subscription authorization - contrasting rules', async ({ pass, te
     ...connInfo,
     subscriptions: true,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -904,12 +913,14 @@ test('GraphQL subscription authorization - contrasting rules', async ({ pass, te
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await rejects(app.ready(), new Error('Subscription for entity "page" have conflictling rules across roles'))
 })
 
-test('GraphQL subscription authorization - contrasting rules / 2', async ({ pass, teardown, same, equal, rejects }) => {
+test('GraphQL subscription authorization - contrasting rules / 2', async () => {
   const app = fastify({
     // TODO(mcollina) fix in avvio
     // There is an odd bug in avvio that keeps a timeout around, preventing
@@ -920,7 +931,7 @@ test('GraphQL subscription authorization - contrasting rules / 2', async ({ pass
     ...connInfo,
     subscriptions: true,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -969,7 +980,9 @@ test('GraphQL subscription authorization - contrasting rules / 2', async ({ pass
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await rejects(app.ready(), new Error('Unable to configure subscriptions and authorization due to multiple check clauses in find'))
 })

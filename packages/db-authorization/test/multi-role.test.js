@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { equal, deepEqual, ok } = require('node:assert')
 const fastify = require('fastify')
 const core = require('@platformatic/db-core')
 const { connInfo, clear, isSQLite } = require('./helper')
@@ -22,12 +23,12 @@ async function createBasicPages (db, sql) {
   }
 }
 
-test('moderators can delete user pages', async ({ pass, teardown, same, equal }) => {
+test('moderators can delete user pages', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -69,7 +70,9 @@ test('moderators can delete user pages', async ({ pass, teardown, same, equal })
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.ready()
 
@@ -98,7 +101,7 @@ test('moderators can delete user pages', async ({ pass, teardown, same, equal })
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -128,7 +131,7 @@ test('moderators can delete user pages', async ({ pass, teardown, same, equal })
       }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: [{
           id: 1,
@@ -163,7 +166,7 @@ test('moderators can delete user pages', async ({ pass, teardown, same, equal })
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 2,
@@ -193,7 +196,7 @@ test('moderators can delete user pages', async ({ pass, teardown, same, equal })
       }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: [{
           id: 2,
@@ -228,7 +231,7 @@ test('moderators can delete user pages', async ({ pass, teardown, same, equal })
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 3,
@@ -258,7 +261,7 @@ test('moderators can delete user pages', async ({ pass, teardown, same, equal })
       }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: null
       },
@@ -280,12 +283,12 @@ test('moderators can delete user pages', async ({ pass, teardown, same, equal })
   }
 })
 
-test('blocked users cannot update', async ({ pass, teardown, same, equal }) => {
+test('blocked users cannot update', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -324,7 +327,9 @@ test('blocked users cannot update', async ({ pass, teardown, same, equal }) => {
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.ready()
 
@@ -353,7 +358,7 @@ test('blocked users cannot update', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -389,7 +394,7 @@ test('blocked users cannot update', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         pages: [{
           id: 1,
@@ -419,7 +424,7 @@ test('blocked users cannot update', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: null
       },
@@ -460,7 +465,7 @@ test('blocked users cannot update', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: null
       },

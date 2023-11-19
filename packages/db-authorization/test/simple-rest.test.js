@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { tspl } = require('@matteo.collina/tspl')
 const fastify = require('fastify')
 const core = require('@platformatic/db-core')
 const { connInfo, clear, isSQLite } = require('./helper')
@@ -22,12 +23,13 @@ async function createBasicPages (db, sql) {
   }
 }
 
-test('users can save and update their own pages, read everybody\'s and delete none', async ({ pass, teardown, same, equal }) => {
+test('users can save and update their own pages, read everybody\'s and delete none', async (t) => {
+  const { equal, deepEqual, ok } = tspl(t, { plan: 19 })
   const app = fastify()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -60,7 +62,9 @@ test('users can save and update their own pages, read everybody\'s and delete no
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.ready()
 
@@ -81,7 +85,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'POST /pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       id: 1,
       title: 'Hello',
       userId: 42
@@ -97,7 +101,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'GET /pages/1 status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       id: 1,
       title: 'Hello',
       userId: 42
@@ -116,7 +120,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'PUT /pages/1 status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       id: 1,
       title: 'Hello World'
     }, 'PUT /pages/1 response')
@@ -131,7 +135,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'GET /pages/1 status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       id: 1,
       title: 'Hello World'
     }, 'GET /pages/1 response')
@@ -154,7 +158,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 401, 'PUT /pages/1 status code (Unauthorized)')
-    same(res.json(), {
+    deepEqual(res.json(), {
       message: 'operation not allowed',
       code: 'PLT_DB_AUTH_UNAUTHORIZED',
       error: 'Unauthorized',
@@ -171,7 +175,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'GET /pages/1 status code (Authorized)')
-    same(res.json(), {
+    deepEqual(res.json(), {
       id: 1,
       title: 'Hello World',
       userId: 42
@@ -184,7 +188,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       url: '/pages/1'
     })
     equal(res.statusCode, 401, 'GET /pages/1 status code (Anonymous)')
-    same(res.json(), {
+    deepEqual(res.json(), {
       message: 'operation not allowed',
       code: 'PLT_DB_AUTH_UNAUTHORIZED',
       error: 'Unauthorized',
@@ -201,7 +205,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 401, 'PUT /pages/1 status code (Anonymous)')
-    same(res.json(), {
+    deepEqual(res.json(), {
       message: 'operation not allowed',
       code: 'PLT_DB_AUTH_UNAUTHORIZED',
       error: 'Unauthorized',
@@ -218,7 +222,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 401, 'DELETE /pages/1 status code (Unauthorized)')
-    same(res.json(), {
+    deepEqual(res.json(), {
       message: 'operation not allowed',
       code: 'PLT_DB_AUTH_UNAUTHORIZED',
       error: 'Unauthorized',
@@ -227,12 +231,14 @@ test('users can save and update their own pages, read everybody\'s and delete no
   }
 })
 
-test('users can find pages with parameters specified', async ({ pass, teardown, same, equal }) => {
+test('users can find pages with parameters specified', async (t) => {
+  const { equal, deepEqual, ok } = tspl(t, { plan: 5 })
+
   const app = fastify()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -255,7 +261,9 @@ test('users can find pages with parameters specified', async ({ pass, teardown, 
       }
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.ready()
 
@@ -301,7 +309,7 @@ test('users can find pages with parameters specified', async ({ pass, teardown, 
       }
     })
     equal(res.statusCode, 200, '/pages?limit=2&offset=2 status code')
-    same(res.json(), pages.map((p, i) => {
+    deepEqual(res.json(), pages.map((p, i) => {
       return { ...p, id: i + 1, userId: 42 }
     }).slice(2, 4), '/pages?limit=2&offset=2 response')
   }
@@ -315,18 +323,20 @@ test('users can find pages with parameters specified', async ({ pass, teardown, 
       }
     })
     equal(res.statusCode, 200, '/pages?orderby.id=desc status code')
-    same(res.json(), pages.map((p, i) => {
+    deepEqual(res.json(), pages.map((p, i) => {
       return { ...p, id: i + 1, userId: 42 }
     }).reverse(), '/pages?orderby.id=desc response')
   }
 })
 
-test('users can find and updateMany pages', async ({ pass, teardown, same, equal }) => {
+test('users can find and updateMany pages', async (t) => {
+  const { equal, deepEqual, ok } = tspl(t, { plan: 3 })
+
   const app = fastify()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -349,7 +359,9 @@ test('users can find and updateMany pages', async ({ pass, teardown, same, equal
       }
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.ready()
 
@@ -398,7 +410,7 @@ test('users can find and updateMany pages', async ({ pass, teardown, same, equal
       }
     })
     equal(res.statusCode, 200, '/pages?where.id.in=1,2 status code')
-    same(res.json(), [
+    deepEqual(res.json(), [
       {
         id: 1,
         title: 'Updated title',
@@ -413,8 +425,8 @@ test('users can find and updateMany pages', async ({ pass, teardown, same, equal
   }
 })
 
-test('additional options are passed to original functions', async ({ plan, teardown, equal }) => {
-  plan(5)
+test('additional options are passed to original functions', async (t) => {
+  const { equal } = tspl(t, { plan: 5 })
   const app = fastify()
   app.register(core, {
     ...connInfo,
@@ -513,7 +525,9 @@ test('additional options are passed to original functions', async ({ plan, teard
       })
     })
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.ready()
 

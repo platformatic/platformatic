@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { equal, deepEqual, ok } = require('node:assert')
 const fastify = require('fastify')
 const core = require('@platformatic/db-core')
 const { connInfo, clear } = require('./helper')
@@ -19,12 +20,12 @@ async function createPagesAndCategories (db, sql) {
   );`)
 }
 
-test('categories are global, but pages are user specific', async ({ pass, teardown, same, equal }) => {
+test('categories are global, but pages are user specific', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createPagesAndCategories(db, sql)
@@ -65,7 +66,9 @@ test('categories are global, but pages are user specific', async ({ pass, teardo
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.ready()
 
@@ -92,7 +95,7 @@ test('categories are global, but pages are user specific', async ({ pass, teardo
       }
     })
     equal(res.statusCode, 200, 'saveCategory status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         saveCategory: {
           id: 1
@@ -124,7 +127,7 @@ test('categories are global, but pages are user specific', async ({ pass, teardo
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -167,7 +170,7 @@ test('categories are global, but pages are user specific', async ({ pass, teardo
     })
     equal(res.statusCode, 200, 'savePage status code')
     const data = res.json()
-    same(data, {
+    deepEqual(data, {
       data: {
         savePage: {
           id: 2,
@@ -204,7 +207,7 @@ test('categories are global, but pages are user specific', async ({ pass, teardo
       }
     })
     equal(res.statusCode, 200, 'getCategoryById status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getCategoryById: {
           id: 1,
@@ -219,12 +222,12 @@ test('categories are global, but pages are user specific', async ({ pass, teardo
   }
 })
 
-test('specify multiple entities in a rule', async ({ pass, teardown, same, equal }) => {
+test('specify multiple entities in a rule', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createPagesAndCategories(db, sql)
@@ -266,7 +269,9 @@ test('specify multiple entities in a rule', async ({ pass, teardown, same, equal
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.ready()
 
@@ -293,7 +298,7 @@ test('specify multiple entities in a rule', async ({ pass, teardown, same, equal
       }
     })
     equal(res.statusCode, 200, 'saveCategory status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         saveCategory: {
           id: 1
@@ -330,7 +335,7 @@ test('specify multiple entities in a rule', async ({ pass, teardown, same, equal
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -373,7 +378,7 @@ test('specify multiple entities in a rule', async ({ pass, teardown, same, equal
     })
     equal(res.statusCode, 200, 'savePage status code')
     const data = res.json()
-    same(data, {
+    deepEqual(data, {
       data: {
         savePage: {
           id: 2,
@@ -410,7 +415,7 @@ test('specify multiple entities in a rule', async ({ pass, teardown, same, equal
       }
     })
     equal(res.statusCode, 200, 'getCategoryById status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getCategoryById: {
           id: 1,
@@ -447,7 +452,7 @@ test('specify multiple entities in a rule', async ({ pass, teardown, same, equal
       }
     })
     equal(res.statusCode, 200, 'categories status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         categories: [{
           id: 1,

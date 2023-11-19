@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { equal, deepEqual, ok } = require('node:assert')
 const fastify = require('fastify')
 const core = require('@platformatic/db-core')
 const { connInfo, clear, isSQLite } = require('./helper')
@@ -22,13 +23,13 @@ async function createBasicPages (db, sql) {
   }
 }
 
-test('users can save and update their own pages, read everybody\'s and delete none', async ({ pass, teardown, same, equal }) => {
+test('users can save and update their own pages, read everybody\'s and delete none', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
     events: false,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -61,7 +62,9 @@ test('users can save and update their own pages, read everybody\'s and delete no
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.ready()
 
@@ -90,7 +93,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -121,7 +124,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -151,7 +154,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -180,7 +183,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -214,7 +217,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: null
       },
@@ -255,7 +258,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -293,7 +296,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         insertPages: [
           { id: 2, title: 'Page 1', userId: 42 },
@@ -321,7 +324,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: null
       },
@@ -359,7 +362,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: null
       },
@@ -399,7 +402,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: null
       },
@@ -444,7 +447,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'insertPages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         insertPages: null
       },
@@ -481,7 +484,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: null
       },
@@ -503,12 +506,12 @@ test('users can save and update their own pages, read everybody\'s and delete no
   }
 })
 
-test('not allowed without permissions', async ({ pass, teardown, same, equal }) => {
+test('not allowed without permissions', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -519,7 +522,9 @@ test('not allowed without permissions', async ({ pass, teardown, same, equal }) 
       secret: 'supersecret'
     }
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.ready()
 
@@ -548,7 +553,7 @@ test('not allowed without permissions', async ({ pass, teardown, same, equal }) 
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: null
       },
@@ -588,7 +593,7 @@ test('not allowed without permissions', async ({ pass, teardown, same, equal }) 
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: null
       },
@@ -636,7 +641,7 @@ test('not allowed without permissions', async ({ pass, teardown, same, equal }) 
       }
     })
     equal(res.statusCode, 200, 'insertPages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         insertPages: null
       },
@@ -676,7 +681,7 @@ test('not allowed without permissions', async ({ pass, teardown, same, equal }) 
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: null
       },
@@ -717,7 +722,7 @@ test('not allowed without permissions', async ({ pass, teardown, same, equal }) 
       }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: null
       },
@@ -739,12 +744,12 @@ test('not allowed without permissions', async ({ pass, teardown, same, equal }) 
   }
 })
 
-test('users can read, save their own pages', async ({ pass, teardown, same, equal }) => {
+test('users can read, save their own pages', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -785,7 +790,9 @@ test('users can read, save their own pages', async ({ pass, teardown, same, equa
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.ready()
 
@@ -814,7 +821,7 @@ test('users can read, save their own pages', async ({ pass, teardown, same, equa
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -845,7 +852,7 @@ test('users can read, save their own pages', async ({ pass, teardown, same, equa
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -880,7 +887,7 @@ test('users can read, save their own pages', async ({ pass, teardown, same, equa
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: null
       },
@@ -921,7 +928,7 @@ test('users can read, save their own pages', async ({ pass, teardown, same, equa
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: null
       }
@@ -948,7 +955,7 @@ test('users can read, save their own pages', async ({ pass, teardown, same, equa
       }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: [{
           id: 1,
@@ -979,7 +986,7 @@ test('users can read, save their own pages', async ({ pass, teardown, same, equa
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: null
       }
@@ -1006,7 +1013,7 @@ test('users can read, save their own pages', async ({ pass, teardown, same, equa
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 2,
@@ -1037,7 +1044,7 @@ test('users can read, save their own pages', async ({ pass, teardown, same, equa
       }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: []
       }
@@ -1045,12 +1052,12 @@ test('users can read, save their own pages', async ({ pass, teardown, same, equa
   }
 })
 
-test('defaults are false', async ({ pass, teardown, same, equal }) => {
+test('defaults are false', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -1067,7 +1074,9 @@ test('defaults are false', async ({ pass, teardown, same, equal }) => {
       entity: 'page'
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.ready()
 
@@ -1096,7 +1105,7 @@ test('defaults are false', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: null
       },
@@ -1137,7 +1146,7 @@ test('defaults are false', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: null
       },
@@ -1178,7 +1187,7 @@ test('defaults are false', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: null
       },
@@ -1219,7 +1228,7 @@ test('defaults are false', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         pages: null
       },
@@ -1241,12 +1250,12 @@ test('defaults are false', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('should throw if context is passed with no reply', async ({ pass, teardown, same, equal }) => {
+test('should throw if context is passed with no reply', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -1259,7 +1268,9 @@ test('should throw if context is passed with no reply', async ({ pass, teardown,
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous'
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
   app.get('/no-context', async (req, reply) => {
     const res = await app.platformatic.entities.page.find({
       fields: ['id', 'title'],
@@ -1275,19 +1286,19 @@ test('should throw if context is passed with no reply', async ({ pass, teardown,
   })
 
   equal(res.statusCode, 500)
-  same(res.json(), {
+  deepEqual(res.json(), {
     statusCode: 500,
     error: 'Internal Server Error',
     message: 'Missing reply in context. You should call this function with { ctx: { reply }}'
   })
 })
 
-test('should not complain if context is passed', async ({ pass, teardown, same, equal }) => {
+test('should not complain if context is passed', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -1309,7 +1320,9 @@ test('should not complain if context is passed', async ({ pass, teardown, same, 
       }
     ]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
   app.get('/with-context', async (req, reply) => {
     const res = await app.platformatic.entities.page.find({
       fields: ['id', 'title'],
@@ -1325,15 +1338,15 @@ test('should not complain if context is passed', async ({ pass, teardown, same, 
   })
 
   equal(res.statusCode, 200)
-  same(res.json(), [])
+  deepEqual(res.json(), [])
 })
 
-test('should support where conditions expressed with object', async ({ pass, teardown, same, equal }) => {
+test('should support where conditions expressed with object', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -1368,7 +1381,9 @@ test('should support where conditions expressed with object', async ({ pass, tea
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.ready()
 
@@ -1397,7 +1412,7 @@ test('should support where conditions expressed with object', async ({ pass, tea
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -1428,7 +1443,7 @@ test('should support where conditions expressed with object', async ({ pass, tea
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,

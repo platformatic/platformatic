@@ -1,35 +1,20 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { deepEqual, equal, ok } = require('assert')
 const fastify = require('fastify')
 const core = require('@platformatic/db-core')
-const { connInfo, clear, isSQLite } = require('./helper')
+const { connInfo, clear, createBasicPages } = require('./helper')
 const auth = require('..')
 const { request } = require('undici')
 
-async function createBasicPages (db, sql) {
-  if (isSQLite) {
-    await db.query(sql`CREATE TABLE pages (
-      id INTEGER PRIMARY KEY,
-      title VARCHAR(42),
-      user_id INTEGER
-    );`)
-  } else {
-    await db.query(sql`CREATE TABLE pages (
-      id SERIAL PRIMARY KEY,
-      title VARCHAR(42),
-      user_id INTEGER
-    );`)
-  }
-}
-
-test('admin can impersonate a users', async ({ pass, teardown, same, equal }) => {
+test('admin can impersonate a users', async () => {
   const app = fastify()
   const adminSecret = require('crypto').randomUUID()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -64,7 +49,9 @@ test('admin can impersonate a users', async ({ pass, teardown, same, equal }) =>
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(() => {
+    app.close()
+  })
 
   await app.ready()
 
@@ -90,7 +77,7 @@ test('admin can impersonate a users', async ({ pass, teardown, same, equal }) =>
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -123,7 +110,7 @@ test('admin can impersonate a users', async ({ pass, teardown, same, equal }) =>
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -155,7 +142,7 @@ test('admin can impersonate a users', async ({ pass, teardown, same, equal }) =>
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -186,7 +173,7 @@ test('admin can impersonate a users', async ({ pass, teardown, same, equal }) =>
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -217,7 +204,7 @@ test('admin can impersonate a users', async ({ pass, teardown, same, equal }) =>
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: null
       },
@@ -260,7 +247,7 @@ test('admin can impersonate a users', async ({ pass, teardown, same, equal }) =>
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: null
       }
@@ -296,7 +283,7 @@ test('admin can impersonate a users', async ({ pass, teardown, same, equal }) =>
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         insertPages: [
           { id: 2, title: 'Page 1', userId: 42 },
@@ -328,7 +315,7 @@ test('admin can impersonate a users', async ({ pass, teardown, same, equal }) =>
       }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: null
       },
@@ -350,13 +337,13 @@ test('admin can impersonate a users', async ({ pass, teardown, same, equal }) =>
   }
 })
 
-test('only admin usage', async ({ pass, teardown, same, equal }) => {
+test('only admin usage', async () => {
   const app = fastify()
   const adminSecret = require('crypto').randomUUID()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -389,7 +376,9 @@ test('only admin usage', async ({ pass, teardown, same, equal }) => {
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.ready()
 
@@ -415,7 +404,7 @@ test('only admin usage', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -448,7 +437,7 @@ test('only admin usage', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -480,7 +469,7 @@ test('only admin usage', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -511,7 +500,7 @@ test('only admin usage', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -542,7 +531,7 @@ test('only admin usage', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: null
       },
@@ -585,7 +574,7 @@ test('only admin usage', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: null
       }
@@ -621,7 +610,7 @@ test('only admin usage', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         insertPages: [
           { id: 2, title: 'Page 1', userId: 42 },
@@ -653,7 +642,7 @@ test('only admin usage', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: null
       },
@@ -675,13 +664,13 @@ test('only admin usage', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('platformatic-admin role', async ({ pass, teardown, same, equal }) => {
+test('platformatic-admin role', async () => {
   const app = fastify()
   const adminSecret = require('crypto').randomUUID()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -690,7 +679,9 @@ test('platformatic-admin role', async ({ pass, teardown, same, equal }) => {
   app.register(auth, {
     adminSecret
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.ready()
 
@@ -713,7 +704,7 @@ test('platformatic-admin role', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -742,7 +733,7 @@ test('platformatic-admin role', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -771,7 +762,7 @@ test('platformatic-admin role', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -800,7 +791,7 @@ test('platformatic-admin role', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -826,7 +817,7 @@ test('platformatic-admin role', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: null
       },
@@ -873,7 +864,7 @@ test('platformatic-admin role', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         insertPages: [
           { id: 2, title: 'Page 1' },
@@ -903,7 +894,7 @@ test('platformatic-admin role', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: [{
           id: 2,
@@ -914,13 +905,13 @@ test('platformatic-admin role', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('admin with no rules', async ({ pass, teardown, same, equal }) => {
+test('admin with no rules', async () => {
   const app = fastify()
   const adminSecret = require('crypto').randomUUID()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -929,7 +920,9 @@ test('admin with no rules', async ({ pass, teardown, same, equal }) => {
   app.register(auth, {
     adminSecret
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.ready()
 
@@ -952,7 +945,7 @@ test('admin with no rules', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -981,7 +974,7 @@ test('admin with no rules', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'getPageById status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -992,13 +985,13 @@ test('admin with no rules', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('platformatic-admin has lower priority to allow user impersonation', async ({ pass, teardown, same, equal }) => {
+test('platformatic-admin has lower priority to allow user impersonation', async () => {
   const app = fastify()
   const adminSecret = require('crypto').randomUUID()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -1029,7 +1022,9 @@ test('platformatic-admin has lower priority to allow user impersonation', async 
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.ready()
 
@@ -1055,7 +1050,7 @@ test('platformatic-admin has lower priority to allow user impersonation', async 
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -1087,7 +1082,7 @@ test('platformatic-admin has lower priority to allow user impersonation', async 
       }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: null
       },
@@ -1129,7 +1124,7 @@ test('platformatic-admin has lower priority to allow user impersonation', async 
       }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: [{
           id: 1,
@@ -1140,13 +1135,13 @@ test('platformatic-admin has lower priority to allow user impersonation', async 
   }
 })
 
-test('adminSecret set admin role as only role if jwt is set', async ({ pass, teardown, same, equal }) => {
+test('adminSecret set admin role as only role if jwt is set', async () => {
   const app = fastify()
   const adminSecret = require('crypto').randomUUID()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -1173,7 +1168,9 @@ test('adminSecret set admin role as only role if jwt is set', async ({ pass, tea
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.ready()
 
@@ -1204,7 +1201,7 @@ test('adminSecret set admin role as only role if jwt is set', async ({ pass, tea
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: '1',
@@ -1216,7 +1213,7 @@ test('adminSecret set admin role as only role if jwt is set', async ({ pass, tea
   }
 })
 
-test('adminSecret set admin as only role if webhook is set', async ({ pass, teardown, same, equal }) => {
+test('adminSecret set admin as only role if webhook is set', async () => {
   async function buildAuthorizer (opts = {}) {
     // We need forceCloseConnection otherwise the test will hang with node16
     const app = fastify({ forceCloseConnections: true })
@@ -1256,7 +1253,7 @@ test('adminSecret set admin as only role if webhook is set', async ({ pass, tear
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -1302,8 +1299,10 @@ test('adminSecret set admin as only role if webhook is set', async ({ pass, tear
     const cookie = res.headers['set-cookie'].split(';')[0]
     return cookie
   }
-  teardown(app.close.bind(app))
-  teardown(() => authorizer.close())
+  test.after(async () => {
+    await app.close()
+  })
+  test.after(() => authorizer.close())
 
   const cookie = await getCookie(42, 'user')
   await app.ready()
@@ -1328,7 +1327,7 @@ test('adminSecret set admin as only role if webhook is set', async ({ pass, tear
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: '1',

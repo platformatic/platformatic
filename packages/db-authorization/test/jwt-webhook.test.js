@@ -2,7 +2,8 @@
 
 const fastify = require('fastify')
 const auth = require('..')
-const { test } = require('tap')
+const { test } = require('node:test')
+const { equal, deepEqual, ok } = require('node:assert')
 const core = require('@platformatic/db-core')
 const { createPublicKey, generateKeyPairSync } = require('crypto')
 const { connInfo, clear, isSQLite } = require('./helper')
@@ -100,9 +101,9 @@ async function buildJwksEndpoint (jwks, fail = false) {
   return app
 }
 
-test('JWT + cookies with WebHook', async ({ pass, teardown, same, equal }) => {
+test('JWT + cookies with WebHook', async () => {
   const authorizer = await buildAuthorizer()
-  teardown(() => authorizer.close())
+  test.after(() => authorizer.close())
 
   const { n, e, kty } = jwtPublicKey
   const kid = 'TEST-KID'
@@ -121,7 +122,7 @@ test('JWT + cookies with WebHook', async ({ pass, teardown, same, equal }) => {
       ]
     }
   )
-  teardown(() => jwksEndpoint.close())
+  test.after(() => jwksEndpoint.close())
 
   const issuer = `http://localhost:${jwksEndpoint.server.address().port}`
   const header = {
@@ -135,7 +136,7 @@ test('JWT + cookies with WebHook', async ({ pass, teardown, same, equal }) => {
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -171,8 +172,10 @@ test('JWT + cookies with WebHook', async ({ pass, teardown, same, equal }) => {
       save: false
     }]
   })
-  teardown(app.close.bind(app))
-  teardown(() => authorizer.close())
+  test.after(async () => {
+    await app.close()
+  })
+  test.after(() => authorizer.close())
 
   await app.ready()
 
@@ -215,7 +218,7 @@ test('JWT + cookies with WebHook', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -248,7 +251,7 @@ test('JWT + cookies with WebHook', async ({ pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       id: 1,
       title: 'Hello',
       userId: 42
@@ -256,7 +259,7 @@ test('JWT + cookies with WebHook', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('Authorization both with JWT and WebHook', async ({ pass, teardown, same, equal }) => {
+test('Authorization both with JWT and WebHook', async () => {
   const authorizer = await buildAuthorizerAPIToken({
     async onAuthorize (request) {
       equal(request.headers.authorization, 'Bearer foobar')
@@ -268,7 +271,7 @@ test('Authorization both with JWT and WebHook', async ({ pass, teardown, same, e
       return payload
     }
   })
-  teardown(() => authorizer.close())
+  test.after(() => authorizer.close())
 
   const { n, e, kty } = jwtPublicKey
   const kid = 'TEST-KID'
@@ -287,7 +290,7 @@ test('Authorization both with JWT and WebHook', async ({ pass, teardown, same, e
       ]
     }
   )
-  teardown(() => jwksEndpoint.close())
+  test.after(() => jwksEndpoint.close())
 
   const issuer = `http://localhost:${jwksEndpoint.server.address().port}`
   const header = {
@@ -301,7 +304,7 @@ test('Authorization both with JWT and WebHook', async ({ pass, teardown, same, e
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -337,8 +340,10 @@ test('Authorization both with JWT and WebHook', async ({ pass, teardown, same, e
       save: false
     }]
   })
-  teardown(app.close.bind(app))
-  teardown(() => authorizer.close())
+  test.after(async () => {
+    await app.close()
+  })
+  test.after(() => authorizer.close())
 
   await app.ready()
 
@@ -362,7 +367,7 @@ test('Authorization both with JWT and WebHook', async ({ pass, teardown, same, e
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -395,7 +400,7 @@ test('Authorization both with JWT and WebHook', async ({ pass, teardown, same, e
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       id: 1,
       title: 'Hello',
       userId: 42

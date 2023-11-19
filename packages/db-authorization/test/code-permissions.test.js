@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { tspl } = require('@matteo.collina/tspl')
 const fastify = require('fastify')
 const core = require('@platformatic/db-core')
 const { connInfo, clear, isSQLite, isMysql } = require('./helper')
@@ -47,13 +48,13 @@ async function createPagesWithTimestamp (db, sql) {
   }
 }
 
-test('users can save and update their own pages, read everybody\'s and delete none', async ({ pass, teardown, same, equal, match, plan }) => {
-  plan(27)
+test('users can save and update their own pages, read everybody\'s and delete none', async (t) => {
+  const { equal, deepEqual, ok } = tspl(t, { plan: 27 })
   const app = fastify()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -87,7 +88,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       },
       defaults: {
         userId: async function ({ user, ctx, input }) {
-          match(user, {
+          deepEqual(user, {
             'X-PLATFORMATIC-USER-ID': generated.shift(),
             'X-PLATFORMATIC-ROLE': 'user'
           })
@@ -106,7 +107,9 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.ready()
 
@@ -135,7 +138,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -166,7 +169,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -196,7 +199,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -225,7 +228,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -259,7 +262,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: null
       },
@@ -300,7 +303,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: null
       }
@@ -334,7 +337,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         insertPages: [
           { id: 2, title: 'Page 1', userId: 42 },
@@ -364,7 +367,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: []
       }
@@ -390,7 +393,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: [{
           id: 1,
@@ -420,7 +423,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: null
       }
@@ -428,13 +431,13 @@ test('users can save and update their own pages, read everybody\'s and delete no
   }
 })
 
-test('user can delete all post written before yesterday', async ({ pass, teardown, same, equal, match, plan }) => {
-  // plan(27)
+test('user can delete all post written before yesterday', async (t) => {
+  const { equal, deepEqual, ok } = tspl(t, { plan: 11 })
   const app = fastify()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
       await clear(db, sql)
       await createPagesWithTimestamp(db, sql)
     }
@@ -468,7 +471,9 @@ test('user can delete all post written before yesterday', async ({ pass, teardow
       }
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.ready()
 
@@ -500,7 +505,7 @@ test('user can delete all post written before yesterday', async ({ pass, teardow
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -534,7 +539,7 @@ test('user can delete all post written before yesterday', async ({ pass, teardow
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 2,
@@ -566,7 +571,7 @@ test('user can delete all post written before yesterday', async ({ pass, teardow
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         pages: [{
           id: 1,
@@ -602,7 +607,7 @@ test('user can delete all post written before yesterday', async ({ pass, teardow
       }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: [{
           id: 2,
@@ -633,7 +638,7 @@ test('user can delete all post written before yesterday', async ({ pass, teardow
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         pages: [{
           id: 1,

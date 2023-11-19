@@ -1,17 +1,18 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { equal, deepEqual, ok } = require('node:assert')
 const core = require('@platformatic/db-core')
 const fastify = require('fastify')
 const { connInfo, clear, createBasicPages } = require('./helper')
 const auth = require('..')
 
-test('users can save and update their own pages, read everybody\'s and delete none', async ({ pass, teardown, same, equal }) => {
+test('users can save and update their own pages, read everybody\'s and delete none', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -44,7 +45,9 @@ test('users can save and update their own pages, read everybody\'s and delete no
     delete: false,
     save: false
   }])
-  teardown(app.close.bind(app))
+  test.after(async () => {
+    await app.close()
+  })
 
   await app.ready()
 
@@ -73,7 +76,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -104,7 +107,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -134,7 +137,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -163,7 +166,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -197,7 +200,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: null
       },
@@ -238,7 +241,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -276,7 +279,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         insertPages: [
           { id: 2, title: 'Page 1', userId: 42 },
@@ -304,7 +307,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: null
       },
@@ -342,7 +345,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: null
       },
@@ -382,7 +385,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: null
       },
@@ -427,7 +430,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'insertPages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         insertPages: null
       },
@@ -464,7 +467,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: null
       },
