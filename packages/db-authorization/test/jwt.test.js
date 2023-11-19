@@ -103,8 +103,8 @@ test('jwt verify success getting public key from jwks endpoint', async () => {
       }
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
   test.after(() => jwksEndpoint.close())
 
@@ -229,8 +229,8 @@ test('jwt verify fail if getting public key from jwks endpoint fails', async () 
       }
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
   test.after(() => jwksEndpoint.close())
 
@@ -346,8 +346,8 @@ test('jwt verify fail if jwks succeed but kid is not found', async () => {
       }
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
   test.after(() => jwksEndpoint.close())
 
@@ -465,8 +465,8 @@ test('jwt verify fail if the domain is not allowed', async () => {
       }
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
   test.after(() => jwksEndpoint.close())
 
@@ -583,8 +583,8 @@ test('jwt skips configure namespace in custom claims', async () => {
       }
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
   test.after(() => jwksEndpoint.close())
 
@@ -720,8 +720,8 @@ test('do not install a preHandler hook', async () => {
       }
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
   test.after(() => jwksEndpoint.close())
 

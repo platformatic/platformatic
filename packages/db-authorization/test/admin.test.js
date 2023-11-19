@@ -376,8 +376,8 @@ test('only admin usage', async () => {
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()
@@ -679,8 +679,8 @@ test('platformatic-admin role', async () => {
   app.register(auth, {
     adminSecret
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()
@@ -920,8 +920,8 @@ test('admin with no rules', async () => {
   app.register(auth, {
     adminSecret
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()
@@ -1022,8 +1022,8 @@ test('platformatic-admin has lower priority to allow user impersonation', async 
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()
@@ -1168,8 +1168,8 @@ test('adminSecret set admin role as only role if jwt is set', async () => {
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()
@@ -1299,8 +1299,8 @@ test('adminSecret set admin as only role if webhook is set', async () => {
     const cookie = res.headers['set-cookie'].split(';')[0]
     return cookie
   }
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
   test.after(() => authorizer.close())
 

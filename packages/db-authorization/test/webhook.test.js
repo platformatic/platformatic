@@ -104,8 +104,8 @@ test('users can save and update their own pages, read everybody\'s and delete no
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
   test.after(() => authorizer.close())
 
@@ -320,8 +320,8 @@ test('Non-200 status code', async (t) => {
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
   test.after(() => authorizer.close())
 

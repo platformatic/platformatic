@@ -107,8 +107,8 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()
@@ -471,8 +471,8 @@ test('user can delete all post written before yesterday', async (t) => {
       }
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()

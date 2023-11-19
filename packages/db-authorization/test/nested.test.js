@@ -66,8 +66,8 @@ test('categories are global, but pages are user specific', async () => {
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()
@@ -269,8 +269,8 @@ test('specify multiple entities in a rule', async () => {
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()

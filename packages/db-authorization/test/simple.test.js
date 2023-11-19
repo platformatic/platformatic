@@ -62,8 +62,8 @@ test('users can save and update their own pages, read everybody\'s and delete no
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()
@@ -522,8 +522,8 @@ test('not allowed without permissions', async () => {
       secret: 'supersecret'
     }
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()
@@ -790,8 +790,8 @@ test('users can read, save their own pages', async () => {
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()
@@ -1074,8 +1074,8 @@ test('defaults are false', async () => {
       entity: 'page'
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()
@@ -1268,8 +1268,8 @@ test('should throw if context is passed with no reply', async () => {
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous'
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
   app.get('/no-context', async (req, reply) => {
     const res = await app.platformatic.entities.page.find({
@@ -1320,8 +1320,8 @@ test('should not complain if context is passed', async () => {
       }
     ]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
   app.get('/with-context', async (req, reply) => {
     const res = await app.platformatic.entities.page.find({
@@ -1381,8 +1381,8 @@ test('should support where conditions expressed with object', async () => {
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()

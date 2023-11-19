@@ -62,8 +62,8 @@ test('users can save and update their own pages, read everybody\'s and delete no
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()
@@ -261,8 +261,8 @@ test('users can find pages with parameters specified', async (t) => {
       }
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()
@@ -359,8 +359,8 @@ test('users can find and updateMany pages', async (t) => {
       }
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()
@@ -525,8 +525,8 @@ test('additional options are passed to original functions', async (t) => {
       })
     })
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()

@@ -55,8 +55,8 @@ test('use the skipAuth option to avoid permissions programatically', async () =>
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()
@@ -331,8 +331,8 @@ test('if ctx is not present, skips permission check ', async () => {
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()
@@ -576,8 +576,8 @@ test('validate that a ctx is needed for skipAuth: false', async () => {
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()

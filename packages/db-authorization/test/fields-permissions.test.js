@@ -72,8 +72,8 @@ test('users can find only the authorized fields', async () => {
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()
@@ -250,8 +250,8 @@ test('users can save only the authorized fields', async () => {
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()
@@ -453,8 +453,8 @@ test('users can insert only the authorized fields', async () => {
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()
@@ -611,8 +611,8 @@ test('app should not start if there are not nullable and not allowed fields in s
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
   try {
     await app.ready()

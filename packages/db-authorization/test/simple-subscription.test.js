@@ -78,8 +78,8 @@ test('GraphQL subscription authorization (same user)', async () => {
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.listen({ port: 0 })
@@ -286,8 +286,8 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.listen({ port: 0 })
@@ -565,8 +565,8 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.listen({ port: 0 })
@@ -852,8 +852,8 @@ test('GraphQL subscription authorization (two users, they can\' see each other d
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await rejects(app.ready(), new Error('Subscription requires that the role "user" has only one check in the find rule for entity "page"'))
@@ -913,8 +913,8 @@ test('GraphQL subscription authorization - contrasting rules', async () => {
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await rejects(app.ready(), new Error('Subscription for entity "page" have conflictling rules across roles'))
@@ -980,8 +980,8 @@ test('GraphQL subscription authorization - contrasting rules / 2', async () => {
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await rejects(app.ready(), new Error('Unable to configure subscriptions and authorization due to multiple check clauses in find'))

@@ -76,8 +76,8 @@ test('wrong entity name', async () => {
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   try {
@@ -115,8 +115,8 @@ test('missing entity', async () => {
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   try {

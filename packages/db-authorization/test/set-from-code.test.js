@@ -45,8 +45,8 @@ test('users can save and update their own pages, read everybody\'s and delete no
     delete: false,
     save: false
   }])
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
 
   await app.ready()

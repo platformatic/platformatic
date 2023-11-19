@@ -172,8 +172,8 @@ test('JWT + cookies with WebHook', async () => {
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
   test.after(() => authorizer.close())
 
@@ -340,8 +340,8 @@ test('Authorization both with JWT and WebHook', async () => {
       save: false
     }]
   })
-  test.after(async () => {
-    await app.close()
+  test.after(() => {
+    app.close()
   })
   test.after(() => authorizer.close())
 
