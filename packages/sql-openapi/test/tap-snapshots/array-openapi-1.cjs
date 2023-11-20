@@ -65,6 +65,7 @@ Object {
   "paths": Object {
     "/pages/": Object {
       "get": Object {
+        "description": "Fetch pages from the database.",
         "operationId": "getPages",
         "parameters": Array [
           Object {
@@ -368,11 +369,13 @@ Object {
             "description": "Default Response",
           },
         },
+        "summary": "Get pages.",
         "tags": Array [
           "pages",
         ],
       },
       "post": Object {
+        "description": "Add new page to the database.",
         "operationId": "createPage",
         "requestBody": Object {
           "content": Object {
@@ -396,11 +399,13 @@ Object {
             "links": Object {},
           },
         },
+        "summary": "Create page.",
         "tags": Array [
           "pages",
         ],
       },
       "put": Object {
+        "description": "Update one or more pages in the database.",
         "operationId": "updatePages",
         "parameters": Array [
           Object {
@@ -664,6 +669,7 @@ Object {
             "links": Object {},
           },
         },
+        "summary": "Update pages.",
         "tags": Array [
           "pages",
         ],
@@ -671,6 +677,7 @@ Object {
     },
     "/pages/{id}": Object {
       "delete": Object {
+        "description": "Delete one or more pages from the Database.",
         "operationId": "deletePages",
         "parameters": Array [
           Object {
@@ -710,11 +717,13 @@ Object {
             "description": "Default Response",
           },
         },
+        "summary": "Delete pages.",
         "tags": Array [
           "pages",
         ],
       },
       "get": Object {
+        "description": "Fetch Page using its id from the database.",
         "operationId": "getPageById",
         "parameters": Array [
           Object {
@@ -755,11 +764,13 @@ Object {
             "links": Object {},
           },
         },
+        "summary": "Get Page by id.",
         "tags": Array [
           "pages",
         ],
       },
       "put": Object {
+        "description": "Update page in the database.",
         "operationId": "updatePage",
         "parameters": Array [
           Object {
@@ -809,6 +820,7 @@ Object {
             "links": Object {},
           },
         },
+        "summary": "Update page.",
         "tags": Array [
           "pages",
         ],

@@ -46,6 +46,8 @@ async function entityPlugin (app, opts) {
   app.get(pathWithParams, {
     schema: {
       operationId: `get${entity.name}By${operationName}`,
+      summary: `Get ${entity.name} by ${operationName}.`,
+      description: `Fetch ${entity.name} by ${operationName} from the database.`,
       params: primaryKeysParams,
       tags: [entity.table],
       querystring: {
@@ -79,6 +81,8 @@ async function entityPlugin (app, opts) {
       url: pathWithParams,
       method,
       schema: {
+        summary: `Update ${entity.name} by ${operationName}.`,
+        description: `Update ${entity.name} by ${operationName} in the database.`,
         body: entitySchemaInput,
         params: primaryKeysParams,
         tags: [entity.table],
@@ -122,6 +126,8 @@ async function entityPlugin (app, opts) {
 
   app.delete(pathWithParams, {
     schema: {
+      summary: `Delete ${entity.name} by ${operationName}.`,
+      description: `Delete ${entity.name} by ${operationName} from the database.`,
       params: primaryKeysParams,
       tags: [entity.table],
       querystring: {
