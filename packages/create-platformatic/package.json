@@ -13,8 +13,8 @@
     "create-platformatic": "./create-platformatic.mjs"
   },
   "scripts": {
-    "test:cli": "tap --no-coverage test/cli/*test.mjs -t120",
-    "test:unit": "standard | snazzy && cross-env NODE_OPTIONS=\"--loader=esmock --no-warnings\" c8 tap --no-coverage test/*test.mjs test/*[!cli]/*test.mjs",
+    "test:cli": "node --test ./test/cli",
+    "test:unit": "standard | snazzy && cross-env NODE_OPTIONS=\"--loader=esmock --no-warnings\" c8 node --test ./test/unit",
     "test": "npm run test:unit && npm run test:cli",
     "lint": "standard | snazzy"
   },
@@ -54,7 +54,6 @@
     "esmock": "^2.5.1",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "tap": "^16.3.9",
     "typescript": "~5.2.2",
     "yaml": "^2.3.2"
   }

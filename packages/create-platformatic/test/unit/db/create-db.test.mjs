@@ -1,6 +1,7 @@
-import createDB from '../../src/db/create-db.mjs'
-import { test, beforeEach, afterEach } from 'tap'
-import { isFileAccessible } from '../../src/utils.mjs'
+import createDB from '../../../src/db/create-db.mjs'
+import { test } from 'node:test'
+import { deepEqual, equal, ok } from 'node:assert'
+import { isFileAccessible } from '../../../src/utils.mjs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import dotenv from 'dotenv'
@@ -24,11 +25,11 @@ DROP TABLE movies;
 const base = tmpdir()
 let tmpDir
 let log = []
-beforeEach(async () => {
+test.beforeEach(async () => {
   tmpDir = await mkdtemp(join(base, 'test-create-platformatic-'))
 })
 
-afterEach(async () => {
+test.afterEach(async () => {
   log = []
   await rm(tmpDir, { recursive: true, force: true })
   process.env = {}
@@ -39,7 +40,7 @@ const fakeLogger = {
   info: msg => log.push(msg)
 }
 
-test('creates project with no typescript', async ({ equal }) => {
+test('creates project with no typescript', async () => {
   const params = {
     hostname: 'myhost',
     port: 6666,
@@ -92,7 +93,7 @@ test('creates project with no typescript', async ({ equal }) => {
   equal(await isFileAccessible(join(tmpDir, 'plugins', 'example.js')), true)
 })
 
-test('creates project with no typescript and no plugin', async ({ equal }) => {
+test('creates project with no typescript and no plugin', async () => {
   const params = {
     hostname: 'myhost',
     port: 6666,
@@ -140,7 +141,7 @@ test('creates project with no typescript and no plugin', async ({ equal }) => {
   equal(await isFileAccessible(join(tmpDir, 'plugin.js')), false)
 })
 
-test('creates project with no migrations', async ({ equal }) => {
+test('creates project with no migrations', async () => {
   const params = {
     hostname: 'myhost',
     port: 6666,
@@ -157,7 +158,7 @@ test('creates project with no migrations', async ({ equal }) => {
   equal(migrations, undefined)
 })
 
-test('creates project with typescript', async ({ equal, same }) => {
+test('creates project with typescript', async () => {
   const params = {
     hostname: 'myhost',
     port: 6666,
@@ -203,7 +204,7 @@ test('creates project with typescript', async ({ equal, same }) => {
   const migrationFileUndo = await readFile(pathToMigrationFileUndo, 'utf8')
   equal(migrationFileUndo, moviesMigrationUndo)
 
-  same(plugins.paths, [{
+  deepEqual(plugins.paths, [{
     path: './plugins',
     encapsulate: false
   }, {
@@ -215,7 +216,7 @@ test('creates project with typescript', async ({ equal, same }) => {
   equal(await isFileAccessible(join(tmpDir, 'tsconfig.json')), true)
 })
 
-test('creates project with no default migrations', async ({ notOk }) => {
+test('creates project with no default migrations', async () => {
   const params = {
     hostname: 'myhost',
     port: 6666,
@@ -223,12 +224,12 @@ test('creates project with no default migrations', async ({ notOk }) => {
     migrations: ''
   }
   await createDB(params, fakeLogger, tmpDir)
-  notOk(log.includes('Migrations folder migrations successfully created.'))
-  notOk(log.includes('Migration file 001.do.sql successfully created.'))
-  notOk(log.includes('Migration file 001.undo.sql successfully created.'))
+  ok(!log.includes('Migrations folder migrations successfully created.'))
+  ok(!log.includes('Migration file 001.do.sql successfully created.'))
+  ok(!log.includes('Migration file 001.undo.sql successfully created.'))
 })
 
-test('creates project with default migrations', async ({ ok }) => {
+test('creates project with default migrations', async () => {
   const params = {
     hostname: 'myhost',
     port: 6666,
@@ -241,7 +242,7 @@ test('creates project with default migrations', async ({ ok }) => {
   ok(log.includes('Migration file 001.undo.sql successfully created.'))
 })
 
-test('creates project in a runtime context', async ({ equal }) => {
+test('creates project in a runtime context', async () => {
   const params = {
     isRuntimeContext: true,
     hostname: 'myhost',

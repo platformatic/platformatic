@@ -1,6 +1,7 @@
-import createService from '../../src/service/create-service.mjs'
-import { isFileAccessible } from '../../src/utils.mjs'
-import { test, beforeEach, afterEach } from 'tap'
+import createService from '../../../src/service/create-service.mjs'
+import { isFileAccessible } from '../../../src/utils.mjs'
+import { test } from 'node:test'
+import { equal, deepEqual, ok } from 'node:assert'
 import { tmpdir } from 'os'
 import { readFile, rm, mkdtemp } from 'fs/promises'
 import { join } from 'path'
@@ -11,11 +12,11 @@ import { schema } from '@platformatic/service'
 const base = tmpdir()
 let tmpDir
 let log = []
-beforeEach(async () => {
+test.beforeEach(async () => {
   tmpDir = await mkdtemp(join(base, 'test-create-platformatic-'))
 })
 
-afterEach(async () => {
+test.afterEach(async () => {
   log = []
   await rm(tmpDir, { recursive: true, force: true })
   process.env = {}
@@ -27,7 +28,7 @@ const fakeLogger = {
   warn: msg => log.push(msg)
 }
 
-test('creates service with typescript', async ({ equal, same, ok }) => {
+test('creates service with typescript', async () => {
   const params = {
     hostname: 'myhost',
     port: 6666,
@@ -65,7 +66,7 @@ test('creates service with typescript', async ({ equal, same, ok }) => {
   equal(process.env.PORT, '6666')
   equal(process.env.PLT_TYPESCRIPT, 'true')
 
-  same(plugins.paths, [{ path: './plugins', encapsulate: false }, './routes'])
+  deepEqual(plugins.paths, [{ path: './plugins', encapsulate: false }, './routes'])
   equal(plugins.typescript, '{PLT_TYPESCRIPT}')
 
   ok(await isFileAccessible(join(tmpDir, 'tsconfig.json')))
@@ -77,7 +78,7 @@ test('creates service with typescript', async ({ equal, same, ok }) => {
   ok(await isFileAccessible(join(tmpDir, 'test', 'helper.ts')))
 })
 
-test('creates service with javascript', async ({ equal, same, ok }) => {
+test('creates service with javascript', async () => {
   const params = {
     hostname: 'myhost',
     port: 6666,
@@ -106,7 +107,7 @@ test('creates service with javascript', async ({ equal, same, ok }) => {
   equal(process.env.PLT_SERVER_HOSTNAME, 'myhost')
   equal(process.env.PORT, '6666')
 
-  same(plugins, { paths: [{ path: './plugins', encapsulate: false }, './routes'] })
+  deepEqual(plugins, { paths: [{ path: './plugins', encapsulate: false }, './routes'] })
   ok(await isFileAccessible(join(tmpDir, 'plugins', 'example.js')))
   ok(await isFileAccessible(join(tmpDir, 'routes', 'root.js')))
 
@@ -115,7 +116,7 @@ test('creates service with javascript', async ({ equal, same, ok }) => {
   ok(await isFileAccessible(join(tmpDir, 'test', 'helper.js')))
 })
 
-test('creates service in a runtime context', async ({ equal, same, ok, notOk }) => {
+test('creates service in a runtime context', async () => {
   const params = {
     isRuntimeContext: true,
     hostname: 'myhost',
@@ -130,7 +131,7 @@ test('creates service in a runtime context', async ({ equal, same, ok, notOk }) 
   }
 
   const serviceEnv = await createService(params, fakeLogger, tmpDir)
-  same(serviceEnv, {
+  deepEqual(serviceEnv, {
     SERVICE_PREFIX_PLT_SERVER_LOGGER_LEVEL: 'info',
     SERVICE_PREFIX_PORT: 6666,
     SERVICE_PREFIX_PLT_SERVER_HOSTNAME: 'myhost'
@@ -144,13 +145,13 @@ test('creates service in a runtime context', async ({ equal, same, ok, notOk }) 
   equal(server, undefined)
 
   const pathToServiceEnvFile = join(tmpDir, '.env')
-  same(await readFile(pathToServiceEnvFile, 'utf8'), '') // file is empty
+  deepEqual(await readFile(pathToServiceEnvFile, 'utf8'), '') // file is empty
   const pathToServiceEnvSampleFile = join(tmpDir, '.env.sample')
-  same(await readFile(pathToServiceEnvSampleFile, 'utf8'), '') // file is empty
+  deepEqual(await readFile(pathToServiceEnvSampleFile, 'utf8'), '') // file is empty
 
-  same(plugins, { paths: [{ path: './plugins', encapsulate: false }, './routes'] })
-  notOk(await isFileAccessible(join(tmpDir, '.github', 'workflows', 'platformatic-static-workspace-deploy.yml')))
-  notOk(await isFileAccessible(join(tmpDir, '.github', 'workflows', 'platformatic-dynamic-workspace-deploy.yml')))
+  deepEqual(plugins, { paths: [{ path: './plugins', encapsulate: false }, './routes'] })
+  ok(!(await isFileAccessible(join(tmpDir, '.github', 'workflows', 'platformatic-static-workspace-deploy.yml'))))
+  ok(!(await isFileAccessible(join(tmpDir, '.github', 'workflows', 'platformatic-dynamic-workspace-deploy.yml'))))
   ok(await isFileAccessible(join(tmpDir, 'plugins', 'example.js')))
   ok(await isFileAccessible(join(tmpDir, 'routes', 'root.js')))
 
