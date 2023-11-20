@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "standard | snazzy && tap test/*test.js && tsd",
+    "test": "standard | snazzy && node ./test/runner.js && tsd",
     "lint": "standard | snazzy"
   },
   "types": "index.d.ts",
@@ -17,13 +17,14 @@
   "devDependencies": {
     "@fastify/cookie": "^8.3.0",
     "@fastify/session": "^10.5.0",
+    "@matteo.collina/tspl": "^0.1.0",
     "@platformatic/db-core": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
     "fast-jwt": "^3.3.0",
     "fastify": "^4.23.2",
+    "glob": "^10.3.10",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "tap": "^16.3.9",
     "tsd": "^0.29.0",
     "why-is-node-running": "^2.2.2",
     "ws": "^8.14.2"

@@ -1,10 +1,11 @@
 'use strict'
-const { test } = require('tap')
+const { test } = require('node:test')
+const { tspl } = require('@matteo.collina/tspl')
 const { getRequestFromContext, getRoles } = require('../lib/utils')
 
 const ANONYMOUS_ROLE = 'anonymous'
-test('should extract request from context', ({ equal, plan }) => {
-  plan(1)
+test('should extract request from context', (t) => {
+  const { equal } = tspl(t, { plan: 1 })
   const fakeContext = {
     reply: {
       request: 'hooray'
@@ -14,8 +15,8 @@ test('should extract request from context', ({ equal, plan }) => {
   equal(res, 'hooray')
 })
 
-test('should throw', ({ throws, plan }) => {
-  plan(2)
+test('should throw', (t) => {
+  const { throws } = tspl(t, { plan: 2 })
   throws(() => {
     getRequestFromContext()
   })
@@ -27,12 +28,12 @@ test('should throw', ({ throws, plan }) => {
   })
 })
 
-test('should get roles from user', ({ same, plan }) => {
-  plan(4)
+test('should get roles from user', (t) => {
+  const { deepEqual } = tspl(t, { plan: 4 })
   const roleKey = 'role'
   {
     const requestWithNoUser = {}
-    same(getRoles(requestWithNoUser, roleKey, ANONYMOUS_ROLE), [ANONYMOUS_ROLE])
+    deepEqual(getRoles(requestWithNoUser, roleKey, ANONYMOUS_ROLE), [ANONYMOUS_ROLE])
   }
   {
     const requestWithStringRoles = {
@@ -40,7 +41,7 @@ test('should get roles from user', ({ same, plan }) => {
         [roleKey]: 'role1,role2,role3'
       }
     }
-    same(getRoles(requestWithStringRoles, roleKey, ANONYMOUS_ROLE), ['role1', 'role2', 'role3'])
+    deepEqual(getRoles(requestWithStringRoles, roleKey, ANONYMOUS_ROLE), ['role1', 'role2', 'role3'])
   }
   {
     const requestWithArrayRoles = {
@@ -48,7 +49,7 @@ test('should get roles from user', ({ same, plan }) => {
         [roleKey]: ['role1', 'role2', 'role3']
       }
     }
-    same(getRoles(requestWithArrayRoles, roleKey, ANONYMOUS_ROLE), ['role1', 'role2', 'role3'])
+    deepEqual(getRoles(requestWithArrayRoles, roleKey, ANONYMOUS_ROLE), ['role1', 'role2', 'role3'])
   }
   {
     const requestWithOtherKindOfRole = {
@@ -56,6 +57,6 @@ test('should get roles from user', ({ same, plan }) => {
         [roleKey]: { role1: true, role2: true }
       }
     }
-    same(getRoles(requestWithOtherKindOfRole, roleKey, ANONYMOUS_ROLE), [ANONYMOUS_ROLE])
+    deepEqual(getRoles(requestWithOtherKindOfRole, roleKey, ANONYMOUS_ROLE), [ANONYMOUS_ROLE])
   }
 })

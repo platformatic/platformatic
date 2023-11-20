@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { equal, fail, ok } = require('node:assert')
 const fastify = require('fastify')
 const core = require('@platformatic/db-core')
 const { connInfo, clear, isSQLite } = require('./helper')
@@ -34,7 +35,7 @@ async function createBasicPages (db, sql) {
   }
 }
 
-test('wrong entity name', async ({ pass, teardown, equal, fail }) => {
+test('wrong entity name', async () => {
   const app = fastify({
     pluginTimeout: 3000
   })
@@ -42,7 +43,7 @@ test('wrong entity name', async ({ pass, teardown, equal, fail }) => {
     ...connInfo,
     events: false,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -75,7 +76,9 @@ test('wrong entity name', async ({ pass, teardown, equal, fail }) => {
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(() => {
+    app.close()
+  })
 
   try {
     await app.ready()
@@ -85,7 +88,7 @@ test('wrong entity name', async ({ pass, teardown, equal, fail }) => {
   }
 })
 
-test('missing entity', async ({ pass, teardown, equal, fail }) => {
+test('missing entity', async () => {
   const app = fastify({
     pluginTimeout: 3000
   })
@@ -93,7 +96,7 @@ test('missing entity', async ({ pass, teardown, equal, fail }) => {
     ...connInfo,
     events: false,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -112,7 +115,9 @@ test('missing entity', async ({ pass, teardown, equal, fail }) => {
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(() => {
+    app.close()
+  })
 
   try {
     await app.ready()

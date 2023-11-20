@@ -39,24 +39,24 @@ module.exports.connInfo = connInfo
 
 module.exports.clear = async function (db, sql) {
   try {
-    await db.query(sql`DROP TABLE pages`)
+    await db.query(sql`DROP TABLE IF EXISTS pages CASCADE`)
   } catch (err) {
   }
   try {
-    await db.query(sql`DROP TABLE categories`)
+    await db.query(sql`DROP TABLE IF EXISTS categories CASCADE`)
   } catch (err) {
   }
 }
 
 async function createBasicPages (db, sql) {
   if (module.exports.isSQLite) {
-    await db.query(sql`CREATE TABLE pages (
+    await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
       id INTEGER PRIMARY KEY,
       title VARCHAR(42),
       user_id INTEGER
     );`)
   } else {
-    await db.query(sql`CREATE TABLE pages (
+    await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
       id SERIAL PRIMARY KEY,
       title VARCHAR(42),
       user_id INTEGER

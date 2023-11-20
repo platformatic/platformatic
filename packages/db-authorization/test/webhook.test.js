@@ -2,9 +2,10 @@
 
 const fastify = require('fastify')
 const auth = require('..')
-const { test } = require('tap')
+const { test } = require('node:test')
+const { tspl } = require('@matteo.collina/tspl')
 const core = require('@platformatic/db-core')
-const { connInfo, clear, isSQLite } = require('./helper')
+const { connInfo, clear, createBasicPages } = require('./helper')
 const { request, Agent, setGlobalDispatcher } = require('undici')
 
 const agent = new Agent({
@@ -46,29 +47,15 @@ async function buildAuthorizer (opts = {}) {
   return app
 }
 
-async function createBasicPages (db, sql) {
-  if (isSQLite) {
-    await db.query(sql`CREATE TABLE pages (
-      id INTEGER PRIMARY KEY,
-      title VARCHAR(42),
-      user_id INTEGER
-    );`)
-  } else {
-    await db.query(sql`CREATE TABLE pages (
-      id SERIAL PRIMARY KEY,
-      title VARCHAR(42),
-      user_id INTEGER
-    );`)
-  }
-}
+test('users can save and update their own pages, read everybody\'s and delete none', async (t) => {
+  const { equal, deepEqual, ok } = tspl(t, { plan: 11 })
 
-test('users can save and update their own pages, read everybody\'s and delete none', async ({ pass, teardown, same, equal }) => {
   const authorizer = await buildAuthorizer()
   const app = fastify()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -101,8 +88,10 @@ test('users can save and update their own pages, read everybody\'s and delete no
       save: false
     }]
   })
-  teardown(app.close.bind(app))
-  teardown(() => authorizer.close())
+  test.after(() => {
+    app.close()
+  })
+  test.after(() => authorizer.close())
 
   await app.ready()
 
@@ -146,7 +135,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -177,7 +166,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -198,7 +187,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), [{
+    deepEqual(res.json(), [{
       id: 1,
       title: 'Hello',
       userId: 42
@@ -225,7 +214,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -254,7 +243,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -265,13 +254,13 @@ test('users can save and update their own pages, read everybody\'s and delete no
   }
 })
 
-test('Non-200 status code', async ({ plan, pass, teardown, same, equal }) => {
-  plan(6)
+test('Non-200 status code', async (t) => {
+  const { equal, deepEqual, ok } = tspl(t, { plan: 6 })
 
   const authorizer = await buildAuthorizer({
     onAuthorize: async (request) => {
       if (request.headers['x-status-code']) {
-        pass('authorizer called, throwing exception')
+        ok('authorizer called, throwing exception')
         const err = new Error('Unauthorized')
         err.statusCode = request.headers['X-STATUS-CODE']
         throw err
@@ -282,7 +271,7 @@ test('Non-200 status code', async ({ plan, pass, teardown, same, equal }) => {
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -315,8 +304,10 @@ test('Non-200 status code', async ({ plan, pass, teardown, same, equal }) => {
       save: false
     }]
   })
-  teardown(app.close.bind(app))
-  teardown(() => authorizer.close())
+  test.after(() => {
+    app.close()
+  })
+  test.after(() => authorizer.close())
 
   await app.ready()
 
@@ -337,7 +328,7 @@ test('Non-200 status code', async ({ plan, pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: null
       },
@@ -378,7 +369,7 @@ test('Non-200 status code', async ({ plan, pass, teardown, same, equal }) => {
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: null
       },
