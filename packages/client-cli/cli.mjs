@@ -212,7 +212,6 @@ async function downloadAndProcess (options) {
   }
 
   if (config && !typesOnly) {
-    console.log('@@@@@@@', config)
     const meta = await analyze({ file: config })
     meta.config.clients = meta.config.clients || []
     if (runtime) {

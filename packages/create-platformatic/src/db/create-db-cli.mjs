@@ -230,18 +230,20 @@ const createPlatformaticDB = async (_args, opts) => {
     // - run the migrations
     // - generate types
     // if we don't generate migrations, we don't ask to apply them (the folder might not exist)
+    let migrationApplied = false
     if (wizardOptions.defaultMigrations && wizardOptions.applyMigrations) {
       const spinner = ora('Applying migrations...').start()
       // We need to apply migrations using the platformatic installed in the project
       try {
         await execa(pkgManager, ['exec', 'platformatic', 'db', 'migrations', 'apply'], { cwd: projectDir })
         spinner.succeed()
+        migrationApplied = true
       } catch (err) {
         logger.trace({ err })
         spinner.fail('Failed applying migrations! Try again by running "platformatic db migrations apply"')
       }
     }
-    if (generatePlugin) {
+    if (generatePlugin && migrationApplied) {
       const spinner = ora('Generating types...').start()
       try {
         await execa(pkgManager, ['exec', 'platformatic', 'db', 'types'], { cwd: projectDir })
