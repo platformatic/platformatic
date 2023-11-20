@@ -1,3 +1,5 @@
+'use strict'
+
 const openApiPathItemNonOperationKeys = ['summary', 'description', 'servers', 'parameters']
 
 function removeOperationPropertiesFromOpenApiPathItem (pathItem) {
