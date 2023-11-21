@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('node:test')
-const { equal, deepEqual, notDeepEqual, ok } = require('node:assert')
+const { equal, deepEqual } = require('node:assert')
 const semver = require('semver')
 const FromZeroEighteenToWillSee = require('../versions/from-zero-eighteen-to-will-see')
 const pkg = require('../package.json')
