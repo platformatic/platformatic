@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { equal, deepEqual, notEqual, rejects, ok } = require('node:assert')
 const { clear, connInfo, isSQLite, isMysql, isPg, isMysql8 } = require('./helper')
 const { connect } = require('..')
 const fakeLogger = {
@@ -9,10 +10,10 @@ const fakeLogger = {
   error: () => {}
 }
 
-test('entity fields', async ({ equal, not, same, teardown }) => {
+test('entity fields', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
 
     if (isSQLite) {
       await db.query(sql`CREATE TABLE pages (
@@ -34,19 +35,19 @@ test('entity fields', async ({ equal, not, same, teardown }) => {
     hooks: {}
   })
   const pageEntity = mapper.entities.page
-  not(pageEntity, undefined)
+  notEqual(pageEntity, undefined)
   equal(pageEntity.name, 'Page')
   equal(pageEntity.singularName, 'page')
   equal(pageEntity.pluralName, 'pages')
-  same(pageEntity.primaryKeys, new Set(['id']))
+  deepEqual(pageEntity.primaryKeys, new Set(['id']))
   equal(pageEntity.table, 'pages')
   equal(pageEntity.camelCasedFields.id.primaryKey, true)
 })
 
-test('entity API', async ({ equal, same, teardown, rejects }) => {
+test('entity API', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
     if (isSQLite) {
       await db.query(sql`CREATE TABLE pages (
         id INTEGER PRIMARY KEY,
@@ -73,7 +74,7 @@ test('entity API', async ({ equal, same, teardown, rejects }) => {
   const pageEntity = mapper.entities.page
   // fixInput
   const fixedInput = pageEntity.fixInput({ id: 42, theTitle: 'Fixme', isPublished: true })
-  same(fixedInput, { id: 42, the_title: 'Fixme', is_published: true })
+  deepEqual(fixedInput, { id: 42, the_title: 'Fixme', is_published: true })
 
   // fixOutput
   const fixedOutput = pageEntity.fixOutput({
@@ -82,25 +83,25 @@ test('entity API', async ({ equal, same, teardown, rejects }) => {
     is_published: true
   })
 
-  same(fixedOutput, { id: 42, theTitle: 'Fixme', isPublished: true })
+  deepEqual(fixedOutput, { id: 42, theTitle: 'Fixme', isPublished: true })
 
   // empty fixOutput
-  same(pageEntity.fixOutput(undefined), undefined)
+  deepEqual(pageEntity.fixOutput(undefined), undefined)
 
   // find
   const findResult = await pageEntity.find({ fields: ['theTitle'] })
-  same(findResult, [{ theTitle: 'foo' }, { theTitle: 'bar' }])
+  deepEqual(findResult, [{ theTitle: 'foo' }, { theTitle: 'bar' }])
 
   // count
   const countResult = await pageEntity.count({ fields: ['theTitle'] })
-  same(countResult, 2)
+  deepEqual(countResult, 2)
 
   // insert - single
   const insertResult = await pageEntity.insert({
     inputs: [{ theTitle: 'foobar', isPublished: false }],
     fields: ['id', 'theTitle', 'isPublished']
   })
-  same(insertResult, [{ id: '3', theTitle: 'foobar', isPublished: false }])
+  deepEqual(insertResult, [{ id: '3', theTitle: 'foobar', isPublished: false }])
 
   // insert - multiple
   const insertMultipleResult = await pageEntity.insert({
@@ -110,19 +111,19 @@ test('entity API', async ({ equal, same, teardown, rejects }) => {
     ],
     fields: ['id', 'theTitle', 'isPublished']
   })
-  same(insertMultipleResult, [
+  deepEqual(insertMultipleResult, [
     { id: '4', theTitle: 'platformatic', isPublished: false },
     { id: '5', theTitle: 'foobar', isPublished: true }
   ])
 
   // save - new record
-  same(await pageEntity.save({
+  deepEqual(await pageEntity.save({
     input: { theTitle: 'fourth page', isPublished: false },
     fields: ['id', 'theTitle', 'isPublished']
   }), { id: 6, theTitle: 'fourth page', isPublished: false })
 
   // save - update record
-  same(await pageEntity.save({
+  deepEqual(await pageEntity.save({
     input: { id: 4, theTitle: 'foofoo', isPublished: true },
     fields: ['id', 'theTitle', 'isPublished']
   }), { id: '4', theTitle: 'foofoo', isPublished: true })
@@ -136,7 +137,7 @@ test('entity API', async ({ equal, same, teardown, rejects }) => {
     await pageEntity.save({ input: { fakeColumn: 'foobar' } })
   })
   // delete
-  same(await pageEntity.delete({
+  deepEqual(await pageEntity.delete({
     where: {
       id: {
         eq: 2
@@ -146,10 +147,10 @@ test('entity API', async ({ equal, same, teardown, rejects }) => {
   }), [{ id: '2', theTitle: 'bar' }])
 })
 
-test('empty save', async ({ equal, same, teardown, rejects }) => {
+test('empty save', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
     if (isSQLite) {
       await db.query(sql`CREATE TABLE pages (
         id INTEGER PRIMARY KEY,
@@ -174,13 +175,13 @@ test('empty save', async ({ equal, same, teardown, rejects }) => {
     input: {},
     fields: ['id', 'theTitle']
   })
-  same(insertResult, { id: '1', theTitle: null })
+  deepEqual(insertResult, { id: '1', theTitle: null })
 })
 
-test('insert with explicit integer PK value', async ({ same, teardown }) => {
+test('insert with explicit integer PK value', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
     await db.query(sql`CREATE TABLE pages (
       id INTEGER PRIMARY KEY,
       title varchar(255) NOT NULL
@@ -198,16 +199,16 @@ test('insert with explicit integer PK value', async ({ same, teardown }) => {
     fields: ['id', 'title'],
     inputs: [{ id: 13, title: '13th page with explicit id equal to 13' }]
   })
-  same(newPage, {
+  deepEqual(newPage, {
     id: '13',
     title: '13th page with explicit id equal to 13'
   })
 })
 
-test('insert with explicit uuid PK value', { skip: !isSQLite }, async ({ same, teardown }) => {
+test('insert with explicit uuid PK value', { skip: !isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
     await db.query(sql`CREATE TABLE pages (
       id uuid PRIMARY KEY,
       title varchar(255) NOT NULL
@@ -229,16 +230,16 @@ test('insert with explicit uuid PK value', { skip: !isSQLite }, async ({ same, t
       title: '13th page with explicit id equal to 13'
     }]
   })
-  same(newPage, {
+  deepEqual(newPage, {
     id: '00000000-0000-0000-0000-000000000013',
     title: '13th page with explicit id equal to 13'
   })
 })
 
-test('insert with explicit uuid PK value without rowid', { skip: !isSQLite }, async ({ same, teardown }) => {
+test('insert with explicit uuid PK value without rowid', { skip: !isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
     await db.query(sql`CREATE TABLE pages (
       id uuid PRIMARY KEY,
       title varchar(255) NOT NULL
@@ -260,16 +261,16 @@ test('insert with explicit uuid PK value without rowid', { skip: !isSQLite }, as
       title: '13th page with explicit id equal to 13'
     }]
   })
-  same(newPage, {
+  deepEqual(newPage, {
     id: '00000000-0000-0000-0000-000000000013',
     title: '13th page with explicit id equal to 13'
   })
 })
 
-test('insert without fields to retrieve', { skip: !isSQLite }, async ({ same, teardown }) => {
+test('insert without fields to retrieve', { skip: !isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
     await db.query(sql`CREATE TABLE pages (
       id INTEGER PRIMARY KEY,
       title varchar(255) NOT NULL
@@ -300,20 +301,20 @@ test('insert without fields to retrieve', { skip: !isSQLite }, async ({ same, te
     }
   })
 
-  same(newPage, {
+  deepEqual(newPage, {
     id: '13',
     title: '13th page with explicit id equal to 13'
   })
 })
 
-test('[SQLite] - UUID', { skip: !isSQLite }, async ({ pass, teardown, same, equal }) => {
+test('[SQLite] - UUID', { skip: !isSQLite }, async () => {
   const mapper = await connect({
     connectionString: connInfo.connectionString,
     log: fakeLogger,
     ignore: {},
     hooks: {},
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
 
@@ -324,7 +325,7 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async ({ pass, teardown, same, equa
       );`)
     }
   })
-  teardown(() => mapper.db.dispose())
+  test.after(() => mapper.db.dispose())
 
   const pageEntity = mapper.entities.page
 
@@ -332,7 +333,7 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async ({ pass, teardown, same, equa
   {
     const res = await pageEntity.save({ input: { title: 'Hello' } })
     id = res.id
-    same(res, {
+    deepEqual(res, {
       id,
       title: 'Hello'
     })
@@ -340,7 +341,7 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async ({ pass, teardown, same, equa
 
   {
     const res = await pageEntity.find({ where: { id: { eq: id } } })
-    same(res, [{
+    deepEqual(res, [{
       id,
       title: 'Hello'
     }])
@@ -348,17 +349,17 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async ({ pass, teardown, same, equa
 
   {
     const res = await pageEntity.save({ input: { id, title: 'Hello World' } })
-    same(res, {
+    deepEqual(res, {
       id,
       title: 'Hello World'
     })
   }
 })
 
-test('[SQLite] allows to have VARCHAR PK', { skip: !isSQLite }, async ({ same, teardown }) => {
+test('[SQLite] allows to have VARCHAR PK', { skip: !isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
 
     await db.query(sql`CREATE TABLE pages (
       id varchar(255) PRIMARY KEY,
@@ -377,16 +378,16 @@ test('[SQLite] allows to have VARCHAR PK', { skip: !isSQLite }, async ({ same, t
     fields: ['id', 'title'],
     inputs: [{ id: 'varchar_id', title: '13th page with explicit id equal to 13' }]
   })
-  same(newPage, {
+  deepEqual(newPage, {
     id: 'varchar_id',
     title: '13th page with explicit id equal to 13'
   })
 })
 
-test('mixing snake and camel case', async ({ pass, teardown, same, equal }) => {
+test('mixing snake and camel case', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
 
     if (isMysql) {
       await db.query(sql`
@@ -465,7 +466,7 @@ test('mixing snake and camel case', async ({ pass, teardown, same, equal }) => {
 
       ]
     })
-    same(res, [{
+    deepEqual(res, [{
       id: '1',
       title: 'A fiction',
       categoryId: newCategory.id
@@ -483,7 +484,7 @@ test('mixing snake and camel case', async ({ pass, teardown, same, equal }) => {
         title: 'A fiction', body_content: 'This is our first fiction', category_id: newCategory.id
       }
     })
-    same(res, {
+    deepEqual(res, {
       id: '3',
       title: 'A fiction',
       categoryId: newCategory.id
@@ -491,10 +492,10 @@ test('mixing snake and camel case', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('only include wanted fields - with foreign', async ({ pass, teardown, same, equal }) => {
+test('only include wanted fields - with foreign', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
 
     if (isMysql) {
       await db.query(sql`
@@ -570,17 +571,17 @@ test('only include wanted fields - with foreign', async ({ pass, teardown, same,
         }
       ]
     })
-    same(res, [{
+    deepEqual(res, [{
       id: '1',
       categoryId: newCategory.id
     }])
   }
 })
 
-test('only include wanted fields - without foreign', async ({ pass, teardown, same, equal }) => {
+test('only include wanted fields - without foreign', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
 
     if (isMysql) {
       await db.query(sql`
@@ -656,17 +657,17 @@ test('only include wanted fields - without foreign', async ({ pass, teardown, sa
         }
       ]
     })
-    same(res, [{
+    deepEqual(res, [{
       id: '1',
       title: 'A fiction'
     }])
   }
 })
 
-test('include all fields', async ({ pass, teardown, same, equal }) => {
+test('include all fields', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
 
     if (isMysql) {
       await db.query(sql`
@@ -740,7 +741,7 @@ test('include all fields', async ({ pass, teardown, same, equal }) => {
         }
       ]
     })
-    same(res, [{
+    deepEqual(res, [{
       id: '1',
       title: 'A fiction',
       bodyContent: 'This is our first fiction',
@@ -749,10 +750,10 @@ test('include all fields', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('include possible values of enum columns', { skip: isSQLite }, async ({ same, teardown }) => {
+test('include possible values of enum columns', { skip: isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
 
     if (isPg) {
       await db.query(sql`
@@ -780,13 +781,13 @@ test('include possible values of enum columns', { skip: isSQLite }, async ({ sam
   })
   const pageEntity = mapper.entities.page
   const typeField = pageEntity.fields.type
-  same(typeField.enum, ['blank', 'non-blank'])
+  deepEqual(typeField.enum, ['blank', 'non-blank'])
 })
 
-test('JSON type', { skip: !(isPg || isMysql8) }, async ({ teardown, same, equal, pass }) => {
+test('JSON type', { skip: !(isPg || isMysql8) }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
 
     await db.query(sql`CREATE TABLE simple_types (
         id SERIAL PRIMARY KEY,
@@ -804,22 +805,22 @@ test('JSON type', { skip: !(isPg || isMysql8) }, async ({ teardown, same, equal,
   const simpleType = mapper.entities.simpleType
 
   // save - new record
-  same(await simpleType.save({
+  deepEqual(await simpleType.save({
     input: { config: { foo: 'bar' } }
   }), { id: 1, config: { foo: 'bar' } })
 
   // save - update
-  same(await simpleType.save({
+  deepEqual(await simpleType.save({
     input: { id: 1, config: { foo: 'bar', bar: 'foo' } }
   }), { id: 1, config: { foo: 'bar', bar: 'foo' } })
 
   // insert
-  same(await simpleType.insert({
+  deepEqual(await simpleType.insert({
     inputs: [{ config: { foo: 'bar' } }]
   }), [{ id: 2, config: { foo: 'bar' } }])
 
   // updateMany
-  same(await simpleType.updateMany({
+  deepEqual(await simpleType.updateMany({
     where: {
       id: {
         eq: 2
@@ -834,10 +835,10 @@ test('JSON type', { skip: !(isPg || isMysql8) }, async ({ teardown, same, equal,
   }), [{ id: 2, config: { foo: 'bar', bar: 'foo' } }])
 })
 
-test('stored and virtual generated columns should return for SQLite', { skip: !(isSQLite) }, async ({ teardown, same }) => {
+test('stored and virtual generated columns should return for SQLite', { skip: !(isSQLite) }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
 
     await db.query(sql`CREATE TABLE generated_test (
       id INTEGER PRIMARY KEY,
@@ -858,22 +859,22 @@ test('stored and virtual generated columns should return for SQLite', { skip: !(
   const generatedTest = mapper.entities.generatedTest
 
   // save - new record
-  same(await generatedTest.save({
+  deepEqual(await generatedTest.save({
     input: { test: 1 }
   }), { id: 1, test: 1, testStored: 2, testVirtual: 4 })
 
   // save - update
-  same(await generatedTest.save({
+  deepEqual(await generatedTest.save({
     input: { id: 1, test: 2 }
   }), { id: 1, test: 2, testStored: 4, testVirtual: 8 })
 
   // insert
-  same(await generatedTest.insert({
+  deepEqual(await generatedTest.insert({
     inputs: [{ test: 4 }]
   }), [{ id: 2, test: 4, testStored: 8, testVirtual: 16 }])
 
   // updateMany
-  same(await generatedTest.updateMany({
+  deepEqual(await generatedTest.updateMany({
     where: {
       id: {
         eq: 2
@@ -885,10 +886,10 @@ test('stored and virtual generated columns should return for SQLite', { skip: !(
   }), [{ id: 2, test: 8, testStored: 16, testVirtual: 32 }])
 })
 
-test('stored generated columns should return for pg', { skip: !(isPg) }, async ({ teardown, same }) => {
+test('stored generated columns should return for pg', { skip: !(isPg) }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
 
     await db.query(sql`CREATE TABLE generated_test (
       id SERIAL PRIMARY KEY,
@@ -908,22 +909,22 @@ test('stored generated columns should return for pg', { skip: !(isPg) }, async (
   const generatedTest = mapper.entities.generatedTest
 
   // save - new record
-  same(await generatedTest.save({
+  deepEqual(await generatedTest.save({
     input: { test: 1 }
   }), { id: 1, test: 1, testStored: 2 })
 
   // save - update
-  same(await generatedTest.save({
+  deepEqual(await generatedTest.save({
     input: { id: 1, test: 2 }
   }), { id: 1, test: 2, testStored: 4 })
 
   // insert
-  same(await generatedTest.insert({
+  deepEqual(await generatedTest.insert({
     inputs: [{ test: 4 }]
   }), [{ id: 2, test: 4, testStored: 8 }])
 
   // updateMany
-  same(await generatedTest.updateMany({
+  deepEqual(await generatedTest.updateMany({
     where: {
       id: {
         eq: 2
@@ -935,10 +936,10 @@ test('stored generated columns should return for pg', { skip: !(isPg) }, async (
   }), [{ id: 2, test: 8, testStored: 16 }])
 })
 
-test('stored and virtual generated columns should return for pg', { skip: (isPg || isSQLite) }, async ({ teardown, same }) => {
+test('stored and virtual generated columns should return for pg', { skip: (isPg || isSQLite) }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
 
     await db.query(sql`CREATE TABLE generated_test (
       id INTEGER UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -959,22 +960,22 @@ test('stored and virtual generated columns should return for pg', { skip: (isPg 
   const generatedTest = mapper.entities.generatedTest
 
   // save - new record
-  same(await generatedTest.save({
+  deepEqual(await generatedTest.save({
     input: { test: 1 }
   }), { id: 1, test: 1, testStored: 2, testVirtual: 4 })
 
   // save - update
-  same(await generatedTest.save({
+  deepEqual(await generatedTest.save({
     input: { id: 1, test: 2 }
   }), { id: 1, test: 2, testStored: 4, testVirtual: 8 })
 
   // insert
-  same(await generatedTest.insert({
+  deepEqual(await generatedTest.insert({
     inputs: [{ test: 4 }]
   }), [{ id: 2, test: 4, testStored: 8, testVirtual: 16 }])
 
   // updateMany
-  same(await generatedTest.updateMany({
+  deepEqual(await generatedTest.updateMany({
     where: {
       id: {
         eq: 2
@@ -986,10 +987,10 @@ test('stored and virtual generated columns should return for pg', { skip: (isPg 
   }), [{ id: 2, test: 8, testStored: 16, testVirtual: 32 }])
 })
 
-test('nested transactions', async ({ equal, same, teardown, rejects }) => {
+test('nested transactions', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
     if (isSQLite) {
       await db.query(sql`CREATE TABLE pages (
         id INTEGER PRIMARY KEY,
@@ -1016,14 +1017,14 @@ test('nested transactions', async ({ equal, same, teardown, rejects }) => {
       fields: ['id', 'theTitle'],
       tx
     })
-    same(insertResult, { id: '1', theTitle: null })
+    deepEqual(insertResult, { id: '1', theTitle: null })
   })
 })
 
-test('array support (PG)', { skip: !(isPg) }, async ({ teardown, same, rejects }) => {
+test('array support (PG)', { skip: !(isPg) }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
 
     await db.query(sql`CREATE TABLE generated_test (
       id SERIAL PRIMARY KEY,
@@ -1043,50 +1044,50 @@ test('array support (PG)', { skip: !(isPg) }, async ({ teardown, same, rejects }
   const generatedTest = mapper.entities.generatedTest
 
   // save - new record
-  same(await generatedTest.save({
+  deepEqual(await generatedTest.save({
     input: { test: [1, 2, 3], checkmark: true }
   }), { id: 1, test: [1, 2, 3], checkmark: true })
 
   // save - update
-  same(await generatedTest.save({
+  deepEqual(await generatedTest.save({
     input: { id: 1, test: [4, 5, 6], checkmark: true }
   }), { id: 1, test: [4, 5, 6], checkmark: true })
 
   // insert
-  same(await generatedTest.insert({
+  deepEqual(await generatedTest.insert({
     inputs: [{ test: [4], checkmark: true }]
   }), [{ id: 2, test: [4], checkmark: true }])
 
   // where any
-  same(await generatedTest.find({
+  deepEqual(await generatedTest.find({
     where: {
       test: { any: 4 }
     }
   }), [{ id: 1, test: [4, 5, 6], checkmark: true }, { id: 2, test: [4], checkmark: true }])
 
   // where all
-  same(await generatedTest.find({
+  deepEqual(await generatedTest.find({
     where: {
       test: { all: 4 }
     }
   }), [{ id: 2, test: [4], checkmark: true }])
 
   // where contains
-  same(await generatedTest.find({
+  deepEqual(await generatedTest.find({
     where: {
       test: { contains: [4] }
     }
   }), [{ id: 1, test: [4, 5, 6], checkmark: true }, { id: 2, test: [4], checkmark: true }])
 
   // where contained
-  same(await generatedTest.find({
+  deepEqual(await generatedTest.find({
     where: {
       test: { contained: [4, 5, 6] }
     }
   }), [{ id: 1, test: [4, 5, 6], checkmark: true }, { id: 2, test: [4], checkmark: true }])
 
   // where overlaps
-  same(await generatedTest.find({
+  deepEqual(await generatedTest.find({
     where: {
       test: { overlaps: [4] }
     }
@@ -1114,7 +1115,7 @@ test('array support (PG)', { skip: !(isPg) }, async ({ teardown, same, rejects }
   }))
 
   // updateMany
-  same(await generatedTest.updateMany({
+  deepEqual(await generatedTest.updateMany({
     where: {
       checkmark: { eq: true }
     },

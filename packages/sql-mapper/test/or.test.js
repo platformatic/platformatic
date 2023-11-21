@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { ok, deepEqual } = require('node:assert')
 const { connect } = require('..')
 const { clear, connInfo, isSQLite, isMysql } = require('./helper')
 const fakeLogger = {
@@ -8,14 +9,14 @@ const fakeLogger = {
   error: () => { }
 }
 
-test('where clause with or operation', async ({ pass, teardown, same }) => {
+test('where clause with or operation', async () => {
   const mapper = await connect({
     ...connInfo,
     autoTimestamp: true,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      teardown(() => db.dispose())
-      pass('onDatabaseLoad called')
+      test.after(() => db.dispose())
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
 
@@ -86,7 +87,7 @@ test('where clause with or operation', async ({ pass, teardown, same }) => {
       }
     })
 
-    same(data, [
+    deepEqual(data, [
       { id: '1', title: 'Dog', longText: 'Foo', counter: 10 },
       { id: '2', title: 'Cat', longText: 'Bar', counter: 20 }
     ])
@@ -110,7 +111,7 @@ test('where clause with or operation', async ({ pass, teardown, same }) => {
       }
     })
 
-    same(data, [
+    deepEqual(data, [
       { id: '2', title: 'Cat', longText: 'Bar', counter: 20 },
       { id: '3', title: 'Mouse', longText: 'Baz', counter: 30 },
       { id: '4', title: 'Duck', longText: 'A duck tale', counter: 40 }
@@ -135,7 +136,7 @@ test('where clause with or operation', async ({ pass, teardown, same }) => {
       }
     })
 
-    same(data, [
+    deepEqual(data, [
       { id: '1', title: 'Dog', longText: 'Foo', counter: 10 },
       { id: '4', title: 'Duck', longText: 'A duck tale', counter: 40 }
     ])
@@ -159,7 +160,7 @@ test('where clause with or operation', async ({ pass, teardown, same }) => {
       }
     })
 
-    same(data, [
+    deepEqual(data, [
       { id: '1', title: 'Dog', longText: 'Foo', counter: 10 },
       { id: '3', title: 'Mouse', longText: 'Baz', counter: 30 }
     ])
@@ -186,7 +187,7 @@ test('where clause with or operation', async ({ pass, teardown, same }) => {
       }
     })
 
-    same(data, [
+    deepEqual(data, [
       { id: '1', title: 'Dog', longText: 'Foo', counter: 10 }
     ])
   }

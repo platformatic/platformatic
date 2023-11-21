@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { tspl } = require('@matteo.collina/tspl')
 const { connect } = require('..')
 const { clear, connInfo, isSQLite } = require('./helper')
 const fakeLogger = {
@@ -8,14 +9,14 @@ const fakeLogger = {
   error: () => {}
 }
 
-test('basic hooks', async ({ pass, teardown, same, equal, plan, fail }) => {
-  plan(14)
+test('basic hooks', async (t) => {
+  const { ok, ifError, deepEqual } = tspl(t, { plan: 14 })
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      teardown(() => db.dispose())
-      pass('onDatabaseLoad called')
+      test.after(() => db.dispose())
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
 
@@ -34,13 +35,13 @@ test('basic hooks', async ({ pass, teardown, same, equal, plan, fail }) => {
     hooks: {
       Page: {
         noKey () {
-          fail('noKey should never be called')
+          ifError('noKey should never be called')
         },
         async save (original, { input, ctx, fields }) {
-          pass('save  called')
+          ok('save  called')
 
           if (!input.id) {
-            same(input, {
+            deepEqual(input, {
               title: 'Hello'
             })
 
@@ -51,7 +52,7 @@ test('basic hooks', async ({ pass, teardown, same, equal, plan, fail }) => {
               fields
             })
           } else {
-            same(input, {
+            deepEqual(input, {
               id: 1,
               title: 'Hello World'
             })
@@ -66,9 +67,9 @@ test('basic hooks', async ({ pass, teardown, same, equal, plan, fail }) => {
           }
         },
         async find (original, args) {
-          pass('find called')
+          ok('find called')
 
-          same(args.where, {
+          deepEqual(args.where, {
             id: {
               eq: '1'
             }
@@ -78,18 +79,18 @@ test('basic hooks', async ({ pass, teardown, same, equal, plan, fail }) => {
               eq: '2'
             }
           }
-          same(args.fields, ['id', 'title'])
+          deepEqual(args.fields, ['id', 'title'])
           return original(args)
         },
         async insert (original, args) {
-          pass('insert called')
+          ok('insert called')
 
-          same(args.inputs, [{
+          deepEqual(args.inputs, [{
             title: 'hello'
           }, {
             title: 'world'
           }])
-          same(args.fields, ['id', 'title'])
+          deepEqual(args.fields, ['id', 'title'])
           return original(args)
         }
       }
@@ -98,14 +99,14 @@ test('basic hooks', async ({ pass, teardown, same, equal, plan, fail }) => {
 
   const entity = mapper.entities.page
 
-  same(await entity.save({ input: { title: 'Hello' } }), {
+  deepEqual(await entity.save({ input: { title: 'Hello' } }), {
     id: 1,
     title: 'Hello from hook'
   })
 
-  same(await entity.find({ where: { id: { eq: 1 } }, fields: ['id', 'title'] }), [])
+  deepEqual(await entity.find({ where: { id: { eq: 1 } }, fields: ['id', 'title'] }), [])
 
-  same(await entity.save({ input: { id: 1, title: 'Hello World' } }), {
+  deepEqual(await entity.save({ input: { id: 1, title: 'Hello World' } }), {
     id: 1,
     title: 'Hello from hook 2'
   })
@@ -113,14 +114,14 @@ test('basic hooks', async ({ pass, teardown, same, equal, plan, fail }) => {
   await entity.insert({ inputs: [{ title: 'hello' }, { title: 'world' }], fields: ['id', 'title'] })
 })
 
-test('addEntityHooks', async ({ pass, teardown, same, equal, plan, fail, throws }) => {
-  plan(15)
+test('addEntityHooks', async (t) => {
+  const { ok, ifError, deepEqual, throws } = tspl(t, { plan: 15 })
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      teardown(() => db.dispose())
-      pass('onDatabaseLoad called')
+      test.after(() => db.dispose())
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
 
@@ -138,17 +139,17 @@ test('addEntityHooks', async ({ pass, teardown, same, equal, plan, fail, throws 
     }
   })
 
-  throws(() => mapper.addEntityHooks('user', {}), 'Cannot find entity user')
+  throws(() => mapper.addEntityHooks('user', {}), { message: 'Cannot find entity user' })
 
   mapper.addEntityHooks('page', {
     noKey () {
-      fail('noKey should never be called')
+      ifError('noKey should never be called')
     },
     async save (original, { input, ctx, fields }) {
-      pass('save  called')
+      ok('save  called')
 
       if (!input.id) {
-        same(input, {
+        deepEqual(input, {
           title: 'Hello'
         })
 
@@ -159,7 +160,7 @@ test('addEntityHooks', async ({ pass, teardown, same, equal, plan, fail, throws 
           fields
         })
       } else {
-        same(input, {
+        deepEqual(input, {
           id: 1,
           title: 'Hello World'
         })
@@ -174,9 +175,9 @@ test('addEntityHooks', async ({ pass, teardown, same, equal, plan, fail, throws 
       }
     },
     async find (original, args) {
-      pass('find called')
+      ok('find called')
 
-      same(args.where, {
+      deepEqual(args.where, {
         id: {
           eq: '1'
         }
@@ -186,32 +187,32 @@ test('addEntityHooks', async ({ pass, teardown, same, equal, plan, fail, throws 
           eq: '2'
         }
       }
-      same(args.fields, ['id', 'title'])
+      deepEqual(args.fields, ['id', 'title'])
       return original(args)
     },
     async insert (original, args) {
-      pass('insert called')
+      ok('insert called')
 
-      same(args.inputs, [{
+      deepEqual(args.inputs, [{
         title: 'hello'
       }, {
         title: 'world'
       }])
-      same(args.fields, ['id', 'title'])
+      deepEqual(args.fields, ['id', 'title'])
       return original(args)
     }
   })
 
   const entity = mapper.entities.page
 
-  same(await entity.save({ input: { title: 'Hello' } }), {
+  deepEqual(await entity.save({ input: { title: 'Hello' } }), {
     id: 1,
     title: 'Hello from hook'
   })
 
-  same(await entity.find({ where: { id: { eq: 1 } }, fields: ['id', 'title'] }), [])
+  deepEqual(await entity.find({ where: { id: { eq: 1 } }, fields: ['id', 'title'] }), [])
 
-  same(await entity.save({ input: { id: 1, title: 'Hello World' } }), {
+  deepEqual(await entity.save({ input: { id: 1, title: 'Hello World' } }), {
     id: 1,
     title: 'Hello from hook 2'
   })
@@ -219,14 +220,14 @@ test('addEntityHooks', async ({ pass, teardown, same, equal, plan, fail, throws 
   await entity.insert({ inputs: [{ title: 'hello' }, { title: 'world' }], fields: ['id', 'title'] })
 })
 
-test('basic hooks with smaller cap name', async ({ pass, teardown, same, equal, plan, fail }) => {
-  plan(14)
+test('basic hooks with smaller cap name', async (t) => {
+  const { ok, ifError, deepEqual } = tspl(t, { plan: 14 })
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      teardown(() => db.dispose())
-      pass('onDatabaseLoad called')
+      test.after(() => db.dispose())
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
 
@@ -245,13 +246,13 @@ test('basic hooks with smaller cap name', async ({ pass, teardown, same, equal, 
     hooks: {
       page: {
         noKey () {
-          fail('noKey should never be called')
+          ifError('noKey should never be called')
         },
         async save (original, { input, ctx, fields }) {
-          pass('save  called')
+          ok('save  called')
 
           if (!input.id) {
-            same(input, {
+            deepEqual(input, {
               title: 'Hello'
             })
 
@@ -262,7 +263,7 @@ test('basic hooks with smaller cap name', async ({ pass, teardown, same, equal, 
               fields
             })
           } else {
-            same(input, {
+            deepEqual(input, {
               id: 1,
               title: 'Hello World'
             })
@@ -277,9 +278,9 @@ test('basic hooks with smaller cap name', async ({ pass, teardown, same, equal, 
           }
         },
         async find (original, args) {
-          pass('find called')
+          ok('find called')
 
-          same(args.where, {
+          deepEqual(args.where, {
             id: {
               eq: '1'
             }
@@ -289,18 +290,18 @@ test('basic hooks with smaller cap name', async ({ pass, teardown, same, equal, 
               eq: '2'
             }
           }
-          same(args.fields, ['id', 'title'])
+          deepEqual(args.fields, ['id', 'title'])
           return original(args)
         },
         async insert (original, args) {
-          pass('insert called')
+          ok('insert called')
 
-          same(args.inputs, [{
+          deepEqual(args.inputs, [{
             title: 'hello'
           }, {
             title: 'world'
           }])
-          same(args.fields, ['id', 'title'])
+          deepEqual(args.fields, ['id', 'title'])
           return original(args)
         }
       }
@@ -309,14 +310,14 @@ test('basic hooks with smaller cap name', async ({ pass, teardown, same, equal, 
 
   const entity = mapper.entities.page
 
-  same(await entity.save({ input: { title: 'Hello' } }), {
+  deepEqual(await entity.save({ input: { title: 'Hello' } }), {
     id: 1,
     title: 'Hello from hook'
   })
 
-  same(await entity.find({ where: { id: { eq: 1 } }, fields: ['id', 'title'] }), [])
+  deepEqual(await entity.find({ where: { id: { eq: 1 } }, fields: ['id', 'title'] }), [])
 
-  same(await entity.save({ input: { id: 1, title: 'Hello World' } }), {
+  deepEqual(await entity.save({ input: { id: 1, title: 'Hello World' } }), {
     id: 1,
     title: 'Hello from hook 2'
   })

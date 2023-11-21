@@ -134,7 +134,7 @@ module.exports.setupDatabase = async function ({ seed, cache, t }) {
     connectionString: connInfo.connectionString,
     log: fakeLogger,
     onDatabaseLoad: async (db, sql) => {
-      t.teardown(() => db.dispose())
+      t.after(() => db.dispose())
 
       for (const query of seed) {
         await db.query(sql(query))
@@ -145,3 +145,24 @@ module.exports.setupDatabase = async function ({ seed, cache, t }) {
     cache
   })
 }
+
+function match (actual, expected) {
+  for (const key in expected) {
+    if (key in actual) {
+      if (typeof expected[key] === 'object' && expected[key] !== null) {
+        if (!match(actual[key], expected[key])) {
+          return false
+        }
+      } else {
+        if (actual[key] !== expected[key]) {
+          return false
+        }
+      }
+    } else {
+      return false
+    }
+  }
+  return true
+}
+
+module.exports.match = match

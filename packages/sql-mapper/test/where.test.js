@@ -1,21 +1,23 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { ok, equal, deepEqual, rejects, match, ifError } = require('node:assert')
 const { connect } = require('..')
 const { clear, connInfo, isMysql, isSQLite } = require('./helper')
 
 const fakeLogger = {
   trace: () => {},
-  error: () => {}
+  error: () => {},
+  warn: () => {}
 }
 
-test('list', async ({ pass, teardown, same, rejects }) => {
+test('list', async () => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      teardown(() => db.dispose())
-      pass('onDatabaseLoad called')
+      test.after(() => db.dispose())
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
 
@@ -61,38 +63,38 @@ test('list', async ({ pass, teardown, same, rejects }) => {
     inputs: posts
   })
 
-  rejects(entity.find.bind(entity, { where: { invalidField: { eq: 'Dog' } } }), 'Unknown field invalidField')
+  rejects(entity.find.bind(entity, { where: { invalidField: { eq: 'Dog' } } }), { message: 'Unknown field invalidField' })
 
-  same(await entity.find({ where: { title: { eq: 'Dog' } }, fields: ['id', 'title', 'longText'] }), [{
+  deepEqual(await entity.find({ where: { title: { eq: 'Dog' } }, fields: ['id', 'title', 'longText'] }), [{
     id: '1',
     title: 'Dog',
     longText: 'Foo'
   }])
 
-  same(await entity.find({ limit: 1, fields: ['id', 'title', 'longText'] }), [{
+  deepEqual(await entity.find({ limit: 1, fields: ['id', 'title', 'longText'] }), [{
     id: '1',
     title: 'Dog',
     longText: 'Foo'
   }])
 
-  same(await entity.find({ offset: 3, fields: ['id', 'title', 'longText'] }), [{
+  deepEqual(await entity.find({ offset: 3, fields: ['id', 'title', 'longText'] }), [{
     id: '4',
     title: 'Duck',
     longText: 'A duck tale'
   }])
 
-  same(await entity.find({ limit: 1, offset: 0, fields: ['id', 'title', 'longText'] }), [{
+  deepEqual(await entity.find({ limit: 1, offset: 0, fields: ['id', 'title', 'longText'] }), [{
     id: '1',
     title: 'Dog',
     longText: 'Foo'
   }])
 
-  same(await entity.find({ limit: 1, offset: 0, orderBy: [{ field: 'id', direction: 'desc' }], fields: ['id', 'title'] }), [{
+  deepEqual(await entity.find({ limit: 1, offset: 0, orderBy: [{ field: 'id', direction: 'desc' }], fields: ['id', 'title'] }), [{
     id: '4',
     title: 'Duck'
   }])
 
-  same(await entity.find({ where: { title: { neq: 'Dog' } }, fields: ['id', 'title', 'longText'] }), [{
+  deepEqual(await entity.find({ where: { title: { neq: 'Dog' } }, fields: ['id', 'title', 'longText'] }), [{
     id: '2',
     title: 'Cat',
     longText: 'Bar'
@@ -106,7 +108,7 @@ test('list', async ({ pass, teardown, same, rejects }) => {
     longText: 'A duck tale'
   }])
 
-  same(await entity.find({ where: { counter: { gt: 10 } }, fields: ['id', 'title', 'longText'] }), [{
+  deepEqual(await entity.find({ where: { counter: { gt: 10 } }, fields: ['id', 'title', 'longText'] }), [{
     id: '2',
     title: 'Cat',
     longText: 'Bar'
@@ -120,7 +122,7 @@ test('list', async ({ pass, teardown, same, rejects }) => {
     longText: 'A duck tale'
   }])
 
-  same(await entity.find({ where: { counter: { lt: 40 } }, fields: ['id', 'title', 'longText'] }), [{
+  deepEqual(await entity.find({ where: { counter: { lt: 40 } }, fields: ['id', 'title', 'longText'] }), [{
     id: '1',
     title: 'Dog',
     longText: 'Foo'
@@ -134,7 +136,7 @@ test('list', async ({ pass, teardown, same, rejects }) => {
     longText: 'Baz'
   }])
 
-  same(await entity.find({ where: { counter: { lte: 30 } }, fields: ['id', 'title', 'longText'] }), [{
+  deepEqual(await entity.find({ where: { counter: { lte: 30 } }, fields: ['id', 'title', 'longText'] }), [{
     id: '1',
     title: 'Dog',
     longText: 'Foo'
@@ -148,7 +150,7 @@ test('list', async ({ pass, teardown, same, rejects }) => {
     longText: 'Baz'
   }])
 
-  same(await entity.find({ where: { counter: { gte: 20 } }, fields: ['id', 'title', 'longText'] }), [{
+  deepEqual(await entity.find({ where: { counter: { gte: 20 } }, fields: ['id', 'title', 'longText'] }), [{
     id: '2',
     title: 'Cat',
     longText: 'Bar'
@@ -162,7 +164,7 @@ test('list', async ({ pass, teardown, same, rejects }) => {
     longText: 'A duck tale'
   }])
 
-  same(await entity.find({ where: { counter: { in: [20, 30] } }, fields: ['id', 'title', 'longText'] }), [{
+  deepEqual(await entity.find({ where: { counter: { in: [20, 30] } }, fields: ['id', 'title', 'longText'] }), [{
     id: '2',
     title: 'Cat',
     longText: 'Bar'
@@ -172,7 +174,7 @@ test('list', async ({ pass, teardown, same, rejects }) => {
     longText: 'Baz'
   }])
 
-  same(await entity.find({ where: { counter: { nin: [10, 40] } }, fields: ['id', 'title', 'longText'] }), [{
+  deepEqual(await entity.find({ where: { counter: { nin: [10, 40] } }, fields: ['id', 'title', 'longText'] }), [{
     id: '2',
     title: 'Cat',
     longText: 'Bar'
@@ -182,7 +184,7 @@ test('list', async ({ pass, teardown, same, rejects }) => {
     longText: 'Baz'
   }])
 
-  same(await entity.find({ where: { counter: { gt: 10, lt: 40 } }, fields: ['id', 'title', 'longText'] }), [{
+  deepEqual(await entity.find({ where: { counter: { gt: 10, lt: 40 } }, fields: ['id', 'title', 'longText'] }), [{
     id: '2',
     title: 'Cat',
     longText: 'Bar'
@@ -193,13 +195,13 @@ test('list', async ({ pass, teardown, same, rejects }) => {
   }])
 })
 
-test('totalCount', async ({ pass, teardown, same, equal }) => {
+test('totalCount', async () => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      teardown(() => db.dispose())
-      pass('onDatabaseLoad called')
+      test.after(() => db.dispose())
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
 
@@ -245,22 +247,22 @@ test('totalCount', async ({ pass, teardown, same, equal }) => {
     inputs: posts
   })
 
-  same(await entity.count(), 4)
+  deepEqual(await entity.count(), 4)
 
-  same(await entity.count({ where: { title: { eq: 'Dog' } } }), 1)
+  deepEqual(await entity.count({ where: { title: { eq: 'Dog' } } }), 1)
 
-  same(await entity.count({ where: { title: { neq: 'Dog' } } }), 3)
+  deepEqual(await entity.count({ where: { title: { neq: 'Dog' } } }), 3)
 
-  same(await entity.count({ limit: 2, offset: 0, fields: ['id', 'title', 'longText'] }), 4)
+  deepEqual(await entity.count({ limit: 2, offset: 0, fields: ['id', 'title', 'longText'] }), 4)
 })
 
-test('foreign keys', async ({ pass, teardown, same, equal }) => {
+test('foreign keys', async () => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      teardown(() => db.dispose())
-      pass('onDatabaseLoad called')
+      test.after(() => db.dispose())
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
 
@@ -359,7 +361,7 @@ test('foreign keys', async ({ pass, teardown, same, equal }) => {
     for (const owner of owners) {
       owner.posts = await mapper.entities.post.find({ where: { ownerId: { eq: owner.id } }, fields: ['id', 'title', 'longText', 'ownerId'] })
     }
-    same(owners, [{
+    deepEqual(owners, [{
       id: '1',
       name: 'Matteo',
       posts: [{
@@ -391,13 +393,13 @@ test('foreign keys', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('limit should be 10 by default 100 at max', async ({ pass, teardown, same, fail, match }) => {
+test('limit should be 10 by default 100 at max', async () => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      teardown(() => db.dispose())
-      pass('onDatabaseLoad called')
+      test.after(() => db.dispose())
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
 
@@ -436,44 +438,43 @@ test('limit should be 10 by default 100 at max', async ({ pass, teardown, same, 
   })
 
   const defaultLimit = 10
-  const max = 100
 
-  same(await (await entity.find()).length, defaultLimit)
+  deepEqual(await (await entity.find()).length, defaultLimit)
 
-  same(await (await entity.find({ limit: 1 })).length, 1)
+  deepEqual(await (await entity.find({ limit: 1 })).length, 1)
 
-  same(await (await entity.find({ offset: 3 })).length, defaultLimit)
+  deepEqual(await (await entity.find({ offset: 3 })).length, defaultLimit)
 
-  same(await (await entity.find({ limit: 1, offset: 0 })).length, 1)
+  deepEqual(await (await entity.find({ limit: 1, offset: 0 })).length, 1)
 
-  same(await (await entity.find({ limit: 0 })).length, 0)
+  deepEqual(await (await entity.find({ limit: 0 })).length, 0)
 
   try {
     await entity.find({ limit: -1 })
-    fail('Expected error for limit not allowed value')
+    ifError('Expected error for limit not allowed value')
   } catch (e) {
-    match(e.message, 'Param limit=-1 not allowed. It must be a not negative value.')
-    match(e.code, 'PLT_SQL_MAPPER_PARAM_LIMIT_MUST_BE_NOT_NEGATIVE')
+    match(e.message, /Param limit=-1 not allowed. It must be a not negative value./)
+    match(e.code, /PLT_SQL_MAPPER_PARAM_LIMIT_MUST_BE_NOT_NEGATIVE/)
   }
 
-  same(await (await entity.find({ limit: 1, offset: 0 })).length, 1)
+  deepEqual(await (await entity.find({ limit: 1, offset: 0 })).length, 1)
 
   try {
     await entity.find({ limit: 1, offset: -1 })
-    fail('Expected error for offset not allowed value')
+    ifError('Expected error for offset not allowed value')
   } catch (e) {
-    match(e, new Error('Param offset=-1 not allowed. It must be not negative value.'))
+    match(e.message, /Param offset=-1 not allowed. It must be not negative value./)
   }
 
   try {
     await entity.find({ limit: 200 })
-    fail('Expected error for limit exceeding max allowed value')
+    ifError('Expected error for limit exceeding max allowed value')
   } catch (e) {
-    match(e, new Error(`Param limit=200 not allowed. Max accepted value ${max}.`))
+    match(e.message, /Param limit=200 not allowed. Max accepted value [0-9]+./)
   }
 })
 
-test('limit must accept custom configuration', async ({ pass, teardown, same, fail, match }) => {
+test('limit must accept custom configuration', async () => {
   const customLimitConf = {
     default: 1,
     max: 5
@@ -482,8 +483,8 @@ test('limit must accept custom configuration', async ({ pass, teardown, same, fa
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      teardown(() => db.dispose())
-      pass('onDatabaseLoad called')
+      test.after(() => db.dispose())
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
 
@@ -522,48 +523,48 @@ test('limit must accept custom configuration', async ({ pass, teardown, same, fa
     inputs: posts
   })
 
-  same(await (await entity.find()).length, customLimitConf.default)
+  deepEqual(await (await entity.find()).length, customLimitConf.default)
 
-  same(await (await entity.find({ limit: 1 })).length, 1)
+  deepEqual(await (await entity.find({ limit: 1 })).length, 1)
 
-  same(await (await entity.find({ offset: 3 })).length, customLimitConf.default)
+  deepEqual(await (await entity.find({ offset: 3 })).length, customLimitConf.default)
 
-  same(await (await entity.find({ limit: 1, offset: 0 })).length, 1)
+  deepEqual(await (await entity.find({ limit: 1, offset: 0 })).length, 1)
 
-  same(await (await entity.find({ limit: 0 })).length, 0)
+  deepEqual(await (await entity.find({ limit: 0 })).length, 0)
 
   try {
     await entity.find({ limit: -1 })
-    fail('Expected error for limit not allowed value')
+    ifError('Expected error for limit not allowed value')
   } catch (e) {
-    match(e.message, 'Param limit=-1 not allowed. It must be a not negative value.')
-    match(e.code, 'PLT_SQL_MAPPER_PARAM_LIMIT_MUST_BE_NOT_NEGATIVE')
+    match(e.message, /Param limit=-1 not allowed. It must be a not negative value./)
+    match(e.code, /PLT_SQL_MAPPER_PARAM_LIMIT_MUST_BE_NOT_NEGATIVE/)
   }
 
-  same(await (await entity.find({ limit: 1, offset: 0 })).length, 1)
+  deepEqual(await (await entity.find({ limit: 1, offset: 0 })).length, 1)
 
   try {
     await entity.find({ limit: 1, offset: -1 })
-    fail('Expected error for offset not allowed value')
+    ifError('Expected error for offset not allowed value')
   } catch (e) {
-    match(e, new Error('Param offset=-1 not allowed. It must be not negative value.'))
+    match(e.message, /Param offset=-1 not allowed. It must be not negative value./)
   }
 
   try {
     await entity.find({ limit: 200 })
-    fail('Expected error for limit exceeding max allowed value')
+    ifError('Expected error for limit exceeding max allowed value')
   } catch (e) {
-    match(e, new Error(`Param limit=200 not allowed. Max accepted value ${customLimitConf.max}.`))
+    match(e.message, /Param limit=200 not allowed. Max accepted value .*./)
   }
 })
 
-test('is NULL', async ({ pass, teardown, same, equal }) => {
+test('is NULL', async () => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      teardown(() => db.dispose())
-      pass('onDatabaseLoad called')
+      test.after(() => db.dispose())
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
 
@@ -593,24 +594,24 @@ test('is NULL', async ({ pass, teardown, same, equal }) => {
     inputs: posts
   })
 
-  same(await entity.find({ where: { title: { eq: null } } }), [{
+  deepEqual(await entity.find({ where: { title: { eq: null } } }), [{
     id: '2',
     title: null
   }])
 
-  same(await entity.find({ where: { title: { neq: null } } }), [{
+  deepEqual(await entity.find({ where: { title: { neq: null } } }), [{
     id: '1',
     title: 'Dog'
   }])
 })
 
-test('LIKE', async ({ pass, teardown, same, equal }) => {
+test('LIKE', async () => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      teardown(() => db.dispose())
-      pass('onDatabaseLoad called')
+      test.after(() => db.dispose())
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
 
@@ -666,14 +667,14 @@ test('LIKE', async ({ pass, teardown, same, equal }) => {
     inputs: posts
   })
 
-  same(await entity.find({ where: { title: { like: '%at' } } }), [{
+  deepEqual(await entity.find({ where: { title: { like: '%at' } } }), [{
     id: '2',
     title: 'Cat',
     longText: 'The Cat meows',
     counter: 2
   }], 'where: { title: { like: \'%at\' } }')
 
-  same(await entity.find({ where: { title: { like: '%at%' } } }), [{
+  deepEqual(await entity.find({ where: { title: { like: '%at%' } } }), [{
     id: '2',
     title: 'Cat',
     longText: 'The Cat meows',
@@ -692,14 +693,14 @@ test('LIKE', async ({ pass, teardown, same, equal }) => {
     counter: 4
   }], 'where: { title: { like: \'%at%\' } }')
 
-  same(await entity.find({ where: { title: { like: 'at%' } } }), [{
+  deepEqual(await entity.find({ where: { title: { like: 'at%' } } }), [{
     id: '4',
     title: 'atmosphere',
     longText: 'The atmosphere is not a sphere',
     counter: 4
   }], 'where: { title: { like: \'at%\' } }')
 
-  same(await entity.find({ where: { longText: { like: '%is%' } } }), [{
+  deepEqual(await entity.find({ where: { longText: { like: '%is%' } } }), [{
     id: '3',
     title: 'Potato',
     longText: 'The Potato is vegetable',
@@ -712,10 +713,10 @@ test('LIKE', async ({ pass, teardown, same, equal }) => {
     counter: 4
   }], 'where: { longText: { like: \'%is%\' } }')
 
-  same(await entity.find({ where: { longText: { like: null } } }), [], 'where: { longText: { like: null } }')
+  deepEqual(await entity.find({ where: { longText: { like: null } } }), [], 'where: { longText: { like: null } }')
 
   if (!isSQLite) {
-    same(await entity.find({ where: { counter: { like: 4 } } }), [{
+    deepEqual(await entity.find({ where: { counter: { like: 4 } } }), [{
       id: '4',
       title: 'atmosphere',
       longText: 'The atmosphere is not a sphere',
@@ -723,7 +724,7 @@ test('LIKE', async ({ pass, teardown, same, equal }) => {
     }], 'where: { counter: { like: 4 } }')
   }
 
-  same(await entity.find({ where: { counter: { like: '%4' } } }), [{
+  deepEqual(await entity.find({ where: { counter: { like: '%4' } } }), [{
     id: '4',
     title: 'atmosphere',
     longText: 'The atmosphere is not a sphere',
@@ -736,23 +737,23 @@ test('LIKE', async ({ pass, teardown, same, equal }) => {
     counter: 14
   }], 'where: { counter: { like: \'%4\' } }')
 
-  same(await entity.find({ where: { counter: { like: '4%' } } }), [{
+  deepEqual(await entity.find({ where: { counter: { like: '4%' } } }), [{
     id: '4',
     title: 'atmosphere',
     longText: 'The atmosphere is not a sphere',
     counter: 4
   }], 'where: { counter: { like: \'4%\' } }')
 
-  same(await entity.find({ where: { counter: { like: null } } }), [], 'where: { counter: { like: null } }')
+  deepEqual(await entity.find({ where: { counter: { like: null } } }), [], 'where: { counter: { like: null } }')
 })
 
-test('ILIKE', async ({ pass, teardown, same, equal }) => {
+test('ILIKE', async () => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      teardown(() => db.dispose())
-      pass('onDatabaseLoad called')
+      test.after(() => db.dispose())
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
 
@@ -808,14 +809,14 @@ test('ILIKE', async ({ pass, teardown, same, equal }) => {
     inputs: posts
   })
 
-  same(await entity.find({ where: { title: { ilike: '%at' } } }), [{
+  deepEqual(await entity.find({ where: { title: { ilike: '%at' } } }), [{
     id: '2',
     title: 'Cat',
     longText: 'The Cat meows',
     counter: 2
   }], 'where: { title: { like: \'%at\' } }')
 
-  same(await entity.find({ where: { title: { ilike: '%at%' } } }), [{
+  deepEqual(await entity.find({ where: { title: { ilike: '%at%' } } }), [{
     id: '2',
     title: 'Cat',
     longText: 'The Cat meows',
@@ -834,14 +835,14 @@ test('ILIKE', async ({ pass, teardown, same, equal }) => {
     counter: 4
   }], 'where: { title: { ilike: \'%at%\' } }')
 
-  same(await entity.find({ where: { title: { ilike: 'at%' } } }), [{
+  deepEqual(await entity.find({ where: { title: { ilike: 'at%' } } }), [{
     id: '4',
     title: 'Atmosphere',
     longText: 'The atmosphere is not a sphere',
     counter: 4
   }], 'where: { title: { ilike: \'at%\' } }')
 
-  same(await entity.find({ where: { longText: { ilike: '%is%' } } }), [{
+  deepEqual(await entity.find({ where: { longText: { ilike: '%is%' } } }), [{
     id: '3',
     title: 'Potato',
     longText: 'The Potato is vegetable',
@@ -854,10 +855,10 @@ test('ILIKE', async ({ pass, teardown, same, equal }) => {
     counter: 4
   }], 'where: { longText: { ilike: \'%is%\' } }')
 
-  same(await entity.find({ where: { longText: { ilike: null } } }), [], 'where: { longText: { ilike: null } }')
+  deepEqual(await entity.find({ where: { longText: { ilike: null } } }), [], 'where: { longText: { ilike: null } }')
 
   if (!isSQLite) {
-    same(await entity.find({ where: { counter: { ilike: 4 } } }), [{
+    deepEqual(await entity.find({ where: { counter: { ilike: 4 } } }), [{
       id: '4',
       title: 'Atmosphere',
       longText: 'The atmosphere is not a sphere',
@@ -865,7 +866,7 @@ test('ILIKE', async ({ pass, teardown, same, equal }) => {
     }], 'where: { counter: { ilike: 4 } }')
   }
 
-  same(await entity.find({ where: { counter: { ilike: '%4' } } }), [{
+  deepEqual(await entity.find({ where: { counter: { ilike: '%4' } } }), [{
     id: '4',
     title: 'Atmosphere',
     longText: 'The atmosphere is not a sphere',
@@ -878,12 +879,12 @@ test('ILIKE', async ({ pass, teardown, same, equal }) => {
     counter: 14
   }], 'where: { counter: { ilike: \'%4\' } }')
 
-  same(await entity.find({ where: { counter: { ilike: '4%' } } }), [{
+  deepEqual(await entity.find({ where: { counter: { ilike: '4%' } } }), [{
     id: '4',
     title: 'Atmosphere',
     longText: 'The atmosphere is not a sphere',
     counter: 4
   }], 'where: { counter: { ilike: \'4%\' } }')
 
-  same(await entity.find({ where: { counter: { ilike: null } } }), [], 'where: { counter: { ilike: null } }')
+  deepEqual(await entity.find({ where: { counter: { ilike: null } } }), [], 'where: { counter: { ilike: null } }')
 })

@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { deepEqual } = require('node:assert')
 const { clear, connInfo, isSQLite } = require('./helper')
 const { createConnectionPool } = require('..')
 const fakeLogger = {
@@ -8,13 +9,13 @@ const fakeLogger = {
   error: () => {}
 }
 
-test('createConnectionPool', async ({ equal, same, teardown, rejects }) => {
+test('createConnectionPool', async () => {
   const { db, sql } = await createConnectionPool({
     connectionString: connInfo.connectionString,
     log: fakeLogger
   })
   await clear(db, sql)
-  teardown(() => db.dispose())
+  test.after(() => db.dispose())
   if (isSQLite) {
     await db.query(sql`CREATE TABLE pages (
         id INTEGER PRIMARY KEY,
@@ -31,7 +32,7 @@ test('createConnectionPool', async ({ equal, same, teardown, rejects }) => {
   await db.query(sql`INSERT INTO pages (the_title, is_published) VALUES ('foo', true)`)
 
   const res = await db.query(sql`SELECT * FROM pages`)
-  same(res, [{
+  deepEqual(res, [{
     id: 1,
     the_title: 'foo',
     is_published: true

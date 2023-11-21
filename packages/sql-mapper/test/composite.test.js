@@ -1,7 +1,8 @@
 'use strict'
 
 const { clear, connInfo, isSQLite, isMysql, isPg } = require('./helper')
-const { test } = require('tap')
+const { test } = require('node:test')
+const { deepEqual } = require('node:assert')
 const { connect } = require('..')
 const fakeLogger = {
   trace: () => {},
@@ -9,11 +10,11 @@ const fakeLogger = {
   error: () => {}
 }
 
-test('composite primary keys', async ({ equal, same, teardown, rejects }) => {
+test('composite primary keys', async () => {
   /* https://github.com/platformatic/platformatic/issues/299 */
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
 
     if (isSQLite) {
       await db.query(sql`CREATE TABLE pages (
@@ -88,17 +89,17 @@ test('composite primary keys', async ({ equal, same, teardown, rejects }) => {
   const page = await pageEntity.save({
     input: { theTitle: 'foobar' }
   })
-  same(page, { id: '1', theTitle: 'foobar' })
+  deepEqual(page, { id: '1', theTitle: 'foobar' })
 
   const user = await userEntity.save({
     input: { username: 'mcollina' }
   })
-  same(user, { id: '1', username: 'mcollina' })
+  deepEqual(user, { id: '1', username: 'mcollina' })
 
   const user2 = await userEntity.save({
     input: { username: 'lucamaraschi' }
   })
-  same(user2, { id: '2', username: 'lucamaraschi' })
+  deepEqual(user2, { id: '2', username: 'lucamaraschi' })
 
   const editor1 = await editorEntity.save({
     input: {
@@ -107,7 +108,7 @@ test('composite primary keys', async ({ equal, same, teardown, rejects }) => {
       role: 'admin'
     }
   })
-  same(editor1, { pageId: '1', userId: '1', role: 'admin' })
+  deepEqual(editor1, { pageId: '1', userId: '1', role: 'admin' })
 
   const editor2 = await editorEntity.save({
     input: {
@@ -116,7 +117,7 @@ test('composite primary keys', async ({ equal, same, teardown, rejects }) => {
       role: 'author'
     }
   })
-  same(editor2, { pageId: '1', userId: '2', role: 'author' })
+  deepEqual(editor2, { pageId: '1', userId: '2', role: 'author' })
 
   await editorEntity.save({
     input: {
@@ -127,7 +128,7 @@ test('composite primary keys', async ({ equal, same, teardown, rejects }) => {
   })
 
   const editors = await editorEntity.find({ orderBy: [{ field: 'userId', direction: 'ASC' }] })
-  same(editors, [{
+  deepEqual(editors, [{
     pageId: '1',
     userId: '1',
     role: 'captain'
@@ -150,7 +151,7 @@ test('composite primary keys', async ({ equal, same, teardown, rejects }) => {
       role: 'author'
     }]
   })
-  same(editorsInserted, [{
+  deepEqual(editorsInserted, [{
     pageId: '1',
     userId: '1',
     role: 'admin'

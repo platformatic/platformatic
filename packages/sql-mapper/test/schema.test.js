@@ -1,17 +1,18 @@
-const { test } = require('tap')
+const { test } = require('node:test')
+const { equal, ok, deepEqual, throws, ifError } = require('node:assert')
 const { connect } = require('..')
 
-const { connInfo, isSQLite, isMysql, isMysql8, isPg, clear } = require('./helper')
+const { connInfo, isSQLite, isMysql, isMysql8, isPg, clear, match } = require('./helper')
 
 const fakeLogger = {
   trace: () => {},
   error: () => {}
 }
 
-test('uses tables from different schemas', { skip: isSQLite }, async ({ pass, teardown, equal }) => {
+test('uses tables from different schemas', { skip: isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
 
     await db.query(sql`CREATE SCHEMA IF NOT EXISTS test1;`)
     if (isMysql || isMysql8) {
@@ -58,13 +59,13 @@ test('uses tables from different schemas', { skip: isSQLite }, async ({ pass, te
   equal(userEntity.singularName, 'test2User')
   equal(userEntity.pluralName, 'test2Users')
   equal(userEntity.schema, 'test2')
-  pass()
+  ok(true)
 })
 
-test('find enums correctly using schemas', { skip: isSQLite }, async ({ pass, teardown, equal, match }) => {
+test('find enums correctly using schemas', { skip: isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
 
     await db.query(sql`CREATE SCHEMA IF NOT EXISTS test1;`)
     if (isMysql || isMysql8) {
@@ -102,7 +103,7 @@ test('find enums correctly using schemas', { skip: isSQLite }, async ({ pass, te
   equal(pageEntity.name, 'Test1Page')
   equal(pageEntity.singularName, 'test1Page')
   equal(pageEntity.pluralName, 'test1Pages')
-  match(mapper.dbschema, [
+  ok(match(mapper.dbschema, [
     {
       schema: 'test1',
       table: 'pages',
@@ -126,14 +127,14 @@ test('find enums correctly using schemas', { skip: isSQLite }, async ({ pass, te
         }
       ]
     }
-  ])
-  pass()
+  ]))
+  ok(true)
 })
 
-test('if schema is empty array, should not load entities from tables in explicit schema', { skip: isSQLite }, async ({ pass, teardown, equal }) => {
+test('if schema is empty array, should not load entities from tables in explicit schema', { skip: isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
 
     await db.query(sql`CREATE SCHEMA IF NOT EXISTS test1;`)
     if (isMysql || isMysql8) {
@@ -172,13 +173,13 @@ test('if schema is empty array, should not load entities from tables in explicit
   })
 
   equal(Object.keys(mapper.entities).length, 0)
-  pass()
+  ok(true)
 })
 
-test('[pg] if schema is empty array, should find entities only in default \'public\' schema', { skip: !isPg }, async ({ pass, teardown, equal }) => {
+test('[pg] if schema is empty array, should find entities only in default \'public\' schema', { skip: !isPg }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
 
     await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
       id SERIAL PRIMARY KEY,
@@ -205,13 +206,13 @@ test('[pg] if schema is empty array, should find entities only in default \'publ
   equal(pageEntity.singularName, 'page')
   equal(pageEntity.pluralName, 'pages')
   equal(pageEntity.schema, 'public')
-  pass()
+  ok(true)
 })
 
-test('[sqlite] if sqllite, ignores schema information', { skip: !isSQLite }, async ({ pass, teardown, equal }) => {
+test('[sqlite] if sqllite, ignores schema information', { skip: !isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
     await db.query(sql`CREATE TABLE "pages" (
       "id" INTEGER PRIMARY KEY,
       "title" TEXT NOT NULL
@@ -232,13 +233,13 @@ test('[sqlite] if sqllite, ignores schema information', { skip: !isSQLite }, asy
   equal(pageEntity.singularName, 'page')
   equal(pageEntity.pluralName, 'pages')
   equal(pageEntity.schema, null)
-  pass()
+  ok(true)
 })
 
-test('addEntityHooks in entities with schema', { skip: isSQLite }, async ({ pass, teardown, same, equal, plan, fail, throws, end }) => {
+test('addEntityHooks in entities with schema', { skip: isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
 
     await db.query(sql`CREATE SCHEMA IF NOT EXISTS test1;`)
     if (isMysql || isMysql8) {
@@ -261,17 +262,17 @@ test('addEntityHooks in entities with schema', { skip: isSQLite }, async ({ pass
     schema: ['test1']
   })
 
-  throws(() => mapper.addEntityHooks('user', {}), 'Cannot find entity user')
+  throws(() => mapper.addEntityHooks('user', {}), { message: 'Cannot find entity user' })
 
   mapper.addEntityHooks('test1Page', {
     noKey () {
-      fail('noKey should never be called')
+      ifError('noKey should never be called')
     },
     async save (original, { input, ctx, fields }) {
-      pass('save  called')
+      ok('save  called')
 
       if (!input.id) {
-        same(input, {
+        deepEqual(input, {
           title: 'Hello'
         })
 
@@ -282,7 +283,7 @@ test('addEntityHooks in entities with schema', { skip: isSQLite }, async ({ pass
           fields
         })
       } else {
-        same(input, {
+        deepEqual(input, {
           id: 1,
           title: 'Hello World'
         })
@@ -297,9 +298,9 @@ test('addEntityHooks in entities with schema', { skip: isSQLite }, async ({ pass
       }
     },
     async find (original, args) {
-      pass('find called')
+      ok('find called')
 
-      same(args.where, {
+      deepEqual(args.where, {
         id: {
           eq: '1'
         }
@@ -309,44 +310,43 @@ test('addEntityHooks in entities with schema', { skip: isSQLite }, async ({ pass
           eq: '2'
         }
       }
-      same(args.fields, ['id', 'title'])
+      deepEqual(args.fields, ['id', 'title'])
       return original(args)
     },
     async insert (original, args) {
-      pass('insert called')
+      ok('insert called')
 
-      same(args.inputs, [{
+      deepEqual(args.inputs, [{
         title: 'hello'
       }, {
         title: 'world'
       }])
-      same(args.fields, ['id', 'title'])
+      deepEqual(args.fields, ['id', 'title'])
       return original(args)
     }
   })
 
   const entity = mapper.entities.test1Page
 
-  same(await entity.save({ input: { title: 'Hello' } }), {
+  deepEqual(await entity.save({ input: { title: 'Hello' } }), {
     id: 1,
     title: 'Hello from hook'
   })
 
-  same(await entity.find({ where: { id: { eq: 1 } }, fields: ['id', 'title'] }), [])
+  deepEqual(await entity.find({ where: { id: { eq: 1 } }, fields: ['id', 'title'] }), [])
 
-  same(await entity.save({ input: { id: 1, title: 'Hello World' } }), {
+  deepEqual(await entity.save({ input: { id: 1, title: 'Hello World' } }), {
     id: 1,
     title: 'Hello from hook 2'
   })
 
   await entity.insert({ inputs: [{ title: 'hello' }, { title: 'world' }], fields: ['id', 'title'] })
-  end()
 })
 
-test('uses tables from different schemas with FK', { skip: isSQLite }, async ({ pass, teardown, equal }) => {
+test('uses tables from different schemas with FK', { skip: isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
 
     await db.query(sql`CREATE SCHEMA IF NOT EXISTS test1;`)
     if (isMysql || isMysql8) {
@@ -402,13 +402,13 @@ test('uses tables from different schemas with FK', { skip: isSQLite }, async ({ 
   const userRelation = userEntity.relations[0]
   equal(userRelation.foreignEntityName, 'test1Page')
   equal(userRelation.entityName, 'test2User')
-  pass()
+  ok(true)
 })
 
-test('recreate mapper from schema', async ({ pass, teardown, equal, match, fail }) => {
+test('recreate mapper from schema', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(() => db.dispose())
 
     if (isMysql || isMysql8) {
       await db.query(sql`
@@ -452,23 +452,23 @@ test('recreate mapper from schema', async ({ pass, teardown, equal, match, fail 
       trace (msg) {
         if (knownQueries.indexOf(msg.query?.text) < 0) {
           console.log(msg)
-          fail('no trace')
+          ifError('no trace')
         }
       },
       error (...msg) {
         console.log(...msg)
-        fail('no error')
+        ifError('no error')
       }
     },
     dbschema,
     ignore: {},
     hooks: {}
   })
-  teardown(() => mapper2.db.dispose())
+  test.after(() => mapper2.db.dispose())
 
   const pageEntity = mapper2.entities.page
   equal(pageEntity.name, 'Page')
   equal(pageEntity.singularName, 'page')
   equal(pageEntity.pluralName, 'pages')
-  pass()
+  ok(true)
 })
