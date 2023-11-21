@@ -142,11 +142,15 @@ class ConfigManager extends EventEmitter {
 
   _transformConfig () {}
 
-  async parse () {
+  async parse (replaceEnv = true) {
     try {
       if (this.fullPath) {
         const configString = await this.load()
-        this.current = this._parser(await this.replaceEnv(configString))
+        if (replaceEnv) {
+          this.current = this._parser(await this.replaceEnv(configString))
+        } else {
+          this.current = this._parser(await this.load())
+        }
         // try updating the config format to latest
         try {
           let meta = await analyze({ config: this.current })
@@ -179,6 +183,7 @@ class ConfigManager extends EventEmitter {
       await this._transformConfig()
       return true
     } catch (err) {
+      console.error(err)
       if (err.name === 'MissingValueError') {
         if (!this.#isEnvVariable(err.key)) {
           throw new errors.InvalidPlaceholderError(err.key, err.key)

@@ -6,7 +6,7 @@ const parseArgs = require('minimist')
 const deepmerge = require('@fastify/deepmerge')
 const errors = require('./errors')
 
-async function loadConfig (minimistConfig, _args, app, overrides = {}) {
+async function loadConfig (minimistConfig, _args, app, overrides = {}, replaceEnv = true) {
   const args = parseArgs(_args, deepmerge({ all: true })({
     string: ['allow-env'],
     default: {
@@ -39,7 +39,7 @@ async function loadConfig (minimistConfig, _args, app, overrides = {}) {
   app = loaded.app
   const configManager = loaded.configManager
 
-  const parsingResult = await configManager.parse()
+  const parsingResult = await configManager.parse(replaceEnv)
   if (!parsingResult) {
     const err = new errors.ConfigurationDoesNotValidateAgainstSchemaError()
     err.validationErrors = configManager.validationErrors
