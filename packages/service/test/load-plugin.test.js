@@ -5,6 +5,8 @@ require('./helper')
 
 const assert = require('node:assert')
 const { test } = require('node:test')
+const { createGunzip } = require('node:zlib')
+const { pipeline } = require('node:stream/promises')
 const { request } = require('undici')
 const { buildServer, platformaticService } = require('..')
 
@@ -65,4 +67,60 @@ test('catch errors from the other side', async (t) => {
     error: 'Internal Server Error',
     message: 'kaboom'
   })
+})
+
+test('accept packages', async (t) => {
+  const app = await buildServer({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugins: {
+      packages: [{
+        name: '@fastify/compress',
+        options: {
+          threshold: 1 // 1 byte
+        }
+      }]
+    }
+  })
+
+  t.after(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const res = await (request(app.url, {
+    headers: {
+      'accept-encoding': 'gzip'
+    }
+  }))
+  assert.strictEqual(res.statusCode, 200)
+  let body = ''
+  await pipeline(res.body, createGunzip(), async function * (stream) {
+    stream.setEncoding('utf8')
+    for await (const chunk of stream) {
+      body += chunk
+    }
+  })
+  assert.deepStrictEqual(JSON.parse(body), { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
+})
+
+test('accept packages / string form', async (t) => {
+  const app = await buildServer({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugins: {
+      packages: ['@fastify/compress']
+    }
+  })
+
+  t.after(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  assert.match(app.printPlugins(), /@fastify\/compress/)
 })

@@ -2,14 +2,26 @@
 
 const fp = require('fastify-plugin')
 const autoload = require('@fastify/autoload')
-const { stat } = require('fs').promises
+const { stat } = require('node:fs').promises
+const { createRequire } = require('node:module')
+const { join } = require('node:path')
+const { pathToFileURL } = require('node:url')
 
 module.exports = fp(async function (app, opts) {
-  for (let plugin of opts.paths) {
+  // fake require next to the configManager dirname
+  const _require = createRequire(join(app.platformatic.configManager.dirname, 'package.json'))
+  for (const plugin of opts.packages || []) {
+    const name = typeof plugin === 'string' ? plugin : plugin.name
+    const url = pathToFileURL(_require.resolve(name))
+    const loaded = await import(url)
+    await app.register(loaded, plugin.options)
+  }
+
+  for (let plugin of opts.paths || []) {
     if (typeof plugin === 'string') {
       plugin = { path: plugin, encapsulate: true }
     }
-    if ((await stat(plugin.path)).isDirectory()) {
+    if (plugin.path && (await stat(plugin.path)).isDirectory()) {
       const patternOptions = patternOptionsFromPlugin(plugin)
 
       app.register(autoload, {
@@ -27,7 +39,7 @@ module.exports = fp(async function (app, opts) {
         ...patternOptions
       })
     } else {
-      let loaded = await import(`file://${plugin.path}`)
+      let loaded = await import(pathToFileURL(plugin.path))
       /* c8 ignore next 3 */
       if (loaded.__esModule === true || typeof loaded.default === 'function') {
         loaded = loaded.default
@@ -56,7 +68,11 @@ function patternOptionsFromPlugin (plugin) {
   const config = {}
 
   // Expected keys for autoload plugin options that expect regexp patterns
-  const patternOptionKeys = ['ignorePattern', 'indexPattern', 'autoHooksPattern']
+  const patternOptionKeys = [
+    'ignorePattern',
+    'indexPattern',
+    'autoHooksPattern'
+  ]
 
   for (const key of patternOptionKeys) {
     const pattern = plugin[key]
