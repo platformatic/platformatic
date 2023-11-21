@@ -117,7 +117,11 @@ Supported object properties:
 ### `plugins`
 
 An optional object that defines the plugins loaded by Platformatic Service.
-- **`paths`** (**required**, `array`): an array of paths (`string`)
+- **`packages`**: : an array of packages/modules (`string`)
+  or an array of objects composed as follows:
+  - `name` (`string`): the name of the package to `import`; required.
+  - `options` (`object`): Optional plugin options.
+- **`paths`** (**optional**, `array`): an array of paths (`string`)
   or an array of objects composed as follows,
   - `path` (`string`): Relative path to plugin's entry point.
   - `options` (`object`): Optional plugin options.
@@ -140,6 +144,12 @@ _Example_
 ```json
 {
   "plugins": {
+    "packages": [{
+      "name": "@fastify/compress",
+      "options": {
+        "threshold": 1
+      }
+    }],
     "paths": [{
       "path": "./my-plugin.js",
       "options": {

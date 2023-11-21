@@ -437,7 +437,8 @@ const plugins = {
               type: 'object',
               additionalProperties: true
             }
-          }
+          },
+          required: ['name']
         }]
       }
     },
