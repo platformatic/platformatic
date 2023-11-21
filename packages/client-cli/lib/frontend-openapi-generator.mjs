@@ -66,14 +66,21 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
       .filter((p) => p.in === 'query')
       .map((p) => p.name)
   }
+
+  function getHeaderParams (operationParams) {
+    return operationParams
+      .filter((p) => p.in === 'header')
+      .map((p) => p.name)
+  }
   for (const operation of operations) {
     const { operationId, responses } = operation.operation
     const operationRequestName = `${capitalize(operationId)}Request`
     const underscoredOperationId = `_${operationId}`
     let queryParams = []
-
+    let headerParams = []
     if (operation.operation.parameters) {
       queryParams = getQueryParamsString(operation.operation.parameters)
+      headerParams = getHeaderParams(operation.operation.parameters)
     }
     allOperations.push(operationId)
     const { method, path } = operation
@@ -137,7 +144,11 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
             writer.write('method: ').quote().write(method.toUpperCase()).quote().write(',')
             writer.writeLine('body: JSON.stringify(request),')
             writer.write('headers:').block(() => {
-              writer.writeLine('\'Content-type\': \'application/json\'')
+              writer.writeLine('\'Content-type\': \'application/json\'' + (headerParams.length > 0 ? ',' : ''))
+              headerParams.forEach((param, idx) => {
+                const trailingComma = (idx === headerParams.length - 1 ? '' : ',')
+                writer.writeLine(`'${param}': request['${param}']${trailingComma}`)
+              })
             })
           })
           .write(')')

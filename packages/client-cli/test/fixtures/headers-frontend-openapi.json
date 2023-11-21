@@ -1,0 +1,49 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/": {
+      "post": {
+        "operationId": "postRoot",
+        "parameters": [
+          {
+            "name": "level",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "foo",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "score": {
+                      "type": "number"
+                    },
+                    "room": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [ "score", "room" ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
