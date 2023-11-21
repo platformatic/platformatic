@@ -15,7 +15,7 @@
   },
   "license": "Apache-2.0",
   "devDependencies": {
-    "@fastify/cookie": "^8.3.0",
+    "@fastify/cookie": "^9.0.0",
     "@fastify/session": "^10.5.0",
     "@matteo.collina/tspl": "^0.1.0",
     "@platformatic/db-core": "workspace:*",
