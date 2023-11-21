@@ -762,9 +762,12 @@ You can find more details about the configuration format here:
 Available commands:
 
 * `help` - show this help message.
-* `help <command>` - shows more information about a command.
+* `help <command>` - show more information about a command.
 * `start` - start the server.
 * `schema config` - generate the schema configuration file.
+* `compile` - compile the typescript files.
+* `versions bump` - bump a new version of the API.
+* `versions update` - update the latest version of the API.
 
 
 #### schema
@@ -805,6 +808,62 @@ save the following as `platformatic.service.json`:
   }
 }
 ```
+
+
+#### versions bump
+
+Bump a new version of platformatic application API.
+
+``` bash
+  $ platformatic service versions bump
+```
+
+As a result, a new application API version will be created, and mappers for the previous version will be generated.
+
+Options:
+
+* `-c, --config <path>` - Path to the configuration file.
+* `-v, --version <string>` - The name of the version to bump. Default: if first version, then `v1`, else `vX`.
+* `-p, --prefix <string>` - The prefix to use for the new version. Default: if first version, then `/v1`, else `/vX`.
+* `--openai` - Use OpenAI to generate the version mappers plugins. Default: false.
+* `--user-api-key <string>` - Platformatic user API key. If not specified, the key will be loaded from the `~/.platformatic/config` file.
+
+If not specified, the configuration will be loaded from any of the following, in the current directory.
+
+* `platformatic.db.json`, or
+* `platformatic.db.yml`, or 
+* `platformatic.db.tml`
+
+You can find more details about the configuration format here:
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
+
+
+
+#### versions update
+
+Update the latest version of platformatic application API.
+
+``` bash
+  $ platformatic service versions update
+```
+
+As a result, the latest application API version will be updated, and mappers for the previous version will be generated.
+
+Options:
+
+* `-c, --config <path>` - Path to the configuration file.
+* `--openai <boolean>` - Use OpenAI to generate the version mappers plugins. Default: false.
+* `--user-api-key <string>` - Platformatic user API key. If not specified, the key will be loaded from the `~/.platformatic/config` file.
+
+If not specified, the configuration will be loaded from any of the following, in the current directory.
+
+* `platformatic.db.json`, or
+* `platformatic.db.yml`, or 
+* `platformatic.db.tml`
+
+You can find more details about the configuration format here:
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
+
 
 
 ### frontend

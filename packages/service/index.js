@@ -13,6 +13,7 @@ const setupMetrics = require('./lib/plugins/metrics')
 const setupTsCompiler = require('./lib/plugins/typescript')
 const setupHealthCheck = require('./lib/plugins/health-check')
 const loadPlugins = require('./lib/plugins/plugins')
+const loadVersions = require('./lib/plugins/versions')
 const { telemetry } = require('@platformatic/telemetry')
 
 const { schema } = require('./lib/schema')
@@ -45,15 +46,13 @@ async function platformaticService (app, opts, toLoad) {
   const serviceConfig = config.service || {}
 
   if (isKeyEnabled('openapi', serviceConfig)) {
-    app.register(setupOpenAPI, serviceConfig.openapi)
+    const openapi = serviceConfig.openapi
+    const versions = config.versions
+    app.register(setupOpenAPI, { openapi, versions })
   }
 
   if (isKeyEnabled('graphql', serviceConfig)) {
     app.register(setupGraphQL, serviceConfig.graphql)
-  }
-
-  if (isKeyEnabled('clients', config)) {
-    app.register(setupClients, config.clients)
   }
 
   if (config.plugins) {
@@ -70,6 +69,17 @@ async function platformaticService (app, opts, toLoad) {
       app.register(setupTsCompiler)
     }
     app.register(loadPlugins)
+  }
+
+  await app.register(async (app) => {
+    if (config.versions) {
+      // TODO: Add typescript mappers support
+      await app.register(loadVersions)
+    }
+  })
+
+  if (isKeyEnabled('clients', config)) {
+    app.register(setupClients, config.clients)
   }
 
   if (isKeyEnabled('cors', config.server)) {

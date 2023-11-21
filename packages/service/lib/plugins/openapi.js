@@ -10,6 +10,7 @@ const fp = require('fastify-plugin')
 // despite being covered by test/routes.test.js
 /* c8 ignore next 33 */
 async function setupOpenAPI (app, opts) {
+  const { openapi, versions } = opts
   const openapiConfig = deepmerge({
     exposeRoute: true,
     info: {
@@ -17,7 +18,7 @@ async function setupOpenAPI (app, opts) {
       description: 'This is a service built on top of Platformatic',
       version: '1.0.0'
     }
-  }, typeof opts === 'object' ? opts : {})
+  }, typeof openapi === 'object' ? openapi : {})
   app.log.trace({ openapi: openapiConfig })
   const swaggerOptions = {
     exposeRoute: openapiConfig.exposeRoute,
@@ -30,13 +31,24 @@ async function setupOpenAPI (app, opts) {
         /* istanbul ignore next */
         return json.$id || `def-${i}`
       }
+    },
+    transform: ({ schema, url }) => {
+      // Hide versioned endpoints
+      for (const version of versions?.configs ?? []) {
+        if (url.startsWith(version.openapi.prefix)) {
+          if (!schema) schema = {}
+          schema.hide = true
+          break
+        }
+      }
+      return { schema, url }
     }
   }
 
-  if (opts.path) {
+  if (openapi.path) {
     swaggerOptions.mode = 'static'
     swaggerOptions.specification = {
-      path: opts.path
+      path: openapi.path
     }
   }
   await app.register(Swagger, swaggerOptions)
@@ -44,7 +56,7 @@ async function setupOpenAPI (app, opts) {
   const { default: theme } = await import('@platformatic/swagger-ui-theme')
   app.register(SwaggerUI, {
     ...theme,
-    ...opts,
+    ...openapi,
     logLevel: 'warn',
     prefix: '/documentation'
   })
