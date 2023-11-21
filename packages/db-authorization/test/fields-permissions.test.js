@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { equal, deepEqual, ok } = require('node:assert')
 const fastify = require('fastify')
 const core = require('@platformatic/db-core')
 const { connInfo, clear, isSQLite } = require('./helper')
@@ -28,12 +29,12 @@ async function createBasicPages (db, sql) {
   }
 }
 
-test('users can find only the authorized fields', async ({ pass, teardown, same, equal }) => {
+test('users can find only the authorized fields', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -71,7 +72,9 @@ test('users can find only the authorized fields', async ({ pass, teardown, same,
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(() => {
+    app.close()
+  })
 
   await app.ready()
 
@@ -102,7 +105,7 @@ test('users can find only the authorized fields', async ({ pass, teardown, same,
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -135,7 +138,7 @@ test('users can find only the authorized fields', async ({ pass, teardown, same,
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -166,7 +169,7 @@ test('users can find only the authorized fields', async ({ pass, teardown, same,
       }
     })
 
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         pages: null
       },
@@ -195,7 +198,7 @@ test('users can find only the authorized fields', async ({ pass, teardown, same,
       }
     })
     equal(res.statusCode, 401, 'GET /pages status code (Unauthorized)')
-    same(res.json(), {
+    deepEqual(res.json(), {
       statusCode: 401,
       error: 'Unauthorized',
       code: 'PLT_DB_AUTH_FIELD_UNAUTHORIZED',
@@ -204,12 +207,12 @@ test('users can find only the authorized fields', async ({ pass, teardown, same,
   }
 })
 
-test('users can save only the authorized fields', async ({ pass, teardown, same, equal }) => {
+test('users can save only the authorized fields', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -247,7 +250,9 @@ test('users can save only the authorized fields', async ({ pass, teardown, same,
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(() => {
+    app.close()
+  })
 
   await app.ready()
 
@@ -277,7 +282,7 @@ test('users can save only the authorized fields', async ({ pass, teardown, same,
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -309,7 +314,7 @@ test('users can save only the authorized fields', async ({ pass, teardown, same,
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -341,7 +346,7 @@ test('users can save only the authorized fields', async ({ pass, teardown, same,
         `
       }
     })
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: null
       },
@@ -383,7 +388,7 @@ test('users can save only the authorized fields', async ({ pass, teardown, same,
         `
       }
     })
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: null
       },
@@ -405,12 +410,12 @@ test('users can save only the authorized fields', async ({ pass, teardown, same,
   }
 })
 
-test('users can insert only the authorized fields', async ({ pass, teardown, same, equal }) => {
+test('users can insert only the authorized fields', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -448,7 +453,9 @@ test('users can insert only the authorized fields', async ({ pass, teardown, sam
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(() => {
+    app.close()
+  })
 
   await app.ready()
 
@@ -491,7 +498,7 @@ test('users can insert only the authorized fields', async ({ pass, teardown, sam
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         insertPages: [{
           id: 1,
@@ -539,7 +546,7 @@ test('users can insert only the authorized fields', async ({ pass, teardown, sam
       }
     })
 
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         insertPages: null
       },
@@ -561,12 +568,12 @@ test('users can insert only the authorized fields', async ({ pass, teardown, sam
   }
 })
 
-test('app should not start if there are not nullable and not allowed fields in save rule', async ({ pass, teardown, same, equal }) => {
+test('app should not start if there are not nullable and not allowed fields in save rule', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -604,10 +611,12 @@ test('app should not start if there are not nullable and not allowed fields in s
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(() => {
+    app.close()
+  })
   try {
     await app.ready()
   } catch (err) {
-    same(err.message, 'missing not nullable field: "topic" in save rule for entity "page"')
+    deepEqual(err.message, 'missing not nullable field: "topic" in save rule for entity "page"')
   }
 })

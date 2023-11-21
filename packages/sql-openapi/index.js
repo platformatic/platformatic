@@ -7,6 +7,7 @@ const { mapSQLEntityToJSONSchema } = require('@platformatic/sql-json-schema-mapp
 const { findNearestString } = require('@platformatic/utils')
 const entityPlugin = require('./lib/entity-to-routes')
 const manyToMany = require('./lib/many-to-many')
+const { getSchemaOverrideFromOpenApiPathItem } = require('./lib/utils')
 const fp = require('fastify-plugin')
 const errors = require('./lib/errors')
 
@@ -36,6 +37,7 @@ async function setupOpenAPI (app, opts) {
   })
 
   const ignore = opts.ignore || []
+  const paths = opts.paths || {}
 
   const { default: theme } = await import('@platformatic/swagger-ui-theme')
   app.register(SwaggerUI, {
@@ -43,6 +45,15 @@ async function setupOpenAPI (app, opts) {
     ...opts,
     logLevel: 'warn',
     prefix: '/documentation'
+  })
+
+  app.addHook('onRoute', (routeOptions) => {
+    if (paths[routeOptions.url]) {
+      routeOptions.schema = {
+        ...routeOptions.schema,
+        ...getSchemaOverrideFromOpenApiPathItem(paths[routeOptions.url], routeOptions.method)
+      }
+    }
   })
 
   for (const entity of Object.values(app.platformatic.entities)) {

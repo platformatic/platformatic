@@ -65,6 +65,7 @@ Object {
   "paths": Object {
     "/posts/": Object {
       "get": Object {
+        "description": "Fetch posts from the database.",
         "operationId": "getPosts",
         "parameters": Array [
           Object {
@@ -569,11 +570,13 @@ Object {
             "description": "Default Response",
           },
         },
+        "summary": "Get posts.",
         "tags": Array [
           "posts",
         ],
       },
       "post": Object {
+        "description": "Add new post to the database.",
         "operationId": "createPost",
         "requestBody": Object {
           "content": Object {
@@ -597,11 +600,13 @@ Object {
             "links": Object {},
           },
         },
+        "summary": "Create post.",
         "tags": Array [
           "posts",
         ],
       },
       "put": Object {
+        "description": "Update one or more posts in the database.",
         "operationId": "updatePosts",
         "parameters": Array [
           Object {
@@ -1042,6 +1047,7 @@ Object {
             "links": Object {},
           },
         },
+        "summary": "Update posts.",
         "tags": Array [
           "posts",
         ],
@@ -1049,6 +1055,7 @@ Object {
     },
     "/posts/{id}": Object {
       "delete": Object {
+        "description": "Delete one or more posts from the Database.",
         "operationId": "deletePosts",
         "parameters": Array [
           Object {
@@ -1089,11 +1096,13 @@ Object {
             "description": "Default Response",
           },
         },
+        "summary": "Delete posts.",
         "tags": Array [
           "posts",
         ],
       },
       "get": Object {
+        "description": "Fetch Post using its id from the database.",
         "operationId": "getPostById",
         "parameters": Array [
           Object {
@@ -1135,11 +1144,13 @@ Object {
             "links": Object {},
           },
         },
+        "summary": "Get Post by id.",
         "tags": Array [
           "posts",
         ],
       },
       "put": Object {
+        "description": "Update post in the database.",
         "operationId": "updatePost",
         "parameters": Array [
           Object {
@@ -1190,6 +1201,7 @@ Object {
             "links": Object {},
           },
         },
+        "summary": "Update post.",
         "tags": Array [
           "posts",
         ],

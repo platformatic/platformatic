@@ -131,6 +131,24 @@ test('allow-env', async (t) => {
   assert.deepEqual(configManager.current, content)
 })
 
+test('allow-env with namespace', async (t) => {
+  const file = join(__dirname, 'fixtures', 'placeholder-namespace.json')
+  process.env.MY_NS_PORT = '3001'
+  const { configManager, args } = await loadConfig({}, ['-c', file, '--allow-env', 'MY_NS_*'], app)
+
+  assert.deepEqual(args, {
+    _: [],
+    c: file,
+    config: file,
+    allowEnv: 'MY_NS_*',
+    'allow-env': 'MY_NS_*',
+    E: 'MY_NS_*'
+  })
+  const content = JSON.parse(await readFile(file, 'utf8'))
+  content.server.port = '3001'
+  assert.deepEqual(configManager.current, content)
+})
+
 test('loadConfig with Store', async t => {
   const file = join(__dirname, 'fixtures', 'with-store.json')
 

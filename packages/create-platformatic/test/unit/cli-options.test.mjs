@@ -1,23 +1,11 @@
 'use strict'
 
-import { test } from 'tap'
-import { getRunPackageManagerInstall, getUseTypescript, getPort } from '../src/cli-options.mjs'
+import { test } from 'node:test'
+import { deepEqual } from 'node:assert'
+import { getUseTypescript, getPort } from '../../src/cli-options.mjs'
 
-test('getRunPackageManagerInstall', async ({ same }) => {
-  same(
-    getRunPackageManagerInstall('npm'),
-    {
-      type: 'list',
-      name: 'runPackageManagerInstall',
-      message: 'Do you want to run npm install?',
-      default: true,
-      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-    }
-  )
-})
-
-test('getUseTypescript', async ({ same }) => {
-  same(
+test('getUseTypescript', async () => {
+  deepEqual(
     getUseTypescript(true),
     {
       type: 'list',
@@ -30,8 +18,8 @@ test('getUseTypescript', async ({ same }) => {
   )
 })
 
-test('getPort', async ({ same }) => {
-  same(
+test('getPort', async () => {
+  deepEqual(
     getPort(undefined),
     {
       type: 'input',
@@ -41,7 +29,7 @@ test('getPort', async ({ same }) => {
     }
   )
 
-  same(
+  deepEqual(
     getPort(undefined),
     {
       type: 'input',
@@ -51,7 +39,7 @@ test('getPort', async ({ same }) => {
     }
   )
 
-  same(
+  deepEqual(
     getPort(1234),
     {
       type: 'input',
@@ -61,7 +49,7 @@ test('getPort', async ({ same }) => {
     }
   )
 
-  same(
+  deepEqual(
     getPort(undefined),
     {
       type: 'input',

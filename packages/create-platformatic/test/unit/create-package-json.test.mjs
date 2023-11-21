@@ -1,7 +1,8 @@
-import { test, beforeEach, afterEach } from 'tap'
+import { test } from 'node:test'
+import { equal } from 'node:assert'
 import { tmpdir } from 'os'
-import { isFileAccessible } from '../src/utils.mjs'
-import { createPackageJson } from '../src/create-package-json.mjs'
+import { isFileAccessible } from '../../src/utils.mjs'
+import { createPackageJson } from '../../src/create-package-json.mjs'
 import { join } from 'path'
 import { mkdtemp, readFile, rm } from 'fs/promises'
 
@@ -11,16 +12,16 @@ const fakeLogger = {
 }
 
 let tmpDir
-beforeEach(async () => {
+test.beforeEach(async () => {
   log = ''
   tmpDir = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
 })
 
-afterEach(async () => {
+test.afterEach(async () => {
   await rm(tmpDir, { recursive: true, force: true })
 })
 
-test('creates package.json file for db project', async ({ equal }) => {
+test('creates package.json file for db project', async () => {
   const version = '1.2.3'
   const fastifyVersion = '4.5.6'
   const addTSBuild = false
@@ -40,7 +41,7 @@ test('creates package.json file for db project', async ({ equal }) => {
   equal(packageJson.devDependencies.fastify, `^${fastifyVersion}`)
 })
 
-test('creates package.json file for service project', async ({ equal }) => {
+test('creates package.json file for service project', async () => {
   const version = '1.2.3'
   const fastifyVersion = '4.5.6'
   const addTSBuild = false
@@ -58,7 +59,7 @@ test('creates package.json file for service project', async ({ equal }) => {
   equal(packageJson.devDependencies.typescript, '^5.2.2')
 })
 
-test('creates package.json file with TS build', async ({ equal }) => {
+test('creates package.json file with TS build', async () => {
   const version = '1.2.3'
   const fastifyVersion = '4.5.6'
   const addTSBuild = true

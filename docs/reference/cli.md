@@ -94,6 +94,7 @@ Welcome to Platformatic. Available commands are:
 * `runtime` - start Platformatic Runtime; type `platformatic runtime help` to know more.
 * `start` - start a Platformatic application.
 * `login` - generate a Platformatic login api key.
+* `client` - generate a Platformatic client.
 
 
 #### compile
@@ -535,8 +536,10 @@ It will generate do and undo sql files in the migrations folder. The name of the
 files will be the next migration number.
 
 ``` bash
-  $ platformatic db migrations create --name "create_users_table"
+  $ platformatic db migrations create
 ```
+
+The migration files are named `001.<do|undo>.sql`, `002.<do|undo>.sql` etc...
 
 Options:
 
@@ -742,6 +745,8 @@ Compile typescript plugins.
 As a result of executing this command, Platformatic Service will compile typescript
 plugins in the `outDir` directory. 
 
+Using the  `--clean` flag, the outDir directory will be removed before the new compilation process starts.
+
 If not specified, the configuration will be loaded from any of the following, in the current directory.
 
 * `platformatic.service.json`, or
@@ -876,8 +881,24 @@ Available commands:
 
 Start the Platformatic Runtime with the following command:
 
-``` bash
+```bash
  $ platformatic runtime start
+```
+
+You can also specify a custom routes file, for example:
+
+```bash
+ $ platformatic runtime start routes.js
+```
+
+Where `routes.js` is:
+
+```javascript
+module.exports = async function (app) {
+  app.get('/hello', async () => {
+    return { hello: 'hello123' }
+  })
+}
 ```
 
 

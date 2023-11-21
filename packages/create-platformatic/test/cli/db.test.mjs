@@ -1,16 +1,18 @@
-import { test, beforeEach, afterEach } from 'tap'
+import { test } from 'node:test'
+import { equal } from 'node:assert'
 import { executeCreatePlatformatic, keys, walk } from './helper.mjs'
+import { timeout } from './timeout.mjs'
 import { isFileAccessible } from '../../src/utils.mjs'
 import { join } from 'node:path'
 import { tmpdir } from 'os'
 import { mkdtemp, rm } from 'fs/promises'
 
 let tmpDir
-beforeEach(async () => {
+test.beforeEach(async () => {
   tmpDir = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
 })
 
-afterEach(async () => {
+test.afterEach(async () => {
   try {
     await rm(tmpDir, { recursive: true, force: true })
   } catch (e) {
@@ -18,7 +20,7 @@ afterEach(async () => {
   }
 })
 
-test('Creates a Platformatic DB service with no migrations and no plugin', async ({ equal, same, match, teardown }) => {
+test('Creates a Platformatic DB service with no migrations and no plugin', { timeout }, async () => {
   // The actions must match IN ORDER
   const actions = [{
     match: 'Which kind of project do you want to create?',
@@ -38,10 +40,6 @@ test('Creates a Platformatic DB service with no migrations and no plugin', async
   }, {
     match: 'What port do you want to use?',
     do: [keys.ENTER]
-  }, {
-    // create-platformatic uses pnpm in CI, so we need to match both options
-    match: ['Do you want to run npm install?', 'Do you want to run pnpm install?'],
-    do: [keys.DOWN, keys.ENTER]
   }, {
     match: 'Do you want to create default migrations',
     do: [keys.DOWN, keys.ENTER]
@@ -75,7 +73,7 @@ test('Creates a Platformatic DB service with no migrations and no plugin', async
   equal(await isFileAccessible(join(baseProjectDir, '.git', 'config')), true)
 })
 
-test('Creates a Platformatic DB service with migrations and plugin', async ({ equal, same, match, teardown }) => {
+test('Creates a Platformatic DB service with migrations and plugin', { timeout }, async () => {
   // The actions must match IN ORDER
   const actions = [{
     match: 'Which kind of project do you want to create?',
@@ -95,10 +93,6 @@ test('Creates a Platformatic DB service with migrations and plugin', async ({ eq
   }, {
     match: 'What port do you want to use?',
     do: [keys.ENTER]
-  }, {
-    // create-platformatic uses pnpm in CI, so we need to match both options
-    match: ['Do you want to run npm install?', 'Do you want to run pnpm install?'],
-    do: [keys.DOWN, keys.ENTER]
   }, {
     match: 'Do you want to create default migrations',
     do: [keys.ENTER]
@@ -137,11 +131,12 @@ test('Creates a Platformatic DB service with migrations and plugin', async ({ eq
   equal(await isFileAccessible(join(baseProjectDir, 'migrations', '001.undo.sql')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'plugins', 'example.js')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'routes', 'root.js')), true)
-  equal(await isFileAccessible(join(baseProjectDir, 'types', 'index.d.ts')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.git', 'config')), false)
+  // types are not generated if migrations are not applied
+  equal(!await isFileAccessible(join(baseProjectDir, 'types', 'index.d.ts')), true)
 })
 
-test('Creates a Platformatic DB service with plugin using typescript, creating all the github actions', async ({ equal, same, match, teardown }) => {
+test('Creates a Platformatic DB service with plugin using typescript, creating all the github actions', { timeout }, async () => {
   // The actions must match IN ORDER
   const actions = [{
     match: 'Which kind of project do you want to create?',
@@ -161,10 +156,6 @@ test('Creates a Platformatic DB service with plugin using typescript, creating a
   }, {
     match: 'What port do you want to use?',
     do: [keys.ENTER]
-  }, {
-    // create-platformatic uses pnpm in CI, so we need to match both options
-    match: ['Do you want to run npm install?', 'Do you want to run pnpm install?'],
-    do: [keys.DOWN, keys.ENTER]
   }, {
     match: 'Do you want to create default migrations',
     do: [keys.ENTER]
@@ -203,9 +194,11 @@ test('Creates a Platformatic DB service with plugin using typescript, creating a
   equal(await isFileAccessible(join(baseProjectDir, 'migrations', '001.undo.sql')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'plugins', 'example.ts')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'routes', 'root.ts')), true)
-  equal(await isFileAccessible(join(baseProjectDir, 'types', 'index.d.ts')), true)
-  equal(await isFileAccessible(join(baseProjectDir, 'global.d.ts')), true)
+
   equal(await isFileAccessible(join(baseProjectDir, 'tsconfig.json')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.github', 'workflows', 'platformatic-dynamic-workspace-deploy.yml')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.github', 'workflows', 'platformatic-static-workspace-deploy.yml')), true)
+  // types are not generated if migrations are not applied
+  equal(!await isFileAccessible(join(baseProjectDir, 'types', 'index.d.ts')), true)
+  equal(!await isFileAccessible(join(baseProjectDir, 'global.d.ts')), true)
 })

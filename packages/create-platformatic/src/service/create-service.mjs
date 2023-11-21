@@ -99,7 +99,6 @@ async function createService (params, logger, currentDir = process.cwd(), versio
   const env = generateEnv(isRuntimeContext, hostname, port, typescript, envPrefix)
   await appendFile(join(currentDir, '.env'), env)
   await writeFile(join(currentDir, '.env.sample'), env)
-  logger.info('Environment file .env found, appending new environment variables to existing .env file.')
 
   if (typescript === true) {
     const tsConfigFileName = join(currentDir, 'tsconfig.json')

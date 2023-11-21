@@ -381,3 +381,15 @@ npx platformatic start --allow-env=HOST,SERVER_LOGGER_LEVEL
 
 If `--allow-env` is passed as an option to the CLI, it will be merged with the
 default allow list.
+
+### Placeholder wildcard
+
+You're also able to define a placeholder wildcard, with your own prefix, for example:
+
+```bash
+npx platformatic service start --allow-env=MY_NS_*
+# OR
+npx platformatic start --allow-env=MY_NS_*
+```
+
+This will allow you to use placeholders like `{MY_NS_MY_VAR}`.

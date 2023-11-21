@@ -10,3 +10,4 @@ Welcome to Platformatic. Available commands are:
 * `runtime` - start Platformatic Runtime; type `platformatic runtime help` to know more.
 * `start` - start a Platformatic application.
 * `login` - generate a Platformatic login api key.
+* `client` - generate a Platformatic client.

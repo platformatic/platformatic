@@ -1,6 +1,8 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { ok, equal } = require('node:assert')
+const { tspl } = require('@matteo.collina/tspl')
 const { version, dependencies } = require('../package.json')
 const { getPlatformaticVersion, hasDependency, getDependencyVersion, checkForDependencies, getLatestNpmVersion } = require('../')
 const { MockAgent, setGlobalDispatcher } = require('undici')
@@ -10,31 +12,23 @@ setGlobalDispatcher(mockAgent)
 mockAgent.disableNetConnect()
 test('getPlatformaticVersion', async t => {
   const platformaticVersion = await getPlatformaticVersion()
-  t.equal(platformaticVersion, version)
+  equal(platformaticVersion, version)
 })
 
 test('hasDependency', async t => {
-  if (hasDependency({ dependencies: { fastify: '1.0.0' } }, 'fastify')) {
-    t.pass('has dependency')
-  }
-
-  if (!hasDependency({ dependencies: { express: '1.0.0' } }, 'fastify')) {
-    t.pass('does not have dependency')
-  }
-
-  if (hasDependency({ devDependencies: { fastify: '1.0.0' } }, 'fastify')) {
-    t.pass('has dependency')
-  }
+  ok(hasDependency({ dependencies: { fastify: '1.0.0' } }, 'fastify'), 'has dependency')
+  ok(!hasDependency({ dependencies: { express: '1.0.0' } }, 'fastify'), 'does not have dependency')
+  ok(hasDependency({ devDependencies: { fastify: '1.0.0' } }, 'fastify'), 'has dev dependency')
 })
 
 test('getDependencyVersion', async t => {
   const version = await getDependencyVersion(require, '@fastify/deepmerge')
-  t.equal(version, dependencies['@fastify/deepmerge'].replace('^', ''))
+  equal(version, dependencies['@fastify/deepmerge'].replace('^', ''))
 })
 
 test('checkForDependencies missing dep', async t => {
   const currentPlatformaticVersion = require('../package.json').version
-  t.plan(4)
+  const { match, equal } = tspl(t, { plan: 4 })
 
   mockAgent
     .get('https://registry.npmjs.org')
@@ -58,12 +52,12 @@ test('checkForDependencies missing dep', async t => {
 
   const logger = {
     warn: (msg) => {
-      t.match(msg, /Please run .+ to install types dependencies./)
-      t.match(msg, `@platformatic/db@${currentPlatformaticVersion}`)
-      t.match(msg, 'foobar@1.42.0')
+      match(msg, /Please run .+ to install types dependencies./)
+      match(msg, new RegExp(`@platformatic/db@${currentPlatformaticVersion}`))
+      match(msg, /foobar@1.42.0/)
     },
     error: (msg) => {
-      t.match(msg, 'Cannot find latest version on npm for package fakepackage')
+      equal(msg, 'Cannot find latest version on npm for package fakepackage')
     }
   }
 
@@ -88,7 +82,7 @@ test('check latest npm version', async (t) => {
         }
       })
     const latest = await getLatestNpmVersion('foobar')
-    t.equal(latest, '1.2.3')
+    equal(latest, '1.2.3')
   }
   {
     // returns null
@@ -101,6 +95,6 @@ test('check latest npm version', async (t) => {
       .reply(404, {})
 
     const latest = await getLatestNpmVersion('foobar')
-    t.equal(latest, null)
+    equal(latest, null)
   }
 })

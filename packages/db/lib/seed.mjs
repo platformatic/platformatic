@@ -16,9 +16,25 @@ async function execute (logger, seedFile, config) {
   await access(seedFile)
 
   logger.info(`seeding from ${seedFile}`)
-  const { default: seed } = await import(pathToFileURL(seedFile))
+  let seedFunction
+  const importedFunction = await import(pathToFileURL(seedFile))
 
-  await seed({ db, sql, entities, logger })
+  if (typeof importedFunction === 'function') {
+    seedFunction = importedFunction
+  } else if (typeof importedFunction.seed === 'function') {
+    seedFunction = importedFunction.seed
+  } else if (typeof importedFunction.default === 'function') {
+    seedFunction = importedFunction.default
+  }
+
+  if (!seedFunction) {
+    logger.error('Cannot find seed function.')
+    logger.error('If you use an ESM module use the signature \'export async function seed (opts)\'.')
+    logger.error('If you use a CJS module use the signature \'module.exports = async function seed (opts)\'.')
+    logger.error('If you use Typescript use the signature \'export async function seed(opts)\'')
+    return
+  }
+  await seedFunction({ db, sql, entities, logger })
   logger.info('seeding complete')
 
   // Once done seeding, close your connection.

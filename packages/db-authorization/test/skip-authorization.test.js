@@ -1,34 +1,19 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { equal, deepEqual, ok, rejects } = require('node:assert')
 const fastify = require('fastify')
 const core = require('@platformatic/db-core')
-const { connInfo, clear, isSQLite } = require('./helper')
+const { connInfo, clear, createBasicPages } = require('./helper')
 const auth = require('..')
 
-async function createBasicPages (db, sql) {
-  if (isSQLite) {
-    await db.query(sql`CREATE TABLE pages (
-      id INTEGER PRIMARY KEY,
-      title VARCHAR(42),
-      user_id INTEGER
-    );`)
-  } else {
-    await db.query(sql`CREATE TABLE pages (
-      id SERIAL PRIMARY KEY,
-      title VARCHAR(42),
-      user_id INTEGER
-    );`)
-  }
-}
-
-test('use the skipAuth option to avoid permissions programatically', async ({ pass, teardown, same, equal }) => {
+test('use the skipAuth option to avoid permissions programatically', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
     events: false,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -54,7 +39,9 @@ test('use the skipAuth option to avoid permissions programatically', async ({ pa
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(() => {
+    app.close()
+  })
 
   await app.ready()
 
@@ -85,7 +72,7 @@ test('use the skipAuth option to avoid permissions programatically', async ({ pa
     })
     equal(res.statusCode, 200, 'savePage status code')
 
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: null
       },
@@ -115,7 +102,7 @@ test('use the skipAuth option to avoid permissions programatically', async ({ pa
       },
       skipAuth: true
     })
-    same(res, { id: '1', title: 'page title', userId: null }, 'save')
+    deepEqual(res, { id: '1', title: 'page title', userId: null }, 'save')
   }
 
   {
@@ -138,7 +125,7 @@ test('use the skipAuth option to avoid permissions programatically', async ({ pa
     })
     equal(res.statusCode, 200, 'pages status code')
 
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: null
       },
@@ -167,7 +154,7 @@ test('use the skipAuth option to avoid permissions programatically', async ({ pa
       },
       skipAuth: true
     })
-    same(res, [{ id: '1', title: 'page title', userId: null }], 'find')
+    deepEqual(res, [{ id: '1', title: 'page title', userId: null }], 'find')
   }
 
   {
@@ -176,7 +163,7 @@ test('use the skipAuth option to avoid permissions programatically', async ({ pa
       skipAuth: true
     })
 
-    same(resInsert, [{ id: '2', title: 'page title2', userId: null }], 'insert')
+    deepEqual(resInsert, [{ id: '2', title: 'page title2', userId: null }], 'insert')
   }
 
   {
@@ -198,7 +185,7 @@ test('use the skipAuth option to avoid permissions programatically', async ({ pa
       }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: null
       },
@@ -233,7 +220,7 @@ test('use the skipAuth option to avoid permissions programatically', async ({ pa
     })
     equal(res.statusCode, 401, 'updateMay status code')
 
-    same(res.json(), {
+    deepEqual(res.json(), {
       statusCode: 401,
       code: 'PLT_DB_AUTH_UNAUTHORIZED',
       error: 'Unauthorized',
@@ -255,7 +242,7 @@ test('use the skipAuth option to avoid permissions programatically', async ({ pa
       },
       skipAuth: true
     })
-    same(res, [
+    deepEqual(res, [
       { id: '1', title: 'Updated page title', userId: null },
       { id: '2', title: 'Updated page title', userId: null }
     ], 'updateMany')
@@ -292,17 +279,17 @@ test('use the skipAuth option to avoid permissions programatically', async ({ pa
         reply: () => {}
       }
     })
-    same(res, [], 'find')
+    deepEqual(res, [], 'find')
   }
 })
 
-test('if ctx is not present, skips permission check ', async ({ pass, teardown, same, equal }) => {
+test('if ctx is not present, skips permission check ', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
     events: true,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -328,7 +315,9 @@ test('if ctx is not present, skips permission check ', async ({ pass, teardown, 
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(() => {
+    app.close()
+  })
 
   await app.ready()
 
@@ -359,7 +348,7 @@ test('if ctx is not present, skips permission check ', async ({ pass, teardown, 
     })
     equal(res.statusCode, 200, 'savePage status code')
 
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: null
       },
@@ -385,7 +374,7 @@ test('if ctx is not present, skips permission check ', async ({ pass, teardown, 
     const res = await app.platformatic.entities.page.save({
       input: { title: 'page title' }
     })
-    same(res, { id: '1', title: 'page title', userId: null }, 'save')
+    deepEqual(res, { id: '1', title: 'page title', userId: null }, 'save')
   }
 
   {
@@ -408,7 +397,7 @@ test('if ctx is not present, skips permission check ', async ({ pass, teardown, 
     })
     equal(res.statusCode, 200, 'pages status code')
 
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: null
       },
@@ -431,13 +420,13 @@ test('if ctx is not present, skips permission check ', async ({ pass, teardown, 
 
   {
     const res = await app.platformatic.entities.page.find()
-    same(res, [{ id: '1', title: 'page title', userId: null }], 'find')
+    deepEqual(res, [{ id: '1', title: 'page title', userId: null }], 'find')
   }
 
   {
     const resInsert = await app.platformatic.entities.page.insert({ inputs: [{ title: 'page title2' }] })
 
-    same(resInsert, [{ id: '2', title: 'page title2', userId: null }], 'insert')
+    deepEqual(resInsert, [{ id: '2', title: 'page title2', userId: null }], 'insert')
   }
 
   {
@@ -459,7 +448,7 @@ test('if ctx is not present, skips permission check ', async ({ pass, teardown, 
       }
     })
     equal(res.statusCode, 200, 'deletePages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: null
       },
@@ -494,7 +483,7 @@ test('if ctx is not present, skips permission check ', async ({ pass, teardown, 
     })
     equal(res.statusCode, 401, 'updateMay status code')
 
-    same(res.json(), {
+    deepEqual(res.json(), {
       statusCode: 401,
       code: 'PLT_DB_AUTH_UNAUTHORIZED',
       error: 'Unauthorized',
@@ -511,7 +500,7 @@ test('if ctx is not present, skips permission check ', async ({ pass, teardown, 
       },
       input: { title: 'Updated page title' }
     })
-    same(res, [
+    deepEqual(res, [
       { id: '1', title: 'Updated page title', userId: null },
       { id: '2', title: 'Updated page title', userId: null }
     ], 'updateMany')
@@ -535,17 +524,17 @@ test('if ctx is not present, skips permission check ', async ({ pass, teardown, 
     })
 
     const res = await app.platformatic.entities.page.find()
-    same(res, [], 'find')
+    deepEqual(res, [], 'find')
   }
 })
 
-test('validate that a ctx is needed for skipAuth: false', async ({ pass, teardown, same, equal, rejects }) => {
+test('validate that a ctx is needed for skipAuth: false', async () => {
   const app = fastify()
   app.register(core, {
     ...connInfo,
     events: false,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -571,7 +560,9 @@ test('validate that a ctx is needed for skipAuth: false', async ({ pass, teardow
       save: false
     }]
   })
-  teardown(app.close.bind(app))
+  test.after(() => {
+    app.close()
+  })
 
   await app.ready()
 

@@ -86,6 +86,8 @@ async function entityPlugin (app, opts) {
   app.get(`/:${primaryKeyCamelcase}`, {
     schema: {
       operationId: `get${entity.name}By${capitalize(primaryKeyCamelcase)}`,
+      summary: `Get ${entity.name} by ${primaryKeyCamelcase}.`,
+      description: `Fetch ${entity.name} using its ${primaryKeyCamelcase} from the database.`,
       params: primaryKeyParams,
       tags: [entity.table],
       querystring: {
@@ -147,6 +149,8 @@ async function entityPlugin (app, opts) {
       app.get(`/:${camelcase(primaryKey)}/${routePathName}`, {
         schema: {
           operationId,
+          summary: `Get ${targetEntity.pluralName} for ${entity.singularName}.`,
+          description: `Fetch all the ${targetEntity.pluralName} for ${entity.singularName} from the database.`,
           params: getPrimaryKeyParams(entity, ignore),
           tags: [entity.table],
           querystring: {
@@ -237,6 +241,8 @@ async function entityPlugin (app, opts) {
       app.get(`/:${camelcase(primaryKey)}/${targetRelation}`, {
         schema: {
           operationId,
+          summary: `Get ${targetEntity.singularName} for ${entity.singularName}.`,
+          description: `Fetch the ${targetEntity.singularName} for ${entity.singularName} from the database.`,
           params: getPrimaryKeyParams(entity, ignore),
           tags: [entity.table],
           querystring: {
@@ -296,6 +302,8 @@ async function entityPlugin (app, opts) {
     method: 'PUT',
     schema: {
       operationId: 'update' + capitalize(entity.singularName),
+      summary: `Update ${entity.singularName}.`,
+      description: `Update ${entity.singularName} in the database.`,
       body: entitySchemaInput,
       params: primaryKeyParams,
       tags: [entity.table],
@@ -336,6 +344,8 @@ async function entityPlugin (app, opts) {
   app.delete(`/:${primaryKeyCamelcase}`, {
     schema: {
       operationId: 'delete' + capitalize(entity.pluralName),
+      summary: `Delete ${entity.pluralName}.`,
+      description: `Delete one or more ${entity.pluralName} from the Database.`,
       params: primaryKeyParams,
       tags: [entity.table],
       querystring: {

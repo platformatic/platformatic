@@ -1,5 +1,6 @@
 'use strict'
-const { test } = require('tap')
+const { test } = require('node:test')
+const { tspl } = require('@matteo.collina/tspl')
 const findRule = require('../lib/find-rule')
 
 const allowAll = {
@@ -13,8 +14,8 @@ const denyAll = {
   delete: false
 }
 
-test('should return first rule that match', ({ same, plan }) => {
-  plan(1)
+test('should return first rule that match', (t) => {
+  const { deepEqual } = tspl(t, { plan: 1 })
   const roles = ['role1']
   const rules = [
     {
@@ -37,11 +38,11 @@ test('should return first rule that match', ({ same, plan }) => {
     }
   ]
   const found = findRule(rules, roles)
-  same(found._id, 'RULE1')
+  deepEqual(found._id, 'RULE1')
 })
 
-test('should return null if no match', ({ same, plan }) => {
-  plan(1)
+test('should return null if no match', (t) => {
+  const { deepEqual } = tspl(t, { plan: 1 })
   const roles = ['role3']
   const rules = [
     {
@@ -64,11 +65,11 @@ test('should return null if no match', ({ same, plan }) => {
     }
   ]
   const found = findRule(rules, roles)
-  same(found, null)
+  deepEqual(found, null)
 })
 
-test('should search all roles until match', ({ same, plan }) => {
-  plan(1)
+test('should search all roles until match', (t) => {
+  const { deepEqual } = tspl(t, { plan: 1 })
   const roles = ['role3', 'role2']
   const rules = [
     {
@@ -91,5 +92,5 @@ test('should search all roles until match', ({ same, plan }) => {
     }
   ]
   const found = findRule(rules, roles)
-  same(found._id, 'RULE2')
+  deepEqual(found._id, 'RULE2')
 })

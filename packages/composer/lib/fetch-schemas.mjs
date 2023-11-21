@@ -33,23 +33,26 @@ export default async function fetchOpenApiSchemas (_args) {
     ignore: 'hostname,pid'
   }))
 
-  try {
-    const { configManager } = await loadConfig({}, _args, platformaticComposer)
-    await configManager.parseAndValidate()
-    const config = configManager.current
+  const { configManager } = await loadConfig({}, _args, platformaticComposer)
+  await configManager.parseAndValidate()
+  const config = configManager.current
+  const { services } = config.composer
 
-    const fetchOpenApiRequests = config.composer.services
-      .filter(({ openapi }) => openapi && openapi.url && openapi.file)
-      .map(service => fetchOpenApiSchema(service))
+  const servicesWithValidOpenApi = services
+    .filter(({ openapi }) => openapi && openapi.url && openapi.file)
 
-    // TODO: replace with allSettled
-    await Promise.all(fetchOpenApiRequests)
+  const fetchOpenApiRequests = servicesWithValidOpenApi
+    .map(service => fetchOpenApiSchema(service))
 
-    logger.info('OpenAPI schemas successfully fetched')
-  } catch (error) {
-    logger.error(error.message)
-    process.exit(1)
-  }
+  const fetchOpenApiResults = await Promise.allSettled(fetchOpenApiRequests)
+  fetchOpenApiResults.forEach((result, index) => {
+    const serviceId = servicesWithValidOpenApi[index].id
+    if (result.status === 'rejected') {
+      logger.error(`Failed to fetch OpenAPI schema for service with id ${serviceId}: ${result.reason}`)
+    } else {
+      logger.info(`Successfully fetched OpenAPI schema for service with id ${serviceId}`)
+    }
+  })
 }
 
 export {

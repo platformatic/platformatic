@@ -1,7 +1,7 @@
 import assert from 'node:assert'
-import path from 'node:path'
+import path, { join } from 'node:path'
 import { test } from 'node:test'
-import { access, rename, cp, rm, mkdir } from 'node:fs/promises'
+import { access, cp, rename, rm, mkdir } from 'node:fs/promises'
 import { execa } from 'execa'
 import stripAnsi from 'strip-ansi'
 import split from 'split2'
@@ -23,7 +23,6 @@ async function getCWD (t) {
   } catch {}
 
   await mkdir(dir, { recursive: true })
-
   t.after(async () => {
     try {
       await rm(dir, { recursive: true })
@@ -358,4 +357,80 @@ test('should compile ts app with config', async (t) => {
   }
 
   assert.fail('should compile typescript plugin with a compile command')
+})
+
+test('should clean outDir with --clean', async (t) => {
+  const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
+  const cwd = await getCWD(t)
+
+  await cp(testDir, cwd, { recursive: true })
+
+  const child = execa('node', [cliPath, 'compile'], { cwd })
+  t.after(exitOnTeardown(child))
+
+  const splitter = split()
+  child.stdout.pipe(splitter)
+  child.stderr.pipe(splitter)
+
+  let output = ''
+
+  const timeout = setTimeout(() => {
+    console.log(output)
+    assert.fail('should not start the service if it was not precompiled and typescript is `false`')
+  }, 30000)
+
+  for await (const data of splitter) {
+    const sanitized = stripAnsi(data)
+    output += sanitized
+    if (sanitized.includes('Typescript compilation completed successfully.')) {
+      clearTimeout(timeout)
+      const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
+      try {
+        await access(jsPluginPath)
+      } catch (err) {
+        assert.fail(err)
+      }
+    }
+  }
+  // rename plugin file and check plugin.js is not there
+  await rename(join(cwd, 'plugin.ts'), join(cwd, 'example.ts'))
+
+  const child2 = execa('node', [cliPath, 'compile', '--clean'], { cwd })
+  t.after(exitOnTeardown(child2))
+
+  const splitter2 = split()
+  child2.stdout.pipe(splitter2)
+  child2.stderr.pipe(splitter2)
+
+  let output2 = ''
+
+  const timeout2 = setTimeout(() => {
+    console.log(output2)
+    assert.fail('should not start the service if it was not precompiled and typescript is `false`')
+  }, 30000)
+
+  for await (const data of splitter2) {
+    const sanitized = stripAnsi(data)
+    output2 += sanitized
+    console.log(output2)
+    if (sanitized.includes('Typescript compilation completed successfully.')) {
+      clearTimeout(timeout2)
+      const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
+      const jsExamplePath = path.join(cwd, 'dist', 'example.js')
+      try {
+        await access(jsExamplePath)
+      } catch (err) {
+        assert.fail(err)
+      }
+
+      try {
+        await access(jsPluginPath)
+        assert.fail(new Error('plugin.js file should not be in dist directory'))
+      } catch (err) {
+        assert.equal(err.code, 'ENOENT')
+      }
+      return
+    }
+  }
+  assert.fail('should clean directory with --clean option')
 })

@@ -10,7 +10,7 @@ async function setupTsCompiler (app) {
   const config = configManager.current
   const workingDir = configManager.dirname
 
-  await compiler.compile(workingDir, config, app.log)
+  await compiler.compile(workingDir, config, app.log, { clean: false })
 }
 
 module.exports = fp(setupTsCompiler)

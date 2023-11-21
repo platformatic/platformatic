@@ -1,5 +1,6 @@
-import createRuntime from '../../src/runtime/create-runtime.mjs'
-import { test, beforeEach, afterEach } from 'tap'
+import createRuntime from '../../../src/runtime/create-runtime.mjs'
+import { test } from 'node:test'
+import { deepEqual } from 'node:assert'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { mkdtemp, readFile, rm } from 'fs/promises'
@@ -7,11 +8,11 @@ import { mkdtemp, readFile, rm } from 'fs/promises'
 const base = tmpdir()
 let tmpDir
 let log = []
-beforeEach(async () => {
+test.beforeEach(async () => {
   tmpDir = await mkdtemp(join(base, 'test-create-platformatic-'))
 })
 
-afterEach(async () => {
+test.afterEach(async () => {
   log = []
   await rm(tmpDir, { recursive: true, force: true })
   process.env = {}
@@ -22,7 +23,7 @@ const fakeLogger = {
   info: msg => log.push(msg)
 }
 
-test('creates runtime', async ({ equal, same, ok }) => {
+test('creates runtime', async () => {
   const params = {
     servicesDir: 'services',
     entrypoint: 'foobar'
@@ -36,7 +37,7 @@ test('creates runtime', async ({ equal, same, ok }) => {
 
   delete runtimeConfig.$schema
 
-  same(runtimeConfig, {
+  deepEqual(runtimeConfig, {
     entrypoint: 'foobar',
     allowCycles: false,
     hotReload: true,
@@ -47,7 +48,7 @@ test('creates runtime', async ({ equal, same, ok }) => {
   })
 })
 
-test('with a full path for autoload', async ({ equal, same, ok }) => {
+test('with a full path for autoload', async () => {
   const params = {
     servicesDir: join(tmpDir, 'services'),
     entrypoint: 'foobar'
@@ -61,7 +62,7 @@ test('with a full path for autoload', async ({ equal, same, ok }) => {
 
   delete runtimeConfig.$schema
 
-  same(runtimeConfig, {
+  deepEqual(runtimeConfig, {
     entrypoint: 'foobar',
     allowCycles: false,
     hotReload: true,

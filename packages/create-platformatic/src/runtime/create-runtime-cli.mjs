@@ -8,9 +8,10 @@ import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa } from 'execa'
 import ora from 'ora'
+import parseArgs from 'minimist'
 import createRuntime from './create-runtime.mjs'
 import askDir from '../ask-dir.mjs'
-import { getInitGitRepository, getPort, getRunPackageManagerInstall } from '../cli-options.mjs'
+import { getInitGitRepository, getPort } from '../cli-options.mjs'
 import generateName from 'boring-name-generator'
 import { chooseKind } from '../index.mjs'
 import { createReadme } from '../create-readme.mjs'
@@ -20,6 +21,13 @@ export async function createPlatformaticRuntime (_args) {
     translateTime: 'SYS:HH:MM:ss',
     ignore: 'hostname,pid'
   }))
+
+  const args = parseArgs(_args, {
+    default: {
+      install: true
+    },
+    boolean: ['install']
+  })
 
   const version = await getVersion()
   const pkgManager = getPkgManager()
@@ -40,11 +48,6 @@ export async function createPlatformaticRuntime (_args) {
     process.exit(1)
   }
 
-  toAsk.push(getRunPackageManagerInstall(pkgManager))
-  // const { runPackageManagerInstall } = await inquirer.prompt([
-  //   getRunPackageManagerInstall(pkgManager)
-  // ])
-
   toAsk.push({
     type: 'list',
     name: 'staticWorkspaceGitHubAction',
@@ -62,7 +65,6 @@ export async function createPlatformaticRuntime (_args) {
 
   toAsk.push(getInitGitRepository())
   const {
-    runPackageManagerInstall,
     staticWorkspaceGitHubAction,
     dynamicWorkspaceGitHubAction,
     initGitRepository
@@ -99,7 +101,7 @@ export async function createPlatformaticRuntime (_args) {
   if (addTypescriptDevDep) {
     const typescriptVersion = await getDependencyVersion('typescript')
     devDependencies.typescript = `^${typescriptVersion}`
-    devDependencies['@types/node'] = 'latest'
+    devDependencies['@types/node'] = await getDependencyVersion('@types/node')
   }
 
   // Create the package.json, notes that we don't have the option for TS (yet) so we don't generate
@@ -138,7 +140,7 @@ export async function createPlatformaticRuntime (_args) {
   }
 
   await createRuntime(params, logger, projectDir, version)
-  if (runPackageManagerInstall) {
+  if (args.install) {
     const spinner = ora('Installing dependencies...').start()
     await execa(pkgManager, ['install'], { cwd: projectDir })
     spinner.succeed()

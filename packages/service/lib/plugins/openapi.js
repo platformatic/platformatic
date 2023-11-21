@@ -19,7 +19,7 @@ async function setupOpenAPI (app, opts) {
     }
   }, typeof opts === 'object' ? opts : {})
   app.log.trace({ openapi: openapiConfig })
-  await app.register(Swagger, {
+  const swaggerOptions = {
     exposeRoute: openapiConfig.exposeRoute,
     openapi: {
       ...openapiConfig
@@ -31,7 +31,15 @@ async function setupOpenAPI (app, opts) {
         return json.$id || `def-${i}`
       }
     }
-  })
+  }
+
+  if (opts.path) {
+    swaggerOptions.mode = 'static'
+    swaggerOptions.specification = {
+      path: opts.path
+    }
+  }
+  await app.register(Swagger, swaggerOptions)
 
   const { default: theme } = await import('@platformatic/swagger-ui-theme')
   app.register(SwaggerUI, {

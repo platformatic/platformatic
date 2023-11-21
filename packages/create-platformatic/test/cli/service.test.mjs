@@ -1,16 +1,18 @@
-import { test, beforeEach, afterEach } from 'tap'
+import { test } from 'node:test'
+import { equal, notEqual } from 'node:assert'
 import { executeCreatePlatformatic, keys, walk } from './helper.mjs'
+import { timeout } from './timeout.mjs'
 import { isFileAccessible, safeMkdir } from '../../src/utils.mjs'
 import { join } from 'node:path'
 import { tmpdir } from 'os'
 import { readFile, mkdtemp, rm, writeFile } from 'node:fs/promises'
 
 let tmpDir
-beforeEach(async () => {
+test.beforeEach(async () => {
   tmpDir = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
 })
 
-afterEach(async () => {
+test.afterEach(async () => {
   try {
     await rm(tmpDir, { recursive: true, force: true })
   } catch (e) {
@@ -18,7 +20,7 @@ afterEach(async () => {
   }
 })
 
-test('Creates a Platformatic Service with no typescript', async ({ equal, same, match, teardown }) => {
+test('Creates a Platformatic Service with no typescript', { timeout }, async () => {
   // The actions must match IN ORDER
   const actions = [{
     match: 'Which kind of project do you want to create?',
@@ -26,10 +28,6 @@ test('Creates a Platformatic Service with no typescript', async ({ equal, same, 
   }, {
     match: 'Where would you like to create your project?',
     do: [keys.ENTER]
-  }, {
-    // create-platformatic uses pnpm in CI, so we need to match both options
-    match: ['Do you want to run npm install?', 'Do you want to run pnpm install?'],
-    do: [keys.DOWN, keys.ENTER] // no
   }, {
     // NOTE THAT HERE THE DEFAULT OPTION FOR SERVICE IS "YES"
     match: 'Do you want to use TypeScript',
@@ -62,7 +60,7 @@ test('Creates a Platformatic Service with no typescript', async ({ equal, same, 
   equal(await isFileAccessible(join(baseProjectDir, '.git', 'config')), true)
 })
 
-test('Creates a Platformatic Service with typescript', async ({ equal, same, match, teardown }) => {
+test('Creates a Platformatic Service with typescript', { timeout }, async () => {
   // The actions must match IN ORDER
   const actions = [{
     match: 'Which kind of project do you want to create?',
@@ -70,10 +68,6 @@ test('Creates a Platformatic Service with typescript', async ({ equal, same, mat
   }, {
     match: 'Where would you like to create your project?',
     do: [keys.ENTER]
-  }, {
-    // create-platformatic uses pnpm in CI, so we need to match both options
-    match: ['Do you want to run npm install?', 'Do you want to run pnpm install?'],
-    do: [keys.DOWN, keys.ENTER] // no
   }, {
     // NOTE THAT HERE THE DEFAULT OPTION FOR SERVICE IS "YES"
     match: 'Do you want to use TypeScript',
@@ -109,7 +103,7 @@ test('Creates a Platformatic Service with typescript', async ({ equal, same, mat
   equal(await isFileAccessible(join(baseProjectDir, '.git', 'config')), false)
 })
 
-test('Creates a Platformatic Service in a non empty directory', async ({ equal, not, teardown }) => {
+test('Creates a Platformatic Service in a non empty directory', { timeout }, async () => {
   const targetDirectory = join(tmpdir(), 'platformatic-service-test')
   // const targetDirectory = '/tmp/tst'
   async function generateServiceFileStructure (dir) {
@@ -125,7 +119,7 @@ test('Creates a Platformatic Service in a non empty directory', async ({ equal, 
   // generate a sample file structure
   await generateServiceFileStructure(targetDirectory)
 
-  teardown(async () => {
+  test.after(async () => {
     await rm(targetDirectory, { recursive: true })
   })
   // The actions must match IN ORDER
@@ -138,10 +132,6 @@ test('Creates a Platformatic Service in a non empty directory', async ({ equal, 
   }, {
     match: 'Confirm you want to use',
     do: [keys.ENTER] // confirm use existing directory
-  }, {
-    // create-platformatic uses pnpm in CI, so we need to match both options
-    match: ['Do you want to run npm install?', 'Do you want to run pnpm install?'],
-    do: [keys.DOWN, keys.ENTER] // no
   }, {
     // NOTE THAT HERE THE DEFAULT OPTION FOR SERVICE IS "YES"
     match: 'Do you want to use TypeScript',
@@ -172,6 +162,6 @@ test('Creates a Platformatic Service in a non empty directory', async ({ equal, 
   equal(await isFileAccessible(join(targetDirectory, '.git', 'config')), true)
 
   // check file contents
-  not(await readFile(join(targetDirectory, 'routes', 'root.js'), 'utf8'), 'console.log(\'hello world\')')
+  notEqual(await readFile(join(targetDirectory, 'routes', 'root.js'), 'utf8'), 'console.log(\'hello world\')')
   equal(await readFile(join(targetDirectory, 'routes', 'sample.js'), 'utf8'), 'console.log(\'hello world\')')
 })

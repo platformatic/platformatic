@@ -1,16 +1,18 @@
-import { test, beforeEach, afterEach } from 'tap'
+import { test } from 'node:test'
+import { equal } from 'node:assert'
 import { executeCreatePlatformatic, keys, walk, getServices } from './helper.mjs'
+import { timeout } from './timeout.mjs'
 import { isFileAccessible } from '../../src/utils.mjs'
 import { join } from 'node:path'
 import { tmpdir } from 'os'
 import { mkdtemp, rm } from 'fs/promises'
 
 let tmpDir
-beforeEach(async () => {
+test.beforeEach(async () => {
   tmpDir = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
 })
 
-afterEach(async () => {
+test.afterEach(async () => {
   try {
     await rm(tmpDir, { recursive: true, force: true })
   } catch (e) {
@@ -18,7 +20,7 @@ afterEach(async () => {
   }
 })
 
-test('Creates a Platformatic Runtime with one Service', async ({ equal, same, match, teardown }) => {
+test('Creates a Platformatic Runtime with one Service', { timeout }, async () => {
   // The actions must match IN ORDER
   const actions = [{
     match: 'Which kind of project do you want to create?',
@@ -29,10 +31,6 @@ test('Creates a Platformatic Runtime with one Service', async ({ equal, same, ma
   }, {
     match: 'Where would you like to load your services from?',
     do: [keys.ENTER]
-  }, {
-    // create-platformatic uses pnpm in CI, so we need to match both options
-    match: ['Do you want to run npm install?', 'Do you want to run pnpm install?'],
-    do: [keys.DOWN, keys.ENTER] // no
   }, {
     match: 'Do you want to create the github action to deploy',
     do: [keys.DOWN, keys.ENTER] // no
@@ -87,7 +85,7 @@ test('Creates a Platformatic Runtime with one Service', async ({ equal, same, ma
   // equal(await isFileAccessible(join(baseServiceDir, 'global.d.ts')), true)
 })
 
-test('Creates a Platformatic Runtime with two Services', async ({ equal, same, match, teardown }) => {
+test('Creates a Platformatic Runtime with two Services', { timeout }, async () => {
   // The actions must match IN ORDER
   const actions = [{
     match: 'Which kind of project do you want to create?',
@@ -98,10 +96,6 @@ test('Creates a Platformatic Runtime with two Services', async ({ equal, same, m
   }, {
     match: 'Where would you like to load your services from?',
     do: [keys.ENTER]
-  }, {
-    // create-platformatic uses pnpm in CI, so we need to match both options
-    match: ['Do you want to run npm install?', 'Do you want to run pnpm install?'],
-    do: [keys.DOWN, keys.ENTER] // no
   }, {
     match: 'Do you want to create the github action to deploy',
     do: [keys.DOWN, keys.ENTER] // no

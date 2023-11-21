@@ -102,6 +102,7 @@ Object {
   "paths": Object {
     "/owners/": Object {
       "get": Object {
+        "description": "Fetch owners from the database.",
         "operationId": "getOwners",
         "parameters": Array [
           Object {
@@ -388,11 +389,13 @@ Object {
             "description": "Default Response",
           },
         },
+        "summary": "Get owners.",
         "tags": Array [
           "owners",
         ],
       },
       "post": Object {
+        "description": "Add new owner to the database.",
         "operationId": "createOwner",
         "requestBody": Object {
           "content": Object {
@@ -423,11 +426,13 @@ Object {
             },
           },
         },
+        "summary": "Create owner.",
         "tags": Array [
           "owners",
         ],
       },
       "put": Object {
+        "description": "Update one or more owners in the database.",
         "operationId": "updateOwners",
         "parameters": Array [
           Object {
@@ -681,6 +686,7 @@ Object {
             },
           },
         },
+        "summary": "Update owners.",
         "tags": Array [
           "owners",
         ],
@@ -688,6 +694,7 @@ Object {
     },
     "/owners/{id}": Object {
       "delete": Object {
+        "description": "Delete one or more owners from the Database.",
         "operationId": "deleteOwners",
         "parameters": Array [
           Object {
@@ -726,11 +733,13 @@ Object {
             "description": "Default Response",
           },
         },
+        "summary": "Delete owners.",
         "tags": Array [
           "owners",
         ],
       },
       "get": Object {
+        "description": "Fetch Owner using its id from the database.",
         "operationId": "getOwnerById",
         "parameters": Array [
           Object {
@@ -777,11 +786,13 @@ Object {
             },
           },
         },
+        "summary": "Get Owner by id.",
         "tags": Array [
           "owners",
         ],
       },
       "put": Object {
+        "description": "Update owner in the database.",
         "operationId": "updateOwner",
         "parameters": Array [
           Object {
@@ -837,6 +848,7 @@ Object {
             },
           },
         },
+        "summary": "Update owner.",
         "tags": Array [
           "owners",
         ],
@@ -844,6 +856,7 @@ Object {
     },
     "/owners/{id}/posts": Object {
       "get": Object {
+        "description": "Fetch all the posts for owner from the database.",
         "operationId": "getPostsForOwner",
         "parameters": Array [
           Object {
@@ -896,6 +909,7 @@ Object {
             },
           },
         },
+        "summary": "Get posts for owner.",
         "tags": Array [
           "owners",
         ],
@@ -903,6 +917,7 @@ Object {
     },
     "/posts/": Object {
       "get": Object {
+        "description": "Fetch posts from the database.",
         "operationId": "getPosts",
         "parameters": Array [
           Object {
@@ -1516,11 +1531,13 @@ Object {
             "description": "Default Response",
           },
         },
+        "summary": "Get posts.",
         "tags": Array [
           "posts",
         ],
       },
       "post": Object {
+        "description": "Add new post to the database.",
         "operationId": "createPost",
         "requestBody": Object {
           "content": Object {
@@ -1551,11 +1568,13 @@ Object {
             },
           },
         },
+        "summary": "Create post.",
         "tags": Array [
           "posts",
         ],
       },
       "put": Object {
+        "description": "Update one or more posts in the database.",
         "operationId": "updatePosts",
         "parameters": Array [
           Object {
@@ -2100,6 +2119,7 @@ Object {
             },
           },
         },
+        "summary": "Update posts.",
         "tags": Array [
           "posts",
         ],
@@ -2107,6 +2127,7 @@ Object {
     },
     "/posts/{id}": Object {
       "delete": Object {
+        "description": "Delete one or more posts from the Database.",
         "operationId": "deletePosts",
         "parameters": Array [
           Object {
@@ -2148,11 +2169,13 @@ Object {
             "description": "Default Response",
           },
         },
+        "summary": "Delete posts.",
         "tags": Array [
           "posts",
         ],
       },
       "get": Object {
+        "description": "Fetch Post using its id from the database.",
         "operationId": "getPostById",
         "parameters": Array [
           Object {
@@ -2202,11 +2225,13 @@ Object {
             },
           },
         },
+        "summary": "Get Post by id.",
         "tags": Array [
           "posts",
         ],
       },
       "put": Object {
+        "description": "Update post in the database.",
         "operationId": "updatePost",
         "parameters": Array [
           Object {
@@ -2265,6 +2290,7 @@ Object {
             },
           },
         },
+        "summary": "Update post.",
         "tags": Array [
           "posts",
         ],
@@ -2272,6 +2298,7 @@ Object {
     },
     "/posts/{id}/owner": Object {
       "get": Object {
+        "description": "Fetch the owner for post from the database.",
         "operationId": "getOwnerForPost",
         "parameters": Array [
           Object {
@@ -2318,6 +2345,7 @@ Object {
             },
           },
         },
+        "summary": "Get owner for post.",
         "tags": Array [
           "posts",
         ],

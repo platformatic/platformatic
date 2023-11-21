@@ -1,9 +1,10 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { equal } = require('node:assert')
 const { PlatformaticTracerProvider } = require('../lib/platformatic-trace-provider')
 
-test('should propagate forceFlush to all registered processors ', async ({ equal, same, teardown }) => {
+test('should propagate forceFlush to all registered processors ', async () => {
   let called1 = false
   let called2 = false
   const mockSpanProcessor1 = {
@@ -24,7 +25,7 @@ test('should propagate forceFlush to all registered processors ', async ({ equal
   equal(called2, true)
 })
 
-test('should propagate shutdown to the active span processor, which should propagate to all the processors ', async ({ equal, same, teardown }) => {
+test('should propagate shutdown to the active span processor, which should propagate to all the processors ', async () => {
   let called1 = false
   let called2 = false
   const mockSpanProcessor1 = {

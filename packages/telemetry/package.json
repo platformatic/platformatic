@@ -1,10 +1,10 @@
 {
   "name": "@platformatic/telemetry",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "description": "OpenTelemetry integration for Platformatic",
   "main": "index.js",
   "scripts": {
-    "test": "npm run lint | snazzy && tap test/*test.js",
+    "test": "npm run lint | snazzy && node --test",
     "lint": "standard | snazzy"
   },
   "author": "Marco Piraccini <marco.piraccini@gmail.com>",
@@ -16,8 +16,7 @@
   "devDependencies": {
     "fastify": "^4.23.2",
     "snazzy": "^9.0.0",
-    "standard": "^17.1.0",
-    "tap": "^16.3.9"
+    "standard": "^17.1.0"
   },
   "dependencies": {
     "@fastify/swagger": "^8.10.1",

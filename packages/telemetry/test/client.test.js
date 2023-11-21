@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { deepEqual, equal, ok } = require('node:assert')
 const fastify = require('fastify')
 const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
 const telemetryPlugin = require('../lib/telemetry')
@@ -24,7 +25,7 @@ async function setupApp (pluginOpts, routeHandler, teardown) {
   return app
 }
 
-test('should add the propagation headers correctly, new propagation started', async ({ equal, same, teardown }) => {
+test('should add the propagation headers correctly, new propagation started', async () => {
   const handler = async (request, reply) => {
     return { foo: 'bar' }
   }
@@ -34,7 +35,7 @@ test('should add the propagation headers correctly, new propagation started', as
     exporter: {
       type: 'memory'
     }
-  }, handler, teardown)
+  }, handler, test.after)
 
   const { startSpanClient } = app.openTelemetry
 
@@ -43,12 +44,12 @@ test('should add the propagation headers correctly, new propagation started', as
 
   const spanId = span._spanContext.spanId
   const traceId = span._spanContext.traceId
-  same(telemetryHeaders, {
+  deepEqual(telemetryHeaders, {
     traceparent: `00-${traceId}-${spanId}-01`
   })
 })
 
-test('should add the propagation headers correctly, with propagation already started', async ({ equal, same, teardown }) => {
+test('should add the propagation headers correctly, with propagation already started', async () => {
   const traceId = '5e994e8fb53b27c91dcd2fec22771d15'
   const spanId = '166f3ab30f21800b'
   const traceparent = `00-${traceId}-${spanId}-01`
@@ -63,7 +64,7 @@ test('should add the propagation headers correctly, with propagation already sta
     exporter: {
       type: 'memory'
     }
-  }, handler, teardown)
+  }, handler, test.after)
 
   const { startSpanClient } = app.openTelemetry
 
@@ -81,13 +82,13 @@ test('should add the propagation headers correctly, with propagation already sta
   const traceId2 = span._spanContext.traceId
 
   // We preserved the tracedId
-  same(traceId, traceId2)
-  same(telemetryHeaders, {
+  deepEqual(traceId, traceId2)
+  deepEqual(telemetryHeaders, {
     traceparent: `00-${traceId}-${spanId2}-01`
   })
 })
 
-test('should trace a client request', async ({ equal, same, teardown }) => {
+test('should trace a client request', async () => {
   let receivedHeaders = null
   const handler = async (request, reply) => {
     receivedHeaders = request.headers
@@ -100,7 +101,7 @@ test('should trace a client request', async ({ equal, same, teardown }) => {
     exporter: {
       type: 'memory'
     }
-  }, handler, teardown)
+  }, handler, test.after)
 
   const { startSpanClient, endSpanClient } = app.openTelemetry
 
@@ -148,7 +149,7 @@ test('should trace a client request', async ({ equal, same, teardown }) => {
   equal(receivedHeaders.traceparent, telemetryHeaders.traceparent)
 })
 
-test('should trace a client request failing', async ({ equal, same, teardown }) => {
+test('should trace a client request failing', async () => {
   const handler = async (request, reply) => {
     return { foo: 'bar' }
   }
@@ -159,7 +160,7 @@ test('should trace a client request failing', async ({ equal, same, teardown }) 
     exporter: {
       type: 'memory'
     }
-  }, handler, teardown)
+  }, handler, test.after)
 
   const { startSpanClient, endSpanClient } = app.openTelemetry
 
@@ -198,7 +199,7 @@ test('should trace a client request failing', async ({ equal, same, teardown }) 
   equal(spanClient.attributes['http.response.status_code'], 404)
 })
 
-test('should trace a client request failing (no HTTP error)', async ({ equal, same, teardown }) => {
+test('should trace a client request failing (no HTTP error)', async () => {
   const handler = async (request, reply) => {
     return { foo: 'bar' }
   }
@@ -209,7 +210,7 @@ test('should trace a client request failing (no HTTP error)', async ({ equal, sa
     exporter: {
       type: 'memory'
     }
-  }, handler, teardown)
+  }, handler, test.after)
 
   const { startSpanClient, endSpanClient, setErrorInSpanClient } = app.openTelemetry
 
@@ -237,7 +238,7 @@ test('should trace a client request failing (no HTTP error)', async ({ equal, sa
   equal(spanClient.attributes['error.stack'].includes('Error: KABOOM!!!'), true)
 })
 
-test('should not add the query in span name', async ({ equal, same, teardown }) => {
+test('should not add the query in span name', async () => {
   const handler = async (request, reply) => {
     return { foo: 'bar' }
   }
@@ -247,16 +248,16 @@ test('should not add the query in span name', async ({ equal, same, teardown }) 
     exporter: {
       type: 'memory'
     }
-  }, handler, teardown)
+  }, handler, test.after)
 
   const { startSpanClient } = app.openTelemetry
 
   const url = 'http://localhost:3000/test?foo=bar'
   const { span } = startSpanClient(url, 'GET')
-  same(span.name, 'GET http://localhost:3000/test')
+  deepEqual(span.name, 'GET http://localhost:3000/test')
 })
 
-test('should ignore the skipped operations', async ({ equal, same, ok, teardown }) => {
+test('should ignore the skipped operations', async () => {
   const handler = async (request, reply) => {
     return { foo: 'bar' }
   }
@@ -272,7 +273,7 @@ test('should ignore the skipped operations', async ({ equal, same, ok, teardown 
     exporter: {
       type: 'memory'
     }
-  }, handler, teardown)
+  }, handler, test.after)
 
   const { startSpanClient } = app.openTelemetry
 

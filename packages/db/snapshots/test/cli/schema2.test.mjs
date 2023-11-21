@@ -43,9 +43,11 @@ export default `\
     "/graphs/": {
       "get": {
         "operationId": "getGraphs",
+        "summary": "Get graphs.",
         "tags": [
           "graphs"
         ],
+        "description": "Fetch graphs from the database.",
         "parameters": [
           {
             "schema": {
@@ -334,9 +336,11 @@ export default `\
       },
       "post": {
         "operationId": "createGraph",
+        "summary": "Create graph.",
         "tags": [
           "graphs"
         ],
+        "description": "Add new graph to the database.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -362,9 +366,11 @@ export default `\
       },
       "put": {
         "operationId": "updateGraphs",
+        "summary": "Update graphs.",
         "tags": [
           "graphs"
         ],
+        "description": "Update one or more graphs in the database.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -615,9 +621,11 @@ export default `\
     "/graphs/{id}": {
       "get": {
         "operationId": "getGraphById",
+        "summary": "Get Graph by id.",
         "tags": [
           "graphs"
         ],
+        "description": "Fetch Graph using its id from the database.",
         "parameters": [
           {
             "schema": {
@@ -659,9 +667,11 @@ export default `\
       },
       "put": {
         "operationId": "updateGraph",
+        "summary": "Update graph.",
         "tags": [
           "graphs"
         ],
+        "description": "Update graph in the database.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -712,9 +722,11 @@ export default `\
       },
       "delete": {
         "operationId": "deleteGraphs",
+        "summary": "Delete graphs.",
         "tags": [
           "graphs"
         ],
+        "description": "Delete one or more graphs from the Database.",
         "parameters": [
           {
             "schema": {

@@ -2,27 +2,12 @@
 
 const fastify = require('fastify')
 const auth = require('..')
-const { test } = require('tap')
+const { test } = require('node:test')
+const { equal, deepEqual, ok } = require('node:assert')
 const core = require('@platformatic/db-core')
-const { connInfo, clear, isSQLite } = require('./helper')
+const { connInfo, clear, createBasicPages } = require('./helper')
 const { createPublicKey, generateKeyPairSync } = require('crypto')
 const { createSigner } = require('fast-jwt')
-
-async function createBasicPages (db, sql) {
-  if (isSQLite) {
-    await db.query(sql`CREATE TABLE pages (
-      id INTEGER PRIMARY KEY,
-      title VARCHAR(42),
-      user_id INTEGER
-    );`)
-  } else {
-    await db.query(sql`CREATE TABLE pages (
-      id SERIAL PRIMARY KEY,
-      title VARCHAR(42),
-      user_id INTEGER
-    );`)
-  }
-}
 
 // creates a RSA key pair for the test
 const { publicKey, privateKey } = generateKeyPairSync('rsa', {
@@ -44,7 +29,7 @@ async function buildJwksEndpoint (jwks, fail = false) {
   return app
 }
 
-test('jwt verify success getting public key from jwks endpoint', async ({ pass, teardown, same, equal }) => {
+test('jwt verify success getting public key from jwks endpoint', async () => {
   const { n, e, kty } = jwtPublicKey
   const kid = 'TEST-KID'
   const alg = 'RS256'
@@ -77,7 +62,7 @@ test('jwt verify success getting public key from jwks endpoint', async ({ pass, 
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -102,8 +87,10 @@ test('jwt verify success getting public key from jwks endpoint', async ({ pass, 
       }
     }]
   })
-  teardown(app.close.bind(app))
-  teardown(() => jwksEndpoint.close())
+  test.after(() => {
+    app.close()
+  })
+  test.after(() => jwksEndpoint.close())
 
   await app.ready()
 
@@ -136,7 +123,7 @@ test('jwt verify success getting public key from jwks endpoint', async ({ pass, 
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -167,7 +154,7 @@ test('jwt verify success getting public key from jwks endpoint', async ({ pass, 
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -179,7 +166,7 @@ test('jwt verify success getting public key from jwks endpoint', async ({ pass, 
   }
 })
 
-test('jwt verify fail if getting public key from jwks endpoint fails', async ({ pass, teardown, same, equal }) => {
+test('jwt verify fail if getting public key from jwks endpoint fails', async () => {
   const kid = 'TEST-KID'
   const alg = 'RS256'
   // This fails
@@ -201,7 +188,7 @@ test('jwt verify fail if getting public key from jwks endpoint fails', async ({ 
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -226,8 +213,10 @@ test('jwt verify fail if getting public key from jwks endpoint fails', async ({ 
       }
     }]
   })
-  teardown(app.close.bind(app))
-  teardown(() => jwksEndpoint.close())
+  test.after(() => {
+    app.close()
+  })
+  test.after(() => jwksEndpoint.close())
 
   await app.ready()
 
@@ -260,7 +249,7 @@ test('jwt verify fail if getting public key from jwks endpoint fails', async ({ 
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: null
       },
@@ -282,7 +271,7 @@ test('jwt verify fail if getting public key from jwks endpoint fails', async ({ 
   }
 })
 
-test('jwt verify fail if jwks succeed but kid is not found', async ({ pass, teardown, same, equal }) => {
+test('jwt verify fail if jwks succeed but kid is not found', async () => {
   const { n, e, kty } = jwtPublicKey
   const kid = 'TEST-KID'
   const alg = 'RS256'
@@ -317,7 +306,7 @@ test('jwt verify fail if jwks succeed but kid is not found', async ({ pass, tear
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
       await clear(db, sql)
       await createBasicPages(db, sql)
     }
@@ -341,8 +330,10 @@ test('jwt verify fail if jwks succeed but kid is not found', async ({ pass, tear
       }
     }]
   })
-  teardown(app.close.bind(app))
-  teardown(() => jwksEndpoint.close())
+  test.after(() => {
+    app.close()
+  })
+  test.after(() => jwksEndpoint.close())
 
   await app.ready()
 
@@ -375,7 +366,7 @@ test('jwt verify fail if jwks succeed but kid is not found', async ({ pass, tear
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: null
       },
@@ -397,7 +388,7 @@ test('jwt verify fail if jwks succeed but kid is not found', async ({ pass, tear
   }
 })
 
-test('jwt verify fail if the domain is not allowed', async ({ pass, teardown, same, equal }) => {
+test('jwt verify fail if the domain is not allowed', async () => {
   const { n, e, kty } = jwtPublicKey
   const kid = 'TEST-KID'
   const alg = 'RS256'
@@ -432,7 +423,7 @@ test('jwt verify fail if the domain is not allowed', async ({ pass, teardown, sa
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
       await clear(db, sql)
       await createBasicPages(db, sql)
     }
@@ -458,8 +449,10 @@ test('jwt verify fail if the domain is not allowed', async ({ pass, teardown, sa
       }
     }]
   })
-  teardown(app.close.bind(app))
-  teardown(() => jwksEndpoint.close())
+  test.after(() => {
+    app.close()
+  })
+  test.after(() => jwksEndpoint.close())
 
   await app.ready()
 
@@ -492,7 +485,7 @@ test('jwt verify fail if the domain is not allowed', async ({ pass, teardown, sa
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: null
       },
@@ -514,7 +507,7 @@ test('jwt verify fail if the domain is not allowed', async ({ pass, teardown, sa
   }
 })
 
-test('jwt skips configure namespace in custom claims', async ({ pass, teardown, same, equal }) => {
+test('jwt skips configure namespace in custom claims', async () => {
   const { n, e, kty } = jwtPublicKey
   const kid = 'TEST-KID'
   const alg = 'RS256'
@@ -548,7 +541,7 @@ test('jwt skips configure namespace in custom claims', async ({ pass, teardown, 
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -574,8 +567,10 @@ test('jwt skips configure namespace in custom claims', async ({ pass, teardown, 
       }
     }]
   })
-  teardown(app.close.bind(app))
-  teardown(() => jwksEndpoint.close())
+  test.after(() => {
+    app.close()
+  })
+  test.after(() => jwksEndpoint.close())
 
   await app.ready()
 
@@ -608,7 +603,7 @@ test('jwt skips configure namespace in custom claims', async ({ pass, teardown, 
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -639,7 +634,7 @@ test('jwt skips configure namespace in custom claims', async ({ pass, teardown, 
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -651,7 +646,7 @@ test('jwt skips configure namespace in custom claims', async ({ pass, teardown, 
   }
 })
 
-test('do not install a preHandler hook', async ({ pass, teardown, same, equal }) => {
+test('do not install a preHandler hook', async () => {
   const { n, e, kty } = jwtPublicKey
   const kid = 'TEST-KID'
   const alg = 'RS256'
@@ -684,7 +679,7 @@ test('do not install a preHandler hook', async ({ pass, teardown, same, equal })
   app.register(core, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -709,8 +704,10 @@ test('do not install a preHandler hook', async ({ pass, teardown, same, equal })
       }
     }]
   })
-  teardown(app.close.bind(app))
-  teardown(() => jwksEndpoint.close())
+  test.after(() => {
+    app.close()
+  })
+  test.after(() => jwksEndpoint.close())
 
   app.get('/test', async (req, reply) => {
     equal(req.user, null)

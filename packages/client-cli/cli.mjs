@@ -4,7 +4,7 @@ import parseArgs from 'minimist'
 import isMain from 'es-main'
 import helpMe from 'help-me'
 import { readFile, writeFile, mkdir, access } from 'fs/promises'
-import { join, dirname, relative, resolve, posix } from 'path'
+import { join, dirname, relative, resolve, posix, sep } from 'path'
 import * as desm from 'desm'
 import { request } from 'undici'
 import { processOpenAPI } from './lib/openapi-generator.mjs'
@@ -139,7 +139,7 @@ async function readFromFileAndWrite (logger, file, folder, name, generateImpleme
     await writeOpenAPIClient(folder, name, text, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language)
     return 'openapi'
   } catch (err) {
-    logger.error(`Error parsing OpenAPI definition: ${err.message} Trying with GraphQL`)
+    logger.error(err, `Error parsing OpenAPI definition: ${err.message} Trying with GraphQL`)
     // try GraphQL
     const schema = graphql.buildSchema(text)
     const introspectionResult = graphql.introspectionFromSchema(schema)
@@ -162,7 +162,8 @@ async function downloadAndProcess (options) {
     optionalHeaders,
     validateResponse,
     isFrontend,
-    language
+    language,
+    type
   } = options
 
   let generateImplementation = options.generateImplementation
@@ -180,11 +181,19 @@ async function downloadAndProcess (options) {
   let found = false
   const toTry = []
   if (url.startsWith('http')) {
-    // add download functions only if it's an URL
-    toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url + '/documentation/json', folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language))
-    toTry.push(downloadAndWriteGraphQL.bind(null, logger, url + '/graphql', folder, name, generateImplementation, typesOnly))
-    toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language))
-    toTry.push(downloadAndWriteGraphQL.bind(null, logger, url, folder, name, generateImplementation, typesOnly))
+    if (type === 'openapi') {
+      toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url + '/documentation/json', folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language))
+      toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language))
+    } else if (options.type === 'graphql') {
+      toTry.push(downloadAndWriteGraphQL.bind(null, logger, url + '/graphql', folder, name, generateImplementation, typesOnly))
+      toTry.push(downloadAndWriteGraphQL.bind(null, logger, url, folder, name, generateImplementation, typesOnly))
+    } else {
+      // add download functions only if it's an URL
+      toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url + '/documentation/json', folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language))
+      toTry.push(downloadAndWriteGraphQL.bind(null, logger, url + '/graphql', folder, name, generateImplementation, typesOnly))
+      toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language))
+      toTry.push(downloadAndWriteGraphQL.bind(null, logger, url, folder, name, generateImplementation, typesOnly))
+    }
   } else {
     // add readFromFileAndWrite to the functions only if it's not an URL
     toTry.push(
@@ -262,7 +271,7 @@ export async function command (argv) {
     ext: '.txt'
   })
   let { _: [url], ...options } = parseArgs(argv, {
-    string: ['name', 'folder', 'runtime', 'optional-headers', 'language'],
+    string: ['name', 'folder', 'runtime', 'optional-headers', 'language', 'type'],
     boolean: ['typescript', 'full-response', 'types-only', 'full-request', 'full', 'frontend', 'validate-response'],
     default: {
       typescript: false,
@@ -297,6 +306,12 @@ export async function command (argv) {
   if (options.runtime) {
     // TODO add flag to allow specifying a runtime config file
     const runtimeConfigFile = await findUp('platformatic.runtime.json')
+
+    // check we are **not** into the runtime root
+    if (runtimeConfigFile?.replace(`${process.cwd()}${sep}`, '') === 'platformatic.runtime.json') {
+      logger.error('Could not create a client runtime from the runtime root.')
+      process.exit(1)
+    }
 
     if (!runtimeConfigFile) {
       logger.error('Could not find a platformatic.runtime.json file in this or any parent directory.')

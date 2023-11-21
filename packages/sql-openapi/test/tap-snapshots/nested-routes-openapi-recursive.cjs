@@ -59,6 +59,7 @@ Object {
   "paths": Object {
     "/people/": Object {
       "get": Object {
+        "description": "Fetch people from the database.",
         "operationId": "getPeople",
         "parameters": Array [
           Object {
@@ -454,11 +455,13 @@ Object {
             "description": "Default Response",
           },
         },
+        "summary": "Get people.",
         "tags": Array [
           "people",
         ],
       },
       "post": Object {
+        "description": "Add new person to the database.",
         "operationId": "createPerson",
         "requestBody": Object {
           "content": Object {
@@ -495,11 +498,13 @@ Object {
             },
           },
         },
+        "summary": "Create person.",
         "tags": Array [
           "people",
         ],
       },
       "put": Object {
+        "description": "Update one or more people in the database.",
         "operationId": "updatePeople",
         "parameters": Array [
           Object {
@@ -856,6 +861,7 @@ Object {
             },
           },
         },
+        "summary": "Update people.",
         "tags": Array [
           "people",
         ],
@@ -863,6 +869,7 @@ Object {
     },
     "/people/{id}": Object {
       "delete": Object {
+        "description": "Delete one or more people from the Database.",
         "operationId": "deletePeople",
         "parameters": Array [
           Object {
@@ -902,11 +909,13 @@ Object {
             "description": "Default Response",
           },
         },
+        "summary": "Delete people.",
         "tags": Array [
           "people",
         ],
       },
       "get": Object {
+        "description": "Fetch Person using its id from the database.",
         "operationId": "getPersonById",
         "parameters": Array [
           Object {
@@ -960,11 +969,13 @@ Object {
             },
           },
         },
+        "summary": "Get Person by id.",
         "tags": Array [
           "people",
         ],
       },
       "put": Object {
+        "description": "Update person in the database.",
         "operationId": "updatePerson",
         "parameters": Array [
           Object {
@@ -1027,6 +1038,7 @@ Object {
             },
           },
         },
+        "summary": "Update person.",
         "tags": Array [
           "people",
         ],
@@ -1034,6 +1046,7 @@ Object {
     },
     "/people/{id}/parent": Object {
       "get": Object {
+        "description": "Fetch the person for person from the database.",
         "operationId": "getPersonForPerson",
         "parameters": Array [
           Object {
@@ -1087,6 +1100,7 @@ Object {
             },
           },
         },
+        "summary": "Get person for person.",
         "tags": Array [
           "people",
         ],
@@ -1094,6 +1108,7 @@ Object {
     },
     "/people/{id}/people": Object {
       "get": Object {
+        "description": "Fetch all the people for person from the database.",
         "operationId": "getPeopleForPerson",
         "parameters": Array [
           Object {
@@ -1150,6 +1165,7 @@ Object {
             },
           },
         },
+        "summary": "Get people for person.",
         "tags": Array [
           "people",
         ],

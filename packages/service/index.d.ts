@@ -38,8 +38,11 @@ interface SchemaExport {
   schema: JSONSchemaType<PlatformaticServiceConfig>
 }
 
+interface TSCompilerOptions {
+  clean: boolean
+}
 interface TSCompiler {
-  compile: (cwd: string, config: object, originalLogger: FastifyBaseLogger) => Promise<boolean>
+  compile: (cwd: string, config: object, originalLogger: FastifyBaseLogger, options: TSCompilerOptions) => Promise<boolean>
 }
 export const schema: SchemaExport
 

@@ -1,12 +1,13 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "version": "0.1.0",
-    "title": "Test"
+    "title": "Test",
+    "version": "0.1.0"
   },
   "components": {
     "schemas": {
       "def-0": {
+        "title": "users",
         "type": "object",
         "properties": {
           "id": {
@@ -15,8 +16,7 @@
           "name": {
             "type": "string"
           }
-        },
-        "title": "users"
+        }
       }
     }
   },
@@ -93,6 +93,16 @@
     },
     "/users/{id}": {
       "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",
@@ -107,6 +117,16 @@
         }
       },
       "post": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",
@@ -121,6 +141,16 @@
         }
       },
       "put": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",
@@ -135,6 +165,16 @@
         }
       },
       "delete": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",

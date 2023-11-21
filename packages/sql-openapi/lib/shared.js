@@ -65,6 +65,8 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
   app.get('/', {
     schema: {
       operationId: 'get' + capitalize(entity.pluralName),
+      summary: `Get ${entity.pluralName}.`,
+      description: `Fetch ${entity.pluralName} from the database.`,
       tags: [entity.table],
       querystring: {
         type: 'object',
@@ -161,6 +163,8 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
   app.post('/', {
     schema: {
       operationId: 'create' + capitalize(entity.singularName),
+      summary: `Create ${entity.singularName}.`,
+      description: `Add new ${entity.singularName} to the database.`,
       body: entitySchemaInput,
       tags: [entity.table],
       response: {
@@ -180,6 +184,8 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
   app.put('/', {
     schema: {
       operationId: 'update' + capitalize(entity.pluralName),
+      summary: `Update ${entity.pluralName}.`,
+      description: `Update one or more ${entity.pluralName} in the database.`,
       body: entitySchemaInput,
       tags: [entity.table],
       querystring: {
