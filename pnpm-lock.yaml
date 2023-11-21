@@ -1709,18 +1709,21 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
     devDependencies:
+      '@matteo.collina/tspl':
+        specifier: ^0.1.0
+        version: 0.1.0
       fastify:
         specifier: ^4.23.2
         version: 4.24.3
+      glob:
+        specifier: ^10.3.10
+        version: 10.3.10
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
       standard:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
-      tap:
-        specifier: ^16.3.9
-        version: 16.3.9(typescript@5.2.2)
       tsd:
         specifier: ^0.29.0
         version: 0.29.0
