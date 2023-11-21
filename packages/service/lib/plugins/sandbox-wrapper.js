@@ -2,10 +2,22 @@
 
 const fp = require('fastify-plugin')
 const autoload = require('@fastify/autoload')
-const { stat } = require('fs').promises
+const { stat } = require('node:fs').promises
+const { createRequire } = require('node:module')
+const { join } = require('node:path')
+const { pathToFileURL } = require('node:url')
 
 module.exports = fp(async function (app, opts) {
-  for (let plugin of opts.paths) {
+  // fake require next to the configManager dirname
+  const _require = createRequire(join(app.platformatic.configManager.dirname, 'package.json'))
+  for (const plugin of opts.packages || []) {
+    const name = typeof plugin === 'string' ? plugin : plugin.name
+    const url = pathToFileURL(_require.resolve(name))
+    const loaded = await import(url)
+    await app.register(loaded, plugin.options)
+  }
+
+  for (let plugin of opts.paths || []) {
     if (typeof plugin === 'string') {
       plugin = { path: plugin, encapsulate: true }
     }
@@ -27,13 +39,7 @@ module.exports = fp(async function (app, opts) {
         ...patternOptions
       })
     } else {
-      let url = ''
-      if (plugin.path) {
-        url = `file://${plugin.path}`
-      } else {
-        url = plugin.module
-      }
-      let loaded = await import(url)
+      let loaded = await import(pathToFileURL(plugin.path))
       /* c8 ignore next 3 */
       if (loaded.__esModule === true || typeof loaded.default === 'function') {
         loaded = loaded.default

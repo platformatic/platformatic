@@ -422,6 +422,25 @@ const plugins = {
   $id: '#plugins',
   type: 'object',
   properties: {
+    packages: {
+      type: 'array',
+      items: {
+        anyOf: [{
+          type: 'string'
+        }, {
+          type: 'object',
+          properties: {
+            name: {
+              type: 'string'
+            },
+            options: {
+              type: 'object',
+              additionalProperties: true
+            }
+          }
+        }]
+      }
+    },
     paths: {
       type: 'array',
       items: {
@@ -517,7 +536,11 @@ const plugins = {
     }
   },
   additionalProperties: false,
-  required: ['paths']
+  anyOf: [{
+    required: ['paths']
+  }, {
+    required: ['packages']
+  }]
 }
 
 const metrics = {

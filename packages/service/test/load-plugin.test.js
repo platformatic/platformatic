@@ -69,15 +69,15 @@ test('catch errors from the other side', async (t) => {
   })
 })
 
-test('accept modules', async (t) => {
+test('accept packages', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
       port: 0
     },
     plugins: {
-      paths: [{
-        module: '@fastify/compress',
+      packages: [{
+        name: '@fastify/compress',
         options: {
           threshold: 1 // 1 byte
         }
@@ -103,5 +103,24 @@ test('accept modules', async (t) => {
       body += chunk
     }
   })
-  assert.deepStrictEqual(JSON.parse(body), 'Welcome to Platformatic! Please visit https://docs.platformatic.dev')
+  assert.deepStrictEqual(JSON.parse(body), { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
+})
+
+test('accept packages / string form', async (t) => {
+  const app = await buildServer({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugins: {
+      packages: ['@fastify/compress']
+    }
+  })
+
+  t.after(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  assert.match(app.printPlugins(), /@fastify\/compress/)
 })

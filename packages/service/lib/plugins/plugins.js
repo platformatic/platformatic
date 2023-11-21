@@ -3,10 +3,9 @@
 const { join, resolve } = require('path')
 const { readFile } = require('fs/promises')
 const fp = require('fastify-plugin')
+const wrapper = require('./sandbox-wrapper')
 
 const { getJSPluginPath, isFileAccessible } = require('../utils')
-
-const wrapperPath = join(__dirname, 'sandbox-wrapper.js')
 
 async function loadPlugins (app) {
   const configManager = app.platformatic.configManager
@@ -45,7 +44,7 @@ async function loadPlugins (app) {
     })
   }
 
-  await app.register(require(wrapperPath), { paths: config.plugins.paths })
+  await app.register(wrapper, { packages: config.plugins.packages, paths: config.plugins.paths })
 }
 
 module.exports = fp(loadPlugins)
