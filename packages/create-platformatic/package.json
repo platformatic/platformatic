@@ -54,7 +54,7 @@
     "esmock": "^2.5.1",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "typescript": "~5.2.2",
+    "typescript": "~5.3.0",
     "yaml": "^2.3.2"
   }
 }

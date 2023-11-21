@@ -592,8 +592,8 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       typescript:
-        specifier: ~5.2.2
-        version: 5.2.2
+        specifier: ~5.3.0
+        version: 5.3.2
       yaml:
         specifier: ^2.3.2
         version: 2.3.4
@@ -4290,7 +4290,7 @@ packages:
       https-proxy-agent: 7.0.2
       js-yaml: 4.1.0
       tslib: 2.6.2
-      typescript: 5.2.2
+      typescript: 5.3.2
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -9238,6 +9238,12 @@ packages:
     resolution: {integrity: sha512-mI4WrpHsbCIcwT9cF4FZvr80QUeKvsUsUvKDoR+X/7XHQH98xYD8YHZg7ANtz2GtZt/CBq2QJ0thkGJMHfqc1w==}
     engines: {node: '>=14.17'}
     hasBin: true
+
+  /typescript@5.3.2:
+    resolution: {integrity: sha512-6l+RyNy7oAHDfxC4FzSJcz9vnjTKxrLpDG5M2Vu4SHRVNg6xzqZp6LYSR9zjqQTu8DU/f5xwxUdADOkbrIX2gQ==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+    dev: true
 
   /ua-parser-js@1.0.37:
     resolution: {integrity: sha512-bhTyI94tZofjo+Dn8SN6Zv8nBDvyXTymAdM3LDI/0IboIUwTu1rEhW7v2TfiVsoYWgkQ4kOVqnI8APUFbIQIFQ==}
