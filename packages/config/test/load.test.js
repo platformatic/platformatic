@@ -234,3 +234,29 @@ test('transformConfig option', async (t) => {
     foobar: 'foobar'
   })
 })
+
+test('should NOT throw if placeholder is missing but replaceEnv is `false`', async (t) => {
+  const cm = new ConfigManager({ source: resolve(__dirname, './fixtures/bad-placeholder.json'), envWhitelist: ['PORT'] })
+  await cm.parse(false)
+  assert.deepEqual(cm.current,
+    {
+      server: {
+        hostname: '127.0.0.1',
+        logger: {
+          level: 'info'
+        },
+        port: '{PORT}'
+      },
+      core: {
+        connectionString: 'sqlite://./db.sqlite'
+      },
+      migrations: {
+        dir: './migrations'
+      },
+      plugin: {
+        path: './plugin-sum.js'
+      }
+    }
+
+  )
+})

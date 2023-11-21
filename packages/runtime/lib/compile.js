@@ -11,7 +11,7 @@ const { isatty } = require('node:tty')
 async function compile (argv, logger) {
   const { configManager, configType } = await loadConfig({}, argv, {
     watch: false
-  })
+  }, false)
   /* c8 ignore next */
   if (!logger) {
     let stream
@@ -40,7 +40,7 @@ async function compile (argv, logger) {
           return service.localServiceEnvVars.get(key)
         },
         watch: false
-      })
+      }, false)
 
       const serviceWasCompiled = await tsCompiler.compile(service.path, configManager.current, childLogger, compileOptions)
       compiled ||= serviceWasCompiled

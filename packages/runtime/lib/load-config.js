@@ -13,8 +13,8 @@ store.add(platformaticDB)
 store.add(platformaticComposer)
 store.add(platformaticRuntime)
 
-function _loadConfig (minimistConfig, args, overrides) {
-  return loadConfig(minimistConfig, args, store, overrides)
+function _loadConfig (minimistConfig, args, overrides, replaceEnv = true) {
+  return loadConfig(minimistConfig, args, store, overrides, replaceEnv)
 }
 
 module.exports = { loadConfig: _loadConfig }
