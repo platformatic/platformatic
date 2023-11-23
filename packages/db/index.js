@@ -60,9 +60,16 @@ async function platformaticDB (app, opts) {
     config.server.healthCheck.fn = healthCheck
   }
 
-  await app.register(platformaticService, opts)
+  async function toLoad (app) {
+    await app.register(core, config.db)
+  }
+  toLoad[Symbol.for('skip-override')] = true
 
-  await app.register(core, config.db)
+  await app.register(platformaticService, {
+    ...opts,
+    beforePlugins: [toLoad]
+  })
+
   if (createSchemaLock) {
     try {
       const path = locateSchemaLock(configManager)

@@ -99,6 +99,20 @@ console.log(await res.json())
 await service.close()
 ```
 
+If you want to provide functionality _before_ the plugins are loaded, but after metrics and telemetry are in place,
+you can use the `beforePlugins` option:
+
+```js
+async function myPlugin (app, opts) {
+  await app.register(platformaticService, {
+    ...opts,
+    beforePlugins: [async function (app) {
+      app.decorate('myvalue', 42)
+    }]
+  })
+}
+```
+
 ## TypeScript support
 
 
