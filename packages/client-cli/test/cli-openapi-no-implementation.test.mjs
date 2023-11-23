@@ -27,6 +27,9 @@ test('generates only types in target folder with --types-only flag', async ({ te
   match(fileContents, /export interface GetMoviesRequest {/)
   match(fileContents, /export interface GetMoviesResponseOK {/)
   match(fileContents, /export interface Movies {/)
+  match(fileContents, /export const moviesEndpointsMap = {/)
+  match(fileContents, /getMovies: "\/movies\/",/)
+  match(fileContents, /getHelloWorld: "\/hello-world",/)
 })
 
 test('openapi client generation (javascript)', async ({ teardown, comment, same }) => {

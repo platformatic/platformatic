@@ -97,6 +97,12 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
     useTabs: false,
     useSingleQuote: true
   })
+
+  const map = new CodeBlockWriter({
+    indentNumberOfSpaces: 2,
+    useTabs: false,
+    useSingleQuote: true
+  })
   /* eslint-enable new-cap */
 
   writer.writeLine('import { type FastifyReply, type FastifyPluginAsync } from \'fastify\'')
@@ -117,7 +123,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
     writer.write(`export interface ${capitalizedName}`).block(() => {
       writeOperations(interfaces, writer, operations, {
         fullRequest, fullResponse, optionalHeaders, schema
-      })
+      }, map, `${camelcasedName}EndpointsMap`)
     })
 
     writer.write(`export interface ${optionsName}`).block(() => {
@@ -128,6 +134,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
     writer.writeLine(`export { ${camelcasedName} as default };`)
 
     writer.write(interfaces.toString())
+    writer.write(map.toString())
   })
 
   writer.blankLine()

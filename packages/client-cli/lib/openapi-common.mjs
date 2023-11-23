@@ -7,11 +7,13 @@ import jsonpointer from 'jsonpointer'
 import errors from './errors.mjs'
 import camelcase from 'camelcase'
 
-export function writeOperations (interfacesWriter, mainWriter, operations, { fullRequest, fullResponse, optionalHeaders, schema }) {
+export function writeOperations (interfacesWriter, mainWriter, operations, { fullRequest, fullResponse, optionalHeaders, schema }, map, mapName) {
   const originalFullResponse = fullResponse
   let currentFullResponse = originalFullResponse
+  map?.writeLine(`export const ${mapName} = {`)
   for (const operation of operations) {
     const operationId = operation.operation.operationId
+    map?.writeLine(`${operationId}: "${operation.path}",`)
     const camelCaseOperationId = camelcase(operationId)
     const { parameters, responses, requestBody } = operation.operation
     const forceFullRequest = fullRequest || hasDuplicatedParameters(operation.operation)
@@ -106,6 +108,8 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
     mainWriter.writeLine(`${camelCaseOperationId}(req?: ${operationRequestName}): Promise<${allResponsesName}>;`)
     currentFullResponse = originalFullResponse
   }
+  map?.writeLine('} as const;')
+  map?.blankLine()
 }
 
 export function writeProperties (writer, blockName, parameters, addedProps) {
