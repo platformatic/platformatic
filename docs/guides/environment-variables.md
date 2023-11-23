@@ -122,7 +122,7 @@ all plugins in the `plugins/` folder.
 
 ### Decorate the Fastify instance
 
-Create a new `plugins/greeting.js` file, calling [fastify.decorate()]()
+Create a new `plugins/greeting.js` file, calling [fastify.decorate()](https://fastify.dev/docs/latest/Reference/Decorators/#decorators)
 to expose some functionality to other plugins:
 
 ```js
