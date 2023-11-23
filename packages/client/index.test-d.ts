@@ -51,7 +51,10 @@ type MyType = {
 const openTelemetryClient = {}
 expectType<Promise<MyType>>(buildOpenAPIClient<MyType>({
   url: 'http://foo.bar',
-  path: 'foobar'
+  path: 'foobar',
+  fullRequest: true,
+  fullResponse: false,
+  throwOnError: false
 }, openTelemetryClient))
 
 expectType<() => FastifyError>(errors.OptionsUrlRequiredError)
