@@ -56,7 +56,10 @@ async function buildServer (options, app) {
 
     const root = fastify(fastifyOptions)
     root.decorate('platformatic', { configManager, config })
-    root.register(app)
+    await root.register(app)
+    if (!root.hasRoute({ url: '/', method: 'GET' })) {
+      await root.register(require('./root-endpoint'))
+    }
 
     root.decorate('url', {
       getter () {

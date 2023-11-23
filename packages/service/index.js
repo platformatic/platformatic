@@ -19,6 +19,7 @@ const { schema } = require('./lib/schema')
 const { addLoggerToTheConfig } = require('./lib/utils')
 const { start, buildServer } = require('./lib/start')
 
+// TODO(mcollina): toLoad is deprecated, remove it in the next major version.
 async function platformaticService (app, opts, toLoad = []) {
   const configManager = app.platformatic.configManager
   const config = configManager.current
@@ -75,10 +76,6 @@ async function platformaticService (app, opts, toLoad = []) {
 
   if (isKeyEnabled('healthCheck', config.server)) {
     app.register(setupHealthCheck, config.server.healthCheck)
-  }
-
-  if (!app.hasRoute({ url: '/', method: 'GET' }) && !Array.isArray(toLoad)) {
-    await app.register(require('./lib/root-endpoint'))
   }
 }
 

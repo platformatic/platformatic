@@ -54,7 +54,7 @@ async function myPlugin (app, opts) {
   // app.platformatic.configManager contains an instance of the ConfigManager
   console.log(app.platformatic.configManager.current)
 
-  await platformaticService(app, opts)
+  await app.register(platformaticService, opts)
 }
 
 // break Fastify encapsulation
@@ -225,7 +225,7 @@ function buildStackable () : Stackable<AcmeBaseConfig> {
     // Fastify types
     const app = _app as FastifyInstance & AcmeBaseMixin
 
-    await platformaticService(app, opts)
+    await app.register(platformaticService, opts)
   }
 
   // break Fastify encapsulation

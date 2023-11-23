@@ -53,23 +53,6 @@ async function platformaticDB (app, opts) {
     }
   }
 
-  async function toLoad (app) {
-    await app.register(core, config.db)
-    if (createSchemaLock) {
-      try {
-        const path = locateSchemaLock(configManager)
-        await fs.writeFile(path, JSON.stringify(app.platformatic.dbschema, null, 2))
-        app.log.info({ path }, 'created schema lock')
-      } catch (err) {
-        app.log.trace({ err }, 'unable to save schema lock')
-      }
-    }
-    if (config.authorization) {
-      app.register(auth, config.authorization)
-    }
-  }
-  toLoad[Symbol.for('skip-override')] = true
-
   if (isKeyEnabled('healthCheck', config.server)) {
     if (typeof config.server.healthCheck !== 'object') {
       config.server.healthCheck = {}
@@ -77,9 +60,21 @@ async function platformaticDB (app, opts) {
     config.server.healthCheck.fn = healthCheck
   }
 
-  await platformaticService(app, opts, [
-    toLoad
-  ])
+  await app.register(platformaticService, opts)
+
+  await app.register(core, config.db)
+  if (createSchemaLock) {
+    try {
+      const path = locateSchemaLock(configManager)
+      await fs.writeFile(path, JSON.stringify(app.platformatic.dbschema, null, 2))
+      app.log.info({ path }, 'created schema lock')
+    } catch (err) {
+      app.log.trace({ err }, 'unable to save schema lock')
+    }
+  }
+  if (config.authorization) {
+    app.register(auth, config.authorization)
+  }
 
   if (Object.keys(app.platformatic.entities).length === 0) {
     app.log.warn(
