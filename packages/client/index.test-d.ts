@@ -48,14 +48,25 @@ type MyType = {
   foo: string
 }
 
+// All params passed
 const openTelemetryClient = {}
 expectType<Promise<MyType>>(buildOpenAPIClient<MyType>({
   url: 'http://foo.bar',
   path: 'foobar',
   fullRequest: true,
   fullResponse: false,
-  throwOnError: false
+  throwOnError: false,
+  validateResponse: false,
+  headers: { foo: 'bar' }
 }, openTelemetryClient))
+
+// Only required params
+expectType<Promise<MyType>>(buildOpenAPIClient<MyType>({
+  url: 'https://undici.com/piscina',
+  fullRequest: true,
+  fullResponse: false,
+  throwOnError: false
+}))
 
 expectType<() => FastifyError>(errors.OptionsUrlRequiredError)
 

@@ -57,8 +57,8 @@ type OpenTelemetry = {
 }
 
 export function generateOperationId(path: string, method: string, methodMeta: MethodMetaInterface, all: string[]): string
-export function buildOpenAPIClient<T>(options: BuildOpenAPIClientOptions, openTelemetry: OpenTelemetry): Promise<T>
-export function buildGraphQLClient(options: BuildGraphQLClientOptions, openTelemetry: OpenTelemetry, logger: AbstractLogger): Promise<BuildGraphQLClientOutput>
+export function buildOpenAPIClient<T>(options: BuildOpenAPIClientOptions, openTelemetry?: OpenTelemetry): Promise<T>
+export function buildGraphQLClient(options: BuildGraphQLClientOptions, openTelemetry?: OpenTelemetry, logger?: AbstractLogger): Promise<BuildGraphQLClientOutput>
 export function hasDuplicatedParameters(methodMeta: MethodMetaInterface): boolean
 
 export const plugin: FastifyPluginAsync<PlatformaticClientPluginOptions>
