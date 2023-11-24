@@ -55,7 +55,7 @@ async function platformaticService (app, opts, toLoad = []) {
 
   if (config.plugins) {
     let registerTsCompiler = false
-    const typescript = config.plugins.typescript
+    const typescript = config.plugins.paths && config.plugins.typescript
     /* c8 ignore next 6 */
     if (typescript === true) {
       registerTsCompiler = true

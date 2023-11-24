@@ -34,7 +34,7 @@ async function loadPlugins (app) {
     isOutDirAccessible = await isFileAccessible(outDir)
   }
 
-  if (isOutDirAccessible) {
+  if (config.plugins.path && isOutDirAccessible) {
     config.plugins.paths = config.plugins.paths.map((plugin) => {
       /* c8 ignore next 3 */
       const tmp = typeof plugin === 'string'
