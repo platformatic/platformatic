@@ -1,5 +1,5 @@
 import { expectError, expectType } from 'tsd'
-import fastify from 'fastify'
+import fastify, { HTTPMethods } from 'fastify'
 import pltClient, { type PlatformaticClientPluginOptions, buildOpenAPIClient, errors } from '.'
 import { FastifyError } from '@fastify/error'
 
@@ -48,9 +48,9 @@ type MyType = {
   foo: string
 }
 
-// All params passed
+// All params and all generics passed
 const openTelemetryClient = {}
-expectType<Promise<MyType>>(buildOpenAPIClient<MyType>({
+expectType<Promise<MyType & { operationIdMap: Record<"foo", { path: "/foo"; method: "get"; }>; }>>(buildOpenAPIClient<MyType, Record<"foo", { path: "/foo", method: "get" }>>({
   url: 'http://foo.bar',
   path: 'foobar',
   fullRequest: true,
@@ -60,13 +60,22 @@ expectType<Promise<MyType>>(buildOpenAPIClient<MyType>({
   headers: { foo: 'bar' }
 }, openTelemetryClient))
 
-// Only required params
-expectType<Promise<MyType>>(buildOpenAPIClient<MyType>({
+// Only required params and no generics
+expectType<Promise<Record<string, object> & { operationIdMap: Record<string, { path: string; method: HTTPMethods; }>; }>>(buildOpenAPIClient({
   url: 'https://undici.com/piscina',
   fullRequest: true,
   fullResponse: false,
   throwOnError: false
 }))
+
+const { operationIdMap } = await buildOpenAPIClient({
+  url: 'http://foo.bar',
+  fullRequest: false,
+  fullResponse: true,
+  throwOnError: true
+})
+
+expectType<{ path: string; method: HTTPMethods; }>(operationIdMap['getFoo'])
 
 expectType<() => FastifyError>(errors.OptionsUrlRequiredError)
 

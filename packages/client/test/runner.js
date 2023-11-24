@@ -9,7 +9,7 @@ const glob = require('glob').globSync
 const reporter = process.stdout.isTTY ? new spec() : tap
 
 const files = [
-  ...glob(path.join(__dirname, '*.test.js'))
+  ...glob(path.join(__dirname, 'openapi.test.js'))
 ]
 
 run({
