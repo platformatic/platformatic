@@ -4,9 +4,8 @@ interface KeyValue {
   [key: string]: string
 }
 
-class ServiceGenerator extends BaseGenerator {
-
+export namespace ServiceGenerator {
+  export class ServiceGenerator extends BaseGenerator.BaseGenerator {
+    constructor(opts?: BaseGenerator.BaseGeneratorOptions)
+  }
 }
-
-export default ServiceGenerator
-export { ServiceGenerator }

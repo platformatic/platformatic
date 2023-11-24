@@ -6,7 +6,7 @@ import ConfigManager from '@platformatic/config'
 import type { IConfigManagerOptions } from '@platformatic/config'
 import { PlatformaticService } from './config'
 import type { JSONSchemaType } from 'ajv'
-import ServiceGenerator from './lib/generator/service-generator'
+import { ServiceGenerator } from './lib/generator/service-generator'
 export interface PlatformaticApp<T> {
   configManager: ConfigManager<T>
   config: T
@@ -53,4 +53,4 @@ export default platformaticService
 
 export const tsCompiler: TSCompiler
 
-export const Generator: ServiceGenerator
+export const Generator: ServiceGenerator.ServiceGenerator
