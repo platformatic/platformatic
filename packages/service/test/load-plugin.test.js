@@ -124,6 +124,26 @@ test('accept packages / string form', async (t) => {
   assert.match(app.printPlugins(), /@fastify\/compress/)
 })
 
+test('accept packages / with typescript on', async (t) => {
+  const app = await buildServer({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    plugins: {
+      packages: ['@fastify/compress'],
+      typescript: true
+    }
+  })
+
+  t.after(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  assert.match(app.printPlugins(), /@fastify\/compress/)
+})
+
 test('customize service without toLoad', async (t) => {
   async function myApp (app, opts) {
     await platformaticService(app, opts)
