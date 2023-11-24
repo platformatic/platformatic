@@ -1,6 +1,6 @@
 import { expectError, expectType } from 'tsd'
 import fastify, { HTTPMethods } from 'fastify'
-import pltClient, { type PlatformaticClientPluginOptions, buildOpenAPIClient, errors } from '.'
+import pltClient, { type PlatformaticClientPluginOptions, type buildOpenAPIClient, type GetHeadersOptions, errors } from '.'
 import { FastifyError } from '@fastify/error'
 
 const server = await fastify()
@@ -57,7 +57,11 @@ const client = await buildOpenAPIClient<MyType>({
   fullResponse: false,
   throwOnError: false,
   validateResponse: false,
-  headers: { foo: 'bar' }
+  headers: { foo: 'bar' },
+  getHeaders(options: GetHeadersOptions) {
+    const { url } = options;
+    return { href: url.href };
+  },
 }, openTelemetry)
 
 // All params and generic passed
@@ -74,4 +78,3 @@ expectType<Promise<unknown>>(buildOpenAPIClient({
 }))
 
 expectType<() => FastifyError>(errors.OptionsUrlRequiredError)
-
