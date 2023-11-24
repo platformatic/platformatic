@@ -1,7 +1,7 @@
-import { BaseGenerator, BaseGeneratorOptions } from '@platformatic/generators'
+import { BaseGenerator } from '@platformatic/generators'
 
-type DBGeneratorOptions = BaseGeneratorOptions
-export class DBGenerator extends BaseGenerator {
+type DBGeneratorOptions = BaseGenerator.BaseGeneratorOptions
+export class DBGenerator extends BaseGenerator.BaseGenerator {
   connectionStrings: string[]
-  constructor(opts?: DBGeneratorOptions)
+  constructor (opts?: DBGeneratorOptions)
 }
