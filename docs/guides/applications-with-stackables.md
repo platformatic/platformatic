@@ -24,7 +24,11 @@ async function foo (app, opts) {
     return text
   })
 
-  await platformaticService(app, opts)
+  await app.register(platformaticService, opts)
+
+  app.get('/', async (request, reply) => {
+    return 'Your new root endpoint'
+  })
 }
 
 foo.configType = 'foo'
@@ -133,5 +137,3 @@ await start(base, process.argv.splice(2)).catch(printAndExitLoadConfigError)
 ```
 
 This is the same as running with platformatic CLI, the `platformatic.json` file will be loaded from the current directory.
-
-
