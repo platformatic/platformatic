@@ -1,11 +1,10 @@
 import { BaseLogger } from 'pino'
 import { FileGenerator } from './file-generator'
-import { Answers, PromptModule } from 'inquirer'
 
 export namespace BaseGenerator {
   export type BaseGeneratorOptions = FileGenerator.FileGeneratorOptions & {
     type?: 'service' | 'db' | 'composer'
-    inquirer?: PromptModule
+    inquirer?: object
   }
   
   export type Env = {
@@ -54,7 +53,7 @@ export namespace BaseGenerator {
     logger: BaseLogger
     platformaticVersion: string
     fastifyVersion: string
-    answers: Answers
+    
     config: BaseGeneratorConfig
     questions: Array<object>
   

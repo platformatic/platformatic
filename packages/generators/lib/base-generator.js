@@ -1,12 +1,11 @@
 'use strict'
 
 const { readFile } = require('node:fs/promises')
-const { stripVersion, convertServiceNameToPrefix, addPrefixToEnv } = require('./utils')
+const { stripVersion, convertServiceNameToPrefix, addPrefixToEnv, extractEnvVariablesFromText } = require('./utils')
 const { join } = require('node:path')
 const { FileGenerator } = require('./file-generator')
 const { generateTests, generatePlugins } = require('./create-plugin')
 const { NoQuestionsError, PrepareError, MissingEnvVariable } = require('./errors')
-const { extractEnvVariablesFromText } = require('./utils')
 const generateName = require('boring-name-generator')
 /* c8 ignore start */
 const fakeLogger = {

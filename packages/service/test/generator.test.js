@@ -93,5 +93,19 @@ describe('generator', () => {
       const configFileContents = JSON.parse(configFile.contents)
       assert.strictEqual(undefined, configFileContents.server)
     })
+
+    test('do not generate .env file', async (t) => {
+      const svc = new ServiceGenerator()
+      svc.setConfig({
+        isRuntimeContext: true,
+        serviceName: 'my-service'
+      })
+
+      await svc.prepare()
+
+      const configFile = svc.getFileObject('platformatic.service.json')
+      const configFileContents = JSON.parse(configFile.contents)
+      assert.strictEqual(undefined, configFileContents.server)
+    })
   })
 })

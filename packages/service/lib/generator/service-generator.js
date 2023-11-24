@@ -34,11 +34,7 @@ declare module 'fastify' {
 `
     this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
     if (this.config.isRuntimeContext) {
-      // remove .env file and env variables since they are all for the config.server property
-      const envFile = this.getFileObject('.env')
-      if (envFile) {
-        envFile.contents = ''
-      }
+      // remove env variables since they are all for the config.server property
       this.config.env = {}
     }
   }
