@@ -54,7 +54,7 @@ async function myPlugin (app, opts) {
   // app.platformatic.configManager contains an instance of the ConfigManager
   console.log(app.platformatic.configManager.current)
 
-  await platformaticService(app, opts)
+  await app.register(platformaticService, opts)
 }
 
 // break Fastify encapsulation
@@ -97,6 +97,20 @@ console.log(await res.json())
 // do something
 
 await service.close()
+```
+
+If you want to provide functionality _before_ the plugins are loaded, but after metrics and telemetry are in place,
+you can use the `beforePlugins` option:
+
+```js
+async function myPlugin (app, opts) {
+  await app.register(platformaticService, {
+    ...opts,
+    beforePlugins: [async function (app) {
+      app.decorate('myvalue', 42)
+    }]
+  })
+}
 ```
 
 ## TypeScript support
@@ -225,7 +239,7 @@ function buildStackable () : Stackable<AcmeBaseConfig> {
     // Fastify types
     const app = _app as FastifyInstance & AcmeBaseMixin
 
-    await platformaticService(app, opts)
+    await app.register(platformaticService, opts)
   }
 
   // break Fastify encapsulation

@@ -19,9 +19,11 @@ const { schema } = require('./lib/schema')
 const { addLoggerToTheConfig } = require('./lib/utils')
 const { start, buildServer } = require('./lib/start')
 
-async function platformaticService (app, opts, toLoad = []) {
+// TODO(mcollina): toLoad is deprecated, remove it in the next major version.
+async function platformaticService (app, opts, toLoad) {
   const configManager = app.platformatic.configManager
   const config = configManager.current
+  const beforePlugins = opts.beforePlugins || toLoad || []
 
   if (isKeyEnabled('metrics', config)) {
     app.register(setupMetrics, config.metrics)
@@ -33,20 +35,20 @@ async function platformaticService (app, opts, toLoad = []) {
     await app.register(telemetry, config.telemetry)
   }
 
-  if (Array.isArray(toLoad)) {
-    for (const plugin of toLoad) {
-      await app.register(plugin)
+  if (Array.isArray(beforePlugins)) {
+    for (const plugin of beforePlugins) {
+      app.register(plugin)
     }
   }
 
   const serviceConfig = config.service || {}
 
   if (isKeyEnabled('openapi', serviceConfig)) {
-    await app.register(setupOpenAPI, serviceConfig.openapi)
+    app.register(setupOpenAPI, serviceConfig.openapi)
   }
 
   if (isKeyEnabled('graphql', serviceConfig)) {
-    await app.register(setupGraphQL, serviceConfig.graphql)
+    app.register(setupGraphQL, serviceConfig.graphql)
   }
 
   if (isKeyEnabled('clients', config)) {
@@ -64,9 +66,9 @@ async function platformaticService (app, opts, toLoad = []) {
     }
 
     if (registerTsCompiler) {
-      await app.register(setupTsCompiler)
+      app.register(setupTsCompiler)
     }
-    await app.register(loadPlugins)
+    app.register(loadPlugins)
   }
 
   if (isKeyEnabled('cors', config.server)) {
@@ -75,10 +77,6 @@ async function platformaticService (app, opts, toLoad = []) {
 
   if (isKeyEnabled('healthCheck', config.server)) {
     app.register(setupHealthCheck, config.server.healthCheck)
-  }
-
-  if (!app.hasRoute({ url: '/', method: 'GET' }) && !Array.isArray(toLoad)) {
-    await app.register(require('./lib/root-endpoint'))
   }
 }
 
