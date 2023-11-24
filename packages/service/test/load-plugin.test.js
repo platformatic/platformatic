@@ -154,7 +154,7 @@ test('customize service with beforePlugins', async (t) => {
       ...opts,
       beforePlugins: [async function (app) {
         app.get('/', () => 'hello world')
-      }] 
+      }]
     })
   }
 
