@@ -221,7 +221,13 @@
 
     <script>
       const currentPath = window.location.pathname
+<<<<<<< HEAD
     
+=======
+      const openApiLink = document.getElementById('openapi-link')
+      openApiLink.href = currentPath + 'documentation'
+
+>>>>>>> 0cb177a0 (feat: scalar api reference integration)
       const prefersLightScheme = window.matchMedia('(prefers-color-scheme: light)');
       if (prefersLightScheme.matches) {
         document.body.classList.add('light-theme');

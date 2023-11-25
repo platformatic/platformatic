@@ -1,0 +1,128 @@
+:root {
+  --theme-font: 'Inter', var(--system-fonts);
+}
+/* basic theme */
+.light-mode {
+  --theme-color-1: #2a2f45;
+  --theme-color-2: #757575;
+  --theme-color-3: #8e8e8e;
+  --theme-color-accent: #1d82de;
+
+  --theme-background-1: #fff;
+  --theme-background-2: #f6f6f6;
+  --theme-background-3: #e7e7e7;
+  --theme-background-accent: #1d82de1f;
+
+  --theme-border-color: rgba(0, 0, 0, 0.1);
+}
+.dark-mode {
+  --theme-color-1: #fff;
+  --theme-color-2: rgba(255, 255, 255, 0.7);
+  --theme-color-3: rgba(255, 255, 255, 0.44);
+  --theme-color-accent: #20fa90;
+
+  --theme-background-1: #001825;
+  --theme-background-2: #062232;
+  --theme-background-3: #143143;
+  --theme-background-accent: #20fa900f;
+
+  --theme-border-color: rgba(255, 255, 255, 0.1);
+}
+.light-mode .t-doc__sidebar .sidebar {
+  --sidebar-background-1: var(--theme-background-1);
+  --sidebar-item-hover-color: currentColor;
+  --sidebar-item-hover-background: var(--theme-background-2);
+  --sidebar-item-active-background: var(--theme-background-accent);
+  --sidebar-border-color: var(--theme-border-color);
+  --sidebar-color-1: var(--theme-color-1);
+  --sidebar-color-2: var(--theme-color-2);
+  --sidebar-color-active: var(--theme-color-accent);
+  --sidebar-search-background: var(--theme-background-2);
+  --sidebar-search-border-color: var(--sidebar-border-color);
+  --sidebar-search--color: var(--theme-color-3);
+}
+
+.dark-mode .t-doc__sidebar .sidebar {
+  --sidebar-background-1: var(--theme-background-1);
+  --sidebar-item-hover-color: currentColor;
+  --sidebar-item-hover-background: var(--theme-background-2);
+  --sidebar-item-active-background: var(--theme-background-accent);
+  --sidebar-border-color: var(--theme-border-color);
+  --sidebar-color-1: var(--theme-color-1);
+  --sidebar-color-2: var(--theme-color-2);
+  --sidebar-color-active: var(--theme-color-accent);
+  --sidebar-search-background: var(--theme-background-2);
+  --sidebar-search-border-color: var(--sidebar-border-color);
+  --sidebar-search--color: var(--theme-color-3);
+}
+/* advanced */
+.light-mode {
+  --theme-button-1: rgb(49 53 56);
+  --theme-button-1-color: #fff;
+  --theme-button-1-hover: rgb(28 31 33);
+
+  --theme-color-green: #069061;
+  --theme-color-red: #ef0006;
+  --theme-color-yellow: #edbe20;
+  --theme-color-blue: #0082d0;
+  --theme-color-orange: #fb892c;
+  --theme-color-purple: #5203d1;
+
+  --theme-scrollbar-color: rgba(0, 0, 0, 0.18);
+  --theme-scrollbar-color-active: rgba(0, 0, 0, 0.36);
+}
+.dark-mode {
+  --theme-button-1: #f6f6f6;
+  --theme-button-1-color: #000;
+  --theme-button-1-hover: #e7e7e7;
+
+  --theme-color-green: #20fa90;
+  --theme-color-red: #ff0000;
+  --theme-color-yellow: #f8e220;
+  --theme-color-blue: #2092fa;
+  --theme-color-orange: #ffab5d;
+  --theme-color-purple: #c51ce1;
+
+  --theme-scrollbar-color: rgba(255, 255, 255, 0.24);
+  --theme-scrollbar-color-active: rgba(255, 255, 255, 0.48);
+}
+.section-container:first-of-type:before {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 40%;
+  height: 400px;
+  background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICAgIDxwYXRoIGQ9Ik0yLjM0Mjc3IDQuNUwwLjE3NzcxIDAuNzVMNC41MDc4NCAwLjc1TDIuMzQyNzcgNC41WiIgZmlsbD0id2hpdGUiIC8+Cjwvc3ZnPgo=);
+  opacity: .17;
+}
+.light-mode .section-container:first-of-type:before {
+  filter: invert(1)
+}
+.light-mode .t-doc__sidebar {
+  --sidebar-background-1: var(--theme-background-1);
+  --sidebar-item-hover-color: currentColor;
+  --sidebar-item-hover-background: var(--theme-background-2);
+  --sidebar-item-active-background: var(--theme-background-accent);
+  --sidebar-border-color: var(--theme-border-color);
+  --sidebar-color-1: var(--theme-color-1);
+  --sidebar-color-2: var(--theme-color-2);
+  --sidebar-color-active: var(--theme-color-accent);
+  --sidebar-search-background: var(--theme-background-2);
+  --sidebar-search-border-color: var(--theme-background-1);
+  --sidebar-search--color: var(--theme-color-3);
+}
+
+.dark-mode .t-doc__sidebar {
+  --sidebar-background-1: var(--theme-background-1);
+  --sidebar-item-hover-color: currentColor;
+  --sidebar-item-hover-background: var(--theme-background-2);
+  --sidebar-item-active-background: var(--theme-background-accent);
+  --sidebar-border-color: var(--theme-border-color);
+  --sidebar-color-1: var(--theme-color-1);
+  --sidebar-color-2: var(--theme-color-2);
+  --sidebar-color-active: var(--theme-color-accent);
+  --sidebar-search-background: var(--theme-background-2);
+  --sidebar-search-border-color: var(--theme-background-1);
+  --sidebar-search--color: var(--theme-color-3);
+}

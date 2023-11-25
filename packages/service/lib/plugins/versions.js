@@ -13,7 +13,6 @@ const {
 const wrapperPath = join(__dirname, 'sandbox-wrapper.js')
 
 const Swagger = require('@fastify/swagger')
-const SwaggerUI = require('@fastify/swagger-ui')
 
 async function loadVersions (app) {
   const configManager = app.platformatic.configManager
