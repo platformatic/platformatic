@@ -114,9 +114,20 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
 
       // GET methods need query strings instead of JSON bodies
       if (method === 'get') {
-        writer.writeLine(
-          `const response = await fetch(\`\${url}${stringLiteralPath}?\${new URLSearchParams(Object.entries(request || {})).toString()}\`)`
-        )
+        writer
+          .conditionalWrite(headerParams.length > 0, `const response = await fetch(\`\${url}${stringLiteralPath}?\${new URLSearchParams(Object.entries(request || {})).toString()}\`, `)
+          .conditionalWrite(headerParams.length === 0, `const response = await fetch(\`\${url}${stringLiteralPath}?\${new URLSearchParams(Object.entries(request || {})).toString()}\`)`)
+        if (headerParams.length > 0) {
+          writer
+            .inlineBlock(() => {
+              writer.write('headers:').block(() => {
+                headerParams.forEach((param, idx) => {
+                  const trailingComma = (idx === headerParams.length - 1 ? '' : ',')
+                  writer.writeLine(`'${param}': request['${param}']${trailingComma}`)
+                })
+              })
+            })
+        }
       } else {
         if (queryParams.length) {
           // query parameters should be appended to the url

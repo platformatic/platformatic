@@ -294,3 +294,24 @@ const _postRoot = async (url: string, request: Types.PostRootRequest) => {
   ok(implementation)
   match(implementation, tsImplementationTemplate)
 })
+
+test('handle headers parameters in get request', async ({ teardown, ok, match }) => {
+  const dir = await moveToTmpdir(teardown)
+
+  const fileName = join(__dirname, 'fixtures', 'get-headers-frontend-openapi.json')
+  await execa('node', [cliPath, fileName, '--language', 'ts', '--frontend', '--name', 'fontend'])
+  const implementation = await readFile(join(dir, 'fontend', 'fontend.ts'), 'utf8')
+
+  const tsImplementationTemplate = `
+const _getRoot = async (url: string, request: Types.PostRootRequest) => {
+  const response = await fetch(\`\${url}/\`, {
+    method: 'GET',
+    headers: {
+      'level': request['level'],
+      'foo': request['foo']
+    }
+  })
+`
+  ok(implementation)
+  match(implementation, tsImplementationTemplate)
+})
