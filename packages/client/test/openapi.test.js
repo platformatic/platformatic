@@ -43,7 +43,7 @@ test('build basic client from url', async (t) => {
     url: `${app.url}/documentation/json`
   })
 
-  assert.deepEqual(client[Symbol.for('operationIdMap')], {
+  assert.deepEqual(client[Symbol.for('plt.operationIdMap')], {
     getMovies: { path: '/movies/', method: 'get' },
     createMovie: { path: '/movies/', method: 'post' },
     updateMovies: { path: '/movies/', method: 'put' },

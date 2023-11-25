@@ -44,7 +44,7 @@ server.register(pltClient, {
   serviceId: 'Fantozzi'
 })
 
-const key = Symbol.for('operationIdMap')
+const key = Symbol.for('plt.operationIdMap')
 type MyType = {
   getFoo: Function
 } & Record<typeof key, { path: string, method: HTTPMethods }>
