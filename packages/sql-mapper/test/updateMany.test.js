@@ -16,7 +16,10 @@ test('updateMany successful', async () => {
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      test.after(() => db.dispose())
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
       ok('onDatabaseLoad called')
 
       await clear(db, sql)
@@ -104,7 +107,10 @@ test('updateMany will return the updated values', async () => {
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      test.after(() => db.dispose())
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
       ok('onDatabaseLoad called')
 
       await clear(db, sql)
@@ -177,7 +183,10 @@ test('updateMany missing input', async () => {
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      test.after(() => db.dispose())
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
       ok('onDatabaseLoad called')
 
       await clear(db, sql)
@@ -241,7 +250,10 @@ test('updateMany successful and update updated_at', async () => {
     autoTimestamp: true,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      test.after(() => db.dispose())
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
       ok('onDatabaseLoad called')
 
       await clear(db, sql)

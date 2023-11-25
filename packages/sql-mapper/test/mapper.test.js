@@ -22,59 +22,67 @@ test('should throw if no connection string is provided', async () => {
   }
 })
 
-test('[PG] return entities', { skip: !isPg }, async () => {
-  async function onDatabaseLoad (db, sql) {
-    await clear(db, sql)
-    test.after(() => db.dispose())
-
-    await db.query(sql`CREATE TABLE pages (
-      id SERIAL PRIMARY KEY,
-      title VARCHAR(255) NOT NULL
-    );`)
-  }
-  const mapper = await connect({
-    connectionString: connInfo.connectionString,
-    log: fakeLogger,
-    onDatabaseLoad,
-    ignore: {},
-    hooks: {}
-  })
-  const pageEntity = mapper.entities.page
-  equal(pageEntity.name, 'Page')
-  equal(pageEntity.singularName, 'page')
-  equal(pageEntity.pluralName, 'pages')
-  ok(true)
-})
-
-test('[mysql] return entities', { skip: !isMysql }, async () => {
-  async function onDatabaseLoad (db, sql) {
-    await clear(db, sql)
-    test.after(() => db.dispose())
-
-    await db.query(sql`CREATE TABLE pages (
-      id SERIAL PRIMARY KEY,
-      title VARCHAR(255) NOT NULL
-    );`)
-  }
-  const mapper = await connect({
-    connectionString: connInfo.connectionString,
-    log: fakeLogger,
-    onDatabaseLoad,
-    ignore: {},
-    hooks: {}
-  })
-  const pageEntity = mapper.entities.page
-  equal(pageEntity.name, 'Page')
-  equal(pageEntity.singularName, 'page')
-  equal(pageEntity.pluralName, 'pages')
-  ok(true)
-})
-
-test('[sqlite] return entities', { skip: !isSQLite }, async () => {
+test('[PG] return entities', { skip: !isPg }, async (t) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
 
     test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
+
+    await db.query(sql`CREATE TABLE pages (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(255) NOT NULL
+    );`)
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+  const pageEntity = mapper.entities.page
+  equal(pageEntity.name, 'Page')
+  equal(pageEntity.singularName, 'page')
+  equal(pageEntity.pluralName, 'pages')
+  ok(true)
+})
+
+test('[mysql] return entities', { skip: !isMysql }, async (t) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+
+    t.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
+
+    await db.query(sql`CREATE TABLE pages (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(255) NOT NULL
+    );`)
+  }
+  const mapper = await connect({
+    connectionString: connInfo.connectionString,
+    log: fakeLogger,
+    onDatabaseLoad,
+    ignore: {},
+    hooks: {}
+  })
+  const pageEntity = mapper.entities.page
+  equal(pageEntity.name, 'Page')
+  equal(pageEntity.singularName, 'page')
+  equal(pageEntity.pluralName, 'pages')
+  ok(true)
+})
+
+test('[sqlite] return entities', { skip: !isSQLite }, async (t) => {
+  async function onDatabaseLoad (db, sql) {
+    await clear(db, sql)
+
+    t.after(async () => {
       await clear(db, sql)
       db.dispose()
     })
@@ -98,10 +106,14 @@ test('[sqlite] return entities', { skip: !isSQLite }, async () => {
   ok(true)
 })
 
-test('ignore tables', async () => {
+test('ignore tables', async (t) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+
+    t.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
       id SERIAL PRIMARY KEY,
@@ -123,7 +135,7 @@ test('ignore tables', async () => {
   equal(mapper.entities.users, undefined)
 })
 
-test('[PG] return entities with Fastify', { skip: !isPg }, async () => {
+test('[PG] return entities with Fastify', { skip: !isPg }, async (t) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
 
@@ -133,7 +145,7 @@ test('[PG] return entities with Fastify', { skip: !isPg }, async () => {
     );`)
   }
   const app = fastify()
-  test.after(() => app.close())
+  t.after(() => app.close())
   app.register(plugin, {
     connectionString: connInfo.connectionString,
     log: fakeLogger,
@@ -147,7 +159,7 @@ test('[PG] return entities with Fastify', { skip: !isPg }, async () => {
   ok(true)
 })
 
-test('[mysql] return entities', { skip: !isMysql }, async () => {
+test('[mysql] return entities', { skip: !isMysql }, async (t) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
 
@@ -157,7 +169,7 @@ test('[mysql] return entities', { skip: !isMysql }, async () => {
     );`)
   }
   const app = fastify()
-  test.after(() => app.close())
+  t.after(() => app.close())
   app.register(plugin, {
     connectionString: connInfo.connectionString,
     onDatabaseLoad
@@ -170,7 +182,7 @@ test('[mysql] return entities', { skip: !isMysql }, async () => {
   ok(true)
 })
 
-test('[sqlite] return entities', { skip: !isSQLite }, async () => {
+test('[sqlite] return entities', { skip: !isSQLite }, async (t) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
 
@@ -180,7 +192,7 @@ test('[sqlite] return entities', { skip: !isSQLite }, async () => {
     );`)
   }
   const app = fastify()
-  test.after(() => app.close())
+  t.after(() => app.close())
   app.register(plugin, {
     connectionString: connInfo.connectionString,
     onDatabaseLoad
@@ -200,7 +212,7 @@ test('missing connectionString', async () => {
   await rejects(app.ready(), /connectionString/)
 })
 
-test('platformaticContext', async () => {
+test('platformaticContext', async (t) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
 
@@ -210,7 +222,7 @@ test('platformaticContext', async () => {
     );`)
   }
   const app = fastify()
-  test.after(() => app.close())
+  t.after(() => app.close())
   app.register(plugin, {
     connectionString: connInfo.connectionString,
     onDatabaseLoad
@@ -273,6 +285,7 @@ test('clean up all tables', async () => {
 test('clean up all tables with foreign keys', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
+
     test.after(async () => {
       await clear(db, sql)
       db.dispose()

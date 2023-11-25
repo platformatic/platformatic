@@ -1,8 +1,9 @@
 const { test } = require('node:test')
 const { equal, ok, deepEqual, throws, ifError } = require('node:assert')
 const { connect } = require('..')
+const { match } = require('@platformatic/utils')
 
-const { connInfo, isSQLite, isMysql, isMysql8, isPg, clear, match } = require('./helper')
+const { connInfo, isSQLite, isMysql, isMysql8, isPg, clear } = require('./helper')
 
 const fakeLogger = {
   trace: () => {},
@@ -12,7 +13,10 @@ const fakeLogger = {
 test('uses tables from different schemas', { skip: isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await db.query(sql`CREATE SCHEMA IF NOT EXISTS test1;`)
     if (isMysql || isMysql8) {
@@ -65,7 +69,10 @@ test('uses tables from different schemas', { skip: isSQLite }, async () => {
 test('find enums correctly using schemas', { skip: isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await db.query(sql`CREATE SCHEMA IF NOT EXISTS test1;`)
     if (isMysql || isMysql8) {
@@ -134,7 +141,10 @@ test('find enums correctly using schemas', { skip: isSQLite }, async () => {
 test('if schema is empty array, should not load entities from tables in explicit schema', { skip: isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await db.query(sql`CREATE SCHEMA IF NOT EXISTS test1;`)
     if (isMysql || isMysql8) {
@@ -179,7 +189,10 @@ test('if schema is empty array, should not load entities from tables in explicit
 test('[pg] if schema is empty array, should find entities only in default \'public\' schema', { skip: !isPg }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
       id SERIAL PRIMARY KEY,
@@ -212,7 +225,10 @@ test('[pg] if schema is empty array, should find entities only in default \'publ
 test('[sqlite] if sqllite, ignores schema information', { skip: !isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
     await db.query(sql`CREATE TABLE "pages" (
       "id" INTEGER PRIMARY KEY,
       "title" TEXT NOT NULL
@@ -239,7 +255,10 @@ test('[sqlite] if sqllite, ignores schema information', { skip: !isSQLite }, asy
 test('addEntityHooks in entities with schema', { skip: isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await db.query(sql`CREATE SCHEMA IF NOT EXISTS test1;`)
     if (isMysql || isMysql8) {
@@ -346,7 +365,10 @@ test('addEntityHooks in entities with schema', { skip: isSQLite }, async () => {
 test('uses tables from different schemas with FK', { skip: isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await db.query(sql`CREATE SCHEMA IF NOT EXISTS test1;`)
     if (isMysql || isMysql8) {
@@ -408,7 +430,10 @@ test('uses tables from different schemas with FK', { skip: isSQLite }, async () 
 test('recreate mapper from schema', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     if (isMysql || isMysql8) {
       await db.query(sql`

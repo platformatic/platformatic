@@ -13,7 +13,10 @@ const fakeLogger = {
 test('entity fields', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     if (isSQLite) {
       await db.query(sql`CREATE TABLE pages (
@@ -47,7 +50,10 @@ test('entity fields', async () => {
 test('entity API', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
     if (isSQLite) {
       await db.query(sql`CREATE TABLE pages (
         id INTEGER PRIMARY KEY,
@@ -150,7 +156,10 @@ test('entity API', async () => {
 test('empty save', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
     if (isSQLite) {
       await db.query(sql`CREATE TABLE pages (
         id INTEGER PRIMARY KEY,
@@ -181,7 +190,10 @@ test('empty save', async () => {
 test('insert with explicit integer PK value', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
     await db.query(sql`CREATE TABLE pages (
       id INTEGER PRIMARY KEY,
       title varchar(255) NOT NULL
@@ -208,7 +220,10 @@ test('insert with explicit integer PK value', async () => {
 test('insert with explicit uuid PK value', { skip: !isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
     await db.query(sql`CREATE TABLE pages (
       id uuid PRIMARY KEY,
       title varchar(255) NOT NULL
@@ -239,7 +254,10 @@ test('insert with explicit uuid PK value', { skip: !isSQLite }, async () => {
 test('insert with explicit uuid PK value without rowid', { skip: !isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
     await db.query(sql`CREATE TABLE pages (
       id uuid PRIMARY KEY,
       title varchar(255) NOT NULL
@@ -270,7 +288,10 @@ test('insert with explicit uuid PK value without rowid', { skip: !isSQLite }, as
 test('insert without fields to retrieve', { skip: !isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
     await db.query(sql`CREATE TABLE pages (
       id INTEGER PRIMARY KEY,
       title varchar(255) NOT NULL
@@ -359,7 +380,10 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async () => {
 test('[SQLite] allows to have VARCHAR PK', { skip: !isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await db.query(sql`CREATE TABLE pages (
       id varchar(255) PRIMARY KEY,
@@ -387,7 +411,10 @@ test('[SQLite] allows to have VARCHAR PK', { skip: !isSQLite }, async () => {
 test('mixing snake and camel case', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     if (isMysql) {
       await db.query(sql`
@@ -495,7 +522,10 @@ test('mixing snake and camel case', async () => {
 test('only include wanted fields - with foreign', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     if (isMysql) {
       await db.query(sql`
@@ -581,7 +611,10 @@ test('only include wanted fields - with foreign', async () => {
 test('only include wanted fields - without foreign', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     if (isMysql) {
       await db.query(sql`
@@ -667,7 +700,10 @@ test('only include wanted fields - without foreign', async () => {
 test('include all fields', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     if (isMysql) {
       await db.query(sql`
@@ -753,7 +789,10 @@ test('include all fields', async () => {
 test('include possible values of enum columns', { skip: isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     if (isPg) {
       await db.query(sql`
@@ -787,7 +826,10 @@ test('include possible values of enum columns', { skip: isSQLite }, async () => 
 test('JSON type', { skip: !(isPg || isMysql8) }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await db.query(sql`CREATE TABLE simple_types (
         id SERIAL PRIMARY KEY,
@@ -838,7 +880,10 @@ test('JSON type', { skip: !(isPg || isMysql8) }, async () => {
 test('stored and virtual generated columns should return for SQLite', { skip: !(isSQLite) }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await db.query(sql`CREATE TABLE generated_test (
       id INTEGER PRIMARY KEY,
@@ -889,7 +934,10 @@ test('stored and virtual generated columns should return for SQLite', { skip: !(
 test('stored generated columns should return for pg', { skip: !(isPg) }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await db.query(sql`CREATE TABLE generated_test (
       id SERIAL PRIMARY KEY,
@@ -939,7 +987,10 @@ test('stored generated columns should return for pg', { skip: !(isPg) }, async (
 test('stored and virtual generated columns should return for pg', { skip: (isPg || isSQLite) }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await db.query(sql`CREATE TABLE generated_test (
       id INTEGER UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -990,7 +1041,10 @@ test('stored and virtual generated columns should return for pg', { skip: (isPg 
 test('nested transactions', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
     if (isSQLite) {
       await db.query(sql`CREATE TABLE pages (
         id INTEGER PRIMARY KEY,
@@ -1024,7 +1078,10 @@ test('nested transactions', async () => {
 test('array support (PG)', { skip: !(isPg) }, async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await db.query(sql`CREATE TABLE generated_test (
       id SERIAL PRIMARY KEY,

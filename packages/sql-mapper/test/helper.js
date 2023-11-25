@@ -50,6 +50,7 @@ module.exports.clear = async function (db, sql) {
   try {
     await db.query(sql`DROP TABLE pages`)
   } catch (err) {
+
   }
 
   try {
@@ -145,27 +146,6 @@ module.exports.setupDatabase = async function ({ seed, cache, t }) {
     cache
   })
 }
-
-function match (actual, expected) {
-  for (const key in expected) {
-    if (key in actual) {
-      if (typeof expected[key] === 'object' && expected[key] !== null) {
-        if (!match(actual[key], expected[key])) {
-          return false
-        }
-      } else {
-        if (actual[key] !== expected[key]) {
-          return false
-        }
-      }
-    } else {
-      return false
-    }
-  }
-  return true
-}
-
-module.exports.match = match
 
 module.exports.createBasicPages = async function (db, sql) {
   if (module.exports.isSQLite) {

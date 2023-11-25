@@ -15,7 +15,10 @@ test('ignore a table', async (t) => {
   const { ok, equal } = tspl(t, { plan: 3 })
   async function onDatabaseLoad (db, sql) {
     ok('onDatabaseLoad called')
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await clear(db, sql)
     await createBasicPages(db, sql)
@@ -42,7 +45,10 @@ test('show a warning if there is no ignored table', async (t) => {
 
   async function onDatabaseLoad (db, sql) {
     ok('onDatabaseLoad called')
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await clear(db, sql)
     await createBasicPages(db, sql)
@@ -77,7 +83,10 @@ test('show a warning if the database is empty', async (t) => {
 
   async function onDatabaseLoad (db, sql) {
     ok('onDatabaseLoad called')
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await clear(db, sql)
   }
@@ -105,7 +114,10 @@ test('ignore a column', async (t) => {
 
   async function onDatabaseLoad (db, sql) {
     ok('onDatabaseLoad called')
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await clear(db, sql)
     await createBasicPages(db, sql)
@@ -136,7 +148,10 @@ test('shows a warning if there is no ignored column', async (t) => {
 
   async function onDatabaseLoad (db, sql) {
     ok('onDatabaseLoad called')
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await clear(db, sql)
     await createBasicPages(db, sql)

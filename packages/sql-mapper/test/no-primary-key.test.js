@@ -15,7 +15,10 @@ test('unique key', async (t) => {
   const { equal, notEqual, deepEqual } = tspl(t, { plan: 8 })
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     const table = sql`
       CREATE TABLE pages (
@@ -54,7 +57,10 @@ test('no key', async (t) => {
 
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     const table = sql`
       CREATE TABLE pages (

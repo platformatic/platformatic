@@ -16,7 +16,10 @@ test('list', async () => {
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      test.after(() => db.dispose())
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
       ok('onDatabaseLoad called')
 
       await clear(db, sql)
@@ -200,7 +203,10 @@ test('totalCount', async () => {
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      test.after(() => db.dispose())
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
       ok('onDatabaseLoad called')
 
       await clear(db, sql)
@@ -261,7 +267,10 @@ test('foreign keys', async () => {
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      test.after(() => db.dispose())
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
       ok('onDatabaseLoad called')
 
       await clear(db, sql)
@@ -398,7 +407,10 @@ test('limit should be 10 by default 100 at max', async () => {
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      test.after(() => db.dispose())
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
       ok('onDatabaseLoad called')
 
       await clear(db, sql)
@@ -483,7 +495,10 @@ test('limit must accept custom configuration', async () => {
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      test.after(() => db.dispose())
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
       ok('onDatabaseLoad called')
 
       await clear(db, sql)
@@ -563,7 +578,10 @@ test('is NULL', async () => {
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      test.after(() => db.dispose())
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
       ok('onDatabaseLoad called')
 
       await clear(db, sql)
@@ -610,7 +628,10 @@ test('LIKE', async () => {
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      test.after(() => db.dispose())
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
       ok('onDatabaseLoad called')
 
       await clear(db, sql)
@@ -752,7 +773,10 @@ test('ILIKE', async () => {
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      test.after(() => db.dispose())
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
       ok('onDatabaseLoad called')
 
       await clear(db, sql)

@@ -13,7 +13,10 @@ const fakeLogger = {
 test('entity transactions', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
     if (isSQLite) {
       await db.query(sql`CREATE TABLE pages (
         id INTEGER PRIMARY KEY,

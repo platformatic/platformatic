@@ -40,7 +40,10 @@ test('inserted_at updated_at happy path', async () => {
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      test.after(() => db.dispose())
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
       ok('onDatabaseLoad called')
 
       await clear(db, sql)
@@ -97,7 +100,10 @@ test('bulk insert adds inserted_at updated_at', async () => {
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      test.after(() => db.dispose())
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
       ok('onDatabaseLoad called')
 
       await clear(db, sql)

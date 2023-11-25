@@ -15,7 +15,10 @@ test('basic hooks', async (t) => {
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      test.after(() => db.dispose())
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
       ok('onDatabaseLoad called')
 
       await clear(db, sql)
@@ -120,7 +123,10 @@ test('addEntityHooks', async (t) => {
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      test.after(() => db.dispose())
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
       ok('onDatabaseLoad called')
 
       await clear(db, sql)
@@ -226,7 +232,10 @@ test('basic hooks with smaller cap name', async (t) => {
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      test.after(() => db.dispose())
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
       ok('onDatabaseLoad called')
 
       await clear(db, sql)
