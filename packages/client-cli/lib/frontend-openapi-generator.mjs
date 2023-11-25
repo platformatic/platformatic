@@ -127,6 +127,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
                 })
               })
             })
+            .write(')')
         }
       } else {
         if (queryParams.length) {
