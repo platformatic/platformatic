@@ -43,6 +43,20 @@ test('build basic client from url', async (t) => {
     url: `${app.url}/documentation/json`
   })
 
+  assert.deepEqual(client[Symbol.for('plt.operationIdMap')], {
+    getMovies: { path: '/movies/', method: 'get' },
+    createMovie: { path: '/movies/', method: 'post' },
+    updateMovies: { path: '/movies/', method: 'put' },
+    getMovieById: { path: '/movies/{id}', method: 'get' },
+    updateMovie: { path: '/movies/{id}', method: 'put' },
+    deleteMovies: { path: '/movies/{id}', method: 'delete' },
+    updateMovieTitle: { path: '/movies/{id}/{title}', method: 'put' },
+    getHelloWorld: { path: '/hello-world', method: 'get' },
+    getHelloName: { path: '/hello/{name}', method: 'get' },
+    getHelloHeaderName: { path: '/hello/header/name', method: 'get' },
+    postWeirdName: { path: '/weird/{name}', method: 'post' }
+  })
+
   const movie = await client.createMovie({
     title: 'The Matrix'
   })

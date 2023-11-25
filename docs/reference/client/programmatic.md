@@ -20,6 +20,29 @@ const res = await client.yourOperationName({ foo: 'bar' })
 console.log(res)
 ```
 
+Once you have a `client` generated from `buildOpenAPIClient`, you can access a mapping between operation IDs and method/path by leveraging the `Symbol.for('plt.operationIdMap')` property.
+
+```js
+const client = await buildOpenAPIClient({
+  // ... your client settings
+})
+
+const mapping = client[Symbol.for('plt.operationIdMap')]
+
+console.log(mapping)
+
+/**
+ * 
+ * You should see something like:
+ * {
+ *  getOperationFoo: { path: '/operation-foo/', method: 'get' },
+ *  postOperationBar: { path: '/operation-bar/', method: 'post' },
+ * }
+ * 
+ */
+
+```
+
 If you use Typescript you can take advantage of the generated types file 
 
 ```ts
