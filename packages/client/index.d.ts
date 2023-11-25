@@ -57,7 +57,7 @@ type OpenTelemetry = {
 }
 
 export function generateOperationId(path: string, method: string, methodMeta: MethodMetaInterface, all: string[]): string
-export function buildOpenAPIClient<T = Record<string, object>, U = Record<keyof T, { path: string, method: HTTPMethods }>>(options: BuildOpenAPIClientOptions, openTelemetry?: OpenTelemetry): Promise<T & { operationIdMap: U }>
+export function buildOpenAPIClient<T>(options: BuildOpenAPIClientOptions, openTelemetry?: OpenTelemetry): Promise<T>
 export function buildGraphQLClient(options: BuildGraphQLClientOptions, openTelemetry?: OpenTelemetry, logger?: AbstractLogger): Promise<BuildGraphQLClientOutput>
 export function hasDuplicatedParameters(methodMeta: MethodMetaInterface): boolean
 

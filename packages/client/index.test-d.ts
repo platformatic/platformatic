@@ -44,13 +44,13 @@ server.register(pltClient, {
   serviceId: 'Fantozzi'
 })
 
+const key = Symbol.for('operationIdMap')
 type MyType = {
-  foo: string
-}
+  getFoo: Function
+} & Record<typeof key, { path: string, method: string }>
 
-// All params and all generics passed
-const openTelemetryClient = {}
-expectType<Promise<MyType & { operationIdMap: Record<"foo", { path: "/foo"; method: "get"; }>; }>>(buildOpenAPIClient<MyType, Record<"foo", { path: "/foo", method: "get" }>>({
+const openTelemetry = {}
+const client = await buildOpenAPIClient<MyType>({
   url: 'http://foo.bar',
   path: 'foobar',
   fullRequest: true,
@@ -58,24 +58,20 @@ expectType<Promise<MyType & { operationIdMap: Record<"foo", { path: "/foo"; meth
   throwOnError: false,
   validateResponse: false,
   headers: { foo: 'bar' }
-}, openTelemetryClient))
+}, openTelemetry)
+
+// All params and generic passed
+expectType<MyType>(client)
+expectType<Function>(client.getFoo)
+expectType<{ path: string, method: string }>(client[key])
 
 // Only required params and no generics
-expectType<Promise<Record<string, object> & { operationIdMap: Record<string, { path: string; method: HTTPMethods; }>; }>>(buildOpenAPIClient({
+expectType<Promise<unknown>>(buildOpenAPIClient({
   url: 'https://undici.com/piscina',
   fullRequest: true,
   fullResponse: false,
   throwOnError: false
 }))
-
-const { operationIdMap } = await buildOpenAPIClient({
-  url: 'http://foo.bar',
-  fullRequest: false,
-  fullResponse: true,
-  throwOnError: true
-})
-
-expectType<{ path: string; method: HTTPMethods; }>(operationIdMap['getFoo'])
 
 expectType<() => FastifyError>(errors.OptionsUrlRequiredError)
 
