@@ -166,3 +166,25 @@ function match (actual, expected) {
 }
 
 module.exports.match = match
+
+module.exports.createBasicPages = async function (db, sql) {
+  if (module.exports.isSQLite) {
+    await db.query(sql`CREATE TABLE pages (
+      id INTEGER PRIMARY KEY,
+      title VARCHAR(42)
+    );`)
+    await db.query(sql`CREATE TABLE categories (
+      id INTEGER PRIMARY KEY,
+      name VARCHAR(42)
+    );`)
+  } else {
+    await db.query(sql`CREATE TABLE pages (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(42)
+    );`)
+    await db.query(sql`CREATE TABLE categories (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(42)
+    );`)
+  }
+}

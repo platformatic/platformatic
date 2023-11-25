@@ -3,34 +3,12 @@
 const { test } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
 const { connect } = require('..')
-const { clear, connInfo, isSQLite } = require('./helper')
+const { clear, connInfo, createBasicPages } = require('./helper')
 
 const fakeLogger = {
   trace: () => {},
   error: () => {},
   warn: () => {}
-}
-
-async function createBasicPages (db, sql) {
-  if (isSQLite) {
-    await db.query(sql`CREATE TABLE pages (
-      id INTEGER PRIMARY KEY,
-      title VARCHAR(42)
-    );`)
-    await db.query(sql`CREATE TABLE categories (
-      id INTEGER PRIMARY KEY,
-      name VARCHAR(42)
-    );`)
-  } else {
-    await db.query(sql`CREATE TABLE pages (
-      id SERIAL PRIMARY KEY,
-      title VARCHAR(42)
-    );`)
-    await db.query(sql`CREATE TABLE categories (
-      id SERIAL PRIMARY KEY,
-      name VARCHAR(42)
-    );`)
-  }
 }
 
 test('ignore a table', async (t) => {

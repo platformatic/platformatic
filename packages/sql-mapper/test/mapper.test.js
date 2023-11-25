@@ -72,8 +72,12 @@ test('[mysql] return entities', { skip: !isMysql }, async () => {
 
 test('[sqlite] return entities', { skip: !isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
-    test.after(async () => await clear(db, sql))
-    test.after(() => db.dispose())
+    await clear(db, sql)
+
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
       id SERIAL PRIMARY KEY,
@@ -96,7 +100,7 @@ test('[sqlite] return entities', { skip: !isSQLite }, async () => {
 
 test('ignore tables', async () => {
   async function onDatabaseLoad (db, sql) {
-    test.after(async () => await clear(db, sql))
+    await clear(db, sql)
     test.after(() => db.dispose())
 
     await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
@@ -121,7 +125,7 @@ test('ignore tables', async () => {
 
 test('[PG] return entities with Fastify', { skip: !isPg }, async () => {
   async function onDatabaseLoad (db, sql) {
-    test.after(async () => await clear(db, sql))
+    await clear(db, sql)
 
     await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
       id SERIAL PRIMARY KEY,
@@ -145,7 +149,7 @@ test('[PG] return entities with Fastify', { skip: !isPg }, async () => {
 
 test('[mysql] return entities', { skip: !isMysql }, async () => {
   async function onDatabaseLoad (db, sql) {
-    test.after(async () => await clear(db, sql))
+    await clear(db, sql)
 
     await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
       id SERIAL PRIMARY KEY,
@@ -168,7 +172,7 @@ test('[mysql] return entities', { skip: !isMysql }, async () => {
 
 test('[sqlite] return entities', { skip: !isSQLite }, async () => {
   async function onDatabaseLoad (db, sql) {
-    test.after(async () => await clear(db, sql))
+    await clear(db, sql)
 
     await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
       id SERIAL PRIMARY KEY,
@@ -198,7 +202,7 @@ test('missing connectionString', async () => {
 
 test('platformaticContext', async () => {
   async function onDatabaseLoad (db, sql) {
-    test.after(async () => await clear(db, sql))
+    await clear(db, sql)
 
     await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
       id SERIAL PRIMARY KEY,
@@ -239,8 +243,11 @@ test('platformatic decorator already present', async () => {
 test('clean up all tables', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(async () => await clear(db, sql))
-    test.after(() => db.dispose())
+
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
       id SERIAL PRIMARY KEY,
@@ -266,8 +273,10 @@ test('clean up all tables', async () => {
 test('clean up all tables with foreign keys', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    test.after(async () => await clear(db, sql))
-    test.after(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     if (db.isSQLite) {
       await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
