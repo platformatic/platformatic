@@ -47,7 +47,7 @@ server.register(pltClient, {
 const key = Symbol.for('operationIdMap')
 type MyType = {
   getFoo: Function
-} & Record<typeof key, { path: string, method: string }>
+} & Record<typeof key, { path: string, method: HTTPMethods }>
 
 const openTelemetry = {}
 const client = await buildOpenAPIClient<MyType>({
@@ -63,7 +63,7 @@ const client = await buildOpenAPIClient<MyType>({
 // All params and generic passed
 expectType<MyType>(client)
 expectType<Function>(client.getFoo)
-expectType<{ path: string, method: string }>(client[key])
+expectType<{ path: string, method: HTTPMethods }>(client[key])
 
 // Only required params and no generics
 expectType<Promise<unknown>>(buildOpenAPIClient({
