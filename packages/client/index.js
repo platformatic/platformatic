@@ -67,6 +67,8 @@ async function buildOpenAPIClient (options, openTelemetry) {
     baseUrl = computeURLWithoutPath(options.url)
   }
 
+  const kOperationIdMap = Symbol.for('plt.operationIdMap')
+  client[kOperationIdMap] = {}
   client[kHeaders] = options.headers || {}
   let { fullRequest, fullResponse, throwOnError } = options
   const generatedOperationIds = []
@@ -93,6 +95,8 @@ async function buildOpenAPIClient (options, openTelemetry) {
         // - there is no responses with 2XX code
         fullResponse = true
       }
+
+      client[kOperationIdMap][operationId] = { path, method }
       client[operationId] = await buildCallFunction(spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse)
     }
   }

@@ -1,5 +1,5 @@
 import { expectError, expectType } from 'tsd'
-import fastify from 'fastify'
+import fastify, { HTTPMethods } from 'fastify'
 import pltClient, { type PlatformaticClientPluginOptions, buildOpenAPIClient, errors } from '.'
 import { FastifyError } from '@fastify/error'
 
@@ -44,13 +44,13 @@ server.register(pltClient, {
   serviceId: 'Fantozzi'
 })
 
+const key = Symbol.for('plt.operationIdMap')
 type MyType = {
-  foo: string
-}
+  getFoo: Function
+} & Record<typeof key, { path: string, method: HTTPMethods }>
 
-// All params passed
-const openTelemetryClient = {}
-expectType<Promise<MyType>>(buildOpenAPIClient<MyType>({
+const openTelemetry = {}
+const client = await buildOpenAPIClient<MyType>({
   url: 'http://foo.bar',
   path: 'foobar',
   fullRequest: true,
@@ -58,10 +58,15 @@ expectType<Promise<MyType>>(buildOpenAPIClient<MyType>({
   throwOnError: false,
   validateResponse: false,
   headers: { foo: 'bar' }
-}, openTelemetryClient))
+}, openTelemetry)
 
-// Only required params
-expectType<Promise<MyType>>(buildOpenAPIClient<MyType>({
+// All params and generic passed
+expectType<MyType>(client)
+expectType<Function>(client.getFoo)
+expectType<{ path: string, method: HTTPMethods }>(client[key])
+
+// Only required params and no generics
+expectType<Promise<unknown>>(buildOpenAPIClient({
   url: 'https://undici.com/piscina',
   fullRequest: true,
   fullResponse: false,
