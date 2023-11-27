@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@platformatic/client": "workspace:*",
-    "@platformatic/db": "workspace:^",
+    "@platformatic/db": "workspace:*",
     "camelcase": "^8.0.0",
     "code-block-writer": "^12.0.0",
     "desm": "^1.3.0",

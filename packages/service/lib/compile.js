@@ -77,7 +77,7 @@ async function compile (cwd, config, originalLogger, options) {
     }
     delete env.NODE_V8_COVERAGE
     // somehow c8 does not pick up these lines even if there is a specific test
-    /* c8 ignore 10 */
+    /* c8 ignore start */
     if (options.clean) {
       // delete outdir directory
       const tsConfigContents = JSON.parse(await readFile(tsConfigPath, 'utf8'))
@@ -88,6 +88,7 @@ async function compile (cwd, config, originalLogger, options) {
         await rm(outDirFullPath, { recursive: true })
       }
     }
+    /* c8 ignore stop */
     await execa(tscExecutablePath, tsFlags, { cwd, env })
     logger.info('Typescript compilation completed successfully.')
     return true
