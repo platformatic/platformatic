@@ -1,8 +1,10 @@
+'use strict'
+
 const assert = require('node:assert')
 const { describe, test } = require('node:test')
 const { DBGenerator } = require('../lib/generator/db-generator')
 
-describe.only('generator', () => {
+describe('generator', () => {
   test('should have default config', async () => {
     const dbApp = new DBGenerator()
     await dbApp.prepare()
@@ -35,7 +37,7 @@ describe.only('generator', () => {
       applyMigrations: false
     })
   })
-  test.only('generate correct .env file', async (t) => {
+  test('generate correct .env file', async (t) => {
     const dbApp = new DBGenerator()
     await dbApp.prepare()
     {
