@@ -57,6 +57,30 @@ describe('generator', () => {
     })
   })
 
+  test('should return config fields', async () => {
+    const svc = new ServiceGenerator()
+    assert.deepEqual(svc.getConfigFields(), [
+      {
+        var: 'PLT_SERVER_HOSTNAME',
+        label: 'What is the hostname?',
+        default: '0.0.0.0',
+        type: 'string'
+      },
+      {
+        var: 'PLT_SERVER_LOGGER_LEVEL',
+        label: 'What is the logger level?',
+        default: 'info',
+        type: 'string'
+      },
+      {
+        label: 'Which port do you want to use?',
+        var: 'PORT',
+        default: 3042,
+        tyoe: 'number'
+      }
+    ])
+  })
+
   describe('runtime context', () => {
     test('should have env prefix', async (t) => {
       const svc = new ServiceGenerator()

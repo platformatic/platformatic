@@ -49,6 +49,13 @@ export namespace BaseGenerator {
     targetDirectory: string
     env: KeyValue
   }
+
+  type ConfigField = {
+    label: string
+    var: string
+    default: string
+    type: 'number' | 'string' | 'boolean'
+  }
   export class BaseGenerator extends FileGenerator.FileGenerator {
     logger: BaseLogger
     platformaticVersion: string
@@ -73,7 +80,7 @@ export namespace BaseGenerator {
     addQuestion(question: any, where?: WhereClause): Promise<void>
     removeQuestion(variableName: string): void
     getTSConfig(): JSONValue
-    
+    getConfigFields(): ConfigField[]   
     generateConfigFile(): Promise<void>
     readPackageJsonFile(): Promise<JSONValue>
     generatePackageJson(): Promise<JSONValue>

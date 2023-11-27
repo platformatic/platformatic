@@ -21,6 +21,29 @@ class ServiceGenerator extends BaseGenerator {
     }
   }
 
+  getConfigFields () {
+    return [
+      {
+        var: 'PLT_SERVER_HOSTNAME',
+        label: 'What is the hostname?',
+        default: '0.0.0.0',
+        type: 'string'
+      },
+      {
+        var: 'PLT_SERVER_LOGGER_LEVEL',
+        label: 'What is the logger level?',
+        default: 'info',
+        type: 'string'
+      },
+      {
+        label: 'Which port do you want to use?',
+        var: 'PORT',
+        default: 3042,
+        tyoe: 'number'
+      }
+    ]
+  }
+
   async _afterPrepare () {
     const GLOBAL_TYPES_TEMPLATE = `
 import { FastifyInstance } from 'fastify'

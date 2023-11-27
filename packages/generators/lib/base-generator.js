@@ -49,6 +49,10 @@ class BaseGenerator extends FileGenerator {
     }
   }
 
+  getConfigFields () {
+    return []
+  }
+
   getDefaultEnv () {
     return {}
   }
