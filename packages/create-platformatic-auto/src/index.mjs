@@ -1,10 +1,9 @@
 import { say } from './say.mjs'
-import { join } from 'desm'
-import path, {basename} from 'node:path'
+import path, { basename } from 'node:path'
 import inquirer from 'inquirer'
-import { readdir, readFile, writeFile } from 'fs/promises'
+import { writeFile } from 'fs/promises'
 import generateName from 'boring-name-generator'
-import { getUsername, getVersion, minimumSupportedNodeVersions, isCurrentVersionSupported, findRuntimeConfigFile, getDependencyVersion, safeMkdir, isFileAccessible } from './utils.mjs'
+import { getUsername, getVersion, minimumSupportedNodeVersions, isCurrentVersionSupported, safeMkdir, isFileAccessible } from './utils.mjs'
 import { createGitignore } from './create-gitignore.mjs'
 import { createGitRepository } from './create-git-repository.mjs'
 import askDir from './ask-dir.mjs'
@@ -31,7 +30,6 @@ export async function chooseStackable (opts = {}) {
   })
 
   // TODO contact the cloud for other stackables
-
 
   return options.type
 }
@@ -73,35 +71,6 @@ export const createPlatformatic = async (argv) => {
     await say(`Please use one of the following Node.js versions >= ${supportedVersions}.`)
   }
 
-
-    /*
-    const runtimeConfig = await findRuntimeConfigFile(process.cwd())
-    if (runtimeConfig) {
-      await say(`Found a ${runtimeConfig} file in the current directory.`)
-      const config = JSON.parse(await readFile(runtimeConfig, 'utf8'))
-      if (config.autoload?.path) {
-        const servicesDir = config.autoload.path
-        const names = []
-        for (const entry of await readdir(servicesDir)) {
-          names.push(entry)
-        }
-        if (!await createRuntimeService({ servicesDir, names })) {
-          process.exit(1)
-        }
-      } else {
-        await say('The current project does not have a services directory.')
-        process.exit(1)
-      }
-    } else {
-      await say('Let\'s start by creating a new project.')
-      await chooseKind(argv)
-    }
-
-  g await say('\nAll done! Please open the project directory and check the README.')
-    await say('\nTo start your application run \'npm start\'.')
-  }
-  */
-
   const logger = pino(pretty({
     translateTime: 'SYS:HH:MM:ss',
     ignore: 'hostname,pid'
@@ -142,7 +111,7 @@ export const createPlatformatic = async (argv) => {
       pkgManager,
       name: projectName,
       projectDir,
-      pkg: stackableName 
+      pkg: stackableName
     })
 
     const { serviceName } = await inquirer.prompt({

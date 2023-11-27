@@ -5,7 +5,7 @@ const { stripVersion, convertServiceNameToPrefix, addPrefixToEnv, extractEnvVari
 const { join } = require('node:path')
 const { FileGenerator } = require('./file-generator')
 const { generateTests, generatePlugins } = require('./create-plugin')
-const { NoQuestionsError, PrepareError, MissingEnvVariable } = require('./errors')
+const { PrepareError, MissingEnvVariable } = require('./errors')
 const generateName = require('boring-name-generator')
 /* c8 ignore start */
 const fakeLogger = {

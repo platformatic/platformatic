@@ -251,7 +251,7 @@ test('should add questions in the correct position (before)', async (t) => {
     type: 'service'
   })
 
-  await bg.prepare()
+  await bg.prepareQuestions()
   const originalQuestionsLength = bg.questions.length
   bg.addQuestion(question, { before: 'typescript' }) // should add as second question
 
@@ -274,7 +274,7 @@ test('should add questions in the correct position (after)', async (t) => {
     type: 'service'
   })
 
-  await bg.prepare()
+  await bg.prepareQuestions()
   const originalQuestionsLength = bg.questions.length
   bg.addQuestion(question, { after: 'typescript' }) // should add as third question
 
@@ -312,7 +312,7 @@ test('should add questions at the end', async (t) => {
 test('should remove question', async (t) => {
   const bg = new BaseGenerator()
 
-  await bg.prepare()
+  await bg.prepareQuestions()
 
   bg.removeQuestion('typescript')
 
