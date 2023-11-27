@@ -10,7 +10,7 @@
     ".": "./create-platformatic.mjs"
   },
   "bin": {
-    "create-platformatic": "./create-platformatic.mjs"
+    "create-platformatic-auto": "./create-platformatic.mjs"
   },
   "scripts": {
     "test:cli": "node --test ./test/cli",
@@ -47,6 +47,8 @@
   "devDependencies": {
     "@platformatic/db": "workspace:*",
     "@platformatic/service": "workspace:*",
+    "@platformatic/runtime": "workspace:*",
+    "@platformatic/composer": "workspace:*",
     "ajv": "^8.12.0",
     "c8": "^8.0.1",
     "cross-env": "^7.0.3",

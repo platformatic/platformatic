@@ -1,4 +1,3 @@
-'use strict'
 const { BaseGenerator } = require('@platformatic/generators')
 const { NoEntryPointError, NoServiceNamedError } = require('./errors')
 const generateName = require('boring-name-generator')
@@ -116,6 +115,16 @@ class RuntimeGenerator extends BaseGenerator {
     for (const { service } of this.services) {
       await service.writeFiles()
     }
+  }
+
+  async prepareQuestions () {
+    // port
+    this.questions.push({
+      type: 'input',
+      name: 'port',
+      default: 3042,
+      message: 'What port do you want to use?'
+    })
   }
 
   setServicesDirectory () {

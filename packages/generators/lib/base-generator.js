@@ -25,7 +25,7 @@ class BaseGenerator extends FileGenerator {
     this.logger = opts.logger || fakeLogger
     this.questions = []
     this.pkgData = null
-    this.inquirer = null
+    this.inquirer = opts.inquirer || null
     this.targetDirectory = opts.targetDirectory || null
     this.config = this.getDefaultConfig()
   }
@@ -90,11 +90,13 @@ class BaseGenerator extends FileGenerator {
 
   /* c8 ignore start */
   async ask () {
-    if (!this.questions.length) {
-      throw new NoQuestionsError()
-    }
     if (this.inquirer) {
-      this.config = await this.inquirer.prompt(this.questions)
+      await this.prepareQuestions()
+      const newConfig = await this.inquirer.prompt(this.questions)
+      this.setConfig({
+        ...this.config,
+        ...newConfig
+      })
     }
   }
 
@@ -129,8 +131,6 @@ class BaseGenerator extends FileGenerator {
 
       await this.generateConfigFile()
 
-      await this.prepareQuestions()
-
       await this.generateEnv()
 
       if (this.config.typescript) {
@@ -162,6 +162,7 @@ class BaseGenerator extends FileGenerator {
         // throw the same error
         throw err
       }
+      console.log(err)
       throw new PrepareError(err.message)
     }
   }
@@ -206,53 +207,32 @@ class BaseGenerator extends FileGenerator {
   }
 
   async prepareQuestions () {
-    // directory
-    this.questions.push({
-      type: 'input',
-      name: 'targetDirectory',
-      message: 'Where would you like to create your project?'
-    })
+    if (!this.config.isRuntimeContext) {
+      if (!this.config.targetDirectory && !this.isRuntimeContext) {
+        // directory
+        this.questions.push({
+          type: 'input',
+          name: 'targetDirectory',
+          message: 'Where would you like to create your project?'
+        })
+      }
 
-    // typescript
-    this.questions.push({
-      type: 'list',
-      name: 'typescript',
-      message: 'Do you want to use TypeScript?',
-      default: false,
-      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-    })
+      // typescript
+      this.questions.push({
+        type: 'list',
+        name: 'typescript',
+        message: 'Do you want to use TypeScript?',
+        default: false,
+        choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+      })
 
-    // init git repository
-    this.questions.push({
-      type: 'list',
-      name: 'initGitRepository',
-      message: 'Do you want to init the git repository?',
-      default: false,
-      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-    })
-
-    // port
-    this.questions.push({
-      type: 'input',
-      name: 'port',
-      message: 'What port do you want to use?'
-    })
-
-    // github actions
-    this.questions.push({
-      type: 'list',
-      name: 'staticWorkspaceGitHubAction',
-      message: 'Do you want to create the github action to deploy this application to Platformatic Cloud?',
-      default: true,
-      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-    },
-    {
-      type: 'list',
-      name: 'dynamicWorkspaceGitHubAction',
-      message: 'Do you want to enable PR Previews in your application?',
-      default: true,
-      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-    })
+      // port
+      this.questions.push({
+        type: 'input',
+        name: 'port',
+        message: 'What port do you want to use?'
+      })
+    }
   }
 
   async addQuestion (question, where) {

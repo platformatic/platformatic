@@ -667,9 +667,15 @@ importers:
         specifier: ^3.0.1
         version: 3.0.1
     devDependencies:
+      '@platformatic/composer':
+        specifier: workspace:*
+        version: link:../composer
       '@platformatic/db':
         specifier: workspace:*
         version: link:../db
+      '@platformatic/runtime':
+        specifier: workspace:*
+        version: link:../runtime
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service

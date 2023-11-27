@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import createPlatformatic from './src/index.mjs'
+import { createPlatformatic } from './src/index.mjs'
 import isMain from 'es-main'
 import parseArgs from 'minimist'
 import { readFile } from 'fs/promises'
@@ -29,13 +29,3 @@ if (isMain(import.meta)) {
   }
   await createPlatformatic(_args)
 }
-
-export { default as createDB } from './src/db/create-db.mjs'
-export { parseDBArgs } from './src/db/create-db-cli.mjs'
-export {
-  createStaticWorkspaceGHAction,
-  createDynamicWorkspaceGHAction
-} from './src/ghaction.mjs'
-
-export { createGitignore, createGitRepository, createPackageJson, getDependencyVersion, getVersion } from './src/index.mjs'
-export { default as createService } from './src/service/create-service.mjs'
