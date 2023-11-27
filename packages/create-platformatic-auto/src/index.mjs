@@ -13,6 +13,8 @@ import pretty from 'pino-pretty'
 import { execa } from 'execa'
 import parseArgs from 'minimist'
 import ora from 'ora'
+import { createRequire } from 'node:module'
+import { pathToFileURL } from 'node:url'
 
 export async function chooseStackable (opts = {}) {
   const skip = opts.skip
@@ -39,14 +41,20 @@ async function importOrLocal ({ pkgManager, name, projectDir, pkg }) {
     return await import(pkg)
   } catch (err) {
     console.log(err)
+    const pkgJsonPath = path.join(projectDir, 'package.json')
     if (!(await isFileAccessible('package.json', projectDir))) {
-      await writeFile(path.join(projectDir, 'package.json'), JSON.stringify({
+      await writeFile(pkgJsonPath, JSON.stringify({
         name
       }))
     }
     const spinner = ora('Installing dependencies...').start()
     await execa(pkgManager, ['install', pkg], { cwd: projectDir })
     spinner.succeed()
+
+    const _require = createRequire(pkgJsonPath)
+    const fileToImport = _require.resolve(pkg)
+
+    return await import(pathToFileURL(fileToImport))
   }
 }
 
