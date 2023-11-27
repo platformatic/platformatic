@@ -27,19 +27,22 @@ class ServiceGenerator extends BaseGenerator {
         var: 'PLT_SERVER_HOSTNAME',
         label: 'What is the hostname?',
         default: '0.0.0.0',
-        type: 'string'
+        type: 'string',
+        configValue: 'hostname'
       },
       {
         var: 'PLT_SERVER_LOGGER_LEVEL',
         label: 'What is the logger level?',
         default: 'info',
-        type: 'string'
+        type: 'string',
+        configValue: ''
       },
       {
         label: 'Which port do you want to use?',
         var: 'PORT',
         default: 3042,
-        tyoe: 'number'
+        tyoe: 'number',
+        configValue: 'port'
       }
     ]
   }
