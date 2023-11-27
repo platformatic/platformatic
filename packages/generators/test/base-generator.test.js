@@ -36,15 +36,13 @@ test('should write file and dirs', async (t) => {
 
   const configFile = JSON.parse(await readFile(join(dir, 'platformatic.json'), 'utf8'))
   assert.deepEqual(configFile, {})
+
+  const gitignore = await readFile(join(dir, '.gitignore'), 'utf8')
+  assert.ok(gitignore.length > 0) // file is created and not empty
 })
 
 test('extended class should generate config', async (t) => {
-  // const dir = await getTempDir()
   class ServiceClass extends BaseGenerator {
-    // constructor (opts) {
-    //   super(opts)
-    // }
-
     async _getConfigFileContents () {
       // Implement when extending this class
       return {

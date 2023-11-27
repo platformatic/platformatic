@@ -5,6 +5,7 @@ const { stripVersion, convertServiceNameToPrefix, addPrefixToEnv, extractEnvVari
 const { join } = require('node:path')
 const { FileGenerator } = require('./file-generator')
 const { generateTests, generatePlugins } = require('./create-plugin')
+const { generateGitignore } = require('./create-gitignore')
 const { NoQuestionsError, PrepareError, MissingEnvVariable } = require('./errors')
 const generateName = require('boring-name-generator')
 /* c8 ignore start */
@@ -145,12 +146,12 @@ class BaseGenerator extends FileGenerator {
       if (this.config.plugin) {
         // create plugin
         this.files.push(...generatePlugins(this.config.typescript))
+        if (this.config.tests) {
+          // create tests
+          this.files.push(...generateTests(this.config.typescript, this.type))
+        }
       }
-      if (this.config.tests) {
-        // create tests
-        this.files.push(...generateTests(this.config.typescript, this.type))
-      }
-
+      this.files.push(generateGitignore())
       await this._afterPrepare()
       this.checkEnvVariablesInConfigFile()
       return {
