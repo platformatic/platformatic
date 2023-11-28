@@ -28,7 +28,7 @@ class RuntimeGenerator extends BaseGenerator {
       service
     })
 
-    if (service.type === 'composer') {
+    if (typeof service.setRuntime === 'function') {
       service.setRuntime(this)
     }
   }
