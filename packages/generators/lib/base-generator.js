@@ -52,6 +52,29 @@ class BaseGenerator extends FileGenerator {
     }
   }
 
+  getConfigFieldsDefinitions () {
+    return []
+  }
+
+  setConfigFields (fields) {
+    const availableConfigFields = this.getConfigFieldsDefinitions()
+    function shouldHandleConfigField (field) {
+      return availableConfigFields.filter((f) => {
+        return f.configValue === field.configValue && f.var === field.var
+      }).length > 0
+    }
+    for (const field of fields) {
+      if (shouldHandleConfigField(field)) {
+        if (field.var) {
+          this.config.env[field.var] = field.value
+        }
+        if (field.configValue) {
+          this.config[field.configValue] = field.value
+        }
+      }
+    }
+  }
+
   getDefaultEnv () {
     return {}
   }

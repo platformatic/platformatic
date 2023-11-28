@@ -5,7 +5,15 @@ interface Headers {
   [key: string]: string
 }
 
-interface BuildOpenAPIClientOptions {
+export interface GetHeadersOptions {
+  url: URL;
+  method: string;
+  body: object;
+  headers: Headers;
+  telemetryHeaders?: Headers;
+}
+
+interface PlatformaticClientOptions {
   url: string;
   path?: string;
   fullResponse: boolean;
@@ -15,11 +23,15 @@ interface BuildOpenAPIClientOptions {
   validateResponse?: boolean;
 }
 
-export type PlatformaticClientPluginOptions = BuildOpenAPIClientOptions & {
+type BuildOpenAPIClientOptions  = PlatformaticClientOptions & {
+  getHeaders?: (options: GetHeadersOptions) => Promise<Headers>;
+}
+
+export type PlatformaticClientPluginOptions = PlatformaticClientOptions & {
   type: 'openapi' | 'graphql';
   name?: string;
   serviceId?: string;
-  getHeaders?: (request: FastifyRequest, reply: FastifyReply, options: { url: URL, method: string, headers: Headers, telemetryHeaders?: Headers, body: object }) => Promise<Headers>;
+  getHeaders?: (request: FastifyRequest, reply: FastifyReply, options: GetHeadersOptions) => Promise<Headers>;
 }
 
 interface AbstractLogger {

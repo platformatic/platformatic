@@ -839,6 +839,50 @@ test('build client with common parameters', async (t) => {
   }, output)
 })
 
+test('build client with header injection options (getHeaders)', async (t) => {
+  const app = Fastify()
+
+  app.get('/path/with/:fieldId', async (req, res) => {
+    return {
+      pathParam: req.params.fieldId,
+      queryParam: req.query.movieId
+    }
+  })
+
+  const clientUrl = await app.listen({
+    port: 0
+  })
+  t.after(() => {
+    app.close()
+  })
+  const specPath = join(__dirname, 'fixtures', 'common-parameters-openapi.json')
+
+  const fieldId = 'foo'
+  const movieId = '123'
+
+  const getHeaders = (options) => {
+    const { url } = options
+    assert.match(url.href, new RegExp(`path/with/${fieldId}\\?movieId=${movieId}`))
+    return { href: url.href }
+  }
+
+  const client = await buildOpenAPIClient({
+    url: clientUrl,
+    path: specPath,
+    getHeaders
+  })
+
+  const output = await client.getPathWithFieldId({
+    fieldId,
+    movieId
+  })
+
+  assert.deepEqual({
+    pathParam: 'foo',
+    queryParam: '123'
+  }, output)
+})
+
 test('edge cases', async (t) => {
   const specPath = join(__dirname, 'fixtures', 'misc', 'openapi.json')
   const client = await buildOpenAPIClient({

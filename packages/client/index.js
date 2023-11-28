@@ -53,6 +53,14 @@ async function buildOpenAPIClient (options, openTelemetry) {
   const client = {}
   let spec
   let baseUrl
+
+  if (typeof options.getHeaders === 'function') {
+    const getHeaders = options.getHeaders
+    options = { ...options }
+    client[kGetHeaders] = getHeaders
+    options.getHeaders = undefined
+  }
+
   const { validateResponse } = options
   // this is tested, not sure why c8 is not picking it up
   if (!options.url) {
@@ -70,6 +78,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
   const kOperationIdMap = Symbol.for('plt.operationIdMap')
   client[kOperationIdMap] = {}
   client[kHeaders] = options.headers || {}
+
   let { fullRequest, fullResponse, throwOnError } = options
   const generatedOperationIds = []
   for (const path of Object.keys(spec.paths)) {
@@ -119,6 +128,7 @@ function hasDuplicatedParameters (methodMeta) {
   })
   return s.size !== methodMeta.parameters.length
 }
+
 async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse) {
   await $RefParser.dereference(spec)
   const ajv = new Ajv()
