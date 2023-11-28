@@ -6,6 +6,7 @@ class ComposerGenerator extends BaseGenerator {
   constructor (opts) {
     super(opts)
     this.type = 'composer'
+    this.runtimeServices = []
   }
 
   async _getConfigFileContents () {
@@ -28,6 +29,18 @@ class ComposerGenerator extends BaseGenerator {
       },
       watch: true
     }
+    if (this.runtimeServices.length > 0) {
+      template.composer.services = this.runtimeServices.map((serviceName) => {
+        return {
+          id: serviceName,
+          openapi: {
+            url: '/documentation/json',
+            prefix: `/${serviceName}`
+          }
+        }
+      })
+    }
+
     if (this.config.plugin) {
       template.plugins = {
         paths: [
@@ -77,7 +90,12 @@ class ComposerGenerator extends BaseGenerator {
       this.config.env = addPrefixToEnv(this.config.env, this.config.envPrefix)
     }
   }
+
+  addRuntimeService (serviceName) {
+    this.runtimeServices.push(serviceName)
+  }
 }
 
 module.exports = ComposerGenerator
 module.exports.ComposerGenerator = ComposerGenerator
+module.exports.Generator = ComposerGenerator
