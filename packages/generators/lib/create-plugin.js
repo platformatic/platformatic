@@ -115,7 +115,7 @@ function testHelperTS (mod, customizations = { pre: '', post: '', config: '', re
   return `\
 import { join } from 'node:path'
 import { readFile } from 'node:fs/promises'
-import { buildServer } from '@platformatic/${mod}'
+import { buildServer } from '${mod}'
 import { test } from 'node:test'
 ${customizations.requires}
 
@@ -125,7 +125,7 @@ type TestContext = Parameters<Exclude<testfn, undefined>>[0]
 export async function getServer (t: TestContext) {
 ${customizations.pre}
   // We go up two folder because this files executes in the dist folder
-  const config = JSON.parse(await readFile(join(__dirname, '..', '..', 'platformatic.${mod}.json'), 'utf8'))
+  const config = JSON.parse(await readFile(join(__dirname, '..', '..', 'platformatic, 'utf8'))
   // Add your config customizations here. For example you want to set
   // all things that are set in the config file to read from an env variable
   config.server.logger.level = 'warn'
@@ -199,13 +199,13 @@ function generateRouteWithTypesSupport (typescript) {
   }
 }
 
-function generateTests (typescript, type, customizations) {
+function generateTests (typescript, mod, customizations) {
   const output = []
   if (typescript) {
     output.push({
       path: 'test',
       file: 'helper.ts',
-      contents: testHelperTS(type, customizations)
+      contents: testHelperTS(mod, customizations)
     })
     output.push({
       path: join('test', 'plugins'),
@@ -221,7 +221,7 @@ function generateTests (typescript, type, customizations) {
     output.push({
       path: 'test',
       file: 'helper.js',
-      contents: testHelperJS(type, customizations)
+      contents: testHelperJS(mod, customizations)
     })
     output.push({
       path: join('test', 'plugins'),

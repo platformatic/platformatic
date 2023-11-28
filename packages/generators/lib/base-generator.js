@@ -5,7 +5,7 @@ const { stripVersion, convertServiceNameToPrefix, addPrefixToEnv, extractEnvVari
 const { join } = require('node:path')
 const { FileGenerator } = require('./file-generator')
 const { generateTests, generatePlugins } = require('./create-plugin')
-const { PrepareError, MissingEnvVariable } = require('./errors')
+const { PrepareError, MissingEnvVariable, ModuleNeeded } = require('./errors')
 const generateName = require('boring-name-generator')
 /* c8 ignore start */
 const fakeLogger = {
@@ -20,7 +20,6 @@ const fakeLogger = {
 class BaseGenerator extends FileGenerator {
   constructor (opts = {}) {
     super(opts)
-    this.type = opts.type
     this.files = []
     this.logger = opts.logger || fakeLogger
     this.questions = []
@@ -28,6 +27,10 @@ class BaseGenerator extends FileGenerator {
     this.inquirer = opts.inquirer || null
     this.targetDirectory = opts.targetDirectory || null
     this.config = this.getDefaultConfig()
+    this.module = opts.module
+    if (!this.module) {
+      throw ModuleNeeded()
+    }
   }
 
   getDefaultConfig () {
@@ -148,7 +151,7 @@ class BaseGenerator extends FileGenerator {
       }
       if (this.config.tests) {
         // create tests
-        this.files.push(...generateTests(this.config.typescript, this.type))
+        this.files.push(...generateTests(this.config.typescript, this.module))
       }
 
       await this._afterPrepare()
@@ -162,13 +165,14 @@ class BaseGenerator extends FileGenerator {
         // throw the same error
         throw err
       }
-      console.log(err)
-      throw new PrepareError(err.message)
+      const _err = new PrepareError(err.message)
+      _err.cause = err
+      throw _err
     }
   }
 
   checkEnvVariablesInConfigFile () {
-    const configFileName = this.getConfigFileName()
+    const configFileName = 'platformatic.json'
     const fileOjbect = this.getFileObject(configFileName)
     const envVars = extractEnvVariablesFromText(fileOjbect.contents)
     const envKeys = Object.keys(this.config.env)
@@ -283,16 +287,8 @@ class BaseGenerator extends FileGenerator {
     }
   }
 
-  getConfigFileName () {
-    if (!this.type) {
-      return 'platformatic.json'
-    } else {
-      return `platformatic.${this.type}.json`
-    }
-  }
-
   async generateConfigFile () {
-    const configFileName = this.getConfigFileName()
+    const configFileName = 'platformatic.json'
     const contents = await this._getConfigFileContents()
     this.addFile({
       path: '',

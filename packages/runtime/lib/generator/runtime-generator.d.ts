@@ -21,7 +21,7 @@ type RuntimeGeneratorOptions = {
 class RuntimeGenerator extends BaseGenerator {
   services: Service[]
   entryPoint: Service
-  constructor(opts?: RuntimeGeneratorOptions)
+  constructor(opts?: Omit<RuntimeGeneratorOptions, 'module'>)
 
   async addService(service: Service, name: string): Promise<void>
 

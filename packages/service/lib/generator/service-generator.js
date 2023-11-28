@@ -4,8 +4,10 @@ const { BaseGenerator } = require('@platformatic/generators')
 
 class ServiceGenerator extends BaseGenerator {
   constructor (opts = {}) {
-    super(opts)
-    this.type = 'service'
+    super({
+      ...opts,
+      module: '@platformatic/service'
+    })
   }
 
   async _beforePrepare () {

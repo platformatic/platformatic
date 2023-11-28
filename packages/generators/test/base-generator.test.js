@@ -20,7 +20,8 @@ afterEach(async () => {
 test('should write file and dirs', async (t) => {
   const dir = await getTempDir()
   const gen = new BaseGenerator({
-    logger: fakeLogger
+    logger: fakeLogger,
+    module: '@platformatic/service'
   })
 
   gen.setConfig({
@@ -41,9 +42,12 @@ test('should write file and dirs', async (t) => {
 test('extended class should generate config', async (t) => {
   // const dir = await getTempDir()
   class ServiceClass extends BaseGenerator {
-    // constructor (opts) {
-    //   super(opts)
-    // }
+    constructor (opts) {
+      super({
+        ...opts,
+        module: '@platformatic/service'
+      })
+    }
 
     async _getConfigFileContents () {
       // Implement when extending this class
@@ -54,7 +58,6 @@ test('extended class should generate config', async (t) => {
   }
 
   const svc = new ServiceClass({
-    type: 'service',
     logger: fakeLogger
   })
 
@@ -63,14 +66,14 @@ test('extended class should generate config', async (t) => {
   const configFile = svc.files[1]
   assert.deepEqual(configFile, {
     path: '',
-    file: 'platformatic.service.json',
+    file: 'platformatic.json',
     contents: JSON.stringify({ foo: 'bar' }, null, 2)
   })
 })
 
 test('setConfig', async (t) => {
   const bg = new BaseGenerator({
-    type: 'service'
+    module: '@platformatic/service'
   })
 
   // should init the default config
@@ -142,7 +145,7 @@ test('setConfig', async (t) => {
 
 test('should append env values', async (t) => {
   const bg = new BaseGenerator({
-    type: 'service'
+    module: '@platformatic/service'
   })
   // partial config with defaults
   bg.setConfig({
@@ -158,7 +161,7 @@ test('should append env values', async (t) => {
 
 test('should return service metadata', async (t) => {
   const bg = new BaseGenerator({
-    type: 'service'
+    module: '@platformatic/service'
   })
   // partial config with defaults
   bg.setConfig({
@@ -179,7 +182,7 @@ test('should return service metadata', async (t) => {
 
 test('should generate javascript plugin, routes and tests', async (t) => {
   const bg = new BaseGenerator({
-    type: 'service'
+    module: '@platformatic/service'
   })
   bg.setConfig({
     plugin: true,
@@ -195,7 +198,7 @@ test('should generate javascript plugin, routes and tests', async (t) => {
 
 test('should generate tsConfig file and typescript files', async (t) => {
   const bg = new BaseGenerator({
-    type: 'service'
+    module: '@platformatic/service'
   })
   bg.setConfig({
     typescript: true,
@@ -233,13 +236,6 @@ test('should generate tsConfig file and typescript files', async (t) => {
   assert.ok(bg.getFileObject('example.test.ts', 'test/plugins'))
 })
 
-test('should generate platformatic.json file if no type is generated', async (t) => {
-  const bg = new BaseGenerator()
-  await bg.prepare()
-  const configFileObject = bg.getFileObject('platformatic.json')
-  assert.ok(configFileObject)
-})
-
 test('should add questions in the correct position (before)', async (t) => {
   const question = {
     type: 'input',
@@ -248,7 +244,7 @@ test('should add questions in the correct position (before)', async (t) => {
   }
 
   const bg = new BaseGenerator({
-    type: 'service'
+    module: '@platformatic/service'
   })
 
   await bg.prepareQuestions()
@@ -271,7 +267,7 @@ test('should add questions in the correct position (after)', async (t) => {
   }
 
   const bg = new BaseGenerator({
-    type: 'service'
+    module: '@platformatic/service'
   })
 
   await bg.prepareQuestions()
@@ -294,7 +290,7 @@ test('should add questions at the end', async (t) => {
   }
 
   const bg = new BaseGenerator({
-    type: 'service'
+    module: '@platformatic/service'
   })
 
   await bg.prepare()
@@ -310,7 +306,9 @@ test('should add questions at the end', async (t) => {
 })
 
 test('should remove question', async (t) => {
-  const bg = new BaseGenerator()
+  const bg = new BaseGenerator({
+    module: '@platformatic/service'
+  })
 
   await bg.prepareQuestions()
 
@@ -324,7 +322,9 @@ test('should remove question', async (t) => {
 })
 
 test('should throw if preapare fails', async (t) => {
-  const bg = new BaseGenerator()
+  const bg = new BaseGenerator({
+    module: '@platformatic/service'
+  })
 
   bg._beforePrepare = async () => {
     throw new Error('beforePrepare error')
@@ -339,7 +339,9 @@ test('should throw if preapare fails', async (t) => {
 })
 
 test('should throw if there is a missing env variable', async () => {
-  const bg = new BaseGenerator()
+  const bg = new BaseGenerator({
+    module: '@platformatic/service'
+  })
 
   bg._getConfigFileContents = async () => {
     return {
@@ -365,7 +367,9 @@ test('should throw if there is a missing env variable', async () => {
 
 describe('runtime context', () => {
   test('should set config.envPrefix correctly', async (t) => {
-    const bg = new BaseGenerator()
+    const bg = new BaseGenerator({
+      module: '@platformatic/service'
+    })
 
     bg.setConfig({
       isRuntimeContext: true,
@@ -392,7 +396,9 @@ describe('runtime context', () => {
   })
 
   test('should generate correct env file from config.env', async (t) => {
-    const bg = new BaseGenerator()
+    const bg = new BaseGenerator({
+      module: '@platformatic/service'
+    })
 
     bg.setConfig({
       isRuntimeContext: true,
@@ -414,7 +420,7 @@ describe('runtime context', () => {
 
   test('should return service metadata', async (t) => {
     const bg = new BaseGenerator({
-      type: 'service'
+      module: '@platformatic/service'
     })
     // partial config with defaults
     bg.setConfig({
@@ -437,7 +443,7 @@ describe('runtime context', () => {
 
   test('should generate service name if not provided', async () => {
     const bg = new BaseGenerator({
-      type: 'service'
+      module: '@platformatic/service'
     })
     bg.setConfig({
       targetDirectory: '/foo/bar',

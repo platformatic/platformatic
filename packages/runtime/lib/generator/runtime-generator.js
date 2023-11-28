@@ -5,7 +5,10 @@ const { join } = require('node:path')
 const { envObjectToString } = require('@platformatic/generators/lib/utils')
 class RuntimeGenerator extends BaseGenerator {
   constructor (opts) {
-    super(opts)
+    super({
+      ...opts,
+      module: '@platformatic/runtime'
+    })
     this.services = []
     this.entryPoint = null
   }
@@ -118,6 +121,15 @@ class RuntimeGenerator extends BaseGenerator {
   }
 
   async prepareQuestions () {
+    // typescript
+    this.questions.push({
+      type: 'list',
+      name: 'typescript',
+      message: 'Do you want to use TypeScript?',
+      default: false,
+      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+    })
+
     // port
     this.questions.push({
       type: 'input',
@@ -150,6 +162,11 @@ class RuntimeGenerator extends BaseGenerator {
   async prepareServiceFiles () {
     let servicesEnv = {}
     for (const svc of this.services) {
+      // Propagate TypeScript
+      svc.service.setConfig({
+        ...svc.service.config,
+        typescript: this.config.typescript
+      })
       const svcEnv = await svc.service.prepare()
       servicesEnv = {
         ...servicesEnv,

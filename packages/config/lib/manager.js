@@ -290,18 +290,24 @@ class ConfigManager extends EventEmitter {
         `platformatic.${type}.yaml`,
         `platformatic.${type}.yml`,
         `platformatic.${type}.toml`,
-        `platformatic.${type}.tml`
+        `platformatic.${type}.tml`,
+        'platformatic.json',
+        'platformatic.json5',
+        'platformatic.yaml',
+        'platformatic.yml',
+        'platformatic.toml',
+        'platformatic.tml'
       ]
     } else {
       // A config type was not provided. Search for all known types and
       // formats. Unfortunately, this means the ConfigManager needs to be
       // aware of the different application types (but that should be small).
-      return [
+      return [...new Set([
         ...this.listConfigFiles('service'),
         ...this.listConfigFiles('db'),
         ...this.listConfigFiles('composer'),
         ...this.listConfigFiles('runtime')
-      ]
+      ])]
     }
   }
 

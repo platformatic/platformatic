@@ -3,7 +3,7 @@ import { FileGenerator } from './file-generator'
 
 export namespace BaseGenerator {
   export type BaseGeneratorOptions = FileGenerator.FileGeneratorOptions & {
-    type?: 'service' | 'db' | 'composer'
+    module: string
     inquirer?: object
   }
   
