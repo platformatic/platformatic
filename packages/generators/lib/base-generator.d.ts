@@ -56,6 +56,7 @@ export namespace BaseGenerator {
     default: string
     type: 'number' | 'string' | 'boolean'
     configValue?: 'string'
+    value?: 'string'
   }
   export class BaseGenerator extends FileGenerator.FileGenerator {
     logger: BaseLogger
