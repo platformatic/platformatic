@@ -83,7 +83,7 @@ export namespace BaseGenerator {
     getTSConfig(): JSONValue
     
     getConfigFields(): ConfigField[]   
-    setConfigFields(ConfigField[]): void
+    setConfigFields(fields: ConfigField[]): void
 
     generateConfigFile(): Promise<void>
     readPackageJsonFile(): Promise<JSONValue>
