@@ -21,7 +21,7 @@ class ServiceGenerator extends BaseGenerator {
     }
   }
 
-  getConfigFields () {
+  getConfigFieldsDefinitions () {
     return [
       {
         var: 'PLT_SERVER_HOSTNAME',

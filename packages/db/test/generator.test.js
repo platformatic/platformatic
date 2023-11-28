@@ -228,7 +228,7 @@ describe('generator', () => {
 
   test('should return config fields', async () => {
     const svc = new DBGenerator()
-    assert.deepEqual(svc.getConfigFields(), [
+    assert.deepEqual(svc.getConfigFieldsDefinitions(), [
       {
         var: 'DATABASE_URL',
         label: 'What is the connection string?',
@@ -260,11 +260,12 @@ describe('generator', () => {
     svc.setConfigFields([
       {
         var: 'DATABASE_URL',
-        label: 'What is the connection string?',
-        type: 'string',
-        configValue: 'connectionString'
+        configValue: 'connectionString',
+        value: 'sqlite123://./db.sqlite'
       }
     ])
+
+    assert.equal(svc.config.database, 'sqlite123')
   })
   describe('runtime context', () => {
     test('should have env prefix', async (t) => {

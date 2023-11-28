@@ -181,9 +181,7 @@ class DBGenerator extends BaseGenerator {
 
   setConfigFields (fields) {
     super.setConfigFields(fields)
-    if (!this.config.database) {
-      this.config.database = this.getDatabaseFromConnectionString()
-    }
+    this.config.database = this.getDatabaseFromConnectionString()
   }
 
   getDatabaseFromConnectionString () {
@@ -197,7 +195,7 @@ class DBGenerator extends BaseGenerator {
     return null
   }
 
-  getConfigFields () {
+  getConfigFieldsDefinitions () {
     return [
       {
         var: 'DATABASE_URL',

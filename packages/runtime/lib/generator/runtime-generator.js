@@ -150,7 +150,7 @@ class RuntimeGenerator extends BaseGenerator {
     return servicesEnv
   }
 
-  getConfigFields () {
+  getConfigFieldsDefinitions () {
     return []
   }
 

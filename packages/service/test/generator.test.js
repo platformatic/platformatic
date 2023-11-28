@@ -63,7 +63,7 @@ describe('generator', () => {
 
   test('should return config fields', async () => {
     const svc = new ServiceGenerator()
-    assert.deepEqual(svc.getConfigFields(), [
+    assert.deepEqual(svc.getConfigFieldsDefinitions(), [
       {
         var: 'PLT_SERVER_HOSTNAME',
         label: 'What is the hostname?',
@@ -94,27 +94,18 @@ describe('generator', () => {
       {
         // existing field
         var: 'PLT_SERVER_HOSTNAME',
-        label: 'What is the hostname?',
-        default: '0.0.0.0',
-        type: 'string',
         configValue: 'hostname',
         value: '127.0.0.123'
       },
       {
         // existing field without configValue
         var: 'PLT_SERVER_LOGGER_LEVEL',
-        label: 'What is the logger level?',
-        default: 'info',
-        type: 'string',
         configValue: '',
         value: 'debug'
       },
       {
         // non-existing field
         var: 'PLT_NOT_EXISTING',
-        label: 'Why so serious?',
-        default: 'foobar',
-        type: 'string',
         configValue: 'foobar',
         value: 'baz'
       }
