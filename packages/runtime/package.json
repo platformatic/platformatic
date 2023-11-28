@@ -42,7 +42,7 @@
     "@platformatic/composer": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/db": "workspace:*",
-    "@platformatic/generators": "workspace:^",
+    "@platformatic/generators": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/utils": "workspace:*",
