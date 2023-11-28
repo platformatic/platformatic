@@ -14,7 +14,7 @@ import { execa } from 'execa'
 import parseArgs from 'minimist'
 import ora from 'ora'
 import { createRequire } from 'node:module'
-import { pathToFileURL } from 'node:url'
+import {pathToFileURL} from 'node:url'
 
 export async function chooseStackable (opts = {}) {
   const skip = opts.skip
@@ -40,20 +40,20 @@ async function importOrLocal ({ pkgManager, name, projectDir, pkg }) {
   try {
     return await import(pkg)
   } catch (err) {
-    console.log(err)
+    // This file does not need to exists, will be created automatically
     const pkgJsonPath = path.join(projectDir, 'package.json')
-    if (!(await isFileAccessible('package.json', projectDir))) {
-      await writeFile(pkgJsonPath, JSON.stringify({
-        name
-      }))
-    }
-    const spinner = ora('Installing dependencies...').start()
+    const _require = createRequire(pkgJsonPath)
+
+    try {
+      const fileToImport = _require.resolve(pkg)
+      return await import(pathToFileURL(fileToImport))
+    } catch {}
+
+    const spinner = ora(`Installing ${pkg}...`).start()
     await execa(pkgManager, ['install', pkg], { cwd: projectDir })
     spinner.succeed()
 
-    const _require = createRequire(pkgJsonPath)
     const fileToImport = _require.resolve(pkg)
-
     return await import(pathToFileURL(fileToImport))
   }
 }
