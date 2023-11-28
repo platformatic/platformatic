@@ -121,35 +121,5 @@ describe('generator', () => {
       const configFileContents = JSON.parse(configFile.contents)
       assert.strictEqual(configFileContents.server, undefined)
     })
-
-    test('should add runtime services in config', async (t) => {
-      const svc = new ComposerGenerator()
-      svc.setConfig({
-        isRuntimeContext: true,
-        serviceName: 'my-service'
-      })
-      svc.addRuntimeService('foo-service')
-      svc.addRuntimeService('db-service')
-      await svc.prepare()
-
-      const configFile = svc.getFileObject('platformatic.composer.json')
-      const configFileContents = JSON.parse(configFile.contents)
-      assert.deepEqual(configFileContents.composer.services, [
-        {
-          id: 'foo-service',
-          openapi: {
-            url: '/documentation/json',
-            prefix: '/foo-service'
-          }
-        },
-        {
-          id: 'db-service',
-          openapi: {
-            url: '/documentation/json',
-            prefix: '/db-service'
-          }
-        }
-      ])
-    })
   })
 })

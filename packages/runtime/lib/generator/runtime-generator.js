@@ -27,6 +27,10 @@ class RuntimeGenerator extends BaseGenerator {
       name: serviceName,
       service
     })
+
+    if (service.type === 'composer') {
+      service.setRuntime(this)
+    }
   }
 
   setEntryPoint (entryPoint) {
@@ -64,23 +68,6 @@ class RuntimeGenerator extends BaseGenerator {
       PLT_SERVER_LOGGER_LEVEL: 'info',
       ...this.config.env
     }
-
-    // add other services to composer services
-    const composerServices = []
-    const otherServices = []
-    this.services.forEach((meta) => {
-      if (meta.service.type === 'composer') {
-        composerServices.push(meta)
-      } else {
-        otherServices.push(meta)
-      }
-    })
-
-    composerServices.forEach((composerServiceMeta) => {
-      otherServices.forEach((otherServiceMeta) => {
-        composerServiceMeta.service.addRuntimeService(otherServiceMeta.name)
-      })
-    })
   }
 
   async _getConfigFileContents () {

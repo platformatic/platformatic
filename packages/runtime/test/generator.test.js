@@ -125,9 +125,6 @@ describe('Generator', () => {
 
     await rg.prepare()
 
-    assert.deepEqual(firstComposer.runtimeServices, ['first-service', 'second-service'])
-    assert.deepEqual(secondComposer.runtimeServices, ['first-service', 'second-service'])
-
     // double check config files
     const firstComposerConfigFile = firstComposer.getFileObject('platformatic.composer.json')
     const firstComposerConfigFileJson = JSON.parse(firstComposerConfigFile.contents)

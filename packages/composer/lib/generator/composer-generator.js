@@ -6,7 +6,7 @@ class ComposerGenerator extends BaseGenerator {
   constructor (opts) {
     super(opts)
     this.type = 'composer'
-    this.runtimeServices = []
+    this.runtime = null
   }
 
   async _getConfigFileContents () {
@@ -29,16 +29,18 @@ class ComposerGenerator extends BaseGenerator {
       },
       watch: true
     }
-    if (this.runtimeServices.length > 0) {
-      template.composer.services = this.runtimeServices.map((serviceName) => {
-        return {
-          id: serviceName,
-          openapi: {
-            url: '/documentation/json',
-            prefix: `/${serviceName}`
+    if (this.runtime !== null) {
+      template.composer.services = this.runtime.services
+        .filter(serviceMeta => serviceMeta.service.type !== 'composer')
+        .map((serviceMeta) => {
+          return {
+            id: serviceMeta.name,
+            openapi: {
+              url: '/documentation/json',
+              prefix: `/${serviceMeta.name}`
+            }
           }
-        }
-      })
+        })
     }
 
     if (this.config.plugin) {
@@ -91,8 +93,8 @@ class ComposerGenerator extends BaseGenerator {
     }
   }
 
-  addRuntimeService (serviceName) {
-    this.runtimeServices.push(serviceName)
+  setRuntime (runtime) {
+    this.runtime = runtime
   }
 }
 
