@@ -103,3 +103,4 @@ declare module 'fastify' {
 
 module.exports = ServiceGenerator
 module.exports.ServiceGenerator = ServiceGenerator
+module.exports.Generator = ServiceGenerator

@@ -2,9 +2,13 @@
 
 const assert = require('node:assert')
 const { describe, test } = require('node:test')
-const { ServiceGenerator } = require('../lib/generator/service-generator')
+const { ServiceGenerator, Generator } = require('../lib/generator/service-generator')
 
 describe('generator', () => {
+  test('should export a Generator property', async () => {
+    const svc = new Generator()
+    assert.equal(svc.type, 'service')
+  })
   test('generate correct .env file', async (t) => {
     const svc = new ServiceGenerator()
     await svc.prepare()

@@ -2,9 +2,13 @@
 
 const assert = require('node:assert')
 const { describe, test } = require('node:test')
-const { DBGenerator } = require('../lib/generator/db-generator')
+const { DBGenerator, Generator } = require('../lib/generator/db-generator')
 
 describe('generator', () => {
+  test('should export a Generator property', async () => {
+    const svc = new Generator()
+    assert.equal(svc.type, 'db')
+  })
   test('should have default config', async () => {
     const dbApp = new DBGenerator()
     await dbApp.prepare()
@@ -222,6 +226,46 @@ describe('generator', () => {
     assert.equal(dbApp.config.connectionString, 'postgres://postgres:postgres@127.0.0.1:5432/postgres')
   })
 
+  test('should return config fields', async () => {
+    const svc = new DBGenerator()
+    assert.deepEqual(svc.getConfigFields(), [
+      {
+        var: 'DATABASE_URL',
+        label: 'What is the connection string?',
+        default: svc.connectionStrings.sqlite,
+        type: 'string',
+        configValue: 'connectionString'
+      }
+    ])
+  })
+
+  test('should get database from connectionString', async () => {
+    const svc = new DBGenerator()
+
+    svc.setConfig({
+      connectionString: 'mydb://foobar.com'
+    })
+    assert.equal(svc.getDatabaseFromConnectionString(), 'mydb')
+    svc.setConfig({
+      connectionString: 'bad_connection_string'
+    })
+    assert.equal(svc.getDatabaseFromConnectionString(), null)
+    svc.setConfig({
+      connectionString: null
+    })
+    assert.equal(svc.getDatabaseFromConnectionString(), null)
+  })
+  test('should set config fields', async () => {
+    const svc = new DBGenerator()
+    svc.setConfigFields([
+      {
+        var: 'DATABASE_URL',
+        label: 'What is the connection string?',
+        type: 'string',
+        configValue: 'connectionString'
+      }
+    ])
+  })
   describe('runtime context', () => {
     test('should have env prefix', async (t) => {
       const svc = new DBGenerator()

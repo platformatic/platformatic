@@ -178,7 +178,38 @@ class DBGenerator extends BaseGenerator {
   getMoviesMigrationUndo () {
     return '-- Add SQL in this file to drop the database tables\nDROP TABLE movies;'
   }
+
+  setConfigFields (fields) {
+    super.setConfigFields(fields)
+    if (!this.config.database) {
+      this.config.database = this.getDatabaseFromConnectionString()
+    }
+  }
+
+  getDatabaseFromConnectionString () {
+    if (this.config.connectionString) {
+      if (this.config.connectionString.indexOf('://') !== -1) {
+        const splitted = this.config.connectionString.split('://')
+        return splitted[0]
+      }
+      return null
+    }
+    return null
+  }
+
+  getConfigFields () {
+    return [
+      {
+        var: 'DATABASE_URL',
+        label: 'What is the connection string?',
+        default: this.connectionStrings.sqlite,
+        type: 'string',
+        configValue: 'connectionString'
+      }
+    ]
+  }
 }
 
 module.exports = DBGenerator
 module.exports.DBGenerator = DBGenerator
+module.exports.Generator = DBGenerator
