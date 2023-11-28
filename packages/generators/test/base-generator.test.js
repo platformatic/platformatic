@@ -159,6 +159,77 @@ test('should append env values', async (t) => {
   assert.equal(dotEnvFile.contents, 'FOO=bar\n')
 })
 
+test('should prepare the questions', async (t) => {
+  const bg = new BaseGenerator({
+    module: '@platformatic/service'
+  })
+  // partial config with defaults
+  bg.setConfig({
+    env: {
+      FOO: 'bar'
+    }
+  })
+
+  await bg.prepareQuestions()
+  assert.deepStrictEqual(bg.questions, [{
+    type: 'input',
+    name: 'targetDirectory',
+    message: 'Where would you like to create your project?'
+  }, {
+    type: 'list',
+    name: 'typescript',
+    message: 'Do you want to use TypeScript?',
+    default: false,
+    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+  }, {
+    type: 'input',
+    name: 'port',
+    message: 'What port do you want to use?'
+  }])
+})
+
+test('should prepare the questions with a targetDirectory', async (t) => {
+  const bg = new BaseGenerator({
+    module: '@platformatic/service'
+  })
+  // partial config with defaults
+  bg.setConfig({
+    targetDirectory: './foo',
+    env: {
+      FOO: 'bar'
+    }
+  })
+
+  await bg.prepareQuestions()
+  assert.deepStrictEqual(bg.questions, [{
+    type: 'list',
+    name: 'typescript',
+    message: 'Do you want to use TypeScript?',
+    default: false,
+    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+  }, {
+    type: 'input',
+    name: 'port',
+    message: 'What port do you want to use?'
+  }])
+})
+
+test('should prepare the questions in runtime context', async (t) => {
+  const bg = new BaseGenerator({
+    module: '@platformatic/service'
+  })
+  // partial config with defaults
+  bg.setConfig({
+    isRuntimeContext: true,
+    env: {
+      FOO: 'bar'
+    }
+  })
+
+  await bg.prepareQuestions()
+  assert.deepStrictEqual(bg.questions, [])
+})
+
 test('should return service metadata', async (t) => {
   const bg = new BaseGenerator({
     module: '@platformatic/service'
@@ -234,91 +305,6 @@ test('should generate tsConfig file and typescript files', async (t) => {
 
   assert.ok(bg.getFileObject('root.test.ts', 'test/routes'))
   assert.ok(bg.getFileObject('example.test.ts', 'test/plugins'))
-})
-
-test('should add questions in the correct position (before)', async (t) => {
-  const question = {
-    type: 'input',
-    name: 'serviceName',
-    message: 'What is the name of the service?'
-  }
-
-  const bg = new BaseGenerator({
-    module: '@platformatic/service'
-  })
-
-  await bg.prepareQuestions()
-  const originalQuestionsLength = bg.questions.length
-  bg.addQuestion(question, { before: 'typescript' }) // should add as second question
-
-  assert.equal(bg.questions.length, originalQuestionsLength + 1)
-  assert.deepEqual(bg.questions[1], {
-    type: 'input',
-    name: 'serviceName',
-    message: 'What is the name of the service?'
-  })
-})
-
-test('should add questions in the correct position (after)', async (t) => {
-  const question = {
-    type: 'input',
-    name: 'serviceName',
-    message: 'What is the name of the service?'
-  }
-
-  const bg = new BaseGenerator({
-    module: '@platformatic/service'
-  })
-
-  await bg.prepareQuestions()
-  const originalQuestionsLength = bg.questions.length
-  bg.addQuestion(question, { after: 'typescript' }) // should add as third question
-
-  assert.equal(bg.questions.length, originalQuestionsLength + 1)
-  assert.deepEqual(bg.questions[2], {
-    type: 'input',
-    name: 'serviceName',
-    message: 'What is the name of the service?'
-  })
-})
-
-test('should add questions at the end', async (t) => {
-  const question = {
-    type: 'input',
-    name: 'serviceName',
-    message: 'What is the name of the service?'
-  }
-
-  const bg = new BaseGenerator({
-    module: '@platformatic/service'
-  })
-
-  await bg.prepare()
-  const originalQuestionsLength = bg.questions.length
-  bg.addQuestion(question)
-
-  assert.equal(bg.questions.length, originalQuestionsLength + 1)
-  assert.deepEqual(bg.questions[originalQuestionsLength], {
-    type: 'input',
-    name: 'serviceName',
-    message: 'What is the name of the service?'
-  })
-})
-
-test('should remove question', async (t) => {
-  const bg = new BaseGenerator({
-    module: '@platformatic/service'
-  })
-
-  await bg.prepareQuestions()
-
-  bg.removeQuestion('typescript')
-
-  bg.questions.forEach((question) => {
-    if (question.name === 'typescript') {
-      assert.fail()
-    }
-  })
 })
 
 test('should throw if preapare fails', async (t) => {

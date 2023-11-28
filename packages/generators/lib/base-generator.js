@@ -212,7 +212,7 @@ class BaseGenerator extends FileGenerator {
 
   async prepareQuestions () {
     if (!this.config.isRuntimeContext) {
-      if (!this.config.targetDirectory && !this.isRuntimeContext) {
+      if (!this.config.targetDirectory) {
         // directory
         this.questions.push({
           type: 'input',
@@ -236,54 +236,6 @@ class BaseGenerator extends FileGenerator {
         name: 'port',
         message: 'What port do you want to use?'
       })
-    }
-  }
-
-  async addQuestion (question, where) {
-    if (where) {
-      if (where.before) {
-        const position = this.questions.reduce((acc, element, idx) => {
-          if (acc === null) {
-            if (element.name === where.before) {
-              acc = idx
-            }
-          }
-          return acc
-        }, null)
-
-        if (position) {
-          this.questions.splice(position, 0, question)
-        }
-      } else if (where.after) {
-        const position = this.questions.reduce((acc, element, idx) => {
-          if (acc === null) {
-            if (element.name === where.after) {
-              acc = idx + 1
-            }
-          }
-          return acc
-        }, null)
-
-        if (position) {
-          this.questions.splice(position, 0, question)
-        }
-      }
-    } else {
-      this.questions.push(question)
-    }
-  }
-
-  removeQuestion (variableName) {
-    const position = this.questions.reduce((acc, element, idx) => {
-      if (acc === null) {
-        if (element.name === variableName) {
-          acc = idx
-        }
-      }
-      return acc
-    }, null)
-    if (position) {
-      this.questions.splice(position, 1)
     }
   }
 
