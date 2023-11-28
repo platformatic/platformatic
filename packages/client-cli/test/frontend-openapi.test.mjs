@@ -303,9 +303,8 @@ test('handle headers parameters in get request', async ({ teardown, ok, match })
   const implementation = await readFile(join(dir, 'fontend', 'fontend.ts'), 'utf8')
 
   const tsImplementationTemplate = `
-const _getRoot = async (url: string, request: Types.PostRootRequest) => {
-  const response = await fetch(\`\${url}/\`, {
-    method: 'GET',
+const _getRoot = async (url: string, request: Types.GetRootRequest) => {
+  const response = await fetch(\`\${url}/?\${new URLSearchParams(Object.entries(request || {})).toString()}\`, {
     headers: {
       'level': request['level'],
       'foo': request['foo']
