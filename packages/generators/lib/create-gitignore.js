@@ -1,5 +1,4 @@
 'use strict'
-const { join } = require('node:path')
 
 const gitignore = `\
 dist
@@ -30,14 +29,13 @@ tags
 # clinicjs
 .clinic/
 `
- function generateGitignore() {
+function generateGitignore () {
   return {
     path: '',
     file: '.gitignore',
     contents: gitignore
   }
 }
-
 
 module.exports = {
   generateGitignore
