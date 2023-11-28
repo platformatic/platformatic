@@ -343,6 +343,7 @@ class BaseGenerator extends FileGenerator {
   }
 
   // implement in the subclass
+  async postInstallActions () {}
   async _beforePrepare () {}
   async _afterPrepare () {}
   async _getConfigFileContents () { return {} }

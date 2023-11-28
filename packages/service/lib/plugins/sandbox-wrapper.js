@@ -22,7 +22,6 @@ module.exports = fp(async function (app, opts) {
       plugin = { path: plugin, encapsulate: true }
     }
     if (plugin.path && (await stat(plugin.path)).isDirectory()) {
-      console.log('registering', plugin.path)
       const patternOptions = patternOptionsFromPlugin(plugin)
 
       app.register(autoload, {

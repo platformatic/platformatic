@@ -189,6 +189,12 @@ class RuntimeGenerator extends BaseGenerator {
       PORT: this.config.port
     }
   }
+
+  async postInstallActions () {
+    for (const { service } of this.services) {
+      await service.postInstallActions()
+    }
+  }
 }
 
 module.exports = RuntimeGenerator

@@ -129,3 +129,4 @@ module.exports.platformaticDB = platformaticDB
 module.exports.ConfigManager = ConfigManager
 module.exports.errors = errors
 module.exports.createConnectionPool = createConnectionPool
+module.exports.Generator = require('./lib/generator/db-generator').Generator

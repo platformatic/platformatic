@@ -100,6 +100,7 @@ export const createPlatformatic = async (argv) => {
   })
 
   const generator = new runtime.Generator({
+    logger,
     name: projectName,
     inquirer
   })
@@ -146,6 +147,7 @@ export const createPlatformatic = async (argv) => {
     names.push(serviceName)
 
     const stackableGenerator = new stackable.Generator({
+      logger,
       inquirer
     })
 
@@ -217,4 +219,8 @@ export const createPlatformatic = async (argv) => {
     await execa(pkgManager, ['install'], { cwd: projectDir })
     spinner.succeed()
   }
+
+  logger.info('Project created successfully, executing post-install actions...')
+  await generator.postInstallActions()
+  logger.info('You are all set! Run `npm start` to start your project.')
 }

@@ -101,5 +101,7 @@ export namespace BaseGenerator {
     _getConfigFileContents(): Promise<JSONValue>
     _generateEnv(): Promise<void>
     appendConfigEnv(): Promise<void>
+
+    postInstallActions(): Promise<void>
   }
 }
