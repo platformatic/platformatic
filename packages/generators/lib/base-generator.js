@@ -53,6 +53,17 @@ class BaseGenerator extends FileGenerator {
     return []
   }
 
+  setConfigFields (fields) {
+    for (const field of fields) {
+      if (field.var) {
+        this.config.env[field.var] = field.value
+      }
+      if (field.configValue) {
+        this.config[field.configValue] = field.value
+      }
+    }
+  }
+
   getDefaultEnv () {
     return {}
   }

@@ -81,7 +81,10 @@ export namespace BaseGenerator {
     addQuestion(question: any, where?: WhereClause): Promise<void>
     removeQuestion(variableName: string): void
     getTSConfig(): JSONValue
+    
     getConfigFields(): ConfigField[]   
+    setConfigFields(ConfigField[]): void
+
     generateConfigFile(): Promise<void>
     readPackageJsonFile(): Promise<JSONValue>
     generatePackageJson(): Promise<JSONValue>

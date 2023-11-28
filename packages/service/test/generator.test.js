@@ -84,6 +84,37 @@ describe('generator', () => {
     ])
   })
 
+  test('should set config fields', async () => {
+    const svc = new ServiceGenerator()
+    const values = [
+      {
+        // existing field
+        var: 'PLT_SERVER_HOSTNAME',
+        label: 'What is the hostname?',
+        default: '0.0.0.0',
+        type: 'string',
+        configValue: 'hostname',
+        value: '127.0.0.123'
+      },
+      {
+        // existing field without configValue
+        var: 'PLT_SERVER_LOGGER_LEVEL',
+        label: 'What is the logger level?',
+        default: 'info',
+        type: 'string',
+        configValue: '',
+        value: 'debug'
+      }
+    ]
+    svc.setConfigFields(values)
+
+    assert.equal(svc.config.hostname, '127.0.0.123')
+    assert.deepEqual(svc.config.env, {
+      PLT_SERVER_HOSTNAME: '127.0.0.123',
+      PLT_SERVER_LOGGER_LEVEL: 'debug'
+    })
+  })
+
   describe('runtime context', () => {
     test('should have env prefix', async (t) => {
       const svc = new ServiceGenerator()
