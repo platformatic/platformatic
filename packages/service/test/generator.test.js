@@ -104,7 +104,17 @@ describe('generator', () => {
         type: 'string',
         configValue: '',
         value: 'debug'
+      },
+      {
+        // non-existing field
+        var: 'PLT_NOT_EXISTING',
+        label: 'Why so serious?',
+        default: 'foobar',
+        type: 'string',
+        configValue: 'foobar',
+        value: 'baz'
       }
+
     ]
     svc.setConfigFields(values)
 
@@ -113,6 +123,9 @@ describe('generator', () => {
       PLT_SERVER_HOSTNAME: '127.0.0.123',
       PLT_SERVER_LOGGER_LEVEL: 'debug'
     })
+
+    assert.equal(undefined, svc.config.foobar)
+    assert.equal(undefined, svc.config.env.PLT_NOT_EXISTING)
   })
 
   describe('runtime context', () => {
