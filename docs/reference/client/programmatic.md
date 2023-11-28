@@ -43,7 +43,33 @@ console.log(mapping)
 
 ```
 
-If you use Typescript you can take advantage of the generated types file 
+You're also able to pass an asynchronous function that modifies the headers for each request with the `getHeaders` option. This function will be executed before each request, just like the plugin `getHeaders` options. Note that `headers` and `getHeaders` are not mutually exclusive, and can work together:
+
+```js
+import { buildOpenAPIClient } from '@platformatic/client'
+
+const client = await buildOpenAPIClient({
+  url: `https://yourapi.com/documentation/json`, 
+  headers: {
+    'foo': 'bar'
+  },
+  getHeaders(options) {
+    const { url, method, body, headers, telemetryHeaders } = options
+
+    // generate your dynamic headers
+
+    return {
+      myDynamicHeader: 'my-value',
+    }
+  }
+})
+
+const res = await client.yourOperationName({ foo: 'bar' })
+
+console.log(res)
+```
+
+If you use Typescript you can take advantage of the generated types file:
 
 ```ts
 import { buildOpenAPIClient } from '@platformatic/client'

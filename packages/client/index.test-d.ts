@@ -1,6 +1,6 @@
 import { expectError, expectType } from 'tsd'
 import fastify, { HTTPMethods } from 'fastify'
-import pltClient, { type PlatformaticClientPluginOptions, type buildOpenAPIClient, type GetHeadersOptions, errors } from '.'
+import pltClient, { type PlatformaticClientPluginOptions, type GetHeadersOptions, buildOpenAPIClient, errors } from '.'
 import { FastifyError } from '@fastify/error'
 
 const server = await fastify()
@@ -58,7 +58,7 @@ const client = await buildOpenAPIClient<MyType>({
   throwOnError: false,
   validateResponse: false,
   headers: { foo: 'bar' },
-  getHeaders(options: GetHeadersOptions) {
+  getHeaders: async (options: GetHeadersOptions) => {
     const { url } = options;
     return { href: url.href };
   },
