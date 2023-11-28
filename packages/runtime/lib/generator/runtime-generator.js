@@ -150,6 +150,14 @@ class RuntimeGenerator extends BaseGenerator {
     return servicesEnv
   }
 
+  getConfigFieldsDefinitions () {
+    return []
+  }
+
+  setConfigFields () {
+    // do nothing, makes no sense
+  }
+
   getRuntimeEnv () {
     return {
       PORT: this.config.port

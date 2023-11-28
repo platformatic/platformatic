@@ -2,9 +2,13 @@
 
 const assert = require('node:assert')
 const { describe, test } = require('node:test')
-const { ServiceGenerator } = require('../lib/generator/service-generator')
+const { ServiceGenerator, Generator } = require('../lib/generator/service-generator')
 
 describe('generator', () => {
+  test('should export a Generator property', async () => {
+    const svc = new Generator()
+    assert.equal(svc.type, 'service')
+  })
   test('generate correct .env file', async (t) => {
     const svc = new ServiceGenerator()
     await svc.prepare()
@@ -55,6 +59,68 @@ describe('generator', () => {
       paths: [{ path: './plugins', encapsulate: false }, './routes'],
       typescript: true
     })
+  })
+
+  test('should return config fields', async () => {
+    const svc = new ServiceGenerator()
+    assert.deepEqual(svc.getConfigFieldsDefinitions(), [
+      {
+        var: 'PLT_SERVER_HOSTNAME',
+        label: 'What is the hostname?',
+        default: '0.0.0.0',
+        type: 'string',
+        configValue: 'hostname'
+      },
+      {
+        var: 'PLT_SERVER_LOGGER_LEVEL',
+        label: 'What is the logger level?',
+        default: 'info',
+        type: 'string',
+        configValue: ''
+      },
+      {
+        label: 'Which port do you want to use?',
+        var: 'PORT',
+        default: 3042,
+        tyoe: 'number',
+        configValue: 'port'
+      }
+    ])
+  })
+
+  test('should set config fields', async () => {
+    const svc = new ServiceGenerator()
+    const values = [
+      {
+        // existing field
+        var: 'PLT_SERVER_HOSTNAME',
+        configValue: 'hostname',
+        value: '127.0.0.123'
+      },
+      {
+        // existing field without configValue
+        var: 'PLT_SERVER_LOGGER_LEVEL',
+        configValue: '',
+        value: 'debug'
+      },
+      {
+        // non-existing field
+        var: 'PLT_NOT_EXISTING',
+        configValue: 'foobar',
+        value: 'baz'
+      }
+
+    ]
+    svc.setConfigFields(values)
+
+    assert.equal(svc.config.hostname, '127.0.0.123')
+    assert.deepEqual(svc.config.env, {
+      PLT_SERVER_HOSTNAME: '127.0.0.123',
+      PLT_SERVER_LOGGER_LEVEL: 'debug'
+    })
+
+    assert.equal(undefined, svc.config.foobar)
+    assert.equal(undefined, svc.config.env.PLT_NOT_EXISTING)
   })
 
   describe('runtime context', () => {
