@@ -1,9 +1,8 @@
 import { say } from './say.mjs'
 import path, { basename } from 'node:path'
 import inquirer from 'inquirer'
-import { writeFile } from 'fs/promises'
 import generateName from 'boring-name-generator'
-import { getUsername, getVersion, minimumSupportedNodeVersions, isCurrentVersionSupported, safeMkdir, isFileAccessible } from './utils.mjs'
+import { getUsername, getVersion, minimumSupportedNodeVersions, isCurrentVersionSupported, safeMkdir } from './utils.mjs'
 import { createGitignore } from './create-gitignore.mjs'
 import { createGitRepository } from './create-git-repository.mjs'
 import askDir from './ask-dir.mjs'
@@ -14,7 +13,7 @@ import { execa } from 'execa'
 import parseArgs from 'minimist'
 import ora from 'ora'
 import { createRequire } from 'node:module'
-import {pathToFileURL} from 'node:url'
+import { pathToFileURL } from 'node:url'
 
 export async function chooseStackable (opts = {}) {
   const skip = opts.skip
