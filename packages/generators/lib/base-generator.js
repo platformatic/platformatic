@@ -339,6 +339,13 @@ class BaseGenerator extends FileGenerator {
       })
       await this._generateEnv()
       this.appendConfigEnv()
+
+      const { contents } = this.getFileObject('.env')
+      this.addFile({
+        path: '',
+        file: '.env.sample',
+        contents
+      })
     }
   }
 

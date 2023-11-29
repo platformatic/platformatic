@@ -1,13 +1,15 @@
 'use strict'
 
 const assert = require('node:assert')
+const { readFile } = require('node:fs/promises')
 const { describe, test } = require('node:test')
 const { ServiceGenerator, Generator } = require('../lib/generator/service-generator')
+const { join } = require('node:path')
 
 describe('generator', () => {
   test('should export a Generator property', async () => {
     const svc = new Generator()
-    assert.equal(svc.type, 'service')
+    assert.equal(svc.module, '@platformatic/service')
   })
   test('generate correct .env file', async (t) => {
     const svc = new ServiceGenerator()
@@ -25,17 +27,34 @@ describe('generator', () => {
 
       await svc.prepare()
 
-      const configFile = svc.getFileObject('platformatic.service.json')
+      const configFile = svc.getFileObject('platformatic.json')
       const configFileJson = JSON.parse(configFile.contents)
       assert.equal(configFileJson.plugins.typescript, true)
     }
   })
 
-  test('have @platformatic/service dependency', async (t) => {
+  test('generate correct README file', async (t) => {
+    const svc = new ServiceGenerator()
+    await svc.prepare()
+
+    svc.setConfig({
+      typescript: true,
+      plugin: true
+    })
+
+    await svc.prepare()
+
+    const readme = svc.getFileObject('README.md')
+    const contentsReadme = await readFile(join(__dirname, '..', 'lib', 'generator', 'README.md'), 'utf8')
+    assert.equal(readme.contents, contentsReadme)
+  })
+
+  test('have platformatic dependencies', async (t) => {
     const svc = new ServiceGenerator()
     await svc.prepare()
     const packageJsonFileObject = svc.getFileObject('package.json')
     const contents = JSON.parse(packageJsonFileObject.contents)
+    assert.equal(contents.dependencies.platformatic, contents.dependencies.platformatic)
     assert.equal(contents.dependencies['@platformatic/service'], contents.dependencies.platformatic)
   })
 
@@ -46,7 +65,7 @@ describe('generator', () => {
       typescript: true
     })
     await svc.prepare()
-    const platformaticConfigFile = svc.getFileObject('platformatic.service.json')
+    const platformaticConfigFile = svc.getFileObject('platformatic.json')
     const contents = JSON.parse(platformaticConfigFile.contents)
     assert.equal(contents.$schema, `https://platformatic.dev/schemas/v${svc.platformaticVersion}/service`)
     assert.deepEqual(contents.server, {
@@ -79,7 +98,7 @@ describe('generator', () => {
       svc.addPackage(packageDefinitions[0])
       await svc.prepare()
 
-      const platformaticConfigFile = svc.getFileObject('platformatic.service.json')
+      const platformaticConfigFile = svc.getFileObject('platformatic.json')
       const contents = JSON.parse(platformaticConfigFile.contents)
 
       assert.deepEqual(contents.plugins, {
@@ -114,7 +133,7 @@ describe('generator', () => {
       svc.addPackage(packageDefinitions[0])
       await svc.prepare()
 
-      const platformaticConfigFile = svc.getFileObject('platformatic.service.json')
+      const platformaticConfigFile = svc.getFileObject('platformatic.json')
       const contents = JSON.parse(platformaticConfigFile.contents)
 
       assert.deepEqual(contents.plugins, {
@@ -231,7 +250,7 @@ describe('generator', () => {
 
       await svc.prepare()
 
-      const configFile = svc.getFileObject('platformatic.service.json')
+      const configFile = svc.getFileObject('platformatic.json')
       const configFileContents = JSON.parse(configFile.contents)
       assert.strictEqual(undefined, configFileContents.server)
     })
@@ -245,7 +264,7 @@ describe('generator', () => {
 
       await svc.prepare()
 
-      const configFile = svc.getFileObject('platformatic.service.json')
+      const configFile = svc.getFileObject('platformatic.json')
       const configFileContents = JSON.parse(configFile.contents)
       assert.strictEqual(undefined, configFileContents.server)
     })

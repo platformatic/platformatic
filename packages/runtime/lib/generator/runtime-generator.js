@@ -3,6 +3,8 @@ const { NoEntryPointError, NoServiceNamedError } = require('./errors')
 const generateName = require('boring-name-generator')
 const { join } = require('node:path')
 const { envObjectToString } = require('@platformatic/generators/lib/utils')
+const { readFile } = require('node:fs/promises')
+
 class RuntimeGenerator extends BaseGenerator {
   constructor (opts) {
     super({
@@ -110,6 +112,14 @@ class RuntimeGenerator extends BaseGenerator {
       file: '.env',
       contents: envObjectToString(this.config.env)
     })
+
+    this.addFile({
+      path: '',
+      file: '.env.sample',
+      contents: envObjectToString(this.config.env)
+    })
+
+    this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
 
     return {
       targetDirectory: this.targetDirectory,
