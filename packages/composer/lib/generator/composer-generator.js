@@ -4,8 +4,10 @@ const { BaseGenerator, addPrefixToEnv } = require('@platformatic/generators')
 
 class ComposerGenerator extends BaseGenerator {
   constructor (opts) {
-    super(opts)
-    this.type = 'composer'
+    super({
+      ...opts,
+      module: '@platformatic/composer'
+    })
     this.runtime = null
   }
 
@@ -31,7 +33,7 @@ class ComposerGenerator extends BaseGenerator {
     }
     if (this.runtime !== null) {
       template.composer.services = this.runtime.services
-        .filter(serviceMeta => serviceMeta.service.type !== 'composer')
+        .filter(serviceMeta => serviceMeta.service.module !== '@platformatic/composer')
         .map((serviceMeta) => {
           return {
             id: serviceMeta.name,
