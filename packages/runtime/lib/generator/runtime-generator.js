@@ -65,7 +65,7 @@ class RuntimeGenerator extends BaseGenerator {
     this.config.env = {
       PLT_SERVER_HOSTNAME: '0.0.0.0',
       PORT: this.config.port || 3042,
-      PLT_SERVER_LOGGER_LEVEL: 'info',
+      PLT_SERVER_LOGGER_LEVEL: this.config.logLevel || 'info',
       ...this.config.env
     }
   }
