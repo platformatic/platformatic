@@ -3,7 +3,6 @@ import path, { basename } from 'node:path'
 import inquirer from 'inquirer'
 import generateName from 'boring-name-generator'
 import { getUsername, getVersion, minimumSupportedNodeVersions, isCurrentVersionSupported, safeMkdir } from './utils.mjs'
-import { createGitignore } from './create-gitignore.mjs'
 import { createGitRepository } from './create-git-repository.mjs'
 import askDir from './ask-dir.mjs'
 import { getPkgManager } from '@platformatic/utils'
@@ -90,8 +89,6 @@ export const createPlatformatic = async (argv) => {
   const projectName = basename(projectDir)
 
   await safeMkdir(projectDir)
-
-  await say('Installing platformatic and @platformatic/runtime')
 
   const runtime = await importOrLocal({
     pkgManager,
@@ -211,7 +208,6 @@ export const createPlatformatic = async (argv) => {
   })
 
   if (initGitRepository) {
-    await createGitignore(logger, projectDir)
     await createGitRepository(logger, projectDir)
   }
 
