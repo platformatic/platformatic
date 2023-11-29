@@ -361,6 +361,25 @@ test('should throw if there is a missing env variable', async () => {
   }
 })
 
+test('should add package', async () => {
+  const bg = new BaseGenerator()
+
+  const packageDefinition = {
+    name: '@my/package',
+    options: [
+      {
+        path: 'foobar',
+        type: 'string',
+        value: 'foobar'
+      }
+    ]
+  }
+  bg.addPackage(packageDefinition)
+
+  assert.equal(bg.packages.length, 1)
+  assert.deepEqual(bg.packages[0], packageDefinition)
+})
+
 describe('runtime context', () => {
   test('should set config.envPrefix correctly', async (t) => {
     const bg = new BaseGenerator()

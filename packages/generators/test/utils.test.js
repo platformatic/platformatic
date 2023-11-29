@@ -2,8 +2,7 @@
 
 const { test, describe } = require('node:test')
 const assert = require('node:assert')
-const { stripVersion, convertServiceNameToPrefix, addPrefixToEnv, envObjectToString } = require('../lib/utils')
-const { extractEnvVariablesFromText } = require('../lib/utils')
+const { stripVersion, convertServiceNameToPrefix, addPrefixToEnv, envObjectToString, extractEnvVariablesFromText, getPackageConfigurationObject } = require('../lib/utils')
 
 describe('utils', () => {
   describe('stripVersion', async () => {
@@ -85,5 +84,68 @@ describe('utils', () => {
       const env = extractEnvVariablesFromText(text)
       assert.deepEqual(env, [])
     })
+  })
+
+  describe('getPackageConfigurationObject', async () => {
+    const input = [
+      {
+        path: 'prefix',
+        value: '/foo',
+        type: 'string'
+      },
+      {
+        path: 'foo.fooOption1',
+        value: 'value1',
+        type: 'string'
+      },
+      {
+        path: 'foo.fooOption2',
+        value: 'value2',
+        type: 'string'
+      },
+      {
+        path: 'foobar',
+        value: '123',
+        type: 'number'
+      },
+      {
+        path: 'boolean.truthy',
+        value: 'true',
+        type: 'boolean'
+      },
+      {
+        path: 'boolean.falsey',
+        value: 'false',
+        type: 'boolean'
+      }
+    ]
+    const config = getPackageConfigurationObject(input)
+    assert.deepEqual(config, {
+      prefix: '/foo',
+      foo: {
+        fooOption1: 'value1',
+        fooOption2: 'value2'
+      },
+      foobar: 123,
+      boolean: {
+        truthy: true,
+        falsey: false
+      }
+    })
+
+    // should throw
+    try {
+      getPackageConfigurationObject([
+        {
+          path: 'wrong',
+          type: 'object',
+          value: {}
+        }
+      ])
+      assert.fail()
+    } catch (err) {
+      assert.equal(err.code, 'PLT_GEN_WRONG_TYPE')
+      assert.equal(err.message, 'Invalid value type. Accepted values are \'string\', \'number\' and \'boolean\', found \'object\'.')
+    }
   })
 })
