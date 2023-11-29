@@ -15,5 +15,5 @@ export namespace GeneratorUtils {
   export function addPrefixToEnv(env: Env, prefix: string): Env
   export function envObjectToString(env: Env): string
   export function extractEnvVariablesFromText(text: string): string[]
-  export function getPackageConfigurationObject(config: PackageConfiguration[])
+  export function getPackageConfigurationObject(config: PackageConfiguration[]): object
 }

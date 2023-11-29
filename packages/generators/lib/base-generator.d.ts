@@ -88,7 +88,7 @@ export namespace BaseGenerator {
     getFastifyVersion(): Promise<string>
     getPlatformaticVersion(): Promise<string>
   
-    addPackage(pkg: PackageDefinition)
+    addPackage(pkg: PackageDefinition): void
 
     prepare(): Promise<GeneratorMetadata>
     run(): Promise<GeneratorMetadata>
