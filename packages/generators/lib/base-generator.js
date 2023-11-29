@@ -28,6 +28,7 @@ class BaseGenerator extends FileGenerator {
     this.inquirer = opts.inquirer || null
     this.targetDirectory = opts.targetDirectory || null
     this.config = this.getDefaultConfig()
+    this.packages = []
     this.module = opts.module
     if (!this.module) {
       throw ModuleNeeded()
@@ -345,6 +346,10 @@ class BaseGenerator extends FileGenerator {
     const metadata = await this.prepare()
     await this.writeFiles()
     return metadata
+  }
+
+  addPackage (pkg) {
+    this.packages.push(pkg)
   }
 
   // implement in the subclass

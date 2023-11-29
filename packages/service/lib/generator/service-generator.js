@@ -1,6 +1,7 @@
 'use strict'
 
 const { BaseGenerator } = require('@platformatic/generators')
+const { getPackageConfigurationObject } = require('@platformatic/generators/lib/utils')
 
 class ServiceGenerator extends BaseGenerator {
   constructor (opts = {}) {
@@ -98,6 +99,18 @@ declare module 'fastify' {
           level: '{PLT_SERVER_LOGGER_LEVEL}'
         }
       }
+    }
+
+    if (this.packages.length > 0) {
+      if (!config.plugins) {
+        config.plugins = {}
+      }
+      config.plugins.packages = this.packages.map((packageDefinition) => {
+        return {
+          name: packageDefinition.name,
+          options: getPackageConfigurationObject(packageDefinition.options)
+        }
+      })
     }
     return config
   }

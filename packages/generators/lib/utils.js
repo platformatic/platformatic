@@ -1,6 +1,7 @@
 'use strict'
 
 const { mkdir } = require('node:fs/promises')
+const { WrongTypeError } = require('./errors')
 
 async function safeMkdir (dir) {
   try {
@@ -58,10 +59,41 @@ function extractEnvVariablesFromText (text) {
   }
   return []
 }
-
+function getPackageConfigurationObject (config) {
+  const output = {}
+  let current = output
+  for (const param of config) {
+    const props = param.path.split('.')
+    props.forEach((prop, idx) => {
+      if (idx === props.length - 1) {
+        switch (param.type) {
+          case 'string' :
+            current[prop] = param.value.toString()
+            break
+          case 'number':
+            current[prop] = parseInt(param.value)
+            break
+          case 'boolean':
+            current[prop] = (param.value === 'true')
+            break
+          default:
+            throw new WrongTypeError(param.type)
+        }
+        current = output
+      } else {
+        if (!current[prop]) {
+          current[prop] = {}
+        }
+        current = current[prop]
+      }
+    })
+  }
+  return output
+}
 module.exports = {
   addPrefixToEnv,
   convertServiceNameToPrefix,
+  getPackageConfigurationObject,
   envObjectToString,
   extractEnvVariablesFromText,
   safeMkdir,

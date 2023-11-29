@@ -1,6 +1,6 @@
 import { BaseLogger } from 'pino'
 import { FileGenerator } from './file-generator'
-
+import { PackageConfiguration } from './utils'
 export namespace BaseGenerator {
   export type BaseGeneratorOptions = FileGenerator.FileGeneratorOptions & {
     module: string
@@ -24,6 +24,11 @@ export namespace BaseGenerator {
   type Dependency = {
     [key: string]: string
   }
+
+  type PackageDefinition = {
+    name: string,
+    options: PackageConfiguration
+  }
   type BaseGeneratorConfig = Record<string, any> & {
     port?: number
     hostname?: string
@@ -37,7 +42,7 @@ export namespace BaseGenerator {
     env?: KeyValue,
     isRuntimeContext?: boolean,
     serviceName?: string,
-    envPrefix?: string 
+    envPrefix?: string
   }
   
   type WhereClause = {
@@ -71,6 +76,7 @@ export namespace BaseGenerator {
     config: BaseGeneratorConfig
     questions: Array<object>
   
+    packages: PackageConfiguration[]
     constructor(opts?: BaseGeneratorOptions)
   
     setConfig(config?: BaseGeneratorConfig): void
@@ -82,6 +88,8 @@ export namespace BaseGenerator {
     getFastifyVersion(): Promise<string>
     getPlatformaticVersion(): Promise<string>
   
+    addPackage(pkg: PackageDefinition): void
+
     prepare(): Promise<GeneratorMetadata>
     run(): Promise<GeneratorMetadata>
     addQuestion(question: any, where?: WhereClause): Promise<void>
