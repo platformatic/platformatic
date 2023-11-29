@@ -343,6 +343,7 @@ class BaseGenerator extends FileGenerator {
   }
 
   // implement in the subclass
+  /* c8 ignore next 1 */
   async postInstallActions () {}
   async _beforePrepare () {}
   async _afterPrepare () {}
