@@ -29,6 +29,10 @@ class RuntimeGenerator extends BaseGenerator {
       name: serviceName,
       service
     })
+
+    if (typeof service.setRuntime === 'function') {
+      service.setRuntime(this)
+    }
   }
 
   setEntryPoint (entryPoint) {

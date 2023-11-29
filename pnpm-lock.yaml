@@ -348,6 +348,9 @@ importers:
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
+      '@platformatic/generators':
+        specifier: workspace:*
+        version: link:../generators
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
@@ -1263,7 +1266,7 @@ importers:
         specifier: workspace:*
         version: link:../db
       '@platformatic/generators':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../generators
       '@platformatic/service':
         specifier: workspace:*

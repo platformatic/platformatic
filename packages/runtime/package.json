@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/runtime",
-  "version": "1.12.1",
+  "version": "1.13.0",
   "description": "",
   "main": "index.js",
   "bin": {
@@ -42,7 +42,7 @@
     "@platformatic/composer": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/db": "workspace:*",
-    "@platformatic/generators": "workspace:^",
+    "@platformatic/generators": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/utils": "workspace:*",

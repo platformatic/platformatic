@@ -6,6 +6,7 @@ const { join } = require('node:path')
 const { FileGenerator } = require('./file-generator')
 const { generateTests, generatePlugins } = require('./create-plugin')
 const { PrepareError, MissingEnvVariable, ModuleNeeded } = require('./errors')
+const { generateGitignore } = require('./create-gitignore')
 const generateName = require('boring-name-generator')
 /* c8 ignore start */
 const fakeLogger = {
@@ -171,14 +172,18 @@ class BaseGenerator extends FileGenerator {
       if (this.config.plugin) {
         // create plugin
         this.files.push(...generatePlugins(this.config.typescript))
-      }
-      if (this.config.tests) {
-        // create tests
-        this.files.push(...generateTests(this.config.typescript, this.module))
+        if (this.config.tests) {
+          // create tests
+          this.files.push(...generateTests(this.config.typescript, this.module))
+        }
       }
 
+      this.files.push(generateGitignore())
+
       await this._afterPrepare()
+
       this.checkEnvVariablesInConfigFile()
+
       return {
         targetDirectory: this.targetDirectory,
         env: this.config.env

@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/composer",
-  "version": "1.12.1",
+  "version": "1.13.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -42,6 +42,7 @@
     "@fastify/swagger": "^8.10.1",
     "@fastify/swagger-ui": "^1.9.3",
     "@platformatic/config": "workspace:*",
+    "@platformatic/generators": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@platformatic/swagger-ui-theme": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
