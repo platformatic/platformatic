@@ -6,7 +6,7 @@ import { getUsername, getVersion, minimumSupportedNodeVersions, isCurrentVersion
 import { createGitignore } from './create-gitignore.mjs'
 import { createGitRepository } from './create-git-repository.mjs'
 import askDir from './ask-dir.mjs'
-import { getPkgManager } from './get-pkg-manager.mjs'
+import { getPkgManager } from '@platformatic/utils'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa } from 'execa'
@@ -16,17 +16,17 @@ import { createRequire } from 'node:module'
 import { pathToFileURL } from 'node:url'
 
 export async function chooseStackable (opts = {}) {
-  const skip = opts.skip
   const choices = [
+    { name: 'Composer', value: '@platformatic/composer' },
     { name: 'DB', value: '@platformatic/db' },
-    { name: 'Service', value: '@platformatic/service' },
-    { name: 'Composer', value: '@platformatic/composer' }
-  ].filter((choice) => !skip || choice.value !== skip)
+    { name: 'Service', value: '@platformatic/service' }
+  ]
 
   const options = await inquirer.prompt({
     type: 'list',
     name: 'type',
     message: 'Which kind of project do you want to create?',
+    default: choices[2].value,
     choices
   })
 

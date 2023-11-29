@@ -503,6 +503,9 @@ importers:
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
+      '@platformatic/utils':
+        specifier: workspace:*
+        version: link:../utils
       '@types/node':
         specifier: ^20.8.10
         version: 20.9.2
@@ -606,6 +609,9 @@ importers:
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
+      '@platformatic/utils':
+        specifier: workspace:*
+        version: link:../utils
       '@types/node':
         specifier: ^20.8.10
         version: 20.9.2
