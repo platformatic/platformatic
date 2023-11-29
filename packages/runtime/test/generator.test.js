@@ -24,7 +24,8 @@ describe('Generator', () => {
     rg.setEntryPoint('first-service')
 
     rg.setConfig({
-      port: 3043
+      port: 3043,
+      logLevel: 'debug'
     })
 
     const output = await rg.prepare()
@@ -33,7 +34,7 @@ describe('Generator', () => {
       targetDirectory: '/tmp/runtime',
       env: {
         PLT_SERVER_HOSTNAME: '0.0.0.0',
-        PLT_SERVER_LOGGER_LEVEL: 'info',
+        PLT_SERVER_LOGGER_LEVEL: 'debug',
         PORT: 3043
       }
     })
