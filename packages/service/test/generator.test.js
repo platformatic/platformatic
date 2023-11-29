@@ -61,6 +61,82 @@ describe('generator', () => {
     })
   })
 
+  test('support packages', async (t) => {
+    {
+      const svc = new ServiceGenerator()
+      const packageDefinitions = [
+        {
+          name: '@fastify/compress',
+          options: [
+            {
+              path: 'threshold',
+              value: '1',
+              type: 'number'
+            }
+          ]
+        }
+      ]
+      svc.addPackage(packageDefinitions[0])
+      await svc.prepare()
+
+      const platformaticConfigFile = svc.getFileObject('platformatic.service.json')
+      const contents = JSON.parse(platformaticConfigFile.contents)
+
+      assert.deepEqual(contents.plugins, {
+        packages: [
+          {
+            name: '@fastify/compress',
+            options: {
+              threshold: 1
+            }
+          }
+        ]
+      })
+    }
+    {
+      // with standard platformatic plugin
+      const svc = new ServiceGenerator()
+      svc.setConfig({
+        plugin: true
+      })
+      const packageDefinitions = [
+        {
+          name: '@fastify/compress',
+          options: [
+            {
+              path: 'threshold',
+              value: '1',
+              type: 'number'
+            }
+          ]
+        }
+      ]
+      svc.addPackage(packageDefinitions[0])
+      await svc.prepare()
+
+      const platformaticConfigFile = svc.getFileObject('platformatic.service.json')
+      const contents = JSON.parse(platformaticConfigFile.contents)
+
+      assert.deepEqual(contents.plugins, {
+        paths: [
+          {
+            encapsulate: false,
+            path: './plugins'
+          },
+          './routes'
+        ],
+        packages: [
+          {
+            name: '@fastify/compress',
+            options: {
+              threshold: 1
+            }
+          }
+        ]
+      })
+    }
+  })
+
   test('should return config fields', async () => {
     const svc = new ServiceGenerator()
     assert.deepEqual(svc.getConfigFieldsDefinitions(), [
