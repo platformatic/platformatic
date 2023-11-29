@@ -61,13 +61,23 @@ class RuntimeGenerator extends BaseGenerator {
 
   async _beforePrepare () {
     this.setServicesDirectory()
-
+    this.setServicesConfigValues()
     this.config.env = {
       PLT_SERVER_HOSTNAME: '0.0.0.0',
       PORT: this.config.port || 3042,
       PLT_SERVER_LOGGER_LEVEL: 'info',
       ...this.config.env
     }
+  }
+
+  setServicesConfigValues () {
+    this.services.forEach(({ service }) => {
+      if (!service.config) {
+        // set default config
+        service.setConfig()
+      }
+      service.config.typescript = this.config.typescript
+    })
   }
 
   async _getConfigFileContents () {
