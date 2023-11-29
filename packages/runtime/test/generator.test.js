@@ -164,4 +164,36 @@ describe('Generator', () => {
       }
     ])
   })
+
+  test('should create a runtime with 2 services with typescript enabled', async () => {
+    const rg = new RuntimeGenerator({
+      targetDirectory: '/tmp/runtime',
+      type: 'runtime'
+    })
+
+    // adding one service
+    const firstService = new ServiceGenerator()
+    rg.addService(firstService, 'first-service')
+
+    // adding another service
+    const secondService = new ServiceGenerator()
+    rg.addService(secondService, 'second-service')
+
+    rg.setEntryPoint('first-service')
+
+    rg.setConfig({
+      port: 3043,
+      typescript: true
+    })
+
+    await rg.prepare()
+
+    // should list only runtime files
+    const runtimeFileList = rg.listFiles()
+    assert.deepEqual(runtimeFileList, ['package.json', 'platformatic.runtime.json', '.env', 'tsconfig.json', '.gitignore'])
+
+    // services have correct typescript value in config
+    assert.equal(firstService.config.typescript, rg.config.typescript)
+    assert.equal(secondService.config.typescript, rg.config.typescript)
+  })
 })
