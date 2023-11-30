@@ -101,8 +101,38 @@ jobs:
         git config --global user.email 'info@platformatic.dev'
     - name: Run test suite
       run: cd packages/create-platformatic && pnpm test
+
+  ci-create-platformatic-auto:
+    needs: setup-node_modules
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        node-version: [18, 20]
+        os: [ubuntu-latest, windows-latest]
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+    - uses: pnpm/action-setup@v2.4.0
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'pnpm'
+    - name: pnpm install
+      uses: nick-fields/retry@v2.9.0
+      with:
+        max_attempts: 10
+        timeout_minutes: 15
+        retry_on: error
+        command: pnpm install --frozen-lockfile
+    - name: platformatic cli global link
+      run: cd packages/cli && pnpm link --global && cd ../..
+    - name: Setup local git user and email
+      run: |
+        git config --global user.name 'Platformatic Github Actions'
+        git config --global user.email 'info@platformatic.dev'
     - name: Run test suite
       run: cd packages/create-platformatic-auto && pnpm test
+
 
   ci-cli:
     needs: setup-node_modules
