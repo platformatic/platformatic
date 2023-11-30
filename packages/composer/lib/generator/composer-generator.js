@@ -1,6 +1,8 @@
 'use strict'
 
 const { BaseGenerator, addPrefixToEnv } = require('@platformatic/generators')
+const { join } = require('node:path')
+const { readFile } = require('node:fs/promises')
 
 class ComposerGenerator extends BaseGenerator {
   constructor (opts) {
@@ -93,6 +95,8 @@ class ComposerGenerator extends BaseGenerator {
       }
       this.config.env = addPrefixToEnv(this.config.env, this.config.envPrefix)
     }
+
+    this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
   }
 
   setRuntime (runtime) {

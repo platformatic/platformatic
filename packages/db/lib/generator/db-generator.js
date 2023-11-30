@@ -4,6 +4,7 @@ const { BaseGenerator, generateTests, addPrefixToEnv } = require('@platformatic/
 const { jsHelperSqlite, jsHelperMySQL, jsHelperPostgres, moviesTestTS, moviesTestJS } = require('./code-templates')
 const { join } = require('node:path')
 const { pathToFileURL } = require('node:url')
+const { readFile } = require('node:fs/promises')
 
 class DBGenerator extends BaseGenerator {
   constructor (opts = {}) {
@@ -115,6 +116,8 @@ class DBGenerator extends BaseGenerator {
       this.createMigrationFiles()
     }
 
+    this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
+
     if (this.config.plugin) {
       let jsHelper = { pre: '', config: '', post: '' }
       switch (this.config.database) {
@@ -131,7 +134,6 @@ class DBGenerator extends BaseGenerator {
           jsHelper = jsHelperMySQL(this.config.connectionString)
           break
       }
-      // await generatePlugins(logger, currentDir, typescript, 'db', jsHelper)
 
       if (this.config.createMigrations) {
         if (this.config.typescript) {

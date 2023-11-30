@@ -118,14 +118,18 @@ test('Creates a Platformatic Service in a non empty directory', { timeout, skip:
   const targetDirectory = join(tmpdir(), 'platformatic-service-test')
   // const targetDirectory = '/tmp/tst'
   async function generateServiceFileStructure (dir) {
-    await safeMkdir(join(targetDirectory, 'plugins'))
-    await safeMkdir(join(targetDirectory, 'routes'))
+    const servicesDir = join(dir, 'services')
+    await safeMkdir(servicesDir)
+
+    const serviceDir = join(servicesDir, 'foo')
+    await safeMkdir(join(serviceDir, 'plugins'))
+    await safeMkdir(join(serviceDir, 'routes'))
 
     await writeFile(join(dir, '.env'), 'SAMPLE_ENV=foobar\n')
 
     // creates 2 files. root.js will be overwritten
-    await writeFile(join(targetDirectory, 'routes', 'root.js'), 'console.log(\'hello world\')')
-    await writeFile(join(targetDirectory, 'routes', 'sample.js'), 'console.log(\'hello world\')')
+    await writeFile(join(serviceDir, 'routes', 'root.js'), 'console.log(\'hello world\')')
+    await writeFile(join(serviceDir, 'routes', 'sample.js'), 'console.log(\'hello world\')')
   }
   // generate a sample file structure
   await generateServiceFileStructure(targetDirectory)
@@ -135,9 +139,6 @@ test('Creates a Platformatic Service in a non empty directory', { timeout, skip:
   })
   // The actions must match IN ORDER
   const actions = [{
-    match: 'Which kind of project do you want to create?',
-    do: [keys.DOWN, keys.ENTER] // Service
-  }, {
     match: 'Where would you like to create your project?',
     do: [targetDirectory, keys.ENTER]
   }, {
