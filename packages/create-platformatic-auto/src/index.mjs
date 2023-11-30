@@ -87,7 +87,8 @@ export const createPlatformatic = async (argv) => {
   const optionsDir = await inquirer.prompt({
     type: 'input',
     name: 'dir',
-    message: 'Where would you like to create your project?'
+    message: 'Where would you like to create your project?',
+    default: 'platformatic'
   })
 
   const projectDir = resolve(process.cwd(), optionsDir.dir)

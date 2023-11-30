@@ -20,7 +20,7 @@ test.afterEach(async () => {
   }
 })
 
-test('Creates a Platformatic Service with no typescript', { timeout, only: true }, async () => {
+test('Creates a Platformatic Service with no typescript', { timeout }, async () => {
   // The actions must match IN ORDER
   const actions = [{
     match: 'Where would you like to create your project?',
