@@ -1,10 +1,9 @@
 import { say } from './say.mjs'
-import path, { basename } from 'node:path'
+import path, { basename, resolve } from 'node:path'
 import inquirer from 'inquirer'
 import generateName from 'boring-name-generator'
 import { getUsername, getVersion, minimumSupportedNodeVersions, isCurrentVersionSupported, safeMkdir } from './utils.mjs'
 import { createGitRepository } from './create-git-repository.mjs'
-import askDir from './ask-dir.mjs'
 import { getPkgManager } from '@platformatic/utils'
 import pino from 'pino'
 import pretty from 'pino-pretty'
@@ -85,7 +84,14 @@ export const createPlatformatic = async (argv) => {
 
   const pkgManager = getPkgManager()
 
-  const projectDir = await askDir(logger, path.join('.', 'platformatic'))
+  const optionsDir = await inquirer.prompt({
+    type: 'input',
+    name: 'dir',
+    message: 'Where would you like to create your project?'
+  })
+
+  const projectDir = resolve(process.cwd(), optionsDir.dir)
+
   const projectName = basename(projectDir)
 
   await safeMkdir(projectDir)
@@ -106,6 +112,11 @@ export const createPlatformatic = async (argv) => {
     ...generator.config,
     targetDirectory: projectDir
   })
+
+  await generator.populateFromExistingConfig()
+  if (generator.existingConfig) {
+    await say('Using existing configuration')
+  }
 
   const names = []
 

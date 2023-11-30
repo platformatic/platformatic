@@ -4,6 +4,8 @@ const generateName = require('boring-name-generator')
 const { join } = require('node:path')
 const { envObjectToString } = require('@platformatic/generators/lib/utils')
 const { readFile } = require('node:fs/promises')
+const { ConfigManager } = require('@platformatic/config')
+const { platformaticRuntime } = require('../config')
 
 class RuntimeGenerator extends BaseGenerator {
   constructor (opts) {
@@ -74,6 +76,39 @@ class RuntimeGenerator extends BaseGenerator {
     }
   }
 
+  async populateFromExistingConfig () {
+    if (this._hasCheckedForExistingConfig) {
+      return
+    }
+    this._hasCheckedForExistingConfig = true
+    const existingConfigFile = await ConfigManager.findConfigFile(this.targetDirectory, 'runtime')
+    if (existingConfigFile) {
+      const configManager = new ConfigManager({
+        ...platformaticRuntime.configManagerConfig,
+        source: join(this.targetDirectory, existingConfigFile)
+      })
+      await configManager.parse()
+      this.existingConfig = configManager.current
+      this.setServicesDirectory()
+      this.config.env = configManager.env
+      this.config.port = configManager.env.PORT
+      this.entryPoint = configManager.current.services.find((svc) => svc.entrypoint)
+    }
+  }
+
+  async prepare () {
+    await this.populateFromExistingConfig()
+    if (this.existingConfig) {
+      await this._afterPrepare()
+      return {
+        env: this.config.env,
+        targetDirectory: this.targetDirectory
+      }
+    } else {
+      return await super.prepare()
+    }
+  }
+
   async _getConfigFileContents () {
     const config = {
       $schema: `https://platformatic.dev/schemas/v${this.platformaticVersion}/runtime`,
@@ -119,7 +154,9 @@ class RuntimeGenerator extends BaseGenerator {
       contents: envObjectToString(this.config.env)
     })
 
-    this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
+    if (!this.existingConfig) {
+      this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
+    }
 
     return {
       targetDirectory: this.targetDirectory,
@@ -135,6 +172,8 @@ class RuntimeGenerator extends BaseGenerator {
   }
 
   async prepareQuestions () {
+    await this.populateFromExistingConfig()
+
     // typescript
     this.questions.push({
       type: 'list',
@@ -143,6 +182,10 @@ class RuntimeGenerator extends BaseGenerator {
       default: false,
       choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
     })
+
+    if (this.existingConfig) {
+      return
+    }
 
     // port
     this.questions.push({
