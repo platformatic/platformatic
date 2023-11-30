@@ -26,7 +26,8 @@ describe('Generator', () => {
     rg.setEntryPoint('first-service')
 
     rg.setConfig({
-      port: 3043
+      port: 3043,
+      logLevel: 'debug'
     })
 
     const output = await rg.prepare()
@@ -35,7 +36,7 @@ describe('Generator', () => {
       targetDirectory: '/tmp/runtime',
       env: {
         PLT_SERVER_HOSTNAME: '0.0.0.0',
-        PLT_SERVER_LOGGER_LEVEL: 'info',
+        PLT_SERVER_LOGGER_LEVEL: 'debug',
         PORT: 3043
       }
     })
@@ -222,5 +223,37 @@ describe('Generator', () => {
       // services have correct target directory
       assert.equal(thirdService.targetDirectory, join(rg.targetDirectory, 'services', thirdService.config.serviceName))
     }
+  })
+
+  test('should create a runtime with 2 services with typescript enabled', async () => {
+    const rg = new RuntimeGenerator({
+      targetDirectory: '/tmp/runtime',
+      type: 'runtime'
+    })
+
+    // adding one service
+    const firstService = new ServiceGenerator()
+    rg.addService(firstService, 'first-service')
+
+    // adding another service
+    const secondService = new ServiceGenerator()
+    rg.addService(secondService, 'second-service')
+
+    rg.setEntryPoint('first-service')
+
+    rg.setConfig({
+      port: 3043,
+      typescript: true
+    })
+
+    await rg.prepare()
+
+    // should list only runtime files
+    const runtimeFileList = rg.listFiles()
+    assert.deepEqual(runtimeFileList, ['package.json', 'platformatic.json', '.env', '.env.sample', 'tsconfig.json', '.gitignore', 'README.md'])
+
+    // services have correct typescript value in config
+    assert.equal(firstService.config.typescript, rg.config.typescript)
+    assert.equal(secondService.config.typescript, rg.config.typescript)
   })
 })

@@ -15,7 +15,8 @@ type KeyValue = {
   [key: string]: string
 }
 
-type RuntimeGeneratorOptions = {
+type RuntimeGeneratorOptions =  BaseGeneratorOptions & {
+  logLevel: string
 }
 
 class RuntimeGenerator extends BaseGenerator {

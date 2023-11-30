@@ -67,11 +67,11 @@ class RuntimeGenerator extends BaseGenerator {
 
   async _beforePrepare () {
     this.setServicesDirectory()
-
+    this.setServicesConfigValues()
     this.config.env = {
       PLT_SERVER_HOSTNAME: '0.0.0.0',
       PORT: this.config.port || 3042,
-      PLT_SERVER_LOGGER_LEVEL: 'info',
+      PLT_SERVER_LOGGER_LEVEL: this.config.logLevel || 'info',
       ...this.config.env
     }
   }
@@ -89,7 +89,6 @@ class RuntimeGenerator extends BaseGenerator {
       })
       await configManager.parse()
       this.existingConfig = configManager.current
-      this.setServicesDirectory()
       this.config.env = configManager.env
       this.config.port = configManager.env.PORT
       this.entryPoint = configManager.current.services.find((svc) => svc.entrypoint)
@@ -99,6 +98,8 @@ class RuntimeGenerator extends BaseGenerator {
   async prepare () {
     await this.populateFromExistingConfig()
     if (this.existingConfig) {
+      this.setServicesDirectory()
+      this.setServicesConfigValues()
       await this._afterPrepare()
       return {
         env: this.config.env,
@@ -107,6 +108,16 @@ class RuntimeGenerator extends BaseGenerator {
     } else {
       return await super.prepare()
     }
+  }
+
+  setServicesConfigValues () {
+    this.services.forEach(({ service }) => {
+      if (!service.config) {
+        // set default config
+        service.setConfig()
+      }
+      service.config.typescript = this.config.typescript
+    })
   }
 
   async _getConfigFileContents () {
