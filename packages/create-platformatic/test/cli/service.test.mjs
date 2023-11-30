@@ -20,20 +20,14 @@ test.afterEach(async () => {
   }
 })
 
-test('Creates a Platformatic Service with no typescript', { timeout, only: true }, async () => {
+test('Creates a Platformatic Service with no typescript', { timeout }, async () => {
   // The actions must match IN ORDER
   const actions = [{
+    match: 'Which kind of project do you want to create?',
+    do: [keys.DOWN, keys.ENTER] // Service
+  }, {
     match: 'Where would you like to create your project?',
     do: [keys.ENTER]
-  }, {
-    match: 'Which kind of project do you want to create?',
-    do: [keys.ENTER] // Service
-  }, {
-    match: 'What is the name of the service?',
-    do: [keys.ENTER]
-  }, {
-    match: 'Do you want to create another service?',
-    do: [keys.DOWN, keys.ENTER] // no
   }, {
     // NOTE THAT HERE THE DEFAULT OPTION FOR SERVICE IS "YES"
     match: 'Do you want to use TypeScript',
@@ -41,6 +35,12 @@ test('Creates a Platformatic Service with no typescript', { timeout, only: true 
   }, {
     match: 'What port do you want to use?',
     do: [keys.ENTER]
+  }, {
+    match: 'Do you want to create the github action to deploy',
+    do: [keys.DOWN, keys.ENTER]
+  }, {
+    match: 'Do you want to enable PR Previews in your application',
+    do: [keys.DOWN, keys.ENTER]
   }, {
     match: 'Do you want to init the git repository',
     do: [keys.DOWN, keys.ENTER] // yes

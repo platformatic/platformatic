@@ -101,6 +101,8 @@ jobs:
         git config --global user.email 'info@platformatic.dev'
     - name: Run test suite
       run: cd packages/create-platformatic && pnpm test
+    - name: Run test suite
+      run: cd packages/create-platformatic-auto && pnpm test
 
   ci-cli:
     needs: setup-node_modules
