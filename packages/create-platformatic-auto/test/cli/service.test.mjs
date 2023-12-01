@@ -24,7 +24,8 @@ test('Creates a Platformatic Service with no typescript', { timeout }, async () 
   // The actions must match IN ORDER
   const actions = [{
     match: 'Where would you like to create your project?',
-    do: [keys.ENTER]
+    do: [keys.ENTER],
+    waitAfter: 5000
   }, {
     match: 'Which kind of project do you want to create?',
     do: [keys.ENTER] // Service
@@ -71,7 +72,8 @@ test('Creates a Platformatic Service with typescript', { timeout }, async () => 
   // The actions must match IN ORDER
   const actions = [{
     match: 'Where would you like to create your project?',
-    do: [keys.ENTER]
+    do: [keys.ENTER],
+    waitAfter: 5000
   }, {
     match: 'Which kind of project do you want to create?',
     do: [keys.ENTER] // Service
@@ -140,7 +142,8 @@ test('Creates a Platformatic Service in a non empty directory', { timeout, skip:
   // The actions must match IN ORDER
   const actions = [{
     match: 'Where would you like to create your project?',
-    do: [targetDirectory, keys.ENTER]
+    do: [targetDirectory, keys.ENTER],
+    waitAfter: 5000
   }, {
     match: 'Confirm you want to use',
     do: [keys.ENTER] // confirm use existing directory
