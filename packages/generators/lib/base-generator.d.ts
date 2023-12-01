@@ -3,7 +3,7 @@ import { FileGenerator } from './file-generator'
 import { PackageConfiguration } from './utils'
 export namespace BaseGenerator {
   export type BaseGeneratorOptions = FileGenerator.FileGeneratorOptions & {
-    type?: 'service' | 'db' | 'composer'
+    module: string
     inquirer?: object
   }
   
@@ -109,5 +109,7 @@ export namespace BaseGenerator {
     _getConfigFileContents(): Promise<JSONValue>
     _generateEnv(): Promise<void>
     appendConfigEnv(): Promise<void>
+
+    postInstallActions(): Promise<void>
   }
 }

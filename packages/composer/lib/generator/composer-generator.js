@@ -1,11 +1,15 @@
 'use strict'
 
 const { BaseGenerator, addPrefixToEnv } = require('@platformatic/generators')
+const { join } = require('node:path')
+const { readFile } = require('node:fs/promises')
 
 class ComposerGenerator extends BaseGenerator {
   constructor (opts) {
-    super(opts)
-    this.type = 'composer'
+    super({
+      ...opts,
+      module: '@platformatic/composer'
+    })
     this.runtime = null
   }
 
@@ -31,7 +35,7 @@ class ComposerGenerator extends BaseGenerator {
     }
     if (this.runtime !== null) {
       template.composer.services = this.runtime.services
-        .filter(serviceMeta => serviceMeta.service.type !== 'composer')
+        .filter(serviceMeta => serviceMeta.service.module !== '@platformatic/composer')
         .map((serviceMeta) => {
           return {
             id: serviceMeta.name,
@@ -91,6 +95,8 @@ class ComposerGenerator extends BaseGenerator {
       }
       this.config.env = addPrefixToEnv(this.config.env, this.config.envPrefix)
     }
+
+    this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
   }
 
   setRuntime (runtime) {

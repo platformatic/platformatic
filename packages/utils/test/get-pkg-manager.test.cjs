@@ -1,6 +1,6 @@
-import { test } from 'node:test'
-import { equal } from 'node:assert'
-import { getPkgManager } from '../../src/get-pkg-manager.mjs'
+const { test } = require('node:test')
+const { equal } = require('node:assert')
+const { getPkgManager } = require('..')
 
 test.beforeEach(() => {
   delete process.env.npm_config_user_agent

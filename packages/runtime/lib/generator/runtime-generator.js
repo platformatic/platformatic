@@ -1,12 +1,18 @@
-'use strict'
 const { BaseGenerator } = require('@platformatic/generators')
 const { NoEntryPointError, NoServiceNamedError } = require('./errors')
 const generateName = require('boring-name-generator')
 const { join } = require('node:path')
 const { envObjectToString } = require('@platformatic/generators/lib/utils')
+const { readFile } = require('node:fs/promises')
+const { ConfigManager } = require('@platformatic/config')
+const { platformaticRuntime } = require('../config')
+
 class RuntimeGenerator extends BaseGenerator {
   constructor (opts) {
-    super(opts)
+    super({
+      ...opts,
+      module: '@platformatic/runtime'
+    })
     this.services = []
     this.entryPoint = null
   }
@@ -42,7 +48,7 @@ class RuntimeGenerator extends BaseGenerator {
   }
 
   async generatePackageJson () {
-    return {
+    const template = {
       scripts: {
         start: 'platformatic start',
         test: 'node --test test/*/*.test.js'
@@ -57,6 +63,13 @@ class RuntimeGenerator extends BaseGenerator {
         node: '^18.8.0 || >=20.6.0'
       }
     }
+    if (this.config.typescript) {
+      const typescriptVersion = JSON.parse(await readFile(join(__dirname, '..', '..', 'package.json'), 'utf-8')).devDependencies.typescript
+      template.scripts.clean = 'rm -fr ./dist'
+      template.scripts.build = 'platformatic compile'
+      template.devDependencies.typescript = typescriptVersion
+    }
+    return template
   }
 
   async _beforePrepare () {
@@ -67,6 +80,40 @@ class RuntimeGenerator extends BaseGenerator {
       PORT: this.config.port || 3042,
       PLT_SERVER_LOGGER_LEVEL: this.config.logLevel || 'info',
       ...this.config.env
+    }
+  }
+
+  async populateFromExistingConfig () {
+    if (this._hasCheckedForExistingConfig) {
+      return
+    }
+    this._hasCheckedForExistingConfig = true
+    const existingConfigFile = await ConfigManager.findConfigFile(this.targetDirectory, 'runtime')
+    if (existingConfigFile) {
+      const configManager = new ConfigManager({
+        ...platformaticRuntime.configManagerConfig,
+        source: join(this.targetDirectory, existingConfigFile)
+      })
+      await configManager.parse()
+      this.existingConfig = configManager.current
+      this.config.env = configManager.env
+      this.config.port = configManager.env.PORT
+      this.entryPoint = configManager.current.services.find((svc) => svc.entrypoint)
+    }
+  }
+
+  async prepare () {
+    await this.populateFromExistingConfig()
+    if (this.existingConfig) {
+      this.setServicesDirectory()
+      this.setServicesConfigValues()
+      await this._afterPrepare()
+      return {
+        env: this.config.env,
+        targetDirectory: this.targetDirectory
+      }
+    } else {
+      return await super.prepare()
     }
   }
 
@@ -119,6 +166,16 @@ class RuntimeGenerator extends BaseGenerator {
       contents: envObjectToString(this.config.env)
     })
 
+    this.addFile({
+      path: '',
+      file: '.env.sample',
+      contents: envObjectToString(this.config.env)
+    })
+
+    if (!this.existingConfig) {
+      this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
+    }
+
     return {
       targetDirectory: this.targetDirectory,
       env: servicesEnv
@@ -130,6 +187,31 @@ class RuntimeGenerator extends BaseGenerator {
     for (const { service } of this.services) {
       await service.writeFiles()
     }
+  }
+
+  async prepareQuestions () {
+    await this.populateFromExistingConfig()
+
+    // typescript
+    this.questions.push({
+      type: 'list',
+      name: 'typescript',
+      message: 'Do you want to use TypeScript?',
+      default: false,
+      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+    })
+
+    if (this.existingConfig) {
+      return
+    }
+
+    // port
+    this.questions.push({
+      type: 'input',
+      name: 'port',
+      default: 3042,
+      message: 'What port do you want to use?'
+    })
   }
 
   setServicesDirectory () {
@@ -155,6 +237,11 @@ class RuntimeGenerator extends BaseGenerator {
   async prepareServiceFiles () {
     let servicesEnv = {}
     for (const svc of this.services) {
+      // Propagate TypeScript
+      svc.service.setConfig({
+        ...svc.service.config,
+        typescript: this.config.typescript
+      })
       const svcEnv = await svc.service.prepare()
       servicesEnv = {
         ...servicesEnv,
@@ -175,6 +262,12 @@ class RuntimeGenerator extends BaseGenerator {
   getRuntimeEnv () {
     return {
       PORT: this.config.port
+    }
+  }
+
+  async postInstallActions () {
+    for (const { service } of this.services) {
+      await service.postInstallActions()
     }
   }
 }

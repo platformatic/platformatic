@@ -8,6 +8,7 @@ const createServerConfig = require('./lib/create-server-config')
 const isFileAccessible = require('./lib/is-file-accessible')
 const packages = require('./lib/packages')
 const errors = require('./lib/errors')
+const getPkgManager = require('./lib/get-pkg-manager')
 
 module.exports.FileWatcher = FileWatcher
 module.exports.findNearestString = findNearestString
@@ -20,4 +21,5 @@ module.exports.getDependencyVersion = packages.getDependencyVersion
 module.exports.getPlatformaticVersion = packages.getPlatformaticVersion
 module.exports.checkForDependencies = packages.checkForDependencies
 module.exports.getLatestNpmVersion = packages.getLatestNpmVersion
+module.exports.getPkgManager = getPkgManager
 module.exports.errors = errors

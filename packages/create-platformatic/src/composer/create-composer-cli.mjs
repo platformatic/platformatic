@@ -1,7 +1,7 @@
 import { getVersion, getDependencyVersion, safeMkdir } from '../utils.mjs'
 import { createPackageJson } from '../create-package-json.mjs'
 import { createGitignore } from '../create-gitignore.mjs'
-import { getPkgManager } from '../get-pkg-manager.mjs'
+import { getPkgManager } from '@platformatic/utils'
 import parseArgs from 'minimist'
 import inquirer from 'inquirer'
 import pino from 'pino'

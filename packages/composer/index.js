@@ -110,5 +110,6 @@ module.exports = {
   ConfigManager,
   platformaticComposer,
   buildServer: buildComposerServer,
-  errors
+  errors,
+  Generator: require('./lib/generator/composer-generator')
 }

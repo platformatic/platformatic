@@ -5,8 +5,8 @@ const { stripVersion, convertServiceNameToPrefix, addPrefixToEnv, extractEnvVari
 const { join } = require('node:path')
 const { FileGenerator } = require('./file-generator')
 const { generateTests, generatePlugins } = require('./create-plugin')
+const { PrepareError, MissingEnvVariable, ModuleNeeded } = require('./errors')
 const { generateGitignore } = require('./create-gitignore')
-const { NoQuestionsError, PrepareError, MissingEnvVariable } = require('./errors')
 const generateName = require('boring-name-generator')
 /* c8 ignore start */
 const fakeLogger = {
@@ -21,15 +21,18 @@ const fakeLogger = {
 class BaseGenerator extends FileGenerator {
   constructor (opts = {}) {
     super(opts)
-    this.type = opts.type
     this.files = []
     this.logger = opts.logger || fakeLogger
     this.questions = []
     this.pkgData = null
-    this.inquirer = null
+    this.inquirer = opts.inquirer || null
     this.targetDirectory = opts.targetDirectory || null
     this.config = this.getDefaultConfig()
     this.packages = []
+    this.module = opts.module
+    if (!this.module) {
+      throw ModuleNeeded()
+    }
   }
 
   getDefaultConfig () {
@@ -115,11 +118,13 @@ class BaseGenerator extends FileGenerator {
 
   /* c8 ignore start */
   async ask () {
-    if (!this.questions.length) {
-      throw new NoQuestionsError()
-    }
     if (this.inquirer) {
-      this.config = await this.inquirer.prompt(this.questions)
+      await this.prepareQuestions()
+      const newConfig = await this.inquirer.prompt(this.questions)
+      this.setConfig({
+        ...this.config,
+        ...newConfig
+      })
     }
   }
 
@@ -154,8 +159,6 @@ class BaseGenerator extends FileGenerator {
 
       await this.generateConfigFile()
 
-      await this.prepareQuestions()
-
       await this.generateEnv()
 
       if (this.config.typescript) {
@@ -172,12 +175,16 @@ class BaseGenerator extends FileGenerator {
         this.files.push(...generatePlugins(this.config.typescript))
         if (this.config.tests) {
           // create tests
-          this.files.push(...generateTests(this.config.typescript, this.type))
+          this.files.push(...generateTests(this.config.typescript, this.module))
         }
       }
+
       this.files.push(generateGitignore())
+
       await this._afterPrepare()
+
       this.checkEnvVariablesInConfigFile()
+
       return {
         targetDirectory: this.targetDirectory,
         env: this.config.env
@@ -187,12 +194,14 @@ class BaseGenerator extends FileGenerator {
         // throw the same error
         throw err
       }
-      throw new PrepareError(err.message)
+      const _err = new PrepareError(err.message)
+      _err.cause = err
+      throw _err
     }
   }
 
   checkEnvVariablesInConfigFile () {
-    const configFileName = this.getConfigFileName()
+    const configFileName = 'platformatic.json'
     const fileOjbect = this.getFileObject(configFileName)
     const envVars = extractEnvVariablesFromText(fileOjbect.contents)
     const envKeys = Object.keys(this.config.env)
@@ -231,113 +240,36 @@ class BaseGenerator extends FileGenerator {
   }
 
   async prepareQuestions () {
-    // directory
-    this.questions.push({
-      type: 'input',
-      name: 'targetDirectory',
-      message: 'Where would you like to create your project?'
-    })
-
-    // typescript
-    this.questions.push({
-      type: 'list',
-      name: 'typescript',
-      message: 'Do you want to use TypeScript?',
-      default: false,
-      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-    })
-
-    // init git repository
-    this.questions.push({
-      type: 'list',
-      name: 'initGitRepository',
-      message: 'Do you want to init the git repository?',
-      default: false,
-      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-    })
-
-    // port
-    this.questions.push({
-      type: 'input',
-      name: 'port',
-      message: 'What port do you want to use?'
-    })
-
-    // github actions
-    this.questions.push({
-      type: 'list',
-      name: 'staticWorkspaceGitHubAction',
-      message: 'Do you want to create the github action to deploy this application to Platformatic Cloud?',
-      default: true,
-      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-    },
-    {
-      type: 'list',
-      name: 'dynamicWorkspaceGitHubAction',
-      message: 'Do you want to enable PR Previews in your application?',
-      default: true,
-      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
-    })
-  }
-
-  async addQuestion (question, where) {
-    if (where) {
-      if (where.before) {
-        const position = this.questions.reduce((acc, element, idx) => {
-          if (acc === null) {
-            if (element.name === where.before) {
-              acc = idx
-            }
-          }
-          return acc
-        }, null)
-
-        if (position) {
-          this.questions.splice(position, 0, question)
-        }
-      } else if (where.after) {
-        const position = this.questions.reduce((acc, element, idx) => {
-          if (acc === null) {
-            if (element.name === where.after) {
-              acc = idx + 1
-            }
-          }
-          return acc
-        }, null)
-
-        if (position) {
-          this.questions.splice(position, 0, question)
-        }
+    if (!this.config.isRuntimeContext) {
+      if (!this.config.targetDirectory) {
+        // directory
+        this.questions.push({
+          type: 'input',
+          name: 'targetDirectory',
+          message: 'Where would you like to create your project?'
+        })
       }
-    } else {
-      this.questions.push(question)
-    }
-  }
 
-  removeQuestion (variableName) {
-    const position = this.questions.reduce((acc, element, idx) => {
-      if (acc === null) {
-        if (element.name === variableName) {
-          acc = idx
-        }
-      }
-      return acc
-    }, null)
-    if (position) {
-      this.questions.splice(position, 1)
-    }
-  }
+      // typescript
+      this.questions.push({
+        type: 'list',
+        name: 'typescript',
+        message: 'Do you want to use TypeScript?',
+        default: false,
+        choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+      })
 
-  getConfigFileName () {
-    if (!this.type) {
-      return 'platformatic.json'
-    } else {
-      return `platformatic.${this.type}.json`
+      // port
+      this.questions.push({
+        type: 'input',
+        name: 'port',
+        message: 'What port do you want to use?'
+      })
     }
   }
 
   async generateConfigFile () {
-    const configFileName = this.getConfigFileName()
+    const configFileName = 'platformatic.json'
     const contents = await this._getConfigFileContents()
     this.addFile({
       path: '',
@@ -407,6 +339,13 @@ class BaseGenerator extends FileGenerator {
       })
       await this._generateEnv()
       this.appendConfigEnv()
+
+      const { contents } = this.getFileObject('.env')
+      this.addFile({
+        path: '',
+        file: '.env.sample',
+        contents
+      })
     }
   }
 
@@ -421,6 +360,8 @@ class BaseGenerator extends FileGenerator {
   }
 
   // implement in the subclass
+  /* c8 ignore next 1 */
+  async postInstallActions () {}
   async _beforePrepare () {}
   async _afterPrepare () {}
   async _getConfigFileContents () { return {} }

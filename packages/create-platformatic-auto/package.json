@@ -1,6 +1,6 @@
 {
-  "name": "create-platformatic",
-  "version": "1.13.1",
+  "name": "create-platformatic-auto",
+  "version": "1.12.1",
   "description": "Create platformatic-db interactive tool",
   "repository": {
     "type": "git",
@@ -10,16 +10,16 @@
     ".": "./create-platformatic.mjs"
   },
   "bin": {
-    "create-platformatic": "./create-platformatic.mjs"
+    "create-platformatic-auto": "./create-platformatic.mjs"
   },
   "scripts": {
-    "test:cli": "node --test ./test/cli",
+    "test:cli": "node --test-concurrency=1 --test ./test/cli",
     "test:unit": "standard | snazzy && cross-env NODE_OPTIONS=\"--loader=esmock --no-warnings\" c8 node --test ./test/unit",
     "test": "npm run test:unit && npm run test:cli",
     "lint": "standard | snazzy"
   },
   "license": "Apache-2.0",
-  "author": "Marco Piraccini <marco.piraccini@gmail.com>",
+  "author": "Matteo Collina <hello@matteocollina.com>",
   "dependencies": {
     "@platformatic/config": "workspace:*",
     "@platformatic/utils": "workspace:*",
@@ -48,6 +48,8 @@
   "devDependencies": {
     "@platformatic/db": "workspace:*",
     "@platformatic/service": "workspace:*",
+    "@platformatic/runtime": "workspace:*",
+    "@platformatic/composer": "workspace:*",
     "ajv": "^8.12.0",
     "c8": "^8.0.1",
     "cross-env": "^7.0.3",

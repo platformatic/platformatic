@@ -16,6 +16,7 @@ type KeyValue = {
 type RuntimeGeneratorOptions =  BaseGenerator.BaseGeneratorOptions & {
   logLevel: string
 }
+
 export namespace RuntimeGenerator {
   export class RuntimeGenerator extends BaseGenerator.BaseGenerator {
     services: Service[]
@@ -34,4 +35,3 @@ export namespace RuntimeGenerator {
     writeServicesFiles(): Promise<GeneratorMetadata>
   }
 }
-

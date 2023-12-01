@@ -1,4 +1,4 @@
-export const getPkgManager = () => {
+module.exports = () => {
   const userAgent = process.env.npm_config_user_agent
   if (!userAgent) {
     return 'npm'

@@ -3,10 +3,15 @@
 const { BaseGenerator, generateTests, addPrefixToEnv } = require('@platformatic/generators')
 const { jsHelperSqlite, jsHelperMySQL, jsHelperPostgres, moviesTestTS, moviesTestJS } = require('./code-templates')
 const { join } = require('node:path')
+const { pathToFileURL } = require('node:url')
+const { readFile } = require('node:fs/promises')
+
 class DBGenerator extends BaseGenerator {
   constructor (opts = {}) {
-    super(opts)
-    this.type = 'db'
+    super({
+      ...opts,
+      module: '@platformatic/db'
+    })
     this.connectionStrings = {
       postgres: 'postgres://postgres:postgres@127.0.0.1:5432/postgres',
       sqlite: 'sqlite://./db.sqlite',
@@ -111,6 +116,8 @@ class DBGenerator extends BaseGenerator {
       this.createMigrationFiles()
     }
 
+    this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
+
     if (this.config.plugin) {
       let jsHelper = { pre: '', config: '', post: '' }
       switch (this.config.database) {
@@ -127,7 +134,6 @@ class DBGenerator extends BaseGenerator {
           jsHelper = jsHelperMySQL(this.config.connectionString)
           break
       }
-      // await generatePlugins(logger, currentDir, typescript, 'db', jsHelper)
 
       if (this.config.createMigrations) {
         if (this.config.typescript) {
@@ -205,6 +211,76 @@ class DBGenerator extends BaseGenerator {
         configValue: 'connectionString'
       }
     ]
+  }
+
+  async prepareQuestions () {
+    await super.prepareQuestions()
+    if (!this.config.connectionString) {
+      const def = this.getConfigFieldsDefinitions().find((q) => q.var === 'DATABASE_URL')
+      this.questions.push({
+        type: 'input',
+        name: def.configValue,
+        message: def.label,
+        default: def.default
+      })
+    }
+
+    this.questions.push({
+      type: 'list',
+      name: 'createMigrations',
+      message: 'Do you want to create default migrations?',
+      default: true,
+      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+    })
+    this.questions.push({
+      type: 'list',
+      name: 'applyMigrations',
+      message: 'Do you want to apply migrations?',
+      default: true,
+      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }],
+      when: (answers) => {
+        return answers.createMigrations
+      }
+    })
+  }
+
+  async postInstallActions () {
+    if (this.config.applyMigrations) {
+      const migrate = (await import(pathToFileURL(join(__dirname, '..', 'migrate.mjs')))).execute
+      const cwd = process.cwd()
+      process.chdir(this.targetDirectory)
+      try {
+        this.logger.info('Applying migrations...')
+        await migrate({
+          logger: this.logger,
+          config: {
+            db: {
+              connectionString: this.config.connectionString
+            },
+            migrations: {
+              dir: this.config.migrations
+            }
+          }
+        })
+        this.logger.info('Generating types...')
+        const genTypes = (await import(pathToFileURL(join(__dirname, '..', 'gen-types.mjs')))).execute
+        await genTypes({
+          logger: this.logger,
+          config: {
+            db: {
+              connectionString: this.config.connectionString,
+              ignore: {
+                versions: true
+              }
+            }
+          }
+        })
+      } catch (err) {
+        this.logger.error({ err })
+      } finally {
+        process.chdir(cwd)
+      }
+    }
   }
 }
 

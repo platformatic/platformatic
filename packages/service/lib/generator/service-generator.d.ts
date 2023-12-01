@@ -6,6 +6,6 @@ interface KeyValue {
 
 export namespace ServiceGenerator {
   export class ServiceGenerator extends BaseGenerator.BaseGenerator {
-    constructor (opts?: BaseGenerator.BaseGeneratorOptions)
+    constructor (opts?: Omit<BaseGenerator.BaseGeneratorOptions, 'module'>)
   }
 }

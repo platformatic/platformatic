@@ -249,7 +249,13 @@ test('ConfigManager.listConfigFiles() lists possible configs by type', async (t)
     'platformatic.db.yaml',
     'platformatic.db.yml',
     'platformatic.db.toml',
-    'platformatic.db.tml'
+    'platformatic.db.tml',
+    'platformatic.json',
+    'platformatic.json5',
+    'platformatic.yaml',
+    'platformatic.yml',
+    'platformatic.toml',
+    'platformatic.tml'
   ])
   assert.deepEqual(ConfigManager.listConfigFiles('service'), [
     'platformatic.service.json',
@@ -257,7 +263,13 @@ test('ConfigManager.listConfigFiles() lists possible configs by type', async (t)
     'platformatic.service.yaml',
     'platformatic.service.yml',
     'platformatic.service.toml',
-    'platformatic.service.tml'
+    'platformatic.service.tml',
+    'platformatic.json',
+    'platformatic.json5',
+    'platformatic.yaml',
+    'platformatic.yml',
+    'platformatic.toml',
+    'platformatic.tml'
   ])
   assert.deepEqual(ConfigManager.listConfigFiles('runtime'), [
     'platformatic.runtime.json',
@@ -265,7 +277,13 @@ test('ConfigManager.listConfigFiles() lists possible configs by type', async (t)
     'platformatic.runtime.yaml',
     'platformatic.runtime.yml',
     'platformatic.runtime.toml',
-    'platformatic.runtime.tml'
+    'platformatic.runtime.tml',
+    'platformatic.json',
+    'platformatic.json5',
+    'platformatic.yaml',
+    'platformatic.yml',
+    'platformatic.toml',
+    'platformatic.tml'
   ])
 })
 
@@ -277,6 +295,12 @@ test('ConfigManager.listConfigFiles() lists all possible configs', async (t) => 
     'platformatic.service.yml',
     'platformatic.service.toml',
     'platformatic.service.tml',
+    'platformatic.json',
+    'platformatic.json5',
+    'platformatic.yaml',
+    'platformatic.yml',
+    'platformatic.toml',
+    'platformatic.tml',
     'platformatic.db.json',
     'platformatic.db.json5',
     'platformatic.db.yaml',

@@ -2,11 +2,15 @@
 
 const { BaseGenerator } = require('@platformatic/generators')
 const { getPackageConfigurationObject } = require('@platformatic/generators/lib/utils')
+const { readFile } = require('node:fs/promises')
+const { join } = require('node:path')
 
 class ServiceGenerator extends BaseGenerator {
   constructor (opts = {}) {
-    super(opts)
-    this.type = 'service'
+    super({
+      ...opts,
+      module: '@platformatic/service'
+    })
   }
 
   async _beforePrepare () {
@@ -64,6 +68,8 @@ declare module 'fastify' {
       // remove env variables since they are all for the config.server property
       this.config.env = {}
     }
+
+    this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
   }
 
   async _getConfigFileContents () {
