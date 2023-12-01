@@ -103,7 +103,9 @@ test('sleep', async () => {
   const start = Date.now()
   await sleep(100)
   const end = Date.now()
-  equal(end - start >= 100, true)
+  // We cannot assert the exact drift because timers
+  // are imprecise
+  equal(end - start >= 90, true)
 })
 
 test('getDependencyVersion', async () => {
