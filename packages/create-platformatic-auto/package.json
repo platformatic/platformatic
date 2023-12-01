@@ -13,8 +13,8 @@
     "create-platformatic-auto": "./create-platformatic.mjs"
   },
   "scripts": {
-    "test:cli": "node --test ./test/cli",
-    "test:unit": "standard | snazzy && cross-env NODE_OPTIONS=\"--loader=esmock --no-warnings\" c8 node --test-concurrency=1 --test ./test/unit",
+    "test:cli": "node --test-concurrency=1 --test ./test/cli",
+    "test:unit": "standard | snazzy && cross-env NODE_OPTIONS=\"--loader=esmock --no-warnings\" c8 node --test ./test/unit",
     "test": "npm run test:unit && npm run test:cli",
     "lint": "standard | snazzy"
   },
