@@ -255,5 +255,9 @@ describe('Generator', () => {
     // services have correct typescript value in config
     assert.equal(firstService.config.typescript, rg.config.typescript)
     assert.equal(secondService.config.typescript, rg.config.typescript)
+
+    // runtime package.json has typescript dependency
+    const packageJson = JSON.parse(rg.getFileObject('package.json').contents)
+    assert.ok(packageJson.devDependencies.typescript)
   })
 })

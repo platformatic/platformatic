@@ -48,7 +48,7 @@ class RuntimeGenerator extends BaseGenerator {
   }
 
   async generatePackageJson () {
-    return {
+    const template = {
       scripts: {
         start: 'platformatic start',
         test: 'node --test test/*/*.test.js'
@@ -63,6 +63,13 @@ class RuntimeGenerator extends BaseGenerator {
         node: '^18.8.0 || >=20.6.0'
       }
     }
+    if (this.config.typescript) {
+      const typescriptVersion = JSON.parse(await readFile(join(__dirname, '..', '..', 'package.json'), 'utf-8')).devDependencies.typescript
+      template.scripts.clean = 'rm -fr ./dist'
+      template.scripts.build = 'platformatic compile'
+      template.devDependencies.typescript = typescriptVersion
+    }
+    return template
   }
 
   async _beforePrepare () {
