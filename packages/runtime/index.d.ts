@@ -17,7 +17,7 @@ declare module '@platformatic/runtime' {
   export function loadConfig(minimistConfig: object, args: object, store: object, overrides: object, replaceEnv: boolean): void
   export function compile(argv: string[], logger: BaseLogger): void
   export function platformaticRuntime(): Promise<void>
-  export const Generator: RuntimeGenerator
+  export const Generator: RuntimeGenerator.RuntimeGenerator
 }
 
 /**
