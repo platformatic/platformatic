@@ -1,5 +1,5 @@
 {
-  "name": "create-platformatic-auto",
+  "name": "@platformatic/create-platformatic-auto",
   "version": "1.13.2",
   "description": "Create platformatic-db interactive tool",
   "repository": {
