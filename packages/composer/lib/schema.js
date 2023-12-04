@@ -21,6 +21,17 @@ const openApiService = {
   additionalProperties: false
 }
 
+const entityResolver = {
+  type: 'object',
+  properties: {
+    name: { type: 'string' },
+    argsAdapter: { typeof: 'function' },
+    partialResults: { typeof: 'function' }
+  },
+  required: ['name'],
+  additionalProperties: false
+}
+
 const graphqlService = {
   anyOf: [
     { type: 'boolean' },
@@ -37,18 +48,38 @@ const graphqlService = {
             '^.*$': {
               type: 'object',
               properties: {
-                referenceListResolverName: { type: 'string' },
-                keys: {
+                pkey: { type: 'string' },
+                resolver: entityResolver,
+                fkeys: {
                   type: 'array',
                   items: {
                     type: 'object',
                     properties: {
+                      type: { type: 'string' },
                       field: { type: 'string' },
-                      type: { type: 'string' }
-                    }
+                      as: { type: 'string' },
+                      pkey: { type: 'string' },
+                      subgraph: { type: 'string' },
+                      resolver: entityResolver
+                    },
+                    required: ['type']
                   }
                 },
-                argsAdapter: { typeof: 'function' }
+                many: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      type: { type: 'string' },
+                      fkey: { type: 'string' },
+                      as: { type: 'string' },
+                      pkey: { type: 'string' },
+                      subgraph: { type: 'string' },
+                      resolver: entityResolver
+                    },
+                    required: ['type', 'fkey', 'as', 'resolver']
+                  }
+                }
               }
             }
           }
@@ -64,8 +95,9 @@ const graphqlComposerOptions = {
   properties: {
     ...graphqlBase.properties,
     // TODO support subscriptions, subscriptions: { type: 'boolean', default: false },
-    // TODO update
-    defaultArgsAdapter: { typeof: 'function' }
+    onSubgraphError: { typeof: 'function' },
+    defaultArgsAdapter: { typeof: 'function' },
+    addEntitiesResolvers: { type: 'boolean', const: false }
   },
   additionalProperties: false
 }

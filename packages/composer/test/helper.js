@@ -423,6 +423,31 @@ function createLoggerSpy () {
   }
 }
 
+/**
+ * on timeout resolve
+ */
+function eventToPromise (fn, timeout = 60_000) {
+  return new Promise((resolve, reject) => {
+    let resolved
+    const t = setTimeout(() => {
+      if (!resolved) {
+        resolve()
+      }
+    }, timeout)
+    try {
+      fn(() => {
+        resolved = true
+        clearTimeout(t)
+        resolve()
+      })
+    } catch (err) {
+      resolved = true
+      clearTimeout(t)
+      reject(err)
+    }
+  })
+}
+
 module.exports = {
   createComposer,
   createOpenApiService,
@@ -430,5 +455,6 @@ module.exports = {
   createBasicService,
   testEntityRoutes,
   graphqlRequest,
-  createLoggerSpy
+  createLoggerSpy,
+  eventToPromise
 }

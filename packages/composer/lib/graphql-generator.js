@@ -18,7 +18,7 @@ async function composeGraphql (app, opts) {
     graphiql: opts.graphql?.graphiql
   }
   if (services.length > 0) {
-    const graphqlSupergraph = await fetchGraphqlSubgraphs(services, opts.graphql)
+    const graphqlSupergraph = await fetchGraphqlSubgraphs(services, opts.graphql, app)
     graphqlConfig.schema = graphqlSupergraph.sdl
     graphqlConfig.resolvers = graphqlSupergraph.resolvers
     graphqlConfig.subscription = false // TODO support subscriptions, will be !!opts.graphql.subscriptions
