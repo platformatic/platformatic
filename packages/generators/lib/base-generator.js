@@ -93,8 +93,10 @@ class BaseGenerator extends FileGenerator {
     if (!config) {
       this.config = this.getDefaultConfig()
     }
+    const oldConfig = this.config
     this.config = {
       ...this.getDefaultConfig(),
+      ...oldConfig,
       ...config
     }
 

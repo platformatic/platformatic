@@ -143,6 +143,33 @@ test('setConfig', async (t) => {
     envPrefix: '',
     tests: false
   })
+
+  // update only some fields
+  bg.setConfig({
+    hostname: '123.123.123.123',
+    port: 3000
+  })
+
+  bg.setConfig({
+    port: 1234
+  })
+
+  assert.deepEqual(bg.config, {
+    port: 1234,
+    hostname: '123.123.123.123',
+    plugin: false,
+    typescript: false,
+    initGitRepository: false,
+    staticWorkspaceGitHubActions: false,
+    dynamicWorkspaceGitHubActions: false,
+    env: {},
+    dependencies: {},
+    devDependencies: {},
+    isRuntimeContext: false,
+    serviceName: '',
+    envPrefix: '',
+    tests: false
+  })
 })
 
 test('should append env values', async (t) => {
