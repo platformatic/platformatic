@@ -14,7 +14,7 @@ function isSameGraphqlSchema (a, b) {
 function serviceToSubgraphConfig (service) {
   if (!service.graphql) { return }
   return {
-    name: service.graphql.name || service.origin,
+    name: service.graphql.name || service.id || service.origin,
     entities: service.graphql.entities,
     server: {
       host: service.graphql.host || service.origin,
@@ -24,9 +24,9 @@ function serviceToSubgraphConfig (service) {
   }
 }
 
-async function fetchGraphqlSubgraphs (services, options) {
+async function fetchGraphqlSubgraphs (services, options, app) {
   const subgraphs = services.map(serviceToSubgraphConfig).filter(s => !!s)
-  const composer = await compose({ ...toComposerOptions(options), subgraphs })
+  const composer = await compose({ ...toComposerOptions(options, app), subgraphs })
 
   return createSupergraph({
     sdl: composer.toSdl(),
@@ -51,11 +51,24 @@ async function fetchGraphqlSubgraphs (services, options) {
 //   }
 // }
 
-function toComposerOptions (options) {
+function toComposerOptions (options, app) {
   return {
+    // TODO logger: options?.logger
     defaultArgsAdapter: options?.defaultArgsAdapter,
-    subscriptions: false // subscriptions are not supported yet
+    addEntitiesResolvers: options?.addEntitiesResolvers,
+    onSubgraphError: (err) => {
+      app.log.error({ err }, 'graphql composer error on subgraph')
+
+      if (options?.onSubgraphError) {
+        try {
+          options.onSubgraphError(err)
+        } catch (err) {
+          app.log.error({ err }, 'running onSubgraphError')
+        }
+      }
+    },
     // TODO options?.subscriptions ? defaultSubscriptionsOptions : undefined
+    subscriptions: false // subscriptions are not supported yet
   }
 }
 

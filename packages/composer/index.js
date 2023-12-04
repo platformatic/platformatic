@@ -117,7 +117,7 @@ async function detectServicesUpdate ({ app, services, fetchOpenApiSchema, fetchG
   }
 
   if (!changed && graphqlServices.length > 0) {
-    const graphqlSupergraph = await fetchGraphqlSubgraphs(graphqlServices, app.graphqlComposerOptions)
+    const graphqlSupergraph = await fetchGraphqlSubgraphs(graphqlServices, app.graphqlComposerOptions, app)
     if (!isSameGraphqlSchema(graphqlSupergraph, app.graphqlSupergraph)) {
       changed = true
       app.graphqlSupergraph = graphqlSupergraph
@@ -151,8 +151,11 @@ async function watchServices (app, opts) {
     try {
       if (await detectServicesUpdate({ app, services: watching, fetchOpenApiSchema, fetchGraphqlSubgraphs })) {
         clearInterval(timer)
-        app.log.info('reloading server')
+        app.log.info('restarting server')
         try {
+          app.addOnRestartHook(async (app) => {
+            app.log.info('server restarted')
+          })
           await app.restart()
         /* c8 ignore next 8 */
         } catch (error) {
