@@ -804,6 +804,25 @@ test('validate response', async (t) => {
     id: 123,
     title: 'Harry Potter'
   })
+
+  // Validate bodies when getting full response
+  const fullResponseClient = await buildOpenAPIClient({
+    url: `${app.url}`,
+    path: join(tmpDir, 'openapi.json'),
+    validateResponse: true,
+    fullResponse: true
+  })
+
+  // invalid response format
+  const invalidFullResult = await fullResponseClient.getInvalid()
+  assert.deepEqual(invalidFullResult.body, {
+    statusCode: 500,
+    message: 'Invalid response format'
+  })
+
+  // valid response
+  const validFullResult = await fullResponseClient.getValid()
+  assert.deepEqual(validFullResult.body.message, 'This is a valid response')
 })
 
 test('build client with common parameters', async (t) => {
