@@ -4,7 +4,7 @@ const assert = require('assert/strict')
 const { test } = require('node:test')
 const { join } = require('node:path')
 
-const { createComposer } = require('./helper')
+const { createComposer, createGraphqlService } = require('./helper')
 
 test('should resolve openapi services to the origin', async (t) => {
   const composer = await createComposer(t,
@@ -39,21 +39,49 @@ test('should resolve openapi services to the origin', async (t) => {
 })
 
 test('should resolve graphql services', async (t) => {
+  const graphql1 = await createGraphqlService(t, {
+    schema: `
+    type Query {
+      add(x: Int, y: Int): Int
+    }`,
+    resolvers: {
+      Query: {
+        async add (_, { x, y }) {
+          return x + y
+        }
+      }
+    }
+  })
+  const graphql2 = await createGraphqlService(t, {
+    schema: `
+    type Query {
+      mul(x: Int, y: Int): Int
+    }`,
+    resolvers: {
+      Query: {
+        async mul (_, { x, y }) {
+          return x * y
+        }
+      }
+    }
+  })
+
+  const graphql1Host = await graphql1.listen()
+  const graphql2Host = await graphql2.listen()
+
   const composer = await createComposer(t,
     {
       composer: {
         services: [
           {
             id: 'graphql1',
-            graphql: {
-              file: join(__dirname, 'graphql', 'fixtures', 'hello.js')
-            }
+            origin: graphql1Host,
+            graphql: true
           },
           {
             id: 'graphql2',
-            graphql: {
-              file: join(__dirname, 'graphql', 'fixtures', 'dogs.js')
-            }
+            origin: graphql2Host,
+            graphql: true
           }
         ]
       }
@@ -67,15 +95,45 @@ test('should resolve graphql services', async (t) => {
 })
 
 test('should resolve different services', async (t) => {
+  const graphql1 = await createGraphqlService(t, {
+    schema: `
+    type Query {
+      add(x: Int, y: Int): Int
+    }`,
+    resolvers: {
+      Query: {
+        async add (_, { x, y }) {
+          return x + y
+        }
+      }
+    }
+  })
+
+  const graphql2 = await createGraphqlService(t, {
+    schema: `
+    type Query {
+      mul(x: Int, y: Int): Int
+    }`,
+    resolvers: {
+      Query: {
+        async mul (_, { x, y }) {
+          return x * y
+        }
+      }
+    }
+  })
+
+  const graphql1Host = await graphql1.listen()
+  const graphql2Host = await graphql2.listen()
+
   const composer = await createComposer(t,
     {
       composer: {
         services: [
           {
             id: 'graphql',
-            graphql: {
-              file: join(__dirname, 'graphql', 'fixtures', 'hello.js')
-            }
+            origin: graphql1Host,
+            graphql: true
           },
           {
             id: 'openapi',
@@ -91,7 +149,7 @@ test('should resolve different services', async (t) => {
               file: join(__dirname, 'openapi', 'fixtures', 'schemas', 'posts.json')
             },
             graphql: {
-              file: join(__dirname, 'graphql', 'fixtures', 'hello.js')
+              host: graphql2Host
             }
           },
           {
@@ -106,7 +164,7 @@ test('should resolve different services', async (t) => {
   assert.equal(services.length, 4)
 
   assert.equal(services[0].id, 'graphql')
-  assert.equal(services[0].origin, 'http://graphql.plt.local')
+  assert.equal(services[0].origin, graphql1Host)
   assert.ok(!services[0].openapi)
   assert.ok(services[0].graphql)
 

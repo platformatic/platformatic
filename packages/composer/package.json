@@ -31,10 +31,10 @@
     "glob": "^10.3.10",
     "json-schema-to-typescript": "^13.1.1",
     "openapi-schema-validator": "^12.1.3",
+    "single-user-cache": "^1.0.1",
     "snazzy": "^9.0.0",
     "split2": "^4.2.0",
     "standard": "^17.1.0",
-    "single-user-cache": "git+ssh://github.com/simone-sanfratello/single-user-cache.git#fix/response",
     "tsd": "^0.29.0"
   },
   "dependencies": {
@@ -46,7 +46,7 @@
     "@fastify/swagger-ui": "^1.9.3",
     "@platformatic/config": "workspace:*",
     "@platformatic/generators": "workspace:*",
-    "@platformatic/graphql-composer": "git+ssh://github.com/platformatic/graphql-composer",
+    "@platformatic/graphql-composer": "git+ssh://github.com/simone-sanfratello/graphql-composer#feat/composer-add-entities-resolvers",
     "@platformatic/service": "workspace:*",
     "@platformatic/swagger-ui-theme": "workspace:*",
     "@platformatic/telemetry": "workspace:*",

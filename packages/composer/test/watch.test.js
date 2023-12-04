@@ -8,7 +8,7 @@ const { request } = require('undici')
 
 const REFRESH_TIMEOUT = 500
 
-test('composer should restart if a service with openapi and graphql', async (t) => {
+test('composer should restart if a service with openapi and graphql updates', async (t) => {
   await t.test('change graphql', async (t) => {
     const schema1 = 'type Query {\n  rnd: Int\n}'
     const schema2 = 'type Query {\n  greetings: String\n}'

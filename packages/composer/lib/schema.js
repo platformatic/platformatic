@@ -63,6 +63,8 @@ const graphqlComposerOptions = {
   type: 'object',
   properties: {
     ...graphqlBase.properties,
+    // TODO support subscriptions, subscriptions: { type: 'boolean', default: false },
+    // TODO update
     defaultArgsAdapter: { typeof: 'function' }
   },
   additionalProperties: false

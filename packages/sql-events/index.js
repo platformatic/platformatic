@@ -88,7 +88,6 @@ function setupEmitter ({ log, mq, mapper, connectionString }) {
       }
 
       if (!data[primaryKey]) {
-        console.log('*************',data)
         throw new errors.PrimaryKeyIsNecessaryInsideData()
       }
 

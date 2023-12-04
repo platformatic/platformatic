@@ -358,8 +358,8 @@ importers:
         specifier: workspace:*
         version: link:../generators
       '@platformatic/graphql-composer':
-        specifier: git+ssh://github.com/platformatic/graphql-composer
-        version: github.com/platformatic/graphql-composer/b6e96a45e6735ff040672fe382ef78d9afec421e
+        specifier: git+ssh://github.com/simone-sanfratello/graphql-composer#feat/composer-add-entities-resolvers
+        version: github.com/simone-sanfratello/graphql-composer/7f185b5b02a0715e3dcac99b985a7117654642fe
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
@@ -449,8 +449,8 @@ importers:
         specifier: ^12.1.3
         version: 12.1.3
       single-user-cache:
-        specifier: git+ssh://github.com/simone-sanfratello/single-user-cache.git#fix/response
-        version: github.com/simone-sanfratello/single-user-cache/3113d173f86615ecbf2d04240bbcfce1bd9ba477
+        specifier: ^1.0.1
+        version: 1.0.1
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -459,7 +459,7 @@ importers:
         version: 4.2.0
       standard:
         specifier: ^17.1.0
-        version: 17.1.0(@typescript-eslint/parser@5.62.0)
+        version: 17.1.0
       tsd:
         specifier: ^0.29.0
         version: 0.29.0
@@ -4861,7 +4861,7 @@ packages:
       eslint-plugin-promise: ^6.0.0
     dependencies:
       eslint: 8.55.0
-      eslint-plugin-import: 2.29.0(@typescript-eslint/parser@5.62.0)(eslint@8.55.0)
+      eslint-plugin-import: 2.29.0(eslint@8.55.0)
       eslint-plugin-n: 15.7.0(eslint@8.55.0)
       eslint-plugin-promise: 6.1.1(eslint@8.55.0)
     dev: true
@@ -4919,6 +4919,34 @@ packages:
       - supports-color
     dev: true
 
+  /eslint-module-utils@2.8.0(eslint-import-resolver-node@0.3.9)(eslint@8.55.0):
+    resolution: {integrity: sha512-aWajIYfsqCKRDgUfjEXNN/JlrzauMuSEy5sbd7WXbtW3EH6A6MpwEh42c7qD+MqQo9QMJ6fWLAeIJynx0g6OAw==}
+    engines: {node: '>=4'}
+    peerDependencies:
+      '@typescript-eslint/parser': '*'
+      eslint: '*'
+      eslint-import-resolver-node: '*'
+      eslint-import-resolver-typescript: '*'
+      eslint-import-resolver-webpack: '*'
+    peerDependenciesMeta:
+      '@typescript-eslint/parser':
+        optional: true
+      eslint:
+        optional: true
+      eslint-import-resolver-node:
+        optional: true
+      eslint-import-resolver-typescript:
+        optional: true
+      eslint-import-resolver-webpack:
+        optional: true
+    dependencies:
+      debug: 3.2.7
+      eslint: 8.55.0
+      eslint-import-resolver-node: 0.3.9
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
   /eslint-plugin-es@4.1.0(eslint@8.55.0):
     resolution: {integrity: sha512-GILhQTnjYE2WorX5Jyi5i4dz5ALWxBIdQECVQavL6s7cI76IZTDWleTHkxz/QT3kvcs2QlGHvKLYsSlPOlPXnQ==}
     engines: {node: '>=8.10.0'}
@@ -4950,6 +4978,40 @@ packages:
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
       eslint-module-utils: 2.8.0(@typescript-eslint/parser@5.62.0)(eslint-import-resolver-node@0.3.9)(eslint@8.55.0)
+      hasown: 2.0.0
+      is-core-module: 2.13.1
+      is-glob: 4.0.3
+      minimatch: 3.1.2
+      object.fromentries: 2.0.7
+      object.groupby: 1.0.1
+      object.values: 1.1.7
+      semver: 6.3.1
+      tsconfig-paths: 3.14.2
+    transitivePeerDependencies:
+      - eslint-import-resolver-typescript
+      - eslint-import-resolver-webpack
+      - supports-color
+    dev: true
+
+  /eslint-plugin-import@2.29.0(eslint@8.55.0):
+    resolution: {integrity: sha512-QPOO5NO6Odv5lpoTkddtutccQjysJuFxoPS7fAHO+9m9udNHvTCPSAMW9zGAYj8lAIdr40I8yPCdUYrncXtrwg==}
+    engines: {node: '>=4'}
+    peerDependencies:
+      '@typescript-eslint/parser': '*'
+      eslint: ^2 || ^3 || ^4 || ^5 || ^6 || ^7.2.0 || ^8
+    peerDependenciesMeta:
+      '@typescript-eslint/parser':
+        optional: true
+    dependencies:
+      array-includes: 3.1.7
+      array.prototype.findlastindex: 1.2.3
+      array.prototype.flat: 1.3.2
+      array.prototype.flatmap: 1.3.2
+      debug: 3.2.7
+      doctrine: 2.1.0
+      eslint: 8.55.0
+      eslint-import-resolver-node: 0.3.9
+      eslint-module-utils: 2.8.0(eslint-import-resolver-node@0.3.9)(eslint@8.55.0)
       hasown: 2.0.0
       is-core-module: 2.13.1
       is-glob: 4.0.3
@@ -8757,6 +8819,12 @@ packages:
     dependencies:
       safe-stable-stringify: 2.4.3
 
+  /single-user-cache@1.0.1:
+    resolution: {integrity: sha512-xFW/TuZUKoMZl47xqfC2jb7dO1XtJ5VgZxQliOKQWTueIH96CX6USaPiZcyDN0HFb4Ow+tsXpJZViRyIkl/rDA==}
+    dependencies:
+      safe-stable-stringify: 2.4.3
+    dev: true
+
   /slash@3.0.0:
     resolution: {integrity: sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==}
     engines: {node: '>=8'}
@@ -8925,6 +8993,27 @@ packages:
     hasBin: true
     dependencies:
       concat-stream: 2.0.0
+    dev: true
+
+  /standard@17.1.0:
+    resolution: {integrity: sha512-jaDqlNSzLtWYW4lvQmU0EnxWMUGQiwHasZl5ZEIwx3S/ijZDjZOzs1y1QqKwKs5vqnFpGtizo4NOYX2s0Voq/g==}
+    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    hasBin: true
+    dependencies:
+      eslint: 8.55.0
+      eslint-config-standard: 17.1.0(eslint-plugin-import@2.29.0)(eslint-plugin-n@15.7.0)(eslint-plugin-promise@6.1.1)(eslint@8.55.0)
+      eslint-config-standard-jsx: 11.0.0(eslint-plugin-react@7.33.2)(eslint@8.55.0)
+      eslint-plugin-import: 2.29.0(eslint@8.55.0)
+      eslint-plugin-n: 15.7.0(eslint@8.55.0)
+      eslint-plugin-promise: 6.1.1(eslint@8.55.0)
+      eslint-plugin-react: 7.33.2(eslint@8.55.0)
+      standard-engine: 15.1.0
+      version-guard: 1.1.1
+    transitivePeerDependencies:
+      - '@typescript-eslint/parser'
+      - eslint-import-resolver-typescript
+      - eslint-import-resolver-webpack
+      - supports-color
     dev: true
 
   /standard@17.1.0(@typescript-eslint/parser@5.62.0):
@@ -9950,23 +10039,18 @@ packages:
     resolution: {integrity: sha512-9bnSc/HEW2uRy67wc+T8UwauLuPJVn28jb+GtJY16iiKWyvmYJRXVT4UamsAEGQfPohgr2q4Tq0sQbQlxTfi1g==}
     engines: {node: '>=12.20'}
 
-  github.com/platformatic/graphql-composer/b6e96a45e6735ff040672fe382ef78d9afec421e:
-    resolution: {tarball: https://codeload.github.com/platformatic/graphql-composer/tar.gz/b6e96a45e6735ff040672fe382ef78d9afec421e}
+  github.com/simone-sanfratello/graphql-composer/7f185b5b02a0715e3dcac99b985a7117654642fe:
+    resolution: {tarball: https://codeload.github.com/simone-sanfratello/graphql-composer/tar.gz/7f185b5b02a0715e3dcac99b985a7117654642fe}
     name: '@platformatic/graphql-composer'
-    version: 0.3.0
+    version: 0.2.0
     dependencies:
       '@mercuriusjs/subscription-client': 1.0.0(graphql@16.8.1)
+      fastify: 4.24.3
       graphql: 16.8.1
+      mercurius: 13.3.1(graphql@16.8.1)
       undici: 5.28.2
     transitivePeerDependencies:
       - bufferutil
+      - supports-color
       - utf-8-validate
     dev: false
-
-  github.com/simone-sanfratello/single-user-cache/3113d173f86615ecbf2d04240bbcfce1bd9ba477:
-    resolution: {tarball: https://codeload.github.com/simone-sanfratello/single-user-cache/tar.gz/3113d173f86615ecbf2d04240bbcfce1bd9ba477}
-    name: single-user-cache
-    version: 1.0.0
-    dependencies:
-      safe-stable-stringify: 2.4.3
-    dev: true

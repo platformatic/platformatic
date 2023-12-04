@@ -54,7 +54,92 @@ const defaultArgsAdapter = (partialResults) => {
   return { where: { id: { in: partialResults.map(r => r?.id) } } }
 }
 
-test('should use a platformatic db service', {skip:true}, async t => {
+const entities = {
+  artists: {
+    Artist: {
+      resolver: { name: 'artists' },
+      pkey: 'id',
+      many: [
+        {
+          type: 'Movie',
+          as: 'movies',
+          pkey: 'id',
+          fkey: 'directorId',
+          subgraph: 'movies',
+          resolver: {
+            name: 'getMoviesByArtists',
+            argsAdapter: (artistIds) => {
+              return { ids: artistIds }
+            },
+            partialResults: (partialResults) => {
+              return partialResults.map(r => r.id)
+            }
+          }
+        },
+        {
+          type: 'Song',
+          as: 'songs',
+          pkey: 'id',
+          fkey: 'singerId',
+          subgraph: 'songs',
+          resolver: {
+            name: 'getSongsByArtists',
+            argsAdapter: (artistIds) => {
+              return { ids: artistIds }
+            },
+            partialResults: (partialResults) => {
+              return partialResults.map(r => r.id)
+            }
+          }
+        }
+      ]
+    }
+  },
+  movies: {
+    Movie: {
+      resolver: { name: 'movies' },
+      pkey: 'id',
+      fkeys: [{
+        type: 'Artist',
+        as: 'director',
+        field: 'directorId',
+        pkey: 'id',
+        resolver: {
+          name: 'getArtistsByMovies',
+          argsAdapter: (partialResults) => {
+            return { ids: partialResults.map(r => r.id) }
+          },
+          partialResults: (partialResults) => {
+            return partialResults.map(r => ({ id: r.directorId }))
+          }
+        }
+      }]
+    }
+  },
+  songs: {
+    Song: {
+      resolver: { name: 'songs' },
+      pkey: 'id',
+      fkeys: [{
+        type: 'Artist',
+        as: 'singer',
+        field: 'singerId',
+        pkey: 'id',
+        resolver: {
+          name: 'getArtistsBySongs',
+          argsAdapter: (partialResults) => {
+            return { ids: partialResults.map(r => r.id) }
+          },
+          partialResults: (partialResults) => {
+            return partialResults.map(r => ({ id: r.singerId }))
+          }
+        }
+      }]
+    }
+  }
+}
+
+test('should use queries and mutations on a single platformatic db service', { skip: true }, async t => {
   const requests = [
     {
       query: '{ movies (limit:1) { title, year }}',
@@ -85,7 +170,6 @@ test('should use a platformatic db service', {skip:true}, async t => {
   ]
 
   const services = await startServices(t, ['movies'])
-  console.log(services)
 
   const composerConfig = toComposerConfig(services)
   composerConfig.composer.graphql.defaultArgsAdapter = defaultArgsAdapter
@@ -105,7 +189,7 @@ test('should use a platformatic db service', {skip:true}, async t => {
   }
 })
 
-test('should use multiple platformatic db services', async t => {
+test('should use queries and mutations on multiple platformatic db services', async t => {
   const requests = [
     // query multiple services
     {
@@ -164,52 +248,17 @@ test('should use multiple platformatic db services', async t => {
       expected: { artists: [{ songs: [{ singer: { songs: [{ singer: { songs: [{ title: 'Every you every me' }, { title: 'The bitter end' }] } }, { singer: { songs: [{ title: 'Every you every me' }, { title: 'The bitter end' }] } }] } }, { singer: { songs: [{ singer: { songs: [{ title: 'Every you every me' }, { title: 'The bitter end' }] } }, { singer: { songs: [{ title: 'Every you every me' }, { title: 'The bitter end' }] } }] } }] }] }
     },
 
-    // mutation
+    // mutation: create
     {
-      query: 'mutation { saveMovie (input: { title: "A new movie" }) { title } }',
-      expected: { saveMovie: { title: 'A new movie' } }
+      query: 'mutation { saveMovie (input: { id: "a-new-movie", title: "A new movie" }) { id, title } }',
+      expected: { saveMovie: { id: 'a-new-movie', title: 'A new movie' } }
     },
     {
       query: 'mutation createMovie($movie: MovieInput!) { saveMovie(input: $movie) { title } }',
-      variables: { movie: { title: 'A wonderful movie' } },
+      variables: { movie: { id: 'a-wonderful-movie', title: 'A wonderful movie' } },
       expected: { saveMovie: { title: 'A wonderful movie' } }
     }
   ]
-
-  const entities = {
-    artists: {
-      Artist: {
-        referenceListResolverName: 'artists',
-        keys: [{ field: 'id' }]
-      }
-    },
-    movies: {
-      Movie: {
-        referenceListResolverName: 'movies',
-        keys: [{ field: 'id' }, { field: 'directorId', type: 'Artist' }]
-      },
-      Artist: {
-        referenceListResolverName: 'movieArtists',
-        argsAdapter: (partialResults) => {
-          return { ids: partialResults.map(r => r.id) }
-        },
-        keys: [{ field: 'id' }]
-      }
-    },
-    songs: {
-      Song: {
-        referenceListResolverName: 'songs',
-        keys: [{ field: 'id' }, { field: 'singerId', type: 'Artist' }]
-      },
-      Artist: {
-        referenceListResolverName: 'songArtists',
-        argsAdapter: (partialResults) => {
-          return { ids: partialResults.map(r => r.id) }
-        },
-        keys: [{ field: 'id' }]
-      }
-    }
-  }
 
   const services = await startServices(t, ['movies', 'songs', 'artists'])
 
@@ -225,10 +274,6 @@ test('should use multiple platformatic db services', async t => {
   for (const request of requests) {
     const response = await graphqlRequest({ query: request.query, variables: request.variables, host: composerHost })
 
-    console.log(JSON.stringify(response))
-
     assert.deepStrictEqual(response, request.expected, 'should get expected result from composer service for query\n' + request.query + '\nresponse' + JSON.stringify(response))
   }
 })
-
-// TODO subscriptions

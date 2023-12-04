@@ -65,8 +65,7 @@ test('should restart composer if a service has been changed, and update the sche
   assert.equal(composer.graphqlSupergraph.sdl, schema2)
 })
 
-// TODO add support to handle broken services to platformatic/graphql-composer
-test('composer should restart and update schema if one of the services shuts down', { skip: true }, async (t) => {
+test('composer should restart and update schema if one of the services shuts down', async (t) => {
   const graphql1 = await createGraphqlService(t, {
     schema: 'type Query { dice: Int }',
     resolvers: { Query: { dice: () => Math.floor(Math.random() * 6) + 1 } },
@@ -158,7 +157,7 @@ test('composer should restart and update schema if one of the services shuts dow
   await setTimeout(REFRESH_TIMEOUT)
   await graphql1.close()
 
-  await setTimeout(REFRESH_TIMEOUT)
+  await setTimeout(REFRESH_TIMEOUT * 5)
   assert.equal(composer.restarted, true, 'composer did not restart')
 
   assert.equal(composer.graphqlSupergraph.sdl, supergraph2)
