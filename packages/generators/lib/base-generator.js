@@ -143,7 +143,7 @@ class BaseGenerator extends FileGenerator {
     }
   }
 
-  async prepare () {
+  async prepare (configFileName) {
     try {
       this.reset()
       await this.getFastifyVersion()
@@ -159,7 +159,7 @@ class BaseGenerator extends FileGenerator {
         contents: JSON.stringify(template, null, 2)
       })
 
-      await this.generateConfigFile()
+      await this.generateConfigFile(configFileName)
 
       await this.generateEnv()
 
@@ -185,7 +185,7 @@ class BaseGenerator extends FileGenerator {
 
       await this._afterPrepare()
 
-      this.checkEnvVariablesInConfigFile()
+      this.checkEnvVariablesInConfigFile(configFileName)
 
       return {
         targetDirectory: this.targetDirectory,
@@ -202,8 +202,7 @@ class BaseGenerator extends FileGenerator {
     }
   }
 
-  checkEnvVariablesInConfigFile () {
-    const configFileName = 'platformatic.json'
+  checkEnvVariablesInConfigFile (configFileName = 'platformatic.json') {
     const fileOjbect = this.getFileObject(configFileName)
     const envVars = extractEnvVariablesFromText(fileOjbect.contents)
     const envKeys = Object.keys(this.config.env)
@@ -270,8 +269,7 @@ class BaseGenerator extends FileGenerator {
     }
   }
 
-  async generateConfigFile () {
-    const configFileName = 'platformatic.json'
+  async generateConfigFile (configFileName = 'platformatic.json') {
     const contents = await this._getConfigFileContents()
     this.addFile({
       path: '',

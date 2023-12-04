@@ -7,7 +7,7 @@ const { ComposerGenerator } = require('../lib/generator/composer-generator')
 describe('generator', () => {
   test('generate correct .env file', async (t) => {
     const svc = new ComposerGenerator()
-    await svc.prepare()
+    await svc.prepare('platformatic.composer.json')
     {
       const dotEnvFile = svc.getFileObject('.env')
       assert.equal(dotEnvFile.contents, 'PLT_SERVER_HOSTNAME=0.0.0.0\nPLT_SERVER_LOGGER_LEVEL=info\nPORT=3042\nPLT_EXAMPLE_ORIGIN=http://127.0.0.1:3043\n')
@@ -19,7 +19,7 @@ describe('generator', () => {
         plugin: true
       })
 
-      await svc.prepare()
+      await svc.prepare('platformatic.composer.json')
 
       const configFile = svc.getFileObject('platformatic.composer.json')
       const configFileJson = JSON.parse(configFile.contents)
@@ -29,7 +29,7 @@ describe('generator', () => {
 
   test('have @platformatic/composer dependency', async (t) => {
     const svc = new ComposerGenerator()
-    await svc.prepare()
+    await svc.prepare('platformatic.composer.json')
     const packageJsonFileObject = svc.getFileObject('package.json')
     const contents = JSON.parse(packageJsonFileObject.contents)
     assert.equal(contents.dependencies['@platformatic/composer'], contents.dependencies.platformatic)
@@ -41,7 +41,7 @@ describe('generator', () => {
       plugin: true,
       typescript: true
     })
-    await svc.prepare()
+    await svc.prepare('platformatic.composer.json')
     const platformaticConfigFile = svc.getFileObject('platformatic.composer.json')
     const contents = JSON.parse(platformaticConfigFile.contents)
     assert.equal(contents.$schema, `https://platformatic.dev/schemas/v${svc.platformaticVersion}/composer`)
@@ -85,7 +85,7 @@ describe('generator', () => {
         PLT_MY_SERVICE_BAZ: 'baz'
       })
 
-      await svc.prepare()
+      await svc.prepare('platformatic.composer.json')
 
       // no env file is generated
       assert.equal(null, svc.getFileObject('.env'))
@@ -101,7 +101,7 @@ describe('generator', () => {
         serviceName: 'my-service'
       })
 
-      await svc.prepare()
+      await svc.prepare('platformatic.composer.json')
 
       const configFile = svc.getFileObject('platformatic.composer.json')
       const configFileContents = JSON.parse(configFile.contents)
@@ -115,7 +115,7 @@ describe('generator', () => {
         serviceName: 'my-service'
       })
 
-      await svc.prepare()
+      await svc.prepare('platformatic.composer.json')
 
       const configFile = svc.getFileObject('platformatic.composer.json')
       const configFileContents = JSON.parse(configFile.contents)
