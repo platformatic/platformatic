@@ -2,12 +2,11 @@
 
 const assert = require('assert/strict')
 const { test } = require('node:test')
-const { serviceToSubgraphConfig } = require('../../lib/graphql-utils')
+const { serviceToSubgraphConfig } = require('../../lib/graphql-fetch')
 
 test('serviceToSubgraphConfig unit test', t => {
   const cases = [
     { label: 'empty service', service: {}, expected: undefined },
-    { label: 'service defined in file', service: { graphql: { file: '/to/file' } }, expected: undefined },
     {
       label: 'default graphql service',
       service: {
@@ -18,6 +17,8 @@ test('serviceToSubgraphConfig unit test', t => {
         }
       },
       expected: {
+        name: 'http://origin',
+        entities: undefined,
         server: {
           host: 'http://origin',
           composeEndpoint: '/introspection',

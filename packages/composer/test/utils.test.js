@@ -21,8 +21,6 @@ test('isFetchable unit test', t => {
   const cases = [
     { label: 'empty service', params: {}, expected: false },
     { label: 'openapi service from file', params: { openapi: { file: '/to/file' } }, expected: false },
-    { label: 'graphql service from file', params: { graphql: { file: 'to/file' } }, expected: false },
-    { label: 'openapi+graphql service both from file', params: { openapi: { file: '/to/file' }, graphql: { file: 'to/file' } }, expected: false },
     { label: 'openapi+graphql service, openapi has url', params: { openapi: { url: 'http://service/opeanapi' }, graphql: true }, expected: true },
     { label: 'openapi+graphql service with default', params: { graphql: true, openapi: true }, expected: true }
   ]

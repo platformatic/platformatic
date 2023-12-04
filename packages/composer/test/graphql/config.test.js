@@ -132,10 +132,12 @@ test('should throw an error on invalid config / entities', async t => {
               id: 'graphql1',
               graphql: {
                 entities: {
-                  any: {
-                    referenceListResolverName: ['theResolver'],
-                    keys: [{ field: -1, type: 1 }],
-                    argsAdapter: 'not-a-function'
+                  Dogs: {
+                    pkey: -1,
+                    resolver: {
+                      name: ['theResolver'],
+                      argsAdapter: 'not-a-function'
+                    }
                   }
                 }
               }

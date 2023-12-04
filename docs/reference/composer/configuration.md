@@ -71,12 +71,15 @@ the services managed by the composer. Each service object supports the following
 
 - **`openapi`** (`object`) - See the Platformatic Service [service](/docs/reference/service/configuration.md#service) openapi option for details.
 - **`graphql`** (`object`) - Has the Platformatic Service [service](/docs/reference/service/configuration.md#service) graphql options, plus
+  TODO
   - **`defaultArgsAdapter`** (`number`) - The default `argsAdapter` function for the entities, for example
   ```js
   graphql: {
     defaultArgsAdapter: (partialResults) => ({ where: { id: { in: partialResults.map(r => r.id) } } })
   }
   ```
+
+  TODO subscriptions are not supported
 
 - **`refreshTimeout`** (`number`) - The number of milliseconds to wait for check for changes in the service OpenAPI specification. If not specified, the default value is `1000`.
 
@@ -211,6 +214,7 @@ _Examples_
 - **`graphqlEndpoint`** (`string`) - The graphql endpoint path, the default value is the common `'/graphql'`.
 - **`composeEndpoint`** (`string`) - The endpoint to retrieve the introspection query from, default is `'/.well-known/graphql-composition'`. In case the endpoint is not available, a second call with introspection query will be sent to the `graphqlEndpoint`.
 - **`entities`** (`Object`) - Configuration object for working with entities in the service. Each key in this object is the name of an entity data type. This is required if the service contains any entities. The values are objects with the the following schema:
+  TODO
   - `referenceListResolverName` (`string`) - The name of the resolver used to retrieve a list of objects by their keys. Can be optional if the entity doesn't have a resolver because its keys are nested in another entity (see the [example](./examples/with-nested-keys.js)).
   - `argsAdapter (partialResults)` (`function`) - When resolving an entity across multiple services, an initial query is made to one service followed by one or more followup queries to other services. The initial query must return enough information to identify the corresponding data in the other services. This function is invoked with the result of the initial query. It should return an object to be used as argument for `referenceListResolverName` query.
   **Default:** if missing, the `defaultArgsAdapter` function will be used.
@@ -218,6 +222,7 @@ _Examples_
   ```js
   entities: {
     Book: {
+      TODO
       referenceListResolverName: 'books',
       keys: [{ field: 'id' }, { field: 'authorId', type: 'Author' }]
       argsAdapter: (partialResults) => ({ where: { id: { in: partialResults.map(r => r.id) } } })

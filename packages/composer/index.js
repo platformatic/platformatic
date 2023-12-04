@@ -6,25 +6,32 @@ const { platformaticService, buildServer } = require('@platformatic/service')
 
 const { schema } = require('./lib/schema')
 const serviceProxy = require('./lib/proxy')
-const openapi = require('./lib/openapi')
+const openapi = require('./lib/openapi.js')
 const graphql = require('./lib/graphql')
 const composerHook = require('./lib/composer-hook')
 const openapiGenerator = require('./lib/openapi-generator')
 const graphqlGenerator = require('./lib/graphql-generator')
 const { isSameGraphqlSchema, fetchGraphqlSubgraphs } = require('./lib/graphql-fetch')
-const errors = require('./lib/errors')
 const { isFetchable } = require('./lib/utils')
+const errors = require('./lib/errors')
 
 const EXPERIMENTAL_GRAPHQL_COMPOSER_FEATURE_MESSAGE = 'graphql composer is an experimental feature'
 
 async function platformaticComposer (app) {
   const configManager = app.platformatic.configManager
   const config = configManager.current
+  let hasGraphqlServices, hasOpenapiServices
 
   const { services } = configManager.current.composer
   for (const service of services) {
     if (!service.origin) {
       service.origin = `http://${service.id}.plt.local`
+    }
+    if (service.openapi && !hasOpenapiServices) {
+      hasOpenapiServices = true
+    }
+    if (service.graphql && !hasGraphqlServices) {
+      hasGraphqlServices = true
     }
   }
 
@@ -33,27 +40,22 @@ async function platformaticComposer (app) {
   app.register(composerHook)
   app.register(platformaticService, config)
   
-  async function toLoad (app) {
-    const hasOpenapiServices = services.some(s => !!s.openapi)
-    const hasGraphqlServices = services.some(s => !!s.graphql)
-
-    if (hasOpenapiServices) {
-      app.register(openapi, config.composer)
-    }
-    if (hasGraphqlServices) {
-      app.log.warn(EXPERIMENTAL_GRAPHQL_COMPOSER_FEATURE_MESSAGE)
-
-      app.register(graphql, config.composer)
-    }
-    app.register(serviceProxy, config.composer)
-    app.register(composerHook)
+  if (hasOpenapiServices) {
+    app.register(openapi, config.composer)
   }
+  if (hasGraphqlServices) {
+    app.log.warn(EXPERIMENTAL_GRAPHQL_COMPOSER_FEATURE_MESSAGE)
+    app.register(graphql, config.composer)
+  }
+  app.register(serviceProxy, config.composer)
+  app.register(composerHook)
 
-  toLoad[Symbol.for('skip-override')] = true
-  await platformaticService(app, config, [toLoad])
-
-  await app.register(openapiGenerator, config.composer)
-  await app.register(graphqlGenerator, config.composer)
+  if (hasOpenapiServices) {
+    await app.register(openapiGenerator, config.composer)
+  }
+  if (hasGraphqlServices) {
+    await app.register(graphqlGenerator, config.composer)
+  }
 
   if (!app.hasRoute({ url: '/', method: 'GET' })) {
     await app.register(require('./lib/root-endpoint'), config)
@@ -78,8 +80,10 @@ platformaticComposer.configManagerConfig = {
   transformConfig: platformaticService.configManagerConfig.transformConfig
 }
 
+// TODO review no need to be async
 async function buildComposerServer (options) {
-  return buildServer(options, platformaticComposer)
+// TODO ConfigManager is not been used, it's attached to platformaticComposer, can be removed
+  return buildServer(options, platformaticComposer, ConfigManager)
 }
 
 async function detectServicesUpdate ({ app, services, fetchOpenApiSchema, fetchGraphqlSubgraphs }) {
@@ -150,7 +154,7 @@ async function watchServices (app, opts) {
         app.log.info('reloading server')
         try {
           await app.restart()
-          /* c8 ignore next 8 */
+        /* c8 ignore next 8 */
         } catch (error) {
           app.log.error({
             err: {

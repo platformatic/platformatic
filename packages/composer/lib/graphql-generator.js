@@ -21,6 +21,7 @@ async function composeGraphql (app, opts) {
     const graphqlSupergraph = await fetchGraphqlSubgraphs(services, opts.graphql)
     graphqlConfig.schema = graphqlSupergraph.sdl
     graphqlConfig.resolvers = graphqlSupergraph.resolvers
+    graphqlConfig.subscription = false // TODO support subscriptions, will be !!opts.graphql.subscriptions
     app.graphqlSupergraph = graphqlSupergraph
   }
 
