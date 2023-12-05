@@ -79,7 +79,7 @@ the services managed by the composer. Each service object supports the following
   }
   ```
 
-  TODO subscriptions are not supported
+  GraphQL subscriptions are not supported in the composer yet.
 
 - **`refreshTimeout`** (`number`) - The number of milliseconds to wait for check for changes in the service OpenAPI specification. If not specified, the default value is `1000`.
 
