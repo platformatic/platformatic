@@ -1,5 +1,7 @@
 'use strict'
 
+const path = require('path')
+const fs = require('fs')
 const assert = require('node:assert/strict')
 const { request, setGlobalDispatcher, Agent } = require('undici')
 const fastify = require('fastify')
@@ -7,6 +9,7 @@ const Swagger = require('@fastify/swagger')
 const SwaggerUI = require('@fastify/swagger-ui')
 const mercurius = require('mercurius')
 const { getIntrospectionQuery } = require('graphql')
+const { buildServer: dbBuildServer } = require('@platformatic/db')
 
 const { buildServer } = require('..')
 
@@ -395,6 +398,28 @@ async function graphqlRequest ({ query, variables, url, host }) {
   return content.errors ? content.errors : content.data
 }
 
+async function createPlatformaticDbService (t, { name, jsonFile }) {
+  try { fs.unlinkSync(path.join(__dirname, 'graphql', 'fixtures', name, 'db0.sqlite')) } catch { }
+  try { fs.unlinkSync(path.join(__dirname, 'graphql', 'fixtures', name, 'db1.sqlite')) } catch { }
+
+  const service = await dbBuildServer(path.join(__dirname, 'graphql', 'fixtures', name, jsonFile))
+  service.get('/.well-known/graphql-composition', async function (req, reply) {
+    return reply.graphql(getIntrospectionQuery())
+  })
+  t.after(async () => {
+    try { await service.close() } catch { }
+  })
+
+  return service
+}
+
+async function startServices (t, names) {
+  return Promise.all(names.map(async ({ name, jsonFile }) => {
+    const service = await createPlatformaticDbService(t, { name, jsonFile })
+    return { name, host: await service.start() }
+  }))
+}
+
 function createLoggerSpy () {
   return {
     _trace: [],
@@ -455,6 +480,8 @@ module.exports = {
   createBasicService,
   testEntityRoutes,
   graphqlRequest,
+  createPlatformaticDbService,
+  startServices,
   createLoggerSpy,
   eventToPromise
 }

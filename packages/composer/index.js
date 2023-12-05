@@ -157,7 +157,6 @@ async function watchServices (app, opts) {
             app.log.info('server restarted')
           })
           await app.restart()
-        /* c8 ignore next 8 */
         } catch (error) {
           app.log.error({
             err: {

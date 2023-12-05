@@ -2,31 +2,7 @@
 
 const assert = require('node:assert/strict')
 const { test } = require('node:test')
-const path = require('path')
-const fs = require('fs')
-const { getIntrospectionQuery } = require('graphql')
-const { buildServer } = require('@platformatic/db')
-const { graphqlRequest, createComposer } = require('../helper')
-
-async function createPlatformaticDbService (t, { name }) {
-  try { fs.unlinkSync(path.join(__dirname, 'fixtures', name, 'db.sqlite')) } catch { }
-  const service = await buildServer(path.join(__dirname, 'fixtures', name, 'db.json'))
-  service.get('/.well-known/graphql-composition', async function (req, reply) {
-    return reply.graphql(getIntrospectionQuery())
-  })
-  t.after(async () => {
-    try { await service.close() } catch { }
-  })
-
-  return service
-}
-
-async function startServices (t, names) {
-  return Promise.all(names.map(async name => {
-    const service = await createPlatformaticDbService(t, { name })
-    return { name, host: await service.start() }
-  }))
-}
+const { graphqlRequest, createComposer, startServices } = require('../helper')
 
 function toComposerConfig (services, entities = {}) {
   return {
@@ -139,7 +115,7 @@ const entities = {
   }
 }
 
-test('should use queries and mutations on a single platformatic db service', { skip: true }, async t => {
+test('should use queries and mutations on a single platformatic db service', async t => {
   const requests = [
     {
       query: '{ movies (limit:1) { title, year }}',
@@ -156,20 +132,19 @@ test('should use queries and mutations on a single platformatic db service', { s
         orderBy: [{field: year, direction: DESC },{field: title, direction: ASC }],
       ) { title, year }}`,
       expected: { movies: [{ title: 'The Dark Knight Rises', year: 2012 }] }
+    },
+    {
+      query: 'mutation { saveMovie (input: { id: "a-new-movie", title: "A new movie" }) { id, title } }',
+      expected: { saveMovie: { id: 'a-new-movie', title: 'A new movie' } }
+    },
+    {
+      query: 'mutation createMovie($movie: MovieInput!) { saveMovie(input: $movie) { id, title } }',
+      variables: { movie: { id: 'a-wonderful-movie', title: 'A wonderful movie' } },
+      expected: { saveMovie: { id: 'a-wonderful-movie', title: 'A wonderful movie' } }
     }
-    // TODO fix https://github.com/platformatic/platformatic/issues/1805
-    // {
-    //   query: 'mutation { saveMovie (input: { title: "A new movie" }) { title } }',
-    //   expected: { saveMovie: { title: 'A new movie' } }
-    // },
-    // {
-    //   query: 'mutation createMovie($movie: MovieInput!) { saveMovie(input: $movie) { title } }',
-    //   variables: { movie: { title: 'A wonderful movie' } },
-    //   expected: {"saveMovie":{"title":"A wonderful movie"}}
-    // }
   ]
 
-  const services = await startServices(t, ['movies'])
+  const services = await startServices(t, [{ name: 'movies', jsonFile: 'with-entities.json' }])
 
   const composerConfig = toComposerConfig(services)
   composerConfig.composer.graphql.defaultArgsAdapter = defaultArgsAdapter
@@ -260,7 +235,7 @@ test('should use queries and mutations on multiple platformatic db services', as
     }
   ]
 
-  const services = await startServices(t, ['movies', 'songs', 'artists'])
+  const services = await startServices(t, [{ name: 'movies', jsonFile: 'with-entities.json' }, { name: 'songs', jsonFile: 'with-entities.json' }, { name: 'artists', jsonFile: 'bare-db.json' }])
 
   const composerConfig = toComposerConfig(services, entities)
 
