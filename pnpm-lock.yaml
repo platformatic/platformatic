@@ -358,8 +358,8 @@ importers:
         specifier: workspace:*
         version: link:../generators
       '@platformatic/graphql-composer':
-        specifier: git+ssh://github.com/simone-sanfratello/graphql-composer#feat/composer-add-entities-resolvers
-        version: github.com/simone-sanfratello/graphql-composer/7cac9fa0a201804c413f63ed95e1830fb4c562c8
+        specifier: ^0.4.0
+        version: 0.4.0
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
@@ -3056,6 +3056,20 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /@platformatic/graphql-composer@0.4.0:
+    resolution: {integrity: sha512-NT2NqgcYrd9lBDXaDMMvXJBlRPfYFKH8fHPaj8VD9uy9z+gHeTPXKQ0qhYT72fOzjPUOuz2MD/ANYWnfJqZv+A==}
+    dependencies:
+      '@mercuriusjs/subscription-client': 1.0.0(graphql@16.8.1)
+      fastify: 4.24.3
+      graphql: 16.8.1
+      mercurius: 13.3.1(graphql@16.8.1)
+      undici: 6.0.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+    dev: false
 
   /@playwright/test@1.40.1:
     resolution: {integrity: sha512-EaaawMTOeEItCRvfmkI9v6rBkF1svM8wjl/YPRrg2N2Wmp+4qJYkWtJsbew1szfKKDm6fPLy4YAanBhIlf9dWw==}
@@ -9961,19 +9975,3 @@ packages:
   /yocto-queue@1.0.0:
     resolution: {integrity: sha512-9bnSc/HEW2uRy67wc+T8UwauLuPJVn28jb+GtJY16iiKWyvmYJRXVT4UamsAEGQfPohgr2q4Tq0sQbQlxTfi1g==}
     engines: {node: '>=12.20'}
-
-  github.com/simone-sanfratello/graphql-composer/7cac9fa0a201804c413f63ed95e1830fb4c562c8:
-    resolution: {tarball: https://codeload.github.com/simone-sanfratello/graphql-composer/tar.gz/7cac9fa0a201804c413f63ed95e1830fb4c562c8}
-    name: '@platformatic/graphql-composer'
-    version: 0.2.0
-    dependencies:
-      '@mercuriusjs/subscription-client': 1.0.0(graphql@16.8.1)
-      fastify: 4.24.3
-      graphql: 16.8.1
-      mercurius: 13.3.1(graphql@16.8.1)
-      undici: 5.28.2
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-    dev: false
