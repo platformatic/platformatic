@@ -22,10 +22,10 @@ async function platformaticComposer (app) {
     }
   }
 
-  app.register(platformaticService, config)
   app.register(openapi, config.composer)
   app.register(serviceProxy, config.composer)
   app.register(composerHook)
+  app.register(platformaticService, config)
 
   await app.register(openapiGenerator, config.composer)
 

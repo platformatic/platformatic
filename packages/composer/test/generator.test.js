@@ -21,7 +21,7 @@ describe('generator', () => {
 
       await svc.prepare()
 
-      const configFile = svc.getFileObject('platformatic.composer.json')
+      const configFile = svc.getFileObject('platformatic.json')
       const configFileJson = JSON.parse(configFile.contents)
       assert.equal(configFileJson.plugins.typescript, true)
     }
@@ -42,7 +42,7 @@ describe('generator', () => {
       typescript: true
     })
     await svc.prepare()
-    const platformaticConfigFile = svc.getFileObject('platformatic.composer.json')
+    const platformaticConfigFile = svc.getFileObject('platformatic.json')
     const contents = JSON.parse(platformaticConfigFile.contents)
     assert.equal(contents.$schema, `https://platformatic.dev/schemas/v${svc.platformaticVersion}/composer`)
     assert.deepEqual(contents.composer, {
@@ -103,7 +103,7 @@ describe('generator', () => {
 
       await svc.prepare()
 
-      const configFile = svc.getFileObject('platformatic.composer.json')
+      const configFile = svc.getFileObject('platformatic.json')
       const configFileContents = JSON.parse(configFile.contents)
       assert.strictEqual(configFileContents.server, undefined)
     })
@@ -117,7 +117,7 @@ describe('generator', () => {
 
       await svc.prepare()
 
-      const configFile = svc.getFileObject('platformatic.composer.json')
+      const configFile = svc.getFileObject('platformatic.json')
       const configFileContents = JSON.parse(configFile.contents)
       assert.strictEqual(configFileContents.server, undefined)
     })
