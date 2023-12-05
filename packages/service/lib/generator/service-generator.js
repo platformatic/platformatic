@@ -78,7 +78,6 @@ declare module 'fastify' {
   }
 
   async _getConfigFileContents () {
-    const theService = this
     const { typescript, isRuntimeContext } = this.config
     const version = this.platformaticVersion
     const config = {

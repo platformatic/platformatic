@@ -117,7 +117,7 @@ describe('generator', () => {
             name: '@fastify/compress',
             options: {
               threshold: 1,
-              foobar: `{PLT_MY_SERVICE_FST_PLUGIN_STATIC_FOOBAR}`
+              foobar: '{PLT_MY_SERVICE_FST_PLUGIN_STATIC_FOOBAR}'
             }
           }
         ]
@@ -252,7 +252,7 @@ describe('generator', () => {
           BAZ: 'baz'
         }
       })
-      
+
       await svc.prepare()
 
       // no env file is generated
