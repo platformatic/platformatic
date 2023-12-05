@@ -29,11 +29,30 @@ function convertServiceNameToPrefix (serviceName) {
   return serviceName.replace(/-/g, '_').toUpperCase()
 }
 
+function addPrefixToString (input, prefix) {
+  if (!prefix) {
+    return input
+  }
+  const prefixRegExp = new RegExp(`^PLT_${prefix}_`)
+  if (!input.match(prefixRegExp)) {
+    // strip PLT_ if needed
+    input = input.replace(/^PLT_/, '')
+    return [`PLT_${prefix}_${input}`]
+  } else {
+    return input
+  }
+}
 function addPrefixToEnv (env, prefix) {
   const newEnv = {}
+  if (!prefix) {
+    // return original env
+    return env
+  }
   const prefixRegExp = new RegExp(`^PLT_${prefix}_`)
   Object.entries(env).forEach((kv) => {
     if (!kv[0].match(prefixRegExp)) {
+      // strip PLT_ if needed
+      kv[0] = kv[0].replace(/^PLT_/, '')
       newEnv[`PLT_${prefix}_${kv[0]}`] = kv[1]
     } else {
       newEnv[kv[0]] = kv[1]
@@ -59,27 +78,38 @@ function extractEnvVariablesFromText (text) {
   }
   return []
 }
-function getPackageConfigurationObject (config) {
-  const output = {}
-  let current = output
+function getPackageConfigurationObject (config, serviceName = '') {
+  const output = {
+    config: {},
+    env: {}
+  }
+  let current = output.config
   for (const param of config) {
     const props = param.path.split('.')
     props.forEach((prop, idx) => {
       if (idx === props.length - 1) {
+        let value
         switch (param.type) {
           case 'string' :
-            current[prop] = param.value.toString()
+            value = param.value.toString()
             break
           case 'number':
-            current[prop] = parseInt(param.value)
+            value = parseInt(param.value)
             break
           case 'boolean':
-            current[prop] = (param.value === 'true')
+            value = (param.value === 'true')
             break
           default:
             throw new WrongTypeError(param.type)
         }
-        current = output
+        if (!param.name) {
+          current[prop] = value
+        } else {
+          const key = addPrefixToString(param.name, convertServiceNameToPrefix(serviceName))
+          current[prop] = `{${key}}`
+          output.env[key] = value
+        }
+        current = output.config
       } else {
         if (!current[prop]) {
           current[prop] = {}
@@ -92,6 +122,7 @@ function getPackageConfigurationObject (config) {
 }
 module.exports = {
   addPrefixToEnv,
+  addPrefixToString,
   convertServiceNameToPrefix,
   getPackageConfigurationObject,
   envObjectToString,

@@ -2,7 +2,7 @@
 
 const { test, describe } = require('node:test')
 const assert = require('node:assert')
-const { stripVersion, convertServiceNameToPrefix, addPrefixToEnv, envObjectToString, extractEnvVariablesFromText, getPackageConfigurationObject } = require('../lib/utils')
+const { stripVersion, convertServiceNameToPrefix, addPrefixToEnv, envObjectToString, extractEnvVariablesFromText, getPackageConfigurationObject, addPrefixToString } = require('../lib/utils')
 
 describe('utils', () => {
   describe('stripVersion', async () => {
@@ -34,18 +34,38 @@ describe('utils', () => {
   })
 
   describe('addPrefixToEnv', () => {
-    test('Should convert env and add prefix, if neede', async (t) => {
-      const testEnv = {
-        FOO: 'bar',
-        PLT_MY_SERVICE_NAME: 'service',
-        DATABASE_URL: 'foobar'
-      }
+    test('Should convert env and add prefix, if needed', async (t) => {
+      {
+        const testEnv = {
+          FOO: 'bar',
+          PLT_MY_SERVICE_NAME: 'service',
+          DATABASE_URL: 'foobar',
+          PLT_ANOTHER_VALUE: 'anotherValue'
+        }
 
-      assert.deepEqual(addPrefixToEnv(testEnv, 'MY_SERVICE'), {
-        PLT_MY_SERVICE_FOO: 'bar',
-        PLT_MY_SERVICE_NAME: 'service',
-        PLT_MY_SERVICE_DATABASE_URL: 'foobar'
-      })
+        assert.deepEqual(addPrefixToEnv(testEnv, 'MY_SERVICE'), {
+          PLT_MY_SERVICE_FOO: 'bar',
+          PLT_MY_SERVICE_NAME: 'service',
+          PLT_MY_SERVICE_DATABASE_URL: 'foobar',
+          PLT_MY_SERVICE_ANOTHER_VALUE: 'anotherValue'
+        })
+      }
+      {
+        // empty service name, return same env
+        const testEnv = {
+          FOO: 'bar',
+          PLT_MY_SERVICE_NAME: 'service',
+          DATABASE_URL: 'foobar',
+          PLT_ANOTHER_VALUE: 'anotherValue'
+        }
+
+        assert.deepEqual(addPrefixToEnv(testEnv, ''), {
+          FOO: 'bar',
+          PLT_MY_SERVICE_NAME: 'service',
+          DATABASE_URL: 'foobar',
+          PLT_ANOTHER_VALUE: 'anotherValue'
+        })
+      }
     })
   })
 
@@ -104,6 +124,12 @@ describe('utils', () => {
         type: 'string'
       },
       {
+        path: 'foo.fooOption3',
+        value: 'value3',
+        type: 'string',
+        name: 'THE_FOO_OPTION_3'
+      },
+      {
         path: 'foobar',
         value: '123',
         type: 'number'
@@ -119,18 +145,23 @@ describe('utils', () => {
         type: 'boolean'
       }
     ]
-    const config = getPackageConfigurationObject(input)
-    assert.deepEqual(config, {
+    const output = getPackageConfigurationObject(input)
+    assert.deepEqual(output.config, {
       prefix: '/foo',
       foo: {
         fooOption1: 'value1',
-        fooOption2: 'value2'
+        fooOption2: 'value2',
+        fooOption3: '{THE_FOO_OPTION_3}'
       },
       foobar: 123,
       boolean: {
         truthy: true,
         falsey: false
       }
+    })
+
+    assert.deepEqual(output.env, {
+      THE_FOO_OPTION_3: 'value3'
     })
 
     // should throw
@@ -147,5 +178,13 @@ describe('utils', () => {
       assert.equal(err.code, 'PLT_GEN_WRONG_TYPE')
       assert.equal(err.message, 'Invalid value type. Accepted values are \'string\', \'number\' and \'boolean\', found \'object\'.')
     }
+  })
+
+  describe('addPrefixToString', () => {
+    test('should add prefix to string', async () => {
+      assert.equal(addPrefixToString('PLT_SERVICE_FOO', 'SERVICE'), 'PLT_SERVICE_FOO')
+      assert.equal(addPrefixToString('FOO', 'SERVICE'), 'PLT_SERVICE_FOO')
+      assert.equal(addPrefixToString('FOO', ''), 'FOO')
+    })
   })
 })
