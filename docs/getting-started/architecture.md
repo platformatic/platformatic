@@ -54,8 +54,6 @@ Platformatic Composer is an HTTP server that automatically aggregates multiple s
 
 The composer acts as a proxy for the underlying services, and automatically generates an OpenAPI definition that combines all the services' routes, acting as reverse proxy for the composed services. 
 
-TODO graphql
-
 ## Platformatic Runtime 
 
 Platformatic Runtime is an environment for running multiple Platformatic microservices as a single monolithic deployment unit.
