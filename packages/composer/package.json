@@ -46,7 +46,7 @@
     "@fastify/swagger-ui": "^1.9.3",
     "@platformatic/config": "workspace:*",
     "@platformatic/generators": "workspace:*",
-    "@platformatic/graphql-composer": "git+ssh://github.com/simone-sanfratello/graphql-composer#feat/composer-add-entities-resolvers",
+    "@platformatic/graphql-composer": "^0.4.0",
     "@platformatic/service": "workspace:*",
     "@platformatic/swagger-ui-theme": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
