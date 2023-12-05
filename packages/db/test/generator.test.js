@@ -7,7 +7,7 @@ const { DBGenerator, Generator } = require('../lib/generator/db-generator')
 describe('generator', () => {
   test('should export a Generator property', async () => {
     const svc = new Generator()
-    assert.equal(svc.type, 'db')
+    assert.equal(svc.module, '@platformatic/db')
   })
   test('should have default config', async () => {
     const dbApp = new DBGenerator()
@@ -20,7 +20,7 @@ describe('generator', () => {
       tests: false,
       typescript: false,
       initGitRepository: false,
-      dependencies: { '@platformatic/db': '^1.10.0' },
+      dependencies: { '@platformatic/db': `^${dbApp.platformaticVersion}` },
       devDependencies: {},
       staticWorkspaceGitHubActions: false,
       dynamicWorkspaceGitHubActions: false,
@@ -64,7 +64,7 @@ describe('generator', () => {
 
       await dbApp.prepare()
 
-      const configFile = dbApp.getFileObject('platformatic.db.json')
+      const configFile = dbApp.getFileObject('platformatic.json')
       const configFileJson = JSON.parse(configFile.contents)
       assert.equal(configFileJson.plugins.typescript, true)
     }
@@ -100,7 +100,7 @@ describe('generator', () => {
       types: true
     })
     await dbApp.prepare()
-    const platformaticConfigFile = dbApp.getFileObject('platformatic.db.json')
+    const platformaticConfigFile = dbApp.getFileObject('platformatic.json')
     const contents = JSON.parse(platformaticConfigFile.contents)
     assert.equal(contents.$schema, `https://platformatic.dev/schemas/v${dbApp.platformaticVersion}/db`)
     assert.deepEqual(contents.server, {
@@ -302,7 +302,7 @@ describe('generator', () => {
 
       await svc.prepare()
 
-      const configFile = svc.getFileObject('platformatic.db.json')
+      const configFile = svc.getFileObject('platformatic.json')
       const configFileContents = JSON.parse(configFile.contents)
       assert.strictEqual(undefined, configFileContents.server)
       assert.ok(configFile.contents.match(/"connectionString": "{PLT_MY_DB_DATABASE_URL}"/))

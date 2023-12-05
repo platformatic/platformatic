@@ -202,18 +202,15 @@ class DBGenerator extends BaseGenerator {
   }
 
   getConfigFieldsDefinitions () {
-    if (this.config.isRuntimeContext) {
-      return [
-        {
-          var: 'DATABASE_URL',
-          label: 'What is the connection string?',
-          default: this.connectionStrings.sqlite,
-          type: 'string',
-          configValue: 'connectionString'
-        }
-      ]
-    }
-    return []
+    return [
+      {
+        var: 'DATABASE_URL',
+        label: 'What is the connection string?',
+        default: this.connectionStrings.sqlite,
+        type: 'string',
+        configValue: 'connectionString'
+      }
+    ]
   }
 
   async prepareQuestions () {
