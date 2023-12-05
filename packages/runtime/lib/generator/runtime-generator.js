@@ -57,7 +57,8 @@ class RuntimeGenerator extends BaseGenerator {
         fastify: `^${this.fastifyVersion}`
       },
       dependencies: {
-        platformatic: `^${this.platformaticVersion}`
+        platformatic: `^${this.platformaticVersion}`,
+        ...this.config.dependencies
       },
       engines: {
         node: '^18.8.0 || >=20.6.0'
@@ -75,12 +76,24 @@ class RuntimeGenerator extends BaseGenerator {
   async _beforePrepare () {
     this.setServicesDirectory()
     this.setServicesConfigValues()
+    this.addServicesDependencies()
+
     this.config.env = {
       PLT_SERVER_HOSTNAME: '0.0.0.0',
       PORT: this.config.port || 3042,
       PLT_SERVER_LOGGER_LEVEL: this.config.logLevel || 'info',
       ...this.config.env
     }
+  }
+
+  addServicesDependencies () {
+    this.services.forEach(({ service }) => {
+      if (service.config.dependencies) {
+        Object.entries(service.config.dependencies).forEach((kv) => {
+          this.config.dependencies[kv[0]] = kv[1]
+        })
+      }
+    })
   }
 
   async populateFromExistingConfig () {

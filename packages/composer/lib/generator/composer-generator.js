@@ -78,12 +78,17 @@ class ComposerGenerator extends BaseGenerator {
       }
       template.plugins.packages = this.packages.map((packageDefinition) => {
         const packageConfigOutput = getPackageConfigurationObject(packageDefinition.options, this.config.serviceName)
-        if (packageConfigOutput.env) {
+        if (Object.keys(packageConfigOutput.env).length > 0) {
+          const envForPackages = {}
           Object.entries(packageConfigOutput.env).forEach((kv) => {
-            this.config.env[kv[0]] = kv[1]
+            envForPackages[kv[0]] = kv[1]
           })
+
           if (this.config.isRuntimeContext) {
-            this.config.env = addPrefixToEnv(this.config.env, this.config.envPrefix)
+            this.config.env = {
+              ...this.config.env,
+              ...addPrefixToEnv(envForPackages, this.config.envPrefix)
+            }
           }
         }
         return {
