@@ -1,6 +1,7 @@
 'use strict'
 
 const { BaseGenerator, generateTests, addPrefixToEnv } = require('@platformatic/generators')
+const { getPackageConfigurationObject } = require('@platformatic/generators/lib/utils')
 const { jsHelperSqlite, jsHelperMySQL, jsHelperPostgres, moviesTestTS, moviesTestJS } = require('./code-templates')
 const { join } = require('node:path')
 const { pathToFileURL } = require('node:url')
@@ -86,6 +87,30 @@ class DBGenerator extends BaseGenerator {
       config.plugins.typescript = true
     }
 
+    if (this.packages.length > 0) {
+      if (!config.plugins) {
+        config.plugins = {}
+      }
+      config.plugins.packages = this.packages.map((packageDefinition) => {
+        const packageConfigOutput = getPackageConfigurationObject(packageDefinition.options, this.config.serviceName)
+        if (Object.keys(packageConfigOutput.env).length > 0) {
+          const envForPackages = {}
+          Object.entries(packageConfigOutput.env).forEach((kv) => {
+            envForPackages[kv[0]] = kv[1]
+          })
+          if (this.config.isRuntimeContext) {
+            this.config.env = {
+              ...this.config.env,
+              ...addPrefixToEnv(envForPackages, this.config.envPrefix)
+            }
+          }
+        }
+        return {
+          name: packageDefinition.name,
+          options: packageConfigOutput.config
+        }
+      })
+    }
     return config
   }
 
@@ -202,18 +227,15 @@ class DBGenerator extends BaseGenerator {
   }
 
   getConfigFieldsDefinitions () {
-    if (this.config.isRuntimeContext) {
-      return [
-        {
-          var: 'DATABASE_URL',
-          label: 'What is the connection string?',
-          default: this.connectionStrings.sqlite,
-          type: 'string',
-          configValue: 'connectionString'
-        }
-      ]
-    }
-    return []
+    return [
+      {
+        var: 'DATABASE_URL',
+        label: 'What is the connection string?',
+        default: this.connectionStrings.sqlite,
+        type: 'string',
+        configValue: 'connectionString'
+      }
+    ]
   }
 
   async prepareQuestions () {

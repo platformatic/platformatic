@@ -359,6 +359,7 @@ class BaseGenerator extends FileGenerator {
 
   addPackage (pkg) {
     this.packages.push(pkg)
+    this.config.dependencies[pkg.name] = 'latest'
   }
 
   // implement in the subclass

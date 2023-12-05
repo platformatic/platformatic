@@ -2,9 +2,13 @@
 
 const assert = require('node:assert')
 const { describe, test } = require('node:test')
-const { ComposerGenerator } = require('../lib/generator/composer-generator')
+const { ComposerGenerator, Generator } = require('../lib/generator/composer-generator')
 
 describe('generator', () => {
+  test('should export a Generator property', async () => {
+    const svc = new Generator()
+    assert.equal(svc.module, '@platformatic/composer')
+  })
   test('generate correct .env file', async (t) => {
     const svc = new ComposerGenerator()
     await svc.prepare()
@@ -69,6 +73,95 @@ describe('generator', () => {
     })
   })
 
+  test('support packages', async (t) => {
+    {
+      const svc = new ComposerGenerator()
+      const packageDefinitions = [
+        {
+          name: '@fastify/compress',
+          options: [
+            {
+              path: 'threshold',
+              value: '1',
+              type: 'number'
+            },
+            {
+              path: 'foobar',
+              value: '123',
+              type: 'number',
+              name: 'FST_PLUGIN_STATIC_FOOBAR'
+            }
+          ]
+        }
+      ]
+      svc.setConfig({
+        isRuntimeContext: true,
+        serviceName: 'my-composer'
+      })
+      svc.addPackage(packageDefinitions[0])
+      await svc.prepare()
+
+      const platformaticConfigFile = svc.getFileObject('platformatic.json')
+      const contents = JSON.parse(platformaticConfigFile.contents)
+
+      assert.deepEqual(contents.plugins, {
+        packages: [
+          {
+            name: '@fastify/compress',
+            options: {
+              threshold: 1,
+              foobar: '{PLT_MY_COMPOSER_FST_PLUGIN_STATIC_FOOBAR}'
+            }
+          }
+        ]
+      })
+
+      assert.equal(svc.config.env.PLT_MY_COMPOSER_FST_PLUGIN_STATIC_FOOBAR, 123)
+    }
+    {
+      // with standard platformatic plugin
+      const svc = new ComposerGenerator()
+      svc.setConfig({
+        plugin: true
+      })
+      const packageDefinitions = [
+        {
+          name: '@fastify/compress',
+          options: [
+            {
+              path: 'threshold',
+              value: '1',
+              type: 'number'
+            }
+          ]
+        }
+      ]
+      svc.addPackage(packageDefinitions[0])
+      await svc.prepare()
+
+      const platformaticConfigFile = svc.getFileObject('platformatic.json')
+      const contents = JSON.parse(platformaticConfigFile.contents)
+
+      assert.deepEqual(contents.plugins, {
+        paths: [
+          {
+            encapsulate: false,
+            path: './plugins'
+          },
+          './routes'
+        ],
+        packages: [
+          {
+            name: '@fastify/compress',
+            options: {
+              threshold: 1
+            }
+          }
+        ]
+      })
+    }
+  })
+
   describe('runtime context', () => {
     test('should have env prefix', async (t) => {
       const svc = new ComposerGenerator()
@@ -90,6 +183,8 @@ describe('generator', () => {
       // no env file is generated
       assert.equal(null, svc.getFileObject('.env'))
       assert.deepEqual(svc.config.env, {
+        PLT_MY_SERVICE_FOO: 'bar',
+        PLT_MY_SERVICE_BAZ: 'baz',
         PLT_MY_SERVICE_EXAMPLE_ORIGIN: 'http://127.0.0.1:3043'
       })
     })

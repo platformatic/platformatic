@@ -1,6 +1,6 @@
 'use strict'
 
-const { BaseGenerator } = require('@platformatic/generators')
+const { BaseGenerator, addPrefixToEnv } = require('@platformatic/generators')
 const { getPackageConfigurationObject } = require('@platformatic/generators/lib/utils')
 const { readFile } = require('node:fs/promises')
 const { join } = require('node:path')
@@ -68,8 +68,10 @@ declare module 'fastify' {
 `
     this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
     if (this.config.isRuntimeContext) {
-      // remove env variables since they are all for the config.server property
-      this.config.env = {}
+      // remove env variables that are not for the plugins
+      delete this.config.env.PLT_SERVER_HOSTNAME
+      delete this.config.env.PORT
+      delete this.config.env.PLT_SERVER_LOGGER_LEVEL
     }
 
     this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
@@ -113,9 +115,22 @@ declare module 'fastify' {
         config.plugins = {}
       }
       config.plugins.packages = this.packages.map((packageDefinition) => {
+        const packageConfigOutput = getPackageConfigurationObject(packageDefinition.options, this.config.serviceName)
+        if (Object.keys(packageConfigOutput.env).length > 0) {
+          const envForPackages = {}
+          Object.entries(packageConfigOutput.env).forEach((kv) => {
+            envForPackages[kv[0]] = kv[1]
+          })
+          if (this.config.isRuntimeContext) {
+            this.config.env = {
+              ...this.config.env,
+              ...addPrefixToEnv(envForPackages, this.config.envPrefix)
+            }
+          }
+        }
         return {
           name: packageDefinition.name,
-          options: getPackageConfigurationObject(packageDefinition.options)
+          options: packageConfigOutput.config
         }
       })
     }
