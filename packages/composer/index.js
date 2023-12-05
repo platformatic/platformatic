@@ -35,25 +35,20 @@ async function platformaticComposer (app) {
     }
   }
 
-  app.register(openapi, config.composer)
-  app.register(serviceProxy, config.composer)
-  app.register(composerHook)
-  app.register(platformaticService, config)
-  
   if (hasOpenapiServices) {
     app.register(openapi, config.composer)
   }
-  if (hasGraphqlServices) {
-    app.log.warn(EXPERIMENTAL_GRAPHQL_COMPOSER_FEATURE_MESSAGE)
-    app.register(graphql, config.composer)
-  }
   app.register(serviceProxy, config.composer)
   app.register(composerHook)
+  app.register(platformaticService, config)
 
   if (hasOpenapiServices) {
     await app.register(openapiGenerator, config.composer)
   }
+
   if (hasGraphqlServices) {
+    app.log.warn(EXPERIMENTAL_GRAPHQL_COMPOSER_FEATURE_MESSAGE)
+    app.register(graphql, config.composer)
     await app.register(graphqlGenerator, config.composer)
   }
 
@@ -62,6 +57,22 @@ async function platformaticComposer (app) {
   }
 
   await watchServices(app, config)
+}
+
+platformaticComposer[Symbol.for('skip-override')] = true
+platformaticComposer.schema = schema
+platformaticComposer.configType = 'composer'
+platformaticComposer.configManagerConfig = {
+  schema,
+  envWhitelist: ['PORT', 'HOSTNAME'],
+  allowToWatch: ['.env'],
+  schemaOptions: {
+    useDefaults: true,
+    coerceTypes: true,
+    allErrors: true,
+    strict: false
+  },
+  transformConfig: platformaticService.configManagerConfig.transformConfig
 }
 
 platformaticComposer[Symbol.for('skip-override')] = true
@@ -163,7 +174,7 @@ async function watchServices (app, opts) {
               message: error.message,
               stack: error.stack
             }
-          }, 'failed to reload server')
+          }, 'failed to restart server')
         }
       }
     } catch (error) {

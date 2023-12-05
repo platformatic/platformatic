@@ -5,8 +5,6 @@ const { describe, test } = require('node:test')
 const { ComposerGenerator } = require('../lib/generator/composer-generator')
 
 describe('generator', () => {
-  const PLATFORMATIC_JSON_FILE = 'platformatic.json' // TODO review: was 'platformatic.composer.json'
-
   test('generate correct .env file', async (t) => {
     const svc = new ComposerGenerator()
     await svc.prepare()

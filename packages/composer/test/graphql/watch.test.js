@@ -7,6 +7,7 @@ const dedent = require('dedent')
 const { createGraphqlService, createComposer, createLoggerSpy, eventToPromise } = require('../helper')
 
 const REFRESH_TIMEOUT = 500
+const RESTART_TIMEOUT = 3_000
 
 test('should restart composer if a service has been changed, and update the schema', async (t) => {
   const schema1 = dedent`
@@ -45,7 +46,7 @@ test('should restart composer if a service has been changed, and update the sche
   )
 
   await composer.start()
-  const restart = eventToPromise(composer.addOnRestartHook, REFRESH_TIMEOUT * 3)
+  const restart = eventToPromise(composer.addOnRestartHook, RESTART_TIMEOUT)
 
   const graphql1a = await createGraphqlService(t, {
     schema: schema2,
@@ -150,7 +151,7 @@ test('composer should restart and update schema if one of the services shuts dow
   )
 
   await composer.start()
-  const restart = eventToPromise(composer.addOnRestartHook, REFRESH_TIMEOUT * 3)
+  const restart = eventToPromise(composer.addOnRestartHook, RESTART_TIMEOUT)
 
   assert.equal(composer.graphqlSupergraph.sdl, supergraph1)
 
@@ -208,7 +209,7 @@ test('should not restart if services did not change', async (t) => {
 
   await composer.start()
 
-  const restart = eventToPromise(composer.addOnRestartHook, REFRESH_TIMEOUT * 3)
+  const restart = eventToPromise(composer.addOnRestartHook, RESTART_TIMEOUT)
   await restart
 
   assert.equal(composer.restarted, false)
@@ -271,7 +272,7 @@ test('should not watch when refreshTimeout is 0', async (t) => {
   )
 
   await composer.start()
-  const restart = eventToPromise(composer.addOnRestartHook, REFRESH_TIMEOUT * 3)
+  const restart = eventToPromise(composer.addOnRestartHook, RESTART_TIMEOUT)
 
   assert.equal(composer.graphqlSupergraph.sdl, supergraph1)
 
@@ -292,7 +293,7 @@ test('should not watch if there are no fetchable services', async (t) => {
   }, logger)
   await composer.start()
 
-  const restart = eventToPromise(composer.addOnRestartHook, REFRESH_TIMEOUT * 3)
+  const restart = eventToPromise(composer.addOnRestartHook, RESTART_TIMEOUT)
   await restart
 
   assert.ok(!logger._info.find(l => l[1] === 'start watching services'))
@@ -324,10 +325,10 @@ test('should handle errors watching services', async (t) => {
   )
 
   await composer.start()
-  const restart = eventToPromise(composer.addOnRestartHook, REFRESH_TIMEOUT * 3)
+  const restart = eventToPromise(composer.addOnRestartHook, RESTART_TIMEOUT)
 
   await graphql1.close()
   await restart
 
-  assert.ok(logger._error.find(l => l[1] === 'failed to reload server'))
+  assert.ok(logger._error.find(l => l[1] === 'failed to restart server'))
 })

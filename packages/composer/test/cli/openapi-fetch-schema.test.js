@@ -22,7 +22,7 @@ test('should fetch the available schemas', async (t) => {
     await rm(cwd, { recursive: true, force: true })
   })
 
-  const pathToConfig = join(cwd, 'platformatic.json')
+  const pathToConfig = join(cwd, 'platformatic.composer.json')
   const pathToSchema1 = join(cwd, 'api1.json')
   const pathToSchema2 = join(cwd, 'api2.json')
 
