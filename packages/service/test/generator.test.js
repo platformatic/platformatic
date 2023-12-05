@@ -158,11 +158,7 @@ describe('generator', () => {
 
   test('should return config fields', async () => {
     const svc = new ServiceGenerator()
-    assert.deepEqual(svc.getConfigFieldsDefinitions(), [])
 
-    svc.setConfig({
-      isRuntimeContext: true
-    })
     assert.deepEqual(svc.getConfigFieldsDefinitions(), [
       {
         var: 'PLT_SERVER_HOSTNAME',
@@ -186,12 +182,18 @@ describe('generator', () => {
         configValue: 'port'
       }
     ])
+
+    // empty array in runtime context
+    svc.setConfig({
+      isRuntimeContext: true
+    })
+    assert.deepEqual(svc.getConfigFieldsDefinitions(), [])
   })
 
   test('should set config fields', async () => {
     const svc = new ServiceGenerator()
     svc.setConfig({
-      isRuntimeContext: true
+      isRuntimeContext: false
     })
     const values = [
       {
