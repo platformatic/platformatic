@@ -454,20 +454,27 @@ function createLoggerSpy () {
 function eventToPromise (fn, timeout = 60_000) {
   return new Promise((resolve, reject) => {
     let resolved
-    const t = setTimeout(() => {
-      if (!resolved) {
-        resolve()
-      }
+    let t = setTimeout(() => {
+      if (resolved) { return }
+      resolve()
     }, timeout)
     try {
-      fn(() => {
+      fn(async () => {
+        if (t) {
+          clearTimeout(t)
+          t = null
+        }
+        if (resolved) { return }
         resolved = true
-        clearTimeout(t)
         resolve()
       })
     } catch (err) {
+      if (t) {
+        clearTimeout(t)
+        t = null
+      }
+      if (resolved) { return }
       resolved = true
-      clearTimeout(t)
       reject(err)
     }
   })
