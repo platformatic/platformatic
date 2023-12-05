@@ -227,7 +227,7 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
       const contentType = sanitizeContentType(res.headers['content-type']) || 'application/json'
       try {
         if (res.statusCode === 204) {
-          responseBody = await res.body.dump()
+          await res.body.dump()
         } else if (contentType === 'application/json') {
           responseBody = await res.body.json()
         } else {
