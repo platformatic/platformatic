@@ -5,16 +5,11 @@
     }
   },
   "db": {
-    "connectionString": "sqlite://./db.sqlite",
+    "connectionString": "sqlite://./db0.sqlite",
     "graphql": true
   },
   "migrations": {
     "dir": "./migrations",
     "autoApply": true
-  },
-  "plugins": {
-    "paths": [
-      "./extends.js"
-    ]
   }
 }

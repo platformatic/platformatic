@@ -1,11 +1,11 @@
 {
   "server":{
     "logger": {
-      "level": "info"
+      "level": "warn"
     }
   },
   "db": {
-    "connectionString": "sqlite://./db.sqlite",
+    "connectionString": "sqlite://./db0.sqlite",
     "graphql": true
   },
   "migrations": {

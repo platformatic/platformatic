@@ -97,7 +97,7 @@ const graphqlComposerOptions = {
     // TODO support subscriptions, subscriptions: { type: 'boolean', default: false },
     onSubgraphError: { typeof: 'function' },
     defaultArgsAdapter: { typeof: 'function' },
-    addEntitiesResolvers: { type: 'boolean', const: false }
+    addEntitiesResolvers: { type: 'boolean', default: false }
   },
   additionalProperties: false
 }
