@@ -30,7 +30,7 @@ class DBGenerator extends BaseGenerator {
       types: false,
       migrations: 'migrations',
       createMigrations: true,
-      applyMigrations: false
+      applyMigrations: true
     }
   }
 
