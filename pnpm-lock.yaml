@@ -358,8 +358,8 @@ importers:
         specifier: workspace:*
         version: link:../generators
       '@platformatic/graphql-composer':
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.5.0
+        version: 0.5.0
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
@@ -3057,13 +3057,14 @@ packages:
     dev: true
     optional: true
 
-  /@platformatic/graphql-composer@0.4.0:
-    resolution: {integrity: sha512-NT2NqgcYrd9lBDXaDMMvXJBlRPfYFKH8fHPaj8VD9uy9z+gHeTPXKQ0qhYT72fOzjPUOuz2MD/ANYWnfJqZv+A==}
+  /@platformatic/graphql-composer@0.5.0:
+    resolution: {integrity: sha512-oJQFBYh13I6naEFq2u2FLn1SOq8ddVXDOag6lwb6htumluf6dg/9+OZzXQLxYjZ2/Lu0RRdG8u53HhHflMQPwQ==}
     dependencies:
       '@mercuriusjs/subscription-client': 1.0.0(graphql@16.8.1)
       fastify: 4.24.3
       graphql: 16.8.1
       mercurius: 13.3.1(graphql@16.8.1)
+      metaline: 1.1.0
       undici: 6.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -7066,6 +7067,12 @@ packages:
     resolution: {integrity: sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==}
     engines: {node: '>= 8'}
     dev: true
+
+  /metaline@1.1.0:
+    resolution: {integrity: sha512-VBgxP9mZx8FHvCyKe6Nla32xgImEj4zAyf/BtIdkLKqfkMWtcekIeB5fL24/EZi/u7PbbJNsVqL7R2bV3cUh/Q==}
+    dependencies:
+      '@fastify/deepmerge': 1.3.0
+    dev: false
 
   /methods@1.1.2:
     resolution: {integrity: sha512-iclAHeNqNm68zFtnZ0e+1L2yUIdvzNoauKU4WBA3VvH/vPFieF7qfRlwUZU+DA9P9bPXIS90ulxoUoCH23sV2w==}
