@@ -25,8 +25,18 @@ const entityResolver = {
   type: 'object',
   properties: {
     name: { type: 'string' },
-    argsAdapter: { typeof: 'function' },
-    partialResults: { typeof: 'function' }
+    argsAdapter: {
+      oneOf: [
+        { typeof: 'function' },
+        { type: 'string' }
+      ]
+    },
+    partialResults: {
+      oneOf: [
+        { typeof: 'function' },
+        { type: 'string' }
+      ]
+    }
   },
   required: ['name'],
   additionalProperties: false
@@ -96,7 +106,12 @@ const graphqlComposerOptions = {
     ...graphqlBase.properties,
     // TODO support subscriptions, subscriptions: { type: 'boolean', default: false },
     onSubgraphError: { typeof: 'function' },
-    defaultArgsAdapter: { typeof: 'function' },
+    defaultArgsAdapter: {
+      oneOf: [
+        { typeof: 'function' },
+        { type: 'string' }
+      ]
+    },
     addEntitiesResolvers: { type: 'boolean', default: false }
   },
   additionalProperties: false
