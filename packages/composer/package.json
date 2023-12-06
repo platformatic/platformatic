@@ -40,7 +40,7 @@
     "@fastify/reply-from": "^9.4.0",
     "@fastify/static": "^6.11.2",
     "@fastify/swagger": "^8.10.1",
-    "@fastify/swagger-ui": "^1.9.3",
+    "@fastify/swagger-ui": "^2.0.0",
     "@platformatic/config": "workspace:*",
     "@platformatic/generators": "workspace:*",
     "@platformatic/service": "workspace:*",

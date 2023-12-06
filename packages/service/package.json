@@ -53,7 +53,7 @@
     "@fastify/restartable": "^2.1.1",
     "@fastify/static": "^6.11.2",
     "@fastify/swagger": "^8.10.1",
-    "@fastify/swagger-ui": "^1.9.3",
+    "@fastify/swagger-ui": "^2.0.0",
     "@fastify/under-pressure": "^8.3.0",
     "@mercuriusjs/federation": "^2.0.0",
     "@platformatic/client": "workspace:*",
