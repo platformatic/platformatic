@@ -350,7 +350,7 @@ importers:
         version: 8.12.0
       '@fastify/swagger-ui':
         specifier: ^2.0.0
-        version: 2.0.0
+        version: 2.0.1
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
@@ -1421,7 +1421,7 @@ importers:
         version: 8.12.0
       '@fastify/swagger-ui':
         specifier: ^2.0.0
-        version: 2.0.0
+        version: 2.0.1
       '@fastify/under-pressure':
         specifier: ^8.3.0
         version: 8.3.0
@@ -1762,7 +1762,7 @@ importers:
         version: 8.12.0
       '@fastify/swagger-ui':
         specifier: ^2.0.0
-        version: 2.0.0
+        version: 2.0.1
       '@platformatic/sql-json-schema-mapper':
         specifier: workspace:*
         version: link:../sql-json-schema-mapper
@@ -2651,8 +2651,8 @@ packages:
       glob: 8.1.0
       p-limit: 3.1.0
 
-  /@fastify/swagger-ui@2.0.0:
-    resolution: {integrity: sha512-n50C5WA478wDf3dQl1bzBTPpBITiXPLajNCRPO27WqaI4/pDe3j+Suu+rF4rwRRcDoG/ipQneME8WHixjkKvkA==}
+  /@fastify/swagger-ui@2.0.1:
+    resolution: {integrity: sha512-sQnufSdQ5kJxaTxBisWYQjkunECuRymYRZYEZEEPpmLUzzZoS22tDLVumb3c1TV4MAlD3L1LTLpxLSXcFL+OZw==}
     dependencies:
       '@fastify/static': 6.12.0
       fastify-plugin: 4.5.1
