@@ -120,7 +120,10 @@ class PlatformaticApp {
     }
 
     if (
-      config.plugins !== undefined &&
+      (
+        config.plugins !== undefined ||
+        config.versions !== undefined
+      ) &&
       this.#originalWatch?.enabled !== false
     ) {
       this.#startFileWatching()
