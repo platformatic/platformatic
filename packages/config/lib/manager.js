@@ -238,6 +238,16 @@ class ConfigManager extends EventEmitter {
         }
       }
     })
+    ajv.addKeyword({
+      keyword: 'typeof',
+      validate: function validate (schema, value, _, data) {
+        // eslint-disable-next-line valid-typeof
+        if (typeof value === schema) { return true }
+        validate.errors = [{ message: `"${data.parentDataProperty}" shoud be a ${schema}.`, params: data.parentData }]
+        return false
+      }
+    })
+
     const ajvValidate = ajv.compile(this.schema)
 
     const res = ajvValidate(this.current)

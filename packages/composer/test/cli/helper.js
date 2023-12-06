@@ -2,6 +2,8 @@
 
 const { on } = require('events')
 const { join } = require('node:path')
+const { tmpdir } = require('node:os')
+const { mkdtemp, rm } = require('node:fs/promises')
 
 const split = require('split2')
 const { Agent, setGlobalDispatcher } = require('undici')
@@ -48,4 +50,13 @@ async function start (...args) {
   }
 }
 
-module.exports = { start, cliPath }
+async function tmpDir (t, name) {
+  const cwd = await mkdtemp(join(tmpdir(), name))
+  t.after(async () => {
+    await rm(cwd, { recursive: true, force: true })
+  })
+
+  return cwd
+}
+
+module.exports = { start, tmpDir, cliPath }

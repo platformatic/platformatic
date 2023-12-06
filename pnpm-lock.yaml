@@ -120,12 +120,18 @@ importers:
       execa:
         specifier: ^8.0.1
         version: 8.0.1
+      graphql:
+        specifier: ^16.8.1
+        version: 16.8.1
       help-me:
         specifier: ^4.2.0
         version: 4.2.0
       inquirer:
         specifier: ^9.2.11
         version: 9.2.12
+      mercurius:
+        specifier: ^13.1.0
+        version: 13.3.1(graphql@16.8.1)
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -344,13 +350,16 @@ importers:
         version: 8.12.0
       '@fastify/swagger-ui':
         specifier: ^2.0.0
-        version: 2.0.0
+        version: 2.0.1
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
+      '@platformatic/graphql-composer':
+        specifier: ^0.5.1
+        version: 0.5.1
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
@@ -384,12 +393,18 @@ importers:
       fastify-plugin:
         specifier: ^4.5.1
         version: 4.5.1
+      graphql:
+        specifier: ^16.8.1
+        version: 16.8.1
       help-me:
         specifier: ^4.2.0
         version: 4.2.0
       json-schema-traverse:
         specifier: ^1.0.0
         version: 1.0.0
+      mercurius:
+        specifier: ^13.1.0
+        version: 13.3.1(graphql@16.8.1)
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -412,9 +427,15 @@ importers:
       '@platformatic/client':
         specifier: workspace:*
         version: link:../client
+      '@platformatic/db':
+        specifier: workspace:*
+        version: link:../db
       c8:
         specifier: ^8.0.1
         version: 8.0.1
+      dedent:
+        specifier: ^1.5.1
+        version: 1.5.1
       execa:
         specifier: ^8.0.1
         version: 8.0.1
@@ -427,6 +448,9 @@ importers:
       openapi-schema-validator:
         specifier: ^12.1.3
         version: 12.1.3
+      single-user-cache:
+        specifier: ^1.0.1
+        version: 1.0.1
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -1400,7 +1424,7 @@ importers:
         version: 8.12.0
       '@fastify/swagger-ui':
         specifier: ^2.0.0
-        version: 2.0.0
+        version: 2.0.1
       '@fastify/under-pressure':
         specifier: ^8.3.0
         version: 8.3.0
@@ -1762,7 +1786,7 @@ importers:
         version: 8.12.0
       '@fastify/swagger-ui':
         specifier: ^2.0.0
-        version: 2.0.0
+        version: 2.0.1
       '@platformatic/sql-json-schema-mapper':
         specifier: workspace:*
         version: link:../sql-json-schema-mapper
@@ -2651,8 +2675,8 @@ packages:
       glob: 8.1.0
       p-limit: 3.1.0
 
-  /@fastify/swagger-ui@2.0.0:
-    resolution: {integrity: sha512-n50C5WA478wDf3dQl1bzBTPpBITiXPLajNCRPO27WqaI4/pDe3j+Suu+rF4rwRRcDoG/ipQneME8WHixjkKvkA==}
+  /@fastify/swagger-ui@2.0.1:
+    resolution: {integrity: sha512-sQnufSdQ5kJxaTxBisWYQjkunECuRymYRZYEZEEPpmLUzzZoS22tDLVumb3c1TV4MAlD3L1LTLpxLSXcFL+OZw==}
     dependencies:
       '@fastify/static': 6.12.0
       fastify-plugin: 4.5.1
@@ -2888,7 +2912,6 @@ packages:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
-    dev: true
 
   /@nodelib/fs.scandir@2.1.5:
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -3057,6 +3080,21 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /@platformatic/graphql-composer@0.5.1:
+    resolution: {integrity: sha512-cgQtHdrKKnZGgwYiyeikchzzrFwOD9LhzllZOgMwutdCU2tSW1LuYQajddyg3Akf3OxkoKrQYsXKUsUPaHIw9A==}
+    dependencies:
+      '@mercuriusjs/subscription-client': 1.0.0(graphql@16.8.1)
+      fastify: 4.24.3
+      graphql: 16.8.1
+      mercurius: 13.3.1(graphql@16.8.1)
+      metaline: 1.1.0
+      undici: 6.0.1
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+    dev: false
 
   /@playwright/test@1.40.0:
     resolution: {integrity: sha512-PdW+kn4eV99iP5gxWNSDQCbhMaDVej+RXL5xr6t04nbKLCBwYtA046t7ofoczHOm8u6c+45hpDKQVZqtqwkeQg==}
@@ -4381,6 +4419,15 @@ packages:
     dependencies:
       mimic-response: 3.1.0
     dev: false
+
+  /dedent@1.5.1:
+    resolution: {integrity: sha512-+LxW+KLWxu3HW3M2w2ympwtqPrqYRzU8fqi6Fhd18fBALe15blJPI/I4+UHveMVG6lJqB4JNd4UG0S5cnVHwIg==}
+    peerDependencies:
+      babel-plugin-macros: ^3.1.0
+    peerDependenciesMeta:
+      babel-plugin-macros:
+        optional: true
+    dev: true
 
   /deep-extend@0.6.0:
     resolution: {integrity: sha512-LOHxIOaPYdHlJRtCQfDIVZtfw/ufM8+rVj649RIHzcm/vGwQRXFt6OPqIFWsm2XEMrNIEtWR64sY1LEKD2vAOA==}
@@ -7052,6 +7099,12 @@ packages:
     engines: {node: '>= 8'}
     dev: true
 
+  /metaline@1.1.0:
+    resolution: {integrity: sha512-VBgxP9mZx8FHvCyKe6Nla32xgImEj4zAyf/BtIdkLKqfkMWtcekIeB5fL24/EZi/u7PbbJNsVqL7R2bV3cUh/Q==}
+    dependencies:
+      '@fastify/deepmerge': 1.3.0
+    dev: false
+
   /methods@1.1.2:
     resolution: {integrity: sha512-iclAHeNqNm68zFtnZ0e+1L2yUIdvzNoauKU4WBA3VvH/vPFieF7qfRlwUZU+DA9P9bPXIS90ulxoUoCH23sV2w==}
     engines: {node: '>= 0.6'}
@@ -8762,6 +8815,12 @@ packages:
     resolution: {integrity: sha512-uMrANoiybpbsrVDbZ2M7GPzxeqZiirwkVnsDAre1zGhXAAw+2dImTxu7h0l1sIVtwGeJnVsRxgG4I5rZrUX0rw==}
     dependencies:
       safe-stable-stringify: 2.4.3
+
+  /single-user-cache@1.0.1:
+    resolution: {integrity: sha512-xFW/TuZUKoMZl47xqfC2jb7dO1XtJ5VgZxQliOKQWTueIH96CX6USaPiZcyDN0HFb4Ow+tsXpJZViRyIkl/rDA==}
+    dependencies:
+      safe-stable-stringify: 2.4.3
+    dev: true
 
   /slash@3.0.0:
     resolution: {integrity: sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==}

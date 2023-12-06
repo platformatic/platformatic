@@ -200,7 +200,7 @@ test('should not proxy request if it is not in a schema file', async (t) => {
   }
 })
 
-test('should not compose api if there is no openapi config', async (t) => {
+test('should not compose api if there is no openapi nor graphql config', async (t) => {
   const api1 = await createOpenApiService(t, ['users'])
   const api2 = await createOpenApiService(t, ['posts'])
 

@@ -1,10 +1,121 @@
 #! /usr/bin/env node
 'use strict'
 
-const { metrics, server, plugins, watch, clients, openApiBase, openApiDefs } = require('@platformatic/service').schema
+const { metrics, server, plugins, watch, clients, openApiBase, openApiDefs, graphqlBase } = require('@platformatic/service').schema
 const telemetry = require('@platformatic/telemetry').schema
 const pkg = require('../package.json')
 const version = 'v' + pkg.version
+
+const openApiService = {
+  type: 'object',
+  properties: {
+    url: { type: 'string' },
+    file: { type: 'string', resolvePath: true },
+    prefix: { type: 'string' },
+    config: { type: 'string', resolvePath: true }
+  },
+  anyOf: [
+    { required: ['url'] },
+    { required: ['file'] }
+  ],
+  additionalProperties: false
+}
+
+const entityResolver = {
+  type: 'object',
+  properties: {
+    name: { type: 'string' },
+    argsAdapter: {
+      oneOf: [
+        { typeof: 'function' },
+        { type: 'string' }
+      ]
+    },
+    partialResults: {
+      oneOf: [
+        { typeof: 'function' },
+        { type: 'string' }
+      ]
+    }
+  },
+  required: ['name'],
+  additionalProperties: false
+}
+
+const graphqlService = {
+  anyOf: [
+    { type: 'boolean' },
+    {
+      type: 'object',
+      properties: {
+        host: { type: 'string' },
+        name: { type: 'string' },
+        graphqlEndpoint: { type: 'string', default: '/graphql' },
+        composeEndpoint: { type: 'string', default: '/.well-known/graphql-composition' },
+        entities: {
+          type: 'object',
+          patternProperties: {
+            '^.*$': {
+              type: 'object',
+              properties: {
+                pkey: { type: 'string' },
+                resolver: entityResolver,
+                fkeys: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      type: { type: 'string' },
+                      field: { type: 'string' },
+                      as: { type: 'string' },
+                      pkey: { type: 'string' },
+                      subgraph: { type: 'string' },
+                      resolver: entityResolver
+                    },
+                    required: ['type']
+                  }
+                },
+                many: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      type: { type: 'string' },
+                      fkey: { type: 'string' },
+                      as: { type: 'string' },
+                      pkey: { type: 'string' },
+                      subgraph: { type: 'string' },
+                      resolver: entityResolver
+                    },
+                    required: ['type', 'fkey', 'as', 'resolver']
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      additionalProperties: false
+    }
+  ]
+}
+
+const graphqlComposerOptions = {
+  type: 'object',
+  properties: {
+    ...graphqlBase.properties,
+    // TODO support subscriptions, subscriptions: { type: 'boolean', default: false },
+    onSubgraphError: { typeof: 'function' },
+    defaultArgsAdapter: {
+      oneOf: [
+        { typeof: 'function' },
+        { type: 'string' }
+      ]
+    },
+    addEntitiesResolvers: { type: 'boolean', default: false }
+  },
+  additionalProperties: false
+}
 
 const composer = {
   type: 'object',
@@ -16,20 +127,8 @@ const composer = {
         properties: {
           id: { type: 'string' },
           origin: { type: 'string' },
-          openapi: {
-            type: 'object',
-            properties: {
-              url: { type: 'string' },
-              file: { type: 'string', resolvePath: true },
-              prefix: { type: 'string' },
-              config: { type: 'string', resolvePath: true }
-            },
-            anyOf: [
-              { required: ['url'] },
-              { required: ['file'] }
-            ],
-            additionalProperties: false
-          },
+          openapi: openApiService,
+          graphql: graphqlService,
           proxy: {
             oneOf: [
               { type: 'boolean', const: false },
@@ -49,6 +148,7 @@ const composer = {
       }
     },
     openapi: openApiBase,
+    graphql: graphqlComposerOptions,
     refreshTimeout: { type: 'integer', minimum: 0, default: 1000 }
   },
   required: ['services'],

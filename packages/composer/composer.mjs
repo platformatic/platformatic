@@ -10,7 +10,7 @@ import { join } from 'desm'
 import { start } from '@platformatic/service'
 import { printAndExitLoadConfigError } from '@platformatic/config'
 
-import { fetchOpenApiSchemas } from './lib/fetch-schemas.mjs'
+import { fetchOpenApiSchemas } from './lib/openapi-fetch-schemas.mjs'
 import { platformaticComposer } from './index.js'
 
 const help = helpMe({
