@@ -54,7 +54,6 @@ async function setupOpenAPI (app, opts) {
 
   await app.register(Swagger, swaggerOptions)
 
-
   const { default: scalarTheme } = await import('@platformatic/scalar-theme')
   const routePrefix = openapi.swaggerPrefix || '/documentation'
 

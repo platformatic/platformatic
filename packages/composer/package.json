@@ -48,7 +48,7 @@
     "@platformatic/graphql-composer": "^0.5.1",
     "@platformatic/service": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
-    "@scalar/fastify-api-reference": "^0.8.3",
+    "@scalar/fastify-api-reference": "^1.10.1",
     "ajv": "^8.12.0",
     "commist": "^3.2.0",
     "desm": "^1.3.0",

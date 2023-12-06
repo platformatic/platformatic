@@ -364,8 +364,8 @@ importers:
         specifier: workspace:*
         version: link:../telemetry
       '@scalar/fastify-api-reference':
-        specifier: ^0.8.3
-        version: 0.8.8(fastify-html@0.2.0)(fastify-plugin@4.5.1)(fastify@4.24.3)
+        specifier: ^1.10.1
+        version: 1.10.1(fastify-html@0.2.0)(fastify-plugin@4.5.1)(fastify@4.24.3)
       ajv:
         specifier: ^8.12.0
         version: 8.12.0
@@ -1452,8 +1452,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       '@scalar/fastify-api-reference':
-        specifier: ^0.8.3
-        version: 0.8.8(fastify-html@0.2.0)(fastify-plugin@4.5.1)(fastify@4.24.3)
+        specifier: ^1.10.1
+        version: 1.10.1(fastify-html@0.2.0)(fastify-plugin@4.5.1)(fastify@4.24.3)
       '@types/ws':
         specifier: ^8.5.6
         version: 8.5.10
@@ -1793,8 +1793,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       '@scalar/fastify-api-reference':
-        specifier: ^0.8.3
-        version: 0.8.8(fastify-html@0.2.0)(fastify-plugin@4.5.1)(fastify@4.24.3)
+        specifier: ^1.10.1
+        version: 1.10.1(fastify-html@0.2.0)(fastify-plugin@4.5.1)(fastify@4.24.3)
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -3240,8 +3240,8 @@ packages:
     dev: true
     optional: true
 
-  /@scalar/fastify-api-reference@0.8.8(fastify-html@0.2.0)(fastify-plugin@4.5.1)(fastify@4.24.3):
-    resolution: {integrity: sha512-v44WnoGAHKw134J3+53SJtC7TuqlvvAfxl5cX0rciE7H+pMPJSsCBO/EQ/SP01KHqS7D8gKwac7a6xHa+gmIXQ==}
+  /@scalar/fastify-api-reference@1.10.1(fastify-html@0.2.0)(fastify-plugin@4.5.1)(fastify@4.24.3):
+    resolution: {integrity: sha512-Jx3fFnwcSx1bU+DIlL6d13aHKMAd0GM/ECi8LXz68UqfO/gj0ez1Px52mdxhaPaZpog3WuLAA/82t+dJku7Ohg==}
     engines: {node: '>=20'}
     peerDependencies:
       fastify: ^4.0.0

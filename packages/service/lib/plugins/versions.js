@@ -13,6 +13,7 @@ const {
 const wrapperPath = join(__dirname, 'sandbox-wrapper.js')
 
 const Swagger = require('@fastify/swagger')
+const ScalarApiReference = require('@scalar/fastify-api-reference')
 
 async function loadVersions (app) {
   const configManager = app.platformatic.configManager
@@ -43,9 +44,9 @@ async function loadVersions (app) {
       }
     })
 
-    app.register(SwaggerUI, {
+    app.register(ScalarApiReference, {
       logLevel: 'warn',
-      prefix: '/documentation'
+      routePrefix: '/documentation'
     })
 
     if (latestVersionConfig.plugins) {
@@ -109,9 +110,9 @@ async function loadVersions (app) {
         }
       })
 
-      app.register(SwaggerUI, {
+      app.register(ScalarApiReference, {
         logLevel: 'warn',
-        prefix: '/documentation'
+        routePrefix: '/documentation'
       })
 
       const componentSchemas = prevOpenapiSchema.components?.schemas ?? {}
