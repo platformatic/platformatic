@@ -38,7 +38,7 @@ describe('generator', () => {
       types: false,
       migrations: 'migrations',
       createMigrations: true,
-      applyMigrations: false
+      applyMigrations: true
     })
   })
   test('generate correct .env file', async (t) => {
