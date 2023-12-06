@@ -4,7 +4,7 @@ import parseArgs from 'minimist'
 import isMain from 'es-main'
 import helpMe from 'help-me'
 import { readFile, writeFile, mkdir, access } from 'fs/promises'
-import { join, dirname, relative, resolve, posix, sep } from 'path'
+import { join, dirname, relative, resolve, posix } from 'path'
 import * as desm from 'desm'
 import { request } from 'undici'
 import { processOpenAPI } from './lib/openapi-generator.mjs'
@@ -305,16 +305,14 @@ export async function command (argv) {
 
   if (options.runtime) {
     // TODO add flag to allow specifying a runtime config file
-    const runtimeConfigFile = await findUp('platformatic.runtime.json')
-
-    // check we are **not** into the runtime root
-    if (runtimeConfigFile?.replace(`${process.cwd()}${sep}`, '') === 'platformatic.runtime.json') {
-      logger.error('Could not create a client runtime from the runtime root.')
-      process.exit(1)
-    }
+    const runtimeConfigFile = await findUp('platformatic.runtime.json', {
+      cwd: dirname(process.cwd())
+    }) || await findUp('platformatic.json', {
+      cwd: dirname(process.cwd())
+    })
 
     if (!runtimeConfigFile) {
-      logger.error('Could not find a platformatic.runtime.json file in this or any parent directory.')
+      logger.error('Could not find a platformatic.json file in any parent directory.')
       process.exit(1)
     }
 
