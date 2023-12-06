@@ -1504,8 +1504,8 @@ importers:
         specifier: ^1.0.36
         version: 1.0.37
       undici:
-        specifier: ^5.25.4
-        version: 5.27.2
+        specifier: ^6.0.0
+        version: 6.0.1
     devDependencies:
       '@fastify/aws-lambda':
         specifier: ^3.3.0
