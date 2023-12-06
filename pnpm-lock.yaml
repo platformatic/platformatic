@@ -358,8 +358,8 @@ importers:
         specifier: workspace:*
         version: link:../generators
       '@platformatic/graphql-composer':
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.5.1
+        version: 0.5.1
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
@@ -3057,8 +3057,8 @@ packages:
     dev: true
     optional: true
 
-  /@platformatic/graphql-composer@0.5.0:
-    resolution: {integrity: sha512-oJQFBYh13I6naEFq2u2FLn1SOq8ddVXDOag6lwb6htumluf6dg/9+OZzXQLxYjZ2/Lu0RRdG8u53HhHflMQPwQ==}
+  /@platformatic/graphql-composer@0.5.1:
+    resolution: {integrity: sha512-cgQtHdrKKnZGgwYiyeikchzzrFwOD9LhzllZOgMwutdCU2tSW1LuYQajddyg3Akf3OxkoKrQYsXKUsUPaHIw9A==}
     dependencies:
       '@mercuriusjs/subscription-client': 1.0.0(graphql@16.8.1)
       fastify: 4.24.3
