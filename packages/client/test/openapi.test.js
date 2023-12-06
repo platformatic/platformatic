@@ -891,3 +891,57 @@ test('edge cases', async (t) => {
   })
   assert.equal(typeof client.getTestWithWeirdCharacters, 'function')
 })
+
+test('do not set bodies for methods that should not have them', async (t) => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'no-bodies')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
+  try {
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildService(join(tmpDir, 'platformatic.service.json'))
+
+  t.after(async () => {
+    await app.close()
+    await rm(tmpDir, { recursive: true })
+  })
+  await app.start()
+
+  const client = await buildOpenAPIClient({
+    url: `${app.url}`,
+    path: join(tmpDir, 'openapi.json')
+  })
+
+  const requestBody = { test: 'data' }
+
+  // API sends back body content it receives
+  const postResult = await client.postHello(requestBody)
+  assert.deepEqual(postResult, requestBody)
+
+  const putResult = await client.putHello(requestBody)
+  assert.deepEqual(putResult, requestBody)
+
+  const patchResult = await client.patchHello(requestBody)
+  assert.deepEqual(patchResult, requestBody)
+
+  const optionsResult = await client.optionsHello(requestBody)
+  assert.deepEqual(optionsResult, requestBody)
+
+  // https://www.rfc-editor.org/rfc/rfc9110
+  // MUST NOT send content
+  const traceResult = await client.traceHello(requestBody)
+  assert.deepEqual(traceResult, '')
+
+  // SHOULD NOT send content
+  const getResult = await client.getHello(requestBody)
+  assert.deepEqual(getResult, '')
+
+  const deleteResult = await client.deleteHello(requestBody)
+  assert.deepEqual(deleteResult, '')
+
+  const headResult = await client.headHello(requestBody)
+  assert.deepEqual(headResult, '')
+})

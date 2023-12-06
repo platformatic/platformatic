@@ -136,6 +136,7 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
   method = method.toUpperCase()
   path = join(url.pathname, path)
 
+  const canHaveBody = method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'OPTIONS'
   const pathParams = methodMeta.parameters?.filter(p => p.in === 'path') || []
   const queryParams = methodMeta.parameters?.filter(p => p.in === 'query') || []
   const headerParams = methodMeta.parameters?.filter(p => p.in === 'header') || []
@@ -213,16 +214,19 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
 
     let res
     try {
-      res = await request(urlToCall, {
+      const requestOptions = {
         method,
         headers: {
           ...headers,
-          ...telemetryHeaders,
-          'content-type': 'application/json; charset=utf-8'
+          ...telemetryHeaders
         },
-        body: JSON.stringify(body),
         throwOnError
-      })
+      }
+      if (canHaveBody) {
+        requestOptions.headers['content-type'] = 'application/json; charset=utf-8'
+        requestOptions.body = JSON.stringify(body)
+      }
+      res = await request(urlToCall, requestOptions)
       let responseBody
       const contentType = sanitizeContentType(res.headers['content-type']) || 'application/json'
       try {
