@@ -1,6 +1,9 @@
 Available commands:
 
 * `help` - show this help message.
-* `help <command>` - shows more information about a command.
+* `help <command>` - show more information about a command.
 * `start` - start the server.
 * `schema config` - generate the schema configuration file.
+* `compile` - compile the typescript files.
+* `versions bump` - bump a new version of the API.
+* `versions update` - update the latest version of the API.

@@ -8,6 +8,8 @@ import { readFile } from 'fs/promises'
 import { join } from 'desm'
 import { printAndExitLoadConfigError } from '@platformatic/config'
 import { generateJsonSchemaConfig } from './lib/gen-schema.js'
+import { bumpVersion } from './lib/bump-version.js'
+import { updateVersion } from './lib/update-version.js'
 import { generateTypes } from './lib/gen-types.mjs'
 
 import { buildCompileCmd } from './lib/compile.js'
@@ -45,6 +47,8 @@ program.register('compile', buildCompileCmd(platformaticService))
 program.register('types', wrapCommand(generateTypes))
 program.register('schema config', wrapCommand(generateJsonSchemaConfig))
 program.register('schema', help.toStdout.bind(null, ['schema']))
+program.register('versions bump', wrapCommand(bumpVersion))
+program.register('versions update', wrapCommand(updateVersion))
 
 export async function runService (argv) {
   const args = parseArgs(argv, {
@@ -54,7 +58,7 @@ export async function runService (argv) {
   })
 
   /* c8 ignore next 4 */
-  if (args.version) {
+  if (args.version && !args._.includes('versions')) {
     console.log('v' + JSON.parse(await readFile(join(import.meta.url, 'package.json'))).version)
     process.exit(0)
   }

@@ -1,0 +1,23 @@
+Update the latest version of platformatic application API.
+
+``` bash
+  $ platformatic service versions update
+```
+
+As a result, the latest application API version will be updated, and mappers for the previous version will be generated.
+
+Options:
+
+* `-c, --config <path>` - Path to the configuration file.
+* `--openai <boolean>` - Use OpenAI to generate the version mappers plugins. Default: false.
+* `--user-api-key <string>` - Platformatic user API key. If not specified, the key will be loaded from the `~/.platformatic/config` file.
+
+If not specified, the configuration will be loaded from any of the following, in the current directory.
+
+* `platformatic.db.json`, or
+* `platformatic.db.yml`, or 
+* `platformatic.db.tml`
+
+You can find more details about the configuration format here:
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
+
