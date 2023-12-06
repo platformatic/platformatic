@@ -241,14 +241,6 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
         // maybe the response is a 302, 301, or anything with empty payload
         responseBody = {}
       }
-      if (fullResponse) {
-        return {
-          statusCode: res.statusCode,
-          headers: res.headers,
-          body: responseBody
-        }
-      }
-
       if (validateResponse) {
         try {
           // validate response first
@@ -269,6 +261,13 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
           }
         } catch (err) {
           responseBody = createErrorResponse(err.message)
+        }
+      }
+      if (fullResponse) {
+        return {
+          statusCode: res.statusCode,
+          headers: res.headers,
+          body: responseBody
         }
       }
       return responseBody
