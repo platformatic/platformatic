@@ -1,6 +1,6 @@
 {
   "name": "create-platformatic",
-  "version": "1.13.5",
+  "version": "1.13.7",
   "description": "Create platformatic-db interactive tool",
   "repository": {
     "type": "git",
@@ -42,7 +42,7 @@
     "pupa": "^3.1.0",
     "semver": "^7.5.4",
     "strip-ansi": "^7.1.0",
-    "undici": "^5.25.4",
+    "undici": "^6.0.0",
     "which": "^3.0.1"
   },
   "devDependencies": {

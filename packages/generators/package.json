@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/generators",
-  "version": "1.13.5",
+  "version": "1.13.7",
   "description": "Main classes and utils for generators.",
   "main": "index.js",
   "scripts": {

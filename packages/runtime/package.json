@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/runtime",
-  "version": "1.13.5",
+  "version": "1.13.7",
   "description": "",
   "main": "index.js",
   "bin": {
@@ -60,7 +60,7 @@
     "minimist": "^1.2.8",
     "pino": "^8.16.0",
     "pino-pretty": "^10.2.3",
-    "undici": "^5.26.3"
+    "undici": "^6.0.0"
   },
   "standard": {
     "ignore": [

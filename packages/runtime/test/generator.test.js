@@ -50,6 +50,44 @@ describe('Generator', () => {
     assert.equal(secondService.targetDirectory, join(rg.targetDirectory, 'services', secondService.config.serviceName))
   })
 
+  test('should have services plugin dependencies in package.json', async () => {
+    const rg = new RuntimeGenerator({
+      targetDirectory: '/tmp/runtime'
+    })
+
+    // adding one service
+    const firstService = new ServiceGenerator()
+    firstService.setConfig({
+      isRuntimeContext: false
+    })
+    firstService.addPackage({
+      name: '@fastify/helmet',
+      options: []
+    })
+    rg.addService(firstService, 'first-service')
+
+    rg.setEntryPoint('first-service')
+
+    rg.setConfig({
+      port: 3043,
+      logLevel: 'debug'
+    })
+
+    const output = await rg.prepare()
+    // runtime package.json has the service dependencies
+    const packageJson = JSON.parse(rg.getFileObject('package.json').contents)
+    assert.equal(packageJson.dependencies['@fastify/helmet'], 'latest')
+
+    assert.deepEqual(output, {
+      targetDirectory: '/tmp/runtime',
+      env: {
+        PLT_SERVER_HOSTNAME: '0.0.0.0',
+        PLT_SERVER_LOGGER_LEVEL: 'debug',
+        PORT: 3043
+      }
+    })
+  })
+
   test('should create a runtime with 1 service and 1 db', async () => {
     const rg = new RuntimeGenerator({
       targetDirectory: '/tmp/runtime'
@@ -84,6 +122,8 @@ describe('Generator', () => {
     assert.deepEqual(output, {
       targetDirectory: '/tmp/runtime',
       env: {
+        PLT_FIRST_SERVICE_SERVICE_1: 'foo',
+        PLT_SECOND_SERVICE_SERVICE_2: 'foo',
         PLT_SERVER_HOSTNAME: '0.0.0.0',
         PLT_SERVER_LOGGER_LEVEL: 'info',
         PORT: 3043
