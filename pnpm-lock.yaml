@@ -61,8 +61,8 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       undici:
-        specifier: ^5.25.4
-        version: 5.28.2
+        specifier: ^6.0.0
+        version: 6.0.0
 
   packages/cli:
     dependencies:
@@ -136,8 +136,8 @@ importers:
         specifier: ^10.2.0
         version: 10.2.3
       undici:
-        specifier: ^5.25.4
-        version: 5.28.2
+        specifier: ^6.0.0
+        version: 6.0.0
     devDependencies:
       c8:
         specifier: ^8.0.1
@@ -185,8 +185,8 @@ importers:
         specifier: ^5.0.1
         version: 5.0.1
       undici:
-        specifier: ^5.25.4
-        version: 5.28.2
+        specifier: ^6.0.0
+        version: 6.0.0
     devDependencies:
       '@platformatic/telemetry':
         specifier: workspace:*
@@ -273,8 +273,8 @@ importers:
         specifier: ^10.2.0
         version: 10.2.3
       undici:
-        specifier: ^5.25.4
-        version: 5.28.2
+        specifier: ^6.0.0
+        version: 6.0.0
       yaml:
         specifier: ^2.3.2
         version: 2.3.4
@@ -406,8 +406,8 @@ importers:
         specifier: ^1.0.36
         version: 1.0.37
       undici:
-        specifier: ^5.25.4
-        version: 5.28.2
+        specifier: ^6.0.0
+        version: 6.0.0
     devDependencies:
       '@platformatic/client':
         specifier: workspace:*
@@ -470,8 +470,8 @@ importers:
         specifier: ^7.5.4
         version: 7.5.4
       undici:
-        specifier: ^5.25.4
-        version: 5.28.2
+        specifier: ^6.0.0
+        version: 6.0.0
     devDependencies:
       '@iarna/toml':
         specifier: ^2.2.5
@@ -564,8 +564,8 @@ importers:
         specifier: ^7.1.0
         version: 7.1.0
       undici:
-        specifier: ^5.25.4
-        version: 5.28.2
+        specifier: ^6.0.0
+        version: 6.0.0
       which:
         specifier: ^3.0.1
         version: 3.0.1
@@ -670,8 +670,8 @@ importers:
         specifier: ^7.1.0
         version: 7.1.0
       undici:
-        specifier: ^5.25.4
-        version: 5.28.2
+        specifier: ^6.0.0
+        version: 6.0.0
       which:
         specifier: ^3.0.1
         version: 3.0.1
@@ -888,8 +888,8 @@ importers:
         specifier: ^5.2.2
         version: 5.3.2
       undici:
-        specifier: ^5.25.4
-        version: 5.28.2
+        specifier: ^6.0.0
+        version: 6.0.0
       vscode-json-languageservice:
         specifier: ^5.3.6
         version: 5.3.7
@@ -921,8 +921,8 @@ importers:
         specifier: ~3.1.0
         version: 3.1.0
       undici:
-        specifier: ^5.25.4
-        version: 5.28.2
+        specifier: ^6.0.0
+        version: 6.0.0
     devDependencies:
       '@fastify/cookie':
         specifier: ^8.3.0
@@ -1019,8 +1019,8 @@ importers:
         specifier: ^6.2.0
         version: 6.2.0
       undici:
-        specifier: ^5.25.4
-        version: 5.28.2
+        specifier: ^6.0.0
+        version: 6.0.0
     devDependencies:
       c8:
         specifier: ^8.0.1
@@ -1083,8 +1083,8 @@ importers:
         specifier: ^1.2.8
         version: 1.2.8
       undici:
-        specifier: ^5.25.4
-        version: 5.28.2
+        specifier: ^6.0.0
+        version: 6.0.0
     devDependencies:
       '@playwright/test':
         specifier: ^1.38.1
@@ -1326,8 +1326,8 @@ importers:
         specifier: ^10.2.3
         version: 10.2.3
       undici:
-        specifier: ^5.26.3
-        version: 5.28.2
+        specifier: ^6.0.0
+        version: 6.0.0
     devDependencies:
       '@fastify/express':
         specifier: ^2.3.0
@@ -1529,8 +1529,8 @@ importers:
         specifier: ^5.2.2
         version: 5.3.2
       undici:
-        specifier: ^5.25.4
-        version: 5.28.2
+        specifier: ^6.0.0
+        version: 6.0.0
       vscode-json-languageservice:
         specifier: ^5.3.6
         version: 5.3.7
@@ -1843,8 +1843,8 @@ importers:
         specifier: ^8.0.4
         version: 8.0.4
       undici:
-        specifier: ^5.25.4
-        version: 5.28.2
+        specifier: ^6.0.0
+        version: 6.0.0
     devDependencies:
       '@matteo.collina/tspl':
         specifier: ^0.1.0
@@ -9534,6 +9534,12 @@ packages:
   /undici@5.28.2:
     resolution: {integrity: sha512-wh1pHJHnUeQV5Xa8/kyQhO7WFa8M34l026L5P/+2TYiakvGy5Rdc8jWZVyG7ieht/0WgJLEd3kcU5gKx+6GC8w==}
     engines: {node: '>=14.0'}
+    dependencies:
+      '@fastify/busboy': 2.1.0
+
+  /undici@6.0.0:
+    resolution: {integrity: sha512-m3nzx/3ji00Y6wY9hAJTBOBdtcMj0SyxpHKd5kaxghTftjB3icbYaPXGeogxIVcm6FVvnAM9aB6wz9L8Sntt8w==}
+    engines: {node: '>=18.0'}
     dependencies:
       '@fastify/busboy': 2.1.0
 
