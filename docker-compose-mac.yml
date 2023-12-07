@@ -14,6 +14,7 @@ services:
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
       - MYSQL_DATABASE=graph
   mysql:
+    platform: linux/amd64
     ports:
       - "3306:3306"
     image: "mysql:5.7"
