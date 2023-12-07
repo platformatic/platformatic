@@ -5,11 +5,11 @@ import { getConnectionInfo } from '../helper.js'
 import { cliPath, getFixturesConfigFileLocation } from './helper.mjs'
 
 test('missing config', async (t) => {
-  await assert.rejects(execa('node', [cliPath, 'start']))
+  await assert.rejects(execa('node', [cliPath, 'migrations', 'apply']))
 })
 
 test('missing connectionString', async (t) => {
-  await assert.rejects(execa('node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('no-connectionString.json')]))
+  await assert.rejects(execa('node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('no-connectionString.json')]))
 })
 
 test('missing migrations', async (t) => {
@@ -17,7 +17,7 @@ test('missing migrations', async (t) => {
   t.after(async () => { await dropTestDB() })
 
   await assert.rejects(execa(
-    'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('no-migrations.json')],
+    'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('no-migrations.json')],
     {
       env: {
         DATABASE_URL: connectionInfo.connectionString
@@ -31,7 +31,7 @@ test('missing migrations.dir', async (t) => {
   t.after(async () => { await dropTestDB() })
 
   await assert.rejects(execa(
-    'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('no-migrations-dir.json')],
+    'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('no-migrations-dir.json')],
     {
       env: {
         DATABASE_URL: connectionInfo.connectionString
@@ -45,7 +45,7 @@ test('not applied migrations', async (t) => {
   t.after(async () => { await dropTestDB() })
 
   await assert.rejects(execa(
-    'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('bad-migrations.json')],
+    'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('bad-migrations.json')],
     {
       env: {
         DATABASE_URL: connectionInfo.connectionString
