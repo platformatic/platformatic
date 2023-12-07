@@ -71,17 +71,25 @@ the services managed by the composer. Each service object supports the following
 
 - **`openapi`** (`object`) - See the Platformatic Service [service](/docs/reference/service/configuration.md#service) openapi option for details.
 - **`graphql`** (`object`) - Has the Platformatic Service [service](/docs/reference/service/configuration.md#service) graphql options, plus
-  TODO
-  - **`defaultArgsAdapter`** (`number`) - The default `argsAdapter` function for the entities, for example
+  
+  - **`addEntitiesResolvers`** (`boolean`) - Automatically add related entities on GraphQL types, following the services entities configuration. See [graphql-composer entities](https://github.com/platformatic/graphql-composer#composer-entities) for details. Default is disabled.
+  - **`defaultArgsAdapter`** (`function` or `string`) - The default `argsAdapter` function for the entities, for example for the platformatic db mapped entities queries
   ```js
   graphql: {
     defaultArgsAdapter: (partialResults) => ({ where: { id: { in: partialResults.map(r => r.id) } } })
   }
   ```
+  or with the [metaline](https://github.com/platformatic/metaline) syntax, especially in the case of using the [json configuration](/docs/reference/cli.md#start)
+  ```json
+  "defaultArgsAdapter": "where.id.in.$>#id"
+  ```
+  - **`onSubgraphError`** (`function`) - Hook called when an error occurs getting schema from a subgraph. The arguments are:
+    - `error` (`error`) - The error
+    - `subgraphName` (`string`) - The erroring subgraph
 
   GraphQL subscriptions are not supported in the composer yet.
 
-- **`refreshTimeout`** (`number`) - The number of milliseconds to wait for check for changes in the service OpenAPI specification. If not specified, the default value is `1000`.
+- **`refreshTimeout`** (`number`) - The number of milliseconds to wait for check for changes in the services. If not specified, the default value is `1000`; set to `0` to disable.
 
 #### `openapi`
 
@@ -213,22 +221,27 @@ _Examples_
 - **`name`** (`string`) - name to identify the service. If not specified, the `service.origin` is used.
 - **`graphqlEndpoint`** (`string`) - The graphql endpoint path, the default value is the common `'/graphql'`.
 - **`composeEndpoint`** (`string`) - The endpoint to retrieve the introspection query from, default is `'/.well-known/graphql-composition'`. In case the endpoint is not available, a second call with introspection query will be sent to the `graphqlEndpoint`.
-- **`entities`** (`Object`) - Configuration object for working with entities in the service. Each key in this object is the name of an entity data type. This is required if the service contains any entities. The values are objects with the the following schema:
-  TODO
-  - `referenceListResolverName` (`string`) - The name of the resolver used to retrieve a list of objects by their keys. Can be optional if the entity doesn't have a resolver because its keys are nested in another entity (see the [example](./examples/with-nested-keys.js)).
-  - `argsAdapter (partialResults)` (`function`) - When resolving an entity across multiple services, an initial query is made to one service followed by one or more followup queries to other services. The initial query must return enough information to identify the corresponding data in the other services. This function is invoked with the result of the initial query. It should return an object to be used as argument for `referenceListResolverName` query.
-  **Default:** if missing, the `defaultArgsAdapter` function will be used.
-  - `keys` (**required**, `Object[]`) - The keys of the entity, to identify itself or refered to other entities. The key format is `[{ field, type }]`, for example `[{ field: 'id', type: 'Book' }]`. `type` can be omitted referring to the entity itself.
-  ```js
-  entities: {
-    Book: {
-      TODO
-      referenceListResolverName: 'books',
-      keys: [{ field: 'id' }, { field: 'authorId', type: 'Author' }]
-      argsAdapter: (partialResults) => ({ where: { id: { in: partialResults.map(r => r.id) } } })
-    }
-  }
-  ```
+- **`entities`** (`object`) - Configuration object for working with entities in this subgraph, the values are objects with the the following schema:
+  - **`resolver`** (`object`) - The resolver to retrieve a list of objects - should return a list - and should accept as a arguments a list of primary keys or foreign keys.
+    - **`name`** (`string`, **required**) - The name of the resolver.
+    - **`argsAdapter (partialResults)`** (`function` or `string`) - The function invoked with a subset of the result of the inital query, where `partialResults` is an array of the parent node. It should return an object to be used as argument for `resolver` query. Can be a function or a [metaline](https://github.com/platformatic/metaline) string.
+  **Default:** if missing, the `defaultArgsAdapter` function will be used; if that is missing too, a [generic one](lib/utils.js#L3) will be used.
+    - **`partialResults`** (`function` or `string`) - The function to adapt the subset of the result to be passed to `argsAdapter` - usually is needed only on resolvers of `fkeys` and `many`. Can be a function or a [metaline](https://github.com/platformatic/metaline) string.
+  - **`pkey`** (`string`, **required**) - The primary key field to identify the entity.
+  - **`fkeys`** (`array of objects`) an array to describe the foreign keys of the entities, for example `fkeys: [{ type: 'Author', field: 'authorId' }]`.
+    - **`type`** (`string`, **required**) - The entity type the foreign key is referrered to.
+    - **`field`** (`string`) - The foreign key field.
+    - **`as`** (`string`) - When using `addEntitiesResolvers`, it defines the name of the foreign entity as a field of the current one, as a single type.
+    - **`pkey`** (`string`) - The primary key of the foreign entity.
+    - **`subgraph`** (`string`) - The subgraph name of the foreign entity, where the resolver is located; if missing is intended the self.
+    - **`resolver`** (object) - The resolver definition to query the foreing entity, same structure as `entity.resolver`.
+  - **`many`** (`array of objects`) - Describe a 1-to-many relation - the reverse of the foreign key.
+    - **`type`** (`string`, **required**) - The entity type where the entity is a foreign key.
+    - **`fkey`** (`string`, **required**) - The foreign key field in the referred entity.
+    - **`as`** (`string`, **required**) - When using `addEntitiesResolvers`, it defines the name of the relation as a field of the current one, as a list.
+    - **`pkey`** (`string`) - The primary key of the referred entity.
+    - **`subgraph`** (`string`) - The subgraph name of the referred entity, where the resolver is located; if missing is intended the self.
+    - **`resolver`** (`object`, **required**) - The resolver definition to query the referred entity, same structure as `entity.resolver`.
 
 ### `telemetry`
 
