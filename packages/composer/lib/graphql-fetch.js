@@ -66,12 +66,12 @@ function toComposerOptions (options, app) {
     // TODO logger: options?.logger
     defaultArgsAdapter: options?.defaultArgsAdapter,
     addEntitiesResolvers: options?.addEntitiesResolvers,
-    onSubgraphError: (err) => {
-      app.log.error({ err }, 'graphql composer error on subgraph')
+    onSubgraphError: (err, subgraphName) => {
+      app.log.error({ err }, 'graphql composer error on subgraph ' + subgraphName)
 
       if (options?.onSubgraphError) {
         try {
-          options.onSubgraphError(err)
+          options.onSubgraphError(err, subgraphName)
         } catch (err) {
           app.log.error({ err }, 'running onSubgraphError')
         }
