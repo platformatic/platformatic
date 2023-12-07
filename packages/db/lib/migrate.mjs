@@ -33,6 +33,7 @@ async function execute ({ logger, rollback, to, config }) {
 }
 
 async function applyMigrations (_args) {
+  console.log(_args)
   const logger = pino(pretty({
     translateTime: 'SYS:HH:MM:ss',
     ignore: 'hostname,pid'

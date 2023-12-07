@@ -1,6 +1,6 @@
 import { join } from 'desm'
 
-const cliPath = join(import.meta.url, '..', '..', 'lib', 'migrate.mjs')
+const cliPath = join(import.meta.url, '..', '..', 'db.mjs')
 
 function removeFileProtocol (str) {
   return str.replace('file:', '')
