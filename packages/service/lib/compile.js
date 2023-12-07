@@ -78,7 +78,7 @@ async function compile (cwd, config, originalLogger, options) {
     delete env.NODE_V8_COVERAGE
     // somehow c8 does not pick up these lines even if there is a specific test
     /* c8 ignore start */
-    if (options.clean) {
+    if (options && options.clean) {
       // delete outdir directory
       const tsConfigContents = JSON.parse(await readFile(tsConfigPath, 'utf8'))
       const outDir = tsConfigContents.compilerOptions.outDir
