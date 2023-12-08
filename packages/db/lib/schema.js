@@ -311,8 +311,13 @@ const migrations = {
       type: 'boolean'
     },
     autoApply: {
-      type: 'boolean',
-      description: 'Whether to automatically apply migrations when running the migrate command.'
+      description: 'Whether to automatically apply migrations when running the migrate command.',
+      anyOf: [{
+        type: 'boolean',
+        default: false
+      }, {
+        type: 'string'
+      }]
     }
   },
   additionalProperties: false,
