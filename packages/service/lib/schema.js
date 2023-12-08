@@ -542,30 +542,39 @@ const plugins = {
   }]
 }
 
+const auth = {
+  type: 'object',
+  properties: {
+    username: { type: 'string' },
+    password: { type: 'string' }
+  },
+  additionalProperties: false,
+  required: ['username', 'password']
+}
+
 const metrics = {
-  anyOf: [
+  oneOf: [
     { type: 'boolean' },
     {
       type: 'object',
       properties: {
         port: {
-          anyOf: [
-            { type: 'integer' },
-            { type: 'string' }
-          ]
+          anyOf: [{ type: 'integer' }, { type: 'string' }]
         },
         hostname: { type: 'string' },
-        auth: {
-          type: 'object',
-          properties: {
-            username: { type: 'string' },
-            password: { type: 'string' }
-          },
-          additionalProperties: false,
-          required: ['username', 'password']
-        }
+        server: { type: 'string', enum: ['own'] },
+        auth
       },
       additionalProperties: false
+    },
+    {
+      type: 'object',
+      properties: {
+        server: { type: 'string', enum: ['parent'] },
+        auth
+      },
+      additionalProperties: false,
+      required: ['server']
     }
   ]
 }

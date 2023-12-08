@@ -16,13 +16,18 @@ let server = null
 module.exports = fp(async function (app, opts) {
   let port = 9090
   let host = '0.0.0.0'
+  let useOwnServer = true
   if (typeof opts === 'object') {
-    if (undefined !== opts.port) {
-      port = opts.port
-    }
-    /* c8 ignore next 3 */
-    if (undefined !== opts.hostname) {
-      host = opts.hostname
+    if (opts.server === 'parent') {
+      useOwnServer = false
+    } else {
+      if (undefined !== opts.port) {
+        port = opts.port
+      }
+      /* c8 ignore next 3 */
+      if (undefined !== opts.hostname) {
+        host = opts.hostname
+      }
     }
   }
   app.register(metricsPlugin, {
@@ -56,27 +61,29 @@ module.exports = fp(async function (app, opts) {
     app.metrics.client.register.registerMetric(eluMetric)
   })
 
-  if (server && server.address().port !== port) {
+  if (useOwnServer && server && server.address().port !== port) {
     await new Promise((resolve) => server.close(resolve))
     server = null
   }
 
-  if (!server) {
+  if (useOwnServer && !server) {
     server = http.createServer()
     server.listen(port, host)
     server.unref()
   }
 
-  const promServer = Fastify({
-    name: 'Prometheus server',
-    serverFactory: (handler) => {
-      server.removeAllListeners('request')
-      server.removeAllListeners('clientError')
-      server.on('request', handler)
-      return server
-    },
-    logger: app.log.child({ name: 'prometheus' })
-  })
+  const promServer = useOwnServer
+    ? Fastify({
+      name: 'Prometheus server',
+      serverFactory: (handler) => {
+        server.removeAllListeners('request')
+        server.removeAllListeners('clientError')
+        server.on('request', handler)
+        return server
+      },
+      logger: app.log.child({ name: 'prometheus' })
+    })
+    : app
 
   promServer.register(fastifyAccepts)
 
@@ -99,7 +106,7 @@ module.exports = fp(async function (app, opts) {
     const { username, password } = opts.auth
     await promServer.register(basicAuth, {
       validate: function (user, pass, req, reply, done) {
-        if (username !== user || password !== pass) {
+        if (req.url.startsWith('/metrics') && (username !== user || password !== pass)) {
           return reply.code(401).send({ message: 'Unauthorized' })
         }
         return done()
@@ -109,9 +116,11 @@ module.exports = fp(async function (app, opts) {
   }
   promServer.route(metricsEndpointOptions)
 
-  app.addHook('onClose', async (instance) => {
-    await promServer.close()
-  })
+  if (useOwnServer) {
+    app.addHook('onClose', async (instance) => {
+      await promServer.close()
+    })
 
-  await promServer.ready()
+    await promServer.ready()
+  }
 })

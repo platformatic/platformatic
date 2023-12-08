@@ -38,7 +38,7 @@ test('has /metrics endpoint with accept application/json', async (t) => {
       hostname: '127.0.0.1',
       port: 0
     },
-    metrics: true
+    metrics: {}
   })
 
   t.after(async () => {
@@ -67,6 +67,7 @@ test('has /metrics endpoint on configured port', async (t) => {
       port: 0
     },
     metrics: {
+      server: 'own',
       port: 9999
     }
   })
@@ -77,6 +78,29 @@ test('has /metrics endpoint on configured port', async (t) => {
   await app.start()
 
   const res = await (request('http://127.0.0.1:9999/metrics'))
+  assert.strictEqual(res.statusCode, 200)
+  assert.match(res.headers['content-type'], /^text\/plain/)
+  const body = await res.body.text()
+  testPrometheusOutput(body)
+})
+
+test('support running in parent server', async (t) => {
+  const app = await buildServer({
+    server: {
+      hostname: '127.0.0.1',
+      port: 8080
+    },
+    metrics: {
+      server: 'parent'
+    }
+  })
+
+  t.after(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const res = await (request('http://127.0.0.1:8080/metrics'))
   assert.strictEqual(res.statusCode, 200)
   assert.match(res.headers['content-type'], /^text\/plain/)
   const body = await res.body.text()
@@ -121,6 +145,56 @@ test('support basic auth', async (t) => {
 
   {
     const res = await (request('http://127.0.0.1:9090/metrics', {
+      headers: {
+        authorization: `Basic ${Buffer.from('foo:bar').toString('base64')}`
+      }
+    }))
+    assert.strictEqual(res.statusCode, 200)
+    assert.match(res.headers['content-type'], /^text\/plain/)
+    const body = await res.body.text()
+    testPrometheusOutput(body)
+  }
+})
+
+test('support basic auth in parent server', async (t) => {
+  const app = await buildServer({
+    server: {
+      hostname: '127.0.0.1',
+      port: 8020
+    },
+    metrics: {
+      server: 'parent',
+      auth: {
+        username: 'foo',
+        password: 'bar'
+      }
+    }
+  })
+
+  t.after(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  {
+    const res = await (request('http://127.0.0.1:8020/metrics'))
+    assert.strictEqual(res.statusCode, 401)
+    assert.match(res.headers['content-type'], /^application\/json/)
+  }
+
+  {
+    // wrong credentials
+    const res = await (request('http://127.0.0.1:8020/metrics', {
+      headers: {
+        authorization: `Basic ${Buffer.from('bar:foo').toString('base64')}`
+      }
+    }))
+    assert.strictEqual(res.statusCode, 401)
+    assert.match(res.headers['content-type'], /^application\/json/)
+  }
+
+  {
+    const res = await (request('http://127.0.0.1:8020/metrics', {
       headers: {
         authorization: `Basic ${Buffer.from('foo:bar').toString('base64')}`
       }
