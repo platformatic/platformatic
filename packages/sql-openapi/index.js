@@ -44,7 +44,7 @@ async function setupOpenAPI (app, opts) {
     ...theme,
     ...opts,
     logLevel: 'warn',
-    prefix: '/documentation'
+    prefix: opts.swaggerPrefix || '/documentation'
   })
 
   app.addHook('onRoute', (routeOptions) => {

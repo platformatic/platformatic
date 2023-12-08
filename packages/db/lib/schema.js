@@ -130,6 +130,10 @@ const db = {
               { type: 'boolean' },
               { type: 'string' }
             ]
+          },
+          swaggerPrefix: {
+            type: 'string',
+            description: 'Base URL for the OpenAPI Swagger Documentation'
           }
         },
         additionalProperties: false

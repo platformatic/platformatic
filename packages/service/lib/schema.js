@@ -619,9 +619,9 @@ const openApiBase = {
     externalDocs: {
       $ref: '#/$defs/external-documentation'
     },
-    prefix: {
+    swaggerPrefix: {
       type: 'string',
-      description: 'Base URL for the OpenAPI'
+      description: 'Base URL for the OpenAPI Swagger Documentation'
     },
     path: {
       type: 'string',
