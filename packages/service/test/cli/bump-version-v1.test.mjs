@@ -11,6 +11,11 @@ function urlDirname (url) {
   return dirname(fileURLToPath(url))
 }
 
+const env = {
+  ...process.env
+}
+delete env.NODE_V8_COVERAGE
+
 test('generate a default version config', async (t) => {
   const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'init-version')
   const cwd = await mkdtemp(join(tmpdir(), 'test-init-version-'))
@@ -25,7 +30,7 @@ test('generate a default version config', async (t) => {
   const configFile = await readFile(configPath, 'utf8')
   const config = JSON.parse(configFile)
 
-  await execa('node', [cliPath, 'versions', 'bump'], { cwd })
+  await execa('node', [cliPath, 'versions', 'bump'], { cwd, env })
 
   const openapiPath = join(cwd, 'versions', versionName, 'openapi.json')
   const openapiFile = await readFile(openapiPath, 'utf8')
@@ -65,7 +70,7 @@ test('generate a version with a custom version name', async (t) => {
   const configFile = await readFile(configPath, 'utf8')
   const config = JSON.parse(configFile)
 
-  await execa('node', [cliPath, 'versions', 'bump', '-v', versionName], { cwd })
+  await execa('node', [cliPath, 'versions', 'bump', '-v', versionName], { cwd, env })
 
   const openapiPath = join(cwd, 'versions', versionName, 'openapi.json')
   const openapiFile = await readFile(openapiPath, 'utf8')
@@ -109,7 +114,7 @@ test('generate a version with a custom version prefix', async (t) => {
     cliPath, 'versions', 'bump',
     '--version', versionName,
     '--prefix', versionPrefix
-  ], { cwd })
+  ], { cwd, env })
 
   const openapiPath = join(cwd, 'versions', versionName, 'openapi.json')
   const openapiFile = await readFile(openapiPath, 'utf8')
@@ -153,7 +158,7 @@ test('add a slash to version prefix if it does not have it', async (t) => {
     cliPath, 'versions', 'bump',
     '--version', versionName,
     '--prefix', versionPrefix
-  ], { cwd })
+  ], { cwd, env })
 
   const openapiPath = join(cwd, 'versions', versionName, 'openapi.json')
   const openapiFile = await readFile(openapiPath, 'utf8')
