@@ -134,7 +134,7 @@ const db = {
           swaggerPrefix: {
             type: 'string',
             description: 'Base URL for the OpenAPI Swagger Documentation'
-          },
+          }
         },
         additionalProperties: false
       }]
