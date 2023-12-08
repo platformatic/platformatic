@@ -29,6 +29,7 @@ describe('generator', () => {
       envPrefix: '',
       env: {
         PLT_SERVER_HOSTNAME: '0.0.0.0',
+        PLT_APPLY_MIGRATIONS: 'true',
         PLT_SERVER_LOGGER_LEVEL: 'info',
         PORT: 3042,
         DATABASE_URL: 'sqlite://./db.sqlite'
@@ -37,8 +38,7 @@ describe('generator', () => {
       connectionString: 'sqlite://./db.sqlite',
       types: false,
       migrations: 'migrations',
-      createMigrations: true,
-      applyMigrations: true
+      createMigrations: true
     })
   })
   test('generate correct .env file', async (t) => {
@@ -50,6 +50,7 @@ describe('generator', () => {
 
         'PLT_SERVER_HOSTNAME=0.0.0.0',
         'PLT_SERVER_LOGGER_LEVEL=info',
+        'PLT_APPLY_MIGRATIONS=true',
         'PORT=3042',
         'DATABASE_URL=sqlite://./db.sqlite',
         ''
@@ -116,7 +117,7 @@ describe('generator', () => {
       schemalock: true
     })
 
-    assert.deepEqual(contents.migrations, { dir: 'migrations' })
+    assert.deepEqual(contents.migrations, { autoApply: '{PLT_APPLY_MIGRATIONS}', dir: 'migrations' })
 
     assert.deepEqual(contents.types, { autogenerate: true })
   })
@@ -235,6 +236,12 @@ describe('generator', () => {
         default: svc.connectionStrings.sqlite,
         type: 'string',
         configValue: 'connectionString'
+      },
+      {
+        default: true,
+        label: 'Should migrations be applied automatically on startup?',
+        type: 'boolean',
+        var: 'PLT_APPLY_MIGRATIONS'
       }
     ])
   })
