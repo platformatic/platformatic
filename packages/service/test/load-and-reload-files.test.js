@@ -97,10 +97,8 @@ test('mock undici is supported', async (t) => {
   const previousAgent = getGlobalDispatcher()
   t.after(() => setGlobalDispatcher(previousAgent))
 
-  const mockAgent = new MockAgent({
-    keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
-  })
+  const mockAgent = new MockAgent()
+  mockAgent.disableNetConnect()
   setGlobalDispatcher(mockAgent)
 
   const mockPool = mockAgent.get('http://localhost:42')
@@ -128,11 +126,9 @@ test('mock undici is supported', async (t) => {
   })
   await app.start()
 
-  const res = await request(`${app.url}/request`, {
-    method: 'GET'
-  })
+  const res = await app.inject('/request')
   assert.strictEqual(res.statusCode, 200)
-  assert.deepStrictEqual(await res.body.json(), {
+  assert.deepStrictEqual(res.json(), {
     hello: 'world'
   })
 })
