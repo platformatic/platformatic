@@ -1,7 +1,7 @@
 'use strict'
 
 const { readFile } = require('node:fs/promises')
-const { stripVersion, convertServiceNameToPrefix, addPrefixToEnv, extractEnvVariablesFromText } = require('./utils')
+const { stripVersion, convertServiceNameToPrefix, addPrefixToEnv, extractEnvVariablesFromText, getPackageConfigurationObject } = require('./utils')
 const { join } = require('node:path')
 const { FileGenerator } = require('./file-generator')
 const { generateTests, generatePlugins } = require('./create-plugin')
@@ -273,6 +273,33 @@ class BaseGenerator extends FileGenerator {
   async generateConfigFile () {
     const configFileName = 'platformatic.json'
     const contents = await this._getConfigFileContents()
+
+    // handle packages
+    if (this.packages.length > 0) {
+      if (!contents.plugins) {
+        contents.plugins = {}
+      }
+      contents.plugins.packages = this.packages.map((packageDefinition) => {
+        const packageConfigOutput = getPackageConfigurationObject(packageDefinition.options, this.config.serviceName)
+        if (Object.keys(packageConfigOutput.env).length > 0) {
+          const envForPackages = {}
+          Object.entries(packageConfigOutput.env).forEach((kv) => {
+            envForPackages[kv[0]] = kv[1]
+          })
+          if (this.config.isRuntimeContext) {
+            this.config.env = {
+              ...this.config.env,
+              ...addPrefixToEnv(envForPackages, this.config.envPrefix)
+            }
+          }
+        }
+        return {
+          name: packageDefinition.name,
+          options: packageConfigOutput.config
+        }
+      })
+    }
+
     this.addFile({
       path: '',
       file: configFileName,

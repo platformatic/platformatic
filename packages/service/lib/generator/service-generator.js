@@ -1,7 +1,6 @@
 'use strict'
 
-const { BaseGenerator, addPrefixToEnv } = require('@platformatic/generators')
-const { getPackageConfigurationObject } = require('@platformatic/generators/lib/utils')
+const { BaseGenerator } = require('@platformatic/generators')
 const { readFile } = require('node:fs/promises')
 const { join } = require('node:path')
 
@@ -110,30 +109,6 @@ declare module 'fastify' {
       }
     }
 
-    if (this.packages.length > 0) {
-      if (!config.plugins) {
-        config.plugins = {}
-      }
-      config.plugins.packages = this.packages.map((packageDefinition) => {
-        const packageConfigOutput = getPackageConfigurationObject(packageDefinition.options, this.config.serviceName)
-        if (Object.keys(packageConfigOutput.env).length > 0) {
-          const envForPackages = {}
-          Object.entries(packageConfigOutput.env).forEach((kv) => {
-            envForPackages[kv[0]] = kv[1]
-          })
-          if (this.config.isRuntimeContext) {
-            this.config.env = {
-              ...this.config.env,
-              ...addPrefixToEnv(envForPackages, this.config.envPrefix)
-            }
-          }
-        }
-        return {
-          name: packageDefinition.name,
-          options: packageConfigOutput.config
-        }
-      })
-    }
     return config
   }
 }

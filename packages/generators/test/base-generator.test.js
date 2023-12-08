@@ -404,6 +404,92 @@ test('should add package', async () => {
   assert.deepEqual(bg.packages[0], packageDefinition)
 })
 
+test('support packages', async (t) => {
+  {
+    const svc = new BaseGenerator({
+      module: '@platformatic/service'
+    })
+    const packageDefinitions = [
+      {
+        name: '@fastify/compress',
+        options: [
+          {
+            path: 'threshold',
+            value: '1',
+            type: 'number'
+          },
+          {
+            path: 'foobar',
+            value: '123',
+            type: 'number',
+            name: 'FST_PLUGIN_STATIC_FOOBAR'
+          }
+        ]
+      }
+    ]
+    svc.setConfig({
+      isRuntimeContext: true,
+      serviceName: 'my-service'
+    })
+    svc.addPackage(packageDefinitions[0])
+    await svc.prepare()
+
+    const platformaticConfigFile = svc.getFileObject('platformatic.json')
+    const contents = JSON.parse(platformaticConfigFile.contents)
+
+    assert.deepEqual(contents.plugins, {
+      packages: [
+        {
+          name: '@fastify/compress',
+          options: {
+            threshold: 1,
+            foobar: '{PLT_MY_SERVICE_FST_PLUGIN_STATIC_FOOBAR}'
+          }
+        }
+      ]
+    })
+
+    assert.equal(svc.config.env.PLT_MY_SERVICE_FST_PLUGIN_STATIC_FOOBAR, 123)
+  }
+  {
+    // with standard platformatic plugin
+    const svc = new BaseGenerator({
+      module: '@platformatic/service'
+    })
+    svc.setConfig({
+      plugin: true
+    })
+    const packageDefinitions = [
+      {
+        name: '@fastify/compress',
+        options: [
+          {
+            path: 'threshold',
+            value: '1',
+            type: 'number'
+          }
+        ]
+      }
+    ]
+    svc.addPackage(packageDefinitions[0])
+    await svc.prepare()
+
+    const platformaticConfigFile = svc.getFileObject('platformatic.json')
+    const contents = JSON.parse(platformaticConfigFile.contents)
+
+    assert.deepEqual(contents.plugins, {
+      packages: [
+        {
+          name: '@fastify/compress',
+          options: {
+            threshold: 1
+          }
+        }
+      ]
+    })
+  }
+})
+
 describe('runtime context', () => {
   test('should set config.envPrefix correctly', async (t) => {
     const bg = new BaseGenerator({
