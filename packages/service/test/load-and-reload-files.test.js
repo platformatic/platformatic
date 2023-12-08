@@ -8,7 +8,9 @@ const { randomUUID } = require('node:crypto')
 const { writeFile } = require('node:fs/promises')
 const { request, setGlobalDispatcher, getGlobalDispatcher, MockAgent } = require('undici')
 const { buildServer } = require('..')
-// require('./helper')
+
+// set up the undici Agent
+require('./helper')
 
 test('load and reload', async (t) => {
   const file = join(os.tmpdir(), `some-plugin-${randomUUID()}.js`)
