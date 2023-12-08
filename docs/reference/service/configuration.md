@@ -109,8 +109,9 @@ This setting can be a `boolean` or an `object`. If set to `true` the Prometheus 
 
 Supported object properties:
 
-- **`hostname`** (`string`) — The hostname where Prometheus server will listen for connections.
-- **`port`** (`number` or `string`) — The port where Prometheus server will listen for connections.
+- **`server`** (`'parent'` or `'own'`) — If set to `'own'` (the default), will spin up a separate server listening on a separate socket that provides the `/metrics` endpoint. Set `server` to `'parent'` to provide the `/metrics` endpoint on the regular server (not recommended unless the endpoint is protected by some other means from being publicly accessible).
+- **`hostname`** (`string`) — The hostname where Prometheus server will listen for connections, if `server` is set to `'own'`.
+- **`port`** (`number` or `string`) — The port where Prometheus server will listen for connections, if `server` is set to `'own'`.
 - **`auth`** (`object`) — Basic Auth configuration. **`username`** and **`password`** are required here
   (use [environment variables](#environment-variables)).
 
