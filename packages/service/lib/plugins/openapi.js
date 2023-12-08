@@ -59,7 +59,7 @@ async function setupOpenAPI (app, opts) {
     ...theme,
     ...openapi,
     logLevel: 'warn',
-    prefix: openapi.prefix || '/documentation'
+    prefix: openapi.swaggerPrefix || '/documentation'
   })
 }
 

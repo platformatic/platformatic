@@ -187,6 +187,35 @@ test('simple db, simple rest API', async (t) => {
     }, 'GET /pages/1?fields=title,id response')
   }
 })
+test('swagger prefix', async (t) => {
+  const { pass, teardown, equal } = t
+  t.snapshotFile = resolve(__dirname, 'tap-snapshots', 'simple-openapi-1.cjs')
+
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(sqlOpenAPI, {
+    swaggerPrefix: 'my-prefix'
+  })
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/my-prefix/json'
+    })
+    equal(res.json().info.version, '1.0.0', 'GET /my-prefix/json info version default')
+  }
+})
 
 async function createBasicPagesNullable (db, sql) {
   if (isSQLite) {
