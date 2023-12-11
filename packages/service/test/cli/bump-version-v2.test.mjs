@@ -11,6 +11,11 @@ function urlDirname (url) {
   return dirname(fileURLToPath(url))
 }
 
+const env = {
+  ...process.env
+}
+delete env.NODE_V8_COVERAGE
+
 test('bump a new version', async (t) => {
   const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'bump-version')
   const cwd = await mkdtemp(join(tmpdir(), 'test-bump-version-'))
@@ -25,7 +30,7 @@ test('bump a new version', async (t) => {
   const v1ConfigFile = await readFile(configPath, 'utf8')
   const v1Config = JSON.parse(v1ConfigFile)
 
-  await execa('node', [cliPath, 'versions', 'bump', '-v', versionName], { cwd })
+  await execa('node', [cliPath, 'versions', 'bump', '-v', versionName], { cwd, env })
 
   const openapiPath = join(cwd, 'versions', versionName, 'openapi.json')
   const openapiFile = await readFile(openapiPath, 'utf8')
@@ -73,7 +78,7 @@ test('bump a new version with a custom version prefix', async (t) => {
     cliPath, 'versions', 'bump',
     '--version', versionName,
     '--prefix', versionPrefix
-  ], { cwd })
+  ], { cwd, env })
 
   const openapiPath = join(cwd, 'versions', versionName, 'openapi.json')
   const openapiFile = await readFile(openapiPath, 'utf8')
@@ -111,7 +116,7 @@ test('fails if version is not specified', async (t) => {
   t.after(async () => { rm(cwd, { recursive: true, force: true }) })
 
   try {
-    await execa('node', [cliPath, 'versions', 'bump'], { cwd })
+    await execa('node', [cliPath, 'versions', 'bump'], { cwd, env })
   } catch (err) {
     assert.strictEqual(err.exitCode, 1)
     assert.ok(
@@ -128,7 +133,7 @@ test('fails if version is already exists', async (t) => {
   t.after(async () => { rm(cwd, { recursive: true, force: true }) })
 
   try {
-    await execa('node', [cliPath, 'versions', 'bump', '--version', 'v1'], { cwd })
+    await execa('node', [cliPath, 'versions', 'bump', '--version', 'v1'], { cwd, env })
   } catch (err) {
     assert.strictEqual(err.exitCode, 1)
     assert.ok(err.stdout.includes('Version v1 already exists.'))
