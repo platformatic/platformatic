@@ -224,3 +224,7 @@ npx platformatic runtime --allow-env=MY_NS_*
 ```
 
 This will allow you to use placeholders like `{MY_NS_MY_VAR}`.
+
+### PLT_ROOT
+
+The `{PLT_ROOT}` placeholder is automatically set to the directory containing the configuration file, so it can be used to configure relative paths.

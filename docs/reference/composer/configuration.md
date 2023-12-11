@@ -266,3 +266,7 @@ See [Setting environment variables](/docs/reference/service/configuration.md#set
 ### Allowed placeholder names
 
 See [Allowed placeholder names](/docs/reference/service/configuration.md#allowed-placeholder-names) for more details.
+
+### PLT_ROOT
+
+See [PLT_ROOT](/docs/reference/service/configuration.md#plt_root) for more details.
