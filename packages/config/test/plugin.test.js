@@ -48,9 +48,9 @@ test('should generate fastify plugin', async (t) => {
   }
 })
 
-test('should generate fastify plugin with PLT_SERVICE_ROOT', async (t) => {
+test('should generate fastify plugin with PLT_ROOT', async (t) => {
   const config = {
-    foo: join('{PLT_SERVICE_ROOT}', 'test')
+    foo: join('{PLT_ROOT}', 'test')
   }
   const schema = {
     type: 'object',
