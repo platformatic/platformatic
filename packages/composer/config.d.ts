@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface HttpsPlatformaticDevSchemasV180Composer {
+export interface HttpsPlatformaticDevSchemasV1144Composer {
   server?: {
     hostname?: string;
     port?: number | string;
@@ -147,6 +147,79 @@ export interface HttpsPlatformaticDevSchemasV180Composer {
         | {
             [k: string]: unknown;
           };
+      graphql?:
+        | boolean
+        | {
+            host?: string;
+            name?: string;
+            graphqlEndpoint?: string;
+            composeEndpoint?: string;
+            entities?: {
+              /**
+               * This interface was referenced by `undefined`'s JSON-Schema definition
+               * via the `patternProperty` "^.*$".
+               */
+              [k: string]: {
+                pkey?: string;
+                resolver?: {
+                  name: string;
+                  argsAdapter?:
+                    | {
+                        [k: string]: unknown;
+                      }
+                    | string;
+                  partialResults?:
+                    | {
+                        [k: string]: unknown;
+                      }
+                    | string;
+                };
+                fkeys?: {
+                  type: string;
+                  field?: string;
+                  as?: string;
+                  pkey?: string;
+                  subgraph?: string;
+                  resolver?: {
+                    name: string;
+                    argsAdapter?:
+                      | {
+                          [k: string]: unknown;
+                        }
+                      | string;
+                    partialResults?:
+                      | {
+                          [k: string]: unknown;
+                        }
+                      | string;
+                  };
+                  [k: string]: unknown;
+                }[];
+                many?: {
+                  type: string;
+                  fkey: string;
+                  as: string;
+                  pkey?: string;
+                  subgraph?: string;
+                  resolver: {
+                    name: string;
+                    argsAdapter?:
+                      | {
+                          [k: string]: unknown;
+                        }
+                      | string;
+                    partialResults?:
+                      | {
+                          [k: string]: unknown;
+                        }
+                      | string;
+                  };
+                  [k: string]: unknown;
+                }[];
+                [k: string]: unknown;
+              };
+            };
+          };
       proxy?:
         | false
         | {
@@ -166,10 +239,26 @@ export interface HttpsPlatformaticDevSchemasV180Composer {
       tags?: Tag[];
       externalDocs?: ExternalDocumentation;
       /**
-       * Base URL for the OpenAPI
+       * Base URL for the OpenAPI Swagger Documentation
        */
-      prefix?: string;
+      swaggerPrefix?: string;
+      /**
+       * Path to an OpenAPI spec file
+       */
+      path?: string;
       [k: string]: unknown;
+    };
+    graphql?: {
+      graphiql?: boolean;
+      onSubgraphError?: {
+        [k: string]: unknown;
+      };
+      defaultArgsAdapter?:
+        | {
+            [k: string]: unknown;
+          }
+        | string;
+      addEntitiesResolvers?: boolean;
     };
     refreshTimeout?: number;
   };
@@ -190,7 +279,9 @@ export interface HttpsPlatformaticDevSchemasV180Composer {
      */
     dir?: string;
   };
-  plugins?: Plugins;
+  plugins?: {
+    [k: string]: unknown;
+  };
   clients?: {
     serviceId?: string;
     name?: string;
@@ -406,41 +497,6 @@ export interface Tag {
    * via the `patternProperty` "^x-".
    */
   [k: string]: unknown;
-}
-export interface Plugins {
-  paths: (
-    | string
-    | {
-        path?: string;
-        encapsulate?: boolean;
-        maxDepth?: number;
-        autoHooks?: boolean;
-        autoHooksPattern?: string;
-        cascadeHooks?: boolean;
-        overwriteHooks?: boolean;
-        routeParams?: boolean;
-        forceESM?: boolean;
-        ignoreFilter?: string;
-        matchFilter?: string;
-        ignorePattern?: string;
-        scriptPattern?: string;
-        indexPattern?: string;
-        options?: {
-          [k: string]: unknown;
-        };
-        [k: string]: unknown;
-      }
-  )[];
-  typescript?:
-    | {
-        enabled?: boolean | string;
-        tsConfig?: string;
-        outDir?: string;
-        flags?: string[];
-        [k: string]: unknown;
-      }
-    | boolean
-    | string;
 }
 export interface OpenTelemetry {
   /**
