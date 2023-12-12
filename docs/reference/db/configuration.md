@@ -461,6 +461,10 @@ See [Setting environment variables](/docs/reference/service/configuration.md#set
 
 See [Allowed placeholder names](/docs/reference/service/configuration.md#allowed-placeholder-names) for more details.
 
+### PLT_ROOT
+
+The `{PLT_ROOT}` placeholder is automatically set to the directory containing the configuration file, so it can be used to configure relative paths.
+
 ## Sample Configuration
 
 This is a bare minimum configuration for Platformatic DB. Uses a local `./db.sqlite` SQLite database, with OpenAPI and GraphQL support.

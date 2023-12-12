@@ -12,6 +12,8 @@ const { getParser, analyze, upgrade } = require('@platformatic/metaconfig')
 const { isFileAccessible } = require('./utils')
 const errors = require('./errors')
 
+const PLT_ROOT = 'PLT_ROOT'
+
 class ConfigManager extends EventEmitter {
   constructor (opts) {
     super()
@@ -123,8 +125,12 @@ class ConfigManager extends EventEmitter {
       // but it's good enough for now.
       return value.replace(/\\/g, '\\\\').replace(/\n/g, '\\n')
     }
+    const fullEnv = {
+      ...this.env,
+      [PLT_ROOT]: join(this.fullPath, '..')
+    }
 
-    return this.pupa(configString, this.env, { transform: escapeJSONstring })
+    return this.pupa(configString, fullEnv, { transform: escapeJSONstring })
   }
 
   /**
