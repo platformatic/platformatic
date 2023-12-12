@@ -2,6 +2,8 @@
 
 const { mkdir } = require('node:fs/promises')
 const { WrongTypeError } = require('./errors')
+const { join } = require('node:path')
+const PLT_ROOT = 'PLT_ROOT'
 
 async function safeMkdir (dir) {
   try {
@@ -89,6 +91,7 @@ function getPackageConfigurationObject (config, serviceName = '') {
     props.forEach((prop, idx) => {
       if (idx === props.length - 1) {
         let value
+        let isPath = false
         switch (param.type) {
           case 'string' :
             value = param.value.toString()
@@ -99,6 +102,10 @@ function getPackageConfigurationObject (config, serviceName = '') {
           case 'boolean':
             value = (param.value === 'true')
             break
+          case 'path':
+            value = `${join(`{${PLT_ROOT}}`, param.value)}`
+            isPath = true
+            break
           default:
             throw new WrongTypeError(param.type)
         }
@@ -106,7 +113,13 @@ function getPackageConfigurationObject (config, serviceName = '') {
           current[prop] = value
         } else {
           const key = addPrefixToString(param.name, convertServiceNameToPrefix(serviceName))
-          current[prop] = `{${key}}`
+          // If it's a path, we need to add it to the env only the relative part of the path
+          if (isPath) {
+            current[prop] = `${join(`{${PLT_ROOT}}`, `{${key}}`)}`
+            value = param.value
+          } else {
+            current[prop] = `{${key}}`
+          }
           output.env[key] = value
         }
         current = output.config
@@ -128,5 +141,6 @@ module.exports = {
   envObjectToString,
   extractEnvVariablesFromText,
   safeMkdir,
-  stripVersion
+  stripVersion,
+  PLT_ROOT
 }
