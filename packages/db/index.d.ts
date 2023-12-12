@@ -30,4 +30,5 @@ export module errors {
   export const MigrateMissingMigrationsDirError: (dir: string) => FastifyError
   export const MissingSeedFileError: () => FastifyError
   export const MigrationsToApplyError: () => FastifyError
+  export const MigrateUnknownDatabaseError: () => FastifyError
 }
