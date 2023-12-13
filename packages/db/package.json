@@ -80,7 +80,7 @@
     "fastify-plugin": "^4.5.1",
     "fastify-print-routes": "^2.1.0",
     "graphql": "^16.8.1",
-    "help-me": "^4.2.0",
+    "help-me": "^5.0.0",
     "minimist": "^1.2.8",
     "pino": "^8.15.3",
     "pino-pretty": "^10.2.0",

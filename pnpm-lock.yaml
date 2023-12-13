@@ -124,8 +124,8 @@ importers:
         specifier: ^16.8.1
         version: 16.8.1
       help-me:
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: ^5.0.0
+        version: 5.0.0
       inquirer:
         specifier: ^9.2.11
         version: 9.2.12
@@ -264,8 +264,8 @@ importers:
         specifier: ^16.8.1
         version: 16.8.1
       help-me:
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: ^5.0.0
+        version: 5.0.0
       jsonpointer:
         specifier: ^5.0.1
         version: 5.0.1
@@ -397,8 +397,8 @@ importers:
         specifier: ^16.8.1
         version: 16.8.1
       help-me:
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: ^5.0.0
+        version: 5.0.0
       json-schema-traverse:
         specifier: ^1.0.0
         version: 1.0.0
@@ -558,8 +558,8 @@ importers:
         specifier: ^4.23.2
         version: 4.24.3
       help-me:
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: ^5.0.0
+        version: 5.0.0
       inquirer:
         specifier: ^9.2.11
         version: 9.2.12
@@ -664,8 +664,8 @@ importers:
         specifier: ^4.23.2
         version: 4.24.3
       help-me:
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: ^5.0.0
+        version: 5.0.0
       inquirer:
         specifier: ^9.2.11
         version: 9.2.12
@@ -836,8 +836,8 @@ importers:
         specifier: ^16.8.1
         version: 16.8.1
       help-me:
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: ^5.0.0
+        version: 5.0.0
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -1098,8 +1098,8 @@ importers:
         specifier: ^8.0.1
         version: 8.0.1
       help-me:
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: ^5.0.0
+        version: 5.0.0
       jsonpointer:
         specifier: ^5.0.1
         version: 5.0.1
@@ -1338,8 +1338,8 @@ importers:
         specifier: ^16.8.1
         version: 16.8.1
       help-me:
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: ^5.0.0
+        version: 5.0.0
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -1504,8 +1504,8 @@ importers:
         specifier: ^16.8.1
         version: 16.8.1
       help-me:
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: ^5.0.0
+        version: 5.0.0
       mercurius:
         specifier: ^13.1.0
         version: 13.3.1(graphql@16.8.1)
@@ -6008,6 +6008,10 @@ packages:
     dependencies:
       glob: 8.1.0
       readable-stream: 3.6.2
+    dev: false
+
+  /help-me@5.0.0:
+    resolution: {integrity: sha512-7xgomUX6ADmcYzFik0HzAxh/73YlKR9bmFzf51CZwR+b6YtzU2m0u49hQCqV6SvlqIqsaxovfwdvbnsw3b/zpg==}
     dev: false
 
   /hmac-drbg@1.0.1:

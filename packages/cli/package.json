@@ -61,7 +61,7 @@
     "dotenv": "^16.3.1",
     "execa": "^8.0.1",
     "graphql": "^16.8.1",
-    "help-me": "^4.2.0",
+    "help-me": "^5.0.0",
     "inquirer": "^9.2.11",
     "mercurius": "^13.1.0",
     "minimist": "^1.2.8",
