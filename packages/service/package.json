@@ -81,7 +81,7 @@
     "fastify-metrics": "^10.3.2",
     "fastify-plugin": "^4.5.1",
     "graphql": "^16.8.1",
-    "help-me": "^4.2.0",
+    "help-me": "^5.0.0",
     "mercurius": "^13.1.0",
     "minimist": "^1.2.8",
     "openapi-schema-diff": "^0.0.1",

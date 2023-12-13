@@ -32,7 +32,7 @@
     "es-main": "^1.3.0",
     "execa": "^8.0.1",
     "fastify": "^4.23.2",
-    "help-me": "^4.2.0",
+    "help-me": "^5.0.0",
     "inquirer": "^9.2.11",
     "log-update": "^5.0.1",
     "minimist": "^1.2.8",
