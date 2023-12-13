@@ -209,6 +209,10 @@ export interface PlatformaticDB {
            */
           swaggerPrefix?: string;
           /**
+           * Base URL for generated Platformatic DB routes
+           */
+          prefix?: string;
+          /**
            * Path to an OpenAPI spec file
            */
           path?: string;

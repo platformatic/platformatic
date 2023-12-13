@@ -134,6 +134,10 @@ const db = {
           swaggerPrefix: {
             type: 'string',
             description: 'Base URL for the OpenAPI Swagger Documentation'
+          },
+          prefix: {
+            type: 'string',
+            description: 'Base URL for generated Platformatic DB routes'
           }
         },
         additionalProperties: false
