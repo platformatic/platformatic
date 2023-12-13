@@ -52,7 +52,7 @@ test('should fail if platformatic_api_key is wrong 1s', async (t) => {
 
   try {
     const deployServicePort = deployService.server.address().port
-    const deployServiceHost = `http://localhost:${deployServicePort}`
+    const deployServiceHost = `http://127.0.0.1:${deployServicePort}`
 
     await deploy({
       deployServiceHost,
@@ -83,7 +83,7 @@ test('should fail if it could not create a bundle', async (t) => {
 
   try {
     const deployServicePort = deployService.server.address().port
-    const deployServiceHost = `http://localhost:${deployServicePort}`
+    const deployServiceHost = `http://127.0.0.1:${deployServicePort}`
 
     await deploy({
       deployServiceHost,
@@ -115,7 +115,7 @@ test('should fail if platformatic_api_key is wrong 2', async (t) => {
 
   try {
     const deployServicePort = deployService.server.address().port
-    const deployServiceHost = `http://localhost:${deployServicePort}`
+    const deployServiceHost = `http://127.0.0.1:${deployServicePort}`
 
     await deploy({
       deployServiceHost,
@@ -146,7 +146,7 @@ test('should fail if it could not create a deployment', async (t) => {
 
   try {
     const deployServicePort = deployService.server.address().port
-    const deployServiceHost = `http://localhost:${deployServicePort}`
+    const deployServiceHost = `http://127.0.0.1:${deployServicePort}`
 
     await deploy({
       deployServiceHost,
@@ -174,7 +174,7 @@ test('should fail if it could not upload code tarball', async (t) => {
 
   try {
     const deployServicePort = deployService.server.address().port
-    const deployServiceHost = `http://localhost:${deployServicePort}`
+    const deployServiceHost = `http://127.0.0.1:${deployServicePort}`
 
     await deploy({
       deployServiceHost,
@@ -217,7 +217,7 @@ test('should fail if it could not make a prewarm call', async (t) => {
 
   try {
     const deployServicePort = deployService.server.address().port
-    const deployServiceHost = `http://localhost:${deployServicePort}`
+    const deployServiceHost = `http://127.0.0.1:${deployServicePort}`
 
     await deploy({
       deployServiceHost,
@@ -241,7 +241,7 @@ test('should fail if it could not make a prewarm call', async (t) => {
 test('should fail if there is no config file', async (t) => {
   try {
     await deploy({
-      deployServiceHost: 'http://localhost:3042',
+      deployServiceHost: 'http://127.0.0.1:3042',
       workspaceId: 'test-workspace-id',
       workspaceKey: 'test-workspace-key',
       pathToProject: join(__dirname, 'fixtures', 'db-basic'),
@@ -261,7 +261,7 @@ test('should fail if there is no config file', async (t) => {
 test('should fail if there is no config file', async (t) => {
   try {
     await deploy({
-      deployServiceHost: 'http://localhost:3042',
+      deployServiceHost: 'http://127.0.0.1:3042',
       workspaceId: 'test-workspace-id',
       workspaceKey: 'test-workspace-key',
       pathToProject: join(__dirname, 'fixtures', 'db-wrong-config-ext'),
@@ -280,7 +280,7 @@ test('should fail if there is no config file', async (t) => {
 test('should fail if there is no config file', async (t) => {
   try {
     await deploy({
-      deployServiceHost: 'http://localhost:3042',
+      deployServiceHost: 'http://127.0.0.1:3042',
       workspaceId: 'test-workspace-id',
       workspaceKey: 'test-workspace-key',
       pathToProject: join(__dirname, 'fixtures', 'db-wrong-config-ext'),
@@ -396,7 +396,7 @@ test('should deploy platformatic project without typescript dep', async (t) => {
   })
 
   const deployServicePort = deployService.server.address().port
-  const deployServiceHost = `http://localhost:${deployServicePort}`
+  const deployServiceHost = `http://127.0.0.1:${deployServicePort}`
 
   const result = await deploy({
     deployServiceHost,

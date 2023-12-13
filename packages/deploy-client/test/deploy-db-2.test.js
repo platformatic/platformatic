@@ -92,7 +92,7 @@ test('should successfully deploy platformatic project without github metadata', 
   }
 
   const deployServicePort = deployService.server.address().port
-  const deployServiceHost = `http://localhost:${deployServicePort}`
+  const deployServiceHost = `http://127.0.0.1:${deployServicePort}`
 
   const result = await deploy({
     deployServiceHost,
@@ -217,7 +217,7 @@ test('should successfully deploy platformatic project with branch context', asyn
   }
 
   const deployServicePort = deployService.server.address().port
-  const deployServiceHost = `http://localhost:${deployServicePort}`
+  const deployServiceHost = `http://127.0.0.1:${deployServicePort}`
 
   const result = await deploy({
     deployServiceHost,
@@ -343,7 +343,7 @@ test('should not deploy bundle of it already exists', async (t) => {
   }
 
   const deployServicePort = deployService.server.address().port
-  const deployServiceHost = `http://localhost:${deployServicePort}`
+  const deployServiceHost = `http://127.0.0.1:${deployServicePort}`
 
   const result = await deploy({
     deployServiceHost,

@@ -93,7 +93,7 @@ test('should deploy platformatic project with a user api key', async (t) => {
   }
 
   const deployServicePort = deployService.server.address().port
-  const deployServiceHost = `http://localhost:${deployServicePort}`
+  const deployServiceHost = `http://127.0.0.1:${deployServicePort}`
 
   const result = await deploy({
     deployServiceHost,
@@ -201,7 +201,7 @@ test('should deploy platformatic project without github metadata', async (t) => 
   }
 
   const deployServicePort = deployService.server.address().port
-  const deployServiceHost = `http://localhost:${deployServicePort}`
+  const deployServiceHost = `http://127.0.0.1:${deployServicePort}`
 
   const result = await deploy({
     deployServiceHost,
@@ -332,7 +332,7 @@ test('should successfully deploy platformatic project with PR context', async (t
   }
 
   const deployServicePort = deployService.server.address().port
-  const deployServiceHost = `http://localhost:${deployServicePort}`
+  const deployServiceHost = `http://127.0.0.1:${deployServicePort}`
 
   const result = await deploy({
     deployServiceHost,
