@@ -65,8 +65,8 @@ jobs:
         timeout_minutes: 15
         retry_on: error
         command: pnpm install --frozen-lockfile
-    - name: Run test suite
-      run: cd packages/deploy-client && pnpm test
+    - name: Run test suite without code coverage
+      run: cd packages/deploy-client && pnpm run nocov
     - name: License Check
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: cd packages/deploy-client && pnpm run license
