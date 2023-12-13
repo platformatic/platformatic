@@ -7,7 +7,10 @@ const glob = require('glob').globSync
 /* eslint-disable new-cap */
 const reporter = process.stdout.isTTY ? new spec() : tap
 
-const files = glob('test/**/*.test.{js,mjs}')
+const files = [
+  ...glob('test/*.test.{js,mjs}'),
+  ...glob('test/cli/*.test.{js,mjs}')
+]
 
 const stream = run({
   files,

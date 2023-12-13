@@ -2,15 +2,13 @@
 
 const { tap, spec } = require('node:test/reporters')
 const { run } = require('node:test')
-const path = require('node:path')
 const glob = require('glob').globSync
 
 /* eslint-disable new-cap */
 const reporter = process.stdout.isTTY ? new spec() : tap
 
 const files = [
-  ...glob(path.join(__dirname, '*.test.js')),
-  ...glob(path.join(__dirname, 'cli', '*.test.mjs'))
+  ...glob('test/*.test.{js,mjs}')
 ]
 
 const stream = run({
