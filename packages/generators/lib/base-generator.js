@@ -1,7 +1,7 @@
 'use strict'
 
 const { readFile } = require('node:fs/promises')
-const { stripVersion, convertServiceNameToPrefix, addPrefixToEnv, extractEnvVariablesFromText, getPackageConfigurationObject } = require('./utils')
+const { stripVersion, convertServiceNameToPrefix, addPrefixToEnv, extractEnvVariablesFromText, getPackageConfigurationObject, PLT_ROOT } = require('./utils')
 const { join } = require('node:path')
 const { FileGenerator } = require('./file-generator')
 const { generateTests, generatePlugins } = require('./create-plugin')
@@ -203,16 +203,20 @@ class BaseGenerator extends FileGenerator {
   }
 
   checkEnvVariablesInConfigFile () {
+    const excludedEnvs = [PLT_ROOT]
     const configFileName = 'platformatic.json'
     const fileOjbect = this.getFileObject(configFileName)
     const envVars = extractEnvVariablesFromText(fileOjbect.contents)
     const envKeys = Object.keys(this.config.env)
     if (envVars.length > 0) {
-      envVars.forEach((ev) => {
+      for (const ev of envVars) {
+        if (excludedEnvs.includes(ev)) {
+          continue
+        }
         if (!envKeys.includes(ev)) {
           throw new MissingEnvVariable(ev, configFileName)
         }
-      })
+      }
     }
 
     return true

@@ -488,6 +488,85 @@ test('support packages', async (t) => {
       ]
     })
   }
+
+  {
+    // with relative path type but no name
+    const svc = new BaseGenerator({
+      module: '@platformatic/service'
+    })
+    svc.setConfig({
+      isRuntimeContext: true,
+      plugin: true
+    })
+    const packageDefinitions = [
+      {
+        name: '@fastify/static',
+        options: [
+          {
+            path: 'root',
+            value: 'public',
+            type: 'path'
+          }
+        ]
+      }
+    ]
+    svc.addPackage(packageDefinitions[0])
+    await svc.prepare()
+
+    const platformaticConfigFile = svc.getFileObject('platformatic.json')
+    const contents = JSON.parse(platformaticConfigFile.contents)
+
+    assert.deepEqual(contents.plugins, {
+      packages: [
+        {
+          name: '@fastify/static',
+          options: {
+            root: '{PLT_ROOT}/public'
+          }
+        }
+      ]
+    })
+  }
+  {
+    // with relative path type and name
+    const svc = new BaseGenerator({
+      module: '@platformatic/service'
+    })
+    svc.setConfig({
+      isRuntimeContext: true,
+      plugin: true,
+      serviceName: 'my-service'
+    })
+    const packageDefinitions = [
+      {
+        name: '@fastify/static',
+        options: [
+          {
+            path: 'root',
+            value: 'public',
+            type: 'path',
+            name: 'FST_PLUGIN_STATIC_ROOT'
+          }
+        ]
+      }
+    ]
+    svc.addPackage(packageDefinitions[0])
+    await svc.prepare()
+
+    const platformaticConfigFile = svc.getFileObject('platformatic.json')
+    const contents = JSON.parse(platformaticConfigFile.contents)
+
+    assert.deepEqual(contents.plugins, {
+      packages: [
+        {
+          name: '@fastify/static',
+          options: {
+            root: '{PLT_ROOT}/{PLT_MY_SERVICE_FST_PLUGIN_STATIC_ROOT}'
+          }
+        }
+      ]
+    })
+  }
 })
 
 describe('runtime context', () => {
