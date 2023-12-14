@@ -21,11 +21,11 @@ const { addLoggerToTheConfig } = require('./lib/utils')
 const { start, buildServer } = require('./lib/start')
 const ServiceGenerator = require('./lib/generator/service-generator.js')
 
-// TODO(mcollina): toLoad is deprecated, remove it in the next major version.
-async function platformaticService (app, opts, toLoad) {
+// TODO(mcollina): arugments[2] is deprecated, remove it in the next major version.
+async function platformaticService (app, opts) {
   const configManager = app.platformatic.configManager
   const config = configManager.current
-  const beforePlugins = opts.beforePlugins || toLoad || []
+  const beforePlugins = opts.beforePlugins || arguments[2] || []
 
   if (isKeyEnabled('metrics', config)) {
     app.register(setupMetrics, config.metrics)
