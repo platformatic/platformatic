@@ -1,12 +1,26 @@
 'use strict'
 
-const { spawn } = require('node:child_process')
-const glob = require('glob')
+const { tap, spec } = require('node:test/reporters')
+const { run } = require('node:test')
+const { join } = require('node:path')
+const glob = require('glob').globSync
 
-const testFiles = glob.sync('test/*/*.test.{js,mjs}')
+/* eslint-disable new-cap */
+const reporter = process.stdout.isTTY ? new spec() : tap
 
-spawn(process.execPath, ['--test', ...testFiles], {
-  stdio: 'inherit',
-  env: { ...process.env }
+const files = [
+  ...glob('*.test.{js,mjs}', { cwd: __dirname }),
+  ...glob('*/*.test.{js,mjs}', { cwd: __dirname })
+].map(file => join(__dirname, file))
+
+const stream = run({
+  files,
+  concurrency: 1,
+  timeout: 30000
 })
-  .on('exit', process.exit)
+
+stream.on('test:fail', () => {
+  process.exitCode = 1
+})
+
+stream.compose(reporter).pipe(process.stdout)
