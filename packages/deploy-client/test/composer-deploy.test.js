@@ -84,7 +84,7 @@ test('should deploy platformatic composer project without github metadata', asyn
   }
 
   const deployServicePort = deployService.server.address().port
-  const deployServiceHost = `http://localhost:${deployServicePort}`
+  const deployServiceHost = `http://127.0.0.1:${deployServicePort}`
 
   const result = await deploy({
     deployServiceHost,

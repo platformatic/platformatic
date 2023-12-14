@@ -94,7 +94,7 @@ test('should deploy platformatic runtime project without github metadata', async
   }
 
   const deployServicePort = deployService.server.address().port
-  const deployServiceHost = `http://localhost:${deployServicePort}`
+  const deployServiceHost = `http://127.0.0.1:${deployServicePort}`
 
   const result = await deploy({
     deployServiceHost,
