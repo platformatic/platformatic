@@ -295,8 +295,8 @@ test('should generate javascript plugin, routes and tests', async (t) => {
   assert.ok(bg.getFileObject('example.js', 'plugins'))
   assert.ok(bg.getFileObject('root.js', 'routes'))
 
-  assert.ok(bg.getFileObject('root.test.js', 'test/routes'))
-  assert.ok(bg.getFileObject('example.test.js', 'test/plugins'))
+  assert.ok(bg.getFileObject('root.test.js', join('test', 'routes')))
+  assert.ok(bg.getFileObject('example.test.js', join('test', 'plugins')))
 })
 
 test('should generate tsConfig file and typescript files', async (t) => {
@@ -335,8 +335,8 @@ test('should generate tsConfig file and typescript files', async (t) => {
   assert.ok(bg.getFileObject('example.ts', 'plugins'))
   assert.ok(bg.getFileObject('root.ts', 'routes'))
 
-  assert.ok(bg.getFileObject('root.test.ts', 'test/routes'))
-  assert.ok(bg.getFileObject('example.test.ts', 'test/plugins'))
+  assert.ok(bg.getFileObject('root.test.ts', join('test', 'routes')))
+  assert.ok(bg.getFileObject('example.test.ts', join('test', 'plugins')))
 })
 
 test('should throw if preapare fails', async (t) => {
@@ -521,7 +521,7 @@ test('support packages', async (t) => {
         {
           name: '@fastify/static',
           options: {
-            root: '{PLT_ROOT}/public'
+            root: join('{PLT_ROOT}', 'public')
           }
         }
       ]
@@ -561,7 +561,7 @@ test('support packages', async (t) => {
         {
           name: '@fastify/static',
           options: {
-            root: '{PLT_ROOT}/{PLT_MY_SERVICE_FST_PLUGIN_STATIC_ROOT}'
+            root: join('{PLT_ROOT}', '{PLT_MY_SERVICE_FST_PLUGIN_STATIC_ROOT}')
           }
         }
       ]

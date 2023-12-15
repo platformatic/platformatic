@@ -39,9 +39,9 @@ describe('FileGenerator', () => {
     fg.addFile({ path: '/anotherpath', file: 'foobar.txt', contents: 'foobar' })
 
     assert.deepEqual(fg.listFiles(), [
-      'path/helloworld.txt',
-      'path/foobar.txt',
-      'anotherpath/foobar.txt'
+      join('path', 'helloworld.txt'),
+      join('path', 'foobar.txt'),
+      join('anotherpath', 'foobar.txt')
     ])
   })
   test('should append file content', async (t) => {
