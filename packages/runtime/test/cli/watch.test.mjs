@@ -10,10 +10,12 @@ import { on } from 'node:events'
 
 beforeEach(async (t) => {
   console.log('starting cli test')
+  await sleep(3000)
 })
 
 afterEach(async (t) => {
   console.log('ending cli test')
+  await sleep(3000)
 })
 
 const fixturesDir = join(desm(import.meta.url), '..', '..', 'fixtures')
