@@ -8,6 +8,14 @@ import { request } from 'undici'
 import { start } from './helper.mjs'
 import { on } from 'node:events'
 
+beforeEach(async (t) => {
+  console.log('starting cli test')
+})
+
+afterEach(async (t) => {
+  console.log('ending cli test')
+})
+
 const fixturesDir = join(desm(import.meta.url), '..', '..', 'fixtures')
 
 const base = join(desm(import.meta.url), '..', 'tmp')
