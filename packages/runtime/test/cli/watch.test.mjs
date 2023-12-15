@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 import { cp, writeFile, mkdtemp, mkdir, rm, utimes } from 'node:fs/promises'
 import { join } from 'node:path'
-import { test } from 'node:test'
+import { test, beforeEach, afterEach } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import desm from 'desm'
 import { request } from 'undici'
