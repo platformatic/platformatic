@@ -8,26 +8,44 @@ const basicAuth = require('@fastify/basic-auth')
 const fastifyAccepts = require('@fastify/accepts')
 const Fastify = require('fastify')
 
-// This is a global server to match global
+// This is a global httpServer to match global
 // prometheus. It's an antipattern, so do
 // not use it elsewhere.
-let server = null
+let httpServer = null
 
 module.exports = fp(async function (app, opts) {
-  let port = 9090
-  let host = '0.0.0.0'
-  if (typeof opts === 'object') {
-    if (undefined !== opts.port) {
-      port = opts.port
+  const server = opts.server ?? 'own'
+  const hostname = opts.hostname ?? '0.0.0.0'
+  const port = opts.port ?? 9090
+  const metricsEndpoint = opts.endpoint ?? '/metrics'
+  const auth = opts.auth ?? null
+
+  let basicAuthValidator = null
+  if (auth) {
+    const { username, password } = auth
+    basicAuthValidator = function (user, pass, req, reply, done) {
+      if (username !== user || password !== pass) {
+        return reply.code(401).send({ message: 'Unauthorized' })
+      }
+      return done()
     }
-    /* c8 ignore next 3 */
-    if (undefined !== opts.hostname) {
-      host = opts.hostname
+
+    if (server === 'parent') {
+      await app.register(basicAuth, {
+        validate: basicAuthValidator
+      })
+
+      app.addHook('onRoute', (routeOptions) => {
+        if (routeOptions.url === metricsEndpoint) {
+          routeOptions.onRequest = app.basicAuth
+        }
+      })
     }
   }
+
   app.register(metricsPlugin, {
     defaultMetrics: { enabled: true },
-    endpoint: null,
+    endpoint: server === 'parent' ? metricsEndpoint : null,
     name: 'metrics',
     routeMetrics: { enabled: true },
     clearRegisterOnInit: true
@@ -56,24 +74,28 @@ module.exports = fp(async function (app, opts) {
     app.metrics.client.register.registerMetric(eluMetric)
   })
 
-  if (server && server.address().port !== port) {
-    await new Promise((resolve) => server.close(resolve))
-    server = null
+  if (httpServer && httpServer.address().port !== port) {
+    await new Promise((resolve) => httpServer.close(resolve))
+    httpServer = null
   }
 
-  if (!server) {
-    server = http.createServer()
-    server.listen(port, host)
-    server.unref()
+  if (server === 'parent') {
+    return
+  }
+
+  if (!httpServer) {
+    httpServer = http.createServer()
+    httpServer.listen(port, hostname)
+    httpServer.unref()
   }
 
   const promServer = Fastify({
     name: 'Prometheus server',
     serverFactory: (handler) => {
-      server.removeAllListeners('request')
-      server.removeAllListeners('clientError')
-      server.on('request', handler)
-      return server
+      httpServer.removeAllListeners('request')
+      httpServer.removeAllListeners('clientError')
+      httpServer.on('request', handler)
+      return httpServer
     },
     logger: app.log.child({ name: 'prometheus' })
   })
@@ -81,7 +103,7 @@ module.exports = fp(async function (app, opts) {
   promServer.register(fastifyAccepts)
 
   const metricsEndpointOptions = {
-    url: '/metrics',
+    url: metricsEndpoint,
     method: 'GET',
     logLevel: 'warn',
     handler: async (req, reply) => {
@@ -95,15 +117,9 @@ module.exports = fp(async function (app, opts) {
     }
   }
 
-  if (opts.auth) {
-    const { username, password } = opts.auth
+  if (auth) {
     await promServer.register(basicAuth, {
-      validate: function (user, pass, req, reply, done) {
-        if (username !== user || password !== pass) {
-          return reply.code(401).send({ message: 'Unauthorized' })
-        }
-        return done()
-      }
+      validate: basicAuthValidator
     })
     metricsEndpointOptions.onRequest = promServer.basicAuth
   }
