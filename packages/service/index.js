@@ -32,7 +32,7 @@ async function platformaticService (app, opts) {
       app.log.warn('In order to serve metrics on the same port as the core applicaton, set metrics.server to "parent".')
       config.metrics.server = 'parent'
     }
-    
+
     app.register(setupMetrics, config.metrics)
   }
 
