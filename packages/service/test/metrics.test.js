@@ -132,6 +132,29 @@ test('support basic auth', async (t) => {
   }
 })
 
+test('has /metrics endpoint on parent server', async (t) => {
+  const app = await buildServer({
+    server: {
+      hostname: '127.0.0.1',
+      port: 3042
+    },
+    metrics: {
+      server: 'parent'
+    }
+  })
+
+  t.after(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const res = await (request('http://127.0.0.1:3042/metrics'))
+  assert.strictEqual(res.statusCode, 200)
+  assert.match(res.headers['content-type'], /^text\/plain/)
+  const body = await res.body.text()
+  testPrometheusOutput(body)
+})
+
 test('do not error on restart', async (t) => {
   const app = await buildServer({
     server: {
