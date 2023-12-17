@@ -9,6 +9,28 @@ const { setTimeout } = require('node:timers/promises')
 const { request } = require('undici')
 const { buildServer } = require('..')
 
+test('should auto set server to "parent" if port conflict', async (t) => {
+  const app = await buildServer({
+    server: {
+      hostname: '127.0.0.1',
+      port: 3042
+    },
+    metrics: {
+      server: 'own',
+      port: 3042
+    }
+  })
+
+  t.after(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const configManager = app.platformatic.configManager
+  const config = configManager.current
+  assert.strictEqual(config.metrics.server, 'parent')
+})
+
 test('has /metrics endpoint on default prometheus port', async (t) => {
   const app = await buildServer({
     server: {
