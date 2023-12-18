@@ -44,13 +44,15 @@ function createCjsLoggingPlugin (text, reloaded) {
 }
 
 function saferm (path) {
-  return rm(path, { recursive: true, force: true }).catch(() => {})
+  return rm(path, { recursive: true, force: true }).catch((error) => {
+    console.log(error)
+  })
 }
 
 test('watches CommonJS files with hotreload on a single service', { timeout: 60000 }, async (t) => {
   console.log('watch-5 started')
   const tmpDir = await mkdtemp(join(base, 'watch-'))
-  t.after(() => saferm(tmpDir))
+  // t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
   const appSrc = join(fixturesDir, 'monorepo', 'serviceAppWithLogger')
   const appDst = join(tmpDir)
@@ -62,7 +64,10 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 600
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
   const { child } = await start('-c', join(appDst, 'platformatic.service.json'))
-  t.after(() => child.kill('SIGINT'))
+  t.after(() => {
+    child.kill('SIGINT')
+    saferm(tmpDir)
+  })
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))
 
