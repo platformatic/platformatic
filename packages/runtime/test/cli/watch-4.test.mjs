@@ -17,6 +17,13 @@ afterEach(async (t) => {
   await sleep(3000)
 })
 
+const why = require('why-is-node-running')
+setTimeout(() => {
+  console.log('-----------------watch-4 - start')
+  why()
+  console.log('-----------------watch-4 - end')
+}, 40000).unref()
+
 const fixturesDir = join(desm(import.meta.url), '..', '..', 'fixtures')
 
 const base = join(desm(import.meta.url), '..', 'tmp')

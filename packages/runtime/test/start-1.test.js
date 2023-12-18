@@ -11,6 +11,13 @@ const { buildServer, platformaticRuntime } = require('..')
 const { startWithConfig } = require('../lib/start')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
+const why = require('why-is-node-running')
+setTimeout(() => {
+  console.log('-----------------start-1 - start')
+  why()
+  console.log('-----------------start-1 - end')
+}, 40000).unref()
+
 test('supports logging via message port', async (t) => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)

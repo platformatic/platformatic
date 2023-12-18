@@ -7,6 +7,13 @@ const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('..')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
+const why = require('why-is-node-running')
+setTimeout(() => {
+  console.log('-----------------start-2 - start')
+  why()
+  console.log('-----------------start-2 - end')
+}, 40000).unref()
+
 test('can start applications programmatically from object', async (t) => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)

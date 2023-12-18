@@ -69,6 +69,7 @@ class RuntimeApiClient extends EventEmitter {
   }
 
   async #sendCommand (command, params = {}) {
+    console.log('sendCommand', command, params)
     const operationId = randomUUID()
 
     this.worker.postMessage({ operationId, command, params })

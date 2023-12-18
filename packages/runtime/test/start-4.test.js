@@ -10,6 +10,13 @@ const os = require('os')
 
 const tmpdir = os.tmpdir()
 
+const why = require('why-is-node-running')
+setTimeout(() => {
+  console.log('-----------------start-4 - start')
+  why()
+  console.log('-----------------start-4 - end')
+}, 40000).unref()
+
 test('supports logging using a transport', async (t) => {
   console.log('start-4 started')
   const configFile = join(fixturesDir, 'server', 'logger-transport', 'platformatic.runtime.json')

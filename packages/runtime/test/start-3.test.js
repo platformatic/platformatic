@@ -9,6 +9,13 @@ const { wrapConfigInRuntimeConfig } = require('../lib/config')
 const { startWithConfig } = require('../lib/start')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
+const why = require('why-is-node-running')
+setTimeout(() => {
+  console.log('-----------------start-3 - start')
+  why()
+  console.log('-----------------start-3 - end')
+}, 40000).unref()
+
 test('logs errors during db migrations', async (t) => {
   console.log('start-3 started')
   const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'platformatic.db.json')
