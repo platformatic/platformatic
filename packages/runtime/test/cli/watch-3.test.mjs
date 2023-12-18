@@ -7,6 +7,8 @@ import desm from 'desm'
 import { request } from 'undici'
 import { start } from './helper.mjs'
 
+import why from 'why-is-node-running'
+
 beforeEach(async (t) => {
   console.log('starting cli test')
   await sleep(3000)
@@ -16,8 +18,6 @@ afterEach(async (t) => {
   console.log('ending cli test')
   await sleep(3000)
 })
-
-const why = require('why-is-node-running')
 setTimeout(() => {
   console.log('-----------------watch-3 - start')
   why()

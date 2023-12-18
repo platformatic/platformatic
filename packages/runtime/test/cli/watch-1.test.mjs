@@ -5,6 +5,8 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import desm from 'desm'
 import { start } from './helper.mjs'
 
+import why from 'why-is-node-running'
+
 beforeEach(async (t) => {
   console.log('starting cli test')
   await sleep(3000)
@@ -15,7 +17,6 @@ afterEach(async (t) => {
   await sleep(3000)
 })
 
-const why = require('why-is-node-running')
 setTimeout(() => {
   console.log('-----------------watch-1 - start')
   why()

@@ -6,6 +6,13 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import desm from 'desm'
 import { start } from './helper.mjs'
 
+import why from 'why-is-node-running'
+setTimeout(() => {
+  console.log('-----------------watch-5 - start')
+  why()
+  console.log('-----------------watch-5 - end')
+}, 40000).unref()
+
 beforeEach(async (t) => {
   console.log('starting cli test')
   await sleep(3000)
@@ -15,13 +22,6 @@ afterEach(async (t) => {
   console.log('ending cli test')
   await sleep(3000)
 })
-
-const why = require('why-is-node-running')
-setTimeout(() => {
-  console.log('-----------------watch-5 - start')
-  why()
-  console.log('-----------------watch-5 - end')
-}, 40000).unref()
 
 const fixturesDir = join(desm(import.meta.url), '..', '..', 'fixtures')
 
