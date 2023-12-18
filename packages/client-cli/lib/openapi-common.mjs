@@ -137,7 +137,6 @@ export function writeProperty (writer, key, value, addedProps, required = true) 
     writer.write('?')
   }
   const valueType = getType(value)
-  /* c8 ignore next 2 */
   const typeValueToWrite = value.nullable === true ? `${valueType} | null` : valueType
   writer.write(`: ${typeValueToWrite};`)
   writer.newLine()
