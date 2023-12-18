@@ -36,7 +36,7 @@ describe('generator', () => {
       },
       database: 'sqlite',
       connectionString: 'sqlite://./db.sqlite',
-      types: false,
+      types: true,
       migrations: 'migrations',
       createMigrations: true
     })
