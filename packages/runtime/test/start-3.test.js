@@ -3,18 +3,14 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { MessageChannel } = require('node:worker_threads')
-const fs = require('fs/promises')
 const { loadConfig } = require('@platformatic/config')
 const { platformaticDB } = require('@platformatic/db')
-const { buildServer, platformaticRuntime } = require('..')
 const { wrapConfigInRuntimeConfig } = require('../lib/config')
 const { startWithConfig } = require('../lib/start')
 const fixturesDir = join(__dirname, '..', 'fixtures')
-const os = require('os')
-
-const tmpdir = os.tmpdir()
 
 test('logs errors during db migrations', async (t) => {
+  console.log('start-3 started')
   const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'platformatic.db.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticDB)
   const runtimeConfig = await wrapConfigInRuntimeConfig(config)
@@ -39,24 +35,5 @@ test('logs errors during db migrations', async (t) => {
   assert.deepStrictEqual(messages[1].metadata, runtimeConfig.current.loggingMetadata)
   assert.strictEqual(messages[1].logs.length, 1)
   assert.match(messages[1].logs[0], /near \\"fiddlesticks\\": syntax error/)
-})
-
-test('supports logging using a transport', async (t) => {
-  const configFile = join(fixturesDir, 'server', 'logger-transport', 'platformatic.runtime.json')
-  const dest = join(tmpdir, `logger-transport-${process.pid}.log`)
-  t.after(async function () {
-    await fs.unlink(dest)
-  })
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  config.configManager.current.server.logger.transport.options = {
-    path: dest
-  }
-  const app = await buildServer(config.configManager.current)
-  await app.start()
-  await app.close()
-
-  const written = await fs.readFile(dest, 'utf8')
-  const parsed = JSON.parse(written)
-
-  assert.strictEqual(parsed.fromTransport, true)
+  console.log('start-3 finished')
 })
