@@ -41,6 +41,7 @@ function saferm (path) {
 }
 
 test('watches CommonJS files with hotreload on a single service', { timeout: 60000 }, async (t) => {
+  console.log('watch-5 started')
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
@@ -62,6 +63,7 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 600
   let restartedThirdTime = false
 
   for await (const log of child.ndj) {
+    console.log(log)
     if (log.msg === 'RELOADED v2') {
       restartedSecondTime = true
     } else if (log.msg === 'RELOADED v3') {
@@ -74,4 +76,5 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 600
   }
 
   assert.ok(restartedThirdTime)
+  console.log('watch-5 ended')
 })

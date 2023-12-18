@@ -43,6 +43,7 @@ function saferm (path) {
 }
 
 test('watches CommonJS files with hotreload on a single service', { timeout: 60000 }, async (t) => {
+  console.log('watch-2.1 started')
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
@@ -64,6 +65,7 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 600
   let restartedThirdTime = false
 
   for await (const log of child.ndj) {
+    console.log(log.msg)
     if (log.msg === 'RELOADED v2') {
       restartedSecondTime = true
     } else if (log.msg === 'RELOADED v3') {
@@ -76,9 +78,11 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 600
   }
 
   assert.ok(restartedThirdTime)
+  console.log('watch-2.1 ended')
 })
 
 test('do not hot reload dependencies', { timeout: 60000 }, async (t) => {
+  console.log('watch-2.2 started')
   process.env.PORT = 0
   const config = join(fixturesDir, 'do-not-reload-dependencies', 'platformatic.service.json')
   const { child, url } = await start('-c', config)
@@ -98,6 +102,7 @@ test('do not hot reload dependencies', { timeout: 60000 }, async (t) => {
     let url
     for (const message of messages) {
       if (message.msg) {
+        console.log(message.msg)
         url = message.msg.match(/server listening at (.+)/i)?.[1]
 
         if (url !== undefined) {
@@ -116,4 +121,6 @@ test('do not hot reload dependencies', { timeout: 60000 }, async (t) => {
 
   const res4 = await request(`${url}/plugin2`)
   assert.strictEqual((await res4.body.json()).hello, plugin2)
+
+  console.log('watch-2.2 ended')
 })

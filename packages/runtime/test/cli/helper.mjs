@@ -36,6 +36,7 @@ export async function start (...args) {
   for await (const messages of on(output, 'data')) {
     for (const message of messages) {
       if (message.msg) {
+        console.log(message.msg)
         const url = message.url ??
           message.msg.match(/server listening at (.+)/i)?.[1]
 
