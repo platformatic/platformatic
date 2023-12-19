@@ -97,6 +97,18 @@ class ComposerGenerator extends BaseGenerator {
       this.config.env = addPrefixToEnv(this.config.env, this.config.envPrefix)
     }
 
+    const GLOBAL_TYPES_TEMPLATE = `
+import { FastifyInstance } from 'fastify'
+import { PlatformaticApp, PlatformaticComposerConfig } from '@platformatic/composer'
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    platformatic: PlatformaticApp<PlatformaticComposerConfig>
+  }
+}
+`
+    this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
+
     this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
   }
 

@@ -39,6 +39,24 @@ describe('generator', () => {
     assert.equal(contents.dependencies['@platformatic/composer'], contents.dependencies.platformatic)
   })
 
+  test('have global.d.ts file', async (t) => {
+    const svc = new ComposerGenerator()
+    await svc.prepare()
+
+    const GLOBAL_TYPES_TEMPLATE = `
+import { FastifyInstance } from 'fastify'
+import { PlatformaticApp, PlatformaticComposerConfig } from '@platformatic/composer'
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    platformatic: PlatformaticApp<PlatformaticComposerConfig>
+  }
+}
+`
+    const globalts = svc.getFileObject('global.d.ts')
+    assert.equal(GLOBAL_TYPES_TEMPLATE, globalts.contents)
+  })
+
   test('config', async (t) => {
     const svc = new ComposerGenerator()
     svc.setConfig({

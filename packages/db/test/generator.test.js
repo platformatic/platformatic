@@ -36,7 +36,7 @@ describe('generator', () => {
       },
       database: 'sqlite',
       connectionString: 'sqlite://./db.sqlite',
-      types: false,
+      types: true,
       migrations: 'migrations',
       createMigrations: true
     })
@@ -92,6 +92,24 @@ describe('generator', () => {
     const packageJsonFileObject = dbApp.getFileObject('package.json')
     const contents = JSON.parse(packageJsonFileObject.contents)
     assert.equal(contents.dependencies['@platformatic/db'], contents.dependencies.platformatic)
+  })
+
+  test('have global.d.ts', async (t) => {
+    const dbApp = new DBGenerator()
+    await dbApp.prepare()
+    const globalts = dbApp.getFileObject('global.d.ts')
+
+    const GLOBAL_TYPES_TEMPLATE = `
+import { FastifyInstance } from 'fastify'
+import { PlatformaticApp, PlatformaticDBConfig, PlatformaticDBMixin, Entities } from '@platformatic/db'
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    platformatic: PlatformaticApp<PlatformaticDBConfig> & PlatformaticDBMixin<Entities>
+  }
+}
+`
+    assert.equal(GLOBAL_TYPES_TEMPLATE, globalts.contents)
   })
 
   test('config', async (t) => {
