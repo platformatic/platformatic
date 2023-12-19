@@ -45,6 +45,12 @@ class RuntimeApi {
 
     setGlobalDispatcher(globalDispatcher)
     this.#dispatcher = globalDispatcher
+
+    process.on('SIGINT', async () => {
+      console.log('closing dispatcher on SIGINT')
+      await this.#dispatcher.close()
+      console.log('closed dispatcher on SIGINT')
+    })
   }
 
   async startListening (parentPort) {
@@ -76,6 +82,11 @@ class RuntimeApi {
       if (service.getStatus() === 'started') {
         return
       }
+    }
+
+    if (this.#dispatcher) {
+      console.log('closing dispatcher in handleProcessLevelEvent')
+      await this.#dispatcher.close()
     }
 
     process.exit() // Exit the worker thread if all services are stopped
