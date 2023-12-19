@@ -1,4 +1,4 @@
-import { cp, writeFile, mkdtemp, mkdir, rm } from 'node:fs/promises'
+import { cp, writeFile, mkdtemp, mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test, beforeEach, afterEach } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
@@ -63,13 +63,13 @@ function createEsmLoggingPlugin (text, reloaded) {
   `
 }
 
-function saferm (path) {
-  return rm(path, { recursive: true, force: true }).catch(() => {})
-}
+// function saferm (path) {
+//   return rm(path, { recursive: true, force: true }).catch(() => {})
+// }
 
 test('watches CommonJS files', async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
-  t.after(() => saferm(tmpDir))
+  // t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
   const configFileSrc = join(fixturesDir, 'configs', 'monorepo.json')
   const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
@@ -97,7 +97,7 @@ test('watches CommonJS files', async (t) => {
 
 test('watches ESM files', async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
-  t.after(() => saferm(tmpDir))
+  // t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
   const configFileSrc = join(fixturesDir, 'configs', 'monorepo.json')
   const configFileDst = join(tmpDir, 'configs', 'monorepo.json')

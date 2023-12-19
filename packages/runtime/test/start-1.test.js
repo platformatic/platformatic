@@ -29,6 +29,7 @@ test('supports logging via message port', async (t) => {
 
   t.after(async () => {
     await app.close()
+    console.log('close start-1.1')
   })
 
   const [msg] = await once(port1, 'message')
@@ -67,6 +68,10 @@ test('handles uncaught exceptions with db app', async (t) => {
   child.stdout.pipe(process.stdout)
   child.stderr.pipe(process.stderr)
   const [exitCode] = await once(child, 'exit')
+
+  t.after(async () => {
+    child.kill('SIGINT')
+  })
 
   assert.strictEqual(exitCode, 42)
 })

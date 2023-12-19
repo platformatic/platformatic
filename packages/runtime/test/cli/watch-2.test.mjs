@@ -1,5 +1,5 @@
 import assert from 'node:assert'
-import { cp, writeFile, mkdtemp, mkdir, rm, utimes } from 'node:fs/promises'
+import { cp, writeFile, mkdtemp, mkdir, utimes } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test, beforeEach, afterEach } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
@@ -45,14 +45,14 @@ function createCjsLoggingPlugin (text, reloaded) {
   `
 }
 
-function saferm (path) {
-  return rm(path, { recursive: true, force: true }).catch(() => {})
-}
+// function saferm (path) {
+//   return rm(path, { recursive: true, force: true }).catch(() => {})
+// }
 
 test('watches CommonJS files with hotreload on a single service', { timeout: 60000 }, async (t) => {
   console.log('watch-2.1 started')
   const tmpDir = await mkdtemp(join(base, 'watch-'))
-  t.after(() => saferm(tmpDir))
+  // t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
   const appSrc = join(fixturesDir, 'monorepo', 'serviceAppWithLogger')
   const appDst = join(tmpDir)

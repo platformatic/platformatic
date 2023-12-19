@@ -1,5 +1,5 @@
 import assert from 'node:assert'
-import { cp, writeFile, mkdtemp, mkdir, rm } from 'node:fs/promises'
+import { cp, writeFile, mkdtemp, mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test, beforeEach, afterEach } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
@@ -43,11 +43,11 @@ function createCjsLoggingPlugin (text, reloaded) {
   `
 }
 
-function saferm (path) {
-  return rm(path, { recursive: true, force: true }).catch((error) => {
-    console.log(error)
-  })
-}
+// function saferm (path) {
+//   return rm(path, { recursive: true, force: true }).catch((error) => {
+//     console.log(error)
+//   })
+// }
 
 test('watches CommonJS files with hotreload on a single service', { timeout: 60000 }, async (t) => {
   console.log('watch-5 started')
@@ -66,7 +66,7 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 600
   const { child } = await start('-c', join(appDst, 'platformatic.service.json'))
   t.after(() => {
     child.kill('SIGINT')
-    saferm(tmpDir)
+    // saferm(tmpDir)
   })
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))

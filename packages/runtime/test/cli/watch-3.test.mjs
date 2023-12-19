@@ -1,5 +1,5 @@
 import assert from 'node:assert'
-import { cp, writeFile, mkdtemp, mkdir, rm } from 'node:fs/promises'
+import { cp, writeFile, mkdtemp, mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test, beforeEach, afterEach } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
@@ -44,13 +44,13 @@ function createCjsLoggingPlugin (text, reloaded) {
   `
 }
 
-function saferm (path) {
-  return rm(path, { recursive: true, force: true }).catch(() => {})
-}
+// function saferm (path) {
+//   return rm(path, { recursive: true, force: true }).catch(() => {})
+// }
 
 test('should not watch files if watch = false', async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
-  t.after(() => saferm(tmpDir))
+  // t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
   const configFileSrc = join(fixturesDir, 'configs', 'monorepo-watch.json')
   const configFileDst = join(tmpDir, 'configs', 'monorepo-watch.json')
