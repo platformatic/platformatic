@@ -24,8 +24,8 @@ test('generates only types in target folder with --types-only flag', async ({ te
   match(fileContents, /'statusCode': U;/)
   match(fileContents, /'headers': Record<string, string>;/)
   match(fileContents, /'body': T;/)
-  match(fileContents, /export interface GetMoviesRequest {/)
-  match(fileContents, /export interface GetMoviesResponseOK {/)
+  match(fileContents, /export type GetMoviesRequest = {/)
+  match(fileContents, /export type GetMoviesResponseOK = Array<{ id\?: number; title: string }>/)
   match(fileContents, /export interface Movies {/)
 })
 
