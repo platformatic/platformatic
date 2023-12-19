@@ -7,6 +7,7 @@ const fastify = require('fastify')
 const { clear, connInfo, isSQLite, isMariaDB, isPg, isMysql8, isMysql } = require('./helper')
 const { resolve } = require('path')
 const { test } = t
+const yaml = require('yaml')
 
 Object.defineProperty(t, 'fullname', {
   value: 'platformatic/db/openapi/simple'
@@ -665,6 +666,14 @@ test('simple db, simple rest API', async (t) => {
   const json = res.json()
   matchSnapshot(json, 'GET /documentation/json response')
   equal(json.info.version, '42.42.42', 'GET /documentation/json info version override by opts')
+
+  const { body } = await app.inject({
+    method: 'GET',
+    url: '/documentation/yaml'
+  })
+
+  const parsedYaml = yaml.parse(body)
+  equal(parsedYaml.info.version, '42.42.42', 'GET /documentation/yaml info version override by opts')
 })
 
 test('deserialize JSON columns', { skip: isSQLite }, async (t) => {
