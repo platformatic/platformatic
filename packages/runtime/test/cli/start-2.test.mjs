@@ -1,17 +1,16 @@
 import assert from 'node:assert'
-import { test, beforeEach, afterEach } from 'node:test'
+import { test } from 'node:test'
 import fs from 'node:fs/promises'
 import { join } from 'desm'
 import { request } from 'undici'
 import { start } from './helper.mjs'
 
-beforeEach(async (t) => {
-  console.log('starting cli test')
-})
-
-afterEach(async (t) => {
-  console.log('ending cli test')
-})
+import why from 'why-is-node-running'
+setTimeout(() => {
+  console.log('-----------------watch-2 - start')
+  why()
+  console.log('-----------------watch-2 - end')
+}, 40000).unref()
 
 test('the runtime server overrides the entrypoint server', async () => {
   const config = join(import.meta.url, '..', '..', 'fixtures', 'server', 'overrides-service', 'platformatic.runtime.json')

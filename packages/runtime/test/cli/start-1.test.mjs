@@ -1,17 +1,16 @@
 import assert from 'node:assert'
 import { on, once } from 'node:events'
-import { test, beforeEach, afterEach } from 'node:test'
+import { test } from 'node:test'
 import { join } from 'desm'
 import { request } from 'undici'
 import { cliPath, start } from './helper.mjs'
 
-beforeEach(async (t) => {
-  console.log('starting cli test')
-})
-
-afterEach(async (t) => {
-  console.log('ending cli test')
-})
+import why from 'why-is-node-running'
+setTimeout(() => {
+  console.log('-----------------watch-2 - start')
+  why()
+  console.log('-----------------watch-2 - end')
+}, 40000).unref()
 
 test('autostart', async () => {
   const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
