@@ -2,7 +2,6 @@
 
 const assert = require('node:assert/strict')
 const { test } = require('node:test')
-const { request } = require('undici')
 const { buildServer } = require('..')
 const { buildConfigManager, getConnectionInfo, createBasicPages } = require('./helper')
 
@@ -34,7 +33,8 @@ test('configure authorizations works even with empty object', async (t) => {
 
   // This must fail because authorization is configured
   {
-    const res = await request(`${app.url}/graphql`, {
+    const res = await app.inject({
+      url: '/graphql',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -53,7 +53,7 @@ test('configure authorizations works even with empty object', async (t) => {
     })
     assert.equal(res.statusCode, 200, 'savePage status code')
 
-    assert.deepEqual(await res.body.json(), {
+    assert.deepEqual(await res.json(), {
       data: {
         savePage: null
       },

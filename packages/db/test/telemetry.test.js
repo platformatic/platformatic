@@ -63,29 +63,36 @@ test('should setup telemetry if configured', async (t) => {
   })
   await app.start()
 
+  const query = `
+    mutation {
+      savePage(input: { title: "Hello" }) {
+        id
+        title
+      }
+    }
+  `
+
   const res = await request(`${app.url}/graphql`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      query: `
-          mutation {
-            savePage(input: { title: "Hello" }) {
-              id
-              title
-            }
-          }
-        `
+      query
     })
   })
   assert.equal(res.statusCode, 200, 'savePage status code')
   const { exporters } = app.openTelemetry
   const finishedSpans = exporters[0].getFinishedSpans()
-  assert.equal(finishedSpans.length, 1)
-  const span = finishedSpans[0]
-  assert.equal(span.name, 'POST /graphql')
-  assert.equal(span.attributes['http.request.method'], 'POST')
-  assert.equal(span.attributes['url.path'], '/graphql')
-  assert.equal(span.attributes['http.response.status_code'], 200)
+  assert.equal(finishedSpans.length, 2)
+  const span1 = finishedSpans[0]
+  assert.equal(span1.name, 'mutation savePage')
+  assert.equal(span1.attributes['graphql.document'], JSON.stringify({ query }))
+  assert.equal(span1.attributes['graphql.operation.name'], 'savePage')
+  assert.equal(span1.attributes['graphql.operation.type'], 'mutation')
+  const span2 = finishedSpans[1]
+  assert.equal(span2.name, 'POST /graphql')
+  assert.equal(span2.attributes['http.request.method'], 'POST')
+  assert.equal(span2.attributes['url.path'], '/graphql')
+  assert.equal(span2.attributes['http.response.status_code'], 200)
 })

@@ -136,7 +136,9 @@ export function writeProperty (writer, key, value, addedProps, required = true) 
     writer.quote(key)
     writer.write('?')
   }
-  writer.write(`: ${getType(value)};`)
+  const valueType = getType(value)
+  const typeValueToWrite = value.nullable === true ? `${valueType} | null` : valueType
+  writer.write(`: ${typeValueToWrite};`)
   writer.newLine()
 }
 

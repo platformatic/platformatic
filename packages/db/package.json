@@ -8,7 +8,7 @@
     "plt-db": "./db.mjs"
   },
   "scripts": {
-    "test": "pnpm run lint && c8 node ./test/runner.js && tsd ",
+    "test": "pnpm run lint && node ./test/runner.js && tsd ",
     "test:postgresql": "DB=postgresql node ./test/runner.js",
     "test:mariadb": "DB=mariadb node ./test/runner.js",
     "test:mysql": "DB=mysql node ./test/runner.js",
