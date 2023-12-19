@@ -221,12 +221,6 @@ export function writeContent (writer, type, content, spec, addedProps) {
         continue
       }
 
-      // Response body has no schema that can be processed
-      // Should not be possible with well formed OpenAPI
-      /* c8 ignore next 3 */
-      // if (!body.schema?.type && !body.schema?.$ref) {
-      //   break
-      // }
       // This is likely buggy as there can be multiple responses for different
       // status codes. This is currently not possible with Platformatic DB
       // services so we skip for now.
@@ -253,43 +247,6 @@ export function writeContent (writer, type, content, spec, addedProps) {
   }
   return isResponseArray
 }
-
-// function writeContent (writer, content, spec, addedProps) {
-//   let isResponseArray = false
-//   if (content) {
-//     for (const [contentType, body] of Object.entries(content)) {
-//       // We ignore all non-JSON endpoints for now
-//       // TODO: support other content types
-//       /* c8 ignore next 3 */
-//       if (contentType.indexOf('application/json') !== 0) {
-//         continue
-//       }
-
-//       // Response body has no schema that can be processed
-//       // Should not be possible with well formed OpenAPI
-//       /* c8 ignore next 3 */
-//       if (!body.schema?.type && !body.schema?.$ref) {
-//         break
-//       }
-//       // This is likely buggy as there can be multiple responses for different
-//       // status codes. This is currently not possible with Platformatic DB
-//       // services so we skip for now.
-//       // TODO: support different schemas for different status codes
-//       if (body.schema.type === 'array') {
-//         isResponseArray = true
-//         if (body.schema.items.type === 'object') {
-//           writeObjectProperties(writer, body.schema.items, spec, addedProps)
-//         } else {
-//           writer.writeLine(getType(body.schema.items))
-//         }
-//       } else {
-//         writeObjectProperties(writer, body.schema, spec, addedProps)
-//       }
-//       break
-//     }
-//   }
-//   return isResponseArray
-// }
 
 function writeObjectProperties (writer, schema, spec, addedProps) {
   if (schema.type === 'object') {
