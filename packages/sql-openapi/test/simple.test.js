@@ -202,7 +202,7 @@ test('swagger prefix', async (t) => {
     }
   })
   app.register(sqlOpenAPI, {
-    swaggerPrefix: 'my-prefix'
+    swaggerPrefix: '/my-prefix'
   })
   teardown(app.close.bind(app))
 
