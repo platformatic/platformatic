@@ -5,7 +5,6 @@ import desm from 'desm'
 import { start } from './helper.mjs'
 
 import why from 'why-is-node-running'
-
 setTimeout(() => {
   console.log('-----------------watch-1 - start')
   why()

@@ -8,9 +8,9 @@ const fixturesDir = join(__dirname, '..', 'fixtures')
 
 const why = require('why-is-node-running')
 setTimeout(() => {
-  console.log('-----------------start-1 - start')
+  console.log('-----------------start-5 - start')
   why()
-  console.log('-----------------start-1 - end')
+  console.log('-----------------start-5 - end')
 }, 40000).unref()
 
 test('handles uncaught exceptions with db app', async (t) => {

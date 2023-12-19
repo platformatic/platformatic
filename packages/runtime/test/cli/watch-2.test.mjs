@@ -1,24 +1,13 @@
 import assert from 'node:assert'
 import { cp, writeFile, mkdtemp, mkdir, utimes } from 'node:fs/promises'
 import { join } from 'node:path'
-import { test, beforeEach, afterEach } from 'node:test'
-import { setTimeout as sleep } from 'node:timers/promises'
+import { test } from 'node:test'
 import desm from 'desm'
 import { request } from 'undici'
 import { start } from './helper.mjs'
 import { on } from 'node:events'
 
 import why from 'why-is-node-running'
-
-beforeEach(async (t) => {
-  console.log('starting cli test')
-  await sleep(3000)
-})
-
-afterEach(async (t) => {
-  console.log('ending cli test')
-  await sleep(3000)
-})
 setTimeout(() => {
   console.log('-----------------watch-2 - start')
   why()
