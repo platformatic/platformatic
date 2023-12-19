@@ -58,7 +58,7 @@ test('support object', async (t) => {
   t.equal(isResponseArray, false)
 })
 
-test('support array of mixed stuff', async (t) => {
+test('support array of allOf structure', async (t) => {
   const writer = getWriter()
   const content = {
     'application/json': {
@@ -110,7 +110,7 @@ test('support array of mixed stuff', async (t) => {
   t.equal(isResponseArray, true)
 })
 
-test('support mixed stuff', async (t) => {
+test('support allOf structure', async (t) => {
   const writer = getWriter()
   const content = {
     'application/json': {
@@ -244,4 +244,104 @@ test('convert to unknown', async (t) => {
   }
   writeContent(writer, 'MyResponseTypeName', content, {}, new Set())
   t.equal(writer.toString(), 'export type MyResponseTypeName = unknown')
+})
+
+test('support anyOf structure', async (t) => {
+  const writer = getWriter()
+  const content = {
+    'application/json': {
+      schema: {
+        anyOf: [
+          {
+            properties: {
+              id: {
+                type: 'string'
+              }
+            },
+            required: ['id'],
+            type: 'object'
+          },
+          {
+            allOf: [
+              {
+                additionalProperties: false,
+                properties: {
+                  age: {
+                    type: 'number'
+                  }
+                },
+                required: ['age'],
+                type: 'object'
+              },
+              {
+                additionalProperties: false,
+                properties: {
+                  valid: {
+                    type: 'boolean'
+                  }
+                },
+                required: ['valid'],
+                type: 'object'
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+  const isResponseArray = writeContent(writer, 'MyResponseTypeName', content, {}, new Set())
+  t.equal(writer.toString(), 'export type MyResponseTypeName = { id: string } | { age: number } & { valid: boolean }')
+  t.equal(isResponseArray, false)
+})
+
+test('support array of anyOf structure', async (t) => {
+  const writer = getWriter()
+  const content = {
+    'application/json': {
+      schema: {
+        type: 'array',
+        items: {
+          anyOf: [
+            {
+              properties: {
+                id: {
+                  type: 'string'
+                }
+              },
+              required: ['id'],
+              type: 'object'
+            },
+            {
+              allOf: [
+                {
+                  additionalProperties: false,
+                  properties: {
+                    age: {
+                      type: 'number'
+                    }
+                  },
+                  required: ['age'],
+                  type: 'object'
+                },
+                {
+                  additionalProperties: false,
+                  properties: {
+                    valid: {
+                      type: 'boolean'
+                    }
+                  },
+                  required: ['valid'],
+                  type: 'object'
+                }
+              ]
+            }
+          ]
+        }
+
+      }
+    }
+  }
+  const isResponseArray = writeContent(writer, 'MyResponseTypeName', content, {}, new Set())
+  t.equal(writer.toString().trim(), 'export type MyResponseTypeName = Array<{ id: string } | { age: number } & { valid: boolean }>')
+  t.equal(isResponseArray, true)
 })
