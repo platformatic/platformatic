@@ -6,6 +6,8 @@ const { PlatformaticApp } = require('./app')
 const errors = require('./errors')
 const { printSchema } = require('graphql')
 
+const { setTimeout } = require('timers/promises')
+
 class RuntimeApi {
   #services
   #dispatcher
@@ -49,10 +51,14 @@ class RuntimeApi {
     parentPort.on('message', async (message) => {
       const command = message?.command
       if (command) {
+        console.log('worker received a request', message)
         const res = await this.#executeCommand(message)
+        console.log('worker sends a response', res)
         parentPort.postMessage(res)
 
         if (command === 'plt:stop-services') {
+          console.log('terminate worker thread')
+          await setTimeout(5000)
           process.exit() // Exit the worker thread.
         }
         return
@@ -132,14 +138,19 @@ class RuntimeApi {
   }
 
   async stopServices () {
+    console.log('call stopServices handler')
     const stopServiceReqs = [this.#dispatcher.close()]
     for (const service of this.#services.values()) {
+      console.log('stopServices', service.appConfig.id)
       const serviceStatus = service.getStatus()
       if (serviceStatus === 'started') {
-        stopServiceReqs.push(service.stop())
+        stopServiceReqs.push(service.stop().then(() => {
+          console.log('stopServices', service.appConfig.id, 'stopped')
+        }))
       }
     }
     await Promise.all(stopServiceReqs)
+    console.log('stopServices', 'all stopped')
   }
 
   async #restartServices () {

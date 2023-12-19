@@ -28,7 +28,9 @@ class RuntimeApiClient extends EventEmitter {
   }
 
   async close () {
+    console.log('start closing RuntimeApiClient')
     await this.#sendCommand('plt:stop-services')
+    console.log('end closing RuntimeApiClient')
     await this.#exitPromise
   }
 
@@ -76,6 +78,7 @@ class RuntimeApiClient extends EventEmitter {
     const [message] = await Promise.race(
       [once(this, operationId), this.#exitPromise]
     )
+    console.log('sendCommand received response', message)
 
     if (this.#exitCode !== undefined) {
       throw new errors.RuntimeExitedError()
@@ -92,6 +95,7 @@ class RuntimeApiClient extends EventEmitter {
   async #exitHandler () {
     this.#exitCode = undefined
     return once(this.worker, 'exit').then((msg) => {
+      console.log('worker on exit was called')
       this.#exitCode = msg[0]
       return msg
     })
