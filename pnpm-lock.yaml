@@ -357,6 +357,9 @@ importers:
       '@platformatic/graphql-composer':
         specifier: ^0.5.1
         version: 0.5.1
+      '@platformatic/scalar-theme':
+        specifier: workspace:*
+        version: link:../scalar-theme
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
