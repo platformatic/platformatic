@@ -16,7 +16,7 @@ const files = [
 const stream = run({
   files,
   concurrency: 1,
-  timeout: 30000
+  timeout: 60000
 })
 
 stream.on('test:fail', () => {
