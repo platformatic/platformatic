@@ -58,7 +58,6 @@ class RuntimeApi {
 
         if (command === 'plt:stop-services') {
           console.log('terminate worker thread')
-          await setTimeout(5000)
           process.exit() // Exit the worker thread.
         }
         return
@@ -150,6 +149,7 @@ class RuntimeApi {
       }
     }
     await Promise.all(stopServiceReqs)
+    await setTimeout(500)
     console.log('stopServices', 'all stopped')
   }
 
