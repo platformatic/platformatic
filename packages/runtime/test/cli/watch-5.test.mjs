@@ -52,29 +52,39 @@ function createCjsLoggingPlugin (text, reloaded) {
 test('watches CommonJS files with hotreload on a single service', { timeout: 60000 }, async (t) => {
   console.log('watch-5 started')
   const tmpDir = await mkdtemp(join(base, 'watch-'))
+  console.log('watch-5 1.1')
   // t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
+  console.log('watch-5 1.2')
   const appSrc = join(fixturesDir, 'monorepo', 'serviceAppWithLogger')
   const appDst = join(tmpDir)
   const cjsPluginFilePath = join(appDst, 'plugin.js')
 
+  console.log('watch-5 1.3')
   await Promise.all([
     cp(appSrc, appDst, { recursive: true })
   ])
+  console.log('watch-5 1.4')
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
+  console.log('watch-5 1.5')
   const { child } = await start('-c', join(appDst, 'platformatic.service.json'))
   t.after(() => {
+    console.log('watch-5 close 1')
     child.kill('SIGINT')
+    console.log('watch-5 close 2')
     // saferm(tmpDir)
   })
 
+  console.log('watch-5 1.6')
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))
+  console.log('watch-5 1.7')
 
   let restartedSecondTime = false
   let restartedThirdTime = false
 
   for await (const log of child.ndj) {
+    console.log('watch-5 18')
     console.log(log)
     if (log.msg === 'RELOADED v2') {
       restartedSecondTime = true
@@ -86,6 +96,8 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 600
       await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v3', true))
     }
   }
+
+  console.log('watch-5 1.9')
 
   assert.ok(restartedThirdTime)
   console.log('watch-5 ended')
