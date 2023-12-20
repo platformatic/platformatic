@@ -9,11 +9,11 @@ import { start } from './helper.mjs'
 
 import why from 'why-is-node-running'
 
-// setTimeout(() => {
-//   console.log('-----------------watch-4 - start')
-//   why()
-//   console.log('-----------------watch-4 - end')
-// }, 40000).unref()
+setTimeout(() => {
+  console.log('-----------------watch-4 - start')
+  why()
+  console.log('-----------------watch-4 - end')
+}, 40000).unref()
 
 const fixturesDir = join(desm(import.meta.url), '..', '..', 'fixtures')
 
@@ -39,30 +39,30 @@ function createCjsLoggingPlugin (text, reloaded) {
 //   return rm(path, { recursive: true, force: true }).catch(() => {})
 // }
 
-// test('should not hot reload files with `--hot-reload false', async (t) => {
-//   const tmpDir = await mkdtemp(join(base, 'watch-'))
-//   // t.after(() => saferm(tmpDir))
-//   t.diagnostic(`using ${tmpDir}`)
-//   const configFileSrc = join(fixturesDir, 'configs', 'monorepo.json')
-//   const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
-//   const appSrc = join(fixturesDir, 'monorepo')
-//   const appDst = join(tmpDir, 'monorepo')
-//   const cjsPluginFilePath = join(appDst, 'serviceApp', 'plugin.js')
+test('should not hot reload files with `--hot-reload false', async (t) => {
+  const tmpDir = await mkdtemp(join(base, 'watch-'))
+  // t.after(() => saferm(tmpDir))
+  t.diagnostic(`using ${tmpDir}`)
+  const configFileSrc = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
+  const appSrc = join(fixturesDir, 'monorepo')
+  const appDst = join(tmpDir, 'monorepo')
+  const cjsPluginFilePath = join(appDst, 'serviceApp', 'plugin.js')
 
-//   await Promise.all([
-//     cp(configFileSrc, configFileDst),
-//     cp(appSrc, appDst, { recursive: true })
-//   ])
+  await Promise.all([
+    cp(configFileSrc, configFileDst),
+    cp(appSrc, appDst, { recursive: true })
+  ])
 
-//   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
-//   const { child, url } = await start('-c', configFileDst, '--hot-reload', 'false')
-//   t.after(() => child.kill('SIGINT'))
-//   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))
-//   await sleep(5000)
-//   const res = await request(`${url}/version`)
-//   const version = await res.body.text()
-//   assert.strictEqual(version, 'v1')
-// })
+  await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
+  const { child, url } = await start('-c', configFileDst, '--hot-reload', 'false')
+  t.after(() => child.kill('SIGINT'))
+  await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))
+  await sleep(5000)
+  const res = await request(`${url}/version`)
+  const version = await res.body.text()
+  assert.strictEqual(version, 'v1')
+})
 
 test('watches CommonJS files with hotreload', { timeout: 60000 }, async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
