@@ -92,12 +92,18 @@ test('watches CommonJS files with hotreload', { timeout: 60000 }, async (t) => {
   for await (const log of child.ndj) {
     if (log.msg === 'RELOADED v2') {
       restartedSecondTime = true
+      console.log('------------------------> RELOADED v2')
     } else if (log.msg === 'RELOADED v3') {
+      console.log('------------------------> RELOADED v2')
       restartedThirdTime = true
       break
     } else if (log.msg?.match(/watching/)) {
+      console.log('------------------------> WRITING v3')
       await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v3', true))
+      console.log('------------------------> WRITTEN v3')
+      console.log('------------------------> WAITING 5s')
       await sleep(5000)
+      console.log('------------------------> WAITED 5s')
     }
   }
 
