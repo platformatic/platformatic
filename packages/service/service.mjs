@@ -11,7 +11,7 @@ import { generateJsonSchemaConfig } from './lib/gen-schema.js'
 import { bumpVersion } from './lib/bump-version.js'
 import { updateVersion } from './lib/update-version.js'
 import { generateTypes } from './lib/gen-types.mjs'
-
+import { createService } from './lib/create.mjs'
 import { buildCompileCmd } from './lib/compile.js'
 
 import { start, platformaticService } from './index.js'
@@ -43,6 +43,7 @@ program.register('start', (argv) => {
   start(platformaticService, argv).catch(printAndExitLoadConfigError)
 })
 
+program.register('create', wrapCommand(createService))
 program.register('compile', buildCompileCmd(platformaticService))
 program.register('types', wrapCommand(generateTypes))
 program.register('schema config', wrapCommand(generateJsonSchemaConfig))
