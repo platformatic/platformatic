@@ -94,10 +94,10 @@ test('watches CommonJS files with hotreload', { timeout: 60000 }, async (t) => {
       restartedSecondTime = true
       console.log('------------------------> RELOADED v2')
     } else if (log.msg === 'RELOADED v3') {
-      console.log('------------------------> RELOADED v2')
+      console.log('------------------------> RELOADED v3')
       restartedThirdTime = true
       break
-    } else if (log.msg?.match(/watching/)) {
+    } else if (log.msg?.match(/listening/)) {
       console.log('------------------------> WRITING v3')
       await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v3', true))
       console.log('------------------------> WRITTEN v3')
