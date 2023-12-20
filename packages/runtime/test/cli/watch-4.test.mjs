@@ -83,6 +83,7 @@ test('watches CommonJS files with hotreload', { timeout: 60000 }, async (t) => {
   const { child } = await start('-c', configFileDst)
   t.after(() => child.kill('SIGINT'))
 
+  await sleep(5000)
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))
 
   let restartedSecondTime = false
@@ -96,6 +97,7 @@ test('watches CommonJS files with hotreload', { timeout: 60000 }, async (t) => {
       break
     } else if (log.msg?.match(/watching/)) {
       await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v3', true))
+      await sleep(5000)
     }
   }
 

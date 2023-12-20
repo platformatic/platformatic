@@ -13,7 +13,11 @@ setTimeout(() => {
   console.log('-----------------start-5 - end')
 }, 40000).unref()
 
-test('handles uncaught exceptions with db app', async (t) => {
+// Skipping until
+// * https://github.com/nodejs/node/issues/49344
+// * https://github.com/nodejs/node/issues/47748
+// are fixed
+test('handles uncaught exceptions with db app', { skip: true }, async (t) => {
   console.log('start-5 1 started')
   // Test for https://github.com/platformatic/platformatic/issues/1193
   const scriptFile = join(fixturesDir, 'start-command-in-runtime.js')
