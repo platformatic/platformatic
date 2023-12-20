@@ -6,10 +6,6 @@ const errors = require('./errors')
 
 const MAX_LISTENERS_COUNT = 100
 
-process.on('exit', () => {
-  console.log('main process on exit was called')
-})
-
 class RuntimeApiClient extends EventEmitter {
   #exitCode
   #exitPromise

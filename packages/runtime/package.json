@@ -60,7 +60,7 @@
     "minimist": "^1.2.8",
     "pino": "^8.16.0",
     "pino-pretty": "^10.2.3",
-    "undici": "^6.0.0",
+    "undici": "^6.1.0",
     "why-is-node-running": "^2.2.2"
   },
   "standard": {

@@ -1350,8 +1350,8 @@ importers:
         specifier: ^10.2.3
         version: 10.2.3
       undici:
-        specifier: ^6.0.0
-        version: 6.0.1
+        specifier: ^6.1.0
+        version: 6.1.0
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
@@ -9650,6 +9650,13 @@ packages:
     engines: {node: '>=18.0'}
     dependencies:
       '@fastify/busboy': 2.1.0
+
+  /undici@6.1.0:
+    resolution: {integrity: sha512-o2XGxMEhMDqOKMcZwSB9w0LbZcYDa/qgEH3oDQKMu28KnFMaSBR5+PjPd/NYyEgUX7u2Sk2DegClF7+5w7yyLw==}
+    engines: {node: '>=18.0'}
+    dependencies:
+      '@fastify/busboy': 2.1.0
+    dev: false
 
   /unicode-length@2.1.0:
     resolution: {integrity: sha512-4bV582zTV9Q02RXBxSUMiuN/KHo5w4aTojuKTNT96DIKps/SIawFp7cS5Mu25VuY1AioGXrmYyzKZUzh8OqoUw==}

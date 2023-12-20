@@ -6,18 +6,11 @@ const { join } = require('node:path')
 const { test } = require('node:test')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
-const why = require('why-is-node-running')
-setTimeout(() => {
-  console.log('-----------------start-5 - start')
-  why()
-  console.log('-----------------start-5 - end')
-}, 40000).unref()
-
 // Skipping until
 // * https://github.com/nodejs/node/issues/49344
 // * https://github.com/nodejs/node/issues/47748
 // are fixed
-test('handles uncaught exceptions with db app', { skip: true }, async (t) => {
+test('handles uncaught exceptions with db app', async (t) => {
   console.log('start-5 1 started')
   // Test for https://github.com/platformatic/platformatic/issues/1193
   const scriptFile = join(fixturesDir, 'start-command-in-runtime.js')
