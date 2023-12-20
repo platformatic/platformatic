@@ -1,12 +1,12 @@
 import assert from 'node:assert'
 import { cp, writeFile, mkdtemp, mkdir, utimes } from 'node:fs/promises'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import desm from 'desm'
 import { request } from 'undici'
 import { start } from './helper.mjs'
 import { on } from 'node:events'
-import { setTimeout as sleep } from 'node:timers/promises'
 
 import why from 'why-is-node-running'
 setTimeout(() => {

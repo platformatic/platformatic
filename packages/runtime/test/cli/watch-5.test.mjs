@@ -1,5 +1,6 @@
 import assert from 'node:assert'
 import { cp, writeFile, mkdtemp, mkdir } from 'node:fs/promises'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import desm from 'desm'
@@ -58,7 +59,6 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 600
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
   console.log('watch-5 1.5')
   const { child } = await start('-c', join(appDst, 'platformatic.service.json'))
-
 
   // Need this sleep to await for the CI linux machine to start watching
   await sleep(2000)
