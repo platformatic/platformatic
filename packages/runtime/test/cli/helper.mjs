@@ -17,6 +17,7 @@ export const cliPath = join(import.meta.url, '..', '..', 'runtime.mjs')
 
 export async function start (...args) {
   const child = execa(process.execPath, [cliPath, 'start', ...args])
+  child.stdout.pipe(process.stdout)
   child.stderr.pipe(process.stdout)
 
   const output = child.stdout.pipe(split(function (line) {
@@ -36,7 +37,6 @@ export async function start (...args) {
   for await (const messages of on(output, 'data')) {
     for (const message of messages) {
       if (message.msg) {
-        console.log(message.msg)
         const url = message.url ??
           message.msg.match(/server listening at (.+)/i)?.[1]
 

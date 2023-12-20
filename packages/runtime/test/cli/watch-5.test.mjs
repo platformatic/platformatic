@@ -59,9 +59,6 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 600
   console.log('watch-5 1.5')
   const { child } = await start('-c', join(appDst, 'platformatic.service.json'))
 
-  child.stdout.pipe(process.stdout)
-  child.stderr.pipe(process.stderr)
-
   t.after(() => {
     console.log('watch-5 close 1')
     child.kill('SIGINT')
@@ -77,8 +74,7 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 600
   let restartedThirdTime = false
 
   for await (const log of child.ndj) {
-    console.log('watch-5 18')
-    console.log(log)
+    console.log('watch-5 message', log)
     if (log.msg === 'RELOADED v2') {
       restartedSecondTime = true
     } else if (log.msg === 'RELOADED v3') {

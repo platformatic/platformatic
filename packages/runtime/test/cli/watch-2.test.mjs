@@ -61,9 +61,6 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 600
   console.log('watch-2 1.6')
   const { child } = await start('-c', join(appDst, 'platformatic.service.json'))
 
-  child.stdout.pipe(process.stdout)
-  child.stderr.pipe(process.stderr)
-
   console.log('watch-2 1.7')
   t.after(() => child.kill('SIGINT'))
 
@@ -126,7 +123,7 @@ test('do not hot reload dependencies', { timeout: 60000 }, async (t) => {
     let url
     for (const message of messages) {
       if (message.msg) {
-        console.log(message.msg)
+        console.log('watch-2 message', message.msg)
         url = message.msg.match(/server listening at (.+)/i)?.[1]
 
         if (url !== undefined) {
