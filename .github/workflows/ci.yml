@@ -434,6 +434,8 @@ jobs:
         retry_on: error
         command: pnpm install --frozen-lockfile
     - name: Run runtime package test suite
+      env:
+        UNDICI_NO_FG: 1
       run: cd packages/runtime && pnpm test
 
   # ci-service:
