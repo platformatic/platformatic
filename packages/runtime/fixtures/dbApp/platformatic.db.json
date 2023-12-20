@@ -23,5 +23,6 @@
     "paths": [
       "plugin.js"
     ]
-  }
+  },
+  "watch": false
 }
