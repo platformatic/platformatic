@@ -59,6 +59,10 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 600
   console.log('watch-5 1.5')
   const { child } = await start('-c', join(appDst, 'platformatic.service.json'))
 
+
+  // Need this sleep to await for the CI linux machine to start watching
+  await sleep(2000)
+
   t.after(() => {
     console.log('watch-5 close 1')
     child.kill('SIGINT')
@@ -83,6 +87,9 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 600
       break
     } else if (log.msg?.match(/listening/)) {
       await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v3', true))
+
+      // Need this sleep to await for the CI linux machine to start watching
+      await sleep(2000)
     }
   }
 

@@ -6,6 +6,7 @@ import desm from 'desm'
 import { request } from 'undici'
 import { start } from './helper.mjs'
 import { on } from 'node:events'
+import { setTimeout as sleep } from 'node:timers/promises'
 
 import why from 'why-is-node-running'
 setTimeout(() => {
@@ -61,6 +62,9 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 600
   console.log('watch-2 1.6')
   const { child } = await start('-c', join(appDst, 'platformatic.service.json'))
 
+  // Need this sleep to await for the CI linux machine to start watching
+  await sleep(2000)
+
   console.log('watch-2 1.7')
   t.after(() => child.kill('SIGINT'))
 
@@ -84,6 +88,9 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 600
       break
     } else if (log.msg?.match(/listening/)) {
       await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v3', true))
+
+      // Need this sleep to await for the CI linux machine to start watching
+      await sleep(2000)
     }
   }
 
