@@ -33,7 +33,10 @@ test('build basic client from url', async ({ teardown, ok, match }) => {
   match(types, /type GetRedirectRequest =/)
   match(types, /type GetRedirectResponseFound =/)
   match(types, /type GetRedirectResponseBadRequest =/)
-  match(types, /'message': string | null;/)
+  match(types, /'message': string \| null;/)
+  match(types, /'dateTime': string \| Date;/)
+  match(types, /'otherDate': string \| Date;/)
+  match(types, /'normalString': string;/)
 
   // handle non 200 code endpoint
   const expectedImplementation = `

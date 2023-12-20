@@ -132,9 +132,7 @@ export function writeProperty (writer, key, value, addedProps, required = true) 
     writer.quote(key)
     writer.write('?')
   }
-  const valueType = getType(value)
-  const typeValueToWrite = value.nullable === true ? `${valueType} | null` : valueType
-  writer.write(`: ${typeValueToWrite};`)
+  writer.write(`: ${getType(value)};`)
   writer.newLine()
 }
 
@@ -189,24 +187,30 @@ export function getType (typeDef, spec) {
     output += ' }'
     return output
   }
-  return JSONSchemaToTsType(typeDef.type)
+  return JSONSchemaToTsType(typeDef)
 }
 
-function JSONSchemaToTsType (type) {
+function JSONSchemaToTsType ({ type, format, nullable }) {
+  const isDateType = format === 'date' || format === 'date-time'
+  let resultType = 'unknown'
+
   switch (type) {
     case 'string':
-      return 'string'
+      resultType = isDateType ? 'string | Date' : 'string'
+      break
     case 'integer':
-      return 'number'
+      resultType = 'number'
+      break
     case 'number':
-      return 'number'
+      resultType = 'number'
+      break
     case 'boolean':
-      return 'boolean'
-      // TODO what other types should we support here?
-      /* c8 ignore next 2 */
-    default:
-      return 'unknown'
+      resultType = 'boolean'
+      break
+    // TODO what other types should we support here?
   }
+
+  return nullable === true ? `${resultType} | null` : resultType
 }
 
 export function writeContent (writer, type, content, spec, addedProps) {
