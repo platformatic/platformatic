@@ -61,6 +61,9 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 600
   console.log('watch-2 1.6')
   const { child } = await start('-c', join(appDst, 'platformatic.service.json'))
 
+  child.stdout.pipe(process.stdout)
+  child.stderr.pipe(process.stderr)
+
   console.log('watch-2 1.7')
   t.after(() => child.kill('SIGINT'))
 

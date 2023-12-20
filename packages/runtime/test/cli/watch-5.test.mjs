@@ -58,6 +58,10 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 600
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
   console.log('watch-5 1.5')
   const { child } = await start('-c', join(appDst, 'platformatic.service.json'))
+
+  child.stdout.pipe(process.stdout)
+  child.stderr.pipe(process.stderr)
+
   t.after(() => {
     console.log('watch-5 close 1')
     child.kill('SIGINT')
