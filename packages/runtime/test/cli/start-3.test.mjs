@@ -6,9 +6,9 @@ import { start } from './helper.mjs'
 
 import why from 'why-is-node-running'
 setTimeout(() => {
-  console.log('-----------------watch-2 - start')
+  console.log('-----------------start-cli-3 - start')
   why()
-  console.log('-----------------watch-2 - end')
+  console.log('-----------------start-cli-3 - end')
 }, 40000).unref()
 
 test('stackable', async () => {

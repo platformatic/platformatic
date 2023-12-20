@@ -7,9 +7,9 @@ import { start } from './helper.mjs'
 
 import why from 'why-is-node-running'
 setTimeout(() => {
-  console.log('-----------------watch-2 - start')
+  console.log('-----------------start-cli-2 - start')
   why()
-  console.log('-----------------watch-2 - end')
+  console.log('-----------------start-cli-2 - end')
 }, 40000).unref()
 
 test('the runtime server overrides the entrypoint server', async () => {

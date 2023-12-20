@@ -8,6 +8,10 @@ const { printSchema } = require('graphql')
 
 const { setTimeout } = require('timers/promises')
 
+process.on('exit', () => {
+  console.log('child process on exit was called')
+})
+
 class RuntimeApi {
   #services
   #dispatcher
