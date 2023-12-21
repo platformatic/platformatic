@@ -74,14 +74,23 @@ test('composer', async (t) => {
     const res = await request(entryUrl)
 
     assert.strictEqual(res.statusCode, 200)
-    assert.deepStrictEqual(await res.body.json(), { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
+    const text = await res.body.text()
+    console.log('--------------->', text)
+
+    const data = JSON.parse(text)
+    assert.deepStrictEqual(data, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
   }
 
   {
     const res = await request(entryUrl + '/service-app/')
 
     assert.strictEqual(res.statusCode, 200)
-    assert.deepStrictEqual(await res.body.json(), { hello: 'hello123' })
+
+    const text = await res.body.text()
+    console.log('--------------->', text)
+
+    const data = JSON.parse(text)
+    assert.deepStrictEqual(data, { hello: 'hello123' })
   }
 })
 
