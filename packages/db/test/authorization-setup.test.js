@@ -1,6 +1,7 @@
 'use strict'
 
 const assert = require('node:assert/strict')
+const { join } = require('node:path')
 const { test } = require('node:test')
 const { buildServer } = require('..')
 const { buildConfigManager, getConnectionInfo, createBasicPages } = require('./helper')
@@ -73,4 +74,34 @@ test('configure authorizations works even with empty object', async (t) => {
       ]
     }, 'savePage response')
   }
+})
+
+test('addCustomRule', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
+
+  const config = {
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    authorization: {},
+    db: {
+      ...connectionInfo,
+      async onDatabaseLoad (db, sql) {
+        await createBasicPages(db, sql)
+      }
+    },
+    plugins: {
+      paths: [join(__dirname, 'fixtures', 'auth-in-code.js')]
+    }
+  }
+
+  const configManager = await buildConfigManager(config)
+  const app = await buildServer({ configManager })
+
+  t.after(async () => {
+    await app.close()
+    await dropTestDB()
+  })
+  await app.start()
 })
