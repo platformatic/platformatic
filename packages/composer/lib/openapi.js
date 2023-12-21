@@ -29,8 +29,11 @@ async function composeOpenAPI (app, opts) {
   app.get('/documentation/json', { schema: { hide: true } }, async () => app.swagger())
   app.get('/documentation/yaml', { schema: { hide: true } }, async () => app.swagger({ yaml: true }))
 
+  const routePrefix = opts.openapi?.swaggerPrefix || '/documentation'
+
   await app.register(require('@scalar/fastify-api-reference'), {
     logLevel: 'warn',
+    routePrefix,
     configuration: {
       customCss: scalarTheme.theme
     }

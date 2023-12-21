@@ -100,8 +100,8 @@ async function composeOpenAPI (app, opts) {
           const replyOptions = {}
           const onResponse = (request, reply, res) => {
             app.openTelemetry?.endSpanClient(reply.request.proxedCallSpan, { statusCode: reply.statusCode })
-            if (req.routeConfig?.onComposerResponse) {
-              req.routeConfig.onComposerResponse(request, reply, res)
+            if (req.routeOptions.config?.onComposerResponse) {
+              req.routeOptions.config?.onComposerResponse(request, reply, res)
             } else {
               reply.send(res)
             }
