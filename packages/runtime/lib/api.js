@@ -1,7 +1,7 @@
 'use strict'
 
 const FastifyUndiciDispatcher = require('fastify-undici-dispatcher')
-const { Agent, setGlobalDispatcher } = require('undici')
+const { setGlobalDispatcher, getGlobalDispatcher } = require('undici')
 const { PlatformaticApp } = require('./app')
 const errors = require('./errors')
 const { printSchema } = require('graphql')
@@ -34,7 +34,7 @@ class RuntimeApi {
       this.#services.set(service.id, app)
     }
 
-    const globalAgent = new Agent()
+    const globalAgent = getGlobalDispatcher()
     const globalDispatcher = new FastifyUndiciDispatcher({
       dispatcher: globalAgent,
       // setting the domain here allows for fail-fast scenarios
@@ -71,6 +71,10 @@ class RuntimeApi {
       if (service.getStatus() === 'started') {
         return
       }
+    }
+
+    if (this.#dispatcher) {
+      await this.#dispatcher.close()
     }
 
     process.exit() // Exit the worker thread if all services are stopped
@@ -132,12 +136,14 @@ class RuntimeApi {
   }
 
   async stopServices () {
+    const stopServiceReqs = [this.#dispatcher.close()]
     for (const service of this.#services.values()) {
       const serviceStatus = service.getStatus()
       if (serviceStatus === 'started') {
-        await service.stop()
+        stopServiceReqs.push(service.stop())
       }
     }
+    await Promise.all(stopServiceReqs)
   }
 
   async #restartServices () {

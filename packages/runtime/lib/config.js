@@ -33,7 +33,14 @@ async function _transformConfig (configManager) {
 
       const config = join(entryPath, configFilename)
 
-      services.push({ id, config, path: entryPath, useHttp: !!mapping.useHttp })
+      const service = { id, config, path: entryPath, useHttp: !!mapping.useHttp }
+      const existingServiceId = services.findIndex(service => service.id === id)
+
+      if (existingServiceId !== -1) {
+        services[existingServiceId] = service
+      } else {
+        services.push(service)
+      }
     }
   }
 
