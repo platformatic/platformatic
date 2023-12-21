@@ -816,7 +816,7 @@ importers:
         version: 3.2.0
       console-table-printer:
         specifier: ^2.11.2
-        version: 2.11.2
+        version: 2.12.0
       desm:
         specifier: ^1.3.0
         version: 1.3.0
@@ -826,6 +826,9 @@ importers:
       es-main:
         specifier: ^1.3.0
         version: 1.3.0
+      execa:
+        specifier: ^8.0.1
+        version: 8.0.1
       fastify:
         specifier: ^4.23.2
         version: 4.25.2
@@ -884,9 +887,6 @@ importers:
       c8:
         specifier: ^9.0.0
         version: 9.0.0
-      execa:
-        specifier: ^8.0.1
-        version: 8.0.1
       glob:
         specifier: ^10.3.10
         version: 10.3.10
@@ -1483,7 +1483,7 @@ importers:
         version: 3.2.0
       console-table-printer:
         specifier: ^2.11.2
-        version: 2.11.2
+        version: 2.12.0
       desm:
         specifier: ^1.3.0
         version: 1.3.0
@@ -4276,8 +4276,8 @@ packages:
       typedarray: 0.0.6
     dev: true
 
-  /console-table-printer@2.11.2:
-    resolution: {integrity: sha512-uuUHie0sfPP542TKGzPFal0W1wo1beuKAqIZdaavcONx8OoqdnJRKjkinbRTOta4FaCa1RcIL+7mMJWX3pQGVg==}
+  /console-table-printer@2.12.0:
+    resolution: {integrity: sha512-Q/Ax+UOpZw0oPZGmv8bH8/W5NpC2rAYy6cX20BVLGQ45v944oL+srmLTZAse/5a3vWDl0MXR/0GTEdsz2dDTbg==}
     dependencies:
       simple-wcswidth: 1.0.1
     dev: false

@@ -76,6 +76,7 @@
     "desm": "^1.3.0",
     "env-schema": "^5.2.0",
     "es-main": "^1.3.0",
+    "execa": "^8.0.1",
     "fastify": "^4.23.2",
     "fastify-metrics": "^10.3.2",
     "fastify-plugin": "^4.5.1",
