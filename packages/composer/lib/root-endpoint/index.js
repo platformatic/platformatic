@@ -28,6 +28,7 @@ module.exports = async (app, opts) => {
     schema: { hide: true },
     handler: (req, reply) => {
       const uaString = req.headers['user-agent']
+      console.log('uaString', uaString)
       if (uaString) {
         const parsed = userAgentParser(uaString)
         if (parsed.browser.name !== undefined) {
