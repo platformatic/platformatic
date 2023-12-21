@@ -3,10 +3,10 @@ import { cp, writeFile, mkdtemp, mkdir, rm, utimes } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { on } from 'node:events'
 import desm from 'desm'
 import { request } from 'undici'
 import { start } from './helper.mjs'
-import { on } from 'node:events'
 
 const fixturesDir = join(desm(import.meta.url), '..', '..', 'fixtures')
 
@@ -123,8 +123,13 @@ test('should not hot reload files with `--hot-reload false', async (t) => {
   ])
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
+
   const { child, url } = await start('-c', configFileDst, '--hot-reload', 'false')
   t.after(() => child.kill('SIGINT'))
+
+  // Need this sleep to await for the CI linux machine to start watching
+  await sleep(2000)
+
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))
   await sleep(5000)
   const res = await request(`${url}/version`)
@@ -132,7 +137,7 @@ test('should not hot reload files with `--hot-reload false', async (t) => {
   assert.strictEqual(version, 'v1')
 })
 
-test('watches CommonJS files with hotreload', { timeout: 30000 }, async (t) => {
+test('watches CommonJS files with hotreload', async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
@@ -148,9 +153,12 @@ test('watches CommonJS files with hotreload', { timeout: 30000 }, async (t) => {
   ])
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
+
   const { child } = await start('-c', configFileDst)
   t.after(() => child.kill('SIGINT'))
 
+  // Need this sleep to await for the CI linux machine to start watching
+  await sleep(2000)
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))
 
   let restartedSecondTime = false
@@ -162,8 +170,11 @@ test('watches CommonJS files with hotreload', { timeout: 30000 }, async (t) => {
     } else if (log.msg === 'RELOADED v3') {
       restartedThirdTime = true
       break
-    } else if (log.msg?.match(/watching/)) {
+    } else if (log.msg?.match(/restarted/)) {
       await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v3', true))
+
+      // Need this sleep to await for the CI linux machine to start watching
+      await sleep(2000)
     }
   }
 
@@ -171,7 +182,7 @@ test('watches CommonJS files with hotreload', { timeout: 30000 }, async (t) => {
   assert.ok(restartedThirdTime)
 })
 
-test('watches CommonJS files with hotreload on a single service', { timeout: 30000 }, async (t) => {
+test('watches CommonJS files with hotreload on a single service', async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
@@ -184,7 +195,12 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 300
   ])
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
+
   const { child } = await start('-c', join(appDst, 'platformatic.service.json'))
+
+  // Need this sleep to await for the CI linux machine to start watching
+  await sleep(2000)
+
   t.after(() => child.kill('SIGINT'))
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))
@@ -201,13 +217,16 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 300
       break
     } else if (log.msg?.match(/listening/)) {
       await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v3', true))
+
+      // Need this sleep to await for the CI linux machine to start watching
+      await sleep(2000)
     }
   }
 
   assert.ok(restartedThirdTime)
 })
 
-test('do not hot reload dependencies', { timeout: 30000 }, async (t) => {
+test('do not hot reload dependencies', async (t) => {
   process.env.PORT = 0
   const config = join(fixturesDir, 'do-not-reload-dependencies', 'platformatic.service.json')
   const { child, url } = await start('-c', config)
@@ -247,7 +266,7 @@ test('do not hot reload dependencies', { timeout: 30000 }, async (t) => {
   assert.strictEqual((await res4.body.json()).hello, plugin2)
 })
 
-test('watches CommonJS files with hotreload on a single service', { timeout: 30000 }, async (t) => {
+test('watches CommonJS files with hotreload on a single service', async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => saferm(tmpDir))
   t.diagnostic(`using ${tmpDir}`)
@@ -261,6 +280,10 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 300
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
   const { child } = await start('-c', join(appDst, 'platformatic.service.json'))
+
+  // Need this sleep to await for the CI linux machine to start watching
+  await sleep(2000)
+
   t.after(() => child.kill('SIGINT'))
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))
@@ -277,6 +300,9 @@ test('watches CommonJS files with hotreload on a single service', { timeout: 300
       break
     } else if (log.msg?.match(/listening/)) {
       await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v3', true))
+
+      // Need this sleep to await for the CI linux machine to start watching
+      await sleep(2000)
     }
   }
 
@@ -301,6 +327,10 @@ test('should not watch files if watch = false', async (t) => {
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
   const { child, url } = await start('-c', configFileDst)
   t.after(() => child.kill('SIGINT'))
+
+  // Need this sleep to await for the CI linux machine to start watching
+  await sleep(2000)
+
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))
   await sleep(5000)
   const res = await request(`${url}/version`)

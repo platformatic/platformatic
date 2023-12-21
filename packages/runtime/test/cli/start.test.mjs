@@ -142,6 +142,7 @@ test('use runtime server', async () => {
   const { child, url } = await start('-c', config)
   assert.strictEqual(url, 'http://127.0.0.1:14242')
   child.kill('SIGINT')
+  await child.catch(() => {})
 })
 
 test('the runtime server overrides the entrypoint server', async () => {
@@ -157,6 +158,7 @@ test('start command with js file', async (t) => {
   try {
     await fs.unlink(config)
   } catch {}
+
   t.after(async () => {
     await fs.unlink(config)
   })

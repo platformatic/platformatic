@@ -73,6 +73,10 @@ class RuntimeApi {
       }
     }
 
+    if (this.#dispatcher) {
+      await this.#dispatcher.close()
+    }
+
     process.exit() // Exit the worker thread if all services are stopped
   }
 
