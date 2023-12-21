@@ -11,6 +11,6 @@ test('stackable', async () => {
 
   assert.strictEqual(res.statusCode, 200)
   assert.deepStrictEqual(await res.body.text(), 'Hello World')
-  child.kill('SIGINT')
+  child.kill('SIGKILL')
   await child.catch(() => {})
 })

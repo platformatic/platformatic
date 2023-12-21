@@ -34,7 +34,7 @@ test('watches CommonJS files', async (t) => {
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
   const { child } = await start('-c', configFileDst)
-  t.after(() => child.kill('SIGINT'))
+  t.after(() => child.kill('SIGKILL'))
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))
 

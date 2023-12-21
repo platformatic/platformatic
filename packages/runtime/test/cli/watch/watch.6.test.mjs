@@ -38,7 +38,7 @@ test('watches CommonJS files with hotreload on a single service', async (t) => {
   // Need this sleep to await for the CI linux machine to start watching
   await sleep(2000)
 
-  t.after(() => child.kill('SIGINT'))
+  t.after(() => child.kill('SIGKILL'))
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))
 

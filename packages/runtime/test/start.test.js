@@ -60,38 +60,32 @@ test('can start applications programmatically from string', async (t) => {
   }
 })
 
-// test('composer', async (t) => {
-//   const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
-//   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-//   const app = await buildServer(config.configManager.current)
-//   const entryUrl = await app.start()
+test('composer', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+  const entryUrl = await app.start()
 
-//   t.after(async () => {
-//     await app.close()
-//   })
+  t.after(async () => {
+    await app.close()
+  })
 
-//   {
-//     const res = await request(entryUrl)
+  {
+    const res = await request(entryUrl)
+    assert.strictEqual(res.statusCode, 200)
 
-//     assert.strictEqual(res.statusCode, 200)
-//     const text = await res.body.text()
-//     console.log('--------------->', text)
+    const data = await res.body.json()
+    assert.deepStrictEqual(data, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
+  }
 
-//     const data = JSON.parse(text)
-//     assert.deepStrictEqual(data, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
-//   }
+  {
+    const res = await request(entryUrl + '/service-app/')
+    assert.strictEqual(res.statusCode, 200)
 
-//   {
-//     const res = await request(entryUrl + '/service-app/')
-
-//     assert.strictEqual(res.statusCode, 200)
-
-//     const text = await res.body.text()
-
-//     const data = JSON.parse(text)
-//     assert.deepStrictEqual(data, { hello: 'hello123' })
-//   }
-// })
+    const data = await res.body.json()
+    assert.deepStrictEqual(data, { hello: 'hello123' })
+  }
+})
 
 test('can restart the runtime apps', async (t) => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')

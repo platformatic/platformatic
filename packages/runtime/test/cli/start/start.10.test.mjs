@@ -21,6 +21,6 @@ test('start command with js file', async (t) => {
 
   assert.strictEqual(res.statusCode, 200)
   assert.deepStrictEqual(await res.body.json(), { hello: 'hello123' })
-  child.kill('SIGINT')
+  child.kill('SIGKILL')
   await child.catch(() => {})
 })

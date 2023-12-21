@@ -10,7 +10,7 @@ test('handles uncaughtException', async (t) => {
   const { child, url } = await start('-c', config)
 
   t.after(async () => {
-    child.kill('SIGINT')
+    child.kill('SIGKILL')
   })
   const res = await request(url + '/async_crash')
 

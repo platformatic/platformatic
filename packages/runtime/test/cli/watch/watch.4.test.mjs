@@ -38,7 +38,7 @@ test('should not hot reload files with `--hot-reload false', async (t) => {
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
 
   const { child, url } = await start('-c', configFileDst, '--hot-reload', 'false')
-  t.after(() => child.kill('SIGINT'))
+  t.after(() => child.kill('SIGKILL'))
 
   // Need this sleep to await for the CI linux machine to start watching
   await sleep(2000)

@@ -34,7 +34,7 @@ test('watches ESM files', async (t) => {
 
   await writeFile(esmPluginFilePath, createEsmLoggingPlugin('v1', false))
   const { child } = await start('-c', configFileDst)
-  t.after(() => child.kill('SIGINT'))
+  t.after(() => child.kill('SIGKILL'))
   await writeFile(esmPluginFilePath, createEsmLoggingPlugin('v2', true))
 
   for await (const log of child.ndj) {

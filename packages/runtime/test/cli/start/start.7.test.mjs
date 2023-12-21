@@ -29,6 +29,6 @@ test('starts the inspector', async (t) => {
   }
 
   assert(found)
-  child.kill('SIGINT')
+  child.kill('SIGKILL')
   await child.catch(() => {})
 })
