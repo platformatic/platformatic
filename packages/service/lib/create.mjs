@@ -40,8 +40,8 @@ async function createService (_args) {
   const logger = pino(stream)
 
   const args = minimist(process.argv.slice(2), {
-    string: ['dir', 'port', 'hostname', 'git'],
-    boolean: ['typescript', 'install', 'plugin'],
+    string: ['dir', 'port', 'hostname'],
+    boolean: ['typescript', 'install', 'plugin', 'git'],
     default: {
       dir: join(process.cwd(), 'platformatic-service'),
       port: 3042,

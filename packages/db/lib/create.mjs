@@ -42,8 +42,8 @@ async function createDB (_args) {
   const logger = pino(stream)
 
   const args = minimist(process.argv.slice(2), {
-    string: ['dir', 'port', 'hostname', 'git', 'connectionString'],
-    boolean: ['typescript', 'install', 'migrations', 'plugin'],
+    string: ['dir', 'port', 'hostname', 'connectionString'],
+    boolean: ['typescript', 'install', 'migrations', 'plugin', 'git'],
     default: {
       dir: join(process.cwd(), 'platformatic-db'),
       port: 3042,

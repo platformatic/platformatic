@@ -351,10 +351,25 @@ platformatic composer <command>
 ```
 
 
+#### create
+
+Creates a new Platformatic Composer application.
+
+Options are
+
+* `dir <string>` - the directory where to create the project (Default: `process.cwd() + 'platformatic-composer'`)
+* `port <string>` - the port where the application will listen (Default: `3042`)
+* `hostname <string>` - the hostname where the application will listen (Default: `0.0.0.0`)
+* `git <boolean>` - Init the git repository (Default: `true`)
+* `typescript <boolean>` - Use Typescript (Default: `false`)
+* `install <boolean>` - Run or not `npm install` after creating the files (Default: `true`)
+* `plugin <boolean>` - Creates a sample plugin and tests (Default: `true`)
+
 #### help
 
 Available commands:
 
+* `create` - creates a new Platformatic Composer application.
 * `help` - show this help message.
 * `help <command>` - shows more information about a command.
 * `start` - start the server.
@@ -459,6 +474,22 @@ If not specified, the configuration will be loaded from any of the following, in
 You can find more details about the configuration format here:
 * [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
 
+
+#### create
+
+Creates a new Platformatic DB application.
+
+Options are
+
+* `dir <string>` - the directory where to create the project (Default: `process.cwd() + 'platformatic-composer'`)
+* `port <string>` - the port where the application will listen (Default: `3042`)
+* `hostname <string>` - the hostname where the application will listen (Default: `0.0.0.0`)
+* `connectionString <string>` - the connection string for your database (Default: `sqlite://./db.sqlite`)
+* `migrations <boolean>` - Creates sample migrations (Default: `true`)
+* `git <boolean>` - Init the git repository (Default: `true`)
+* `typescript <boolean>` - Use Typescript (Default: `false`)
+* `install <boolean>` - Run or not `npm install` after creating the files (Default: `true`)
+* `plugin <boolean>` - Creates a sample plugin and tests (Default: `true`)
 
 #### help
 
@@ -757,10 +788,25 @@ You can find more details about the configuration format here:
 * [Platformatic Service Configuration](https://docs.platformatic.dev/docs/reference/service/configuration)
 
 
+#### create
+
+Creates a new Platformatic Service application.
+
+Options are
+
+* `dir <string>` - the directory where to create the project (Default: `process.cwd() + 'platformatic-composer'`)
+* `port <string>` - the port where the application will listen (Default: `3042`)
+* `hostname <string>` - the hostname where the application will listen (Default: `0.0.0.0`)
+* `git <boolean>` - Init the git repository (Default: `true`)
+* `typescript <boolean>` - Use Typescript (Default: `false`)
+* `install <boolean>` - Run or not `npm install` after creating the files (Default: `true`)
+* `plugin <boolean>` - Creates a sample plugin and tests (Default: `true`)
+
 #### help
 
 Available commands:
 
+* `create` - creates a new Platformatic Service application.
 * `help` - show this help message.
 * `help <command>` - show more information about a command.
 * `start` - start the server.
