@@ -187,7 +187,11 @@ test('logs errors during db migrations', async (t) => {
   assert.match(messages[1].logs[0], /near \\"fiddlesticks\\": syntax error/)
 })
 
-test('supports logging using a transport', async (t) => {
+// Transports use FinalizationRegistry, which is somewhat broken.
+// * https://github.com/nodejs/node/issues/49344
+// * https://github.com/nodejs/node/issues/47748
+// are fixed
+test('supports logging using a transport', { skip: true }, async (t) => {
   const configFile = join(fixturesDir, 'server', 'logger-transport', 'platformatic.runtime.json')
   const dest = join(tmpdir, `logger-transport-${process.pid}.log`)
   t.after(async function () {
