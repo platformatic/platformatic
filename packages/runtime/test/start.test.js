@@ -164,7 +164,7 @@ test('can start with a custom environment', async (t) => {
 // * https://github.com/nodejs/node/issues/49344
 // * https://github.com/nodejs/node/issues/47748
 // are fixed
-test('handles uncaught exceptions with db app', { skip: true }, async (t) => {
+test('handles uncaught exceptions with db app', async (t) => {
   // Test for https://github.com/platformatic/platformatic/issues/1193
   const scriptFile = join(fixturesDir, 'start-command-in-runtime.js')
   const configFile = join(fixturesDir, 'dbApp', 'platformatic.db.json')
@@ -180,7 +180,7 @@ test('handles uncaught exceptions with db app', { skip: true }, async (t) => {
   assert.strictEqual(exitCode, 42)
 })
 
-test('logs errors during db migrations', { skip: true }, async (t) => {
+test('logs errors during db migrations', async (t) => {
   const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'platformatic.db.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticDB)
   const runtimeConfig = await wrapConfigInRuntimeConfig(config)
