@@ -9,8 +9,8 @@ const glob = require('glob').globSync
 const reporter = process.stdout.isTTY ? new spec() : tap
 
 const files = [
-  ...glob('**/*start*.test.{js,mjs}', { cwd: __dirname }),
-  ...glob('**/*watch*.test.{js,mjs}', { cwd: __dirname })
+  ...glob('**/*.test.{js,mjs}', { cwd: __dirname }),
+  ...glob('**/*.test.{js,mjs}', { cwd: __dirname })
 ].map(file => join(__dirname, file))
 
 const stream = run({
