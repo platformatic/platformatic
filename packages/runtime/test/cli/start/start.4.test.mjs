@@ -6,7 +6,7 @@ import { cliPath } from '../helper.mjs'
 
 test('handles startup errors', async (t) => {
   const { execa } = await import('execa')
-  const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'service-throws-on-start.json')
+  const config = join(import.meta.url, '..', '..', '..', 'fixtures', 'configs', 'service-throws-on-start.json')
   const child = execa(process.execPath, [cliPath, 'start', '-c', config], { encoding: 'utf8' })
   let stdout = ''
   let found = false

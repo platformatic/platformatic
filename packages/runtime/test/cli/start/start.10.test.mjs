@@ -6,8 +6,8 @@ import { request } from 'undici'
 import { start } from '../helper.mjs'
 
 test('start command with js file', async (t) => {
-  const file = join(import.meta.url, '..', '..', 'fixtures', 'empty', 'hello.js')
-  const config = join(import.meta.url, '..', '..', 'fixtures', 'empty', 'platformatic.service.json')
+  const file = join(import.meta.url, '..', '..', '..', 'fixtures', 'empty', 'hello.js')
+  const config = join(import.meta.url, '..', '..', '..', 'fixtures', 'empty', 'platformatic.service.json')
   try {
     await fs.unlink(config)
   } catch {}

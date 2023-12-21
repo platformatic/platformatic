@@ -6,7 +6,7 @@ import { request } from 'undici'
 import { start } from '../helper.mjs'
 
 test('handles uncaughtException', async (t) => {
-  const config = join(import.meta.url, '..', '..', 'fixtures', 'dbApp', 'platformatic.db.json')
+  const config = join(import.meta.url, '..', '..', '..', 'fixtures', 'dbApp', 'platformatic.db.json')
   const { child, url } = await start('-c', config)
 
   t.after(async () => {

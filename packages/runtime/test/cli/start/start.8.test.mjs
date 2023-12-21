@@ -5,7 +5,7 @@ import { request } from 'undici'
 import { start } from '../helper.mjs'
 
 test('stackable', async () => {
-  const config = join(import.meta.url, '..', '..', 'fixtures', 'stackables', 'platformatic.json')
+  const config = join(import.meta.url, '..', '..', '..', 'fixtures', 'stackables', 'platformatic.json')
   const { child, url } = await start('-c', config)
   const res = await request(url + '/foo')
 

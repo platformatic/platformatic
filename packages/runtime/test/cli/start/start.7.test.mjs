@@ -6,7 +6,7 @@ import { cliPath } from '../helper.mjs'
 
 test('starts the inspector', async (t) => {
   const { execa } = await import('execa')
-  const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
+  const config = join(import.meta.url, '..', '..', '..', 'fixtures', 'configs', 'monorepo.json')
   const child = execa(process.execPath, [cliPath, 'start', '-c', config, '--inspect'], {
     encoding: 'utf8'
   })
