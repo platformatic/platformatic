@@ -35,6 +35,7 @@ module.exports = async (app, opts) => {
       process._rawDebug('uaString', uaString)
       process._rawDebug('uaString', uaString)
       process._rawDebug('uaString', uaString)
+      app.log.error({ uaString: '' + JSON.stringify(uaString) }, 'uaString')
       process._rawDebug('----------------------ddddd')
       if (uaString) {
         const parsed = userAgentParser(uaString)
