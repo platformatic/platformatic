@@ -2,7 +2,6 @@
 
 const os = require('node:os')
 const assert = require('node:assert')
-const { spawn } = require('node:child_process')
 const { once } = require('node:events')
 const { join } = require('node:path')
 const { test } = require('node:test')
@@ -160,27 +159,8 @@ test('can start with a custom environment', async (t) => {
   assert.deepStrictEqual(await res.body.json(), { A_CUSTOM_ENV_VAR: 'foobar' })
 })
 
-// Skipping until
-// * https://github.com/nodejs/node/issues/49344
-// * https://github.com/nodejs/node/issues/47748
-// are fixed
-test('handles uncaught exceptions with db app', async (t) => {
-  // Test for https://github.com/platformatic/platformatic/issues/1193
-  const scriptFile = join(fixturesDir, 'start-command-in-runtime.js')
-  const configFile = join(fixturesDir, 'dbApp', 'platformatic.db.json')
-  const child = spawn(process.execPath, [scriptFile, configFile, '/async_crash'])
-  child.stdout.pipe(process.stdout)
-  child.stderr.pipe(process.stderr)
-  const [exitCode] = await once(child, 'exit')
-
-  t.after(async () => {
-    child.kill('SIGINT')
-  })
-
-  assert.strictEqual(exitCode, 42)
-})
-
 test('logs errors during db migrations', async (t) => {
+  console.log('start-3 started')
   const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'platformatic.db.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticDB)
   const runtimeConfig = await wrapConfigInRuntimeConfig(config)

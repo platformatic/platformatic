@@ -49,7 +49,9 @@ async function startWithConfig (configManager, env = process.env) {
 
   let exited = null
   let isWorkerAlive = true
-  worker.on('exit', () => {
+  worker.on('exit', (code) => {
+    // TODO(mcollina): refactor to not set this here
+    process.exitCode = code
     isWorkerAlive = false
     configManager.fileWatcher?.stopWatching()
     if (typeof exited === 'function') {
@@ -72,6 +74,7 @@ async function startWithConfig (configManager, env = process.env) {
       worker.postMessage({ signal: 'SIGUSR2' })
     })
 
+    // TODO(mcollina): refactor to not alter globals here
     closeWithGrace((event, cb) => {
       if (isWorkerAlive) {
         worker.postMessage(event)
