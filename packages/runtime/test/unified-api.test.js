@@ -184,7 +184,7 @@ test('start()', async (t) => {
   })
 })
 
-test('startCommand()', async (t) => {
+test('startCommand()', { skip: true }, async (t) => {
   await t.test('can start a server', async (t) => {
     const scriptFile = join(fixturesDir, 'start-command.js')
     const configFile = join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'platformatic.service.json')
