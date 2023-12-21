@@ -24,6 +24,7 @@ test('can start applications programmatically from object', async (t) => {
   const entryUrl = await app.start()
 
   t.after(async () => {
+    process.exitCode = 0
     await app.close()
   })
 
@@ -116,6 +117,7 @@ test('can restart the runtime apps', async (t) => {
     assert.strictEqual(res.statusCode, 200)
     assert.deepStrictEqual(await res.body.json(), { hello: 'world' })
   }
+  process.exitCode = 0
 })
 
 test('supports logging via message port', async (t) => {
@@ -141,6 +143,7 @@ test('supports logging via message port', async (t) => {
     // Verify that each log is valid JSON.
     JSON.parse(msg.logs[i])
   }
+  process.exitCode = 0
 })
 
 test('can start with a custom environment', async (t) => {
@@ -157,6 +160,7 @@ test('can start with a custom environment', async (t) => {
 
   assert.strictEqual(res.statusCode, 200)
   assert.deepStrictEqual(await res.body.json(), { A_CUSTOM_ENV_VAR: 'foobar' })
+  process.exitCode = 0
 })
 
 test('logs errors during db migrations', async (t) => {
@@ -185,6 +189,7 @@ test('logs errors during db migrations', async (t) => {
   assert.deepStrictEqual(messages[1].metadata, runtimeConfig.current.loggingMetadata)
   assert.strictEqual(messages[1].logs.length, 1)
   assert.match(messages[1].logs[0], /near \\"fiddlesticks\\": syntax error/)
+  process.exitCode = 0
 })
 
 // Transports use FinalizationRegistry, which is somewhat broken.
@@ -209,4 +214,5 @@ test('supports logging using a transport', { skip: true }, async (t) => {
   const parsed = JSON.parse(written)
 
   assert.strictEqual(parsed.fromTransport, true)
+  process.exitCode = 0
 })
