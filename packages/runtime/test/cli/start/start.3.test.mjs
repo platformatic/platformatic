@@ -5,7 +5,10 @@ import { join } from 'desm'
 import { request } from 'undici'
 import { start } from '../helper.mjs'
 
-test('handles uncaughtException', async (t) => {
+// Unskip when these issues are resolved:
+// * https://github.com/nodejs/node/issues/49344
+// * https://github.com/nodejs/node/issues/47748
+test('handles uncaughtException', { skip: true }, async (t) => {
   const config = join(import.meta.url, '..', '..', '..', 'fixtures', 'dbApp', 'platformatic.db.json')
   const { child, url } = await start('-c', config)
 
