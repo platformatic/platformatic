@@ -348,9 +348,6 @@ importers:
       '@fastify/swagger':
         specifier: ^8.10.1
         version: 8.12.1
-      '@fastify/swagger-ui':
-        specifier: ^2.0.0
-        version: 2.0.1
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
@@ -360,15 +357,18 @@ importers:
       '@platformatic/graphql-composer':
         specifier: ^0.5.1
         version: 0.5.1
+      '@platformatic/scalar-theme':
+        specifier: workspace:*
+        version: link:../scalar-theme
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
-      '@platformatic/swagger-ui-theme':
-        specifier: workspace:*
-        version: link:../swagger-ui-theme
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
+      '@scalar/fastify-api-reference':
+        specifier: ^1.10.1
+        version: 1.11.1(fastify-html@0.2.0)(fastify-plugin@4.5.1)(fastify@4.25.1)
       ajv:
         specifier: ^8.12.0
         version: 8.12.0
@@ -1396,6 +1396,8 @@ importers:
         specifier: ^5.2.2
         version: 5.3.3
 
+  packages/scalar-theme: {}
+
   packages/service:
     dependencies:
       '@fastify/accepts':
@@ -1425,9 +1427,6 @@ importers:
       '@fastify/swagger':
         specifier: ^8.10.1
         version: 8.12.1
-      '@fastify/swagger-ui':
-        specifier: ^2.0.0
-        version: 2.0.1
       '@fastify/under-pressure':
         specifier: ^8.3.0
         version: 8.3.0
@@ -1449,15 +1448,18 @@ importers:
       '@platformatic/metaconfig':
         specifier: workspace:*
         version: link:../metaconfig
-      '@platformatic/swagger-ui-theme':
+      '@platformatic/scalar-theme':
         specifier: workspace:*
-        version: link:../swagger-ui-theme
+        version: link:../scalar-theme
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
+      '@scalar/fastify-api-reference':
+        specifier: ^1.10.1
+        version: 1.11.1(fastify-html@0.2.0)(fastify-plugin@4.5.1)(fastify@4.25.1)
       '@types/ws':
         specifier: ^8.5.6
         version: 8.5.10
@@ -1787,18 +1789,18 @@ importers:
       '@fastify/swagger':
         specifier: ^8.10.1
         version: 8.12.1
-      '@fastify/swagger-ui':
-        specifier: ^2.0.0
-        version: 2.0.1
+      '@platformatic/scalar-theme':
+        specifier: workspace:*
+        version: link:../scalar-theme
       '@platformatic/sql-json-schema-mapper':
         specifier: workspace:*
         version: link:../sql-json-schema-mapper
-      '@platformatic/swagger-ui-theme':
-        specifier: workspace:*
-        version: link:../swagger-ui-theme
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
+      '@scalar/fastify-api-reference':
+        specifier: ^1.10.1
+        version: 1.11.1(fastify-html@0.2.0)(fastify-plugin@4.5.1)(fastify@4.25.1)
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -2687,16 +2689,6 @@ packages:
       glob: 8.1.0
       p-limit: 3.1.0
 
-  /@fastify/swagger-ui@2.0.1:
-    resolution: {integrity: sha512-sQnufSdQ5kJxaTxBisWYQjkunECuRymYRZYEZEEPpmLUzzZoS22tDLVumb3c1TV4MAlD3L1LTLpxLSXcFL+OZw==}
-    dependencies:
-      '@fastify/static': 6.12.0
-      fastify-plugin: 4.5.1
-      openapi-types: 12.1.3
-      rfdc: 1.3.0
-      yaml: 2.3.4
-    dev: false
-
   /@fastify/swagger@8.12.1:
     resolution: {integrity: sha512-0GATwS+a1QHHhTYtyZfoIpRD5lL1XlDSiV2DqsTVMQxKpL18kx5o6oMz0l0rtFr4883XIGiRuvTv2rxFRIxp4Q==}
     dependencies:
@@ -3300,6 +3292,19 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /@scalar/fastify-api-reference@1.11.1(fastify-html@0.2.0)(fastify-plugin@4.5.1)(fastify@4.25.1):
+    resolution: {integrity: sha512-/7mHafSw9RYlH5C+Je+4KAGKMRCxmuRC0jPcrH4MwawqwfF2hFpX3ERlCEylEfrSQ95d2sso8NzgJVNVPn6BEw==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      fastify: ^4.0.0
+      fastify-html: ^0.2.0
+      fastify-plugin: ^4.0.0
+    dependencies:
+      fastify: 4.25.1
+      fastify-html: 0.2.0
+      fastify-plugin: 4.5.1
+    dev: false
 
   /@seriousme/openapi-schema-validator@2.1.5:
     resolution: {integrity: sha512-SXkWGGaIlPKetdV+cfJc0bUm6l/CPsLrvoOGxX7Ke/AtP3hCFdvVbo+4uHKt9dQzKDZryDxlHMU2P9j8b5IsMA==}
@@ -4312,6 +4317,11 @@ packages:
 
   /commist@3.2.0:
     resolution: {integrity: sha512-4PIMoPniho+LqXmpS5d3NuGYncG6XWlkBSVGiWycL22dd42OYdUGil2CWuzklaJoNxyxUSpO4MKIBU94viWNAw==}
+    dev: false
+
+  /common-tags@1.8.2:
+    resolution: {integrity: sha512-gk/Z852D2Wtb//0I+kRFNKKE9dIIVirjoqPoA1wJU+XePVXZfGeBpk45+A1rKO4Q43prqWBNY/MiIeRLbPWUaA==}
+    engines: {node: '>=4.0.0'}
     dev: false
 
   /commondir@1.0.1:
@@ -5449,6 +5459,13 @@ packages:
     engines: {node: '>=0.10.0'}
     dependencies:
       reusify: 1.0.4
+    dev: false
+
+  /fastify-html@0.2.0:
+    resolution: {integrity: sha512-P2zwpFnAUcxfzHbkcGtuKRwv2Y2lPGXfySRScnZHax0JfR8WL2YIzPW/xUdU+oexOQAsR29aQyeBmmSbwXRkRg==}
+    dependencies:
+      common-tags: 1.8.2
+      fastify-plugin: 4.5.1
     dev: false
 
   /fastify-metrics@10.5.0(fastify@4.25.1):
