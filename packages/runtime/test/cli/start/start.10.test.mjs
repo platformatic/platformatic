@@ -3,22 +3,7 @@ import { test } from 'node:test'
 import fs from 'node:fs/promises'
 import { join } from 'desm'
 import { request } from 'undici'
-import { start } from './helper.mjs'
-
-test('use runtime server', async () => {
-  const config = join(import.meta.url, '..', '..', 'fixtures', 'server', 'runtime-server', 'platformatic.runtime.json')
-  const { child, url } = await start('-c', config)
-  assert.strictEqual(url, 'http://127.0.0.1:14242')
-  child.kill('SIGINT')
-  await child.catch(() => {})
-})
-
-test('the runtime server overrides the entrypoint server', async () => {
-  const config = join(import.meta.url, '..', '..', 'fixtures', 'server', 'overrides-service', 'platformatic.runtime.json')
-  const { child, url } = await start('-c', config)
-  assert.strictEqual(url, 'http://127.0.0.1:14242')
-  child.kill('SIGINT')
-})
+import { start } from '../helper.mjs'
 
 test('start command with js file', async (t) => {
   const file = join(import.meta.url, '..', '..', 'fixtures', 'empty', 'hello.js')

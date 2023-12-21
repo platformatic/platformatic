@@ -12,8 +12,12 @@ const files = [
   ...glob('*start*.test.{js,mjs}', { cwd: __dirname }),
   ...glob('*watch*.test.{js,mjs}', { cwd: __dirname }),
   ...glob('*/*start*.test.{js,mjs}', { cwd: __dirname }),
-  ...glob('*/*watch*.test.{js,mjs}', { cwd: __dirname })
+  ...glob('*/*watch*.test.{js,mjs}', { cwd: __dirname }),
+  ...glob('*/*/*start*.test.{js,mjs}', { cwd: __dirname }),
+  ...glob('*/*/*watch*.test.{js,mjs}', { cwd: __dirname })
 ].map(file => join(__dirname, file))
+
+console.log(files)
 
 const stream = run({
   files,

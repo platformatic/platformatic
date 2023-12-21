@@ -3,7 +3,7 @@ import { once } from 'node:events'
 import { test } from 'node:test'
 import { join } from 'desm'
 import { request } from 'undici'
-import { start } from './helper.mjs'
+import { start } from '../helper.mjs'
 
 test('handles uncaughtException', async (t) => {
   const config = join(import.meta.url, '..', '..', 'fixtures', 'dbApp', 'platformatic.db.json')
