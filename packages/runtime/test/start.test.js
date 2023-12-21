@@ -70,6 +70,7 @@ test('composer', async (t) => {
     await app.close()
   })
 
+  console.log('--------------->', entryUrl)
   {
     const res = await request(entryUrl)
 
