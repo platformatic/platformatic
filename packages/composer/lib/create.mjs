@@ -1,6 +1,6 @@
 'use strict'
 import minimist from 'minimist'
-import { Generator } from '../lib/generator/db-generator.js'
+import { Generator } from './generator/composer-generator.js'
 import { join } from 'node:path'
 import { getPkgManager } from '@platformatic/utils'
 import { execa } from 'execa'
@@ -10,15 +10,12 @@ import pino from 'pino'
 import pinoPretty from 'pino-pretty'
 
 function printAppSummary (args, logger) {
-  logger.info('Creating a Platformatic DB app with this config: ')
+  logger.info('Creating a Platformatic Composer app with this config: ')
   const table = [
     { config: 'Directory', value: args.dir },
-    { config: 'Connection String', value: args.connectionString },
     { config: 'Language', value: args.typescript ? 'Typescript' : 'Javascript' },
     { config: 'Init Git Repository', value: args.git },
-    { config: 'Install Dependencies', value: args.install },
-    { config: 'Sample Plugin and Tests', value: args.plugin },
-    { config: 'Create Sample Migrations', value: args.migrations }
+    { config: 'Install Dependencies', value: args.install }
   ]
 
   const p = new Table({
@@ -31,7 +28,7 @@ function printAppSummary (args, logger) {
   p.addRows(table)
   p.printTable()
 }
-async function createDB (_args) {
+async function createComposer (_args) {
   const stream = pinoPretty({
     translateTime: 'SYS:HH:MM:ss',
     ignore: 'hostname,pid',
@@ -42,18 +39,16 @@ async function createDB (_args) {
   const logger = pino(stream)
 
   const args = minimist(process.argv.slice(2), {
-    string: ['dir', 'port', 'hostname', 'git', 'connectionString'],
-    boolean: ['typescript', 'install', 'migrations', 'plugin'],
+    string: ['dir', 'port', 'hostname', 'git'],
+    boolean: ['typescript', 'install'],
     default: {
-      dir: join(process.cwd(), 'platformatic-db'),
+      dir: join(process.cwd(), 'platformatic-composer'),
       port: 3042,
       hostname: '0.0.0.0',
       plugin: true,
       typescript: false,
       git: false,
-      install: true,
-      migrations: true,
-      connectionString: 'sqlite://./db.sqlite'
+      install: true
     }
 
   })
@@ -86,4 +81,4 @@ async function createDB (_args) {
   }
 }
 
-export { createDB }
+export { createComposer }

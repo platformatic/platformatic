@@ -369,6 +369,9 @@ importers:
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
+      '@platformatic/utils':
+        specifier: workspace:^
+        version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.10.1
         version: 1.12.8(fastify-html@0.2.0)(fastify-plugin@4.5.1)(fastify@4.25.2)
@@ -378,6 +381,9 @@ importers:
       commist:
         specifier: ^3.2.0
         version: 3.2.0
+      console-table-printer:
+        specifier: ^2.11.2
+        version: 2.12.0
       desm:
         specifier: ^1.3.0
         version: 1.3.0
@@ -411,6 +417,9 @@ importers:
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
+      ora:
+        specifier: ^6.3.1
+        version: 6.3.1
       pino:
         specifier: ^8.15.3
         version: 8.17.2

@@ -41,7 +41,7 @@ async function createService (_args) {
 
   const args = minimist(process.argv.slice(2), {
     string: ['dir', 'port', 'hostname', 'git'],
-    boolean: ['typescript', 'install'],
+    boolean: ['typescript', 'install', 'plugin'],
     default: {
       dir: join(process.cwd(), 'platformatic-service'),
       port: 3042,
