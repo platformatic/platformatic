@@ -13,7 +13,7 @@ const why = require('why-is-node-running')
 
 setTimeout(() => {
   why()
-}, 5000)
+}, 5000).unref()
 
 test('logs errors during db migrations', async (t) => {
   const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'platformatic.db.json')
@@ -32,10 +32,6 @@ test('logs errors during db migrations', async (t) => {
   await assert.rejects(async () => {
     await runtime.start()
   }, /The runtime exited before the operation completed/)
-
-  t.after(async () => {
-    runtime.close()
-  })
 
   assert.strictEqual(messages.length, 2)
   assert.deepStrictEqual(messages[0].metadata, runtimeConfig.current.loggingMetadata)
