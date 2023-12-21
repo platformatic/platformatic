@@ -9,7 +9,6 @@ const Swagger = require('@fastify/swagger')
 const mercurius = require('mercurius')
 const { getIntrospectionQuery } = require('graphql')
 const { buildServer: dbBuildServer } = require('@platformatic/db')
-const ScalarApiReference = require('@scalar/fastify-api-reference')
 
 const { buildServer } = require('..')
 
@@ -39,8 +38,6 @@ async function createBasicService (t) {
   /** Serve spec file in yaml and json */
   app.get('/documentation/json', { schema: { hide: true } }, async () => app.swagger())
   app.get('/documentation/yaml', { schema: { hide: true } }, async () => app.swagger({ yaml: true }))
-
-  await app.register(ScalarApiReference)
 
   app.get('/text', async () => {
     return 'Some text'
@@ -108,7 +105,10 @@ async function createOpenApiService (t, entitiesNames = []) {
       }
     }
   })
-  await app.register(ScalarApiReference)
+
+  /** Serve spec file in yaml and json */
+  app.get('/documentation/json', { schema: { hide: true } }, async () => app.swagger())
+  app.get('/documentation/yaml', { schema: { hide: true } }, async () => app.swagger({ yaml: true }))
 
   app.decorate('getOpenApiSchema', async () => {
     const { body } = await app.inject({

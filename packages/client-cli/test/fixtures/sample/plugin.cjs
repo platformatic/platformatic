@@ -20,7 +20,11 @@ module.exports = async function (app) {
         400: {
           type: 'object',
           properties: {
-            message: { type: 'string', nullable: true }
+            message: { type: 'string', nullable: true },
+            dateTime: { type: 'string', format: 'date-time' },
+            otherDate: { type: 'string', format: 'date' },
+            nullableDate: { type: 'string', format: 'date', nullable: true },
+            normalString: { type: 'string' }
           }
         }
       }
