@@ -44,6 +44,9 @@ async function loadVersions (app) {
       }
     })
 
+    app.get('/documentation/json', { schema: { hide: true } }, async () => app.swagger())
+    app.get('/documentation/yaml', { schema: { hide: true } }, async () => app.swagger({ yaml: true }))
+
     app.register(ScalarApiReference, {
       logLevel: 'warn',
       routePrefix: '/documentation'
@@ -109,6 +112,9 @@ async function loadVersions (app) {
           }
         }
       })
+
+      app.get('/documentation/json', { schema: { hide: true } }, async () => app.swagger())
+      app.get('/documentation/yaml', { schema: { hide: true } }, async () => app.swagger({ yaml: true }))
 
       app.register(ScalarApiReference, {
         logLevel: 'warn',
