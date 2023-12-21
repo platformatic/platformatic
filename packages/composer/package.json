@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "standard | snazzy",
-    "test": "pnpm run lint && c8 node ./test/runner.js && tsd",
+    "test": "pnpm run lint && node ./test/runner.js && tsd",
     "build": "node lib/schema.js | json2ts > config.d.ts",
     "nocov": "pnpm run lint && node ./test/runner.js"
   },
