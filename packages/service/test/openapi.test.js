@@ -15,7 +15,7 @@ test('support prefix option', async (t) => {
     service: {
       openapi: {
         path: join(__dirname, 'fixtures', 'openapi-spec-test.json'),
-        swaggerPrefix: 'my-prefix'
+        swaggerPrefix: '/my-prefix'
       }
     },
     watch: false,
