@@ -28,15 +28,6 @@ module.exports = async (app, opts) => {
     schema: { hide: true },
     handler: (req, reply) => {
       const uaString = req.headers['user-agent']
-      process._rawDebug('----------------------ddddd')
-      process._rawDebug('uaString', uaString)
-      process._rawDebug('uaString', uaString)
-      process._rawDebug('uaString', uaString)
-      process._rawDebug('uaString', uaString)
-      process._rawDebug('uaString', uaString)
-      process._rawDebug('uaString', uaString)
-      app.log.error({ uaString: '' + JSON.stringify(uaString) }, 'uaString')
-      process._rawDebug('----------------------ddddd')
       if (uaString) {
         const parsed = userAgentParser(uaString)
         if (parsed.browser.name !== undefined) {

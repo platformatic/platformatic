@@ -48,7 +48,9 @@ async function startWithConfig (configManager, env = process.env) {
   })
 
   let exited = null
+  let isWorkerAlive = true
   worker.on('exit', () => {
+    isWorkerAlive = false
     configManager.fileWatcher?.stopWatching()
     if (typeof exited === 'function') {
       exited()
@@ -71,8 +73,12 @@ async function startWithConfig (configManager, env = process.env) {
     })
 
     closeWithGrace((event, cb) => {
-      worker.postMessage(event)
-      exited = cb
+      if (isWorkerAlive) {
+        worker.postMessage(event)
+        exited = cb
+      } else {
+        setImmediate(cb)
+      }
     })
 
     /* c8 ignore next 3 */

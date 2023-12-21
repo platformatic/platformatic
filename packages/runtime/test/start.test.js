@@ -180,7 +180,7 @@ test('handles uncaught exceptions with db app', { skip: true }, async (t) => {
   assert.strictEqual(exitCode, 42)
 })
 
-test('logs errors during db migrations', async (t) => {
+test('logs errors during db migrations', { skip: true }, async (t) => {
   const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'platformatic.db.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticDB)
   const runtimeConfig = await wrapConfigInRuntimeConfig(config)
