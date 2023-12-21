@@ -23,10 +23,17 @@ async function composeOpenAPI (app, opts) {
     }
   })
 
-  const { default: theme } = await import('@platformatic/swagger-ui-theme')
-  await app.register(require('@fastify/swagger-ui'), {
-    ...theme,
-    logLevel: 'warn'
+  const { default: scalarTheme } = await import('@platformatic/scalar-theme')
+
+  /** Serve spec file in yaml and json */
+  app.get('/documentation/json', { schema: { hide: true } }, async () => app.swagger())
+  app.get('/documentation/yaml', { schema: { hide: true } }, async () => app.swagger({ yaml: true }))
+
+  await app.register(require('@scalar/fastify-api-reference'), {
+    logLevel: 'warn',
+    configuration: {
+      customCss: scalarTheme.theme
+    }
   })
 }
 

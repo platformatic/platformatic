@@ -20,7 +20,7 @@ module.exports = async function (app) {
         400: {
           type: 'object',
           properties: {
-            message: { type: 'string' }
+            message: { type: 'string', nullable: true }
           }
         }
       }

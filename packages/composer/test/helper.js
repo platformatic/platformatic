@@ -6,10 +6,10 @@ const assert = require('node:assert/strict')
 const { request, setGlobalDispatcher, Agent } = require('undici')
 const fastify = require('fastify')
 const Swagger = require('@fastify/swagger')
-const SwaggerUI = require('@fastify/swagger-ui')
 const mercurius = require('mercurius')
 const { getIntrospectionQuery } = require('graphql')
 const { buildServer: dbBuildServer } = require('@platformatic/db')
+const ScalarApiReference = require('@scalar/fastify-api-reference')
 
 const { buildServer } = require('..')
 
@@ -35,7 +35,12 @@ async function createBasicService (t) {
       }
     }
   })
-  await app.register(SwaggerUI)
+
+  /** Serve spec file in yaml and json */
+  app.get('/documentation/json', { schema: { hide: true } }, async () => app.swagger())
+  app.get('/documentation/yaml', { schema: { hide: true } }, async () => app.swagger({ yaml: true }))
+
+  await app.register(ScalarApiReference)
 
   app.get('/text', async () => {
     return 'Some text'
@@ -103,7 +108,7 @@ async function createOpenApiService (t, entitiesNames = []) {
       }
     }
   })
-  await app.register(SwaggerUI)
+  await app.register(ScalarApiReference)
 
   app.decorate('getOpenApiSchema', async () => {
     const { body } = await app.inject({

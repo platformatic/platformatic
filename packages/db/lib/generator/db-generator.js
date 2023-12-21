@@ -25,7 +25,7 @@ class DBGenerator extends BaseGenerator {
       ...defaultBaseConfig,
       database: 'sqlite',
       connectionString: null,
-      types: false,
+      types: true,
       migrations: 'migrations',
       createMigrations: true
     }
@@ -147,7 +147,7 @@ class DBGenerator extends BaseGenerator {
 
       // TODO(leorossi): this is unfortunate. We have already generated tests in BaseGenerator
       // next line will override the test files
-      generateTests(this.config.typescript, this.type, jsHelper).forEach((fileObject) => {
+      generateTests(this.config.typescript, '@platformatic/db', jsHelper).forEach((fileObject) => {
         this.addFile(fileObject)
       })
 
@@ -159,6 +159,18 @@ class DBGenerator extends BaseGenerator {
         }
       }
     }
+
+    const GLOBAL_TYPES_TEMPLATE = `
+import { FastifyInstance } from 'fastify'
+import { PlatformaticApp, PlatformaticDBConfig, PlatformaticDBMixin, Entities } from '@platformatic/db'
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    platformatic: PlatformaticApp<PlatformaticDBConfig> & PlatformaticDBMixin<Entities>
+  }
+}
+`
+    this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
   }
 
   createMigrationFiles () {

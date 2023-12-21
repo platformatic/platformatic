@@ -1,7 +1,7 @@
 'use strict'
 
 const Swagger = require('@fastify/swagger')
-const SwaggerUI = require('@fastify/swagger-ui')
+const ScalarApiReference = require('@scalar/fastify-api-reference')
 const deepmerge = require('@fastify/deepmerge')({ all: true })
 const { mapSQLEntityToJSONSchema } = require('@platformatic/sql-json-schema-mapper')
 const { findNearestString } = require('@platformatic/utils')
@@ -39,12 +39,19 @@ async function setupOpenAPI (app, opts) {
   const ignore = opts.ignore || []
   const paths = opts.paths || {}
 
-  const { default: theme } = await import('@platformatic/swagger-ui-theme')
-  app.register(SwaggerUI, {
-    ...theme,
+  const { default: scalarTheme } = await import('@platformatic/scalar-theme')
+  const routePrefix = opts.swaggerPrefix || '/documentation'
+
+  app.get(`${routePrefix}/json`, { schema: { hide: true } }, async () => app.swagger())
+  app.get(`${routePrefix}/yaml`, { schema: { hide: true } }, async () => app.swagger({ yaml: true }))
+
+  app.register(ScalarApiReference, {
     ...opts,
     logLevel: 'warn',
-    prefix: opts.swaggerPrefix || '/documentation'
+    routePrefix,
+    configuration: {
+      customCss: scalarTheme.theme
+    }
   })
 
   app.addHook('onRoute', (routeOptions) => {

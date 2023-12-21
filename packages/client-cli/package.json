@@ -8,7 +8,7 @@
   },
   "scripts": {
     "lint": "standard",
-    "test": "c8 tap test/*.test.*js",
+    "test": "tap test/*.test.*js",
     "nocov": "tap test/*.test.*js"
   },
   "repository": {

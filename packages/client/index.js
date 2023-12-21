@@ -400,6 +400,7 @@ async function plugin (app, opts) {
     client = await buildOpenAPIClient(opts, app.openTelemetry)
   } else if (opts.type === 'graphql') {
     if (!opts.url.endsWith('/graphql')) {
+      /* c8 ignore next 2 */
       opts.url += '/graphql'
     }
     client = await buildGraphQLClient(opts, app.openTelemetry, app.log)

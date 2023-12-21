@@ -80,7 +80,6 @@ test('openapi client generation (typescript)', async ({ teardown, comment, same 
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
-
   const dir = await moveToTmpdir(teardown)
 
   comment(`working in ${dir}`)
@@ -829,7 +828,7 @@ test('nested optional parameters are correctly identified', async ({ teardown, c
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
   match(data, `
-  export interface GetMoviesResponseOK {
+  export type GetMoviesResponseOK = {
     'data': { foo: string; bar?: string; baz?: { nested1?: string; nested2: string } };
   }
 `)
@@ -844,7 +843,7 @@ test('request with same parameter name in body/path/header/query', async ({ tear
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
   match(data, `
-  export interface GetMoviesRequest {
+  export type GetMoviesRequest = {
     body: {
       'id': string;
     }
@@ -876,7 +875,7 @@ test('openapi client generation (javascript) from file with fullRequest, fullRes
     const typeFile = join(dir, 'full', 'full.d.ts')
     const data = await readFile(typeFile, 'utf-8')
     match(data, `
-  export interface PostHelloRequest {
+  export type PostHelloRequest = {
     body: {
       'bodyId': string;
     }
@@ -944,7 +943,7 @@ test('do not generate implementation file if in platformatic service', async ({ 
     const typeFile = join(dir, 'full', 'full.d.ts')
     const data = await readFile(typeFile, 'utf-8')
     match(data, `
-  export interface PostHelloRequest {
+  export type PostHelloRequest = {
     body: {
       'bodyId': string;
     }
@@ -973,7 +972,7 @@ test('optional-headers option', async ({ teardown, comment, match }) => {
   const typeFile = join(dir, 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
   match(data, `
-  export interface PostHelloRequest {
+  export type PostHelloRequest = {
     'authorization'?: string;
   }
 `)
@@ -989,7 +988,7 @@ test('common parameters in paths', async ({ teardown, comment, match }) => {
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
   match(data, `
-  export interface GetPathWithFieldIdRequest {
+  export type GetPathWithFieldIdRequest = {
     path: {
       'fieldId': string;
     }
@@ -999,14 +998,14 @@ test('common parameters in paths', async ({ teardown, comment, match }) => {
   }
 `)
   match(data, `
-  export interface GetSampleRequest {
+  export type GetSampleRequest = {
     query: {
       'movieId': string;
     }
   }
 `)
   match(data, `
-  export interface PostPathWithFieldIdRequest {
+  export type PostPathWithFieldIdRequest = {
     path: {
       'fieldId': string;
     }

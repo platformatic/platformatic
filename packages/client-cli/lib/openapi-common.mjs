@@ -4,7 +4,6 @@ import { STATUS_CODES } from 'node:http'
 import { capitalize, classCase } from './utils.mjs'
 import { hasDuplicatedParameters } from '@platformatic/client'
 import jsonpointer from 'jsonpointer'
-import errors from './errors.mjs'
 import camelcase from 'camelcase'
 
 export function writeOperations (interfacesWriter, mainWriter, operations, { fullRequest, fullResponse, optionalHeaders, schema }) {
@@ -22,7 +21,7 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
     const operationRequestName = `${capitalize(camelCaseOperationId)}Request`
     const operationResponseName = `${capitalize(camelCaseOperationId)}Response`
 
-    interfacesWriter.write(`export interface ${operationRequestName}`).block(() => {
+    interfacesWriter.write(`export type ${operationRequestName} = `).block(() => {
       const addedProps = new Set()
       if (parameters) {
         if (forceFullRequest) {
@@ -86,10 +85,7 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
       } else {
         type = `${operationResponseName}${classCase(STATUS_CODES[statusCode])}`
       }
-      let isResponseArray
-      interfacesWriter.write(`export interface ${type}`).block(() => {
-        isResponseArray = writeContent(interfacesWriter, response.content, schema, new Set())
-      })
+      const isResponseArray = writeContent(interfacesWriter, type, response.content, schema, new Set())
       interfacesWriter.blankLine()
       if (isResponseArray) type = `Array<${type}>`
       if (currentFullResponse) type = `FullResponse<${type}, ${statusCode}>`
@@ -136,11 +132,16 @@ export function writeProperty (writer, key, value, addedProps, required = true) 
     writer.quote(key)
     writer.write('?')
   }
-  writer.write(`: ${getType(value)};`)
+  const valueType = getType(value)
+  const typeValueToWrite = value.nullable === true ? `${valueType} | null` : valueType
+  writer.write(`: ${typeValueToWrite};`)
   writer.newLine()
 }
 
-export function getType (typeDef) {
+export function getType (typeDef, spec) {
+  if (typeDef.$ref) {
+    typeDef = jsonpointer.get(spec, typeDef.$ref.replace('#', ''))
+  }
   if (typeDef.schema) {
     return getType(typeDef.schema)
   }
@@ -208,8 +209,9 @@ function JSONSchemaToTsType (type) {
   }
 }
 
-function writeContent (writer, content, spec, addedProps) {
+export function writeContent (writer, type, content, spec, addedProps) {
   let isResponseArray = false
+
   if (content) {
     for (const [contentType, body] of Object.entries(content)) {
       // We ignore all non-JSON endpoints for now
@@ -219,21 +221,26 @@ function writeContent (writer, content, spec, addedProps) {
         continue
       }
 
-      // Response body has no schema that can be processed
-      // Should not be possible with well formed OpenAPI
-      /* c8 ignore next 3 */
-      if (!body.schema?.type && !body.schema?.$ref) {
-        break
-      }
       // This is likely buggy as there can be multiple responses for different
       // status codes. This is currently not possible with Platformatic DB
       // services so we skip for now.
       // TODO: support different schemas for different status codes
       if (body.schema.type === 'array') {
         isResponseArray = true
-        writeObjectProperties(writer, body.schema.items, spec, addedProps)
+        if (body.schema.items.type === 'object') {
+          writer.write(`export type ${type} = Array<`).inlineBlock(() => {
+            writeObjectProperties(writer, body.schema.items, spec, addedProps)
+          })
+          writer.write('>')
+        } else {
+          writer.writeLine(`export type ${type} = Array<${getType(body.schema.items, spec)}>`)
+        }
+      } else if (body.schema.type === 'object') {
+        writer.write(`export type ${type} = `).inlineBlock(() => {
+          writeObjectProperties(writer, body.schema, spec, addedProps)
+        })
       } else {
-        writeObjectProperties(writer, body.schema, spec, addedProps)
+        writer.write(`export type ${type} = ${getType(body.schema, spec)}`)
       }
       break
     }
@@ -242,20 +249,14 @@ function writeContent (writer, content, spec, addedProps) {
 }
 
 function writeObjectProperties (writer, schema, spec, addedProps) {
-  if (schema.$ref) {
-    schema = jsonpointer.get(spec, schema.$ref.replace('#', ''))
-  }
   if (schema.type === 'object') {
     for (const [key, value] of Object.entries(schema.properties)) {
+      /* c8 ignore next 3 */
       if (addedProps.has(key)) {
         continue
       }
       const required = schema.required && schema.required.includes(key)
       writeProperty(writer, key, value, addedProps, required)
     }
-    // This is unlikely to happen with well-formed OpenAPI.
-    /* c8 ignore next 3 */
-  } else {
-    throw new errors.TypeNotSupportedError(schema.type)
   }
 }
