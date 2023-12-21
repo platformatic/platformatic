@@ -12,6 +12,7 @@ test('graphql enabled', async (t) => {
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      forceCloseConnections: true,
       healthCheck: {
         enabled: true,
         interval: 2000
@@ -63,6 +64,7 @@ test('graphql disabled', async (t) => {
     const app = await buildServer(buildConfig({
       server: {
         hostname: '127.0.0.1',
+        forceCloseConnections: true,
         port: 0,
         healthCheck: {
           enabled: true,
@@ -86,6 +88,7 @@ test('graphql disabled', async (t) => {
 test('disable graphiql', async (t) => {
   const app = await buildServer(buildConfig({
     server: {
+      forceCloseConnections: true,
       hostname: '127.0.0.1',
       port: 0,
       healthCheck: {
@@ -140,6 +143,7 @@ test('graphql disabled by default', async (t) => {
   try {
     const app = await buildServer(buildConfig({
       server: {
+        forceCloseConnections: true,
         hostname: '127.0.0.1',
         port: 0,
         healthCheck: {
@@ -161,6 +165,7 @@ test('graphql disabled by default', async (t) => {
 test('graphql errors are correctly propagated in custom resolvers', async (t) => {
   const app = await buildServer(buildConfig({
     server: {
+      forceCloseConnections: true,
       hostname: '127.0.0.1',
       port: 0,
       healthCheck: {
