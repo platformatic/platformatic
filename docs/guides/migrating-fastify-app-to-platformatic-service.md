@@ -409,7 +409,7 @@ Platformatic Service also provides many other features that are built on top of 
 
 - Metrics with [`fastify-metrics`](https://www.npmjs.com/package/fastify-metrics)
 - Healthcheck endpoint with [`@fastify/under-pressure`](https://github.com/fastify/under-pressure)
-- OpenAPI specification and Swagger UI with [`@fastify/swagger`](https://www.npmjs.com/package/@fastify/swagger) and [`@fastify/swagger-ui`](https://www.npmjs.com/package/@fastify/swagger-ui)
+- OpenAPI specification and Scalar with [`@fastify/swagger`](https://www.npmjs.com/package/@fastify/swagger) and [`@scalar/fastify-api-reference`](https://www.npmjs.com/package/@scalar/fastify-api-reference)
 - GraphQL API support with [`mercurius`](https://www.npmjs.com/package/mercurius)
 - CORS support with [`@fastify/cors`](https://github.com/fastify/fastify-cors)
 - Configuration with environment variable validation

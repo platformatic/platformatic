@@ -1,0 +1,26 @@
+{
+  "name": "@platformatic/scalar-theme",
+  "version": "1.0.0",
+  "description": "Platformatic's Scalar theme for @scalar/fastify-api-reference",
+  "main": "theme.js",
+  "type": "module",
+  "homepage": "https://docs.platformatic.dev/",
+  "scripts": {},
+  "author": "Marc Laventure <marc@scalar.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "license": "Apache-2.0",
+  "keywords": [
+    "platformatic",
+    "GraphQL",
+    "OpenAPI",
+    "SQLite",
+    "PostgreSQL",
+    "MySQL",
+    "MariaDB",
+    "fastify",
+    "mercurius"
+  ]
+}

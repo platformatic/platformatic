@@ -95,7 +95,7 @@ Read thorough documentation on the [quick start guide](https://github.com/platfo
    }
    ```
 5. In your project directory, use the Platformatic CLI to start your API server: `platformatic db start`
-6. Start interacting with the API by opening the following link on your browser http://127.0.0.1:3042/documentation/static/index.html or you can use curl
+6. Start interacting with the API by opening the following link on your browser http://127.0.0.1:3042/documentation or you can use curl
    to do it. Read the quick start guide to see examples.
 </details>
 

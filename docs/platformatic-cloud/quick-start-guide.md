@@ -192,9 +192,9 @@ Once the GitHub Actions deployment workflow has completed, go to the `production
 for your app in Platformatic Cloud. Click on the link for the **Entry Point**. You should now
 see the Platformatic DB app home page.
 
-Click on the **OpenAPI Documentation** link to try out your app's REST API using the Swagger UI.
+Click on the **OpenAPI Documentation** link to try out your app's REST API using Scalar.
 
-![Screenshot of Swagger UI for a Platformatic DB app](./images/quick-start-guide/platformatic-db-swagger-ui.png)
+![Screenshot of Scalar for a Platformatic DB app](./images/quick-start-guide/platformatic-db-scalar.png)
 
 ## Preview pull request changes
 
