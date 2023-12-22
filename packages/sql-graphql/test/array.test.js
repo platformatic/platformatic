@@ -1,10 +1,10 @@
 'use strict'
 
+const { clear, connInfo, isPg } = require('./helper')
 const { test } = require('tap')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { clear, connInfo, isPg } = require('./helper')
 
 test('array support', { skip: !isPg }, async ({ pass, teardown, same, equal }) => {
   const app = fastify()

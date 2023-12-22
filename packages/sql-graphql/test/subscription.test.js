@@ -1,5 +1,6 @@
 'use strict'
 
+const { clear, connInfo, isSQLite } = require('./helper')
 const { test } = require('tap')
 const Fastify = require('fastify')
 const WebSocket = require('ws')
@@ -7,7 +8,6 @@ const { once } = require('events')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const sqlEvents = require('@platformatic/sql-events')
-const { clear, connInfo, isSQLite } = require('./helper')
 const stream = require('stream')
 const graphql = require('graphql')
 

@@ -1728,6 +1728,9 @@ importers:
       tap:
         specifier: ^16.3.9
         version: 16.3.10(typescript@5.3.3)
+      why-is-node-running:
+        specifier: ^2.2.2
+        version: 2.2.2
 
   packages/sql-mapper:
     dependencies:
@@ -1818,7 +1821,7 @@ importers:
         specifier: workspace:*
         version: link:../sql-mapper
       fastify:
-        specifier: ^4.23.2
+        specifier: ^4.25.1
         version: 4.25.1
       mercurius:
         specifier: ^13.1.0
@@ -1841,6 +1844,9 @@ importers:
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
+      yaml:
+        specifier: ^2.3.2
+        version: 2.3.4
 
   packages/swagger-ui-theme: {}
 
