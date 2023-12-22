@@ -1,10 +1,10 @@
 'use strict'
 
+const { clear, connInfo, isSQLite } = require('./helper')
 const { test } = require('tap')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { clear, connInfo, isSQLite } = require('./helper')
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {

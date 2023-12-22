@@ -1,10 +1,10 @@
 'use strict'
 
+const { connInfo, isPg } = require('./helper')
 const { test } = require('tap')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { connInfo, isPg } = require('./helper')
 
 async function runMigrations (db, sql) {
   await db.query(sql`

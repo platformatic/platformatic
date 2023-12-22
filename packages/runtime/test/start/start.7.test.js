@@ -10,7 +10,10 @@ const { wrapConfigInRuntimeConfig } = require('../../lib/config')
 const { startWithConfig } = require('../../lib/start')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('logs errors during db migrations', async (t) => {
+// Unskip when these issues are resolved:
+// * https://github.com/nodejs/node/issues/49344
+// * https://github.com/nodejs/node/issues/47748
+test('logs errors during db migrations', { skip: true }, async (t) => {
   const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'platformatic.db.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticDB)
   const runtimeConfig = await wrapConfigInRuntimeConfig(config)

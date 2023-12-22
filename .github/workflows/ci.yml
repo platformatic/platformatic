@@ -317,7 +317,7 @@ jobs:
   ci-db-core-test:
     needs: setup-node_modules
     runs-on: ${{matrix.os}}
-    timeout-minutes: 10
+    timeout-minutes: 15
     strategy:
       matrix:
         db: [postgresql, mariadb, mysql, mysql8, sqlite]

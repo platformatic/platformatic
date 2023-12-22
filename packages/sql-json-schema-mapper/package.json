@@ -28,7 +28,8 @@
     "fastify": "^4.23.2",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "tap": "^16.3.9"
+    "tap": "^16.3.9",
+    "why-is-node-running": "^2.2.2"
   },
   "dependencies": {
     "code-block-writer": "^12.0.0",

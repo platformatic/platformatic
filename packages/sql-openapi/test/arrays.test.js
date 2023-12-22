@@ -1,10 +1,10 @@
 'use strict'
 
+const { clear, connInfo, isPg } = require('./helper')
 const t = require('tap')
 const sqlOpenAPI = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { clear, connInfo, isPg } = require('./helper')
 const { resolve } = require('path')
 const { test } = t
 

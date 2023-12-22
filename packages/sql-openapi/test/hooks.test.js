@@ -1,10 +1,10 @@
 'use strict'
 
+const { clear, connInfo, isSQLite } = require('./helper')
 const { test } = require('tap')
 const sqlOpenAPI = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { clear, connInfo, isSQLite } = require('./helper')
 
 test('basic hooks', async ({ pass, teardown, same, equal, plan, not }) => {
   plan(19)
