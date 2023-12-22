@@ -1694,6 +1694,9 @@ importers:
       tsd:
         specifier: ^0.29.0
         version: 0.29.0
+      why-is-node-running:
+        specifier: ^2.2.2
+        version: 2.2.2
       ws:
         specifier: ^8.14.2
         version: 8.15.1
@@ -1835,6 +1838,9 @@ importers:
       tsd:
         specifier: ^0.29.0
         version: 0.29.0
+      why-is-node-running:
+        specifier: ^2.2.2
+        version: 2.2.2
 
   packages/swagger-ui-theme: {}
 

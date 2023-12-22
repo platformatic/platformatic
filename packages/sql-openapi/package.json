@@ -32,7 +32,8 @@
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
     "tap": "^16.3.9",
-    "tsd": "^0.29.0"
+    "tsd": "^0.29.0",
+    "why-is-node-running": "^2.2.2"
   },
   "dependencies": {
     "@fastify/deepmerge": "^1.3.0",

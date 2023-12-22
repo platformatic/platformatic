@@ -10,7 +10,8 @@ test('support prefix option', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
+      forceCloseConnections: true
     },
     service: {
       openapi: {
@@ -58,7 +59,8 @@ test('provide openapi spec from a file', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
+      forceCloseConnections: true
     },
     service: {
       openapi: {
