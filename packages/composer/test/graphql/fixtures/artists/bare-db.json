@@ -1,0 +1,15 @@
+{
+  "server":{
+    "logger": {
+      "level": "info"
+    }
+  },
+  "db": {
+    "connectionString": "sqlite://./db0.sqlite",
+    "graphql": true
+  },
+  "migrations": {
+    "dir": "./migrations",
+    "autoApply": true
+  }
+}

@@ -10,7 +10,8 @@
       body {
         width: 100%;
         height: 100vh;
-        overflow-y: hidden;
+        overflow-y: auto;
+        overflow-x: hidden;
         --text-color: #FFFFFF;
         --bg-color: #001825;
         --theme-img: url('./images/light_mode.svg')
@@ -76,15 +77,24 @@
         display: flex;
         column-gap: 3rem;
         justify-content: center;
-        align-items: center;
+        align-items: start;
         margin: 2rem 0;
+      }
+
+      .buttons-list-container {
+        display: flex;
+        flex-direction: column;
+        row-gap: 1rem;
+        justify-content: center;
+        align-items: start;
       }
 
       .button-link {
         width: 250px;
         border: 1px solid var(--text-color);
         border-radius: 2px;
-      } 
+        padding: 2px 6px;
+      }
 
       button {
         border-radius: 8px;
@@ -203,7 +213,7 @@
         <h2 class="text-center">Explore our flexible toolkit for building robust APIs.</h2>
         <div class="button-container">
           <a href="https://docs.platformatic.dev" target="_blank" class="button-link">Documentation</a>
-          <a id="openapi-link" target="_blank" class="button-link">OpenAPI Documentation</a>
+          <div class="open-documentation-version buttons-list-container">&nbsp;</div>
           <a id="graphql-link" target="_blank" class="button-link">GraphiQL</a>
         </div>
       </div>
@@ -213,7 +223,7 @@
       const currentPath = window.location.pathname
     
       const openApiLink = document.getElementById('openapi-link')
-      openApiLink.href = currentPath + 'documentation/static/index.html'
+      openApiLink.href = currentPath + 'documentation'
 
       const graphqlLink = document.getElementById('graphql-link')
       graphqlLink.href = currentPath + 'graphiql'
@@ -235,6 +245,27 @@
           document.getElementById('logo').src = 'images/platformatic-logo-dark.svg'
         }
       }
+
+      function join (...paths) {
+        return paths.join('/').replace(/\/+/g, '/')
+      }
+
+      fetch('/_platformatic_versions')
+        .then(response => response.json())
+        .then(versions => {
+          const sharedOpenapiHref = join(currentPath, 'documentation/static/index.html')
+          const openapiButtons = [
+            `<a href="${sharedOpenapiHref}"target="_blank" class="button-link">OpenAPI Documentation</a>`
+          ]
+
+          for (const version of versions) {
+            const href = join(currentPath, version.prefix, 'documentation/static/index.html')
+            openapiButtons.push(`<a href="${href}"target="_blank" class="button-link">OpenAPI Documentation ${version.name}</a>`)
+          }
+
+          const buttonList = document.getElementsByClassName('open-documentation-version')[0]
+          buttonList.innerHTML = openapiButtons.join('')
+        })
     </script>
   </body>
 </html>

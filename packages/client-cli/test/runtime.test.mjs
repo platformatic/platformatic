@@ -104,7 +104,7 @@ test('should return error if in the runtime root', async ({ teardown, comment, f
 
     fail()
   } catch (err) {
-    match(err.message, 'Could not create a client runtime from the runtime root.')
+    match(err.message, 'Could not find a platformatic.json file in any parent directory.')
   }
 })
 
@@ -312,7 +312,8 @@ test('no platformatic.runtime.json', async ({ teardown, comment, match, plan, eq
   const stream = app.stdout.pipe(split())
 
   for await (const line of stream) {
-    match(line, 'Could not find a platformatic.runtime.json file in this or any parent directory.')
+    console.log(line)
+    match(line, 'Could not find a platformatic.json file in any parent directory.')
   }
 
   const [code] = await onExit

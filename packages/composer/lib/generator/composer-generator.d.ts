@@ -5,7 +5,7 @@ export namespace ComposerGenerator {
   export class ComposerGenerator extends BaseGenerator {
     runtime: RuntimeGenerator
 
-    setRuntime(runtime: RuntimeGenerator)
+    setRuntime(runtime: RuntimeGenerator): void
   }
   
 }

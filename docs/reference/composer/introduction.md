@@ -7,6 +7,7 @@ services APIs into a single API.
 
 - Command-line interface: [`platformatic composer`](/reference/cli.md#composer)
 - Automatic [OpenApi composition](/reference/composer/configuration.md#composer)
+- Automatic [GraphQL composition](/reference/composer/configuration.md#composer) (experimental)
 - [Reverse proxy](/reference/composer/configuration.md#composer) for composed services
 - Add custom functionality in a [Fastify plugin](/reference/composer/plugin.md)
 - Write plugins in JavaScript or [TypeScript](/reference/cli.md#compile)
@@ -25,6 +26,8 @@ If you're only interested in the features available in Platformatic Composer, yo
 The following configuration file can be used to start a new Platformatic
 Composer project. For more details on the configuration file, see the
 [configuration documentation](/reference/composer/configuration.md).
+
+With OpenAPI services
 
 ```json
 {
@@ -53,6 +56,39 @@ Composer project. For more details on the configuration file, see the
           "url": "/documentation/json"
         }
       }
+    ],
+    "refreshTimeout": 1000
+  },
+  "watch": true
+}
+```
+
+With GraphQL services
+
+```json
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0,
+    "logger": {
+      "level": "info"
+    }
+  },
+  "composer": {
+    "graphql": {
+      "graphiql": true
+    },
+    "services": [
+      {
+        "id": "books",
+        "origin": "https://books-service.com",
+        "graphql": true
+      },
+      {
+        "id": "authors",
+        "origin": "https://authors-service.com",
+        "graphql": true
+      },
     ],
     "refreshTimeout": 1000
   },

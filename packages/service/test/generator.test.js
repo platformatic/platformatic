@@ -91,10 +91,20 @@ describe('generator', () => {
               path: 'threshold',
               value: '1',
               type: 'number'
+            },
+            {
+              path: 'foobar',
+              value: '123',
+              type: 'number',
+              name: 'FST_PLUGIN_STATIC_FOOBAR'
             }
           ]
         }
       ]
+      svc.setConfig({
+        isRuntimeContext: true,
+        serviceName: 'my-service'
+      })
       svc.addPackage(packageDefinitions[0])
       await svc.prepare()
 
@@ -106,11 +116,14 @@ describe('generator', () => {
           {
             name: '@fastify/compress',
             options: {
-              threshold: 1
+              threshold: 1,
+              foobar: '{PLT_MY_SERVICE_FST_PLUGIN_STATIC_FOOBAR}'
             }
           }
         ]
       })
+
+      assert.equal(svc.config.env.PLT_MY_SERVICE_FST_PLUGIN_STATIC_FOOBAR, 123)
     }
     {
       // with standard platformatic plugin
@@ -158,6 +171,7 @@ describe('generator', () => {
 
   test('should return config fields', async () => {
     const svc = new ServiceGenerator()
+
     assert.deepEqual(svc.getConfigFieldsDefinitions(), [
       {
         var: 'PLT_SERVER_HOSTNAME',
@@ -181,10 +195,19 @@ describe('generator', () => {
         configValue: 'port'
       }
     ])
+
+    // empty array in runtime context
+    svc.setConfig({
+      isRuntimeContext: true
+    })
+    assert.deepEqual(svc.getConfigFieldsDefinitions(), [])
   })
 
   test('should set config fields', async () => {
     const svc = new ServiceGenerator()
+    svc.setConfig({
+      isRuntimeContext: false
+    })
     const values = [
       {
         // existing field
@@ -229,16 +252,15 @@ describe('generator', () => {
           BAZ: 'baz'
         }
       })
-      assert.deepEqual(svc.config.env, {
-        PLT_MY_SERVICE_FOO: 'bar',
-        PLT_MY_SERVICE_BAZ: 'baz'
-      })
 
       await svc.prepare()
 
       // no env file is generated
       assert.equal(null, svc.getFileObject('.env'))
-      assert.deepEqual(svc.config.env, {})
+      assert.deepEqual(svc.config.env, {
+        PLT_MY_SERVICE_FOO: 'bar',
+        PLT_MY_SERVICE_BAZ: 'baz'
+      })
     })
 
     test('should not have server.config', async (t) => {

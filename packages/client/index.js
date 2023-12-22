@@ -136,6 +136,7 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
   method = method.toUpperCase()
   path = join(url.pathname, path)
 
+  const canHaveBody = method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'OPTIONS'
   const pathParams = methodMeta.parameters?.filter(p => p.in === 'path') || []
   const queryParams = methodMeta.parameters?.filter(p => p.in === 'query') || []
   const headerParams = methodMeta.parameters?.filter(p => p.in === 'header') || []
@@ -213,21 +214,24 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
 
     let res
     try {
-      res = await request(urlToCall, {
+      const requestOptions = {
         method,
         headers: {
           ...headers,
-          ...telemetryHeaders,
-          'content-type': 'application/json; charset=utf-8'
+          ...telemetryHeaders
         },
-        body: JSON.stringify(body),
         throwOnError
-      })
+      }
+      if (canHaveBody) {
+        requestOptions.headers['content-type'] = 'application/json; charset=utf-8'
+        requestOptions.body = JSON.stringify(body)
+      }
+      res = await request(urlToCall, requestOptions)
       let responseBody
       const contentType = sanitizeContentType(res.headers['content-type']) || 'application/json'
       try {
         if (res.statusCode === 204) {
-          responseBody = await res.body.dump()
+          await res.body.dump()
         } else if (contentType === 'application/json') {
           responseBody = await res.body.json()
         } else {
@@ -237,14 +241,6 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
         // maybe the response is a 302, 301, or anything with empty payload
         responseBody = {}
       }
-      if (fullResponse) {
-        return {
-          statusCode: res.statusCode,
-          headers: res.headers,
-          body: responseBody
-        }
-      }
-
       if (validateResponse) {
         try {
           // validate response first
@@ -265,6 +261,13 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
           }
         } catch (err) {
           responseBody = createErrorResponse(err.message)
+        }
+      }
+      if (fullResponse) {
+        return {
+          statusCode: res.statusCode,
+          headers: res.headers,
+          body: responseBody
         }
       }
       return responseBody

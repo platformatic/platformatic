@@ -13,6 +13,7 @@ const setupMetrics = require('./lib/plugins/metrics')
 const setupTsCompiler = require('./lib/plugins/typescript')
 const setupHealthCheck = require('./lib/plugins/health-check')
 const loadPlugins = require('./lib/plugins/plugins')
+const loadVersions = require('./lib/plugins/versions')
 const { telemetry } = require('@platformatic/telemetry')
 
 const { schema } = require('./lib/schema')
@@ -20,11 +21,11 @@ const { addLoggerToTheConfig } = require('./lib/utils')
 const { start, buildServer } = require('./lib/start')
 const ServiceGenerator = require('./lib/generator/service-generator.js')
 
-// TODO(mcollina): toLoad is deprecated, remove it in the next major version.
-async function platformaticService (app, opts, toLoad) {
+// TODO(mcollina): arugments[2] is deprecated, remove it in the next major version.
+async function platformaticService (app, opts) {
   const configManager = app.platformatic.configManager
   const config = configManager.current
-  const beforePlugins = opts.beforePlugins || toLoad || []
+  const beforePlugins = opts.beforePlugins || arguments[2] || []
 
   if (isKeyEnabled('metrics', config)) {
     app.register(setupMetrics, config.metrics)
@@ -45,15 +46,13 @@ async function platformaticService (app, opts, toLoad) {
   const serviceConfig = config.service || {}
 
   if (isKeyEnabled('openapi', serviceConfig)) {
-    app.register(setupOpenAPI, serviceConfig.openapi)
+    const openapi = serviceConfig.openapi
+    const versions = config.versions
+    app.register(setupOpenAPI, { openapi, versions })
   }
 
   if (isKeyEnabled('graphql', serviceConfig)) {
     app.register(setupGraphQL, serviceConfig.graphql)
-  }
-
-  if (isKeyEnabled('clients', config)) {
-    app.register(setupClients, config.clients)
   }
 
   if (config.plugins) {
@@ -70,6 +69,17 @@ async function platformaticService (app, opts, toLoad) {
       app.register(setupTsCompiler)
     }
     app.register(loadPlugins)
+  }
+
+  await app.register(async (app) => {
+    if (config.versions) {
+      // TODO: Add typescript mappers support
+      await app.register(loadVersions)
+    }
+  })
+
+  if (isKeyEnabled('clients', config)) {
+    app.register(setupClients, config.clients)
   }
 
   if (isKeyEnabled('cors', config.server)) {

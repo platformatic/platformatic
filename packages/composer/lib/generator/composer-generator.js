@@ -70,6 +70,7 @@ class ComposerGenerator extends BaseGenerator {
         }
       }
     }
+
     return template
   }
 
@@ -90,11 +91,23 @@ class ComposerGenerator extends BaseGenerator {
   async _afterPrepare () {
     if (this.config.isRuntimeContext) {
       // remove env variables since they are all for the config.server property
-      this.config.env = {
-        EXAMPLE_ORIGIN: 'http://127.0.0.1:3043'
-      }
+      delete this.config.env.PLT_SERVER_HOSTNAME
+      delete this.config.env.PLT_SERVER_LOGGER_LEVEL
+      delete this.config.env.PORT
       this.config.env = addPrefixToEnv(this.config.env, this.config.envPrefix)
     }
+
+    const GLOBAL_TYPES_TEMPLATE = `
+import { FastifyInstance } from 'fastify'
+import { PlatformaticApp, PlatformaticComposerConfig } from '@platformatic/composer'
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    platformatic: PlatformaticApp<PlatformaticComposerConfig>
+  }
+}
+`
+    this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
 
     this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
   }

@@ -11,7 +11,7 @@ test('migrate up', async (t) => {
   t.after(async () => { await dropTestDB() })
 
   const { stdout } = await execa(
-    'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('simple.json')],
+    'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('simple.json')],
     {
       env: {
         DATABASE_URL: connectionInfo.connectionString
@@ -29,7 +29,7 @@ test('migrate up & down specifying a version with "to"', async (t) => {
 
   {
     const { stdout } = await execa(
-      'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('simple.json')],
+      'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('simple.json')],
       {
         env: {
           DATABASE_URL: connectionInfo.connectionString
@@ -42,7 +42,7 @@ test('migrate up & down specifying a version with "to"', async (t) => {
 
   {
     const { stdout } = await execa(
-      'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('simple.json'), '-t', '000'],
+      'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('simple.json'), '-t', '000'],
       {
         env: {
           DATABASE_URL: connectionInfo.connectionString
@@ -59,7 +59,7 @@ test('ignore versions', async (t) => {
   t.after(async () => { await dropTestDB() })
 
   const { stdout } = await execa(
-    'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('simple.json')],
+    'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('simple.json')],
     {
       env: {
         DATABASE_URL: connectionInfo.connectionString
@@ -77,7 +77,7 @@ test('migrations rollback', async (t) => {
   {
     // apply all migrations
     const { stdout } = await execa(
-      'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('multiple-migrations.json')],
+      'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('multiple-migrations.json')],
       {
         env: {
           DATABASE_URL: connectionInfo.connectionString
@@ -93,7 +93,7 @@ test('migrations rollback', async (t) => {
   // Down to no migrations applied
   {
     const { stdout } = await execa(
-      'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'],
+      'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'],
       {
         env: {
           DATABASE_URL: connectionInfo.connectionString
@@ -106,7 +106,7 @@ test('migrations rollback', async (t) => {
 
   {
     const { stdout } = await execa(
-      'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'],
+      'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'],
       {
         env: {
           DATABASE_URL: connectionInfo.connectionString
@@ -119,7 +119,7 @@ test('migrations rollback', async (t) => {
 
   {
     const { stdout } = await execa(
-      'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'],
+      'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'],
       {
         env: {
           DATABASE_URL: connectionInfo.connectionString
@@ -132,7 +132,7 @@ test('migrations rollback', async (t) => {
 
   {
     const { stdout } = await execa(
-      'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'],
+      'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'],
       {
         env: {
           DATABASE_URL: connectionInfo.connectionString
@@ -147,7 +147,7 @@ test('migrations rollback', async (t) => {
   {
     // apply all migrations
     const { stdout } = await execa(
-      'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('multiple-migrations.json')],
+      'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('multiple-migrations.json')],
       {
         env: {
           DATABASE_URL: connectionInfo.connectionString
@@ -171,7 +171,7 @@ test('after a migration, platformatic config is touched', async (t) => {
   const { mtime: mtimePrev } = statSync(getFixturesConfigFileLocation('simple.json'))
   {
     const { stdout } = await execa(
-      'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('simple.json')],
+      'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('simple.json')],
       {
         env: {
           DATABASE_URL: connectionInfo.connectionString

@@ -1,11 +1,12 @@
 {
   "name": "@platformatic/deploy-client",
-  "version": "1.13.3",
+  "version": "1.15.1",
   "description": "Deploy code to the Platformatic cloud",
   "main": "index.js",
   "scripts": {
     "lint": "standard | snazzy",
     "test": "pnpm run lint && c8 --100 node ./test/runner.js",
+    "nocov": "pnpm run lint && node ./test/runner.js",
     "license": "license-checker --production --onlyAllow 'Apache-2.0;MIT;ISC;BSD-2-Clause;BSD-3-Clause'"
   },
   "repository": {
@@ -36,6 +37,6 @@
     "@platformatic/service": "workspace:*",
     "pretty-bytes": "^6.1.1",
     "tar": "^6.2.0",
-    "undici": "^5.25.4"
+    "undici": "^6.0.0"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/client-cli",
-  "version": "1.13.3",
+  "version": "1.15.1",
   "description": "A client for all platformatic backends",
   "main": "cli.mjs",
   "bin": {
@@ -8,7 +8,7 @@
   },
   "scripts": {
     "lint": "standard",
-    "test": "c8 tap test/*.test.*js",
+    "test": "tap test/*.test.*js",
     "nocov": "tap test/*.test.*js"
   },
   "repository": {
@@ -50,12 +50,12 @@
     "es-main": "^1.3.0",
     "find-up": "^7.0.0",
     "graphql": "^16.8.1",
-    "help-me": "^4.2.0",
+    "help-me": "^5.0.0",
     "jsonpointer": "^5.0.1",
     "minimist": "^1.2.8",
     "pino": "^8.15.3",
     "pino-pretty": "^10.2.0",
-    "undici": "^5.25.4",
+    "undici": "^6.0.0",
     "yaml": "^2.3.2"
   }
 }

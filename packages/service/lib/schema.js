@@ -3,7 +3,6 @@
 'use strict'
 
 const pkg = require('../package.json')
-const version = 'v' + pkg.version
 const openApiDefs = require('./openapi-schema-defs')
 const telemetry = require('@platformatic/telemetry').schema
 
@@ -419,7 +418,6 @@ const watch = {
 }
 
 const plugins = {
-  $id: '#plugins',
   type: 'object',
   properties: {
     packages: {
@@ -621,9 +619,9 @@ const openApiBase = {
     externalDocs: {
       $ref: '#/$defs/external-documentation'
     },
-    prefix: {
+    swaggerPrefix: {
       type: 'string',
-      description: 'Base URL for the OpenAPI'
+      description: 'Base URL for the OpenAPI Swagger Documentation'
     },
     path: {
       type: 'string',
@@ -642,16 +640,22 @@ const openapi = {
   }]
 }
 
+const graphqlBase = {
+  type: 'object',
+  properties: {
+    graphiql: {
+      type: 'boolean'
+    }
+  },
+  additionalProperties: false
+}
+
 const graphql = {
   anyOf: [{
-    type: 'boolean'
+    ...graphqlBase,
+    additionalProperties: false
   }, {
-    type: 'object',
-    properties: {
-      graphiql: {
-        type: 'boolean'
-      }
-    }
+    type: 'boolean'
   }]
 }
 
@@ -695,8 +699,49 @@ const clients = {
   }
 }
 
+const version = {
+  type: 'object',
+  properties: {
+    version: { type: 'string' },
+    openapi: {
+      type: 'object',
+      properties: {
+        prefix: {
+          type: 'string'
+        },
+        path: {
+          type: 'string',
+          resolvePath: true
+        }
+      },
+      additionalProperties: false
+    },
+    plugins
+  },
+  required: ['version'],
+  additionalProperties: false
+}
+
+const versions = {
+  type: 'object',
+  properties: {
+    dir: {
+      type: 'string',
+      description: 'The path to the directory containing the versions mappers',
+      resolvePath: true,
+      default: 'versions'
+    },
+    configs: {
+      type: 'array',
+      items: version
+    }
+  },
+  required: ['dir', 'configs'],
+  additionalProperties: false
+}
+
 const platformaticServiceSchema = {
-  $id: `https://platformatic.dev/schemas/${version}/service`,
+  $id: `https://platformatic.dev/schemas/v${pkg.version}/service`,
   title: 'Platformatic Service',
   type: 'object',
   properties: {
@@ -715,7 +760,8 @@ const platformaticServiceSchema = {
       type: 'string'
     },
     service,
-    clients
+    clients,
+    versions
   },
   additionalProperties: false,
   $defs: openApiDefs
@@ -729,6 +775,7 @@ module.exports.plugins = plugins
 module.exports.watch = watch
 module.exports.openApiDefs = openApiDefs
 module.exports.openApiBase = openApiBase
+module.exports.graphqlBase = graphqlBase
 module.exports.clients = clients
 
 if (require.main === module) {

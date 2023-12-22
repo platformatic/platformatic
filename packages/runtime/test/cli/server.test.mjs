@@ -12,7 +12,7 @@ test('autostart', async () => {
 
   assert.strictEqual(res.statusCode, 200)
   assert.deepStrictEqual(await res.body.json(), { hello: 'hello123' })
-  child.kill('SIGINT')
+  child.kill('SIGKILL')
 })
 
 test('start command', async () => {
@@ -22,7 +22,7 @@ test('start command', async () => {
 
   assert.strictEqual(res.statusCode, 200)
   assert.deepStrictEqual(await res.body.json(), { hello: 'hello123' })
-  child.kill('SIGINT')
+  child.kill('SIGKILL')
 })
 
 test('handles startup errors', async (t) => {
@@ -117,7 +117,7 @@ test('starts the inspector', async (t) => {
   }
 
   assert(found)
-  child.kill('SIGINT')
+  child.kill('SIGKILL')
 })
 
 test('stackable', async () => {
@@ -127,5 +127,5 @@ test('stackable', async () => {
 
   assert.strictEqual(res.statusCode, 200)
   assert.deepStrictEqual(await res.body.text(), 'Hello World')
-  child.kill('SIGINT')
+  child.kill('SIGKILL')
 })

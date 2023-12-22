@@ -3,7 +3,6 @@
 const { BaseGenerator, generateTests, addPrefixToEnv } = require('@platformatic/generators')
 const { jsHelperSqlite, jsHelperMySQL, jsHelperPostgres, moviesTestTS, moviesTestJS } = require('./code-templates')
 const { join } = require('node:path')
-const { pathToFileURL } = require('node:url')
 const { readFile } = require('node:fs/promises')
 
 class DBGenerator extends BaseGenerator {
@@ -26,10 +25,9 @@ class DBGenerator extends BaseGenerator {
       ...defaultBaseConfig,
       database: 'sqlite',
       connectionString: null,
-      types: false,
+      types: true,
       migrations: 'migrations',
-      createMigrations: true,
-      applyMigrations: false
+      createMigrations: true
     }
   }
 
@@ -37,6 +35,7 @@ class DBGenerator extends BaseGenerator {
     const { typescript, isRuntimeContext, envPrefix = '', migrations, plugin, types } = this.config
     const version = this.platformaticVersion
     const connectionStringValue = envPrefix ? `PLT_${envPrefix}_DATABASE_URL` : 'DATABASE_URL'
+    const applyMigrationsStringValue = envPrefix ? `PLT_${envPrefix}_APPLY_MIGRATIONS` : 'PLT_APPLY_MIGRATIONS'
     const config = {
       $schema: `https://platformatic.dev/schemas/v${version}/db`,
       db: {
@@ -62,7 +61,8 @@ class DBGenerator extends BaseGenerator {
 
     if (migrations) {
       config.migrations = {
-        dir: migrations
+        dir: migrations,
+        autoApply: `{${applyMigrationsStringValue}}`
       }
     }
 
@@ -97,13 +97,15 @@ class DBGenerator extends BaseGenerator {
 
     if (this.config.isRuntimeContext) {
       this.config.env = {
-        DATABASE_URL: this.connectionStrings[this.config.database]
+        DATABASE_URL: this.connectionStrings[this.config.database],
+        PLT_APPLY_MIGRATIONS: 'true'
       }
       this.config.env = addPrefixToEnv(this.config.env, this.config.envPrefix)
     } else {
       this.config.env = {
         PLT_SERVER_HOSTNAME: this.config.hostname,
         PLT_SERVER_LOGGER_LEVEL: 'info',
+        PLT_APPLY_MIGRATIONS: 'true',
         PORT: 3042,
         DATABASE_URL: this.connectionStrings[this.config.database],
         ...this.config.env
@@ -145,7 +147,7 @@ class DBGenerator extends BaseGenerator {
 
       // TODO(leorossi): this is unfortunate. We have already generated tests in BaseGenerator
       // next line will override the test files
-      generateTests(this.config.typescript, this.type, jsHelper).forEach((fileObject) => {
+      generateTests(this.config.typescript, '@platformatic/db', jsHelper).forEach((fileObject) => {
         this.addFile(fileObject)
       })
 
@@ -157,6 +159,18 @@ class DBGenerator extends BaseGenerator {
         }
       }
     }
+
+    const GLOBAL_TYPES_TEMPLATE = `
+import { FastifyInstance } from 'fastify'
+import { PlatformaticApp, PlatformaticDBConfig, PlatformaticDBMixin, Entities } from '@platformatic/db'
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    platformatic: PlatformaticApp<PlatformaticDBConfig> & PlatformaticDBMixin<Entities>
+  }
+}
+`
+    this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
   }
 
   createMigrationFiles () {
@@ -209,6 +223,12 @@ class DBGenerator extends BaseGenerator {
         default: this.connectionStrings.sqlite,
         type: 'string',
         configValue: 'connectionString'
+      },
+      {
+        var: 'PLT_APPLY_MIGRATIONS',
+        label: 'Should migrations be applied automatically on startup?',
+        default: true,
+        type: 'boolean'
       }
     ]
   }
@@ -232,55 +252,6 @@ class DBGenerator extends BaseGenerator {
       default: true,
       choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
     })
-    this.questions.push({
-      type: 'list',
-      name: 'applyMigrations',
-      message: 'Do you want to apply migrations?',
-      default: true,
-      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }],
-      when: (answers) => {
-        return answers.createMigrations
-      }
-    })
-  }
-
-  async postInstallActions () {
-    if (this.config.applyMigrations) {
-      const migrate = (await import(pathToFileURL(join(__dirname, '..', 'migrate.mjs')))).execute
-      const cwd = process.cwd()
-      process.chdir(this.targetDirectory)
-      try {
-        this.logger.info('Applying migrations...')
-        await migrate({
-          logger: this.logger,
-          config: {
-            db: {
-              connectionString: this.config.connectionString
-            },
-            migrations: {
-              dir: this.config.migrations
-            }
-          }
-        })
-        this.logger.info('Generating types...')
-        const genTypes = (await import(pathToFileURL(join(__dirname, '..', 'gen-types.mjs')))).execute
-        await genTypes({
-          logger: this.logger,
-          config: {
-            db: {
-              connectionString: this.config.connectionString,
-              ignore: {
-                versions: true
-              }
-            }
-          }
-        })
-      } catch (err) {
-        this.logger.error({ err })
-      } finally {
-        process.chdir(cwd)
-      }
-    }
   }
 }
 

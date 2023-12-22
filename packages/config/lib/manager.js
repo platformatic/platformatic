@@ -12,6 +12,8 @@ const { getParser, analyze, upgrade } = require('@platformatic/metaconfig')
 const { isFileAccessible } = require('./utils')
 const errors = require('./errors')
 
+const PLT_ROOT = 'PLT_ROOT'
+
 class ConfigManager extends EventEmitter {
   constructor (opts) {
     super()
@@ -123,8 +125,12 @@ class ConfigManager extends EventEmitter {
       // but it's good enough for now.
       return value.replace(/\\/g, '\\\\').replace(/\n/g, '\\n')
     }
+    const fullEnv = {
+      ...this.env,
+      [PLT_ROOT]: join(this.fullPath, '..')
+    }
 
-    return this.pupa(configString, this.env, { transform: escapeJSONstring })
+    return this.pupa(configString, fullEnv, { transform: escapeJSONstring })
   }
 
   /**
@@ -238,6 +244,16 @@ class ConfigManager extends EventEmitter {
         }
       }
     })
+    ajv.addKeyword({
+      keyword: 'typeof',
+      validate: function validate (schema, value, _, data) {
+        // eslint-disable-next-line valid-typeof
+        if (typeof value === schema) { return true }
+        validate.errors = [{ message: `"${data.parentDataProperty}" shoud be a ${schema}.`, params: data.parentData }]
+        return false
+      }
+    })
+
     const ajvValidate = ajv.compile(this.schema)
 
     const res = ajvValidate(this.current)

@@ -6,7 +6,7 @@ export namespace BaseGenerator {
     module: string
     inquirer?: object
   }
-  
+
   export type Env = {
     [key: string]: string | number | boolean
   }
@@ -14,13 +14,13 @@ export namespace BaseGenerator {
     [key: string]: string | number | undefined | null | boolean | object
   }
   type JSONValue =
-      | string
-      | number
-      | boolean
-      | { [x: string]: JSONValue }
-      | object
-      | Array<JSONValue>
-  
+    | string
+    | number
+    | boolean
+    | { [x: string]: JSONValue }
+    | object
+    | Array<JSONValue>
+
   type Dependency = {
     [key: string]: string
   }
@@ -34,7 +34,7 @@ export namespace BaseGenerator {
     hostname?: string
     plugin?: boolean
     dependencies?: Dependency
-    devDependencies?: Dependency  
+    devDependencies?: Dependency
     typescript?: boolean
     initGitRepository?: boolean
     staticWorkspaceGitHubActions?: boolean
@@ -44,12 +44,12 @@ export namespace BaseGenerator {
     serviceName?: string,
     envPrefix?: string
   }
-  
+
   type WhereClause = {
     before?: string
     after?: string
   }
-  
+
   type GeneratorMetadata = {
     targetDirectory: string
     env: KeyValue
@@ -59,7 +59,7 @@ export namespace BaseGenerator {
     label: string
     var: string
     default: string
-    type: 'number' | 'string' | 'boolean'
+    type: 'number' | 'string' | 'boolean' | 'path'
     configValue?: 'string'
 
   }
@@ -72,22 +72,22 @@ export namespace BaseGenerator {
     logger: BaseLogger
     platformaticVersion: string
     fastifyVersion: string
-    
+
     config: BaseGeneratorConfig
     questions: Array<object>
-  
+
     packages: PackageConfiguration[]
     constructor(opts?: BaseGeneratorOptions)
-  
+
     setConfig(config?: BaseGeneratorConfig): void
-    setEnv(env?: Env ): void
-  
+    setEnv(env?: Env): void
+
     getDefaultConfig(): JSONValue
-    getDefaultEnv(): Env 
-  
+    getDefaultEnv(): Env
+
     getFastifyVersion(): Promise<string>
     getPlatformaticVersion(): Promise<string>
-  
+
     addPackage(pkg: PackageDefinition): void
 
     prepare(): Promise<GeneratorMetadata>
@@ -95,7 +95,7 @@ export namespace BaseGenerator {
     addQuestion(question: any, where?: WhereClause): Promise<void>
     removeQuestion(variableName: string): void
     getTSConfig(): JSONValue
-    
+
     getConfigFieldsDefinitions(): ConfigFieldDefinition[]
     setConfigFields(fields: ConfigField[]): void
 

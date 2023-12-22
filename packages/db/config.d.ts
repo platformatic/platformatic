@@ -49,6 +49,33 @@ export interface PlatformaticDB {
       | boolean
       | {
           level?: string;
+          transport?:
+            | {
+                target?: string;
+                options?: {
+                  [k: string]: unknown;
+                };
+              }
+            | {
+                targets?: {
+                  target?: string;
+                  options?: {
+                    [k: string]: unknown;
+                  };
+                  level?: string;
+                  additionalProperties?: never;
+                  [k: string]: unknown;
+                }[];
+                options?: {
+                  [k: string]: unknown;
+                };
+              };
+          pipeline?: {
+            target?: string;
+            options?: {
+              [k: string]: unknown;
+            };
+          };
           [k: string]: unknown;
         };
     serializerOpts?: {
@@ -160,6 +187,7 @@ export interface PlatformaticDB {
           subscriptionIgnore?: string[];
           schema?: string;
           schemaPath?: string;
+          enabled?: boolean | string;
           [k: string]: unknown;
         };
     openapi?:
@@ -177,9 +205,17 @@ export interface PlatformaticDB {
           tags?: Tag[];
           externalDocs?: ExternalDocumentation;
           /**
-           * Base URL for the OpenAPI
+           * Base URL for the OpenAPI Swagger Documentation
+           */
+          swaggerPrefix?: string;
+          /**
+           * Base URL for generated Platformatic DB routes
            */
           prefix?: string;
+          /**
+           * Path to an OpenAPI spec file
+           */
+          path?: string;
           ignore?: {
             [k: string]:
               | boolean
@@ -187,6 +223,7 @@ export interface PlatformaticDB {
                   [k: string]: boolean;
                 };
           };
+          enabled?: boolean | string;
         };
     ignore?: {
       [k: string]: boolean;
@@ -200,6 +237,7 @@ export interface PlatformaticDB {
       | boolean
       | {
           connectionString?: string;
+          enabled?: boolean | string;
         };
     cache?: boolean;
     [k: string]: unknown;
@@ -291,7 +329,7 @@ export interface PlatformaticDB {
     /**
      * Whether to automatically apply migrations when running the migrate command.
      */
-    autoApply?: boolean;
+    autoApply?: boolean | string;
   };
   metrics?:
     | boolean
@@ -310,7 +348,9 @@ export interface PlatformaticDB {
      */
     dir?: string;
   };
-  plugins?: Plugins;
+  plugins?: {
+    [k: string]: unknown;
+  };
   telemetry?: OpenTelemetry;
   clients?: {
     serviceId?: string;
@@ -329,7 +369,8 @@ export interface PlatformaticDB {
         allow?: [string, ...string[]];
         ignore?: string[];
       }
-    | boolean;
+    | boolean
+    | string;
   $schema?: string;
 }
 export interface Info {
@@ -525,41 +566,6 @@ export interface Tag {
    * via the `patternProperty` "^x-".
    */
   [k: string]: unknown;
-}
-export interface Plugins {
-  paths: (
-    | string
-    | {
-        path?: string;
-        encapsulate?: boolean;
-        maxDepth?: number;
-        autoHooks?: boolean;
-        autoHooksPattern?: string;
-        cascadeHooks?: boolean;
-        overwriteHooks?: boolean;
-        routeParams?: boolean;
-        forceESM?: boolean;
-        ignoreFilter?: string;
-        matchFilter?: string;
-        ignorePattern?: string;
-        scriptPattern?: string;
-        indexPattern?: string;
-        options?: {
-          [k: string]: unknown;
-        };
-        [k: string]: unknown;
-      }
-  )[];
-  typescript?:
-    | {
-        enabled?: boolean | string;
-        tsConfig?: string;
-        outDir?: string;
-        flags?: string[];
-        [k: string]: unknown;
-      }
-    | boolean
-    | string;
 }
 export interface OpenTelemetry {
   /**

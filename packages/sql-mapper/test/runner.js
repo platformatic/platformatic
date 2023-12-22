@@ -1,19 +1,26 @@
 'use strict'
 
-const { spec: SpecReporter, tap } = require('node:test/reporters')
+const { tap, spec } = require('node:test/reporters')
 const { run } = require('node:test')
-const process = require('node:process')
-const { globSync } = require('glob')
-const path = require('path')
+const { join } = require('node:path')
+const glob = require('glob').globSync
 
-const reporter = process.stdout.isTTY ? new SpecReporter() : tap
+/* eslint-disable new-cap */
+const reporter = process.stdout.isTTY ? new spec() : tap
 
 const files = [
-  ...globSync(path.join(__dirname, '*.test.js'))
-]
+  ...glob('*.test.{js,mjs}', { cwd: __dirname }),
+  ...glob('*/*.test.{js,mjs}', { cwd: __dirname })
+].map(file => join(__dirname, file))
 
-run({
+const stream = run({
   files,
   concurrency: 1,
-  timeout: 30000
-}).compose(reporter).pipe(process.stdout)
+  timeout: 60000
+})
+
+stream.on('test:fail', () => {
+  process.exitCode = 1
+})
+
+stream.compose(reporter).pipe(process.stdout)

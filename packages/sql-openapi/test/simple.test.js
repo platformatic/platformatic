@@ -7,6 +7,7 @@ const fastify = require('fastify')
 const { clear, connInfo, isSQLite, isMariaDB, isPg, isMysql8, isMysql } = require('./helper')
 const { resolve } = require('path')
 const { test } = t
+const yaml = require('yaml')
 
 Object.defineProperty(t, 'fullname', {
   value: 'platformatic/db/openapi/simple'
@@ -185,6 +186,35 @@ test('simple db, simple rest API', async (t) => {
       id: 1,
       title: 'Hello fields'
     }, 'GET /pages/1?fields=title,id response')
+  }
+})
+test('swagger prefix', async (t) => {
+  const { pass, teardown, equal } = t
+  t.snapshotFile = resolve(__dirname, 'tap-snapshots', 'simple-openapi-1.cjs')
+
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
+
+      await clear(db, sql)
+      await createBasicPages(db, sql)
+    }
+  })
+  app.register(sqlOpenAPI, {
+    swaggerPrefix: '/my-prefix'
+  })
+  teardown(app.close.bind(app))
+
+  await app.ready()
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/my-prefix/json'
+    })
+    equal(res.json().info.version, '1.0.0', 'GET /my-prefix/json info version default')
   }
 })
 
@@ -636,6 +666,14 @@ test('simple db, simple rest API', async (t) => {
   const json = res.json()
   matchSnapshot(json, 'GET /documentation/json response')
   equal(json.info.version, '42.42.42', 'GET /documentation/json info version override by opts')
+
+  const { body } = await app.inject({
+    method: 'GET',
+    url: '/documentation/yaml'
+  })
+
+  const parsedYaml = yaml.parse(body)
+  equal(parsedYaml.info.version, '42.42.42', 'GET /documentation/yaml info version override by opts')
 })
 
 test('deserialize JSON columns', { skip: isSQLite }, async (t) => {

@@ -7,7 +7,7 @@ const errors = require('./errors')
 
 const { modifyOpenApiSchema, originPathSymbol } = require('./openapi-modifier')
 const composeOpenApi = require('./openapi-composer')
-const loadOpenApiConfig = require('./load-openapi-config.js')
+const loadOpenApiConfig = require('./openapi-load-config.js')
 const { prefixWithSlash } = require('./utils.js')
 
 async function fetchOpenApiSchema (openApiUrl) {
@@ -30,6 +30,8 @@ async function getOpenApiSchema (origin, openapi) {
 }
 
 async function composeOpenAPI (app, opts) {
+  if (!opts.services.some(s => s.openapi)) { return }
+
   const { services } = opts
 
   const openApiSchemas = []
@@ -98,8 +100,8 @@ async function composeOpenAPI (app, opts) {
           const replyOptions = {}
           const onResponse = (request, reply, res) => {
             app.openTelemetry?.endSpanClient(reply.request.proxedCallSpan, { statusCode: reply.statusCode })
-            if (req.routeConfig?.onComposerResponse) {
-              req.routeConfig.onComposerResponse(request, reply, res)
+            if (req.routeOptions.config?.onComposerResponse) {
+              req.routeOptions.config?.onComposerResponse(request, reply, res)
             } else {
               reply.send(res)
             }

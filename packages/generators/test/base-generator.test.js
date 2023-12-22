@@ -143,6 +143,33 @@ test('setConfig', async (t) => {
     envPrefix: '',
     tests: false
   })
+
+  // update only some fields
+  bg.setConfig({
+    hostname: '123.123.123.123',
+    port: 3000
+  })
+
+  bg.setConfig({
+    port: 1234
+  })
+
+  assert.deepEqual(bg.config, {
+    port: 1234,
+    hostname: '123.123.123.123',
+    plugin: false,
+    typescript: false,
+    initGitRepository: false,
+    staticWorkspaceGitHubActions: false,
+    dynamicWorkspaceGitHubActions: false,
+    env: {},
+    dependencies: {},
+    devDependencies: {},
+    isRuntimeContext: false,
+    serviceName: '',
+    envPrefix: '',
+    tests: false
+  })
 })
 
 test('should append env values', async (t) => {
@@ -268,8 +295,8 @@ test('should generate javascript plugin, routes and tests', async (t) => {
   assert.ok(bg.getFileObject('example.js', 'plugins'))
   assert.ok(bg.getFileObject('root.js', 'routes'))
 
-  assert.ok(bg.getFileObject('root.test.js', 'test/routes'))
-  assert.ok(bg.getFileObject('example.test.js', 'test/plugins'))
+  assert.ok(bg.getFileObject('root.test.js', join('test', 'routes')))
+  assert.ok(bg.getFileObject('example.test.js', join('test', 'plugins')))
 })
 
 test('should generate tsConfig file and typescript files', async (t) => {
@@ -308,8 +335,8 @@ test('should generate tsConfig file and typescript files', async (t) => {
   assert.ok(bg.getFileObject('example.ts', 'plugins'))
   assert.ok(bg.getFileObject('root.ts', 'routes'))
 
-  assert.ok(bg.getFileObject('root.test.ts', 'test/routes'))
-  assert.ok(bg.getFileObject('example.test.ts', 'test/plugins'))
+  assert.ok(bg.getFileObject('root.test.ts', join('test', 'routes')))
+  assert.ok(bg.getFileObject('example.test.ts', join('test', 'plugins')))
 })
 
 test('should throw if preapare fails', async (t) => {
@@ -375,6 +402,171 @@ test('should add package', async () => {
 
   assert.equal(bg.packages.length, 1)
   assert.deepEqual(bg.packages[0], packageDefinition)
+})
+
+test('support packages', async (t) => {
+  {
+    const svc = new BaseGenerator({
+      module: '@platformatic/service'
+    })
+    const packageDefinitions = [
+      {
+        name: '@fastify/compress',
+        options: [
+          {
+            path: 'threshold',
+            value: '1',
+            type: 'number'
+          },
+          {
+            path: 'foobar',
+            value: '123',
+            type: 'number',
+            name: 'FST_PLUGIN_STATIC_FOOBAR'
+          }
+        ]
+      }
+    ]
+    svc.setConfig({
+      isRuntimeContext: true,
+      serviceName: 'my-service'
+    })
+    svc.addPackage(packageDefinitions[0])
+    await svc.prepare()
+
+    const platformaticConfigFile = svc.getFileObject('platformatic.json')
+    const contents = JSON.parse(platformaticConfigFile.contents)
+
+    assert.deepEqual(contents.plugins, {
+      packages: [
+        {
+          name: '@fastify/compress',
+          options: {
+            threshold: 1,
+            foobar: '{PLT_MY_SERVICE_FST_PLUGIN_STATIC_FOOBAR}'
+          }
+        }
+      ]
+    })
+
+    assert.equal(svc.config.env.PLT_MY_SERVICE_FST_PLUGIN_STATIC_FOOBAR, 123)
+  }
+  {
+    // with standard platformatic plugin
+    const svc = new BaseGenerator({
+      module: '@platformatic/service'
+    })
+    svc.setConfig({
+      plugin: true
+    })
+    const packageDefinitions = [
+      {
+        name: '@fastify/compress',
+        options: [
+          {
+            path: 'threshold',
+            value: '1',
+            type: 'number'
+          }
+        ]
+      }
+    ]
+    svc.addPackage(packageDefinitions[0])
+    await svc.prepare()
+
+    const platformaticConfigFile = svc.getFileObject('platformatic.json')
+    const contents = JSON.parse(platformaticConfigFile.contents)
+
+    assert.deepEqual(contents.plugins, {
+      packages: [
+        {
+          name: '@fastify/compress',
+          options: {
+            threshold: 1
+          }
+        }
+      ]
+    })
+  }
+
+  {
+    // with relative path type but no name
+    const svc = new BaseGenerator({
+      module: '@platformatic/service'
+    })
+    svc.setConfig({
+      isRuntimeContext: true,
+      plugin: true
+    })
+    const packageDefinitions = [
+      {
+        name: '@fastify/static',
+        options: [
+          {
+            path: 'root',
+            value: 'public',
+            type: 'path'
+          }
+        ]
+      }
+    ]
+    svc.addPackage(packageDefinitions[0])
+    await svc.prepare()
+
+    const platformaticConfigFile = svc.getFileObject('platformatic.json')
+    const contents = JSON.parse(platformaticConfigFile.contents)
+
+    assert.deepEqual(contents.plugins, {
+      packages: [
+        {
+          name: '@fastify/static',
+          options: {
+            root: join('{PLT_ROOT}', 'public')
+          }
+        }
+      ]
+    })
+  }
+  {
+    // with relative path type and name
+    const svc = new BaseGenerator({
+      module: '@platformatic/service'
+    })
+    svc.setConfig({
+      isRuntimeContext: true,
+      plugin: true,
+      serviceName: 'my-service'
+    })
+    const packageDefinitions = [
+      {
+        name: '@fastify/static',
+        options: [
+          {
+            path: 'root',
+            value: 'public',
+            type: 'path',
+            name: 'FST_PLUGIN_STATIC_ROOT'
+          }
+        ]
+      }
+    ]
+    svc.addPackage(packageDefinitions[0])
+    await svc.prepare()
+
+    const platformaticConfigFile = svc.getFileObject('platformatic.json')
+    const contents = JSON.parse(platformaticConfigFile.contents)
+
+    assert.deepEqual(contents.plugins, {
+      packages: [
+        {
+          name: '@fastify/static',
+          options: {
+            root: join('{PLT_ROOT}', '{PLT_MY_SERVICE_FST_PLUGIN_STATIC_ROOT}')
+          }
+        }
+      ]
+    })
+  }
 })
 
 describe('runtime context', () => {

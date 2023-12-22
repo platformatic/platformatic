@@ -188,24 +188,30 @@ export function getType (typeDef) {
     output += ' }'
     return output
   }
-  return JSONSchemaToTsType(typeDef.type)
+  return JSONSchemaToTsType(typeDef)
 }
 
-function JSONSchemaToTsType (type) {
+function JSONSchemaToTsType ({ type, format, nullable }) {
+  const isDateType = format === 'date' || format === 'date-time'
+  let resultType = 'unknown'
+
   switch (type) {
     case 'string':
-      return 'string'
+      resultType = isDateType ? 'string | Date' : 'string'
+      break
     case 'integer':
-      return 'number'
+      resultType = 'number'
+      break
     case 'number':
-      return 'number'
+      resultType = 'number'
+      break
     case 'boolean':
-      return 'boolean'
-      // TODO what other types should we support here?
-      /* c8 ignore next 2 */
-    default:
-      return 'unknown'
+      resultType = 'boolean'
+      break
+    // TODO what other types should we support here?
   }
+
+  return nullable === true ? `${resultType} | null` : resultType
 }
 
 function writeContent (writer, content, spec, addedProps) {

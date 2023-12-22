@@ -130,6 +130,14 @@ const db = {
               { type: 'boolean' },
               { type: 'string' }
             ]
+          },
+          swaggerPrefix: {
+            type: 'string',
+            description: 'Base URL for the OpenAPI Swagger Documentation'
+          },
+          prefix: {
+            type: 'string',
+            description: 'Base URL for generated Platformatic DB routes'
           }
         },
         additionalProperties: false
@@ -311,8 +319,13 @@ const migrations = {
       type: 'boolean'
     },
     autoApply: {
-      type: 'boolean',
-      description: 'Whether to automatically apply migrations when running the migrate command.'
+      description: 'Whether to automatically apply migrations when running the migrate command.',
+      anyOf: [{
+        type: 'boolean',
+        default: false
+      }, {
+        type: 'string'
+      }]
     }
   },
   additionalProperties: false,

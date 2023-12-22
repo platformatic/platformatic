@@ -40,8 +40,6 @@ class Migrator {
       driver = 'mysql'
     } else if (db.isSQLite) {
       driver = 'sqlite3'
-    } else {
-      throw new errors.MigrateUnknownDatabaseError()
     }
 
     const database = driver !== 'sqlite3'

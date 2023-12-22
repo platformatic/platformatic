@@ -1,10 +1,14 @@
 'use strict'
 
+const path = require('path')
+const fs = require('fs')
 const assert = require('node:assert/strict')
 const { request, setGlobalDispatcher, Agent } = require('undici')
 const fastify = require('fastify')
 const Swagger = require('@fastify/swagger')
-const SwaggerUI = require('@fastify/swagger-ui')
+const mercurius = require('mercurius')
+const { getIntrospectionQuery } = require('graphql')
+const { buildServer: dbBuildServer } = require('@platformatic/db')
 
 const { buildServer } = require('..')
 
@@ -30,7 +34,10 @@ async function createBasicService (t) {
       }
     }
   })
-  await app.register(SwaggerUI)
+
+  /** Serve spec file in yaml and json */
+  app.get('/documentation/json', { schema: { hide: true } }, async () => app.swagger())
+  app.get('/documentation/yaml', { schema: { hide: true } }, async () => app.swagger({ yaml: true }))
 
   app.get('/text', async () => {
     return 'Some text'
@@ -98,7 +105,10 @@ async function createOpenApiService (t, entitiesNames = []) {
       }
     }
   })
-  await app.register(SwaggerUI)
+
+  /** Serve spec file in yaml and json */
+  app.get('/documentation/json', { schema: { hide: true } }, async () => app.swagger())
+  app.get('/documentation/yaml', { schema: { hide: true } }, async () => app.swagger({ yaml: true }))
 
   app.decorate('getOpenApiSchema', async () => {
     const { body } = await app.inject({
@@ -230,10 +240,49 @@ async function createOpenApiService (t, entitiesNames = []) {
   return app
 }
 
-async function createComposer (t, composerConfig) {
+async function createGraphqlService (t, { schema, resolvers, extend, file, exposeIntrospection = true }) {
+  const app = fastify({ logger: false, port: 0 })
+  t.after(async () => {
+    await app.close()
+  })
+
+  if (file) {
+    await app.register(mercurius, require(file))
+  } else {
+    await app.register(mercurius, { schema, resolvers })
+  }
+
+  if (extend) {
+    if (extend.file) {
+      const { schema, resolvers } = require(extend.file)
+      if (schema) {
+        app.graphql.extendSchema(schema)
+      }
+      if (resolvers) {
+        app.graphql.defineResolvers(resolvers)
+      }
+    }
+    if (extend.schema) {
+      app.graphql.extendSchema(extend.schema)
+    }
+    if (extend.resolvers) {
+      app.graphql.defineResolvers(extend.resolvers)
+    }
+  }
+
+  if (exposeIntrospection) {
+    app.get('/.well-known/graphql-composition', async function (req, reply) {
+      return reply.graphql(getIntrospectionQuery())
+    })
+  }
+
+  return app
+}
+
+async function createComposer (t, composerConfig, logger = false) {
   const defaultConfig = {
     server: {
-      logger: false,
+      logger,
       hostname: '127.0.0.1',
       port: 0,
       keepAliveTimeout: 10,
@@ -339,9 +388,112 @@ async function testEntityRoutes (origin, entitiesRoutes) {
   }
 }
 
+async function graphqlRequest ({ query, variables, url, host }) {
+  const { body, statusCode } = await request(url || host + '/graphql', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ query, variables })
+  })
+
+  const content = await body.json()
+  if (statusCode !== 200) { console.log(statusCode, content) }
+
+  return content.errors ? content.errors : content.data
+}
+
+async function createPlatformaticDbService (t, { name, jsonFile }) {
+  try { fs.unlinkSync(path.join(__dirname, 'graphql', 'fixtures', name, 'db0.sqlite')) } catch { }
+  try { fs.unlinkSync(path.join(__dirname, 'graphql', 'fixtures', name, 'db1.sqlite')) } catch { }
+
+  const service = await dbBuildServer(path.join(__dirname, 'graphql', 'fixtures', name, jsonFile))
+  service.get('/.well-known/graphql-composition', async function (req, reply) {
+    return reply.graphql(getIntrospectionQuery())
+  })
+  t.after(async () => {
+    try { await service.close() } catch { }
+  })
+
+  return service
+}
+
+async function startServices (t, names) {
+  return Promise.all(names.map(async ({ name, jsonFile }) => {
+    const service = await createPlatformaticDbService(t, { name, jsonFile })
+    return { name, host: await service.start() }
+  }))
+}
+
+function createLoggerSpy () {
+  return {
+    _trace: [],
+    _debug: [],
+    _info: [],
+    _warn: [],
+    _error: [],
+    _fatal: [],
+
+    trace: function (...args) { this._trace.push(args) },
+    debug: function (...args) { this._debug.push(args) },
+    info: function (...args) { this._info.push(args) },
+    warn: function (...args) { this._warn.push(args) },
+    error: function (...args) { this._error.push(args) },
+    fatal: function (...args) { this._fatal.push(args) },
+    child: function () { return this },
+
+    reset: function () {
+      this._trace = []
+      this._debug = []
+      this._info = []
+      this._warn = []
+      this._error = []
+      this._fatal = []
+    }
+  }
+}
+
+/**
+ * on timeout resolve
+ */
+function eventToPromise (fn, timeout = 60_000) {
+  return new Promise((resolve, reject) => {
+    let resolved
+    let t = setTimeout(() => {
+      if (resolved) { return }
+      resolve()
+    }, timeout)
+    try {
+      fn(async () => {
+        if (t) {
+          clearTimeout(t)
+          t = null
+        }
+        if (resolved) { return }
+        resolved = true
+        resolve()
+      })
+    } catch (err) {
+      if (t) {
+        clearTimeout(t)
+        t = null
+      }
+      if (resolved) { return }
+      resolved = true
+      reject(err)
+    }
+  })
+}
+
 module.exports = {
   createComposer,
   createOpenApiService,
+  createGraphqlService,
   createBasicService,
-  testEntityRoutes
+  testEntityRoutes,
+  graphqlRequest,
+  createPlatformaticDbService,
+  startServices,
+  createLoggerSpy,
+  eventToPromise
 }

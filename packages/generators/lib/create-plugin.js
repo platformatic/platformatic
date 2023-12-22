@@ -59,10 +59,11 @@ ${customization.requires || ''}
 
 async function getServer (t) {
 ${customization.pre || ''}
-  const config = JSON.parse(await readFile(join(__dirname, '..', 'platformatic.${mod}.json'), 'utf8'))
+  const config = JSON.parse(await readFile(join(__dirname, '..', 'platformatic.json'), 'utf8'))
   // Add your config customizations here. For example you want to set
   // all things that are set in the config file to read from an env variable
-  config.server.logger.level = 'warn'
+  config.server ||= {}
+  config.server.logger ||= {}
   config.watch = false
 ${customization.config || ''}
   // Add your config customizations here
@@ -125,9 +126,11 @@ type TestContext = Parameters<Exclude<testfn, undefined>>[0]
 export async function getServer (t: TestContext) {
 ${customizations.pre}
   // We go up two folder because this files executes in the dist folder
-  const config = JSON.parse(await readFile(join(__dirname, '..', '..', 'platformatic'), 'utf8'))
+  const config = JSON.parse(await readFile(join(__dirname, '..', '..', 'platformatic.json'), 'utf8'))
   // Add your config customizations here. For example you want to set
   // all things that are set in the config file to read from an env variable
+  config.server ||= {}
+  config.server.logger ||= {}
   config.server.logger.level = 'warn'
   config.watch = false
 ${customizations.config}

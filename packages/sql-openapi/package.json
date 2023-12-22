@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-openapi",
-  "version": "1.13.3",
+  "version": "1.15.1",
   "description": "Map a SQL database to OpenAPI, for Fastify",
   "main": "index.js",
   "types": "index.d.ts",
@@ -32,16 +32,17 @@
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
     "tap": "^16.3.9",
-    "tsd": "^0.29.0"
+    "tsd": "^0.29.0",
+    "why-is-node-running": "^2.2.2"
   },
   "dependencies": {
     "@fastify/deepmerge": "^1.3.0",
     "@fastify/error": "^3.3.0",
     "@fastify/swagger": "^8.10.1",
-    "@fastify/swagger-ui": "^1.9.3",
+    "@platformatic/scalar-theme": "workspace:*",
     "@platformatic/sql-json-schema-mapper": "workspace:*",
-    "@platformatic/swagger-ui-theme": "workspace:*",
     "@platformatic/utils": "workspace:*",
+    "@scalar/fastify-api-reference": "^1.10.1",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^4.5.1",
     "inflected": "^2.1.0"

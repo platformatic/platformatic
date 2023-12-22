@@ -32,6 +32,33 @@ export interface PlatformaticService {
       | boolean
       | {
           level?: string;
+          transport?:
+            | {
+                target?: string;
+                options?: {
+                  [k: string]: unknown;
+                };
+              }
+            | {
+                targets?: {
+                  target?: string;
+                  options?: {
+                    [k: string]: unknown;
+                  };
+                  level?: string;
+                  additionalProperties?: never;
+                  [k: string]: unknown;
+                }[];
+                options?: {
+                  [k: string]: unknown;
+                };
+              };
+          pipeline?: {
+            target?: string;
+            options?: {
+              [k: string]: unknown;
+            };
+          };
           [k: string]: unknown;
         };
     serializerOpts?: {
@@ -109,7 +136,9 @@ export interface PlatformaticService {
       hideOptionsRoute?: boolean;
     };
   };
-  plugins?: Plugins;
+  plugins?: {
+    [k: string]: unknown;
+  };
   metrics?:
     | boolean
     | {
@@ -148,17 +177,20 @@ export interface PlatformaticService {
           tags?: Tag[];
           externalDocs?: ExternalDocumentation;
           /**
-           * Base URL for the OpenAPI
+           * Base URL for the OpenAPI Swagger Documentation
            */
-          prefix?: string;
+          swaggerPrefix?: string;
+          /**
+           * Path to an OpenAPI spec file
+           */
+          path?: string;
         }
       | boolean;
     graphql?:
-      | boolean
       | {
           graphiql?: boolean;
-          [k: string]: unknown;
-        };
+        }
+      | boolean;
   };
   clients?: {
     serviceId?: string;
@@ -168,41 +200,26 @@ export interface PlatformaticService {
     schema?: string;
     url?: string;
   }[];
-}
-export interface Plugins {
-  paths: (
-    | string
-    | {
+  versions?: {
+    /**
+     * The path to the directory containing the versions mappers
+     */
+    dir: string;
+    configs: {
+      version: string;
+      openapi?: {
+        prefix?: string;
         path?: string;
-        encapsulate?: boolean;
-        maxDepth?: number;
-        autoHooks?: boolean;
-        autoHooksPattern?: string;
-        cascadeHooks?: boolean;
-        overwriteHooks?: boolean;
-        routeParams?: boolean;
-        forceESM?: boolean;
-        ignoreFilter?: string;
-        matchFilter?: string;
-        ignorePattern?: string;
-        scriptPattern?: string;
-        indexPattern?: string;
-        options?: {
-          [k: string]: unknown;
-        };
-        [k: string]: unknown;
-      }
-  )[];
-  typescript?:
-    | {
-        enabled?: boolean | string;
-        tsConfig?: string;
-        outDir?: string;
-        flags?: string[];
-        [k: string]: unknown;
-      }
-    | boolean
-    | string;
+      };
+      plugins?:
+        | {
+            [k: string]: unknown;
+          }
+        | {
+            [k: string]: unknown;
+          };
+    }[];
+  };
 }
 export interface OpenTelemetry {
   /**

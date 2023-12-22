@@ -1,7 +1,6 @@
 #! /usr/bin/env node
 
 import { Migrator } from './migrator.mjs'
-import isMain from 'es-main'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { checkForDependencies } from '@platformatic/utils'
@@ -80,7 +79,3 @@ async function applyMigrations (_args) {
 }
 
 export { applyMigrations, execute }
-
-if (isMain(import.meta)) {
-  await applyMigrations(process.argv.splice(2))
-}

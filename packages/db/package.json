@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db",
-  "version": "1.13.3",
+  "version": "1.15.1",
   "description": "",
   "main": "index.js",
   "types": "index.d.ts",
@@ -8,7 +8,7 @@
     "plt-db": "./db.mjs"
   },
   "scripts": {
-    "test": "pnpm run lint && c8 node ./test/runner.js && tsd ",
+    "test": "pnpm run lint && node ./test/runner.js && tsd ",
     "test:postgresql": "DB=postgresql node ./test/runner.js",
     "test:mariadb": "DB=mariadb node ./test/runner.js",
     "test:mysql": "DB=mysql node ./test/runner.js",
@@ -43,7 +43,7 @@
     "ts-standard": "^12.0.2",
     "tsd": "^0.29.0",
     "typescript": "^5.2.2",
-    "undici": "^5.25.4",
+    "undici": "^6.0.0",
     "vscode-json-languageservice": "^5.3.6",
     "why-is-node-running": "^2.2.2",
     "yaml": "^2.3.2"
@@ -80,7 +80,7 @@
     "fastify-plugin": "^4.5.1",
     "fastify-print-routes": "^2.1.0",
     "graphql": "^16.8.1",
-    "help-me": "^4.2.0",
+    "help-me": "^5.0.0",
     "minimist": "^1.2.8",
     "pino": "^8.15.3",
     "pino-pretty": "^10.2.0",

@@ -1,7 +1,6 @@
 'use strict'
 
 const { BaseGenerator } = require('@platformatic/generators')
-const { getPackageConfigurationObject } = require('@platformatic/generators/lib/utils')
 const { readFile } = require('node:fs/promises')
 const { join } = require('node:path')
 
@@ -27,6 +26,9 @@ class ServiceGenerator extends BaseGenerator {
   }
 
   getConfigFieldsDefinitions () {
+    if (this.config.isRuntimeContext) {
+      return []
+    }
     return [
       {
         var: 'PLT_SERVER_HOSTNAME',
@@ -65,8 +67,10 @@ declare module 'fastify' {
 `
     this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
     if (this.config.isRuntimeContext) {
-      // remove env variables since they are all for the config.server property
-      this.config.env = {}
+      // remove env variables that are not for the plugins
+      delete this.config.env.PLT_SERVER_HOSTNAME
+      delete this.config.env.PORT
+      delete this.config.env.PLT_SERVER_LOGGER_LEVEL
     }
 
     this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
@@ -105,17 +109,6 @@ declare module 'fastify' {
       }
     }
 
-    if (this.packages.length > 0) {
-      if (!config.plugins) {
-        config.plugins = {}
-      }
-      config.plugins.packages = this.packages.map((packageDefinition) => {
-        return {
-          name: packageDefinition.name,
-          options: getPackageConfigurationObject(packageDefinition.options)
-        }
-      })
-    }
     return config
   }
 }

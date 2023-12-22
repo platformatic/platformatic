@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/authenticate",
-  "version": "1.13.3",
+  "version": "1.15.1",
   "description": "",
   "main": "authenticate.js",
   "type": "module",
@@ -24,7 +24,7 @@
     "fastify": "^4.23.2",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "undici": "^5.25.4"
+    "undici": "^6.0.0"
   },
   "dependencies": {
     "@fastify/error": "^3.3.0",

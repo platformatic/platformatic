@@ -3,7 +3,7 @@ type Env = {
 }
 
 export type PackageConfiguration = {
-  type: 'number' | 'string' | 'boolean'
+  type: 'number' | 'string' | 'boolean' | 'path'
   path: string
   value: number | string | boolean
 }
@@ -13,7 +13,9 @@ export namespace GeneratorUtils {
   export function stripVersion(version: string): string
   export function convertServiceNameToPrefix(serviceName: string): string
   export function addPrefixToEnv(env: Env, prefix: string): Env
+  export function addPrefixToEnv(input: string, prefix: string): string
   export function envObjectToString(env: Env): string
   export function extractEnvVariablesFromText(text: string): string[]
   export function getPackageConfigurationObject(config: PackageConfiguration[]): object
+  export const PLT_ROOT: string
 }
