@@ -1,10 +1,10 @@
 'use strict'
 
+const { clear, connInfo, isSQLite, isPg } = require('./helper')
 const { test } = require('tap')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { clear, connInfo, isSQLite, isPg } = require('./helper')
 
 test('should properly setup the enum types', { skip: isSQLite }, async ({ pass, teardown, same }) => {
   const app = fastify()

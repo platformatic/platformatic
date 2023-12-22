@@ -1,10 +1,10 @@
 'use strict'
 
+const { clear, connInfo, isSQLite, isMysql8, isMysql } = require('./helper')
 const t = require('tap')
 const sqlOpenAPI = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { clear, connInfo, isSQLite, isMysql8, isMysql } = require('./helper')
 const { test } = t
 
 Object.defineProperty(t, 'fullname', {

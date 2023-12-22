@@ -1,10 +1,10 @@
 'use strict'
 
+const { isSQLite, isPg, connInfo, isMysql, clear } = require('./helper')
 const { test } = require('tap')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { isSQLite, isPg, connInfo, isMysql, clear } = require('./helper')
 
 test('should handle relationships with different schemas', { skip: isSQLite }, async ({ pass, teardown, same, equal }) => {
   const app = fastify()

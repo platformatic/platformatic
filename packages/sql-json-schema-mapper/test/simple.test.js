@@ -1,9 +1,9 @@
 'use strict'
 
+const { clear, connInfo, isSQLite, isMariaDB, isPg } = require('./helper')
 const t = require('tap')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { clear, connInfo, isSQLite, isMariaDB, isPg } = require('./helper')
 const { mapSQLEntityToJSONSchema } = require('..')
 const { test } = t
 

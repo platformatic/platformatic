@@ -1,9 +1,9 @@
 'use strict'
 
+const { isSQLite } = require('./helper')
 const fastify = require('fastify')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
-const { isSQLite } = require('./helper')
 const { test, skip } = require('tap')
 const { tmpdir } = require('os')
 const { join } = require('path')

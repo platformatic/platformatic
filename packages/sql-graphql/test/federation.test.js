@@ -1,12 +1,12 @@
 'use strict'
 
+const { clear, connInfo, isSQLite } = require('./helper')
 const { test } = require('tap')
 const Fastify = require('fastify')
 const Gateway = require('@mercuriusjs/gateway')
 const { mercuriusFederationPlugin } = require('@mercuriusjs/federation')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
-const { clear, connInfo, isSQLite } = require('./helper')
 
 async function createTestService (t, schema, resolvers = {}) {
   const service = Fastify({ logger: { level: 'error' } })
