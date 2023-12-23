@@ -55,3 +55,38 @@ test('do not match arrays', (t) => {
   const { strictEqual } = tspl(t, { plan: 1 })
   strictEqual(match([{ a: 1 }, { b: 2 }], [{ a: 1 }, { b: 3 }]), false)
 })
+
+test('string pattern match fail', async (t) => {
+  const { equal } = tspl(t, { plan: 1 })
+  equal(match({ a: 'hello world', b: 2 }, { a: 'world.*' }), false)
+})
+
+test('multi-line string pattern match', async (t) => {
+  const { ok } = tspl(t, { plan: 1 })
+  const actual = `
+    function example() {
+      console.log('Hello, world!');
+      return true;
+    }
+  `
+  const expected = `
+    console.log('Hello, world!');
+    return true;
+  `
+  ok(match(actual, expected))
+})
+
+test('multi-line string pattern match fail', async (t) => {
+  const { equal } = tspl(t, { plan: 1 })
+  const actual = `
+    function example() {
+      console.log('Hello, world!');
+      return false;
+    }
+  `
+  const expected = `
+    console.log('Goodbye, world!');
+    return true;
+  `
+  equal(match(actual, expected), false)
+})
