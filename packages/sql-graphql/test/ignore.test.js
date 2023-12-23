@@ -2,7 +2,7 @@
 
 const { clear, connInfo, isSQLite } = require('./helper')
 const { test } = require('node:test')
-const { deepEqual: same, equal, ok: pass } = require('node:assert')
+const { equal, ok: pass } = require('node:assert')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
@@ -161,7 +161,7 @@ test('ignore a table via sql-graphql option', async (t) => {
 })
 
 test('show a warning if there is no ignored entity', async (t) => {
-  const { ok: pass } = tspl(t, { plan: 2 });
+  const { ok: pass } = tspl(t, { plan: 2 })
 
   const app = fastify({
     logger: {
@@ -249,7 +249,7 @@ test('ignore a column via sql-graphql option', async (t) => {
 })
 
 test('show a warning if there is no ignored entity field', async (t) => {
-  const { ok: pass } = tspl(t, { plan: 2 });
+  const { ok: pass } = tspl(t, { plan: 2 })
 
   const app = fastify({
     logger: {

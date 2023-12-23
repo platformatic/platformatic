@@ -1,7 +1,7 @@
 'use strict'
 
 const { clear, connInfo, isPg, isMysql, isSQLite } = require('./helper')
-const { test } = require('node:test')
+const { test, skip } = require('node:test')
 const { deepEqual: same, equal, ok: pass } = require('node:assert')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')

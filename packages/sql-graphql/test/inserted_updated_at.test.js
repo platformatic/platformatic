@@ -2,7 +2,7 @@
 
 const { clear, connInfo, isSQLite, isMysql } = require('./helper')
 const { test } = require('node:test')
-const { deepEqual: same, equal, ok: pass, notEqual } = require('node:assert')
+const { equal, ok: pass, notEqual } = require('node:assert')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')

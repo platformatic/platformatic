@@ -2,7 +2,7 @@
 
 const { clear, connInfo, isSQLite } = require('./helper')
 const { test } = require('node:test')
-const { deepEqual: same, equal, ok: pass } = require('node:assert')
+const { deepEqual: same, ok: pass } = require('node:assert')
 const Fastify = require('fastify')
 const Gateway = require('@mercuriusjs/gateway')
 const { mercuriusFederationPlugin } = require('@mercuriusjs/federation')

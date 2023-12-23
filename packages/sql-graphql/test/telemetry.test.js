@@ -2,7 +2,7 @@
 
 const { clear, connInfo, isSQLite, isPg } = require('./helper')
 const { test, only } = require('node:test')
-const { deepEqual: same, equal, ok: pass } = require('node:assert')
+const { deepEqual: same, equal, ok: pass, fail } = require('node:assert')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const { telemetry } = require('@platformatic/telemetry')

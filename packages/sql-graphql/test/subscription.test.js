@@ -2,7 +2,7 @@
 
 const { clear, connInfo, isSQLite } = require('./helper')
 const { test } = require('node:test')
-const { equal, ok: pass, deepEqual: same } = require('node:assert')
+const { equal, deepEqual: same } = require('node:assert')
 const Fastify = require('fastify')
 const WebSocket = require('ws')
 const { once } = require('events')
