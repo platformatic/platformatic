@@ -1015,9 +1015,6 @@ importers:
       standard:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
-      tap:
-        specifier: ^16.3.9
-        version: 16.3.10(typescript@5.3.3)
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
@@ -1612,9 +1609,15 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0
     devDependencies:
+      '@matteo.collina/tspl':
+        specifier: ^0.1.0
+        version: 0.1.0
       '@platformatic/sql-mapper':
         specifier: workspace:*
         version: link:../sql-mapper
+      borp:
+        specifier: ^0.4.2
+        version: 0.4.2
       fastify:
         specifier: ^4.23.2
         version: 4.25.1
@@ -1627,9 +1630,6 @@ importers:
       standard:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
-      tap:
-        specifier: ^16.3.9
-        version: 16.3.10(typescript@5.3.3)
       tsd:
         specifier: ^0.29.0
         version: 0.29.0
@@ -1719,6 +1719,9 @@ importers:
       '@platformatic/sql-mapper':
         specifier: workspace:*
         version: link:../sql-mapper
+      borp:
+        specifier: ^0.4.2
+        version: 0.4.2
       dtsgenerator:
         specifier: ^3.19.1
         version: 3.19.1
@@ -1731,9 +1734,6 @@ importers:
       standard:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
-      tap:
-        specifier: ^16.3.9
-        version: 16.3.10(typescript@5.3.3)
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2

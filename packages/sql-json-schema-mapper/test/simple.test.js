@@ -1,11 +1,11 @@
 'use strict'
 
 const { clear, connInfo, isSQLite, isMariaDB, isPg } = require('./helper')
-const t = require('tap')
+const { test } = require('node:test')
+const { deepEqual: same, equal, ok: pass } = require('node:assert')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
 const { mapSQLEntityToJSONSchema } = require('..')
-const { test } = t
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -68,8 +68,6 @@ async function createBasicGeneratedTests (db, sql) {
 }
 
 test('simple db, simple rest API', async (t) => {
-  const { pass, teardown } = t
-
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -80,7 +78,7 @@ test('simple db, simple rest API', async (t) => {
       await createBasicPages(db, sql)
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -88,32 +86,30 @@ test('simple db, simple rest API', async (t) => {
     const page = app.platformatic.entities.page
     const pageJsonSchema = mapSQLEntityToJSONSchema(page)
 
-    t.equal(pageJsonSchema.$id, 'Page')
-    t.equal(pageJsonSchema.title, 'Page')
-    t.equal(pageJsonSchema.description, 'A Page')
-    t.equal(pageJsonSchema.type, 'object')
-    t.same(pageJsonSchema.properties.id, { type: 'integer' })
-    t.same(pageJsonSchema.properties.title, { type: 'string' })
-    t.same(pageJsonSchema.properties.description, { type: 'string', nullable: true })
-    t.same(pageJsonSchema.properties.section, { type: 'string', nullable: true })
+    equal(pageJsonSchema.$id, 'Page')
+    equal(pageJsonSchema.title, 'Page')
+    equal(pageJsonSchema.description, 'A Page')
+    equal(pageJsonSchema.type, 'object')
+    same(pageJsonSchema.properties.id, { type: 'integer' })
+    same(pageJsonSchema.properties.title, { type: 'string' })
+    same(pageJsonSchema.properties.description, { type: 'string', nullable: true })
+    same(pageJsonSchema.properties.section, { type: 'string', nullable: true })
     if (isMariaDB) {
-      t.same(pageJsonSchema.properties.metadata, { type: 'string', nullable: true })
+      same(pageJsonSchema.properties.metadata, { type: 'string', nullable: true })
     } else {
-      t.same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
+      same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
     }
     if (isPg) {
-      t.same(pageJsonSchema.properties.metadataB, { type: 'object', additionalProperties: true, nullable: true })
+      same(pageJsonSchema.properties.metadataB, { type: 'object', additionalProperties: true, nullable: true })
     }
-    t.same(pageJsonSchema.required, ['title'])
+    same(pageJsonSchema.required, ['title'])
     if (!isSQLite) {
-      t.same(pageJsonSchema.properties.type, { type: 'string', nullable: true, enum: ['blank', 'non-blank'] })
+      same(pageJsonSchema.properties.type, { type: 'string', nullable: true, enum: ['blank', 'non-blank'] })
     }
   }
 })
 
 test('noRequired = true', async (t) => {
-  const { pass, teardown } = t
-
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -124,7 +120,7 @@ test('noRequired = true', async (t) => {
       await createBasicPages(db, sql)
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -132,32 +128,30 @@ test('noRequired = true', async (t) => {
     const page = app.platformatic.entities.page
     const pageJsonSchema = mapSQLEntityToJSONSchema(page, {}, true)
 
-    t.equal(pageJsonSchema.$id, 'Page')
-    t.equal(pageJsonSchema.title, 'Page')
-    t.equal(pageJsonSchema.description, 'A Page')
-    t.equal(pageJsonSchema.type, 'object')
-    t.same(pageJsonSchema.properties.id, { type: 'integer', nullable: true })
-    t.same(pageJsonSchema.properties.title, { type: 'string', nullable: true })
-    t.same(pageJsonSchema.properties.description, { type: 'string', nullable: true })
-    t.same(pageJsonSchema.properties.section, { type: 'string', nullable: true })
+    equal(pageJsonSchema.$id, 'Page')
+    equal(pageJsonSchema.title, 'Page')
+    equal(pageJsonSchema.description, 'A Page')
+    equal(pageJsonSchema.type, 'object')
+    same(pageJsonSchema.properties.id, { type: 'integer', nullable: true })
+    same(pageJsonSchema.properties.title, { type: 'string', nullable: true })
+    same(pageJsonSchema.properties.description, { type: 'string', nullable: true })
+    same(pageJsonSchema.properties.section, { type: 'string', nullable: true })
     if (isMariaDB) {
-      t.same(pageJsonSchema.properties.metadata, { type: 'string', nullable: true })
+      same(pageJsonSchema.properties.metadata, { type: 'string', nullable: true })
     } else {
-      t.same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
+      same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
     }
     if (isPg) {
-      t.same(pageJsonSchema.properties.metadataB, { type: 'object', additionalProperties: true, nullable: true })
+      same(pageJsonSchema.properties.metadataB, { type: 'object', additionalProperties: true, nullable: true })
     }
-    t.equal(pageJsonSchema.required, undefined)
+    equal(pageJsonSchema.required, undefined)
     if (!isSQLite) {
-      t.same(pageJsonSchema.properties.type, { type: 'string', nullable: true, enum: ['blank', 'non-blank'] })
+      same(pageJsonSchema.properties.type, { type: 'string', nullable: true, enum: ['blank', 'non-blank'] })
     }
   }
 })
 
 test('ignore one field', async (t) => {
-  const { pass, teardown } = t
-
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -168,7 +162,7 @@ test('ignore one field', async (t) => {
       await createBasicPages(db, sql)
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -178,31 +172,29 @@ test('ignore one field', async (t) => {
       title: true
     })
 
-    t.equal(pageJsonSchema.$id, 'Page')
-    t.equal(pageJsonSchema.title, 'Page')
-    t.equal(pageJsonSchema.description, 'A Page')
-    t.equal(pageJsonSchema.type, 'object')
-    t.same(pageJsonSchema.properties.id, { type: 'integer' })
-    t.equal(pageJsonSchema.properties.title, undefined)
-    t.same(pageJsonSchema.properties.description, { type: 'string', nullable: true })
+    equal(pageJsonSchema.$id, 'Page')
+    equal(pageJsonSchema.title, 'Page')
+    equal(pageJsonSchema.description, 'A Page')
+    equal(pageJsonSchema.type, 'object')
+    same(pageJsonSchema.properties.id, { type: 'integer' })
+    equal(pageJsonSchema.properties.title, undefined)
+    same(pageJsonSchema.properties.description, { type: 'string', nullable: true })
     if (isMariaDB) {
-      t.same(pageJsonSchema.properties.metadata, { type: 'string', nullable: true })
+      same(pageJsonSchema.properties.metadata, { type: 'string', nullable: true })
     } else {
-      t.same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
+      same(pageJsonSchema.properties.metadata, { type: 'object', additionalProperties: true, nullable: true })
     }
     if (isPg) {
-      t.same(pageJsonSchema.properties.metadataB, { type: 'object', additionalProperties: true, nullable: true })
+      same(pageJsonSchema.properties.metadataB, { type: 'object', additionalProperties: true, nullable: true })
     }
-    t.same(pageJsonSchema.required, undefined)
+    same(pageJsonSchema.required, undefined)
     if (!isSQLite) {
-      t.same(pageJsonSchema.properties.type, { type: 'string', nullable: true, enum: ['blank', 'non-blank'] })
+      same(pageJsonSchema.properties.type, { type: 'string', nullable: true, enum: ['blank', 'non-blank'] })
     }
   }
 })
 
 test('stored and virtual generated columns should be read only', async (t) => {
-  const { pass, teardown } = t
-
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -213,7 +205,7 @@ test('stored and virtual generated columns should be read only', async (t) => {
       await createBasicGeneratedTests(db, sql)
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -223,17 +215,15 @@ test('stored and virtual generated columns should be read only', async (t) => {
 
     // as of postgresql 15 virtual generated column is not supported
     if (isPg) {
-      t.same(generatedTestJsonSchema.properties.testStored, { type: 'integer', nullable: true, readOnly: true })
+      same(generatedTestJsonSchema.properties.testStored, { type: 'integer', nullable: true, readOnly: true })
     } else {
-      t.same(generatedTestJsonSchema.properties.testStored, { type: 'integer', nullable: true, readOnly: true })
-      t.same(generatedTestJsonSchema.properties.testVirtual, { type: 'integer', nullable: true, readOnly: true })
+      same(generatedTestJsonSchema.properties.testStored, { type: 'integer', nullable: true, readOnly: true })
+      same(generatedTestJsonSchema.properties.testVirtual, { type: 'integer', nullable: true, readOnly: true })
     }
   }
 })
 
 test('PG Arrays', { skip: !isPg }, async (t) => {
-  const { pass, teardown } = t
-
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -248,7 +238,7 @@ test('PG Arrays', { skip: !isPg }, async (t) => {
     );`)
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -256,13 +246,13 @@ test('PG Arrays', { skip: !isPg }, async (t) => {
     const page = app.platformatic.entities.page
     const pageJsonSchema = mapSQLEntityToJSONSchema(page)
 
-    t.equal(pageJsonSchema.$id, 'Page')
-    t.equal(pageJsonSchema.title, 'Page')
-    t.equal(pageJsonSchema.description, 'A Page')
-    t.equal(pageJsonSchema.type, 'object')
-    t.same(pageJsonSchema.properties.id, { type: 'integer' })
-    t.same(pageJsonSchema.properties.title, { type: 'string' })
-    t.same(pageJsonSchema.properties.tags, { type: 'array', items: { type: 'string' } })
-    t.same(pageJsonSchema.required, ['tags', 'title'])
+    equal(pageJsonSchema.$id, 'Page')
+    equal(pageJsonSchema.title, 'Page')
+    equal(pageJsonSchema.description, 'A Page')
+    equal(pageJsonSchema.type, 'object')
+    same(pageJsonSchema.properties.id, { type: 'integer' })
+    same(pageJsonSchema.properties.title, { type: 'string' })
+    same(pageJsonSchema.properties.tags, { type: 'array', items: { type: 'string' } })
+    same(pageJsonSchema.required, ['tags', 'title'])
   }
 })

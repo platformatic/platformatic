@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { equal, deepEqual: same, rejects, fail } = require('node:assert')
 const sqlMapper = require('@platformatic/sql-mapper')
 const { connect } = sqlMapper
 const { clear, connInfo, isSQLite } = require('./helper')
@@ -13,10 +14,10 @@ const fakeLogger = {
   error () {}
 }
 
-test('get topics', async ({ equal, same, teardown }) => {
+test('get topics', async (t) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    t.after(() => db.dispose())
 
     if (isSQLite) {
       await db.query(sql`CREATE TABLE pages (
@@ -96,10 +97,10 @@ test('get topics', async ({ equal, same, teardown }) => {
   }
 })
 
-test('hooks', async ({ equal, same, teardown }) => {
+test('hooks', async (t) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    t.after(() => db.dispose())
 
     if (isSQLite) {
       await db.query(sql`CREATE TABLE pages (
@@ -179,10 +180,10 @@ test('hooks', async ({ equal, same, teardown }) => {
   }
 })
 
-test('get topics', async ({ equal, same, teardown }) => {
+test('get topics', async (t) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    t.after(() => db.dispose())
 
     if (isSQLite) {
       await db.query(sql`CREATE TABLE pages (
@@ -215,10 +216,10 @@ test('get topics', async ({ equal, same, teardown }) => {
   await pageEntity.getSubscriptionTopic({ action: 'save' })
 })
 
-test('no events', async ({ equal, same, teardown, fail, comment }) => {
+test('no events', async (t) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    t.after(() => db.dispose())
 
     if (isSQLite) {
       await db.query(sql`CREATE TABLE pages (
@@ -255,7 +256,7 @@ test('no events', async ({ equal, same, teardown, fail, comment }) => {
   equal(mapper.mq, mq)
 
   queue.on('data', function (msg) {
-    comment(JSON.stringify(msg, null, 2))
+    t.diagnostic(JSON.stringify(msg, null, 2))
     fail('no message')
   })
 
@@ -283,10 +284,10 @@ test('no events', async ({ equal, same, teardown, fail, comment }) => {
   })
 })
 
-test('wrong action', async ({ equal, rejects, teardown, fail, comment }) => {
+test('wrong action', async (t) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    t.after(() => db.dispose())
 
     if (isSQLite) {
       await db.query(sql`CREATE TABLE pages (

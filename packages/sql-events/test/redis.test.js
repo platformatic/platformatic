@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { equal, deepEqual: same } = require('node:assert')
 const sqlMapper = require('@platformatic/sql-mapper')
 const { connect } = sqlMapper
 const { clear, connInfo, isSQLite } = require('./helper')
@@ -15,10 +16,10 @@ const fakeLogger = {
   error () {}
 }
 
-test('emit events', async ({ equal, same, teardown, comment }) => {
+test('emit events', async (t) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    t.after(() => db.dispose())
 
     if (isSQLite) {
       await db.query(sql`CREATE TABLE pages (
@@ -40,10 +41,10 @@ test('emit events', async ({ equal, same, teardown, comment }) => {
   const pageEntity = mapper.entities.page
 
   equal(setupEmitter({ mapper, connectionString: 'redis://127.0.0.1:6379', log: fakeLogger }), undefined)
-  teardown(promisify(mapper.mq.close.bind(mapper.mq)))
+  t.after(() => mapper.mq.close())
 
   const anotherMQ = new MQEmitterRedis()
-  teardown(() => anotherMQ.close())
+  t.after(() => anotherMQ.close())
 
   const messages = new PassThrough({ objectMode: true })
   await promisify(anotherMQ.on.bind(anotherMQ))('#', function (msg, cb) {

@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { deepEqual: same, equal, ok } = require('node:assert')
 const Fastify = require('fastify')
 const { clear, connInfo } = require('./helper')
 const core = require('..')
@@ -25,7 +26,7 @@ async function onDatabaseLoad (db, sql) {
   await createBasicPages(db, sql)
 }
 
-test('entities are available', async ({ ok, teardown }) => {
+test('entities are available', async (t) => {
   const app = Fastify({
     pluginTimeout: 30000
   })
@@ -33,13 +34,13 @@ test('entities are available', async ({ ok, teardown }) => {
     ...connInfo,
     onDatabaseLoad
   })
-  teardown(() => app.close())
+  t.after(() => app.close())
 
   await app.ready()
   ok(app.platformatic.entities.page)
 })
 
-test('graphql is available', async ({ equal, same, teardown }) => {
+test('graphql is available', async (t) => {
   const app = Fastify({
     pluginTimeout: 30000
   })
@@ -47,7 +48,7 @@ test('graphql is available', async ({ equal, same, teardown }) => {
     ...connInfo,
     onDatabaseLoad
   })
-  teardown(() => app.close())
+  t.after(() => app.close())
 
   const res = await app.inject({
     method: 'POST',
@@ -74,7 +75,7 @@ test('graphql is available', async ({ equal, same, teardown }) => {
   }, 'savePage response')
 })
 
-test('graphql is available via the boolean enabled flag', async ({ equal, same, teardown }) => {
+test('graphql is available via the boolean enabled flag', async (t) => {
   const app = Fastify({
     pluginTimeout: 30000
   })
@@ -85,7 +86,7 @@ test('graphql is available via the boolean enabled flag', async ({ equal, same, 
       enabled: true
     }
   })
-  teardown(() => app.close())
+  t.after(() => app.close())
 
   const res = await app.inject({
     method: 'POST',
@@ -112,7 +113,7 @@ test('graphql is available via the boolean enabled flag', async ({ equal, same, 
   }, 'savePage response')
 })
 
-test('graphql is available via the string enabled flag', async ({ equal, same, teardown }) => {
+test('graphql is available via the string enabled flag', async (t) => {
   const app = Fastify({
     pluginTimeout: 30000
   })
@@ -123,7 +124,7 @@ test('graphql is available via the string enabled flag', async ({ equal, same, t
       enabled: 'true'
     }
   })
-  teardown(() => app.close())
+  t.after(() => app.close())
 
   const res = await app.inject({
     method: 'POST',
@@ -150,7 +151,7 @@ test('graphql is available via the string enabled flag', async ({ equal, same, t
   }, 'savePage response')
 })
 
-test('graphiql can be enabled', async ({ equal, same, teardown }) => {
+test('graphiql can be enabled', async (t) => {
   const app = Fastify({
     pluginTimeout: 30000
   })
@@ -161,7 +162,7 @@ test('graphiql can be enabled', async ({ equal, same, teardown }) => {
       graphiql: true
     }
   })
-  teardown(() => app.close())
+  t.after(() => app.close())
 
   const res = await app.inject({
     method: 'GET',
@@ -170,7 +171,7 @@ test('graphiql can be enabled', async ({ equal, same, teardown }) => {
   equal(res.statusCode, 200, 'savePage status code')
 })
 
-test('graphql can be disabled', async ({ equal, teardown }) => {
+test('graphql can be disabled', async (t) => {
   const app = Fastify({
     pluginTimeout: 30000
   })
@@ -179,7 +180,7 @@ test('graphql can be disabled', async ({ equal, teardown }) => {
     onDatabaseLoad,
     graphql: false
   })
-  teardown(() => app.close())
+  t.after(() => app.close())
 
   const res = await app.inject({
     method: 'POST',
@@ -198,7 +199,7 @@ test('graphql can be disabled', async ({ equal, teardown }) => {
   equal(res.statusCode, 404, '/graphql not found')
 })
 
-test('graphql can be disabled via boolean enabled flag', async ({ equal, teardown }) => {
+test('graphql can be disabled via boolean enabled flag', async (t) => {
   const app = Fastify({
     pluginTimeout: 30000
   })
@@ -209,7 +210,7 @@ test('graphql can be disabled via boolean enabled flag', async ({ equal, teardow
       enabled: false
     }
   })
-  teardown(() => app.close())
+  t.after(() => app.close())
 
   const res = await app.inject({
     method: 'POST',
@@ -228,7 +229,7 @@ test('graphql can be disabled via boolean enabled flag', async ({ equal, teardow
   equal(res.statusCode, 404, '/graphql not found')
 })
 
-test('graphql can be disabled via string enabled flag', async ({ equal, teardown }) => {
+test('graphql can be disabled via string enabled flag', async (t) => {
   const app = Fastify({
     pluginTimeout: 30000
   })
@@ -239,7 +240,7 @@ test('graphql can be disabled via string enabled flag', async ({ equal, teardown
       enabled: 'false'
     }
   })
-  teardown(() => app.close())
+  t.after(() => app.close())
 
   const res = await app.inject({
     method: 'POST',
@@ -258,7 +259,7 @@ test('graphql can be disabled via string enabled flag', async ({ equal, teardown
   equal(res.statusCode, 404, '/graphql not found')
 })
 
-test('openapi is available', async ({ equal, teardown }) => {
+test('openapi is available', async (t) => {
   const app = Fastify({
     pluginTimeout: 30000
   })
@@ -266,7 +267,7 @@ test('openapi is available', async ({ equal, teardown }) => {
     ...connInfo,
     onDatabaseLoad
   })
-  teardown(() => app.close())
+  t.after(() => app.close())
 
   const res = await app.inject({
     method: 'GET',
@@ -275,7 +276,7 @@ test('openapi is available', async ({ equal, teardown }) => {
   equal(res.statusCode, 200, '/pages status code')
 })
 
-test('openapi is available via the enabled flag', async ({ equal, teardown }) => {
+test('openapi is available via the enabled flag', async (t) => {
   const app = Fastify({
     pluginTimeout: 30000
   })
@@ -286,7 +287,7 @@ test('openapi is available via the enabled flag', async ({ equal, teardown }) =>
       enabled: true
     }
   })
-  teardown(() => app.close())
+  t.after(() => app.close())
 
   const res = await app.inject({
     method: 'GET',
@@ -295,7 +296,7 @@ test('openapi is available via the enabled flag', async ({ equal, teardown }) =>
   equal(res.statusCode, 200, '/pages status code')
 })
 
-test('openapi can be disabled', async ({ equal, teardown }) => {
+test('openapi can be disabled', async (t) => {
   const app = Fastify({
     pluginTimeout: 30000
   })
@@ -304,7 +305,7 @@ test('openapi can be disabled', async ({ equal, teardown }) => {
     onDatabaseLoad,
     openapi: false
   })
-  teardown(() => app.close())
+  t.after(() => app.close())
 
   const res = await app.inject({
     method: 'GET',
@@ -313,7 +314,7 @@ test('openapi can be disabled', async ({ equal, teardown }) => {
   equal(res.statusCode, 404, '/pages status code')
 })
 
-test('openapi can be disabled via enabled flag', async ({ equal, teardown }) => {
+test('openapi can be disabled via enabled flag', async (t) => {
   const app = Fastify({
     pluginTimeout: 30000
   })
@@ -324,7 +325,7 @@ test('openapi can be disabled via enabled flag', async ({ equal, teardown }) => 
       enabled: false
     }
   })
-  teardown(() => app.close())
+  t.after(() => app.close())
 
   const res = await app.inject({
     method: 'GET',
@@ -333,7 +334,7 @@ test('openapi can be disabled via enabled flag', async ({ equal, teardown }) => 
   equal(res.statusCode, 404, '/pages status code')
 })
 
-test('openapi with an object', async ({ equal, teardown }) => {
+test('openapi with an object', async (t) => {
   const app = Fastify({
     pluginTimeout: 30000
   })
@@ -342,7 +343,7 @@ test('openapi with an object', async ({ equal, teardown }) => {
     onDatabaseLoad,
     openapi: {}
   })
-  teardown(() => app.close())
+  t.after(() => app.close())
 
   const res = await app.inject({
     method: 'GET',
@@ -351,7 +352,7 @@ test('openapi with an object', async ({ equal, teardown }) => {
   equal(res.statusCode, 200, '/pages status code')
 })
 
-test('mq is available', async ({ equal, same, teardown }) => {
+test('mq is available', async (t) => {
   const app = Fastify({
     pluginTimeout: 30000
   })
@@ -360,7 +361,7 @@ test('mq is available', async ({ equal, same, teardown }) => {
     events: true,
     onDatabaseLoad
   })
-  teardown(() => app.close())
+  t.after(() => app.close())
 
   const queue = await app.platformatic.subscribe([
     await app.platformatic.entities.page.getSubscriptionTopic({ action: 'save' })
@@ -399,7 +400,7 @@ test('mq is available', async ({ equal, same, teardown }) => {
   })
 })
 
-test('mq is available via the enabled flag', async ({ equal, same, teardown }) => {
+test('mq is available via the enabled flag', async (t) => {
   const app = Fastify({
     pluginTimeout: 30000
   })
@@ -410,7 +411,7 @@ test('mq is available via the enabled flag', async ({ equal, same, teardown }) =
     },
     onDatabaseLoad
   })
-  teardown(() => app.close())
+  t.after(() => app.close())
 
   const queue = await app.platformatic.subscribe([
     await app.platformatic.entities.page.getSubscriptionTopic({ action: 'save' })
@@ -449,7 +450,7 @@ test('mq is available via the enabled flag', async ({ equal, same, teardown }) =
   })
 })
 
-test('mq is disabled via the enabled flag', async ({ same, teardown }) => {
+test('mq is disabled via the enabled flag', async (t) => {
   const app = Fastify({
     pluginTimeout: 30000
   })
@@ -460,7 +461,7 @@ test('mq is disabled via the enabled flag', async ({ same, teardown }) => {
     },
     onDatabaseLoad
   })
-  teardown(() => app.close())
+  t.after(() => app.close())
 
   same(app.platformatic.entities.page.getSubscriptionTopic, undefined, 'subscription not available')
 })
