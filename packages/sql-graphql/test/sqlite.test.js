@@ -1,10 +1,11 @@
 'use strict'
 
+const { isSQLite } = require('./helper')
 const fastify = require('fastify')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
-const { isSQLite } = require('./helper')
-const { test, skip } = require('tap')
+const { test, skip } = require('node:test')
+const { equal, ok: pass, deepEqual: same } = require('node:assert')
 const { tmpdir } = require('os')
 const { join } = require('path')
 const { randomUUID } = require('crypto')
@@ -14,7 +15,7 @@ if (!isSQLite) {
   process.exit(0)
 }
 
-test('store, close and load', async ({ pass, same, equal }) => {
+test('store, close and load', async (t) => {
   const file = join(tmpdir(), randomUUID())
   {
     const app = fastify()
@@ -91,7 +92,7 @@ test('store, close and load', async ({ pass, same, equal }) => {
   }
 })
 
-test('demo', async ({ pass, same, equal, teardown }) => {
+test('demo', async (t) => {
   const file = join(tmpdir(), randomUUID())
   const app = fastify()
   app.register(sqlMapper, {
@@ -116,7 +117,7 @@ test('demo', async ({ pass, same, equal, teardown }) => {
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   {
     const res = await app.inject({

@@ -1,20 +1,16 @@
 'use strict'
 
-const t = require('tap')
+const { clear, connInfo, isSQLite, isMysql } = require('./helper')
+const { deepEqual: same, equal, ok: pass } = require('node:assert')
+const { test } = require('node:test')
 const fastify = require('fastify')
+const Snap = require('@matteo.collina/snap')
 const sqlOpenAPI = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
-const { clear, connInfo, isSQLite, isMysql } = require('./helper')
-const { resolve } = require('path')
-const { test } = t
 
-Object.defineProperty(t, 'fullname', {
-  value: 'platformatic/db/openapi/orderby'
-})
+const snap = Snap(__filename)
 
 test('one-level order by', async (t) => {
-  const { pass, teardown, same, equal, matchSnapshot } = t
-  t.snapshotFile = resolve(__dirname, 'tap-snapshots', 'orderby-openapi-1.cjs')
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -45,7 +41,7 @@ test('one-level order by', async (t) => {
     }
   })
   app.register(sqlOpenAPI)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -104,7 +100,8 @@ test('one-level order by', async (t) => {
       url: '/documentation/json'
     })
     const json = res.json()
-    matchSnapshot(json, 'GET /documentation/json response')
+    const snapshot = await snap(json)
+    equal(json, snapshot)
   }
 
   {
@@ -123,7 +120,7 @@ test('one-level order by', async (t) => {
   }
 })
 
-test('list order by', async ({ pass, teardown, same, equal }) => {
+test('list order by', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -148,7 +145,7 @@ test('list order by', async ({ pass, teardown, same, equal }) => {
     }
   })
   app.register(sqlOpenAPI)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -161,9 +158,9 @@ test('list order by', async ({ pass, teardown, same, equal }) => {
       ]
     })
     same(res, [
-      { id: 1, counter: 3, counter2: 3 },
-      { id: 2, counter: 3, counter2: 2 },
-      { id: 3, counter: 1, counter2: 1 }
+      { id: '1', counter: 3, counter2: 3 },
+      { id: '2', counter: 3, counter2: 2 },
+      { id: '3', counter: 1, counter2: 1 }
     ])
   }
 

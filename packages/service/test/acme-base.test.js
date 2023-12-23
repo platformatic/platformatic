@@ -23,7 +23,7 @@ test('stackable in typescript', async t => {
 
   const cwd = join(__dirname, '..', 'fixtures', 'acme-base-ts')
 
-  await execa(join(__dirname, '..', 'node_modules', '.bin', 'tsc'), { cwd })
+  await execa(join(__dirname, '..', 'node_modules', '.bin', 'tsc'), { cwd, stdio: 'inherit' })
 
   // if this fails, it will throw an error
   await execa('node', ['--test'], {

@@ -1,12 +1,13 @@
 'use strict'
 
-const { test } = require('tap')
+const { clear, connInfo, isSQLite, isMysql } = require('./helper')
+const { test } = require('node:test')
+const { equal, ok: pass, deepEqual: same } = require('node:assert')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { clear, connInfo, isSQLite, isMysql } = require('./helper')
 
-test('one-level order by', async ({ pass, teardown, same, equal }) => {
+test('one-level order by', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -31,7 +32,7 @@ test('one-level order by', async ({ pass, teardown, same, equal }) => {
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -157,7 +158,7 @@ test('one-level order by', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('list order by', async ({ pass, teardown, same, equal }) => {
+test('list order by', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -182,7 +183,7 @@ test('list order by', async ({ pass, teardown, same, equal }) => {
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -250,7 +251,7 @@ test('list order by', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('nested order by', async ({ pass, teardown, same, equal }) => {
+test('nested order by', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -302,7 +303,7 @@ test('nested order by', async ({ pass, teardown, same, equal }) => {
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   const categories = [{
     name: 'Pets'

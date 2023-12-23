@@ -1,16 +1,16 @@
 {
   "name": "@platformatic/sql-json-schema-mapper",
-  "version": "1.15.1",
+  "version": "1.16.0",
   "description": "Map SQL entity to JSON schema",
   "main": "index.js",
   "scripts": {
     "lint": "standard | snazzy",
     "test": "standard | snazzy && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
-    "test:postgresql": "DB=postgresql tap test/*.test.js",
-    "test:mariadb": "DB=mariadb tap test/*.test.js",
-    "test:mysql": "DB=mysql tap test/*.test.js",
-    "test:mysql8": "DB=mysql8 tap test/*.test.js",
-    "test:sqlite": "DB=sqlite tap test/*.test.js"
+    "test:postgresql": "DB=postgresql borp test/*.test.js",
+    "test:mariadb": "DB=mariadb borp test/*.test.js",
+    "test:mysql": "DB=mysql borp test/*.test.js",
+    "test:mysql8": "DB=mysql8 borp test/*.test.js",
+    "test:sqlite": "DB=sqlite borp test/*.test.js"
   },
   "repository": {
     "type": "git",
@@ -24,11 +24,12 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@platformatic/sql-mapper": "workspace:*",
+    "borp": "^0.4.2",
     "dtsgenerator": "^3.19.1",
     "fastify": "^4.23.2",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "tap": "^16.3.9"
+    "why-is-node-running": "^2.2.2"
   },
   "dependencies": {
     "code-block-writer": "^12.0.0",

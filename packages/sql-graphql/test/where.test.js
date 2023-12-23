@@ -1,12 +1,13 @@
 'use strict'
 
-const { test } = require('tap')
+const { clear, connInfo, isMysql, isSQLite } = require('./helper')
+const { test } = require('node:test')
+const { deepEqual: same, equal, ok: pass } = require('node:assert')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { clear, connInfo, isMysql, isSQLite } = require('./helper')
 
-test('list', async ({ pass, teardown, same, equal }) => {
+test('list', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -33,7 +34,7 @@ test('list', async ({ pass, teardown, same, equal }) => {
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -381,7 +382,7 @@ test('list', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('nested where', async ({ pass, teardown, same, equal }) => {
+test('nested where', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -441,7 +442,7 @@ test('nested where', async ({ pass, teardown, same, equal }) => {
   })
   app.register(sqlGraphQL)
 
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -560,7 +561,7 @@ test('nested where', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('delete', async ({ pass, teardown, same, equal }) => {
+test('delete', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -587,7 +588,7 @@ test('delete', async ({ pass, teardown, same, equal }) => {
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -680,7 +681,7 @@ test('delete', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('delete all', async ({ pass, teardown, same, equal }) => {
+test('delete all', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -707,7 +708,7 @@ test('delete all', async ({ pass, teardown, same, equal }) => {
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -813,7 +814,7 @@ test('delete all', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('like', async ({ pass, teardown, same, equal }) => {
+test('like', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -840,7 +841,7 @@ test('like', async ({ pass, teardown, same, equal }) => {
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 

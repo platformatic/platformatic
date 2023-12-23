@@ -1,20 +1,16 @@
 'use strict'
 
-const t = require('tap')
+const { clear, connInfo, isSQLite, isMysql } = require('./helper')
+const { deepEqual: same, equal, ok: pass } = require('node:assert/strict')
+const Snap = require('@matteo.collina/snap')
+const { test } = require('node:test')
 const fastify = require('fastify')
 const sqlOpenAPI = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
-const { clear, connInfo, isSQLite, isMysql } = require('./helper')
-const { resolve } = require('path')
-const { test } = t
 
-Object.defineProperty(t, 'fullname', {
-  value: 'platformatic/db/openapi/where'
-})
+const snap = Snap(__filename)
 
 test('list', async (t) => {
-  const { pass, teardown, same, equal, matchSnapshot } = t
-  t.snapshotFile = resolve(__dirname, 'tap-snapshots', 'where-openapi-1.cjs')
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -48,7 +44,7 @@ test('list', async (t) => {
     }
   })
   app.register(sqlOpenAPI)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -58,7 +54,8 @@ test('list', async (t) => {
       url: '/documentation/json'
     })
     const openapi = res.json()
-    matchSnapshot(openapi, 'matches expected OpenAPI defs')
+    const snapshot = await snap(openapi)
+    equal(openapi, snapshot)
   }
 
   const posts = [{
@@ -95,7 +92,7 @@ test('list', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?fields=id,title,longText status code')
     same(res.json(), [{
-      id: '1',
+      id: 1,
       title: 'Dog',
       longText: 'Foo'
     }, {
@@ -120,7 +117,7 @@ test('list', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.title.eq=Dog status code')
     same(res.json(), [{
-      id: '1',
+      id: 1,
       title: 'Dog',
       longText: 'Foo'
     }], 'GET /posts?where.title.eq=Dog response')
@@ -133,15 +130,15 @@ test('list', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.title.neq=Dog status code')
     same(res.json(), [{
-      id: '2',
+      id: 2,
       title: 'Cat',
       longText: 'Bar'
     }, {
-      id: '3',
+      id: 3,
       title: 'Mouse',
       longText: 'Baz'
     }, {
-      id: '4',
+      id: 4,
       title: 'Duck',
       longText: 'A duck tale'
     }], 'GET /posts?where.title.neq=Dog response')
@@ -154,15 +151,15 @@ test('list', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.counter.gt=10 status code')
     same(res.json(), [{
-      id: '2',
+      id: 2,
       title: 'Cat',
       longText: 'Bar'
     }, {
-      id: '3',
+      id: 3,
       title: 'Mouse',
       longText: 'Baz'
     }, {
-      id: '4',
+      id: 4,
       title: 'Duck',
       longText: 'A duck tale'
     }], 'GET /posts?where.counter.gt=10 response')
@@ -175,15 +172,15 @@ test('list', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.counter.lt=40 status code')
     same(res.json(), [{
-      id: '1',
+      id: 1,
       title: 'Dog',
       longText: 'Foo'
     }, {
-      id: '2',
+      id: 2,
       title: 'Cat',
       longText: 'Bar'
     }, {
-      id: '3',
+      id: 3,
       title: 'Mouse',
       longText: 'Baz'
     }], 'GET /posts?where.counter.lt=40 response')
@@ -196,15 +193,15 @@ test('list', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.counter.lte=30 posts status code')
     same(res.json(), [{
-      id: '1',
+      id: 1,
       title: 'Dog',
       longText: 'Foo'
     }, {
-      id: '2',
+      id: 2,
       title: 'Cat',
       longText: 'Bar'
     }, {
-      id: '3',
+      id: 3,
       title: 'Mouse',
       longText: 'Baz'
     }], 'GET /posts?where.counter.lte=30 response')
@@ -217,15 +214,15 @@ test('list', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.counter.gte=20 status code')
     same(res.json(), [{
-      id: '2',
+      id: 2,
       title: 'Cat',
       longText: 'Bar'
     }, {
-      id: '3',
+      id: 3,
       title: 'Mouse',
       longText: 'Baz'
     }, {
-      id: '4',
+      id: 4,
       title: 'Duck',
       longText: 'A duck tale'
     }], 'GET /posts?where.counter.gte=20 response')
@@ -238,11 +235,11 @@ test('list', async (t) => {
     })
     equal(res.statusCode, 200, 'posts status code')
     same(res.json(), [{
-      id: '2',
+      id: 2,
       title: 'Cat',
       longText: 'Bar'
     }, {
-      id: '3',
+      id: 3,
       title: 'Mouse',
       longText: 'Baz'
     }], 'posts response')
@@ -255,11 +252,11 @@ test('list', async (t) => {
     })
     equal(res.statusCode, 200, '/posts status code')
     same(res.json(), [{
-      id: '2',
+      id: 2,
       title: 'Cat',
       longText: 'Bar'
     }, {
-      id: '3',
+      id: 3,
       title: 'Mouse',
       longText: 'Baz'
     }], '/posts response')
@@ -272,11 +269,11 @@ test('list', async (t) => {
     })
     equal(res.statusCode, 200, '/posts status code')
     same(res.json(), [{
-      id: '2',
+      id: 2,
       title: 'Cat',
       longText: 'Bar'
     }, {
-      id: '3',
+      id: 3,
       title: 'Mouse',
       longText: 'Baz'
     }], 'posts response')
@@ -289,11 +286,11 @@ test('list', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.title.in=Dog,Cat status code')
     same(res.json(), [{
-      id: '1',
+      id: 1,
       title: 'Dog',
       longText: 'Foo'
     }, {
-      id: '2',
+      id: 2,
       title: 'Cat',
       longText: 'Bar'
     }], 'GET /posts?where.title.in=Dog,Cat response')
@@ -307,11 +304,11 @@ test('list', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.title.in=Dog,Cat status code')
     same(res.json(), [{
-      id: '1',
+      id: 1,
       title: 'Dog',
       longText: 'Foo'
     }, {
-      id: '2',
+      id: 2,
       title: 'Cat',
       longText: 'Bar'
     }, {
@@ -327,8 +324,6 @@ test('list', async (t) => {
 })
 
 test('nested where', async (t) => {
-  const { pass, teardown, same, equal, matchSnapshot } = t
-  t.snapshotFile = resolve(__dirname, 'tap-snapshots', 'where-openapi-2.cjs')
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -387,7 +382,7 @@ test('nested where', async (t) => {
     }
   })
   app.register(sqlOpenAPI)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -397,7 +392,8 @@ test('nested where', async (t) => {
       url: '/documentation/json'
     })
     const openapi = res.json()
-    matchSnapshot(openapi, 'matches expected OpenAPI defs')
+    const snapshot = await snap(openapi)
+    equal(openapi, snapshot)
   }
 
   const owners = [{
@@ -469,8 +465,6 @@ test('nested where', async (t) => {
 })
 
 test('list with NOT NULL', async (t) => {
-  const { pass, teardown, same, equal, matchSnapshot } = t
-  t.snapshotFile = resolve(__dirname, 'tap-snapshots', 'where-openapi-3.cjs')
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -504,7 +498,7 @@ test('list with NOT NULL', async (t) => {
     }
   })
   app.register(sqlOpenAPI)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -514,7 +508,8 @@ test('list with NOT NULL', async (t) => {
       url: '/documentation/json'
     })
     const openapi = res.json()
-    matchSnapshot(openapi, 'matches expected OpenAPI defs')
+    const snapshot = await snap(openapi)
+    equal(openapi, snapshot)
   }
 
   const posts = [{
@@ -551,7 +546,7 @@ test('list with NOT NULL', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?fields=id,title,longText status code')
     same(res.json(), [{
-      id: '1',
+      id: 1,
       title: 'Dog',
       longText: 'Foo'
     }, {
@@ -576,7 +571,7 @@ test('list with NOT NULL', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.title.eq=Dog status code')
     same(res.json(), [{
-      id: '1',
+      id: 1,
       title: 'Dog',
       longText: 'Foo'
     }], 'GET /posts?where.title.eq=Dog response')
@@ -589,15 +584,15 @@ test('list with NOT NULL', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.title.neq=Dog status code')
     same(res.json(), [{
-      id: '2',
+      id: 2,
       title: 'Cat',
       longText: 'Bar'
     }, {
-      id: '3',
+      id: 3,
       title: 'Mouse',
       longText: 'Baz'
     }, {
-      id: '4',
+      id: 4,
       title: 'Duck',
       longText: 'A duck tale'
     }], 'GET /posts?where.title.neq=Dog response')
@@ -610,15 +605,15 @@ test('list with NOT NULL', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.counter.gt=10 status code')
     same(res.json(), [{
-      id: '2',
+      id: 2,
       title: 'Cat',
       longText: 'Bar'
     }, {
-      id: '3',
+      id: 3,
       title: 'Mouse',
       longText: 'Baz'
     }, {
-      id: '4',
+      id: 4,
       title: 'Duck',
       longText: 'A duck tale'
     }], 'GET /posts?where.counter.gt=10 response')
@@ -631,15 +626,15 @@ test('list with NOT NULL', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.counter.lt=40 status code')
     same(res.json(), [{
-      id: '1',
+      id: 1,
       title: 'Dog',
       longText: 'Foo'
     }, {
-      id: '2',
+      id: 2,
       title: 'Cat',
       longText: 'Bar'
     }, {
-      id: '3',
+      id: 3,
       title: 'Mouse',
       longText: 'Baz'
     }], 'GET /posts?where.counter.lt=40 response')
@@ -652,15 +647,15 @@ test('list with NOT NULL', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.counter.lte=30 posts status code')
     same(res.json(), [{
-      id: '1',
+      id: 1,
       title: 'Dog',
       longText: 'Foo'
     }, {
-      id: '2',
+      id: 2,
       title: 'Cat',
       longText: 'Bar'
     }, {
-      id: '3',
+      id: 3,
       title: 'Mouse',
       longText: 'Baz'
     }], 'GET /posts?where.counter.lte=30 response')
@@ -673,15 +668,15 @@ test('list with NOT NULL', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.counter.gte=20 status code')
     same(res.json(), [{
-      id: '2',
+      id: 2,
       title: 'Cat',
       longText: 'Bar'
     }, {
-      id: '3',
+      id: 3,
       title: 'Mouse',
       longText: 'Baz'
     }, {
-      id: '4',
+      id: 4,
       title: 'Duck',
       longText: 'A duck tale'
     }], 'GET /posts?where.counter.gte=20 response')
@@ -694,11 +689,11 @@ test('list with NOT NULL', async (t) => {
     })
     equal(res.statusCode, 200, 'posts status code')
     same(res.json(), [{
-      id: '2',
+      id: 2,
       title: 'Cat',
       longText: 'Bar'
     }, {
-      id: '3',
+      id: 3,
       title: 'Mouse',
       longText: 'Baz'
     }], 'posts response')
@@ -711,11 +706,11 @@ test('list with NOT NULL', async (t) => {
     })
     equal(res.statusCode, 200, '/posts status code')
     same(res.json(), [{
-      id: '2',
+      id: 2,
       title: 'Cat',
       longText: 'Bar'
     }, {
-      id: '3',
+      id: 3,
       title: 'Mouse',
       longText: 'Baz'
     }], '/posts response')
@@ -728,11 +723,11 @@ test('list with NOT NULL', async (t) => {
     })
     equal(res.statusCode, 200, '/posts status code')
     same(res.json(), [{
-      id: '2',
+      id: 2,
       title: 'Cat',
       longText: 'Bar'
     }, {
-      id: '3',
+      id: 3,
       title: 'Mouse',
       longText: 'Baz'
     }], 'posts response')
@@ -745,11 +740,11 @@ test('list with NOT NULL', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.title.in=Dog,Cat status code')
     same(res.json(), [{
-      id: '1',
+      id: 1,
       title: 'Dog',
       longText: 'Foo'
     }, {
-      id: '2',
+      id: 2,
       title: 'Cat',
       longText: 'Bar'
     }], 'GET /posts?where.title.in=Dog,Cat response')
@@ -763,11 +758,11 @@ test('list with NOT NULL', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.title.in=Dog,Cat status code')
     same(res.json(), [{
-      id: '1',
+      id: 1,
       title: 'Dog',
       longText: 'Foo'
     }, {
-      id: '2',
+      id: 2,
       title: 'Cat',
       longText: 'Bar'
     }, {

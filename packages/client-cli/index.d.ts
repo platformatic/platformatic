@@ -9,5 +9,6 @@ declare module '@platformatic/client-cli' {
  */
 export module errors {
   export const UnknownTypeError: (type: string) => FastifyError
+  export const TypeNotSupportedError: (type: string) => FastifyError
 }
 

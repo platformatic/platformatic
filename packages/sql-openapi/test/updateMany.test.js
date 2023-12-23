@@ -1,20 +1,16 @@
 'use strict'
 
-const t = require('tap')
+const { clear, connInfo, isSQLite, isMysql } = require('./helper')
+const { deepEqual: same, equal, ok: pass } = require('node:assert/strict')
+const Snap = require('@matteo.collina/snap')
+const { test } = require('node:test')
 const fastify = require('fastify')
 const sqlOpenAPI = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
-const { clear, connInfo, isSQLite, isMysql } = require('./helper')
-const { resolve } = require('path')
-const { test } = t
 
-Object.defineProperty(t, 'fullname', {
-  value: 'platformatic/db/openapi/updateMany'
-})
+const snap = Snap(__filename)
 
 test('updateMany', async (t) => {
-  const { pass, teardown, same, equal, matchSnapshot } = t
-  t.snapshotFile = resolve(__dirname, 'tap-snapshots', 'updateMany-openapi-1.cjs')
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -48,7 +44,7 @@ test('updateMany', async (t) => {
     }
   })
   app.register(sqlOpenAPI)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -58,7 +54,8 @@ test('updateMany', async (t) => {
       url: '/documentation/json'
     })
     const openapi = res.json()
-    matchSnapshot(openapi, 'matches expected OpenAPI defs')
+    const snapshot = await snap(openapi)
+    equal(openapi, snapshot)
   }
 
   const posts = [{

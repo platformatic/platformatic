@@ -1,12 +1,13 @@
 'use strict'
 
-const { test } = require('tap')
+const { isSQLite, isPg, connInfo, isMysql, clear } = require('./helper')
+const { test } = require('node:test')
+const { deepEqual: same, equal, ok: pass } = require('node:assert')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { isSQLite, isPg, connInfo, isMysql, clear } = require('./helper')
 
-test('should handle relationships with different schemas', { skip: isSQLite }, async ({ pass, teardown, same, equal }) => {
+test('should handle relationships with different schemas', { skip: isSQLite }, async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -48,7 +49,7 @@ test('should handle relationships with different schemas', { skip: isSQLite }, a
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -166,7 +167,7 @@ test('should handle relationships with different schemas', { skip: isSQLite }, a
   }
 })
 
-test('should not throw if all of the schema with contraint references are loaded on the config', { skip: !isPg }, async ({ pass, teardown, same }) => {
+test('should not throw if all of the schema with contraint references are loaded on the config', { skip: !isPg }, async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -212,7 +213,7 @@ test('should not throw if all of the schema with contraint references are loaded
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   try {
     await app.ready()
@@ -221,7 +222,7 @@ test('should not throw if all of the schema with contraint references are loaded
   }
 })
 
-test('should not throw if some of the schema with contraint references are not passed to the config', { skip: !isPg }, async ({ pass, teardown, same }) => {
+test('should not throw if some of the schema with contraint references are not passed to the config', { skip: !isPg }, async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -267,7 +268,7 @@ test('should not throw if some of the schema with contraint references are not p
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   try {
     await app.ready()

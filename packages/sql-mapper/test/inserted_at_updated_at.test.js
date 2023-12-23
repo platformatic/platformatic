@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { ok, notEqual, notDeepEqual, deepEqual, equal } = require('node:assert')
 const { clear, connInfo, isSQLite, isMysql } = require('./helper')
 const { setTimeout } = require('timers/promises')
 const { connect } = require('..')
@@ -34,13 +35,16 @@ async function createBasicPages (db, sql) {
   }
 }
 
-test('inserted_at updated_at happy path', async ({ pass, teardown, same, equal, not, comment, notSame }) => {
+test('inserted_at updated_at happy path', async () => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      teardown(() => db.dispose())
-      pass('onDatabaseLoad called')
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -55,17 +59,17 @@ test('inserted_at updated_at happy path', async ({ pass, teardown, same, equal, 
   const original = await entity.save({
     input: { title: 'Hello' }
   })
-  not(original.insertedAt, null, 'insertedAt')
-  not(original.updatedAt, null, 'updatedAt')
-  comment(`insertedAt: ${original.insertedAt}`)
-  comment(`updatedAt: ${original.updatedAt}`)
+  notEqual(original.insertedAt, null, 'insertedAt')
+  notEqual(original.updatedAt, null, 'updatedAt')
+  console.log(`insertedAt: ${original.insertedAt}`)
+  console.log(`updatedAt: ${original.updatedAt}`)
 
   {
     const [data] = await entity.find({ where: { id: { eq: original.id } } })
-    same(data.insertedAt, original.insertedAt, 'insertedAt')
-    same(data.updatedAt, original.updatedAt, 'updatedAt')
-    comment(`insertedAt: ${data.insertedAt}`)
-    comment(`updatedAt: ${data.updatedAt}`)
+    deepEqual(data.insertedAt, original.insertedAt, 'insertedAt')
+    deepEqual(data.updatedAt, original.updatedAt, 'updatedAt')
+    console.log(`insertedAt: ${data.insertedAt}`)
+    console.log(`updatedAt: ${data.updatedAt}`)
   }
 
   await setTimeout(1000) // await 1s
@@ -75,29 +79,32 @@ test('inserted_at updated_at happy path', async ({ pass, teardown, same, equal, 
     const data = await entity.save({
       input: { id: original.id, title: 'Hello World' }
     })
-    same(data.insertedAt, original.insertedAt, 'insertedAt')
-    notSame(data.updatedAt, original.updatedAt, 'updatedAt')
+    deepEqual(data.insertedAt, original.insertedAt, 'insertedAt')
+    notDeepEqual(data.updatedAt, original.updatedAt, 'updatedAt')
     updated = data
-    comment(`insertedAt: ${data.insertedAt}`)
-    comment(`updatedAt: ${data.updatedAt}`)
+    console.log(`insertedAt: ${data.insertedAt}`)
+    console.log(`updatedAt: ${data.updatedAt}`)
   }
 
   {
     const [data] = await entity.find({ where: { id: { eq: original.id } } })
-    same(data.insertedAt, updated.insertedAt, 'insertedAt')
-    same(data.updatedAt, updated.updatedAt, 'updatedAt')
-    comment(`insertedAt: ${data.insertedAt}`)
-    comment(`updatedAt: ${data.updatedAt}`)
+    deepEqual(data.insertedAt, updated.insertedAt, 'insertedAt')
+    deepEqual(data.updatedAt, updated.updatedAt, 'updatedAt')
+    console.log(`insertedAt: ${data.insertedAt}`)
+    console.log(`updatedAt: ${data.updatedAt}`)
   }
 })
 
-test('bulk insert adds inserted_at updated_at', async ({ pass, teardown, same, equal, not, comment }) => {
+test('bulk insert adds inserted_at updated_at', async () => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      teardown(() => db.dispose())
-      pass('onDatabaseLoad called')
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
@@ -115,18 +122,18 @@ test('bulk insert adds inserted_at updated_at', async ({ pass, teardown, same, e
       ]
     })
     for (const page of pages) {
-      not(page.insertedAt, null, 'insertedAt')
-      not(page.updatedAt, null, 'updatedAt')
-      same(page.insertedAt, page.updatedAt, 'insertedAt === updatedAt')
+      notEqual(page.insertedAt, null, 'insertedAt')
+      notEqual(page.updatedAt, null, 'updatedAt')
+      deepEqual(page.insertedAt, page.updatedAt, 'insertedAt === updatedAt')
     }
   }
 
   {
     const pages = await entity.find()
     for (const page of pages) {
-      not(page.insertedAt, null, 'insertedAt')
-      not(page.updatedAt, null, 'updatedAt')
-      same(page.insertedAt, page.updatedAt, 'insertedAt === updatedAt')
+      notEqual(page.insertedAt, null, 'insertedAt')
+      notEqual(page.updatedAt, null, 'updatedAt')
+      deepEqual(page.insertedAt, page.updatedAt, 'insertedAt === updatedAt')
     }
   }
 })

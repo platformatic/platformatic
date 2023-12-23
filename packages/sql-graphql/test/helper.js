@@ -1,5 +1,12 @@
 'use strict'
 
+const why = require('why-is-node-running')
+
+setInterval(() => {
+  console.log('why is node running?')
+  why()
+}, 1000 * 30).unref() // 30 seconds
+
 // Needed to work with dates & postgresql
 // See https://node-postgres.com/features/types/
 process.env.TZ = 'UTC'
@@ -89,6 +96,26 @@ module.exports.clear = async function (db, sql) {
   }
   try {
     await db.query(sql`DROP TABLE individuals`)
+  } catch (err) {
+  }
+
+  try {
+    await db.query(sql`DROP TABLE movies`)
+  } catch (err) {
+  }
+
+  try {
+    await db.query(sql`DROP TABLE company`)
+  } catch (err) {
+  }
+
+  try {
+    await db.query(sql`DROP TABLE company_social_medias`)
+  } catch (err) {
+  }
+
+  try {
+    await db.query(sql`DROP TABLE social_medias`)
   } catch (err) {
   }
 

@@ -1,12 +1,13 @@
 'use strict'
 
-const { test } = require('tap')
+const { clear, connInfo, isSQLite } = require('./helper')
+const { test } = require('node:test')
+const { deepEqual: same, equal, ok: pass } = require('node:assert')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { clear, connInfo, isSQLite } = require('./helper')
 
-test('count', async ({ pass, teardown, same, equal }) => {
+test('count', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -33,7 +34,7 @@ test('count', async ({ pass, teardown, same, equal }) => {
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 

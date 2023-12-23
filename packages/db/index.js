@@ -60,16 +60,6 @@ async function platformaticDB (app, opts) {
     config.server.healthCheck.fn = healthCheck
   }
 
-  async function toLoad (app) {
-    await app.register(core, config.db)
-  }
-  toLoad[Symbol.for('skip-override')] = true
-
-  await app.register(platformaticService, {
-    ...opts,
-    beforePlugins: [toLoad]
-  })
-
   if (createSchemaLock) {
     try {
       const path = locateSchemaLock(configManager)
@@ -79,16 +69,27 @@ async function platformaticDB (app, opts) {
       app.log.trace({ err }, 'unable to save schema lock')
     }
   }
-  if (config.authorization) {
-    app.register(auth, config.authorization)
-  }
 
-  if (Object.keys(app.platformatic.entities).length === 0) {
-    app.log.warn(
-      'No tables found in the database. Are you connected to the right database? Did you forget to run your migrations? ' +
-      'This guide can help with debugging Platformatic DB: https://docs.platformatic.dev/docs/guides/debug-platformatic-db'
-    )
+  async function toLoad (app) {
+    await app.register(core, config.db)
+
+    if (config.authorization) {
+      await app.register(auth, config.authorization)
+    }
+
+    if (Object.keys(app.platformatic.entities).length === 0) {
+      app.log.warn(
+        'No tables found in the database. Are you connected to the right database? Did you forget to run your migrations? ' +
+        'This guide can help with debugging Platformatic DB: https://docs.platformatic.dev/docs/guides/debug-platformatic-db'
+      )
+    }
   }
+  toLoad[Symbol.for('skip-override')] = true
+
+  await app.register(platformaticService, {
+    ...opts,
+    beforePlugins: [toLoad]
+  })
 
   if (!app.hasRoute({ url: '/', method: 'GET' })) {
     app.register(require('./lib/root-endpoint'), config)

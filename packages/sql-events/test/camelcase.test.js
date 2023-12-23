@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { equal, deepEqual: same } = require('node:assert')
 const sqlMapper = require('@platformatic/sql-mapper')
 const { connect } = sqlMapper
 const { clear, connInfo, isSQLite } = require('./helper')
@@ -14,10 +15,10 @@ const fakeLogger = {
   error () {}
 }
 
-test('emit events when there is a primary key to be camelised', async ({ equal, same, teardown }) => {
+test('emit events when there is a primary key to be camelised', async (t) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    t.after(() => db.dispose())
 
     if (isSQLite) {
       await db.query(sql`CREATE TABLE pages (
@@ -97,7 +98,7 @@ test('emit events when there is a primary key to be camelised', async ({ equal, 
   }
 })
 
-test('return entities', async ({ pass, teardown, equal, same }) => {
+test('return entities', async (t) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
 
@@ -114,7 +115,7 @@ test('return entities', async ({ pass, teardown, equal, same }) => {
     }
   }
   const app = fastify()
-  teardown(() => app.close())
+  t.after(() => app.close())
   app.register(sqlMapper, {
     connectionString: connInfo.connectionString,
     onDatabaseLoad
@@ -178,10 +179,10 @@ test('return entities', async ({ pass, teardown, equal, same }) => {
   }
 })
 
-test('insert', async ({ equal, same, teardown }) => {
+test('insert', async (t) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    t.after(() => db.dispose())
 
     if (isSQLite) {
       await db.query(sql`CREATE TABLE pages (
@@ -235,10 +236,10 @@ test('insert', async ({ equal, same, teardown }) => {
   }
 })
 
-test('more than one element for delete', async ({ equal, same, teardown }) => {
+test('more than one element for delete', async (t) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    t.after(() => db.dispose())
 
     if (isSQLite) {
       await db.query(sql`CREATE TABLE pages (

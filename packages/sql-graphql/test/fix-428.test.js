@@ -1,10 +1,11 @@
 'use strict'
 
-const { test } = require('tap')
+const { connInfo, isPg } = require('./helper')
+const { test } = require('node:test')
+const { deepEqual: same, equal, ok: pass } = require('node:assert')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { connInfo, isPg } = require('./helper')
 
 async function runMigrations (db, sql) {
   await db.query(sql`
@@ -37,7 +38,7 @@ drop table if exists social_medias;
   `)
 }
 
-test('do not crash', { skip: !isPg }, async ({ pass, teardown, same, equal }) => {
+test('do not crash', { skip: !isPg }, async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -46,13 +47,13 @@ test('do not crash', { skip: !isPg }, async ({ pass, teardown, same, equal }) =>
       await clean(db, sql)
 
       await runMigrations(db, sql)
-      teardown(async () => {
+      t.after(() => async () => {
         await clean(db, sql)
       })
     }
   })
   await app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 

@@ -1,10 +1,10 @@
 {
   "name": "@platformatic/db-core",
-  "version": "1.15.1",
+  "version": "1.16.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "standard | snazzy && tap test/*test.js",
+    "test": "standard | snazzy && node --test",
     "lint": "standard | snazzy"
   },
   "repository": {
@@ -21,7 +21,6 @@
     "fastify": "^4.23.2",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "tap": "^16.3.9",
     "why-is-node-running": "^2.2.2"
   },
   "dependencies": {

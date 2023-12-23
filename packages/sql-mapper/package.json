@@ -1,17 +1,18 @@
 {
   "name": "@platformatic/sql-mapper",
-  "version": "1.15.1",
+  "version": "1.16.0",
   "description": "A data mapper utility for SQL databases",
   "main": "mapper.js",
   "types": "mapper.d.ts",
   "scripts": {
     "lint": "standard | snazzy",
     "test": "standard | snazzy && npm run test:typescript && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
-    "test:postgresql": "DB=postgresql tap test/*.test.js",
-    "test:mariadb": "DB=mariadb tap test/*.test.js",
-    "test:mysql": "DB=mysql tap test/*.test.js",
-    "test:mysql8": "DB=mysql8 tap test/*.test.js",
-    "test:sqlite": "DB=sqlite tap test/*.test.js",
+    "test:runner": "node ./test/runner.js",
+    "test:postgresql": "DB=postgresql npm run test:runner",
+    "test:mariadb": "DB=mariadb npm run test:runner",
+    "test:mysql": "DB=mysql npm run test:runner",
+    "test:mysql8": "DB=mysql8 npm run test:runner",
+    "test:sqlite": "DB=sqlite npm run test:runner",
     "test:typescript": "tsd"
   },
   "repository": {
@@ -25,10 +26,11 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
+    "@matteo.collina/tspl": "^0.1.0",
     "fastify": "^4.23.2",
+    "glob": "^10.3.10",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "tap": "^16.3.9",
     "tsd": "^0.29.0"
   },
   "dependencies": {

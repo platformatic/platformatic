@@ -50,7 +50,6 @@ export async function start (...args) {
 
 export function delDir (tmpDir) {
   return async function () {
-    console.time('delDir')
     // We give up after 10s.
     // This is because on Windows, it's very hard to delete files if the file
     // system is not collaborating.
@@ -65,4 +64,35 @@ export function delDir (tmpDir) {
     }
     console.timeEnd('delDir')
   }
+}
+
+export function createCjsLoggingPlugin (text, reloaded) {
+  return `\
+    module.exports = async (app) => {
+      if (${reloaded}) {
+        app.log.info('RELOADED ' + '${text}')
+      }
+      app.get('/version', () => '${text}')
+    }
+  `
+}
+
+export function createEsmLoggingPlugin (text, reloaded) {
+  return `\
+    import fs from 'fs' // No node: scheme. Coverage for the loader.
+    import dns from 'node:dns' // With node: scheme. Coverage for the loader.
+
+    try {
+      await import('./relative.mjs') // Relative path. Coverage for the loader.
+    } catch {
+      // Ignore err. File does not exist.
+    }
+
+    export default async function (app) {
+      if (${reloaded}) {
+        app.log.info('RELOADED ' + '${text}')
+      }
+      app.get('/version', () => '${text}')
+    }
+  `
 }

@@ -1,27 +1,20 @@
 'use strict'
 
-const t = require('tap')
+const { clear, connInfo, isPg } = require('./helper')
+const { test } = require('node:test')
+const { deepEqual: same, equal } = require('node:assert/strict')
+const Snap = require('@matteo.collina/snap')
 const sqlOpenAPI = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { clear, connInfo, isPg } = require('./helper')
-const { resolve } = require('path')
-const { test } = t
 
-Object.defineProperty(t, 'fullname', {
-  value: 'platformatic/db/openapi/array'
-})
+const snap = Snap(__filename)
 
 test('expose arrays', { skip: !isPg }, async (t) => {
-  const { pass, teardown, same, equal, matchSnapshot } = t
-  t.snapshotFile = resolve(__dirname, 'tap-snapshots', 'array-openapi-1.cjs')
-
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
-
       await clear(db, sql)
       await db.query(sql`CREATE TABLE pages (
       id SERIAL PRIMARY KEY,
@@ -31,7 +24,9 @@ test('expose arrays', { skip: !isPg }, async (t) => {
     }
   })
   app.register(sqlOpenAPI)
-  teardown(app.close.bind(app))
+  t.after(async () => {
+    await app.close()
+  })
 
   await app.ready()
 
@@ -198,7 +193,8 @@ test('expose arrays', { skip: !isPg }, async (t) => {
       url: '/documentation/json'
     })
     const json = res.json()
-    matchSnapshot(json, 'GET /documentation/json response')
+    const snapshot = await snap(json)
+    same(json, snapshot)
   }
 
   {

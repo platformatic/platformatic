@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { ok, equal, rejects, deepEqual } = require('node:assert')
 const { connect, plugin } = require('..')
 const { clear, connInfo, isPg, isMysql, isSQLite } = require('./helper')
 const fastify = require('fastify')
@@ -11,7 +12,7 @@ const fakeLogger = {
   warn: () => {}
 }
 
-test('should throw if no connection string is provided', async ({ equal }) => {
+test('should throw if no connection string is provided', async () => {
   try {
     await connect({
       connectionString: false
@@ -21,10 +22,14 @@ test('should throw if no connection string is provided', async ({ equal }) => {
   }
 })
 
-test('[PG] return entities', { skip: !isPg }, async ({ pass, teardown, equal }) => {
+test('[PG] return entities', { skip: !isPg }, async (t) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await db.query(sql`CREATE TABLE pages (
       id SERIAL PRIMARY KEY,
@@ -42,13 +47,17 @@ test('[PG] return entities', { skip: !isPg }, async ({ pass, teardown, equal }) 
   equal(pageEntity.name, 'Page')
   equal(pageEntity.singularName, 'page')
   equal(pageEntity.pluralName, 'pages')
-  pass()
+  ok(true)
 })
 
-test('[mysql] return entities', { skip: !isMysql }, async ({ pass, teardown, equal }) => {
+test('[mysql] return entities', { skip: !isMysql }, async (t) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+
+    t.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await db.query(sql`CREATE TABLE pages (
       id SERIAL PRIMARY KEY,
@@ -66,13 +75,17 @@ test('[mysql] return entities', { skip: !isMysql }, async ({ pass, teardown, equ
   equal(pageEntity.name, 'Page')
   equal(pageEntity.singularName, 'page')
   equal(pageEntity.pluralName, 'pages')
-  pass()
+  ok(true)
 })
 
-test('[sqlite] return entities', { skip: !isSQLite }, async ({ pass, teardown, equal }) => {
+test('[sqlite] return entities', { skip: !isSQLite }, async (t) => {
   async function onDatabaseLoad (db, sql) {
-    teardown(async () => await clear(db, sql))
-    teardown(() => db.dispose())
+    await clear(db, sql)
+
+    t.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
       id SERIAL PRIMARY KEY,
@@ -90,13 +103,17 @@ test('[sqlite] return entities', { skip: !isSQLite }, async ({ pass, teardown, e
   equal(pageEntity.name, 'Page')
   equal(pageEntity.singularName, 'page')
   equal(pageEntity.pluralName, 'pages')
-  pass()
+  ok(true)
 })
 
-test('ignore tables', async ({ teardown, has }) => {
+test('ignore tables', async (t) => {
   async function onDatabaseLoad (db, sql) {
-    teardown(async () => await clear(db, sql))
-    teardown(() => db.dispose())
+    await clear(db, sql)
+
+    t.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
       id SERIAL PRIMARY KEY,
@@ -115,12 +132,12 @@ test('ignore tables', async ({ teardown, has }) => {
     ignore: { users: true },
     hooks: {}
   })
-  has(mapper.entities.users, undefined)
+  equal(mapper.entities.users, undefined)
 })
 
-test('[PG] return entities with Fastify', { skip: !isPg }, async ({ pass, teardown, equal }) => {
+test('[PG] return entities with Fastify', { skip: !isPg }, async (t) => {
   async function onDatabaseLoad (db, sql) {
-    teardown(async () => await clear(db, sql))
+    await clear(db, sql)
 
     await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
       id SERIAL PRIMARY KEY,
@@ -128,7 +145,7 @@ test('[PG] return entities with Fastify', { skip: !isPg }, async ({ pass, teardo
     );`)
   }
   const app = fastify()
-  teardown(() => app.close())
+  t.after(() => app.close())
   app.register(plugin, {
     connectionString: connInfo.connectionString,
     log: fakeLogger,
@@ -139,12 +156,12 @@ test('[PG] return entities with Fastify', { skip: !isPg }, async ({ pass, teardo
   equal(pageEntity.name, 'Page')
   equal(pageEntity.singularName, 'page')
   equal(pageEntity.pluralName, 'pages')
-  pass()
+  ok(true)
 })
 
-test('[mysql] return entities', { skip: !isMysql }, async ({ pass, teardown, equal }) => {
+test('[mysql] return entities', { skip: !isMysql }, async (t) => {
   async function onDatabaseLoad (db, sql) {
-    teardown(async () => await clear(db, sql))
+    await clear(db, sql)
 
     await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
       id SERIAL PRIMARY KEY,
@@ -152,7 +169,7 @@ test('[mysql] return entities', { skip: !isMysql }, async ({ pass, teardown, equ
     );`)
   }
   const app = fastify()
-  teardown(() => app.close())
+  t.after(() => app.close())
   app.register(plugin, {
     connectionString: connInfo.connectionString,
     onDatabaseLoad
@@ -162,12 +179,12 @@ test('[mysql] return entities', { skip: !isMysql }, async ({ pass, teardown, equ
   equal(pageEntity.name, 'Page')
   equal(pageEntity.singularName, 'page')
   equal(pageEntity.pluralName, 'pages')
-  pass()
+  ok(true)
 })
 
-test('[sqlite] return entities', { skip: !isSQLite }, async ({ pass, teardown, equal }) => {
+test('[sqlite] return entities', { skip: !isSQLite }, async (t) => {
   async function onDatabaseLoad (db, sql) {
-    teardown(async () => await clear(db, sql))
+    await clear(db, sql)
 
     await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
       id SERIAL PRIMARY KEY,
@@ -175,7 +192,7 @@ test('[sqlite] return entities', { skip: !isSQLite }, async ({ pass, teardown, e
     );`)
   }
   const app = fastify()
-  teardown(() => app.close())
+  t.after(() => app.close())
   app.register(plugin, {
     connectionString: connInfo.connectionString,
     onDatabaseLoad
@@ -185,20 +202,19 @@ test('[sqlite] return entities', { skip: !isSQLite }, async ({ pass, teardown, e
   equal(pageEntity.name, 'Page')
   equal(pageEntity.singularName, 'page')
   equal(pageEntity.pluralName, 'pages')
-  pass()
+  ok(true)
 })
 
-test('missing connectionString', async ({ rejects }) => {
+test('missing connectionString', async () => {
   const app = fastify()
   app.register(plugin)
 
   await rejects(app.ready(), /connectionString/)
 })
 
-test('platformaticContext', async ({ plan, equal, teardown }) => {
-  plan(3)
+test('platformaticContext', async (t) => {
   async function onDatabaseLoad (db, sql) {
-    teardown(async () => await clear(db, sql))
+    await clear(db, sql)
 
     await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
       id SERIAL PRIMARY KEY,
@@ -206,7 +222,7 @@ test('platformaticContext', async ({ plan, equal, teardown }) => {
     );`)
   }
   const app = fastify()
-  teardown(() => app.close())
+  t.after(() => app.close())
   app.register(plugin, {
     connectionString: connInfo.connectionString,
     onDatabaseLoad
@@ -223,12 +239,12 @@ test('platformaticContext', async ({ plan, equal, teardown }) => {
   equal(res.statusCode, 200)
 })
 
-test('platformatic decorator already present', async ({ teardown }) => {
+test('platformatic decorator already present', async () => {
   async function onDatabaseLoad (db, sql) {
   }
   const app = fastify()
   app.decorate('platformatic', {})
-  teardown(() => app.close())
+  test.after(() => app.close())
   app.register(plugin, {
     connectionString: connInfo.connectionString,
     onDatabaseLoad
@@ -236,11 +252,14 @@ test('platformatic decorator already present', async ({ teardown }) => {
   await app.ready()
 })
 
-test('clean up all tables', async ({ teardown, has, equal, same }) => {
+test('clean up all tables', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(async () => await clear(db, sql))
-    teardown(() => db.dispose())
+
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
       id SERIAL PRIMARY KEY,
@@ -255,7 +274,7 @@ test('clean up all tables', async ({ teardown, has, equal, same }) => {
 
   const res = await mapper.entities.page.save({ input: { title: 'hello' } })
 
-  same(await mapper.entities.page.find(), [res])
+  deepEqual(await mapper.entities.page.find(), [res])
 
   await mapper.cleanUpAllEntities()
 
@@ -263,11 +282,14 @@ test('clean up all tables', async ({ teardown, has, equal, same }) => {
   equal(pages.length, 0)
 })
 
-test('clean up all tables with foreign keys', async ({ teardown, has, equal, same }) => {
+test('clean up all tables with foreign keys', async () => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(async () => await clear(db, sql))
-    teardown(() => db.dispose())
+
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     if (db.isSQLite) {
       await db.query(sql`CREATE TABLE IF NOT EXISTS pages (
@@ -309,10 +331,10 @@ test('clean up all tables with foreign keys', async ({ teardown, has, equal, sam
 
   {
     const p1 = await mapper.entities.page.save({ input: { title: 'hello' } })
-    same(await mapper.entities.page.find(), [p1])
+    deepEqual(await mapper.entities.page.find(), [p1])
 
     const c1 = await mapper.entities.comment.save({ input: { text: 'foo', pageId: p1.id } })
-    same(await mapper.entities.comment.find(), [c1])
+    deepEqual(await mapper.entities.comment.find(), [c1])
   }
 
   await mapper.cleanUpAllEntities()

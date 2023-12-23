@@ -30,9 +30,9 @@ test('build basic client from url', async ({ teardown, ok, match }) => {
 
   // The types interfaces are being created
   match(types, /interface FullResponse<T, U extends number>/)
-  match(types, /type GetRedirectRequest =/)
-  match(types, /type GetRedirectResponseFound =/)
-  match(types, /type GetRedirectResponseBadRequest =/)
+  match(types, /interface GetRedirectRequest/)
+  match(types, /interface GetRedirectResponseFound/)
+  match(types, /interface GetRedirectResponseBadRequest/)
   match(types, /'message': string \| null;/)
   match(types, /'dateTime': string \| Date;/)
   match(types, /'otherDate': string \| Date;/)

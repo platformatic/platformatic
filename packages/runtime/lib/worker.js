@@ -58,25 +58,6 @@ if (config.server) {
   config.server.logger = logger
 }
 
-/* c8 ignore next 4 */
-process.once('uncaughtException', (err) => {
-  logger.error({ err }, 'runtime error')
-  logger[pino.symbols.streamSym].flushSync?.()
-  setImmediate(() => {
-    process.exit(1)
-  })
-})
-
-// Tested by test/cli/start.test.mjs by C8 does not see it.
-/* c8 ignore next 4 */
-process.once('unhandledRejection', (err) => {
-  logger.error({ err }, 'runtime error')
-  logger[pino.symbols.streamSym].flushSync?.()
-  setImmediate(() => {
-    process.exit(1)
-  })
-})
-
 function main () {
   const { inspectorOptions } = workerData.config
 
@@ -93,6 +74,38 @@ function main () {
   runtime.startListening(parentPort)
 
   parentPort.postMessage('plt:init')
+
+  let stopping = false
+
+  async function stop () {
+    if (stopping) {
+      return
+    }
+
+    stopping = true
+    try {
+      await runtime.stopServices()
+    } catch (err) {
+      logger.error({ err }, 'error while stopping services')
+    }
+  }
+
+  /* c8 ignore next 4 */
+  process.on('uncaughtException', (err) => {
+    logger.error({ err }, 'runtime error')
+    stop().then(() => {
+      process.exit(1)
+    })
+  })
+
+  // Tested by test/cli/start.test.mjs by C8 does not see it.
+  /* c8 ignore next 4 */
+  process.on('unhandledRejection', (err) => {
+    logger.error({ err }, 'runtime error')
+    stop().then(() => {
+      process.exit(1)
+    })
+  })
 }
 
 main()

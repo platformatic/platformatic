@@ -1,10 +1,11 @@
 'use strict'
 
-const { test } = require('tap')
+const { clear, connInfo, isSQLite, isMysql } = require('./helper')
+const { test } = require('node:test')
+const { equal, ok: pass, notEqual } = require('node:assert')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { clear, connInfo, isSQLite, isMysql } = require('./helper')
 const { setTimeout } = require('timers/promises')
 
 async function createBasicPages (db, sql) {
@@ -32,7 +33,7 @@ async function createBasicPages (db, sql) {
   }
 }
 
-test('inserted_at updated_at happy path', async ({ pass, teardown, same, equal, not, comment }) => {
+test('inserted_at updated_at happy path', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -48,7 +49,7 @@ test('inserted_at updated_at happy path', async ({ pass, teardown, same, equal, 
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -73,10 +74,10 @@ test('inserted_at updated_at happy path', async ({ pass, teardown, same, equal, 
     })
     equal(res.statusCode, 200, 'savePage status code')
     const data = res.json().data
-    not(data.savePage.insertedAt, null, 'insertedAt')
-    not(data.savePage.updatedAt, null, 'updatedAt')
-    comment(`insertedAt: ${data.savePage.insertedAt}`)
-    comment(`updatedAt: ${data.savePage.updatedAt}`)
+    notEqual(data.savePage.insertedAt, null, 'insertedAt')
+    notEqual(data.savePage.updatedAt, null, 'updatedAt')
+    t.diagnostic(`insertedAt: ${data.savePage.insertedAt}`)
+    t.diagnostic(`updatedAt: ${data.savePage.updatedAt}`)
     original = data.savePage
   }
 
@@ -101,8 +102,8 @@ test('inserted_at updated_at happy path', async ({ pass, teardown, same, equal, 
     const data = res.json().data
     equal(data.getPageById.insertedAt, original.insertedAt, 'insertedAt')
     equal(data.getPageById.updatedAt, original.updatedAt, 'updatedAt')
-    comment(`insertedAt: ${data.getPageById.insertedAt}`)
-    comment(`updatedAt: ${data.getPageById.updatedAt}`)
+    t.diagnostic(`insertedAt: ${data.getPageById.insertedAt}`)
+    t.diagnostic(`updatedAt: ${data.getPageById.updatedAt}`)
   }
 
   await setTimeout(1000) // await 1s
@@ -127,10 +128,10 @@ test('inserted_at updated_at happy path', async ({ pass, teardown, same, equal, 
     })
     const data = res.json().data
     equal(data.savePage.insertedAt, original.insertedAt, 'insertedAt')
-    not(data.savePage.updatedAt, original.updatedAt, 'updatedAt')
+    notEqual(data.savePage.updatedAt, original.updatedAt, 'updatedAt')
     updated = data.savePage
-    comment(`insertedAt: ${data.savePage.insertedAt}`)
-    comment(`updatedAt: ${data.savePage.updatedAt}`)
+    t.diagnostic(`insertedAt: ${data.savePage.insertedAt}`)
+    t.diagnostic(`updatedAt: ${data.savePage.updatedAt}`)
   }
 
   {
@@ -154,12 +155,12 @@ test('inserted_at updated_at happy path', async ({ pass, teardown, same, equal, 
     const data = res.json().data
     equal(data.getPageById.insertedAt, updated.insertedAt, 'insertedAt')
     equal(data.getPageById.updatedAt, updated.updatedAt, 'updatedAt')
-    comment(`insertedAt: ${data.getPageById.insertedAt}`)
-    comment(`updatedAt: ${data.getPageById.updatedAt}`)
+    t.diagnostic(`insertedAt: ${data.getPageById.insertedAt}`)
+    t.diagnostic(`updatedAt: ${data.getPageById.updatedAt}`)
   }
 })
 
-test('cannot set inserted_at', async ({ pass, teardown, same, equal, not, comment }) => {
+test('cannot set inserted_at', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -175,7 +176,7 @@ test('cannot set inserted_at', async ({ pass, teardown, same, equal, not, commen
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -202,7 +203,7 @@ test('cannot set inserted_at', async ({ pass, teardown, same, equal, not, commen
   }
 })
 
-test('cannot set updated_at', async ({ pass, teardown, same, equal, not, comment }) => {
+test('cannot set updated_at', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -218,7 +219,7 @@ test('cannot set updated_at', async ({ pass, teardown, same, equal, not, comment
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -241,10 +242,10 @@ test('cannot set updated_at', async ({ pass, teardown, same, equal, not, comment
     })
     equal(res.statusCode, 200, 'savePage status code')
     const data = res.json().data
-    not(data.savePage.insertedAt, null, 'insertedAt')
-    not(data.savePage.updatedAt, null, 'updatedAt')
-    comment(`insertedAt: ${data.savePage.insertedAt}`)
-    comment(`updatedAt: ${data.savePage.updatedAt}`)
+    notEqual(data.savePage.insertedAt, null, 'insertedAt')
+    notEqual(data.savePage.updatedAt, null, 'updatedAt')
+    t.diagnostic(`insertedAt: ${data.savePage.insertedAt}`)
+    t.diagnostic(`updatedAt: ${data.savePage.updatedAt}`)
   }
 
   {
@@ -270,7 +271,7 @@ test('cannot set updated_at', async ({ pass, teardown, same, equal, not, comment
   }
 })
 
-test('do not assign inserted_at updated_at', async ({ pass, teardown, same, equal, not, comment }) => {
+test('do not assign inserted_at updated_at', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -283,7 +284,7 @@ test('do not assign inserted_at updated_at', async ({ pass, teardown, same, equa
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -379,7 +380,7 @@ test('do not assign inserted_at updated_at', async ({ pass, teardown, same, equa
   }
 })
 
-test('bulk insert adds inserted_at updated_at', async ({ pass, teardown, same, equal, not, comment }) => {
+test('bulk insert adds inserted_at updated_at', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -395,7 +396,7 @@ test('bulk insert adds inserted_at updated_at', async ({ pass, teardown, same, e
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -418,8 +419,8 @@ test('bulk insert adds inserted_at updated_at', async ({ pass, teardown, same, e
     })
     equal(res.statusCode, 200, 'savePage status code')
     const data = res.json().data
-    not(data.savePage.insertedAt, null, 'insertedAt')
-    not(data.savePage.updatedAt, null, 'updatedAt')
+    notEqual(data.savePage.insertedAt, null, 'insertedAt')
+    notEqual(data.savePage.updatedAt, null, 'updatedAt')
   }
 
   {
@@ -449,8 +450,8 @@ test('bulk insert adds inserted_at updated_at', async ({ pass, teardown, same, e
     equal(res.statusCode, 200, 'savePage status code')
     const pages = res.json().data.insertPages
     for (const page of pages) {
-      not(page.insertedAt, null, 'insertedAt')
-      not(page.updatedAt, null, 'updatedAt')
+      notEqual(page.insertedAt, null, 'insertedAt')
+      notEqual(page.updatedAt, null, 'updatedAt')
       equal(page.insertedAt, page.updatedAt, 'insertedAt === updatedAt')
     }
   }
@@ -475,14 +476,14 @@ test('bulk insert adds inserted_at updated_at', async ({ pass, teardown, same, e
     equal(res.statusCode, 200, 'pages status code')
     const pages = res.json().data.pages
     for (const page of pages) {
-      not(page.insertedAt, null, 'insertedAt')
-      not(page.updatedAt, null, 'updatedAt')
+      notEqual(page.insertedAt, null, 'insertedAt')
+      notEqual(page.updatedAt, null, 'updatedAt')
       equal(page.insertedAt, page.updatedAt, 'insertedAt === updatedAt')
     }
   }
 })
 
-test('bulk insert with autoTimestamp=false do not had inserted_at updated_at', async ({ pass, teardown, same, equal, not, comment }) => {
+test('bulk insert with autoTimestamp=false do not had inserted_at updated_at', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -495,7 +496,7 @@ test('bulk insert with autoTimestamp=false do not had inserted_at updated_at', a
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 

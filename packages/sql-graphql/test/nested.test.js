@@ -1,12 +1,14 @@
 'use strict'
 
-const { test } = require('tap')
+const { clear, connInfo, isMysql, isSQLite } = require('./helper')
+const { test } = require('node:test')
+const { deepEqual: same, equal, ok: pass } = require('node:assert')
+const { match } = require('@platformatic/utils')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { clear, connInfo, isMysql, isSQLite } = require('./helper')
 
-test('nested resolver', async ({ pass, teardown, same, equal }) => {
+test('nested resolver', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -58,7 +60,7 @@ test('nested resolver', async ({ pass, teardown, same, equal }) => {
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   const categories = [{
     name: 'Pets'
@@ -258,7 +260,7 @@ test('nested resolver', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('nested resolver with more of 10 rows in nested entity', async ({ pass, teardown, same, equal }) => {
+test('nested resolver with more of 10 rows in nested entity', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -310,7 +312,7 @@ test('nested resolver with more of 10 rows in nested entity', async ({ pass, tea
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   const categories = [
     { name: 'Category 01' },
@@ -413,7 +415,7 @@ test('nested resolver with more of 10 rows in nested entity', async ({ pass, tea
   }
 })
 
-test('disable one-too-many', async ({ pass, teardown, same, equal, match }) => {
+test('disable one-too-many', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -471,7 +473,7 @@ test('disable one-too-many', async ({ pass, teardown, same, equal, match }) => {
       }
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   const categories = [{
     name: 'Pets'
@@ -589,15 +591,15 @@ test('disable one-too-many', async ({ pass, teardown, same, equal, match }) => {
       }
     })
     equal(res.statusCode, 400, 'categories.posts status code')
-    match(res.json(), {
+    pass(match(res.json(), {
       errors: [{
         message: 'Cannot query field "pages" on type "Category". Did you mean "name"?'
       }]
-    }, 'categories.posts response')
+    }, 'categories.posts response'))
   }
 })
 
-test('disable many-to-one relationship', async ({ pass, teardown, same, equal, match }) => {
+test('disable many-to-one relationship', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -655,7 +657,7 @@ test('disable many-to-one relationship', async ({ pass, teardown, same, equal, m
       }
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   const categories = [{
     name: 'Pets'
@@ -727,11 +729,11 @@ test('disable many-to-one relationship', async ({ pass, teardown, same, equal, m
       }
     })
     equal(res.statusCode, 400, 'pages status code')
-    match(res.json(), {
+    pass(match(res.json(), {
       errors: [{
         message: 'Cannot query field "category" on type "Page". Did you mean "categoryId"?'
       }]
-    }, 'pages response')
+    }, 'pages response'))
   }
 
   {
@@ -773,7 +775,7 @@ test('disable many-to-one relationship', async ({ pass, teardown, same, equal, m
   }
 })
 
-test('nested update', async ({ pass, teardown, same, equal }) => {
+test('nested update', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -825,7 +827,7 @@ test('nested update', async ({ pass, teardown, same, equal }) => {
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   const categories = [{
     name: 'Pets'
@@ -1016,7 +1018,7 @@ test('nested update', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('nested resolver without `id` suffix', async ({ pass, teardown, same, equal }) => {
+test('nested resolver without `id` suffix', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -1068,7 +1070,7 @@ test('nested resolver without `id` suffix', async ({ pass, teardown, same, equal
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   const categories = [{
     name: 'Pets'
