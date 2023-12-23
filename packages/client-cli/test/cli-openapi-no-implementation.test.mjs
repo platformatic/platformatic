@@ -1,5 +1,7 @@
 import { request, moveToTmpdir } from './helper.js'
-import { test } from 'tap'
+import { test, after } from 'node:test'
+import { equal, deepEqual as same } from 'node:assert'
+import { match } from '@platformatic/utils'
 import { buildServer } from '@platformatic/db'
 import { buildServer as buildService } from '@platformatic/service'
 import { join, posix } from 'path'
@@ -7,9 +9,9 @@ import * as desm from 'desm'
 import { execa } from 'execa'
 import { promises as fs } from 'fs'
 
-test('generates only types in target folder with --types-only flag', async ({ teardown, comment, same, match }) => {
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+test('generates only types in target folder with --types-only flag', async (t) => {
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), desm.join(import.meta.url, 'fixtures', 'movies', 'openapi.json'), '--name', 'movies', '-f', dir, '--types-only'])
   const files = await fs.readdir(dir)
   same(files.length, 1)
@@ -29,19 +31,19 @@ test('generates only types in target folder with --types-only flag', async ({ te
   match(fileContents, /export interface Movies {/)
 })
 
-test('openapi client generation (javascript)', async ({ teardown, comment, same }) => {
+test('openapi client generation (javascript)', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
-  teardown(async () => { await app.close() })
+  t.after(async () => { await app.close() })
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
 
   const pltServiceConfig = {
     $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
@@ -72,7 +74,7 @@ module.exports = async function (app) {
 
   const app2 = await buildService('./platformatic.service.json')
   await app2.start()
-  teardown(async () => {
+  t.after(async () => {
     await app2.close()
   })
 
@@ -86,7 +88,7 @@ module.exports = async function (app) {
   })
 })
 
-test('openapi client generation (typescript)', async ({ teardown, comment, same }) => {
+test('openapi client generation (typescript)', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -96,9 +98,9 @@ test('openapi client generation (typescript)', async ({ teardown, comment, same 
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(after)
 
-  comment(`working in ${dir}`)
+  t.diagnostic(`working in ${dir}`)
   const pltServiceConfig = {
     $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
     server: {
@@ -146,8 +148,8 @@ export default myPlugin
 
   const app2 = await buildService('./platformatic.service.json')
   await app2.start()
-  teardown(async () => { await app.close() })
-  teardown(async () => { await app2.close() })
+  t.after(async () => { await app.close() })
+  t.after(async () => { await app2.close() })
 
   const res = await request(app2.url, {
     method: 'POST'
@@ -159,7 +161,7 @@ export default myPlugin
   })
 })
 
-test('config support with folder', async ({ teardown, comment, match }) => {
+test('config support with folder', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -168,12 +170,12 @@ test('config support with folder', async ({ teardown, comment, match }) => {
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
 
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
 
   const pltServiceConfig = {
     $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
@@ -203,7 +205,7 @@ test('config support with folder', async ({ teardown, comment, match }) => {
   }
 })
 
-test('openapi client generation (typescript) with --types-only', async ({ teardown, comment, same }) => {
+test('openapi client generation (typescript) with --types-only', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -213,9 +215,9 @@ test('openapi client generation (typescript) with --types-only', async ({ teardo
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(after)
 
-  comment(`working in ${dir}`)
+  t.diagnostic(`working in ${dir}`)
   const pltServiceConfig = {
     $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
     server: {
@@ -273,8 +275,8 @@ export default myPlugin
 
   const app2 = await buildService('./platformatic.service.json')
   await app2.start()
-  teardown(async () => { await app.close() })
-  teardown(async () => { await app2.close() })
+  t.after(async () => { await app.close() })
+  t.after(async () => { await app2.close() })
 
   const res = await request(app2.url, {
     method: 'POST'
@@ -286,7 +288,7 @@ export default myPlugin
   })
 })
 
-test('generate client twice', async ({ teardown, comment, same, equal }) => {
+test('generate client twice', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -295,12 +297,12 @@ test('generate client twice', async ({ teardown, comment, same, equal }) => {
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
 
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
 
   const pltServiceConfig = {
     $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
@@ -332,11 +334,11 @@ module.exports = async function (app) {
   equal(envFile.match(/PLT_MOVIES_URL/g).length, 1)
 })
 
-test('openapi client generation (javascript) from file', async ({ teardown, comment, same }) => {
+test('openapi client generation (javascript) from file', async (t) => {
   const openapi = desm.join(import.meta.url, 'fixtures', 'movies', 'openapi.json')
 
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
 
   const pltServiceConfig = {
     $schema: 'https://platformatic.dev/schemas/v0.28.0/service',

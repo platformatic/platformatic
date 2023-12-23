@@ -1,5 +1,7 @@
 import { request, moveToTmpdir } from './helper.js'
-import { test } from 'tap'
+import { test, after } from 'node:test'
+import { equal } from 'node:assert'
+import { match } from '@platformatic/utils'
 import { buildServer } from '@platformatic/db'
 import { join } from 'path'
 import * as desm from 'desm'
@@ -11,7 +13,7 @@ import { copy } from 'fs-extra'
 
 const env = { ...process.env, NODE_V8_COVERAGE: undefined }
 
-test('dashes in name', async ({ teardown, comment, same, equal, match }) => {
+test('dashes in name', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -21,9 +23,9 @@ test('dashes in name', async ({ teardown, comment, same, equal, match }) => {
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(after)
 
-  comment(`working in ${dir}`)
+  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'uncanny-movies'])
 
   const readSDL = await fs.readFile(join(dir, 'uncanny-movies', 'uncanny-movies.schema.graphql'), 'utf8')
@@ -33,7 +35,7 @@ test('dashes in name', async ({ teardown, comment, same, equal, match }) => {
     equal(sdl, readSDL)
   }
 
-  comment(`server at ${app.url}`)
+  t.diagnostic(`server at ${app.url}`)
 
   const toWrite = `
 'use strict'
@@ -54,8 +56,8 @@ app.listen({ port: 0 })
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
   const server2 = execa('node', ['index.js'], { env })
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -82,7 +84,7 @@ app.listen({ port: 0 })
   })
 })
 
-test('dashes in name (typescript)', async ({ teardown, comment, same, match }) => {
+test('dashes in name (typescript)', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -92,12 +94,12 @@ test('dashes in name (typescript)', async ({ teardown, comment, same, match }) =
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(after)
 
-  comment(`working in ${dir}`)
+  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'uncanny-movies'])
 
-  comment(`upstream URL is ${app.url}`)
+  t.diagnostic(`upstream URL is ${app.url}`)
 
   const toWrite = `
 import Fastify from 'fastify';
@@ -139,8 +141,8 @@ app.listen({ port: 0 });
   await copy(join(dir, 'uncanny-movies'), join(dir, 'build', 'uncanny-movies'))
 
   const server2 = execa('node', ['build/index.js'], { env })
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -155,7 +157,7 @@ app.listen({ port: 0 });
     url = msg.slice(base.length)
     break
   }
-  comment(`client URL is ${url}`)
+  t.diagnostic(`client URL is ${url}`)
   const res = await request(url, {
     method: 'POST'
   })
@@ -165,7 +167,7 @@ app.listen({ port: 0 });
   })
 })
 
-test('different folder name', async ({ teardown, comment, same, equal, match }) => {
+test('different folder name', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -175,9 +177,9 @@ test('different folder name', async ({ teardown, comment, same, equal, match }) 
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(after)
 
-  comment(`working in ${dir}`)
+  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies', '--folder', 'uncanny'])
 
   const readSDL = await fs.readFile(join(dir, 'uncanny', 'movies.schema.graphql'), 'utf8')
@@ -187,7 +189,7 @@ test('different folder name', async ({ teardown, comment, same, equal, match }) 
     equal(sdl, readSDL)
   }
 
-  comment(`server at ${app.url}`)
+  t.diagnostic(`server at ${app.url}`)
 
   const toWrite = `
 'use strict'
@@ -208,8 +210,8 @@ app.listen({ port: 0 })
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
   const server2 = execa('node', ['index.js'], { env })
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -236,7 +238,7 @@ app.listen({ port: 0 })
   })
 })
 
-test('tilde in name', async ({ teardown, comment, same, equal, match }) => {
+test('tilde in name', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -246,9 +248,9 @@ test('tilde in name', async ({ teardown, comment, same, equal, match }) => {
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(after)
 
-  comment(`working in ${dir}`)
+  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'uncanny~movies'])
 
   const readSDL = await fs.readFile(join(dir, 'uncanny~movies', 'uncanny~movies.schema.graphql'), 'utf8')
@@ -258,7 +260,7 @@ test('tilde in name', async ({ teardown, comment, same, equal, match }) => {
     equal(sdl, readSDL)
   }
 
-  comment(`server at ${app.url}`)
+  t.diagnostic(`server at ${app.url}`)
 
   const toWrite = `
 'use strict'
@@ -279,8 +281,8 @@ app.listen({ port: 0 })
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
   const server2 = execa('node', ['index.js'])
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 

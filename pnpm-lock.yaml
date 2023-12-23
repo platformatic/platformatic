@@ -285,6 +285,9 @@ importers:
         specifier: ^2.3.2
         version: 2.3.4
     devDependencies:
+      '@matteo.collina/tspl':
+        specifier: ^0.1.0
+        version: 0.1.0
       '@platformatic/db':
         specifier: workspace:*
         version: link:../db
@@ -294,6 +297,12 @@ importers:
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
+      '@platformatic/utils':
+        specifier: workspace:*
+        version: link:../utils
+      borp:
+        specifier: ^0.4.2
+        version: 0.4.2
       c8:
         specifier: ^8.0.1
         version: 8.0.1

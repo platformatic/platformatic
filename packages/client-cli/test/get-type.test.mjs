@@ -1,6 +1,7 @@
 'use strict'
 
-import { test } from 'tap'
+import { test } from 'node:test'
+import { equal } from 'node:assert'
 import { getType } from '../lib/openapi-common.mjs'
 
 test('get type with schema', async (t) => {
@@ -17,7 +18,7 @@ test('get type with schema', async (t) => {
     }
   }
   const type = getType(def)
-  t.equal(type, 'Array<\'id\' | \'title\'>')
+  equal(type, 'Array<\'id\' | \'title\'>')
 })
 
 test('get type without schema', async (t) => {
@@ -34,8 +35,8 @@ test('get type without schema', async (t) => {
   const stringDef = {
     type: 'string'
   }
-  t.equal(getType(stringDef), 'string')
-  t.equal(getType(arrayStringDef), 'Array<\'id\' | \'title\'>')
+  equal(getType(stringDef), 'string')
+  equal(getType(arrayStringDef), 'Array<\'id\' | \'title\'>')
 })
 
 test('support anyOf', async (t) => {
@@ -57,7 +58,7 @@ test('support anyOf', async (t) => {
       ]
     }
   }
-  t.equal(getType(anyOfDef), 'string | Array<string> | number')
+  equal(getType(anyOfDef), 'string | Array<string> | number')
 })
 
 test('support allOf', async (t) => {
@@ -79,7 +80,7 @@ test('support allOf', async (t) => {
       ]
     }
   }
-  t.equal(getType(allOfDef), 'string & Array<string> & number')
+  equal(getType(allOfDef), 'string & Array<string> & number')
 })
 
 test('support objects', async (t) => {
@@ -90,7 +91,7 @@ test('support objects', async (t) => {
       bar: { type: 'number' }
     }
   }
-  t.equal(getType(objectDef), '{ foo?: string; bar?: number }')
+  equal(getType(objectDef), '{ foo?: string; bar?: number }')
 })
 
 test('support nested objects', async (t) => {
@@ -110,7 +111,7 @@ test('support nested objects', async (t) => {
       }
     }
   }
-  t.equal(getType(objectDef), '{ foo?: string; bar?: { prop1?: string; prop2?: Array<string> } }')
+  equal(getType(objectDef), '{ foo?: string; bar?: { prop1?: string; prop2?: Array<string> } }')
 })
 
 test('support array of objects', async (t) => {
@@ -123,7 +124,7 @@ test('support array of objects', async (t) => {
     },
     type: 'array'
   }
-  t.equal(getType(arrayOfObjectsDef), 'Array<{ attachedAt?: string; id: string }>')
+  equal(getType(arrayOfObjectsDef), 'Array<{ attachedAt?: string; id: string }>')
 })
 
 test('support array with anyOf', async (t) => {
@@ -140,7 +141,7 @@ test('support array with anyOf', async (t) => {
     },
     type: 'array'
   }
-  t.equal(getType(arrayOfObjectsDef), 'Array<string | number>')
+  equal(getType(arrayOfObjectsDef), 'Array<string | number>')
 })
 
 test('support enum', async (t) => {
@@ -162,7 +163,7 @@ test('support enum', async (t) => {
     required: ['prop1', 'prop2']
   }
 
-  t.equal(getType(enumDef), '{ prop1: \'foo\' | \'bar\' | \'pippo\\\'Giuseppe_Raimondo_Vittorio\\\'baudo\'; prop2: string }')
+  equal(getType(enumDef), '{ prop1: \'foo\' | \'bar\' | \'pippo\\\'Giuseppe_Raimondo_Vittorio\\\'baudo\'; prop2: string }')
 })
 
 test('support enum with numbers', async (t) => {
@@ -179,7 +180,7 @@ test('support enum with numbers', async (t) => {
     type: 'object'
   }
 
-  t.equal(getType(enumDef), '{ prop1?: 1 | 2; prop2?: string }')
+  equal(getType(enumDef), '{ prop1?: 1 | 2; prop2?: string }')
 })
 
 test('object without properties', async (t) => {
@@ -197,5 +198,5 @@ test('object without properties', async (t) => {
     }
   }
 
-  t.equal(getType(emptyObjectDef), '{ prop1?: string; prop2?: object; prop3?: object }')
+  equal(getType(emptyObjectDef), '{ prop1?: string; prop2?: object; prop3?: object }')
 })

@@ -1,5 +1,7 @@
 import { request, moveToTmpdir } from './helper.js'
-import { test } from 'tap'
+import { test, after } from 'node:test'
+import { equal, deepEqual as same } from 'node:assert'
+import { match } from '@platformatic/utils'
 import { buildServer } from '@platformatic/db'
 import { join } from 'path'
 import * as desm from 'desm'
@@ -9,7 +11,7 @@ import graphql from 'graphql'
 import dotenv from 'dotenv'
 import { buildServer as buildService } from '@platformatic/service'
 
-test('graphql client generation (javascript)', async ({ teardown, comment, same, equal, match }) => {
+test('graphql client generation (javascript)', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -19,9 +21,9 @@ test('graphql client generation (javascript)', async ({ teardown, comment, same,
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(after)
 
-  comment(`working in ${dir}`)
+  t.diagnostic(`working in ${dir}`)
 
   const pltServiceConfig = {
     $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
@@ -62,8 +64,8 @@ module.exports = async function (app) {
   const app2 = await buildService('./platformatic.service.json')
   await app2.start()
 
-  teardown(async () => { await app2.close() })
-  teardown(async () => { await app.close() })
+  t.after(async () => { await app2.close() })
+  t.after(async () => { await app.close() })
 
   const res = await request(app2.url, {
     method: 'POST'
@@ -88,7 +90,7 @@ module.exports = async function (app) {
   }
 })
 
-test('graphql client generation (typescript)', async ({ teardown, comment, same, match }) => {
+test('graphql client generation (typescript)', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -98,9 +100,9 @@ test('graphql client generation (typescript)', async ({ teardown, comment, same,
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(after)
 
-  comment(`working in ${dir}`)
+  t.diagnostic(`working in ${dir}`)
 
   const pltServiceConfig = {
     $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
@@ -147,13 +149,13 @@ export default myPlugin
 
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
 
-  comment(`upstream URL is ${app.url}`)
+  t.diagnostic(`upstream URL is ${app.url}`)
 
   const app2 = await buildService('./platformatic.service.json')
   await app2.start()
 
-  teardown(async () => { await app2.close() })
-  teardown(async () => { await app.close() })
+  t.after(async () => { await app2.close() })
+  t.after(async () => { await app.close() })
 
   const res = await request(app2.url, {
     method: 'POST'

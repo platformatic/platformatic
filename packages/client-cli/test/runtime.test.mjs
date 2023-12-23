@@ -1,5 +1,8 @@
 import { request, moveToTmpdir } from './helper.js'
-import { test } from 'tap'
+import { test, after } from 'node:test'
+import { deepEqual as same, fail } from 'node:assert'
+import { match } from '@platformatic/utils'
+import { tspl } from '@matteo.collina/tspl'
 import { join, dirname, posix } from 'path'
 import { fileURLToPath } from 'node:url'
 import * as desm from 'desm'
@@ -8,9 +11,9 @@ import { cp, writeFile, readFile } from 'node:fs/promises'
 import split from 'split2'
 import { once } from 'node:events'
 
-test('openapi client generation (javascript) via the runtime', async ({ teardown, comment, same, match }) => {
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+test('openapi client generation (javascript) via the runtime', async (t) => {
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
 
   await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
 
@@ -67,7 +70,7 @@ module.exports = async function (app, opts) {
   process.chdir(dir)
 
   const app2 = execa('node', [desm.join(import.meta.url, '..', '..', 'cli', 'cli.js'), 'start'])
-  teardown(() => app2.kill())
+  t.after(() => app2.kill())
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
@@ -91,9 +94,9 @@ module.exports = async function (app, opts) {
     title: 'foo'
   })
 })
-test('should return error if in the runtime root', async ({ teardown, comment, fail, match }) => {
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+test('should return error if in the runtime root', async (t) => {
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
 
   await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
 
@@ -108,9 +111,9 @@ test('should return error if in the runtime root', async ({ teardown, comment, f
   }
 })
 
-test('graphql client generation (javascript) via the runtime', async ({ teardown, comment, same, match }) => {
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+test('graphql client generation (javascript) via the runtime', async (t) => {
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
 
   await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
 
@@ -184,7 +187,7 @@ module.exports = async function (app, opts) {
   process.chdir(dir)
 
   const app2 = execa('node', [desm.join(import.meta.url, '..', '..', 'cli', 'cli.js'), 'start'])
-  teardown(() => app2.kill())
+  t.after(() => app2.kill())
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
@@ -209,9 +212,9 @@ module.exports = async function (app, opts) {
   })
 })
 
-test('generate client twice', async ({ teardown, comment, same, match, equal }) => {
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+test('generate client twice', async (t) => {
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
 
   await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
 
@@ -255,9 +258,9 @@ PLT_SERVER_LOGGER_LEVEL=info
   })
 })
 
-test('error if a service does not have openapi enabled', async ({ teardown, comment, match, fail }) => {
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+test('error if a service does not have openapi enabled', async (t) => {
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
 
   await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
 
@@ -298,10 +301,10 @@ PLT_SERVER_LOGGER_LEVEL=info
   }
 })
 
-test('no platformatic.runtime.json', async ({ teardown, comment, match, plan, equal }) => {
-  plan(2)
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+test('no platformatic.runtime.json', async (t) => {
+  const { equal, match } = tspl(t, { plan: 2 })
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
 
   process.chdir(dir)
 
@@ -313,7 +316,7 @@ test('no platformatic.runtime.json', async ({ teardown, comment, match, plan, eq
 
   for await (const line of stream) {
     console.log(line)
-    match(line, 'Could not find a platformatic.json file in any parent directory.')
+    match(line, /Could not find a platformatic.json file in any parent directory./)
   }
 
   const [code] = await onExit
