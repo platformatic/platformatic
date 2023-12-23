@@ -1,7 +1,9 @@
 'use strict'
 
 const { clear, connInfo, isSQLite, isMysql, isMariaDB, isPg } = require('./helper')
-const { test } = require('tap')
+const { test } = require('node:test')
+const { deepEqual: same, equal, ok: pass } = require('node:assert')
+const { tspl } = require('@matteo.collina/tspl')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
@@ -20,7 +22,7 @@ async function createBasicPages (db, sql) {
   }
 }
 
-test('simple db simple graphql schema', async ({ pass, teardown, same, equal }) => {
+test('simple db simple graphql schema', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -32,7 +34,7 @@ test('simple db simple graphql schema', async ({ pass, teardown, same, equal }) 
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -141,7 +143,7 @@ test('simple db simple graphql schema', async ({ pass, teardown, same, equal }) 
   }
 })
 
-test('with federationMetadata', async ({ pass, teardown, same, equal }) => {
+test('with federationMetadata', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -154,7 +156,7 @@ test('with federationMetadata', async ({ pass, teardown, same, equal }) => {
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -237,7 +239,7 @@ test('with federationMetadata', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('add resolver', async ({ pass, teardown, same, equal }) => {
+test('add resolver', async (t) => {
   const app = fastify()
 
   const schema = `
@@ -270,7 +272,7 @@ test('add resolver', async ({ pass, teardown, same, equal }) => {
     schema,
     resolvers
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -353,8 +355,8 @@ test('add resolver', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('override resolver', async ({ pass, teardown, same, equal, plan }) => {
-  plan(3)
+test('override resolver', async (t) => {
+  const { ok: pass, deepEqual: same, equal } = tspl(t, { plan: 3 })
 
   const app = fastify()
   app.register(sqlMapper, {
@@ -417,7 +419,7 @@ test('override resolver', async ({ pass, teardown, same, equal, plan }) => {
       }
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   const res = await app.inject({
     method: 'POST',
@@ -444,8 +446,8 @@ test('override resolver', async ({ pass, teardown, same, equal, plan }) => {
   }, 'savePage response')
 })
 
-test('add totally new type and resolver', async ({ pass, teardown, same, equal, plan }) => {
-  plan(4)
+test('add totally new type and resolver', async (t) => {
+  const { ok: pass, deepEqual: same, equal } = tspl(t, { plan: 4 })
 
   const app = fastify()
   app.register(sqlMapper, {
@@ -485,7 +487,7 @@ test('add totally new type and resolver', async ({ pass, teardown, same, equal, 
       }
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   const res = await app.inject({
     method: 'POST',
@@ -514,7 +516,7 @@ test('add totally new type and resolver', async ({ pass, teardown, same, equal, 
   }, 'getCategory response')
 })
 
-test('list', async ({ pass, teardown, same, equal }) => {
+test('list', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -539,7 +541,7 @@ test('list', async ({ pass, teardown, same, equal }) => {
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -628,7 +630,7 @@ test('list', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('not found', async ({ pass, teardown, same, equal }) => {
+test('not found', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -641,7 +643,7 @@ test('not found', async ({ pass, teardown, same, equal }) => {
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -669,7 +671,7 @@ test('not found', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('graphiql is enabled by default', async ({ pass, teardown, same, equal }) => {
+test('graphiql is enabled by default', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -681,13 +683,13 @@ test('graphiql is enabled by default', async ({ pass, teardown, same, equal }) =
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   const res = await app.inject('/graphiql')
   equal(res.statusCode, 200)
 })
 
-test('graphiql can be disabled', async ({ pass, teardown, same, equal }) => {
+test('graphiql can be disabled', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -701,13 +703,13 @@ test('graphiql can be disabled', async ({ pass, teardown, same, equal }) => {
   app.register(sqlGraphQL, {
     graphiql: false
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   const res = await app.inject('/graphiql')
   equal(res.statusCode, 404)
 })
 
-test('default query hello should be created when no entities are found', async ({ pass, teardown, same, equal }) => {
+test('default query hello should be created when no entities are found', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -717,7 +719,7 @@ test('default query hello should be created when no entities are found', async (
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   const res = await app.inject({
     method: 'POST',
@@ -734,7 +736,7 @@ test('default query hello should be created when no entities are found', async (
   })
 })
 
-test('default query hello should not be created when entities are found', async ({ pass, teardown, same, equal }) => {
+test('default query hello should not be created when entities are found', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -745,7 +747,7 @@ test('default query hello should not be created when entities are found', async 
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   const res = await app.inject({
     method: 'POST',
@@ -760,7 +762,7 @@ test('default query hello should not be created when entities are found', async 
   same(json.errors[0].message, 'Cannot query field "hello" on type "Query".')
 })
 
-test('primary key snake_case', async ({ pass, teardown, same, equal }) => {
+test('primary key snake_case', async (t) => {
   async function createBasicPagesWithSnakeCasePK (db, sql) {
     if (isSQLite) {
       await db.query(sql`CREATE TABLE pages (
@@ -788,7 +790,7 @@ test('primary key snake_case', async ({ pass, teardown, same, equal }) => {
   app.register(sqlGraphQL, {
     graphiql: false
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   const res = await app.inject('/graphiql')
   equal(res.statusCode, 404)
@@ -847,7 +849,6 @@ test('primary key snake_case', async ({ pass, teardown, same, equal }) => {
 })
 
 test('deserialize JSON columns', { skip: isSQLite }, async (t) => {
-  const { pass, teardown, same } = t
   const app = fastify()
   const jsonData = {
     foo: 'bar',
@@ -876,7 +877,7 @@ test('deserialize JSON columns', { skip: isSQLite }, async (t) => {
   app.register(sqlGraphQL, {
     graphiql: false
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
   const res = await app.inject({
@@ -903,7 +904,6 @@ test('deserialize JSON columns', { skip: isSQLite }, async (t) => {
 })
 
 test('deserialize JSONB columns', { skip: !isPg }, async (t) => {
-  const { pass, teardown, same } = t
   const app = fastify()
   const jsonData = {
     foo: 'bar',
@@ -932,7 +932,7 @@ test('deserialize JSONB columns', { skip: !isPg }, async (t) => {
   app.register(sqlGraphQL, {
     graphiql: false
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
   const res = await app.inject({
