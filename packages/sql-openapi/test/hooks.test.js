@@ -1,19 +1,22 @@
 'use strict'
 
 const { clear, connInfo, isSQLite } = require('./helper')
-const { test } = require('tap')
+const { test } = require('node:test')
 const sqlOpenAPI = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
+const tspl = require('@matteo.collina/tspl')
 
-test('basic hooks', async ({ pass, teardown, same, equal, plan, not }) => {
-  plan(19)
+test('basic hooks', async (t) => {
+  const { deepEqual: same, strictEqual: equal, notStrictEqual: not } = tspl(t, { plan: 15 })
   const app = fastify()
+  t.after(() => {
+    return app.close()
+  })
+
   app.register(sqlMapper, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
-
       await clear(db, sql)
 
       if (isSQLite) {
@@ -34,8 +37,6 @@ test('basic hooks', async ({ pass, teardown, same, equal, plan, not }) => {
           // This should never be called
         },
         async save (original, { input, ctx, fields }) {
-          pass('save  called')
-
           not(ctx.reply, undefined, 'ctx.reply is defined')
           not(ctx.app, undefined, 'ctx.app is defined')
           if (!input.id) {
@@ -65,8 +66,6 @@ test('basic hooks', async ({ pass, teardown, same, equal, plan, not }) => {
           }
         },
         async find (original, args) {
-          pass('find called')
-
           not(args.ctx.reply, undefined, 'ctx.reply is defined')
           not(args.ctx.app, undefined, 'ctx.app is defined')
           same(args.where, {
@@ -86,7 +85,6 @@ test('basic hooks', async ({ pass, teardown, same, equal, plan, not }) => {
     }
   })
   app.register(sqlOpenAPI)
-  teardown(app.close.bind(app))
 
   await app.ready()
 
@@ -129,9 +127,11 @@ test('basic hooks', async ({ pass, teardown, same, equal, plan, not }) => {
   }
 })
 
-test('delete hook', async ({ pass, teardown, same, equal, plan, not }) => {
-  plan(9)
+test('delete hook', async (t) => {
   const app = fastify()
+  t.after(() => app.close())
+
+  const { deepEqual: same, strictEqual: equal, notStrictEqual: not } = tspl(t, { plan: 8 })
   app.register(sqlMapper, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
@@ -152,12 +152,10 @@ test('delete hook', async ({ pass, teardown, same, equal, plan, not }) => {
     hooks: {
       Page: {
         async delete (original, args) {
-          pass('delete called')
-
           not(args.ctx.app, undefined, 'ctx.app is defined')
           same(args.where, {
             id: {
-              eq: '1'
+              eq: 1
             }
           })
           same(args.fields, ['id', 'title'])
@@ -167,7 +165,6 @@ test('delete hook', async ({ pass, teardown, same, equal, plan, not }) => {
     }
   })
   app.register(sqlOpenAPI)
-  teardown(app.close.bind(app))
 
   await app.ready()
   {

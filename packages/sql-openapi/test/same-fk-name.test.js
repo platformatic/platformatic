@@ -1,12 +1,13 @@
 'use strict'
 
 const { clear, connInfo } = require('./helper')
-const { test } = require('tap')
+const { test } = require('node:test')
+const { deepEqual: same, equal } = require('node:assert/strict')
 const fastify = require('fastify')
 const sqlMapper = require('@platformatic/sql-mapper')
 const sqlOpenAPI = require('..')
 
-test('same foreign keys with different names', async ({ equal, same, teardown }) => {
+test('same foreign keys with different names', async (t) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
 
@@ -31,7 +32,7 @@ test('same foreign keys with different names', async ({ equal, same, teardown })
       onDatabaseLoad
     })
     app.register(sqlOpenAPI)
-    teardown(app.close.bind(app))
+    t.after(() => app.close())
 
     await app.ready()
   } catch (error) {

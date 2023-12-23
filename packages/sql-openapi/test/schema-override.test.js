@@ -1,7 +1,8 @@
 'use strict'
 
 const { clear, connInfo, isSQLite } = require('./helper')
-const { test } = require('tap')
+const { equal, ok: pass } = require('node:assert/strict')
+const { test } = require('node:test')
 const fastify = require('fastify')
 const sqlOpenAPI = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
@@ -28,7 +29,7 @@ async function createBasicPages (db, sql) {
   }
 }
 
-test('path schema override', async ({ pass, teardown, equal }) => {
+test('path schema override', async (t) => {
   const customSummary1 = 'Custom summary 1'
   const customDescription1 = 'Custom description 1'
   const customSummary2 = 'Custom summary 2'
@@ -59,7 +60,7 @@ test('path schema override', async ({ pass, teardown, equal }) => {
       }
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 

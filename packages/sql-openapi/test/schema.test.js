@@ -1,15 +1,11 @@
 'use strict'
 
 const { clear, connInfo, isSQLite, isMysql8, isMysql } = require('./helper')
-const t = require('tap')
+const { deepEqual: same, equal, ok: pass } = require('node:assert')
+const { test } = require('node:test')
 const sqlOpenAPI = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
-const { test } = t
-
-Object.defineProperty(t, 'fullname', {
-  value: 'platformatic/db/openapi/simple'
-})
 
 async function createBasicPages (db, sql) {
   await db.query(sql`CREATE SCHEMA IF NOT EXISTS test1;`)
@@ -44,8 +40,6 @@ async function createBasicPages (db, sql) {
 }
 
 test('Simple rest API with different schemas', { skip: isSQLite }, async (t) => {
-  const { pass, teardown, same, equal } = t
-
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -58,7 +52,7 @@ test('Simple rest API with different schemas', { skip: isSQLite }, async (t) => 
     }
   })
   app.register(sqlOpenAPI)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -182,7 +176,7 @@ test('Simple rest API with different schemas', { skip: isSQLite }, async (t) => 
   }
 })
 
-test('composite primary keys with schema', { skip: isSQLite }, async ({ equal, same, teardown, rejects }) => {
+test('composite primary keys with schema', { skip: isSQLite }, async (t) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
 
@@ -237,7 +231,7 @@ test('composite primary keys with schema', { skip: isSQLite }, async ({ equal, s
     onDatabaseLoad
   })
   app.register(sqlOpenAPI)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 

@@ -1,20 +1,16 @@
 'use strict'
 
 const { clear, connInfo, isSQLite, isMysql } = require('./helper')
-const t = require('tap')
+const { deepEqual: same, equal, ok: pass } = require('node:assert/strict')
+const Snap = require('@matteo.collina/snap')
+const { test } = require('node:test')
 const fastify = require('fastify')
 const sqlOpenAPI = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
-const { resolve } = require('path')
-const { test } = t
 
-Object.defineProperty(t, 'fullname', {
-  value: 'platformatic/db/openapi/where'
-})
+const snap = Snap(__filename)
 
 test('nested routes', async (t) => {
-  const { pass, teardown, same, equal, matchSnapshot } = t
-  t.snapshotFile = resolve(__dirname, 'tap-snapshots', 'nested-routes-openapi.cjs')
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -73,7 +69,7 @@ test('nested routes', async (t) => {
     }
   })
   app.register(sqlOpenAPI)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -83,7 +79,8 @@ test('nested routes', async (t) => {
       url: '/documentation/json'
     })
     const openapi = res.json()
-    matchSnapshot(openapi, 'matches expected OpenAPI defs')
+    const snapshot = await snap(openapi)
+    equal(openapi, snapshot)
   }
 
   const owners = [{
@@ -215,8 +212,6 @@ test('nested routes', async (t) => {
 })
 
 test('nested routes with recursive FK', async (t) => {
-  const { pass, teardown, same, equal, matchSnapshot } = t
-  t.snapshotFile = resolve(__dirname, 'tap-snapshots', 'nested-routes-openapi-recursive.cjs')
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -255,7 +250,7 @@ test('nested routes with recursive FK', async (t) => {
     }
   })
   app.register(sqlOpenAPI)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -265,7 +260,8 @@ test('nested routes with recursive FK', async (t) => {
       url: '/documentation/json'
     })
     const openapi = res.json()
-    matchSnapshot(openapi, 'matches expected OpenAPI defs')
+    const snapshot = await snap(openapi)
+    equal(openapi, snapshot)
   }
 
   const res = await app.inject({

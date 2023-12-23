@@ -1,20 +1,16 @@
 'use strict'
 
 const { clear, connInfo, isSQLite, isMysql } = require('./helper')
-const t = require('tap')
+const { test } = require('node:test')
+const Snap = require('@matteo.collina/snap')
+const { deepEqual: same, equal, ok: pass } = require('node:assert/strict')
 const fastify = require('fastify')
 const sqlOpenAPI = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
-const { resolve } = require('path')
-const { test } = t
 
-Object.defineProperty(t, 'fullname', {
-  value: 'platformatic/db/openapi/where'
-})
+const snap = Snap(__filename)
 
 test('list', async (t) => {
-  const { pass, teardown, same, equal, matchSnapshot } = t
-  t.snapshotFile = resolve(__dirname, 'tap-snapshots', 'where-openapi-1.cjs')
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -48,7 +44,7 @@ test('list', async (t) => {
     }
   })
   app.register(sqlOpenAPI)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -58,7 +54,8 @@ test('list', async (t) => {
       url: '/documentation/json'
     })
     const openapi = res.json()
-    matchSnapshot(openapi, 'matches expected OpenAPI defs')
+    const snapshot = await snap(openapi)
+    equal(openapi, snapshot)
   }
 
   const posts = [{
@@ -95,8 +92,8 @@ test('list', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.or=(title.eq=Dog|title.eq=Cat)&fields=id,title,longText status code')
     same(res.json(), [
-      { id: '1', title: 'Dog', longText: 'Foo' },
-      { id: '2', title: 'Cat', longText: 'Bar' }
+      { id: 1, title: 'Dog', longText: 'Foo' },
+      { id: 2, title: 'Cat', longText: 'Bar' }
     ], 'GET /posts?where.or=(title.eq=Dog|title.eq=Cat)&fields=id,title,longText response')
   }
 
@@ -107,7 +104,7 @@ test('list', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.or=(title.eq=Dog|title.eq=Cat)&where.id.eq=1&fields=id,title,longText status code')
     same(res.json(), [
-      { id: '1', title: 'Dog', longText: 'Foo' }
+      { id: 1, title: 'Dog', longText: 'Foo' }
     ], 'GET /posts?where.or=(title.eq=Dog|title.eq=Cat)&where.id.eq=1&fields=id,title,longText response')
   }
 
@@ -118,9 +115,9 @@ test('list', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.or=(counter.eq=10|counter.gte=30)&fields=id,title,longText status code')
     same(res.json(), [
-      { id: '1', title: 'Dog', longText: 'Foo' },
-      { id: '3', title: 'Mouse', longText: 'Baz' },
-      { id: '4', title: 'Duck', longText: 'A duck tale' }
+      { id: 1, title: 'Dog', longText: 'Foo' },
+      { id: 3, title: 'Mouse', longText: 'Baz' },
+      { id: 4, title: 'Duck', longText: 'A duck tale' }
     ], 'GET /posts?where.or=(counter.eq=10|counter.gte=30)&fields=id,title,longText response')
   }
 
@@ -131,8 +128,8 @@ test('list', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.or=(title.eq=Dog|title.eq=Duck)&fields=id,title,longText status code')
     same(res.json(), [
-      { id: '1', title: 'Dog', longText: 'Foo' },
-      { id: '4', title: 'Duck', longText: 'A duck tale' }
+      { id: 1, title: 'Dog', longText: 'Foo' },
+      { id: 4, title: 'Duck', longText: 'A duck tale' }
     ], 'GET /posts?where.or=(title.eq=Dog|title.eq=Duck)&fields=id,title,longText response')
   }
 
@@ -143,8 +140,8 @@ test('list', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.or=(title.eq=Dog|longText.eq=Baz)&fields=id,title,longText status code')
     same(res.json(), [
-      { id: '1', title: 'Dog', longText: 'Foo' },
-      { id: '3', title: 'Mouse', longText: 'Baz' }
+      { id: 1, title: 'Dog', longText: 'Foo' },
+      { id: 3, title: 'Mouse', longText: 'Baz' }
     ], 'GET /posts?where.or=(title.eq=Dog|longText.eq=Baz)&fields=id,title,longText response')
   }
 
@@ -155,7 +152,7 @@ test('list', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.or=(title.eq=Dog|longText.eq=Baz)&where.counter.in=10,20&fields=id,title,longText status code')
     same(res.json(), [
-      { id: '1', title: 'Dog', longText: 'Foo' }
+      { id: 1, title: 'Dog', longText: 'Foo' }
     ], 'GET /posts?where.or=(title.eq=Dog|longText.eq=Baz)&where.counter.in=10,20&fields=id,title,longText response')
   }
 
@@ -166,9 +163,9 @@ test('list', async (t) => {
     })
     equal(res.statusCode, 200, 'GET /posts?where.or=(counter.in=10,20|counter.in=20,30)&fields=id,title,longText status code')
     same(res.json(), [
-      { id: '1', title: 'Dog', longText: 'Foo' },
-      { id: '2', title: 'Cat', longText: 'Bar' },
-      { id: '3', title: 'Mouse', longText: 'Baz' }
+      { id: 1, title: 'Dog', longText: 'Foo' },
+      { id: 2, title: 'Cat', longText: 'Bar' },
+      { id: 3, title: 'Mouse', longText: 'Baz' }
     ], 'GET /posts?where.or=(counter.in=10,20|counter.in=20,30)&fields=id,title,longText response')
   }
 })
