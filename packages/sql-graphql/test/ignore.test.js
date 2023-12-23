@@ -1,10 +1,12 @@
 'use strict'
 
 const { clear, connInfo, isSQLite } = require('./helper')
-const { test } = require('tap')
+const { test } = require('node:test')
+const { equal, ok: pass } = require('node:assert')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
+const { default: tspl } = require('@matteo.collina/tspl')
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -28,7 +30,7 @@ async function createBasicPages (db, sql) {
   }
 }
 
-test('ignore a table', async ({ pass, teardown, equal }) => {
+test('ignore a table', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -43,7 +45,7 @@ test('ignore a table', async ({ pass, teardown, equal }) => {
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -69,7 +71,7 @@ test('ignore a table', async ({ pass, teardown, equal }) => {
   }
 })
 
-test('ignore a column', async ({ pass, teardown, equal }) => {
+test('ignore a column', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -86,7 +88,7 @@ test('ignore a column', async ({ pass, teardown, equal }) => {
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -116,7 +118,7 @@ test('ignore a column', async ({ pass, teardown, equal }) => {
   }
 })
 
-test('ignore a table via sql-graphql option', async ({ pass, teardown, equal }) => {
+test('ignore a table via sql-graphql option', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -132,7 +134,7 @@ test('ignore a table via sql-graphql option', async ({ pass, teardown, equal }) 
       category: true
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -158,8 +160,8 @@ test('ignore a table via sql-graphql option', async ({ pass, teardown, equal }) 
   }
 })
 
-test('show a warning if there is no ignored entity', async ({ plan, pass, teardown }) => {
-  plan(2)
+test('show a warning if there is no ignored entity', async (t) => {
+  const { ok: pass } = tspl(t, { plan: 2 })
 
   const app = fastify({
     logger: {
@@ -193,12 +195,12 @@ test('show a warning if there is no ignored entity', async ({ plan, pass, teardo
       missingEntityPages: true
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 })
 
-test('ignore a column via sql-graphql option', async ({ pass, teardown, equal }) => {
+test('ignore a column via sql-graphql option', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -216,7 +218,7 @@ test('ignore a column via sql-graphql option', async ({ pass, teardown, equal })
       }
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -246,8 +248,8 @@ test('ignore a column via sql-graphql option', async ({ pass, teardown, equal })
   }
 })
 
-test('show a warning if there is no ignored entity field', async ({ plan, pass, teardown }) => {
-  plan(2)
+test('show a warning if there is no ignored entity field', async (t) => {
+  const { ok: pass } = tspl(t, { plan: 2 })
 
   const app = fastify({
     logger: {
@@ -283,7 +285,7 @@ test('show a warning if there is no ignored entity field', async ({ plan, pass, 
       }
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 })

@@ -1,8 +1,9 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { tspl } = require('@matteo.collina/tspl')
 const { connect } = require('..')
-const { clear, connInfo, isSQLite } = require('./helper')
+const { clear, connInfo, createBasicPages } = require('./helper')
 
 const fakeLogger = {
   trace: () => {},
@@ -10,32 +11,14 @@ const fakeLogger = {
   warn: () => {}
 }
 
-async function createBasicPages (db, sql) {
-  if (isSQLite) {
-    await db.query(sql`CREATE TABLE pages (
-      id INTEGER PRIMARY KEY,
-      title VARCHAR(42)
-    );`)
-    await db.query(sql`CREATE TABLE categories (
-      id INTEGER PRIMARY KEY,
-      name VARCHAR(42)
-    );`)
-  } else {
-    await db.query(sql`CREATE TABLE pages (
-      id SERIAL PRIMARY KEY,
-      title VARCHAR(42)
-    );`)
-    await db.query(sql`CREATE TABLE categories (
-      id SERIAL PRIMARY KEY,
-      name VARCHAR(42)
-    );`)
-  }
-}
-
-test('ignore a table', async ({ pass, teardown, equal }) => {
+test('ignore a table', async (t) => {
+  const { ok, equal } = tspl(t, { plan: 3 })
   async function onDatabaseLoad (db, sql) {
-    pass('onDatabaseLoad called')
-    teardown(() => db.dispose())
+    ok('onDatabaseLoad called')
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await clear(db, sql)
     await createBasicPages(db, sql)
@@ -57,12 +40,15 @@ test('ignore a table', async ({ pass, teardown, equal }) => {
   equal(categoryEntity, undefined, 'category entity is ignored')
 })
 
-test('show a warning if there is no ignored table', async ({ plan, pass, teardown, equal }) => {
-  plan(4)
+test('show a warning if there is no ignored table', async (t) => {
+  const { equal, ok } = tspl(t, { plan: 4 })
 
   async function onDatabaseLoad (db, sql) {
-    pass('onDatabaseLoad called')
-    teardown(() => db.dispose())
+    ok('onDatabaseLoad called')
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await clear(db, sql)
     await createBasicPages(db, sql)
@@ -92,12 +78,15 @@ test('show a warning if there is no ignored table', async ({ plan, pass, teardow
   equal(categoryEntity.name, 'Category')
 })
 
-test('show a warning if the database is empty', async ({ plan, pass, teardown, equal }) => {
-  // plan(4)
+test('show a warning if the database is empty', async (t) => {
+  const { ok, equal } = tspl(t, { plan: 2 })
 
   async function onDatabaseLoad (db, sql) {
-    pass('onDatabaseLoad called')
-    teardown(() => db.dispose())
+    ok('onDatabaseLoad called')
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await clear(db, sql)
   }
@@ -120,10 +109,15 @@ test('show a warning if the database is empty', async ({ plan, pass, teardown, e
   })
 })
 
-test('ignore a column', async ({ pass, teardown, equal }) => {
+test('ignore a column', async (t) => {
+  const { ok, equal } = tspl(t, { plan: 5 })
+
   async function onDatabaseLoad (db, sql) {
-    pass('onDatabaseLoad called')
-    teardown(() => db.dispose())
+    ok('onDatabaseLoad called')
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await clear(db, sql)
     await createBasicPages(db, sql)
@@ -149,12 +143,15 @@ test('ignore a column', async ({ pass, teardown, equal }) => {
   equal(categoryEntity.fields.name, undefined, 'name column is ignored')
 })
 
-test('shows a warning if there is no ignored column', async ({ plan, pass, teardown, equal }) => {
-  plan(4)
+test('shows a warning if there is no ignored column', async (t) => {
+  const { equal, ok } = tspl(t, { plan: 4 })
 
   async function onDatabaseLoad (db, sql) {
-    pass('onDatabaseLoad called')
-    teardown(() => db.dispose())
+    ok('onDatabaseLoad called')
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     await clear(db, sql)
     await createBasicPages(db, sql)

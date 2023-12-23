@@ -1,12 +1,13 @@
 'use strict'
 
 const { clear, connInfo, isPg } = require('./helper')
-const { test } = require('tap')
+const { test } = require('node:test')
+const { deepEqual: same, equal, ok: pass } = require('node:assert')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
 
-test('array support', { skip: !isPg }, async ({ pass, teardown, same, equal }) => {
+test('array support', { skip: !isPg }, async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -22,7 +23,7 @@ test('array support', { skip: !isPg }, async ({ pass, teardown, same, equal }) =
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 

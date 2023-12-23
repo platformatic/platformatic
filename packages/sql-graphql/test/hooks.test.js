@@ -1,13 +1,15 @@
 'use strict'
 
-const { clear, connInfo, isMysql, isSQLite } = require('./helper')
-const { test } = require('tap')
+const { test } = require('node:test')
+const { tspl } = require('@matteo.collina/tspl')
 const sqlMapper = require('@platformatic/sql-mapper')
 const sqlGraphQL = require('..')
 const fastify = require('fastify')
+const { clear, connInfo, isMysql, isSQLite } = require('./helper')
 
-test('basic hooks', async ({ pass, teardown, same, equal, plan }) => {
-  plan(22)
+test('basic hooks', async (t) => {
+  const { equal, ok: pass, deepEqual } = tspl(t, { plan: 22 })
+
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -38,7 +40,7 @@ test('basic hooks', async ({ pass, teardown, same, equal, plan }) => {
 
           equal(ctx.app, app)
           if (!input.id) {
-            same(input, {
+            deepEqual(input, {
               title: 'Hello'
             })
 
@@ -49,7 +51,7 @@ test('basic hooks', async ({ pass, teardown, same, equal, plan }) => {
               fields
             })
           } else {
-            same(input, {
+            deepEqual(input, {
               id: 1,
               title: 'Hello World'
             })
@@ -67,7 +69,7 @@ test('basic hooks', async ({ pass, teardown, same, equal, plan }) => {
           pass('find called')
 
           equal(args.ctx.app, app)
-          same(args.where, {
+          deepEqual(args.where, {
             id: {
               in: ['1']
             }
@@ -77,26 +79,26 @@ test('basic hooks', async ({ pass, teardown, same, equal, plan }) => {
               eq: ['2']
             }
           }
-          same(args.fields, ['id', 'title'])
+          deepEqual(args.fields, ['id', 'title'])
           return original(args)
         },
         async insert (original, args) {
           pass('insert called')
 
           equal(args.ctx.app, app)
-          same(args.inputs, [{
+          deepEqual(args.inputs, [{
             title: 'Hello'
           }, {
             title: 'Hello World'
           }])
-          same(args.fields, ['id', 'title'])
+          deepEqual(args.fields, ['id', 'title'])
           return original(args)
         }
       }
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -116,7 +118,7 @@ test('basic hooks', async ({ pass, teardown, same, equal, plan }) => {
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -142,7 +144,7 @@ test('basic hooks', async ({ pass, teardown, same, equal, plan }) => {
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: null
       }
@@ -165,7 +167,7 @@ test('basic hooks', async ({ pass, teardown, same, equal, plan }) => {
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -205,8 +207,8 @@ test('basic hooks', async ({ pass, teardown, same, equal, plan }) => {
   }
 })
 
-test('hooks with relationships', async ({ pass, teardown, same, equal, plan }) => {
-  plan(17)
+test('hooks with relationships', async (t) => {
+  const { equal, ok: pass, deepEqual } = tspl(t, { plan: 17 })
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -277,7 +279,7 @@ test('hooks with relationships', async ({ pass, teardown, same, equal, plan }) =
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   const categories = [{
     name: 'Pets'
@@ -323,7 +325,7 @@ test('hooks with relationships', async ({ pass, teardown, same, equal, plan }) =
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -365,7 +367,7 @@ test('hooks with relationships', async ({ pass, teardown, same, equal, plan }) =
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
@@ -411,7 +413,7 @@ test('hooks with relationships', async ({ pass, teardown, same, equal, plan }) =
       }
     })
     equal(res.statusCode, 200, 'categories.posts status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         categories: [{
           id: 1,
@@ -434,8 +436,8 @@ test('hooks with relationships', async ({ pass, teardown, same, equal, plan }) =
   }
 })
 
-test('delete hook', async ({ pass, teardown, same, equal, plan }) => {
-  plan(10)
+test('delete hook', async (t) => {
+  const { equal, ok: pass, deepEqual } = tspl(t, { plan: 10 })
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -460,19 +462,19 @@ test('delete hook', async ({ pass, teardown, same, equal, plan }) => {
           pass('delete called')
 
           equal(args.ctx.app, app)
-          same(args.where, {
+          deepEqual(args.where, {
             id: {
               eq: '1'
             }
           })
-          same(args.fields, ['id', 'title'])
+          deepEqual(args.fields, ['id', 'title'])
           return original(args)
         }
       }
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -492,7 +494,7 @@ test('delete hook', async ({ pass, teardown, same, equal, plan }) => {
       }
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
@@ -518,7 +520,7 @@ test('delete hook', async ({ pass, teardown, same, equal, plan }) => {
       }
     })
     equal(res.statusCode, 200, 'deletePage status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         deletePages: [{
           id: 1,
@@ -544,7 +546,7 @@ test('delete hook', async ({ pass, teardown, same, equal, plan }) => {
       }
     })
     equal(res.statusCode, 200, 'pages status code')
-    same(res.json(), {
+    deepEqual(res.json(), {
       data: {
         getPageById: null
       }
@@ -552,8 +554,8 @@ test('delete hook', async ({ pass, teardown, same, equal, plan }) => {
   }
 })
 
-test('false resolver no schema', async ({ pass, teardown, same, equal, plan, match }) => {
-  plan(5)
+test('false resolver no schema', async (t) => {
+  const { equal, ok: pass, deepEqual } = tspl(t, { plan: 5 })
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -593,7 +595,7 @@ test('false resolver no schema', async ({ pass, teardown, same, equal, plan, mat
       }
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -631,11 +633,12 @@ test('false resolver no schema', async ({ pass, teardown, same, equal, plan, mat
       }
     })
     equal(res.statusCode, 400, 'pages status code')
-    match(res.json(), {
+    deepEqual(res.json(), {
       data: null,
       errors: [{
         message: 'Cannot query field "getPageById" on type "Query".',
-        locations: [{ line: 3, column: 13 }]
+        locations: [{ line: 3, column: 13 }
+        ]
       }]
     })
   }

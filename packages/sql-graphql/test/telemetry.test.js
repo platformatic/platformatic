@@ -1,7 +1,8 @@
 'use strict'
 
 const { clear, connInfo, isSQLite, isPg } = require('./helper')
-const { test, only } = require('tap')
+const { test, only } = require('node:test')
+const { deepEqual: same, equal, ok: pass, fail } = require('node:assert')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const { telemetry } = require('@platformatic/telemetry')
@@ -21,7 +22,7 @@ async function createBasicPages (db, sql) {
   }
 }
 
-test('creates the spans for the graphql mutation', async ({ pass, teardown, same, equal }) => {
+test('creates the spans for the graphql mutation', async (t) => {
   const app = fastify()
 
   await app.register(telemetry, {
@@ -42,7 +43,7 @@ test('creates the spans for the graphql mutation', async ({ pass, teardown, same
   })
 
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -99,7 +100,7 @@ test('creates the spans for the graphql mutation', async ({ pass, teardown, same
 })
 
 // We skip this for sqllite because in sqlite it's HARD to have a resolver exception without a schema validation exception first.
-test('creates the spans for errors', { skip: isSQLite }, async ({ pass, teardown, same, equal }) => {
+test('creates the spans for errors', { skip: isSQLite }, async (t) => {
   const app = fastify()
 
   await app.register(telemetry, {
@@ -120,7 +121,7 @@ test('creates the spans for errors', { skip: isSQLite }, async ({ pass, teardown
   })
 
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -180,7 +181,7 @@ test('creates the spans for errors', { skip: isSQLite }, async ({ pass, teardown
   equal(graphqlSpan.status.message, expectedMessage)
 })
 
-only('don\'t wrap the schema types starting with __', async ({ pass, teardown, same, equal, fail }) => {
+only('don\'t wrap the schema types starting with __', async (t) => {
   const app = fastify()
 
   await app.register(telemetry, {
@@ -201,7 +202,7 @@ only('don\'t wrap the schema types starting with __', async ({ pass, teardown, s
   })
 
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 

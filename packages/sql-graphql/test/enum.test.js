@@ -1,12 +1,13 @@
 'use strict'
 
 const { clear, connInfo, isSQLite, isPg } = require('./helper')
-const { test } = require('tap')
+const { test } = require('node:test')
+const { deepEqual: same, equal, ok: pass } = require('node:assert')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
 
-test('should properly setup the enum types', { skip: isSQLite }, async ({ pass, teardown, same }) => {
+test('should properly setup the enum types', { skip: isSQLite }, async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -36,7 +37,7 @@ test('should properly setup the enum types', { skip: isSQLite }, async ({ pass, 
   })
 
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   try {
     await app.ready()
@@ -47,7 +48,7 @@ test('should properly setup the enum types', { skip: isSQLite }, async ({ pass, 
   }
 })
 
-test('should not fail if enum value contains a space ', { skip: isSQLite }, async ({ pass, teardown, same }) => {
+test('should not fail if enum value contains a space ', { skip: isSQLite }, async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -77,7 +78,7 @@ test('should not fail if enum value contains a space ', { skip: isSQLite }, asyn
   })
 
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   try {
     await app.ready()
@@ -88,7 +89,7 @@ test('should not fail if enum value contains a space ', { skip: isSQLite }, asyn
   }
 })
 
-test('should not fail if tables have duplicate enum names', { skip: isSQLite }, async ({ pass, teardown, same }) => {
+test('should not fail if tables have duplicate enum names', { skip: isSQLite }, async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -129,7 +130,7 @@ test('should not fail if tables have duplicate enum names', { skip: isSQLite }, 
   })
 
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   try {
     await app.ready()
@@ -140,7 +141,7 @@ test('should not fail if tables have duplicate enum names', { skip: isSQLite }, 
   }
 })
 
-test('should not fail if tables have enum with special characters', { skip: isSQLite }, async ({ pass, teardown, same, equal }) => {
+test('should not fail if tables have enum with special characters', { skip: isSQLite }, async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -172,7 +173,7 @@ test('should not fail if tables have enum with special characters', { skip: isSQ
   })
 
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   try {
     await app.ready()

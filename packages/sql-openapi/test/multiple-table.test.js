@@ -1,12 +1,13 @@
 'use strict'
 
 const { clear, connInfo } = require('./helper')
-const { test } = require('tap')
+const { test } = require('node:test')
+const { deepEqual: same, equal } = require('node:assert/strict')
 const fastify = require('fastify')
 const sqlMapper = require('@platformatic/sql-mapper')
 const sqlOpenAPI = require('..')
 
-test('multiple tables have foreign keys pointing to the same primary key', async ({ equal, same, teardown }) => {
+test('multiple tables have foreign keys pointing to the same primary key', async (t) => {
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
 
@@ -41,7 +42,7 @@ test('multiple tables have foreign keys pointing to the same primary key', async
       onDatabaseLoad
     })
     app.register(sqlOpenAPI)
-    teardown(app.close.bind(app))
+    t.after(() => app.close())
 
     await app.ready()
   } catch (error) {

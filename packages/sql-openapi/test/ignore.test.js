@@ -1,10 +1,13 @@
 'use strict'
 
 const { clear, connInfo, isSQLite } = require('./helper')
-const { test } = require('tap')
+const { deepEqual: same, equal, ok: pass } = require('node:assert/strict')
+const tspl = require('@matteo.collina/tspl')
+const { test } = require('node:test')
 const fastify = require('fastify')
 const sqlOpenAPI = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
+const { ok } = require('node:assert')
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -28,7 +31,7 @@ async function createBasicPages (db, sql) {
   }
 }
 
-test('ignore a table', async ({ pass, teardown, equal }) => {
+test('ignore a table', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -36,14 +39,12 @@ test('ignore a table', async ({ pass, teardown, equal }) => {
       categories: true
     },
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
-
       await clear(db, sql)
       await createBasicPages(db, sql)
     }
   })
   app.register(sqlOpenAPI)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -58,7 +59,7 @@ test('ignore a table', async ({ pass, teardown, equal }) => {
   }
 })
 
-test('ignore a column', async ({ pass, teardown, equal }) => {
+test('ignore a column', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -68,14 +69,12 @@ test('ignore a column', async ({ pass, teardown, equal }) => {
       }
     },
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
-
       await clear(db, sql)
       await createBasicPages(db, sql)
     }
   })
   app.register(sqlOpenAPI)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -90,13 +89,11 @@ test('ignore a column', async ({ pass, teardown, equal }) => {
   }
 })
 
-test('ignore a table from OpenAPI', async ({ pass, teardown, equal }) => {
+test('ignore a table from OpenAPI', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
-
       await clear(db, sql)
       await createBasicPages(db, sql)
     }
@@ -106,7 +103,7 @@ test('ignore a table from OpenAPI', async ({ pass, teardown, equal }) => {
       category: true
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -131,9 +128,7 @@ test('ignore a table from OpenAPI', async ({ pass, teardown, equal }) => {
   equal(Boolean(app.platformatic.entities.category), true, 'category entity exists')
 })
 
-test('show a warning if there is no ignored entity', async ({ plan, pass, teardown }) => {
-  plan(2)
-
+test('show a warning if there is no ignored entity', async (t) => {
   const app = fastify({
     logger: {
       info () {},
@@ -146,7 +141,7 @@ test('show a warning if there is no ignored entity', async ({ plan, pass, teardo
       },
       warn (msg) {
         if (msg === 'Ignored openapi entity "missingEntityPages" not found. Did you mean "page"?') {
-          pass('warning message is shown')
+          ok('warning message is shown')
         }
       }
     }
@@ -166,14 +161,12 @@ test('show a warning if there is no ignored entity', async ({ plan, pass, teardo
       missingEntityPages: true
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 })
 
-test('show a warning if database is empty', async ({ plan, pass, teardown }) => {
-  plan(2)
-
+test('show a warning if database is empty', async (t) => {
   const app = fastify({
     logger: {
       info () {},
@@ -195,7 +188,7 @@ test('show a warning if database is empty', async ({ plan, pass, teardown }) => 
   app.register(sqlMapper, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
     }
@@ -205,12 +198,12 @@ test('show a warning if database is empty', async ({ plan, pass, teardown }) => 
       missingEntityPages: true
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 })
 
-test('ignore a column in OpenAPI', async ({ pass, teardown, equal, same }) => {
+test('ignore a column in OpenAPI', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -228,7 +221,7 @@ test('ignore a column in OpenAPI', async ({ pass, teardown, equal, same }) => {
       }
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -253,8 +246,8 @@ test('ignore a column in OpenAPI', async ({ pass, teardown, equal, same }) => {
   same(fieldsParameter.schema.items.enum, ['id'])
 })
 
-test('show a warning if there is no ignored entity field', async ({ plan, pass, teardown }) => {
-  plan(2)
+test('show a warning if there is no ignored entity field', async (t) => {
+  const { ok: pass } = tspl(t, { plan: 2 })
 
   const app = fastify({
     logger: {
@@ -290,7 +283,7 @@ test('show a warning if there is no ignored entity field', async ({ plan, pass, 
       }
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 })

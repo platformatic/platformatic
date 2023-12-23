@@ -1,12 +1,13 @@
 'use strict'
 
 const { clear, connInfo, isSQLite, isMysql, isPg } = require('./helper')
-const { test } = require('tap')
+const { test } = require('node:test')
+const { deepEqual: same, equal } = require('node:assert/strict')
 const fastify = require('fastify')
 const sqlMapper = require('@platformatic/sql-mapper')
 const sqlOpenAPI = require('..')
 
-test('composite primary keys', async ({ equal, same, teardown, rejects }) => {
+test('composite primary keys', async (t) => {
   /* https://github.com/platformatic/platformatic/issues/299 */
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
@@ -77,7 +78,7 @@ test('composite primary keys', async ({ equal, same, teardown, rejects }) => {
     onDatabaseLoad
   })
   app.register(sqlOpenAPI)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -203,12 +204,12 @@ test('composite primary keys', async ({ equal, same, teardown, rejects }) => {
     })
     equal(res.statusCode, 200, 'GET /editors status code')
     same(res.json(), [{
-      userId: '1',
-      pageId: '1',
+      userId: 1,
+      pageId: 1,
       role: 'captain'
     }, {
-      userId: '2',
-      pageId: '1',
+      userId: 2,
+      pageId: 1,
       role: 'author'
     }], 'GET /editors response')
   }
@@ -220,8 +221,8 @@ test('composite primary keys', async ({ equal, same, teardown, rejects }) => {
     })
     equal(res.statusCode, 200, 'GET /editors status code')
     same(res.json(), [{
-      userId: '2',
-      pageId: '1',
+      userId: 2,
+      pageId: 1,
       role: 'author'
     }], 'GET /editors response')
   }
@@ -256,7 +257,7 @@ test('composite primary keys', async ({ equal, same, teardown, rejects }) => {
   }
 })
 
-test('composite primary keys withour relations', async ({ equal, same, teardown, rejects }) => {
+test('composite primary keys withour relations', async (t) => {
   /* https://github.com/platformatic/platformatic/issues/299 */
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
@@ -291,7 +292,7 @@ test('composite primary keys withour relations', async ({ equal, same, teardown,
     onDatabaseLoad
   })
   app.register(sqlOpenAPI)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -372,12 +373,12 @@ test('composite primary keys withour relations', async ({ equal, same, teardown,
     })
     equal(res.statusCode, 200, 'GET /editors status code')
     same(res.json(), [{
-      userId: '1',
-      pageId: '1',
+      userId: 1,
+      pageId: 1,
       role: 'captain'
     }, {
-      userId: '2',
-      pageId: '1',
+      userId: 2,
+      pageId: 1,
       role: 'author'
     }], 'GET /editors response')
   }
@@ -389,8 +390,8 @@ test('composite primary keys withour relations', async ({ equal, same, teardown,
     })
     equal(res.statusCode, 200, 'GET /editors status code')
     same(res.json(), [{
-      userId: '2',
-      pageId: '1',
+      userId: 2,
+      pageId: 1,
       role: 'author'
     }], 'GET /editors response')
   }

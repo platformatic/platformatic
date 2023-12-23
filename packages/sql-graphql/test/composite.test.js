@@ -1,13 +1,14 @@
 'use strict'
 
 const { clear, connInfo, isSQLite, isMysql, isPg } = require('./helper')
-const { test } = require('tap')
+const { test } = require('node:test')
+const { deepEqual: same, equal } = require('node:assert')
 const fastify = require('fastify')
 const sqlMapper = require('@platformatic/sql-mapper')
 const sqlEvents = require('@platformatic/sql-events')
 const sqlGraphQL = require('..')
 
-test('composite primary keys', async ({ equal, same, teardown, rejects }) => {
+test('composite primary keys', async (t) => {
   /* https://github.com/platformatic/platformatic/issues/299 */
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
@@ -79,7 +80,7 @@ test('composite primary keys', async ({ equal, same, teardown, rejects }) => {
   })
   app.register(sqlEvents) // needed as if it's present it might throw
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -332,7 +333,7 @@ test('composite primary keys', async ({ equal, same, teardown, rejects }) => {
   }
 })
 
-test('composite primary keys with no foreign keys', async ({ equal, same, teardown, rejects }) => {
+test('composite primary keys with no foreign keys', async (t) => {
   /* https://github.com/platformatic/platformatic/issues/299 */
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
@@ -352,7 +353,7 @@ test('composite primary keys with no foreign keys', async ({ equal, same, teardo
   })
   app.register(sqlEvents) // needed as if it's present it will throw
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 

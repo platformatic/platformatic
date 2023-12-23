@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { tspl } = require('@matteo.collina/tspl')
 
 const { clear, connInfo, isMysql8, isSQLite } = require('./helper')
 const { connect } = require('..')
@@ -10,10 +11,14 @@ const fakeLogger = {
   error: () => {}
 }
 
-test('unique key', async ({ equal, not, same, teardown }) => {
+test('unique key', async (t) => {
+  const { equal, notEqual, deepEqual } = tspl(t, { plan: 8 })
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     const table = sql`
       CREATE TABLE pages (
@@ -32,26 +37,30 @@ test('unique key', async ({ equal, not, same, teardown }) => {
     hooks: {}
   })
   const pageEntity = mapper.entities.page
-  not(pageEntity, undefined)
+  notEqual(pageEntity, undefined)
   equal(pageEntity.name, 'Page')
   equal(pageEntity.singularName, 'page')
   equal(pageEntity.pluralName, 'pages')
   if (isMysql8 || isSQLite) {
-    same(pageEntity.primaryKeys, new Set(['name']))
+    deepEqual(pageEntity.primaryKeys, new Set(['name']))
     equal(pageEntity.camelCasedFields.name.primaryKey, true)
   } else {
-    same(pageEntity.primaryKeys, new Set(['xx']))
+    deepEqual(pageEntity.primaryKeys, new Set(['xx']))
     equal(pageEntity.camelCasedFields.xx.primaryKey, true)
   }
   equal(pageEntity.camelCasedFields.xx.unique, true)
   equal(pageEntity.camelCasedFields.name.unique, true)
 })
 
-test('no key', async ({ same, teardown, pass, equal, plan }) => {
-  plan(3)
+test('no key', async (t) => {
+  const { equal, deepEqual } = tspl(t, { plan: 3 })
+
   async function onDatabaseLoad (db, sql) {
     await clear(db, sql)
-    teardown(() => db.dispose())
+    test.after(async () => {
+      await clear(db, sql)
+      db.dispose()
+    })
 
     const table = sql`
       CREATE TABLE pages (
@@ -65,7 +74,7 @@ test('no key', async ({ same, teardown, pass, equal, plan }) => {
   const log = {
     trace: () => {},
     warn: (obj, str) => {
-      same(obj, { table: 'pages' })
+      deepEqual(obj, { table: 'pages' })
       equal(str, 'Cannot find any primary keys for table')
     },
     error: () => {}
@@ -75,5 +84,5 @@ test('no key', async ({ same, teardown, pass, equal, plan }) => {
     log,
     onDatabaseLoad
   })
-  same(mapper.entities, {})
+  deepEqual(mapper.entities, {})
 })

@@ -1,12 +1,14 @@
 'use strict'
 
 const { clear, connInfo, isSQLite, isPg } = require('./helper')
-const { test } = require('tap')
+const { test } = require('node:test')
+const { deepEqual: same, equal, ok: pass } = require('node:assert')
+const { match } = require('@platformatic/utils')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
 
-test('batch inserts', async ({ pass, teardown, same, equal }) => {
+test('batch inserts', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -29,7 +31,7 @@ test('batch inserts', async ({ pass, teardown, same, equal }) => {
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -95,7 +97,7 @@ test('batch inserts', async ({ pass, teardown, same, equal }) => {
   }
 })
 
-test('[PG] - batch inserts UUID', { skip: !isPg }, async ({ pass, teardown, same, equal, match }) => {
+test('[PG] - batch inserts UUID', { skip: !isPg }, async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -113,7 +115,7 @@ test('[PG] - batch inserts UUID', { skip: !isPg }, async ({ pass, teardown, same
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -142,7 +144,7 @@ test('[PG] - batch inserts UUID', { skip: !isPg }, async ({ pass, teardown, same
     })
     equal(res.statusCode, 200, 'savePage status code')
     ids = res.json().data.insertPages
-    match(res.json(), {
+    pass(match(res.json(), {
       data: {
         insertPages: [
           { title: 'Page 1' },
@@ -150,7 +152,7 @@ test('[PG] - batch inserts UUID', { skip: !isPg }, async ({ pass, teardown, same
           { title: 'Page 3' }
         ]
       }
-    }, 'insertPages response')
+    }, 'insertPages response'))
   }
 
   for (const { id, title } of ids) {

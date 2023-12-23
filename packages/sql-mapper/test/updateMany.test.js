@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { ok, deepEqual, notDeepEqual, rejects } = require('node:assert')
 const { connect } = require('..')
 const { clear, connInfo, isSQLite, isMysql } = require('./helper')
 const { setTimeout } = require('timers/promises')
@@ -10,13 +11,16 @@ const fakeLogger = {
   error: () => {}
 }
 
-test('updateMany successful', async ({ pass, teardown, same }) => {
+test('updateMany successful', async () => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      teardown(() => db.dispose())
-      pass('onDatabaseLoad called')
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
 
@@ -75,7 +79,7 @@ test('updateMany successful', async ({ pass, teardown, same }) => {
 
   const updatedPosts = await entity.find({})
 
-  same(updatedPosts, [{
+  deepEqual(updatedPosts, [{
     id: '1',
     title: 'Dog',
     longText: 'Foo',
@@ -98,13 +102,16 @@ test('updateMany successful', async ({ pass, teardown, same }) => {
   }])
 })
 
-test('updateMany will return the updated values', async ({ pass, teardown, same }) => {
+test('updateMany will return the updated values', async () => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      teardown(() => db.dispose())
-      pass('onDatabaseLoad called')
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
 
@@ -162,7 +169,7 @@ test('updateMany will return the updated values', async ({ pass, teardown, same 
     fields: ['id', 'counter']
   })
 
-  same(updatedPosts, [{
+  deepEqual(updatedPosts, [{
     id: '3',
     counter: 30
   }, {
@@ -171,13 +178,16 @@ test('updateMany will return the updated values', async ({ pass, teardown, same 
   }])
 })
 
-test('updateMany missing input', async ({ pass, teardown, rejects }) => {
+test('updateMany missing input', async () => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      teardown(() => db.dispose())
-      pass('onDatabaseLoad called')
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
 
@@ -229,17 +239,22 @@ test('updateMany missing input', async ({ pass, teardown, rejects }) => {
         gte: 30
       }
     }
-  }), new Error('Input not provided.'))
+  }), {
+    message: 'Input not provided.'
+  })
 })
 
-test('updateMany successful and update updated_at', async ({ pass, teardown, same, notSame }) => {
+test('updateMany successful and update updated_at', async () => {
   const mapper = await connect({
     ...connInfo,
     autoTimestamp: true,
     log: fakeLogger,
     async onDatabaseLoad (db, sql) {
-      teardown(() => db.dispose())
-      pass('onDatabaseLoad called')
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
 
@@ -313,7 +328,7 @@ test('updateMany successful and update updated_at', async ({ pass, teardown, sam
   })
 
   const updatedPost3 = (await entity.find({ where: { id: { eq: '3' } } }))[0]
-  same(updatedPost3.title, 'Updated title')
-  same(createdPost3.createdAt, updatedPost3.createdAt)
-  notSame(createdPost3.updatedAt, updatedPost3.updatedAt)
+  deepEqual(updatedPost3.title, 'Updated title')
+  deepEqual(createdPost3.createdAt, updatedPost3.createdAt)
+  notDeepEqual(createdPost3.updatedAt, updatedPost3.updatedAt)
 })

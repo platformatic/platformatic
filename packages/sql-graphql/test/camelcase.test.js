@@ -1,7 +1,8 @@
 'use strict'
 
 const { clear, connInfo, isSQLite } = require('./helper')
-const { test } = require('tap')
+const { test } = require('node:test')
+const { deepEqual: same, equal } = require('node:assert/strict')
 const Fastify = require('fastify')
 const WebSocket = require('ws')
 const { once } = require('events')
@@ -27,14 +28,16 @@ async function createBasicPages (db, sql) {
 function createWebSocketClient (t, app) {
   const ws = new WebSocket('ws://localhost:' + (app.server.address()).port + '/graphql', 'graphql-ws')
   const client = WebSocket.createWebSocketStream(ws, { encoding: 'utf8', objectMode: true })
-  t.teardown(client.destroy.bind(client))
+  t.after(() => {
+    client.destroy()
+  })
   client.setEncoding('utf8')
   return { client, ws }
 }
 
 test('subscription - crud when there is a primary key to be camelised', async t => {
   const app = Fastify()
-  t.teardown(() => app.close())
+  t.after(() => app.close())
 
   app.register(sqlMapper, {
     ...connInfo,
@@ -88,10 +91,10 @@ test('subscription - crud when there is a primary key to be camelised', async t 
   {
     const [chunk] = await once(client, 'data')
     const data = JSON.parse(chunk)
-    t.equal(data.type, 'connection_ack')
+    equal(data.type, 'connection_ack')
   }
 
-  t.comment('sending mutation')
+  t.diagnostic('sending mutation')
 
   await app.inject({
     method: 'POST',
@@ -107,12 +110,12 @@ test('subscription - crud when there is a primary key to be camelised', async t 
     }
   })
 
-  t.comment('mutation sent')
+  t.diagnostic('mutation sent')
 
   {
     const [chunk] = await once(client, 'data')
     const data = JSON.parse(chunk)
-    t.same(data, {
+    same(data, {
       type: 'data',
       payload: {
         data: {
@@ -125,7 +128,7 @@ test('subscription - crud when there is a primary key to be camelised', async t 
     })
   }
 
-  t.comment('updating entity')
+  t.diagnostic('updating entity')
 
   await app.inject({
     method: 'POST',
@@ -141,12 +144,12 @@ test('subscription - crud when there is a primary key to be camelised', async t 
     }
   })
 
-  t.comment('entity updated')
+  t.diagnostic('entity updated')
 
   {
     const [chunk] = await once(client, 'data')
     const data = JSON.parse(chunk)
-    t.same(data, {
+    same(data, {
       type: 'data',
       payload: {
         data: {
@@ -159,7 +162,7 @@ test('subscription - crud when there is a primary key to be camelised', async t 
     })
   }
 
-  t.comment('deleting entity')
+  t.diagnostic('deleting entity')
 
   await app.inject({
     method: 'POST',
@@ -175,12 +178,12 @@ test('subscription - crud when there is a primary key to be camelised', async t 
     }
   })
 
-  t.comment('entity deleted')
+  t.diagnostic('entity deleted')
 
   {
     const [chunk] = await once(client, 'data')
     const data = JSON.parse(chunk)
-    t.same(data, {
+    same(data, {
       type: 'data',
       payload: {
         data: {
@@ -192,7 +195,7 @@ test('subscription - crud when there is a primary key to be camelised', async t 
     })
   }
 
-  t.comment('sending mutation')
+  t.diagnostic('sending mutation')
 
   {
     const [
@@ -221,9 +224,9 @@ test('subscription - crud when there is a primary key to be camelised', async t 
             }
           }
         })
-        t.comment('mutation sent')
+        t.diagnostic('mutation sent')
         const pages = res.json().data.insertPages
-        t.comment(JSON.stringify(pages, null, 2))
+        t.diagnostic(JSON.stringify(pages, null, 2))
         return pages
       })(),
       (async function () {
@@ -237,18 +240,18 @@ test('subscription - crud when there is a primary key to be camelised', async t 
             break
           }
         }
-        t.comment('received all pages', JSON.stringify(pages, null, 2))
+        t.diagnostic('received all pages', JSON.stringify(pages, null, 2))
         return pages
       })()
     ]))
 
-    t.same(received, stored)
+    same(received, stored)
   }
 })
 
 test('subscription - crud with a primary key to be camelised, two schemas and a ignore', async t => {
   const app = Fastify()
-  t.teardown(() => app.close())
+  t.after(() => app.close())
 
   app.register(sqlMapper, {
     ...connInfo,
@@ -277,7 +280,7 @@ test('subscription - crud with a primary key to be camelised, two schemas and a 
   await app.listen({ port: 0 })
 
   const { client } = createWebSocketClient(t, app)
-  t.teardown(() => client.destroy())
+  t.after(() => client.destroy())
 
   client.write(JSON.stringify({
     type: 'connection_init'
@@ -286,7 +289,7 @@ test('subscription - crud with a primary key to be camelised, two schemas and a 
   {
     const [chunk] = await once(client, 'data')
     const data = JSON.parse(chunk)
-    t.equal(data.type, 'connection_ack')
+    equal(data.type, 'connection_ack')
   }
 
   {
@@ -307,6 +310,6 @@ test('subscription - crud with a primary key to be camelised, two schemas and a 
   {
     const [chunk] = await once(client, 'data')
     const data = JSON.parse(chunk)
-    t.equal(data.payload, 'The subscription field "categorySaved" is not defined.')
+    equal(data.payload, 'The subscription field "categorySaved" is not defined.')
   }
 })

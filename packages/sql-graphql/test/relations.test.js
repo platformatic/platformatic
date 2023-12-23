@@ -1,7 +1,8 @@
 'use strict'
 
 const { isSQLite, connInfo, isMysql, clear } = require('./helper')
-const { test } = require('tap')
+const { test } = require('node:test')
+const { rejects, equal, ok: pass, deepEqual: same } = require('node:assert')
 const { tmpdir } = require('os')
 const { randomUUID } = require('crypto')
 const { join } = require('path')
@@ -9,7 +10,7 @@ const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
 
-test('should fail when an unknown foreign key relationship exists', { skip: !isSQLite }, async ({ pass, rejects, same, teardown }) => {
+test('should fail when an unknown foreign key relationship exists', { skip: !isSQLite }, async (t) => {
   const file = join(tmpdir(), randomUUID())
   const app = fastify()
   app.register(sqlMapper, {
@@ -36,7 +37,7 @@ test('should fail when an unknown foreign key relationship exists', { skip: !isS
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await rejects(app.inject({
     method: 'POST',
@@ -54,7 +55,7 @@ test('should fail when an unknown foreign key relationship exists', { skip: !isS
   }), 'No foreign table named "subcategories" was found')
 })
 
-test('should handle multi references', async ({ pass, teardown, same, equal }) => {
+test('should handle multi references', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -112,7 +113,7 @@ test('should handle multi references', async ({ pass, teardown, same, equal }) =
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -237,7 +238,7 @@ test('should handle multi references', async ({ pass, teardown, same, equal }) =
   }
 })
 
-test('cut out id exactly from ending when forming a name of relation', async ({ pass, teardown, same, equal }) => {
+test('cut out id exactly from ending when forming a name of relation', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -290,7 +291,7 @@ test('cut out id exactly from ending when forming a name of relation', async ({ 
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -382,7 +383,7 @@ test('cut out id exactly from ending when forming a name of relation', async ({ 
   }
 })
 
-test('should handle reads from save', { only: true }, async ({ pass, teardown, same, equal }) => {
+test('should handle reads from save', { only: true }, async (t) => {
   const app = fastify({ logger: false })
   app.register(sqlMapper, {
     ...connInfo,
@@ -461,7 +462,7 @@ test('should handle reads from save', { only: true }, async ({ pass, teardown, s
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -579,7 +580,7 @@ test('should handle reads from save', { only: true }, async ({ pass, teardown, s
   }
 })
 
-test('should handle nullable relation', async ({ pass, teardown, same, equal }) => {
+test('should handle nullable relation', async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -632,7 +633,7 @@ test('should handle nullable relation', async ({ pass, teardown, same, equal }) 
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 

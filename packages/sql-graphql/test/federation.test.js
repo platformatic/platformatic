@@ -1,7 +1,8 @@
 'use strict'
 
 const { clear, connInfo, isSQLite } = require('./helper')
-const { test } = require('tap')
+const { test } = require('node:test')
+const { deepEqual: same, ok: pass } = require('node:assert')
 const Fastify = require('fastify')
 const Gateway = require('@mercuriusjs/gateway')
 const { mercuriusFederationPlugin } = require('@mercuriusjs/federation')
@@ -77,25 +78,25 @@ async function createTestGatewayServer (t, cacheOpts) {
   const categoryServiceResolvers = {
     Query: {
       categories: (root, args, context, info) => {
-        t.pass('Query.categories resolved')
+        pass('Query.categories resolved')
         return Object.values(categories)
       }
     },
     Category: {
       posts: (root, args, context, info) => {
-        t.pass('Category.posts resolved')
+        pass('Category.posts resolved')
         return categoryPost[root.id]
           ? categoryPost[root.id].map(id => ({ id }))
           : []
       },
       __resolveReference: (category, args, context, info) => {
-        t.pass('Category.__resolveReference')
+        pass('Category.__resolveReference')
         return categories[category.id]
       }
     },
     Post: {
       category: (root, args, context, info) => {
-        t.pass('Post.category resolved')
+        pass('Post.category resolved')
         return categories[postCategory[root.id]]
       }
     }
@@ -106,7 +107,7 @@ async function createTestGatewayServer (t, cacheOpts) {
   postService.register(sqlMapper, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      t.pass('onDatabaseLoad called')
+      pass('onDatabaseLoad called')
 
       await clear(db, sql)
 
@@ -150,7 +151,7 @@ async function createTestGatewayServer (t, cacheOpts) {
   })
 
   const gateway = Fastify()
-  t.teardown(async () => {
+  t.after(async () => {
     await gateway.close()
     await categoryService.close()
     await postService.close()
@@ -286,7 +287,7 @@ test('extendable', async (t) => {
     }
   }
 
-  t.comment('first request')
+  t.diagnostic('first request')
 
   {
     const res = await app.inject({
@@ -295,10 +296,10 @@ test('extendable', async (t) => {
       body: { query }
     })
 
-    t.same(res.json(), expected)
+    same(res.json(), expected)
   }
 
-  t.comment('second request')
+  t.diagnostic('second request')
 
   {
     const res = await app.inject({
@@ -307,6 +308,6 @@ test('extendable', async (t) => {
       body: { query }
     })
 
-    t.same(res.json(), expected)
+    same(res.json(), expected)
   }
 })
