@@ -7,6 +7,7 @@ const { test } = require('node:test')
 const fastify = require('fastify')
 const sqlOpenAPI = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
+const { ok } = require('node:assert')
 
 async function createBasicPages (db, sql) {
   if (isSQLite) {
@@ -128,8 +129,6 @@ test('ignore a table from OpenAPI', async (t) => {
 })
 
 test('show a warning if there is no ignored entity', async (t) => {
-  const { ok: pass } = tspl(t, { plan: 2 })
-
   const app = fastify({
     logger: {
       info () {},
@@ -142,7 +141,7 @@ test('show a warning if there is no ignored entity', async (t) => {
       },
       warn (msg) {
         if (msg === 'Ignored openapi entity "missingEntityPages" not found. Did you mean "page"?') {
-          pass('warning message is shown')
+          ok('warning message is shown')
         }
       }
     }
@@ -168,8 +167,6 @@ test('show a warning if there is no ignored entity', async (t) => {
 })
 
 test('show a warning if database is empty', async (t) => {
-  const { ok: pass } = tspl(t, { plan: 2 })
-
   const app = fastify({
     logger: {
       info () {},
@@ -191,7 +188,7 @@ test('show a warning if database is empty', async (t) => {
   app.register(sqlMapper, {
     ...connInfo,
     async onDatabaseLoad (db, sql) {
-      pass('onDatabaseLoad called')
+      ok('onDatabaseLoad called')
 
       await clear(db, sql)
     }
