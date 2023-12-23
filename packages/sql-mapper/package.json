@@ -6,7 +6,7 @@
   "types": "mapper.d.ts",
   "scripts": {
     "lint": "standard | snazzy",
-    "test": "standard | snazzy && npm run test:typescript && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
+    "test": "npm run lint && npm run test:typescript && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
     "test:runner": "node ./test/runner.js",
     "test:postgresql": "DB=postgresql npm run test:runner",
     "test:mariadb": "DB=mariadb npm run test:runner",

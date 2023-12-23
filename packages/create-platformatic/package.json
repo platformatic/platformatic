@@ -14,7 +14,7 @@
   },
   "scripts": {
     "test:cli": "node --test ./test/cli",
-    "test:unit": "standard | snazzy && cross-env NODE_OPTIONS=\"--loader=esmock --no-warnings\" c8 node --test ./test/unit",
+    "test:unit": "pnpm run lint && cross-env NODE_OPTIONS=\"--loader=esmock --no-warnings\" c8 node --test ./test/unit",
     "test": "npm run test:unit && npm run test:cli",
     "lint": "standard | snazzy"
   },

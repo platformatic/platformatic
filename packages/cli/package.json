@@ -10,7 +10,7 @@
   },
   "homepage": "https://docs.platformatic.dev/",
   "scripts": {
-    "test": "standard | snazzy && c8 node ./test/runner.js",
+    "test": "pnpm run lint && c8 node ./test/runner.js",
     "lint": "standard | snazzy",
     "license": "license-checker --production --onlyAllow 'Apache-2.0;MIT;ISC;BSD-2-Clause;BSD-3-Clause;CC-BY-4.0'"
   },

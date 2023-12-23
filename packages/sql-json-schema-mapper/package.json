@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "standard | snazzy",
-    "test": "standard | snazzy && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
+    "test": "npm run lint && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
     "test:postgresql": "DB=postgresql borp test/*.test.js",
     "test:mariadb": "DB=mariadb borp test/*.test.js",
     "test:mysql": "DB=mysql borp test/*.test.js",
