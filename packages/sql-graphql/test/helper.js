@@ -100,6 +100,26 @@ module.exports.clear = async function (db, sql) {
   }
 
   try {
+    await db.query(sql`DROP TABLE movies`)
+  } catch (err) {
+  }
+
+  try {
+    await db.query(sql`DROP TABLE company`)
+  } catch (err) {
+  }
+
+  try {
+    await db.query(sql`DROP TABLE company_social_medias`)
+  } catch (err) {
+  }
+
+  try {
+    await db.query(sql`DROP TABLE social_medias`)
+  } catch (err) {
+  }
+
+  try {
     await db.query(sql`DROP Type simple_enum`)
   } catch (err) {
   }
