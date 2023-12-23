@@ -562,8 +562,7 @@ jobs:
         mkdir -p packages/frontend-template/src/platformatic-generated-code &&
         cd packages/frontend-template/src/platformatic-generated-code &&
         node ../../../client-cli/cli.mjs http://127.0.0.1:9999 --frontend --language ts &&
-        pnpm run test:types &&
-        pnpm run test:e2e
+        pnpm test
   ci-generators:
     needs: setup-node_modules
     runs-on: ${{matrix.os}}
