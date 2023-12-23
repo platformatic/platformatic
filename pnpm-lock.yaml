@@ -1006,6 +1006,9 @@ importers:
         specifier: ^4.5.1
         version: 4.5.1
     devDependencies:
+      borp:
+        specifier: ^0.4.2
+        version: 0.4.2
       fastify:
         specifier: ^4.23.2
         version: 4.25.1
@@ -1015,9 +1018,6 @@ importers:
       standard:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
-      tap:
-        specifier: ^16.3.9
-        version: 16.3.10(typescript@5.3.3)
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
