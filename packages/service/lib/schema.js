@@ -555,6 +555,11 @@ const metrics = {
           ]
         },
         hostname: { type: 'string' },
+        endpoint: { type: 'string' },
+        server: {
+          type: 'string',
+          enum: ['own', 'parent']
+        },
         auth: {
           type: 'object',
           properties: {

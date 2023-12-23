@@ -28,6 +28,11 @@ async function platformaticService (app, opts) {
   const beforePlugins = opts.beforePlugins || arguments[2] || []
 
   if (isKeyEnabled('metrics', config)) {
+    if (config.metrics.server === 'own' && parseInt(config.server.port) === parseInt(config.metrics.port)) {
+      app.log.warn('In order to serve metrics on the same port as the core applicaton, set metrics.server to "parent".')
+      config.metrics.server = 'parent'
+    }
+
     app.register(setupMetrics, config.metrics)
   }
 

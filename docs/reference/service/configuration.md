@@ -109,8 +109,10 @@ This setting can be a `boolean` or an `object`. If set to `true` the Prometheus 
 
 Supported object properties:
 
-- **`hostname`** (`string`) — The hostname where Prometheus server will listen for connections.
-- **`port`** (`number` or `string`) — The port where Prometheus server will listen for connections.
+- **`server`** (`enum`) — Can be set to "own" or "parent", determines if metrics will be served on a different server or the same server as the Platformatic application.
+- **`hostname`** (`string`) — The hostname where Prometheus server will listen for connections, should be used only if `server` is set to "own".
+- **`port`** (`number` or `string`) — The port where Prometheus server will listen for connections, should be used only if `server` is set to "own".
+- **`endpoint`** (`string`) — The endpoint on which metrics will be served.
 - **`auth`** (`object`) — Basic Auth configuration. **`username`** and **`password`** are required here
   (use [environment variables](#environment-variables)).
 
