@@ -45,3 +45,13 @@ test('should return false for mismatching values', (t) => {
   const { equal } = tspl(t, { plan: 1 })
   equal(match({ a: 1, b: 2 }, { a: 1, c: 3 }), false)
 })
+
+test('match arrays', (t) => {
+  const { strictEqual } = tspl(t, { plan: 1 })
+  strictEqual(match([{ a: 1 }, { b: 2 }], [{ a: 1 }, { b: 2 }]), true)
+})
+
+test('do not match arrays', (t) => {
+  const { strictEqual } = tspl(t, { plan: 1 })
+  strictEqual(match([{ a: 1 }, { b: 2 }], [{ a: 1 }, { b: 3 }]), false)
+})

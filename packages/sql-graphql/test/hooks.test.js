@@ -1,10 +1,10 @@
 'use strict'
 
-const { clear, connInfo, isMysql, isSQLite } = require('./helper')
 const { test } = require('tap')
 const sqlMapper = require('@platformatic/sql-mapper')
 const sqlGraphQL = require('..')
 const fastify = require('fastify')
+const { clear, connInfo, isMysql, isSQLite } = require('./helper')
 
 test('basic hooks', async ({ pass, teardown, same, equal, plan }) => {
   plan(22)
@@ -552,8 +552,8 @@ test('delete hook', async ({ pass, teardown, same, equal, plan }) => {
   }
 })
 
-test('false resolver no schema', async ({ pass, teardown, same, equal, plan, match }) => {
-  plan(5)
+test('false resolver no schema', async ({ pass, teardown, same, equal, plan }) => {
+  plan(4)
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -631,11 +631,13 @@ test('false resolver no schema', async ({ pass, teardown, same, equal, plan, mat
       }
     })
     equal(res.statusCode, 400, 'pages status code')
+    console.log(res.body.toString())
     match(res.json(), {
       data: null,
       errors: [{
         message: 'Cannot query field "getPageById" on type "Query".',
-        locations: [{ line: 3, column: 13 }]
+        locations: [{ line: 3, column: 13 }
+        ]
       }]
     })
   }

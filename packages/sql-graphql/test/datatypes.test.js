@@ -1,12 +1,13 @@
 'use strict'
 
 const { clear, connInfo, isPg, isMysql, isSQLite } = require('./helper')
-const { test } = require('tap')
+const { test } = require('node:test')
+const { deepEqual: same, equal, ok: pass } = require('node:assert')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
 const fastify = require('fastify')
 
-test('[PG] simple db simple graphql schema', { skip: !isPg }, async ({ pass, teardown, same, equal }) => {
+test('[PG] simple db simple graphql schema', { skip: !isPg }, async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -33,7 +34,7 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async ({ pass, tea
       );`)
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   app.register(sqlGraphQL)
 
@@ -146,7 +147,7 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async ({ pass, tea
   }
 })
 
-test('[PG] - UUID', { skip: !isPg }, async ({ pass, teardown, same, equal }) => {
+test('[PG] - UUID', { skip: !isPg }, async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -164,7 +165,7 @@ test('[PG] - UUID', { skip: !isPg }, async ({ pass, teardown, same, equal }) => 
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -249,7 +250,7 @@ test('[PG] - UUID', { skip: !isPg }, async ({ pass, teardown, same, equal }) => 
   }
 })
 
-test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async ({ pass, teardown, same, equal }) => {
+test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -277,7 +278,7 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async ({ pas
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -391,7 +392,7 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async ({ pas
   }
 })
 
-test('[MySQL] - UUID', { skip: !isMysql }, async ({ pass, teardown, same, equal, skip }) => {
+test('[MySQL] - UUID', { skip: !isMysql }, async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -411,7 +412,7 @@ test('[MySQL] - UUID', { skip: !isMysql }, async ({ pass, teardown, same, equal,
     }
   })
   app.register(sqlGraphQL)
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -501,7 +502,7 @@ test('[MySQL] - UUID', { skip: !isMysql }, async ({ pass, teardown, same, equal,
   }
 })
 
-test('[SQLite] simple db simple graphql schema', { skip: !isSQLite }, async ({ pass, teardown, same, equal }) => {
+test('[SQLite] simple db simple graphql schema', { skip: !isSQLite }, async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -523,7 +524,7 @@ test('[SQLite] simple db simple graphql schema', { skip: !isSQLite }, async ({ p
       );`)
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   app.register(sqlGraphQL)
 
@@ -620,7 +621,7 @@ test('[SQLite] simple db simple graphql schema', { skip: !isSQLite }, async ({ p
   }
 })
 
-test('[SQLite] - UUID', { skip: !isSQLite }, async ({ pass, teardown, same, equal }) => {
+test('[SQLite] - UUID', { skip: !isSQLite }, async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -638,7 +639,7 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async ({ pass, teardown, same, equa
   })
   app.register(sqlGraphQL)
 
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   await app.ready()
 
@@ -723,7 +724,7 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async ({ pass, teardown, same, equa
   }
 })
 
-test('BIGINT!', { skip: isSQLite }, async ({ pass, teardown, same, equal }) => {
+test('BIGINT!', { skip: isSQLite }, async (t) => {
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
@@ -739,7 +740,7 @@ test('BIGINT!', { skip: isSQLite }, async ({ pass, teardown, same, equal }) => {
       );`)
     }
   })
-  teardown(app.close.bind(app))
+  t.after(() => app.close())
 
   app.register(sqlGraphQL)
 
