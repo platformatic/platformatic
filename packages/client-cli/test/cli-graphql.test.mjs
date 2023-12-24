@@ -1,5 +1,7 @@
 import { request, moveToTmpdir } from './helper.js'
-import { test } from 'tap'
+import { test, after } from 'node:test'
+import { equal } from 'node:assert'
+import { match } from '@platformatic/utils'
 import { buildServer } from '@platformatic/db'
 import { join } from 'path'
 import * as desm from 'desm'
@@ -11,7 +13,7 @@ import { copy } from 'fs-extra'
 
 const env = { ...process.env, NODE_V8_COVERAGE: undefined }
 
-test('graphql client generation (javascript)', async ({ teardown, comment, same, equal, match }) => {
+test('graphql client generation (javascript)', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -21,9 +23,9 @@ test('graphql client generation (javascript)', async ({ teardown, comment, same,
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(after)
 
-  comment(`working in ${dir}`)
+  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url, '--name', 'movies', '--type', 'graphql'])
 
   const readSDL = await fs.readFile(join(dir, 'movies', 'movies.schema.graphql'), 'utf8')
@@ -33,7 +35,7 @@ test('graphql client generation (javascript)', async ({ teardown, comment, same,
     equal(sdl, readSDL)
   }
 
-  comment(`server at ${app.url}`)
+  t.diagnostic(`server at ${app.url}`)
 
   const toWrite = `
 'use strict'
@@ -54,8 +56,8 @@ app.listen({ port: 0 })
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
   const server2 = execa('node', ['index.js'])
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -82,7 +84,7 @@ app.listen({ port: 0 })
   })
 })
 
-test('graphql client generation (typescript)', async ({ teardown, comment, same, match }) => {
+test('graphql client generation (typescript)', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -92,12 +94,12 @@ test('graphql client generation (typescript)', async ({ teardown, comment, same,
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(after)
 
-  comment(`working in ${dir}`)
+  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
 
-  comment(`upstream URL is ${app.url}`)
+  t.diagnostic(`upstream URL is ${app.url}`)
 
   const toWrite = `
 import Fastify from 'fastify';
@@ -139,8 +141,8 @@ app.listen({ port: 0 });
   await copy(join(dir, 'movies'), join(dir, 'build', 'movies'))
 
   const server2 = execa('node', ['build/index.js'])
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -155,7 +157,7 @@ app.listen({ port: 0 });
     url = msg.slice(base.length)
     break
   }
-  comment(`client URL is ${url}`)
+  t.diagnostic(`client URL is ${url}`)
   const res = await request(url, {
     method: 'POST'
   })
@@ -165,7 +167,7 @@ app.listen({ port: 0 });
   })
 })
 
-test('graphql client generation with relations (typescript)', async ({ teardown, comment, same, match }) => {
+test('graphql client generation with relations (typescript)', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies-quotes', 'db.sqlite'))
   } catch {
@@ -175,9 +177,9 @@ test('graphql client generation with relations (typescript)', async ({ teardown,
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(after)
 
-  comment(`working in ${dir}`)
+  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
 
   const toWrite = `
@@ -240,8 +242,8 @@ app.listen({ port: 0});
   await copy(join(dir, 'movies'), join(dir, 'build', 'movies'))
 
   const server2 = execa('node', ['build/index.js'])
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -268,7 +270,7 @@ app.listen({ port: 0});
   })
 })
 
-test('graphql client generation (javascript) with slash at the end of the URL', async ({ teardown, comment, same, match }) => {
+test('graphql client generation (javascript) with slash at the end of the URL', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -278,12 +280,12 @@ test('graphql client generation (javascript) with slash at the end of the URL', 
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(after)
 
-  comment(`working in ${dir}`)
+  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
 
-  comment(`server at ${app.url}`)
+  t.diagnostic(`server at ${app.url}`)
 
   const toWrite = `
 'use strict'
@@ -304,8 +306,8 @@ app.listen({ port: 0 })
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
   const server2 = execa('node', ['index.js'])
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -329,7 +331,7 @@ app.listen({ port: 0 })
   })
 })
 
-test('configureClient (typescript)', async ({ teardown, comment, same, match }) => {
+test('configureClient (typescript)', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -339,12 +341,12 @@ test('configureClient (typescript)', async ({ teardown, comment, same, match }) 
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(after)
 
-  comment(`working in ${dir}`)
+  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
 
-  comment(`upstream URL is ${app.url}`)
+  t.diagnostic(`upstream URL is ${app.url}`)
 
   const toWrite = `
 import Fastify from 'fastify';
@@ -394,8 +396,8 @@ app.listen({ port: 0 });
   await copy(join(dir, 'movies'), join(dir, 'build', 'movies'))
 
   const server2 = execa('node', ['build/index.js'])
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -410,7 +412,7 @@ app.listen({ port: 0 });
     url = msg.slice(base.length)
     break
   }
-  comment(`client URL is ${url}`)
+  t.diagnostic(`client URL is ${url}`)
   const res = await request(url, {
     method: 'POST'
   })
@@ -420,7 +422,7 @@ app.listen({ port: 0 });
   })
 })
 
-test('graphql client generation (javascript) from a file', async ({ teardown, comment, same, equal, match }) => {
+test('graphql client generation (javascript) from a file', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -430,8 +432,8 @@ test('graphql client generation (javascript) from a file', async ({ teardown, co
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
 
   const sdl = graphql.printSchema(app.graphql.schema)
   const sdlFile = join(dir, 'movies.schema.graphql')
@@ -442,7 +444,7 @@ test('graphql client generation (javascript) from a file', async ({ teardown, co
   const readSDL = await fs.readFile(join(dir, 'movies', 'movies.schema.graphql'), 'utf8')
   equal(sdl, readSDL)
 
-  comment(`server at ${app.url}`)
+  t.diagnostic(`server at ${app.url}`)
 
   const toWrite = `
 'use strict'
@@ -463,8 +465,8 @@ app.listen({ port: 0 })
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
   const server2 = execa('node', ['index.js'])
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 

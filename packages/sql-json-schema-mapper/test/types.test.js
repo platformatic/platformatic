@@ -1,6 +1,7 @@
 'use strict'
 
-const { test } = require('tap')
+const { test } = require('node:test')
+const { deepEqual: same, notEqual } = require('node:assert')
 const dtsgenerator = require('dtsgenerator')
 const { mapOpenAPItoTypes } = require('..')
 
@@ -15,9 +16,9 @@ function referenceTest (name, obj, opts = {}) {
     const reference = await dtsgenerator.default({ contents: [dtsgenerator.parseSchema(structuredClone(obj))] })
     const cloned = structuredClone(obj)
     const ours = mapOpenAPItoTypes(cloned, { id: { primaryKey: true } })
-    t.not(cloned, obj)
-    t.same(cloned, obj)
-    t.same(ours.trim(), reference.trim())
+    notEqual(cloned, obj)
+    same(cloned, obj)
+    same(ours.trim(), reference.trim())
   })
 }
 

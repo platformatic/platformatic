@@ -4,7 +4,7 @@
   "description": "Platformatic DB Config Manager",
   "main": "index.js",
   "scripts": {
-    "test": "standard | snazzy && c8 --100 node ./test/runner.js",
+    "test": "pnpm run lint && c8 --100 node ./test/runner.js",
     "lint": "standard | snazzy"
   },
   "repository": {

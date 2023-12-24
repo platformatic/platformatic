@@ -1,5 +1,7 @@
 import { request, moveToTmpdir } from './helper.js'
-import { test } from 'tap'
+import { test, after } from 'node:test'
+import { equal, deepEqual as same, rejects } from 'node:assert'
+import { match } from '@platformatic/utils'
 import { buildServer } from '@platformatic/runtime'
 import { join } from 'path'
 import * as desm from 'desm'
@@ -13,7 +15,7 @@ import { isFileAccessible } from '../cli.mjs'
 
 const env = { ...process.env, NODE_V8_COVERAGE: undefined }
 
-test('openapi client generation (javascript)', async ({ teardown, comment, same }) => {
+test('openapi client generation (javascript)', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -23,8 +25,8 @@ test('openapi client generation (javascript)', async ({ teardown, comment, same 
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
 
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url, '--name', 'movies', '--type', 'openapi'])
 
@@ -45,8 +47,8 @@ app.listen({ port: 0 })
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
   const app2 = execa('node', ['index.js'], { env })
-  teardown(() => app2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => app2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
@@ -71,7 +73,7 @@ app.listen({ port: 0 })
   })
 })
 
-test('openapi client generation (typescript)', async ({ teardown, comment, same }) => {
+test('openapi client generation (typescript)', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -81,9 +83,9 @@ test('openapi client generation (typescript)', async ({ teardown, comment, same 
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(after)
 
-  comment(`working in ${dir}`)
+  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
   const toWrite = `
@@ -130,8 +132,8 @@ app.listen({ port: 0 });
   await copy(join(dir, 'movies'), join(dir, 'build', 'movies'))
 
   const server2 = execa('node', ['build/index.js'], { env })
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
   server2.stderr.pipe(process.stderr)
@@ -157,7 +159,7 @@ app.listen({ port: 0 });
   })
 })
 
-test('openapi client generation (javascript) with slash at the end', async ({ teardown, comment, same }) => {
+test('openapi client generation (javascript) with slash at the end', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -167,9 +169,9 @@ test('openapi client generation (javascript) with slash at the end', async ({ te
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(after)
 
-  comment(`working in ${dir}`)
+  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
   const toWrite = `
@@ -189,8 +191,8 @@ app.listen({ port: 0 })
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
   const server2 = execa('node', ['index.js'], { env })
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -215,7 +217,7 @@ app.listen({ port: 0 })
   })
 })
 
-test('no such file', async ({ rejects, teardown }) => {
+test('no such file', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -224,19 +226,19 @@ test('no such file', async ({ rejects, teardown }) => {
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
 
-  await moveToTmpdir(teardown)
+  await moveToTmpdir(after)
   await rejects(execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), `${app.url}/foo/bar`, '--name', 'movies']))
 })
 
-test('no such file', async ({ rejects, teardown }) => {
+test('no such file', async (t) => {
   await rejects(execa('node', [desm.join(import.meta.url, '..', 'cli.mjs')]))
 })
 
-test('datatypes', async ({ teardown, comment, match }) => {
+test('datatypes', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies-quotes', 'db.sqlite'))
   } catch {
@@ -246,9 +248,9 @@ test('datatypes', async ({ teardown, comment, match }) => {
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(after)
 
-  comment(`working in ${dir}`)
+  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
   const toWrite = `
@@ -268,8 +270,8 @@ app.listen({ port: 0 })
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
   const server2 = execa('node', ['index.js'], { env })
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -294,7 +296,7 @@ app.listen({ port: 0 })
   })
 })
 
-test('configureClient (typescript)', async ({ teardown, comment, same }) => {
+test('configureClient (typescript)', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -304,9 +306,9 @@ test('configureClient (typescript)', async ({ teardown, comment, same }) => {
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(after)
 
-  comment(`working in ${dir}`)
+  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
   const toWrite = `
@@ -356,8 +358,8 @@ app.listen({ port: 0 });
   await copy(join(dir, 'movies'), join(dir, 'build', 'movies'))
 
   const server2 = execa('node', ['build/index.js'])
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
   server2.stderr.pipe(process.stderr)
@@ -383,7 +385,7 @@ app.listen({ port: 0 });
   })
 })
 
-test('dotenv & config support', async ({ teardown, comment, same }) => {
+test('dotenv & config support', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -392,12 +394,12 @@ test('dotenv & config support', async ({ teardown, comment, same }) => {
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
 
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
 
   const pltServiceConfig = {
     $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
@@ -435,7 +437,7 @@ test('dotenv & config support', async ({ teardown, comment, same }) => {
   }
 })
 
-test('full-response option', async ({ teardown, comment, match }) => {
+test('full-response option', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -445,8 +447,8 @@ test('full-response option', async ({ teardown, comment, match }) => {
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
 
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--full-response'])
 
@@ -466,8 +468,8 @@ app.listen({ port: 0 })
 `
   await fs.writeFile(join(dir, 'index.js'), toWrite)
   const app2 = execa('node', ['index.js'])
-  teardown(() => app2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => app2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
@@ -514,7 +516,7 @@ app.listen({ port: 0 })
   }
 })
 
-test('openapi client generation (javascript) from file', async ({ teardown, comment, same }) => {
+test('openapi client generation (javascript) from file', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -524,8 +526,8 @@ test('openapi client generation (javascript) from file', async ({ teardown, comm
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
 
   const openAPI = app.swagger()
   const openAPIfile = join(dir, 'movies.schema.json')
@@ -550,8 +552,8 @@ app.listen({ port: 0 })
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
   const app2 = execa('node', ['index.js'])
-  teardown(() => app2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => app2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
@@ -576,7 +578,7 @@ app.listen({ port: 0 })
   })
 })
 
-test('name with dashes', async ({ teardown, comment, same }) => {
+test('name with dashes', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -586,8 +588,8 @@ test('name with dashes', async ({ teardown, comment, same }) => {
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
 
   try {
     await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'uncanny-movies'])
@@ -622,8 +624,8 @@ app.listen({ port: 0 })
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
   const app2 = execa('node', ['index.js'])
-  teardown(() => app2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => app2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
@@ -648,7 +650,7 @@ app.listen({ port: 0 })
   })
 })
 
-test('no dashes typescript', async ({ teardown, comment, same }) => {
+test('no dashes typescript', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -658,9 +660,9 @@ test('no dashes typescript', async ({ teardown, comment, same }) => {
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(after)
 
-  comment(`working in ${dir}`)
+  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'uncanny-movies'])
 
   const toWrite = `
@@ -702,8 +704,8 @@ app.listen({ port: 0 });
   await copy(join(dir, 'uncanny-movies'), join(dir, 'build', 'uncanny-movies'))
 
   const server2 = execa('node', ['build/index.js'])
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
   server2.stderr.pipe(process.stderr)
@@ -729,7 +731,7 @@ app.listen({ port: 0 });
   })
 })
 
-test('name with tilde', async ({ teardown, comment, same }) => {
+test('name with tilde', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -739,8 +741,8 @@ test('name with tilde', async ({ teardown, comment, same }) => {
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
 
   try {
     await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'uncanny~movies'])
@@ -775,8 +777,8 @@ app.listen({ port: 0 })
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
   const app2 = execa('node', ['index.js'])
-  teardown(() => app2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => app2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
@@ -801,10 +803,10 @@ app.listen({ port: 0 })
   })
 })
 
-test('openapi client generation from YAML file', async ({ teardown, comment, same, match }) => {
-  const dir = await moveToTmpdir(teardown)
+test('openapi client generation from YAML file', async (t) => {
+  const dir = await moveToTmpdir(after)
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'openapi.yaml')
-  comment(`working in ${dir}`)
+  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
 
   // check openapi json file has been created
@@ -819,10 +821,10 @@ test('openapi client generation from YAML file', async ({ teardown, comment, sam
   match(typeData, 'getMovies(req?: GetMoviesRequest): Promise<GetMoviesResponses>;')
 })
 
-test('nested optional parameters are correctly identified', async ({ teardown, comment, match }) => {
-  const dir = await moveToTmpdir(teardown)
+test('nested optional parameters are correctly identified', async (t) => {
+  const dir = await moveToTmpdir(after)
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'optional-params-openapi.json')
-  comment(`working in ${dir}`)
+  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
 
   // check the type file has the correct implementation for the request
@@ -835,10 +837,10 @@ test('nested optional parameters are correctly identified', async ({ teardown, c
 `)
 })
 
-test('request with same parameter name in body/path/header/query', async ({ teardown, comment, match }) => {
-  const dir = await moveToTmpdir(teardown)
+test('request with same parameter name in body/path/header/query', async (t) => {
+  const dir = await moveToTmpdir(after)
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'same-parameter-name-openapi.json')
-  comment(`working in ${dir}`)
+  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
   // check the type file has the correct implementation for the request
   const typeFile = join(dir, 'movies', 'movies.d.ts')
@@ -860,10 +862,10 @@ test('request with same parameter name in body/path/header/query', async ({ tear
   }`)
 })
 
-test('openapi client generation (javascript) from file with fullRequest, fullResponse, validateResponse and optionalHeaders', async ({ teardown, comment, match }) => {
+test('openapi client generation (javascript) from file with fullRequest, fullResponse, validateResponse and optionalHeaders', async (t) => {
   const openapi = desm.join(import.meta.url, 'fixtures', 'full-req-res', 'openapi.json')
-  const dir = await moveToTmpdir((teardown))
-  comment(`working in ${dir}`)
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
 
   const fullOptions = [
     ['--full-request', '--full-response'],
@@ -913,10 +915,10 @@ async function generateFullClientPlugin (app, opts) {
   }
 })
 
-test('do not generate implementation file if in platformatic service', async ({ teardown, comment, match, not }) => {
+test('do not generate implementation file if in platformatic service', async (t) => {
   const openapi = desm.join(import.meta.url, 'fixtures', 'full-req-res', 'openapi.json')
-  const dir = await moveToTmpdir((teardown))
-  comment(`working in ${dir}`)
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
 
   const pltServiceConfig = {
     $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
@@ -938,7 +940,7 @@ test('do not generate implementation file if in platformatic service', async ({ 
   for (const opt of fullOptions) {
     await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapi, '--name', 'full', '--validate-response', '--optional-headers', 'headerId', ...opt])
 
-    not(isFileAccessible(join(dir, 'full', 'full.cjs')), true)
+    equal(await isFileAccessible(join(dir, 'full', 'full.cjs')), false)
 
     // check the type file has the correct implementation for the request and the response
     const typeFile = join(dir, 'full', 'full.d.ts')
@@ -963,9 +965,9 @@ test('do not generate implementation file if in platformatic service', async ({ 
   }
 })
 
-test('optional-headers option', async ({ teardown, comment, match }) => {
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+test('optional-headers option', async (t) => {
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'optional-headers-openapi.json')
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--optional-headers', 'foobar,authorization', '--types-only'])
@@ -979,9 +981,9 @@ test('optional-headers option', async ({ teardown, comment, match }) => {
 `)
 })
 
-test('common parameters in paths', async ({ teardown, comment, match }) => {
-  const dir = await moveToTmpdir(teardown)
-  comment(`working in ${dir}`)
+test('common parameters in paths', async (t) => {
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'common-parameters', 'openapi.json')
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--full-request'])
@@ -1022,7 +1024,7 @@ test('common parameters in paths', async ({ teardown, comment, match }) => {
 
   await app.start()
 
-  comment(`working in ${dir}`)
+  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'commonparams', '--full-request'])
 
   const toWrite = `
@@ -1052,8 +1054,8 @@ app.listen({ port: 0 })
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
   const server2 = execa('node', ['index.js'])
-  teardown(() => server2.kill())
-  teardown(async () => { await app.close() })
+  t.after(() => server2.kill())
+  t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 

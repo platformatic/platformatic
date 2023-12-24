@@ -1,6 +1,8 @@
 'use strict'
 
-import { test } from 'tap'
+import { test, after } from 'node:test'
+import { equal, ok } from 'node:assert'
+import { match } from '@platformatic/utils'
 import { buildServer } from '@platformatic/db'
 import { join } from 'path'
 import { processFrontendOpenAPI } from '../lib/frontend-openapi-generator.mjs'
@@ -12,7 +14,7 @@ import { execa } from 'execa'
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 
-test('build basic client from url', async ({ teardown, ok, match }) => {
+test('build basic client from url', async (t) => {
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'sample', 'db.sqlite'))
   } catch {
@@ -20,7 +22,7 @@ test('build basic client from url', async ({ teardown, ok, match }) => {
   }
   const app = await buildServer(join(__dirname, 'fixtures', 'sample', 'platformatic.db.json'))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
   await app.start()
@@ -88,7 +90,7 @@ export default function build(url: string): PlatformaticFrontendClient`
 
   {
     // Support custom url in cli
-    const dir = await moveToTmpdir(teardown)
+    const dir = await moveToTmpdir(after)
     await execa('node', [cliPath, `${app.url}/custom-swagger`, '--frontend', '--name', 'sample'])
     const implementation = await readFile(join(dir, 'sample', 'sample.mjs'), 'utf8')
     const types = await readFile(join(dir, 'sample', 'sample-types.d.ts'), 'utf8')
@@ -119,7 +121,7 @@ export interface Sample {
   }
 })
 
-test('generate correct file names', async ({ teardown, ok }) => {
+test('generate correct file names', async (t) => {
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'sample', 'db.sqlite'))
   } catch {
@@ -127,13 +129,13 @@ test('generate correct file names', async ({ teardown, ok }) => {
   }
   const app = await buildServer(join(__dirname, 'fixtures', 'sample', 'platformatic.db.json'))
 
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
   })
 
   await app.start()
 
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(after)
 
   // Without --name will create api/client filenames
   await execa('node', [cliPath, app.url, '--language', 'ts', '--frontend'])
@@ -160,7 +162,7 @@ test('generate correct file names', async ({ teardown, ok }) => {
   ok(await readFile(join(dir, 'sample-name', 'sample-name-types.d.ts')))
 })
 
-test('test factory and client', async ({ teardown, equal }) => {
+test('test factory and client', async (t) => {
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'sample', 'db.sqlite'))
   } catch {
@@ -170,14 +172,14 @@ test('test factory and client', async ({ teardown, equal }) => {
   // start 2 services
   const app = await buildServer(join(__dirname, 'fixtures', 'sample', 'platformatic.db.json'))
   const app2 = await buildServer(join(__dirname, 'fixtures', 'sample', 'platformatic.db.json'))
-  teardown(async () => {
+  t.after(async () => {
     await app.close()
     await app2.close()
   })
 
   await app.start()
   await app2.start()
-  const dir = await moveToTmpdir(teardown)
+  const dir = await moveToTmpdir(after)
 
   await execa('node', [cliPath, app.url, '--name', 'foobar', '--frontend'])
   const testFile = `
@@ -201,8 +203,8 @@ console.log(await getReturnUrl({}))
   equal(lines[1], `{ url: '${app2.url}' }`) // raw, app2 object
 })
 
-test('generate frontend client from path', async ({ teardown, ok, match }) => {
-  const dir = await moveToTmpdir(teardown)
+test('generate frontend client from path', async (t) => {
+  const dir = await moveToTmpdir(after)
 
   const fileName = join(__dirname, 'fixtures', 'frontend-openapi.json')
   await execa('node', [cliPath, fileName, '--language', 'ts', '--frontend'])
@@ -225,8 +227,8 @@ export interface Api {
   match(types, typesTemplate)
 })
 
-test('generate frontend client from path (name with dashes)', async ({ teardown, ok, match }) => {
-  const dir = await moveToTmpdir(teardown)
+test('generate frontend client from path (name with dashes)', async (t) => {
+  const dir = await moveToTmpdir(after)
 
   const fileName = join(__dirname, 'fixtures', 'frontend-openapi.json')
   await execa('node', [cliPath, fileName, '--language', 'ts', '--frontend', '--name', 'a-custom-name'])
@@ -253,8 +255,8 @@ export interface ACustomName {
   match(implementation, importTemplate)
 })
 
-test('append query parameters to url in non-GET requests', async ({ teardown, ok, match }) => {
-  const dir = await moveToTmpdir(teardown)
+test('append query parameters to url in non-GET requests', async (t) => {
+  const dir = await moveToTmpdir(after)
 
   const fileName = join(__dirname, 'fixtures', 'append-query-params-frontend-openapi.json')
   await execa('node', [cliPath, fileName, '--language', 'ts', '--frontend', '--name', 'fontend'])
@@ -277,8 +279,8 @@ const _postRoot = async (url: string, request: Types.PostRootRequest) => {
   match(implementation, tsImplementationTemplate)
 })
 
-test('handle headers parameters', async ({ teardown, ok, match }) => {
-  const dir = await moveToTmpdir(teardown)
+test('handle headers parameters', async (t) => {
+  const dir = await moveToTmpdir(after)
 
   const fileName = join(__dirname, 'fixtures', 'headers-frontend-openapi.json')
   await execa('node', [cliPath, fileName, '--language', 'ts', '--frontend', '--name', 'fontend'])
@@ -300,8 +302,8 @@ const _postRoot = async (url: string, request: Types.PostRootRequest) => {
   match(implementation, tsImplementationTemplate)
 })
 
-test('handle headers parameters in get request', async ({ teardown, ok, match }) => {
-  const dir = await moveToTmpdir(teardown)
+test('handle headers parameters in get request', async (t) => {
+  const dir = await moveToTmpdir(after)
 
   const fileName = join(__dirname, 'fixtures', 'get-headers-frontend-openapi.json')
   await execa('node', [cliPath, fileName, '--language', 'ts', '--frontend', '--name', 'fontend'])

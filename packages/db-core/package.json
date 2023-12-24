@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "standard | snazzy && node --test",
+    "test": "pnpm run lint && node --test",
     "lint": "standard | snazzy"
   },
   "repository": {
