@@ -146,7 +146,7 @@ await app.listen({ port, host })
 As well as a couple of tests for the API routes:
 
 ```javascript
-// tests/routes.test.js
+// test/routes.test.js
 
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
@@ -347,10 +347,10 @@ If you copy over the tests from your existing Fastify app, they will typically o
 
 ### Replacing your Fastify server factory function
 
-The example Fastify app has a `buildApp()` factory function which creates a Fastify server instance. The `import` line for that function can be removed from `tests/routes.test.js`:
+The example Fastify app has a `buildApp()` factory function which creates a Fastify server instance. The `import` line for that function can be removed from `test/routes.test.js`:
 
 ```javascript
-// tests/routes.test.js
+// test/routes.test.js
 
 import { buildApp } from '../app.js'
 ```
@@ -358,7 +358,7 @@ import { buildApp } from '../app.js'
 And replaced with an `import` of the `buildServer()` function from `@platformatic/service`:
 
 ```javascript
-// tests/routes.test.js
+// test/routes.test.js
 
 import { buildServer } from '@platformatic/service'
 ```
@@ -377,7 +377,7 @@ If you have logged enabled for your Platformatic Service app, you'll probably wa
 Instead of passing the path to your app's configuration to `buildServer()`, you can import the app configuration and disable logging:
 
 ```javascript
-// tests/routes.test.js
+// test/routes.test.js
 
 import serviceConfig from '../platformatic.service.json' assert { type: 'json' }
 
@@ -387,7 +387,7 @@ serviceConfig.server.logger = false
 Then pass that `serviceConfig` configuration object to the `buildServer()` function:
 
 ```javascript
-// tests/routes.test.js
+// test/routes.test.js
 
 const app = await buildServer(serviceConfig)
 ```
