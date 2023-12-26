@@ -31,7 +31,7 @@
     "glob": "^10.3.10",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "tsd": "^0.29.0"
+    "tsd": "^0.30.0"
   },
   "dependencies": {
     "@databases/mysql": "^6.0.0",

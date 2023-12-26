@@ -34,7 +34,7 @@
     "openapi-types": "^12.1.3",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "tsd": "^0.29.0",
+    "tsd": "^0.30.0",
     "why-is-node-running": "^2.2.2",
     "yaml": "^2.3.2"
   },
