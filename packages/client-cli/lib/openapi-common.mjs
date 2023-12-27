@@ -49,10 +49,10 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
                 break
             }
           }
-          writeProperties(interfacesWriter, 'body', bodyParams, addedProps)
-          writeProperties(interfacesWriter, 'path', pathParams, addedProps)
-          writeProperties(interfacesWriter, 'query', queryParams, addedProps)
-          writeProperties(interfacesWriter, 'headers', headersParams, addedProps)
+          writeProperties(interfacesWriter, 'body', bodyParams, addedProps, 'req')
+          writeProperties(interfacesWriter, 'path', pathParams, addedProps, 'req')
+          writeProperties(interfacesWriter, 'query', queryParams, addedProps, 'req')
+          writeProperties(interfacesWriter, 'headers', headersParams, addedProps, 'req')
         } else {
           for (const parameter of parameters) {
             let { name, required } = parameter
@@ -61,12 +61,12 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
             }
             // We do not check for addedProps here because it's the first
             // group of properties
-            writeProperty(interfacesWriter, name, parameter, addedProps, required)
+            writeProperty(interfacesWriter, name, parameter, addedProps, required, 'req')
           }
         }
       }
       if (requestBody) {
-        writeContent(interfacesWriter, requestBody.content, schema, addedProps)
+        writeContent(interfacesWriter, requestBody.content, schema, addedProps, 'req')
       }
     })
     interfacesWriter.blankLine()
@@ -88,7 +88,7 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
       }
       let isResponseArray
       interfacesWriter.write(`export interface ${type}`).block(() => {
-        isResponseArray = writeContent(interfacesWriter, response.content, schema, new Set())
+        isResponseArray = writeContent(interfacesWriter, response.content, schema, new Set(), 'res')
       })
       interfacesWriter.blankLine()
       if (isResponseArray) type = `Array<${type}>`
@@ -108,7 +108,7 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
   }
 }
 
-export function writeProperties (writer, blockName, parameters, addedProps) {
+export function writeProperties (writer, blockName, parameters, addedProps, methodType) {
   if (parameters.length > 0) {
     let allOptionalParams = true
     for (const { required } of parameters) {
@@ -122,13 +122,13 @@ export function writeProperties (writer, blockName, parameters, addedProps) {
         const { name, required } = parameter
         // We do not check for addedProps here because it's the first
         // group of properties
-        writeProperty(writer, name, parameter, addedProps, required)
+        writeProperty(writer, name, parameter, addedProps, required, methodType)
       }
     })
   }
 }
 
-export function writeProperty (writer, key, value, addedProps, required = true) {
+export function writeProperty (writer, key, value, addedProps, required = true, methodType) {
   addedProps.add(key)
   if (required) {
     writer.quote(key)
@@ -136,29 +136,29 @@ export function writeProperty (writer, key, value, addedProps, required = true) 
     writer.quote(key)
     writer.write('?')
   }
-  writer.write(`: ${getType(value)};`)
+  writer.write(`: ${getType(value, methodType)};`)
   writer.newLine()
 }
 
-export function getType (typeDef) {
+export function getType (typeDef, methodType) {
   if (typeDef.schema) {
-    return getType(typeDef.schema)
+    return getType(typeDef.schema, methodType)
   }
   if (typeDef.anyOf) {
     // recursively call this function
     return typeDef.anyOf.map((t) => {
-      return getType(t)
+      return getType(t, methodType)
     }).join(' | ')
   }
 
   if (typeDef.allOf) {
     // recursively call this function
     return typeDef.allOf.map((t) => {
-      return getType(t)
+      return getType(t, methodType)
     }).join(' & ')
   }
   if (typeDef.type === 'array') {
-    return `Array<${getType(typeDef.items)}>`
+    return `Array<${getType(typeDef.items, methodType)}>`
   }
   if (typeDef.enum) {
     return typeDef.enum.map((en) => {
@@ -182,22 +182,22 @@ export function getType (typeDef) {
       if (typeDef.required) {
         required = !!typeDef.required.includes(prop)
       }
-      return `${prop}${required ? '' : '?'}: ${getType(typeDef.properties[prop])}`
+      return `${prop}${required ? '' : '?'}: ${getType(typeDef.properties[prop], methodType)}`
     })
     output += props.join('; ')
     output += ' }'
     return output
   }
-  return JSONSchemaToTsType(typeDef)
+  return JSONSchemaToTsType(typeDef, methodType)
 }
 
-function JSONSchemaToTsType ({ type, format, nullable }) {
+function JSONSchemaToTsType ({ type, format, nullable }, methodType) {
   const isDateType = format === 'date' || format === 'date-time'
   let resultType = 'unknown'
 
   switch (type) {
     case 'string':
-      resultType = isDateType ? 'string | Date' : 'string'
+      resultType = isDateType && methodType === 'req' ? 'string | Date' : 'string'
       break
     case 'integer':
       resultType = 'number'
@@ -214,7 +214,7 @@ function JSONSchemaToTsType ({ type, format, nullable }) {
   return nullable === true ? `${resultType} | null` : resultType
 }
 
-function writeContent (writer, content, spec, addedProps) {
+function writeContent (writer, content, spec, addedProps, methodType) {
   let isResponseArray = false
   if (content) {
     for (const [contentType, body] of Object.entries(content)) {
@@ -237,9 +237,9 @@ function writeContent (writer, content, spec, addedProps) {
       // TODO: support different schemas for different status codes
       if (body.schema.type === 'array') {
         isResponseArray = true
-        writeObjectProperties(writer, body.schema.items, spec, addedProps)
+        writeObjectProperties(writer, body.schema.items, spec, addedProps, methodType)
       } else {
-        writeObjectProperties(writer, body.schema, spec, addedProps)
+        writeObjectProperties(writer, body.schema, spec, addedProps, methodType)
       }
       break
     }
@@ -247,7 +247,7 @@ function writeContent (writer, content, spec, addedProps) {
   return isResponseArray
 }
 
-function writeObjectProperties (writer, schema, spec, addedProps) {
+function writeObjectProperties (writer, schema, spec, addedProps, methodType) {
   if (schema.$ref) {
     schema = jsonpointer.get(spec, schema.$ref.replace('#', ''))
   }
@@ -257,7 +257,7 @@ function writeObjectProperties (writer, schema, spec, addedProps) {
         continue
       }
       const required = schema.required && schema.required.includes(key)
-      writeProperty(writer, key, value, addedProps, required)
+      writeProperty(writer, key, value, addedProps, required, methodType)
     }
     // This is unlikely to happen with well-formed OpenAPI.
     /* c8 ignore next 3 */

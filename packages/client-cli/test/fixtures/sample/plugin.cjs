@@ -12,6 +12,17 @@ module.exports = async function (app) {
 
   app.get('/redirect', {
     schema: {
+      params: {
+        type: 'object',
+        properties: {
+          messageReq: { type: 'string', nullable: true },
+          dateTimeReq: { type: 'string', format: 'date-time' },
+          otherDateReq: { type: 'string', format: 'date' },
+          nullableDateReq: { type: 'string', format: 'date', nullable: true },
+          normalStringReq: { type: 'string' }
+        },
+        required: ['id', 'title']
+      },
       response: {
         302: {
           type: 'object',
@@ -20,11 +31,11 @@ module.exports = async function (app) {
         400: {
           type: 'object',
           properties: {
-            message: { type: 'string', nullable: true },
-            dateTime: { type: 'string', format: 'date-time' },
-            otherDate: { type: 'string', format: 'date' },
-            nullableDate: { type: 'string', format: 'date', nullable: true },
-            normalString: { type: 'string' }
+            messageRes: { type: 'string', nullable: true },
+            dateTimeRes: { type: 'string', format: 'date-time' },
+            otherDateRes: { type: 'string', format: 'date' },
+            nullableDateRes: { type: 'string', format: 'date', nullable: true },
+            normalStringRes: { type: 'string' }
           }
         }
       }
