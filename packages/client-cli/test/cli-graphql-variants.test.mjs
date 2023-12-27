@@ -79,9 +79,9 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  match(body, {
+  equal(match(body, {
     title: 'foo'
-  })
+  }), true)
 })
 
 test('dashes in name (typescript)', async (t) => {
@@ -162,9 +162,9 @@ app.listen({ port: 0 });
     method: 'POST'
   })
   const body = await res.body.json()
-  match(body, {
+  equal(match(body, {
     title: 'foo'
-  })
+  }), true)
 })
 
 test('different folder name', async (t) => {
@@ -233,9 +233,9 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  match(body, {
+  equal(match(body, {
     title: 'foo'
-  })
+  }), true)
 })
 
 test('tilde in name', async (t) => {
@@ -304,7 +304,7 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  match(body, {
+  equal(match(body, {
     title: 'foo'
-  })
+  }), true)
 })

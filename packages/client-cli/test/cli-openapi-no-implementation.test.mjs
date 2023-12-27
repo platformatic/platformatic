@@ -1,7 +1,7 @@
 import { request, moveToTmpdir } from './helper.js'
 import { test, after } from 'node:test'
-import { equal, deepEqual as same } from 'node:assert'
-import { match } from '@platformatic/utils'
+import { equal, deepEqual as same, match } from 'node:assert'
+import { match as matchObj } from '@platformatic/utils'
 import { buildServer } from '@platformatic/db'
 import { buildServer as buildService } from '@platformatic/service'
 import { join, posix } from 'path'
@@ -194,14 +194,14 @@ test('config support with folder', async (t) => {
 
   {
     const config = JSON.parse(await fs.readFile('./platformatic.service.json'))
-    match(config, {
+    equal(matchObj(config, {
       clients: [{
         schema: posix.join('uncanny', 'movies.openapi.json'),
         name: 'movies',
         type: 'openapi',
         url: '{PLT_MOVIES_URL}'
       }]
-    })
+    }), true)
   }
 })
 
