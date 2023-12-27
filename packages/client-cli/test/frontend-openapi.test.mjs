@@ -35,11 +35,20 @@ test('build basic client from url', async (t) => {
   match(types, /interface GetRedirectRequest/)
   match(types, /interface GetRedirectResponseFound/)
   match(types, /interface GetRedirectResponseBadRequest/)
-  match(types, /'message': string \| null;/)
-  match(types, /'dateTime': string \| Date;/)
-  match(types, /'otherDate': string \| Date;/)
-  match(types, /'nullableDate': string \| Date \| null;/)
-  match(types, /'normalString': string;/)
+
+  // Request can contain a `Date` type
+  ok(types.includes("'messageReq': string | null;"))
+  ok(types.includes("'dateTimeReq': string | Date;"))
+  ok(types.includes("'otherDateReq': string | Date;"))
+  ok(types.includes("'nullableDateReq': string | Date | null;"))
+  ok(types.includes("'normalStringReq': string;"))
+
+  // Response shouldn't contain `Date` for the same fields as above
+  ok(types.includes("'messageRes': string | null;"))
+  ok(types.includes("'dateTimeRes': string;"))
+  ok(types.includes("'otherDateRes': string;"))
+  ok(types.includes("'nullableDateRes': string | null;"))
+  ok(types.includes("'normalStringRes': string;"))
 
   // handle non 200 code endpoint
   const expectedImplementation = `
