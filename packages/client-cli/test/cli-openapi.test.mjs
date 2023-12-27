@@ -290,10 +290,10 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  match(body, {
+  equal(match(body, {
     id: 1,
     title: 'foo'
-  })
+  }), true)
 })
 
 test('configureClient (typescript)', async (t) => {
@@ -492,7 +492,7 @@ app.listen({ port: 0 })
     const matchDate = /[a-z]{3}, \d{2} [a-z]{3} \d{4} \d{2}:\d{2}:\d{2} GMT/i
     const matchKeepAlive = /timeout=\d+/
 
-    match(body, {
+    equal(match(body, {
       statusCode: 200,
       headers: {
         location: '/movies/1',
@@ -506,13 +506,13 @@ app.listen({ port: 0 })
         id: 1,
         title: 'foo'
       }
-    })
+    }), true)
   }
 
   {
     const res = await request(`${app.url}/redirect-me`)
-    match(res.statusCode, 302)
-    match(res.headers.location, 'https://google.com')
+    equal(match(res.statusCode, 302), true)
+    equal(match(res.headers.location, 'https://google.com'), true)
   }
 })
 
@@ -818,7 +818,7 @@ test('openapi client generation from YAML file', async (t) => {
   // Check operation names are correctly capitalized
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const typeData = await readFile(typeFile, 'utf-8')
-  match(typeData, 'getMovies(req?: GetMoviesRequest): Promise<GetMoviesResponses>;')
+  equal(match(typeData, 'getMovies(req?: GetMoviesRequest): Promise<GetMoviesResponses>;'), true)
 })
 
 test('nested optional parameters are correctly identified', async (t) => {
@@ -830,11 +830,11 @@ test('nested optional parameters are correctly identified', async (t) => {
   // check the type file has the correct implementation for the request
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
-  match(data, `
+  equal(data.includes(`
   export interface GetMoviesResponseOK {
     'data': { foo: string; bar?: string; baz?: { nested1?: string; nested2: string } };
   }
-`)
+`), true)
 })
 
 test('request with same parameter name in body/path/header/query', async (t) => {
@@ -845,7 +845,7 @@ test('request with same parameter name in body/path/header/query', async (t) => 
   // check the type file has the correct implementation for the request
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
-  match(data, `
+  equal(data.includes(`
   export interface GetMoviesRequest {
     body: {
       'id': string;
@@ -859,7 +859,7 @@ test('request with same parameter name in body/path/header/query', async (t) => 
     headers: {
       'id': string;
     }
-  }`)
+  }`), true)
 })
 
 test('openapi client generation (javascript) from file with fullRequest, fullResponse, validateResponse and optionalHeaders', async (t) => {
@@ -877,7 +877,7 @@ test('openapi client generation (javascript) from file with fullRequest, fullRes
     // check the type file has the correct implementation for the request and the response
     const typeFile = join(dir, 'full', 'full.d.ts')
     const data = await readFile(typeFile, 'utf-8')
-    match(data, `
+    equal(data.includes(`
   export interface PostHelloRequest {
     body: {
       'bodyId': string;
@@ -889,15 +889,15 @@ test('openapi client generation (javascript) from file with fullRequest, fullRes
       'headerId'?: string;
     }
   }
-`)
-    match(data, `
+`), true)
+    equal(data.includes(`
   export interface Full {
     postHello(req?: PostHelloRequest): Promise<PostHelloResponses>;
-  }`)
+  }`), true)
     const implementationFile = join(dir, 'full', 'full.cjs')
     const implementationData = await readFile(implementationFile, 'utf-8')
     // check the implementation instantiate the client with fullRequest and fullResponse
-    match(implementationData, `
+    equal(implementationData.includes(`
 async function generateFullClientPlugin (app, opts) {
   app.register(pltClient, {
     type: 'openapi',
@@ -911,7 +911,7 @@ async function generateFullClientPlugin (app, opts) {
     validateResponse: true,
     getHeaders: opts.getHeaders
   })
-}`)
+}`), true)
   }
 })
 
@@ -945,7 +945,7 @@ test('do not generate implementation file if in platformatic service', async (t)
     // check the type file has the correct implementation for the request and the response
     const typeFile = join(dir, 'full', 'full.d.ts')
     const data = await readFile(typeFile, 'utf-8')
-    match(data, `
+    equal(data.includes(`
   export interface PostHelloRequest {
     body: {
       'bodyId': string;
@@ -957,11 +957,11 @@ test('do not generate implementation file if in platformatic service', async (t)
       'headerId'?: string;
     }
   }
-`)
-    match(data, `
+`), true)
+    equal(data.includes(`
   export interface Full {
     postHello(req?: PostHelloRequest): Promise<PostHelloResponses>;
-  }`)
+  }`), true)
   }
 })
 
@@ -974,11 +974,11 @@ test('optional-headers option', async (t) => {
 
   const typeFile = join(dir, 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
-  match(data, `
+  equal(data.includes(`
   export interface PostHelloRequest {
     'authorization'?: string;
   }
-`)
+`), true)
 })
 
 test('common parameters in paths', async (t) => {
@@ -990,7 +990,7 @@ test('common parameters in paths', async (t) => {
 
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
-  match(data, `
+  equal(data.includes(`
   export interface GetPathWithFieldIdRequest {
     path: {
       'fieldId': string;
@@ -999,21 +999,21 @@ test('common parameters in paths', async (t) => {
       'movieId': string;
     }
   }
-`)
-  match(data, `
+`), true)
+  equal(data.includes(`
   export interface GetSampleRequest {
     query: {
       'movieId': string;
     }
   }
-`)
-  match(data, `
+`), true)
+  equal(data.includes(`
   export interface PostPathWithFieldIdRequest {
     path: {
       'fieldId': string;
     }
   }
-`)
+`), true)
   // test implementation
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'common-parameters', 'db.sqlite'))
@@ -1075,13 +1075,13 @@ app.listen({ port: 0 })
       method: 'GET'
     })
     const body = await res.body.json()
-    match(body, { query: { movieId: '123' }, path: { fieldId: 'foo' } })
+    equal(match(body, { query: { movieId: '123' }, path: { fieldId: 'foo' } }), true)
   }
   {
     const res = await request(url, {
       method: 'POST'
     })
     const body = await res.body.json()
-    match(body, { path: { fieldId: 'foo' } })
+    equal(match(body, { path: { fieldId: 'foo' } }), true)
   }
 })

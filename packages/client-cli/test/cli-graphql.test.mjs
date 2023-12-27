@@ -79,9 +79,9 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  match(body, {
+  equal(match(body, {
     title: 'foo'
-  })
+  }), true)
 })
 
 test('graphql client generation (typescript)', async (t) => {
@@ -162,9 +162,9 @@ app.listen({ port: 0 });
     method: 'POST'
   })
   const body = await res.body.json()
-  match(body, {
+  equal(match(body, {
     title: 'foo'
-  })
+  }), true)
 })
 
 test('graphql client generation with relations (typescript)', async (t) => {
@@ -262,12 +262,12 @@ app.listen({ port: 0});
     method: 'POST'
   })
   const body = await res.body.json()
-  match(body, {
+  equal(match(body, {
     quote: 'foo',
     movie: {
       title: 'foo'
     }
-  })
+  }), true)
 })
 
 test('graphql client generation (javascript) with slash at the end of the URL', async (t) => {
@@ -326,9 +326,9 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  match(body, {
+  equal(match(body, {
     title: 'foo'
-  })
+  }), true)
 })
 
 test('configureClient (typescript)', async (t) => {
@@ -417,9 +417,9 @@ app.listen({ port: 0 });
     method: 'POST'
   })
   const body = await res.body.json()
-  match(body, {
+  equal(match(body, {
     title: 'foo'
-  })
+  }), true)
 })
 
 test('graphql client generation (javascript) from a file', async (t) => {
@@ -488,7 +488,7 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  match(body, {
+  equal(match(body, {
     title: 'foo'
-  })
+  }), true)
 })

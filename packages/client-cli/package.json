@@ -8,8 +8,7 @@
   },
   "scripts": {
     "lint": "standard | snazzy",
-    "test": "pnpm run lint && c8 borp --concurrency=1",
-    "nocov": "pnpm run lint && borp --concurrency=1"
+    "test": "pnpm run lint && borp --concurrency=1"
   },
   "repository": {
     "type": "git",
@@ -28,7 +27,6 @@
     "@platformatic/service": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "borp": "^0.4.2",
-    "c8": "^8.0.1",
     "dotenv": "^16.3.1",
     "execa": "^8.0.1",
     "fastify": "^4.23.2",

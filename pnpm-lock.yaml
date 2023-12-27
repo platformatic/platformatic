@@ -303,9 +303,6 @@ importers:
       borp:
         specifier: ^0.4.2
         version: 0.4.2
-      c8:
-        specifier: ^8.0.1
-        version: 8.0.1
       dotenv:
         specifier: ^16.3.1
         version: 16.3.1
