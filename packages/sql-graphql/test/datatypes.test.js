@@ -25,7 +25,9 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async (t) => {
         long_text TEXT,
         born_at_date DATE,
         born_at_time TIME,
+        born_at_timetz TIME,
         born_at_timestamp TIMESTAMP,
+        born_at_timestamptz TIMESTAMPTZ,
         uuid UUID UNIQUE,
         a_real real,
         a_smallint smallint,
@@ -55,7 +57,9 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async (t) => {
                               longText: "abc",
                               bornAtDate: "2021-11-11",
                               bornAtTime: "12:42:00Z",
+                              bornAtTimetz: "12:42:00Z",
                               bornAtTimestamp: "${timestamp.toISOString()}",
+                              bornAtTimestamptz: "${timestamp.toISOString()}",
                               uuid: "12345678-1234-1234-1234-123456789012",
                               aReal: 1.2,
                               aSmallint: 42,
@@ -68,7 +72,9 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async (t) => {
               longText
               bornAtDate
               bornAtTime
+              bornAtTimetz
               bornAtTimestamp
+              bornAtTimestamptz
               uuid
               aReal
               aSmallint
@@ -89,7 +95,9 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async (t) => {
           longText: 'abc',
           bornAtDate: '2021-11-11',
           bornAtTime: '12:42:00',
+          bornAtTimetz: '12:42:00',
           bornAtTimestamp: timestamp.toISOString(),
+          bornAtTimestamptz: timestamp.toISOString(),
           uuid: '12345678-1234-1234-1234-123456789012',
           aReal: 1.2,
           aSmallint: 42,
@@ -114,7 +122,9 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async (t) => {
               longText
               bornAtDate
               bornAtTime
+              bornAtTimetz
               bornAtTimestamp
+              bornAtTimestamptz
               uuid
               aReal
               aSmallint
@@ -135,7 +145,9 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async (t) => {
           longText: 'abc',
           bornAtDate: '2021-11-11',
           bornAtTime: '12:42:00',
+          bornAtTimetz: '12:42:00',
           bornAtTimestamp: timestamp.toISOString(),
+          bornAtTimestamptz: timestamp.toISOString(),
           uuid: '12345678-1234-1234-1234-123456789012',
           aReal: 1.2,
           aSmallint: 42,

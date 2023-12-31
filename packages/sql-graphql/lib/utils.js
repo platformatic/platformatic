@@ -50,8 +50,12 @@ function sqlTypeToGraphQL (sqlType) {
     case 'date':
       return scalars.GraphQLDate
     case 'time':
-      return graphql.GraphQLString
+      return scalars.GraphQLTime
+    case 'timetz':
+      return scalars.GraphQLTime
     case 'timestamp':
+      return scalars.GraphQLDateTime
+    case 'timestamptz':
       return scalars.GraphQLDateTime
     case 'uuid':
       return graphql.GraphQLID
