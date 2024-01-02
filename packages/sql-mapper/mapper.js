@@ -101,7 +101,7 @@ async function createConnectionPool ({ log, connectionString, poolSize, idleTime
   return { db, sql }
 }
 
-async function connect ({ connectionString, log, onDatabaseLoad, poolSize, ignore = {}, autoTimestamp = true, hooks = {}, schema, limit = {}, dbschema, cache, idleTimeoutMilliseconds, queueTimeoutMilliseconds, acquireLockTimeoutMilliseconds }) {
+async function connect ({ connectionString, log, onDatabaseLoad, poolSize, include = {}, ignore = {}, autoTimestamp = true, hooks = {}, schema, limit = {}, dbschema, cache, idleTimeoutMilliseconds, queueTimeoutMilliseconds, acquireLockTimeoutMilliseconds }) {
   if (typeof autoTimestamp === 'boolean' && autoTimestamp === true) {
     autoTimestamp = defaultAutoTimestampFields
   }
@@ -164,6 +164,19 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize, ignor
     }
 
     const schemaTables = dbschema.map(table => table.table)
+    if (Object.keys(include).length) {
+      for (const includedTable of Object.keys(include)) {
+        if (!schemaTables.includes(includedTable)) {
+          const nearestTable = findNearestString(schemaTables, includedTable)
+          let warningMessage = `Specified table "${includedTable}" not found.`
+          if (nearestTable) {
+            warningMessage += ` Did you mean "${nearestTable}"?`
+          }
+          log.warn(warningMessage)
+        }
+      }
+    }
+
     for (const ignoredTable of Object.keys(ignore)) {
       if (!schemaTables.includes(ignoredTable)) {
         const nearestTable = findNearestString(schemaTables, ignoredTable)
@@ -181,6 +194,10 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize, ignor
       /* istanbul ignore next */
       if (typeof table !== 'string') {
         throw new errors.TableMustBeAStringError(table)
+      }
+      // If include is being used and a table is not explicitly included add it to the ignore object
+      if (Object.keys(include).length && !include[table]) {
+        ignore[table] = true
       }
       if (ignore[table] === true) {
         continue
