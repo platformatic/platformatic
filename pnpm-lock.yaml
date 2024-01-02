@@ -301,8 +301,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       borp:
-        specifier: ^0.4.2
-        version: 0.4.2
+        specifier: ^0.5.0
+        version: 0.5.0
       dotenv:
         specifier: ^16.3.1
         version: 16.3.1
@@ -1613,8 +1613,8 @@ importers:
         specifier: workspace:*
         version: link:../sql-mapper
       borp:
-        specifier: ^0.4.2
-        version: 0.4.2
+        specifier: ^0.5.0
+        version: 0.5.0
       fastify:
         specifier: ^4.23.2
         version: 4.25.2
@@ -1683,8 +1683,8 @@ importers:
         specifier: workspace:*
         version: link:../telemetry
       borp:
-        specifier: ^0.4.2
-        version: 0.4.2
+        specifier: ^0.5.0
+        version: 0.5.0
       fastify:
         specifier: ^4.23.2
         version: 4.25.2
@@ -1717,8 +1717,8 @@ importers:
         specifier: workspace:*
         version: link:../sql-mapper
       borp:
-        specifier: ^0.4.2
-        version: 0.4.2
+        specifier: ^0.5.0
+        version: 0.5.0
       dtsgenerator:
         specifier: ^3.19.1
         version: 3.19.1
@@ -1833,8 +1833,8 @@ importers:
         specifier: workspace:*
         version: link:../sql-mapper
       borp:
-        specifier: ^0.4.2
-        version: 0.4.2
+        specifier: ^0.5.0
+        version: 0.5.0
       fastify:
         specifier: ^4.25.1
         version: 4.25.2
@@ -3939,8 +3939,8 @@ packages:
       lodash: 4.17.21
     dev: false
 
-  /borp@0.4.2:
-    resolution: {integrity: sha512-9WHQ5EbE8piouyDQXie2cruOkS+s3TE2SK9S7V2qlm1BupAY72Vx5PGQeqrU7uTgOfi09nRfa1p5rh8XHedMfw==}
+  /borp@0.5.0:
+    resolution: {integrity: sha512-7noQDTw5NGme7lVSJu1H+Sy0S48PF+H1Eat9F6ZM0d10CfnCqcghMI/m+o8om1axuJOTg1YRVIl0kFcktWpPKQ==}
     hasBin: true
     dependencies:
       c8: 8.0.1
