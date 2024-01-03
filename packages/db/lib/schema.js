@@ -70,6 +70,12 @@ const db = {
           graphiql: {
             type: 'boolean'
           },
+          include: {
+            type: 'object',
+            additionalProperties: {
+              type: 'boolean'
+            }
+          },
           ignore: {
             type: 'object',
             additionalProperties: {
@@ -112,6 +118,12 @@ const db = {
         type: 'object',
         properties: {
           ...(openApiBase.properties),
+          include: {
+            type: 'object',
+            additionalProperties: {
+              type: 'boolean'
+            }
+          },
           ignore: {
             type: 'object',
             additionalProperties: {
@@ -142,6 +154,12 @@ const db = {
         },
         additionalProperties: false
       }]
+    },
+    include: {
+      type: 'object',
+      additionalProperties: {
+        type: 'boolean'
+      }
     },
     ignore: {
       type: 'object',
