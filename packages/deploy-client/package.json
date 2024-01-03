@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "c8": "^8.0.1",
+    "c8": "^9.0.0",
     "glob": "^10.3.10",
     "fastify": "^4.23.2",
     "license-checker": "^25.0.1",

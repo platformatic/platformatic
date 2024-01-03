@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "@types/inquirer": "^9.0.7",
-    "c8": "^8.0.1",
+    "c8": "^9.0.0",
     "glob": "^10.3.10",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
