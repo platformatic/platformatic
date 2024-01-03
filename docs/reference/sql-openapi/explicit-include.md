@@ -1,9 +1,9 @@
-# Explicitly including entities
+# Explicitly including tables
 
-`@platformatic/sql-openapi` allows for specifying entities to be included. **Note**:
-using this method will ignore any unspecified entities in the schema.
+`@platformatic/sql-openapi` allows for specifying tables to be included. **Note**:
+using the `include` option will ignore any unspecified tables in the schema.
 
-To include entities:
+To include tables:
 
 ```javascript
 app.register(require('@platformatic/sql-openapi'), {

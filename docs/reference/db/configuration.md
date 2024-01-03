@@ -116,7 +116,7 @@ A **required** object with the following settings:
   }
   ```
 
-  It's possible to selectively ignore entites:
+  It's possible to selectively ignore entities:
 
   ```json
   {
@@ -245,7 +245,7 @@ A **required** object with the following settings:
   }
   ```
 
-  It's possible to selectively ignore entites:
+  It's possible to selectively ignore entities:
 
   ```json
   {
@@ -271,6 +271,22 @@ A **required** object with the following settings:
           "categories": {
             "name": true
           }
+        }
+      }
+    }
+  }
+  ```
+
+  It's possible to explicitly identify tables for which you like to build an entity:
+  **Note**: all other tables will be ignored.
+
+  ```json
+  {
+    "db": {
+      ...
+      "openapi": {
+        "include": {
+          "categories": true
         }
       }
     }
