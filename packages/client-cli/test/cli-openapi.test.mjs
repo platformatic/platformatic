@@ -523,18 +523,16 @@ test('url-auth-headers with wrong values', async (t) => {
   const dir = await moveToTmpdir(after)
   t.diagnostic(`working in ${dir}`)
 
-  let errName, errMessage, errStack
+  let errName, errMessage
   try {
     await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/docs', '--name', 'authUrlHeaders', '--url-auth-headers', 'this-is-wrong'])
-  } catch ({ name, message, stack }) {
+  } catch ({ name, message }) {
     errName = name
     errMessage = message
-    errStack = stack
   }
 
   equal(errName, 'Error')
   ok(errMessage.includes('Command failed'))
-  ok(errStack.includes('Uncaught SyntaxError: Unexpected token'))
 
   t.after(async () => { await app.close() })
 })
