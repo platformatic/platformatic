@@ -534,7 +534,7 @@ test('url-auth-headers with wrong values', async (t) => {
 
   equal(errName, 'Error')
   ok(errMessage.includes('Command failed'))
-  ok(errStack.includes('"this-is-wrong" is not valid JSON'))
+  ok(errStack.includes('Uncaught SyntaxError: Unexpected token'))
 
   t.after(async () => { await app.close() })
 })
