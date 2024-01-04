@@ -1,6 +1,6 @@
 import { request, moveToTmpdir } from './helper.js'
 import { test, after } from 'node:test'
-import { equal, deepEqual as same, rejects } from 'node:assert'
+import { ok, equal, deepEqual as same, rejects } from 'node:assert'
 import { match } from '@platformatic/utils'
 import { buildServer } from '@platformatic/runtime'
 import { join } from 'path'
@@ -460,7 +460,7 @@ const movies = require('./movies')
 const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}' })
-app.post('/', async (request, reply) => {  
+app.post('/', async (request, reply) => {
   const res = await request.movies.createMovie({ title: 'foo' })
   return res
 })
@@ -514,6 +514,66 @@ app.listen({ port: 0 })
     equal(match(res.statusCode, 302), true)
     equal(match(res.headers.location, 'https://google.com'), true)
   }
+})
+
+test('url-auth-headers option', async (t) => {
+  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'url-auth-headers', 'platformatic.service.json'))
+  await app.start()
+
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
+
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/docs', '--name', 'authUrlHeaders', '--url-auth-headers', '{"authorization":"42"}'])
+
+  let errName, errMessage, errStack
+  try {
+    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/docs', '--name', 'authUrlHeaders', '--url-auth-headers', 'this-is-wrong'])
+  } catch ({ name, message, stack }) {
+    errName = name
+    errMessage = message
+    errStack = stack
+  }
+
+  equal(errName, 'Error')
+  ok(errMessage.includes('Command failed'))
+  ok(errStack.includes("ERROR: Unexpected token 'h', \"this-is-wrong\" is not valid JSON"))
+
+  const toWrite = `
+'use strict'
+
+const Fastify = require('fastify')
+const authUrlHeaders = require('./authUrlHeaders')
+const app = Fastify({ logger: true })
+
+app.register(authUrlHeaders, { url: '${app.url}' })
+app.post('/', async (request, reply) => {
+  const res = await request.authUrlHeaders.getHello()
+  return res
+})
+app.listen({ port: 0 })
+`
+  await fs.writeFile(join(dir, 'index.js'), toWrite)
+  const app2 = execa('node', ['index.js'])
+  t.after(() => app2.kill())
+  t.after(async () => { await app.close() })
+
+  const stream = app2.stdout.pipe(split(JSON.parse))
+
+  // this is unfortuate :(
+  const base = 'Server listening at '
+  let url
+  for await (const line of stream) {
+    const msg = line.msg
+    if (msg.indexOf(base) !== 0) {
+      continue
+    }
+    url = msg.slice(base.length)
+    break
+  }
+
+  const res = await request(url, { method: 'POST' })
+  const body = await res.body.json()
+  equal(body.foo, 'bar')
 })
 
 test('openapi client generation (javascript) from file', async (t) => {
