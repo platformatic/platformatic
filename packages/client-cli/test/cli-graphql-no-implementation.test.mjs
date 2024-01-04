@@ -71,9 +71,9 @@ module.exports = async function (app) {
     method: 'POST'
   })
   const body = await res.body.json()
-  match(body, {
+  equal(match(body, {
     title: 'foo'
-  })
+  }), true)
 
   {
     const envs = dotenv.parse(await fs.readFile(join(dir, '.env')))
@@ -161,7 +161,7 @@ export default myPlugin
     method: 'POST'
   })
   const body = await res.body.json()
-  match(body, {
+  equal(match(body, {
     title: 'foo'
-  })
+  }), true)
 })

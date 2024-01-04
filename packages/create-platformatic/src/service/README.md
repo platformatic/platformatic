@@ -25,7 +25,7 @@ npm start
 
 ### Explore
 - ⚡ The Platformatic DB server is running at http://localhost:3042/
-- 📔 View the REST API's Swagger documentation at http://localhost:3042/documentation/
+- 📔 View the REST API's Swagger documentation at http://localhost:3042/documentation
 - 🔍 Try out the GraphiQL web UI at http://localhost:3042/graphiql
 
 

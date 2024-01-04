@@ -1,6 +1,6 @@
 import { request, moveToTmpdir } from './helper.js'
 import { test, after } from 'node:test'
-import { deepEqual as same, fail } from 'node:assert'
+import { equal, deepEqual as same, fail } from 'node:assert'
 import { match } from '@platformatic/utils'
 import { tspl } from '@matteo.collina/tspl'
 import { join, dirname, posix } from 'path'
@@ -248,14 +248,14 @@ PLT_SERVER_LOGGER_LEVEL=info
 
   const config = JSON.parse(await readFile(join(dir, 'services', 'languid-nobleman', 'platformatic.service.json'), 'utf8'))
 
-  match(config, {
+  equal(match(config, {
     clients: [{
       schema: 'movies/movies.openapi.json',
       name: 'movies',
       type: 'openapi',
       serviceId: 'somber-chariot'
     }]
-  })
+  }), true)
 })
 
 test('error if a service does not have openapi enabled', async (t) => {

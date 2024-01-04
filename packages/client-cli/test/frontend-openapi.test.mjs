@@ -1,8 +1,7 @@
 'use strict'
 
 import { test, after } from 'node:test'
-import { equal, ok } from 'node:assert'
-import { match } from '@platformatic/utils'
+import { equal, ok, match } from 'node:assert'
 import { buildServer } from '@platformatic/db'
 import { join } from 'path'
 import { processFrontendOpenAPI } from '../lib/frontend-openapi-generator.mjs'
@@ -92,10 +91,10 @@ export default function build(url: string): PlatformaticFrontendClient`
 
   // Correct CamelCase name
   const camelCase = 'export interface Sample {'
-  match(implementation, expectedImplementation)
-  match(implementation, factoryImplementation)
-  match(types, factoryType)
-  match(types, camelCase)
+  equal(implementation.includes(expectedImplementation), true)
+  equal(implementation.includes(factoryImplementation), true)
+  equal(types.includes(factoryType), true)
+  equal(types.includes(camelCase), true)
 
   {
     // Support custom url in cli
@@ -124,9 +123,9 @@ export interface Sample {
 `
     ok(implementation)
     ok(types)
-    match(implementation, jsImplementationTemplate)
-    match(types, typesTemplate)
-    match(types, unionTypesTemplate)
+    equal(implementation.includes(jsImplementationTemplate), true)
+    equal(types.includes(typesTemplate), true)
+    equal(types.includes(unionTypesTemplate), true)
   }
 })
 
@@ -232,8 +231,8 @@ export interface Api {
 
   ok(implementation)
   ok(types)
-  match(implementation, tsImplementationTemplate)
-  match(types, typesTemplate)
+  equal(implementation.includes(tsImplementationTemplate), true)
+  equal(types.includes(typesTemplate), true)
 })
 
 test('generate frontend client from path (name with dashes)', async (t) => {
@@ -259,9 +258,9 @@ export interface ACustomName {
 
   ok(implementation)
   ok(types)
-  match(implementation, tsImplementationTemplate)
-  match(types, typesTemplate)
-  match(implementation, importTemplate)
+  equal(implementation.includes(tsImplementationTemplate), true)
+  equal(types.includes(typesTemplate), true)
+  equal(implementation.includes(importTemplate), true)
 })
 
 test('append query parameters to url in non-GET requests', async (t) => {
@@ -285,7 +284,7 @@ const _postRoot = async (url: string, request: Types.PostRootRequest) => {
   const response = await fetch(\`\${url}/?\${searchParams.toString()}\`, {
 `
   ok(implementation)
-  match(implementation, tsImplementationTemplate)
+  equal(implementation.includes(tsImplementationTemplate), true)
 })
 
 test('handle headers parameters', async (t) => {
@@ -308,7 +307,7 @@ const _postRoot = async (url: string, request: Types.PostRootRequest) => {
   })
 `
   ok(implementation)
-  match(implementation, tsImplementationTemplate)
+  equal(implementation.includes(tsImplementationTemplate), true)
 })
 
 test('handle headers parameters in get request', async (t) => {
@@ -328,5 +327,5 @@ const _getRoot = async (url: string, request: Types.GetRootRequest) => {
   })
 `
   ok(implementation)
-  match(implementation, tsImplementationTemplate)
+  equal(implementation.includes(tsImplementationTemplate), true)
 })

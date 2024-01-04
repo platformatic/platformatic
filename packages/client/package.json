@@ -20,7 +20,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@platformatic/telemetry": "workspace:*",
-    "c8": "^8.0.1",
+    "c8": "^9.0.0",
     "desm": "^1.3.0",
     "execa": "^8.0.1",
     "fastify": "^4.23.2",
