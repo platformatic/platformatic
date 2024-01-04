@@ -516,6 +516,29 @@ app.listen({ port: 0 })
   }
 })
 
+test('url-auth-headers with wrong values', async (t) => {
+  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'url-auth-headers', 'platformatic.service.json'))
+  await app.start()
+
+  const dir = await moveToTmpdir(after)
+  t.diagnostic(`working in ${dir}`)
+
+  let errName, errMessage, errStack
+  try {
+    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/docs', '--name', 'authUrlHeaders', '--url-auth-headers', 'this-is-wrong'])
+  } catch ({ name, message, stack }) {
+    errName = name
+    errMessage = message
+    errStack = stack
+  }
+
+  equal(errName, 'Error')
+  ok(errMessage.includes('Command failed'))
+  ok(errStack.includes("ERROR: Unexpected token 'h', \"this-is-wrong\" is not valid JSON"))
+
+  t.after(async () => { await app.close() })
+})
+
 test('url-auth-headers option with valid values', async (t) => {
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'url-auth-headers', 'platformatic.service.json'))
   await app.start()
@@ -561,29 +584,6 @@ app.listen({ port: 0 })
   const res = await request(url, { method: 'POST' })
   const body = await res.body.json()
   equal(body.foo, 'bar')
-})
-
-test('url-auth-headers with wrong values', async (t) => {
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'url-auth-headers', 'platformatic.service.json'))
-  await app.start()
-
-  const dir = await moveToTmpdir(after)
-  t.diagnostic(`working in ${dir}`)
-
-  let errName, errMessage, errStack
-  try {
-    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/docs', '--name', 'authUrlHeaders', '--url-auth-headers', 'this-is-wrong'])
-  } catch ({ name, message, stack }) {
-    errName = name
-    errMessage = message
-    errStack = stack
-  }
-
-  equal(errName, 'Error')
-  ok(errMessage.includes('Command failed'))
-  ok(errStack.includes("ERROR: Unexpected token 'h', \"this-is-wrong\" is not valid JSON"))
-
-  t.after(async () => { await app.close() })
 })
 
 test('openapi client generation (javascript) from file', async (t) => {
