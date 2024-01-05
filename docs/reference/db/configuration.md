@@ -332,6 +332,20 @@ A **required** object with the following settings:
     }
   }
   ```
+- **`include`** (`object`) — Key/value object that defines which database tables should be mapped as API entities.
+
+  _Examples_
+
+  ```json
+  {
+    "db": {
+      ...
+      "include": {
+        "version": true // "versions" table will be the only entity mapped with REST APIs
+      }
+    }
+  }
+  ```
 
 - **`events`** (`boolean` or `object`, default: `true`) — Controls the support for events published by the SQL mapping layer.
   If enabled, this option add support for GraphQL Subscription over WebSocket. By default it uses an in-process message broker.
