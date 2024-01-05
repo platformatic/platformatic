@@ -1,0 +1,21 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v0.38.1/service",
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "0",
+    "logger": {
+      "level": "error"
+    }
+  },
+  "service": {
+    "openapi": true
+  },
+  "plugins": {
+    "paths": [
+      {
+        "path": "./plugins",
+        "encapsulate": false
+      }
+    ]
+  }
+}

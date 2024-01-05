@@ -69,4 +69,5 @@ Options:
 * `--optional-headers <headers>` - Comma separated string of headers that will be marked as optional in the type file. Ignored if `--frontend`
 * `--validate-response` - If set, will validate the response body against the schema. Ignored if `--frontend`
 * `--language js|ts` - Generate a Javascript or Typescript frontend client. Only works if `--frontend`
+* `--url-auth-headers <stringify-headers>` - When the Open API schema is passed as URL (instead of static file) this property allow to pass authorization headers. Headers should be passed as `string` (e.g. '{"authorization":"42"}').
 
