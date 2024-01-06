@@ -74,7 +74,9 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
   }
   for (const operation of operations) {
     const { operationId, responses } = operation.operation
-    const operationRequestName = `${capitalize(operationId)}Request`
+    const camelCaseOperationId = camelcase(operationId)
+    const operationRequestName = `${capitalize(camelCaseOperationId)}Request`
+    const operationResponseName = `${capitalize(camelCaseOperationId)}Responses`
     const underscoredOperationId = `_${operationId}`
     let queryParams = []
     let headerParams = []
@@ -99,7 +101,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
       // export const getMovies:Api['getMovies'] = async (request) => {
       // ```
       writer.write(
-          `const ${underscoredOperationId} = async (url: string, request: Types.${operationRequestName}) =>`
+        `const ${underscoredOperationId} = async (url: string, request: Types.${operationRequestName}): Promise<Types.${operationResponseName}> =>`
       )
     } else {
       writer.write(`async function ${underscoredOperationId} (url, request)`)
@@ -198,7 +200,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
     })
     writer.blankLine()
     if (language === 'ts') {
-      writer.write(`export const ${operationId}: ${camelCaseName}['${operationId}'] = async (request: Types.${operationRequestName}) =>`).block(() => {
+      writer.write(`export const ${operationId}: ${camelCaseName}['${operationId}'] = async (request: Types.${operationRequestName}): Promise<Types.${operationResponseName}> =>`).block(() => {
         writer.write(`return await ${underscoredOperationId}(baseUrl, request)`)
       })
     } else {
