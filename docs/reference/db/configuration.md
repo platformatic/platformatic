@@ -332,7 +332,7 @@ A **required** object with the following settings:
     }
   }
   ```
-- **`include`** (`object`) — Key/value object that defines which database tables should be mapped as API entities.
+- **`include`** (`object`) — Key/value object that defines which entities should be exposed
 
   _Examples_
 
