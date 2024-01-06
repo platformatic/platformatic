@@ -224,7 +224,7 @@ Open `platformatic.composer.js` and change it to the following:
 }
 ```
 
-Note that we just added `test-service` as `origin` of the proxed service and added the usual `telementry` configuration, with a different `serviceName`.
+Note that we just added `test-service` as `origin` of the proxied service and added the usual `telemetry` configuration, with a different `serviceName`.
 
 Finally, start the composer:
 
@@ -267,7 +267,7 @@ You can then click on the trace and see the details:
 
 ![image](./telemetry-images/jaeger-3.png)
 
-Note that everytime a request is received or client call is done, a new span is started. So we have:
+Note that every time a request is received or client call is done, a new span is started. So we have:
 - One span for the request received by the `test-composer` 
 - One span for the client call to `test-service`
 - One span for the request received by `test-service`

@@ -18,7 +18,7 @@ A Platformatic Service is an HTTP server based on [Fastify](https://www.fastify.
 With Platformatic Service you can:
 - Add custom functionality in a [Fastify plugin](https://fastify.dev/docs/latest/Reference/Plugins)
 - Write plugins in JavaScript or [TypeScript](https://www.typescriptlang.org/)
-- Optionally user TypeScript to write your application code
+- Optionally use TypeScript to write your application code
 
 A Platformatic Service is the basic building block of a Platformatic application.
 

@@ -128,7 +128,7 @@ Copy over the `routes` directory from your Express app.
 
 ### Install @fastify/express
 
-Install the [`@fastify/express`](https://www.npmjs.com/package/@fastify/express) Fastify plugin to add full Express compability to your Platformatic Service app:
+Install the [`@fastify/express`](https://www.npmjs.com/package/@fastify/express) Fastify plugin to add full Express compatibility to your Platformatic Service app:
 
 ```bash
 npm install @fastify/express
