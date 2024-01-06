@@ -48,7 +48,7 @@ npm i pino-elasticsearch
 
 ## Configure Logger Transport
 
-Configuring your platformatic application to log to ElasticSearch is straighforward,
+Configuring your Platformatic application to log to ElasticSearch is straightforward,
 you just have to configure it like the following:
 
 ```json
@@ -75,7 +75,7 @@ you just have to configure it like the following:
 ```
 
 This snippet can be applied either to the `platformatic.runtime.json` config
-for Platformatic Runtime applications, or as part of the applicaiton configuration
+for Platformatic Runtime applications, or as part of the application configuration
 for any other application.
 
 This setup will allow you to log both to the terminal (TTY)

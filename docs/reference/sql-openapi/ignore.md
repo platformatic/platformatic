@@ -2,7 +2,7 @@
 
 `@platformatic/sql-openapi` allows to selectively ignore entities and fields.
 
-To ignore entites:
+To ignore entities:
 
 ```javascript
 app.register(require('@platformatic/sql-openapi'), {

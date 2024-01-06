@@ -29,7 +29,7 @@ This guide
 
 ## Configure the new Platformatic app
 
-documentation to create a new Platformatic app. Every Platformatic app uses the "Movie" demo entity and includes
+Every Platformatic app uses the "Movie" demo entity and includes
 the corresponding table, migrations, and REST API to create, read, update, and delete movies.
 
 Once the new Platformatic app is ready:
@@ -179,7 +179,7 @@ cd rest-api-frontend/src
 npx platformatic client http://127.0.0.1:3042 --frontend --name foobar --language ts
 ```
 
-will generated `foobar.ts` and `foobar-types.d.ts`
+This will generate `foobar.ts` and `foobar-types.d.ts`
 
 
 ## React and Vue.js components that read, create, and update an entity

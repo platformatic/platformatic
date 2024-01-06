@@ -106,7 +106,7 @@ The snippet above defines a `Post` model with the following fields and propertie
 - `viewCount`: An `Int` field with a default value of 0.
 - `createdAt`: A `DateTime` field with a timestamp of when the value is created as its default value.
 
-By default, Prisma maps the model name and its format to the table name — which is also used im Prisma Client. Platformatic DB uses a snake casing and pluralized table names to map your table names to the generated API. The `@@map()` attribute in the Prisma schema allows you to define the name and format of your table names to be used in your database. You can also use the `@map()` attribute to define the format for field names to be used in your database. Refer to the [Foreign keys and table names naming conventions](#foreign-keys-and-table-names-naming-conventions) section to learn how you can automate formatting foreign keys and table names.
+By default, Prisma maps the model name and its format to the table name — which is also used in Prisma Client. Platformatic DB uses a snake casing and pluralized table names to map your table names to the generated API. The `@@map()` attribute in the Prisma schema allows you to define the name and format of your table names to be used in your database. You can also use the `@map()` attribute to define the format for field names to be used in your database. Refer to the [Foreign keys and table names naming conventions](#foreign-keys-and-table-names-naming-conventions) section to learn how you can automate formatting foreign keys and table names.
 
 Next, run the following command to generate an up and down migration:
 

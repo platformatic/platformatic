@@ -177,6 +177,9 @@ export interface PlatformaticDB {
       | boolean
       | {
           graphiql?: boolean;
+          include?: {
+            [k: string]: boolean;
+          };
           ignore?: {
             [k: string]:
               | boolean
@@ -209,13 +212,12 @@ export interface PlatformaticDB {
            */
           swaggerPrefix?: string;
           /**
-           * Base URL for generated Platformatic DB routes
-           */
-          prefix?: string;
-          /**
            * Path to an OpenAPI spec file
            */
           path?: string;
+          include?: {
+            [k: string]: boolean;
+          };
           ignore?: {
             [k: string]:
               | boolean
@@ -224,7 +226,14 @@ export interface PlatformaticDB {
                 };
           };
           enabled?: boolean | string;
+          /**
+           * Base URL for generated Platformatic DB routes
+           */
+          prefix?: string;
         };
+    include?: {
+      [k: string]: boolean;
+    };
     ignore?: {
       [k: string]: boolean;
     };
@@ -336,6 +345,8 @@ export interface PlatformaticDB {
     | {
         port?: number | string;
         hostname?: string;
+        endpoint?: string;
+        server?: "own" | "parent";
         auth?: {
           username: string;
           password: string;

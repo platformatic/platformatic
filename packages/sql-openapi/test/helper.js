@@ -37,6 +37,28 @@ if (!process.env.DB || process.env.DB === 'postgresql') {
 
 module.exports.connInfo = connInfo
 
+module.exports.createBasicPages = async function createBasicPages (db, sql) {
+  if (module.exports.isSQLite) {
+    await db.query(sql`CREATE TABLE pages (
+      id INTEGER PRIMARY KEY,
+      title VARCHAR(42)
+    );`)
+    await db.query(sql`CREATE TABLE categories (
+      id INTEGER PRIMARY KEY,
+      name VARCHAR(42)
+    );`)
+  } else {
+    await db.query(sql`CREATE TABLE pages (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(42)
+    );`)
+    await db.query(sql`CREATE TABLE categories (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(42)
+    );`)
+  }
+}
+
 module.exports.clear = async function (db, sql) {
   try {
     await db.query(sql`DROP TABLE editors`)

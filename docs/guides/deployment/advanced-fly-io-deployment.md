@@ -6,7 +6,7 @@ deployment guide.
 ## Adding `sqlite` for debugging
 
 With a combination of Docker and Fly.io, you can create an easy way to debug
-your sqlite aplication without stopping your application or exporting the data.
+your sqlite application without stopping your application or exporting the data.
 At the end of this guide, you will be able to run `fly ssh console -C db-cli` to
 be dropped into your remote database.
 

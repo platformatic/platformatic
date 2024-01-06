@@ -258,7 +258,7 @@ curl http://localhost:3042/v2/users
 
 ### Generating the mapper plugin with OpenAI
 
-Platformatic supports generating the mapper plugin automatically using the OpenAI. Before doing make sure that you have a platformatic user API key. If not you can generate it by running the following command:
+Platformatic supports generating the mapper plugin automatically using the OpenAI. Before doing so, make sure you have a platformatic user API key. If not, you can generate it by running the following command:
 
 ```bash
 npx platformatic@latest login

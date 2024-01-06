@@ -14,7 +14,7 @@ To disable timestamps, you need to set the `autoTimestamp` field to `false` in c
   "db": {
     "connectionString": "postgres://postgres:postgres@127.0.0.1/postgres",
     "autoTimestamp": false
-  },
+  }
 ...
 }
 ```
