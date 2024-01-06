@@ -341,7 +341,7 @@ A **required** object with the following settings:
     "db": {
       ...
       "include": {
-        "version": true // "versions" table will be the only entity mapped with REST APIs
+        "version": true
       }
     }
   }
