@@ -66,7 +66,7 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
         }
       }
       if (requestBody) {
-        writeContent(interfacesWriter, requestBody.content, schema, addedProps, 'req')
+        writeContent(interfacesWriter, requestBody.content, schema, addedProps, 'req', forceFullRequest ? 'body' : null)
       }
     })
     interfacesWriter.blankLine()
@@ -214,7 +214,7 @@ function JSONSchemaToTsType ({ type, format, nullable }, methodType) {
   return nullable === true ? `${resultType} | null` : resultType
 }
 
-function writeContent (writer, content, spec, addedProps, methodType) {
+function writeContent (writer, content, spec, addedProps, methodType, wrapper) {
   let isResponseArray = false
   if (content) {
     for (const [contentType, body] of Object.entries(content)) {
@@ -231,15 +231,25 @@ function writeContent (writer, content, spec, addedProps, methodType) {
       if (!body.schema?.type && !body.schema?.$ref) {
         break
       }
+
+      let schema
       // This is likely buggy as there can be multiple responses for different
       // status codes. This is currently not possible with Platformatic DB
       // services so we skip for now.
       // TODO: support different schemas for different status codes
       if (body.schema.type === 'array') {
         isResponseArray = true
-        writeObjectProperties(writer, body.schema.items, spec, addedProps, methodType)
+        schema = body.schema.items
       } else {
-        writeObjectProperties(writer, body.schema, spec, addedProps, methodType)
+        schema = body.schema
+      }
+
+      if (wrapper) {
+        writer.write(`${wrapper}: `).block(() =>
+          writeObjectProperties(writer, schema, spec, addedProps, methodType)
+        )
+      } else {
+        writeObjectProperties(writer, schema, spec, addedProps, methodType)
       }
       break
     }
