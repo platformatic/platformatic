@@ -19,7 +19,7 @@ migrations/
 
 Postgrator uses a table in your schema, to store which migrations have been already processed, so that only new ones will be applied at every server start.
 
-You can always rollback some migrations specifing what version you would like to rollback to.
+You can always rollback some migrations specifying what version you would like to rollback to.
 
 _Example_
 
@@ -68,5 +68,5 @@ See documentation about `db migrations apply` [command](../cli#migrate)
 
 In short:
 - be sure to define a correct `migrations.dir` folder under the config on `platformatic.db.json`
-- get the `MIGRATION_NUMBER` (f.e. if the file is named `002.do.sql` will be `002`)
+- get the `MIGRATION_NUMBER` (i.e. if the file is named `002.do.sql` the migration number will be `002`)
 - run `npx platformatic db migrations apply --to MIGRATION_NUMBER` 

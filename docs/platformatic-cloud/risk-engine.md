@@ -50,7 +50,7 @@ When an application is deployed on the cloud, it uses [opentelemetry](https://op
 
 ![Platformatic App and Risk engine](./images/risk-engine/service-risk-engine.png)
 
-The risk engine collects automatically data about the service calls (meaning that no actual data exchanged by services are collected, just the service name, i.e. the `path` and the `method` of the calls) in the form of open telemtry `traces` of `spans`. See [Opentelemetry documentation](https://opentelemetry.io/docs/concepts/signals/traces) about the details on how the informations are sent form the services to the Risk Engine (or any other Open Telemetry backend).
+The risk engine collects automatically data about the service calls (meaning that no actual data exchanged by services are collected, just the service name, i.e. the `path` and the `method` of the calls) in the form of open telemetry `traces` of `spans`. See [Opentelemetry documentation](https://opentelemetry.io/docs/concepts/signals/traces) about the details on how the informations are sent form the services to the Risk Engine (or any other Open Telemetry backend).
 
 As said, this happens automatically and transparently in Platformatic Cloud for both OpenAPI and GraphQL services. 
 
@@ -58,7 +58,7 @@ As said, this happens automatically and transparently in Platformatic Cloud for 
 In the GraphQL we have only one HTTP endpoint (which is by default `POST/graphql`). In this case we assume that an operation is actually the type of the graphQL request (e.g. `query` or `mutation`) and the name of the query. 
 :::
 
-When a PR is created, the risk engine is triggered and it calculates the risk of the change. This is done automatically by the Platformatic Github Action if they has been created as explaine in the [Cloud Quick Start Guide](./quick-start-guide), that:
+When a PR is created, the risk engine is triggered and it calculates the risk of the change. This is done automatically by the Platformatic Github Actions if they have been created as explained in the [Cloud Quick Start Guide](./quick-start-guide), that:
 - Calculates the operations changed by the PR
 - Ask to the risk engine the risk of that change
 

@@ -460,7 +460,7 @@ const movies = require('./movies')
 const app = Fastify({ logger: true })
 
 app.register(movies, { url: '${app.url}' })
-app.post('/', async (request, reply) => {  
+app.post('/', async (request, reply) => {
   const res = await request.movies.createMovie({ title: 'foo' })
   return res
 })

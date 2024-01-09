@@ -87,9 +87,18 @@ async function writeGraphQLClient (folder, name, schema, url, generateImplementa
   await writeFile(join(folder, 'package.json'), getPackageJSON({ name, generateImplementation }))
 }
 
-async function downloadAndWriteOpenAPI (logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language) {
+async function downloadAndWriteOpenAPI (logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language, urlAuthHeaders) {
   logger.debug(`Trying to download OpenAPI schema from ${url}`)
-  const res = await request(url)
+  let requestOptions
+  if (urlAuthHeaders) {
+    try {
+      requestOptions = { headers: JSON.parse(urlAuthHeaders) }
+    } catch (err) {
+      logger.error(err)
+    }
+  }
+
+  const res = await request(url, requestOptions)
   if (res.statusCode === 200) {
     // we are OpenAPI
     const text = await res.body.text()
@@ -163,7 +172,8 @@ async function downloadAndProcess (options) {
     validateResponse,
     isFrontend,
     language,
-    type
+    type,
+    urlAuthHeaders
   } = options
 
   let generateImplementation = options.generateImplementation
@@ -182,16 +192,16 @@ async function downloadAndProcess (options) {
   const toTry = []
   if (url.startsWith('http')) {
     if (type === 'openapi') {
-      toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url + '/documentation/json', folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language))
-      toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language))
+      toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url + '/documentation/json', folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language, urlAuthHeaders))
+      toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language, urlAuthHeaders))
     } else if (options.type === 'graphql') {
       toTry.push(downloadAndWriteGraphQL.bind(null, logger, url + '/graphql', folder, name, generateImplementation, typesOnly))
       toTry.push(downloadAndWriteGraphQL.bind(null, logger, url, folder, name, generateImplementation, typesOnly))
     } else {
       // add download functions only if it's an URL
-      toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url + '/documentation/json', folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language))
+      toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url + '/documentation/json', folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language, urlAuthHeaders))
       toTry.push(downloadAndWriteGraphQL.bind(null, logger, url + '/graphql', folder, name, generateImplementation, typesOnly))
-      toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language))
+      toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language, urlAuthHeaders))
       toTry.push(downloadAndWriteGraphQL.bind(null, logger, url, folder, name, generateImplementation, typesOnly))
     }
   } else {
@@ -271,7 +281,7 @@ export async function command (argv) {
     ext: '.txt'
   })
   let { _: [url], ...options } = parseArgs(argv, {
-    string: ['name', 'folder', 'runtime', 'optional-headers', 'language', 'type'],
+    string: ['name', 'folder', 'runtime', 'optional-headers', 'language', 'type', 'url-auth-headers'],
     boolean: ['typescript', 'full-response', 'types-only', 'full-request', 'full', 'frontend', 'validate-response'],
     default: {
       typescript: false,
@@ -379,6 +389,7 @@ export async function command (argv) {
       options.name = options.isFrontend ? 'api' : 'client'
     }
     options.folder = options.folder || join(process.cwd(), options.name)
+    options.urlAuthHeaders = options['url-auth-headers']
     await downloadAndProcess({ url, ...options, logger, runtime: options.runtime })
     logger.info(`Client generated successfully into ${options.folder}`)
     logger.info('Check out the docs to know more: https://docs.platformatic.dev/docs/reference/client/introduction')

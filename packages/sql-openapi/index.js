@@ -37,6 +37,7 @@ async function setupOpenAPI (app, opts) {
   })
 
   const ignore = opts.ignore || []
+  const include = opts.include || []
   const paths = opts.paths || {}
 
   const { default: scalarTheme } = await import('@platformatic/scalar-theme')
@@ -64,6 +65,11 @@ async function setupOpenAPI (app, opts) {
   })
 
   for (const entity of Object.values(app.platformatic.entities)) {
+    if (Object.keys(include).length) {
+      if (!Object.hasOwn(include, entity.singularName)) {
+        ignore[entity.singularName] = true
+      }
+    }
     const entitySchema = mapSQLEntityToJSONSchema(entity, ignore[entity.singularName], true)
     // TODO remove reverseRelationships from the entity
     /* istanbul ignore next */
@@ -97,6 +103,17 @@ async function setupOpenAPI (app, opts) {
     if (!entitiesNames.includes(ignoredEntity)) {
       const nearestEntity = findNearestString(entitiesNames, ignoredEntity)
       let warningMessage = `Ignored openapi entity "${ignoredEntity}" not found.`
+      if (nearestEntity) {
+        warningMessage += ` Did you mean "${nearestEntity}"?`
+      }
+      app.log.warn(warningMessage)
+    }
+  }
+
+  for (const includedEntity of Object.keys(include)) {
+    if (!entitiesNames.includes(includedEntity)) {
+      const nearestEntity = findNearestString(entitiesNames, includedEntity)
+      let warningMessage = `Specified openapi entity "${includedEntity}" not found.`
       if (nearestEntity) {
         warningMessage += ` Did you mean "${nearestEntity}"?`
       }

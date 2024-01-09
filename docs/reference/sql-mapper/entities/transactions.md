@@ -1,6 +1,6 @@
 # Transactions
 
-Platformatic DB entites support transaction through the `tx` optional parameter. 
+Platformatic DB entities support transaction through the `tx` optional parameter. 
 If the `tx` parameter is provided, the entity will join the transaction, e.g.:
 
 ```js

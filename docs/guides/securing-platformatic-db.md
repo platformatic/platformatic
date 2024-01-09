@@ -73,7 +73,7 @@ Note that the role of an admin user from `adminSecret` strategy is `platformatic
 
 ## Read-only access to _anonymous_ users
 
-The following configuration will allo all _anonymous_ users (e.g. each user without a known role)
+The following configuration will allow all _anonymous_ users (e.g. each user without a known role)
 to access the `pages` table / `page` entity in Read-only mode:
 
 

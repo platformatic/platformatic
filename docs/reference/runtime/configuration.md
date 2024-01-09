@@ -187,7 +187,7 @@ PLT_ENTRYPOINT=service
 The `.env` file must be located in the same folder as the Platformatic
 configuration file or in the current working directory.
 
-Environment variables can also be set directly on the commmand line, for example:
+Environment variables can also be set directly on the command line, for example:
 
 ```bash
 PLT_ENTRYPOINT=service npx platformatic runtime

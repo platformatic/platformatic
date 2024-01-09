@@ -169,7 +169,7 @@ The `typescript` can also be an object to customize the compilation. Here are th
 * `enabled` (`boolean` or `string`): enables compilation
 * `tsConfig` (`string`): path to the `tsconfig.json` file relative to the configuration
 * `outDir` (`string`): the output directory of `tsconfig.json`, in case `tsconfig.json` is not available
-and and `enabled` is set to `false` (procution build)
+and `enabled` is set to `false` (production build)
 * `flags` (array of `string`): flags to be passed to `tsc`. Overrides `tsConfig`.
 
 

@@ -35,7 +35,7 @@ Older Platformatic applications might not have the same layout, if so you can up
 ## Compiling for deployment
 
 Compiling for deployment is then as easy as running `plt service compile` in that same folder.
-Rememeber to set `PLT_TYPESCRIPT=false` in your environment variables in the deployed environments.
+Remember to set `PLT_TYPESCRIPT=false` in your environment variables in the deployed environments.
 
 ## Usage with Runtime
 

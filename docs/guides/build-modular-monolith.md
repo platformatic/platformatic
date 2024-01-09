@@ -1187,13 +1187,13 @@ Which should give us a response like this:
 [{"id":1,"title":"Maximum Overdrive","directorId":1,"producerId":4,"releasedYear":1986,"createdAt":"1687996711612","updatedAt":"1687996711612","directorName":"Stephen King","producerName":"Martha Schumacher"},{"id":2,"title":"The Shining","directorId":5,"producerId":1,"releasedYear":1980,"createdAt":"1687996711619","updatedAt":"1687996711619","directorName":"Mick Garris","producerName":"Stephen King"},{"id":3,"title":"Kajillionaire","directorId":2,"producerId":6,"releasedYear":2020,"createdAt":"1687996711621","updatedAt":"1687996711621","directorName":"Miranda July","producerName":"Dede Gardner"}]
 ```
 
-Our Library app is now succesfully running in production! 🎉
+Our Library app is now successfully running in production! 🎉
 
 ### Automate deployment with GitHub Actions
 
 If we want to automate pull request preview and production deployments of our app to Platformatic Cloud, we can do it with GitHub Actions by:
 
-1. Creating a new repository on GitHub, then commiting and push up the code for our Library app.
+1. Creating a new repository on GitHub, then committing and push up the code for our Library app.
 2. Following the [Cloud Quick Start Guide](https://docs.platformatic.cloud/docs/quick-start-guide/?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) to configure the deployment for our app. We can skip the step for creating a GitHub repository.
 
 ## Next steps

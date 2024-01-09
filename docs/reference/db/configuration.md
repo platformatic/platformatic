@@ -57,7 +57,7 @@ A **required** object with the following settings:
 - **`connectionString`** (**required**, `string`) — Database connection URL.
   - Example: `postgres://user:password@my-database:5432/db-name`
 
-- ** `schema`** (array of `string`) - Currently supported only for postgres, schemas used tolook for entities. If not provided, the default `public` schema is used.
+- ** `schema`** (array of `string`) - Currently supported only for postgres, schemas used to look for entities. If not provided, the default `public` schema is used.
 
  _Examples_
 
@@ -116,7 +116,7 @@ A **required** object with the following settings:
   }
   ```
 
-  It's possible to selectively ignore entites:
+  It's possible to selectively ignore entities:
 
   ```json
   {
@@ -245,7 +245,7 @@ A **required** object with the following settings:
   }
   ```
 
-  It's possible to selectively ignore entites:
+  It's possible to selectively ignore entities:
 
   ```json
   {
@@ -271,6 +271,22 @@ A **required** object with the following settings:
           "categories": {
             "name": true
           }
+        }
+      }
+    }
+  }
+  ```
+
+  It's possible to explicitly identify tables for which you like to build an entity:
+  **Note**: all other tables will be ignored.
+
+  ```json
+  {
+    "db": {
+      ...
+      "openapi": {
+        "include": {
+          "categories": true
         }
       }
     }
@@ -312,6 +328,20 @@ A **required** object with the following settings:
       ...
       "ignore": {
         "versions": true // "versions" table will be not mapped with GraphQL/REST APIs
+      }
+    }
+  }
+  ```
+- **`include`** (`object`) — Key/value object that defines which entities should be exposed.
+
+  _Examples_
+
+  ```json
+  {
+    "db": {
+      ...
+      "include": {
+        "version": true
       }
     }
   }

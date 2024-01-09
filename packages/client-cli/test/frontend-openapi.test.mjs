@@ -220,7 +220,7 @@ test('generate frontend client from path', async (t) => {
   const types = await readFile(join(dir, 'api', 'api-types.d.ts'), 'utf8')
 
   const tsImplementationTemplate = `
-export const getHello: Api['getHello'] = async (request: Types.GetHelloRequest) => {
+export const getHello: Api['getHello'] = async (request: Types.GetHelloRequest): Promise<Types.GetHelloResponses> => {
   return await _getHello(baseUrl, request)
 }`
   const typesTemplate = `
@@ -247,7 +247,7 @@ test('generate frontend client from path (name with dashes)', async (t) => {
 import type * as Types from './a-custom-name-types'
 `
   const tsImplementationTemplate = `
-export const getHello: ACustomName['getHello'] = async (request: Types.GetHelloRequest) => {
+export const getHello: ACustomName['getHello'] = async (request: Types.GetHelloRequest): Promise<Types.GetHelloResponses> => {
   return await _getHello(baseUrl, request)
 }`
   const typesTemplate = `
@@ -271,7 +271,7 @@ test('append query parameters to url in non-GET requests', async (t) => {
   const implementation = await readFile(join(dir, 'fontend', 'fontend.ts'), 'utf8')
 
   const tsImplementationTemplate = `
-const _postRoot = async (url: string, request: Types.PostRootRequest) => {
+const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<Types.PostRootResponses> => {
   const queryParameters: (keyof Types.PostRootRequest)[] = ['level']
   const searchParams = new URLSearchParams()
   queryParameters.forEach((qp) =>{
@@ -295,7 +295,7 @@ test('handle headers parameters', async (t) => {
   const implementation = await readFile(join(dir, 'fontend', 'fontend.ts'), 'utf8')
 
   const tsImplementationTemplate = `
-const _postRoot = async (url: string, request: Types.PostRootRequest) => {
+const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<Types.PostRootResponses> => {
   const response = await fetch(\`\${url}/\`, {
     method: 'POST',
     body: JSON.stringify(request),
@@ -318,7 +318,7 @@ test('handle headers parameters in get request', async (t) => {
   const implementation = await readFile(join(dir, 'fontend', 'fontend.ts'), 'utf8')
 
   const tsImplementationTemplate = `
-const _getRoot = async (url: string, request: Types.GetRootRequest) => {
+const _getRoot = async (url: string, request: Types.GetRootRequest): Promise<Types.GetRootResponses> => {
   const response = await fetch(\`\${url}/?\${new URLSearchParams(Object.entries(request || {})).toString()}\`, {
     headers: {
       'level': request['level'],

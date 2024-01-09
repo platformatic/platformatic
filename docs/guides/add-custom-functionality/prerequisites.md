@@ -34,7 +34,7 @@ Create a `platformatic.db.json` file in the root project, it will be loaded auto
 - Once Platformatic DB starts, its API will be available at `http://127.0.0.1:3042`
 - It will connect and read the schema from a PostgreSQL DB
 - Will read migrations from `./migrations` directory
-- Will load custom functionallity from `./plugin.js` file.
+- Will load custom functionality from `./plugin.js` file.
 ## Database and Migrations
 
 Start the database using the sample `docker-compose.yml` file.
