@@ -26,3 +26,17 @@ test('generates name from different path with same method and opeartionId', asyn
   assert.equal(third, 'getSampleOperationId1')
   assert.equal(fourth, 'getSampleOperationId2')
 })
+
+test('generates name with path parameter', async (t) => {
+  const opId = generateOperationId('/v3/accounts/{id}', 'get', {}, [])
+
+  assert.equal(opId, 'getV3AccountsId')
+})
+
+test('sanitizies bad operationId fields', async (t) => {
+  const opId = generateOperationId('/v3/accounts/{id}', 'get', {
+    operationId: '/v3/accounts/{id}'
+  }, [])
+
+  assert.equal(opId, 'getV3AccountsId')
+})

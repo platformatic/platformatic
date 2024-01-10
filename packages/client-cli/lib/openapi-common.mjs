@@ -258,16 +258,25 @@ function writeContent (writer, content, spec, addedProps, methodType, wrapper) {
 }
 
 function writeObjectProperties (writer, schema, spec, addedProps, methodType) {
-  if (schema.$ref) {
-    schema = jsonpointer.get(spec, schema.$ref.replace('#', ''))
-  }
-  if (schema.type === 'object') {
-    for (const [key, value] of Object.entries(schema.properties)) {
+  function _writeObjectProps (obj) {
+    for (const [key, value] of Object.entries(obj)) {
       if (addedProps.has(key)) {
         continue
       }
       const required = schema.required && schema.required.includes(key)
       writeProperty(writer, key, value, addedProps, required, methodType)
+    }
+  }
+  if (schema.$ref) {
+    schema = jsonpointer.get(spec, schema.$ref.replace('#', ''))
+  }
+  if (schema.type === 'object') {
+    if (schema.properties) {
+      _writeObjectProps(schema.properties)
+    }
+
+    if (schema.additionalProperties && typeof schema.additionalProperties === 'object') {
+      _writeObjectProps(schema.additionalProperties)
     }
     // This is unlikely to happen with well-formed OpenAPI.
     /* c8 ignore next 3 */
