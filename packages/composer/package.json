@@ -40,7 +40,7 @@
   "dependencies": {
     "@fastify/error": "^3.3.0",
     "@fastify/http-proxy": "^9.2.1",
-    "@fastify/reply-from": "^9.4.0",
+    "@fastify/reply-from": "^9.6.0",
     "@fastify/static": "^6.11.2",
     "@fastify/swagger": "^8.10.1",
     "@platformatic/config": "workspace:*",
