@@ -31,12 +31,10 @@
             "type": "integer"
           },
           "title": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           }
-        },
-        "required": [
-          "title"
-        ]
+        }
       }
     }
   },

@@ -275,9 +275,64 @@ async function sqlMapper (app, opts) {
   })
 }
 
+async function dropTable (db, sql, table) {
+  try {
+    if (db.isSQLite) {
+      await db.query(sql`DROP TABLE ${sql(table)};`)
+    } else {
+      await db.query(sql`DROP TABLE ${sql(table)} CASCADE;`)
+    }
+    return table
+  } catch (err) {
+    // ignore, it will be dropped on the next roundon the next roundon the next roundon the next round
+  }
+}
+
+async function dropAllTables (db, sql, schemas) {
+  let queries
+  /* istanbul ignore next */
+  if (db.isPg) {
+    queries = queriesFactory.pg
+  } else if (db.isMySql) {
+    queries = queriesFactory.mysql
+  } else if (db.isMariaDB) {
+    queries = queriesFactory.mariadb
+  } else if (db.isSQLite) {
+    queries = queriesFactory.sqlite
+  }
+
+  const tables = new Set((await queries.listTables(db, sql, schemas)).map((t) => {
+    /* istanbul ignore next */
+    if (t.schema) {
+      return `${t.schema}.${t.table}`
+    }
+    return t.table
+  }))
+  let count = 0
+
+  while (tables.size > 0) {
+    if (count++ > 100) {
+      throw new Error('too many iterations, unable to clear the db')
+    }
+
+    const deletes = []
+    for (const table of tables) {
+      deletes.push(dropTable(db, sql, table))
+    }
+
+    const res = await Promise.all(deletes)
+    for (const table of res) {
+      if (table) {
+        tables.delete(table)
+      }
+    }
+  }
+}
+
 module.exports = fp(sqlMapper)
 module.exports.connect = connect
 module.exports.createConnectionPool = createConnectionPool
 module.exports.plugin = module.exports
 module.exports.utils = require('./lib/utils')
 module.exports.errors = errors
+module.exports.dropAllTables = dropAllTables

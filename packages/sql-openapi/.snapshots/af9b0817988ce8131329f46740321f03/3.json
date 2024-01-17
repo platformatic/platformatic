@@ -31,15 +31,17 @@
             "type": "integer"
           },
           "title": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
-        }
+        },
+        "required": [
+          "title"
+        ]
       }
     }
   },
   "paths": {
-    "/pages/": {
+    "/api/pages/": {
       "get": {
         "operationId": "getPages",
         "summary": "Get pages.",
@@ -617,7 +619,7 @@
         }
       }
     },
-    "/pages/{id}": {
+    "/api/pages/{id}": {
       "get": {
         "operationId": "getPageById",
         "summary": "Get Page by id.",

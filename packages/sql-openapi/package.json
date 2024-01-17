@@ -10,7 +10,7 @@
     "test:postgresql": "DB=postgresql borp --concurrency=1 test/*.test.js",
     "test:mariadb": "DB=mariadb borp --concurrency=1",
     "test:mysql": "DB=mysql borp --concurrency=1",
-    "test:mysql8": "DB=mysql8 borp --concurrency=1",
+    "test:mysql8": "DB=mysql8 borp --concurrency=1 --timeout=60000",
     "test:sqlite": "DB=sqlite borp --concurrency=1",
     "test:typescript": "tsd"
   },
@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "@matteo.collina/snap": "^0.1.0",
+    "@matteo.collina/snap": "^0.1.1",
     "@matteo.collina/tspl": "^0.1.0",
     "@platformatic/sql-mapper": "workspace:*",
     "borp": "^0.5.0",

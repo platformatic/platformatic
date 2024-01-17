@@ -55,7 +55,7 @@ test('updateMany', async (t) => {
     })
     const openapi = res.json()
     const snapshot = await snap(openapi)
-    equal(openapi, snapshot)
+    same(openapi, snapshot)
   }
 
   const posts = [{
