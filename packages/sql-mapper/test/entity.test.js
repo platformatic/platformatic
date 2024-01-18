@@ -796,6 +796,7 @@ test('include possible values of enum columns', { skip: isSQLite }, async () => 
 
     if (isPg) {
       await db.query(sql`
+      DROP TYPE IF EXISTS pagetype CASCADE;
       CREATE TYPE pagetype as enum ('blank', 'non-blank');
       CREATE TABLE pages (
         id INTEGER PRIMARY KEY,

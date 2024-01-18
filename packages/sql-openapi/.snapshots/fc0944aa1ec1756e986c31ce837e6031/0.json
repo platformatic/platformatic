@@ -19,6 +19,13 @@
           "title": {
             "type": "string",
             "nullable": true
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         }
       },
@@ -32,16 +39,23 @@
           },
           "title": {
             "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
+          "tags",
           "title"
         ]
       }
     }
   },
   "paths": {
-    "/api/pages/": {
+    "/pages/": {
       "get": {
         "operationId": "getPages",
         "summary": "Get pages.",
@@ -83,6 +97,7 @@
                 "type": "string",
                 "enum": [
                   "id",
+                  "tags",
                   "title"
                 ]
               }
@@ -185,6 +200,22 @@
             },
             "in": "query",
             "name": "where.id.overlaps",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.tags.all",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.tags.any",
             "required": false
           },
           {
@@ -389,6 +420,7 @@
                 "type": "string",
                 "enum": [
                   "id",
+                  "tags",
                   "title"
                 ]
               }
@@ -491,6 +523,22 @@
             },
             "in": "query",
             "name": "where.id.overlaps",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.tags.all",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.tags.any",
             "required": false
           },
           {
@@ -619,7 +667,7 @@
         }
       }
     },
-    "/api/pages/{id}": {
+    "/pages/{id}": {
       "get": {
         "operationId": "getPageById",
         "summary": "Get Page by id.",
@@ -635,6 +683,7 @@
                 "type": "string",
                 "enum": [
                   "id",
+                  "tags",
                   "title"
                 ]
               }
@@ -690,6 +739,7 @@
                 "type": "string",
                 "enum": [
                   "id",
+                  "tags",
                   "title"
                 ]
               }
@@ -736,6 +786,7 @@
                 "type": "string",
                 "enum": [
                   "id",
+                  "tags",
                   "title"
                 ]
               }

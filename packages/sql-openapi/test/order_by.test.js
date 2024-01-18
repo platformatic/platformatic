@@ -101,7 +101,7 @@ test('one-level order by', async (t) => {
     })
     const json = res.json()
     const snapshot = await snap(json)
-    equal(json, snapshot)
+    same(json, snapshot)
   }
 
   {

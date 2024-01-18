@@ -84,6 +84,7 @@ test('find enums correctly using schemas', { skip: isSQLite }, async () => {
     );`)
     } else if (isPg) {
       await db.query(sql`
+      DROP TYPE IF EXISTS pagetype CASCADE;
       CREATE TYPE pagetype as enum ('blank', 'non-blank');
       CREATE TABLE IF NOT EXISTS "test1"."pages" (
       id SERIAL PRIMARY KEY,

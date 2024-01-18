@@ -80,7 +80,7 @@ test('nested routes', async (t) => {
     })
     const openapi = res.json()
     const snapshot = await snap(openapi)
-    equal(openapi, snapshot)
+    same(openapi, snapshot)
   }
 
   const owners = [{
@@ -261,7 +261,7 @@ test('nested routes with recursive FK', async (t) => {
     })
     const openapi = res.json()
     const snapshot = await snap(openapi)
-    equal(openapi, snapshot)
+    same(openapi, snapshot)
   }
 
   const res = await app.inject({

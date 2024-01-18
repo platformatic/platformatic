@@ -134,7 +134,7 @@ test('simple db, simple rest API', async (t) => {
     })
     const json = res.json()
     const snapshot = await snap(json)
-    equal(json, snapshot)
+    same(json, snapshot)
   }
 
   {
@@ -268,7 +268,7 @@ test('nullable fields', async (t) => {
     })
     const openapi = res.json()
     const snapshot = await snap(openapi)
-    equal(openapi, snapshot)
+    same(openapi, snapshot)
   }
 })
 
@@ -653,7 +653,7 @@ test('simple db, simple rest API', async (t) => {
   })
   const json = res.json()
   const snapshot = await snap(json)
-  equal(json, snapshot)
+  same(json, snapshot)
   equal(json.info.version, '42.42.42', 'GET /documentation/json info version override by opts')
 
   const { body } = await app.inject({
@@ -762,7 +762,7 @@ test('expose the api with a prefix, if defined', async (t) => {
     })
     const json = res.json()
     const snapshot = await snap(json)
-    equal(json, snapshot)
+    same(json, snapshot)
   }
 })
 

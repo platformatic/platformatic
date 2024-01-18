@@ -7,56 +7,62 @@
   },
   "components": {
     "schemas": {
-      "Person": {
-        "title": "Person",
-        "description": "A Person",
+      "Post": {
+        "title": "Post",
+        "description": "A Post",
         "type": "object",
         "properties": {
           "id": {
             "type": "integer",
             "nullable": true
           },
-          "name": {
+          "title": {
             "type": "string",
             "nullable": true
           },
-          "parentId": {
+          "longText": {
+            "type": "string",
+            "nullable": true
+          },
+          "counter": {
             "type": "integer",
             "nullable": true
           }
         }
       },
-      "PersonInput": {
-        "title": "PersonInput",
-        "description": "A Person",
+      "PostInput": {
+        "title": "PostInput",
+        "description": "A Post",
         "type": "object",
         "properties": {
           "id": {
             "type": "integer"
           },
-          "name": {
-            "type": "string"
+          "title": {
+            "type": "string",
+            "nullable": true
           },
-          "parentId": {
+          "longText": {
+            "type": "string",
+            "nullable": true
+          },
+          "counter": {
             "type": "integer",
             "nullable": true
           }
-        },
-        "required": [
-          "name"
-        ]
+        }
       }
     }
   },
   "paths": {
-    "/people/": {
+    "/posts/": {
       "get": {
-        "operationId": "getPeople",
-        "summary": "Get people.",
+        "operationId": "getPosts",
+        "summary": "Get posts.",
         "tags": [
-          "people"
+          "posts"
         ],
-        "description": "Fetch people from the database.",
+        "description": "Fetch posts from the database.",
         "parameters": [
           {
             "schema": {
@@ -90,14 +96,111 @@
               "items": {
                 "type": "string",
                 "enum": [
+                  "counter",
                   "id",
-                  "name",
-                  "parentId"
+                  "longText",
+                  "title"
                 ]
               }
             },
             "in": "query",
             "name": "fields",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.counter.eq",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.counter.neq",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.counter.gt",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.counter.gte",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.counter.lt",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.counter.lte",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.counter.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.counter.in",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.counter.nin",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.counter.contains",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.counter.contained",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.counter.overlaps",
             "required": false
           },
           {
@@ -201,7 +304,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.eq",
+            "name": "where.longText.eq",
             "required": false
           },
           {
@@ -209,7 +312,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.neq",
+            "name": "where.longText.neq",
             "required": false
           },
           {
@@ -217,7 +320,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.gt",
+            "name": "where.longText.gt",
             "required": false
           },
           {
@@ -225,7 +328,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.gte",
+            "name": "where.longText.gte",
             "required": false
           },
           {
@@ -233,7 +336,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.lt",
+            "name": "where.longText.lt",
             "required": false
           },
           {
@@ -241,7 +344,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.lte",
+            "name": "where.longText.lte",
             "required": false
           },
           {
@@ -249,7 +352,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.like",
+            "name": "where.longText.like",
             "required": false
           },
           {
@@ -257,7 +360,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.in",
+            "name": "where.longText.in",
             "required": false
           },
           {
@@ -265,7 +368,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.nin",
+            "name": "where.longText.nin",
             "required": false
           },
           {
@@ -273,7 +376,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.contains",
+            "name": "where.longText.contains",
             "required": false
           },
           {
@@ -281,7 +384,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.contained",
+            "name": "where.longText.contained",
             "required": false
           },
           {
@@ -289,63 +392,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.overlaps",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "integer"
-            },
-            "in": "query",
-            "name": "where.parentId.eq",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "integer"
-            },
-            "in": "query",
-            "name": "where.parentId.neq",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "integer"
-            },
-            "in": "query",
-            "name": "where.parentId.gt",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "integer"
-            },
-            "in": "query",
-            "name": "where.parentId.gte",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "integer"
-            },
-            "in": "query",
-            "name": "where.parentId.lt",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "integer"
-            },
-            "in": "query",
-            "name": "where.parentId.lte",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "integer"
-            },
-            "in": "query",
-            "name": "where.parentId.like",
+            "name": "where.longText.overlaps",
             "required": false
           },
           {
@@ -353,7 +400,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.parentId.in",
+            "name": "where.title.eq",
             "required": false
           },
           {
@@ -361,7 +408,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.parentId.nin",
+            "name": "where.title.neq",
             "required": false
           },
           {
@@ -369,7 +416,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.parentId.contains",
+            "name": "where.title.gt",
             "required": false
           },
           {
@@ -377,7 +424,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.parentId.contained",
+            "name": "where.title.gte",
             "required": false
           },
           {
@@ -385,7 +432,63 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.parentId.overlaps",
+            "name": "where.title.lt",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.title.lte",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.title.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.title.in",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.title.nin",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.title.contains",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.title.contained",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.title.overlaps",
             "required": false
           },
           {
@@ -397,6 +500,18 @@
             },
             "in": "query",
             "name": "where.or",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            },
+            "in": "query",
+            "name": "orderby.counter",
             "required": false
           },
           {
@@ -420,7 +535,7 @@
               ]
             },
             "in": "query",
-            "name": "orderby.name",
+            "name": "orderby.longText",
             "required": false
           },
           {
@@ -432,7 +547,7 @@
               ]
             },
             "in": "query",
-            "name": "orderby.parentId",
+            "name": "orderby.title",
             "required": false
           }
         ],
@@ -444,7 +559,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Person"
+                    "$ref": "#/components/schemas/Post"
                   }
                 }
               }
@@ -453,17 +568,17 @@
         }
       },
       "post": {
-        "operationId": "createPerson",
-        "summary": "Create person.",
+        "operationId": "createPost",
+        "summary": "Create post.",
         "tags": [
-          "people"
+          "posts"
         ],
-        "description": "Add new person to the database.",
+        "description": "Add new post to the database.",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PersonInput"
+                "$ref": "#/components/schemas/PostInput"
               }
             }
           }
@@ -474,39 +589,26 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Person"
+                  "$ref": "#/components/schemas/Post"
                 }
               }
             },
-            "links": {
-              "GetPersonById": {
-                "operationId": "getPersonById",
-                "parameters": {
-                  "id": "$response.body#/parentId"
-                }
-              },
-              "GetPeople": {
-                "operationId": "getPeople",
-                "parameters": {
-                  "where.parentId.eq": "$response.body#/id"
-                }
-              }
-            }
+            "links": {}
           }
         }
       },
       "put": {
-        "operationId": "updatePeople",
-        "summary": "Update people.",
+        "operationId": "updatePosts",
+        "summary": "Update posts.",
         "tags": [
-          "people"
+          "posts"
         ],
-        "description": "Update one or more people in the database.",
+        "description": "Update one or more posts in the database.",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PersonInput"
+                "$ref": "#/components/schemas/PostInput"
               }
             }
           }
@@ -518,14 +620,111 @@
               "items": {
                 "type": "string",
                 "enum": [
+                  "counter",
                   "id",
-                  "name",
-                  "parentId"
+                  "longText",
+                  "title"
                 ]
               }
             },
             "in": "query",
             "name": "fields",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.counter.eq",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.counter.neq",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.counter.gt",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.counter.gte",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.counter.lt",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.counter.lte",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.counter.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.counter.in",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.counter.nin",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.counter.contains",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.counter.contained",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.counter.overlaps",
             "required": false
           },
           {
@@ -629,7 +828,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.eq",
+            "name": "where.longText.eq",
             "required": false
           },
           {
@@ -637,7 +836,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.neq",
+            "name": "where.longText.neq",
             "required": false
           },
           {
@@ -645,7 +844,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.gt",
+            "name": "where.longText.gt",
             "required": false
           },
           {
@@ -653,7 +852,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.gte",
+            "name": "where.longText.gte",
             "required": false
           },
           {
@@ -661,7 +860,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.lt",
+            "name": "where.longText.lt",
             "required": false
           },
           {
@@ -669,7 +868,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.lte",
+            "name": "where.longText.lte",
             "required": false
           },
           {
@@ -677,7 +876,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.like",
+            "name": "where.longText.like",
             "required": false
           },
           {
@@ -685,7 +884,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.in",
+            "name": "where.longText.in",
             "required": false
           },
           {
@@ -693,7 +892,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.nin",
+            "name": "where.longText.nin",
             "required": false
           },
           {
@@ -701,7 +900,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.contains",
+            "name": "where.longText.contains",
             "required": false
           },
           {
@@ -709,7 +908,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.contained",
+            "name": "where.longText.contained",
             "required": false
           },
           {
@@ -717,63 +916,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.name.overlaps",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "integer"
-            },
-            "in": "query",
-            "name": "where.parentId.eq",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "integer"
-            },
-            "in": "query",
-            "name": "where.parentId.neq",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "integer"
-            },
-            "in": "query",
-            "name": "where.parentId.gt",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "integer"
-            },
-            "in": "query",
-            "name": "where.parentId.gte",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "integer"
-            },
-            "in": "query",
-            "name": "where.parentId.lt",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "integer"
-            },
-            "in": "query",
-            "name": "where.parentId.lte",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "integer"
-            },
-            "in": "query",
-            "name": "where.parentId.like",
+            "name": "where.longText.overlaps",
             "required": false
           },
           {
@@ -781,7 +924,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.parentId.in",
+            "name": "where.title.eq",
             "required": false
           },
           {
@@ -789,7 +932,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.parentId.nin",
+            "name": "where.title.neq",
             "required": false
           },
           {
@@ -797,7 +940,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.parentId.contains",
+            "name": "where.title.gt",
             "required": false
           },
           {
@@ -805,7 +948,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.parentId.contained",
+            "name": "where.title.gte",
             "required": false
           },
           {
@@ -813,7 +956,63 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.parentId.overlaps",
+            "name": "where.title.lt",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.title.lte",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.title.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.title.in",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.title.nin",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.title.contains",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.title.contained",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.title.overlaps",
             "required": false
           },
           {
@@ -836,37 +1035,24 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Person"
+                    "$ref": "#/components/schemas/Post"
                   }
                 }
               }
             },
-            "links": {
-              "GetPersonById": {
-                "operationId": "getPersonById",
-                "parameters": {
-                  "id": "$response.body#/parentId"
-                }
-              },
-              "GetPeople": {
-                "operationId": "getPeople",
-                "parameters": {
-                  "where.parentId.eq": "$response.body#/id"
-                }
-              }
-            }
+            "links": {}
           }
         }
       }
     },
-    "/people/{id}": {
+    "/posts/{id}": {
       "get": {
-        "operationId": "getPersonById",
-        "summary": "Get Person by id.",
+        "operationId": "getPostById",
+        "summary": "Get Post by id.",
         "tags": [
-          "people"
+          "posts"
         ],
-        "description": "Fetch Person using its id from the database.",
+        "description": "Fetch Post using its id from the database.",
         "parameters": [
           {
             "schema": {
@@ -874,9 +1060,10 @@
               "items": {
                 "type": "string",
                 "enum": [
+                  "counter",
                   "id",
-                  "name",
-                  "parentId"
+                  "longText",
+                  "title"
                 ]
               }
             },
@@ -899,39 +1086,26 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Person"
+                  "$ref": "#/components/schemas/Post"
                 }
               }
             },
-            "links": {
-              "GetPersonById": {
-                "operationId": "getPersonById",
-                "parameters": {
-                  "id": "$response.body#/parentId"
-                }
-              },
-              "GetPeople": {
-                "operationId": "getPeople",
-                "parameters": {
-                  "where.parentId.eq": "$response.body#/id"
-                }
-              }
-            }
+            "links": {}
           }
         }
       },
       "put": {
-        "operationId": "updatePerson",
-        "summary": "Update person.",
+        "operationId": "updatePost",
+        "summary": "Update post.",
         "tags": [
-          "people"
+          "posts"
         ],
-        "description": "Update person in the database.",
+        "description": "Update post in the database.",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PersonInput"
+                "$ref": "#/components/schemas/PostInput"
               }
             }
           }
@@ -943,9 +1117,10 @@
               "items": {
                 "type": "string",
                 "enum": [
+                  "counter",
                   "id",
-                  "name",
-                  "parentId"
+                  "longText",
+                  "title"
                 ]
               }
             },
@@ -968,34 +1143,21 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Person"
+                  "$ref": "#/components/schemas/Post"
                 }
               }
             },
-            "links": {
-              "GetPersonById": {
-                "operationId": "getPersonById",
-                "parameters": {
-                  "id": "$response.body#/parentId"
-                }
-              },
-              "GetPeople": {
-                "operationId": "getPeople",
-                "parameters": {
-                  "where.parentId.eq": "$response.body#/id"
-                }
-              }
-            }
+            "links": {}
           }
         }
       },
       "delete": {
-        "operationId": "deletePeople",
-        "summary": "Delete people.",
+        "operationId": "deletePosts",
+        "summary": "Delete posts.",
         "tags": [
-          "people"
+          "posts"
         ],
-        "description": "Delete one or more people from the Database.",
+        "description": "Delete one or more posts from the Database.",
         "parameters": [
           {
             "schema": {
@@ -1003,9 +1165,10 @@
               "items": {
                 "type": "string",
                 "enum": [
+                  "counter",
                   "id",
-                  "name",
-                  "parentId"
+                  "longText",
+                  "title"
                 ]
               }
             },
@@ -1028,134 +1191,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Person"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/people/{id}/people": {
-      "get": {
-        "operationId": "getPeopleForPerson",
-        "summary": "Get people for person.",
-        "tags": [
-          "people"
-        ],
-        "description": "Fetch all the people for person from the database.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "enum": [
-                  "id",
-                  "name",
-                  "parentId"
-                ]
-              }
-            },
-            "in": "query",
-            "name": "fields",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "integer"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Person"
-                  }
-                }
-              }
-            },
-            "links": {
-              "GetPersonById": {
-                "operationId": "getPersonById",
-                "parameters": {
-                  "id": "$response.body#/parentId"
-                }
-              },
-              "GetPeople": {
-                "operationId": "getPeople",
-                "parameters": {
-                  "where.parentId.eq": "$response.body#/id"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/people/{id}/parent": {
-      "get": {
-        "operationId": "getPersonForPerson",
-        "summary": "Get person for person.",
-        "tags": [
-          "people"
-        ],
-        "description": "Fetch the person for person from the database.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "enum": [
-                  "id",
-                  "name",
-                  "parentId"
-                ]
-              }
-            },
-            "in": "query",
-            "name": "fields",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "integer"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Person"
-                }
-              }
-            },
-            "links": {
-              "GetPersonById": {
-                "operationId": "getPersonById",
-                "parameters": {
-                  "id": "$response.body#/parentId"
-                }
-              },
-              "GetPeople": {
-                "operationId": "getPeople",
-                "parameters": {
-                  "where.parentId.eq": "$response.body#/id"
+                  "$ref": "#/components/schemas/Post"
                 }
               }
             }
