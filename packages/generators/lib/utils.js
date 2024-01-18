@@ -3,6 +3,7 @@
 const { mkdir } = require('node:fs/promises')
 const { WrongTypeError } = require('./errors')
 const { join } = require('node:path')
+const { request } = require('undici')
 const PLT_ROOT = 'PLT_ROOT'
 
 async function safeMkdir (dir) {
@@ -133,6 +134,16 @@ function getPackageConfigurationObject (config, serviceName = '') {
   }
   return output
 }
+
+async function getLatestNpmVersion (pkg) {
+  const res = await request(`https://registry.npmjs.org/${pkg}`)
+  if (res.statusCode === 200) {
+    const json = await res.body.json()
+    return json['dist-tags'].latest
+  }
+  return null
+}
+
 module.exports = {
   addPrefixToEnv,
   addPrefixToString,
@@ -142,5 +153,6 @@ module.exports = {
   extractEnvVariablesFromText,
   safeMkdir,
   stripVersion,
-  PLT_ROOT
+  PLT_ROOT,
+  getLatestNpmVersion
 }

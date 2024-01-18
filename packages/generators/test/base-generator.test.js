@@ -8,6 +8,11 @@ const { join } = require('node:path')
 const { fakeLogger, getTempDir } = require('./helpers')
 const { BaseGenerator } = require('../lib/base-generator')
 const { convertServiceNameToPrefix } = require('../lib/utils')
+const { MockAgent, setGlobalDispatcher } = require('undici')
+
+const mockAgent = new MockAgent()
+setGlobalDispatcher(mockAgent)
+mockAgent.disableNetConnect()
 
 afterEach(async () => {
   try {
@@ -398,7 +403,7 @@ test('should add package', async () => {
       }
     ]
   }
-  bg.addPackage(packageDefinition)
+  await bg.addPackage(packageDefinition)
 
   assert.equal(bg.packages.length, 1)
   assert.deepEqual(bg.packages[0], packageDefinition)
@@ -431,7 +436,7 @@ test('support packages', async (t) => {
       isRuntimeContext: true,
       serviceName: 'my-service'
     })
-    svc.addPackage(packageDefinitions[0])
+    await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
 
     const platformaticConfigFile = svc.getFileObject('platformatic.json')
@@ -450,7 +455,12 @@ test('support packages', async (t) => {
     })
 
     assert.equal(svc.config.env.PLT_MY_SERVICE_FST_PLUGIN_STATIC_FOOBAR, 123)
+
+    const packageJsonFile = svc.getFileObject('package.json')
+    const packageJson = JSON.parse(packageJsonFile.contents)
+    assert.equal(packageJson.dependencies['@fastify/compress'], 'latest')
   }
+
   {
     // with standard platformatic plugin
     const svc = new BaseGenerator({
@@ -471,7 +481,7 @@ test('support packages', async (t) => {
         ]
       }
     ]
-    svc.addPackage(packageDefinitions[0])
+    await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
 
     const platformaticConfigFile = svc.getFileObject('platformatic.json')
@@ -510,7 +520,7 @@ test('support packages', async (t) => {
         ]
       }
     ]
-    svc.addPackage(packageDefinitions[0])
+    await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
 
     const platformaticConfigFile = svc.getFileObject('platformatic.json')
@@ -550,7 +560,7 @@ test('support packages', async (t) => {
         ]
       }
     ]
-    svc.addPackage(packageDefinitions[0])
+    await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
 
     const platformaticConfigFile = svc.getFileObject('platformatic.json')
@@ -566,6 +576,74 @@ test('support packages', async (t) => {
         }
       ]
     })
+  }
+
+  {
+    // should get the version from npm
+    mockAgent
+      .get('https://registry.npmjs.org')
+      .intercept({
+        method: 'GET',
+        path: '/foobar'
+      })
+      .reply(200, {
+        'dist-tags': {
+          latest: '1.42.0'
+        }
+      })
+
+    const svc = new BaseGenerator({
+      module: '@platformatic/service'
+    })
+    const packageDefinitions = [
+      {
+        name: 'foobar',
+        options: []
+      }
+    ]
+    svc.setConfig({
+      isRuntimeContext: true,
+      serviceName: 'my-service'
+    })
+    await svc.addPackage(packageDefinitions[0])
+    await svc.prepare()
+
+    const packageJsonFile = svc.getFileObject('package.json')
+    const packageJson = JSON.parse(packageJsonFile.contents)
+    assert.equal(packageJson.dependencies.foobar, '1.42.0')
+  }
+
+  {
+    // should default to `latest` if getting the version from npm fails
+    mockAgent
+      .get('https://registry.npmjs.org')
+      .intercept({
+        method: 'GET',
+        path: '/foobar'
+      })
+      .reply(500, {
+        message: 'Internal Server Error'
+      })
+
+    const svc = new BaseGenerator({
+      module: '@platformatic/service'
+    })
+    const packageDefinitions = [
+      {
+        name: 'foobar',
+        options: []
+      }
+    ]
+    svc.setConfig({
+      isRuntimeContext: true,
+      serviceName: 'my-service'
+    })
+    await svc.addPackage(packageDefinitions[0])
+    await svc.prepare()
+
+    const packageJsonFile = svc.getFileObject('package.json')
+    const packageJson = JSON.parse(packageJsonFile.contents)
+    assert.equal(packageJson.dependencies.foobar, 'latest')
   }
 })
 

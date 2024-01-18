@@ -14,7 +14,8 @@
     "@fastify/error": "^3.4.1",
     "boring-name-generator": "^1.0.3",
     "fastify": "^4.24.3",
-    "pino": "^8.16.1"
+    "pino": "^8.16.1",
+    "undici": "^6.3.0"
   },
   "devDependencies": {
     "@types/inquirer": "^9.0.7",

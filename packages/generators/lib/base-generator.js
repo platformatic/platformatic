@@ -1,7 +1,15 @@
 'use strict'
 
 const { readFile } = require('node:fs/promises')
-const { stripVersion, convertServiceNameToPrefix, addPrefixToEnv, extractEnvVariablesFromText, getPackageConfigurationObject, PLT_ROOT } = require('./utils')
+const {
+  stripVersion,
+  convertServiceNameToPrefix,
+  addPrefixToEnv,
+  extractEnvVariablesFromText,
+  getPackageConfigurationObject,
+  PLT_ROOT,
+  getLatestNpmVersion
+} = require('./utils')
 const { join } = require('node:path')
 const { FileGenerator } = require('./file-generator')
 const { generateTests, generatePlugins } = require('./create-plugin')
@@ -388,9 +396,17 @@ class BaseGenerator extends FileGenerator {
     return metadata
   }
 
-  addPackage (pkg) {
-    this.packages.push(pkg)
+  async addPackage (pkg) {
     this.config.dependencies[pkg.name] = 'latest'
+    try {
+      const version = await getLatestNpmVersion(pkg.name)
+      if (version) {
+        this.config.dependencies[pkg.name] = version
+      }
+    } catch (err) {
+      this.logger.warn(`Could not get latest version for ${pkg.name}, setting it to latest`)
+    }
+    this.packages.push(pkg)
   }
 
   // implement in the subclass
