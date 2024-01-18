@@ -530,6 +530,9 @@ importers:
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
+      '@platformatic/create-platformatic-auto':
+        specifier: workspace:*
+        version: link:../create-platformatic-auto
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
