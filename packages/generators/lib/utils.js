@@ -138,7 +138,7 @@ function getPackageConfigurationObject (config, serviceName = '') {
 
 async function getLatestNpmVersion (pkg) {
   const npmCall = request(`https://registry.npmjs.org/${pkg}`)
-  const timeout = setTimeout(2000, null)
+  const timeout = setTimeout(1000, null)
   const res = await Promise.race([npmCall, timeout])
   if (!res) {
     return null
