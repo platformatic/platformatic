@@ -4,6 +4,12 @@ const assert = require('node:assert')
 const { describe, test } = require('node:test')
 const { DBGenerator, Generator } = require('../lib/generator/db-generator')
 
+const { MockAgent, setGlobalDispatcher } = require('undici')
+
+const mockAgent = new MockAgent()
+setGlobalDispatcher(mockAgent)
+mockAgent.disableNetConnect()
+
 describe('generator', () => {
   test('should export a Generator property', async () => {
     const svc = new Generator()
@@ -318,7 +324,7 @@ declare module 'fastify' {
         isRuntimeContext: true,
         serviceName: 'my-db'
       })
-      svc.addPackage(packageDefinitions[0])
+      await svc.addPackage(packageDefinitions[0])
       await svc.prepare()
 
       const platformaticConfigFile = svc.getFileObject('platformatic.json')
@@ -356,7 +362,7 @@ declare module 'fastify' {
           ]
         }
       ]
-      svc.addPackage(packageDefinitions[0])
+      await svc.addPackage(packageDefinitions[0])
       await svc.prepare()
 
       const platformaticConfigFile = svc.getFileObject('platformatic.json')

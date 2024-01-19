@@ -1221,6 +1221,9 @@ importers:
       pino:
         specifier: ^8.16.1
         version: 8.17.2
+      undici:
+        specifier: ^6.3.0
+        version: 6.3.0
     devDependencies:
       '@types/inquirer':
         specifier: ^9.0.7
@@ -9209,6 +9212,13 @@ packages:
     engines: {node: '>=18.0'}
     dependencies:
       '@fastify/busboy': 2.1.0
+
+  /undici@6.3.0:
+    resolution: {integrity: sha512-zkSMOXs2topAR1LF0PxAaNNvhdX4LYEcmRMJLMh3mjgfZpBtc/souXOp4aYiR5Q46HrBPA2/8DkEZhD3eNFE1Q==}
+    engines: {node: '>=18.0'}
+    dependencies:
+      '@fastify/busboy': 2.1.0
+    dev: false
 
   /unicorn-magic@0.1.0:
     resolution: {integrity: sha512-lRfVq8fE8gz6QMBuDM6a+LO3IAzTi05H6gCVaUpir2E1Rwpo4ZUog45KpNXKC/Mn3Yb9UDuHumeFTo9iV/D9FQ==}

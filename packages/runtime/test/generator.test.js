@@ -8,6 +8,11 @@ const { ServiceGenerator } = require('../../service/lib/generator/service-genera
 const { ComposerGenerator } = require('../../composer/lib/generator/composer-generator')
 const { join } = require('node:path')
 const { tmpdir } = require('node:os')
+const { MockAgent, setGlobalDispatcher } = require('undici')
+
+const mockAgent = new MockAgent()
+setGlobalDispatcher(mockAgent)
+mockAgent.disableNetConnect()
 
 describe('Generator', () => {
   test('should create a runtime with 2 services', async () => {
@@ -60,7 +65,7 @@ describe('Generator', () => {
     firstService.setConfig({
       isRuntimeContext: false
     })
-    firstService.addPackage({
+    await firstService.addPackage({
       name: '@fastify/helmet',
       options: []
     })

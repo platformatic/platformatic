@@ -3,6 +3,11 @@
 const assert = require('node:assert')
 const { describe, test } = require('node:test')
 const { ComposerGenerator, Generator } = require('../lib/generator/composer-generator')
+const { MockAgent, setGlobalDispatcher } = require('undici')
+
+const mockAgent = new MockAgent()
+setGlobalDispatcher(mockAgent)
+mockAgent.disableNetConnect()
 
 describe('generator', () => {
   test('should export a Generator property', async () => {
@@ -116,7 +121,7 @@ declare module 'fastify' {
         isRuntimeContext: true,
         serviceName: 'my-composer'
       })
-      svc.addPackage(packageDefinitions[0])
+      await svc.addPackage(packageDefinitions[0])
       await svc.prepare()
 
       const platformaticConfigFile = svc.getFileObject('platformatic.json')
@@ -154,7 +159,7 @@ declare module 'fastify' {
           ]
         }
       ]
-      svc.addPackage(packageDefinitions[0])
+      await svc.addPackage(packageDefinitions[0])
       await svc.prepare()
 
       const platformaticConfigFile = svc.getFileObject('platformatic.json')
