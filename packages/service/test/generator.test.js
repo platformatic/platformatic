@@ -6,6 +6,12 @@ const { describe, test } = require('node:test')
 const { ServiceGenerator, Generator } = require('../lib/generator/service-generator')
 const { join } = require('node:path')
 
+const { MockAgent, setGlobalDispatcher } = require('undici')
+
+const mockAgent = new MockAgent()
+setGlobalDispatcher(mockAgent)
+mockAgent.disableNetConnect()
+
 describe('generator', () => {
   test('should export a Generator property', async () => {
     const svc = new Generator()
