@@ -369,6 +369,9 @@ importers:
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
+      '@platformatic/utils':
+        specifier: workspace:^
+        version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.10.1
         version: 1.12.8(fastify-html@0.2.0)(fastify-plugin@4.5.1)(fastify@4.25.2)
@@ -378,12 +381,18 @@ importers:
       commist:
         specifier: ^3.2.0
         version: 3.2.0
+      console-table-printer:
+        specifier: ^2.11.2
+        version: 2.12.0
       desm:
         specifier: ^1.3.0
         version: 1.3.0
       es-main:
         specifier: ^1.3.0
         version: 1.3.0
+      execa:
+        specifier: ^8.0.1
+        version: 8.0.1
       fast-deep-equal:
         specifier: ^3.1.3
         version: 3.1.3
@@ -411,6 +420,9 @@ importers:
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
+      ora:
+        specifier: ^6.3.1
+        version: 6.3.1
       pino:
         specifier: ^8.15.3
         version: 8.17.2
@@ -439,9 +451,6 @@ importers:
       dedent:
         specifier: ^1.5.1
         version: 1.5.1
-      execa:
-        specifier: ^8.0.1
-        version: 8.0.1
       glob:
         specifier: ^10.3.10
         version: 10.3.10
@@ -817,6 +826,9 @@ importers:
       commist:
         specifier: ^3.2.0
         version: 3.2.0
+      console-table-printer:
+        specifier: ^2.11.2
+        version: 2.12.0
       desm:
         specifier: ^1.3.0
         version: 1.3.0
@@ -826,6 +838,9 @@ importers:
       es-main:
         specifier: ^1.3.0
         version: 1.3.0
+      execa:
+        specifier: ^8.0.1
+        version: 8.0.1
       fastify:
         specifier: ^4.23.2
         version: 4.25.2
@@ -847,6 +862,9 @@ importers:
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
+      ora:
+        specifier: ^6.3.1
+        version: 6.3.1
       pino:
         specifier: ^8.15.3
         version: 8.17.2
@@ -881,9 +899,6 @@ importers:
       c8:
         specifier: ^9.0.0
         version: 9.0.0
-      execa:
-        specifier: ^8.0.1
-        version: 8.0.1
       glob:
         specifier: ^10.3.10
         version: 10.3.10
@@ -1481,6 +1496,9 @@ importers:
       commist:
         specifier: ^3.2.0
         version: 3.2.0
+      console-table-printer:
+        specifier: ^2.11.2
+        version: 2.12.0
       desm:
         specifier: ^1.3.0
         version: 1.3.0
@@ -1520,6 +1538,9 @@ importers:
       openapi-schema-diff:
         specifier: ^0.0.1
         version: 0.0.1
+      ora:
+        specifier: ^6.3.1
+        version: 6.3.1
       pino:
         specifier: ^8.15.3
         version: 8.17.2
@@ -4307,6 +4328,12 @@ packages:
       readable-stream: 3.6.2
       typedarray: 0.0.6
     dev: true
+
+  /console-table-printer@2.12.0:
+    resolution: {integrity: sha512-Q/Ax+UOpZw0oPZGmv8bH8/W5NpC2rAYy6cX20BVLGQ45v944oL+srmLTZAse/5a3vWDl0MXR/0GTEdsz2dDTbg==}
+    dependencies:
+      simple-wcswidth: 1.0.1
+    dev: false
 
   /content-disposition@0.5.4:
     resolution: {integrity: sha512-FveZTNuGw04cxlAiWbzi6zTAL/lhehaWbTtgluJh4/E95DqMwTmha3KZN1aAWA8cFIhHzMZUvLevkw5Rqk+tSQ==}
@@ -8560,6 +8587,10 @@ packages:
       decompress-response: 6.0.0
       once: 1.4.0
       simple-concat: 1.0.1
+    dev: false
+
+  /simple-wcswidth@1.0.1:
+    resolution: {integrity: sha512-xMO/8eNREtaROt7tJvWJqHBDTMFN4eiQ5I4JRMuilwfnFcV5W9u7RUkueNkdw0jPqGMX36iCywelS5yilTuOxg==}
     dev: false
 
   /single-user-cache@0.6.0:

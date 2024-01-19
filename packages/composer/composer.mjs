@@ -12,7 +12,7 @@ import { printAndExitLoadConfigError } from '@platformatic/config'
 
 import { fetchOpenApiSchemas } from './lib/openapi-fetch-schemas.mjs'
 import { platformaticComposer } from './index.js'
-
+import { createComposer } from './lib/create.mjs'
 const help = helpMe({
   dir: join(import.meta.url, 'help'),
   // the default
@@ -27,6 +27,7 @@ program.register('start', (argv) => {
 program.register('openapi schemas fetch', (argv) => {
   return fetchOpenApiSchemas(argv).catch(printAndExitLoadConfigError)
 })
+program.register('create', createComposer)
 
 export async function runComposer (argv) {
   const args = parseArgs(argv, {

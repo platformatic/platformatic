@@ -15,6 +15,7 @@ import { seed } from './lib/seed.mjs'
 import { generateTypes } from './lib/gen-types.mjs'
 import { printGraphQLSchema, printOpenAPISchema, generateJsonSchemaConfig } from './lib/gen-schema.mjs'
 import { generateMigration } from './lib/gen-migration.mjs'
+import { createDB } from './lib/create.mjs'
 
 const compile = tsCompiler.buildCompileCmd(platformaticDB)
 
@@ -46,6 +47,8 @@ program.register('help schema', help.toStdout.bind(null, ['schema']))
 program.register('start', (argv) => {
   start(platformaticDB, argv).catch(printAndExitLoadConfigError)
 })
+
+program.register('create', wrapCommand(createDB))
 program.register('compile', wrapCommand(compile))
 program.register('migrations create', wrapCommand(generateMigration))
 program.register('migrations apply', wrapCommand(applyMigrations))
