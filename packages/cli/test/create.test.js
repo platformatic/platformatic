@@ -7,7 +7,6 @@ import { tmpdir } from 'node:os'
 import { readdir, rm, stat } from 'node:fs/promises'
 import { cliPath } from './helper.js'
 
-
 let count = 0
 test('should create a service with base options', async (t) => {
   const dest = join(tmpdir(), `test-cli-create-${process.pid}-${count++}`)
@@ -19,13 +18,13 @@ test('should create a service with base options', async (t) => {
     cliPath, 'service', 'create',
     '--dir', dest,
     '--install', 'false'
-  ])  
+  ])
   await child
 
   // check file structure
   const files = ['.env', '.env.sample', '.gitignore', 'README.md', 'global.d.ts', 'package.json', 'platformatic.json']
-  const dirs = ['plugins','routes','test']
-  
+  const dirs = ['plugins', 'routes', 'test']
+
   const dirContents = await readdir(dest)
   for (const file of dirContents) {
     const fileStat = await stat(join(dest, file))
@@ -39,7 +38,6 @@ test('should create a service with base options', async (t) => {
   }
 })
 
-
 test('should create a db with base options', async (t) => {
   const dest = join(tmpdir(), `test-cli-create-${process.pid}-${count++}`)
   t.after(async () => {
@@ -50,13 +48,13 @@ test('should create a db with base options', async (t) => {
     cliPath, 'db', 'create',
     '--dir', dest,
     '--install', 'false'
-  ])  
+  ])
   await child
 
   // check file structure
   const files = ['.env', '.env.sample', '.gitignore', 'README.md', 'global.d.ts', 'package.json', 'platformatic.json']
-  const dirs = ['migrations', 'plugins','routes','test']
-  
+  const dirs = ['migrations', 'plugins', 'routes', 'test']
+
   const dirContents = await readdir(dest)
   for (const file of dirContents) {
     const fileStat = await stat(join(dest, file))
@@ -80,13 +78,13 @@ test('should create a composer with base options', async (t) => {
     cliPath, 'composer', 'create',
     '--dir', dest,
     '--install', 'false'
-  ])  
+  ])
   await child
 
   // check file structure
   const files = ['.env', '.env.sample', '.gitignore', 'README.md', 'global.d.ts', 'package.json', 'platformatic.json']
-  const dirs = ['plugins','routes','test']
-  
+  const dirs = ['plugins', 'routes', 'test']
+
   const dirContents = await readdir(dest)
   for (const file of dirContents) {
     const fileStat = await stat(join(dest, file))
