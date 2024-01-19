@@ -29,3 +29,5 @@ if (isMain(import.meta)) {
   }
   await createPlatformatic(_args)
 }
+
+export { createPlatformatic }

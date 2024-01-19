@@ -2,6 +2,7 @@ import { join } from 'path'
 import { isFileAccessible, safeMkdir } from './utils.mjs'
 import { writeFile } from 'fs/promises'
 import columnify from 'columnify'
+
 function envAsString (env, indent) {
   const spaces = ' '.repeat(indent * 2)
   return Object.keys(env).reduce((acc, key) => {

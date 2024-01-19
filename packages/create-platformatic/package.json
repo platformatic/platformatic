@@ -21,6 +21,7 @@
   "license": "Apache-2.0",
   "author": "Marco Piraccini <marco.piraccini@gmail.com>",
   "dependencies": {
+    "@platformatic/create-platformatic-auto": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "@types/node": "^20.8.10",
