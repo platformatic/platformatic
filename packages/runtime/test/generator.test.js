@@ -60,7 +60,7 @@ describe('Generator', () => {
     firstService.setConfig({
       isRuntimeContext: false
     })
-    firstService.addPackage({
+    await firstService.addPackage({
       name: '@fastify/helmet',
       options: []
     })

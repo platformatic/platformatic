@@ -537,6 +537,7 @@ test('support packages', async (t) => {
       ]
     })
   }
+
   {
     // with relative path type and name
     const svc = new BaseGenerator({
@@ -611,6 +612,75 @@ test('support packages', async (t) => {
     const packageJsonFile = svc.getFileObject('package.json')
     const packageJson = JSON.parse(packageJsonFile.contents)
     assert.equal(packageJson.dependencies.foobar, '1.42.0')
+  }
+
+  {
+    // should default to `latest` if getting the version from npm fails
+    mockAgent
+      .get('https://registry.npmjs.org')
+      .intercept({
+        method: 'GET',
+        path: '/foobar'
+      })
+      .reply(500, {
+        message: 'Internal Server Error'
+      })
+
+    const svc = new BaseGenerator({
+      module: '@platformatic/service'
+    })
+    const packageDefinitions = [
+      {
+        name: 'foobar',
+        options: []
+      }
+    ]
+    svc.setConfig({
+      isRuntimeContext: true,
+      serviceName: 'my-service'
+    })
+    await svc.addPackage(packageDefinitions[0])
+    await svc.prepare()
+
+    const packageJsonFile = svc.getFileObject('package.json')
+    const packageJson = JSON.parse(packageJsonFile.contents)
+    assert.equal(packageJson.dependencies.foobar, 'latest')
+  }
+
+  {
+    // should set latest on timeout
+    mockAgent
+      .get('https://registry.npmjs.org')
+      .intercept({
+        method: 'GET',
+        path: '/foobarxxx'
+      })
+      .reply(200, {
+        'dist-tags': {
+          latest: '1.42.0'
+        }
+      }).delay(3000)
+
+    const svc = new BaseGenerator({
+      module: '@platformatic/service'
+    })
+    const packageName = 'foobarxxx'
+    const packageDefinitions = [
+      {
+        name: packageName,
+        options: []
+      }
+    ]
+    svc.setConfig({
+      isRuntimeContext: true,
+      serviceName: 'my-service'
+    })
+    await svc.addPackage(packageDefinitions[0])
+    await svc.prepare()
+
+    const packageJsonFile = svc.getFileObject('package.json')
+    const packageJson = JSON.parse(packageJsonFile.contents)
+    assert.equal(packageJson.dependencies[packageName], 'latest')
   }
 
   {

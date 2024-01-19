@@ -4,6 +4,7 @@ const { mkdir } = require('node:fs/promises')
 const { WrongTypeError } = require('./errors')
 const { join } = require('node:path')
 const { request } = require('undici')
+const { setTimeout } = require('timers/promises')
 const PLT_ROOT = 'PLT_ROOT'
 
 async function safeMkdir (dir) {
@@ -136,7 +137,13 @@ function getPackageConfigurationObject (config, serviceName = '') {
 }
 
 async function getLatestNpmVersion (pkg) {
-  const res = await request(`https://registry.npmjs.org/${pkg}`)
+  const npmCall = request(`https://registry.npmjs.org/${pkg}`)
+  const timeout = setTimeout(2000, null)
+  const res = await Promise.race([npmCall, timeout])
+  if (!res) {
+    return null
+  }
+  clearTimeout(timeout)
   if (res.statusCode === 200) {
     const json = await res.body.json()
     return json['dist-tags'].latest

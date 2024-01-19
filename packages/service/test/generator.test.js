@@ -105,7 +105,7 @@ describe('generator', () => {
         isRuntimeContext: true,
         serviceName: 'my-service'
       })
-      svc.addPackage(packageDefinitions[0])
+      await svc.addPackage(packageDefinitions[0])
       await svc.prepare()
 
       const platformaticConfigFile = svc.getFileObject('platformatic.json')
@@ -143,7 +143,7 @@ describe('generator', () => {
           ]
         }
       ]
-      svc.addPackage(packageDefinitions[0])
+      await svc.addPackage(packageDefinitions[0])
       await svc.prepare()
 
       const platformaticConfigFile = svc.getFileObject('platformatic.json')
