@@ -410,6 +410,8 @@ An optional object with the following settings:
 
 - **`dir`** (**required**, `string`): Relative path to the migrations directory.
 - **`autoApply`** (`boolean`, default: `false`): Automatically apply migrations when Platformatic DB server starts.
+- **`migrationsTable`** (`string`, default: `versions`): Table created to track schema version
+- **`validateChecksums`** (`boolean`): Validates checksum of existing SQL migration files already run prior to executing migrations. Unused for JS migrations.
 
 ### `plugins`
 
