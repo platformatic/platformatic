@@ -410,6 +410,10 @@ An optional object with the following settings:
 
 - **`dir`** (**required**, `string`): Relative path to the migrations directory.
 - **`autoApply`** (`boolean`, default: `false`): Automatically apply migrations when Platformatic DB server starts.
+- **`migrationsTable`** (`string`, default: `versions`): Table created to track schema version
+- **`validateChecksums`** (`boolean`): Validates checksum of existing SQL migration files already run prior to executing migrations. Unused for JS migrations.
+- **`newline`** (`string`): Force line ending on file when generating checksum. Value should be either CRLF (windows) or LF (unix/mac).
+- **`currentSchema`** (`string`): For Postgres and MS SQL Server(will ignore for another DBs). Specifies schema to look to when validating `versions` table columns. For Postgres, run's `SET search_path = currentSchema` prior to running queries against db. 
 
 ### `plugins`
 

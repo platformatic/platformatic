@@ -344,6 +344,19 @@ const migrations = {
       }, {
         type: 'string'
       }]
+    },
+    migrationsTable: {
+      type: 'string',
+      description: 'Table created to track schema version.',
+      default: 'versions'
+    },
+    newline: {
+      type: 'string',
+      description: 'Force line ending on file when generating checksum. Value should be either CRLF (windows) or LF (unix/mac).'
+    },
+    currentSchema: {
+      type: 'string',
+      description: 'For Postgres and MS SQL Server(will ignore for another DBs). Specifies schema to look to when validating `versions` table columns. For Postgres, run\'s `SET search_path = currentSchema` prior to running queries against db.'
     }
   },
   additionalProperties: false,

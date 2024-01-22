@@ -10,6 +10,8 @@ class Migrator {
     this.migrationDir = migrationConfig.dir
     this.migrationsTable = migrationConfig.table
     this.validateChecksums = migrationConfig.validateChecksums
+    this.newline = migrationConfig.newline
+    this.currentSchema = migrationConfig.currentSchema
 
     this.logger = logger
 
@@ -60,7 +62,9 @@ class Migrator {
         const res = await db.query(sql`${sql.__dangerous__rawValue(query)}`)
         return { rows: res }
       },
-      validateChecksums: this.validateChecksums
+      validateChecksums: this.validateChecksums,
+      newline: this.newline,
+      currentSchema: ['pg', 'mysql'].includes(driver) ? this.currentSchema : undefined
     })
 
     if (this.validateChecksums === true) {
