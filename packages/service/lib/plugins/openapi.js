@@ -58,8 +58,14 @@ async function setupOpenAPI (app, opts) {
   const routePrefix = openapi.swaggerPrefix || '/documentation'
 
   /** Serve spec file in yaml and json */
-  app.get(`${routePrefix}/json`, { schema: { hide: true } }, async () => app.swagger())
-  app.get(`${routePrefix}/yaml`, { schema: { hide: true } }, async () => app.swagger({ yaml: true }))
+  app.get(`${routePrefix}/json`, {
+    schema: { hide: true },
+    logLevel: 'warn'
+  }, async () => app.swagger())
+  app.get(`${routePrefix}/yaml`, {
+    schema: { hide: true },
+    logLevel: 'warn'
+  }, async () => app.swagger({ yaml: true }))
 
   app.register(ScalarApiReference, {
     ...opts,
