@@ -15,7 +15,15 @@ const errors = require('./errors')
 const camelCase = require('camelcase')
 
 function generateOperationId (path, method, methodMeta, all) {
-  let operationId = methodMeta.operationId
+  let operationId = null
+  // use methodMeta.operationId only if it's present AND it is a valid string that can be
+  // concatenated without converting it
+  // i.e
+  // operationId = "MyOperationId123" is valid
+  // operationId = "/v3/accounts/{id}" is NOT valid and sholuld be converted in "V3AccountsId"
+  if (methodMeta.operationId && methodMeta.operationId.match(/^[a-zA-z0-9]+$/)) {
+    operationId = methodMeta.operationId
+  }
   if (!operationId) {
     const pathParams = methodMeta.parameters?.filter(p => p.in === 'path') || []
     let stringToUpdate = path
@@ -27,7 +35,7 @@ function generateOperationId (path, method, methodMeta, all) {
       stringToUpdate
         .split(/[/-]+/)
         .map((token) => {
-          const sanitized = token.replace(/[^a-zA-z0-9]/, '')
+          const sanitized = token.replace(/[^a-zA-z0-9]/g, '')
           return capitalize(sanitized)
         }).join('')
   } else {
