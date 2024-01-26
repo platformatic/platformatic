@@ -645,9 +645,21 @@ importers:
 
   packages/create-platformatic-auto:
     dependencies:
+      '@platformatic/composer':
+        specifier: workspace:*
+        version: link:../composer
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
+      '@platformatic/db':
+        specifier: workspace:*
+        version: link:../db
+      '@platformatic/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+      '@platformatic/service':
+        specifier: workspace:*
+        version: link:../service
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -715,18 +727,6 @@ importers:
         specifier: ^3.0.1
         version: 3.0.1
     devDependencies:
-      '@platformatic/composer':
-        specifier: workspace:*
-        version: link:../composer
-      '@platformatic/db':
-        specifier: workspace:*
-        version: link:../db
-      '@platformatic/runtime':
-        specifier: workspace:*
-        version: link:../runtime
-      '@platformatic/service':
-        specifier: workspace:*
-        version: link:../service
       ajv:
         specifier: ^8.12.0
         version: 8.12.0
