@@ -53,4 +53,4 @@ export default platformaticService
 
 export const tsCompiler: TSCompiler
 
-export const Generator: ServiceGenerator.ServiceGenerator
+export import Generator = ServiceGenerator.ServiceGenerator
