@@ -91,7 +91,7 @@ test('support objects', async (t) => {
       bar: { type: 'number' }
     }
   }
-  equal(getType(objectDef), '{ foo?: string; bar?: number }')
+  equal(getType(objectDef), '{ \'foo\'?: string; \'bar\'?: number }')
 })
 
 test('support nested objects', async (t) => {
@@ -111,7 +111,7 @@ test('support nested objects', async (t) => {
       }
     }
   }
-  equal(getType(objectDef), '{ foo?: string; bar?: { prop1?: string; prop2?: Array<string> } }')
+  equal(getType(objectDef), '{ \'foo\'?: string; \'bar\'?: { \'prop1\'?: string; \'prop2\'?: Array<string> } }')
 })
 
 test('support array of objects', async (t) => {
@@ -124,7 +124,7 @@ test('support array of objects', async (t) => {
     },
     type: 'array'
   }
-  equal(getType(arrayOfObjectsDef), 'Array<{ attachedAt?: string; id: string }>')
+  equal(getType(arrayOfObjectsDef), 'Array<{ \'attachedAt\'?: string; \'id\': string }>')
 })
 
 test('support array with anyOf', async (t) => {
@@ -163,7 +163,7 @@ test('support enum', async (t) => {
     required: ['prop1', 'prop2']
   }
 
-  equal(getType(enumDef), '{ prop1: \'foo\' | \'bar\' | \'pippo\\\'Giuseppe_Raimondo_Vittorio\\\'baudo\'; prop2: string }')
+  equal(getType(enumDef), '{ \'prop1\': \'foo\' | \'bar\' | \'pippo\\\'Giuseppe_Raimondo_Vittorio\\\'baudo\'; \'prop2\': string }')
 })
 
 test('support enum with numbers', async (t) => {
@@ -180,7 +180,7 @@ test('support enum with numbers', async (t) => {
     type: 'object'
   }
 
-  equal(getType(enumDef), '{ prop1?: 1 | 2; prop2?: string }')
+  equal(getType(enumDef), '{ \'prop1\'?: 1 | 2; \'prop2\'?: string }')
 })
 
 test('object without properties', async (t) => {
@@ -198,5 +198,5 @@ test('object without properties', async (t) => {
     }
   }
 
-  equal(getType(emptyObjectDef), '{ prop1?: string; prop2?: object; prop3?: object }')
+  equal(getType(emptyObjectDef), '{ \'prop1\'?: string; \'prop2\'?: object; \'prop3\'?: object }')
 })

@@ -31,9 +31,9 @@ test('build basic client from url', async (t) => {
 
   // The types interfaces are being created
   match(types, /interface FullResponse<T, U extends number>/)
-  match(types, /interface GetRedirectRequest/)
-  match(types, /interface GetRedirectResponseFound/)
-  match(types, /interface GetRedirectResponseBadRequest/)
+  match(types, /type GetRedirectRequest = /)
+  match(types, /type GetRedirectResponseFound = /)
+  match(types, /type GetRedirectResponseBadRequest = /)
 
   // Request can contain a `Date` type
   ok(types.includes("'messageReq': string | null;"))
@@ -111,16 +111,15 @@ export const getCustomSwagger = async (request) => {
     const typesTemplate = `
 export interface Sample {
   setBaseUrl(newUrl: string) : void;
-  getCustomSwagger(req?: GetCustomSwaggerRequest): Promise<GetCustomSwaggerResponses>;
+  getCustomSwagger(req?: GetCustomSwaggerRequest): Promise<unknown>;
   getRedirect(req?: GetRedirectRequest): Promise<GetRedirectResponses>;
-  getReturnUrl(req?: GetReturnUrlRequest): Promise<GetReturnUrlResponses>;
-  postFoobar(req?: PostFoobarRequest): Promise<PostFoobarResponses>;
+  getReturnUrl(req?: GetReturnUrlRequest): Promise<unknown>;
+  postFoobar(req?: PostFoobarRequest): Promise<unknown>;
 }`
 
-    const unionTypesTemplate = `type GetRedirectResponses = 
+    const unionTypesTemplate = `export type GetRedirectResponses = 
   FullResponse<GetRedirectResponseFound, 302>
-  | FullResponse<GetRedirectResponseBadRequest, 400>
-`
+  | FullResponse<GetRedirectResponseBadRequest, 400>`
     ok(implementation)
     ok(types)
     equal(implementation.includes(jsImplementationTemplate), true)
