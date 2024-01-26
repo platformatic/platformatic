@@ -62,6 +62,7 @@ const client = await buildOpenAPIClient<MyType>({
     const { url } = options;
     return { href: url.href };
   },
+  queryParser: (query) => `${query.toString()}[]`
 }, openTelemetry)
 
 // All params and generic passed

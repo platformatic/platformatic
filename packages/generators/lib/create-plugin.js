@@ -54,7 +54,7 @@ function testHelperJS (mod, customization = { pre: '', post: '', config: '' }) {
 
 const { join } = require('node:path')
 const { readFile } = require('node:fs/promises')
-const { buildServer } = require('@platformatic/${mod}')
+const { buildServer } = require('${mod}')
 ${customization.requires || ''}
 
 async function getServer (t) {

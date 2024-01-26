@@ -12,8 +12,6 @@ import utils from '@platformatic/utils'
 
 const checkForDependencies = utils.checkForDependencies
 
-const DEFAULT_TYPES_FOLDER_PATH = resolve(process.cwd(), 'types')
-
 const GLOBAL_TYPES_TEMPLATE = `\
 import type { PlatformaticApp, PlatformaticDBMixin, PlatformaticDBConfig, Entity, Entities, EntityHooks } from '@platformatic/db'
 ENTITIES_IMPORTS_PLACEHOLDER
@@ -42,11 +40,8 @@ async function removeUnusedTypeFiles (entities, dir) {
   await Promise.all(removedEntityNames.map((file) => unlink(join(dir, file))))
 }
 
-function getTypesFolderPath (config) {
-  if (config.types?.dir) {
-    return resolve(process.cwd(), config.types.dir)
-  }
-  return DEFAULT_TYPES_FOLDER_PATH
+function getTypesFolderPath (cwd, config) {
+  return resolve(cwd, config.types?.dir ?? 'types')
 }
 
 async function generateEntityType (entity) {
@@ -81,7 +76,7 @@ async function generateGlobalTypes (entities, config) {
   const globalHooks = []
   const completeTypesImports = []
 
-  let typesRelativePath = relative(process.cwd(), getTypesFolderPath(config))
+  let typesRelativePath = relative(process.cwd(), getTypesFolderPath(process.cwd(), config))
   {
     const parsedPath = parse(typesRelativePath)
     typesRelativePath = posix.format(parsedPath)
@@ -124,16 +119,6 @@ declare module 'fastify' {
     .replace('HOOKS_DEFINITION_PLACEHOLDER', globalHooks.join('\n    '))
 }
 
-async function generateGlobalTypesFile (entities, config) {
-  const globalTypes = await generateGlobalTypes(entities, config)
-
-  const typesPath = getTypesFolderPath(config)
-  const typesRelativePath = relative(typesPath, process.cwd())
-  const fileNameOrThen = join(typesPath, typesRelativePath, 'global.d.ts')
-
-  await writeFileIfChanged(fileNameOrThen, globalTypes)
-}
-
 async function writeFileIfChanged (filename, content) {
   const isFileExists = await isFileAccessible(filename)
   if (isFileExists) {
@@ -144,14 +129,17 @@ async function writeFileIfChanged (filename, content) {
   return true
 }
 
-async function execute ({ logger, config }) {
+async function execute ({ logger, config, configManager }) {
   const wrap = await setupDB(logger, config.db)
   const { db, entities } = wrap
   if (Object.keys(entities).length === 0) {
     // do not generate types if no schema is found
     return 0
   }
-  const typesFolderPath = getTypesFolderPath(config)
+
+  const servicePath = configManager.dirname
+  const typesFolderPath = getTypesFolderPath(servicePath, config)
+
   const isTypeFolderExists = await isFileAccessible(typesFolderPath)
   if (isTypeFolderExists) {
     await removeUnusedTypeFiles(entities, typesFolderPath)
@@ -180,7 +168,11 @@ async function execute ({ logger, config }) {
   if (isTypeChanged) {
     logger.info('Regenerating global.d.ts')
   }
-  await generateGlobalTypesFile(entities, config)
+
+  const globalTypes = await generateGlobalTypes(entities, config)
+  const globalTypesFilePath = join(servicePath, 'global.d.ts')
+  await writeFileIfChanged(globalTypesFilePath, globalTypes)
+
   await db.dispose()
   return count
 }
@@ -196,7 +188,7 @@ async function generateTypes (_args) {
   await configManager.parseAndValidate()
   const config = configManager.current
 
-  const count = await execute({ logger, config })
+  const count = await execute({ logger, config, configManager })
   if (count === 0) {
     logger.warn('No entities found in your schema. Types were NOT generated.')
     logger.warn('Please run `platformatic db migrations apply` to generate types.')
@@ -204,4 +196,4 @@ async function generateTypes (_args) {
   await checkForDependencies(logger, args, createRequire(import.meta.url), config, ['@platformatic/db'])
 }
 
-export { execute, generateTypes, generateGlobalTypesFile }
+export { execute, generateTypes }
