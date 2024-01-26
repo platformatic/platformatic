@@ -5736,7 +5736,7 @@ packages:
     engines: {node: '>=14'}
     dependencies:
       jwk-to-pem: 2.0.5
-      lru-cache: 10.1.0
+      lru-cache: 10.2.0
       node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
