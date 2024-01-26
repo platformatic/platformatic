@@ -8,6 +8,10 @@ import { BaseGenerator } from '@platformatic/generators'
 import { PlatformaticService } from './config'
 import type { JSONSchemaType } from 'ajv'
 import { ServiceGenerator } from './lib/generator/service-generator'
+
+/* eslint-disable @typescript-eslint/no-unused-vars */
+export import Generator = ServiceGenerator.ServiceGenerator
+
 export interface PlatformaticApp<T> {
   configManager: ConfigManager<T>
   config: T
@@ -34,7 +38,7 @@ export interface Stackable<ConfigType> {
 
   configType: string
   configManagerConfig: ConfigManagerConfig<ConfigType>
-  schema: object,
+  schema: object
   Generator?: new () => BaseGenerator.BaseGenerator
 }
 
@@ -56,5 +60,3 @@ export declare const platformaticService: Stackable<PlatformaticServiceConfig>
 export default platformaticService
 
 export const tsCompiler: TSCompiler
-
-export import Generator = ServiceGenerator.ServiceGenerator
