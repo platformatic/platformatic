@@ -222,9 +222,6 @@
     <script>
       const currentPath = window.location.pathname
     
-      const openApiLink = document.getElementById('openapi-link')
-      openApiLink.href = currentPath + 'documentation'
-
       const graphqlLink = document.getElementById('graphql-link')
       graphqlLink.href = currentPath + 'graphiql'
 
@@ -253,14 +250,14 @@
       fetch('/_platformatic_versions')
         .then(response => response.json())
         .then(versions => {
-          const sharedOpenapiHref = join(currentPath, 'documentation/static/index.html')
+          const sharedOpenapiHref = join(currentPath, 'documentation')
           const openapiButtons = [
             `<a href="${sharedOpenapiHref}"target="_blank" class="button-link">OpenAPI Documentation</a>`
           ]
 
           for (const version of versions) {
-            const href = join(currentPath, version.prefix, 'documentation/static/index.html')
-            openapiButtons.push(`<a href="${href}"target="_blank" class="button-link">OpenAPI Documentation ${version.name}</a>`)
+            const href = join(currentPath, version.prefix, 'documentation')
+            openapiButtons.push(`<a href="${href}" target="_blank" class="button-link">OpenAPI Documentation ${version.name}</a>`)
           }
 
           const buttonList = document.getElementsByClassName('open-documentation-version')[0]
