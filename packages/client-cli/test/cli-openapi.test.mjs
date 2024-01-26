@@ -659,7 +659,6 @@ test('no dashes typescript', async (t) => {
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
-
   const dir = await moveToTmpdir(after)
 
   t.diagnostic(`working in ${dir}`)
@@ -808,7 +807,7 @@ test('openapi client generation from YAML file', async (t) => {
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'openapi.yaml')
   t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
-
+  
   // check openapi json file has been created
   const jsonFile = join(dir, 'movies', 'movies.openapi.json')
   const data = await readFile(jsonFile, 'utf-8')
@@ -818,6 +817,7 @@ test('openapi client generation from YAML file', async (t) => {
   // Check operation names are correctly capitalized
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const typeData = await readFile(typeFile, 'utf-8')
+
   equal(match(typeData, 'getMovies(req?: GetMoviesRequest): Promise<GetMoviesResponses>;'), true)
 })
 
@@ -830,9 +830,10 @@ test('nested optional parameters are correctly identified', async (t) => {
   // check the type file has the correct implementation for the request
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
+
   equal(data.includes(`
-  export interface GetMoviesResponseOK {
-    'data': { foo: string; bar?: string; baz?: { nested1?: string; nested2: string } };
+  export type GetMoviesResponseOK = {
+    'data': { 'foo': string; 'bar'?: string; 'baz'?: { 'nested1'?: string; 'nested2': string } };
   }
 `), true)
 })
@@ -846,7 +847,7 @@ test('request with same parameter name in body/path/header/query', async (t) => 
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
   equal(data.includes(`
-  export interface GetMoviesRequest {
+  export type GetMoviesRequest = {
     body: {
       'id': string;
     }
@@ -878,7 +879,7 @@ test('openapi client generation (javascript) from file with fullRequest, fullRes
     const typeFile = join(dir, 'full', 'full.d.ts')
     const data = await readFile(typeFile, 'utf-8')
     equal(data.includes(`
-  export interface PostHelloRequest {
+  export type PostHelloRequest = {
     body: {
       'bodyId': string;
     }
@@ -946,7 +947,7 @@ test('do not generate implementation file if in platformatic service', async (t)
     const typeFile = join(dir, 'full', 'full.d.ts')
     const data = await readFile(typeFile, 'utf-8')
     equal(data.includes(`
-  export interface PostHelloRequest {
+  export type PostHelloRequest = {
     body: {
       'bodyId': string;
     }
@@ -975,7 +976,7 @@ test('optional-headers option', async (t) => {
   const typeFile = join(dir, 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
   equal(data.includes(`
-  export interface PostHelloRequest {
+  export type PostHelloRequest = {
     'authorization'?: string;
   }
 `), true)
@@ -991,7 +992,7 @@ test('common parameters in paths', async (t) => {
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
   equal(data.includes(`
-  export interface GetPathWithFieldIdRequest {
+  export type GetPathWithFieldIdRequest = {
     path: {
       'fieldId': string;
     }
@@ -1001,14 +1002,14 @@ test('common parameters in paths', async (t) => {
   }
 `), true)
   equal(data.includes(`
-  export interface GetSampleRequest {
+  export type GetSampleRequest = {
     query: {
       'movieId': string;
     }
   }
 `), true)
   equal(data.includes(`
-  export interface PostPathWithFieldIdRequest {
+  export type PostPathWithFieldIdRequest = {
     path: {
       'fieldId': string;
     }

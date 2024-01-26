@@ -3,44 +3,50 @@ import { STATUS_CODES } from 'node:http'
 import { capitalize, classCase } from './utils.mjs'
 import { getType, writeObjectProperties } from './openapi-common.mjs'
 
-function responsesWriter (operationId, responsesArray, isFullResponse, writer) {
-  const responseTypes = Object.entries(responsesArray).map(([statusCode, response]) => {
-    // We ignore all non-JSON endpoints for now
-    // TODO: support other content types
-    if (!response.content || undefined === response.content['application/json']) {
-      return
-    }
-
-    if (statusCode === '204') {
-      return 'undefined'
-    }
-    const currentFullResponse = isFullResponse
-    // Unrecognized status code
-    const statusCodeName = STATUS_CODES[statusCode]
-    let typeName
-    if (statusCodeName === undefined) {
-      typeName = `${operationId}${statusCode}Response`
-    } else {
-      typeName = `${operationId}Response${classCase(STATUS_CODES[statusCode])}`
-    }
-    let isResponseArray
-    writeResponse(typeName, response.content['application/json'].schema)
-    if (isResponseArray) typeName = `Array<${typeName}>`
-    if (currentFullResponse) typeName = `FullResponse<${typeName}, ${statusCode}>`
-    return typeName
-  })
+function responsesWriter (operationId, responsesArray, isFullResponse, writer, spec) {
+  const responseTypes = Object.entries(responsesArray)
+    .filter(([statusCode, response]) => {
+      // We ignore all non-JSON endpoints for now
+      // TODO: support other content types
+      return response.content && response.content['application/json'] !== undefined
+    })
+    .map(([statusCode, response]) => {
+      if (statusCode === '204') {
+        return 'undefined'
+      }
+      // Unrecognized status code
+      const statusCodeName = STATUS_CODES[statusCode]
+      let typeName
+      if (statusCodeName === undefined) {
+        typeName = `${operationId}${statusCode}Response`
+      } else {
+        typeName = `${operationId}Response${classCase(STATUS_CODES[statusCode])}`
+      }
+      let isResponseArray
+      writeResponse(typeName, response.content['application/json'].schema)
+      if (isResponseArray) typeName = `Array<${typeName}>`
+      if (isFullResponse) typeName = `FullResponse<${typeName}, ${statusCode}>`
+      return typeName
+    })
 
   // write response unions
-  const allResponsesName = `${capitalize(operationId)}Responses`
-  writer.writeLine(`export type ${allResponsesName} =`)
-  writer.indent(() => {
-    writer.write(responseTypes.join('\n| '))
-  })
-  writer.blankLine()
-  // mainWriter.writeLine(`${camelCaseOperationId}(req?: ${operationRequestName}): Promise<${allResponsesName}>;`)
-  // currentFullResponse = originalFullResponse
+  if (responseTypes.length) {
+    const allResponsesName = `${capitalize(operationId)}Responses`
+    writer.writeLine(`export type ${allResponsesName} = `)
+    writer.indent(() => {
+      if (responseTypes.length > 0) {
+        writer.write(responseTypes.join('\n| '))
+      } else {
+        writer.write('unknown')
+      }
+    })
+    writer.blankLine()
+    // mainWriter.writeLine(`${camelCaseOperationId}(req?: ${operationRequestName}): Promise<${allResponsesName}>;`)
+    // currentFullResponse = originalFullResponse
 
-  return allResponsesName
+    return allResponsesName
+  }
+  return 'unknown'
 
   function writeResponse (typeName, responseSchema) {
     if (!responseSchema) {
@@ -52,13 +58,12 @@ function responsesWriter (operationId, responsesArray, isFullResponse, writer) {
         writeObjectProperties(writer, responseSchema, {}, new Set(), 'res')
       })
     } else {
-      writer.writeLine(`export type ${typeName} = ${getType(responseSchema, 'res')}`)
+      writer.writeLine(`export type ${typeName} = ${getType(responseSchema, 'res', spec)}`)
     }
 
     return
     let isResponseArray
     for (const [contentType, body] of Object.entries(responseSchema)) {
-      console.log(contentType, body, '!@!@#!@#@#@')
       // We ignore all non-JSON endpoints for now
       // TODO: support other content types
       /* c8 ignore next 3 */
@@ -78,9 +83,8 @@ function responsesWriter (operationId, responsesArray, isFullResponse, writer) {
       // services so we skip for now.
       // TODO: support different schemas for different status codes
       writer.write(`export type ${typeName} =`).block(() => {
-        writer.writeLine(getType(schema, 'res'))
+        writer.writeLine(getType(schema, 'res', spec))
       })
-      console.log(body)
       // if (body.schema.type === 'array') {
       //   isResponseArray = true
       //   schema = body.schema.items
