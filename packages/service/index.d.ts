@@ -15,6 +15,7 @@ export interface PlatformaticApp<T> {
 export type PlatformaticServiceConfig = PlatformaticService
 
 export function buildServer (opts: object, app?: object, ConfigManagerContructor?: object): Promise<FastifyInstance>
+export function start (app: FastifyInstance, args: string[]): Promise<void>
 
 declare module 'fastify' {
   interface FastifyInstance {

@@ -6,6 +6,7 @@ import type { MercuriusPlugin } from 'mercurius'
 import { PlatformaticService } from './config'
 import { BaseGenerator } from '@platformatic/generators'
 import {
+  start,
   buildServer,
   PlatformaticApp,
   platformaticService,
@@ -29,6 +30,8 @@ expectType<PlatformaticService>(server.platformatic.config)
 expectType<OpenAPI.Document>(server.swagger())
 expectType<MercuriusPlugin>(server.graphql)
 expectType<Promise<void>>(server.restart())
+
+await start(server, ['--help'])
 
 function buildStackable (): Stackable<PlatformaticServiceConfig> {
   async function myApp (app: FastifyInstance, opts: object): Promise<void> {
