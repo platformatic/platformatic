@@ -951,8 +951,8 @@ importers:
         specifier: ^3.3.0
         version: 3.4.1
       '@fastify/jwt':
-        specifier: ^7.2.1
-        version: 7.2.4
+        specifier: ^8.0.0
+        version: 8.0.0
       fastify-plugin:
         specifier: ^4.5.1
         version: 4.5.1
@@ -2678,6 +2678,16 @@ packages:
 
   /@fastify/jwt@7.2.4:
     resolution: {integrity: sha512-aWJzVb3iZb9xIPjfut8YOrkNEKrZA9xyF2C2Hv9nTheFp7CQPGIZMNTyf3848BsD27nw0JLk8jVLZ2g2DfJOoQ==}
+    dependencies:
+      '@fastify/error': 3.4.1
+      '@lukeed/ms': 2.0.2
+      fast-jwt: 3.3.2
+      fastify-plugin: 4.5.1
+      steed: 1.1.3
+    dev: false
+
+  /@fastify/jwt@8.0.0:
+    resolution: {integrity: sha512-pJHjmZaokteZFMbsVVt7pbyJpbDogTnpl/aD7eR3vLOPgfktp4k4gUM6cd7RtjL/Ol1qDwL5mup+vdNlZI3K0Q==}
     dependencies:
       '@fastify/error': 3.4.1
       '@lukeed/ms': 2.0.2
