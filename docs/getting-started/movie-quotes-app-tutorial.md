@@ -535,19 +535,19 @@ handling for us:
 // src/lib/quotes-api.js
 
 async function graphqlClientWrapper(method, gqlQuery, queryVariables = {}) {
-	const queryResult = await graphqlClient[method](
-		gqlQuery,
-		queryVariables
-	).toPromise();
+  const queryResult = await graphqlClient[method](
+    gqlQuery,
+    queryVariables
+  ).toPromise();
 
-	if (queryResult.error) {
-		console.error("GraphQL error:", queryResult.error);
-	}
+  if (queryResult.error) {
+    console.error("GraphQL error:", queryResult.error);
+  }
 
-	return {
-		data: queryResult.data,
-		error: queryResult.error,
-	};
+  return {
+    data: queryResult.data,
+    error: queryResult.error,
+  };
 }
 
 export const quotesApi = {
