@@ -229,7 +229,8 @@ test('generate types on start', async (t) => {
 
   await cp(testDir, cwd, { recursive: true })
 
-  const child = execa('node', [cliPath, 'start'], { cwd })
+  const pathToConfig = join(cwd, 'platformatic.db.json')
+  const child = execa('node', [cliPath, 'start', '-c', pathToConfig])
   t.after(async () => {
     child.kill('SIGINT')
     await safeRm(cwd)
