@@ -960,8 +960,8 @@ importers:
         specifier: ^0.3.1
         version: 0.3.2
       get-jwks:
-        specifier: ^8.3.1
-        version: 8.3.1
+        specifier: ^9.0.0
+        version: 9.0.0
       leven:
         specifier: ~3.1.0
         version: 3.1.0
@@ -5716,6 +5716,17 @@ packages:
     dependencies:
       jwk-to-pem: 2.0.5
       lru-cache: 10.2.0
+      node-fetch: 2.7.0
+    transitivePeerDependencies:
+      - encoding
+    dev: false
+
+  /get-jwks@9.0.0:
+    resolution: {integrity: sha512-QCmi8SUnVDIIkRen629kRYGii9JnLeOOqVTi0bhU4uE7sH6IguS8Flp3Npaw0tPI7wbz6qvSoXrdOseIHJJ8KQ==}
+    engines: {node: '>=14'}
+    dependencies:
+      jwk-to-pem: 2.0.5
+      lru-cache: 10.1.0
       node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
