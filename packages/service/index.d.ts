@@ -4,9 +4,14 @@
 import { FastifyInstance, FastifyBaseLogger } from 'fastify'
 import ConfigManager from '@platformatic/config'
 import type { IConfigManagerOptions } from '@platformatic/config'
+import { BaseGenerator } from '@platformatic/generators'
 import { PlatformaticService } from './config'
 import type { JSONSchemaType } from 'ajv'
 import { ServiceGenerator } from './lib/generator/service-generator'
+
+/* eslint-disable @typescript-eslint/no-unused-vars */
+export import Generator = ServiceGenerator.ServiceGenerator
+
 export interface PlatformaticApp<T> {
   configManager: ConfigManager<T>
   config: T
@@ -14,7 +19,8 @@ export interface PlatformaticApp<T> {
 
 export type PlatformaticServiceConfig = PlatformaticService
 
-export function buildServer (opts: object, app?: object, ConfigManagerContructor?: object): Promise<FastifyInstance>
+export function buildServer (opts: object, app?: object, ConfigManagerConstructor?: object): Promise<FastifyInstance>
+export function start<ConfigType> (app: Stackable<ConfigType>, args: string[]): Promise<void>
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -23,7 +29,7 @@ declare module 'fastify' {
 }
 
 export interface ConfigManagerConfig<T> extends Omit<IConfigManagerOptions, 'source' | 'watch' | 'schema'> {
-  transformConfig: (this: ConfigManager<T>) => Promise<void>
+  transformConfig?: (this: ConfigManager<T>) => Promise<void>
   schema: object
 }
 
@@ -33,6 +39,7 @@ export interface Stackable<ConfigType> {
   configType: string
   configManagerConfig: ConfigManagerConfig<ConfigType>
   schema: object
+  Generator?: new () => BaseGenerator.BaseGenerator
 }
 
 interface SchemaExport {
@@ -45,6 +52,7 @@ interface TSCompilerOptions {
 interface TSCompiler {
   compile: (cwd: string, config: object, originalLogger: FastifyBaseLogger, options: TSCompilerOptions) => Promise<boolean>
 }
+
 export const schema: SchemaExport
 
 export declare const platformaticService: Stackable<PlatformaticServiceConfig>
@@ -52,5 +60,3 @@ export declare const platformaticService: Stackable<PlatformaticServiceConfig>
 export default platformaticService
 
 export const tsCompiler: TSCompiler
-
-export const Generator: ServiceGenerator.ServiceGenerator

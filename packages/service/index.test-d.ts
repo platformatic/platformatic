@@ -1,10 +1,19 @@
 import { expectType } from 'tsd'
 import { FastifyInstance } from 'fastify'
-import { buildServer, PlatformaticApp, platformaticService, Stackable, PlatformaticServiceConfig } from '.'
 import ConfigManager from '@platformatic/config'
 import { OpenAPI } from 'openapi-types'
 import type { MercuriusPlugin } from 'mercurius'
 import { PlatformaticService } from './config'
+import { BaseGenerator } from '@platformatic/generators'
+import {
+  start,
+  buildServer,
+  PlatformaticApp,
+  platformaticService,
+  Stackable,
+  Generator,
+  PlatformaticServiceConfig
+} from '.'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -12,8 +21,7 @@ declare module 'fastify' {
   }
 }
 
-const server = await buildServer({
-})
+const server = await buildServer({})
 
 expectType<FastifyInstance>(server)
 expectType<ConfigManager<PlatformaticService>>(server.platformatic.configManager)
@@ -41,7 +49,18 @@ function buildStackable (): Stackable<PlatformaticServiceConfig> {
     }
   }
 
+  await start(myApp, ['--help'])
+
   return myApp
 }
 
 expectType<Stackable<PlatformaticServiceConfig>>(buildStackable())
+
+const generator = new Generator()
+expectType<Generator>(generator)
+
+class MyGenerator extends Generator {}
+const myGenerator = new MyGenerator()
+
+expectType<MyGenerator>(myGenerator)
+expectType<BaseGenerator.BaseGeneratorConfig>(myGenerator.config)

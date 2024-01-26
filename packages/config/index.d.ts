@@ -65,3 +65,5 @@ export module errors {
   export const NoConfigFileFoundError: FastifyError
 }
 
+export function printAndExitLoadConfigError (err: any): void
+export function printAndExitValidationError (err: any): void
