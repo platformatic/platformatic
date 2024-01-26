@@ -20,36 +20,38 @@ test.afterEach(async () => {
   }
 })
 
-// test('Creates a Platformatic Stackable without typescript', { timeout }, async () => {
-//   // The actions must match IN ORDER
-//   const actions = [{
-//     match: 'What kind of project do you want to create?',
-//     do: [keys.DOWN, keys.ENTER] // Stackable
-//   }, {
-//     match: 'Where would you like to create your project?',
-//     do: [keys.ENTER],
-//     waitAfter: 5000
-//   }, {
-//     match: 'Do you want to use TypeScript',
-//     do: [keys.ENTER] // no
-//   }, {
-//     match: 'Do you want to init the git repository',
-//     do: [keys.DOWN, keys.ENTER] // yes
-//   }]
-//   await executeCreatePlatformatic(tmpDir, actions, 'Stackable created successfully!')
+test('Creates a Platformatic Stackable without typescript', { timeout }, async () => {
+  // The actions must match IN ORDER
+  const actions = [{
+    match: 'What kind of project do you want to create?',
+    do: [keys.DOWN, keys.ENTER] // Stackable
+  }, {
+    match: 'Where would you like to create your project?',
+    do: [keys.ENTER],
+    waitAfter: 5000
+  }, {
+    match: 'Do you want to use TypeScript',
+    do: [keys.ENTER] // no
+  }, {
+    match: 'Do you want to init the git repository',
+    do: [keys.DOWN, keys.ENTER] // yes
+  }]
+  await executeCreatePlatformatic(tmpDir, actions, 'Stackable created successfully!')
 
-//   const baseProjectDir = join(tmpDir, 'platformatic')
-//   const files = await walk(baseProjectDir)
-//   console.log('==> created files', files)
-//   equal(await isFileAccessible(join(baseProjectDir, '.gitignore')), true)
-//   equal(await isFileAccessible(join(baseProjectDir, 'index.js')), true)
-//   equal(await isFileAccessible(join(baseProjectDir, 'package.json')), true)
-//   equal(await isFileAccessible(join(baseProjectDir, 'plugins', 'example.js')), true)
-//   equal(await isFileAccessible(join(baseProjectDir, 'lib', 'schema.js')), true)
-//   equal(await isFileAccessible(join(baseProjectDir, 'lib', 'generator.js')), true)
-//   equal(await isFileAccessible(join(baseProjectDir, 'cli', 'create.js')), true)
-//   equal(await isFileAccessible(join(baseProjectDir, 'cli', 'start.js')), true)
-// })
+  const baseProjectDir = join(tmpDir, 'platformatic')
+  const files = await walk(baseProjectDir)
+  console.log('==> created files', files)
+  equal(await isFileAccessible(join(baseProjectDir, '.gitignore')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'index.js')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'index.d.ts')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'config.d.ts')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'package.json')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'plugins', 'example.js')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'lib', 'schema.js')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'lib', 'generator.js')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'cli', 'create.js')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'cli', 'start.js')), true)
+})
 
 test('Creates a Platformatic Stackable with typescript', { timeout }, async () => {
   // The actions must match IN ORDER
@@ -73,11 +75,13 @@ test('Creates a Platformatic Stackable with typescript', { timeout }, async () =
   const files = await walk(baseProjectDir)
   console.log('==> created files', files)
   equal(await isFileAccessible(join(baseProjectDir, '.gitignore')), true)
-  equal(await isFileAccessible(join(baseProjectDir, 'index.js')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'index.ts')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'index.d.ts')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'config.d.ts')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'package.json')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'plugins', 'example.ts')), true)
-  equal(await isFileAccessible(join(baseProjectDir, 'lib', 'schema.js')), true)
-  equal(await isFileAccessible(join(baseProjectDir, 'lib', 'generator.js')), true)
-  equal(await isFileAccessible(join(baseProjectDir, 'cli', 'create.js')), true)
-  equal(await isFileAccessible(join(baseProjectDir, 'cli', 'start.js')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'lib', 'schema.ts')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'lib', 'generator.ts')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'cli', 'create.ts')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'cli', 'start.ts')), true)
 })
