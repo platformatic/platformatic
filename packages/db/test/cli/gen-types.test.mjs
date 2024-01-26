@@ -229,6 +229,49 @@ test('generate types on start', async (t) => {
 
   await cp(testDir, cwd, { recursive: true })
 
+  const child = execa('node', [cliPath, 'start'], { cwd })
+  t.after(async () => {
+    child.kill('SIGINT')
+    await safeRm(cwd)
+  })
+
+  const splitter = split()
+  child.stdout.pipe(splitter)
+
+  let found = false
+  for await (const data of splitter) {
+    const sanitized = stripAnsi(data)
+    if (sanitized.match(/(.*)Generated type for(.*)/)) {
+      found = true
+      break
+    }
+  }
+  assert.equal(found, true)
+
+  t.diagnostic('sleep a bit to allow the fs to write everything down')
+  await setTimeout(100)
+
+  t.diagnostic('Adjusting type reference to avoid loops')
+  await adjustTypeReferenceToAvoidLoops(cwd)
+
+  try {
+    await execa(pathToTSD, { cwd })
+  } catch (err) {
+    console.log(err)
+    assert.fail('Failed to generate types')
+  }
+})
+
+test('generate types on start in a different cwd', async (t) => {
+  const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
+  const cwd = join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
+
+  try {
+    await safeRm(cwd)
+  } catch {}
+
+  await cp(testDir, cwd, { recursive: true })
+
   const pathToConfig = join(cwd, 'platformatic.db.json')
   const child = execa('node', [cliPath, 'start', '-c', pathToConfig])
   t.after(async () => {
