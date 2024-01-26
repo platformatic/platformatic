@@ -197,7 +197,7 @@ describe('generator', () => {
         label: 'Which port do you want to use?',
         var: 'PORT',
         default: 3042,
-        tyoe: 'number',
+        type: 'number',
         configValue: 'port'
       }
     ])
