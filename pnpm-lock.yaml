@@ -343,8 +343,8 @@ importers:
         specifier: ^9.2.1
         version: 9.3.0
       '@fastify/reply-from':
-        specifier: ^9.4.0
-        version: 9.5.0
+        specifier: ^9.6.0
+        version: 9.6.0
       '@fastify/static':
         specifier: ^6.11.2
         version: 6.12.0
@@ -2667,7 +2667,7 @@ packages:
   /@fastify/http-proxy@9.3.0:
     resolution: {integrity: sha512-fQkdgwco8q7eI2PQA8lH++y3Q+hNlIByBYsphl+r4FKRbmrU7ey4WOA/CA9tBhe4oEojGpa3eTU4jXvqf2DBuQ==}
     dependencies:
-      '@fastify/reply-from': 9.5.0
+      '@fastify/reply-from': 9.6.0
       fast-querystring: 1.1.2
       fastify-plugin: 4.5.1
       ws: 8.16.0
@@ -2694,11 +2694,12 @@ packages:
       which: 4.0.0
     dev: true
 
-  /@fastify/reply-from@9.5.0:
-    resolution: {integrity: sha512-lSEASzAMHELN2mp0BDheL5omr+IaakuTPM70cHWHn/KEPJqPqGpN6x8YfOhY6fL1f3Hlgyhqq7CiFdEtT4xZ/Q==}
+  /@fastify/reply-from@9.6.0:
+    resolution: {integrity: sha512-c1AqCq5+Wsc9iGpeRE5UpkzNJFn1HW1tCBgQw9h/EcaohqhYp2zoeXFM/MVFZvVKPph9eFkbWzLoQqMH4degfg==}
     dependencies:
       '@fastify/error': 3.4.1
       end-of-stream: 1.4.4
+      fast-content-type-parse: 1.1.0
       fast-querystring: 1.1.2
       fastify-plugin: 4.5.1
       pump: 3.0.0
