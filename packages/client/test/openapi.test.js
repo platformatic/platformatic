@@ -2,7 +2,7 @@
 
 const assert = require('node:assert/strict')
 const { tmpdir } = require('node:os')
-const { test } = require('node:test')
+const { test, mock } = require('node:test')
 const { join } = require('node:path')
 const { unlink, mkdtemp, cp, rm } = require('node:fs/promises')
 const { ResponseStatusCodeError } = require('undici').errors
@@ -287,6 +287,45 @@ test('build full response client from url', async (t) => {
     assert.match(hello.headers['keep-alive'], matchKeepAlive)
     assert.deepEqual(hello.body, { hello: 'Matteo' })
   }
+})
+
+test('properly call query parser', async (t) => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
+  try {
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildServer(join(tmpDir, 'platformatic.db.json'))
+
+  t.after(async () => {
+    await app.close()
+    await rm(tmpDir, { recursive: true })
+  })
+  await app.start()
+
+  const mockQueryParser = mock.fn()
+  const clientWithoutQueryParser = await buildOpenAPIClient({
+    url: `${app.url}/documentation/json`,
+    fullResponse: true
+  })
+
+  const resultWithoutQueryParser = await clientWithoutQueryParser.getMovies()
+  assert.equal(resultWithoutQueryParser.statusCode, 200)
+  assert.strictEqual(mockQueryParser.mock.callCount(), 0)
+
+  const clientWithQueryParser = await buildOpenAPIClient({
+    url: `${app.url}/documentation/json`,
+    fullResponse: true,
+    queryParser: mockQueryParser
+  })
+
+  const { statusCode } = await clientWithQueryParser.getMovies()
+  assert.equal(statusCode, 200)
+  assert.strictEqual(mockQueryParser.mock.callCount(), 1)
 })
 
 test('throw on error level response', async (t) => {

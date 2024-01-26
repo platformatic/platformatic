@@ -21,6 +21,7 @@ interface PlatformaticClientOptions {
   throwOnError: boolean;
   headers?: Headers;
   validateResponse?: boolean;
+  queryParser?: (query: URLSearchParams) => string
 }
 
 type BuildOpenAPIClientOptions  = PlatformaticClientOptions & {
