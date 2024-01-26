@@ -1,7 +1,6 @@
 'use strict'
 
-import { STATUS_CODES } from 'node:http'
-import { capitalize, classCase } from './utils.mjs'
+import { capitalize } from './utils.mjs'
 import { hasDuplicatedParameters } from '@platformatic/client'
 import jsonpointer from 'jsonpointer'
 import errors from './errors.mjs'
@@ -22,7 +21,6 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
     }
     const capitalizedCamelCaseOperationId = capitalize(camelCaseOperationId)
     const operationRequestName = `${capitalizedCamelCaseOperationId}Request`
-    const operationResponseName = `${capitalizedCamelCaseOperationId}Response`
 
     interfacesWriter.write(`export type ${operationRequestName} =`).block(() => {
       const addedProps = new Set()
@@ -75,40 +73,6 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
     const allResponsesName = responsesWriter(capitalizedCamelCaseOperationId, responses, currentFullResponse, interfacesWriter, schema)
     mainWriter.writeLine(`${camelCaseOperationId}(req?: ${operationRequestName}): Promise<${allResponsesName}>;`)
     currentFullResponse = originalFullResponse
-    // const responseTypes = Object.entries(responses).map(([statusCode, response]) => {
-    //   // The client library will always dump bodies for 204 responses
-    //   // so the type must be undefined
-    //   if (statusCode === '204') {
-    //     return 'undefined'
-    //   }
-
-    //   // Unrecognized status code
-    //   const statusCodeName = STATUS_CODES[statusCode]
-    //   let type
-    //   if (statusCodeName === undefined) {
-    //     type = `${operationResponseName}${statusCode}Response`
-    //   } else {
-    //     type = `${operationResponseName}${classCase(STATUS_CODES[statusCode])}`
-    //   }
-    //   let isResponseArray
-    //   interfacesWriter.write(`export type ${type} =`).block(() => {
-    //     isResponseArray = writeContent(interfacesWriter, response.content, schema, new Set(), 'res')
-    //   })
-    //   interfacesWriter.blankLine()
-    //   if (isResponseArray) type = `Array<${type}>`
-    //   if (currentFullResponse) type = `FullResponse<${type}, ${statusCode}>`
-    //   return type
-    // })
-
-    // // write response unions
-    // const allResponsesName = `${capitalize(camelCaseOperationId)}Responses`
-    // interfacesWriter.writeLine(`type ${allResponsesName} = `)
-    // interfacesWriter.indent(() => {
-    //   interfacesWriter.write(responseTypes.join('\n| '))
-    // })
-    // interfacesWriter.blankLine()
-    // mainWriter.writeLine(`${camelCaseOperationId}(req?: ${operationRequestName}): Promise<${allResponsesName}>;`)
-    // currentFullResponse = originalFullResponse
   }
 }
 

@@ -371,3 +371,92 @@ export type MyOperationResponses =
   MyOperationResponseOK
 `.trim())
 })
+
+test('support array of $ref', async (t) => {
+  const writer = getWriter()
+  const spec = {
+    components: {
+      schemas: {
+        Movie: {
+          title: 'Movie',
+          description: 'A Movie',
+          type: 'object',
+          properties: {
+            id: {
+              type: 'integer'
+            },
+            title: {
+              type: 'string'
+            }
+          },
+          required: [
+            'title'
+          ]
+        }
+      }
+    }
+  }
+  const responses = {
+    200: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'array',
+            items: {
+              $ref: '#/components/schemas/Movie'
+            }
+          }
+        }
+      }
+    }
+  }
+  responsesWriter('MyOperation', responses, false, writer, spec)
+  const expected = `
+export type MyOperationResponseOK = Array<{ 'id'?: number; 'title': string }>
+export type MyOperationResponses =
+  MyOperationResponseOK`.trim()
+  assert.equal(writer.toString().trim(), expected)
+})
+
+test('support $ref', async (t) => {
+  const writer = getWriter()
+  const spec = {
+    components: {
+      schemas: {
+        Movie: {
+          title: 'Movie',
+          description: 'A Movie',
+          type: 'object',
+          properties: {
+            id: {
+              type: 'integer'
+            },
+            title: {
+              type: 'string'
+            }
+          },
+          required: [
+            'title'
+          ]
+        }
+      }
+    }
+  }
+  const responses = {
+    200: {
+      content: {
+        'application/json': {
+          schema: {
+            $ref: '#/components/schemas/Movie'
+          }
+        }
+      }
+    }
+  }
+  responsesWriter('MyOperation', responses, false, writer, spec)
+  const expected = `
+export type MyOperationResponseOK = { 'id'?: number; 'title': string }
+export type MyOperationResponses =
+  MyOperationResponseOK`.trim()
+  assert.equal(writer.toString().trim(), expected)
+})

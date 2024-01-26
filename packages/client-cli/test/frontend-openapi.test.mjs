@@ -117,7 +117,7 @@ export interface Sample {
   postFoobar(req?: PostFoobarRequest): Promise<unknown>;
 }`
 
-    const unionTypesTemplate = `export type GetRedirectResponses = 
+    const unionTypesTemplate = `export type GetRedirectResponses =
   FullResponse<GetRedirectResponseFound, 302>
   | FullResponse<GetRedirectResponseBadRequest, 400>`
     ok(implementation)
