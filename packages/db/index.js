@@ -49,7 +49,7 @@ async function platformaticDB (app, opts) {
     if (config.types && config.types.autogenerate === true) {
       app.log.debug({ types: config.types }, 'generating types')
       const { execute } = await import('./lib/gen-types.mjs')
-      await execute({ logger: app.log, config })
+      await execute({ logger: app.log, config, configManager })
     }
   }
 
