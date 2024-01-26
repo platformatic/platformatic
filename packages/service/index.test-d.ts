@@ -31,8 +31,6 @@ expectType<OpenAPI.Document>(server.swagger())
 expectType<MercuriusPlugin>(server.graphql)
 expectType<Promise<void>>(server.restart())
 
-await start(server, ['--help'])
-
 function buildStackable (): Stackable<PlatformaticServiceConfig> {
   async function myApp (app: FastifyInstance, opts: object): Promise<void> {
     await platformaticService(app, opts)
@@ -50,6 +48,8 @@ function buildStackable (): Stackable<PlatformaticServiceConfig> {
       }
     }
   }
+
+  await start(myApp, ['--help'])
 
   return myApp
 }
