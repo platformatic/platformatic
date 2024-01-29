@@ -24,7 +24,8 @@ stackable.configManagerConfig = {
     coerceTypes: true,
     allErrors: true,
     strict: false
-  }
+  },
+  transformConfig: async () => {}
 }
 
 // break Fastify encapsulation
@@ -38,10 +39,11 @@ import { platformaticService, Stackable } from '@platformatic/service'
 import { schema } from './lib/schema'
 import { Generator } from './lib/generator'
 import { StackableConfig } from './config'
+import greetingPlugin from './plugins/example'
 
 const stackable: Stackable<StackableConfig> = async function (fastify, opts) {
   await fastify.register(platformaticService, opts)
-  await fastify.register(require('./plugins/example'), opts)
+  await fastify.register(greetingPlugin, opts)
 }
 
 stackable.configType = 'stackable'
@@ -56,7 +58,8 @@ stackable.configManagerConfig = {
     coerceTypes: true,
     allErrors: true,
     strict: false
-  }
+  },
+  transformConfig: async () => {}
 }
 
 // break Fastify encapsulation
@@ -217,6 +220,7 @@ if (require.main === module) {
 `
 
 const STACKABLE_CONFIG_TYPES_FILE = `\
+// Use npm run build:config to generate this file from the Stackable schema
 export interface StackableConfig {
   greeting?: {
     text: string;
