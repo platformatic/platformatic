@@ -52,7 +52,7 @@ test('build basic client from url', async (t) => {
   // handle non 200 code endpoint
   const expectedImplementation = `
 async function _getRedirect (url, request) {
-  const response = await fetch(\`\${url}/redirect?\${new URLSearchParams(Object.entries(request || {})).toString()}\`)
+  const response = await fetch(\`\${url}/redirect\`)
 
   let body = await response.text()
 
@@ -318,7 +318,7 @@ test('handle headers parameters in get request', async (t) => {
 
   const tsImplementationTemplate = `
 const _getRoot = async (url: string, request: Types.GetRootRequest): Promise<Types.GetRootResponses> => {
-  const response = await fetch(\`\${url}/?\${new URLSearchParams(Object.entries(request || {})).toString()}\`, {
+  const response = await fetch(\`\${url}/\`, {
     headers: {
       'level': request['level'],
       'foo': request['foo']

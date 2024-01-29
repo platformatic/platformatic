@@ -115,10 +115,38 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
       const stringLiteralPath = path.replace(/\{/gm, '${request.')
 
       // GET methods need query strings instead of JSON bodies
+      if (queryParams.length) {
+        // query parameters should be appended to the url
+        const quotedParams = queryParams.map((qp) => `'${qp}'`)
+        let queryParametersType = ''
+        if (language === 'ts') {
+          queryParametersType = `: (keyof Types.${operationRequestName})[] `
+        }
+        writer.writeLine(`const queryParameters${queryParametersType}= [${quotedParams.join(', ')}]`)
+        writer.writeLine('const searchParams = new URLSearchParams()')
+        writer.write('queryParameters.forEach((qp) =>').inlineBlock(() => {
+          writer.write('if (request[qp]) ').block(() => {
+            writer.writeLine('searchParams.append(qp, request[qp]?.toString() || \'\')')
+            writer.writeLine('delete request[qp]')
+          })
+        })
+        writer.write(')')
+        writer.blankLine()
+      }
+
       if (method === 'get') {
+        let commonString = `const response = await fetch(\`\${url}${stringLiteralPath}`
+
+        if (queryParams.length > 0) {
+          /* eslint-disable no-template-curly-in-string */
+          commonString += '?${searchParams.toString()}`'
+          /* eslint-enable no-template-curly-in-string */
+        } else {
+          commonString += '`'
+        }
         writer
-          .conditionalWrite(headerParams.length > 0, `const response = await fetch(\`\${url}${stringLiteralPath}?\${new URLSearchParams(Object.entries(request || {})).toString()}\`, `)
-          .conditionalWrite(headerParams.length === 0, `const response = await fetch(\`\${url}${stringLiteralPath}?\${new URLSearchParams(Object.entries(request || {})).toString()}\`)`)
+          .conditionalWrite(headerParams.length > 0, `const response = await fetch(\`\${url}${stringLiteralPath}\`, `)
+          .conditionalWrite(headerParams.length === 0, `${commonString})`)
         if (headerParams.length > 0) {
           writer
             .inlineBlock(() => {
@@ -132,25 +160,6 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
             .write(')')
         }
       } else {
-        if (queryParams.length) {
-          // query parameters should be appended to the url
-          const quotedParams = queryParams.map((qp) => `'${qp}'`)
-          let queryParametersType = ''
-          if (language === 'ts') {
-            queryParametersType = `: (keyof Types.${operationRequestName})[] `
-          }
-          writer.writeLine(`const queryParameters${queryParametersType}= [${quotedParams.join(', ')}]`)
-          writer.writeLine('const searchParams = new URLSearchParams()')
-          writer.write('queryParameters.forEach((qp) =>').inlineBlock(() => {
-            writer.write('if (request[qp]) ').block(() => {
-              writer.writeLine('searchParams.append(qp, request[qp]?.toString() || \'\')')
-              writer.writeLine('delete request[qp]')
-            })
-          })
-          writer.write(')')
-          writer.blankLine()
-        }
-
         writer
           .conditionalWrite(queryParams.length > 0, `const response = await fetch(\`\${url}${stringLiteralPath}?\${searchParams.toString()}\`, `)
           .conditionalWrite(queryParams.length === 0, `const response = await fetch(\`\${url}${stringLiteralPath}\`, `)
