@@ -61,7 +61,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
     options.getHeaders = undefined
   }
 
-  const { validateResponse } = options
+  const { validateResponse, queryParser } = options
   // this is tested, not sure why c8 is not picking it up
   if (!options.url) {
     throw new errors.OptionsUrlRequiredError()
@@ -106,7 +106,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
       }
 
       client[kOperationIdMap][operationId] = { path, method }
-      client[operationId] = await buildCallFunction(spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse)
+      client[operationId] = await buildCallFunction(spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser)
     }
   }
   return client
@@ -129,7 +129,7 @@ function hasDuplicatedParameters (methodMeta) {
   return s.size !== methodMeta.parameters.length
 }
 
-async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse) {
+async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser) {
   await $RefParser.dereference(spec)
   const ajv = new Ajv()
   const url = new URL(baseUrl)
@@ -202,7 +202,8 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
         }
       }
     }
-    urlToCall.search = query.toString()
+
+    urlToCall.search = queryParser ? queryParser(query) : query.toString()
     urlToCall.pathname = pathToCall
 
     const { span, telemetryHeaders } = openTelemetry?.startSpanClient(urlToCall.toString(), method, telemetryContext) || { span: null, telemetryHeaders: {} }

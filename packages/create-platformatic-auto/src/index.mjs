@@ -38,7 +38,6 @@ async function importOrLocal ({ pkgManager, name, projectDir, pkg }) {
   try {
     return await import(pkg)
   } catch (err) {
-    console.log(err)
     // This file does not need to exists, will be created automatically
     const pkgJsonPath = path.join(projectDir, 'package.json')
     const _require = createRequire(pkgJsonPath)
