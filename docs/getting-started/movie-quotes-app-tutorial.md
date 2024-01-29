@@ -551,12 +551,12 @@ async function graphqlClientWrapper(method, gqlQuery, queryVariables = {}) {
 }
 
 export const quotesApi = {
-	async query(gqlQuery, queryVariables = {}) {
-		return await graphqlClientWrapper("query", gqlQuery, queryVariables);
-	},
-	async mutation(gqlQuery, queryVariables = {}) {
-		return await graphqlClientWrapper("mutation", gqlQuery, queryVariables);
-	}
+  async query(gqlQuery, queryVariables = {}) {
+    return await graphqlClientWrapper("query", gqlQuery, queryVariables);
+  },
+  async mutation(gqlQuery, queryVariables = {}) {
+    return await graphqlClientWrapper("mutation", gqlQuery, queryVariables);
+  }
 }
 ```
 
@@ -687,8 +687,8 @@ To style our listing page, let's add CSS classes to the component template in
 ```astro
 ---
 export interface Props {
-	title: string;
-	page?: string;
+  title: string;
+  page?: string;
 }
 
 const { title, page } = Astro.props;
