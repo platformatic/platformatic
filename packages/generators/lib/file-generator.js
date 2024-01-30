@@ -24,7 +24,7 @@ class FileGenerator {
     this.targetDirectory = dir
   }
 
-  addFile ({ path, file, contents }) {
+  addFile ({ path, file, contents, options }) {
     const fileObject = this.getFileObject(file, path)
     if (path.startsWith('/')) {
       path = path.substring(1)
@@ -32,7 +32,7 @@ class FileGenerator {
     if (fileObject) {
       fileObject.contents = contents
     } else {
-      this.files.push({ path, file, contents })
+      this.files.push({ path, file, contents, options })
     }
   }
 
@@ -62,7 +62,7 @@ class FileGenerator {
         await safeMkdir(baseDir)
       }
       const fullFilePath = join(baseDir, fileToWrite.file)
-      await writeFile(fullFilePath, fileToWrite.contents)
+      await writeFile(fullFilePath, fileToWrite.contents, fileToWrite.options)
       this.logger.info(`${fullFilePath} written!`)
     }
   }

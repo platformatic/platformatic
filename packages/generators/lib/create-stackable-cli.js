@@ -134,12 +134,14 @@ function generateStackableCli (typescript, stackableName) {
       {
         path: 'cli',
         file: 'start.ts',
-        contents: getTsStackableStartCli()
+        contents: getTsStackableStartCli(),
+        options: { mode: 0o755 }
       },
       {
         path: 'cli',
         file: 'create.ts',
-        contents: getTsStackableCreateCli(stackableName)
+        contents: getTsStackableCreateCli(stackableName),
+        options: { mode: 0o755 }
       }
     ]
   }
@@ -148,12 +150,14 @@ function generateStackableCli (typescript, stackableName) {
     {
       path: 'cli',
       file: 'start.js',
-      contents: getJsStackableStartCli()
+      contents: getJsStackableStartCli(),
+      options: { mode: 0o755 }
     },
     {
       path: 'cli',
       file: 'create.js',
-      contents: getJsStackableCreateCli(stackableName)
+      contents: getJsStackableCreateCli(stackableName),
+      options: { mode: 0o755 }
     }
   ]
 }
