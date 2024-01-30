@@ -74,7 +74,8 @@ test('extended class should generate config', async (t) => {
   assert.deepEqual(configFile, {
     path: '',
     file: 'platformatic.json',
-    contents: JSON.stringify({ foo: 'bar' }, null, 2)
+    contents: JSON.stringify({ foo: 'bar' }, null, 2),
+    options: {}
   })
 })
 

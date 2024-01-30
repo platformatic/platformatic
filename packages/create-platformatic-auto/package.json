@@ -1,7 +1,7 @@
 {
   "name": "@platformatic/create-platformatic-auto",
   "version": "1.19.0",
-  "description": "Create platformatic-db interactive tool",
+  "description": "Create platformatic application interactive tool",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/platformatic/platformatic.git"
@@ -13,7 +13,7 @@
     "create-platformatic-auto": "./create-platformatic.mjs"
   },
   "scripts": {
-    "test:cli": "node --test-concurrency=1 --test ./test/cli",
+    "test:cli": "node --test ./test/cli",
     "test:unit": "pnpm run lint && cross-env NODE_OPTIONS=\"--loader=esmock --no-warnings\" c8 node --test ./test/unit",
     "test": "npm run test:unit && npm run test:cli",
     "lint": "standard | snazzy"
@@ -23,6 +23,7 @@
   "dependencies": {
     "@platformatic/config": "workspace:*",
     "@platformatic/utils": "workspace:*",
+    "@platformatic/generators": "workspace:*",
     "@types/node": "^20.8.10",
     "boring-name-generator": "^1.0.3",
     "chalk": "^5.3.0",

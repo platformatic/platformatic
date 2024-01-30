@@ -56,7 +56,9 @@ function buildStackable () : Stackable<AcmeBaseConfig> {
     },
     async transformConfig (this: ConfigManager<AcmeBaseConfig & PlatformaticServiceConfig>) {
       // Call the transformConfig method from the base stackable
-      platformaticService.configManagerConfig.transformConfig.call(this)
+      if (platformaticService.configManagerConfig.transformConfig) {
+        platformaticService.configManagerConfig.transformConfig.call(this)
+      }
 
       // In this method you can alter the configuration before the application
       // is started. It's useful to apply some defaults that cannot be derived
