@@ -115,10 +115,19 @@ class ${stackableGeneratorType} extends ServiceGenerator {
     const config = {
       $schema: './stackable.schema.json',
       greeting: {
-        text: this.config.greeting ?? 'Hello world!'
+        text: '{PLT_GREETING_TEXT}'
       }
     }
     return Object.assign({}, baseConfig, config)
+  }
+
+  async _beforePrepare () {
+    super._beforePrepare()
+
+    this.config.env = {
+      PLT_GREETING_TEXT: this.config.greeting ?? 'Hello world!',
+      ...this.config.env
+    }
   }
 
   async _afterPrepare () {
@@ -157,10 +166,19 @@ class ${stackableGeneratorType} extends ServiceGenerator {
     const config = {
       $schema: './stackable.schema.json',
       greeting: {
-        text: this.config.greeting ?? 'Hello world!'
+        text: '{PLT_GREETING_TEXT}'
       }
     }
     return Object.assign({}, baseConfig, config)
+  }
+
+  async _beforePrepare () {
+    super._beforePrepare()
+
+    this.config.env = {
+      PLT_GREETING_TEXT: this.config.greeting ?? 'Hello world!',
+      ...this.config.env
+    }
   }
 
   async _afterPrepare () {
