@@ -2,6 +2,7 @@
 
 const { join } = require('node:path')
 const { readFile } = require('node:fs/promises')
+const { kebabCase } = require('change-case-all')
 const { stripVersion, getLatestNpmVersion } = require('./utils')
 const { FileGenerator } = require('./file-generator')
 const { PrepareError } = require('./errors')
@@ -35,6 +36,7 @@ class StackableGenerator extends FileGenerator {
 
   getDefaultConfig () {
     return {
+      stackableName: 'my-stackable',
       typescript: false,
       initGitRepository: false,
       dependencies: {},
@@ -102,8 +104,10 @@ class StackableGenerator extends FileGenerator {
       }
 
       const typescript = this.config.typescript
-      this.files.push(...generateStackableFiles(typescript))
-      this.files.push(...generateStackableCli(typescript))
+      const stackableName = this.config.stackableName
+
+      this.files.push(...generateStackableFiles(typescript, stackableName))
+      this.files.push(...generateStackableCli(typescript, stackableName))
       this.files.push(...generateStackablePlugins(typescript))
       this.files.push(generateGitignore())
 
@@ -157,6 +161,13 @@ class StackableGenerator extends FileGenerator {
       })
     }
 
+    this.questions.push({
+      type: 'input',
+      name: 'stackableName',
+      message: 'What is the name of the stackable?',
+      default: 'my-stackable'
+    })
+
     // typescript
     this.questions.push({
       type: 'list',
@@ -205,18 +216,25 @@ class StackableGenerator extends FileGenerator {
       fastify: `^${this.fastifyVersion}`
     }
 
+    const npmPackageName = kebabCase(this.config.stackableName)
+    const createStackableCommand = kebabCase('create-' + this.config.stackableName)
+    const startStackableCommand = kebabCase('start-' + this.config.stackableName)
+
     if (this.config.typescript) {
       const packageJsonFile = await readFile(join(__dirname, '..', 'package.json'), 'utf-8')
       const typescriptVersion = JSON.parse(packageJsonFile).devDependencies.typescript
 
       return {
+        name: npmPackageName,
         main: 'dist/index.js',
+        bin: {
+          [createStackableCommand]: './dist/cli/create.js',
+          [startStackableCommand]: './dist/cli/start.js'
+        },
         scripts: {
           build: 'tsc --build',
           'build:config': 'node ./dist/lib/schema.js | json2ts > config.d.ts',
-          clean: 'rm -fr ./dist',
-          create: 'node ./dist/cli/create.js --dir ./app',
-          start: 'node ./dist/cli/start.js -c ./app/platformatic.json'
+          clean: 'rm -fr ./dist'
         },
         devDependencies: {
           ...devDependencies,
@@ -236,11 +254,14 @@ class StackableGenerator extends FileGenerator {
     }
 
     return {
+      name: npmPackageName,
       main: 'index.js',
+      bin: {
+        [createStackableCommand]: './cli/create.js',
+        [startStackableCommand]: './cli/start.js'
+      },
       scripts: {
-        'build:config': 'node lib/schema.js | json2ts > config.d.ts',
-        create: 'node cli/create.js --dir ./app',
-        start: 'node cli/start.js -c ./app/platformatic.json'
+        'build:config': 'node lib/schema.js | json2ts > config.d.ts'
       },
       devDependencies: {
         ...devDependencies,

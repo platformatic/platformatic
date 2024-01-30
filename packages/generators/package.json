@@ -13,6 +13,7 @@
   "dependencies": {
     "@fastify/error": "^3.4.1",
     "boring-name-generator": "^1.0.3",
+    "change-case-all": "^2.1.0",
     "fastify": "^4.24.3",
     "pino": "^8.16.1",
     "undici": "^6.3.0"

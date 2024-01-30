@@ -1,6 +1,9 @@
 'use strict'
 
-const JS_STACKABLE_INDEX_FILE = `\
+const { pascalCase, camelCase, capitalCase, kebabCase } = require('change-case-all')
+
+function getJsStackableIndexFile (stackableName) {
+  return `\
 'use strict'
 
 const { platformaticService } = require('@platformatic/service')
@@ -12,7 +15,7 @@ async function stackable (fastify, opts) {
   await fastify.register(require('./plugins/example'), opts)
 }
 
-stackable.configType = 'stackable'
+stackable.configType = '${kebabCase(stackableName + '-app')}'
 stackable.schema = schema
 stackable.Generator = Generator
 stackable.configManagerConfig = {
@@ -33,20 +36,23 @@ stackable[Symbol.for('skip-override')] = true
 
 module.exports = stackable
 `
+}
 
-const TS_STACKABLE_INDEX_FILE = `\
+function getTsStackableIndexFile (stackableName) {
+  const stackableConfigType = pascalCase(stackableName + 'Config')
+
+  return `\
 import { platformaticService, Stackable } from '@platformatic/service'
 import { schema } from './lib/schema'
 import { Generator } from './lib/generator'
-import { StackableConfig } from './config'
-import greetingPlugin from './plugins/example'
+import { ${stackableConfigType} } from './config'
 
-const stackable: Stackable<StackableConfig> = async function (fastify, opts) {
+const stackable: Stackable<${stackableConfigType}> = async function (fastify, opts) {
   await fastify.register(platformaticService, opts)
-  await fastify.register(greetingPlugin, opts)
+  await fastify.register(require('./plugins/example'), opts)
 }
 
-stackable.configType = 'stackable'
+stackable.configType = '${kebabCase(stackableName + '-app')}'
 stackable.schema = schema
 stackable.Generator = Generator
 stackable.configManagerConfig = {
@@ -68,26 +74,34 @@ stackable[Symbol.for('skip-override')] = true
 
 export default stackable
 `
+}
 
-const INDEX_TYPES_FILE = `\
+function getStackableIndexTypesFile (stackableName) {
+  const stackableConfigType = pascalCase(stackableName + 'Config')
+
+  return `\
 import { FastifyInstance } from 'fastify'
 import { PlatformaticApp } from '@platformatic/service'
-import { StackableConfig } from './config'
+import { ${stackableConfigType} } from './config'
 
 declare module 'fastify' {
   interface FastifyInstance {
-    platformatic: PlatformaticApp<StackableConfig>
+    platformatic: PlatformaticApp<${stackableConfigType}>
   }
 }
 `
+}
 
-const JS_STACKABLE_GENERATOR_FILE = `\
+function getJsStackableGeneratorFile (stackableName) {
+  const stackableGeneratorType = pascalCase(stackableName + 'Generator')
+
+  return `\
 'use strict'
 
 const { Generator: ServiceGenerator } = require('@platformatic/service')
 const { schema } = require('./schema')
 
-class Generator extends ServiceGenerator {
+class ${stackableGeneratorType} extends ServiceGenerator {
   getDefaultConfig () {
     const defaultBaseConfig = super.getDefaultConfig()
     const defaultConfig = {
@@ -116,16 +130,20 @@ class Generator extends ServiceGenerator {
   }
 }
 
-module.exports = Generator
-module.exports.Generator = Generator
+module.exports = ${stackableGeneratorType}
+module.exports.Generator = ${stackableGeneratorType}
 `
+}
 
-const TS_STACKABLE_GENERATOR_FILE = `\
+function getTsStackableGeneratorFile (stackableName) {
+  const stackableGeneratorType = pascalCase(stackableName + 'Generator')
+
+  return `\
 import { Generator as ServiceGenerator } from '@platformatic/service'
 import { BaseGenerator } from '@platformatic/generators'
 import { schema } from './schema'
 
-class Generator extends ServiceGenerator {
+class ${stackableGeneratorType} extends ServiceGenerator {
   getDefaultConfig (): BaseGenerator.JSONValue {
     const defaultBaseConfig = super.getDefaultConfig()
     const defaultConfig = {
@@ -154,20 +172,24 @@ class Generator extends ServiceGenerator {
   }
 }
 
-export default Generator
-export { Generator }
-
+export default ${stackableGeneratorType}
+export { ${stackableGeneratorType} as Generator }
 `
+}
 
-const JS_STACKABLE_SCHEMA_FILE = `\
+function getJsStackableSchemaFile (stackableName) {
+  const schemaTitle = capitalCase(stackableName + 'Config')
+  const schemaVarName = camelCase(stackableName + 'Schema')
+
+  return `\
 'use strict'
 
 const { schema } = require('@platformatic/service')
 
-const stackableSchema = {
+const ${schemaVarName} = {
   ...schema.schema,
   $id: 'stackable',
-  title: 'Stackable Config',
+  title: '${schemaTitle}',
   properties: {
     ...schema.schema.properties,
     greeting: {
@@ -183,20 +205,25 @@ const stackableSchema = {
   },
 }
 
-module.exports.schema = stackableSchema
+module.exports.schema = ${schemaVarName}
 
 if (require.main === module) {
-  console.log(JSON.stringify(stackableSchema, null, 2))
+  console.log(JSON.stringify(${schemaVarName}, null, 2))
 }
 `
+}
 
-const TS_STACKABLE_SCHEMA_FILE = `\
+function getTsStackableSchemaFile (stackableName) {
+  const schemaTitle = capitalCase(stackableName + 'Config')
+  const schemaVarName = camelCase(stackableName + 'Schema')
+
+  return `\
 import { schema } from '@platformatic/service'
 
-const stackableSchema = {
+const ${schemaVarName} = {
   ...schema.schema,
   $id: 'stackable',
-  title: 'Stackable Config',
+  title: '${schemaTitle}',
   properties: {
     ...schema.schema.properties,
     greeting: {
@@ -212,49 +239,54 @@ const stackableSchema = {
   },
 }
 
-export { stackableSchema as schema }
+export { ${schemaVarName} as schema }
 
 if (require.main === module) {
-  console.log(JSON.stringify(stackableSchema, null, 2))
+  console.log(JSON.stringify(${schemaVarName}, null, 2))
 }
 `
+}
 
-const STACKABLE_CONFIG_TYPES_FILE = `\
+function getStackableConfigTypesFile (stackableName) {
+  const stackableConfigType = pascalCase(stackableName + 'Config')
+
+  return `\
 // Use npm run build:config to generate this file from the Stackable schema
-export interface StackableConfig {
+export interface ${stackableConfigType} {
   greeting?: {
     text: string;
   };
 }
 `
+}
 
-function generateStackableFiles (typescript) {
+function generateStackableFiles (typescript, stackableName) {
   if (typescript) {
     return [
       {
         path: '',
         file: 'index.ts',
-        contents: TS_STACKABLE_INDEX_FILE
+        contents: getTsStackableIndexFile(stackableName)
       },
       {
         path: '',
         file: 'index.d.ts',
-        contents: INDEX_TYPES_FILE
+        contents: getStackableIndexTypesFile(stackableName)
       },
       {
         path: '',
         file: 'config.d.ts',
-        contents: STACKABLE_CONFIG_TYPES_FILE
+        contents: getStackableConfigTypesFile(stackableName)
       },
       {
         path: 'lib',
         file: 'generator.ts',
-        contents: TS_STACKABLE_GENERATOR_FILE
+        contents: getTsStackableGeneratorFile(stackableName)
       },
       {
         path: 'lib',
         file: 'schema.ts',
-        contents: TS_STACKABLE_SCHEMA_FILE
+        contents: getTsStackableSchemaFile(stackableName)
       }
     ]
   }
@@ -262,27 +294,27 @@ function generateStackableFiles (typescript) {
     {
       path: '',
       file: 'index.js',
-      contents: JS_STACKABLE_INDEX_FILE
+      contents: getJsStackableIndexFile(stackableName)
     },
     {
       path: '',
       file: 'index.d.ts',
-      contents: INDEX_TYPES_FILE
+      contents: getStackableIndexTypesFile(stackableName)
     },
     {
       path: '',
       file: 'config.d.ts',
-      contents: STACKABLE_CONFIG_TYPES_FILE
+      contents: getStackableConfigTypesFile(stackableName)
     },
     {
       path: 'lib',
       file: 'generator.js',
-      contents: JS_STACKABLE_GENERATOR_FILE
+      contents: getJsStackableGeneratorFile(stackableName)
     },
     {
       path: 'lib',
       file: 'schema.js',
-      contents: JS_STACKABLE_SCHEMA_FILE
+      contents: getJsStackableSchemaFile(stackableName)
     }
   ]
 }

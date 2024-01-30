@@ -27,8 +27,10 @@ test('Creates a Platformatic Stackable without typescript', { timeout }, async (
     do: [keys.DOWN, keys.ENTER] // Stackable
   }, {
     match: 'Where would you like to create your project?',
-    do: [keys.ENTER],
-    waitAfter: 5000
+    do: [keys.ENTER]
+  }, {
+    match: 'What is the name of the stackable?',
+    do: [keys.ENTER] // my-stackable
   }, {
     match: 'Do you want to use TypeScript',
     do: [keys.ENTER] // no
@@ -60,8 +62,10 @@ test('Creates a Platformatic Stackable with typescript', { timeout }, async () =
     do: [keys.DOWN, keys.ENTER] // Stackable
   }, {
     match: 'Where would you like to create your project?',
-    do: [keys.ENTER],
-    waitAfter: 5000
+    do: [keys.ENTER]
+  }, {
+    match: 'What is the name of the stackable?',
+    do: [keys.ENTER] // my-stackable
   }, {
     match: 'Do you want to use TypeScript',
     do: [keys.DOWN, keys.ENTER] // yes
