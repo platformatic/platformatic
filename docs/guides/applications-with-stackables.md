@@ -22,6 +22,8 @@ npx create-platformatic@latest
   - `Stackable`
 - **Where would you like to create your project?**
   - `.`
+- **What is the name of the stackable?**
+  - `my-stackable`
 - **Do you want to use TypeScript?**
   - `no`
 - **Do you want to init the git repository?**
@@ -66,7 +68,7 @@ Each Stackable should have a few required properties attached to the `stackable`
 - `stackable.configManagerConfig`: ab object with the config for the `ConfigManager` class. Used to manage the Stackable config.
 
 ```js
-stackable.configType = 'stackable'
+stackable.configType = 'my-stackable-app'
 stackable.schema = schema
 stackable.Generator = Generator
 stackable.configManagerConfig = {
@@ -78,16 +80,22 @@ stackable.configManagerConfig = {
     coerceTypes: true,
     allErrors: true,
     strict: false
-  }
+  },
+  transformConfig: async () => {}
 }
 ```
 
 ### Stackable generator
 
-`Generator` is a class extending `BaseGenerator` or any other stackable generator. It's used to generate the Stackable application. You can find an example of a generator in `lib/generator.js`.
+`MyStackableGenerator` is a class extending `BaseGenerator` or any other stackable generator (ServiceGenerator in this example). It's used to generate a Stackable application. You can find an example of a generator in `lib/generator.js`.
 
 ```js
-class Generator extends ServiceGenerator {
+'use strict'
+
+const { Generator: ServiceGenerator } = require('@platformatic/service')
+const { schema } = require('./schema')
+
+class MyStackableGenerator extends ServiceGenerator {
   getDefaultConfig () {
     const defaultBaseConfig = super.getDefaultConfig()
     const defaultConfig = {
@@ -101,10 +109,19 @@ class Generator extends ServiceGenerator {
     const config = {
       $schema: './stackable.schema.json',
       greeting: {
-        text: this.config.greeting ?? 'Hello world!'
+        text: '{PLT_GREETING_TEXT}'
       }
     }
     return Object.assign({}, baseConfig, config)
+  }
+
+  async _beforePrepare () {
+    super._beforePrepare()
+
+    this.config.env = {
+      PLT_GREETING_TEXT: this.config.greeting ?? 'Hello world!',
+      ...this.config.env
+    }
   }
 
   async _afterPrepare () {
@@ -115,21 +132,28 @@ class Generator extends ServiceGenerator {
     })
   }
 }
+
+module.exports = MyStackableGenerator
+module.exports.Generator = MyStackableGenerator
 ```
 
 This generator extends `ServiceGenerator` which means it will generate an application based on Platformatic Service. If you want to create a Stackable based on Platformatic DB or Platformatic Composer you can extend `DBGenerator` or `ComposerGenerator` respectively.
 
-In addition this generator adds a custom `greeting` property to the Stackable config and generates a `stackable.schema.json` file with the JSON schema of the Stackable config.
+In addition this generator adds a custom `greeting` property to the Stackable config and generates a `stackable.schema.json` file with the JSON schema of the Stackable config. Greeting text will be taken from the `PLT_GREETING_TEXT` environment variable. Generator will create a `.env` file with the `PLT_GREETING_TEXT` variable set to `Hello world!` by default.
 
 ### Stackable schema
 
 `schema` is the JSON schema of the Stackable config. It's used to validate the Stackable config. You can find an example of a schema in `lib/schema.js`.
 
 ```js
-const stackableSchema = {
+'use strict'
+
+const { schema } = require('@platformatic/service')
+
+const myStackableSchema = {
   ...schema.schema,
-  $id: 'stackable',
-  title: 'Stackable Config',
+  $id: 'my-stackable',
+  title: 'My Stackable Config',
   properties: {
     ...schema.schema.properties,
     greeting: {
@@ -142,19 +166,55 @@ const stackableSchema = {
       required: ['text'],
       additionalProperties: false
     }
-  },
+  }
 }
+
+module.exports.schema = myStackableSchema
+
+if (require.main === module) {
+  console.log(JSON.stringify(myStackableSchema, null, 2))
+}
+
 ```
 
 This schema extends the Platformatic Service schema and adds a custom `greeting` property. You can also use the stackable schema to generate a types file for the Stackable config. To do so, you can use `npm run build:config` cli command.
+
+Note that the `$id` property of the schema identifies the module in our system, allowing us to retrieve the schema correctly. When your stackable is ready you can publish the config schema and use a remote schema url instead. It is recommended, but not required, that the JSON schema is actually published in this location. Doing so allows tooling such as the VSCode language server to provide autocompletion.
+
+__Example__
+```json
+{
+  "$id": "https://example.com/schemas/my-stackable.schema.json"
+}
+
+### Stackable CLI
+
+If you chose to use TypeScript, you will need to run `npm run build` first to compile the Stackable.
+
+You can find two scripts in the `cli` folder: `create.js` and `start.js`. These scripts are used to create and start a Stackable application respectively. `package.json` contains two bin commands: `create-my-stackable` and `start-my-stackable` which are used to run these scripts. Note that CLI commands include the Stackable name, so it might be different if you chose a different name for your Stackable.
+
+```json
+{
+  "bin": {
+    "create-my-stackable": "./cli/create.js",
+    "start-my-stackable": "./cli/start.js"
+  }
+}
+```
+
+To use these commands before publishing the Stackable to npm you can run `npm link` in the Stackable folder. This will create symlinks to the Stackable scripts in the global folder. After that you can use `create-my-stackable` and `start-my-stackable` commands in any folder.
+
+```bash
+npm link
+```
 
 ### Creating a Stackable application
 
 If you chose to use TypeScript, you will need to run `npm run build` first to compile the Stackable.
 
-To create an application based on a Stackable you can run the `npm run create` cli command. This command uses the `cli/create.js` script to generate the application. By default application will be generated in the `./app` folder. As a next step you need to install the dependencies.
+To create an application based on your Stackable you can run the `create-my-stackable` cli command. This command uses the `cli/create.js` script to generate the application. By default application will be generated in a `./my-stackable-app` folder. To change the default folder you can use the `--dir` option. For other options check the `cli/create.js` script.
 
-if you open a `./app/platformatic.json` file you will find a custom `greeting` property added to the Stackable config.
+After generating the application you can find a stackable app config file `./app/platformatic.json` with the custom greeting option. Option value is set in a `.env` file as a `PLT_GREETING_TEXT` environment variable.
 
 ```json
 {
@@ -180,16 +240,25 @@ if you open a `./app/platformatic.json` file you will find a custom `greeting` p
     ]
   },
   "greeting": {
-    "text": "Hello world!"
+    "text": "{PLT_GREETING_TEXT}"
   }
+}
+```
+
+You can see that the config uses the local `./stackable.schema.json` file to validate the config. When your stackable is ready you can publish the config schema and use a remote schema url instead.
+
+__Example__
+```json
+{
+  "$schema": "https://example.com/schemas/my-stackable.schema.json"
 }
 ```
 
 ### Starting a Stackable application
 
-To start the application you can run the `npm run start` cli command. This command uses the `cli/start.js` script to start the application. By default application will be started from the `./app` folder.
+To start the application you can run the `start-my-stackable` cli command. This command uses the `cli/start.js` script to start the application. By default `start-my-stackable` looks for a project in the current folder. To change the default folder you can use the `-c` option to specify a path to the `platformatic.json` file.
 
-In the logs you should see the custom greeting logged from the `./plugins/example.js` plugin.
+In the logs you should see the custom greeting logged from the stackable `./plugins/example.js` plugin.
 
 ```bash
 [12:27:10.724] INFO (87553): Loading stackable greeting plugin.

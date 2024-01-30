@@ -196,6 +196,7 @@ export { ${stackableGeneratorType} as Generator }
 }
 
 function getJsStackableSchemaFile (stackableName) {
+  const schemaId = kebabCase(stackableName)
   const schemaTitle = capitalCase(stackableName + 'Config')
   const schemaVarName = camelCase(stackableName + 'Schema')
 
@@ -206,7 +207,7 @@ const { schema } = require('@platformatic/service')
 
 const ${schemaVarName} = {
   ...schema.schema,
-  $id: 'stackable',
+  $id: '${schemaId}',
   title: '${schemaTitle}',
   properties: {
     ...schema.schema.properties,
@@ -220,7 +221,7 @@ const ${schemaVarName} = {
       required: ['text'],
       additionalProperties: false
     }
-  },
+  }
 }
 
 module.exports.schema = ${schemaVarName}
@@ -232,6 +233,7 @@ if (require.main === module) {
 }
 
 function getTsStackableSchemaFile (stackableName) {
+  const schemaId = kebabCase(stackableName)
   const schemaTitle = capitalCase(stackableName + 'Config')
   const schemaVarName = camelCase(stackableName + 'Schema')
 
@@ -240,7 +242,7 @@ import { schema } from '@platformatic/service'
 
 const ${schemaVarName} = {
   ...schema.schema,
-  $id: 'stackable',
+  $id: '${schemaId}',
   title: '${schemaTitle}',
   properties: {
     ...schema.schema.properties,
@@ -254,7 +256,7 @@ const ${schemaVarName} = {
       required: ['text'],
       additionalProperties: false
     }
-  },
+  }
 }
 
 export { ${schemaVarName} as schema }
