@@ -1,6 +1,6 @@
 # Monitoring with Prometheus and Grafana
 
-[Prometheus](https://auth0.com/) is open source system and alerting toolkit for monitoring and alerting. It's a time series database that collects metrics from configured targets at given intervals, evaluates rule expressions, displays the results, and can trigger alerts if some condition is observed to be true.
+[Prometheus](https://prometheus.io/) is open source system and alerting toolkit for monitoring and alerting. It's a time series database that collects metrics from configured targets at given intervals, evaluates rule expressions, displays the results, and can trigger alerts if some condition is observed to be true.
 [Grafana](https://grafana.com/oss/grafana/) is an open source visualization and analytics software. 
 
 It's a pretty common solution to use Prometheus to collect and store monitoring data, and Grafana to visualize it.
