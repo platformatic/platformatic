@@ -31,9 +31,9 @@ test('build basic client from url', async (t) => {
 
   // The types interfaces are being created
   match(types, /interface FullResponse<T, U extends number>/)
-  match(types, /interface GetRedirectRequest/)
-  match(types, /interface GetRedirectResponseFound/)
-  match(types, /interface GetRedirectResponseBadRequest/)
+  match(types, /type GetRedirectRequest = /)
+  match(types, /type GetRedirectResponseFound = /)
+  match(types, /type GetRedirectResponseBadRequest = /)
 
   // Request can contain a `Date` type
   ok(types.includes("'messageReq': string | null;"))
@@ -52,7 +52,7 @@ test('build basic client from url', async (t) => {
   // handle non 200 code endpoint
   const expectedImplementation = `
 async function _getRedirect (url, request) {
-  const response = await fetch(\`\${url}/redirect?\${new URLSearchParams(Object.entries(request || {})).toString()}\`)
+  const response = await fetch(\`\${url}/redirect\`)
 
   let body = await response.text()
 
@@ -111,16 +111,15 @@ export const getCustomSwagger = async (request) => {
     const typesTemplate = `
 export interface Sample {
   setBaseUrl(newUrl: string) : void;
-  getCustomSwagger(req?: GetCustomSwaggerRequest): Promise<GetCustomSwaggerResponses>;
+  getCustomSwagger(req?: GetCustomSwaggerRequest): Promise<unknown>;
   getRedirect(req?: GetRedirectRequest): Promise<GetRedirectResponses>;
-  getReturnUrl(req?: GetReturnUrlRequest): Promise<GetReturnUrlResponses>;
-  postFoobar(req?: PostFoobarRequest): Promise<PostFoobarResponses>;
+  getReturnUrl(req?: GetReturnUrlRequest): Promise<unknown>;
+  postFoobar(req?: PostFoobarRequest): Promise<unknown>;
 }`
 
-    const unionTypesTemplate = `type GetRedirectResponses = 
+    const unionTypesTemplate = `export type GetRedirectResponses =
   FullResponse<GetRedirectResponseFound, 302>
-  | FullResponse<GetRedirectResponseBadRequest, 400>
-`
+  | FullResponse<GetRedirectResponseBadRequest, 400>`
     ok(implementation)
     ok(types)
     equal(implementation.includes(jsImplementationTemplate), true)
@@ -319,7 +318,7 @@ test('handle headers parameters in get request', async (t) => {
 
   const tsImplementationTemplate = `
 const _getRoot = async (url: string, request: Types.GetRootRequest): Promise<Types.GetRootResponses> => {
-  const response = await fetch(\`\${url}/?\${new URLSearchParams(Object.entries(request || {})).toString()}\`, {
+  const response = await fetch(\`\${url}/\`, {
     headers: {
       'level': request['level'],
       'foo': request['foo']

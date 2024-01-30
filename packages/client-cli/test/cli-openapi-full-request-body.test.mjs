@@ -32,11 +32,10 @@ test('full-request-body', async (t) => {
 
   const typeFile = join(dir, 'full', 'full.d.ts')
   const data = await readFile(typeFile, 'utf-8')
-  console.log('data', data)
   equal(data.includes(`
-  export interface PostHelloRequest {
+  export type PostHelloRequest = {
     body: {
-      'mainData': Array<{ surname?: string; name: string }>;
+      'mainData': Array<{ 'surname'?: string; 'name': string }>;
     }
   }`), true)
 })

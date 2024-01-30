@@ -1,11 +1,11 @@
 'use strict'
 
-import { STATUS_CODES } from 'node:http'
-import { capitalize, classCase } from './utils.mjs'
+import { capitalize } from './utils.mjs'
 import { hasDuplicatedParameters } from '@platformatic/client'
 import jsonpointer from 'jsonpointer'
 import errors from './errors.mjs'
 import camelcase from 'camelcase'
+import { responsesWriter } from './responses-writer.mjs'
 
 export function writeOperations (interfacesWriter, mainWriter, operations, { fullRequest, fullResponse, optionalHeaders, schema }) {
   const originalFullResponse = fullResponse
@@ -19,10 +19,10 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
     if (successResponses.length !== 1) {
       currentFullResponse = true
     }
-    const operationRequestName = `${capitalize(camelCaseOperationId)}Request`
-    const operationResponseName = `${capitalize(camelCaseOperationId)}Response`
+    const capitalizedCamelCaseOperationId = capitalize(camelCaseOperationId)
+    const operationRequestName = `${capitalizedCamelCaseOperationId}Request`
 
-    interfacesWriter.write(`export interface ${operationRequestName}`).block(() => {
+    interfacesWriter.write(`export type ${operationRequestName} =`).block(() => {
       const addedProps = new Set()
       if (parameters) {
         if (forceFullRequest) {
@@ -49,10 +49,10 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
                 break
             }
           }
-          writeProperties(interfacesWriter, 'body', bodyParams, addedProps, 'req')
-          writeProperties(interfacesWriter, 'path', pathParams, addedProps, 'req')
-          writeProperties(interfacesWriter, 'query', queryParams, addedProps, 'req')
-          writeProperties(interfacesWriter, 'headers', headersParams, addedProps, 'req')
+          writeProperties(interfacesWriter, 'body', bodyParams, addedProps, 'req', schema)
+          writeProperties(interfacesWriter, 'path', pathParams, addedProps, 'req', schema)
+          writeProperties(interfacesWriter, 'query', queryParams, addedProps, 'req', schema)
+          writeProperties(interfacesWriter, 'headers', headersParams, addedProps, 'req', schema)
         } else {
           for (const parameter of parameters) {
             let { name, required } = parameter
@@ -61,7 +61,7 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
             }
             // We do not check for addedProps here because it's the first
             // group of properties
-            writeProperty(interfacesWriter, name, parameter, addedProps, required, 'req')
+            writeProperty(interfacesWriter, name, parameter, addedProps, required, 'req', schema)
           }
         }
       }
@@ -70,45 +70,13 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
       }
     })
     interfacesWriter.blankLine()
-
-    const responseTypes = Object.entries(responses).map(([statusCode, response]) => {
-      // The client library will always dump bodies for 204 responses
-      // so the type must be undefined
-      if (statusCode === '204') {
-        return 'undefined'
-      }
-
-      // Unrecognized status code
-      const statusCodeName = STATUS_CODES[statusCode]
-      let type
-      if (statusCodeName === undefined) {
-        type = `${operationResponseName}${statusCode}Response`
-      } else {
-        type = `${operationResponseName}${classCase(STATUS_CODES[statusCode])}`
-      }
-      let isResponseArray
-      interfacesWriter.write(`export interface ${type}`).block(() => {
-        isResponseArray = writeContent(interfacesWriter, response.content, schema, new Set(), 'res')
-      })
-      interfacesWriter.blankLine()
-      if (isResponseArray) type = `Array<${type}>`
-      if (currentFullResponse) type = `FullResponse<${type}, ${statusCode}>`
-      return type
-    })
-
-    // write response unions
-    const allResponsesName = `${capitalize(camelCaseOperationId)}Responses`
-    interfacesWriter.writeLine(`type ${allResponsesName} = `)
-    interfacesWriter.indent(() => {
-      interfacesWriter.write(responseTypes.join('\n| '))
-    })
-    interfacesWriter.blankLine()
+    const allResponsesName = responsesWriter(capitalizedCamelCaseOperationId, responses, currentFullResponse, interfacesWriter, schema)
     mainWriter.writeLine(`${camelCaseOperationId}(req?: ${operationRequestName}): Promise<${allResponsesName}>;`)
     currentFullResponse = originalFullResponse
   }
 }
 
-export function writeProperties (writer, blockName, parameters, addedProps, methodType) {
+export function writeProperties (writer, blockName, parameters, addedProps, methodType, spec) {
   if (parameters.length > 0) {
     let allOptionalParams = true
     for (const { required } of parameters) {
@@ -122,13 +90,13 @@ export function writeProperties (writer, blockName, parameters, addedProps, meth
         const { name, required } = parameter
         // We do not check for addedProps here because it's the first
         // group of properties
-        writeProperty(writer, name, parameter, addedProps, required, methodType)
+        writeProperty(writer, name, parameter, addedProps, required, methodType, spec)
       }
     })
   }
 }
 
-export function writeProperty (writer, key, value, addedProps, required = true, methodType) {
+export function writeProperty (writer, key, value, addedProps, required = true, methodType, spec) {
   addedProps.add(key)
   if (required) {
     writer.quote(key)
@@ -136,29 +104,32 @@ export function writeProperty (writer, key, value, addedProps, required = true, 
     writer.quote(key)
     writer.write('?')
   }
-  writer.write(`: ${getType(value, methodType)};`)
+  writer.write(`: ${getType(value, methodType, spec)};`)
   writer.newLine()
 }
 
-export function getType (typeDef, methodType) {
+export function getType (typeDef, methodType, spec) {
+  if (typeDef.$ref) {
+    typeDef = jsonpointer.get(spec, typeDef.$ref.replace('#', ''))
+  }
   if (typeDef.schema) {
-    return getType(typeDef.schema, methodType)
+    return getType(typeDef.schema, methodType, spec)
   }
   if (typeDef.anyOf) {
     // recursively call this function
     return typeDef.anyOf.map((t) => {
-      return getType(t, methodType)
+      return getType(t, methodType, spec)
     }).join(' | ')
   }
 
   if (typeDef.allOf) {
     // recursively call this function
     return typeDef.allOf.map((t) => {
-      return getType(t, methodType)
+      return getType(t, methodType, spec)
     }).join(' & ')
   }
   if (typeDef.type === 'array') {
-    return `Array<${getType(typeDef.items, methodType)}>`
+    return `Array<${getType(typeDef.items, methodType, spec)}>`
   }
   if (typeDef.enum) {
     return typeDef.enum.map((en) => {
@@ -182,7 +153,7 @@ export function getType (typeDef, methodType) {
       if (typeDef.required) {
         required = !!typeDef.required.includes(prop)
       }
-      return `${prop}${required ? '' : '?'}: ${getType(typeDef.properties[prop], methodType)}`
+      return `'${prop}'${required ? '' : '?'}: ${getType(typeDef.properties[prop], methodType, spec)}`
     })
     output += props.join('; ')
     output += ' }'
@@ -214,7 +185,7 @@ function JSONSchemaToTsType ({ type, format, nullable }, methodType) {
   return nullable === true ? `${resultType} | null` : resultType
 }
 
-function writeContent (writer, content, spec, addedProps, methodType, wrapper) {
+export function writeContent (writer, content, spec, addedProps, methodType, wrapper) {
   let isResponseArray = false
   if (content) {
     for (const [contentType, body] of Object.entries(content)) {
@@ -237,9 +208,14 @@ function writeContent (writer, content, spec, addedProps, methodType, wrapper) {
       // status codes. This is currently not possible with Platformatic DB
       // services so we skip for now.
       // TODO: support different schemas for different status codes
+
       if (body.schema.type === 'array') {
         isResponseArray = true
         schema = body.schema.items
+        if (schema.type !== 'object') {
+          writer.writeLine(getType(schema, methodType, spec))
+          return isResponseArray
+        }
       } else {
         schema = body.schema
       }
@@ -257,20 +233,28 @@ function writeContent (writer, content, spec, addedProps, methodType, wrapper) {
   return isResponseArray
 }
 
-function writeObjectProperties (writer, schema, spec, addedProps, methodType) {
-  if (schema.$ref) {
-    schema = jsonpointer.get(spec, schema.$ref.replace('#', ''))
-  }
-  if (schema.type === 'object') {
-    for (const [key, value] of Object.entries(schema.properties)) {
+export function writeObjectProperties (writer, schema, spec, addedProps, methodType) {
+  function _writeObjectProps (obj) {
+    for (const [key, value] of Object.entries(obj)) {
       if (addedProps.has(key)) {
         continue
       }
       const required = schema.required && schema.required.includes(key)
-      writeProperty(writer, key, value, addedProps, required, methodType)
+      writeProperty(writer, key, value, addedProps, required, methodType, spec)
     }
-    // This is unlikely to happen with well-formed OpenAPI.
-    /* c8 ignore next 3 */
+  }
+
+  if (schema.$ref) {
+    schema = jsonpointer.get(spec, schema.$ref.replace('#', ''))
+  }
+  if (schema.type === 'object') {
+    if (schema.properties) {
+      _writeObjectProps(schema.properties)
+    }
+
+    if (schema.additionalProperties && typeof schema.additionalProperties === 'object') {
+      _writeObjectProps(schema.additionalProperties)
+    }
   } else {
     throw new errors.TypeNotSupportedError(schema.type)
   }
