@@ -24,7 +24,7 @@ class FileGenerator {
     this.targetDirectory = dir
   }
 
-  addFile ({ path, file, contents, options }) {
+  addFile ({ path, file, contents, options = {} }) {
     const fileObject = this.getFileObject(file, path)
     if (path.startsWith('/')) {
       path = path.substring(1)
