@@ -28,7 +28,7 @@
     "@matteo.collina/snap": "^0.1.1",
     "@matteo.collina/tspl": "^0.1.0",
     "@platformatic/sql-mapper": "workspace:*",
-    "borp": "^0.5.0",
+    "borp": "^0.6.0",
     "fastify": "^4.25.1",
     "mercurius": "^13.1.0",
     "openapi-types": "^12.1.3",

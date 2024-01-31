@@ -1869,8 +1869,8 @@ importers:
         specifier: workspace:*
         version: link:../sql-mapper
       borp:
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.6.0
+        version: 0.6.0
       fastify:
         specifier: ^4.25.1
         version: 4.26.0
@@ -3985,6 +3985,16 @@ packages:
       execa: 8.0.1
       find-up: 7.0.0
       glob: 10.3.10
+
+  /borp@0.6.0:
+    resolution: {integrity: sha512-fqPkpt18Ge1jazLPfU0PTTY4oT/GMfys0hThfrBpgXww2HiyeXDQwQXz+vp/Zs/i2OaPoM+sjvH7cZacjrmPlg==}
+    hasBin: true
+    dependencies:
+      c8: 9.1.0
+      execa: 8.0.1
+      find-up: 7.0.0
+      glob: 10.3.10
+    dev: true
 
   /brace-expansion@1.1.11:
     resolution: {integrity: sha512-iCuPHDFgrHX7H2vEI/5xpz07zSHB00TpugqhmYtVmMO6518mCuRMoOYFldEBl0g187ufozdaHgWKcYFb61qGiA==}
