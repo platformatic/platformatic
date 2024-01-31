@@ -472,7 +472,7 @@ jobs:
       - name: Run test suite with code coverage
         run: |
           cd packages/service
-          pnpm run unit -- -r=spec --r=md:report.md
+          pnpm run unit -- --reporter=spec --reporter=md:report.md
       - name: Upload report
         shell: bash
         if: success() || failure() 
