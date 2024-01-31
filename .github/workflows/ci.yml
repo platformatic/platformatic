@@ -557,7 +557,7 @@ jobs:
       shell: bash
       if: success() || failure() 
       run: |
-        cat report.md >> "$GITHUB_STEP_SUMMARY"
+        cat packages/telemetry/report.md >> "$GITHUB_STEP_SUMMARY"
 
   playwright-e2e:
     needs: setup-node_modules
