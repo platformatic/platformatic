@@ -344,13 +344,13 @@ jobs:
       run: sleep 10
       if: ${{ matrix.db != 'sqlite' }}
     - name: Run test suite sql-mapper
-      run: cd packages/sql-mapper && pnpm run test:${{ matrix.db }} -- --reporter=spec --reporter=md:report.md && cd ../..
+      run: cd packages/sql-mapper && pnpm run test:${{ matrix.db }} --reporter=spec --reporter=md:report.md && cd ../..
     - name: Run test suite sql-json-schema-mapper
       run: cd packages/sql-json-schema-mapper && pnpm run test:${{ matrix.db }} -- --reporter=spec --reporter=md:report.md && cd ../..
     - name: Run test suite sql-openapi
-      run: cd packages/sql-openapi && pnpm run test:${{ matrix.db }} -- --reporter=spec --reporter=md:report.md && cd ../..
+      run: cd packages/sql-openapi && pnpm run test:${{ matrix.db }} --reporter=spec --reporter=md:report.md && cd ../..
     - name: Run test suite sql-graphql
-      run: cd packages/sql-graphql && pnpm run test:${{ matrix.db }} -- --reporter=spec --reporter=md:report.md && cd ..
+      run: cd packages/sql-graphql && pnpm run test:${{ matrix.db }} --reporter=spec --reporter=md:report.md && cd ..
     - name: Upload report
       shell: bash
       if: success() || failure() 
@@ -472,7 +472,7 @@ jobs:
       - name: Run test suite with code coverage
         run: |
           cd packages/service
-          pnpm run unit -- --reporter=spec --reporter=md:report.md
+          pnpm run unit --reporter=spec --reporter=md:report.md
       - name: Upload report
         shell: bash
         if: success() || failure() 
@@ -552,7 +552,7 @@ jobs:
         retry_on: error
         command: pnpm install --frozen-lockfile
     - name: Run test suite
-      run: cd packages/telemetry && pnpm test -- --reporter spec --reporter md:report.md
+      run: cd packages/telemetry && pnpm test --reporter spec --reporter md:report.md
     - name: Upload report
       shell: bash
       if: success() || failure() 
