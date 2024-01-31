@@ -24,7 +24,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@platformatic/sql-mapper": "workspace:*",
-    "borp": "^0.5.0",
+    "borp": "^0.7.0",
     "dtsgenerator": "^3.19.1",
     "fastify": "^4.23.2",
     "snazzy": "^9.0.0",

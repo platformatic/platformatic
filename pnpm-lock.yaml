@@ -1488,8 +1488,8 @@ importers:
         specifier: ^8.12.0
         version: 8.12.0
       borp:
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.7.0
+        version: 0.7.0
       cli-progress:
         specifier: ^3.12.0
         version: 3.12.0
@@ -1719,8 +1719,8 @@ importers:
         specifier: workspace:*
         version: link:../telemetry
       borp:
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.7.0
+        version: 0.7.0
       fastify:
         specifier: ^4.23.2
         version: 4.26.0
@@ -1753,8 +1753,8 @@ importers:
         specifier: workspace:*
         version: link:../sql-mapper
       borp:
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.7.0
+        version: 0.7.0
       dtsgenerator:
         specifier: ^3.19.1
         version: 3.19.1
@@ -1810,6 +1810,9 @@ importers:
       '@matteo.collina/tspl':
         specifier: ^0.1.0
         version: 0.1.1
+      borp:
+        specifier: ^0.7.0
+        version: 0.7.0
       fastify:
         specifier: ^4.23.2
         version: 4.26.0
@@ -1869,8 +1872,8 @@ importers:
         specifier: workspace:*
         version: link:../sql-mapper
       borp:
-        specifier: ^0.6.0
-        version: 0.6.0
+        specifier: ^0.7.0
+        version: 0.7.0
       fastify:
         specifier: ^4.25.1
         version: 4.26.0
@@ -3985,16 +3988,16 @@ packages:
       execa: 8.0.1
       find-up: 7.0.0
       glob: 10.3.10
+    dev: true
 
-  /borp@0.6.0:
-    resolution: {integrity: sha512-fqPkpt18Ge1jazLPfU0PTTY4oT/GMfys0hThfrBpgXww2HiyeXDQwQXz+vp/Zs/i2OaPoM+sjvH7cZacjrmPlg==}
+  /borp@0.7.0:
+    resolution: {integrity: sha512-QM3jm8Y/QjoijVsEbYhWcaLTnqlkltf6CSSndSXErq9acg6dlqOUTnAf33WeZviMpcoikBASX263WMvgh2Fc5w==}
     hasBin: true
     dependencies:
       c8: 9.1.0
       execa: 8.0.1
       find-up: 7.0.0
       glob: 10.3.10
-    dev: true
 
   /brace-expansion@1.1.11:
     resolution: {integrity: sha512-iCuPHDFgrHX7H2vEI/5xpz07zSHB00TpugqhmYtVmMO6518mCuRMoOYFldEBl0g187ufozdaHgWKcYFb61qGiA==}
@@ -4078,6 +4081,7 @@ packages:
       v8-to-istanbul: 9.2.0
       yargs: 17.7.2
       yargs-parser: 21.1.1
+    dev: true
 
   /c8@9.1.0:
     resolution: {integrity: sha512-mBWcT5iqNir1zIkzSPyI3NCR9EZCVI3WUD+AVO17MVWTSFNyUueXE82qTeampNtTr+ilN/5Ua3j24LgbCKjDVg==}
@@ -4095,7 +4099,6 @@ packages:
       v8-to-istanbul: 9.2.0
       yargs: 17.7.2
       yargs-parser: 21.1.1
-    dev: true
 
   /call-bind@1.0.5:
     resolution: {integrity: sha512-C3nQxfFZxFRVoJoGKKI8y3MOEo129NQ+FgQ08iye+Mk4zNZZGdjfs06bVTr+DBSlA66Q2VEcMki/cUCP4SercQ==}
@@ -5624,6 +5627,7 @@ packages:
     dependencies:
       cross-spawn: 7.0.3
       signal-exit: 3.0.7
+    dev: true
 
   /foreground-child@3.1.1:
     resolution: {integrity: sha512-TMKDUnIte6bfb5nWv7V/caI169OHgvwjb7V4WkeUvbQQdjr5rWKqHFiKWb/fcOwB+CzBT+qbWjvj+DVwRskpIg==}
@@ -8345,6 +8349,7 @@ packages:
     hasBin: true
     dependencies:
       glob: 7.2.3
+    dev: true
 
   /rimraf@4.4.1:
     resolution: {integrity: sha512-Gk8NlF062+T9CqNGn6h4tls3k6T1+/nXdOcSZVikNVtlRdYpA7wRJJMoXmuvOnLW844rPjdQ7JgXCYM6PPC/og==}
