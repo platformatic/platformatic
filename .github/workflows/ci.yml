@@ -477,7 +477,7 @@ jobs:
         shell: bash
         if: success() || failure() 
         run: |
-          cat report.md >> "$GITHUB_STEP_SUMMARY"
+          cat packages/sql-mapper/report.md >> "$GITHUB_STEP_SUMMARY"
 
   ci-utils:
     needs: setup-node_modules
