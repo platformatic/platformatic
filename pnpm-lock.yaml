@@ -1609,8 +1609,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0
       '@fastify/compress':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: ^7.0.0
+        version: 7.0.0
       bindings:
         specifier: ^1.5.0
         version: 1.5.0
@@ -2685,8 +2685,8 @@ packages:
     resolution: {integrity: sha512-+KpH+QxZU7O4675t3mnkQKcZZg56u+K/Ct2K+N2AZYNVK8kyeo/bI18tI8aPm3tvNNRyTWfj6s5tnGNlcbQRsA==}
     engines: {node: '>=14'}
 
-  /@fastify/compress@6.5.0:
-    resolution: {integrity: sha512-AqUOK714jY7qkzbQbS4zyI4yNFgnRoOJ3eH/oV1T9f5fFdPDRdrFxm5de1ya5n+as4bvitjwU9EY7zvtT9pI2A==}
+  /@fastify/compress@7.0.0:
+    resolution: {integrity: sha512-jo/NaBVHP1OXIf8Kmr3bZyYQB0gAIgcy5c8rRKTPjhklHO7lRs/6ZFckUVT0NtbKSvrTuIcmSkxYpjyv3FNHXA==}
     dependencies:
       '@fastify/accept-negotiator': 1.1.0
       fastify-plugin: 4.5.1
