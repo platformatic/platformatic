@@ -1931,6 +1931,9 @@ importers:
         specifier: ^4.5.1
         version: 4.5.1
     devDependencies:
+      borp:
+        specifier: ^0.7.0
+        version: 0.7.0
       fastify:
         specifier: ^4.23.2
         version: 4.26.0

@@ -4,7 +4,7 @@
   "description": "OpenTelemetry integration for Platformatic",
   "main": "index.js",
   "scripts": {
-    "test": "npm run lint | snazzy && node --test",
+    "test": "npm run lint | snazzy && borp",
     "lint": "standard | snazzy"
   },
   "author": "Marco Piraccini <marco.piraccini@gmail.com>",
@@ -14,6 +14,7 @@
   },
   "license": "Apache-2.0",
   "devDependencies": {
+    "borp": "^0.7.0",
     "fastify": "^4.23.2",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0"
