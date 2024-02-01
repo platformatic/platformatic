@@ -7,8 +7,8 @@
     "plt-runtime": "./runtime.mjs"
   },
   "scripts": {
-    "test": "npm run lint && node ./test/runner.js && tsd",
-    "coverage": "npm run lint && c8 -x fixtures -x test node ./test/runner.js && tsd",
+    "test": "npm run lint && borp --concurrency=1 --timeout=120000 && tsd",
+    "coverage": "npm run lint && borp -X=fixtures -X=test -C --concurrency=1 --timeout=120000 && tsd",
     "lint": "standard | snazzy"
   },
   "author": "Matteo Collina <hello@matteocollina.com>",
@@ -25,6 +25,7 @@
     "@fastify/express": "^2.3.0",
     "@platformatic/sql-graphql": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
+    "borp": "^0.8.0",
     "c8": "^9.0.0",
     "execa": "^8.0.1",
     "express": "^4.18.2",

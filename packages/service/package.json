@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "pnpm run test && pnpm run lint",
-    "unit": "borp --pattern 'test/**/*.test.{js, mjs}' --ignore 'fixtures/**/*' --concurrency=1 --timeout=60000 --no-typescript",
+    "unit": "borp --pattern 'test/**/*.test.{js,mjs}' --ignore 'fixtures/**/*' --concurrency=1 --timeout=60000 --no-typescript",
     "nocov": "pnpm run lint && node ./test/runner.js && tsd",
     "build": "node lib/schema.js | json2ts > config.d.ts",
     "lint": "standard | snazzy && ts-standard | snazzy && tsd"
@@ -42,7 +42,7 @@
     "undici": "^6.0.0",
     "vscode-json-languageservice": "^5.3.6",
     "why-is-node-running": "^2.2.2",
-    "borp": "^0.7.0",
+    "borp": "^0.8.0",
     "yaml": "^2.3.2"
   },
   "dependencies": {
