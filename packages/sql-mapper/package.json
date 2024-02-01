@@ -8,11 +8,11 @@
     "lint": "standard | snazzy",
     "test": "npm run lint && npm run test:typescript && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
     "test:runner": "borp --pattern 'test/**/*.test.{js, mjs}' --concurrency=1 --timeout=60000",
-    "test:postgresql": "DB=postgresql npm run test:runner",
-    "test:mariadb": "DB=mariadb npm run test:runner",
-    "test:mysql": "DB=mysql npm run test:runner",
-    "test:mysql8": "DB=mysql8 npm run test:runner",
-    "test:sqlite": "DB=sqlite npm run test:runner",
+    "test:postgresql": "DB=postgresql npm run test:runner --",
+    "test:mariadb": "DB=mariadb npm run test:runner --",
+    "test:mysql": "DB=mysql npm run test:runner --",
+    "test:mysql8": "DB=mysql8 npm run test:runner --",
+    "test:sqlite": "DB=sqlite npm run test:runner --",
     "test:typescript": "tsd"
   },
   "repository": {
