@@ -35,7 +35,7 @@
     "fastify": "^4.26.0",
     "help-me": "^5.0.0",
     "inquirer": "^9.2.13",
-    "log-update": "^5.0.1",
+    "log-update": "^6.0.0",
     "minimist": "^1.2.8",
     "ora": "^6.3.1",
     "pino": "^8.17.2",
