@@ -6,7 +6,7 @@
   "scripts": {
     "lint": "standard | snazzy",
     "test": "pnpm run lint && borp -C --concurrency=1",
-    "nocov": "pnpm run lint && ",
+    "nocov": "pnpm run lint && borp --concurrency=1",
     "license": "license-checker --production --onlyAllow 'Apache-2.0;MIT;ISC;BSD-2-Clause;BSD-3-Clause'"
   },
   "repository": {
