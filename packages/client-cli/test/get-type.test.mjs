@@ -223,54 +223,7 @@ test('support oneOf', async (t) => {
   equal(getType(oneOfDef), 'string | Array<string> | number')
 })
 
-test.only('support discriminator object', async (t) => {
-  // const spec = {
-  //   components: {
-  //     schemas: {
-  //       Animal: {
-  //         type: 'object',
-  //         discriminator: {
-  //           propertyName: 'type',
-  //           mapping: {
-  //             dog: '#/components/schemas/Dog',
-  //             cat: '#/components/schemas/Cat'
-  //           }
-  //         }
-  //       },
-  //       Dog: {
-  //         allOf: [
-  //           { $ref: '#/components/schemas/Animal' },
-  //           {
-  //             type: 'object',
-  //             properties: {
-  //               type: { type: 'string', enum: ['dog'] },
-  //               name: { type: 'string' },
-  //               breed: { type: 'string' },
-  //               barkSound: { type: 'string' }
-  //             },
-  //             required: ['type', 'name', 'breed', 'barkSound']
-  //           }
-  //         ]
-  //       },
-  //       Cat: {
-  //         allOf: [
-  //           { $ref: '#/components/schemas/Animal' },
-  //           {
-  //             type: 'object',
-  //             properties: {
-  //               type: { type: 'string', enum: ['cat'] },
-  //               name: { type: 'string' },
-  //               breed: { type: 'string' },
-  //               meowSound: { type: 'string' }
-  //             },
-  //             required: ['type', 'name', 'breed', 'meowSound']
-  //           }
-  //         ]
-  //       }
-  //     }
-  //   }
-  // }
-
+test('support discriminator object', async (t) => {
   const spec = {
     components: {
       schemas: {
