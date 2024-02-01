@@ -346,7 +346,7 @@ jobs:
     - name: Run test suite sql-mapper
       run: cd packages/sql-mapper && pnpm run test:${{ matrix.db }} --reporter=spec --reporter=md:report.md && cd ../..
     - name: Run test suite sql-json-schema-mapper
-      run: cd packages/sql-json-schema-mapper && pnpm run test:${{ matrix.db }} -- --reporter=spec --reporter=md:report.md && cd ../..
+      run: cd packages/sql-json-schema-mapper && pnpm run test:${{ matrix.db }} --reporter=spec --reporter=md:report.md && cd ../..
     - name: Run test suite sql-openapi
       run: cd packages/sql-openapi && pnpm run test:${{ matrix.db }} --reporter=spec --reporter=md:report.md && cd ../..
     - name: Run test suite sql-graphql
@@ -477,7 +477,7 @@ jobs:
         shell: bash
         if: success() || failure() 
         run: |
-          cat packages/sql-mapper/report.md >> "$GITHUB_STEP_SUMMARY"
+          cat packages/service/report.md >> "$GITHUB_STEP_SUMMARY"
 
   ci-utils:
     needs: setup-node_modules
