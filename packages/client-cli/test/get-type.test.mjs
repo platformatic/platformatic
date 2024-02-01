@@ -2,7 +2,7 @@
 
 import { test } from 'node:test'
 import { equal } from 'node:assert'
-import { getType } from '../lib/openapi-common.mjs'
+import { getType } from '../lib/get-type.mjs'
 
 test('get type with schema', async (t) => {
   const def = {
@@ -199,4 +199,110 @@ test('object without properties', async (t) => {
   }
 
   equal(getType(emptyObjectDef), '{ \'prop1\'?: string; \'prop2\'?: object; \'prop3\'?: object }')
+})
+
+test('support oneOf', async (t) => {
+  const oneOfDef = {
+    schema: {
+      oneOf: [
+        {
+          type: 'string'
+        },
+        {
+          items: {
+            type: 'string'
+          },
+          type: 'array'
+        },
+        {
+          type: 'number'
+        }
+      ]
+    }
+  }
+  equal(getType(oneOfDef), 'string | Array<string> | number')
+})
+
+test.only('support discriminator object', async (t) => {
+  // const spec = {
+  //   components: {
+  //     schemas: {
+  //       Animal: {
+  //         type: 'object',
+  //         discriminator: {
+  //           propertyName: 'type',
+  //           mapping: {
+  //             dog: '#/components/schemas/Dog',
+  //             cat: '#/components/schemas/Cat'
+  //           }
+  //         }
+  //       },
+  //       Dog: {
+  //         allOf: [
+  //           { $ref: '#/components/schemas/Animal' },
+  //           {
+  //             type: 'object',
+  //             properties: {
+  //               type: { type: 'string', enum: ['dog'] },
+  //               name: { type: 'string' },
+  //               breed: { type: 'string' },
+  //               barkSound: { type: 'string' }
+  //             },
+  //             required: ['type', 'name', 'breed', 'barkSound']
+  //           }
+  //         ]
+  //       },
+  //       Cat: {
+  //         allOf: [
+  //           { $ref: '#/components/schemas/Animal' },
+  //           {
+  //             type: 'object',
+  //             properties: {
+  //               type: { type: 'string', enum: ['cat'] },
+  //               name: { type: 'string' },
+  //               breed: { type: 'string' },
+  //               meowSound: { type: 'string' }
+  //             },
+  //             required: ['type', 'name', 'breed', 'meowSound']
+  //           }
+  //         ]
+  //       }
+  //     }
+  //   }
+  // }
+
+  const spec = {
+    components: {
+      schemas: {
+        Dog: {
+          type: 'object',
+          properties: {
+            type: { type: 'string' },
+            barkSound: { type: 'string' }
+          },
+          required: ['type', 'barkSound']
+        },
+        Cat: {
+          type: 'object',
+          properties: {
+            type: { type: 'string' },
+            meowSound: { type: 'string' }
+          },
+          required: ['type', 'meowSound']
+        }
+      }
+    }
+  }
+  const anyOfDef = {
+    schema: {
+      oneOf: [
+        { $ref: '#/components/schemas/Dog' },
+        { $ref: '#/components/schemas/Cat' }
+      ],
+      discriminator: {
+        propertyName: 'type'
+      }
+    }
+  }
+  equal(getType(anyOfDef, 'res', spec), '{ \'type\': \'Dog\'; \'barkSound\': string } | { \'type\': \'Cat\'; \'meowSound\': string }')
 })

@@ -1,7 +1,8 @@
 'use strict'
 import { STATUS_CODES } from 'node:http'
 import { capitalize, classCase } from './utils.mjs'
-import { getType, writeObjectProperties } from './openapi-common.mjs'
+import { writeObjectProperties } from './openapi-common.mjs'
+import { getType } from './get-type.mjs'
 
 function responsesWriter (operationId, responsesArray, isFullResponse, writer, spec) {
   const responseTypes = Object.entries(responsesArray)
