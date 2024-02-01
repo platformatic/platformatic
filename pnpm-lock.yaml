@@ -875,8 +875,8 @@ importers:
         specifier: ^4.5.1
         version: 4.5.1
       fastify-print-routes:
-        specifier: ^2.1.0
-        version: 2.1.0
+        specifier: ^3.0.0
+        version: 3.0.2
       graphql:
         specifier: ^16.8.1
         version: 16.8.1
@@ -3728,8 +3728,8 @@ packages:
     hasBin: true
     dev: true
 
-  /acquerello@1.1.2:
-    resolution: {integrity: sha512-V/ynq+ekRAls3iWOQMxA8G9pi40aTL9mheHHxA8x8oowZVjY7bROD99t+TSOKKp3BviACYOsNMlL+b+8jZ7ImQ==}
+  /acquerello@2.0.6:
+    resolution: {integrity: sha512-wgjSLq5ISND4tNmVioSEAuD+Sc35UEcY9ip1BlmxJXiu4Otw6yfRKkKmfp6hsgA5NJXFz3/tZUi6RGTrJjRbEQ==}
     engines: {node: '>= 18.18.0'}
     dev: false
 
@@ -5488,11 +5488,11 @@ packages:
   /fastify-plugin@4.5.1:
     resolution: {integrity: sha512-stRHYGeuqpEZTL1Ef0Ovr2ltazUT9g844X5z/zEBFLG8RYlpDiOCIG+ATvYEp+/zmc7sN29mcIMp8gvYplYPIQ==}
 
-  /fastify-print-routes@2.1.0:
-    resolution: {integrity: sha512-R91MYrC2fvJZ2tVIJ3C1Oh0arbBpyBV3QcN0PA7s8kG4uwsaF6OE8xUWth7JDxNNuvH+avumAT+nb36BTIdgtg==}
-    engines: {node: '>=14.15.0'}
+  /fastify-print-routes@3.0.2:
+    resolution: {integrity: sha512-MeWpT2OSLilH+t/2F/q38L+LqiZvlUmQ+fGmqtLJY5z2WtLfJ/smyBNi6D2V0Cv5btGfxE9f58rHcZ0uLmeDyw==}
+    engines: {node: '>= 18.18.0'}
     dependencies:
-      acquerello: 1.1.2
+      acquerello: 2.0.6
       fastify-plugin: 4.5.1
       table: 6.8.1
     dev: false
