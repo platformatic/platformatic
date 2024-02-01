@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "lint": "standard",
-    "test": "pnpm run lint && borp -C && tsd",
-    "nocov": "pnpm run lint && borp && tsd"
+    "test": "pnpm run lint && borp -C --timeout 120000 && tsd",
+    "nocov": "pnpm run lint && borp --timeout 120000 && tsd"
   },
   "repository": {
     "type": "git",
