@@ -13,10 +13,10 @@ import { cliPath, start } from './helper.js'
 test('migrate and start', async (t) => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
 
-  t.diagnostic('migrating')
+  console.log('migrating')
   const cwd = join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite')
-  t.diagnostic(`dbl ${connectionInfo.connectionString}`)
-  t.diagnostic(`cwd ${cwd}`)
+  console.log(`dbl ${connectionInfo.connectionString}`)
+  console.log(`cwd ${cwd}`)
 
   const { stdout } = await execa('node', [cliPath, 'migrations', 'apply'], {
     cwd,
@@ -30,7 +30,7 @@ test('migrate and start', async (t) => {
     assert.match(sanitized, /001\.do\.sql/)
   }
 
-  t.diagnostic('starting')
+  console.log('starting')
 
   const { child, url } = await start([], {
     cwd,
@@ -74,11 +74,11 @@ test('migrate and start', async (t) => {
 
 test('no cwd', async (t) => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
-  t.diagnostic('migrating')
+  console.log('migrating')
 
   const config = join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite', 'platformatic.db.json')
-  t.diagnostic(`dbl ${connectionInfo.connectionString}`)
-  t.diagnostic(`cfg ${config}`)
+  console.log(`dbl ${connectionInfo.connectionString}`)
+  console.log(`cfg ${config}`)
 
   const { stdout } = await execa(
     'node', [cliPath, 'migrations', 'apply', '-c', config],
@@ -94,7 +94,7 @@ test('no cwd', async (t) => {
     assert.ok(sanitized.includes('001.do.sql'))
   }
 
-  t.diagnostic('starting')
+  console.log('starting')
 
   const { child, url } = await start(['-c', config], {
     env: {
@@ -138,10 +138,10 @@ test('no cwd', async (t) => {
 test('do not restart on save', async (t) => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
 
-  t.diagnostic('migrating')
+  console.log('migrating')
   const cwd = join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite')
-  t.diagnostic(`dbl ${connectionInfo.connectionString}`)
-  t.diagnostic(`cwd ${cwd}`)
+  console.log(`dbl ${connectionInfo.connectionString}`)
+  console.log(`cwd ${cwd}`)
 
   const { stdout } = await execa('node', [cliPath, 'migrations', 'apply'], {
     cwd,
@@ -155,7 +155,7 @@ test('do not restart on save', async (t) => {
     assert.match(sanitized, /001\.do\.sql/)
   }
 
-  t.diagnostic('starting')
+  console.log('starting')
 
   const { child, url } = await start([], {
     cwd,

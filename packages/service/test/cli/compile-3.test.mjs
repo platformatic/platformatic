@@ -71,8 +71,8 @@ test('missing tsconfig file', async (t) => {
     await execa('node', [cliPath, 'compile'], { cwd })
     assert.fail('should not compile typescript plugin')
   } catch (err) {
-    t.diagnostic(err.stdout)
-    t.diagnostic(err.stderr)
+    console.log(err.stdout)
+    console.log(err.stderr)
     assert.strictEqual(err.stdout.includes('No typescript configuration file was found, skipping compilation.'), true)
   }
 })
@@ -90,8 +90,8 @@ test('start command should not compile typescript plugin with errors', async (t)
     assert.fail('should not compile bad typescript plugin')
   } catch (err) {
     if (!err.stdout.includes('Found 1 error')) {
-      t.diagnostic(err.stdout)
-      t.diagnostic(err.stderr)
+      console.log(err.stdout)
+      console.log(err.stderr)
       console.error(err)
       assert.fail('should throw one ts error')
     }
@@ -121,7 +121,7 @@ test('should not compile typescript plugin with start without tsconfig', async (
     t.after(exitOnTeardown(child))
     assert.fail('should not compile typescript plugin with start without tsconfig')
   } catch (err) {
-    t.diagnostic(err.stdout)
+    console.log(err.stdout)
     assert.strictEqual(err.stdout.includes('No typescript configuration file was found, skipping compilation.'), true)
   }
 })
