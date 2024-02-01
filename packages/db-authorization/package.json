@@ -20,7 +20,7 @@
     "@matteo.collina/tspl": "^0.1.1",
     "@platformatic/db-core": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
-    "borp": "^0.8.0",
+    "borp": "^0.9.0",
     "fast-jwt": "^3.3.3",
     "fastify": "^4.26.0",
     "glob": "^10.3.10",
