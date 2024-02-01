@@ -1,5 +1,3 @@
-'use strict'
-
 import { test } from 'node:test'
 import { equal } from 'node:assert'
 import { getType } from '../lib/get-type.mjs'
