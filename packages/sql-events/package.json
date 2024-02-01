@@ -24,17 +24,17 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "@matteo.collina/tspl": "^0.1.0",
+    "@matteo.collina/tspl": "^0.1.1",
     "@platformatic/sql-mapper": "workspace:*",
     "borp": "^0.8.0",
-    "fastify": "^4.23.2",
+    "fastify": "^4.26.0",
     "ioredis": "^5.3.2",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "tsd": "^0.30.0"
+    "tsd": "^0.30.4"
   },
   "dependencies": {
-    "@fastify/error": "^3.3.0",
+    "@fastify/error": "^3.4.1",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^4.5.1",
     "mqemitter": "^5.0.0",

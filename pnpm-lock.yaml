@@ -9,19 +9,19 @@ importers:
   .:
     devDependencies:
       '@fastify/pre-commit':
-        specifier: ^2.0.2
+        specifier: ^2.1.0
         version: 2.1.0
       desm:
-        specifier: ^1.3.0
+        specifier: ^1.3.1
         version: 1.3.1
       markdownlint-cli2:
-        specifier: ^0.12.0
+        specifier: ^0.12.1
         version: 0.12.1
 
   packages/authenticate:
     dependencies:
       '@fastify/error':
-        specifier: ^3.3.0
+        specifier: ^3.4.1
         version: 3.4.1
       '@platformatic/config':
         specifier: workspace:*
@@ -42,20 +42,20 @@ importers:
         specifier: ^8.4.2
         version: 8.4.2
       ws:
-        specifier: ^8.14.2
+        specifier: ^8.16.0
         version: 8.16.0
     devDependencies:
       '@fastify/websocket':
-        specifier: ^8.2.0
+        specifier: ^8.3.1
         version: 8.3.1
       borp:
         specifier: ^0.8.0
         version: 0.8.0
       c8:
-        specifier: ^9.0.0
+        specifier: ^9.1.0
         version: 9.1.0
       fastify:
-        specifier: ^4.23.2
+        specifier: ^4.26.0
         version: 4.26.0
       snazzy:
         specifier: ^9.0.0
@@ -64,13 +64,13 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       undici:
-        specifier: ^6.0.0
-        version: 6.5.0
+        specifier: ^6.6.0
+        version: 6.6.0
 
   packages/cli:
     dependencies:
       '@fastify/error':
-        specifier: ^3.3.0
+        specifier: ^3.4.1
         version: 3.4.1
       '@platformatic/authenticate':
         specifier: workspace:*
@@ -115,10 +115,10 @@ importers:
         specifier: workspace:*
         version: link:../create-platformatic
       desm:
-        specifier: ^1.3.0
+        specifier: ^1.3.1
         version: 1.3.1
       dotenv:
-        specifier: ^16.3.1
+        specifier: ^16.4.1
         version: 16.4.1
       execa:
         specifier: ^8.0.1
@@ -130,32 +130,32 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0
       inquirer:
-        specifier: ^9.2.11
+        specifier: ^9.2.13
         version: 9.2.13
       mercurius:
-        specifier: ^13.1.0
+        specifier: ^13.3.3
         version: 13.3.3(graphql@16.8.1)
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
       pino:
-        specifier: ^8.15.3
+        specifier: ^8.17.2
         version: 8.17.2
       pino-pretty:
-        specifier: ^10.2.0
+        specifier: ^10.3.1
         version: 10.3.1
       undici:
-        specifier: ^6.0.0
-        version: 6.5.0
+        specifier: ^6.6.0
+        version: 6.6.0
     devDependencies:
       borp:
         specifier: ^0.8.0
         version: 0.8.0
       c8:
-        specifier: ^9.0.0
+        specifier: ^9.1.0
         version: 9.1.0
       fastify:
-        specifier: ^4.23.2
+        specifier: ^4.26.0
         version: 4.26.0
       glob:
         specifier: ^10.3.10
@@ -182,7 +182,7 @@ importers:
         specifier: ^11.1.0
         version: 11.1.0
       '@fastify/error':
-        specifier: ^3.3.0
+        specifier: ^3.4.1
         version: 3.4.1
       abstract-logging:
         specifier: ^2.0.1
@@ -197,8 +197,8 @@ importers:
         specifier: ^5.0.1
         version: 5.0.1
       undici:
-        specifier: ^6.0.0
-        version: 6.5.0
+        specifier: ^6.6.0
+        version: 6.6.0
     devDependencies:
       '@platformatic/telemetry':
         specifier: workspace:*
@@ -207,16 +207,16 @@ importers:
         specifier: ^0.8.0
         version: 0.8.0
       c8:
-        specifier: ^9.0.0
+        specifier: ^9.1.0
         version: 9.1.0
       desm:
-        specifier: ^1.3.0
+        specifier: ^1.3.1
         version: 1.3.1
       execa:
         specifier: ^8.0.1
         version: 8.0.1
       fastify:
-        specifier: ^4.23.2
+        specifier: ^4.26.0
         version: 4.26.0
       glob:
         specifier: ^10.3.10
@@ -231,16 +231,16 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tsd:
-        specifier: ^0.30.0
+        specifier: ^0.30.4
         version: 0.30.4
       typescript:
-        specifier: ^5.2.2
+        specifier: ^5.3.3
         version: 5.3.3
 
   packages/client-cli:
     dependencies:
       '@fastify/error':
-        specifier: ^3.3.0
+        specifier: ^3.4.1
         version: 3.4.1
       '@platformatic/client':
         specifier: workspace:*
@@ -261,7 +261,7 @@ importers:
         specifier: ^12.0.0
         version: 12.0.0
       desm:
-        specifier: ^1.3.0
+        specifier: ^1.3.1
         version: 1.3.1
       es-main:
         specifier: ^1.3.0
@@ -282,20 +282,20 @@ importers:
         specifier: ^1.2.8
         version: 1.2.8
       pino:
-        specifier: ^8.15.3
+        specifier: ^8.17.2
         version: 8.17.2
       pino-pretty:
-        specifier: ^10.2.0
+        specifier: ^10.3.1
         version: 10.3.1
       undici:
-        specifier: ^6.0.0
-        version: 6.5.0
+        specifier: ^6.6.0
+        version: 6.6.0
       yaml:
-        specifier: ^2.3.2
+        specifier: ^2.3.4
         version: 2.3.4
     devDependencies:
       '@matteo.collina/tspl':
-        specifier: ^0.1.0
+        specifier: ^0.1.1
         version: 0.1.1
       '@platformatic/db':
         specifier: workspace:*
@@ -313,19 +313,19 @@ importers:
         specifier: ^0.8.0
         version: 0.8.0
       dotenv:
-        specifier: ^16.3.1
+        specifier: ^16.4.1
         version: 16.4.1
       execa:
         specifier: ^8.0.1
         version: 8.0.1
       fastify:
-        specifier: ^4.23.2
+        specifier: ^4.26.0
         version: 4.26.0
       fastify-tsconfig:
         specifier: ^2.0.0
         version: 2.0.0
       fs-extra:
-        specifier: ^11.1.1
+        specifier: ^11.2.0
         version: 11.2.0
       snazzy:
         specifier: ^9.0.0
@@ -337,7 +337,7 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       typescript:
-        specifier: ^5.2.2
+        specifier: ^5.3.3
         version: 5.3.3
       why-is-node-running:
         specifier: ^2.2.2
@@ -346,19 +346,19 @@ importers:
   packages/composer:
     dependencies:
       '@fastify/error':
-        specifier: ^3.3.0
+        specifier: ^3.4.1
         version: 3.4.1
       '@fastify/http-proxy':
-        specifier: ^9.2.1
-        version: 9.3.0
+        specifier: ^9.4.0
+        version: 9.4.0
       '@fastify/reply-from':
-        specifier: ^9.6.0
+        specifier: ^9.7.0
         version: 9.7.0
       '@fastify/static':
-        specifier: ^6.11.2
+        specifier: ^6.12.0
         version: 6.12.0
       '@fastify/swagger':
-        specifier: ^8.10.1
+        specifier: ^8.14.0
         version: 8.14.0
       '@platformatic/config':
         specifier: workspace:*
@@ -382,7 +382,7 @@ importers:
         specifier: workspace:^
         version: link:../utils
       '@scalar/fastify-api-reference':
-        specifier: ^1.10.1
+        specifier: ^1.13.18
         version: 1.13.18(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.0)
       ajv:
         specifier: ^8.12.0
@@ -391,10 +391,10 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0
       console-table-printer:
-        specifier: ^2.11.2
+        specifier: ^2.12.0
         version: 2.12.0
       desm:
-        specifier: ^1.3.0
+        specifier: ^1.3.1
         version: 1.3.1
       es-main:
         specifier: ^1.3.0
@@ -406,10 +406,10 @@ importers:
         specifier: ^3.1.3
         version: 3.1.3
       fastify:
-        specifier: ^4.23.2
+        specifier: ^4.26.0
         version: 4.26.0
       fastify-openapi-glue:
-        specifier: ^4.3.3
+        specifier: ^4.4.3
         version: 4.4.3
       fastify-plugin:
         specifier: ^4.5.1
@@ -424,7 +424,7 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0
       mercurius:
-        specifier: ^13.1.0
+        specifier: ^13.3.3
         version: 13.3.3(graphql@16.8.1)
       minimist:
         specifier: ^1.2.8
@@ -433,20 +433,20 @@ importers:
         specifier: ^6.3.1
         version: 6.3.1
       pino:
-        specifier: ^8.15.3
+        specifier: ^8.17.2
         version: 8.17.2
       pino-pretty:
-        specifier: ^10.2.0
+        specifier: ^10.3.1
         version: 10.3.1
       rfdc:
-        specifier: ^1.3.0
+        specifier: ^1.3.1
         version: 1.3.1
       ua-parser-js:
-        specifier: ^1.0.36
+        specifier: ^1.0.37
         version: 1.0.37
       undici:
-        specifier: ^6.0.0
-        version: 6.5.0
+        specifier: ^6.6.0
+        version: 6.6.0
     devDependencies:
       '@platformatic/client':
         specifier: workspace:*
@@ -458,7 +458,7 @@ importers:
         specifier: ^0.8.0
         version: 0.8.0
       c8:
-        specifier: ^9.0.0
+        specifier: ^9.1.0
         version: 9.1.0
       dedent:
         specifier: ^1.5.1
@@ -467,7 +467,7 @@ importers:
         specifier: ^10.3.10
         version: 10.3.10
       json-schema-to-typescript:
-        specifier: ^13.1.1
+        specifier: ^13.1.2
         version: 13.1.2
       openapi-schema-validator:
         specifier: ^12.1.3
@@ -485,7 +485,7 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tsd:
-        specifier: ^0.30.0
+        specifier: ^0.30.4
         version: 0.30.4
 
   packages/config:
@@ -494,7 +494,7 @@ importers:
         specifier: ^1.3.0
         version: 1.3.0
       '@fastify/error':
-        specifier: ^3.3.0
+        specifier: ^3.4.1
         version: 3.4.1
       '@platformatic/metaconfig':
         specifier: workspace:*
@@ -506,7 +506,7 @@ importers:
         specifier: ^8.12.0
         version: 8.12.0
       dotenv:
-        specifier: ^16.3.1
+        specifier: ^16.4.1
         version: 16.4.1
       minimist:
         specifier: ^1.2.8
@@ -518,8 +518,8 @@ importers:
         specifier: ^7.5.4
         version: 7.5.4
       undici:
-        specifier: ^6.0.0
-        version: 6.5.0
+        specifier: ^6.6.0
+        version: 6.6.0
     devDependencies:
       '@iarna/toml':
         specifier: ^2.2.5
@@ -528,10 +528,10 @@ importers:
         specifier: ^0.8.0
         version: 0.8.0
       c8:
-        specifier: ^9.0.0
+        specifier: ^9.1.0
         version: 9.1.0
       fastify:
-        specifier: ^4.23.2
+        specifier: ^4.26.0
         version: 4.26.0
       glob:
         specifier: ^10.3.10
@@ -546,7 +546,7 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       yaml:
-        specifier: ^2.3.2
+        specifier: ^2.3.4
         version: 2.3.4
 
   packages/create-platformatic:
@@ -561,8 +561,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       '@types/node':
-        specifier: ^20.8.10
-        version: 20.11.10
+        specifier: ^20.11.15
+        version: 20.11.15
       boring-name-generator:
         specifier: ^1.0.3
         version: 1.0.3
@@ -576,7 +576,7 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0
       desm:
-        specifier: ^1.3.0
+        specifier: ^1.3.1
         version: 1.3.1
       es-main:
         specifier: ^1.3.0
@@ -585,13 +585,13 @@ importers:
         specifier: ^8.0.1
         version: 8.0.1
       fastify:
-        specifier: ^4.23.2
+        specifier: ^4.26.0
         version: 4.26.0
       help-me:
         specifier: ^5.0.0
         version: 5.0.0
       inquirer:
-        specifier: ^9.2.11
+        specifier: ^9.2.13
         version: 9.2.13
       log-update:
         specifier: ^5.0.1
@@ -603,10 +603,10 @@ importers:
         specifier: ^6.3.1
         version: 6.3.1
       pino:
-        specifier: ^8.15.3
+        specifier: ^8.17.2
         version: 8.17.2
       pino-pretty:
-        specifier: ^10.2.0
+        specifier: ^10.3.1
         version: 10.3.1
       pupa:
         specifier: ^3.1.0
@@ -618,8 +618,8 @@ importers:
         specifier: ^7.1.0
         version: 7.1.0
       undici:
-        specifier: ^6.0.0
-        version: 6.5.0
+        specifier: ^6.6.0
+        version: 6.6.0
       which:
         specifier: ^3.0.1
         version: 3.0.1
@@ -637,16 +637,16 @@ importers:
         specifier: ^0.8.0
         version: 0.8.0
       c8:
-        specifier: ^9.0.0
+        specifier: ^9.1.0
         version: 9.1.0
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
       dotenv:
-        specifier: ^16.3.1
+        specifier: ^16.4.1
         version: 16.4.1
       esmock:
-        specifier: ^2.5.1
+        specifier: ^2.6.3
         version: 2.6.3
       snazzy:
         specifier: ^9.0.0
@@ -655,10 +655,10 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       typescript:
-        specifier: ~5.3.0
+        specifier: ~5.3.3
         version: 5.3.3
       yaml:
-        specifier: ^2.3.2
+        specifier: ^2.3.4
         version: 2.3.4
 
   packages/create-platformatic-auto:
@@ -673,8 +673,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       '@types/node':
-        specifier: ^20.8.10
-        version: 20.11.10
+        specifier: ^20.11.15
+        version: 20.11.15
       boring-name-generator:
         specifier: ^1.0.3
         version: 1.0.3
@@ -688,7 +688,7 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0
       desm:
-        specifier: ^1.3.0
+        specifier: ^1.3.1
         version: 1.3.1
       es-main:
         specifier: ^1.3.0
@@ -697,13 +697,13 @@ importers:
         specifier: ^8.0.1
         version: 8.0.1
       fastify:
-        specifier: ^4.23.2
+        specifier: ^4.26.0
         version: 4.26.0
       help-me:
         specifier: ^5.0.0
         version: 5.0.0
       inquirer:
-        specifier: ^9.2.11
+        specifier: ^9.2.13
         version: 9.2.13
       log-update:
         specifier: ^5.0.1
@@ -715,10 +715,10 @@ importers:
         specifier: ^6.3.1
         version: 6.3.1
       pino:
-        specifier: ^8.15.3
+        specifier: ^8.17.2
         version: 8.17.2
       pino-pretty:
-        specifier: ^10.2.0
+        specifier: ^10.3.1
         version: 10.3.1
       pupa:
         specifier: ^3.1.0
@@ -730,8 +730,8 @@ importers:
         specifier: ^7.1.0
         version: 7.1.0
       undici:
-        specifier: ^6.0.0
-        version: 6.5.0
+        specifier: ^6.6.0
+        version: 6.6.0
       which:
         specifier: ^3.0.1
         version: 3.0.1
@@ -755,16 +755,16 @@ importers:
         specifier: ^0.8.0
         version: 0.8.0
       c8:
-        specifier: ^9.0.0
+        specifier: ^9.1.0
         version: 9.1.0
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
       dotenv:
-        specifier: ^16.3.1
+        specifier: ^16.4.1
         version: 16.4.1
       esmock:
-        specifier: ^2.5.1
+        specifier: ^2.6.3
         version: 2.6.3
       snazzy:
         specifier: ^9.0.0
@@ -773,34 +773,34 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       typescript:
-        specifier: ~5.3.0
+        specifier: ~5.3.3
         version: 5.3.3
       yaml:
-        specifier: ^2.3.2
+        specifier: ^2.3.4
         version: 2.3.4
 
   packages/db:
     dependencies:
       '@fastify/accepts':
-        specifier: ^4.2.0
+        specifier: ^4.3.0
         version: 4.3.0
       '@fastify/basic-auth':
-        specifier: ^5.0.0
+        specifier: ^5.1.1
         version: 5.1.1
       '@fastify/cors':
-        specifier: ^8.4.0
+        specifier: ^8.5.0
         version: 8.5.0
       '@fastify/deepmerge':
         specifier: ^1.3.0
         version: 1.3.0
       '@fastify/error':
-        specifier: ^3.3.0
+        specifier: ^3.4.1
         version: 3.4.1
       '@fastify/static':
-        specifier: ^6.11.2
+        specifier: ^6.12.0
         version: 6.12.0
       '@fastify/swagger':
-        specifier: ^8.10.1
+        specifier: ^8.14.0
         version: 8.14.0
       '@platformatic/config':
         specifier: workspace:*
@@ -851,13 +851,13 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0
       console-table-printer:
-        specifier: ^2.11.2
+        specifier: ^2.12.0
         version: 2.12.0
       desm:
-        specifier: ^1.3.0
+        specifier: ^1.3.1
         version: 1.3.1
       env-schema:
-        specifier: ^5.2.0
+        specifier: ^5.2.1
         version: 5.2.1
       es-main:
         specifier: ^1.3.0
@@ -866,17 +866,17 @@ importers:
         specifier: ^8.0.1
         version: 8.0.1
       fastify:
-        specifier: ^4.23.2
+        specifier: ^4.26.0
         version: 4.26.0
       fastify-metrics:
-        specifier: ^10.3.2
+        specifier: ^10.6.0
         version: 10.6.0(fastify@4.26.0)
       fastify-plugin:
         specifier: ^4.5.1
         version: 4.5.1
       fastify-print-routes:
         specifier: ^2.1.0
-        version: 2.2.0
+        version: 2.1.0
       graphql:
         specifier: ^16.8.1
         version: 16.8.1
@@ -890,26 +890,26 @@ importers:
         specifier: ^6.3.1
         version: 6.3.1
       pino:
-        specifier: ^8.15.3
+        specifier: ^8.17.2
         version: 8.17.2
       pino-pretty:
-        specifier: ^10.2.0
+        specifier: ^10.3.1
         version: 10.3.1
       postgrator:
         specifier: ^7.2.0
         version: 7.2.0
       rfdc:
-        specifier: ^1.3.0
+        specifier: ^1.3.1
         version: 1.3.1
       rimraf:
         specifier: ^4.4.1
         version: 4.4.1
       ua-parser-js:
-        specifier: ^1.0.36
+        specifier: ^1.0.37
         version: 1.0.37
     devDependencies:
       '@databases/pg':
-        specifier: ^5.4.1
+        specifier: ^5.5.0
         version: 5.5.0(typescript@5.3.3)
       '@databases/sql':
         specifier: ^3.3.0
@@ -924,16 +924,16 @@ importers:
         specifier: ^0.8.0
         version: 0.8.0
       c8:
-        specifier: ^9.0.0
+        specifier: ^9.1.0
         version: 9.1.0
       glob:
         specifier: ^10.3.10
         version: 10.3.10
       json-schema-to-typescript:
-        specifier: ^13.1.1
+        specifier: ^13.1.2
         version: 13.1.2
       mercurius:
-        specifier: ^13.1.0
+        specifier: ^13.3.3
         version: 13.3.3(graphql@16.8.1)
       openapi-types:
         specifier: ^12.1.3
@@ -954,28 +954,28 @@ importers:
         specifier: ^12.0.2
         version: 12.0.2(typescript@5.3.3)
       tsd:
-        specifier: ^0.30.0
+        specifier: ^0.30.4
         version: 0.30.4
       typescript:
-        specifier: ^5.2.2
+        specifier: ^5.3.3
         version: 5.3.3
       undici:
-        specifier: ^6.0.0
-        version: 6.5.0
+        specifier: ^6.6.0
+        version: 6.6.0
       vscode-json-languageservice:
-        specifier: ^5.3.6
+        specifier: ^5.3.9
         version: 5.3.9
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
       yaml:
-        specifier: ^2.3.2
+        specifier: ^2.3.4
         version: 2.3.4
 
   packages/db-authorization:
     dependencies:
       '@fastify/error':
-        specifier: ^3.3.0
+        specifier: ^3.4.1
         version: 3.4.1
       '@fastify/jwt':
         specifier: ^8.0.0
@@ -984,26 +984,26 @@ importers:
         specifier: ^4.5.1
         version: 4.5.1
       fastify-user:
-        specifier: ^0.3.1
+        specifier: ^0.3.2
         version: 0.3.2
       get-jwks:
-        specifier: ^9.0.0
+        specifier: ^9.0.1
         version: 9.0.1
       leven:
         specifier: ~3.1.0
         version: 3.1.0
       undici:
-        specifier: ^6.0.0
-        version: 6.5.0
+        specifier: ^6.6.0
+        version: 6.6.0
     devDependencies:
       '@fastify/cookie':
         specifier: ^8.3.0
         version: 8.3.0
       '@fastify/session':
-        specifier: ^10.5.0
+        specifier: ^10.7.0
         version: 10.7.0
       '@matteo.collina/tspl':
-        specifier: ^0.1.0
+        specifier: ^0.1.1
         version: 0.1.1
       '@platformatic/db-core':
         specifier: workspace:*
@@ -1015,10 +1015,10 @@ importers:
         specifier: ^0.8.0
         version: 0.8.0
       fast-jwt:
-        specifier: ^3.3.0
+        specifier: ^3.3.3
         version: 3.3.3
       fastify:
-        specifier: ^4.23.2
+        specifier: ^4.26.0
         version: 4.26.0
       glob:
         specifier: ^10.3.10
@@ -1030,13 +1030,13 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tsd:
-        specifier: ^0.30.0
+        specifier: ^0.30.4
         version: 0.30.4
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
       ws:
-        specifier: ^8.14.2
+        specifier: ^8.16.0
         version: 8.16.0
 
   packages/db-core:
@@ -1061,7 +1061,7 @@ importers:
         specifier: ^0.8.0
         version: 0.8.0
       fastify:
-        specifier: ^4.23.2
+        specifier: ^4.26.0
         version: 4.26.0
       snazzy:
         specifier: ^9.0.0
@@ -1076,7 +1076,7 @@ importers:
   packages/deploy-client:
     dependencies:
       '@fastify/error':
-        specifier: ^3.3.0
+        specifier: ^3.4.1
         version: 3.4.1
       '@platformatic/config':
         specifier: workspace:*
@@ -1094,17 +1094,17 @@ importers:
         specifier: ^6.2.0
         version: 6.2.0
       undici:
-        specifier: ^6.0.0
-        version: 6.5.0
+        specifier: ^6.6.0
+        version: 6.6.0
     devDependencies:
       borp:
         specifier: ^0.8.0
         version: 0.8.0
       c8:
-        specifier: ^9.0.0
+        specifier: ^9.1.0
         version: 9.1.0
       fastify:
-        specifier: ^4.23.2
+        specifier: ^4.26.0
         version: 4.26.0
       glob:
         specifier: ^10.3.10
@@ -1122,7 +1122,7 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       typescript:
-        specifier: ^5.2.2
+        specifier: ^5.3.3
         version: 5.3.3
 
   packages/frontend-template:
@@ -1140,7 +1140,7 @@ importers:
         specifier: ^12.0.0
         version: 12.0.0
       desm:
-        specifier: ^1.3.0
+        specifier: ^1.3.1
         version: 1.3.1
       es-main:
         specifier: ^1.3.0
@@ -1158,17 +1158,17 @@ importers:
         specifier: ^1.2.8
         version: 1.2.8
       undici:
-        specifier: ^6.0.0
-        version: 6.5.0
+        specifier: ^6.6.0
+        version: 6.6.0
     devDependencies:
       '@playwright/test':
-        specifier: ^1.38.1
+        specifier: ^1.41.1
         version: 1.41.1
       '@types/react':
-        specifier: ^18.2.24
-        version: 18.2.48
+        specifier: ^18.2.51
+        version: 18.2.51
       '@types/react-dom':
-        specifier: ^18.2.8
+        specifier: ^18.2.18
         version: 18.2.18
       '@vitejs/plugin-react':
         specifier: ^3.1.0
@@ -1186,10 +1186,10 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       typescript:
-        specifier: ^5.2.2
+        specifier: ^5.3.3
         version: 5.3.3
       vite:
-        specifier: ^5.0.0
+        specifier: ^5.0.12
         version: 5.0.12
 
   packages/generate-errors-doc:
@@ -1273,14 +1273,14 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
       fastify:
-        specifier: ^4.24.3
+        specifier: ^4.26.0
         version: 4.26.0
       pino:
-        specifier: ^8.16.1
+        specifier: ^8.17.2
         version: 8.17.2
       undici:
-        specifier: ^6.3.0
-        version: 6.5.0
+        specifier: ^6.6.0
+        version: 6.6.0
     devDependencies:
       '@types/inquirer':
         specifier: ^9.0.7
@@ -1289,7 +1289,7 @@ importers:
         specifier: ^0.8.0
         version: 0.8.0
       c8:
-        specifier: ^9.0.0
+        specifier: ^9.1.0
         version: 9.1.0
       glob:
         specifier: ^10.3.10
@@ -1301,13 +1301,13 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       typescript:
-        specifier: ^5.2.2
+        specifier: ^5.3.3
         version: 5.3.3
 
   packages/metaconfig:
     dependencies:
       '@fastify/error':
-        specifier: ^3.3.0
+        specifier: ^3.4.1
         version: 3.4.1
       '@iarna/toml':
         specifier: ^2.2.5
@@ -1316,13 +1316,13 @@ importers:
         specifier: ^2.2.3
         version: 2.2.3
       rfdc:
-        specifier: ^1.3.0
+        specifier: ^1.3.1
         version: 1.3.1
       semver:
         specifier: ^7.5.4
         version: 7.5.4
       yaml:
-        specifier: ^2.3.2
+        specifier: ^2.3.4
         version: 2.3.4
     devDependencies:
       borp:
@@ -1341,7 +1341,7 @@ importers:
   packages/runtime:
     dependencies:
       '@fastify/error':
-        specifier: ^3.4.0
+        specifier: ^3.4.1
         version: 3.4.1
       '@hapi/topo':
         specifier: ^6.0.2
@@ -1380,7 +1380,7 @@ importers:
         specifier: ^2.0.0
         version: 2.0.0
       desm:
-        specifier: ^1.3.0
+        specifier: ^1.3.1
         version: 1.3.1
       es-main:
         specifier: ^1.3.0
@@ -1389,7 +1389,7 @@ importers:
         specifier: ^1.0.16
         version: 1.0.16
       fastify:
-        specifier: ^4.24.1
+        specifier: ^4.26.0
         version: 4.26.0
       fastify-undici-dispatcher:
         specifier: ^0.5.0
@@ -1404,14 +1404,14 @@ importers:
         specifier: ^1.2.8
         version: 1.2.8
       pino:
-        specifier: ^8.16.0
+        specifier: ^8.17.2
         version: 8.17.2
       pino-pretty:
-        specifier: ^10.2.3
+        specifier: ^10.3.1
         version: 10.3.1
       undici:
-        specifier: ^6.2.0
-        version: 6.5.0
+        specifier: ^6.6.0
+        version: 6.6.0
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
@@ -1429,7 +1429,7 @@ importers:
         specifier: ^0.8.0
         version: 0.8.0
       c8:
-        specifier: ^9.0.0
+        specifier: ^9.1.0
         version: 9.1.0
       execa:
         specifier: ^8.0.1
@@ -1453,10 +1453,10 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tsd:
-        specifier: ^0.30.0
+        specifier: ^0.30.4
         version: 0.30.4
       typescript:
-        specifier: ^5.2.2
+        specifier: ^5.3.3
         version: 5.3.3
 
   packages/scalar-theme: {}
@@ -1464,31 +1464,31 @@ importers:
   packages/service:
     dependencies:
       '@fastify/accepts':
-        specifier: ^4.2.0
+        specifier: ^4.3.0
         version: 4.3.0
       '@fastify/autoload':
-        specifier: ^5.7.1
+        specifier: ^5.8.0
         version: 5.8.0
       '@fastify/basic-auth':
-        specifier: ^5.0.0
+        specifier: ^5.1.1
         version: 5.1.1
       '@fastify/cors':
-        specifier: ^8.4.0
+        specifier: ^8.5.0
         version: 8.5.0
       '@fastify/deepmerge':
         specifier: ^1.3.0
         version: 1.3.0
       '@fastify/error':
-        specifier: ^3.4.0
+        specifier: ^3.4.1
         version: 3.4.1
       '@fastify/restartable':
-        specifier: ^2.1.1
+        specifier: ^2.2.0
         version: 2.2.0
       '@fastify/static':
-        specifier: ^6.11.2
+        specifier: ^6.12.0
         version: 6.12.0
       '@fastify/swagger':
-        specifier: ^8.10.1
+        specifier: ^8.14.0
         version: 8.14.0
       '@fastify/under-pressure':
         specifier: ^8.3.0
@@ -1521,10 +1521,10 @@ importers:
         specifier: workspace:*
         version: link:../utils
       '@scalar/fastify-api-reference':
-        specifier: ^1.10.1
+        specifier: ^1.13.18
         version: 1.13.18(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.0)
       '@types/ws':
-        specifier: ^8.5.6
+        specifier: ^8.5.10
         version: 8.5.10
       ajv:
         specifier: ^8.12.0
@@ -1545,13 +1545,13 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0
       console-table-printer:
-        specifier: ^2.11.2
+        specifier: ^2.12.0
         version: 2.12.0
       desm:
-        specifier: ^1.3.0
+        specifier: ^1.3.1
         version: 1.3.1
       env-schema:
-        specifier: ^5.2.0
+        specifier: ^5.2.1
         version: 5.2.1
       es-main:
         specifier: ^1.3.0
@@ -1560,13 +1560,13 @@ importers:
         specifier: ^8.0.1
         version: 8.0.1
       fastify:
-        specifier: ^4.23.2
+        specifier: ^4.26.0
         version: 4.26.0
       fastify-metrics:
-        specifier: ^10.3.2
+        specifier: ^10.6.0
         version: 10.6.0(fastify@4.26.0)
       fastify-openapi-glue:
-        specifier: ^4.3.3
+        specifier: ^4.4.3
         version: 4.4.3
       fastify-plugin:
         specifier: ^4.5.1
@@ -1578,7 +1578,7 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0
       mercurius:
-        specifier: ^13.1.0
+        specifier: ^13.3.3
         version: 13.3.3(graphql@16.8.1)
       minimist:
         specifier: ^1.2.8
@@ -1590,20 +1590,20 @@ importers:
         specifier: ^6.3.1
         version: 6.3.1
       pino:
-        specifier: ^8.15.3
+        specifier: ^8.17.2
         version: 8.17.2
       pino-pretty:
-        specifier: ^10.2.0
+        specifier: ^10.3.1
         version: 10.3.1
       rfdc:
-        specifier: ^1.3.0
+        specifier: ^1.3.1
         version: 1.3.1
       ua-parser-js:
-        specifier: ^1.0.36
+        specifier: ^1.0.37
         version: 1.0.37
       undici:
-        specifier: ^6.0.0
-        version: 6.5.0
+        specifier: ^6.6.0
+        version: 6.6.0
     devDependencies:
       '@fastify/aws-lambda':
         specifier: ^4.0.0
@@ -1621,7 +1621,7 @@ importers:
         specifier: ^10.3.10
         version: 10.3.10
       json-schema-to-typescript:
-        specifier: ^13.1.1
+        specifier: ^13.1.2
         version: 13.1.2
       openapi-types:
         specifier: ^12.1.3
@@ -1648,25 +1648,25 @@ importers:
         specifier: ^12.0.2
         version: 12.0.2(typescript@5.3.3)
       tsd:
-        specifier: ^0.30.0
+        specifier: ^0.30.4
         version: 0.30.4
       typescript:
-        specifier: ^5.2.2
+        specifier: ^5.3.3
         version: 5.3.3
       vscode-json-languageservice:
-        specifier: ^5.3.6
+        specifier: ^5.3.9
         version: 5.3.9
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
       yaml:
-        specifier: ^2.3.2
+        specifier: ^2.3.4
         version: 2.3.4
 
   packages/sql-events:
     dependencies:
       '@fastify/error':
-        specifier: ^3.3.0
+        specifier: ^3.4.1
         version: 3.4.1
       camelcase:
         specifier: ^6.3.0
@@ -1682,7 +1682,7 @@ importers:
         version: 5.0.0
     devDependencies:
       '@matteo.collina/tspl':
-        specifier: ^0.1.0
+        specifier: ^0.1.1
         version: 0.1.1
       '@platformatic/sql-mapper':
         specifier: workspace:*
@@ -1691,7 +1691,7 @@ importers:
         specifier: ^0.8.0
         version: 0.8.0
       fastify:
-        specifier: ^4.23.2
+        specifier: ^4.26.0
         version: 4.26.0
       ioredis:
         specifier: ^5.3.2
@@ -1703,13 +1703,13 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tsd:
-        specifier: ^0.30.0
+        specifier: ^0.30.4
         version: 0.30.4
 
   packages/sql-graphql:
     dependencies:
       '@fastify/error':
-        specifier: ^3.3.0
+        specifier: ^3.4.1
         version: 3.4.1
       '@mercuriusjs/federation':
         specifier: ^2.0.0
@@ -1727,7 +1727,7 @@ importers:
         specifier: ^16.8.1
         version: 16.8.1
       graphql-scalars:
-        specifier: ^1.22.2
+        specifier: ^1.22.4
         version: 1.22.4(graphql@16.8.1)
       graphql-type-json:
         specifier: ^0.3.2
@@ -1736,14 +1736,14 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
       mercurius:
-        specifier: ^13.1.0
+        specifier: ^13.3.3
         version: 13.3.3(graphql@16.8.1)
     devDependencies:
       '@matteo.collina/snap':
         specifier: ^0.1.1
         version: 0.1.1
       '@matteo.collina/tspl':
-        specifier: ^0.1.0
+        specifier: ^0.1.1
         version: 0.1.1
       '@mercuriusjs/gateway':
         specifier: ^1.2.0
@@ -1761,7 +1761,7 @@ importers:
         specifier: ^0.8.0
         version: 0.8.0
       fastify:
-        specifier: ^4.23.2
+        specifier: ^4.26.0
         version: 4.26.0
       snazzy:
         specifier: ^9.0.0
@@ -1770,13 +1770,13 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tsd:
-        specifier: ^0.30.0
+        specifier: ^0.30.4
         version: 0.30.4
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
       ws:
-        specifier: ^8.14.2
+        specifier: ^8.16.0
         version: 8.16.0
 
   packages/sql-json-schema-mapper:
@@ -1798,7 +1798,7 @@ importers:
         specifier: ^3.19.1
         version: 3.19.1
       fastify:
-        specifier: ^4.23.2
+        specifier: ^4.26.0
         version: 4.26.0
       snazzy:
         specifier: ^9.0.0
@@ -1816,13 +1816,13 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0
       '@databases/pg':
-        specifier: ^5.4.1
+        specifier: ^5.5.0
         version: 5.5.0(typescript@5.3.3)
       '@databases/sql':
         specifier: ^3.3.0
         version: 3.3.0
       '@fastify/error':
-        specifier: ^3.3.0
+        specifier: ^3.4.1
         version: 3.4.1
       '@hapi/topo':
         specifier: ^6.0.2
@@ -1847,13 +1847,13 @@ importers:
         version: 2.1.0
     devDependencies:
       '@matteo.collina/tspl':
-        specifier: ^0.1.0
+        specifier: ^0.1.1
         version: 0.1.1
       borp:
         specifier: ^0.8.0
         version: 0.8.0
       fastify:
-        specifier: ^4.23.2
+        specifier: ^4.26.0
         version: 4.26.0
       glob:
         specifier: ^10.3.10
@@ -1865,7 +1865,7 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tsd:
-        specifier: ^0.30.0
+        specifier: ^0.30.4
         version: 0.30.4
 
   packages/sql-openapi:
@@ -1874,10 +1874,10 @@ importers:
         specifier: ^1.3.0
         version: 1.3.0
       '@fastify/error':
-        specifier: ^3.3.0
+        specifier: ^3.4.1
         version: 3.4.1
       '@fastify/swagger':
-        specifier: ^8.10.1
+        specifier: ^8.14.0
         version: 8.14.0
       '@platformatic/scalar-theme':
         specifier: workspace:*
@@ -1889,7 +1889,7 @@ importers:
         specifier: workspace:*
         version: link:../utils
       '@scalar/fastify-api-reference':
-        specifier: ^1.10.1
+        specifier: ^1.13.18
         version: 1.13.18(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.0)
       camelcase:
         specifier: ^6.3.0
@@ -1905,7 +1905,7 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1
       '@matteo.collina/tspl':
-        specifier: ^0.1.0
+        specifier: ^0.1.1
         version: 0.1.1
       '@platformatic/sql-mapper':
         specifier: workspace:*
@@ -1914,10 +1914,10 @@ importers:
         specifier: ^0.8.0
         version: 0.8.0
       fastify:
-        specifier: ^4.25.1
+        specifier: ^4.26.0
         version: 4.26.0
       mercurius:
-        specifier: ^13.1.0
+        specifier: ^13.3.3
         version: 13.3.3(graphql@16.8.1)
       openapi-types:
         specifier: ^12.1.3
@@ -1929,13 +1929,13 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       tsd:
-        specifier: ^0.30.0
+        specifier: ^0.30.4
         version: 0.30.4
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
       yaml:
-        specifier: ^2.3.2
+        specifier: ^2.3.4
         version: 2.3.4
 
   packages/swagger-ui-theme: {}
@@ -1943,31 +1943,31 @@ importers:
   packages/telemetry:
     dependencies:
       '@fastify/swagger':
-        specifier: ^8.10.1
+        specifier: ^8.14.0
         version: 8.14.0
       '@opentelemetry/api':
-        specifier: ^1.6.0
+        specifier: ^1.7.0
         version: 1.7.0
       '@opentelemetry/core':
-        specifier: ^1.17.0
+        specifier: ^1.21.0
         version: 1.21.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/exporter-trace-otlp-proto':
         specifier: ^0.48.0
         version: 0.48.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/exporter-zipkin':
-        specifier: ^1.17.0
+        specifier: ^1.21.0
         version: 1.21.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/resources':
-        specifier: ^1.17.0
+        specifier: ^1.21.0
         version: 1.21.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/sdk-trace-base':
-        specifier: ^1.17.0
+        specifier: ^1.21.0
         version: 1.21.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/semantic-conventions':
-        specifier: ^1.17.0
+        specifier: ^1.21.0
         version: 1.21.0
       fast-uri:
-        specifier: ^2.2.0
+        specifier: ^2.3.0
         version: 2.3.0
       fastify-plugin:
         specifier: ^4.5.1
@@ -1977,7 +1977,7 @@ importers:
         specifier: ^0.8.0
         version: 0.8.0
       fastify:
-        specifier: ^4.23.2
+        specifier: ^4.26.0
         version: 4.26.0
       snazzy:
         specifier: ^9.0.0
@@ -1992,7 +1992,7 @@ importers:
         specifier: ^1.3.0
         version: 1.3.0
       '@fastify/error':
-        specifier: ^3.3.0
+        specifier: ^3.4.1
         version: 3.4.1
       leven:
         specifier: ~3.1.0
@@ -2001,17 +2001,17 @@ importers:
         specifier: ^8.0.4
         version: 8.0.4
       undici:
-        specifier: ^6.0.0
-        version: 6.5.0
+        specifier: ^6.6.0
+        version: 6.6.0
     devDependencies:
       '@matteo.collina/tspl':
-        specifier: ^0.1.0
+        specifier: ^0.1.1
         version: 0.1.1
       borp:
         specifier: ^0.8.0
         version: 0.8.0
       fastify:
-        specifier: ^4.23.2
+        specifier: ^4.26.0
         version: 4.26.0
       snazzy:
         specifier: ^9.0.0
@@ -2634,7 +2634,7 @@ packages:
       debug: 4.3.4
       espree: 9.6.1
       globals: 13.24.0
-      ignore: 5.3.0
+      ignore: 5.3.1
       import-fresh: 3.3.0
       js-yaml: 4.1.0
       minimatch: 3.1.2
@@ -2730,10 +2730,10 @@ packages:
   /@fastify/fast-json-stringify-compiler@4.3.0:
     resolution: {integrity: sha512-aZAXGYo6m22Fk1zZzEUKBvut/CIIQe/BapEORnxiD5Qr0kPHqqI69NtEMCme74h+at72sPhbkb4ZrLd1W3KRLA==}
     dependencies:
-      fast-json-stringify: 5.10.0
+      fast-json-stringify: 5.11.1
 
-  /@fastify/http-proxy@9.3.0:
-    resolution: {integrity: sha512-fQkdgwco8q7eI2PQA8lH++y3Q+hNlIByBYsphl+r4FKRbmrU7ey4WOA/CA9tBhe4oEojGpa3eTU4jXvqf2DBuQ==}
+  /@fastify/http-proxy@9.4.0:
+    resolution: {integrity: sha512-oXdvWBETRI2fJYJnRfFP/qJ6fQddUJz47X71WP7SkHdm4D5OejlNwrgnEJLUS5Kr4BSXHE5Nq5K6mmUlkivKiA==}
     dependencies:
       '@fastify/reply-from': 9.7.0
       fast-querystring: 1.1.2
@@ -3218,7 +3218,7 @@ packages:
       graphql: 16.8.1
       mercurius: 13.3.3(graphql@16.8.1)
       metaline: 1.1.0
-      undici: 6.5.0
+      undici: 6.6.0
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -3276,8 +3276,8 @@ packages:
     resolution: {integrity: sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==}
     dev: false
 
-  /@reporters/github@1.5.4:
-    resolution: {integrity: sha512-ihqhIj3NsGAKf2dPSirTbgJCztaiUcC1c7xQfcF7/vMgSZdq9Uko+CjRgIw9+tJd9uGXRznx/JoojIdLpCT3Tg==}
+  /@reporters/github@1.6.0:
+    resolution: {integrity: sha512-p25J8TQkW1TEhbrZrcrfqQK8lSEmBAPbjFxx29JLvyjE9+/YaHjKBytkRY9Vsy0zk97zdf+15CxkMYl6GYZhMw==}
     dependencies:
       '@actions/core': 1.10.1
       stack-utils: 2.0.6
@@ -3427,7 +3427,7 @@ packages:
   /@types/better-sqlite3@7.6.9:
     resolution: {integrity: sha512-FvktcujPDj9XKMJQWFcl2vVl7OdRIqsSRX9b0acWwTmwLK9CF2eqo/FRcmMLNpugKoX/avA6pb7TorDLmpgTnQ==}
     dependencies:
-      '@types/node': 20.11.10
+      '@types/node': 20.11.15
     dev: false
 
   /@types/eslint@7.29.0:
@@ -3445,7 +3445,7 @@ packages:
     resolution: {integrity: sha512-ZUxbzKl0IfJILTS6t7ip5fQQM/J3TJYubDm3nMbgubNNYS62eXeUpoLUC8/7fJNiFYHTrGPQn7hspDUzIHX3UA==}
     dependencies:
       '@types/minimatch': 5.1.2
-      '@types/node': 20.11.10
+      '@types/node': 20.11.15
     dev: true
 
   /@types/inquirer@9.0.7:
@@ -3486,11 +3486,11 @@ packages:
   /@types/mysql@2.15.25:
     resolution: {integrity: sha512-pKjbzNu/xvD2xOx4psIfxu9CBg+GovLvQFk8NYTW3oT7Gf5QY65MvNgQNFvVb0nC3l9DCKGqBFYhujVrDqii4A==}
     dependencies:
-      '@types/node': 20.11.10
+      '@types/node': 20.11.15
     dev: false
 
-  /@types/node@20.11.10:
-    resolution: {integrity: sha512-rZEfe/hJSGYmdfX9tvcPMYeYPW2sNl50nsw4jZmRcaG0HIAb0WYEpsB05GOb53vjqpyE9GUhlDQ4jLSoB5q9kg==}
+  /@types/node@20.11.15:
+    resolution: {integrity: sha512-gscmuADZfvNULx1eyirVbr3kVOVZtpQtzKMCZpeSZcN6MfbkRXAR4s9/gsQ4CzxLHw6EStDtKLNtSDL3vbq05A==}
     dependencies:
       undici-types: 5.26.5
 
@@ -3509,11 +3509,11 @@ packages:
   /@types/react-dom@18.2.18:
     resolution: {integrity: sha512-TJxDm6OfAX2KJWJdMEVTwWke5Sc/E/RlnPGvGfS0W7+6ocy2xhDVQVh/KvC2Uf7kACs+gDytdusDSdWfWkaNzw==}
     dependencies:
-      '@types/react': 18.2.48
+      '@types/react': 18.2.51
     dev: true
 
-  /@types/react@18.2.48:
-    resolution: {integrity: sha512-qboRCl6Ie70DQQG9hhNREz81jqC1cs9EVNcjQ1AU+jH6NFfSAhVVbrrY/+nSF+Bsk4AOwm9Qa61InvMCyV+H3w==}
+  /@types/react@18.2.51:
+    resolution: {integrity: sha512-XeoMaU4CzyjdRr3c4IQQtiH7Rpo18V07rYZUucEZQwOUEtGgTXv7e6igQiQ+xnV6MbMe1qjEmKdgMNnfppnXfg==}
     dependencies:
       '@types/prop-types': 15.7.11
       '@types/scheduler': 0.16.8
@@ -3531,13 +3531,13 @@ packages:
   /@types/through@0.0.33:
     resolution: {integrity: sha512-HsJ+z3QuETzP3cswwtzt2vEIiHBk/dCcHGhbmG5X3ecnwFD/lPrMpliGXxSCg03L9AhrdwA4Oz/qfspkDW+xGQ==}
     dependencies:
-      '@types/node': 20.11.10
+      '@types/node': 20.11.15
     dev: true
 
   /@types/ws@8.5.10:
     resolution: {integrity: sha512-vmQSUcfalpIq0R9q7uTo2lXs6eGIpt9wtnLdMv9LVpIjCA/+ufZRozlVoVelIYixx1ugCBKDhn89vnsEGOCx9A==}
     dependencies:
-      '@types/node': 20.11.10
+      '@types/node': 20.11.15
     dev: false
 
   /@typescript-eslint/eslint-plugin@5.62.0(@typescript-eslint/parser@5.62.0)(eslint@8.56.0)(typescript@5.3.3):
@@ -3559,7 +3559,7 @@ packages:
       debug: 4.3.4
       eslint: 8.56.0
       graphemer: 1.4.0
-      ignore: 5.3.0
+      ignore: 5.3.1
       natural-compare-lite: 1.4.0
       semver: 7.5.4
       tsutils: 3.21.0(typescript@5.3.3)
@@ -3967,8 +3967,8 @@ packages:
     resolution: {integrity: sha512-kNOjDqAh7px0XWNI+4QbzoiR/nTkHAWNud2uvnJquD1/x5a7EQZMJT0AczqK0Qn67oY/TTQ1LbUKajZpp3I9tQ==}
     engines: {node: '>=8.0.0'}
 
-  /available-typed-arrays@1.0.5:
-    resolution: {integrity: sha512-DMD0KiN46eipeziST1LPP/STfDU0sufISXmjSgvVsoU2tqxctQeASejWcfNtxYKqETM1UxQ8sp2OrSBWpHY6sw==}
+  /available-typed-arrays@1.0.6:
+    resolution: {integrity: sha512-j1QzY8iPNPG4o4xmO3ptzpRxTciqD3MgEHtifP/YnJpIo58Xu+ne4BejlbkuaLfXn/nz6HFiw29bLpj2PNMdGg==}
     engines: {node: '>= 0.4'}
     dev: true
 
@@ -4055,7 +4055,7 @@ packages:
     resolution: {integrity: sha512-R0182GknkfY4y4qB/mkZooHwiIpDqJUlhtKCxamM2oGLJ/MIIbEAsAUWJ1wMS8Clwx71Ase8ioNLBQvIKNZrYw==}
     hasBin: true
     dependencies:
-      '@reporters/github': 1.5.4
+      '@reporters/github': 1.6.0
       c8: 9.1.0
       execa: 8.0.1
       find-up: 7.0.0
@@ -4089,8 +4089,8 @@ packages:
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
     dependencies:
-      caniuse-lite: 1.0.30001581
-      electron-to-chromium: 1.4.650
+      caniuse-lite: 1.0.30001582
+      electron-to-chromium: 1.4.653
       node-releases: 2.0.14
       update-browserslist-db: 1.0.13(browserslist@4.22.3)
     dev: true
@@ -4184,8 +4184,8 @@ packages:
     engines: {node: '>=16'}
     dev: false
 
-  /caniuse-lite@1.0.30001581:
-    resolution: {integrity: sha512-whlTkwhqV2tUmP3oYhtNfaWGYHDdS3JYFQBKXxcUR9qqPWsRhFHhoISO2Xnl/g0xyKzht9mI1LZpiNWfMzHixQ==}
+  /caniuse-lite@1.0.30001582:
+    resolution: {integrity: sha512-vsJG3V5vgfduaQGVxL53uSX/HUzxyr2eA8xCo36OLal7sRcSZbibJtLeh0qja4sFOr/QQGt4opB4tOy+eOgAxg==}
     dev: true
 
   /chalk@2.4.2:
@@ -4693,8 +4693,8 @@ packages:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
     dev: true
 
-  /electron-to-chromium@1.4.650:
-    resolution: {integrity: sha512-sYSQhJCJa4aGA1wYol5cMQgekDBlbVfTRavlGZVr3WZpDdOPcp6a6xUnFfrt8TqZhsBYYbDxJZCjGfHuGupCRQ==}
+  /electron-to-chromium@1.4.653:
+    resolution: {integrity: sha512-wA2A2LQCqnEwQAvwADQq3KpMpNwgAUBnRmrFgRzHnPhbQUFArTR32Ab46f4p0MovDLcg4uqd4nCsN2hTltslpA==}
     dev: true
 
   /elliptic@6.5.4:
@@ -4749,7 +4749,7 @@ packages:
     dependencies:
       array-buffer-byte-length: 1.0.0
       arraybuffer.prototype.slice: 1.0.2
-      available-typed-arrays: 1.0.5
+      available-typed-arrays: 1.0.6
       call-bind: 1.0.5
       es-set-tostringtag: 2.0.2
       es-to-primitive: 1.2.1
@@ -5097,7 +5097,7 @@ packages:
       eslint: 8.56.0
       eslint-plugin-es: 4.1.0(eslint@8.56.0)
       eslint-utils: 3.0.0(eslint@8.56.0)
-      ignore: 5.3.0
+      ignore: 5.3.1
       is-core-module: 2.13.1
       minimatch: 3.1.2
       resolve: 1.22.8
@@ -5220,7 +5220,7 @@ packages:
       glob-parent: 6.0.2
       globals: 13.24.0
       graphemer: 1.4.0
-      ignore: 5.3.0
+      ignore: 5.3.1
       imurmurhash: 0.1.4
       is-glob: 4.0.3
       is-path-inside: 3.0.3
@@ -5405,8 +5405,8 @@ packages:
     resolution: {integrity: sha512-lhd/wF+Lk98HZoTCtlVraHtfh5XYijIjalXck7saUtuanSDyLMxnHhSXEDJqHxD7msR8D0uCmqlkwjCV8xvwHw==}
     dev: true
 
-  /fast-json-stringify@5.10.0:
-    resolution: {integrity: sha512-fu1BhzPzgOdvK+sVhSPFzm06DQl0Dwbo+NQxWm21k03ili2wsJExXbGZ9qsD4Lsn7zFGltF8h9I1fuhk4JPnrQ==}
+  /fast-json-stringify@5.11.1:
+    resolution: {integrity: sha512-Lrj3tmc/qI1OCmr0WJEJFC4TxnAdLnbZZ0CvFvHv/PHNieLCX12PNBlV9KGIDS08w49T8h7vkMuzNoB+3NyX0g==}
     dependencies:
       '@fastify/deepmerge': 1.3.0
       ajv: 8.12.0
@@ -5488,10 +5488,9 @@ packages:
   /fastify-plugin@4.5.1:
     resolution: {integrity: sha512-stRHYGeuqpEZTL1Ef0Ovr2ltazUT9g844X5z/zEBFLG8RYlpDiOCIG+ATvYEp+/zmc7sN29mcIMp8gvYplYPIQ==}
 
-  /fastify-print-routes@2.2.0:
-    resolution: {integrity: sha512-nmw5V8mbHw2oEpCwUX5PFfgyBzOy3E41d3OIvR8SGDm7IyqKbvnDg/IkjBNQ0SEXo19wjReTTo5D4ZY7WO1wgg==}
-    engines: {node: '>= 18.18.0'}
-    deprecated: 'Semantic versioning violation: it should have been a major version.'
+  /fastify-print-routes@2.1.0:
+    resolution: {integrity: sha512-R91MYrC2fvJZ2tVIJ3C1Oh0arbBpyBV3QcN0PA7s8kG4uwsaF6OE8xUWth7JDxNNuvH+avumAT+nb36BTIdgtg==}
+    engines: {node: '>=14.15.0'}
     dependencies:
       acquerello: 1.1.2
       fastify-plugin: 4.5.1
@@ -5531,7 +5530,7 @@ packages:
       abstract-logging: 2.0.1
       avvio: 8.2.1
       fast-content-type-parse: 1.1.0
-      fast-json-stringify: 5.10.0
+      fast-json-stringify: 5.11.1
       find-my-way: 8.1.0
       light-my-request: 5.11.0
       pino: 8.17.2
@@ -5921,7 +5920,7 @@ packages:
       array-union: 2.1.0
       dir-glob: 3.0.1
       fast-glob: 3.3.2
-      ignore: 5.3.0
+      ignore: 5.3.1
       merge2: 1.4.1
       slash: 3.0.0
     dev: true
@@ -5932,7 +5931,7 @@ packages:
     dependencies:
       '@sindresorhus/merge-streams': 1.0.0
       fast-glob: 3.3.2
-      ignore: 5.3.0
+      ignore: 5.3.1
       path-type: 5.0.0
       slash: 5.1.0
       unicorn-magic: 0.1.0
@@ -5957,7 +5956,7 @@ packages:
       graphql: '>=15'
     dependencies:
       '@graphql-typed-document-node/core': 3.2.0(graphql@16.8.1)
-      fast-json-stringify: 5.10.0
+      fast-json-stringify: 5.11.1
       generate-function: 2.3.1
       graphql: 16.8.1
       lodash.memoize: 4.1.2
@@ -6130,8 +6129,8 @@ packages:
   /ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
 
-  /ignore@5.3.0:
-    resolution: {integrity: sha512-g7dmpshy+gD7mh88OC9NwSGTKoc3kyLAZQRU1mt53Aw/vnvfXnbC+F/7F7QoYVKbV+KNvJx8wArewKy1vXMtlg==}
+  /ignore@5.3.1:
+    resolution: {integrity: sha512-5Fytz/IraMjqpwfd34ke28PTVMjZjJG2MPn5t7OE4eUCUNf8BAa7b5WUS9/Qvr6mwOQS7Mk6vdsMno5he+T8Xw==}
     engines: {node: '>= 4'}
     dev: true
 
@@ -8053,7 +8052,7 @@ packages:
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
-      '@types/node': 20.11.10
+      '@types/node': 20.11.15
       long: 5.2.3
     dev: false
 
@@ -9302,7 +9301,7 @@ packages:
     resolution: {integrity: sha512-RD97prjEt9EL8YgAgpOkf3O4IF9lhJFr9g0htQkm0rchFp/Vx7LW5Q8fSXXub7BXAODyUQohRMyOc3faCPd0hg==}
     engines: {node: '>= 0.4'}
     dependencies:
-      available-typed-arrays: 1.0.5
+      available-typed-arrays: 1.0.6
       call-bind: 1.0.5
       for-each: 0.3.3
       has-proto: 1.0.1
@@ -9358,8 +9357,8 @@ packages:
     dependencies:
       '@fastify/busboy': 2.1.0
 
-  /undici@6.5.0:
-    resolution: {integrity: sha512-/MUmPb2ptTvp1j7lPvdMSofMdqPxcOhAaKZi4k55sqm6XMeKI3n1dZJ5cnD4gLjpt2l7CIlthR1IXM59xKhpxw==}
+  /undici@6.6.0:
+    resolution: {integrity: sha512-p8VvLAgnx6g9pydV0GG/kciSx3ZCq5PLeEU4yefjoZCc1HSeiMxbrFzYIZlgSMrX3l0CoTJ37C6edu13acE40A==}
     engines: {node: '>=18.0'}
     dependencies:
       '@fastify/busboy': 2.1.0
@@ -9557,7 +9556,7 @@ packages:
     resolution: {integrity: sha512-P5Nra0qjSncduVPEAr7xhoF5guty49ArDTwzJ/yNuPIbZppyRxFQsRCWrocxIY+CnMVG+qfbU2FmDKyvSGClow==}
     engines: {node: '>= 0.4'}
     dependencies:
-      available-typed-arrays: 1.0.5
+      available-typed-arrays: 1.0.6
       call-bind: 1.0.5
       for-each: 0.3.3
       gopd: 1.0.1

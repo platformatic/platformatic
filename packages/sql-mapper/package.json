@@ -26,19 +26,19 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "@matteo.collina/tspl": "^0.1.0",
+    "@matteo.collina/tspl": "^0.1.1",
     "borp": "^0.8.0",
-    "fastify": "^4.23.2",
+    "fastify": "^4.26.0",
     "glob": "^10.3.10",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "tsd": "^0.30.0"
+    "tsd": "^0.30.4"
   },
   "dependencies": {
     "@databases/mysql": "^6.0.0",
-    "@databases/pg": "^5.4.1",
+    "@databases/pg": "^5.5.0",
     "@databases/sql": "^3.3.0",
-    "@fastify/error": "^3.3.0",
+    "@fastify/error": "^3.4.1",
     "@hapi/topo": "^6.0.2",
     "@matteo.collina/sqlite-pool": "^0.3.0",
     "@platformatic/utils": "workspace:*",
