@@ -13,7 +13,7 @@
     "create-platformatic": "./create-platformatic.mjs"
   },
   "scripts": {
-    "test:cli": "borp --pattern \"test/cli/*.test.mjs\" --timeout 120000",
+    "test:cli": "borp --pattern \"test/cli/*.test.mjs\" --timeout 120000 --concurrency=1",
     "test:unit": "pnpm run lint && cross-env NODE_OPTIONS=\"--loader=esmock --no-warnings\" borp --coverage --pattern \"test/unit/*.test.mjs\" --timeout 120000",
     "test": "npm run test:unit && npm run test:cli",
     "lint": "standard | snazzy"
