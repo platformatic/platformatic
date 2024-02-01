@@ -26,30 +26,30 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@matteo.collina/snap": "^0.1.1",
-    "@matteo.collina/tspl": "^0.1.0",
+    "@matteo.collina/tspl": "^0.1.1",
     "@mercuriusjs/gateway": "^1.2.0",
     "@platformatic/sql-events": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
-    "borp": "^0.5.0",
-    "fastify": "^4.23.2",
+    "borp": "^0.8.0",
+    "fastify": "^4.26.0",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "tsd": "^0.30.0",
+    "tsd": "^0.30.4",
     "why-is-node-running": "^2.2.2",
-    "ws": "^8.14.2"
+    "ws": "^8.16.0"
   },
   "dependencies": {
-    "@fastify/error": "^3.3.0",
+    "@fastify/error": "^3.4.1",
     "@mercuriusjs/federation": "^2.0.0",
     "@platformatic/utils": "workspace:*",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^4.5.1",
     "graphql": "^16.8.1",
-    "graphql-scalars": "^1.22.2",
+    "graphql-scalars": "^1.22.4",
     "graphql-type-json": "^0.3.2",
     "inflected": "^2.1.0",
-    "mercurius": "^13.1.0"
+    "mercurius": "^13.3.3"
   },
   "tsd": {
     "directory": "test/types"

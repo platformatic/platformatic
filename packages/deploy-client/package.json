@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "lint": "standard | snazzy",
-    "test": "pnpm run lint && c8 --100 node ./test/runner.js",
-    "nocov": "pnpm run lint && node ./test/runner.js",
+    "test": "pnpm run lint && borp -C --concurrency=1",
+    "nocov": "pnpm run lint && borp --concurrency=1",
     "license": "license-checker --production --onlyAllow 'Apache-2.0;MIT;ISC;BSD-2-Clause;BSD-3-Clause'"
   },
   "repository": {
@@ -20,22 +20,23 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "c8": "^9.0.0",
+    "borp": "^0.8.0",
+    "c8": "^9.1.0",
+    "fastify": "^4.26.0",
     "glob": "^10.3.10",
-    "fastify": "^4.23.2",
     "license-checker": "^25.0.1",
     "proxyquire": "^2.1.3",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "typescript": "^5.2.2"
+    "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@fastify/error": "^3.3.0",
+    "@fastify/error": "^3.4.1",
     "@platformatic/config": "workspace:*",
     "@platformatic/runtime": "workspace:*",
     "@platformatic/service": "workspace:*",
     "pretty-bytes": "^6.1.1",
     "tar": "^6.2.0",
-    "undici": "^6.0.0"
+    "undici": "^6.6.0"
   }
 }

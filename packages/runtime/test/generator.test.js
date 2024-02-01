@@ -213,7 +213,7 @@ describe('Generator', () => {
 
   test('add services to an existing folder', async (t) => {
     const targetDirectory = await mkdtemp(join(tmpdir(), 'platformatic-runtime-generator-'))
-    t.diagnostic('targetDirectory: ' + targetDirectory)
+    console.log('targetDirectory: ' + targetDirectory)
     t.after(async () => {
       await rm(targetDirectory, { recursive: true })
     })

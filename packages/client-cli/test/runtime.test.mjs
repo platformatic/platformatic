@@ -13,7 +13,7 @@ import { once } from 'node:events'
 
 test('openapi client generation (javascript) via the runtime', async (t) => {
   const dir = await moveToTmpdir(after)
-  t.diagnostic(`working in ${dir}`)
+  console.log(`working in ${dir}`)
 
   await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
 
@@ -96,7 +96,7 @@ module.exports = async function (app, opts) {
 })
 test('should return error if in the runtime root', async (t) => {
   const dir = await moveToTmpdir(after)
-  t.diagnostic(`working in ${dir}`)
+  console.log(`working in ${dir}`)
 
   await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
 
@@ -113,7 +113,7 @@ test('should return error if in the runtime root', async (t) => {
 
 test('graphql client generation (javascript) via the runtime', async (t) => {
   const dir = await moveToTmpdir(after)
-  t.diagnostic(`working in ${dir}`)
+  console.log(`working in ${dir}`)
 
   await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
 
@@ -214,7 +214,7 @@ module.exports = async function (app, opts) {
 
 test('generate client twice', async (t) => {
   const dir = await moveToTmpdir(after)
-  t.diagnostic(`working in ${dir}`)
+  console.log(`working in ${dir}`)
 
   await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
 
@@ -260,7 +260,7 @@ PLT_SERVER_LOGGER_LEVEL=info
 
 test('error if a service does not have openapi enabled', async (t) => {
   const dir = await moveToTmpdir(after)
-  t.diagnostic(`working in ${dir}`)
+  console.log(`working in ${dir}`)
 
   await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
 
@@ -304,7 +304,7 @@ PLT_SERVER_LOGGER_LEVEL=info
 test('no platformatic.runtime.json', async (t) => {
   const { equal, match } = tspl(t, { plan: 2 })
   const dir = await moveToTmpdir(after)
-  t.diagnostic(`working in ${dir}`)
+  console.log(`working in ${dir}`)
 
   process.chdir(dir)
 

@@ -76,8 +76,8 @@ test('inserted_at updated_at happy path', async (t) => {
     const data = res.json().data
     notEqual(data.savePage.insertedAt, null, 'insertedAt')
     notEqual(data.savePage.updatedAt, null, 'updatedAt')
-    t.diagnostic(`insertedAt: ${data.savePage.insertedAt}`)
-    t.diagnostic(`updatedAt: ${data.savePage.updatedAt}`)
+    console.log(`insertedAt: ${data.savePage.insertedAt}`)
+    console.log(`updatedAt: ${data.savePage.updatedAt}`)
     original = data.savePage
   }
 
@@ -102,8 +102,8 @@ test('inserted_at updated_at happy path', async (t) => {
     const data = res.json().data
     equal(data.getPageById.insertedAt, original.insertedAt, 'insertedAt')
     equal(data.getPageById.updatedAt, original.updatedAt, 'updatedAt')
-    t.diagnostic(`insertedAt: ${data.getPageById.insertedAt}`)
-    t.diagnostic(`updatedAt: ${data.getPageById.updatedAt}`)
+    console.log(`insertedAt: ${data.getPageById.insertedAt}`)
+    console.log(`updatedAt: ${data.getPageById.updatedAt}`)
   }
 
   await setTimeout(1000) // await 1s
@@ -130,8 +130,8 @@ test('inserted_at updated_at happy path', async (t) => {
     equal(data.savePage.insertedAt, original.insertedAt, 'insertedAt')
     notEqual(data.savePage.updatedAt, original.updatedAt, 'updatedAt')
     updated = data.savePage
-    t.diagnostic(`insertedAt: ${data.savePage.insertedAt}`)
-    t.diagnostic(`updatedAt: ${data.savePage.updatedAt}`)
+    console.log(`insertedAt: ${data.savePage.insertedAt}`)
+    console.log(`updatedAt: ${data.savePage.updatedAt}`)
   }
 
   {
@@ -155,8 +155,8 @@ test('inserted_at updated_at happy path', async (t) => {
     const data = res.json().data
     equal(data.getPageById.insertedAt, updated.insertedAt, 'insertedAt')
     equal(data.getPageById.updatedAt, updated.updatedAt, 'updatedAt')
-    t.diagnostic(`insertedAt: ${data.getPageById.insertedAt}`)
-    t.diagnostic(`updatedAt: ${data.getPageById.updatedAt}`)
+    console.log(`insertedAt: ${data.getPageById.insertedAt}`)
+    console.log(`updatedAt: ${data.getPageById.updatedAt}`)
   }
 })
 
@@ -244,8 +244,8 @@ test('cannot set updated_at', async (t) => {
     const data = res.json().data
     notEqual(data.savePage.insertedAt, null, 'insertedAt')
     notEqual(data.savePage.updatedAt, null, 'updatedAt')
-    t.diagnostic(`insertedAt: ${data.savePage.insertedAt}`)
-    t.diagnostic(`updatedAt: ${data.savePage.updatedAt}`)
+    console.log(`insertedAt: ${data.savePage.insertedAt}`)
+    console.log(`updatedAt: ${data.savePage.updatedAt}`)
   }
 
   {

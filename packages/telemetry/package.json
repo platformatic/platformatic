@@ -4,7 +4,7 @@
   "description": "OpenTelemetry integration for Platformatic",
   "main": "index.js",
   "scripts": {
-    "test": "npm run lint | snazzy && node --test",
+    "test": "npm run lint | snazzy && borp",
     "lint": "standard | snazzy"
   },
   "author": "Marco Piraccini <marco.piraccini@gmail.com>",
@@ -14,20 +14,21 @@
   },
   "license": "Apache-2.0",
   "devDependencies": {
-    "fastify": "^4.23.2",
+    "borp": "^0.8.0",
+    "fastify": "^4.26.0",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0"
   },
   "dependencies": {
-    "@fastify/swagger": "^8.10.1",
-    "@opentelemetry/api": "^1.6.0",
-    "@opentelemetry/core": "^1.17.0",
+    "@fastify/swagger": "^8.14.0",
+    "@opentelemetry/api": "^1.7.0",
+    "@opentelemetry/core": "^1.21.0",
     "@opentelemetry/exporter-trace-otlp-proto": "^0.48.0",
-    "@opentelemetry/exporter-zipkin": "^1.17.0",
-    "@opentelemetry/resources": "^1.17.0",
-    "@opentelemetry/sdk-trace-base": "^1.17.0",
-    "@opentelemetry/semantic-conventions": "^1.17.0",
-    "fast-uri": "^2.2.0",
+    "@opentelemetry/exporter-zipkin": "^1.21.0",
+    "@opentelemetry/resources": "^1.21.0",
+    "@opentelemetry/sdk-trace-base": "^1.21.0",
+    "@opentelemetry/semantic-conventions": "^1.21.0",
+    "fast-uri": "^2.3.0",
     "fastify-plugin": "^4.5.1"
   }
 }

@@ -72,8 +72,6 @@ test('created_at updated_at happy path', async (t) => {
     const data = res.json().data
     not(data.savePage.createdAt, null, 'createdAt')
     not(data.savePage.updatedAt, null, 'updatedAt')
-    t.diagnostic(`createdAt: ${data.savePage.createdAt}`)
-    t.diagnostic(`updatedAt: ${data.savePage.updatedAt}`)
     original = data.savePage
   }
 
@@ -98,8 +96,6 @@ test('created_at updated_at happy path', async (t) => {
     const data = res.json().data
     equal(data.getPageById.createdAt, original.createdAt, 'createdAt')
     equal(data.getPageById.updatedAt, original.updatedAt, 'updatedAt')
-    t.diagnostic(`createdAt: ${data.getPageById.createdAt}`)
-    t.diagnostic(`updatedAt: ${data.getPageById.updatedAt}`)
   }
 
   await setTimeout(1000) // await 1s
@@ -126,8 +122,6 @@ test('created_at updated_at happy path', async (t) => {
     equal(data.savePage.createdAt, original.createdAt, 'createdAt')
     not(data.savePage.updatedAt, original.updatedAt, 'updatedAt')
     updated = data.savePage
-    t.diagnostic(`createdAt: ${data.savePage.createdAt}`)
-    t.diagnostic(`updatedAt: ${data.savePage.updatedAt}`)
   }
 
   {
@@ -151,8 +145,6 @@ test('created_at updated_at happy path', async (t) => {
     const data = res.json().data
     equal(data.getPageById.createdAt, updated.createdAt, 'createdAt')
     equal(data.getPageById.updatedAt, updated.updatedAt, 'updatedAt')
-    t.diagnostic(`createdAt: ${data.getPageById.createdAt}`)
-    t.diagnostic(`updatedAt: ${data.getPageById.updatedAt}`)
   }
 })
 
@@ -232,8 +224,6 @@ test('cannot set updated_at', async (t) => {
     const data = res.json().data
     not(data.savePage.createdAt, null, 'createdAt')
     not(data.savePage.updatedAt, null, 'updatedAt')
-    t.diagnostic(`createdAt: ${data.savePage.createdAt}`)
-    t.diagnostic(`updatedAt: ${data.savePage.updatedAt}`)
   }
 
   {
