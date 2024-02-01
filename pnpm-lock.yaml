@@ -48,6 +48,9 @@ importers:
       '@fastify/websocket':
         specifier: ^8.2.0
         version: 8.3.1
+      borp:
+        specifier: ^0.8.0
+        version: 0.8.0
       c8:
         specifier: ^9.0.0
         version: 9.1.0
@@ -145,6 +148,9 @@ importers:
         specifier: ^6.0.0
         version: 6.5.0
     devDependencies:
+      borp:
+        specifier: ^0.8.0
+        version: 0.8.0
       c8:
         specifier: ^9.0.0
         version: 9.1.0
@@ -197,6 +203,9 @@ importers:
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
+      borp:
+        specifier: ^0.8.0
+        version: 0.8.0
       c8:
         specifier: ^9.0.0
         version: 9.1.0
@@ -301,8 +310,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       borp:
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.8.0
+        version: 0.8.0
       dotenv:
         specifier: ^16.3.1
         version: 16.4.1
@@ -4042,16 +4051,6 @@ packages:
       lodash: 4.17.21
     dev: false
 
-  /borp@0.5.0:
-    resolution: {integrity: sha512-7noQDTw5NGme7lVSJu1H+Sy0S48PF+H1Eat9F6ZM0d10CfnCqcghMI/m+o8om1axuJOTg1YRVIl0kFcktWpPKQ==}
-    hasBin: true
-    dependencies:
-      c8: 8.0.1
-      execa: 8.0.1
-      find-up: 7.0.0
-      glob: 10.3.10
-    dev: true
-
   /borp@0.8.0:
     resolution: {integrity: sha512-R0182GknkfY4y4qB/mkZooHwiIpDqJUlhtKCxamM2oGLJ/MIIbEAsAUWJ1wMS8Clwx71Ase8ioNLBQvIKNZrYw==}
     hasBin: true
@@ -4126,25 +4125,6 @@ packages:
   /bytes@3.1.2:
     resolution: {integrity: sha512-/Nf7TyzTx6S3yRJObOAV7956r8cr2+Oj8AC5dt8wSP3BQAoeX58NoHyCU8P8zGkNXStjTSi6fzO6F0pBdcYbEg==}
     engines: {node: '>= 0.8'}
-    dev: true
-
-  /c8@8.0.1:
-    resolution: {integrity: sha512-EINpopxZNH1mETuI0DzRA4MZpAUH+IFiRhnmFD3vFr3vdrgxqi3VfE3KL0AIL+zDq8rC9bZqwM/VDmmoe04y7w==}
-    engines: {node: '>=12'}
-    hasBin: true
-    dependencies:
-      '@bcoe/v8-coverage': 0.2.3
-      '@istanbuljs/schema': 0.1.3
-      find-up: 5.0.0
-      foreground-child: 2.0.0
-      istanbul-lib-coverage: 3.2.2
-      istanbul-lib-report: 3.0.1
-      istanbul-reports: 3.1.6
-      rimraf: 3.0.2
-      test-exclude: 6.0.0
-      v8-to-istanbul: 9.2.0
-      yargs: 17.7.2
-      yargs-parser: 21.1.1
     dev: true
 
   /c8@9.1.0:
@@ -5693,14 +5673,6 @@ packages:
     resolution: {integrity: sha512-jqYfLp7mo9vIyQf8ykW2v7A+2N4QjeCeI5+Dz9XraiO1ign81wjiH7Fb9vSOWvQfNtmSa4H2RoQTrrXivdUZmw==}
     dependencies:
       is-callable: 1.2.7
-    dev: true
-
-  /foreground-child@2.0.0:
-    resolution: {integrity: sha512-dCIq9FpEcyQyXKCkyzmlPTFNgrCzPudOe+mhvJU5zAtlBnGVy2yKxtfsxK2tQBThwq225jcvBjpw1Gr40uzZCA==}
-    engines: {node: '>=8.0.0'}
-    dependencies:
-      cross-spawn: 7.0.3
-      signal-exit: 3.0.7
     dev: true
 
   /foreground-child@3.1.1:
@@ -8657,6 +8629,7 @@ packages:
 
   /signal-exit@3.0.7:
     resolution: {integrity: sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ==}
+    dev: false
 
   /signal-exit@4.1.0:
     resolution: {integrity: sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==}

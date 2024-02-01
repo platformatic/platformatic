@@ -10,7 +10,7 @@
   },
   "homepage": "https://docs.platformatic.dev/",
   "scripts": {
-    "test": "pnpm run lint && c8 node ./test/runner.js",
+    "test": "pnpm run lint && borp -C",
     "lint": "standard | snazzy",
     "license": "license-checker --production --onlyAllow 'Apache-2.0;MIT;ISC;BSD-2-Clause;BSD-3-Clause;CC-BY-4.0'"
   },
@@ -32,6 +32,7 @@
     "mercurius"
   ],
   "devDependencies": {
+    "borp": "^0.8.0",
     "c8": "^9.0.0",
     "fastify": "^4.23.2",
     "glob": "^10.3.10",

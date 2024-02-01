@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "lint": "standard",
-    "test": "pnpm run lint && c8 node ./test/runner.js && tsd",
-    "nocov": "pnpm run lint && node ./test/runner.js && tsd"
+    "test": "pnpm run lint && borp -C && tsd",
+    "nocov": "pnpm run lint && borp && tsd"
   },
   "repository": {
     "type": "git",
@@ -20,6 +20,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@platformatic/telemetry": "workspace:*",
+    "borp": "^0.8.0",
     "c8": "^9.0.0",
     "desm": "^1.3.0",
     "execa": "^8.0.1",
