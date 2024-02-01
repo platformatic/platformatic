@@ -27,7 +27,7 @@
     "@fastify/aws-lambda": "^4.0.0",
     "@fastify/compress": "^6.5.0",
     "bindings": "^1.5.0",
-    "borp": "^0.8.0",
+    "borp": "^0.9.0",
     "glob": "^10.3.10",
     "json-schema-to-typescript": "^13.1.2",
     "openapi-types": "^12.1.3",
