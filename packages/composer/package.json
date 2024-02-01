@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "standard | snazzy",
-    "test": "pnpm run lint && node ./test/runner.js && tsd",
+    "test": "pnpm run lint && borp -T && tsd",
     "build": "node lib/schema.js | json2ts > config.d.ts",
     "nocov": "pnpm run lint && node ./test/runner.js"
   },
@@ -25,6 +25,7 @@
   "devDependencies": {
     "@platformatic/client": "workspace:*",
     "@platformatic/db": "workspace:*",
+    "borp": "^0.8.0",
     "c8": "^9.0.0",
     "dedent": "^1.5.1",
     "glob": "^10.3.10",

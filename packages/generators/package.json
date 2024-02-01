@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "standard | snazzy",
-    "test": "pnpm run lint && c8 --100 -x fixtures -x test node ./test/runner.js"
+    "test": "pnpm run lint && borp -C -X fixtures -X test --concurrency=1"
   },
   "keywords": [],
   "author": "",
@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "@types/inquirer": "^9.0.7",
+    "borp": "^0.8.0",
     "c8": "^9.0.0",
     "glob": "^10.3.10",
     "snazzy": "^9.0.0",
