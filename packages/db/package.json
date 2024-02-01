@@ -81,7 +81,7 @@
     "fastify": "^4.26.0",
     "fastify-metrics": "^10.6.0",
     "fastify-plugin": "^4.5.1",
-    "fastify-print-routes": "^2.1.0",
+    "fastify-print-routes": "^3.0.0",
     "graphql": "^16.8.1",
     "help-me": "^5.0.0",
     "minimist": "^1.2.8",
