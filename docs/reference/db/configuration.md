@@ -1,7 +1,7 @@
 # Configuration
 
 Platformatic DB is configured with a configuration file. It supports the use
-of environment variables as setting values with [configuration placeholders](#configuration-placeholders).
+of environment variables as setting values with [environment variable placeholders](#environment-variable-placeholders).
 
 ## Configuration file
 
@@ -44,7 +44,7 @@ Configuration settings are organised into the following groups:
 - [`clients`](#clients)
 
 Sensitive configuration settings, such as a database connection URL that contains
-a password, should be set using [configuration placeholders](#configuration-placeholders).
+a password, should be set using [environment variable placeholders](#environment-variable-placeholders).
 
 ### `server`
 
