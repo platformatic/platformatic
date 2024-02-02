@@ -6,6 +6,7 @@ import jsonpointer from 'jsonpointer'
 import errors from './errors.mjs'
 import camelcase from 'camelcase'
 import { responsesWriter } from './responses-writer.mjs'
+import { getType } from './get-type.mjs'
 
 export function writeOperations (interfacesWriter, mainWriter, operations, { fullRequest, fullResponse, optionalHeaders, schema }) {
   const originalFullResponse = fullResponse
@@ -106,83 +107,6 @@ export function writeProperty (writer, key, value, addedProps, required = true, 
   }
   writer.write(`: ${getType(value, methodType, spec)};`)
   writer.newLine()
-}
-
-export function getType (typeDef, methodType, spec) {
-  if (typeDef.$ref) {
-    typeDef = jsonpointer.get(spec, typeDef.$ref.replace('#', ''))
-  }
-  if (typeDef.schema) {
-    return getType(typeDef.schema, methodType, spec)
-  }
-  if (typeDef.anyOf) {
-    // recursively call this function
-    return typeDef.anyOf.map((t) => {
-      return getType(t, methodType, spec)
-    }).join(' | ')
-  }
-
-  if (typeDef.allOf) {
-    // recursively call this function
-    return typeDef.allOf.map((t) => {
-      return getType(t, methodType, spec)
-    }).join(' & ')
-  }
-  if (typeDef.type === 'array') {
-    return `Array<${getType(typeDef.items, methodType, spec)}>`
-  }
-  if (typeDef.enum) {
-    return typeDef.enum.map((en) => {
-      if (typeDef.type === 'string') {
-        return `'${en.replace(/'/g, "\\'")}'`
-      } else {
-        return en
-      }
-    }).join(' | ')
-  }
-  if (typeDef.type === 'object') {
-    if (!typeDef.properties || Object.keys(typeDef.properties).length === 0) {
-      // Object without properties
-      return 'object'
-    }
-    let output = '{ '
-    // TODO: add a test for objects without properties
-    /* c8 ignore next 1 */
-    const props = Object.keys(typeDef.properties || {}).map((prop) => {
-      let required = false
-      if (typeDef.required) {
-        required = !!typeDef.required.includes(prop)
-      }
-      return `'${prop}'${required ? '' : '?'}: ${getType(typeDef.properties[prop], methodType, spec)}`
-    })
-    output += props.join('; ')
-    output += ' }'
-    return output
-  }
-  return JSONSchemaToTsType(typeDef, methodType)
-}
-
-function JSONSchemaToTsType ({ type, format, nullable }, methodType) {
-  const isDateType = format === 'date' || format === 'date-time'
-  let resultType = 'unknown'
-
-  switch (type) {
-    case 'string':
-      resultType = isDateType && methodType === 'req' ? 'string | Date' : 'string'
-      break
-    case 'integer':
-      resultType = 'number'
-      break
-    case 'number':
-      resultType = 'number'
-      break
-    case 'boolean':
-      resultType = 'boolean'
-      break
-    // TODO what other types should we support here?
-  }
-
-  return nullable === true ? `${resultType} | null` : resultType
 }
 
 export function writeContent (writer, content, spec, addedProps, methodType, wrapper) {

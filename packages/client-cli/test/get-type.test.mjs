@@ -1,8 +1,6 @@
-'use strict'
-
 import { test } from 'node:test'
 import { equal } from 'node:assert'
-import { getType } from '../lib/openapi-common.mjs'
+import { getType } from '../lib/get-type.mjs'
 
 test('get type with schema', async (t) => {
   const def = {
@@ -199,4 +197,63 @@ test('object without properties', async (t) => {
   }
 
   equal(getType(emptyObjectDef), '{ \'prop1\'?: string; \'prop2\'?: object; \'prop3\'?: object }')
+})
+
+test('support oneOf', async (t) => {
+  const oneOfDef = {
+    schema: {
+      oneOf: [
+        {
+          type: 'string'
+        },
+        {
+          items: {
+            type: 'string'
+          },
+          type: 'array'
+        },
+        {
+          type: 'number'
+        }
+      ]
+    }
+  }
+  equal(getType(oneOfDef), 'string | Array<string> | number')
+})
+
+test('support discriminator object', async (t) => {
+  const spec = {
+    components: {
+      schemas: {
+        Dog: {
+          type: 'object',
+          properties: {
+            type: { type: 'string' },
+            barkSound: { type: 'string' }
+          },
+          required: ['type', 'barkSound']
+        },
+        Cat: {
+          type: 'object',
+          properties: {
+            type: { type: 'string' },
+            meowSound: { type: 'string' }
+          },
+          required: ['type', 'meowSound']
+        }
+      }
+    }
+  }
+  const anyOfDef = {
+    schema: {
+      oneOf: [
+        { $ref: '#/components/schemas/Dog' },
+        { $ref: '#/components/schemas/Cat' }
+      ],
+      discriminator: {
+        propertyName: 'type'
+      }
+    }
+  }
+  equal(getType(anyOfDef, 'res', spec), '{ \'type\': \'Dog\'; \'barkSound\': string } | { \'type\': \'Cat\'; \'meowSound\': string }')
 })

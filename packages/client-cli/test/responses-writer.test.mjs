@@ -460,3 +460,52 @@ export type MyOperationResponses =
   MyOperationResponseOK`.trim()
   assert.equal(writer.toString().trim(), expected)
 })
+
+test('support discriminator object', async (t) => {
+  const writer = getWriter()
+  const spec = {
+    components: {
+      schemas: {
+        Cat: {
+          type: 'object',
+          properties: {
+            cuddle: { type: 'boolean' },
+            petType: { type: 'string' },
+            breed: { type: 'string' }
+          },
+          required: ['petType']
+        },
+        Dog: {
+          type: 'object',
+          properties: {
+            bark: { type: 'boolean' },
+            petType: { type: 'string' }
+          }
+        }
+      }
+    }
+  }
+  const responses = {
+    200: {
+      content: {
+        'application/json': {
+          schema: {
+            oneOf: [
+              { $ref: '#/components/schemas/Dog' },
+              { $ref: '#/components/schemas/Cat' }
+            ],
+            discriminator: {
+              propertyName: 'petType'
+            }
+          }
+        }
+      }
+    }
+  }
+  responsesWriter('MyOperation', responses, false, writer, spec)
+  const expected = `
+export type MyOperationResponseOK = { 'bark'?: boolean; 'petType'?: 'Dog' } | { 'cuddle'?: boolean; 'petType': 'Cat'; 'breed'?: string }
+export type MyOperationResponses =
+  MyOperationResponseOK`.trim()
+  assert.equal(writer.toString().trim(), expected)
+})
