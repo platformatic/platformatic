@@ -41,7 +41,7 @@
     "@fastify/error": "^3.4.1",
     "@fastify/http-proxy": "^9.4.0",
     "@fastify/reply-from": "^9.7.0",
-    "@fastify/static": "^6.12.0",
+    "@fastify/static": "^7.0.0",
     "@fastify/swagger": "^8.14.0",
     "@platformatic/config": "workspace:*",
     "@platformatic/generators": "workspace:*",
