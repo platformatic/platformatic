@@ -62,7 +62,6 @@ export function delDir (tmpDir) {
         console.log('Could not delete directory, retrying', tmpDir)
       }
     }
-    console.timeEnd('delDir')
   }
 }
 
