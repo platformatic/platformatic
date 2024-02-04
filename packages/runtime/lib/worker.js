@@ -1,8 +1,10 @@
 'use strict'
 
 const inspector = require('node:inspector')
-const { register } = require('node:module')
+const { register, createRequire } = require('node:module')
 const { isatty } = require('node:tty')
+const { pathToFileURL } = require('node:url')
+const { join } = require('node:path')
 const {
   MessageChannel,
   parentPort,
@@ -10,6 +12,8 @@ const {
 } = require('node:worker_threads')
 const undici = require('undici')
 const pino = require('pino')
+const FastifyUndiciDispatcher = require('fastify-undici-dispatcher')
+const { setGlobalDispatcher, Agent } = require('undici')
 const RuntimeApi = require('./api')
 const { MessagePortWritable } = require('./message-port-writable')
 let loaderPort
@@ -58,7 +62,36 @@ if (config.server) {
   config.server.logger = logger
 }
 
-function main () {
+let stop
+
+/* c8 ignore next 4 */
+process.on('uncaughtException', (err) => {
+  logger.error({ err }, 'runtime uncaught exception')
+
+  if (stop) {
+    stop().then(() => {
+      process.exit(1)
+    })
+  } else {
+    process.exit(1)
+  }
+})
+
+// Tested by test/cli/start.test.mjs by C8 does not see it.
+/* c8 ignore next 4 */
+process.on('unhandledRejection', (err) => {
+  logger.error({ err }, 'runtime unhandled rejection')
+
+  if (stop) {
+    stop().then(() => {
+      process.exit(1)
+    })
+  } else {
+    process.exit(1)
+  }
+})
+
+async function main () {
   const { inspectorOptions } = workerData.config
 
   if (inspectorOptions) {
@@ -70,6 +103,30 @@ function main () {
     inspector.open(inspectorOptions.port, inspectorOptions.host, inspectorOptions.breakFirstLine)
   }
 
+  let interceptors = []
+
+  if (config.undici?.interceptors) {
+    const _require = createRequire(join(workerData.dirname, 'package.json'))
+    interceptors = await Promise.all(config.undici.interceptors.map(async ({ module, options }) => {
+      const url = pathToFileURL(_require.resolve(module))
+      const interceptor = (await import(url)).default
+      return interceptor(options)
+    }))
+  }
+
+  const globalAgent = new Agent({
+    ...config.undici,
+    interceptors: {
+      Agent: interceptors
+    }
+  })
+  const globalDispatcher = new FastifyUndiciDispatcher({
+    dispatcher: globalAgent,
+    // setting the domain here allows for fail-fast scenarios
+    domain: '.plt.local'
+  })
+  setGlobalDispatcher(globalDispatcher)
+
   const runtime = new RuntimeApi(workerData.config, logger, loaderPort)
   runtime.startListening(parentPort)
 
@@ -77,7 +134,7 @@ function main () {
 
   let stopping = false
 
-  async function stop () {
+  stop = async function () {
     if (stopping) {
       return
     }
@@ -89,23 +146,7 @@ function main () {
       logger.error({ err }, 'error while stopping services')
     }
   }
-
-  /* c8 ignore next 4 */
-  process.on('uncaughtException', (err) => {
-    logger.error({ err }, 'runtime error')
-    stop().then(() => {
-      process.exit(1)
-    })
-  })
-
-  // Tested by test/cli/start.test.mjs by C8 does not see it.
-  /* c8 ignore next 4 */
-  process.on('unhandledRejection', (err) => {
-    logger.error({ err }, 'runtime error')
-    stop().then(() => {
-      process.exit(1)
-    })
-  })
 }
 
+// No need to catch this because there is the unhadledRejection handler on top.
 main()

@@ -36,6 +36,9 @@ async function startWithConfig (configManager, env = process.env) {
   if (config.hotReload) {
     config.loaderFile = kLoaderFile
   }
+
+  const dirname = configManager.dirname
+
   // The configManager cannot be transferred to the worker, so remove it.
   delete config.configManager
 
@@ -43,7 +46,7 @@ async function startWithConfig (configManager, env = process.env) {
     /* c8 ignore next */
     execArgv: config.hotReload ? kWorkerExecArgv : [],
     transferList: config.loggingPort ? [config.loggingPort] : [],
-    workerData: { config },
+    workerData: { config, dirname },
     env
   })
 
