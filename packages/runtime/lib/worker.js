@@ -12,7 +12,6 @@ const {
 } = require('node:worker_threads')
 const undici = require('undici')
 const pino = require('pino')
-const FastifyUndiciDispatcher = require('fastify-undici-dispatcher')
 const { setGlobalDispatcher, Agent } = require('undici')
 const RuntimeApi = require('./api')
 const { MessagePortWritable } = require('./message-port-writable')
@@ -126,14 +125,9 @@ async function main () {
     }
   }
 
-  const globalAgent = new Agent({
+  const globalDispatcher = new Agent({
     ...config.undici,
     interceptors
-  })
-  const globalDispatcher = new FastifyUndiciDispatcher({
-    dispatcher: globalAgent,
-    // setting the domain here allows for fail-fast scenarios
-    domain: '.plt.local'
   })
   setGlobalDispatcher(globalDispatcher)
 
