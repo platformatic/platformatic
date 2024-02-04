@@ -91,6 +91,18 @@ process.on('unhandledRejection', (err) => {
   }
 })
 
+async function loadInterceptor (_require, module, options) {
+  const url = pathToFileURL(_require.resolve(module))
+  const interceptor = (await import(url)).default
+  return interceptor(options)
+}
+
+function loadInterceptors (_require, interceptors) {
+  return Promise.all(interceptors.map(async ({ module, options }) => {
+    return loadInterceptor(_require, module, options)
+  }))
+}
+
 async function main () {
   const { inspectorOptions } = workerData.config
 
@@ -103,22 +115,20 @@ async function main () {
     inspector.open(inspectorOptions.port, inspectorOptions.host, inspectorOptions.breakFirstLine)
   }
 
-  let interceptors = []
+  const interceptors = {}
 
   if (config.undici?.interceptors) {
     const _require = createRequire(join(workerData.dirname, 'package.json'))
-    interceptors = await Promise.all(config.undici.interceptors.map(async ({ module, options }) => {
-      const url = pathToFileURL(_require.resolve(module))
-      const interceptor = (await import(url)).default
-      return interceptor(options)
-    }))
+    for (const key of ['Agent', 'Pool', 'Client']) {
+      if (config.undici.interceptors[key]) {
+        interceptors[key] = await loadInterceptors(_require, config.undici.interceptors[key])
+      }
+    }
   }
 
   const globalAgent = new Agent({
     ...config.undici,
-    interceptors: {
-      Agent: interceptors
-    }
+    interceptors
   })
   const globalDispatcher = new FastifyUndiciDispatcher({
     dispatcher: globalAgent,

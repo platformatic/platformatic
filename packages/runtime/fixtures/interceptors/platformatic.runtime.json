@@ -12,13 +12,15 @@
     }
   },
   "undici": {
-    "interceptors": [{
-      "module": "undici-oauth-interceptor",
-      "options": {
-        "refreshToken": "{{PLT_REFRESH_TOKEN}}",
-        "origins": ["{{PLT_EXTERNAL_SERVICE}}"],
-        "clientId": "my-client-id"
-      }
-    }]
+    "interceptors": {
+      "Agent": [{
+        "module": "undici-oauth-interceptor",
+        "options": {
+          "refreshToken": "{{PLT_REFRESH_TOKEN}}",
+          "origins": ["{{PLT_EXTERNAL_SERVICE}}"],
+          "clientId": "my-client-id"
+        }
+      }]
+    }
   }
 }
