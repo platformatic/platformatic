@@ -183,9 +183,9 @@ Allowing to configure the options in the agent as well as [interceptors](https:/
             "Agent": [{
                 "module": "undici-oauth-interceptor",
                 "options": {
-                    "clientId": "{{PLT_CLIENT_ID}}",
-                    "refreshToken": "{{PLT_REFRESH_TOKEN}}",
-                    "origins": ["{{PLT_EXTERNAL_SERVICE}}"]
+                    "clientId": "{PLT_CLIENT_ID}",
+                    "refreshToken": "{PLT_REFRESH_TOKEN}",
+                    "origins": ["{PLT_EXTERNAL_SERVICE}"]
                 }
             }]
         }
