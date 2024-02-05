@@ -1437,6 +1437,9 @@ importers:
       express:
         specifier: ^4.18.2
         version: 4.18.2
+      fast-jwt:
+        specifier: ^3.3.3
+        version: 3.3.3
       glob:
         specifier: ^10.3.10
         version: 10.3.10
@@ -1458,6 +1461,9 @@ importers:
       typescript:
         specifier: ^5.3.3
         version: 5.3.3
+      undici-oauth-interceptor:
+        specifier: ^0.4.2
+        version: 0.4.2
 
   packages/scalar-theme: {}
 
@@ -9365,6 +9371,13 @@ packages:
       has-bigints: 1.0.2
       has-symbols: 1.0.3
       which-boxed-primitive: 1.0.2
+    dev: true
+
+  /undici-oauth-interceptor@0.4.2:
+    resolution: {integrity: sha512-YqV0PwSGyKH16wvnTH8s1P09F1RRMPQEjIHyCXIS+J9sMlnkaepMFS+Sps6zeyXM2eYoF30WAm68t7HDQ7eIAg==}
+    dependencies:
+      fast-jwt: 3.3.3
+      undici: 6.6.0
     dev: true
 
   /undici-types@5.26.5:

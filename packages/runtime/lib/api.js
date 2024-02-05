@@ -1,7 +1,7 @@
 'use strict'
 
+const { getGlobalDispatcher, setGlobalDispatcher } = require('undici')
 const FastifyUndiciDispatcher = require('fastify-undici-dispatcher')
-const { setGlobalDispatcher, getGlobalDispatcher } = require('undici')
 const { PlatformaticApp } = require('./app')
 const errors = require('./errors')
 const { printSchema } = require('graphql')
@@ -29,20 +29,18 @@ class RuntimeApi {
           keepAliveTimeout: 5000
         }
       }
+
       const app = new PlatformaticApp(service, loaderPort, logger, serviceTelemetryConfig, serverConfig)
 
       this.#services.set(service.id, app)
     }
 
-    const globalAgent = getGlobalDispatcher()
-    const globalDispatcher = new FastifyUndiciDispatcher({
-      dispatcher: globalAgent,
+    this.#dispatcher = new FastifyUndiciDispatcher({
+      dispatcher: getGlobalDispatcher(),
       // setting the domain here allows for fail-fast scenarios
       domain: '.plt.local'
     })
-
-    setGlobalDispatcher(globalDispatcher)
-    this.#dispatcher = globalDispatcher
+    setGlobalDispatcher(this.#dispatcher)
   }
 
   async startListening (parentPort) {

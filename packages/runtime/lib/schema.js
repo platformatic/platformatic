@@ -105,6 +105,28 @@ const platformaticRuntimeSchema = {
         }
       }
     },
+    undici: {
+      agentOptions: {
+        type: 'object',
+        additionalProperties: true
+      },
+      interceptors: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            module: {
+              type: 'string'
+            },
+            options: {
+              type: 'object',
+              additionalProperties: true
+            }
+          },
+          required: ['module', 'options']
+        }
+      }
+    },
     $schema: {
       type: 'string'
     }

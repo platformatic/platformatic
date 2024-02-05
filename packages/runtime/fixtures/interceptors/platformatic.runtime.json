@@ -1,0 +1,26 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v1.20.0/runtime",
+  "entrypoint": "a",
+  "autoload": {
+    "path": "./services"
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "{{PORT}}",
+    "logger": {
+      "level": "info"
+    }
+  },
+  "undici": {
+    "interceptors": {
+      "Agent": [{
+        "module": "undici-oauth-interceptor",
+        "options": {
+          "refreshToken": "{{PLT_REFRESH_TOKEN}}",
+          "origins": ["{{PLT_EXTERNAL_SERVICE}}"],
+          "clientId": "my-client-id"
+        }
+      }]
+    }
+  }
+}

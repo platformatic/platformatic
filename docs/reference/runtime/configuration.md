@@ -40,6 +40,7 @@ Configuration settings are organized into the following groups:
 - [`allowCycles`](#allowCycles)
 - [`telemetry`](#telemetry)
 - [`server`](#server)
+- [`undici`](#undici)
 
 Configuration settings containing sensitive data should be set using
 [configuration placeholders](#configuration-placeholders).
@@ -164,6 +165,33 @@ Note that OTLP traces can be consumed by different solutions, like [Jaeger](http
 This configures the Platformatic Runtime entrypoint `server`. If the entrypoint has also a `server` configured, when the runtime is started, this configuration is used. 
 
 See [Platformatic Service server](/docs/reference/service/configuration.md#server) for more details.
+
+### `undici`
+
+This configures the [`undici`](https://undici.nodejs.org) global
+[Dispatcher](https://undici.nodejs.org/#/docs/api/Dispatcher).
+Allowing to configure the options in the agent as well as [interceptors](https://github.com/nodejs/undici/blob/main/docs/api/DispatchInterceptor.md).
+
+  _Example_
+
+  ```json
+  {
+    "undici": {
+        "keepAliveTimeout": 1000,
+        "keepAliveMaxTimeout": 1000,
+        "interceptors": {
+            "Agent": [{
+                "module": "undici-oauth-interceptor",
+                "options": {
+                    "clientId": "{{PLT_CLIENT_ID}}",
+                    "refreshToken": "{{PLT_REFRESH_TOKEN}}",
+                    "origins": ["{{PLT_EXTERNAL_SERVICE}}"]
+                }
+            }]
+        }
+    }
+  }
+  ```
 
 ## Environment variable placeholders
 
