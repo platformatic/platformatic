@@ -2,6 +2,10 @@
 
 const { mapSQLTypeToOpenAPIType } = require('@platformatic/sql-json-schema-mapper')
 
+const stringOperations = ['in', 'nin', 'contains', 'contained', 'overlaps']
+const typedOperations = ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like']
+module.exports.SQLOperations = [...stringOperations, ...typedOperations]
+
 function generateArgs (entity, ignore) {
   const sortedEntityFields = Object.keys(entity.fields).sort()
 
@@ -18,12 +22,12 @@ function generateArgs (entity, ignore) {
         acc[key] = { type: mapSQLTypeToOpenAPIType(field.sqlType) }
       }
     } else {
-      for (const modifier of ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like']) {
+      for (const modifier of typedOperations) {
         const key = baseKey + modifier
         acc[key] = { type: mapSQLTypeToOpenAPIType(field.sqlType), enum: field.enum }
       }
 
-      for (const modifier of ['in', 'nin', 'contains', 'contained', 'overlaps']) {
+      for (const modifier of stringOperations) {
         const key = baseKey + modifier
         acc[key] = { type: 'string' }
       }

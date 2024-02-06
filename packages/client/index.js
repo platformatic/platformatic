@@ -137,6 +137,10 @@ function hasDuplicatedParameters (methodMeta) {
   return s.size !== methodMeta.parameters.length
 }
 
+function whereOrClauseIsComplexObject (orClause) {
+  return (Array.isArray(orClause) && typeof orClause[0] !== 'string')
+}
+
 async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser) {
   await $RefParser.dereference(spec)
   const ajv = new Ajv()
@@ -175,7 +179,24 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
       for (const param of queryParams) {
         if (args?.query[param.name] !== undefined) {
           if (isArrayQueryParam(param)) {
-            args.query[param.name].forEach((p) => query.append(param.name, p))
+            if (param.name === 'where.or' && whereOrClauseIsComplexObject(args.query[param.name])) {
+              // parse the object from
+              // [
+              //   { id: { eq: 1 },
+              //   { title: { eq: 'Matrix' },
+              // ]
+              // to ['id.eq=1|title.eq=Matrix']
+
+              const stringArray = []
+              for (const c of args.query[param.name]) {
+                const field = Object.keys(c)[0]
+                const [op, value] = Object.entries(c[field])[0]
+                stringArray.push(`${field}.${op}=${value}`)
+              }
+              query.append(param.name, `(${stringArray.join('|')})`)
+            } else {
+              args.query[param.name].forEach((p) => query.append(param.name, p))
+            }
           } else {
             query.append(param.name, args.query[param.name])
           }
@@ -195,7 +216,24 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
       for (const param of queryParams) {
         if (body[param.name] !== undefined) {
           if (isArrayQueryParam(param)) {
-            body[param.name].forEach((p) => query.append(param.name, p))
+            if (param.name === 'where.or' && whereOrClauseIsComplexObject(body['where.or'])) {
+              // parse the object from
+              // [
+              //   { id: { eq: 1 },
+              //   { title: { eq: 'Matrix' },
+              // ]
+              // to ['id.eq=1|title.eq=Matrix']
+
+              const stringArray = []
+              for (const c of body[param.name]) {
+                const field = Object.keys(c)[0]
+                const [op, value] = Object.entries(c[field])[0]
+                stringArray.push(`${field}.${op}=${value}`)
+              }
+              query.append(param.name, `(${stringArray.join('|')})`)
+            } else {
+              body[param.name].forEach((p) => query.append(param.name, p))
+            }
           } else {
             query.append(param.name, body[param.name])
           }
