@@ -2,7 +2,7 @@ import CodeBlockWriter from 'code-block-writer'
 import { generateOperationId } from '@platformatic/client'
 import { capitalize, toJavaScriptName } from './utils.mjs'
 import { writeOperations } from './openapi-common.mjs'
-import { SQLOperations } from '../../sql-openapi/lib/shared.js'
+import { SQLOperations } from '@platformatic/sql-openapi/lib/shared.js'
 
 export function processOpenAPI ({ schema, name, fullResponse, fullRequest, optionalHeaders, validateResponse }) {
   return {

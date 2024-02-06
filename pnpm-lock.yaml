@@ -251,6 +251,9 @@ importers:
       '@platformatic/metaconfig':
         specifier: workspace:*
         version: link:../metaconfig
+      '@platformatic/sql-openapi':
+        specifier: workspace:*
+        version: link:../sql-openapi
       abstract-logging:
         specifier: ^2.0.1
         version: 2.0.1

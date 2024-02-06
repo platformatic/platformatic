@@ -43,6 +43,7 @@
     "@platformatic/client": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/metaconfig": "workspace:*",
+    "@platformatic/sql-openapi": "workspace:*",
     "abstract-logging": "^2.0.1",
     "camelcase": "~6.3.0",
     "code-block-writer": "^12.0.0",
