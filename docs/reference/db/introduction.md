@@ -48,7 +48,7 @@ Get up and running in 2 minutes using our
 
 
 The required database driver is automatically inferred and loaded based on the
-value of the [`connectionString`](/reference/db/configuration.md#core)
+value of the [`connectionString`](/reference/db/configuration.md#db)
 configuration setting.
 
 ## Issues
