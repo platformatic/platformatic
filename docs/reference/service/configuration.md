@@ -79,7 +79,6 @@ A object with the following settings:
 - **`maxParamLength`** (`integer`) -- the maximum length of a request parameter
 - **`caseSensitive`** (`boolean`) -- if `true`, the router will be case sensitive
 - **`ignoreTrailingSlash`** (`boolean`) -- if `true`, the router will ignore the trailing slash
-- **`ignoreTrailingSlash`** (`boolean`) -- if `true`, the router will ignore the trailing slash
 - **`connectionTimeout`** (`integer`) -- the milliseconds to wait for a new HTTP request
 - **`keepAliveTimeout`** (`integer`) -- the milliseconds to wait for a keep-alive HTTP request
 - **`maxRequestsPerSocket`** (`integer`) -- the maximum number of requests per socket
