@@ -199,7 +199,6 @@ Enables watching for file changes if set to `true`  or `"true"`. It can also be 
 * **`enabled`** (`boolean` or `string`): enables watching.
 - **`ignore`** (`string[]`, default: `null`): List of glob patterns to ignore when watching for changes. If `null` or not specified, ignore rule is not applied. Ignore option doesn't work for typescript files.
 - **`allow`** (`string[]`, default: `['*.js', '**/*.js']`): List of glob patterns to allow when watching for changes. If `null` or not specified, allow rule is not applied. Allow option doesn't work for typescript files.
--
 
   _Example_
 
