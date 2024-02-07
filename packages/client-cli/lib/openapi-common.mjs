@@ -13,17 +13,14 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
   let currentFullResponse = originalFullResponse
   for (const operation of operations) {
     const operationId = operation.operation.operationId
-
     const camelCaseOperationId = camelcase(operationId)
-    const capitalizedCamelCaseOperationId = capitalize(camelCaseOperationId)
-
     const { parameters, responses, requestBody } = operation.operation
     const forceFullRequest = fullRequest || hasDuplicatedParameters(operation.operation)
     const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
     if (successResponses.length !== 1) {
       currentFullResponse = true
     }
-
+    const capitalizedCamelCaseOperationId = capitalize(camelCaseOperationId)
     const operationRequestName = `${capitalizedCamelCaseOperationId}Request`
 
     interfacesWriter.write(`export type ${operationRequestName} =`).block(() => {
@@ -65,11 +62,7 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
             }
             // We do not check for addedProps here because it's the first
             // group of properties
-            if (parameter.name === 'where.or') {
-              interfacesWriter.writeLine(`'${parameter.name}'${required ? '' : '?'}: Partial<Record<keyof typeof ${capitalizedCamelCaseOperationId}Fields, Partial<Record<keyof typeof SQLOperations, any>>>>[],`)
-            } else {
-              writeProperty(interfacesWriter, name, parameter, addedProps, required, 'req', schema)
-            }
+            writeProperty(interfacesWriter, name, parameter, addedProps, required, 'req', schema)
           }
         }
       }

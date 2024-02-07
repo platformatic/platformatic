@@ -2,7 +2,6 @@ import CodeBlockWriter from 'code-block-writer'
 import { generateOperationId } from '@platformatic/client'
 import { capitalize, toJavaScriptName } from './utils.mjs'
 import { writeOperations } from './openapi-common.mjs'
-import { SQLOperations } from '../../sql-openapi/lib/shared.js'
 
 export function processOpenAPI ({ schema, name, fullResponse, fullRequest, optionalHeaders, validateResponse }) {
   return {
@@ -62,23 +61,6 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
   const capitalizedName = capitalize(camelcasedName)
   const { paths } = schema
   const generatedOperationIds = []
-  /* eslint-disable new-cap */
-  const writer = new CodeBlockWriter({
-    indentNumberOfSpaces: 2,
-    useTabs: false,
-    useSingleQuote: true
-  })
-
-  const interfaces = new CodeBlockWriter({
-    indentNumberOfSpaces: 2,
-    useTabs: false,
-    useSingleQuote: true
-  })
-
-  writer.writeLine('import { type FastifyReply, type FastifyPluginAsync } from \'fastify\'')
-  writer.blankLine()
-
-  /* eslint-enable new-cap */
   const operations = Object.entries(paths).flatMap(([path, methods]) => {
     let commonParameters = []
     if (methods.parameters) {
@@ -93,15 +75,6 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
         operation.parameters = commonParameters
       }
       const opId = generateOperationId(path, method, operation, generatedOperationIds)
-      const entityFields = operation.parameters.find((p) => p.name === 'fields')
-      if (entityFields) {
-        const enumFields = entityFields.schema.items.enum
-        // write fields list for each operation as type
-        // TODO: Should get entity fields instead
-        writer.write(`enum ${capitalize(opId)}Fields`).block(() => {
-          enumFields.forEach((f) => writer.writeLine(`'${f}',`))
-        })
-      }
       return {
         path,
         method,
@@ -112,10 +85,22 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
       }
     })
   })
-  // write enum for common operations
-  writer.write('enum SQLOperations').block(() => {
-    SQLOperations.forEach((op) => writer.writeLine(`'${op}',`))
+  /* eslint-disable new-cap */
+  const writer = new CodeBlockWriter({
+    indentNumberOfSpaces: 2,
+    useTabs: false,
+    useSingleQuote: true
   })
+
+  const interfaces = new CodeBlockWriter({
+    indentNumberOfSpaces: 2,
+    useTabs: false,
+    useSingleQuote: true
+  })
+  /* eslint-enable new-cap */
+
+  writer.writeLine('import { type FastifyReply, type FastifyPluginAsync } from \'fastify\'')
+  writer.blankLine()
 
   const pluginName = `${capitalizedName}Plugin`
   const optionsName = `${capitalizedName}Options`
