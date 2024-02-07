@@ -775,4 +775,21 @@ test('list with NOT NULL', async (t) => {
       longText: 'A duck tale'
     }], 'GET /posts?where.title.in=Dog,Cat response')
   }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.longText.in=Foo,Bar&fields=id,title,longText'
+    })
+    equal(res.statusCode, 200, 'GET /posts?where.longText.in=Foo,Bar&fields=id,title,longText status code')
+    same(res.json(), [{
+      id: 1,
+      title: 'Dog',
+      longText: 'Foo'
+    }, {
+      id: 2,
+      title: 'Cat',
+      longText: 'Bar'
+    }], 'GET /posts?where.longText.in=Foo,Bar&fields=id,title,longText response')
+  }
 })
