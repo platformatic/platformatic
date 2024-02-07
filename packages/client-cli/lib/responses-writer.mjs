@@ -44,7 +44,7 @@ function responsesWriter (operationId, responsesArray, isFullResponse, writer, s
     writer.blankLine()
     return allResponsesName
   }
-  return 'unknown'
+  return 'FullResponse<unknown, 200>'
 
   function writeResponse (typeName, responseSchema) {
     if (!responseSchema) {

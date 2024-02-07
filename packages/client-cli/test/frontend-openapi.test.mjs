@@ -111,10 +111,10 @@ export const getCustomSwagger = async (request) => {
     const typesTemplate = `
 export interface Sample {
   setBaseUrl(newUrl: string) : void;
-  getCustomSwagger(req?: GetCustomSwaggerRequest): Promise<unknown>;
+  getCustomSwagger(req?: GetCustomSwaggerRequest): Promise<FullResponse<unknown, 200>>;
   getRedirect(req?: GetRedirectRequest): Promise<GetRedirectResponses>;
-  getReturnUrl(req?: GetReturnUrlRequest): Promise<unknown>;
-  postFoobar(req?: PostFoobarRequest): Promise<unknown>;
+  getReturnUrl(req?: GetReturnUrlRequest): Promise<FullResponse<unknown, 200>>;
+  postFoobar(req?: PostFoobarRequest): Promise<FullResponse<unknown, 200>>;
 }`
 
     const unionTypesTemplate = `export type GetRedirectResponses =
