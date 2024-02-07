@@ -348,7 +348,7 @@ export interface PlatformaticDB {
      */
     newline?: string;
     /**
-     * For Postgres and MS SQL Server(will ignore for another DBs). Specifies schema to look to when validating `versions` table columns. For Postgres, run's `SET search_path = currentSchema` prior to running queries against db.
+     * For Postgres and MS SQL Server(will ignore for another DBs). Specifies schema to look to when validating `versions` table columns. For Postgres, run `SET search_path = currentSchema` prior to running queries against db.
      */
     currentSchema?: string;
   };
