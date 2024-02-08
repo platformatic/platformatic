@@ -53,7 +53,7 @@ test('build basic client from url', async (t) => {
   const expectedImplementation = `
 async function _getRedirect (url, request) {
   const headers = {
-    'Content-type': 'application/json'
+    'Content-type': 'application/json; charset=utf-8'
   }
 
   const response = await fetch(\`\${url}/redirect\`, {
@@ -287,7 +287,7 @@ const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<T
   })
 
   const headers = {
-    'Content-type': 'application/json'
+    'Content-type': 'application/json; charset=utf-8'
   }
 
   const response = await fetch(\`\${url}/?\${searchParams.toString()}\`, {
@@ -310,7 +310,7 @@ test('handle headers parameters', async (t) => {
   const tsImplementationTemplate = `
 const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<Types.PostRootResponses> => {
   const headers = {
-    'Content-type': 'application/json'
+    'Content-type': 'application/json; charset=utf-8'
   }
   if (request['level'] !== undefined) {
     headers['level'] = request['level']
@@ -342,7 +342,7 @@ test('handle headers parameters in get request', async (t) => {
   const tsImplementationTemplate = `
 const _getRoot = async (url: string, request: Types.GetRootRequest): Promise<Types.GetRootResponses> => {
   const headers = {
-    'Content-type': 'application/json'
+    'Content-type': 'application/json; charset=utf-8'
   }
   if (request['level'] !== undefined) {
     headers['level'] = request['level']

@@ -135,7 +135,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
       }
 
       writer.write('const headers =').block(() => {
-        writer.writeLine('\'Content-type\': \'application/json\'')
+        writer.writeLine('\'Content-type\': \'application/json; charset=utf-8\'')
       })
 
       headerParams.forEach((param, idx) => {
