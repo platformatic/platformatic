@@ -52,14 +52,19 @@ test('build basic client from url', async (t) => {
   // handle non 200 code endpoint
   const expectedImplementation = `
 async function _getRedirect (url, request) {
-  const response = await fetch(\`\${url}/redirect\`)
+  const headers = {
+    'Content-type': 'application/json'
+  }
+
+  const response = await fetch(\`\${url}/redirect\`, {
+    headers
+  })
 
   let body = await response.text()
 
   try {
     body = JSON.parse(body)
-  }
-  catch (err) {
+  } catch (err) {
     // do nothing and keep original body
   }
 
@@ -91,6 +96,7 @@ export default function build(url: string): PlatformaticFrontendClient`
 
   // Correct CamelCase name
   const camelCase = 'export interface Sample {'
+
   equal(implementation.includes(expectedImplementation), true)
   equal(implementation.includes(factoryImplementation), true)
   equal(types.includes(factoryType), true)
@@ -271,16 +277,24 @@ test('append query parameters to url in non-GET requests', async (t) => {
 
   const tsImplementationTemplate = `
 const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<Types.PostRootResponses> => {
-  const queryParameters: (keyof Types.PostRootRequest)[] = ['level']
+  const queryParameters: (keyof Types.PostRootRequest)[]  = ['level']
   const searchParams = new URLSearchParams()
-  queryParameters.forEach((qp) =>{
+  queryParameters.forEach((qp) => {
     if (request[qp]) {
       searchParams.append(qp, request[qp]?.toString() || '')
       delete request[qp]
     }
   })
 
+  const headers = {
+    'Content-type': 'application/json'
+  }
+
   const response = await fetch(\`\${url}/?\${searchParams.toString()}\`, {
+    method: 'POST',
+    body: JSON.stringify(request),
+    headers
+  })
 `
   ok(implementation)
   equal(implementation.includes(tsImplementationTemplate), true)
@@ -295,16 +309,25 @@ test('handle headers parameters', async (t) => {
 
   const tsImplementationTemplate = `
 const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<Types.PostRootResponses> => {
+  const headers = {
+    'Content-type': 'application/json'
+  }
+  if (request['level'] !== undefined) {
+    headers['level'] = request['level']
+    delete request['level']
+  }
+  if (request['foo'] !== undefined) {
+    headers['foo'] = request['foo']
+    delete request['foo']
+  }
+
   const response = await fetch(\`\${url}/\`, {
     method: 'POST',
     body: JSON.stringify(request),
-    headers: {
-      'Content-type': 'application/json',
-      'level': request['level'],
-      'foo': request['foo']
-    }
+    headers
   })
 `
+
   ok(implementation)
   equal(implementation.includes(tsImplementationTemplate), true)
 })
@@ -318,11 +341,20 @@ test('handle headers parameters in get request', async (t) => {
 
   const tsImplementationTemplate = `
 const _getRoot = async (url: string, request: Types.GetRootRequest): Promise<Types.GetRootResponses> => {
+  const headers = {
+    'Content-type': 'application/json'
+  }
+  if (request['level'] !== undefined) {
+    headers['level'] = request['level']
+    delete request['level']
+  }
+  if (request['foo'] !== undefined) {
+    headers['foo'] = request['foo']
+    delete request['foo']
+  }
+
   const response = await fetch(\`\${url}/\`, {
-    headers: {
-      'level': request['level'],
-      'foo': request['foo']
-    }
+    headers
   })
 `
   ok(implementation)

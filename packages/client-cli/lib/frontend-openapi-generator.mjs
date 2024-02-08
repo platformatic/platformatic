@@ -122,9 +122,9 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
         if (language === 'ts') {
           queryParametersType = `: (keyof Types.${operationRequestName})[] `
         }
-        writer.writeLine(`const queryParameters${queryParametersType}= [${quotedParams.join(', ')}]`)
+        writer.writeLine(`const queryParameters${queryParametersType} = [${quotedParams.join(', ')}]`)
         writer.writeLine('const searchParams = new URLSearchParams()')
-        writer.write('queryParameters.forEach((qp) =>').inlineBlock(() => {
+        writer.write('queryParameters.forEach((qp) => ').inlineBlock(() => {
           writer.write('if (request[qp]) ').block(() => {
             writer.writeLine('searchParams.append(qp, request[qp]?.toString() || \'\')')
             writer.writeLine('delete request[qp]')
@@ -134,48 +134,30 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
         writer.blankLine()
       }
 
-      if (method === 'get') {
-        let commonString = `const response = await fetch(\`\${url}${stringLiteralPath}`
+      writer.write('const headers =').block(() => {
+        writer.writeLine('\'Content-type\': \'application/json\'')
+      })
 
-        if (queryParams.length > 0) {
-          /* eslint-disable no-template-curly-in-string */
-          commonString += '?${searchParams.toString()}`'
-          /* eslint-enable no-template-curly-in-string */
-        } else {
-          commonString += '`'
-        }
-        writer
-          .conditionalWrite(headerParams.length > 0, `const response = await fetch(\`\${url}${stringLiteralPath}\`, `)
-          .conditionalWrite(headerParams.length === 0, `${commonString})`)
-        if (headerParams.length > 0) {
-          writer
-            .inlineBlock(() => {
-              writer.write('headers:').block(() => {
-                headerParams.forEach((param, idx) => {
-                  const trailingComma = (idx === headerParams.length - 1 ? '' : ',')
-                  writer.writeLine(`'${param}': request['${param}']${trailingComma}`)
-                })
-              })
-            })
-            .write(')')
-        }
-      } else {
-        writer
-          .conditionalWrite(queryParams.length > 0, `const response = await fetch(\`\${url}${stringLiteralPath}?\${searchParams.toString()}\`, `)
-          .conditionalWrite(queryParams.length === 0, `const response = await fetch(\`\${url}${stringLiteralPath}\`, `)
-          .inlineBlock(() => {
+      headerParams.forEach((param, idx) => {
+        writer.write(`if (request['${param}'] !== undefined)`).block(() => {
+          writer.writeLine(`headers['${param}'] = request['${param}']`)
+          writer.writeLine(`delete request['${param}']`)
+        })
+      })
+      writer.blankLine()
+
+      /* eslint-disable-next-line no-template-curly-in-string */
+      const searchString = queryParams.length > 0 ? '?${searchParams.toString()}' : ''
+      writer
+        .write(`const response = await fetch(\`\${url}${stringLiteralPath}${searchString}\`, `)
+        .inlineBlock(() => {
+          if (method !== 'get') {
             writer.write('method: ').quote().write(method.toUpperCase()).quote().write(',')
             writer.writeLine('body: JSON.stringify(request),')
-            writer.write('headers:').block(() => {
-              writer.writeLine('\'Content-type\': \'application/json\'' + (headerParams.length > 0 ? ',' : ''))
-              headerParams.forEach((param, idx) => {
-                const trailingComma = (idx === headerParams.length - 1 ? '' : ',')
-                writer.writeLine(`'${param}': request['${param}']${trailingComma}`)
-              })
-            })
-          })
-          .write(')')
-      }
+          }
+          writer.write('headers')
+        })
+        .write(')')
 
       writer.blankLine()
       if (currentFullResponse) {
@@ -183,10 +165,10 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
 
         writer.blankLine()
 
-        writer.write('try').block(() => {
+        writer.write('try ').inlineBlock(() => {
           writer.write('body = JSON.parse(body)')
         })
-        writer.write('catch (err)').block(() => {
+        writer.write(' catch (err)').block(() => {
           writer.write('// do nothing and keep original body')
         })
 
@@ -247,7 +229,6 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
       }
     })
   })
-
   return writer.toString()
 }
 
