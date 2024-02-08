@@ -113,7 +113,7 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
             // TODO handle escaping of ,
             v = v.split(',')
             /* istanbul ignore next */
-            if (mapSQLTypeToOpenAPIType(entity.fields[field].sqlType) === 'integer') {
+            if (mapSQLTypeToOpenAPIType(entity.camelCasedFields[field].sqlType) === 'integer') {
               v = v.map((v) => parseInt(v))
             }
           }
@@ -131,7 +131,7 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
         if (modifier === 'in' || modifier === 'nin') {
           // TODO handle escaping of ,
           value = query[key].split(',')
-          if (mapSQLTypeToOpenAPIType(entity.fields[field].sqlType) === 'integer') {
+          if (mapSQLTypeToOpenAPIType(entity.camelCasedFields[field].sqlType) === 'integer') {
             value = value.map((v) => parseInt(v))
           }
         }
@@ -221,7 +221,7 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
           if (modifier === 'in' || modifier === 'nin') {
             // TODO handle escaping of ,
             value = query[key].split(',')
-            if (mapSQLTypeToOpenAPIType(entity.fields[field].sqlType) === 'integer') {
+            if (mapSQLTypeToOpenAPIType(entity.camelCasedFields[field].sqlType) === 'integer') {
               value = value.map((v) => parseInt(v))
             }
           }
