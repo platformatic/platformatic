@@ -18,6 +18,7 @@ import { findUp } from 'find-up'
 import pino from 'pino'
 import pinoPretty from 'pino-pretty'
 import YAML from 'yaml'
+import camelcase from 'camelcase'
 import errors from './lib/errors.mjs'
 
 function parseFile (content) {
@@ -237,7 +238,7 @@ async function downloadAndProcess (options) {
     }
     const toPush = {
       schema,
-      name,
+      name: camelcase(name),
       type: found
     }
     if (runtime) {
