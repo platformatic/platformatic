@@ -81,6 +81,12 @@ async function setupOpenAPI (app, opts) {
     inputEntity.$id = `${entitySchema.$id}Input`
     inputEntity.title = `${entitySchema.title}Input`
 
+    if (opts.allowPrimaryKeysInInput === false) {
+      for (const key of entity.primaryKeys) {
+        const camelCased = entity.fields[key].camelcase
+        delete inputEntity.properties[camelCased]
+      }
+    }
     app.addSchema(inputEntity)
 
     for (const relation of Object.values(entity.relations)) {

@@ -24,7 +24,8 @@
             "type": "integer",
             "nullable": true
           }
-        }
+        },
+        "additionalProperties": false
       },
       "PageInput": {
         "title": "PageInput",
@@ -42,7 +43,8 @@
             "type": "integer",
             "nullable": true
           }
-        }
+        },
+        "additionalProperties": false
       }
     }
   },
