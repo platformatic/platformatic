@@ -461,7 +461,7 @@ jobs:
       - name: Run test suite with code coverage
         run: |
           cd packages/service
-          pnpm run unit
+          pnpm run test
 
   ci-utils:
     needs: setup-node_modules
