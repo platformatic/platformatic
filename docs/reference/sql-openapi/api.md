@@ -413,7 +413,7 @@ To configure:
 
 ```javascript
 app.register(require('@platformatic/sql-openapi'), {
-  allowIdInInput: false
+  allowPrimaryKeysInInput: false
 })
 ```
 
