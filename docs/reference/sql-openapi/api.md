@@ -419,7 +419,7 @@ app.register(require('@platformatic/sql-openapi'), {
 
 _Example_
 
-If `allowIdInInput` is set to `false`:
+If `allowPrimaryKeysInInput` is set to `false`:
 
 ```
 $ curl -X 'POST' \
