@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/client-cli",
-  "version": "1.20.0",
+  "version": "1.20.3",
   "description": "A client for all platformatic backends",
   "main": "cli.mjs",
   "bin": {
@@ -8,7 +8,7 @@
   },
   "scripts": {
     "lint": "standard | snazzy",
-    "test": "pnpm run lint && borp --concurrency=1"
+    "test": "pnpm run lint && borp --concurrency=1 --timeout=120000"
   },
   "repository": {
     "type": "git",

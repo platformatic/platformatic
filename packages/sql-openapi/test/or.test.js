@@ -168,4 +168,17 @@ test('list', async (t) => {
       { id: 3, title: 'Mouse', longText: 'Baz' }
     ], 'GET /posts?where.or=(counter.in=10,20|counter.in=20,30)&fields=id,title,longText response')
   }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.or=(longText.in=Foo,Bar|longText.in=Bar,Baz)&fields=id,title,longText'
+    })
+    equal(res.statusCode, 200, 'GET /posts?where.or=(longText.in=Foo,Bar|longText.in=Bar,Baz)&fields=id,title,longText status code')
+    same(res.json(), [
+      { id: 1, title: 'Dog', longText: 'Foo' },
+      { id: 2, title: 'Cat', longText: 'Bar' },
+      { id: 3, title: 'Mouse', longText: 'Baz' }
+    ], 'GET /posts?where.or=(longText.in=Foo,Bar|longText.in=Bar,Baz)&fields=id,title,longText response')
+  }
 })

@@ -31,7 +31,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-      - uses: pnpm/action-setup@v2.4.0
+      - uses: pnpm/action-setup@v3.0.0
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -53,7 +53,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-    - uses: pnpm/action-setup@v2.4.0
+    - uses: pnpm/action-setup@v3.0.0
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
@@ -81,7 +81,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-    - uses: pnpm/action-setup@v2.4.0
+    - uses: pnpm/action-setup@v3.0.0
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
@@ -112,7 +112,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-    - uses: pnpm/action-setup@v2.4.0
+    - uses: pnpm/action-setup@v3.0.0
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
@@ -143,7 +143,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-    - uses: pnpm/action-setup@v2.4.0
+    - uses: pnpm/action-setup@v3.0.0
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
@@ -171,7 +171,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-    - uses: pnpm/action-setup@v2.4.0
+    - uses: pnpm/action-setup@v3.0.0
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
@@ -198,7 +198,7 @@ jobs:
         os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-    - uses: pnpm/action-setup@v2.4.0
+    - uses: pnpm/action-setup@v3.0.0
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
@@ -223,7 +223,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-    - uses: pnpm/action-setup@v2.4.0
+    - uses: pnpm/action-setup@v3.0.0
     - uses: ikalnytskyi/action-setup-postgres@v5
     - uses: actions/setup-node@v4
       with:
@@ -253,7 +253,7 @@ jobs:
         os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-    - uses: pnpm/action-setup@v2.4.0
+    - uses: pnpm/action-setup@v3.0.0
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
@@ -279,7 +279,7 @@ jobs:
         os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-    - uses: pnpm/action-setup@v2.4.0
+    - uses: pnpm/action-setup@v3.0.0
     - uses: actions/setup-node@v4
       with:
         node-version: 18
@@ -325,7 +325,7 @@ jobs:
         os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-    - uses: pnpm/action-setup@v2.4.0
+    - uses: pnpm/action-setup@v3.0.0
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
@@ -363,7 +363,7 @@ jobs:
         os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-    - uses: pnpm/action-setup@v2.4.0
+    - uses: pnpm/action-setup@v3.0.0
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
@@ -396,7 +396,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-      - uses: pnpm/action-setup@v2.4.0
+      - uses: pnpm/action-setup@v3.0.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
@@ -421,7 +421,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-    - uses: pnpm/action-setup@v2.4.0
+    - uses: pnpm/action-setup@v3.0.0
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
@@ -446,7 +446,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-      - uses: pnpm/action-setup@v2.4.0
+      - uses: pnpm/action-setup@v3.0.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
@@ -461,7 +461,7 @@ jobs:
       - name: Run test suite with code coverage
         run: |
           cd packages/service
-          pnpm run unit
+          pnpm run test
 
   ci-utils:
     needs: setup-node_modules
@@ -473,7 +473,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-    - uses: pnpm/action-setup@v2.4.0
+    - uses: pnpm/action-setup@v3.0.0
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
@@ -498,7 +498,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-      - uses: pnpm/action-setup@v2.4.0
+      - uses: pnpm/action-setup@v3.0.0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
@@ -524,7 +524,7 @@ jobs:
         os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-    - uses: pnpm/action-setup@v2.4.0
+    - uses: pnpm/action-setup@v3.0.0
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
@@ -544,7 +544,7 @@ jobs:
     timeout-minutes: 5
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-    - uses: pnpm/action-setup@v2.4.0
+    - uses: pnpm/action-setup@v3.0.0
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
@@ -575,7 +575,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-    - uses: pnpm/action-setup@v2.4.0
+    - uses: pnpm/action-setup@v3.0.0
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
@@ -600,7 +600,7 @@ jobs:
         os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-    - uses: pnpm/action-setup@v2.4.0
+    - uses: pnpm/action-setup@v3.0.0
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
