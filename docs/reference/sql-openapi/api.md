@@ -439,7 +439,7 @@ $ curl -X 'POST' \
 }
 ```
 
-If `allowIdInInput` is set to `true` or left `undefined`:
+If `allowPrimaryKeysInInput` is set to `true` or left `undefined`:
 
 ```
 $ curl -X 'POST' \
