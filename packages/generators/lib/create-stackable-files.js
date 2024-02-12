@@ -35,6 +35,8 @@ stackable.configManagerConfig = {
 stackable[Symbol.for('skip-override')] = true
 
 module.exports = stackable
+module.exports.schema = schema
+module.exports.Generator = Generator
 `
 }
 
@@ -73,6 +75,7 @@ stackable.configManagerConfig = {
 stackable[Symbol.for('skip-override')] = true
 
 export default stackable
+export { Generator, schema }
 `
 }
 
