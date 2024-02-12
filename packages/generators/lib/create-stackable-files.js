@@ -149,6 +149,22 @@ class ${stackableGeneratorType} extends ServiceGenerator {
       PLT_GREETING_TEXT: this.config.greeting ?? 'Hello world!',
       ...this.config.env
     }
+
+    const packageJson = await this.getStackablePackageJson()
+    const packageName = packageJson.name
+    const packageVersion = packageJson.version
+
+    if (!packageName) {
+      throw new Error('Missing package name in package.json')
+    }
+
+    if (!packageVersion) {
+      throw new Error('Missing package version in package.json')
+    }
+
+    this.config.dependencies = {
+      [packageName]: \`^\${packageVersion}\`
+    }
   }
 
   async _afterPrepare () {
@@ -232,6 +248,22 @@ class ${stackableGeneratorType} extends ServiceGenerator {
     this.config.env = {
       PLT_GREETING_TEXT: this.config.greeting ?? 'Hello world!',
       ...this.config.env
+    }
+
+    const packageJson = await this.getStackablePackageJson()
+    const packageName = packageJson.name
+    const packageVersion = packageJson.version
+
+    if (!packageName) {
+      throw new Error('Missing package name in package.json')
+    }
+
+    if (!packageVersion) {
+      throw new Error('Missing package version in package.json')
+    }
+
+    this.config.dependencies = {
+      [packageName]: \`^\${packageVersion}\`
     }
   }
 
