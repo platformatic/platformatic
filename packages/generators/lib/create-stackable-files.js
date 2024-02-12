@@ -92,6 +92,52 @@ declare module 'fastify' {
     platformatic: PlatformaticApp<${stackableConfigType}>
   }
 }
+
+export { PlatformaticApp, ${stackableConfigType} }
+`
+}
+
+function getJsGlobalTypesTemplateFile (stackableName) {
+  const stackableConfigType = pascalCase(stackableName + 'Config')
+
+  return `\
+'use strict'
+
+function generateGlobalTypesFile (npmPackageName) {
+  return \`\
+import { FastifyInstance } from 'fastify'
+import { ${stackableConfigType}, PlatformaticApp } from '\${npmPackageName}'
+  
+declare module 'fastify' {
+  interface FastifyInstance {
+    platformatic: PlatformaticApp<${stackableConfigType}>
+  }
+}
+\`
+}
+
+module.exports = {
+  generateGlobalTypesFile
+}
+`
+}
+
+function getTsGlobalTypesTemplateFile (stackableName) {
+  const stackableConfigType = pascalCase(stackableName + 'Config')
+
+  return `\
+export function generateGlobalTypesFile (npmPackageName) {
+  return \`\
+import { FastifyInstance } from 'fastify'
+import { ${stackableConfigType}, PlatformaticApp } from '\${npmPackageName}'
+  
+declare module 'fastify' {
+  interface FastifyInstance {
+    platformatic: PlatformaticApp<${stackableConfigType}>
+  }
+}
+\`
+}
 `
 }
 
@@ -105,6 +151,7 @@ const { join } = require('node:path')
 const { readFile } = require('node:fs/promises')
 const { Generator: ServiceGenerator } = require('@platformatic/service')
 const { schema } = require('./schema')
+const { generateGlobalTypesFile } = require('./templates/types')
 
 class ${stackableGeneratorType} extends ServiceGenerator {
   getDefaultConfig () {
@@ -168,6 +215,13 @@ class ${stackableGeneratorType} extends ServiceGenerator {
   }
 
   async _afterPrepare () {
+    const npmPackageName = await this.getStackablePackageName()
+    this.addFile({
+      path: '',
+      file: 'global.d.ts',
+      contents: generateGlobalTypesFile(npmPackageName)
+    })
+
     this.addFile({
       path: '',
       file: 'stackable.schema.json',
@@ -176,9 +230,12 @@ class ${stackableGeneratorType} extends ServiceGenerator {
   }
 
   async getStackablePackageJson () {
-    const packageJsonPath = join(__dirname, '..', 'package.json')
-    const packageJson = await readFile(packageJsonPath, 'utf8')
-    return JSON.parse(packageJson)
+    if (!this._packageJson) {
+      const packageJsonPath = join(__dirname, '..', 'package.json')
+      const packageJson = await readFile(packageJsonPath, 'utf8')
+      this._packageJson = JSON.parse(packageJson)
+    }
+    return this._packageJson
   }
 
   async getStackablePackageName () {
@@ -205,6 +262,7 @@ import { readFile } from 'node:fs/promises'
 import { Generator as ServiceGenerator } from '@platformatic/service'
 import { BaseGenerator } from '@platformatic/generators'
 import { schema } from './schema'
+import { generateGlobalTypesFile } from './templates/types'
 
 class ${stackableGeneratorType} extends ServiceGenerator {
   getDefaultConfig (): BaseGenerator.JSONValue {
@@ -268,6 +326,13 @@ class ${stackableGeneratorType} extends ServiceGenerator {
   }
 
   async _afterPrepare () {
+    const npmPackageName = await this.getStackablePackageName()
+    this.addFile({
+      path: '',
+      file: 'global.d.ts',
+      contents: generateGlobalTypesFile(npmPackageName)
+    })
+
     this.addFile({
       path: '',
       file: 'stackable.schema.json',
@@ -276,9 +341,12 @@ class ${stackableGeneratorType} extends ServiceGenerator {
   }
 
   async getStackablePackageJson () {
-    const packageJsonPath = join(__dirname, '..', 'package.json')
-    const packageJson = await readFile(packageJsonPath, 'utf8')
-    return JSON.parse(packageJson)
+    if (!this._packageJson) {
+      const packageJsonPath = join(__dirname, '..', 'package.json')
+      const packageJson = await readFile(packageJsonPath, 'utf8')
+      this._packageJson = JSON.parse(packageJson)
+    }
+    return this._packageJson
   }
 
   async getStackablePackageName () {
@@ -407,6 +475,11 @@ function generateStackableFiles (typescript, stackableName) {
         contents: getTsStackableGeneratorFile(stackableName)
       },
       {
+        path: 'lib/templates',
+        file: 'types.ts',
+        contents: getTsGlobalTypesTemplateFile(stackableName)
+      },
+      {
         path: 'lib',
         file: 'schema.ts',
         contents: getTsStackableSchemaFile(stackableName)
@@ -433,6 +506,11 @@ function generateStackableFiles (typescript, stackableName) {
       path: 'lib',
       file: 'generator.js',
       contents: getJsStackableGeneratorFile(stackableName)
+    },
+    {
+      path: 'lib/templates',
+      file: 'types.js',
+      contents: getJsGlobalTypesTemplateFile(stackableName)
     },
     {
       path: 'lib',
