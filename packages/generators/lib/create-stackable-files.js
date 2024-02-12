@@ -101,6 +101,8 @@ function getJsStackableGeneratorFile (stackableName) {
   return `\
 'use strict'
 
+const { join } = require('node:path')
+const { readFile } = require('node:fs/promises')
 const { Generator: ServiceGenerator } = require('@platformatic/service')
 const { schema } = require('./schema')
 
@@ -182,6 +184,8 @@ function getTsStackableGeneratorFile (stackableName) {
   const stackableGeneratorType = pascalCase(stackableName + 'Generator')
 
   return `\
+import { join } from 'node:path'
+import { readFile } from 'node:fs/promises'
 import { Generator as ServiceGenerator } from '@platformatic/service'
 import { BaseGenerator } from '@platformatic/generators'
 import { schema } from './schema'
