@@ -436,6 +436,10 @@ $ curl -X 'POST' \
   "id": 1,
   "title": "Hello Platformatic!",
   "body": "Welcome to Platformatic"
+  "statusCode": 400,
+  "code": 'FST_ERR_VALIDATION',
+  "error:" 'Bad Request',
+  "message": 'body/id must NOT be valid'
 }
 ```
 
