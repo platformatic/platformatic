@@ -39,7 +39,7 @@ async function analyze (opts) {
 
   if (data.$schema.indexOf('./') === 0) {
     // We assume v0.16
-    Handler = require('./versions/0.16.0.js')
+    Handler = require('./versions/no-version.js')
   }
 
   if (!Handler) {

@@ -11,7 +11,6 @@ const { tmpdir } = require('os')
 const { join } = require('path')
 const { cp } = require('fs/promises')
 const pkg = require('../package.json')
-const semver = require('semver')
 const createError = require('@fastify/error')
 
 test('throws if no config or file is provided', async () => {
@@ -98,11 +97,9 @@ test('current version must be matched', async () => {
   equal(meta.version, version)
 })
 
-test('upgrade to latest version', async () => {
+test('upgrade config with a filepath in $schema', async () => {
   const file = join(__dirname, 'fixtures', 'v0.16.0', 'array.db.json')
   const meta = await analyze({ file })
   const upgraded = upgrade(meta)
-  const version = pkg.version.replace('-dev', '')
-  console.log(`upgraded to ${upgraded.version}`)
-  equal(semver.satisfies(version, '^' + upgraded.version), true)
+  equal(upgraded.version, null)
 })
