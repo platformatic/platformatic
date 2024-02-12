@@ -126,9 +126,8 @@ function getTsGlobalTypesTemplateFile (stackableName) {
   const stackableConfigType = pascalCase(stackableName + 'Config')
 
   return `\
-export function generateGlobalTypesFile (npmPackageName) {
-  return \`\
-import { FastifyInstance } from 'fastify'
+export function generateGlobalTypesFile (npmPackageName: string): string {
+  return \`import { FastifyInstance } from 'fastify'
 import { ${stackableConfigType}, PlatformaticApp } from '\${npmPackageName}'
   
 declare module 'fastify' {
@@ -170,18 +169,17 @@ class ${stackableGeneratorType} extends ServiceGenerator {
         var: 'PLT_GREETING_TEXT',
         label: 'What should the stackable greeting say?',
         default: 'Hello world!',
-        type: 'string',
-        configValue: ''
+        type: 'string'
       }
     ]
   }
 
   async _getConfigFileContents () {
     const baseConfig = await super._getConfigFileContents()
-    const packageName = await this.getStackablePackageName()
+    const packageJson = await this.getStackablePackageJson()
     const config = {
       $schema: './stackable.schema.json',
-      module: packageName,
+      module: packageJson.name,
       greeting: {
         text: '{PLT_GREETING_TEXT}'
       }
@@ -198,28 +196,18 @@ class ${stackableGeneratorType} extends ServiceGenerator {
     }
 
     const packageJson = await this.getStackablePackageJson()
-    const packageName = packageJson.name
-    const packageVersion = packageJson.version
-
-    if (!packageName) {
-      throw new Error('Missing package name in package.json')
-    }
-
-    if (!packageVersion) {
-      throw new Error('Missing package version in package.json')
-    }
 
     this.config.dependencies = {
-      [packageName]: \`^\${packageVersion}\`
+      [packageJson.name]: \`^\${packageJson.version}\`
     }
   }
 
   async _afterPrepare () {
-    const npmPackageName = await this.getStackablePackageName()
+    const packageJson = await this.getStackablePackageJson()
     this.addFile({
       path: '',
       file: 'global.d.ts',
-      contents: generateGlobalTypesFile(npmPackageName)
+      contents: generateGlobalTypesFile(packageJson.name)
     })
 
     this.addFile({
@@ -230,21 +218,23 @@ class ${stackableGeneratorType} extends ServiceGenerator {
   }
 
   async getStackablePackageJson () {
-    if (!this._packageJson) {
+    if (this._packageJson === null) {
       const packageJsonPath = join(__dirname, '..', 'package.json')
-      const packageJson = await readFile(packageJsonPath, 'utf8')
-      this._packageJson = JSON.parse(packageJson)
+      const packageJsonFile = await readFile(packageJsonPath, 'utf8')
+      const packageJson = JSON.parse(packageJsonFile)
+
+      if (!packageJson.name) {
+        throw new Error('Missing package name in package.json')
+      }
+  
+      if (!packageJson.version) {
+        throw new Error('Missing package version in package.json')
+      }
+
+      this._packageJson = packageJson
+      return packageJson
     }
     return this._packageJson
-  }
-
-  async getStackablePackageName () {
-    const packageJson = await this.getStackablePackageJson()
-    const packageName = packageJson.name
-    if (!packageName) {
-      throw new Error('Missing package name in package.json')
-    }
-    return packageName
   }
 }
 
@@ -264,7 +254,14 @@ import { BaseGenerator } from '@platformatic/generators'
 import { schema } from './schema'
 import { generateGlobalTypesFile } from './templates/types'
 
+type PackageJson = {
+  name: string
+  version: string
+}
+
 class ${stackableGeneratorType} extends ServiceGenerator {
+  private _packageJson: PackageJson | null = null
+
   getDefaultConfig (): BaseGenerator.JSONValue {
     const defaultBaseConfig = super.getDefaultConfig()
     const defaultConfig = {
@@ -273,7 +270,7 @@ class ${stackableGeneratorType} extends ServiceGenerator {
     return Object.assign({}, defaultBaseConfig, defaultConfig)
   }
 
-  getConfigFieldsDefinitions () {
+  getConfigFieldsDefinitions (): BaseGenerator.ConfigFieldDefinition[] {
     const serviceConfigFieldsDefs = super.getConfigFieldsDefinitions()
     return [
       ...serviceConfigFieldsDefs,
@@ -281,18 +278,17 @@ class ${stackableGeneratorType} extends ServiceGenerator {
         var: 'PLT_GREETING_TEXT',
         label: 'What should the stackable greeting say?',
         default: 'Hello world!',
-        type: 'string',
-        configValue: ''
+        type: 'string'
       }
     ]
   }
 
   async _getConfigFileContents (): Promise<BaseGenerator.JSONValue> {
     const baseConfig = await super._getConfigFileContents()
-    const packageName = await this.getStackablePackageName()
+    const packageJson = await this.getStackablePackageJson()
     const config = {
       $schema: './stackable.schema.json',
-      module: packageName,
+      module: packageJson.name,
       greeting: {
         text: '{PLT_GREETING_TEXT}'
       }
@@ -309,28 +305,18 @@ class ${stackableGeneratorType} extends ServiceGenerator {
     }
 
     const packageJson = await this.getStackablePackageJson()
-    const packageName = packageJson.name
-    const packageVersion = packageJson.version
-
-    if (!packageName) {
-      throw new Error('Missing package name in package.json')
-    }
-
-    if (!packageVersion) {
-      throw new Error('Missing package version in package.json')
-    }
 
     this.config.dependencies = {
-      [packageName]: \`^\${packageVersion}\`
+      [packageJson.name]: \`^\${packageJson.version}\`
     }
   }
 
   async _afterPrepare () {
-    const npmPackageName = await this.getStackablePackageName()
+    const packageJson = await this.getStackablePackageJson()
     this.addFile({
       path: '',
       file: 'global.d.ts',
-      contents: generateGlobalTypesFile(npmPackageName)
+      contents: generateGlobalTypesFile(packageJson.name)
     })
 
     this.addFile({
@@ -340,22 +326,24 @@ class ${stackableGeneratorType} extends ServiceGenerator {
     })
   }
 
-  async getStackablePackageJson () {
-    if (!this._packageJson) {
-      const packageJsonPath = join(__dirname, '..', 'package.json')
-      const packageJson = await readFile(packageJsonPath, 'utf8')
-      this._packageJson = JSON.parse(packageJson)
+  async getStackablePackageJson (): Promise<PackageJson> {
+    if (this._packageJson === null) {
+      const packageJsonPath = join(__dirname, '..', '..', 'package.json')
+      const packageJsonFile = await readFile(packageJsonPath, 'utf8')
+      const packageJson = JSON.parse(packageJsonFile)
+
+      if (!packageJson.name) {
+        throw new Error('Missing package name in package.json')
+      }
+  
+      if (!packageJson.version) {
+        throw new Error('Missing package version in package.json')
+      }
+
+      this._packageJson = packageJson
+      return packageJson
     }
     return this._packageJson
-  }
-
-  async getStackablePackageName () {
-    const packageJson = await this.getStackablePackageJson()
-    const packageName = packageJson.name
-    if (!packageName) {
-      throw new Error('Missing package name in package.json')
-    }
-    return packageName
   }
 }
 
