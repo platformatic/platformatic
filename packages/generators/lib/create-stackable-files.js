@@ -113,10 +113,26 @@ class ${stackableGeneratorType} extends ServiceGenerator {
     return Object.assign({}, defaultBaseConfig, defaultConfig)
   }
 
+  getConfigFieldsDefinitions () {
+    const serviceConfigFieldsDefs = super.getConfigFieldsDefinitions()
+    return [
+      ...serviceConfigFieldsDefs,
+      {
+        var: 'PLT_GREETING_TEXT',
+        label: 'What should the stackable greeting say?',
+        default: 'Hello world!',
+        type: 'string',
+        configValue: ''
+      }
+    ]
+  }
+
   async _getConfigFileContents () {
     const baseConfig = await super._getConfigFileContents()
+    const packageName = await this.getStackablePackageName()
     const config = {
       $schema: './stackable.schema.json',
+      module: packageName,
       greeting: {
         text: '{PLT_GREETING_TEXT}'
       }
@@ -139,6 +155,21 @@ class ${stackableGeneratorType} extends ServiceGenerator {
       file: 'stackable.schema.json',
       contents: JSON.stringify(schema, null, 2)
     })
+  }
+
+  async getStackablePackageJson () {
+    const packageJsonPath = join(__dirname, '..', 'package.json')
+    const packageJson = await readFile(packageJsonPath, 'utf8')
+    return JSON.parse(packageJson)
+  }
+
+  async getStackablePackageName () {
+    const packageJson = await this.getStackablePackageJson()
+    const packageName = packageJson.name
+    if (!packageName) {
+      throw new Error('Missing package name in package.json')
+    }
+    return packageName
   }
 }
 
@@ -164,10 +195,26 @@ class ${stackableGeneratorType} extends ServiceGenerator {
     return Object.assign({}, defaultBaseConfig, defaultConfig)
   }
 
+  getConfigFieldsDefinitions () {
+    const serviceConfigFieldsDefs = super.getConfigFieldsDefinitions()
+    return [
+      ...serviceConfigFieldsDefs,
+      {
+        var: 'PLT_GREETING_TEXT',
+        label: 'What should the stackable greeting say?',
+        default: 'Hello world!',
+        type: 'string',
+        configValue: ''
+      }
+    ]
+  }
+
   async _getConfigFileContents (): Promise<BaseGenerator.JSONValue> {
     const baseConfig = await super._getConfigFileContents()
+    const packageName = await this.getStackablePackageName()
     const config = {
       $schema: './stackable.schema.json',
+      module: packageName,
       greeting: {
         text: '{PLT_GREETING_TEXT}'
       }
@@ -190,6 +237,21 @@ class ${stackableGeneratorType} extends ServiceGenerator {
       file: 'stackable.schema.json',
       contents: JSON.stringify(schema, null, 2)
     })
+  }
+
+  async getStackablePackageJson () {
+    const packageJsonPath = join(__dirname, '..', 'package.json')
+    const packageJson = await readFile(packageJsonPath, 'utf8')
+    return JSON.parse(packageJson)
+  }
+
+  async getStackablePackageName () {
+    const packageJson = await this.getStackablePackageJson()
+    const packageName = packageJson.name
+    if (!packageName) {
+      throw new Error('Missing package name in package.json')
+    }
+    return packageName
   }
 }
 
@@ -214,6 +276,7 @@ const ${schemaVarName} = {
   title: '${schemaTitle}',
   properties: {
     ...schema.schema.properties,
+    module: { type: 'string' },
     greeting: {
       type: 'object',
       properties: {
@@ -249,6 +312,7 @@ const ${schemaVarName} = {
   title: '${schemaTitle}',
   properties: {
     ...schema.schema.properties,
+    module: { type: 'string' },
     greeting: {
       type: 'object',
       properties: {
