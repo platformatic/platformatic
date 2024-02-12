@@ -84,7 +84,8 @@ async function setupOpenAPI (app, opts) {
     if (opts.allowPrimaryKeysInInput === false) {
       for (const key of entity.primaryKeys) {
         const camelCased = entity.fields[key].camelcase
-        delete inputEntity.properties[camelCased]
+        // Produces "body/{KEY} must not be valid"
+        inputEntity.properties[camelCased] = { not: {} }
       }
     }
     app.addSchema(inputEntity)

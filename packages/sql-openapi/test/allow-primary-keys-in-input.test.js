@@ -66,6 +66,23 @@ test('allowPrimaryKeysInInput: false', async (t) => {
         title: 'Hello'
       }
     })
+    equal(res.statusCode, 400, 'POST /pages status code')
+    same(res.json(), {
+      statusCode: 400,
+      code: 'FST_ERR_VALIDATION',
+      error: 'Bad Request',
+      message: 'body/id must NOT be valid'
+    }, 'POST /pages response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/pages',
+      body: {
+        title: 'Hello'
+      }
+    })
     equal(res.statusCode, 200, 'POST /pages status code')
     equal(res.headers.location, '/pages/1', 'POST /api/pages location')
     same(res.json(), {

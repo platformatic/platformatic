@@ -28,6 +28,9 @@
         "description": "A Page",
         "type": "object",
         "properties": {
+          "id": {
+            "not": {}
+          },
           "title": {
             "type": "string"
           }
