@@ -79,7 +79,7 @@ test('throws if the parser is unknown', async () => {
 
 test('writes a config file', async () => {
   const dest = join(tmpdir(), `test-metaconfig-${process.pid}.json`)
-  await cp(join(__dirname, 'fixtures', 'v0.16.0', 'array.db.json'), dest)
+  await cp(join(__dirname, 'fixtures', 'no-version', 'no-version.json'), dest)
   const meta = await analyze({ file: dest })
   meta.format = 'yaml' // transform to yaml
   meta.path = dest.replace(/\.json$/, '.yaml')
@@ -98,7 +98,7 @@ test('current version must be matched', async () => {
 })
 
 test('upgrade config with a filepath in $schema', async () => {
-  const file = join(__dirname, 'fixtures', 'v0.16.0', 'array.db.json')
+  const file = join(__dirname, 'fixtures', 'no-version', 'no-version.json')
   const meta = await analyze({ file })
   const upgraded = upgrade(meta)
   equal(upgraded.version, null)

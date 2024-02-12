@@ -1,5 +1,5 @@
 {
-  "$schema": "./platformatic.db.schema.json",
+  "$schema": "./platformatic.custom.schema.json",
   "server": {
     "hostname": "{PLT_SERVER_HOSTNAME}",
     "port": "{PORT}",
@@ -10,18 +10,15 @@
   "core": {
     "connectionString": "{DATABASE_URL}",
     "graphql": true,
-    "openapi": true
+    "openapi": true,
+    "events": false
   },
   "migrations": {
     "dir": "migrations"
   },
-  "plugin": {
-    "path": "plugin.ts",
-    "typescript": {
-      "outDir": "dist"
-    }
-  },
-  "types": {
-    "autogenerate": true
-  }
+  "plugin": [{
+    "path": "./plugin/index.js"
+  }, {
+    "path": "./routes/"
+  }]
 }
