@@ -20,7 +20,8 @@
             "type": "string",
             "nullable": true
           }
-        }
+        },
+        "additionalProperties": false
       },
       "PageInput": {
         "title": "PageInput",
@@ -34,6 +35,7 @@
             "type": "string"
           }
         },
+        "additionalProperties": false,
         "required": [
           "title"
         ]

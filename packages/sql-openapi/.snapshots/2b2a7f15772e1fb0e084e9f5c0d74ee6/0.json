@@ -19,13 +19,6 @@
           "title": {
             "type": "string",
             "nullable": true
-          },
-          "tags": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
           }
         },
         "additionalProperties": false
@@ -36,21 +29,14 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "integer"
+            "not": {}
           },
           "title": {
             "type": "string"
-          },
-          "tags": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
           }
         },
         "additionalProperties": false,
         "required": [
-          "tags",
           "title"
         ]
       }
@@ -99,7 +85,6 @@
                 "type": "string",
                 "enum": [
                   "id",
-                  "tags",
                   "title"
                 ]
               }
@@ -202,22 +187,6 @@
             },
             "in": "query",
             "name": "where.id.overlaps",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "where.tags.all",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "where.tags.any",
             "required": false
           },
           {
@@ -422,7 +391,6 @@
                 "type": "string",
                 "enum": [
                   "id",
-                  "tags",
                   "title"
                 ]
               }
@@ -525,22 +493,6 @@
             },
             "in": "query",
             "name": "where.id.overlaps",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "where.tags.all",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "where.tags.any",
             "required": false
           },
           {
@@ -685,7 +637,6 @@
                 "type": "string",
                 "enum": [
                   "id",
-                  "tags",
                   "title"
                 ]
               }
@@ -741,7 +692,6 @@
                 "type": "string",
                 "enum": [
                   "id",
-                  "tags",
                   "title"
                 ]
               }
@@ -788,7 +738,6 @@
                 "type": "string",
                 "enum": [
                   "id",
-                  "tags",
                   "title"
                 ]
               }

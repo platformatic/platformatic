@@ -294,6 +294,8 @@ A **required** object with the following settings:
   ```
 - **`autoTimestamp`** (`boolean` or `object`) - Generate timestamp automatically when inserting/updating records.
 
+- **`allowPrimaryKeysInInput`** (`boolean`) - Allow the user to set the primary keys when creating new entities.
+
 - **`poolSize`** (`number`, default: `10`) — Maximum number of connections in the connection pool.
 
 - **`idleTimeoutMilliseconds`** (`number`, default: `30000`) - Max milliseconds a client can go unused before it is removed from the pool and destroyed.

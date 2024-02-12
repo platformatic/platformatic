@@ -108,7 +108,8 @@ function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = false) {
     title: entity.name,
     description: `A ${entity.name}`,
     type: 'object',
-    properties
+    properties,
+    additionalProperties: false
   }
 
   if (required.length > 0) {

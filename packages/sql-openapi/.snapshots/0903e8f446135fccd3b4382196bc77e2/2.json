@@ -28,7 +28,8 @@
             "type": "integer",
             "nullable": true
           }
-        }
+        },
+        "additionalProperties": false
       },
       "PostInput": {
         "title": "PostInput",
@@ -48,6 +49,7 @@
             "type": "integer"
           }
         },
+        "additionalProperties": false,
         "required": [
           "counter",
           "longText",

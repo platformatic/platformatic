@@ -21,7 +21,8 @@ export default `\
             "type": "string",
             "nullable": true
           }
-        }
+        },
+        "additionalProperties": false
       },
       "GraphInput": {
         "title": "GraphInput",
@@ -35,7 +36,8 @@ export default `\
             "type": "string",
             "nullable": true
           }
-        }
+        },
+        "additionalProperties": false
       }
     }
   },

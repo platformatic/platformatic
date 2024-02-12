@@ -28,7 +28,8 @@
             "type": "integer",
             "nullable": true
           }
-        }
+        },
+        "additionalProperties": false
       },
       "PostInput": {
         "title": "PostInput",
@@ -50,7 +51,8 @@
             "type": "integer",
             "nullable": true
           }
-        }
+        },
+        "additionalProperties": false
       }
     }
   },

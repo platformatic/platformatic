@@ -118,6 +118,10 @@ const db = {
         type: 'object',
         properties: {
           ...(openApiBase.properties),
+          allowPrimaryKeysInInput: {
+            type: 'boolean',
+            default: true
+          },
           include: {
             type: 'object',
             additionalProperties: {

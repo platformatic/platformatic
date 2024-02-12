@@ -24,7 +24,8 @@
             "type": "integer",
             "nullable": true
           }
-        }
+        },
+        "additionalProperties": false
       },
       "PersonInput": {
         "title": "PersonInput",
@@ -42,6 +43,7 @@
             "nullable": true
           }
         },
+        "additionalProperties": false,
         "required": [
           "name"
         ]

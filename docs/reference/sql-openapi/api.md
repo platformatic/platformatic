@@ -403,3 +403,62 @@ By default *offset* is not applied to the request.
 Clients can override this behavior by passing a value.
 
 *Offset* only accepts values `>= 0`. Otherwise an error is return.
+
+## Allow the primary keys in the input
+
+`@platformatic/sql-openapi` allows for specifying if to accept the table primary keys
+in the inputs to the various routes.
+
+To configure:
+
+```javascript
+app.register(require('@platformatic/sql-openapi'), {
+  allowPrimaryKeysInInput: false
+})
+```
+
+_Example_
+
+If `allowPrimaryKeysInInput` is set to `false`:
+
+```
+$ curl -X 'POST' \
+  'http://localhost:3042/pages/' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "id": 42,
+  "title": "Hello Platformatic!",
+  "body": "Welcome to Platformatic!"
+}'
+
+{
+  "id": 1,
+  "title": "Hello Platformatic!",
+  "body": "Welcome to Platformatic"
+  "statusCode": 400,
+  "code": 'FST_ERR_VALIDATION',
+  "error:" 'Bad Request',
+  "message": 'body/id must NOT be valid'
+}
+```
+
+If `allowPrimaryKeysInInput` is set to `true` or left `undefined`:
+
+```
+$ curl -X 'POST' \
+  'http://localhost:3042/pages/' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "id": 42,
+  "title": "Hello Platformatic!",
+  "body": "Welcome to Platformatic!"
+}'
+
+{
+  "id": 42,
+  "title": "Hello Platformatic!",
+  "body": "Welcome to Platformatic"
+}
+```
