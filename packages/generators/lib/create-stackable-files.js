@@ -28,7 +28,7 @@ stackable.configManagerConfig = {
     allErrors: true,
     strict: false
   },
-  transformConfig: async () => {}
+  async transformConfig () {}
 }
 
 // break Fastify encapsulation
@@ -67,7 +67,7 @@ stackable.configManagerConfig = {
     allErrors: true,
     strict: false
   },
-  transformConfig: async () => {}
+  async transformConfig () {}
 }
 
 // break Fastify encapsulation
