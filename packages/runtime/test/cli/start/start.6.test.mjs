@@ -31,5 +31,9 @@ test('does not start if node inspector flags are provided', async (t) => {
 
   assert(found)
 
+  child.kill('SIGKILL')
+
+  // if we do not await this, the test will crash because the event loop has nothing to do
+  // but there is still a promise waiting
   await child.catch(() => {})
 })
