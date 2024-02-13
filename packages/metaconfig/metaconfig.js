@@ -37,6 +37,10 @@ async function analyze (opts) {
   let Handler
   let version
 
+  if (data.module !== undefined) {
+    throw new errors.ModulePropertyExists()
+  }
+
   if (data.$schema.indexOf('./') === 0) {
     // We assume v0.16
     Handler = require('./versions/0.16.0.js')
