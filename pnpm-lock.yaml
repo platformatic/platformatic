@@ -157,9 +157,6 @@ importers:
       fastify:
         specifier: ^4.26.0
         version: 4.26.0
-      glob:
-        specifier: ^10.3.10
-        version: 10.3.10
       license-checker:
         specifier: ^25.0.1
         version: 25.0.1
@@ -218,9 +215,6 @@ importers:
       fastify:
         specifier: ^4.26.0
         version: 4.26.0
-      glob:
-        specifier: ^10.3.10
-        version: 10.3.10
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -463,9 +457,6 @@ importers:
       dedent:
         specifier: ^1.5.1
         version: 1.5.1
-      glob:
-        specifier: ^10.3.10
-        version: 10.3.10
       json-schema-to-typescript:
         specifier: ^13.1.2
         version: 13.1.2
@@ -533,9 +524,6 @@ importers:
       fastify:
         specifier: ^4.26.0
         version: 4.26.0
-      glob:
-        specifier: ^10.3.10
-        version: 10.3.10
       json5:
         specifier: ^2.2.3
         version: 2.2.3
@@ -926,9 +914,6 @@ importers:
       c8:
         specifier: ^9.1.0
         version: 9.1.0
-      glob:
-        specifier: ^10.3.10
-        version: 10.3.10
       json-schema-to-typescript:
         specifier: ^13.1.2
         version: 13.1.2
@@ -1020,9 +1005,6 @@ importers:
       fastify:
         specifier: ^4.26.0
         version: 4.26.0
-      glob:
-        specifier: ^10.3.10
-        version: 10.3.10
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -1106,9 +1088,6 @@ importers:
       fastify:
         specifier: ^4.26.0
         version: 4.26.0
-      glob:
-        specifier: ^10.3.10
-        version: 10.3.10
       license-checker:
         specifier: ^25.0.1
         version: 25.0.1
@@ -1291,9 +1270,6 @@ importers:
       c8:
         specifier: ^9.1.0
         version: 9.1.0
-      glob:
-        specifier: ^10.3.10
-        version: 10.3.10
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -1440,9 +1416,6 @@ importers:
       fast-jwt:
         specifier: ^3.3.3
         version: 3.3.3
-      glob:
-        specifier: ^10.3.10
-        version: 10.3.10
       pino-abstract-transport:
         specifier: ^1.1.0
         version: 1.1.0
@@ -1623,9 +1596,6 @@ importers:
       borp:
         specifier: ^0.9.0
         version: 0.9.1
-      glob:
-        specifier: ^10.3.10
-        version: 10.3.10
       json-schema-to-typescript:
         specifier: ^13.1.2
         version: 13.1.2
@@ -1861,9 +1831,6 @@ importers:
       fastify:
         specifier: ^4.26.0
         version: 4.26.0
-      glob:
-        specifier: ^10.3.10
-        version: 10.3.10
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
