@@ -6,11 +6,11 @@ function getJsStackableStartCli () {
   return `\
 #!/usr/bin/env node
 'use strict'
-  
+
 const stackable = require('../index')
 const { start } = require('@platformatic/service')
 const { printAndExitLoadConfigError } = require('@platformatic/config')
-  
+
 start(stackable, process.argv.splice(2)).catch(printAndExitLoadConfigError)
 `
 }
@@ -32,48 +32,44 @@ function getJsStackableCreateCli (stackableName) {
 'use strict'
 
 const { join } = require('node:path')
-const pino = require('pino')
-const pretty = require('pino-pretty')
-const minimist = require('minimist')
+const { parseArgs } = require('node:util')
 const { Generator } = require('../lib/generator')
-  
+
 async function execute () {
-  const logger = pino(pretty({
-    translateTime: 'SYS:HH:MM:ss',
-    ignore: 'hostname,pid'
-  }))
-  
-  const args = minimist(process.argv.slice(2), {
-    string: ['dir', 'port', 'hostname'],
-    boolean: ['typescript', 'install', 'plugin', 'git'],
-    default: {
-      dir: join(process.cwd(), '${kebabCase(stackableName + '-app')}'),
-      port: 3042,
-      hostname: '0.0.0.0',
-      plugin: true,
-      typescript: false,
-      git: false,
-      install: true
+  const args = parseArgs({
+    args: process.argv.slice(2),
+    options: {
+      dir: {
+        type: 'string',
+        default: join(process.cwd(), '${kebabCase(stackableName + '-app')}')
+      },
+      port: { type: 'string', default: '3042' },
+      hostname: { type: 'string', default: '0.0.0.0' },
+      plugins: { type: 'boolean', default: true },
+      tests: { type: 'boolean', default: true },
+      typescript: { type: 'boolean', default: false },
+      git: { type: 'boolean', default: false },
+      install: { type: 'boolean', default: true }
     }
   })
-  
-  const generator = new Generator({ logger })
-  
+
+  const generator = new Generator()
+
   generator.setConfig({
-    port: args.port,
-    hostname: args.hostname,
-    plugin: args.plugin,
-    tests: args.plugin,
-    typescript: args.typescript,
-    initGitRepository: args.git,
-    targetDirectory: args.dir
+    port: parseInt(args.values.port),
+    hostname: args.values.hostname,
+    plugins: args.values.plugins,
+    tests: args.values.tests,
+    typescript: args.values.typescript,
+    initGitRepository: args.values.git,
+    targetDirectory: args.values.dir
   })
-  
+
   await generator.run()
-  
-  logger.info('Application created successfully! Run \`npm run start\` to start an application.')
+
+  console.log('Application created successfully! Run \`npm run start\` to start an application.')
 }
-  
+
 execute()
 `
 }
@@ -82,46 +78,42 @@ function getTsStackableCreateCli (stackableName) {
   return `\
 #!/usr/bin/env node
 import { join } from 'node:path'
-import pino from 'pino'
-import pretty from 'pino-pretty'
-import minimist from 'minimist'
+import { parseArgs } from 'node:util'
 import { Generator } from '../lib/generator'
 
 async function execute () {
-  const logger = pino(pretty({
-    translateTime: 'SYS:HH:MM:ss',
-    ignore: 'hostname,pid'
-  }))
-
-  const args = minimist(process.argv.slice(2), {
-    string: ['dir', 'port', 'hostname'],
-    boolean: ['typescript', 'install', 'plugin', 'git'],
-    default: {
-      dir: join(process.cwd(), '${kebabCase(stackableName + '-app')}'),
-      port: 3042,
-      hostname: '0.0.0.0',
-      plugin: true,
-      typescript: false,
-      git: false,
-      install: true
+  const args = parseArgs({
+    args: process.argv.slice(2),
+    options: {
+      dir: {
+        type: 'string',
+        default: join(process.cwd(), '${kebabCase(stackableName + '-app')}')
+      },
+      port: { type: 'string', default: '3042' },
+      hostname: { type: 'string', default: '0.0.0.0' },
+      plugins: { type: 'boolean', default: true },
+      tests: { type: 'boolean', default: true },
+      typescript: { type: 'boolean', default: false },
+      git: { type: 'boolean', default: false },
+      install: { type: 'boolean', default: true }
     }
   })
 
-  const generator = new Generator({ logger })
+  const generator = new Generator()
 
   generator.setConfig({
-    port: args.port,
-    hostname: args.hostname,
-    plugin: args.plugin,
-    tests: args.plugin,
-    typescript: args.typescript,
-    initGitRepository: args.git,
-    targetDirectory: args.dir
+    port: parseInt(args.values.port as string),
+    hostname: args.values.hostname,
+    plugins: args.values.plugins,
+    tests: args.values.tests,
+    typescript: args.values.typescript,
+    initGitRepository: args.values.git,
+    targetDirectory: args.values.dir
   })
 
   await generator.run()
 
-  logger.info('Application created successfully! Run \`npm run start\` to start an application.')
+  console.log('Application created successfully! Run \`npm run start\` to start an application.')
 }
 
 execute()
