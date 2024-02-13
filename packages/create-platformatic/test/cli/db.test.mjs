@@ -28,7 +28,7 @@ test('Creates a Platformatic DB service with no migrations', { timeout }, async 
   }, {
     match: 'Where would you like to create your project?',
     do: [keys.ENTER],
-    waitAfter: 5000
+    waitAfter: 8000
   }, {
     match: 'Which kind of project do you want to create?',
     do: [keys.UP, keys.ENTER] // DB

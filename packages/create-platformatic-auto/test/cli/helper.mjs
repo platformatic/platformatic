@@ -70,11 +70,11 @@ export async function executeCreatePlatformatic (dir, actions = [], done = 'All 
 
       // We need this because the prompt prints an introduction before asking anything.
       // If we don't like this, we could use a flag to recognize when the introduction is done
-      await sleep(4000)
+      await sleep(5000)
 
       while (true) {
         if (!expectedQuestion) {
-          await sleep(200)
+          await sleep(500)
           // We processed all expected questions, so now we wait for the process to be done.
           // If the "done" string is not printed, the test will timeout
           if (lastPrompt && lastPrompt.includes(done)) {

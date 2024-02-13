@@ -28,7 +28,7 @@ test('Creates a Platformatic Service with no typescript', { timeout }, async () 
   }, {
     match: 'Where would you like to create your project?',
     do: [keys.ENTER],
-    waitAfter: 5000
+    waitAfter: 8000
   }, {
     match: 'Which kind of project do you want to create?',
     do: [keys.ENTER] // Service
@@ -79,7 +79,7 @@ test('Creates a Platformatic Service with typescript', { timeout }, async () => 
   }, {
     match: 'Where would you like to create your project?',
     do: [keys.ENTER],
-    waitAfter: 5000
+    waitAfter: 8000
   }, {
     match: 'Which kind of project do you want to create?',
     do: [keys.ENTER] // Service
@@ -152,7 +152,7 @@ test('Creates a Platformatic Service in a non empty directory', { timeout, skip:
   }, {
     match: 'Where would you like to create your project?',
     do: [targetDirectory, keys.ENTER],
-    waitAfter: 5000
+    waitAfter: 8000
   }, {
     match: 'Confirm you want to use',
     do: [keys.ENTER] // confirm use existing directory
