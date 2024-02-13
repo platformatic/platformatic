@@ -13,13 +13,14 @@ class ServiceGenerator extends BaseGenerator {
   }
 
   async _beforePrepare () {
-    this.config.env = {
-      PLT_SERVER_HOSTNAME: this.config.hostname,
-      PLT_SERVER_LOGGER_LEVEL: 'info',
-      PORT: 3042,
-      ...this.config.env
-
+    if (!this.config.isRuntimeContext) {
+      this.addEnvVars({
+        PLT_SERVER_HOSTNAME: this.config.hostname,
+        PLT_SERVER_LOGGER_LEVEL: 'info',
+        PORT: 3042
+      })
     }
+
     this.config.dependencies = {
       '@platformatic/service': `^${this.platformaticVersion}`
     }
@@ -66,13 +67,6 @@ declare module 'fastify' {
 }
 `
     this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
-    if (this.config.isRuntimeContext) {
-      // remove env variables that are not for the plugins
-      delete this.config.env.PLT_SERVER_HOSTNAME
-      delete this.config.env.PORT
-      delete this.config.env.PLT_SERVER_LOGGER_LEVEL
-    }
-
     this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
   }
 

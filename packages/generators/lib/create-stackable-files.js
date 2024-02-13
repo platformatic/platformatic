@@ -181,7 +181,7 @@ class ${stackableGeneratorType} extends ServiceGenerator {
       $schema: './stackable.schema.json',
       module: packageJson.name,
       greeting: {
-        text: '{PLT_GREETING_TEXT}'
+        text: \`{\${this.getEnvVarName('PLT_GREETING_TEXT')}}\`
       }
     }
     return Object.assign({}, baseConfig, config)
@@ -190,10 +190,9 @@ class ${stackableGeneratorType} extends ServiceGenerator {
   async _beforePrepare () {
     super._beforePrepare()
 
-    this.config.env = {
-      PLT_GREETING_TEXT: this.config.greeting ?? 'Hello world!',
-      ...this.config.env
-    }
+    this.addEnvVars({
+      PLT_GREETING_TEXT: this.config.greeting ?? 'Hello world!'
+    })
 
     const packageJson = await this.getStackablePackageJson()
 
@@ -290,7 +289,7 @@ class ${stackableGeneratorType} extends ServiceGenerator {
       $schema: './stackable.schema.json',
       module: packageJson.name,
       greeting: {
-        text: '{PLT_GREETING_TEXT}'
+        text: \`{\${this.getEnvVarName('PLT_GREETING_TEXT')}}\`
       }
     }
     return Object.assign({}, baseConfig, config)
@@ -299,10 +298,9 @@ class ${stackableGeneratorType} extends ServiceGenerator {
   async _beforePrepare () {
     super._beforePrepare()
 
-    this.config.env = {
-      PLT_GREETING_TEXT: this.config.greeting ?? 'Hello world!',
-      ...this.config.env
-    }
+    this.addEnvVars({
+      PLT_GREETING_TEXT: this.config.greeting ?? 'Hello world!'
+    })
 
     const packageJson = await this.getStackablePackageJson()
 

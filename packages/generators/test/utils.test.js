@@ -2,7 +2,14 @@
 
 const { test, describe } = require('node:test')
 const assert = require('node:assert')
-const { stripVersion, convertServiceNameToPrefix, addPrefixToEnv, envObjectToString, extractEnvVariablesFromText, getPackageConfigurationObject, addPrefixToString } = require('../lib/utils')
+const {
+  stripVersion,
+  convertServiceNameToPrefix,
+  envObjectToString,
+  extractEnvVariablesFromText,
+  getPackageConfigurationObject,
+  addPrefixToString
+} = require('../lib/utils')
 
 describe('utils', () => {
   describe('stripVersion', async () => {
@@ -30,42 +37,6 @@ describe('utils', () => {
         const converted = convertServiceNameToPrefix(exp[0])
         assert.equal(exp[1], converted)
       })
-    })
-  })
-
-  describe('addPrefixToEnv', () => {
-    test('Should convert env and add prefix, if needed', async (t) => {
-      {
-        const testEnv = {
-          FOO: 'bar',
-          PLT_MY_SERVICE_NAME: 'service',
-          DATABASE_URL: 'foobar',
-          PLT_ANOTHER_VALUE: 'anotherValue'
-        }
-
-        assert.deepEqual(addPrefixToEnv(testEnv, 'MY_SERVICE'), {
-          PLT_MY_SERVICE_FOO: 'bar',
-          PLT_MY_SERVICE_NAME: 'service',
-          PLT_MY_SERVICE_DATABASE_URL: 'foobar',
-          PLT_MY_SERVICE_ANOTHER_VALUE: 'anotherValue'
-        })
-      }
-      {
-        // empty service name, return same env
-        const testEnv = {
-          FOO: 'bar',
-          PLT_MY_SERVICE_NAME: 'service',
-          DATABASE_URL: 'foobar',
-          PLT_ANOTHER_VALUE: 'anotherValue'
-        }
-
-        assert.deepEqual(addPrefixToEnv(testEnv, ''), {
-          FOO: 'bar',
-          PLT_MY_SERVICE_NAME: 'service',
-          DATABASE_URL: 'foobar',
-          PLT_ANOTHER_VALUE: 'anotherValue'
-        })
-      }
     })
   })
 
@@ -176,7 +147,7 @@ describe('utils', () => {
       assert.fail()
     } catch (err) {
       assert.equal(err.code, 'PLT_GEN_WRONG_TYPE')
-      assert.equal(err.message, 'Invalid value type. Accepted values are \'string\', \'number\' and \'boolean\', found \'object\'.')
+      assert.equal(err.message, "Invalid value type. Accepted values are 'string', 'number' and 'boolean', found 'object'.")
     }
   })
 

@@ -46,24 +46,6 @@ function addPrefixToString (input, prefix) {
     return input
   }
 }
-function addPrefixToEnv (env, prefix) {
-  const newEnv = {}
-  if (!prefix) {
-    // return original env
-    return env
-  }
-  const prefixRegExp = new RegExp(`^PLT_${prefix}_`)
-  Object.entries(env).forEach((kv) => {
-    if (!kv[0].match(prefixRegExp)) {
-      // strip PLT_ if needed
-      kv[0] = kv[0].replace(/^PLT_/, '')
-      newEnv[`PLT_${prefix}_${kv[0]}`] = kv[1]
-    } else {
-      newEnv[kv[0]] = kv[1]
-    }
-  })
-  return newEnv
-}
 
 function envObjectToString (env) {
   const output = []
@@ -152,7 +134,6 @@ async function getLatestNpmVersion (pkg) {
 }
 
 module.exports = {
-  addPrefixToEnv,
   addPrefixToString,
   convertServiceNameToPrefix,
   getPackageConfigurationObject,

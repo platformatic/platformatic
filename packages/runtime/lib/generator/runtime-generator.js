@@ -1,3 +1,5 @@
+'use strict'
+
 const { BaseGenerator } = require('@platformatic/generators')
 const { NoEntryPointError, NoServiceNamedError } = require('./errors')
 const generateName = require('boring-name-generator')
@@ -78,12 +80,11 @@ class RuntimeGenerator extends BaseGenerator {
     this.setServicesConfigValues()
     this.addServicesDependencies()
 
-    this.config.env = {
+    this.addEnvVars({
       PLT_SERVER_HOSTNAME: '0.0.0.0',
       PORT: this.config.port || 3042,
-      PLT_SERVER_LOGGER_LEVEL: this.config.logLevel || 'info',
-      ...this.config.env
-    }
+      PLT_SERVER_LOGGER_LEVEL: this.config.logLevel || 'info'
+    })
   }
 
   addServicesDependencies () {
@@ -167,11 +168,11 @@ class RuntimeGenerator extends BaseGenerator {
       throw new NoEntryPointError()
     }
     const servicesEnv = await this.prepareServiceFiles()
-    this.config.env = {
+    this.addEnvVars({
       ...this.config.env,
       ...this.getRuntimeEnv(),
       ...servicesEnv
-    }
+    })
 
     this.addFile({
       path: '',
