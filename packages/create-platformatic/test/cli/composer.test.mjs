@@ -28,7 +28,7 @@ test('Creates a Platformatic Composer', { timeout }, async () => {
   }, {
     match: 'Where would you like to create your project?',
     do: [keys.ENTER],
-    waitAfter: 5000
+    waitAfter: 8000
   }, {
     match: 'Which kind of project do you want to create?',
     do: [keys.UP, keys.UP, keys.ENTER] // Composer
@@ -42,7 +42,7 @@ test('Creates a Platformatic Composer', { timeout }, async () => {
     // NOTE THAT HERE THE DEFAULT OPTION FOR SERVICE IS "YES"
     match: 'Do you want to use TypeScript',
     do: [keys.ENTER], // no
-    waitAfter: 5000
+    waitAfter: 8000
   }, {
     match: 'What port do you want to use?',
     do: [keys.ENTER]
