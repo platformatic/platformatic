@@ -4,7 +4,6 @@ const { readFile } = require('node:fs/promises')
 const {
   stripVersion,
   convertServiceNameToPrefix,
-  addPrefixToEnv,
   extractEnvVariablesFromText,
   getPackageConfigurationObject,
   PLT_ROOT,
@@ -76,7 +75,7 @@ class BaseGenerator extends FileGenerator {
     for (const field of fields) {
       if (shouldHandleConfigField(field)) {
         if (field.var) {
-          this.config.env[field.var] = field.value
+          this.addEnvVar(field.var, field.value)
         }
         if (field.configValue) {
           this.config[field.configValue] = field.value
@@ -89,12 +88,37 @@ class BaseGenerator extends FileGenerator {
     return {}
   }
 
-  setEnv (env) {
-    if (this.config.isRuntimeContext) {
-      this.config.env = addPrefixToEnv(this.config.env, this.config.envPrefix)
-    } else {
-      this.config.env = env
+  getEnvVarName (envVarName) {
+    const envVarPrefix = 'PLT_' + this.config.envPrefix + '_'
+    if (this.config.isRuntimeContext && !envVarName.startsWith(envVarPrefix)) {
+      if (envVarName.startsWith('PLT_')) {
+        return envVarName.replace('PLT_', envVarPrefix)
+      }
+      return envVarPrefix + envVarName
     }
+    return envVarName
+  }
+
+  addEnvVars (envVars) {
+    for (const envVarName of Object.keys(envVars)) {
+      const envVarValue = envVars[envVarName]
+      this.addEnvVar(envVarName, envVarValue)
+    }
+  }
+
+  addEnvVar (envVarName, envVarValue) {
+    envVarName = this.getEnvVarName(envVarName)
+    this.config.env[envVarName] = envVarValue
+  }
+
+  getEnvVar (envVarName) {
+    envVarName = this.getEnvVarName(envVarName)
+    return this.config.env[envVarName]
+  }
+
+  setEnvVars (envVars) {
+    this.config.env = {}
+    this.addEnvVars(envVars)
   }
 
   setConfig (config) {
@@ -116,10 +140,8 @@ class BaseGenerator extends FileGenerator {
       if (this.config.serviceName && !this.config.envPrefix) {
         this.config.envPrefix = convertServiceNameToPrefix(this.config.serviceName)
       }
-
-      // modify env
-      this.config.env = addPrefixToEnv(this.config.env, this.config.envPrefix)
     }
+    this.setEnvVars(this.config.env)
 
     if (this.config.targetDirectory) {
       this.targetDirectory = this.config.targetDirectory
@@ -213,8 +235,8 @@ class BaseGenerator extends FileGenerator {
   checkEnvVariablesInConfigFile () {
     const excludedEnvs = [PLT_ROOT]
     const configFileName = 'platformatic.json'
-    const fileOjbect = this.getFileObject(configFileName)
-    const envVars = extractEnvVariablesFromText(fileOjbect.contents)
+    const fileObject = this.getFileObject(configFileName)
+    const envVars = extractEnvVariablesFromText(fileObject.contents)
     const envKeys = Object.keys(this.config.env)
     if (envVars.length > 0) {
       for (const ev of envVars) {
@@ -298,12 +320,7 @@ class BaseGenerator extends FileGenerator {
           Object.entries(packageConfigOutput.env).forEach((kv) => {
             envForPackages[kv[0]] = kv[1]
           })
-          if (this.config.isRuntimeContext) {
-            this.config.env = {
-              ...this.config.env,
-              ...addPrefixToEnv(envForPackages, this.config.envPrefix)
-            }
-          }
+          this.addEnvVars(envForPackages)
         }
         return {
           name: packageDefinition.name,

@@ -7,8 +7,9 @@ export namespace BaseGenerator {
     inquirer?: object
   }
 
+  export type EnvVarValue = string | number | boolean
   export type Env = {
-    [key: string]: string | number | boolean
+    [key: string]: EnvVarValue
   }
   type KeyValue = {
     [key: string]: string | number | undefined | null | boolean | object
@@ -80,7 +81,12 @@ export namespace BaseGenerator {
     constructor(opts?: BaseGeneratorOptions)
 
     setConfig(config?: BaseGeneratorConfig): void
-    setEnv(env?: Env): void
+    
+    getEnvVarName (envVarName: string): string
+    addEnvVars (envVars: Env): void
+    addEnvVar (envVarName: string, envVarValue: EnvVarValue): void
+    getEnvVar (envVarName: string): EnvVarValue
+    setEnvVars(env?: Env): void
 
     getDefaultConfig(): JSONValue
     getDefaultEnv(): Env

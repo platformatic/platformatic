@@ -53,12 +53,11 @@ describe('generator', () => {
     {
       const dotEnvFile = dbApp.getFileObject('.env')
       assert.equal(dotEnvFile.contents, [
-
         'PLT_SERVER_HOSTNAME=0.0.0.0',
         'PLT_SERVER_LOGGER_LEVEL=info',
-        'PLT_APPLY_MIGRATIONS=true',
         'PORT=3042',
         'DATABASE_URL=sqlite://./db.sqlite',
+        'PLT_APPLY_MIGRATIONS=true',
         ''
       ].join('\n'))
     }

@@ -1,6 +1,6 @@
 'use strict'
 
-const { BaseGenerator, addPrefixToEnv } = require('@platformatic/generators')
+const { BaseGenerator } = require('@platformatic/generators')
 const { join } = require('node:path')
 const { readFile } = require('node:fs/promises')
 
@@ -14,16 +14,13 @@ class ComposerGenerator extends BaseGenerator {
   }
 
   async _getConfigFileContents () {
-    const { envPrefix } = this.config
-    const exampleOriginValue = envPrefix ? `PLT_${envPrefix}_EXAMPLE_ORIGIN` : 'PLT_EXAMPLE_ORIGIN'
-
     const template = {
       $schema: `https://platformatic.dev/schemas/v${this.platformaticVersion}/composer`,
       composer: {
         services: [
           {
             id: 'example',
-            origin: `{${exampleOriginValue}}`,
+            origin: `{${this.getEnvVarName('PLT_EXAMPLE_ORIGIN')}}`,
             openapi: {
               url: '/documentation/json'
             }
@@ -75,28 +72,24 @@ class ComposerGenerator extends BaseGenerator {
   }
 
   async _beforePrepare () {
-    this.config.env = {
-      PLT_SERVER_HOSTNAME: this.config.hostname,
-      PLT_SERVER_LOGGER_LEVEL: 'info',
-      PORT: 3042,
-      PLT_EXAMPLE_ORIGIN: 'http://127.0.0.1:3043',
-      ...this.config.env
-
+    if (!this.config.isRuntimeContext) {
+      this.addEnvVars({
+        PLT_SERVER_HOSTNAME: this.config.hostname,
+        PLT_SERVER_LOGGER_LEVEL: 'info',
+        PORT: 3042
+      })
     }
+
+    this.addEnvVars({
+      PLT_EXAMPLE_ORIGIN: 'http://127.0.0.1:3043'
+    })
+
     this.config.dependencies = {
       '@platformatic/composer': `^${this.platformaticVersion}`
     }
   }
 
   async _afterPrepare () {
-    if (this.config.isRuntimeContext) {
-      // remove env variables since they are all for the config.server property
-      delete this.config.env.PLT_SERVER_HOSTNAME
-      delete this.config.env.PLT_SERVER_LOGGER_LEVEL
-      delete this.config.env.PORT
-      this.config.env = addPrefixToEnv(this.config.env, this.config.envPrefix)
-    }
-
     const GLOBAL_TYPES_TEMPLATE = `
 import { FastifyInstance } from 'fastify'
 import { PlatformaticApp, PlatformaticComposerConfig } from '@platformatic/composer'
@@ -108,7 +101,6 @@ declare module 'fastify' {
 }
 `
     this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
-
     this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
   }
 

@@ -1,6 +1,6 @@
 'use strict'
 
-const { BaseGenerator, generateTests, addPrefixToEnv } = require('@platformatic/generators')
+const { BaseGenerator, generateTests } = require('@platformatic/generators')
 const { jsHelperSqlite, jsHelperMySQL, jsHelperPostgres, moviesTestTS, moviesTestJS } = require('./code-templates')
 const { join } = require('node:path')
 const { readFile } = require('node:fs/promises')
@@ -32,14 +32,13 @@ class DBGenerator extends BaseGenerator {
   }
 
   async _getConfigFileContents () {
-    const { typescript, isRuntimeContext, envPrefix = '', migrations, plugin, types } = this.config
+    const { typescript, isRuntimeContext, migrations, plugin, types } = this.config
     const version = this.platformaticVersion
-    const connectionStringValue = envPrefix ? `PLT_${envPrefix}_DATABASE_URL` : 'DATABASE_URL'
-    const applyMigrationsStringValue = envPrefix ? `PLT_${envPrefix}_APPLY_MIGRATIONS` : 'PLT_APPLY_MIGRATIONS'
+
     const config = {
       $schema: `https://platformatic.dev/schemas/v${version}/db`,
       db: {
-        connectionString: `{${connectionStringValue}}`,
+        connectionString: `{${this.getEnvVarName('DATABASE_URL')}}`,
         graphql: true,
         openapi: true,
         schemalock: true
@@ -62,7 +61,7 @@ class DBGenerator extends BaseGenerator {
     if (migrations) {
       config.migrations = {
         dir: migrations,
-        autoApply: `{${applyMigrationsStringValue}}`
+        autoApply: `{${this.getEnvVarName('PLT_APPLY_MIGRATIONS')}}`
       }
     }
 
@@ -95,22 +94,18 @@ class DBGenerator extends BaseGenerator {
       '@platformatic/db': `^${this.platformaticVersion}`
     }
 
-    if (this.config.isRuntimeContext) {
-      this.config.env = {
-        DATABASE_URL: this.connectionStrings[this.config.database],
-        PLT_APPLY_MIGRATIONS: 'true'
-      }
-      this.config.env = addPrefixToEnv(this.config.env, this.config.envPrefix)
-    } else {
-      this.config.env = {
+    if (!this.config.isRuntimeContext) {
+      this.addEnvVars({
         PLT_SERVER_HOSTNAME: this.config.hostname,
         PLT_SERVER_LOGGER_LEVEL: 'info',
-        PLT_APPLY_MIGRATIONS: 'true',
-        PORT: 3042,
-        DATABASE_URL: this.connectionStrings[this.config.database],
-        ...this.config.env
-      }
+        PORT: 3042
+      })
     }
+
+    this.addEnvVars({
+      DATABASE_URL: this.connectionStrings[this.config.database],
+      PLT_APPLY_MIGRATIONS: 'true'
+    })
   }
 
   async _afterPrepare () {
