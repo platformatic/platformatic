@@ -218,7 +218,7 @@ class ${stackableGeneratorType} extends ServiceGenerator {
   }
 
   async getStackablePackageJson () {
-    if (this._packageJson === null) {
+    if (!this._packageJson) {
       const packageJsonPath = join(__dirname, '..', 'package.json')
       const packageJsonFile = await readFile(packageJsonPath, 'utf8')
       const packageJson = JSON.parse(packageJsonFile)
@@ -327,7 +327,7 @@ class ${stackableGeneratorType} extends ServiceGenerator {
   }
 
   async getStackablePackageJson (): Promise<PackageJson> {
-    if (this._packageJson === null) {
+    if (!this._packageJson) {
       const packageJsonPath = join(__dirname, '..', '..', 'package.json')
       const packageJsonFile = await readFile(packageJsonPath, 'utf8')
       const packageJson = JSON.parse(packageJsonFile)
