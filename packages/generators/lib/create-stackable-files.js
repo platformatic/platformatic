@@ -226,7 +226,7 @@ class ${stackableGeneratorType} extends ServiceGenerator {
       if (!packageJson.name) {
         throw new Error('Missing package name in package.json')
       }
-  
+
       if (!packageJson.version) {
         throw new Error('Missing package version in package.json')
       }
@@ -335,7 +335,7 @@ class ${stackableGeneratorType} extends ServiceGenerator {
       if (!packageJson.name) {
         throw new Error('Missing package name in package.json')
       }
-  
+
       if (!packageJson.version) {
         throw new Error('Missing package version in package.json')
       }

@@ -205,11 +205,7 @@ class StackableGenerator extends FileGenerator {
     const dependencies = {
       '@platformatic/config': `^${this.platformaticVersion}`,
       '@platformatic/service': `^${this.platformaticVersion}`,
-      'json-schema-to-typescript': '^13.0.0',
-      pino: '^8.0.0',
-      'pino-pretty': '^10.0.0',
-      minimist: '^1.2.0',
-      platformatic: `^${this.platformaticVersion}`
+      'json-schema-to-typescript': '^13.0.0'
     }
 
     const devDependencies = {
@@ -237,9 +233,11 @@ class StackableGenerator extends FileGenerator {
           'build:config': 'node ./dist/lib/schema.js | json2ts > config.d.ts',
           clean: 'rm -fr ./dist'
         },
+        engines: {
+          node: '^18.8.0 || >=20.6.0'
+        },
         devDependencies: {
           ...devDependencies,
-          '@types/minimist': '^1.2.5',
           typescript: typescriptVersion,
           ...this.config.devDependencies
         },
@@ -248,8 +246,8 @@ class StackableGenerator extends FileGenerator {
           '@platformatic/generators': `^${this.platformaticVersion}`,
           ...this.config.dependencies
         },
-        engines: {
-          node: '^18.8.0 || >=20.6.0'
+        overrides: {
+          minimatch: '^5.0.0'
         }
       }
     }
@@ -263,18 +261,20 @@ class StackableGenerator extends FileGenerator {
         [startStackableCommand]: './cli/start.js'
       },
       scripts: {
-        'build:config': 'node lib/schema.js | json2ts > config.d.ts'
+        'build:config': 'node lib/schema.js | json2ts > config.d.ts',
+        lint: 'standard'
+      },
+      engines: {
+        node: '^18.8.0 || >=20.6.0'
       },
       devDependencies: {
         ...devDependencies,
+        standard: '^17.0.0',
         ...this.config.devDependencies
       },
       dependencies: {
         ...dependencies,
         ...this.config.dependencies
-      },
-      engines: {
-        node: '^18.8.0 || >=20.6.0'
       }
     }
   }
