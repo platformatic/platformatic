@@ -38,7 +38,8 @@ describe('generator', () => {
         PLT_APPLY_MIGRATIONS: 'true',
         PLT_SERVER_LOGGER_LEVEL: 'info',
         PORT: 3042,
-        DATABASE_URL: 'sqlite://./db.sqlite'
+        DATABASE_URL: 'sqlite://./db.sqlite',
+        PLT_TYPESCRIPT: false
       },
       database: 'sqlite',
       connectionString: 'sqlite://./db.sqlite',
@@ -56,6 +57,7 @@ describe('generator', () => {
         'PLT_SERVER_HOSTNAME=0.0.0.0',
         'PLT_SERVER_LOGGER_LEVEL=info',
         'PORT=3042',
+        'PLT_TYPESCRIPT=false',
         'DATABASE_URL=sqlite://./db.sqlite',
         'PLT_APPLY_MIGRATIONS=true',
         ''
@@ -72,7 +74,10 @@ describe('generator', () => {
 
       const configFile = dbApp.getFileObject('platformatic.json')
       const configFileJson = JSON.parse(configFile.contents)
-      assert.equal(configFileJson.plugins.typescript, true)
+      assert.equal(configFileJson.plugins.typescript, '{PLT_TYPESCRIPT}')
+
+      const dotEnvFile = dbApp.getFileObject('.env')
+      assert.ok(dotEnvFile.contents.includes('PLT_TYPESCRIPT=true'))
     }
 
     {
@@ -376,7 +381,6 @@ declare module 'fastify' {
           {
             path: './routes'
           }
-
         ],
         packages: [
           {
@@ -385,7 +389,8 @@ declare module 'fastify' {
               threshold: 1
             }
           }
-        ]
+        ],
+        typescript: '{PLT_TYPESCRIPT}'
       })
     }
   })

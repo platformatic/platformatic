@@ -32,7 +32,7 @@ class DBGenerator extends BaseGenerator {
   }
 
   async _getConfigFileContents () {
-    const { typescript, isRuntimeContext, migrations, plugin, types } = this.config
+    const { isRuntimeContext, migrations, plugin, types } = this.config
     const version = this.platformaticVersion
 
     const config = {
@@ -72,7 +72,8 @@ class DBGenerator extends BaseGenerator {
           encapsulate: false
         }, {
           path: './routes'
-        }]
+        }],
+        typescript: `{${this.getEnvVarName('PLT_TYPESCRIPT')}}`
       }
     }
 
@@ -80,9 +81,6 @@ class DBGenerator extends BaseGenerator {
       config.types = {
         autogenerate: true
       }
-    }
-    if (typescript === true && config.plugins) {
-      config.plugins.typescript = true
     }
 
     return config
@@ -103,6 +101,7 @@ class DBGenerator extends BaseGenerator {
     }
 
     this.addEnvVars({
+      PLT_TYPESCRIPT: this.config.typescript,
       DATABASE_URL: this.connectionStrings[this.config.database],
       PLT_APPLY_MIGRATIONS: 'true'
     })
