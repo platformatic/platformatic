@@ -5,7 +5,6 @@ const { join } = require('node:path')
 const { test } = require('node:test')
 const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
-// const antani = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
 test('all services have trustProxy = true in server config (except entrypoint)', async (t) => {
