@@ -4,6 +4,7 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { request } = require('undici')
+const { isatty } = require('tty')
 
 const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('..')
@@ -166,16 +167,20 @@ test('should get service config', async (t) => {
   assert.strictEqual(statusCode, 200)
 
   const serviceConfig = await body.json()
+
+  const logger = {}
+  if (isatty(1) && !logger.transport) {
+    logger.transport = {
+      target: 'pino-pretty'
+    }
+  }
+
   assert.deepStrictEqual(serviceConfig, {
     $schema: `https://platformatic.dev/schemas/v${pltVersion}/service`,
     server: {
       hostname: '127.0.0.1',
       port: 0,
-      logger: {
-        transport: {
-          target: 'pino-pretty'
-        }
-      },
+      logger,
       keepAliveTimeout: 5000
     },
     service: { openapi: true },
