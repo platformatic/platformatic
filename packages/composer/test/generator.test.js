@@ -19,7 +19,14 @@ describe('generator', () => {
     await svc.prepare()
     {
       const dotEnvFile = svc.getFileObject('.env')
-      assert.equal(dotEnvFile.contents, 'PLT_SERVER_HOSTNAME=0.0.0.0\nPLT_SERVER_LOGGER_LEVEL=info\nPORT=3042\nPLT_EXAMPLE_ORIGIN=http://127.0.0.1:3043\n')
+      assert.equal(dotEnvFile.contents, [
+        'PLT_SERVER_HOSTNAME=0.0.0.0',
+        'PLT_SERVER_LOGGER_LEVEL=info',
+        'PORT=3042',
+        'PLT_TYPESCRIPT=false',
+        'PLT_EXAMPLE_ORIGIN=http://127.0.0.1:3043',
+        ''
+      ].join('\n'))
     }
 
     {
@@ -32,7 +39,10 @@ describe('generator', () => {
 
       const configFile = svc.getFileObject('platformatic.json')
       const configFileJson = JSON.parse(configFile.contents)
-      assert.equal(configFileJson.plugins.typescript, true)
+      assert.equal(configFileJson.plugins.typescript, '{PLT_TYPESCRIPT}')
+
+      const dotEnvFile = svc.getFileObject('.env')
+      assert.ok(dotEnvFile.contents.includes('PLT_TYPESCRIPT=true'))
     }
   })
 
@@ -92,7 +102,7 @@ declare module 'fastify' {
 
     assert.deepEqual(contents.plugins, {
       paths: [{ path: './plugins', encapsulate: false }, './routes'],
-      typescript: true
+      typescript: '{PLT_TYPESCRIPT}'
     })
   })
 
@@ -180,7 +190,8 @@ declare module 'fastify' {
               threshold: 1
             }
           }
-        ]
+        ],
+        typescript: '{PLT_TYPESCRIPT}'
       })
     }
   })
@@ -208,6 +219,7 @@ declare module 'fastify' {
       assert.deepEqual(svc.config.env, {
         PLT_MY_SERVICE_FOO: 'bar',
         PLT_MY_SERVICE_BAZ: 'baz',
+        PLT_MY_SERVICE_TYPESCRIPT: false,
         PLT_MY_SERVICE_EXAMPLE_ORIGIN: 'http://127.0.0.1:3043'
       })
     })

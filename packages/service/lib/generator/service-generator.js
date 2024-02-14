@@ -21,6 +21,10 @@ class ServiceGenerator extends BaseGenerator {
       })
     }
 
+    this.addEnvVars({
+      PLT_TYPESCRIPT: this.config.typescript
+    })
+
     this.config.dependencies = {
       '@platformatic/service': `^${this.platformaticVersion}`
     }
@@ -71,7 +75,7 @@ declare module 'fastify' {
   }
 
   async _getConfigFileContents () {
-    const { typescript, isRuntimeContext } = this.config
+    const { isRuntimeContext } = this.config
     const version = this.platformaticVersion
     const config = {
       $schema: `https://platformatic.dev/schemas/v${version}/service`,
@@ -85,11 +89,8 @@ declare module 'fastify' {
         paths: [
           { path: './plugins', encapsulate: false },
           './routes'
-        ]
-      }
-
-      if (typescript === true) {
-        config.plugins.typescript = true
+        ],
+        typescript: `{${this.getEnvVarName('PLT_TYPESCRIPT')}}`
       }
     }
 
