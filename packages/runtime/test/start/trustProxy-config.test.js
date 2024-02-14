@@ -17,7 +17,6 @@ test('all services have trustProxy = true in server config (except entrypoint)',
 
   for (const s of services.services) {
     const config = await app.getServiceConfig(s.id)
-    console.log(s.entrypoint, config.server)
     if (s.entrypoint) {
       assert.equal(config.server.trustProxy, undefined)
     } else {
