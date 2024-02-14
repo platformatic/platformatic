@@ -8,6 +8,7 @@ const { Worker } = require('node:worker_threads')
 const closeWithGrace = require('close-with-grace')
 const { start: serviceStart } = require('@platformatic/service')
 const { loadConfig } = require('./load-config')
+const { createDashboard } = require('./dashboard')
 const { parseInspectorOptions, wrapConfigInRuntimeConfig } = require('./config')
 const RuntimeApiClient = require('./api-client.js')
 const { printConfigValidationErrors } = require('@platformatic/config')
@@ -50,6 +51,8 @@ async function startWithConfig (configManager, env = process.env) {
     env
   })
 
+  let dashboard = null
+
   let exited = null
   let isWorkerAlive = true
   worker.on('exit', (code) => {
@@ -57,6 +60,7 @@ async function startWithConfig (configManager, env = process.env) {
     process.exitCode = code
     isWorkerAlive = false
     configManager.fileWatcher?.stopWatching()
+    dashboard?.close()
     if (typeof exited === 'function') {
       exited()
     }
@@ -96,6 +100,12 @@ async function startWithConfig (configManager, env = process.env) {
   await once(worker, 'message') // plt:init
 
   const runtimeApiClient = new RuntimeApiClient(worker)
+
+  if (config.dashboard) {
+    dashboard = await startDashboard(config.dashboard, runtimeApiClient)
+    runtimeApiClient.dashboard = dashboard
+  }
+
   return runtimeApiClient
 }
 
@@ -110,6 +120,23 @@ async function start (args) {
   }
 
   return serviceStart(config.app, args)
+}
+
+async function startDashboard (dashboardConfig, runtimeApiClient) {
+  const { hostname, port, ...config } = dashboardConfig
+
+  try {
+    const dashboard = await createDashboard(config, runtimeApiClient)
+    await dashboard.listen({
+      host: hostname ?? '127.0.0.1',
+      port: port ?? 4042
+    })
+    return dashboard
+  /* c8 ignore next 4 */
+  } catch (err) {
+    console.error(err)
+    process.exit(1)
+  }
 }
 
 async function startCommand (args) {

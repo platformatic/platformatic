@@ -129,6 +129,18 @@ const platformaticRuntimeSchema = {
     },
     $schema: {
       type: 'string'
+    },
+    dashboard: {
+      anyOf: [
+        { type: 'boolean' },
+        {
+          type: 'object',
+          properties: {
+            hostname: { type: 'string' },
+            port: { type: 'number' }
+          }
+        }
+      ]
     }
   },
   anyOf: [

@@ -47,12 +47,13 @@ class RuntimeApi {
     parentPort.on('message', async (message) => {
       const command = message?.command
       if (command) {
-        const res = await this.#executeCommand(message)
-        parentPort.postMessage(res)
-
-        if (command === 'plt:stop-services') {
+        if (command === 'plt:close') {
+          await this.#dispatcher.close()
           process.exit() // Exit the worker thread.
         }
+
+        const res = await this.#executeCommand(message)
+        parentPort.postMessage(res)
         return
       }
       await this.#handleProcessLevelEvent(message)
@@ -134,7 +135,7 @@ class RuntimeApi {
   }
 
   async stopServices () {
-    const stopServiceReqs = [this.#dispatcher.close()]
+    const stopServiceReqs = []
     for (const service of this.#services.values()) {
       const serviceStatus = service.getStatus()
       if (serviceStatus === 'started') {

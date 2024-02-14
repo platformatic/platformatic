@@ -41,6 +41,7 @@ Configuration settings are organized into the following groups:
 - [`telemetry`](#telemetry)
 - [`server`](#server)
 - [`undici`](#undici)
+- [`dashboard`](#dashboard)
 
 Configuration settings containing sensitive data should be set using
 [configuration placeholders](#configuration-placeholders).
@@ -192,6 +193,14 @@ Allowing to configure the options in the agent as well as [interceptors](https:/
     }
   }
   ```
+
+### `dashboard`
+
+An optional object that configures the Platformatic Dashboard. If this object
+is not provided, the Platformatic Dashboard will not be started.
+
+- **`hostname`** (`string`) - The host for the Platformatic Dashboard. Default: `127.0.0.1`.
+- **`port`** (`number`) - The port that the Platformatic Dashboard. Default: `4042`.
 
 ## Environment variable placeholders
 
