@@ -40,7 +40,7 @@ async function platformaticComposer (app) {
   }
   app.register(serviceProxy, config.composer)
   app.register(composerHook)
-  app.register(platformaticService, config)
+  await app.register(platformaticService, config)
 
   if (hasOpenapiServices) {
     await app.register(openapiGenerator, config.composer)

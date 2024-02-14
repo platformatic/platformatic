@@ -32,7 +32,9 @@ module.exports = fp(async function (app, opts) {
           request.proxedCallSpan = span
           return {
             ...telemetryHeaders,
-            ...headers
+            ...headers,
+            'x-forwarded-for': request.ip,
+            'x-forwarded-host': request.hostname
           }
         },
         onResponse: (request, reply, res) => {
