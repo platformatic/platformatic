@@ -50,6 +50,26 @@ async function createManagementApi (config, runtimeApiClient) {
       app.log.debug('stop service', { id })
       await runtimeApiClient.stopService(id)
     })
+
+    app.all('/services/:id/proxy/*', async (request, reply) => {
+      const { id, '*': requestUrl } = request.params
+      app.log.debug('proxy request', { id, requestUrl })
+
+      const injectParams = {
+        method: request.method,
+        url: requestUrl || '/',
+        headers: request.headers,
+        query: request.query,
+        body: request.body
+      }
+
+      const res = await runtimeApiClient.inject(id, injectParams)
+
+      reply
+        .code(res.statusCode)
+        .headers(res.headers)
+        .send(res.body)
+    })
   }, { prefix: '/api' })
 
   return app

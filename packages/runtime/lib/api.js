@@ -270,8 +270,7 @@ class RuntimeApi {
       statusCode: res.statusCode,
       statusMessage: res.statusMessage,
       headers: res.headers,
-      body: res.body,
-      payload: res.payload
+      body: res.body
     }
   }
 }
