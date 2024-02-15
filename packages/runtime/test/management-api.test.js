@@ -3,7 +3,7 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const { request } = require('undici')
+const { Client } = require('undici')
 const { isatty } = require('tty')
 
 const { loadConfig } = require('@platformatic/config')
@@ -15,8 +15,8 @@ const pltVersion = require('../package.json').version
 // Each test runtime app adds own process listeners
 process.setMaxListeners(100)
 
-test('should stop all services with a dashboard api', async (t) => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-dashboard.json')
+test('should stop all services with a management api', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
 
@@ -24,13 +24,17 @@ test('should stop all services with a dashboard api', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await app.dashboard.close()
+    await app.managementApi.close()
   })
 
-  const { address, port } = app.dashboard.server.address()
-  const dashboardOrigin = `http://${address}:${port}`
+  const client = new Client({
+    hostname: 'localhost',
+    protocol: 'http:'
+  }, {
+    socketPath: app.managementApi.server.address()
+  })
 
-  const { statusCode } = await request(dashboardOrigin, {
+  const { statusCode } = await client.request({
     method: 'POST',
     path: '/api/services/stop'
   })
@@ -48,20 +52,24 @@ test('should stop all services with a dashboard api', async (t) => {
   }
 })
 
-test('should start all services with a dashboard api', async (t) => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-dashboard.json')
+test('should start all services with a management api', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
 
   t.after(async () => {
     await app.close()
-    await app.dashboard.close()
+    await app.managementApi.close()
   })
 
-  const { address, port } = app.dashboard.server.address()
-  const dashboardOrigin = `http://${address}:${port}`
+  const client = new Client({
+    hostname: 'localhost',
+    protocol: 'http:'
+  }, {
+    socketPath: app.managementApi.server.address()
+  })
 
-  const { statusCode } = await request(dashboardOrigin, {
+  const { statusCode } = await client.request({
     method: 'POST',
     path: '/api/services/start'
   })
@@ -79,8 +87,8 @@ test('should start all services with a dashboard api', async (t) => {
   }
 })
 
-test('should restart all services with a dashboard api', async (t) => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-dashboard.json')
+test('should restart all services with a management api', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
 
@@ -88,13 +96,17 @@ test('should restart all services with a dashboard api', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await app.dashboard.close()
+    await app.managementApi.close()
   })
 
-  const { address, port } = app.dashboard.server.address()
-  const dashboardOrigin = `http://${address}:${port}`
+  const client = new Client({
+    hostname: 'localhost',
+    protocol: 'http:'
+  }, {
+    socketPath: app.managementApi.server.address()
+  })
 
-  const { statusCode } = await request(dashboardOrigin, {
+  const { statusCode } = await client.request({
     method: 'POST',
     path: '/api/services/restart'
   })
@@ -113,7 +125,7 @@ test('should restart all services with a dashboard api', async (t) => {
 })
 
 test('should get service details', async (t) => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-dashboard.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
 
@@ -121,13 +133,17 @@ test('should get service details', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await app.dashboard.close()
+    await app.managementApi.close()
   })
 
-  const { address, port } = app.dashboard.server.address()
-  const dashboardOrigin = `http://${address}:${port}`
+  const client = new Client({
+    hostname: 'localhost',
+    protocol: 'http:'
+  }, {
+    socketPath: app.managementApi.server.address()
+  })
 
-  const { statusCode, body } = await request(dashboardOrigin, {
+  const { statusCode, body } = await client.request({
     method: 'GET',
     path: '/api/services/with-logger'
   })
@@ -145,7 +161,7 @@ test('should get service details', async (t) => {
 })
 
 test('should get service config', async (t) => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-dashboard.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
 
@@ -153,13 +169,17 @@ test('should get service config', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await app.dashboard.close()
+    await app.managementApi.close()
   })
 
-  const { address, port } = app.dashboard.server.address()
-  const dashboardOrigin = `http://${address}:${port}`
+  const client = new Client({
+    hostname: 'localhost',
+    protocol: 'http:'
+  }, {
+    socketPath: app.managementApi.server.address()
+  })
 
-  const { statusCode, body } = await request(dashboardOrigin, {
+  const { statusCode, body } = await client.request({
     method: 'GET',
     path: '/api/services/with-logger/config'
   })
@@ -196,7 +216,7 @@ test('should get service config', async (t) => {
 })
 
 test('should get services topology', async (t) => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-dashboard.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
 
@@ -204,13 +224,17 @@ test('should get services topology', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await app.dashboard.close()
+    await app.managementApi.close()
   })
 
-  const { address, port } = app.dashboard.server.address()
-  const dashboardOrigin = `http://${address}:${port}`
+  const client = new Client({
+    hostname: 'localhost',
+    protocol: 'http:'
+  }, {
+    socketPath: app.managementApi.server.address()
+  })
 
-  const { statusCode, body } = await request(dashboardOrigin, {
+  const { statusCode, body } = await client.request({
     method: 'GET',
     path: '/api/services'
   })
@@ -261,7 +285,7 @@ test('should get services topology', async (t) => {
 })
 
 test('should stop service by service id', async (t) => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-dashboard.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
 
@@ -269,7 +293,7 @@ test('should stop service by service id', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await app.dashboard.close()
+    await app.managementApi.close()
   })
 
   {
@@ -277,10 +301,14 @@ test('should stop service by service id', async (t) => {
     assert.strictEqual(serviceDetails.status, 'started')
   }
 
-  const { address, port } = app.dashboard.server.address()
-  const dashboardOrigin = `http://${address}:${port}`
+  const client = new Client({
+    hostname: 'localhost',
+    protocol: 'http:'
+  }, {
+    socketPath: app.managementApi.server.address()
+  })
 
-  const { statusCode } = await request(dashboardOrigin, {
+  const { statusCode } = await client.request({
     method: 'POST',
     path: '/api/services/with-logger/stop'
   })
@@ -294,7 +322,7 @@ test('should stop service by service id', async (t) => {
 })
 
 test('should start stopped service by service id', async (t) => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-dashboard.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
 
@@ -302,7 +330,7 @@ test('should start stopped service by service id', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await app.dashboard.close()
+    await app.managementApi.close()
   })
 
   await app.stopService('with-logger')
@@ -312,10 +340,14 @@ test('should start stopped service by service id', async (t) => {
     assert.strictEqual(serviceDetails.status, 'stopped')
   }
 
-  const { address, port } = app.dashboard.server.address()
-  const dashboardOrigin = `http://${address}:${port}`
+  const client = new Client({
+    hostname: 'localhost',
+    protocol: 'http:'
+  }, {
+    socketPath: app.managementApi.server.address()
+  })
 
-  const { statusCode } = await request(dashboardOrigin, {
+  const { statusCode } = await client.request({
     method: 'POST',
     path: '/api/services/with-logger/start'
   })
@@ -326,31 +358,4 @@ test('should start stopped service by service id', async (t) => {
     const serviceDetails = await app.getServiceDetails('with-logger')
     assert.strictEqual(serviceDetails.status, 'started')
   }
-})
-
-test('should start dashboard with default options', async (t) => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-dashboard.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-
-  config.configManager.current.dashboard = true
-  const app = await buildServer(config.configManager.current)
-
-  await app.start()
-
-  t.after(async () => {
-    await app.close()
-    await app.dashboard.close()
-  })
-
-  await app.stopService('with-logger')
-
-  {
-    const serviceDetails = await app.getServiceDetails('with-logger')
-    assert.strictEqual(serviceDetails.status, 'stopped')
-  }
-
-  const { address, port } = app.dashboard.server.address()
-
-  assert.strictEqual(address, '127.0.0.1')
-  assert.strictEqual(port, 4042)
 })

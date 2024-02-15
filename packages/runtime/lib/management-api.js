@@ -3,8 +3,8 @@
 const fastify = require('fastify')
 const { isatty } = require('tty')
 
-async function createDashboard (config, runtimeApiClient) {
-  addDashboardLogger(config)
+async function createManagementApi (config, runtimeApiClient) {
+  addManagementApiLogger(config)
   const app = fastify(config)
 
   app.register(async (app) => {
@@ -55,12 +55,12 @@ async function createDashboard (config, runtimeApiClient) {
   return app
 }
 
-function addDashboardLogger (config) {
+function addManagementApiLogger (config) {
   let logger = config.logger
   if (!logger) {
     config.logger = {
       level: 'info',
-      name: 'dashboard'
+      name: 'management-api'
     }
     logger = config.logger
   }
@@ -73,4 +73,4 @@ function addDashboardLogger (config) {
   }
 }
 
-module.exports = { createDashboard }
+module.exports = { createManagementApi }
