@@ -211,6 +211,9 @@ test('should get service config', async (t) => {
     },
     watch: {
       enabled: false
+    },
+    metrics: {
+      server: 'parent'
     }
   })
 })
@@ -388,4 +391,34 @@ test('should proxy request to the service', async (t) => {
 
   const data = await body.json()
   assert.deepStrictEqual(data, { hello: 'plugin1' })
+})
+
+test('should get service metrics via runtime management api proxy', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+    await app.managementApi.close()
+  })
+
+  const client = new Client({
+    hostname: 'localhost',
+    protocol: 'http:'
+  }, {
+    socketPath: app.managementApi.server.address()
+  })
+
+  const { statusCode, body } = await client.request({
+    method: 'GET',
+    path: '/api/services/with-logger/proxy/metrics'
+  })
+
+  assert.strictEqual(statusCode, 200)
+
+  const data = await body.text()
+  assert.ok(data)
 })

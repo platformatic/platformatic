@@ -23,7 +23,6 @@ test('should get service config', async (t) => {
 
   delete serviceConfig.$schema
 
-  // TODO: should return correct logger config
   assert.deepStrictEqual(serviceConfig, {
     server: {
       hostname: '127.0.0.1',
@@ -39,6 +38,9 @@ test('should get service config', async (t) => {
     },
     watch: {
       enabled: false
+    },
+    metrics: {
+      server: 'parent'
     }
   })
 })

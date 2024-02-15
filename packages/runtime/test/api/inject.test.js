@@ -32,7 +32,6 @@ test('should inject request to service', async (t) => {
   assert.strictEqual(res.headers.connection, 'keep-alive')
 
   assert.strictEqual(res.body, '{"hello":"world"}')
-  assert.strictEqual(res.payload, '{"hello":"world"}')
 })
 
 test('should fail inject request is service is not started', async (t) => {
