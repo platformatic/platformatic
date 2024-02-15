@@ -67,3 +67,7 @@ of `http://awesome.plt.local`. The `fastify-undici-dispatcher` module maps that
 domain to the Fastify server running the `awesome` microservice. Any Node.js
 APIs based on Undici, such as `fetch()`, will then automatically route requests
 addressed to `awesome.plt.local` to the corresponding Fastify server.
+
+# TrustProxy
+
+For each service in the runtime **except the entrypoint**, Platformatic will set the Fastify's `trustProxy` option to true. This will change the ip/hostname in the request object to match the one coming from the entrypoint, rather than the internal `xyz.plt.local` name. Visit [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#trustproxy) for more details
