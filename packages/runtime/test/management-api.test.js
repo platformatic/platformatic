@@ -10,10 +10,47 @@ const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('..')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
-const pltVersion = require('../package.json').version
+const platformaticVersion = require('../package.json').version
 
 // Each test runtime app adds own process listeners
 process.setMaxListeners(100)
+
+test('should get the runtime metadata', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+    await app.managementApi.close()
+  })
+
+  const client = new Client({
+    hostname: 'localhost',
+    protocol: 'http:'
+  }, {
+    socketPath: app.managementApi.server.address()
+  })
+
+  const { statusCode, body } = await client.request({
+    method: 'GET',
+    path: '/api/metadata'
+  })
+
+  assert.strictEqual(statusCode, 200)
+
+  const metadata = await body.json()
+  assert.deepStrictEqual(metadata, {
+    pid: process.pid,
+    cwd: process.cwd(),
+    release: process.release,
+    execPath: process.execPath,
+    nodeVersion: process.version,
+    platformaticVersion
+  })
+})
 
 test('should stop all services with a management api', async (t) => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
@@ -196,7 +233,7 @@ test('should get service config', async (t) => {
   }
 
   assert.deepStrictEqual(serviceConfig, {
-    $schema: `https://platformatic.dev/schemas/v${pltVersion}/service`,
+    $schema: `https://platformatic.dev/schemas/v${platformaticVersion}/service`,
     server: {
       hostname: '127.0.0.1',
       port: 0,

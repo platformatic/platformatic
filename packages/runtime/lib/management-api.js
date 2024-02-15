@@ -2,12 +2,24 @@
 
 const fastify = require('fastify')
 const { isatty } = require('tty')
+const platformaticVersion = require('../package.json').version
 
 async function createManagementApi (config, runtimeApiClient) {
   addManagementApiLogger(config)
   const app = fastify(config)
 
   app.register(async (app) => {
+    app.get('/metadata', async () => {
+      return {
+        pid: process.pid,
+        cwd: process.cwd(),
+        release: process.release,
+        execPath: process.execPath,
+        nodeVersion: process.version,
+        platformaticVersion
+      }
+    })
+
     app.get('/services', async () => {
       return runtimeApiClient.getServices()
     })
