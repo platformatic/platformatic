@@ -6,7 +6,7 @@ const { request } = require('undici')
 const {
   createComposer,
   createOpenApiService
-} = require('.. /helper')
+} = require('../helper')
 
 test('should expose x-forwarded-* headers', async (t) => {
   const service1 = await createOpenApiService(t, ['users'], { addHeadersSchema: true })
