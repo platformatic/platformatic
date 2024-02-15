@@ -8,7 +8,6 @@ const {
   createOpenApiService
 } = require('.. /helper')
 
-
 test('should expose x-forwarded-* headers', async (t) => {
   const service1 = await createOpenApiService(t, ['users'], { addHeadersSchema: true })
 
@@ -45,5 +44,4 @@ test('should expose x-forwarded-* headers', async (t) => {
   const [expectedForwardedFor] = expectedForwardedHost.split(':')
   assert.equal(returnedHeaders['x-forwarded-host'], expectedForwardedHost)
   assert.equal(returnedHeaders['x-forwarded-for'], expectedForwardedFor)
-
 })
