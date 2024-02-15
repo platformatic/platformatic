@@ -49,6 +49,7 @@ async function setupOpenAPI (app, opts) {
   app.register(ScalarApiReference, {
     ...opts,
     logLevel: 'warn',
+    prefix: undefined,
     routePrefix,
     configuration: {
       customCss: scalarTheme.theme

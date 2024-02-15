@@ -764,6 +764,13 @@ test('expose the api with a prefix, if defined', async (t) => {
     const snapshot = await snap(json)
     same(json, snapshot)
   }
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/documentation'
+    })
+    equal(res.statusCode, 200, 'GET /documentation status code')
+  }
 })
 
 test('JSON type', { skip: !(isPg || isMysql8) }, async (t) => {
