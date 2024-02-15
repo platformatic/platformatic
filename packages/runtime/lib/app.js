@@ -103,6 +103,16 @@ class PlatformaticApp {
       })
     }
 
+    if (!this.appConfig.entrypoint) {
+      configManager.update({
+        ...configManager.current,
+        server: {
+          ...(configManager.current.server || {}),
+          trustProxy: true
+        }
+      })
+    }
+
     const config = configManager.current
 
     this.#setuplogger(configManager)

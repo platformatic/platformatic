@@ -90,7 +90,7 @@ async function createBasicService (t) {
   return app
 }
 
-async function createOpenApiService (t, entitiesNames = []) {
+async function createOpenApiService (t, entitiesNames = [], options = {}) {
   const app = fastify({
     logger: false,
     keepAliveTimeout: 10,
@@ -109,6 +109,13 @@ async function createOpenApiService (t, entitiesNames = []) {
   /** Serve spec file in yaml and json */
   app.get('/documentation/json', { schema: { hide: true } }, async () => app.swagger())
   app.get('/documentation/yaml', { schema: { hide: true } }, async () => app.swagger({ yaml: true }))
+
+  if (options.addHeadersSchema) {
+    // sample route to return headers
+    app.get('/headers', async (req, res) => {
+      return { ...req.headers }
+    })
+  }
 
   app.decorate('getOpenApiSchema', async () => {
     const { body } = await app.inject({
