@@ -41,7 +41,7 @@ Configuration settings are organized into the following groups:
 - [`telemetry`](#telemetry)
 - [`server`](#server)
 - [`undici`](#undici)
-- [`dashboard`](#dashboard)
+- [`managementApi`](#managementapi)
 
 Configuration settings containing sensitive data should be set using
 [configuration placeholders](#configuration-placeholders).
@@ -194,13 +194,22 @@ Allowing to configure the options in the agent as well as [interceptors](https:/
   }
   ```
 
-### `dashboard`
+### `managementApi`
 
-An optional object that configures the Platformatic Dashboard. If this object
-is not provided, the Platformatic Dashboard will not be started.
+An optional object that configures the Platformatic Management Api. If this object
+is not provided, the Platformatic Management Api will not be started. The options are
+passed directly to the Fastify server.
 
-- **`hostname`** (`string`) - The host for the Platformatic Dashboard. Default: `127.0.0.1`.
-- **`port`** (`number`) - The port that the Platformatic Dashboard. Default: `4042`.
+  _Example_
+
+  ```json
+  {
+    "managementApi": {
+      "logger": true,
+      "trustProxy": true
+    }
+  }
+  ```
 
 ## Environment variable placeholders
 
