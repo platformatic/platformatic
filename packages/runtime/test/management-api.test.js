@@ -45,7 +45,6 @@ test('should get the runtime metadata', async (t) => {
   assert.deepStrictEqual(metadata, {
     pid: process.pid,
     cwd: process.cwd(),
-    release: process.release,
     execPath: process.execPath,
     nodeVersion: process.version,
     platformaticVersion

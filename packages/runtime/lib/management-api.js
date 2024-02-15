@@ -13,7 +13,6 @@ async function createManagementApi (config, runtimeApiClient) {
       return {
         pid: process.pid,
         cwd: process.cwd(),
-        release: process.release,
         execPath: process.execPath,
         nodeVersion: process.version,
         platformaticVersion
