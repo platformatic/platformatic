@@ -116,7 +116,12 @@ async function composeOpenAPI (app, opts) {
             // - request.span: the span of the request to the proxy
             // - request.proxedCallSpan: the span of the request to the proxied service
             request.proxedCallSpan = span
-            return { ...headers, ...telemetryHeaders }
+            return {
+              ...headers,
+              ...telemetryHeaders,
+              'x-forwarded-for': request.ip,
+              'x-forwarded-host': request.hostname
+            }
           }
           replyOptions.onResponse = onResponse
           replyOptions.rewriteRequestHeaders = rewriteRequestHeaders
