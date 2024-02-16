@@ -114,7 +114,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
       interfaces.writeLine('\'body\': T;')
     })
     interfaces.blankLine()
-    writer.write(`export interface ${capitalizedName}`).block(() => {
+    writer.write(`export type ${capitalizedName} =`).block(() => {
       writeOperations(interfaces, writer, operations, {
         fullRequest, fullResponse, optionalHeaders, schema
       })

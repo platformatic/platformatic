@@ -892,7 +892,7 @@ test('openapi client generation (javascript) from file with fullRequest, fullRes
   }
 `), true)
     equal(data.includes(`
-  export interface Full {
+  export type Full = {
     postHello(req?: PostHelloRequest): Promise<PostHelloResponses>;
   }`), true)
     const implementationFile = join(dir, 'full', 'full.cjs')
@@ -960,7 +960,7 @@ test('do not generate implementation file if in platformatic service', async (t)
   }
 `), true)
     equal(data.includes(`
-  export interface Full {
+  export type Full = {
     postHello(req?: PostHelloRequest): Promise<PostHelloResponses>;
   }`), true)
   }

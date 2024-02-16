@@ -28,7 +28,7 @@ test('generates only types in target folder with --types-only flag', async (t) =
   match(fileContents, /'body': T;/)
   match(fileContents, /export type GetMoviesRequest = {/)
   match(fileContents, /export type GetMoviesResponseOK = Array/)
-  match(fileContents, /export interface Movies {/)
+  match(fileContents, /export type Movies = {/)
 })
 
 test('openapi client generation (javascript)', async (t) => {
