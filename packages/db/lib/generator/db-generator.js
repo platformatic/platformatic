@@ -93,18 +93,18 @@ class DBGenerator extends BaseGenerator {
     }
 
     if (!this.config.isRuntimeContext) {
-      this.addDefaultEnvVars({
+      this.addEnvVars({
         PLT_SERVER_HOSTNAME: this.config.hostname,
         PLT_SERVER_LOGGER_LEVEL: 'info',
         PORT: 3042
-      })
+      }, { overwrite: false })
     }
 
-    this.addDefaultEnvVars({
+    this.addEnvVars({
       PLT_TYPESCRIPT: this.config.typescript,
       DATABASE_URL: this.connectionStrings[this.config.database],
       PLT_APPLY_MIGRATIONS: 'true'
-    })
+    }, { overwrite: false })
   }
 
   async _afterPrepare () {

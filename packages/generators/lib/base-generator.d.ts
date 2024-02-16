@@ -62,13 +62,18 @@ export namespace BaseGenerator {
     default: string
     type: 'number' | 'string' | 'boolean' | 'path'
     configValue?: 'string'
-
   }
+
   type ConfigField = {
     var: string
     configValue?: 'string'
     value: 'string'
   }
+
+  type AddEnvVarOptions = {
+    overwrite: boolean
+  }
+
   export class BaseGenerator extends FileGenerator.FileGenerator {
     logger: BaseLogger
     platformaticVersion: string
@@ -83,10 +88,8 @@ export namespace BaseGenerator {
     setConfig(config?: BaseGeneratorConfig): void
     
     getEnvVarName (envVarName: string): string
-    addEnvVars (envVars: Env): void
-    addDefaultEnvVars (envVars: Env): void
-    addEnvVar (envVarName: string, envVarValue: EnvVarValue): void
-    addDefaultEnvVar (envVarName: string, envVarValue: EnvVarValue): void
+    addEnvVars (envVars: Env, opts: AddEnvVarOptions): void
+    addEnvVar (envVarName: string, envVarValue: EnvVarValue, opts: AddEnvVarOptions): void
     getEnvVar (envVarName: string): EnvVarValue
     setEnvVars(env?: Env): void
 
