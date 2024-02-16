@@ -80,7 +80,7 @@ class RuntimeGenerator extends BaseGenerator {
     this.setServicesConfigValues()
     this.addServicesDependencies()
 
-    this.addEnvVars({
+    this.addDefaultEnvVars({
       PLT_SERVER_HOSTNAME: '0.0.0.0',
       PORT: this.config.port || 3042,
       PLT_SERVER_LOGGER_LEVEL: this.config.logLevel || 'info'

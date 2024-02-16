@@ -190,7 +190,7 @@ class ${stackableGeneratorType} extends ServiceGenerator {
   async _beforePrepare () {
     super._beforePrepare()
 
-    this.addEnvVars({
+    this.addDefaultEnvVars({
       PLT_GREETING_TEXT: this.config.greeting ?? 'Hello world!'
     })
 
@@ -298,7 +298,7 @@ class ${stackableGeneratorType} extends ServiceGenerator {
   async _beforePrepare () {
     super._beforePrepare()
 
-    this.addEnvVars({
+    this.addDefaultEnvVars({
       PLT_GREETING_TEXT: this.config.greeting ?? 'Hello world!'
     })
 

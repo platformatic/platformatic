@@ -72,14 +72,14 @@ class ComposerGenerator extends BaseGenerator {
 
   async _beforePrepare () {
     if (!this.config.isRuntimeContext) {
-      this.addEnvVars({
+      this.addDefaultEnvVars({
         PLT_SERVER_HOSTNAME: this.config.hostname,
         PLT_SERVER_LOGGER_LEVEL: 'info',
         PORT: 3042
       })
     }
 
-    this.addEnvVars({
+    this.addDefaultEnvVars({
       PLT_TYPESCRIPT: this.config.typescript,
       PLT_EXAMPLE_ORIGIN: 'http://127.0.0.1:3043'
     })

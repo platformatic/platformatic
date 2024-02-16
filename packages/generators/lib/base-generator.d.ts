@@ -84,7 +84,9 @@ export namespace BaseGenerator {
     
     getEnvVarName (envVarName: string): string
     addEnvVars (envVars: Env): void
+    addDefaultEnvVars (envVars: Env): void
     addEnvVar (envVarName: string, envVarValue: EnvVarValue): void
+    addDefaultEnvVar (envVarName: string, envVarValue: EnvVarValue): void
     getEnvVar (envVarName: string): EnvVarValue
     setEnvVars(env?: Env): void
 
