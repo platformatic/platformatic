@@ -200,7 +200,7 @@ Allowing to configure the options in the agent as well as [interceptors](https:/
 
 An optional object that configures the Platformatic Management Api. If this object
 is not provided, the Platformatic Management Api will not be started. The options are
-passed directly to the Fastify server.
+passed directly to the Fastify server that backs the Management API. If enabled, it will listen to UNIX Socket/Windows named pipe located at `platformatic/pids/<PID>` inside the OS temporary folder.
 
   _Example_
 
