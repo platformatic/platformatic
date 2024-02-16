@@ -41,7 +41,7 @@ Configuration settings are organized into the following groups:
 - [`telemetry`](#telemetry)
 - [`server`](#server)
 - [`undici`](#undici)
-- [`managementApi`](#managementapi)
+- [`managementApi`](#managementapi(experimantal)) **(experimental)**
 
 Configuration settings containing sensitive data should be set using
 [configuration placeholders](#configuration-placeholders).
@@ -195,6 +195,8 @@ Allowing to configure the options in the agent as well as [interceptors](https:/
   ```
 
 ### `managementApi`
+
+> **Warning:** Experimental. The feature is not subject to semantic versioning rules. Non-backward compatible changes or removal may occur in any future release. Use of the feature is not recommended in production environments.
 
 An optional object that configures the Platformatic Management Api. If this object
 is not provided, the Platformatic Management Api will not be started. The options are
