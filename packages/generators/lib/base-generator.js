@@ -99,16 +99,19 @@ class BaseGenerator extends FileGenerator {
     return envVarName
   }
 
-  addEnvVars (envVars) {
+  addEnvVars (envVars, opts = {}) {
     for (const envVarName of Object.keys(envVars)) {
       const envVarValue = envVars[envVarName]
-      this.addEnvVar(envVarName, envVarValue)
+      this.addEnvVar(envVarName, envVarValue, opts)
     }
   }
 
-  addEnvVar (envVarName, envVarValue) {
+  addEnvVar (envVarName, envVarValue, opts = {}) {
+    opts.overwrite ??= true
     envVarName = this.getEnvVarName(envVarName)
-    this.config.env[envVarName] = envVarValue
+    if (opts.overwrite || !this.config.env[envVarName]) {
+      this.config.env[envVarName] = envVarValue
+    }
   }
 
   getEnvVar (envVarName) {

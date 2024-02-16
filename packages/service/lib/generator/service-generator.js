@@ -18,12 +18,12 @@ class ServiceGenerator extends BaseGenerator {
         PLT_SERVER_HOSTNAME: this.config.hostname,
         PLT_SERVER_LOGGER_LEVEL: 'info',
         PORT: 3042
-      })
+      }, { overwrite: false })
     }
 
     this.addEnvVars({
       PLT_TYPESCRIPT: this.config.typescript
-    })
+    }, { overwrite: false })
 
     this.config.dependencies = {
       '@platformatic/service': `^${this.platformaticVersion}`
