@@ -1716,8 +1716,8 @@ importers:
         version: 13.3.3(graphql@16.8.1)
     devDependencies:
       '@matteo.collina/snap':
-        specifier: ^0.1.1
-        version: 0.1.2
+        specifier: ^0.2.0
+        version: 0.2.1
       '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
@@ -1875,8 +1875,8 @@ importers:
         version: 2.1.0
     devDependencies:
       '@matteo.collina/snap':
-        specifier: ^0.1.1
-        version: 0.1.2
+        specifier: ^0.2.0
+        version: 0.2.1
       '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
@@ -2957,8 +2957,8 @@ packages:
     resolution: {integrity: sha512-9I2Zn6+NJLfaGoz9jN3lpwDgAYvfGeNYdbAIjJOqzs4Tpc+VU3Jqq4IofSUBKajiDS8k9fZIg18/z13mpk1bsA==}
     engines: {node: '>=8'}
 
-  /@matteo.collina/snap@0.1.2:
-    resolution: {integrity: sha512-lC0z5rukWaUaCZwpek2+yR8tk/dvM3IF1tzeQncARduKwJ7nkR644rOWALje1EGJz4qCSh+fBhNSH+mnV4wcLg==}
+  /@matteo.collina/snap@0.2.1:
+    resolution: {integrity: sha512-rXCDKwOhAHzjmHUxEjKcmhvuhzF6gY0JWhpol9lTA+n5V1yTrbKNHNCe5ovxZjPw25PusmIEbYBIswC3ZUjhNQ==}
     dependencies:
       find-up: 7.0.0
       slash: 5.1.0
