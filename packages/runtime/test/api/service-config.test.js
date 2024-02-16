@@ -28,7 +28,9 @@ test('should get service config', async (t) => {
       hostname: '127.0.0.1',
       port: 0,
       logger: {},
-      keepAliveTimeout: 5000
+      keepAliveTimeout: 5000,
+      trustProxy: true
+
     },
     service: { openapi: true },
     plugins: {

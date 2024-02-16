@@ -52,12 +52,11 @@ class ComposerGenerator extends BaseGenerator {
             encapsulate: false
           },
           './routes'
-        ]
+        ],
+        typescript: `{${this.getEnvVarName('PLT_TYPESCRIPT')}}`
       }
     }
-    if (this.config.typescript === true) {
-      template.plugins.typescript = true
-    }
+
     if (!this.config.isRuntimeContext) {
       template.server = {
         hostname: '{PLT_SERVER_HOSTNAME}',
@@ -81,6 +80,7 @@ class ComposerGenerator extends BaseGenerator {
     }
 
     this.addEnvVars({
+      PLT_TYPESCRIPT: this.config.typescript,
       PLT_EXAMPLE_ORIGIN: 'http://127.0.0.1:3043'
     })
 

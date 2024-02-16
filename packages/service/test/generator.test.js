@@ -22,7 +22,13 @@ describe('generator', () => {
     await svc.prepare()
     {
       const dotEnvFile = svc.getFileObject('.env')
-      assert.equal(dotEnvFile.contents, 'PLT_SERVER_HOSTNAME=0.0.0.0\nPLT_SERVER_LOGGER_LEVEL=info\nPORT=3042\n')
+      const expectedDotEnvFile =
+        'PLT_SERVER_HOSTNAME=0.0.0.0\n' +
+        'PLT_SERVER_LOGGER_LEVEL=info\n' +
+        'PORT=3042\n' +
+        'PLT_TYPESCRIPT=false\n'
+
+      assert.equal(dotEnvFile.contents, expectedDotEnvFile)
     }
 
     {
@@ -35,7 +41,7 @@ describe('generator', () => {
 
       const configFile = svc.getFileObject('platformatic.json')
       const configFileJson = JSON.parse(configFile.contents)
-      assert.equal(configFileJson.plugins.typescript, true)
+      assert.equal(configFileJson.plugins.typescript, '{PLT_TYPESCRIPT}')
     }
   })
 
@@ -82,7 +88,7 @@ describe('generator', () => {
 
     assert.deepEqual(contents.plugins, {
       paths: [{ path: './plugins', encapsulate: false }, './routes'],
-      typescript: true
+      typescript: '{PLT_TYPESCRIPT}'
     })
   })
 
@@ -163,6 +169,7 @@ describe('generator', () => {
           },
           './routes'
         ],
+        typescript: '{PLT_TYPESCRIPT}',
         packages: [
           {
             name: '@fastify/compress',
@@ -265,7 +272,8 @@ describe('generator', () => {
       assert.equal(null, svc.getFileObject('.env'))
       assert.deepEqual(svc.config.env, {
         PLT_MY_SERVICE_FOO: 'bar',
-        PLT_MY_SERVICE_BAZ: 'baz'
+        PLT_MY_SERVICE_BAZ: 'baz',
+        PLT_MY_SERVICE_TYPESCRIPT: false
       })
     })
 

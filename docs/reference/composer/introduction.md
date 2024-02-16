@@ -11,6 +11,7 @@ services APIs into a single API.
 - [Reverse proxy](/reference/composer/configuration.md#composer) for composed services
 - Add custom functionality in a [Fastify plugin](/reference/composer/plugin.md)
 - Write plugins in JavaScript or [TypeScript](/reference/cli.md#compile)
+- Add `x-forwarded-for` and `x-forwarded-host` header for each internal request
 
 ## Issues
 
