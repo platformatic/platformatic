@@ -16,5 +16,8 @@
       "plugin.js"
     ]
   },
-  "watch": true
+  "watch": true,
+  "metrics": {
+    "server": "parent"
+  }
 }

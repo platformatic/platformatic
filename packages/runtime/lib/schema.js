@@ -129,6 +129,15 @@ const platformaticRuntimeSchema = {
     },
     $schema: {
       type: 'string'
+    },
+    managementApi: {
+      anyOf: [
+        { type: 'boolean' },
+        {
+          type: 'object',
+          properties: {}
+        }
+      ]
     }
   },
   anyOf: [

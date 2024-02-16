@@ -1,16 +1,19 @@
 'use strict'
+
+const { tmpdir, platform } = require('node:os')
 const { once } = require('node:events')
 const inspector = require('node:inspector')
 const { join, resolve, dirname } = require('node:path')
-const fs = require('node:fs/promises')
+const { writeFile, unlink, mkdir } = require('node:fs/promises')
 const { pathToFileURL } = require('node:url')
 const { Worker } = require('node:worker_threads')
-const closeWithGrace = require('close-with-grace')
 const { start: serviceStart } = require('@platformatic/service')
+const { printConfigValidationErrors } = require('@platformatic/config')
+const closeWithGrace = require('close-with-grace')
 const { loadConfig } = require('./load-config')
+const { createManagementApi } = require('./management-api')
 const { parseInspectorOptions, wrapConfigInRuntimeConfig } = require('./config')
 const RuntimeApiClient = require('./api-client.js')
-const { printConfigValidationErrors } = require('@platformatic/config')
 const errors = require('./errors')
 const pkg = require('../package.json')
 
@@ -21,6 +24,8 @@ const kWorkerExecArgv = [
   '--experimental-loader',
   kLoaderFile
 ]
+
+const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'pids')
 
 async function startWithConfig (configManager, env = process.env) {
   const config = configManager.current
@@ -50,6 +55,8 @@ async function startWithConfig (configManager, env = process.env) {
     env
   })
 
+  let managementApi = null
+
   let exited = null
   let isWorkerAlive = true
   worker.on('exit', (code) => {
@@ -57,6 +64,7 @@ async function startWithConfig (configManager, env = process.env) {
     process.exitCode = code
     isWorkerAlive = false
     configManager.fileWatcher?.stopWatching()
+    managementApi?.close()
     if (typeof exited === 'function') {
       exited()
     }
@@ -96,6 +104,12 @@ async function startWithConfig (configManager, env = process.env) {
   await once(worker, 'message') // plt:init
 
   const runtimeApiClient = new RuntimeApiClient(worker)
+
+  if (config.managementApi) {
+    managementApi = await startManagementApi(config.managementApi, runtimeApiClient)
+    runtimeApiClient.managementApi = managementApi
+  }
+
   return runtimeApiClient
 }
 
@@ -110,6 +124,38 @@ async function start (args) {
   }
 
   return serviceStart(config.app, args)
+}
+
+async function startManagementApi (managementApiConfig, runtimeApiClient) {
+  const runtimePID = process.pid
+
+  let socketPath = null
+  if (platform() === 'win32') {
+    socketPath = '\\\\.\\pipe\\' + join(PLATFORMATIC_TMP_DIR, `${runtimePID}.sock`)
+  } else {
+    await mkdir(PLATFORMATIC_TMP_DIR, { recursive: true })
+    socketPath = join(PLATFORMATIC_TMP_DIR, `${runtimePID}.sock`)
+  }
+
+  try {
+    await mkdir(PLATFORMATIC_TMP_DIR, { recursive: true })
+    await unlink(socketPath).catch((err) => {
+      if (err.code !== 'ENOENT') {
+        throw new errors.FailedToUnlinkManagementApiSocket(err.message)
+      }
+    })
+
+    const managementApi = await createManagementApi(
+      managementApiConfig,
+      runtimeApiClient
+    )
+    await managementApi.listen({ path: socketPath })
+    return managementApi
+  /* c8 ignore next 4 */
+  } catch (err) {
+    console.error(err)
+    process.exit(1)
+  }
 }
 
 async function startCommand (args) {
@@ -148,7 +194,7 @@ async function startCommand (args) {
       }
       const toWrite = join(dirname(resolve(args[0])), 'platformatic.service.json')
       console.log(`No config file found, creating ${join(dirname(args[0]), 'platformatic.service.json')}`)
-      await fs.writeFile(toWrite, JSON.stringify(config, null, 2))
+      await writeFile(toWrite, JSON.stringify(config, null, 2))
       return startCommand(['--config', toWrite])
     }
     logErrorAndExit(err)
