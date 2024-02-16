@@ -237,6 +237,7 @@ test('should get service config', async (t) => {
       hostname: '127.0.0.1',
       port: 0,
       logger,
+      trustProxy: true,
       keepAliveTimeout: 5000
     },
     service: { openapi: true },
