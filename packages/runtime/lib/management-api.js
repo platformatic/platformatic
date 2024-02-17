@@ -113,6 +113,10 @@ async function createManagementApi (configManager, runtimeApiClient) {
         .headers(res.headers)
         .send(res.body)
     })
+
+    app.get('/logs', { websocket: true }, async (connection) => {
+      process.stdout.pipe(connection.socket)
+    })
   }, { prefix: '/api' })
 
   return app
