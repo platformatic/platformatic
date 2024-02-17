@@ -42,6 +42,10 @@ class RuntimeApiClient extends EventEmitter {
     return this.#sendCommand('plt:restart-services')
   }
 
+  async getEntrypointUrl () {
+    return this.#sendCommand('plt:get-entrypoint-url')
+  }
+
   async getServices () {
     return this.#sendCommand('plt:get-services')
   }

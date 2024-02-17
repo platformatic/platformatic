@@ -40,15 +40,19 @@ test('should get the runtime metadata', async (t) => {
 
   assert.strictEqual(statusCode, 200)
 
+  const entrypointUrl = await app.getEntrypointUrl()
+
   const metadata = await body.json()
   assert.deepStrictEqual(metadata, {
     pid: process.pid,
     cwd: process.cwd(),
+    uptimeSeconds: Math.floor(process.uptime()),
     execPath: process.execPath,
     nodeVersion: process.version,
     packageName: 'test-runtime-package',
     packageVersion: '1.0.42',
     projectDir,
+    url: entrypointUrl,
     platformaticVersion
   })
 })

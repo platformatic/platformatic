@@ -5,17 +5,6 @@ const { readFile } = require('node:fs/promises')
 const fastify = require('fastify')
 const platformaticVersion = require('../package.json').version
 
-async function getRuntimePackageJson (cwd) {
-  try {
-    const packageJsonPath = join(cwd, 'package.json')
-    const packageJsonFile = await readFile(packageJsonPath, 'utf8')
-    const packageJson = JSON.parse(packageJsonFile)
-    return packageJson
-  } catch (err) {
-    return {}
-  }
-}
-
 async function createManagementApi (configManager, runtimeApiClient) {
   let apiConfig = configManager.current.managementApi
   if (!apiConfig || apiConfig === true) {
@@ -30,19 +19,28 @@ async function createManagementApi (configManager, runtimeApiClient) {
     'Use of the feature is not recommended in production environments.'
   )
 
+  async function getRuntimePackageJson (cwd) {
+    const packageJsonPath = join(cwd, 'package.json')
+    const packageJsonFile = await readFile(packageJsonPath, 'utf8')
+    const packageJson = JSON.parse(packageJsonFile)
+    return packageJson
+  }
+
   app.register(async (app) => {
     app.get('/metadata', async () => {
-      console.log(configManager.dirname)
-      const packageJson = await getRuntimePackageJson(configManager.dirname)
+      const packageJson = await getRuntimePackageJson(configManager.dirname).catch(() => ({}))
+      const entrypointUrl = await runtimeApiClient.getEntrypointUrl().catch(() => null)
 
       return {
         pid: process.pid,
         cwd: process.cwd(),
+        uptimeSeconds: Math.floor(process.uptime()),
         execPath: process.execPath,
         nodeVersion: process.version,
         projectDir: configManager.dirname,
         packageName: packageJson.name ?? null,
         packageVersion: packageJson.version ?? null,
+        url: entrypointUrl,
         platformaticVersion
       }
     })
