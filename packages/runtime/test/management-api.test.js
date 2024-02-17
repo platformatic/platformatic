@@ -40,7 +40,7 @@ test('should get the runtime metadata', async (t) => {
 
   assert.strictEqual(statusCode, 200)
 
-  const entrypointUrl = await app.getEntrypointUrl()
+  const entrypoint = await app.getEntrypointDetails()
 
   const metadata = await body.json()
   assert.deepStrictEqual(metadata, {
@@ -52,7 +52,8 @@ test('should get the runtime metadata', async (t) => {
     packageName: 'test-runtime-package',
     packageVersion: '1.0.42',
     projectDir,
-    url: entrypointUrl,
+    url: entrypoint.url,
+    status: 'started',
     platformaticVersion
   })
 })
@@ -192,11 +193,13 @@ test('should get service details', async (t) => {
 
   assert.strictEqual(statusCode, 200)
 
+  const entrypointDetails = await app.getEntrypointDetails()
   const serviceDetails = await body.json()
   assert.deepStrictEqual(serviceDetails, {
     id: 'service-1',
     status: 'started',
     entrypoint: true,
+    url: entrypointDetails.url,
     localUrl: 'http://service-1.plt.local',
     dependencies: []
   })
@@ -286,6 +289,7 @@ test('should get services topology', async (t) => {
 
   assert.strictEqual(statusCode, 200)
 
+  const entrypointDetails = await app.getEntrypointDetails()
   const topology = await body.json()
 
   assert.deepStrictEqual(topology, {
@@ -295,6 +299,7 @@ test('should get services topology', async (t) => {
         id: 'service-1',
         status: 'started',
         entrypoint: true,
+        url: entrypointDetails.url,
         localUrl: 'http://service-1.plt.local',
         dependencies: []
       },

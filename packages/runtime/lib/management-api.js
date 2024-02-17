@@ -29,7 +29,7 @@ async function createManagementApi (configManager, runtimeApiClient) {
   app.register(async (app) => {
     app.get('/metadata', async () => {
       const packageJson = await getRuntimePackageJson(configManager.dirname).catch(() => ({}))
-      const entrypointUrl = await runtimeApiClient.getEntrypointUrl().catch(() => null)
+      const entrypointDetails = await runtimeApiClient.getEntrypointDetails().catch(() => null)
 
       return {
         pid: process.pid,
@@ -40,7 +40,8 @@ async function createManagementApi (configManager, runtimeApiClient) {
         projectDir: configManager.dirname,
         packageName: packageJson.name ?? null,
         packageVersion: packageJson.version ?? null,
-        url: entrypointUrl,
+        url: entrypointDetails?.url ?? null,
+        status: entrypointDetails?.status ?? null,
         platformaticVersion
       }
     })
