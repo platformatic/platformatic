@@ -60,6 +60,11 @@ async function createManagementApi (configManager, runtimeApiClient) {
       await runtimeApiClient.stop()
     })
 
+    app.post('/services/close', async () => {
+      app.log.debug('close services')
+      await runtimeApiClient.close()
+    })
+
     app.post('/services/restart', async () => {
       app.log.debug('restart services')
       await runtimeApiClient.restart()
