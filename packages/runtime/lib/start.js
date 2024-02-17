@@ -106,7 +106,7 @@ async function startWithConfig (configManager, env = process.env) {
   const runtimeApiClient = new RuntimeApiClient(worker)
 
   if (config.managementApi) {
-    managementApi = await startManagementApi(config.managementApi, runtimeApiClient)
+    managementApi = await startManagementApi(configManager, runtimeApiClient)
     runtimeApiClient.managementApi = managementApi
   }
 
@@ -126,7 +126,7 @@ async function start (args) {
   return serviceStart(config.app, args)
 }
 
-async function startManagementApi (managementApiConfig, runtimeApiClient) {
+async function startManagementApi (configManager, runtimeApiClient) {
   const runtimePID = process.pid
 
   let socketPath = null
@@ -146,7 +146,7 @@ async function startManagementApi (managementApiConfig, runtimeApiClient) {
     })
 
     const managementApi = await createManagementApi(
-      managementApiConfig,
+      configManager,
       runtimeApiClient
     )
     await managementApi.listen({ path: socketPath })
