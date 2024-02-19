@@ -1,9 +1,13 @@
 'use strict'
 
+const { tmpdir, platform } = require('node:os')
 const { join } = require('node:path')
-const { readFile } = require('node:fs/promises')
+const { readFile, mkdir, unlink } = require('node:fs/promises')
 const fastify = require('fastify')
+const errors = require('./errors')
 const platformaticVersion = require('../package.json').version
+
+const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'pids')
 
 async function createManagementApi (configManager, runtimeApiClient, loggingPort) {
   let apiConfig = configManager.current.managementApi
@@ -138,4 +142,37 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
   return app
 }
 
-module.exports = { createManagementApi }
+async function startManagementApi (configManager, runtimeApiClient, loggingPort) {
+  const runtimePID = process.pid
+
+  let socketPath = null
+  if (platform() === 'win32') {
+    socketPath = '\\\\.\\pipe\\platformatic-' + runtimePID
+  } else {
+    await mkdir(PLATFORMATIC_TMP_DIR, { recursive: true })
+    socketPath = join(PLATFORMATIC_TMP_DIR, `${runtimePID}.sock`)
+  }
+
+  try {
+    await mkdir(PLATFORMATIC_TMP_DIR, { recursive: true })
+    await unlink(socketPath).catch((err) => {
+      if (err.code !== 'ENOENT') {
+        throw new errors.FailedToUnlinkManagementApiSocket(err.message)
+      }
+    })
+
+    const managementApi = await createManagementApi(
+      configManager,
+      runtimeApiClient,
+      loggingPort
+    )
+    await managementApi.listen({ path: socketPath })
+    return managementApi
+  /* c8 ignore next 4 */
+  } catch (err) {
+    console.error(err)
+    process.exit(1)
+  }
+}
+
+module.exports = { startManagementApi, createManagementApi }
