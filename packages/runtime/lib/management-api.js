@@ -118,7 +118,9 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
 
     app.get('/logs', { websocket: true }, async (connection) => {
       const handler = (message) => {
-        connection.socket.send(message)
+        for (const log of message.logs) {
+          connection.socket.send(log)
+        }
       }
       loggingPort.on('message', handler)
       connection.socket.on('close', () => {
