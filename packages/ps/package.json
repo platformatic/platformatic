@@ -1,0 +1,33 @@
+{
+  "name": "@platformatic/ps",
+  "version": "1.23.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "pnpm run lint && pnpm run unit && tsd",
+    "unit": "borp --pattern 'test/**/*.test.{js,mjs}' --concurrency=1 --no-typescript",
+    "build": "node lib/schema.js | json2ts > config.d.ts",
+    "lint": "standard | snazzy && ts-standard | snazzy && tsd"
+  },
+  "author": "Matteo Collina <hello@matteocollina.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformatic/platformatic/issues"
+  },
+  "homepage": "https://github.com/platformatic/platformatic#readme",
+  "devDependencies": {
+    "standard": "^17.1.0"
+  },
+  "dependencies": {
+    "commist": "^3.2.0",
+    "pino": "^8.17.2",
+    "pino-pretty": "^10.3.1",
+    "tty-table": "^4.2.0",
+    "undici": "^6.6.0",
+    "ws": "^8.16.0"
+  }
+}

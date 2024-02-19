@@ -2,6 +2,7 @@
 
 import commist from 'commist'
 import minimist from 'minimist'
+import { runPS } from '@platformatic/ps/ps.js'
 import { runDB } from '@platformatic/db/db.mjs'
 import { run as runRuntime, compile } from '@platformatic/runtime/runtime.mjs'
 import { startCommand } from '@platformatic/runtime'
@@ -16,7 +17,6 @@ import helpMe from 'help-me'
 import { upgrade } from './lib/upgrade.js'
 import { gh } from './lib/gh.js'
 import { deploy } from './lib/deploy.js'
-
 import { logo } from './lib/ascii.js'
 
 const program = commist({ maxDistance: 2 })
@@ -39,6 +39,7 @@ const ensureCommand = async ({ output, help }) => {
   process.exit(1)
 }
 
+program.register('ps', async (args) => ensureCommand(await runPS(args)))
 program.register('db', async (args) => ensureCommand(await runDB(args)))
 program.register('runtime', async (args) => ensureCommand(await runRuntime(args)))
 program.register('service', async (args) => ensureCommand(await runService(args)))
