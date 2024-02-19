@@ -9,6 +9,15 @@ const platformaticVersion = require('../package.json').version
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'pids')
 
+const pinoLogLevels = {
+  fatal: 60,
+  error: 50,
+  warn: 40,
+  info: 30,
+  debug: 20,
+  trace: 10
+}
+
 async function createManagementApi (configManager, runtimeApiClient, loggingPort) {
   let apiConfig = configManager.current.managementApi
   if (!apiConfig || apiConfig === true) {
@@ -120,12 +129,23 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
         .send(res.body)
     })
 
-    app.get('/logs', { websocket: true }, async (connection) => {
+    app.get('/logs', { websocket: true }, async (connection, req) => {
+      const logLevel = req.query.level || 'info'
+      const logLevelNumber = pinoLogLevels[logLevel]
+
       const handler = (message) => {
         for (const log of message.logs) {
-          connection.socket.send(log)
+          try {
+            const parsedLog = JSON.parse(log)
+            if (parsedLog.level >= logLevelNumber) {
+              connection.socket.send(log)
+            }
+          } catch (err) {
+            console.error('Failed to parse log message: ', log, err)
+          }
         }
       }
+
       loggingPort.on('message', handler)
       connection.socket.on('close', () => {
         loggingPort.off('message', handler)

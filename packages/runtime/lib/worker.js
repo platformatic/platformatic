@@ -51,10 +51,10 @@ if (config.loggingPort) {
     port: config.loggingPort
   })
   const multiStream = pino.multistream([
-    { stream: portStream, level: 'debug' },
+    { stream: portStream, level: 'trace' },
     { stream: cliStream, level: loggerConfig.level || 'info' }
   ])
-  logger = pino({ level: 'debug' }, multiStream)
+  logger = pino({ level: 'trace' }, multiStream)
 } else {
   logger = pino(loggerConfig, cliStream)
 }
