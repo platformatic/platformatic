@@ -46,8 +46,8 @@ importers:
         version: 8.16.0
     devDependencies:
       '@fastify/websocket':
-        specifier: ^8.3.1
-        version: 8.3.1
+        specifier: ^9.0.0
+        version: 9.0.0
       borp:
         specifier: ^0.9.0
         version: 0.9.1
@@ -1320,8 +1320,8 @@ importers:
         specifier: ^3.4.1
         version: 3.4.1
       '@fastify/websocket':
-        specifier: ^8.3.0
-        version: 8.3.1
+        specifier: ^9.0.0
+        version: 9.0.0
       '@hapi/topo':
         specifier: ^6.0.2
         version: 6.0.2
@@ -2834,6 +2834,16 @@ packages:
   /@fastify/websocket@8.3.1:
     resolution: {integrity: sha512-hsQYHHJme/kvP3ZS4v/WMUznPBVeeQHHwAoMy1LiN6m/HuPfbdXq1MBJ4Nt8qX1YI+eVbog4MnOsU7MTozkwYA==}
     dependencies:
+      fastify-plugin: 4.5.1
+      ws: 8.16.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  /@fastify/websocket@9.0.0:
+    resolution: {integrity: sha512-rpHDtDdTaAQ1GuN6VzOZaUEmegXR3HhSA2QAL2e8GgiNGo/cTyy+chwbu7OjDIWnq3HZisitln/0N8Xdn0Fc+w==}
+    dependencies:
+      duplexify: 4.1.2
       fastify-plugin: 4.5.1
       ws: 8.16.0
     transitivePeerDependencies:
@@ -4671,7 +4681,6 @@ packages:
       inherits: 2.0.4
       readable-stream: 3.6.2
       stream-shift: 1.0.3
-    dev: true
 
   /eastasianwidth@0.2.0:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
@@ -8884,7 +8893,6 @@ packages:
 
   /stream-shift@1.0.3:
     resolution: {integrity: sha512-76ORR0DO1o1hlKwTbi/DM3EXWGf3ZJYO8cXX5RJwnul2DEg2oyoZyjLNoQM8WsvZiFKCRfC1O0J7iCvie3RZmQ==}
-    dev: true
 
   /string-width@4.2.3:
     resolution: {integrity: sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==}
