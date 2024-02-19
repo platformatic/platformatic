@@ -1,12 +1,17 @@
 'use strict'
 
+const { join } = require('node:path')
+const { readFile } = require('node:fs/promises')
 const fastify = require('fastify')
-const { isatty } = require('tty')
 const platformaticVersion = require('../package.json').version
 
-async function createManagementApi (config, runtimeApiClient) {
-  addManagementApiLogger(config)
-  const app = fastify(config)
+async function createManagementApi (configManager, runtimeApiClient) {
+  let apiConfig = configManager.current.managementApi
+  if (!apiConfig || apiConfig === true) {
+    apiConfig = {}
+  }
+
+  const app = fastify(apiConfig)
   app.log.warn(
     'Runtime Management API is in the experimental stage. ' +
     'The feature is not subject to semantic versioning rules. ' +
@@ -14,13 +19,29 @@ async function createManagementApi (config, runtimeApiClient) {
     'Use of the feature is not recommended in production environments.'
   )
 
+  async function getRuntimePackageJson (cwd) {
+    const packageJsonPath = join(cwd, 'package.json')
+    const packageJsonFile = await readFile(packageJsonPath, 'utf8')
+    const packageJson = JSON.parse(packageJsonFile)
+    return packageJson
+  }
+
   app.register(async (app) => {
     app.get('/metadata', async () => {
+      const packageJson = await getRuntimePackageJson(configManager.dirname).catch(() => ({}))
+      const entrypointDetails = await runtimeApiClient.getEntrypointDetails().catch(() => null)
+
       return {
         pid: process.pid,
         cwd: process.cwd(),
+        uptimeSeconds: Math.floor(process.uptime()),
         execPath: process.execPath,
         nodeVersion: process.version,
+        projectDir: configManager.dirname,
+        packageName: packageJson.name ?? null,
+        packageVersion: packageJson.version ?? null,
+        url: entrypointDetails?.url ?? null,
+        status: entrypointDetails?.status ?? null,
         platformaticVersion
       }
     })
@@ -37,6 +58,11 @@ async function createManagementApi (config, runtimeApiClient) {
     app.post('/services/stop', async () => {
       app.log.debug('stop services')
       await runtimeApiClient.stop()
+    })
+
+    app.post('/services/close', async () => {
+      app.log.debug('close services')
+      await runtimeApiClient.close()
     })
 
     app.post('/services/restart', async () => {
@@ -87,27 +113,13 @@ async function createManagementApi (config, runtimeApiClient) {
         .headers(res.headers)
         .send(res.body)
     })
+
+    app.get('/logs', { websocket: true }, async (connection) => {
+      process.stdout.pipe(connection.socket)
+    })
   }, { prefix: '/api' })
 
   return app
-}
-
-function addManagementApiLogger (config) {
-  let logger = config.logger
-  if (!logger) {
-    config.logger = {
-      level: 'info',
-      name: 'management-api'
-    }
-    logger = config.logger
-  }
-
-  /* c8 ignore next 5 */
-  if (isatty(1) && !logger.transport) {
-    logger.transport = {
-      target: 'pino-pretty'
-    }
-  }
 }
 
 module.exports = { createManagementApi }

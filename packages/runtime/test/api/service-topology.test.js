@@ -19,6 +19,7 @@ test('should get services topology', async (t) => {
     await app.close()
   })
 
+  const entrypointDetails = await app.getEntrypointDetails()
   const topology = await app.getServices()
 
   assert.deepStrictEqual(topology, {
@@ -35,6 +36,7 @@ test('should get services topology', async (t) => {
         id: 'serviceApp',
         status: 'started',
         entrypoint: true,
+        url: entrypointDetails.url,
         localUrl: 'http://serviceApp.plt.local',
         dependencies: [
           {

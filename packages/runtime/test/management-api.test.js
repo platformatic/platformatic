@@ -6,8 +6,7 @@ const { test } = require('node:test')
 const { Client } = require('undici')
 const { isatty } = require('tty')
 
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('..')
+const { buildServer } = require('..')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
 const platformaticVersion = require('../package.json').version
@@ -16,9 +15,9 @@ const platformaticVersion = require('../package.json').version
 process.setMaxListeners(100)
 
 test('should get the runtime metadata', async (t) => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const projectDir = join(fixturesDir, 'management-api')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
 
   await app.start()
 
@@ -41,20 +40,28 @@ test('should get the runtime metadata', async (t) => {
 
   assert.strictEqual(statusCode, 200)
 
+  const entrypoint = await app.getEntrypointDetails()
+
   const metadata = await body.json()
   assert.deepStrictEqual(metadata, {
     pid: process.pid,
     cwd: process.cwd(),
+    uptimeSeconds: Math.floor(process.uptime()),
     execPath: process.execPath,
     nodeVersion: process.version,
+    packageName: 'test-runtime-package',
+    packageVersion: '1.0.42',
+    projectDir,
+    url: entrypoint.url,
+    status: 'started',
     platformaticVersion
   })
 })
 
 test('should stop all services with a management api', async (t) => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const projectDir = join(fixturesDir, 'management-api')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
 
   await app.start()
 
@@ -78,20 +85,20 @@ test('should stop all services with a management api', async (t) => {
   assert.strictEqual(statusCode, 200)
 
   {
-    const serviceDetails = await app.getServiceDetails('with-logger')
+    const serviceDetails = await app.getServiceDetails('service-1')
     assert.strictEqual(serviceDetails.status, 'stopped')
   }
 
   {
-    const serviceDetails = await app.getServiceDetails('serviceApp')
+    const serviceDetails = await app.getServiceDetails('service-2')
     assert.strictEqual(serviceDetails.status, 'stopped')
   }
 })
 
 test('should start all services with a management api', async (t) => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const projectDir = join(fixturesDir, 'management-api')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
 
   t.after(async () => {
     await app.close()
@@ -113,20 +120,20 @@ test('should start all services with a management api', async (t) => {
   assert.strictEqual(statusCode, 200)
 
   {
-    const serviceDetails = await app.getServiceDetails('with-logger')
+    const serviceDetails = await app.getServiceDetails('service-1')
     assert.strictEqual(serviceDetails.status, 'started')
   }
 
   {
-    const serviceDetails = await app.getServiceDetails('serviceApp')
+    const serviceDetails = await app.getServiceDetails('service-2')
     assert.strictEqual(serviceDetails.status, 'started')
   }
 })
 
 test('should restart all services with a management api', async (t) => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const projectDir = join(fixturesDir, 'management-api')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
 
   await app.start()
 
@@ -150,20 +157,20 @@ test('should restart all services with a management api', async (t) => {
   assert.strictEqual(statusCode, 200)
 
   {
-    const serviceDetails = await app.getServiceDetails('with-logger')
+    const serviceDetails = await app.getServiceDetails('service-1')
     assert.strictEqual(serviceDetails.status, 'started')
   }
 
   {
-    const serviceDetails = await app.getServiceDetails('serviceApp')
+    const serviceDetails = await app.getServiceDetails('service-2')
     assert.strictEqual(serviceDetails.status, 'started')
   }
 })
 
 test('should get service details', async (t) => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const projectDir = join(fixturesDir, 'management-api')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
 
   await app.start()
 
@@ -181,25 +188,27 @@ test('should get service details', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/services/with-logger'
+    path: '/api/services/service-1'
   })
 
   assert.strictEqual(statusCode, 200)
 
+  const entrypointDetails = await app.getEntrypointDetails()
   const serviceDetails = await body.json()
   assert.deepStrictEqual(serviceDetails, {
-    id: 'with-logger',
+    id: 'service-1',
     status: 'started',
-    entrypoint: false,
-    localUrl: 'http://with-logger.plt.local',
+    entrypoint: true,
+    url: entrypointDetails.url,
+    localUrl: 'http://service-1.plt.local',
     dependencies: []
   })
 })
 
 test('should get service config', async (t) => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const projectDir = join(fixturesDir, 'management-api')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
 
   await app.start()
 
@@ -217,7 +226,7 @@ test('should get service config', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/services/with-logger/config'
+    path: '/api/services/service-1/config'
   })
 
   assert.strictEqual(statusCode, 200)
@@ -237,13 +246,12 @@ test('should get service config', async (t) => {
       hostname: '127.0.0.1',
       port: 0,
       logger,
-      trustProxy: true,
       keepAliveTimeout: 5000
     },
     service: { openapi: true },
     plugins: {
       paths: [
-        join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'plugin.js')
+        join(projectDir, 'services', 'service-1', 'plugin.js')
       ]
     },
     watch: {
@@ -256,9 +264,9 @@ test('should get service config', async (t) => {
 })
 
 test('should get services topology', async (t) => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const projectDir = join(fixturesDir, 'management-api')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
 
   await app.start()
 
@@ -281,43 +289,25 @@ test('should get services topology', async (t) => {
 
   assert.strictEqual(statusCode, 200)
 
+  const entrypointDetails = await app.getEntrypointDetails()
   const topology = await body.json()
 
   assert.deepStrictEqual(topology, {
-    entrypoint: 'serviceApp',
+    entrypoint: 'service-1',
     services: [
       {
-        dependencies: [],
-        entrypoint: false,
-        id: 'dbApp',
-        localUrl: 'http://dbApp.plt.local',
-        status: 'started'
-      },
-      {
-        id: 'serviceApp',
+        id: 'service-1',
         status: 'started',
         entrypoint: true,
-        localUrl: 'http://serviceApp.plt.local',
-        dependencies: [
-          {
-            id: 'with-logger',
-            url: 'http://with-logger.plt.local',
-            local: true
-          }
-        ]
-      },
-      {
-        id: 'with-logger',
-        status: 'started',
-        entrypoint: false,
-        localUrl: 'http://with-logger.plt.local',
+        url: entrypointDetails.url,
+        localUrl: 'http://service-1.plt.local',
         dependencies: []
       },
       {
-        id: 'multi-plugin-service',
+        id: 'service-2',
         status: 'started',
         entrypoint: false,
-        localUrl: 'http://multi-plugin-service.plt.local',
+        localUrl: 'http://service-2.plt.local',
         dependencies: []
       }
     ]
@@ -325,9 +315,9 @@ test('should get services topology', async (t) => {
 })
 
 test('should stop service by service id', async (t) => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const projectDir = join(fixturesDir, 'management-api')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
 
   await app.start()
 
@@ -337,7 +327,7 @@ test('should stop service by service id', async (t) => {
   })
 
   {
-    const serviceDetails = await app.getServiceDetails('with-logger')
+    const serviceDetails = await app.getServiceDetails('service-1')
     assert.strictEqual(serviceDetails.status, 'started')
   }
 
@@ -350,21 +340,21 @@ test('should stop service by service id', async (t) => {
 
   const { statusCode } = await client.request({
     method: 'POST',
-    path: '/api/services/with-logger/stop'
+    path: '/api/services/service-1/stop'
   })
 
   assert.strictEqual(statusCode, 200)
 
   {
-    const serviceDetails = await app.getServiceDetails('with-logger')
+    const serviceDetails = await app.getServiceDetails('service-1')
     assert.strictEqual(serviceDetails.status, 'stopped')
   }
 })
 
 test('should start stopped service by service id', async (t) => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const projectDir = join(fixturesDir, 'management-api')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
 
   await app.start()
 
@@ -373,10 +363,10 @@ test('should start stopped service by service id', async (t) => {
     await app.managementApi.close()
   })
 
-  await app.stopService('with-logger')
+  await app.stopService('service-1')
 
   {
-    const serviceDetails = await app.getServiceDetails('with-logger')
+    const serviceDetails = await app.getServiceDetails('service-1')
     assert.strictEqual(serviceDetails.status, 'stopped')
   }
 
@@ -389,21 +379,21 @@ test('should start stopped service by service id', async (t) => {
 
   const { statusCode } = await client.request({
     method: 'POST',
-    path: '/api/services/with-logger/start'
+    path: '/api/services/service-1/start'
   })
 
   assert.strictEqual(statusCode, 200)
 
   {
-    const serviceDetails = await app.getServiceDetails('with-logger')
+    const serviceDetails = await app.getServiceDetails('service-1')
     assert.strictEqual(serviceDetails.status, 'started')
   }
 })
 
 test('should proxy request to the service', async (t) => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const projectDir = join(fixturesDir, 'management-api')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
 
   await app.start()
 
@@ -421,19 +411,19 @@ test('should proxy request to the service', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/services/multi-plugin-service/proxy/plugin1'
+    path: '/api/services/service-2/proxy/hello'
   })
 
   assert.strictEqual(statusCode, 200)
 
   const data = await body.json()
-  assert.deepStrictEqual(data, { hello: 'plugin1' })
+  assert.deepStrictEqual(data, { service: 'service-2' })
 })
 
 test('should get service metrics via runtime management api proxy', async (t) => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const projectDir = join(fixturesDir, 'management-api')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
 
   await app.start()
 
@@ -451,7 +441,7 @@ test('should get service metrics via runtime management api proxy', async (t) =>
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/services/with-logger/proxy/metrics'
+    path: '/api/services/service-1/proxy/metrics'
   })
 
   assert.strictEqual(statusCode, 200)

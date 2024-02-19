@@ -97,6 +97,8 @@ class RuntimeApi {
         return this.stopServices(params)
       case 'plt:restart-services':
         return this.#restartServices(params)
+      case 'plt:get-entrypoint-details':
+        return this.#getEntrypointDetails(params)
       case 'plt:get-services':
         return this.#getServices(params)
       case 'plt:get-service-details':
@@ -162,6 +164,15 @@ class RuntimeApi {
     return entrypointUrl
   }
 
+  #getEntrypointDetails () {
+    for (const service of this.#services.values()) {
+      if (service.appConfig.entrypoint) {
+        return this.#getServiceDetails({ id: service.appConfig.id })
+      }
+    }
+    return null
+  }
+
   #getServices () {
     const services = { services: [] }
 
@@ -192,7 +203,13 @@ class RuntimeApi {
     const status = service.getStatus()
 
     const { entrypoint, dependencies, localUrl } = service.appConfig
-    return { id, status, localUrl, entrypoint, dependencies }
+    const serviceDetails = { id, status, localUrl, entrypoint, dependencies }
+
+    if (entrypoint) {
+      serviceDetails.url = status === 'started' ? service.server.url : null
+    }
+
+    return serviceDetails
   }
 
   #getServiceConfig ({ id }) {
