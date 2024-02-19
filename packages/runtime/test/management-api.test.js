@@ -1,6 +1,7 @@
 'use strict'
 
 const assert = require('node:assert')
+const { platform } = require('node:os')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { Client } = require('undici')
@@ -464,14 +465,20 @@ test('should get runtime logs via management api', async (t) => {
   })
 
   const socketPath = app.managementApi.server.address()
-  const socket = new WebSocket('ws+unix://' + socketPath + ':/api/logs')
+
+  let webSocket = null
+  if (platform() === 'win32') {
+    webSocket = new WebSocket('ws+pipe://' + socketPath + ':/api/logs')
+  } else {
+    webSocket = new WebSocket('ws+unix://' + socketPath + ':/api/logs')
+  }
 
   return new Promise((resolve, reject) => {
-    socket.on('error', (err) => {
+    webSocket.on('error', (err) => {
       reject(err)
     })
 
-    socket.on('message', (data) => {
+    webSocket.on('message', (data) => {
       if (data.includes('Server listening at')) {
         resolve()
       } else {
