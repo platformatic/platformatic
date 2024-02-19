@@ -186,6 +186,13 @@ async function startManagementApi (configManager, runtimeApiClient, loggingPort)
       runtimeApiClient,
       loggingPort
     )
+
+    if (platform() !== 'win32') {
+      managementApi.addHook('onClose', async () => {
+        await unlink(socketPath).catch(() => {})
+      })
+    }
+
     await managementApi.listen({ path: socketPath })
     return managementApi
   /* c8 ignore next 4 */
