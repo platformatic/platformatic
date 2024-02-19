@@ -474,15 +474,18 @@ test('should get runtime logs via management api', async (t) => {
   }
 
   return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error('Timeout'))
+    }, 10000)
+
     webSocket.on('error', (err) => {
       reject(err)
     })
 
     webSocket.on('message', (data) => {
       if (data.includes('Server listening at')) {
+        clearTimeout(timeout)
         resolve()
-      } else {
-        reject(new Error('Unexpected message: ' + data))
       }
     })
   })
