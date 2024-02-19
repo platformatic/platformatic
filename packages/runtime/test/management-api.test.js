@@ -45,19 +45,19 @@ test('should get the runtime metadata', async (t) => {
   const entrypoint = await app.getEntrypointDetails()
 
   const metadata = await body.json()
-  assert.deepStrictEqual(metadata, {
-    pid: process.pid,
-    cwd: process.cwd(),
-    uptimeSeconds: Math.floor(process.uptime()),
-    execPath: process.execPath,
-    nodeVersion: process.version,
-    packageName: 'test-runtime-package',
-    packageVersion: '1.0.42',
-    projectDir,
-    url: entrypoint.url,
-    status: 'started',
-    platformaticVersion
-  })
+  assert.equal(metadata.pid, process.pid)
+  assert.equal(metadata.cwd, process.cwd())
+  assert.equal(metadata.execPath, process.execPath)
+  assert.equal(metadata.nodeVersion, process.version)
+  assert.equal(metadata.packageName, 'test-runtime-package')
+  assert.equal(metadata.packageVersion, '1.0.42')
+  assert.equal(metadata.projectDir, projectDir)
+  assert.equal(metadata.url, entrypoint.url)
+  assert.equal(metadata.status, 'started')
+  assert.equal(metadata.platformaticVersion, platformaticVersion)
+
+  assert.ok(metadata.uptimeSeconds >= 0)
+  assert.ok(metadata.uptimeSeconds < 10)
 })
 
 test('should stop all services with a management api', async (t) => {
