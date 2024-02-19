@@ -11,7 +11,6 @@ const { tmpdir } = require('os')
 const { join } = require('path')
 const { cp } = require('fs/promises')
 const pkg = require('../package.json')
-const semver = require('semver')
 const createError = require('@fastify/error')
 
 test('throws if no config or file is provided', async () => {
@@ -80,7 +79,7 @@ test('throws if the parser is unknown', async () => {
 
 test('writes a config file', async () => {
   const dest = join(tmpdir(), `test-metaconfig-${process.pid}.json`)
-  await cp(join(__dirname, 'fixtures', 'v0.16.0', 'array.db.json'), dest)
+  await cp(join(__dirname, 'fixtures', 'no-version', 'no-version.json'), dest)
   const meta = await analyze({ file: dest })
   meta.format = 'yaml' // transform to yaml
   meta.path = dest.replace(/\.json$/, '.yaml')
@@ -98,11 +97,9 @@ test('current version must be matched', async () => {
   equal(meta.version, version)
 })
 
-test('upgrade to latest version', async () => {
-  const file = join(__dirname, 'fixtures', 'v0.16.0', 'array.db.json')
+test('upgrade config with a filepath in $schema', async () => {
+  const file = join(__dirname, 'fixtures', 'no-version', 'no-version.json')
   const meta = await analyze({ file })
   const upgraded = upgrade(meta)
-  const version = pkg.version.replace('-dev', '')
-  console.log(`upgraded to ${upgraded.version}`)
-  equal(semver.satisfies(version, '^' + upgraded.version), true)
+  equal(upgraded.version, null)
 })

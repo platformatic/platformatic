@@ -16,7 +16,7 @@ test('writes a config file', async (t) => {
   const dest = join(tmpdir(), `test-cli-${process.pid}-${count++}`)
 
   await cp(
-    join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'v0.16.0.db.json'),
+    join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'v0.17.0.db.json'),
     join(dest, 'platformatic.db.json'))
 
   await execa('node', [cliPath, 'upgrade'], {
@@ -32,7 +32,7 @@ test('writes a config file with a config option', async (t) => {
   const dest = join(tmpdir(), `test-cli-${process.pid}-${count++}`)
 
   await cp(
-    join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'v0.16.0.db.json'),
+    join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'v0.17.0.db.json'),
     join(dest, 'platformatic.db.json'))
 
   await execa('node', [cliPath, 'upgrade', '-c', join(dest, 'platformatic.db.json')])

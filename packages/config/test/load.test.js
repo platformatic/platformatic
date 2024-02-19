@@ -135,7 +135,7 @@ test('should automatically update', async (t) => {
 
   const fixturesDir = join(__dirname, 'fixtures')
   const cm = new ConfigManager({
-    source: join(fixturesDir, 'db-0.16.0.json'),
+    source: join(fixturesDir, 'db-0.17.0.json'),
     env: { PLT_FOOBAR: 'foobar' }
   })
   await cm.parse()
@@ -183,7 +183,7 @@ test('should use the remote schema', async (t) => {
 
   const fixturesDir = join(__dirname, 'fixtures')
   const cm = new ConfigManager({
-    source: join(fixturesDir, 'db-0.16.0.json'),
+    source: join(fixturesDir, 'db-0.17.0.json'),
     env: { PLT_FOOBAR: 'foobar' }
   })
   await cm.parse()

@@ -15,7 +15,7 @@ test('creates a deploy config for static workspace', async (t) => {
 
   await mkdirp(dest)
   await cp(
-    join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'v0.16.0.db.json'),
+    join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'v0.17.0.db.json'),
     join(dest, 'platformatic.db.json'))
 
   await execa('node', [cliPath, 'gh'], {
@@ -32,7 +32,7 @@ test('creates a deploy config for dynamic workspace', async (t) => {
 
   await mkdirp(dest)
   await cp(
-    join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'v0.16.0.db.json'),
+    join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'v0.17.0.db.json'),
     join(dest, 'platformatic.db.json'))
 
   await execa('node', [cliPath, 'gh', '-t', 'dynamic'], {
@@ -49,7 +49,7 @@ test('creation fails if workspace type is not static or dynamic', async (t) => {
 
   await mkdirp(dest)
   await cp(
-    join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'v0.16.0.db.json'),
+    join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'v0.17.0.db.json'),
     join(dest, 'platformatic.db.json'))
 
   try {
@@ -80,7 +80,7 @@ test('creates a deploy must warn that a .env exists', async (t) => {
 
   await mkdirp(dest)
   await cp(
-    join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'v0.16.0.db.json'),
+    join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'v0.17.0.db.json'),
     join(dest, 'platformatic.db.json'))
 
   await writeFile(join(dest, '.env'), 'TEST=1')

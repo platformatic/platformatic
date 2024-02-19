@@ -1,5 +1,5 @@
 {
-  "$schema": "./platformatic.db.schema.json",
+  "$schema": "https://platformatic.dev/schemas/v0.17.0/db",
   "server": {
     "hostname": "{PLT_SERVER_HOSTNAME}",
     "port": "{PORT}",
@@ -31,5 +31,11 @@
   },
   "migrations": {
     "dir": "migrations"
+  },
+  "plugin": {
+    "path": "plugin.js"
+  },
+  "types": {
+    "autogenerate": true
   }
 }
