@@ -50,7 +50,7 @@ async function startWithConfig (configManager, env = process.env) {
   let mainLoggingPort = null
   let childLoggingPort = config.loggingPort
 
-  if (!childLoggingPort) {
+  if (!childLoggingPort && config.managementApi) {
     const { port1, port2 } = new MessageChannel()
     mainLoggingPort = port1
     childLoggingPort = port2

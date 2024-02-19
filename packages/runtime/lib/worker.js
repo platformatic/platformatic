@@ -42,22 +42,21 @@ if (loggerConfig) {
   loggerConfig = {}
 }
 
-const pinoStreams = []
-/* c8 ignore next 10 */
+let pinoStream = pino.destination(1)
+if (isatty(1)) {
+  pinoStream = pretty()
+}
 if (config.loggingPort) {
-  const destination = new MessagePortWritable({
+  delete loggerConfig.transport
+
+  const portStream = new MessagePortWritable({
     metadata: config.loggingMetadata,
     port: config.loggingPort
   })
-  pinoStreams.push({ stream: destination })
-  delete loggerConfig.transport
+  pinoStream = pino.multistream([portStream, pinoStream])
 }
 
-if (!loggerConfig.transport && isatty(1)) {
-  pinoStreams.push({ stream: pretty() })
-}
-
-const logger = pino(loggerConfig, pino.multistream(pinoStreams))
+const logger = pino(loggerConfig, pinoStream)
 
 if (config.server) {
   config.server.logger = logger
