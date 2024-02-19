@@ -36,7 +36,8 @@
     "standard": "^17.1.0",
     "tsd": "^0.30.4",
     "typescript": "^5.3.3",
-    "undici-oauth-interceptor": "^0.4.2"
+    "undici-oauth-interceptor": "^0.4.2",
+    "ws": "^8.16.0"
   },
   "dependencies": {
     "@fastify/error": "^3.4.1",

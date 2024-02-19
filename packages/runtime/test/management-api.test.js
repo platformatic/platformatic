@@ -4,6 +4,7 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { Client } = require('undici')
+const WebSocket = require('ws')
 const { isatty } = require('tty')
 
 const { buildServer } = require('..')
@@ -448,4 +449,34 @@ test('should get service metrics via runtime management api proxy', async (t) =>
 
   const data = await body.text()
   assert.ok(data)
+})
+
+test('should get runtime logs via management api', async (t) => {
+  const projectDir = join(fixturesDir, 'management-api')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+    await app.managementApi.close()
+  })
+
+  const socketPath = app.managementApi.server.address()
+  const socket = new WebSocket('ws+unix://' + socketPath + ':/api/logs')
+
+  return new Promise((resolve, reject) => {
+    socket.on('error', (err) => {
+      reject(err)
+    })
+
+    socket.on('message', (data) => {
+      if (data.includes('Server listening at')) {
+        resolve()
+      } else {
+        reject(new Error('Unexpected message: ' + data))
+      }
+    })
+  })
 })

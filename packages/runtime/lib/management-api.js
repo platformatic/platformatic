@@ -5,7 +5,7 @@ const { readFile } = require('node:fs/promises')
 const fastify = require('fastify')
 const platformaticVersion = require('../package.json').version
 
-async function createManagementApi (configManager, runtimeApiClient) {
+async function createManagementApi (configManager, runtimeApiClient, loggingPort) {
   let apiConfig = configManager.current.managementApi
   if (!apiConfig || apiConfig === true) {
     apiConfig = {}
@@ -25,6 +25,8 @@ async function createManagementApi (configManager, runtimeApiClient) {
     const packageJson = JSON.parse(packageJsonFile)
     return packageJson
   }
+
+  app.register(require('@fastify/websocket'))
 
   app.register(async (app) => {
     app.get('/metadata', async () => {
@@ -115,7 +117,11 @@ async function createManagementApi (configManager, runtimeApiClient) {
     })
 
     app.get('/logs', { websocket: true }, async (connection) => {
-      process.stdout.pipe(connection.socket)
+      loggingPort.on('message', (message) => {
+        for (const log of message.logs) {
+          connection.socket.send(log)
+        }
+      })
     })
   }, { prefix: '/api' })
 

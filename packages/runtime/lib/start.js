@@ -47,10 +47,21 @@ async function startWithConfig (configManager, env = process.env) {
   // The configManager cannot be transferred to the worker, so remove it.
   delete config.configManager
 
+  let mainLoggingPort = null
+  let childLoggingPort = config.loggingPort
+
+  if (!childLoggingPort) {
+    const { port1, port2 } = new MessageChannel()
+    mainLoggingPort = port1
+    childLoggingPort = port2
+
+    config.loggingPort = childLoggingPort
+  }
+
   const worker = new Worker(kWorkerFile, {
     /* c8 ignore next */
     execArgv: config.hotReload ? kWorkerExecArgv : [],
-    transferList: config.loggingPort ? [config.loggingPort] : [],
+    transferList: childLoggingPort ? [childLoggingPort] : [],
     workerData: { config, dirname },
     env
   })
@@ -106,7 +117,11 @@ async function startWithConfig (configManager, env = process.env) {
   const runtimeApiClient = new RuntimeApiClient(worker)
 
   if (config.managementApi) {
-    managementApi = await startManagementApi(configManager, runtimeApiClient)
+    managementApi = await startManagementApi(
+      configManager,
+      runtimeApiClient,
+      mainLoggingPort
+    )
     runtimeApiClient.managementApi = managementApi
   }
 
@@ -126,7 +141,7 @@ async function start (args) {
   return serviceStart(config.app, args)
 }
 
-async function startManagementApi (configManager, runtimeApiClient) {
+async function startManagementApi (configManager, runtimeApiClient, loggingPort) {
   const runtimePID = process.pid
 
   let socketPath = null
@@ -147,7 +162,8 @@ async function startManagementApi (configManager, runtimeApiClient) {
 
     const managementApi = await createManagementApi(
       configManager,
-      runtimeApiClient
+      runtimeApiClient,
+      loggingPort
     )
     await managementApi.listen({ path: socketPath })
     return managementApi
