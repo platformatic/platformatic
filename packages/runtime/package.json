@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@fastify/error": "^3.4.1",
-    "@fastify/websocket": "^8.3.0",
+    "@fastify/websocket": "^9.0.0",
     "@hapi/topo": "^6.0.2",
     "@platformatic/composer": "workspace:*",
     "@platformatic/config": "workspace:*",
