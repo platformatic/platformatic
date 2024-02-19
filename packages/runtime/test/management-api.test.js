@@ -468,7 +468,7 @@ test('should get runtime logs via management api', async (t) => {
 
   let webSocket = null
   if (platform() === 'win32') {
-    webSocket = new WebSocket('ws+pipe://' + socketPath + ':/api/logs')
+    webSocket = new WebSocket('ws+unix:' + socketPath + ':/api/logs')
   } else {
     webSocket = new WebSocket('ws+unix://' + socketPath + ':/api/logs')
   }

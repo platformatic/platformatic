@@ -146,7 +146,7 @@ async function startManagementApi (configManager, runtimeApiClient, loggingPort)
 
   let socketPath = null
   if (platform() === 'win32') {
-    socketPath = '\\\\.\\pipe\\' + join(PLATFORMATIC_TMP_DIR, `${runtimePID}.sock`)
+    socketPath = '\\\\.\\pipe\\platformatic-' + runtimePID
   } else {
     await mkdir(PLATFORMATIC_TMP_DIR, { recursive: true })
     socketPath = join(PLATFORMATIC_TMP_DIR, `${runtimePID}.sock`)
