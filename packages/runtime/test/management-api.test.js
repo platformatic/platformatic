@@ -1,11 +1,11 @@
 'use strict'
 
 const assert = require('node:assert')
-const { platform } = require('node:os')
+// const { platform } = require('node:os')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { Client } = require('undici')
-const WebSocket = require('ws')
+// const WebSocket = require('ws')
 const { isatty } = require('tty')
 
 const { buildServer } = require('..')
