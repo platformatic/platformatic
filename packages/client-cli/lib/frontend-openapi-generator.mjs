@@ -112,8 +112,8 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
       // /organizations/{orgId}/members/{memberId}
       // to
       // /organizations/${request.orgId}/members/${request.memberId}
-      const stringLiteralPath = path.replace(/\{/gm, '${request.')
-
+      const stringLiteralPath = path.replace(/\{/gm, '${request[\'').replace(/\}/gm, '\']}')
+      console.log(stringLiteralPath)
       // GET methods need query strings instead of JSON bodies
       if (queryParams.length) {
         // query parameters should be appended to the url

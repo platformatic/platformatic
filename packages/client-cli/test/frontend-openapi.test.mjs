@@ -360,3 +360,30 @@ const _getRoot = async (url: string, request: Types.GetRootRequest): Promise<Typ
   ok(implementation)
   equal(implementation.includes(tsImplementationTemplate), true)
 })
+
+test('handle wildcard in path parameter', async (t) => {
+  const dir = await moveToTmpdir(after)
+
+  const fileName = join(__dirname, 'fixtures', 'wildcard-in-path-openapi.json')
+  await execa('node', [cliPath, fileName, '--frontend', '--name', 'fontend'])
+  const implementation = await readFile(join(dir, 'fontend', 'fontend.mjs'), 'utf8')
+
+  const tsImplementationTemplate = `
+async function _getPkgScopeNameRange (url, request) {
+  const headers = {
+    'Content-type': 'application/json; charset=utf-8'
+  }
+
+  const response = await fetch(\`\${url}/pkg/@\${request['scope']}/\${request['name']}/\${request['range']}/\${request['*']}\`, {
+    headers
+  })
+
+  if (!response.ok) {
+    throw new Error(await response.text())
+  }
+
+  return await response.json()
+}`
+  ok(implementation)
+  equal(implementation.includes(tsImplementationTemplate), true)
+})
