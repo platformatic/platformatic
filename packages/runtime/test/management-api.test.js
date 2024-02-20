@@ -32,10 +32,10 @@ test('should get the runtime metadata', async (t) => {
     keepAliveMaxTimeout: 10
   })
 
-  t.after(async () => {
-    await client.close()
-    await app.close()
-    await app.managementApi.close()
+  t.after(() => {
+    client.close()
+    app.close()
+    app.managementApi.close()
   })
 
   const { statusCode, body } = await client.request({
@@ -70,11 +70,6 @@ test('should stop all services with a management api', async (t) => {
 
   await app.start()
 
-  t.after(async () => {
-    await app.close()
-    await app.managementApi.close()
-  })
-
   const client = new Client({
     hostname: 'localhost',
     protocol: 'http:'
@@ -84,10 +79,17 @@ test('should stop all services with a management api', async (t) => {
     keepAliveMaxTimeout: 10
   })
 
-  const { statusCode } = await client.request({
+  t.after(() => {
+    client.close()
+    app.close()
+    app.managementApi.close()
+  })
+
+  const { statusCode, body } = await client.request({
     method: 'POST',
     path: '/api/services/stop'
   })
+  await body.text()
 
   assert.strictEqual(statusCode, 200)
 
@@ -116,10 +118,10 @@ test('should start all services with a management api', async (t) => {
     keepAliveMaxTimeout: 10
   })
 
-  t.after(async () => {
-    await client.close()
-    await app.close()
-    await app.managementApi.close()
+  t.after(() => {
+    client.close()
+    app.close()
+    app.managementApi.close()
   })
 
   const { statusCode, body } = await client.request({
@@ -157,10 +159,10 @@ test('should restart all services with a management api', async (t) => {
     keepAliveMaxTimeout: 10
   })
 
-  t.after(async () => {
-    await client.close()
-    await app.close()
-    await app.managementApi.close()
+  t.after(() => {
+    client.close()
+    app.close()
+    app.managementApi.close()
   })
 
   const { statusCode, body } = await client.request({
@@ -198,10 +200,10 @@ test('should get service details', async (t) => {
     keepAliveMaxTimeout: 10
   })
 
-  t.after(async () => {
-    await client.close()
-    await app.close()
-    await app.managementApi.close()
+  t.after(() => {
+    client.close()
+    app.close()
+    app.managementApi.close()
   })
 
   const { statusCode, body } = await client.request({
@@ -239,10 +241,10 @@ test('should get service config', async (t) => {
     keepAliveMaxTimeout: 10
   })
 
-  t.after(async () => {
-    await client.close()
-    await app.close()
-    await app.managementApi.close()
+  t.after(() => {
+    client.close()
+    app.close()
+    app.managementApi.close()
   })
 
   const { statusCode, body } = await client.request({
@@ -300,10 +302,10 @@ test('should get services topology', async (t) => {
     keepAliveMaxTimeout: 10
   })
 
-  t.after(async () => {
-    await client.close()
-    await app.close()
-    await app.managementApi.close()
+  t.after(() => {
+    client.close()
+    app.close()
+    app.managementApi.close()
   })
 
   const { statusCode, body } = await client.request({
@@ -345,9 +347,9 @@ test('should stop service by service id', async (t) => {
 
   await app.start()
 
-  t.after(async () => {
-    await app.close()
-    await app.managementApi.close()
+  t.after(() => {
+    app.close()
+    app.managementApi.close()
   })
 
   {
@@ -389,9 +391,9 @@ test('should start stopped service by service id', async (t) => {
 
   await app.start()
 
-  t.after(async () => {
-    await app.close()
-    await app.managementApi.close()
+  t.after(() => {
+    app.close()
+    app.managementApi.close()
   })
 
   await app.stopService('service-1')
@@ -444,10 +446,10 @@ test('should proxy request to the service', async (t) => {
     keepAliveMaxTimeout: 10
   })
 
-  t.after(async () => {
-    await client.close()
-    await app.close()
-    await app.managementApi.close()
+  t.after(() => {
+    client.close()
+    app.close()
+    app.managementApi.close()
   })
 
   const { statusCode, body } = await client.request({
