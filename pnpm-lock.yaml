@@ -1440,6 +1440,9 @@ importers:
       undici-oauth-interceptor:
         specifier: ^0.4.2
         version: 0.4.2
+      ws:
+        specifier: ^8.16.0
+        version: 8.16.0
 
   packages/scalar-theme: {}
 

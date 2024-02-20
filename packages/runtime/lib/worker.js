@@ -12,6 +12,7 @@ const {
 } = require('node:worker_threads')
 const undici = require('undici')
 const pino = require('pino')
+const pretty = require('pino-pretty')
 const { setGlobalDispatcher, Agent } = require('undici')
 const RuntimeApi = require('./api')
 const { MessagePortWritable } = require('./message-port-writable')
@@ -34,7 +35,6 @@ globalThis.fetch = undici.fetch
 const config = workerData.config
 
 let loggerConfig = config.server?.logger
-let destination
 
 if (loggerConfig) {
   loggerConfig = { ...loggerConfig }
@@ -42,20 +42,22 @@ if (loggerConfig) {
   loggerConfig = {}
 }
 
-/* c8 ignore next 10 */
+const cliStream = isatty(1) ? pretty() : pino.destination(1)
+
+let logger = null
 if (config.loggingPort) {
-  destination = new MessagePortWritable({
+  const portStream = new MessagePortWritable({
     metadata: config.loggingMetadata,
     port: config.loggingPort
   })
-  delete loggerConfig.transport
-} else if (!loggerConfig.transport && isatty(1)) {
-  loggerConfig.transport = {
-    target: 'pino-pretty'
-  }
+  const multiStream = pino.multistream([
+    { stream: portStream, level: 'trace' },
+    { stream: cliStream, level: loggerConfig.level || 'info' }
+  ])
+  logger = pino({ level: 'trace' }, multiStream)
+} else {
+  logger = pino(loggerConfig, cliStream)
 }
-
-const logger = pino(loggerConfig, destination)
 
 if (config.server) {
   config.server.logger = logger

@@ -1,17 +1,16 @@
 'use strict'
 
-const { tmpdir, platform } = require('node:os')
 const { once } = require('node:events')
 const inspector = require('node:inspector')
 const { join, resolve, dirname } = require('node:path')
-const { writeFile, unlink, mkdir } = require('node:fs/promises')
+const { writeFile } = require('node:fs/promises')
 const { pathToFileURL } = require('node:url')
 const { Worker } = require('node:worker_threads')
 const { start: serviceStart } = require('@platformatic/service')
 const { printConfigValidationErrors } = require('@platformatic/config')
 const closeWithGrace = require('close-with-grace')
 const { loadConfig } = require('./load-config')
-const { createManagementApi } = require('./management-api')
+const { startManagementApi } = require('./management-api')
 const { parseInspectorOptions, wrapConfigInRuntimeConfig } = require('./config')
 const RuntimeApiClient = require('./api-client.js')
 const errors = require('./errors')
@@ -24,8 +23,6 @@ const kWorkerExecArgv = [
   '--experimental-loader',
   kLoaderFile
 ]
-
-const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'pids')
 
 async function startWithConfig (configManager, env = process.env) {
   const config = configManager.current
@@ -47,10 +44,21 @@ async function startWithConfig (configManager, env = process.env) {
   // The configManager cannot be transferred to the worker, so remove it.
   delete config.configManager
 
+  let mainLoggingPort = null
+  let childLoggingPort = config.loggingPort
+
+  if (!childLoggingPort && config.managementApi) {
+    const { port1, port2 } = new MessageChannel()
+    mainLoggingPort = port1
+    childLoggingPort = port2
+
+    config.loggingPort = childLoggingPort
+  }
+
   const worker = new Worker(kWorkerFile, {
     /* c8 ignore next */
     execArgv: config.hotReload ? kWorkerExecArgv : [],
-    transferList: config.loggingPort ? [config.loggingPort] : [],
+    transferList: childLoggingPort ? [childLoggingPort] : [],
     workerData: { config, dirname },
     env
   })
@@ -106,7 +114,11 @@ async function startWithConfig (configManager, env = process.env) {
   const runtimeApiClient = new RuntimeApiClient(worker)
 
   if (config.managementApi) {
-    managementApi = await startManagementApi(configManager, runtimeApiClient)
+    managementApi = await startManagementApi(
+      configManager,
+      runtimeApiClient,
+      mainLoggingPort
+    )
     runtimeApiClient.managementApi = managementApi
   }
 
@@ -124,38 +136,6 @@ async function start (args) {
   }
 
   return serviceStart(config.app, args)
-}
-
-async function startManagementApi (configManager, runtimeApiClient) {
-  const runtimePID = process.pid
-
-  let socketPath = null
-  if (platform() === 'win32') {
-    socketPath = '\\\\.\\pipe\\' + join(PLATFORMATIC_TMP_DIR, `${runtimePID}.sock`)
-  } else {
-    await mkdir(PLATFORMATIC_TMP_DIR, { recursive: true })
-    socketPath = join(PLATFORMATIC_TMP_DIR, `${runtimePID}.sock`)
-  }
-
-  try {
-    await mkdir(PLATFORMATIC_TMP_DIR, { recursive: true })
-    await unlink(socketPath).catch((err) => {
-      if (err.code !== 'ENOENT') {
-        throw new errors.FailedToUnlinkManagementApiSocket(err.message)
-      }
-    })
-
-    const managementApi = await createManagementApi(
-      configManager,
-      runtimeApiClient
-    )
-    await managementApi.listen({ path: socketPath })
-    return managementApi
-  /* c8 ignore next 4 */
-  } catch (err) {
-    console.error(err)
-    process.exit(1)
-  }
 }
 
 async function startCommand (args) {

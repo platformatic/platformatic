@@ -1,11 +1,24 @@
 'use strict'
 
+const { tmpdir, platform } = require('node:os')
 const { join } = require('node:path')
-const { readFile } = require('node:fs/promises')
+const { readFile, mkdir, unlink } = require('node:fs/promises')
 const fastify = require('fastify')
+const errors = require('./errors')
 const platformaticVersion = require('../package.json').version
 
-async function createManagementApi (configManager, runtimeApiClient) {
+const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'pids')
+
+const pinoLogLevels = {
+  fatal: 60,
+  error: 50,
+  warn: 40,
+  info: 30,
+  debug: 20,
+  trace: 10
+}
+
+async function createManagementApi (configManager, runtimeApiClient, loggingPort) {
   let apiConfig = configManager.current.managementApi
   if (!apiConfig || apiConfig === true) {
     apiConfig = {}
@@ -25,6 +38,8 @@ async function createManagementApi (configManager, runtimeApiClient) {
     const packageJson = JSON.parse(packageJsonFile)
     return packageJson
   }
+
+  app.register(require('@fastify/websocket'))
 
   app.register(async (app) => {
     app.get('/metadata', async () => {
@@ -114,12 +129,77 @@ async function createManagementApi (configManager, runtimeApiClient) {
         .send(res.body)
     })
 
-    app.get('/logs', { websocket: true }, async (connection) => {
-      process.stdout.pipe(connection.socket)
+    app.get('/logs', { websocket: true }, async (connection, req) => {
+      const logLevel = req.query.level || 'info'
+      const logLevelNumber = pinoLogLevels[logLevel]
+
+      const handler = (message) => {
+        for (const log of message.logs) {
+          try {
+            const parsedLog = JSON.parse(log)
+            if (parsedLog.level >= logLevelNumber) {
+              connection.socket.send(log)
+            }
+          } catch (err) {
+            console.error('Failed to parse log message: ', log, err)
+          }
+        }
+      }
+
+      loggingPort.on('message', handler)
+      connection.socket.on('close', () => {
+        loggingPort.off('message', handler)
+      })
+      connection.socket.on('error', () => {
+        loggingPort.off('message', handler)
+      })
+      connection.socket.on('end', () => {
+        loggingPort.off('message', handler)
+      })
     })
   }, { prefix: '/api' })
 
   return app
 }
 
-module.exports = { createManagementApi }
+async function startManagementApi (configManager, runtimeApiClient, loggingPort) {
+  const runtimePID = process.pid
+
+  let socketPath = null
+  if (platform() === 'win32') {
+    socketPath = '\\\\.\\pipe\\platformatic-' + runtimePID
+  } else {
+    await mkdir(PLATFORMATIC_TMP_DIR, { recursive: true })
+    socketPath = join(PLATFORMATIC_TMP_DIR, `${runtimePID}.sock`)
+  }
+
+  try {
+    await mkdir(PLATFORMATIC_TMP_DIR, { recursive: true })
+    await unlink(socketPath).catch((err) => {
+      if (err.code !== 'ENOENT') {
+        throw new errors.FailedToUnlinkManagementApiSocket(err.message)
+      }
+    })
+
+    const managementApi = await createManagementApi(
+      configManager,
+      runtimeApiClient,
+      loggingPort
+    )
+
+    if (platform() !== 'win32') {
+      managementApi.addHook('onClose', async () => {
+        await unlink(socketPath).catch(() => {})
+      })
+    }
+
+    await managementApi.listen({ path: socketPath })
+    return managementApi
+  /* c8 ignore next 4 */
+  } catch (err) {
+    console.error(err)
+    process.exit(1)
+  }
+}
+
+module.exports = { startManagementApi, createManagementApi }
