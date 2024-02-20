@@ -1097,7 +1097,7 @@ test('requestbody as array', async (t) => {
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
   equal(data.includes(`
-  export interface Movies {
+  export type Movies = {
     postFoobar(req?: PostFoobarRequest[]): Promise<FullResponse<unknown, 200>>;
   }
 `), true)
