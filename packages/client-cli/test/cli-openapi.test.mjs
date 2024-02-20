@@ -1086,3 +1086,24 @@ app.listen({ port: 0 })
     equal(match(body, { path: { fieldId: 'foo' } }), true)
   }
 })
+
+test('requestbody as array', async (t) => {
+  const dir = await moveToTmpdir(after)
+  console.log(`working in ${dir}`)
+
+  const openAPIfile = desm.join(import.meta.url, 'fixtures', 'requestbody-as-array-openapi.json')
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies'])
+
+  const typeFile = join(dir, 'movies', 'movies.d.ts')
+  const data = await readFile(typeFile, 'utf-8')
+  equal(data.includes(`
+  export interface Movies {
+    postFoobar(req?: PostFoobarRequest[]): Promise<FullResponse<unknown, 200>>;
+  }
+`), true)
+  equal(data.includes(`
+  export type PostFoobarRequest = {
+    'id': string;
+    'title': string;
+  }`), true)
+})

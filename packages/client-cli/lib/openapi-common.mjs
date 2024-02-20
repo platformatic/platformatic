@@ -23,6 +23,7 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
     const capitalizedCamelCaseOperationId = capitalize(camelCaseOperationId)
     const operationRequestName = `${capitalizedCamelCaseOperationId}Request`
 
+    let isRequestArray = false
     interfacesWriter.write(`export type ${operationRequestName} =`).block(() => {
       const addedProps = new Set()
       if (parameters) {
@@ -67,12 +68,12 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
         }
       }
       if (requestBody) {
-        writeContent(interfacesWriter, requestBody.content, schema, addedProps, 'req', forceFullRequest ? 'body' : null)
+        isRequestArray = writeContent(interfacesWriter, requestBody.content, schema, addedProps, 'req', forceFullRequest ? 'body' : null)
       }
     })
     interfacesWriter.blankLine()
     const allResponsesName = responsesWriter(capitalizedCamelCaseOperationId, responses, currentFullResponse, interfacesWriter, schema)
-    mainWriter.writeLine(`${camelCaseOperationId}(req?: ${operationRequestName}): Promise<${allResponsesName}>;`)
+    mainWriter.writeLine(`${camelCaseOperationId}(req?: ${operationRequestName}${isRequestArray ? '[]' : ''}): Promise<${allResponsesName}>;`)
     currentFullResponse = originalFullResponse
   }
 }
@@ -132,7 +133,6 @@ export function writeContent (writer, content, spec, addedProps, methodType, wra
       // status codes. This is currently not possible with Platformatic DB
       // services so we skip for now.
       // TODO: support different schemas for different status codes
-
       if (body.schema.type === 'array') {
         isResponseArray = true
         schema = body.schema.items
