@@ -13,11 +13,11 @@ const streamRuntimeLogsCommand = require('./lib/logs')
 
 const program = commist({ maxDistance: 2 })
 
-program.register('stop', stopRuntimeServiceCommand)
-program.register('start', startRuntimeServiceCommand)
-program.register('close', closeRuntimeServiceCommand)
-program.register('restart', restartRuntimeServiceCommand)
-program.register('logs', streamRuntimeLogsCommand)
+program.register('stop', wrapCommand(stopRuntimeServiceCommand))
+program.register('start', wrapCommand(startRuntimeServiceCommand))
+program.register('close', wrapCommand(closeRuntimeServiceCommand))
+program.register('restart', wrapCommand(restartRuntimeServiceCommand))
+program.register('logs', wrapCommand(streamRuntimeLogsCommand))
 
 async function runPS (argv) {
   if (argv.length === 0) {
@@ -45,6 +45,16 @@ async function runPS (argv) {
 
 if (require.main === module) {
   runPS(process.argv.slice(2))
+}
+
+function wrapCommand (fn) {
+  return async function (...args) {
+    try {
+      return await fn(...args)
+    } catch (err) {
+      console.log(err.message)
+    }
+  }
 }
 
 module.exports = { runPS }

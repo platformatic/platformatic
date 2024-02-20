@@ -1,6 +1,7 @@
 'use strict'
 
 const { parseArgs } = require('node:util')
+const errors = require('./errors')
 const {
   getRuntimeByPID,
   getRuntimeByPackageName,
@@ -23,11 +24,11 @@ async function stopRuntimeServicesCommand (argv) {
   } else if (args.name) {
     runtime = await getRuntimeByPackageName(args.name)
   } else {
-    throw new Error('You must specify either a PID or a package name')
+    throw errors.MissingRuntimeIdentifier()
   }
 
   if (!runtime) {
-    throw new Error('Runtime not found')
+    throw errors.RuntimeNotFound()
   }
 
   await stopRuntimeServices(runtime.pid)
