@@ -3,6 +3,7 @@
 const { join } = require('node:path')
 const { parseArgs } = require('node:util')
 const commist = require('commist')
+const helpMe = require('help-me')
 
 const getRuntimesEnvCommand = require('./lib/env')
 const getRuntimeServicesCommand = require('./lib/services')
@@ -14,6 +15,11 @@ const restartRuntimeServiceCommand = require('./lib/restart')
 const injectRuntimeCommand = require('./lib/inject')
 const streamRuntimeLogsCommand = require('./lib/logs')
 
+const help = helpMe({
+  dir: join(__dirname, 'help'),
+  ext: '.txt'
+})
+
 const program = commist({ maxDistance: 2 })
 
 program.register('stop', wrapCommand(stopRuntimeServiceCommand))
@@ -24,6 +30,7 @@ program.register('logs', wrapCommand(streamRuntimeLogsCommand))
 program.register('env', wrapCommand(getRuntimesEnvCommand))
 program.register('services', wrapCommand(getRuntimeServicesCommand))
 program.register('inject', wrapCommand(injectRuntimeCommand))
+program.register('help', help.toStdout)
 
 async function runPS (argv) {
   if (argv.length === 0) {

@@ -1,0 +1,16 @@
+Starts all platformatic runtime services.
+
+``` bash
+  $ platformatic ps start -n runtime-name
+```
+
+Options:
+
+* `-p, --pid <number>` - The process id of the runtime to start.
+* `-n, --name <string>` - The name of the runtime to start.
+
+The `start` command uses the Platformatic Runtime Management API. To enable it
+set the `managementApi` option to `true` in the runtime configuration file.
+
+To get the list of runtimes with enabled management API use the
+`platformatic ps` command.

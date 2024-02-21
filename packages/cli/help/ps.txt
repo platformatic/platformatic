@@ -1,0 +1,10 @@
+Lists all running platformatic runtime applications.
+
+``` bash
+  $ platformatic ps
+```
+
+To see the list of all available ps commands, run `platformatic ps help`.
+
+The `ps` command uses the Platformatic Runtime Management API. To enable it
+set the `managementApi` option to `true` in the runtime configuration file.

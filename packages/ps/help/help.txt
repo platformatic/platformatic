@@ -1,0 +1,10 @@
+Available commands:
+
+* `start` - starts all platformatic runtime services.
+* `stop` - stops all platformatic runtime services.
+* `restart` - restarts all platformatic runtime services.
+* `close` - stops all platformatic runtime services and kills the runtime process.
+* `services` - lists the runtime services.
+* `env` - lists the runtime environment variables.
+* `logs` - shows the runtime logs.
+* `inject` - injects a request to the runtime service

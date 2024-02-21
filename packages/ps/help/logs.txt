@@ -1,0 +1,19 @@
+Streams logs from the platformatic runtime application.
+
+``` bash
+  $ platformatic ps logs -n runtime-name
+```
+
+Options:
+
+* `-p, --pid <number>` - The process id of the runtime.
+* `-n, --name <string>` - The name of the runtime.
+* `-l, --level <string>` - The pino log level to stream. Default is `info`.
+* `--pretty` <boolean> - Pretty print the logs. Default is `true`.
+
+The `logs` command uses the Platformatic Runtime Management API. To enable it
+set the `managementApi` option to `true` in the runtime configuration file.
+
+To get the list of runtimes with enabled management API use the
+`platformatic ps` command.
+
