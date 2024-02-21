@@ -2,33 +2,78 @@
 
 const { tmpdir, platform } = require('node:os')
 const { join } = require('node:path')
+const { exec } = require('node:child_process')
 const { readdir } = require('node:fs/promises')
 const { Client } = require('undici')
 const WebSocket = require('ws')
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'pids')
+const PLATFORMATIC_PIPE_PREFIX = '\\\\.\\pipe\\platformatic-'
 
 function getSocketPathFromPid (pid) {
   if (platform() === 'win32') {
-    return '\\\\.\\pipe\\platformatic-' + pid
+    return PLATFORMATIC_PIPE_PREFIX + pid
   }
   return join(PLATFORMATIC_TMP_DIR, `${pid}.sock`)
 }
 
 async function getRuntimes () {
-  const socketNames = await readdir(PLATFORMATIC_TMP_DIR)
+  const runtimePIDs = platform() === 'win32'
+    ? await getWindowsRuntimePIDs()
+    : await getUnixRuntimePIDs()
 
   const runtimes = []
-  for (const socketName of socketNames) {
-    const runtimePid = socketName.replace('.sock', '')
+  for (const runtimePID of runtimePIDs) {
     try {
-      const runtimeMetadata = await getRuntimeMetadata(runtimePid)
+      const runtimeMetadata = await getRuntimeMetadata(runtimePID)
       runtimes.push(runtimeMetadata)
     } catch (err) {
       continue
     }
   }
   return runtimes
+}
+
+async function getUnixRuntimePIDs () {
+  const socketNames = await readdir(PLATFORMATIC_TMP_DIR)
+  const runtimePIDs = []
+  for (const socketName of socketNames) {
+    const runtimePID = socketName.replace('.sock', '')
+    runtimePIDs.push(runtimePID)
+  }
+  return runtimePIDs
+}
+
+async function getWindowsRuntimePIDs () {
+  const pipeNames = await getWindowsNamedPipes()
+  const runtimePIDs = []
+  for (const pipeName of pipeNames) {
+    if (pipeName.startsWith(PLATFORMATIC_PIPE_PREFIX)) {
+      const runtimePID = pipeName.replace(PLATFORMATIC_PIPE_PREFIX, '')
+      runtimePIDs.push(runtimePID)
+    }
+  }
+  console.log('-------------------------runtimePIDs', runtimePIDs)
+  return runtimePIDs
+}
+
+async function getWindowsNamedPipes () {
+  return new Promise((resolve, reject) => {
+    exec(
+      '[System.IO.Directory]::GetFiles("\\\\.\\pipe\\")',
+      { shell: 'powershell.exe' },
+      (err, stdout) => {
+        if (err) {
+          reject(err)
+          return
+        }
+        console.log('-------------------------stdout', stdout)
+        const namedPipes = stdout.split('\n')
+        console.log('-------------------------namedPipes', stdout)
+        resolve(namedPipes)
+      }
+    )
+  })
 }
 
 async function getRuntimeMetadata (pid) {
