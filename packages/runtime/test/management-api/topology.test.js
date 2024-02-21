@@ -47,6 +47,7 @@ test('should get services topology', async (t) => {
     services: [
       {
         id: 'service-1',
+        type: 'service',
         status: 'started',
         entrypoint: true,
         url: entrypointDetails.url,
@@ -55,6 +56,7 @@ test('should get services topology', async (t) => {
       },
       {
         id: 'service-2',
+        type: 'service',
         status: 'started',
         entrypoint: false,
         localUrl: 'http://service-2.plt.local',

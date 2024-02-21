@@ -202,8 +202,9 @@ class RuntimeApi {
     const service = this.#getServiceById(id)
     const status = service.getStatus()
 
+    const type = service.config.configType
     const { entrypoint, dependencies, localUrl } = service.appConfig
-    const serviceDetails = { id, status, localUrl, entrypoint, dependencies }
+    const serviceDetails = { id, type, status, localUrl, entrypoint, dependencies }
 
     if (entrypoint) {
       serviceDetails.url = status === 'started' ? service.server.url : null

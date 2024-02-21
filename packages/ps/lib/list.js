@@ -33,10 +33,7 @@ const tableColumns = [
   },
   {
     value: 'url',
-    alias: 'URL',
-    formatter: (url) => {
-      return url || '-----'
-    }
+    alias: 'URL'
   },
   {
     value: 'projectDir',
@@ -84,6 +81,7 @@ async function printRuntimes (runtimes) {
       if (column.formatter) {
         value = column.formatter(value)
       }
+      value ??= '-----'
       raw.push(value)
     }
     raws.push(raw)

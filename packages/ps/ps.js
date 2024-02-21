@@ -5,6 +5,7 @@ const { parseArgs } = require('node:util')
 const commist = require('commist')
 
 const getRuntimesEnv = require('./lib/env')
+const getRuntimeServices = require('./lib/services')
 const listRuntimesCommand = require('./lib/list')
 const stopRuntimeServiceCommand = require('./lib/stop')
 const closeRuntimeServiceCommand = require('./lib/close')
@@ -20,6 +21,7 @@ program.register('close', wrapCommand(closeRuntimeServiceCommand))
 program.register('restart', wrapCommand(restartRuntimeServiceCommand))
 program.register('logs', wrapCommand(streamRuntimeLogsCommand))
 program.register('env', wrapCommand(getRuntimesEnv))
+program.register('services', wrapCommand(getRuntimeServices))
 
 async function runPS (argv) {
   if (argv.length === 0) {
