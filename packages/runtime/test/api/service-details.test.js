@@ -22,6 +22,7 @@ test('should get service details', async (t) => {
   const serviceDetails = await app.getServiceDetails('with-logger')
   assert.deepStrictEqual(serviceDetails, {
     id: 'with-logger',
+    type: 'service',
     status: 'started',
     entrypoint: false,
     localUrl: 'http://with-logger.plt.local',
