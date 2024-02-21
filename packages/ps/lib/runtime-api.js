@@ -221,7 +221,7 @@ async function closeRuntimeServices (pid) {
 function pipeRuntimeLogsStream (pid, options, onMessage) {
   const socketPath = getSocketPathFromPid(pid)
   let query = ''
-  if (options.level || options.pretty) {
+  if (options.level || options.pretty || options.serviceId) {
     query = '?' + new URLSearchParams(options).toString()
   }
 

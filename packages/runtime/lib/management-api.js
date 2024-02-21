@@ -137,6 +137,7 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
     app.get('/logs', { websocket: true }, async (connection, req) => {
       const logLevel = req.query.level || 'info'
       const pretty = req.query.pretty !== 'false'
+      const serviceId = req.query.serviceId || null
 
       const logLevelNumber = pinoLogLevels[logLevel]
       const prettify = prettyFactory()
@@ -145,12 +146,12 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
         for (let log of message.logs) {
           try {
             const parsedLog = JSON.parse(log)
-            if (parsedLog.level >= logLevelNumber) {
-              if (pretty) {
-                log = prettify(parsedLog)
-              }
-              connection.socket.send(log)
+            if (parsedLog.level < logLevelNumber) continue
+            if (serviceId && parsedLog.name !== serviceId) continue
+            if (pretty) {
+              log = prettify(parsedLog)
             }
+            connection.socket.send(log)
           } catch (err) {
             console.error('Failed to parse log message: ', log, err)
           }

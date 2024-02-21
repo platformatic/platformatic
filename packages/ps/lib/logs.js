@@ -15,7 +15,8 @@ async function streamRuntimeLogsCommand (argv) {
       pid: { type: 'string', short: 'p' },
       name: { type: 'string', short: 'n' },
       level: { type: 'string', short: 'l', default: 'info' },
-      pretty: { type: 'boolean', default: true }
+      pretty: { type: 'boolean', default: true },
+      service: { type: 'string', short: 's' }
     },
     strict: false
   }).values
@@ -39,6 +40,9 @@ async function streamRuntimeLogsCommand (argv) {
   }
   if (args.pretty !== undefined) {
     options.pretty = args.pretty
+  }
+  if (args.service !== undefined) {
+    options.serviceId = args.service
   }
 
   pipeRuntimeLogsStream(runtime.pid, options, (message) => {
