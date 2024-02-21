@@ -22,12 +22,8 @@ test('should get runtime logs via management api', async (t) => {
 
   const socketPath = app.managementApi.server.address()
 
-  let webSocket = null
-  if (platform() === 'win32') {
-    webSocket = new WebSocket('ws+unix:' + socketPath + ':/api/logs')
-  } else {
-    webSocket = new WebSocket('ws+unix://' + socketPath + ':/api/logs')
-  }
+  const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
+  const webSocket = new WebSocket(protocol + socketPath + ':/api/logs')
 
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {

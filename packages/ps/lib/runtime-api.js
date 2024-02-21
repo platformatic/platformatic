@@ -1,6 +1,6 @@
 'use strict'
 
-const { tmpdir } = require('node:os')
+const { tmpdir, platform } = require('node:os')
 const { join } = require('node:path')
 const { readdir } = require('node:fs/promises')
 const { Client } = require('undici')
@@ -9,6 +9,9 @@ const WebSocket = require('ws')
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'pids')
 
 function getSocketPathFromPid (pid) {
+  if (platform() === 'win32') {
+    return '\\\\.\\pipe\\platformatic-' + pid
+  }
   return join(PLATFORMATIC_TMP_DIR, `${pid}.sock`)
 }
 
@@ -158,13 +161,15 @@ function pipeRuntimeLogsStream (pid, options, onMessage) {
   if (options.level || options.pretty) {
     query = '?' + new URLSearchParams(options).toString()
   }
-  const socket = new WebSocket('ws+unix://' + socketPath + ':/api/logs' + query)
 
-  socket.on('error', (err) => {
+  const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
+  const webSocket = new WebSocket(protocol + socketPath + ':/api/logs' + query)
+
+  webSocket.on('error', (err) => {
     throw new Error(`WebSocket error: ${err.message}`)
   })
 
-  socket.on('message', (data) => {
+  webSocket.on('message', (data) => {
     onMessage(data.toString())
   })
 }
