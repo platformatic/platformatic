@@ -1,6 +1,7 @@
 'use strict'
 
 const { parseArgs } = require('node:util')
+const { table, getBorderCharacters } = require('table')
 const errors = require('./errors')
 const {
   getRuntimeByPID,
@@ -8,16 +9,51 @@ const {
   getRuntimeServices
 } = require('./runtime-api')
 
-function buildRuntimeTopology (runtimeTopology) {
-  const entrypoint = runtimeTopology.services.find(service => service.entrypoint)
+const tableColumns = [
+  {
+    value: 'id',
+    alias: 'NAME'
+  },
+  {
+    value: 'type',
+    alias: 'TYPE'
+  },
+  {
+    value: 'entrypoint',
+    alias: 'ENTRYPOINT',
+    formatter: (entrypoint) => {
+      return entrypoint ? 'yes' : 'no'
+    }
+  }
+]
 
-  let topology = `- ${entrypoint.id} (${entrypoint.type}) <- entrypoint`
-  for (const service of runtimeTopology.services) {
-    if (service.entrypoint) continue
-    topology += `\n - ${service.id} (${service.type})`
+const tableConfig = {
+  border: getBorderCharacters('void'),
+  columnDefault: {
+    paddingLeft: 1,
+    paddingRight: 1
+  },
+  drawHorizontalLine: () => false
+}
+
+async function printRuntimeServices (services) {
+  const raws = [tableColumns.map(column => column.alias)]
+
+  for (const service of services.services) {
+    const raw = []
+    for (const column of tableColumns) {
+      let value = service[column.value]
+      if (column.formatter) {
+        value = column.formatter(value)
+      }
+      value ??= '-----'
+      raw.push(value)
+    }
+    raws.push(raw)
   }
 
-  return topology
+  const servicesTable = table(raws, tableConfig)
+  console.log(servicesTable)
 }
 
 async function getRuntimeServicesCommand (argv) {
@@ -44,7 +80,7 @@ async function getRuntimeServicesCommand (argv) {
   }
 
   const runtimeServices = await getRuntimeServices(runtime.pid)
-  console.log(buildRuntimeTopology(runtimeServices))
+  printRuntimeServices(runtimeServices)
 }
 
 module.exports = getRuntimeServicesCommand
