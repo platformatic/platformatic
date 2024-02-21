@@ -49,6 +49,27 @@ async function getRuntimeMetadata (pid) {
   return metadata
 }
 
+async function getRuntimeEnv (pid) {
+  const socketPath = getSocketPathFromPid(pid)
+  const client = new Client({
+    hostname: 'localhost',
+    protocol: 'http:'
+  }, { socketPath })
+
+  const { statusCode, body } = await client.request({
+    path: '/api/env',
+    method: 'GET'
+  })
+
+  if (statusCode !== 200) {
+    const error = await body.text()
+    throw new Error(`Failed to get runtime env: ${error}`)
+  }
+
+  const runtimeEnv = await body.json()
+  return runtimeEnv
+}
+
 async function getRuntimeByPackageName (packageName) {
   const runtimes = await getRuntimes()
   return runtimes.find(runtime => runtime.packageName === packageName)
@@ -147,6 +168,7 @@ function pipeRuntimeLogsStream (pid, onMessage) {
 module.exports = {
   getRuntimes,
   getRuntimeMetadata,
+  getRuntimeEnv,
   getRuntimeByPID,
   getRuntimeByPackageName,
   stopRuntimeServices,

@@ -1,11 +1,15 @@
 import { on } from 'node:events'
+import { createRequire } from 'node:module'
 import { execa } from 'execa'
 import split from 'split2'
 
-const runtimeCliPath = import.meta.resolve('@platformatic/runtime/runtime.mjs').replace('file://', '')
+const runtimeCliPath = createRequire(import.meta.url).resolve('@platformatic/runtime/runtime.mjs')
 
-export async function startRuntime (configPath) {
-  const runtime = execa(process.execPath, [runtimeCliPath, 'start', '-c', configPath])
+export async function startRuntime (configPath, env = {}) {
+  const runtime = execa(
+    process.execPath, [runtimeCliPath, 'start', '-c', configPath],
+    { env }
+  )
   runtime.stdout.pipe(process.stdout)
   runtime.stderr.pipe(process.stderr)
 

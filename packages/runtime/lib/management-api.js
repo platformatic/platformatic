@@ -61,6 +61,10 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
       }
     })
 
+    app.get('/env', async () => {
+      return process.env
+    })
+
     app.get('/services', async () => {
       return runtimeApiClient.getServices()
     })
