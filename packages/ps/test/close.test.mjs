@@ -25,7 +25,7 @@ test('should close runtime by pid', async (t) => {
   assert.strictEqual(child.stdout, 'Closed runtime "runtime-1".')
 
   const errorTimeout = async () => {
-    await sleep(10000)
+    await sleep(15000)
     throw new Error('Couldn\'t close runtime')
   }
 
@@ -52,7 +52,7 @@ test('should close runtime by pid', async (t) => {
   assert.strictEqual(child.stdout, 'Closed runtime "runtime-1".')
 
   const errorTimeout = async () => {
-    await sleep(10000)
+    await sleep(15000)
     throw new Error('Couldn\'t close runtime')
   }
 
