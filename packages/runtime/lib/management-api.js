@@ -4,6 +4,7 @@ const { tmpdir, platform } = require('node:os')
 const { join } = require('node:path')
 const { readFile, mkdir, unlink } = require('node:fs/promises')
 const fastify = require('fastify')
+const { prettyFactory } = require('pino-pretty')
 const errors = require('./errors')
 const platformaticVersion = require('../package.json').version
 
@@ -135,13 +136,19 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
 
     app.get('/logs', { websocket: true }, async (connection, req) => {
       const logLevel = req.query.level || 'info'
+      const pretty = req.query.pretty !== 'false'
+
       const logLevelNumber = pinoLogLevels[logLevel]
+      const prettify = prettyFactory()
 
       const handler = (message) => {
-        for (const log of message.logs) {
+        for (let log of message.logs) {
           try {
             const parsedLog = JSON.parse(log)
             if (parsedLog.level >= logLevelNumber) {
+              if (pretty) {
+                log = prettify(parsedLog)
+              }
               connection.socket.send(log)
             }
           } catch (err) {

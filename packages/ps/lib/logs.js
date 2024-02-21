@@ -13,7 +13,9 @@ async function streamRuntimeLogsCommand (argv) {
     args: argv,
     options: {
       pid: { type: 'string', short: 'p' },
-      name: { type: 'string', short: 'n' }
+      name: { type: 'string', short: 'n' },
+      level: { type: 'string', short: 'l', default: 'info' },
+      pretty: { type: 'boolean', default: true }
     },
     strict: false
   }).values
@@ -31,7 +33,15 @@ async function streamRuntimeLogsCommand (argv) {
     throw errors.RuntimeNotFound()
   }
 
-  pipeRuntimeLogsStream(runtime.pid, (message) => {
+  const options = {}
+  if (args.level !== undefined) {
+    options.level = args.level
+  }
+  if (args.pretty !== undefined) {
+    options.pretty = args.pretty
+  }
+
+  pipeRuntimeLogsStream(runtime.pid, options, (message) => {
     process.stdout.write(message)
   })
 }

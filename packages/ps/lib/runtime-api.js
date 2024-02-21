@@ -152,9 +152,13 @@ async function closeRuntimeServices (pid) {
   }
 }
 
-function pipeRuntimeLogsStream (pid, onMessage) {
+function pipeRuntimeLogsStream (pid, options, onMessage) {
   const socketPath = getSocketPathFromPid(pid)
-  const socket = new WebSocket('ws+unix://' + socketPath + ':/api/logs')
+  let query = ''
+  if (options.level || options.pretty) {
+    query = '?' + new URLSearchParams(options).toString()
+  }
+  const socket = new WebSocket('ws+unix://' + socketPath + ':/api/logs' + query)
 
   socket.on('error', (err) => {
     throw new Error(`WebSocket error: ${err.message}`)
