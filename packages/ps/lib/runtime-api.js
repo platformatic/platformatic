@@ -1,6 +1,6 @@
 'use strict'
 
-const { tmpdir, platform } = require('node:os')
+const { tmpdir, platform, EOL } = require('node:os')
 const { join } = require('node:path')
 const { exec } = require('node:child_process')
 const { readdir } = require('node:fs/promises')
@@ -39,7 +39,7 @@ async function getUnixRuntimePIDs () {
   const runtimePIDs = []
   for (const socketName of socketNames) {
     const runtimePID = socketName.replace('.sock', '')
-    runtimePIDs.push(runtimePID)
+    runtimePIDs.push(parseInt(runtimePID))
   }
   return runtimePIDs
 }
@@ -50,10 +50,9 @@ async function getWindowsRuntimePIDs () {
   for (const pipeName of pipeNames) {
     if (pipeName.startsWith(PLATFORMATIC_PIPE_PREFIX)) {
       const runtimePID = pipeName.replace(PLATFORMATIC_PIPE_PREFIX, '')
-      runtimePIDs.push(runtimePID)
+      runtimePIDs.push(parseInt(runtimePID))
     }
   }
-  console.log('-------------------------runtimePIDs', runtimePIDs)
   return runtimePIDs
 }
 
@@ -67,9 +66,7 @@ async function getWindowsNamedPipes () {
           reject(err)
           return
         }
-        console.log('-------------------------stdout', stdout)
-        const namedPipes = stdout.split('\n')
-        console.log('-------------------------namedPipes', stdout)
+        const namedPipes = stdout.split(EOL)
         resolve(namedPipes)
       }
     )
