@@ -237,10 +237,35 @@ function pipeRuntimeLogsStream (pid, options, onMessage) {
   })
 }
 
+async function injectRuntime (pid, serviceId, options) {
+  const socketPath = getSocketPathFromPid(pid)
+  const client = new Client({
+    hostname: 'localhost',
+    protocol: 'http:'
+  }, { socketPath })
+
+  const response = await client.request({
+    path: `/api/services/${serviceId}/proxy` + options.url,
+    method: options.method,
+    headers: options.headers,
+    query: options.query,
+    body: options.body
+  })
+
+  const body = await response.body.text()
+
+  return {
+    statusCode: response.statusCode,
+    headers: response.headers,
+    body
+  }
+}
+
 module.exports = {
   getRuntimes,
   getRuntimeMetadata,
   getRuntimeServices,
+  injectRuntime,
   getRuntimeEnv,
   getRuntimeByPID,
   getRuntimeByPackageName,
