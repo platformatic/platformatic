@@ -269,6 +269,29 @@ ${startCliHelp.trim()}
 
 `;
 
+// Command: ctr
+
+out += `
+### ctr
+
+\`\`\`bash
+platformatic ctr <command>
+\`\`\`
+
+`
+
+const controlHelpsDir = join(import.meta.url, '../packages/control/help')
+const controlHelps = await readdir(controlHelpsDir)
+
+for (const controlHelp of controlHelps) {
+  const controlHelpPath = path.join(controlHelpsDir, controlHelp)
+  const content = await readFile(controlHelpPath)
+  out += `
+#### ${controlHelp.replace('.txt', '')}
+
+${content}
+`
+}
 
 await writeFile(join(import.meta.url, '..', 'docs', 'reference', 'cli.md'), out)
 

@@ -95,6 +95,10 @@ Welcome to Platformatic. Available commands are:
 * `start` - start a Platformatic application.
 * `login` - generate a Platformatic login api key.
 * `client` - generate a Platformatic client.
+* `ps` - list all platformatic runtime applications.
+* `logs` - stream logs for a platformatic runtime application.
+* `inject` - inject a request into a platformatic runtime application.
+* `ctr` - Platformatic Control commands; `platformatic ctr help` to know more.
 
 
 #### compile
@@ -206,6 +210,39 @@ You can find more details about the configuration format here:
 
 
 
+#### inject
+
+Injects a request to the platformatic runtime service.
+
+``` bash
+  $ platformatic inject -n runtime-name
+     -X POST
+     -H "Content-Type: application/json"
+     -d '{"key": "value"}'
+```
+
+Options:
+
+* `-p, --pid <number>` - The process id of the runtime.
+* `-n, --name <string>` - The name of the runtime.
+* `-s, --service <string>` - The name of the runtime service.
+* `-X, --request <string>` - The request HTTP method. Default is `GET`.
+* `-H, --header <string>` - The request header. Can be used multiple times.
+* `-d, --data <string>` - The request data.
+* `-i, --include <boolean>` - Include the response headers in the output. Default is `false`.
+* `-o, --output <file>` - Write the response to the specified file.
+
+The `inject` command sends a request to the runtime service and prints the
+response to the standard output. If the `--service` option is not specified the
+request is sent to the runtime entrypoint.
+
+The `inject` command uses the Platformatic Runtime Management API. To enable it
+set the `managementApi` option to `true` in the runtime configuration file.
+
+To get the list of runtimes with enabled management API use the
+`platformatic ctr ps` command.
+
+
 #### login
 
 Generate a Platformatic login api key.
@@ -218,6 +255,45 @@ Options:
 
 * `-c, --config FILE` - Specify a path to a global platformatic config file. Defaults to `~/.platformatic/config.json`.
 * `--browser` - Automatically open default browser. If process stdout is a TTY, the default is `true`. Otherwise, the default is `false`.
+
+
+#### logs
+
+Streams logs from the platformatic runtime application.
+
+``` bash
+  $ platformatic logs -n runtime-name
+```
+
+Options:
+
+* `-p, --pid <number>` - The process id of the runtime.
+* `-n, --name <string>` - The name of the runtime.
+* `-l, --level <string>` - The pino log level to stream. Default is `info`.
+* `-s, --service <string>` - The name of the service to stream logs from.
+* `--pretty` <boolean> - Pretty print the logs. Default is `true`.
+
+If `--service` is not specified, the command will stream logs from all services.
+
+The `logs` command uses the Platformatic Runtime Management API. To enable it
+set the `managementApi` option to `true` in the runtime configuration file.
+
+To get the list of runtimes with enabled management API use the
+`platformatic ctr ps` command.
+
+
+#### ps
+
+Lists all running platformatic runtime applications.
+
+``` bash
+  $ platformatic ps
+```
+
+To see the list of all available control commands, run `platformatic ctr help`.
+
+The `ps` command uses the Platformatic Runtime Management API. To enable it
+set the `managementApi` option to `true` in the runtime configuration file.
 
 
 #### start
@@ -341,6 +417,7 @@ Options:
 * `--optional-headers <headers>` - Comma separated string of headers that will be marked as optional in the type file. Ignored if `--frontend`
 * `--validate-response` - If set, will validate the response body against the schema. Ignored if `--frontend`
 * `--language js|ts` - Generate a Javascript or Typescript frontend client. Only works if `--frontend`
+* `--url-auth-headers <stringify-headers>` - When the Open API schema is passed as URL (instead of static file) this property allow to pass authorization headers. Headers should be passed as `string` (e.g. '{"authorization":"42"}').
 
 
 
@@ -1020,4 +1097,215 @@ Options:
 * `-c, --config <path>` - Path to the configuration file.
 * `--inspect[=[host:]port]` - Start the Node.js debugger. `host` defaults to `'127.0.0.1'`. `port` defaults to 9229. Use caution when binding to a public host:port combination.
 * `--inspect-brk[=[host:]port]` - Start the Node.js debugger and block until a client has attached. `host` defaults to `'127.0.0.1'`. `port` defaults to 9229. Use caution when binding to a public host:port combination.
+
+
+### ctr
+
+```bash
+platformatic ctr <command>
+```
+
+
+#### close
+
+Closes a platformatic runtime application.
+
+``` bash
+  $ platformatic ctr close -n runtime-name
+```
+
+Options:
+
+* `-p, --pid <number>` - The process id of the runtime to close.
+* `-n, --name <string>` - The name of the runtime to close.
+
+The `close` command stops all services of the runtime and kills the
+runtime process. If you want to stop the runtime without killing the process
+use the `platformatic ctr stop` command.
+
+The `closer` command uses the Platformatic Runtime Management API. To enable it
+set the `managementApi` option to `true` in the runtime configuration file.
+
+To get the list of runtimes with enabled management API use the
+`platformatic ctr ps` command.
+
+
+#### env
+
+Lists platformatic runtime application environment variables
+
+``` bash
+  $ platformatic ctr env -n runtime-name
+```
+
+Options:
+
+* `-p, --pid <number>` - The process id of the runtime.
+* `-n, --name <string>` - The name of the runtime.
+
+The `env` command uses the Platformatic Runtime Management API. To enable it
+set the `managementApi` option to `true` in the runtime configuration file.
+
+To get the list of runtimes with enabled management API use the
+`platformatic ctr ps` command.
+
+
+#### help
+
+Available commands:
+
+* `ps` - lists all platformatic runtime applications.
+* `start` - starts all platformatic runtime services.
+* `stop` - stops all platformatic runtime services.
+* `restart` - restarts all platformatic runtime services.
+* `close` - stops all platformatic runtime services and kills the runtime process.
+* `services` - lists the runtime services.
+* `env` - lists the runtime environment variables.
+* `logs` - shows the runtime logs.
+* `inject` - injects a request to the runtime service
+
+
+#### inject
+
+Injects a request to the platformatic runtime service.
+
+``` bash
+  $ platformatic ctr inject -n runtime-name
+     -X POST
+     -H "Content-Type: application/json"
+     -d '{"key": "value"}'
+```
+
+Options:
+
+* `-p, --pid <number>` - The process id of the runtime.
+* `-n, --name <string>` - The name of the runtime.
+* `-s, --service <string>` - The name of the runtime service.
+* `-X, --request <string>` - The request HTTP method. Default is `GET`.
+* `-H, --header <string>` - The request header. Can be used multiple times.
+* `-d, --data <string>` - The request data.
+* `-i, --include <boolean>` - Include the response headers in the output. Default is `false`.
+* `-o, --output <file>` - Write the response to the specified file.
+
+The `inject` command sends a request to the runtime service and prints the
+response to the standard output. If the `--service` option is not specified the
+request is sent to the runtime entrypoint.
+
+The `inject` command uses the Platformatic Runtime Management API. To enable it
+set the `managementApi` option to `true` in the runtime configuration file.
+
+To get the list of runtimes with enabled management API use the
+`platformatic ctr ps` command.
+
+
+#### logs
+
+Streams logs from the platformatic runtime application.
+
+``` bash
+  $ platformatic ctr logs -n runtime-name
+```
+
+Options:
+
+* `-p, --pid <number>` - The process id of the runtime.
+* `-n, --name <string>` - The name of the runtime.
+* `-l, --level <string>` - The pino log level to stream. Default is `info`.
+* `-s, --service <string>` - The name of the service to stream logs from.
+* `--pretty` <boolean> - Pretty print the logs. Default is `true`.
+
+If `--service` is not specified, the command will stream logs from all services.
+
+The `logs` command uses the Platformatic Runtime Management API. To enable it
+set the `managementApi` option to `true` in the runtime configuration file.
+
+To get the list of runtimes with enabled management API use the
+`platformatic ctr ps` command.
+
+
+#### restart
+
+Restarts all platformatic runtime services.
+
+``` bash
+  $ platformatic ctr restart -n runtime-name
+```
+
+Options:
+
+* `-p, --pid <number>` - The process id of the runtime to restart.
+* `-n, --name <string>` - The name of the runtime to restart.
+
+The `restart` command uses the Platformatic Runtime Management API. To enable it
+set the `managementApi` option to `true` in the runtime configuration file.
+
+To get the list of runtimes with enabled management API use the
+`platformatic ctr ps` command.
+
+
+#### services
+
+Lists the platformatic runtime services.
+
+``` bash
+  $ platformatic ctr services -n runtime-name
+```
+
+Options:
+
+* `-p, --pid <number>` - The process id of the runtime.
+* `-n, --name <string>` - The name of the runtime.
+
+The `services` command uses the Platformatic Runtime Management API. To enable it
+set the `managementApi` option to `true` in the runtime configuration file.
+
+To get the list of runtimes with enabled management API use the
+`platformatic ctr ps` command.
+
+
+#### start
+
+Starts all platformatic runtime services.
+
+``` bash
+  $ platformatic ctr start -n runtime-name
+```
+
+Options:
+
+* `-p, --pid <number>` - The process id of the runtime to start.
+* `-n, --name <string>` - The name of the runtime to start.
+
+The `start` command uses the Platformatic Runtime Management API. To enable it
+set the `managementApi` option to `true` in the runtime configuration file.
+
+To get the list of runtimes with enabled management API use the
+`platformatic ctr ps` command.
+
+
+#### stop
+
+Stops all platformatic runtime services.
+
+``` bash
+  $ platformatic ctr stop -n runtime-name
+```
+
+Options:
+
+* `-p, --pid <number>` - The process id of the runtime to stop.
+* `-n, --name <string>` - The name of the runtime to stop.
+
+The `stop` command stops all services of the runtime, but does not kill the
+runtime process itself. That means you still can work with the runtime via
+`platformatic ctr` command.
+
+To start the runtime again use the `platformatic ctr start` command. If you want
+to completely remove the runtime use the `platformatic ctr close` command.
+
+The `stop` command uses the Platformatic Runtime Management API. To enable it
+set the `managementApi` option to `true` in the runtime configuration file.
+
+To get the list of runtimes with enabled management API use the
+`platformatic ctr ps` command.
 
