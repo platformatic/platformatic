@@ -9,7 +9,7 @@ import * as desm from 'desm'
 import { execa } from 'execa'
 import { buildServer } from '@platformatic/runtime'
 
-const cliPath = desm.join(import.meta.url, '..', 'ps.js')
+const cliPath = desm.join(import.meta.url, '..', 'control.js')
 const fixturesDir = desm.join(import.meta.url, 'fixtures')
 
 test('should inject runtime entrypoint by pid', async (t) => {
@@ -122,7 +122,7 @@ test('should inject runtime service with output to the file', async (t) => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
-  const tmpFilePath = join(tmpdir(), 'plt-ps-inject-output')
+  const tmpFilePath = join(tmpdir(), 'plt-control-inject-output')
 
   await app.start()
 

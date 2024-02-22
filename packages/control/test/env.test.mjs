@@ -7,7 +7,7 @@ import { execa } from 'execa'
 import * as desm from 'desm'
 import { startRuntime } from './helper.mjs'
 
-const cliPath = desm.join(import.meta.url, '..', 'ps.js')
+const cliPath = desm.join(import.meta.url, '..', 'control.js')
 const fixturesDir = desm.join(import.meta.url, 'fixtures')
 
 test('should get runtime env by pid', async (t) => {

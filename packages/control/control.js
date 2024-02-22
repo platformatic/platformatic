@@ -5,9 +5,9 @@ const { parseArgs } = require('node:util')
 const commist = require('commist')
 const helpMe = require('help-me')
 
+const getRuntimesCommand = require('./lib/list')
 const getRuntimesEnvCommand = require('./lib/env')
 const getRuntimeServicesCommand = require('./lib/services')
-const listRuntimesCommand = require('./lib/list')
 const stopRuntimeServiceCommand = require('./lib/stop')
 const closeRuntimeServiceCommand = require('./lib/close')
 const startRuntimeServiceCommand = require('./lib/start')
@@ -22,6 +22,7 @@ const help = helpMe({
 
 const program = commist({ maxDistance: 2 })
 
+program.register('ps', wrapCommand(getRuntimesCommand))
 program.register('stop', wrapCommand(stopRuntimeServiceCommand))
 program.register('start', wrapCommand(startRuntimeServiceCommand))
 program.register('close', wrapCommand(closeRuntimeServiceCommand))
@@ -32,9 +33,9 @@ program.register('services', wrapCommand(getRuntimeServicesCommand))
 program.register('inject', wrapCommand(injectRuntimeCommand))
 program.register('help', help.toStdout)
 
-async function runPS (argv) {
+async function runControl (argv) {
   if (argv.length === 0) {
-    listRuntimesCommand()
+    help.toStdout()
     return {}
   }
 
@@ -57,7 +58,7 @@ async function runPS (argv) {
 }
 
 if (require.main === module) {
-  runPS(process.argv.slice(2))
+  runControl(process.argv.slice(2))
 }
 
 function wrapCommand (fn) {
@@ -70,4 +71,4 @@ function wrapCommand (fn) {
   }
 }
 
-module.exports = { runPS }
+module.exports = { runControl }

@@ -2,12 +2,12 @@
 
 import commist from 'commist'
 import minimist from 'minimist'
-import { runPS } from '@platformatic/ps/ps.js'
 import { runDB } from '@platformatic/db/db.mjs'
 import { run as runRuntime, compile } from '@platformatic/runtime/runtime.mjs'
 import { startCommand } from '@platformatic/runtime'
 import { runService } from '@platformatic/service/service.mjs'
 import { runComposer } from '@platformatic/composer/composer.mjs'
+import { runControl } from '@platformatic/control/control.js'
 import { login } from '@platformatic/authenticate/authenticate.js'
 import { command as client } from '@platformatic/client-cli'
 import { readFile } from 'fs/promises'
@@ -39,12 +39,12 @@ const ensureCommand = async ({ output, help }) => {
   process.exit(1)
 }
 
-program.register('ps', async (args) => ensureCommand(await runPS(args)))
 program.register('db', async (args) => ensureCommand(await runDB(args)))
 program.register('runtime', async (args) => ensureCommand(await runRuntime(args)))
 program.register('service', async (args) => ensureCommand(await runService(args)))
 program.register('composer', async (args) => ensureCommand(await runComposer(args)))
 program.register('start', async (args) => ensureCommand(await startCommand(args)))
+program.register('ctr', async (args) => ensureCommand(await runControl(args)))
 program.register('upgrade', upgrade)
 program.register('client', client)
 program.register('compile', compile)

@@ -1,7 +1,7 @@
 Streams logs from the platformatic runtime application.
 
 ``` bash
-  $ platformatic ps logs -n runtime-name
+  $ platformatic ctr logs -n runtime-name
 ```
 
 Options:
@@ -18,5 +18,4 @@ The `logs` command uses the Platformatic Runtime Management API. To enable it
 set the `managementApi` option to `true` in the runtime configuration file.
 
 To get the list of runtimes with enabled management API use the
-`platformatic ps` command.
-
+`platformatic ctr ps` command.

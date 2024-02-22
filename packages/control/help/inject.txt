@@ -1,7 +1,7 @@
 Injects a request to the platformatic runtime service.
 
 ``` bash
-  $ platformatic ps inject -n runtime-name
+  $ platformatic ctr inject -n runtime-name
      -X POST
      -H "Content-Type: application/json"
      -d '{"key": "value"}'
@@ -26,4 +26,4 @@ The `inject` command uses the Platformatic Runtime Management API. To enable it
 set the `managementApi` option to `true` in the runtime configuration file.
 
 To get the list of runtimes with enabled management API use the
-`platformatic ps` command.
+`platformatic ctr ps` command.

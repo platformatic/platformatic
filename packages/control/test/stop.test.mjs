@@ -7,7 +7,7 @@ import * as desm from 'desm'
 import { execa } from 'execa'
 import { buildServer } from '@platformatic/runtime'
 
-const cliPath = desm.join(import.meta.url, '..', 'ps.js')
+const cliPath = desm.join(import.meta.url, '..', 'control.js')
 const fixturesDir = desm.join(import.meta.url, 'fixtures')
 
 test('should stop runtime by pid', async (t) => {
