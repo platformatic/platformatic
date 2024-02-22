@@ -98,7 +98,7 @@ Welcome to Platformatic. Available commands are:
 * `ps` - list all platformatic runtime applications.
 * `logs` - stream logs for a platformatic runtime application.
 * `inject` - inject a request into a platformatic runtime application.
-* `ctr` - Platformatic Control commands; `platformatic ctr help` to know more.
+* `ctl` - Platformatic Control commands; `platformatic ctl help` to know more.
 
 
 #### compile
@@ -240,7 +240,7 @@ The `inject` command uses the Platformatic Runtime Management API. To enable it
 set the `managementApi` option to `true` in the runtime configuration file.
 
 To get the list of runtimes with enabled management API use the
-`platformatic ctr ps` command.
+`platformatic ctl ps` command.
 
 
 #### login
@@ -279,7 +279,7 @@ The `logs` command uses the Platformatic Runtime Management API. To enable it
 set the `managementApi` option to `true` in the runtime configuration file.
 
 To get the list of runtimes with enabled management API use the
-`platformatic ctr ps` command.
+`platformatic ctl ps` command.
 
 
 #### ps
@@ -290,7 +290,7 @@ Lists all running platformatic runtime applications.
   $ platformatic ps
 ```
 
-To see the list of all available control commands, run `platformatic ctr help`.
+To see the list of all available control commands, run `platformatic ctl help`.
 
 The `ps` command uses the Platformatic Runtime Management API. To enable it
 set the `managementApi` option to `true` in the runtime configuration file.
@@ -1099,10 +1099,10 @@ Options:
 * `--inspect-brk[=[host:]port]` - Start the Node.js debugger and block until a client has attached. `host` defaults to `'127.0.0.1'`. `port` defaults to 9229. Use caution when binding to a public host:port combination.
 
 
-### ctr
+### ctl
 
 ```bash
-platformatic ctr <command>
+platformatic ctl <command>
 ```
 
 
@@ -1111,7 +1111,7 @@ platformatic ctr <command>
 Closes a platformatic runtime application.
 
 ``` bash
-  $ platformatic ctr close -n runtime-name
+  $ platformatic ctl close -n runtime-name
 ```
 
 Options:
@@ -1121,13 +1121,13 @@ Options:
 
 The `close` command stops all services of the runtime and kills the
 runtime process. If you want to stop the runtime without killing the process
-use the `platformatic ctr stop` command.
+use the `platformatic ctl stop` command.
 
 The `close` command uses the Platformatic Runtime Management API. To enable it
 set the `managementApi` option to `true` in the runtime configuration file.
 
 To get the list of runtimes with enabled management API use the
-`platformatic ctr ps` command.
+`platformatic ctl ps` command.
 
 
 #### env
@@ -1135,7 +1135,7 @@ To get the list of runtimes with enabled management API use the
 Lists platformatic runtime application environment variables
 
 ``` bash
-  $ platformatic ctr env -n runtime-name
+  $ platformatic ctl env -n runtime-name
 ```
 
 Options:
@@ -1147,7 +1147,7 @@ The `env` command uses the Platformatic Runtime Management API. To enable it
 set the `managementApi` option to `true` in the runtime configuration file.
 
 To get the list of runtimes with enabled management API use the
-`platformatic ctr ps` command.
+`platformatic ctl ps` command.
 
 
 #### help
@@ -1170,7 +1170,7 @@ Available commands:
 Injects a request to the platformatic runtime service.
 
 ``` bash
-  $ platformatic ctr inject -n runtime-name /hello
+  $ platformatic ctl inject -n runtime-name /hello
      -X POST
      -H "Content-Type: application/json"
      -d '{"key": "value"}'
@@ -1195,7 +1195,7 @@ The `inject` command uses the Platformatic Runtime Management API. To enable it
 set the `managementApi` option to `true` in the runtime configuration file.
 
 To get the list of runtimes with enabled management API use the
-`platformatic ctr ps` command.
+`platformatic ctl ps` command.
 
 
 #### logs
@@ -1203,7 +1203,7 @@ To get the list of runtimes with enabled management API use the
 Streams logs from the platformatic runtime application.
 
 ``` bash
-  $ platformatic ctr logs -n runtime-name
+  $ platformatic ctl logs -n runtime-name
 ```
 
 Options:
@@ -1220,7 +1220,7 @@ The `logs` command uses the Platformatic Runtime Management API. To enable it
 set the `managementApi` option to `true` in the runtime configuration file.
 
 To get the list of runtimes with enabled management API use the
-`platformatic ctr ps` command.
+`platformatic ctl ps` command.
 
 
 #### restart
@@ -1228,7 +1228,7 @@ To get the list of runtimes with enabled management API use the
 Restarts all platformatic runtime services.
 
 ``` bash
-  $ platformatic ctr restart -n runtime-name
+  $ platformatic ctl restart -n runtime-name
 ```
 
 Options:
@@ -1240,7 +1240,7 @@ The `restart` command uses the Platformatic Runtime Management API. To enable it
 set the `managementApi` option to `true` in the runtime configuration file.
 
 To get the list of runtimes with enabled management API use the
-`platformatic ctr ps` command.
+`platformatic ctl ps` command.
 
 
 #### services
@@ -1248,7 +1248,7 @@ To get the list of runtimes with enabled management API use the
 Lists the platformatic runtime services.
 
 ``` bash
-  $ platformatic ctr services -n runtime-name
+  $ platformatic ctl services -n runtime-name
 ```
 
 Options:
@@ -1260,7 +1260,7 @@ The `services` command uses the Platformatic Runtime Management API. To enable i
 set the `managementApi` option to `true` in the runtime configuration file.
 
 To get the list of runtimes with enabled management API use the
-`platformatic ctr ps` command.
+`platformatic ctl ps` command.
 
 
 #### start
@@ -1268,7 +1268,7 @@ To get the list of runtimes with enabled management API use the
 Starts all platformatic runtime services.
 
 ``` bash
-  $ platformatic ctr start -n runtime-name
+  $ platformatic ctl start -n runtime-name
 ```
 
 Options:
@@ -1280,7 +1280,7 @@ The `start` command uses the Platformatic Runtime Management API. To enable it
 set the `managementApi` option to `true` in the runtime configuration file.
 
 To get the list of runtimes with enabled management API use the
-`platformatic ctr ps` command.
+`platformatic ctl ps` command.
 
 
 #### stop
@@ -1288,7 +1288,7 @@ To get the list of runtimes with enabled management API use the
 Stops all platformatic runtime services.
 
 ``` bash
-  $ platformatic ctr stop -n runtime-name
+  $ platformatic ctl stop -n runtime-name
 ```
 
 Options:
@@ -1298,14 +1298,14 @@ Options:
 
 The `stop` command stops all services of the runtime, but does not kill the
 runtime process itself. That means you still can work with the runtime via
-`platformatic ctr` command.
+`platformatic ctl` command.
 
-To start the runtime again use the `platformatic ctr start` command. If you want
-to completely remove the runtime use the `platformatic ctr close` command.
+To start the runtime again use the `platformatic ctl start` command. If you want
+to completely remove the runtime use the `platformatic ctl close` command.
 
 The `stop` command uses the Platformatic Runtime Management API. To enable it
 set the `managementApi` option to `true` in the runtime configuration file.
 
 To get the list of runtimes with enabled management API use the
-`platformatic ctr ps` command.
+`platformatic ctl ps` command.
 

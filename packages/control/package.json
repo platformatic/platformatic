@@ -4,7 +4,7 @@
   "description": "Platformatic Control",
   "main": "index.js",
   "bin": {
-    "plt-ctr": "./control.js"
+    "plt-ctl": "./control.js"
   },
   "scripts": {
     "test": "pnpm run lint && pnpm run unit",

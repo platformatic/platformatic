@@ -1,7 +1,7 @@
 Closes a platformatic runtime application.
 
 ``` bash
-  $ platformatic ctr close -n runtime-name
+  $ platformatic ctl close -n runtime-name
 ```
 
 Options:
@@ -11,10 +11,10 @@ Options:
 
 The `close` command stops all services of the runtime and kills the
 runtime process. If you want to stop the runtime without killing the process
-use the `platformatic ctr stop` command.
+use the `platformatic ctl stop` command.
 
 The `close` command uses the Platformatic Runtime Management API. To enable it
 set the `managementApi` option to `true` in the runtime configuration file.
 
 To get the list of runtimes with enabled management API use the
-`platformatic ctr ps` command.
+`platformatic ctl ps` command.

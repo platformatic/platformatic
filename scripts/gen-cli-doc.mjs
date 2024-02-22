@@ -269,13 +269,13 @@ ${startCliHelp.trim()}
 
 `;
 
-// Command: ctr
+// Command: ctl
 
 out += `
-### ctr
+### ctl
 
 \`\`\`bash
-platformatic ctr <command>
+platformatic ctl <command>
 \`\`\`
 
 `
