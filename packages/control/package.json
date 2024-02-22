@@ -1,8 +1,11 @@
 {
   "name": "@platformatic/control",
   "version": "1.23.0",
-  "description": "",
+  "description": "Platformatic Control",
   "main": "index.js",
+  "bin": {
+    "plt-ctr": "./control.js"
+  },
   "scripts": {
     "test": "pnpm run lint && pnpm run unit",
     "unit": "borp --pattern 'test/**/*.test.{js,mjs}' --concurrency=1 --no-typescript",

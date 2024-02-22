@@ -1,7 +1,7 @@
 Lists all running platformatic runtime applications.
 
 ``` bash
-  $ platformatic ctr ps
+  $ platformatic ps
 ```
 
 To see the list of all available control commands, run `platformatic ctr help`.

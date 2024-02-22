@@ -71,4 +71,15 @@ function wrapCommand (fn) {
   }
 }
 
-module.exports = { runControl }
+module.exports = {
+  runControl,
+  getRuntimesCommand,
+  getRuntimesEnvCommand,
+  getRuntimeServicesCommand,
+  stopRuntimeServiceCommand,
+  closeRuntimeServiceCommand,
+  startRuntimeServiceCommand,
+  restartRuntimeServiceCommand,
+  injectRuntimeCommand,
+  streamRuntimeLogsCommand
+}

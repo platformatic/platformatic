@@ -7,7 +7,6 @@ import { run as runRuntime, compile } from '@platformatic/runtime/runtime.mjs'
 import { startCommand } from '@platformatic/runtime'
 import { runService } from '@platformatic/service/service.mjs'
 import { runComposer } from '@platformatic/composer/composer.mjs'
-import { runControl } from '@platformatic/control/control.js'
 import { login } from '@platformatic/authenticate/authenticate.js'
 import { command as client } from '@platformatic/client-cli'
 import { readFile } from 'fs/promises'
@@ -18,6 +17,12 @@ import { upgrade } from './lib/upgrade.js'
 import { gh } from './lib/gh.js'
 import { deploy } from './lib/deploy.js'
 import { logo } from './lib/ascii.js'
+import {
+  runControl,
+  getRuntimesCommand,
+  injectRuntimeCommand,
+  streamRuntimeLogsCommand
+} from '@platformatic/control/control.js'
 
 const program = commist({ maxDistance: 2 })
 const help = helpMe({
@@ -45,6 +50,9 @@ program.register('service', async (args) => ensureCommand(await runService(args)
 program.register('composer', async (args) => ensureCommand(await runComposer(args)))
 program.register('start', async (args) => ensureCommand(await startCommand(args)))
 program.register('ctr', async (args) => ensureCommand(await runControl(args)))
+program.register('ps', async (args) => getRuntimesCommand(args))
+program.register('inject', async (args) => injectRuntimeCommand(args))
+program.register('logs', async (args) => streamRuntimeLogsCommand(args))
 program.register('upgrade', upgrade)
 program.register('client', client)
 program.register('compile', compile)

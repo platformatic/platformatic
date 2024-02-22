@@ -1,7 +1,7 @@
 'use strict'
 
-const runtimeApi = require('./lib/runtime-api-client')
+const RuntimeApiClient = require('./lib/runtime-api-client')
 
 module.exports = {
-  ...runtimeApi
+  RuntimeApiClient
 }
