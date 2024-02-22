@@ -48,7 +48,9 @@ class RuntimeApi {
       const command = message?.command
       if (command) {
         if (command === 'plt:close') {
-          await this.#dispatcher.close()
+          if (this.#dispatcher) {
+            await this.#dispatcher.close()
+          }
           process.exit() // Exit the worker thread.
         }
 
