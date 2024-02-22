@@ -2,10 +2,19 @@
 
 const createError = require('@fastify/error')
 
-const ERROR_PREFIX = 'PLT_PS'
+const ERROR_PREFIX = 'PLT_CTR'
 
 module.exports = {
   RuntimeNotFound: createError(`${ERROR_PREFIX}_RUNTIME_NOT_FOUND`, 'Runtime not found.'),
   MissingRuntimeIdentifier: createError(`${ERROR_PREFIX}_MISSING_RUNTIME_IDENTIFIER`, 'Runtime name or PID is required.'),
-  MissingRequestURL: createError(`${ERROR_PREFIX}_MISSING_REQUEST_URL`, 'Request URL is required.')
+  MissingRequestURL: createError(`${ERROR_PREFIX}_MISSING_REQUEST_URL`, 'Request URL is required.'),
+  FailedToGetRuntimeMetadata: createError(`${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_METADATA`, 'Failed to get runtime metadata %s.'),
+  FailedToGetRuntimeServices: createError(`${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_SERVICES`, 'Failed to get runtime services %s.'),
+  FailedToGetRuntimeEnv: createError(`${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_ENV`, 'Failed to get runtime environment variables %s.'),
+  FailedToInjectRuntime: createError(`${ERROR_PREFIX}_FAILED_TO_INJECT_RUNTIME`, 'Failed to inject runtime %s.'),
+  FailedToStreamRuntimeLogs: createError(`${ERROR_PREFIX}_FAILED_TO_STREAM_RUNTIME_LOGS`, 'Failed to stream runtime logs %s.'),
+  FailedToStartRuntimeServices: createError(`${ERROR_PREFIX}_FAILED_TO_START_RUNTIME_SERVICES`, 'Failed to start runtime services %s.'),
+  FailedToStopRuntimeServices: createError(`${ERROR_PREFIX}_FAILED_TO_STOP_RUNTIME_SERVICES`, 'Failed to stop runtime services %s.'),
+  FailedToRestartRuntimeServices: createError(`${ERROR_PREFIX}_FAILED_TO_RESTART_RUNTIME_SERVICES`, 'Failed to restart runtime services %s.'),
+  FailedToCloseRuntime: createError(`${ERROR_PREFIX}_FAILED_TO_CLOSE_RUNTIME`, 'Failed to close runtime %s.')
 }

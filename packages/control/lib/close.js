@@ -29,7 +29,7 @@ async function closeRuntimeServicesCommand (argv) {
     throw errors.RuntimeNotFound()
   }
 
-  await client.closeRuntimeServices(runtime.pid)
+  await client.closeRuntime(runtime.pid)
   console.log(`Closed runtime "${runtime.packageName}".`)
 
   await client.close()

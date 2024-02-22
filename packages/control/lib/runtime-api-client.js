@@ -6,6 +6,7 @@ const { exec } = require('node:child_process')
 const { readdir } = require('node:fs/promises')
 const { Client } = require('undici')
 const WebSocket = require('ws')
+const errors = require('./errors.js')
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'pids')
 const PLATFORMATIC_PIPE_PREFIX = '\\\\.\\pipe\\platformatic-'
@@ -41,7 +42,7 @@ class RuntimeApiClient {
 
     if (statusCode !== 200) {
       const error = await body.text()
-      throw new Error(`Failed to get runtime metadata: ${error}`)
+      throw new errors.FailedToGetRuntimeMetadata(error)
     }
 
     const metadata = await body.json()
@@ -58,7 +59,7 @@ class RuntimeApiClient {
 
     if (statusCode !== 200) {
       const error = await body.text()
-      throw new Error(`Failed to get runtime services: ${error}`)
+      throw new errors.FailedToGetRuntimeServices(error)
     }
 
     const runtimeServices = await body.json()
@@ -75,7 +76,7 @@ class RuntimeApiClient {
 
     if (statusCode !== 200) {
       const error = await body.text()
-      throw new Error(`Failed to get runtime env: ${error}`)
+      throw new errors.FailedToGetRuntimeEnv(error)
     }
 
     const runtimeEnv = await body.json()
@@ -102,7 +103,7 @@ class RuntimeApiClient {
 
     if (statusCode !== 200) {
       const error = await body.text()
-      throw new Error(`Failed to stop runtime services: ${error}`)
+      throw new errors.FailedToStopRuntimeServices(error)
     }
   }
 
@@ -116,7 +117,7 @@ class RuntimeApiClient {
 
     if (statusCode !== 200) {
       const error = await body.text()
-      throw new Error(`Failed to start runtime services: ${error}`)
+      throw new errors.FailedToStartRuntimeServices(error)
     }
   }
 
@@ -130,11 +131,11 @@ class RuntimeApiClient {
 
     if (statusCode !== 200) {
       const error = await body.text()
-      throw new Error(`Failed to restart runtime services: ${error}`)
+      throw new errors.FailedToRestartRuntimeServices(error)
     }
   }
 
-  async closeRuntimeServices (pid) {
+  async closeRuntime (pid) {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
@@ -144,7 +145,7 @@ class RuntimeApiClient {
 
     if (statusCode !== 200) {
       const error = await body.text()
-      throw new Error(`Failed to close runtime services: ${error}`)
+      throw new errors.FailedToCloseRuntime(error)
     }
   }
 
@@ -160,7 +161,7 @@ class RuntimeApiClient {
     this.#webSockets.add(webSocket)
 
     webSocket.on('error', (err) => {
-      throw new Error(`WebSocket error: ${err.message}`)
+      throw new errors.FailedToStreamRuntimeLogs(err.message)
     })
 
     webSocket.on('message', (data) => {
