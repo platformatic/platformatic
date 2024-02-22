@@ -9,9 +9,11 @@ const { printSchema } = require('graphql')
 class RuntimeApi {
   #services
   #dispatcher
+  #logger
 
   constructor (config, logger, loaderPort) {
     this.#services = new Map()
+    this.#logger = logger
     const telemetryConfig = config.telemetry
 
     for (let i = 0; i < config.services.length; ++i) {
@@ -48,8 +50,19 @@ class RuntimeApi {
       const command = message?.command
       if (command) {
         if (command === 'plt:close') {
+          // We close everything because they might be using
+          // a FinalizationRegistry and it may stuck us in an infinite loop.
+          // This is a workaround for
+          // https://github.com/nodejs/node/issues/47748
+          // https://github.com/nodejs/node/issues/49344
+          // Remove once https://github.com/nodejs/node/pull/51290 is released
+          // on all lines.
+          // Likelty to be removed when we drop support for Node.js 18.
           await this.#dispatcher.close()
-          process.exit() // Exit the worker thread.
+          await this.stopServices()
+
+          setImmediate(process.exit) // Exit the worker thread.
+          return
         }
 
         const res = await this.#executeCommand(message)

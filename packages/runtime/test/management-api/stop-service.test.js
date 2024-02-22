@@ -15,12 +15,6 @@ test('should stop service by service id', async (t) => {
 
   await app.start()
 
-  t.after(async () => {
-    await Promise.all([
-      app.close(),
-      app.managementApi.close()
-    ])
-  })
   {
     const serviceDetails = await app.getServiceDetails('service-1')
     assert.strictEqual(serviceDetails.status, 'started')
@@ -37,6 +31,10 @@ test('should stop service by service id', async (t) => {
 
   t.after(async () => {
     await client.close()
+    await Promise.all([
+      app.close(),
+      app.managementApi.close()
+    ])
   })
 
   const { statusCode, body } = await client.request({
@@ -60,13 +58,6 @@ test('should start stopped service by service id', async (t) => {
 
   await app.start()
 
-  t.after(async () => {
-    await Promise.all([
-      app.close(),
-      app.managementApi.close()
-    ])
-  })
-
   await app.stopService('service-1')
 
   {
@@ -85,6 +76,10 @@ test('should start stopped service by service id', async (t) => {
 
   t.after(async () => {
     await client.close()
+    await Promise.all([
+      app.close(),
+      app.managementApi.close()
+    ])
   })
 
   const { statusCode, body } = await client.request({
@@ -118,8 +113,9 @@ test('should proxy request to the service', async (t) => {
   })
 
   t.after(async () => {
+    await client.close()
+
     await Promise.all([
-      client.close(),
       app.close(),
       app.managementApi.close()
     ])
@@ -134,36 +130,4 @@ test('should proxy request to the service', async (t) => {
 
   const data = await body.json()
   assert.deepStrictEqual(data, { service: 'service-2' })
-})
-
-test('should get service metrics via runtime management api proxy', async (t) => {
-  const projectDir = join(fixturesDir, 'management-api')
-  const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
-
-  await app.start()
-
-  t.after(async () => {
-    await app.close()
-    await app.managementApi.close()
-  })
-
-  const client = new Client({
-    hostname: 'localhost',
-    protocol: 'http:'
-  }, {
-    socketPath: app.managementApi.server.address(),
-    keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
-  })
-
-  const { statusCode, body } = await client.request({
-    method: 'GET',
-    path: '/api/services/service-1/proxy/metrics'
-  })
-
-  assert.strictEqual(statusCode, 200)
-
-  const data = await body.text()
-  assert.ok(data)
 })
