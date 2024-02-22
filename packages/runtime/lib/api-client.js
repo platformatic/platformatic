@@ -3,6 +3,7 @@
 const { once, EventEmitter } = require('node:events')
 const { randomUUID } = require('node:crypto')
 const errors = require('./errors')
+const { setTimeout: sleep } = require('node:timers/promises')
 
 const MAX_LISTENERS_COUNT = 100
 
@@ -35,7 +36,22 @@ class RuntimeApiClient extends EventEmitter {
     await this.#sendCommand('plt:stop-services')
 
     this.worker.postMessage({ command: 'plt:close' })
-    await this.#exitPromise
+    const res = await Promise.race([
+      this.#exitPromise,
+      // We must kill the worker if it doesn't exit in 10 seconds
+      // because it may be stuck in an infinite loop.
+      // This is a workaround for
+      // https://github.com/nodejs/node/issues/47748
+      // https://github.com/nodejs/node/issues/49344
+      // Remove once https://github.com/nodejs/node/pull/51290 is released
+      // on all lines.
+      // Likely to be removed when we drop support for Node.js 18.
+      sleep(10000, 'timeout', { ref: false })
+    ])
+
+    if (res === 'timeout') {
+      this.worker.unref()
+    }
   }
 
   async restart () {
