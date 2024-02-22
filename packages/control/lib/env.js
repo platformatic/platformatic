@@ -1,12 +1,8 @@
 'use strict'
 
 const { parseArgs } = require('node:util')
+const RuntimeApiClient = require('./runtime-api-client')
 const errors = require('./errors')
-const {
-  getRuntimeByPID,
-  getRuntimeByPackageName,
-  getRuntimeEnv
-} = require('./runtime-api')
 
 async function getRuntimeEnvCommand (argv) {
   const args = parseArgs({
@@ -18,11 +14,13 @@ async function getRuntimeEnvCommand (argv) {
     strict: false
   }).values
 
+  const client = new RuntimeApiClient()
+
   let runtime = null
   if (args.pid) {
-    runtime = await getRuntimeByPID(parseInt(args.pid))
+    runtime = await client.getRuntimeByPID(parseInt(args.pid))
   } else if (args.name) {
-    runtime = await getRuntimeByPackageName(args.name)
+    runtime = await client.getRuntimeByPackageName(args.name)
   } else {
     throw errors.MissingRuntimeIdentifier()
   }
@@ -31,12 +29,14 @@ async function getRuntimeEnvCommand (argv) {
     throw errors.RuntimeNotFound()
   }
 
-  const runtimeEnv = await getRuntimeEnv(runtime.pid)
+  const runtimeEnv = await client.getRuntimeEnv(runtime.pid)
   let output = ''
   for (const key in runtimeEnv) {
     output += `${key}=${runtimeEnv[key]}\n`
   }
   console.log(output)
+
+  await client.close()
 }
 
 module.exports = getRuntimeEnvCommand

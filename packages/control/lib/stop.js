@@ -1,12 +1,8 @@
 'use strict'
 
 const { parseArgs } = require('node:util')
+const RuntimeApiClient = require('./runtime-api-client')
 const errors = require('./errors')
-const {
-  getRuntimeByPID,
-  getRuntimeByPackageName,
-  stopRuntimeServices
-} = require('./runtime-api')
 
 async function stopRuntimeServicesCommand (argv) {
   const args = parseArgs({
@@ -18,11 +14,13 @@ async function stopRuntimeServicesCommand (argv) {
     strict: false
   }).values
 
+  const client = new RuntimeApiClient()
+
   let runtime = null
   if (args.pid) {
-    runtime = await getRuntimeByPID(parseInt(args.pid))
+    runtime = await client.getRuntimeByPID(parseInt(args.pid))
   } else if (args.name) {
-    runtime = await getRuntimeByPackageName(args.name)
+    runtime = await client.getRuntimeByPackageName(args.name)
   } else {
     throw errors.MissingRuntimeIdentifier()
   }
@@ -31,8 +29,10 @@ async function stopRuntimeServicesCommand (argv) {
     throw errors.RuntimeNotFound()
   }
 
-  await stopRuntimeServices(runtime.pid)
+  await client.stopRuntimeServices(runtime.pid)
   console.log(`Stopped runtime "${runtime.packageName}".`)
+
+  await client.close()
 }
 
 module.exports = stopRuntimeServicesCommand

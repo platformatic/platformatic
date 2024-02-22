@@ -1,7 +1,7 @@
 'use strict'
 
 const { table, getBorderCharacters } = require('table')
-const { getRuntimes } = require('./runtime-api')
+const RuntimeApiClient = require('./runtime-api-client')
 
 const tableColumns = [
   {
@@ -92,12 +92,15 @@ async function printRuntimes (runtimes) {
 }
 
 async function listRuntimesCommand () {
-  const runtimes = await getRuntimes()
+  const client = new RuntimeApiClient()
+  const runtimes = await client.getRuntimes()
   if (runtimes.length === 0) {
     console.log('No platformatic runtimes found.')
     return
   }
   printRuntimes(runtimes)
+
+  await client.close()
 }
 
 module.exports = listRuntimesCommand

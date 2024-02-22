@@ -1,12 +1,8 @@
 'use strict'
 
 const { parseArgs } = require('node:util')
+const RuntimeApiClient = require('./runtime-api-client')
 const errors = require('./errors')
-const {
-  getRuntimeByPID,
-  getRuntimeByPackageName,
-  pipeRuntimeLogsStream
-} = require('./runtime-api')
 
 async function streamRuntimeLogsCommand (argv) {
   const args = parseArgs({
@@ -21,11 +17,13 @@ async function streamRuntimeLogsCommand (argv) {
     strict: false
   }).values
 
+  const client = new RuntimeApiClient()
+
   let runtime = null
   if (args.pid) {
-    runtime = await getRuntimeByPID(parseInt(args.pid))
+    runtime = await client.getRuntimeByPID(parseInt(args.pid))
   } else if (args.name) {
-    runtime = await getRuntimeByPackageName(args.name)
+    runtime = await client.getRuntimeByPackageName(args.name)
   } else {
     throw errors.MissingRuntimeIdentifier()
   }
@@ -45,8 +43,18 @@ async function streamRuntimeLogsCommand (argv) {
     options.serviceId = args.service
   }
 
-  pipeRuntimeLogsStream(runtime.pid, options, (message) => {
+  client.pipeRuntimeLogsStream(runtime.pid, options, (message) => {
     process.stdout.write(message)
+  })
+
+  process.on('SIGINT', async () => {
+    await client.close()
+    process.exit(0)
+  })
+
+  process.on('SIGTERM', async () => {
+    await client.close()
+    process.exit(0)
   })
 }
 

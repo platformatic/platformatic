@@ -2,12 +2,8 @@
 
 const { parseArgs } = require('node:util')
 const { table, getBorderCharacters } = require('table')
+const RuntimeApiClient = require('./runtime-api-client')
 const errors = require('./errors')
-const {
-  getRuntimeByPID,
-  getRuntimeByPackageName,
-  getRuntimeServices
-} = require('./runtime-api')
 
 const tableColumns = [
   {
@@ -66,11 +62,13 @@ async function getRuntimeServicesCommand (argv) {
     strict: false
   }).values
 
+  const client = new RuntimeApiClient()
+
   let runtime = null
   if (args.pid) {
-    runtime = await getRuntimeByPID(parseInt(args.pid))
+    runtime = await client.getRuntimeByPID(parseInt(args.pid))
   } else if (args.name) {
-    runtime = await getRuntimeByPackageName(args.name)
+    runtime = await client.getRuntimeByPackageName(args.name)
   } else {
     throw errors.MissingRuntimeIdentifier()
   }
@@ -79,8 +77,10 @@ async function getRuntimeServicesCommand (argv) {
     throw errors.RuntimeNotFound()
   }
 
-  const runtimeServices = await getRuntimeServices(runtime.pid)
+  const runtimeServices = await client.getRuntimeServices(runtime.pid)
   printRuntimeServices(runtimeServices)
+
+  await client.close()
 }
 
 module.exports = getRuntimeServicesCommand

@@ -2,13 +2,8 @@
 
 const { parseArgs } = require('node:util')
 const { writeFile } = require('node:fs/promises')
+const RuntimeApiClient = require('./runtime-api-client')
 const errors = require('./errors')
-const {
-  getRuntimeByPID,
-  getRuntimeByPackageName,
-  getRuntimeServices,
-  injectRuntime
-} = require('./runtime-api')
 
 async function injectRuntimeCommand (argv) {
   const { values: args, positionals } = parseArgs({
@@ -26,11 +21,13 @@ async function injectRuntimeCommand (argv) {
     strict: false
   })
 
+  const client = new RuntimeApiClient()
+
   let runtime = null
   if (args.pid) {
-    runtime = await getRuntimeByPID(parseInt(args.pid))
+    runtime = await client.getRuntimeByPID(parseInt(args.pid))
   } else if (args.name) {
-    runtime = await getRuntimeByPackageName(args.name)
+    runtime = await client.getRuntimeByPackageName(args.name)
   } else {
     throw errors.MissingRuntimeIdentifier()
   }
@@ -41,7 +38,7 @@ async function injectRuntimeCommand (argv) {
 
   let serviceId = args.service
   if (!serviceId) {
-    const runtimeServices = await getRuntimeServices(runtime.pid)
+    const runtimeServices = await client.getRuntimeServices(runtime.pid)
     serviceId = runtimeServices.entrypoint
   }
 
@@ -61,7 +58,7 @@ async function injectRuntimeCommand (argv) {
 
   const injectOptions = { url, method, headers, body }
 
-  const response = await injectRuntime(runtime.pid, serviceId, injectOptions)
+  const response = await client.injectRuntime(runtime.pid, serviceId, injectOptions)
 
   let result = ''
   if (args.include) {
@@ -79,6 +76,8 @@ async function injectRuntimeCommand (argv) {
   }
 
   console.log(result)
+
+  await client.close()
 }
 
 module.exports = injectRuntimeCommand
