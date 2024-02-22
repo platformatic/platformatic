@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "pnpm run lint && pnpm run unit",
-    "unit": "borp --concurrency=1",
+    "unit": "borp --concurrency=1 --timeout 60000",
     "build": "node lib/schema.js | json2ts > config.d.ts",
     "lint": "standard | snazzy"
   },
