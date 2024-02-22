@@ -65,6 +65,7 @@ test('should inject runtime service by pid', async (t) => {
   const responseBody = child.stdout
   const response = JSON.parse(responseBody)
   assert.deepStrictEqual(response, {
+    runtime: 'runtime-1',
     service: 'service-1'
   })
 })

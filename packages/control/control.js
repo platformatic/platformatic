@@ -5,7 +5,7 @@ const { parseArgs } = require('node:util')
 const commist = require('commist')
 const helpMe = require('help-me')
 
-const getRuntimesCommand = require('./lib/list')
+const getRuntimesCommand = require('./lib/ps')
 const getRuntimesEnvCommand = require('./lib/env')
 const getRuntimeServicesCommand = require('./lib/services')
 const stopRuntimeServiceCommand = require('./lib/stop')
