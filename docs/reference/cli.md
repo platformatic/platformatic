@@ -215,7 +215,7 @@ You can find more details about the configuration format here:
 Injects a request to the platformatic runtime service.
 
 ``` bash
-  $ platformatic inject -n runtime-name
+  $ platformatic inject -n runtime-name /hello
      -X POST
      -H "Content-Type: application/json"
      -d '{"key": "value"}'
@@ -1170,7 +1170,7 @@ Available commands:
 Injects a request to the platformatic runtime service.
 
 ``` bash
-  $ platformatic ctr inject -n runtime-name
+  $ platformatic ctr inject -n runtime-name /hello
      -X POST
      -H "Content-Type: application/json"
      -d '{"key": "value"}'
