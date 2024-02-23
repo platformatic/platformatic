@@ -32,24 +32,22 @@ test('should get all runtimes', async (t) => {
 
   const headers = headersRow.split(/\s+/).filter(Boolean)
   assert.deepStrictEqual(headers, [
-    'PID', 'NAME', 'PLT', 'TIME', 'STATUS', 'URL', 'PWD'
+    'PID', 'NAME', 'PLT', 'TIME', 'URL', 'PWD'
   ])
 
   const runtime1Values = runtime1Row.split(/\s+/).filter(Boolean)
-  assert.strictEqual(runtime1Values.length, 7)
+  assert.strictEqual(runtime1Values.length, 6)
   assert.strictEqual(runtime1Values[0], runtime1.pid.toString())
   assert.strictEqual(runtime1Values[1], 'runtime-1')
   assert.strictEqual(runtime1Values[2], '1.23.0')
-  assert.strictEqual(runtime1Values[4], '\x1B[32mrunning\x1B[39m')
-  assert.strictEqual(runtime1Values[5], runtime1Url)
-  assert.strictEqual(runtime1Values[6], runtimeProjectDir1)
+  assert.strictEqual(runtime1Values[4], runtime1Url)
+  assert.strictEqual(runtime1Values[5], runtimeProjectDir1)
 
   const runtime2Values = runtime2Row.split(/\s+/).filter(Boolean)
-  assert.strictEqual(runtime2Values.length, 7)
+  assert.strictEqual(runtime2Values.length, 6)
   assert.strictEqual(runtime2Values[0], runtime2.pid.toString())
   assert.strictEqual(runtime2Values[1], 'runtime-2')
   assert.strictEqual(runtime2Values[2], '1.23.0')
-  assert.strictEqual(runtime2Values[4], '\x1B[32mrunning\x1B[39m')
-  assert.strictEqual(runtime2Values[5], runtime2Url)
-  assert.strictEqual(runtime2Values[6], runtimeProjectDir2)
+  assert.strictEqual(runtime2Values[4], runtime2Url)
+  assert.strictEqual(runtime2Values[5], runtimeProjectDir2)
 })

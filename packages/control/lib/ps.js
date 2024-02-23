@@ -22,16 +22,6 @@ const tableColumns = [
     formatter: formatRuntimeTime
   },
   {
-    value: 'status',
-    alias: 'STATUS',
-    formatter: (status) => {
-      if (status === 'started') {
-        return '\x1b[32mrunning\x1b[0m'
-      }
-      return `\x1b[31m${status}\x1b[0m`
-    }
-  },
-  {
     value: 'url',
     alias: 'URL'
   },

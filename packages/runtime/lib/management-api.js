@@ -57,7 +57,6 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
         packageName: packageJson.name ?? null,
         packageVersion: packageJson.version ?? null,
         url: entrypointDetails?.url ?? null,
-        status: entrypointDetails?.status ?? null,
         platformaticVersion
       }
     })

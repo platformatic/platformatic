@@ -101,16 +101,6 @@ class RuntimeApiClient {
     return runtimeEnv
   }
 
-  async getRuntimeByPackageName (packageName) {
-    const runtimes = await this.getRuntimes()
-    return runtimes.find(runtime => runtime.packageName === packageName)
-  }
-
-  async getRuntimeByPID (pid) {
-    const runtimes = await this.getRuntimes()
-    return runtimes.find(runtime => runtime.pid === pid)
-  }
-
   async restartRuntimeServices (pid) {
     const client = this.#getUndiciClient(pid)
 
