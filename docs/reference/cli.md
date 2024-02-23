@@ -1263,26 +1263,6 @@ To get the list of runtimes with enabled management API use the
 `platformatic ctl ps` command.
 
 
-#### start
-
-Starts all platformatic runtime services.
-
-``` bash
-  $ platformatic ctl start -n runtime-name
-```
-
-Options:
-
-* `-p, --pid <number>` - The process id of the runtime to start.
-* `-n, --name <string>` - The name of the runtime to start.
-
-The `start` command uses the Platformatic Runtime Management API. To enable it
-set the `managementApi` option to `true` in the runtime configuration file.
-
-To get the list of runtimes with enabled management API use the
-`platformatic ctl ps` command.
-
-
 #### stop
 
 Stops all platformatic runtime services.
@@ -1299,9 +1279,6 @@ Options:
 The `stop` command stops all services of the runtime, but does not kill the
 runtime process itself. That means you still can work with the runtime via
 `platformatic ctl` command.
-
-To start the runtime again use the `platformatic ctl start` command. If you want
-to completely remove the runtime use the `platformatic ctl close` command.
 
 The `stop` command uses the Platformatic Runtime Management API. To enable it
 set the `managementApi` option to `true` in the runtime configuration file.
