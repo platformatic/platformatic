@@ -132,10 +132,11 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
         writer.write(')')
         writer.blankLine()
       }
-
-      writer.write('const headers =').block(() => {
-        writer.writeLine('\'Content-type\': \'application/json; charset=utf-8\'')
-      })
+      if (method !== 'get') {
+        writer.write('const headers =').block(() => {
+          writer.writeLine('\'Content-type\': \'application/json; charset=utf-8\'')
+        })
+      }
 
       headerParams.forEach((param, idx) => {
         writer.write(`if (request['${param}'] !== undefined)`).block(() => {
@@ -147,16 +148,18 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
 
       /* eslint-disable-next-line no-template-curly-in-string */
       const searchString = queryParams.length > 0 ? '?${searchParams.toString()}' : ''
-      writer
-        .write(`const response = await fetch(\`\${url}${stringLiteralPath}${searchString}\`, `)
-        .inlineBlock(() => {
-          if (method !== 'get') {
+      if (method !== 'get') {
+        writer
+          .write(`const response = await fetch(\`\${url}${stringLiteralPath}${searchString}\`, `)
+          .inlineBlock(() => {
             writer.write('method: ').quote().write(method.toUpperCase()).quote().write(',')
             writer.writeLine('body: JSON.stringify(request),')
-          }
-          writer.write('headers')
-        })
-        .write(')')
+            writer.write('headers')
+          })
+          .write(')')
+      } else {
+        writer.write(`const response = await fetch(\`\${url}${stringLiteralPath}${searchString}\`)`)
+      }
 
       writer.blankLine()
       if (currentFullResponse) {
