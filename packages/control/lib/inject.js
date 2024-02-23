@@ -60,10 +60,9 @@ async function injectRuntimeCommand (argv) {
 
   if (args.output) {
     await writeFile(args.output, result)
-    return
+  } else {
+    console.log(result)
   }
-
-  console.log(result)
 
   await client.close()
 }
