@@ -25,11 +25,7 @@ test('should stop all services with a management api', async (t) => {
   })
 
   t.after(async () => {
-    await Promise.all([
-      client.close(),
-      app.close(),
-      app.managementApi.close()
-    ])
+    await client.close()
   })
 
   const { statusCode, body } = await client.request({
@@ -39,14 +35,4 @@ test('should stop all services with a management api', async (t) => {
   await body.text()
 
   assert.strictEqual(statusCode, 200)
-
-  {
-    const serviceDetails = await app.getServiceDetails('service-1')
-    assert.strictEqual(serviceDetails.status, 'stopped')
-  }
-
-  {
-    const serviceDetails = await app.getServiceDetails('service-2')
-    assert.strictEqual(serviceDetails.status, 'stopped')
-  }
 })

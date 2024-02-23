@@ -111,34 +111,6 @@ class RuntimeApiClient {
     return runtimes.find(runtime => runtime.pid === pid)
   }
 
-  async stopRuntimeServices (pid) {
-    const client = this.#getUndiciClient(pid)
-
-    const { statusCode, body } = await client.request({
-      path: '/api/services/stop',
-      method: 'POST'
-    })
-
-    if (statusCode !== 200) {
-      const error = await body.text()
-      throw new errors.FailedToStopRuntimeServices(error)
-    }
-  }
-
-  async startRuntimeServices (pid) {
-    const client = this.#getUndiciClient(pid)
-
-    const { statusCode, body } = await client.request({
-      path: '/api/services/start',
-      method: 'POST'
-    })
-
-    if (statusCode !== 200) {
-      const error = await body.text()
-      throw new errors.FailedToStartRuntimeServices(error)
-    }
-  }
-
   async restartRuntimeServices (pid) {
     const client = this.#getUndiciClient(pid)
 
@@ -153,17 +125,17 @@ class RuntimeApiClient {
     }
   }
 
-  async closeRuntime (pid) {
+  async stopRuntime (pid) {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: '/api/services/close',
+      path: '/api/services/stop',
       method: 'POST'
     })
 
     if (statusCode !== 200) {
       const error = await body.text()
-      throw new errors.FailedToCloseRuntime(error)
+      throw new errors.FailedToStopRuntime(error)
     }
   }
 

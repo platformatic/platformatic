@@ -14,7 +14,6 @@ module.exports = {
   FailedToInjectRuntime: createError(`${ERROR_PREFIX}_FAILED_TO_INJECT_RUNTIME`, 'Failed to inject runtime %s.'),
   FailedToStreamRuntimeLogs: createError(`${ERROR_PREFIX}_FAILED_TO_STREAM_RUNTIME_LOGS`, 'Failed to stream runtime logs %s.'),
   FailedToStartRuntimeServices: createError(`${ERROR_PREFIX}_FAILED_TO_START_RUNTIME_SERVICES`, 'Failed to start runtime services %s.'),
-  FailedToStopRuntimeServices: createError(`${ERROR_PREFIX}_FAILED_TO_STOP_RUNTIME_SERVICES`, 'Failed to stop runtime services %s.'),
   FailedToRestartRuntimeServices: createError(`${ERROR_PREFIX}_FAILED_TO_RESTART_RUNTIME_SERVICES`, 'Failed to restart runtime services %s.'),
-  FailedToCloseRuntime: createError(`${ERROR_PREFIX}_FAILED_TO_CLOSE_RUNTIME`, 'Failed to close runtime %s.')
+  FailedToStopRuntime: createError(`${ERROR_PREFIX}_FAILED_TO_STOP_RUNTIME`, 'Failed to stop the runtime %s.')
 }

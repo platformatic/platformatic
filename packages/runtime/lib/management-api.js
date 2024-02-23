@@ -70,18 +70,8 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
       return runtimeApiClient.getServices()
     })
 
-    app.post('/services/start', async () => {
-      app.log.debug('start services')
-      await runtimeApiClient.start()
-    })
-
     app.post('/services/stop', async () => {
       app.log.debug('stop services')
-      await runtimeApiClient.stop()
-    })
-
-    app.post('/services/close', async () => {
-      app.log.debug('close services')
       await runtimeApiClient.close()
     })
 

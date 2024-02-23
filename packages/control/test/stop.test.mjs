@@ -3,9 +3,10 @@
 import assert from 'node:assert'
 import { test } from 'node:test'
 import { join } from 'node:path'
-import * as desm from 'desm'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { execa } from 'execa'
-import { buildServer } from '@platformatic/runtime'
+import * as desm from 'desm'
+import { startRuntime } from './helper.mjs'
 
 const cliPath = desm.join(import.meta.url, '..', 'control.js')
 const fixturesDir = desm.join(import.meta.url, 'fixtures')
@@ -13,55 +14,55 @@ const fixturesDir = desm.join(import.meta.url, 'fixtures')
 test('should stop runtime by pid', async (t) => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
-
-  await app.start()
+  const { runtime } = await startRuntime(configFile)
 
   t.after(() => {
-    app.close()
-    app.managementApi.close()
+    runtime.kill('SIGKILL')
   })
 
-  const child = await execa('node', [cliPath, 'stop', '-p', process.pid])
+  const child = await execa('node', [cliPath, 'stop', '-p', runtime.pid])
   assert.strictEqual(child.exitCode, 0)
   assert.strictEqual(child.stdout, 'Stopped runtime "runtime-1".')
 
-  {
-    const serviceDetails = await app.getServiceDetails('service-1')
-    assert.strictEqual(serviceDetails.status, 'stopped')
+  const errorTimeout = async () => {
+    await sleep(15000)
+    throw new Error('Couldn\'t stop runtime')
   }
 
-  {
-    const serviceDetails = await app.getServiceDetails('service-2')
-    assert.strictEqual(serviceDetails.status, 'stopped')
+  const runtimeExit = async () => {
+    await runtime
+    clearTimeout(errorTimeout)
+    assert.strictEqual(runtime.exitCode, 0)
   }
+
+  await Promise.race([errorTimeout(), runtimeExit()])
 })
 
-test('should stop runtime by package name', async (t) => {
+test('should stop runtime by name', async (t) => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
-
-  await app.start()
+  const { runtime } = await startRuntime(configFile)
 
   t.after(() => {
-    app.close()
-    app.managementApi.close()
+    runtime.kill('SIGKILL')
   })
 
   const child = await execa('node', [cliPath, 'stop', '-n', 'runtime-1'])
   assert.strictEqual(child.exitCode, 0)
   assert.strictEqual(child.stdout, 'Stopped runtime "runtime-1".')
 
-  {
-    const serviceDetails = await app.getServiceDetails('service-1')
-    assert.strictEqual(serviceDetails.status, 'stopped')
+  const errorTimeout = async () => {
+    await sleep(15000)
+    throw new Error('Couldn\'t stop runtime')
   }
 
-  {
-    const serviceDetails = await app.getServiceDetails('service-2')
-    assert.strictEqual(serviceDetails.status, 'stopped')
+  const runtimeExit = async () => {
+    await runtime
+    clearTimeout(errorTimeout)
+    assert.strictEqual(runtime.exitCode, 0)
   }
+
+  await Promise.race([errorTimeout(), runtimeExit()])
 })
 
 test('should throw if runtime is missing', async (t) => {

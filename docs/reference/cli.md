@@ -1106,30 +1106,6 @@ platformatic ctl <command>
 ```
 
 
-#### close
-
-Closes a platformatic runtime application.
-
-``` bash
-  $ platformatic ctl close -n runtime-name
-```
-
-Options:
-
-* `-p, --pid <number>` - The process id of the runtime to close.
-* `-n, --name <string>` - The name of the runtime to close.
-
-The `close` command stops all services of the runtime and kills the
-runtime process. If you want to stop the runtime without killing the process
-use the `platformatic ctl stop` command.
-
-The `close` command uses the Platformatic Runtime Management API. To enable it
-set the `managementApi` option to `true` in the runtime configuration file.
-
-To get the list of runtimes with enabled management API use the
-`platformatic ctl ps` command.
-
-
 #### env
 
 Lists platformatic runtime application environment variables
@@ -1155,10 +1131,8 @@ To get the list of runtimes with enabled management API use the
 Available commands:
 
 * `ps` - lists all platformatic runtime applications.
-* `start` - starts all platformatic runtime services.
-* `stop` - stops all platformatic runtime services.
+* `stop` - stops a platformatic runtime application.
 * `restart` - restarts all platformatic runtime services.
-* `close` - stops all platformatic runtime services and kills the runtime process.
 * `services` - lists the runtime services.
 * `env` - lists the runtime environment variables.
 * `logs` - shows the runtime logs.
@@ -1275,10 +1249,6 @@ Options:
 
 * `-p, --pid <number>` - The process id of the runtime to stop.
 * `-n, --name <string>` - The name of the runtime to stop.
-
-The `stop` command stops all services of the runtime, but does not kill the
-runtime process itself. That means you still can work with the runtime via
-`platformatic ctl` command.
 
 The `stop` command uses the Platformatic Runtime Management API. To enable it
 set the `managementApi` option to `true` in the runtime configuration file.

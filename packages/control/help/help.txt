@@ -1,10 +1,8 @@
 Available commands:
 
 * `ps` - lists all platformatic runtime applications.
-* `start` - starts all platformatic runtime services.
-* `stop` - stops all platformatic runtime services.
+* `stop` - stops a platformatic runtime application.
 * `restart` - restarts all platformatic runtime services.
-* `close` - stops all platformatic runtime services and kills the runtime process.
 * `services` - lists the runtime services.
 * `env` - lists the runtime environment variables.
 * `logs` - shows the runtime logs.

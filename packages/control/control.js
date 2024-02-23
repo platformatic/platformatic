@@ -8,9 +8,7 @@ const helpMe = require('help-me')
 const getRuntimesCommand = require('./lib/ps')
 const getRuntimesEnvCommand = require('./lib/env')
 const getRuntimeServicesCommand = require('./lib/services')
-const stopRuntimeServiceCommand = require('./lib/stop')
-const closeRuntimeServiceCommand = require('./lib/close')
-const startRuntimeServiceCommand = require('./lib/start')
+const stopRuntimeCommand = require('./lib/stop')
 const restartRuntimeServiceCommand = require('./lib/restart')
 const injectRuntimeCommand = require('./lib/inject')
 const streamRuntimeLogsCommand = require('./lib/logs')
@@ -23,9 +21,7 @@ const help = helpMe({
 const program = commist({ maxDistance: 2 })
 
 program.register('ps', wrapCommand(getRuntimesCommand))
-program.register('stop', wrapCommand(stopRuntimeServiceCommand))
-program.register('start', wrapCommand(startRuntimeServiceCommand))
-program.register('close', wrapCommand(closeRuntimeServiceCommand))
+program.register('stop', wrapCommand(stopRuntimeCommand))
 program.register('restart', wrapCommand(restartRuntimeServiceCommand))
 program.register('logs', wrapCommand(streamRuntimeLogsCommand))
 program.register('env', wrapCommand(getRuntimesEnvCommand))
@@ -76,9 +72,7 @@ module.exports = {
   getRuntimesCommand,
   getRuntimesEnvCommand,
   getRuntimeServicesCommand,
-  stopRuntimeServiceCommand,
-  closeRuntimeServiceCommand,
-  startRuntimeServiceCommand,
+  stopRuntimeCommand,
   restartRuntimeServiceCommand,
   injectRuntimeCommand,
   streamRuntimeLogsCommand

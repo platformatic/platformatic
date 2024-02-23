@@ -9,10 +9,6 @@ Options:
 * `-p, --pid <number>` - The process id of the runtime to stop.
 * `-n, --name <string>` - The name of the runtime to stop.
 
-The `stop` command stops all services of the runtime, but does not kill the
-runtime process itself. That means you still can work with the runtime via
-`platformatic ctl` command.
-
 The `stop` command uses the Platformatic Runtime Management API. To enable it
 set the `managementApi` option to `true` in the runtime configuration file.
 
