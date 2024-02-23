@@ -52,13 +52,8 @@ test('build basic client from url', async (t) => {
   // handle non 200 code endpoint
   const expectedImplementation = `
 async function _getRedirect (url, request) {
-  const headers = {
-    'Content-type': 'application/json; charset=utf-8'
-  }
 
-  const response = await fetch(\`\${url}/redirect\`, {
-    headers
-  })
+  const response = await fetch(\`\${url}/redirect\`)
 
   let body = await response.text()
 
@@ -96,7 +91,6 @@ export default function build(url: string): PlatformaticFrontendClient`
 
   // Correct CamelCase name
   const camelCase = 'export interface Sample {'
-
   equal(implementation.includes(expectedImplementation), true)
   equal(implementation.includes(factoryImplementation), true)
   equal(types.includes(factoryType), true)
@@ -341,9 +335,6 @@ test('handle headers parameters in get request', async (t) => {
 
   const tsImplementationTemplate = `
 const _getRoot = async (url: string, request: Types.GetRootRequest): Promise<Types.GetRootResponses> => {
-  const headers = {
-    'Content-type': 'application/json; charset=utf-8'
-  }
   if (request['level'] !== undefined) {
     headers['level'] = request['level']
     delete request['level']
@@ -353,9 +344,7 @@ const _getRoot = async (url: string, request: Types.GetRootRequest): Promise<Typ
     delete request['foo']
   }
 
-  const response = await fetch(\`\${url}/\`, {
-    headers
-  })
+  const response = await fetch(\`\${url}/\`)
 `
   ok(implementation)
   equal(implementation.includes(tsImplementationTemplate), true)
@@ -370,13 +359,8 @@ test('handle wildcard in path parameter', async (t) => {
 
   const tsImplementationTemplate = `
 async function _getPkgScopeNameRange (url, request) {
-  const headers = {
-    'Content-type': 'application/json; charset=utf-8'
-  }
 
-  const response = await fetch(\`\${url}/pkg/@\${request['scope']}/\${request['name']}/\${request['range']}/\${request['*']}\`, {
-    headers
-  })
+  const response = await fetch(\`\${url}/pkg/@\${request['scope']}/\${request['name']}/\${request['range']}/\${request['*']}\`)
 
   if (!response.ok) {
     throw new Error(await response.text())
@@ -386,4 +370,22 @@ async function _getPkgScopeNameRange (url, request) {
 }`
   ok(implementation)
   equal(implementation.includes(tsImplementationTemplate), true)
+})
+
+test('do not add headers to fetch if a get request', async (t) => {
+  const dir = await moveToTmpdir(after)
+
+  const openAPIfile = join(__dirname, 'fixtures', 'empty-responses-openapi.json')
+  await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend'])
+
+  const typeFile = join(dir, 'movies', 'movies.ts')
+  const data = await readFile(typeFile, 'utf-8')
+  equal(data.includes(`
+  const response = await fetch(\`\${url}/auth/login\`)
+
+  if (!response.ok) {
+    throw new Error(await response.text())
+  }
+
+`), true)
 })
