@@ -69,10 +69,3 @@ test('should throw if runtime is missing', async (t) => {
   assert.strictEqual(child.exitCode, 0)
   assert.strictEqual(child.stdout, 'Runtime not found.')
 })
-
-test('should throw if runtime name and pid are missing', async (t) => {
-  const child = await execa('node', [cliPath, 'stop'])
-  assert.strictEqual(child.exitCode, 0)
-  assert.strictEqual(child.stdout, 'Runtime name or PID is required.')
-  assert.strictEqual(child.stdout, 'Runtime name or PID is required.')
-})

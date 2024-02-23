@@ -15,15 +15,7 @@ async function restartRuntimeServicesCommand (argv) {
   }).values
 
   const client = new RuntimeApiClient()
-
-  let runtime = null
-  if (args.pid) {
-    runtime = await client.getRuntimeByPID(parseInt(args.pid))
-  } else if (args.name) {
-    runtime = await client.getRuntimeByPackageName(args.name)
-  } else {
-    throw errors.MissingRuntimeIdentifier()
-  }
+  const runtime = await client.getMatchingRuntime(args)
 
   if (!runtime) {
     throw errors.RuntimeNotFound()

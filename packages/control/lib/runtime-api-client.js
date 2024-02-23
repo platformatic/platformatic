@@ -15,6 +15,23 @@ class RuntimeApiClient {
   #undiciClients = new Map()
   #webSockets = new Set()
 
+  async getMatchingRuntime (opts) {
+    const runtimes = await this.getRuntimes()
+
+    let runtime = null
+    if (opts.pid) {
+      runtime = runtimes.find(runtime => runtime.pid === parseInt(opts.pid))
+    } else if (opts.name) {
+      runtime = runtimes.find(runtime => runtime.packageName === opts.name)
+    } else if (runtimes.length === 1) {
+      runtime = runtimes[0]
+    }
+    if (!runtime) {
+      throw errors.RuntimeNotFound()
+    }
+    return runtime
+  }
+
   async getRuntimes () {
     const runtimePIDs = platform() === 'win32'
       ? await this.#getWindowsRuntimePIDs()

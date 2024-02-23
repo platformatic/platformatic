@@ -2,7 +2,6 @@
 
 const { parseArgs } = require('node:util')
 const RuntimeApiClient = require('./runtime-api-client')
-const errors = require('./errors')
 
 async function closeRuntimeServicesCommand (argv) {
   const args = parseArgs({
@@ -15,19 +14,7 @@ async function closeRuntimeServicesCommand (argv) {
   }).values
 
   const client = new RuntimeApiClient()
-
-  let runtime = null
-  if (args.pid) {
-    runtime = await client.getRuntimeByPID(parseInt(args.pid))
-  } else if (args.name) {
-    runtime = await client.getRuntimeByPackageName(args.name)
-  } else {
-    throw errors.MissingRuntimeIdentifier()
-  }
-
-  if (!runtime) {
-    throw errors.RuntimeNotFound()
-  }
+  const runtime = await client.getMatchingRuntime(args)
 
   await client.closeRuntime(runtime.pid)
   console.log(`Closed runtime "${runtime.packageName}".`)

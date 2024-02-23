@@ -38,15 +38,22 @@ test('should get runtime env by name', async (t) => {
   assert.ok(child.stdout.includes('FOO=bar'))
 })
 
+test('should use the runtime if there is only one', async (t) => {
+  const projectDir = join(fixturesDir, 'runtime-1')
+  const configFile = join(projectDir, 'platformatic.json')
+  const { runtime } = await startRuntime(configFile, { FOO: 'bar' })
+
+  t.after(() => {
+    runtime.kill('SIGKILL')
+  })
+
+  const child = await execa('node', [cliPath, 'env'])
+  assert.strictEqual(child.exitCode, 0)
+  assert.ok(child.stdout.includes('FOO=bar'))
+})
+
 test('should throw if runtime is missing', async () => {
   const child = await execa('node', [cliPath, 'env', '-p', 42])
   assert.strictEqual(child.exitCode, 0)
   assert.strictEqual(child.stdout, 'Runtime not found.')
-})
-
-test('should throw if runtime name and pid are missing', async () => {
-  const child = await execa('node', [cliPath, 'env'])
-  assert.strictEqual(child.exitCode, 0)
-  assert.strictEqual(child.stdout, 'Runtime name or PID is required.')
-  assert.strictEqual(child.stdout, 'Runtime name or PID is required.')
 })

@@ -38,7 +38,7 @@ test('should close runtime by pid', async (t) => {
   await Promise.race([errorTimeout(), runtimeExit()])
 })
 
-test('should close runtime by pid', async (t) => {
+test('should close runtime by name', async (t) => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
   const { runtime } = await startRuntime(configFile)
@@ -69,11 +69,4 @@ test('should throw if runtime is missing', async (t) => {
   const child = await execa('node', [cliPath, 'close', '-p', 42])
   assert.strictEqual(child.exitCode, 0)
   assert.strictEqual(child.stdout, 'Runtime not found.')
-})
-
-test('should throw if runtime name and pid are missing', async (t) => {
-  const child = await execa('node', [cliPath, 'close'])
-  assert.strictEqual(child.exitCode, 0)
-  assert.strictEqual(child.stdout, 'Runtime name or PID is required.')
-  assert.strictEqual(child.stdout, 'Runtime name or PID is required.')
 })

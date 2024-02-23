@@ -3,7 +3,6 @@
 const { parseArgs } = require('node:util')
 const { table, getBorderCharacters } = require('table')
 const RuntimeApiClient = require('./runtime-api-client')
-const errors = require('./errors')
 
 const tableColumns = [
   {
@@ -63,19 +62,7 @@ async function getRuntimeServicesCommand (argv) {
   }).values
 
   const client = new RuntimeApiClient()
-
-  let runtime = null
-  if (args.pid) {
-    runtime = await client.getRuntimeByPID(parseInt(args.pid))
-  } else if (args.name) {
-    runtime = await client.getRuntimeByPackageName(args.name)
-  } else {
-    throw errors.MissingRuntimeIdentifier()
-  }
-
-  if (!runtime) {
-    throw errors.RuntimeNotFound()
-  }
+  const runtime = await client.getMatchingRuntime(args)
 
   const runtimeServices = await client.getRuntimeServices(runtime.pid)
   printRuntimeServices(runtimeServices)
