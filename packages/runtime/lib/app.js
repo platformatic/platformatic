@@ -73,7 +73,10 @@ class PlatformaticApp {
       this.#setuplogger(this.config.configManager)
       await this.server.restart()
     } catch (err) {
-      this.#logAndExit(err)
+      // The restart failed. Log the error and
+      // wait for another event.
+      // The old app is still available
+      this.#logger.error({ err })
     }
 
     this.#restarting = false

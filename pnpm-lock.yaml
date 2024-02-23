@@ -1398,6 +1398,9 @@ importers:
       '@fastify/express':
         specifier: ^2.3.0
         version: 2.3.0
+      '@matteo.collina/tspl':
+        specifier: ^0.1.1
+        version: 0.1.1
       '@platformatic/sql-graphql':
         specifier: workspace:*
         version: link:../sql-graphql
