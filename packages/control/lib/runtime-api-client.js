@@ -196,14 +196,7 @@ class RuntimeApiClient {
       query: options.query,
       body: options.body
     })
-
-    const body = await response.body.text()
-
-    return {
-      statusCode: response.statusCode,
-      headers: response.headers,
-      body
-    }
+    return response
   }
 
   async close () {

@@ -56,7 +56,7 @@ async function injectRuntimeCommand (argv) {
     }
     result += '\n'
   }
-  result += response.body
+  result += await response.body.text()
 
   if (args.output) {
     await writeFile(args.output, result)
