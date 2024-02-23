@@ -4,7 +4,7 @@ const { parseArgs } = require('node:util')
 const RuntimeApiClient = require('./runtime-api-client')
 const errors = require('./errors')
 
-async function restartRuntimeServicesCommand (argv) {
+async function restartRuntimeCommand (argv) {
   const args = parseArgs({
     args: argv,
     options: {
@@ -21,10 +21,19 @@ async function restartRuntimeServicesCommand (argv) {
     throw errors.RuntimeNotFound()
   }
 
-  await client.restartRuntimeServices(runtime.pid)
-  console.log(`Restarted runtime "${runtime.packageName}".`)
+  const runtimeProcess = await client.restartRuntime(runtime.pid)
+  runtimeProcess.stdout.pipe(process.stdout)
+  runtimeProcess.stderr.pipe(process.stderr)
+
+  process.on('SIGINT', async () => {
+    runtimeProcess.kill('SIGINT')
+  })
+
+  process.on('SIGTERM', async () => {
+    runtimeProcess.kill('SIGTERM')
+  })
 
   await client.close()
 }
 
-module.exports = restartRuntimeServicesCommand
+module.exports = restartRuntimeCommand

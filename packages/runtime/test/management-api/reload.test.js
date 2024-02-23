@@ -8,7 +8,7 @@ const { Client } = require('undici')
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should restart all services with a management api', async (t) => {
+test('should reload all services with a management api', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
@@ -34,7 +34,7 @@ test('should restart all services with a management api', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'POST',
-    path: '/api/services/restart'
+    path: '/api/reload'
   })
   await body.text()
 

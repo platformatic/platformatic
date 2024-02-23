@@ -2,7 +2,7 @@
 
 const { tmpdir, platform, EOL } = require('node:os')
 const { join } = require('node:path')
-const { exec } = require('node:child_process')
+const { exec, spawn } = require('node:child_process')
 const { readdir } = require('node:fs/promises')
 const { Readable } = require('node:stream')
 const { Client } = require('undici')
@@ -101,25 +101,26 @@ class RuntimeApiClient {
     return runtimeEnv
   }
 
-  async restartRuntimeServices (pid) {
-    const client = this.#getUndiciClient(pid)
+  async restartRuntime (pid, options = {}) {
+    const runtime = await this.getMatchingRuntime({ pid })
 
-    const { statusCode, body } = await client.request({
-      path: '/api/services/restart',
-      method: 'POST'
+    await this.stopRuntime(pid)
+
+    const [startCommand, ...startArgs] = runtime.argv
+    const child = spawn(startCommand, startArgs, {
+      cwd: runtime.cwd,
+      env: { ...process.env },
+      ...options
     })
 
-    if (statusCode !== 200) {
-      const error = await body.text()
-      throw new errors.FailedToRestartRuntimeServices(error)
-    }
+    return child
   }
 
   async stopRuntime (pid) {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: '/api/services/stop',
+      path: '/api/stop',
       method: 'POST'
     })
 

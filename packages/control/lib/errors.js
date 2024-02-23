@@ -13,7 +13,6 @@ module.exports = {
   FailedToGetRuntimeEnv: createError(`${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_ENV`, 'Failed to get runtime environment variables %s.'),
   FailedToInjectRuntime: createError(`${ERROR_PREFIX}_FAILED_TO_INJECT_RUNTIME`, 'Failed to inject runtime %s.'),
   FailedToStreamRuntimeLogs: createError(`${ERROR_PREFIX}_FAILED_TO_STREAM_RUNTIME_LOGS`, 'Failed to stream runtime logs %s.'),
-  FailedToStartRuntimeServices: createError(`${ERROR_PREFIX}_FAILED_TO_START_RUNTIME_SERVICES`, 'Failed to start runtime services %s.'),
-  FailedToRestartRuntimeServices: createError(`${ERROR_PREFIX}_FAILED_TO_RESTART_RUNTIME_SERVICES`, 'Failed to restart runtime services %s.'),
+  FailedToRestartRuntime: createError(`${ERROR_PREFIX}_FAILED_TO_RESTART_RUNTIME`, 'Failed to restart runtime %s.'),
   FailedToStopRuntime: createError(`${ERROR_PREFIX}_FAILED_TO_STOP_RUNTIME`, 'Failed to stop the runtime %s.')
 }

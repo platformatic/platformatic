@@ -9,7 +9,7 @@ const getRuntimesCommand = require('./lib/ps')
 const getRuntimesEnvCommand = require('./lib/env')
 const getRuntimeServicesCommand = require('./lib/services')
 const stopRuntimeCommand = require('./lib/stop')
-const restartRuntimeServiceCommand = require('./lib/restart')
+const restartRuntimeCommand = require('./lib/restart')
 const injectRuntimeCommand = require('./lib/inject')
 const streamRuntimeLogsCommand = require('./lib/logs')
 
@@ -22,7 +22,7 @@ const program = commist({ maxDistance: 2 })
 
 program.register('ps', wrapCommand(getRuntimesCommand))
 program.register('stop', wrapCommand(stopRuntimeCommand))
-program.register('restart', wrapCommand(restartRuntimeServiceCommand))
+program.register('restart', wrapCommand(restartRuntimeCommand))
 program.register('logs', wrapCommand(streamRuntimeLogsCommand))
 program.register('env', wrapCommand(getRuntimesEnvCommand))
 program.register('services', wrapCommand(getRuntimeServicesCommand))
@@ -73,7 +73,7 @@ module.exports = {
   getRuntimesEnvCommand,
   getRuntimeServicesCommand,
   stopRuntimeCommand,
-  restartRuntimeServiceCommand,
+  restartRuntimeCommand,
   injectRuntimeCommand,
   streamRuntimeLogsCommand
 }

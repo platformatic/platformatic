@@ -50,6 +50,7 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
       return {
         pid: process.pid,
         cwd: process.cwd(),
+        argv: process.argv,
         uptimeSeconds: Math.floor(process.uptime()),
         execPath: process.execPath,
         nodeVersion: process.version,
@@ -65,18 +66,18 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
       return process.env
     })
 
-    app.get('/services', async () => {
-      return runtimeApiClient.getServices()
-    })
-
-    app.post('/services/stop', async () => {
+    app.post('/stop', async () => {
       app.log.debug('stop services')
       await runtimeApiClient.close()
     })
 
-    app.post('/services/restart', async () => {
-      app.log.debug('restart services')
-      await runtimeApiClient.restart()
+    app.post('/reload', async () => {
+      app.log.debug('reload services')
+      await runtimeApiClient.reload()
+    })
+
+    app.get('/services', async () => {
+      return runtimeApiClient.getServices()
     })
 
     app.get('/services/:id', async (request) => {
