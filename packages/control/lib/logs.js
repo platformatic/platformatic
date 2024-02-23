@@ -30,17 +30,15 @@ async function streamRuntimeLogsCommand (argv) {
     options.serviceId = args.service
   }
 
-  client.pipeRuntimeLogsStream(runtime.pid, options, (message) => {
-    process.stdout.write(message)
-  })
+  const logsStream = client.getRuntimeLogsStream(runtime.pid, options)
+  logsStream.pipe(process.stdout)
 
-  process.on('SIGINT', async () => {
-    await client.close()
+  process.on('SIGINT', () => {
+    logsStream.destroy()
     process.exit(0)
   })
-
-  process.on('SIGTERM', async () => {
-    await client.close()
+  process.on('SIGTERM', () => {
+    logsStream.destroy()
     process.exit(0)
   })
 }

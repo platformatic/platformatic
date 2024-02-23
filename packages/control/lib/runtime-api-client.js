@@ -4,6 +4,7 @@ const { tmpdir, platform, EOL } = require('node:os')
 const { join } = require('node:path')
 const { exec } = require('node:child_process')
 const { readdir } = require('node:fs/promises')
+const { Readable } = require('node:stream')
 const { Client } = require('undici')
 const WebSocket = require('ws')
 const errors = require('./errors.js')
@@ -166,7 +167,7 @@ class RuntimeApiClient {
     }
   }
 
-  pipeRuntimeLogsStream (pid, options, onMessage) {
+  getRuntimeLogsStream (pid, options) {
     const socketPath = this.#getSocketPathFromPid(pid)
     let query = ''
     if (options.level || options.pretty || options.serviceId) {
@@ -174,16 +175,11 @@ class RuntimeApiClient {
     }
 
     const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
-    const webSocket = new WebSocket(protocol + socketPath + ':/api/logs' + query)
-    this.#webSockets.add(webSocket)
+    const webSocketUrl = protocol + socketPath + ':/api/logs' + query
+    const webSocketStream = new WebSocketStream(webSocketUrl)
+    this.#webSockets.add(webSocketStream.ws)
 
-    webSocket.on('error', (err) => {
-      throw new errors.FailedToStreamRuntimeLogs(err.message)
-    })
-
-    webSocket.on('message', (data) => {
-      onMessage(data.toString())
-    })
+    return webSocketStream
   }
 
   async injectRuntime (pid, serviceId, options) {
@@ -267,6 +263,28 @@ class RuntimeApiClient {
       )
     })
   }
+}
+
+class WebSocketStream extends Readable {
+  constructor (url) {
+    super()
+    this.ws = new WebSocket(url)
+
+    this.ws.on('message', (data) => {
+      this.push(data)
+    })
+    this.ws.on('close', () => {
+      this.push(null)
+    })
+    this.ws.on('error', (err) => {
+      this.emit('error', new errors.FailedToStreamRuntimeLogs(err.message))
+    })
+    this.on('close', () => {
+      this.ws.close()
+    })
+  }
+
+  _read () {}
 }
 
 module.exports = RuntimeApiClient
