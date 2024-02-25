@@ -1713,7 +1713,7 @@ importers:
         version: 16.8.1
       graphql-scalars:
         specifier: ^1.22.4
-        version: 1.22.4(graphql@16.8.1)
+        version: 1.22.5(graphql@16.8.1)
       graphql-type-json:
         specifier: ^0.3.2
         version: 0.3.2(graphql@16.8.1)
@@ -6224,8 +6224,8 @@ packages:
       lodash.merge: 4.6.2
       lodash.mergewith: 4.6.2
 
-  /graphql-scalars@1.22.4(graphql@16.8.1):
-    resolution: {integrity: sha512-ILnv7jq5VKHLUyoaTFX7lgYrjCd6vTee9i8/B+D4zJKJT5TguOl0KkpPEbXHjmeor8AZYrVsrYUHdqRBMX1pjA==}
+  /graphql-scalars@1.22.5(graphql@16.8.1):
+    resolution: {integrity: sha512-Mw7uaqRscjdaXmxlHbt3sYGLU8o1hfFvTvN2VRrYEJyEPy6zGIbaFyJ4PPyt9H6GRHp01MQwS6HqXroRYHyGOg==}
     engines: {node: '>=10'}
     peerDependencies:
       graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
