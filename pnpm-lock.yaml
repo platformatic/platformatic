@@ -131,7 +131,7 @@ importers:
         version: 5.0.0
       inquirer:
         specifier: ^9.2.13
-        version: 9.2.14
+        version: 9.2.15
       mercurius:
         specifier: ^13.3.3
         version: 13.3.3(graphql@16.8.1)
@@ -580,7 +580,7 @@ importers:
         version: 5.0.0
       inquirer:
         specifier: ^9.2.13
-        version: 9.2.14
+        version: 9.2.15
       log-update:
         specifier: ^6.0.0
         version: 6.0.0
@@ -692,7 +692,7 @@ importers:
         version: 5.0.0
       inquirer:
         specifier: ^9.2.13
-        version: 9.2.14
+        version: 9.2.15
       log-update:
         specifier: ^6.0.0
         version: 6.0.0
@@ -6428,8 +6428,8 @@ packages:
     resolution: {integrity: sha512-JV/yugV2uzW5iMRSiZAyDtQd+nxtUnjeLt0acNdw98kKLrvuRVyB80tsREOE7yvGVgalhZ6RNXCmEHkUKBKxew==}
     dev: false
 
-  /inquirer@9.2.14:
-    resolution: {integrity: sha512-4ByIMt677Iz5AvjyKrDpzaepIyMewNvDcvwpVVRZNmy9dLakVoVgdCHZXbK1SlVJra1db0JZ6XkJyHsanpdrdQ==}
+  /inquirer@9.2.15:
+    resolution: {integrity: sha512-vI2w4zl/mDluHt9YEQ/543VTCwPKWiHzKtm9dM2V0NdFcqEexDAjUHzO1oA60HRNaVifGXXM1tRRNluLVHa0Kg==}
     engines: {node: '>=18'}
     dependencies:
       '@ljharb/through': 2.3.12
