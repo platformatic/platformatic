@@ -119,7 +119,7 @@ importers:
         version: 1.3.1
       dotenv:
         specifier: ^16.4.1
-        version: 16.4.4
+        version: 16.4.5
       execa:
         specifier: ^8.0.1
         version: 8.0.1
@@ -308,7 +308,7 @@ importers:
         version: 0.9.1
       dotenv:
         specifier: ^16.4.1
-        version: 16.4.4
+        version: 16.4.5
       execa:
         specifier: ^8.0.1
         version: 8.0.1
@@ -498,7 +498,7 @@ importers:
         version: 8.12.0
       dotenv:
         specifier: ^16.4.1
-        version: 16.4.4
+        version: 16.4.5
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -632,7 +632,7 @@ importers:
         version: 7.0.3
       dotenv:
         specifier: ^16.4.1
-        version: 16.4.4
+        version: 16.4.5
       esmock:
         specifier: ^2.6.3
         version: 2.6.3
@@ -750,7 +750,7 @@ importers:
         version: 7.0.3
       dotenv:
         specifier: ^16.4.1
-        version: 16.4.4
+        version: 16.4.5
       esmock:
         specifier: ^2.6.3
         version: 2.6.3
@@ -4676,8 +4676,8 @@ packages:
     engines: {node: '>=12'}
     dev: false
 
-  /dotenv@16.4.4:
-    resolution: {integrity: sha512-XvPXc8XAQThSjAbY6cQ/9PcBXmFoWuw1sQ3b8HqUCR6ziGXjkTi//kB9SWa2UwqlgdAIuRqAa/9hVljzPehbYg==}
+  /dotenv@16.4.5:
+    resolution: {integrity: sha512-ZmdL2rui+eB2YwhsWzjInR8LldtZHGDoQ1ugH85ppHKwpUHL7j7rN0Ti9NCnGiQbhaZ11FpR+7ao1dNsmduNUg==}
     engines: {node: '>=12'}
 
   /drange@1.1.1:
@@ -4788,7 +4788,7 @@ packages:
     resolution: {integrity: sha512-gWMNrQ3dVHAZcCx7epiFwgXcyfBh4heD/6+OK3bEbke3uL+KqwYA9nUOwzJyRZh1cJOFcwdPuY1n0GKSFlSWAg==}
     dependencies:
       ajv: 8.12.0
-      dotenv: 16.4.4
+      dotenv: 16.4.5
       dotenv-expand: 10.0.0
     dev: false
 
