@@ -99,7 +99,7 @@ platformatic ctl reload [-p <PID> | -n <NAME>]
 ```
 
 The difference between `reload` and `restart` is that `reload` does not kill
-the runtime process. It stops and starts all the runtime services.
+the runtime process. It stops and starts all the runtime services. Some configurations will not be updated.
 
 You can reload a running runtime application by specifying either its PID or its name.
 
