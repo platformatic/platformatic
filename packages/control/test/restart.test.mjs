@@ -14,10 +14,10 @@ test('should restart the runtime by pid', async (t) => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
   const { runtime } = await startRuntime(configFile)
-  t.after(() => runtime.kill('SIGKILL'))
+  t.after(() => runtime.kill('SIGINT'))
 
   const child = execa('node', [cliPath, 'restart', '-p', runtime.pid])
-  t.after(() => child.kill('SIGKILL'))
+  t.after(() => child.kill('SIGINT'))
 
   const errorTimeout = setTimeout(() => {
     throw new Error('Couldn\'t start server')

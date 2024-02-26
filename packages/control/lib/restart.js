@@ -25,11 +25,11 @@ async function restartRuntimeCommand (argv) {
   runtimeProcess.stdout.pipe(process.stdout)
   runtimeProcess.stderr.pipe(process.stderr)
 
-  process.on('SIGINT', async () => {
+  process.on('SIGINT', () => {
     runtimeProcess.kill('SIGINT')
   })
 
-  process.on('SIGTERM', async () => {
+  process.on('SIGTERM', () => {
     runtimeProcess.kill('SIGTERM')
   })
 
