@@ -111,6 +111,20 @@ class RuntimeApiClient {
     return child
   }
 
+  async reloadRuntime (pid) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: '/api/reload',
+      method: 'POST'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new errors.FailedToReloadRuntime(error)
+    }
+  }
+
   async stopRuntime (pid) {
     const client = this.#getUndiciClient(pid)
 

@@ -1,4 +1,4 @@
-Stops all platformatic runtime services.
+Stops a platformatic runtime application.
 
 ``` bash
   $ platformatic ctl stop -n runtime-name

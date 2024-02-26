@@ -73,7 +73,7 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
 
     app.post('/reload', async () => {
       app.log.debug('reload services')
-      await runtimeApiClient.reload()
+      await runtimeApiClient.restart()
     })
 
     app.get('/services', async () => {

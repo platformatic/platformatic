@@ -1197,9 +1197,46 @@ To get the list of runtimes with enabled management API use the
 `platformatic ctl ps` command.
 
 
+#### ps
+
+Lists all running platformatic runtime applications.
+
+``` bash
+  $ platformatic ctl ps
+```
+
+To see the list of all available control commands, run `platformatic ctl help`.
+
+The `ps` command uses the Platformatic Runtime Management API. To enable it
+set the `managementApi` option to `true` in the runtime configuration file.
+
+
+#### reload
+
+Reloads a platformatic runtime application.
+
+``` bash
+  $ platformatic ctl reload -n runtime-name
+```
+
+Options:
+
+* `-p, --pid <number>` - The process id of the runtime to reload.
+* `-n, --name <string>` - The name of the runtime to reload.
+
+The difference between `reload` and `restart` is that `reload` does not kill
+the runtime process. It stops and starts all the runtime services.
+
+The `reload` command uses the Platformatic Runtime Management API. To enable it
+set the `managementApi` option to `true` in the runtime configuration file.
+
+To get the list of runtimes with enabled management API use the
+`platformatic ctl ps` command.
+
+
 #### restart
 
-Restarts all platformatic runtime services.
+Restarts a platformatic runtime application.
 
 ``` bash
   $ platformatic ctl restart -n runtime-name
@@ -1239,7 +1276,7 @@ To get the list of runtimes with enabled management API use the
 
 #### stop
 
-Stops all platformatic runtime services.
+Stops a platformatic runtime application.
 
 ``` bash
   $ platformatic ctl stop -n runtime-name

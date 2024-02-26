@@ -43,6 +43,7 @@ Here are the available commands for managing runtime applications:
 - `ps` - Lists all running runtime applications.
 - `stop` - Stops a running runtime application.
 - `restart` - Restarts a running runtime application.
+- `reload` - Reloads a running runtime application.
 - `logs` - Displays logs for a running runtime application.
 - `env` - Lists environment variables for a running runtime application.
 - `inject` - Injects an HTTP request into a running runtime application.
@@ -86,6 +87,20 @@ platformatic ctl restart [-p <PID> | -n <NAME>]
 You can restart a running runtime application by specifying either its PID or its name.
 Note that after restarting, the application parent process will be changed to the
 current CLI process.
+
+
+### Reloading a running runtime application
+
+To reload a running runtime application, run the following command:
+
+```bash
+platformatic ctl reload [-p <PID> | -n <NAME>]
+```
+
+The difference between `reload` and `restart` is that `reload` does not kill
+the runtime process. It stops and starts all the runtime services.
+
+You can reload a running runtime application by specifying either its PID or its name.
 
 ### Displaying logs for a running runtime application
 

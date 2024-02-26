@@ -1,4 +1,4 @@
-Restarts all platformatic runtime services.
+Restarts a platformatic runtime application.
 
 ``` bash
   $ platformatic ctl restart -n runtime-name
