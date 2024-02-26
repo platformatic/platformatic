@@ -2,7 +2,6 @@
 
 const { parseArgs } = require('node:util')
 const RuntimeApiClient = require('./runtime-api-client')
-const errors = require('./errors')
 
 async function restartRuntimeCommand (argv) {
   const args = parseArgs({
@@ -16,10 +15,6 @@ async function restartRuntimeCommand (argv) {
 
   const client = new RuntimeApiClient()
   const runtime = await client.getMatchingRuntime(args)
-
-  if (!runtime) {
-    throw errors.RuntimeNotFound()
-  }
 
   const runtimeProcess = await client.restartRuntime(runtime.pid, { stdio: 'inherit' })
 
