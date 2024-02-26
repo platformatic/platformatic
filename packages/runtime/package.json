@@ -23,6 +23,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@fastify/express": "^2.3.0",
+    "@matteo.collina/tspl": "^0.1.1",
     "@platformatic/sql-graphql": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
     "borp": "^0.9.0",

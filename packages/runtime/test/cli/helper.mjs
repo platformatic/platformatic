@@ -24,7 +24,7 @@ export async function start (...args) {
       const obj = JSON.parse(line)
       return obj
     } catch (err) {
-      console.log(line)
+      console.log('>>', line)
     }
   }))
   child.ndj = output
