@@ -40,10 +40,6 @@ test('should stop runtime by name', async (t) => {
   const configFile = join(projectDir, 'platformatic.json')
   const { runtime } = await startRuntime(configFile)
 
-  t.after(() => {
-    runtime.kill('SIGKILL')
-  })
-
   const child = await execa('node', [cliPath, 'stop', '-n', 'runtime-1'])
   assert.strictEqual(child.exitCode, 0)
   assert.strictEqual(child.stdout, 'Stopped runtime "runtime-1".')
