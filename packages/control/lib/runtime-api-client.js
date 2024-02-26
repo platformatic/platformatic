@@ -107,12 +107,7 @@ class RuntimeApiClient {
     await this.stopRuntime(pid)
 
     const [startCommand, ...startArgs] = runtime.argv
-    const child = spawn(startCommand, startArgs, {
-      cwd: runtime.cwd,
-      env: { ...process.env },
-      ...options
-    })
-
+    const child = spawn(startCommand, startArgs, { cwd: runtime.cwd, ...options })
     return child
   }
 
