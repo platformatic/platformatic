@@ -21,9 +21,7 @@ async function restartRuntimeCommand (argv) {
     throw errors.RuntimeNotFound()
   }
 
-  const runtimeProcess = await client.restartRuntime(runtime.pid)
-  runtimeProcess.stdout.pipe(process.stdout)
-  runtimeProcess.stderr.pipe(process.stderr)
+  const runtimeProcess = await client.restartRuntime(runtime.pid, { stdio: 'inherit' })
 
   process.on('SIGINT', () => {
     runtimeProcess.kill('SIGINT')
