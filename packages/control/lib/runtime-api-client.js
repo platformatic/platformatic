@@ -38,16 +38,15 @@ class RuntimeApiClient {
       ? await this.#getWindowsRuntimePIDs()
       : await this.#getUnixRuntimePIDs()
 
-    const runtimes = []
-    for (const runtimePID of runtimePIDs) {
-      try {
-        const runtimeMetadata = await this.getRuntimeMetadata(runtimePID)
-        runtimes.push(runtimeMetadata)
-      } catch (err) {
-        continue
-      }
-    }
-    return runtimes
+    const getMetadataRequests = await Promise.allSettled(
+      runtimePIDs.map(async (runtimePID) => {
+        return this.getRuntimeMetadata(runtimePID)
+      })
+    )
+
+    return getMetadataRequests
+      .filter(result => result.status === 'fulfilled')
+      .map(result => result.value)
   }
 
   async getRuntimeMetadata (pid) {
