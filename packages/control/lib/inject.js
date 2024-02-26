@@ -34,7 +34,9 @@ async function injectRuntimeCommand (argv) {
     throw errors.MissingRequestURL()
   }
 
-  const url = positionals[0]
+  const fullUrl = new URL(positionals[0], runtime.url)
+  const injectPath = fullUrl.href.slice(runtime.url.length)
+
   const method = args.request
   const body = args.data
 
@@ -44,7 +46,7 @@ async function injectRuntimeCommand (argv) {
     headers[name] = value
   }
 
-  const injectOptions = { url, method, headers, body }
+  const injectOptions = { url: injectPath, method, headers, body }
 
   const response = await client.injectRuntime(runtime.pid, serviceId, injectOptions)
 
