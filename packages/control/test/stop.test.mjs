@@ -3,7 +3,6 @@
 import assert from 'node:assert'
 import { test } from 'node:test'
 import { join } from 'node:path'
-import { setTimeout as sleep } from 'node:timers/promises'
 import { execa } from 'execa'
 import * as desm from 'desm'
 import { startRuntime } from './helper.mjs'
@@ -16,18 +15,16 @@ test('should stop runtime by pid', async (t) => {
   const configFile = join(projectDir, 'platformatic.json')
   const { runtime } = await startRuntime(configFile)
 
-  t.after(() => {
-    runtime.kill('SIGKILL')
-  })
-
   const child = await execa('node', [cliPath, 'stop', '-p', runtime.pid])
   assert.strictEqual(child.exitCode, 0)
   assert.strictEqual(child.stdout, 'Stopped runtime "runtime-1".')
 
-  const errorTimeout = async () => {
-    await sleep(15000)
-    throw new Error('Couldn\'t stop runtime')
-  }
+  let errorTimeout = null
+  const timeoutPromise = new Promise((resolve, reject) => {
+    errorTimeout = setTimeout(() => {
+      reject(new Error('Couldn\'t stop runtime'))
+    })
+  })
 
   const runtimeExit = async () => {
     await runtime
@@ -35,7 +32,7 @@ test('should stop runtime by pid', async (t) => {
     assert.strictEqual(runtime.exitCode, 0)
   }
 
-  await Promise.race([errorTimeout(), runtimeExit()])
+  await Promise.race([runtimeExit(), timeoutPromise])
 })
 
 test('should stop runtime by name', async (t) => {
@@ -51,10 +48,12 @@ test('should stop runtime by name', async (t) => {
   assert.strictEqual(child.exitCode, 0)
   assert.strictEqual(child.stdout, 'Stopped runtime "runtime-1".')
 
-  const errorTimeout = async () => {
-    await sleep(15000)
-    throw new Error('Couldn\'t stop runtime')
-  }
+  let errorTimeout = null
+  const timeoutPromise = new Promise((resolve, reject) => {
+    errorTimeout = setTimeout(() => {
+      reject(new Error('Couldn\'t stop runtime'))
+    })
+  })
 
   const runtimeExit = async () => {
     await runtime
@@ -62,7 +61,7 @@ test('should stop runtime by name', async (t) => {
     assert.strictEqual(runtime.exitCode, 0)
   }
 
-  await Promise.race([errorTimeout(), runtimeExit()])
+  await Promise.race([runtimeExit(), timeoutPromise])
 })
 
 test('should throw if runtime is missing', async (t) => {

@@ -1,7 +1,13 @@
 import { on } from 'node:events'
 import { createRequire } from 'node:module'
 import { execa } from 'execa'
+import { Agent, setGlobalDispatcher } from 'undici'
 import split from 'split2'
+
+setGlobalDispatcher(new Agent({
+  keepAliveTimeout: 10,
+  keepAliveMaxTimeout: 10
+}))
 
 const runtimeCliPath = createRequire(import.meta.url).resolve('@platformatic/runtime/runtime.mjs')
 
