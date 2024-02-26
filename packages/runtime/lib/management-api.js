@@ -4,6 +4,7 @@ const { tmpdir, platform } = require('node:os')
 const { join } = require('node:path')
 const { readFile, mkdir, unlink } = require('node:fs/promises')
 const fastify = require('fastify')
+const { prettyFactory } = require('pino-pretty')
 const errors = require('./errors')
 const platformaticVersion = require('../package.json').version
 
@@ -49,6 +50,7 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
       return {
         pid: process.pid,
         cwd: process.cwd(),
+        argv: process.argv,
         uptimeSeconds: Math.floor(process.uptime()),
         execPath: process.execPath,
         nodeVersion: process.version,
@@ -56,33 +58,30 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
         packageName: packageJson.name ?? null,
         packageVersion: packageJson.version ?? null,
         url: entrypointDetails?.url ?? null,
-        status: entrypointDetails?.status ?? null,
         platformaticVersion
       }
     })
 
-    app.get('/services', async () => {
-      return runtimeApiClient.getServices()
+    app.get('/config', async () => {
+      return configManager.current
     })
 
-    app.post('/services/start', async () => {
-      app.log.debug('start services')
-      await runtimeApiClient.start()
+    app.get('/env', async () => {
+      return process.env
     })
 
-    app.post('/services/stop', async () => {
+    app.post('/stop', async () => {
       app.log.debug('stop services')
-      await runtimeApiClient.stop()
-    })
-
-    app.post('/services/close', async () => {
-      app.log.debug('close services')
       await runtimeApiClient.close()
     })
 
-    app.post('/services/restart', async () => {
-      app.log.debug('restart services')
+    app.post('/reload', async () => {
+      app.log.debug('reload services')
       await runtimeApiClient.restart()
+    })
+
+    app.get('/services', async () => {
+      return runtimeApiClient.getServices()
     })
 
     app.get('/services/:id', async (request) => {
@@ -131,15 +130,22 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
 
     app.get('/logs', { websocket: true }, async (connection, req) => {
       const logLevel = req.query.level || 'info'
+      const pretty = req.query.pretty !== 'false'
+      const serviceId = req.query.serviceId || null
+
       const logLevelNumber = pinoLogLevels[logLevel]
+      const prettify = prettyFactory()
 
       const handler = (message) => {
-        for (const log of message.logs) {
+        for (let log of message.logs) {
           try {
             const parsedLog = JSON.parse(log)
-            if (parsedLog.level >= logLevelNumber) {
-              connection.socket.send(log)
+            if (parsedLog.level < logLevelNumber) continue
+            if (serviceId && parsedLog.name !== serviceId) continue
+            if (pretty) {
+              log = prettify(parsedLog)
             }
+            connection.socket.send(log)
           } catch (err) {
             console.error('Failed to parse log message: ', log, err)
           }

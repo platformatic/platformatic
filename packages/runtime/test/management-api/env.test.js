@@ -8,10 +8,12 @@ const { Client } = require('undici')
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should start all services with a management api', async (t) => {
+test('should get the runtime process env', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
+
+  await app.start()
 
   const client = new Client({
     hostname: 'localhost',
@@ -31,20 +33,12 @@ test('should start all services with a management api', async (t) => {
   })
 
   const { statusCode, body } = await client.request({
-    method: 'POST',
-    path: '/api/services/start'
+    method: 'GET',
+    path: '/api/env'
   })
-  await body.text()
 
   assert.strictEqual(statusCode, 200)
 
-  {
-    const serviceDetails = await app.getServiceDetails('service-1')
-    assert.strictEqual(serviceDetails.status, 'started')
-  }
-
-  {
-    const serviceDetails = await app.getServiceDetails('service-2')
-    assert.strictEqual(serviceDetails.status, 'started')
-  }
+  const runtimeEnv = await body.json()
+  assert.deepEqual(runtimeEnv, process.env)
 })

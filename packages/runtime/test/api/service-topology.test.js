@@ -27,6 +27,7 @@ test('should get services topology', async (t) => {
     services: [
       {
         id: 'db-app',
+        type: 'db',
         status: 'started',
         entrypoint: false,
         localUrl: 'http://db-app.plt.local',
@@ -34,6 +35,7 @@ test('should get services topology', async (t) => {
       },
       {
         id: 'serviceApp',
+        type: 'service',
         status: 'started',
         entrypoint: true,
         url: entrypointDetails.url,
@@ -48,6 +50,7 @@ test('should get services topology', async (t) => {
       },
       {
         id: 'with-logger',
+        type: 'service',
         status: 'started',
         entrypoint: false,
         localUrl: 'http://with-logger.plt.local',
@@ -55,6 +58,7 @@ test('should get services topology', async (t) => {
       },
       {
         id: 'multi-plugin-service',
+        type: 'service',
         status: 'started',
         entrypoint: false,
         localUrl: 'http://multi-plugin-service.plt.local',

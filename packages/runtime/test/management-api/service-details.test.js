@@ -43,6 +43,7 @@ test('should get service details', async (t) => {
   const serviceDetails = await body.json()
   assert.deepStrictEqual(serviceDetails, {
     id: 'service-1',
+    type: 'service',
     status: 'started',
     entrypoint: true,
     url: entrypointDetails.url,

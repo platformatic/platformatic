@@ -47,6 +47,7 @@
     "@platformatic/client-cli": "workspace:*",
     "@platformatic/composer": "workspace:*",
     "@platformatic/config": "workspace:*",
+    "@platformatic/control": "workspace:*",
     "@platformatic/db": "workspace:*",
     "@platformatic/deploy-client": "workspace:*",
     "@platformatic/frontend-template": "workspace:*",

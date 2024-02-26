@@ -45,5 +45,5 @@ export async function run (argv) {
 }
 
 if (isMain(import.meta)) {
-  await run(process.argv.splice(2))
+  await run(process.argv.slice(2))
 }

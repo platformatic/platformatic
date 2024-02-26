@@ -16,8 +16,13 @@ import helpMe from 'help-me'
 import { upgrade } from './lib/upgrade.js'
 import { gh } from './lib/gh.js'
 import { deploy } from './lib/deploy.js'
-
 import { logo } from './lib/ascii.js'
+import {
+  runControl,
+  getRuntimesCommand,
+  injectRuntimeCommand,
+  streamRuntimeLogsCommand
+} from '@platformatic/control/control.js'
 
 const program = commist({ maxDistance: 2 })
 const help = helpMe({
@@ -44,6 +49,10 @@ program.register('runtime', async (args) => ensureCommand(await runRuntime(args)
 program.register('service', async (args) => ensureCommand(await runService(args)))
 program.register('composer', async (args) => ensureCommand(await runComposer(args)))
 program.register('start', async (args) => ensureCommand(await startCommand(args)))
+program.register('ctl', async (args) => ensureCommand(await runControl(args)))
+program.register('ps', async (args) => getRuntimesCommand(args))
+program.register('inject', async (args) => injectRuntimeCommand(args))
+program.register('logs', async (args) => streamRuntimeLogsCommand(args))
 program.register('upgrade', upgrade)
 program.register('client', client)
 program.register('compile', compile)

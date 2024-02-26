@@ -57,8 +57,10 @@ class RuntimeApi {
           // https://github.com/nodejs/node/issues/49344
           // Remove once https://github.com/nodejs/node/pull/51290 is released
           // on all lines.
-          // Likelty to be removed when we drop support for Node.js 18.
-          await this.#dispatcher.close()
+          // Likely to be removed when we drop support for Node.js 18.
+          if (this.#dispatcher) {
+            await this.#dispatcher.close()
+          }
           await this.stopServices()
 
           setImmediate(process.exit) // Exit the worker thread.
@@ -215,8 +217,9 @@ class RuntimeApi {
     const service = this.#getServiceById(id)
     const status = service.getStatus()
 
+    const type = service.config.configType
     const { entrypoint, dependencies, localUrl } = service.appConfig
-    const serviceDetails = { id, status, localUrl, entrypoint, dependencies }
+    const serviceDetails = { id, type, status, localUrl, entrypoint, dependencies }
 
     if (entrypoint) {
       serviceDetails.url = status === 'started' ? service.server.url : null

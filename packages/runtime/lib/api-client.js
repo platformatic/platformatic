@@ -28,10 +28,6 @@ class RuntimeApiClient extends EventEmitter {
     return this.#sendCommand('plt:start-services')
   }
 
-  async stop () {
-    await this.#sendCommand('plt:stop-services')
-  }
-
   async close () {
     await this.#sendCommand('plt:stop-services')
 

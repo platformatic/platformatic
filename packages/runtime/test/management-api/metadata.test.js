@@ -52,7 +52,6 @@ test('should get the runtime metadata', async (t) => {
   assert.equal(metadata.packageVersion, '1.0.42')
   assert.equal(metadata.projectDir, projectDir)
   assert.equal(metadata.url, entrypoint.url)
-  assert.equal(metadata.status, 'started')
   assert.equal(metadata.platformaticVersion, platformaticVersion)
 
   assert.ok(metadata.uptimeSeconds >= 0)

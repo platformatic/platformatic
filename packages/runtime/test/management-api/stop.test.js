@@ -8,7 +8,7 @@ const { Client } = require('undici')
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should stop all services with a management api', async (t) => {
+test('should stop the runtimes with a management api', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
@@ -25,28 +25,14 @@ test('should stop all services with a management api', async (t) => {
   })
 
   t.after(async () => {
-    await Promise.all([
-      client.close(),
-      app.close(),
-      app.managementApi.close()
-    ])
+    await client.close()
   })
 
   const { statusCode, body } = await client.request({
     method: 'POST',
-    path: '/api/services/stop'
+    path: '/api/stop'
   })
   await body.text()
 
   assert.strictEqual(statusCode, 200)
-
-  {
-    const serviceDetails = await app.getServiceDetails('service-1')
-    assert.strictEqual(serviceDetails.status, 'stopped')
-  }
-
-  {
-    const serviceDetails = await app.getServiceDetails('service-2')
-    assert.strictEqual(serviceDetails.status, 'stopped')
-  }
 })

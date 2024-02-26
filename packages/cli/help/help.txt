@@ -11,3 +11,7 @@ Welcome to Platformatic. Available commands are:
 * `start` - start a Platformatic application.
 * `login` - generate a Platformatic login api key.
 * `client` - generate a Platformatic client.
+* `ps` - list all platformatic runtime applications.
+* `logs` - stream logs for a platformatic runtime application.
+* `inject` - inject a request into a platformatic runtime application.
+* `ctl` - Platformatic Control commands; `platformatic ctl help` to know more.
