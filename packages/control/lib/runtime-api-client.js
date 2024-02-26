@@ -83,6 +83,40 @@ class RuntimeApiClient {
     return runtimeServices
   }
 
+  async getRuntimeServiceConfig (pid, serviceId) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: `/api/services/${serviceId}/config`,
+      method: 'GET'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new errors.FailedToGetRuntimeServiceConfig(error)
+    }
+
+    const serviceConfig = await body.json()
+    return serviceConfig
+  }
+
+  async getRuntimeConfig (pid) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: '/api/config',
+      method: 'GET'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new errors.FailedToGetRuntimeConfig(error)
+    }
+
+    const runtimeConfig = await body.json()
+    return runtimeConfig
+  }
+
   async getRuntimeEnv (pid) {
     const client = this.#getUndiciClient(pid)
 

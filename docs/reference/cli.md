@@ -1106,6 +1106,26 @@ platformatic ctl <command>
 ```
 
 
+#### config
+
+Prints runtime or runtime service config file
+
+``` bash
+  $ platformatic ctl config -n runtime-name
+```
+
+Options:
+
+* `-p, --pid <number>` - The process id of the runtime.
+* `-n, --name <string>` - The name of the runtime.
+
+The `config` command uses the Platformatic Runtime Management API. To enable it
+set the `managementApi` option to `true` in the runtime configuration file.
+
+To get the list of runtimes with enabled management API use the
+`platformatic ctl ps` command.
+
+
 #### env
 
 Lists platformatic runtime application environment variables
@@ -1135,9 +1155,10 @@ Available commands:
 * `restart` - restarts all platformatic runtime services.
 * `reload` - reloads all platformatic runtime services.
 * `services` - lists the runtime services.
+* `config` - prints runtime or runtime service config file.
 * `env` - lists the runtime environment variables.
 * `logs` - shows the runtime logs.
-* `inject` - injects a request to the runtime service
+* `inject` - injects a request to the runtime service.
 
 
 #### inject

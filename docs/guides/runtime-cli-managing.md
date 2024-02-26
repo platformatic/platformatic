@@ -46,6 +46,7 @@ Here are the available commands for managing runtime applications:
 - `reload` - Reloads a running runtime application.
 - `logs` - Displays logs for a running runtime application.
 - `env` - Lists environment variables for a running runtime application.
+- `config` - Prints runtime or runtime service config file.
 - `inject` - Injects an HTTP request into a running runtime application.
 - `services` - Lists all services in a running runtime application.
 
@@ -140,6 +141,22 @@ platformatic ctl env [-p <PID> | -n <NAME>]
 ```
 
 You can list environment variables for a running runtime application by specifying either its PID or its name.
+
+### Printing runtime config file
+
+To print the runtime config file, run the following command:
+
+```bash
+platformatic ctl config [-p <PID> | -n <NAME>]
+```
+
+To print the runtime service config file, run the following command:
+
+```bash
+platformatic ctl config [-p <PID> | -n <NAME>] -s <service-name>
+```
+
+You can print the runtime config file for a running runtime application by specifying either its PID or its name.
 
 ### Injecting an HTTP request into a running runtime application
 

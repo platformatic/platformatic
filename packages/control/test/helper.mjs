@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises'
 import { on } from 'node:events'
 import { createRequire } from 'node:module'
 import { execa } from 'execa'
@@ -10,6 +11,12 @@ setGlobalDispatcher(new Agent({
 }))
 
 const runtimeCliPath = createRequire(import.meta.url).resolve('@platformatic/runtime/runtime.mjs')
+
+export async function getPlatformaticVersion () {
+  const packageJsonPath = new URL('../package.json', import.meta.url)
+  const packageJson = await readFile(packageJsonPath, 'utf8')
+  return JSON.parse(packageJson).version
+}
 
 export async function startRuntime (configPath, env = {}) {
   const runtime = execa(

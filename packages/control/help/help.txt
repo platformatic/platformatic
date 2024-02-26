@@ -5,6 +5,7 @@ Available commands:
 * `restart` - restarts all platformatic runtime services.
 * `reload` - reloads all platformatic runtime services.
 * `services` - lists the runtime services.
+* `config` - prints runtime or runtime service config file.
 * `env` - lists the runtime environment variables.
 * `logs` - shows the runtime logs.
-* `inject` - injects a request to the runtime service
+* `inject` - injects a request to the runtime service.
