@@ -42,7 +42,7 @@ Note that if we use schemas and migrations, we must specify the schema in the mi
   ...
 ```
 
-The entities name are then generated in the form `schemaName + entityName`, PascalCase (this is necessary to avoid name collisions in case there are tables with same name in different schemas).
+The entity names are then generated in the form `schemaName + entityName`, PascalCase (this is necessary to avoid name collisions in case there are tables with same name in different schemas).
 So for instance for the example above we generate the `Test1Movie` and `Test2User` entities.
 
 :::info
