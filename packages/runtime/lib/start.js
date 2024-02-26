@@ -25,7 +25,7 @@ const kWorkerExecArgv = [
 ]
 
 async function startWithConfig (configManager, env = process.env) {
-  const config = configManager.current
+  const config = { ...configManager.current }
 
   if (inspector.url()) {
     throw new errors.NodeInspectorFlagsNotSupportedError()

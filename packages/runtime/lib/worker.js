@@ -63,34 +63,30 @@ if (config.server) {
   config.server.logger = logger
 }
 
+const restartOnError = config.restartOnError ?? true
+
 let stop
+let restart
 
-/* c8 ignore next 4 */
-process.on('uncaughtException', (err) => {
-  logger.error({ err }, 'runtime uncaught exception')
+function genErrorHandler (name) {
+  /* c8 ignore next 4 */
+  process.on(name, (err) => {
+    logger.error({ err }, `runtime ${name}`)
 
-  if (stop) {
-    stop().then(() => {
+    if (restartOnError && restart) {
+      restart()
+    } else if (!restartOnError && stop) {
+      stop().then(() => {
+        process.exit(1)
+      })
+    } else {
       process.exit(1)
-    })
-  } else {
-    process.exit(1)
-  }
-})
+    }
+  })
+}
 
-// Tested by test/cli/start.test.mjs by C8 does not see it.
-/* c8 ignore next 4 */
-process.on('unhandledRejection', (err) => {
-  logger.error({ err }, 'runtime unhandled rejection')
-
-  if (stop) {
-    stop().then(() => {
-      process.exit(1)
-    })
-  } else {
-    process.exit(1)
-  }
-})
+genErrorHandler('unhandledRejection')
+genErrorHandler('uncaughtException')
 
 async function loadInterceptor (_require, module, options) {
   const url = pathToFileURL(_require.resolve(module))
@@ -139,7 +135,6 @@ async function main () {
   parentPort.postMessage('plt:init')
 
   let stopping = false
-
   stop = async function () {
     if (stopping) {
       return
@@ -150,6 +145,23 @@ async function main () {
       await runtime.stopServices()
     } catch (err) {
       logger.error({ err }, 'error while stopping services')
+    }
+  }
+
+  let restarting = false
+  restart = async function () {
+    if (restarting) {
+      return
+    }
+
+    restarting = true
+    try {
+      logger.info('restarting...')
+      await runtime.restartServices()
+    } catch (err) {
+      logger.error({ err }, 'error while restarting services')
+    } finally {
+      restarting = false
     }
   }
 }

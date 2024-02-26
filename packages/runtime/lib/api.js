@@ -111,7 +111,7 @@ class RuntimeApi {
       case 'plt:stop-services':
         return this.stopServices(params)
       case 'plt:restart-services':
-        return this.#restartServices(params)
+        return this.restartServices(params)
       case 'plt:get-entrypoint-details':
         return this.#getEntrypointDetails(params)
       case 'plt:get-services':
@@ -162,7 +162,7 @@ class RuntimeApi {
     await Promise.all(stopServiceReqs)
   }
 
-  async #restartServices () {
+  async restartServices () {
     let entrypointUrl = null
     for (const service of this.#services.values()) {
       if (service.server) {
