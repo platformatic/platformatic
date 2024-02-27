@@ -1,7 +1,7 @@
 # Configuration
 
 Platformatic Composer configured with a configuration file. It supports the use
-of environment variables as setting values with [configuration placeholders](#configuration-placeholders).
+of environment variables as setting values with [environment variable placeholders](#environment-variable-placeholders).
 
 ## Configuration file
 
