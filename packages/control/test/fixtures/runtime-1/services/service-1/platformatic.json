@@ -1,13 +1,5 @@
 {
   "$schema": "https://platformatic.dev/schemas/v1.22.0/service",
-  "server": {
-    "hostname": "127.0.0.1",
-    "port": 0,
-    "logger": {
-      "name": "service-with-logger",
-      "level": "trace"
-    }
-  },
   "service": {
     "openapi": true
   },

@@ -4,20 +4,10 @@ const { tmpdir, platform } = require('node:os')
 const { join } = require('node:path')
 const { readFile, mkdir, unlink } = require('node:fs/promises')
 const fastify = require('fastify')
-const { prettyFactory } = require('pino-pretty')
 const errors = require('./errors')
 const platformaticVersion = require('../package.json').version
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'pids')
-
-const pinoLogLevels = {
-  fatal: 60,
-  error: 50,
-  warn: 40,
-  info: 30,
-  debug: 20,
-  trace: 10
-}
 
 async function createManagementApi (configManager, runtimeApiClient, loggingPort) {
   let apiConfig = configManager.current.managementApi
@@ -129,26 +119,9 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
     })
 
     app.get('/logs', { websocket: true }, async (connection, req) => {
-      const logLevel = req.query.level || 'info'
-      const pretty = req.query.pretty !== 'false'
-      const serviceId = req.query.serviceId || null
-
-      const logLevelNumber = pinoLogLevels[logLevel]
-      const prettify = prettyFactory()
-
       const handler = (message) => {
-        for (let log of message.logs) {
-          try {
-            const parsedLog = JSON.parse(log)
-            if (parsedLog.level < logLevelNumber) continue
-            if (serviceId && parsedLog.name !== serviceId) continue
-            if (pretty) {
-              log = prettify(parsedLog)
-            }
-            connection.socket.send(log)
-          } catch (err) {
-            console.error('Failed to parse log message: ', log, err)
-          }
+        for (const log of message.logs) {
+          connection.socket.send(log)
         }
       }
 
