@@ -335,7 +335,9 @@ const migrations = {
       description: 'The path to the directory containing the migrations.'
     },
     table: {
-      type: 'string'
+      type: 'string',
+      description: 'Table created to track schema version.',
+      default: 'versions'
     },
     validateChecksums: {
       type: 'boolean'
@@ -348,11 +350,6 @@ const migrations = {
       }, {
         type: 'string'
       }]
-    },
-    migrationsTable: {
-      type: 'string',
-      description: 'Table created to track schema version.',
-      default: 'versions'
     },
     newline: {
       type: 'string',

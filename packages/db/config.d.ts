@@ -333,16 +333,15 @@ export interface PlatformaticDB {
      * The path to the directory containing the migrations.
      */
     dir: string;
+    /**
+     * Table created to track schema version.
+     */
     table?: string;
     validateChecksums?: boolean;
     /**
      * Whether to automatically apply migrations when running the migrate command.
      */
     autoApply?: boolean | string;
-    /**
-     * Table created to track schema version.
-     */
-    migrationsTable?: string;
     /**
      * Force line ending on file when generating checksum. Value should be either CRLF (windows) or LF (unix/mac).
      */
