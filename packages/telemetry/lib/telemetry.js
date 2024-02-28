@@ -194,7 +194,11 @@ async function setupTelemetry (app, opts) {
   app.addHook('onResponse', endSpan)
   app.addHook('onError', setErrorInSpan)
   app.addHook('onClose', async function () {
-    await provider.shutdown()
+    try {
+      await provider.shutdown()
+    } catch (err) {
+      app.log.error({ err }, 'Error shutting down telemetry provider')
+    }
   })
 
   //* Client APIs
