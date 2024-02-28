@@ -172,15 +172,11 @@ class RuntimeApiClient {
     }
   }
 
-  getRuntimeLogsStream (pid, options) {
+  getRuntimeLogsStream (pid) {
     const socketPath = this.#getSocketPathFromPid(pid)
-    let query = ''
-    if (options.level || options.pretty || options.serviceId) {
-      query = '?' + new URLSearchParams(options).toString()
-    }
 
     const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
-    const webSocketUrl = protocol + socketPath + ':/api/logs' + query
+    const webSocketUrl = protocol + socketPath + ':/api/logs'
     const webSocketStream = new WebSocketStream(webSocketUrl)
     this.#webSockets.add(webSocketStream.ws)
 
