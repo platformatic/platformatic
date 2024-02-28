@@ -5,10 +5,12 @@ import { test } from 'node:test'
 import { join } from 'node:path'
 import { execa } from 'execa'
 import * as desm from 'desm'
-import { startRuntime } from './helper.mjs'
+import { startRuntime, getPlatformaticVersion } from './helper.mjs'
 
 const cliPath = desm.join(import.meta.url, '..', 'control.js')
 const fixturesDir = desm.join(import.meta.url, 'fixtures')
+
+const version = await getPlatformaticVersion()
 
 test('should get all runtimes', async (t) => {
   const runtimeProjectDir1 = join(fixturesDir, 'runtime-1')
@@ -39,7 +41,7 @@ test('should get all runtimes', async (t) => {
   assert.strictEqual(runtime1Values.length, 6)
   assert.strictEqual(runtime1Values[0], runtime1.pid.toString())
   assert.strictEqual(runtime1Values[1], 'runtime-1')
-  assert.strictEqual(runtime1Values[2], '1.23.0')
+  assert.strictEqual(runtime1Values[2], version)
   assert.strictEqual(runtime1Values[4], runtime1Url)
   assert.strictEqual(runtime1Values[5], runtimeProjectDir1)
 
@@ -47,7 +49,7 @@ test('should get all runtimes', async (t) => {
   assert.strictEqual(runtime2Values.length, 6)
   assert.strictEqual(runtime2Values[0], runtime2.pid.toString())
   assert.strictEqual(runtime2Values[1], 'runtime-2')
-  assert.strictEqual(runtime2Values[2], '1.23.0')
+  assert.strictEqual(runtime2Values[2], version)
   assert.strictEqual(runtime2Values[4], runtime2Url)
   assert.strictEqual(runtime2Values[5], runtimeProjectDir2)
 })
