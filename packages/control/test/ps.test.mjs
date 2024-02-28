@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import { execa } from 'execa'
 import * as desm from 'desm'
 import { startRuntime } from './helper.mjs'
-import { readFile } from 'node:fs/promises'
+import { getPlatformaticVersion } from './helper.mjs'
 
 const cliPath = desm.join(import.meta.url, '..', 'control.js')
 const fixturesDir = desm.join(import.meta.url, 'fixtures')
