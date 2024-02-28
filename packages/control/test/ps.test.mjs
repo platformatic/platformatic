@@ -11,7 +11,7 @@ import { getPlatformaticVersion } from './helper.mjs'
 const cliPath = desm.join(import.meta.url, '..', 'control.js')
 const fixturesDir = desm.join(import.meta.url, 'fixtures')
 
-const { version } = JSON.parse(await readFile(desm.join(import.meta.url, '..', 'package.json'), 'utf8'))
+const version = await getPlatformaticVersion()
 
 test('should get all runtimes', async (t) => {
   const runtimeProjectDir1 = join(fixturesDir, 'runtime-1')
