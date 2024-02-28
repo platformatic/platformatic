@@ -13,7 +13,7 @@ import { execa } from 'execa'
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 
-test.only('build basic client from url', async (t) => {
+test('build basic client from url', async (t) => {
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'sample', 'db.sqlite'))
   } catch {
@@ -394,7 +394,7 @@ test('do not add headers to fetch if a get request', async (t) => {
 `), true)
 })
 
-test.only('support empty response', async (t) => {
+test('support empty response', async (t) => {
   const dir = await moveToTmpdir(after)
 
   const openAPIfile = join(__dirname, 'fixtures', 'empty-responses-openapi.json')
