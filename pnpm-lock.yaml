@@ -690,7 +690,7 @@ importers:
         version: 16.4.5
       esmock:
         specifier: ^2.6.3
-        version: 2.6.3
+        version: 2.6.4
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -808,7 +808,7 @@ importers:
         version: 16.4.5
       esmock:
         specifier: ^2.6.3
-        version: 2.6.3
+        version: 2.6.4
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -5549,8 +5549,8 @@ packages:
       - supports-color
     dev: true
 
-  /esmock@2.6.3:
-    resolution: {integrity: sha512-1gtVLLHyB742JNWkIFfiKwB8rXgJZO/X717ua4yzT0hIqsDFjtnrpAKHO+HlIMSIhMExCWJzpk9lDsh2XuKAKw==}
+  /esmock@2.6.4:
+    resolution: {integrity: sha512-w/MIHWZeFzlyW6tTUW/sj1aSAScU8IQapjz8oCxjx3J90fhhmO0QdPGBjPD3oQSLLtVCFcgkTvdh7dNigp9K5A==}
     engines: {node: '>=14.16.0'}
     dev: true
 
