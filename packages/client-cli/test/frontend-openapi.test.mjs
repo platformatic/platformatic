@@ -13,7 +13,7 @@ import { execa } from 'execa'
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 
-test('build basic client from url', async (t) => {
+test.only('build basic client from url', async (t) => {
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'sample', 'db.sqlite'))
   } catch {
@@ -111,20 +111,24 @@ export const getCustomSwagger = async (request) => {
     const typesTemplate = `
 export interface Sample {
   setBaseUrl(newUrl: string) : void;
-  getCustomSwagger(req?: GetCustomSwaggerRequest): Promise<FullResponse<unknown, 200>>;
+  getCustomSwagger(req?: GetCustomSwaggerRequest): Promise<GetCustomSwaggerResponses>;
   getRedirect(req?: GetRedirectRequest): Promise<GetRedirectResponses>;
-  getReturnUrl(req?: GetReturnUrlRequest): Promise<FullResponse<unknown, 200>>;
-  postFoobar(req?: PostFoobarRequest): Promise<FullResponse<unknown, 200>>;
+  getReturnUrl(req?: GetReturnUrlRequest): Promise<GetReturnUrlResponses>;
+  postFoobar(req?: PostFoobarRequest): Promise<PostFoobarResponses>;
 }`
 
     const unionTypesTemplate = `export type GetRedirectResponses =
   FullResponse<GetRedirectResponseFound, 302>
   | FullResponse<GetRedirectResponseBadRequest, 400>`
+    const postFooBarResponses = `export type PostFoobarResponseOK = {}
+export type PostFoobarResponses =
+  FullResponse<PostFoobarResponseOK, 200>`
     ok(implementation)
     ok(types)
     equal(implementation.includes(jsImplementationTemplate), true)
     equal(types.includes(typesTemplate), true)
     equal(types.includes(unionTypesTemplate), true)
+    equal(types.includes(postFooBarResponses), true)
   }
 })
 
@@ -387,5 +391,31 @@ test('do not add headers to fetch if a get request', async (t) => {
     throw new Error(await response.text())
   }
 
+`), true)
+})
+
+test.only('support empty response', async (t) => {
+  const dir = await moveToTmpdir(after)
+
+  const openAPIfile = join(__dirname, 'fixtures', 'empty-responses-openapi.json')
+  await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend'])
+
+  const implementationFile = join(dir, 'movies', 'movies.ts')
+  const implementation = await readFile(implementationFile, 'utf-8')
+  equal(implementation.includes(`
+  const response = await fetch(\`\${url}/auth/login\`)
+
+  if (!response.ok) {
+    throw new Error(await response.text())
+  }
+
+`), true)
+
+  const typeFile = join(dir, 'movies', 'movies-types.d.ts')
+  const type = await readFile(typeFile, 'utf-8')
+  equal(type.includes(`
+export type GetAuthLoginResponseOK = {}
+export type GetAuthLoginResponses =
+  FullResponse<GetAuthLoginResponseOK, 200>
 `), true)
 })

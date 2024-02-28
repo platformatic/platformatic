@@ -1098,7 +1098,7 @@ test('requestbody as array', async (t) => {
   const data = await readFile(typeFile, 'utf-8')
   equal(data.includes(`
   export type Movies = {
-    postFoobar(req?: PostFoobarRequest[]): Promise<FullResponse<unknown, 200>>;
+    postFoobar(req?: PostFoobarRequest[]): Promise<PostFoobarResponses>;
   }
 `), true)
   equal(data.includes(`
