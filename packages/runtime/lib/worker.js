@@ -34,14 +34,7 @@ globalThis.fetch = undici.fetch
 
 const config = workerData.config
 
-let loggerConfig = config.server?.logger
-
-if (loggerConfig) {
-  loggerConfig = { ...loggerConfig }
-} else {
-  loggerConfig = {}
-}
-
+const loggerConfig = { ...config.server?.logger }
 const cliStream = isatty(1) ? pretty() : pino.destination(1)
 
 let logger = null
@@ -59,9 +52,10 @@ if (config.loggingPort) {
   logger = pino(loggerConfig, cliStream)
 }
 
-if (config.server) {
-  config.server.logger = logger
+if (!config.server) {
+  config.server = {}
 }
+config.server.logger = logger
 
 let stop
 

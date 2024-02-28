@@ -248,9 +248,8 @@ class PlatformaticApp {
   }
 
   #setuplogger (configManager) {
-    // Set the logger if not present
     configManager.current.server = configManager.current.server || {}
-    const childLogger = this.#logger.child({}, { level: configManager.current.server.logger?.level || 'info' })
+    const childLogger = this.#logger.child({})
     configManager.current.server.logger = childLogger
   }
 

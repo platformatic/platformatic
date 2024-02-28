@@ -7,7 +7,7 @@
     "plt-runtime": "./runtime.mjs"
   },
   "scripts": {
-    "test": "npm run lint && borp --concurrency=1 --timeout=180000 && tsd",
+    "test": "npm run lint && borp --concurrency=1 --timeout=60000 && tsd",
     "coverage": "npm run lint && borp -X=fixtures -X=test -C --concurrency=1 --timeout=120000 && tsd",
     "lint": "standard | snazzy"
   },

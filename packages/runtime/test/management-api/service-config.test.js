@@ -54,8 +54,6 @@ test('should get service config', async (t) => {
   assert.deepStrictEqual(serviceConfig, {
     $schema: `https://platformatic.dev/schemas/v${platformaticVersion}/service`,
     server: {
-      hostname: '127.0.0.1',
-      port: 0,
       logger,
       keepAliveTimeout: 5000
     },
