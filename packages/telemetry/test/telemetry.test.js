@@ -347,10 +347,47 @@ test('should configure an exporter as an array', async () => {
       }
     }]
   }, handler, test.after)
+
+  const injectArgs = {
+    method: 'GET',
+    url: '/test/123',
+    headers: {
+      host: 'test'
+    }
+  }
+  await app.inject(injectArgs)
+
   const { exporters } = app.openTelemetry
   const exporter = exporters[0]
   equal(exporter.constructor.name, 'OTLPTraceExporter')
   equal(exporter.url, 'http://localhost:4317')
+})
+
+test('do not stop closing the server if the exporter fails', async () => {
+  const handler = async (request, reply) => {
+    return {}
+  }
+  const app = await setupApp({
+    serviceName: 'test-service',
+    version: '1.0.0',
+    exporter: [{
+      type: 'otlp',
+      options: {
+        url: 'http://risk-engine.local'
+      }
+    }]
+  }, handler, test.after)
+
+  // We need to send some data to the server to make sure there is data
+  // to flush via the exporter
+  const injectArgs = {
+    method: 'GET',
+    url: '/test/123',
+    headers: {
+      host: 'test'
+    }
+  }
+  await app.inject(injectArgs)
 })
 
 test('should use multiple exporters and sent traces to all the exporters', async () => {
