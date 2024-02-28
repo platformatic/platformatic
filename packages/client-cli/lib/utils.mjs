@@ -36,3 +36,12 @@ export async function appendToBothEnvs (dir, key, value) {
 export function toJavaScriptName (str) {
   return camelcase(str.replace(/[^a-zA-Z0-9]+/gi, ' '))
 }
+
+export function getResponseContentType (responseObject) {
+  if (!responseObject || responseObject.content === undefined) {
+    return null
+  }
+
+  const [firstContentType] = Object.entries(responseObject.content)
+  return firstContentType[0]
+}
