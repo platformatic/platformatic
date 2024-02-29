@@ -289,7 +289,7 @@ importers:
         version: 6.6.2
       yaml:
         specifier: ^2.3.4
-        version: 2.3.4
+        version: 2.4.0
     devDependencies:
       '@matteo.collina/tspl':
         specifier: ^0.1.1
@@ -538,7 +538,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
       yaml:
         specifier: ^2.3.4
-        version: 2.3.4
+        version: 2.4.0
 
   packages/control:
     dependencies:
@@ -702,7 +702,7 @@ importers:
         version: 5.3.3
       yaml:
         specifier: ^2.3.4
-        version: 2.3.4
+        version: 2.4.0
 
   packages/create-platformatic-auto:
     dependencies:
@@ -820,7 +820,7 @@ importers:
         version: 5.3.3
       yaml:
         specifier: ^2.3.4
-        version: 2.3.4
+        version: 2.4.0
 
   packages/db:
     dependencies:
@@ -1010,7 +1010,7 @@ importers:
         version: 2.2.2
       yaml:
         specifier: ^2.3.4
-        version: 2.3.4
+        version: 2.4.0
 
   packages/db-authorization:
     dependencies:
@@ -1354,7 +1354,7 @@ importers:
         version: 7.6.0
       yaml:
         specifier: ^2.3.4
-        version: 2.3.4
+        version: 2.4.0
     devDependencies:
       borp:
         specifier: ^0.9.0
@@ -1701,7 +1701,7 @@ importers:
         version: 2.2.2
       yaml:
         specifier: ^2.3.4
-        version: 2.3.4
+        version: 2.4.0
 
   packages/sql-events:
     dependencies:
@@ -1973,7 +1973,7 @@ importers:
         version: 2.2.2
       yaml:
         specifier: ^2.3.4
-        version: 2.3.4
+        version: 2.4.0
 
   packages/swagger-ui-theme: {}
 
@@ -2885,7 +2885,7 @@ packages:
       json-schema-resolver: 2.0.0
       openapi-types: 12.1.3
       rfdc: 1.3.1
-      yaml: 2.3.4
+      yaml: 2.4.0
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -10019,6 +10019,12 @@ packages:
   /yaml@2.3.4:
     resolution: {integrity: sha512-8aAvwVUSHpfEqTQ4w/KMlf3HcRdt50E5ODIQJBw1fQ5RL34xabzxtUlzTXVqc4rkZsPbvrXKWnABCD7kWSmocA==}
     engines: {node: '>= 14'}
+    dev: true
+
+  /yaml@2.4.0:
+    resolution: {integrity: sha512-j9iR8g+/t0lArF4V6NE/QCfT+CO7iLqrXAHZbJdo+LfjqP1vR8Fg5bSiaq6Q2lOD1AUEVrEVIgABvBFYojJVYQ==}
+    engines: {node: '>= 14'}
+    hasBin: true
 
   /yargs-parser@20.2.9:
     resolution: {integrity: sha512-y11nGElTIV+CT3Zv9t7VKl+Q3hTQoT9a1Qzezhhl6Rp21gJ/IVTW7Z3y9EWXhuUBC2Shnf+DX0antecpAwSP8w==}
