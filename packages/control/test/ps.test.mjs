@@ -1,7 +1,7 @@
 'use strict'
 
 import assert from 'node:assert'
-import { tmpdir, platform } from 'node:os'
+import { tmpdir, platform, rmdir } from 'node:os'
 import { test } from 'node:test'
 import { join } from 'node:path'
 import { readdir, writeFile } from 'node:fs/promises'
@@ -67,5 +67,22 @@ test('should remove the runtime sock if can not get metadata', { skip: platform(
   {
     const runtimeSockets = await readdir(PLATFORMATIC_TMP_DIR)
     assert.strictEqual(runtimeSockets.length, 0)
+  }
+})
+
+test('should get no runtimes running', async (t) => {
+  const child = await execa('node', [cliPath, 'ps'])
+  assert.strictEqual(child.exitCode, 0)
+  const runtimesTable = child.stdout
+  assert.strictEqual(runtimesTable, 'No platformatic runtimes found.')
+
+  {
+    const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'pids')
+    // This should work even if there is no /tmp/platformatic/pids directory
+    await rmdir(PLATFORMATIC_TMP_DIR, { recursive: true })
+    const child = await execa('node', [cliPath, 'ps'])
+    assert.strictEqual(child.exitCode, 0)
+    const runtimesTable = child.stdout
+    assert.strictEqual(runtimesTable, 'No platformatic runtimes found.')
   }
 })
