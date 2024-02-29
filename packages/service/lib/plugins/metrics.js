@@ -1,51 +1,14 @@
 'use strict'
 
-const http = require('http')
-const { eventLoopUtilization } = require('perf_hooks').performance
+const http = require('node:http')
+const { eventLoopUtilization } = require('node:perf_hooks').performance
+const fastify = require('fastify')
 const fp = require('fastify-plugin')
-const metricsPlugin = require('fastify-metrics')
-const basicAuth = require('@fastify/basic-auth')
-const fastifyAccepts = require('@fastify/accepts')
-const Fastify = require('fastify')
 
-// This is a global httpServer to match global
-// prometheus. It's an antipattern, so do
-// not use it elsewhere.
-let httpServer = null
-
-module.exports = fp(async function (app, opts) {
-  const server = opts.server ?? 'own'
-  const hostname = opts.hostname ?? '0.0.0.0'
-  const port = opts.port ?? 9090
-  const metricsEndpoint = opts.endpoint ?? '/metrics'
-  const auth = opts.auth ?? null
-
-  let basicAuthValidator = null
-  if (auth) {
-    const { username, password } = auth
-    basicAuthValidator = function (user, pass, req, reply, done) {
-      if (username !== user || password !== pass) {
-        return reply.code(401).send({ message: 'Unauthorized' })
-      }
-      return done()
-    }
-
-    if (server === 'parent') {
-      await app.register(basicAuth, {
-        validate: basicAuthValidator
-      })
-
-      app.addHook('onRoute', (routeOptions) => {
-        if (routeOptions.url === metricsEndpoint) {
-          routeOptions.onRequest = app.basicAuth
-        }
-      })
-    }
-  }
-
-  app.register(metricsPlugin, {
+const metricsPlugin = fp(async function (app) {
+  app.register(require('fastify-metrics'), {
     defaultMetrics: { enabled: true },
-    endpoint: server === 'parent' ? metricsEndpoint : null,
+    endpoint: null,
     name: 'metrics',
     routeMetrics: { enabled: true },
     clearRegisterOnInit: true
@@ -73,14 +36,18 @@ module.exports = fp(async function (app, opts) {
 
     app.metrics.client.register.registerMetric(eluMetric)
   })
+}, {
+  encapsulate: false
+})
 
+// This is a global httpServer to match global
+// prometheus. It's an antipattern, so do
+// not use it elsewhere.
+let httpServer = null
+
+async function createMetricsServer (app, hostname, port) {
   if (httpServer && httpServer.address().port !== port) {
-    await new Promise((resolve) => httpServer.close(resolve))
-    httpServer = null
-  }
-
-  if (server === 'parent') {
-    return
+    await closeMetricsServer()
   }
 
   if (!httpServer) {
@@ -89,7 +56,7 @@ module.exports = fp(async function (app, opts) {
     httpServer.unref()
   }
 
-  const promServer = Fastify({
+  const promServer = fastify({
     name: 'Prometheus server',
     serverFactory: (handler) => {
       httpServer.removeAllListeners('request')
@@ -100,34 +67,69 @@ module.exports = fp(async function (app, opts) {
     logger: app.log.child({ name: 'prometheus' })
   })
 
-  promServer.register(fastifyAccepts)
+  app.addHook('onClose', async () => {
+    await promServer.close()
+  })
 
-  const metricsEndpointOptions = {
+  return promServer
+}
+
+async function closeMetricsServer () {
+  if (httpServer) {
+    await new Promise((resolve) => httpServer.close(resolve))
+    httpServer = null
+  }
+}
+
+module.exports = fp(async function (app, opts) {
+  const server = opts.server ?? 'own'
+  const hostname = opts.hostname ?? '0.0.0.0'
+  const port = opts.port ?? 9090
+  const metricsEndpoint = opts.endpoint ?? '/metrics'
+  const auth = opts.auth ?? null
+
+  app.register(metricsPlugin)
+
+  let metricsServer = app
+  if (server === 'own') {
+    metricsServer = await createMetricsServer(app, hostname, port)
+  } else {
+    await closeMetricsServer()
+  }
+
+  let onRequestHook
+  if (auth) {
+    const { username, password } = auth
+
+    await metricsServer.register(require('@fastify/basic-auth'), {
+      validate: function (user, pass, req, reply, done) {
+        if (username !== user || password !== pass) {
+          return reply.code(401).send({ message: 'Unauthorized' })
+        }
+        return done()
+      }
+    })
+    onRequestHook = metricsServer.basicAuth
+  }
+
+  metricsServer.register(require('@fastify/accepts'))
+  metricsServer.route({
     url: metricsEndpoint,
     method: 'GET',
     logLevel: 'warn',
+    onRequest: onRequestHook,
     handler: async (req, reply) => {
       const promRegistry = app.metrics.client.register
       const accepts = req.accepts()
       if (!accepts.type('text/plain') && accepts.type('application/json')) {
-        return await promRegistry.getMetricsAsJSON()
+        return promRegistry.getMetricsAsJSON()
       }
       reply.type('text/plain')
-      return await promRegistry.metrics()
+      return promRegistry.metrics()
     }
-  }
-
-  if (auth) {
-    await promServer.register(basicAuth, {
-      validate: basicAuthValidator
-    })
-    metricsEndpointOptions.onRequest = promServer.basicAuth
-  }
-  promServer.route(metricsEndpointOptions)
-
-  app.addHook('onClose', async (instance) => {
-    await promServer.close()
   })
 
-  await promServer.ready()
+  if (server === 'own') {
+    await metricsServer.ready()
+  }
 })
