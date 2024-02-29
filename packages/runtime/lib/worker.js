@@ -52,10 +52,9 @@ if (config.loggingPort) {
   logger = pino(loggerConfig, cliStream)
 }
 
-if (!config.server) {
-  config.server = {}
+if (config.server) {
+  config.server.logger = logger
 }
-config.server.logger = logger
 
 let stop
 

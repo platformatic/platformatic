@@ -30,7 +30,6 @@ test('should get service config', async (t) => {
       logger: {},
       keepAliveTimeout: 5000,
       trustProxy: true
-
     },
     service: { openapi: true },
     plugins: {
