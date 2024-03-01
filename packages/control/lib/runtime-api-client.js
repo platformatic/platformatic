@@ -3,7 +3,7 @@
 const { tmpdir, platform, EOL } = require('node:os')
 const { join } = require('node:path')
 const { exec, spawn } = require('node:child_process')
-const { readdir } = require('node:fs/promises')
+const { readdir, unlink } = require('node:fs/promises')
 const { Readable } = require('node:stream')
 const { Client } = require('undici')
 const WebSocket = require('ws')
@@ -44,9 +44,18 @@ class RuntimeApiClient {
       })
     )
 
-    return getMetadataRequests
-      .filter(result => result.status === 'fulfilled')
-      .map(result => result.value)
+    const runtimes = []
+    for (let i = 0; i < runtimePIDs.length; i++) {
+      const runtimePID = runtimePIDs[i]
+      const metadataRequest = getMetadataRequests[i]
+
+      if (metadataRequest.status === 'rejected') {
+        await this.#removeRuntimeSocket(runtimePID).catch(() => {})
+      } else {
+        runtimes.push(metadataRequest.value)
+      }
+    }
+    return runtimes
   }
 
   async getRuntimeMetadata (pid) {
@@ -263,6 +272,13 @@ class RuntimeApiClient {
         }
       )
     })
+  }
+
+  async #removeRuntimeSocket (pid) {
+    if (platform() !== 'win32') {
+      const socketPath = this.#getSocketPathFromPid(pid)
+      await unlink(socketPath)
+    }
   }
 }
 
