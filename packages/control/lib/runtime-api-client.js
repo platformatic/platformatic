@@ -3,7 +3,7 @@
 const { tmpdir, platform, EOL } = require('node:os')
 const { join } = require('node:path')
 const { exec, spawn } = require('node:child_process')
-const { readdir, unlink } = require('node:fs/promises')
+const { readdir, unlink, access } = require('node:fs/promises')
 const { Readable } = require('node:stream')
 const { Client } = require('undici')
 const WebSocket = require('ws')
@@ -236,6 +236,11 @@ class RuntimeApiClient {
   }
 
   async #getUnixRuntimePIDs () {
+    try {
+      await access(PLATFORMATIC_TMP_DIR)
+    } catch {
+      return []
+    }
     const socketNames = await readdir(PLATFORMATIC_TMP_DIR)
     const runtimePIDs = []
     for (const socketName of socketNames) {
