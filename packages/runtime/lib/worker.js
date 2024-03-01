@@ -47,6 +47,10 @@ if (config.loggingPort) {
     { stream: portStream, level: 'trace' },
     { stream: cliStream, level: loggerConfig.level || 'info' }
   ])
+  if (loggerConfig.transport) {
+    const transport = pino.transport(loggerConfig.transport)
+    multiStream.add({ level: loggerConfig.level || 'info', stream: transport })
+  }
   logger = pino({ level: 'trace' }, multiStream)
 } else {
   logger = pino(loggerConfig, cliStream)
