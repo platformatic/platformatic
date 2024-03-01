@@ -23,5 +23,10 @@
         "config": "platformatic.db.json"
       }
     }
+  },
+  "server": {
+    "logger": {
+      "level": "trace"
+    }
   }
 }

@@ -61,8 +61,6 @@ class RuntimeApi {
           if (this.#dispatcher) {
             await this.#dispatcher.close()
           }
-          await this.stopServices()
-
           setImmediate(process.exit) // Exit the worker thread.
           return
         }

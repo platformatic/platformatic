@@ -248,10 +248,12 @@ class PlatformaticApp {
   }
 
   #setuplogger (configManager) {
-    // Set the logger if not present
     configManager.current.server = configManager.current.server || {}
-    const childLogger = this.#logger.child({}, { level: configManager.current.server.logger?.level || 'info' })
-    configManager.current.server.logger = childLogger
+    const level = configManager.current.server.logger?.level
+
+    configManager.current.server.logger = level
+      ? this.#logger.child({ level })
+      : this.#logger
   }
 
   #startFileWatching () {

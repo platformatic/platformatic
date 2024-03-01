@@ -158,6 +158,14 @@ test('should filter runtime logs by service id', async (t) => {
 
   assert.strictEqual(receivedServices.size, 1)
   assert.ok(receivedServices.has('service-2'))
+
+  assert.strictEqual(receivedLogLevels.size, 6)
+  assert.ok(receivedLogLevels.has(10)) // trace
+  assert.ok(receivedLogLevels.has(20)) // debug
+  assert.ok(receivedLogLevels.has(30)) // info
+  assert.ok(receivedLogLevels.has(40)) // warn
+  assert.ok(receivedLogLevels.has(50)) // error
+  assert.ok(receivedLogLevels.has(60)) // fatal
 })
 
 test('should throw if runtime is missing', async (t) => {
