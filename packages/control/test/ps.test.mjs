@@ -1,8 +1,10 @@
 'use strict'
 
 import assert from 'node:assert'
+import { tmpdir, platform } from 'node:os'
 import { test } from 'node:test'
 import { join } from 'node:path'
+import { readdir, writeFile } from 'node:fs/promises'
 import { execa } from 'execa'
 import * as desm from 'desm'
 import { startRuntime, getPlatformaticVersion } from './helper.mjs'
@@ -11,6 +13,8 @@ const cliPath = desm.join(import.meta.url, '..', 'control.js')
 const fixturesDir = desm.join(import.meta.url, 'fixtures')
 
 const version = await getPlatformaticVersion()
+
+const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'pids')
 
 test('should get all runtimes', async (t) => {
   const runtimeProjectDir1 = join(fixturesDir, 'runtime-1')
@@ -52,4 +56,16 @@ test('should get all runtimes', async (t) => {
   assert.strictEqual(runtime2Values[2], version)
   assert.strictEqual(runtime2Values[4], runtime2Url)
   assert.strictEqual(runtime2Values[5], runtimeProjectDir2)
+})
+
+test('should remove the runtime sock if can not get metadata', { skip: platform() === 'win32' }, async (t) => {
+  await writeFile(join(PLATFORMATIC_TMP_DIR, '1234.sock'), '')
+
+  const child = await execa('node', [cliPath, 'ps'])
+  assert.strictEqual(child.exitCode, 0)
+
+  {
+    const runtimeSockets = await readdir(PLATFORMATIC_TMP_DIR)
+    assert.strictEqual(runtimeSockets.length, 0)
+  }
 })
