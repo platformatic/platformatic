@@ -210,8 +210,8 @@ console.log(await getReturnUrl({}))
   /* eslint-disable no-control-regex */
   const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n') // remove ANSI colors, if any
   /* eslint-enable no-control-regex */
-  equal(lines[0], `{ url: '${app.url}' }`) // client, app object
-  equal(lines[1], `{ url: '${app2.url}' }`) // raw, app2 object
+  equal(lines[0], `{"url":"${app.url}"}`) // client, app object
+  equal(lines[1], `{"url":"${app2.url}"}`) // raw, app2 object
 })
 
 test('generate frontend client from path', async (t) => {
@@ -370,7 +370,7 @@ async function _getPkgScopeNameRange (url, request) {
     throw new Error(await response.text())
   }
 
-  return await response.json()
+  return await response.text()
 }`
   ok(implementation)
   equal(implementation.includes(tsImplementationTemplate), true)
@@ -418,4 +418,38 @@ export type GetAuthLoginResponseOK = {}
 export type GetAuthLoginResponses =
   FullResponse<GetAuthLoginResponseOK, 200>
 `), true)
+})
+
+test('call response.json only for json responses', async (t) => {
+  const dir = await moveToTmpdir(after)
+  {
+    const openAPIfile = join(__dirname, 'fixtures', 'empty-responses-openapi.json')
+    await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend'])
+    const implementationFile = join(dir, 'movies', 'movies.ts')
+    const implementation = await readFile(implementationFile, 'utf-8')
+    const expected = `
+  const response = await fetch(\`\${url}/auth/login\`)
+
+  if (!response.ok) {
+    throw new Error(await response.text())
+  }
+
+  return await response.text()`
+    equal(implementation.includes(expected), true)
+  }
+  {
+    const openAPIfile = join(__dirname, 'fixtures', 'frontend-openapi.json')
+    await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend'])
+    const implementationFile = join(dir, 'movies', 'movies.ts')
+    const implementation = await readFile(implementationFile, 'utf-8')
+    equal(implementation.includes(`
+  const response = await fetch(\`\${url}/hello\`)
+
+  if (!response.ok) {
+    throw new Error(await response.text())
+  }
+
+  return await response.json()
+`), true)
+  }
 })

@@ -45,3 +45,10 @@ export function getResponseContentType (responseObject) {
   const [firstContentType] = Object.entries(responseObject.content)
   return firstContentType[0]
 }
+
+export function is200JsonResponse (responses) {
+  if (responses['200'] && responses['200'].content && responses['200'].content['application/json']) {
+    return true
+  }
+  return false
+}
