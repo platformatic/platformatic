@@ -1,6 +1,6 @@
 import CodeBlockWriter from 'code-block-writer'
 import { generateOperationId } from '@platformatic/client'
-import { capitalize } from './utils.mjs'
+import { capitalize, is200JsonResponse } from './utils.mjs'
 import camelcase from 'camelcase'
 import { writeOperations } from '../../client-cli/lib/openapi-common.mjs'
 
@@ -187,8 +187,11 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
         })
 
         writer.blankLine()
-
-        writer.writeLine('return await response.json()')
+        if (is200JsonResponse(operation.operation.responses)) {
+          writer.writeLine('return await response.json()')
+        } else {
+          writer.writeLine('return await response.text()')
+        }
       }
     })
     writer.blankLine()
