@@ -34,7 +34,7 @@ test('should reload all services with a management api', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'POST',
-    path: '/api/reload'
+    path: '/api/v1/reload'
   })
   await body.text()
 

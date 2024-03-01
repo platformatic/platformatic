@@ -34,7 +34,7 @@ test('should get services topology', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/services'
+    path: '/api/v1/services'
   })
 
   assert.strictEqual(statusCode, 200)

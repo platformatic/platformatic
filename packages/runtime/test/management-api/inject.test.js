@@ -34,7 +34,7 @@ test('should proxy request to the service', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/services/service-2/proxy/hello'
+    path: '/api/v1/services/service-2/proxy/hello'
   })
 
   assert.strictEqual(statusCode, 200)

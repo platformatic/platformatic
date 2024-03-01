@@ -36,7 +36,7 @@ test('should get the runtime metadata', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/metadata'
+    path: '/api/v1/metadata'
   })
 
   assert.strictEqual(statusCode, 200)

@@ -136,7 +136,7 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
         loggingPort.off('message', handler)
       })
     })
-  }, { prefix: '/api' })
+  }, { prefix: '/api/v1' })
 
   return app
 }

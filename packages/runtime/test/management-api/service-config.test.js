@@ -37,7 +37,7 @@ test('should get service config', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/services/service-1/config'
+    path: '/api/v1/services/service-1/config'
   })
 
   assert.strictEqual(statusCode, 200)

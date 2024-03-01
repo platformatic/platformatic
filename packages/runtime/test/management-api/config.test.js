@@ -36,7 +36,7 @@ test('should get runtime config', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/config'
+    path: '/api/v1/config'
   })
 
   assert.strictEqual(statusCode, 200)

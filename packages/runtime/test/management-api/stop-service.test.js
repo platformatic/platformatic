@@ -39,7 +39,7 @@ test('should stop service by service id', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'POST',
-    path: '/api/services/service-1/stop'
+    path: '/api/v1/services/service-1/stop'
   })
   await body.text()
 
@@ -84,7 +84,7 @@ test('should start stopped service by service id', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'POST',
-    path: '/api/services/service-1/start'
+    path: '/api/v1/services/service-1/start'
   })
   await body.text()
 
@@ -123,7 +123,7 @@ test('should proxy request to the service', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/services/service-2/proxy/hello'
+    path: '/api/v1/services/service-2/proxy/hello'
   })
 
   assert.strictEqual(statusCode, 200)

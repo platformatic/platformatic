@@ -30,7 +30,7 @@ test('should stop the runtimes with a management api', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'POST',
-    path: '/api/stop'
+    path: '/api/v1/stop'
   })
   await body.text()
 
