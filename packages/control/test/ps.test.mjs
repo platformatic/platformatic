@@ -1,10 +1,10 @@
 'use strict'
 
 import assert from 'node:assert'
-import { tmpdir, platform, rmdir } from 'node:os'
+import { tmpdir, platform } from 'node:os'
 import { test } from 'node:test'
 import { join } from 'node:path'
-import { readdir, writeFile } from 'node:fs/promises'
+import { readdir, writeFile, rmdir } from 'node:fs/promises'
 import { execa } from 'execa'
 import * as desm from 'desm'
 import { startRuntime, getPlatformaticVersion } from './helper.mjs'
