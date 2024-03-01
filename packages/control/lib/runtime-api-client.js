@@ -62,7 +62,7 @@ class RuntimeApiClient {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: '/api/metadata',
+      path: '/api/v1/metadata',
       method: 'GET'
     })
 
@@ -79,7 +79,7 @@ class RuntimeApiClient {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: '/api/services',
+      path: '/api/v1/services',
       method: 'GET'
     })
 
@@ -96,7 +96,7 @@ class RuntimeApiClient {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: `/api/services/${serviceId}/config`,
+      path: `/api/v1/services/${serviceId}/config`,
       method: 'GET'
     })
 
@@ -113,7 +113,7 @@ class RuntimeApiClient {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: '/api/config',
+      path: '/api/v1/config',
       method: 'GET'
     })
 
@@ -130,7 +130,7 @@ class RuntimeApiClient {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: '/api/env',
+      path: '/api/v1/env',
       method: 'GET'
     })
 
@@ -157,7 +157,7 @@ class RuntimeApiClient {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: '/api/reload',
+      path: '/api/v1/reload',
       method: 'POST'
     })
 
@@ -171,7 +171,7 @@ class RuntimeApiClient {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: '/api/stop',
+      path: '/api/v1/stop',
       method: 'POST'
     })
 
@@ -185,7 +185,7 @@ class RuntimeApiClient {
     const socketPath = this.#getSocketPathFromPid(pid)
 
     const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
-    const webSocketUrl = protocol + socketPath + ':/api/logs'
+    const webSocketUrl = protocol + socketPath + ':/api/v1/logs'
     const webSocketStream = new WebSocketStream(webSocketUrl)
     this.#webSockets.add(webSocketStream.ws)
 
@@ -196,7 +196,7 @@ class RuntimeApiClient {
     const client = this.#getUndiciClient(pid)
 
     const response = await client.request({
-      path: `/api/services/${serviceId}/proxy` + options.url,
+      path: `/api/v1/services/${serviceId}/proxy` + options.url,
       method: options.method,
       headers: options.headers,
       query: options.query,

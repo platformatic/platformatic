@@ -34,7 +34,7 @@ test('should get service metrics via runtime management api proxy', async (t) =>
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/services/service-1/proxy/metrics'
+    path: '/api/v1/services/service-1/proxy/metrics'
   })
 
   assert.strictEqual(statusCode, 200)
