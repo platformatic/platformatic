@@ -56,7 +56,7 @@ importers:
         version: 9.1.0
       fastify:
         specifier: ^4.26.0
-        version: 4.26.1
+        version: 4.26.2
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -159,7 +159,7 @@ importers:
         version: 9.1.0
       fastify:
         specifier: ^4.26.0
-        version: 4.26.1
+        version: 4.26.2
       license-checker:
         specifier: ^25.0.1
         version: 25.0.1
@@ -217,7 +217,7 @@ importers:
         version: 8.0.1
       fastify:
         specifier: ^4.26.0
-        version: 4.26.1
+        version: 4.26.2
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -317,7 +317,7 @@ importers:
         version: 8.0.1
       fastify:
         specifier: ^4.26.0
-        version: 4.26.1
+        version: 4.26.2
       fastify-tsconfig:
         specifier: ^2.0.0
         version: 2.0.0
@@ -380,7 +380,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.13.18
-        version: 1.17.14(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.1)
+        version: 1.17.14(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.2)
       ajv:
         specifier: ^8.12.0
         version: 8.12.0
@@ -404,7 +404,7 @@ importers:
         version: 3.1.3
       fastify:
         specifier: ^4.26.0
-        version: 4.26.1
+        version: 4.26.2
       fastify-openapi-glue:
         specifier: ^4.4.3
         version: 4.4.3
@@ -526,7 +526,7 @@ importers:
         version: 9.1.0
       fastify:
         specifier: ^4.26.0
-        version: 4.26.1
+        version: 4.26.2
       json5:
         specifier: ^2.2.3
         version: 2.2.3
@@ -629,7 +629,7 @@ importers:
         version: 8.0.1
       fastify:
         specifier: ^4.26.0
-        version: 4.26.1
+        version: 4.26.2
       help-me:
         specifier: ^5.0.0
         version: 5.0.0
@@ -741,7 +741,7 @@ importers:
         version: 8.0.1
       fastify:
         specifier: ^4.26.0
-        version: 4.26.1
+        version: 4.26.2
       help-me:
         specifier: ^5.0.0
         version: 5.0.0
@@ -910,10 +910,10 @@ importers:
         version: 8.0.1
       fastify:
         specifier: ^4.26.0
-        version: 4.26.1
+        version: 4.26.2
       fastify-metrics:
         specifier: ^10.6.0
-        version: 10.6.0(fastify@4.26.1)
+        version: 10.6.0(fastify@4.26.2)
       fastify-plugin:
         specifier: ^4.5.1
         version: 4.5.1
@@ -1059,7 +1059,7 @@ importers:
         version: 3.3.3
       fastify:
         specifier: ^4.26.0
-        version: 4.26.1
+        version: 4.26.2
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -1099,7 +1099,7 @@ importers:
         version: 0.9.1
       fastify:
         specifier: ^4.26.0
-        version: 4.26.1
+        version: 4.26.2
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -1142,7 +1142,7 @@ importers:
         version: 9.1.0
       fastify:
         specifier: ^4.26.0
-        version: 4.26.1
+        version: 4.26.2
       license-checker:
         specifier: ^25.0.1
         version: 25.0.1
@@ -1308,7 +1308,7 @@ importers:
         version: 2.1.0
       fastify:
         specifier: ^4.26.0
-        version: 4.26.1
+        version: 4.26.2
       pino:
         specifier: ^8.17.2
         version: 8.19.0
@@ -1424,7 +1424,7 @@ importers:
         version: 1.0.16
       fastify:
         specifier: ^4.26.0
-        version: 4.26.1
+        version: 4.26.2
       fastify-undici-dispatcher:
         specifier: ^0.5.0
         version: 0.5.1
@@ -1565,7 +1565,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.13.18
-        version: 1.17.14(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.1)
+        version: 1.17.14(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.2)
       '@types/ws':
         specifier: ^8.5.10
         version: 8.5.10
@@ -1604,10 +1604,10 @@ importers:
         version: 8.0.1
       fastify:
         specifier: ^4.26.0
-        version: 4.26.1
+        version: 4.26.2
       fastify-metrics:
         specifier: ^10.6.0
-        version: 10.6.0(fastify@4.26.1)
+        version: 10.6.0(fastify@4.26.2)
       fastify-openapi-glue:
         specifier: ^4.4.3
         version: 4.4.3
@@ -1732,7 +1732,7 @@ importers:
         version: 0.9.1
       fastify:
         specifier: ^4.26.0
-        version: 4.26.1
+        version: 4.26.2
       ioredis:
         specifier: ^5.3.2
         version: 5.3.2
@@ -1802,7 +1802,7 @@ importers:
         version: 0.9.1
       fastify:
         specifier: ^4.26.0
-        version: 4.26.1
+        version: 4.26.2
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -1839,7 +1839,7 @@ importers:
         version: 3.19.1
       fastify:
         specifier: ^4.26.0
-        version: 4.26.1
+        version: 4.26.2
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -1894,7 +1894,7 @@ importers:
         version: 0.9.1
       fastify:
         specifier: ^4.26.0
-        version: 4.26.1
+        version: 4.26.2
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -1927,7 +1927,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.13.18
-        version: 1.17.14(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.1)
+        version: 1.17.14(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.2)
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -1952,7 +1952,7 @@ importers:
         version: 0.9.1
       fastify:
         specifier: ^4.26.0
-        version: 4.26.1
+        version: 4.26.2
       mercurius:
         specifier: ^13.3.3
         version: 13.3.3(graphql@16.8.1)
@@ -2015,7 +2015,7 @@ importers:
         version: 0.9.1
       fastify:
         specifier: ^4.26.0
-        version: 4.26.1
+        version: 4.26.2
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -2049,7 +2049,7 @@ importers:
         version: 0.9.1
       fastify:
         specifier: ^4.26.0
-        version: 4.26.1
+        version: 4.26.2
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -2836,7 +2836,7 @@ packages:
   /@fastify/restartable@2.2.0:
     resolution: {integrity: sha512-sksvEyt9SLISEiphXZpbvodLVATYJ4kaFQ1+Inb6nb9+hOqEX6Q1DEtytqpQsg5BYDhDAr+vEoXXto/CatgCHQ==}
     dependencies:
-      fastify: 4.26.1
+      fastify: 4.26.2
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -3282,7 +3282,7 @@ packages:
     resolution: {integrity: sha512-cgQtHdrKKnZGgwYiyeikchzzrFwOD9LhzllZOgMwutdCU2tSW1LuYQajddyg3Akf3OxkoKrQYsXKUsUPaHIw9A==}
     dependencies:
       '@mercuriusjs/subscription-client': 1.0.0(graphql@16.8.1)
-      fastify: 4.26.1
+      fastify: 4.26.2
       graphql: 16.8.1
       mercurius: 13.3.3(graphql@16.8.1)
       metaline: 1.1.0
@@ -3455,7 +3455,7 @@ packages:
     dev: true
     optional: true
 
-  /@scalar/fastify-api-reference@1.17.14(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.1):
+  /@scalar/fastify-api-reference@1.17.14(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.2):
     resolution: {integrity: sha512-wP1ins6MagGJWdhS1gAYpNceLGecniBDcElTvw6awQObUUaKTIZugp3GM0f/MAVxSP+WuRbL6WNl9kGZXa+BYw==}
     engines: {node: '>=18'}
     peerDependencies:
@@ -3463,7 +3463,7 @@ packages:
       fastify-html: ^0.3.0
       fastify-plugin: ^4.0.0
     dependencies:
-      fastify: 4.26.1
+      fastify: 4.26.2
       fastify-html: 0.3.3
       fastify-plugin: 4.5.1
     dev: false
@@ -4501,6 +4501,11 @@ packages:
 
   /cookie@0.5.0:
     resolution: {integrity: sha512-YZ3GUyn/o8gfKJlnlX7g7xq4gyO6OSuhGPKaaGssGB2qgDUS0gPgtTvoyZLTt9Ab6dC4hfc9dV5arkvc/OCmrw==}
+    engines: {node: '>= 0.6'}
+    dev: true
+
+  /cookie@0.6.0:
+    resolution: {integrity: sha512-U71cyTamuh1CRNCfpGY6to28lxvNwPG4Guz/EVjgf3Jmzv0vlDp1atT9eS5dDjMYHucpHbWns6Lwf3BKz6svdw==}
     engines: {node: '>= 0.6'}
 
   /core-util-is@1.0.3:
@@ -5776,12 +5781,12 @@ packages:
       ghtml: 1.0.1
     dev: false
 
-  /fastify-metrics@10.6.0(fastify@4.26.1):
+  /fastify-metrics@10.6.0(fastify@4.26.2):
     resolution: {integrity: sha512-QIPncCnwBOEObMn+VaRhsBC1ox8qEsaiYF2sV/A1UbXj7ic70W8/HNn/hlEC2W8JQbBeZMx++o1um2fPfhsFDQ==}
     peerDependencies:
       fastify: '>=4'
     dependencies:
-      fastify: 4.26.1
+      fastify: 4.26.2
       fastify-plugin: 4.5.1
       prom-client: 14.2.0
     dev: false
@@ -5825,7 +5830,7 @@ packages:
     dependencies:
       '@fastify/error': 3.4.1
       '@fastify/jwt': 8.0.0
-      fastify: 4.26.1
+      fastify: 4.26.2
       fastify-plugin: 4.5.1
       get-jwks: 8.3.1
     transitivePeerDependencies:
@@ -5833,8 +5838,8 @@ packages:
       - supports-color
     dev: false
 
-  /fastify@4.26.1:
-    resolution: {integrity: sha512-tznA/G55dsxzM5XChBfcvVSloG2ejeeotfPPJSFaWmHyCDVGMpvf3nRNbsCb/JTBF9RmQFBfuujWt3Nphjesng==}
+  /fastify@4.26.2:
+    resolution: {integrity: sha512-90pjTuPGrfVKtdpLeLzND5nyC4woXZN5VadiNQCicj/iJU4viNHKhsAnb7jmv1vu2IzkLXyBiCzdWuzeXgQ5Ug==}
     dependencies:
       '@fastify/ajv-compiler': 3.5.0
       '@fastify/error': 3.4.1
@@ -5844,7 +5849,7 @@ packages:
       fast-content-type-parse: 1.1.0
       fast-json-stringify: 5.12.0
       find-my-way: 8.1.0
-      light-my-request: 5.11.0
+      light-my-request: 5.11.1
       pino: 8.19.0
       process-warning: 3.0.0
       proxy-addr: 2.0.7
@@ -7024,10 +7029,10 @@ packages:
       - supports-color
     dev: true
 
-  /light-my-request@5.11.0:
-    resolution: {integrity: sha512-qkFCeloXCOMpmEdZ/MV91P8AT4fjwFXWaAFz3lUeStM8RcoM1ks4J/F8r1b3r6y/H4u3ACEJ1T+Gv5bopj7oDA==}
+  /light-my-request@5.11.1:
+    resolution: {integrity: sha512-KXAh2m6VRlkWCk2KfmHE7tLBXKh30JE0tXUJY4dNxje4oLmPKUqlUfImiEQZLphx+Z9KTQcVv4DjGnJxkVOIbA==}
     dependencies:
-      cookie: 0.5.0
+      cookie: 0.6.0
       process-warning: 2.3.2
       set-cookie-parser: 2.6.0
 
