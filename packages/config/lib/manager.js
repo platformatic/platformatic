@@ -14,10 +14,33 @@ const errors = require('./errors')
 
 const PLT_ROOT = 'PLT_ROOT'
 
+async function fetchSchema (schemaLocation) {
+  let schema
+  if (!schemaLocation) {
+    return {}
+  }
+
+  try {
+    if (schemaLocation.indexOf('http') === 0) {
+      const { body, statusCode } = await request(schemaLocation)
+      if (statusCode === 200) {
+        schema = await body.json()
+      }
+    } else {
+      schema = JSON.parse(await readFile(schemaLocation, 'utf-8'))
+    }
+  } catch {
+    //  Skip error, nothing to do
+  }
+
+  return schema || {}
+}
+
 class ConfigManager extends EventEmitter {
   constructor (opts) {
     super()
     this.pupa = null
+    this._stackableUpgrade = opts.upgrade
 
     this.envWhitelist = opts.envWhitelist || []
     if (typeof this.envWhitelist === 'string') {
@@ -129,7 +152,6 @@ class ConfigManager extends EventEmitter {
       ...this.env,
       [PLT_ROOT]: join(this.fullPath, '..')
     }
-
     return this.pupa(configString, fullEnv, { transform: escapeJSONstring })
   }
 
@@ -157,6 +179,7 @@ class ConfigManager extends EventEmitter {
         } else {
           this.current = this._parser(await this.load())
         }
+
         // try updating the config format to latest
         try {
           let meta = await analyze({ config: this.current })
@@ -167,25 +190,24 @@ class ConfigManager extends EventEmitter {
         }
       }
 
-      if (!this._providedSchema && this.current.$schema) {
+      const schema = await fetchSchema(this.current.$schema)
+
+      if (this._stackableUpgrade) {
+        this.current = await this._stackableUpgrade(this.current, schema.version)
+      }
+
+      if (!this._providedSchema) {
         // The user did not provide a schema, but we have a link to the schema
         // in $schema. Try to fetch the schema and ignore anything that goes
         // wrong.
-        try {
-          const { body, statusCode } = await request(this.current.$schema)
-          if (statusCode === 200) {
-            this.schema = await body.json()
-          }
-          /* c8 ignore next 3 */
-        } catch {
-          // Ignore error.
-        }
+        this.schema = schema
       }
 
       const validationResult = this.validate()
       if (!validationResult) {
         return false
       }
+
       await this._transformConfig()
       return true
     } catch (err) {

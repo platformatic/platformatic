@@ -1,18 +1,20 @@
 'use strict'
 
-const { createRequire } = require('module')
+const { createRequire } = require('node:module')
 const { isFileAccessible } = require('./utils')
-const { join } = require('path')
+const { join } = require('node:path')
 const { ConfigManager } = require('./manager')
-const { readFile } = require('fs/promises')
+const { readFile } = require('node:fs/promises')
+const { readFileSync } = require('node:fs')
 const { getParser, analyze, upgrade } = require('@platformatic/metaconfig')
 const errors = require('./errors')
+
+const pltVersion = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8')).version
 
 class Store {
   #map = new Map()
   #cwd
   #require
-  #currentVersion
 
   constructor (opts) {
     opts = opts || {}
@@ -21,8 +23,6 @@ class Store {
     // createRequire accepts a filename, but it's not used,
     // so we pass a dummy file to make it happy
     this.#require = createRequire(join(this.#cwd, 'noop.js'))
-
-    this.#currentVersion = null
   }
 
   add (app) {
@@ -49,7 +49,6 @@ class Store {
       app.configManagerConfig.schema = app.schema
     }
 
-    this.#currentVersion = this.getVersionFromSchema(app.schema.$id)
     this.#map.set(app.schema.$id, app)
   }
 
@@ -83,7 +82,7 @@ class Store {
       if (attemptedToRunVersion === null) {
         throw new errors.AddAModulePropertyToTheConfigOrAddAKnownSchemaError()
       } else {
-        throw new errors.VersionMismatchError(this.#currentVersion, attemptedToRunVersion)
+        throw new errors.VersionMismatchError(pltVersion, attemptedToRunVersion)
       }
     }
 

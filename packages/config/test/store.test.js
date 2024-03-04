@@ -6,6 +6,8 @@ const { join } = require('node:path')
 const { Store } = require('../')
 const { ConfigManager } = require('../lib/manager')
 
+const { version } = JSON.parse(require('node:fs').readFileSync(join(__dirname, '../package.json'), 'utf-8'))
+
 test('Store with builtins', async t => {
   function foo () {
   }
@@ -44,7 +46,7 @@ test('Store with builtins', async t => {
     await store.get({ $schema: 'https://platformatic.dev/schemas/v0.99.0/something.json' })
     assert.fail()
   } catch (err) {
-    assert.equal(err.message, 'Version mismatch. You are running Platformatic null but your app requires v0.99.0')
+    assert.equal(err.message, `Version mismatch. You are running Platformatic ${version} but your app requires v0.99.0`)
   }
   assert.deepEqual(store.listTypes(), [{
     id: 'foo',
@@ -350,7 +352,7 @@ test('Version mismatch', async t => {
     await store.get({ $schema: 'https://platformatic.dev/schemas/v0.99.0/something.json' })
     assert.fail()
   } catch (err) {
-    assert.equal(err.message, 'Version mismatch. You are running Platformatic v0.42.0 but your app requires v0.99.0')
+    assert.equal(err.message, `Version mismatch. You are running Platformatic ${version} but your app requires v0.99.0`)
   }
 })
 
