@@ -1,0 +1,11 @@
+{
+  "$schema": "./stackable.schema.json",
+  "module": "./foo.js",
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
+  },
+  "plugins": {
+    "paths": ["./plugin.js"]
+  }
+}

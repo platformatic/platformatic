@@ -359,11 +359,14 @@ function getJsStackableSchemaFile (stackableName) {
 'use strict'
 
 const { schema } = require('@platformatic/service')
+const { readFileSync } = require('node:fs')
+const { version } = JSON.parse(readFileSync('package.json', 'utf8'))
 
 const ${schemaVarName} = {
   ...schema.schema,
   $id: '${schemaId}',
   title: '${schemaTitle}',
+  version,
   properties: {
     ...schema.schema.properties,
     module: { type: 'string' },
@@ -395,11 +398,14 @@ function getTsStackableSchemaFile (stackableName) {
 
   return `\
 import { schema } from '@platformatic/service'
+import { readFileSync } from 'node:fs'
+const { version } = JSON.parse(readFileSync('package.json', 'utf8'))
 
 const ${schemaVarName} = {
   ...schema.schema,
   $id: '${schemaId}',
   title: '${schemaTitle}',
+  version,
   properties: {
     ...schema.schema.properties,
     module: { type: 'string' },

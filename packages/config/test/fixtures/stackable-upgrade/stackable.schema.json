@@ -1,0 +1,15 @@
+{
+  "version": "0.42.0",
+  "type": "object",
+  "properties": {
+    "server": {
+      "type": "object"
+    },
+    "plugins": {
+      "type": "object"
+    }
+  },
+  "originalVersion": {
+    "type": "string"
+  }
+}
