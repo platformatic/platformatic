@@ -2,20 +2,17 @@
 
 const { tmpdir, platform } = require('node:os')
 const { join } = require('node:path')
-const { readFile, mkdir, unlink } = require('node:fs/promises')
+const { createReadStream } = require('node:fs')
+const { readFile, readdir, mkdir, unlink } = require('node:fs/promises')
 const fastify = require('fastify')
 const errors = require('./errors')
 const platformaticVersion = require('../package.json').version
 
-const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'pids')
+const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
+const runtimeTmpDir = join(PLATFORMATIC_TMP_DIR, process.pid.toString())
 
 async function createManagementApi (configManager, runtimeApiClient, loggingPort) {
-  let apiConfig = configManager.current.managementApi
-  if (!apiConfig || apiConfig === true) {
-    apiConfig = {}
-  }
-
-  const app = fastify(apiConfig)
+  const app = fastify()
   app.log.warn(
     'Runtime Management API is in the experimental stage. ' +
     'The feature is not subject to semantic versioning rules. ' +
@@ -118,7 +115,7 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
         .send(res.body)
     })
 
-    app.get('/logs', { websocket: true }, async (connection, req) => {
+    app.get('/logs/live', { websocket: true }, async (connection, req) => {
       const handler = (message) => {
         for (const log of message.logs) {
           connection.socket.send(log)
@@ -136,6 +133,41 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
         loggingPort.off('message', handler)
       })
     })
+
+    app.get('/logs/history', { websocket: true }, async (connection, req) => {
+      const runtimeTmpFiles = await readdir(runtimeTmpDir)
+      const runtimeLogFiles = runtimeTmpFiles
+        .filter((file) => file.startsWith('logs'))
+        .map((file) => join(runtimeTmpDir, file))
+        .sort()
+
+      if (runtimeLogFiles.length === 0) {
+        connection.socket.close()
+        return
+      }
+
+      const streamLogFile = (fileIndex) => {
+        const file = runtimeLogFiles[fileIndex]
+        const stream = createReadStream(file)
+
+        const isLastFile = fileIndex === runtimeLogFiles.length - 1
+
+        stream.on('data', (chunk) => {
+          connection.socket.send(chunk)
+        })
+        stream.on('error', () => {
+          connection.socket.close()
+        })
+        stream.on('end', () => {
+          if (isLastFile) {
+            connection.socket.close()
+            return
+          }
+          streamLogFile(fileIndex + 1)
+        })
+      }
+      streamLogFile(0)
+    })
   }, { prefix: '/api/v1' })
 
   return app
@@ -148,12 +180,11 @@ async function startManagementApi (configManager, runtimeApiClient, loggingPort)
   if (platform() === 'win32') {
     socketPath = '\\\\.\\pipe\\platformatic-' + runtimePID
   } else {
-    await mkdir(PLATFORMATIC_TMP_DIR, { recursive: true })
-    socketPath = join(PLATFORMATIC_TMP_DIR, `${runtimePID}.sock`)
+    socketPath = join(runtimeTmpDir, 'socket')
   }
 
   try {
-    await mkdir(PLATFORMATIC_TMP_DIR, { recursive: true })
+    await mkdir(runtimeTmpDir, { recursive: true })
     await unlink(socketPath).catch((err) => {
       if (err.code !== 'ENOENT') {
         throw new errors.FailedToUnlinkManagementApiSocket(err.message)
