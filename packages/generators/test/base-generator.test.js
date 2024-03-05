@@ -720,7 +720,7 @@ test('support packages', async (t) => {
     assert.equal(packageJson.dependencies.foobar, 'latest')
   }
 })
-test.only('should load data from directory', async (t) => {
+test('should load data from directory', async (t) => {
   const runtimeDirectory = join(__dirname, 'fixtures', 'sample-runtime')
   const bg = new BaseGenerator({
     module: '@platformatic/service'
