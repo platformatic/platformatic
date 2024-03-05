@@ -101,6 +101,7 @@ export namespace BaseGenerator {
 
     addPackage(pkg: PackageDefinition): Promise<void>
 
+    loadFromDir(dir: string): Promise<void>
     prepare(): Promise<GeneratorMetadata>
     run(): Promise<GeneratorMetadata>
     addQuestion(question: any, where?: WhereClause): Promise<void>

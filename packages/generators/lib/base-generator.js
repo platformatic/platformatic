@@ -15,6 +15,9 @@ const { generateTests, generatePlugins } = require('./create-plugin')
 const { PrepareError, MissingEnvVariable, ModuleNeeded } = require('./errors')
 const { generateGitignore } = require('./create-gitignore')
 const generateName = require('boring-name-generator')
+const { getServiceTemplateFromSchemaUrl } = require('./utils')
+const { flattenObject } = require('./utils')
+const { envStringToObject } = require('./utils')
 /* c8 ignore start */
 const fakeLogger = {
   info: () => {},
@@ -429,6 +432,48 @@ class BaseGenerator extends FileGenerator {
       this.logger.warn(`Could not get latest version for ${pkg.name}, setting it to latest`)
     }
     this.packages.push(pkg)
+  }
+
+  async loadFromDir (serviceName, runtimeRootPath) {
+    const runtimePkgConfigFileData = JSON.parse(await readFile(join(runtimeRootPath, 'platformatic.json'), 'utf-8'))
+    const servicesPath = runtimePkgConfigFileData.autoload.path
+    const servicePkgJsonFileData = JSON.parse(await readFile(join(runtimeRootPath, servicesPath, serviceName, 'platformatic.json'), 'utf-8'))
+    const runtimeEnv = envStringToObject(await readFile(join(runtimeRootPath, '.env'), 'utf-8'))
+    const serviceNamePrefix = convertServiceNameToPrefix(serviceName)
+    const plugins = []
+    if (servicePkgJsonFileData.plugins && servicePkgJsonFileData.plugins.packages) {
+      for (const pkg of servicePkgJsonFileData.plugins.packages) {
+        const flattened = flattenObject(pkg)
+        const output = {
+          name: flattened.name,
+          options: []
+        }
+        if (pkg.options) {
+          Object.entries(flattened)
+            .filter(([key, value]) => key.indexOf('options.') === 0 && flattened[key].startsWith('{PLT_'))
+            .forEach(([key, value]) => {
+              const runtimeEnvVarKey = value.replace(/[{}]/g, '')
+              const serviceEnvVarKey = runtimeEnvVarKey.replace(`PLT_${serviceNamePrefix}_`, '')
+              const option = {
+                name: serviceEnvVarKey,
+                path: key.replace('options.', ''),
+                type: 'string',
+                value: runtimeEnv[runtimeEnvVarKey]
+              }
+              output.options.push(option)
+            })
+        }
+
+        plugins.push(output)
+      }
+    }
+
+    return {
+      name: serviceName,
+      template: getServiceTemplateFromSchemaUrl(servicePkgJsonFileData.$schema),
+      fields: [],
+      plugins
+    }
   }
 
   // implement in the subclass

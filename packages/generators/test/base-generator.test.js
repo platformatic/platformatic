@@ -720,7 +720,55 @@ test('support packages', async (t) => {
     assert.equal(packageJson.dependencies.foobar, 'latest')
   }
 })
-
+test.only('should load data from directory', async (t) => {
+  const runtimeDirectory = join(__dirname, 'fixtures', 'sample-runtime')
+  const bg = new BaseGenerator({
+    module: '@platformatic/service'
+  })
+  const data = await bg.loadFromDir('rival', runtimeDirectory)
+  const expected = {
+    name: 'rival',
+    template: '@platformatic/service',
+    fields: [],
+    plugins: [
+      {
+        name: '@fastify/oauth2',
+        options: [
+          {
+            path: 'name',
+            type: 'string',
+            value: 'googleOAuth2',
+            name: 'FST_PLUGIN_OAUTH2_NAME'
+          },
+          {
+            path: 'credentials.client.id',
+            type: 'string',
+            value: 'sample_client_id',
+            name: 'FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID'
+          },
+          {
+            path: 'credentials.client.secret',
+            type: 'string',
+            value: 'sample_client_secret',
+            name: 'FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET'
+          },
+          {
+            path: 'startRedirectPath',
+            type: 'string',
+            value: '/login/google',
+            name: 'FST_PLUGIN_OAUTH2_REDIRECT_PATH'
+          },
+          {
+            path: 'callbackUri',
+            type: 'string',
+            value: 'http://localhost:3000/login/google/callback',
+            name: 'FST_PLUGIN_OAUTH2_CALLBACK_URI'
+          }
+        ]
+      }]
+  }
+  assert.deepEqual(data, expected)
+})
 describe('runtime context', () => {
   test('should set config.envPrefix correctly', async (t) => {
     const bg = new BaseGenerator({
