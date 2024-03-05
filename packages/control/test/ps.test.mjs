@@ -4,7 +4,7 @@ import assert from 'node:assert'
 import { tmpdir, platform } from 'node:os'
 import { test } from 'node:test'
 import { join } from 'node:path'
-import { readdir, writeFile, rmdir } from 'node:fs/promises'
+import { readdir, writeFile, mkdir, rmdir } from 'node:fs/promises'
 import { execa } from 'execa'
 import * as desm from 'desm'
 import { startRuntime, getPlatformaticVersion } from './helper.mjs'
@@ -14,7 +14,7 @@ const fixturesDir = desm.join(import.meta.url, 'fixtures')
 
 const version = await getPlatformaticVersion()
 
-const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'pids')
+const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 
 test('should get all runtimes', async (t) => {
   const runtimeProjectDir1 = join(fixturesDir, 'runtime-1')
@@ -59,13 +59,15 @@ test('should get all runtimes', async (t) => {
 })
 
 test('should remove the runtime sock if can not get metadata', { skip: platform() === 'win32' }, async (t) => {
-  await writeFile(join(PLATFORMATIC_TMP_DIR, '1234.sock'), '')
+  const runtimeDir = join(PLATFORMATIC_TMP_DIR, '1234')
+  await mkdir(runtimeDir, { recursive: true })
+  await writeFile(join(runtimeDir, 'socket'), '')
 
   const child = await execa('node', [cliPath, 'ps'])
   assert.strictEqual(child.exitCode, 0)
 
   {
-    const runtimeSockets = await readdir(PLATFORMATIC_TMP_DIR)
+    const runtimeSockets = await readdir(runtimeDir)
     assert.strictEqual(runtimeSockets.length, 0)
   }
 })
@@ -77,8 +79,7 @@ test('should get no runtimes running', async (t) => {
   assert.strictEqual(runtimesTable, 'No platformatic runtimes found.')
 
   {
-    const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'pids')
-    // This should work even if there is no /tmp/platformatic/pids directory
+    // This should work even if there is no /tmp/platformatic/runtimes directory
     await rmdir(PLATFORMATIC_TMP_DIR, { recursive: true })
     const child = await execa('node', [cliPath, 'ps'])
     assert.strictEqual(child.exitCode, 0)

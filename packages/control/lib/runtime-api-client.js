@@ -9,7 +9,7 @@ const { Client } = require('undici')
 const WebSocket = require('ws')
 const errors = require('./errors.js')
 
-const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'pids')
+const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 const PLATFORMATIC_PIPE_PREFIX = '\\\\.\\pipe\\platformatic-'
 
 class RuntimeApiClient {
@@ -181,11 +181,22 @@ class RuntimeApiClient {
     }
   }
 
-  getRuntimeLogsStream (pid) {
+  getRuntimeLiveLogsStream (pid) {
     const socketPath = this.#getSocketPathFromPid(pid)
 
     const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
-    const webSocketUrl = protocol + socketPath + ':/api/v1/logs'
+    const webSocketUrl = protocol + socketPath + ':/api/v1/logs/live'
+    const webSocketStream = new WebSocketStream(webSocketUrl)
+    this.#webSockets.add(webSocketStream.ws)
+
+    return webSocketStream
+  }
+
+  getRuntimeHistoryLogsStream (pid) {
+    const socketPath = this.#getSocketPathFromPid(pid)
+
+    const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
+    const webSocketUrl = protocol + socketPath + ':/api/v1/logs/history'
     const webSocketStream = new WebSocketStream(webSocketUrl)
     this.#webSockets.add(webSocketStream.ws)
 
@@ -232,7 +243,7 @@ class RuntimeApiClient {
     if (platform() === 'win32') {
       return PLATFORMATIC_PIPE_PREFIX + pid
     }
-    return join(PLATFORMATIC_TMP_DIR, `${pid}.sock`)
+    return join(PLATFORMATIC_TMP_DIR, pid.toString(), 'socket')
   }
 
   async #getUnixRuntimePIDs () {
@@ -241,11 +252,10 @@ class RuntimeApiClient {
     } catch {
       return []
     }
-    const socketNames = await readdir(PLATFORMATIC_TMP_DIR)
+    const runtimeDirs = await readdir(PLATFORMATIC_TMP_DIR)
     const runtimePIDs = []
-    for (const socketName of socketNames) {
-      const runtimePID = socketName.replace('.sock', '')
-      runtimePIDs.push(parseInt(runtimePID))
+    for (const runtimeDirName of runtimeDirs) {
+      runtimePIDs.push(parseInt(runtimeDirName))
     }
     return runtimePIDs
   }

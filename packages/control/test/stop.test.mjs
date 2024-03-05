@@ -23,7 +23,7 @@ test('should stop runtime by pid', async (t) => {
   const timeoutPromise = new Promise((resolve, reject) => {
     errorTimeout = setTimeout(() => {
       reject(new Error('Couldn\'t stop runtime'))
-    })
+    }, 15000)
   })
 
   const runtimeExit = async () => {
@@ -48,7 +48,7 @@ test('should stop runtime by name', async (t) => {
   const timeoutPromise = new Promise((resolve, reject) => {
     errorTimeout = setTimeout(() => {
       reject(new Error('Couldn\'t stop runtime'))
-    })
+    }, 15000)
   })
 
   const runtimeExit = async () => {

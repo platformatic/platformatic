@@ -1443,6 +1443,9 @@ importers:
       pino-pretty:
         specifier: ^10.3.1
         version: 10.3.1
+      pino-roll:
+        specifier: 1.0.0-rc.1
+        version: 1.0.0-rc.1
       undici:
         specifier: ^6.6.0
         version: 6.7.0
@@ -7967,6 +7970,12 @@ packages:
       strip-json-comments: 3.1.1
     dev: false
 
+  /pino-roll@1.0.0-rc.1:
+    resolution: {integrity: sha512-wJUXdRMlbbUQkBT8C0ePwPxJpP9Eg2FKUfBAKv2ATsS/+ujtV64l/sLtdQcI+F+aAac0/1QjJOjuVyxUTDq5zA==}
+    dependencies:
+      sonic-boom: 2.8.0
+    dev: false
+
   /pino-std-serializers@4.0.0:
     resolution: {integrity: sha512-cK0pekc1Kjy5w9V2/n+8MkZwusa6EyyxfeQCB799CQRhRt/CqYKiWs5adeu8Shve2ZNffvfC/7J64A2PJo1W/Q==}
     dev: true
@@ -8840,7 +8849,6 @@ packages:
     resolution: {integrity: sha512-kuonw1YOYYNOve5iHdSahXPOK49GqwA+LZhI6Wz/l0rP57iKyXXIHaRagOBHAPmGwJC6od2Z9zgvZ5loSgMlVg==}
     dependencies:
       atomic-sleep: 1.0.0
-    dev: true
 
   /sonic-boom@3.8.0:
     resolution: {integrity: sha512-ybz6OYOUjoQQCQ/i4LU8kaToD8ACtYP+Cj5qd2AO36bwbdewxWJ3ArmJ2cr6AvxlL2o0PqnCcPGUgkILbfkaCA==}
