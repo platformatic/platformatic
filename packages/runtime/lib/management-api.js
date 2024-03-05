@@ -148,13 +148,11 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
 
       const streamLogFile = (fileIndex) => {
         const file = runtimeLogFiles[fileIndex]
-        const stream = createReadStream(file)
-
         const isLastFile = fileIndex === runtimeLogFiles.length - 1
 
-        stream.on('data', (chunk) => {
-          connection.socket.send(chunk)
-        })
+        const stream = createReadStream(file)
+        stream.pipe(connection, { end: isLastFile })
+
         stream.on('error', () => {
           connection.socket.close()
         })
