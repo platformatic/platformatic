@@ -142,7 +142,7 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
         .sort()
 
       if (runtimeLogFiles.length === 0) {
-        connection.socket.close()
+        connection.end()
         return
       }
 
@@ -153,12 +153,13 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
         const stream = createReadStream(file)
         stream.pipe(connection, { end: isLastFile })
 
-        stream.on('error', () => {
-          connection.socket.close()
+        stream.on('error', (err) => {
+          app.log.error(err, 'Error streaming log file')
+          connection.end()
         })
         stream.on('end', () => {
           if (isLastFile) {
-            connection.socket.close()
+            connection.end()
             return
           }
           streamLogFile(fileIndex + 1)
