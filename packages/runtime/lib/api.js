@@ -122,6 +122,8 @@ class RuntimeApi {
         return this.#getServiceOpenapiSchema(params)
       case 'plt:get-service-graphql-schema':
         return this.#getServiceGraphqlSchema(params)
+      case 'plt:get-service-metrics':
+        return this.#getServiceMetrics(params)
       case 'plt:start-service':
         return this.#startService(params)
       case 'plt:stop-service':
@@ -275,6 +277,25 @@ class RuntimeApi {
     } catch (err) {
       throw new errors.FailedToRetrieveGraphQLSchemaError(id, err.message)
     }
+  }
+
+  async #getServiceMetrics ({ id, format }) {
+    const service = this.#getServiceById(id)
+
+    if (!service.config) {
+      throw new errors.ServiceNotStartedError(id)
+    }
+
+    const servicePromRegister = service.server.metrics?.client?.register
+    if (!servicePromRegister) {
+      return null
+    }
+
+    const metrics = format === 'json'
+      ? await servicePromRegister.getMetricsAsJSON()
+      : await servicePromRegister.metrics()
+
+    return { metrics }
   }
 
   async #startService ({ id }) {
