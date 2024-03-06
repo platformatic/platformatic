@@ -67,13 +67,15 @@ Note that this migration has been already applied by Platformatic creator.
 
 In your service directory (under the services/ folder in the project directory), check the
 Platformatic configuration file named **`platformatic.json`**
-and the environment file named **`.env`**:
+The environment file named **`.env`** in your project directory(`quick-start`),
+provides the values for environment variables.
 
-The created configuration tells Platformatic to:
+This created configuration tells Platformatic to:
 
-- Run an API server on `http://127.0.0.1:3042/`
+- Run an API server on `http://0.0.0.0:3042/`
 - Connect to an SQLite database stored in a file named `db.sqlite`
 - Look for database migration files in the `migrations` directory
+- Auto-apply the migrations
 - Load the plugin file named `plugin.js` and automatically generate types
 
 :::tip
