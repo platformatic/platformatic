@@ -68,9 +68,9 @@ Note that this migration has been already applied by Platformatic creator.
 In your service directory (under the services/ folder in the project directory), check the
 Platformatic configuration file named **`platformatic.json`**
 The environment file named **`.env`** in your project directory(`quick-start`),
-provides the values for environment variables.
+provides the values for environment variable placeholders.
 
-This created configuration tells Platformatic to:
+This generated configuration tells Platformatic to:
 
 - Run an API server on `http://0.0.0.0:3042/`
 - Connect to an SQLite database stored in a file named `db.sqlite`
