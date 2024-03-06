@@ -44,7 +44,8 @@ like to set up your new Platformatic project. For this guide, select these optio
 ```
 
 Once the wizard is complete, you'll have a Platformatic app project in the
-folder `quick-start`, with example migration files and a plugin script.
+folder `quick-start`, with example migration files, plugin script,
+routes, and tests inside your service directory under services/
 
 :::info
 
