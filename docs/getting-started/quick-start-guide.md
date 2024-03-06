@@ -52,7 +52,7 @@ the project files that the wizard has created for you.
 
 #### Check the database schema
 
-In your project directory (`quick-start`), open the `migrations` directory that can store your database migration files that will contain both the `001.do.sql` and `001.undo.sql` files. The `001.do.sql` file contains the SQL statements to create the database objects, while the `001.undo.sql` file contains the SQL statements to drop them.
+In your service directory - inside services/ folder under the project directory (`quick-start`), open the `migrations` directory that can store your database migration files that will contain both the `001.do.sql` and `001.undo.sql` files. The `001.do.sql` file contains the SQL statements to create the database objects, while the `001.undo.sql` file contains the SQL statements to drop them.
 
 ```sql title="migrations/001.do.sql"
 CREATE TABLE IF NOT EXISTS movies (
@@ -65,14 +65,17 @@ Note that this migration has been already applied by Platformatic creator.
 
 #### Check your API configuration
 
-In your project directory, check the Platformatic configuration file named
-**`platformatic.db.json`** and the environment file named **`.env`**:
+In your service directory (under the services/ folder in the project directory), check the
+Platformatic configuration file named **`platformatic.json`**
+The environment file named **`.env`** in your project directory(`quick-start`),
+provides the values for environment variable placeholders.
 
-The created configuration tells Platformatic to:
+This generated configuration tells Platformatic to:
 
-- Run an API server on `http://127.0.0.1:3042/`
+- Run an API server on `http://0.0.0.0:3042/`
 - Connect to an SQLite database stored in a file named `db.sqlite`
 - Look for database migration files in the `migrations` directory
+- Auto-apply the migrations
 - Load the plugin file named `plugin.js` and automatically generate types
 
 :::tip
