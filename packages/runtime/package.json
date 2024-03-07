@@ -52,6 +52,7 @@
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "boring-name-generator": "^1.0.3",
+    "change-case-all": "^2.1.0",
     "close-with-grace": "^1.2.0",
     "commist": "^3.2.0",
     "debounce": "^2.0.0",

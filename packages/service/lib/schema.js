@@ -560,6 +560,15 @@ const metrics = {
           type: 'string',
           enum: ['own', 'parent']
         },
+        defaultMetrics: {
+          type: 'object',
+          properties: {
+            enabled: { type: 'boolean' }
+          },
+          required: ['enabled'],
+          additionalProperties: false
+        },
+        prefix: { type: 'string' },
         auth: {
           type: 'object',
           properties: {

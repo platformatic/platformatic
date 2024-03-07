@@ -3,12 +3,11 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
-
 const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should get a service metrics in a json format', async (t) => {
+test('should get runtime metrics in a json format', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
@@ -20,12 +19,10 @@ test('should get a service metrics in a json format', async (t) => {
     await app.close()
   })
 
-  const metrics = await app.getServiceMetrics('service-1')
-  const metricsNames = metrics.metrics.map((metric) => metric.name).sort()
+  const { metrics } = await app.getMetrics()
+  const metricsNames = metrics.map((metric) => metric.name).sort()
 
   assert.deepStrictEqual(metricsNames, [
-    'http_request_duration_seconds',
-    'http_request_summary_seconds',
     'nodejs_active_handles',
     'nodejs_active_handles_total',
     'nodejs_active_requests',
@@ -53,11 +50,15 @@ test('should get a service metrics in a json format', async (t) => {
     'process_cpu_system_seconds_total',
     'process_cpu_user_seconds_total',
     'process_resident_memory_bytes',
-    'process_start_time_seconds'
+    'process_start_time_seconds',
+    'service_1_http_request_duration_seconds',
+    'service_1_http_request_summary_seconds',
+    'service_2_http_request_duration_seconds',
+    'service_2_http_request_summary_seconds'
   ])
 })
 
-test('should get a service metrics in a text format', async (t) => {
+test('should get runtime metrics in a text format', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
@@ -69,17 +70,16 @@ test('should get a service metrics in a text format', async (t) => {
     await app.close()
   })
 
-  const metrics = await app.getServiceMetrics('service-1', 'text')
+  const metrics = await app.getMetrics('text')
   const metricsNames = metrics.metrics.split('\n')
-    .filter(line => line && !line.startsWith('#'))
-    .map(line => line.split(' ')[0])
-    .map(name => name.split('{')[0])
-    .filter((value, index, self) => self.indexOf(value) === index)
+    .filter(line => line && line.startsWith('# TYPE'))
+    .map(line => line.split(' ')[2])
     .sort()
 
   assert.deepStrictEqual(metricsNames, [
     'nodejs_active_handles',
     'nodejs_active_handles_total',
+    'nodejs_active_requests',
     'nodejs_active_requests_total',
     'nodejs_active_resources',
     'nodejs_active_resources_total',
@@ -92,12 +92,8 @@ test('should get a service metrics in a text format', async (t) => {
     'nodejs_eventloop_lag_seconds',
     'nodejs_eventloop_lag_stddev_seconds',
     'nodejs_eventloop_utilization',
-    'nodejs_eventloop_utilization_count',
-    'nodejs_eventloop_utilization_sum',
     'nodejs_external_memory_bytes',
-    'nodejs_gc_duration_seconds_bucket',
-    'nodejs_gc_duration_seconds_count',
-    'nodejs_gc_duration_seconds_sum',
+    'nodejs_gc_duration_seconds',
     'nodejs_heap_size_total_bytes',
     'nodejs_heap_size_used_bytes',
     'nodejs_heap_space_size_available_bytes',
@@ -108,6 +104,10 @@ test('should get a service metrics in a text format', async (t) => {
     'process_cpu_system_seconds_total',
     'process_cpu_user_seconds_total',
     'process_resident_memory_bytes',
-    'process_start_time_seconds'
+    'process_start_time_seconds',
+    'service_1_http_request_duration_seconds',
+    'service_1_http_request_summary_seconds',
+    'service_2_http_request_duration_seconds',
+    'service_2_http_request_summary_seconds'
   ])
 })

@@ -5,36 +5,64 @@ const { eventLoopUtilization } = require('node:perf_hooks').performance
 const fastify = require('fastify')
 const fp = require('fastify-plugin')
 
-const metricsPlugin = fp(async function (app) {
+const metricsPlugin = fp(async function (app, opts = {}) {
+  const defaultMetrics = opts.defaultMetrics ?? { enabled: true }
+  const prefix = opts.prefix ?? ''
+
   app.register(require('fastify-metrics'), {
-    defaultMetrics: { enabled: true },
+    defaultMetrics: defaultMetrics || { enabled: true },
     endpoint: null,
     name: 'metrics',
-    routeMetrics: { enabled: true },
-    clearRegisterOnInit: true
+    clearRegisterOnInit: false,
+    routeMetrics: {
+      enabled: true,
+      overrides: {
+        histogram: {
+          name: prefix + 'http_request_duration_seconds'
+        },
+        summary: {
+          name: prefix + 'http_request_summary_seconds'
+        }
+      }
+    }
   })
 
-  app.register(async (app) => {
-    const eluMetric = new app.metrics.client.Summary({
-      name: 'nodejs_eventloop_utilization',
-      help: 'The event loop utilization as a fraction of the loop time. 1 is fully utilized, 0 is fully idle.',
-      maxAgeSeconds: 60,
-      ageBuckets: 5,
-      labelNames: ['idle', 'active', 'utilization']
+  if (defaultMetrics.enabled) {
+    app.register(async (app) => {
+      const eluMetric = new app.metrics.client.Summary({
+        name: 'nodejs_eventloop_utilization',
+        help: 'The event loop utilization as a fraction of the loop time. 1 is fully utilized, 0 is fully idle.',
+        maxAgeSeconds: 60,
+        ageBuckets: 5,
+        labelNames: ['idle', 'active', 'utilization']
+      })
+
+      let startELU = eventLoopUtilization()
+      const eluTimeout = setInterval(() => {
+        const endELU = eventLoopUtilization()
+        eluMetric.observe(eventLoopUtilization(endELU, startELU).utilization)
+        startELU = endELU
+      }, 100).unref()
+
+      app.addHook('onClose', () => {
+        clearInterval(eluTimeout)
+      })
+
+      app.metrics.client.register.registerMetric(eluMetric)
     })
+  }
 
-    let startELU = eventLoopUtilization()
-    const eluTimeout = setInterval(() => {
-      const endELU = eventLoopUtilization()
-      eluMetric.observe(eventLoopUtilization(endELU, startELU).utilization)
-      startELU = endELU
-    }, 100)
-
-    app.addHook('onClose', () => {
-      clearInterval(eluTimeout)
+  let isRestarting = false
+  app.addHook('onReady', async () => {
+    app.addPreRestartHook(async () => {
+      isRestarting = true
+      app.metrics.client.register.clear()
     })
-
-    app.metrics.client.register.registerMetric(eluMetric)
+  })
+  app.addHook('onClose', async () => {
+    if (!isRestarting) {
+      app.metrics.client.register.clear()
+    }
   })
 }, {
   encapsulate: false
@@ -88,7 +116,7 @@ module.exports = fp(async function (app, opts) {
   const metricsEndpoint = opts.endpoint ?? '/metrics'
   const auth = opts.auth ?? null
 
-  app.register(metricsPlugin)
+  app.register(metricsPlugin, opts)
 
   let metricsServer = app
   if (server === 'own') {

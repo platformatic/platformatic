@@ -4,6 +4,7 @@ const { once } = require('node:events')
 const { dirname } = require('node:path')
 const { FileWatcher } = require('@platformatic/utils')
 const debounce = require('debounce')
+const { snakeCase } = require('change-case-all')
 const { buildServer } = require('./build-server')
 const { loadConfig } = require('./load-config')
 const errors = require('./errors')
@@ -105,6 +106,15 @@ class PlatformaticApp {
         server: this.#serverConfig
       })
     }
+
+    configManager.update({
+      ...configManager.current,
+      metrics: {
+        ...configManager.current.metrics,
+        defaultMetrics: { enabled: this.appConfig.entrypoint },
+        prefix: snakeCase(this.appConfig.id) + '_'
+      }
+    })
 
     if (!this.appConfig.entrypoint) {
       configManager.update({
