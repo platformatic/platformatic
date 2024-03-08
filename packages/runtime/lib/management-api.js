@@ -3,7 +3,7 @@
 const { tmpdir, platform } = require('node:os')
 const { join } = require('node:path')
 const { createReadStream, watch } = require('node:fs')
-const { readFile, readdir, mkdir, unlink } = require('node:fs/promises')
+const { readFile, readdir, mkdir, unlink, open } = require('node:fs/promises')
 const fastify = require('fastify')
 const errors = require('./errors')
 const platformaticVersion = require('../package.json').version
@@ -130,28 +130,76 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
       const latestFilePath = join(runtimeTmpDir, latestFileName)
       const latestFileIndex = parseInt(latestFileName.slice('logs.'.length))
 
-      const streamLogFile = (fileIndex, filePath) => {
-        const stream = createReadStream(filePath)
-        stream.pipe(connection, { end: false })
+      let fileName = latestFileName
+      let filePath = latestFilePath
+      let fileIndex = latestFileIndex
+      let fileOffset = 0
+      let fileStream = null
+      let fd = await open(filePath, 'r')
 
-        stream.on('error', (err) => {
+      let isStreaming = false
+
+      const streamLogFile = () => {
+        if (isStreaming) return
+        isStreaming = true
+
+        fileStream = createReadStream(filePath, {
+          fd,
+          start: fileOffset,
+          autoClose: false
+        })
+        fileStream.pipe(connection, { end: false })
+
+        fileStream.on('error', (err) => {
           app.log.error(err, 'Error streaming log file')
+          closeFile()
           connection.end()
         })
-
-        stream.on('end', () => {
-          const nextFileIndex = fileIndex + 1
-          const nextFileName = 'logs.' + nextFileIndex
-          const nextFilePath = join(runtimeTmpDir, nextFileName)
-          const watcher = watch(runtimeTmpDir, (event, filename) => {
-            if (event === 'rename' && filename === nextFileName) {
-              watcher.close()
-              streamLogFile(nextFileIndex, nextFilePath)
-            }
-          }).unref()
+        fileStream.on('end', () => {
+          isStreaming = false
+          fileOffset += fileStream.bytesRead
         })
       }
-      streamLogFile(latestFileIndex, latestFilePath)
+
+      const watchLogFile = async (filePath) => {
+        fd = await open(filePath, 'r')
+
+        return watch(filePath, (event, filename) => {
+          if (event === 'change' && filename === fileName) {
+            streamLogFile()
+          }
+        }).unref()
+      }
+
+      const closeFile = () => {
+        fd.close().catch((err) => {
+          app.log.error(err, 'Error closing log file')
+        })
+      }
+
+      let nextFileName = 'logs.' + fileIndex + 1
+      let logFileWatcher = await watchLogFile(filePath)
+
+      watch(runtimeTmpDir, async (event, filename) => {
+        if (event === 'rename' && filename === nextFileName) {
+          const nextFilePath = join(runtimeTmpDir, nextFileName)
+          fileName = nextFileName
+          filePath = nextFilePath
+          fileOffset = 0
+          fileIndex++
+
+          nextFileName = 'logs.' + fileIndex
+
+          fileStream.on('end', () => {
+            closeFile()
+          })
+
+          logFileWatcher.close()
+          logFileWatcher = await watchLogFile(filePath)
+        }
+      }).unref()
+
+      streamLogFile()
     })
 
     app.get('/logs/count', async () => {
