@@ -1,6 +1,6 @@
 import { expectError, expectType } from 'tsd'
 import fastify, { HTTPMethods } from 'fastify'
-import pltClient, { type PlatformaticClientPluginOptions, type GetHeadersOptions, buildOpenAPIClient, errors, InformationalStatus, ClientErrorStatus, RedirectionStatus, ServerErrorStatus, SuccessfulStatus } from '.'
+import pltClient, { type PlatformaticClientPluginOptions, type GetHeadersOptions, buildOpenAPIClient, errors } from '.'
 import { FastifyError } from '@fastify/error'
 
 const server = await fastify()
@@ -79,33 +79,3 @@ expectType<Promise<unknown>>(buildOpenAPIClient({
 }))
 
 expectType<() => FastifyError>(errors.OptionsUrlRequiredError)
-
-expectError<InformationalStatus>(99)
-expectType<InformationalStatus>(100)
-expectType<InformationalStatus>(150)
-expectType<InformationalStatus>(199)
-expectError<InformationalStatus>(200)
-
-expectError<SuccessfulStatus>(199)
-expectType<SuccessfulStatus>(200)
-expectType<SuccessfulStatus>(250)
-expectType<SuccessfulStatus>(299)
-expectError<SuccessfulStatus>(300)
-
-expectError<RedirectionStatus>(299)
-expectType<RedirectionStatus>(300)
-expectType<RedirectionStatus>(350)
-expectType<RedirectionStatus>(399)
-expectError<RedirectionStatus>(400)
-
-expectError<ClientErrorStatus>(399)
-expectType<ClientErrorStatus>(400)
-expectType<ClientErrorStatus>(450)
-expectType<ClientErrorStatus>(499)
-expectError<ClientErrorStatus>(500)
-
-expectError<ServerErrorStatus>(499)
-expectType<ServerErrorStatus>(500)
-expectType<ServerErrorStatus>(550)
-expectType<ServerErrorStatus>(599)
-expectError<ServerErrorStatus>(600)

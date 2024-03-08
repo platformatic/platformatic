@@ -12,11 +12,11 @@ type IntRange<F extends number, T extends number> = Exclude<
   Enumerate<F>
 >;
 
-export type InformationalStatus = IntRange<100, 200>;
-export type SuccessfulStatus = IntRange<200, 300>;
-export type RedirectionStatus = IntRange<300, 400>;
-export type ClientErrorStatus = IntRange<400, 500>;
-export type ServerErrorStatus = IntRange<500, 600>;
+export type StatusCode1xx = IntRange<100, 200>;
+export type StatusCode2xx = IntRange<200, 300>;
+export type StatusCode3xx = IntRange<300, 400>;
+export type StatusCode4xx = IntRange<400, 500>;
+export type StatusCode5xx = IntRange<500, 600>;
 
 interface Headers {
   [key: string]: string
