@@ -1,11 +1,12 @@
 'use strict'
 import { STATUS_CODES } from 'node:http'
-import { capitalize, classCase, getResponseContentType } from './utils.mjs'
+import { capitalize, classCase, getResponseContentType, getResponseTypes } from './utils.mjs'
 import { writeObjectProperties } from './openapi-common.mjs'
 import { getType } from './get-type.mjs'
 
-function responsesWriter (operationId, responsesArray, isFullResponse, writer, spec) {
-  const responseTypes = Object.entries(responsesArray)
+function responsesWriter (operationId, responsesObject, isFullResponse, writer, spec) {
+  const mappedResponses = getResponseTypes(responsesObject)
+  const responseTypes = Object.entries(responsesObject)
     .filter(([statusCode, response]) => {
       // We ignore all non-JSON endpoints for now
       // TODO: support other content types
@@ -31,6 +32,10 @@ function responsesWriter (operationId, responsesArray, isFullResponse, writer, s
       } else if (responseContentType === null) {
         isFullResponse = true
         writer.writeLine(`export type ${typeName} = {}`)
+      } else if (mappedResponses.blob.includes(parseInt(statusCode))) {
+        writer.writeLine(`export type ${typeName} = Blob`)
+      } else if (mappedResponses.text.includes(parseInt(statusCode))) {
+        writer.writeLine(`export type ${typeName} = string`)
       } else {
         isFullResponse = true
         writer.writeLine(`export type ${typeName} = string`)

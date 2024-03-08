@@ -1,6 +1,6 @@
 import CodeBlockWriter from 'code-block-writer'
 import { generateOperationId } from '@platformatic/client'
-import { capitalize, is200JsonResponse } from './utils.mjs'
+import { capitalize, getAllResponseCodes, getResponseTypes, is200JsonResponse } from './utils.mjs'
 import camelcase from 'camelcase'
 import { writeOperations } from '../../client-cli/lib/openapi-common.mjs'
 
@@ -163,24 +163,58 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
 
       writer.blankLine()
       if (currentFullResponse) {
-        writer.write('let body = await response.text()')
+        // writer.write('let body = await response.text()')
+
+        // writer.blankLine()
+
+        // writer.write('try ').inlineBlock(() => {
+        //   writer.write('body = JSON.parse(body)')
+        // })
+        // writer.write(' catch (err)').block(() => {
+        //   writer.write('// do nothing and keep original body')
+        // })
 
         writer.blankLine()
-
-        writer.write('try ').inlineBlock(() => {
-          writer.write('body = JSON.parse(body)')
+        const mappedResponses = getResponseTypes(operation.operation.responses)
+        const allResponseCodes = getAllResponseCodes(operation.operation.responses)
+        Object.keys(mappedResponses).forEach((responseType) => {
+          if (mappedResponses[responseType].length > 0) {
+            writer.writeLine(`const ${responseType}Responses = [${mappedResponses[responseType].join(', ')}]`)
+            writer.write(`if (${responseType}Responses.includes(response.status)) `).block(() => {
+              writer.write('return ').block(() => {
+                writer.write('statusCode: response.status')
+                if (language === 'ts') {
+                  writer.write(` as ${mappedResponses[responseType].join(' | ')},`)
+                } else {
+                  writer.write(',')
+                }
+                writer.writeLine('headers: response.headers,')
+                writer.writeLine(`body: await response.${responseType}()`)
+              })
+            })
+          }
         })
-        writer.write(' catch (err)').block(() => {
-          writer.write('// do nothing and keep original body')
-        })
 
-        writer.blankLine()
-
-        writer.write('return').block(() => {
-          writer.writeLine('statusCode: response.status,')
+        // write default response as fallback
+        writer.write('return ').block(() => {
+          writer.write('statusCode: response.status')
+          if (language === 'ts') {
+            writer.write(` as ${allResponseCodes.join(' | ')},`)
+          } else {
+            writer.write(',')
+          }
           writer.writeLine('headers: response.headers,')
-          writer.writeLine('body')
+          writer.write('body: await response.text()')
+          if (language === 'ts') {
+            writer.write(' as any')
+          }
         })
+        // writer.write('return').block(() => {
+        //   const allResponseCodes = getAllResponseCodes(operation.operation.responses)
+        //   writer.writeLine(`statusCode: response.status as ${allResponseCodes.join(' | ')},`)
+        //   writer.writeLine('headers: response.headers,')
+        //   writer.writeLine('body')
+        // })
       } else {
         writer.write('if (!response.ok)').block(() => {
           writer.writeLine('throw new Error(await response.text())')

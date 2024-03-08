@@ -453,3 +453,14 @@ test('call response.json only for json responses', async (t) => {
 `), true)
   }
 })
+
+test.only('statusCode is a number', async (t) => {
+  const dir = await moveToTmpdir(after)
+  const openAPIfile = join(__dirname, 'fixtures', 'multiple-responses-openapi.json')
+  await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend', '--full-response'])
+  const implementationFile = join(dir, 'movies', 'movies.ts')
+  const implementation = await readFile(implementationFile, 'utf-8')
+  const expected = ''
+  equal(implementation.includes(expected), true)
+  console.log(implementation)
+})
