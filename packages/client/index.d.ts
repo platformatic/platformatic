@@ -1,6 +1,23 @@
 import { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyError } from '@fastify/error'
 
+type Enumerate<
+  N extends number,
+  Acc extends number[] = [],
+> = Acc["length"] extends N
+  ? Acc[number]
+  : Enumerate<N, [...Acc, Acc["length"]]>;
+type IntRange<F extends number, T extends number> = Exclude<
+  Enumerate<T>,
+  Enumerate<F>
+>;
+
+export type InformationalStatus = IntRange<100, 200>;
+export type SuccessfulStatus = IntRange<200, 300>;
+export type RedirectionStatus = IntRange<300, 400>;
+export type ClientErrorStatus = IntRange<400, 500>;
+export type ServerErrorStatus = IntRange<500, 600>;
+
 interface Headers {
   [key: string]: string
 }
