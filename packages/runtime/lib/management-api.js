@@ -2,7 +2,7 @@
 
 const { tmpdir, platform } = require('node:os')
 const { join } = require('node:path')
-const { createReadStream } = require('node:fs')
+const { createReadStream, watch } = require('node:fs')
 const { readFile, readdir, mkdir, unlink } = require('node:fs/promises')
 const fastify = require('fastify')
 const errors = require('./errors')
@@ -115,30 +115,10 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
         .send(res.body)
     })
 
-    app.get('/logs/live', { websocket: true }, async (connection, req) => {
-      const handler = (message) => {
-        for (const log of message.logs) {
-          connection.socket.send(log)
-        }
-      }
-
-      loggingPort.on('message', handler)
-      connection.socket.on('close', () => {
-        loggingPort.off('message', handler)
-      })
-      connection.socket.on('error', () => {
-        loggingPort.off('message', handler)
-      })
-      connection.socket.on('end', () => {
-        loggingPort.off('message', handler)
-      })
-    })
-
-    app.get('/logs/history', { websocket: true }, async (connection, req) => {
+    app.get('/logs/live', { websocket: true }, async (connection) => {
       const runtimeTmpFiles = await readdir(runtimeTmpDir)
       const runtimeLogFiles = runtimeTmpFiles
         .filter((file) => file.startsWith('logs'))
-        .map((file) => join(runtimeTmpDir, file))
         .sort()
 
       if (runtimeLogFiles.length === 0) {
@@ -146,26 +126,54 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
         return
       }
 
-      const streamLogFile = (fileIndex) => {
-        const file = runtimeLogFiles[fileIndex]
-        const isLastFile = fileIndex === runtimeLogFiles.length - 1
+      const latestFileName = runtimeLogFiles[runtimeLogFiles.length - 1]
+      const latestFilePath = join(runtimeTmpDir, latestFileName)
+      const latestFileIndex = parseInt(latestFileName.slice('logs.'.length))
 
-        const stream = createReadStream(file)
-        stream.pipe(connection, { end: isLastFile })
+      const streamLogFile = (fileIndex, filePath) => {
+        const stream = createReadStream(filePath)
+        stream.pipe(connection, { end: false })
 
         stream.on('error', (err) => {
           app.log.error(err, 'Error streaming log file')
           connection.end()
         })
+
         stream.on('end', () => {
-          if (isLastFile) {
-            connection.end()
-            return
-          }
-          streamLogFile(fileIndex + 1)
+          const nextFileIndex = fileIndex + 1
+          const nextFileName = 'logs.' + nextFileIndex
+          const nextFilePath = join(runtimeTmpDir, nextFileName)
+          const watcher = watch(runtimeTmpDir, (event, filename) => {
+            if (event === 'rename' && filename === nextFileName) {
+              watcher.close()
+              streamLogFile(nextFileIndex, nextFilePath)
+            }
+          }).unref()
         })
       }
-      streamLogFile(0)
+      streamLogFile(latestFileIndex, latestFilePath)
+    })
+
+    app.get('/logs/count', async () => {
+      const runtimeTmpFiles = await readdir(runtimeTmpDir)
+      const runtimeLogFiles = runtimeTmpFiles
+        .filter((file) => file.startsWith('logs'))
+        .sort()
+
+      if (runtimeLogFiles.length === 0) {
+        return { count: 0 }
+      }
+
+      const latestFileName = runtimeLogFiles[runtimeLogFiles.length - 1]
+      const latestFileIndex = parseInt(latestFileName.slice('logs.'.length))
+
+      return { count: latestFileIndex }
+    })
+
+    app.get('/logs/:id', async (req) => {
+      const { id } = req.params
+      const filePath = join(runtimeTmpDir, `logs.${id}`)
+      return createReadStream(filePath)
     })
   }, { prefix: '/api/v1' })
 

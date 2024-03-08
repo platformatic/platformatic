@@ -1,12 +1,17 @@
 'use strict'
 
-const { platform } = require('node:os')
+const assert = require('node:assert')
+const { tmpdir } = require('node:os')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const WebSocket = require('ws')
+const { writeFile, rm } = require('node:fs/promises')
+const { Client } = require('undici')
 
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+
+const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
+const runtimeTmpDir = join(PLATFORMATIC_TMP_DIR, process.pid.toString())
 
 test('should get runtime logs history via management api', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
@@ -18,28 +23,27 @@ test('should get runtime logs history via management api', async (t) => {
   t.after(async () => {
     await app.close()
     await app.managementApi.close()
+    await rm(runtimeTmpDir, { recursive: true, force: true })
   })
 
-  const socketPath = app.managementApi.server.address()
+  const testLogs = 'test-logs-42\n'
+  await writeFile(join(runtimeTmpDir, 'logs.42'), testLogs)
 
-  const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
-  const webSocket = new WebSocket(protocol + socketPath + ':/api/v1/logs/history')
-
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      reject(new Error('Timeout'))
-    }, 10000)
-
-    webSocket.on('error', (err) => {
-      reject(err)
-    })
-
-    webSocket.on('message', (data) => {
-      if (data.includes('Server listening at')) {
-        clearTimeout(timeout)
-        webSocket.close()
-        resolve()
-      }
-    })
+  const client = new Client({
+    hostname: 'localhost',
+    protocol: 'http:'
+  }, {
+    socketPath: app.managementApi.server.address(),
+    keepAliveTimeout: 10,
+    keepAliveMaxTimeout: 10
   })
+
+  const { statusCode, body } = await client.request({
+    method: 'GET',
+    path: '/api/v1/logs/42'
+  })
+  assert.strictEqual(statusCode, 200)
+
+  const data = await body.text()
+  assert.strictEqual(data, testLogs)
 })

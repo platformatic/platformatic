@@ -192,15 +192,37 @@ class RuntimeApiClient {
     return webSocketStream
   }
 
-  getRuntimeHistoryLogsStream (pid) {
-    const socketPath = this.#getSocketPathFromPid(pid)
+  async getRuntimeLogs (pid, logsId) {
+    const client = this.#getUndiciClient(pid)
 
-    const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
-    const webSocketUrl = protocol + socketPath + ':/api/v1/logs/history'
-    const webSocketStream = new WebSocketStream(webSocketUrl)
-    this.#webSockets.add(webSocketStream.ws)
+    const { statusCode, body } = await client.request({
+      path: '/api/v1/logs/' + logsId,
+      method: 'GET'
+    })
 
-    return webSocketStream
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new errors.FailedToGetHistoryLogs(error)
+    }
+
+    return body
+  }
+
+  async getRuntimeLogsCount (pid) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: '/api/v1/logs/count',
+      method: 'GET'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new errors.FailedToGetHistoryLogsCount(error)
+    }
+
+    const { count } = await body.json()
+    return count
   }
 
   async injectRuntime (pid, serviceId, options) {
