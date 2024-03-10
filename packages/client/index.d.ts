@@ -1,22 +1,13 @@
 import { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyError } from '@fastify/error'
+import { CodeClasses, Digit, StringAsNumber } from 'fastify/types/utils';
 
-type Enumerate<
-  N extends number,
-  Acc extends number[] = [],
-> = Acc["length"] extends N
-  ? Acc[number]
-  : Enumerate<N, [...Acc, Acc["length"]]>;
-type IntRange<F extends number, T extends number> = Exclude<
-  Enumerate<T>,
-  Enumerate<F>
->;
-
-export type StatusCode1xx = IntRange<100, 200>;
-export type StatusCode2xx = IntRange<200, 300>;
-export type StatusCode3xx = IntRange<300, 400>;
-export type StatusCode4xx = IntRange<400, 500>;
-export type StatusCode5xx = IntRange<500, 600>;
+type StatusCodes<T extends CodeClasses> = StringAsNumber<`${T}${Digit}${Digit}`>
+export type StatusCode1xx = StatusCodes<1>;
+export type StatusCode2xx = StatusCodes<2>;
+export type StatusCode3xx = StatusCodes<3>;
+export type StatusCode4xx = StatusCodes<4>;
+export type StatusCode5xx = StatusCodes<5>;
 
 interface Headers {
   [key: string]: string
