@@ -86,10 +86,9 @@ const isSuccessfulResponse = (
 
 const exampleUsageOfStatusCodeType = (status: number) => {
   if (isSuccessfulResponse(status)) {
-    // now status type equals to `StatusCode2xx`
-    expectAssignable<StatusCode2xx>(status)
+    expectType<StatusCode2xx>(status)
   } else {
-    expectNotAssignable<StatusCode2xx>(status)
+    expectError<StatusCode2xx>(status)
   }
 }
 
