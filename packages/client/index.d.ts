@@ -1,6 +1,16 @@
 import { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyError } from '@fastify/error'
 
+type CodeClasses = 1 | 2 | 3 | 4 | 5;
+type Digit = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+type StringAsNumber<T extends string> = T extends `${infer N extends number}` ? N : never;
+type StatusCodes<T extends CodeClasses> = StringAsNumber<`${T}${Digit}${Digit}`>;
+export type StatusCode1xx = StatusCodes<1>;
+export type StatusCode2xx = StatusCodes<2>;
+export type StatusCode3xx = StatusCodes<3>;
+export type StatusCode4xx = StatusCodes<4>;
+export type StatusCode5xx = StatusCodes<5>;
+
 interface Headers {
   [key: string]: string
 }
