@@ -13,7 +13,7 @@ import { execa } from 'execa'
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 
-test.only('build basic client from url', async (t) => {
+test('build basic client from url', async (t) => {
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'sample', 'db.sqlite'))
   } catch {
@@ -55,18 +55,19 @@ async function _getRedirect (url, request) {
 
   const response = await fetch(\`\${url}/redirect\`)
 
-  let body = await response.text()
 
-  try {
-    body = JSON.parse(body)
-  } catch (err) {
-    // do nothing and keep original body
+  const jsonResponses = [302, 400]
+  if (jsonResponses.includes(response.status)) {
+    return {
+      statusCode: response.status,
+      headers: response.headers,
+      body: await response.json()
+    }
   }
-
   return {
     statusCode: response.status,
     headers: response.headers,
-    body
+    body: await response.text()
   }
 }
 
@@ -91,7 +92,6 @@ export default function build(url: string): PlatformaticFrontendClient`
 
   // Correct CamelCase name
   const camelCase = 'export interface Sample {'
-  console.log(implementation)
   equal(implementation.includes(expectedImplementation), true)
   equal(implementation.includes(factoryImplementation), true)
   equal(types.includes(factoryType), true)
