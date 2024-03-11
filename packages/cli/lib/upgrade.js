@@ -1,21 +1,13 @@
-import ConfigManager from '@platformatic/config'
-import { analyze, write, upgrade as upgradeConfig } from '@platformatic/metaconfig'
+import { Store } from '@platformatic/config'
 import parseArgs from 'minimist'
-import { access } from 'fs/promises'
-import { resolve } from 'path'
+import { writeFile } from 'fs/promises'
 import { execa } from 'execa'
 import { getLatestNpmVersion } from '@platformatic/utils'
-
-const configFileNames = ConfigManager.listConfigFiles()
-
-async function isFileAccessible (filename) {
-  try {
-    await access(filename)
-    return true
-  } catch (err) {
-    return false
-  }
-}
+import { platformaticService } from '@platformatic/service'
+import { platformaticDB } from '@platformatic/db'
+import { platformaticComposer } from '@platformatic/composer'
+import { platformaticRuntime } from '@platformatic/runtime'
+import { getStringifier } from '@platformatic/metaconfig'
 
 export async function upgrade (argv) {
   const args = parseArgs(argv, {
@@ -24,37 +16,44 @@ export async function upgrade (argv) {
     }
   })
   try {
-    await upgradeApp(args.config)
     await upgradeSystem()
+    await upgradeApp(args.config)
   } catch (err) {
-    // silently ignore errors
+    console.log(err)
+    process.exit(1)
   }
 }
 
 async function upgradeApp (config) {
-  let accessibleConfigFilename = config
+  const store = new Store({
+    cwd: process.cwd()
+  })
+  store.add(platformaticService)
+  store.add(platformaticDB)
+  store.add(platformaticComposer)
+  store.add(platformaticRuntime)
 
-  if (!accessibleConfigFilename) {
-    const configFilesAccessibility = await Promise.all(configFileNames.map((fileName) => isFileAccessible(fileName)))
-    accessibleConfigFilename = configFileNames.find((value, index) => configFilesAccessibility[index])
-  }
+  const { configManager, app } = await store.loadConfig({
+    config,
+    overrides: {
+      fixPaths: false,
+      onMissingEnv (key) {
+        return ''
+      }
+    }
+  })
 
-  if (!accessibleConfigFilename) {
-    console.error('No config file found')
-    process.exitCode = 1
-    return
-  }
+  await configManager.parseAndValidate()
 
-  accessibleConfigFilename = resolve(accessibleConfigFilename)
+  const stringify = getStringifier(configManager.fullPath)
 
-  let meta = await analyze({ file: accessibleConfigFilename })
+  console.log(`Updating for ${app.configType}`)
 
-  console.log(`Found ${meta.version} for Platformatic ${meta.kind} in ${meta.format} format`)
+  const newConfig = stringify(configManager.current)
 
-  meta = upgradeConfig(meta)
+  console.log(configManager.current)
 
-  await write(meta)
-  console.log('App Upgraded to', meta.version)
+  await writeFile(configManager.fullPath, newConfig, 'utf8')
 }
 
 async function upgradeSystem () {

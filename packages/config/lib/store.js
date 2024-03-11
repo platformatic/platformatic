@@ -6,7 +6,7 @@ const { join } = require('node:path')
 const { ConfigManager } = require('./manager')
 const { readFile } = require('node:fs/promises')
 const { readFileSync } = require('node:fs')
-const { getParser, analyze, upgrade } = require('@platformatic/metaconfig')
+const { getParser } = require('@platformatic/metaconfig')
 const errors = require('./errors')
 
 const pltVersion = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8')).version
@@ -52,7 +52,7 @@ class Store {
     this.#map.set(app.schema.$id, app)
   }
 
-  async get ({ $schema, module, extends: _extends }, { directory } = {}) {
+  async get ({ $schema, module, extends: _extends, core, db }, { directory } = {}) {
     // We support both 'module' and 'extends'. Note that we have to rename the veriable, because "extends" is a reserved word
     const extendedModule = _extends || module
     let app = this.#map.get($schema)
@@ -76,14 +76,25 @@ class Store {
       }
     }
 
-    if (app === undefined) {
-      const attemptedToRunVersion = this.getVersionFromSchema($schema)
+    const match = $schema?.match(/\/schemas\/(.*)\/(.*)/)
+    if (!app && match) {
+      const type = match[2]
 
-      if (attemptedToRunVersion === null) {
-        throw new errors.AddAModulePropertyToTheConfigOrAddAKnownSchemaError()
+      const toLoad = `https://platformatic.dev/schemas/v${pltVersion}/${type}`
+      app = this.#map.get(toLoad)
+    }
+
+    // Legacy Platformatic apps
+    if (!app && $schema?.indexOf('./') === 0) {
+      if (core || db) {
+        app = this.#map.get(`https://platformatic.dev/schemas/v${pltVersion}/db`)
       } else {
-        throw new errors.VersionMismatchError(pltVersion, attemptedToRunVersion)
+        app = this.#map.get(`https://platformatic.dev/schemas/v${pltVersion}/service`)
       }
+    }
+
+    if (!app) {
+      throw new errors.AddAModulePropertyToTheConfigOrAddAKnownSchemaError()
     }
 
     return app
@@ -194,13 +205,7 @@ class Store {
     if (!app) {
       const parser = getParser(configFile)
       const parsed = parser(await readFile(configFile))
-      try {
-        const meta = await analyze({ config: parsed })
-        const config = upgrade(meta).config
-        app = await this.get(config, opts)
-      } catch (err) {
-        app = await this.get(parsed, opts)
-      }
+      app = await this.get(parsed, opts)
     }
 
     const configManagerConfig = {
