@@ -57,6 +57,30 @@ describe('Generator', () => {
     assert.equal(secondService.targetDirectory, join(rg.targetDirectory, 'services', secondService.config.serviceName))
   })
 
+  test('should have a name in package.json', async () => {
+    const rg = new RuntimeGenerator({
+      name: 'test-runtime',
+      targetDirectory: '/tmp/runtime'
+    })
+
+    const firstService = new ServiceGenerator()
+    firstService.setConfig({
+      isRuntimeContext: false
+    })
+    rg.addService(firstService, 'first-service')
+
+    rg.setEntryPoint('first-service')
+
+    rg.setConfig({
+      port: 3043,
+      logLevel: 'debug'
+    })
+
+    await rg.prepare()
+    const packageJson = JSON.parse(rg.getFileObject('package.json').contents)
+    assert.equal(packageJson.name, 'test-runtime')
+  })
+
   test('should have services plugin dependencies in package.json', async () => {
     const rg = new RuntimeGenerator({
       targetDirectory: '/tmp/runtime'
