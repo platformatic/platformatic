@@ -31,7 +31,7 @@ function responsesWriter (operationId, responsesObject, isFullResponse, writer, 
         writeResponse(typeName, response.content['application/json'].schema)
       } else if (responseContentType === null) {
         isFullResponse = true
-        writer.writeLine(`export type ${typeName} = {}`)
+        writer.writeLine(`export type ${typeName} = unknown`)
       } else if (mappedResponses.blob.includes(parseInt(statusCode))) {
         writer.writeLine(`export type ${typeName} = Blob`)
       } else if (mappedResponses.text.includes(parseInt(statusCode))) {

@@ -163,17 +163,6 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
 
       writer.blankLine()
       if (currentFullResponse) {
-        // writer.write('let body = await response.text()')
-
-        // writer.blankLine()
-
-        // writer.write('try ').inlineBlock(() => {
-        //   writer.write('body = JSON.parse(body)')
-        // })
-        // writer.write(' catch (err)').block(() => {
-        //   writer.write('// do nothing and keep original body')
-        // })
-
         writer.blankLine()
         const mappedResponses = getResponseTypes(operation.operation.responses)
         const allResponseCodes = getAllResponseCodes(operation.operation.responses)
@@ -196,6 +185,21 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
         })
 
         // write default response as fallback
+        writer.write('if (response.headers[\'content-type\'] === \'application/json\') ').block(() => {
+          writer.write('return ').block(() => {
+            writer.write('statusCode: response.status')
+            if (language === 'ts') {
+              writer.write(` as ${allResponseCodes.join(' | ')},`)
+            } else {
+              writer.write(',')
+            }
+            writer.writeLine('headers: response.headers,')
+            writer.write('body: await response.json()')
+            if (language === 'ts') {
+              writer.write(' as any')
+            }
+          })
+        })
         writer.write('return ').block(() => {
           writer.write('statusCode: response.status')
           if (language === 'ts') {
