@@ -13,7 +13,7 @@ import { execa } from 'execa'
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 
-test('build basic client from url', async (t) => {
+test.only('build basic client from url', async (t) => {
   try {
     await fs.unlink(join(__dirname, 'fixtures', 'sample', 'db.sqlite'))
   } catch {
@@ -91,6 +91,7 @@ export default function build(url: string): PlatformaticFrontendClient`
 
   // Correct CamelCase name
   const camelCase = 'export interface Sample {'
+  console.log(implementation)
   equal(implementation.includes(expectedImplementation), true)
   equal(implementation.includes(factoryImplementation), true)
   equal(types.includes(factoryType), true)
@@ -454,7 +455,7 @@ test('call response.json only for json responses', async (t) => {
   }
 })
 
-test.only('statusCode is a number', async (t) => {
+test('statusCode is a number', async (t) => {
   const dir = await moveToTmpdir(after)
   const openAPIfile = join(__dirname, 'fixtures', 'multiple-responses-openapi.json')
   await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend', '--full-response'])
