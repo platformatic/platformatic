@@ -76,7 +76,7 @@ describe('Generator', () => {
       logLevel: 'debug'
     })
 
-    const output = await rg.prepare()
+    await rg.prepare()
     const packageJson = JSON.parse(rg.getFileObject('package.json').contents)
     assert.equal(packageJson.name, 'test-runtime')
   })
