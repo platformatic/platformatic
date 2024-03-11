@@ -14,6 +14,7 @@ const setupTsCompiler = require('./lib/plugins/typescript')
 const setupHealthCheck = require('./lib/plugins/health-check')
 const loadPlugins = require('./lib/plugins/plugins')
 const loadVersions = require('./lib/plugins/versions')
+const upgrade = require('./lib/upgrade')
 const { telemetry } = require('@platformatic/telemetry')
 
 const { schema } = require('./lib/schema')
@@ -136,7 +137,8 @@ platformaticService.configManagerConfig = {
       this.current.watch.ignore ||= []
       this.current.watch.ignore.push(outDir + '/**/*')
     }
-  }
+  },
+  upgrade
 }
 
 function _buildServer (options, app) {

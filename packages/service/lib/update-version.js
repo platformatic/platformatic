@@ -854,7 +854,7 @@ async function updateVersion (_args) {
     // TODO: find out why process stucks sometimes
     process.exit(0)
   } catch (err) {
-    logger.error(err.message)
+    logger.error({ err })
     process.exit(1)
   }
 }

@@ -1,0 +1,28 @@
+{
+  "$schema": "./platformatic.service.schema.json",
+  "server": {
+    "hostname": "{PLT_SERVER_HOSTNAME}",
+    "port": "{PORT}",
+    "logger": {
+      "level": "{PLT_SERVER_LOGGER_LEVEL}"
+    }
+  },
+  "plugin": [{
+    "path": "plugin.ts",
+    "hotReload": true,
+    "stopTimeout": 10000,
+    "options": {
+      "something": "else"
+    },
+    "typescript": {
+      "dist": "dist"
+    }
+  }, {
+    "path": "other.js",
+    "hotReload": false,
+    "stopTimeout": 2,
+    "options": {
+      "foo": "bar"
+    }
+  }]
+}

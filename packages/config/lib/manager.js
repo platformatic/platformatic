@@ -8,13 +8,13 @@ const Ajv = require('ajv')
 const fastifyPlugin = require('./plugin')
 const dotenv = require('dotenv')
 const { request } = require('undici')
-const { getParser, analyze, upgrade } = require('@platformatic/metaconfig')
+const { getParser } = require('@platformatic/metaconfig')
 const { isFileAccessible } = require('./utils')
 const errors = require('./errors')
 
 const PLT_ROOT = 'PLT_ROOT'
 
-async function fetchSchema (schemaLocation) {
+async function fetchSchema (schemaLocation, fullPath) {
   let schema
   if (!schemaLocation) {
     return {}
@@ -27,7 +27,9 @@ async function fetchSchema (schemaLocation) {
         schema = await body.json()
       }
     } else {
-      schema = JSON.parse(await readFile(schemaLocation, 'utf-8'))
+      const dir = dirname(fullPath)
+      const schemaPath = resolve(dir, schemaLocation)
+      schema = JSON.parse(await readFile(schemaPath, 'utf-8'))
     }
   } catch {
     //  Skip error, nothing to do
@@ -41,6 +43,7 @@ class ConfigManager extends EventEmitter {
     super()
     this.pupa = null
     this._stackableUpgrade = opts.upgrade
+    this._fixPaths = opts.fixPaths === undefined ? true : opts.fixPaths
 
     this.envWhitelist = opts.envWhitelist || []
     if (typeof this.envWhitelist === 'string') {
@@ -179,28 +182,26 @@ class ConfigManager extends EventEmitter {
         } else {
           this.current = this._parser(await this.load())
         }
-
-        // try updating the config format to latest
-        try {
-          let meta = await analyze({ config: this.current })
-          meta = upgrade(meta)
-          this.current = meta.config
-        } catch {
-          // nothing to do
-        }
       }
 
-      const schema = await fetchSchema(this.current.$schema)
+      const schema = await fetchSchema(this.current.$schema, this.fullPath)
 
       if (this._stackableUpgrade) {
-        this.current = await this._stackableUpgrade(this.current, schema.version)
-      }
+        let version = schema.version
+        if (!version && this.current.$schema?.indexOf('https://platformatic.dev/schemas/') === 0) {
+          const url = new URL(this.current.$schema)
+          const res = url.pathname.match(/^\/schemas\/v(\d+\.\d+\.\d+)\/(.*)$/)
+          version = res[1]
+        }
 
-      if (!this._providedSchema) {
-        // The user did not provide a schema, but we have a link to the schema
-        // in $schema. Try to fetch the schema and ignore anything that goes
-        // wrong.
-        this.schema = schema
+        if (!version && schema.$id?.indexOf('https://schemas.platformatic.dev') === 0) {
+          version = '0.15.0'
+        }
+
+        // If we can't find a version, then we can't upgrade
+        if (version) {
+          this.current = await this._stackableUpgrade(this.current, version)
+        }
       }
 
       const validationResult = this.validate()
@@ -229,42 +230,44 @@ class ConfigManager extends EventEmitter {
       return false
     }
     const ajv = new Ajv(this.schemaOptions)
-    ajv.addKeyword({
-      keyword: 'resolvePath',
-      type: 'string',
-      schemaType: 'boolean',
-      // TODO: figure out how to implement this via the new `code`
-      // option in Ajv
-      validate: (schema, path, parentSchema, data) => {
-        if (typeof path !== 'string' || path.trim() === '') {
-          return false
-        }
-        const resolved = resolve(this.dirname, path)
-        data.parentData[data.parentDataProperty] = resolved
-        return true
-      }
-    })
-    ajv.addKeyword({
-      keyword: 'resolveModule',
-      type: 'string',
-      schemaType: 'boolean',
-      // TODO: figure out how to implement this via the new `code`
-      // option in Ajv
-      validate: (schema, path, parentSchema, data) => {
-        if (typeof path !== 'string' || path.trim() === '') {
-          return false
-        }
-        const toRequire = this.fullPath || join(this.dirname, 'foo')
-        const _require = createRequire(toRequire)
-        try {
-          const resolved = _require.resolve(path)
+    if (this._fixPaths) {
+      ajv.addKeyword({
+        keyword: 'resolvePath',
+        type: 'string',
+        schemaType: 'boolean',
+        // TODO: figure out how to implement this via the new `code`
+        // option in Ajv
+        validate: (schema, path, parentSchema, data) => {
+          if (typeof path !== 'string' || path.trim() === '') {
+            return false
+          }
+          const resolved = resolve(this.dirname, path)
           data.parentData[data.parentDataProperty] = resolved
           return true
-        } catch {
-          return false
         }
-      }
-    })
+      })
+      ajv.addKeyword({
+        keyword: 'resolveModule',
+        type: 'string',
+        schemaType: 'boolean',
+        // TODO: figure out how to implement this via the new `code`
+        // option in Ajv
+        validate: (schema, path, parentSchema, data) => {
+          if (typeof path !== 'string' || path.trim() === '') {
+            return false
+          }
+          const toRequire = this.fullPath || join(this.dirname, 'foo')
+          const _require = createRequire(toRequire)
+          try {
+            const resolved = _require.resolve(path)
+            data.parentData[data.parentDataProperty] = resolved
+            return true
+          } catch {
+            return false
+          }
+        }
+      })
+    }
     ajv.addKeyword({
       keyword: 'typeof',
       validate: function validate (schema, value, _, data) {
