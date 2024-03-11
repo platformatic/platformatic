@@ -462,12 +462,12 @@ test('call response.json only for json responses', async (t) => {
   }
 })
 
-test('shoudl match expected implementation with typescript', async (t) => {
+test('should match expected implementation with typescript', async (t) => {
   const dir = await moveToTmpdir(after)
   const openAPIfile = join(__dirname, 'fixtures', 'multiple-responses-openapi.json')
   await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend', '--full-response'])
   const implementationFile = join(dir, 'movies', 'movies.ts')
   const implementation = await readFile(implementationFile, 'utf-8')
   const expected = await readFile(join(__dirname, 'expected-generated-code', 'multiple-responses-movies.ts'), 'utf-8')
-  equal(implementation, expected)
+  equal(implementation.replace(/\r/g, ''), expected.replace(/\r/g, '')) // to make windows CI happy
 })
