@@ -10,6 +10,7 @@ const ConfigManager = require('@platformatic/config')
 const adjustConfig = require('./lib/adjust-config')
 const { locateSchemaLock, updateSchemaLock } = require('./lib/utils')
 const errors = require('./lib/errors')
+const upgrade = require('./lib/upgrade')
 const fs = require('fs/promises')
 
 async function platformaticDB (app, opts) {
@@ -117,7 +118,8 @@ platformaticDB.configManagerConfig = {
   schemaOptions: platformaticService.configManagerConfig.schemaOptions,
   async transformConfig () {
     await adjustConfig(this)
-  }
+  },
+  upgrade
 }
 
 function _buildServer (options) {

@@ -1,18 +1,18 @@
 {
   "$schema": "https://platformatic.dev/schemas/v0.27.0/service",
   "server": {
-    "hostname": "127.0.0.1",
+    "hostname": "{PLT_SERVER_HOSTNAME}",
     "port": "{PORT}",
     "logger": {
-      "level": "info"
+      "level": "{PLT_SERVER_LOGGER_LEVEL}"
     }
-  },
-  "service": {
-    "openapi": true
   },
   "plugins": {
     "paths": [
-      "./plugin.js"
-    ]
+      "plugin.js"
+    ],
+    "hotReload": {
+      "enabled": true
+    }
   }
 }

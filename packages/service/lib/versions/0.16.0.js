@@ -1,9 +1,11 @@
 'use strict'
 
-module.exports.migration = {
+module.exports = {
   version: '0.16.0',
+  toVersion: '0.17.0',
   up: function (config) {
     let kind = 'service'
+    // This file will be reused in platformatic/db
     if (config.core) {
       kind = 'db'
     }

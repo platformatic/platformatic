@@ -2,11 +2,8 @@
 
 const assert = require('node:assert')
 const { test } = require('node:test')
-const { join, resolve } = require('node:path')
+const { resolve } = require('node:path')
 const ConfigManager = require('..')
-const { MockAgent, setGlobalDispatcher, getGlobalDispatcher } = require('undici')
-const pkg = require('../package.json')
-const { schema } = require('../../db') // avoid circular dependency on pnpm
 
 test('should throw if file is not found', async () => {
   try {
@@ -108,104 +105,6 @@ test('should support JSON5 format', async (t) => {
     migrations: { dir: './demo/auth/migrations', validateChecksums: false },
     authorization: { adminSecret: 'plt-db' },
     foobar: 'foobar'
-  })
-})
-
-test('should automatically update', async (t) => {
-  const _agent = getGlobalDispatcher()
-  const mockAgent = new MockAgent()
-  setGlobalDispatcher(mockAgent)
-  t.after(() => {
-    setGlobalDispatcher(_agent)
-  })
-
-  // Provide the base url to the request
-  const mockPool = mockAgent.get('https://platformatic.dev')
-  mockAgent.disableNetConnect()
-
-  // intercept the request
-  mockPool.intercept({
-    path: `/schemas/v${pkg.version}/db`,
-    method: 'GET'
-  }).reply(404, () => {
-    return {
-      message: 'not found'
-    }
-  })
-
-  const fixturesDir = join(__dirname, 'fixtures')
-  const cm = new ConfigManager({
-    source: join(fixturesDir, 'db-0.16.0.json'),
-    env: { PLT_FOOBAR: 'foobar' }
-  })
-  await cm.parse()
-
-  assert.deepEqual(cm.current, {
-    $schema: `https://platformatic.dev/schemas/v${pkg.version}/db`,
-    server: { hostname: '127.0.0.1', port: '3042', logger: { level: 'info' } },
-    metrics: { auth: { username: 'plt-db', password: 'plt-db' } },
-    plugins: { paths: ['./plugin-sum.js'] },
-    db: {
-      connectionString: 'postgres://postgres:postgres@localhost:5432/postgres',
-      graphiql: true,
-      ignore: { versions: true }
-    },
-    migrations: {
-      dir: './demo/migrations',
-      validateChecksums: false
-    },
-    authorization: { adminSecret: 'plt-db' },
-    watch: {
-      ignore: ['*.sqlite', '*.sqlite-journal']
-    }
-  })
-})
-
-test('should use the remote schema', async (t) => {
-  const _agent = getGlobalDispatcher()
-  const mockAgent = new MockAgent()
-  setGlobalDispatcher(mockAgent)
-  t.after(() => {
-    setGlobalDispatcher(_agent)
-  })
-
-  // Provide the base url to the request
-  const mockPool = mockAgent.get('https://platformatic.dev')
-  mockAgent.disableNetConnect()
-
-  // intercept the request
-  mockPool.intercept({
-    path: `/schemas/v${pkg.version}/db`,
-    method: 'GET'
-  }).reply(200, () => {
-    return JSON.stringify(schema)
-  })
-
-  const fixturesDir = join(__dirname, 'fixtures')
-  const cm = new ConfigManager({
-    source: join(fixturesDir, 'db-0.16.0.json'),
-    env: { PLT_FOOBAR: 'foobar' }
-  })
-  await cm.parse()
-
-  assert.deepEqual(cm.current, {
-    $schema: `https://platformatic.dev/schemas/v${pkg.version}/db`,
-    server: { hostname: '127.0.0.1', port: '3042', logger: { level: 'info' } },
-    metrics: { auth: { username: 'plt-db', password: 'plt-db' } },
-    plugins: { paths: [join(fixturesDir, 'plugin-sum.js')] },
-    db: {
-      connectionString: 'postgres://postgres:postgres@localhost:5432/postgres',
-      graphiql: true,
-      ignore: { versions: true }
-    },
-    migrations: {
-      dir: join(fixturesDir, 'demo', 'migrations'),
-      validateChecksums: false
-    },
-    authorization: { adminSecret: 'plt-db' },
-    watch: {
-      ignore: ['*.sqlite', '*.sqlite-journal']
-    }
   })
 })
 
