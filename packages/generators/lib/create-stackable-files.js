@@ -9,16 +9,18 @@ function getJsStackableIndexFile (stackableName) {
 const { platformaticService } = require('@platformatic/service')
 const { schema } = require('./lib/schema')
 const { Generator } = require('./lib/generator')
+const { readFileSync } = require('node:fs')
+const { version } = require('./package.json')
 
 async function stackable (fastify, opts) {
   await fastify.register(platformaticService, opts)
   await fastify.register(require('./plugins/example'), opts)
 }
-
 stackable.configType = '${kebabCase(stackableName + '-app')}'
 stackable.schema = schema
 stackable.Generator = Generator
 stackable.configManagerConfig = {
+  version,
   schema,
   envWhitelist: ['PORT', 'HOSTNAME'],
   allowToWatch: ['.env'],
@@ -48,6 +50,9 @@ import { platformaticService, Stackable } from '@platformatic/service'
 import { schema } from './lib/schema'
 import { Generator } from './lib/generator'
 import { ${stackableConfigType} } from './config'
+import { readFileSync } from 'node:fs'
+
+const { version } = JSON.parse(readFileSync('package.json', 'utf8'))
 
 const stackable: Stackable<${stackableConfigType}> = async function (fastify, opts) {
   await fastify.register(platformaticService, opts)
@@ -58,6 +63,7 @@ stackable.configType = '${kebabCase(stackableName + '-app')}'
 stackable.schema = schema
 stackable.Generator = Generator
 stackable.configManagerConfig = {
+  version,
   schema,
   envWhitelist: ['PORT', 'HOSTNAME'],
   allowToWatch: ['.env'],
@@ -398,8 +404,6 @@ function getTsStackableSchemaFile (stackableName) {
 
   return `\
 import { schema } from '@platformatic/service'
-import { readFileSync } from 'node:fs'
-const { version } = JSON.parse(readFileSync('package.json', 'utf8'))
 
 const ${schemaVarName} = {
   ...schema.schema,

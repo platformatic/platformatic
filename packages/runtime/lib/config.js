@@ -243,10 +243,10 @@ async function platformaticRuntime () {
 }
 
 platformaticRuntime[Symbol.for('skip-override')] = true
-platformaticRuntime.version = require('../package.json').version
 platformaticRuntime.schema = schema
 platformaticRuntime.configType = 'runtime'
 platformaticRuntime.configManagerConfig = {
+  version: require('../package.json').version,
   schema,
   allowToWatch: ['.env'],
   schemaOptions: {

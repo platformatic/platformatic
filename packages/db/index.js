@@ -110,10 +110,10 @@ async function healthCheck (app) {
 }
 
 platformaticDB[Symbol.for('skip-override')] = true
-platformaticDB.version = version
 platformaticDB.schema = schema
 platformaticDB.configType = 'db'
 platformaticDB.configManagerConfig = {
+  version,
   schema,
   envWhitelist: ['DATABASE_URL', ...platformaticService.configManagerConfig.envWhitelist],
   allowToWatch: ['.env'],

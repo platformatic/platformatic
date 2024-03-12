@@ -49,6 +49,7 @@ If you want to build a similar kind of tool, follow this example:
 
 ```js
 import { buildServer, schema } from '@platformatic/service'
+import { readFileSync } from 'node:fs'
 
 async function myPlugin (app, opts) {
   // app.platformatic.configManager contains an instance of the ConfigManager
@@ -68,6 +69,7 @@ myPlugin.schema = schema
 
 // The configuration of the ConfigManager
 myPlugin.configManagerConfig = {
+  version: JSON.parse(readFileSync(new URL(import.meta.url, 'package.json'))).version
   schema: foo.schema,
   envWhitelist: ['PORT', 'HOSTNAME'],
   allowToWatch: ['.env'],
@@ -217,6 +219,7 @@ import { schema } from './schema.js'
 import { FastifyInstance } from 'fastify'
 import type { ConfigManager } from '@platformatic/config'
 import type { AcmeBase as AcmeBaseConfig } from './config.js'
+import { readFileSync } from 'node:fs'
 
 export interface AcmeBaseMixin {
   platformatic: {
@@ -255,6 +258,9 @@ function buildStackable () : Stackable<AcmeBaseConfig> {
   // The configuration of the ConfigManager
   acmeBase.configManagerConfig = {
     schema,
+    version: require('./package.json').version
+    //// use the following if the file is compiled as ESM:
+    // version: JSON.parse(readFileSync(new URL(import.meta.url, 'package.json'))).version
     envWhitelist: ['PORT', 'HOSTNAME', 'WATCH'],
     allowToWatch: ['.env'],
     schemaOptions: {
@@ -311,9 +317,10 @@ export const migration = {
 
 ### Wiring it to the stackable
 
-You just need to add an `upgrade` function into your `configManagerConfig`:
+You just need to add a `version` string (the current module version, as specified in `package.json`)
+and `upgrade` function into your `configManagerConfig`:
 
-```
+```javascript
 const { join } = require('path')
 const pkg = require('../package.json')
 
@@ -338,6 +345,7 @@ async function upgrade (config, version) {
 
 stackable.configManagerConfig = {
   ...
+  version: require('./package.json'),
   upgrade
 }
 ```

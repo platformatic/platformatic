@@ -1,6 +1,6 @@
 {
   "$schema": "./stackable.schema.json",
-  "module": "./foo.js",
+  "module": "./foo.js@0.42.0",
   "server": {
     "hostname": "127.0.0.1",
     "port": 0

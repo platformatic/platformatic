@@ -1,7 +1,7 @@
 'use strict'
 
 const { createRequire } = require('node:module')
-const { isFileAccessible } = require('./utils')
+const { isFileAccessible, splitModuleFromVersion } = require('./utils')
 const { join } = require('node:path')
 const { ConfigManager } = require('./manager')
 const { readFile } = require('node:fs/promises')
@@ -52,9 +52,12 @@ class Store {
     this.#map.set(app.schema.$id, app)
   }
 
-  async get ({ $schema, module, extends: _extends, core, db }, { directory } = {}) {
+  async _get ({ $schema, module, extends: _extends, core, db }, { directory } = {}) {
     // We support both 'module' and 'extends'. Note that we have to rename the veriable, because "extends" is a reserved word
-    const extendedModule = _extends || module
+    const {
+      module: extendedModule,
+      version
+    } = splitModuleFromVersion(_extends || module)
     let app = this.#map.get($schema)
     let require = this.#require
 
@@ -97,6 +100,11 @@ class Store {
       throw new errors.AddAModulePropertyToTheConfigOrAddAKnownSchemaError()
     }
 
+    return { app, version }
+  }
+
+  async get (...args) {
+    const { app } = await this._get(...args)
     return app
   }
 
@@ -193,6 +201,7 @@ class Store {
     const overrides = opts.overrides
     let configFile = opts.config
     let app = opts.app
+    let version
 
     if (!configFile) {
       const found = await this.#findConfigFile(opts.directory)
@@ -205,11 +214,14 @@ class Store {
     if (!app) {
       const parser = getParser(configFile)
       const parsed = parser(await readFile(configFile))
-      app = await this.get(parsed, opts)
+      const res = await this._get(parsed, opts)
+      app = res.app
+      version = res.version
     }
 
     const configManagerConfig = {
       schema: app.schema,
+      configVersion: version,
       ...app.configManagerConfig,
       ...overrides
     }

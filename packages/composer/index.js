@@ -61,9 +61,9 @@ async function platformaticComposer (app) {
 
 platformaticComposer[Symbol.for('skip-override')] = true
 platformaticComposer.schema = schema
-platformaticComposer.version = require('./package.json').version
 platformaticComposer.configType = 'composer'
 platformaticComposer.configManagerConfig = {
+  version: require('./package.json').version,
   schema,
   envWhitelist: ['PORT', 'HOSTNAME'],
   allowToWatch: ['.env'],

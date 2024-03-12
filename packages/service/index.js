@@ -100,10 +100,10 @@ async function platformaticService (app, opts) {
 }
 
 platformaticService[Symbol.for('skip-override')] = true
-platformaticService.version = version
 platformaticService.schema = schema
 platformaticService.configType = 'service'
 platformaticService.configManagerConfig = {
+  version,
   schema,
   envWhitelist: ['PORT', 'HOSTNAME'],
   allowToWatch: ['.env'],

@@ -36,11 +36,13 @@ export interface ConfigManagerConfig<T> extends Omit<IConfigManagerOptions, 'sou
 export interface Stackable<ConfigType> {
   (app: FastifyInstance, opts: object): Promise<void>
 
-  version: string
   configType: string
   configManagerConfig: ConfigManagerConfig<ConfigType>
   schema: object
   Generator?: new () => BaseGenerator.BaseGenerator
+
+  version?: string
+  upgrade?: (config: any, version: string) => Promise<any>
 }
 
 interface SchemaExport {

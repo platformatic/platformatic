@@ -22,7 +22,7 @@ test('stackable update', async t => {
   await res.configManager.parseAndValidate()
   assert.deepStrictEqual(res.configManager.current, {
     $schema: './stackable.schema.json',
-    module: './foo.js',
+    module: './foo.js@0.42.0',
     server: {
       hostname: '127.0.0.1',
       port: 0
