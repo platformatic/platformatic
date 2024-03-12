@@ -372,7 +372,6 @@ export async function command (argv) {
     if (options['types-only']) {
       options.generateImplementation = false
       options.typesOnly = true
-      options.folder = process.cwd()
     } else {
       options.generateImplementation = !options.config
     }
