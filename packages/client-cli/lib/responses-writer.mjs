@@ -7,12 +7,6 @@ import { getType } from './get-type.mjs'
 function responsesWriter (operationId, responsesObject, isFullResponse, writer, spec) {
   const mappedResponses = getResponseTypes(responsesObject)
   const responseTypes = Object.entries(responsesObject)
-    .filter(([statusCode, response]) => {
-      // We ignore all non-JSON endpoints for now
-      // TODO: support other content types
-      return true
-      // return response.content && response.content['application/json'] !== undefined
-    })
     .map(([statusCode, response]) => {
       if (statusCode === '204') {
         return 'undefined'
