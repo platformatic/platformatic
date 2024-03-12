@@ -30,7 +30,8 @@ test('should write file and dirs', async (t) => {
   })
 
   gen.setConfig({
-    targetDirectory: dir
+    targetDirectory: dir,
+    serviceName: 'test-service'
   })
 
   await gen.run()
@@ -39,6 +40,8 @@ test('should write file and dirs', async (t) => {
   assert.ok(packageJson.scripts)
   assert.ok(packageJson.dependencies)
   assert.ok(packageJson.engines)
+
+  assert.equal(packageJson.name, 'test-service')
 
   const configFile = JSON.parse(await readFile(join(dir, 'platformatic.json'), 'utf8'))
   assert.deepEqual(configFile, {})
