@@ -66,7 +66,7 @@
     "pino": "^8.17.2",
     "pino-pretty": "^10.3.1",
     "pino-roll": "1.0.0-rc.1",
-    "tail-stream": "^0.3.4",
+    "tail-file-stream": "platformatic/tail-file-stream#add-tail-file-stream",
     "undici": "^6.6.0",
     "why-is-node-running": "^2.2.2"
   },

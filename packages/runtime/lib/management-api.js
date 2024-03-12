@@ -5,7 +5,7 @@ const { join } = require('node:path')
 const { createReadStream, watch } = require('node:fs')
 const { readFile, readdir, mkdir, unlink } = require('node:fs/promises')
 const fastify = require('fastify')
-const ts = require('tail-stream')
+const ts = require('tail-file-stream')
 const errors = require('./errors')
 const platformaticVersion = require('../package.json').version
 
@@ -171,8 +171,8 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
         }
       }).unref()
 
-      connection.on('close', () => fileStream.end())
-      connection.on('error', () => fileStream.end())
+      connection.on('close', () => fileStream.close())
+      connection.on('error', () => fileStream.close())
     })
 
     app.get('/logs/count', async () => {
