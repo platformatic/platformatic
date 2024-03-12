@@ -39,6 +39,7 @@ test('should write file and dirs', async (t) => {
   assert.ok(packageJson.scripts)
   assert.ok(packageJson.dependencies)
   assert.ok(packageJson.engines)
+  assert.ok(packageJson.name)
 
   const configFile = JSON.parse(await readFile(join(dir, 'platformatic.json'), 'utf8'))
   assert.deepEqual(configFile, {})
