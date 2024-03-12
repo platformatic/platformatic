@@ -1,6 +1,7 @@
 'use strict'
 
 const inspector = require('node:inspector')
+const { tmpdir } = require('node:os')
 const { register, createRequire } = require('node:module')
 const { isatty } = require('node:tty')
 const { pathToFileURL } = require('node:url')
@@ -18,6 +19,8 @@ const RuntimeApi = require('./api')
 const { MessagePortWritable } = require('./message-port-writable')
 let loaderPort
 
+const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
+
 if (typeof register === 'function' && workerData.config.loaderFile) {
   const { port1, port2 } = new MessageChannel()
   register(workerData.config.loaderFile, {
@@ -34,28 +37,41 @@ globalThis.fetch = undici.fetch
 
 const config = workerData.config
 
-const loggerConfig = { ...config.server?.logger }
-const cliStream = isatty(1) ? pretty() : pino.destination(1)
+function createLogger (config) {
+  const loggerConfig = { ...config.server?.logger }
+  const cliStream = isatty(1) ? pretty() : pino.destination(1)
 
-let logger = null
-if (config.loggingPort) {
-  const portStream = new MessagePortWritable({
-    metadata: config.loggingMetadata,
-    port: config.loggingPort
-  })
+  if (!config.loggingPort && !config.managementApi) {
+    return pino(loggerConfig, cliStream)
+  }
+
   const multiStream = pino.multistream([
-    { stream: portStream, level: 'trace' },
     { stream: cliStream, level: loggerConfig.level || 'info' }
   ])
+
   if (loggerConfig.transport) {
     const transport = pino.transport(loggerConfig.transport)
     multiStream.add({ level: loggerConfig.level || 'info', stream: transport })
   }
-  logger = pino({ level: 'trace' }, multiStream)
-} else {
-  logger = pino(loggerConfig, cliStream)
+  if (config.loggingPort) {
+    const portStream = new MessagePortWritable({
+      metadata: config.loggingMetadata,
+      port: config.loggingPort
+    })
+    multiStream.add({ level: 'trace', stream: portStream })
+  }
+  if (config.managementApi) {
+    const logsPath = join(PLATFORMATIC_TMP_DIR, process.pid.toString(), 'logs')
+    const pinoRoll = pino.transport({
+      target: 'pino-roll',
+      options: { file: logsPath, size: '5m', mkdir: true }
+    })
+    multiStream.add({ level: 'trace', stream: pinoRoll })
+  }
+  return pino({ level: 'trace' }, multiStream)
 }
 
+const logger = createLogger(config)
 if (config.server) {
   config.server.logger = logger
 }

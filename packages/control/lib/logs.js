@@ -32,10 +32,10 @@ async function streamRuntimeLogsCommand (argv) {
   const logLevelNumber = pinoLogLevels[args.level]
   const prettify = prettyFactory()
 
-  const logsStream = client.getRuntimeLogsStream(runtime.pid)
+  const logsStream = client.getRuntimeLiveLogsStream(runtime.pid)
 
   logsStream.on('data', (data) => {
-    const logs = data.toString().split('\n')
+    const logs = data.toString().split('\n').filter(Boolean)
 
     for (let log of logs) {
       try {

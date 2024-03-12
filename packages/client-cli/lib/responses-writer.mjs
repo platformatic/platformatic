@@ -62,7 +62,7 @@ function responsesWriter (operationId, responsesArray, isFullResponse, writer, s
     }
     if (responseSchema.type === 'object') {
       writer.write(`export type ${typeName} =`).block(() => {
-        writeObjectProperties(writer, responseSchema, {}, new Set(), 'res')
+        writeObjectProperties(writer, responseSchema, spec, new Set(), 'res')
       })
     } else {
       writer.writeLine(`export type ${typeName} = ${getType(responseSchema, 'res', spec)}`)

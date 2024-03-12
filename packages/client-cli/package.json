@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/client-cli",
-  "version": "1.25.0",
+  "version": "1.26.0",
   "description": "A client for all platformatic backends",
   "main": "cli.mjs",
   "bin": {
@@ -26,7 +26,7 @@
     "@platformatic/runtime": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@platformatic/utils": "workspace:*",
-    "borp": "^0.9.0",
+    "borp": "^0.10.0",
     "dotenv": "^16.4.1",
     "execa": "^8.0.1",
     "fastify": "^4.26.0",

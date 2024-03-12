@@ -9,7 +9,7 @@ The base services are:
 
 These micro-services can be developed and deployed independently or aggregated into a single API using [Platformatic Composer](#platformatic-composer) or deployed as a single unit using [Platformatic Runtime](#platformatic-runtime).
 
-All platformatic components can be reused with [Stackables](#platformatic-stackbles).
+All platformatic components can be reused with [Stackables](#platformatic-stackables).
 And finally, all Platformatic components can be deployed on [Platformatic Cloud](#platformatic-cloud).
 
 ## Platformatic Service

@@ -1,7 +1,7 @@
 # Configuration
 
 Platformatic Runtime is configured with a configuration file. It supports the
-use of environment variables as setting values with [configuration placeholders](#configuration-placeholders).
+use of environment variables as setting values with [environment variable placeholders](#environment-variable-placeholders).
 
 ## Configuration file
 
@@ -44,7 +44,7 @@ Configuration settings are organized into the following groups:
 - [`managementApi`](#managementapi(experimantal)) **(experimental)**
 
 Configuration settings containing sensitive data should be set using
-[configuration placeholders](#configuration-placeholders).
+[environment variable placeholders](#environment-variable-placeholders).
 
 The `autoload` and `services` settings can be used together, but at least one
 of them must be provided. When the configuration file is parsed, `autoload`

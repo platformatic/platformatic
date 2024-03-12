@@ -55,7 +55,7 @@ function formatRuntimeTime (timeSeconds) {
 const tableConfig = {
   border: getBorderCharacters('void'),
   columnDefault: {
-    paddingLeft: 1,
+    paddingLeft: 0,
     paddingRight: 1
   },
   drawHorizontalLine: () => false
