@@ -36,6 +36,7 @@ function buildStackable (): Stackable<PlatformaticServiceConfig> {
     await platformaticService(app, opts)
   }
 
+  myApp.version = platformaticService.version
   myApp.schema = platformaticService.configManagerConfig.schema
   myApp.configType = 'myApp'
   myApp.configManagerConfig = {

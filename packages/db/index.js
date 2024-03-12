@@ -12,6 +12,7 @@ const { locateSchemaLock, updateSchemaLock } = require('./lib/utils')
 const errors = require('./lib/errors')
 const upgrade = require('./lib/upgrade')
 const fs = require('fs/promises')
+const version = require('./package.json').version
 
 async function platformaticDB (app, opts) {
   const configManager = app.platformatic.configManager
@@ -109,6 +110,7 @@ async function healthCheck (app) {
 }
 
 platformaticDB[Symbol.for('skip-override')] = true
+platformaticDB.version = version
 platformaticDB.schema = schema
 platformaticDB.configType = 'db'
 platformaticDB.configManagerConfig = {

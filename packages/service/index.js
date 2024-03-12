@@ -22,6 +22,8 @@ const { addLoggerToTheConfig } = require('./lib/utils')
 const { start, buildServer } = require('./lib/start')
 const ServiceGenerator = require('./lib/generator/service-generator.js')
 
+const { version } = require('./package.json')
+
 // TODO(mcollina): arugments[2] is deprecated, remove it in the next major version.
 async function platformaticService (app, opts) {
   const configManager = app.platformatic.configManager
@@ -98,6 +100,7 @@ async function platformaticService (app, opts) {
 }
 
 platformaticService[Symbol.for('skip-override')] = true
+platformaticService.version = version
 platformaticService.schema = schema
 platformaticService.configType = 'service'
 platformaticService.configManagerConfig = {
