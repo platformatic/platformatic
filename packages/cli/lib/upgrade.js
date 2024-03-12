@@ -57,7 +57,7 @@ async function upgradeApp (config) {
 
 async function upgradeSystem () {
   console.log('Checking latest platformatic version on npm registry...')
-  const currentRunningVersion = await checkSystemPlatformaticVersion()
+  const { version: currentRunningVersion } = require('../package.json')
   const latestNpmVersion = await getLatestNpmVersion('platformatic')
   if (latestNpmVersion) {
     const compareResult = compareVersions(currentRunningVersion, latestNpmVersion)
@@ -88,12 +88,4 @@ export function compareVersions (first, second) {
   if (firstPatch > secondPatch) return 1
 
   return 0
-}
-
-async function checkSystemPlatformaticVersion () {
-  const { stdout } = await execa('platformatic', ['--version'])
-  if (stdout.match(/v\d+\.\d+\.\d+/)) {
-    return stdout.substring(1)
-  }
-  return '0.0.0'
 }
