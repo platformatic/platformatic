@@ -6,7 +6,7 @@ const { join } = require('node:path')
 const { ConfigManager } = require('./manager')
 const { readFile } = require('node:fs/promises')
 const { readFileSync } = require('node:fs')
-const { getParser } = require('@platformatic/metaconfig')
+const { getParser } = require('./formats')
 const errors = require('./errors')
 
 const pltVersion = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8')).version

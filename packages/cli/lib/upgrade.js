@@ -1,4 +1,4 @@
-import { Store } from '@platformatic/config'
+import { Store, getStringifier } from '@platformatic/config'
 import parseArgs from 'minimist'
 import { writeFile } from 'fs/promises'
 import { execa } from 'execa'
@@ -7,7 +7,6 @@ import { platformaticService } from '@platformatic/service'
 import { platformaticDB } from '@platformatic/db'
 import { platformaticComposer } from '@platformatic/composer'
 import { platformaticRuntime } from '@platformatic/runtime'
-import { getStringifier } from '@platformatic/metaconfig'
 
 export async function upgrade (argv) {
   const args = parseArgs(argv, {

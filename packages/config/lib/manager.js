@@ -8,7 +8,7 @@ const Ajv = require('ajv')
 const fastifyPlugin = require('./plugin')
 const dotenv = require('dotenv')
 const { request } = require('undici')
-const { getParser } = require('@platformatic/metaconfig')
+const { getParser } = require('./formats')
 const { isFileAccessible } = require('./utils')
 const errors = require('./errors')
 

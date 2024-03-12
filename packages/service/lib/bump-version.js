@@ -4,8 +4,7 @@ const { join, relative } = require('node:path')
 const { mkdir, readFile, writeFile } = require('node:fs/promises')
 const pino = require('pino')
 const pretty = require('pino-pretty')
-const { loadConfig } = require('@platformatic/config')
-const { analyze, write: writeConfig } = require('@platformatic/metaconfig')
+const { loadConfig, getParser, getStringifier } = require('@platformatic/config')
 const { platformaticService } = require('../index.js')
 const { getOpenapiSchema } = require('./get-openapi-schema.js')
 const { createMappersPlugins } = require('./update-version.js')
@@ -23,8 +22,9 @@ async function execute ({
 }) {
   const config = configManager.current
 
-  const metaConfig = await analyze({ file: configManager.fullPath })
-  const rawConfig = metaConfig.config
+  const parse = getParser(configManager.fullPath)
+  const stringify = getStringifier(configManager.fullPath)
+  const rawConfig = parse(await readFile(configManager.fullPath, 'utf8'))
 
   const versionsDirName = 'versions'
   const versionsDirPath = config.versions?.dir ??
@@ -102,7 +102,7 @@ async function execute ({
   config.versions = versionsConfigs
   rawConfig.versions = rawVersionsConfigs
 
-  await Promise.all([configManager.update(), writeConfig(metaConfig)])
+  await Promise.all([configManager.update(), writeFile(configManager.fullPath, stringify(rawConfig))])
 
   if (latestVersionConfig) {
     logger.info(`Reading openapi schema for "${latestVersion}"`)

@@ -10,8 +10,7 @@ import { request } from 'undici'
 import { processOpenAPI } from './lib/openapi-generator.mjs'
 import { processFrontendOpenAPI } from './lib/frontend-openapi-generator.mjs'
 import { processGraphQL } from './lib/graphql-generator.mjs'
-import { ConfigManager, loadConfig } from '@platformatic/config'
-import { analyze, write } from '@platformatic/metaconfig'
+import { ConfigManager, loadConfig, getStringifier, getParser } from '@platformatic/config'
 import graphql from 'graphql'
 import { appendToBothEnvs } from './lib/utils.mjs'
 import { findUp } from 'find-up'
@@ -223,12 +222,14 @@ async function downloadAndProcess (options) {
   }
 
   if (config && !typesOnly) {
-    const meta = await analyze({ file: config })
-    meta.config.clients = meta.config.clients || []
+    const parse = getParser(config)
+    const stringify = getStringifier(config)
+    const data = parse(await readFile(config, 'utf8'))
+    data.clients = data.clients || []
     if (runtime) {
-      meta.config.clients = meta.config.clients.filter((client) => client.serviceId !== runtime)
+      data.clients = data.clients.filter((client) => client.serviceId !== runtime)
     } else {
-      meta.config.clients = meta.config.clients.filter((client) => client.name !== name)
+      data.clients = data.clients.filter((client) => client.name !== name)
     }
     let schema
     if (found === 'openapi') {
@@ -246,8 +247,8 @@ async function downloadAndProcess (options) {
     } else {
       toPush.url = `{PLT_${name.toUpperCase()}_URL}`
     }
-    meta.config.clients.push(toPush)
-    await write(meta)
+    data.clients.push(toPush)
+    await writeFile(config, stringify(data))
     if (!runtime) {
       try {
         const toSaveUrl = new URL(url)
