@@ -284,3 +284,60 @@ export async function buildServer (opts: object) {
   return buildServiceServer(opts, acmeBase)
 }
 ```
+
+## Implement auto-upgrade of the configuration
+
+Platformatic support auto-upgrading the configuration of your stackable to the latest version. This enables
+the use of compatibility options to turn on and off individual features. Imagine that you want to change the
+default behavior of your stackable: you can add a configuration option to set the _previous_ behavior.
+Then during the upgrade logic, you only have to add this new configuration.
+
+The key to implement this logic is [semgrator](https://github.com/platformatic/semgrator).
+`semgrator` run migrations code based on semantic version rules.
+So on a breaking/behavior change that results in a new compatibility option in your configuration file,
+you can add a new migration rule that set the new option to false automatically.
+
+### Writing migrations
+
+```
+export const migration = {
+  version: '1.0.0',
+  up: (input) => {
+    // Do something with Config
+    return input
+  },
+}
+```
+
+### Wiring it to the stackable
+
+You just need to add an `upgrade` function into your `configManagerConfig`:
+
+```
+const { join } = require('path')
+const pkg = require('../package.json')
+
+async function upgrade (config, version) {
+  const { semgrator } = await import('semgrator')
+
+  const iterator = semgrator({
+    version,
+    path: join(__dirname, 'versions'),
+    input: config
+  })
+
+  let result
+
+  for await (const updated of iterator) {
+    // You can add a console.log here to know what is updated
+    result = updated.result
+  }
+
+  return result
+}
+
+stackable.configManagerConfig = {
+  ...
+  upgrade
+}
+```

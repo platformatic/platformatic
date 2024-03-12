@@ -1,12 +1,12 @@
 import { Store, getStringifier } from '@platformatic/config'
 import parseArgs from 'minimist'
-import { writeFile } from 'fs/promises'
-import { execa } from 'execa'
+import { writeFile, readFile } from 'fs/promises'
 import { getLatestNpmVersion } from '@platformatic/utils'
 import { platformaticService } from '@platformatic/service'
 import { platformaticDB } from '@platformatic/db'
 import { platformaticComposer } from '@platformatic/composer'
 import { platformaticRuntime } from '@platformatic/runtime'
+import { join } from 'desm'
 
 export async function upgrade (argv) {
   const args = parseArgs(argv, {
@@ -57,7 +57,7 @@ async function upgradeApp (config) {
 
 async function upgradeSystem () {
   console.log('Checking latest platformatic version on npm registry...')
-  const { version: currentRunningVersion } = require('../package.json')
+  const { version: currentRunningVersion } = JSON.parse(await readFile(join(import.meta.url, '..', 'package.json')))
   const latestNpmVersion = await getLatestNpmVersion('platformatic')
   if (latestNpmVersion) {
     const compareResult = compareVersions(currentRunningVersion, latestNpmVersion)
