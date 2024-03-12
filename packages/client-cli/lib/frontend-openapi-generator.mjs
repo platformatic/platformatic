@@ -163,7 +163,6 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
 
       writer.blankLine()
       if (currentFullResponse) {
-        writer.blankLine()
         const mappedResponses = getResponseTypes(operation.operation.responses)
         const allResponseCodes = getAllResponseCodes(operation.operation.responses)
         Object.keys(mappedResponses).forEach((responseType) => {
@@ -213,12 +212,6 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
             writer.write(' as any')
           }
         })
-        // writer.write('return').block(() => {
-        //   const allResponseCodes = getAllResponseCodes(operation.operation.responses)
-        //   writer.writeLine(`statusCode: response.status as ${allResponseCodes.join(' | ')},`)
-        //   writer.writeLine('headers: response.headers,')
-        //   writer.writeLine('body')
-        // })
       } else {
         writer.write('if (!response.ok)').block(() => {
           writer.writeLine('throw new Error(await response.text())')

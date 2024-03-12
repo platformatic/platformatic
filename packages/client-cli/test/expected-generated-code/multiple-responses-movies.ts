@@ -11,7 +11,6 @@ const _getPkgScopeNameVersion = async (url: string, request: Types.GetPkgScopeNa
 
   const response = await fetch(`${url}/pkg/@${request['scope']}/${request['name']}/${request['version']}/${request['*']}`)
 
-
   const textResponses = [302, 400]
   if (textResponses.includes(response.status)) {
     return {

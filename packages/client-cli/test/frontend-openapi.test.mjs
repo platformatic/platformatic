@@ -55,7 +55,6 @@ async function _getRedirect (url, request) {
 
   const response = await fetch(\`\${url}/redirect\`)
 
-
   const jsonResponses = [302, 400]
   if (jsonResponses.includes(response.status)) {
     return {
