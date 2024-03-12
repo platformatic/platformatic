@@ -100,6 +100,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
   /* eslint-enable new-cap */
 
   writer.writeLine('import { type FastifyReply, type FastifyPluginAsync } from \'fastify\'')
+  writer.writeLine('import { type GetHeadersOptions } from \'@platformatic/client\'')
   writer.blankLine()
 
   const pluginName = `${capitalizedName}Plugin`
@@ -136,7 +137,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
   writer.blankLine()
   writer.write('declare module \'fastify\'').block(() => {
     writer.write(`interface Configure${capitalizedName}`).block(() => {
-      writer.writeLine('getHeaders(req: FastifyRequest, reply: FastifyReply): Promise<Record<string,string>>;')
+      writer.writeLine('getHeaders(req: FastifyRequest, reply: FastifyReply, options: GetHeadersOptions): Promise<Record<string,string>>;')
     })
     writer.write('interface FastifyInstance').block(() => {
       writer.writeLine(`configure${capitalizedName}(opts: Configure${capitalizedName}): unknown`)
