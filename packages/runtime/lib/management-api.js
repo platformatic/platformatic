@@ -118,23 +118,41 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
 
     app.get('/logs/live', { websocket: true }, async (connection) => {
       const runtimeTmpFiles = await readdir(runtimeTmpDir)
-      const runtimeLogFiles = runtimeTmpFiles
-        .filter((file) => file.startsWith('logs'))
-        .sort()
 
-      if (runtimeLogFiles.length === 0) {
+      let latestFileIndex = -1
+      for (const fileName of runtimeTmpFiles) {
+        if (fileName.startsWith('logs')) {
+          const logIndex = parseInt(fileName.slice('logs.'.length))
+          latestFileIndex = Math.max(latestFileIndex, logIndex)
+        }
+      }
+
+      if (latestFileIndex === -1) {
         connection.end()
         return
       }
 
-      const latestFileName = runtimeLogFiles[runtimeLogFiles.length - 1]
-      const latestFilePath = join(runtimeTmpDir, latestFileName)
-      const latestFileIndex = parseInt(latestFileName.slice('logs.'.length))
+      let fileStream = null
+      let fileIndex = latestFileIndex
+      let waiting = false
 
-      let isFileEnded = false
+      const watcher = watch(runtimeTmpDir, async (event, filename) => {
+        if (event === 'rename' && filename.startsWith('logs')) {
+          const logFileIndex = parseInt(filename.slice('logs.'.length))
+          if (logFileIndex > latestFileIndex) {
+            latestFileIndex = logFileIndex
+            if (waiting) {
+              streamNextLogFile()
+            }
+          }
+        }
+      }).unref()
 
-      const streamLogFile = (filePath) => {
-        const fileStream = ts.createReadStream(filePath)
+      const streamLogFile = () => {
+        const fileName = 'logs.' + fileIndex
+        const filePath = join(runtimeTmpDir, fileName)
+
+        fileStream = ts.createReadStream(filePath)
         fileStream.pipe(connection, { end: false })
 
         fileStream.on('error', (err) => {
@@ -143,37 +161,25 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
         })
 
         fileStream.on('data', () => {
-          isFileEnded = false
+          waiting = false
         })
         fileStream.on('eof', () => {
-          isFileEnded = true
+          waiting = true
+          if (latestFileIndex > fileIndex) {
+            streamNextLogFile()
+          }
         })
 
         return fileStream
       }
 
-      let fileStream = streamLogFile(latestFilePath)
-      let nextFileIndex = latestFileIndex + 1
-      let nextFileName = 'logs.' + nextFileIndex
+      const streamNextLogFile = () => {
+        fileStream.unpipe(connection)
+        fileStream.destroy()
+        streamLogFile(++fileIndex)
+      }
 
-      const watcher = watch(runtimeTmpDir, async (event, filename) => {
-        if (event === 'rename' && filename === nextFileName) {
-          const newFilePath = join(runtimeTmpDir, nextFileName)
-          nextFileName = 'logs.' + ++nextFileIndex
-
-          if (isFileEnded) {
-            fileStream.unpipe(connection)
-            fileStream.destroy()
-          } else {
-            fileStream.on('eof', () => {
-              fileStream.unpipe(connection)
-              fileStream.destroy()
-            })
-          }
-
-          fileStream = streamLogFile(newFilePath)
-        }
-      }).unref()
+      streamLogFile(fileIndex)
 
       connection.on('close', () => {
         watcher.close()
