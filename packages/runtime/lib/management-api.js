@@ -142,7 +142,7 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
           if (logFileIndex > latestFileIndex) {
             latestFileIndex = logFileIndex
             if (waiting) {
-              streamNextLogFile()
+              streamLogFile(++fileIndex)
             }
           }
         }
@@ -152,11 +152,20 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
         const fileName = 'logs.' + fileIndex
         const filePath = join(runtimeTmpDir, fileName)
 
+        const prevFileStream = fileStream
+
         fileStream = ts.createReadStream(filePath)
         fileStream.pipe(connection, { end: false })
 
+        if (prevFileStream) {
+          prevFileStream.unpipe(connection)
+          prevFileStream.destroy()
+        }
+
         fileStream.on('error', (err) => {
           app.log.error(err, 'Error streaming log file')
+          fileStream.destroy()
+          watcher.close()
           connection.end()
         })
 
@@ -164,19 +173,14 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
           waiting = false
         })
         fileStream.on('eof', () => {
-          waiting = true
           if (latestFileIndex > fileIndex) {
-            streamNextLogFile()
+            streamLogFile(++fileIndex)
+          } else {
+            waiting = true
           }
         })
 
         return fileStream
-      }
-
-      const streamNextLogFile = () => {
-        fileStream.unpipe(connection)
-        fileStream.destroy()
-        streamLogFile(++fileIndex)
       }
 
       streamLogFile(fileIndex)
@@ -185,7 +189,8 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
         watcher.close()
         fileStream.destroy()
       })
-      connection.on('error', () => {
+      connection.on('error', (error) => {
+        app.log.error({ error }, 'Error streaming log file')
         watcher.close()
         fileStream.destroy()
       })
