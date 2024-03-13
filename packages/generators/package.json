@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "standard | snazzy",
-    "test": "pnpm run lint && borp -C -X fixtures -X test --concurrency=1"
+    "test": "pnpm run lint && borp -C -X fixtures -X test --concurrency=1 && tsd"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +24,7 @@
     "c8": "^9.1.0",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
+    "tsd": "^0.30.4",
     "typescript": "^5.3.3"
   }
 }

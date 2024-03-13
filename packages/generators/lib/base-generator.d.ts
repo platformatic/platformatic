@@ -61,13 +61,13 @@ export namespace BaseGenerator {
     var: string
     default: string
     type: 'number' | 'string' | 'boolean' | 'path'
-    configValue?: 'string'
+    configValue?: string
   }
 
   type ConfigField = {
     var: string
-    configValue?: 'string'
-    value: 'string'
+    configValue?: string
+    value: string
   }
 
   type AddEnvVarOptions = {
