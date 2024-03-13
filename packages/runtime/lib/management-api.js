@@ -152,27 +152,37 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
         return fileStream
       }
 
-      let fileIndex = latestFileIndex
       let fileStream = streamLogFile(latestFilePath)
-      let nextFileName = 'logs.' + (latestFileIndex + 1)
+      let nextFileIndex = latestFileIndex + 1
+      let nextFileName = 'logs.' + nextFileIndex
 
-      watch(runtimeTmpDir, async (event, filename) => {
+      const watcher = watch(runtimeTmpDir, async (event, filename) => {
         if (event === 'rename' && filename === nextFileName) {
+          const newFilePath = join(runtimeTmpDir, nextFileName)
+          nextFileName = 'logs.' + ++nextFileIndex
+
           if (isFileEnded) {
-            fileStream.end()
+            fileStream.unpipe(connection)
+            fileStream.destroy()
           } else {
-            fileStream.on('eof', () => fileStream.end())
+            fileStream.on('eof', () => {
+              fileStream.unpipe(connection)
+              fileStream.destroy()
+            })
           }
 
-          const nextFilePath = join(runtimeTmpDir, nextFileName)
-
-          nextFileName = 'logs.' + ++fileIndex
-          fileStream = streamLogFile(nextFilePath)
+          fileStream = streamLogFile(newFilePath)
         }
       }).unref()
 
-      connection.on('close', () => fileStream.close())
-      connection.on('error', () => fileStream.close())
+      connection.on('close', () => {
+        watcher.close()
+        fileStream.destroy()
+      })
+      connection.on('error', () => {
+        watcher.close()
+        fileStream.destroy()
+      })
     })
 
     app.get('/logs/count', async () => {
