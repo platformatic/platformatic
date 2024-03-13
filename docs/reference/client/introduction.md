@@ -129,7 +129,7 @@ For example
 $ platformatic client http://exmaple.com/to/schema/file --name myclient --types-only
 ```
 
-Will create the single `myclient.d.ts` file in current directory
+Will create the single `myclient.d.ts` file.
 
 
 ### OpenAPI
