@@ -108,5 +108,5 @@ test('client is loaded before plugins', async (t) => {
   const res = await request(`${app2.url}/`)
   assert.strictEqual(res.statusCode, 200, 'status code')
   const data = await res.body.json()
-  assert.deepStrictEqual(data, { hello: 'world' })
+  assert.deepStrictEqual(data, { hello: 'world', hasConfig: true })
 })
