@@ -330,7 +330,8 @@ async function upgrade (config, version) {
   const iterator = semgrator({
     version,
     path: join(__dirname, 'versions'),
-    input: config
+    input: config,
+    logger: this.logger
   })
 
   let result

@@ -6,6 +6,8 @@ import { platformaticService } from '@platformatic/service'
 import { platformaticDB } from '@platformatic/db'
 import { platformaticComposer } from '@platformatic/composer'
 import { platformaticRuntime } from '@platformatic/runtime'
+import pino from 'pino'
+import pretty from 'pino-pretty'
 import { join } from 'desm'
 
 export async function upgrade (argv) {
@@ -14,25 +16,31 @@ export async function upgrade (argv) {
       config: 'c'
     }
   })
+
+  const logger = pino(pretty({
+    translateTime: 'SYS:HH:MM:ss',
+    ignore: 'hostname,pid'
+  }))
   try {
-    await upgradeSystem()
-    await upgradeApp(args.config)
+    await upgradeSystem(logger)
+    await upgradeApp(args.config, logger)
   } catch (err) {
     console.log(err)
     process.exit(1)
   }
 }
 
-async function upgradeApp (config) {
+async function upgradeApp (config, logger) {
   const store = new Store({
-    cwd: process.cwd()
+    cwd: process.cwd(),
+    logger
   })
   store.add(platformaticService)
   store.add(platformaticDB)
   store.add(platformaticComposer)
   store.add(platformaticRuntime)
 
-  const { configManager, app } = await store.loadConfig({
+  const { configManager } = await store.loadConfig({
     config,
     overrides: {
       fixPaths: false,
@@ -46,27 +54,25 @@ async function upgradeApp (config) {
 
   const stringify = getStringifier(configManager.fullPath)
 
-  console.log(`Updating for ${app.configType}`)
-
   const newConfig = stringify(configManager.current)
 
-  console.log(configManager.current)
-
   await writeFile(configManager.fullPath, newConfig, 'utf8')
+
+  logger.info(`✅ Updated ${configManager.fullPath}`)
 }
 
-async function upgradeSystem () {
-  console.log('Checking latest platformatic version on npm registry...')
+async function upgradeSystem (logger) {
+  logger.info('Checking latest platformatic version on npm registry...')
   const { version: currentRunningVersion } = JSON.parse(await readFile(join(import.meta.url, '..', 'package.json')))
   const latestNpmVersion = await getLatestNpmVersion('platformatic')
   if (latestNpmVersion) {
     const compareResult = compareVersions(currentRunningVersion, latestNpmVersion)
     switch (compareResult) {
       case 0:
-        console.log(`✅ You are running the latest Platformatic version v${latestNpmVersion}!`)
+        logger.info(`✅ You are running the latest Platformatic version v${latestNpmVersion}!`)
         break
       case -1:
-        console.log(`✨ Version ${latestNpmVersion} of Platformatic has been released, please update with "npm update -g platformatic"`)
+        logger.info(`✨ Version ${latestNpmVersion} of Platformatic has been released, please update with "npm update platformatic"`)
         break
     }
   }

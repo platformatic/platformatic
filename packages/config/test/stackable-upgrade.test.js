@@ -5,8 +5,10 @@ const { join } = require('node:path')
 const { test } = require('node:test')
 const { Store } = require('../')
 const { ConfigManager } = require('../lib/manager')
+const pino = require('pino')
+const { sink, consecutive } = require('pino-test')
 
-test('stackable update', async t => {
+test('stackable upgrade', async t => {
   const cwd = process.cwd()
   process.chdir(join(__dirname, 'fixtures', 'stackable-upgrade'))
 
@@ -32,4 +34,28 @@ test('stackable update', async t => {
     },
     originalVersion: '0.42.0' // see foo.js
   })
+})
+
+test('stackable upgrade should have the logger available', async t => {
+  const cwd = process.cwd()
+  process.chdir(join(__dirname, 'fixtures', 'stackable-upgrade'))
+
+  const stream = sink()
+  const store = new Store({
+    logger: pino(stream)
+  })
+
+  t.after(() => {
+    process.chdir(cwd)
+  })
+
+  const res = await store.loadConfig()
+  await res.configManager.parseAndValidate()
+
+  await consecutive(stream, [
+    {
+      level: 30,
+      msg: 'bar'
+    }
+  ])
 })

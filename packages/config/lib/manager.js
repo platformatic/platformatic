@@ -11,6 +11,7 @@ const { request } = require('undici')
 const { getParser } = require('./formats')
 const { isFileAccessible, splitModuleFromVersion } = require('./utils')
 const errors = require('./errors')
+const abstractlogger = require('./logger')
 
 const PLT_ROOT = 'PLT_ROOT'
 
@@ -46,6 +47,7 @@ class ConfigManager extends EventEmitter {
     this._fixPaths = opts.fixPaths === undefined ? true : opts.fixPaths
     this._configVersion = opts.configVersion // requested version
     this._version = opts.version
+    this.logger = opts.logger || abstractlogger
 
     if (this._stackableUpgrade && !this._version) {
       throw new errors.VersionMissingError()

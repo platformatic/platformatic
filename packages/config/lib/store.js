@@ -8,6 +8,7 @@ const { readFile } = require('node:fs/promises')
 const { readFileSync } = require('node:fs')
 const { getParser } = require('./formats')
 const errors = require('./errors')
+const abstractLogger = require('./logger')
 
 const pltVersion = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8')).version
 
@@ -23,6 +24,7 @@ class Store {
     // createRequire accepts a filename, but it's not used,
     // so we pass a dummy file to make it happy
     this.#require = createRequire(join(this.#cwd, 'noop.js'))
+    this.logger = opts.logger || abstractLogger
   }
 
   add (app) {
@@ -222,6 +224,7 @@ class Store {
     const configManagerConfig = {
       schema: app.schema,
       configVersion: version,
+      logger: this.logger,
       ...app.configManagerConfig,
       ...overrides
     }

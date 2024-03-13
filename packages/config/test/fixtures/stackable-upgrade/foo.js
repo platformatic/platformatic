@@ -23,6 +23,7 @@ foo.configManagerConfig = {
     strict: false
   },
   upgrade (config, originalVersion) {
+    this.logger.child({}).info('bar')
     return {
       ...config,
       originalVersion

@@ -20,7 +20,8 @@ module.exports = async function upgrade (config, version) {
   const res = semgrator({
     version,
     migrations,
-    input: config
+    input: config,
+    logger: this.logger.child({ name: '@platformatic/db' })
   })
 
   let result

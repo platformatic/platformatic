@@ -22,9 +22,13 @@ test('writes a config file', async (t) => {
     join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'platformatic.db.schema.json'),
     join(dest, 'platformatic.db.schema.json'))
 
-  await execa('node', [cliPath, 'upgrade'], {
+  const { stdout } = await execa('node', [cliPath, 'upgrade'], {
     cwd: dest
   })
+
+  assert.match(stdout, /Migrating to version 0.16.0/)
+  assert.match(stdout, /Migrating to version 0.18.0/)
+  assert.match(stdout, /Migrating to version 0.28.0/)
 
   const config = JSON.parse(await readFile(join(dest, 'platformatic.db.json'), 'utf8'))
 

@@ -205,7 +205,7 @@ class PlatformaticApp {
         onMissingEnv (key) {
           return appConfig.localServiceEnvVars.get(key)
         }
-      })
+      }, true, this.#logger)
     } catch (err) {
       this.#logAndExit(err)
     }
