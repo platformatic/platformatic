@@ -110,6 +110,8 @@ class Store {
     return app
   }
 
+  // TODO(mcollina): remove in the next major version
+  /* c8 ignore next 10 */
   getVersionFromSchema (schema) {
     if (!schema) {
       return null

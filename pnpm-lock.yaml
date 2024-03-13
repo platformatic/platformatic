@@ -505,13 +505,13 @@ importers:
       semver:
         specifier: ^7.5.4
         version: 7.6.0
-      undici:
-        specifier: ^6.6.0
-        version: 6.7.0
     devDependencies:
       '@iarna/toml':
         specifier: ^2.2.5
         version: 2.2.5
+      '@matteo.collina/tspl':
+        specifier: ^0.1.1
+        version: 0.1.1
       borp:
         specifier: ^0.10.0
         version: 0.10.0

@@ -7,37 +7,12 @@ const { createRequire } = require('node:module')
 const Ajv = require('ajv')
 const fastifyPlugin = require('./plugin')
 const dotenv = require('dotenv')
-const { request } = require('undici')
 const { getParser } = require('./formats')
 const { isFileAccessible, splitModuleFromVersion } = require('./utils')
 const errors = require('./errors')
 const abstractlogger = require('./logger')
 
 const PLT_ROOT = 'PLT_ROOT'
-
-async function fetchSchema (schemaLocation, fullPath) {
-  let schema
-  if (!schemaLocation) {
-    return {}
-  }
-
-  try {
-    if (schemaLocation.indexOf('http') === 0) {
-      const { body, statusCode } = await request(schemaLocation)
-      if (statusCode === 200) {
-        schema = await body.json()
-      }
-    } else {
-      const dir = dirname(fullPath)
-      const schemaPath = resolve(dir, schemaLocation)
-      schema = JSON.parse(await readFile(schemaPath, 'utf-8'))
-    }
-  } catch {
-    //  Skip error, nothing to do
-  }
-
-  return schema || {}
-}
 
 class ConfigManager extends EventEmitter {
   constructor (opts) {
@@ -205,8 +180,13 @@ class ConfigManager extends EventEmitter {
           version = res[1]
         }
 
-        if (!version) {
-          const schema = await fetchSchema(this.current.$schema, this.fullPath)
+        // Really old Platformatic applications followed this format. This was a bad decision that we
+        // keep supporting.
+        // TODO(mcollina): remove in a future version
+        if (!version && this.fullPath && this.current.$schema && this.current.$schema.indexOf('./') === 0) {
+          const dir = dirname(this.fullPath)
+          const schemaPath = resolve(dir, this.current.$schema)
+          const schema = JSON.parse(await readFile(schemaPath, 'utf-8'))
           if (schema.$id?.indexOf('https://schemas.platformatic.dev') === 0) {
             version = '0.15.0'
           }
@@ -251,44 +231,49 @@ class ConfigManager extends EventEmitter {
       return false
     }
     const ajv = new Ajv(this.schemaOptions)
-    if (this._fixPaths) {
-      ajv.addKeyword({
-        keyword: 'resolvePath',
-        type: 'string',
-        schemaType: 'boolean',
-        // TODO: figure out how to implement this via the new `code`
-        // option in Ajv
-        validate: (schema, path, parentSchema, data) => {
-          if (typeof path !== 'string' || path.trim() === '') {
-            return false
-          }
+    ajv.addKeyword({
+      keyword: 'resolvePath',
+      type: 'string',
+      schemaType: 'boolean',
+      // TODO: figure out how to implement this via the new `code`
+      // option in Ajv
+      validate: (schema, path, parentSchema, data) => {
+        if (typeof path !== 'string' || path.trim() === '') {
+          return false
+        }
+
+        if (this._fixPaths) {
           const resolved = resolve(this.dirname, path)
           data.parentData[data.parentDataProperty] = resolved
+        }
+        return true
+      }
+    })
+    ajv.addKeyword({
+      keyword: 'resolveModule',
+      type: 'string',
+      schemaType: 'boolean',
+      // TODO: figure out how to implement this via the new `code`
+      // option in Ajv
+      validate: (schema, path, parentSchema, data) => {
+        if (typeof path !== 'string' || path.trim() === '') {
+          return false
+        }
+        if (!this._fixPaths) {
           return true
         }
-      })
-      ajv.addKeyword({
-        keyword: 'resolveModule',
-        type: 'string',
-        schemaType: 'boolean',
-        // TODO: figure out how to implement this via the new `code`
-        // option in Ajv
-        validate: (schema, path, parentSchema, data) => {
-          if (typeof path !== 'string' || path.trim() === '') {
-            return false
-          }
-          const toRequire = this.fullPath || join(this.dirname, 'foo')
-          const _require = createRequire(toRequire)
-          try {
-            const resolved = _require.resolve(path)
-            data.parentData[data.parentDataProperty] = resolved
-            return true
-          } catch {
-            return false
-          }
+        const toRequire = this.fullPath || join(this.dirname, 'foo')
+        const _require = createRequire(toRequire)
+        try {
+          const resolved = _require.resolve(path)
+          data.parentData[data.parentDataProperty] = resolved
+          return true
+        } catch {
+          return false
         }
-      })
-    }
+      }
+    })
+
     ajv.addKeyword({
       keyword: 'typeof',
       validate: function validate (schema, value, _, data) {

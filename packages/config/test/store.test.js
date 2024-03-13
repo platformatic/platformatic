@@ -6,6 +6,8 @@ const { join } = require('node:path')
 const { Store } = require('../')
 const { ConfigManager } = require('../lib/manager')
 
+const { version } = require('../package.json')
+
 test('Store with builtins', async t => {
   function foo () {
   }
@@ -358,4 +360,64 @@ test('schema null', async (t) => {
   const store = new Store()
   assert.equal(store.getVersionFromSchema(undefined), null)
   assert.equal(store.getVersionFromSchema(null), null)
+})
+
+test('Platformatic Service', async t => {
+  function foo () {
+  }
+
+  foo.schema = {
+    $id: `https://platformatic.dev/schemas/v${version}/service`,
+    type: 'object'
+  }
+
+  foo.configType = 'foo'
+  foo.configManagerConfig = {
+    schema: foo.schema,
+    envWhitelist: ['PORT', 'HOSTNAME'],
+    allowToWatch: ['.env'],
+    schemaOptions: {
+      useDefaults: true,
+      coerceTypes: true,
+      allErrors: true,
+      strict: false
+    },
+    transformConfig () {
+    }
+  }
+
+  const store = new Store()
+  store.add(foo)
+
+  assert.equal(await store.get({ $schema: './foo' }), foo, 'should have builtin value')
+})
+
+test('Platformatic DB', async t => {
+  function foo () {
+  }
+
+  foo.schema = {
+    $id: `https://platformatic.dev/schemas/v${version}/db`,
+    type: 'object'
+  }
+
+  foo.configType = 'foo'
+  foo.configManagerConfig = {
+    schema: foo.schema,
+    envWhitelist: ['PORT', 'HOSTNAME'],
+    allowToWatch: ['.env'],
+    schemaOptions: {
+      useDefaults: true,
+      coerceTypes: true,
+      allErrors: true,
+      strict: false
+    },
+    transformConfig () {
+    }
+  }
+
+  const store = new Store()
+  store.add(foo)
+
+  assert.equal(await store.get({ $schema: './foo', db: {} }), foo, 'should have builtin value')
 })
