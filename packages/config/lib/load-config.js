@@ -6,7 +6,7 @@ const parseArgs = require('minimist')
 const deepmerge = require('@fastify/deepmerge')
 const errors = require('./errors')
 
-async function loadConfig (minimistConfig, _args, app, overrides = {}, replaceEnv = true, logger = undefined) {
+async function loadConfig (minimistConfig, _args, app, overrides = {}, replaceEnv = true, logger) {
   const args = parseArgs(_args, deepmerge({ all: true })({
     string: ['allow-env'],
     default: {
