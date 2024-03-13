@@ -364,6 +364,7 @@ class BaseGenerator extends FileGenerator {
 
   async generatePackageJson () {
     const template = {
+      name: `${this.config.serviceName}`,
       scripts: {
         start: 'platformatic start',
         test: 'node --test test/**'

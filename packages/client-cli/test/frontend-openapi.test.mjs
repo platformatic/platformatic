@@ -55,18 +55,25 @@ async function _getRedirect (url, request) {
 
   const response = await fetch(\`\${url}/redirect\`)
 
-  let body = await response.text()
-
-  try {
-    body = JSON.parse(body)
-  } catch (err) {
-    // do nothing and keep original body
+  const jsonResponses = [302, 400]
+  if (jsonResponses.includes(response.status)) {
+    return {
+      statusCode: response.status,
+      headers: response.headers,
+      body: await response.json()
+    }
   }
-
+  if (response.headers['content-type'] === 'application/json') {
+    return {
+      statusCode: response.status,
+      headers: response.headers,
+      body: await response.json()
+    }
+  }
   return {
     statusCode: response.status,
     headers: response.headers,
-    body
+    body: await response.text()
   }
 }
 
@@ -120,7 +127,7 @@ export interface Sample {
     const unionTypesTemplate = `export type GetRedirectResponses =
   FullResponse<GetRedirectResponseFound, 302>
   | FullResponse<GetRedirectResponseBadRequest, 400>`
-    const postFooBarResponses = `export type PostFoobarResponseOK = {}
+    const postFooBarResponses = `export type PostFoobarResponseOK = unknown
 export type PostFoobarResponses =
   FullResponse<PostFoobarResponseOK, 200>`
     ok(implementation)
@@ -414,7 +421,7 @@ test('support empty response', async (t) => {
   const typeFile = join(dir, 'movies', 'movies-types.d.ts')
   const type = await readFile(typeFile, 'utf-8')
   equal(type.includes(`
-export type GetAuthLoginResponseOK = {}
+export type GetAuthLoginResponseOK = unknown
 export type GetAuthLoginResponses =
   FullResponse<GetAuthLoginResponseOK, 200>
 `), true)
@@ -452,4 +459,14 @@ test('call response.json only for json responses', async (t) => {
   return await response.json()
 `), true)
   }
+})
+
+test('should match expected implementation with typescript', async (t) => {
+  const dir = await moveToTmpdir(after)
+  const openAPIfile = join(__dirname, 'fixtures', 'multiple-responses-openapi.json')
+  await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend', '--full-response'])
+  const implementationFile = join(dir, 'movies', 'movies.ts')
+  const implementation = await readFile(implementationFile, 'utf-8')
+  const expected = await readFile(join(__dirname, 'expected-generated-code', 'multiple-responses-movies.ts'), 'utf-8')
+  equal(implementation.replace(/\r/g, ''), expected.replace(/\r/g, '')) // to make windows CI happy
 })

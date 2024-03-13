@@ -912,8 +912,8 @@ importers:
         specifier: ^4.26.0
         version: 4.26.2
       fastify-metrics:
-        specifier: ^10.6.0
-        version: 10.6.0(fastify@4.26.2)
+        specifier: ^11.0.0
+        version: 11.0.0(fastify@4.26.2)
       fastify-plugin:
         specifier: ^4.5.1
         version: 4.5.1
@@ -1331,6 +1331,9 @@ importers:
       standard:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
+      tsd:
+        specifier: ^0.30.4
+        version: 0.30.7
       typescript:
         specifier: ^5.3.3
         version: 5.3.3
@@ -1575,8 +1578,8 @@ importers:
         specifier: ^4.26.0
         version: 4.26.2
       fastify-metrics:
-        specifier: ^10.6.0
-        version: 10.6.0(fastify@4.26.2)
+        specifier: ^11.0.0
+        version: 11.0.0(fastify@4.26.2)
       fastify-openapi-glue:
         specifier: ^4.4.3
         version: 4.4.3
@@ -5549,14 +5552,14 @@ packages:
       ghtml: 1.0.1
     dev: false
 
-  /fastify-metrics@10.6.0(fastify@4.26.2):
-    resolution: {integrity: sha512-QIPncCnwBOEObMn+VaRhsBC1ox8qEsaiYF2sV/A1UbXj7ic70W8/HNn/hlEC2W8JQbBeZMx++o1um2fPfhsFDQ==}
+  /fastify-metrics@11.0.0(fastify@4.26.2):
+    resolution: {integrity: sha512-2nv0pzkuRVRuAmW3fR2vh1FQF7sV/mgzOJ8cz3HjUzByudWvx2IOHKnJLWtUohiD1AaI2QxtLQKTDZv/nASBRQ==}
     peerDependencies:
       fastify: '>=4'
     dependencies:
       fastify: 4.26.2
       fastify-plugin: 4.5.1
-      prom-client: 14.2.0
+      prom-client: 15.1.0
     dev: false
 
   /fastify-openapi-glue@4.4.3:
@@ -8133,10 +8136,11 @@ packages:
     resolution: {integrity: sha512-cdGef/drWFoydD1JsMzuFf8100nZl+GT+yacc2bEced5f9Rjk4z+WtFUTBu9PhOi9j/jfmBPu0mMEY4wIdAF8A==}
     engines: {node: '>= 0.6.0'}
 
-  /prom-client@14.2.0:
-    resolution: {integrity: sha512-sF308EhTenb/pDRPakm+WgiN+VdM/T1RaHj1x+MvAuT8UiQP8JmOEbxVqtkbfR4LrvOg5n7ic01kRBDGXjYikA==}
-    engines: {node: '>=10'}
+  /prom-client@15.1.0:
+    resolution: {integrity: sha512-cCD7jLTqyPdjEPBo/Xk4Iu8jxjuZgZJ3e/oET3L+ZwOuap/7Cw3dH/TJSsZKs1TQLZ2IHpIlRAKw82ef06kmMw==}
+    engines: {node: ^16 || ^18 || >=20}
     dependencies:
+      '@opentelemetry/api': 1.8.0
       tdigest: 0.1.2
     dev: false
 
