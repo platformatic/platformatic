@@ -54,11 +54,11 @@ class RuntimeGenerator extends BaseGenerator {
     const template = {
       name: `${this.runtimeName}`,
       scripts: {
-        start: 'platformatic start',
-        test: 'node --test test/*/*.test.js'
+        start: 'platformatic start'
       },
       devDependencies: {
-        fastify: `^${this.fastifyVersion}`
+        fastify: `^${this.fastifyVersion}`,
+        borp: `${this.pkgData.devDependencies.borp}`
       },
       dependencies: {
         platformatic: `^${this.platformaticVersion}`,
