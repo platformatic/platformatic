@@ -36,10 +36,10 @@ function buildStackable (): Stackable<PlatformaticServiceConfig> {
     await platformaticService(app, opts)
   }
 
-  myApp.version = platformaticService.version
   myApp.schema = platformaticService.configManagerConfig.schema
   myApp.configType = 'myApp'
   myApp.configManagerConfig = {
+    version: platformaticService.configManagerConfig.version,
     ...platformaticService.configManagerConfig,
     async transformConfig (this: ConfigManager<PlatformaticServiceConfig>) {
       this.current.plugins = {
@@ -47,6 +47,13 @@ function buildStackable (): Stackable<PlatformaticServiceConfig> {
           path: 'my-plugin'
         }]
       }
+    },
+    async upgrade (config: PlatformaticServiceConfig, version: string) {
+      const upgrade = platformaticService.configManagerConfig.upgrade
+      if (typeof upgrade === 'function') {
+        return upgrade.call(this, config, version)
+      }
+      return config
     }
   }
 
@@ -65,3 +72,28 @@ const myGenerator = new MyGenerator()
 
 expectType<MyGenerator>(myGenerator)
 expectType<BaseGenerator.BaseGeneratorConfig>(myGenerator.config)
+
+function buildStackable2 (): Stackable<PlatformaticServiceConfig> {
+  async function myApp (app: FastifyInstance, opts: object): Promise<void> {
+    await platformaticService(app, opts)
+  }
+
+  myApp.schema = platformaticService.configManagerConfig.schema
+  myApp.configType = 'myApp'
+  myApp.configManagerConfig = {
+    ...platformaticService.configManagerConfig,
+    async transformConfig (this: ConfigManager<PlatformaticServiceConfig>) {
+      this.current.plugins = {
+        paths: [{
+          path: 'my-plugin'
+        }]
+      }
+    }
+  }
+
+  await start(myApp, ['--help'])
+
+  return myApp
+}
+
+expectType<Stackable<PlatformaticServiceConfig>>(buildStackable2())

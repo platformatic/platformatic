@@ -32,6 +32,9 @@ export interface IConfigManagerOptions {
   watch?: boolean
   logger?: AbstractLogger
   allowToWatch?: string[]
+  version?: string
+  configVersion?: string
+  upgrade?: (config: any, version: string) => Promise<any> | any
 }
 
 type JsonArray = boolean[] | number[] | string[] | JsonMap[] | Date[]
