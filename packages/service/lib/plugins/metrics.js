@@ -29,25 +29,17 @@ const metricsPlugin = fp(async function (app, opts = {}) {
 
   if (defaultMetrics.enabled) {
     app.register(async (app) => {
-      const eluMetric = new app.metrics.client.Summary({
+      let startELU = eventLoopUtilization()
+      const eluMetric = new app.metrics.client.Gauge({
         name: 'nodejs_eventloop_utilization',
         help: 'The event loop utilization as a fraction of the loop time. 1 is fully utilized, 0 is fully idle.',
-        maxAgeSeconds: 60,
-        ageBuckets: 5,
-        labelNames: ['idle', 'active', 'utilization']
+        collect: () => {
+          const endELU = eventLoopUtilization()
+          const result = eventLoopUtilization(endELU, startELU).utilization
+          eluMetric.set(result)
+          startELU = endELU
+        }
       })
-
-      let startELU = eventLoopUtilization()
-      const eluTimeout = setInterval(() => {
-        const endELU = eventLoopUtilization()
-        eluMetric.observe(eventLoopUtilization(endELU, startELU).utilization)
-        startELU = endELU
-      }, 100).unref()
-
-      app.addHook('onClose', () => {
-        clearInterval(eluTimeout)
-      })
-
       app.metrics.client.register.registerMetric(eluMetric)
     })
   }

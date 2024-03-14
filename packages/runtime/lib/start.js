@@ -120,6 +120,7 @@ async function startWithConfig (configManager, env = process.env) {
       mainLoggingPort
     )
     runtimeApiClient.managementApi = managementApi
+    runtimeApiClient.startCollectingMetrics()
   }
 
   return runtimeApiClient

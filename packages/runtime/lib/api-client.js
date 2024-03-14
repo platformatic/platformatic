@@ -6,10 +6,13 @@ const errors = require('./errors')
 const { setTimeout: sleep } = require('node:timers/promises')
 
 const MAX_LISTENERS_COUNT = 100
+const MAX_METRICS_QUEUE_LENGTH = 5 * 60 // 5 minutes in seconds
+const COLLECT_METRICS_TIMEOUT = 1000
 
 class RuntimeApiClient extends EventEmitter {
   #exitCode
   #exitPromise
+  #metrics
 
   constructor (worker) {
     super()
@@ -92,6 +95,62 @@ class RuntimeApiClient extends EventEmitter {
 
   async inject (id, injectParams) {
     return this.#sendCommand('plt:inject', { id, injectParams })
+  }
+
+  async getFormattedMetrics () {
+    const { metrics } = await this.getMetrics()
+
+    const rssMetric = metrics.find(
+      (metric) => metric.name === 'process_resident_memory_bytes'
+    )
+    const totalHeapSizeMetric = metrics.find(
+      (metric) => metric.name === 'nodejs_heap_size_total_bytes'
+    )
+    const usedHeapSizeMetric = metrics.find(
+      (metric) => metric.name === 'nodejs_heap_size_used_bytes'
+    )
+    const heapSpaceSizeTotalMetric = metrics.find(
+      (metric) => metric.name === 'nodejs_heap_space_size_total_bytes'
+    )
+    const newSpaceSizeTotalMetric = heapSpaceSizeTotalMetric.values.find(
+      (value) => value.labels.space === 'new'
+    )
+    const oldSpaceSizeTotalMetric = heapSpaceSizeTotalMetric.values.find(
+      (value) => value.labels.space === 'old'
+    )
+    const eventLoopUtilizationMetric = metrics.find(
+      (metric) => metric.name === 'nodejs_eventloop_utilization'
+    )
+
+    const rss = rssMetric.values[0].value
+    const elu = eventLoopUtilizationMetric.values[0].value
+    const totalHeapSize = totalHeapSizeMetric.values[0].value
+    const usedHeapSize = usedHeapSizeMetric.values[0].value
+    const newSpaceSize = newSpaceSizeTotalMetric.value
+    const oldSpaceSize = oldSpaceSizeTotalMetric.value
+
+    return {
+      version: 1,
+      date: new Date().toISOString(),
+      elu,
+      rss,
+      totalHeapSize,
+      usedHeapSize,
+      newSpaceSize,
+      oldSpaceSize
+    }
+  }
+
+  startCollectingMetrics () {
+    this.#metrics = []
+
+    setInterval(async () => {
+      const metrics = await this.getFormattedMetrics()
+      this.#metrics.push(metrics)
+      if (this.#metrics.length > MAX_METRICS_QUEUE_LENGTH) {
+        this.#metrics.shift()
+      }
+    }, COLLECT_METRICS_TIMEOUT).unref()
   }
 
   async #sendCommand (command, params = {}) {
