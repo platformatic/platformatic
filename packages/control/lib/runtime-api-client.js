@@ -181,26 +181,49 @@ class RuntimeApiClient {
     }
   }
 
-  getRuntimeLiveLogsStream (pid) {
+  getRuntimeLiveLogsStream (pid, startLogIndex) {
     const socketPath = this.#getSocketPathFromPid(pid)
 
     const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
-    const webSocketUrl = protocol + socketPath + ':/api/v1/logs/live'
+    const query = startLogIndex ? `?start=${startLogIndex}` : ''
+    const webSocketUrl = protocol + socketPath + ':/api/v1/logs/live' + query
     const webSocketStream = new WebSocketStream(webSocketUrl)
     this.#webSockets.add(webSocketStream.ws)
 
     return webSocketStream
   }
 
-  getRuntimeHistoryLogsStream (pid) {
-    const socketPath = this.#getSocketPathFromPid(pid)
+  async getRuntimeLogsStream (pid, logsId) {
+    const client = this.#getUndiciClient(pid)
 
-    const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
-    const webSocketUrl = protocol + socketPath + ':/api/v1/logs/history'
-    const webSocketStream = new WebSocketStream(webSocketUrl)
-    this.#webSockets.add(webSocketStream.ws)
+    const { statusCode, body } = await client.request({
+      path: '/api/v1/logs/' + logsId,
+      method: 'GET'
+    })
 
-    return webSocketStream
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new errors.FailedToGetRuntimeHistoryLogs(error)
+    }
+
+    return body
+  }
+
+  async getRuntimeLogIndexes (pid) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: '/api/v1/logs/indexes',
+      method: 'GET'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new errors.FailedToGetRuntimeLogIndexes(error)
+    }
+
+    const { indexes } = await body.json()
+    return indexes
   }
 
   async injectRuntime (pid, serviceId, options) {
