@@ -2,11 +2,10 @@
 
 const { tmpdir, platform } = require('node:os')
 const { join } = require('node:path')
-const { createReadStream, watch } = require('node:fs')
-const { readFile, readdir, mkdir, unlink } = require('node:fs/promises')
+const { readFile, mkdir, unlink } = require('node:fs/promises')
 const fastify = require('fastify')
-const ts = require('tail-file-stream')
 const errors = require('./errors')
+const { pipeLiveLogs, getLogFileStream, getLatestLogIndex } = require('./logs')
 const platformaticVersion = require('../package.json').version
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
@@ -116,106 +115,20 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
         .send(res.body)
     })
 
-    app.get('/logs/live', { websocket: true }, async (connection) => {
-      const runtimeTmpFiles = await readdir(runtimeTmpDir)
-
-      let latestFileIndex = -1
-      for (const fileName of runtimeTmpFiles) {
-        if (fileName.startsWith('logs')) {
-          const logIndex = parseInt(fileName.slice('logs.'.length))
-          latestFileIndex = Math.max(latestFileIndex, logIndex)
-        }
-      }
-
-      if (latestFileIndex === -1) {
-        connection.end()
-        return
-      }
-
-      let fileStream = null
-      let fileIndex = latestFileIndex
-      let waiting = false
-
-      const watcher = watch(runtimeTmpDir, async (event, filename) => {
-        if (event === 'rename' && filename.startsWith('logs')) {
-          const logFileIndex = parseInt(filename.slice('logs.'.length))
-          if (logFileIndex > latestFileIndex) {
-            latestFileIndex = logFileIndex
-            if (waiting) {
-              streamLogFile(++fileIndex)
-            }
-          }
-        }
-      }).unref()
-
-      const streamLogFile = () => {
-        const fileName = 'logs.' + fileIndex
-        const filePath = join(runtimeTmpDir, fileName)
-
-        const prevFileStream = fileStream
-
-        fileStream = ts.createReadStream(filePath)
-        fileStream.pipe(connection, { end: false })
-
-        if (prevFileStream) {
-          prevFileStream.unpipe(connection)
-          prevFileStream.destroy()
-        }
-
-        fileStream.on('error', (err) => {
-          app.log.error(err, 'Error streaming log file')
-          fileStream.destroy()
-          watcher.close()
-          connection.end()
-        })
-
-        fileStream.on('data', () => {
-          waiting = false
-        })
-        fileStream.on('eof', () => {
-          if (latestFileIndex > fileIndex) {
-            streamLogFile(++fileIndex)
-          } else {
-            waiting = true
-          }
-        })
-
-        return fileStream
-      }
-
-      streamLogFile(fileIndex)
-
-      connection.on('close', () => {
-        watcher.close()
-        fileStream.destroy()
-      })
-      connection.on('error', (error) => {
-        app.log.error({ error }, 'Error streaming log file')
-        watcher.close()
-        fileStream.destroy()
-      })
+    app.get('/logs/live', { websocket: true }, async (connection, req) => {
+      const startLogIndex = req.query.start ? parseInt(req.query.start) : null
+      pipeLiveLogs(connection, req.log, startLogIndex)
     })
 
-    app.get('/logs/count', async () => {
-      const runtimeTmpFiles = await readdir(runtimeTmpDir)
-      const runtimeLogFiles = runtimeTmpFiles
-        .filter((file) => file.startsWith('logs'))
-        .sort()
-
-      if (runtimeLogFiles.length === 0) {
-        return { count: 0 }
-      }
-
-      const latestFileName = runtimeLogFiles[runtimeLogFiles.length - 1]
-      const latestFileIndex = parseInt(latestFileName.slice('logs.'.length))
-
-      return { count: latestFileIndex }
+    app.get('/logs/latest/index', async () => {
+      const latestLogIndex = await getLatestLogIndex()
+      return { index: latestLogIndex }
     })
 
     app.get('/logs/:id', async (req) => {
       const { id } = req.params
-      const filePath = join(runtimeTmpDir, `logs.${id}`)
-      return createReadStream(filePath)
+      const logFileStream = await getLogFileStream(id)
+      return logFileStream
     })
   }, { prefix: '/api/v1' })
 

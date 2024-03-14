@@ -181,11 +181,12 @@ class RuntimeApiClient {
     }
   }
 
-  getRuntimeLiveLogsStream (pid) {
+  getRuntimeLiveLogsStream (pid, startLogIndex) {
     const socketPath = this.#getSocketPathFromPid(pid)
 
     const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
-    const webSocketUrl = protocol + socketPath + ':/api/v1/logs/live'
+    const query = startLogIndex ? `?start=${startLogIndex}` : ''
+    const webSocketUrl = protocol + socketPath + ':/api/v1/logs/live' + query
     const webSocketStream = new WebSocketStream(webSocketUrl)
     this.#webSockets.add(webSocketStream.ws)
 
@@ -208,11 +209,11 @@ class RuntimeApiClient {
     return body
   }
 
-  async getRuntimeLogsCount (pid) {
+  async getRuntimeLatestLogIndex (pid) {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: '/api/v1/logs/count',
+      path: '/api/v1/logs/latest/index',
       method: 'GET'
     })
 
