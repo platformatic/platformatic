@@ -1447,8 +1447,8 @@ importers:
         specifier: 1.0.0-rc.1
         version: 1.0.0-rc.1
       tail-file-stream:
-        specifier: platformatic/tail-file-stream#main
-        version: github.com/platformatic/tail-file-stream/e78268dc21d14c358ee072ba099b10a27092dba7
+        specifier: ^0.1.0
+        version: 0.1.0
       undici:
         specifier: ^6.6.0
         version: 6.7.1
@@ -9160,6 +9160,10 @@ packages:
       strip-ansi: 6.0.1
     dev: false
 
+  /tail-file-stream@0.1.0:
+    resolution: {integrity: sha512-4yfpJwnH5ac2N1i6sHRd2Sp3M78IZqsPdhI0m26qgtzoMTaLXDxG7vYJym/Vr06K0+VF+dNvQOk+9JEQn1F73g==}
+    dev: false
+
   /tar-fs@2.1.1:
     resolution: {integrity: sha512-V0r2Y9scmbDRLCNex/+hYzvp/zyYjvFbHPNgVTKfQvVrb6guiE/fxP+XblDNR011utopbkex2nM4dHNV6GDsng==}
     dependencies:
@@ -9872,9 +9876,3 @@ packages:
   /yocto-queue@1.0.0:
     resolution: {integrity: sha512-9bnSc/HEW2uRy67wc+T8UwauLuPJVn28jb+GtJY16iiKWyvmYJRXVT4UamsAEGQfPohgr2q4Tq0sQbQlxTfi1g==}
     engines: {node: '>=12.20'}
-
-  github.com/platformatic/tail-file-stream/e78268dc21d14c358ee072ba099b10a27092dba7:
-    resolution: {tarball: https://codeload.github.com/platformatic/tail-file-stream/tar.gz/e78268dc21d14c358ee072ba099b10a27092dba7}
-    name: tail-file-stream
-    version: 0.0.1
-    dev: false
