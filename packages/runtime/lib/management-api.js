@@ -123,9 +123,7 @@ async function createManagementApi (configManager, runtimeApiClient) {
       connection.socket.send(serializedMetrics)
 
       const eventHandler = (metrics) => {
-        const serializedMetrics = metrics
-          .map((metric) => JSON.stringify(metric))
-          .join('\n')
+        const serializedMetrics = JSON.stringify(metrics)
         connection.socket.send(serializedMetrics)
       }
 
