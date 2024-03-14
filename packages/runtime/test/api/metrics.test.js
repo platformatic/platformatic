@@ -3,6 +3,7 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
+const { setTimeout: sleep } = require('node:timers/promises')
 const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
@@ -110,4 +111,64 @@ test('should get runtime metrics in a text format', async (t) => {
     'service_2_http_request_duration_seconds',
     'service_2_http_request_summary_seconds'
   ])
+})
+
+test('should get formatted runtime metrics', async (t) => {
+  const projectDir = join(fixturesDir, 'management-api')
+  const configFile = join(projectDir, 'platformatic.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  const metrics = await app.getFormattedMetrics()
+  const metricsKeys = Object.keys(metrics).sort()
+
+  assert.deepStrictEqual(metricsKeys, [
+    'date',
+    'elu',
+    'newSpaceSize',
+    'oldSpaceSize',
+    'rss',
+    'totalHeapSize',
+    'usedHeapSize',
+    'version'
+  ])
+})
+
+test('should get cached formatted runtime metrics', async (t) => {
+  const projectDir = join(fixturesDir, 'management-api')
+  const configFile = join(projectDir, 'platformatic.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // wait for the metrics to be cached
+  await sleep(5000)
+
+  const metrics = await app.getCachedMetrics()
+  assert.ok(metrics.length > 4)
+
+  for (const metric of metrics) {
+    const metricsKeys = Object.keys(metric).sort()
+    assert.deepStrictEqual(metricsKeys, [
+      'date',
+      'elu',
+      'newSpaceSize',
+      'oldSpaceSize',
+      'rss',
+      'totalHeapSize',
+      'usedHeapSize',
+      'version'
+    ])
+  }
 })

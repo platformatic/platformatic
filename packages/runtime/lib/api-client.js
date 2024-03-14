@@ -13,6 +13,7 @@ class RuntimeApiClient extends EventEmitter {
   #exitCode
   #exitPromise
   #metrics
+  #metricsTimeout
 
   constructor (worker) {
     super()
@@ -147,8 +148,7 @@ class RuntimeApiClient extends EventEmitter {
 
   startCollectingMetrics () {
     this.#metrics = []
-
-    setInterval(async () => {
+    this.#metricsTimeout = setInterval(async () => {
       const metrics = await this.getFormattedMetrics()
       this.emit('metrics', metrics)
       this.#metrics.push(metrics)
@@ -181,6 +181,7 @@ class RuntimeApiClient extends EventEmitter {
   async #exitHandler () {
     this.#exitCode = undefined
     return once(this.worker, 'exit').then((msg) => {
+      clearInterval(this.#metricsTimeout)
       this.#exitCode = msg[0]
       return msg
     })
