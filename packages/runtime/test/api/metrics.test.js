@@ -55,8 +55,10 @@ test('should get runtime metrics in a json format', async (t) => {
     'process_start_time_seconds',
     'service_1_http_request_duration_seconds',
     'service_1_http_request_summary_seconds',
+    'service_1_http_request_all_summary_seconds',
     'service_2_http_request_duration_seconds',
-    'service_2_http_request_summary_seconds'
+    'service_2_http_request_summary_seconds',
+    'service_2_http_request_all_summary_seconds'
   ])
 })
 
@@ -110,8 +112,10 @@ test('should get runtime metrics in a text format', async (t) => {
     'process_start_time_seconds',
     'service_1_http_request_duration_seconds',
     'service_1_http_request_summary_seconds',
+    'service_1_http_request_all_summary_seconds',
     'service_2_http_request_duration_seconds',
-    'service_2_http_request_summary_seconds'
+    'service_2_http_request_summary_seconds',
+    'service_2_http_request_all_summary_seconds'
   ])
 })
 
@@ -134,6 +138,7 @@ test('should get formatted runtime metrics', async (t) => {
     'cpu',
     'date',
     'elu',
+    'entrypoint',
     'newSpaceSize',
     'oldSpaceSize',
     'rss',
@@ -141,6 +146,14 @@ test('should get formatted runtime metrics', async (t) => {
     'usedHeapSize',
     'version'
   ])
+
+  const entrypointMetrics = metrics.entrypoint
+  const entrypointMetricsKeys = Object.keys(entrypointMetrics).sort()
+  assert.deepStrictEqual(entrypointMetricsKeys, ['latency'])
+
+  const latencyMetrics = entrypointMetrics.latency
+  const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
+  assert.deepStrictEqual(latencyMetricsKeys, ['p90', 'p95', 'p99'])
 })
 
 test('should get cached formatted runtime metrics', async (t) => {
@@ -167,6 +180,7 @@ test('should get cached formatted runtime metrics', async (t) => {
       'cpu',
       'date',
       'elu',
+      'entrypoint',
       'newSpaceSize',
       'oldSpaceSize',
       'rss',
@@ -174,5 +188,13 @@ test('should get cached formatted runtime metrics', async (t) => {
       'usedHeapSize',
       'version'
     ])
+
+    const entrypointMetrics = metric.entrypoint
+    const entrypointMetricsKeys = Object.keys(entrypointMetrics).sort()
+    assert.deepStrictEqual(entrypointMetricsKeys, ['latency'])
+
+    const latencyMetrics = entrypointMetrics.latency
+    const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
+    assert.deepStrictEqual(latencyMetricsKeys, ['p90', 'p95', 'p99'])
   }
 })

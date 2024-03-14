@@ -28,6 +28,33 @@ const metricsPlugin = fp(async function (app, opts = {}) {
     }
   })
 
+  app.register(fp(async (app) => {
+    const httpLatencyMetric = new app.metrics.client.Summary({
+      name: prefix + 'http_request_all_summary_seconds',
+      help: 'request duration in seconds summary for all requests',
+      collect: () => {
+        process.nextTick(() => httpLatencyMetric.reset())
+      }
+    })
+    const ignoredMethods = ['HEAD', 'OPTIONS', 'TRACE', 'CONNECT']
+    const timers = new WeakMap()
+    app.addHook('onRequest', async (req) => {
+      if (ignoredMethods.includes(req.method)) return
+      const timer = httpLatencyMetric.startTimer()
+      timers.set(req, timer)
+    })
+    app.addHook('onResponse', async (req) => {
+      if (ignoredMethods.includes(req.method)) return
+      const timer = timers.get(req)
+      if (timer) {
+        timer()
+        timers.delete(req)
+      }
+    })
+  }, {
+    encapsulate: false
+  }))
+
   if (defaultMetrics.enabled) {
     app.register(async (app) => {
       let startELU = eventLoopUtilization()

@@ -81,6 +81,7 @@ test('should get runtime live metrics', async (t) => {
         'cpu',
         'date',
         'elu',
+        'entrypoint',
         'newSpaceSize',
         'oldSpaceSize',
         'rss',

@@ -105,6 +105,10 @@ class RuntimeApiClient extends EventEmitter {
   async getFormattedMetrics () {
     const { metrics } = await this.getMetrics()
 
+    const entrypointDetails = await this.getEntrypointDetails()
+    const entrypointConfig = await this.getServiceConfig(entrypointDetails.id)
+    const entrypointMetricsPrefix = entrypointConfig.metrics?.prefix
+
     const cpuMetric = metrics.find(
       (metric) => metric.name === 'process_cpu_percent_usage'
     )
@@ -130,6 +134,29 @@ class RuntimeApiClient extends EventEmitter {
       (metric) => metric.name === 'nodejs_eventloop_utilization'
     )
 
+    let p90Value = 0
+    let p95Value = 0
+    let p99Value = 0
+
+    if (entrypointMetricsPrefix) {
+      const metricName = entrypointMetricsPrefix + 'http_request_all_summary_seconds'
+      const httpLatencyMetrics = metrics.find((metric) => metric.name === metricName)
+
+      p90Value = httpLatencyMetrics.values.find(
+        (value) => value.labels.quantile === 0.9
+      ).value || 0
+      p95Value = httpLatencyMetrics.values.find(
+        (value) => value.labels.quantile === 0.95
+      ).value || 0
+      p99Value = httpLatencyMetrics.values.find(
+        (value) => value.labels.quantile === 0.99
+      ).value || 0
+
+      p90Value = Math.round(p90Value * 1000)
+      p95Value = Math.round(p95Value * 1000)
+      p99Value = Math.round(p99Value * 1000)
+    }
+
     const cpu = cpuMetric.values[0].value
     const rss = rssMetric.values[0].value
     const elu = eventLoopUtilizationMetric.values[0].value
@@ -138,7 +165,7 @@ class RuntimeApiClient extends EventEmitter {
     const newSpaceSize = newSpaceSizeTotalMetric.value
     const oldSpaceSize = oldSpaceSizeTotalMetric.value
 
-    return {
+    const formattedMetrics = {
       version: 1,
       date: new Date().toISOString(),
       cpu,
@@ -147,8 +174,16 @@ class RuntimeApiClient extends EventEmitter {
       totalHeapSize,
       usedHeapSize,
       newSpaceSize,
-      oldSpaceSize
+      oldSpaceSize,
+      entrypoint: {
+        latency: {
+          p90: p90Value,
+          p95: p95Value,
+          p99: p99Value
+        }
+      }
     }
+    return formattedMetrics
   }
 
   startCollectingMetrics () {
