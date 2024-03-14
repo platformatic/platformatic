@@ -9,7 +9,6 @@ function getJsStackableIndexFile (stackableName) {
 const { platformaticService } = require('@platformatic/service')
 const { schema } = require('./lib/schema')
 const { Generator } = require('./lib/generator')
-const { readFileSync } = require('node:fs')
 const { version } = require('./package.json')
 
 async function stackable (fastify, opts) {
@@ -365,8 +364,7 @@ function getJsStackableSchemaFile (stackableName) {
 'use strict'
 
 const { schema } = require('@platformatic/service')
-const { readFileSync } = require('node:fs')
-const { version } = JSON.parse(readFileSync('package.json', 'utf8'))
+const { version } = require('../package.json')
 
 const ${schemaVarName} = {
   ...schema.schema,
