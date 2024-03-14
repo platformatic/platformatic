@@ -78,6 +78,7 @@ test('should get runtime live metrics', async (t) => {
       const metric = JSON.parse(serializedMetric)
       const metricsKeys = Object.keys(metric).sort()
       assert.deepStrictEqual(metricsKeys, [
+        'cpu',
         'date',
         'elu',
         'newSpaceSize',

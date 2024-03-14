@@ -1,5 +1,6 @@
 'use strict'
 
+const os = require('node:os')
 const http = require('node:http')
 const { eventLoopUtilization } = require('node:perf_hooks').performance
 const fastify = require('fastify')
@@ -41,6 +42,38 @@ const metricsPlugin = fp(async function (app, opts = {}) {
         }
       })
       app.metrics.client.register.registerMetric(eluMetric)
+
+      let previousIdleTime = 0
+      let previousTotalTime = 0
+      const cpuMetric = new app.metrics.client.Gauge({
+        name: 'process_cpu_percent_usage',
+        help: 'The process CPU percent usage.',
+        collect: () => {
+          const cpus = os.cpus()
+          let idleTime = 0
+          let totalTime = 0
+
+          cpus.forEach(cpu => {
+            for (const type in cpu.times) {
+              totalTime += cpu.times[type]
+              if (type === 'idle') {
+                idleTime += cpu.times[type]
+              }
+            }
+          })
+
+          const idleDiff = idleTime - previousIdleTime
+          const totalDiff = totalTime - previousTotalTime
+
+          const usagePercent = 100 - ((100 * idleDiff) / totalDiff)
+          const roundedUsage = Math.round(usagePercent * 100) / 100
+          cpuMetric.set(roundedUsage)
+
+          previousIdleTime = idleTime
+          previousTotalTime = totalTime
+        }
+      })
+      app.metrics.client.register.registerMetric(cpuMetric)
     })
   }
 

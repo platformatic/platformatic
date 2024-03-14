@@ -105,6 +105,9 @@ class RuntimeApiClient extends EventEmitter {
   async getFormattedMetrics () {
     const { metrics } = await this.getMetrics()
 
+    const cpuMetric = metrics.find(
+      (metric) => metric.name === 'process_cpu_percent_usage'
+    )
     const rssMetric = metrics.find(
       (metric) => metric.name === 'process_resident_memory_bytes'
     )
@@ -127,6 +130,7 @@ class RuntimeApiClient extends EventEmitter {
       (metric) => metric.name === 'nodejs_eventloop_utilization'
     )
 
+    const cpu = cpuMetric.values[0].value
     const rss = rssMetric.values[0].value
     const elu = eventLoopUtilizationMetric.values[0].value
     const totalHeapSize = totalHeapSizeMetric.values[0].value
@@ -137,6 +141,7 @@ class RuntimeApiClient extends EventEmitter {
     return {
       version: 1,
       date: new Date().toISOString(),
+      cpu,
       elu,
       rss,
       totalHeapSize,

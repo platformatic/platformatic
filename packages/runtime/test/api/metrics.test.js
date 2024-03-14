@@ -47,6 +47,7 @@ test('should get runtime metrics in a json format', async (t) => {
     'nodejs_heap_space_size_total_bytes',
     'nodejs_heap_space_size_used_bytes',
     'nodejs_version_info',
+    'process_cpu_percent_usage',
     'process_cpu_seconds_total',
     'process_cpu_system_seconds_total',
     'process_cpu_user_seconds_total',
@@ -101,6 +102,7 @@ test('should get runtime metrics in a text format', async (t) => {
     'nodejs_heap_space_size_total_bytes',
     'nodejs_heap_space_size_used_bytes',
     'nodejs_version_info',
+    'process_cpu_percent_usage',
     'process_cpu_seconds_total',
     'process_cpu_system_seconds_total',
     'process_cpu_user_seconds_total',
@@ -129,6 +131,7 @@ test('should get formatted runtime metrics', async (t) => {
   const metricsKeys = Object.keys(metrics).sort()
 
   assert.deepStrictEqual(metricsKeys, [
+    'cpu',
     'date',
     'elu',
     'newSpaceSize',
@@ -161,6 +164,7 @@ test('should get cached formatted runtime metrics', async (t) => {
   for (const metric of metrics) {
     const metricsKeys = Object.keys(metric).sort()
     assert.deepStrictEqual(metricsKeys, [
+      'cpu',
       'date',
       'elu',
       'newSpaceSize',
