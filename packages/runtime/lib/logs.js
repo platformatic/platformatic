@@ -94,15 +94,10 @@ async function pipeLiveLogs (writableStream, logger, startLogIndex) {
   })
 }
 
-async function getLatestLogIndex () {
+async function getLogIndexes () {
   const runtimeLogFiles = await getLogFiles()
-  if (runtimeLogFiles.length === 0) {
-    return -1
-  }
-
-  const latestFileName = runtimeLogFiles[runtimeLogFiles.length - 1]
-  const latestFileIndex = parseInt(latestFileName.slice('logs.'.length))
-  return latestFileIndex
+  return runtimeLogFiles
+    .map((file) => parseInt(file.slice('logs.'.length)))
 }
 
 async function getLogFileStream (logFileIndex) {
@@ -113,5 +108,5 @@ async function getLogFileStream (logFileIndex) {
 module.exports = {
   pipeLiveLogs,
   getLogFileStream,
-  getLatestLogIndex
+  getLogIndexes
 }

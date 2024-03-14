@@ -13,7 +13,7 @@ const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 const runtimeTmpDir = join(PLATFORMATIC_TMP_DIR, process.pid.toString())
 
-test('should get runtime latest log index', async (t) => {
+test('should get runtime log indexes', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
@@ -40,10 +40,10 @@ test('should get runtime latest log index', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/logs/latest/index'
+    path: '/api/v1/logs/indexes'
   })
   assert.strictEqual(statusCode, 200)
 
   const data = await body.json()
-  assert.deepStrictEqual(data, { index: 42 })
+  assert.deepStrictEqual(data, { indexes: [1, 42] })
 })

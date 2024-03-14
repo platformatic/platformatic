@@ -5,7 +5,7 @@ const { join } = require('node:path')
 const { readFile, mkdir, unlink } = require('node:fs/promises')
 const fastify = require('fastify')
 const errors = require('./errors')
-const { pipeLiveLogs, getLogFileStream, getLatestLogIndex } = require('./logs')
+const { pipeLiveLogs, getLogFileStream, getLogIndexes } = require('./logs')
 const platformaticVersion = require('../package.json').version
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
@@ -117,17 +117,32 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
 
     app.get('/logs/live', { websocket: true }, async (connection, req) => {
       const startLogIndex = req.query.start ? parseInt(req.query.start) : null
+
+      if (startLogIndex) {
+        const logIndexes = await getLogIndexes()
+        if (!logIndexes.includes(startLogIndex)) {
+          throw new errors.LogFileNotFound(startLogIndex)
+        }
+      }
+
       pipeLiveLogs(connection, req.log, startLogIndex)
     })
 
-    app.get('/logs/latest/index', async () => {
-      const latestLogIndex = await getLatestLogIndex()
-      return { index: latestLogIndex }
+    app.get('/logs/indexes', async () => {
+      const logIndexes = await getLogIndexes()
+      return { indexes: logIndexes }
     })
 
     app.get('/logs/:id', async (req) => {
       const { id } = req.params
-      const logFileStream = await getLogFileStream(id)
+
+      const logIndex = parseInt(id)
+      const logIndexes = await getLogIndexes()
+      if (!logIndexes.includes(logIndex)) {
+        throw new errors.LogFileNotFound(logIndex)
+      }
+
+      const logFileStream = await getLogFileStream(logIndex)
       return logFileStream
     })
   }, { prefix: '/api/v1' })
