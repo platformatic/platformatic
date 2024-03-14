@@ -189,7 +189,16 @@ class RuntimeApiClient extends EventEmitter {
   startCollectingMetrics () {
     this.#metrics = []
     this.#metricsTimeout = setInterval(async () => {
-      const metrics = await this.getFormattedMetrics()
+      let metrics = null
+      try {
+        metrics = await this.getFormattedMetrics()
+      } catch (error) {
+        if (!(error instanceof errors.RuntimeExitedError)) {
+          console.error('Error collecting metrics', error)
+        }
+        return
+      }
+
       this.emit('metrics', metrics)
       this.#metrics.push(metrics)
       if (this.#metrics.length > MAX_METRICS_QUEUE_LENGTH) {
