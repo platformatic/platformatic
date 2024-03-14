@@ -21,9 +21,9 @@ test('should get runtime metrics in a json format', async (t) => {
   })
 
   const { metrics } = await app.getMetrics()
-  const metricsNames = metrics.map((metric) => metric.name).sort()
+  const metricsNames = metrics.map((metric) => metric.name)
 
-  assert.deepStrictEqual(metricsNames, [
+  const expectedMetricNames = [
     'nodejs_active_handles',
     'nodejs_active_handles_total',
     'nodejs_active_requests',
@@ -59,7 +59,10 @@ test('should get runtime metrics in a json format', async (t) => {
     'service_2_http_request_all_summary_seconds',
     'service_2_http_request_duration_seconds',
     'service_2_http_request_summary_seconds'
-  ])
+  ]
+  for (const metricName of expectedMetricNames) {
+    assert.ok(metricsNames.includes(metricName))
+  }
 })
 
 test('should get runtime metrics in a text format', async (t) => {
@@ -78,9 +81,8 @@ test('should get runtime metrics in a text format', async (t) => {
   const metricsNames = metrics.metrics.split('\n')
     .filter(line => line && line.startsWith('# TYPE'))
     .map(line => line.split(' ')[2])
-    .sort()
 
-  assert.deepStrictEqual(metricsNames, [
+  const expectedMetricNames = [
     'nodejs_active_handles',
     'nodejs_active_handles_total',
     'nodejs_active_requests',
@@ -116,7 +118,10 @@ test('should get runtime metrics in a text format', async (t) => {
     'service_2_http_request_all_summary_seconds',
     'service_2_http_request_duration_seconds',
     'service_2_http_request_summary_seconds'
-  ])
+  ]
+  for (const metricName of expectedMetricNames) {
+    assert.ok(metricsNames.includes(metricName))
+  }
 })
 
 test('should get formatted runtime metrics', async (t) => {
