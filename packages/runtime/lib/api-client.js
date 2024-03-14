@@ -97,6 +97,10 @@ class RuntimeApiClient extends EventEmitter {
     return this.#sendCommand('plt:inject', { id, injectParams })
   }
 
+  getCachedMetrics () {
+    return this.#metrics
+  }
+
   async getFormattedMetrics () {
     const { metrics } = await this.getMetrics()
 
@@ -146,6 +150,7 @@ class RuntimeApiClient extends EventEmitter {
 
     setInterval(async () => {
       const metrics = await this.getFormattedMetrics()
+      this.emit('metrics', metrics)
       this.#metrics.push(metrics)
       if (this.#metrics.length > MAX_METRICS_QUEUE_LENGTH) {
         this.#metrics.shift()

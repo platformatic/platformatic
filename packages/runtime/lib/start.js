@@ -44,21 +44,10 @@ async function startWithConfig (configManager, env = process.env) {
   // The configManager cannot be transferred to the worker, so remove it.
   delete config.configManager
 
-  let mainLoggingPort = null
-  let childLoggingPort = config.loggingPort
-
-  if (!childLoggingPort && config.managementApi) {
-    const { port1, port2 } = new MessageChannel()
-    mainLoggingPort = port1
-    childLoggingPort = port2
-
-    config.loggingPort = childLoggingPort
-  }
-
   const worker = new Worker(kWorkerFile, {
     /* c8 ignore next */
     execArgv: config.hotReload ? kWorkerExecArgv : [],
-    transferList: childLoggingPort ? [childLoggingPort] : [],
+    transferList: config.loggingPort ? [config.loggingPort] : [],
     workerData: { config, dirname },
     env
   })
@@ -116,8 +105,7 @@ async function startWithConfig (configManager, env = process.env) {
   if (config.managementApi) {
     managementApi = await startManagementApi(
       configManager,
-      runtimeApiClient,
-      mainLoggingPort
+      runtimeApiClient
     )
     runtimeApiClient.managementApi = managementApi
     runtimeApiClient.startCollectingMetrics()
