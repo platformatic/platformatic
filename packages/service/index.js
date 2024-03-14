@@ -45,6 +45,12 @@ async function platformaticService (app, opts) {
     await app.register(telemetry, config.telemetry)
   }
 
+  // This must be done before loading the plugins, so they can be
+  // configured accordingly
+  if (isKeyEnabled('clients', config)) {
+    app.register(setupClients, config.clients)
+  }
+
   if (Array.isArray(beforePlugins)) {
     for (const plugin of beforePlugins) {
       app.register(plugin)
@@ -85,10 +91,6 @@ async function platformaticService (app, opts) {
       await app.register(loadVersions)
     }
   })
-
-  if (isKeyEnabled('clients', config)) {
-    app.register(setupClients, config.clients)
-  }
 
   if (isKeyEnabled('cors', config.server)) {
     app.register(setupCors, config.server.cors)
