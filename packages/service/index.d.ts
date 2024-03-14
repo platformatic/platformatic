@@ -28,7 +28,7 @@ declare module 'fastify' {
   }
 }
 
-export interface ConfigManagerConfig<T> extends Omit<IConfigManagerOptions, 'source' | 'watch' | 'schema'> {
+export interface ConfigManagerConfig<T> extends Omit<IConfigManagerOptions, 'source' | 'watch' | 'schema' | 'configVersion'> {
   transformConfig: (this: ConfigManager<T>) => Promise<void>
   schema: object
 }

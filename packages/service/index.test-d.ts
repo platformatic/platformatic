@@ -1,4 +1,4 @@
-import { expectType } from 'tsd'
+import { expectType, expectError } from 'tsd'
 import { FastifyInstance } from 'fastify'
 import ConfigManager from '@platformatic/config'
 import { OpenAPI } from 'openapi-types'
@@ -56,6 +56,9 @@ function buildStackable (): Stackable<PlatformaticServiceConfig> {
       return config
     }
   }
+
+  // configVersion is not part of ConfigManagerConfig
+  expectError(myApp.configManagerConfig.configVersion)
 
   await start(myApp, ['--help'])
 
