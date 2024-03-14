@@ -367,10 +367,11 @@ class BaseGenerator extends FileGenerator {
       name: `${this.config.serviceName}`,
       scripts: {
         start: 'platformatic start',
-        test: 'node --test test/**'
+        test: 'borp'
       },
       devDependencies: {
         fastify: `^${this.fastifyVersion}`,
+        borp: `${this.pkgData.devDependencies.borp}`,
         ...this.config.devDependencies
       },
       dependencies: {
