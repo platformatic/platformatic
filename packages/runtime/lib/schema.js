@@ -106,24 +106,41 @@ const platformaticRuntimeSchema = {
       }
     },
     undici: {
-      agentOptions: {
-        type: 'object',
-        additionalProperties: true
-      },
-      interceptors: {
-        type: 'array',
-        items: {
+      type: 'object',
+      properties: {
+        agentOptions: {
           type: 'object',
-          properties: {
-            module: {
-              type: 'string'
-            },
-            options: {
-              type: 'object',
-              additionalProperties: true
+          additionalProperties: true
+        },
+        interceptors: {
+          anyOf: [{
+            type: 'array',
+            items: {
+              $ref: '#/$defs/undiciInterceptor'
             }
-          },
-          required: ['module', 'options']
+          }, {
+            type: 'object',
+            properties: {
+              Client: {
+                type: 'array',
+                items: {
+                  $ref: '#/$defs/undiciInterceptor'
+                }
+              },
+              Pool: {
+                type: 'array',
+                items: {
+                  $ref: '#/$defs/undiciInterceptor'
+                }
+              },
+              Agent: {
+                type: 'array',
+                items: {
+                  $ref: '#/$defs/undiciInterceptor'
+                }
+              }
+            }
+          }]
         }
       }
     },
@@ -144,7 +161,22 @@ const platformaticRuntimeSchema = {
     { required: ['autoload', 'entrypoint'] },
     { required: ['services', 'entrypoint'] }
   ],
-  additionalProperties: false
+  additionalProperties: false,
+  $defs: {
+    undiciInterceptor: {
+      type: 'object',
+      properties: {
+        module: {
+          type: 'string'
+        },
+        options: {
+          type: 'object',
+          additionalProperties: true
+        }
+      },
+      required: ['module', 'options']
+    }
+  }
 }
 
 module.exports.schema = platformaticRuntimeSchema

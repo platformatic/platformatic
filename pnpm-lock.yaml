@@ -1429,8 +1429,8 @@ importers:
         specifier: ^4.26.0
         version: 4.26.2
       fastify-undici-dispatcher:
-        specifier: ^0.5.0
-        version: 0.5.1
+        specifier: ^0.6.0
+        version: 0.6.0
       graphql:
         specifier: ^16.8.1
         version: 16.8.1
@@ -1453,8 +1453,8 @@ importers:
         specifier: ^0.1.0
         version: 0.1.0
       undici:
-        specifier: ^6.6.0
-        version: 6.8.0
+        specifier: ^6.9.0
+        version: 6.9.0
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
@@ -5638,10 +5638,10 @@ packages:
     engines: {node: '>=18.0.0'}
     dev: true
 
-  /fastify-undici-dispatcher@0.5.1:
-    resolution: {integrity: sha512-lJmnlW6YPHHOWvfMpn8mbJSFyv+Gjx/nPdL0gUEL+9JNeOA2T6AVAP+L6xzL9IRGCRbz13twFxbHylcrPYU9rg==}
+  /fastify-undici-dispatcher@0.6.0:
+    resolution: {integrity: sha512-xSt3eCZHsZOh5cDBbEObWHIYYz+g8QmyqFgxVypTjxvE74QOcpx9KGonrHQkKKCnkY31CmXFoBgZjSvwIDZWPQ==}
     dependencies:
-      undici: 6.8.0
+      undici: 6.9.0
     dev: false
 
   /fastify-user@0.3.3:
@@ -9521,7 +9521,7 @@ packages:
     resolution: {integrity: sha512-YqV0PwSGyKH16wvnTH8s1P09F1RRMPQEjIHyCXIS+J9sMlnkaepMFS+Sps6zeyXM2eYoF30WAm68t7HDQ7eIAg==}
     dependencies:
       fast-jwt: 3.3.3
-      undici: 6.8.0
+      undici: 6.9.0
     dev: true
 
   /undici-types@5.26.5:
@@ -9535,6 +9535,10 @@ packages:
 
   /undici@6.8.0:
     resolution: {integrity: sha512-22FP0QRSJDQO2PC+bMBVqvsZ3cNQwQnxCNq910N3eIIU4xgMVVpLbEEX7fCg7AalvijPwjlyk5ezenw9FqZfHQ==}
+    engines: {node: '>=18.0'}
+
+  /undici@6.9.0:
+    resolution: {integrity: sha512-XPWfXzJedevUziHwun70EKNvGnxv4CnfraFZ4f/JV01+fcvMYzHE26r/j8AY/9c/70nkN4B1zX7E2Oyuqwz4+Q==}
     engines: {node: '>=18.0'}
 
   /unicorn-magic@0.1.0:
