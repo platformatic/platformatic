@@ -53,12 +53,12 @@ test('should get runtime metrics in a json format', async (t) => {
     'process_cpu_user_seconds_total',
     'process_resident_memory_bytes',
     'process_start_time_seconds',
+    'service_1_http_request_all_summary_seconds',
     'service_1_http_request_duration_seconds',
     'service_1_http_request_summary_seconds',
-    'service_1_http_request_all_summary_seconds',
+    'service_2_http_request_all_summary_seconds',
     'service_2_http_request_duration_seconds',
-    'service_2_http_request_summary_seconds',
-    'service_2_http_request_all_summary_seconds'
+    'service_2_http_request_summary_seconds'
   ])
 })
 
@@ -110,12 +110,12 @@ test('should get runtime metrics in a text format', async (t) => {
     'process_cpu_user_seconds_total',
     'process_resident_memory_bytes',
     'process_start_time_seconds',
+    'service_1_http_request_all_summary_seconds',
     'service_1_http_request_duration_seconds',
     'service_1_http_request_summary_seconds',
-    'service_1_http_request_all_summary_seconds',
+    'service_2_http_request_all_summary_seconds',
     'service_2_http_request_duration_seconds',
-    'service_2_http_request_summary_seconds',
-    'service_2_http_request_all_summary_seconds'
+    'service_2_http_request_summary_seconds'
   ])
 })
 
