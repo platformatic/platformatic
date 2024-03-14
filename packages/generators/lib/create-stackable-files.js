@@ -184,7 +184,7 @@ class ${stackableGeneratorType} extends ServiceGenerator {
     const packageJson = await this.getStackablePackageJson()
     const config = {
       $schema: './stackable.schema.json',
-      module: packageJson.name,
+      module: \`\${packageJson.name}@\${packageJson.version}\`,
       greeting: {
         text: \`{\${this.getEnvVarName('PLT_GREETING_TEXT')}}\`
       }
@@ -292,7 +292,7 @@ class ${stackableGeneratorType} extends ServiceGenerator {
     const packageJson = await this.getStackablePackageJson()
     const config = {
       $schema: './stackable.schema.json',
-      module: packageJson.name,
+      module: \`\${packageJson.name}@\${packageJson.version}\`,
       greeting: {
         text: \`{\${this.getEnvVarName('PLT_GREETING_TEXT')}}\`
       }
