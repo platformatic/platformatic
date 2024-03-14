@@ -1449,6 +1449,9 @@ importers:
       pino-roll:
         specifier: 1.0.0-rc.1
         version: 1.0.0-rc.1
+      tail-file-stream:
+        specifier: ^0.1.0
+        version: 0.1.0
       undici:
         specifier: ^6.6.0
         version: 6.8.0
@@ -9159,6 +9162,10 @@ packages:
       slice-ansi: 4.0.0
       string-width: 4.2.3
       strip-ansi: 6.0.1
+    dev: false
+
+  /tail-file-stream@0.1.0:
+    resolution: {integrity: sha512-4yfpJwnH5ac2N1i6sHRd2Sp3M78IZqsPdhI0m26qgtzoMTaLXDxG7vYJym/Vr06K0+VF+dNvQOk+9JEQn1F73g==}
     dev: false
 
   /tar-fs@2.1.1:
