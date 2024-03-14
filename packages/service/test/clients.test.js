@@ -87,3 +87,26 @@ test('client is loaded dependencyless', async (t) => {
   const data = await res.body.json()
   assert.deepStrictEqual(data, { hello: 'world' })
 })
+
+test('client is loaded before plugins', async (t) => {
+  const app1 = await buildServer(join(__dirname, '..', 'fixtures', 'hello', 'warn-log.service.json'))
+
+  t.after(async () => {
+    await app1.close()
+  })
+  await app1.start()
+
+  process.env.PLT_CLIENT_URL = app1.url
+
+  const app2 = await buildServer(join(__dirname, '..', 'fixtures', 'hello-client-from-plugin', 'platformatic.service.json'))
+
+  t.after(async () => {
+    await app2.close()
+  })
+  await app2.start()
+
+  const res = await request(`${app2.url}/`)
+  assert.strictEqual(res.statusCode, 200, 'status code')
+  const data = await res.body.json()
+  assert.deepStrictEqual(data, { hello: 'world', hasConfig: true })
+})

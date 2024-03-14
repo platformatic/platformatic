@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/create-platformatic-auto",
-  "version": "1.25.0",
+  "version": "1.27.0",
   "description": "Create platformatic application interactive tool",
   "repository": {
     "type": "git",
@@ -52,14 +52,14 @@
     "@platformatic/runtime": "workspace:*",
     "@platformatic/service": "workspace:*",
     "ajv": "^8.12.0",
-    "borp": "^0.9.0",
+    "borp": "^0.10.0",
     "c8": "^9.1.0",
     "cross-env": "^7.0.3",
     "dotenv": "^16.4.1",
     "esmock": "^2.6.3",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "typescript": "~5.3.3",
+    "typescript": "~5.4.0",
     "yaml": "^2.3.4"
   }
 }

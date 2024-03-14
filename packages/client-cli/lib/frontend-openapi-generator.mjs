@@ -1,6 +1,6 @@
 import CodeBlockWriter from 'code-block-writer'
 import { generateOperationId } from '@platformatic/client'
-import { capitalize, is200JsonResponse } from './utils.mjs'
+import { capitalize, getAllResponseCodes, getResponseTypes, is200JsonResponse } from './utils.mjs'
 import camelcase from 'camelcase'
 import { writeOperations } from '../../client-cli/lib/openapi-common.mjs'
 
@@ -163,23 +163,54 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
 
       writer.blankLine()
       if (currentFullResponse) {
-        writer.write('let body = await response.text()')
-
-        writer.blankLine()
-
-        writer.write('try ').inlineBlock(() => {
-          writer.write('body = JSON.parse(body)')
+        const mappedResponses = getResponseTypes(operation.operation.responses)
+        const allResponseCodes = getAllResponseCodes(operation.operation.responses)
+        Object.keys(mappedResponses).forEach((responseType) => {
+          if (mappedResponses[responseType].length > 0) {
+            writer.writeLine(`const ${responseType}Responses = [${mappedResponses[responseType].join(', ')}]`)
+            writer.write(`if (${responseType}Responses.includes(response.status)) `).block(() => {
+              writer.write('return ').block(() => {
+                writer.write('statusCode: response.status')
+                if (language === 'ts') {
+                  writer.write(` as ${mappedResponses[responseType].join(' | ')},`)
+                } else {
+                  writer.write(',')
+                }
+                writer.writeLine('headers: response.headers,')
+                writer.writeLine(`body: await response.${responseType}()`)
+              })
+            })
+          }
         })
-        writer.write(' catch (err)').block(() => {
-          writer.write('// do nothing and keep original body')
+
+        // write default response as fallback
+        writer.write('if (response.headers[\'content-type\'] === \'application/json\') ').block(() => {
+          writer.write('return ').block(() => {
+            writer.write('statusCode: response.status')
+            if (language === 'ts') {
+              writer.write(` as ${allResponseCodes.join(' | ')},`)
+            } else {
+              writer.write(',')
+            }
+            writer.writeLine('headers: response.headers,')
+            writer.write('body: await response.json()')
+            if (language === 'ts') {
+              writer.write(' as any')
+            }
+          })
         })
-
-        writer.blankLine()
-
-        writer.write('return').block(() => {
-          writer.writeLine('statusCode: response.status,')
+        writer.write('return ').block(() => {
+          writer.write('statusCode: response.status')
+          if (language === 'ts') {
+            writer.write(` as ${allResponseCodes.join(' | ')},`)
+          } else {
+            writer.write(',')
+          }
           writer.writeLine('headers: response.headers,')
-          writer.writeLine('body')
+          writer.write('body: await response.text()')
+          if (language === 'ts') {
+            writer.write(' as any')
+          }
         })
       } else {
         writer.write('if (!response.ok)').block(() => {
