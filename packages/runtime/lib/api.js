@@ -122,6 +122,8 @@ class RuntimeApi {
         return this.#getServiceOpenapiSchema(params)
       case 'plt:get-service-graphql-schema':
         return this.#getServiceGraphqlSchema(params)
+      case 'plt:get-metrics':
+        return this.#getMetrics(params)
       case 'plt:start-service':
         return this.#startService(params)
       case 'plt:stop-service':
@@ -275,6 +277,33 @@ class RuntimeApi {
     } catch (err) {
       throw new errors.FailedToRetrieveGraphQLSchemaError(id, err.message)
     }
+  }
+
+  async #getMetrics ({ format }) {
+    let entrypoint = null
+    for (const service of this.#services.values()) {
+      if (service.appConfig.entrypoint) {
+        entrypoint = service
+        break
+      }
+    }
+
+    if (!entrypoint.config) {
+      throw new errors.ServiceNotStartedError(entrypoint.id)
+    }
+
+    const promRegister = entrypoint.server.metrics?.client?.register
+    if (!promRegister) {
+      return null
+    }
+
+    // All runtime services shares the same metrics registry.
+    // Getting metrics from the entrypoint returns all metrics.
+    const metrics = format === 'json'
+      ? await promRegister.getMetricsAsJSON()
+      : await promRegister.metrics()
+
+    return { metrics }
   }
 
   async #startService ({ id }) {

@@ -11,7 +11,7 @@ const platformaticVersion = require('../package.json').version
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 const runtimeTmpDir = join(PLATFORMATIC_TMP_DIR, process.pid.toString())
 
-async function createManagementApi (configManager, runtimeApiClient, loggingPort) {
+async function createManagementApi (configManager, runtimeApiClient) {
   const app = fastify()
   app.log.warn(
     'Runtime Management API is in the experimental stage. ' +
@@ -115,6 +115,29 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
         .send(res.body)
     })
 
+    app.get('/metrics/live', { websocket: true }, async (connection) => {
+      const cachedMetrics = runtimeApiClient.getCachedMetrics()
+      const serializedMetrics = cachedMetrics
+        .map((metric) => JSON.stringify(metric))
+        .join('\n')
+      connection.socket.send(serializedMetrics)
+
+      const eventHandler = (metrics) => {
+        const serializedMetrics = JSON.stringify(metrics)
+        connection.socket.send(serializedMetrics)
+      }
+
+      runtimeApiClient.on('metrics', eventHandler)
+
+      connection.on('error', () => {
+        runtimeApiClient.off('metrics', eventHandler)
+      })
+
+      connection.on('close', () => {
+        runtimeApiClient.off('metrics', eventHandler)
+      })
+    })
+
     app.get('/logs/live', { websocket: true }, async (connection, req) => {
       const startLogIndex = req.query.start ? parseInt(req.query.start) : null
 
@@ -150,7 +173,7 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
   return app
 }
 
-async function startManagementApi (configManager, runtimeApiClient, loggingPort) {
+async function startManagementApi (configManager, runtimeApiClient) {
   const runtimePID = process.pid
 
   let socketPath = null
@@ -170,8 +193,7 @@ async function startManagementApi (configManager, runtimeApiClient, loggingPort)
 
     const managementApi = await createManagementApi(
       configManager,
-      runtimeApiClient,
-      loggingPort
+      runtimeApiClient
     )
 
     if (platform() !== 'win32') {
