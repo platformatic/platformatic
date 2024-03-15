@@ -1,18 +1,21 @@
 'use strict'
 
-const { createRequire } = require('module')
-const { isFileAccessible } = require('./utils')
-const { join } = require('path')
+const { createRequire } = require('node:module')
+const { isFileAccessible, splitModuleFromVersion } = require('./utils')
+const { join } = require('node:path')
 const { ConfigManager } = require('./manager')
-const { readFile } = require('fs/promises')
-const { getParser, analyze, upgrade } = require('@platformatic/metaconfig')
+const { readFile } = require('node:fs/promises')
+const { readFileSync } = require('node:fs')
+const { getParser } = require('./formats')
 const errors = require('./errors')
+const abstractLogger = require('./logger')
+
+const pltVersion = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8')).version
 
 class Store {
   #map = new Map()
   #cwd
   #require
-  #currentVersion
 
   constructor (opts) {
     opts = opts || {}
@@ -21,8 +24,7 @@ class Store {
     // createRequire accepts a filename, but it's not used,
     // so we pass a dummy file to make it happy
     this.#require = createRequire(join(this.#cwd, 'noop.js'))
-
-    this.#currentVersion = null
+    this.logger = opts.logger || abstractLogger
   }
 
   add (app) {
@@ -49,13 +51,15 @@ class Store {
       app.configManagerConfig.schema = app.schema
     }
 
-    this.#currentVersion = this.getVersionFromSchema(app.schema.$id)
     this.#map.set(app.schema.$id, app)
   }
 
-  async get ({ $schema, module, extends: _extends }, { directory } = {}) {
+  async _get ({ $schema, module, extends: _extends, core, db }, { directory } = {}) {
     // We support both 'module' and 'extends'. Note that we have to rename the veriable, because "extends" is a reserved word
-    const extendedModule = _extends || module
+    const {
+      module: extendedModule,
+      version
+    } = splitModuleFromVersion(_extends || module)
     let app = this.#map.get($schema)
     let require = this.#require
 
@@ -77,19 +81,37 @@ class Store {
       }
     }
 
-    if (app === undefined) {
-      const attemptedToRunVersion = this.getVersionFromSchema($schema)
+    const match = $schema?.match(/\/schemas\/(.*)\/(.*)/)
+    if (!app && match) {
+      const type = match[2]
 
-      if (attemptedToRunVersion === null) {
-        throw new errors.AddAModulePropertyToTheConfigOrAddAKnownSchemaError()
+      const toLoad = `https://platformatic.dev/schemas/v${pltVersion}/${type}`
+      app = this.#map.get(toLoad)
+    }
+
+    // Legacy Platformatic apps
+    if (!app && $schema?.indexOf('./') === 0) {
+      if (core || db) {
+        app = this.#map.get(`https://platformatic.dev/schemas/v${pltVersion}/db`)
       } else {
-        throw new errors.VersionMismatchError(this.#currentVersion, attemptedToRunVersion)
+        app = this.#map.get(`https://platformatic.dev/schemas/v${pltVersion}/service`)
       }
     }
 
+    if (!app) {
+      throw new errors.AddAModulePropertyToTheConfigOrAddAKnownSchemaError()
+    }
+
+    return { app, version }
+  }
+
+  async get (...args) {
+    const { app } = await this._get(...args)
     return app
   }
 
+  // TODO(mcollina): remove in the next major version
+  /* c8 ignore next 10 */
   getVersionFromSchema (schema) {
     if (!schema) {
       return null
@@ -183,6 +205,7 @@ class Store {
     const overrides = opts.overrides
     let configFile = opts.config
     let app = opts.app
+    let version
 
     if (!configFile) {
       const found = await this.#findConfigFile(opts.directory)
@@ -195,17 +218,15 @@ class Store {
     if (!app) {
       const parser = getParser(configFile)
       const parsed = parser(await readFile(configFile))
-      try {
-        const meta = await analyze({ config: parsed })
-        const config = upgrade(meta).config
-        app = await this.get(config, opts)
-      } catch (err) {
-        app = await this.get(parsed, opts)
-      }
+      const res = await this._get(parsed, opts)
+      app = res.app
+      version = res.version
     }
 
     const configManagerConfig = {
       schema: app.schema,
+      configVersion: version,
+      logger: this.logger,
       ...app.configManagerConfig,
       ...overrides
     }

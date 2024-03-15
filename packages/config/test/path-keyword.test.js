@@ -120,3 +120,25 @@ test('resolveModule / 3', async (t) => {
   const parseResult = await cm.parse()
   assert.equal(parseResult, false)
 })
+
+test('fixPaths: false', async (t) => {
+  const configFile = join(__dirname, 'fixtures', 'onepath.json')
+  const cm = new ConfigManager({
+    source: configFile,
+    fixPaths: false,
+    schema: {
+      type: 'object',
+      properties: {
+        path: {
+          type: 'string',
+          resolveModule: true
+        }
+      }
+    }
+  })
+
+  const parseResult = await cm.parse()
+  assert.equal(parseResult, true)
+
+  assert.equal(isAbsolute(cm.current.path), false)
+})

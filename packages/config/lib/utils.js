@@ -14,3 +14,18 @@ async function isFileAccessible (filename, directory) {
 }
 
 module.exports.isFileAccessible = isFileAccessible
+
+function splitModuleFromVersion (module) {
+  if (!module) {
+    return {}
+  }
+  const versionMatcher = module.match(/(.+)@(\d+.\d+.\d+)/)
+  let version
+  if (versionMatcher) {
+    module = versionMatcher[1]
+    version = versionMatcher[2]
+  }
+  return { module, version }
+}
+
+module.exports.splitModuleFromVersion = splitModuleFromVersion

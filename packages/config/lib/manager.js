@@ -7,10 +7,10 @@ const { createRequire } = require('node:module')
 const Ajv = require('ajv')
 const fastifyPlugin = require('./plugin')
 const dotenv = require('dotenv')
-const { request } = require('undici')
-const { getParser, analyze, upgrade } = require('@platformatic/metaconfig')
-const { isFileAccessible } = require('./utils')
+const { getParser } = require('./formats')
+const { isFileAccessible, splitModuleFromVersion } = require('./utils')
 const errors = require('./errors')
+const abstractlogger = require('./logger')
 
 const PLT_ROOT = 'PLT_ROOT'
 
@@ -18,6 +18,15 @@ class ConfigManager extends EventEmitter {
   constructor (opts) {
     super()
     this.pupa = null
+    this._stackableUpgrade = opts.upgrade
+    this._fixPaths = opts.fixPaths === undefined ? true : opts.fixPaths
+    this._configVersion = opts.configVersion // requested version
+    this._version = opts.version
+    this.logger = opts.logger || abstractlogger
+
+    if (this._stackableUpgrade && !this._version) {
+      throw new errors.VersionMissingError()
+    }
 
     this.envWhitelist = opts.envWhitelist || []
     if (typeof this.envWhitelist === 'string') {
@@ -129,7 +138,6 @@ class ConfigManager extends EventEmitter {
       ...this.env,
       [PLT_ROOT]: join(this.fullPath, '..')
     }
-
     return this.pupa(configString, fullEnv, { transform: escapeJSONstring })
   }
 
@@ -157,28 +165,43 @@ class ConfigManager extends EventEmitter {
         } else {
           this.current = this._parser(await this.load())
         }
-        // try updating the config format to latest
-        try {
-          let meta = await analyze({ config: this.current })
-          meta = upgrade(meta)
-          this.current = meta.config
-        } catch {
-          // nothing to do
-        }
       }
 
-      if (!this._providedSchema && this.current.$schema) {
-        // The user did not provide a schema, but we have a link to the schema
-        // in $schema. Try to fetch the schema and ignore anything that goes
-        // wrong.
-        try {
-          const { body, statusCode } = await request(this.current.$schema)
-          if (statusCode === 200) {
-            this.schema = await body.json()
+      if (this._stackableUpgrade) {
+        if (!this._configVersion && (this.current.extends || this.current.module)) {
+          const { version } = splitModuleFromVersion(this.current.extends || this.current.module)
+          this._configVersion = version
+        }
+
+        let version = this._configVersion
+        if (!version && this.current.$schema?.indexOf('https://platformatic.dev/schemas/') === 0) {
+          const url = new URL(this.current.$schema)
+          const res = url.pathname.match(/^\/schemas\/v(\d+\.\d+\.\d+)\/(.*)$/)
+          version = res[1]
+        }
+
+        // Really old Platformatic applications followed this format. This was a bad decision that we
+        // keep supporting.
+        // TODO(mcollina): remove in a future version
+        if (!version && this.fullPath && this.current.$schema && this.current.$schema.indexOf('./') === 0) {
+          const dir = dirname(this.fullPath)
+          const schemaPath = resolve(dir, this.current.$schema)
+          const schema = JSON.parse(await readFile(schemaPath, 'utf-8'))
+          if (schema.$id?.indexOf('https://schemas.platformatic.dev') === 0) {
+            version = '0.15.0'
           }
-          /* c8 ignore next 3 */
-        } catch {
-          // Ignore error.
+        }
+
+        // If we can't find a version, then we can't upgrade
+        if (version) {
+          this.current = await this._stackableUpgrade(this.current, version)
+
+          if (this.current.extends) {
+            this.current.extends.replace(/.+@(\d+\.\d+\.\d+)$/, this._version)
+          }
+          if (this.current.module) {
+            this.current.module.replace(/.+@(\d+\.\d+\.\d+)$/, this._version)
+          }
         }
       }
 
@@ -186,6 +209,7 @@ class ConfigManager extends EventEmitter {
       if (!validationResult) {
         return false
       }
+
       await this._transformConfig()
       return true
     } catch (err) {
@@ -217,8 +241,11 @@ class ConfigManager extends EventEmitter {
         if (typeof path !== 'string' || path.trim() === '') {
           return false
         }
-        const resolved = resolve(this.dirname, path)
-        data.parentData[data.parentDataProperty] = resolved
+
+        if (this._fixPaths) {
+          const resolved = resolve(this.dirname, path)
+          data.parentData[data.parentDataProperty] = resolved
+        }
         return true
       }
     })
@@ -232,6 +259,9 @@ class ConfigManager extends EventEmitter {
         if (typeof path !== 'string' || path.trim() === '') {
           return false
         }
+        if (!this._fixPaths) {
+          return true
+        }
         const toRequire = this.fullPath || join(this.dirname, 'foo')
         const _require = createRequire(toRequire)
         try {
@@ -243,6 +273,7 @@ class ConfigManager extends EventEmitter {
         }
       }
     })
+
     ajv.addKeyword({
       keyword: 'typeof',
       validate: function validate (schema, value, _, data) {

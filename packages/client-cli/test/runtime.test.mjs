@@ -11,7 +11,7 @@ import { cp, writeFile, readFile } from 'node:fs/promises'
 import split from 'split2'
 import { once } from 'node:events'
 
-test('openapi client generation (javascript) via the runtime', async (t) => {
+test.only('openapi client generation (javascript) via the runtime', async (t) => {
   const dir = await moveToTmpdir(after)
   console.log(`working in ${dir}`)
 
@@ -73,11 +73,13 @@ module.exports = async function (app, opts) {
   t.after(() => app2.kill())
 
   const stream = app2.stdout.pipe(split(JSON.parse))
+  app2.stderr.pipe(process.stderr)
 
   // this is unfortuate :(
   const base = 'Server listening at '
   let url
   for await (const line of stream) {
+    console.log(line)
     const msg = line.msg
     if (msg.indexOf(base) !== 0) {
       continue
@@ -94,6 +96,7 @@ module.exports = async function (app, opts) {
     title: 'foo'
   })
 })
+
 test('should return error if in the runtime root', async (t) => {
   const dir = await moveToTmpdir(after)
   console.log(`working in ${dir}`)

@@ -144,6 +144,8 @@ export interface PlatformaticService {
     | {
         port?: number | string;
         hostname?: string;
+        endpoint?: string;
+        server?: "own" | "parent";
         auth?: {
           username: string;
           password: string;

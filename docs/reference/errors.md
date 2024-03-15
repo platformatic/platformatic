@@ -5,23 +5,11 @@
 ### PLT_AUTHENTICATE_UNABLE_TO_CONTACT_LOGIN_SERVICE
 **Message:** Unable to contact login service 
 
-### PLT_AUTHENTICATE_UNABLE_TO_RETRIEVE_TOKENS
-**Message:** Unable to retrieve tokens 
-
-### PLT_AUTHENTICATE_USER_DID_NOT_AUTHENTICATE_BEFORE_EXPIRY
-**Message:** User did not authenticate before expiry 
+### PLT_AUTHENTICATE_UNKNOWN_MESSAGE_TYPE
+**Message:** Received unknown message type from login service: %s 
 
 ### PLT_AUTHENTICATE_CONFIG_OPTION_REQUIRES_PATH_TO_FILE
 **Message:** --config option requires path to a file 
-
-### PLT_AUTHENTICATE_UNABLE_TO_GET_USER_DATA
-**Message:** Unable to get user data 
-
-### PLT_AUTHENTICATE_UNABLE_TO_CLAIM_INVITE
-**Message:** Unable to claim invite 
-
-### PLT_AUTHENTICATE_MISSING_INVITE
-**Message:** Missing invite 
 
 ## @platformatic/client 
 
@@ -92,6 +80,9 @@ Did you mean PLT_%s?
 ### PLT_CONFIG_VERSION_MISMATCH
 **Message:** Version mismatch. You are running Platformatic %s but your app requires %s 
 
+### PLT_CONFIG_INVALID_CONFIG_FILE_EXTENSION
+**Message:** Invalid config file extension. Only yml, yaml, json, json5, toml, tml are supported. 
+
 ### PLT_CONFIG_NO_CONFIG_FILE_FOUND
 **Message:** no config file found 
 
@@ -150,69 +141,61 @@ Did you mean PLT_%s?
 ### PLT_SQL_DEPLOY_CLIENT_MISSING_CONFIG_FILE
 **Message:** Missing config file! 
 
-## @platformatic/metaconfig 
-
-### PLT_SQL_METACONFIG_MISSING_FILE_OR_CONFIG
-**Message:** missing file or config to analyze 
-
-### PLT_SQL_METACONFIG_MISSING_SCHEMA
-**Message:** missing $schema, unable to determine the version 
-
-### PLT_SQL_METACONFIG_UNABLE_TO_DETERMINE_VERSION
-**Message:** unable to determine the version 
-
-### PLT_SQL_METACONFIG_INVALID_CONFIG_FILE_EXTENSION
-**Message:** Invalid config file extension. Only yml, yaml, json, json5, toml, tml are supported. 
-
 ## @platformatic/runtime 
 
-### PLT_SQL_RUNTIME_RUNTIME_EXIT
+### PLT_RUNTIME_RUNTIME_EXIT
 **Message:** The runtime exited before the operation completed 
 
-### PLT_SQL_RUNTIME_UNKNOWN_RUNTIME_API_COMMAND
+### PLT_RUNTIME_UNKNOWN_RUNTIME_API_COMMAND
 **Message:** Unknown Runtime API command "%s" 
 
-### PLT_SQL_RUNTIME_SERVICE_NOT_FOUND
+### PLT_RUNTIME_SERVICE_NOT_FOUND
 **Message:** Service with id '%s' not found 
 
-### PLT_SQL_RUNTIME_SERVICE_NOT_STARTED
+### PLT_RUNTIME_SERVICE_NOT_STARTED
 **Message:** Service with id '%s' is not started 
 
-### PLT_SQL_RUNTIME_FAILED_TO_RETRIEVE_OPENAPI_SCHEMA
+### PLT_RUNTIME_FAILED_TO_RETRIEVE_OPENAPI_SCHEMA
 **Message:** Failed to retrieve OpenAPI schema for service with id "%s": %s 
 
-### PLT_SQL_RUNTIME_APPLICATION_ALREADY_STARTED
+### PLT_RUNTIME_FAILED_TO_RETRIEVE_GRAPHQL_SCHEMA
+**Message:** Failed to retrieve GraphQL schema for service with id "%s": %s 
+
+### PLT_RUNTIME_APPLICATION_ALREADY_STARTED
 **Message:** Application is already started 
 
-### PLT_SQL_RUNTIME_APPLICATION_NOT_STARTED
+### PLT_RUNTIME_APPLICATION_NOT_STARTED
 **Message:** Application has not been started 
 
-### PLT_SQL_RUNTIME_CONFIG_PATH_MUST_BE_STRING
+### PLT_RUNTIME_CONFIG_PATH_MUST_BE_STRING
 **Message:** Config path must be a string 
 
-### PLT_SQL_RUNTIME_NO_CONFIG_FILE_FOUND
+### PLT_RUNTIME_NO_CONFIG_FILE_FOUND
 **Message:** No config file found for service '%s' 
 
-### PLT_SQL_RUNTIME_INVALID_ENTRYPOINT
+### PLT_RUNTIME_INVALID_ENTRYPOINT
 **Message:** Invalid entrypoint: '%s' does not exist 
 
-### PLT_SQL_RUNTIME_MISSING_DEPENDENCY
+### PLT_RUNTIME_MISSING_DEPENDENCY
 **Message:** Missing dependency: "%s" 
 
-### PLT_SQL_RUNTIME_INSPECT_AND_INSPECT_BRK
+### PLT_RUNTIME_INSPECT_AND_INSPECT_BRK
 **Message:** --inspect and --inspect-brk cannot be used together 
 
-### PLT_SQL_RUNTIME_INSPECTOR_PORT
+### PLT_RUNTIME_INSPECTOR_PORT
 **Message:** Inspector port must be 0 or in range 1024 to 65535 
 
-### PLT_SQL_RUNTIME_INSPECTOR_HOST
+### PLT_RUNTIME_INSPECTOR_HOST
 **Message:** Inspector host cannot be empty 
 
-### PLT_SQL_RUNTIME_CANNOT_MAP_SPECIFIER_TO_ABSOLUTE_PATH
+### PLT_RUNTIME_CANNOT_MAP_SPECIFIER_TO_ABSOLUTE_PATH
 **Message:** Cannot map "%s" to an absolute path 
 
-### PLT_SQL_RUNTIME_NODE_INSPECTOR_FLAGS_NOT_SUPPORTED
+### PLT_RUNTIME_NODE_INSPECTOR_FLAGS_NOT_SUPPORTED
 **Message:** The Node.js inspector flags are not supported. Please use 'platformatic start --inspect' instead. 
+
+### PLT_RUNTIME_FAILED_TO_UNLINK_MANAGEMENT_API_SOCKET
+**Message:** Failed to unlink management API socket "%s" 
 
 ## @platformatic/service 
 

@@ -9,16 +9,17 @@ function getJsStackableIndexFile (stackableName) {
 const { platformaticService } = require('@platformatic/service')
 const { schema } = require('./lib/schema')
 const { Generator } = require('./lib/generator')
+const { version } = require('./package.json')
 
 async function stackable (fastify, opts) {
   await fastify.register(platformaticService, opts)
   await fastify.register(require('./plugins/example'), opts)
 }
-
 stackable.configType = '${kebabCase(stackableName + '-app')}'
 stackable.schema = schema
 stackable.Generator = Generator
 stackable.configManagerConfig = {
+  version,
   schema,
   envWhitelist: ['PORT', 'HOSTNAME'],
   allowToWatch: ['.env'],
@@ -48,6 +49,9 @@ import { platformaticService, Stackable } from '@platformatic/service'
 import { schema } from './lib/schema'
 import { Generator } from './lib/generator'
 import { ${stackableConfigType} } from './config'
+import { readFileSync } from 'node:fs'
+
+const { version } = JSON.parse(readFileSync('package.json', 'utf8'))
 
 const stackable: Stackable<${stackableConfigType}> = async function (fastify, opts) {
   await fastify.register(platformaticService, opts)
@@ -58,6 +62,7 @@ stackable.configType = '${kebabCase(stackableName + '-app')}'
 stackable.schema = schema
 stackable.Generator = Generator
 stackable.configManagerConfig = {
+  version,
   schema,
   envWhitelist: ['PORT', 'HOSTNAME'],
   allowToWatch: ['.env'],
@@ -179,7 +184,7 @@ class ${stackableGeneratorType} extends ServiceGenerator {
     const packageJson = await this.getStackablePackageJson()
     const config = {
       $schema: './stackable.schema.json',
-      module: packageJson.name,
+      module: \`\${packageJson.name}@\${packageJson.version}\`,
       greeting: {
         text: \`{\${this.getEnvVarName('PLT_GREETING_TEXT')}}\`
       }
@@ -287,7 +292,7 @@ class ${stackableGeneratorType} extends ServiceGenerator {
     const packageJson = await this.getStackablePackageJson()
     const config = {
       $schema: './stackable.schema.json',
-      module: packageJson.name,
+      module: \`\${packageJson.name}@\${packageJson.version}\`,
       greeting: {
         text: \`{\${this.getEnvVarName('PLT_GREETING_TEXT')}}\`
       }
@@ -359,11 +364,13 @@ function getJsStackableSchemaFile (stackableName) {
 'use strict'
 
 const { schema } = require('@platformatic/service')
+const { version } = require('../package.json')
 
 const ${schemaVarName} = {
   ...schema.schema,
   $id: '${schemaId}',
   title: '${schemaTitle}',
+  version,
   properties: {
     ...schema.schema.properties,
     module: { type: 'string' },
@@ -400,6 +407,7 @@ const ${schemaVarName} = {
   ...schema.schema,
   $id: '${schemaId}',
   title: '${schemaTitle}',
+  version,
   properties: {
     ...schema.schema.properties,
     module: { type: 'string' },

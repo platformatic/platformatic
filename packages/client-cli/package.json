@@ -42,7 +42,6 @@
     "@fastify/error": "^3.4.1",
     "@platformatic/client": "workspace:*",
     "@platformatic/config": "workspace:*",
-    "@platformatic/metaconfig": "workspace:*",
     "abstract-logging": "^2.0.1",
     "camelcase": "~6.3.0",
     "code-block-writer": "^13.0.1",

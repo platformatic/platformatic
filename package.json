@@ -9,7 +9,6 @@
     "postinstall": "node ./scripts/postinstall.js",
     "lint:markdown": "markdownlint-cli2",
     "test:config": "cd packages/config && pnpm test",
-    "test:metaconfig": "cd packages/config && pnpm test",
     "lint": "pnpm -r --workspace-concurrency=1 lint",
     "generate-errors-doc": "cd packages/generate-errors-doc && pnpm run generate-doc"
   },
@@ -21,7 +20,6 @@
   },
   "pre-commit": [
     "lint",
-    "test:config",
-    "test:metaconfig"
+    "test:config"
   ]
 }
