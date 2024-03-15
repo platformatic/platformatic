@@ -22,10 +22,10 @@
     "@fastify/websocket": "^9.0.0",
     "borp": "^0.10.0",
     "c8": "^9.1.0",
-    "fastify": "^4.26.0",
+    "fastify": "^4.26.2",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "undici": "^6.6.0"
+    "undici": "^6.9.0"
   },
   "dependencies": {
     "@fastify/error": "^3.4.1",

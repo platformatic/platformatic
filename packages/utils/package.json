@@ -20,7 +20,7 @@
   "devDependencies": {
     "@matteo.collina/tspl": "^0.1.1",
     "borp": "^0.10.0",
-    "fastify": "^4.26.0",
+    "fastify": "^4.26.2",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0"
   },
@@ -29,6 +29,6 @@
     "@fastify/error": "^3.4.1",
     "leven": "~3.1.0",
     "minimatch": "^8.0.4",
-    "undici": "^6.6.0"
+    "undici": "^6.9.0"
   }
 }

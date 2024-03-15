@@ -1,6 +1,7 @@
 'use strict'
 
 const fastify = require('fastify')
+const formBody = require('@fastify/formbody')
 const { createSigner } = require('fast-jwt')
 
 async function start (opts) {
@@ -14,6 +15,8 @@ async function start (opts) {
 
   app.decorate('refreshToken', '')
   app.decorate('signSync', signSync)
+
+  app.register(formBody)
 
   // Dump bearer token implementation
   app.post('/token', async (req, res) => {
