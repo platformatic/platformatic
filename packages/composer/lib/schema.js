@@ -174,6 +174,7 @@ const types = {
 const platformaticComposerSchema = {
   $id: `https://platformatic.dev/schemas/${version}/composer`,
   $schema: 'http://json-schema.org/draft-07/schema#',
+  title: 'Platformatic Composer',
   type: 'object',
   properties: {
     server,

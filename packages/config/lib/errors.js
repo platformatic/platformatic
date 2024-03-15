@@ -17,5 +17,7 @@ module.exports = {
   ConfigTypeMustBeAStringError: createError(`${ERROR_PREFIX}_CONFIG_TYPE_MUST_BE_A_STRING`, 'configType must be a string', undefined, TypeError),
   AddAModulePropertyToTheConfigOrAddAKnownSchemaError: createError(`${ERROR_PREFIX}_ADD_A_MODULE_PROPERTY_TO_THE_CONFIG_OR_ADD_A_KNOWN_SCHEMA`, 'Add a module property to the config or add a known $schema.'),
   VersionMismatchError: createError(`${ERROR_PREFIX}_VERSION_MISMATCH`, 'Version mismatch. You are running Platformatic %s but your app requires %s'),
-  NoConfigFileFoundError: createError(`${ERROR_PREFIX}_NO_CONFIG_FILE_FOUND`, 'no config file found')
+  InvalidConfigFileExtensionError: createError(`${ERROR_PREFIX}_INVALID_CONFIG_FILE_EXTENSION`, 'Invalid config file extension. Only yml, yaml, json, json5, toml, tml are supported.'),
+  NoConfigFileFoundError: createError(`${ERROR_PREFIX}_NO_CONFIG_FILE_FOUND`, 'no config file found'),
+  VersionMissingError: createError(`${ERROR_PREFIX}_VERSION_MISSING`, 'version is required if upgrade is specified.')
 }

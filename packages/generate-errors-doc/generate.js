@@ -14,7 +14,6 @@ const modules = [
   '@platformatic/db-authorization',
   '@platformatic/db-core',
   '@platformatic/deploy-client',
-  '@platformatic/metaconfig',
   '@platformatic/runtime',
   '@platformatic/service',
   '@platformatic/sql-mapper',

@@ -38,6 +38,7 @@
     "tsd": "^0.30.4",
     "typescript": "^5.3.3",
     "undici-oauth-interceptor": "^0.4.2",
+    "why-is-node-running": "^2.2.2",
     "ws": "^8.16.0"
   },
   "dependencies": {
@@ -66,6 +67,7 @@
     "minimist": "^1.2.8",
     "pino": "^8.17.2",
     "pino-pretty": "^10.3.1",
+    "semgrator": "^0.3.0",
     "pino-roll": "1.0.0-rc.1",
     "tail-file-stream": "^0.1.0",
     "undici": "^6.6.0",

@@ -5,8 +5,11 @@
   "main": "index.js",
   "scripts": {
     "lint": "standard | snazzy",
-    "test": "pnpm run lint && borp -T --timeout=120000 && tsd",
-    "build": "node lib/schema.js | json2ts > config.d.ts",
+    "test": "pnpm run lint && borp -T --timeout=120000 -c 1&& tsd",
+    "gen-schema": "node lib/schema.js > schema.json",
+    "gen-types": "json2ts > config.d.ts < schema.json",
+    "build": "pnpm run gen-schema && pnpm run gen-types",
+    "prepublishOnly": "pnpm run build",
     "nocov": "pnpm run lint && node ./test/runner.js"
   },
   "bin": {

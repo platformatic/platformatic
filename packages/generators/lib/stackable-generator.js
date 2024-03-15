@@ -230,7 +230,9 @@ class StackableGenerator extends FileGenerator {
         },
         scripts: {
           build: 'tsc --build',
-          'build:config': 'node ./dist/lib/schema.js | json2ts > config.d.ts',
+          'gen-schema': 'node lib/schema.js > schema.json',
+          'gen-types': 'json2ts > config.d.ts < schema.json',
+          'build:config': 'pnpm run gen-schema && pnpm run gen-types',
           clean: 'rm -fr ./dist'
         },
         engines: {
@@ -261,7 +263,10 @@ class StackableGenerator extends FileGenerator {
         [startStackableCommand]: './cli/start.js'
       },
       scripts: {
-        'build:config': 'node lib/schema.js | json2ts > config.d.ts',
+        'gen-schema': 'node lib/schema.js > schema.json',
+        'gen-types': 'json2ts > config.d.ts < schema.json',
+        'build:config': 'pnpm run gen-schema && pnpm run gen-types',
+        prepublishOnly: 'pnpm run build:config',
         lint: 'standard'
       },
       engines: {

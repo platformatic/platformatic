@@ -63,6 +63,7 @@ platformaticComposer[Symbol.for('skip-override')] = true
 platformaticComposer.schema = schema
 platformaticComposer.configType = 'composer'
 platformaticComposer.configManagerConfig = {
+  version: require('./package.json').version,
   schema,
   envWhitelist: ['PORT', 'HOSTNAME'],
   allowToWatch: ['.env'],
