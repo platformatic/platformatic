@@ -1398,8 +1398,8 @@ importers:
         specifier: ^4.26.0
         version: 4.26.2
       fastify-undici-dispatcher:
-        specifier: ^0.5.0
-        version: 0.5.1
+        specifier: ^0.6.0
+        version: 0.6.0
       graphql:
         specifier: ^16.8.1
         version: 16.8.1
@@ -5596,10 +5596,10 @@ packages:
     engines: {node: '>=18.0.0'}
     dev: true
 
-  /fastify-undici-dispatcher@0.5.1:
-    resolution: {integrity: sha512-lJmnlW6YPHHOWvfMpn8mbJSFyv+Gjx/nPdL0gUEL+9JNeOA2T6AVAP+L6xzL9IRGCRbz13twFxbHylcrPYU9rg==}
+  /fastify-undici-dispatcher@0.6.0:
+    resolution: {integrity: sha512-xSt3eCZHsZOh5cDBbEObWHIYYz+g8QmyqFgxVypTjxvE74QOcpx9KGonrHQkKKCnkY31CmXFoBgZjSvwIDZWPQ==}
     dependencies:
-      undici: 6.7.0
+      undici: 6.9.0
     dev: false
 
   /fastify-user@0.3.3:
@@ -9523,6 +9523,11 @@ packages:
     engines: {node: '>=18.0'}
     dependencies:
       '@fastify/busboy': 2.1.1
+
+  /undici@6.9.0:
+    resolution: {integrity: sha512-XPWfXzJedevUziHwun70EKNvGnxv4CnfraFZ4f/JV01+fcvMYzHE26r/j8AY/9c/70nkN4B1zX7E2Oyuqwz4+Q==}
+    engines: {node: '>=18.0'}
+    dev: false
 
   /unicorn-magic@0.1.0:
     resolution: {integrity: sha512-lRfVq8fE8gz6QMBuDM6a+LO3IAzTi05H6gCVaUpir2E1Rwpo4ZUog45KpNXKC/Mn3Yb9UDuHumeFTo9iV/D9FQ==}
