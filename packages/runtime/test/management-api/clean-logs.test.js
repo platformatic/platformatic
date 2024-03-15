@@ -30,7 +30,7 @@ test('should clean the logs after reaching a limit', async (t) => {
   })
 
   const testLogs = 'test-logs-42\n'
-  for (let i = 10; i <= 70; i++) {
+  for (let i = 38; i <= 80; i++) {
     await writeFile(join(runtimeTmpDir, `logs.${i}`), testLogs)
   }
 

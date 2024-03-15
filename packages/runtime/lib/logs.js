@@ -114,24 +114,25 @@ async function getLogFileStream (logFileIndex) {
   return createReadStream(filePath)
 }
 
-async function cleanLogs () {
-  const runtimeLogFiles = await getLogFiles()
-  if (runtimeLogFiles.length > LOGS_FILES_THRESHOLD) {
-    const removePromises = runtimeLogFiles
-      .slice(0, runtimeLogFiles.length - LOGS_FILES_LIMIT)
-      .map((file) => join(runtimeTmpDir, file))
-      .map((filePath) => rm(filePath))
-
-    await Promise.allSettled(removePromises)
-  }
-}
-
 function startCleanLogsWatcher () {
+  let cleaning = false
+
   watch(runtimeTmpDir, async (event, filename) => {
     if (event === 'rename' && filename.startsWith('logs')) {
+      if (cleaning) return
       const logFileIndex = parseInt(filename.slice('logs.'.length))
-      if (logFileIndex % LOGS_FILES_THRESHOLD === 0) {
-        cleanLogs()
+      if (logFileIndex % 10 === 0) {
+        const runtimeLogFiles = await getLogFiles()
+        if (runtimeLogFiles.length > LOGS_FILES_THRESHOLD) {
+          cleaning = true
+          const removePromises = runtimeLogFiles
+            .slice(0, runtimeLogFiles.length - LOGS_FILES_LIMIT)
+            .map((file) => join(runtimeTmpDir, file))
+            .map((filePath) => rm(filePath))
+
+          await Promise.allSettled(removePromises)
+          cleaning = false
+        }
       }
     }
   }).unref()
