@@ -33,7 +33,7 @@ class RuntimeApi {
         }
       }
 
-      const app = new PlatformaticApp(service, loaderPort, logger, serviceTelemetryConfig, serverConfig)
+      const app = new PlatformaticApp(service, loaderPort, logger, serviceTelemetryConfig, serverConfig, !!config.managementApi)
 
       this.#services.set(service.id, app)
     }
