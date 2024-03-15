@@ -3,8 +3,11 @@
 const { tmpdir } = require('node:os')
 const { join } = require('node:path')
 const { createReadStream, watch } = require('node:fs')
-const { readdir } = require('node:fs/promises')
+const { readdir, rm } = require('node:fs/promises')
 const ts = require('tail-file-stream')
+
+const LOGS_FILES_LIMIT = 30 // 30 files * 5MB = 150MB
+const LOGS_FILES_THRESHOLD = LOGS_FILES_LIMIT + 10
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 const runtimeTmpDir = join(PLATFORMATIC_TMP_DIR, process.pid.toString())
@@ -96,8 +99,14 @@ async function pipeLiveLogs (writableStream, logger, startLogIndex) {
 
 async function getLogIndexes () {
   const runtimeLogFiles = await getLogFiles()
-  return runtimeLogFiles
+  let runtimeLogsIndexes = runtimeLogFiles
     .map((file) => parseInt(file.slice('logs.'.length)))
+
+  if (runtimeLogsIndexes.length > LOGS_FILES_LIMIT) {
+    runtimeLogsIndexes = runtimeLogsIndexes.slice(-LOGS_FILES_LIMIT)
+  }
+
+  return runtimeLogsIndexes
 }
 
 async function getLogFileStream (logFileIndex) {
@@ -105,8 +114,32 @@ async function getLogFileStream (logFileIndex) {
   return createReadStream(filePath)
 }
 
+async function cleanLogs () {
+  const runtimeLogFiles = await getLogFiles()
+  if (runtimeLogFiles.length > LOGS_FILES_THRESHOLD) {
+    const removePromises = runtimeLogFiles
+      .slice(0, runtimeLogFiles.length - LOGS_FILES_LIMIT)
+      .map((file) => join(runtimeTmpDir, file))
+      .map((filePath) => rm(filePath))
+
+    await Promise.allSettled(removePromises)
+  }
+}
+
+function startCleanLogsWatcher () {
+  watch(runtimeTmpDir, async (event, filename) => {
+    if (event === 'rename' && filename.startsWith('logs')) {
+      const logFileIndex = parseInt(filename.slice('logs.'.length))
+      if (logFileIndex % LOGS_FILES_THRESHOLD === 0) {
+        cleanLogs()
+      }
+    }
+  }).unref()
+}
+
 module.exports = {
   pipeLiveLogs,
   getLogFileStream,
-  getLogIndexes
+  getLogIndexes,
+  startCleanLogsWatcher
 }

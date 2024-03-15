@@ -2,8 +2,9 @@
 
 const { once, EventEmitter } = require('node:events')
 const { randomUUID } = require('node:crypto')
-const errors = require('./errors')
 const { setTimeout: sleep } = require('node:timers/promises')
+const { startCleanLogsWatcher } = require('./logs')
+const errors = require('./errors')
 
 const MAX_LISTENERS_COUNT = 100
 const MAX_METRICS_QUEUE_LENGTH = 5 * 60 // 5 minutes in seconds
@@ -205,6 +206,10 @@ class RuntimeApiClient extends EventEmitter {
         this.#metrics.shift()
       }
     }, COLLECT_METRICS_TIMEOUT).unref()
+  }
+
+  startCleanLogsWatcher () {
+    startCleanLogsWatcher()
   }
 
   async #sendCommand (command, params = {}) {
