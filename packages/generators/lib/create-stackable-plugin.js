@@ -16,6 +16,7 @@ module.exports = async function (fastify, opts) {
 
 function getTsStackablePluginFile () {
   return `\
+// eslint-disable-next-line
 /// <reference path="../index.d.ts" />
 import { FastifyInstance, FastifyPluginOptions } from 'fastify'
 
