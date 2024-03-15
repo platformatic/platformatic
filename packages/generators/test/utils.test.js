@@ -1,6 +1,7 @@
 'use strict'
 
 const { test, describe } = require('node:test')
+const { EOL } = require('node:os')
 const assert = require('node:assert')
 const {
   stripVersion,
@@ -50,7 +51,7 @@ describe('utils', () => {
         DATABASE_URL: 'sqlite://./db.sqlite'
       }
 
-      assert.equal(envObjectToString(env), 'FOO=bar\nDATABASE_URL=sqlite://./db.sqlite')
+      assert.equal(envObjectToString(env), `FOO=bar${EOL}DATABASE_URL=sqlite://./db.sqlite`)
     })
   })
 
@@ -216,7 +217,7 @@ describe('utils', () => {
         PLT_SERVICE_NAME_FOOBAR: 'foobar'
       }
 
-      assert.deepEqual(envStringToObject(template.join('\n')), expected)
+      assert.deepEqual(envStringToObject(template.join(EOL)), expected)
     })
   })
 })

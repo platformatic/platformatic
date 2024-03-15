@@ -194,10 +194,10 @@ test('should append env values', async (t) => {
 
   await bg.prepare()
   const dotEnvFile = bg.getFileObject('.env')
-  assert.equal(dotEnvFile.contents, 'FOO=bar\n')
+  assert.equal(dotEnvFile.contents.trim(), 'FOO=bar')
 
   const dotEnvSampleFile = bg.getFileObject('.env.sample')
-  assert.equal(dotEnvSampleFile.contents, 'FOO=bar\n')
+  assert.equal(dotEnvSampleFile.contents.trim(), 'FOO=bar')
 })
 
 test('should prepare the questions', async (t) => {
