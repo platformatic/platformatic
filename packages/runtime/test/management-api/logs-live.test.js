@@ -37,6 +37,7 @@ test('should get runtime logs via management api', async (t) => {
     })
 
     webSocket.on('message', (data) => {
+      console.log('message:', data)
       if (data.includes('Server listening at')) {
         clearTimeout(timeout)
         webSocket.close()
@@ -91,6 +92,7 @@ test('should support custom use transport with a message port logging', async (t
     })
 
     webSocket.on('message', (data) => {
+      console.log('message:', data)
       if (data.includes('Server listening at')) {
         clearTimeout(timeout)
         webSocket.close()
