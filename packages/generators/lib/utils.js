@@ -6,7 +6,7 @@ const { join } = require('node:path')
 const { request } = require('undici')
 const { setTimeout } = require('timers/promises')
 const PLT_ROOT = 'PLT_ROOT'
-
+const { EOL } = require('node:os')
 async function safeMkdir (dir) {
   try {
     await mkdir(dir, { recursive: true })
@@ -52,12 +52,12 @@ function envObjectToString (env) {
   Object.entries(env).forEach((kv) => {
     output.push(`${kv[0]}=${kv[1]}`)
   })
-  return output.join('\n')
+  return output.join(EOL)
 }
 
 function envStringToObject (envString) {
   const output = {}
-  const split = envString.split('\n')
+  const split = envString.split(EOL)
   split
     .filter((line) => {
       return line.trim() !== '' && line.indexOf('#') !== 0
