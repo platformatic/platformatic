@@ -64,7 +64,7 @@ function createLogger (config) {
     const logsPath = join(PLATFORMATIC_TMP_DIR, process.pid.toString(), 'logs')
     const pinoRoll = pino.transport({
       target: 'pino-roll',
-      options: { file: logsPath, size: '5m', mkdir: true }
+      options: { file: logsPath, mode: 0o600, size: '5m', mkdir: true }
     })
     multiStream.add({ level: 'trace', stream: pinoRoll })
   }
