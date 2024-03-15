@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "@matteo.collina/snap": "^0.2.1",
+    "@matteo.collina/snap": "^0.3.0",
     "@matteo.collina/tspl": "^0.1.1",
     "@platformatic/sql-mapper": "workspace:*",
     "borp": "^0.10.0",
