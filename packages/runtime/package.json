@@ -23,6 +23,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@fastify/express": "^2.3.0",
+    "@fastify/formbody": "^7.4.0",
     "@matteo.collina/tspl": "^0.1.1",
     "@platformatic/sql-graphql": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
@@ -37,7 +38,7 @@
     "standard": "^17.1.0",
     "tsd": "^0.30.4",
     "typescript": "^5.3.3",
-    "undici-oauth-interceptor": "^0.4.2",
+    "undici-oidc-interceptor": "^0.5.0",
     "ws": "^8.16.0"
   },
   "dependencies": {

@@ -181,16 +181,20 @@ Allowing to configure the options in the agent as well as [interceptors](https:/
         "keepAliveTimeout": 1000,
         "keepAliveMaxTimeout": 1000,
         "interceptors": [{
-            "module": "undici-oauth-interceptor",
+            "module": "undici-oidc-interceptor",
             "options": {
                 "clientId": "{PLT_CLIENT_ID}",
-                "refreshToken": "{PLT_REFRESH_TOKEN}",
+                "clientSecret": "{PLT_CLIENT_SECRET}",
+                "idpTokenUrl": "{PLT_IDP_TOKEN_URL}",
                 "origins": ["{PLT_EXTERNAL_SERVICE}"]
             }
         }]
     }
   }
   ```
+
+Note that IDP stands for Identity Provider, and its token url is the URL that will be called to generate a new
+token.
 
 ### `managementApi`
 

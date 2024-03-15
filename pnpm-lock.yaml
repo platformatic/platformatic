@@ -1462,6 +1462,9 @@ importers:
       '@fastify/express':
         specifier: ^2.3.0
         version: 2.3.0
+      '@fastify/formbody':
+        specifier: ^7.4.0
+        version: 7.4.0
       '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
@@ -1504,9 +1507,9 @@ importers:
       typescript:
         specifier: ^5.3.3
         version: 5.4.2
-      undici-oauth-interceptor:
-        specifier: ^0.4.2
-        version: 0.4.2
+      undici-oidc-interceptor:
+        specifier: ^0.5.0
+        version: 0.5.0
       ws:
         specifier: ^8.16.0
         version: 8.16.0
@@ -2776,6 +2779,13 @@ packages:
     resolution: {integrity: sha512-aZAXGYo6m22Fk1zZzEUKBvut/CIIQe/BapEORnxiD5Qr0kPHqqI69NtEMCme74h+at72sPhbkb4ZrLd1W3KRLA==}
     dependencies:
       fast-json-stringify: 5.12.0
+
+  /@fastify/formbody@7.4.0:
+    resolution: {integrity: sha512-H3C6h1GN56/SMrZS8N2vCT2cZr7mIHzBHzOBa5OPpjfB/D6FzP9mMpE02ZzrFX0ANeh0BAJdoXKOF2e7IbV+Og==}
+    dependencies:
+      fast-querystring: 1.1.2
+      fastify-plugin: 4.5.1
+    dev: true
 
   /@fastify/http-proxy@9.4.0:
     resolution: {integrity: sha512-oXdvWBETRI2fJYJnRfFP/qJ6fQddUJz47X71WP7SkHdm4D5OejlNwrgnEJLUS5Kr4BSXHE5Nq5K6mmUlkivKiA==}
@@ -5560,6 +5570,16 @@ packages:
       asn1.js: 5.4.1
       ecdsa-sig-formatter: 1.0.11
       mnemonist: 0.39.8
+
+  /fast-jwt@4.0.0:
+    resolution: {integrity: sha512-CnI93Tmk7eSzfw4e0Jlc5ZcWiN+/zK7xAKAhtXS8PAcKmYqfcXqxJl1hMyhk3iEt0M9JLo7DCYRDV2XcIacWAw==}
+    engines: {node: '>=16 <22'}
+    dependencies:
+      '@lukeed/ms': 2.0.2
+      asn1.js: 5.4.1
+      ecdsa-sig-formatter: 1.0.11
+      mnemonist: 0.39.8
+    dev: true
 
   /fast-levenshtein@2.0.6:
     resolution: {integrity: sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw==}
@@ -9517,10 +9537,10 @@ packages:
       which-boxed-primitive: 1.0.2
     dev: true
 
-  /undici-oauth-interceptor@0.4.2:
-    resolution: {integrity: sha512-YqV0PwSGyKH16wvnTH8s1P09F1RRMPQEjIHyCXIS+J9sMlnkaepMFS+Sps6zeyXM2eYoF30WAm68t7HDQ7eIAg==}
+  /undici-oidc-interceptor@0.5.0:
+    resolution: {integrity: sha512-YU6ABaLFxzKZGjBmamrrRTlziIe6/jrEBUEyNEe2ZRtlXULorg6xo+/jsyEPZVizHdrTFFX3ZPEPxrNmO3pOEA==}
     dependencies:
-      fast-jwt: 3.3.3
+      fast-jwt: 4.0.0
       undici: 6.9.0
     dev: true
 

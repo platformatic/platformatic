@@ -15,6 +15,7 @@ test('interceptors as undici options', async (t) => {
 
   await externalServer.listen({ port: 0 })
 
+  process.env.PLT_IDP_TOKEN_URL = idpServer.listeningOrigin + '/token'
   process.env.PLT_REFRESH_TOKEN = idpServer.refreshToken
   process.env.PLT_EXTERNAL_SERVICE = externalServer.listeningOrigin
   process.env.PORT = 0
@@ -46,6 +47,7 @@ test('composable interceptors', async (t) => {
 
   await externalServer.listen({ port: 0 })
 
+  process.env.PLT_IDP_TOKEN_URL = idpServer.listeningOrigin + '/token'
   process.env.PLT_REFRESH_TOKEN = idpServer.refreshToken
   process.env.PLT_EXTERNAL_SERVICE = externalServer.listeningOrigin
   process.env.PORT = 0

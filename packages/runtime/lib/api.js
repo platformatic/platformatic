@@ -176,7 +176,7 @@ class RuntimeApi {
       }
 
       const serviceUrl = new URL(service.appConfig.localUrl)
-      this.#dispatcher.route(serviceUrl.host, service.server)
+      this.#interceptor.route(serviceUrl.host, service.server)
     }
     return entrypointUrl
   }
