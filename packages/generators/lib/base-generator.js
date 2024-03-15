@@ -182,47 +182,62 @@ class BaseGenerator extends FileGenerator {
   async prepare () {
     try {
       this.reset()
-      await this.getFastifyVersion()
-      await this.getPlatformaticVersion()
 
-      await this._beforePrepare()
-
-      // generate package.json
-      const template = await this.generatePackageJson()
-      this.addFile({
-        path: '',
-        file: 'package.json',
-        contents: JSON.stringify(template, null, 2)
-      })
-
-      await this.generateConfigFile()
-
-      await this.generateEnv()
-
-      if (this.config.typescript) {
-        // create tsconfig.json
+      if (this.config.isUpdating) {
+        // only the packages options may have changed, let's update those
+        await this.generateConfigFile()
+        const generatedConfigFile = JSON.parse(this.getFileObject('platformatic.json', '').contents)
+        const fileFromDisk = await this.loadFile({ file: 'platformatic.json', path: '' })
+        const currentConfigFile = JSON.parse(fileFromDisk.contents)
+        currentConfigFile.plugins.packages = generatedConfigFile.plugins.packages
+        this.reset()
         this.addFile({
           path: '',
-          file: 'tsconfig.json',
-          contents: JSON.stringify(this.getTsConfig(), null, 2)
+          file: 'platformatic.json',
+          contents: JSON.stringify(currentConfigFile, null, 2)
         })
-      }
+      } else {
+        await this.getFastifyVersion()
+        await this.getPlatformaticVersion()
 
-      if (this.config.plugin) {
-        // create plugin
-        this.files.push(...generatePlugins(this.config.typescript))
-        if (this.config.tests) {
-          // create tests
-          this.files.push(...generateTests(this.config.typescript, this.module))
+        await this._beforePrepare()
+
+        // generate package.json
+        const template = await this.generatePackageJson()
+        this.addFile({
+          path: '',
+          file: 'package.json',
+          contents: JSON.stringify(template, null, 2)
+        })
+
+        await this.generateConfigFile()
+
+        await this.generateEnv()
+
+        if (this.config.typescript) {
+          // create tsconfig.json
+          this.addFile({
+            path: '',
+            file: 'tsconfig.json',
+            contents: JSON.stringify(this.getTsConfig(), null, 2)
+          })
         }
+
+        if (this.config.plugin) {
+          // create plugin
+          this.files.push(...generatePlugins(this.config.typescript))
+          if (this.config.tests) {
+            // create tests
+            this.files.push(...generateTests(this.config.typescript, this.module))
+          }
+        }
+
+        this.files.push(generateGitignore())
+
+        await this._afterPrepare()
+
+        this.checkEnvVariablesInConfigFile()
       }
-
-      this.files.push(generateGitignore())
-
-      await this._afterPrepare()
-
-      this.checkEnvVariablesInConfigFile()
-
       return {
         targetDirectory: this.targetDirectory,
         env: this.config.env

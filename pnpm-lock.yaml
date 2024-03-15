@@ -1391,6 +1391,9 @@ importers:
       desm:
         specifier: ^1.3.1
         version: 1.3.1
+      dotenv-tool:
+        specifier: ^0.0.2
+        version: 0.0.2
       es-main:
         specifier: ^1.3.0
         version: 1.3.0
@@ -4710,6 +4713,10 @@ packages:
   /dotenv-expand@10.0.0:
     resolution: {integrity: sha512-GopVGCpVS1UKH75VKHGuQFqS1Gusej0z4FyQkPdwjil2gNIv+LNsqBlboOzpJFZKVT95GkCyWJbBSdFEFUWI2A==}
     engines: {node: '>=12'}
+    dev: false
+
+  /dotenv-tool@0.0.2:
+    resolution: {integrity: sha512-G+TDYJpMTgZhCWjdK0zY+FGgPdGO27yQh2FCELiRGKqYd08/XmafVpN34yrSmJlyskhpqmLexmd+QE1C/pXMOA==}
     dev: false
 
   /dotenv@16.4.5:

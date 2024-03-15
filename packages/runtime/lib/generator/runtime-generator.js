@@ -5,9 +5,15 @@ const { NoEntryPointError, NoServiceNamedError } = require('./errors')
 const generateName = require('boring-name-generator')
 const { join } = require('node:path')
 const { envObjectToString } = require('@platformatic/generators/lib/utils')
-const { readFile } = require('node:fs/promises')
+const { readFile, readdir, stat } = require('node:fs/promises')
 const { ConfigManager } = require('@platformatic/config')
 const { platformaticRuntime } = require('../config')
+const ServiceGenerator = require('@platformatic/service/lib/generator/service-generator')
+const DBGenerator = require('@platformatic/db/lib/generator/db-generator')
+const ComposerGenerator = require('@platformatic/composer/lib/generator/composer-generator')
+const { CannotFindGeneratorForTemplateError, CannotRemoveServiceOnUpdateError } = require('../errors')
+const { getServiceTemplateFromSchemaUrl } = require('@platformatic/generators/lib/utils')
+const { DotEnvTool } = require('dotenv-tool')
 
 class RuntimeGenerator extends BaseGenerator {
   constructor (opts) {
@@ -200,8 +206,10 @@ class RuntimeGenerator extends BaseGenerator {
 
   async writeFiles () {
     await super.writeFiles()
-    for (const { service } of this.services) {
-      await service.writeFiles()
+    if (!this.config.isUpdating) {
+      for (const { service } of this.services) {
+        await service.writeFiles()
+      }
     }
   }
 
@@ -285,6 +293,121 @@ class RuntimeGenerator extends BaseGenerator {
     for (const { service } of this.services) {
       await service.postInstallActions()
     }
+  }
+
+  getGeneratorForTemplate (templateName) {
+    switch (templateName) {
+      case '@platformatic/service':
+        return ServiceGenerator
+      case '@platformatic/db':
+        return DBGenerator
+      case '@platformatic/composer':
+        return ComposerGenerator
+      default:
+        throw new CannotFindGeneratorForTemplateError(templateName)
+    }
+  }
+
+  async loadFromDir () {
+    const output = {
+      services: []
+    }
+    const runtimePkgConfigFileData = JSON.parse(await readFile(join(this.targetDirectory, 'platformatic.json'), 'utf-8'))
+    const servicesPath = join(this.targetDirectory, runtimePkgConfigFileData.autoload.path)
+
+    // load all services
+    const allServices = await readdir(servicesPath)
+    for (const s of allServices) {
+      // check is a directory
+      const currentServicePath = join(servicesPath, s)
+      const dirStat = await stat(currentServicePath)
+      if (dirStat.isDirectory()) {
+        // load the package json file
+        const servicePkgJson = JSON.parse(await readFile(join(currentServicePath, 'platformatic.json'), 'utf-8'))
+        // get generator for this module
+        const template = getServiceTemplateFromSchemaUrl(servicePkgJson.$schema)
+        const Generator = this.getGeneratorForTemplate(template)
+        const instance = new Generator()
+        this.addService(instance, s)
+        output.services.push(await instance.loadFromDir(s, this.targetDirectory))
+      }
+    }
+    return output
+  }
+
+  async update (newConfig) {
+    let allServicesDependencies = {}
+    function getDifference (a, b) {
+      return a.filter(element => {
+        return !b.includes(element)
+      })
+    }
+    this.config.isUpdating = true
+
+    // check all services are present with the same template
+    const allCurrentServicesNames = this.services.map((s) => s.name)
+    const allNewServicesNames = newConfig.services.map((s) => s.name)
+    // load dotenv tool
+    const envTool = new DotEnvTool({
+      path: join(this.targetDirectory, '.env')
+    })
+
+    await envTool.load()
+
+    const removedServices = getDifference(allCurrentServicesNames, allNewServicesNames)
+    if (removedServices.length > 0) {
+      throw new CannotRemoveServiceOnUpdateError(removedServices.join(', '))
+    }
+
+    // handle new services
+    for (const newService of newConfig.services) {
+      // create generator for the service
+      const ServiceGenerator = this.getGeneratorForTemplate(newService.template)
+      const serviceInstance = new ServiceGenerator()
+      const baseConfig = {
+        isRuntimeContext: true,
+        targetDirectory: join(this.targetDirectory, 'services', newService.name),
+        serviceName: newService.name
+      }
+      if (allCurrentServicesNames.includes(newService.name)) {
+        // update existing services env values
+        // otherwise, is a new service
+        baseConfig.isUpdating = true
+      }
+      serviceInstance.setConfig(baseConfig)
+      for (const plug of newService.plugins) {
+        await serviceInstance.addPackage(plug)
+        for (const opt of plug.options) {
+          const key = `PLT_${serviceInstance.config.envPrefix}_${opt.name}`
+          const value = opt.value
+          if (envTool.hasKey(key)) {
+            envTool.updateKey(key, value)
+          } else {
+            envTool.addKey(key, value)
+          }
+        }
+      }
+      allServicesDependencies = { ...allServicesDependencies, ...serviceInstance.config.dependencies }
+      await serviceInstance.prepare()
+      await serviceInstance.writeFiles()
+    }
+
+    // update runtime package.json dependencies
+    // read current package.json file
+    const currrentPackageJson = JSON.parse(await readFile(join(this.targetDirectory, 'package.json'), 'utf-8'))
+    currrentPackageJson.dependencies = {
+      ...currrentPackageJson.dependencies,
+      ...allServicesDependencies
+    }
+    this.addFile({
+      path: '',
+      file: 'package.json',
+      contents: JSON.stringify(currrentPackageJson)
+    })
+
+    await this.writeFiles()
+    // save new env
+    await envTool.save()
   }
 }
 
