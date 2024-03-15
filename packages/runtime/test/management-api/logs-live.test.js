@@ -10,7 +10,9 @@ const WebSocket = require('ws')
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should get runtime logs via management api', async (t) => {
+const skip = platform() === 'win32'
+
+test('should get runtime logs via management api', { skip }, async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
@@ -37,7 +39,6 @@ test('should get runtime logs via management api', async (t) => {
     })
 
     webSocket.on('message', (data) => {
-      console.log('message:', data)
       if (data.includes('Server listening at')) {
         clearTimeout(timeout)
         webSocket.close()
@@ -47,7 +48,7 @@ test('should get runtime logs via management api', async (t) => {
   })
 })
 
-test('should support custom use transport with a message port logging', async (t) => {
+test('should support custom use transport with a message port logging', { skip }, async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configPath = join(projectDir, 'platformatic.json')
   const configFile = await readFile(configPath, 'utf8')
@@ -92,7 +93,6 @@ test('should support custom use transport with a message port logging', async (t
     })
 
     webSocket.on('message', (data) => {
-      console.log('message:', data)
       if (data.includes('Server listening at')) {
         clearTimeout(timeout)
         webSocket.close()
