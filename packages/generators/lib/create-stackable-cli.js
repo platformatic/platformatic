@@ -81,7 +81,7 @@ import { join } from 'node:path'
 import { parseArgs } from 'node:util'
 import { Generator } from '../lib/generator'
 
-async function execute () {
+async function execute (): Promise<void> {
   const args = parseArgs({
     args: process.argv.slice(2),
     options: {
@@ -116,7 +116,9 @@ async function execute () {
   console.log('Application created successfully! Run \`npm run start\` to start an application.')
 }
 
-execute()
+execute().catch(err => {
+  throw err
+})
 `
 }
 

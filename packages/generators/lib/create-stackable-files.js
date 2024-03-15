@@ -295,8 +295,8 @@ class ${stackableGeneratorType} extends ServiceGenerator {
     return Object.assign({}, baseConfig, config)
   }
 
-  async _beforePrepare () {
-    super._beforePrepare()
+  async _beforePrepare (): Promise<void> {
+    await super._beforePrepare()
 
     this.addEnvVars({
       PLT_GREETING_TEXT: this.config.greeting ?? 'Hello world!'
@@ -309,7 +309,7 @@ class ${stackableGeneratorType} extends ServiceGenerator {
     }
   }
 
-  async _afterPrepare () {
+  async _afterPrepare (): Promise<void> {
     const packageJson = await this.getStackablePackageJson()
     this.addFile({
       path: '',
@@ -328,18 +328,18 @@ class ${stackableGeneratorType} extends ServiceGenerator {
     if (!this._packageJson) {
       const packageJsonPath = join(__dirname, '..', '..', 'package.json')
       const packageJsonFile = await readFile(packageJsonPath, 'utf8')
-      const packageJson = JSON.parse(packageJsonFile)
+      const packageJson: Partial<PackageJson> = JSON.parse(packageJsonFile)
 
-      if (!packageJson.name) {
+      if (packageJson.name === undefined || packageJson.name === null) {
         throw new Error('Missing package name in package.json')
       }
 
-      if (!packageJson.version) {
+      if (packageJson.version === undefined || packageJson.version === null) {
         throw new Error('Missing package version in package.json')
       }
 
-      this._packageJson = packageJson
-      return packageJson
+      this._packageJson = packageJson as PackageJson
+      return packageJson as PackageJson
     }
     return this._packageJson
   }
