@@ -413,4 +413,17 @@ describe('upgrade', () => {
     })
     await cm.parse()
   })
+
+  test('if all things fails, it\'s a legacy app', async (t) => {
+    const plan = tspl(t, { plan: 1 })
+    const cm = new ConfigManager({
+      version: '1.0.0',
+      source: join(__dirname, 'fixtures', 'db-0.16.0-empty.json'),
+      upgrade (config, origin) {
+        plan.equal(origin, '0.15.0')
+        return config
+      }
+    })
+    await cm.parse()
+  })
 })

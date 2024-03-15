@@ -185,10 +185,16 @@ class ConfigManager extends EventEmitter {
         // TODO(mcollina): remove in a future version
         if (!version && this.fullPath && this.current.$schema && this.current.$schema.indexOf('./') === 0) {
           const dir = dirname(this.fullPath)
-          const schemaPath = resolve(dir, this.current.$schema)
-          const schema = JSON.parse(await readFile(schemaPath, 'utf-8'))
-          if (schema.$id?.indexOf('https://schemas.platformatic.dev') === 0) {
-            version = '0.15.0'
+          try {
+            const schemaPath = resolve(dir, this.current.$schema)
+            const schema = JSON.parse(await readFile(schemaPath, 'utf-8'))
+            if (schema.$id?.indexOf('https://schemas.platformatic.dev') === 0) {
+              version = '0.15.0'
+            }
+          } catch {
+            if (this.current.server) {
+              version = '0.15.0'
+            }
           }
         }
 
