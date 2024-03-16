@@ -211,7 +211,8 @@ class RuntimeApi {
     const service = this.#services.get(id)
 
     if (!service) {
-      throw new errors.ServiceNotFoundError(id)
+      const listOfServices = this.#getServices().services.map(svc => svc.id).join(', ')
+      throw new errors.ServiceNotFoundError(listOfServices)
     }
 
     return service
