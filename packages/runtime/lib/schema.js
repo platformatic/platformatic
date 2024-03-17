@@ -155,6 +155,13 @@ const platformaticRuntimeSchema = {
           properties: {}
         }
       ]
+    },
+    restartOnError: {
+      default: true,
+      anyOf: [
+        { type: 'boolean' },
+        { type: 'string' }
+      ]
     }
   },
   anyOf: [
