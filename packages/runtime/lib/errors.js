@@ -7,7 +7,7 @@ const ERROR_PREFIX = 'PLT_RUNTIME'
 module.exports = {
   RuntimeExitedError: createError(`${ERROR_PREFIX}_RUNTIME_EXIT`, 'The runtime exited before the operation completed'),
   UnknownRuntimeAPICommandError: createError(`${ERROR_PREFIX}_UNKNOWN_RUNTIME_API_COMMAND`, 'Unknown Runtime API command "%s"'),
-  ServiceNotFoundError: createError(`${ERROR_PREFIX}_SERVICE_NOT_FOUND`, "Service with id '%s' not found"),
+  ServiceNotFoundError: createError(`${ERROR_PREFIX}_SERVICE_NOT_FOUND`, 'Service not found. Available services are: %s'),
   ServiceNotStartedError: createError(`${ERROR_PREFIX}_SERVICE_NOT_STARTED`, "Service with id '%s' is not started"),
   FailedToRetrieveOpenAPISchemaError: createError(`${ERROR_PREFIX}_FAILED_TO_RETRIEVE_OPENAPI_SCHEMA`, 'Failed to retrieve OpenAPI schema for service with id "%s": %s'),
   FailedToRetrieveGraphQLSchemaError: createError(`${ERROR_PREFIX}_FAILED_TO_RETRIEVE_GRAPHQL_SCHEMA`, 'Failed to retrieve GraphQL schema for service with id "%s": %s'),

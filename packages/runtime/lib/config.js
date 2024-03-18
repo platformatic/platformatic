@@ -6,6 +6,7 @@ const Topo = require('@hapi/topo')
 const ConfigManager = require('@platformatic/config')
 const { schema } = require('./schema')
 const errors = require('./errors')
+const upgrade = require('./upgrade')
 
 async function _transformConfig (configManager) {
   const config = configManager.current
@@ -245,6 +246,7 @@ platformaticRuntime[Symbol.for('skip-override')] = true
 platformaticRuntime.schema = schema
 platformaticRuntime.configType = 'runtime'
 platformaticRuntime.configManagerConfig = {
+  version: require('../package.json').version,
   schema,
   allowToWatch: ['.env'],
   schemaOptions: {
@@ -256,7 +258,8 @@ platformaticRuntime.configManagerConfig = {
   envWhitelist: ['DATABASE_URL', 'PORT', 'HOSTNAME'],
   async transformConfig () {
     await _transformConfig(this)
-  }
+  },
+  upgrade
 }
 
 async function wrapConfigInRuntimeConfig ({ configManager, args }) {

@@ -9,16 +9,17 @@ function getJsStackableIndexFile (stackableName) {
 const { platformaticService } = require('@platformatic/service')
 const { schema } = require('./lib/schema')
 const { Generator } = require('./lib/generator')
+const { version } = require('./package.json')
 
 async function stackable (fastify, opts) {
   await fastify.register(platformaticService, opts)
   await fastify.register(require('./plugins/example'), opts)
 }
-
 stackable.configType = '${kebabCase(stackableName + '-app')}'
 stackable.schema = schema
 stackable.Generator = Generator
 stackable.configManagerConfig = {
+  version,
   schema,
   envWhitelist: ['PORT', 'HOSTNAME'],
   allowToWatch: ['.env'],
@@ -48,6 +49,9 @@ import { platformaticService, Stackable } from '@platformatic/service'
 import { schema } from './lib/schema'
 import { Generator } from './lib/generator'
 import { ${stackableConfigType} } from './config'
+import { readFileSync } from 'node:fs'
+
+const { version } = JSON.parse(readFileSync('package.json', 'utf8'))
 
 const stackable: Stackable<${stackableConfigType}> = async function (fastify, opts) {
   await fastify.register(platformaticService, opts)
@@ -58,6 +62,7 @@ stackable.configType = '${kebabCase(stackableName + '-app')}'
 stackable.schema = schema
 stackable.Generator = Generator
 stackable.configManagerConfig = {
+  version,
   schema,
   envWhitelist: ['PORT', 'HOSTNAME'],
   allowToWatch: ['.env'],
@@ -179,7 +184,7 @@ class ${stackableGeneratorType} extends ServiceGenerator {
     const packageJson = await this.getStackablePackageJson()
     const config = {
       $schema: './stackable.schema.json',
-      module: packageJson.name,
+      module: \`\${packageJson.name}@\${packageJson.version}\`,
       greeting: {
         text: \`{\${this.getEnvVarName('PLT_GREETING_TEXT')}}\`
       }
@@ -287,7 +292,7 @@ class ${stackableGeneratorType} extends ServiceGenerator {
     const packageJson = await this.getStackablePackageJson()
     const config = {
       $schema: './stackable.schema.json',
-      module: packageJson.name,
+      module: \`\${packageJson.name}@\${packageJson.version}\`,
       greeting: {
         text: \`{\${this.getEnvVarName('PLT_GREETING_TEXT')}}\`
       }
@@ -295,8 +300,8 @@ class ${stackableGeneratorType} extends ServiceGenerator {
     return Object.assign({}, baseConfig, config)
   }
 
-  async _beforePrepare () {
-    super._beforePrepare()
+  async _beforePrepare (): Promise<void> {
+    await super._beforePrepare()
 
     this.addEnvVars({
       PLT_GREETING_TEXT: this.config.greeting ?? 'Hello world!'
@@ -309,7 +314,7 @@ class ${stackableGeneratorType} extends ServiceGenerator {
     }
   }
 
-  async _afterPrepare () {
+  async _afterPrepare (): Promise<void> {
     const packageJson = await this.getStackablePackageJson()
     this.addFile({
       path: '',
@@ -328,18 +333,18 @@ class ${stackableGeneratorType} extends ServiceGenerator {
     if (!this._packageJson) {
       const packageJsonPath = join(__dirname, '..', '..', 'package.json')
       const packageJsonFile = await readFile(packageJsonPath, 'utf8')
-      const packageJson = JSON.parse(packageJsonFile)
+      const packageJson: Partial<PackageJson> = JSON.parse(packageJsonFile)
 
-      if (!packageJson.name) {
+      if (packageJson.name === undefined || packageJson.name === null) {
         throw new Error('Missing package name in package.json')
       }
 
-      if (!packageJson.version) {
+      if (packageJson.version === undefined || packageJson.version === null) {
         throw new Error('Missing package version in package.json')
       }
 
-      this._packageJson = packageJson
-      return packageJson
+      this._packageJson = packageJson as PackageJson
+      return packageJson as PackageJson
     }
     return this._packageJson
   }
@@ -359,11 +364,13 @@ function getJsStackableSchemaFile (stackableName) {
 'use strict'
 
 const { schema } = require('@platformatic/service')
+const { version } = require('../package.json')
 
 const ${schemaVarName} = {
   ...schema.schema,
   $id: '${schemaId}',
   title: '${schemaTitle}',
+  version,
   properties: {
     ...schema.schema.properties,
     module: { type: 'string' },
@@ -400,6 +407,7 @@ const ${schemaVarName} = {
   ...schema.schema,
   $id: '${schemaId}',
   title: '${schemaTitle}',
+  version,
   properties: {
     ...schema.schema.properties,
     module: { type: 'string' },

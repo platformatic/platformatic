@@ -10,7 +10,7 @@ Options:
 * `-n, --name <string>` - The name of the runtime.
 * `-l, --level <string>` - The pino log level to stream. Default is `info`.
 * `-s, --service <string>` - The name of the service to stream logs from.
-* `--pretty` <boolean> - Pretty print the logs. Default is `true`.
+* `--pretty <boolean>` - Pretty print the logs. Default is `true`.
 
 If `--service` is not specified, the command will stream logs from all services.
 

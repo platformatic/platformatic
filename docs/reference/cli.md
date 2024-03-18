@@ -271,7 +271,7 @@ Options:
 * `-n, --name <string>` - The name of the runtime.
 * `-l, --level <string>` - The pino log level to stream. Default is `info`.
 * `-s, --service <string>` - The name of the service to stream logs from.
-* `--pretty` <boolean> - Pretty print the logs. Default is `true`.
+* `--pretty <boolean>` - Pretty print the logs. Default is `true`.
 
 If `--service` is not specified, the command will stream logs from all services.
 
@@ -417,7 +417,7 @@ Options:
 * `--optional-headers <headers>` - Comma separated string of headers that will be marked as optional in the type file. Ignored if `--frontend`
 * `--validate-response` - If set, will validate the response body against the schema. Ignored if `--frontend`
 * `--language js|ts` - Generate a Javascript or Typescript frontend client. Only works if `--frontend`
-* `--url-auth-headers <stringify-headers>` - When the Open API schema is passed as URL (instead of static file) this property allow to pass authorization headers. Headers should be passed as `string` (e.g. '{"authorization":"42"}').
+* `--url-auth-headers <stringify-headers>` - When the Open API schema is passed as URL (instead of static file) this property allow to pass authorization headers. Headers should be passed as `string` (e.g. `'{"authorization":"42"}'`).
 
 
 
@@ -1208,7 +1208,7 @@ Options:
 * `-n, --name <string>` - The name of the runtime.
 * `-l, --level <string>` - The pino log level to stream. Default is `info`.
 * `-s, --service <string>` - The name of the service to stream logs from.
-* `--pretty` <boolean> - Pretty print the logs. Default is `true`.
+* `--pretty <boolean>` - Pretty print the logs. Default is `true`.
 
 If `--service` is not specified, the command will stream logs from all services.
 

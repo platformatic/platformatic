@@ -1,7 +1,7 @@
 'use strict'
 
 const { getGlobalDispatcher, setGlobalDispatcher } = require('undici')
-const FastifyUndiciDispatcher = require('fastify-undici-dispatcher')
+const { createFastifyInterceptor } = require('fastify-undici-dispatcher')
 const { PlatformaticApp } = require('./app')
 const errors = require('./errors')
 const { printSchema } = require('graphql')
@@ -9,9 +9,10 @@ const { printSchema } = require('graphql')
 class RuntimeApi {
   #services
   #dispatcher
+  #interceptor
   #logger
 
-  constructor (config, logger, loaderPort) {
+  constructor (config, logger, loaderPort, composedInterceptors = []) {
     this.#services = new Map()
     this.#logger = logger
     const telemetryConfig = config.telemetry
@@ -32,16 +33,19 @@ class RuntimeApi {
         }
       }
 
-      const app = new PlatformaticApp(service, loaderPort, logger, serviceTelemetryConfig, serverConfig)
+      const app = new PlatformaticApp(service, loaderPort, logger, serviceTelemetryConfig, serverConfig, !!config.managementApi)
 
       this.#services.set(service.id, app)
     }
 
-    this.#dispatcher = new FastifyUndiciDispatcher({
-      dispatcher: getGlobalDispatcher(),
+    this.#interceptor = createFastifyInterceptor({
       // setting the domain here allows for fail-fast scenarios
       domain: '.plt.local'
     })
+
+    composedInterceptors.unshift(this.#interceptor)
+
+    this.#dispatcher = getGlobalDispatcher().compose(composedInterceptors)
     setGlobalDispatcher(this.#dispatcher)
   }
 
@@ -146,7 +150,7 @@ class RuntimeApi {
       }
 
       const serviceUrl = new URL(service.appConfig.localUrl)
-      this.#dispatcher.route(serviceUrl.host, service.server)
+      this.#interceptor.route(serviceUrl.host, service.server)
     }
     return entrypointUrl
   }
@@ -174,7 +178,7 @@ class RuntimeApi {
       }
 
       const serviceUrl = new URL(service.appConfig.localUrl)
-      this.#dispatcher.route(serviceUrl.host, service.server)
+      this.#interceptor.route(serviceUrl.host, service.server)
     }
     return entrypointUrl
   }
@@ -207,7 +211,8 @@ class RuntimeApi {
     const service = this.#services.get(id)
 
     if (!service) {
-      throw new errors.ServiceNotFoundError(id)
+      const listOfServices = this.#getServices().services.map(svc => svc.id).join(', ')
+      throw new errors.ServiceNotFoundError(listOfServices)
     }
 
     return service
@@ -217,7 +222,7 @@ class RuntimeApi {
     const service = this.#getServiceById(id)
     const status = service.getStatus()
 
-    const type = service.config.configType
+    const type = service.config?.configType
     const { entrypoint, dependencies, localUrl } = service.appConfig
     const serviceDetails = { id, type, status, localUrl, entrypoint, dependencies }
 

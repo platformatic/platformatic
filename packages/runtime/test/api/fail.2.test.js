@@ -21,6 +21,7 @@ test('should fail to start service with a wrong id', async (t) => {
     await app.startService('wrong-service-id')
     assert.fail('should have thrown')
   } catch (err) {
-    assert.strictEqual(err.message, 'Service with id \'wrong-service-id\' not found')
+    assert.strictEqual(err.message,
+      'Service not found. Available services are: db-app, serviceApp, with-logger, multi-plugin-service')
   }
 })

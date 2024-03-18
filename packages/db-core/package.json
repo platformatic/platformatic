@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db-core",
-  "version": "1.27.0",
+  "version": "1.28.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -19,7 +19,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "borp": "^0.10.0",
-    "fastify": "^4.26.0",
+    "fastify": "^4.26.2",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
     "why-is-node-running": "^2.2.2"

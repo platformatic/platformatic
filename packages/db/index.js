@@ -10,7 +10,9 @@ const ConfigManager = require('@platformatic/config')
 const adjustConfig = require('./lib/adjust-config')
 const { locateSchemaLock, updateSchemaLock } = require('./lib/utils')
 const errors = require('./lib/errors')
+const upgrade = require('./lib/upgrade')
 const fs = require('fs/promises')
+const version = require('./package.json').version
 
 async function platformaticDB (app, opts) {
   const configManager = app.platformatic.configManager
@@ -111,13 +113,15 @@ platformaticDB[Symbol.for('skip-override')] = true
 platformaticDB.schema = schema
 platformaticDB.configType = 'db'
 platformaticDB.configManagerConfig = {
+  version,
   schema,
   envWhitelist: ['DATABASE_URL', ...platformaticService.configManagerConfig.envWhitelist],
   allowToWatch: ['.env'],
   schemaOptions: platformaticService.configManagerConfig.schemaOptions,
   async transformConfig () {
     await adjustConfig(this)
-  }
+  },
+  upgrade
 }
 
 function _buildServer (options) {

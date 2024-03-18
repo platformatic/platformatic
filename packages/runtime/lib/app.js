@@ -20,8 +20,9 @@ class PlatformaticApp {
   #telemetryConfig
   #serverConfig
   #debouncedRestart
+  #hasManagementApi
 
-  constructor (appConfig, loaderPort, logger, telemetryConfig, serverConfig) {
+  constructor (appConfig, loaderPort, logger, telemetryConfig, serverConfig, hasManagementApi) {
     this.appConfig = appConfig
     this.config = null
     this.#hotReload = false
@@ -31,6 +32,7 @@ class PlatformaticApp {
     this.#started = false
     this.#originalWatch = null
     this.#fileWatcher = null
+    this.#hasManagementApi = !!hasManagementApi
     this.#logger = logger.child({
       name: this.appConfig.id
     })
@@ -107,14 +109,16 @@ class PlatformaticApp {
       })
     }
 
-    configManager.update({
-      ...configManager.current,
-      metrics: {
-        ...configManager.current.metrics,
-        defaultMetrics: { enabled: this.appConfig.entrypoint },
-        prefix: snakeCase(this.appConfig.id) + '_'
-      }
-    })
+    if (this.#hasManagementApi) {
+      configManager.update({
+        ...configManager.current,
+        metrics: {
+          ...configManager.current.metrics,
+          defaultMetrics: { enabled: this.appConfig.entrypoint },
+          prefix: snakeCase(this.appConfig.id) + '_'
+        }
+      })
+    }
 
     if (!this.appConfig.entrypoint) {
       configManager.update({
@@ -215,7 +219,7 @@ class PlatformaticApp {
         onMissingEnv (key) {
           return appConfig.localServiceEnvVars.get(key)
         }
-      })
+      }, true, this.#logger)
     } catch (err) {
       this.#logAndExit(err)
     }

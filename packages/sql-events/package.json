@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-events",
-  "version": "1.27.0",
+  "version": "1.28.1",
   "description": "Emit events via MQEmitter",
   "main": "index.js",
   "scripts": {
@@ -27,11 +27,11 @@
     "@matteo.collina/tspl": "^0.1.1",
     "@platformatic/sql-mapper": "workspace:*",
     "borp": "^0.10.0",
-    "fastify": "^4.26.0",
+    "fastify": "^4.26.2",
     "ioredis": "^5.3.2",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "tsd": "^0.30.4"
+    "tsd": "^0.30.7"
   },
   "dependencies": {
     "@fastify/error": "^3.4.1",

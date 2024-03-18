@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-mapper",
-  "version": "1.27.0",
+  "version": "1.28.1",
   "description": "A data mapper utility for SQL databases",
   "main": "mapper.js",
   "types": "mapper.d.ts",
@@ -28,10 +28,10 @@
   "devDependencies": {
     "@matteo.collina/tspl": "^0.1.1",
     "borp": "^0.10.0",
-    "fastify": "^4.26.0",
+    "fastify": "^4.26.2",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "tsd": "^0.30.4"
+    "tsd": "^0.30.7"
   },
   "dependencies": {
     "@databases/mysql": "^6.0.0",
@@ -41,7 +41,7 @@
     "@hapi/topo": "^6.0.2",
     "@matteo.collina/sqlite-pool": "^0.3.0",
     "@platformatic/utils": "workspace:*",
-    "async-cache-dedupe": "^2.0.0",
+    "async-cache-dedupe": "^2.1.0",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^4.5.1",
     "inflected": "^2.1.0"

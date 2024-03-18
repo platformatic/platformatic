@@ -1,17 +1,40 @@
 import { type InstanceOptions } from 'ajv'
 import { type FastifyPluginAsync } from 'fastify'
 import { FastifyError } from '@fastify/error'
+
+interface LogFn {
+  // TODO: why is this different from `obj: object` or `obj: any`?
+  /* tslint:disable:no-unnecessary-generics */
+  <T extends object>(obj: T, msg?: string, ...args: any[]): void
+  (obj: unknown, msg?: string, ...args: any[]): void
+  (msg: string, ...args: any[]): void
+}
+
+export interface AbstractLogger {
+  error: LogFn
+  warn: LogFn
+  info: LogFn
+  debug: LogFn
+  trace: LogFn
+  child: (opts: object) => AbstractLogger
+}
+
 interface IEnv {
   [key: string]: string
 }
 export interface IConfigManagerOptions {
   source: string | JsonMap
   schema?: object
+  fixPaths?: boolean
   schemaOptions?: Partial<InstanceOptions>
   env?: IEnv
   envWhitelist?: string[]
   watch?: boolean
+  logger?: AbstractLogger
   allowToWatch?: string[]
+  version?: string
+  configVersion?: string
+  upgrade?: (config: any, version: string) => Promise<any> | any
 }
 
 type JsonArray = boolean[] | number[] | string[] | JsonMap[] | Date[]

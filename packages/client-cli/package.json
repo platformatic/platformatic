@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/client-cli",
-  "version": "1.27.0",
+  "version": "1.28.1",
   "description": "A client for all platformatic backends",
   "main": "cli.mjs",
   "bin": {
@@ -27,25 +27,24 @@
     "@platformatic/service": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "borp": "^0.10.0",
-    "dotenv": "^16.4.1",
+    "dotenv": "^16.4.5",
     "execa": "^8.0.1",
-    "fastify": "^4.26.0",
+    "fastify": "^4.26.2",
     "fastify-tsconfig": "^2.0.0",
     "fs-extra": "^11.2.0",
     "snazzy": "^9.0.0",
     "split2": "^4.2.0",
     "standard": "^17.1.0",
-    "typescript": "^5.3.3",
+    "typescript": "^5.4.2",
     "why-is-node-running": "^2.2.2"
   },
   "dependencies": {
     "@fastify/error": "^3.4.1",
     "@platformatic/client": "workspace:*",
     "@platformatic/config": "workspace:*",
-    "@platformatic/metaconfig": "workspace:*",
     "abstract-logging": "^2.0.1",
     "camelcase": "~6.3.0",
-    "code-block-writer": "^13.0.0",
+    "code-block-writer": "^13.0.1",
     "desm": "^1.3.1",
     "es-main": "^1.3.0",
     "find-up": "^7.0.0",
@@ -53,9 +52,9 @@
     "help-me": "^5.0.0",
     "jsonpointer": "^5.0.1",
     "minimist": "^1.2.8",
-    "pino": "^8.17.2",
+    "pino": "^8.19.0",
     "pino-pretty": "^10.3.1",
-    "undici": "^6.6.0",
-    "yaml": "^2.3.4"
+    "undici": "^6.9.0",
+    "yaml": "^2.4.1"
   }
 }
