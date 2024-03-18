@@ -94,7 +94,7 @@ async function parseClientsAndComposer (configManager) {
   for (let i = 0; i < configManager.current.services.length; ++i) {
     const service = configManager.current.services[i]
     const cm = new ConfigManager({ source: service.config })
-    const configString = await cm.load()
+    const configString = await cm.readConfig()
     const parsed = cm._parser(configString)
 
     if (Array.isArray(parsed.composer?.services)) {
