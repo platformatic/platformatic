@@ -117,7 +117,7 @@ async function getLogFileStream (logFileIndex) {
 function startCleanLogsWatcher () {
   let cleaning = false
 
-  watch(runtimeTmpDir, async (event, filename) => {
+  const watcher = watch(runtimeTmpDir, async (event, filename) => {
     if (event === 'rename' && filename.startsWith('logs')) {
       if (cleaning) return
       const logFileIndex = parseInt(filename.slice('logs.'.length))
@@ -136,6 +136,8 @@ function startCleanLogsWatcher () {
       }
     }
   }).unref()
+
+  return watcher
 }
 
 module.exports = {
