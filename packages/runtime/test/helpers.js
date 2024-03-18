@@ -1,8 +1,5 @@
-'use strict'
-
 const { join } = require('node:path')
-const fs = require('node:fs/promises')
-const { safeMkdir } = require('../lib/utils')
+const { mkdir, rm } = require('node:fs/promises')
 const { MockAgent, setGlobalDispatcher } = require('undici')
 
 const mockAgent = new MockAgent()
@@ -10,29 +7,32 @@ setGlobalDispatcher(mockAgent)
 mockAgent.disableNetConnect()
 
 let counter = 0
-
 async function getTempDir (baseDir) {
   if (baseDir === undefined) {
     baseDir = __dirname
   }
-  const dir = join(baseDir, 'tmp', `platformatic-generators-${process.pid}-${Date.now()}-${counter++}`)
+  const dir = join(baseDir, 'tmp', `plt-runtime-${process.pid}-${Date.now()}-${counter++}`)
   await safeMkdir(dir)
   return dir
 }
 async function moveToTmpdir (teardown) {
   const cwd = process.cwd()
-  // const tmp = join(__dirname, 'tmp')
-  // try {
-  //   await fs.mkdir(tmp)
-  // } catch {
-  // }
   const dir = await getTempDir()
   process.chdir(dir)
   teardown(() => process.chdir(cwd))
   if (!process.env.SKIP_RM_TMP) {
-    teardown(() => fs.rm(dir, { recursive: true }).catch(() => {}))
+    teardown(() => rm(dir, { recursive: true }).catch(() => {}))
   }
   return dir
+}
+
+async function safeMkdir (dir) {
+  try {
+    await mkdir(dir, { recursive: true })
+    /* c8 ignore next 3 */
+  } catch (err) {
+    // do nothing
+  }
 }
 
 function mockNpmJsRequestForPkgs (pkgs) {
@@ -51,14 +51,7 @@ function mockNpmJsRequestForPkgs (pkgs) {
   }
 }
 module.exports = {
-  fakeLogger: {
-    info: () => {},
-    debug: () => {},
-    warn: () => {},
-    error: () => {}
-  },
   getTempDir,
   moveToTmpdir,
-  mockNpmJsRequestForPkgs,
-  mockAgent
+  mockNpmJsRequestForPkgs
 }

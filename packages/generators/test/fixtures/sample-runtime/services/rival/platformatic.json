@@ -1,0 +1,33 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v1.25.0/service",
+  "service": {
+    "openapi": true
+  },
+  "watch": true,
+  "plugins": {
+    "paths": [
+      {
+        "path": "./plugins",
+        "encapsulate": false
+      },
+      "./routes"
+    ],
+    "typescript": "{PLT_RIVAL_TYPESCRIPT}",
+    "packages": [
+      {
+        "name": "@fastify/oauth2",
+        "options": {
+          "name": "{PLT_RIVAL_FST_PLUGIN_OAUTH2_NAME}",
+          "credentials": {
+            "client": {
+              "id": "{PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID}",
+              "secret": "{PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET}"
+            }
+          },
+          "startRedirectPath": "{PLT_RIVAL_FST_PLUGIN_OAUTH2_REDIRECT_PATH}",
+          "callbackUri": "{PLT_RIVAL_FST_PLUGIN_OAUTH2_CALLBACK_URI}"
+        }
+      }
+    ]
+  }
+}

@@ -9,6 +9,7 @@ const { ComposerGenerator } = require('../../composer/lib/generator/composer-gen
 const { join } = require('node:path')
 const { tmpdir } = require('node:os')
 const { MockAgent, setGlobalDispatcher } = require('undici')
+const { CannotFindGeneratorForTemplateError } = require('../lib/errors.js')
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -335,5 +336,24 @@ describe('Generator', () => {
     // runtime package.json has typescript dependency
     const packageJson = JSON.parse(rg.getFileObject('package.json').contents)
     assert.ok(packageJson.devDependencies.typescript)
+  })
+
+  test('should return generator for templates', async (t) => {
+    const rg = new RuntimeGenerator({
+      targetDirectory: '/tmp/runtime'
+    })
+    const serviceGen = rg.getGeneratorForTemplate('@platformatic/service')
+    const dbGen = rg.getGeneratorForTemplate('@platformatic/db')
+    const composerGen = rg.getGeneratorForTemplate('@platformatic/composer')
+    assert.equal(serviceGen.name, 'ServiceGenerator')
+    assert.equal(dbGen.name, 'DBGenerator')
+    assert.equal(composerGen.name, 'ComposerGenerator')
+    try {
+      rg.getGeneratorForTemplate('fake/template')
+      assert.fail()
+    } catch (err) {
+      assert.ok(err instanceof CannotFindGeneratorForTemplateError)
+      assert.equal(err.message, 'Cannot find a generator for template "fake/template"')
+    }
   })
 })

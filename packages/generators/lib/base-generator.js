@@ -15,6 +15,9 @@ const { generateTests, generatePlugins } = require('./create-plugin')
 const { PrepareError, MissingEnvVariable, ModuleNeeded } = require('./errors')
 const { generateGitignore } = require('./create-gitignore')
 const generateName = require('boring-name-generator')
+const { getServiceTemplateFromSchemaUrl } = require('./utils')
+const { flattenObject } = require('./utils')
+const { envStringToObject } = require('./utils')
 /* c8 ignore start */
 const fakeLogger = {
   info: () => {},
@@ -57,7 +60,8 @@ class BaseGenerator extends FileGenerator {
       isRuntimeContext: false,
       serviceName: '',
       envPrefix: '',
-      env: {}
+      env: {},
+      isUpdating: false
     }
   }
 
@@ -179,47 +183,64 @@ class BaseGenerator extends FileGenerator {
   async prepare () {
     try {
       this.reset()
-      await this.getFastifyVersion()
-      await this.getPlatformaticVersion()
 
-      await this._beforePrepare()
-
-      // generate package.json
-      const template = await this.generatePackageJson()
-      this.addFile({
-        path: '',
-        file: 'package.json',
-        contents: JSON.stringify(template, null, 2)
-      })
-
-      await this.generateConfigFile()
-
-      await this.generateEnv()
-
-      if (this.config.typescript) {
-        // create tsconfig.json
+      if (this.config.isUpdating) {
+        // only the packages options may have changed, let's update those
+        await this.generateConfigFile()
+        const generatedConfigFile = JSON.parse(this.getFileObject('platformatic.json', '').contents)
+        const fileFromDisk = await this.loadFile({ file: 'platformatic.json', path: '' })
+        const currentConfigFile = JSON.parse(fileFromDisk.contents)
+        if (generatedConfigFile.plugins && generatedConfigFile.plugins.packages) {
+          currentConfigFile.plugins.packages = generatedConfigFile.plugins.packages
+        }
+        this.reset()
         this.addFile({
           path: '',
-          file: 'tsconfig.json',
-          contents: JSON.stringify(this.getTsConfig(), null, 2)
+          file: 'platformatic.json',
+          contents: JSON.stringify(currentConfigFile, null, 2)
         })
-      }
+      } else {
+        await this.getFastifyVersion()
+        await this.getPlatformaticVersion()
 
-      if (this.config.plugin) {
-        // create plugin
-        this.files.push(...generatePlugins(this.config.typescript))
-        if (this.config.tests) {
-          // create tests
-          this.files.push(...generateTests(this.config.typescript, this.module))
+        await this._beforePrepare()
+
+        // generate package.json
+        const template = await this.generatePackageJson()
+        this.addFile({
+          path: '',
+          file: 'package.json',
+          contents: JSON.stringify(template, null, 2)
+        })
+
+        await this.generateConfigFile()
+
+        await this.generateEnv()
+
+        if (this.config.typescript) {
+          // create tsconfig.json
+          this.addFile({
+            path: '',
+            file: 'tsconfig.json',
+            contents: JSON.stringify(this.getTsConfig(), null, 2)
+          })
         }
+
+        if (this.config.plugin) {
+          // create plugin
+          this.files.push(...generatePlugins(this.config.typescript))
+          if (this.config.tests) {
+            // create tests
+            this.files.push(...generateTests(this.config.typescript, this.module))
+          }
+        }
+
+        this.files.push(generateGitignore())
+
+        await this._afterPrepare()
+
+        this.checkEnvVariablesInConfigFile()
       }
-
-      this.files.push(generateGitignore())
-
-      await this._afterPrepare()
-
-      this.checkEnvVariablesInConfigFile()
-
       return {
         targetDirectory: this.targetDirectory,
         env: this.config.env
@@ -310,7 +331,6 @@ class BaseGenerator extends FileGenerator {
   async generateConfigFile () {
     const configFileName = 'platformatic.json'
     const contents = await this._getConfigFileContents()
-
     // handle packages
     if (this.packages.length > 0) {
       if (!contents.plugins) {
@@ -429,6 +449,48 @@ class BaseGenerator extends FileGenerator {
       this.logger.warn(`Could not get latest version for ${pkg.name}, setting it to latest`)
     }
     this.packages.push(pkg)
+  }
+
+  async loadFromDir (serviceName, runtimeRootPath) {
+    const runtimePkgConfigFileData = JSON.parse(await readFile(join(runtimeRootPath, 'platformatic.json'), 'utf-8'))
+    const servicesPath = runtimePkgConfigFileData.autoload.path
+    const servicePkgJsonFileData = JSON.parse(await readFile(join(runtimeRootPath, servicesPath, serviceName, 'platformatic.json'), 'utf-8'))
+    const runtimeEnv = envStringToObject(await readFile(join(runtimeRootPath, '.env'), 'utf-8'))
+    const serviceNamePrefix = convertServiceNameToPrefix(serviceName)
+    const plugins = []
+    if (servicePkgJsonFileData.plugins && servicePkgJsonFileData.plugins.packages) {
+      for (const pkg of servicePkgJsonFileData.plugins.packages) {
+        const flattened = flattenObject(pkg)
+        const output = {
+          name: flattened.name,
+          options: []
+        }
+        if (pkg.options) {
+          Object.entries(flattened)
+            .filter(([key, value]) => key.indexOf('options.') === 0 && flattened[key].startsWith('{PLT_'))
+            .forEach(([key, value]) => {
+              const runtimeEnvVarKey = value.replace(/[{}]/g, '')
+              const serviceEnvVarKey = runtimeEnvVarKey.replace(`PLT_${serviceNamePrefix}_`, '')
+              const option = {
+                name: serviceEnvVarKey,
+                path: key.replace('options.', ''),
+                type: 'string',
+                value: runtimeEnv[runtimeEnvVarKey]
+              }
+              output.options.push(option)
+            })
+        }
+
+        plugins.push(output)
+      }
+    }
+
+    return {
+      name: serviceName,
+      template: getServiceTemplateFromSchemaUrl(servicePkgJsonFileData.$schema),
+      fields: [],
+      plugins
+    }
   }
 
   // implement in the subclass

@@ -103,4 +103,38 @@ describe('FileGenerator', () => {
       assert.equal(err.code, 'ENOENT')
     }
   })
+
+  test('should load file from filesystem', async (t) => {
+    const tempDir = join(tmpdir(), `plt-file-generator-test-${dirCount++}`)
+    t.after(async () => {
+      await rm(tempDir, { recursive: true })
+    })
+
+    await safeMkdir(tempDir)
+    const fg = new FileGenerator()
+    fg.setTargetDirectory(tempDir)
+    fg.addFile({ path: 'myDir', file: 'helloworld.txt', contents: 'hello world' })
+    await fg.writeFiles()
+
+    fg.reset()
+    const fileObject = await fg.loadFile({
+      path: 'myDir',
+      file: 'helloworld.txt'
+    })
+
+    assert.deepEqual(fileObject, {
+      path: 'myDir',
+      file: 'helloworld.txt',
+      contents: 'hello world',
+      options: {}
+    })
+
+    assert.equal(fg.files.length, 1)
+    assert.deepEqual(fg.files[0], {
+      path: 'myDir',
+      file: 'helloworld.txt',
+      contents: 'hello world',
+      options: {}
+    })
+  })
 })

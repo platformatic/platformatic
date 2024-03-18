@@ -23,6 +23,7 @@ export namespace FileGenerator {
     reset(): void
     writeFiles(): Promise<void>
     listFiles(): FileObject
+    loadFile(): Promise<FileObject>
     getFileObject(file: string, path?: string): FileObject
   }
   

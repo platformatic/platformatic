@@ -6,7 +6,7 @@ const { join } = require('node:path')
 const { request } = require('undici')
 const { setTimeout } = require('timers/promises')
 const PLT_ROOT = 'PLT_ROOT'
-
+const { EOL } = require('node:os')
 async function safeMkdir (dir) {
   try {
     await mkdir(dir, { recursive: true })
@@ -52,9 +52,22 @@ function envObjectToString (env) {
   Object.entries(env).forEach((kv) => {
     output.push(`${kv[0]}=${kv[1]}`)
   })
-  return output.join('\n')
+  return output.join(EOL)
 }
 
+function envStringToObject (envString) {
+  const output = {}
+  const split = envString.split(EOL)
+  split
+    .filter((line) => {
+      return line.trim() !== '' && line.indexOf('#') !== 0
+    })
+    .forEach((line) => {
+      const kv = line.split('=')
+      output[kv[0]] = kv[1]
+    })
+  return output
+}
 function extractEnvVariablesFromText (text) {
   const match = text.match(/\{[a-zA-Z0-9-_]*\}/g)
   if (match) {
@@ -132,13 +145,53 @@ async function getLatestNpmVersion (pkg) {
   }
   return null
 }
+/**
+ * Flatten a deep-nested object to a single level depth one
+ * i.e from
+ * {
+ *  name: 'test',
+ *  a: {
+ *    b: {
+ *      c: 'foobar'
+ *    }
+ *  }
+ * }
+ * to:
+ * {
+ *    name: 'test',
+ *    'a.b.c': 'foobar'
+ * }
+ * @param {Object} ob
+ * @returns Object
+ */
+function flattenObject (ob) {
+  const result = {}
+  for (const i in ob) {
+    if ((typeof ob[i]) === 'object' && !Array.isArray(ob[i])) {
+      const temp = flattenObject(ob[i])
+      for (const j in temp) {
+        result[i + '.' + j] = temp[j]
+      }
+    } else {
+      result[i] = ob[i]
+    }
+  }
+  return result
+}
 
+function getServiceTemplateFromSchemaUrl (schemaUrl) {
+  const splitted = schemaUrl.split('/')
+  return `@platformatic/${splitted[splitted.length - 1]}`
+}
 module.exports = {
   addPrefixToString,
   convertServiceNameToPrefix,
   getPackageConfigurationObject,
   envObjectToString,
+  envStringToObject,
   extractEnvVariablesFromText,
+  flattenObject,
+  getServiceTemplateFromSchemaUrl,
   safeMkdir,
   stripVersion,
   PLT_ROOT,
