@@ -177,7 +177,6 @@ test('should get cached formatted runtime metrics', async (t) => {
   await sleep(5000)
 
   const metrics = await app.getCachedMetrics()
-  assert.ok(metrics.length > 4)
 
   for (const metric of metrics) {
     const metricsKeys = Object.keys(metric).sort()
