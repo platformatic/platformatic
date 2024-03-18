@@ -108,8 +108,10 @@ async function startWithConfig (configManager, env = process.env) {
       runtimeApiClient
     )
     runtimeApiClient.managementApi = managementApi
-    runtimeApiClient.startCollectingMetrics()
-    runtimeApiClient.startCleanLogsWatcher()
+    runtimeApiClient.on('start', () => {
+      runtimeApiClient.startCollectingMetrics()
+      runtimeApiClient.startCleanLogsWatcher()
+    })
   }
 
   return runtimeApiClient
