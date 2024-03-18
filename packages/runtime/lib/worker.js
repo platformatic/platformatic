@@ -63,7 +63,11 @@ function createLogger (config) {
   if (config.managementApi) {
     const logsFileMb = 5
     const logsLimitMb = config.managementApi?.logs?.limit || 200
-    const logsLimitCount = Math.ceil(logsLimitMb / logsFileMb)
+
+    let logsLimitCount = Math.ceil(logsLimitMb / logsFileMb)
+    if (logsLimitCount < 1) {
+      logsLimitCount = 1
+    }
 
     const logsPath = join(PLATFORMATIC_TMP_DIR, process.pid.toString(), 'logs')
     const pinoRoll = pino.transport({
