@@ -159,11 +159,11 @@ class ConfigManager extends EventEmitter {
   async parse (replaceEnv = true) {
     try {
       if (this.fullPath) {
-        const configString = await this.load()
+        const configString = await this.readConfig()
         if (replaceEnv) {
           this.current = this._parser(await this.replaceEnv(configString))
         } else {
-          this.current = this._parser(await this.load())
+          this.current = this._parser(await this.readConfig())
         }
       }
 
@@ -328,7 +328,7 @@ class ConfigManager extends EventEmitter {
     return true
   }
 
-  async load () {
+  async readConfig () {
     const configString = await readFile(this.fullPath, 'utf-8')
     return configString
   }
