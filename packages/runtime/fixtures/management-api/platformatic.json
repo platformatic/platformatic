@@ -12,7 +12,7 @@
   },
   "managementApi": {
     "logs": {
-      "limit": 15
+      "maxSize": 15
     }
   }
 }

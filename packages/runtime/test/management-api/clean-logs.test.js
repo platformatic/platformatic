@@ -40,7 +40,6 @@ test('should clean the logs after reaching a limit', async (t) => {
     (file) => file.startsWith('logs')
   )
   assert.deepStrictEqual(runtimeLogFiles, [
-    'logs.4',
     'logs.5',
     'logs.6',
     'logs.7'

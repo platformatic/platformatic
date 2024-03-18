@@ -154,7 +154,7 @@ const platformaticRuntimeSchema = {
           type: 'object',
           properties: {
             logs: {
-              limit: {
+              maxSize: {
                 type: 'number',
                 minimum: 5,
                 default: 200
