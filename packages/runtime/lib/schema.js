@@ -156,7 +156,7 @@ const platformaticRuntimeSchema = {
             logs: {
               limit: {
                 type: 'number',
-                minaaa: 5,
+                minimum: 5,
                 default: 200
               }
             }
