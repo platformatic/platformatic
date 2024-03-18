@@ -71,37 +71,41 @@ class ComposerGenerator extends BaseGenerator {
   }
 
   async _beforePrepare () {
-    if (!this.config.isRuntimeContext) {
+    if (!this.config.isUpdating) {
+      if (!this.config.isRuntimeContext) {
+        this.addEnvVars({
+          PLT_SERVER_HOSTNAME: this.config.hostname,
+          PLT_SERVER_LOGGER_LEVEL: 'info',
+          PORT: 3042
+        }, { overwrite: false })
+      }
+
       this.addEnvVars({
-        PLT_SERVER_HOSTNAME: this.config.hostname,
-        PLT_SERVER_LOGGER_LEVEL: 'info',
-        PORT: 3042
+        PLT_TYPESCRIPT: this.config.typescript,
+        PLT_EXAMPLE_ORIGIN: 'http://127.0.0.1:3043'
       }, { overwrite: false })
-    }
 
-    this.addEnvVars({
-      PLT_TYPESCRIPT: this.config.typescript,
-      PLT_EXAMPLE_ORIGIN: 'http://127.0.0.1:3043'
-    }, { overwrite: false })
-
-    this.config.dependencies = {
-      '@platformatic/composer': `^${this.platformaticVersion}`
+      this.config.dependencies = {
+        '@platformatic/composer': `^${this.platformaticVersion}`
+      }
     }
   }
 
   async _afterPrepare () {
-    const GLOBAL_TYPES_TEMPLATE = `
-import { FastifyInstance } from 'fastify'
-import { PlatformaticApp, PlatformaticComposerConfig } from '@platformatic/composer'
-
-declare module 'fastify' {
-  interface FastifyInstance {
-    platformatic: PlatformaticApp<PlatformaticComposerConfig>
-  }
-}
-`
-    this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
-    this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
+    if (!this.config.isUpdating) {
+      const GLOBAL_TYPES_TEMPLATE = `
+      import { FastifyInstance } from 'fastify'
+      import { PlatformaticApp, PlatformaticComposerConfig } from '@platformatic/composer'
+      
+      declare module 'fastify' {
+        interface FastifyInstance {
+          platformatic: PlatformaticApp<PlatformaticComposerConfig>
+        }
+      }
+      `
+      this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
+      this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
+    }
   }
 
   setRuntime (runtime) {

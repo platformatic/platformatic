@@ -2,12 +2,13 @@
 const { test, after } = require('node:test')
 const assert = require('node:assert')
 const { join } = require('node:path')
-const { moveToTmpdir } = require('./helpers')
+const { moveToTmpdir, mockNpmJsRequestForPkgs } = require('./helpers')
 const { cp, readFile, writeFile } = require('node:fs/promises')
 const RuntimeGenerator = require('../lib/generator/runtime-generator')
 const ServiceGenerator = require('@platformatic/service/lib/generator/service-generator')
 const { CannotRemoveServiceOnUpdateError } = require('../lib/errors')
 const { DotEnvTool } = require('dotenv-tool')
+
 test('should throw if trying to remove a service', async (t) => {
   const dir = await moveToTmpdir(after)
 
@@ -38,6 +39,7 @@ test('should throw if trying to remove a service', async (t) => {
 })
 
 test('should add a new service with new env variables', async (t) => {
+  mockNpmJsRequestForPkgs(['@fastify/oauth2', '@fastify/foo-plugin'])
   const dir = await moveToTmpdir(after)
 
   const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
@@ -57,7 +59,7 @@ test('should add a new service with new env variables', async (t) => {
     template: '@platformatic/service',
     fields: [],
     plugins: [{
-      name: 'fastify/foo-plugin',
+      name: '@fastify/foo-plugin',
       options: [
         {
           name: 'FST_PLUGIN_FOO_TEST_VALUE',
@@ -81,7 +83,7 @@ test('should add a new service with new env variables', async (t) => {
   // the new service has been generated
   const serviceConfigFile = JSON.parse(await readFile(join(dir, 'services', 'foobar', 'platformatic.json'), 'utf-8'))
   assert.deepEqual(serviceConfigFile.plugins.packages[0], {
-    name: 'fastify/foo-plugin',
+    name: '@fastify/foo-plugin',
     options: {
       testValue: '{PLT_FOOBAR_FST_PLUGIN_FOO_TEST_VALUE}',
       credentials: {
@@ -102,6 +104,8 @@ test('should add a new service with new env variables', async (t) => {
 })
 
 test('should update existing service\'s plugin options', async (t) => {
+  mockNpmJsRequestForPkgs(['@fastify/oauth2'])
+
   const dir = await moveToTmpdir(after)
 
   const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
@@ -176,6 +180,8 @@ test('should update existing service\'s plugin options', async (t) => {
 })
 
 test('should add new service\'s plugin and options', async (t) => {
+  mockNpmJsRequestForPkgs(['@fastify/passport', '@fastify/oauth2'])
+
   const dir = await moveToTmpdir(after)
 
   const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')

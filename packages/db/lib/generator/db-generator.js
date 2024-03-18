@@ -87,84 +87,88 @@ class DBGenerator extends BaseGenerator {
   }
 
   async _beforePrepare () {
-    this.config.connectionString = this.config.connectionString || this.connectionStrings[this.config.database]
-    this.config.dependencies = {
-      '@platformatic/db': `^${this.platformaticVersion}`
-    }
+    if (!this.config.isUpdating) {
+      this.config.connectionString = this.config.connectionString || this.connectionStrings[this.config.database]
+      this.config.dependencies = {
+        '@platformatic/db': `^${this.platformaticVersion}`
+      }
 
-    if (!this.config.isRuntimeContext) {
+      if (!this.config.isRuntimeContext) {
+        this.addEnvVars({
+          PLT_SERVER_HOSTNAME: this.config.hostname,
+          PLT_SERVER_LOGGER_LEVEL: 'info',
+          PORT: 3042
+        }, { overwrite: false })
+      }
+
       this.addEnvVars({
-        PLT_SERVER_HOSTNAME: this.config.hostname,
-        PLT_SERVER_LOGGER_LEVEL: 'info',
-        PORT: 3042
+        PLT_TYPESCRIPT: this.config.typescript,
+        DATABASE_URL: this.connectionStrings[this.config.database],
+        PLT_APPLY_MIGRATIONS: 'true'
       }, { overwrite: false })
     }
-
-    this.addEnvVars({
-      PLT_TYPESCRIPT: this.config.typescript,
-      DATABASE_URL: this.connectionStrings[this.config.database],
-      PLT_APPLY_MIGRATIONS: 'true'
-    }, { overwrite: false })
   }
 
   async _afterPrepare () {
-    if (this.config.createMigrations) {
-      this.createMigrationFiles()
-    }
-
-    this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
-
-    if (this.config.plugin) {
-      let jsHelper = { pre: '', config: '', post: '' }
-      switch (this.config.database) {
-        case 'sqlite':
-          jsHelper = jsHelperSqlite
-          break
-        case 'mysql':
-          jsHelper = jsHelperMySQL(this.config.connectionString)
-          break
-        case 'postgres':
-          jsHelper = jsHelperPostgres(this.config.connectionString)
-          break
-        case 'mariadb':
-          jsHelper = jsHelperMySQL(this.config.connectionString)
-          break
-      }
-
+    if (!this.config.isUpdating) {
       if (this.config.createMigrations) {
-        if (this.config.typescript) {
-          this.addFile({ path: join('test', 'routes'), file: 'movies.test.ts', contents: moviesTestTS })
-        } else {
-          this.addFile({ path: join('test', 'routes'), file: 'movies.test.js', contents: moviesTestJS })
+        this.createMigrationFiles()
+      }
+
+      this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
+
+      if (this.config.plugin) {
+        let jsHelper = { pre: '', config: '', post: '' }
+        switch (this.config.database) {
+          case 'sqlite':
+            jsHelper = jsHelperSqlite
+            break
+          case 'mysql':
+            jsHelper = jsHelperMySQL(this.config.connectionString)
+            break
+          case 'postgres':
+            jsHelper = jsHelperPostgres(this.config.connectionString)
+            break
+          case 'mariadb':
+            jsHelper = jsHelperMySQL(this.config.connectionString)
+            break
+        }
+
+        if (this.config.createMigrations) {
+          if (this.config.typescript) {
+            this.addFile({ path: join('test', 'routes'), file: 'movies.test.ts', contents: moviesTestTS })
+          } else {
+            this.addFile({ path: join('test', 'routes'), file: 'movies.test.js', contents: moviesTestJS })
+          }
+        }
+
+        // TODO(leorossi): this is unfortunate. We have already generated tests in BaseGenerator
+        // next line will override the test files
+        generateTests(this.config.typescript, '@platformatic/db', jsHelper).forEach((fileObject) => {
+          this.addFile(fileObject)
+        })
+
+        if (this.config.isRuntimeContext) {
+          // remove .env file and env variables since they are all for the config.server property
+          const envFile = this.getFileObject('.env')
+          if (envFile) {
+            envFile.contents = ''
+          }
         }
       }
 
-      // TODO(leorossi): this is unfortunate. We have already generated tests in BaseGenerator
-      // next line will override the test files
-      generateTests(this.config.typescript, '@platformatic/db', jsHelper).forEach((fileObject) => {
-        this.addFile(fileObject)
-      })
-
-      if (this.config.isRuntimeContext) {
-        // remove .env file and env variables since they are all for the config.server property
-        const envFile = this.getFileObject('.env')
-        if (envFile) {
-          envFile.contents = ''
-        }
-      }
+      const GLOBAL_TYPES_TEMPLATE = `
+  import { FastifyInstance } from 'fastify'
+  import { PlatformaticApp, PlatformaticDBConfig, PlatformaticDBMixin, Entities } from '@platformatic/db'
+  
+  declare module 'fastify' {
+    interface FastifyInstance {
+      platformatic: PlatformaticApp<PlatformaticDBConfig> & PlatformaticDBMixin<Entities>
     }
-
-    const GLOBAL_TYPES_TEMPLATE = `
-import { FastifyInstance } from 'fastify'
-import { PlatformaticApp, PlatformaticDBConfig, PlatformaticDBMixin, Entities } from '@platformatic/db'
-
-declare module 'fastify' {
-  interface FastifyInstance {
-    platformatic: PlatformaticApp<PlatformaticDBConfig> & PlatformaticDBMixin<Entities>
   }
-}
-`
-    this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
+  `
+      this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
+    }
   }
 
   createMigrationFiles () {
