@@ -61,10 +61,26 @@ function createLogger (config) {
     multiStream.add({ level: 'trace', stream: portStream })
   }
   if (config.managementApi) {
+    const logsFileMb = 5
+    const logsLimitMb = config.managementApi?.logs?.limit || 200
+    const logsLimitCount = Math.ceil(logsLimitMb / logsFileMb)
+    console.log(config.managementApi)
+    console.log('logsLimitMb', logsLimitMb)
+    console.log('logsFileMb', logsFileMb)
+    console.log('logsLimitCount', logsLimitCount)
+
     const logsPath = join(PLATFORMATIC_TMP_DIR, process.pid.toString(), 'logs')
     const pinoRoll = pino.transport({
       target: 'pino-roll',
-      options: { file: logsPath, mode: 0o600, size: '5m', mkdir: true }
+      options: {
+        file: logsPath,
+        mode: 0o600,
+        size: logsFileMb + 'm',
+        mkdir: true,
+        limit: {
+          count: logsLimitCount
+        }
+      }
     })
     multiStream.add({ level: 'trace', stream: pinoRoll })
   }

@@ -152,7 +152,16 @@ const platformaticRuntimeSchema = {
         { type: 'boolean' },
         {
           type: 'object',
-          properties: {}
+          properties: {
+            logs: {
+              limit: {
+                type: 'number',
+                minaaa: 5,
+                default: 200
+              }
+            }
+          },
+          additionalProperties: false
         }
       ]
     }

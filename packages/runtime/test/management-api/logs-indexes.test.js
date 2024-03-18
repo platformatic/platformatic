@@ -5,6 +5,7 @@ const { tmpdir } = require('node:os')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { writeFile, rm } = require('node:fs/promises')
+const { setTimeout: sleep } = require('node:timers/promises')
 const { Client } = require('undici')
 
 const { buildServer } = require('../..')
@@ -61,11 +62,6 @@ test('should get only latest 30 logs indexes (150 MB)', async (t) => {
     await rm(runtimeTmpDir, { recursive: true, force: true })
   })
 
-  const testLogs = 'test-logs-42\n'
-  for (let i = 10; i <= 50; i++) {
-    await writeFile(join(runtimeTmpDir, `logs.${i}`), testLogs)
-  }
-
   const client = new Client({
     hostname: 'localhost',
     protocol: 'http:'
@@ -75,6 +71,23 @@ test('should get only latest 30 logs indexes (150 MB)', async (t) => {
     keepAliveMaxTimeout: 10
   })
 
+  {
+    const res = await app.inject('service-1', {
+      method: 'GET',
+      url: '/large-logs'
+    })
+    assert.strictEqual(res.statusCode, 200)
+
+    // Wait for logs to be written
+    await sleep(3000)
+  }
+
+  const res = await app.inject('service-1', {
+    method: 'GET',
+    url: '/large-logs'
+  })
+  assert.strictEqual(res.statusCode, 200)
+
   const { statusCode, body } = await client.request({
     method: 'GET',
     path: '/api/v1/logs/indexes'
@@ -82,12 +95,5 @@ test('should get only latest 30 logs indexes (150 MB)', async (t) => {
   assert.strictEqual(statusCode, 200)
 
   const { indexes } = await body.json()
-  assert.strictEqual(indexes.length, 30)
-
-  let j = 0
-  for (let i = 21; i <= 50; i++) {
-    const expectedIndex = i
-    const actualIndex = indexes[j++]
-    assert.strictEqual(actualIndex, expectedIndex)
-  }
+  assert.deepStrictEqual(indexes, [4, 5, 6, 7])
 })

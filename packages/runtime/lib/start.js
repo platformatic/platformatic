@@ -110,7 +110,6 @@ async function buildRuntime (configManager, env = process.env) {
     runtimeApiClient.managementApi = managementApi
     runtimeApiClient.on('start', () => {
       runtimeApiClient.startCollectingMetrics()
-      runtimeApiClient.startCleanLogsWatcher()
     })
   }
 

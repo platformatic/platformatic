@@ -2,9 +2,8 @@
 
 const { once, EventEmitter } = require('node:events')
 const { randomUUID } = require('node:crypto')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { startCleanLogsWatcher } = require('./logs')
 const errors = require('./errors')
+const { setTimeout: sleep } = require('node:timers/promises')
 
 const MAX_LISTENERS_COUNT = 100
 const MAX_METRICS_QUEUE_LENGTH = 5 * 60 // 5 minutes in seconds
@@ -15,14 +14,12 @@ class RuntimeApiClient extends EventEmitter {
   #exitPromise
   #metrics
   #metricsTimeout
-  #cleanLogsWatcher
 
   constructor (worker) {
     super()
     this.setMaxListeners(MAX_LISTENERS_COUNT)
 
     this.worker = worker
-    this.#cleanLogsWatcher = null
     this.#exitPromise = this.#exitHandler()
     this.worker.on('message', (message) => {
       if (message.operationId) {
@@ -212,19 +209,6 @@ class RuntimeApiClient extends EventEmitter {
     }, COLLECT_METRICS_TIMEOUT).unref()
   }
 
-  startCleanLogsWatcher () {
-    if (!this.#cleanLogsWatcher) {
-      this.#cleanLogsWatcher = startCleanLogsWatcher()
-    }
-  }
-
-  stopCleanLogsWatcher () {
-    if (this.#cleanLogsWatcher) {
-      this.#cleanLogsWatcher.close()
-      this.#cleanLogsWatcher = null
-    }
-  }
-
   async #sendCommand (command, params = {}) {
     const operationId = randomUUID()
 
@@ -249,7 +233,6 @@ class RuntimeApiClient extends EventEmitter {
     this.#exitCode = undefined
     return once(this.worker, 'exit').then((msg) => {
       clearInterval(this.#metricsTimeout)
-      this.stopCleanLogsWatcher()
       this.#exitCode = msg[0]
       return msg
     })

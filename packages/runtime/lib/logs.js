@@ -3,11 +3,8 @@
 const { tmpdir } = require('node:os')
 const { join } = require('node:path')
 const { createReadStream, watch } = require('node:fs')
-const { readdir, rm } = require('node:fs/promises')
+const { readdir } = require('node:fs/promises')
 const ts = require('tail-file-stream')
-
-const LOGS_FILES_LIMIT = 30 // 30 files * 5MB = 150MB
-const LOGS_FILES_THRESHOLD = LOGS_FILES_LIMIT + 10
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 const runtimeTmpDir = join(PLATFORMATIC_TMP_DIR, process.pid.toString())
@@ -99,14 +96,8 @@ async function pipeLiveLogs (writableStream, logger, startLogIndex) {
 
 async function getLogIndexes () {
   const runtimeLogFiles = await getLogFiles()
-  let runtimeLogsIndexes = runtimeLogFiles
+  return runtimeLogFiles
     .map((file) => parseInt(file.slice('logs.'.length)))
-
-  if (runtimeLogsIndexes.length > LOGS_FILES_LIMIT) {
-    runtimeLogsIndexes = runtimeLogsIndexes.slice(-LOGS_FILES_LIMIT)
-  }
-
-  return runtimeLogsIndexes
 }
 
 async function getLogFileStream (logFileIndex) {
@@ -114,35 +105,8 @@ async function getLogFileStream (logFileIndex) {
   return createReadStream(filePath)
 }
 
-function startCleanLogsWatcher () {
-  let cleaning = false
-
-  const watcher = watch(runtimeTmpDir, async (event, filename) => {
-    if (event === 'rename' && filename.startsWith('logs')) {
-      if (cleaning) return
-      const logFileIndex = parseInt(filename.slice('logs.'.length))
-      if (logFileIndex % 10 === 0) {
-        const runtimeLogFiles = await getLogFiles()
-        if (runtimeLogFiles.length > LOGS_FILES_THRESHOLD) {
-          cleaning = true
-          const removePromises = runtimeLogFiles
-            .slice(0, runtimeLogFiles.length - LOGS_FILES_LIMIT)
-            .map((file) => join(runtimeTmpDir, file))
-            .map((filePath) => rm(filePath))
-
-          await Promise.allSettled(removePromises)
-          cleaning = false
-        }
-      }
-    }
-  }).unref()
-
-  return watcher
-}
-
 module.exports = {
   pipeLiveLogs,
   getLogFileStream,
-  getLogIndexes,
-  startCleanLogsWatcher
+  getLogIndexes
 }

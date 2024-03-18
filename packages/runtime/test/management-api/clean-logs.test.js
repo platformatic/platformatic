@@ -4,7 +4,7 @@ const assert = require('node:assert')
 const { tmpdir } = require('node:os')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const { writeFile, rm, readdir } = require('node:fs/promises')
+const { rm, readdir } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
 
 const { buildServer } = require('../..')
@@ -20,27 +20,29 @@ test('should clean the logs after reaching a limit', async (t) => {
 
   await app.start()
 
-  // Wait for start watching the logs
-  await sleep(1000)
-
   t.after(async () => {
     await app.close()
     await app.managementApi.close()
     await rm(runtimeTmpDir, { recursive: true, force: true })
   })
 
-  const testLogs = 'test-logs-42\n'
-  for (let i = 38; i <= 80; i++) {
-    await writeFile(join(runtimeTmpDir, `logs.${i}`), testLogs)
-  }
+  const res = await app.inject('service-1', {
+    method: 'GET',
+    url: '/large-logs'
+  })
+  assert.strictEqual(res.statusCode, 200)
 
-  // Wait for the logs to be cleaned
-  await sleep(1000)
+  // Wait for logs to be written
+  await sleep(3000)
 
   const runtimeTmpFiles = await readdir(runtimeTmpDir)
   const runtimeLogFiles = runtimeTmpFiles.filter(
     (file) => file.startsWith('logs')
   )
-  assert.ok(runtimeLogFiles.length <= 40)
-  assert.ok(runtimeLogFiles.length >= 30)
+  assert.deepStrictEqual(runtimeLogFiles, [
+    'logs.4',
+    'logs.5',
+    'logs.6',
+    'logs.7'
+  ])
 })
