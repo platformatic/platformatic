@@ -94,15 +94,15 @@ class ComposerGenerator extends BaseGenerator {
   async _afterPrepare () {
     if (!this.config.isUpdating) {
       const GLOBAL_TYPES_TEMPLATE = `
-      import { FastifyInstance } from 'fastify'
-      import { PlatformaticApp, PlatformaticComposerConfig } from '@platformatic/composer'
-      
-      declare module 'fastify' {
-        interface FastifyInstance {
-          platformatic: PlatformaticApp<PlatformaticComposerConfig>
-        }
-      }
-      `
+import { FastifyInstance } from 'fastify'
+import { PlatformaticApp, PlatformaticComposerConfig } from '@platformatic/composer'
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    platformatic: PlatformaticApp<PlatformaticComposerConfig>
+  }
+}
+`
       this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
       this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
     }

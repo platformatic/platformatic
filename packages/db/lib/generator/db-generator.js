@@ -158,15 +158,15 @@ class DBGenerator extends BaseGenerator {
       }
 
       const GLOBAL_TYPES_TEMPLATE = `
-  import { FastifyInstance } from 'fastify'
-  import { PlatformaticApp, PlatformaticDBConfig, PlatformaticDBMixin, Entities } from '@platformatic/db'
-  
-  declare module 'fastify' {
-    interface FastifyInstance {
-      platformatic: PlatformaticApp<PlatformaticDBConfig> & PlatformaticDBMixin<Entities>
-    }
+import { FastifyInstance } from 'fastify'
+import { PlatformaticApp, PlatformaticDBConfig, PlatformaticDBMixin, Entities } from '@platformatic/db'
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    platformatic: PlatformaticApp<PlatformaticDBConfig> & PlatformaticDBMixin<Entities>
   }
-  `
+}
+`
       this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
     }
   }

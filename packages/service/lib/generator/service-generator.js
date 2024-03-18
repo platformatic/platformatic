@@ -66,15 +66,15 @@ class ServiceGenerator extends BaseGenerator {
     // if we are NOT updating, create env and files, otherwise leave as it is
     if (!this.config.isUpdating) {
       const GLOBAL_TYPES_TEMPLATE = `
-      import { FastifyInstance } from 'fastify'
-      import { PlatformaticApp, PlatformaticServiceConfig } from '@platformatic/service'
-      
-      declare module 'fastify' {
-        interface FastifyInstance {
-          platformatic: PlatformaticApp<PlatformaticServiceConfig>
-        }
-      }
-      `
+import { FastifyInstance } from 'fastify'
+import { PlatformaticApp, PlatformaticServiceConfig } from '@platformatic/service'
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    platformatic: PlatformaticApp<PlatformaticServiceConfig>
+  }
+}
+`
       this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
       this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
     }

@@ -60,7 +60,8 @@ class BaseGenerator extends FileGenerator {
       isRuntimeContext: false,
       serviceName: '',
       envPrefix: '',
-      env: {}
+      env: {},
+      isUpdating: false
     }
   }
 
@@ -189,7 +190,9 @@ class BaseGenerator extends FileGenerator {
         const generatedConfigFile = JSON.parse(this.getFileObject('platformatic.json', '').contents)
         const fileFromDisk = await this.loadFile({ file: 'platformatic.json', path: '' })
         const currentConfigFile = JSON.parse(fileFromDisk.contents)
-        currentConfigFile.plugins.packages = generatedConfigFile.plugins.packages
+        if (generatedConfigFile.plugins && generatedConfigFile.plugins.packages) {
+          currentConfigFile.plugins.packages = generatedConfigFile.plugins.packages
+        }
         this.reset()
         this.addFile({
           path: '',
@@ -328,7 +331,6 @@ class BaseGenerator extends FileGenerator {
   async generateConfigFile () {
     const configFileName = 'platformatic.json'
     const contents = await this._getConfigFileContents()
-
     // handle packages
     if (this.packages.length > 0) {
       if (!contents.plugins) {
