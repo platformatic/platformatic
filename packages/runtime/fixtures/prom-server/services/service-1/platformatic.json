@@ -1,0 +1,13 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v1.22.0/service",
+  "service": {
+    "openapi": true
+  },
+  "plugins": {
+    "paths": ["plugin.js"]
+  },
+  "watch": true,
+  "metrics": {
+    "server": "parent"
+  }
+}

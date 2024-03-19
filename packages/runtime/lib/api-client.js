@@ -240,6 +240,7 @@ class RuntimeApiClient extends EventEmitter {
     return once(this.worker, 'exit').then((msg) => {
       clearInterval(this.#metricsTimeout)
       this.#exitCode = msg[0]
+      this.emit('close')
       return msg
     })
   }

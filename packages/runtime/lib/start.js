@@ -11,6 +11,7 @@ const { printConfigValidationErrors } = require('@platformatic/config')
 const closeWithGrace = require('close-with-grace')
 const { loadConfig } = require('./load-config')
 const { startManagementApi } = require('./management-api')
+const { startPrometheusServer } = require('./prom-server.js')
 const { parseInspectorOptions, wrapConfigInRuntimeConfig } = require('./config')
 const RuntimeApiClient = require('./api-client.js')
 const errors = require('./errors')
@@ -110,6 +111,11 @@ async function buildRuntime (configManager, env = process.env) {
     runtimeApiClient.managementApi = managementApi
     runtimeApiClient.on('start', () => {
       runtimeApiClient.startCollectingMetrics()
+    })
+  }
+  if (config.metrics) {
+    runtimeApiClient.on('start', async () => {
+      await startPrometheusServer(runtimeApiClient, config.metrics)
     })
   }
 

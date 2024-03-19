@@ -109,13 +109,14 @@ class PlatformaticApp {
       })
     }
 
-    if (this.#hasManagementApi) {
+    if (this.#hasManagementApi || configManager.current.metrics) {
       configManager.update({
         ...configManager.current,
         metrics: {
-          ...configManager.current.metrics,
+          server: 'parent',
           defaultMetrics: { enabled: this.appConfig.entrypoint },
-          prefix: snakeCase(this.appConfig.id) + '_'
+          prefix: snakeCase(this.appConfig.id) + '_',
+          ...configManager.current.metrics
         }
       })
     }
