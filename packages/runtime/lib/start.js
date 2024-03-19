@@ -115,7 +115,6 @@ async function buildRuntime (configManager, env = process.env) {
   }
   if (config.metrics) {
     runtimeApiClient.on('start', async () => {
-      console.log('----------------------', config.metrics)
       await startPrometheusServer(runtimeApiClient, config.metrics)
     })
   }
