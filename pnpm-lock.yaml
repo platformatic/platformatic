@@ -1433,6 +1433,9 @@ importers:
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
+      ws:
+        specifier: ^8.16.0
+        version: 8.16.0
     devDependencies:
       '@fastify/express':
         specifier: ^2.3.0
@@ -1485,9 +1488,6 @@ importers:
       undici-oidc-interceptor:
         specifier: ^0.5.0
         version: 0.5.0
-      ws:
-        specifier: ^8.16.0
-        version: 8.16.0
 
   packages/scalar-theme: {}
 
