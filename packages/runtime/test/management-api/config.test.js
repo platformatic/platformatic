@@ -53,5 +53,7 @@ test('should get runtime config', async (t) => {
     path: join(projectDir, 'services'),
     exclude: []
   })
-  assert.deepStrictEqual(runtimeConfig.managementApi, true)
+  assert.deepStrictEqual(runtimeConfig.managementApi, {
+    logs: { maxSize: 15 }
+  })
 })

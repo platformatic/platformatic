@@ -24,7 +24,7 @@ const kWorkerExecArgv = [
   kLoaderFile
 ]
 
-async function startWithConfig (configManager, env = process.env) {
+async function buildRuntime (configManager, env = process.env) {
   const config = configManager.current
 
   if (inspector.url()) {
@@ -108,7 +108,9 @@ async function startWithConfig (configManager, env = process.env) {
       runtimeApiClient
     )
     runtimeApiClient.managementApi = managementApi
-    runtimeApiClient.startCollectingMetrics()
+    runtimeApiClient.on('start', () => {
+      runtimeApiClient.startCollectingMetrics()
+    })
   }
 
   return runtimeApiClient
@@ -119,7 +121,7 @@ async function start (args) {
 
   if (config.configType === 'runtime') {
     config.configManager.args = config.args
-    const app = await startWithConfig(config.configManager)
+    const app = await buildRuntime(config.configManager)
     await app.start()
     return app
   }
@@ -134,11 +136,11 @@ async function startCommand (args) {
 
     if (config.configType === 'runtime') {
       config.configManager.args = config.args
-      runtime = await startWithConfig(config.configManager)
+      runtime = await buildRuntime(config.configManager)
     } else {
       const wrappedConfig = await wrapConfigInRuntimeConfig(config)
       wrappedConfig.args = config.args
-      runtime = await startWithConfig(wrappedConfig)
+      runtime = await buildRuntime(wrappedConfig)
     }
 
     return await runtime.start()
@@ -194,4 +196,4 @@ In alternative run "npm create platformatic@latest" to generate a basic plt serv
   process.exit(1)
 }
 
-module.exports = { start, startWithConfig, startCommand }
+module.exports = { buildRuntime, start, startCommand }

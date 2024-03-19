@@ -201,19 +201,12 @@ token.
 > **Warning:** Experimental. The feature is not subject to semantic versioning rules. Non-backward compatible changes or removal may occur in any future release. Use of the feature is not recommended in production environments.
 
 An optional object that configures the Platformatic Management Api. If this object
-is not provided, the Platformatic Management Api will not be started. The options are
-passed directly to the Fastify server that backs the Management API. If enabled, it will listen to UNIX Socket/Windows named pipe located at `platformatic/pids/<PID>` inside the OS temporary folder.
+is not provided, the Platformatic Management Api will not be started. If enabled,
+it will listen to UNIX Socket/Windows named pipe located at `platformatic/pids/<PID>`
+inside the OS temporary folder.
 
-  _Example_
-
-  ```json
-  {
-    "managementApi": {
-      "logger": true,
-      "trustProxy": true
-    }
-  }
-  ```
+- **`logs`** (`object`). Optional configuration for the runtime logs.
+    - **`maxSize`** (`number`). Maximum size of the logs that will be stored in the file system in MB. Default: `200`. Minimum: `5`.
 
 ## Environment variable placeholders
 

@@ -7,7 +7,7 @@ const { MessageChannel } = require('node:worker_threads')
 const { loadConfig } = require('@platformatic/config')
 const { platformaticDB } = require('@platformatic/db')
 const { wrapConfigInRuntimeConfig } = require('../../lib/config')
-const { startWithConfig } = require('../../lib/start')
+const { buildRuntime } = require('../../lib/start')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
 // Unskip when these issues are resolved:
@@ -20,7 +20,7 @@ test('logs errors during db migrations', { skip: true }, async (t) => {
   const { port1, port2 } = new MessageChannel()
   runtimeConfig.current.loggingPort = port2
   runtimeConfig.current.loggingMetadata = { foo: 1, bar: 2 }
-  const runtime = await startWithConfig(runtimeConfig)
+  const runtime = await buildRuntime(runtimeConfig)
   const messages = []
 
   port1.on('message', (msg) => {

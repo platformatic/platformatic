@@ -6,13 +6,13 @@ const { test } = require('node:test')
 const { join } = require('node:path')
 const { loadConfig } = require('@platformatic/config')
 const { platformaticRuntime } = require('..')
-const { startWithConfig } = require('../lib/start')
+const { buildRuntime } = require('../lib/start')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
 test('propagate the traceId correctly to runtime services', async (t) => {
   const configFile = join(fixturesDir, 'telemetry', 'platformatic.runtime.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await startWithConfig(config.configManager)
+  const app = await buildRuntime(config.configManager)
 
   t.after(async () => {
     await app.close()
