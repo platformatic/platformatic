@@ -608,7 +608,7 @@ importers:
         version: link:../utils
       '@types/node':
         specifier: ^20.11.28
-        version: 20.11.29
+        version: 20.11.30
       boring-name-generator:
         specifier: ^1.0.3
         version: 1.0.3
@@ -720,7 +720,7 @@ importers:
         version: link:../utils
       '@types/node':
         specifier: ^20.11.28
-        version: 20.11.29
+        version: 20.11.30
       boring-name-generator:
         specifier: ^1.0.3
         version: 1.0.3
@@ -3477,7 +3477,7 @@ packages:
   /@types/better-sqlite3@7.6.9:
     resolution: {integrity: sha512-FvktcujPDj9XKMJQWFcl2vVl7OdRIqsSRX9b0acWwTmwLK9CF2eqo/FRcmMLNpugKoX/avA6pb7TorDLmpgTnQ==}
     dependencies:
-      '@types/node': 20.11.29
+      '@types/node': 20.11.30
     dev: false
 
   /@types/eslint@7.29.0:
@@ -3495,7 +3495,7 @@ packages:
     resolution: {integrity: sha512-ZUxbzKl0IfJILTS6t7ip5fQQM/J3TJYubDm3nMbgubNNYS62eXeUpoLUC8/7fJNiFYHTrGPQn7hspDUzIHX3UA==}
     dependencies:
       '@types/minimatch': 5.1.2
-      '@types/node': 20.11.29
+      '@types/node': 20.11.30
     dev: true
 
   /@types/inquirer@9.0.7:
@@ -3531,11 +3531,11 @@ packages:
   /@types/mysql@2.15.26:
     resolution: {integrity: sha512-DSLCOXhkvfS5WNNPbfn2KdICAmk8lLc+/PNvnPnF7gOdMZCxopXduqv0OQ13y/yA/zXTSikZZqVgybUxOEg6YQ==}
     dependencies:
-      '@types/node': 20.11.29
+      '@types/node': 20.11.30
     dev: false
 
-  /@types/node@20.11.29:
-    resolution: {integrity: sha512-P99thMkD/1YkCvAtOd6/zGedKNA0p2fj4ZpjCzcNiSCBWgm3cNRTBfa/qjFnsKkkojxu4vVLtWpesnZ9+ap+gA==}
+  /@types/node@20.11.30:
+    resolution: {integrity: sha512-dHM6ZxwlmuZaRmUPfv1p+KrdD1Dci04FbdEm/9wEMouFqxYoFl5aMkt0VMAUtYRQDyYvD41WJLukhq/ha3YuTw==}
     dependencies:
       undici-types: 5.26.5
 
@@ -3576,13 +3576,13 @@ packages:
   /@types/through@0.0.33:
     resolution: {integrity: sha512-HsJ+z3QuETzP3cswwtzt2vEIiHBk/dCcHGhbmG5X3ecnwFD/lPrMpliGXxSCg03L9AhrdwA4Oz/qfspkDW+xGQ==}
     dependencies:
-      '@types/node': 20.11.29
+      '@types/node': 20.11.30
     dev: true
 
   /@types/ws@8.5.10:
     resolution: {integrity: sha512-vmQSUcfalpIq0R9q7uTo2lXs6eGIpt9wtnLdMv9LVpIjCA/+ufZRozlVoVelIYixx1ugCBKDhn89vnsEGOCx9A==}
     dependencies:
-      '@types/node': 20.11.29
+      '@types/node': 20.11.30
     dev: false
 
   /@typescript-eslint/eslint-plugin@5.62.0(@typescript-eslint/parser@5.62.0)(eslint@8.57.0)(typescript@5.4.2):
@@ -8218,7 +8218,7 @@ packages:
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
-      '@types/node': 20.11.29
+      '@types/node': 20.11.30
       long: 5.2.3
     dev: false
 
