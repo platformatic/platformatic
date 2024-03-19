@@ -27,7 +27,7 @@
   "devDependencies": {
     "@matteo.collina/snap": "^0.3.0",
     "@matteo.collina/tspl": "^0.1.1",
-    "@mercuriusjs/gateway": "^1.2.0",
+    "@mercuriusjs/gateway": "^3.0.0",
     "@platformatic/sql-events": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "@fastify/error": "^3.4.1",
-    "@mercuriusjs/federation": "^2.0.0",
+    "@mercuriusjs/federation": "^3.0.0",
     "@platformatic/utils": "workspace:*",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^4.5.1",
@@ -49,7 +49,7 @@
     "graphql-scalars": "^1.22.5",
     "graphql-type-json": "^0.3.2",
     "inflected": "^2.1.0",
-    "mercurius": "^13.4.0"
+    "mercurius": "^14.0.0"
   },
   "tsd": {
     "directory": "test/types"
