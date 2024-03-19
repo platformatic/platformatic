@@ -1420,7 +1420,7 @@ importers:
         version: 10.3.1
       pino-roll:
         specifier: ^1.0.0
-        version: 1.0.0
+        version: 1.0.1
       semgrator:
         specifier: ^0.3.0
         version: 0.3.0
@@ -7953,8 +7953,8 @@ packages:
       strip-json-comments: 3.1.1
     dev: false
 
-  /pino-roll@1.0.0:
-    resolution: {integrity: sha512-N9CwFtHki9F/bayArFgfDY5s7cO/Q0JodEiJfrQnu5iJlJatvLWqfeqv0cQfs13NFAfZAdQ8opJE8x2l5Ocwcg==}
+  /pino-roll@1.0.1:
+    resolution: {integrity: sha512-9mMf0dn7KsqiY/Bs7gDRoBd5lsksSknPnbTEFKQVTeuGXi8RFuXS5UkLw4StIY/uG6PMrM7KJydB7ramoyVDzA==}
     dependencies:
       sonic-boom: 3.8.0
     dev: false
