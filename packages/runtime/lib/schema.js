@@ -164,6 +164,34 @@ const platformaticRuntimeSchema = {
           additionalProperties: false
         }
       ]
+    },
+    metrics: {
+      anyOf: [
+        { type: 'boolean' },
+        {
+          type: 'object',
+          properties: {
+            port: {
+              anyOf: [
+                { type: 'integer' },
+                { type: 'string' }
+              ]
+            },
+            hostname: { type: 'string' },
+            endpoint: { type: 'string' },
+            auth: {
+              type: 'object',
+              properties: {
+                username: { type: 'string' },
+                password: { type: 'string' }
+              },
+              additionalProperties: false,
+              required: ['username', 'password']
+            }
+          },
+          additionalProperties: false
+        }
+      ]
     }
   },
   anyOf: [

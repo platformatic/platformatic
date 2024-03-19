@@ -99,9 +99,6 @@ test('do not force enable metrics without the management api', async (t) => {
     },
     watch: {
       enabled: false
-    },
-    metrics: {
-      server: 'parent'
     }
   })
 })

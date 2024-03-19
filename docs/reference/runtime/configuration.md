@@ -41,6 +41,7 @@ Configuration settings are organized into the following groups:
 - [`telemetry`](#telemetry)
 - [`server`](#server)
 - [`undici`](#undici)
+- [`metrics`](#metrics)
 - [`managementApi`](#managementapi(experimantal)) **(experimental)**
 
 Configuration settings containing sensitive data should be set using
@@ -195,6 +196,17 @@ Allowing to configure the options in the agent as well as [interceptors](https:/
 
 Note that IDP stands for Identity Provider, and its token url is the URL that will be called to generate a new
 token.
+
+### `metrics`
+
+This configures the Platformatic Runtime Prometheus server. The Prometheus server exposes aggregated metrics from the Platformatic Runtime services.
+
+- **`hostname`** (`string`). The hostname where the Prometheus server will be listening. Default: `0.0.0.0`.
+- **`port`** (`number`). The port where the Prometheus server will be listening. Default: `9090`.
+- **`endpoint`** (`string`). The endpoint where the Prometheus server will be listening. Default: `/metrics`.
+- **`auth`** (`object`). Optional configuration for the Prometheus server authentication.
+    - **`username`** (`string`). The username for the Prometheus server authentication.
+    - **`password`** (`string`). The password for the Prometheus server authentication.
 
 ### `managementApi`
 
