@@ -158,7 +158,7 @@ test('should get formatted runtime metrics', async (t) => {
 
   const latencyMetrics = entrypointMetrics.latency
   const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
-  assert.deepStrictEqual(latencyMetricsKeys, ['p90', 'p95', 'p99'])
+  assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
 })
 
 test('should get cached formatted runtime metrics', async (t) => {
@@ -200,6 +200,6 @@ test('should get cached formatted runtime metrics', async (t) => {
 
     const latencyMetrics = entrypointMetrics.latency
     const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
-    assert.deepStrictEqual(latencyMetricsKeys, ['p90', 'p95', 'p99'])
+    assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
   }
 })

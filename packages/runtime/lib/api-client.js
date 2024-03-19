@@ -134,6 +134,7 @@ class RuntimeApiClient extends EventEmitter {
       (metric) => metric.name === 'nodejs_eventloop_utilization'
     )
 
+    let p50Value = 0
     let p90Value = 0
     let p95Value = 0
     let p99Value = 0
@@ -142,6 +143,9 @@ class RuntimeApiClient extends EventEmitter {
       const metricName = entrypointMetricsPrefix + 'http_request_all_summary_seconds'
       const httpLatencyMetrics = metrics.find((metric) => metric.name === metricName)
 
+      p50Value = httpLatencyMetrics.values.find(
+        (value) => value.labels.quantile === 0.5
+      ).value || 0
       p90Value = httpLatencyMetrics.values.find(
         (value) => value.labels.quantile === 0.9
       ).value || 0
@@ -152,6 +156,7 @@ class RuntimeApiClient extends EventEmitter {
         (value) => value.labels.quantile === 0.99
       ).value || 0
 
+      p50Value = Math.round(p50Value * 1000)
       p90Value = Math.round(p90Value * 1000)
       p95Value = Math.round(p95Value * 1000)
       p99Value = Math.round(p99Value * 1000)
@@ -177,6 +182,7 @@ class RuntimeApiClient extends EventEmitter {
       oldSpaceSize,
       entrypoint: {
         latency: {
+          p50: p50Value,
           p90: p90Value,
           p95: p95Value,
           p99: p99Value
