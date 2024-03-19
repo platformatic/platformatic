@@ -1941,8 +1941,8 @@ importers:
         specifier: ^4.26.2
         version: 4.26.2
       mercurius:
-        specifier: ^13.4.0
-        version: 13.4.0(graphql@16.8.1)
+        specifier: ^14.0.0
+        version: 14.0.0(graphql@16.8.1)
       openapi-types:
         specifier: ^12.1.3
         version: 12.1.3
@@ -2881,6 +2881,7 @@ packages:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+    dev: false
 
   /@fastify/websocket@9.0.0:
     resolution: {integrity: sha512-rpHDtDdTaAQ1GuN6VzOZaUEmegXR3HhSA2QAL2e8GgiNGo/cTyy+chwbu7OjDIWnq3HZisitln/0N8Xdn0Fc+w==}
@@ -7104,6 +7105,7 @@ packages:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+    dev: false
 
   /mercurius@14.0.0(graphql@16.8.1):
     resolution: {integrity: sha512-eGqBuc8ZfnBbJDnnedZWx0mPJ2ZQZz2HLmPCxRdMa5RZnRP9Uxn4Ew1x1OQ49MvNbut9xfvHCXKlr8uI6GOyZg==}
