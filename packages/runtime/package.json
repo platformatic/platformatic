@@ -69,7 +69,7 @@
     "pino": "^8.19.0",
     "pino-pretty": "^10.3.1",
     "semgrator": "^0.3.0",
-    "pino-roll": "mcollina/pino-roll#main",
+    "pino-roll": "^1.0.0",
     "tail-file-stream": "^0.1.0",
     "undici": "^6.9.0",
     "why-is-node-running": "^2.2.2"
