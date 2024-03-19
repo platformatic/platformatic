@@ -45,7 +45,8 @@ describe('generator', () => {
       connectionString: 'sqlite://./db.sqlite',
       types: true,
       migrations: 'migrations',
-      createMigrations: true
+      createMigrations: true,
+      isUpdating: false
     })
   })
   test('generate correct .env file', async (t) => {

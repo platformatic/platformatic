@@ -77,6 +77,7 @@ function createLogger (config) {
         mode: 0o600,
         size: logsFileMb + 'm',
         mkdir: true,
+        fsync: true,
         limit: {
           count: logsLimitCount
         }

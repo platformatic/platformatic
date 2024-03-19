@@ -1,6 +1,7 @@
 'use strict'
 
 const { test, describe } = require('node:test')
+const { EOL } = require('node:os')
 const assert = require('node:assert')
 const {
   stripVersion,
@@ -10,6 +11,9 @@ const {
   getPackageConfigurationObject,
   addPrefixToString
 } = require('../lib/utils')
+const { flattenObject } = require('../lib/utils')
+const { getServiceTemplateFromSchemaUrl } = require('../lib/utils')
+const { envStringToObject } = require('../lib/utils')
 
 describe('utils', () => {
   describe('stripVersion', async () => {
@@ -47,7 +51,7 @@ describe('utils', () => {
         DATABASE_URL: 'sqlite://./db.sqlite'
       }
 
-      assert.equal(envObjectToString(env), 'FOO=bar\nDATABASE_URL=sqlite://./db.sqlite')
+      assert.equal(envObjectToString(env), `FOO=bar${EOL}DATABASE_URL=sqlite://./db.sqlite`)
     })
   })
 
@@ -156,6 +160,64 @@ describe('utils', () => {
       assert.equal(addPrefixToString('PLT_SERVICE_FOO', 'SERVICE'), 'PLT_SERVICE_FOO')
       assert.equal(addPrefixToString('FOO', 'SERVICE'), 'PLT_SERVICE_FOO')
       assert.equal(addPrefixToString('FOO', ''), 'FOO')
+    })
+  })
+
+  describe('flattenObject', () => {
+    test('should return a single depth object', () => {
+      const packageObject = {
+        name: '@fastify/oauth2',
+        options: {
+          name: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_NAME}',
+          credentials: {
+            client: {
+              id: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID}',
+              secret: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET}'
+            }
+          },
+          startRedirectPath: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_REDIRECT_PATH}',
+          callbackUri: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CALLBACK_URI}'
+        }
+      }
+      const expected = {
+        name: '@fastify/oauth2',
+        'options.name': '{PLT_RIVAL_FST_PLUGIN_OAUTH2_NAME}',
+        'options.credentials.client.id': '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID}',
+        'options.credentials.client.secret': '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET}',
+        'options.startRedirectPath': '{PLT_RIVAL_FST_PLUGIN_OAUTH2_REDIRECT_PATH}',
+        'options.callbackUri': '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CALLBACK_URI}'
+      }
+      assert.deepEqual(flattenObject(packageObject), expected)
+    })
+  })
+
+  describe('getServiceTemplateFromSchemaUrl', () => {
+    test('should get the right template name from schema url', () => {
+      const composerSchema = 'https://platformatic.dev/schemas/v1.25.0/composer'
+      const serviceSchema = 'https://platformatic.dev/schemas/v1.25.0/service'
+      const dbSchema = 'https://platformatic.dev/schemas/v1.25.0/db'
+
+      assert.equal(getServiceTemplateFromSchemaUrl(composerSchema), '@platformatic/composer')
+      assert.equal(getServiceTemplateFromSchemaUrl(serviceSchema), '@platformatic/service')
+      assert.equal(getServiceTemplateFromSchemaUrl(dbSchema), '@platformatic/db')
+    })
+  })
+
+  describe('envStringToObject', () => {
+    test('should convert .env-like string to object', () => {
+      const template = [
+        '',
+        '# this is a comment that will be not parsed',
+        'MY_VAR=value',
+        'PLT_SERVICE_NAME_FOOBAR=foobar'
+      ]
+
+      const expected = {
+        MY_VAR: 'value',
+        PLT_SERVICE_NAME_FOOBAR: 'foobar'
+      }
+
+      assert.deepEqual(envStringToObject(template.join(EOL)), expected)
     })
   })
 })

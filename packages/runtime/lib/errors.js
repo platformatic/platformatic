@@ -23,5 +23,7 @@ module.exports = {
   CannotMapSpecifierToAbsolutePathError: createError(`${ERROR_PREFIX}_CANNOT_MAP_SPECIFIER_TO_ABSOLUTE_PATH`, 'Cannot map "%s" to an absolute path'),
   NodeInspectorFlagsNotSupportedError: createError(`${ERROR_PREFIX}_NODE_INSPECTOR_FLAGS_NOT_SUPPORTED`, 'The Node.js inspector flags are not supported. Please use \'platformatic start --inspect\' instead.'),
   FailedToUnlinkManagementApiSocket: createError(`${ERROR_PREFIX}_FAILED_TO_UNLINK_MANAGEMENT_API_SOCKET`, 'Failed to unlink management API socket "%s"'),
-  LogFileNotFound: createError(`${ERROR_PREFIX}_LOG_FILE_NOT_FOUND`, 'Log file with index %s not found', 404)
+  LogFileNotFound: createError(`${ERROR_PREFIX}_LOG_FILE_NOT_FOUND`, 'Log file with index %s not found', 404),
+  CannotFindGeneratorForTemplateError: createError(`${ERROR_PREFIX}_CANNOT_FIND_GENERATOR_FOR_TEMPLATE`, 'Cannot find a generator for template "%s"'),
+  CannotRemoveServiceOnUpdateError: createError(`${ERROR_PREFIX}_CANNOT_REMOVE_SERVICE_ON_UPDATE`, 'Cannot remove service "%s" when updating a Runtime')
 }
