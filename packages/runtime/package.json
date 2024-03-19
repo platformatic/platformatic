@@ -39,12 +39,12 @@
     "tsd": "^0.30.7",
     "typescript": "^5.4.2",
     "undici-oidc-interceptor": "^0.5.0",
-    "why-is-node-running": "^2.2.2",
-    "ws": "^8.16.0"
+    "why-is-node-running": "^2.2.2"
   },
   "dependencies": {
+    "ws": "^8.16.0",
     "@fastify/error": "^3.4.1",
-    "@fastify/websocket": "^9.0.0",
+    "@fastify/websocket": "^10.0.0",
     "@hapi/topo": "^6.0.2",
     "@platformatic/composer": "workspace:*",
     "@platformatic/config": "workspace:*",

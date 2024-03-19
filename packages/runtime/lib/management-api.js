@@ -4,6 +4,7 @@ const { tmpdir, platform } = require('node:os')
 const { join } = require('node:path')
 const { readFile, mkdir, unlink } = require('node:fs/promises')
 const fastify = require('fastify')
+const ws = require('ws')
 const errors = require('./errors')
 const { pipeLiveLogs, getLogFileStream, getLogIndexes } = require('./logs')
 const platformaticVersion = require('../package.json').version
@@ -115,30 +116,30 @@ async function createManagementApi (configManager, runtimeApiClient) {
         .send(res.body)
     })
 
-    app.get('/metrics/live', { websocket: true }, async (connection) => {
+    app.get('/metrics/live', { websocket: true }, async (socket) => {
       const cachedMetrics = runtimeApiClient.getCachedMetrics()
       const serializedMetrics = cachedMetrics
         .map((metric) => JSON.stringify(metric))
         .join('\n')
-      connection.socket.send(serializedMetrics)
+      socket.send(serializedMetrics)
 
       const eventHandler = (metrics) => {
         const serializedMetrics = JSON.stringify(metrics)
-        connection.socket.send(serializedMetrics)
+        socket.send(serializedMetrics)
       }
 
       runtimeApiClient.on('metrics', eventHandler)
 
-      connection.on('error', () => {
+      socket.on('error', () => {
         runtimeApiClient.off('metrics', eventHandler)
       })
 
-      connection.on('close', () => {
+      socket.on('close', () => {
         runtimeApiClient.off('metrics', eventHandler)
       })
     })
 
-    app.get('/logs/live', { websocket: true }, async (connection, req) => {
+    app.get('/logs/live', { websocket: true }, async (socket, req) => {
       const startLogIndex = req.query.start ? parseInt(req.query.start) : null
 
       if (startLogIndex) {
@@ -148,7 +149,9 @@ async function createManagementApi (configManager, runtimeApiClient) {
         }
       }
 
-      pipeLiveLogs(connection, req.log, startLogIndex)
+      const stream = ws.createWebSocketStream(socket)
+
+      pipeLiveLogs(stream, req.log, startLogIndex)
     })
 
     app.get('/logs/indexes', async () => {
