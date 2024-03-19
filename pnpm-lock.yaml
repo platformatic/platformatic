@@ -1419,8 +1419,8 @@ importers:
         specifier: ^10.3.1
         version: 10.3.1
       pino-roll:
-        specifier: feugy/pino-roll#main
-        version: github.com/feugy/pino-roll/1bee3e916a6d2736ce77a2060e17fadd0b2b339f
+        specifier: ^1.0.0
+        version: 1.0.0
       semgrator:
         specifier: ^0.3.0
         version: 0.3.0
@@ -7991,6 +7991,12 @@ packages:
       strip-json-comments: 3.1.1
     dev: false
 
+  /pino-roll@1.0.0:
+    resolution: {integrity: sha512-N9CwFtHki9F/bayArFgfDY5s7cO/Q0JodEiJfrQnu5iJlJatvLWqfeqv0cQfs13NFAfZAdQ8opJE8x2l5Ocwcg==}
+    dependencies:
+      sonic-boom: 3.8.0
+    dev: false
+
   /pino-std-serializers@4.0.0:
     resolution: {integrity: sha512-cK0pekc1Kjy5w9V2/n+8MkZwusa6EyyxfeQCB799CQRhRt/CqYKiWs5adeu8Shve2ZNffvfC/7J64A2PJo1W/Q==}
     dev: true
@@ -9886,13 +9892,3 @@ packages:
   /yocto-queue@1.0.0:
     resolution: {integrity: sha512-9bnSc/HEW2uRy67wc+T8UwauLuPJVn28jb+GtJY16iiKWyvmYJRXVT4UamsAEGQfPohgr2q4Tq0sQbQlxTfi1g==}
     engines: {node: '>=12.20'}
-
-  github.com/feugy/pino-roll/1bee3e916a6d2736ce77a2060e17fadd0b2b339f:
-    resolution: {tarball: https://codeload.github.com/feugy/pino-roll/tar.gz/1bee3e916a6d2736ce77a2060e17fadd0b2b339f}
-    name: pino-roll
-    version: 1.0.0-rc.1
-    prepare: true
-    requiresBuild: true
-    dependencies:
-      sonic-boom: 3.8.0
-    dev: false
