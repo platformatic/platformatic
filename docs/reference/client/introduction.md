@@ -71,7 +71,7 @@ The client configuration in the `platformatic.db.json` and `platformatic.service
 }
 ```
 
-Note that the generator would also have updated the `.env` and `.env.sample` files if they exists.
+Note that the generator would also have updated the `.env` and `.env.sample` files if they exist.
 
 ## Generating a client for a service running within Platformatic Runtime
 
