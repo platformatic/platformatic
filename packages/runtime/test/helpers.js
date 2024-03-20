@@ -53,5 +53,6 @@ function mockNpmJsRequestForPkgs (pkgs) {
 module.exports = {
   getTempDir,
   moveToTmpdir,
-  mockNpmJsRequestForPkgs
+  mockNpmJsRequestForPkgs,
+  mockAgent
 }

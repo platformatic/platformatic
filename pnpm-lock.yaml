@@ -1389,8 +1389,8 @@ importers:
         specifier: ^1.3.1
         version: 1.3.1
       dotenv-tool:
-        specifier: ^0.0.2
-        version: 0.0.2
+        specifier: ^0.1.1
+        version: 0.1.1
       es-main:
         specifier: ^1.3.0
         version: 1.3.0
@@ -4680,8 +4680,8 @@ packages:
     engines: {node: '>=12'}
     dev: false
 
-  /dotenv-tool@0.0.2:
-    resolution: {integrity: sha512-G+TDYJpMTgZhCWjdK0zY+FGgPdGO27yQh2FCELiRGKqYd08/XmafVpN34yrSmJlyskhpqmLexmd+QE1C/pXMOA==}
+  /dotenv-tool@0.1.1:
+    resolution: {integrity: sha512-72oQ+k8fWjKPCu/WfP+aiCPLtcsyqYLSa2s8ezFmI77jzgtF21bep6yvSj4q2d69o6b24W9BDU857zGuD7bh6w==}
     dev: false
 
   /dotenv@16.4.5:
