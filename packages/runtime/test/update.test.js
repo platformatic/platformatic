@@ -301,3 +301,62 @@ test('should add new service\'s plugin and options', async (t) => {
   assert.ok(runtimePackageJson.dependencies['@fastify/passport'])
   assert.ok(runtimePackageJson.dependencies['@fastify/oauth2'])
 })
+
+test('should remove a plugin from an existing service', async (t) => {
+  mockNpmJsRequestForPkgs(['@fastify/passport'])
+  const dir = await moveToTmpdir(after)
+
+  const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
+  await cp(fixture, dir, { recursive: true })
+
+  const rg = new RuntimeGenerator({
+    targetDirectory: dir
+  })
+  await rg.loadFromDir(dir)
+  const oldServiceConfigFile = JSON.parse(await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8'))
+  // load previous service config file
+  const updatedService = {
+    name: 'rival',
+    template: '@platformatic/service',
+    fields: [],
+    plugins: [{
+      name: '@fastify/passport',
+      options: [
+        {
+          name: 'FST_PLUGIN_PASSPORT_COUNTRY',
+          path: 'country',
+          type: 'string',
+          value: 'italy'
+        }
+      ]
+    }]
+  }
+  await rg.update({
+    services: [updatedService] // the original service was removed
+  })
+
+  // the config file should be left unchanged
+  const newServiceConfigFile = JSON.parse(await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8'))
+  assert.notDeepEqual(oldServiceConfigFile, newServiceConfigFile)
+
+  // the runtime .env should be updated
+  const runtimeDotEnv = new DotEnvTool({
+    path: join(dir, '.env')
+  })
+
+  await runtimeDotEnv.load()
+
+  // new value
+  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_PASSPORT_COUNTRY'), 'italy')
+  // removed values
+  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_NAME'), null)
+  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID'), null)
+  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET'), null)
+  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_REDIRECT_PATH'), null)
+  assert.equal(runtimeDotEnv.getKey('PLT_RIVAL_FST_PLUGIN_OAUTH2_CALLBACK_URI'), null)
+
+  const runtimePackageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf-8'))
+
+  assert.ok(runtimePackageJson.dependencies['@fastify/passport'])
+  assert.ok(!runtimePackageJson.dependencies['@fastify/oauth2'])
+})

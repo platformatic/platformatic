@@ -14,6 +14,7 @@ const ComposerGenerator = require('@platformatic/composer/lib/generator/composer
 const { CannotFindGeneratorForTemplateError, CannotRemoveServiceOnUpdateError } = require('../errors')
 const { getServiceTemplateFromSchemaUrl } = require('@platformatic/generators/lib/utils')
 const { DotEnvTool } = require('dotenv-tool')
+const { getArrayDifference } = require('../utils')
 
 class RuntimeGenerator extends BaseGenerator {
   constructor (opts) {
@@ -339,13 +340,11 @@ class RuntimeGenerator extends BaseGenerator {
 
   async update (newConfig) {
     let allServicesDependencies = {}
-    function getDifference (a, b) {
-      return a.filter(element => {
-        return !b.includes(element)
-      })
-    }
-    this.config.isUpdating = true
+    const runtimeAddedEnvKeys = []
 
+    this.config.isUpdating = true
+    const currrentPackageJson = JSON.parse(await readFile(join(this.targetDirectory, 'package.json'), 'utf-8'))
+    const currentRuntimeDependencies = currrentPackageJson.dependencies
     // check all services are present with the same template
     const allCurrentServicesNames = this.services.map((s) => s.name)
     const allNewServicesNames = newConfig.services.map((s) => s.name)
@@ -356,7 +355,7 @@ class RuntimeGenerator extends BaseGenerator {
 
     await envTool.load()
 
-    const removedServices = getDifference(allCurrentServicesNames, allNewServicesNames)
+    const removedServices = getArrayDifference(allCurrentServicesNames, allNewServicesNames)
     if (removedServices.length > 0) {
       throw new CannotRemoveServiceOnUpdateError(removedServices.join(', '))
     }
@@ -375,12 +374,22 @@ class RuntimeGenerator extends BaseGenerator {
         // update existing services env values
         // otherwise, is a new service
         baseConfig.isUpdating = true
+
+        // handle service's plugin differences
+        const oldServiceMetadata = await serviceInstance.loadFromDir(newService.name, this.targetDirectory)
+        const oldServicePackages = oldServiceMetadata.plugins.map((meta) => meta.name)
+        const newServicePackages = newService.plugins.map((meta) => meta.name)
+        const pluginsToRemove = getArrayDifference(oldServicePackages, newServicePackages)
+        pluginsToRemove.forEach((p) => delete currentRuntimeDependencies[p])
       }
       serviceInstance.setConfig(baseConfig)
+
+      const serviceEnvPrefix = `PLT_${serviceInstance.config.envPrefix}`
       for (const plug of newService.plugins) {
         await serviceInstance.addPackage(plug)
         for (const opt of plug.options) {
-          const key = `PLT_${serviceInstance.config.envPrefix}_${opt.name}`
+          const key = `${serviceEnvPrefix}_${opt.name}`
+          runtimeAddedEnvKeys.push(key)
           const value = opt.value
           if (envTool.hasKey(key)) {
             envTool.updateKey(key, value)
@@ -392,11 +401,16 @@ class RuntimeGenerator extends BaseGenerator {
       allServicesDependencies = { ...allServicesDependencies, ...serviceInstance.config.dependencies }
       await serviceInstance.prepare()
       await serviceInstance.writeFiles()
+      // cleanup runtime env removing keys not present anymore in service plugins
+      const allKeys = envTool.getKeys()
+      allKeys.forEach((k) => {
+        if (k.startsWith('PLT_') && !runtimeAddedEnvKeys.includes(k)) {
+          envTool.deleteKey(k)
+        }
+      })
     }
 
     // update runtime package.json dependencies
-    // read current package.json file
-    const currrentPackageJson = JSON.parse(await readFile(join(this.targetDirectory, 'package.json'), 'utf-8'))
     currrentPackageJson.dependencies = {
       ...currrentPackageJson.dependencies,
       ...allServicesDependencies
@@ -404,7 +418,7 @@ class RuntimeGenerator extends BaseGenerator {
     this.addFile({
       path: '',
       file: 'package.json',
-      contents: JSON.stringify(currrentPackageJson)
+      contents: JSON.stringify(currrentPackageJson, null, 2)
     })
 
     await this.writeFiles()

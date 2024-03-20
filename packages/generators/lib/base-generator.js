@@ -192,6 +192,9 @@ class BaseGenerator extends FileGenerator {
         const currentConfigFile = JSON.parse(fileFromDisk.contents)
         if (generatedConfigFile.plugins && generatedConfigFile.plugins.packages) {
           currentConfigFile.plugins.packages = generatedConfigFile.plugins.packages
+        } else {
+          // remove packages because new configuration does not have them
+          currentConfigFile.plugins.packages = []
         }
         this.reset()
         this.addFile({
