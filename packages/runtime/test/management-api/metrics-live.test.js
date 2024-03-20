@@ -26,7 +26,7 @@ test('should get runtime metrics via management api', async (t) => {
   const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
   const webSocket = new WebSocket(protocol + socketPath + ':/api/v1/metrics/live')
 
-  return new Promise((resolve, reject) => {
+  await new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
       reject(new Error('Timeout'))
     }, 10000)
@@ -35,27 +35,33 @@ test('should get runtime metrics via management api', async (t) => {
       reject(err)
     })
 
-    webSocket.on('message', (data) => {
-      data = data.toString()
-      if (!data) return
-      clearTimeout(timeout)
-      webSocket.close()
+    let count = 0
 
-      const metrics = JSON.parse(data)
-      const metricsKeys = Object.keys(metrics).sort()
-      assert.deepStrictEqual(metricsKeys, [
-        'cpu',
-        'date',
-        'elu',
-        'entrypoint',
-        'newSpaceSize',
-        'oldSpaceSize',
-        'rss',
-        'totalHeapSize',
-        'usedHeapSize',
-        'version'
-      ])
-      resolve()
+    webSocket.on('message', (data) => {
+      if (count++ > 5) {
+        clearTimeout(timeout)
+        webSocket.close()
+        resolve()
+      }
+
+      const records = data.toString().split('\n')
+      for (const record of records) {
+        if (!record) continue
+        const metrics = JSON.parse(record)
+        const metricsKeys = Object.keys(metrics).sort()
+        assert.deepStrictEqual(metricsKeys, [
+          'cpu',
+          'date',
+          'elu',
+          'entrypoint',
+          'newSpaceSize',
+          'oldSpaceSize',
+          'rss',
+          'totalHeapSize',
+          'usedHeapSize',
+          'version'
+        ])
+      }
     })
   })
 })

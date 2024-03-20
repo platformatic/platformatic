@@ -4,12 +4,12 @@ import assert from 'node:assert'
 import { tmpdir } from 'node:os'
 import { test } from 'node:test'
 import { join } from 'node:path'
-import { once } from 'node:events'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { writeFile, rm } from 'node:fs/promises'
 import * as desm from 'desm'
 import { RuntimeApiClient } from '../index.js'
 import { startRuntime } from './helper.mjs'
+import split from 'split2'
 
 const fixturesDir = desm.join(import.meta.url, 'fixtures')
 
@@ -71,11 +71,12 @@ test('should get runtime live metrics', async (t) => {
   const runtimeClient = new RuntimeApiClient()
   const runtimeMetricsStream = runtimeClient.getRuntimeLiveMetricsStream(runtime.pid)
 
-  const data = await once(runtimeMetricsStream, 'data')
-  for (const chunk of data) {
-    const serializedMetrics = chunk.toString().split('\n')
-    for (const serializedMetric of serializedMetrics) {
-      const metric = JSON.parse(serializedMetric)
+  let count = 0
+  await new Promise((resolve, reject) => {
+    runtimeMetricsStream.pipe(split((record) => {
+      if (count++ > 10) resolve()
+
+      const metric = JSON.parse(record)
       const metricsKeys = Object.keys(metric).sort()
       assert.deepStrictEqual(metricsKeys, [
         'cpu',
@@ -89,6 +90,6 @@ test('should get runtime live metrics', async (t) => {
         'usedHeapSize',
         'version'
       ])
-    }
-  }
+    }))
+  })
 })
