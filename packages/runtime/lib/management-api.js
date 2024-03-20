@@ -118,14 +118,16 @@ async function createManagementApi (configManager, runtimeApiClient) {
 
     app.get('/metrics/live', { websocket: true }, async (socket) => {
       const cachedMetrics = runtimeApiClient.getCachedMetrics()
-      const serializedMetrics = cachedMetrics
-        .map((metric) => JSON.stringify(metric))
-        .join('\n')
-      socket.send(serializedMetrics)
+      if (cachedMetrics.length > 0) {
+        const serializedMetrics = cachedMetrics
+          .map((metric) => JSON.stringify(metric))
+          .join('\n')
+        socket.send(serializedMetrics + '\n')
+      }
 
       const eventHandler = (metrics) => {
         const serializedMetrics = JSON.stringify(metrics)
-        socket.send(serializedMetrics)
+        socket.send(serializedMetrics + '\n')
       }
 
       runtimeApiClient.on('metrics', eventHandler)
