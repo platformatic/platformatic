@@ -25,7 +25,7 @@ const tableColumns = [
 const tableConfig = {
   border: getBorderCharacters('void'),
   columnDefault: {
-    paddingLeft: 1,
+    paddingLeft: 0,
     paddingRight: 1
   },
   drawHorizontalLine: () => false
@@ -48,7 +48,7 @@ async function printRuntimeServices (services) {
   }
 
   const servicesTable = table(raws, tableConfig)
-  console.log(servicesTable)
+  process.stdout.write(servicesTable)
 }
 
 async function getRuntimeServicesCommand (argv) {

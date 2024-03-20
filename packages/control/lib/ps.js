@@ -78,7 +78,7 @@ async function printRuntimes (runtimes) {
   }
 
   const runtimesTable = table(raws, tableConfig)
-  console.log(runtimesTable)
+  process.stdout.write(runtimesTable)
 }
 
 async function listRuntimesCommand () {
