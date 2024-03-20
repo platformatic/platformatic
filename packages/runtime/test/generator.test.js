@@ -45,6 +45,7 @@ describe('Generator', () => {
         PLT_SECOND_SERVICE_TYPESCRIPT: false,
         PLT_SERVER_HOSTNAME: '0.0.0.0',
         PLT_SERVER_LOGGER_LEVEL: 'debug',
+        PLT_MANAGEMENT_API: true,
         PORT: 3043
       }
     })
@@ -115,6 +116,7 @@ describe('Generator', () => {
       env: {
         PLT_FIRST_SERVICE_TYPESCRIPT: false,
         PLT_SERVER_HOSTNAME: '0.0.0.0',
+        PLT_MANAGEMENT_API: true,
         PLT_SERVER_LOGGER_LEVEL: 'debug',
         PORT: 3043
       }
@@ -160,6 +162,7 @@ describe('Generator', () => {
         PLT_SECOND_SERVICE_SERVICE_2: 'foo',
         PLT_SECOND_SERVICE_TYPESCRIPT: false,
         PLT_SERVER_HOSTNAME: '0.0.0.0',
+        PLT_MANAGEMENT_API: true,
         PLT_SERVER_LOGGER_LEVEL: 'info',
         PORT: 3043
       }
@@ -289,6 +292,7 @@ describe('Generator', () => {
           PLT_SECOND_SERVICE_TYPESCRIPT: 'false',
           PLT_SERVER_HOSTNAME: '0.0.0.0',
           PLT_SERVER_LOGGER_LEVEL: 'info',
+          PLT_MANAGEMENT_API: 'true',
           PORT: 3043
         }
       })

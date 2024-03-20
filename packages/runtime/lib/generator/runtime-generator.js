@@ -91,7 +91,8 @@ class RuntimeGenerator extends BaseGenerator {
     this.addEnvVars({
       PLT_SERVER_HOSTNAME: '0.0.0.0',
       PORT: this.config.port || 3042,
-      PLT_SERVER_LOGGER_LEVEL: this.config.logLevel || 'info'
+      PLT_SERVER_LOGGER_LEVEL: this.config.logLevel || 'info',
+      PLT_MANAGEMENT_API: true
     }, { overwrite: false })
   }
 
@@ -165,7 +166,8 @@ class RuntimeGenerator extends BaseGenerator {
         logger: {
           level: '{PLT_SERVER_LOGGER_LEVEL}'
         }
-      }
+      },
+      managementApi: '{PLT_MANAGEMENT_API}'
     }
 
     return config

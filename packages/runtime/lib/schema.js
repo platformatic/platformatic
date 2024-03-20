@@ -150,6 +150,7 @@ const platformaticRuntimeSchema = {
     managementApi: {
       anyOf: [
         { type: 'boolean' },
+        { type: 'string' },
         {
           type: 'object',
           properties: {
@@ -163,7 +164,8 @@ const platformaticRuntimeSchema = {
           },
           additionalProperties: false
         }
-      ]
+      ],
+      default: true
     },
     metrics: {
       anyOf: [
