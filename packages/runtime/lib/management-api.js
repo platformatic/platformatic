@@ -6,7 +6,7 @@ const { readFile, mkdir, unlink } = require('node:fs/promises')
 const fastify = require('fastify')
 const ws = require('ws')
 const errors = require('./errors')
-const { pipeLiveLogs, getLogFileStream, getLogIndexes } = require('./logs')
+const { pipeLogsStream, getLogFileStream, getLogIndexes } = require('./logs')
 const platformaticVersion = require('../package.json').version
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
@@ -152,13 +152,21 @@ async function createManagementApi (configManager, runtimeApiClient) {
       }
 
       const stream = ws.createWebSocketStream(socket)
-
-      pipeLiveLogs(stream, req.log, startLogIndex)
+      pipeLogsStream(stream, req.log, startLogIndex)
     })
 
     app.get('/logs/indexes', async () => {
       const logIndexes = await getLogIndexes()
       return { indexes: logIndexes }
+    })
+
+    app.get('/logs/all', async (req, reply) => {
+      const logIndexes = await getLogIndexes()
+      const startLogIndex = logIndexes.at(0)
+      const endLogIndex = logIndexes.at(-1)
+
+      reply.hijack()
+      pipeLogsStream(reply.raw, req.log, startLogIndex, endLogIndex)
     })
 
     app.get('/logs/:id', async (req) => {

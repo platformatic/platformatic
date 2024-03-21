@@ -54,6 +54,33 @@ test('should get runtime history log', async (t) => {
   assert.strictEqual(runtimeLogs, testLogs)
 })
 
+test('should get runtime all logs', async (t) => {
+  const projectDir = join(fixturesDir, 'runtime-1')
+  const configFile = join(projectDir, 'platformatic.json')
+  const { runtime } = await startRuntime(configFile)
+  t.after(() => runtime.kill('SIGINT'))
+
+  const runtimeTmpDir = join(PLATFORMATIC_TMP_DIR, runtime.pid.toString())
+  t.after(async () => {
+    await rm(runtimeTmpDir, { recursive: true, force: true })
+  })
+
+  const testLogs = 'test-logs-42\n'
+  await writeFile(join(runtimeTmpDir, 'logs.2'), testLogs)
+  await writeFile(join(runtimeTmpDir, 'logs.3'), testLogs)
+
+  const runtimeClient = new RuntimeApiClient()
+  const runtimeLogsStream = await runtimeClient.getRuntimeAllLogsStream(runtime.pid)
+  const runtimeLogs = await runtimeLogsStream.text()
+
+  const logsLines = runtimeLogs.split('\n')
+  const logsLinesCount = logsLines.length
+  assert(logsLinesCount > 3)
+
+  assert.strictEqual(logsLines.at(-2) + '\n', testLogs)
+  assert.strictEqual(logsLines.at(-3) + '\n', testLogs)
+})
+
 test('should get runtime live metrics', async (t) => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')

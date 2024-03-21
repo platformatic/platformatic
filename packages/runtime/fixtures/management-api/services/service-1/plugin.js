@@ -7,8 +7,8 @@ module.exports = async function (app) {
   })
 
   app.get('/large-logs', async (req) => {
-    const largeLog = 'a'.repeat(5 * 1024 * 1024)
-    for (let i = 0; i < 10; i++) {
+    const largeLog = 'a'.repeat(100)
+    for (let i = 0; i < 500000; i++) {
       app.log.trace(largeLog)
     }
   })
