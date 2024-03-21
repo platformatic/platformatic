@@ -220,6 +220,22 @@ class RuntimeApiClient {
     return body
   }
 
+  async getRuntimeAllLogsStream (pid) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: '/api/v1/logs/all',
+      method: 'GET'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new errors.FailedToGetRuntimeAllLogs(error)
+    }
+
+    return body
+  }
+
   async getRuntimeLogIndexes (pid) {
     const client = this.#getUndiciClient(pid)
 

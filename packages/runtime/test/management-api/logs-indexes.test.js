@@ -71,22 +71,14 @@ test('should get only latest 30 logs indexes (150 MB)', async (t) => {
     keepAliveMaxTimeout: 10
   })
 
-  {
-    const res = await app.inject('service-1', {
-      method: 'GET',
-      url: '/large-logs'
-    })
-    assert.strictEqual(res.statusCode, 200)
-
-    // Wait for logs to be written
-    await sleep(3000)
-  }
-
   const res = await app.inject('service-1', {
     method: 'GET',
     url: '/large-logs'
   })
   assert.strictEqual(res.statusCode, 200)
+
+  // Wait for logs to be written
+  await sleep(3000)
 
   const { statusCode, body } = await client.request({
     method: 'GET',
@@ -95,5 +87,5 @@ test('should get only latest 30 logs indexes (150 MB)', async (t) => {
   assert.strictEqual(statusCode, 200)
 
   const { indexes } = await body.json()
-  assert.deepStrictEqual(indexes, [5, 6, 7])
+  assert.deepStrictEqual(indexes, [11, 12, 13])
 })

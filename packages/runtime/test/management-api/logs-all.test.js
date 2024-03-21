@@ -4,8 +4,9 @@ const assert = require('node:assert')
 const { tmpdir } = require('node:os')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const { rm, readdir } = require('node:fs/promises')
+const { rm } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
+const { Client } = require('undici')
 
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
@@ -13,7 +14,7 @@ const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 const runtimeTmpDir = join(PLATFORMATIC_TMP_DIR, process.pid.toString())
 
-test('should clean the logs after reaching a limit', async (t) => {
+test('should get all runtime logs', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
@@ -26,6 +27,15 @@ test('should clean the logs after reaching a limit', async (t) => {
     await rm(runtimeTmpDir, { recursive: true, force: true })
   })
 
+  const client = new Client({
+    hostname: 'localhost',
+    protocol: 'http:'
+  }, {
+    socketPath: app.managementApi.server.address(),
+    keepAliveTimeout: 10,
+    keepAliveMaxTimeout: 10
+  })
+
   const res = await app.inject('service-1', {
     method: 'GET',
     url: '/large-logs'
@@ -35,13 +45,15 @@ test('should clean the logs after reaching a limit', async (t) => {
   // Wait for logs to be written
   await sleep(3000)
 
-  const runtimeTmpFiles = await readdir(runtimeTmpDir)
-  const runtimeLogFiles = runtimeTmpFiles.filter(
-    (file) => file.startsWith('logs')
-  )
-  assert.deepStrictEqual(runtimeLogFiles, [
-    'logs.11',
-    'logs.12',
-    'logs.13'
-  ])
+  const { statusCode, body } = await client.request({
+    method: 'GET',
+    path: '/api/v1/logs/all'
+  })
+  assert.strictEqual(statusCode, 200)
+
+  const data = await body.text()
+
+  const logsSize = Buffer.byteLength(data, 'utf8')
+  const logsSizeMb = logsSize / 1024 / 1024
+  assert(logsSizeMb > 10)
 })

@@ -21,7 +21,9 @@ async function getLogFiles () {
   return runtimeLogFiles
 }
 
-async function pipeLiveLogs (writableStream, logger, startLogIndex) {
+async function pipeLogsStream (writableStream, logger, startLogIndex, endLogIndex) {
+  endLogIndex = endLogIndex || Infinity
+
   const runtimeLogFiles = await getLogFiles()
   if (runtimeLogFiles.length === 0) {
     writableStream.end()
@@ -47,6 +49,11 @@ async function pipeLiveLogs (writableStream, logger, startLogIndex) {
   }).unref()
 
   const streamLogFile = () => {
+    if (fileIndex > endLogIndex) {
+      writableStream.end()
+      return
+    }
+
     const fileName = 'logs.' + fileIndex
     const filePath = join(runtimeTmpDir, fileName)
 
@@ -61,7 +68,7 @@ async function pipeLiveLogs (writableStream, logger, startLogIndex) {
     }
 
     fileStream.on('error', (err) => {
-      logger.log.error(err, 'Error streaming log file')
+      logger.error(err, 'Error streaming log file')
       fileStream.destroy()
       watcher.close()
       writableStream.end()
@@ -72,6 +79,10 @@ async function pipeLiveLogs (writableStream, logger, startLogIndex) {
     })
 
     fileStream.on('eof', () => {
+      if (fileIndex >= endLogIndex) {
+        writableStream.end()
+        return
+      }
       if (latestFileIndex > fileIndex) {
         streamLogFile(++fileIndex)
       } else {
@@ -106,7 +117,7 @@ async function getLogFileStream (logFileIndex) {
 }
 
 module.exports = {
-  pipeLiveLogs,
+  pipeLogsStream,
   getLogFileStream,
   getLogIndexes
 }
