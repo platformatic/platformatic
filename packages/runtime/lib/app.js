@@ -96,7 +96,7 @@ class PlatformaticApp {
 
     await this.#initializeConfig()
     await this.#updateConfig()
-    
+
     const configManager = this.config.configManager
     const config = configManager.current
 
