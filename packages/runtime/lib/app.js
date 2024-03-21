@@ -113,7 +113,7 @@ class PlatformaticApp {
       configManager.update({
         ...configManager.current,
         metrics: {
-          server: 'parent',
+          server: 'hide',
           defaultMetrics: { enabled: this.appConfig.entrypoint },
           prefix: snakeCase(this.appConfig.id) + '_',
           ...configManager.current.metrics

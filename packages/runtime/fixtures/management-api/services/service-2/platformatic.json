@@ -5,6 +5,5 @@
   },
   "plugins": {
     "paths": ["plugin.js"]
-  },
-  "metrics": true
+  }
 }

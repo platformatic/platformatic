@@ -8,7 +8,7 @@ const { Client } = require('undici')
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should get service metrics via runtime management api proxy', async (t) => {
+test('should not expose service metrics via runtime management api proxy', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
@@ -32,13 +32,10 @@ test('should get service metrics via runtime management api proxy', async (t) =>
     ])
   })
 
-  const { statusCode, body } = await client.request({
+  const { statusCode } = await client.request({
     method: 'GET',
     path: '/api/v1/services/service-1/proxy/metrics'
   })
 
-  assert.strictEqual(statusCode, 200)
-
-  const data = await body.text()
-  assert.ok(data)
+  assert.strictEqual(statusCode, 404)
 })

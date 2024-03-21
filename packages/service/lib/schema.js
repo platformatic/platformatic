@@ -558,7 +558,7 @@ const metrics = {
         endpoint: { type: 'string' },
         server: {
           type: 'string',
-          enum: ['own', 'parent']
+          enum: ['own', 'parent', 'hide']
         },
         defaultMetrics: {
           type: 'object',

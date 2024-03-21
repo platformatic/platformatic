@@ -97,7 +97,7 @@ test('should get runtime service config', async (t) => {
         enabled: true
       },
       prefix: 'service_1_',
-      server: 'parent'
+      server: 'hide'
     }
   })
 })
