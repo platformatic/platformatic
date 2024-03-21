@@ -101,6 +101,10 @@ test('should add a new service with new env variables', async (t) => {
 
   assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_FST_PLUGIN_FOO_TEST_VALUE'), 'foobar')
   assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_FST_PLUGIN_FOO_CREDENTIALS_NAME'), 'johndoe')
+
+  const runtimePackageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf-8'))
+  assert.ok(runtimePackageJson.dependencies['@fastify/oauth2'])
+  assert.ok(runtimePackageJson.dependencies['@fastify/foo-plugin'])
 })
 
 test('should update existing service\'s plugin options', async (t) => {
@@ -359,4 +363,103 @@ test('should remove a plugin from an existing service', async (t) => {
 
   assert.ok(runtimePackageJson.dependencies['@fastify/passport'])
   assert.ok(!runtimePackageJson.dependencies['@fastify/oauth2'])
+})
+
+test('should remove a plugin from a service and add the same on the other', async (t) => {
+  mockNpmJsRequestForPkgs(['@fastify/oauth2', '@fastify/foo-plugin'])
+  const dir = await moveToTmpdir(after)
+
+  const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
+  await cp(fixture, dir, { recursive: true })
+
+  const rg = new RuntimeGenerator({
+    targetDirectory: dir
+  })
+  await rg.loadFromDir(dir)
+  assert.equal(rg.services.length, 1)
+  assert.equal(rg.services[0].name, 'rival')
+  const updatedService = {
+    name: 'rival',
+    template: '@platformatic/service',
+    fields: [],
+    plugins: [
+      {
+        name: '@fastify/passport',
+        options: [
+          {
+            name: 'FST_PLUGIN_PASSPORT_COUNTRY',
+            path: 'country',
+            type: 'string',
+            value: 'italy'
+          }
+        ]
+      }
+    ]
+  }
+  const newService = {
+    name: 'foobar',
+    template: '@platformatic/db',
+    fields: [],
+    plugins: [
+      {
+        name: '@fastify/foo-plugin',
+        options: [
+          {
+            name: 'FST_PLUGIN_FOO_TEST_VALUE',
+            path: 'testValue',
+            type: 'string',
+            value: 'foobar'
+          },
+          {
+            name: 'FST_PLUGIN_FOO_CREDENTIALS_NAME',
+            path: 'credentials.name',
+            type: 'string',
+            value: 'johndoe'
+          }
+        ]
+      },
+      {
+        name: '@fastify/oauth2',
+        options: [
+          {
+            name: 'FST_PLUGIN_OAUTH2_NAME',
+            path: 'name',
+            type: 'string',
+            value: 'new_oauth2_name'
+          }
+        ]
+      }
+    ]
+  }
+  await rg.update({
+    services: [updatedService, newService] // the original service was removed
+  })
+
+  // the new service has been generated
+  const serviceConfigFile = JSON.parse(await readFile(join(dir, 'services', 'foobar', 'platformatic.json'), 'utf-8'))
+  assert.deepEqual(serviceConfigFile.plugins.packages[0], {
+    name: '@fastify/foo-plugin',
+    options: {
+      testValue: '{PLT_FOOBAR_FST_PLUGIN_FOO_TEST_VALUE}',
+      credentials: {
+        name: '{PLT_FOOBAR_FST_PLUGIN_FOO_CREDENTIALS_NAME}'
+      }
+    }
+  })
+
+  // the runtime .env should be updated
+  const runtimeDotEnv = new DotEnvTool({
+    path: join(dir, '.env')
+  })
+
+  await runtimeDotEnv.load()
+
+  assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_FST_PLUGIN_FOO_TEST_VALUE'), 'foobar')
+  assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_FST_PLUGIN_FOO_CREDENTIALS_NAME'), 'johndoe')
+  assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_FST_PLUGIN_OAUTH2_NAME'), 'new_oauth2_name')
+
+  const runtimePackageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf-8'))
+  assert.ok(runtimePackageJson.dependencies['@fastify/oauth2'])
+  assert.ok(runtimePackageJson.dependencies['@fastify/foo-plugin'])
+  assert.ok(runtimePackageJson.dependencies['@fastify/passport'])
 })
