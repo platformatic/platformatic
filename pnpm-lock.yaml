@@ -338,7 +338,7 @@ importers:
         version: 3.4.1
       '@fastify/http-proxy':
         specifier: ^9.4.0
-        version: 9.4.0
+        version: 9.5.0
       '@fastify/reply-from':
         specifier: ^9.7.0
         version: 9.7.0
@@ -2762,8 +2762,8 @@ packages:
       fastify-plugin: 4.5.1
     dev: true
 
-  /@fastify/http-proxy@9.4.0:
-    resolution: {integrity: sha512-oXdvWBETRI2fJYJnRfFP/qJ6fQddUJz47X71WP7SkHdm4D5OejlNwrgnEJLUS5Kr4BSXHE5Nq5K6mmUlkivKiA==}
+  /@fastify/http-proxy@9.5.0:
+    resolution: {integrity: sha512-1iqIdV10d5k9YtfHq9ylX5zt1NiM50fG+rIX40qt00R694sqWso3ukyTFZVk33SDoSiBW8roB7n11RUVUoN+Ag==}
     dependencies:
       '@fastify/reply-from': 9.7.0
       fast-querystring: 1.1.2
