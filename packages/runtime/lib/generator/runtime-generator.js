@@ -5,13 +5,13 @@ const { NoEntryPointError, NoServiceNamedError } = require('./errors')
 const generateName = require('boring-name-generator')
 const { join } = require('node:path')
 const { envObjectToString } = require('@platformatic/generators/lib/utils')
-const { readFile, readdir, stat } = require('node:fs/promises')
+const { readFile, readdir, stat, rm } = require('node:fs/promises')
 const { ConfigManager } = require('@platformatic/config')
 const { platformaticRuntime } = require('../config')
 const ServiceGenerator = require('@platformatic/service/lib/generator/service-generator')
 const DBGenerator = require('@platformatic/db/lib/generator/db-generator')
 const ComposerGenerator = require('@platformatic/composer/lib/generator/composer-generator')
-const { CannotFindGeneratorForTemplateError, CannotRemoveServiceOnUpdateError } = require('../errors')
+const { CannotFindGeneratorForTemplateError } = require('../errors')
 const { getServiceTemplateFromSchemaUrl } = require('@platformatic/generators/lib/utils')
 const { DotEnvTool } = require('dotenv-tool')
 const { getArrayDifference } = require('../utils')
@@ -357,7 +357,30 @@ class RuntimeGenerator extends BaseGenerator {
 
     const removedServices = getArrayDifference(allCurrentServicesNames, allNewServicesNames)
     if (removedServices.length > 0) {
-      throw new CannotRemoveServiceOnUpdateError(removedServices.join(', '))
+      for (const removedService of removedServices) {
+        // handle service delete
+
+        // delete env variables
+        const s = this.services.find((f) => f.name === removedService)
+        const allKeys = envTool.getKeys()
+        allKeys.forEach((k) => {
+          if (k.startsWith(`PLT_${s.service.config.envPrefix}`)) {
+            envTool.deleteKey(k)
+          }
+        })
+
+        // delete dependencies
+        const servicePackageJson = JSON.parse(await readFile(join(this.targetDirectory, 'services', s.name, 'platformatic.json')))
+        if (servicePackageJson.plugins && servicePackageJson.plugins.packages) {
+          servicePackageJson.plugins.packages
+            .forEach((p) => {
+              delete (currrentPackageJson.dependencies[p.name])
+            })
+        }
+        // delete directory
+        await rm(join(this.targetDirectory, 'services', s.name), { recursive: true })
+      }
+      // throw new CannotRemoveServiceOnUpdateError(removedServices.join(', '))
     }
 
     // handle new services
@@ -368,7 +391,8 @@ class RuntimeGenerator extends BaseGenerator {
       const baseConfig = {
         isRuntimeContext: true,
         targetDirectory: join(this.targetDirectory, 'services', newService.name),
-        serviceName: newService.name
+        serviceName: newService.name,
+        plugin: true
       }
       if (allCurrentServicesNames.includes(newService.name)) {
         // update existing services env values
@@ -383,6 +407,7 @@ class RuntimeGenerator extends BaseGenerator {
         pluginsToRemove.forEach((p) => delete currentRuntimeDependencies[p])
       }
       serviceInstance.setConfig(baseConfig)
+      serviceInstance.setConfigFields(newService.fields)
 
       const serviceEnvPrefix = `PLT_${serviceInstance.config.envPrefix}`
       for (const plug of newService.plugins) {
@@ -399,14 +424,19 @@ class RuntimeGenerator extends BaseGenerator {
         }
       }
       allServicesDependencies = { ...allServicesDependencies, ...serviceInstance.config.dependencies }
-      await serviceInstance.prepare()
+      const afterPrepareMetadata = await serviceInstance.prepare()
       await serviceInstance.writeFiles()
       // cleanup runtime env removing keys not present anymore in service plugins
       const allKeys = envTool.getKeys()
       allKeys.forEach((k) => {
-        if (k.startsWith('PLT_') && !runtimeAddedEnvKeys.includes(k)) {
+        if (k.startsWith(serviceEnvPrefix) && !runtimeAddedEnvKeys.includes(k)) {
           envTool.deleteKey(k)
         }
+      })
+
+      // add service env variables to runtime env
+      Object.entries(afterPrepareMetadata.env).forEach(([key, value]) => {
+        envTool.addKey(key, value)
       })
     }
 
