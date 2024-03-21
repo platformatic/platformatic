@@ -3,38 +3,53 @@ const { test, after } = require('node:test')
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { moveToTmpdir, mockNpmJsRequestForPkgs } = require('./helpers')
-const { cp, readFile, writeFile } = require('node:fs/promises')
+const { cp, readFile, writeFile, stat } = require('node:fs/promises')
 const RuntimeGenerator = require('../lib/generator/runtime-generator')
 const ServiceGenerator = require('@platformatic/service/lib/generator/service-generator')
-const { CannotRemoveServiceOnUpdateError } = require('../lib/errors')
 const { DotEnvTool } = require('dotenv-tool')
 
-test('should throw if trying to remove a service', async (t) => {
+test('should remove a service', async (t) => {
   const dir = await moveToTmpdir(after)
 
-  const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
+  const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime-with-2-services')
   await cp(fixture, dir, { recursive: true })
 
   const rg = new RuntimeGenerator({
     targetDirectory: dir
   })
   await rg.loadFromDir(dir)
-  assert.equal(rg.services.length, 1)
-  assert.equal(rg.services[0].name, 'rival')
-  const newService = {
+  assert.equal(rg.services.length, 2)
+  assert.equal(rg.services[0].name, 'foobar')
+  assert.equal(rg.services[1].name, 'rival')
+  const updatedFoobar = {
     name: 'foobar',
     template: '@platformatic/service',
     fields: [],
     plugins: []
   }
+  await rg.update({
+    services: [updatedFoobar] // the original service was removed
+  })
+  // the runtime .env should be updated
+  const runtimeDotEnv = new DotEnvTool({
+    path: join(dir, '.env')
+  })
+
+  await runtimeDotEnv.load()
+
+  // no env values related to 'rival' service are in the env file anymore
+  runtimeDotEnv.getKeys().forEach((k) => assert.ok(!k.startsWith('PLT_RIVAL')))
+
+  // the only dependency has been removed
+  const runtimePackageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf-8'))
+  assert.ok(!runtimePackageJson.dependencies['@fastify/oauth2'])
+
+  // the directory has been deleted
   try {
-    await rg.update({
-      services: [newService] // the original service was removed
-    })
+    await stat(join(dir, 'services', 'rival'))
     assert.fail()
   } catch (err) {
-    assert.ok(err instanceof CannotRemoveServiceOnUpdateError)
-    assert.equal(err.message, 'Cannot remove service "rival" when updating a Runtime')
+    assert.equal(err.code, 'ENOENT')
   }
 })
 
@@ -461,5 +476,76 @@ test('should remove a plugin from a service and add the same on the other', asyn
   const runtimePackageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf-8'))
   assert.ok(runtimePackageJson.dependencies['@fastify/oauth2'])
   assert.ok(runtimePackageJson.dependencies['@fastify/foo-plugin'])
+  assert.ok(runtimePackageJson.dependencies['@fastify/passport'])
+})
+
+test('should handle new fields on new service', async (t) => {
+  mockNpmJsRequestForPkgs(['@fastify/oauth2', '@fastify/foo-plugin'])
+  const dir = await moveToTmpdir(after)
+
+  const fixture = join(__dirname, '..', 'fixtures', 'sample-runtime')
+  await cp(fixture, dir, { recursive: true })
+
+  const rg = new RuntimeGenerator({
+    targetDirectory: dir
+  })
+  await rg.loadFromDir(dir)
+  assert.equal(rg.services.length, 1)
+  assert.equal(rg.services[0].name, 'rival')
+  const updatedService = {
+    name: 'rival',
+    template: '@platformatic/service',
+    fields: [],
+    plugins: [
+      {
+        name: '@fastify/passport',
+        options: [
+          {
+            name: 'FST_PLUGIN_PASSPORT_COUNTRY',
+            path: 'country',
+            type: 'string',
+            value: 'italy'
+          }
+        ]
+      }
+    ]
+  }
+  const newService = {
+    name: 'foobar',
+    template: '@platformatic/db',
+    fields: [
+      {
+        var: 'DATABASE_URL',
+        value: 'sqlite://./db.sqlite',
+        configValue: 'connectionString',
+        type: 'string'
+      },
+      {
+        var: 'PLT_APPLY_MIGRATIONS',
+        value: 'true',
+        type: 'boolean'
+      }
+    ],
+    plugins: []
+  }
+  await rg.update({
+    services: [updatedService, newService] // the original service was removed
+  })
+
+  // the new service has been generated
+  const serviceConfigFile = JSON.parse(await readFile(join(dir, 'services', 'foobar', 'platformatic.json'), 'utf-8'))
+  assert.equal(serviceConfigFile.plugins.packages, undefined)
+
+  // the runtime .env should be updated
+  const runtimeDotEnv = new DotEnvTool({
+    path: join(dir, '.env')
+  })
+
+  await runtimeDotEnv.load()
+
+  assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_DATABASE_URL'), 'sqlite://./db.sqlite')
+  assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_APPLY_MIGRATIONS'), 'true')
+
+  const runtimePackageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf-8'))
   assert.ok(runtimePackageJson.dependencies['@fastify/passport'])
 })
