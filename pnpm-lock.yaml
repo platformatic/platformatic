@@ -1513,7 +1513,7 @@ importers:
         version: 3.4.1
       '@fastify/restartable':
         specifier: ^2.2.0
-        version: 2.2.0
+        version: 2.3.0
       '@fastify/static':
         specifier: ^7.0.1
         version: 7.0.1
@@ -2810,8 +2810,8 @@ packages:
       undici: 5.28.3
     dev: false
 
-  /@fastify/restartable@2.2.0:
-    resolution: {integrity: sha512-sksvEyt9SLISEiphXZpbvodLVATYJ4kaFQ1+Inb6nb9+hOqEX6Q1DEtytqpQsg5BYDhDAr+vEoXXto/CatgCHQ==}
+  /@fastify/restartable@2.3.0:
+    resolution: {integrity: sha512-I5TSksCEx6+tOSso41pCehXLPi5Das2L27znP35w41ydMLttq1H2e/QtszBQmnaGEIqBM3nkFSzBLAeCj3K27Q==}
     dependencies:
       fastify: 4.26.2
     transitivePeerDependencies:
