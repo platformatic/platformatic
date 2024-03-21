@@ -2,7 +2,7 @@
 
 const { tmpdir, platform } = require('node:os')
 const { join } = require('node:path')
-const { readFile, mkdir, unlink } = require('node:fs/promises')
+const { readFile, mkdir, rm } = require('node:fs/promises')
 const fastify = require('fastify')
 const ws = require('ws')
 const errors = require('./errors')
@@ -197,12 +197,12 @@ async function startManagementApi (configManager, runtimeApiClient) {
   }
 
   try {
-    await mkdir(runtimeTmpDir, { recursive: true })
-    await unlink(socketPath).catch((err) => {
+    await rm(runtimeTmpDir, { recursive: true, force: true }).catch((err) => {
       if (err.code !== 'ENOENT') {
         throw new errors.FailedToUnlinkManagementApiSocket(err.message)
       }
     })
+    await mkdir(runtimeTmpDir, { recursive: true })
 
     const managementApi = await createManagementApi(
       configManager,
@@ -211,7 +211,7 @@ async function startManagementApi (configManager, runtimeApiClient) {
 
     if (platform() !== 'win32') {
       managementApi.addHook('onClose', async () => {
-        await unlink(socketPath).catch(() => {})
+        await rm(runtimeTmpDir, { recursive: true, force: true }).catch()
       })
     }
 
