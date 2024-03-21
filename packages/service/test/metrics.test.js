@@ -272,6 +272,32 @@ test('restarting 10 times does not leak', async (t) => {
   }
 })
 
+test('should not expose metrics if server hide is set', async (t) => {
+  const app = await buildServer({
+    server: {
+      hostname: '127.0.0.1',
+      port: 3042
+    },
+    metrics: {
+      server: 'hide'
+    }
+  })
+
+  t.after(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  try {
+    await request('http://127.0.0.1:9090/metrics')
+  } catch (err) {
+    assert.strictEqual(err.code, 'ECONNREFUSED')
+  }
+
+  const res = await request('http://127.0.0.1:3042/metrics')
+  assert.strictEqual(res.statusCode, 404)
+})
+
 function testPrometheusOutput (output) {
   let metricBlock = []
   const lines = output.split('\n')

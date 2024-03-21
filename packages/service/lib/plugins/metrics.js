@@ -177,37 +177,40 @@ module.exports = fp(async function (app, opts) {
     await closeMetricsServer()
   }
 
-  let onRequestHook
-  if (auth) {
-    const { username, password } = auth
+  if (server !== 'hide') {
+    let onRequestHook
+    if (auth) {
+      const { username, password } = auth
 
-    await metricsServer.register(require('@fastify/basic-auth'), {
-      validate: function (user, pass, req, reply, done) {
-        if (username !== user || password !== pass) {
-          return reply.code(401).send({ message: 'Unauthorized' })
+      await metricsServer.register(require('@fastify/basic-auth'), {
+        validate: function (user, pass, req, reply, done) {
+          if (username !== user || password !== pass) {
+            return reply.code(401).send({ message: 'Unauthorized' })
+          }
+          return done()
         }
-        return done()
+      })
+      onRequestHook = metricsServer.basicAuth
+    }
+
+    metricsServer.register(require('@fastify/accepts'))
+
+    metricsServer.route({
+      url: metricsEndpoint,
+      method: 'GET',
+      logLevel: 'warn',
+      onRequest: onRequestHook,
+      handler: async (req, reply) => {
+        const promRegistry = app.metrics.client.register
+        const accepts = req.accepts()
+        if (!accepts.type('text/plain') && accepts.type('application/json')) {
+          return promRegistry.getMetricsAsJSON()
+        }
+        reply.type('text/plain')
+        return promRegistry.metrics()
       }
     })
-    onRequestHook = metricsServer.basicAuth
   }
-
-  metricsServer.register(require('@fastify/accepts'))
-  metricsServer.route({
-    url: metricsEndpoint,
-    method: 'GET',
-    logLevel: 'warn',
-    onRequest: onRequestHook,
-    handler: async (req, reply) => {
-      const promRegistry = app.metrics.client.register
-      const accepts = req.accepts()
-      if (!accepts.type('text/plain') && accepts.type('application/json')) {
-        return promRegistry.getMetricsAsJSON()
-      }
-      reply.type('text/plain')
-      return promRegistry.metrics()
-    }
-  })
 
   if (server === 'own') {
     await metricsServer.ready()

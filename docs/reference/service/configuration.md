@@ -108,7 +108,7 @@ This setting can be a `boolean` or an `object`. If set to `true` the Prometheus 
 
 Supported object properties:
 
-- **`server`** (`enum`) — Can be set to "own" or "parent", determines if metrics will be served on a different server or the same server as the Platformatic application.
+- **`server`** (`enum`) — Can be set to "own", "parent" or "hide" determines if metrics will be served on a different server or the same server as the Platformatic application or hidden at all.
 - **`hostname`** (`string`) — The hostname where Prometheus server will listen for connections, should be used only if `server` is set to "own".
 - **`port`** (`number` or `string`) — The port where Prometheus server will listen for connections, should be used only if `server` is set to "own".
 - **`endpoint`** (`string`) — The endpoint on which metrics will be served.
