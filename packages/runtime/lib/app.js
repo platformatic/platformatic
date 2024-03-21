@@ -100,7 +100,7 @@ class PlatformaticApp {
     const configManager = this.config.configManager
     const config = configManager.current
 
-    this.#setuplogger(this.config.configManager)
+    this.#setuplogger(configManager)
 
     try {
       // If this is a restart, have the fastify server restart itself. If this
