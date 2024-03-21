@@ -73,6 +73,8 @@ class PlatformaticApp {
 
     try {
       await this.config.configManager.parseAndValidate()
+      await this.#updateConfig()
+
       this.#setuplogger(this.config.configManager)
       await this.server.restart()
     } catch (err) {
@@ -93,44 +95,9 @@ class PlatformaticApp {
     this.#started = true
 
     await this.#initializeConfig()
-    this.#originalWatch = this.config.configManager.current.watch
-    this.config.configManager.current.watch = { enabled: false }
+    await this.#updateConfig()
 
-    const { configManager } = this.config
-    configManager.update({
-      ...configManager.current,
-      telemetry: this.#telemetryConfig
-    })
-
-    if (this.#serverConfig) {
-      configManager.update({
-        ...configManager.current,
-        server: this.#serverConfig
-      })
-    }
-
-    if (this.#hasManagementApi || configManager.current.metrics) {
-      configManager.update({
-        ...configManager.current,
-        metrics: {
-          server: 'hide',
-          defaultMetrics: { enabled: this.appConfig.entrypoint },
-          prefix: snakeCase(this.appConfig.id) + '_',
-          ...configManager.current.metrics
-        }
-      })
-    }
-
-    if (!this.appConfig.entrypoint) {
-      configManager.update({
-        ...configManager.current,
-        server: {
-          ...(configManager.current.server || {}),
-          trustProxy: true
-        }
-      })
-    }
-
+    const configManager = this.config.configManager
     const config = configManager.current
 
     this.#setuplogger(configManager)
@@ -260,6 +227,46 @@ class PlatformaticApp {
       /* c8 ignore next */
       this.server.log.error({ err }, 'error reloading the configuration')
     })
+  }
+
+  async #updateConfig () {
+    this.#originalWatch = this.config.configManager.current.watch
+    this.config.configManager.current.watch = { enabled: false }
+
+    const { configManager } = this.config
+    configManager.update({
+      ...configManager.current,
+      telemetry: this.#telemetryConfig
+    })
+
+    if (this.#serverConfig) {
+      configManager.update({
+        ...configManager.current,
+        server: this.#serverConfig
+      })
+    }
+
+    if (this.#hasManagementApi || configManager.current.metrics) {
+      configManager.update({
+        ...configManager.current,
+        metrics: {
+          server: 'hide',
+          defaultMetrics: { enabled: this.appConfig.entrypoint },
+          prefix: snakeCase(this.appConfig.id) + '_',
+          ...configManager.current.metrics
+        }
+      })
+    }
+
+    if (!this.appConfig.entrypoint) {
+      configManager.update({
+        ...configManager.current,
+        server: {
+          ...(configManager.current.server || {}),
+          trustProxy: true
+        }
+      })
+    }
   }
 
   #setuplogger (configManager) {

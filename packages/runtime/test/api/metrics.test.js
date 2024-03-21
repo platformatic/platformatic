@@ -202,3 +202,47 @@ test('should get cached formatted runtime metrics', async (t) => {
     assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
   }
 })
+
+test('should get metrics after reloading one of the services', async (t) => {
+  const projectDir = join(fixturesDir, 'management-api')
+  const configFile = join(projectDir, 'platformatic.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.stopService('service-2')
+  await app.startService('service-2')
+
+  await sleep(5000)
+
+  const metrics = await app.getCachedMetrics()
+
+  for (const metric of metrics) {
+    const metricsKeys = Object.keys(metric).sort()
+    assert.deepStrictEqual(metricsKeys, [
+      'cpu',
+      'date',
+      'elu',
+      'entrypoint',
+      'newSpaceSize',
+      'oldSpaceSize',
+      'rss',
+      'totalHeapSize',
+      'usedHeapSize',
+      'version'
+    ])
+
+    const entrypointMetrics = metric.entrypoint
+    const entrypointMetricsKeys = Object.keys(entrypointMetrics).sort()
+    assert.deepStrictEqual(entrypointMetricsKeys, ['latency'])
+
+    const latencyMetrics = entrypointMetrics.latency
+    const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
+    assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
+  }
+})

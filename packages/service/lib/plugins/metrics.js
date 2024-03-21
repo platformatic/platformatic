@@ -104,16 +104,25 @@ const metricsPlugin = fp(async function (app, opts = {}) {
     })
   }
 
+  function cleanMetrics () {
+    const metrics = app.metrics.client.register._metrics
+    for (const metricName in metrics) {
+      if (defaultMetrics.enabled || metricName.startsWith(prefix)) {
+        delete metrics[metricName]
+      }
+    }
+  }
+
   let isRestarting = false
   app.addHook('onReady', async () => {
     app.addPreRestartHook(async () => {
       isRestarting = true
-      app.metrics.client.register.clear()
+      cleanMetrics()
     })
   })
   app.addHook('onClose', async () => {
     if (!isRestarting) {
-      app.metrics.client.register.clear()
+      cleanMetrics()
     }
   })
 }, {
