@@ -429,7 +429,7 @@ class RuntimeGenerator extends BaseGenerator {
       // cleanup runtime env removing keys not present anymore in service plugins
       const allKeys = envTool.getKeys()
       allKeys.forEach((k) => {
-        if (k.startsWith(serviceEnvPrefix) && !runtimeAddedEnvKeys.includes(k)) {
+        if (k.startsWith(`${serviceEnvPrefix}_FST_PLUGIN`) && !runtimeAddedEnvKeys.includes(k)) {
           envTool.deleteKey(k)
         }
       })

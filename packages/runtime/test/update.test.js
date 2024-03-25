@@ -40,6 +40,8 @@ test('should remove a service', async (t) => {
   // no env values related to 'rival' service are in the env file anymore
   runtimeDotEnv.getKeys().forEach((k) => assert.ok(!k.startsWith('PLT_RIVAL')))
 
+  // the other plugin values should be there
+  assert.equal(runtimeDotEnv.getKey('PLT_FOOBAR_TYPESCRIPT'), 'true')
   // the only dependency has been removed
   const runtimePackageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf-8'))
   assert.ok(!runtimePackageJson.dependencies['@fastify/oauth2'])
