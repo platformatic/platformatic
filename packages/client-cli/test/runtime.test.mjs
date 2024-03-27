@@ -11,7 +11,7 @@ import { cp, writeFile, readFile } from 'node:fs/promises'
 import split from 'split2'
 import { once } from 'node:events'
 
-test.only('openapi client generation (javascript) via the runtime', async (t) => {
+test('openapi client generation (javascript) via the runtime', async (t) => {
   const dir = await moveToTmpdir(after)
 
   await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
