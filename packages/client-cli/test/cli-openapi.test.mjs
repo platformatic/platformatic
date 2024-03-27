@@ -72,7 +72,7 @@ app.listen({ port: 0 })
   })
 })
 
-test.only('openapi client generation (typescript)', async (t) => {
+test('openapi client generation (typescript)', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -825,7 +825,7 @@ test('nested optional parameters are correctly identified', async (t) => {
 `), true)
 })
 
-test.only('request with same parameter name in body/path/header/query', async (t) => {
+test('request with same parameter name in body/path/header/query', async (t) => {
   const dir = await moveToTmpdir(after)
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'same-parameter-name-openapi.json')
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
