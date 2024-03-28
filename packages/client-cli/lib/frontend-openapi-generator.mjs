@@ -1,6 +1,6 @@
 import CodeBlockWriter from 'code-block-writer'
 import { generateOperationId } from '@platformatic/client'
-import { capitalize, getAllResponseCodes, getResponseTypes, is200JsonResponse } from './utils.mjs'
+import { capitalize, getAllResponseCodes, getResponseContentType, getResponseTypes, is200JsonResponse } from './utils.mjs'
 import camelcase from 'camelcase'
 import { writeOperations } from '../../client-cli/lib/openapi-common.mjs'
 
@@ -49,6 +49,15 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
     writer.writeLine(
       'export const setBaseUrl = (newUrl: string) : void => { baseUrl = newUrl }'
     )
+
+    writer.write('function headersToJSON(headers: Headers): Object ').block(() => {
+      writer.writeLine('const output = {}')
+      writer.write('headers.forEach((value, key) => ').inlineBlock(() => {
+        writer.write('output[key] = value')
+      })
+      writer.write(')')
+      writer.writeLine('return output')
+    })
   } else {
     writer.writeLine(
       `/**  @type {import('./${name}-types.d.ts').${camelCaseName}['setBaseUrl']} */`
@@ -56,6 +65,15 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
     writer.writeLine(
       'export const setBaseUrl = (newUrl) => { baseUrl = newUrl }'
     )
+
+    writer.write('function headersToJSON(headers) ').block(() => {
+      writer.writeLine('const output = {}')
+      writer.write('headers.forEach((value, key) => ').inlineBlock(() => {
+        writer.write('output[key] = value')
+      })
+      writer.write(')')
+      writer.writeLine('return output')
+    })
   }
   writer.blankLine()
   const allOperations = []
@@ -89,7 +107,6 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
 
     // Only dealing with success responses
     const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
-
     /* c8 ignore next 3 */
     if (successResponses.length !== 1) {
       currentFullResponse = true
@@ -162,8 +179,12 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
       }
 
       writer.blankLine()
+      const mappedResponses = getResponseTypes(operation.operation.responses)
+      const responsesContentType = getResponseContentType(operation.operation.responses)
+      if (responsesContentType === null) {
+        currentFullResponse = true
+      }
       if (currentFullResponse) {
-        const mappedResponses = getResponseTypes(operation.operation.responses)
         const allResponseCodes = getAllResponseCodes(operation.operation.responses)
         Object.keys(mappedResponses).forEach((responseType) => {
           if (mappedResponses[responseType].length > 0) {
@@ -176,7 +197,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
                 } else {
                   writer.write(',')
                 }
-                writer.writeLine('headers: response.headers,')
+                writer.writeLine('headers: headersToJSON(response.headers),')
                 writer.writeLine(`body: await response.${responseType}()`)
               })
             })
@@ -192,7 +213,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
             } else {
               writer.write(',')
             }
-            writer.writeLine('headers: response.headers,')
+            writer.writeLine('headers: headersToJSON(response.headers),')
             writer.write('body: await response.json()')
             if (language === 'ts') {
               writer.write(' as any')
@@ -206,7 +227,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
           } else {
             writer.write(',')
           }
-          writer.writeLine('headers: response.headers,')
+          writer.writeLine('headers: headersToJSON(response.headers),')
           writer.write('body: await response.text()')
           if (language === 'ts') {
             writer.write(' as any')
