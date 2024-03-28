@@ -47,7 +47,7 @@
     "@fastify/swagger": "^8.14.0",
     "@platformatic/config": "workspace:*",
     "@platformatic/generators": "workspace:*",
-    "@platformatic/graphql-composer": "^0.5.1",
+    "@platformatic/graphql-composer": "^0.6.0",
     "@platformatic/scalar-theme": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
