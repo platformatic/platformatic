@@ -1007,7 +1007,7 @@ importers:
         version: 6.10.2
       vscode-json-languageservice:
         specifier: ^5.3.9
-        version: 5.3.9
+        version: 5.3.10
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
@@ -1682,7 +1682,7 @@ importers:
         version: 5.4.3
       vscode-json-languageservice:
         specifier: ^5.3.9
-        version: 5.3.9
+        version: 5.3.10
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
@@ -9647,8 +9647,8 @@ packages:
       fsevents: 2.3.3
     dev: true
 
-  /vscode-json-languageservice@5.3.9:
-    resolution: {integrity: sha512-0IcymTw0ZYX5Zcx+7KLLwTRvg0FzXUVnM1hrUH+sPhqEX0fHGg2h5UUOSp1f8ydGS7/xxzlFI3TR01yaHs6Y0Q==}
+  /vscode-json-languageservice@5.3.10:
+    resolution: {integrity: sha512-KlbUYaer3DAnsVyRtgg/MhXOu4TTwY8TjaZYRY7Mt80zSpmvbmd58YT4Wq2ZiqHzdioD6lAvRSxhSCL0DvVY8Q==}
     dependencies:
       '@vscode/l10n': 0.0.18
       jsonc-parser: 3.2.1
