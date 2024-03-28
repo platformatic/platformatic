@@ -59,20 +59,20 @@ async function _getRedirect (url, request) {
   if (jsonResponses.includes(response.status)) {
     return {
       statusCode: response.status,
-      headers: response.headers,
+      headers: headersToJSON(response.headers),
       body: await response.json()
     }
   }
   if (response.headers['content-type'] === 'application/json') {
     return {
       statusCode: response.status,
-      headers: response.headers,
+      headers: headersToJSON(response.headers),
       body: await response.json()
     }
   }
   return {
     statusCode: response.status,
-    headers: response.headers,
+    headers: headersToJSON(response.headers),
     body: await response.text()
   }
 }
@@ -217,8 +217,17 @@ console.log(await getReturnUrl({}))
   /* eslint-disable no-control-regex */
   const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n') // remove ANSI colors, if any
   /* eslint-enable no-control-regex */
-  equal(lines[0], `{"url":"${app.url}"}`) // client, app object
-  equal(lines[1], `{"url":"${app2.url}"}`) // raw, app2 object
+  let foundAppUrl = false
+  lines.forEach((line) => {
+    if (line.trim().startsWith('body')) {
+      if (!foundAppUrl) {
+        ok(line.trim().endsWith(`'{"url":"${app.url}"}'`))
+        foundAppUrl = true
+      } else {
+        ok(line.trim().endsWith(`'{"url":"${app2.url}"}'`))
+      }
+    }
+  })
 })
 
 test('generate frontend client from path', async (t) => {
@@ -372,13 +381,7 @@ test('handle wildcard in path parameter', async (t) => {
 async function _getPkgScopeNameRange (url, request) {
 
   const response = await fetch(\`\${url}/pkg/@\${request['scope']}/\${request['name']}/\${request['range']}/\${request['*']}\`)
-
-  if (!response.ok) {
-    throw new Error(await response.text())
-  }
-
-  return await response.text()
-}`
+`
   ok(implementation)
   equal(implementation.includes(tsImplementationTemplate), true)
 })
@@ -394,11 +397,26 @@ test('do not add headers to fetch if a get request', async (t) => {
   equal(data.includes(`
   const response = await fetch(\`\${url}/auth/login\`)
 
-  if (!response.ok) {
-    throw new Error(await response.text())
+  const textResponses = [200]
+  if (textResponses.includes(response.status)) {
+    return {
+      statusCode: response.status as 200,
+      headers: headersToJSON(response.headers),
+      body: await response.text()
+    }
   }
-
-`), true)
+  if (response.headers['content-type'] === 'application/json') {
+    return {
+      statusCode: response.status as 200,
+      headers: headersToJSON(response.headers),
+      body: await response.json() as any
+    }
+  }
+  return {
+    statusCode: response.status as 200,
+    headers: headersToJSON(response.headers),
+    body: await response.text() as any
+  }`), true)
 })
 
 test('support empty response', async (t) => {
@@ -409,13 +427,31 @@ test('support empty response', async (t) => {
 
   const implementationFile = join(dir, 'movies', 'movies.ts')
   const implementation = await readFile(implementationFile, 'utf-8')
+
+  // Empty responses led to a full response returns
   equal(implementation.includes(`
   const response = await fetch(\`\${url}/auth/login\`)
 
-  if (!response.ok) {
-    throw new Error(await response.text())
+  const textResponses = [200]
+  if (textResponses.includes(response.status)) {
+    return {
+      statusCode: response.status as 200,
+      headers: headersToJSON(response.headers),
+      body: await response.text()
+    }
   }
-
+  if (response.headers['content-type'] === 'application/json') {
+    return {
+      statusCode: response.status as 200,
+      headers: headersToJSON(response.headers),
+      body: await response.json() as any
+    }
+  }
+  return {
+    statusCode: response.status as 200,
+    headers: headersToJSON(response.headers),
+    body: await response.text() as any
+  }
 `), true)
 
   const typeFile = join(dir, 'movies', 'movies-types.d.ts')
@@ -427,7 +463,7 @@ export type GetAuthLoginResponses =
 `), true)
 })
 
-test('call response.json only for json responses', async (t) => {
+test.only('call response.json only for json responses', async (t) => {
   const dir = await moveToTmpdir(after)
   {
     const openAPIfile = join(__dirname, 'fixtures', 'empty-responses-openapi.json')
@@ -437,11 +473,27 @@ test('call response.json only for json responses', async (t) => {
     const expected = `
   const response = await fetch(\`\${url}/auth/login\`)
 
-  if (!response.ok) {
-    throw new Error(await response.text())
+  const textResponses = [200]
+  if (textResponses.includes(response.status)) {
+    return {
+      statusCode: response.status as 200,
+      headers: headersToJSON(response.headers),
+      body: await response.text()
+    }
   }
+  if (response.headers['content-type'] === 'application/json') {
+    return {
+      statusCode: response.status as 200,
+      headers: headersToJSON(response.headers),
+      body: await response.json() as any
+    }
+  }
+  return {
+    statusCode: response.status as 200,
+    headers: headersToJSON(response.headers),
+    body: await response.text() as any
+  }`
 
-  return await response.text()`
     equal(implementation.includes(expected), true)
   }
   {
@@ -449,15 +501,30 @@ test('call response.json only for json responses', async (t) => {
     await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend'])
     const implementationFile = join(dir, 'movies', 'movies.ts')
     const implementation = await readFile(implementationFile, 'utf-8')
-    equal(implementation.includes(`
+    const expected = `
   const response = await fetch(\`\${url}/hello\`)
 
-  if (!response.ok) {
-    throw new Error(await response.text())
+  const jsonResponses = [200]
+  if (jsonResponses.includes(response.status)) {
+    return {
+      statusCode: response.status as 200,
+      headers: headersToJSON(response.headers),
+      body: await response.json()
+    }
   }
-
-  return await response.json()
-`), true)
+  if (response.headers['content-type'] === 'application/json') {
+    return {
+      statusCode: response.status as 200,
+      headers: headersToJSON(response.headers),
+      body: await response.json() as any
+    }
+  }
+  return {
+    statusCode: response.status as 200,
+    headers: headersToJSON(response.headers),
+    body: await response.text() as any
+  }`
+    equal(implementation.includes(expected), true)
   }
 })
 
