@@ -1463,7 +1463,7 @@ importers:
         version: 8.0.1
       express:
         specifier: ^4.18.3
-        version: 4.19.1
+        version: 4.19.2
       fast-jwt:
         specifier: ^3.3.3
         version: 3.3.3
@@ -2745,7 +2745,7 @@ packages:
   /@fastify/express@2.3.0:
     resolution: {integrity: sha512-jvvjlPPCfJsSHfF6tQDyARJ3+c3xXiqcxVZu6bi3xMWCWB3fl07vrjFDeaqnwqKhLZ9+m6cog5dw7gIMKEsTnQ==}
     dependencies:
-      express: 4.19.1
+      express: 4.19.2
       fastify-plugin: 4.5.1
     transitivePeerDependencies:
       - supports-color
@@ -5439,8 +5439,8 @@ packages:
     engines: {node: '>=6'}
     dev: false
 
-  /express@4.19.1:
-    resolution: {integrity: sha512-K4w1/Bp7y8iSiVObmCrtq8Cs79XjJc/RU2YYkZQ7wpUu5ZyZ7MtPHkqoMz4pf+mgXfNvo2qft8D9OnrH2ABk9w==}
+  /express@4.19.2:
+    resolution: {integrity: sha512-5T6nhjsT+EOMzuck8JjBHARTHfMht0POzlA60WV2pMD3gyXw2LZnZ+ueGdNxG+0calOJcWKbpFcuzLZ91YWq9Q==}
     engines: {node: '>= 0.10.0'}
     dependencies:
       accepts: 1.3.8
