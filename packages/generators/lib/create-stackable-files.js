@@ -36,8 +36,6 @@ stackable.configManagerConfig = {
 stackable[Symbol.for('skip-override')] = true
 
 module.exports = stackable
-module.exports.schema = schema
-module.exports.Generator = Generator
 `
 }
 
@@ -266,7 +264,7 @@ type PackageJson = {
 class ${stackableGeneratorType} extends ServiceGenerator {
   private _packageJson: PackageJson | null = null
 
-  getDefaultConfig (): BaseGenerator.JSONValue {
+  getDefaultConfig (): { [x: string]: BaseGenerator.JSONValue } {
     const defaultBaseConfig = super.getDefaultConfig()
     const defaultConfig = {
       greeting: 'Hello world!'
@@ -287,7 +285,7 @@ class ${stackableGeneratorType} extends ServiceGenerator {
     ]
   }
 
-  async _getConfigFileContents (): Promise<BaseGenerator.JSONValue> {
+  async _getConfigFileContents (): Promise<{ [x: string]: BaseGenerator.JSONValue }> {
     const baseConfig = await super._getConfigFileContents()
     const packageJson = await this.getStackablePackageJson()
     const config = {
@@ -402,6 +400,9 @@ function getTsStackableSchemaFile (stackableName) {
 
   return `\
 import { schema } from '@platformatic/service'
+import { readFileSync } from 'node:fs'
+
+const { version } = JSON.parse(readFileSync('package.json', 'utf8'))
 
 const ${schemaVarName} = {
   ...schema.schema,

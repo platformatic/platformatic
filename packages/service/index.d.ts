@@ -43,6 +43,7 @@ export interface Stackable<ConfigType> {
 
   version?: string
   upgrade?: (config: any, version: string) => Promise<any>
+  transformConfig?: (config: any) => Promise<any>
 }
 
 interface SchemaExport {

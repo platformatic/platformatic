@@ -10,6 +10,7 @@ const { generateGitignore } = require('./create-gitignore')
 const { generateStackableCli } = require('./create-stackable-cli')
 const { generateStackableFiles } = require('./create-stackable-files')
 const { generateStackablePlugins } = require('./create-stackable-plugin')
+const { generateStackableTests } = require('./create-stackable-tests')
 
 /* c8 ignore start */
 const fakeLogger = {
@@ -109,6 +110,7 @@ class StackableGenerator extends FileGenerator {
       this.files.push(...generateStackableFiles(typescript, stackableName))
       this.files.push(...generateStackableCli(typescript, stackableName))
       this.files.push(...generateStackablePlugins(typescript))
+      this.files.push(...generateStackableTests(typescript, stackableName))
       this.files.push(generateGitignore())
 
       await this._afterPrepare()
@@ -209,6 +211,7 @@ class StackableGenerator extends FileGenerator {
     }
 
     const devDependencies = {
+      borp: '^0.10.0',
       fastify: `^${this.fastifyVersion}`
     }
 
@@ -233,7 +236,8 @@ class StackableGenerator extends FileGenerator {
           'gen-schema': 'node lib/schema.js > schema.json',
           'gen-types': 'json2ts > config.d.ts < schema.json',
           'build:config': 'pnpm run gen-schema && pnpm run gen-types',
-          clean: 'rm -fr ./dist'
+          clean: 'rm -fr ./dist',
+          test: 'borp'
         },
         engines: {
           node: '^18.8.0 || >=20.6.0'
@@ -247,9 +251,6 @@ class StackableGenerator extends FileGenerator {
           ...dependencies,
           '@platformatic/generators': `^${this.platformaticVersion}`,
           ...this.config.dependencies
-        },
-        overrides: {
-          minimatch: '^5.0.0'
         }
       }
     }
@@ -267,7 +268,8 @@ class StackableGenerator extends FileGenerator {
         'gen-types': 'json2ts > config.d.ts < schema.json',
         'build:config': 'pnpm run gen-schema && pnpm run gen-types',
         prepublishOnly: 'pnpm run build:config',
-        lint: 'standard'
+        lint: 'standard',
+        test: 'borp'
       },
       engines: {
         node: '^18.8.0 || >=20.6.0'
