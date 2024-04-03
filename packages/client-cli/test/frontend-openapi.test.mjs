@@ -504,26 +504,11 @@ test('call response.json only for json responses', async (t) => {
     const expected = `
   const response = await fetch(\`\${url}/hello\`)
 
-  const jsonResponses = [200]
-  if (jsonResponses.includes(response.status)) {
-    return {
-      statusCode: response.status as 200,
-      headers: headersToJSON(response.headers),
-      body: await response.json()
-    }
+  if (!response.ok) {
+    throw new Error(await response.text())
   }
-  if (response.headers.get('content-type') === 'application/json') {
-    return {
-      statusCode: response.status as 200,
-      headers: headersToJSON(response.headers),
-      body: await response.json() as any
-    }
-  }
-  return {
-    statusCode: response.status as 200,
-    headers: headersToJSON(response.headers),
-    body: await response.text() as any
-  }`
+
+  return await response.json()`
     equal(implementation.includes(expected), true)
   }
 })

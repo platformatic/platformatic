@@ -113,7 +113,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
       currentFullResponse = true
     } else {
       // check if is empty response
-      if (getResponseContentType(successResponses[0]) === null) {
+      if (getResponseContentType(successResponses[0][1]) === null) {
         currentFullResponse = true
       }
     }
