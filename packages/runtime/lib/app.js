@@ -20,9 +20,8 @@ class PlatformaticApp {
   #telemetryConfig
   #serverConfig
   #debouncedRestart
-  #hasManagementApi
 
-  constructor (appConfig, loaderPort, logger, telemetryConfig, serverConfig, hasManagementApi) {
+  constructor (appConfig, loaderPort, logger, telemetryConfig, serverConfig) {
     this.appConfig = appConfig
     this.config = null
     this.#hotReload = false
@@ -32,7 +31,6 @@ class PlatformaticApp {
     this.#started = false
     this.#originalWatch = null
     this.#fileWatcher = null
-    this.#hasManagementApi = !!hasManagementApi
     this.#logger = logger.child({
       name: this.appConfig.id
     })
@@ -246,7 +244,7 @@ class PlatformaticApp {
       })
     }
 
-    if (this.#hasManagementApi || configManager.current.metrics) {
+    if (configManager.current.metrics) {
       configManager.update({
         ...configManager.current,
         metrics: {
