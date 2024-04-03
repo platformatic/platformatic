@@ -50,6 +50,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
       'export const setBaseUrl = (newUrl: string) : void => { baseUrl = newUrl }'
     )
 
+    writer.writeLine('/* @ts-ignore */')
     writer.write('function headersToJSON(headers: Headers): Object ').block(() => {
       writer.writeLine('const output = {} as any')
       writer.write('headers.forEach((value, key) => ').inlineBlock(() => {

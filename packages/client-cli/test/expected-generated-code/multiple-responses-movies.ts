@@ -6,6 +6,7 @@ import type * as Types from './movies-types'
 // The base URL for the API. This can be overridden by calling `setBaseUrl`.
 let baseUrl = ''
 export const setBaseUrl = (newUrl: string) : void => { baseUrl = newUrl }
+/* @ts-ignore */
 function headersToJSON(headers: Headers): Object {
   const output = {} as any
   headers.forEach((value, key) => {
