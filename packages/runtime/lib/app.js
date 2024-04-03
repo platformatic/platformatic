@@ -246,7 +246,10 @@ class PlatformaticApp {
       })
     }
 
-    if (this.#hasManagementApi || configManager.current.metrics) {
+    if (
+      (this.#hasManagementApi && configManager.current.metrics === undefined) ||
+      configManager.current.metrics
+    ) {
       configManager.update({
         ...configManager.current,
         metrics: {
