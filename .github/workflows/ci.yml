@@ -257,7 +257,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
     - name: Start docker containers for testing
-      run: docker-compose up -d postgresql
+      run: docker compose up -d postgresql
     - name: pnpm install
       uses: nick-fields/retry@v3.0.0
       with:
@@ -329,7 +329,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
     - name: Start docker containers for testing
-      run: docker-compose up -d ${{ matrix.db }}
+      run: docker compose up -d ${{ matrix.db }}
       if: ${{ matrix.db != 'sqlite' }}
     - name: pnpm install
       uses: nick-fields/retry@v3.0.0
@@ -367,10 +367,10 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
     - name: Start docker containers for testing
-      run: docker-compose up -d ${{ matrix.db }}
+      run: docker compose up -d ${{ matrix.db }}
       if: ${{ matrix.db != 'sqlite' }}
     - name: Start redis containers for testing
-      run: docker-compose up -d redis
+      run: docker compose up -d redis
     - name: pnpm install
       uses: nick-fields/retry@v3.0.0
       with:
@@ -573,7 +573,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
     - name: Start docker containers for testing
-      run: docker-compose up -d postgresql
+      run: docker compose up -d postgresql
     - name: pnpm install
       run: pnpm install --frozen-lockfile
     - name: Install Playwright browsers
