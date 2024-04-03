@@ -67,6 +67,13 @@ test('should get service config', async (t) => {
     },
     watch: {
       enabled: false
+    },
+    metrics: {
+      server: 'hide',
+      defaultMetrics: {
+        enabled: true
+      },
+      prefix: 'service_1_'
     }
   })
 })

@@ -52,7 +52,7 @@ test('should get service config', async (t) => {
   })
 })
 
-test('do not force enable metrics without the management api', async (t) => {
+test('do not force enable metrics if they are not set', async (t) => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
