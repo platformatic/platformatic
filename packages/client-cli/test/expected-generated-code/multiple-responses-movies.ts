@@ -7,7 +7,7 @@ import type * as Types from './movies-types'
 let baseUrl = ''
 export const setBaseUrl = (newUrl: string) : void => { baseUrl = newUrl }
 function headersToJSON(headers: Headers): Object {
-  const output = {}
+  const output = {} as any
   headers.forEach((value, key) => {
     output[key] = value
   })
@@ -42,7 +42,7 @@ const _getPkgScopeNameVersion = async (url: string, request: Types.GetPkgScopeNa
       body: await response.json()
     }
   }
-  if (response.headers['content-type'] === 'application/json') {
+  if (response.headers.get('content-type') === 'application/json') {
     return {
       statusCode: response.status as 200 | 202 | 302 | 400 | 404,
       headers: headersToJSON(response.headers),

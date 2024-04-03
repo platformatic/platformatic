@@ -63,7 +63,7 @@ async function _getRedirect (url, request) {
       body: await response.json()
     }
   }
-  if (response.headers['content-type'] === 'application/json') {
+  if (response.headers.get('content-type') === 'application/json') {
     return {
       statusCode: response.status,
       headers: headersToJSON(response.headers),
@@ -405,7 +405,7 @@ test('do not add headers to fetch if a get request', async (t) => {
       body: await response.text()
     }
   }
-  if (response.headers['content-type'] === 'application/json') {
+  if (response.headers.get('content-type') === 'application/json') {
     return {
       statusCode: response.status as 200,
       headers: headersToJSON(response.headers),
@@ -440,7 +440,7 @@ test('support empty response', async (t) => {
       body: await response.text()
     }
   }
-  if (response.headers['content-type'] === 'application/json') {
+  if (response.headers.get('content-type') === 'application/json') {
     return {
       statusCode: response.status as 200,
       headers: headersToJSON(response.headers),
@@ -463,7 +463,7 @@ export type GetAuthLoginResponses =
 `), true)
 })
 
-test.only('call response.json only for json responses', async (t) => {
+test('call response.json only for json responses', async (t) => {
   const dir = await moveToTmpdir(after)
   {
     const openAPIfile = join(__dirname, 'fixtures', 'empty-responses-openapi.json')
@@ -481,7 +481,7 @@ test.only('call response.json only for json responses', async (t) => {
       body: await response.text()
     }
   }
-  if (response.headers['content-type'] === 'application/json') {
+  if (response.headers.get('content-type') === 'application/json') {
     return {
       statusCode: response.status as 200,
       headers: headersToJSON(response.headers),
@@ -512,7 +512,7 @@ test.only('call response.json only for json responses', async (t) => {
       body: await response.json()
     }
   }
-  if (response.headers['content-type'] === 'application/json') {
+  if (response.headers.get('content-type') === 'application/json') {
     return {
       statusCode: response.status as 200,
       headers: headersToJSON(response.headers),

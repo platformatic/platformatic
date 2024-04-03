@@ -51,7 +51,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
     )
 
     writer.write('function headersToJSON(headers: Headers): Object ').block(() => {
-      writer.writeLine('const output = {}')
+      writer.writeLine('const output = {} as any')
       writer.write('headers.forEach((value, key) => ').inlineBlock(() => {
         writer.write('output[key] = value')
       })
@@ -110,6 +110,11 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
     /* c8 ignore next 3 */
     if (successResponses.length !== 1) {
       currentFullResponse = true
+    } else {
+      // check if is empty response
+      if (getResponseContentType(successResponses[0]) === null) {
+        currentFullResponse = true
+      }
     }
     if (language === 'ts') {
       // Write
@@ -180,10 +185,6 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
 
       writer.blankLine()
       const mappedResponses = getResponseTypes(operation.operation.responses)
-      const responsesContentType = getResponseContentType(operation.operation.responses)
-      if (responsesContentType === null) {
-        currentFullResponse = true
-      }
       if (currentFullResponse) {
         const allResponseCodes = getAllResponseCodes(operation.operation.responses)
         Object.keys(mappedResponses).forEach((responseType) => {
@@ -205,7 +206,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
         })
 
         // write default response as fallback
-        writer.write('if (response.headers[\'content-type\'] === \'application/json\') ').block(() => {
+        writer.write('if (response.headers.get(\'content-type\') === \'application/json\') ').block(() => {
           writer.write('return ').block(() => {
             writer.write('statusCode: response.status')
             if (language === 'ts') {
