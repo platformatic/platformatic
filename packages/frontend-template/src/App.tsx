@@ -18,7 +18,7 @@ function App() {
   async function onUpdateMovie() {
     if (!newMovie || !newMovie.id) return
 
-    const updatedMovie = await updateMovie({ id: newMovie.id, title: 'The Lord of the Rings' })
+    const updatedMovie = await updateMovie({ id: newMovie.id, body: { title: 'The Lord of the Rings' }} )
     setNewMovie(updatedMovie)
   }
 
