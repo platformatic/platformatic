@@ -7,7 +7,6 @@ import errors from './errors.mjs'
 import camelcase from 'camelcase'
 import { responsesWriter } from './responses-writer.mjs'
 import { getType } from './get-type.mjs'
-import CodeBlockWriter from 'code-block-writer'
 
 export function writeOperations (interfacesWriter, mainWriter, operations, { fullRequest, fullResponse, optionalHeaders, schema }) {
   const originalFullResponse = fullResponse
@@ -16,9 +15,7 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
     const operationId = operation.operation.operationId
     const camelCaseOperationId = camelcase(operationId)
     const { parameters, responses, requestBody } = operation.operation
-    let forceFullRequest = fullRequest || hasDuplicatedParameters(operation.operation)
-    // signal that "parameters" have been parsed (i.e. headers)
-    let hasParametersParsed = false
+    const forceFullRequest = fullRequest || hasDuplicatedParameters(operation.operation)
     const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
     if (successResponses.length !== 1) {
       currentFullResponse = true
@@ -27,79 +24,53 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
     const operationRequestName = `${capitalizedCamelCaseOperationId}Request`
 
     let isRequestArray = false
-    let isStructuredType = false
-    const bodyWriter = new CodeBlockWriter({
-      indentNumberOfSpaces: 2,
-      useTabs: false,
-      useSingleQuote: true
+    interfacesWriter.write(`export type ${operationRequestName} =`).block(() => {
+      const addedProps = new Set()
+      if (parameters) {
+        if (forceFullRequest) {
+          const bodyParams = []
+          const pathParams = []
+          const queryParams = []
+          const headersParams = []
+          for (const parameter of parameters) {
+            if (optionalHeaders.includes(parameter.name)) {
+              parameter.required = false
+            }
+            switch (parameter.in) {
+              case 'query':
+                queryParams.push(parameter)
+                break
+              case 'path':
+                pathParams.push(parameter)
+                break
+              case 'body':
+                bodyParams.push(parameter)
+                break
+              case 'header':
+                headersParams.push(parameter)
+                break
+            }
+          }
+          writeProperties(interfacesWriter, 'body', bodyParams, addedProps, 'req', schema)
+          writeProperties(interfacesWriter, 'path', pathParams, addedProps, 'req', schema)
+          writeProperties(interfacesWriter, 'query', queryParams, addedProps, 'req', schema)
+          writeProperties(interfacesWriter, 'headers', headersParams, addedProps, 'req', schema)
+        } else {
+          for (const parameter of parameters) {
+            let { name, required } = parameter
+            if (optionalHeaders.includes(name)) {
+              required = false
+            }
+            // We do not check for addedProps here because it's the first
+            // group of properties
+            writeProperty(interfacesWriter, name, parameter, addedProps, required, 'req', schema)
+          }
+        }
+      }
+      if (requestBody) {
+        isRequestArray = writeContent(interfacesWriter, requestBody.content, schema, addedProps, 'req', forceFullRequest ? 'body' : null)
+      }
     })
-
-    const addedProps = new Set()
-    if (parameters) {
-      if (forceFullRequest) {
-        const bodyParams = []
-        const pathParams = []
-        const queryParams = []
-        const headersParams = []
-        for (const parameter of parameters) {
-          if (optionalHeaders.includes(parameter.name)) {
-            parameter.required = false
-          }
-          switch (parameter.in) {
-            case 'query':
-              queryParams.push(parameter)
-              break
-            case 'path':
-              pathParams.push(parameter)
-              break
-            case 'body':
-              bodyParams.push(parameter)
-              break
-            case 'header':
-              headersParams.push(parameter)
-              break
-          }
-        }
-        writeProperties(bodyWriter, 'body', bodyParams, addedProps, 'req', schema)
-        writeProperties(bodyWriter, 'path', pathParams, addedProps, 'req', schema)
-        writeProperties(bodyWriter, 'query', queryParams, addedProps, 'req', schema)
-        writeProperties(bodyWriter, 'headers', headersParams, addedProps, 'req', schema)
-      } else {
-        for (const parameter of parameters) {
-          hasParametersParsed = true
-          let { name, required } = parameter
-          if (optionalHeaders.includes(name)) {
-            required = false
-          }
-          // We do not check for addedProps here because it's the first
-          // group of properties
-          writeProperty(bodyWriter, name, parameter, addedProps, required, 'req', schema)
-        }
-      }
-    }
-    if (requestBody) {
-      if (hasParametersParsed) {
-        forceFullRequest = true
-      }
-      const writeContentOutput = writeContent(bodyWriter, requestBody.content, schema, addedProps, 'req', forceFullRequest ? 'body' : null)
-      isRequestArray = writeContentOutput.isArray
-      isStructuredType = writeContentOutput.isStructuredType
-    } else {
-      if (bodyWriter.getLength() === 0) {
-        // no body has been written, let's put a fallback 'unknown' value
-        bodyWriter.write('unknown')
-      }
-    }
-
-    if (isStructuredType || forceFullRequest || hasParametersParsed) {
-      interfacesWriter.write(`export type ${operationRequestName} =`).block(() => {
-        interfacesWriter.write(bodyWriter.toString())
-      })
-    } else {
-      interfacesWriter.write(`export type ${operationRequestName} = `)
-      interfacesWriter.write(bodyWriter.toString())
-    }
-
     interfacesWriter.blankLine()
     const allResponsesName = responsesWriter(capitalizedCamelCaseOperationId, responses, currentFullResponse, interfacesWriter, schema)
     mainWriter.writeLine(`${camelCaseOperationId}(req?: ${operationRequestName}${isRequestArray ? '[]' : ''}): Promise<${allResponsesName}>;`)
@@ -140,8 +111,7 @@ export function writeProperty (writer, key, value, addedProps, required = true, 
 }
 
 export function writeContent (writer, content, spec, addedProps, methodType, wrapper) {
-  let isArray = false
-  let isStructuredType = false
+  let isResponseArray = false
   if (content) {
     for (const [contentType, body] of Object.entries(content)) {
       // We ignore all non-JSON endpoints for now
@@ -157,21 +127,19 @@ export function writeContent (writer, content, spec, addedProps, methodType, wra
       if (!body.schema?.type && !body.schema?.$ref) {
         break
       }
-      if (body.schema.type === 'object' || body.schema.$ref) {
-        isStructuredType = true
-      }
+
       let schema
       // This is likely buggy as there can be multiple responses for different
       // status codes. This is currently not possible with Platformatic DB
       // services so we skip for now.
       // TODO: support different schemas for different status codes
       if (body.schema.type === 'array') {
-        isArray = true
-        if (wrapper) {
-          writer.write(`${wrapper}: `)
+        isResponseArray = true
+        schema = body.schema.items
+        if (schema.type !== 'object') {
+          writer.writeLine(getType(schema, methodType, spec))
+          return isResponseArray
         }
-        writer.write(getType(body.schema, methodType, spec))
-        return { isArray, isStructuredType }
       } else {
         schema = body.schema
       }
@@ -186,7 +154,7 @@ export function writeContent (writer, content, spec, addedProps, methodType, wra
       break
     }
   }
-  return { isArray, isStructuredType }
+  return isResponseArray
 }
 
 export function writeObjectProperties (writer, schema, spec, addedProps, methodType) {

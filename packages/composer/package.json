@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/composer",
-  "version": "1.31.1",
+  "version": "1.32.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -37,7 +37,7 @@
     "snazzy": "^9.0.0",
     "split2": "^4.2.0",
     "standard": "^17.1.0",
-    "tsd": "^0.30.7"
+    "tsd": "^0.31.0"
   },
   "dependencies": {
     "@fastify/error": "^3.4.1",

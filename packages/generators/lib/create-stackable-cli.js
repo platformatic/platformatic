@@ -89,7 +89,7 @@ async function execute (): Promise<void> {
         type: 'string',
         default: join(process.cwd(), '${kebabCase(stackableName + '-app')}')
       },
-      port: { type: 'string', default: '3042' },
+      port: { type: 'string' },
       hostname: { type: 'string', default: '0.0.0.0' },
       plugin: { type: 'boolean', default: true },
       tests: { type: 'boolean', default: true },
@@ -102,7 +102,7 @@ async function execute (): Promise<void> {
   const generator = new Generator()
 
   generator.setConfig({
-    port: parseInt(args.values.port as string),
+    port: parseInt(args.values.port || '3042'),
     hostname: args.values.hostname,
     plugin: args.values.plugin,
     tests: args.values.tests,

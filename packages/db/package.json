@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db",
-  "version": "1.31.1",
+  "version": "1.32.0",
   "description": "",
   "main": "index.js",
   "types": "index.d.ts",
@@ -44,7 +44,7 @@
     "standard": "^17.1.0",
     "strip-ansi": "^7.1.0",
     "ts-standard": "^12.0.2",
-    "tsd": "^0.30.7",
+    "tsd": "^0.31.0",
     "typescript": "^5.4.2",
     "undici": "^6.9.0",
     "vscode-json-languageservice": "^5.3.9",

@@ -107,6 +107,8 @@ class RuntimeApiClient extends EventEmitter {
   async getFormattedMetrics () {
     const { metrics } = await this.getMetrics()
 
+    if (metrics === null) return null
+
     const entrypointDetails = await this.getEntrypointDetails()
     const entrypointConfig = await this.getServiceConfig(entrypointDetails.id)
     const entrypointMetricsPrefix = entrypointConfig.metrics?.prefix
