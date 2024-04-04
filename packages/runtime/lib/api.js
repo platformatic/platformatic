@@ -299,7 +299,7 @@ class RuntimeApi {
 
     const promRegister = entrypoint.server.metrics?.client?.register
     if (!promRegister) {
-      return null
+      return { metrics: null }
     }
 
     // All runtime services shares the same metrics registry.
