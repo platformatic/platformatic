@@ -53,6 +53,15 @@ test('should create a stackable project without typescript', async (t) => {
 
   const gitignore = await readFile(join(dir, '.gitignore'), 'utf8')
   assert.ok(gitignore.length > 0)
+
+  const testIndexFile = await readFile(join(dir, 'test', 'index.test.js'), 'utf8')
+  assert.ok(testIndexFile.length > 0)
+
+  const testSchemaFile = await readFile(join(dir, 'test', 'schema.test.js'), 'utf8')
+  assert.ok(testSchemaFile.length > 0)
+
+  const testGeneratorFile = await readFile(join(dir, 'test', 'generator.test.js'), 'utf8')
+  assert.ok(testGeneratorFile.length > 0)
 })
 
 test('should create a stackable project with typescript', async (t) => {
@@ -93,4 +102,13 @@ test('should create a stackable project with typescript', async (t) => {
 
   const gitignore = await readFile(join(dir, '.gitignore'), 'utf8')
   assert.ok(gitignore.length > 0)
+
+  const testIndexFile = await readFile(join(dir, 'test', 'index.test.ts'), 'utf8')
+  assert.ok(testIndexFile.length > 0)
+
+  const testSchemaFile = await readFile(join(dir, 'test', 'schema.test.ts'), 'utf8')
+  assert.ok(testSchemaFile.length > 0)
+
+  const testGeneratorFile = await readFile(join(dir, 'test', 'generator.test.ts'), 'utf8')
+  assert.ok(testGeneratorFile.length > 0)
 })
