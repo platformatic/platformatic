@@ -22,7 +22,7 @@ async function auth (app, opts) {
   const anonymousRole = opts.anonymousRole || 'anonymous'
 
   if (opts.jwt && opts.jwt.namespace) {
-    opts.jwt.namespace = opts.jwt.namespace.replace(/\/?$/, '/');
+    opts.jwt.namespace = opts.jwt.namespace.replace(/\/?$/, '/')
   }
 
   app.decorateRequest('setupDBAuthorizationUser', setupUser)
