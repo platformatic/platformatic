@@ -385,6 +385,36 @@ test('edge cases', async (t) => {
   assert.equal(typeof client.getTestWithWeirdCharacters, 'function')
 })
 
+test('should not throw when params are not passed', async (t) => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'misc')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
+  try {
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildService(join(tmpDir, 'platformatic.service.json'))
+
+  t.after(async () => {
+    await app.close()
+    await rm(tmpDir, { recursive: true })
+  })
+  await app.start()
+
+  const client = await buildOpenAPIClient({
+    fullRequest: true,
+    url: `${app.url}`,
+    path: join(tmpDir, 'openapi.json')
+  })
+  const result1 = await client.getTestWithWeirdCharacters({ id: 'foo' })
+  assert.strictEqual(typeof result1, 'object', 'call with params')
+
+  const result2 = await client.getTestWithWeirdCharacters({})
+  assert.strictEqual(typeof result2, 'object', 'call without params')
+})
+
 test('do not set bodies for methods that should not have them', async (t) => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'no-bodies')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
