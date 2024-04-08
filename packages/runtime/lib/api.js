@@ -1,5 +1,6 @@
 'use strict'
 
+const { once } = require('node:events')
 const { getGlobalDispatcher, setGlobalDispatcher } = require('undici')
 const { createFastifyInterceptor } = require('fastify-undici-dispatcher')
 const { PlatformaticApp } = require('./app')
@@ -84,9 +85,11 @@ class RuntimeApi {
     }))
 
     for (const service of services) {
-      if (service.getStatus() === 'started') {
-        return
-      }
+      const serviceStatus = service.getStatus()
+      if (
+        serviceStatus === 'starting' ||
+        serviceStatus === 'started'
+      ) return
     }
 
     if (this.#dispatcher) {
@@ -159,6 +162,11 @@ class RuntimeApi {
     const stopServiceReqs = []
     for (const service of this.#services.values()) {
       const serviceStatus = service.getStatus()
+      if (serviceStatus === 'starting') {
+        stopServiceReqs.push(
+          once(service, 'start').then(() => service.stop())
+        )
+      }
       if (serviceStatus === 'started') {
         stopServiceReqs.push(service.stop())
       }
@@ -169,9 +177,12 @@ class RuntimeApi {
   async #restartServices () {
     let entrypointUrl = null
     for (const service of this.#services.values()) {
-      if (service.server) {
-        await service.restart(true)
+      const serviceStatus = service.getStatus()
+      if (serviceStatus === 'starting') {
+        await once(service, 'start')
       }
+
+      await service.restart(true)
 
       if (service.appConfig.entrypoint) {
         entrypointUrl = service.server.url
@@ -236,18 +247,19 @@ class RuntimeApi {
   #getServiceConfig ({ id }) {
     const service = this.#getServiceById(id)
 
-    const { config } = service
-    if (!config) {
+    const serviceStatus = service.getStatus()
+    if (serviceStatus !== 'started') {
       throw new errors.ServiceNotStartedError(id)
     }
 
-    return config.configManager.current
+    return service.config.configManager.current
   }
 
   async #getServiceOpenapiSchema ({ id }) {
     const service = this.#getServiceById(id)
 
-    if (!service.config) {
+    const serviceStatus = service.getStatus()
+    if (serviceStatus !== 'started') {
       throw new errors.ServiceNotStartedError(id)
     }
 
@@ -267,7 +279,8 @@ class RuntimeApi {
   async #getServiceGraphqlSchema ({ id }) {
     const service = this.#getServiceById(id)
 
-    if (!service.config) {
+    const serviceStatus = service.getStatus()
+    if (serviceStatus !== 'started') {
       throw new errors.ServiceNotStartedError(id)
     }
 
@@ -293,7 +306,8 @@ class RuntimeApi {
       }
     }
 
-    if (!entrypoint.config) {
+    const entrypointStatus = entrypoint.getStatus()
+    if (entrypointStatus !== 'started') {
       throw new errors.ServiceNotStartedError(entrypoint.id)
     }
 
@@ -313,11 +327,23 @@ class RuntimeApi {
 
   async #startService ({ id }) {
     const service = this.#getServiceById(id)
-    await service.start()
+    const serviceStatus = service.getStatus()
+
+    if (serviceStatus === 'starting') {
+      await once(service, 'start')
+    } else {
+      await service.start()
+    }
   }
 
   async #stopService ({ id }) {
     const service = this.#getServiceById(id)
+    const serviceStatus = service.getStatus()
+
+    if (serviceStatus === 'starting') {
+      await once(service, 'start')
+    }
+
     await service.stop()
   }
 
