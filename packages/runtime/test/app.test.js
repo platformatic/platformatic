@@ -3,6 +3,7 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
+const { once } = require('node:events')
 const { utimes } = require('node:fs/promises')
 const { PlatformaticApp } = require('../lib/app')
 const fixturesDir = join(__dirname, '..', 'fixtures')
@@ -401,4 +402,41 @@ test('logs errors during startup', async (t) => {
   }
   const lastLine = lines[lines.length - 1]
   assert.strictEqual(lastLine.msg, 'boom')
+})
+
+test('returns application statuses', async (t) => {
+  const { logger } = getLoggerAndStream()
+  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
+  const configFile = join(appPath, 'platformatic.service.json')
+  const config = {
+    id: 'serviceApp',
+    config: configFile,
+    path: appPath,
+    entrypoint: true,
+    hotReload: true,
+    dependencies: [],
+    dependents: [],
+    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
+  }
+  const app = new PlatformaticApp(config, null, logger)
+
+  app.start()
+
+  assert.strictEqual(app.getStatus(), 'starting')
+  assert.strictEqual(app.server, null)
+
+  await once(app, 'start')
+
+  assert.strictEqual(app.getStatus(), 'started')
+  assert.notStrictEqual(app.server, null)
+
+  app.stop()
+
+  assert.strictEqual(app.getStatus(), 'started')
+  assert.notStrictEqual(app.server, null)
+
+  await once(app, 'stop')
+
+  assert.strictEqual(app.getStatus(), 'stopped')
+  assert.notStrictEqual(app.server, null)
 })
