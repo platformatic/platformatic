@@ -1,7 +1,6 @@
 'use strict'
 
 const inspector = require('node:inspector')
-const { tmpdir } = require('node:os')
 const { register, createRequire } = require('node:module')
 const { isatty } = require('node:tty')
 const { join } = require('node:path')
@@ -18,8 +17,6 @@ const RuntimeApi = require('./api')
 const { MessagePortWritable } = require('./message-port-writable')
 const loadInterceptors = require('./interceptors')
 let loaderPort
-
-const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 
 if (typeof register === 'function' && workerData.config.loaderFile) {
   const { port1, port2 } = new MessageChannel()
@@ -69,7 +66,7 @@ function createLogger (config) {
       logsLimitCount = 1
     }
 
-    const logsPath = join(PLATFORMATIC_TMP_DIR, process.pid.toString(), 'logs')
+    const logsPath = join(workerData.runtimeTmpDir, 'logs')
     const pinoRoll = pino.transport({
       target: 'pino-roll',
       options: {

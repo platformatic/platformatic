@@ -4,6 +4,7 @@ import assert from 'node:assert'
 import { tmpdir } from 'node:os'
 import { test } from 'node:test'
 import { join } from 'node:path'
+import { createHash } from 'node:crypto'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { writeFile, rm } from 'node:fs/promises'
 import * as desm from 'desm'
@@ -21,7 +22,12 @@ test('should get runtime log indexes', async (t) => {
   const { runtime } = await startRuntime(configFile)
   t.after(() => runtime.kill('SIGINT'))
 
-  const runtimeTmpDir = join(PLATFORMATIC_TMP_DIR, runtime.pid.toString())
+  const runtimeDirHash = createHash('md5').update(projectDir).digest('hex')
+  const runtimeTmpDir = join(
+    PLATFORMATIC_TMP_DIR,
+    runtimeDirHash,
+    runtime.pid.toString()
+  )
   t.after(async () => {
     await rm(runtimeTmpDir, { recursive: true, force: true })
   })
@@ -40,7 +46,12 @@ test('should get runtime history log', async (t) => {
   const { runtime } = await startRuntime(configFile)
   t.after(() => runtime.kill('SIGINT'))
 
-  const runtimeTmpDir = join(PLATFORMATIC_TMP_DIR, runtime.pid.toString())
+  const runtimeDirHash = createHash('md5').update(projectDir).digest('hex')
+  const runtimeTmpDir = join(
+    PLATFORMATIC_TMP_DIR,
+    runtimeDirHash,
+    runtime.pid.toString()
+  )
   t.after(async () => {
     await rm(runtimeTmpDir, { recursive: true, force: true })
   })
@@ -60,7 +71,12 @@ test('should get runtime all logs', async (t) => {
   const { runtime } = await startRuntime(configFile)
   t.after(() => runtime.kill('SIGINT'))
 
-  const runtimeTmpDir = join(PLATFORMATIC_TMP_DIR, runtime.pid.toString())
+  const runtimeDirHash = createHash('md5').update(projectDir).digest('hex')
+  const runtimeTmpDir = join(
+    PLATFORMATIC_TMP_DIR,
+    runtimeDirHash,
+    runtime.pid.toString()
+  )
   t.after(async () => {
     await rm(runtimeTmpDir, { recursive: true, force: true })
   })
@@ -87,7 +103,12 @@ test('should get runtime live metrics', async (t) => {
   const { runtime } = await startRuntime(configFile)
   t.after(() => runtime.kill('SIGINT'))
 
-  const runtimeTmpDir = join(PLATFORMATIC_TMP_DIR, runtime.pid.toString())
+  const runtimeDirHash = createHash('md5').update(projectDir).digest('hex')
+  const runtimeTmpDir = join(
+    PLATFORMATIC_TMP_DIR,
+    runtimeDirHash,
+    runtime.pid.toString()
+  )
   t.after(async () => {
     await rm(runtimeTmpDir, { recursive: true, force: true })
   })

@@ -293,7 +293,7 @@ class RuntimeApiClient {
     if (platform() === 'win32') {
       return PLATFORMATIC_PIPE_PREFIX + pid
     }
-    return join(PLATFORMATIC_TMP_DIR, pid.toString(), 'socket')
+    return join(PLATFORMATIC_TMP_DIR, 'sockets', pid.toString())
   }
 
   async #getUnixRuntimePIDs () {
@@ -302,7 +302,7 @@ class RuntimeApiClient {
     } catch {
       return []
     }
-    const runtimeDirs = await readdir(PLATFORMATIC_TMP_DIR)
+    const runtimeDirs = await readdir(join(PLATFORMATIC_TMP_DIR, 'sockets'))
     const runtimePIDs = []
     for (const runtimeDirName of runtimeDirs) {
       runtimePIDs.push(parseInt(runtimeDirName))
