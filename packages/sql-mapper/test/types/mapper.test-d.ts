@@ -96,6 +96,8 @@ expectType<Partial<EntityFields>[]>(await entity.insert({ inputs: [{ id: 1, name
 expectType<Partial<EntityFields>>(await entity.save({ input: { id: 1, name: 'test' }, tx: pluginOptions.db }))
 expectType<Partial<EntityFields>[]>(await entity.delete({ tx: pluginOptions.db }))
 expectType<number>(await entity.count({ tx: pluginOptions.db }))
+expectType<Partial<EntityFields>[]>(await entity.find({ where: { id: { eq: null } } }))
+expectType<Partial<EntityFields>[]>(await entity.find({ where: { id: { neq: null } } }))
 
 const whereCondition: WhereCondition = {
   eq: {eq: ""},
