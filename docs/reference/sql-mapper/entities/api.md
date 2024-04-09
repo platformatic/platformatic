@@ -34,7 +34,7 @@ The `where` object's key is the field you want to check, the value is a key/valu
 
 ### Handling Null Values
 
-When using the `eq` and `neq` operators with a null value, the comparison logic adheres to standard SQL rules for null value handling. Below is an explanation of how these operators are interpreted when the value is null:
+When using the `eq` and `neq` operators with a null value, the comparison logic adheres to standard SQL rules for null value handling.
 
 ### Examples
 
