@@ -45,7 +45,8 @@ describe('generator', () => {
       connectionString: 'sqlite://./db.sqlite',
       types: true,
       migrations: 'migrations',
-      createMigrations: true
+      createMigrations: true,
+      isUpdating: false
     })
   })
   test('generate correct .env file', async (t) => {
@@ -101,7 +102,7 @@ describe('generator', () => {
     await dbApp.prepare()
     const packageJsonFileObject = dbApp.getFileObject('package.json')
     const contents = JSON.parse(packageJsonFileObject.contents)
-    assert.equal(contents.dependencies['@platformatic/db'], contents.dependencies.platformatic)
+    assert.ok(contents.dependencies['@platformatic/db'])
   })
 
   test('have global.d.ts', async (t) => {

@@ -66,8 +66,8 @@ describe('generator', () => {
     await svc.prepare()
     const packageJsonFileObject = svc.getFileObject('package.json')
     const contents = JSON.parse(packageJsonFileObject.contents)
-    assert.equal(contents.dependencies.platformatic, contents.dependencies.platformatic)
-    assert.equal(contents.dependencies['@platformatic/service'], contents.dependencies.platformatic)
+    assert.equal(contents.dependencies.platformatic, undefined)
+    assert.ok(contents.dependencies['@platformatic/service'])
   })
 
   test('config', async (t) => {

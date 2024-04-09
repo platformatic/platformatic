@@ -1,4 +1,4 @@
-# Architecture
+io-# Architecture
 
 Platformatic is a collection of Open Source tools designed to eliminate friction
 in backend development. 
@@ -9,7 +9,7 @@ The base services are:
 
 These micro-services can be developed and deployed independently or aggregated into a single API using [Platformatic Composer](#platformatic-composer) or deployed as a single unit using [Platformatic Runtime](#platformatic-runtime).
 
-All platformatic components can be reused with [Stackables](#platformatic-stackbles).
+All platformatic components can be reused with [Stackables](#platformatic-stackables).
 And finally, all Platformatic components can be deployed on [Platformatic Cloud](#platformatic-cloud).
 
 ## Platformatic Service
@@ -38,7 +38,7 @@ Platformatic DB is composed of a few key libraries:
 1. `@platformatic/sql-openapi` - uses `sql-mapper` to create a series of REST routes and matching OpenAPI definitions.
    Internally it uses [`@fastify/swagger`](https://github.com/fastify/fastify-swagger).
 1. `@platformatic/sql-graphql` - uses `sql-mapper` to create a GraphQL endpoint and schema. `sql-graphql` also support Federation.
-   Internally it uses [`mercurius`](https://github.com/mercuriusjs/mercurius).
+   Internally it uses [`mercurius`](https://github.com/mercurius-js/mercurius).
 
 Platformatic DB allows you to load a [Fastify plugin](https://www.fastify.io/docs/latest/Reference/Plugins/) during server startup that contains your own application-specific code.
 The plugin can add more routes or resolvers — these will automatically be shown in the OpenAPI and GraphQL schemas.

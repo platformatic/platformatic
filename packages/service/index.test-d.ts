@@ -1,4 +1,4 @@
-import { expectType } from 'tsd'
+import { expectType, expectError } from 'tsd'
 import { FastifyInstance } from 'fastify'
 import ConfigManager from '@platformatic/config'
 import { OpenAPI } from 'openapi-types'
@@ -39,6 +39,7 @@ function buildStackable (): Stackable<PlatformaticServiceConfig> {
   myApp.schema = platformaticService.configManagerConfig.schema
   myApp.configType = 'myApp'
   myApp.configManagerConfig = {
+    version: platformaticService.configManagerConfig.version,
     ...platformaticService.configManagerConfig,
     async transformConfig (this: ConfigManager<PlatformaticServiceConfig>) {
       this.current.plugins = {
@@ -46,8 +47,18 @@ function buildStackable (): Stackable<PlatformaticServiceConfig> {
           path: 'my-plugin'
         }]
       }
+    },
+    async upgrade (config: PlatformaticServiceConfig, version: string) {
+      const upgrade = platformaticService.configManagerConfig.upgrade
+      if (typeof upgrade === 'function') {
+        return upgrade.call(this, config, version)
+      }
+      return config
     }
   }
+
+  // configVersion is not part of ConfigManagerConfig
+  expectError(myApp.configManagerConfig.configVersion)
 
   await start(myApp, ['--help'])
 
@@ -64,3 +75,28 @@ const myGenerator = new MyGenerator()
 
 expectType<MyGenerator>(myGenerator)
 expectType<BaseGenerator.BaseGeneratorConfig>(myGenerator.config)
+
+function buildStackable2 (): Stackable<PlatformaticServiceConfig> {
+  async function myApp (app: FastifyInstance, opts: object): Promise<void> {
+    await platformaticService(app, opts)
+  }
+
+  myApp.schema = platformaticService.configManagerConfig.schema
+  myApp.configType = 'myApp'
+  myApp.configManagerConfig = {
+    ...platformaticService.configManagerConfig,
+    async transformConfig (this: ConfigManager<PlatformaticServiceConfig>) {
+      this.current.plugins = {
+        paths: [{
+          path: 'my-plugin'
+        }]
+      }
+    }
+  }
+
+  await start(myApp, ['--help'])
+
+  return myApp
+}
+
+expectType<Stackable<PlatformaticServiceConfig>>(buildStackable2())

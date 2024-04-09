@@ -6,8 +6,5 @@
   "plugins": {
     "paths": ["plugin.js"]
   },
-  "watch": true,
-  "metrics": {
-    "server": "parent"
-  }
+  "watch": true
 }

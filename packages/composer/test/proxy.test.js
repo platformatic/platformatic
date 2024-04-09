@@ -15,9 +15,11 @@ const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 test('should proxy openapi requests', async (t) => {
   const service1 = await createOpenApiService(t, ['users'], { addHeadersSchema: true })
   const service2 = await createOpenApiService(t, ['posts'])
+  const service3 = await createOpenApiService(t, ['comments'])
 
   const origin1 = await service1.listen({ port: 0 })
   const origin2 = await service2.listen({ port: 0 })
+  const origin3 = await service3.listen({ port: 0 })
 
   const config = {
     composer: {
@@ -41,6 +43,16 @@ test('should proxy openapi requests', async (t) => {
           proxy: {
             prefix: '/internal/service2'
           }
+        },
+        {
+          id: 'service3',
+          origin: origin3,
+          openapi: {
+            url: '/documentation/json'
+          },
+          proxy: {
+            prefix: '/'
+          }
         }
       ],
       refreshTimeout: 1000
@@ -61,7 +73,14 @@ test('should proxy openapi requests', async (t) => {
 
   for (const path in openApiSchema.paths) {
     for (const service of config.composer.services) {
-      if (path.startsWith(service.proxy.prefix)) {
+      const proxyPrefix = service.proxy.prefix.at(-1) === '/'
+        ? service.proxy.prefix.slice(0, -1)
+        : service.proxy.prefix
+
+      if (
+        path === proxyPrefix + '/' ||
+        path === proxyPrefix + '/*'
+      ) {
         assert.fail('proxy routes should be removed from openapi schema')
       }
     }

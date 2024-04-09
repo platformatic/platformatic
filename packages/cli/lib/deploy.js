@@ -22,11 +22,6 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 const CREATE_NEW_WORKSPACE_CHOICE = Symbol('CREATE_NEW_WORKSPACE_CHOICE')
 const CREATE_NEW_APPLICATION_CHOICE = Symbol('CREATE_NEW_APPLICATION_CHOICE')
 
-const logger = pino(pretty({
-  translateTime: 'SYS:HH:MM:ss',
-  ignore: 'hostname,pid'
-}))
-
 async function askMissingWorkspaceDetails (
   workspaceType,
   workspaceId,
@@ -439,7 +434,13 @@ async function getUserWorkspaceDetails (deployServiceHost, userApiKey) {
 }
 
 export async function deploy (argv) {
-  console.log('This application will be deployed to ' + bold(green('Platformatic Cloud')) + '. To change the target use the --deploy-service-host flag')
+  const logger = pino(pretty({
+    translateTime: 'SYS:HH:MM:ss',
+    ignore: 'hostname,pid'
+  }))
+
+  logger.info('This application will be deployed to ' + bold(green('Platformatic Cloud')) + '. To change the target use the --deploy-service-host flag')
+
   try {
     const args = parseArgs(argv, {
       alias: {

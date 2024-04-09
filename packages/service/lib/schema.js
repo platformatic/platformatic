@@ -558,8 +558,17 @@ const metrics = {
         endpoint: { type: 'string' },
         server: {
           type: 'string',
-          enum: ['own', 'parent']
+          enum: ['own', 'parent', 'hide']
         },
+        defaultMetrics: {
+          type: 'object',
+          properties: {
+            enabled: { type: 'boolean' }
+          },
+          required: ['enabled'],
+          additionalProperties: false
+        },
+        prefix: { type: 'string' },
         auth: {
           type: 'object',
           properties: {
@@ -747,6 +756,7 @@ const versions = {
 
 const platformaticServiceSchema = {
   $id: `https://platformatic.dev/schemas/v${pkg.version}/service`,
+  version: pkg.version,
   title: 'Platformatic Service',
   type: 'object',
   properties: {

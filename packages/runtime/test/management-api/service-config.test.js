@@ -69,7 +69,11 @@ test('should get service config', async (t) => {
       enabled: false
     },
     metrics: {
-      server: 'parent'
+      server: 'hide',
+      defaultMetrics: {
+        enabled: true
+      },
+      prefix: 'service_1_'
     }
   })
 })

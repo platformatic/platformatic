@@ -45,7 +45,7 @@ async function execute () {
       },
       port: { type: 'string', default: '3042' },
       hostname: { type: 'string', default: '0.0.0.0' },
-      plugins: { type: 'boolean', default: true },
+      plugin: { type: 'boolean', default: true },
       tests: { type: 'boolean', default: true },
       typescript: { type: 'boolean', default: false },
       git: { type: 'boolean', default: false },
@@ -58,7 +58,7 @@ async function execute () {
   generator.setConfig({
     port: parseInt(args.values.port),
     hostname: args.values.hostname,
-    plugins: args.values.plugins,
+    plugin: args.values.plugin,
     tests: args.values.tests,
     typescript: args.values.typescript,
     initGitRepository: args.values.git,
@@ -81,7 +81,7 @@ import { join } from 'node:path'
 import { parseArgs } from 'node:util'
 import { Generator } from '../lib/generator'
 
-async function execute () {
+async function execute (): Promise<void> {
   const args = parseArgs({
     args: process.argv.slice(2),
     options: {
@@ -89,9 +89,9 @@ async function execute () {
         type: 'string',
         default: join(process.cwd(), '${kebabCase(stackableName + '-app')}')
       },
-      port: { type: 'string', default: '3042' },
+      port: { type: 'string' },
       hostname: { type: 'string', default: '0.0.0.0' },
-      plugins: { type: 'boolean', default: true },
+      plugin: { type: 'boolean', default: true },
       tests: { type: 'boolean', default: true },
       typescript: { type: 'boolean', default: false },
       git: { type: 'boolean', default: false },
@@ -102,9 +102,9 @@ async function execute () {
   const generator = new Generator()
 
   generator.setConfig({
-    port: parseInt(args.values.port as string),
+    port: parseInt(args.values.port || '3042'),
     hostname: args.values.hostname,
-    plugins: args.values.plugins,
+    plugin: args.values.plugin,
     tests: args.values.tests,
     typescript: args.values.typescript,
     initGitRepository: args.values.git,
@@ -116,7 +116,9 @@ async function execute () {
   console.log('Application created successfully! Run \`npm run start\` to start an application.')
 }
 
-execute()
+execute().catch(err => {
+  throw err
+})
 `
 }
 

@@ -4,7 +4,6 @@ const inspector = require('node:inspector')
 const { tmpdir } = require('node:os')
 const { register, createRequire } = require('node:module')
 const { isatty } = require('node:tty')
-const { pathToFileURL } = require('node:url')
 const { join } = require('node:path')
 const {
   MessageChannel,
@@ -17,6 +16,7 @@ const pretty = require('pino-pretty')
 const { setGlobalDispatcher, Agent } = require('undici')
 const RuntimeApi = require('./api')
 const { MessagePortWritable } = require('./message-port-writable')
+const loadInterceptors = require('./interceptors')
 let loaderPort
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
@@ -61,10 +61,27 @@ function createLogger (config) {
     multiStream.add({ level: 'trace', stream: portStream })
   }
   if (config.managementApi) {
+    const logsFileMb = 5
+    const logsLimitMb = config.managementApi?.logs?.maxSize || 200
+
+    let logsLimitCount = Math.ceil(logsLimitMb / logsFileMb) - 1
+    if (logsLimitCount < 1) {
+      logsLimitCount = 1
+    }
+
     const logsPath = join(PLATFORMATIC_TMP_DIR, process.pid.toString(), 'logs')
     const pinoRoll = pino.transport({
       target: 'pino-roll',
-      options: { file: logsPath, size: '5m', mkdir: true }
+      options: {
+        file: logsPath,
+        mode: 0o600,
+        size: logsFileMb + 'm',
+        mkdir: true,
+        fsync: true,
+        limit: {
+          count: logsLimitCount
+        }
+      }
     })
     multiStream.add({ level: 'trace', stream: pinoRoll })
   }
@@ -105,18 +122,6 @@ process.on('unhandledRejection', (err) => {
   }
 })
 
-async function loadInterceptor (_require, module, options) {
-  const url = pathToFileURL(_require.resolve(module))
-  const interceptor = (await import(url)).default
-  return interceptor(options)
-}
-
-function loadInterceptors (_require, interceptors) {
-  return Promise.all(interceptors.map(async ({ module, options }) => {
-    return loadInterceptor(_require, module, options)
-  }))
-}
-
 async function main () {
   const { inspectorOptions } = workerData.config
 
@@ -130,13 +135,17 @@ async function main () {
   }
 
   const interceptors = {}
-
+  const composedInterceptors = []
   if (config.undici?.interceptors) {
     const _require = createRequire(join(workerData.dirname, 'package.json'))
     for (const key of ['Agent', 'Pool', 'Client']) {
       if (config.undici.interceptors[key]) {
         interceptors[key] = await loadInterceptors(_require, config.undici.interceptors[key])
       }
+    }
+
+    if (Array.isArray(config.undici.interceptors)) {
+      composedInterceptors.push(...await loadInterceptors(_require, config.undici.interceptors))
     }
   }
 
@@ -146,7 +155,7 @@ async function main () {
   })
   setGlobalDispatcher(globalDispatcher)
 
-  const runtime = new RuntimeApi(workerData.config, logger, loaderPort)
+  const runtime = new RuntimeApi(workerData.config, logger, loaderPort, composedInterceptors)
   runtime.startListening(parentPort)
 
   parentPort.postMessage('plt:init')

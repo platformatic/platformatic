@@ -20,17 +20,21 @@ The entity operation methods accept a `where` option to allow limiting of the da
 
 The `where` object's key is the field you want to check, the value is a key/value map where the key is an operator (see the table below) and the value is the value you want to run the operator against.
 
-| Platformatic operator | SQL operator |
+| Platformatic operator | SQL operator | Note |
 |--- | ---|
-| eq | `'='` |
-| in | `'IN'` |
-| nin | `'NOT IN'` |
-| neq | `'<>'` |
-| gt | `'>'` |
-| gte | `'>='` |
-| lt | `'<'` |
-| lte | `'<='` |
-| like | `'LIKE'` |
+| eq | '=' | If value is `null`, translates to `IS NULL`. |
+| in | 'IN' | |
+| nin | 'NOT IN' | |
+| neq | '<>' | If value is `null`, translates to `IS NOT NULL`. |
+| gt | '>' | |
+| gte | '>=' | |
+| lt | '<' | |
+| lte | '<=' | |
+| like | 'LIKE' | |
+
+### Handling Null Values
+
+When using the `eq` and `neq` operators with a null value, the comparison logic adheres to standard SQL rules for null value handling.
 
 ### Examples
 
@@ -92,6 +96,7 @@ Where clause operations are by default combined with the `AND` operator. To comb
   }
 }
 ```
+
 ### Select all rows with id 1 or 3 and title like 'foo%'
 ```
 {
@@ -111,6 +116,30 @@ Where clause operations are by default combined with the `AND` operator. To comb
     ],
     title: {
       like: 'foo%'
+    }
+  }
+}
+```
+
+### Select all rows where title is null
+```
+{
+  ...
+  "where": {
+    title: {
+      eq: null
+    }
+  }
+}
+```
+
+### Select all rows where title is not null
+```
+{
+  ...
+  "where": {
+    title: {
+      neq: null
     }
   }
 }

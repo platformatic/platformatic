@@ -41,6 +41,7 @@ Configuration settings are organized into the following groups:
 - [`telemetry`](#telemetry)
 - [`server`](#server)
 - [`undici`](#undici)
+- [`metrics`](#metrics)
 - [`managementApi`](#managementapi(experimantal)) **(experimental)**
 
 Configuration settings containing sensitive data should be set using
@@ -171,7 +172,7 @@ See [Platformatic Service server](/docs/reference/service/configuration.md#serve
 
 This configures the [`undici`](https://undici.nodejs.org) global
 [Dispatcher](https://undici.nodejs.org/#/docs/api/Dispatcher).
-Allowing to configure the options in the agent as well as [interceptors](https://github.com/nodejs/undici/blob/main/docs/api/DispatchInterceptor.md).
+Allowing to configure the options in the agent as well as [interceptors](https://undici.nodejs.org/#/docs/api/Dispatcher?id=dispatchercomposeinterceptors-interceptor).
 
   _Example_
 
@@ -180,38 +181,44 @@ Allowing to configure the options in the agent as well as [interceptors](https:/
     "undici": {
         "keepAliveTimeout": 1000,
         "keepAliveMaxTimeout": 1000,
-        "interceptors": {
-            "Agent": [{
-                "module": "undici-oauth-interceptor",
-                "options": {
-                    "clientId": "{PLT_CLIENT_ID}",
-                    "refreshToken": "{PLT_REFRESH_TOKEN}",
-                    "origins": ["{PLT_EXTERNAL_SERVICE}"]
-                }
-            }]
-        }
+        "interceptors": [{
+            "module": "undici-oidc-interceptor",
+            "options": {
+                "clientId": "{PLT_CLIENT_ID}",
+                "clientSecret": "{PLT_CLIENT_SECRET}",
+                "idpTokenUrl": "{PLT_IDP_TOKEN_URL}",
+                "origins": ["{PLT_EXTERNAL_SERVICE}"]
+            }
+        }]
     }
   }
   ```
+
+Note that IDP stands for Identity Provider, and its token url is the URL that will be called to generate a new
+token.
+
+### `metrics`
+
+This configures the Platformatic Runtime Prometheus server. The Prometheus server exposes aggregated metrics from the Platformatic Runtime services.
+
+- **`hostname`** (`string`). The hostname where the Prometheus server will be listening. Default: `0.0.0.0`.
+- **`port`** (`number`). The port where the Prometheus server will be listening. Default: `9090`.
+- **`endpoint`** (`string`). The endpoint where the Prometheus server will be listening. Default: `/metrics`.
+- **`auth`** (`object`). Optional configuration for the Prometheus server authentication.
+    - **`username`** (`string`). The username for the Prometheus server authentication.
+    - **`password`** (`string`). The password for the Prometheus server authentication.
 
 ### `managementApi`
 
 > **Warning:** Experimental. The feature is not subject to semantic versioning rules. Non-backward compatible changes or removal may occur in any future release. Use of the feature is not recommended in production environments.
 
 An optional object that configures the Platformatic Management Api. If this object
-is not provided, the Platformatic Management Api will not be started. The options are
-passed directly to the Fastify server that backs the Management API. If enabled, it will listen to UNIX Socket/Windows named pipe located at `platformatic/pids/<PID>` inside the OS temporary folder.
+is not provided, the Platformatic Management Api will not be started. If enabled,
+it will listen to UNIX Socket/Windows named pipe located at `platformatic/pids/<PID>`
+inside the OS temporary folder.
 
-  _Example_
-
-  ```json
-  {
-    "managementApi": {
-      "logger": true,
-      "trustProxy": true
-    }
-  }
-  ```
+- **`logs`** (`object`). Optional configuration for the runtime logs.
+    - **`maxSize`** (`number`). Maximum size of the logs that will be stored in the file system in MB. Default: `200`. Minimum: `5`.
 
 ## Environment variable placeholders
 

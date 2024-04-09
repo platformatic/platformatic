@@ -973,7 +973,7 @@ test('optional-headers option', async (t) => {
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'optional-headers-openapi.json')
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--optional-headers', 'foobar,authorization', '--types-only'])
 
-  const typeFile = join(dir, 'movies.d.ts')
+  const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
   equal(data.includes(`
   export type PostHelloRequest = {

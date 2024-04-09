@@ -1,40 +1,129 @@
 'use strict'
 
+const os = require('node:os')
 const http = require('node:http')
 const { eventLoopUtilization } = require('node:perf_hooks').performance
 const fastify = require('fastify')
 const fp = require('fastify-plugin')
 
-const metricsPlugin = fp(async function (app) {
+const metricsPlugin = fp(async function (app, opts = {}) {
+  const defaultMetrics = opts.defaultMetrics ?? { enabled: true }
+  const prefix = opts.prefix ?? ''
+
   app.register(require('fastify-metrics'), {
-    defaultMetrics: { enabled: true },
+    defaultMetrics: defaultMetrics || { enabled: true },
     endpoint: null,
     name: 'metrics',
-    routeMetrics: { enabled: true },
-    clearRegisterOnInit: true
+    clearRegisterOnInit: false,
+    routeMetrics: {
+      enabled: true,
+      overrides: {
+        histogram: {
+          name: prefix + 'http_request_duration_seconds'
+        },
+        summary: {
+          name: prefix + 'http_request_summary_seconds'
+        }
+      }
+    }
   })
 
-  app.register(async (app) => {
-    const eluMetric = new app.metrics.client.Summary({
-      name: 'nodejs_eventloop_utilization',
-      help: 'The event loop utilization as a fraction of the loop time. 1 is fully utilized, 0 is fully idle.',
-      maxAgeSeconds: 60,
-      ageBuckets: 5,
-      labelNames: ['idle', 'active', 'utilization']
+  app.register(fp(async (app) => {
+    const httpLatencyMetric = new app.metrics.client.Summary({
+      name: prefix + 'http_request_all_summary_seconds',
+      help: 'request duration in seconds summary for all requests',
+      collect: () => {
+        process.nextTick(() => httpLatencyMetric.reset())
+      }
     })
-
-    let startELU = eventLoopUtilization()
-    const eluTimeout = setInterval(() => {
-      const endELU = eventLoopUtilization()
-      eluMetric.observe(eventLoopUtilization(endELU, startELU).utilization)
-      startELU = endELU
-    }, 100)
-
-    app.addHook('onClose', () => {
-      clearInterval(eluTimeout)
+    const ignoredMethods = ['HEAD', 'OPTIONS', 'TRACE', 'CONNECT']
+    const timers = new WeakMap()
+    app.addHook('onRequest', async (req) => {
+      if (ignoredMethods.includes(req.method)) return
+      const timer = httpLatencyMetric.startTimer()
+      timers.set(req, timer)
     })
+    app.addHook('onResponse', async (req) => {
+      if (ignoredMethods.includes(req.method)) return
+      const timer = timers.get(req)
+      if (timer) {
+        timer()
+        timers.delete(req)
+      }
+    })
+  }, {
+    encapsulate: false
+  }))
 
-    app.metrics.client.register.registerMetric(eluMetric)
+  if (defaultMetrics.enabled) {
+    app.register(async (app) => {
+      let startELU = eventLoopUtilization()
+      const eluMetric = new app.metrics.client.Gauge({
+        name: 'nodejs_eventloop_utilization',
+        help: 'The event loop utilization as a fraction of the loop time. 1 is fully utilized, 0 is fully idle.',
+        collect: () => {
+          const endELU = eventLoopUtilization()
+          const result = eventLoopUtilization(endELU, startELU).utilization
+          eluMetric.set(result)
+          startELU = endELU
+        }
+      })
+      app.metrics.client.register.registerMetric(eluMetric)
+
+      let previousIdleTime = 0
+      let previousTotalTime = 0
+      const cpuMetric = new app.metrics.client.Gauge({
+        name: 'process_cpu_percent_usage',
+        help: 'The process CPU percent usage.',
+        collect: () => {
+          const cpus = os.cpus()
+          let idleTime = 0
+          let totalTime = 0
+
+          cpus.forEach(cpu => {
+            for (const type in cpu.times) {
+              totalTime += cpu.times[type]
+              if (type === 'idle') {
+                idleTime += cpu.times[type]
+              }
+            }
+          })
+
+          const idleDiff = idleTime - previousIdleTime
+          const totalDiff = totalTime - previousTotalTime
+
+          const usagePercent = 100 - ((100 * idleDiff) / totalDiff)
+          const roundedUsage = Math.round(usagePercent * 100) / 100
+          cpuMetric.set(roundedUsage)
+
+          previousIdleTime = idleTime
+          previousTotalTime = totalTime
+        }
+      })
+      app.metrics.client.register.registerMetric(cpuMetric)
+    })
+  }
+
+  function cleanMetrics () {
+    const metrics = app.metrics.client.register._metrics
+    for (const metricName in metrics) {
+      if (defaultMetrics.enabled || metricName.startsWith(prefix)) {
+        delete metrics[metricName]
+      }
+    }
+  }
+
+  let isRestarting = false
+  app.addHook('onReady', async () => {
+    app.addPreRestartHook(async () => {
+      isRestarting = true
+      cleanMetrics()
+    })
+  })
+  app.addHook('onClose', async () => {
+    if (!isRestarting) {
+      cleanMetrics()
+    }
   })
 }, {
   encapsulate: false
@@ -88,7 +177,7 @@ module.exports = fp(async function (app, opts) {
   const metricsEndpoint = opts.endpoint ?? '/metrics'
   const auth = opts.auth ?? null
 
-  app.register(metricsPlugin)
+  app.register(metricsPlugin, opts)
 
   let metricsServer = app
   if (server === 'own') {
@@ -97,37 +186,40 @@ module.exports = fp(async function (app, opts) {
     await closeMetricsServer()
   }
 
-  let onRequestHook
-  if (auth) {
-    const { username, password } = auth
+  if (server !== 'hide') {
+    let onRequestHook
+    if (auth) {
+      const { username, password } = auth
 
-    await metricsServer.register(require('@fastify/basic-auth'), {
-      validate: function (user, pass, req, reply, done) {
-        if (username !== user || password !== pass) {
-          return reply.code(401).send({ message: 'Unauthorized' })
+      await metricsServer.register(require('@fastify/basic-auth'), {
+        validate: function (user, pass, req, reply, done) {
+          if (username !== user || password !== pass) {
+            return reply.code(401).send({ message: 'Unauthorized' })
+          }
+          return done()
         }
-        return done()
+      })
+      onRequestHook = metricsServer.basicAuth
+    }
+
+    metricsServer.register(require('@fastify/accepts'))
+
+    metricsServer.route({
+      url: metricsEndpoint,
+      method: 'GET',
+      logLevel: 'warn',
+      onRequest: onRequestHook,
+      handler: async (req, reply) => {
+        const promRegistry = app.metrics.client.register
+        const accepts = req.accepts()
+        if (!accepts.type('text/plain') && accepts.type('application/json')) {
+          return promRegistry.getMetricsAsJSON()
+        }
+        reply.type('text/plain')
+        return promRegistry.metrics()
       }
     })
-    onRequestHook = metricsServer.basicAuth
   }
-
-  metricsServer.register(require('@fastify/accepts'))
-  metricsServer.route({
-    url: metricsEndpoint,
-    method: 'GET',
-    logLevel: 'warn',
-    onRequest: onRequestHook,
-    handler: async (req, reply) => {
-      const promRegistry = app.metrics.client.register
-      const accepts = req.accepts()
-      if (!accepts.type('text/plain') && accepts.type('application/json')) {
-        return promRegistry.getMetricsAsJSON()
-      }
-      reply.type('text/plain')
-      return promRegistry.metrics()
-    }
-  })
 
   if (server === 'own') {
     await metricsServer.ready()

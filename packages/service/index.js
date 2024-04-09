@@ -14,12 +14,15 @@ const setupTsCompiler = require('./lib/plugins/typescript')
 const setupHealthCheck = require('./lib/plugins/health-check')
 const loadPlugins = require('./lib/plugins/plugins')
 const loadVersions = require('./lib/plugins/versions')
+const upgrade = require('./lib/upgrade')
 const { telemetry } = require('@platformatic/telemetry')
 
 const { schema } = require('./lib/schema')
 const { addLoggerToTheConfig } = require('./lib/utils')
 const { start, buildServer } = require('./lib/start')
 const ServiceGenerator = require('./lib/generator/service-generator.js')
+
+const { version } = require('./package.json')
 
 // TODO(mcollina): arugments[2] is deprecated, remove it in the next major version.
 async function platformaticService (app, opts) {
@@ -40,6 +43,12 @@ async function platformaticService (app, opts) {
   // openTelemetry decoretor exists and then configure accordingly.
   if (isKeyEnabled('telemetry', config)) {
     await app.register(telemetry, config.telemetry)
+  }
+
+  // This must be done before loading the plugins, so they can be
+  // configured accordingly
+  if (isKeyEnabled('clients', config)) {
+    app.register(setupClients, config.clients)
   }
 
   if (Array.isArray(beforePlugins)) {
@@ -83,10 +92,6 @@ async function platformaticService (app, opts) {
     }
   })
 
-  if (isKeyEnabled('clients', config)) {
-    app.register(setupClients, config.clients)
-  }
-
   if (isKeyEnabled('cors', config.server)) {
     app.register(setupCors, config.server.cors)
   }
@@ -100,6 +105,7 @@ platformaticService[Symbol.for('skip-override')] = true
 platformaticService.schema = schema
 platformaticService.configType = 'service'
 platformaticService.configManagerConfig = {
+  version,
   schema,
   envWhitelist: ['PORT', 'HOSTNAME'],
   allowToWatch: ['.env'],
@@ -136,7 +142,8 @@ platformaticService.configManagerConfig = {
       this.current.watch.ignore ||= []
       this.current.watch.ignore.push(outDir + '/**/*')
     }
-  }
+  },
+  upgrade
 }
 
 function _buildServer (options, app) {

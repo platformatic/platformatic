@@ -58,7 +58,7 @@ test('should get all runtimes', async (t) => {
   assert.strictEqual(runtime2Values[5], runtimeProjectDir2)
 })
 
-test('should remove the runtime sock if can not get metadata', { skip: platform() === 'win32' }, async (t) => {
+test('should remove the runtime tmp dir if can not get metadata', { skip: platform() === 'win32' }, async (t) => {
   const runtimeDir = join(PLATFORMATIC_TMP_DIR, '1234')
   await mkdir(runtimeDir, { recursive: true })
   await writeFile(join(runtimeDir, 'socket'), '')
@@ -66,9 +66,10 @@ test('should remove the runtime sock if can not get metadata', { skip: platform(
   const child = await execa('node', [cliPath, 'ps'])
   assert.strictEqual(child.exitCode, 0)
 
-  {
-    const runtimeSockets = await readdir(runtimeDir)
-    assert.strictEqual(runtimeSockets.length, 0)
+  try {
+    await readdir(runtimeDir)
+  } catch (error) {
+    assert.strictEqual(error.code, 'ENOENT')
   }
 })
 

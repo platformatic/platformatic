@@ -2,11 +2,12 @@
 
 const assert = require('node:assert/strict')
 const { tmpdir } = require('node:os')
-const { test } = require('node:test')
+const { test, describe } = require('node:test')
 const { join, resolve } = require('node:path')
 const { unlink, writeFile, mkdir } = require('node:fs/promises')
 const ConfigManager = require('..')
 const pid = process.pid
+const { tspl } = require('@matteo.collina/tspl')
 
 test('should compute absolute path', () => {
   const cm = new ConfigManager({ source: './test.json' })
@@ -347,4 +348,82 @@ test('ConfigManager.findConfigFile() searches cwd by default', async (t) => {
     await ConfigManager.findConfigFile(),
     undefined
   )
+})
+
+test('should throw if there is upgrade but not version', async (t) => {
+  try {
+    // eslint-disable-next-line no-new
+    new ConfigManager({
+      upgrade () {}
+    })
+    assert.fail()
+  } catch (err) {
+    assert.equal(err.message, 'version is required if upgrade is specified.')
+  }
+})
+
+describe('upgrade', () => {
+  test('missing configVersion with platformatic URL schema', async (t) => {
+    const plan = tspl(t, { plan: 1 })
+    const cm = new ConfigManager({
+      version: '1.0.0',
+      source: {
+        $schema: 'https://platformatic.dev/schemas/v0.42.0/something.json',
+        server: {
+          hostname: '127.0.0.1',
+          port: '3042'
+        }
+      },
+      upgrade (config, origin) {
+        plan.equal(origin, '0.42.0')
+        return config
+      }
+    })
+    await cm.parse()
+  })
+
+  test('missing configVersion with version in module', async (t) => {
+    const plan = tspl(t, { plan: 1 })
+    const cm = new ConfigManager({
+      version: '1.0.0',
+      source: {
+        module: './foo.js@0.42.0',
+        server: {
+          hostname: '127.0.0.1',
+          port: '3042'
+        }
+      },
+      upgrade (config, origin) {
+        plan.equal(origin, '0.42.0')
+        return config
+      }
+    })
+    await cm.parse()
+  })
+
+  test('missing configVersion with version in module', async (t) => {
+    const plan = tspl(t, { plan: 1 })
+    const cm = new ConfigManager({
+      version: '1.0.0',
+      source: join(__dirname, 'fixtures', 'service-old.json'),
+      upgrade (config, origin) {
+        plan.equal(origin, '0.15.0')
+        return config
+      }
+    })
+    await cm.parse()
+  })
+
+  test('if all things fails, it\'s a legacy app', async (t) => {
+    const plan = tspl(t, { plan: 1 })
+    const cm = new ConfigManager({
+      version: '1.0.0',
+      source: join(__dirname, 'fixtures', 'db-0.16.0-empty.json'),
+      upgrade (config, origin) {
+        plan.equal(origin, '0.15.0')
+        return config
+      }
+    })
+    await cm.parse()
+  })
 })

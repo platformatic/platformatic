@@ -2,16 +2,17 @@
 
 const { tmpdir, platform } = require('node:os')
 const { join } = require('node:path')
-const { createReadStream } = require('node:fs')
-const { readFile, readdir, mkdir, unlink } = require('node:fs/promises')
+const { readFile, mkdir, rm } = require('node:fs/promises')
 const fastify = require('fastify')
+const ws = require('ws')
 const errors = require('./errors')
+const { pipeLogsStream, getLogFileStream, getLogIndexes } = require('./logs')
 const platformaticVersion = require('../package.json').version
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 const runtimeTmpDir = join(PLATFORMATIC_TMP_DIR, process.pid.toString())
 
-async function createManagementApi (configManager, runtimeApiClient, loggingPort) {
+async function createManagementApi (configManager, runtimeApiClient) {
   const app = fastify()
   app.log.warn(
     'Runtime Management API is in the experimental stage. ' +
@@ -115,64 +116,77 @@ async function createManagementApi (configManager, runtimeApiClient, loggingPort
         .send(res.body)
     })
 
-    app.get('/logs/live', { websocket: true }, async (connection, req) => {
-      const handler = (message) => {
-        for (const log of message.logs) {
-          connection.socket.send(log)
-        }
+    app.get('/metrics/live', { websocket: true }, async (socket) => {
+      const cachedMetrics = runtimeApiClient.getCachedMetrics()
+      if (cachedMetrics.length > 0) {
+        const serializedMetrics = cachedMetrics
+          .map((metric) => JSON.stringify(metric))
+          .join('\n')
+        socket.send(serializedMetrics + '\n')
       }
 
-      loggingPort.on('message', handler)
-      connection.socket.on('close', () => {
-        loggingPort.off('message', handler)
+      const eventHandler = (metrics) => {
+        const serializedMetrics = JSON.stringify(metrics)
+        socket.send(serializedMetrics + '\n')
+      }
+
+      runtimeApiClient.on('metrics', eventHandler)
+
+      socket.on('error', () => {
+        runtimeApiClient.off('metrics', eventHandler)
       })
-      connection.socket.on('error', () => {
-        loggingPort.off('message', handler)
-      })
-      connection.socket.on('end', () => {
-        loggingPort.off('message', handler)
+
+      socket.on('close', () => {
+        runtimeApiClient.off('metrics', eventHandler)
       })
     })
 
-    app.get('/logs/history', { websocket: true }, async (connection, req) => {
-      const runtimeTmpFiles = await readdir(runtimeTmpDir)
-      const runtimeLogFiles = runtimeTmpFiles
-        .filter((file) => file.startsWith('logs'))
-        .map((file) => join(runtimeTmpDir, file))
-        .sort()
+    app.get('/logs/live', { websocket: true }, async (socket, req) => {
+      const startLogIndex = req.query.start ? parseInt(req.query.start) : null
 
-      if (runtimeLogFiles.length === 0) {
-        connection.end()
-        return
+      if (startLogIndex) {
+        const logIndexes = await getLogIndexes()
+        if (!logIndexes.includes(startLogIndex)) {
+          throw new errors.LogFileNotFound(startLogIndex)
+        }
       }
 
-      const streamLogFile = (fileIndex) => {
-        const file = runtimeLogFiles[fileIndex]
-        const isLastFile = fileIndex === runtimeLogFiles.length - 1
+      const stream = ws.createWebSocketStream(socket)
+      pipeLogsStream(stream, req.log, startLogIndex)
+    })
 
-        const stream = createReadStream(file)
-        stream.pipe(connection, { end: isLastFile })
+    app.get('/logs/indexes', async () => {
+      const logIndexes = await getLogIndexes()
+      return { indexes: logIndexes }
+    })
 
-        stream.on('error', (err) => {
-          app.log.error(err, 'Error streaming log file')
-          connection.end()
-        })
-        stream.on('end', () => {
-          if (isLastFile) {
-            connection.end()
-            return
-          }
-          streamLogFile(fileIndex + 1)
-        })
+    app.get('/logs/all', async (req, reply) => {
+      const logIndexes = await getLogIndexes()
+      const startLogIndex = logIndexes.at(0)
+      const endLogIndex = logIndexes.at(-1)
+
+      reply.hijack()
+      pipeLogsStream(reply.raw, req.log, startLogIndex, endLogIndex)
+    })
+
+    app.get('/logs/:id', async (req) => {
+      const { id } = req.params
+
+      const logIndex = parseInt(id)
+      const logIndexes = await getLogIndexes()
+      if (!logIndexes.includes(logIndex)) {
+        throw new errors.LogFileNotFound(logIndex)
       }
-      streamLogFile(0)
+
+      const logFileStream = await getLogFileStream(logIndex)
+      return logFileStream
     })
   }, { prefix: '/api/v1' })
 
   return app
 }
 
-async function startManagementApi (configManager, runtimeApiClient, loggingPort) {
+async function startManagementApi (configManager, runtimeApiClient) {
   const runtimePID = process.pid
 
   let socketPath = null
@@ -183,22 +197,21 @@ async function startManagementApi (configManager, runtimeApiClient, loggingPort)
   }
 
   try {
-    await mkdir(runtimeTmpDir, { recursive: true })
-    await unlink(socketPath).catch((err) => {
+    await rm(runtimeTmpDir, { recursive: true, force: true }).catch((err) => {
       if (err.code !== 'ENOENT') {
         throw new errors.FailedToUnlinkManagementApiSocket(err.message)
       }
     })
+    await mkdir(runtimeTmpDir, { recursive: true })
 
     const managementApi = await createManagementApi(
       configManager,
-      runtimeApiClient,
-      loggingPort
+      runtimeApiClient
     )
 
     if (platform() !== 'win32') {
       managementApi.addHook('onClose', async () => {
-        await unlink(socketPath).catch(() => {})
+        await rm(runtimeTmpDir, { recursive: true, force: true }).catch()
       })
     }
 

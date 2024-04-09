@@ -3,7 +3,7 @@
 const { tmpdir, platform, EOL } = require('node:os')
 const { join } = require('node:path')
 const { exec, spawn } = require('node:child_process')
-const { readdir, unlink, access } = require('node:fs/promises')
+const { readdir, rm, access } = require('node:fs/promises')
 const { Readable } = require('node:stream')
 const { Client } = require('undici')
 const WebSocket = require('ws')
@@ -50,7 +50,7 @@ class RuntimeApiClient {
       const metadataRequest = getMetadataRequests[i]
 
       if (metadataRequest.status === 'rejected') {
-        await this.#removeRuntimeSocket(runtimePID).catch(() => {})
+        await this.#removeRuntimeTmpDir(runtimePID).catch(() => {})
       } else {
         runtimes.push(metadataRequest.value)
       }
@@ -181,26 +181,76 @@ class RuntimeApiClient {
     }
   }
 
-  getRuntimeLiveLogsStream (pid) {
+  getRuntimeLiveMetricsStream (pid) {
     const socketPath = this.#getSocketPathFromPid(pid)
 
     const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
-    const webSocketUrl = protocol + socketPath + ':/api/v1/logs/live'
+    const webSocketUrl = protocol + socketPath + ':/api/v1/metrics/live'
     const webSocketStream = new WebSocketStream(webSocketUrl)
     this.#webSockets.add(webSocketStream.ws)
 
     return webSocketStream
   }
 
-  getRuntimeHistoryLogsStream (pid) {
+  getRuntimeLiveLogsStream (pid, startLogIndex) {
     const socketPath = this.#getSocketPathFromPid(pid)
 
     const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
-    const webSocketUrl = protocol + socketPath + ':/api/v1/logs/history'
+    const query = startLogIndex ? `?start=${startLogIndex}` : ''
+    const webSocketUrl = protocol + socketPath + ':/api/v1/logs/live' + query
     const webSocketStream = new WebSocketStream(webSocketUrl)
     this.#webSockets.add(webSocketStream.ws)
 
     return webSocketStream
+  }
+
+  async getRuntimeLogsStream (pid, logsId) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: '/api/v1/logs/' + logsId,
+      method: 'GET'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new errors.FailedToGetRuntimeHistoryLogs(error)
+    }
+
+    return body
+  }
+
+  async getRuntimeAllLogsStream (pid) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: '/api/v1/logs/all',
+      method: 'GET'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new errors.FailedToGetRuntimeAllLogs(error)
+    }
+
+    return body
+  }
+
+  async getRuntimeLogIndexes (pid) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: '/api/v1/logs/indexes',
+      method: 'GET'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new errors.FailedToGetRuntimeLogIndexes(error)
+    }
+
+    const { indexes } = await body.json()
+    return indexes
   }
 
   async injectRuntime (pid, serviceId, options) {
@@ -289,11 +339,9 @@ class RuntimeApiClient {
     })
   }
 
-  async #removeRuntimeSocket (pid) {
-    if (platform() !== 'win32') {
-      const socketPath = this.#getSocketPathFromPid(pid)
-      await unlink(socketPath)
-    }
+  async #removeRuntimeTmpDir (pid) {
+    const runtimeDir = join(PLATFORMATIC_TMP_DIR, pid.toString())
+    await rm(runtimeDir, { recursive: true, force: true })
   }
 }
 

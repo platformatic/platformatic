@@ -13,7 +13,14 @@ async function composeOpenAPI (app, opts) {
     },
     transform: ({ schema, url }) => {
       for (const service of opts.services) {
-        if (service.proxy && url.startsWith(service.proxy.prefix)) {
+        if (!service.proxy) continue
+
+        const proxyPrefix = service.proxy.prefix.at(-1) === '/'
+          ? service.proxy.prefix.slice(0, -1)
+          : service.proxy.prefix
+
+        const proxyUrls = [proxyPrefix + '/', proxyPrefix + '/*']
+        if (proxyUrls.includes(url)) {
           schema = schema ?? {}
           schema.hide = true
           break

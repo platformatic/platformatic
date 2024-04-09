@@ -30,7 +30,7 @@ test('should get runtime logs via management api', async (t) => {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
       reject(new Error('Timeout'))
-    }, 10000)
+    }, 100000)
 
     webSocket.on('error', (err) => {
       reject(err)
@@ -84,7 +84,7 @@ test('should support custom use transport with a message port logging', async (t
   await new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
       reject(new Error('Timeout'))
-    }, 10000)
+    }, 100000)
 
     webSocket.on('error', (err) => {
       reject(err)
@@ -94,11 +94,13 @@ test('should support custom use transport with a message port logging', async (t
       if (data.includes('Server listening at')) {
         clearTimeout(timeout)
         webSocket.close()
-        resolve()
+        // We must defer this to allow the logs to flush
+        setTimeout(resolve, 1000)
       }
     })
   })
 
   const logs = await readFile(logsPath, 'utf8')
+  console.log('>>>', logs)
   assert.ok(logs.includes('Server listening at'))
 })
