@@ -1,0 +1,34 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v1.28.1/db",
+  "db": {
+    "connectionString": "{PLT_PIQUANT_COMBAT_DATABASE_URL}",
+    "graphql": true,
+    "openapi": true,
+    "schemalock": true
+  },
+  "watch": {
+    "ignore": [
+      "*.sqlite",
+      "*.sqlite-journal"
+    ]
+  },
+  "migrations": {
+    "dir": "migrations",
+    "autoApply": "{PLT_PIQUANT_COMBAT_APPLY_MIGRATIONS}"
+  },
+  "plugins": {
+    "paths": [
+      {
+        "path": "./plugins",
+        "encapsulate": false
+      },
+      {
+        "path": "./routes"
+      }
+    ],
+    "typescript": "{PLT_PIQUANT_COMBAT_TYPESCRIPT}"
+  },
+  "types": {
+    "autogenerate": true
+  }
+}
