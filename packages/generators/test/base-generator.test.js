@@ -34,6 +34,7 @@ test('should write file and dirs', async (t) => {
   const packageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'))
   assert.ok(packageJson.scripts)
   assert.ok(packageJson.dependencies)
+  assert.equal(packageJson.dependencies.platformatic, undefined)
   assert.ok(packageJson.engines)
 
   assert.equal(packageJson.name, 'test-service')
