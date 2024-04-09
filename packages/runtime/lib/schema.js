@@ -10,6 +10,9 @@ const platformaticRuntimeSchema = {
   $schema: 'http://json-schema.org/draft-07/schema#',
   type: 'object',
   properties: {
+    $schema: {
+      type: 'string'
+    },
     autoload: {
       type: 'object',
       additionalProperties: false,
@@ -49,29 +52,6 @@ const platformaticRuntimeSchema = {
     },
     telemetry,
     server,
-    services: {
-      type: 'array',
-      default: [],
-      items: {
-        type: 'object',
-        required: ['id', 'path', 'config'],
-        properties: {
-          id: {
-            type: 'string'
-          },
-          path: {
-            type: 'string',
-            resolvePath: true
-          },
-          config: {
-            type: 'string'
-          },
-          useHttp: {
-            type: 'boolean'
-          }
-        }
-      }
-    },
     entrypoint: {
       type: 'string'
     },
@@ -144,9 +124,6 @@ const platformaticRuntimeSchema = {
         }
       }
     },
-    $schema: {
-      type: 'string'
-    },
     managementApi: {
       anyOf: [
         { type: 'boolean' },
@@ -194,6 +171,28 @@ const platformaticRuntimeSchema = {
           additionalProperties: false
         }
       ]
+    },
+    services: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['id', 'path', 'config'],
+        properties: {
+          id: {
+            type: 'string'
+          },
+          path: {
+            type: 'string',
+            resolvePath: true
+          },
+          config: {
+            type: 'string'
+          },
+          useHttp: {
+            type: 'boolean'
+          }
+        }
+      }
     }
   },
   anyOf: [

@@ -307,8 +307,8 @@ class ConfigManager extends EventEmitter {
   }
 
   /* c8 ignore next 8 */
-  async parseAndValidate () {
-    const validationResult = await this.parse()
+  async parseAndValidate (replaceEnv = true) {
+    const validationResult = await this.parse(replaceEnv)
     if (!validationResult) {
       throw new errors.ValidationErrors(this.validationErrors.map((err) => {
         return err.message
