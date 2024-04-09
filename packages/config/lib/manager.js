@@ -219,6 +219,7 @@ class ConfigManager extends EventEmitter {
       await this._transformConfig()
       return true
     } catch (err) {
+      console.log(err)
       if (err.name === 'MissingValueError') {
         if (!this.#isEnvVariable(err.key)) {
           throw new errors.InvalidPlaceholderError(err.key, err.key)
