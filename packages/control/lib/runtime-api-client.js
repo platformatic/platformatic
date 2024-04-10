@@ -204,12 +204,14 @@ class RuntimeApiClient {
     return webSocketStream
   }
 
-  async getRuntimeLogsStream (pid, logsId) {
+  async getRuntimeLogsStream (pid, logsId, options = {}) {
+    const runtimePID = options.runtimePID ?? pid
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
       path: '/api/v1/logs/' + logsId,
-      method: 'GET'
+      method: 'GET',
+      query: { pid: runtimePID }
     })
 
     if (statusCode !== 200) {
@@ -220,12 +222,14 @@ class RuntimeApiClient {
     return body
   }
 
-  async getRuntimeAllLogsStream (pid) {
+  async getRuntimeAllLogsStream (pid, options = {}) {
+    const runtimePID = options.runtimePID ?? pid
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
       path: '/api/v1/logs/all',
-      method: 'GET'
+      method: 'GET',
+      query: { pid: runtimePID }
     })
 
     if (statusCode !== 200) {
@@ -236,12 +240,14 @@ class RuntimeApiClient {
     return body
   }
 
-  async getRuntimeLogIndexes (pid) {
+  async getRuntimeLogIndexes (pid, options = {}) {
+    const all = options.all ?? false
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
       path: '/api/v1/logs/indexes',
-      method: 'GET'
+      method: 'GET',
+      query: { all }
     })
 
     if (statusCode !== 200) {
@@ -249,8 +255,10 @@ class RuntimeApiClient {
       throw new errors.FailedToGetRuntimeLogIndexes(error)
     }
 
-    const { indexes } = await body.json()
-    return indexes
+    const result = await body.json()
+    if (all) return result
+
+    return result.indexes
   }
 
   async injectRuntime (pid, serviceId, options) {
