@@ -17,14 +17,14 @@ test('should get all runtime logs', async (t) => {
   const app = await buildServer(configFile)
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await rm(runtimeTmpDir, { recursive: true, force: true })
+  await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
 
   await app.start()
 
   t.after(async () => {
     await app.close()
     await app.managementApi.close()
-    await rm(runtimeTmpDir, { recursive: true, force: true })
+    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
   })
 
   const client = new Client({
@@ -64,7 +64,7 @@ test('should get previous runtime logs', async (t) => {
   const app = await buildServer(configFile)
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await rm(runtimeTmpDir, { recursive: true, force: true })
+  await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
 
   const prevRuntimePID = '424242'
   const prevRuntimeTmpDir = getRuntimeLogsDir(projectDir, prevRuntimePID)
@@ -83,7 +83,7 @@ test('should get previous runtime logs', async (t) => {
   t.after(async () => {
     await app.close()
     await app.managementApi.close()
-    await rm(runtimeTmpDir, { recursive: true, force: true })
+    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
   })
 
   const client = new Client({

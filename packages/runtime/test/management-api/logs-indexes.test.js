@@ -17,14 +17,14 @@ test('should get runtime log indexes', async (t) => {
   const app = await buildServer(configFile)
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await rm(runtimeTmpDir, { recursive: true, force: true })
+  await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
 
   await app.start()
 
   t.after(async () => {
     await app.close()
     await app.managementApi.close()
-    await rm(runtimeTmpDir, { recursive: true, force: true })
+    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
   })
 
   const testLogs = 'test-logs-42\n'
@@ -56,14 +56,14 @@ test('should get only latest 30 logs indexes (150 MB)', async (t) => {
   const app = await buildServer(configFile)
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await rm(runtimeTmpDir, { recursive: true, force: true })
+  await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
 
   await app.start()
 
   t.after(async () => {
     await app.close()
     await app.managementApi.close()
-    await rm(runtimeTmpDir, { recursive: true, force: true })
+    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
   })
 
   const client = new Client({
@@ -100,7 +100,7 @@ test('should get all runtimes log indexes (with previous)', async (t) => {
   const app = await buildServer(configFile)
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await rm(runtimeTmpDir, { recursive: true, force: true })
+  await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
 
   const prevRuntimePID = '424242'
   const prevRuntimeLogsDir = getRuntimeLogsDir(projectDir, prevRuntimePID)
@@ -114,7 +114,7 @@ test('should get all runtimes log indexes (with previous)', async (t) => {
   t.after(async () => {
     await app.close()
     await app.managementApi.close()
-    await rm(runtimeTmpDir, { recursive: true, force: true })
+    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
   })
 
   const client = new Client({

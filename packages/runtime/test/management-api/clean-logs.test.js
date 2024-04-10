@@ -16,14 +16,14 @@ test('should clean the logs after reaching a limit', async (t) => {
   const app = await buildServer(configFile)
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await rm(runtimeTmpDir, { recursive: true, force: true })
+  await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
 
   await app.start()
 
   t.after(async () => {
     await app.close()
     await app.managementApi.close()
-    await rm(runtimeTmpDir, { recursive: true, force: true })
+    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
   })
 
   const res = await app.inject('service-1', {
