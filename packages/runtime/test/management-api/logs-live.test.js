@@ -94,13 +94,11 @@ test('should support custom use transport with a message port logging', async (t
       if (data.includes('Server listening at')) {
         clearTimeout(timeout)
         webSocket.close()
-        // We must defer this to allow the logs to flush
-        setTimeout(resolve, 1000)
+        resolve()
       }
     })
   })
 
   const logs = await readFile(logsPath, 'utf8')
-  console.log('>>>', logs)
   assert.ok(logs.includes('Server listening at'))
 })
