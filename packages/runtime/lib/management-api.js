@@ -1,18 +1,17 @@
 'use strict'
 
-const { tmpdir, platform } = require('node:os')
+const { tmpdir } = require('node:os')
+const { platform } = require('node:os')
 const { join } = require('node:path')
-const { readFile, mkdir, rm } = require('node:fs/promises')
+const { mkdir, rm } = require('node:fs/promises')
 const fastify = require('fastify')
 const ws = require('ws')
+const { getRuntimeLogsDir } = require('./api-client.js')
 const errors = require('./errors')
-const { pipeLogsStream, getLogFileStream, getLogIndexes } = require('./logs')
-const platformaticVersion = require('../package.json').version
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
-const runtimeTmpDir = join(PLATFORMATIC_TMP_DIR, process.pid.toString())
 
-async function createManagementApi (configManager, runtimeApiClient) {
+async function createManagementApi (runtimeApiClient) {
   const app = fastify()
   app.log.warn(
     'Runtime Management API is in the experimental stage. ' +
@@ -21,37 +20,15 @@ async function createManagementApi (configManager, runtimeApiClient) {
     'Use of the feature is not recommended in production environments.'
   )
 
-  async function getRuntimePackageJson (cwd) {
-    const packageJsonPath = join(cwd, 'package.json')
-    const packageJsonFile = await readFile(packageJsonPath, 'utf8')
-    const packageJson = JSON.parse(packageJsonFile)
-    return packageJson
-  }
-
   app.register(require('@fastify/websocket'))
 
   app.register(async (app) => {
     app.get('/metadata', async () => {
-      const packageJson = await getRuntimePackageJson(configManager.dirname).catch(() => ({}))
-      const entrypointDetails = await runtimeApiClient.getEntrypointDetails().catch(() => null)
-
-      return {
-        pid: process.pid,
-        cwd: process.cwd(),
-        argv: process.argv,
-        uptimeSeconds: Math.floor(process.uptime()),
-        execPath: process.execPath,
-        nodeVersion: process.version,
-        projectDir: configManager.dirname,
-        packageName: packageJson.name ?? null,
-        packageVersion: packageJson.version ?? null,
-        url: entrypointDetails?.url ?? null,
-        platformaticVersion
-      }
+      return runtimeApiClient.getRuntimeMetadata()
     })
 
     app.get('/config', async () => {
-      return configManager.current
+      return runtimeApiClient.getRuntimeConfig()
     })
 
     app.get('/env', async () => {
@@ -142,43 +119,67 @@ async function createManagementApi (configManager, runtimeApiClient) {
     })
 
     app.get('/logs/live', { websocket: true }, async (socket, req) => {
-      const startLogIndex = req.query.start ? parseInt(req.query.start) : null
+      const startLogId = req.query.start ? parseInt(req.query.start) : null
 
-      if (startLogIndex) {
-        const logIndexes = await getLogIndexes()
-        if (!logIndexes.includes(startLogIndex)) {
-          throw new errors.LogFileNotFound(startLogIndex)
+      if (startLogId) {
+        const logIds = await runtimeApiClient.getLogIds()
+        if (!logIds.includes(startLogId)) {
+          throw new errors.LogFileNotFound(startLogId)
         }
       }
 
       const stream = ws.createWebSocketStream(socket)
-      pipeLogsStream(stream, req.log, startLogIndex)
+      runtimeApiClient.pipeLogsStream(stream, req.log, startLogId)
     })
 
-    app.get('/logs/indexes', async () => {
-      const logIndexes = await getLogIndexes()
-      return { indexes: logIndexes }
+    app.get('/logs/indexes', async (req) => {
+      const returnAllIds = req.query.all === 'true'
+
+      const runtimesLogsIds = await runtimeApiClient.getLogIds()
+      if (returnAllIds) {
+        return runtimesLogsIds
+      }
+
+      if (runtimesLogsIds.length === 0) {
+        return []
+      }
+
+      return { indexes: runtimesLogsIds.at(-1).indexes }
     })
 
     app.get('/logs/all', async (req, reply) => {
-      const logIndexes = await getLogIndexes()
-      const startLogIndex = logIndexes.at(0)
-      const endLogIndex = logIndexes.at(-1)
+      const runtimePID = parseInt(req.query.pid) || process.pid
+
+      const allLogIds = await runtimeApiClient.getLogIds()
+      const logsIds = allLogIds.find((logs) => logs.pid === runtimePID)
+      const startLogId = logsIds.indexes.at(0)
+      const endLogId = logsIds.indexes.at(-1)
 
       reply.hijack()
-      pipeLogsStream(reply.raw, req.log, startLogIndex, endLogIndex)
+
+      runtimeApiClient.pipeLogsStream(
+        reply.raw,
+        req.log,
+        startLogId,
+        endLogId,
+        runtimePID
+      )
     })
 
     app.get('/logs/:id', async (req) => {
-      const { id } = req.params
+      const logId = parseInt(req.params.id)
+      const runtimePID = parseInt(req.query.pid) || process.pid
 
-      const logIndex = parseInt(id)
-      const logIndexes = await getLogIndexes()
-      if (!logIndexes.includes(logIndex)) {
-        throw new errors.LogFileNotFound(logIndex)
+      const allLogIds = await runtimeApiClient.getLogIds()
+      const runtimeLogsIds = allLogIds.find((logs) => logs.pid === runtimePID)
+      if (!runtimeLogsIds || !runtimeLogsIds.indexes.includes(logId)) {
+        throw new errors.LogFileNotFound(logId)
       }
 
-      const logFileStream = await getLogFileStream(logIndex)
+      const logFileStream = await runtimeApiClient.getLogFileStream(
+        logId,
+        runtimePID
+      )
       return logFileStream
     })
   }, { prefix: '/api/v1' })
@@ -186,34 +187,34 @@ async function createManagementApi (configManager, runtimeApiClient) {
   return app
 }
 
-async function startManagementApi (configManager, runtimeApiClient) {
+async function startManagementApi (runtimeApiClient, configManager) {
   const runtimePID = process.pid
 
-  let socketPath = null
-  if (platform() === 'win32') {
-    socketPath = '\\\\.\\pipe\\platformatic-' + runtimePID
-  } else {
-    socketPath = join(runtimeTmpDir, 'socket')
-  }
-
   try {
-    await rm(runtimeTmpDir, { recursive: true, force: true }).catch((err) => {
-      if (err.code !== 'ENOENT') {
-        throw new errors.FailedToUnlinkManagementApiSocket(err.message)
+    const runtimePIDDir = join(PLATFORMATIC_TMP_DIR, runtimePID.toString())
+    if (platform() !== 'win32') {
+      await rm(runtimePIDDir, { recursive: true, force: true }).catch()
+      await mkdir(runtimePIDDir, { recursive: true })
+    }
+
+    const runtimeLogsDir = getRuntimeLogsDir(configManager.dirname, process.pid)
+    await rm(runtimeLogsDir, { recursive: true, force: true }).catch()
+    await mkdir(runtimeLogsDir, { recursive: true })
+
+    let socketPath = null
+    if (platform() === 'win32') {
+      socketPath = '\\\\.\\pipe\\platformatic-' + runtimePID.toString()
+    } else {
+      socketPath = join(runtimePIDDir, 'socket')
+    }
+
+    const managementApi = await createManagementApi(runtimeApiClient)
+
+    managementApi.addHook('onClose', async () => {
+      if (platform() !== 'win32') {
+        await rm(runtimePIDDir, { recursive: true, force: true }).catch()
       }
     })
-    await mkdir(runtimeTmpDir, { recursive: true })
-
-    const managementApi = await createManagementApi(
-      configManager,
-      runtimeApiClient
-    )
-
-    if (platform() !== 'win32') {
-      managementApi.addHook('onClose', async () => {
-        await rm(runtimeTmpDir, { recursive: true, force: true }).catch()
-      })
-    }
 
     await managementApi.listen({ path: socketPath })
     return managementApi

@@ -13,7 +13,7 @@ const { loadConfig } = require('./load-config')
 const { startManagementApi } = require('./management-api')
 const { startPrometheusServer } = require('./prom-server.js')
 const { parseInspectorOptions, wrapConfigInRuntimeConfig } = require('./config')
-const RuntimeApiClient = require('./api-client.js')
+const { RuntimeApiClient, getRuntimeLogsDir } = require('./api-client.js')
 const errors = require('./errors')
 const pkg = require('../package.json')
 
@@ -41,6 +41,7 @@ async function buildRuntime (configManager, env = process.env) {
   }
 
   const dirname = configManager.dirname
+  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
 
   // The configManager cannot be transferred to the worker, so remove it.
   delete config.configManager
@@ -49,7 +50,7 @@ async function buildRuntime (configManager, env = process.env) {
     /* c8 ignore next */
     execArgv: config.hotReload ? kWorkerExecArgv : [],
     transferList: config.loggingPort ? [config.loggingPort] : [],
-    workerData: { config, dirname },
+    workerData: { config, dirname, runtimeLogsDir },
     env
   })
 
@@ -101,13 +102,14 @@ async function buildRuntime (configManager, env = process.env) {
 
   await once(worker, 'message') // plt:init
 
-  const runtimeApiClient = new RuntimeApiClient(worker)
+  const runtimeApiClient = new RuntimeApiClient(
+    worker,
+    configManager,
+    runtimeLogsDir
+  )
 
   if (config.managementApi) {
-    managementApi = await startManagementApi(
-      configManager,
-      runtimeApiClient
-    )
+    managementApi = await startManagementApi(runtimeApiClient, configManager)
     runtimeApiClient.managementApi = managementApi
     runtimeApiClient.on('start', () => {
       runtimeApiClient.startCollectingMetrics()

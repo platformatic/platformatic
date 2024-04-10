@@ -1,9 +1,16 @@
 'use strict'
 
+const { tmpdir } = require('node:os')
+const { join } = require('node:path')
 const { once, EventEmitter } = require('node:events')
-const { randomUUID } = require('node:crypto')
-const errors = require('./errors')
+const { randomUUID, createHash } = require('node:crypto')
+const { createReadStream, watch } = require('node:fs')
+const { readdir, readFile, stat, access } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
+const errors = require('./errors')
+const ts = require('tail-file-stream')
+
+const platformaticVersion = require('../package.json').version
 
 const MAX_LISTENERS_COUNT = 100
 const MAX_METRICS_QUEUE_LENGTH = 5 * 60 // 5 minutes in seconds
@@ -12,20 +19,55 @@ const COLLECT_METRICS_TIMEOUT = 1000
 class RuntimeApiClient extends EventEmitter {
   #exitCode
   #exitPromise
+  #configManager
+  #runtimeTmpDir
   #metrics
   #metricsTimeout
 
-  constructor (worker) {
+  constructor (worker, configManager) {
     super()
     this.setMaxListeners(MAX_LISTENERS_COUNT)
 
     this.worker = worker
+    this.#configManager = configManager
+    this.#runtimeTmpDir = getRuntimeTmpDir(configManager.dirname)
     this.#exitPromise = this.#exitHandler()
     this.worker.on('message', (message) => {
       if (message.operationId) {
         this.emit(message.operationId, message)
       }
     })
+  }
+
+  async #getRuntimePackageJson () {
+    const runtimeDir = this.#configManager.dirname
+    const packageJsonPath = join(runtimeDir, 'package.json')
+    const packageJsonFile = await readFile(packageJsonPath, 'utf8')
+    const packageJson = JSON.parse(packageJsonFile)
+    return packageJson
+  }
+
+  async getRuntimeMetadata () {
+    const packageJson = await this.#getRuntimePackageJson()
+    const entrypointDetails = await this.getEntrypointDetails()
+
+    return {
+      pid: process.pid,
+      cwd: process.cwd(),
+      argv: process.argv,
+      uptimeSeconds: Math.floor(process.uptime()),
+      execPath: process.execPath,
+      nodeVersion: process.version,
+      projectDir: this.#configManager.dirname,
+      packageName: packageJson.name ?? null,
+      packageVersion: packageJson.version ?? null,
+      url: entrypointDetails?.url ?? null,
+      platformaticVersion
+    }
+  }
+
+  getRuntimeConfig () {
+    return this.#configManager.current
   }
 
   async start () {
@@ -217,6 +259,162 @@ class RuntimeApiClient extends EventEmitter {
     }, COLLECT_METRICS_TIMEOUT).unref()
   }
 
+  async pipeLogsStream (writableStream, logger, startLogId, endLogId, runtimePID) {
+    endLogId = endLogId || Infinity
+    runtimePID = runtimePID ?? process.pid
+
+    const runtimeLogFiles = await this.#getRuntimeLogFiles(runtimePID)
+    if (runtimeLogFiles.length === 0) {
+      writableStream.end()
+      return
+    }
+
+    let latestFileId = parseInt(runtimeLogFiles.at(-1).slice('logs.'.length))
+
+    let waiting = false
+    let fileStream = null
+    let fileId = startLogId ?? latestFileId
+
+    const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
+
+    const watcher = watch(runtimeLogsDir, async (event, filename) => {
+      if (event === 'rename' && filename.startsWith('logs')) {
+        const logFileId = parseInt(filename.slice('logs.'.length))
+        if (logFileId > latestFileId) {
+          latestFileId = logFileId
+          if (waiting) {
+            streamLogFile(++fileId)
+          }
+        }
+      }
+    }).unref()
+
+    const streamLogFile = () => {
+      if (fileId > endLogId) {
+        writableStream.end()
+        return
+      }
+
+      const fileName = 'logs.' + fileId
+      const filePath = join(runtimeLogsDir, fileName)
+
+      const prevFileStream = fileStream
+
+      fileStream = ts.createReadStream(filePath)
+      fileStream.pipe(writableStream, { end: false })
+
+      if (prevFileStream) {
+        prevFileStream.unpipe(writableStream)
+        prevFileStream.destroy()
+      }
+
+      fileStream.on('error', (err) => {
+        logger.error(err, 'Error streaming log file')
+        fileStream.destroy()
+        watcher.close()
+        writableStream.end()
+      })
+
+      fileStream.on('data', () => {
+        waiting = false
+      })
+
+      fileStream.on('eof', () => {
+        if (fileId >= endLogId) {
+          writableStream.end()
+          return
+        }
+        if (latestFileId > fileId) {
+          streamLogFile(++fileId)
+        } else {
+          waiting = true
+        }
+      })
+
+      return fileStream
+    }
+
+    streamLogFile(fileId)
+
+    writableStream.on('close', () => {
+      watcher.close()
+      fileStream.destroy()
+    })
+    writableStream.on('error', () => {
+      watcher.close()
+      fileStream.destroy()
+    })
+  }
+
+  async getLogIds () {
+    const runtimesLogFiles = await this.#getAllLogsFiles()
+    const runtimesLogsIds = []
+
+    for (const runtime of runtimesLogFiles) {
+      const runtimeLogIds = []
+      for (const logFile of runtime.runtimeLogFiles) {
+        const logId = parseInt(logFile.slice('logs.'.length))
+        runtimeLogIds.push(logId)
+      }
+      runtimesLogsIds.push({
+        pid: runtime.runtimePID,
+        indexes: runtimeLogIds
+      })
+    }
+
+    return runtimesLogsIds
+  }
+
+  async getLogFileStream (logFileId, runtimePID) {
+    const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
+    const filePath = join(runtimeLogsDir, `logs.${logFileId}`)
+    return createReadStream(filePath)
+  }
+
+  #getRuntimeLogsDir (runtimePID) {
+    return join(this.#runtimeTmpDir, runtimePID.toString(), 'logs')
+  }
+
+  async #getRuntimeLogFiles (runtimePID) {
+    const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
+    const runtimeLogsFiles = await readdir(runtimeLogsDir)
+    return runtimeLogsFiles
+      .filter((file) => file.startsWith('logs'))
+      .sort((log1, log2) => {
+        const index1 = parseInt(log1.slice('logs.'.length))
+        const index2 = parseInt(log2.slice('logs.'.length))
+        return index1 - index2
+      })
+  }
+
+  async #getAllLogsFiles () {
+    try {
+      await access(this.#runtimeTmpDir)
+    } catch (error) {
+      return []
+    }
+
+    const runtimePIDs = await readdir(this.#runtimeTmpDir)
+    const runtimesLogFiles = []
+
+    for (const runtimePID of runtimePIDs) {
+      const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
+      const runtimeLogsDirStat = await stat(runtimeLogsDir)
+      const runtimeLogFiles = await this.#getRuntimeLogFiles(runtimePID)
+      const lastModified = runtimeLogsDirStat.mtime
+
+      runtimesLogFiles.push({
+        runtimePID: parseInt(runtimePID),
+        runtimeLogFiles,
+        lastModified
+      })
+    }
+
+    return runtimesLogFiles.sort(
+      (runtime1, runtime2) => runtime1.lastModified - runtime2.lastModified
+    )
+  }
+
   async #sendCommand (command, params = {}) {
     const operationId = randomUUID()
 
@@ -248,4 +446,19 @@ class RuntimeApiClient extends EventEmitter {
   }
 }
 
-module.exports = RuntimeApiClient
+function getRuntimeTmpDir (runtimeDir) {
+  const platformaticTmpDir = join(tmpdir(), 'platformatic', 'applications')
+  const runtimeDirHash = createHash('md5').update(runtimeDir).digest('hex')
+  return join(platformaticTmpDir, runtimeDirHash)
+}
+
+function getRuntimeLogsDir (runtimeDir, runtimePID) {
+  const runtimeTmpDir = getRuntimeTmpDir(runtimeDir)
+  return join(runtimeTmpDir, runtimePID.toString(), 'logs')
+}
+
+module.exports = {
+  RuntimeApiClient,
+  getRuntimeTmpDir,
+  getRuntimeLogsDir
+}
