@@ -6,7 +6,7 @@ import { test } from 'node:test'
 import { join } from 'node:path'
 import { createHash } from 'node:crypto'
 import { setTimeout as sleep } from 'node:timers/promises'
-import { writeFile, rm } from 'node:fs/promises'
+import { writeFile, rm, mkdir } from 'node:fs/promises'
 import * as desm from 'desm'
 import { RuntimeApiClient } from '../index.js'
 import { startRuntime } from './helper.mjs'
@@ -37,6 +37,44 @@ test('should get runtime log indexes', async (t) => {
   assert.deepStrictEqual(logIndexes, [1, 42])
 })
 
+test('should get all runtime log indexes', async (t) => {
+  const projectDir = join(fixturesDir, 'runtime-1')
+  const configFile = join(projectDir, 'platformatic.json')
+
+  const runtimeTmpDir = getRuntimeTmpDir(projectDir)
+  await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+
+  const prevRuntimePID = 424242
+  const prevTestLogs = 'test-logs-42\n'
+  const prevRuntimeLogsDir = getRuntimeLogsDir(projectDir, prevRuntimePID)
+  await mkdir(prevRuntimeLogsDir, { recursive: true })
+  await writeFile(join(prevRuntimeLogsDir, 'logs.41'), prevTestLogs)
+
+  const { runtime } = await startRuntime(configFile)
+  t.after(async () => {
+    runtime.kill('SIGINT')
+    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+  })
+
+  const testLogs = 'test-logs-42\n'
+  const runtimeLogsDir = getRuntimeLogsDir(projectDir, runtime.pid)
+  await writeFile(join(runtimeLogsDir, 'logs.42'), testLogs)
+
+  const runtimeClient = new RuntimeApiClient()
+  const logIndexes = await runtimeClient.getRuntimeLogIndexes(runtime.pid, { all: true })
+
+  assert.deepStrictEqual(logIndexes, [
+    {
+      pid: prevRuntimePID,
+      indexes: [41]
+    },
+    {
+      pid: runtime.pid,
+      indexes: [1, 42]
+    }
+  ])
+})
+
 test('should get runtime history log', async (t) => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
@@ -58,6 +96,33 @@ test('should get runtime history log', async (t) => {
   const runtimeLogsStream = await runtimeClient.getRuntimeLogsStream(runtime.pid, 42)
   const runtimeLogs = await runtimeLogsStream.text()
   assert.strictEqual(runtimeLogs, testLogs)
+})
+
+test('should get runtime history log for prev run', async (t) => {
+  const projectDir = join(fixturesDir, 'runtime-1')
+  const configFile = join(projectDir, 'platformatic.json')
+
+  const runtimeTmpDir = getRuntimeTmpDir(projectDir)
+  await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+
+  const prevRuntimePID = 424242
+  const prevTestLogs = 'test-logs-41\n'
+  const prevRuntimeLogsDir = getRuntimeLogsDir(projectDir, prevRuntimePID)
+  await mkdir(prevRuntimeLogsDir, { recursive: true })
+  await writeFile(join(prevRuntimeLogsDir, 'logs.41'), prevTestLogs)
+
+  const { runtime } = await startRuntime(configFile)
+  t.after(async () => {
+    runtime.kill('SIGINT')
+    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+  })
+
+  const runtimeClient = new RuntimeApiClient()
+  const runtimeLogsStream = await runtimeClient.getRuntimeLogsStream(runtime.pid, 41, {
+    runtimePID: prevRuntimePID
+  })
+  const runtimeLogs = await runtimeLogsStream.text()
+  assert.strictEqual(runtimeLogs, prevTestLogs)
 })
 
 test('should get runtime all logs', async (t) => {
@@ -88,6 +153,37 @@ test('should get runtime all logs', async (t) => {
 
   assert.strictEqual(logsLines.at(-2) + '\n', testLogs)
   assert.strictEqual(logsLines.at(-3) + '\n', testLogs)
+})
+
+test('should get runtime all logs for prev run', async (t) => {
+  const projectDir = join(fixturesDir, 'runtime-1')
+  const configFile = join(projectDir, 'platformatic.json')
+
+  const runtimeTmpDir = getRuntimeTmpDir(projectDir)
+  await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+
+  const prevRuntimePID = 424242
+  const prevTestLogs = 'test-logs-41\n'
+  const prevRuntimeLogsDir = getRuntimeLogsDir(projectDir, prevRuntimePID)
+  await mkdir(prevRuntimeLogsDir, { recursive: true })
+  await writeFile(join(prevRuntimeLogsDir, 'logs.2'), prevTestLogs)
+  await writeFile(join(prevRuntimeLogsDir, 'logs.3'), prevTestLogs)
+
+  const { runtime } = await startRuntime(configFile)
+  t.after(async () => {
+    runtime.kill('SIGINT')
+    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+  })
+
+  const runtimeClient = new RuntimeApiClient()
+  const runtimeLogsStream = await runtimeClient.getRuntimeAllLogsStream(runtime.pid, {
+    runtimePID: prevRuntimePID
+  })
+  const runtimeLogs = await runtimeLogsStream.text()
+
+  const logsLines = runtimeLogs.split('\n')
+  assert.strictEqual(logsLines.at(-2) + '\n', prevTestLogs)
+  assert.strictEqual(logsLines.at(-3) + '\n', prevTestLogs)
 })
 
 test('should get runtime live metrics', async (t) => {
