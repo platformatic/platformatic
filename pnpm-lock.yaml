@@ -1420,7 +1420,7 @@ importers:
         version: 10.3.1
       pino-roll:
         specifier: ^1.0.0
-        version: 1.0.1
+        version: 1.1.0
       semgrator:
         specifier: ^0.3.0
         version: 0.3.0
@@ -5896,7 +5896,7 @@ packages:
     resolution: {integrity: sha512-gXOrdGOd7AWxMMmZl2esd/MgenEn5i9CApO7d6dkXZV/8kNn3/dm/VfkRUfTzvpVJUAsYM2FR+6bYHKcsC8p7w==}
     dependencies:
       fastify-plugin: 4.5.1
-      ghtml: 1.2.0
+      ghtml: 1.2.1
     dev: false
 
   /fastify-metrics@11.0.0(fastify@4.26.2):
@@ -6269,8 +6269,8 @@ packages:
       get-intrinsic: 1.2.4
     dev: true
 
-  /ghtml@1.2.0:
-    resolution: {integrity: sha512-/+yRj/Rs+d4WkQiOou4yZswSOipaS4Du4eN6/f5UR4fcbxeVbwyv72x+BIZwHPko0RIqND8aRxQDcw1QeQyAQQ==}
+  /ghtml@1.2.1:
+    resolution: {integrity: sha512-pULT0AVOeotMcqtHx4OE5qeFJTL8C3jb6MM4mY82qgXPh8NRx+PtmxJ/NQYH9D32+7SDSfhvaozU12AjyeRK+g==}
     engines: {node: '>=18'}
     dev: false
 
@@ -8279,8 +8279,8 @@ packages:
       strip-json-comments: 3.1.1
     dev: false
 
-  /pino-roll@1.0.1:
-    resolution: {integrity: sha512-9mMf0dn7KsqiY/Bs7gDRoBd5lsksSknPnbTEFKQVTeuGXi8RFuXS5UkLw4StIY/uG6PMrM7KJydB7ramoyVDzA==}
+  /pino-roll@1.1.0:
+    resolution: {integrity: sha512-VlioCA387G/56yelKkoe0OXFFG/LnsqiMRAQnRijgXh8NMoeFaQssU14nz3kSqk5GZ3BWBERgB8M9S2AN3wQGA==}
     dependencies:
       sonic-boom: 3.8.1
     dev: false
