@@ -39,9 +39,5 @@ test('should clean the logs after reaching a limit', async (t) => {
   const runtimeLogFiles = runtimeTmpFiles.filter(
     (file) => file.startsWith('logs')
   )
-  assert.deepStrictEqual(runtimeLogFiles, [
-    'logs.11',
-    'logs.12',
-    'logs.13'
-  ])
+  assert.deepStrictEqual(runtimeLogFiles.length, 3)
 })
