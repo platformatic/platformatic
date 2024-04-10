@@ -762,12 +762,9 @@ const $defs = {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#reference-object',
     type: 'object',
     properties: {
-      /* Uncomment once the fjs bug is fixed
-       * https://github.com/fastify/fast-json-stringify/pull/705
       $ref: {
         type: 'string'
       },
-      */
       summary: {
         type: 'string'
       },
