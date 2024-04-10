@@ -1,8 +1,9 @@
 'use strict'
 
-const { join, dirname } = require('node:path')
+const { tmpdir } = require('node:os')
+const { join } = require('node:path')
 const { once, EventEmitter } = require('node:events')
-const { randomUUID } = require('node:crypto')
+const { randomUUID, createHash } = require('node:crypto')
 const { createReadStream, watch } = require('node:fs')
 const { readdir, readFile, stat, access } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
@@ -23,13 +24,13 @@ class RuntimeApiClient extends EventEmitter {
   #metrics
   #metricsTimeout
 
-  constructor (worker, configManager, runtimeTmpDir) {
+  constructor (worker, configManager) {
     super()
     this.setMaxListeners(MAX_LISTENERS_COUNT)
 
     this.worker = worker
     this.#configManager = configManager
-    this.#runtimeTmpDir = runtimeTmpDir
+    this.#runtimeTmpDir = getRuntimeTmpDir(configManager.dirname)
     this.#exitPromise = this.#exitHandler()
     this.worker.on('message', (message) => {
       if (message.operationId) {
@@ -67,13 +68,6 @@ class RuntimeApiClient extends EventEmitter {
 
   getRuntimeConfig () {
     return this.#configManager.current
-  }
-
-  getRuntimeTmpDir (runtimePID) {
-    if (runtimePID && runtimePID !== process.pid) {
-      return join(dirname(this.#runtimeTmpDir), runtimePID.toString())
-    }
-    return this.#runtimeTmpDir
   }
 
   async start () {
@@ -267,6 +261,7 @@ class RuntimeApiClient extends EventEmitter {
 
   async pipeLogsStream (writableStream, logger, startLogId, endLogId, runtimePID) {
     endLogId = endLogId || Infinity
+    runtimePID = runtimePID ?? process.pid
 
     const runtimeLogFiles = await this.#getRuntimeLogFiles(runtimePID)
     if (runtimeLogFiles.length === 0) {
@@ -280,9 +275,9 @@ class RuntimeApiClient extends EventEmitter {
     let fileStream = null
     let fileId = startLogId ?? latestFileId
 
-    const runtimeTmpDir = this.getRuntimeTmpDir(runtimePID)
+    const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
 
-    const watcher = watch(runtimeTmpDir, async (event, filename) => {
+    const watcher = watch(runtimeLogsDir, async (event, filename) => {
       if (event === 'rename' && filename.startsWith('logs')) {
         const logFileId = parseInt(filename.slice('logs.'.length))
         if (logFileId > latestFileId) {
@@ -301,7 +296,7 @@ class RuntimeApiClient extends EventEmitter {
       }
 
       const fileName = 'logs.' + fileId
-      const filePath = join(runtimeTmpDir, fileName)
+      const filePath = join(runtimeLogsDir, fileName)
 
       const prevFileStream = fileStream
 
@@ -371,15 +366,19 @@ class RuntimeApiClient extends EventEmitter {
   }
 
   async getLogFileStream (logFileId, runtimePID) {
-    const runtimeTmpDir = this.getRuntimeTmpDir(runtimePID)
-    const filePath = join(runtimeTmpDir, `logs.${logFileId}`)
+    const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
+    const filePath = join(runtimeLogsDir, `logs.${logFileId}`)
     return createReadStream(filePath)
   }
 
+  #getRuntimeLogsDir (runtimePID) {
+    return join(this.#runtimeTmpDir, runtimePID.toString(), 'logs')
+  }
+
   async #getRuntimeLogFiles (runtimePID) {
-    const runtimeTmpDir = this.getRuntimeTmpDir(runtimePID)
-    const runtimeTmpFiles = await readdir(runtimeTmpDir)
-    return runtimeTmpFiles
+    const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
+    const runtimeLogsFiles = await readdir(runtimeLogsDir)
+    return runtimeLogsFiles
       .filter((file) => file.startsWith('logs'))
       .sort((log1, log2) => {
         const index1 = parseInt(log1.slice('logs.'.length))
@@ -389,23 +388,20 @@ class RuntimeApiClient extends EventEmitter {
   }
 
   async #getAllLogsFiles () {
-    const runtimeTmpDir = this.getRuntimeTmpDir()
-    const runtimeAppTmpDir = dirname(runtimeTmpDir)
-
     try {
-      await access(runtimeAppTmpDir)
+      await access(this.#runtimeTmpDir)
     } catch (error) {
       return []
     }
 
-    const runtimePIDs = await readdir(runtimeAppTmpDir)
+    const runtimePIDs = await readdir(this.#runtimeTmpDir)
     const runtimesLogFiles = []
 
     for (const runtimePID of runtimePIDs) {
-      const runtimeTmpDir = join(runtimeAppTmpDir, runtimePID)
-      const runtimeTmpDirStat = await stat(runtimeTmpDir)
+      const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
+      const runtimeLogsDirStat = await stat(runtimeLogsDir)
       const runtimeLogFiles = await this.#getRuntimeLogFiles(runtimePID)
-      const lastModified = runtimeTmpDirStat.mtime
+      const lastModified = runtimeLogsDirStat.mtime
 
       runtimesLogFiles.push({
         runtimePID: parseInt(runtimePID),
@@ -450,4 +446,19 @@ class RuntimeApiClient extends EventEmitter {
   }
 }
 
-module.exports = RuntimeApiClient
+function getRuntimeTmpDir (runtimeDir) {
+  const platformaticTmpDir = join(tmpdir(), 'platformatic', 'applications')
+  const runtimeDirHash = createHash('md5').update(runtimeDir).digest('hex')
+  return join(platformaticTmpDir, runtimeDirHash)
+}
+
+function getRuntimeLogsDir (runtimeDir, runtimePID) {
+  const runtimeTmpDir = getRuntimeTmpDir(runtimeDir)
+  return join(runtimeTmpDir, runtimePID.toString(), 'logs')
+}
+
+module.exports = {
+  RuntimeApiClient,
+  getRuntimeTmpDir,
+  getRuntimeLogsDir
+}

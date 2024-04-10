@@ -6,6 +6,7 @@ const { join } = require('node:path')
 const { mkdir, rm } = require('node:fs/promises')
 const fastify = require('fastify')
 const ws = require('ws')
+const { getRuntimeLogsDir } = require('./api-client.js')
 const errors = require('./errors')
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
@@ -186,35 +187,34 @@ async function createManagementApi (runtimeApiClient) {
   return app
 }
 
-async function startManagementApi (runtimeApiClient) {
+async function startManagementApi (runtimeApiClient, configManager) {
   const runtimePID = process.pid
 
-  let socketPath = null
-  if (platform() === 'win32') {
-    socketPath = '\\\\.\\pipe\\platformatic-' + runtimePID.toString()
-  } else {
-    const runtimeSocketsDir = join(PLATFORMATIC_TMP_DIR, 'sockets')
-    await mkdir(runtimeSocketsDir, { recursive: true })
-    socketPath = join(runtimeSocketsDir, runtimePID.toString())
-  }
-
   try {
-    const runtimeTmpDir = runtimeApiClient.getRuntimeTmpDir()
-    await rm(runtimeTmpDir, { recursive: true, force: true }).catch()
-    await rm(socketPath, { force: true }).catch((err) => {
-      if (err.code !== 'ENOENT') {
-        throw new errors.FailedToUnlinkManagementApiSocket(err.message)
-      }
-    })
-    await mkdir(runtimeTmpDir, { recursive: true })
+    const runtimePIDDir = join(PLATFORMATIC_TMP_DIR, runtimePID.toString())
+    if (platform() !== 'win32') {
+      await rm(runtimePIDDir, { recursive: true, force: true }).catch()
+      await mkdir(runtimePIDDir, { recursive: true })
+    }
+
+    const runtimeLogsDir = getRuntimeLogsDir(configManager.dirname, process.pid)
+    await rm(runtimeLogsDir, { recursive: true, force: true }).catch()
+    await mkdir(runtimeLogsDir, { recursive: true })
+
+    let socketPath = null
+    if (platform() === 'win32') {
+      socketPath = '\\\\.\\pipe\\platformatic-' + runtimePID.toString()
+    } else {
+      socketPath = join(runtimePIDDir, 'socket')
+    }
 
     const managementApi = await createManagementApi(runtimeApiClient)
 
-    if (platform() !== 'win32') {
-      managementApi.addHook('onClose', async () => {
-        await rm(socketPath, { force: true }).catch()
-      })
-    }
+    managementApi.addHook('onClose', async () => {
+      if (platform() !== 'win32') {
+        await rm(runtimePIDDir, { recursive: true, force: true }).catch()
+      }
+    })
 
     await managementApi.listen({ path: socketPath })
     return managementApi

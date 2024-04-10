@@ -1,10 +1,11 @@
 'use strict'
 
 const assert = require('node:assert')
-const { join, dirname } = require('node:path')
+const { join } = require('node:path')
 const { test } = require('node:test')
 const { writeFile, rm, mkdir } = require('node:fs/promises')
 const { Client } = require('undici')
+const { getRuntimeTmpDir, getRuntimeLogsDir } = require('../../lib/api-client')
 
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
@@ -14,19 +15,20 @@ test('should get runtime logs history via management api', async (t) => {
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
 
-  const runtimeTmpDir = app.getRuntimeTmpDir()
-  await rm(dirname(runtimeTmpDir), { recursive: true, force: true })
+  const runtimeTmpDir = getRuntimeTmpDir(projectDir)
+  await rm(runtimeTmpDir, { recursive: true, force: true })
 
   await app.start()
 
   t.after(async () => {
     await app.close()
     await app.managementApi.close()
-    await rm(dirname(runtimeTmpDir), { recursive: true, force: true })
+    await rm(runtimeTmpDir, { recursive: true, force: true })
   })
 
   const testLogs = 'test-logs-42\n'
-  await writeFile(join(runtimeTmpDir, 'logs.42'), testLogs)
+  const runtimeLogsDir = getRuntimeLogsDir(projectDir, process.pid)
+  await writeFile(join(runtimeLogsDir, 'logs.42'), testLogs)
 
   const client = new Client({
     hostname: 'localhost',
@@ -52,23 +54,22 @@ test('should get logs from previous run', async (t) => {
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
 
-  const runtimeTmpDir = app.getRuntimeTmpDir()
-  const runtimeAppTmpDir = dirname(runtimeTmpDir)
-  await rm(runtimeAppTmpDir, { recursive: true, force: true })
+  const runtimeTmpDir = getRuntimeTmpDir(projectDir)
+  await rm(runtimeTmpDir, { recursive: true, force: true })
 
   const prevRuntimePID = '424242'
-  const prevRuntimeTmpDir = join(runtimeAppTmpDir, prevRuntimePID)
-  await mkdir(prevRuntimeTmpDir, { recursive: true })
+  const prevRuntimeLogsDir = getRuntimeLogsDir(projectDir, prevRuntimePID)
+  await mkdir(prevRuntimeLogsDir, { recursive: true })
 
   const prevRuntimeLogs = 'test-logs-42\n'
-  await writeFile(join(prevRuntimeTmpDir, 'logs.42'), prevRuntimeLogs)
+  await writeFile(join(prevRuntimeLogsDir, 'logs.42'), prevRuntimeLogs)
 
   await app.start()
 
   t.after(async () => {
     await app.close()
     await app.managementApi.close()
-    await rm(runtimeAppTmpDir, { recursive: true, force: true })
+    await rm(runtimeTmpDir, { recursive: true, force: true })
   })
 
   const client = new Client({
@@ -100,13 +101,13 @@ test('should throw 404 if log file does not exist', async (t) => {
 
   await app.start()
 
-  const runtimeTmpDir = app.getRuntimeTmpDir()
-  await rm(dirname(runtimeTmpDir), { recursive: true, force: true })
+  const runtimeTmpDir = getRuntimeTmpDir(projectDir)
+  await rm(runtimeTmpDir, { recursive: true, force: true })
 
   t.after(async () => {
     await app.close()
     await app.managementApi.close()
-    await rm(dirname(runtimeTmpDir), { recursive: true, force: true })
+    await rm(runtimeTmpDir, { recursive: true, force: true })
   })
 
   const client = new Client({

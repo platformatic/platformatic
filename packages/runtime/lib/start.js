@@ -1,13 +1,11 @@
 'use strict'
 
-const { tmpdir } = require('node:os')
 const { once } = require('node:events')
 const inspector = require('node:inspector')
 const { join, resolve, dirname } = require('node:path')
 const { writeFile } = require('node:fs/promises')
 const { pathToFileURL } = require('node:url')
 const { Worker } = require('node:worker_threads')
-const { createHash } = require('crypto')
 const { start: serviceStart } = require('@platformatic/service')
 const { printConfigValidationErrors } = require('@platformatic/config')
 const closeWithGrace = require('close-with-grace')
@@ -15,7 +13,7 @@ const { loadConfig } = require('./load-config')
 const { startManagementApi } = require('./management-api')
 const { startPrometheusServer } = require('./prom-server.js')
 const { parseInspectorOptions, wrapConfigInRuntimeConfig } = require('./config')
-const RuntimeApiClient = require('./api-client.js')
+const { RuntimeApiClient, getRuntimeLogsDir } = require('./api-client.js')
 const errors = require('./errors')
 const pkg = require('../package.json')
 
@@ -43,7 +41,7 @@ async function buildRuntime (configManager, env = process.env) {
   }
 
   const dirname = configManager.dirname
-  const runtimeTmpDir = getRuntimeTmpDir(dirname)
+  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
 
   // The configManager cannot be transferred to the worker, so remove it.
   delete config.configManager
@@ -52,7 +50,7 @@ async function buildRuntime (configManager, env = process.env) {
     /* c8 ignore next */
     execArgv: config.hotReload ? kWorkerExecArgv : [],
     transferList: config.loggingPort ? [config.loggingPort] : [],
-    workerData: { config, dirname, runtimeTmpDir },
+    workerData: { config, dirname, runtimeLogsDir },
     env
   })
 
@@ -107,11 +105,11 @@ async function buildRuntime (configManager, env = process.env) {
   const runtimeApiClient = new RuntimeApiClient(
     worker,
     configManager,
-    runtimeTmpDir
+    runtimeLogsDir
   )
 
   if (config.managementApi) {
-    managementApi = await startManagementApi(runtimeApiClient)
+    managementApi = await startManagementApi(runtimeApiClient, configManager)
     runtimeApiClient.managementApi = managementApi
     runtimeApiClient.on('start', () => {
       runtimeApiClient.startCollectingMetrics()
@@ -204,12 +202,6 @@ In alternative run "npm create platformatic@latest" to generate a basic plt serv
   }
 
   process.exit(1)
-}
-
-function getRuntimeTmpDir (runtimeDir) {
-  const runtimeDirHash = createHash('md5').update(runtimeDir).digest('hex')
-  const platformaticTmpDir = join(tmpdir(), 'platformatic', 'runtimes')
-  return join(platformaticTmpDir, runtimeDirHash, process.pid.toString())
 }
 
 module.exports = { buildRuntime, start, startCommand }

@@ -66,7 +66,7 @@ function createLogger (config) {
       logsLimitCount = 1
     }
 
-    const logsPath = join(workerData.runtimeTmpDir, 'logs')
+    const logsPath = join(workerData.runtimeLogsDir, 'logs')
     const pinoRoll = pino.transport({
       target: 'pino-roll',
       options: {
