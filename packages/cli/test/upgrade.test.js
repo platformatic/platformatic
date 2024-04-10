@@ -56,3 +56,20 @@ test('writes a config file with a config option', async (t) => {
 test('no config file no party', async (t) => {
   await assert.rejects(execa('node', [cliPath, 'upgrade']))
 })
+
+test('updates a runtime', async (t) => {
+  const dest = join(tmpdir(), `test-cli-${process.pid}-${count++}`)
+
+  await cp(
+    join(dirname(fileURLToPath(import.meta.url)), '..', 'fixtures', 'runtime-upgrade'),
+    dest,
+    { recursive: true })
+
+  await execa('node', [cliPath, 'upgrade'], {
+    cwd: dest
+  })
+
+  const config = JSON.parse(await readFile(join(dest, 'platformatic.json'), 'utf8'))
+
+  assert.match(config.$schema, new RegExp('https://platformatic.dev/schemas/v\\d+.\\d+.\\d+/runtime'))
+})

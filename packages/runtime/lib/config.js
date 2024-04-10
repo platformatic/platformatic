@@ -13,7 +13,15 @@ async function _transformConfig (configManager) {
   const services = config.services ?? []
 
   if (config.autoload) {
-    const { path, exclude = [], mappings = {} } = config.autoload
+    const { exclude = [], mappings = {} } = config.autoload
+    let { path } = config.autoload
+
+    // This is a hack, but it's the only way to not fix the paths for the autoloaded services
+    // while we are upgrading the config
+    if (configManager._fixPaths) {
+      path = pathResolve(configManager.dirname, path)
+    }
+
     const entries = await readdir(path, { withFileTypes: true })
 
     for (let i = 0; i < entries.length; ++i) {
@@ -46,6 +54,7 @@ async function _transformConfig (configManager) {
   }
 
   configManager.current.allowCycles = !!configManager.current.allowCycles
+
   configManager.current.serviceMap = new Map()
   configManager.current.inspectorOptions = undefined
 
@@ -54,7 +63,9 @@ async function _transformConfig (configManager) {
   for (let i = 0; i < services.length; ++i) {
     const service = services[i]
 
-    service.config = pathResolve(service.path, service.config)
+    if (configManager._fixPaths) {
+      service.config = pathResolve(service.path, service.config)
+    }
     service.entrypoint = service.id === config.entrypoint
     service.hotReload = !!config.hotReload
     service.dependencies = []
@@ -74,6 +85,7 @@ async function _transformConfig (configManager) {
   }
 
   configManager.current.services = services
+
   await parseClientsAndComposer(configManager)
 
   if (!configManager.current.allowCycles) {
