@@ -19,12 +19,12 @@ test('should get runtime log indexes', async (t) => {
   const configFile = join(projectDir, 'platformatic.json')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await rm(runtimeTmpDir, { recursive: true, force: true })
+  await rm(runtimeTmpDir, { recursive: true, force: true }).catch(() => {})
 
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
     runtime.kill('SIGINT')
-    await rm(runtimeTmpDir, { recursive: true, force: true })
+    await rm(runtimeTmpDir, { recursive: true, force: true }).catch(() => {})
   })
 
   const testLogs = 'test-logs-42\n'
@@ -42,12 +42,12 @@ test('should get runtime history log', async (t) => {
   const configFile = join(projectDir, 'platformatic.json')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await rm(runtimeTmpDir, { recursive: true, force: true })
+  await rm(runtimeTmpDir, { recursive: true, force: true }).catch(() => {})
 
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
     runtime.kill('SIGINT')
-    await rm(runtimeTmpDir, { recursive: true, force: true })
+    await rm(runtimeTmpDir, { recursive: true, force: true }).catch(() => {})
   })
 
   const testLogs = 'test-logs-42\n'
@@ -65,12 +65,12 @@ test('should get runtime all logs', async (t) => {
   const configFile = join(projectDir, 'platformatic.json')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await rm(runtimeTmpDir, { recursive: true, force: true })
+  await rm(runtimeTmpDir, { recursive: true, force: true }).catch(() => {})
 
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
     runtime.kill('SIGINT')
-    await rm(runtimeTmpDir, { recursive: true, force: true })
+    await rm(runtimeTmpDir, { recursive: true, force: true }).catch(() => {})
   })
 
   const testLogs = 'test-logs-42\n'
