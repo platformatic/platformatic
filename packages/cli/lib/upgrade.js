@@ -7,6 +7,7 @@ import { platformaticComposer } from '@platformatic/composer'
 import { platformaticRuntime } from '@platformatic/runtime'
 import pino from 'pino'
 import pretty from 'pino-pretty'
+import fjs from 'fast-json-stringify'
 
 export async function upgrade (argv) {
   const args = parseArgs(argv, {
@@ -42,16 +43,23 @@ async function upgradeApp (config, logger) {
     overrides: {
       fixPaths: false,
       onMissingEnv (key) {
-        return ''
+        return '{' + key + '}'
       }
     }
   })
 
-  await configManager.parseAndValidate()
+  await configManager.parseAndValidate(false)
+  config = configManager.current
+
+  // If the schema is present, we use it to format the config
+  if (configManager.schema) {
+    const stringify = fjs(configManager.schema)
+    config = JSON.parse(stringify(config))
+  }
 
   const stringify = getStringifier(configManager.fullPath)
 
-  const newConfig = stringify(configManager.current)
+  const newConfig = stringify(config)
 
   await writeFile(configManager.fullPath, newConfig, 'utf8')
 

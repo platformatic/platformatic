@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/create-platformatic-auto",
-  "version": "1.33.0",
+  "version": "1.34.0",
   "description": "Create platformatic application interactive tool",
   "repository": {
     "type": "git",

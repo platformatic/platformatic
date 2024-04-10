@@ -96,6 +96,7 @@ expectType<Partial<EntityFields>[]>(await entity.insert({ inputs: [{ id: 1, name
 expectType<Partial<EntityFields>>(await entity.save({ input: { id: 1, name: 'test' }, tx: pluginOptions.db }))
 expectType<Partial<EntityFields>[]>(await entity.delete({ tx: pluginOptions.db }))
 expectType<number>(await entity.count({ tx: pluginOptions.db }))
+expectType<Partial<EntityFields>[]>(await entity.updateMany({ where: { id: { eq: '1' } }, input: { id: 1, name: 'test' }}))
 expectType<Partial<EntityFields>[]>(await entity.find({ where: { id: { eq: null } } }))
 expectType<Partial<EntityFields>[]>(await entity.find({ where: { id: { neq: null } } }))
 
@@ -119,6 +120,7 @@ const whereCondition: WhereCondition = {
 await entity.find({ where: whereCondition })
 await entity.delete({ where: whereCondition })
 await entity.count({ where: whereCondition })
+await entity.updateMany({ where: whereCondition, input: { id: 1, name: 'test' } })
 
 const entityHooks: EntityHooks = {
   async find(originalFind: typeof entity.find, ...options: Parameters<typeof entity.find>): ReturnType<typeof entity.find> { return [] },
@@ -126,6 +128,7 @@ const entityHooks: EntityHooks = {
   async save(originalSave: typeof entity.save, ...options: Parameters<typeof entity.save>): ReturnType<typeof entity.save> { return {} },
   async delete(originalDelete: typeof entity.delete, ...options: Parameters<typeof entity.delete>): ReturnType<typeof entity.delete> { return [] },
   async count(originalCount: typeof entity.count, ...options: Parameters<typeof entity.count>): ReturnType<typeof entity.count> { return 0 },
+  async updateMany(originalUpdateMany: typeof entity.updateMany, ...options: Parameters<typeof entity.updateMany>): ReturnType<typeof entity.updateMany> { return [] },
 }
 expectType<EntityHooks>(entityHooks)
 expectType<SQLMapperPluginInterface<Entities>>(await connect<Entities>({ connectionString: '', log }))
