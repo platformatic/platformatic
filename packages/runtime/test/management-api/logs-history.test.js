@@ -13,17 +13,17 @@ const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 test('should get runtime logs history via management api', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+  await rm(runtimeTmpDir, { recursive: true, force: true })
 
+  const app = await buildServer(configFile)
   await app.start()
 
   t.after(async () => {
     await app.close()
     await app.managementApi.close()
-    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+    await rm(runtimeTmpDir, { recursive: true, force: true })
   })
 
   const testLogs = 'test-logs-42\n'
@@ -52,10 +52,9 @@ test('should get runtime logs history via management api', async (t) => {
 test('should get logs from previous run', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+  await rm(runtimeTmpDir, { recursive: true, force: true })
 
   const prevRuntimePID = '424242'
   const prevRuntimeLogsDir = getRuntimeLogsDir(projectDir, prevRuntimePID)
@@ -64,12 +63,13 @@ test('should get logs from previous run', async (t) => {
   const prevRuntimeLogs = 'test-logs-42\n'
   await writeFile(join(prevRuntimeLogsDir, 'logs.42'), prevRuntimeLogs)
 
+  const app = await buildServer(configFile)
   await app.start()
 
   t.after(async () => {
     await app.close()
     await app.managementApi.close()
-    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+    await rm(runtimeTmpDir, { recursive: true, force: true })
   })
 
   const client = new Client({
@@ -97,17 +97,17 @@ test('should get logs from previous run', async (t) => {
 test('should throw 404 if log file does not exist', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
-
-  await app.start()
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+  await rm(runtimeTmpDir, { recursive: true, force: true })
+
+  const app = await buildServer(configFile)
+  await app.start()
 
   t.after(async () => {
     await app.close()
     await app.managementApi.close()
-    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+    await rm(runtimeTmpDir, { recursive: true, force: true })
   })
 
   const client = new Client({
