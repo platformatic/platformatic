@@ -44,17 +44,17 @@ test('should get all runtime log indexes', async (t) => {
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
   await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
 
-  const { runtime } = await startRuntime(configFile)
-  t.after(async () => {
-    runtime.kill('SIGINT')
-    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
-  })
-
   const prevRuntimePID = 424242
   const prevTestLogs = 'test-logs-42\n'
   const prevRuntimeLogsDir = getRuntimeLogsDir(projectDir, prevRuntimePID)
   await mkdir(prevRuntimeLogsDir, { recursive: true })
   await writeFile(join(prevRuntimeLogsDir, 'logs.41'), prevTestLogs)
+
+  const { runtime } = await startRuntime(configFile)
+  t.after(async () => {
+    runtime.kill('SIGINT')
+    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+  })
 
   const testLogs = 'test-logs-42\n'
   const runtimeLogsDir = getRuntimeLogsDir(projectDir, runtime.pid)
@@ -105,17 +105,17 @@ test('should get runtime history log for prev run', async (t) => {
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
   await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
 
-  const { runtime } = await startRuntime(configFile)
-  t.after(async () => {
-    runtime.kill('SIGINT')
-    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
-  })
-
   const prevRuntimePID = 424242
   const prevTestLogs = 'test-logs-41\n'
   const prevRuntimeLogsDir = getRuntimeLogsDir(projectDir, prevRuntimePID)
   await mkdir(prevRuntimeLogsDir, { recursive: true })
   await writeFile(join(prevRuntimeLogsDir, 'logs.41'), prevTestLogs)
+
+  const { runtime } = await startRuntime(configFile)
+  t.after(async () => {
+    runtime.kill('SIGINT')
+    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+  })
 
   const runtimeClient = new RuntimeApiClient()
   const runtimeLogsStream = await runtimeClient.getRuntimeLogsStream(runtime.pid, 41, {
@@ -162,18 +162,18 @@ test('should get runtime all logs for prev run', async (t) => {
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
   await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
 
-  const { runtime } = await startRuntime(configFile)
-  t.after(async () => {
-    runtime.kill('SIGINT')
-    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
-  })
-
   const prevRuntimePID = 424242
   const prevTestLogs = 'test-logs-41\n'
   const prevRuntimeLogsDir = getRuntimeLogsDir(projectDir, prevRuntimePID)
   await mkdir(prevRuntimeLogsDir, { recursive: true })
   await writeFile(join(prevRuntimeLogsDir, 'logs.2'), prevTestLogs)
   await writeFile(join(prevRuntimeLogsDir, 'logs.3'), prevTestLogs)
+
+  const { runtime } = await startRuntime(configFile)
+  t.after(async () => {
+    runtime.kill('SIGINT')
+    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+  })
 
   const runtimeClient = new RuntimeApiClient()
   const runtimeLogsStream = await runtimeClient.getRuntimeAllLogsStream(runtime.pid, {
