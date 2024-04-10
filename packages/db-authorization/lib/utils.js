@@ -7,7 +7,7 @@ function getRequestFromContext (ctx) {
   return ctx.reply.request
 }
 
-function getRoles (request, roleKey, anonymousRole) {
+function getRoles (request, roleKey, anonymousRole, isRolePath = false) {
   let output = []
   const user = request.user
   if (!user) {
@@ -15,7 +15,17 @@ function getRoles (request, roleKey, anonymousRole) {
     return output
   }
 
-  const rolesRaw = user[roleKey]
+  let rolesRaw
+  if (isRolePath) {
+    const roleKeys = roleKey.split('.')
+    rolesRaw = user
+    for (const key of roleKeys) {
+      rolesRaw = rolesRaw[key]
+    }
+  } else {
+    rolesRaw = user[roleKey]
+  }
+
   if (typeof rolesRaw === 'string') {
     output = rolesRaw.split(',')
   } else if (Array.isArray(rolesRaw)) {
@@ -24,6 +34,7 @@ function getRoles (request, roleKey, anonymousRole) {
   if (output.length === 0) {
     output.push(anonymousRole)
   }
+
   return output
 }
 module.exports = {

@@ -84,6 +84,28 @@ The roles key in user metadata defaults to `X-PLATFORMATIC-ROLE`. It's possible 
   }
 ```
 
+Another option is to use the `rolePath` field to specify a path to the role in the user metadata. This is useful when the role is nested in the user data extracted from the JWT claims, e.g. if we have a JWT token with:
+
+```json
+{
+  "user": {
+    "roles": ["admin", "editor"]
+  }
+}
+
+```
+
+We can specify the `rolePath` as `user.roles`:
+
+```json
+ "authorization": {
+    "rolePath": "user.roles",
+    ...
+  }
+```
+
+Note that the `roleKey` has the precedence on `rolePath`. If both are set, the `roleKey` will be used and the `rolePath` will be ignored.
+
 ## User metadata
 
 User roles and other user data, such as `userId`, are referred to by Platformatic
