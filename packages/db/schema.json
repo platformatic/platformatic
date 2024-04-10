@@ -736,8 +736,12 @@
         },
         "roleKey": {
           "type": "string",
-          "description": "The user metadata key to store user roles",
+          "description": "The user metadata key to get user roles",
           "default": "X-PLATFORMATIC-ROLE"
+        },
+        "rolePath": {
+          "type": "string",
+          "description": "The user metadata path to get user roles"
         },
         "anonymousRole": {
           "type": "string",
