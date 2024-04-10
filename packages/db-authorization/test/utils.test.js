@@ -60,3 +60,58 @@ test('should get roles from user', (t) => {
     deepEqual(getRoles(requestWithOtherKindOfRole, roleKey, ANONYMOUS_ROLE), [ANONYMOUS_ROLE])
   }
 })
+
+test('should get roles from user with path', (t) => {
+  const { deepEqual } = tspl(t, { plan: 4 })
+  const roleKey = 'role'
+  const isRolePath = true
+  {
+    const requestWithNoUser = {}
+    deepEqual(getRoles(requestWithNoUser, roleKey, ANONYMOUS_ROLE, isRolePath), [ANONYMOUS_ROLE])
+  }
+  {
+    // Past is set, but it is not a path
+    const requestWithStringRoles = {
+      user: {
+        [roleKey]: 'role1,role2,role3'
+      }
+    }
+    deepEqual(getRoles(requestWithStringRoles, roleKey, ANONYMOUS_ROLE, isRolePath), ['role1', 'role2', 'role3'])
+  }
+
+  {
+    // Proper path with array
+    const roleKey = 'resource_access.rest-api.roles'
+    // Past is set, but it is not a path
+    const requestWithStringRoles = {
+      user: {
+        resource_access: {
+          'rest-api': {
+            roles: [
+              'role1',
+              'role2',
+              'role3'
+            ]
+          }
+        }
+      }
+    }
+    deepEqual(getRoles(requestWithStringRoles, roleKey, ANONYMOUS_ROLE, isRolePath), ['role1', 'role2', 'role3'])
+  }
+
+  {
+    // Proper path with comma separated string
+    const roleKey = 'resource_access.rest-api.roles'
+    // Past is set, but it is not a path
+    const requestWithStringRoles = {
+      user: {
+        resource_access: {
+          'rest-api': {
+            roles: 'role1,role2,role3'
+          }
+        }
+      }
+    }
+    deepEqual(getRoles(requestWithStringRoles, roleKey, ANONYMOUS_ROLE, isRolePath), ['role1', 'role2', 'role3'])
+  }
+})

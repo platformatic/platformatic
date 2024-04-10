@@ -50,6 +50,7 @@ export type AddRulesForRoles = <T>(rules: Iterable<AuthorizationRule<T>>) => voi
 export interface DBAuthorizationPluginOptions<T = any> extends FastifyUserPluginOptions {
   adminSecret?: string
   roleKey?: string
+  isRolePath?: boolean
   anonymousRole?: string
   rules: Array<AuthorizationRule<T>>
 }
