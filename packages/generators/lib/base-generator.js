@@ -398,7 +398,6 @@ class BaseGenerator extends FileGenerator {
         ...this.config.devDependencies
       },
       dependencies: {
-        platformatic: `^${this.platformaticVersion}`,
         ...this.config.dependencies
       },
       engines: {
