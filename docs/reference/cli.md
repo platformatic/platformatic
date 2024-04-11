@@ -230,6 +230,7 @@ Options:
 * `-H, --header <string>` - The request header. Can be used multiple times.
 * `-d, --data <string>` - The request data.
 * `-i, --include <boolean>` - Include the response headers in the output. Default is `false`.
+* `-v, --verbose <boolean>` - Make the operation more talkative. Default is `false`.
 * `-o, --output <file>` - Write the response to the specified file.
 
 The `inject` command sends a request to the runtime service and prints the
@@ -403,6 +404,14 @@ export default async function (app: FastifyInstance) {
 }
 ```
 
+You can generate only the types with the --types-only flag.
+
+```bash
+$ platformatic client http://exmaple.com/to/schema/file --name myclient --types-only
+```
+
+Will create the single myclient.d.ts file.
+
 Options:
 
 * `-c, --config <path>` - Path to the configuration file.
@@ -418,8 +427,7 @@ Options:
 * `--validate-response` - If set, will validate the response body against the schema. Ignored if `--frontend`
 * `--language js|ts` - Generate a Javascript or Typescript frontend client. Only works if `--frontend`
 * `--url-auth-headers <stringify-headers>` - When the Open API schema is passed as URL (instead of static file) this property allow to pass authorization headers. Headers should be passed as `string` (e.g. `'{"authorization":"42"}'`).
-
-
+* `--types-only` - Generate only the type file.
 
 ### composer
 
@@ -1181,6 +1189,7 @@ Options:
 * `-H, --header <string>` - The request header. Can be used multiple times.
 * `-d, --data <string>` - The request data.
 * `-i, --include <boolean>` - Include the response headers in the output. Default is `false`.
+* `-v, --verbose <boolean>` - Make the operation more talkative. Default is `false`.
 * `-o, --output <file>` - Write the response to the specified file.
 
 The `inject` command sends a request to the runtime service and prints the
