@@ -1206,7 +1206,7 @@ importers:
         version: 1.43.0
       '@types/react':
         specifier: ^18.2.66
-        version: 18.2.74
+        version: 18.2.75
       '@types/react-dom':
         specifier: ^18.2.22
         version: 18.2.24
@@ -3620,11 +3620,11 @@ packages:
   /@types/react-dom@18.2.24:
     resolution: {integrity: sha512-cN6upcKd8zkGy4HU9F1+/s98Hrp6D4MOcippK4PoE8OZRngohHZpbJn1GsaDLz87MqvHNoT13nHvNqM9ocRHZg==}
     dependencies:
-      '@types/react': 18.2.74
+      '@types/react': 18.2.75
     dev: true
 
-  /@types/react@18.2.74:
-    resolution: {integrity: sha512-9AEqNZZyBx8OdZpxzQlaFEVCSFUM2YXJH46yPOiOpm078k6ZLOCcuAzGum/zK8YBwY+dbahVNbHrbgrAwIRlqw==}
+  /@types/react@18.2.75:
+    resolution: {integrity: sha512-+DNnF7yc5y0bHkBTiLKqXFe+L4B3nvOphiMY3tuA5X10esmjqk7smyBZzbGTy2vsiy/Bnzj8yFIBL8xhRacoOg==}
     dependencies:
       '@types/prop-types': 15.7.12
       csstype: 3.1.3
@@ -5909,7 +5909,7 @@ packages:
     resolution: {integrity: sha512-gXOrdGOd7AWxMMmZl2esd/MgenEn5i9CApO7d6dkXZV/8kNn3/dm/VfkRUfTzvpVJUAsYM2FR+6bYHKcsC8p7w==}
     dependencies:
       fastify-plugin: 4.5.1
-      ghtml: 1.2.1
+      ghtml: 1.2.2
     dev: false
 
   /fastify-metrics@11.0.0(fastify@4.26.2):
@@ -6282,8 +6282,8 @@ packages:
       get-intrinsic: 1.2.4
     dev: true
 
-  /ghtml@1.2.1:
-    resolution: {integrity: sha512-pULT0AVOeotMcqtHx4OE5qeFJTL8C3jb6MM4mY82qgXPh8NRx+PtmxJ/NQYH9D32+7SDSfhvaozU12AjyeRK+g==}
+  /ghtml@1.2.2:
+    resolution: {integrity: sha512-0QOi0vJaKgcPRKc2r9jdW7x4kFgw99tTCf8j8ODkHAqU//zw/DMLbXiwzxnfK4y2VfozhmSV7tzNtpB1eA0qOQ==}
     engines: {node: '>=18'}
     dev: false
 
