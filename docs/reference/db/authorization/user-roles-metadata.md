@@ -104,7 +104,7 @@ We can specify the `rolePath` as `user.roles`:
   }
 ```
 
-Note that the `roleKey` has the precedence on `rolePath`. If both are set, the `roleKey` will be used and the `rolePath` will be ignored.
+Note that the `rolePath` has the precedence on `roleKey`. If both are set, the `rolePath` will be used and the `roleKey` will be ignored.
 
 ## User metadata
 
