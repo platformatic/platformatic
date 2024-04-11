@@ -1,4 +1,9 @@
-import NewApiProjectInstructions from '../getting-started/new-api-project-instructions.md';
+---
+slug: /movie-quotes-app-tutorial
+description: Build an Astro frontend 
+---
+
+import NewApiProjectInstructions from '../../getting-started/new-api-project-instructions.md';
 
 # Movie Quotes App Tutorial
 
@@ -57,9 +62,13 @@ cd tutorial-movie-quotes-app/apps/movie-quotes-api/
 
 ### Define the database schema
 
+Let's create a new directory to store our migration files:
 
+```bash
+mkdir migrations
+```
 
-Then we'll navigate to the file **`001.do.sql`** in the **`migrations`**
+Then we'll create a migration file named **`001.do.sql`** in the **`migrations`**
 directory:
 
 ```sql
