@@ -18,7 +18,7 @@ const PLT_ADMIN_ROLE = 'platformatic-admin'
 async function auth (app, opts) {
   app.register(fastifyUser, opts)
   const adminSecret = opts.adminSecret
-  const roleKey = opts.roleKey || opts.rolePath || 'X-PLATFORMATIC-ROLE'
+  const roleKey = opts.rolePath || opts.roleKey || 'X-PLATFORMATIC-ROLE'
   const isRolePath = !!opts.rolePath // if `true` the role is intepreted as path like `user.role`
   const anonymousRole = opts.anonymousRole || 'anonymous'
 
