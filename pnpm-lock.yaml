@@ -453,7 +453,7 @@ importers:
         version: 9.1.0
       dedent:
         specifier: ^1.5.1
-        version: 1.5.1
+        version: 1.5.3
       json-schema-to-typescript:
         specifier: ^13.1.2
         version: 13.1.2
@@ -4704,8 +4704,8 @@ packages:
       mimic-response: 3.1.0
     dev: false
 
-  /dedent@1.5.1:
-    resolution: {integrity: sha512-+LxW+KLWxu3HW3M2w2ympwtqPrqYRzU8fqi6Fhd18fBALe15blJPI/I4+UHveMVG6lJqB4JNd4UG0S5cnVHwIg==}
+  /dedent@1.5.3:
+    resolution: {integrity: sha512-NHQtfOOW68WD8lgypbLA5oT+Bt0xXJhiYvoR6SmmNXZfpzOGXwdKWmcwG8N7PwVVWV3eF/68nmD9BaJSsTBhyQ==}
     peerDependencies:
       babel-plugin-macros: ^3.1.0
     peerDependenciesMeta:
