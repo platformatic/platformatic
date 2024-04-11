@@ -47,7 +47,7 @@ async function runControl (argv) {
     strict: false
   }).values
 
-  if (args.version) {
+  if (args.version && argv[0] !== 'inject') {
     const packageJson = require(join(__dirname, 'package.json'))
     console.log(packageJson.version)
     process.exit(0)

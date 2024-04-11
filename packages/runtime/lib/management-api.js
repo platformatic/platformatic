@@ -77,6 +77,11 @@ async function createManagementApi (runtimeApiClient) {
       const { id, '*': requestUrl } = request.params
       app.log.debug('proxy request', { id, requestUrl })
 
+      delete request.headers.connection
+      delete request.headers['content-length']
+      delete request.headers['content-encoding']
+      delete request.headers['transfer-encoding']
+
       const injectParams = {
         method: request.method,
         url: requestUrl || '/',

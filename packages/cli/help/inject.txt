@@ -16,6 +16,7 @@ Options:
 * `-H, --header <string>` - The request header. Can be used multiple times.
 * `-d, --data <string>` - The request data.
 * `-i, --include <boolean>` - Include the response headers in the output. Default is `false`.
+* `-v, --verbose <boolean>` - Make the operation more talkative. Default is `false`.
 * `-o, --output <file>` - Write the response to the specified file.
 
 The `inject` command sends a request to the runtime service and prints the
