@@ -149,6 +149,7 @@ const composer = {
     },
     openapi: openApiBase,
     graphql: graphqlComposerOptions,
+    addEmptySchema: { type: 'boolean', default: false },
     refreshTimeout: { type: 'integer', minimum: 0, default: 1000 }
   },
   required: ['services'],

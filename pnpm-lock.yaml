@@ -400,8 +400,8 @@ importers:
         specifier: ^4.26.2
         version: 4.26.2
       fastify-openapi-glue:
-        specifier: ^4.4.3
-        version: 4.5.0
+        specifier: ^4.6.0
+        version: 4.6.0
       fastify-plugin:
         specifier: ^4.5.1
         version: 4.5.1
@@ -5886,6 +5886,17 @@ packages:
 
   /fastify-openapi-glue@4.5.0:
     resolution: {integrity: sha512-ynmdpV8F17TUs3tdLuicM0nprHF+qQ4S3CYpQJcmkqFyeVrk1AltwOUJ64qmCGXy8K0an+DXlsvTLcDnX6nd9Q==}
+    engines: {node: '>=14.0.0'}
+    hasBin: true
+    dependencies:
+      '@seriousme/openapi-schema-validator': 2.2.1
+      fastify-plugin: 4.5.1
+      js-yaml: 4.1.0
+      minimist: 1.2.8
+    dev: false
+
+  /fastify-openapi-glue@4.6.0:
+    resolution: {integrity: sha512-7fe/P/WRR9BB3T5jWUznl+5yP3x9nX+rgF5CYyzQV4YkIRsCZazg7k98Xeiq0GmnCJOSw8SMXdetUoZOfT3ujA==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:

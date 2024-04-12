@@ -91,6 +91,8 @@ the services managed by the composer. Each service object supports the following
 
 - **`refreshTimeout`** (`number`) - The number of milliseconds to wait for check for changes in the services. If not specified, the default value is `1000`; set to `0` to disable.
 
+- **`addEmptySchema`** (`boolean`) - If true, the composer will add an empty response schema to the composed OpenAPI specification. Default is `false`.
+
 #### `openapi`
 
 - **`url`** (`string`) - A path of the route that exposes the OpenAPI specification. If a service is a Platformatic Service or Platformatic DB, use `/documentation/json` as a value. Use this or `file` option to specify the OpenAPI specification.

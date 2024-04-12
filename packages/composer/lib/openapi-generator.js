@@ -85,6 +85,7 @@ async function composeOpenAPI (app, opts) {
 
   await app.register(await import('fastify-openapi-glue'), {
     specification: composedOpenApiSchema,
+    addEmptySchema: opts.addEmptySchema,
     operationResolver: (operationId, method, openApiPath) => {
       const { origin, prefix, schema } = apiByApiRoutes[openApiPath]
       const originPath = schema[originPathSymbol]
