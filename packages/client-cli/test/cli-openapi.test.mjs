@@ -1085,7 +1085,7 @@ test('requestbody as array', async (t) => {
   equal(data.includes('export type PostFoobarRequest = Array<{ \'id\'?: string; \'title\'?: string }>'), true)
 })
 
-test.only('requestBody and params should generate a full request', async (t) => {
+test('requestBody and params should generate a full request', async (t) => {
   const dir = await moveToTmpdir(after)
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'requestbody-and-parameters-openapi.json')
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
