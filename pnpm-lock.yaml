@@ -49,8 +49,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.1
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       c8:
         specifier: ^9.1.0
         version: 9.1.0
@@ -149,8 +149,8 @@ importers:
         version: 6.12.0
     devDependencies:
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       c8:
         specifier: ^9.1.0
         version: 9.1.0
@@ -204,8 +204,8 @@ importers:
         specifier: workspace:*
         version: link:../telemetry
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       c8:
         specifier: ^9.1.0
         version: 9.1.0
@@ -301,8 +301,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       dotenv:
         specifier: ^16.4.5
         version: 16.4.5
@@ -446,8 +446,8 @@ importers:
         specifier: workspace:*
         version: link:../db
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       c8:
         specifier: ^9.1.0
         version: 9.1.0
@@ -516,8 +516,8 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       c8:
         specifier: ^9.1.0
         version: 9.1.0
@@ -574,8 +574,8 @@ importers:
         specifier: workspace:*
         version: link:../runtime
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       desm:
         specifier: ^1.3.1
         version: 1.3.1
@@ -680,8 +680,8 @@ importers:
         specifier: ^8.12.0
         version: 8.12.0
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       c8:
         specifier: ^9.1.0
         version: 9.1.0
@@ -798,8 +798,8 @@ importers:
         specifier: ^8.12.0
         version: 8.12.0
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       c8:
         specifier: ^9.1.0
         version: 9.1.0
@@ -970,8 +970,8 @@ importers:
         specifier: ^1.5.0
         version: 1.5.0
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       c8:
         specifier: ^9.1.0
         version: 9.1.0
@@ -1058,8 +1058,8 @@ importers:
         specifier: workspace:*
         version: link:../sql-mapper
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       fast-jwt:
         specifier: ^3.3.3
         version: 3.3.3
@@ -1101,8 +1101,8 @@ importers:
         version: 4.5.1
     devDependencies:
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       fastify:
         specifier: ^4.26.2
         version: 4.26.2
@@ -1141,8 +1141,8 @@ importers:
         version: 6.12.0
     devDependencies:
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       c8:
         specifier: ^9.1.0
         version: 9.1.0
@@ -1323,8 +1323,8 @@ importers:
         specifier: ^9.0.7
         version: 9.0.7
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       c8:
         specifier: ^9.1.0
         version: 9.1.0
@@ -1456,8 +1456,8 @@ importers:
         specifier: workspace:*
         version: link:../sql-mapper
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       c8:
         specifier: ^9.1.0
         version: 9.1.0
@@ -1648,8 +1648,8 @@ importers:
         specifier: ^1.5.0
         version: 1.5.0
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       json-schema-to-typescript:
         specifier: ^13.1.2
         version: 13.1.2
@@ -1718,8 +1718,8 @@ importers:
         specifier: workspace:*
         version: link:../sql-mapper
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       fastify:
         specifier: ^4.26.2
         version: 4.26.2
@@ -1788,8 +1788,8 @@ importers:
         specifier: workspace:*
         version: link:../telemetry
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       fastify:
         specifier: ^4.26.2
         version: 4.26.2
@@ -1822,8 +1822,8 @@ importers:
         specifier: workspace:*
         version: link:../sql-mapper
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       dtsgenerator:
         specifier: ^3.19.1
         version: 3.19.1
@@ -1880,8 +1880,8 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       fastify:
         specifier: ^4.26.2
         version: 4.26.2
@@ -1938,8 +1938,8 @@ importers:
         specifier: workspace:*
         version: link:../sql-mapper
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       fastify:
         specifier: ^4.26.2
         version: 4.26.2
@@ -2001,8 +2001,8 @@ importers:
         version: 4.5.1
     devDependencies:
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       fastify:
         specifier: ^4.26.2
         version: 4.26.2
@@ -2035,8 +2035,8 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1
       borp:
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.11.0
+        version: 0.11.0
       fastify:
         specifier: ^4.26.2
         version: 4.26.2
@@ -4169,8 +4169,8 @@ packages:
       lodash: 4.17.21
     dev: false
 
-  /borp@0.10.0:
-    resolution: {integrity: sha512-O5ToZzO0r3K+cH4x/eS0CRO7woLhiJqgufnCSb2tSjZJOe6bLIlxRaC6YQTaorNF9Nvid9HKYmfpPOuJUNKQvw==}
+  /borp@0.11.0:
+    resolution: {integrity: sha512-pwyiJAa7JwAfHwoMbGuIgRkpqbFJ8rc9mVEsBvhCcbkYIh3lKjMGhvWFJ+2xTANSZSkgvdL+7Nx1qiYdaWP3MA==}
     hasBin: true
     dependencies:
       '@reporters/github': 1.7.0
