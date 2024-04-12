@@ -90,3 +90,26 @@ export function getResponseTypes (responses) {
   })
   return output
 }
+
+/**
+ * Returns the type of the request body which can be 'object', 'array', 'plain' or 'empty'
+ * @param {object} requestBodyBlock The requestBody OpenAPI spec block
+ */
+export function getBodyType (requestBodyBlock) {
+  if (requestBodyBlock === undefined) {
+    return 'empty'
+  }
+  if (requestBodyBlock.content && requestBodyBlock.content['application/json']) {
+    const schema = requestBodyBlock.content['application/json'].schema
+    if (schema.$ref) {
+      return 'object'
+    }
+    if (schema.type === 'array') {
+      return 'array'
+    }
+    if (schema.type === 'object') {
+      return 'object'
+    }
+  }
+  return 'plain'
+}

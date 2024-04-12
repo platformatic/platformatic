@@ -1,6 +1,6 @@
 'use strict'
 
-import { capitalize } from './utils.mjs'
+import { capitalize, getBodyType } from './utils.mjs'
 import { hasDuplicatedParameters } from '@platformatic/client'
 import jsonpointer from 'jsonpointer'
 import errors from './errors.mjs'
@@ -78,7 +78,8 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
       }
     }
     if (requestBody) {
-      if (hasParametersParsed) {
+      const bodyType = getBodyType(requestBody)
+      if (hasParametersParsed && (bodyType === 'array' || bodyType === 'plain')) {
         forceFullRequest = true
       }
       const writeContentOutput = writeContent(bodyWriter, requestBody.content, schema, addedProps, 'req', forceFullRequest ? 'body' : null)
