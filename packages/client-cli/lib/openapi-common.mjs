@@ -11,14 +11,14 @@ import CodeBlockWriter from 'code-block-writer'
 
 export function writeOperations (interfacesWriter, mainWriter, operations, { fullRequest, fullResponse, optionalHeaders, schema }) {
   const originalFullResponse = fullResponse
+  const originalFullRequest = fullRequest
   let currentFullResponse = originalFullResponse
+  let currentFullRequest = originalFullRequest
   for (const operation of operations) {
     const operationId = operation.operation.operationId
     const camelCaseOperationId = camelcase(operationId)
     const { parameters, responses, requestBody } = operation.operation
-    let forceFullRequest = fullRequest || hasDuplicatedParameters(operation.operation)
-    // signal that "parameters" have been parsed (i.e. headers)
-    let hasParametersParsed = false
+    currentFullRequest = fullRequest || hasDuplicatedParameters(operation.operation)
     const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
     if (successResponses.length !== 1) {
       currentFullResponse = true
@@ -36,7 +36,7 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
 
     const addedProps = new Set()
     if (parameters) {
-      if (forceFullRequest) {
+      if (currentFullRequest) {
         const bodyParams = []
         const pathParams = []
         const queryParams = []
@@ -66,7 +66,6 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
         writeProperties(bodyWriter, 'headers', headersParams, addedProps, 'req', schema)
       } else {
         for (const parameter of parameters) {
-          hasParametersParsed = true
           let { name, required } = parameter
           if (optionalHeaders.includes(name)) {
             required = false
@@ -79,10 +78,10 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
     }
     if (requestBody) {
       const bodyType = getBodyType(requestBody)
-      if (hasParametersParsed && (bodyType === 'array' || bodyType === 'plain')) {
-        forceFullRequest = true
+      if (parameters && parameters.length && (bodyType === 'array' || bodyType === 'plain')) {
+        currentFullRequest = true
       }
-      const writeContentOutput = writeContent(bodyWriter, requestBody.content, schema, addedProps, 'req', forceFullRequest ? 'body' : null)
+      const writeContentOutput = writeContent(bodyWriter, requestBody.content, schema, addedProps, 'req', currentFullRequest ? 'body' : null)
       isRequestArray = writeContentOutput.isArray
       isStructuredType = writeContentOutput.isStructuredType
     } else {
@@ -92,7 +91,7 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
       }
     }
 
-    if (isStructuredType || forceFullRequest || hasParametersParsed) {
+    if (isStructuredType || currentFullRequest || !isRequestArray) {
       interfacesWriter.write(`export type ${operationRequestName} =`).block(() => {
         interfacesWriter.write(bodyWriter.toString())
       })
@@ -105,6 +104,7 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
     const allResponsesName = responsesWriter(capitalizedCamelCaseOperationId, responses, currentFullResponse, interfacesWriter, schema)
     mainWriter.writeLine(`${camelCaseOperationId}(req?: ${operationRequestName}${isRequestArray ? '[]' : ''}): Promise<${allResponsesName}>;`)
     currentFullResponse = originalFullResponse
+    currentFullRequest = originalFullRequest
   }
 }
 
