@@ -260,6 +260,7 @@ export interface PlatformaticComposer {
         | string;
       addEntitiesResolvers?: boolean;
     };
+    addEmptySchema?: boolean;
     refreshTimeout?: number;
   };
   metrics?:
