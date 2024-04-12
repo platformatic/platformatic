@@ -374,7 +374,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.20.25(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.2)
+        version: 1.20.27(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.2)
       ajv:
         specifier: ^8.12.0
         version: 8.12.0
@@ -1552,7 +1552,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.20.25(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.2)
+        version: 1.20.27(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.2)
       '@types/ws':
         specifier: ^8.5.10
         version: 8.5.10
@@ -1917,7 +1917,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.20.25(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.2)
+        version: 1.20.27(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.2)
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -3502,8 +3502,8 @@ packages:
     dev: true
     optional: true
 
-  /@scalar/fastify-api-reference@1.20.25(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.2):
-    resolution: {integrity: sha512-nzR48CVrA5qbBI50O9LfPRT31AAQ6Db4OSIIqAcfLuUlf5K2L+JbqtmafQNocWbt5b27YXVRwc6rHBcdoEC4/Q==}
+  /@scalar/fastify-api-reference@1.20.27(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.2):
+    resolution: {integrity: sha512-fSLu2QeJk1uM7MM3h5yTCWzTBFXfJZzkKNlo7FG2nTEEuN5mDVXJf7DaGzp87Hj+OcrwxKcfFMNhMdi+KYQIaQ==}
     engines: {node: '>=18'}
     peerDependencies:
       fastify: ^4.0.0
