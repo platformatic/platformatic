@@ -1,9 +1,4 @@
----
-slug: /movie-quotes-app-tutorial
-description: Build an Astro frontend 
----
-
-import NewApiProjectInstructions from '../../getting-started/new-api-project-instructions.md';
+import NewApiProjectInstructions from '../getting-started/new-api-project-instructions.md';
 
 # Movie Quotes App Tutorial
 

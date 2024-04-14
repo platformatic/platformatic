@@ -1,3 +1,8 @@
+---
+id: overview
+description: overview
+---
+
 # Platformatic Client
 
 Create a Fastify plugin that exposes a client for a remote OpenAPI or GraphQL API.

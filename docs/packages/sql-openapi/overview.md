@@ -1,3 +1,8 @@
+---
+title: Overview
+label: SQL-RestAPI
+---
+
 # Introduction to the REST API
 
 The Platformatic DB OpenAPI plugin automatically starts a REST API server (powered by [Fastify](https://fastify.io)) that provides CRUD (**C**reate, **R**ead, **U**pdate, **D**elete) functionality for each entity.

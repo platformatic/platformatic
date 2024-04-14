@@ -1,7 +1,8 @@
 ---
-title: Overview
+title: Introduction
 label: Welcome to Platformatic
 ---
+
 
 # Welcome to Platformatic
 
@@ -15,66 +16,6 @@ Our goal is to make API development simple: we aim is to remove all friction fro
 
 Platformatic is a collection of Open Source tools designed to eliminate friction
 in backend development. 
-
-<CardSection
-  id="essentials"
-  description=""
-  HeadingTag="h2"
->
-  <Card
-    icon={<span className="text-3xl" style={{fontFamily: 'Inter'}}>1️⃣</span>}
-    title="Get your keys"
-    to="./get-started"
-    description="Learn how to register on Dyte and get your API Keys"
-  />
-  <Card
-    icon={<span className="text-3xl" style={{fontFamily: 'Inter'}}>2️⃣</span>}
-    title="Concepts"
-    to="./concepts"
-    description="Learn about the architecture, design and basic concepts behind Dyte"
-  />
-  <Card
-    icon={<span className="text-3xl" style={{fontFamily: 'Inter'}}>3️⃣</span>}
-    title="Server Setup"
-    to="./build-live-video-app"
-    description="Steps to access Dyte's REST API"
-  />
-  <Card
-    icon={<span className="text-3xl" style={{fontFamily: 'Inter'}}>4️⃣</span>}
-    title="Client Setup"
-    to="./client-setup"
-    description="Set up and configure your client to integrate video calls "
-  />
-</CardSection>
-
-<head>
-  <title>Overview Guide</title>
-  <meta
-    name="description"
-    content="Get started with Dyte's video conferencing capabilities. Follow our guide for an introduction to video conferencing and its features."
-  />
-</head>
-
-
-
-
-
-
-
-The base services are:
-- [Welcome to Platformatic](#welcome-to-platformatic)
-  - [Why Choose Platformatic?](#why-choose-platformatic)
-  - [Platformatic Service](#platformatic-service)
-  - [Platformatic DB](#platformatic-db)
-  - [Platformatic Composer](#platformatic-composer)
-  - [Platformatic Runtime](#platformatic-runtime)
-  - [Platformatic Stackables](#platformatic-stackables)
-  - [Platformatic Cloud](#platformatic-cloud)
-
-These micro-services can be developed and deployed independently or aggregated into a single API using [Platformatic Composer](#platformatic-composer) or deployed as a single unit using [Platformatic Runtime](#platformatic-runtime).
-
-All platformatic components can be reused with [Stackables](#platformatic-stackables).
-And finally, all Platformatic components can be deployed on [Platformatic Cloud](#platformatic-cloud).
 
 
 ## Platformatic Service
@@ -136,18 +77,20 @@ Platformatic Stackables are reusable components that can be used to build Platfo
 
 This is useful to publish the application on the public npm registry (or a private one!), including building your own CLI, or to create a specialized template for your organization to allow for centralized bugfixes and updates.
 
-## Platformatic Cloud 
+## Other Resources 
+
+<!-- ## Platformatic Cloud 
 [Platformatic Cloud](https://platformatic.cloud) allows to deploy Platformatic Applications on our cloud for both static deployments and PR reviews. 
 The deployment on the cloud can be done:
 - Automatically using the GitHub actions created with `create-platformatic` 
 - Using the Platformatic CLI (see https://docs.platformatic.dev/docs/reference/cli#deploy)
 
-If you configure the GitHub actions, you can deploy your application on the cloud by simply pushing to the main branch or creating a PR. For a guide about how to do a deploy on Platformatic Cloud, please check the [Platformatic Cloud Quick Start Guide](https://docs.platformatic.dev/docs/platformatic-cloud/quick-start-guide).
+If you configure the GitHub actions, you can deploy your application on the cloud by simply pushing to the main branch or creating a PR. For a guide about how to do a deploy on Platformatic Cloud, please check the [Platformatic Cloud Quick Start Guide](https://docs.platformatic.dev/docs/platformatic-cloud/quick-start-guide). -->
 
 
-:::info
+<!-- :::info
 If you create a PR, we calculate automatically the "risk score" for that PR. For more info about this, 
 see [Calculate the risk of a pull request](https://docs.platformatic.dev/docs/platformatic-cloud/quick-start-guide/#calculate-the-risk-of-a-pull-request).
-:::
+::: -->
 
 

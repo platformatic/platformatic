@@ -1,3 +1,8 @@
+---
+title: Overview
+label: Platformatic DB
+---
+
 # Platformatic DB
 
 Platformatic DB is an HTTP server that provides a flexible set of tools for
