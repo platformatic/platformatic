@@ -79,19 +79,9 @@ This is useful to publish the application on the public npm registry (or a priva
 
 ## Other Resources 
 
-<!-- ## Platformatic Cloud 
-[Platformatic Cloud](https://platformatic.cloud) allows to deploy Platformatic Applications on our cloud for both static deployments and PR reviews. 
-The deployment on the cloud can be done:
-- Automatically using the GitHub actions created with `create-platformatic` 
-- Using the Platformatic CLI (see https://docs.platformatic.dev/docs/reference/cli#deploy)
-
-If you configure the GitHub actions, you can deploy your application on the cloud by simply pushing to the main branch or creating a PR. For a guide about how to do a deploy on Platformatic Cloud, please check the [Platformatic Cloud Quick Start Guide](https://docs.platformatic.dev/docs/platformatic-cloud/quick-start-guide). -->
-
-
-<!-- :::info
-If you create a PR, we calculate automatically the "risk score" for that PR. For more info about this, 
-see [Calculate the risk of a pull request](https://docs.platformatic.dev/docs/platformatic-cloud/quick-start-guide/#calculate-the-risk-of-a-pull-request).
-::: -->
-::: -->
+Have a look at our [FAQ](),you might find your questions answered there.
+Check out our [Blog](https://blog.platformatic.dev/) and watch tutorials on [YouTube](https://www.youtube.com/channel/UCLuqTMhiF1BHGPTLYO4M3Gw).
+Join our Community on [Discord](https://discord.gg/platformatic)for updates and share your thoughts.
+Follow us on [Twitter](https://twitter.com/platformatic).
 
 
