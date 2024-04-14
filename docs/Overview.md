@@ -92,5 +92,6 @@ If you configure the GitHub actions, you can deploy your application on the clou
 If you create a PR, we calculate automatically the "risk score" for that PR. For more info about this, 
 see [Calculate the risk of a pull request](https://docs.platformatic.dev/docs/platformatic-cloud/quick-start-guide/#calculate-the-risk-of-a-pull-request).
 ::: -->
+::: -->
 
 
