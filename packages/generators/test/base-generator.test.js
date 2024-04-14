@@ -771,7 +771,7 @@ test('should load data from directory', async (t) => {
   assert.deepEqual(data, expected)
 })
 
-test.only('on update should just touch the packages configuration', async (t) => {
+test('on update should just touch the packages configuration', async (t) => {
   mockNpmJsRequestForPkgs(['@fastify/foo-plugin'])
   const runtimeDirectory = join(__dirname, 'fixtures', 'sample-runtime', 'services', 'rival')
   const dir = await moveToTmpdir(after)

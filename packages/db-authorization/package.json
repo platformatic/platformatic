@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db-authorization",
-  "version": "1.34.0",
+  "version": "1.35.2",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -20,7 +20,7 @@
     "@matteo.collina/tspl": "^0.1.1",
     "@platformatic/db-core": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
-    "borp": "^0.10.0",
+    "borp": "^0.11.0",
     "fast-jwt": "^3.3.3",
     "fastify": "^4.26.2",
     "snazzy": "^9.0.0",

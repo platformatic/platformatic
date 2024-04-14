@@ -174,6 +174,61 @@ test('should inject runtime service with output to the file', async (t) => {
   assert.deepStrictEqual(response, { foo: 'bar' })
 })
 
+test('should inject runtime service with --verbose option', async (t) => {
+  const projectDir = join(fixturesDir, 'runtime-1')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(() => {
+    app.close()
+    app.managementApi.close()
+  })
+
+  const child = await execa(
+    'node',
+    [
+      cliPath, 'inject',
+      '-n', 'runtime-1',
+      '-s', 'service-1',
+      '-X', 'POST',
+      '-H', 'content-type:application/json',
+      '-H', 'foo: bar',
+      '-H', 'bar: baz',
+      '-d', '{"foo":"bar"}',
+      '-v',
+      '/mirror'
+    ]
+  )
+  assert.strictEqual(child.exitCode, 0)
+
+  const responseLines = child.stdout.split('\n')
+  assert.strictEqual(responseLines[0], '> POST /mirror HTTP/1.1')
+  assert.strictEqual(responseLines[1], '> content-type: application/json')
+  assert.strictEqual(responseLines[2], '> foo:  bar')
+  assert.strictEqual(responseLines[3], '> bar:  baz')
+  assert.strictEqual(responseLines[4], '> ')
+  assert.strictEqual(responseLines[5], '< HTTP/1.1 200')
+
+  let responseBody = ''
+  const responseHeaders = {}
+  for (let i = 6; i < responseLines.length; i++) {
+    const responseLine = responseLines[i].replace('< ', '')
+    if (responseLine === '') {
+      responseBody = responseLines.slice(i + 1).join('\n')
+      break
+    }
+    const [name, value] = responseLine.split(': ')
+    responseHeaders[name] = value
+  }
+  assert.strictEqual(responseHeaders.foo, 'bar')
+  assert.strictEqual(responseHeaders.bar, 'baz')
+
+  const response = JSON.parse(responseBody)
+  assert.deepStrictEqual(response, { foo: 'bar' })
+})
+
 test('should throw if runtime is missing', async (t) => {
   const child = await execa('node', [cliPath, 'inject', '-p', 42])
   assert.strictEqual(child.exitCode, 0)

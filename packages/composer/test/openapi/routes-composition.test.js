@@ -7,6 +7,7 @@ const { request } = require('undici')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 const {
   createComposer,
+  createBasicService,
   createOpenApiService,
   testEntityRoutes
 } = require('../helper')
@@ -320,4 +321,40 @@ test('should parse array querystring', async (t) => {
     path: '/users?fields=id,name'
   })
   assert.equal(statusCode, 200)
+})
+
+test('should compose empty responses', async (t) => {
+  const api = await createBasicService(t)
+  await api.listen({ port: 0 })
+
+  const composer = await createComposer(t, {
+    composer: {
+      services: [
+        {
+          id: 'api1',
+          origin: 'http://127.0.0.1:' + api.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            prefix: '/api'
+          }
+        }
+      ],
+      addEmptySchema: true
+    }
+  })
+
+  await composer.start()
+
+  const { statusCode, body } = await composer.inject({
+    method: 'GET',
+    url: '/documentation/json'
+  })
+  assert.equal(statusCode, 200)
+
+  const openApiSchema = JSON.parse(body)
+  openApiValidator.validate(openApiSchema)
+
+  const emptyRouteResponses = openApiSchema.paths['/api/empty'].get.responses
+  assert.ok(emptyRouteResponses['204'])
+  assert.ok(emptyRouteResponses['302'])
 })

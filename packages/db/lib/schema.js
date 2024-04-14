@@ -246,6 +246,10 @@ const authorization = {
       description: 'The user metadata key to store user roles',
       default: 'X-PLATFORMATIC-ROLE'
     },
+    rolePath: {
+      type: 'string',
+      description: 'The user metadata path to store user roles'
+    },
     anonymousRole: {
       type: 'string',
       description: 'The role name for anonymous users',

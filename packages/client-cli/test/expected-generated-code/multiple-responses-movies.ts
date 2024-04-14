@@ -6,6 +6,14 @@ import type * as Types from './movies-types'
 // The base URL for the API. This can be overridden by calling `setBaseUrl`.
 let baseUrl = ''
 export const setBaseUrl = (newUrl: string) : void => { baseUrl = newUrl }
+/* @ts-ignore */
+function headersToJSON(headers: Headers): Object {
+  const output = {} as any
+  headers.forEach((value, key) => {
+    output[key] = value
+  })
+  return output
+}
 
 const _getPkgScopeNameVersion = async (url: string, request: Types.GetPkgScopeNameVersionRequest): Promise<Types.GetPkgScopeNameVersionResponses> => {
 
@@ -15,7 +23,7 @@ const _getPkgScopeNameVersion = async (url: string, request: Types.GetPkgScopeNa
   if (textResponses.includes(response.status)) {
     return {
       statusCode: response.status as 302 | 400,
-      headers: response.headers,
+      headers: headersToJSON(response.headers),
       body: await response.text()
     }
   }
@@ -23,7 +31,7 @@ const _getPkgScopeNameVersion = async (url: string, request: Types.GetPkgScopeNa
   if (blobResponses.includes(response.status)) {
     return {
       statusCode: response.status as 202,
-      headers: response.headers,
+      headers: headersToJSON(response.headers),
       body: await response.blob()
     }
   }
@@ -31,20 +39,20 @@ const _getPkgScopeNameVersion = async (url: string, request: Types.GetPkgScopeNa
   if (jsonResponses.includes(response.status)) {
     return {
       statusCode: response.status as 200 | 404,
-      headers: response.headers,
+      headers: headersToJSON(response.headers),
       body: await response.json()
     }
   }
-  if (response.headers['content-type'] === 'application/json') {
+  if (response.headers.get('content-type') === 'application/json') {
     return {
       statusCode: response.status as 200 | 202 | 302 | 400 | 404,
-      headers: response.headers,
+      headers: headersToJSON(response.headers),
       body: await response.json() as any
     }
   }
   return {
     statusCode: response.status as 200 | 202 | 302 | 400 | 404,
-    headers: response.headers,
+    headers: headersToJSON(response.headers),
     body: await response.text() as any
   }
 }

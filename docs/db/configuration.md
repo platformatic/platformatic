@@ -435,6 +435,8 @@ calls. Use an [environment variable placeholder](#environment-variable-placehold
 to securely provide the value for this setting.
 - `roleKey` (`string`, default: `X-PLATFORMATIC-ROLE`): The name of the key in user
   metadata that is used to store the user's roles. See [Role configuration](/docs/reference/db/authorization/user-roles-metadata#role-configuration).
+- `rolePath` (`string`): The name of the dot-separated path in user
+  metadata that is used to store the user's roles. See [Role configuration](/docs/reference/db/authorization/user-roles-metadata#role-configuration).
 - `anonymousRole` (`string`, default: `anonymous`): The name of the anonymous role. See [Role configuration](/docs/reference/db/authorization/user-roles-metadata#role-configuration).
 - `jwt` (`object`): Configuration for the [JWT authorization strategy](/docs/reference/db/authorization/strategies#json-web-token-jwt).
   Any option accepted by [`@fastify/jwt`](https://github.com/fastify/fastify-jwt)

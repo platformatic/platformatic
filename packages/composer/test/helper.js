@@ -47,6 +47,19 @@ async function createBasicService (t) {
     throw new Error('KA-BOOM!!!')
   })
 
+  app.get('/empty', {
+    schema: {
+      response: {
+        204: {
+          type: 'null'
+        },
+        302: {
+          type: 'null'
+        }
+      }
+    }
+  }, async () => {})
+
   app.get('/object', {
     schema: {
       response: {

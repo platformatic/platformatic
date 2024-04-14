@@ -4,7 +4,7 @@ import assert from 'node:assert'
 import { tmpdir, platform } from 'node:os'
 import { test } from 'node:test'
 import { join } from 'node:path'
-import { readdir, writeFile, mkdir, rmdir } from 'node:fs/promises'
+import { readdir, writeFile, mkdir, rm } from 'node:fs/promises'
 import { execa } from 'execa'
 import * as desm from 'desm'
 import { startRuntime, getPlatformaticVersion } from './helper.mjs'
@@ -81,7 +81,7 @@ test('should get no runtimes running', async (t) => {
 
   {
     // This should work even if there is no /tmp/platformatic/runtimes directory
-    await rmdir(PLATFORMATIC_TMP_DIR, { recursive: true })
+    await rm(PLATFORMATIC_TMP_DIR, { recursive: true, force: true }).catch(() => {})
     const child = await execa('node', [cliPath, 'ps'])
     assert.strictEqual(child.exitCode, 0)
     const runtimesTable = child.stdout
