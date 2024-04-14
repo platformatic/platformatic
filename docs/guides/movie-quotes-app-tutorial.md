@@ -270,7 +270,7 @@ The GraphQL schema shows all of the queries and mutations that we can run
 against our GraphQL API, as well as the types of data that it expects as input.
 </TabItem>
 <TabItem value="rest" label="Rest API">
-This is for Open APi Platformatic Rest API
+This is for Open APi Platformatic Rest API with Open API. 
 </TabItem>
 </Tabs>
 
