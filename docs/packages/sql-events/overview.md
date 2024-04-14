@@ -1,4 +1,9 @@
-# Introduction to the sql-events module
+---
+title: Overview
+label: sql-events
+---
+
+# Platformatic DB sql-events module
 
 The Platformatic DB sql-events uses [mqemitter](http://npm.im/mqemitter) to publish events when [entities](/reference/sql-mapper/entities/introduction.md) are saved and deleted.
 

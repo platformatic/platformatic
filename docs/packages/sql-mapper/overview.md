@@ -1,4 +1,9 @@
-# Introduction to @platformatic/sql-mapper
+---
+title: Overview
+label: Introduction to @platformatic/sql-mapper
+---
+
+# Introduction to `@platformatic/sql-mapper`
 
 `@platformatic/sql-mapper` is the underlining utility that Platformatic DB uses to create useful utilities to
 manipulate your SQL database using JavaScript.

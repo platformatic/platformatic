@@ -1,6 +1,9 @@
-# Authorization
+---
+title: Overview
+label: Authorization
+---
 
-## Introduction
+# Introduction
 
 Authorization in Platformatic DB is **role-based**. User authentication and the
 assignment of roles must be handled by an external authentication service.

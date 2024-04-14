@@ -1,4 +1,9 @@
-# Introduction to the GraphQL API
+---
+title: Overview
+label: SQL-GraphQL
+---
+
+# Platformatic DB GraphQL 
 
 The Platformatic DB GraphQL plugin starts a GraphQL server wand makes it available
 via a `/graphql` endpoint. This endpoint is automatically ready to run queries and

@@ -1,4 +1,7 @@
 import NewApiProjectInstructions from '../getting-started/new-api-project-instructions.md';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 
 # Movie Quotes App Tutorial
 
@@ -171,6 +174,8 @@ npm run start
 The new migration should be automatically applied and we'll see the log message
 `running 002.do.sql`.
 
+<Tabs>
+<TabItem value="graphql" label="GraphQL">
 Our Platformatic DB server also provides a GraphQL API. Let's open up the GraphiQL
 application in our web browser:
 
@@ -263,6 +268,12 @@ npx platformatic db schema graphql
 
 The GraphQL schema shows all of the queries and mutations that we can run
 against our GraphQL API, as well as the types of data that it expects as input.
+</TabItem>
+<TabItem value="rest" label="Rest API">
+This is for Open APi Platformatic Rest API with Open API. 
+</TabItem>
+</Tabs>
+
 
 ### Populate the database
 

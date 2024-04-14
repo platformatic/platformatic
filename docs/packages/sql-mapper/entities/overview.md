@@ -1,3 +1,8 @@
+---
+title: Overview
+label: Entities
+---
+
 # Introduction to Entities
 
 The primary goal of Platformatic DB is to read a database schema and generate REST and GraphQL endpoints that enable the execution of CRUD (Create/Retrieve/Update/Delete) operations against the database.

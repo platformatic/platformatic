@@ -1,3 +1,8 @@
+---
+title: Overview
+label: Platformatic Service
+---
+
 # Platformatic Service
 
 Platformatic Service is an HTTP server that provides a developer tools for
