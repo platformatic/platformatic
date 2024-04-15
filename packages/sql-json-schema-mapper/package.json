@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-json-schema-mapper",
-  "version": "1.35.3",
+  "version": "1.35.4",
   "description": "Map SQL entity to JSON schema",
   "main": "index.js",
   "scripts": {
