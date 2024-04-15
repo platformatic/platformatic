@@ -1047,7 +1047,7 @@ importers:
         version: 8.3.0
       '@fastify/session':
         specifier: ^10.7.0
-        version: 10.7.0
+        version: 10.7.1
       '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
@@ -2863,8 +2863,8 @@ packages:
       http-errors: 2.0.0
       mime: 3.0.0
 
-  /@fastify/session@10.7.0:
-    resolution: {integrity: sha512-ECA75gnyaxcyIukgyO2NGT3XdbLReNl/pTKrrkRfDc6pVqNtdptwwfx9KXrIMOfsO4B3m84eF3wZ9GgnebiZ4w==}
+  /@fastify/session@10.7.1:
+    resolution: {integrity: sha512-7useheNpXAMvPb5AmqjUvdkOqfABfgU+je3fvu3uqZt2uZ8ZTLZU0ogmLtSDd0QJ7vksnUzp7AutjztilEp3sQ==}
     dependencies:
       fastify-plugin: 4.5.1
       safe-stable-stringify: 2.4.3
@@ -5883,7 +5883,7 @@ packages:
     resolution: {integrity: sha512-gXOrdGOd7AWxMMmZl2esd/MgenEn5i9CApO7d6dkXZV/8kNn3/dm/VfkRUfTzvpVJUAsYM2FR+6bYHKcsC8p7w==}
     dependencies:
       fastify-plugin: 4.5.1
-      ghtml: 1.2.3
+      ghtml: 1.2.4
     dev: false
 
   /fastify-metrics@11.0.0(fastify@4.26.2):
@@ -6242,8 +6242,8 @@ packages:
       get-intrinsic: 1.2.4
     dev: true
 
-  /ghtml@1.2.3:
-    resolution: {integrity: sha512-xF3r73oX6bS9eZr3EgH2Bt2wowo7bONLsN7cql66rRI1f3sn2cxCZ3x2jUxoKVY7nrhfZ4xu8wFg8s+nBZopUQ==}
+  /ghtml@1.2.4:
+    resolution: {integrity: sha512-fjvPydzgVno2Vo6PY9LEOWA4/eupbNSQLCo4NIzBo1grlPk4Aq3deMhhvyOeBUA8eBy5iUrpPHRpKbHA+8orPw==}
     engines: {node: '>=18'}
     dev: false
 
