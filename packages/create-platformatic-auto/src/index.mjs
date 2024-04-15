@@ -13,23 +13,29 @@ import parseArgs from 'minimist'
 import ora from 'ora'
 import { createRequire } from 'node:module'
 import { pathToFileURL } from 'node:url'
+import { request } from 'undici'
 
 export async function chooseStackable (opts = {}) {
-  const choices = [
-    { name: 'Composer', value: '@platformatic/composer' },
-    { name: 'DB', value: '@platformatic/db' },
-    { name: 'Service', value: '@platformatic/service' }
-  ]
+  const stackablesRequest = request('https://marketplace.platformatic.dev/templates')
+  const stackablesRequestTimeout = new Promise((resolve, reject) => {
+    setTimeout(reject, 5000, new Error('Request timed out'))
+  })
+
+  let choices = []
+  try {
+    const { body } = await Promise.race([stackablesRequest, stackablesRequestTimeout])
+    choices = (await body.json()).map(stackable => stackable.name)
+  } catch (err) {
+    choices = ['@platformatic/composer', '@platformatic/db', '@platformatic/service']
+  }
 
   const options = await inquirer.prompt({
     type: 'list',
     name: 'type',
     message: 'Which kind of project do you want to create?',
-    default: choices[2].value,
+    default: choices.indexOf('@platformatic/service'),
     choices
   })
-
-  // TODO contact the cloud for other stackables
 
   return options.type
 }
@@ -45,7 +51,7 @@ async function importOrLocal ({ pkgManager, name, projectDir, pkg }) {
     try {
       const fileToImport = _require.resolve(pkg)
       return await import(pathToFileURL(fileToImport))
-    } catch {}
+    } catch { }
 
     const spinner = ora(`Installing ${pkg}...`).start()
     await execa(pkgManager, ['install', pkg], { cwd: projectDir })
