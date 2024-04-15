@@ -98,10 +98,10 @@ process.on('uncaughtException', (err) => {
 
   if (stop) {
     stop().then(() => {
-      process.exit(1)
+      setImmediate(process.exit.bind(process, 1))
     })
   } else {
-    process.exit(1)
+    setImmediate(process.exit.bind(process, 1))
   }
 })
 
@@ -112,10 +112,10 @@ process.on('unhandledRejection', (err) => {
 
   if (stop) {
     stop().then(() => {
-      process.exit(1)
+      setImmediate(process.exit.bind(process, 1))
     })
   } else {
-    process.exit(1)
+    setImmediate(process.exit.bind(process, 1))
   }
 })
 

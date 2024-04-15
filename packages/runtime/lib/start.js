@@ -25,6 +25,18 @@ const kWorkerExecArgv = [
   kLoaderFile
 ]
 
+function startWorker ({ config, dirname, runtimeLogsDir }, env) {
+  const worker = new Worker(kWorkerFile, {
+    /* c8 ignore next */
+    execArgv: config.hotReload ? kWorkerExecArgv : [],
+    transferList: config.loggingPort ? [config.loggingPort] : [],
+    workerData: { config, dirname, runtimeLogsDir },
+    env
+  })
+
+  return worker
+}
+
 async function buildRuntime (configManager, env = process.env) {
   const config = configManager.current
 
@@ -46,36 +58,15 @@ async function buildRuntime (configManager, env = process.env) {
   // The configManager cannot be transferred to the worker, so remove it.
   delete config.configManager
 
-  const worker = new Worker(kWorkerFile, {
-    /* c8 ignore next */
-    execArgv: config.hotReload ? kWorkerExecArgv : [],
-    transferList: config.loggingPort ? [config.loggingPort] : [],
-    workerData: { config, dirname, runtimeLogsDir },
-    env
-  })
+  let worker = startWorker({ config, dirname, runtimeLogsDir }, env)
 
   let managementApi = null
 
-  let exited = null
-  let isWorkerAlive = true
-  worker.on('exit', (code) => {
-    // TODO(mcollina): refactor to not set this here
-    process.exitCode = code
-    isWorkerAlive = false
-    configManager.fileWatcher?.stopWatching()
-    managementApi?.close()
-    if (typeof exited === 'function') {
-      exited()
-    }
-  })
-
-  worker.on('error', () => {
-    // If this is the only 'error' handler, then exit the process as the default
-    // behavior. If anything else is listening for errors, then don't exit.
-    if (worker.listenerCount('error') === 1) {
-      // The error is logged in the worker.
-      process.exit(1)
-    }
+  let exiting = false
+  closeWithGrace((event, cb) => {
+    exiting = true
+    worker.postMessage(event)
+    worker.once('exit', cb)
   })
 
   if (config.hotReload) {
@@ -84,21 +75,29 @@ async function buildRuntime (configManager, env = process.env) {
       worker.postMessage({ signal: 'SIGUSR2' })
     })
 
-    // TODO(mcollina): refactor to not alter globals here
-    closeWithGrace((event, cb) => {
-      if (isWorkerAlive) {
-        worker.postMessage(event)
-        exited = cb
-      } else {
-        setImmediate(cb)
-      }
-    })
-
     /* c8 ignore next 3 */
     configManager.on('update', () => {
       // TODO(cjihrig): Need to clean up and restart the worker.
     })
   }
+
+  function setupExit () {
+    worker.on('exit', (code) => {
+      if (exiting || !runtimeApiClient.started) {
+        configManager.fileWatcher?.stopWatching()
+        managementApi?.close()
+        return
+      }
+
+      worker = startWorker({ config, dirname, runtimeLogsDir }, env)
+      setupExit()
+      once(worker, 'message').then(() => {
+        runtimeApiClient.setWorker(worker)
+      })
+    })
+  }
+
+  setupExit()
 
   await once(worker, 'message') // plt:init
 
