@@ -346,7 +346,20 @@ class RuntimeApiClient extends EventEmitter {
     })
   }
 
-  async getLogIds () {
+  async getLogIds (runtimePID) {
+    runtimePID = runtimePID ?? process.pid
+
+    const runtimeLogFiles = await this.#getRuntimeLogFiles(runtimePID)
+    const runtimeLogIds = []
+
+    for (const logFile of runtimeLogFiles) {
+      const logId = parseInt(logFile.slice('logs.'.length))
+      runtimeLogIds.push(logId)
+    }
+    return runtimeLogIds
+  }
+
+  async getAllLogIds () {
     const runtimesLogFiles = await this.#getAllLogsFiles()
     const runtimesLogsIds = []
 

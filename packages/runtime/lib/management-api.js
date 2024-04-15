@@ -140,25 +140,21 @@ async function createManagementApi (runtimeApiClient) {
     app.get('/logs/indexes', async (req) => {
       const returnAllIds = req.query.all === 'true'
 
-      const runtimesLogsIds = await runtimeApiClient.getLogIds()
       if (returnAllIds) {
+        const runtimesLogsIds = await runtimeApiClient.getAllLogIds()
         return runtimesLogsIds
       }
 
-      if (runtimesLogsIds.length === 0) {
-        return []
-      }
-
-      return { indexes: runtimesLogsIds.at(-1).indexes }
+      const runtimeLogsIds = await runtimeApiClient.getLogIds()
+      return { indexes: runtimeLogsIds }
     })
 
     app.get('/logs/all', async (req, reply) => {
       const runtimePID = parseInt(req.query.pid) || process.pid
 
-      const allLogIds = await runtimeApiClient.getLogIds()
-      const logsIds = allLogIds.find((logs) => logs.pid === runtimePID)
-      const startLogId = logsIds.indexes.at(0)
-      const endLogId = logsIds.indexes.at(-1)
+      const logsIds = await runtimeApiClient.getLogIds(runtimePID)
+      const startLogId = logsIds.at(0)
+      const endLogId = logsIds.at(-1)
 
       reply.hijack()
 
@@ -175,9 +171,8 @@ async function createManagementApi (runtimeApiClient) {
       const logId = parseInt(req.params.id)
       const runtimePID = parseInt(req.query.pid) || process.pid
 
-      const allLogIds = await runtimeApiClient.getLogIds()
-      const runtimeLogsIds = allLogIds.find((logs) => logs.pid === runtimePID)
-      if (!runtimeLogsIds || !runtimeLogsIds.indexes.includes(logId)) {
+      const logIds = await runtimeApiClient.getLogIds(runtimePID)
+      if (!logIds || !logIds.includes(logId)) {
         throw new errors.LogFileNotFound(logId)
       }
 
