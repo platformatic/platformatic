@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/images/favicon.ico" />
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Platformatic Service</title>
     <style>
@@ -12,19 +12,25 @@
         height: 100vh;
         overflow-y: auto;
         overflow-x: hidden;
-        --text-color: #FFFFFF;
-        --bg-color: #001825;
-        --theme-img: url('./images/light_mode.svg')
+        --secondary-color: #FFFFFF;
+        --primary-color: #00050B;
+        --primary-color-rgb: 0, 5, 11;
+        --secondary-color-rgb: 255, 255, 255;
+        --theme-img: url('./images/light_mode.svg');
+        --triangle-url: url('./images/triangle_light.svg');
       }
 
       body.light-theme {
-        --text-color: #001825;
-        --bg-color: #FFFFFF;
-        --theme-img: url('./images/dark_mode.svg')
+        --secondary-color: #00050B;
+        --primary-color: #FFFFFF;
+        --secondary-color-rgb: 0, 5, 11;
+        --primary-color-rgb: 255, 255, 255;
+        --theme-img: url('./images/dark_mode.svg');
+        --triangle-url: url('./images/triangle_dark.svg');
       }
 
       body {
-        background: var(--bg-color);
+        background: var(--primary-color);
       }
 
       :root {
@@ -32,7 +38,7 @@
         font-size: 16px;
         line-height: 24px;
         font-weight: 400;
-
+        position: relative;
         color-scheme: light dark;
         color: inherit;
 
@@ -46,28 +52,18 @@
 
       a {
         font-weight: 600;
-        color: var(--text-color);
+        color: var(--secondary-color);
         text-decoration: inherit;
         width: 100%;
         text-align: center;
         padding: 4px 0px;
       }
       a:hover {
-        text-decoration: underline;
+        background-color: rgba(var(--secondary-color-rgb), 0.3);
       }
 
-      h1 {
-        font-size: 4.375rem;
-        line-height: 5rem;
-        font-weight: 700;
-        margin: 2rem 0;
-      }
-      h2, h1 {
-        color: var(--text-color);
-      }
-
-      .text-main-green {
-        color: #21FA90;
+      .text-opacque {
+        opacity: 0.7;
       }
       .text-center {
         text-align: center;
@@ -75,7 +71,7 @@
 
       .button-container {
         display: flex;
-        column-gap: 3rem;
+        column-gap: 0.5rem;
         justify-content: center;
         align-items: start;
         margin: 2rem 0;
@@ -90,10 +86,10 @@
       }
 
       .button-link {
-        width: 250px;
-        border: 1px solid var(--text-color);
-        border-radius: 2px;
-        padding: 2px 6px;
+        width: 246px;
+        border: 1px solid var(--secondary-color);
+        border-radius: 4px;
+        padding: 8px 16px;
       }
 
       button {
@@ -132,41 +128,29 @@
         margin: auto;
         position: relative;
         z-index: 20;
+        color: var(--secondary-color);
       }
 
-      .polygon14 {
-        background-image: url("images/background_polygon_14.svg");
-        background-repeat: no-repeat;
-        position: fixed;
-        height: 868px;
-        width: 832px;
-        transform-origin: center;
-        animation: rotationClockwise 15s infinite linear;
-        z-index: 0;
-        bottom: -40%;
-        left: -10%;
-      }
-
-      .polygon28 {
-        background-image: url("images/background_polygon_28.svg");
-        background-repeat: no-repeat;
-        position: absolute;
-        height: 212px;
-        width: 246px;
-        transform-origin: 123px 106px;
-        animation: rotationAntiClockwise 15s infinite linear;
-        z-index: 0;
-        top: 20vH;
-        left: 10%;
-      }
-
-      .topFrame {
+      .plt-triangle-container {
         position: absolute;
         top: 0;
         right: 0;
-        width: 50vw;
-        height: auto;
-        z-index: 0;
+        width: 25%;
+        height: 50vH;
+        z-index: -1;
+        content: ''; 
+        background: var(--triangle-url) repeat;
+        opacity: 0.25;
+      }
+
+      .plt-triangle-content-opacque {
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        top: 0;
+        left: 0;
+        content: '';
+        background: linear-gradient(to top, rgba(var(--primary-color-rgb), 1), rgba(var(--primary-color-rgb), 0.2) 43%);
       }
 
       #button-theme-selector {
@@ -178,39 +162,37 @@
         height: 40px;
         background: var(--theme-img);
         outline: none;
+        z-index: 1;
+      }
+
+      .text-desktop-display {
+        font-family: Inter;
+        font-size: 4rem;
+        font-weight: 600;
+        line-height: 5rem;
+        text-align: center;
+      }
+
+      .text-desktop-body-large {
+        font-family: Inter;
+        font-size: 1.125rem;
+        font-weight: 300;
+        line-height: 1.688rem;
+        text-align: center;
       }
 
 
-      @keyframes rotationClockwise {
-        from {
-          transform: rotate(0deg);
-        }
-        to {
-          transform: rotate(359deg);
-        }
-      }
-
-      @keyframes rotationAntiClockwise {
-        from {
-          transform: rotate(-0deg);
-        }
-        to {
-          transform: rotate(-359deg);
-        }
-      }
     </style>
   </head>
   <body>
     <div id="root">
-      <div class="polygon14"></div>
-      <div class="polygon28"></div>
-      <img class="topFrame" src="images/background_frame.svg" />
+      <div class="plt-triangle-container"><div class="plt-triangle-content-opacque"></div></div>
       <button id="button-theme-selector" type="button" class="theme-selector" alt="theme selector" onclick="toggleLightMode()"></button>
       
       <div id="content">
         <img id="logo" height="256" />
-        <h1 class="text-center"><span>Welcome to</span><br/><span class="text-main-green">Platformatic Service</span></h1>
-        <h2 class="text-center">Explore our flexible toolkit for building robust APIs.</h2>
+        <p class="text-desktop-display"><span class="text-opacque">Welcome to</span><br/><span>Platformatic Service</span></p>
+        <p class="text-desktop-body-large">Explore our flexible toolkit for building robust APIs.</p>
         <div class="button-container">
           <a href="https://docs.platformatic.dev" target="_blank" class="button-link">Documentation</a>
           <div class="open-documentation-version buttons-list-container">&nbsp;</div>
