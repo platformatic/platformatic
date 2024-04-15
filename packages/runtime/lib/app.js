@@ -1,17 +1,18 @@
 'use strict'
 
-const { once } = require('node:events')
 const { dirname } = require('node:path')
+const { EventEmitter, once } = require('node:events')
 const { FileWatcher } = require('@platformatic/utils')
 const debounce = require('debounce')
+const { snakeCase } = require('change-case-all')
 const { buildServer } = require('./build-server')
 const { loadConfig } = require('./load-config')
 const errors = require('./errors')
 
-class PlatformaticApp {
+class PlatformaticApp extends EventEmitter {
   #hotReload
   #loaderPort
-  #restarting
+  #starting
   #started
   #originalWatch
   #fileWatcher
@@ -19,17 +20,20 @@ class PlatformaticApp {
   #telemetryConfig
   #serverConfig
   #debouncedRestart
+  #hasManagementApi
 
-  constructor (appConfig, loaderPort, logger, telemetryConfig, serverConfig) {
+  constructor (appConfig, loaderPort, logger, telemetryConfig, serverConfig, hasManagementApi) {
+    super()
     this.appConfig = appConfig
     this.config = null
     this.#hotReload = false
     this.#loaderPort = loaderPort
-    this.#restarting = false
-    this.server = null
+    this.#starting = false
     this.#started = false
+    this.server = null
     this.#originalWatch = null
     this.#fileWatcher = null
+    this.#hasManagementApi = !!hasManagementApi
     this.#logger = logger.child({
       name: this.appConfig.id
     })
@@ -44,19 +48,18 @@ class PlatformaticApp {
   }
 
   getStatus () {
-    if (this.#started) {
-      return 'started'
-    } else {
-      return 'stopped'
-    }
+    if (this.#starting) return 'starting'
+    if (this.#started) return 'started'
+    return 'stopped'
   }
 
   async restart (force) {
-    if (this.#restarting || !this.#started || (!this.#hotReload && !force)) {
+    if (this.#starting || !this.#started || (!this.#hotReload && !force)) {
       return
     }
 
-    this.#restarting = true
+    this.#starting = true
+    this.#started = false
 
     // The CJS cache should not be cleared from the loader because v20 moved
     // the loader to a different thread with a different CJS cache.
@@ -70,6 +73,8 @@ class PlatformaticApp {
 
     try {
       await this.config.configManager.parseAndValidate()
+      await this.#updateConfig()
+
       this.#setuplogger(this.config.configManager)
       await this.server.restart()
     } catch (err) {
@@ -79,43 +84,23 @@ class PlatformaticApp {
       this.#logger.error({ err })
     }
 
-    this.#restarting = false
+    this.#started = true
+    this.#starting = false
+    this.emit('start')
+    this.emit('restart')
   }
 
   async start () {
-    if (this.#started) {
+    if (this.#starting || this.#started) {
       throw new errors.ApplicationAlreadyStartedError()
     }
 
-    this.#started = true
+    this.#starting = true
 
     await this.#initializeConfig()
-    this.#originalWatch = this.config.configManager.current.watch
-    this.config.configManager.current.watch = { enabled: false }
+    await this.#updateConfig()
 
-    const { configManager } = this.config
-    configManager.update({
-      ...configManager.current,
-      telemetry: this.#telemetryConfig
-    })
-
-    if (this.#serverConfig) {
-      configManager.update({
-        ...configManager.current,
-        server: this.#serverConfig
-      })
-    }
-
-    if (!this.appConfig.entrypoint) {
-      configManager.update({
-        ...configManager.current,
-        server: {
-          ...(configManager.current.server || {}),
-          trustProxy: true
-        }
-      })
-    }
-
+    const configManager = this.config.configManager
     const config = configManager.current
 
     this.#setuplogger(configManager)
@@ -154,10 +139,14 @@ class PlatformaticApp {
       // Make sure the server has run all the onReady hooks before returning.
       await this.server.ready()
     }
+
+    this.#started = true
+    this.#starting = false
+    this.emit('start')
   }
 
   async stop () {
-    if (!this.#started) {
+    if (!this.#started || this.#starting) {
       throw new errors.ApplicationNotStartedError()
     }
 
@@ -165,6 +154,8 @@ class PlatformaticApp {
     await this.server.close()
 
     this.#started = false
+    this.#starting = false
+    this.emit('stop')
   }
 
   async handleProcessLevelEvent ({ signal, err }) {
@@ -190,6 +181,10 @@ class PlatformaticApp {
       this.server.log.info({ signal }, 'received signal')
     }
 
+    if (this.#starting) {
+      await once(this, 'start')
+    }
+
     if (this.#started) {
       await this.stop()
       this.server.log.info('server stopped')
@@ -205,7 +200,7 @@ class PlatformaticApp {
         onMissingEnv (key) {
           return appConfig.localServiceEnvVars.get(key)
         }
-      })
+      }, true, this.#logger)
     } catch (err) {
       this.#logAndExit(err)
     }
@@ -247,11 +242,56 @@ class PlatformaticApp {
     })
   }
 
+  async #updateConfig () {
+    this.#originalWatch = this.config.configManager.current.watch
+    this.config.configManager.current.watch = { enabled: false }
+
+    const { configManager } = this.config
+    configManager.update({
+      ...configManager.current,
+      telemetry: this.#telemetryConfig
+    })
+
+    if (this.#serverConfig) {
+      configManager.update({
+        ...configManager.current,
+        server: this.#serverConfig
+      })
+    }
+
+    if (
+      (this.#hasManagementApi && configManager.current.metrics === undefined) ||
+      configManager.current.metrics
+    ) {
+      configManager.update({
+        ...configManager.current,
+        metrics: {
+          server: 'hide',
+          defaultMetrics: { enabled: this.appConfig.entrypoint },
+          prefix: snakeCase(this.appConfig.id) + '_',
+          ...configManager.current.metrics
+        }
+      })
+    }
+
+    if (!this.appConfig.entrypoint) {
+      configManager.update({
+        ...configManager.current,
+        server: {
+          ...(configManager.current.server || {}),
+          trustProxy: true
+        }
+      })
+    }
+  }
+
   #setuplogger (configManager) {
-    // Set the logger if not present
     configManager.current.server = configManager.current.server || {}
-    const childLogger = this.#logger.child({}, { level: configManager.current.server.logger?.level || 'info' })
-    configManager.current.server.logger = childLogger
+    const level = configManager.current.server.logger?.level
+
+    configManager.current.server.logger = level
+      ? this.#logger.child({ level })
+      : this.#logger
   }
 
   #startFileWatching () {

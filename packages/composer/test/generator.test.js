@@ -51,7 +51,7 @@ describe('generator', () => {
     await svc.prepare()
     const packageJsonFileObject = svc.getFileObject('package.json')
     const contents = JSON.parse(packageJsonFileObject.contents)
-    assert.equal(contents.dependencies['@platformatic/composer'], contents.dependencies.platformatic)
+    assert.ok(contents.dependencies['@platformatic/composer'])
   })
 
   test('have global.d.ts file', async (t) => {

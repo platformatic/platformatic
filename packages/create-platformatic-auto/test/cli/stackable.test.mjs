@@ -53,6 +53,9 @@ test('Creates a Platformatic Stackable without typescript', { timeout }, async (
   equal(await isFileAccessible(join(baseProjectDir, 'lib', 'generator.js')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'cli', 'create.js')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'cli', 'start.js')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'test', 'index.test.js')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'test', 'schema.test.js')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'test', 'generator.test.js')), true)
 })
 
 test('Creates a Platformatic Stackable with typescript', { timeout }, async () => {
@@ -88,4 +91,7 @@ test('Creates a Platformatic Stackable with typescript', { timeout }, async () =
   equal(await isFileAccessible(join(baseProjectDir, 'lib', 'generator.ts')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'cli', 'create.ts')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'cli', 'start.ts')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'test', 'index.test.ts')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'test', 'schema.test.ts')), true)
+  equal(await isFileAccessible(join(baseProjectDir, 'test', 'generator.test.ts')), true)
 })

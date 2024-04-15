@@ -5,9 +5,16 @@ const { NoEntryPointError, NoServiceNamedError } = require('./errors')
 const generateName = require('boring-name-generator')
 const { join } = require('node:path')
 const { envObjectToString } = require('@platformatic/generators/lib/utils')
-const { readFile } = require('node:fs/promises')
+const { readFile, readdir, stat, rm } = require('node:fs/promises')
 const { ConfigManager } = require('@platformatic/config')
 const { platformaticRuntime } = require('../config')
+const ServiceGenerator = require('@platformatic/service/lib/generator/service-generator')
+const DBGenerator = require('@platformatic/db/lib/generator/db-generator')
+const ComposerGenerator = require('@platformatic/composer/lib/generator/composer-generator')
+const { CannotFindGeneratorForTemplateError } = require('../errors')
+const { getServiceTemplateFromSchemaUrl } = require('@platformatic/generators/lib/utils')
+const { DotEnvTool } = require('dotenv-tool')
+const { getArrayDifference } = require('../utils')
 
 class RuntimeGenerator extends BaseGenerator {
   constructor (opts) {
@@ -15,6 +22,7 @@ class RuntimeGenerator extends BaseGenerator {
       ...opts,
       module: '@platformatic/runtime'
     })
+    this.runtimeName = opts.name
     this.services = []
     this.entryPoint = null
   }
@@ -51,12 +59,13 @@ class RuntimeGenerator extends BaseGenerator {
 
   async generatePackageJson () {
     const template = {
+      name: `${this.runtimeName}`,
       scripts: {
-        start: 'platformatic start',
-        test: 'node --test test/*/*.test.js'
+        start: 'platformatic start'
       },
       devDependencies: {
-        fastify: `^${this.fastifyVersion}`
+        fastify: `^${this.fastifyVersion}`,
+        borp: `${this.pkgData.devDependencies.borp}`
       },
       dependencies: {
         platformatic: `^${this.platformaticVersion}`,
@@ -83,7 +92,8 @@ class RuntimeGenerator extends BaseGenerator {
     this.addEnvVars({
       PLT_SERVER_HOSTNAME: '0.0.0.0',
       PORT: this.config.port || 3042,
-      PLT_SERVER_LOGGER_LEVEL: this.config.logLevel || 'info'
+      PLT_SERVER_LOGGER_LEVEL: this.config.logLevel || 'info',
+      PLT_MANAGEMENT_API: true
     }, { overwrite: false })
   }
 
@@ -157,7 +167,8 @@ class RuntimeGenerator extends BaseGenerator {
         logger: {
           level: '{PLT_SERVER_LOGGER_LEVEL}'
         }
-      }
+      },
+      managementApi: '{PLT_MANAGEMENT_API}'
     }
 
     return config
@@ -198,8 +209,10 @@ class RuntimeGenerator extends BaseGenerator {
 
   async writeFiles () {
     await super.writeFiles()
-    for (const { service } of this.services) {
-      await service.writeFiles()
+    if (!this.config.isUpdating) {
+      for (const { service } of this.services) {
+        await service.writeFiles()
+      }
     }
   }
 
@@ -283,6 +296,164 @@ class RuntimeGenerator extends BaseGenerator {
     for (const { service } of this.services) {
       await service.postInstallActions()
     }
+  }
+
+  getGeneratorForTemplate (templateName) {
+    switch (templateName) {
+      case '@platformatic/service':
+        return ServiceGenerator
+      case '@platformatic/db':
+        return DBGenerator
+      case '@platformatic/composer':
+        return ComposerGenerator
+      default:
+        throw new CannotFindGeneratorForTemplateError(templateName)
+    }
+  }
+
+  async loadFromDir () {
+    const output = {
+      services: []
+    }
+    const runtimePkgConfigFileData = JSON.parse(await readFile(join(this.targetDirectory, 'platformatic.json'), 'utf-8'))
+    const servicesPath = join(this.targetDirectory, runtimePkgConfigFileData.autoload.path)
+
+    // load all services
+    const allServices = await readdir(servicesPath)
+    for (const s of allServices) {
+      // check is a directory
+      const currentServicePath = join(servicesPath, s)
+      const dirStat = await stat(currentServicePath)
+      if (dirStat.isDirectory()) {
+        // load the package json file
+        const servicePkgJson = JSON.parse(await readFile(join(currentServicePath, 'platformatic.json'), 'utf-8'))
+        // get generator for this module
+        const template = getServiceTemplateFromSchemaUrl(servicePkgJson.$schema)
+        const Generator = this.getGeneratorForTemplate(template)
+        const instance = new Generator()
+        this.addService(instance, s)
+        output.services.push(await instance.loadFromDir(s, this.targetDirectory))
+      }
+    }
+    return output
+  }
+
+  async update (newConfig) {
+    let allServicesDependencies = {}
+    const runtimeAddedEnvKeys = []
+
+    this.config.isUpdating = true
+    const currrentPackageJson = JSON.parse(await readFile(join(this.targetDirectory, 'package.json'), 'utf-8'))
+    const currentRuntimeDependencies = currrentPackageJson.dependencies
+    // check all services are present with the same template
+    const allCurrentServicesNames = this.services.map((s) => s.name)
+    const allNewServicesNames = newConfig.services.map((s) => s.name)
+    // load dotenv tool
+    const envTool = new DotEnvTool({
+      path: join(this.targetDirectory, '.env')
+    })
+
+    await envTool.load()
+
+    const removedServices = getArrayDifference(allCurrentServicesNames, allNewServicesNames)
+    if (removedServices.length > 0) {
+      for (const removedService of removedServices) {
+        // handle service delete
+
+        // delete env variables
+        const s = this.services.find((f) => f.name === removedService)
+        const allKeys = envTool.getKeys()
+        allKeys.forEach((k) => {
+          if (k.startsWith(`PLT_${s.service.config.envPrefix}`)) {
+            envTool.deleteKey(k)
+          }
+        })
+
+        // delete dependencies
+        const servicePackageJson = JSON.parse(await readFile(join(this.targetDirectory, 'services', s.name, 'platformatic.json')))
+        if (servicePackageJson.plugins && servicePackageJson.plugins.packages) {
+          servicePackageJson.plugins.packages
+            .forEach((p) => {
+              delete (currrentPackageJson.dependencies[p.name])
+            })
+        }
+        // delete directory
+        await rm(join(this.targetDirectory, 'services', s.name), { recursive: true })
+      }
+      // throw new CannotRemoveServiceOnUpdateError(removedServices.join(', '))
+    }
+
+    // handle new services
+    for (const newService of newConfig.services) {
+      // create generator for the service
+      const ServiceGenerator = this.getGeneratorForTemplate(newService.template)
+      const serviceInstance = new ServiceGenerator()
+      const baseConfig = {
+        isRuntimeContext: true,
+        targetDirectory: join(this.targetDirectory, 'services', newService.name),
+        serviceName: newService.name,
+        plugin: true
+      }
+      if (allCurrentServicesNames.includes(newService.name)) {
+        // update existing services env values
+        // otherwise, is a new service
+        baseConfig.isUpdating = true
+
+        // handle service's plugin differences
+        const oldServiceMetadata = await serviceInstance.loadFromDir(newService.name, this.targetDirectory)
+        const oldServicePackages = oldServiceMetadata.plugins.map((meta) => meta.name)
+        const newServicePackages = newService.plugins.map((meta) => meta.name)
+        const pluginsToRemove = getArrayDifference(oldServicePackages, newServicePackages)
+        pluginsToRemove.forEach((p) => delete currentRuntimeDependencies[p])
+      }
+      serviceInstance.setConfig(baseConfig)
+      serviceInstance.setConfigFields(newService.fields)
+
+      const serviceEnvPrefix = `PLT_${serviceInstance.config.envPrefix}`
+      for (const plug of newService.plugins) {
+        await serviceInstance.addPackage(plug)
+        for (const opt of plug.options) {
+          const key = `${serviceEnvPrefix}_${opt.name}`
+          runtimeAddedEnvKeys.push(key)
+          const value = opt.value
+          if (envTool.hasKey(key)) {
+            envTool.updateKey(key, value)
+          } else {
+            envTool.addKey(key, value)
+          }
+        }
+      }
+      allServicesDependencies = { ...allServicesDependencies, ...serviceInstance.config.dependencies }
+      const afterPrepareMetadata = await serviceInstance.prepare()
+      await serviceInstance.writeFiles()
+      // cleanup runtime env removing keys not present anymore in service plugins
+      const allKeys = envTool.getKeys()
+      allKeys.forEach((k) => {
+        if (k.startsWith(`${serviceEnvPrefix}_FST_PLUGIN`) && !runtimeAddedEnvKeys.includes(k)) {
+          envTool.deleteKey(k)
+        }
+      })
+
+      // add service env variables to runtime env
+      Object.entries(afterPrepareMetadata.env).forEach(([key, value]) => {
+        envTool.addKey(key, value)
+      })
+    }
+
+    // update runtime package.json dependencies
+    currrentPackageJson.dependencies = {
+      ...currrentPackageJson.dependencies,
+      ...allServicesDependencies
+    }
+    this.addFile({
+      path: '',
+      file: 'package.json',
+      contents: JSON.stringify(currrentPackageJson, null, 2)
+    })
+
+    await this.writeFiles()
+    // save new env
+    await envTool.save()
   }
 }
 

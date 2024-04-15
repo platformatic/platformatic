@@ -9,6 +9,7 @@ const { ComposerGenerator } = require('../../composer/lib/generator/composer-gen
 const { join } = require('node:path')
 const { tmpdir } = require('node:os')
 const { MockAgent, setGlobalDispatcher } = require('undici')
+const { CannotFindGeneratorForTemplateError } = require('../lib/errors.js')
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -44,6 +45,7 @@ describe('Generator', () => {
         PLT_SECOND_SERVICE_TYPESCRIPT: false,
         PLT_SERVER_HOSTNAME: '0.0.0.0',
         PLT_SERVER_LOGGER_LEVEL: 'debug',
+        PLT_MANAGEMENT_API: true,
         PORT: 3043
       }
     })
@@ -55,6 +57,30 @@ describe('Generator', () => {
     // services have correct target directory
     assert.equal(firstService.targetDirectory, join(rg.targetDirectory, 'services', firstService.config.serviceName))
     assert.equal(secondService.targetDirectory, join(rg.targetDirectory, 'services', secondService.config.serviceName))
+  })
+
+  test('should have a name in package.json', async () => {
+    const rg = new RuntimeGenerator({
+      name: 'test-runtime',
+      targetDirectory: '/tmp/runtime'
+    })
+
+    const firstService = new ServiceGenerator()
+    firstService.setConfig({
+      isRuntimeContext: false
+    })
+    rg.addService(firstService, 'first-service')
+
+    rg.setEntryPoint('first-service')
+
+    rg.setConfig({
+      port: 3043,
+      logLevel: 'debug'
+    })
+
+    await rg.prepare()
+    const packageJson = JSON.parse(rg.getFileObject('package.json').contents)
+    assert.equal(packageJson.name, 'test-runtime')
   })
 
   test('should have services plugin dependencies in package.json', async () => {
@@ -90,6 +116,7 @@ describe('Generator', () => {
       env: {
         PLT_FIRST_SERVICE_TYPESCRIPT: false,
         PLT_SERVER_HOSTNAME: '0.0.0.0',
+        PLT_MANAGEMENT_API: true,
         PLT_SERVER_LOGGER_LEVEL: 'debug',
         PORT: 3043
       }
@@ -135,6 +162,7 @@ describe('Generator', () => {
         PLT_SECOND_SERVICE_SERVICE_2: 'foo',
         PLT_SECOND_SERVICE_TYPESCRIPT: false,
         PLT_SERVER_HOSTNAME: '0.0.0.0',
+        PLT_MANAGEMENT_API: true,
         PLT_SERVER_LOGGER_LEVEL: 'info',
         PORT: 3043
       }
@@ -264,6 +292,7 @@ describe('Generator', () => {
           PLT_SECOND_SERVICE_TYPESCRIPT: 'false',
           PLT_SERVER_HOSTNAME: '0.0.0.0',
           PLT_SERVER_LOGGER_LEVEL: 'info',
+          PLT_MANAGEMENT_API: 'true',
           PORT: 3043
         }
       })
@@ -311,5 +340,24 @@ describe('Generator', () => {
     // runtime package.json has typescript dependency
     const packageJson = JSON.parse(rg.getFileObject('package.json').contents)
     assert.ok(packageJson.devDependencies.typescript)
+  })
+
+  test('should return generator for templates', async (t) => {
+    const rg = new RuntimeGenerator({
+      targetDirectory: '/tmp/runtime'
+    })
+    const serviceGen = rg.getGeneratorForTemplate('@platformatic/service')
+    const dbGen = rg.getGeneratorForTemplate('@platformatic/db')
+    const composerGen = rg.getGeneratorForTemplate('@platformatic/composer')
+    assert.equal(serviceGen.name, 'ServiceGenerator')
+    assert.equal(dbGen.name, 'DBGenerator')
+    assert.equal(composerGen.name, 'ComposerGenerator')
+    try {
+      rg.getGeneratorForTemplate('fake/template')
+      assert.fail()
+    } catch (err) {
+      assert.ok(err instanceof CannotFindGeneratorForTemplateError)
+      assert.equal(err.message, 'Cannot find a generator for template "fake/template"')
+    }
   })
 })

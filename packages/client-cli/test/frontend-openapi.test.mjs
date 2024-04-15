@@ -55,18 +55,25 @@ async function _getRedirect (url, request) {
 
   const response = await fetch(\`\${url}/redirect\`)
 
-  let body = await response.text()
-
-  try {
-    body = JSON.parse(body)
-  } catch (err) {
-    // do nothing and keep original body
+  const jsonResponses = [302, 400]
+  if (jsonResponses.includes(response.status)) {
+    return {
+      statusCode: response.status,
+      headers: headersToJSON(response.headers),
+      body: await response.json()
+    }
   }
-
+  if (response.headers.get('content-type') === 'application/json') {
+    return {
+      statusCode: response.status,
+      headers: headersToJSON(response.headers),
+      body: await response.json()
+    }
+  }
   return {
     statusCode: response.status,
-    headers: response.headers,
-    body
+    headers: headersToJSON(response.headers),
+    body: await response.text()
   }
 }
 
@@ -111,20 +118,24 @@ export const getCustomSwagger = async (request) => {
     const typesTemplate = `
 export interface Sample {
   setBaseUrl(newUrl: string) : void;
-  getCustomSwagger(req?: GetCustomSwaggerRequest): Promise<FullResponse<unknown, 200>>;
+  getCustomSwagger(req?: GetCustomSwaggerRequest): Promise<GetCustomSwaggerResponses>;
   getRedirect(req?: GetRedirectRequest): Promise<GetRedirectResponses>;
-  getReturnUrl(req?: GetReturnUrlRequest): Promise<FullResponse<unknown, 200>>;
-  postFoobar(req?: PostFoobarRequest): Promise<FullResponse<unknown, 200>>;
+  getReturnUrl(req?: GetReturnUrlRequest): Promise<GetReturnUrlResponses>;
+  postFoobar(req?: PostFoobarRequest): Promise<PostFoobarResponses>;
 }`
 
     const unionTypesTemplate = `export type GetRedirectResponses =
   FullResponse<GetRedirectResponseFound, 302>
   | FullResponse<GetRedirectResponseBadRequest, 400>`
+    const postFooBarResponses = `export type PostFoobarResponseOK = unknown
+export type PostFoobarResponses =
+  FullResponse<PostFoobarResponseOK, 200>`
     ok(implementation)
     ok(types)
     equal(implementation.includes(jsImplementationTemplate), true)
     equal(types.includes(typesTemplate), true)
     equal(types.includes(unionTypesTemplate), true)
+    equal(types.includes(postFooBarResponses), true)
   }
 })
 
@@ -206,8 +217,17 @@ console.log(await getReturnUrl({}))
   /* eslint-disable no-control-regex */
   const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n') // remove ANSI colors, if any
   /* eslint-enable no-control-regex */
-  equal(lines[0], `{ url: '${app.url}' }`) // client, app object
-  equal(lines[1], `{ url: '${app2.url}' }`) // raw, app2 object
+  let foundAppUrl = false
+  lines.forEach((line) => {
+    if (line.trim().startsWith('body')) {
+      if (!foundAppUrl) {
+        ok(line.trim().endsWith(`'{"url":"${app.url}"}'`))
+        foundAppUrl = true
+      } else {
+        ok(line.trim().endsWith(`'{"url":"${app2.url}"}'`))
+      }
+    }
+  })
 })
 
 test('generate frontend client from path', async (t) => {
@@ -361,13 +381,7 @@ test('handle wildcard in path parameter', async (t) => {
 async function _getPkgScopeNameRange (url, request) {
 
   const response = await fetch(\`\${url}/pkg/@\${request['scope']}/\${request['name']}/\${request['range']}/\${request['*']}\`)
-
-  if (!response.ok) {
-    throw new Error(await response.text())
-  }
-
-  return await response.json()
-}`
+`
   ok(implementation)
   equal(implementation.includes(tsImplementationTemplate), true)
 })
@@ -383,9 +397,128 @@ test('do not add headers to fetch if a get request', async (t) => {
   equal(data.includes(`
   const response = await fetch(\`\${url}/auth/login\`)
 
+  const textResponses = [200]
+  if (textResponses.includes(response.status)) {
+    return {
+      statusCode: response.status as 200,
+      headers: headersToJSON(response.headers),
+      body: await response.text()
+    }
+  }
+  if (response.headers.get('content-type') === 'application/json') {
+    return {
+      statusCode: response.status as 200,
+      headers: headersToJSON(response.headers),
+      body: await response.json() as any
+    }
+  }
+  return {
+    statusCode: response.status as 200,
+    headers: headersToJSON(response.headers),
+    body: await response.text() as any
+  }`), true)
+})
+
+test('support empty response', async (t) => {
+  const dir = await moveToTmpdir(after)
+
+  const openAPIfile = join(__dirname, 'fixtures', 'empty-responses-openapi.json')
+  await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend'])
+
+  const implementationFile = join(dir, 'movies', 'movies.ts')
+  const implementation = await readFile(implementationFile, 'utf-8')
+
+  // Empty responses led to a full response returns
+  equal(implementation.includes(`
+  const response = await fetch(\`\${url}/auth/login\`)
+
+  const textResponses = [200]
+  if (textResponses.includes(response.status)) {
+    return {
+      statusCode: response.status as 200,
+      headers: headersToJSON(response.headers),
+      body: await response.text()
+    }
+  }
+  if (response.headers.get('content-type') === 'application/json') {
+    return {
+      statusCode: response.status as 200,
+      headers: headersToJSON(response.headers),
+      body: await response.json() as any
+    }
+  }
+  return {
+    statusCode: response.status as 200,
+    headers: headersToJSON(response.headers),
+    body: await response.text() as any
+  }
+`), true)
+
+  const typeFile = join(dir, 'movies', 'movies-types.d.ts')
+  const type = await readFile(typeFile, 'utf-8')
+  equal(type.includes(`
+export type GetAuthLoginResponseOK = unknown
+export type GetAuthLoginResponses =
+  FullResponse<GetAuthLoginResponseOK, 200>
+`), true)
+})
+
+test('call response.json only for json responses', async (t) => {
+  const dir = await moveToTmpdir(after)
+  {
+    const openAPIfile = join(__dirname, 'fixtures', 'empty-responses-openapi.json')
+    await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend'])
+    const implementationFile = join(dir, 'movies', 'movies.ts')
+    const implementation = await readFile(implementationFile, 'utf-8')
+    const expected = `
+  const response = await fetch(\`\${url}/auth/login\`)
+
+  const textResponses = [200]
+  if (textResponses.includes(response.status)) {
+    return {
+      statusCode: response.status as 200,
+      headers: headersToJSON(response.headers),
+      body: await response.text()
+    }
+  }
+  if (response.headers.get('content-type') === 'application/json') {
+    return {
+      statusCode: response.status as 200,
+      headers: headersToJSON(response.headers),
+      body: await response.json() as any
+    }
+  }
+  return {
+    statusCode: response.status as 200,
+    headers: headersToJSON(response.headers),
+    body: await response.text() as any
+  }`
+
+    equal(implementation.includes(expected), true)
+  }
+  {
+    const openAPIfile = join(__dirname, 'fixtures', 'frontend-openapi.json')
+    await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend'])
+    const implementationFile = join(dir, 'movies', 'movies.ts')
+    const implementation = await readFile(implementationFile, 'utf-8')
+    const expected = `
+  const response = await fetch(\`\${url}/hello\`)
+
   if (!response.ok) {
     throw new Error(await response.text())
   }
 
-`), true)
+  return await response.json()`
+    equal(implementation.includes(expected), true)
+  }
+})
+
+test('should match expected implementation with typescript', async (t) => {
+  const dir = await moveToTmpdir(after)
+  const openAPIfile = join(__dirname, 'fixtures', 'multiple-responses-openapi.json')
+  await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend', '--full-response'])
+  const implementationFile = join(dir, 'movies', 'movies.ts')
+  const implementation = await readFile(implementationFile, 'utf-8')
+  const expected = await readFile(join(__dirname, 'expected-generated-code', 'multiple-responses-movies.ts'), 'utf-8')
+  equal(implementation.replace(/\r/g, ''), expected.replace(/\r/g, '')) // to make windows CI happy
 })

@@ -10,8 +10,7 @@ const { request } = require('undici')
 const { green } = require('colorette')
 const compareOpenApiSchemas = require('openapi-schema-diff')
 const { default: CodeBlockWriter } = require('code-block-writer')
-const { loadConfig } = require('@platformatic/config')
-const { analyze, write: writeConfig } = require('@platformatic/metaconfig')
+const { loadConfig, getParser, getStringifier } = require('@platformatic/config')
 const { getOpenapiSchema } = require('./get-openapi-schema.js')
 const { platformaticService } = require('../index.js')
 const {
@@ -744,8 +743,10 @@ async function addMappersToConfig (mappersDir, version, configManager) {
     if (mappersDir.startsWith(foundPluginPath)) return
   }
 
-  const metaConfig = await analyze({ file: configManager.fullPath })
-  const rawConfig = metaConfig.config
+  // TODO(mcollina) this must auto-upgrade
+  const parse = getParser(configManager.fullPath)
+  const stringify = getStringifier(configManager.fullPath)
+  const rawConfig = parse(await readFile(configManager.fullPath, 'utf8'))
   const rawPrevVersionConfig = rawConfig.versions.configs.find(c => c.version === version)
 
   const relativePath = relative(configManager.dirname, mappersDir)
@@ -755,7 +756,7 @@ async function addMappersToConfig (mappersDir, version, configManager) {
   }
   prevVersionConfig.plugins.paths.push(relativePath)
   rawPrevVersionConfig.plugins.paths.push(relativePath)
-  await Promise.all([configManager.update(), writeConfig(metaConfig)])
+  await Promise.all([configManager.update(), writeFile(configManager.fullPath, stringify(rawConfig), 'utf8')])
 }
 
 async function execute ({
@@ -854,7 +855,7 @@ async function updateVersion (_args) {
     // TODO: find out why process stucks sometimes
     process.exit(0)
   } catch (err) {
-    logger.error(err.message)
+    logger.error({ err })
     process.exit(1)
   }
 }

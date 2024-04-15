@@ -1,7 +1,17 @@
 'use strict'
 
 const { parseArgs } = require('node:util')
+const { prettyFactory } = require('pino-pretty')
 const RuntimeApiClient = require('./runtime-api-client')
+
+const pinoLogLevels = {
+  fatal: 60,
+  error: 50,
+  warn: 40,
+  info: 30,
+  debug: 20,
+  trace: 10
+}
 
 async function streamRuntimeLogsCommand (argv) {
   const args = parseArgs({
@@ -10,7 +20,7 @@ async function streamRuntimeLogsCommand (argv) {
       pid: { type: 'string', short: 'p' },
       name: { type: 'string', short: 'n' },
       level: { type: 'string', short: 'l', default: 'info' },
-      pretty: { type: 'boolean', default: true },
+      pretty: { type: 'string', default: 'true' },
       service: { type: 'string', short: 's' }
     },
     strict: false
@@ -19,19 +29,30 @@ async function streamRuntimeLogsCommand (argv) {
   const client = new RuntimeApiClient()
   const runtime = await client.getMatchingRuntime(args)
 
-  const options = {}
-  if (args.level !== undefined) {
-    options.level = args.level
-  }
-  if (args.pretty !== undefined) {
-    options.pretty = args.pretty
-  }
-  if (args.service !== undefined) {
-    options.serviceId = args.service
-  }
+  const logLevelNumber = pinoLogLevels[args.level]
+  const prettify = prettyFactory()
 
-  const logsStream = client.getRuntimeLogsStream(runtime.pid, options)
-  logsStream.pipe(process.stdout)
+  const logsStream = client.getRuntimeLiveLogsStream(runtime.pid)
+
+  logsStream.on('data', (data) => {
+    const logs = data.toString().split('\n').filter(Boolean)
+
+    for (let log of logs) {
+      try {
+        const parsedLog = JSON.parse(log)
+        if (parsedLog.level < logLevelNumber) continue
+        if (args.service && parsedLog.name !== args.service) continue
+        if (args.pretty !== 'false') {
+          log = prettify(parsedLog)
+        } else {
+          log += '\n'
+        }
+        process.stdout.write(log)
+      } catch (err) {
+        console.error('Failed to parse log message: ', log, err)
+      }
+    }
+  })
 
   process.on('SIGINT', () => {
     logsStream.destroy()

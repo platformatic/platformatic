@@ -92,6 +92,12 @@ test('should get runtime service config', async (t) => {
       ]
     },
     watch: { enabled: false },
-    metrics: { server: 'parent' }
+    metrics: {
+      defaultMetrics: {
+        enabled: true
+      },
+      prefix: 'service_1_',
+      server: 'hide'
+    }
   })
 })

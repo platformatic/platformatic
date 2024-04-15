@@ -1,11 +1,11 @@
 {
   "name": "@platformatic/generators",
-  "version": "1.23.0",
+  "version": "1.35.4",
   "description": "Main classes and utils for generators.",
   "main": "index.js",
   "scripts": {
     "lint": "standard | snazzy",
-    "test": "pnpm run lint && borp -C -X fixtures -X test --concurrency=1"
+    "test": "pnpm run lint && borp -C -X fixtures -X test --concurrency=1 && tsd"
   },
   "keywords": [],
   "author": "",
@@ -14,16 +14,17 @@
     "@fastify/error": "^3.4.1",
     "boring-name-generator": "^1.0.3",
     "change-case-all": "^2.1.0",
-    "fastify": "^4.26.0",
-    "pino": "^8.17.2",
-    "undici": "^6.6.0"
+    "fastify": "^4.26.2",
+    "pino": "^8.19.0",
+    "undici": "^6.9.0"
   },
   "devDependencies": {
     "@types/inquirer": "^9.0.7",
-    "borp": "^0.9.0",
+    "borp": "^0.11.0",
     "c8": "^9.1.0",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "typescript": "^5.3.3"
+    "tsd": "^0.31.0",
+    "typescript": "^5.4.2"
   }
 }

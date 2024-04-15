@@ -1,16 +1,12 @@
 'use strict'
 import { STATUS_CODES } from 'node:http'
-import { capitalize, classCase } from './utils.mjs'
+import { capitalize, classCase, getResponseContentType, getResponseTypes } from './utils.mjs'
 import { writeObjectProperties } from './openapi-common.mjs'
 import { getType } from './get-type.mjs'
 
-function responsesWriter (operationId, responsesArray, isFullResponse, writer, spec) {
-  const responseTypes = Object.entries(responsesArray)
-    .filter(([statusCode, response]) => {
-      // We ignore all non-JSON endpoints for now
-      // TODO: support other content types
-      return response.content && response.content['application/json'] !== undefined
-    })
+function responsesWriter (operationId, responsesObject, isFullResponse, writer, spec) {
+  const mappedResponses = getResponseTypes(responsesObject)
+  const responseTypes = Object.entries(responsesObject)
     .map(([statusCode, response]) => {
       if (statusCode === '204') {
         return 'undefined'
@@ -24,12 +20,25 @@ function responsesWriter (operationId, responsesArray, isFullResponse, writer, s
         typeName = `${operationId}Response${classCase(STATUS_CODES[statusCode])}`
       }
       let isResponseArray
-      writeResponse(typeName, response.content['application/json'].schema)
+      const responseContentType = getResponseContentType(response)
+      if (responseContentType === 'application/json') {
+        writeResponse(typeName, response.content['application/json'].schema)
+      } else if (responseContentType === null) {
+        isFullResponse = true
+        writer.writeLine(`export type ${typeName} = unknown`)
+      } else if (mappedResponses.blob.includes(parseInt(statusCode))) {
+        writer.writeLine(`export type ${typeName} = Blob`)
+      } else if (mappedResponses.text.includes(parseInt(statusCode))) {
+        writer.writeLine(`export type ${typeName} = string`)
+      } else {
+        isFullResponse = true
+        writer.writeLine(`export type ${typeName} = string`)
+      }
+
       if (isResponseArray) typeName = `Array<${typeName}>`
       if (isFullResponse) typeName = `FullResponse<${typeName}, ${statusCode}>`
       return typeName
     })
-
   // write response unions
   if (responseTypes.length) {
     const allResponsesName = `${capitalize(operationId)}Responses`
@@ -52,7 +61,7 @@ function responsesWriter (operationId, responsesArray, isFullResponse, writer, s
     }
     if (responseSchema.type === 'object') {
       writer.write(`export type ${typeName} =`).block(() => {
-        writeObjectProperties(writer, responseSchema, {}, new Set(), 'res')
+        writeObjectProperties(writer, responseSchema, spec, new Set(), 'res')
       })
     } else {
       writer.writeLine(`export type ${typeName} = ${getType(responseSchema, 'res', spec)}`)

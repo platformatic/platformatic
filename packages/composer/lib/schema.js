@@ -149,6 +149,7 @@ const composer = {
     },
     openapi: openApiBase,
     graphql: graphqlComposerOptions,
+    addEmptySchema: { type: 'boolean', default: false },
     refreshTimeout: { type: 'integer', minimum: 0, default: 1000 }
   },
   required: ['services'],
@@ -174,6 +175,7 @@ const types = {
 const platformaticComposerSchema = {
   $id: `https://platformatic.dev/schemas/${version}/composer`,
   $schema: 'http://json-schema.org/draft-07/schema#',
+  title: 'Platformatic Composer',
   type: 'object',
   properties: {
     server,

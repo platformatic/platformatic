@@ -10,6 +10,9 @@ const platformaticRuntimeSchema = {
   $schema: 'http://json-schema.org/draft-07/schema#',
   type: 'object',
   properties: {
+    $schema: {
+      type: 'string'
+    },
     autoload: {
       type: 'object',
       additionalProperties: false,
@@ -49,29 +52,6 @@ const platformaticRuntimeSchema = {
     },
     telemetry,
     server,
-    services: {
-      type: 'array',
-      default: [],
-      items: {
-        type: 'object',
-        required: ['id', 'path', 'config'],
-        properties: {
-          id: {
-            type: 'string'
-          },
-          path: {
-            type: 'string',
-            resolvePath: true
-          },
-          config: {
-            type: 'string'
-          },
-          useHttp: {
-            type: 'boolean'
-          }
-        }
-      }
-    },
     entrypoint: {
       type: 'string'
     },
@@ -106,36 +86,89 @@ const platformaticRuntimeSchema = {
       }
     },
     undici: {
-      agentOptions: {
-        type: 'object',
-        additionalProperties: true
-      },
-      interceptors: {
-        type: 'array',
-        items: {
+      type: 'object',
+      properties: {
+        agentOptions: {
           type: 'object',
-          properties: {
-            module: {
-              type: 'string'
-            },
-            options: {
-              type: 'object',
-              additionalProperties: true
+          additionalProperties: true
+        },
+        interceptors: {
+          anyOf: [{
+            type: 'array',
+            items: {
+              $ref: '#/$defs/undiciInterceptor'
             }
-          },
-          required: ['module', 'options']
+          }, {
+            type: 'object',
+            properties: {
+              Client: {
+                type: 'array',
+                items: {
+                  $ref: '#/$defs/undiciInterceptor'
+                }
+              },
+              Pool: {
+                type: 'array',
+                items: {
+                  $ref: '#/$defs/undiciInterceptor'
+                }
+              },
+              Agent: {
+                type: 'array',
+                items: {
+                  $ref: '#/$defs/undiciInterceptor'
+                }
+              }
+            }
+          }]
         }
       }
-    },
-    $schema: {
-      type: 'string'
     },
     managementApi: {
       anyOf: [
         { type: 'boolean' },
+        { type: 'string' },
         {
           type: 'object',
-          properties: {}
+          properties: {
+            logs: {
+              maxSize: {
+                type: 'number',
+                minimum: 5,
+                default: 200
+              }
+            }
+          },
+          additionalProperties: false
+        }
+      ],
+      default: true
+    },
+    metrics: {
+      anyOf: [
+        { type: 'boolean' },
+        {
+          type: 'object',
+          properties: {
+            port: {
+              anyOf: [
+                { type: 'integer' },
+                { type: 'string' }
+              ]
+            },
+            hostname: { type: 'string' },
+            endpoint: { type: 'string' },
+            auth: {
+              type: 'object',
+              properties: {
+                username: { type: 'string' },
+                password: { type: 'string' }
+              },
+              additionalProperties: false,
+              required: ['username', 'password']
+            }
+          },
+          additionalProperties: false
         }
       ]
     },
@@ -145,13 +178,50 @@ const platformaticRuntimeSchema = {
         { type: 'boolean' },
         { type: 'string' }
       ]
+    },
+    services: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['id', 'path', 'config'],
+        properties: {
+          id: {
+            type: 'string'
+          },
+          path: {
+            type: 'string',
+            resolvePath: true
+          },
+          config: {
+            type: 'string'
+          },
+          useHttp: {
+            type: 'boolean'
+          }
+        }
+      }
     }
   },
   anyOf: [
     { required: ['autoload', 'entrypoint'] },
     { required: ['services', 'entrypoint'] }
   ],
-  additionalProperties: false
+  additionalProperties: false,
+  $defs: {
+    undiciInterceptor: {
+      type: 'object',
+      properties: {
+        module: {
+          type: 'string'
+        },
+        options: {
+          type: 'object',
+          additionalProperties: true
+        }
+      },
+      required: ['module', 'options']
+    }
+  }
 }
 
 module.exports.schema = platformaticRuntimeSchema

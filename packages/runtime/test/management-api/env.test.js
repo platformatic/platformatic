@@ -34,7 +34,7 @@ test('should get the runtime process env', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/env'
+    path: '/api/v1/env'
   })
 
   assert.strictEqual(statusCode, 200)

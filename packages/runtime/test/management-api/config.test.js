@@ -36,7 +36,7 @@ test('should get runtime config', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/config'
+    path: '/api/v1/config'
   })
 
   assert.strictEqual(statusCode, 200)
@@ -53,5 +53,7 @@ test('should get runtime config', async (t) => {
     path: join(projectDir, 'services'),
     exclude: []
   })
-  assert.deepStrictEqual(runtimeConfig.managementApi, true)
+  assert.deepStrictEqual(runtimeConfig.managementApi, {
+    logs: { maxSize: 15 }
+  })
 })

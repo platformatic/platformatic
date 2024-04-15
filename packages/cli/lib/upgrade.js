@@ -1,21 +1,13 @@
-import ConfigManager from '@platformatic/config'
-import { analyze, write, upgrade as upgradeConfig } from '@platformatic/metaconfig'
+import { Store, getStringifier } from '@platformatic/config'
 import parseArgs from 'minimist'
-import { access } from 'fs/promises'
-import { resolve } from 'path'
-import { execa } from 'execa'
-import { getLatestNpmVersion } from '@platformatic/utils'
-
-const configFileNames = ConfigManager.listConfigFiles()
-
-async function isFileAccessible (filename) {
-  try {
-    await access(filename)
-    return true
-  } catch (err) {
-    return false
-  }
-}
+import { writeFile } from 'fs/promises'
+import { platformaticService } from '@platformatic/service'
+import { platformaticDB } from '@platformatic/db'
+import { platformaticComposer } from '@platformatic/composer'
+import { platformaticRuntime } from '@platformatic/runtime'
+import pino from 'pino'
+import pretty from 'pino-pretty'
+import fjs from 'fast-json-stringify'
 
 export async function upgrade (argv) {
   const args = parseArgs(argv, {
@@ -23,79 +15,53 @@ export async function upgrade (argv) {
       config: 'c'
     }
   })
+
+  const logger = pino(pretty({
+    translateTime: 'SYS:HH:MM:ss',
+    ignore: 'hostname,pid'
+  }))
   try {
-    await upgradeApp(args.config)
-    await upgradeSystem()
+    await upgradeApp(args.config, logger)
   } catch (err) {
-    // silently ignore errors
+    console.log(err)
+    process.exit(1)
   }
 }
 
-async function upgradeApp (config) {
-  let accessibleConfigFilename = config
+async function upgradeApp (config, logger) {
+  const store = new Store({
+    cwd: process.cwd(),
+    logger
+  })
+  store.add(platformaticService)
+  store.add(platformaticDB)
+  store.add(platformaticComposer)
+  store.add(platformaticRuntime)
 
-  if (!accessibleConfigFilename) {
-    const configFilesAccessibility = await Promise.all(configFileNames.map((fileName) => isFileAccessible(fileName)))
-    accessibleConfigFilename = configFileNames.find((value, index) => configFilesAccessibility[index])
-  }
-
-  if (!accessibleConfigFilename) {
-    console.error('No config file found')
-    process.exitCode = 1
-    return
-  }
-
-  accessibleConfigFilename = resolve(accessibleConfigFilename)
-
-  let meta = await analyze({ file: accessibleConfigFilename })
-
-  console.log(`Found ${meta.version} for Platformatic ${meta.kind} in ${meta.format} format`)
-
-  meta = upgradeConfig(meta)
-
-  await write(meta)
-  console.log('App Upgraded to', meta.version)
-}
-
-async function upgradeSystem () {
-  console.log('Checking latest platformatic version on npm registry...')
-  const currentRunningVersion = await checkSystemPlatformaticVersion()
-  const latestNpmVersion = await getLatestNpmVersion('platformatic')
-  if (latestNpmVersion) {
-    const compareResult = compareVersions(currentRunningVersion, latestNpmVersion)
-    switch (compareResult) {
-      case 0:
-        console.log(`✅ You are running the latest Platformatic version v${latestNpmVersion}!`)
-        break
-      case -1:
-        console.log(`✨ Version ${latestNpmVersion} of Platformatic has been released, please update with "npm update -g platformatic"`)
-        break
+  const { configManager } = await store.loadConfig({
+    config,
+    overrides: {
+      fixPaths: false,
+      onMissingEnv (key) {
+        return '{' + key + '}'
+      }
     }
+  })
+
+  await configManager.parseAndValidate(false)
+  config = configManager.current
+
+  // If the schema is present, we use it to format the config
+  if (configManager.schema) {
+    const stringify = fjs(configManager.schema)
+    config = JSON.parse(stringify(config))
   }
-}
 
-export function compareVersions (first, second) {
-  const [firstMajor, firstMinor, firstPatch] = first.split('.')
-  const [secondMajor, secondMinor, secondPatch] = second.split('.')
+  const stringify = getStringifier(configManager.fullPath)
 
-  if (firstMajor < secondMajor) return -1
-  if (firstMajor > secondMajor) return 1
+  const newConfig = stringify(config)
 
-  // firstMajor === secondMajor
-  if (firstMinor < secondMinor) return -1
-  if (firstMinor > secondMinor) return 1
+  await writeFile(configManager.fullPath, newConfig, 'utf8')
 
-  // firstMinor === secondMinor
-  if (firstPatch < secondPatch) return -1
-  if (firstPatch > secondPatch) return 1
-
-  return 0
-}
-
-async function checkSystemPlatformaticVersion () {
-  const { stdout } = await execa('platformatic', ['--version'])
-  if (stdout.match(/v\d+\.\d+\.\d+/)) {
-    return stdout.substring(1)
-  }
-  return '0.0.0'
+  logger.info(`✅ Updated ${configManager.fullPath}`)
 }

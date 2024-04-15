@@ -1,4 +1,0 @@
-{
-  "$schema": "./platformatic.custom.schema.json",
-  "module": "test-stackable"
-}

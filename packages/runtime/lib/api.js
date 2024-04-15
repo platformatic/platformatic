@@ -1,7 +1,8 @@
 'use strict'
 
+const { once } = require('node:events')
 const { getGlobalDispatcher, setGlobalDispatcher } = require('undici')
-const FastifyUndiciDispatcher = require('fastify-undici-dispatcher')
+const { createFastifyInterceptor } = require('fastify-undici-dispatcher')
 const { PlatformaticApp } = require('./app')
 const errors = require('./errors')
 const { printSchema } = require('graphql')
@@ -9,9 +10,10 @@ const { printSchema } = require('graphql')
 class RuntimeApi {
   #services
   #dispatcher
+  #interceptor
   #logger
 
-  constructor (config, logger, loaderPort) {
+  constructor (config, logger, loaderPort, composedInterceptors = []) {
     this.#services = new Map()
     this.#logger = logger
     const telemetryConfig = config.telemetry
@@ -32,16 +34,19 @@ class RuntimeApi {
         }
       }
 
-      const app = new PlatformaticApp(service, loaderPort, logger, serviceTelemetryConfig, serverConfig)
+      const app = new PlatformaticApp(service, loaderPort, logger, serviceTelemetryConfig, serverConfig, !!config.managementApi)
 
       this.#services.set(service.id, app)
     }
 
-    this.#dispatcher = new FastifyUndiciDispatcher({
-      dispatcher: getGlobalDispatcher(),
+    this.#interceptor = createFastifyInterceptor({
       // setting the domain here allows for fail-fast scenarios
       domain: '.plt.local'
     })
+
+    composedInterceptors.unshift(this.#interceptor)
+
+    this.#dispatcher = getGlobalDispatcher().compose(composedInterceptors)
     setGlobalDispatcher(this.#dispatcher)
   }
 
@@ -61,8 +66,6 @@ class RuntimeApi {
           if (this.#dispatcher) {
             await this.#dispatcher.close()
           }
-          await this.stopServices()
-
           setImmediate(process.exit) // Exit the worker thread.
           return
         }
@@ -82,9 +85,11 @@ class RuntimeApi {
     }))
 
     for (const service of services) {
-      if (service.getStatus() === 'started') {
-        return
-      }
+      const serviceStatus = service.getStatus()
+      if (
+        serviceStatus === 'starting' ||
+        serviceStatus === 'started'
+      ) return
     }
 
     if (this.#dispatcher) {
@@ -124,6 +129,8 @@ class RuntimeApi {
         return this.#getServiceOpenapiSchema(params)
       case 'plt:get-service-graphql-schema':
         return this.#getServiceGraphqlSchema(params)
+      case 'plt:get-metrics':
+        return this.#getMetrics(params)
       case 'plt:start-service':
         return this.#startService(params)
       case 'plt:stop-service':
@@ -146,7 +153,7 @@ class RuntimeApi {
       }
 
       const serviceUrl = new URL(service.appConfig.localUrl)
-      this.#dispatcher.route(serviceUrl.host, service.server)
+      this.#interceptor.route(serviceUrl.host, service.server)
     }
     return entrypointUrl
   }
@@ -155,6 +162,11 @@ class RuntimeApi {
     const stopServiceReqs = []
     for (const service of this.#services.values()) {
       const serviceStatus = service.getStatus()
+      if (serviceStatus === 'starting') {
+        stopServiceReqs.push(
+          once(service, 'start').then(() => service.stop())
+        )
+      }
       if (serviceStatus === 'started') {
         stopServiceReqs.push(service.stop())
       }
@@ -165,16 +177,19 @@ class RuntimeApi {
   async restartServices () {
     let entrypointUrl = null
     for (const service of this.#services.values()) {
-      if (service.server) {
-        await service.restart(true)
+      const serviceStatus = service.getStatus()
+      if (serviceStatus === 'starting') {
+        await once(service, 'start')
       }
+
+      await service.restart(true)
 
       if (service.appConfig.entrypoint) {
         entrypointUrl = service.server.url
       }
 
       const serviceUrl = new URL(service.appConfig.localUrl)
-      this.#dispatcher.route(serviceUrl.host, service.server)
+      this.#interceptor.route(serviceUrl.host, service.server)
     }
     return entrypointUrl
   }
@@ -207,7 +222,8 @@ class RuntimeApi {
     const service = this.#services.get(id)
 
     if (!service) {
-      throw new errors.ServiceNotFoundError(id)
+      const listOfServices = this.#getServices().services.map(svc => svc.id).join(', ')
+      throw new errors.ServiceNotFoundError(listOfServices)
     }
 
     return service
@@ -217,7 +233,7 @@ class RuntimeApi {
     const service = this.#getServiceById(id)
     const status = service.getStatus()
 
-    const type = service.config.configType
+    const type = service.config?.configType
     const { entrypoint, dependencies, localUrl } = service.appConfig
     const serviceDetails = { id, type, status, localUrl, entrypoint, dependencies }
 
@@ -231,18 +247,19 @@ class RuntimeApi {
   #getServiceConfig ({ id }) {
     const service = this.#getServiceById(id)
 
-    const { config } = service
-    if (!config) {
+    const serviceStatus = service.getStatus()
+    if (serviceStatus !== 'started') {
       throw new errors.ServiceNotStartedError(id)
     }
 
-    return config.configManager.current
+    return service.config.configManager.current
   }
 
   async #getServiceOpenapiSchema ({ id }) {
     const service = this.#getServiceById(id)
 
-    if (!service.config) {
+    const serviceStatus = service.getStatus()
+    if (serviceStatus !== 'started') {
       throw new errors.ServiceNotStartedError(id)
     }
 
@@ -262,7 +279,8 @@ class RuntimeApi {
   async #getServiceGraphqlSchema ({ id }) {
     const service = this.#getServiceById(id)
 
-    if (!service.config) {
+    const serviceStatus = service.getStatus()
+    if (serviceStatus !== 'started') {
       throw new errors.ServiceNotStartedError(id)
     }
 
@@ -279,13 +297,53 @@ class RuntimeApi {
     }
   }
 
+  async #getMetrics ({ format }) {
+    let entrypoint = null
+    for (const service of this.#services.values()) {
+      if (service.appConfig.entrypoint) {
+        entrypoint = service
+        break
+      }
+    }
+
+    const entrypointStatus = entrypoint.getStatus()
+    if (entrypointStatus !== 'started') {
+      throw new errors.ServiceNotStartedError(entrypoint.id)
+    }
+
+    const promRegister = entrypoint.server.metrics?.client?.register
+    if (!promRegister) {
+      return { metrics: null }
+    }
+
+    // All runtime services shares the same metrics registry.
+    // Getting metrics from the entrypoint returns all metrics.
+    const metrics = format === 'json'
+      ? await promRegister.getMetricsAsJSON()
+      : await promRegister.metrics()
+
+    return { metrics }
+  }
+
   async #startService ({ id }) {
     const service = this.#getServiceById(id)
-    await service.start()
+    const serviceStatus = service.getStatus()
+
+    if (serviceStatus === 'starting') {
+      await once(service, 'start')
+    } else {
+      await service.start()
+    }
   }
 
   async #stopService ({ id }) {
     const service = this.#getServiceById(id)
+    const serviceStatus = service.getStatus()
+
+    if (serviceStatus === 'starting') {
+      await once(service, 'start')
+    }
+
     await service.stop()
   }
 

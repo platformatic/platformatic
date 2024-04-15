@@ -3,13 +3,13 @@
 const { tmpdir, platform, EOL } = require('node:os')
 const { join } = require('node:path')
 const { exec, spawn } = require('node:child_process')
-const { readdir } = require('node:fs/promises')
+const { readdir, rm, access } = require('node:fs/promises')
 const { Readable } = require('node:stream')
 const { Client } = require('undici')
 const WebSocket = require('ws')
 const errors = require('./errors.js')
 
-const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'pids')
+const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 const PLATFORMATIC_PIPE_PREFIX = '\\\\.\\pipe\\platformatic-'
 
 class RuntimeApiClient {
@@ -44,16 +44,25 @@ class RuntimeApiClient {
       })
     )
 
-    return getMetadataRequests
-      .filter(result => result.status === 'fulfilled')
-      .map(result => result.value)
+    const runtimes = []
+    for (let i = 0; i < runtimePIDs.length; i++) {
+      const runtimePID = runtimePIDs[i]
+      const metadataRequest = getMetadataRequests[i]
+
+      if (metadataRequest.status === 'rejected') {
+        await this.#removeRuntimeTmpDir(runtimePID).catch(() => {})
+      } else {
+        runtimes.push(metadataRequest.value)
+      }
+    }
+    return runtimes
   }
 
   async getRuntimeMetadata (pid) {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: '/api/metadata',
+      path: '/api/v1/metadata',
       method: 'GET'
     })
 
@@ -70,7 +79,7 @@ class RuntimeApiClient {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: '/api/services',
+      path: '/api/v1/services',
       method: 'GET'
     })
 
@@ -87,7 +96,7 @@ class RuntimeApiClient {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: `/api/services/${serviceId}/config`,
+      path: `/api/v1/services/${serviceId}/config`,
       method: 'GET'
     })
 
@@ -104,7 +113,7 @@ class RuntimeApiClient {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: '/api/config',
+      path: '/api/v1/config',
       method: 'GET'
     })
 
@@ -121,7 +130,7 @@ class RuntimeApiClient {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: '/api/env',
+      path: '/api/v1/env',
       method: 'GET'
     })
 
@@ -148,7 +157,7 @@ class RuntimeApiClient {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: '/api/reload',
+      path: '/api/v1/reload',
       method: 'POST'
     })
 
@@ -162,7 +171,7 @@ class RuntimeApiClient {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: '/api/stop',
+      path: '/api/v1/stop',
       method: 'POST'
     })
 
@@ -172,26 +181,91 @@ class RuntimeApiClient {
     }
   }
 
-  getRuntimeLogsStream (pid, options) {
+  getRuntimeLiveMetricsStream (pid) {
     const socketPath = this.#getSocketPathFromPid(pid)
-    let query = ''
-    if (options.level || options.pretty || options.serviceId) {
-      query = '?' + new URLSearchParams(options).toString()
-    }
 
     const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
-    const webSocketUrl = protocol + socketPath + ':/api/logs' + query
+    const webSocketUrl = protocol + socketPath + ':/api/v1/metrics/live'
     const webSocketStream = new WebSocketStream(webSocketUrl)
     this.#webSockets.add(webSocketStream.ws)
 
     return webSocketStream
   }
 
+  getRuntimeLiveLogsStream (pid, startLogIndex) {
+    const socketPath = this.#getSocketPathFromPid(pid)
+
+    const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
+    const query = startLogIndex ? `?start=${startLogIndex}` : ''
+    const webSocketUrl = protocol + socketPath + ':/api/v1/logs/live' + query
+    const webSocketStream = new WebSocketStream(webSocketUrl)
+    this.#webSockets.add(webSocketStream.ws)
+
+    return webSocketStream
+  }
+
+  async getRuntimeLogsStream (pid, logsId, options = {}) {
+    const runtimePID = options.runtimePID ?? pid
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: '/api/v1/logs/' + logsId,
+      method: 'GET',
+      query: { pid: runtimePID }
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new errors.FailedToGetRuntimeHistoryLogs(error)
+    }
+
+    return body
+  }
+
+  async getRuntimeAllLogsStream (pid, options = {}) {
+    const runtimePID = options.runtimePID ?? pid
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: '/api/v1/logs/all',
+      method: 'GET',
+      query: { pid: runtimePID }
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new errors.FailedToGetRuntimeAllLogs(error)
+    }
+
+    return body
+  }
+
+  async getRuntimeLogIndexes (pid, options = {}) {
+    const all = options.all ?? false
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: '/api/v1/logs/indexes',
+      method: 'GET',
+      query: { all }
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new errors.FailedToGetRuntimeLogIndexes(error)
+    }
+
+    const result = await body.json()
+    if (all) return result
+
+    return result.indexes
+  }
+
   async injectRuntime (pid, serviceId, options) {
     const client = this.#getUndiciClient(pid)
 
     const response = await client.request({
-      path: `/api/services/${serviceId}/proxy` + options.url,
+      path: `/api/v1/services/${serviceId}/proxy` + options.url,
       method: options.method,
       headers: options.headers,
       query: options.query,
@@ -227,15 +301,19 @@ class RuntimeApiClient {
     if (platform() === 'win32') {
       return PLATFORMATIC_PIPE_PREFIX + pid
     }
-    return join(PLATFORMATIC_TMP_DIR, `${pid}.sock`)
+    return join(PLATFORMATIC_TMP_DIR, pid.toString(), 'socket')
   }
 
   async #getUnixRuntimePIDs () {
-    const socketNames = await readdir(PLATFORMATIC_TMP_DIR)
+    try {
+      await access(PLATFORMATIC_TMP_DIR)
+    } catch {
+      return []
+    }
+    const runtimeDirs = await readdir(PLATFORMATIC_TMP_DIR)
     const runtimePIDs = []
-    for (const socketName of socketNames) {
-      const runtimePID = socketName.replace('.sock', '')
-      runtimePIDs.push(parseInt(runtimePID))
+    for (const runtimeDirName of runtimeDirs) {
+      runtimePIDs.push(parseInt(runtimeDirName))
     }
     return runtimePIDs
   }
@@ -267,6 +345,11 @@ class RuntimeApiClient {
         }
       )
     })
+  }
+
+  async #removeRuntimeTmpDir (pid) {
+    const runtimeDir = join(PLATFORMATIC_TMP_DIR, pid.toString())
+    await rm(runtimeDir, { recursive: true, force: true })
   }
 }
 

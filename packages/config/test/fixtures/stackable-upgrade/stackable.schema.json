@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "properties": {
+    "server": {
+      "type": "object"
+    },
+    "plugins": {
+      "type": "object"
+    }
+  },
+  "originalVersion": {
+    "type": "string"
+  }
+}

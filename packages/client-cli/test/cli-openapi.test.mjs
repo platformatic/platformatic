@@ -26,7 +26,6 @@ test('openapi client generation (javascript)', async (t) => {
   await app.start()
 
   const dir = await moveToTmpdir(after)
-  console.log(`working in ${dir}`)
 
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url, '--name', 'movies', '--type', 'openapi'])
 
@@ -85,7 +84,6 @@ test('openapi client generation (typescript)', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  console.log(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
   const toWrite = `
@@ -171,7 +169,6 @@ test('openapi client generation (javascript) with slash at the end', async (t) =
 
   const dir = await moveToTmpdir(after)
 
-  console.log(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
   const toWrite = `
@@ -250,7 +247,6 @@ test('datatypes', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  console.log(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
   const toWrite = `
@@ -308,7 +304,6 @@ test('configureClient (typescript)', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  console.log(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
   const toWrite = `
@@ -399,7 +394,6 @@ test('dotenv & config support', async (t) => {
   })
 
   const dir = await moveToTmpdir(after)
-  console.log(`working in ${dir}`)
 
   const pltServiceConfig = {
     $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
@@ -448,7 +442,6 @@ test('full-response option', async (t) => {
   await app.start()
 
   const dir = await moveToTmpdir(after)
-  console.log(`working in ${dir}`)
 
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--full-response'])
 
@@ -527,7 +520,6 @@ test('openapi client generation (javascript) from file', async (t) => {
   await app.start()
 
   const dir = await moveToTmpdir(after)
-  console.log(`working in ${dir}`)
 
   const openAPI = app.swagger()
   const openAPIfile = join(dir, 'movies.schema.json')
@@ -589,7 +581,6 @@ test('name with dashes', async (t) => {
   await app.start()
 
   const dir = await moveToTmpdir(after)
-  console.log(`working in ${dir}`)
 
   try {
     await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'uncanny-movies'])
@@ -661,7 +652,6 @@ test('no dashes typescript', async (t) => {
   await app.start()
   const dir = await moveToTmpdir(after)
 
-  console.log(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'uncanny-movies'])
 
   const toWrite = `
@@ -741,7 +731,6 @@ test('name with tilde', async (t) => {
   await app.start()
 
   const dir = await moveToTmpdir(after)
-  console.log(`working in ${dir}`)
 
   try {
     await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'uncanny~movies'])
@@ -805,7 +794,6 @@ app.listen({ port: 0 })
 test('openapi client generation from YAML file', async (t) => {
   const dir = await moveToTmpdir(after)
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'openapi.yaml')
-  console.log(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
 
   // check openapi json file has been created
@@ -824,7 +812,6 @@ test('openapi client generation from YAML file', async (t) => {
 test('nested optional parameters are correctly identified', async (t) => {
   const dir = await moveToTmpdir(after)
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'optional-params-openapi.json')
-  console.log(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
 
   // check the type file has the correct implementation for the request
@@ -841,7 +828,6 @@ test('nested optional parameters are correctly identified', async (t) => {
 test('request with same parameter name in body/path/header/query', async (t) => {
   const dir = await moveToTmpdir(after)
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'same-parameter-name-openapi.json')
-  console.log(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
   // check the type file has the correct implementation for the request
   const typeFile = join(dir, 'movies', 'movies.d.ts')
@@ -866,7 +852,6 @@ test('request with same parameter name in body/path/header/query', async (t) => 
 test('openapi client generation (javascript) from file with fullRequest, fullResponse, validateResponse and optionalHeaders', async (t) => {
   const openapi = desm.join(import.meta.url, 'fixtures', 'full-req-res', 'openapi.json')
   const dir = await moveToTmpdir(after)
-  console.log(`working in ${dir}`)
 
   const fullOptions = [
     ['--full-request', '--full-response'],
@@ -919,7 +904,6 @@ async function generateFullClientPlugin (app, opts) {
 test('do not generate implementation file if in platformatic service', async (t) => {
   const openapi = desm.join(import.meta.url, 'fixtures', 'full-req-res', 'openapi.json')
   const dir = await moveToTmpdir(after)
-  console.log(`working in ${dir}`)
 
   const pltServiceConfig = {
     $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
@@ -968,12 +952,11 @@ test('do not generate implementation file if in platformatic service', async (t)
 
 test('optional-headers option', async (t) => {
   const dir = await moveToTmpdir(after)
-  console.log(`working in ${dir}`)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'optional-headers-openapi.json')
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--optional-headers', 'foobar,authorization', '--types-only'])
 
-  const typeFile = join(dir, 'movies.d.ts')
+  const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
   equal(data.includes(`
   export type PostHelloRequest = {
@@ -984,7 +967,6 @@ test('optional-headers option', async (t) => {
 
 test('common parameters in paths', async (t) => {
   const dir = await moveToTmpdir(after)
-  console.log(`working in ${dir}`)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'common-parameters', 'openapi.json')
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--full-request'])
@@ -1025,7 +1007,6 @@ test('common parameters in paths', async (t) => {
 
   await app.start()
 
-  console.log(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'commonparams', '--full-request'])
 
   const toWrite = `
@@ -1089,21 +1070,32 @@ app.listen({ port: 0 })
 
 test('requestbody as array', async (t) => {
   const dir = await moveToTmpdir(after)
-  console.log(`working in ${dir}`)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'requestbody-as-array-openapi.json')
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies'])
+  const typeFile = join(dir, 'movies', 'movies.d.ts')
+  const data = await readFile(typeFile, 'utf-8')
 
+  equal(data.includes(`
+  export type Movies = {
+    postFoobar(req?: PostFoobarRequest[]): Promise<PostFoobarResponses>;
+  }
+`), true)
+  equal(data.includes('export type PostFoobarRequest = Array<{ \'id\'?: string; \'title\'?: string }>'), true)
+})
+
+test('requestBody and params should generate a full request', async (t) => {
+  const dir = await moveToTmpdir(after)
+  const openapiFile = desm.join(import.meta.url, 'fixtures', 'requestbody-and-parameters-openapi.json')
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
+
+  // check the type file has the correct implementation for the request
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
   equal(data.includes(`
-  export type Movies = {
-    postFoobar(req?: PostFoobarRequest[]): Promise<FullResponse<unknown, 200>>;
+  export type PutFooRequest = {
+    'bar': string;
+    body: Array<{ 'codeType': 'customField'; 'externalId': unknown; 'internalId': string; 'kind': 'mapped' } | { 'codeType': 'costCenter'; 'externalId': unknown; 'kind': 'mapped' } | { 'externalId': unknown; 'kind': 'notMapped' }>
   }
 `), true)
-  equal(data.includes(`
-  export type PostFoobarRequest = {
-    'id': string;
-    'title': string;
-  }`), true)
 })

@@ -6,7 +6,6 @@ import { dirname, join } from 'node:path'
 import { cp, readFile } from 'node:fs/promises'
 import { execa } from 'execa'
 import { cliPath } from './helper.js'
-import { compareVersions } from '../lib/upgrade.js'
 
 let count = 0
 
@@ -19,9 +18,17 @@ test('writes a config file', async (t) => {
     join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'v0.16.0.db.json'),
     join(dest, 'platformatic.db.json'))
 
-  await execa('node', [cliPath, 'upgrade'], {
+  await cp(
+    join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'platformatic.db.schema.json'),
+    join(dest, 'platformatic.db.schema.json'))
+
+  const { stdout } = await execa('node', [cliPath, 'upgrade'], {
     cwd: dest
   })
+
+  assert.match(stdout, /Migrating to version 0.16.0/)
+  assert.match(stdout, /Migrating to version 0.18.0/)
+  assert.match(stdout, /Migrating to version 0.28.0/)
 
   const config = JSON.parse(await readFile(join(dest, 'platformatic.db.json'), 'utf8'))
 
@@ -35,6 +42,10 @@ test('writes a config file with a config option', async (t) => {
     join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'v0.16.0.db.json'),
     join(dest, 'platformatic.db.json'))
 
+  await cp(
+    join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'platformatic.db.schema.json'),
+    join(dest, 'platformatic.db.schema.json'))
+
   await execa('node', [cliPath, 'upgrade', '-c', join(dest, 'platformatic.db.json')])
 
   const config = JSON.parse(await readFile(join(dest, 'platformatic.db.json'), 'utf8'))
@@ -46,12 +57,19 @@ test('no config file no party', async (t) => {
   await assert.rejects(execa('node', [cliPath, 'upgrade']))
 })
 
-test('compare versions', async (t) => {
-  assert.equal(compareVersions('1.0.0', '0.49.12'), 1)
-  assert.equal(compareVersions('0.49.12', '1.0.0'), -1)
-  assert.equal(compareVersions('1.2.3', '1.2.3'), 0)
-  assert.equal(compareVersions('1.2.3', '1.2.4'), -1)
-  assert.equal(compareVersions('1.2.4', '1.2.3'), 1)
-  assert.equal(compareVersions('1.3.3', '1.2.3'), 1)
-  assert.equal(compareVersions('1.2.3', '1.3.3'), -1)
+test('updates a runtime', async (t) => {
+  const dest = join(tmpdir(), `test-cli-${process.pid}-${count++}`)
+
+  await cp(
+    join(dirname(fileURLToPath(import.meta.url)), '..', 'fixtures', 'runtime-upgrade'),
+    dest,
+    { recursive: true })
+
+  await execa('node', [cliPath, 'upgrade'], {
+    cwd: dest
+  })
+
+  const config = JSON.parse(await readFile(join(dest, 'platformatic.json'), 'utf8'))
+
+  assert.match(config.$schema, new RegExp('https://platformatic.dev/schemas/v\\d+.\\d+.\\d+/runtime'))
 })

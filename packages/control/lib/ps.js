@@ -55,7 +55,7 @@ function formatRuntimeTime (timeSeconds) {
 const tableConfig = {
   border: getBorderCharacters('void'),
   columnDefault: {
-    paddingLeft: 1,
+    paddingLeft: 0,
     paddingRight: 1
   },
   drawHorizontalLine: () => false
@@ -78,7 +78,7 @@ async function printRuntimes (runtimes) {
   }
 
   const runtimesTable = table(raws, tableConfig)
-  console.log(runtimesTable)
+  process.stdout.write(runtimesTable)
 }
 
 async function listRuntimesCommand () {

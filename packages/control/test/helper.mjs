@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { on } from 'node:events'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { createRequire } from 'node:module'
 import { execa } from 'execa'
 import { Agent, setGlobalDispatcher } from 'undici'
@@ -47,6 +48,7 @@ export async function startRuntime (configPath, env = {}) {
 
         if (url !== undefined) {
           clearTimeout(errorTimeout)
+          await sleep(1000)
           return { runtime, url, output }
         }
       }

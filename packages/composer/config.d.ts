@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface HttpsPlatformaticDevSchemasV1144Composer {
+export interface PlatformaticComposer {
   server?: {
     hostname?: string;
     port?: number | string;
@@ -260,6 +260,7 @@ export interface HttpsPlatformaticDevSchemasV1144Composer {
         | string;
       addEntitiesResolvers?: boolean;
     };
+    addEmptySchema?: boolean;
     refreshTimeout?: number;
   };
   metrics?:
@@ -267,6 +268,8 @@ export interface HttpsPlatformaticDevSchemasV1144Composer {
     | {
         port?: number | string;
         hostname?: string;
+        endpoint?: string;
+        server?: "own" | "parent";
         auth?: {
           username: string;
           password: string;

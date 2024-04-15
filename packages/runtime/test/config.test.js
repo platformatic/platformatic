@@ -8,6 +8,7 @@ const { platformaticService } = require('@platformatic/service')
 const { platformaticDB } = require('@platformatic/db')
 const { parseInspectorOptions, platformaticRuntime, wrapConfigInRuntimeConfig } = require('../lib/config')
 const fixturesDir = join(__dirname, '..', 'fixtures')
+const { Store } = require('@platformatic/config')
 
 test('throws if no entrypoint is found', async (t) => {
   const configFile = join(fixturesDir, 'configs', 'invalid-entrypoint.json')
@@ -266,4 +267,28 @@ test('defaults name to `main` if package.json exists but has no name', async (t)
   const conf = runtimeConfig.current
   assert.strictEqual(conf.services.length, 1)
   assert.strictEqual(conf.services[0].id, 'main')
+})
+
+test('loads with the store', async (t) => {
+  const cwd = process.cwd()
+  process.chdir(join(fixturesDir, 'configs'))
+  t.after(() => {
+    process.chdir(cwd)
+  })
+  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
+
+  const store = new Store()
+  store.add(platformaticRuntime)
+
+  const { configManager } = await store.loadConfig({
+    config: configFile,
+    overrides: {
+      fixPaths: false,
+      onMissingEnv (key) {
+        return '{' + key + '}'
+      }
+    }
+  })
+
+  await configManager.parseAndValidate(false)
 })

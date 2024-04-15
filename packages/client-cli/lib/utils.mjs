@@ -36,3 +36,80 @@ export async function appendToBothEnvs (dir, key, value) {
 export function toJavaScriptName (str) {
   return camelcase(str.replace(/[^a-zA-Z0-9]+/gi, ' '))
 }
+
+export function getResponseContentType (responseObject) {
+  if (!responseObject || responseObject.content === undefined) {
+    return null
+  }
+
+  const [firstContentType] = Object.entries(responseObject.content)
+  return firstContentType[0]
+}
+
+export function is200JsonResponse (responses) {
+  if (responses['200'] && responses['200'].content && responses['200'].content['application/json']) {
+    return true
+  }
+  return false
+}
+
+export function getAllResponseCodes (responses) {
+  return Object.keys(responses).map((code) => {
+    return parseInt(code)
+  })
+}
+
+export function getResponseTypes (responses) {
+  const output = {
+    text: [],
+    blob: [],
+    json: []
+  }
+  Object.keys(responses).forEach((code) => {
+    const resp = responses[code]
+    const intCode = parseInt(code)
+    if (resp.content) {
+      // get all type of contents
+      Object.keys(resp.content).forEach((contentType) => {
+        if (contentType === 'application/json') {
+          output.json.push(intCode)
+        } else if (contentType.startsWith('text/')) {
+          output.text.push(intCode)
+        } else {
+          const respSchema = resp.content[contentType].schema
+          if (respSchema.type && respSchema.type === 'string' && respSchema.format === 'binary') {
+            output.blob.push(intCode)
+          } else {
+            output.text.push(intCode)
+          }
+        }
+      })
+    } else {
+      output.text.push(intCode)
+    }
+  })
+  return output
+}
+
+/**
+ * Returns the type of the request body which can be 'object', 'array', 'plain' or 'empty'
+ * @param {object} requestBodyBlock The requestBody OpenAPI spec block
+ */
+export function getBodyType (requestBodyBlock) {
+  if (requestBodyBlock === undefined) {
+    return 'empty'
+  }
+  if (requestBodyBlock.content && requestBodyBlock.content['application/json']) {
+    const schema = requestBodyBlock.content['application/json'].schema
+    if (schema.$ref) {
+      return 'object'
+    }
+    if (schema.type === 'array') {
+      return 'array'
+    }
+    if (schema.type === 'object') {
+      return 'object'
+    }
+  }
+  return 'plain'
+}

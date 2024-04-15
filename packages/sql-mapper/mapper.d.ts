@@ -74,11 +74,11 @@ export interface WhereCondition {
     /**
      * Equal to value.
      */
-    eq?: string,
+    eq?: string | null,
     /**
      * Not equal to value.
      */
-    neq?: string,
+    neq?: string | null,
     /**
      * Greater than value.
      */
@@ -227,6 +227,27 @@ interface Delete<EntityFields> {
   }): Promise<Partial<EntityFields>[]>,
 }
 
+interface UpdateMany<EntityFields> {
+  (options: {
+    /**
+     * SQL where condition.
+     */
+    where: WhereCondition,
+    /**
+     * Entity fields to update.
+     */
+    input: EntityFields,
+    /**
+     * List of fields to be returned for each object
+     */
+    fields?: string[],
+    /**
+     * If present, the entity participates in transaction
+     */
+    tx?: Database
+  }): Promise<Partial<EntityFields>[]>
+}
+
 export interface Entity<EntityFields = any> {
   /**
    * The origin name of the database entity.
@@ -288,6 +309,10 @@ export interface Entity<EntityFields = any> {
    * Count the entities considering the where condition.
    */
   count: Count,
+  /**
+   * Update one or more entity rows from the database.
+   */
+  updateMany: UpdateMany<EntityFields>
 }
 
 type EntityHook<T extends (...args: any) => any> = (original: T, ...options: Parameters<T>) => ReturnType<T>;
@@ -298,6 +323,7 @@ export interface EntityHooks<EntityFields = any> {
   save?: EntityHook<Save<EntityFields>>,
   delete?: EntityHook<Delete<EntityFields>>,
   count?: EntityHook<Count>,
+  updateMany?: EntityHook<UpdateMany<EntityFields>>
 }
 
 interface BasePoolOptions {

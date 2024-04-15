@@ -61,13 +61,13 @@ export namespace BaseGenerator {
     var: string
     default: string
     type: 'number' | 'string' | 'boolean' | 'path'
-    configValue?: 'string'
+    configValue?: string
   }
 
   type ConfigField = {
     var: string
-    configValue?: 'string'
-    value: 'string'
+    configValue?: string
+    value: string
   }
 
   type AddEnvVarOptions = {
@@ -93,7 +93,7 @@ export namespace BaseGenerator {
     getEnvVar (envVarName: string): EnvVarValue
     setEnvVars(env?: Env): void
 
-    getDefaultConfig(): JSONValue
+    getDefaultConfig(): { [x: string]: JSONValue }
     getDefaultEnv(): Env
 
     getFastifyVersion(): Promise<string>
@@ -101,23 +101,24 @@ export namespace BaseGenerator {
 
     addPackage(pkg: PackageDefinition): Promise<void>
 
+    loadFromDir(dir: string): Promise<void>
     prepare(): Promise<GeneratorMetadata>
     run(): Promise<GeneratorMetadata>
     addQuestion(question: any, where?: WhereClause): Promise<void>
     removeQuestion(variableName: string): void
-    getTSConfig(): JSONValue
+    getTSConfig(): { [x: string]: JSONValue }
 
     getConfigFieldsDefinitions(): ConfigFieldDefinition[]
     setConfigFields(fields: ConfigField[]): void
 
     generateConfigFile(): Promise<void>
     readPackageJsonFile(): Promise<JSONValue>
-    generatePackageJson(): Promise<JSONValue>
+    generatePackageJson(): Promise<{ [x: string]: JSONValue }>
     getConfigFileName(): string
     checkEnvVariablesInConfigFile(): boolean
     _beforePrepare(): Promise<void>
     _afterPrepare(): Promise<void | JSONValue>
-    _getConfigFileContents(): Promise<JSONValue>
+    _getConfigFileContents(): Promise<{ [x: string]: BaseGenerator.JSONValue }>
     _generateEnv(): Promise<void>
     appendConfigEnv(): Promise<void>
 

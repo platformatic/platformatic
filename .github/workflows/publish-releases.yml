@@ -22,9 +22,10 @@ jobs:
       - uses: pnpm/action-setup@v3.0.0
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
+      - run: npm install npm -g
       - name: pnpm install
         uses: nick-fields/retry@v3.0.0
         with:

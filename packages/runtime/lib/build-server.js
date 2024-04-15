@@ -1,7 +1,8 @@
 'use strict'
+
 const ConfigManager = require('@platformatic/config')
 const { platformaticRuntime } = require('./config')
-const { startWithConfig } = require('./start')
+const { buildRuntime } = require('./start')
 const { buildServer: buildServerService } = require('@platformatic/service')
 const { loadConfig } = require('./load-config')
 
@@ -35,7 +36,7 @@ async function buildServerRuntime (options = {}) {
     }
   }
 
-  return startWithConfig(options.configManager)
+  return buildRuntime(options.configManager)
 }
 
 async function buildServer (options) {

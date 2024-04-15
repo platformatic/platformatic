@@ -1,7 +1,7 @@
 'use strict'
 const { safeMkdir } = require('./utils')
 const { join } = require('node:path')
-const { writeFile } = require('node:fs/promises')
+const { writeFile, readFile } = require('node:fs/promises')
 
 /* c8 ignore start */
 const fakeLogger = {
@@ -22,6 +22,13 @@ class FileGenerator {
 
   setTargetDirectory (dir) {
     this.targetDirectory = dir
+  }
+
+  async loadFile ({ path, file }) {
+    const filePath = join(this.targetDirectory, path, file)
+    const contents = await readFile(filePath, 'utf-8')
+    this.addFile({ path, file, contents })
+    return this.getFileObject(file, path)
   }
 
   addFile ({ path, file, contents, options = {} }) {

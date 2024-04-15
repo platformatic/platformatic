@@ -246,6 +246,10 @@ const authorization = {
       description: 'The user metadata key to store user roles',
       default: 'X-PLATFORMATIC-ROLE'
     },
+    rolePath: {
+      type: 'string',
+      description: 'The user metadata path to store user roles'
+    },
     anonymousRole: {
       type: 'string',
       description: 'The role name for anonymous users',
@@ -335,7 +339,9 @@ const migrations = {
       description: 'The path to the directory containing the migrations.'
     },
     table: {
-      type: 'string'
+      type: 'string',
+      description: 'Table created to track schema version.',
+      default: 'versions'
     },
     validateChecksums: {
       type: 'boolean'
@@ -348,11 +354,6 @@ const migrations = {
       }, {
         type: 'string'
       }]
-    },
-    migrationsTable: {
-      type: 'string',
-      description: 'Table created to track schema version.',
-      default: 'versions'
     },
     newline: {
       type: 'string',

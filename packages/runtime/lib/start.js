@@ -11,8 +11,9 @@ const { printConfigValidationErrors } = require('@platformatic/config')
 const closeWithGrace = require('close-with-grace')
 const { loadConfig } = require('./load-config')
 const { startManagementApi } = require('./management-api')
+const { startPrometheusServer } = require('./prom-server.js')
 const { parseInspectorOptions, wrapConfigInRuntimeConfig } = require('./config')
-const RuntimeApiClient = require('./api-client.js')
+const { RuntimeApiClient, getRuntimeLogsDir } = require('./api-client.js')
 const errors = require('./errors')
 const pkg = require('../package.json')
 
@@ -24,8 +25,8 @@ const kWorkerExecArgv = [
   kLoaderFile
 ]
 
-async function startWithConfig (configManager, env = process.env) {
-  const config = { ...configManager.current }
+async function buildRuntime (configManager, env = process.env) {
+  const config = configManager.current
 
   if (inspector.url()) {
     throw new errors.NodeInspectorFlagsNotSupportedError()
@@ -40,26 +41,16 @@ async function startWithConfig (configManager, env = process.env) {
   }
 
   const dirname = configManager.dirname
+  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
 
   // The configManager cannot be transferred to the worker, so remove it.
   delete config.configManager
 
-  let mainLoggingPort = null
-  let childLoggingPort = config.loggingPort
-
-  if (!childLoggingPort && config.managementApi) {
-    const { port1, port2 } = new MessageChannel()
-    mainLoggingPort = port1
-    childLoggingPort = port2
-
-    config.loggingPort = childLoggingPort
-  }
-
   const worker = new Worker(kWorkerFile, {
     /* c8 ignore next */
     execArgv: config.hotReload ? kWorkerExecArgv : [],
-    transferList: childLoggingPort ? [childLoggingPort] : [],
-    workerData: { config, dirname },
+    transferList: config.loggingPort ? [config.loggingPort] : [],
+    workerData: { config, dirname, runtimeLogsDir },
     env
   })
 
@@ -111,15 +102,23 @@ async function startWithConfig (configManager, env = process.env) {
 
   await once(worker, 'message') // plt:init
 
-  const runtimeApiClient = new RuntimeApiClient(worker)
+  const runtimeApiClient = new RuntimeApiClient(
+    worker,
+    configManager,
+    runtimeLogsDir
+  )
 
   if (config.managementApi) {
-    managementApi = await startManagementApi(
-      configManager,
-      runtimeApiClient,
-      mainLoggingPort
-    )
+    managementApi = await startManagementApi(runtimeApiClient, configManager)
     runtimeApiClient.managementApi = managementApi
+    runtimeApiClient.on('start', () => {
+      runtimeApiClient.startCollectingMetrics()
+    })
+  }
+  if (config.metrics) {
+    runtimeApiClient.on('start', async () => {
+      await startPrometheusServer(runtimeApiClient, config.metrics)
+    })
   }
 
   return runtimeApiClient
@@ -130,7 +129,7 @@ async function start (args) {
 
   if (config.configType === 'runtime') {
     config.configManager.args = config.args
-    const app = await startWithConfig(config.configManager)
+    const app = await buildRuntime(config.configManager)
     await app.start()
     return app
   }
@@ -145,11 +144,11 @@ async function startCommand (args) {
 
     if (config.configType === 'runtime') {
       config.configManager.args = config.args
-      runtime = await startWithConfig(config.configManager)
+      runtime = await buildRuntime(config.configManager)
     } else {
       const wrappedConfig = await wrapConfigInRuntimeConfig(config)
       wrappedConfig.args = config.args
-      runtime = await startWithConfig(wrappedConfig)
+      runtime = await buildRuntime(wrappedConfig)
     }
 
     return await runtime.start()
@@ -205,4 +204,4 @@ In alternative run "npm create platformatic@latest" to generate a basic plt serv
   process.exit(1)
 }
 
-module.exports = { start, startWithConfig, startCommand }
+module.exports = { buildRuntime, start, startCommand }

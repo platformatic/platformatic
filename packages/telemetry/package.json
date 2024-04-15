@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/telemetry",
-  "version": "1.23.0",
+  "version": "1.35.4",
   "description": "OpenTelemetry integration for Platformatic",
   "main": "index.js",
   "scripts": {
@@ -14,20 +14,20 @@
   },
   "license": "Apache-2.0",
   "devDependencies": {
-    "borp": "^0.9.0",
-    "fastify": "^4.26.0",
+    "borp": "^0.11.0",
+    "fastify": "^4.26.2",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0"
   },
   "dependencies": {
     "@fastify/swagger": "^8.14.0",
-    "@opentelemetry/api": "^1.7.0",
-    "@opentelemetry/core": "^1.21.0",
-    "@opentelemetry/exporter-trace-otlp-proto": "^0.48.0",
-    "@opentelemetry/exporter-zipkin": "^1.21.0",
-    "@opentelemetry/resources": "^1.21.0",
-    "@opentelemetry/sdk-trace-base": "^1.21.0",
-    "@opentelemetry/semantic-conventions": "^1.21.0",
+    "@opentelemetry/api": "^1.8.0",
+    "@opentelemetry/core": "^1.22.0",
+    "@opentelemetry/exporter-trace-otlp-proto": "^0.50.0",
+    "@opentelemetry/exporter-zipkin": "^1.22.0",
+    "@opentelemetry/resources": "^1.22.0",
+    "@opentelemetry/sdk-trace-base": "^1.22.0",
+    "@opentelemetry/semantic-conventions": "^1.22.0",
     "fast-uri": "^2.3.0",
     "fastify-plugin": "^4.5.1"
   }

@@ -9,16 +9,16 @@ export async function createAuthProxy (t, opts = {}) {
   app.decorate('waitingRequests', new Map())
 
   app.register(async function (fastify) {
-    fastify.get('/user-api-key', { websocket: true }, async (connection) => {
+    fastify.get('/user-api-key', { websocket: true }, async (socket) => {
       const reqId = randomUUID().replace(/-/g, '')
       fastify.log.debug({ reqId }, 'Connection established.')
 
-      connection.socket.on('message', message => {
+      socket.on('message', message => {
         try {
           message = JSON.parse(message.toString())
         } catch (err) {
           fastify.log.error({ reqId, err }, 'Failed to parse message.')
-          connection.socket.close()
+          socket.close()
           return
         }
 
@@ -28,8 +28,8 @@ export async function createAuthProxy (t, opts = {}) {
             type: 'CREATE_USER_API_KEY_REQ_ID',
             data: { reqId }
           }
-          fastify.waitingRequests.set(reqId, connection)
-          connection.socket.send(JSON.stringify(responseMessage))
+          fastify.waitingRequests.set(reqId, socket)
+          socket.send(JSON.stringify(responseMessage))
 
           fastify.inject({
             method: 'PUT',
@@ -39,16 +39,16 @@ export async function createAuthProxy (t, opts = {}) {
           return
         }
 
-        connection.socket.close()
+        socket.close()
         throw new Error(`Unknown message type "${message.type}".`)
       })
 
-      connection.socket.on('error', err => {
+      socket.on('error', err => {
         fastify.log.error({ reqId, err }, 'Connection error.')
-        connection.socket.close()
+        socket.close()
       })
 
-      connection.socket.on('close', () => {
+      socket.on('close', () => {
         fastify.log.debug({ reqId }, 'Connection closed.')
         fastify.waitingRequests.delete(reqId)
       })
@@ -56,8 +56,8 @@ export async function createAuthProxy (t, opts = {}) {
 
     fastify.put('/user-api-key', async (request, reply) => {
       const { reqId, key } = request.body
-      const connection = fastify.waitingRequests.get(reqId)
-      if (!connection) {
+      const socket = fastify.waitingRequests.get(reqId)
+      if (!socket) {
         reply.code(404)
         return { error: 'Connection not found.' }
       }
@@ -68,8 +68,8 @@ export async function createAuthProxy (t, opts = {}) {
         type: 'CREATE_USER_API_KEY_RESULT',
         data: { userApiKey: key }
       }
-      connection.socket.send(JSON.stringify(responseMessage))
-      connection.socket.close()
+      socket.send(JSON.stringify(responseMessage))
+      socket.close()
     })
   })
   await app.listen({ port: 0 })

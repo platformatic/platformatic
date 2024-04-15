@@ -28,7 +28,7 @@ declare module 'fastify' {
   }
 }
 
-export interface ConfigManagerConfig<T> extends Omit<IConfigManagerOptions, 'source' | 'watch' | 'schema'> {
+export interface ConfigManagerConfig<T> extends Omit<IConfigManagerOptions, 'source' | 'watch' | 'schema' | 'configVersion'> {
   transformConfig: (this: ConfigManager<T>) => Promise<void>
   schema: object
 }
@@ -40,6 +40,10 @@ export interface Stackable<ConfigType> {
   configManagerConfig: ConfigManagerConfig<ConfigType>
   schema: object
   Generator?: new () => BaseGenerator.BaseGenerator
+
+  version?: string
+  upgrade?: (config: any, version: string) => Promise<any>
+  transformConfig?: (config: any) => Promise<any>
 }
 
 interface SchemaExport {

@@ -4,7 +4,6 @@ const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const { join } = require('node:path')
 const { readFile } = require('node:fs/promises')
-const { version } = require('../package.json')
 const { loadConfig, Store, printConfigValidationErrors, printAndExitLoadConfigError } = require('../')
 
 function app () {
@@ -272,42 +271,4 @@ test('printAndExitLoadConfigError bare error', async t => {
     process.exit = processExit
   })
   printAndExitLoadConfigError(throwed)
-})
-
-test('auto-upgrades', async t => {
-  const file = join(__dirname, 'fixtures', '$schema.db.json')
-
-  const store = new Store()
-  function app () {
-  }
-  app.configType = 'db'
-  app.schema = {
-    $id: `https://platformatic.dev/schemas/v${version}/db`,
-    type: 'object'
-  }
-  store.add(app)
-  const { configManager, args } = await loadConfig({}, ['-c', file], store)
-
-  assert.deepEqual(args, {
-    _: [],
-    c: file,
-    config: file,
-    allowEnv: '',
-    'allow-env': '',
-    E: ''
-  })
-  assert.deepEqual(configManager.current, {
-    $schema: `https://platformatic.dev/schemas/v${version}/db`,
-    server: { hostname: '127.0.0.1', port: 0 },
-    db: {
-      connectionString: 'postgres://postgres:postgres@127.0.0.1/postgres'
-    },
-    migrations: {
-      dir: './migrations',
-      table: 'versions',
-      autoApply: false,
-      validateChecksums: true
-    },
-    watch: { ignore: ['*.sqlite', '*.sqlite-journal'] }
-  })
 })

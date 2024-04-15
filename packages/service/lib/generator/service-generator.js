@@ -13,20 +13,23 @@ class ServiceGenerator extends BaseGenerator {
   }
 
   async _beforePrepare () {
-    if (!this.config.isRuntimeContext) {
+    // if we are NOT updating, create env and files, otherwise leave as it is
+    if (!this.config.isUpdating) {
+      if (!this.config.isRuntimeContext) {
+        this.addEnvVars({
+          PLT_SERVER_HOSTNAME: this.config.hostname,
+          PLT_SERVER_LOGGER_LEVEL: 'info',
+          PORT: 3042
+        }, { overwrite: false })
+      }
+
       this.addEnvVars({
-        PLT_SERVER_HOSTNAME: this.config.hostname,
-        PLT_SERVER_LOGGER_LEVEL: 'info',
-        PORT: 3042
+        PLT_TYPESCRIPT: this.config.typescript
       }, { overwrite: false })
-    }
 
-    this.addEnvVars({
-      PLT_TYPESCRIPT: this.config.typescript
-    }, { overwrite: false })
-
-    this.config.dependencies = {
-      '@platformatic/service': `^${this.platformaticVersion}`
+      this.config.dependencies = {
+        '@platformatic/service': `^${this.platformaticVersion}`
+      }
     }
   }
 
@@ -60,7 +63,9 @@ class ServiceGenerator extends BaseGenerator {
   }
 
   async _afterPrepare () {
-    const GLOBAL_TYPES_TEMPLATE = `
+    // if we are NOT updating, create env and files, otherwise leave as it is
+    if (!this.config.isUpdating) {
+      const GLOBAL_TYPES_TEMPLATE = `
 import { FastifyInstance } from 'fastify'
 import { PlatformaticApp, PlatformaticServiceConfig } from '@platformatic/service'
 
@@ -70,8 +75,9 @@ declare module 'fastify' {
   }
 }
 `
-    this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
-    this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
+      this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
+      this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
+    }
   }
 
   async _getConfigFileContents () {

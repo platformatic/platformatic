@@ -1,18 +1,13 @@
 'use strict'
 
-const { readFile, rm } = require('node:fs/promises')
-const { test, afterEach, describe } = require('node:test')
+const { readFile, rm, cp } = require('node:fs/promises')
+const { test, after, afterEach, describe } = require('node:test')
 const assert = require('node:assert')
 const { join } = require('node:path')
 
-const { fakeLogger, getTempDir } = require('./helpers')
+const { fakeLogger, getTempDir, moveToTmpdir, mockNpmJsRequestForPkgs, mockAgent } = require('./helpers')
 const { BaseGenerator } = require('../lib/base-generator')
 const { convertServiceNameToPrefix } = require('../lib/utils')
-const { MockAgent, setGlobalDispatcher } = require('undici')
-
-const mockAgent = new MockAgent()
-setGlobalDispatcher(mockAgent)
-mockAgent.disableNetConnect()
 
 afterEach(async () => {
   try {
@@ -30,7 +25,8 @@ test('should write file and dirs', async (t) => {
   })
 
   gen.setConfig({
-    targetDirectory: dir
+    targetDirectory: dir,
+    serviceName: 'test-service'
   })
 
   await gen.run()
@@ -38,7 +34,10 @@ test('should write file and dirs', async (t) => {
   const packageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'))
   assert.ok(packageJson.scripts)
   assert.ok(packageJson.dependencies)
+  assert.equal(packageJson.dependencies.platformatic, undefined)
   assert.ok(packageJson.engines)
+
+  assert.equal(packageJson.name, 'test-service')
 
   const configFile = JSON.parse(await readFile(join(dir, 'platformatic.json'), 'utf8'))
   assert.deepEqual(configFile, {})
@@ -101,7 +100,8 @@ test('setConfig', async (t) => {
     isRuntimeContext: false,
     serviceName: '',
     envPrefix: '',
-    tests: false
+    tests: false,
+    isUpdating: false
   })
 
   // should not have undefined properties
@@ -128,7 +128,8 @@ test('setConfig', async (t) => {
     isRuntimeContext: false,
     serviceName: '',
     envPrefix: '',
-    tests: false
+    tests: false,
+    isUpdating: false
   })
 
   // reset config to defaults
@@ -147,7 +148,8 @@ test('setConfig', async (t) => {
     isRuntimeContext: false,
     serviceName: '',
     envPrefix: '',
-    tests: false
+    tests: false,
+    isUpdating: false
   })
 
   // update only some fields
@@ -174,7 +176,8 @@ test('setConfig', async (t) => {
     isRuntimeContext: false,
     serviceName: '',
     envPrefix: '',
-    tests: false
+    tests: false,
+    isUpdating: false
   })
 })
 
@@ -191,10 +194,10 @@ test('should append env values', async (t) => {
 
   await bg.prepare()
   const dotEnvFile = bg.getFileObject('.env')
-  assert.equal(dotEnvFile.contents, 'FOO=bar\n')
+  assert.equal(dotEnvFile.contents.trim(), 'FOO=bar')
 
   const dotEnvSampleFile = bg.getFileObject('.env.sample')
-  assert.equal(dotEnvSampleFile.contents, 'FOO=bar\n')
+  assert.equal(dotEnvSampleFile.contents.trim(), 'FOO=bar')
 })
 
 test('should prepare the questions', async (t) => {
@@ -581,18 +584,19 @@ test('support packages', async (t) => {
   }
 
   {
+    mockNpmJsRequestForPkgs(['foobar'])
     // should get the version from npm
-    mockAgent
-      .get('https://registry.npmjs.org')
-      .intercept({
-        method: 'GET',
-        path: '/foobar'
-      })
-      .reply(200, {
-        'dist-tags': {
-          latest: '1.42.0'
-        }
-      })
+    // mockAgent
+    //   .get('https://registry.npmjs.org')
+    //   .intercept({
+    //     method: 'GET',
+    //     path: '/foobar'
+    //   })
+    //   .reply(200, {
+    //     'dist-tags': {
+    //       latest: '1.42.0'
+    //     }
+    //   })
 
     const svc = new BaseGenerator({
       module: '@platformatic/service'
@@ -717,7 +721,99 @@ test('support packages', async (t) => {
     assert.equal(packageJson.dependencies.foobar, 'latest')
   }
 })
+test('should load data from directory', async (t) => {
+  const runtimeDirectory = join(__dirname, 'fixtures', 'sample-runtime')
+  const bg = new BaseGenerator({
+    module: '@platformatic/service'
+  })
+  const data = await bg.loadFromDir('rival', runtimeDirectory)
+  const expected = {
+    name: 'rival',
+    template: '@platformatic/service',
+    fields: [],
+    plugins: [
+      {
+        name: '@fastify/oauth2',
+        options: [
+          {
+            path: 'name',
+            type: 'string',
+            value: 'googleOAuth2',
+            name: 'FST_PLUGIN_OAUTH2_NAME'
+          },
+          {
+            path: 'credentials.client.id',
+            type: 'string',
+            value: 'sample_client_id',
+            name: 'FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID'
+          },
+          {
+            path: 'credentials.client.secret',
+            type: 'string',
+            value: 'sample_client_secret',
+            name: 'FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET'
+          },
+          {
+            path: 'startRedirectPath',
+            type: 'string',
+            value: '/login/google',
+            name: 'FST_PLUGIN_OAUTH2_REDIRECT_PATH'
+          },
+          {
+            path: 'callbackUri',
+            type: 'string',
+            value: 'http://localhost:3000/login/google/callback',
+            name: 'FST_PLUGIN_OAUTH2_CALLBACK_URI'
+          }
+        ]
+      }]
+  }
+  assert.deepEqual(data, expected)
+})
 
+test('on update should just touch the packages configuration', async (t) => {
+  mockNpmJsRequestForPkgs(['@fastify/foo-plugin'])
+  const runtimeDirectory = join(__dirname, 'fixtures', 'sample-runtime', 'services', 'rival')
+  const dir = await moveToTmpdir(after)
+  await cp(runtimeDirectory, dir, { recursive: true })
+
+  const bg = new BaseGenerator({
+    module: '@platformatic/service',
+    targetDirectory: dir
+  })
+  bg.setConfig({
+    isUpdating: true
+  })
+  await bg.addPackage({
+    name: '@fastify/foo-plugin',
+    options: [
+      {
+        path: 'name',
+        type: 'string',
+        value: 'foobar',
+        name: 'FST_PLUGIN_FOO_FOOBAR'
+      }
+    ]
+  })
+  await bg.prepare()
+
+  assert.equal(bg.files.length, 1)
+  assert.equal(bg.files[0].file, 'platformatic.json')
+  assert.equal(bg.files[0].path, '')
+
+  const configFileContents = JSON.parse(bg.files[0].contents)
+  assert.deepEqual(configFileContents.plugins.packages, [
+    {
+      name: '@fastify/foo-plugin',
+      options: {
+        name: '{FST_PLUGIN_FOO_FOOBAR}'
+      }
+    }
+  ])
+  assert.deepEqual(bg.config.dependencies, {
+    '@fastify/foo-plugin': '1.42.0'
+  })
+})
 describe('runtime context', () => {
   test('should set config.envPrefix correctly', async (t) => {
     const bg = new BaseGenerator({

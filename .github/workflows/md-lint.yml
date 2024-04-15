@@ -37,7 +37,7 @@ jobs:
         run: npm install --ignore-scripts
 
       - name: Add Matcher
-        uses: xt0rted/markdownlint-problem-matcher@v2
+        uses: xt0rted/markdownlint-problem-matcher@v3
 
       - name: Run Linter
         run: ./node_modules/.bin/markdownlint-cli2

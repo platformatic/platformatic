@@ -2,3 +2,5 @@
 # test files
 coverage
 test/tmp
+
+!test/fixtures/sample-runtime/.env
