@@ -14,12 +14,11 @@ import ora from 'ora'
 import { createRequire } from 'node:module'
 import { pathToFileURL } from 'node:url'
 import { request } from 'undici'
+import { setTimeout } from 'node:timers/promises'
 
 export async function chooseStackable (opts = {}) {
   const stackablesRequest = request('https://marketplace.platformatic.dev/templates')
-  const stackablesRequestTimeout = new Promise((resolve, reject) => {
-    setTimeout(reject, 5000, new Error('Request timed out'))
-  })
+  const stackablesRequestTimeout = setTimeout(5000, new Error('Request timed out'))
 
   let choices = []
   try {
