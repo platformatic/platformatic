@@ -69,8 +69,6 @@ async function buildRuntime (configManager, env = process.env) {
     exiting = true
     worker.postMessage(event)
     worker.once('exit', (code) => {
-      configManager.fileWatcher?.stopWatching()
-      managementApi?.close()
       if (code !== 0) {
         cb(new WorkerExitCodeError(code))
         return
@@ -96,6 +94,10 @@ async function buildRuntime (configManager, env = process.env) {
       // runtimeApiClient.started can be false if a stop command was issued
       // via the management API.
       if (exiting || !runtimeApiClient.started) {
+        // We must stop those here in case the `closeWithGrace` callback
+        // was not called.
+        configManager.fileWatcher?.stopWatching()
+        managementApi?.close()
         return
       }
 
