@@ -28,15 +28,32 @@ class RuntimeApiClient extends EventEmitter {
     super()
     this.setMaxListeners(MAX_LISTENERS_COUNT)
 
-    this.worker = worker
     this.#configManager = configManager
     this.#runtimeTmpDir = getRuntimeTmpDir(configManager.dirname)
+
+    this.setWorker(worker)
+  }
+
+  async setWorker (worker) {
+    if (!worker) {
+      throw new errors.WorkerIsRequired()
+    }
+    if (this.worker) {
+      this.worker.removeAllListeners('message')
+      // Ignore all things that happen after the worker has been replaced
+      this.#exitPromise.catch(() => {})
+    }
+    this.worker = worker
     this.#exitPromise = this.#exitHandler()
     this.worker.on('message', (message) => {
       if (message.operationId) {
         this.emit(message.operationId, message)
       }
     })
+
+    if (this.started) {
+      await this.start()
+    }
   }
 
   async #getRuntimePackageJson () {
@@ -71,12 +88,14 @@ class RuntimeApiClient extends EventEmitter {
   }
 
   async start () {
+    this.started = true
     const address = await this.#sendCommand('plt:start-services')
     this.emit('start', address)
     return address
   }
 
   async close () {
+    this.started = false
     await this.#sendCommand('plt:stop-services')
 
     this.worker.postMessage({ command: 'plt:close' })

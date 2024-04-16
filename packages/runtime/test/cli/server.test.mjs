@@ -1,5 +1,5 @@
 import assert from 'node:assert'
-import { on, once } from 'node:events'
+import { on } from 'node:events'
 import { test } from 'node:test'
 import { join } from 'desm'
 import { request } from 'undici'
@@ -54,16 +54,6 @@ test('handles startup errors', async (t) => {
   // if we do not await this, the test will crash because the event loop has nothing to do
   // but there is still a promise waiting
   await child.catch(() => {})
-})
-
-test('exits on error', async () => {
-  const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
-  const { child, url } = await start('start', '-c', config)
-  const res = await request(url + '/crash')
-  const [exitCode] = await once(child, 'exit')
-
-  assert.strictEqual(res.statusCode, 200)
-  assert.strictEqual(exitCode, 1)
 })
 
 test('does not start if node inspector flags are provided', async (t) => {
