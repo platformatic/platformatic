@@ -16,18 +16,22 @@ import { pathToFileURL } from 'node:url'
 import { request } from 'undici'
 import { setTimeout } from 'node:timers/promises'
 
-export async function chooseStackable (opts = {}) {
+async function fetchStackables () {
   const stackablesRequest = request('https://marketplace.platformatic.dev/templates')
   const stackablesRequestTimeout = setTimeout(5000, new Error('Request timed out'))
 
-  let choices = []
   try {
-    const { body } = await Promise.race([stackablesRequest, stackablesRequestTimeout])
-    choices = (await body.json()).map(stackable => stackable.name)
-  } catch (err) {
-    choices = ['@platformatic/composer', '@platformatic/db', '@platformatic/service']
-  }
+    const { statusCode, body } = await Promise.race([stackablesRequest, stackablesRequestTimeout])
+    if (statusCode === 200) {
+      return (await body.json()).map(stackable => stackable.name)
+    }
+  } catch (err) {}
 
+  return ['@platformatic/composer', '@platformatic/db', '@platformatic/service']
+}
+
+export async function chooseStackable (opts = {}) {
+  const choices = await fetchStackables()
   const options = await inquirer.prompt({
     type: 'list',
     name: 'type',
