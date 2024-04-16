@@ -1441,8 +1441,8 @@ importers:
         version: 8.16.0
     devDependencies:
       '@fastify/express':
-        specifier: ^2.3.0
-        version: 2.3.0
+        specifier: ^3.0.0
+        version: 3.0.0
       '@fastify/formbody':
         specifier: ^7.4.0
         version: 7.4.0
@@ -2780,8 +2780,8 @@ packages:
   /@fastify/error@3.4.1:
     resolution: {integrity: sha512-wWSvph+29GR783IhmvdwWnN4bUxTD01Vm5Xad4i7i1VuAOItLvbPAb69sb0IQ2N57yprvhNIwAP5B6xfKTmjmQ==}
 
-  /@fastify/express@2.3.0:
-    resolution: {integrity: sha512-jvvjlPPCfJsSHfF6tQDyARJ3+c3xXiqcxVZu6bi3xMWCWB3fl07vrjFDeaqnwqKhLZ9+m6cog5dw7gIMKEsTnQ==}
+  /@fastify/express@3.0.0:
+    resolution: {integrity: sha512-Ug6aulXCUiHgMyrHVYQqnQbGdsAV0aTad6nZxbOr6w3QjKn1mdQS3Kyzvc+I0xMjZ9yIyMUWHSooHgZ0l7nOng==}
     dependencies:
       express: 4.19.2
       fastify-plugin: 4.5.1
