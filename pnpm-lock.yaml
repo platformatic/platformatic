@@ -374,7 +374,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.20.27(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.2)
+        version: 1.21.0
       ajv:
         specifier: ^8.12.0
         version: 8.12.0
@@ -1552,7 +1552,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.20.27(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.2)
+        version: 1.21.0
       '@types/ws':
         specifier: ^8.5.10
         version: 8.5.10
@@ -1917,7 +1917,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.20.27(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.2)
+        version: 1.21.0
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -3484,16 +3484,10 @@ packages:
     dev: true
     optional: true
 
-  /@scalar/fastify-api-reference@1.20.27(fastify-html@0.3.3)(fastify-plugin@4.5.1)(fastify@4.26.2):
-    resolution: {integrity: sha512-fSLu2QeJk1uM7MM3h5yTCWzTBFXfJZzkKNlo7FG2nTEEuN5mDVXJf7DaGzp87Hj+OcrwxKcfFMNhMdi+KYQIaQ==}
+  /@scalar/fastify-api-reference@1.21.0:
+    resolution: {integrity: sha512-Udj5bZezR3smAZyt0haNuupfyg7V1lzKy+zwkiJW8ZTTrE7+77AYDdnP9voXvfX8GP63+FrzOC9/fQ6iOtTUxQ==}
     engines: {node: '>=18'}
-    peerDependencies:
-      fastify: ^4.0.0
-      fastify-html: ^0.3.0
-      fastify-plugin: ^4.0.0
     dependencies:
-      fastify: 4.26.2
-      fastify-html: 0.3.3
       fastify-plugin: 4.5.1
     dev: false
 
@@ -5887,13 +5881,6 @@ packages:
       reusify: 1.0.4
     dev: false
 
-  /fastify-html@0.3.3:
-    resolution: {integrity: sha512-gXOrdGOd7AWxMMmZl2esd/MgenEn5i9CApO7d6dkXZV/8kNn3/dm/VfkRUfTzvpVJUAsYM2FR+6bYHKcsC8p7w==}
-    dependencies:
-      fastify-plugin: 4.5.1
-      ghtml: 1.2.4
-    dev: false
-
   /fastify-metrics@11.0.0(fastify@4.26.2):
     resolution: {integrity: sha512-2nv0pzkuRVRuAmW3fR2vh1FQF7sV/mgzOJ8cz3HjUzByudWvx2IOHKnJLWtUohiD1AaI2QxtLQKTDZv/nASBRQ==}
     peerDependencies:
@@ -6249,11 +6236,6 @@ packages:
       es-errors: 1.3.0
       get-intrinsic: 1.2.4
     dev: true
-
-  /ghtml@1.2.4:
-    resolution: {integrity: sha512-fjvPydzgVno2Vo6PY9LEOWA4/eupbNSQLCo4NIzBo1grlPk4Aq3deMhhvyOeBUA8eBy5iUrpPHRpKbHA+8orPw==}
-    engines: {node: '>=18'}
-    dev: false
 
   /github-from-package@0.0.0:
     resolution: {integrity: sha512-SyHy3T1v2NUXn29OsWdxmK6RwHD+vkj3v8en8AOBZ1wBQ/hCAQ5bAQTD02kW4W9tUp/3Qh6J8r9EvntiyCmOOw==}
