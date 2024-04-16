@@ -113,7 +113,7 @@ file, **`platformatic.db.json`**:
 
 :::info
 
-Take a look at the [Configuration reference](../reference/db/configuration.md)
+Take a look at the [Configuration reference](../db/configuration.md)
 to see all the supported configuration settings.
 
 :::
