@@ -16,7 +16,7 @@ import { pathToFileURL } from 'node:url'
 import { request } from 'undici'
 import { setTimeout } from 'node:timers/promises'
 
-async function fetchStackables () {
+export async function fetchStackables () {
   const stackablesRequest = request('https://marketplace.platformatic.dev/templates')
   const stackablesRequestTimeout = setTimeout(5000, new Error('Request timed out'))
 
