@@ -4,6 +4,7 @@ const { once } = require('node:events')
 const inspector = require('node:inspector')
 const { join, resolve, dirname } = require('node:path')
 const { writeFile } = require('node:fs/promises')
+const { setTimeout: sleep } = require('node:timers/promises')
 const { pathToFileURL } = require('node:url')
 const { Worker } = require('node:worker_threads')
 const { start: serviceStart } = require('@platformatic/service')
@@ -12,6 +13,7 @@ const closeWithGrace = require('close-with-grace')
 const { loadConfig } = require('./load-config')
 const { startManagementApi } = require('./management-api')
 const { startPrometheusServer } = require('./prom-server.js')
+const { WorkerExitCodeError } = require('./errors')
 const { parseInspectorOptions, wrapConfigInRuntimeConfig } = require('./config')
 const { RuntimeApiClient, getRuntimeLogsDir } = require('./api-client.js')
 const errors = require('./errors')
@@ -66,7 +68,13 @@ async function buildRuntime (configManager, env = process.env) {
   closeWithGrace((event, cb) => {
     exiting = true
     worker.postMessage(event)
-    worker.once('exit', cb)
+    worker.once('exit', (code) => {
+      if (code !== 0) {
+        cb(new WorkerExitCodeError(code))
+        return
+      }
+      cb()
+    })
   })
 
   if (config.hotReload) {
@@ -175,32 +183,35 @@ async function startCommand (args) {
       await writeFile(toWrite, JSON.stringify(config, null, 2))
       return startCommand(['--config', toWrite])
     }
-    logErrorAndExit(err)
-  }
-}
 
-function logErrorAndExit (err) {
-  if (err.filenames) {
-    console.error(`Missing config file!
-Be sure to have a config file with one of the following names:
+    if (err.code === 'PLT_RUNTIME_RUNTIME_EXIT') {
+      console.log('Runtime exited before startup was completed, restarting')
+      await sleep(1000)
+      return startCommand(args)
+    }
 
-${err.filenames.map((s) => ' * ' + s).join('\n')}
+    if (err.filenames) {
+      console.error(`Missing config file!
+  Be sure to have a config file with one of the following names:
 
-In alternative run "npm create platformatic@latest" to generate a basic plt service config.`)
+  ${err.filenames.map((s) => ' * ' + s).join('\n')}
+
+  In alternative run "npm create platformatic@latest" to generate a basic plt service config.`)
+      process.exit(1)
+    } else if (err.validationErrors) {
+      printConfigValidationErrors(err)
+      process.exit(1)
+    }
+
+    delete err?.stack
+    console.error(err?.message)
+
+    if (err?.cause) {
+      console.error(`${err.cause}`)
+    }
+
     process.exit(1)
-  } else if (err.validationErrors) {
-    printConfigValidationErrors(err)
-    process.exit(1)
   }
-
-  delete err?.stack
-  console.error(err?.message)
-
-  if (err?.cause) {
-    console.error(`${err.cause}`)
-  }
-
-  process.exit(1)
 }
 
 module.exports = { buildRuntime, start, startCommand }
