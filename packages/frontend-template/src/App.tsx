@@ -38,11 +38,11 @@ function App() {
       <p>
         You can find more details about the topic at:&nbsp;
         <a
-          href="https://docs.platformatic.dev/docs/reference/cli/"
+          href="https://docs.platformatic.dev/docs/cli"
           target="_blank"
           rel="noopener noreferrer nofollow"
         >
-          https://docs.platformatic.dev/docs/reference/cli/
+          https://docs.platformatic.dev/docs/cli
         </a>
       </p>
 
