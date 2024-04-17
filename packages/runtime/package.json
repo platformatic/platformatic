@@ -22,7 +22,7 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "@fastify/express": "^2.3.0",
+    "@fastify/express": "^3.0.0",
     "@fastify/formbody": "^7.4.0",
     "@matteo.collina/tspl": "^0.1.1",
     "@platformatic/sql-graphql": "workspace:*",
