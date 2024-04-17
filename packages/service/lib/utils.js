@@ -1,6 +1,6 @@
 'use strict'
 
-const { access } = require('node:fs/promises')
+const { access, readFile, stat } = require('node:fs/promises')
 const { resolve, join, relative, dirname, basename } = require('node:path')
 const { isatty } = require('tty')
 
@@ -190,7 +190,35 @@ function changeOpenapiSchemaPrefix (openapiSchema, oldVersionPrefix, newVersionP
   }
 }
 
+let isDockerCached
+
+async function isDocker () {
+  async function hasDockerEnv () {
+    try {
+      await stat('/.dockerenv')
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  async function hasDockerCGroup () {
+    try {
+      return (await readFile('/proc/self/cgroup', 'utf8')).includes('docker')
+    } catch {
+      return false
+    }
+  }
+
+  if (isDockerCached === undefined) {
+    isDockerCached = await hasDockerEnv() || await hasDockerCGroup()
+  }
+
+  return isDockerCached
+}
+
 module.exports = {
+  isDocker,
   isFileAccessible,
   getJSPluginPath,
   addLoggerToTheConfig,

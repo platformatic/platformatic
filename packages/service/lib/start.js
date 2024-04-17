@@ -3,9 +3,10 @@
 const { readFile } = require('fs/promises')
 const close = require('close-with-grace')
 const { loadConfig, ConfigManager, printConfigValidationErrors, printAndExitLoadConfigError } = require('@platformatic/config')
-const { addLoggerToTheConfig } = require('./utils.js')
+const { addLoggerToTheConfig, isDocker } = require('./utils.js')
 const { restartable } = require('@fastify/restartable')
 const { randomUUID } = require('crypto')
+
 async function adjustHttpsKeyAndCert (arg) {
   if (typeof arg === 'string') {
     return arg
@@ -47,13 +48,17 @@ async function buildServer (options, app) {
   async function createRestartable (fastify) {
     const config = configManager.current
     let fastifyOptions = {}
+
     if (config.server) {
+      // override hostname if it's docker
+      if (await isDocker()) {
+        config.server.hostname = '0.0.0.0'
+      }
       fastifyOptions = {
         ...config.server
       }
     }
     fastifyOptions.genReqId = function (req) { return randomUUID() }
-
     const root = fastify(fastifyOptions)
     root.decorate('platformatic', { configManager, config })
     await root.register(app)
