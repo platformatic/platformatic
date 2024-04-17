@@ -1,5 +1,5 @@
 import { say } from './say.mjs'
-import path, { basename, resolve } from 'node:path'
+import path, { basename, join, resolve } from 'node:path'
 import inquirer from 'inquirer'
 import generateName from 'boring-name-generator'
 import { getUsername, getVersion, minimumSupportedNodeVersions, isCurrentVersionSupported, safeMkdir } from './utils.mjs'
@@ -13,6 +13,7 @@ import parseArgs from 'minimist'
 import ora from 'ora'
 import { createRequire } from 'node:module'
 import { pathToFileURL } from 'node:url'
+import { writeFile } from 'node:fs/promises'
 
 export async function chooseStackable (opts = {}) {
   const choices = [
@@ -239,6 +240,14 @@ async function createApplication (args, logger, pkgManager) {
 
   if (initGitRepository) {
     await createGitRepository(logger, projectDir)
+  }
+
+  if (pkgManager === 'pnpm') {
+    // add pnpm-workspace.yaml file if needed
+    const content = `packages:
+# all packages in direct subdirs of packages/
+- 'services/*'`
+    await (writeFile(join(projectDir, 'pnpm-workspace.yaml'), content))
   }
 
   if (args.install) {
