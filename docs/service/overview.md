@@ -13,10 +13,10 @@ For a high level overview of how Platformatic Service works, please reference th
 
 ## Features
 
-- Command-line interface: [`platformatic service`](/reference/cli.md#service)
-- Add custom functionality in a [Fastify plugin](/reference/db/plugin.md)
-- Write plugins in JavaScript or [TypeScript](/reference/cli.md#compile)
-- Start Platformatic Service [programmatically](/reference/service/programmatic.md) in tests or other applications
+- Command-line interface: [`platformatic service`](../cli.md)
+- Add custom functionality in a [Fastify plugin](./plugin.md)
+- Write plugins in JavaScript or [TypeScript](../cli.md#compile)
+- Start Platformatic Service [programmatically](./programmatic.md) in tests or other applications
 - Fully typed
 
 ## Issues

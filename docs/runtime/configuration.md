@@ -13,7 +13,7 @@ one of these filenames, it will automatically load it:
 - `platformatic.runtime.yml` or `platformatic.runtime.yaml`
 - `platformatic.runtime.tml` or `platformatic.runtime.toml`
 
-Alternatively, a [`--config` option](/reference/cli.md#service) with a configuration
+Alternatively, a [`--config` option](../cli.md/#service) with a configuration
 filepath can be passed to most `platformatic runtime` CLI commands.
 
 The configuration examples in this reference use JSON.
@@ -33,17 +33,25 @@ Comments are supported by the JSON5, YAML and TOML file formats.
 
 Configuration settings are organized into the following groups:
 
-- [`autoload`](#autoload)
-- [`services`](#services)
-- [`entrypoint`](#entrypoint) **(required)**
-- [`hotReload`](#hotReload)
-- [`allowCycles`](#allowCycles)
-- [`restartOnError`](#restartOnError)
-- [`telemetry`](#telemetry)
-- [`server`](#server)
-- [`undici`](#undici)
-- [`metrics`](#metrics)
-- [`managementApi`](#managementapi(experimantal)) **(experimental)**
+- [Configuration](#configuration)
+  - [Configuration file](#configuration-file)
+    - [Supported formats](#supported-formats)
+  - [Settings](#settings)
+    - [`autoload`](#autoload)
+    - [`services`](#services)
+    - [`entrypoint`](#entrypoint)
+    - [`hotReload`](#hotreload)
+    - [`allowCycles`](#allowcycles)
+    - [`telemetry`](#telemetry)
+    - [`server`](#server)
+    - [`undici`](#undici)
+    - [`metrics`](#metrics)
+    - [`managementApi`](#managementapi)
+  - [Environment variable placeholders](#environment-variable-placeholders)
+    - [Setting environment variables](#setting-environment-variables)
+    - [Allowed placeholder names](#allowed-placeholder-names)
+    - [Placeholder wildcard](#placeholder-wildcard)
+    - [PLT\_ROOT](#plt_root)
 
 Configuration settings containing sensitive data should be set using
 [environment variable placeholders](#environment-variable-placeholders).

@@ -8,7 +8,7 @@ Building production ready Node.js application with Fastify can require a certain
 - **Developer choice = developer freedom** — Fastify only applies a few strong opinions, in key areas such as logging and validation. The framework features have been designed to give you the freedom to build your applications however you want.
 - **You know your needs best** — Fastify doesn't make assumptions about what plugins you'll need in your application. As the Fastify [plugin ecosystem](https://www.fastify.io/ecosystem/) and the community has grown, a clear group of popular plugin choices has emerged.
 
-[Platformatic Service](/docs/reference/service/introduction) is the natural evolution of the build-it-from-scratch Fastify development experience. It provides a solid foundation for building Node.js applications on top of Fastify, with best practices baked in.
+[Platformatic Service](../service/overview.md) is the natural evolution of the build-it-from-scratch Fastify development experience. It provides a solid foundation for building Node.js applications on top of Fastify, with best practices baked in.
 
 > See the [Building apps with Platformatic Service](#building-apps-with-platformatic-service) section of this guide to learn more about the built-in features.
 
@@ -223,7 +223,7 @@ The generated configuration is set up to load plugins from the `plugins` and `ro
 
 The value for any configuration setting in `platformatic.service.json` can be replaced with an environment variable by adding a placeholder, for example `{PLT_SERVER_LOGGER_LEVEL}`. In development, environment variables are automatically loaded by your Platformatic Service app from a `.env` file in the root directory of your app. In production, you'll typically set these environment variables using a feature provided by your hosting provider.
 
-See the Platformatic Service documentation for [Environment variable placeholders](/docs/reference/service/configuration#environment-variable-placeholders) to learn more about how this works.
+See the Platformatic Service documentation for [Environment variable placeholders](../service//configuration.md#environment-variable-placeholders) to learn more about how this works.
 
 ### Using ES modules
 
@@ -341,7 +341,7 @@ If you're using [`@fastify/autoload`](https://www.npmjs.com/package/@fastify/aut
 
 ## Migrating tests
 
-You'll generally use the Platformatic CLI to start your Platformatic Service app (`npx platformatic start`). However for testing, you can use the [programmatic API](/docs/reference/service/programmatic/) provided by Platformatic Service. This allows you to load your app in your test scripts and then run tests against it.
+You'll generally use the Platformatic CLI to start your Platformatic Service app (`npx platformatic start`). However for testing, you can use the [programmatic API](../service/programmatic.md) provided by Platformatic Service. This allows you to load your app in your test scripts and then run tests against it.
 
 If you copy over the tests from your existing Fastify app, they will typically only require a small amount of refactoring to work with Platformatic Service.
 
@@ -422,11 +422,11 @@ All Platformatic Service features are fully configurable via `platformatic.servi
 - Write your plugins in JavaScript or TypeScript — TypeScript support is provided out-of-the-box and supports hot reloading.
 - Pretty printed logs — Making it easier to understand and debug your application during development.
 
-> See the [Platformatic Service Configuration](/docs/reference/service/configuration/) documentation for all of the features which can be configured.
+> See the [Platformatic Service Configuration](../service/configuration.md) documentation for all of the features which can be configured.
 
 ## Next steps
 
-The documentation for [Platformatic Service](/docs/reference/service/introduction) is a helpful reference when building a Platformatic Service app.
+The documentation for [Platformatic Service](../service/overview.md) is a helpful reference when building a Platformatic Service app.
 
 ### Watch: Understand the parts of a Platformatic app
 
