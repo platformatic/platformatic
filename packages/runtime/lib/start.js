@@ -4,7 +4,6 @@ const { once } = require('node:events')
 const inspector = require('node:inspector')
 const { join, resolve, dirname } = require('node:path')
 const { writeFile } = require('node:fs/promises')
-const { setTimeout: sleep } = require('node:timers/promises')
 const { pathToFileURL } = require('node:url')
 const { Worker } = require('node:worker_threads')
 const { start: serviceStart } = require('@platformatic/service')
@@ -13,7 +12,6 @@ const closeWithGrace = require('close-with-grace')
 const { loadConfig } = require('./load-config')
 const { startManagementApi } = require('./management-api')
 const { startPrometheusServer } = require('./prom-server.js')
-const { WorkerExitCodeError } = require('./errors')
 const { parseInspectorOptions, wrapConfigInRuntimeConfig } = require('./config')
 const { RuntimeApiClient, getRuntimeLogsDir } = require('./api-client.js')
 const errors = require('./errors')
@@ -64,19 +62,6 @@ async function buildRuntime (configManager, env = process.env) {
 
   let managementApi = null
 
-  let exiting = false
-  closeWithGrace((event, cb) => {
-    exiting = true
-    worker.postMessage(event)
-    worker.once('exit', (code) => {
-      if (code !== 0) {
-        cb(new WorkerExitCodeError(code))
-        return
-      }
-      cb()
-    })
-  })
-
   if (config.hotReload) {
     /* c8 ignore next 3 */
     process.on('SIGUSR2', () => {
@@ -93,7 +78,7 @@ async function buildRuntime (configManager, env = process.env) {
     worker.on('exit', (code) => {
       // runtimeApiClient.started can be false if a stop command was issued
       // via the management API.
-      if (exiting || !runtimeApiClient.started) {
+      if (!runtimeApiClient.started) {
         // We must stop those here in case the `closeWithGrace` callback
         // was not called.
         configManager.fileWatcher?.stopWatching()
@@ -103,8 +88,12 @@ async function buildRuntime (configManager, env = process.env) {
 
       worker = startWorker({ config, dirname, runtimeLogsDir }, env)
       setupExit()
-      once(worker, 'message').then(() => {
-        runtimeApiClient.setWorker(worker)
+
+      once(worker, 'message').then((msg) => {
+        runtimeApiClient.setWorker(worker).catch(() => {
+          // TODO: currently we restart if the worker fails to start intermitently
+          // should we limit this to a number of retries?
+        })
       })
     })
   }
@@ -162,7 +151,16 @@ async function startCommand (args) {
       runtime = await buildRuntime(wrappedConfig)
     }
 
-    return await runtime.start()
+    const res = await runtime.start()
+
+    closeWithGrace(async (event) => {
+      if (event.err instanceof Error) {
+        console.error(event.err)
+      }
+      await runtime.close()
+    })
+
+    return res
   } catch (err) {
     if (err.code === 'PLT_CONFIG_NO_CONFIG_FILE_FOUND' && args.length === 1) {
       const config = {
@@ -188,12 +186,6 @@ async function startCommand (args) {
       return startCommand(['--config', toWrite])
     }
 
-    if (err.code === 'PLT_RUNTIME_RUNTIME_EXIT') {
-      console.log('Runtime exited before startup was completed, restarting')
-      await sleep(1000)
-      return startCommand(args)
-    }
-
     if (err.filenames) {
       console.error(`Missing config file!
   Be sure to have a config file with one of the following names:
@@ -207,12 +199,7 @@ async function startCommand (args) {
       process.exit(1)
     }
 
-    delete err?.stack
-    console.error(err?.message)
-
-    if (err?.cause) {
-      console.error(`${err.cause}`)
-    }
+    console.error(err)
 
     process.exit(1)
   }

@@ -88,8 +88,8 @@ class RuntimeApiClient extends EventEmitter {
   }
 
   async start () {
-    this.started = true
     const address = await this.#sendCommand('plt:start-services')
+    this.started = true
     this.emit('start', address)
     return address
   }

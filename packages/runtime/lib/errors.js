@@ -25,7 +25,6 @@ module.exports = {
   FailedToUnlinkManagementApiSocket: createError(`${ERROR_PREFIX}_FAILED_TO_UNLINK_MANAGEMENT_API_SOCKET`, 'Failed to unlink management API socket "%s"'),
   LogFileNotFound: createError(`${ERROR_PREFIX}_LOG_FILE_NOT_FOUND`, 'Log file with index %s not found', 404),
   CannotFindGeneratorForTemplateError: createError(`${ERROR_PREFIX}_CANNOT_FIND_GENERATOR_FOR_TEMPLATE`, 'Cannot find a generator for template "%s"'),
-  WorkerExitCodeError: createError(`${ERROR_PREFIX}_WORKER_EXIT_CODE`, 'The worker exited with non-zero exit code "%s"'),
   WorkerIsRequired: createError(`${ERROR_PREFIX}_REQUIRED_WORKER`, 'The worker parameter is required'),
 
   // TODO: should remove next one as it's not used anymore
