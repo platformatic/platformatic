@@ -1,5 +1,5 @@
 import assert from 'node:assert'
-import { on } from 'node:events'
+import { on, once } from 'node:events'
 import { test } from 'node:test'
 import { join } from 'desm'
 import { request } from 'undici'
@@ -47,4 +47,16 @@ test('restart in case of a crash', async () => {
 
   child.kill('SIGINT')
   await child.catch(() => {})
+})
+
+test('do not restart in case of a crash in case it\'s so specified', async () => {
+  process.env.PORT = await getPort()
+  const config = join(import.meta.url, '..', '..', 'fixtures', 'do-not-restart-on-crash', 'platformatic.runtime.json')
+  const { child, url } = await start('-c', config)
+
+  request(url + '/crash', {
+    method: 'POST'
+  })
+
+  await once(child, 'exit')
 })
