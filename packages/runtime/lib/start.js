@@ -78,7 +78,7 @@ async function buildRuntime (configManager, env = process.env) {
     worker.on('exit', (code) => {
       // runtimeApiClient.started can be false if a stop command was issued
       // via the management API.
-      if (!runtimeApiClient.started) {
+      if (config.restartOnError === false || !runtimeApiClient.started) {
         // We must stop those here in case the `closeWithGrace` callback
         // was not called.
         configManager.fileWatcher?.stopWatching()

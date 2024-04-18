@@ -172,6 +172,13 @@ const platformaticRuntimeSchema = {
         }
       ]
     },
+    restartOnError: {
+      default: true,
+      anyOf: [
+        { type: 'boolean' },
+        { type: 'string' }
+      ]
+    },
     services: {
       type: 'array',
       items: {
