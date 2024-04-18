@@ -38,6 +38,7 @@ Configuration settings are organized into the following groups:
 - [`entrypoint`](#entrypoint) **(required)**
 - [`hotReload`](#hotReload)
 - [`allowCycles`](#allowCycles)
+- [`restartOnError`](#restartOnError)
 - [`telemetry`](#telemetry)
 - [`server`](#server)
 - [`undici`](#undici)
