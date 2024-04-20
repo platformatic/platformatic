@@ -31,7 +31,7 @@
     "borp": "^0.11.0",
     "c8": "^9.1.0",
     "dedent": "^1.5.1",
-    "json-schema-to-typescript": "^13.1.2",
+    "json-schema-to-typescript": "^14.0.0",
     "openapi-schema-validator": "^12.1.3",
     "single-user-cache": "^1.0.1",
     "snazzy": "^9.0.0",
