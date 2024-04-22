@@ -26,7 +26,7 @@ const sidebars = {
         'composer/configuration',
         'composer/programmatic',
         'composer/api-modification',
-        'composer/plugin.md', 
+        'composer/plugin', 
       ],
     },
     {
@@ -188,7 +188,8 @@ const sidebars = {
         'guides/dockerize-platformatic-app',
         'guides/build-modular-monolith',
         'guides/logging-to-elasticsearch',
-        "guides/jwt-keycloak"
+        "guides/jwt-keycloak",
+        "guides/use-env-with-platformatic"
       ],
     },
     'FAQs'
