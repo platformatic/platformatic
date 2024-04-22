@@ -8,7 +8,7 @@
   },
   "scripts": {
     "lint": "standard | snazzy",
-    "test": "pnpm run lint && borp --concurrency=1 --timeout=120000"
+    "test": "pnpm run lint && borp --concurrency=1 --timeout=120000 && tsd"
   },
   "repository": {
     "type": "git",
@@ -36,6 +36,7 @@
     "split2": "^4.2.0",
     "standard": "^17.1.0",
     "typescript": "^5.4.2",
+    "tsd": "^0.31.0",
     "why-is-node-running": "^2.2.2"
   },
   "dependencies": {
@@ -56,5 +57,6 @@
     "pino-pretty": "^10.3.1",
     "undici": "^6.9.0",
     "yaml": "^2.4.1"
-  }
+  },
+  "types": "index.d.ts"
 }
