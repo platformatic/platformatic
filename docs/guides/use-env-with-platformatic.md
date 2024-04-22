@@ -81,4 +81,4 @@ CUSTOM_MESSAGE=Welcome to the world of the backend without frictions
 
 ## Conclusion 
 
-In this guide, you learn how to use environment variables in a Platformatic application to manage configuration data securely. By setting up the application, configuring plugins, and modifying the `platformatic.json` file.
+In this guide, you learnt how to use environment variables in a Platformatic application to manage configuration data securely. 

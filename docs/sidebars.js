@@ -188,7 +188,8 @@ const sidebars = {
         'guides/dockerize-platformatic-app',
         'guides/build-modular-monolith',
         'guides/logging-to-elasticsearch',
-        "guides/jwt-keycloak"
+        "guides/jwt-keycloak",
+        "guides/use-env-with-platformatic"
       ],
     },
     'FAQs'
