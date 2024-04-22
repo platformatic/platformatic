@@ -14,23 +14,32 @@ import ora from 'ora'
 import { createRequire } from 'node:module'
 import { pathToFileURL } from 'node:url'
 import { writeFile } from 'node:fs/promises'
+import { request } from 'undici'
+import { setTimeout } from 'node:timers/promises'
+
+export async function fetchStackables () {
+  const stackablesRequest = request('https://marketplace.platformatic.dev/templates')
+  const stackablesRequestTimeout = setTimeout(5000, new Error('Request timed out'))
+
+  try {
+    const { statusCode, body } = await Promise.race([stackablesRequest, stackablesRequestTimeout])
+    if (statusCode === 200) {
+      return (await body.json()).map(stackable => stackable.name)
+    }
+  } catch (err) {}
+
+  return ['@platformatic/composer', '@platformatic/db', '@platformatic/service']
+}
 
 export async function chooseStackable (opts = {}) {
-  const choices = [
-    { name: 'Composer', value: '@platformatic/composer' },
-    { name: 'DB', value: '@platformatic/db' },
-    { name: 'Service', value: '@platformatic/service' }
-  ]
-
+  const choices = await fetchStackables()
   const options = await inquirer.prompt({
     type: 'list',
     name: 'type',
     message: 'Which kind of project do you want to create?',
-    default: choices[2].value,
+    default: choices.indexOf('@platformatic/service'),
     choices
   })
-
-  // TODO contact the cloud for other stackables
 
   return options.type
 }
@@ -46,7 +55,7 @@ async function importOrLocal ({ pkgManager, name, projectDir, pkg }) {
     try {
       const fileToImport = _require.resolve(pkg)
       return await import(pathToFileURL(fileToImport))
-    } catch {}
+    } catch { }
 
     const spinner = ora(`Installing ${pkg}...`).start()
     await execa(pkgManager, ['install', pkg], { cwd: projectDir })
