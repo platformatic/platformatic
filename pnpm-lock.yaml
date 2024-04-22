@@ -327,6 +327,9 @@ importers:
       standard:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0)
+      tsd:
+        specifier: ^0.31.0
+        version: 0.31.0
       typescript:
         specifier: ^5.4.2
         version: 5.4.5
