@@ -1,6 +1,3 @@
-:root {
-  --theme-font: 'Inter', var(--system-fonts);
-}
 /* basic theme */
 .light-mode {
   --theme-color-1: #2a2f45;
