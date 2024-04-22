@@ -26,7 +26,7 @@ const sidebars = {
         'composer/configuration',
         'composer/programmatic',
         'composer/api-modification',
-        'composer/plugin.md', 
+        'composer/plugin', 
       ],
     },
     {
