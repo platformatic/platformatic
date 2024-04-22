@@ -142,8 +142,8 @@ importers:
         specifier: ^8.19.0
         version: 8.20.0
       pino-pretty:
-        specifier: ^10.3.1
-        version: 10.3.1
+        specifier: ^11.0.0
+        version: 11.0.0
       undici:
         specifier: ^6.9.0
         version: 6.13.0
@@ -276,8 +276,8 @@ importers:
         specifier: ^8.19.0
         version: 8.20.0
       pino-pretty:
-        specifier: ^10.3.1
-        version: 10.3.1
+        specifier: ^11.0.0
+        version: 11.0.0
       undici:
         specifier: ^6.9.0
         version: 6.13.0
@@ -430,8 +430,8 @@ importers:
         specifier: ^8.19.0
         version: 8.20.0
       pino-pretty:
-        specifier: ^10.3.1
-        version: 10.3.1
+        specifier: ^11.0.0
+        version: 11.0.0
       rfdc:
         specifier: ^1.3.1
         version: 1.3.1
@@ -561,8 +561,8 @@ importers:
         specifier: ^8.19.0
         version: 8.20.0
       pino-pretty:
-        specifier: ^10.3.1
-        version: 10.3.1
+        specifier: ^11.0.0
+        version: 11.0.0
       table:
         specifier: ^6.8.1
         version: 6.8.2
@@ -655,8 +655,8 @@ importers:
         specifier: ^8.19.0
         version: 8.20.0
       pino-pretty:
-        specifier: ^10.3.1
-        version: 10.3.1
+        specifier: ^11.0.0
+        version: 11.0.0
       pupa:
         specifier: ^3.1.0
         version: 3.1.0
@@ -767,8 +767,8 @@ importers:
         specifier: ^8.19.0
         version: 8.20.0
       pino-pretty:
-        specifier: ^10.3.1
-        version: 10.3.1
+        specifier: ^11.0.0
+        version: 11.0.0
       pupa:
         specifier: ^3.1.0
         version: 3.1.0
@@ -942,8 +942,8 @@ importers:
         specifier: ^8.19.0
         version: 8.20.0
       pino-pretty:
-        specifier: ^10.3.1
-        version: 10.3.1
+        specifier: ^11.0.0
+        version: 11.0.0
       postgrator:
         specifier: ^7.2.0
         version: 7.2.0
@@ -1422,8 +1422,8 @@ importers:
         specifier: ^8.19.0
         version: 8.20.0
       pino-pretty:
-        specifier: ^10.3.1
-        version: 10.3.1
+        specifier: ^11.0.0
+        version: 11.0.0
       pino-roll:
         specifier: ^1.0.0
         version: 1.1.0
@@ -1629,8 +1629,8 @@ importers:
         specifier: ^8.19.0
         version: 8.20.0
       pino-pretty:
-        specifier: ^10.3.1
-        version: 10.3.1
+        specifier: ^11.0.0
+        version: 11.0.0
       rfdc:
         specifier: ^1.3.1
         version: 1.3.1
@@ -8233,10 +8233,9 @@ packages:
     dependencies:
       readable-stream: 4.5.2
       split2: 4.2.0
-    dev: true
 
-  /pino-pretty@10.3.1:
-    resolution: {integrity: sha512-az8JbIYeN/1iLj2t0jR9DV48/LQ3RC6hZPpapKPkb84Q+yTidMCpgWxIT3N0flnBDilyBQ1luWNpOeJptjdp/g==}
+  /pino-pretty@11.0.0:
+    resolution: {integrity: sha512-YFJZqw59mHIY72wBnBs7XhLGG6qpJMa4pEQTRgEPEbjIYbng2LXEZZF1DoyDg9CfejEy8uZCyzpcBXXG0oOCwQ==}
     hasBin: true
     dependencies:
       colorette: 2.0.20
@@ -8247,7 +8246,7 @@ packages:
       joycon: 3.1.1
       minimist: 1.2.8
       on-exit-leak-free: 2.1.2
-      pino-abstract-transport: 1.1.0
+      pino-abstract-transport: 1.2.0
       pump: 3.0.0
       readable-stream: 4.5.2
       secure-json-parse: 2.7.0
