@@ -11,8 +11,7 @@ const errors = require('./errors')
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 
-async function createManagementApi (runtimeApiClient) {
-  const app = fastify()
+async function managementApiPlugin (app, opts) {
   app.log.warn(
     'Runtime Management API is in the experimental stage. ' +
     'The feature is not subject to semantic versioning rules. ' +
@@ -20,174 +19,170 @@ async function createManagementApi (runtimeApiClient) {
     'Use of the feature is not recommended in production environments.'
   )
 
-  app.register(require('@fastify/websocket'))
+  const runtime = opts.runtime
 
-  app.register(async (app) => {
-    app.get('/metadata', async () => {
-      return runtimeApiClient.getRuntimeMetadata()
+  app.get('/metadata', async () => {
+    return runtime.getRuntimeMetadata()
+  })
+
+  app.get('/config', async () => {
+    return runtime.getRuntimeConfig()
+  })
+
+  app.get('/env', async () => {
+    return process.env
+  })
+
+  app.post('/stop', async () => {
+    app.log.debug('stop services')
+    await runtime.close()
+  })
+
+  app.post('/reload', async () => {
+    app.log.debug('reload services')
+    await runtime.restart()
+  })
+
+  app.get('/services', async () => {
+    return runtime.getServices()
+  })
+
+  app.get('/services/:id', async (request) => {
+    const { id } = request.params
+    app.log.debug('get service details', { id })
+    return runtime.getServiceDetails(id)
+  })
+
+  app.get('/services/:id/config', async (request) => {
+    const { id } = request.params
+    app.log.debug('get service config', { id })
+    return runtime.getServiceConfig(id)
+  })
+
+  app.post('/services/:id/start', async (request) => {
+    const { id } = request.params
+    app.log.debug('start service', { id })
+    await runtime.startService(id)
+  })
+
+  app.post('/services/:id/stop', async (request) => {
+    const { id } = request.params
+    app.log.debug('stop service', { id })
+    await runtime.stopService(id)
+  })
+
+  app.all('/services/:id/proxy/*', async (request, reply) => {
+    const { id, '*': requestUrl } = request.params
+    app.log.debug('proxy request', { id, requestUrl })
+
+    delete request.headers.connection
+    delete request.headers['content-length']
+    delete request.headers['content-encoding']
+    delete request.headers['transfer-encoding']
+
+    const injectParams = {
+      method: request.method,
+      url: requestUrl || '/',
+      headers: request.headers,
+      query: request.query,
+      body: request.body
+    }
+
+    const res = await runtime.inject(id, injectParams)
+
+    reply
+      .code(res.statusCode)
+      .headers(res.headers)
+      .send(res.body)
+  })
+
+  app.get('/metrics/live', { websocket: true }, async (socket) => {
+    const cachedMetrics = runtime.getCachedMetrics()
+    if (cachedMetrics.length > 0) {
+      const serializedMetrics = cachedMetrics
+        .map((metric) => JSON.stringify(metric))
+        .join('\n')
+      socket.send(serializedMetrics + '\n')
+    }
+
+    const eventHandler = (metrics) => {
+      const serializedMetrics = JSON.stringify(metrics)
+      socket.send(serializedMetrics + '\n')
+    }
+
+    runtime.on('metrics', eventHandler)
+
+    socket.on('error', () => {
+      runtime.off('metrics', eventHandler)
     })
 
-    app.get('/config', async () => {
-      return runtimeApiClient.getRuntimeConfig()
+    socket.on('close', () => {
+      runtime.off('metrics', eventHandler)
     })
+  })
 
-    app.get('/env', async () => {
-      return process.env
-    })
+  app.get('/logs/live', { websocket: true }, async (socket, req) => {
+    const startLogId = req.query.start ? parseInt(req.query.start) : null
 
-    app.post('/stop', async () => {
-      app.log.debug('stop services')
-      await runtimeApiClient.close()
-    })
-
-    app.post('/reload', async () => {
-      app.log.debug('reload services')
-      await runtimeApiClient.restart()
-    })
-
-    app.get('/services', async () => {
-      return runtimeApiClient.getServices()
-    })
-
-    app.get('/services/:id', async (request) => {
-      const { id } = request.params
-      app.log.debug('get service details', { id })
-      return runtimeApiClient.getServiceDetails(id)
-    })
-
-    app.get('/services/:id/config', async (request) => {
-      const { id } = request.params
-      app.log.debug('get service config', { id })
-      return runtimeApiClient.getServiceConfig(id)
-    })
-
-    app.post('/services/:id/start', async (request) => {
-      const { id } = request.params
-      app.log.debug('start service', { id })
-      await runtimeApiClient.startService(id)
-    })
-
-    app.post('/services/:id/stop', async (request) => {
-      const { id } = request.params
-      app.log.debug('stop service', { id })
-      await runtimeApiClient.stopService(id)
-    })
-
-    app.all('/services/:id/proxy/*', async (request, reply) => {
-      const { id, '*': requestUrl } = request.params
-      app.log.debug('proxy request', { id, requestUrl })
-
-      delete request.headers.connection
-      delete request.headers['content-length']
-      delete request.headers['content-encoding']
-      delete request.headers['transfer-encoding']
-
-      const injectParams = {
-        method: request.method,
-        url: requestUrl || '/',
-        headers: request.headers,
-        query: request.query,
-        body: request.body
+    if (startLogId) {
+      const logIds = await runtime.getLogIds()
+      if (!logIds.includes(startLogId)) {
+        throw new errors.LogFileNotFound(startLogId)
       }
+    }
 
-      const res = await runtimeApiClient.inject(id, injectParams)
+    const stream = ws.createWebSocketStream(socket)
+    runtime.pipeLogsStream(stream, req.log, startLogId)
+  })
 
-      reply
-        .code(res.statusCode)
-        .headers(res.headers)
-        .send(res.body)
-    })
+  app.get('/logs/indexes', async (req) => {
+    const returnAllIds = req.query.all === 'true'
 
-    app.get('/metrics/live', { websocket: true }, async (socket) => {
-      const cachedMetrics = runtimeApiClient.getCachedMetrics()
-      if (cachedMetrics.length > 0) {
-        const serializedMetrics = cachedMetrics
-          .map((metric) => JSON.stringify(metric))
-          .join('\n')
-        socket.send(serializedMetrics + '\n')
-      }
+    if (returnAllIds) {
+      const runtimesLogsIds = await runtime.getAllLogIds()
+      return runtimesLogsIds
+    }
 
-      const eventHandler = (metrics) => {
-        const serializedMetrics = JSON.stringify(metrics)
-        socket.send(serializedMetrics + '\n')
-      }
+    const runtimeLogsIds = await runtime.getLogIds()
+    return { indexes: runtimeLogsIds }
+  })
 
-      runtimeApiClient.on('metrics', eventHandler)
+  app.get('/logs/all', async (req, reply) => {
+    const runtimePID = parseInt(req.query.pid) || process.pid
 
-      socket.on('error', () => {
-        runtimeApiClient.off('metrics', eventHandler)
-      })
+    const logsIds = await runtime.getLogIds(runtimePID)
+    const startLogId = logsIds.at(0)
+    const endLogId = logsIds.at(-1)
 
-      socket.on('close', () => {
-        runtimeApiClient.off('metrics', eventHandler)
-      })
-    })
+    reply.hijack()
 
-    app.get('/logs/live', { websocket: true }, async (socket, req) => {
-      const startLogId = req.query.start ? parseInt(req.query.start) : null
+    runtime.pipeLogsStream(
+      reply.raw,
+      req.log,
+      startLogId,
+      endLogId,
+      runtimePID
+    )
+  })
 
-      if (startLogId) {
-        const logIds = await runtimeApiClient.getLogIds()
-        if (!logIds.includes(startLogId)) {
-          throw new errors.LogFileNotFound(startLogId)
-        }
-      }
+  app.get('/logs/:id', async (req) => {
+    const logId = parseInt(req.params.id)
+    const runtimePID = parseInt(req.query.pid) || process.pid
 
-      const stream = ws.createWebSocketStream(socket)
-      runtimeApiClient.pipeLogsStream(stream, req.log, startLogId)
-    })
+    const logIds = await runtime.getLogIds(runtimePID)
+    if (!logIds || !logIds.includes(logId)) {
+      throw new errors.LogFileNotFound(logId)
+    }
 
-    app.get('/logs/indexes', async (req) => {
-      const returnAllIds = req.query.all === 'true'
-
-      if (returnAllIds) {
-        const runtimesLogsIds = await runtimeApiClient.getAllLogIds()
-        return runtimesLogsIds
-      }
-
-      const runtimeLogsIds = await runtimeApiClient.getLogIds()
-      return { indexes: runtimeLogsIds }
-    })
-
-    app.get('/logs/all', async (req, reply) => {
-      const runtimePID = parseInt(req.query.pid) || process.pid
-
-      const logsIds = await runtimeApiClient.getLogIds(runtimePID)
-      const startLogId = logsIds.at(0)
-      const endLogId = logsIds.at(-1)
-
-      reply.hijack()
-
-      runtimeApiClient.pipeLogsStream(
-        reply.raw,
-        req.log,
-        startLogId,
-        endLogId,
-        runtimePID
-      )
-    })
-
-    app.get('/logs/:id', async (req) => {
-      const logId = parseInt(req.params.id)
-      const runtimePID = parseInt(req.query.pid) || process.pid
-
-      const logIds = await runtimeApiClient.getLogIds(runtimePID)
-      if (!logIds || !logIds.includes(logId)) {
-        throw new errors.LogFileNotFound(logId)
-      }
-
-      const logFileStream = await runtimeApiClient.getLogFileStream(
-        logId,
-        runtimePID
-      )
-      return logFileStream
-    })
-  }, { prefix: '/api/v1' })
-
-  return app
+    const logFileStream = await runtime.getLogFileStream(
+      logId,
+      runtimePID
+    )
+    return logFileStream
+  })
 }
 
-async function startManagementApi (runtimeApiClient, configManager) {
+async function startManagementApi (runtime, configManager) {
   const runtimePID = process.pid
 
   try {
@@ -208,7 +203,9 @@ async function startManagementApi (runtimeApiClient, configManager) {
       socketPath = join(runtimePIDDir, 'socket')
     }
 
-    const managementApi = await createManagementApi(runtimeApiClient)
+    const managementApi = fastify()
+    managementApi.register(require('@fastify/websocket'))
+    managementApi.register(managementApiPlugin, { runtime, prefix: '/api/v1' })
 
     managementApi.addHook('onClose', async () => {
       if (platform() !== 'win32') {
@@ -225,4 +222,4 @@ async function startManagementApi (runtimeApiClient, configManager) {
   }
 }
 
-module.exports = { startManagementApi, createManagementApi }
+module.exports = { startManagementApi, managementApiPlugin }
