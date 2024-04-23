@@ -332,3 +332,67 @@ test('updateMany successful and update updated_at', async () => {
   deepEqual(createdPost3.createdAt, updatedPost3.createdAt)
   notDeepEqual(createdPost3.updatedAt, updatedPost3.updatedAt)
 })
+
+test('updateMany missing where clause', async () => {
+  const mapper = await connect({
+    ...connInfo,
+    log: fakeLogger,
+    async onDatabaseLoad (db, sql) {
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
+      ok('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      if (isSQLite) {
+        await db.query(sql`CREATE TABLE posts (
+          id INTEGER PRIMARY KEY,
+          title VARCHAR(42),
+          long_text TEXT,
+          counter INTEGER
+        );`)
+      } else {
+        await db.query(sql`CREATE TABLE posts (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(42),
+          long_text TEXT,
+          counter INTEGER
+        );`)
+      }
+    }
+  })
+
+  const entity = mapper.entities.post
+
+  const posts = [{
+    title: 'Dog',
+    longText: 'Foo',
+    counter: 10
+  }, {
+    title: 'Cat',
+    longText: 'Bar',
+    counter: 20
+  }, {
+    title: 'Mouse',
+    longText: 'Baz',
+    counter: 30
+  }, {
+    title: 'Duck',
+    longText: 'A duck tale',
+    counter: 40
+  }]
+
+  await entity.insert({
+    inputs: posts
+  })
+
+  rejects(entity.updateMany({
+    input: {
+      title: 'Updated title'
+    }
+  }), {
+    message: 'Missing where clause'
+  })
+})

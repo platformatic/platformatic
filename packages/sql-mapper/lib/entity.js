@@ -149,11 +149,14 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
   }
 
   async function updateMany (args) {
-    const db = args.tx || defaultDb
-    const fieldsToRetrieve = computeFields(args.fields).map((f) => sql.ident(f))
     if (args.input === undefined) {
       throw new errors.InputNotProvidedError()
     }
+    if (args.where === undefined || Object.keys(args.where).length === 0) {
+      throw new errors.MissingWhereClauseError()
+    }
+    const db = args.tx || defaultDb
+    const fieldsToRetrieve = computeFields(args.fields).map((f) => sql.ident(f))
     const input = fixInput(args.input)
     if (autoTimestamp && fields[autoTimestamp.updatedAt]) {
       const now = new Date()
