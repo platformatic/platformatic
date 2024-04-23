@@ -347,7 +347,7 @@ importers:
         version: 9.5.0
       '@fastify/reply-from':
         specifier: ^9.7.0
-        version: 9.7.0
+        version: 9.8.0
       '@fastify/static':
         specifier: ^7.0.1
         version: 7.0.3
@@ -2796,7 +2796,7 @@ packages:
   /@fastify/http-proxy@9.5.0:
     resolution: {integrity: sha512-1iqIdV10d5k9YtfHq9ylX5zt1NiM50fG+rIX40qt00R694sqWso3ukyTFZVk33SDoSiBW8roB7n11RUVUoN+Ag==}
     dependencies:
-      '@fastify/reply-from': 9.7.0
+      '@fastify/reply-from': 9.8.0
       fast-querystring: 1.1.2
       fastify-plugin: 4.5.1
       ws: 8.16.0
@@ -2828,16 +2828,15 @@ packages:
       which: 4.0.0
     dev: true
 
-  /@fastify/reply-from@9.7.0:
-    resolution: {integrity: sha512-/F1QBl3FGlTqStjmiuoLRDchVxP967TZh6FZPwQteWhdLsDec8mqSACE+cRzw6qHUj3v9hfdd7JNgmb++fyFhQ==}
+  /@fastify/reply-from@9.8.0:
+    resolution: {integrity: sha512-bPNVaFhEeNI0Lyl6404YZaPFokudCplidE3QoOcr78yOy6H9sYw97p5KPYvY/NJNUHfFtvxOaSAHnK+YSiv/Mg==}
     dependencies:
       '@fastify/error': 3.4.1
       end-of-stream: 1.4.4
       fast-content-type-parse: 1.1.0
       fast-querystring: 1.1.2
       fastify-plugin: 4.5.1
-      pump: 3.0.0
-      tiny-lru: 11.2.6
+      toad-cache: 3.7.0
       undici: 5.28.4
     dev: false
 
