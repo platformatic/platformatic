@@ -8,10 +8,10 @@ of environment variables as setting values with [environment variable placeholde
 If the Platformatic CLI finds a file in the current working directory matching
 one of these filenames, it will automatically load it:
 
-- `platformatic.db.json`
-- `platformatic.db.json5`
-- `platformatic.db.yml` or `platformatic.db.yaml`
-- `platformatic.db.tml` or `platformatic.db.toml`
+- `platformatic.json`
+- `platformatic.json5`
+- `platformatic.yml` or `platformatic.yaml`
+- `platformatic.tml` or `platformatic.toml`
 
 Alternatively, a [`--config` option](/reference/cli.md#db) with a configuration
 filepath can be passed to most `platformatic db` CLI commands.

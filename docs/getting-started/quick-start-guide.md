@@ -5,34 +5,26 @@ import NewApiProjectInstructions from './new-api-project-instructions.md';
 
 # Quick Start Guide
 
-In this guide you'll learn how to create and run your first API with
-[Platformatic DB](/docs/reference/db/introduction.md). Let's get started!
+Welcome to your first steps with [Platformatic DB](/docs/reference/db/introduction.md). This guide will help you set up and run your first API using Platformatic DB with [SQLite](https://www.sqlite.org/). By the end of this guide, you'll have a fully functional API up and running.
 
-:::info
+:::note
 
-This guide uses [SQLite](https://www.sqlite.org/) for the database, but
-Platformatic DB also supports [PostgreSQL](https://www.postgresql.org/),
-[MySQL](https://www.mysql.com/) and [MariaDB](https://mariadb.org/) databases.
+While this guide uses [SQLite](https://www.sqlite.org/), Platformatic DB also supports [PostgreSQL](https://www.postgresql.org/), [MySQL](https://www.mysql.com/), and [MariaDB](https://mariadb.org/). For more details on database compatibility, see the [Platformatic DB documentation](/docs/reference/db/introduction.md).
 
 :::
 
 ## Prerequisites
 
-Platformatic supports macOS, Linux and Windows ([WSL](https://docs.microsoft.com/windows/wsl/) recommended).
-
-To follow along with this guide you'll need to have these things installed:
-
-- [Node.js](https://nodejs.org/) >= v18.8.0 or >= v20.6.0
-- [npm](https://docs.npmjs.com/cli/) v7 or later
+Before starting, ensure you have the following installed:
+- [Node.js](https://nodejs.org/) (v18.8.0 or higher)
+- [npm](https://docs.npmjs.com/cli/) (v7 or higher)
 - A code editor, for example [Visual Studio Code](https://code.visualstudio.com/)
 
-## Create a new API project
-
-### Automatic CLI
+## Automatic Setup with Platformatic CLI
 
 <NewApiProjectInstructions/>
 
-#### Start your API server
+### Start Your API Server
 
 In your project directory, run this command to start your API server:
 
@@ -40,30 +32,16 @@ In your project directory, run this command to start your API server:
 npm start
 ```
 
-Your Platformatic API is now up and running! 🌟
+Your API server is now live! 🌟 It will automatically serve REST and GraphQL interfaces for your SQL database.
 
-This command will:
+### Check the database schema
 
-- Automatically map your SQL database to REST and GraphQL API interfaces.
-- Start the Platformatic API server.
+In your service directory - inside the `services` folder under the project directory (`quick-start`), open the `migrations` directory. This folder contains your database migration files: 
 
-You can jump down to [Next steps](#next-steps) or read on to learn more about
-the project files that the wizard has created for you.
+- `001.do.sql`: contains the SQL statements to create the database objects.
+- `001.undo.sql`: contains the SQL statements to drop database objects. 
 
-#### Check the database schema
-
-In your service directory - inside services/ folder under the project directory (`quick-start`), open the `migrations` directory that can store your database migration files that will contain both the `001.do.sql` and `001.undo.sql` files. The `001.do.sql` file contains the SQL statements to create the database objects, while the `001.undo.sql` file contains the SQL statements to drop them.
-
-```sql title="migrations/001.do.sql"
-CREATE TABLE IF NOT EXISTS movies (
-  id INTEGER PRIMARY KEY,
-  title TEXT NOT NULL
-);
-```
-
-Note that this migration has been already applied by Platformatic creator.
-
-#### Check your API configuration
+### Check your API configuration
 
 In your service directory (under the services/ folder in the project directory), check the
 Platformatic configuration file named **`platformatic.json`**
@@ -80,18 +58,18 @@ This generated configuration tells Platformatic to:
 
 :::tip
 
-The [Configuration reference](/docs/reference/db/configuration.md) explains all of the
-supported configuration options.
+You can learn more about configuration options in our [Configuration reference](../db/configuration.md). 
 
 :::
 
-### Manual setup
+## Manual setup
 
-Create a directory for your new API project:
+If you prefer setting up manually or need custom configurations:
+
+### Initialize Your Project
 
 ```bash
 mkdir quick-start
-
 cd quick-start
 ```
 
@@ -128,21 +106,19 @@ pnpm add platformatic
 </TabItem>
 </Tabs>
 
-#### Add a database schema
+### Configure Your Database Schema
 
 In your project directory (`quick-start`), create a file for your sqlite database and also, a `migrations` directory to
 store your database migration files:
 
 ```bash
 touch db.sqlite
-
 mkdir migrations
 ```
 
-Then create a new migration file named **`001.do.sql`** in the **`migrations`**
-directory.
-
-Copy and paste this SQL query into the migration file:
+Next, create a new migration file named **`001.do.sql`** in the **`migrations`**
+directory. Copy and paste the SQL query below into the migration file to create a new database table
+named `movies`:
 
 ```sql title="migrations/001.do.sql"
 CREATE TABLE movies (
@@ -151,21 +127,15 @@ CREATE TABLE movies (
 );
 ```
 
-When it's run by Platformatic, this query will create a new database table
-named `movies`.
-
 :::tip
 
-You can check syntax for SQL queries on the [Database.Guide SQL Reference](https://database.guide/sql-reference-for-beginners/).
+You can check syntax for SQL queries on the [Database Guide SQL Reference](https://database.guide/sql-reference-for-beginners/).
 
 :::
 
-#### Configure your API
+### Configure your API
 
-In your project directory, create a new Platformatic configuration file named
-**`platformatic.db.json`**.
-
-Copy and paste in this configuration:
+Create a new Platformatic configuration file named **`platformatic.json`** in your project directory with the following configuration to set up your server and database:
 
 ```json title="platformatic.db.json"
 {
@@ -189,14 +159,8 @@ This configuration tells Platformatic to:
 - Connect to an SQLite database stored in a file named `db.sqlite`
 - Look for, and apply the database migrations specified in the `migrations` directory
 
-:::tip
 
-The [Configuration reference](/docs/reference/db/configuration.md) explains all of the
-supported configuration options.
-
-:::
-
-#### Start your API server
+### Start your API server
 
 In your project directory, use the Platformatic CLI to start your API server:
 
@@ -205,19 +169,22 @@ npx platformatic db start
 ```
 
 This will:
-
 - Automatically map your SQL database to REST and GraphQL API interfaces.
 - Start the Platformatic API server.
 
 Your Platformatic API is now up and running! 🌟
 
-## Next steps
+## Next Steps
 
-### Use the REST API interface
+Now that your API is up and running, it's time to interact with it using the REST and GraphQL interfaces. Below, you'll find simple examples of how to use these interfaces effectively.
 
-You can use cURL to make requests to the REST interface of your API, for example:
+### Interacting with the REST API Interface
+
+The REST API allows you to perform standard HTTP requests. Below are examples of how you can create a new movie and retrieve all movies from your database using `cURL`.
 
 #### Create a new movie
+
+To add a new movie to your database, use this `cURL` command:
 
 ```bash
 curl -X POST -H "Content-Type: application/json" \
@@ -225,20 +192,23 @@ curl -X POST -H "Content-Type: application/json" \
 	http://localhost:3042/movies
 ```
 
-You should receive a response from your API like this:
+You should receive a response similar to this:
 
 ```json
 {"id":1,"title":"Hello Platformatic DB"}
 ```
+This means that the movie was successfully added to your database
 
-#### Get all movies
+
+#### Get All Movies
+
+To fetch all movies stored in your database, use the following command
 
 ```bash
 curl http://localhost:3042/movies
 ```
 
-You should receive a response from your API like this, with an array
-containing all the movies in your database:
+The response will be an array containing all the movies:
 
 ```json
 [{"id":1,"title":"Hello Platformatic DB"}]
@@ -246,23 +216,22 @@ containing all the movies in your database:
 
 :::tip
 
-If you would like to know more about what routes are automatically available,
-take a look at the [REST API reference](/docs/reference/sql-openapi/introduction.md)
-for an overview of the REST interface that the generated API provides.
+For a comprehensive list of available routes and operations, refer to the [REST API reference](/docs/reference/sql-openapi/introduction.md)
 
 :::
 
-#### Swagger OpenAPI documentation
+#### Exploring API Documentation with Swagger
 
-You can explore the OpenAPI documentation for your REST API in the Swagger UI at
+You can access the Swagger UI to explore detailed documentation for your REST API at:
+
 [http://localhost:3042/documentation](http://localhost:3042/documentation)
 
-### Use the GraphQL API interface
+### Interacting with the GraphQL Interface
 
 Open [http://localhost:3042/graphiql](http://localhost:3042/graphiql) in your
 web browser to explore the GraphQL interface of your API.
 
-Try out this GraphQL query to retrieve all movies from your API:
+Run the query below to retrieve all movies:
 
 ```graphql
 query {
@@ -276,7 +245,7 @@ query {
 :::tip
 
 Learn more about your API's GraphQL interface in the
-[GraphQL API reference](/docs/reference/sql-graphql/introduction.md).
+[GraphQL API reference](../packages/sql-graphql/overview.md).
 
 :::
 

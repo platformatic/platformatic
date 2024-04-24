@@ -1,7 +1,7 @@
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-Run this command in your terminal to start the Platformatic creator wizard:
+To start the Platformatic creator wizard, run the appropriate command for your package manager in your terminal:
 
 <Tabs groupId="package-manager-create">
 <TabItem value="npm" label="npm">
@@ -27,13 +27,12 @@ pnpm create platformatic@latest
 </TabItem>
 </Tabs>
 
-This interactive command-line tool will ask you some questions about how you'd
-like to set up your new Platformatic project. For this guide, select these options:
+This interactive command-line tool will guide you through setting up a new Platformatic project. For this guide, please choose the following options:
 
 ```
 - What kind of project do you want to create?   => Application
 - Where would you like to create your project?  => quick-start
-- Which kind of project do you want to create?  => DB
+- Which kind of project do you want to create?  => @platformatic/db
 - What is the name of the service?              => (generated-randomly), e.g. legal-soup
 - What is the connection string?                => sqlite://./db.sqlite
 - Do you want to create default migrations?     => Yes
@@ -43,13 +42,10 @@ like to set up your new Platformatic project. For this guide, select these optio
 - Do you want to init the git repository?       => No
 ```
 
-Once the wizard is complete, you'll have a Platformatic app project in the
-folder `quick-start`, with example migration files, plugin script,
-routes, and tests inside your service directory under services/
+After completing the wizard, your Platformatic application will be ready in the `quick-start` folder. This includes example migration files, plugin scripts, routes, and tests within your service directory.
 
-:::info
+:::note
 
-Make sure you run the npm/yarn/pnpm command `install` command manually if you
-don't ask the wizard to do it for you.
+If the wizard does not handle dependency installation, ensure to run npm/yarn/pnpm install command manually:
 
 :::
