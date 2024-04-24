@@ -125,7 +125,7 @@ importers:
         version: 8.0.1
       fast-json-stringify:
         specifier: ^5.14.1
-        version: 5.14.1
+        version: 5.15.0
       graphql:
         specifier: ^16.8.1
         version: 16.8.1
@@ -5822,6 +5822,17 @@ packages:
       json-schema-ref-resolver: 1.0.1
       rfdc: 1.3.1
 
+  /fast-json-stringify@5.15.0:
+    resolution: {integrity: sha512-BUEAAyDKb64u+kmkINYfXUUiKjBKerSmVu/dzotfaWSHBxR44JFrOZgkhMO6VxDhDfiuAoi8mx4drd5nvNdA4Q==}
+    dependencies:
+      '@fastify/merge-json-schemas': 0.1.1
+      ajv: 8.12.0
+      ajv-formats: 3.0.1(ajv@8.12.0)
+      fast-deep-equal: 3.1.3
+      fast-uri: 2.3.0
+      json-schema-ref-resolver: 1.0.1
+      rfdc: 1.3.1
+
   /fast-jwt@3.3.3:
     resolution: {integrity: sha512-oS3P8bRI24oPLJUePt2OgF64FBQib5TlgHLFQxYNoHYEEZe0gU3cKjJAVqpB5XKV/zjxmq4Hzbk3fgfW/wRz8Q==}
     engines: {node: '>=16 <22'}
@@ -6365,7 +6376,7 @@ packages:
       graphql: '>=15'
     dependencies:
       '@graphql-typed-document-node/core': 3.2.0(graphql@16.8.1)
-      fast-json-stringify: 5.14.1
+      fast-json-stringify: 5.15.0
       generate-function: 2.3.1
       graphql: 16.8.1
       lodash.memoize: 4.1.2
