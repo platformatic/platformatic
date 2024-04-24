@@ -15,7 +15,7 @@
     "boring-name-generator": "^1.0.3",
     "change-case-all": "^2.1.0",
     "fastify": "^4.26.2",
-    "pino": "^8.19.0",
+    "pino": "^9.0.0",
     "undici": "^6.9.0"
   },
   "devDependencies": {

@@ -139,8 +139,8 @@ importers:
         specifier: ^1.2.8
         version: 1.2.8
       pino:
-        specifier: ^8.19.0
-        version: 8.20.0
+        specifier: ^9.0.0
+        version: 9.0.0
       pino-pretty:
         specifier: ^11.0.0
         version: 11.0.0
@@ -273,8 +273,8 @@ importers:
         specifier: ^1.2.8
         version: 1.2.8
       pino:
-        specifier: ^8.19.0
-        version: 8.20.0
+        specifier: ^9.0.0
+        version: 9.0.0
       pino-pretty:
         specifier: ^11.0.0
         version: 11.0.0
@@ -427,8 +427,8 @@ importers:
         specifier: ^6.3.1
         version: 6.3.1
       pino:
-        specifier: ^8.19.0
-        version: 8.20.0
+        specifier: ^9.0.0
+        version: 9.0.0
       pino-pretty:
         specifier: ^11.0.0
         version: 11.0.0
@@ -531,8 +531,8 @@ importers:
         specifier: ^2.2.3
         version: 2.2.3
       pino:
-        specifier: ^8.17.2
-        version: 8.20.0
+        specifier: ^9.0.0
+        version: 9.0.0
       pino-test:
         specifier: ^1.0.1
         version: 1.0.1
@@ -558,8 +558,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0
       pino:
-        specifier: ^8.19.0
-        version: 8.20.0
+        specifier: ^9.0.0
+        version: 9.0.0
       pino-pretty:
         specifier: ^11.0.0
         version: 11.0.0
@@ -652,8 +652,8 @@ importers:
         specifier: ^6.3.1
         version: 6.3.1
       pino:
-        specifier: ^8.19.0
-        version: 8.20.0
+        specifier: ^9.0.0
+        version: 9.0.0
       pino-pretty:
         specifier: ^11.0.0
         version: 11.0.0
@@ -764,8 +764,8 @@ importers:
         specifier: ^6.3.1
         version: 6.3.1
       pino:
-        specifier: ^8.19.0
-        version: 8.20.0
+        specifier: ^9.0.0
+        version: 9.0.0
       pino-pretty:
         specifier: ^11.0.0
         version: 11.0.0
@@ -939,8 +939,8 @@ importers:
         specifier: ^6.3.1
         version: 6.3.1
       pino:
-        specifier: ^8.19.0
-        version: 8.20.0
+        specifier: ^9.0.0
+        version: 9.0.0
       pino-pretty:
         specifier: ^11.0.0
         version: 11.0.0
@@ -1316,8 +1316,8 @@ importers:
         specifier: ^4.26.2
         version: 4.26.2
       pino:
-        specifier: ^8.19.0
-        version: 8.20.0
+        specifier: ^9.0.0
+        version: 9.0.0
       undici:
         specifier: ^6.9.0
         version: 6.14.1
@@ -1419,8 +1419,8 @@ importers:
         specifier: ^1.2.8
         version: 1.2.8
       pino:
-        specifier: ^8.19.0
-        version: 8.20.0
+        specifier: ^9.0.0
+        version: 9.0.0
       pino-pretty:
         specifier: ^11.0.0
         version: 11.0.0
@@ -1626,8 +1626,8 @@ importers:
         specifier: ^6.3.1
         version: 6.3.1
       pino:
-        specifier: ^8.19.0
-        version: 8.20.0
+        specifier: ^9.0.0
+        version: 9.0.0
       pino-pretty:
         specifier: ^11.0.0
         version: 11.0.0
@@ -8305,6 +8305,22 @@ packages:
       sonic-boom: 3.8.1
       thread-stream: 2.4.1
 
+  /pino@9.0.0:
+    resolution: {integrity: sha512-uI1ThkzTShNSwvsUM6b4ND8ANzWURk9zTELMztFkmnCQeR/4wkomJ+echHee5GMWGovoSfjwdeu80DsFIt7mbA==}
+    hasBin: true
+    dependencies:
+      atomic-sleep: 1.0.0
+      fast-redact: 3.5.0
+      on-exit-leak-free: 2.1.2
+      pino-abstract-transport: 1.2.0
+      pino-std-serializers: 6.2.2
+      process-warning: 3.0.0
+      quick-format-unescaped: 4.0.4
+      real-require: 0.2.0
+      safe-stable-stringify: 2.4.3
+      sonic-boom: 3.8.1
+      thread-stream: 2.6.0
+
   /pkg-conf@3.1.0:
     resolution: {integrity: sha512-m0OTbR/5VPNPqO1ph6Fqbj7Hv6QU7gR/tQW40ZqrL1rjgCU85W6C1bJn0BItuJqnR98PWzw7Z8hHeChD1WrgdQ==}
     engines: {node: '>=6'}
@@ -9531,6 +9547,11 @@ packages:
 
   /thread-stream@2.4.1:
     resolution: {integrity: sha512-d/Ex2iWd1whipbT681JmTINKw0ZwOUBZm7+Gjs64DHuX34mmw8vJL2bFAaNacaW72zYiTJxSHi5abUuOi5nsfg==}
+    dependencies:
+      real-require: 0.2.0
+
+  /thread-stream@2.6.0:
+    resolution: {integrity: sha512-t4eNiKdGwd1EV6tx76mRbrOqwvkxz+ssOiQXEXw88m4p/Xp6679vg16sf39BAstRjHOiWIqp5+J2ylHk3pU30g==}
     dependencies:
       real-require: 0.2.0
 
