@@ -25,10 +25,7 @@ test('happy path', async t => {
     _: [],
     c: file,
     config: file,
-    boo: true,
-    allowEnv: '',
-    'allow-env': '',
-    E: ''
+    boo: true
   })
   assert.deepEqual(configManager.current, JSON.parse(await readFile(file, 'utf8')))
 })
@@ -45,10 +42,7 @@ test('cwd', async t => {
   const { configManager, args } = await loadConfig({}, [], app)
 
   assert.deepEqual(args, {
-    _: [],
-    allowEnv: '',
-    'allow-env': '',
-    E: ''
+    _: []
   })
   assert.deepEqual(configManager.current, JSON.parse(await readFile(file, 'utf8')))
 })
@@ -112,42 +106,6 @@ test('not passing validation kills the process', async t => {
   }
 })
 
-test('allow-env', async (t) => {
-  const file = join(__dirname, 'fixtures', 'bad-placeholder.json')
-  process.env.PORT = '3000'
-  const { configManager, args } = await loadConfig({}, ['-c', file, '--allow-env', 'PORT'], app)
-
-  assert.deepEqual(args, {
-    _: [],
-    c: file,
-    config: file,
-    allowEnv: 'PORT',
-    'allow-env': 'PORT',
-    E: 'PORT'
-  })
-  const content = JSON.parse(await readFile(file, 'utf8'))
-  content.server.port = '3000'
-  assert.deepEqual(configManager.current, content)
-})
-
-test('allow-env with namespace', async (t) => {
-  const file = join(__dirname, 'fixtures', 'placeholder-namespace.json')
-  process.env.MY_NS_PORT = '3001'
-  const { configManager, args } = await loadConfig({}, ['-c', file, '--allow-env', 'MY_NS_*'], app)
-
-  assert.deepEqual(args, {
-    _: [],
-    c: file,
-    config: file,
-    allowEnv: 'MY_NS_*',
-    'allow-env': 'MY_NS_*',
-    E: 'MY_NS_*'
-  })
-  const content = JSON.parse(await readFile(file, 'utf8'))
-  content.server.port = '3001'
-  assert.deepEqual(configManager.current, content)
-})
-
 test('loadConfig with Store', async t => {
   const file = join(__dirname, 'fixtures', 'with-store.json')
 
@@ -159,10 +117,7 @@ test('loadConfig with Store', async t => {
     _: [],
     c: file,
     config: file,
-    boo: true,
-    allowEnv: '',
-    'allow-env': '',
-    E: ''
+    boo: true
   })
   assert.deepEqual(configManager.current, JSON.parse(await readFile(file, 'utf8')))
 })

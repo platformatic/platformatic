@@ -231,12 +231,9 @@ class Store {
       ...overrides
     }
 
-    const envWhitelist = opts.allowEnv ? opts.allowEnv : configManagerConfig.envWhitelist
-
     const configManager = new ConfigManager({
       source: configFile,
-      ...configManagerConfig,
-      envWhitelist
+      ...configManagerConfig
     })
 
     return { configManager, app }

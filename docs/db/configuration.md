@@ -495,10 +495,6 @@ See [Environment variable placeholders](/docs/reference/service/configuration.md
 
 See [Setting environment variables](/docs/reference/service/configuration.md#setting-environment-variables) for more details.
 
-### Allowed placeholder names
-
-See [Allowed placeholder names](/docs/reference/service/configuration.md#allowed-placeholder-names) for more details.
-
 ### PLT_ROOT
 
 The `{PLT_ROOT}` placeholder is automatically set to the directory containing the configuration file, so it can be used to configure relative paths.

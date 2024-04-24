@@ -267,7 +267,6 @@ platformaticRuntime.configManagerConfig = {
     allErrors: true,
     strict: false
   },
-  envWhitelist: ['DATABASE_URL', 'PORT', 'HOSTNAME'],
   async transformConfig () {
     await _transformConfig(this)
   },

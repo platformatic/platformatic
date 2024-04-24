@@ -20,7 +20,6 @@ test('Store with builtins', async t => {
   foo.configType = 'foo'
   foo.configManagerConfig = {
     schema: foo.schema,
-    envWhitelist: ['PORT', 'HOSTNAME'],
     allowToWatch: ['.env'],
     schemaOptions: {
       useDefaults: true,
@@ -76,7 +75,6 @@ test('missing configType', async t => {
 
   foo.configManagerConfig = {
     schema: foo.schema,
-    envWhitelist: ['PORT', 'HOSTNAME'],
     allowToWatch: ['.env'],
     schemaOptions: {
       useDefaults: true,
@@ -126,7 +124,6 @@ test('add schema to configManagerConfig', async t => {
 
   foo.configType = 'foo'
   foo.configManagerConfig = {
-    envWhitelist: ['PORT', 'HOSTNAME'],
     allowToWatch: ['.env'],
     schemaOptions: {
       useDefaults: true,
@@ -218,7 +215,6 @@ test('app must be a function', async t => {
   foo.configType = 'foo'
   foo.configManagerConfig = {
     schema: foo.schema,
-    envWhitelist: ['PORT', 'HOSTNAME'],
     allowToWatch: ['.env'],
     schemaOptions: {
       useDefaults: true,
@@ -246,7 +242,6 @@ test('loadConfig', async t => {
   foo.configType = 'service'
   foo.configManagerConfig = {
     schema: foo.schema,
-    envWhitelist: ['PORT', 'HOSTNAME'],
     allowToWatch: ['.env'],
     schemaOptions: {
       useDefaults: true,
@@ -285,7 +280,6 @@ test('loadConfig', async t => {
   foo.configType = 'service'
   foo.configManagerConfig = {
     schema: foo.schema,
-    envWhitelist: ['PORT', 'HOSTNAME'],
     allowToWatch: ['.env'],
     schemaOptions: {
       useDefaults: true,
@@ -333,7 +327,6 @@ test('Version mismatch', async t => {
   foo.configType = 'foo'
   foo.configManagerConfig = {
     schema: foo.schema,
-    envWhitelist: ['PORT', 'HOSTNAME'],
     allowToWatch: ['.env'],
     schemaOptions: {
       useDefaults: true,
@@ -374,7 +367,6 @@ test('Platformatic Service', async t => {
   foo.configType = 'foo'
   foo.configManagerConfig = {
     schema: foo.schema,
-    envWhitelist: ['PORT', 'HOSTNAME'],
     allowToWatch: ['.env'],
     schemaOptions: {
       useDefaults: true,
@@ -404,7 +396,6 @@ test('Platformatic DB', async t => {
   foo.configType = 'foo'
   foo.configManagerConfig = {
     schema: foo.schema,
-    envWhitelist: ['PORT', 'HOSTNAME'],
     allowToWatch: ['.env'],
     schemaOptions: {
       useDefaults: true,

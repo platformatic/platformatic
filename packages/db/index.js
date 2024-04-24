@@ -115,7 +115,6 @@ platformaticDB.configType = 'db'
 platformaticDB.configManagerConfig = {
   version,
   schema,
-  envWhitelist: ['DATABASE_URL', ...platformaticService.configManagerConfig.envWhitelist],
   allowToWatch: ['.env'],
   schemaOptions: platformaticService.configManagerConfig.schemaOptions,
   async transformConfig () {

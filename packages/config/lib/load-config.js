@@ -8,14 +8,9 @@ const errors = require('./errors')
 
 async function loadConfig (minimistConfig, _args, app, overrides = {}, replaceEnv = true, logger) {
   const args = parseArgs(_args, deepmerge({ all: true })({
-    string: ['allow-env'],
-    default: {
-      allowEnv: '' // The default is set in ConfigManager
-    },
     alias: {
       v: 'version',
-      c: 'config',
-      allowEnv: ['allow-env', 'E']
+      c: 'config'
     }
   }, minimistConfig))
 
@@ -32,7 +27,6 @@ async function loadConfig (minimistConfig, _args, app, overrides = {}, replaceEn
     app,
     directory: args.config && dirname(args.config),
     config: args.config,
-    allowEnv: args.allowEnv,
     overrides
   })
 

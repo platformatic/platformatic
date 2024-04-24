@@ -69,7 +69,7 @@ test('dirname as cwd', async (t) => {
   assert.equal(cm.dirname, process.cwd())
 })
 
-test('should purge env', (t) => {
+test('should used passed env vars', (t) => {
   {
     // passed env
     const cm = new ConfigManager({
@@ -80,7 +80,9 @@ test('should purge env', (t) => {
       }
     })
 
-    assert.deepEqual(cm.env, {
+    assert.deepStrictEqual(cm.env, {
+      ...process.env,
+      FOOBAR: 'foobar',
       PLT_FOOBAR: 'plt_foobar'
     })
   }
@@ -93,42 +95,7 @@ test('should purge env', (t) => {
       delete process.env.FOOBAR
       delete process.env.PLT_FOOBAR
     })
-    assert.deepEqual(cm.env, {
-      PLT_FOOBAR: 'plt_foobar'
-    })
-  }
-})
-
-test('support env white list', (t) => {
-  {
-    // passed env
-    const cm = new ConfigManager({
-      source: './test.json',
-      env: {
-        FOOBAR: 'foobar',
-        PLT_FOOBAR: 'plt_foobar'
-      },
-      envWhitelist: ['FOOBAR']
-    })
-
-    assert.deepEqual(cm.env, {
-      PLT_FOOBAR: 'plt_foobar',
-      FOOBAR: 'foobar'
-    })
-  }
-  {
-    // from process env
-    process.env.FOOBAR = 'foobar'
-    process.env.PLT_FOOBAR = 'plt_foobar'
-    const cm = new ConfigManager({ source: './fixtures/test.json', envWhitelist: ['FOOBAR'] })
-    t.after(() => {
-      delete process.env.FOOBAR
-      delete process.env.PLT_FOOBAR
-    })
-    assert.deepEqual(cm.env, {
-      PLT_FOOBAR: 'plt_foobar',
-      FOOBAR: 'foobar'
-    })
+    assert.deepStrictEqual(cm.env, { ...process.env })
   }
 })
 

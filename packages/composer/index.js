@@ -65,7 +65,6 @@ platformaticComposer.configType = 'composer'
 platformaticComposer.configManagerConfig = {
   version: require('./package.json').version,
   schema,
-  envWhitelist: ['PORT', 'HOSTNAME'],
   allowToWatch: ['.env'],
   schemaOptions: {
     useDefaults: true,
@@ -81,7 +80,6 @@ platformaticComposer.schema = schema
 platformaticComposer.configType = 'composer'
 platformaticComposer.configManagerConfig = {
   schema,
-  envWhitelist: ['PORT', 'HOSTNAME'],
   allowToWatch: ['.env'],
   schemaOptions: {
     useDefaults: true,

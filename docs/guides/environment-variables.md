@@ -45,45 +45,6 @@ Environment variables can also be set directly on the command line, for example:
 PLT_SERVER_LOGGER_LEVEL=debug npx platformatic start
 ```
 
-### Allowed Environment Variables
-
-All placeholders in a configuration must be available as an environment variable
-and must meet the allowed placeholder name rules.
-
-### Allowed placeholder names
-
-Only placeholder names prefixed with `PLT_`, or that are in this allow list, will be
-dynamically replaced in the configuration file:
-
-- `PORT`
-- `DATABASE_URL`
-
-This restriction is to avoid accidentally exposing system environment variables.
-An error will be raised by Platformatic if it finds a configuration placeholder
-that isn't allowed.
-
-The default allow list can be extended by passing a `--allow-env` CLI option with a
-comma separated list of strings, for example:
-
-```bash
-npx platformatic start --allow-env=HOST,SERVER_LOGGER_LEVEL
-```
-
-If `--allow-env` is passed as an option to the CLI, it will be merged with the
-default allow list.
-
-### Placeholder wildcard
-
-You're also able to define a placeholder wildcard, with your own prefix, for example:
-
-```bash
-npx platformatic service start --allow-env=MY_NS_*
-# OR
-npx platformatic start --allow-env=MY_NS_*
-```
-
-This will allow you to use placeholders like `{MY_NS_MY_VAR}`.
-
 ## Adding a custom environment variable to a project
 
 ### Create a Platformatic DB App
