@@ -5,7 +5,7 @@ import NewApiProjectInstructions from './new-api-project-instructions.md';
 
 # Quick Start Guide
 
-Welcome to your first steps with [Platformatic DB](/docs/reference/db/introduction.md). This guide will help you set up and run your first API using Platformatic DB with [SQLite](https://www.sqlite.org/). By the end of this guide, you'll have a fully functional API up and running.
+Welcome to your first steps with [Platformatic DB](/docs/reference/db/introduction.md). This guide will help you set up and run your first API using Platformatic DB with [SQLite](https://www.sqlite.org/). By the end of this guide, you'll have a fully functional API ready to use.
 
 :::note
 
@@ -18,7 +18,7 @@ While this guide uses [SQLite](https://www.sqlite.org/), Platformatic DB also su
 Before starting, ensure you have the following installed:
 - [Node.js](https://nodejs.org/) (v18.8.0 or higher)
 - [npm](https://docs.npmjs.com/cli/) (v7 or higher)
-- A code editor, for example [Visual Studio Code](https://code.visualstudio.com/)
+- A code editor, (e.g., [Visual Studio Code](https://code.visualstudio.com/))
 
 ## Automatic Setup with Platformatic CLI
 
@@ -26,27 +26,46 @@ Before starting, ensure you have the following installed:
 
 ### Start Your API Server
 
-In your project directory, run this command to start your API server:
+Run the following command in your project directory to start your API server:
+
+<Tabs groupId="package-manager">
+<TabItem value="npm" label="npm">
 
 ```bash
 npm start
 ```
 
+</TabItem>
+<TabItem value="yarn" label="yarn">
+
+```bash
+yarn run start
+```
+
+</TabItem>
+
+<TabItem value="pnpm" label="pnpm">
+
+```bash
+pnpm start
+```
+
+</TabItem>
+</Tabs>
+
+
 Your API server is now live! 🌟 It will automatically serve REST and GraphQL interfaces for your SQL database.
 
-### Check the database schema
+### Check The Database Schema
 
-In your service directory - inside the `services` folder under the project directory (`quick-start`), open the `migrations` directory. This folder contains your database migration files: 
+Navigate to the `migrations` directory within the `services` folder of your project directory. This folder contains your database migration files: 
 
-- `001.do.sql`: contains the SQL statements to create the database objects.
-- `001.undo.sql`: contains the SQL statements to drop database objects. 
+- `001.do.sql`: contains the SQL statements for creating database objects.
+- `001.undo.sql`: contains the SQL statements to remove database objects. 
 
-### Check your API configuration
+### Check Your API configuration
 
-In your service directory (under the services/ folder in the project directory), check the
-Platformatic configuration file named **`platformatic.json`**
-The environment file named **`.env`** in your project directory(`quick-start`),
-provides the values for environment variable placeholders.
+Examine the `platformatic.json` file in the services folder and the `.env` file in the root of your project directory to confirm the API configuration:
 
 This generated configuration tells Platformatic to:
 
@@ -58,23 +77,24 @@ This generated configuration tells Platformatic to:
 
 :::tip
 
-You can learn more about configuration options in our [Configuration reference](../db/configuration.md). 
+You can learn more about configuration options in the [Configuration reference](../db/configuration.md). 
 
 :::
 
 ## Manual setup
 
-If you prefer setting up manually or need custom configurations:
+Follow the steps below if you prefer setting up manually or need custom configurations:
 
 ### Initialize Your Project
+
+Create and navigate into your project directory:
 
 ```bash
 mkdir quick-start
 cd quick-start
 ```
 
-Then create a `package.json` file and install the [platformatic](https://www.npmjs.com/package/platformatic)
-CLI as a project dependency:
+Initialize your project and install [Platformatic](https://www.npmjs.com/package/platformatic) as a dependency using your preferred package manager:
 
 <Tabs groupId="package-manager">
 <TabItem value="npm" label="npm">
@@ -106,7 +126,7 @@ pnpm add platformatic
 </TabItem>
 </Tabs>
 
-### Configure Your Database Schema
+### Configuration Your Database
 
 In your project directory (`quick-start`), create a file for your sqlite database and also, a `migrations` directory to
 store your database migration files:
@@ -116,7 +136,7 @@ touch db.sqlite
 mkdir migrations
 ```
 
-Next, create a new migration file named **`001.do.sql`** in the **`migrations`**
+Create a new migration file named **`001.do.sql`** in the **`migrations`**
 directory. Copy and paste the SQL query below into the migration file to create a new database table
 named `movies`:
 
@@ -133,11 +153,11 @@ You can check syntax for SQL queries on the [Database Guide SQL Reference](https
 
 :::
 
-### Configure your API
+### Configure Your API
 
 Create a new Platformatic configuration file named **`platformatic.json`** in your project directory with the following configuration to set up your server and database:
 
-```json title="platformatic.db.json"
+```json title="platformatic.json"
 {
   "server": {
     "hostname": "127.0.0.1",
@@ -160,7 +180,7 @@ This configuration tells Platformatic to:
 - Look for, and apply the database migrations specified in the `migrations` directory
 
 
-### Start your API server
+### Start Your API Server
 
 In your project directory, use the Platformatic CLI to start your API server:
 

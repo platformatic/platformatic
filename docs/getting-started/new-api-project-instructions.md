@@ -46,6 +46,6 @@ After completing the wizard, your Platformatic application will be ready in the 
 
 :::note
 
-If the wizard does not handle dependency installation, ensure to run npm/yarn/pnpm install command manually:
+If the wizard does not handle dependency installation, ensure to run `npm/yarn/pnpm` install command manually:
 
 :::
