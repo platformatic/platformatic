@@ -1064,8 +1064,8 @@ importers:
         specifier: ^0.13.0
         version: 0.13.0
       fast-jwt:
-        specifier: ^3.3.3
-        version: 3.3.3
+        specifier: ^4.0.0
+        version: 4.0.0
       fastify:
         specifier: ^4.26.2
         version: 4.26.2
@@ -1471,8 +1471,8 @@ importers:
         specifier: ^4.18.3
         version: 4.19.2
       fast-jwt:
-        specifier: ^3.3.3
-        version: 3.3.3
+        specifier: ^4.0.0
+        version: 4.0.0
       get-port:
         specifier: ^7.1.0
         version: 7.1.0
@@ -5841,6 +5841,7 @@ packages:
       asn1.js: 5.4.1
       ecdsa-sig-formatter: 1.0.11
       mnemonist: 0.39.8
+    dev: false
 
   /fast-jwt@4.0.0:
     resolution: {integrity: sha512-CnI93Tmk7eSzfw4e0Jlc5ZcWiN+/zK7xAKAhtXS8PAcKmYqfcXqxJl1hMyhk3iEt0M9JLo7DCYRDV2XcIacWAw==}
