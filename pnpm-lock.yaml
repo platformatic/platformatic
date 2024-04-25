@@ -693,7 +693,7 @@ importers:
         version: 16.4.5
       esmock:
         specifier: ^2.6.4
-        version: 2.6.4
+        version: 2.6.5
       fastify:
         specifier: ^4.26.2
         version: 4.26.2
@@ -811,7 +811,7 @@ importers:
         version: 16.4.5
       esmock:
         specifier: ^2.6.4
-        version: 2.6.4
+        version: 2.6.5
       fastify:
         specifier: ^4.26.2
         version: 4.26.2
@@ -5624,8 +5624,8 @@ packages:
       - supports-color
     dev: true
 
-  /esmock@2.6.4:
-    resolution: {integrity: sha512-w/MIHWZeFzlyW6tTUW/sj1aSAScU8IQapjz8oCxjx3J90fhhmO0QdPGBjPD3oQSLLtVCFcgkTvdh7dNigp9K5A==}
+  /esmock@2.6.5:
+    resolution: {integrity: sha512-tvFsbtSI9lCuvufbX+UIDn/MoBjTu6UDvQKR8ZmKWHrK3AkioKD2LuTkM75XSngRki3SsBb4uiO58EydQuFCGg==}
     engines: {node: '>=14.16.0'}
     dev: true
 
