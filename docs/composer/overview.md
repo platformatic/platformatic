@@ -3,15 +3,15 @@ title: Overview
 label: Platformatic Composer
 ---
 
-# Platformatic Composer 
+# Platformatic Composer
 
-Platformatic Composer automatically composes microservices into one ecosystem with a single public API. It is a new way to develop aggregated APIs, starting with OpenAPI composition across multiple API sources.
+Platformatic Composer is designed to automatically integrate microservices into one ecosystem, providing a single public API for more efficient management and deployment. It is a new way to develop aggregated APIs, starting with OpenAPI composition across multiple API sources. 
 
-Check out the Platformatic Composer features:
+## Features of Platformatic Composer
 
-OpenAPI composition
-Resolve conflicts between different endpoints
-Automatic schema refresh
-Customizable via Node.js and [Fastify](https://www.fastify.io/) plugins
-Automatic TypeScript compilation
-...and all the features of Platformatic Service
+- **OpenAPI Composition:** Effortlessly combine multiple APIs into a cohesive structure.
+- **Conflict Resolution:** Automatically resolve endpoint conflicts between different endpoints to maintain API consistency.
+- **Automatic Schema Refresh:** Keep your API schema up-to-date with changes in the source APIs without manual intervention.
+- **Extensibility:** Customize and extend functionality using Node.js and [Fastify](https://www.fastify.io/) plugins.
+- **TypeScript Support:** Benefit from automatic TypeScript compilation to enhance code quality and reliability.
+- **Platformatic Service Integration:** Utilize all the robust features of Platformatic Service to supercharge your API management.
