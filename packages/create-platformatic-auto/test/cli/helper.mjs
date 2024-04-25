@@ -5,6 +5,7 @@ import stripAnsi from 'strip-ansi'
 import { promisify } from 'node:util'
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
+import fastify from 'fastify'
 
 const sleep = promisify(setTimeout)
 
@@ -49,7 +50,12 @@ export const getServices = async (dir) => {
 //    match: 'Server listening at',
 //    do: [keys.DOWN, keys.ENTER]
 // }
-export async function executeCreatePlatformatic (dir, actions = [], done = 'All done!', pkgMgrInstall = false, pkgManager = 'npm') {
+export async function executeCreatePlatformatic (dir, actions = [], options = {}) {
+  const done = options.done || 'You are all set!'
+  const pkgMgrInstall = options.pkgMgrInstall || false
+  const pkgManager = options.pkgManager || 'npm'
+  const marketplaceHost = options.marketplaceHost
+
   const runCreatePlatformatic = async () => {
     const questions = [...actions]
     try {
@@ -63,7 +69,11 @@ export async function executeCreatePlatformatic (dir, actions = [], done = 'All 
         }
       }
 
-      const child = execa('node', [createPath, `--install=${pkgMgrInstall.toString()}`], execaOptions)
+      const child = execa('node', [
+        createPath,
+        `--install=${pkgMgrInstall.toString()}`,
+        `--marketplace-host=${marketplaceHost}`
+      ], execaOptions)
 
       // We just need the "lastPrompt" printed before the process stopped to wait for an answer
       // If we don't have any outptu from process for more than 500ms, we assume it's waiting for an answer
@@ -125,4 +135,25 @@ export async function safeKill (child) {
       }
     }
   }
+}
+
+export async function startMarketplace (t, opts = {}) {
+  const marketplace = fastify()
+
+  marketplace.get('/templates', async (request, reply) => {
+    if (opts.templatesCallback) {
+      return opts.templatesCallback(request, reply)
+    }
+    return [
+      { name: '@platformatic/composer' },
+      { name: '@platformatic/db' },
+      { name: '@platformatic/service' }
+    ]
+  })
+
+  await marketplace.listen({ port: 0 })
+  t.after(() => marketplace.close())
+
+  const address = marketplace.server.address()
+  return `http://127.0.0.1:${address.port}`
 }
