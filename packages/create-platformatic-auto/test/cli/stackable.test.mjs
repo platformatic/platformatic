@@ -38,7 +38,9 @@ test('Creates a Platformatic Stackable without typescript', { timeout }, async (
     match: 'Do you want to init the git repository',
     do: [keys.DOWN, keys.ENTER] // yes
   }]
-  await executeCreatePlatformatic(tmpDir, actions, 'Stackable created successfully!')
+  await executeCreatePlatformatic(tmpDir, actions, {
+    done: 'Stackable created successfully!'
+  })
 
   const baseProjectDir = join(tmpDir, 'platformatic')
   const files = await walk(baseProjectDir)
@@ -76,7 +78,9 @@ test('Creates a Platformatic Stackable with typescript', { timeout }, async () =
     match: 'Do you want to init the git repository',
     do: [keys.ENTER] // no
   }]
-  await executeCreatePlatformatic(tmpDir, actions, 'Stackable created successfully!')
+  await executeCreatePlatformatic(tmpDir, actions, {
+    done: 'Stackable created successfully!'
+  })
 
   const baseProjectDir = join(tmpDir, 'platformatic')
   const files = await walk(baseProjectDir)
