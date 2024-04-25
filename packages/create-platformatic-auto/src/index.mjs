@@ -17,12 +17,19 @@ import { writeFile } from 'node:fs/promises'
 import { request } from 'undici'
 import { setTimeout } from 'node:timers/promises'
 
-export async function fetchStackables () {
-  const stackablesRequest = request('https://marketplace.platformatic.dev/templates')
+const MARKETPLACE_HOST = 'https://marketplace.platformatic.dev'
+
+export async function fetchStackables (marketplaceHost) {
+  marketplaceHost = marketplaceHost || MARKETPLACE_HOST
+
+  const stackablesRequest = request(marketplaceHost + '/templates')
   const stackablesRequestTimeout = setTimeout(5000, new Error('Request timed out'))
 
   try {
-    const { statusCode, body } = await Promise.race([stackablesRequest, stackablesRequestTimeout])
+    const { statusCode, body } = await Promise.race([
+      stackablesRequest,
+      stackablesRequestTimeout
+    ])
     if (statusCode === 200) {
       return (await body.json()).map(stackable => stackable.name)
     }
@@ -31,14 +38,13 @@ export async function fetchStackables () {
   return ['@platformatic/composer', '@platformatic/db', '@platformatic/service']
 }
 
-export async function chooseStackable (opts = {}) {
-  const choices = await fetchStackables()
+export async function chooseStackable (stackables) {
   const options = await inquirer.prompt({
     type: 'list',
     name: 'type',
     message: 'Which kind of project do you want to create?',
-    default: choices.indexOf('@platformatic/service'),
-    choices
+    default: stackables.indexOf('@platformatic/service'),
+    choices: stackables
   })
 
   return options.type
@@ -71,7 +77,8 @@ export const createPlatformatic = async (argv) => {
     default: {
       install: true
     },
-    boolean: ['install']
+    boolean: ['install'],
+    string: ['marketplace-host']
   })
 
   const username = await getUsername()
@@ -148,9 +155,10 @@ async function createApplication (args, logger, pkgManager) {
   }
 
   const names = []
+  const stackables = await fetchStackables(args['marketplace-host'])
 
   while (true) {
-    const stackableName = await chooseStackable()
+    const stackableName = await chooseStackable(stackables)
     // await say(`Creating a ${stackable} project in ${projectDir}...`)
 
     const stackable = await importOrLocal({

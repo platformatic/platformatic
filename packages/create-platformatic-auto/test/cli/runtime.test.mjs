@@ -3,10 +3,15 @@ import { equal } from 'node:assert'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { mkdtemp, rm } from 'node:fs/promises'
-
-import { executeCreatePlatformatic, keys, walk, getServices } from './helper.mjs'
 import { timeout } from './timeout.mjs'
 import { isFileAccessible } from '../../src/utils.mjs'
+import {
+  executeCreatePlatformatic,
+  startMarketplace,
+  keys,
+  walk,
+  getServices
+} from './helper.mjs'
 
 let tmpDir
 test.beforeEach(async () => {
@@ -21,7 +26,8 @@ test.afterEach(async () => {
   }
 })
 
-test('Creates a Platformatic Runtime with two Services', { timeout }, async () => {
+test('Creates a Platformatic Runtime with two Services', { timeout }, async (t) => {
+  const marketplaceHost = await startMarketplace(t)
   // The actions must match IN ORDER
   const actions = [{
     match: 'What kind of project do you want to create?',
@@ -61,7 +67,10 @@ test('Creates a Platformatic Runtime with two Services', { timeout }, async () =
     match: 'Do you want to init the git repository',
     do: [keys.DOWN, keys.ENTER] // yes
   }]
-  await executeCreatePlatformatic(tmpDir, actions, 'You are all set!', false, 'pnpm')
+  await executeCreatePlatformatic(tmpDir, actions, {
+    marketplaceHost,
+    pkgManager: 'pnpm'
+  })
 
   const baseProjectDir = join(tmpDir, 'platformatic')
   const files = await walk(baseProjectDir)
