@@ -18,16 +18,9 @@ Platformatic Composer will automatically detect and load configuration files fou
 
 To specify a configuration file manually, use the [`--config` option](../cli.md#composer) with any `platformatic composer` CLI command. 
 
-### Supported File Formats
+## Supported File Formats
 
-Platformatic Composer supports the following file formats, their file extensions and the ability to include comments:
-
-| Format | Extensions         | Comments Supported |
-|--------|--------------------|--------------------|
-| JSON   | `.json`            | No                 |
-| JSON5  | `.json5`           | Yes                |
-| YAML   | `.yml`, `.yaml`    | Yes                |
-| TOML   | `.tml`, `.toml`    | Yes                |
+For detailed information on supported file formats and extensions, visit our [Supported File Formats and Extensions](../file-formats.md) page
 
 ## Configuration Settings
 

@@ -2,14 +2,14 @@
 
 If you want to modify automatically generated API, you can use composer custom `onRoute` hook.
 
-### addComposerOnRouteHook(openApiPath, methods, handler)
+### `addComposerOnRouteHook(openApiPath, methods, handler)`
 
 - **`openApiPath`** (`string`) - A route OpenAPI path that Platformatic Composer takes from the OpenAPI specification.
 - **`methods`** (`string[]`) - Route HTTP methods that Platformatic Composer takes from the OpenAPI specification.
 - **`handler`** (`function`) - fastify [onRoute](https://www.fastify.io/docs/latest/Reference/Hooks/#onroute) hook handler.
 
 
-### onComposerResponse
+### `onComposerResponse`
 
 `onComposerResponse` hook is called after the response is received from a composed service.
 It might be useful if you want to modify the response before it is sent to the client.
