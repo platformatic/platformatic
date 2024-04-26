@@ -2,7 +2,7 @@
 
 If you want to modify automatically generated API, you can use composer custom `onRoute` hook.
 
-#### `addComposerOnRouteHook(openApiPath, methods, handler)`
+### addComposerOnRouteHook(openApiPath, methods, handler)
 
 - **`openApiPath`** (`string`) - A route OpenAPI path that Platformatic Composer takes from the OpenAPI specification.
 - **`methods`** (`string[]`) - Route HTTP methods that Platformatic Composer takes from the OpenAPI specification.

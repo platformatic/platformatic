@@ -1,8 +1,10 @@
 # Plugin
 
-If you want to add features to a service, you will need to register a plugin, which will be in the form of a standard [Fastify](https://fastify.io) plugin.
+To extend the functionality of a service in Platformatic, you can register a [plugin](https://fastify.dev/docs/latest/Reference/Plugins/). These plugins are standard [Fastify](https://fastify.io) plugins.
 
-The config file will specify where the plugin file is located as the example below:
+## Plugin Configuration
+
+Specify the location of your plugin files in the configuration file, as shown in the example below. This path is relative to the config file path.
 
 ```json
 {
@@ -12,29 +14,42 @@ The config file will specify where the plugin file is located as the example bel
   }
 }
 ```
-The path is relative to the config file path.
+### Creating a Plugin
 
-You should export an async `function` which receives a parameters
-- `app` (`FastifyInstance`) that is the main fastify [instance](https://www.fastify.io/docs/latest/Reference/Server/#instance)
-- `opts` all the options specified in the config file after `path`
+Your plugin should export an asynchronous function that receives the parameters:
+
+- `app` (`FastifyInstance`): this is the main fastify [instance](https://www.fastify.io/docs/latest/Reference/Server/#instance).
+- `opts`: contains all the options specified in the config file after `path`.
+
+#### Example Plugin
+
+Here's a simple example of a Fastify plugin:
+
+```js
+module.exports = async function (app, opts) {
+  app.get('/hello', async (request, reply) => {
+    return 'Hello from Platformatic!';
+  });
+}
+```
 
 ## Hot Reload
 
-Plugin file is being watched by [`fs.watch`](https://nodejs.org/api/fs.html#fspromiseswatchfilename-options) function.
-
-You don't need to reload Platformatic Composer server while working on your plugin. Every time you save, the watcher will trigger a reload event and the server will auto-restart and load your updated code.
+The plugin file is monitored by the [`fs.watch`](https://nodejs.org/api/fs.html#fspromiseswatchfilename-options) function. There's no need to manually reload the Platformatic Composer server while developing your plugin. Changes are detected automatically, triggering a server restart to load your updated code.
 
 :::tip
 
-At this time, on Linux, file watch in subdirectories is not supported due to a Node.js limitation (documented [here](https://nodejs.org/api/fs.html#caveats)).
+Currently, on Linux, file watching in subdirectories is not supported due to a Node.js limitation, as documented [here](https://nodejs.org/api/fs.html#caveats).
 
 :::
 
-## Directories
+## Directory Structure 
 
-The path can also be a directory. In that case, the directory will be loaded with [`@fastify/autoload`](https://github.com/fastify/fastify-autoload).
+Plugins can also be directories, which are loaded using [`@fastify/autoload`](https://github.com/fastify/fastify-autoload). This approach automatically configures routes matching the folder structure.
 
-Consider the following directory structure:
+### Example Directory Structure
+
+Consider the following directory structure for organizing multiple plugins:
 
 ```
 ├── routes
@@ -45,15 +60,14 @@ Consider the following directory structure:
 │   ├── single-plugin
 │   │   └── utils.js
 │   └── another-plugin.js
-└── platformatic.composer.json
+└── platformatic.json
 ```
 
-By default the folder will be added as a prefix to all the routes defined within them.
-See the autoload documentation for all the options to customize this behavior.
+By default, each folder will be added as a prefix to the routes defined within them. Refer to the [@fastify/autoload](https://github.com/fastify/fastify-autoload) documentation for customization options.
 
-## Multiple plugins
+## Loading Multiple Plugins
 
-Multiple plugins can be loaded in parallel by specifying an array:
+To load multiple plugins in parallel, specify an array of paths in the configuration:
 
 ```json
 {
@@ -67,3 +81,4 @@ Multiple plugins can be loaded in parallel by specifying an array:
   }
 }
 ```
+
