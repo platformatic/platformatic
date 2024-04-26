@@ -14,7 +14,6 @@ foo.configType = 'foo'
 foo.configManagerConfig = {
   schema: foo.schema,
   version: '1.0.0',
-  envWhitelist: ['PORT', 'HOSTNAME'],
   allowToWatch: ['.env'],
   schemaOptions: {
     useDefaults: true,
