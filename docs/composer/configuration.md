@@ -229,7 +229,26 @@ Use json schema format to describe the response structure, this only for  `200` 
     - **`subgraph`** (`string`) - The subgraph name of the referred entity, where the resolver is located; if missing is intended the self.
     - **`resolver`** (`object`, **required**) - The resolver definition to query the referred entity, same structure as `entity.resolver`.
 
+### `telemetry`
 
-## Environment Variable Placeholders
+See [Platformatic Service telemetry](/docs/reference/service/configuration.md#telemetry) for more details.
 
-For a more secure configuration, use environment variable placeholders to inject runtime values. See our documentation on setting and using [ENV placeholders](../service//configuration.md#environment-variable-placeholders).
+### `watch`
+
+See [Platformatic Service watch](/docs/reference/service/configuration.md#watch) for more details.
+
+### `clients`
+
+See [Platformatic Service clients](/docs/reference/service/configuration.md#clients) for more details.
+
+## Environment variable placeholders
+
+See [Environment variable placeholders](/docs/reference/service/configuration.md#environment-variable-placeholders) for more details.
+
+### Setting environment variables
+
+See [Setting environment variables](/docs/reference/service/configuration.md#setting-environment-variables) for more details.
+
+### PLT_ROOT
+
+See [PLT_ROOT](/docs/reference/service/configuration.md#plt_root) for more details.

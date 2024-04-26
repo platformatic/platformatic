@@ -20,8 +20,7 @@ test('env white list', async (t) => {
 
   const { child, url } = await start(
     [
-      '--config', join(import.meta.url, '..', 'fixtures', 'env-whitelist.json'),
-      '--allow-env', 'DATABASE_URL,HOSTNAME'
+      '--config', join(import.meta.url, '..', 'fixtures', 'env-whitelist.json')
     ],
     {
       env: {
@@ -121,9 +120,7 @@ test('env white list schema', async (t) => {
     'schema',
     'graphql',
     '--config',
-    join(import.meta.url, '..', 'fixtures', 'env-whitelist.json'),
-    '--allow-env',
-    'DATABASE_URL,HOSTNAME'
+    join(import.meta.url, '..', 'fixtures', 'env-whitelist.json')
   ], {
     env: {
       DATABASE_URL: connectionInfo.connectionString,

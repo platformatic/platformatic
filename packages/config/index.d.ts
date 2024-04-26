@@ -55,7 +55,6 @@ export class ConfigManager<T = object> {
   fullPath: string
   dirname: string
   getSerializer(): ISerializer
-  purgeEnv(): IEnv
   replaceEnv(configString: string): string
   parse(): Promise<void>
   validate(): boolean

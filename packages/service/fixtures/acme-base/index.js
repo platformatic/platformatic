@@ -36,7 +36,6 @@ async function isDirectory (path) {
 // The configuration of the ConfigManager
 acmeBase.configManagerConfig = {
   schema,
-  envWhitelist: ['PORT', 'HOSTNAME', 'WATCH'],
   allowToWatch: ['.env'],
   schemaOptions: {
     useDefaults: true,

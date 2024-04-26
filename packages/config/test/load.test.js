@@ -15,19 +15,9 @@ test('should throw if file is not found', async () => {
   }
 })
 
-test('should throw if placeholder is invalid', async () => {
-  try {
-    const cm = new ConfigManager({ source: resolve(__dirname, './fixtures/bad-placeholder.json') })
-    await cm.parse()
-    assert.fail()
-  } catch (err) {
-    assert.equal(err.message, 'PORT is an invalid placeholder. All placeholders must be prefixed with PLT_.\nDid you mean PLT_PORT?')
-  }
-})
-
 test('should throw if placeholder is missing', async (t) => {
   try {
-    const cm = new ConfigManager({ source: resolve(__dirname, './fixtures/bad-placeholder.json'), envWhitelist: ['PORT'] })
+    const cm = new ConfigManager({ source: resolve(__dirname, './fixtures/bad-placeholder.json') })
     await cm.parse()
     assert.fail()
   } catch (err) {
@@ -135,7 +125,7 @@ test('transformConfig option', async (t) => {
 })
 
 test('should NOT throw if placeholder is missing but replaceEnv is `false`', async (t) => {
-  const cm = new ConfigManager({ source: resolve(__dirname, './fixtures/bad-placeholder.json'), envWhitelist: ['PORT'] })
+  const cm = new ConfigManager({ source: resolve(__dirname, './fixtures/bad-placeholder.json') })
   await cm.parse(false)
   assert.deepEqual(cm.current,
     {
@@ -161,7 +151,7 @@ test('should NOT throw if placeholder is missing but replaceEnv is `false`', asy
 })
 
 test('should NOT throw if placeholder is missing but replaceEnv is `false` / 2', async (t) => {
-  const cm = new ConfigManager({ source: resolve(__dirname, './fixtures/bad-placeholder.json'), envWhitelist: ['PORT'] })
+  const cm = new ConfigManager({ source: resolve(__dirname, './fixtures/bad-placeholder.json') })
   await cm.parseAndValidate(false)
   assert.deepEqual(cm.current,
     {

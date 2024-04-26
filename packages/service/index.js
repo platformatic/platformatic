@@ -107,7 +107,6 @@ platformaticService.configType = 'service'
 platformaticService.configManagerConfig = {
   version,
   schema,
-  envWhitelist: ['PORT', 'HOSTNAME'],
   allowToWatch: ['.env'],
   schemaOptions: {
     useDefaults: true,

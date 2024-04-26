@@ -28,11 +28,6 @@ class ConfigManager extends EventEmitter {
       throw new errors.VersionMissingError()
     }
 
-    this.envWhitelist = opts.envWhitelist || []
-    if (typeof this.envWhitelist === 'string') {
-      this.envWhitelist = opts.envWhitelist.split(',')
-    }
-
     if (!opts.source) {
       throw new errors.SourceMissingError()
     }
@@ -53,7 +48,7 @@ class ConfigManager extends EventEmitter {
     this.schemaOptions = opts.schemaOptions || {}
     this._providedSchema = !!opts.schema
     this._originalEnv = opts.env || {}
-    this.env = this.purgeEnv(this._originalEnv)
+    this.env = { ...process.env, ...this._originalEnv }
     this._onMissingEnv = opts.onMissingEnv
     if (typeof opts.transformConfig === 'function') {
       this._transformConfig = opts.transformConfig
@@ -67,20 +62,6 @@ class ConfigManager extends EventEmitter {
         configManager: this
       })
     }
-  }
-
-  purgeEnv (providedEnvironment) {
-    const env = {
-      ...process.env,
-      ...providedEnvironment
-    }
-    const purged = {}
-    for (const key in env) {
-      if (this.#isEnvVariable(key)) {
-        purged[key] = env[key]
-      }
-    }
-    return purged
   }
 
   async replaceEnv (configString) {
@@ -112,13 +93,13 @@ class ConfigManager extends EventEmitter {
         // do nothing, again
       }
     }
-    let env = { ...this._originalEnv }
+    let env = { ...process.env, ...this._originalEnv }
     if (dotEnvPath) {
       const data = await readFile(dotEnvPath, 'utf-8')
       const parsed = dotenv.parse(data)
       env = { ...env, ...parsed }
     }
-    this.env = this.purgeEnv(env)
+    this.env = env
 
     const escapeJSONstring = ({ key, value }) => {
       if (!value && this._onMissingEnv) {
@@ -139,19 +120,6 @@ class ConfigManager extends EventEmitter {
       [PLT_ROOT]: join(this.fullPath, '..')
     }
     return this.pupa(configString, fullEnv, { transform: escapeJSONstring })
-  }
-
-  /**
-   * Checks if a key starts with `PLT_` or is in the whitelist.
-   * With respect for wildcard ala `MY_NS_*`
-   * @param {string} key
-   */
-  #isEnvVariable (key) {
-    const isInWhitelist = this.envWhitelist.some((whitelisted) =>
-      (whitelisted.endsWith('*') && key.startsWith(whitelisted.slice(0, -1))) || whitelisted === key
-    )
-
-    return key.startsWith('PLT_') || isInWhitelist
   }
 
   _transformConfig () {}
@@ -221,11 +189,7 @@ class ConfigManager extends EventEmitter {
     } catch (err) {
       console.log(err)
       if (err.name === 'MissingValueError') {
-        if (!this.#isEnvVariable(err.key)) {
-          throw new errors.InvalidPlaceholderError(err.key, err.key)
-        } else {
-          throw new errors.EnvVarMissingError(err.key)
-        }
+        throw new errors.EnvVarMissingError(err.key)
       }
       const newerr = new errors.CannotParseConfigFileError(err.message)
       newerr.cause = err

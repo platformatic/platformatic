@@ -73,7 +73,6 @@ stackable.schema = schema
 stackable.Generator = Generator
 stackable.configManagerConfig = {
   schema,
-  envWhitelist: ['PORT', 'HOSTNAME'],
   allowToWatch: ['.env'],
   schemaOptions: {
     useDefaults: true,
