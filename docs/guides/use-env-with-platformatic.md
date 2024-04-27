@@ -1,3 +1,7 @@
+---
+image: '../images/ENV_Var_Platforamtic.png'
+---
+
 # How to use ENV variables with Platformatic
 
 ## Introduction
