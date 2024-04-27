@@ -9,18 +9,13 @@ Platformatic Composer can be configured with a [configuration file](#configurati
 
 ## Configuration Files
 
-Platformatic Composer will automatically detect and load configuration files found in the current working directory. The supported file names include:
-
-- `platformatic.json`
-- `platformatic.json5`
-- `platformatic.yml` or `platformatic.yaml`
-- `platformatic.tml` or `platformatic.toml`
+Platformatic will automatically detect and load configuration files found in the current working directory with the file names listed [here](../file-formats.md#configuration-files).
 
 To specify a configuration file manually, use the [`--config` option](../cli.md#composer) with any `platformatic composer` CLI command. 
 
 ## Supported File Formats
 
-For detailed information on supported file formats and extensions, visit our [Supported File Formats and Extensions](../file-formats.md) page
+For detailed information on supported file formats and extensions, visit our [Supported File Formats and Extensions](../file-formats.md#supported-file-formats) page
 
 ## Configuration Settings
 
