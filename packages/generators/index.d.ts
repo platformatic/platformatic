@@ -1,7 +1,8 @@
 import { BaseGenerator } from './lib/base-generator'
-import { generateTests } from './lib/create-plugin'
+import { generateTests, generatePlugins } from './lib/create-plugin'
 
 export {
   BaseGenerator,
-  generateTests
+  generateTests,
+  generatePlugins
 }
