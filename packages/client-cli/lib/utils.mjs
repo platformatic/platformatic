@@ -47,9 +47,13 @@ export function getResponseContentType (responseObject) {
 }
 
 export function is200JsonResponse (responses) {
-  if (responses['200'] && responses['200'].content && responses['200'].content['application/json']) {
-    return true
+  const successResponsesCodes = Object.keys(responses).filter((r) => r.startsWith('2'))
+  for (const code of successResponsesCodes) {
+    if (responses[code] && responses[code].content && responses[code].content['application/json']) {
+      return true
+    }
   }
+
   return false
 }
 
