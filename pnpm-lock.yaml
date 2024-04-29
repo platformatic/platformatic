@@ -1715,7 +1715,7 @@ importers:
         version: 5.0.0
       mqemitter-redis:
         specifier: ^5.0.0
-        version: 5.0.0
+        version: 5.1.0
     devDependencies:
       '@matteo.collina/tspl':
         specifier: ^0.1.1
@@ -7596,8 +7596,8 @@ packages:
     resolution: {integrity: sha512-iSAJLHYKnX41mKcJKjqvnAN9sf0LMDTXDEvFv+ffuRR9a1MIuXLjMNL6EsnDHSkKLTWNqQQ5uo61P4EbU4NU+Q==}
     dev: true
 
-  /mqemitter-redis@5.0.0:
-    resolution: {integrity: sha512-4ld+yZHfQ+YTbP5IfF8nsZDjSyfMe8DTefdm40E80BwvGbKvMSOABMWXUjmmXHawGm+whKUGBIYlMytsQoOIUw==}
+  /mqemitter-redis@5.1.0:
+    resolution: {integrity: sha512-gT/oFTawvc1z/+WzSy0JZVyuOLoCgPxR27/n7zYKFGirDGwZU5HBlbf8bUmOdfTfimqB1vetl4eJ7Rd0c1HJrg==}
     dependencies:
       hyperid: 3.2.0
       inherits: 2.0.4
