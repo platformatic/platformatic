@@ -54,6 +54,19 @@ test('should detect a json response', async (t) => {
     }
     equal(is200JsonResponse(responsesObject), false)
   }
+
+  {
+    const responsesObject = {
+      '2xx': {
+        content: {
+          'application/json': {
+            schema: {}
+          }
+        }
+      }
+    }
+    equal(is200JsonResponse(responsesObject), true)
+  }
 })
 
 test('should return all response codes', async () => {
