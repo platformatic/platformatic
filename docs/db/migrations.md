@@ -1,3 +1,5 @@
+import Issues from '../getting-started/issues.md';
+
 # Migrations
 
 It uses [Postgrator](https://www.npmjs.com/package/postgrator) under the hood to run migrations. Please refer to the [Postgrator documentation](https://github.com/rickbergfalk/postgrator) for guidance on writing migration files.
@@ -70,3 +72,5 @@ In short:
 - be sure to define a correct `migrations.dir` folder under the config on `platformatic.db.json`
 - get the `MIGRATION_NUMBER` (i.e. if the file is named `002.do.sql` the migration number will be `002`)
 - run `npx platformatic db migrations apply --to MIGRATION_NUMBER` 
+
+<Issues />

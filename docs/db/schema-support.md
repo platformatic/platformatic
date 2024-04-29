@@ -1,3 +1,5 @@
+import Issues from '../getting-started/issues.md';
+
 # Schema support
 
 It's possible to specify the schemas where the tables are located (if the database supports schemas).
@@ -48,3 +50,5 @@ So for instance for the example above we generate the `Test1Movie` and `Test2Use
 :::info
 ***Please pay attention to the entity names when using schema, these are also used to setup authorization rules***
 :::
+
+<Issues />

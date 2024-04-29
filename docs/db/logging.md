@@ -1,3 +1,5 @@
+import Issues from '../getting-started/issues.md';
+
 # Logging
 
 Platformatic DB uses a low overhead logger named [Pino](https://github.com/pinojs/pino)
@@ -105,3 +107,5 @@ To enable query logging, set the log level to `trace`. This will show all querie
     }
     responseTime: 10.350167274475098
 ```
+
+<Issues />
