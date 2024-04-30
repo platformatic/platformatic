@@ -1,3 +1,5 @@
+import Issues from '../getting-started/issues.md';
+
 # Programmatic API
 
 It's possible to start an instance of Platformatic DB from JavaScript.
@@ -67,3 +69,5 @@ Restart the Fastify application
 #### .close()
 
 Stops the application.
+
+<Issues />

@@ -1,3 +1,5 @@
+import Issues from '../getting-started/issues.md';
+
 # Configuration
 
 Platformatic DB is configured with a configuration file. It supports the use
@@ -520,5 +522,5 @@ Server will listen to `http://127.0.0.1:3042`
 }
 ```
 
-
+<Issues />
  
