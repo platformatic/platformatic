@@ -1871,7 +1871,7 @@ importers:
         version: link:../utils
       async-cache-dedupe:
         specifier: ^2.1.0
-        version: 2.1.0
+        version: 2.2.0
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -4071,8 +4071,8 @@ packages:
     engines: {node: '>=8'}
     dev: false
 
-  /async-cache-dedupe@2.1.0:
-    resolution: {integrity: sha512-hBoXEwpJOUIjce7HrwbGN9RlYZM6+XblU+ClZ0AzrV4y5UGDqMR/EUAg2S2p0GF0b0IYOreFEt5RD0eiUwa2Qg==}
+  /async-cache-dedupe@2.2.0:
+    resolution: {integrity: sha512-jl4L6dGC+KLB/LIA1iIBiq7eWQ43K7lIcIdwbUUwRmfT209yH8Xm1uPTOxxlNQ7XD6/XHU7xhSr/NgPxlH04MQ==}
     dependencies:
       mnemonist: 0.39.8
       safe-stable-stringify: 2.4.3
