@@ -7,7 +7,8 @@ const { graphqlRequest, createComposer, startServices } = require('../helper')
 function toComposerConfig (services, entities = {}) {
   return {
     composer: {
-      graphql: {},
+      graphql: {
+      },
       services: services.map(s => {
         const config = {
           id: s.name,
@@ -34,41 +35,7 @@ const entities = {
   artists: {
     Artist: {
       resolver: { name: 'artists' },
-      pkey: 'id',
-      many: [
-        {
-          type: 'Movie',
-          as: 'movies',
-          pkey: 'id',
-          fkey: 'directorId',
-          subgraph: 'movies',
-          resolver: {
-            name: 'getMoviesByArtists',
-            argsAdapter: (artistIds) => {
-              return { ids: artistIds }
-            },
-            partialResults: (partialResults) => {
-              return partialResults.map(r => r.id)
-            }
-          }
-        },
-        {
-          type: 'Song',
-          as: 'songs',
-          pkey: 'id',
-          fkey: 'singerId',
-          subgraph: 'songs',
-          resolver: {
-            name: 'getSongsByArtists',
-            argsAdapter: (artistIds) => {
-              return { ids: artistIds }
-            },
-            partialResults: (partialResults) => {
-              return partialResults.map(r => r.id)
-            }
-          }
-        }
-      ]
+      pkey: 'id'
     }
   },
   movies: {
@@ -77,19 +44,25 @@ const entities = {
       pkey: 'id',
       fkeys: [{
         type: 'Artist',
-        as: 'director',
         field: 'directorId',
+        subgraph: 'artists',
         pkey: 'id',
         resolver: {
-          name: 'getArtistsByMovies',
-          argsAdapter: (partialResults) => {
-            return { ids: partialResults.map(r => r.id) }
-          },
+          name: 'artists',
           partialResults: (partialResults) => {
             return partialResults.map(r => ({ id: r.directorId }))
           }
         }
       }]
+    },
+    Artist: {
+      pkey: 'id',
+      resolver: {
+        name: 'getArtistsByMovies',
+        argsAdapter: (partialResults) => {
+          return { ids: partialResults.map(r => r.id) }
+        }
+      }
     }
   },
   songs: {
@@ -98,19 +71,25 @@ const entities = {
       pkey: 'id',
       fkeys: [{
         type: 'Artist',
-        as: 'singer',
         field: 'singerId',
         pkey: 'id',
+        subgraph: 'artists',
         resolver: {
-          name: 'getArtistsBySongs',
-          argsAdapter: (partialResults) => {
-            return { ids: partialResults.map(r => r.id) }
-          },
+          name: 'artists',
           partialResults: (partialResults) => {
             return partialResults.map(r => ({ id: r.singerId }))
           }
         }
       }]
+    },
+    Artist: {
+      pkey: 'id',
+      resolver: {
+        name: 'getArtistsBySongs',
+        argsAdapter: (partialResults) => {
+          return { ids: partialResults.map(r => r.id) }
+        }
+      }
     }
   }
 }

@@ -429,7 +429,8 @@ async function createPlatformaticDbService (t, { name, jsonFile }) {
 
   const service = await dbBuildServer(path.join(__dirname, 'graphql', 'fixtures', name, jsonFile))
   service.get('/.well-known/graphql-composition', async function (req, reply) {
-    return reply.graphql(getIntrospectionQuery())
+    const res = await reply.graphql(getIntrospectionQuery())
+    return res
   })
   t.after(async () => {
     try { await service.close() } catch { }

@@ -42,6 +42,49 @@ const entityResolver = {
   additionalProperties: false
 }
 
+const entities = {
+  type: 'object',
+  patternProperties: {
+    '^.*$': {
+      type: 'object',
+      properties: {
+        pkey: { type: 'string' },
+        resolver: entityResolver,
+        fkeys: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              type: { type: 'string' },
+              field: { type: 'string' },
+              as: { type: 'string' },
+              pkey: { type: 'string' },
+              subgraph: { type: 'string' },
+              resolver: entityResolver
+            },
+            required: ['type']
+          }
+        },
+        many: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              type: { type: 'string' },
+              fkey: { type: 'string' },
+              as: { type: 'string' },
+              pkey: { type: 'string' },
+              subgraph: { type: 'string' },
+              resolver: entityResolver
+            },
+            required: ['type', 'fkey', 'resolver']
+          }
+        }
+      }
+    }
+  }
+}
+
 const graphqlService = {
   anyOf: [
     { type: 'boolean' },
@@ -52,48 +95,7 @@ const graphqlService = {
         name: { type: 'string' },
         graphqlEndpoint: { type: 'string', default: '/graphql' },
         composeEndpoint: { type: 'string', default: '/.well-known/graphql-composition' },
-        entities: {
-          type: 'object',
-          patternProperties: {
-            '^.*$': {
-              type: 'object',
-              properties: {
-                pkey: { type: 'string' },
-                resolver: entityResolver,
-                fkeys: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      type: { type: 'string' },
-                      field: { type: 'string' },
-                      as: { type: 'string' },
-                      pkey: { type: 'string' },
-                      subgraph: { type: 'string' },
-                      resolver: entityResolver
-                    },
-                    required: ['type']
-                  }
-                },
-                many: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      type: { type: 'string' },
-                      fkey: { type: 'string' },
-                      as: { type: 'string' },
-                      pkey: { type: 'string' },
-                      subgraph: { type: 'string' },
-                      resolver: entityResolver
-                    },
-                    required: ['type', 'fkey', 'as', 'resolver']
-                  }
-                }
-              }
-            }
-          }
-        }
+        entities
       },
       additionalProperties: false
     }
@@ -112,6 +114,7 @@ const graphqlComposerOptions = {
         { type: 'string' }
       ]
     },
+    entities,
     addEntitiesResolvers: { type: 'boolean', default: false }
   },
   additionalProperties: false
