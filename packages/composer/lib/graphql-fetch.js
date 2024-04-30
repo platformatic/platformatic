@@ -39,6 +39,7 @@ async function fetchGraphqlSubgraphs (services, options, app) {
   const composer = await compose({ ...toComposerOptions(options, app), subgraphs })
 
   return createSupergraph({
+    logger: app.log,
     sdl: composer.toSdl(),
     resolvers: composer.resolvers
   })
@@ -63,9 +64,10 @@ async function fetchGraphqlSubgraphs (services, options, app) {
 
 function toComposerOptions (options, app) {
   return {
-    // TODO logger: options?.logger
+    logger: app.log,
     defaultArgsAdapter: options?.defaultArgsAdapter,
     addEntitiesResolvers: options?.addEntitiesResolvers,
+    entities: options?.entities,
     onSubgraphError: (err, subgraphName) => {
       app.log.error({ err }, 'graphql composer error on subgraph ' + subgraphName)
 
@@ -76,9 +78,7 @@ function toComposerOptions (options, app) {
           app.log.error({ err }, 'running onSubgraphError')
         }
       }
-    },
-    // TODO options?.subscriptions ? defaultSubscriptionsOptions : undefined
-    subscriptions: false // subscriptions are not supported yet
+    }
   }
 }
 
