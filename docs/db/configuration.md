@@ -7,29 +7,13 @@ of environment variables as setting values with [environment variable placeholde
 
 ## Configuration file
 
-If the Platformatic CLI finds a file in the current working directory matching
-one of these filenames, it will automatically load it:
+The Platformatic CLI will automatically detect and load configuration files found in the current working directory with the file names listed [here](../file-formats.md#configuration-files).
 
-- `platformatic.json`
-- `platformatic.json5`
-- `platformatic.yml` or `platformatic.yaml`
-- `platformatic.tml` or `platformatic.toml`
-
-Alternatively, a [`--config` option](/reference/cli.md#db) with a configuration
-filepath can be passed to most `platformatic db` CLI commands.
-
-The configuration examples in this reference use JSON.
+Alternatively, a [`--config` option](../cli.md#db) specify a configuration file path for most platformatic db CLI commands. The configuration examples in this reference use the JSON format.
 
 ### Supported formats
 
-| Format | Extensions |
-| :-- | :-- |
-| JSON | `.json` |
-| JSON5 | `.json5` |
-| YAML | `.yml`, `.yaml` |
-| TOML | `.tml` |
-
-Comments are supported by the JSON5, YAML and TOML file formats.
+For detailed information on supported file formats and extensions, visit our [Supported File Formats and Extensions](../file-formats.md#supported-file-formats) page
 
 ## Settings
 

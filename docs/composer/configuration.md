@@ -1,3 +1,5 @@
+import Issues from '../getting-started/issues.md';
+
 ---
 title: Configuration Overview
 label: Platformatic Composer Configuration
@@ -236,3 +238,5 @@ Environment variable placeholders are used to securely inject runtime configurat
 ### PLT_ROOT
 
 The [PLT_ROOT](../service/configuration.md#plt_root) variable is used to configure relative path and is set to the directory containing the Service configuration file. 
+
+<Issues />
