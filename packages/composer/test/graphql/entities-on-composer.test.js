@@ -8,6 +8,7 @@ function toComposerConfig (services, entities = {}) {
   return {
     composer: {
       graphql: {
+        entities,
         addEntitiesResolvers: true
       },
       services: services.map(s => {
@@ -15,12 +16,6 @@ function toComposerConfig (services, entities = {}) {
           id: s.name,
           origin: s.host,
           graphql: true
-        }
-        if (entities[s.name]) {
-          config.graphql = {
-            name: s.name,
-            entities: entities[s.name]
-          }
         }
         return config
       })
@@ -33,91 +28,84 @@ const defaultArgsAdapter = (partialResults) => {
 }
 
 const entities = {
-  artists: {
-    Artist: {
-      resolver: { name: 'artists' },
-      pkey: 'id',
-      many: [
-        {
-          type: 'Movie',
-          as: 'movies',
-          pkey: 'id',
-          fkey: 'directorId',
-          subgraph: 'movies',
-          resolver: {
-            name: 'movies',
-            argsAdapter: (artistIds) => {
-              return { where: { directorId: { in: artistIds } }, limit: 99 }
-            },
-            partialResults: (artists) => {
-              return artists.map(r => r.id)
-            }
-          }
-        },
-        {
-          type: 'Song',
-          as: 'songs',
-          pkey: 'id',
-          fkey: 'singerId',
-          subgraph: 'songs',
-          resolver: {
-            name: 'songs',
-            argsAdapter: (artistIds) => {
-              return { where: { singerId: { in: artistIds } } }
-            },
-            partialResults: (artists) => {
-              return artists.map(r => r.id)
-            }
+  Artist: {
+    subgraph: 'artists',
+    resolver: { name: 'artists' },
+    pkey: 'id',
+    many: [
+      {
+        type: 'Movie',
+        as: 'movies',
+        pkey: 'id',
+        fkey: 'directorId',
+        subgraph: 'movies',
+        resolver: {
+          name: 'movies',
+          argsAdapter: (artistIds) => {
+            return { where: { directorId: { in: artistIds } }, limit: 99 }
+          },
+          partialResults: (artists) => {
+            return artists.map(r => r.id)
           }
         }
-      ]
-    }
+      },
+      {
+        type: 'Song',
+        as: 'songs',
+        pkey: 'id',
+        fkey: 'singerId',
+        subgraph: 'songs',
+        resolver: {
+          name: 'songs',
+          argsAdapter: (artistIds) => {
+            return { where: { singerId: { in: artistIds } } }
+          },
+          partialResults: (artists) => {
+            return artists.map(r => r.id)
+          }
+        }
+      }
+    ]
   },
-  movies: {
-    Movie: {
-      resolver: { name: 'movies' },
-      pkey: 'id',
-      fkeys: [
-        {
-          type: 'Artist',
-          as: 'director',
-          field: 'directorId',
-          pkey: 'id',
-          resolver: {
-            name: 'movies',
-            argsAdapter: (movieIds) => {
-              return { where: { directorId: { in: movieIds.map(r => r.id) } }, limit: 99 }
-            },
-            partialResults: (movies) => {
-              return movies.map(r => ({ id: r.directorId }))
-            }
+  Movie: {
+    subgraph: 'movies',
+    resolver: { name: 'movies' },
+    pkey: 'id',
+    fkeys: [
+      {
+        type: 'Artist',
+        as: 'director',
+        field: 'directorId',
+        subgraph: 'artists',
+        pkey: 'id',
+        resolver: {
+          name: 'artists',
+          partialResults: (movies) => {
+            return movies.map(r => ({ id: r.directorId }))
           }
         }
-      ]
-    }
+      }
+    ]
   },
-  songs: {
-    Song: {
-      resolver: { name: 'songs' },
-      pkey: 'id',
-      fkeys: [
-        {
-          type: 'Artist',
-          as: 'singer',
-          field: 'singerId',
-          pkey: 'id',
-          resolver: {
-            name: 'songs',
-            argsAdapter: (songIds) => {
-              return { where: { singerId: { in: songIds.map(r => r.id) } }, limit: 99 }
-            },
-            partialResults: (songs) => {
-              return songs.map(r => ({ id: r.singerId }))
-            }
+  Song: {
+    subgraph: 'songs',
+    resolver: { name: 'songs' },
+    pkey: 'id',
+    fkeys: [
+      {
+        type: 'Artist',
+        as: 'singer',
+        field: 'singerId',
+        subgraph: 'artists',
+        pkey: 'id',
+        resolver: {
+          name: 'artists',
+          partialResults: (songs) => {
+            return songs.map(r => ({ id: r.singerId }))
           }
         }
-      ]
-    }
+      }
+    ]
   }
 }
 

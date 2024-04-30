@@ -361,8 +361,8 @@ importers:
         specifier: workspace:*
         version: link:../generators
       '@platformatic/graphql-composer':
-        specifier: ^0.5.1
-        version: 0.5.1
+        specifier: ^0.6.0
+        version: 0.6.1
       '@platformatic/scalar-theme':
         specifier: workspace:*
         version: link:../scalar-theme
@@ -3109,6 +3109,7 @@ packages:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+    dev: true
 
   /@nodelib/fs.scandir@2.1.5:
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -3277,14 +3278,15 @@ packages:
     requiresBuild: true
     optional: true
 
-  /@platformatic/graphql-composer@0.5.1:
-    resolution: {integrity: sha512-cgQtHdrKKnZGgwYiyeikchzzrFwOD9LhzllZOgMwutdCU2tSW1LuYQajddyg3Akf3OxkoKrQYsXKUsUPaHIw9A==}
+  /@platformatic/graphql-composer@0.6.1:
+    resolution: {integrity: sha512-hcHougmAzXtY7XSNPeJG2niITY1phUdtqrQAs3ShpUbEmYLXf74/wIvJO39GQSpFddNXIfDr/PNMGU63ly/DwQ==}
     dependencies:
-      '@mercuriusjs/subscription-client': 1.0.0(graphql@16.8.1)
+      abstract-logger: 0.2.5
       fastify: 4.26.2
       graphql: 16.8.1
       mercurius: 13.4.1(graphql@16.8.1)
       metaline: 1.1.0
+      pino: 8.21.0
       undici: 6.15.0
     transitivePeerDependencies:
       - bufferutil
@@ -3791,6 +3793,13 @@ packages:
     engines: {node: '>=6.5'}
     dependencies:
       event-target-shim: 5.0.1
+
+  /abstract-logger@0.2.5:
+    resolution: {integrity: sha512-tcSYS736l1i6m5aG0lka/gkhThaR1T2LZArk5wqvk/ZzZfkMZuKlCZJZzqw5qnKqV/+NZxJIlDz1PJ6Ft/zpYA==}
+    dependencies:
+      inherits-ex: 1.6.0
+      util-ex: 0.3.18
+    dev: false
 
   /abstract-logging@2.0.1:
     resolution: {integrity: sha512-2BjRTZxTPvheOvGbBslFSYOUkr+SjPtOnrLP33f+VIWLzezQpZcqVg7ja3L4dBXmzzgwT+a029jRx5PCi3JuiA==}
@@ -6571,6 +6580,10 @@ packages:
     dependencies:
       once: 1.4.0
       wrappy: 1.0.2
+
+  /inherits-ex@1.6.0:
+    resolution: {integrity: sha512-67sANrSoIvMmYDy0qyjmM/PvFdgBmWZVQoPBsRpDuP4tmlylEX1KdGN1bHvReG3eHBdaHY7WlZsrqys4y/cLVA==}
+    dev: false
 
   /inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
@@ -9858,6 +9871,13 @@ packages:
 
   /util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
+
+  /util-ex@0.3.18:
+    resolution: {integrity: sha512-GPVjD257DtgCDMHYqbdWvZ+RY3HaXZ7Dps/44de5WscOjFNL2Qr+6dTIKGlyfA4A5BXyeFKWy8mb19OATWhh8Q==}
+    dependencies:
+      inherits-ex: 1.6.0
+      xtend: 4.0.2
+    dev: false
 
   /util-extend@1.0.3:
     resolution: {integrity: sha512-mLs5zAK+ctllYBj+iAQvlDCwoxU/WDOUaJkcFudeiAX6OajC6BKXJUa9a+tbtkC11dz2Ufb7h0lyvIOVn4LADA==}
