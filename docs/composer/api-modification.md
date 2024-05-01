@@ -1,3 +1,5 @@
+import Issues from '../getting-started/issues.md';
+
 # API modification
 
 If you want to modify automatically generated API, you can use composer custom `onRoute` hook.
@@ -42,3 +44,5 @@ app.platformatic.addComposerOnRouteHook('/users/{id}', ['GET'], routeOptions => 
   routeOptions.config.onComposerResponse = onComposerResponse
 })
 ```
+
+<Issues />
