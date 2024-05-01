@@ -1065,7 +1065,7 @@ importers:
         version: 0.13.0
       fast-jwt:
         specifier: ^4.0.0
-        version: 4.0.0
+        version: 4.0.1
       fastify:
         specifier: ^4.26.2
         version: 4.26.2
@@ -1472,7 +1472,7 @@ importers:
         version: 4.19.2
       fast-jwt:
         specifier: ^4.0.0
-        version: 4.0.0
+        version: 4.0.1
       get-port:
         specifier: ^7.1.0
         version: 7.1.0
