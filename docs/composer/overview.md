@@ -1,11 +1,6 @@
 import Issues from '../getting-started/issues.md';
 
----
-title: Overview
-label: Platformatic Composer
----
-
-# Platformatic Composer
+# Overview
 
 Platformatic Composer is designed to automatically integrate microservices into one ecosystem, providing a single public API for more efficient management and deployment. It is a new way to develop aggregated APIs, starting with OpenAPI composition across multiple API sources. 
 

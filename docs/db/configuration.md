@@ -1,53 +1,47 @@
 import Issues from '../getting-started/issues.md';
 
-# Configuration
+# Configuration 
 
-Platformatic DB is configured with a configuration file. It supports the use
-of environment variables as setting values with [environment variable placeholders](#environment-variable-placeholders).
+Platformatic DB can be configured with a [configuration file](#configuration-file) in the different file formats below. The DB also support the use of environment variables as setting values with [environment variable placeholders](#environment-variable-placeholders). 
 
-## Configuration file
+## Configuration Files
 
 The Platformatic CLI will automatically detect and load configuration files found in the current working directory with the file names listed [here](../file-formats.md#configuration-files).
 
 Alternatively, a [`--config` option](../cli.md#db) specify a configuration file path for most platformatic db CLI commands. The configuration examples in this reference use the JSON format.
 
-### Supported formats
+## Supported File Formats
 
-For detailed information on supported file formats and extensions, visit our [Supported File Formats and Extensions](../file-formats.md#supported-file-formats) page
+For detailed information on supported file formats and extensions, please visit our [Supported File Formats and Extensions](../file-formats.md#supported-file-formats) page.
 
-## Settings
+## Configuration Settings
 
-Configuration settings are organised into the following groups:
+Configuration file settings are grouped as follows:
 
-- [`server`](#server) **(required)**
-- [`db`](#db) **(required)**
-- [`metrics`](#metrics)
-- [`migrations`](#migrations)
-- [`plugins`](#plugins)
-- [`authorization`](#authorization)
-- [`telemetry`](#telemetry)
-- [`watch`](#watch)
-- [`clients`](#clients)
+- **`server`** **(required)**: Configures the [server settings](../service/configuration.md#server)
+- **`composer`**: Specific settings for Platformatic Composer, such as service management and API composition.
+- **`metrics`**: Monitors and records performance [metrics](../service/configuration.md#metrics).
+- **`plugins`**: Manages additional functionality through [plugins](../service/configuration.md#plugins).
+- **`telemetry`**: Handles [telemetry data reporting](../service/configuration.md#telemetry).
+- **`watch`**: Observes file changes for [dynamic updates](../service/configuration.md#watch).
+- **`clients`**: Configures [client-specific](../service/configuration.md#clients) settings. 
 
-Sensitive configuration settings, such as a database connection URL that contains
-a password, should be set using [environment variable placeholders](#environment-variable-placeholders).
+Sensitive data within these settings should use [configuration placeholders](#configuration-placeholders) to ensure security.
 
-### `server`
-
-See [Platformatic Service server](/docs/reference/service/configuration.md#server) for more details.
 
 ### `db`
 
 A **required** object with the following settings:
 
-- **`connectionString`** (**required**, `string`) — Database connection URL.
-  - Example: `postgres://user:password@my-database:5432/db-name`
+- **`connectionString`** (**required**, `string`) — Specifies the URL for database connection.
 
-- ** `schema`** (array of `string`) - Currently supported only for postgres, schemas used to look for entities. If not provided, the default `public` schema is used.
+```json title="Example"
+postgres://user:password@my-database:5432/db-name
+```
 
- _Examples_
+- **`schema`** (array of `string`) - Defines the database schemas, only supported for PostgreSQL. Defaults to 'public' if unspecified.
 
-```json
+```json title="Example Object"
   "db": {
     "connectionString": "(...)",
     "schema": [
@@ -60,9 +54,7 @@ A **required** object with the following settings:
 ```
 
   - Platformatic DB supports MySQL, MariaDB, PostgreSQL and SQLite.
-- **`graphql`** (`boolean` or `object`, default: `true`) — Controls the GraphQL API interface, with optional GraphiQL UI.
-
-  _Examples_
+- **`graphql`** (`boolean` or `object`, default: `true`) — Controls the GraphQL API interface, with optional GraphQL API interface.
 
   Enables GraphQL support
 
@@ -152,11 +144,9 @@ A **required** object with the following settings:
   - If value is an object, all [OpenAPI v3](https://swagger.io/specification/) allowed properties can be passed. Also a `prefix` property can be passed to set the OpenAPI prefix.
   - Platformatic DB uses [`@fastify/swagger`](https://github.com/fastify/fastify-swagger) under the hood to manage this configuration.
 
-  _Examples_
-
   Enables OpenAPI
 
-  ```json
+  ```json title="Example Object"
   {
     "db": {
       ...
@@ -167,7 +157,7 @@ A **required** object with the following settings:
 
   Enables OpenAPI using the `enabled` option
 
-  ```json
+  ```json title="Example Object"
   {
     "db": {
       ...
@@ -181,7 +171,7 @@ A **required** object with the following settings:
 
   Enables OpenAPI with prefix
 
-  ```json
+  ```json title="Example Object"
   {
     "db": {
       ...
@@ -194,7 +184,7 @@ A **required** object with the following settings:
 
   Enables OpenAPI with options
 
-  ```json
+  ```json title="Example Object"
   {
     "db": {
       ...
@@ -209,8 +199,9 @@ A **required** object with the following settings:
   ```
 
   You can for example add the `security` section, so that Swagger will allow you to add the authentication header to your requests.
-  In the following code snippet, we're adding a Bearer token in the form of a [JWT](/reference/db/authorization/strategies.md#json-web-token-jwt):
-  ```json
+  We're adding a Bearer token in the form of a [JWT](/reference/db/authorization/strategies.md#json-web-token-jwt) in the code block below: 
+
+  ```json title="Example Object"
   {
     "db": {
       ...
@@ -231,9 +222,9 @@ A **required** object with the following settings:
   }
   ```
 
-  It's possible to selectively ignore entities:
+  You can selectively ignore entities:
 
-  ```json
+  ```json title="Example Object"
   {
     "db": {
       ...
@@ -246,9 +237,9 @@ A **required** object with the following settings:
   }
   ```
 
-  It's possible to selectively ignore fields:
+  Selectively ignore fields:
 
-  ```json
+  ```json title="Example Object"
   {
     "db": {
       ...
@@ -263,10 +254,9 @@ A **required** object with the following settings:
   }
   ```
 
-  It's possible to explicitly identify tables for which you like to build an entity:
-  **Note**: all other tables will be ignored.
+  You can explicitly identify tables to build an entity, **however all other tables will be ignored**:
 
-  ```json
+  ```json title="Example Object"
   {
     "db": {
       ...
@@ -292,9 +282,8 @@ A **required** object with the following settings:
 
 - **`limit`** (`object`) - Set the default and max limit for pagination. Default is 10, max is 1000.
 
-  _Examples_
 
-  ```json
+  ```json title="Example Object"
   {
     "db": {
       ...
@@ -308,9 +297,7 @@ A **required** object with the following settings:
 
 - **`ignore`** (`object`) — Key/value object that defines which database tables should not be mapped as API entities.
 
-  _Examples_
-
-  ```json
+  ```json title="Example Object"
   {
     "db": {
       ...
@@ -322,9 +309,7 @@ A **required** object with the following settings:
   ```
 - **`include`** (`object`) — Key/value object that defines which entities should be exposed.
 
-  _Examples_
-
-  ```json
+  ```json title="Example Object"
   {
     "db": {
       ...
@@ -336,43 +321,26 @@ A **required** object with the following settings:
   ```
 
 - **`events`** (`boolean` or `object`, default: `true`) — Controls the support for events published by the SQL mapping layer.
-  If enabled, this option add support for GraphQL Subscription over WebSocket. By default it uses an in-process message broker.
-  It's possible to configure it to use Redis instead.
+  - `enabled`: Set to `true` to activate event publishing, which  support for GraphQL Subscription over WebSocket using an in-process message broker.
+  - Custom Broker: To use an external message broker, such as Redis, provide the connection string as shown in the example below.
 
-  _Examples_
-
-  Enable events using the `enabled` option.
-
-  ```json
+  ```json title="Example Object"
   {
     "db": {
       ...
       "events": {
         ...
-        "enabled": true
-      }
-    }
-  }
-  ```
-
-  ```json
-  {
-    "db": {
-      ...
-      "events": {
-        "connectionString": "redis://:password@redishost.com:6380/"
+        "enabled": true,
+         "connectionString": "redis://:password@redishost.com:6380/"
       }
     }
   }
   ```
 
 - **`schemalock`** (`boolean` or `object`, default: `false`) — Controls the caching of the database schema on disk.
-  If set to `true` the database schema metadata is stored inside a `schema.lock` file.
-  It's also possible to configure the location of that file by specifying a path, like so:
+  Enabling this feature (`true`) saves the database schema metadata in a `schema.lock` file, ensuring faster startup times and consistent schema enforcement across sessions. You can also customize the storage location of the `schema.lock` file by providing a specific file path:
 
-  _Examples_
-
-  ```json
+  ```json title="Example Object"
   {
     "db": {
       ...
@@ -385,10 +353,6 @@ A **required** object with the following settings:
 
   Starting Platformatic DB or running a migration will automatically create the schemalock file.
 
-
-### `metrics`
-
-See [Platformatic Service metrics](/docs/reference/service/configuration.md#metrics) for more details.
 
 ### `migrations`
 
@@ -403,14 +367,6 @@ An optional object with the following settings:
 - **`newline`** (`string`): Force line ending on file when generating checksum. Value should be either CRLF (windows) or LF (unix/mac).
 - **`currentSchema`** (`string`): For Postgres and MS SQL Server(will ignore for another DBs). Specifies schema to look to when validating `versions` table columns. For Postgres, run `SET search_path = currentSchema` prior to running queries against db. 
 
-### `plugins`
-
-See [Platformatic Service plugins](/docs/reference/service/configuration.md#plugins) for more details.
-
-### `watch`
-
-See [Platformatic Service watch](/docs/reference/service/configuration.md#watch) for more details.
-
 ### `authorization`
 
 An optional object with the following settings:
@@ -419,26 +375,25 @@ An optional object with the following settings:
 `x-platformatic-admin-secret` HTTP header when performing GraphQL/REST API
 calls. Use an [environment variable placeholder](#environment-variable-placeholders)
 to securely provide the value for this setting.
-- `roleKey` (`string`, default: `X-PLATFORMATIC-ROLE`): The name of the key in user
-  metadata that is used to store the user's roles. See [Role configuration](/docs/reference/db/authorization/user-roles-metadata#role-configuration).
+- `roleKey` (`string`, default: `X-PLATFORMATIC-ROLE`): The name of the key in user metadata that is used to store the user's roles. See [Role configuration](../db/authorization/user-roles-metadata.md#role-configuration)
 - `rolePath` (`string`): The name of the dot-separated path in user
-  metadata that is used to store the user's roles. See [Role configuration](/docs/reference/db/authorization/user-roles-metadata#role-configuration).
-- `anonymousRole` (`string`, default: `anonymous`): The name of the anonymous role. See [Role configuration](/docs/reference/db/authorization/user-roles-metadata#role-configuration).
-- `jwt` (`object`): Configuration for the [JWT authorization strategy](/docs/reference/db/authorization/strategies#json-web-token-jwt).
+  metadata that is used to store the user's roles. See [Role configuration](../db/authorization/user-roles-metadata.md#role-configuration).
+- `anonymousRole` (`string`, default: `anonymous`): The name of the anonymous role. See [Role configuration](../db/authorization/user-roles-metadata.md#role-configuration).
+- `jwt` (`object`): Configuration for the [JWT authorization strategy](../db/authorization/strategies.md#json-web-token-jwt).
   Any option accepted by [`@fastify/jwt`](https://github.com/fastify/fastify-jwt)
   can be passed in this object.
   - `secret` (required, `string` or `object`): The secret key that the JWT was signed with.
   See the [`@fastify/jwt` documentation](https://github.com/fastify/fastify-jwt#secret-required)
   for accepted string and object values. Use an [environment variable placeholder](#environment-variable-placeholders)
   to securely provide the value for this setting.
-  - `jwks` (`boolean` or `object`): Configure authorization with JSON Web Key Sets (JWKS). See the [JWKS documentation](/docs/reference/db/authorization/strategies#json-web-key-sets-jwks).
-  - `namespace` (`string`): Configure a [JWT Custom Claim Namespace](/docs/reference/db/authorization/strategies#jwt-custom-claim-namespace)
-    to avoid name collisions.
-- `webhook` (`object`): Configuration for the [Webhook authorization strategy](/docs/reference/db/authorization/strategies#webhook).
+  - `jwks` (`boolean` or `object`): Configure authorization with JSON Web Key Sets (JWKS). See the [JWKS documentation](../db/authorization/strategies.md#json-web-key-sets-jwks). 
+  - `namespace` (`string`): Configure a [JWT Custom Claim Namespace](../db/authorization/strategies.md#jwt-custom-claim-namespace) to
+    to avoid name collisions. 
+- `webhook` (`object`): Configuration for the [Webhook authorization strategy](../db/authorization/strategies.md#webhook).
   - `url` (required, `string`): Webhook URL that Platformatic DB will make a
   POST request to.
 - `rules` (`array`): Authorization rules that describe the CRUD actions that
-  users are allowed to perform against entities. See [Rules](/docs/reference/db/authorization/rules)
+  users are allowed to perform against entities. See [Rules](../db/authorization/rules.md)
   documentation.
 
 :::note
@@ -461,35 +416,19 @@ operations are allowed unless `adminSecret` is passed.
 }
 ```
 
-### `telemetry`
+## Setting and Using ENV placeholders
 
-See [Platformatic Service telemetry](/docs/reference/service/configuration.md#telemetry) for more details.
-
-### `watch`
-
-See [Platformatic Service watch](/docs/reference/service/configuration.md#watch) for more details.
-
-### `clients`
-
-See [Platformatic Service clients](/docs/reference/service/configuration.md#clients) for more details.
-
-## Environment variable placeholders
-
-See [Environment variable placeholders](/docs/reference/service/configuration.md#environment-variable-placeholders) for more details.
-
-### Setting environment variables
-
-See [Setting environment variables](/docs/reference/service/configuration.md#setting-environment-variables) for more details.
+Environment variable placeholders are used to securely inject runtime configurations. Learn how to [set](../service/configuration.md#setting-environment-variables) and [use](../service/configuration.md#environment-variable-placeholders) environment variable placeholders [documentation](../service/configuration.md).
 
 ### PLT_ROOT
 
-The `{PLT_ROOT}` placeholder is automatically set to the directory containing the configuration file, so it can be used to configure relative paths.
+The [PLT_ROOT](../service/configuration.md#plt_root) variable is used to configure relative path and is set to the directory containing the Service configuration file.
 
 ## Sample Configuration
 
-This is a bare minimum configuration for Platformatic DB. Uses a local `./db.sqlite` SQLite database, with OpenAPI and GraphQL support.
+The example below is a basic setup for Platformatic DB using a local SQLite database. It includes support for OpenAPI, GraphQL, and the GraphiQL interface.
 
-Server will listen to `http://127.0.0.1:3042`
+The server is configured to listen on `http://127.0.0.1:3042`:
 
 ```json
 {

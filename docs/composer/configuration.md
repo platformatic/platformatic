@@ -1,13 +1,8 @@
 import Issues from '../getting-started/issues.md';
 
----
-title: Configuration Overview
-label: Platformatic Composer Configuration
----
+# Configuration
 
-# Configuration of Platformatic Composer
-
-Platformatic Composer can be configured with a [configuration file](#configuration-files) in the different file formats below. The Composer also supports use of environment variables as setting values with [environment variable placeholders](https://docs.platformatic.dev/docs/composer/configuration#environment-variable-placeholders). 
+Platformatic Composer can be configured with a [configuration file](#configuration-files) in the different file formats below. The Composer also supports use of environment variables as setting values with [environment variable placeholders](../composer/configuration.md#setting-and-using-env-placeholders). 
 
 ## Configuration Files
 
