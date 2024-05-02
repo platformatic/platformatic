@@ -1,6 +1,30 @@
----
-image: '../images/ENV_Var_Platforamtic.png'
----
+<head>
+  <meta name="description" content="Learn how to use environment variables efficiently with Platformatic to manage different deployment settings." />
+  <meta name="keywords" content="Platformatic, environment variables, configuration, software development, API" />
+  <link rel="preconnect" href="https://example.com" />
+  <script type="application/ld+json">
+     {JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Guide",
+      "headline": "How to Use Environment Variables with Platformatic",
+      "image": "../images/ENV_Var_Platforamtic.png",
+      "author": {
+        "@type": "Person",
+        "name": "Fortune Ikechi"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Platformatic",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "../images/ENV_Var_Platforamtic.png"
+        }
+      },
+      "datePublished": "2024-04-23",
+      "dateModified": "2024-05-02"
+     })}  
+  </script>
+</head>
 
 # How to use ENV variables with Platformatic
 
