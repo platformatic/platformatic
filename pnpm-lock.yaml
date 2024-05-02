@@ -459,7 +459,7 @@ importers:
         version: 1.5.3
       json-schema-to-typescript:
         specifier: ^14.0.0
-        version: 14.0.0
+        version: 14.0.4
       openapi-schema-validator:
         specifier: ^12.1.3
         version: 12.1.3
@@ -980,7 +980,7 @@ importers:
         version: 9.1.0
       json-schema-to-typescript:
         specifier: ^14.0.0
-        version: 14.0.0
+        version: 14.0.4
       mercurius:
         specifier: ^14.0.0
         version: 14.1.0(graphql@16.8.1)
@@ -1658,7 +1658,7 @@ importers:
         version: 0.13.0
       json-schema-to-typescript:
         specifier: ^14.0.0
-        version: 14.0.0
+        version: 14.0.4
       openapi-types:
         specifier: ^12.1.3
         version: 12.1.3
@@ -3558,13 +3558,6 @@ packages:
 
   /@types/normalize-package-data@2.4.4:
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
-    dev: true
-
-  /@types/prettier@3.0.0:
-    resolution: {integrity: sha512-mFMBfMOz8QxhYVbuINtswBp9VL2b4Y0QqYHwqLz3YbgtfAcat2Dl6Y1o4e22S/OVE6Ebl9m7wWiMT2lSbAs1wA==}
-    deprecated: This is a stub types definition. prettier provides its own type definitions, so you do not need this installed.
-    dependencies:
-      prettier: 3.2.5
     dev: true
 
   /@types/prop-types@15.7.12:
@@ -7000,15 +6993,14 @@ packages:
       - supports-color
     dev: false
 
-  /json-schema-to-typescript@14.0.0:
-    resolution: {integrity: sha512-y/Pj93Ggu69LyRPxqpe16t8LA/5ZyJVoqmUf+o+2cBG33dH/GsDn5oDZD3EiOTkHXjVuZg4qWnWzTtS2LcoeiA==}
+  /json-schema-to-typescript@14.0.4:
+    resolution: {integrity: sha512-covPOp3hrbD+oEcMvDxP5Rh6xNZj7lOTZkXAeQoDyu1PuEl1A6oRZ3Sy05HN11vXXmdJ6gLh5P3Qz0mgMPTzzw==}
     engines: {node: '>=16.0.0'}
     hasBin: true
     dependencies:
       '@apidevtools/json-schema-ref-parser': 11.6.1
       '@types/json-schema': 7.0.15
       '@types/lodash': 4.17.0
-      '@types/prettier': 3.0.0
       cli-color: 2.0.4
       glob: 10.3.12
       is-glob: 4.0.3
