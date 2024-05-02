@@ -20,7 +20,7 @@ At Platformatic, Our goal is to make API development simple: we aim is to remove
 
 ## Platformatic Service
 
-![Platformatic Service](../docs/images/Platformatic_Service_Diagram_(Light_Mode).png)
+![Platformatic Service](./images/Platformatic_Service_Diagram_(Light_Mode).png)
 
 A Platformatic Service is an HTTP server based on [Fastify](https://www.fastify.io/) that allows developers to build robust APIs with Node.js.
 
@@ -33,7 +33,7 @@ With Platformatic Service you can:
 
 ## Platformatic DB
 
-![Platformatic DB Architecture](../docs/images/Platformatic_DB_Diagram_(Light_Mode).png)
+![Platformatic DB Architecture](./images/Platformatic_DB_Diagram_(Light_Mode).png)
 
 Platformatic DB can expose a SQL database by dynamically mapping it to REST/OpenAPI
 and GraphQL endpoints. It supports a limited subset of the SQL query language, but
@@ -55,14 +55,14 @@ The plugin can add more routes or resolvers — these will automatically be show
 
 ## Platformatic Composer
 
-![Platformatic Composer Architecture](../docs/images/Platformatic_Composer_Diagram_(Light_Mode).png)
+![Platformatic Composer Architecture](./images/Platformatic_Composer_Diagram_(Light_Mode).png)
 
 Platformatic Composer is an HTTP server that automatically aggregates multiple services APIs into a single API. 
 The composer acts as a proxy for the underlying services, and automatically generates an OpenAPI definition that combines all the services' routes, acting as reverse proxy for the composed services. 
 
 ## Platformatic Runtime 
 
-![Platformatic Runtime Architecture](../docs/images/Platformatic_Runtime_Diagram_(Light_Mode).png)
+![Platformatic Runtime Architecture](./images/Platformatic_Runtime_Diagram_(Light_Mode).png)
 
 Platformatic Runtime is an environment for running multiple Platformatic microservices as a single monolithic deployment unit.
 
@@ -71,9 +71,9 @@ The Runtime exposes an "entrypoint" API for the whole runtime. Only the entrypoi
 
 ## Platformatic Stackables 
 
-Platformatic Stackables are reusable components that can be used to build Platformatic Services. Services can extends these modules and add custom functionalities.
+![Platformatic Stackables Architecture](./images/Platformatic_Stackables_Diagram_(Light_Mode).png)
 
-<!-- ![Platformatic Stackables](./platformatic-stackables-architecture.png) -->
+Platformatic Stackables are reusable components that can be used to build Platformatic Services. Services can extends these modules and add custom functionalities.
 
 This is useful to publish the application on the public npm registry (or a private one!), including building your own CLI, or to create a specialized template for your organization to allow for centralized bugfixes and updates.
 
