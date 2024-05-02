@@ -175,12 +175,18 @@ test('build basic client from file (path parameter)', async (t) => {
       path: join(__dirname, 'fixtures', 'path-params', 'openapi.json')
     })
 
-    const result = await client.getPath({
+    const params = {
       path: { id: 'baz' },
       query: { name: 'bar' }
-    })
+    }
+    const result = await client.getPath(params)
     assert.equal(result.id, 'baz')
     assert.equal(result.name, 'bar')
+    assert.deepEqual(params, {
+      path: { id: 'baz' },
+      query: { name: 'bar' }
+    },
+    'calling the client should NOT override the sent params')
 
     const { id, name } = await client.getPath({ path: { id: 'ok' }, query: { name: undefined } })
     assert.equal(id, 'ok')
