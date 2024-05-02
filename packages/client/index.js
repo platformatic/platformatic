@@ -169,7 +169,6 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
           throw new Error('missing required parameter ' + param.name)
         }
         pathToCall = pathToCall.replace(`{${param.name}}`, args.path[param.name])
-        args.path[param.name] = undefined
       }
 
       for (const param of queryParams) {
@@ -179,7 +178,6 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
           } else {
             query.append(param.name, args.query[param.name])
           }
-          args.query[param.name] = undefined
         }
       }
     } else {
