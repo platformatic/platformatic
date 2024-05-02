@@ -1,9 +1,14 @@
 import Issues from '../getting-started/issues.md';
 
 # Configuration 
+# Configuration 
 
 Platformatic DB can be configured with a [configuration file](#configuration-file) in the different file formats below. The DB also support the use of environment variables as setting values with [environment variable placeholders](#environment-variable-placeholders). 
+Platformatic DB can be configured with a [configuration file](#configuration-file) in the different file formats below. The DB also support the use of environment variables as setting values with [environment variable placeholders](#environment-variable-placeholders). 
 
+## Configuration Files
+
+The Platformatic CLI will automatically detect and load configuration files found in the current working directory with the file names listed [here](../file-formats.md#configuration-files).
 ## Configuration Files
 
 The Platformatic CLI will automatically detect and load configuration files found in the current working directory with the file names listed [here](../file-formats.md#configuration-files).
@@ -15,8 +20,26 @@ Alternatively, a [`--config` option](../cli.md#db) specify a configuration file 
 For detailed information on supported file formats and extensions, please visit our [Supported File Formats and Extensions](../file-formats.md#supported-file-formats) page.
 
 ## Configuration Settings
+Alternatively, a [`--config` option](../cli.md#db) specify a configuration file path for most platformatic db CLI commands. The configuration examples in this reference use the JSON format.
+
+## Supported File Formats
+
+For detailed information on supported file formats and extensions, please visit our [Supported File Formats and Extensions](../file-formats.md#supported-file-formats) page.
+
+## Configuration Settings
 
 Configuration file settings are grouped as follows:
+Configuration file settings are grouped as follows:
+
+- **`server`** **(required)**: Configures the [server settings](../service/configuration.md#server)
+- **`composer`**: Specific settings for Platformatic Composer, such as service management and API composition.
+- **`metrics`**: Monitors and records performance [metrics](../service/configuration.md#metrics).
+- **`plugins`**: Manages additional functionality through [plugins](../service/configuration.md#plugins).
+- **`telemetry`**: Handles [telemetry data reporting](../service/configuration.md#telemetry).
+- **`watch`**: Observes file changes for [dynamic updates](../service/configuration.md#watch).
+- **`clients`**: Configures [client-specific](../service/configuration.md#clients) settings. 
+
+Sensitive data within these settings should use [configuration placeholders](#configuration-placeholders) to ensure security.
 
 - **`server`** **(required)**: Configures the [server settings](../service/configuration.md#server)
 - **`composer`**: Specific settings for Platformatic Composer, such as service management and API composition.
@@ -34,13 +57,19 @@ Sensitive data within these settings should use [configuration placeholders](#co
 A **required** object with the following settings:
 
 - **`connectionString`** (**required**, `string`) — Specifies the URL for database connection.
+- **`connectionString`** (**required**, `string`) — Specifies the URL for database connection.
 
+```json title="Example"
+postgres://user:password@my-database:5432/db-name
+```
 ```json title="Example"
 postgres://user:password@my-database:5432/db-name
 ```
 
 - **`schema`** (array of `string`) - Defines the database schemas, only supported for PostgreSQL. Defaults to 'public' if unspecified.
+- **`schema`** (array of `string`) - Defines the database schemas, only supported for PostgreSQL. Defaults to 'public' if unspecified.
 
+```json title="Example Object"
 ```json title="Example Object"
   "db": {
     "connectionString": "(...)",
@@ -54,6 +83,7 @@ postgres://user:password@my-database:5432/db-name
 ```
 
   - Platformatic DB supports MySQL, MariaDB, PostgreSQL and SQLite.
+- **`graphql`** (`boolean` or `object`, default: `true`) — Controls the GraphQL API interface, with optional GraphQL API interface.
 - **`graphql`** (`boolean` or `object`, default: `true`) — Controls the GraphQL API interface, with optional GraphQL API interface.
 
   Enables GraphQL support
@@ -158,6 +188,7 @@ postgres://user:password@my-database:5432/db-name
   Enables OpenAPI using the `enabled` option
 
   ```json title="Example Object"
+  ```json title="Example Object"
   {
     "db": {
       ...
@@ -172,6 +203,7 @@ postgres://user:password@my-database:5432/db-name
   Enables OpenAPI with prefix
 
   ```json title="Example Object"
+  ```json title="Example Object"
   {
     "db": {
       ...
@@ -184,6 +216,7 @@ postgres://user:password@my-database:5432/db-name
 
   Enables OpenAPI with options
 
+  ```json title="Example Object"
   ```json title="Example Object"
   {
     "db": {
@@ -199,6 +232,9 @@ postgres://user:password@my-database:5432/db-name
   ```
 
   You can for example add the `security` section, so that Swagger will allow you to add the authentication header to your requests.
+  We're adding a Bearer token in the form of a [JWT](/reference/db/authorization/strategies.md#json-web-token-jwt) in the code block below: 
+
+  ```json title="Example Object"
   We're adding a Bearer token in the form of a [JWT](/reference/db/authorization/strategies.md#json-web-token-jwt) in the code block below: 
 
   ```json title="Example Object"
@@ -223,7 +259,9 @@ postgres://user:password@my-database:5432/db-name
   ```
 
   You can selectively ignore entities:
+  You can selectively ignore entities:
 
+  ```json title="Example Object"
   ```json title="Example Object"
   {
     "db": {
@@ -238,7 +276,9 @@ postgres://user:password@my-database:5432/db-name
   ```
 
   Selectively ignore fields:
+  Selectively ignore fields:
 
+  ```json title="Example Object"
   ```json title="Example Object"
   {
     "db": {
@@ -255,7 +295,9 @@ postgres://user:password@my-database:5432/db-name
   ```
 
   You can explicitly identify tables to build an entity, **however all other tables will be ignored**:
+  You can explicitly identify tables to build an entity, **however all other tables will be ignored**:
 
+  ```json title="Example Object"
   ```json title="Example Object"
   {
     "db": {
@@ -298,6 +340,7 @@ postgres://user:password@my-database:5432/db-name
 - **`ignore`** (`object`) — Key/value object that defines which database tables should not be mapped as API entities.
 
   ```json title="Example Object"
+  ```json title="Example Object"
   {
     "db": {
       ...
@@ -309,6 +352,7 @@ postgres://user:password@my-database:5432/db-name
   ```
 - **`include`** (`object`) — Key/value object that defines which entities should be exposed.
 
+  ```json title="Example Object"
   ```json title="Example Object"
   {
     "db": {
@@ -323,13 +367,18 @@ postgres://user:password@my-database:5432/db-name
 - **`events`** (`boolean` or `object`, default: `true`) — Controls the support for events published by the SQL mapping layer.
   - `enabled`: Set to `true` to activate event publishing, which  support for GraphQL Subscription over WebSocket using an in-process message broker.
   - Custom Broker: To use an external message broker, such as Redis, provide the connection string as shown in the example below.
+  - `enabled`: Set to `true` to activate event publishing, which  support for GraphQL Subscription over WebSocket using an in-process message broker.
+  - Custom Broker: To use an external message broker, such as Redis, provide the connection string as shown in the example below.
 
+  ```json title="Example Object"
   ```json title="Example Object"
   {
     "db": {
       ...
       "events": {
         ...
+        "enabled": true,
+         "connectionString": "redis://:password@redishost.com:6380/"
         "enabled": true,
          "connectionString": "redis://:password@redishost.com:6380/"
       }
@@ -339,7 +388,9 @@ postgres://user:password@my-database:5432/db-name
 
 - **`schemalock`** (`boolean` or `object`, default: `false`) — Controls the caching of the database schema on disk.
   Enabling this feature (`true`) saves the database schema metadata in a `schema.lock` file, ensuring faster startup times and consistent schema enforcement across sessions. You can also customize the storage location of the `schema.lock` file by providing a specific file path:
+  Enabling this feature (`true`) saves the database schema metadata in a `schema.lock` file, ensuring faster startup times and consistent schema enforcement across sessions. You can also customize the storage location of the `schema.lock` file by providing a specific file path:
 
+  ```json title="Example Object"
   ```json title="Example Object"
   {
     "db": {
@@ -376,7 +427,11 @@ An optional object with the following settings:
 calls. Use an [environment variable placeholder](#environment-variable-placeholders)
 to securely provide the value for this setting.
 - `roleKey` (`string`, default: `X-PLATFORMATIC-ROLE`): The name of the key in user metadata that is used to store the user's roles. See [Role configuration](../db/authorization/user-roles-metadata.md#role-configuration)
+- `roleKey` (`string`, default: `X-PLATFORMATIC-ROLE`): The name of the key in user metadata that is used to store the user's roles. See [Role configuration](../db/authorization/user-roles-metadata.md#role-configuration)
 - `rolePath` (`string`): The name of the dot-separated path in user
+  metadata that is used to store the user's roles. See [Role configuration](../db/authorization/user-roles-metadata.md#role-configuration).
+- `anonymousRole` (`string`, default: `anonymous`): The name of the anonymous role. See [Role configuration](../db/authorization/user-roles-metadata.md#role-configuration).
+- `jwt` (`object`): Configuration for the [JWT authorization strategy](../db/authorization/strategies.md#json-web-token-jwt).
   metadata that is used to store the user's roles. See [Role configuration](../db/authorization/user-roles-metadata.md#role-configuration).
 - `anonymousRole` (`string`, default: `anonymous`): The name of the anonymous role. See [Role configuration](../db/authorization/user-roles-metadata.md#role-configuration).
 - `jwt` (`object`): Configuration for the [JWT authorization strategy](../db/authorization/strategies.md#json-web-token-jwt).
@@ -390,9 +445,14 @@ to securely provide the value for this setting.
   - `namespace` (`string`): Configure a [JWT Custom Claim Namespace](../db/authorization/strategies.md#jwt-custom-claim-namespace) to
     to avoid name collisions. 
 - `webhook` (`object`): Configuration for the [Webhook authorization strategy](../db/authorization/strategies.md#webhook).
+  - `jwks` (`boolean` or `object`): Configure authorization with JSON Web Key Sets (JWKS). See the [JWKS documentation](../db/authorization/strategies.md#json-web-key-sets-jwks). 
+  - `namespace` (`string`): Configure a [JWT Custom Claim Namespace](../db/authorization/strategies.md#jwt-custom-claim-namespace) to
+    to avoid name collisions. 
+- `webhook` (`object`): Configuration for the [Webhook authorization strategy](../db/authorization/strategies.md#webhook).
   - `url` (required, `string`): Webhook URL that Platformatic DB will make a
   POST request to.
 - `rules` (`array`): Authorization rules that describe the CRUD actions that
+  users are allowed to perform against entities. See [Rules](../db/authorization/rules.md)
   users are allowed to perform against entities. See [Rules](../db/authorization/rules.md)
   documentation.
 
@@ -419,16 +479,16 @@ operations are allowed unless `adminSecret` is passed.
 ## Setting and Using ENV placeholders
 
 Environment variable placeholders are used to securely inject runtime configurations. Learn how to [set](../service/configuration.md#setting-environment-variables) and [use](../service/configuration.md#environment-variable-placeholders) environment variable placeholders [documentation](../service/configuration.md).
+## Setting and Using ENV placeholders
+
+Environment variable placeholders are used to securely inject runtime configurations. Learn how to [set](../service/configuration.md#setting-environment-variables) and [use](../service/configuration.md#environment-variable-placeholders) environment variable placeholders [documentation](../service/configuration.md).
 
 ### PLT_ROOT
 
 The [PLT_ROOT](../service/configuration.md#plt_root) variable is used to configure relative path and is set to the directory containing the Service configuration file.
+The [PLT_ROOT](../service/configuration.md#plt_root) variable is used to configure relative path and is set to the directory containing the Service configuration file.
 
 ## Sample Configuration
-
-This is a basic configuration for Platformatic DB. Uses a local `./db.sqlite` SQLite database, with OpenAPI and GraphQL support.
-
-Server will listen to `http://127.0.0.1:3042`
 
 The example below is a basic setup for Platformatic DB using a local SQLite database. It includes support for OpenAPI, GraphQL, and the GraphiQL interface.
 

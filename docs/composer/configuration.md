@@ -1,11 +1,8 @@
----
-title: Configuration Overview
-label: Platformatic Composer Configuration
----
+import Issues from '../getting-started/issues.md';
 
-# Configuration of Platformatic Composer
+# Configuration
 
-Platformatic Composer can be configured with a [configuration file](#configuration-files) in the different file formats below. The Composer also supports use of environment variables as setting values with [environment variable placeholders](https://docs.platformatic.dev/docs/composer/configuration#environment-variable-placeholders). 
+Platformatic Composer can be configured with a [configuration file](#configuration-files) in the different file formats below. The Composer also supports use of environment variables as setting values with [environment variable placeholders](../composer/configuration.md#setting-and-using-env-placeholders). 
 
 ## Configuration Files
 
@@ -236,3 +233,5 @@ Environment variable placeholders are used to securely inject runtime configurat
 ### PLT_ROOT
 
 The [PLT_ROOT](../service/configuration.md#plt_root) variable is used to configure relative path and is set to the directory containing the Service configuration file. 
+
+<Issues />

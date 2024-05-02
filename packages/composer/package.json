@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/composer",
-  "version": "1.36.2",
+  "version": "1.37.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -47,7 +47,7 @@
     "@fastify/swagger": "^8.14.0",
     "@platformatic/config": "workspace:*",
     "@platformatic/generators": "workspace:*",
-    "@platformatic/graphql-composer": "^0.6.0",
+    "@platformatic/graphql-composer": "^0.7.0",
     "@platformatic/scalar-theme": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@platformatic/telemetry": "workspace:*",

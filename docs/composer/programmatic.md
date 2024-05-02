@@ -1,3 +1,5 @@
+import Issues from '../getting-started/issues.md';
+
 # Programmatic API
 
 In many cases it's useful to start Platformatic Composer using an API instead of
@@ -58,3 +60,5 @@ console.log(await res.json())
 
 await app.close()
 ```
+
+<Issues />
