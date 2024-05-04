@@ -1028,7 +1028,7 @@ importers:
         version: 3.4.1
       '@fastify/jwt':
         specifier: ^8.0.0
-        version: 8.0.0
+        version: 8.0.1
       fastify-plugin:
         specifier: ^4.5.1
         version: 4.5.1
@@ -2434,8 +2434,8 @@ packages:
   '@fastify/http-proxy@9.5.0':
     resolution: {integrity: sha512-1iqIdV10d5k9YtfHq9ylX5zt1NiM50fG+rIX40qt00R694sqWso3ukyTFZVk33SDoSiBW8roB7n11RUVUoN+Ag==}
 
-  '@fastify/jwt@8.0.0':
-    resolution: {integrity: sha512-pJHjmZaokteZFMbsVVt7pbyJpbDogTnpl/aD7eR3vLOPgfktp4k4gUM6cd7RtjL/Ol1qDwL5mup+vdNlZI3K0Q==}
+  '@fastify/jwt@8.0.1':
+    resolution: {integrity: sha512-295bd7V6bDCnZOu8MAQgM6r7V1KILB+kdEq1q6nbHfXCnML569n7NSo3WzeLDG6IAqDl+Rhzi1vjxwaNHhRCBA==}
 
   '@fastify/merge-json-schemas@0.1.1':
     resolution: {integrity: sha512-fERDVz7topgNjtXsJTTW1JKLy0rhuLRcquYqNR9rF7OcVpCa2OVW49ZPDIhaRRCaUuvVxI+N416xUoF76HNSXA==}
@@ -3885,10 +3885,6 @@ packages:
 
   fast-json-stringify@5.15.0:
     resolution: {integrity: sha512-BUEAAyDKb64u+kmkINYfXUUiKjBKerSmVu/dzotfaWSHBxR44JFrOZgkhMO6VxDhDfiuAoi8mx4drd5nvNdA4Q==}
-
-  fast-jwt@3.3.3:
-    resolution: {integrity: sha512-oS3P8bRI24oPLJUePt2OgF64FBQib5TlgHLFQxYNoHYEEZe0gU3cKjJAVqpB5XKV/zjxmq4Hzbk3fgfW/wRz8Q==}
-    engines: {node: '>=16 <22'}
 
   fast-jwt@4.0.1:
     resolution: {integrity: sha512-+mdSoH0QdOdFSbbGBctJu7L1yfXRtbmjbVJ4W/PEjyvivobDena0RKwihtBkOML1P+kUJ1QuewnH8u+mROsR1w==}
@@ -6755,11 +6751,11 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@fastify/jwt@8.0.0':
+  '@fastify/jwt@8.0.1':
     dependencies:
       '@fastify/error': 3.4.1
       '@lukeed/ms': 2.0.2
-      fast-jwt: 3.3.3
+      fast-jwt: 4.0.1
       fastify-plugin: 4.5.1
       steed: 1.1.3
 
@@ -8504,13 +8500,6 @@ snapshots:
       json-schema-ref-resolver: 1.0.1
       rfdc: 1.3.1
 
-  fast-jwt@3.3.3:
-    dependencies:
-      '@lukeed/ms': 2.0.2
-      asn1.js: 5.4.1
-      ecdsa-sig-formatter: 1.0.11
-      mnemonist: 0.39.8
-
   fast-jwt@4.0.1:
     dependencies:
       '@lukeed/ms': 2.0.2
@@ -8566,7 +8555,7 @@ snapshots:
   fastify-user@0.3.3:
     dependencies:
       '@fastify/error': 3.4.1
-      '@fastify/jwt': 8.0.0
+      '@fastify/jwt': 8.0.1
       fastify: 4.26.2
       fastify-plugin: 4.5.1
       get-jwks: 8.3.1
