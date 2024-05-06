@@ -1507,7 +1507,7 @@ importers:
         version: 4.3.0
       '@fastify/autoload':
         specifier: ^5.8.0
-        version: 5.8.1
+        version: 5.8.2
       '@fastify/basic-auth':
         specifier: ^5.1.1
         version: 5.1.1
@@ -2394,8 +2394,8 @@ packages:
   '@fastify/ajv-compiler@3.5.0':
     resolution: {integrity: sha512-ebbEtlI7dxXF5ziNdr05mOY8NnDiPB1XvAlLHctRt/Rc+C3LCOVW5imUVX+mhvUhnNzmPBHewUkOFgGlCxgdAA==}
 
-  '@fastify/autoload@5.8.1':
-    resolution: {integrity: sha512-NPTDKGri3WSZf236/2laMcFdBjENk2wUAkU7XI72FQ5/BDXCZXJ1+qPHivzSljBpmysdmYqjnRHDVn9N6OGWrw==}
+  '@fastify/autoload@5.8.2':
+    resolution: {integrity: sha512-AX555mbAvtYPWZhOJG73y8zV39wH+wEnOcgg13xfGoHJ46rdsfx0Rs8Yfi5exE4bBqdzcM72iIZdhTbLbEqScA==}
 
   '@fastify/aws-lambda@4.0.0':
     resolution: {integrity: sha512-zbBS+iITy5/HyZ6KrYdGJnWc28sApwC+FZc+cb9l1mIAXvZzVa7Pk7XriO/EFdRoCSXdybtCrq9F9CE0Bx9BGg==}
@@ -6686,7 +6686,7 @@ snapshots:
       ajv-formats: 2.1.1(ajv@8.13.0)
       fast-uri: 2.3.0
 
-  '@fastify/autoload@5.8.1': {}
+  '@fastify/autoload@5.8.2': {}
 
   '@fastify/aws-lambda@4.0.0': {}
 
