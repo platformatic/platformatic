@@ -5,7 +5,7 @@ import Issues from '../getting-started/issues.md';
 Platformatic DB uses [Postgrator](https://www.npmjs.com/package/postgrator) to handle database migrations efficiently. 
 
 :::note
-Please refer to the [Postgrator documentation](https://github.com/rickbergfalk/postgrator) on writing migration files.
+For detailed guidance on writing migration files, please refer to the [Postgrator documentation](https://github.com/rickbergfalk/postgrator).
 :::
 
 ## Migration File Structure
