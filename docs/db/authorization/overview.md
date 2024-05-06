@@ -24,7 +24,6 @@ To learn more about roles, permissions and rules, visit our guide on [Authorizat
 ## Bypass authorization in development
 
 To make testing and developing easier, it's possible to bypass authorization checks
-if an `adminSecret` is set. See the [HTTP headers (development only)](/docs/reference/db/authorization/strategies#http-headers-development-only) documentation.
-
+if an `adminSecret` is set. See the [HTTP headers (development only)](../../db/authorization/strategies.md#http-headers-development-only) documentation.
 
 <Issues />
