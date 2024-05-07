@@ -1,14 +1,23 @@
-# Strategies
+---
+title: Strategies 
+label: Authorization
+---
+
+import Issues from "../../getting-started/issues.md"
+
+# Authorization Strategies
+
+Platformatic DB implements flexible, role-based authorization strategies that integrate seamlessly with external authentication services. This section outlines the available strategies and how to configure them.
 
 <!-- TODO: Update diagrams with the updated versions I created for my API adventure talk -->
 
-## Introduction
+## Supported Authorization Strategies
 
-Platformatic DB supports the following authorization strategies:
+Platformatic DB supports multiple authorization strategies to accommodate various security requirements:
 
-- [JSON Web Token (JWT)](#json-web-token-jwt) with support for [JSON Web Key Sets (JWKS)](#json-web-key-sets-jwks)
+- [JSON Web Token (JWT)](#json-web-token-jwt)
 - [Webhook](#webhook)
-- [HTTP headers (development only)](#http-headers-development-only)
+- [HTTP headers (development only)](#http-headers-development-only) 
 
 <!-- TODO: Clarify/expand this section and put it somewhere else
 
@@ -21,15 +30,20 @@ forward the request to the webhook.
 
 ## JSON Web Token (JWT)
 
-The [JSON Web Token](https://jwt.io/) (JWT) authorization strategy is built on top
-of the [`@fastify/jwt`](https://github.com/fastify/fastify-jwt) Fastify plugin.
+
+The JWT strategy is built on top of the [`@fastify/jwt`](https://github.com/fastify/fastify-jwt) plugin. By default `@fastify/jwt` looks for JWTs primarily in the `Authorization` header of HTTP requests.
 
 ![Platformatic DB JWT integration](./images/jwt.png)
 
-To configure it, the quickest way is to pass a shared `secret` in your
-Platformatic DB configuration file, for example:
+:::important
+HTTP requests to the Platformatic DB API should include a header like this `Authorization: Bearer <token>`
+:::
 
-```json title="platformatic.db.json"
+### Configuration
+
+Set up JWT by specifying a shared `secret` in the Platformatic DB configuration file as shown below:
+
+```json title="platformatic.json"
 {
   "authorization": {
     "jwt": {
@@ -39,31 +53,20 @@ Platformatic DB configuration file, for example:
 }
 ```
 
-By default `@fastify/jwt` looks for a JWT in an HTTP request's `Authorization`
-header. This requires HTTP requests to the Platformatic DB API to include an
-`Authorization` header like this:
-
-```
-Authorization: Bearer <token>
-```
-
 See the [`@fastify/jwt` documentation](https://github.com/fastify/fastify-jwt#options)
 for all of the available configuration options.
 
 ### JSON Web Key Sets (JWKS)
 
-The JWT authorization strategy includes support for [JSON Web Key](https://www.rfc-editor.org/rfc/rfc7517) Sets.
+The JWT authorization strategy includes support for [JSON Web Key](https://www.rfc-editor.org/rfc/rfc7517) Sets. For enhanced security, configure JWT to use JWKS for dynamic public key fetching:
 
-To configure it:
-
-```json title="platformatic.db.json"
+```json title="platformatic.json"
 {
   "authorization": {
     "jwt": {
       "jwks": {
         "allowedDomains": [
-          "https://ISSUER_DOMAIN"
-        ]
+          "https://ISSUER_DOMAIN"]
       }
     }
   }
@@ -97,7 +100,7 @@ library can be specified in the `authorization.jwt.jwks` object.
 
 ### JWT Custom Claim Namespace
 
-JWT claims can be namespaced to avoid name collisions. If so, we will receive tokens
+JWT claims can be namespaced to avoid name conflicts. If so, we will receive tokens
 with custom claims such as: `https://platformatic.dev/X-PLATFORMATIC-ROLE`
 (where `https://platformatic.dev/` is the namespace).
 If we want to map these claims to user metadata removing our namespace, we can
@@ -120,13 +123,15 @@ is mapped to `X-PLATFORMATIC-ROLE` user metadata.
 
 <!-- TODO: authenticate OR authorize? -->
 
-Platformatic DB can use a webhook to authenticate requests.
+Authenticate API requests by configuring a webhook that Platformatic DB will call with each request.
 
 ![Platformatic DB Webhook integration](./images/webhook.png)
 
-In this case, the URL is configured on authorization:
+### Configuration 
 
-```json title="platformatic.db.json"
+Define the webhook URL in the authorization settings:
+
+```json title="platformatic.json"
 {
   "authorization": {
     "webhook": {
@@ -151,22 +156,22 @@ In the Webhook case, the HTTP response contains the roles/user information as HT
 
 ## HTTP headers (development only)
 
-:::danger
-Passing an admin API key via HTTP headers is highly insecure and should only be used
-during development or within protected networks.
-:::
-
 If a request has `X-PLATFORMATIC-ADMIN-SECRET` HTTP header set with a valid `adminSecret`
-(see [configuration reference](/reference/db/configuration.md#authorization)) the
+(see [configuration reference](../../db/configuration.md#authorization)) the
 role is set automatically as `platformatic-admin`, unless a different role is set for
-user impersonation (which is disabled if JWT or Webhook are set, see [below](#user-impersonation)).
+user impersonation (which is disabled if JWT or Webhook are set, see [user-impersonation](#user-impersonation)).
 
 ![Platformatic DB HTTP Headers](./images/http.png)
 
 <!-- TODO: Unclear what the following paragraph means -->
 
-Also, the following rule is automatically added to every entity, allowing the user
-that presented the `adminSecret` to perform any operation on any entity:
+:::danger
+Passing an admin API key via HTTP headers is highly insecure and should only be used
+during development or within protected networks.
+:::
+
+
+The following rule is automatically added to every entity, to allow users with `adminSecret` to perform all operations on any entity:
 
 ```json
 {
@@ -191,3 +196,6 @@ app.addAuthStrategy({
   }
 })
 ```
+
+
+<Issues />
