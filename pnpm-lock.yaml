@@ -350,7 +350,7 @@ importers:
         version: 9.8.0
       '@fastify/static':
         specifier: ^7.0.1
-        version: 7.0.3
+        version: 7.0.4
       '@fastify/swagger':
         specifier: ^8.14.0
         version: 8.14.0
@@ -847,7 +847,7 @@ importers:
         version: 3.4.1
       '@fastify/static':
         specifier: ^7.0.1
-        version: 7.0.3
+        version: 7.0.4
       '@fastify/swagger':
         specifier: ^8.14.0
         version: 8.14.0
@@ -1525,7 +1525,7 @@ importers:
         version: 2.3.0
       '@fastify/static':
         specifier: ^7.0.1
-        version: 7.0.3
+        version: 7.0.4
       '@fastify/swagger':
         specifier: ^8.14.0
         version: 8.14.0
@@ -2455,8 +2455,8 @@ packages:
   '@fastify/session@10.7.2':
     resolution: {integrity: sha512-PezR26nY8FMmAs4cww5rpnVyRkPDv2WQcVBLEKrtLTQy8mjL+twUKv9TLo/SXZYHZOIETzmquWoLYlnY3dSb+w==}
 
-  '@fastify/static@7.0.3':
-    resolution: {integrity: sha512-2tmTdF+uFCykasutaO6k4/wOt7eXyi7m3dGuCPo5micXzv0qt6ttb/nWnDYL/BlXjYGfp1JI4a1gyluTIylvQA==}
+  '@fastify/static@7.0.4':
+    resolution: {integrity: sha512-p2uKtaf8BMOZWLs6wu+Ihg7bWNBdjNgCwDza4MJtTqg+5ovKmcbgbR9Xs5/smZ1YISfzKOCNYmZV8LaCj+eJ1Q==}
 
   '@fastify/swagger@8.14.0':
     resolution: {integrity: sha512-sGiznEb3rl6pKGGUZ+JmfI7ct5cwbTQGo+IjewaTvtzfrshnryu4dZwEsjw0YHABpBA+kCz3kpRaHB7qpa67jg==}
@@ -6798,7 +6798,7 @@ snapshots:
       fastify-plugin: 4.5.1
       safe-stable-stringify: 2.4.3
 
-  '@fastify/static@7.0.3':
+  '@fastify/static@7.0.4':
     dependencies:
       '@fastify/accept-negotiator': 1.1.0
       '@fastify/send': 2.1.0
@@ -9454,7 +9454,7 @@ snapshots:
   mercurius@14.1.0(graphql@16.8.1):
     dependencies:
       '@fastify/error': 3.4.1
-      '@fastify/static': 7.0.3
+      '@fastify/static': 7.0.4
       '@fastify/websocket': 10.0.1
       fastify-plugin: 4.5.1
       graphql: 16.8.1
