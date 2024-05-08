@@ -95,9 +95,9 @@ Welcome to Platformatic. Available commands are:
 * `start` - start a Platformatic application.
 * `login` - generate a Platformatic login api key.
 * `client` - generate a Platformatic client.
-* `ps` - list all platformatic runtime applications.
-* `logs` - stream logs for a platformatic runtime application.
-* `inject` - inject a request into a platformatic runtime application.
+* `ps` - list all Platformatic runtime applications.
+* `logs` - stream logs for a Platformatic runtime application.
+* `inject` - inject a request into a Platformatic runtime application.
 * `ctl` - Platformatic Control commands; `platformatic ctl help` to know more.
 
 
@@ -110,74 +110,6 @@ Compile all typescript plugins.
 ```
 
 This command will compile the TypeScript plugins for each platformatic application.
-
-
-#### deploy
-
-Deploys an application to the [Platformatic Cloud](https://docs.platformatic.dev/docs/category/platformatic-cloud).
-
-``` bash
- $ platformatic deploy
-```
-
-Options:
-
-* `-t, --type static/dynamic` - The type of the workspace.
-* `-c, --config FILE` - Specify a configuration file to use.
-* `-k, --keys FILE` - Specify a path to the workspace keys file.
-* `-l  --label TEXT` - The deploy label. Only for dynamic workspaces.
-* `-e  --env FILE` - The environment file to use. Default: ".env"
-* `-s  --secrets FILE` - The secrets file to use. Default: ".secrets.env"
-* `--workspace-id uuid` - The workspace id where the application will be deployed.
-* `--workspace-key TEXT` - The workspace key where the application will be deployed.
-
-1. To deploy a Platformatic application to the cloud, you should go to the Platformatic cloud dashboard and create a workspace.
-2. Once you have created a workspace, retrieve your workspace id and key from the workspace settings page. Optionally, you can download the provided workspace env file, which you can use with the `--keys` option.
-
-> :information_source:
->
-> When deploying an application to a ***dynamic workspace***, specify the deploy `--label` option. You can find it on your cloud dashboard or you can specify a new one.
->
-> If you do not specify an environment file to use with the `-e` flag, **ensure that a default environment file named `.env` exists**.
-
-Deploy a **static** Platformatic Cloud application.
-
-```bash
-platformatic deploy \
-    -t static \
-    -c platformatic.db.json \
-    -e .env.prototype \
-    --workspace-id=00000000-0000-0000-0000-000000000000 \
-    --workspace-key=11111111111111111111111111111111
-```
-
-Deploy a **static** Platformatic Cloud application with a workspace keys file. The keys file can be downloaded from the Platformatic Console when generating a new API key.
-
-```bash
-platformatic deploy \
-    -t static \
-    -c platformatic.db.json \
-    -k foo.plt.txt
-```
-
-The `foo.plt.txt` must contain two variables for the workspace id and workspace API key.
-
-```
-# Contents of foo.plt.txt
-PLATFORMATIC_STATIC_WORKSPACE_ID=00000000-0000-0000-0000-000000000000
-PLATFORMATIC_STATIC_WORKSPACE_API_KEY=11111111111111111111111111111111
-```
-
-Deploy a **dynamic** Platformatic Cloud application.
-
-```bash
-platformatic deploy \
-    -t dynamic \
-    -c platformatic.db.json \
-    -l dev \
-    --workspace-id=00000000-0000-0000-0000-000000000000 \
-    --workspace-key=11111111111111111111111111111111
-```
 
 
 #### gh
@@ -197,22 +129,22 @@ Options:
 
 If not specified, the configuration will be loaded from any of the following, in the current directory.
 
-* `platformatic.db.json`, or
-* `platformatic.db.yml`, or 
-* `platformatic.db.tml`, or 
-* `platformatic.service.json`, or
-* `platformatic.service.yml`, or 
-* `platformatic.service.tml`
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`, or 
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`
 
 You can find more details about the configuration format here:
-* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
-* [Platformatic Service Configuration](https://docs.platformatic.dev/docs/reference/service/configuration)
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
+* [Platformatic Service Configuration](https://docs.platformatic.dev/docs/service/configuration)
 
 
 
 #### inject
 
-Injects a request to the platformatic runtime service.
+Injects a request to the Platformatic runtime service.
 
 ``` bash
   $ platformatic inject -n runtime-name /hello
@@ -223,7 +155,7 @@ Injects a request to the platformatic runtime service.
 
 Options:
 
-* `-p, --pid <number>` - The process id of the runtime.
+* `-p, --pid <number>` - The process `id` of the runtime.
 * `-n, --name <string>` - The name of the runtime.
 * `-s, --service <string>` - The name of the runtime service.
 * `-X, --request <string>` - The request HTTP method. Default is `GET`.
@@ -235,7 +167,7 @@ Options:
 
 The `inject` command sends a request to the runtime service and prints the
 response to the standard output. If the `--service` option is not specified the
-request is sent to the runtime entrypoint.
+request is sent to the runtime entry point.
 
 The `inject` command uses the Platformatic Runtime Management API. To enable it
 set the `managementApi` option to `true` in the runtime configuration file.
@@ -254,7 +186,7 @@ Generate a Platformatic login api key.
 
 Options:
 
-* `-c, --config FILE` - Specify a path to a global platformatic config file. Defaults to `~/.platformatic/config.json`.
+* `-c, --config FILE` - Specify a path to a global Platformatic config file. Defaults to `~/.platformatic/config.json`.
 * `--browser` - Automatically open default browser. If process stdout is a TTY, the default is `true`. Otherwise, the default is `false`.
 
 
@@ -326,16 +258,16 @@ Options:
 
 If not specified, the configuration will be loaded from any of the following, in the current directory.
 
-* `platformatic.db.json`, or
-* `platformatic.db.yml`, or 
-* `platformatic.db.tml`, or 
-* `platformatic.service.json`, or
-* `platformatic.service.yml`, or 
-* `platformatic.service.tml`
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`, or 
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`
 
 You can find more details about the configuration format here:
-* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
-* [Platformatic Service Configuration](https://docs.platformatic.dev/docs/reference/service/configuration)
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
+* [Platformatic Service Configuration](https://docs.platformatic.dev/docs/service/configuration)
 
 
 ### client

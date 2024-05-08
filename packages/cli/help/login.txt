@@ -6,5 +6,5 @@ Generate a Platformatic login api key.
 
 Options:
 
-* `-c, --config FILE` - Specify a path to a global platformatic config file. Defaults to `~/.platformatic/config.json`.
+* `-c, --config FILE` - Specify a path to a global Platformatic config file. Defaults to `~/.platformatic/config.json`.
 * `--browser` - Automatically open default browser. If process stdout is a TTY, the default is `true`. Otherwise, the default is `false`.
