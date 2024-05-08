@@ -46,9 +46,9 @@ Options:
 
 If not specified, the configuration will be loaded from any of the following, in the current directory.
 
-* `platformatic.composer.json`, or
-* `platformatic.composer.yml`, or 
-* `platformatic.composer.tml`
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`
 
 You can find more details about the configuration format here:
-* [Platformatic Composer Configuration](https://docs.platformatic.dev/docs/reference/composer/configuration)
+* [Platformatic Composer Configuration](https://docs.platformatic.dev/docs/composer/configuration)

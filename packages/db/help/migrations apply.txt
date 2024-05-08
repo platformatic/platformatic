@@ -36,10 +36,10 @@ Options:
 
 If not specified, the configuration will be loaded from any of the following, in the current directory.
 
-* `platformatic.db.json`, or
-* `platformatic.db.yml`, or 
-* `platformatic.db.tml`
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`
 
 You can find more details about the configuration format here:
-* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
 
