@@ -6,7 +6,6 @@ toc_max_heading_level: 4
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import TOCInline from '@theme/TOCInline';
 
 # Platformatic CLI
 
@@ -74,10 +73,6 @@ same version of the Platformatic CLI.
 
 ## Commands
 
-The Platformatic CLI provides the following commands:
-
-<TOCInline toc={toc} minHeadingLevel={3} maxHeadingLevel={4} />
-
 ### help
 
 
@@ -90,14 +85,13 @@ Welcome to Platformatic. Available commands are:
 * `service` - start Platformatic Service; type `platformatic service help` to know more.
 * `upgrade` - upgrade the Platformatic configuration to the latest version.
 * `gh` - create a new gh action for Platformatic deployments.
-* `deploy` - deploy a Platformatic application to the cloud.
 * `runtime` - start Platformatic Runtime; type `platformatic runtime help` to know more.
 * `start` - start a Platformatic application.
 * `login` - generate a Platformatic login api key.
 * `client` - generate a Platformatic client.
-* `ps` - list all platformatic runtime applications.
-* `logs` - stream logs for a platformatic runtime application.
-* `inject` - inject a request into a platformatic runtime application.
+* `ps` - list all Platformatic runtime applications.
+* `logs` - stream logs for a Platformatic runtime application.
+* `inject` - inject a request into a Platformatic runtime application.
 * `ctl` - Platformatic Control commands; `platformatic ctl help` to know more.
 
 
@@ -110,74 +104,6 @@ Compile all typescript plugins.
 ```
 
 This command will compile the TypeScript plugins for each platformatic application.
-
-
-#### deploy
-
-Deploys an application to the [Platformatic Cloud](https://docs.platformatic.dev/docs/category/platformatic-cloud).
-
-``` bash
- $ platformatic deploy
-```
-
-Options:
-
-* `-t, --type static/dynamic` - The type of the workspace.
-* `-c, --config FILE` - Specify a configuration file to use.
-* `-k, --keys FILE` - Specify a path to the workspace keys file.
-* `-l  --label TEXT` - The deploy label. Only for dynamic workspaces.
-* `-e  --env FILE` - The environment file to use. Default: ".env"
-* `-s  --secrets FILE` - The secrets file to use. Default: ".secrets.env"
-* `--workspace-id uuid` - The workspace id where the application will be deployed.
-* `--workspace-key TEXT` - The workspace key where the application will be deployed.
-
-1. To deploy a Platformatic application to the cloud, you should go to the Platformatic cloud dashboard and create a workspace.
-2. Once you have created a workspace, retrieve your workspace id and key from the workspace settings page. Optionally, you can download the provided workspace env file, which you can use with the `--keys` option.
-
-> :information_source:
->
-> When deploying an application to a ***dynamic workspace***, specify the deploy `--label` option. You can find it on your cloud dashboard or you can specify a new one.
->
-> If you do not specify an environment file to use with the `-e` flag, **ensure that a default environment file named `.env` exists**.
-
-Deploy a **static** Platformatic Cloud application.
-
-```bash
-platformatic deploy \
-    -t static \
-    -c platformatic.db.json \
-    -e .env.prototype \
-    --workspace-id=00000000-0000-0000-0000-000000000000 \
-    --workspace-key=11111111111111111111111111111111
-```
-
-Deploy a **static** Platformatic Cloud application with a workspace keys file. The keys file can be downloaded from the Platformatic Console when generating a new API key.
-
-```bash
-platformatic deploy \
-    -t static \
-    -c platformatic.db.json \
-    -k foo.plt.txt
-```
-
-The `foo.plt.txt` must contain two variables for the workspace id and workspace API key.
-
-```
-# Contents of foo.plt.txt
-PLATFORMATIC_STATIC_WORKSPACE_ID=00000000-0000-0000-0000-000000000000
-PLATFORMATIC_STATIC_WORKSPACE_API_KEY=11111111111111111111111111111111
-```
-
-Deploy a **dynamic** Platformatic Cloud application.
-
-```bash
-platformatic deploy \
-    -t dynamic \
-    -c platformatic.db.json \
-    -l dev \
-    --workspace-id=00000000-0000-0000-0000-000000000000 \
-    --workspace-key=11111111111111111111111111111111
-```
 
 
 #### gh
@@ -197,22 +123,22 @@ Options:
 
 If not specified, the configuration will be loaded from any of the following, in the current directory.
 
-* `platformatic.db.json`, or
-* `platformatic.db.yml`, or 
-* `platformatic.db.tml`, or 
-* `platformatic.service.json`, or
-* `platformatic.service.yml`, or 
-* `platformatic.service.tml`
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`, or 
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`
 
 You can find more details about the configuration format here:
-* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
-* [Platformatic Service Configuration](https://docs.platformatic.dev/docs/reference/service/configuration)
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
+* [Platformatic Service Configuration](https://docs.platformatic.dev/docs/service/configuration)
 
 
 
 #### inject
 
-Injects a request to the platformatic runtime service.
+Injects a request to the Platformatic runtime service.
 
 ``` bash
   $ platformatic inject -n runtime-name /hello
@@ -223,7 +149,7 @@ Injects a request to the platformatic runtime service.
 
 Options:
 
-* `-p, --pid <number>` - The process id of the runtime.
+* `-p, --pid <number>` - The process `id` of the runtime.
 * `-n, --name <string>` - The name of the runtime.
 * `-s, --service <string>` - The name of the runtime service.
 * `-X, --request <string>` - The request HTTP method. Default is `GET`.
@@ -235,7 +161,7 @@ Options:
 
 The `inject` command sends a request to the runtime service and prints the
 response to the standard output. If the `--service` option is not specified the
-request is sent to the runtime entrypoint.
+request is sent to the runtime entry point.
 
 The `inject` command uses the Platformatic Runtime Management API. To enable it
 set the `managementApi` option to `true` in the runtime configuration file.
@@ -254,7 +180,7 @@ Generate a Platformatic login api key.
 
 Options:
 
-* `-c, --config FILE` - Specify a path to a global platformatic config file. Defaults to `~/.platformatic/config.json`.
+* `-c, --config FILE` - Specify a path to a global Platformatic config file. Defaults to `~/.platformatic/config.json`.
 * `--browser` - Automatically open default browser. If process stdout is a TTY, the default is `true`. Otherwise, the default is `false`.
 
 
@@ -326,16 +252,16 @@ Options:
 
 If not specified, the configuration will be loaded from any of the following, in the current directory.
 
-* `platformatic.db.json`, or
-* `platformatic.db.yml`, or 
-* `platformatic.db.tml`, or 
-* `platformatic.service.json`, or
-* `platformatic.service.yml`, or 
-* `platformatic.service.tml`
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`, or 
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`
 
 You can find more details about the configuration format here:
-* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
-* [Platformatic Service Configuration](https://docs.platformatic.dev/docs/reference/service/configuration)
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
+* [Platformatic Service Configuration](https://docs.platformatic.dev/docs/service/configuration)
 
 
 ### client
@@ -375,7 +301,7 @@ $ platformatic client --runtime SERVICE_NAME -n myclient
 All the above commands will create a Fastify plugin that exposes a client in the `request` object for the remote API in a folder `myclient` and a file named myclient.js inside it.
 
 If platformatic config file is specified, it will be edited and a `clients` section will be added.
-Then, in any part of your Platformatic application you can use the client.
+Then, in any part of your Platformatic application, you can use the client.
 
 You can use the client in your application in Javascript, calling a GraphQL endpoint:
 
@@ -470,7 +396,7 @@ Fetch OpenAPI schemas from remote services to use in your Platformatic project.
 ```
 
 It will fetch all the schemas from the remote services and store them by path
-set in the `platformatic.composer.json` file. If the path is not set, it will
+set in the `platformatic.json` file. If the path is not set, it will
 skip fetching the schema.
 
 
@@ -483,7 +409,7 @@ Start the Platformatic Composer server with the following command:
  ```
 
 You will need a configuration file. Here is an example to get you started,
-save the following as `platformatic.composer.json`:
+save the following as `platformatic.json`:
 
 ``` json
   {
@@ -524,12 +450,12 @@ Options:
 
 If not specified, the configuration will be loaded from any of the following, in the current directory.
 
-* `platformatic.composer.json`, or
-* `platformatic.composer.yml`, or 
-* `platformatic.composer.tml`
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`
 
 You can find more details about the configuration format here:
-* [Platformatic Composer Configuration](https://docs.platformatic.dev/docs/reference/composer/configuration)
+* [Platformatic Composer Configuration](https://docs.platformatic.dev/docs/composer/configuration)
 
 
 ### db
@@ -552,12 +478,12 @@ plugins in the `outDir` directory.
 
 If not specified, the configuration will be loaded from any of the following, in the current directory.
 
-* `platformatic.db.json`, or
-* `platformatic.db.yml`, or 
-* `platformatic.db.tml`
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`
 
 You can find more details about the configuration format here:
-* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
 
 
 #### create
@@ -631,12 +557,12 @@ Options:
 
 If not specified, the configuration will be loaded from any of the following, in the current directory.
 
-* `platformatic.db.json`, or
-* `platformatic.db.yml`, or 
-* `platformatic.db.tml`
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`
 
 You can find more details about the configuration format here:
-* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
 
 
 
@@ -663,12 +589,12 @@ Options:
 
 If not specified, the configuration will be loaded from any of the following, in the current directory.
 
-* `platformatic.db.json`, or
-* `platformatic.db.yml`, or 
-* `platformatic.db.tml`
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`
 
 You can find more details about the configuration format here:
-* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
 
 
 #### migrations
@@ -683,11 +609,11 @@ Available commands:
 
 Update the config schema file:
 
-* `schema config` - update the JSON schema config available on `platformatic.db.schema.json`
+* `schema config` - update the JSON schema config available on `platformatic.json`
 
-Your configuration on `platformatic.db.json` has a schema defined to improve the developer experience and avoid mistakes when updating the configuration of Platformatic DB.
-When you run `platformatic db init`, a new JSON `$schema` property is added in `platformatic.db.schema.json`. This can allow your IDE to add suggestions (f.e. mandatory/missing fields, types, default values) by opening the config in `platformatic.db.json`.
-Running `platformatic db schema config` you can update your schema so that it matches well the latest changes available on your config.
+Your configuration on `platformatic.json` has a schema defined to improve the developer experience and avoid mistakes when updating the configuration of Platformatic DB.
+When you run `platformatic db init`, a new JSON `$schema` property is added in `platformatic.json`. This can allow your IDE to add suggestions (f.e. mandatory/missing fields, types, default values) by opening the config in `platformatic.json`.
+Running `platformatic schema config` you can update your schema so that it matches well the latest changes available on your config.
 
 Generate a schema from the database and prints it to standard output:
 
@@ -700,12 +626,12 @@ Options:
 
 If not specified, the configuration will be loaded from any of the following, in the current directory.
 
-* `platformatic.db.json`, or
-* `platformatic.db.yml`, or 
-* `platformatic.db.tml`
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`
 
 You can find more details about the configuration format here:
-* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
 
 
 #### seed
@@ -739,12 +665,12 @@ Options:
 
 If not specified, the configuration will be loaded from any of the following, in the current directory.
 
-* `platformatic.db.json`, or
-* `platformatic.db.yml`, or 
-* `platformatic.db.tml`
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`
 
 You can find more details about the configuration format here:
-* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
 
 
 
@@ -757,7 +683,7 @@ Start the Platformatic DB server with the following command:
  ```
 
 You will need a  configuration file. Here is an example to get you started,
-save the following as `platformatic.db.json`:
+save the following as `platformatic.json`:
 
 ``` json
   {
@@ -790,12 +716,12 @@ Options:
 
 If not specified, the configuration will be loaded from any of the following, in the current directory.
 
-* `platformatic.db.json`, or
-* `platformatic.db.yml`, or 
-* `platformatic.db.tml`
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`
 
 You can find more details about the configuration format here:
-* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
 
 
 
@@ -835,12 +761,12 @@ module.exports = async function (app) {
 
 If not specified, the configuration will be loaded from any of the following, in the current directory.
 
-* `platformatic.db.json`, or
-* `platformatic.db.yml`, or 
-* `platformatic.db.tml`
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`
 
 You can find more details about the configuration format here:
-* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
 
 
 ### service
@@ -865,12 +791,12 @@ Using the  `--clean` flag, the outDir directory will be removed before the new c
 
 If not specified, the configuration will be loaded from any of the following, in the current directory.
 
-* `platformatic.service.json`, or
-* `platformatic.service.yml`, or 
-* `platformatic.service.tml`
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`
 
 You can find more details about the configuration format here:
-* [Platformatic Service Configuration](https://docs.platformatic.dev/docs/reference/service/configuration)
+* [Platformatic Service Configuration](https://docs.platformatic.dev/docs/service/configuration)
 
 
 #### create
@@ -905,10 +831,10 @@ Available commands:
 
 Update the config schema file:
 
-* `schema config` - update the JSON schema config available on `platformatic.service.schema.json`
+* `schema config` - update the JSON schema config available on `platformatic.json`
 
-Your configuration on `platformatic.service.json` has a schema defined to improve the developer experience and avoid mistakes when updating the configuration of Platformatic Service.
-When you initialize a new Platformatic service (f.e. running `npm create platformatic@latest`), a new JSON `$schema` property is added in the `platformatic.service.json` config. This can allow your IDE to add suggestions (f.e. mandatory/missing fields, types, default values) by opening the config in `platformatic.service.json`.
+Your configuration on `platformatic.json` has a schema defined to improve the developer experience and avoid mistakes when updating the configuration of Platformatic Service.
+When you initialize a new Platformatic service (f.e. running `npm create platformatic@latest`), a new JSON `$schema` property is added in the `platformatic.json` config. This can allow your IDE to add suggestions (f.e. mandatory/missing fields, types, default values) by opening the config in `platformatic.service.json`.
 Running `platformatic service schema config` you can update your schema so that it matches well the latest changes available on your config.
 
 
@@ -923,7 +849,7 @@ Start the Platformatic Service with the following command:
  ```
 
 You will need a  configuration file. Here is an example to get you started,
-save the following as `platformatic.service.json`:
+save the following as `platformatic.json`:
 
 ``` json
 {
@@ -961,12 +887,12 @@ Options:
 
 If not specified, the configuration will be loaded from any of the following, in the current directory.
 
-* `platformatic.db.json`, or
-* `platformatic.db.yml`, or 
-* `platformatic.db.tml`
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`
 
 You can find more details about the configuration format here:
-* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
 
 
 
@@ -988,12 +914,12 @@ Options:
 
 If not specified, the configuration will be loaded from any of the following, in the current directory.
 
-* `platformatic.db.json`, or
-* `platformatic.db.yml`, or 
-* `platformatic.db.tml`
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`
 
 You can find more details about the configuration format here:
-* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
 
 
 
@@ -1035,8 +961,8 @@ In case of problems, please check that:
 
 * The Platformatic app URL is valid.
 * The Platformatic app whose URL belongs must be up and running.
-* OpenAPI must be enabled (`db.openapi` in your `platformatic.db.json` is not set to `false`). You can find more details about the db configuration format [here](https://docs.platformatic.dev/docs/reference/db/configuration/#db).
-* CORS must be managed in your Platformatic app (`server.cors.origin.regexp` in your `platformatic.db.json` is set to `/*/`, for instance). You can find more details about the cors configuration [here](https://docs.platformatic.dev/docs/reference/service/configuration/#server).
+* OpenAPI must be enabled (`db.openapi` in your `platformatic.json` is not set to `false`). You can find more details about the db configuration format [here](https://docs.platformatic.dev/docs/reference/db/configuration/#db).
+* CORS must be managed in your Platformatic app (`server.cors.origin.regexp` in your `platformatic.json` is set to `/*/`, for instance). You can find more details about the cors configuration [here](https://docs.platformatic.dev/docs/reference/service/configuration/#server).
 
 
 ### runtime

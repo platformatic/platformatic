@@ -1,4 +1,4 @@
-Injects a request to the platformatic runtime service.
+Injects a request to the Platformatic runtime service.
 
 ``` bash
   $ platformatic inject -n runtime-name /hello
@@ -9,7 +9,7 @@ Injects a request to the platformatic runtime service.
 
 Options:
 
-* `-p, --pid <number>` - The process id of the runtime.
+* `-p, --pid <number>` - The process `id` of the runtime.
 * `-n, --name <string>` - The name of the runtime.
 * `-s, --service <string>` - The name of the runtime service.
 * `-X, --request <string>` - The request HTTP method. Default is `GET`.
@@ -21,7 +21,7 @@ Options:
 
 The `inject` command sends a request to the runtime service and prints the
 response to the standard output. If the `--service` option is not specified the
-request is sent to the runtime entrypoint.
+request is sent to the runtime entry point.
 
 The `inject` command uses the Platformatic Runtime Management API. To enable it
 set the `managementApi` option to `true` in the runtime configuration file.

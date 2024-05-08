@@ -26,7 +26,7 @@ $ platformatic client --runtime SERVICE_NAME -n myclient
 All the above commands will create a Fastify plugin that exposes a client in the `request` object for the remote API in a folder `myclient` and a file named myclient.js inside it.
 
 If platformatic config file is specified, it will be edited and a `clients` section will be added.
-Then, in any part of your Platformatic application you can use the client.
+Then, in any part of your Platformatic application, you can use the client.
 
 You can use the client in your application in Javascript, calling a GraphQL endpoint:
 

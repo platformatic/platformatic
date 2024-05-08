@@ -1,10 +1,10 @@
 Update the config schema file:
 
-* `schema config` - update the JSON schema config available on `platformatic.db.schema.json`
+* `schema config` - update the JSON schema config available on `platformatic.json`
 
-Your configuration on `platformatic.db.json` has a schema defined to improve the developer experience and avoid mistakes when updating the configuration of Platformatic DB.
-When you run `platformatic db init`, a new JSON `$schema` property is added in `platformatic.db.schema.json`. This can allow your IDE to add suggestions (f.e. mandatory/missing fields, types, default values) by opening the config in `platformatic.db.json`.
-Running `platformatic db schema config` you can update your schema so that it matches well the latest changes available on your config.
+Your configuration on `platformatic.json` has a schema defined to improve the developer experience and avoid mistakes when updating the configuration of Platformatic DB.
+When you run `platformatic db init`, a new JSON `$schema` property is added in `platformatic.json`. This can allow your IDE to add suggestions (f.e. mandatory/missing fields, types, default values) by opening the config in `platformatic.json`.
+Running `platformatic schema config` you can update your schema so that it matches well the latest changes available on your config.
 
 Generate a schema from the database and prints it to standard output:
 
@@ -17,9 +17,9 @@ Options:
 
 If not specified, the configuration will be loaded from any of the following, in the current directory.
 
-* `platformatic.db.json`, or
-* `platformatic.db.yml`, or 
-* `platformatic.db.tml`
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`
 
 You can find more details about the configuration format here:
-* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/reference/db/configuration)
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)

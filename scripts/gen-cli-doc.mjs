@@ -10,7 +10,6 @@ toc_max_heading_level: 4
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import TOCInline from '@theme/TOCInline';
 
 # Platformatic CLI
 
@@ -78,20 +77,15 @@ same version of the Platformatic CLI.
 
 ## Commands
 
-The Platformatic CLI provides the following commands:
-
-<TOCInline toc={toc} minHeadingLevel={3} maxHeadingLevel={4} />
-
 ### help
 
-`
+`;
 
 // Command: help
 
 const cliHelpDir = join(import.meta.url, '../packages/cli/help')
 const cliHelp = path.join(cliHelpDir, 'help.txt')
 const cliHelps = await readdir(cliHelpDir)
-
 const mainCliHelp = await readFile(cliHelp, 'utf8')
 
 out += `
@@ -293,5 +287,5 @@ ${content}
 `
 }
 
-await writeFile(join(import.meta.url, '..', 'docs', 'reference', 'cli.md'), out)
+await writeFile(join(import.meta.url, '..', 'docs', 'cli.md'), out)
 
