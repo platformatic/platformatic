@@ -37,7 +37,7 @@ pnpm add platformatic
 </TabItem>
 </Tabs>
 
-Once it's installed, you can run it with:
+Once it's installed you can run it with:
 
 <Tabs groupId="package-manager">
 <TabItem value="npm" label="npm">
@@ -76,6 +76,7 @@ same version of the Platformatic CLI.
 ### help
 
 
+
 Welcome to Platformatic. Available commands are:
 
 * `help` - display this message.
@@ -92,6 +93,7 @@ Welcome to Platformatic. Available commands are:
 * `logs` - stream logs for a Platformatic runtime application.
 * `inject` - inject a request into a Platformatic runtime application.
 * `ctl` - Platformatic Control commands; `platformatic ctl help` to know more.
+
 
 #### compile
 
@@ -924,11 +926,10 @@ You can find more details about the configuration format here:
 ### frontend
 
 ```bash
-platformatic frontend <command>
+platformatic client <url> --frontend --language <language>
 ```
 
 
-#### help
 
 Create frontend code to consume the REST APIs of a Platformatic application.
 
@@ -962,65 +963,6 @@ In case of problems, please check that:
 * The Platformatic app whose URL belongs must be up and running.
 * OpenAPI must be enabled (`db.openapi` in your `platformatic.json` is not set to `false`). You can find more details about the db configuration format [here](https://docs.platformatic.dev/docs/reference/db/configuration/#db).
 * CORS must be managed in your Platformatic app (`server.cors.origin.regexp` in your `platformatic.json` is set to `/*/`, for instance). You can find more details about the cors configuration [here](https://docs.platformatic.dev/docs/reference/service/configuration/#server).
-
-
-#### invalid-params
-
-Url and language parameters are mandatory.
-
-```bash
-npx platformatic frontend <url> <language>
-```
-
-example
-
-```bash
-npx platformatic frontend http://127.0.0.1:3042 ts
-```
-
-where `http://127.0.0.1:3042` must be replaced with your Platformatic application endpoint and the language can be `ts` or `js`.
-
-Refer to the [dedicated guide](https://docs.platformatic.dev/docs/guides/generate-frontend-code-to-consume-platformatic-rest-api) where the full process of generating and consuming the frontend code is described.
-
-
-#### invalid-url
-
-Something went wrong. Ensure the passed url is valid.
-
-You can find more details about the available options at:
-https://docs.platformatic.dev/docs/cli
-
-
-#### missing-url
-
-Something went wrong. Ensure the passed url is valid.
-
-You can find more details about the available options at:
-https://docs.platformatic.dev/docs/cli
-
-
-#### open-api-server-error
-
-
-Something went wrong. Ensure
-* The passed url is valid and the Platformatic app is running.
-* OpenAPI is enabled (`db.openapi` in `platformatic.db.json` is not set to `false`).
-
-You can find more details about
-the db configuration format at:
-https://docs.platformatic.dev/docs/db/configuration/#db
-
-
-#### open-api-server-no-200
-
-
-The server is running but responded with a non-200 status code. Ensure
-* The passed url is valid and the Platformatic app is running.
-* OpenAPI is enabled (`db.openapi` in `platformatic.db.json` is not set to `false`).
-
-You can find more details about
-the db configuration format at:
-https://docs.platformatic.dev/docs/db/configuration/#db
 
 
 ### runtime
@@ -1074,6 +1016,21 @@ module.exports = async function (app) {
   })
 }
 ```
+
+
+### start
+
+Start a Platformatic application with the following command:
+
+```bash
+$ platformatic start
+```
+
+Options:
+
+* `-c, --config <path>` - Path to the configuration file.
+* `--inspect[=[host:]port]` - Start the Node.js debugger. `host` defaults to `'127.0.0.1'`. `port` defaults to 9229. Use caution when binding to a public host:port combination.
+* `--inspect-brk[=[host:]port]` - Start the Node.js debugger and block until a client has attached. `host` defaults to `'127.0.0.1'`. `port` defaults to 9229. Use caution when binding to a public host:port combination.
 
 
 ### ctl
