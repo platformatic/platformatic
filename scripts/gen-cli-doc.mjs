@@ -293,5 +293,5 @@ ${content}
 `
 }
 
-await writeFile(join(import.meta.url, '..', 'docs', 'reference', 'cli.md'), out)
+await writeFile(join(import.meta.url, '..', 'docs', 'cli.md'), out)
 
