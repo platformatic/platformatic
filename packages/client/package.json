@@ -22,7 +22,7 @@
     "@platformatic/telemetry": "workspace:*",
     "borp": "^0.13.0",
     "c8": "^9.1.0",
-    "execa": "^8.0.1",
+    "execa": "^9.0.0",
     "fastify": "^4.26.2",
     "snazzy": "^9.0.0",
     "split2": "^4.2.0",

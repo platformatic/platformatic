@@ -28,7 +28,7 @@
     "@platformatic/utils": "workspace:*",
     "borp": "^0.13.0",
     "dotenv": "^16.4.5",
-    "execa": "^8.0.1",
+    "execa": "^9.0.0",
     "fastify": "^4.26.2",
     "fastify-tsconfig": "^2.0.0",
     "fs-extra": "^11.2.0",
