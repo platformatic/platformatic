@@ -5,7 +5,7 @@ Start the Platformatic Composer server with the following command:
  ```
 
 You will need a configuration file. Here is an example to get you started,
-save the following as `platformatic.composer.json`:
+save the following as `platformatic.json`:
 
 ``` json
   {

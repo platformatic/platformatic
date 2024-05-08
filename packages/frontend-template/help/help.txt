@@ -28,5 +28,5 @@ In case of problems, please check that:
 
 * The Platformatic app URL is valid.
 * The Platformatic app whose URL belongs must be up and running.
-* OpenAPI must be enabled (`db.openapi` in your `platformatic.db.json` is not set to `false`). You can find more details about the db configuration format [here](https://docs.platformatic.dev/docs/reference/db/configuration/#db).
-* CORS must be managed in your Platformatic app (`server.cors.origin.regexp` in your `platformatic.db.json` is set to `/*/`, for instance). You can find more details about the cors configuration [here](https://docs.platformatic.dev/docs/reference/service/configuration/#server).
+* OpenAPI must be enabled (`db.openapi` in your `platformatic.json` is not set to `false`). You can find more details about the db configuration format [here](https://docs.platformatic.dev/docs/reference/db/configuration/#db).
+* CORS must be managed in your Platformatic app (`server.cors.origin.regexp` in your `platformatic.json` is set to `/*/`, for instance). You can find more details about the cors configuration [here](https://docs.platformatic.dev/docs/reference/service/configuration/#server).
