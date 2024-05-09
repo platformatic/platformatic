@@ -12,7 +12,9 @@ mockAgent.disableNetConnect()
 
 setGlobalDispatcher(mockAgent)
 
-const mockPool = mockAgent.get('https://marketplace.platformatic.dev')
+const MARKETPLACE_HOST = 'https://marketplace.platformatic.dev'
+
+const mockPool = mockAgent.get(MARKETPLACE_HOST)
 const defaultStackables = ['@platformatic/composer', '@platformatic/db', '@platformatic/service']
 
 test('should fetch stackables from the marketplace', async () => {
@@ -25,6 +27,47 @@ test('should fetch stackables from the marketplace', async () => {
   mockPool.intercept({ path: '/templates' }).reply(200, mockStackables)
 
   const stackables = await fetchStackables()
+  deepEqual(stackables, mockStackables.map(s => s.name))
+})
+
+test('should fetch private stackables from the marketplace', async () => {
+  const mockStackables = [
+    { name: 'mock-service-1' },
+    { name: 'mock-service-2' },
+    { name: 'mock-service-3' },
+    { name: 'private-mock-service-1' }
+  ]
+
+  const userApiKey = 'mock-api-key'
+  mockPool.intercept({
+    path: '/templates',
+    headers: {
+      'x-platformatic-user-api-key': userApiKey
+    }
+  }).reply(200, mockStackables)
+
+  const stackables = await fetchStackables(MARKETPLACE_HOST, userApiKey)
+  deepEqual(stackables, mockStackables.map(s => s.name))
+})
+
+test('should fetch only public stackables if user api key is wrong', async () => {
+  const mockStackables = [
+    { name: 'mock-service-1' },
+    { name: 'mock-service-2' },
+    { name: 'mock-service-3' }
+  ]
+
+  const userApiKey = 'mock-api-key'
+  mockPool.intercept({
+    path: '/templates',
+    headers: {
+      'x-platformatic-user-api-key': userApiKey
+    }
+  }).reply(401)
+
+  mockPool.intercept({ path: '/templates' }).reply(200, mockStackables)
+
+  const stackables = await fetchStackables(MARKETPLACE_HOST, userApiKey)
   deepEqual(stackables, mockStackables.map(s => s.name))
 })
 
