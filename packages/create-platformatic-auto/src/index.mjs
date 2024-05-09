@@ -6,6 +6,7 @@ import { getUsername, getVersion, minimumSupportedNodeVersions, isCurrentVersion
 import { createGitRepository } from './create-git-repository.mjs'
 import { getPkgManager } from '@platformatic/utils'
 import { StackableGenerator } from '@platformatic/generators'
+import { getUserApiKey } from '@platformatic/authenticate'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa } from 'execa'
@@ -19,10 +20,15 @@ import { setTimeout } from 'node:timers/promises'
 
 const MARKETPLACE_HOST = 'https://marketplace.platformatic.dev'
 
-export async function fetchStackables (marketplaceHost) {
+export async function fetchStackables (marketplaceHost, userApiKey) {
   marketplaceHost = marketplaceHost || MARKETPLACE_HOST
 
-  const stackablesRequest = request(marketplaceHost + '/templates')
+  const stackablesRequest = request(marketplaceHost + '/templates', {
+    method: 'GET',
+    headers: {
+      'x-platformatic-user-api-key': userApiKey
+    }
+  })
   const stackablesRequestTimeout = setTimeout(5000, new Error('Request timed out'))
 
   try {
@@ -30,6 +36,9 @@ export async function fetchStackables (marketplaceHost) {
       stackablesRequest,
       stackablesRequestTimeout
     ])
+    if (statusCode === 401 && userApiKey) {
+      return fetchStackables(marketplaceHost)
+    }
     if (statusCode === 200) {
       return (await body.json()).map(stackable => stackable.name)
     }
@@ -78,7 +87,7 @@ export const createPlatformatic = async (argv) => {
       install: true
     },
     boolean: ['install'],
-    string: ['marketplace-host']
+    string: ['global-config', 'marketplace-host']
   })
 
   const username = await getUsername()
@@ -154,8 +163,11 @@ async function createApplication (args, logger, pkgManager) {
     await say('Using existing configuration')
   }
 
+  const globalConfigPath = args['global-config']
+  const userApiKey = await getUserApiKey(globalConfigPath).catch(() => {})
+  const stackables = await fetchStackables(args['marketplace-host'], userApiKey)
+
   const names = []
-  const stackables = await fetchStackables(args['marketplace-host'])
 
   while (true) {
     const stackableName = await chooseStackable(stackables)

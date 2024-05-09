@@ -712,6 +712,9 @@ importers:
 
   packages/create-platformatic-auto:
     dependencies:
+      '@platformatic/authenticate':
+        specifier: workspace:*
+        version: link:../authenticate
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config

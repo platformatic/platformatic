@@ -1,7 +1,7 @@
 import parseArgs from 'minimist'
 import open from 'open'
 import { blue, green, underline } from 'colorette'
-import { lstat, mkdir, writeFile } from 'node:fs/promises'
+import { lstat, mkdir, writeFile, access } from 'node:fs/promises'
 import path from 'node:path'
 import { WebSocket } from 'ws'
 import ConfigManager from '@platformatic/config'
@@ -111,6 +111,13 @@ export async function getUserApiKey (configPath) {
   if (!configPath) {
     configPath = path.join(PLT_HOME, '.platformatic', 'config.json')
   }
+
+  try {
+    await access(configPath)
+  } catch (err) {
+    return null
+  }
+
   const config = new ConfigManager({ source: configPath, schema })
   await config.parse()
 
