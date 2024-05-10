@@ -41,6 +41,14 @@ describe('generator', () => {
         DATABASE_URL: 'sqlite://./db.sqlite',
         PLT_TYPESCRIPT: false
       },
+      defaultEnv: {
+        DATABASE_URL: 'sqlite://./db.sqlite',
+        PLT_APPLY_MIGRATIONS: 'true',
+        PLT_SERVER_HOSTNAME: '0.0.0.0',
+        PLT_SERVER_LOGGER_LEVEL: 'info',
+        PLT_TYPESCRIPT: false,
+        PORT: 3042
+      },
       database: 'sqlite',
       connectionString: 'sqlite://./db.sqlite',
       types: true,
