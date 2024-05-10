@@ -60,6 +60,7 @@ class RuntimeGenerator extends BaseGenerator {
   async generatePackageJson () {
     const template = {
       name: `${this.runtimeName}`,
+      workspaces: ['services/*'],
       scripts: {
         start: 'platformatic start'
       },
