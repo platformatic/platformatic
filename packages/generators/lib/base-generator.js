@@ -61,6 +61,7 @@ class BaseGenerator extends FileGenerator {
       serviceName: '',
       envPrefix: '',
       env: {},
+      defaultEnv: {},
       isUpdating: false
     }
   }
@@ -88,10 +89,6 @@ class BaseGenerator extends FileGenerator {
     }
   }
 
-  getDefaultEnv () {
-    return {}
-  }
-
   getEnvVarName (envVarName) {
     const envVarPrefix = 'PLT_' + this.config.envPrefix + '_'
     if (this.config.isRuntimeContext && !envVarName.startsWith(envVarPrefix)) {
@@ -112,9 +109,14 @@ class BaseGenerator extends FileGenerator {
 
   addEnvVar (envVarName, envVarValue, opts = {}) {
     opts.overwrite ??= true
+    opts.default ??= false
+
     envVarName = this.getEnvVarName(envVarName)
     if (opts.overwrite || !this.config.env[envVarName]) {
       this.config.env[envVarName] = envVarValue
+    }
+    if ((opts.overwrite || !this.config.defaultEnv[envVarName]) && opts.default) {
+      this.config.defaultEnv[envVarName] = envVarValue
     }
   }
 
@@ -123,9 +125,10 @@ class BaseGenerator extends FileGenerator {
     return this.config.env[envVarName]
   }
 
-  setEnvVars (envVars) {
+  setEnvVars (envVars, opts) {
     this.config.env = {}
-    this.addEnvVars(envVars)
+    this.config.defaultEnv = {}
+    this.addEnvVars(envVars, opts)
   }
 
   setConfig (config) {
@@ -164,19 +167,6 @@ class BaseGenerator extends FileGenerator {
         ...this.config,
         ...newConfig
       })
-    }
-  }
-
-  /* c8 ignore stop */
-  appendConfigEnv () {
-    const dotEnvFile = this.getFileObject('.env')
-    let dotEnvFileContents = dotEnvFile.contents
-
-    if (this.config.env) {
-      Object.entries(this.config.env).forEach((kv) => {
-        dotEnvFileContents += `${kv[0]}=${kv[1]}\n`
-      })
-      dotEnvFile.contents = dotEnvFileContents
     }
   }
 
@@ -416,20 +406,26 @@ class BaseGenerator extends FileGenerator {
 
   async generateEnv () {
     if (!this.config.isRuntimeContext) {
-      // generate an empty .env file
       this.addFile({
         path: '',
         file: '.env',
-        contents: ''
+        contents: serializeEnvVars(this.config.env)
       })
-      await this._generateEnv()
-      this.appendConfigEnv()
 
-      const { contents } = this.getFileObject('.env')
+      const emptyEnvVars = {}
+      for (const envVarName of Object.keys(this.config.env)) {
+        if (!this.config.defaultEnv[envVarName]) {
+          emptyEnvVars[envVarName] = ''
+        }
+      }
+
       this.addFile({
         path: '',
         file: '.env.sample',
-        contents
+        contents: serializeEnvVars({
+          ...this.config.defaultEnv,
+          ...emptyEnvVars
+        })
       })
     }
   }
@@ -501,7 +497,15 @@ class BaseGenerator extends FileGenerator {
   async _beforePrepare () {}
   async _afterPrepare () {}
   async _getConfigFileContents () { return {} }
-  async _generateEnv () {}
+}
+
+function serializeEnvVars (envVars) {
+  let envVarsString = ''
+  for (const envVarName of Object.keys(envVars)) {
+    const envVarValue = envVars[envVarName]
+    envVarsString += `${envVarName}=${envVarValue}\n`
+  }
+  return envVarsString
 }
 
 module.exports = BaseGenerator

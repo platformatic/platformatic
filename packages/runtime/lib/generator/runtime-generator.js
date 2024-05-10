@@ -94,7 +94,7 @@ class RuntimeGenerator extends BaseGenerator {
       PORT: this.config.port || 3042,
       PLT_SERVER_LOGGER_LEVEL: this.config.logLevel || 'info',
       PLT_MANAGEMENT_API: true
-    }, { overwrite: false })
+    }, { overwrite: false, default: true })
   }
 
   addServicesDependencies () {

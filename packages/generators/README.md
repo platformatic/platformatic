@@ -61,7 +61,3 @@ Called from `prepare` function. You have already access to the current `fastify`
 #### `_afterPrepare`
 
 Called at the end of `prepare` function body
-
-#### `_generateEnv`
-
-The `BaseGenerator` will create an empty `.env` file. In this function you can customize and append other values that may be needed. The values in `this.config.env` object will be automatically appended after this method is called.
