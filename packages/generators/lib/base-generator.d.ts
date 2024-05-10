@@ -94,7 +94,6 @@ export namespace BaseGenerator {
     setEnvVars(env?: Env): void
 
     getDefaultConfig(): { [x: string]: JSONValue }
-    getDefaultEnv(): Env
 
     getFastifyVersion(): Promise<string>
     getPlatformaticVersion(): Promise<string>
@@ -119,8 +118,6 @@ export namespace BaseGenerator {
     _beforePrepare(): Promise<void>
     _afterPrepare(): Promise<void | JSONValue>
     _getConfigFileContents(): Promise<{ [x: string]: BaseGenerator.JSONValue }>
-    _generateEnv(): Promise<void>
-    appendConfigEnv(): Promise<void>
 
     postInstallActions(): Promise<void>
   }

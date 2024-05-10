@@ -95,6 +95,7 @@ test('setConfig', async (t) => {
     staticWorkspaceGitHubActions: false,
     dynamicWorkspaceGitHubActions: false,
     env: {},
+    defaultEnv: {},
     dependencies: {},
     devDependencies: {},
     isRuntimeContext: false,
@@ -123,6 +124,7 @@ test('setConfig', async (t) => {
     staticWorkspaceGitHubActions: false,
     dynamicWorkspaceGitHubActions: false,
     env: {},
+    defaultEnv: {},
     dependencies: {},
     devDependencies: {},
     isRuntimeContext: false,
@@ -143,6 +145,7 @@ test('setConfig', async (t) => {
     staticWorkspaceGitHubActions: false,
     dynamicWorkspaceGitHubActions: false,
     env: {},
+    defaultEnv: {},
     dependencies: {},
     devDependencies: {},
     isRuntimeContext: false,
@@ -171,6 +174,7 @@ test('setConfig', async (t) => {
     staticWorkspaceGitHubActions: false,
     dynamicWorkspaceGitHubActions: false,
     env: {},
+    defaultEnv: {},
     dependencies: {},
     devDependencies: {},
     isRuntimeContext: false,
@@ -197,7 +201,30 @@ test('should append env values', async (t) => {
   assert.equal(dotEnvFile.contents.trim(), 'FOO=bar')
 
   const dotEnvSampleFile = bg.getFileObject('.env.sample')
-  assert.equal(dotEnvSampleFile.contents.trim(), 'FOO=bar')
+  assert.equal(dotEnvSampleFile.contents.trim(), 'FOO=')
+})
+
+test('should add a default env var to the .env.sample config', async (t) => {
+  const bg = new BaseGenerator({
+    module: '@platformatic/service'
+  })
+  // partial config with defaults
+  bg.setConfig({
+    env: {
+      FOO: 'bar'
+    }
+  })
+
+  bg.addEnvVars({
+    BAR: 'baz'
+  }, { overwrite: false, default: true })
+
+  await bg.prepare()
+  const dotEnvFile = bg.getFileObject('.env')
+  assert.equal(dotEnvFile.contents.trim(), 'FOO=bar\nBAR=baz')
+
+  const dotEnvSampleFile = bg.getFileObject('.env.sample')
+  assert.equal(dotEnvSampleFile.contents.trim(), 'BAR=baz\nFOO=')
 })
 
 test('should prepare the questions', async (t) => {

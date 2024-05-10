@@ -193,7 +193,7 @@ class ${stackableGeneratorType} extends ServiceGenerator {
 
     this.addEnvVars({
       PLT_GREETING_TEXT: this.config.greeting ?? 'Hello world!'
-    }, { overwrite: false })
+    }, { overwrite: false, default: true })
 
     const packageJson = await this.getStackablePackageJson()
 
@@ -301,7 +301,7 @@ class ${stackableGeneratorType} extends ServiceGenerator {
 
     this.addEnvVars({
       PLT_GREETING_TEXT: this.config.greeting ?? 'Hello world!'
-    }, { overwrite: false })
+    }, { overwrite: false, default: true })
 
     const packageJson = await this.getStackablePackageJson()
 

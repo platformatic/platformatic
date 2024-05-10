@@ -25,7 +25,7 @@ class ServiceGenerator extends BaseGenerator {
 
       this.addEnvVars({
         PLT_TYPESCRIPT: this.config.typescript
-      }, { overwrite: false })
+      }, { overwrite: false, default: true })
 
       this.config.dependencies = {
         '@platformatic/service': `^${this.platformaticVersion}`

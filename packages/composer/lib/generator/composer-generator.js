@@ -77,13 +77,13 @@ class ComposerGenerator extends BaseGenerator {
           PLT_SERVER_HOSTNAME: this.config.hostname,
           PLT_SERVER_LOGGER_LEVEL: 'info',
           PORT: 3042
-        }, { overwrite: false })
+        }, { overwrite: false, default: true })
       }
 
       this.addEnvVars({
         PLT_TYPESCRIPT: this.config.typescript,
         PLT_EXAMPLE_ORIGIN: 'http://127.0.0.1:3043'
-      }, { overwrite: false })
+      }, { overwrite: false, default: true })
 
       this.config.dependencies = {
         '@platformatic/composer': `^${this.platformaticVersion}`

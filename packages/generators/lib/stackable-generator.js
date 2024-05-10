@@ -311,7 +311,6 @@ class StackableGenerator extends FileGenerator {
   async _beforePrepare () {}
   async _afterPrepare () {}
   async _getConfigFileContents () { return {} }
-  async _generateEnv () {}
 }
 
 module.exports = StackableGenerator
