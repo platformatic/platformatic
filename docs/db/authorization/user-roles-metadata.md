@@ -1,12 +1,8 @@
 # User Roles & Metadata
 
+import Issues from '../../getting-started/issues.md';
+
 ## Introduction
-
-<!--
-
-TODO: Explain what roles and user metadata are
-
--->
 
 Roles and user information are passed to Platformatic DB from an external
 authentication service as a string (JWT claims or HTTP headers). We refer to
@@ -14,39 +10,39 @@ this data as [user metadata](#user-metadata).
 
 ## Roles
 
-<!-- TODO: Rewrite this section -->
+### Understanding User Roles
 
-<!-- TODO: Update the link here -->
-Users can have a list of roles associated with them. These roles can be specified
-in an `X-PLATFORMATIC-ROLE` property as a list of comma separated role names
-(the key name is [configurable](/reference/db/configuration.md#role-and-anonymous-keys)).
+User roles in Platformatic DB are represented as strings and are passed via the `X-PLATFORMATIC-ROLE` HTTP header. These roles are specified as a list of comma-separated names. The key used to pass roles is configurable, allowing integration with various authentication systems.
 
-Note that role names are just strings.
+For detailed configuration options, refer to our [configuration documentation](#role-configuration)
 
 ### Reserved roles
 
-Some special role names are reserved by Platformatic DB:
+Platformatic DB reserves certain role names for internal use:
 
-- `platformatic-admin` : this identifies a user who has admin powers
-- `anonymous`: set automatically when no roles are associated
+- `platformatic-admin`: Identifies a user with admin powers.
+- `anonymous`: Automatically assigned when no other roles are specified.
 
-### Anonymous role
+### Anonymous Role
 
-If a user has no role, the `anonymous` role is assigned automatically. It's possible
-to specify rules to apply to users with this role:
+By default, if a user does not have an assigned role, the `anonymous` role is applied. You can define specific rules for users with this role as shown below:
 
 ```json
-    {
-      "role": "anonymous",
-      "entity": "page",
-      "find": false,
-      "delete": false,
-      "save": false
-    }
+{
+  "role": "anonymous",
+  "entity": "page",
+  "find": false,
+  "delete": false,
+  "save": false
+}
 ```
 
-In this case, a user that has no role or explicitly has the `anonymous` role
-cannot perform any operations on the `page` entity.
+This configuration ensures that users with the `anonymous` role cannot perform `find`, `delete`, or `save` operations on the page entity.
+
+
+### Role Impersonation
+Role impersonation allows an admin to perform actions on behalf of another user by specifying roles to impersonate in the `X-PLATFORMATIC-ROLE` HTTP header. This feature requires a valid `X-PLATFORMATIC-ADMIN-SECRET` header.
+
 
 ### Role impersonation
 
@@ -55,19 +51,13 @@ possible to impersonate a user roles. The roles to impersonate can be specified
 by sending a `X-PLATFORMATIC-ROLE` HTTP header containing a comma separated list
 of roles.
 
-<!--
-
-TODO: Add an example
-
+```plaintext
 X-PLATFORMATIC-ADMIN-SECRET: <shared-admin-secret>
 X-PLATFORMATIC-ROLE: editor,admin
+```
 
--->
-
-:::note
-When JWT or Webhook are set, user role impersonation is not enabled, and the role
-is always set as `platfomatic-admin` automatically if the `X-PLATFORMATIC-ADMIN-SECRET`
-HTTP header is specified.
+:::important
+Role impersonation is disabled when JWT or Webhook authentication methods are set. In such cases, the role is automatically set to platformatic-admin if the X-PLATFORMATIC-ADMIN-SECRET HTTP header is specified.
 :::
 
 ### Role configuration
@@ -115,4 +105,9 @@ User metadata is parsed from an HTTP request and stored in a `user` object on th
 Fastify request object. This object is populated on-demand, but it's possible
 to populate it explicity with `await request.setupDBAuthorizationUser()`.
 
-<!-- TODO: Give some examples? -->
+```javascript
+await request.setupDBAuthorizationUser();
+const userRoles = request.user.roles;
+```
+
+<Issues />
