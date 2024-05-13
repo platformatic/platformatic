@@ -134,7 +134,7 @@ importers:
         version: 5.0.0
       inquirer:
         specifier: ^9.2.16
-        version: 9.2.20
+        version: 9.2.21
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -638,7 +638,7 @@ importers:
         version: 5.0.0
       inquirer:
         specifier: ^9.2.16
-        version: 9.2.20
+        version: 9.2.21
       log-update:
         specifier: ^6.0.0
         version: 6.0.0
@@ -753,7 +753,7 @@ importers:
         version: 5.0.0
       inquirer:
         specifier: ^9.2.16
-        version: 9.2.20
+        version: 9.2.21
       log-update:
         specifier: ^6.0.0
         version: 6.0.0
@@ -4294,8 +4294,8 @@ packages:
   ini@1.3.8:
     resolution: {integrity: sha512-JV/yugV2uzW5iMRSiZAyDtQd+nxtUnjeLt0acNdw98kKLrvuRVyB80tsREOE7yvGVgalhZ6RNXCmEHkUKBKxew==}
 
-  inquirer@9.2.20:
-    resolution: {integrity: sha512-SFwJJPS+Ms75NV+wzFBHjirG4z3tzvis31h+9NyH1tqjIu2c7vCavlXILZ73q/nPYy8/aw4W+DNzLH5MjfYXiA==}
+  inquirer@9.2.21:
+    resolution: {integrity: sha512-c/dwDruM1FtzeISV+xMHm+JZTmhpmgWPEZI2bU3+Fwu5MhbAX0zMHHxj5warNfttE5NUID3aijrFUpDc2yBvcA==}
     engines: {node: '>=18'}
 
   int64-buffer@0.1.10:
@@ -8968,7 +8968,7 @@ snapshots:
 
   ini@1.3.8: {}
 
-  inquirer@9.2.20:
+  inquirer@9.2.21:
     dependencies:
       '@inquirer/figures': 1.0.1
       '@ljharb/through': 2.3.13
