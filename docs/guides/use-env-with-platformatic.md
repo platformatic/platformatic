@@ -1,3 +1,5 @@
+# How to use ENV variables with Platformatic
+
 <head>
   <meta name="description" content="Learn how to use environment variables efficiently with Platformatic to manage different deployment settings." />
   <meta name="keywords" content="Platformatic, environment variables, configuration, software development, API" />
@@ -25,8 +27,6 @@
      })}  
   </script>
 </head>
-
-# How to use ENV variables with Platformatic
 
 ## Introduction
 
