@@ -18,14 +18,19 @@ The paths are relative to the config file path.
 
 Once the config file is set up, you can write your plugin to extend Platformatic DB API or write your custom business logic.
 
-You should export an async `function` which receives a parameters
-- `app` (`FastifyInstance`) that is the main fastify [instance](https://www.fastify.io/docs/latest/Reference/Server/#instance) running Platformatic DB
-- `opts` all the options specified in the config file after `path`
--
-You can always access Platformatic [data mapper](/reference/sql-mapper/introduction.md) through `app.platformatic` property.
+You should export an async `function` which receives a parameters:
 
-:::info
-To make sure that a user has the appropriate set of permissions to perform any action on an entity the `context` should be passed to the `entity mapper` operation like this:
+- `app` (`FastifyInstance`) the main Fastify [instance](https://www.fastify.io/docs/latest/Reference/Server/#instance) running Platformatic DB.
+- `opts` all the options specified in the config file after `path`.
+-
+You can always access Platformatic [data mapper](../packages/sql-mapper/overview.md) through `app.platformatic` property.
+
+
+## Context Integration in Plugin Operations
+
+To ensure robust authorization and data management, it's important to pass the `context` object to the `entity mapper`. This `context` includes user-specific data, permissions, and other parameters that influence how data operations are executed. 
+
+Here's how you can integrate context into your plugin:
 
 ```js
 app.post('/', async (req, reply) => {
@@ -37,13 +42,12 @@ app.post('/', async (req, reply) => {
   })
 })
 ```
-:::
 
 Check some [examples](/guides/add-custom-functionality/introduction.md).
 
 ## Hot Reload
 
-Plugin file is being watched by [`fs.watch`](https://nodejs.org/api/fs.html#fspromiseswatchfilename-options) function.
+Plugin files are monitored by the [`fs.watch`](https://nodejs.org/api/fs.html#fspromiseswatchfilename-options) function.
 
 You don't need to reload Platformatic DB server while working on your plugin. Every time you save, the watcher will trigger a reload event and the server will auto-restart and load your updated code.
 
@@ -72,7 +76,7 @@ Consider the following directory structure:
 ```
 
 By default the folder will be added as a prefix to all the routes defined within them.
-See the autoload documentation for all the options to customize this behavior.
+See the [autoload documentation](../runtime/configuration.md#autoload) for all the options to customize this behavior.
 
 ## Multiple plugins
 
@@ -90,7 +94,6 @@ Multiple plugins can be loaded in parallel by specifying an array:
   }
 }
 ```
-fastify.swagger()
 
 ## TypeScript and autocompletion
 
@@ -115,6 +118,6 @@ export default async function (fastify: FastifyInstance, opts: FastifyPluginOpti
 }
 ```
 
-Note that you need to add the `"plugins": { "typescript": true }` configuration to your `platformatic.service.json`.
+Note that you need to add the `"plugins": { "typescript": true }` configuration to your `platformatic.json`.
 
 <Issues />
