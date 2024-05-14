@@ -2,26 +2,27 @@ import Issues from '../getting-started/issues.md';
 
 # Programmatic API
 
-It's possible to start an instance of Platformatic DB from JavaScript.
+Platformatic DB allows starting and managing database instances programmatically using JavaScript, offering a flexible way to integrate database operations into your applications or scripts.
 
 ```js
 import { buildServer } from '@platformatic/db'
 
 const app = await buildServer('/path/to/platformatic.db.json')
 
-await app.start() // this will start our server
-
-console.log('URL', app.url)
+await app.start() // This starts the server.
+console.log('Server URL:', app.url)
 
 const res = await fetch(app.url)
-console.log(await res.json())
+console.log('Server response:', await res.json())
 
-// do something
+// Additional operations can be performed here.
 
-await app.close()
+await app.close() // This stops the server.
 ```
 
-It is also possible to customize the configuration:
+## Customizing Configuration
+
+You can customize the server configuration to meet specific requirements, such as setting a custom hostname or database connection string:
 
 ```js
 import { buildServer } from '@platformatic/db'
@@ -48,26 +49,18 @@ console.log(await res.json())
 await app.close()
 ```
 
-For more details on how this is implemented, read [Platformatic Service Programmatic API](/reference/service/programmatic.md).
+For more details on how this is implemented, read [Platformatic Service Programmatic API](../service/programmatic.md).
 
 ## API
 
 ### buildServer(config)
-
-Returns an instance of the [restartable application](#RestartableApp)
+- parameters: `config` (Object) - configuration settings for the server and database.
+- Returns: An instance of [restartable application](#restartableapp)
 
 ### RestartableApp
+- `.start()`: Initializes and listens to the hostname/port defined in the config. 
+- `.restart()`: Restarts the Fastify application, useful for applying configuration changes or recovering from state issues.
+- `.close()`: Stops the application. 
 
-#### .start()
-
-Listen to the hostname/port combination specified in the config.
-
-#### .restart()
-
-Restart the Fastify application
-
-#### .close()
-
-Stops the application.
 
 <Issues />
