@@ -18,7 +18,7 @@ Every authorization rule must include the following:
 
 Each rule can specify permissions for CRUD operations (`find`, `save`, `delete`). Here's an example illustrating how these permissions are structured:
 
-```json
+```json title="Example JSON object"
 {
   "role": "user",
   "entity": "page",
@@ -40,7 +40,7 @@ This configuration allows users with the `user` role to `find` and `delete` page
 
 For more fine-grained control, use the `checks` field to define conditions under which operations can be executed. Every entity operation — such as `find`, `insert`, `save` or `delete` — can have authorization `checks` specified for them. This value can be `false` (operation disabled) or `true` (operation enabled with no checks).
 
-```json
+```json title="Example JSON object"
 {
   "role": "user",
   "entity": "page",
@@ -76,7 +76,7 @@ Platformatic DB allows the specification of `fields` arrays in authorization rul
 
 For `save` operations, it's important to include all not-nullable fields in the configuration to prevent runtime errors due to missing data. Platformatic performs these checks at startup to ensure configurations are correct.
 
-```json title='Example JSON object'
+```json title="Example JSON object"
 {
   "rule": {
     "entity": "page",
