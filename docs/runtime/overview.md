@@ -3,32 +3,27 @@ title: Overview
 label: Platformatic Runtime
 ---
 
+import Issues from '../getting-started/issues.md';
+
 # Platformatic Runtime
 
-Platformatic Runtime is an environment for running multiple Platformatic
-microservices as a single monolithic deployment unit.
+Platformatic Runtime provides a unified environment for running multiple Platformatic microservices as a single monolithic deployment unit, for streamlined development.
 
 ## Features
 
-- Command-line interface: [`platformatic runtime`](/reference/cli.md#runtime)
-- Start Platformatic Runtime [programmatically](/reference/runtime/programmatic.md) in tests or other applications
-- Support for monorepo-based applications.
-- [Interservice communication](#interservice-communication) using private message passing.
+- **Command-line interface**: [`platformatic runtime`](../cli.md#runtime) provides a powerful and flexible CLI for managing your runtime environment.
+- **Programmatic start**: Start Platformatic Runtime [programmatically](../runtime/programmatic.md) in tests or other applications for enhanced integration.
+- **Monorepo support**: Efficiently manage applications within a monorepo setup. 
+- **Interservice communication**:  Enable [interservice communication](#interservice-communication) using private message passing to streamline service interactions.
 
-## Issues
-
-If you run into a bug or have a suggestion for improvement, please
-[raise an issue on GitHub](https://github.com/platformatic/platformatic/issues/new).
 
 ## Standalone usage
 
-If you're only interested in the features available in Platformatic Runtime, you can replace `platformatic` with `@platformatic/runtime` in the `dependencies` of your `package.json`, so that you'll import fewer deps.
+If you're only interested in the features available in Platformatic Runtime, you can replace `platformatic` with `@platformatic/runtime` in the `dependencies` of your `package.json`. This reduces the number of dependencies you need to import for your application.
 
 ## Example configuration file
 
-The following configuration file can be used to start a new Platformatic
-Runtime project. For more details on the configuration file, see the
-[configuration documentation](/reference/runtime/configuration.md).
+The following configuration file can be used to start a new Platformatic Runtime project. For more details on the configuration file, see the [configuration documentation](../runtime/configuration.md).
 
 ```json
 {
@@ -43,28 +38,22 @@ Runtime project. For more details on the configuration file, see the
 
 ## TypeScript Compilation
 
-Platformatic Runtime streamlines the compilation of all services built on TypeScript with the command
-`plt runtime compile`. The TypeScript compiler (`tsc`) is required to be installed separately.
+Platformatic Runtime streamlines the compilation of all services built on TypeScript with the command `plt runtime compile`. This command integrates seamlessly with Platformatic features, ensuring faster builds and consistent environments. it's important to note that the TypeScript compiler (`tsc`) must be installed separately.
 
 ## Platformatic Runtime context
 
 Every Platformatic Runtime application can be run as a standalone application
-or as a Platformatic Runtime service. In a second case, you can use Platformatic
-Runtime features to archive some compile and runtime optimizations. For example,
-see [Interservice communication](#interservice-communication). Looking through the
-Platformatic documentation, you can find some features that are available only
-if you run your application as a Platformatic Runtime service.
+or as a Platformatic Runtime service. Runtime service enables certain compile and runtime optimizations, enhancing performance and resource management. You can see the [interservice communication](#interservice-communication) for more features. 
 
 ## Interservice communication
 
-The Platformatic Runtime allows multiple microservice applications to run
+Platformatic Runtime allows multiple microservice applications to run
 within a single process. Only the entrypoint binds to an operating system
 port and can be reached from outside of the runtime.
 
 Within the runtime, all interservice communication happens by injecting HTTP
 requests into the running servers, without binding them to ports. This injection
-is handled by
-[`fastify-undici-dispatcher`](https://www.npmjs.com/package/fastify-undici-dispatcher).
+is handled by [`fastify-undici-dispatcher`](https://www.npmjs.com/package/fastify-undici-dispatcher).
 
 Each microservice is assigned an internal domain name based on its unique ID.
 For example, a microservice with the ID `awesome` is given the internal domain
@@ -75,4 +64,6 @@ addressed to `awesome.plt.local` to the corresponding Fastify server.
 
 # TrustProxy
 
-For each service in the runtime **except the entrypoint**, Platformatic will set the Fastify's `trustProxy` option to true. This will change the ip/hostname in the request object to match the one coming from the entrypoint, rather than the internal `xyz.plt.local` name. Visit [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#trustproxy) for more details
+For each service in the runtime **except the entrypoint**, Platformatic will set the Fastify's `trustProxy` option to true. This will change the ip/hostname in the request object to match the one coming from the entrypoint, rather than the internal `xyz.plt.local` name.This is useful for services behind a proxy, ensuring the original client's IP address is preserved. Visit [fastify docs](https://www.fastify.io/docs/latest/Reference/Server/#trustproxy) for more details.
+
+<Issues />
