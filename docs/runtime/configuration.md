@@ -111,12 +111,12 @@ microservices are started in the order specified in the configuration file.
     - **`options`** (`object`) — These options are supported:
         - **`url`** (`string`) — The URL to send the telemetry to. Required for `otlp` exporter. This has no effect on `console` and `memory` exporters.
         - **`headers`** (`object`) — Optional headers to send with the telemetry. This has no effect on `console` and `memory` exporters.
-        
-Note that OTLP traces can be consumed by different solutions, like [Jaeger](https://www.jaegertracing.io/). [Here](https://opentelemetry.io/ecosystem/vendors/) the full list.
 
-  _Example_
+:::important        
+OTLP traces can be consumed by different solutions, like [Jaeger](https://www.jaegertracing.io/). [Here](https://opentelemetry.io/ecosystem/vendors/) the full list.
+:::
 
-  ```json
+  ```json title="Example JSON object"
   {
     "telemetry": {
         "serviceName": "test-service",
@@ -134,7 +134,7 @@ Note that OTLP traces can be consumed by different solutions, like [Jaeger](http
 
 This configures the Platformatic Runtime entrypoint `server`. If the entrypoint has also a `server` configured, when the runtime is started, this configuration is used. 
 
-See [Platformatic Service server](/docs/reference/service/configuration.md#server) for more details.
+See the Platformatic [Service server documentation](../service/configuration.md#server) for more details. 
 
 ### `undici`
 
@@ -142,9 +142,8 @@ This configures the [`undici`](https://undici.nodejs.org) global
 [Dispatcher](https://undici.nodejs.org/#/docs/api/Dispatcher).
 Allowing to configure the options in the agent as well as [interceptors](https://undici.nodejs.org/#/docs/api/Dispatcher?id=dispatchercomposeinterceptors-interceptor).
 
-  _Example_
 
-  ```json
+  ```json title="Example JSON object"
   {
     "undici": {
         "keepAliveTimeout": 1000,
@@ -162,8 +161,7 @@ Allowing to configure the options in the agent as well as [interceptors](https:/
   }
   ```
 
-Note that IDP stands for Identity Provider, and its token url is the URL that will be called to generate a new
-token.
+It's important to note that `IDP` stands for Identity Provider, and its token `url` is the URL that will be called to generate a new token.
 
 ### `metrics`
 
@@ -188,15 +186,13 @@ inside the OS temporary folder.
 - **`logs`** (`object`). Optional configuration for the runtime logs.
     - **`maxSize`** (`number`). Maximum size of the logs that will be stored in the file system in MB. Default: `200`. Minimum: `5`.
 
-## Environment variable placeholders
+## Setting and Using ENV placeholders
 
 The value for any configuration setting can be replaced with an environment
 variable by adding a placeholder in the configuration file, for example
 `{PLT_ENTRYPOINT}`.
 
-### Setting environment variables
-
-If a `.env` file exists it will automatically be loaded by Platformatic using
+If an `.env` file exists it will automatically be loaded by Platformatic using
 [`dotenv`](https://github.com/motdotla/dotenv). For example:
 
 ```plaintext title=".env"
@@ -212,6 +208,10 @@ Environment variables can also be set directly on the command line, for example:
 PLT_ENTRYPOINT=service npx platformatic runtime
 ```
 
+:::note
+Learn how to [set](../service/configuration.md#setting-environment-variables) and [use](../service/configuration.md#environment-variable-placeholders) environment variable placeholders [documentation](../service/configuration.md).
+:::
+
 ### PLT_ROOT
 
-The `{PLT_ROOT}` placeholder is automatically set to the directory containing the configuration file, so it can be used to configure relative paths.
+The `{PLT_ROOT}` placeholder is automatically set to the directory containing the configuration file, so it can be used to configure relative paths. See our [documentation](../service/configuration.md#plt_root) to learn more on PLT_ROOT placeholders.
