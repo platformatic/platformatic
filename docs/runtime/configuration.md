@@ -3,62 +3,26 @@
 Platformatic Runtime is configured with a configuration file. It supports the
 use of environment variables as setting values with [environment variable placeholders](#environment-variable-placeholders).
 
-## Configuration file
+## Configuration Files
 
-If the Platformatic CLI finds a file in the current working directory matching
-one of these filenames, it will automatically load it:
+The Platformatic CLI will automatically detect and load configuration files found in the current working directory with the file names listed [here](../file-formats.md#configuration-files).
 
-- `platformatic.runtime.json`
-- `platformatic.runtime.json5`
-- `platformatic.runtime.yml` or `platformatic.runtime.yaml`
-- `platformatic.runtime.tml` or `platformatic.runtime.toml`
+Alternatively, a [`--config` option](../cli.md#db) specify a configuration file path for most `platformatic runtime` CLI commands. The configuration examples in this reference use the JSON format.
 
-Alternatively, a [`--config` option](../cli.md/#service) with a configuration
-filepath can be passed to most `platformatic runtime` CLI commands.
+## Supported File Formats 
 
-The configuration examples in this reference use JSON.
-
-### Supported formats
-
-| Format | Extensions |
-| :-- | :-- |
-| JSON | `.json` |
-| JSON5 | `.json5` |
-| YAML | `.yml`, `.yaml` |
-| TOML | `.tml` |
-
-Comments are supported by the JSON5, YAML and TOML file formats.
+For detailed information on supported file formats and extensions, please visit our [Supported File Formats and Extensions](../file-formats.md#supported-file-formats) page.
 
 ## Settings
-
-Configuration settings are organized into the following groups:
-
-- [Configuration](#configuration)
-  - [Configuration file](#configuration-file)
-    - [Supported formats](#supported-formats)
-  - [Settings](#settings)
-    - [`autoload`](#autoload)
-    - [`services`](#services)
-    - [`entrypoint`](#entrypoint)
-    - [`hotReload`](#hotreload)
-    - [`allowCycles`](#allowcycles)
-    - [`telemetry`](#telemetry)
-    - [`server`](#server)
-    - [`undici`](#undici)
-    - [`metrics`](#metrics)
-    - [`managementApi`](#managementapi)
-  - [Environment variable placeholders](#environment-variable-placeholders)
-    - [Setting environment variables](#setting-environment-variables)
-    - [Allowed placeholder names](#allowed-placeholder-names)
-    - [Placeholder wildcard](#placeholder-wildcard)
-    - [PLT\_ROOT](#plt_root)
 
 Configuration settings containing sensitive data should be set using
 [environment variable placeholders](#environment-variable-placeholders).
 
+:::info
 The `autoload` and `services` settings can be used together, but at least one
 of them must be provided. When the configuration file is parsed, `autoload`
 configuration is translated into `services` configuration.
+:::
 
 ### `autoload`
 
@@ -80,9 +44,7 @@ these default values.
   - **`config` (**required**, `string`) - The overridden configuration file
   name. This is the file that will be used when starting the microservice.
   - **`useHttp`** (`boolean`) - The service will be started on a random HTTP port
-  on `127.0.0.1`, and exposed to the other services via that port; set it to `true`
-  if you are using [@fastify/express](https://github.com/fastify/fastify-express).
-  Default: `false`.
+  on `127.0.0.1`, and exposed to the other services via that port and on default, it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
 
 ### `services`
 
@@ -100,30 +62,27 @@ the microservice.
 - **`config`** (**required**, `string`) - The configuration file used to start
 the microservice.
 - **`useHttp`** (`boolean`) - The service will be started on a random HTTP port
-on `127.0.0.1`, and exposed to the other services via that port; set it to `true`
-if you are using [@fastify/express](https://github.com/fastify/fastify-express).
-Default: `false`.
+on `127.0.0.1`, and exposed to the other services via that port, on default it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
 
 ### `entrypoint`
 
 The Platformatic Runtime's entrypoint is a microservice that is exposed
-publicly. This value must be the ID of a service defined via the `autoload` or
+publicly. This value must be the `ID` of a service defined via the `autoload` or
 `services` configuration.
 
 ### `hotReload`
 
-An optional boolean, defaulting to `false`, indicating if hot reloading should
+An optional boolean, set to default `false`, indicating if hot reloading should
 be enabled for the runtime. If this value is set to `false`, it will disable
 hot reloading for any microservices managed by the runtime. If this value is
-`true`, hot reloading for individual microservices is managed by the
+`true`. Hot reloading for individual microservices is managed by the
 configuration of that microservice.
 
-:::warning
-While hot reloading is useful for development, it is not recommended for use in
-production.
-:::
-
 Note that `watch` should be enabled for each individual service in the runtime.
+
+:::warning
+While hot reloading is useful for development, it is not recommended for use in production.
+:::
 
 ### `allowCycles`
 

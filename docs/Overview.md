@@ -15,7 +15,7 @@ Platformatic enables developers to efficiently develop and run APIs at scale. Hi
 
 This is time consuming, and painstakingly complex. With growing demands of SaaS applications, the amount of API permutations has grown exponentially and has become a development bottleneck. This has led large organizations to create dedicated platform API engineering teams to help teams deliver on business demands.
 
-At Platformatic, Our goal is to make API development simple: we aim is to remove all friction from the day-to-day of backend developers.
+At Platformatic, Our goal is to make API development simple: we aim to remove friction from the day-to-day of backend developers.
 
 
 ## Platformatic Service
@@ -35,7 +35,7 @@ With Platformatic Service you can:
 
 ![Platformatic DB Architecture](./images/Platformatic_DB_Diagram_(Light_Mode).png)
 
-Platformatic DB can expose a SQL database by dynamically mapping it to REST/OpenAPI
+Platformatic DB can expose an SQL database by dynamically mapping it to REST/OpenAPI
 and GraphQL endpoints. It supports a limited subset of the SQL query language, but
 also allows developers to add their own custom routes and resolvers.
 
