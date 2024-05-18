@@ -1,25 +1,20 @@
 # Programmatic API
 
-In many cases it's useful to start Platformatic applications using an API
-instead of the command line. The `@platformatic/runtime` API makes it simple to
-work with different application types (e.g. `service`, `db`, `composer` and `runtime`) without
-needing to know the application type a priori.
+Using the `@platformatic/runtime` API, you can start Platformatic applications programmatically, bypassing the command line. This API facilitates interaction with various application types such as `service`, `db`, `composer`, and `runtime`, simplifying operations across different services. 
 
 ## `buildServer()`
 
-The `buildServer` function creates a server from a provided configuration
-object or configuration filename.
-The config can be of either Platformatic Service, Platformatic DB,
-Platformatic Composer or any other application built on top of
-[Platformatic Service](/reference/service/programmatic.md).
+`buildServer` function initializes a server based on a configuration object or file. It supports configurations for Platformatic Service, Platformatic DB, Platformatic Composer, and any other applications developed on top of [Platformatic Service](../service/programmatic.md).
+
 
 ```js
 import { buildServer } from '@platformatic/runtime'
 
+// Initialize the server using a configuration file
 const app = await buildServer('path/to/platformatic.runtime.json')
 const entrypointUrl = await app.start()
 
-// Make a request to the entrypoint.
+// Sample request to the server's entrypoint
 const res = await fetch(entrypointUrl)
 console.log(await res.json())
 
@@ -28,7 +23,9 @@ console.log(await res.json())
 await app.close()
 ```
 
-It is also possible to customize the configuration:
+## Custom Configuration 
+
+You can customize your server setup directly within your code by specifying the configuration details:
 
 
 ```js
@@ -47,20 +44,17 @@ await app.start()
 ```
 
 
-## `loadConfig()`
+## `loadConfig()` 
 
-The `loadConfig` function is used to read and parse a configuration file for
-an arbitrary Platformatic application.
+The `loadConfig` reads and parses a configuration file for any Platformatic application. It can automatically detect the type of application or accept explicit instructions.
 
 ```js
 import { loadConfig } from '@platformatic/runtime'
 
-// Read the config based on command line arguments. loadConfig() will detect
-// the application type.
+// Read the configuration and automatically detect the application type.
 const config = await loadConfig({}, ['-c', '/path/to/platformatic.config.json'])
 
-// Read the config based on command line arguments. The application type can
-// be provided explicitly.
+// Read the config based on command line arguments and provide default configuration if needed
 const config = await loadConfig(
   {},
   ['-c', '/path/to/platformatic.config.json']
@@ -76,8 +70,7 @@ const config = await loadConfig(
 
 ## `start()`
 
-The `start` function loads a configuration, builds a server, and starts the
-server. However, the server is not returned.
+The `start` function loads a configuration, builds and starts a server but does not return the server instance. This function is best suited for scenarios where no further interaction with the server is necessary after launch.
 
 ```js
 import { start } from '@platformatic/runtime'
