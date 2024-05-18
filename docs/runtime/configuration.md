@@ -3,62 +3,26 @@
 Platformatic Runtime is configured with a configuration file. It supports the
 use of environment variables as setting values with [environment variable placeholders](#environment-variable-placeholders).
 
-## Configuration file
+## Configuration Files
 
-If the Platformatic CLI finds a file in the current working directory matching
-one of these filenames, it will automatically load it:
+The Platformatic CLI will automatically detect and load configuration files found in the current working directory with the file names listed [here](../file-formats.md#configuration-files).
 
-- `platformatic.runtime.json`
-- `platformatic.runtime.json5`
-- `platformatic.runtime.yml` or `platformatic.runtime.yaml`
-- `platformatic.runtime.tml` or `platformatic.runtime.toml`
+Alternatively, a [`--config` option](../cli.md#db) specify a configuration file path for most `platformatic runtime` CLI commands. The configuration examples in this reference use the JSON format.
 
-Alternatively, a [`--config` option](../cli.md/#service) with a configuration
-filepath can be passed to most `platformatic runtime` CLI commands.
+## Supported File Formats 
 
-The configuration examples in this reference use JSON.
-
-### Supported formats
-
-| Format | Extensions |
-| :-- | :-- |
-| JSON | `.json` |
-| JSON5 | `.json5` |
-| YAML | `.yml`, `.yaml` |
-| TOML | `.tml` |
-
-Comments are supported by the JSON5, YAML and TOML file formats.
+For detailed information on supported file formats and extensions, please visit our [Supported File Formats and Extensions](../file-formats.md#supported-file-formats) page.
 
 ## Settings
-
-Configuration settings are organized into the following groups:
-
-- [Configuration](#configuration)
-  - [Configuration file](#configuration-file)
-    - [Supported formats](#supported-formats)
-  - [Settings](#settings)
-    - [`autoload`](#autoload)
-    - [`services`](#services)
-    - [`entrypoint`](#entrypoint)
-    - [`hotReload`](#hotreload)
-    - [`allowCycles`](#allowcycles)
-    - [`telemetry`](#telemetry)
-    - [`server`](#server)
-    - [`undici`](#undici)
-    - [`metrics`](#metrics)
-    - [`managementApi`](#managementapi)
-  - [Environment variable placeholders](#environment-variable-placeholders)
-    - [Setting environment variables](#setting-environment-variables)
-    - [Allowed placeholder names](#allowed-placeholder-names)
-    - [Placeholder wildcard](#placeholder-wildcard)
-    - [PLT\_ROOT](#plt_root)
 
 Configuration settings containing sensitive data should be set using
 [environment variable placeholders](#environment-variable-placeholders).
 
+:::info
 The `autoload` and `services` settings can be used together, but at least one
 of them must be provided. When the configuration file is parsed, `autoload`
 configuration is translated into `services` configuration.
+:::
 
 ### `autoload`
 
@@ -80,9 +44,7 @@ these default values.
   - **`config` (**required**, `string`) - The overridden configuration file
   name. This is the file that will be used when starting the microservice.
   - **`useHttp`** (`boolean`) - The service will be started on a random HTTP port
-  on `127.0.0.1`, and exposed to the other services via that port; set it to `true`
-  if you are using [@fastify/express](https://github.com/fastify/fastify-express).
-  Default: `false`.
+  on `127.0.0.1`, and exposed to the other services via that port and on default, it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
 
 ### `services`
 
@@ -100,30 +62,27 @@ the microservice.
 - **`config`** (**required**, `string`) - The configuration file used to start
 the microservice.
 - **`useHttp`** (`boolean`) - The service will be started on a random HTTP port
-on `127.0.0.1`, and exposed to the other services via that port; set it to `true`
-if you are using [@fastify/express](https://github.com/fastify/fastify-express).
-Default: `false`.
+on `127.0.0.1`, and exposed to the other services via that port, on default it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
 
 ### `entrypoint`
 
 The Platformatic Runtime's entrypoint is a microservice that is exposed
-publicly. This value must be the ID of a service defined via the `autoload` or
+publicly. This value must be the `ID` of a service defined via the `autoload` or
 `services` configuration.
 
 ### `hotReload`
 
-An optional boolean, defaulting to `false`, indicating if hot reloading should
+An optional boolean, set to default `false`, indicating if hot reloading should
 be enabled for the runtime. If this value is set to `false`, it will disable
 hot reloading for any microservices managed by the runtime. If this value is
-`true`, hot reloading for individual microservices is managed by the
+`true`. Hot reloading for individual microservices is managed by the
 configuration of that microservice.
 
-:::warning
-While hot reloading is useful for development, it is not recommended for use in
-production.
-:::
-
 Note that `watch` should be enabled for each individual service in the runtime.
+
+:::warning
+While hot reloading is useful for development, it is not recommended for use in production.
+:::
 
 ### `allowCycles`
 
@@ -152,12 +111,12 @@ microservices are started in the order specified in the configuration file.
     - **`options`** (`object`) — These options are supported:
         - **`url`** (`string`) — The URL to send the telemetry to. Required for `otlp` exporter. This has no effect on `console` and `memory` exporters.
         - **`headers`** (`object`) — Optional headers to send with the telemetry. This has no effect on `console` and `memory` exporters.
-        
-Note that OTLP traces can be consumed by different solutions, like [Jaeger](https://www.jaegertracing.io/). [Here](https://opentelemetry.io/ecosystem/vendors/) the full list.
 
-  _Example_
+:::important        
+OTLP traces can be consumed by different solutions, like [Jaeger](https://www.jaegertracing.io/). [Here](https://opentelemetry.io/ecosystem/vendors/) the full list.
+:::
 
-  ```json
+  ```json title="Example JSON object"
   {
     "telemetry": {
         "serviceName": "test-service",
@@ -175,7 +134,7 @@ Note that OTLP traces can be consumed by different solutions, like [Jaeger](http
 
 This configures the Platformatic Runtime entrypoint `server`. If the entrypoint has also a `server` configured, when the runtime is started, this configuration is used. 
 
-See [Platformatic Service server](/docs/reference/service/configuration.md#server) for more details.
+See the Platformatic [Service server documentation](../service/configuration.md#server) for more details. 
 
 ### `undici`
 
@@ -183,9 +142,8 @@ This configures the [`undici`](https://undici.nodejs.org) global
 [Dispatcher](https://undici.nodejs.org/#/docs/api/Dispatcher).
 Allowing to configure the options in the agent as well as [interceptors](https://undici.nodejs.org/#/docs/api/Dispatcher?id=dispatchercomposeinterceptors-interceptor).
 
-  _Example_
 
-  ```json
+  ```json title="Example JSON object"
   {
     "undici": {
         "keepAliveTimeout": 1000,
@@ -203,8 +161,7 @@ Allowing to configure the options in the agent as well as [interceptors](https:/
   }
   ```
 
-Note that IDP stands for Identity Provider, and its token url is the URL that will be called to generate a new
-token.
+It's important to note that `IDP` stands for Identity Provider, and its token `url` is the URL that will be called to generate a new token.
 
 ### `metrics`
 
@@ -229,15 +186,13 @@ inside the OS temporary folder.
 - **`logs`** (`object`). Optional configuration for the runtime logs.
     - **`maxSize`** (`number`). Maximum size of the logs that will be stored in the file system in MB. Default: `200`. Minimum: `5`.
 
-## Environment variable placeholders
+## Setting and Using ENV placeholders
 
 The value for any configuration setting can be replaced with an environment
 variable by adding a placeholder in the configuration file, for example
 `{PLT_ENTRYPOINT}`.
 
-### Setting environment variables
-
-If a `.env` file exists it will automatically be loaded by Platformatic using
+If an `.env` file exists it will automatically be loaded by Platformatic using
 [`dotenv`](https://github.com/motdotla/dotenv). For example:
 
 ```plaintext title=".env"
@@ -253,6 +208,10 @@ Environment variables can also be set directly on the command line, for example:
 PLT_ENTRYPOINT=service npx platformatic runtime
 ```
 
+:::note
+Learn how to [set](../service/configuration.md#setting-environment-variables) and [use](../service/configuration.md#environment-variable-placeholders) environment variable placeholders [documentation](../service/configuration.md).
+:::
+
 ### PLT_ROOT
 
-The `{PLT_ROOT}` placeholder is automatically set to the directory containing the configuration file, so it can be used to configure relative paths.
+The `{PLT_ROOT}` placeholder is automatically set to the directory containing the configuration file, so it can be used to configure relative paths. See our [documentation](../service/configuration.md#plt_root) to learn more on PLT_ROOT placeholders.
