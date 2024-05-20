@@ -79,9 +79,7 @@ test('should used passed env vars', (t) => {
         PLT_FOOBAR: 'plt_foobar'
       }
     })
-
     assert.deepStrictEqual(cm.env, {
-      ...process.env,
       FOOBAR: 'foobar',
       PLT_FOOBAR: 'plt_foobar'
     })
@@ -95,7 +93,7 @@ test('should used passed env vars', (t) => {
       delete process.env.FOOBAR
       delete process.env.PLT_FOOBAR
     })
-    assert.deepStrictEqual(cm.env, { ...process.env })
+    assert.deepStrictEqual(cm.env, {})
   }
 })
 
