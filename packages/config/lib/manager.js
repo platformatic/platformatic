@@ -48,11 +48,21 @@ class ConfigManager extends EventEmitter {
     this.schemaOptions = opts.schemaOptions || {}
     this._providedSchema = !!opts.schema
     this._originalEnv = opts.env || {}
-    this.env = this._originalEnv
+    this.env = { ...this.getProcessEnvValues(), ...this._originalEnv }
     this._onMissingEnv = opts.onMissingEnv
     if (typeof opts.transformConfig === 'function') {
       this._transformConfig = opts.transformConfig
     }
+  }
+
+  getProcessEnvValues () {
+    const output = {}
+    Object.entries(process.env).forEach(([key, value]) => {
+      if (key.startsWith('PLT_') || key === 'DATABASE_URL' || key === 'PORT') {
+        output[key] = value
+      }
+    })
+    return output
   }
 
   toFastifyPlugin () {
@@ -93,7 +103,7 @@ class ConfigManager extends EventEmitter {
         // do nothing, again
       }
     }
-    let env = this._originalEnv
+    let env = { ...this.getProcessEnvValues(), ...this._originalEnv }
     if (dotEnvPath) {
       const data = await readFile(dotEnvPath, 'utf-8')
       const parsed = dotenv.parse(data)
