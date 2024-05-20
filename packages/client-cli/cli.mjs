@@ -399,7 +399,7 @@ export async function command (argv) {
     options.urlAuthHeaders = options['url-auth-headers']
     await downloadAndProcess({ url, ...options, logger, runtime: options.runtime })
     logger.info(`Client generated successfully into ${options.folder}`)
-    logger.info('Check out the docs to know more: https://docs.platformatic.dev/docs/reference/client/introduction')
+    logger.info('Check out the docs to know more: https://docs.platformatic.dev/docs/service/overview')
     if (runtime) {
       await runtime.stopServices()
     }

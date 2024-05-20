@@ -1,6 +1,6 @@
 # Platformatic Runtime API
 
-This is a generated [Platformatic Runtime](https://docs.platformatic.dev/docs/reference/runtime/introduction) application.
+This is a generated [Platformatic Runtime](https://docs.platformatic.dev/docs/runtime/overview) application.
 
 ## Requirements
 
