@@ -242,12 +242,6 @@ async function downloadAndProcess (options) {
       name: camelcase(name),
       type: found
     }
-    const availableCommandLineOptionsInClient = ['fullRequest', 'fullResponse', 'validateResponse']
-    availableCommandLineOptionsInClient.forEach((c) => {
-      if (options[c]) {
-        toPush[c] = true
-      }
-    })
     if (runtime) {
       toPush.serviceId = runtime
     } else {

@@ -707,10 +707,7 @@ const clients = {
       },
       url: {
         type: 'string'
-      },
-      fullResponse: { type: 'boolean' },
-      fullRequest: { type: 'boolean' },
-      validateResponse: { type: 'boolean' }
+      }
     },
     additionalProperties: false
   }
