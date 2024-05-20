@@ -1,6 +1,6 @@
 # @platformatic/swagger-ui-theme
 
-Check out the full documentation on [our website](https://docs.platformatic.dev/docs/reference/sql-openapi/introduction).
+Check out the full documentation on [our website](https://docs.platformatic.dev/docs/packages/sql-openapi/overview).
 
 ## Install
 

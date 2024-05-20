@@ -242,6 +242,12 @@ async function downloadAndProcess (options) {
       name: camelcase(name),
       type: found
     }
+    const availableCommandLineOptionsInClient = ['fullRequest', 'fullResponse', 'validateResponse']
+    availableCommandLineOptionsInClient.forEach((c) => {
+      if (options[c]) {
+        toPush[c] = true
+      }
+    })
     if (runtime) {
       toPush.serviceId = runtime
     } else {
@@ -393,7 +399,7 @@ export async function command (argv) {
     options.urlAuthHeaders = options['url-auth-headers']
     await downloadAndProcess({ url, ...options, logger, runtime: options.runtime })
     logger.info(`Client generated successfully into ${options.folder}`)
-    logger.info('Check out the docs to know more: https://docs.platformatic.dev/docs/reference/client/introduction')
+    logger.info('Check out the docs to know more: https://docs.platformatic.dev/docs/service/overview')
     if (runtime) {
       await runtime.stopServices()
     }
