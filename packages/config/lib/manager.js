@@ -127,9 +127,9 @@ class ConfigManager extends EventEmitter {
       return value.replace(/\\/g, '\\\\').replace(/\n/g, '\\n')
     }
     const fullEnv = {
+      ...process.env,
       ...this.env,
-      [PLT_ROOT]: join(this.fullPath, '..'),
-      ...process.env
+      [PLT_ROOT]: join(this.fullPath, '..')
     }
     return this.pupa(configString, fullEnv, { transform: escapeJSONstring })
   }
