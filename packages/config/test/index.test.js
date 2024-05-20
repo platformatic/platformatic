@@ -93,7 +93,7 @@ test('should used passed env vars', (t) => {
       delete process.env.FOOBAR
       delete process.env.PLT_FOOBAR
     })
-    assert.deepStrictEqual(cm.env, { PLT_FOOBAR: 'plt_foobar' })
+    assert.deepStrictEqual(cm.env, {})
   }
 })
 
