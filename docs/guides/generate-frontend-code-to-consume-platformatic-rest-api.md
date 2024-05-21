@@ -47,7 +47,7 @@ Once the new Platformatic app is ready:
     },
 +   "cors": {
 +     "origin": {
-+       "regexp": "/*/"
++       "regexp": "^http://localhost.*"
 +     }
 +   }
   },
