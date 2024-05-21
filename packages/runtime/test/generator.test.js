@@ -289,7 +289,6 @@ describe('Generator', () => {
       assert.deepEqual(output, {
         targetDirectory,
         env: {
-          ...process.env,
           PLT_FIRST_SERVICE_TYPESCRIPT: false,
           PLT_SECOND_SERVICE_TYPESCRIPT: 'false',
           PLT_SERVER_HOSTNAME: '127.0.0.1',
