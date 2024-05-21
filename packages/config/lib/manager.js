@@ -48,7 +48,7 @@ class ConfigManager extends EventEmitter {
     this.schemaOptions = opts.schemaOptions || {}
     this._providedSchema = !!opts.schema
     this._originalEnv = opts.env || {}
-    this.env = { ...process.env, ...this._originalEnv }
+    this.env = { ...this._originalEnv }
     this._onMissingEnv = opts.onMissingEnv
     if (typeof opts.transformConfig === 'function') {
       this._transformConfig = opts.transformConfig
@@ -93,7 +93,7 @@ class ConfigManager extends EventEmitter {
         // do nothing, again
       }
     }
-    let env = { ...process.env, ...this._originalEnv }
+    let env = { ...this._originalEnv }
     if (dotEnvPath) {
       const data = await readFile(dotEnvPath, 'utf-8')
       const parsed = dotenv.parse(data)
@@ -116,6 +116,7 @@ class ConfigManager extends EventEmitter {
       return value.replace(/\\/g, '\\\\').replace(/\n/g, '\\n')
     }
     const fullEnv = {
+      ...process.env,
       ...this.env,
       [PLT_ROOT]: join(this.fullPath, '..')
     }
@@ -187,7 +188,6 @@ class ConfigManager extends EventEmitter {
       await this._transformConfig()
       return true
     } catch (err) {
-      console.log(err)
       if (err.name === 'MissingValueError') {
         throw new errors.EnvVarMissingError(err.key)
       }
