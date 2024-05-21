@@ -123,7 +123,7 @@ __Before opening a pull request, please ensure that the tests are passing for th
 
 ### Updating the CLI docs
 
-The [cli.md](./docs/reference/cli.md) file is automatically generated through the [gen-cli-doc.mjs](./scripts/gen-cli-doc.mjs) script and you must not manually change it.
+The [cli.md](../docs/cli.md) file is automatically generated through the [gen-cli-doc.mjs](./scripts/gen-cli-doc.mjs) script and you must not manually change it.
 
 To update the CLI docs:
 1. Update/add the txt helpers
