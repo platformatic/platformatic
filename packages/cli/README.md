@@ -24,16 +24,16 @@ guide to get up and running with Platformatic.
 
 ## Documentation
 
-- [Getting Started](https://docs.platformatic.dev/docs/category/getting-started)
-- [Reference](https://docs.platformatic.dev/docs/category/reference)
-- [Guides](https://docs.platformatic.dev/docs/category/guides)
+- [Getting Started](https://docs.platformatic.dev/docs/getting-started/quick-start-guide)
+- [CLI](https://docs.platformatic.dev/docs/cli)
+- [Guides](https://docs.platformatic.dev/docs/guides/movie-quotes-app-tutorial)
 
 Check out our full documentation at [docs.platformatic.dev](https://docs.platformatic.dev).
 
 ## Support
 
-Having issues? Drop in to the [Platformatic Discord](https://discord.gg/platformatic)
-for help.
+If you run into a bug, issues or have a suggestion for improvement, please raise an 
+[issue on GitHub](https://github.com/platformatic/platformatic/issues/new) or join our [Discord feedback](https://discord.gg/platformatic) channel.
 
 ## License
 
