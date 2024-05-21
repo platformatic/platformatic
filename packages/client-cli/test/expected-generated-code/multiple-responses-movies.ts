@@ -5,7 +5,10 @@ import type * as Types from './movies-types'
 
 // The base URL for the API. This can be overridden by calling `setBaseUrl`.
 let baseUrl = ''
-export const setBaseUrl = (newUrl: string) : void => { baseUrl = newUrl }
+function sanitizeUrl(url: string) : string {
+  if (url.endsWith('/')) { return url.slice(0, -1) } else { return url }
+}
+export const setBaseUrl = (newUrl: string) : void => { baseUrl = sanitizeUrl(newUrl) }
 type JSON = Record<string, unknown>
 function headersToJSON(headers: Headers): JSON {
   const output: JSON = {}
@@ -61,6 +64,7 @@ export const getPkgScopeNameVersion: Movies['getPkgScopeNameVersion'] = async (r
   return await _getPkgScopeNameVersion(baseUrl, request)
 }
 export default function build (url: string) {
+  url = sanitizeUrl(url)
   return {
     getPkgScopeNameVersion: _getPkgScopeNameVersion.bind(url, ...arguments)
   }
