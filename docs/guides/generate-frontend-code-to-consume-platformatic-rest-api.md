@@ -34,7 +34,8 @@ the corresponding table, migrations, and REST API to create, read, update, and d
 
 Once the new Platformatic app is ready:
 
-* Set up CORS in `platformatic.db.json`
+* Define a `PLT_SERVER_CORS_ORIGIN` env variable as a valid regexp (f.e. `"^http://localhost.*"` or `"^https://your.awesome.service/*"`)
+* Pass it to `platformatic.db.json`
 
 ```diff
 {
@@ -47,7 +48,7 @@ Once the new Platformatic app is ready:
     },
 +   "cors": {
 +     "origin": {
-+       "regexp": "/*/"
++       "regexp": "{PLT_SERVER_CORS_ORIGIN}"
 +     }
 +   }
   },
