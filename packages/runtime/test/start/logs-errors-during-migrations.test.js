@@ -6,7 +6,7 @@ const { test } = require('node:test')
 const { MessageChannel } = require('node:worker_threads')
 const { loadConfig } = require('@platformatic/config')
 const { platformaticDB } = require('@platformatic/db')
-const { wrapConfigInRuntimeConfig } = require('../../lib/config')
+const { wrapConfigInRuntimeConfig } = require('../..')
 const { buildRuntime } = require('../../lib/start')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 

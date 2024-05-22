@@ -37,7 +37,8 @@ function startWorker ({ config, dirname, runtimeLogsDir }, env) {
   return worker
 }
 
-async function buildRuntime (configManager, env = process.env) {
+async function buildRuntime (configManager, env) {
+  env = env || process.env
   const config = configManager.current
 
   if (inspector.url()) {
