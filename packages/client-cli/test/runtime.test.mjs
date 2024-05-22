@@ -402,7 +402,7 @@ module.exports = async function (app, opts) {
   })
 })
 
-test.only('support full-request, full-response and validate-response options', async (t) => {
+test('support full-request, full-response and validate-response options', async (t) => {
   const dir = await moveToTmpdir(after)
 
   await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })

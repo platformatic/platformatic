@@ -46,11 +46,15 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
   writer.writeLine('// The base URL for the API. This can be overridden by calling `setBaseUrl`.')
   writer.writeLine('let baseUrl = \'\'')
   if (language === 'ts') {
+    writer.write('function sanitizeUrl(url: string) : string ').block(() => {
+      writer.writeLine('if (url.endsWith(\'/\')) { return url.slice(0, -1) } else { return url }')
+    })
     writer.writeLine(
-      'export const setBaseUrl = (newUrl: string) : void => { baseUrl = newUrl }'
+      'export const setBaseUrl = (newUrl: string) : void => { baseUrl = sanitizeUrl(newUrl) }'
     )
 
     writer.writeLine('type JSON = Record<string, unknown>')
+    writer.writeLine('/* @ts-ignore */')
     writer.write('function headersToJSON(headers: Headers): JSON ').block(() => {
       writer.writeLine('const output: JSON = {}')
       writer.write('headers.forEach((value, key) => ').inlineBlock(() => {
@@ -60,11 +64,14 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
       writer.writeLine('return output')
     })
   } else {
+    writer.write('function sanitizeUrl(url)').block(() => {
+      writer.writeLine('if (url.endsWith(\'/\')) { return url.slice(0, -1) } else { return url }')
+    })
     writer.writeLine(
       `/**  @type {import('./${name}-types.d.ts').${camelCaseName}['setBaseUrl']} */`
     )
     writer.writeLine(
-      'export const setBaseUrl = (newUrl) => { baseUrl = newUrl }'
+      'export const setBaseUrl = (newUrl) => { baseUrl = sanitizeUrl(newUrl) }'
     )
 
     writer.write('function headersToJSON(headers) ').block(() => {
@@ -276,6 +283,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
     ? 'export default function build (url: string)'
     : 'export default function build (url)'
   writer.write(factoryBuildFunction).block(() => {
+    writer.writeLine('url = sanitizeUrl(url)')
     writer.write('return').block(() => {
       for (const [idx, op] of allOperations.entries()) {
         const underscoredOperation = `_${op}`

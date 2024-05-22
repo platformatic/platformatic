@@ -84,6 +84,7 @@ export const getRedirect = async (request) => {
   // create factory
   const factoryImplementation = `
 export default function build (url) {
+  url = sanitizeUrl(url)
   return {
     getCustomSwagger: _getCustomSwagger.bind(url, ...arguments),
     getRedirect: _getRedirect.bind(url, ...arguments),
