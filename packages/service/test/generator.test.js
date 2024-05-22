@@ -112,6 +112,7 @@ describe('generator', () => {
       ]
       svc.setConfig({
         isRuntimeContext: true,
+        plugin: false,
         serviceName: 'my-service'
       })
       await svc.addPackage(packageDefinitions[0])
