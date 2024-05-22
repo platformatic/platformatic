@@ -25,6 +25,8 @@ class DBGenerator extends BaseGenerator {
       ...defaultBaseConfig,
       database: 'sqlite',
       connectionString: null,
+      plugin: true,
+      tests: true,
       types: true,
       migrations: 'migrations',
       createMigrations: true

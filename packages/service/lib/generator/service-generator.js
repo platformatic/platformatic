@@ -12,6 +12,13 @@ class ServiceGenerator extends BaseGenerator {
     })
   }
 
+  getDefaultConfig () {
+    const config = super.getDefaultConfig()
+    config.plugin = true
+    config.tests = true
+    return config
+  }
+
   async _beforePrepare () {
     // if we are NOT updating, create env and files, otherwise leave as it is
     if (!this.config.isUpdating) {

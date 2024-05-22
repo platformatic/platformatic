@@ -22,8 +22,8 @@ describe('generator', () => {
     assert.deepEqual(dbApp.config, {
       port: 3042,
       hostname: '0.0.0.0',
-      plugin: false,
-      tests: false,
+      plugin: true,
+      tests: true,
       typescript: false,
       initGitRepository: false,
       dependencies: { '@platformatic/db': `^${dbApp.platformaticVersion}` },
@@ -75,8 +75,7 @@ describe('generator', () => {
 
     {
       dbApp.setConfig({
-        typescript: true,
-        plugin: true
+        typescript: true
       })
 
       await dbApp.prepare()
@@ -164,8 +163,7 @@ declare module 'fastify' {
     {
       // sqlite
       dbApp.setConfig({
-        typescript: true,
-        plugin: true
+        typescript: true
       })
       await dbApp.prepare()
 
@@ -178,8 +176,7 @@ declare module 'fastify' {
     {
       // sqlite with javascript
       dbApp.setConfig({
-        typescript: false,
-        plugin: true
+        typescript: false
       })
       await dbApp.prepare()
 
@@ -193,7 +190,6 @@ declare module 'fastify' {
       // mysql
       dbApp.setConfig({
         typescript: true,
-        plugin: true,
         database: 'mysql'
       })
       await dbApp.prepare()
@@ -214,7 +210,6 @@ declare module 'fastify' {
       // mariadb
       dbApp.setConfig({
         typescript: true,
-        plugin: true,
         database: 'mariadb'
       })
       await dbApp.prepare()
@@ -235,7 +230,6 @@ declare module 'fastify' {
       // postgres
       dbApp.setConfig({
         typescript: true,
-        plugin: true,
         database: 'postgres'
       })
       await dbApp.prepare()
@@ -335,7 +329,8 @@ declare module 'fastify' {
       ]
       svc.setConfig({
         isRuntimeContext: true,
-        serviceName: 'my-db'
+        serviceName: 'my-db',
+        plugin: false
       })
       await svc.addPackage(packageDefinitions[0])
       await svc.prepare()
@@ -360,9 +355,6 @@ declare module 'fastify' {
     {
       // with standard platformatic plugin
       const svc = new DBGenerator()
-      svc.setConfig({
-        plugin: true
-      })
       const packageDefinitions = [
         {
           name: '@fastify/compress',
