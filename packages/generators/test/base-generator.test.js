@@ -375,7 +375,7 @@ test('should generate tsConfig file and typescript files', async (t) => {
   assert.ok(bg.getFileObject('example.test.ts', join('test', 'plugins')))
 })
 
-test('should throw if preapare fails', async (t) => {
+test('should throw if prepare fails', async (t) => {
   const bg = new BaseGenerator({
     module: '@platformatic/service'
   })
@@ -841,6 +841,44 @@ test('on update should just touch the packages configuration', async (t) => {
     '@fastify/foo-plugin': '1.42.0'
   })
 })
+
+test('on update should just touch the packages configuration', async (t) => {
+  mockNpmJsRequestForPkgs(['@fastify/foo-plugin'])
+  const runtimeDirectory = join(__dirname, 'fixtures', 'sample-runtime', 'services', 'no-plugin')
+  const dir = await moveToTmpdir(after)
+  await cp(runtimeDirectory, dir, { recursive: true })
+
+  const bg = new BaseGenerator({
+    module: '@platformatic/service',
+    targetDirectory: dir
+  })
+  bg.setConfig({
+    isUpdating: true
+  })
+  await bg.addPackage({
+    name: '@fastify/foo-plugin',
+    options: [
+      {
+        path: 'name',
+        type: 'string',
+        value: 'foobar',
+        name: 'FST_PLUGIN_FOO_FOOBAR'
+      }
+    ]
+  })
+  await bg.prepare()
+
+  assert.equal(bg.files.length, 1)
+  assert.equal(bg.files[0].file, 'platformatic.json')
+  assert.equal(bg.files[0].path, '')
+
+  const configFileContents = JSON.parse(bg.files[0].contents)
+  assert.equal(configFileContents.plugins, undefined)
+  assert.deepEqual(bg.config.dependencies, {
+    '@fastify/foo-plugin': '1.42.0'
+  })
+})
+
 describe('runtime context', () => {
   test('should set config.envPrefix correctly', async (t) => {
     const bg = new BaseGenerator({

@@ -180,11 +180,13 @@ class BaseGenerator extends FileGenerator {
         const generatedConfigFile = JSON.parse(this.getFileObject('platformatic.json', '').contents)
         const fileFromDisk = await this.loadFile({ file: 'platformatic.json', path: '' })
         const currentConfigFile = JSON.parse(fileFromDisk.contents)
-        if (generatedConfigFile.plugins && generatedConfigFile.plugins.packages) {
-          currentConfigFile.plugins.packages = generatedConfigFile.plugins.packages
-        } else {
-          // remove packages because new configuration does not have them
-          currentConfigFile.plugins.packages = []
+        if (currentConfigFile.plugins) {
+          if (generatedConfigFile.plugins && generatedConfigFile.plugins.packages) {
+            currentConfigFile.plugins.packages = generatedConfigFile.plugins.packages
+          } else {
+            // remove packages because new configuration does not have them
+            currentConfigFile.plugins.packages = []
+          }
         }
         this.reset()
         this.addFile({
