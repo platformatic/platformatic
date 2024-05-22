@@ -514,7 +514,7 @@ test('call response.json only for json responses', async (t) => {
   }
 })
 
-test.only('should match expected implementation with typescript', async (t) => {
+test('should match expected implementation with typescript', async (t) => {
   const dir = await moveToTmpdir(after)
   const openAPIfile = join(__dirname, 'fixtures', 'multiple-responses-openapi.json')
   await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend', '--full-response'])
