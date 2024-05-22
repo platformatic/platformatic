@@ -33,8 +33,7 @@ describe('generator', () => {
 
     {
       svc.setConfig({
-        typescript: true,
-        plugin: true
+        typescript: true
       })
 
       await svc.prepare()
@@ -50,8 +49,7 @@ describe('generator', () => {
     await svc.prepare()
 
     svc.setConfig({
-      typescript: true,
-      plugin: true
+      typescript: true
     })
 
     await svc.prepare()
@@ -73,7 +71,6 @@ describe('generator', () => {
   test('config', async (t) => {
     const svc = new ServiceGenerator()
     svc.setConfig({
-      plugin: true,
       typescript: true
     })
     await svc.prepare()
@@ -140,9 +137,6 @@ describe('generator', () => {
     {
       // with standard platformatic plugin
       const svc = new ServiceGenerator()
-      svc.setConfig({
-        plugin: true
-      })
       const packageDefinitions = [
         {
           name: '@fastify/compress',

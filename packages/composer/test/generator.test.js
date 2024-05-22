@@ -31,8 +31,7 @@ describe('generator', () => {
 
     {
       svc.setConfig({
-        typescript: true,
-        plugin: true
+        typescript: true
       })
 
       await svc.prepare()
@@ -75,7 +74,6 @@ declare module 'fastify' {
   test('config', async (t) => {
     const svc = new ComposerGenerator()
     svc.setConfig({
-      plugin: true,
       typescript: true
     })
     await svc.prepare()
@@ -129,6 +127,7 @@ declare module 'fastify' {
       ]
       svc.setConfig({
         isRuntimeContext: true,
+        plugin: false,
         serviceName: 'my-composer'
       })
       await svc.addPackage(packageDefinitions[0])
@@ -154,9 +153,6 @@ declare module 'fastify' {
     {
       // with standard platformatic plugin
       const svc = new ComposerGenerator()
-      svc.setConfig({
-        plugin: true
-      })
       const packageDefinitions = [
         {
           name: '@fastify/compress',

@@ -211,9 +211,7 @@ async function createApplication (args, logger, pkgManager) {
 
     stackableGenerator.setConfig({
       ...stackableGenerator.config,
-      serviceName,
-      plugin: true,
-      tests: true
+      serviceName
     })
 
     generator.addService(stackableGenerator, serviceName)

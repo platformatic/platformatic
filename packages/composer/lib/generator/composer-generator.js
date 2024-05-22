@@ -13,6 +13,15 @@ class ComposerGenerator extends BaseGenerator {
     this.runtime = null
   }
 
+  getDefaultConfig () {
+    const defaultBaseConfig = super.getDefaultConfig()
+    return {
+      ...defaultBaseConfig,
+      plugin: true,
+      tests: true
+    }
+  }
+
   async _getConfigFileContents () {
     const template = {
       $schema: `https://platformatic.dev/schemas/v${this.platformaticVersion}/composer`,
