@@ -521,6 +521,5 @@ test('should match expected implementation with typescript', async (t) => {
   const implementationFile = join(dir, 'movies', 'movies.ts')
   const implementation = await readFile(implementationFile, 'utf-8')
   const expected = await readFile(join(__dirname, 'expected-generated-code', 'multiple-responses-movies.ts'), 'utf-8')
-  console.log(expected, '#####################\n', implementation)
   equal(implementation.replace(/\r/g, ''), expected.replace(/\r/g, '')) // to make windows CI happy
 })

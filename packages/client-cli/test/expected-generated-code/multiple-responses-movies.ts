@@ -10,6 +10,7 @@ function sanitizeUrl(url: string) : string {
 }
 export const setBaseUrl = (newUrl: string) : void => { baseUrl = sanitizeUrl(newUrl) }
 type JSON = Record<string, unknown>
+/* @ts-ignore */
 function headersToJSON(headers: Headers): JSON {
   const output: JSON = {}
   headers.forEach((value, key) => {
