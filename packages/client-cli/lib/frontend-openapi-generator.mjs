@@ -54,6 +54,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
     )
 
     writer.writeLine('type JSON = Record<string, unknown>')
+    writer.writeLine('/* @ts-ignore */')
     writer.write('function headersToJSON(headers: Headers): JSON ').block(() => {
       writer.writeLine('const output: JSON = {}')
       writer.write('headers.forEach((value, key) => ').inlineBlock(() => {
