@@ -1,0 +1,7 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v1.25.0/service",
+  "service": {
+    "openapi": true
+  },
+  "watch": true
+}
