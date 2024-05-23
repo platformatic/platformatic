@@ -8,13 +8,11 @@ const { envObjectToString } = require('@platformatic/generators/lib/utils')
 const { readFile, readdir, stat, rm } = require('node:fs/promises')
 const { ConfigManager } = require('@platformatic/config')
 const { platformaticRuntime } = require('../config')
-const ServiceGenerator = require('@platformatic/service/lib/generator/service-generator')
-const DBGenerator = require('@platformatic/db/lib/generator/db-generator')
-const ComposerGenerator = require('@platformatic/composer/lib/generator/composer-generator')
-const { CannotFindGeneratorForTemplateError } = require('../errors')
 const { getServiceTemplateFromSchemaUrl } = require('@platformatic/generators/lib/utils')
 const { DotEnvTool } = require('dotenv-tool')
 const { getArrayDifference } = require('../utils')
+const { createRequire } = require('node:module')
+const { pathToFileURL } = require('node:url')
 
 class RuntimeGenerator extends BaseGenerator {
   constructor (opts) {
@@ -299,17 +297,10 @@ class RuntimeGenerator extends BaseGenerator {
     }
   }
 
-  getGeneratorForTemplate (templateName) {
-    switch (templateName) {
-      case '@platformatic/service':
-        return ServiceGenerator
-      case '@platformatic/db':
-        return DBGenerator
-      case '@platformatic/composer':
-        return ComposerGenerator
-      default:
-        throw new CannotFindGeneratorForTemplateError(templateName)
-    }
+  async _getGeneratorForTemplate (dir, pkg) {
+    const _require = createRequire(dir)
+    const fileToImport = _require.resolve(pkg)
+    return (await import(pathToFileURL(fileToImport))).Generator
   }
 
   async loadFromDir () {
@@ -327,11 +318,13 @@ class RuntimeGenerator extends BaseGenerator {
       const dirStat = await stat(currentServicePath)
       if (dirStat.isDirectory()) {
         // load the package json file
-        const servicePkgJson = JSON.parse(await readFile(join(currentServicePath, 'platformatic.json'), 'utf-8'))
-        // get generator for this module
-        const template = getServiceTemplateFromSchemaUrl(servicePkgJson.$schema)
-        const Generator = this.getGeneratorForTemplate(template)
-        const instance = new Generator()
+        const servicePltJson = JSON.parse(await readFile(join(currentServicePath, 'platformatic.json'), 'utf-8'))
+        // get module to load
+        const template = servicePltJson.module || getServiceTemplateFromSchemaUrl(servicePltJson.$schema)
+        const Generator = await this._getGeneratorForTemplate(currentServicePath, template)
+        const instance = new Generator({
+          logger: this.logger
+        })
         this.addService(instance, s)
         output.services.push(await instance.loadFromDir(s, this.targetDirectory))
       }
@@ -387,8 +380,10 @@ class RuntimeGenerator extends BaseGenerator {
     // handle new services
     for (const newService of newConfig.services) {
       // create generator for the service
-      const ServiceGenerator = this.getGeneratorForTemplate(newService.template)
-      const serviceInstance = new ServiceGenerator()
+      const ServiceGenerator = await this._getGeneratorForTemplate(join(this.targetDirectory, 'package.json'), newService.template)
+      const serviceInstance = new ServiceGenerator({
+        logger: this.logger
+      })
       const baseConfig = {
         isRuntimeContext: true,
         targetDirectory: join(this.targetDirectory, 'services', newService.name),
