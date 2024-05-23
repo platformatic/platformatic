@@ -125,7 +125,7 @@ importers:
         version: 8.0.1
       fast-json-stringify:
         specifier: ^5.14.1
-        version: 5.15.1
+        version: 5.16.0
       graphql:
         specifier: ^16.8.1
         version: 16.8.1
@@ -3886,6 +3886,9 @@ packages:
   fast-json-stringify@5.15.1:
     resolution: {integrity: sha512-JopGtkvvguRqrS4gHXSSA2jf4pDgOZkeBAkLO1LbzOpiOMo7/kugoR+KiWifpLpluaVeYDkAuxCJOj4Gyc6L9A==}
 
+  fast-json-stringify@5.16.0:
+    resolution: {integrity: sha512-A4bg6E15QrkuVO3f0SwIASgzMzR6XC4qTyTqhf3hYXy0iazbAdZKwkE+ox4WgzKyzM6ygvbdq3r134UjOaaAnA==}
+
   fast-jwt@4.0.1:
     resolution: {integrity: sha512-+mdSoH0QdOdFSbbGBctJu7L1yfXRtbmjbVJ4W/PEjyvivobDena0RKwihtBkOML1P+kUJ1QuewnH8u+mROsR1w==}
     engines: {node: '>=16'}
@@ -4284,6 +4287,7 @@ packages:
 
   inflight@1.0.6:
     resolution: {integrity: sha512-k92I/b08q4wvFscXCLvqfsHCrjrF7yiXsQuIVvVE7N82W3+aqpzuUdBbfhWcy/FZR3/4IgflMgKLOsvPDrGCJA==}
+    deprecated: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
 
   inherits-ex@1.6.0:
     resolution: {integrity: sha512-67sANrSoIvMmYDy0qyjmM/PvFdgBmWZVQoPBsRpDuP4tmlylEX1KdGN1bHvReG3eHBdaHY7WlZsrqys4y/cLVA==}
@@ -8509,6 +8513,16 @@ snapshots:
       json-schema-ref-resolver: 1.0.1
       rfdc: 1.3.1
 
+  fast-json-stringify@5.16.0:
+    dependencies:
+      '@fastify/merge-json-schemas': 0.1.1
+      ajv: 8.13.0
+      ajv-formats: 3.0.1(ajv@8.13.0)
+      fast-deep-equal: 3.1.3
+      fast-uri: 2.3.0
+      json-schema-ref-resolver: 1.0.1
+      rfdc: 1.3.1
+
   fast-jwt@4.0.1:
     dependencies:
       '@lukeed/ms': 2.0.2
@@ -8844,7 +8858,7 @@ snapshots:
   graphql-jit@0.8.4(graphql@16.8.1):
     dependencies:
       '@graphql-typed-document-node/core': 3.2.0(graphql@16.8.1)
-      fast-json-stringify: 5.15.1
+      fast-json-stringify: 5.16.0
       generate-function: 2.3.1
       graphql: 16.8.1
       lodash.memoize: 4.1.2
