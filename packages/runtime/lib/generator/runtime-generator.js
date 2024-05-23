@@ -322,7 +322,9 @@ class RuntimeGenerator extends BaseGenerator {
         // get module to load
         const template = servicePltJson.module || getServiceTemplateFromSchemaUrl(servicePltJson.$schema)
         const Generator = await this._getGeneratorForTemplate(currentServicePath, template)
-        const instance = new Generator()
+        const instance = new Generator({
+          logger: this.logger
+        })
         this.addService(instance, s)
         output.services.push(await instance.loadFromDir(s, this.targetDirectory))
       }
@@ -379,7 +381,9 @@ class RuntimeGenerator extends BaseGenerator {
     for (const newService of newConfig.services) {
       // create generator for the service
       const ServiceGenerator = await this._getGeneratorForTemplate(join(this.targetDirectory, 'package.json'), newService.template)
-      const serviceInstance = new ServiceGenerator()
+      const serviceInstance = new ServiceGenerator({
+        logger: this.logger
+      })
       const baseConfig = {
         isRuntimeContext: true,
         targetDirectory: join(this.targetDirectory, 'services', newService.name),
