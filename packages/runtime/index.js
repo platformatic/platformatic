@@ -1,6 +1,6 @@
 'use strict'
 const { buildServer } = require('./lib/build-server')
-const { platformaticRuntime } = require('./lib/config')
+const { platformaticRuntime, wrapConfigInRuntimeConfig } = require('./lib/config')
 const { start, startCommand } = require('./lib/start')
 const RuntimeApi = require('./lib/api')
 const { compile } = require('./lib/compile')
@@ -10,6 +10,7 @@ const RuntimeGenerator = require('./lib/generator/runtime-generator')
 
 module.exports.buildServer = buildServer
 module.exports.platformaticRuntime = platformaticRuntime
+module.exports.wrapConfigInRuntimeConfig = wrapConfigInRuntimeConfig
 module.exports.schema = platformaticRuntime.schema
 module.exports.RuntimeApi = RuntimeApi
 module.exports.start = start

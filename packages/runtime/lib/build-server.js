@@ -36,7 +36,7 @@ async function buildServerRuntime (options = {}) {
     }
   }
 
-  return buildRuntime(options.configManager)
+  return buildRuntime(options.configManager, options.env)
 }
 
 async function buildServer (options) {
