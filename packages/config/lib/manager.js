@@ -86,15 +86,17 @@ class ConfigManager extends EventEmitter {
     const escapeJSON = opts.escapeJSON || true
     const env = opts.env || await this.#loadEnv()
 
-    if (typeof config === 'object') {
+    if (typeof config === 'object' && config !== null) {
+      if (config[skipReplaceEnv]) {
+        delete config[skipReplaceEnv]
+        return config
+      }
+
       for (const key of Object.keys(config)) {
         const value = config[key]
-        if (value[skipReplaceEnv]) {
-          delete value[skipReplaceEnv]
-          continue
-        }
         config[key] = await this.replaceEnv(value, { env, escapeJSON: false })
       }
+      return config
     }
 
     const replaceEnv = ({ key, value }) => {
