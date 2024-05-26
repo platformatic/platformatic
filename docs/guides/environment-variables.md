@@ -20,7 +20,7 @@ In any Platformatic configuration file, you can always interpolate an environmen
 }
 ```
 
-The replacement is done via [`pupa`](http://npm.im/pupa), before the JSON file is parsed.
+The replacement is done via [`pupa`](http://npm.im/pupa), after the JSON file is parsed.
 
 All Platformatic configuration files support Environment Variables replacement, i.e.
 env variables are supported in Platformatic Service, Platformatic DB, Platformatic Composer, Platformatic Runtime.
