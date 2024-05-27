@@ -13,6 +13,10 @@ const platformaticRuntimeSchema = {
     $schema: {
       type: 'string'
     },
+    preload: {
+      type: 'string',
+      resolvePath: true
+    },
     autoload: {
       type: 'object',
       additionalProperties: false,

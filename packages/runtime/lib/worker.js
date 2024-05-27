@@ -120,6 +120,10 @@ process.on('unhandledRejection', (err) => {
 })
 
 async function main () {
+  if (config.preload) {
+    await import(config.preload)
+  }
+
   const { inspectorOptions } = workerData.config
 
   if (inspectorOptions) {

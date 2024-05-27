@@ -46,6 +46,13 @@ these default values.
   - **`useHttp`** (`boolean`) - The service will be started on a random HTTP port
   on `127.0.0.1`, and exposed to the other services via that port and on default, it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
 
+### `preload`
+
+The `preload` configuration is intended to be used to register
+Application Performance Monitoring (APM) agents. `preload` should contain
+a path pointing to a commonjs or es module that is loaded at the start of
+of the app worker thread.
+
 ### `services`
 
 `services` is an array of objects that defines the microservices managed by the
