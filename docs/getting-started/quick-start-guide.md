@@ -219,6 +219,12 @@ You should receive a response similar to this:
 ```
 This means that the movie was successfully added to your database
 
+:::tip
+
+Learn more about your API's GraphQL interface in the
+[GraphQL API reference](../packages/sql-graphql/overview.md).
+
+:::
 
 #### Get All Movies
 
@@ -262,10 +268,9 @@ query {
 }
 ```
 
+
 :::tip
 
-Learn more about your API's GraphQL interface in the
-[GraphQL API reference](../packages/sql-graphql/overview.md).
+For more advanced guides, refer to the [Platformatic learning hub](../learn/overview.md).
 
 :::
-
