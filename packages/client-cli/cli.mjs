@@ -301,7 +301,8 @@ export async function command (argv) {
       t: 'typescript',
       c: 'config',
       R: 'runtime',
-      F: 'full'
+      F: 'full',
+      h: 'help'
     }
   })
 
@@ -370,7 +371,7 @@ export async function command (argv) {
     url = `http://${options.runtime}.plt.local`
   }
 
-  if (!url) {
+  if (!url || options.help) {
     await help.toStdout()
     process.exit(1)
   }
