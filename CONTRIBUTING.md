@@ -17,12 +17,6 @@ cd platformatic
 
 2. **Install pnpm**: Install pnpm: Follow the official [pnpm installation guide](https://pnpm.io/installation) to install pnpm globally on your machine.
 
-If you're on Mac, you can use Homebrew:
-
-```sh 
-brew install pnpm 
-```
-
 3. **Setup pnpm**: Run the setup script to configure the local path and restart your termina.
 
 ```sh
