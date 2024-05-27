@@ -2,156 +2,261 @@
 
 ## Running and Developing DB
 
+### Introduction 
+
+Welcome to the Platformatic development guide. This document will help you set up your development environment, run the [Platformatic DB](https://docs.platformatic.dev/docs/db/overview), and contribute to the project. Follow the steps below to get started.
+
 ### Preparation
 
-1. Clone this repository, and enter in the directory (`cd platformatic` on most installations)
-2. Install pnpm `npm i pnpm --location=global` (if you're on Mac, you can use `brew` to install it with `brew install pnpm`)
-3. Make sure to run `pnpm setup` to configure the local path; then close and reopen your terminal.
-4. Install dependencies `pnpm i`
-5. Install docker with Docker Desktop or [Colima](https://github.com/abiosoft/colima)
-
-To have your global install of `platformatic` resolve to your local copy instead of the version installed via npm, you
-should use [`pnpm link`](https://pnpm.io/cli/link). This will add links so that you can use the `platformatic` and `plt`
-commands everywhere.
-
-Run from the root folder of the project, execute the following.
+1. **Clone the repository**: Clone this repository and navigate to the platformatic directory.
 
 ```sh
+git clone https://github.com/platformatic/platformatic.git
+cd platformatic
+```
+
+2. **Install pnpm**: Install pnpm globally.
+
+```sh
+npm install -g pnpm 
+```
+
+If you're on Mac, you can use Homebrew:
+
+```sh 
+brew install pnpm 
+```
+
+3. **Setup pnpm**: Run the setup script to configure the local path and restart your termina.
+
+```sh
+pnpm setup 
+```
+
+4. **Install dependencies**: Install the dependencies for platformatic.
+
+```sh
+pnpm install 
+```
+
+5. **Install Docker**: Install Docker using [Docker desktop](https://www.docker.com/products/docker-desktop) or [Colima](https://github.com/abiosoft/colima)
+
+To ensure your global installation of `platformatic` resolves to your local copy, use [`pnpm link`](https://pnpm.io/cli/link), this will add links so that you can use the `platformatic` and `plt`
+
+## Link Platformatic Globally 
+
+To ensure your global installation of `platformatic` resolves to your local copy, use [`pnpm link`](https://pnpm.io/cli/link), to add links so you can use `platformatic` and `plt` commands.
+
+From the root folder of the project, run:
+
+```sh 
 cd packages/cli
 pnpm link --global
 ```
-This might give you a `pnpm` warning. However, everything should be set up
-correctly anyway. You can verify everything works by running `platformatic`.
+
+You might receive a `pnpm` warning, but everything should be set up correctly. Verify by running:
+
+```sh
+platformatic 
+```
 
 <details>
   <summary><b>Troubleshooting</b></summary>
 
-##### [SQLite module CPU arch incompatibility](https://github.com/platformatic/platformatic/issues/754)
-```
-Error: Cannot find module '/platformatic/node_modules/.pnpm/sqlite3@5.1.4/node_modules/sqlite3/lib/binding/napi-v6-darwin-unknown-arm64/node_sqlite3.node'
-Require stack:
-- /platformatic/node_modules/.pnpm/sqlite3@5.1.4/node_modules/sqlite3/lib/sqlite3-binding.js
-- /platformatic/node_modules/.pnpm/sqlite3@5.1.4/node_modules/sqlite3/lib/sqlite3.js
-- /platformatic/node_modules/.pnpm/@databases+sqlite@4.0.2/node_modules/@databases/sqlite/lib/index.js
-- /platformatic/packages/sql-mapper/mapper.js
-- /platformatic/packages/db-core/index.js
-```
+### SQLite module CPU arch incompatibility
+If you encounter errors related to the SQLite module CPU architecture, follow these steps:
 
-First of all, check that `pnpm` has NOT been installed with `volta`. If so, remove it and install it again with another method.
+1. Ensure `pnpm` was not installed with `volta`. If so, reinstall it using another method.
+2. Remove the `node_modules` directory and clear the pnpm store.
 
-Remove the `node_modules` folder with `rm -fr ./node_modules`, then delete the pnpm cache with:
-```
+```sh 
+rm -rf ./node_modules
 pnpm store prune
-
-# Get the path of the pnpm store
 pnpm store path
-
-# Remove the pnpm store folder
 rm -fr /path/from/the/above/command
 ```
+3. Reinstall the dependencies.
+   
+```sh 
+pnpm install
+```
+**env: node: No such file or directory**
+If you encounter this error when using pnpm, try the following:
 
-Then install again all of the needed packages by running `pnpm i`.
-
-##### `env: node: No such file or directory` when using `pnpm`
-* get the `pnpm` path with `which pnpm`, then remove it; it's best to use the package manager you installed `pnpm` with
-* verify that the node version in use [is correct](https://docs.platformatic.dev/docs/getting-started/quick-start-guide/#prerequisites)
-* reinstall it (`npm install pnpm -g`)
-
+1. Remove the `pnpm` installation.
+```sh 
+which pnpm 
+```
+2. Ensure the correct Node.js version is in use.
+3. Reinstall `pnpm` 
+```sh 
+npm install  -g pnpm 
+```
 </details>
 <br>
 
-### Start platformatic db
 
-Read thorough documentation on the [quick start guide](https://github.com/platformatic/platformatic/blob/main/docs/getting-started/quick-start-guide.md), 
-<details>
-   <summary>or follow these steps to quickly create and start a platformatic db server.</summary>
+### Starting Platformatic DB 
 
-1. Create directories to work from `mkdir -p my-demo` then `cd my-demo`
-2. Then create a package.json file with the default configs: `npm init --yes`
-3. Create a migrations directory to store your database migration files: `mkdir migrations`
-   Then create a new migration file named 001.do.sql in the migrations directory: `touch migrations/001.do.sql`
-   Copy and paste this SQL query into the migration file:
-   ```sql
-   CREATE TABLE pages (
-    id INTEGER PRIMARY KEY,
-    title VARCHAR(255) NOT NULL
-   )
-   ```
-4. In your project directory, create a new Platformatic configuration file named platformatic.db.json: `touch platformatic.db.json`
-   Copy and paste this configuration:
-   ```json
-   {
-     "server": {
-       "hostname": "127.0.0.1",
-       "port": "3042"
-     },
-     "db": {
-       "connectionString": "sqlite://./pages.db"
-     },
-     "migrations": {
-       "dir": "./migrations",
-       "autoApply": true
-     }
-   }
-   ```
-5. In your project directory, use the Platformatic CLI to start your API server: `platformatic db start`
-6. Start interacting with the API by opening the following link on your browser http://127.0.0.1:3042/documentation or you can use curl
-   to do it. Read the quick start guide to see examples.
-</details>
+Refer to the [quick start guide](https://github.com/platformatic/platformatic/blo) for thorough documentation, or follow these steps to quickly create and start a [Platformatic DB](https://docs.platformatic.dev/docs/db/overview) server:
+
+1. **Create Working Directories:**
+
+```sh 
+mkdir -p my-demo 
+cd my-demo 
+```
+
+2. **Initialize a package.json**: Create a package.json file.
+
+```sh 
+npm init --yes
+```
+
+1. **Create a migrations directory**: Create a directory for your database migration files.
+
+```sh 
+mkdir migrations
+touch migrations/001.do.sql
+```
+
+Add the following SQL query to `001.do.sql`:
+
+```sql 
+CREATE TABLE pages (
+  id INTEGER PRIMARY KEY,
+  title VARCHAR(255) NOT NULL
+)
+```
+
+4. **Create Platformatic Configuration File**: Create and configure `platformatic.json`.
+
+```sh 
+touch platformatic.db.json
+```
+
+Add the following configuration:
+
+```json 
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "3042"
+  },
+  "db": {
+    "connectionString": "sqlite://./pages.db"
+  },
+  "migrations": {
+    "dir": "./migrations",
+    "autoApply": true
+  }
+}
+```
+
+5. **Start API Server:** Use the Platformatic CLI to start your API server.
+
+```sh
+platformatic start
+```
+
+6.**Interact with the API**
+
 
 ### Testing
+1. **Start the RDBMS**: Use Docker to start all databases for development.
+- On Linux:
+  
+```sh 
+docker compose up
+```
 
-1. Start the RDBMS
+- On Intel Macs:
 
-   We use Docker to start all the databases we develop against.
+```sh 
+docker compose -f docker-compose-mac.yml up
+```
 
-   On Linux, execute: `docker compose up`
+- On Apple Silicon Macs:
 
-   On Intel Macs: `docker compose -f docker-compose-mac.yml up` 
+```sh 
+docker compose -f docker-compose-apple-silicon.yml up
+```
 
-   On Apple Silicon Macs: `docker compose -f docker-compose-apple-silicon.yml up` 
+- On Windows:
 
-   On Windows, execute: `docker-compose up --build`
-2. Run tests: `pnpm test`
+```sh 
+docker-compose up --build
+```
 
-If you encounter issues running tests (f.e. failing tests without making a change to the codebase), try to:
-1. Run `pnpm cleanall`
-2. Run `pnpm store path` and remove the folder shown as an output
-3. Run `pnpm install` again
+2. **Run Tests**: Execute tests using pnpm.
 
-__Before opening a pull request, please ensure that the tests are passing for the specific project you are working on.__
+```sh 
+pnpm test
+```
+
+If you encounter issues with failing tests without code changes, try:
+
+1. Clean the environment.
+
+```sh
+pnpm cleanall
+```
+
+2. Clear `pnpm` store and reinstall packages.
+
+```sh
+pnpm store path
+rm -rf /path/from/previous/command
+pnpm install
+```
+
+Please ensure all tests pass before opening a pull request.
 
 ### Updating the CLI docs
 
-The [cli.md](../docs/cli.md) file is automatically generated through the [gen-cli-doc.mjs](./scripts/gen-cli-doc.mjs) script and you must not manually change it.
+The `cli.md` file is automatically generated and should not be manually edited. To update the CLI docs:
 
-To update the CLI docs:
-1. Update/add the txt helpers
-2. run `node scripts/gen-cli-doc.mjs`
+1. Update or add the text helpers
+2. Generate the docs.
+
+```sh 
+node scripts/gen-cli-doc.mjs
+```
 
 ### Releasing
 
-All platformatic modules share the same release number and are released
-in a single process. In order to avoid internal breakages, dependencies as
-part of this repository are using the `workspace:*` which will be replaced
-by precise versions during publish by pnpm.
+Platformatic modules share the same release number and are released in a single process. Dependencies use `workspace:*` replaced by precise versions during publish by `pnpm`.
 
-The procedure to release is simple:
+1. Update the version in the root `package.json`.
 
-1. Update the version of the root `package.json`
-1. run `./scripts/sync-version.sh`
-1. run `pnpm -r publish --access=public`
+2. Sync the version.
 
-### Creating and merging a PR 
-On the top of the PR description, if this is a fix of a github issue, add:
+```sh
+./scripts/sync-version.sh
 ```
-fixes #issuenum 
+
+3. Publish the release.
+
+```sh 
+pnpm -r publish --access=public
 ```
-When all checks are passed and the changes are approved, merge the PR with `squash and merge` option
 
-## Navigating the project via ctags
+### Creating and Merging a PR
 
-You can navigate the project using [universal ctags](https://github.com/universal-ctags/ctags). To generate a valid `tags` file use the following command:
+When creating a pull request:
+
+1. If it fixes a GitHub issue, add the following at the top of the PR description:
+
+```sh 
+fixes #issue number 
+```
+
+2. Ensure all checks pass and the changes are approved.
+3. Merge the PR using the "squash and merge" option.
+
+### Navigating the project via ctags
+
+You can navigate the project using [universal ctags](https://github.com/universal-ctags/ctags). Generate a `tags` file with:
 
 ```
 ctags --exclude=node_modules --exclude='**/*.test.js' --exclude='**/build' -R *
