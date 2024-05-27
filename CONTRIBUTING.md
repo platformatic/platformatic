@@ -15,11 +15,7 @@ git clone https://github.com/platformatic/platformatic.git
 cd platformatic
 ```
 
-2. **Install pnpm**: Install pnpm globally.
-
-```sh
-npm install -g pnpm 
-```
+2. **Install pnpm**: Install pnpm: Follow the official [pnpm installation guide](https://pnpm.io/installation) to install pnpm globally on your machine.
 
 If you're on Mac, you can use Homebrew:
 
