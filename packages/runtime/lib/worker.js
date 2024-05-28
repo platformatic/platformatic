@@ -4,6 +4,7 @@ const inspector = require('node:inspector')
 const { register, createRequire } = require('node:module')
 const { isatty } = require('node:tty')
 const { join } = require('node:path')
+const { pathToFileURL } = require('node:url')
 const {
   MessageChannel,
   parentPort,
@@ -120,6 +121,10 @@ process.on('unhandledRejection', (err) => {
 })
 
 async function main () {
+  if (config.preload) {
+    await import(pathToFileURL(config.preload))
+  }
+
   const { inspectorOptions } = workerData.config
 
   if (inspectorOptions) {
