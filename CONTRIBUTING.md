@@ -31,6 +31,26 @@ pnpm install
 
 5. **Install Docker**: Install Docker using [Docker desktop](https://www.docker.com/products/docker-desktop) or [Colima](https://github.com/abiosoft/colima)
 
+6. **Run Docker Compose**: Depending on your system, use the appropriate Docker Compose file to set up your environment.
+
+- On Intel Macs:
+
+```sh 
+docker compose -f docker-compose-mac.yml up
+```
+
+- On Apple Silicon Macs:
+
+```sh 
+docker compose -f docker-compose-apple-silicon.yml up
+```
+
+- On Windows:
+
+```sh 
+docker-compose up --build
+```
+
 To ensure your global installation of `platformatic` resolves to your local copy, use [`pnpm link`](https://pnpm.io/cli/link), this will add links so that you can use the `platformatic` and `plt`
 
 ## Link Platformatic Globally 
@@ -49,6 +69,15 @@ You might receive a `pnpm` warning, but everything should be set up correctly. V
 ```sh
 platformatic 
 ```
+
+To create a new Platformatic app using your local version, follow these steps:
+
+
+
+
+
+
+
 
 <details>
   <summary><b>Troubleshooting</b></summary>
@@ -153,32 +182,8 @@ platformatic start
 
 
 ### Testing
-1. **Start the RDBMS**: Use Docker to start all databases for development.
-- On Linux:
-  
-```sh 
-docker compose up
-```
 
-- On Intel Macs:
-
-```sh 
-docker compose -f docker-compose-mac.yml up
-```
-
-- On Apple Silicon Macs:
-
-```sh 
-docker compose -f docker-compose-apple-silicon.yml up
-```
-
-- On Windows:
-
-```sh 
-docker-compose up --build
-```
-
-2. **Run Tests**: Execute tests using pnpm.
+1. **Run Tests**: Execute tests using pnpm.
 
 ```sh 
 pnpm test
