@@ -15,7 +15,6 @@
 const sidebars = {
   docs: [
     'Overview',
-    'getting-started/quick-start-guide',
     'cli',
     {
       type: 'category',
@@ -147,9 +146,23 @@ const sidebars = {
         },
       ],
     },
+    
+    'FAQs'
+  ],
+  Learn: [
+    'learn/overview',
+    'getting-started/quick-start-guide',
     {
       type: 'category',
-      label: 'Guides',
+      label: 'Beginner Tutorials',
+      collapsed: true,
+      items: [
+        'learn/beginner/crud-application',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Advanced Guides',
       collapsed: true,
       items: [
         'guides/movie-quotes-app-tutorial',
@@ -192,6 +205,7 @@ const sidebars = {
         "guides/use-env-with-platformatic"
       ],
     },
+    'learn/glossary',
     'FAQs'
   ]
 };
