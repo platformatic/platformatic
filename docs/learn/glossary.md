@@ -118,7 +118,7 @@ label: A comprehensive glossary of terms and terminologies associated with Platf
 ## T
 
 **Todo API Tutorial**
-- A beginner-friendly tutorial for creating a simple Todo API using Platformatic. Check out the [Todo API Tutorial](../tutorials/todo-api.md) for hands-on learning.
+- A beginner-friendly tutorial for creating a simple Todo API using Platformatic. Check out the [Todo API Tutorial](../learn/beginner/crud-application.md) for hands-on learning.
 
 ## U
 
