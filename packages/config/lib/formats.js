@@ -3,13 +3,31 @@
 const errors = require('./errors.js')
 const { extname } = require('path')
 
+function quoteYamlBraces (yamlString) {
+  const bracesRegexp = /{(\d+|[a-z$_][\w\-$]*?(?:\.[\w\-$]*?)*?)}/gi
+  const stringRegexp = /(["'])(?:(?=(\\?))\2.)*?\1/gi
+
+  const stringMatches = [...yamlString.matchAll(stringRegexp)]
+
+  return yamlString.replace(bracesRegexp, (match, p1, offset) => {
+    for (const stringMatch of stringMatches) {
+      const stringStart = stringMatch.index
+      const stringEnd = stringMatch.index + stringMatch[0].length
+      if (offset >= stringStart && offset <= stringEnd) return match
+    }
+    return `'${match}'`
+  })
+}
+
+module.exports.quoteYamlBraces = quoteYamlBraces
+
 function getParser (path) {
   /* eslint no-case-declarations: off */
   switch (extname(path)) {
     case '.yaml':
     case '.yml':
       const YAML = require('yaml')
-      return YAML.parse
+      return (string, ...args) => YAML.parse(quoteYamlBraces(string), ...args)
     case '.json':
       return JSON.parse
     case '.json5':

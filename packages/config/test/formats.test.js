@@ -2,6 +2,7 @@
 
 const { describe, test } = require('node:test')
 const { getParser, getStringifier } = require('..')
+const { quoteYamlBraces } = require('../lib/formats')
 const { equal, throws, deepEqual } = require('node:assert/strict')
 
 for (const ext of ['yaml', 'yml', 'json', 'json5', 'toml', 'tml']) {
@@ -31,4 +32,39 @@ test('getParser should throw for unknown extension', () => {
 
 test('getStringifier should throw for unknown extension', () => {
   throws(() => getStringifier('file.txt'))
+})
+
+test('quoteYamlBraces should quote all yaml env vars that are not in the string', () => {
+  const yamlString = `
+  placeholders:
+    - {123}
+    - {variable}
+    - {some.variable}
+    - {some_variable}
+    - {some-variable}
+    - {some$variable}
+  strings:
+    - "{this.should.not.match}"
+    - '{neither.should.this}'
+  nested:
+    key: "{nested{123}not.match}"
+    other: '{nested{variable}not.match}'
+  `
+
+  const quotedYamlString = quoteYamlBraces(yamlString)
+  equal(quotedYamlString, `
+  placeholders:
+    - '{123}'
+    - '{variable}'
+    - '{some.variable}'
+    - '{some_variable}'
+    - '{some-variable}'
+    - '{some$variable}'
+  strings:
+    - "{this.should.not.match}"
+    - '{neither.should.this}'
+  nested:
+    key: "{nested{123}not.match}"
+    other: '{nested{variable}not.match}'
+  `)
 })

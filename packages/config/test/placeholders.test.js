@@ -164,3 +164,114 @@ test('support a custom callback for missing env vars', async (t) => {
   const result = await cm.replaceEnv(JSON.stringify(config))
   assert.deepEqual(JSON.parse(result).plugin, customValue)
 })
+
+test('transform placeholders in object values', async (t) => {
+  {
+    const cm = new ConfigManager({
+      source: './file.json',
+      env: {
+        PLT_FOO: 'bar',
+        PLT_USERNAME: 'john'
+      }
+    })
+    const config = {
+      server: {
+        hostname: '127.0.0.1',
+        port: '3042',
+        replace: '{PLT_FOO}'
+      }
+    }
+
+    const res = await cm.replaceEnv(config)
+    assert.deepEqual(res, {
+      server: {
+        hostname: '127.0.0.1',
+        port: '3042',
+        replace: 'bar'
+      }
+    })
+  }
+
+  {
+    // shouldn't complain if no placeholders are defined
+    const cm = new ConfigManager({
+      source: './file.json',
+      env: {
+        PLT_FOO: 'bar',
+        PLT_USERNAME: 'john'
+      }
+    })
+
+    const config = {
+      server: {
+        hostname: '127.0.0.1',
+        port: '3042'
+      }
+    }
+
+    const res = await cm.replaceEnv(config)
+    assert.deepEqual(res, {
+      server: {
+        hostname: '127.0.0.1',
+        port: '3042'
+      }
+    })
+  }
+})
+
+test('throws if not all placeholders in object are defined', async (t) => {
+  const cm = new ConfigManager({
+    source: './file.json',
+    env: {
+      PLT_FOO: 'bar',
+      PLT_USERNAME: 'john'
+    }
+  })
+
+  const config = {
+    server: {
+      hostname: '127.0.0.1',
+      port: '3042',
+      replace: '{PLT_FOO}'
+    },
+    plugin: '{PLT_PLUGIN}'
+  }
+  try {
+    await cm.replaceEnv(config)
+  } catch (err) {
+    assert.deepEqual(err.name, 'MissingValueError')
+    assert.deepEqual(err.message, 'Missing a value for the placeholder: PLT_PLUGIN')
+  }
+})
+
+test('skips ignored placeholders', async (t) => {
+  const cm = new ConfigManager({
+    source: './file.json',
+    env: {
+      PLT_FOO: 'bar',
+      PLT_USERNAME: 'john'
+    }
+  })
+
+  const config = {
+    openapi: {
+      paths: [
+        '/movies/{id}',
+        '/movies/{PLT_FOO}'
+      ]
+    }
+  }
+
+  const res = await cm.replaceEnv(config, {
+    ignore: ['$.openapi.paths']
+  })
+
+  assert.deepEqual(res, {
+    openapi: {
+      paths: [
+        '/movies/{id}',
+        '/movies/{PLT_FOO}'
+      ]
+    }
+  })
+})
