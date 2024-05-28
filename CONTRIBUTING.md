@@ -70,14 +70,45 @@ You might receive a `pnpm` warning, but everything should be set up correctly. V
 platformatic 
 ```
 
+### Running Platformatic locally 
+
 To create a new Platformatic app using your local version, follow these steps:
 
+1. **Link Platformatic and create-platformatic Globally**:
+From the root folder of the project, run:
 
+```sh
+pnpm run global-links
+```
 
+2. **Create a new directory for your app**:
 
+```sh
+mkdir platformatic-app
+cd platformatic-app
+```
 
+3. **Initialize a new Platformatic app using the create-platformatic** command:
 
+```sh 
+npx create-platformatic
+```
 
+4. **Follow the prompts** to configure your new app. You'll be asked to provide some information like the project name and template. Choose the options that best suit your needs
+
+5. **Navigate into your newly created app's directory**:
+
+```sh 
+cd platformatic-app
+```
+
+6. **Run the Platformatic app** to verify everything is set up correctly:
+
+```sh 
+platformatic start
+```
+
+You should see output indicating that your Platformatic app is running on `http://localhost:3042`
 
 <details>
   <summary><b>Troubleshooting</b></summary>
