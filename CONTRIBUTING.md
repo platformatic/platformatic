@@ -48,20 +48,27 @@ docker compose -f docker-compose-apple-silicon.yml up
 - On Windows:
 
 ```sh 
-docker-compose up --build
+docker-compose up 
 ```
-
-To ensure your global installation of `platformatic` resolves to your local copy, use [`pnpm link`](https://pnpm.io/cli/link), this will add links so that you can use the `platformatic` and `plt`
 
 ## Link Platformatic Globally 
 
-To ensure your global installation of `platformatic` resolves to your local copy, use [`pnpm link`](https://pnpm.io/cli/link), to add links so you can use `platformatic` and `plt` commands.
+To ensure your global installation of `platformatic` resolves to your local copy, add a script in the root project to handle linking. This will allow you to use `platformatic` and `plt` commands globally.
 
+1. **Add global-links Script**
+In the `package.json` file of the root project, add the following script:
+
+```json
+"scripts": {
+  "global-links": "cd packages/cli && pnpm link --global && cd ../create-platformatic && pnpm link --global"
+}
+```
+
+2. **Run the global-links Script**
 From the root folder of the project, run:
 
-```sh 
-cd packages/cli
-pnpm link --global
+```sh
+pnpm run global-links
 ```
 
 You might receive a `pnpm` warning, but everything should be set up correctly. Verify by running:
@@ -70,7 +77,7 @@ You might receive a `pnpm` warning, but everything should be set up correctly. V
 platformatic 
 ```
 
-### Running Platformatic locally 
+## Running Platformatic locally 
 
 To create a new Platformatic app using your local version, follow these steps:
 
