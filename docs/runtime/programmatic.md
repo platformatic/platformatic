@@ -1,3 +1,5 @@
+import Issues from '../getting-started/issues.md';
+
 # Programmatic API
 
 Using the `@platformatic/runtime` API, you can start Platformatic applications programmatically, bypassing the command line. This API facilitates interaction with various application types such as `service`, `db`, `composer`, and `runtime`, simplifying operations across different services. 
@@ -18,7 +20,7 @@ const entrypointUrl = await app.start()
 const res = await fetch(entrypointUrl)
 console.log(await res.json())
 
-// Do other interesting things.
+// Perform other operations
 
 await app.close()
 ```
@@ -46,7 +48,7 @@ await app.start()
 
 ## `loadConfig()` 
 
-The `loadConfig` reads and parses a configuration file for any Platformatic application. It can automatically detect the type of application or accept explicit instructions.
+The `loadConfig` function reads and parses a configuration file for any Platformatic application. It can automatically detect the type of application or accept explicit instructions.
 
 ```js
 import { loadConfig } from '@platformatic/runtime'
@@ -60,7 +62,7 @@ const config = await loadConfig(
   ['-c', '/path/to/platformatic.config.json']
 )
 
-// Default config can be specified.
+// Specify a default config 
 const config = await loadConfig(
   {},
   ['-c', '/path/to/platformatic.config.json'],
@@ -89,3 +91,5 @@ import { startCommand } from '@platformatic/runtime'
 
 await startCommand(['-c', '/path/to/platformatic.config.json])
 ```
+
+<Issues />

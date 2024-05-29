@@ -1,3 +1,5 @@
+import Issues from '../getting-started/issues.md';
+
 # Configuration
 
 Platformatic Runtime is configured with a configuration file. It supports the
@@ -5,9 +7,9 @@ use of environment variables as setting values with [environment variable placeh
 
 ## Configuration Files
 
-The Platformatic CLI will automatically detect and load configuration files found in the current working directory with the file names listed [here](../file-formats.md#configuration-files).
+The Platformatic CLI automatically detects and loads configuration files found in the current working directory with the file names listed [here](../file-formats.md#configuration-files).
 
-Alternatively, a [`--config` option](../cli.md#db) specify a configuration file path for most `platformatic runtime` CLI commands. The configuration examples in this reference use the JSON format.
+Alternatively, you can use the [`--config` option](../cli.md#db) to specify a configuration file path for most `platformatic runtime` CLI commands. The configuration examples in this reference use the JSON format.
 
 ## Supported File Formats 
 
@@ -50,7 +52,7 @@ these default values.
 
 The `preload` configuration is intended to be used to register
 Application Performance Monitoring (APM) agents. `preload` should contain
-a path pointing to a commonjs or es module that is loaded at the start of
+a path pointing to a CommonJS or ES module that is loaded at the start of
 of the app worker thread.
 
 ### `services`
@@ -120,7 +122,7 @@ microservices are started in the order specified in the configuration file.
         - **`headers`** (`object`) — Optional headers to send with the telemetry. This has no effect on `console` and `memory` exporters.
 
 :::important        
-OTLP traces can be consumed by different solutions, like [Jaeger](https://www.jaegertracing.io/). [Here](https://opentelemetry.io/ecosystem/vendors/) the full list.
+OTLP traces can be consumed by different solutions, like [Jaeger](https://www.jaegertracing.io/). See the full list [here](https://opentelemetry.io/ecosystem/vendors/).
 :::
 
   ```json title="Example JSON object"
@@ -222,3 +224,6 @@ Learn how to [set](../service/configuration.md#setting-environment-variables) an
 ### PLT_ROOT
 
 The `{PLT_ROOT}` placeholder is automatically set to the directory containing the configuration file, so it can be used to configure relative paths. See our [documentation](../service/configuration.md#plt_root) to learn more on PLT_ROOT placeholders.
+
+
+<Issues />
