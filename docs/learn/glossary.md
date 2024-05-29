@@ -18,7 +18,7 @@ label: A comprehensive glossary of terms and terminologies associated with Platf
 ## C
 
 **CLI (Command Line Interface)**
-- A tool for interacting with Platformatic via text commands. The Platformatic CLI simplifies managing services and configurations.
+- A tool for interacting with Platformatic via text commands. The [Platformatic CLI](../cli.md) simplifies managing services and configurations.
 
 **CRUD (Create, Read, Update, Delete)**
 - Basic operations for managing data. Platformatic automates CRUD operations for API endpoints based on schemas.
@@ -92,7 +92,7 @@ label: A comprehensive glossary of terms and terminologies associated with Platf
 ## P
 
 **Plugin**
-- An add-on that extends the functionality of Platformatic. Plugins can be used to add features like authentication, logging, and more.
+- An add-on that extends the functionality of Platformatic. Plugins can be used to add features like authentication, logging, and are based on [Fastify](https://fastify.dev/docs/latest/Reference/Plugins).
 
 ## Q
 
@@ -114,6 +114,7 @@ label: A comprehensive glossary of terms and terminologies associated with Platf
 
 **Service**
 - A dedicated infrastructure layer for managing service-to-service communication. Platformatic can integrate with service meshes for advanced microservice management.
+- A Platformatic [Service](../service/overview.md) is an HTTP server based on [Fastify](https://fastify.dev) that allows developers to build robust APIs with Node.js.
 
 ## T
 
@@ -128,7 +129,7 @@ label: A comprehensive glossary of terms and terminologies associated with Platf
 ## V
 
 **Verdaccio**
-- A lightweight private npm proxy registry. Recommended for local development with Platformatic.
+- A lightweight private [npm proxy registry](https://verdaccio.org). Recommended for local development with Platformatic.
 
 ## W
 
