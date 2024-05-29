@@ -144,25 +144,13 @@ const db = {
           ignoreRoutes: {
             type: 'array',
             items: {
-              oneOf: [
-                {
-                  type: 'object',
-                  properties: {
-                    entity: { type: 'string' }
-                  },
-                  required: ['entity'],
-                  additionalProperties: false
-                },
-                {
-                  type: 'object',
-                  properties: {
-                    method: { type: 'string' },
-                    path: { type: 'string' }
-                  },
-                  required: ['method', 'path'],
-                  additionalProperties: false
-                }
-              ]
+              type: 'object',
+              properties: {
+                method: { type: 'string' },
+                path: { type: 'string' }
+              },
+              required: ['method', 'path'],
+              additionalProperties: false
             }
           },
           enabled: {
