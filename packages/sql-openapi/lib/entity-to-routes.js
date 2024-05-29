@@ -82,9 +82,9 @@ async function entityPlugin (app, opts) {
 
   const fields = getFieldsForEntity(entity, ignore)
 
-  rootEntityRoutes(app, entity, whereArgs, orderByArgs, entityLinks, entitySchema, fields, entitySchemaInput, ignoreRoutes, opts.prefix)
+  rootEntityRoutes(app, entity, whereArgs, orderByArgs, entityLinks, entitySchema, fields, entitySchemaInput, ignoreRoutes)
 
-  const openapiPath = `${opts.prefix}/{${primaryKeyCamelcase}}`
+  const openapiPath = `${app.prefix}/{${primaryKeyCamelcase}}`
   const ignoredGETRoute = ignoreRoutes.find(ignoreRoute => {
     return ignoreRoute.path === openapiPath && ignoreRoute.method === 'GET'
   })
@@ -153,7 +153,7 @@ async function entityPlugin (app, opts) {
       mapRoutePathNamesReverseRelations.set(routePathName, true)
     }
 
-    const reverseOpenapiPath = `${opts.prefix}/{${camelcase(primaryKey)}}/${routePathName}`
+    const reverseOpenapiPath = `${app.prefix}/{${camelcase(primaryKey)}}/${routePathName}`
     const ignoredReversedGETRoute = ignoreRoutes.find(ignoreRoute => {
       return ignoreRoute.path === reverseOpenapiPath && ignoreRoute.method === 'GET'
     })
@@ -253,7 +253,7 @@ async function entityPlugin (app, opts) {
     const operationId = `get${capitalize(targetEntity.singularName)}For${capitalize(entity.singularName)}`
     // We need to get the relation name from the PK column:
 
-    const targetOpenapiPath = `${opts.prefix}/{${camelcase(primaryKey)}}/${targetRelation}`
+    const targetOpenapiPath = `${app.prefix}/{${camelcase(primaryKey)}}/${targetRelation}`
     const ignoredReversedGETRoute = ignoreRoutes.find(ignoreRoute => {
       return ignoreRoute.path === targetOpenapiPath && ignoreRoute.method === 'GET'
     })

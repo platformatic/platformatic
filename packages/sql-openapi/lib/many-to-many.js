@@ -23,7 +23,7 @@ async function entityPlugin (app, opts) {
 
   const fields = getFieldsForEntity(entity, ignore)
 
-  rootEntityRoutes(app, entity, whereArgs, orderByArgs, undefined, entitySchema, fields, entitySchemaInput, ignoreRoutes, opts.prefix)
+  rootEntityRoutes(app, entity, whereArgs, orderByArgs, undefined, entitySchema, fields, entitySchemaInput, ignoreRoutes)
 
   let pathWithParams = ''
   let openapiPathWithParams = ''
@@ -33,10 +33,10 @@ async function entityPlugin (app, opts) {
     const relation = entity.relations.find((relation) => relation.column_name === key)
     if (relation) {
       pathWithParams += `/${relation.foreignEntityName}/:${camelcaseKey}`
-      openapiPathWithParams += `${opts.prefix}/${relation.foreignEntityName}/{${camelcaseKey}}`
+      openapiPathWithParams += `${app.prefix}/${relation.foreignEntityName}/{${camelcaseKey}}`
     } else {
       pathWithParams += `/${camelcaseKey}/:${camelcaseKey}`
-      openapiPathWithParams += `${opts.prefix}/{${camelcaseKey}}`
+      openapiPathWithParams += `${app.prefix}/{${camelcaseKey}}`
     }
   }
 

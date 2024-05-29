@@ -61,9 +61,9 @@ function generateArgs (entity, ignore) {
 
 module.exports.generateArgs = generateArgs
 
-function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, entitySchema, fields, entitySchemaInput, ignoreRoutes, prefix) {
+function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, entitySchema, fields, entitySchemaInput, ignoreRoutes) {
   const ignoredGETRoute = ignoreRoutes.find(ignoreRoutes => {
-    return ignoreRoutes.path === prefix && ignoreRoutes.method === 'GET'
+    return ignoreRoutes.path === app.prefix && ignoreRoutes.method === 'GET'
   })
 
   if (!ignoredGETRoute) {
@@ -167,7 +167,7 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
   }
 
   const ignoredPOSTRoute = ignoreRoutes.find(ignoreRoute => {
-    return ignoreRoute.path === prefix && ignoreRoute.method === 'POST'
+    return ignoreRoute.path === app.prefix && ignoreRoute.method === 'POST'
   })
 
   if (!ignoredPOSTRoute) {
@@ -194,7 +194,7 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
   }
 
   const ignoredPUTRoute = ignoreRoutes.find(ignoreRoute => {
-    return ignoreRoute.path === prefix && ignoreRoute.method === 'PUT'
+    return ignoreRoute.path === app.prefix && ignoreRoute.method === 'PUT'
   })
   if (!ignoredPUTRoute) {
     app.put('/', {
