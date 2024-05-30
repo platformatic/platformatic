@@ -61,6 +61,14 @@ test('should get services topology', async (t) => {
         entrypoint: false,
         localUrl: 'http://service-2.plt.local',
         dependencies: []
+      },
+      {
+        id: 'service-db',
+        type: 'db',
+        status: 'started',
+        entrypoint: false,
+        localUrl: 'http://service-db.plt.local',
+        dependencies: []
       }
     ]
   })
