@@ -23,3 +23,19 @@ app.register(require('@platformatic/sql-openapi'), {
   }
 })
 ```
+
+# Ignoring entity routes
+
+To ignore some of the auto-generated routes for an entity:
+
+```javascript
+app.register(require('@platformatic/sql-openapi'), {
+  ignoreRoutes: {
+    { method: 'GET', path: '/categories' },
+    { method: 'GET', path: '/categories/{id}' },
+    { method: 'DELETE', path: '/categories/{id}' },
+    { method: 'DELETE', path: '/posts/{id}' }
+  }
+})
+```
+

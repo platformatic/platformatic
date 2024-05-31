@@ -117,6 +117,7 @@ platformaticDB.configManagerConfig = {
   schema,
   allowToWatch: ['.env'],
   schemaOptions: platformaticService.configManagerConfig.schemaOptions,
+  replaceEnvIgnore: ['$.db.openapi.ignore'],
   async transformConfig () {
     await adjustConfig(this)
   },
