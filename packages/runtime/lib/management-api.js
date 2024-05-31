@@ -59,6 +59,18 @@ async function managementApiPlugin (app, opts) {
     return runtime.getServiceConfig(id)
   })
 
+  app.get('/services/:id/openapi-schema', async (request) => {
+    const { id } = request.params
+    app.log.debug('get openapi-schema', { id })
+    return runtime.getServiceOpenapiSchema(id)
+  })
+
+  app.get('/services/:id/graphql-schema', async (request) => {
+    const { id } = request.params
+    app.log.debug('get graphql-schema', { id })
+    return runtime.getServiceGraphqlSchema(id)
+  })
+
   app.post('/services/:id/start', async (request) => {
     const { id } = request.params
     app.log.debug('start service', { id })
