@@ -134,7 +134,7 @@ importers:
         version: 5.0.0
       inquirer:
         specifier: ^9.2.16
-        version: 9.2.22
+        version: 9.2.23
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -641,7 +641,7 @@ importers:
         version: 5.0.0
       inquirer:
         specifier: ^9.2.16
-        version: 9.2.22
+        version: 9.2.23
       log-update:
         specifier: ^6.0.0
         version: 6.0.0
@@ -753,7 +753,7 @@ importers:
         version: 5.0.0
       inquirer:
         specifier: ^9.2.16
-        version: 9.2.22
+        version: 9.2.23
       log-update:
         specifier: ^6.0.0
         version: 6.0.0
@@ -2492,8 +2492,8 @@ packages:
   '@iarna/toml@2.2.5':
     resolution: {integrity: sha512-trnsAYxU3xnS1gPHPyU961coFyLkh4gAD/0zQ5mymY4yOZ+CYvsPqUbOFSw0aDM4y0tV7tiFxL/1XfXPNC6IPg==}
 
-  '@inquirer/figures@1.0.2':
-    resolution: {integrity: sha512-4F1MBwVr3c/m4bAUef6LgkvBfSjzwH+OfldgHqcuacWwSUetFebM2wi58WfG9uk1rR98U6GwLed4asLJbwdV5w==}
+  '@inquirer/figures@1.0.3':
+    resolution: {integrity: sha512-ErXXzENMH5pJt5/ssXV0DfWUZqly8nGzf0UcBV9xTnP+KyffE2mqyxIMBrZ8ijQck2nU0TQm40EQB53YreyWHw==}
     engines: {node: '>=18'}
 
   '@ioredis/commands@1.2.0':
@@ -4305,8 +4305,8 @@ packages:
   ini@1.3.8:
     resolution: {integrity: sha512-JV/yugV2uzW5iMRSiZAyDtQd+nxtUnjeLt0acNdw98kKLrvuRVyB80tsREOE7yvGVgalhZ6RNXCmEHkUKBKxew==}
 
-  inquirer@9.2.22:
-    resolution: {integrity: sha512-SqLLa/Oe5rZUagTR9z+Zd6izyatHglbmbvVofo1KzuVB54YHleWzeHNLoR7FOICGOeQSqeLh1cordb3MzhGcEw==}
+  inquirer@9.2.23:
+    resolution: {integrity: sha512-kod5s+FBPIDM2xiy9fu+6wdU/SkK5le5GS9lh4FEBjBHqiMgD9lLFbCbuqFNAjNL2ZOy9Wd9F694IOzN9pZHBA==}
     engines: {node: '>=18'}
 
   int64-buffer@0.1.10:
@@ -6911,7 +6911,7 @@ snapshots:
 
   '@iarna/toml@2.2.5': {}
 
-  '@inquirer/figures@1.0.2': {}
+  '@inquirer/figures@1.0.3': {}
 
   '@ioredis/commands@1.2.0': {}
 
@@ -9019,9 +9019,9 @@ snapshots:
 
   ini@1.3.8: {}
 
-  inquirer@9.2.22:
+  inquirer@9.2.23:
     dependencies:
-      '@inquirer/figures': 1.0.2
+      '@inquirer/figures': 1.0.3
       '@ljharb/through': 2.3.13
       ansi-escapes: 4.3.2
       chalk: 5.3.0
