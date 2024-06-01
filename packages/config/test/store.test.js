@@ -268,7 +268,7 @@ test('loadConfig', async t => {
   assert.equal(res.app, foo, 'should return app')
 })
 
-test('loadConfig with platformatic.yaml should fail', async t => {
+test('loadConfig with platformatic.yaml', async t => {
   function foo () {
   }
 
@@ -301,12 +301,9 @@ test('loadConfig with platformatic.yaml should fail', async t => {
     process.chdir(cwd)
   })
 
-  try {
-    await store.loadConfig()
-    assert.fail()
-  } catch (err) {
-    assert.equal(err.message, 'yamlString.matchAll is not a function or its return value is not iterable')
-  }
+  const res = await store.loadConfig()
+  assert.equal(res.configManager instanceof ConfigManager, true, 'should return configManager')
+  assert.equal(res.app, foo, 'should return app')
 })
 
 test('loadConfig custom module', async t => {
