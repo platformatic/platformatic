@@ -268,44 +268,6 @@ test('loadConfig', async t => {
   assert.equal(res.app, foo, 'should return app')
 })
 
-test('loadConfig', async t => {
-  function foo () {
-  }
-
-  foo.schema = {
-    $id: 'foo',
-    type: 'object'
-  }
-
-  foo.configType = 'service'
-  foo.configManagerConfig = {
-    schema: foo.schema,
-    allowToWatch: ['.env'],
-    schemaOptions: {
-      useDefaults: true,
-      coerceTypes: true,
-      allErrors: true,
-      strict: false
-    },
-    transformConfig () {
-    }
-  }
-
-  const cwd = process.cwd()
-  process.chdir(join(__dirname, 'fixtures'))
-
-  const store = new Store()
-  store.add(foo)
-
-  t.after(() => {
-    process.chdir(cwd)
-  })
-
-  const res = await store.loadConfig()
-  assert.equal(res.configManager instanceof ConfigManager, true, 'should return configManager')
-  assert.equal(res.app, foo, 'should return app')
-})
-
 test('loadConfig custom module', async t => {
   const store = new Store({
     cwd: join(__dirname, 'fixtures', 'app')
