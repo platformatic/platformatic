@@ -141,6 +141,18 @@ const db = {
               }]
             }
           },
+          ignoreRoutes: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                method: { type: 'string' },
+                path: { type: 'string' }
+              },
+              required: ['method', 'path'],
+              additionalProperties: false
+            }
+          },
           enabled: {
             anyOf: [
               { type: 'boolean' },

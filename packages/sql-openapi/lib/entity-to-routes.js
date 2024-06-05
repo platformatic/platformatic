@@ -44,6 +44,7 @@ const getEntityLinksForEntity = (app, entity) => {
 async function entityPlugin (app, opts) {
   const entity = opts.entity
   const ignore = opts.ignore
+  const ignoreRoutes = opts.ignoreRoutes
 
   const entitySchema = {
     $ref: entity.name + '#'
@@ -81,44 +82,51 @@ async function entityPlugin (app, opts) {
 
   const fields = getFieldsForEntity(entity, ignore)
 
-  rootEntityRoutes(app, entity, whereArgs, orderByArgs, entityLinks, entitySchema, fields, entitySchemaInput)
+  rootEntityRoutes(app, entity, whereArgs, orderByArgs, entityLinks, entitySchema, fields, entitySchemaInput, ignoreRoutes)
 
-  app.get(`/:${primaryKeyCamelcase}`, {
-    schema: {
-      operationId: `get${entity.name}By${capitalize(primaryKeyCamelcase)}`,
-      summary: `Get ${entity.name} by ${primaryKeyCamelcase}.`,
-      description: `Fetch ${entity.name} using its ${primaryKeyCamelcase} from the database.`,
-      params: primaryKeyParams,
-      tags: [entity.table],
-      querystring: {
-        type: 'object',
-        properties: {
-          fields
-        }
-      },
-      response: {
-        200: entitySchema
-      }
-    },
-    links: {
-      200: entityLinks
-    }
-  }, async function (request, reply) {
-    const ctx = { app: this, reply }
-    const res = await entity.find({
-      ctx,
-      where: {
-        [primaryKeyCamelcase]: {
-          eq: request.params[primaryKeyCamelcase]
-        }
-      },
-      fields: request.query.fields
-    })
-    if (res.length === 0) {
-      return reply.callNotFound()
-    }
-    return res[0]
+  const openapiPath = `${app.prefix}/{${primaryKeyCamelcase}}`
+  const ignoredGETRoute = ignoreRoutes.find(ignoreRoute => {
+    return ignoreRoute.path === openapiPath && ignoreRoute.method === 'GET'
   })
+
+  if (!ignoredGETRoute) {
+    app.get(`/:${primaryKeyCamelcase}`, {
+      schema: {
+        operationId: `get${entity.name}By${capitalize(primaryKeyCamelcase)}`,
+        summary: `Get ${entity.name} by ${primaryKeyCamelcase}.`,
+        description: `Fetch ${entity.name} using its ${primaryKeyCamelcase} from the database.`,
+        params: primaryKeyParams,
+        tags: [entity.table],
+        querystring: {
+          type: 'object',
+          properties: {
+            fields
+          }
+        },
+        response: {
+          200: entitySchema
+        }
+      },
+      links: {
+        200: entityLinks
+      }
+    }, async function (request, reply) {
+      const ctx = { app: this, reply }
+      const res = await entity.find({
+        ctx,
+        where: {
+          [primaryKeyCamelcase]: {
+            eq: request.params[primaryKeyCamelcase]
+          }
+        },
+        fields: request.query.fields
+      })
+      if (res.length === 0) {
+        return reply.callNotFound()
+      }
+      return res[0]
+    })
+  }
 
   const mapRoutePathNamesReverseRelations = new Map()
   let idxRoutePathNamesReverseRelations = 1
@@ -145,70 +153,77 @@ async function entityPlugin (app, opts) {
       mapRoutePathNamesReverseRelations.set(routePathName, true)
     }
 
-    try {
-      app.get(`/:${camelcase(primaryKey)}/${routePathName}`, {
-        schema: {
-          operationId,
-          summary: `Get ${targetEntity.pluralName} for ${entity.singularName}.`,
-          description: `Fetch all the ${targetEntity.pluralName} for ${entity.singularName} from the database.`,
-          params: getPrimaryKeyParams(entity, ignore),
-          tags: [entity.table],
-          querystring: {
-            type: 'object',
-            properties: {
-              fields: getFieldsForEntity(targetEntity, ignore)
+    const reverseOpenapiPath = `${app.prefix}/{${camelcase(primaryKey)}}/${routePathName}`
+    const ignoredReversedGETRoute = ignoreRoutes.find(ignoreRoute => {
+      return ignoreRoute.path === reverseOpenapiPath && ignoreRoute.method === 'GET'
+    })
+
+    if (!ignoredReversedGETRoute) {
+      try {
+        app.get(`/:${camelcase(primaryKey)}/${routePathName}`, {
+          schema: {
+            operationId,
+            summary: `Get ${targetEntity.pluralName} for ${entity.singularName}.`,
+            description: `Fetch all the ${targetEntity.pluralName} for ${entity.singularName} from the database.`,
+            params: getPrimaryKeyParams(entity, ignore),
+            tags: [entity.table],
+            querystring: {
+              type: 'object',
+              properties: {
+                fields: getFieldsForEntity(targetEntity, ignore)
+              }
+            },
+            response: {
+              200: {
+                type: 'array',
+                items: targetEntitySchema
+              }
             }
           },
-          response: {
-            200: {
-              type: 'array',
-              items: targetEntitySchema
-            }
+          links: {
+            200: entityLinks
           }
-        },
-        links: {
-          200: entityLinks
-        }
-      }, async function (request, reply) {
-        const ctx = { app: this, reply }
-        // IF we want to have HTTP/404 in case the entity does not exist
-        // we need to do 2 queries. One to check if the entity exists. the other to get the related entities
-        // Improvement: this could be also done with a single query with a join,
+        }, async function (request, reply) {
+          const ctx = { app: this, reply }
+          // IF we want to have HTTP/404 in case the entity does not exist
+          // we need to do 2 queries. One to check if the entity exists. the other to get the related entities
+          // Improvement: this could be also done with a single query with a join,
 
-        // check that the entity exists
-        const resEntity = await entity.count({
-          ctx,
-          where: {
-            [primaryKeyCamelcase]: {
-              eq: request.params[primaryKeyCamelcase]
+          // check that the entity exists
+          const resEntity = await entity.count({
+            ctx,
+            where: {
+              [primaryKeyCamelcase]: {
+                eq: request.params[primaryKeyCamelcase]
+              }
             }
+          })
+          if (resEntity === 0) {
+            return reply.callNotFound()
           }
-        })
-        if (resEntity === 0) {
-          return reply.callNotFound()
-        }
 
-        // get the related entities
-        const res = await targetEntity.find({
-          ctx,
-          where: {
-            [targetForeignKeyCamelcase]: {
-              eq: request.params[primaryKeyCamelcase]
-            }
-          },
-          fields: request.query.fields
+          // get the related entities
+          const res = await targetEntity.find({
+            ctx,
+            where: {
+              [targetForeignKeyCamelcase]: {
+                eq: request.params[primaryKeyCamelcase]
+              }
+            },
+            fields: request.query.fields
 
-        })
-        if (res.length === 0) {
+          })
+          if (res.length === 0) {
           // This is a query on a FK, so
-          return []
-        }
-        return res
-      })
-    } catch (error) /* istanbul ignore next */ {
-      app.log.error(error)
-      app.log.info({ routePathName, targetEntityName, targetEntitySchema, operationId })
-      throw new errors.UnableToCreateTheRouteForTheReverseRelationshipError()
+            return []
+          }
+          return res
+        })
+      } catch (error) /* istanbul ignore next */ {
+        app.log.error(error)
+        app.log.info({ routePathName, targetEntityName, targetEntitySchema, operationId })
+        throw new errors.UnableToCreateTheRouteForTheReverseRelationshipError()
+      }
     }
   }
 
@@ -237,143 +252,161 @@ async function entityPlugin (app, opts) {
     // e.g. getMovieForQuote
     const operationId = `get${capitalize(targetEntity.singularName)}For${capitalize(entity.singularName)}`
     // We need to get the relation name from the PK column:
-    try {
-      app.get(`/:${camelcase(primaryKey)}/${targetRelation}`, {
-        schema: {
-          operationId,
-          summary: `Get ${targetEntity.singularName} for ${entity.singularName}.`,
-          description: `Fetch the ${targetEntity.singularName} for ${entity.singularName} from the database.`,
-          params: getPrimaryKeyParams(entity, ignore),
-          tags: [entity.table],
-          querystring: {
-            type: 'object',
-            properties: {
-              fields: getFieldsForEntity(targetEntity, ignore)
+
+    const targetOpenapiPath = `${app.prefix}/{${camelcase(primaryKey)}}/${targetRelation}`
+    const ignoredReversedGETRoute = ignoreRoutes.find(ignoreRoute => {
+      return ignoreRoute.path === targetOpenapiPath && ignoreRoute.method === 'GET'
+    })
+
+    if (!ignoredReversedGETRoute) {
+      try {
+        app.get(`/:${camelcase(primaryKey)}/${targetRelation}`, {
+          schema: {
+            operationId,
+            summary: `Get ${targetEntity.singularName} for ${entity.singularName}.`,
+            description: `Fetch the ${targetEntity.singularName} for ${entity.singularName} from the database.`,
+            params: getPrimaryKeyParams(entity, ignore),
+            tags: [entity.table],
+            querystring: {
+              type: 'object',
+              properties: {
+                fields: getFieldsForEntity(targetEntity, ignore)
+              }
+            },
+            response: {
+              200: targetEntitySchema
             }
           },
-          response: {
-            200: targetEntitySchema
+          links: {
+            200: entityLinks
+          }
+        }, async function (request, reply) {
+          const ctx = { app: this, reply }
+          // check that the entity exists
+          const resEntity = (await entity.find({
+            ctx,
+            where: {
+              [primaryKeyCamelcase]: {
+                eq: request.params[primaryKeyCamelcase]
+              }
+            }
+          }))[0]
+
+          if (!resEntity) {
+            return reply.callNotFound()
+          }
+
+          // get the related entity
+          const res = await targetEntity.find({
+            ctx,
+            where: {
+              [targetForeignKeyCamelcase]: {
+                eq: resEntity[targetColumnCamelcase]
+              }
+            },
+            fields: request.query.fields
+          })
+
+          if (res.length === 0) {
+            return reply.callNotFound()
+          }
+          return res[0]
+        })
+      } catch (error) /* istanbul ignore next */ {
+        app.log.error(error)
+        app.log.info({ primaryKey, targetRelation, targetEntitySchema, targetEntityName, targetEntity, operationId })
+        throw new errors.UnableToCreateTheRouteForThePKColRelationshipError()
+      }
+    }
+  }
+
+  const ignoredPUTRoute = ignoreRoutes.find(ignoreRoute => {
+    return ignoreRoute.path === openapiPath && ignoreRoute.method === 'PUT'
+  })
+  if (!ignoredPUTRoute) {
+    app.route({
+      url: `/:${primaryKeyCamelcase}`,
+      method: 'PUT',
+      schema: {
+        operationId: 'update' + capitalize(entity.singularName),
+        summary: `Update ${entity.singularName}.`,
+        description: `Update ${entity.singularName} in the database.`,
+        body: entitySchemaInput,
+        params: primaryKeyParams,
+        tags: [entity.table],
+        querystring: {
+          type: 'object',
+          properties: {
+            fields
           }
         },
-        links: {
-          200: entityLinks
+        response: {
+          200: entitySchema
         }
-      }, async function (request, reply) {
+      },
+      links: {
+        200: entityLinks
+      },
+      async handler (request, reply) {
+        const id = request.params[primaryKeyCamelcase]
         const ctx = { app: this, reply }
-        // check that the entity exists
-        const resEntity = (await entity.find({
+        const res = await entity.save({
           ctx,
+          input: {
+            ...request.body,
+            [primaryKeyCamelcase]: id
+          },
           where: {
             [primaryKeyCamelcase]: {
-              eq: request.params[primaryKeyCamelcase]
-            }
-          }
-        }))[0]
-
-        if (!resEntity) {
-          return reply.callNotFound()
-        }
-
-        // get the related entity
-        const res = await targetEntity.find({
-          ctx,
-          where: {
-            [targetForeignKeyCamelcase]: {
-              eq: resEntity[targetColumnCamelcase]
+              eq: id
             }
           },
           fields: request.query.fields
         })
-
-        if (res.length === 0) {
-          return reply.callNotFound()
-        }
-        return res[0]
-      })
-    } catch (error) /* istanbul ignore next */ {
-      app.log.error(error)
-      app.log.info({ primaryKey, targetRelation, targetEntitySchema, targetEntityName, targetEntity, operationId })
-      throw new errors.UnableToCreateTheRouteForThePKColRelationshipError()
-    }
+        reply.header('location', `${app.prefix}/${res[primaryKeyCamelcase]}`)
+        return res
+      }
+    })
   }
 
-  app.route({
-    url: `/:${primaryKeyCamelcase}`,
-    method: 'PUT',
-    schema: {
-      operationId: 'update' + capitalize(entity.singularName),
-      summary: `Update ${entity.singularName}.`,
-      description: `Update ${entity.singularName} in the database.`,
-      body: entitySchemaInput,
-      params: primaryKeyParams,
-      tags: [entity.table],
-      querystring: {
-        type: 'object',
-        properties: {
-          fields
-        }
-      },
-      response: {
-        200: entitySchema
-      }
-    },
-    links: {
-      200: entityLinks
-    },
-    async handler (request, reply) {
-      const id = request.params[primaryKeyCamelcase]
-      const ctx = { app: this, reply }
-      const res = await entity.save({
-        ctx,
-        input: {
-          ...request.body,
-          [primaryKeyCamelcase]: id
+  const ignoredDELETERoute = ignoreRoutes.find(ignoreRoute => {
+    return ignoreRoute.path === openapiPath && ignoreRoute.method === 'DELETE'
+  })
+  if (!ignoredDELETERoute) {
+    app.delete(`/:${primaryKeyCamelcase}`, {
+      schema: {
+        operationId: 'delete' + capitalize(entity.pluralName),
+        summary: `Delete ${entity.pluralName}.`,
+        description: `Delete one or more ${entity.pluralName} from the Database.`,
+        params: primaryKeyParams,
+        tags: [entity.table],
+        querystring: {
+          type: 'object',
+          properties: {
+            fields
+          }
         },
+        response: {
+          200: entitySchema
+        }
+      }
+    }, async function (request, reply) {
+      const ctx = { app: this, reply }
+      const res = await entity.delete({
+        ctx,
         where: {
           [primaryKeyCamelcase]: {
-            eq: id
+            eq: request.params[primaryKeyCamelcase]
           }
         },
         fields: request.query.fields
       })
-      reply.header('location', `${app.prefix}/${res[primaryKeyCamelcase]}`)
-      return res
-    }
-  })
-
-  app.delete(`/:${primaryKeyCamelcase}`, {
-    schema: {
-      operationId: 'delete' + capitalize(entity.pluralName),
-      summary: `Delete ${entity.pluralName}.`,
-      description: `Delete one or more ${entity.pluralName} from the Database.`,
-      params: primaryKeyParams,
-      tags: [entity.table],
-      querystring: {
-        type: 'object',
-        properties: {
-          fields
-        }
-      },
-      response: {
-        200: entitySchema
+      if (res.length === 0) {
+        return reply.callNotFound()
       }
-    }
-  }, async function (request, reply) {
-    const ctx = { app: this, reply }
-    const res = await entity.delete({
-      ctx,
-      where: {
-        [primaryKeyCamelcase]: {
-          eq: request.params[primaryKeyCamelcase]
-        }
-      },
-      fields: request.query.fields
+      return res[0]
     })
-    if (res.length === 0) {
-      return reply.callNotFound()
-    }
-    return res[0]
-  })
+  }
 }
 
 function getPrimaryKeyParams (entity, ignore) {
