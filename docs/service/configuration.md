@@ -1,50 +1,25 @@
+import Issues from '../getting-started/issues.md';
+
 # Configuration
 
 Platformatic Service configured with a configuration file. It supports the use
 of environment variables as setting values with [configuration placeholders](#configuration-placeholders).
 
-## Configuration file
+## Configuration Files
 
-If the Platformatic CLI finds a file in the current working directory matching
-one of these filenames, it will automatically load it:
+The Platformatic CLI automatically detects and loads configuration files found in the current working directory with the file names listed [here](../file-formats.md#configuration-files).
 
-- `platformatic.service.json`
-- `platformatic.service.json5`
-- `platformatic.service.yml` or `platformatic.service.yaml`
-- `platformatic.service.tml` or `platformatic.service.toml`
+Alternatively, you can specify a configuration file path using the [`--config` option](../cli.md#db) for most `platformatic runtime` CLI commands. The configuration examples in this reference use the JSON format.
 
-Alternatively, a [`--config` option](/reference/cli.md#service) with a configuration
-filepath can be passed to most `platformatic service` CLI commands.
+### Supported File Formats
 
-The configuration examples in this reference use JSON.
-
-### Supported formats
-
-| Format | Extensions |
-| :-- | :-- |
-| JSON | `.json` |
-| JSON5 | `.json5` |
-| YAML | `.yml`, `.yaml` |
-| TOML | `.tml` |
-
-Comments are supported by the JSON5, YAML and TOML file formats.
+For detailed information on supported file formats and extensions, please visit our [Supported File Formats and Extensions](../file-formats.md#supported-file-formats) page.
 
 ## Settings
 
-Configuration settings are organised into the following groups:
+Configuration settings containing sensitive data, such as database connection URLs and passwords, should be set using [configuration placeholders](#configuration-placeholders).
 
-- [`server`](#server) **(required)**
-- [`service`](#service)
-- [`metrics`](#metrics)
-- [`plugins`](#plugins)
-- [`telemetry`](#telemetry)
-- [`watch`](#watch)
-- [`clients`](#clients)
-
-Sensitive configuration settings, such as a database connection URL that contains
-a password, should be set using [configuration placeholders](#configuration-placeholders).
-
-### `server`
+### `server` **(required)**
 
 A object with the following settings:
 
@@ -333,9 +308,11 @@ An array of [Platformatic Client](/reference/client/introduction.md) configurati
 The value for any configuration setting can be replaced with an environment variable
 by adding a placeholder in the configuration file, for example `{PLT_SERVER_LOGGER_LEVEL}`.
 
+The value for any configuration setting can be replaced with an environment variable placeholder in a configuration file, such as `{PORT}`.
+
 ### Example
 
-```json title="platformatic.service.json"
+```json title="platformatic.json"
 {
   "server": {
     "port": "{PORT}"
@@ -346,7 +323,7 @@ by adding a placeholder in the configuration file, for example `{PLT_SERVER_LOGG
 Platformatic will replace the placeholders in this example with the environment
 variables of the same name.
 
-### Setting environment variables
+### Setting Environment Variables
 
 If a `.env` file exists it will automatically be loaded by Platformatic using
 [`dotenv`](https://github.com/motdotla/dotenv). For example:

@@ -131,7 +131,7 @@ You can generate only the types with the `--types-only` flag.
 For example
 
 ```bash
-$ platformatic client http://exmaple.com/to/schema/file --name myclient --types-only
+$ platformatic client http://example.com/to/schema/file --name myclient --types-only
 ```
 
 Will create the single `myclient.d.ts` file.
