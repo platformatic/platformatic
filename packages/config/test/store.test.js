@@ -268,6 +268,47 @@ test('loadConfig', async t => {
   assert.equal(res.app, foo, 'should return app')
 })
 
+test('loadConfig with platformatic.yaml should fail', async t => {
+  function foo () {
+  }
+
+  foo.schema = {
+    $id: `https://platformatic.dev/schemas/v${version}/service`,
+    type: 'object'
+  }
+
+  foo.configType = 'service'
+  foo.configManagerConfig = {
+    schema: foo.schema,
+    allowToWatch: ['.env'],
+    schemaOptions: {
+      useDefaults: true,
+      coerceTypes: true,
+      allErrors: true,
+      strict: false
+    },
+    transformConfig () {
+    }
+  }
+
+  const cwd = process.cwd()
+  process.chdir(join(__dirname, 'fixtures/platformatic-yaml'))
+
+  const store = new Store()
+  store.add(foo)
+
+  t.after(() => {
+    process.chdir(cwd)
+  })
+
+  try {
+    await store.loadConfig()
+    assert.fail()
+  } catch (err) {
+    assert.equal(err.message, 'yamlString.matchAll is not a function or its return value is not iterable')
+  }
+})
+
 test('loadConfig custom module', async t => {
   const store = new Store({
     cwd: join(__dirname, 'fixtures', 'app')
