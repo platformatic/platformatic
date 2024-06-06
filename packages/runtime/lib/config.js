@@ -103,135 +103,87 @@ function missingDependencyErrorMessage (clientName, service, configManager) {
 }
 
 async function parseClientsAndComposer (configManager) {
-  for (let i = 0; i < configManager.current.services.length; ++i) {
-    const service = configManager.current.services[i]
+  for (const service of configManager.current.services) {
     const cm = new ConfigManager({ source: service.config })
     const configString = await cm.load()
-    const parsed = cm._parser(configString)
+    const serviceConfig = cm._parser(configString)
 
-    if (Array.isArray(parsed.composer?.services)) {
-      for (let i = 0; i < parsed.composer.services.length; ++i) {
-        const dep = parsed.composer.services[i]
-        /* c8 ignore next 4 - why c8? */
-        const clientName = dep.id ?? ''
-        const dependency = configManager.current.serviceMap.get(clientName)
+    async function parseConfigUrl (urlString) {
+      if (!urlString) {
+        return { url: null, envVar: null }
+      }
 
-        let isLocal = true
-        let clientUrl = null
-
-        if (dep.origin !== undefined) {
-          try {
-            clientUrl = await cm.replaceEnv(dep.origin)
-            isLocal = false
-            /* c8 ignore next 4 */
-          } catch (err) {
-            // The MissingValueError is an error coming from pupa: https://github.com/sindresorhus/pupa#missingvalueerror
-            // All other errors are simply rethrown.
-            if (err.name !== 'MissingValueError') {
-              throw err
-            }
-
-            if (dependency !== undefined && dep.origin === `{${err.key}}`) {
-              clientUrl = `http://${clientName}.plt.local`
-              service.localServiceEnvVars.set(err.key, clientUrl)
-            }
-          }
+      try {
+        const url = await cm.replaceEnv(urlString)
+        return { url, envVar: null }
+      } catch (err) {
+        // The MissingValueError is an error coming from pupa
+        // https://github.com/sindresorhus/pupa#missingvalueerror
+        // All other errors are simply re-thrown.
+        if (err.name !== 'MissingValueError' || urlString !== `{${err.key}}`) {
+          throw err
         }
-
-        if (isLocal) {
-          if (dependency === undefined) {
-            throw new errors.MissingDependencyError(missingDependencyErrorMessage(clientName, service, configManager))
-          }
-          clientUrl = `http://${clientName}.plt.local`
-          dependency.dependents.push(service.id)
-        }
-
-        service.dependencies.push({
-          id: clientName,
-          url: clientUrl,
-          local: isLocal
-        })
+        return { url: null, envVar: err.key }
       }
     }
 
-    if (Array.isArray(parsed.clients)) {
-      const promises = parsed.clients.map((client) => {
-        // eslint-disable-next-line no-async-promise-executor
-        return new Promise(async (resolve, reject) => {
-          let clientName = client.serviceId || ''
-          let clientUrl
-          let missingKey
-          let isLocal = false
+    async function addServiceDependency (service, dependencyId, urlString) {
+      let { url, envVar } = await parseConfigUrl(urlString)
+      if (url !== null) {
+        service.dependencies.push({ id: dependencyId, url, local: false })
+        return
+      }
 
-          if (clientName === '' || client.url !== undefined) {
+      const depService = configManager.current.serviceMap.get(dependencyId)
+      if (depService === undefined) {
+        throw new errors.MissingDependencyError(
+          missingDependencyErrorMessage(dependencyId, service, configManager)
+        )
+      }
+
+      url = `http://${dependencyId}.plt.local`
+
+      if (envVar !== null) {
+        service.localServiceEnvVars.set(envVar, url)
+      }
+
+      depService.dependents.push(service.id)
+      service.dependencies.push({ id: dependencyId, url, local: true })
+    }
+
+    const composedServices = serviceConfig.composer?.services
+    if (Array.isArray(composedServices)) {
+      await Promise.all(
+        composedServices.map(async (composedService) =>
+          addServiceDependency(
+            service,
+            composedService.id,
+            composedService.origin
+          )
+        )
+      )
+    }
+
+    if (Array.isArray(serviceConfig.clients)) {
+      await Promise.all(
+        serviceConfig.clients.map(async (client) => {
+          let clientServiceId = client.serviceId
+          if (!clientServiceId) {
             try {
-              clientUrl = await cm.replaceEnv(client.url)
-              /* c8 ignore next 2 - unclear why c8 is unhappy here */
+              const clientPath = pathResolve(service.path, client.path)
+              const clientPackageJsonPath = join(clientPath, 'package.json')
+              const clientPackageJSONFile = await readFile(clientPackageJsonPath, 'utf8')
+              const clientPackageJSON = JSON.parse(clientPackageJSONFile)
+              clientServiceId = clientPackageJSON.name ?? ''
             } catch (err) {
-              if (err.name !== 'MissingValueError') {
-                /* c8 ignore next 3 */
-                reject(err)
-                return
+              if (client.url === undefined || client.name === undefined) {
+                throw err
               }
-
-              missingKey = err.key
-            }
-            isLocal = missingKey && client.url === `{${missingKey}}`
-            /* c8 ignore next 3 */
-          } else {
-            /* c8 ignore next 2 */
-            isLocal = true
-          }
-
-          /* c8 ignore next 20 - unclear why c8 is unhappy for nearly 20 lines here */
-          if (!clientName) {
-            try {
-              const clientAbsolutePath = pathResolve(service.path, client.path)
-              const clientPackageJson = join(clientAbsolutePath, 'package.json')
-              const clientMetadata = JSON.parse(await readFile(clientPackageJson, 'utf8'))
-              clientName = clientMetadata.name ?? ''
-            } catch (err) {
-              if (client.url !== undefined && client.name !== undefined) {
-                // We resolve because this is a remote client
-                resolve()
-              } else {
-                reject(err)
-              }
-              return
             }
           }
-
-          if (clientUrl === undefined) {
-            // Combine the service name with the client name to avoid collisions
-            // if two or more services have a client with the same name pointing
-            // to different services.
-            clientUrl = isLocal ? `http://${clientName}.plt.local` : client.url
-          }
-
-          service.dependencies.push({
-            id: clientName,
-            url: clientUrl,
-            local: isLocal
-          })
-
-          const dependency = configManager.current.serviceMap.get(clientName)
-
-          /* c8 ignore next 4 */
-          if (dependency === undefined) {
-            throw new errors.MissingDependencyError(missingDependencyErrorMessage(clientName, service, configManager))
-          }
-
-          dependency.dependents.push(service.id)
-
-          if (isLocal) {
-            service.localServiceEnvVars.set(missingKey, clientUrl)
-          }
-
-          resolve()
+          await addServiceDependency(service, clientServiceId, client.url)
         })
-      })
-
-      await Promise.all(promises)
+      )
     }
   }
 }
@@ -240,11 +192,16 @@ function topologicalSort (configManager) {
   const { services } = configManager.current
   const topo = new Topo.Sorter()
 
-  for (let i = 0; i < services.length; ++i) {
-    const service = services[i]
-    const dependencyIds = service.dependencies.map(dep => dep.id)
+  for (const service of services) {
+    const localDependencyIds = service.dependencies
+      .filter(dep => dep.local)
+      .map(dep => dep.id)
 
-    topo.add(service, { group: service.id, after: dependencyIds, manual: true })
+    topo.add(service, {
+      group: service.id,
+      after: localDependencyIds,
+      manual: true
+    })
   }
 
   configManager.current.services = topo.sort()
