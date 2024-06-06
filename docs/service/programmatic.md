@@ -1,11 +1,14 @@
 # Programmatic API
 
-In many cases it's useful to start Platformatic Service using an API instead of
-command line, e.g. in tests we want to start and stop our server.
+In many cases, it's useful to start Platformatic Service using an API instead of the command line, e.g., in tests where we want to start and stop our server programmatically.
 
-The `buildServer` function allows that:
+## Using `buildServer` Function
 
-```js
+The `buildServer` function allows starting the Platformatic Service programmatically.
+
+### Basic Example 
+
+```js title="server.js"
 import { buildServer } from '@platformatic/service'
 
 const app = await buildServer('path/to/platformatic.service.json')
@@ -19,6 +22,8 @@ console.log(await res.json())
 
 await app.close()
 ```
+
+### Custom Configuration 
 
 It is also possible to customize the configuration:
 
@@ -42,12 +47,11 @@ console.log(await res.json())
 await app.close()
 ```
 
-## Creating a reusable application on top of Platformatic Service
+## Creating a Reusable Application on Top of Platformatic Service
 
-[Platformatic DB](/reference/db/introduction.md) is built on top of Platformatic Serivce.
-If you want to build a similar kind of tool, follow this example:
+[Platformatic DB](../db/overview.md) is built on top of Platformatic Serivce. If you want to build a similar kind of tool, follow this example:
 
-```js
+```js title="Example Plugin"
 import { buildServer, schema } from '@platformatic/service'
 import { readFileSync } from 'node:fs'
 
@@ -100,10 +104,12 @@ console.log(await res.json())
 await service.close()
 ```
 
+### Using `beforePlugins` Option
+
 If you want to provide functionality _before_ the plugins are loaded, but after metrics and telemetry are in place,
 you can use the `beforePlugins` option:
 
-```js
+```js title="Example Plugin"
 async function myPlugin (app, opts) {
   await app.register(platformaticService, {
     ...opts,
@@ -114,11 +120,11 @@ async function myPlugin (app, opts) {
 }
 ```
 
-## TypeScript support
+## TypeScript Support
 
+To ensure this module works in a TypeScript setup (outside of an application created with `create-platformatic`), you need to add the following to your types:
 
-In order for this module to work on a TypeScript setup (outside of an application created with `create-platformatic`),
-you have to add the following to your types:
+### Type Declarations 
 
 ```ts
 import { FastifyInstance } from 'fastify'
@@ -131,7 +137,7 @@ declare module 'fastify' {
 }
 ```
 
-Then, you can use it:
+### Usage Example 
 
 ```ts
 /// <reference path="./global.d.ts" />
@@ -146,12 +152,13 @@ export default async function (app: FastifyInstance) {
 
 You can always generate a file called `global.d.ts` with the above content via the `platformatic service types` command.
 
-
-### Usage with custom configuration
+## Usage with Custom Configuration
 
 If you are creating a reusable application on top of Platformatic Service, you would need to create the types for your schema, 
 using [json-schema-to-typescript](https://www.npmjs.com/package/json-schema-to-typescript) in a `./config.d.ts` file and
-use it like so:
+use it like this:
+
+### Custom Configuration Types
 
 ```ts
 import { FastifyInstance } from 'fastify'
@@ -164,13 +171,15 @@ declare module 'fastify' {
   }
 }
 ```
+:::note
+You can construct `platformatic` like any other union types, adding other definitions.
+:::
 
-Note that you can construct `platformatic` like any other union types, adding other definitions.
+## Writing a Custom Stackable with TypeScript
 
-## Writing a custom Stackable with TypeScript
+Creating a reusable application with TypeScript requires a bit of setup. First, create a `schema.ts` file that generates the JSON Schema for your your application.
 
-Creating a reusable application with TypeScript requires a bit of setup.
-First, create a `schema.ts` file that generates the JSON Schema for your your application. Like so:
+### Schema Definition
 
 ```ts
 import { schema as serviceSchema } from '@platformatic/service'
@@ -204,7 +213,9 @@ if (esMain(import.meta)) {
 }
 ```
 
-Then generates the matching types with [json-schema-to-typescript](http://npm.im/json-schema-to-typescript):
+#### Generate Matching Types 
+
+Use [json-schema-to-typescript](http://npm.im/json-schema-to-typescript) to generate types:
 
 1. `tsc && node dist/lib/schema.js > schemas/acme.json`
 2. `json2ts < schemas/acme.json > src/lib/config.d.ts`
@@ -289,7 +300,7 @@ export async function buildServer (opts: object) {
 }
 ```
 
-## Implement auto-upgrade of the configuration
+## Implementing Auto-Upgrade of the Configuration
 
 Platformatic support auto-upgrading the configuration of your stackable to the latest version. This enables
 the use of compatibility options to turn on and off individual features. Imagine that you want to change the
@@ -315,8 +326,7 @@ export const migration = {
 
 ### Wiring it to the stackable
 
-You just need to add a `version` string (the current module version, as specified in `package.json`)
-and `upgrade` function into your `configManagerConfig`:
+Add a `version` string, specified in your `package.json` and `upgrade` function to your `configManagerConfig`:
 
 ```javascript
 const { join } = require('path')

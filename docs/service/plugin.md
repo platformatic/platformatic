@@ -1,10 +1,12 @@
 # Plugin
 
-If you want to add features to a service, you will need to register a plugin, which will be in the form of a standard [Fastify](https://fastify.io) plugin.
+To add more features to a Platformatic service, you will need to register a plugin, which will be in the form of a standard [Fastify](https://fastify.io) plugin.
 
-The config file will specify where the plugin file is located as the example below:
+## Configuration
 
-```json
+The config file specifies where the plugin file is located. The path is relative to the config file path.
+
+```json title="platformatic.json"
 {
   ...
   "plugins": {
@@ -12,29 +14,28 @@ The config file will specify where the plugin file is located as the example bel
   }
 }
 ```
-The path is relative to the config file path.
 
-You should export an async `function` which receives a parameters
-- `app` (`FastifyInstance`) that is the main fastify [instance](https://www.fastify.io/docs/latest/Reference/Server/#instance)
+You should export an async `function` which receives the following parameters:
+
+- `app` (`FastifyInstance`) the main fastify [instance](https://www.fastify.io/docs/latest/Reference/Server/#instance)
 - `opts` all the options specified in the config file after `path`
 
 ## Hot Reload
 
-Plugin file is being watched by [`fs.watch`](https://nodejs.org/api/fs.html#fspromiseswatchfilename-options) function.
+The plugin file is watched by the [`fs.watch`](https://nodejs.org/api/fs.html#fspromiseswatchfilename-options) function.
 
-You don't need to reload Platformatic Service server while working on your plugin. Every time you save, the watcher will trigger a reload event and the server will auto-restart and load your updated code.
+You don't need to reload the Platformatic Service server while working on your plugin. Every time you save, the watcher will trigger a reload event, and the server will auto-restart and load your updated code.
 
-:::tip
-
-At this time, on Linux, file watch in subdirectories is not supported due to a Node.js limitation (documented [here](https://nodejs.org/api/fs.html#caveats)).
-
+:::info
+On Linux, file watch in subdirectories is not supported due to a Node.js limitation ([documented here](https://nodejs.org/api/fs.html#caveats)).
 :::
+
 
 ## Directories
 
 The path can also be a directory. In that case, the directory will be loaded with [`@fastify/autoload`](https://github.com/fastify/fastify-autoload).
 
-Consider the following directory structure:
+**Example Directory Structure**
 
 ```
 ├── routes
@@ -49,9 +50,9 @@ Consider the following directory structure:
 ```
 
 By default the folder will be added as a prefix to all the routes defined within them.
-See the autoload documentation for all the options to customize this behavior.
+See the [autoload](../runtime/configuration.md#autoload) documentation for all the options to customize this behavior.
 
-## Multiple plugins
+## Multiple Plugins
 
 Multiple plugins can be loaded in parallel by specifying an array:
 
@@ -70,8 +71,7 @@ Multiple plugins can be loaded in parallel by specifying an array:
 
 ## TypeScript and Autocompletion
 
-In order to provide the correct typings of the features added by Platformatic Service to your Fastify instance,
-add the following at the top of your files:
+To provide the correct typings of the features added by Platformatic Service to your Fastify instance, add the following at the top of your files:
 
 ```js
 /// <references types="@platformatic/service" />
@@ -95,4 +95,17 @@ Note that you need to add the `"typescript": true` configuration to your `platfo
 
 Setting `"typescript": false` but including a `tsconfig.json` with an [`outDir`](https://www.typescriptlang.org/tsconfig#outDir)
 option, will instruct Platformatic Service to try loading your plugins from that folder instead.
-This setup is needed to support pre-compiled sources to reduce cold start time during deployment.
+This setup supports pre-compiled sources to reduce cold start time during deployment.
+
+```json title="Example Configuration"
+{
+  "typescript": false,
+  "plugins": {
+    "paths": [
+      { "path": "./dist/plugin.js" }
+    ]
+  }
+}
+```
+
+

@@ -3,6 +3,8 @@ title: Overview
 label: Platformatic Service
 ---
 
+import Issues from '../getting-started/issues.md';
+
 # Platformatic Service
 
 Platformatic Service is an HTTP server that provides a developer tools for
@@ -33,3 +35,5 @@ You can use the `plt-service` command, it's the equivalent of `plt service`.
 ## TypeScript
 
 To generate the types for the application, run `platformatic db types`.
+
+<Issues />
