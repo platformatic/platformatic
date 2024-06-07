@@ -1,0 +1,23 @@
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0,
+    "logger": {
+      "level": "info"
+    }
+  },
+  "db": {
+    "connectionString": "{DATABASE_URL}",
+    "openapi": {
+      "ignoreRoutes": [
+        { "method": "GET", "path": "/pages/{id}" },
+        { "method": "POST", "path": "/pages" }
+      ]
+    }
+  },
+  "migrations": {
+    "dir": "./migrations",
+    "table": "versions",
+    "autoApply": false
+  }
+}
