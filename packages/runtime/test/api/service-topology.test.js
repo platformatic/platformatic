@@ -8,6 +8,8 @@ const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
+const platformaticVersion = require('../../package.json').version
+
 test('should get services topology', async (t) => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
@@ -29,6 +31,7 @@ test('should get services topology', async (t) => {
         id: 'db-app',
         type: 'db',
         status: 'started',
+        version: platformaticVersion,
         entrypoint: false,
         localUrl: 'http://db-app.plt.local',
         dependencies: []
@@ -37,6 +40,7 @@ test('should get services topology', async (t) => {
         id: 'serviceApp',
         type: 'service',
         status: 'started',
+        version: platformaticVersion,
         entrypoint: true,
         url: entrypointDetails.url,
         localUrl: 'http://serviceApp.plt.local',
@@ -52,6 +56,7 @@ test('should get services topology', async (t) => {
         id: 'with-logger',
         type: 'service',
         status: 'started',
+        version: platformaticVersion,
         entrypoint: false,
         localUrl: 'http://with-logger.plt.local',
         dependencies: []
@@ -60,6 +65,7 @@ test('should get services topology', async (t) => {
         id: 'multi-plugin-service',
         type: 'service',
         status: 'started',
+        version: platformaticVersion,
         entrypoint: false,
         localUrl: 'http://multi-plugin-service.plt.local',
         dependencies: []
