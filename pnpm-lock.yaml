@@ -1783,7 +1783,7 @@ importers:
         version: 0.1.1
       '@mercuriusjs/gateway':
         specifier: ^3.0.0
-        version: 3.0.0
+        version: 3.0.1
       '@platformatic/sql-events':
         specifier: workspace:*
         version: link:../sql-events
@@ -2560,8 +2560,8 @@ packages:
   '@mercuriusjs/federation@3.0.0':
     resolution: {integrity: sha512-GVk6n314p6rs2gfF3OtqsREftyuzYztiAq0XFl7wg/8w6bJMNctzn/nMkBcA8JYl++d52uchzWLD7eo2yQXQTw==}
 
-  '@mercuriusjs/gateway@3.0.0':
-    resolution: {integrity: sha512-KBShjsz5Q1DhEdH4GE9Z97vzaauJPwIhTxrTJL4uMs80z2DujiXGdiNSNpYBN3Dyi1Dn9pOg2WJ/TEAsyNg6hQ==}
+  '@mercuriusjs/gateway@3.0.1':
+    resolution: {integrity: sha512-t/a3U3SQS4bd0iiOzHUaqbnp7VSoHIGICyQFKYsQHPEGO8yhmZGk2zfAvDG5J2dgioPnk2af6BGA+/WZRlAlnw==}
 
   '@mercuriusjs/subscription-client@1.0.0':
     resolution: {integrity: sha512-hIGqNp6FBdcy7ZkrWNk4mHl/Qodtwvbu9/iRl3zQdNRl4UtlVI7xW/FPU+2AJy0qTB567yrpvtQPwtmQLuYHYg==}
@@ -6019,6 +6019,10 @@ packages:
     resolution: {integrity: sha512-JpqM0K33lG6iQGKiigcwuURAKZlq6rHXfrgeL4/I8/REoyJTGU+tEMszvT/oTRVHG2OiylhGDjqPp1jWMlr3bw==}
     engines: {node: '>=12'}
 
+  tiny-lru@11.2.6:
+    resolution: {integrity: sha512-0PU3c9PjMnltZaFo2sGYv/nnJsMjG0Cxx8X6FXHPPGjFyoo1SJDxvUXW1207rdiSxYizf31roo+GrkIByQeZoA==}
+    engines: {node: '>=12'}
+
   title-case@3.0.3:
     resolution: {integrity: sha512-e1zGYRvbffpcHIrnuqT0Dh+gEJtDaxDSoG4JAIpq4oDFyooziLBIiYQv0GBT4FUAnUop5uZ1hiIAj7oAF6sOCA==}
 
@@ -7015,7 +7019,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@mercuriusjs/gateway@3.0.0':
+  '@mercuriusjs/gateway@3.0.1':
     dependencies:
       '@mercuriusjs/federation': 3.0.0
       '@mercuriusjs/subscription-client': 1.0.0(graphql@16.8.1)
@@ -7025,7 +7029,7 @@ snapshots:
       mercurius: 14.0.0(graphql@16.8.1)
       p-map: 4.0.0
       single-user-cache: 0.6.0
-      tiny-lru: 11.2.5
+      tiny-lru: 11.2.6
       use-strict: 1.0.1
       ws: 8.16.0
     transitivePeerDependencies:
@@ -10984,6 +10988,8 @@ snapshots:
       next-tick: 1.1.0
 
   tiny-lru@11.2.5: {}
+
+  tiny-lru@11.2.6: {}
 
   title-case@3.0.3:
     dependencies:
