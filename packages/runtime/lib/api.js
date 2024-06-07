@@ -234,8 +234,8 @@ class RuntimeApi {
     const status = service.getStatus()
 
     const type = service.config?.configType
+    const version = service.config?.app?.configManagerConfig.version ?? null
     const { entrypoint, dependencies, localUrl } = service.appConfig
-    const { version } = service.config.app.configManagerConfig
 
     const serviceDetails = {
       id,
