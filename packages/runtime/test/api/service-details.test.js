@@ -8,6 +8,8 @@ const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
+const platformaticVersion = require('../../package.json').version
+
 test('should get service details', async (t) => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
@@ -24,6 +26,7 @@ test('should get service details', async (t) => {
     id: 'with-logger',
     type: 'service',
     status: 'started',
+    version: platformaticVersion,
     entrypoint: false,
     localUrl: 'http://with-logger.plt.local',
     dependencies: []

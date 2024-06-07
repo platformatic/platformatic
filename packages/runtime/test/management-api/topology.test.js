@@ -8,6 +8,8 @@ const { Client } = require('undici')
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
+const platformaticVersion = require('../../package.json').version
+
 test('should get services topology', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
@@ -49,6 +51,7 @@ test('should get services topology', async (t) => {
         id: 'service-1',
         type: 'service',
         status: 'started',
+        version: platformaticVersion,
         entrypoint: true,
         url: entrypointDetails.url,
         localUrl: 'http://service-1.plt.local',
@@ -58,6 +61,7 @@ test('should get services topology', async (t) => {
         id: 'service-2',
         type: 'service',
         status: 'started',
+        version: platformaticVersion,
         entrypoint: false,
         localUrl: 'http://service-2.plt.local',
         dependencies: []
@@ -66,6 +70,7 @@ test('should get services topology', async (t) => {
         id: 'service-db',
         type: 'db',
         status: 'started',
+        version: platformaticVersion,
         entrypoint: false,
         localUrl: 'http://service-db.plt.local',
         dependencies: []
