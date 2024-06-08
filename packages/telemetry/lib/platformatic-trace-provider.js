@@ -16,13 +16,13 @@ class PlatformaticTracerProvider {
     const mergedConfig = merge(
       {},
       {
-        sampler: new AlwaysOnSampler()
+        sampler: new AlwaysOnSampler(),
       },
       config
     )
     this.resource = mergedConfig.resource ?? Resource.empty()
     this._config = Object.assign({}, mergedConfig, {
-      resource: this.resource
+      resource: this.resource,
     })
   }
 
@@ -49,8 +49,8 @@ class PlatformaticTracerProvider {
   getPropagator () {
     return new CompositePropagator({
       propagators: [
-        new W3CTraceContextPropagator() // see: https://www.w3.org/TR/trace-context/
-      ]
+        new W3CTraceContextPropagator(), // see: https://www.w3.org/TR/trace-context/
+      ],
     })
   }
 

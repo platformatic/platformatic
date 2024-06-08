@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "npm run lint | snazzy && borp",
-    "lint": "standard | snazzy"
+    "lint": "eslint"
   },
   "author": "Marco Piraccini <marco.piraccini@gmail.com>",
   "repository": {
@@ -16,8 +16,7 @@
   "devDependencies": {
     "borp": "^0.14.0",
     "fastify": "^4.26.2",
-    "snazzy": "^9.0.0",
-    "standard": "^17.1.0"
+    "neostandard": "^0.6.0"
   },
   "dependencies": {
     "@fastify/swagger": "^8.14.0",

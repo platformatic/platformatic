@@ -2012,12 +2012,9 @@ importers:
       fastify:
         specifier: ^4.26.2
         version: 4.26.2
-      snazzy:
-        specifier: ^9.0.0
-        version: 9.0.0
-      standard:
-        specifier: ^17.1.0
-        version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.4.5))
+      neostandard:
+        specifier: ^0.6.0
+        version: 0.6.0(@typescript-eslint/parser@8.0.0-alpha.28(eslint@9.4.0)(typescript@5.4.5))(eslint@9.4.0)(typescript@5.4.5)
 
   packages/utils:
     dependencies:

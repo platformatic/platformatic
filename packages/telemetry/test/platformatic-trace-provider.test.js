@@ -8,10 +8,10 @@ test('should propagate forceFlush to all registered processors ', async () => {
   let called1 = false
   let called2 = false
   const mockSpanProcessor1 = {
-    forceFlush: async () => { called1 = true }
+    forceFlush: async () => { called1 = true },
   }
   const mockSpanProcessor2 = {
-    forceFlush: async () => { called2 = true }
+    forceFlush: async () => { called2 = true },
   }
   const provider = new PlatformaticTracerProvider()
   equal(provider._registeredSpanProcessors.length, 0)
@@ -29,10 +29,10 @@ test('should propagate shutdown to the active span processor, which should propa
   let called1 = false
   let called2 = false
   const mockSpanProcessor1 = {
-    shutdown: async () => { called1 = true }
+    shutdown: async () => { called1 = true },
   }
   const mockSpanProcessor2 = {
-    shutdown: async () => { called2 = true }
+    shutdown: async () => { called2 = true },
   }
   const provider = new PlatformaticTracerProvider()
   equal(provider._registeredSpanProcessors.length, 0)
