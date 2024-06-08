@@ -39,7 +39,7 @@ class FileWatcher extends EventEmitter {
     // See: https://github.com/nodejs/node/issues/48437
     const fsWatcher = watch(this.path, {
       signal,
-      recursive: true
+      recursive: true,
     })
 
     let updateTimeout = null

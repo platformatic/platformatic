@@ -20,21 +20,21 @@ test('start and ends an internal span', async () => {
     serviceName: 'test-service',
     version: '1.0.0',
     exporter: {
-      type: 'memory'
-    }
+      type: 'memory',
+    },
   }, handler, test.after)
 
   const { startInternalSpan, endInternalSpan } = app.openTelemetry
 
   const incomingHeaders = {
     host: 'test',
-    traceparent
+    traceparent,
   }
   const { propagator } = app.openTelemetry
   const context = propagator.extract(new PlatformaticContext(), { headers: incomingHeaders }, fastifyTextMapGetter)
 
   const attributes = {
-    'test-attribute': 'test-value'
+    'test-attribute': 'test-value',
   }
   const span = startInternalSpan('TEST', context, attributes)
   deepEqual(span._spanContext.traceId, traceId)
@@ -62,8 +62,8 @@ test('start and ends an internal span with no parent context and no attributes',
     serviceName: 'test-service',
     version: '1.0.0',
     exporter: {
-      type: 'memory'
-    }
+      type: 'memory',
+    },
   }, handler, test.after)
 
   const { startInternalSpan, endInternalSpan } = app.openTelemetry
@@ -97,21 +97,21 @@ test('start and ends an internal span with error', async () => {
     serviceName: 'test-service',
     version: '1.0.0',
     exporter: {
-      type: 'memory'
-    }
+      type: 'memory',
+    },
   }, handler, test.after)
 
   const { startInternalSpan, endInternalSpan } = app.openTelemetry
 
   const incomingHeaders = {
     host: 'test',
-    traceparent
+    traceparent,
   }
   const { propagator } = app.openTelemetry
   const context = propagator.extract(new PlatformaticContext(), { headers: incomingHeaders }, fastifyTextMapGetter)
 
   const attributes = {
-    'test-attribute': 'test-value'
+    'test-attribute': 'test-value',
   }
   const span = startInternalSpan('TEST', context, attributes)
   deepEqual(span._spanContext.traceId, traceId)

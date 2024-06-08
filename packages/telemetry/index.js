@@ -5,5 +5,5 @@ const schema = require('./lib/schema')
 
 module.exports = {
   telemetry,
-  schema
+  schema,
 }

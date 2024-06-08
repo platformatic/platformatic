@@ -28,8 +28,8 @@ const injectArgs = {
   method: 'GET',
   url: '/test',
   headers: {
-    host: 'test'
-  }
+    host: 'test',
+  },
 }
 
 test('should trace a request not failing', async () => {
@@ -41,8 +41,8 @@ test('should trace a request not failing', async () => {
     serviceName: 'test-service',
     version: '1.0.0',
     exporter: {
-      type: 'memory'
-    }
+      type: 'memory',
+    },
   }, handler, test.after)
 
   await app.inject(injectArgs)
@@ -73,16 +73,16 @@ test('should not put query in `url.path', async () => {
     method: 'GET',
     url: '/test?foo=bar',
     headers: {
-      host: 'test'
-    }
+      host: 'test',
+    },
   }
 
   const app = await setupApp({
     serviceName: 'test-service',
     version: '1.0.0',
     exporter: {
-      type: 'memory'
-    }
+      type: 'memory',
+    },
   }, handler, test.after)
 
   await app.inject(injectArgs)
@@ -114,8 +114,8 @@ test('request should add attribute to a span', async () => {
     serviceName: 'test-service',
     version: '1.0.0',
     exporter: {
-      type: 'memory'
-    }
+      type: 'memory',
+    },
   }, handler, test.after)
 
   await app.inject(injectArgs)
@@ -148,8 +148,8 @@ test('should be able to set the W3C trace context', async () => {
     serviceName: 'test-service',
     version: '1.0.0',
     exporter: {
-      type: 'memory'
-    }
+      type: 'memory',
+    },
   }, handler, test.after)
 
   const response = await app.inject(injectArgs)
@@ -165,8 +165,8 @@ test('should trace a request that fails', async () => {
     serviceName: 'test-service',
     version: '1.0.0',
     exporter: {
-      type: 'memory'
-    }
+      type: 'memory',
+    },
   }, handler, test.after)
 
   await app.inject(injectArgs)
@@ -192,7 +192,7 @@ test('if no exporter is configured, should default to console', async () => {
   }
   const app = await setupApp({
     serviceName: 'test-service',
-    version: '1.0.0'
+    version: '1.0.0',
   }, handler, test.after)
 
   await app.inject(injectArgs)
@@ -211,9 +211,9 @@ test('should configure OTLP correctly', async () => {
     exporter: {
       type: 'otlp',
       options: {
-        url: 'http://localhost:4317'
-      }
-    }
+        url: 'http://localhost:4317',
+      },
+    },
   }, handler, test.after)
 
   const { exporters } = app.openTelemetry
@@ -232,9 +232,9 @@ test('should configure Zipkin correctly', async () => {
     exporter: {
       type: 'zipkin',
       options: {
-        url: 'http://localhost:9876'
-      }
-    }
+        url: 'http://localhost:9876',
+      },
+    },
   }, handler, test.after)
 
   const { exporters } = app.openTelemetry
@@ -251,8 +251,8 @@ test('wrong exporter is configured, should default to console', async () => {
     serviceName: 'test-service',
     version: '1.0.0',
     exporter: {
-      type: 'wrong-exporter'
-    }
+      type: 'wrong-exporter',
+    },
   }, handler, test.after)
 
   await app.inject(injectArgs)
@@ -271,19 +271,19 @@ test('should not trace if the operation is skipped', async () => {
     version: '1.0.0',
     skip: [{
       path: '/documentation/json',
-      method: 'GET'
+      method: 'GET',
     }],
     exporter: {
-      type: 'memory'
-    }
+      type: 'memory',
+    },
   }, handler, test.after)
 
   const injectArgs = {
     method: 'GET',
     url: '/documentation/json',
     headers: {
-      host: 'test'
-    }
+      host: 'test',
+    },
   }
 
   await app.inject(injectArgs)
@@ -302,16 +302,16 @@ test('should not put the URL param in path', async () => {
     method: 'GET',
     url: '/test/123',
     headers: {
-      host: 'test'
-    }
+      host: 'test',
+    },
   }
 
   const app = await setupApp({
     serviceName: 'test-service',
     version: '1.0.0',
     exporter: {
-      type: 'memory'
-    }
+      type: 'memory',
+    },
   }, handler, test.after)
 
   await app.inject(injectArgs)
@@ -343,17 +343,17 @@ test('should configure an exporter as an array', async () => {
     exporter: [{
       type: 'otlp',
       options: {
-        url: 'http://localhost:4317'
-      }
-    }]
+        url: 'http://localhost:4317',
+      },
+    }],
   }, handler, test.after)
 
   const injectArgs = {
     method: 'GET',
     url: '/test/123',
     headers: {
-      host: 'test'
-    }
+      host: 'test',
+    },
   }
   await app.inject(injectArgs)
 
@@ -373,9 +373,9 @@ test('do not stop closing the server if the exporter fails', async () => {
     exporter: [{
       type: 'otlp',
       options: {
-        url: 'http://risk-engine.local'
-      }
-    }]
+        url: 'http://risk-engine.local',
+      },
+    }],
   }, handler, test.after)
 
   // We need to send some data to the server to make sure there is data
@@ -384,8 +384,8 @@ test('do not stop closing the server if the exporter fails', async () => {
     method: 'GET',
     url: '/test/123',
     headers: {
-      host: 'test'
-    }
+      host: 'test',
+    },
   }
   await app.inject(injectArgs)
 })
@@ -398,10 +398,10 @@ test('should use multiple exporters and sent traces to all the exporters', async
     serviceName: 'test-service',
     version: '1.0.0',
     exporter: [{
-      type: 'memory'
+      type: 'memory',
     }, {
-      type: 'memory'
-    }]
+      type: 'memory',
+    }],
   }, handler, test.after)
   const { exporters } = app.openTelemetry
 

@@ -19,5 +19,5 @@ async function setupApp (pluginOpts, routeHandler, teardown) {
 }
 
 module.exports = {
-  setupApp
+  setupApp,
 }

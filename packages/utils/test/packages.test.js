@@ -34,7 +34,7 @@ test('checkForDependencies missing dep', async t => {
     .get('https://registry.npmjs.org')
     .intercept({
       method: 'GET',
-      path: '/fakepackage'
+      path: '/fakepackage',
     })
     .reply(404, {})
 
@@ -42,12 +42,12 @@ test('checkForDependencies missing dep', async t => {
     .get('https://registry.npmjs.org')
     .intercept({
       method: 'GET',
-      path: '/foobar'
+      path: '/foobar',
     })
     .reply(200, {
       'dist-tags': {
-        latest: '1.42.0'
-      }
+        latest: '1.42.0',
+      },
     })
 
   const logger = {
@@ -58,7 +58,7 @@ test('checkForDependencies missing dep', async t => {
     },
     error: (msg) => {
       equal(msg, 'Cannot find latest version on npm for package fakepackage')
-    }
+    },
   }
 
   const args = {}
@@ -74,12 +74,12 @@ test('check latest npm version', async (t) => {
       .get('https://registry.npmjs.org')
       .intercept({
         method: 'GET',
-        path: '/foobar'
+        path: '/foobar',
       })
       .reply(200, {
         'dist-tags': {
-          latest: '1.2.3'
-        }
+          latest: '1.2.3',
+        },
       })
     const latest = await getLatestNpmVersion('foobar')
     equal(latest, '1.2.3')
@@ -90,7 +90,7 @@ test('check latest npm version', async (t) => {
       .get('https://registry.npmjs.org')
       .intercept({
         method: 'GET',
-        path: '/foobar'
+        path: '/foobar',
       })
       .reply(404, {})
 
