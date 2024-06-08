@@ -163,8 +163,8 @@ async function startCommand (args) {
 
     return res
   } catch (err) {
-    if (err.code === 'PLT_RUNTIME_EADDR_IN_USE'){
-      //TODO: Restart Application with port incremented +1
+    if (err.code === 'PLT_RUNTIME_EADDR_IN_USE') {
+      // TODO: Restart Application with port incremented +1
     }
     if (err.code === 'PLT_CONFIG_NO_CONFIG_FILE_FOUND' && args.length === 1) {
       const config = {
