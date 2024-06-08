@@ -8,6 +8,9 @@
     "platformatic": "cli.js",
     "plt": "cli.js"
   },
+  "pkg": {
+    "assets": "node_modules/**/*"
+  },
   "homepage": "https://docs.platformatic.dev/",
   "scripts": {
     "test": "pnpm run lint && borp --timeout 120000 --concurrency 1",
