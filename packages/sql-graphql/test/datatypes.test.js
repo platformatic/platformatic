@@ -336,7 +336,6 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async (t) =>
       }
     })
     equal(res.statusCode, 200, 'saveSimpleType status code')
-    console.log(JSON.stringify(res.json(), null, 2))
     same(res.json(), {
       data: {
         saveSimpleType: {
