@@ -294,10 +294,9 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async (t) =>
 
   await app.ready()
 
-  const isMariaDB = app.platformatic.db.isMariaDB
-
   const timestamp = new Date()
-  const bornAtTimestamp = new Date(Math[isMariaDB ? 'floor' : 'round'](timestamp.getTime() / 1000) * 1000).toISOString()
+  const bornAtTimestamp = new Date(Math.round(timestamp.getTime() / 1000) * 1000).toISOString()
+  console.log('bornAtTimestamp', bornAtTimestamp)
 
   {
     const res = await app.inject({
@@ -337,6 +336,7 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async (t) =>
       }
     })
     equal(res.statusCode, 200, 'saveSimpleType status code')
+    console.log(JSON.stringify(res.json(), null, 2))
     same(res.json(), {
       data: {
         saveSimpleType: {
