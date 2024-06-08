@@ -20,12 +20,8 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm i -g pnpm
-    - run: npm i -g pkg
+    - uses: pnpm/action-setup@v4.0.0
+          
+    - run: pnpm i
+    - run: pnpm i -g pkg
     - run: pkg . --target latest --output myapp-1.0.0 --debug
