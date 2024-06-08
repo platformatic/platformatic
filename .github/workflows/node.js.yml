@@ -1,27 +1,70 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
-name: Node.js CI
+name: run PKG
 
 on:
   push:
-    branches: [ "feature/without-forked-workflows" ]
+    branches:
+      - feature/without-forked-workflows
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - 'signatures/**'
   pull_request:
-    branches: [ "feature/without-forked-workflows" ]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - 'signatures/**'
+
+# This allows a subsequently queued workflow run to interrupt previous runs
+concurrency:
+  group: "${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}"
+  cancel-in-progress: true
+
+env:
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
-
+  setup-node_modules:
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 15
     strategy:
       matrix:
-        node-version: [14.x, 16.x, 18.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
+        os: [ubuntu-latest, windows-latest]
     steps:
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+      - uses: pnpm/action-setup@v4.0.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - uses: "nick-fields/retry@v3.0.0"
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm fetch --ignore-scripts
+  ci-cli:
+    needs: setup-node_modules
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        node-version: [18, 20]
+        os: [ubuntu-latest, windows-latest]
+    steps:
+    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
     - uses: pnpm/action-setup@v4.0.0
-          
-    - run: pnpm i
-    - run: pnpm i -g pkg
-    - run: pkg . --target latest --output myapp-1.0.0 --debug
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'pnpm'
+    - name: pnpm install
+      uses: nick-fields/retry@v3.0.0
+      with:
+        max_attempts: 1
+        timeout_minutes: 15
+        retry_on: error
+        command: pnpm install --frozen-lockfile
+    - name: Install Dev PKG
+      run: cd packages/cli && pnpm i -d pkg
+    - name: Run PKG
+      run: cd packages/cli && pkg . --target latest --output myapp-1.0.0 --debug
