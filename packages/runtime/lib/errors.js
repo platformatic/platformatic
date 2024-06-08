@@ -5,6 +5,7 @@ const createError = require('@fastify/error')
 const ERROR_PREFIX = 'PLT_RUNTIME'
 
 module.exports = {
+  AddressInUseError: createError(`${ERROR_PREFIX}_EADDR_IN_USE`, "The current port is in use by another application"),
   RuntimeExitedError: createError(`${ERROR_PREFIX}_RUNTIME_EXIT`, 'The runtime exited before the operation completed'),
   UnknownRuntimeAPICommandError: createError(`${ERROR_PREFIX}_UNKNOWN_RUNTIME_API_COMMAND`, 'Unknown Runtime API command "%s"'),
   ServiceNotFoundError: createError(`${ERROR_PREFIX}_SERVICE_NOT_FOUND`, 'Service not found. Available services are: %s'),

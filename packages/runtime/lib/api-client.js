@@ -456,8 +456,12 @@ class RuntimeApiClient extends EventEmitter {
     )
 
     if (this.#exitCode !== undefined) {
+      if(this.exitCode === 1){
+        throw new errors.AddressInUseError()
+      }
       throw new errors.RuntimeExitedError()
     }
+
 
     const { error, data } = message
     if (error !== null) {
