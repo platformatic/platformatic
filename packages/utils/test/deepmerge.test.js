@@ -7,19 +7,19 @@ const { deepmerge } = require('..')
 test('deepmerge', async (t) => {
   const first = {
     b: [{
-      a: 'foo'
-    }]
+      a: 'foo',
+    }],
   }
   const second = {
     b: [{
-      b: 'bar'
-    }]
+      b: 'bar',
+    }],
   }
   const result = deepmerge(first, second)
   deepEqual(result, {
     b: [{
       a: 'foo',
-      b: 'bar'
-    }]
+      b: 'bar',
+    }],
   })
 })
