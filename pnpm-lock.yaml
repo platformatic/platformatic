@@ -1065,7 +1065,7 @@ importers:
         version: 0.14.0
       fast-jwt:
         specifier: ^4.0.0
-        version: 4.0.0
+        version: 4.0.1
       fastify:
         specifier: ^4.26.2
         version: 4.26.2
@@ -1472,7 +1472,7 @@ importers:
         version: 4.19.2
       fast-jwt:
         specifier: ^4.0.0
-        version: 4.0.0
+        version: 4.0.1
       get-port:
         specifier: ^7.1.0
         version: 7.1.0
@@ -3928,9 +3928,9 @@ packages:
     resolution: {integrity: sha512-oS3P8bRI24oPLJUePt2OgF64FBQib5TlgHLFQxYNoHYEEZe0gU3cKjJAVqpB5XKV/zjxmq4Hzbk3fgfW/wRz8Q==}
     engines: {node: '>=16 <22'}
 
-  fast-jwt@4.0.0:
-    resolution: {integrity: sha512-CnI93Tmk7eSzfw4e0Jlc5ZcWiN+/zK7xAKAhtXS8PAcKmYqfcXqxJl1hMyhk3iEt0M9JLo7DCYRDV2XcIacWAw==}
-    engines: {node: '>=16 <22'}
+  fast-jwt@4.0.1:
+    resolution: {integrity: sha512-+mdSoH0QdOdFSbbGBctJu7L1yfXRtbmjbVJ4W/PEjyvivobDena0RKwihtBkOML1P+kUJ1QuewnH8u+mROsR1w==}
+    engines: {node: '>=16'}
 
   fast-levenshtein@2.0.6:
     resolution: {integrity: sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw==}
@@ -8623,7 +8623,7 @@ snapshots:
       ecdsa-sig-formatter: 1.0.11
       mnemonist: 0.39.8
 
-  fast-jwt@4.0.0:
+  fast-jwt@4.0.1:
     dependencies:
       '@lukeed/ms': 2.0.2
       asn1.js: 5.4.1
@@ -11141,7 +11141,7 @@ snapshots:
 
   undici-oidc-interceptor@0.5.0:
     dependencies:
-      fast-jwt: 4.0.0
+      fast-jwt: 4.0.1
       undici: 6.13.0
 
   undici-types@5.26.5: {}
