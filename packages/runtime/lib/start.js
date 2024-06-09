@@ -138,21 +138,53 @@ async function start (args) {
   return serviceStart(config.app, args)
 }
 
+async function setupAndStartRuntime(config){
+  const MAX_PORT = 65535;
+  let runtimeConfig
+
+  if (config.configType === 'runtime') {
+    config.configManager.args = config.args
+    runtimeConfig = config.configManager
+  } else {
+    const wrappedConfig = await wrapConfigInRuntimeConfig(config)
+    wrappedConfig.args = config.args
+    runtimeConfig = wrappedConfig
+  }
+
+  let runtime = await buildRuntime(runtimeConfig)
+
+  let address = null
+  
+  while(address === null){
+    try{
+      address = await runtime.start();
+    }
+    catch(err)
+    {
+        if(err.code === 'PLT_RUNTIME_EADDR_IN_USE'){
+          if(runtimeConfig.current.server.port > 65535){
+            throw err;
+          }
+          runtimeConfig.current.server.port++
+          runtime = await buildRuntime(runtimeConfig)
+        }
+    }
+  }
+
+  return {address: address, runtime: runtime}
+  
+
+}
+
+
 async function startCommand (args) {
   try {
     const config = await loadConfig({}, args)
-    let runtime
+  
+    let startResult = await setupAndStartRuntime();
 
-    if (config.configType === 'runtime') {
-      config.configManager.args = config.args
-      runtime = await buildRuntime(config.configManager)
-    } else {
-      const wrappedConfig = await wrapConfigInRuntimeConfig(config)
-      wrappedConfig.args = config.args
-      runtime = await buildRuntime(wrappedConfig)
-    }
-
-    const res = await runtime.start()
+    let runtime = startResult.runtime
+    const res = startResult.address;
 
     closeWithGrace(async (event) => {
       if (event.err instanceof Error) {
@@ -163,9 +195,6 @@ async function startCommand (args) {
 
     return res
   } catch (err) {
-    if (err.code === 'PLT_RUNTIME_EADDR_IN_USE') {
-      // TODO: Restart Application with port incremented +1
-    }
     if (err.code === 'PLT_CONFIG_NO_CONFIG_FILE_FOUND' && args.length === 1) {
       const config = {
         $schema: `https://platformatic.dev/schemas/v${pkg.version}/service`,

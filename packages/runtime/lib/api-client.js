@@ -449,7 +449,6 @@ class RuntimeApiClient extends EventEmitter {
 
   async #sendCommand (command, params = {}) {
     const operationId = randomUUID()
-
     this.worker.postMessage({ operationId, command, params })
     const [message] = await Promise.race(
       [once(this, operationId), this.#exitPromise]
