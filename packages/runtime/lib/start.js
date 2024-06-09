@@ -138,8 +138,8 @@ async function start (args) {
   return serviceStart(config.app, args)
 }
 
-async function setupAndStartRuntime(config){
-  const MAX_PORT = 65535;
+async function setupAndStartRuntime (config) {
+  const MAX_PORT = 65535
   let runtimeConfig
 
   if (config.configType === 'runtime') {
@@ -154,37 +154,32 @@ async function setupAndStartRuntime(config){
   let runtime = await buildRuntime(runtimeConfig)
 
   let address = null
-  
-  while(address === null){
-    try{
-      address = await runtime.start();
-    }
-    catch(err)
-    {
-        if(err.code === 'PLT_RUNTIME_EADDR_IN_USE'){
-          if(runtimeConfig.current.server.port > 65535){
-            throw err;
-          }
-          runtimeConfig.current.server.port++
-          runtime = await buildRuntime(runtimeConfig)
+
+  while (address === null) {
+    try {
+      address = await runtime.start()
+    } catch (err) {
+      if (err.code === 'PLT_RUNTIME_EADDR_IN_USE') {
+        if (runtimeConfig.current.server.port > MAX_PORT) {
+          throw err
         }
+        runtimeConfig.current.server.port++
+        runtime = await buildRuntime(runtimeConfig)
+      }
     }
   }
 
-  return {address: address, runtime: runtime}
-  
-
+  return { address, runtime }
 }
-
 
 async function startCommand (args) {
   try {
     const config = await loadConfig({}, args)
-  
-    let startResult = await setupAndStartRuntime();
 
-    let runtime = startResult.runtime
-    const res = startResult.address;
+    const startResult = await setupAndStartRuntime(config)
+
+    const runtime = startResult.runtime
+    const res = startResult.address
 
     closeWithGrace(async (event) => {
       if (event.err instanceof Error) {
