@@ -1,6 +1,6 @@
 # Hooks
 
-Entity hooks are a way to wrap the [API methods](./api) for an entity and add custom behaviour.
+Entity hooks are a way to wrap the [API methods](../api) for an entity and add custom behaviour.
 
 The Platformatic DB SQL Mapper provides an `addEntityHooks(entityName, spec)` function that can be used to add hooks for an entity.
 
