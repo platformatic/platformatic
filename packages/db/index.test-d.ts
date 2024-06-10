@@ -37,7 +37,7 @@ type ErrorWithNoParams = () => FastifyError
 type ErrorWithOneParam = (param: string) => FastifyError
 
 expectType<ErrorWithNoParams>(errors.MigrateMissingMigrationsError)
-expectType<ErrorWithNoParams>(errors.UknonwnDatabaseError)
+expectType<ErrorWithNoParams>(errors.UnknownDatabaseError)
 expectType<ErrorWithOneParam>(errors.MigrateMissingMigrationsDirError)
 expectType<ErrorWithNoParams>(errors.MissingSeedFileError)
 expectType<ErrorWithNoParams>(errors.MigrationsToApplyError)

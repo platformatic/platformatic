@@ -26,7 +26,7 @@ export function buildServer (opts: object, app?: object, ConfigManagerContructor
 export module errors {
 
   export const MigrateMissingMigrationsError: () => FastifyError
-  export const UknonwnDatabaseError: () => FastifyError
+  export const UnknownDatabaseError: () => FastifyError
   export const MigrateMissingMigrationsDirError: (dir: string) => FastifyError
   export const MissingSeedFileError: () => FastifyError
   export const MigrationsToApplyError: () => FastifyError
