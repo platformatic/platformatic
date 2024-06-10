@@ -8,6 +8,8 @@ const { Client } = require('undici')
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
+const platformaticVersion = require('../../package.json').version
+
 test('should get service details', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
@@ -45,6 +47,7 @@ test('should get service details', async (t) => {
     id: 'service-1',
     type: 'service',
     status: 'started',
+    version: platformaticVersion,
     entrypoint: true,
     url: entrypointDetails.url,
     localUrl: 'http://service-1.plt.local',

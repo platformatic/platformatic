@@ -383,7 +383,7 @@ test('cut out id exactly from ending when forming a name of relation', async (t)
   }
 })
 
-test('should handle reads from save', { only: true }, async (t) => {
+test('should handle reads from save', async (t) => {
   const app = fastify({ logger: false })
   app.register(sqlMapper, {
     ...connInfo,

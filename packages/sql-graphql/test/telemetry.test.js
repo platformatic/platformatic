@@ -1,7 +1,7 @@
 'use strict'
 
 const { clear, connInfo, isSQLite, isPg } = require('./helper')
-const { test, only } = require('node:test')
+const { test } = require('node:test')
 const { deepEqual: same, equal, ok: pass, fail } = require('node:assert')
 const sqlGraphQL = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
@@ -181,7 +181,7 @@ test('creates the spans for errors', { skip: isSQLite }, async (t) => {
   equal(graphqlSpan.status.message, expectedMessage)
 })
 
-only('don\'t wrap the schema types starting with __', async (t) => {
+test('don\'t wrap the schema types starting with __', async (t) => {
   const app = fastify()
 
   await app.register(telemetry, {
