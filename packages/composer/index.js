@@ -75,21 +75,6 @@ platformaticComposer.configManagerConfig = {
   transformConfig: platformaticService.configManagerConfig.transformConfig
 }
 
-platformaticComposer[Symbol.for('skip-override')] = true
-platformaticComposer.schema = schema
-platformaticComposer.configType = 'composer'
-platformaticComposer.configManagerConfig = {
-  schema,
-  allowToWatch: ['.env'],
-  schemaOptions: {
-    useDefaults: true,
-    coerceTypes: true,
-    allErrors: true,
-    strict: false
-  },
-  transformConfig: platformaticService.configManagerConfig.transformConfig
-}
-
 // TODO review no need to be async
 async function buildComposerServer (options) {
 // TODO ConfigManager is not been used, it's attached to platformaticComposer, can be removed

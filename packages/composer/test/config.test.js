@@ -7,6 +7,10 @@ const { platformaticComposer } = require('..')
 
 test('configManagerConfig.transformConfig', async (t) => {
   assert.deepEqual(
+    platformaticComposer.configManagerConfig.version,
+    require('../package.json').version
+  )
+  assert.deepEqual(
     platformaticComposer.configManagerConfig.transformConfig,
     platformaticService.configManagerConfig.transformConfig
   )
