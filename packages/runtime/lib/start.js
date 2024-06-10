@@ -162,6 +162,7 @@ async function setupAndStartRuntime (config) {
 
   let address = null
   let startErr = null
+  let originalPort = runtimeConfig.current.server.port;
   while (address === null) {
     try {
       address = await runtime.start()
@@ -178,7 +179,7 @@ async function setupAndStartRuntime (config) {
   }
 
   if(startErr?.code === 'PLT_RUNTIME_EADDR_IN_USE'){
-    logger.warn(`Port: ${process.env.PORT} is already in use!`)
+    logger.warn(`Port: ${originalPort} is already in use!`)
     logger.warn(`Starting service on port: ${runtimeConfig.current.server.port}`)
   }
 
