@@ -165,15 +165,12 @@ async function setupAndStartRuntime (config) {
       startErr = err
       if (err.code === 'PLT_RUNTIME_EADDR_IN_USE') {
         if (runtimeConfig.current.server.port > MAX_PORT) throw err
-      
         runtimeConfig.current.server.port++
         runtime = await buildRuntime(runtimeConfig)
       }
     }
   }
-
   if (startErr?.code === 'PLT_RUNTIME_EADDR_IN_USE') {
-    
     const logger = pino(pretty({
       translateTime: 'SYS:HH:MM:ss',
       ignore: 'hostname,pid'
