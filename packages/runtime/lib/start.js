@@ -16,8 +16,8 @@ const { parseInspectorOptions, wrapConfigInRuntimeConfig } = require('./config')
 const { RuntimeApiClient, getRuntimeLogsDir } = require('./api-client.js')
 const errors = require('./errors')
 const pkg = require('../package.json')
-const pino = require('pino');
-const pretty = require('pino-pretty');
+const pino = require('pino')
+const pretty = require('pino-pretty')
 
 const kLoaderFile = pathToFileURL(join(__dirname, 'loader.mjs')).href
 const kWorkerFile = join(__dirname, 'worker.js')
@@ -26,11 +26,6 @@ const kWorkerExecArgv = [
   '--experimental-loader',
   kLoaderFile
 ]
-
-const logger = pino(pretty({
-  translateTime: 'SYS:HH:MM:ss',
-  ignore: 'hostname,pid'
-}))
 
 function startWorker ({ config, dirname, runtimeLogsDir }, env) {
   const worker = new Worker(kWorkerFile, {
@@ -162,27 +157,30 @@ async function setupAndStartRuntime (config) {
 
   let address = null
   let startErr = null
-  let originalPort = runtimeConfig.current.server.port;
+  const originalPort = runtimeConfig.current.server.port
   while (address === null) {
     try {
       address = await runtime.start()
     } catch (err) {
       startErr = err
       if (err.code === 'PLT_RUNTIME_EADDR_IN_USE') {
-        if (runtimeConfig.current.server.port > MAX_PORT) {
-          throw err
-        }
+        if (runtimeConfig.current.server.port > MAX_PORT) throw err
+      
         runtimeConfig.current.server.port++
         runtime = await buildRuntime(runtimeConfig)
       }
     }
   }
 
-  if(startErr?.code === 'PLT_RUNTIME_EADDR_IN_USE'){
+  if (startErr?.code === 'PLT_RUNTIME_EADDR_IN_USE') {
+    
+    const logger = pino(pretty({
+      translateTime: 'SYS:HH:MM:ss',
+      ignore: 'hostname,pid'
+    }))
     logger.warn(`Port: ${originalPort} is already in use!`)
     logger.warn(`Starting service on port: ${runtimeConfig.current.server.port}`)
   }
-
   return { address, runtime }
 }
 
