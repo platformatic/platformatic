@@ -129,4 +129,4 @@ packages/db/test/fixtures/schema.lock
 packages/runtime/test/tmp
 
 #OS Files
-.DB_Store
+.DS_Store
