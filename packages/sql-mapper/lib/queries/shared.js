@@ -64,43 +64,48 @@ async function insertMany (db, sql, table, schema, inputs, inputToFieldMap, prim
 }
 
 function insertPrep (inputs, inputToFieldMap, fields, sql) {
-  const inputSet = new Set()
-  const values = []
+  const tableFields = Object.keys(fields)
+  const inputRaws = []
+
   for (const input of inputs) {
-    const inputValues = []
-    for (const key of Object.keys(input)) {
-      let newKey = key
-      if (inputToFieldMap[key] === undefined) {
-        if (fields[key] === undefined) {
-          throw new errors.UnknownFieldError(key)
-        }
-      } else {
-        newKey = inputToFieldMap[key]
+    for (const entityKey of Object.keys(input)) {
+      const field = inputToFieldMap[entityKey]
+
+      if (field === undefined && fields[entityKey] === undefined) {
+        throw new errors.UnknownFieldError(entityKey)
       }
-
-      inputSet.add(newKey)
-
-      let value = input[key] ?? input[newKey]
-
-      if (value && !fields[newKey].isArray && typeof value === 'object' && !(value instanceof Date)) {
-        // This is a JSON field
-        value = JSON.stringify(value)
-      }
-
-      inputValues.push(sql.value(value))
     }
 
-    values.push(sql` (${sql.join(
-      inputValues,
-      sql`, `
-    )})`)
+    const inputValues = []
+    for (const field of tableFields) {
+      const fieldMetadata = fields[field]
+      const inputKey = fieldMetadata.camelcase
+
+      let inputValue = input[inputKey] ?? input[field]
+      if (
+        inputValue &&
+        typeof inputValue === 'object' &&
+        !fieldMetadata.isArray &&
+        !(inputValue instanceof Date)
+      ) {
+        // This is a JSON field
+        inputValue = JSON.stringify(inputValue)
+      }
+
+      if (inputValue !== undefined) {
+        inputValues.push(sql.value(inputValue))
+      } else {
+        inputValues.push(sql`DEFAULT`)
+      }
+    }
+    inputRaws.push(sql` (${sql.join(inputValues, sql`, `)})`)
   }
-  const inputKeys = Array.from(inputSet)
   const keys = sql.join(
-    inputKeys.map((key) => sql.ident(key)),
+    tableFields.map((key) => sql.ident(key)),
     sql`, `
   )
-  return { keys, values }
+
+  return { keys, values: inputRaws }
 }
 
 async function updateMany (db, sql, table, schema, criteria, input, fieldsToRetrieve) {

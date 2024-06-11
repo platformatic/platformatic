@@ -113,7 +113,7 @@ test('entity API', async () => {
   const insertMultipleResult = await pageEntity.insert({
     inputs: [
       { theTitle: 'platformatic', isPublished: false },
-      { theTitle: 'foobar', isPublished: true }
+      { isPublished: true, theTitle: 'foobar' }
     ],
     fields: ['id', 'theTitle', 'isPublished']
   })
