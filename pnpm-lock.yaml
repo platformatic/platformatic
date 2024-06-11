@@ -1832,7 +1832,7 @@ importers:
         version: 0.15.0
       dtsgenerator:
         specifier: ^3.19.1
-        version: 3.19.1
+        version: 3.19.2
       fastify:
         specifier: ^4.26.2
         version: 4.27.0
@@ -3298,9 +3298,9 @@ packages:
     resolution: {integrity: sha512-lomjuFZKfM6MSAnV9aCZC9sc0qGbmZdfygNv+nCpqVkSKdCxCklLtd16O0EILGkImHw9ZpHkAnHaB+8Zxq5W6Q==}
     engines: {node: '>=8.0.0'}
 
-  commander@11.1.0:
-    resolution: {integrity: sha512-yPVavfyCcRhmorC7rWlkHn15b4wDVgVmBA7kV4QVBsF7kv/9TKJAbAXVTxvTnwP8HHKjRCJDClKbciiYS7p0DQ==}
-    engines: {node: '>=16'}
+  commander@12.1.0:
+    resolution: {integrity: sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA==}
+    engines: {node: '>=18'}
 
   commander@2.20.3:
     resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
@@ -3525,9 +3525,9 @@ packages:
     resolution: {integrity: sha512-pYxfDYpued//QpnLIm4Avk7rsNtAtQkUES2cwAYSvD/wd2pKD71gN2Ebj3e7klzXwjocvE8c5vx/1fxwpqmSxA==}
     engines: {node: '>=4'}
 
-  dtsgenerator@3.19.1:
-    resolution: {integrity: sha512-x4gfUwDYmI3VLAfoKH18AdAs7WY1WN9w4ccZElLWWdzd3+HFvuQZQBgBpF8ISJLrMk/lHbqeJZ0m2d2aV92qNw==}
-    engines: {node: '>= 16.0'}
+  dtsgenerator@3.19.2:
+    resolution: {integrity: sha512-ehtdeCLaVrSzRO23QLnDQJ13CHZtTOS95RxQc3yGM0FhKimNLvt/JklzAv7JZPb1T09Fkj8lmKQtk32tuz/aXg==}
+    engines: {node: '>= 18.0'}
     hasBin: true
 
   duplexify@3.7.1:
@@ -7820,7 +7820,7 @@ snapshots:
       strip-ansi: 6.0.1
       wcwidth: 1.0.1
 
-  commander@11.1.0: {}
+  commander@12.1.0: {}
 
   commander@2.20.3: {}
 
@@ -8002,9 +8002,9 @@ snapshots:
   drange@1.1.1:
     optional: true
 
-  dtsgenerator@3.19.1:
+  dtsgenerator@3.19.2:
     dependencies:
-      commander: 11.1.0
+      commander: 12.1.0
       cross-fetch: 4.0.0
       debug: 4.3.5
       glob: 10.4.1
