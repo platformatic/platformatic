@@ -1,7 +1,7 @@
 'use strict'
 const path = require('path')
 const fastifyStatic = require('@fastify/static')
-const userAgentParser = require('ua-parser-js')
+const userAgentParser = require('my-ua-parser')
 
 module.exports = async (app, opts) => {
   app.register(fastifyStatic, {
