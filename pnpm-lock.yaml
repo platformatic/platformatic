@@ -423,6 +423,9 @@ importers:
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
+      my-ua-parser:
+        specifier: ^2.0.2
+        version: 2.0.2
       ora:
         specifier: ^6.3.1
         version: 6.3.1
@@ -435,9 +438,6 @@ importers:
       rfdc:
         specifier: ^1.3.1
         version: 1.3.1
-      ua-parser-js:
-        specifier: ^1.0.37
-        version: 1.0.38
       undici:
         specifier: ^6.9.0
         version: 6.18.2
@@ -935,6 +935,9 @@ importers:
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
+      my-ua-parser:
+        specifier: ^2.0.2
+        version: 2.0.2
       ora:
         specifier: ^6.3.1
         version: 6.3.1
@@ -956,9 +959,6 @@ importers:
       semgrator:
         specifier: ^0.3.0
         version: 0.3.0
-      ua-parser-js:
-        specifier: ^1.0.37
-        version: 1.0.38
     devDependencies:
       '@databases/pg':
         specifier: ^5.5.0
@@ -1619,6 +1619,9 @@ importers:
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
+      my-ua-parser:
+        specifier: ^2.0.2
+        version: 2.0.2
       openapi-schema-diff:
         specifier: ^0.0.1
         version: 0.0.1
@@ -1637,9 +1640,6 @@ importers:
       semgrator:
         specifier: ^0.3.0
         version: 0.3.0
-      ua-parser-js:
-        specifier: ^1.0.37
-        version: 1.0.38
       undici:
         specifier: ^6.9.0
         version: 6.18.2
@@ -4941,6 +4941,9 @@ packages:
     resolution: {integrity: sha512-avsJQhyd+680gKXyG/sQc0nXaC6rBkPOfyHYcFb9+hdkqQkR9bdnkJ0AMZhke0oesPqIO+mFFJ+IdBc7mst4IA==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
 
+  my-ua-parser@2.0.2:
+    resolution: {integrity: sha512-0srf51uf+zT6bJeVJKNkAyNYPVRbHH7YZ5wGWZ/2hTGdO/kt3FWS2C8iaASJkychkuC8gvImh1QWASuMS7iwqQ==}
+
   mysql2@2.3.3:
     resolution: {integrity: sha512-wxJUev6LgMSgACDkb/InIFxDprRa6T95+VEoR+xPvtngtccNH2dGjEB/fVZ8yg1gWv1510c9CvXuJHi5zUm0ZA==}
     engines: {node: '>= 8.0'}
@@ -6141,9 +6144,6 @@ packages:
     resolution: {integrity: sha512-vcI4UpRgg81oIRUFwR0WSIHKt11nJ7SAVlYNIu+QpqeyXP+gpQJy/Z4+F0aGxSE4MqwjyXvW/TzgkLAx2AGHwQ==}
     engines: {node: '>=14.17'}
     hasBin: true
-
-  ua-parser-js@1.0.38:
-    resolution: {integrity: sha512-Aq5ppTOfvrCMgAPneW1HfWj66Xi7XL+/mIy996R1/CLS/rcyJQm6QZdsKrUeivDFQ+Oc9Wyuwor8Ze8peEoUoQ==}
 
   uc.micro@2.1.0:
     resolution: {integrity: sha512-ARDJmphmdvUk6Glw7y9DQ2bFkKBHwQHLi2lsaH6PPmz/Ka9sFOBsBluozhDltWmnv9u/cF6Rt87znRTPV+yp/A==}
@@ -9707,6 +9707,10 @@ snapshots:
 
   mute-stream@1.0.0: {}
 
+  my-ua-parser@2.0.2:
+    dependencies:
+      tsd: 0.31.0
+
   mysql2@2.3.3:
     dependencies:
       denque: 2.1.0
@@ -11113,8 +11117,6 @@ snapshots:
   typedarray@0.0.6: {}
 
   typescript@5.4.5: {}
-
-  ua-parser-js@1.0.38: {}
 
   uc.micro@2.1.0: {}
 
