@@ -293,9 +293,15 @@ const server = {
         { type: 'integer' }
       ]
     },
+    http2: {
+      type: 'boolean'
+    },
     https: {
       type: 'object',
       properties: {
+        allowHTTP1: {
+          type: 'boolean'
+        },
         key: {
           anyOf: [
             {
