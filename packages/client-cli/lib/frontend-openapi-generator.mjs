@@ -156,9 +156,16 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
         writer.write('queryParameters.forEach((qp) => ').inlineBlock(() => {
           writer.write('if (request[qp]) ').inlineBlock(() => {
             writer.write('if (Array.isArray(request[qp])) ').inlineBlock(() => {
-              writer.write('request[qp].forEach((p) => ').inlineBlock(() => {
-                writer.write('searchParams.append(qp, p)')
-              })
+              if (language === 'ts') {
+                writer.write('(request[qp] as string[]).forEach((p) => ').inlineBlock(() => {
+                  writer.write('searchParams.append(qp, p)')
+                })
+              } else {
+                writer.write('request[qp].forEach((p) => ').inlineBlock(() => {
+                  writer.write('searchParams.append(qp, p)')
+                })
+              }
+
               writer.write(')')
             })
             writer.write(' else ').inlineBlock(() => {
