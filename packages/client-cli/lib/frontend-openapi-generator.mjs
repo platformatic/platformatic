@@ -90,7 +90,12 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
   function getQueryParamsString (operationParams) {
     return operationParams
       .filter((p) => p.in === 'query')
-      .map((p) => p.name)
+      .map((p) => {
+        if (p.type === 'array') {
+          return `${p.name}[]`
+        }
+        return p.name
+      })
   }
 
   function getHeaderParams (operationParams) {
@@ -154,10 +159,18 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
         writer.writeLine(`const queryParameters${queryParametersType} = [${quotedParams.join(', ')}]`)
         writer.writeLine('const searchParams = new URLSearchParams()')
         writer.write('queryParameters.forEach((qp) => ').inlineBlock(() => {
-          writer.write('if (request[qp]) ').block(() => {
-            writer.writeLine('searchParams.append(qp, request[qp]?.toString() || \'\')')
-            writer.writeLine('delete request[qp]')
+          writer.write('if (request[qp]) ').inlineBlock(() => {
+            writer.write('if (Array.isArray(request[qp])) ').inlineBlock(() => {
+              writer.write('request[qp].forEach((p) => ').inlineBlock(() => {
+                writer.write('searchParams.append(qp + \'[]\', qp[p].toString() || \'\')')
+              })
+              writer.write(')')
+            })
+            writer.write(' else ').inlineBlock(() => {
+              writer.writeLine('searchParams.append(qp, request[qp]?.toString() || \'\')')
+            })
           })
+          writer.writeLine('delete request[qp]')
         })
         writer.write(')')
         writer.blankLine()

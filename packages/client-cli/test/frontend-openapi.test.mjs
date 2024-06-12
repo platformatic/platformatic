@@ -296,9 +296,15 @@ const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<T
   const searchParams = new URLSearchParams()
   queryParameters.forEach((qp) => {
     if (request[qp]) {
-      searchParams.append(qp, request[qp]?.toString() || '')
-      delete request[qp]
+      if (Array.isArray(request[qp])) {
+        request[qp].forEach((p) => {
+          searchParams.append(qp + '[]', qp[p].toString() || '')
+        })
+      } else {
+        searchParams.append(qp, request[qp]?.toString() || '')
+      }
     }
+    delete request[qp]
   })
 
   const headers = {
@@ -522,4 +528,31 @@ test('should match expected implementation with typescript', async (t) => {
   const implementation = await readFile(implementationFile, 'utf-8')
   const expected = await readFile(join(__dirname, 'expected-generated-code', 'multiple-responses-movies.ts'), 'utf-8')
   equal(implementation.replace(/\r/g, ''), expected.replace(/\r/g, '')) // to make windows CI happy
+})
+
+test('serialize correctly array query parameters', async (t) => {
+  const dir = await moveToTmpdir(after)
+  {
+    const openAPIfile = join(__dirname, 'fixtures', 'array-query-parameters-openapi.json')
+    await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend'])
+    const implementationFile = join(dir, 'movies', 'movies.ts')
+    const implementation = await readFile(implementationFile, 'utf-8')
+    const expected = `
+  const queryParameters: (keyof Types.GetMoviesRequest)[]  = ['ids[]']
+  const searchParams = new URLSearchParams()
+  queryParameters.forEach((qp) => {
+    if (request[qp]) {
+      if (Array.isArray(request[qp])) {
+        request[qp].forEach((p) => {
+          searchParams.append(qp + '[]', qp[p].toString() || '')
+        })
+      } else {
+        searchParams.append(qp, request[qp]?.toString() || '')
+      }
+    }
+    delete request[qp]
+  })`
+
+    equal(implementation.includes(expected), true)
+  }
 })
