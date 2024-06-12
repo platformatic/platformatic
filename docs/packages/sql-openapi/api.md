@@ -1,10 +1,8 @@
 # API
 
-Each table is mapped to an `entity` named after table's name. 
+Each table is mapped to an `entity` named after the table's name. In the following reference, we'll use some placeholders, but let's start with an example:
 
-In the following reference we'll use some placeholders, but let's see an example
-
-_Example_
+**Example**
 
 Given this SQL executed against your database:
 
@@ -23,27 +21,25 @@ CREATE TABLE pages (
 
 ## GET and POST parameters
 
-Some APIs needs the `GET` method, where parameters must be defined in the URL, or `POST/PUT` methods, where parameters can be defined in the http request payload.
+Some APIs needs the `GET` method, where parameters must be defined in the URL, or `POST/PUT` methods, where parameters can be defined in the `HTTP` request payload.
 
 ## Fields
 
 Every API can define a `fields` parameter, representing the entity fields you want to get back for each row of the table. If not specified all fields are returned.
 
-
-`fields` parameter are always sent in query string, even for `POST`, `PUT` and `DELETE` requests, as a comma separated value.
+The `fields` parameter is always sent in the query string, even for `POST`, `PUT` and `DELETE` requests, as a comma-separated value.
 
 <a name="plural"></a>
 ## `GET /[PLURAL_ENTITY_NAME]`
 
-Return all entities matching `where` clause
+Returns all entities matching `where` clause
 
-### Where clause
+### Where Clause
 
 You can define many `WHERE` clauses in REST API, each clause includes a **field**, an **operator** and a **value**.
 
-The **field** is one of the fields found in the schema.
-
-The **operator** follows this table:
+- **Field**: One of the fields found in the schema.
+- **Operator** follows this table:
 
 | Platformatic operator | SQL operator |
 |--- | ---|
@@ -56,13 +52,13 @@ The **operator** follows this table:
 | lt | `'<'` |
 | lte | `'<='` |
 
-The **value** is the value you want to compare the field to.
+- **Value**: The value you want to compare the field to.
 
 For GET requests all these clauses are specified in the query string using the format `where.[FIELD].[OPERATOR]=[VALUE]`
 
-_Example_
+**Example**
 
-If you want to get the `title` and the `body` of every `page` where `id < 15` you can make an HTTP request like this:
+To get the `title` and the `body` of every `page` where `id < 15`, make an HTTP request like this:
 
 ```bash
 $ curl -X 'GET' \
@@ -70,15 +66,15 @@ $ curl -X 'GET' \
   -H 'accept: application/json'
 ```
 
-Where clause operations are by default combined with the `AND` operator. To create an `OR` condition use the `where.or` query param.
+### Combining Where Clauses 
 
-Each `where.or` query param can contain multiple conditions separated by a `|` (pipe).
+Where clause operations are by default combined with the `AND` operator. To create an `OR` condition, use the `where.or` query parameter.
 
-The `where.or` conditions are similar to the `where` conditions, except that they don't have the `where` prefix.
+Each `where.or` query parameter can contain multiple conditions separated by a `|` (pipe).
 
-_Example_
+**Example**
 
-If you want to get the `posts` where `counter = 10` `OR` `counter > 30` you can make an HTTP request like this:
+To get the `posts` where `counter = 10` `OR` `counter > 30`, make an HTTP request like this:
 
 ```bash
 $ curl -X 'GET' \
@@ -91,12 +87,12 @@ You can define the ordering of the returned rows within your REST API calls with
 
 `?orderby.[field]=[asc | desc]`
 
-The **field** is one of the fields found in the schema.
-The **value** can be `asc` or `desc`.
+- **Field**: One of the fields found in the schema.
+- **Value**: can be `asc` or `desc`.
 
-_Example_
+**Example**
 
-If you want to get the `pages` ordered alphabetically by their `titles` you can make an HTTP request like this:
+To get the `pages` ordered alphabetically by their `titles`, make an HTTP request like this:
 
 ```bash
 $ curl -X 'GET' \
@@ -126,9 +122,9 @@ $ curl -v -X 'GET' \
 
 Creates a new row in table. Expects fields to be sent in a JSON formatted request body.
 
-_Example_
+**Example**
 
-```
+```bash
 $ curl -X 'POST' \
   'http://localhost:3042/pages/' \
   -H 'accept: application/json' \
@@ -149,9 +145,9 @@ $ curl -X 'POST' \
 
 Returns a single row, identified by `PRIMARY_KEY`.
 
-_Example_
+**Example**
 
-```
+```bash
 $ curl -X 'GET' 'http://localhost:3042/pages/1?fields=title,body
 
 {
@@ -164,9 +160,9 @@ $ curl -X 'GET' 'http://localhost:3042/pages/1?fields=title,body
 
 Updates a row identified by `PRIMARY_KEY`. 
 
-_Example_
+**Example**
 
-```
+```bash
 $ curl -X 'POST' \
   'http://localhost:3042/pages/1' \
   -H 'accept: application/json' \
@@ -182,6 +178,7 @@ $ curl -X 'POST' \
   "body": "Welcome to Platformatic"
 }
 ```
+
 ## `PUT [PLURAL_ENTITY_NAME]/[PRIMARY_KEY]`
 
 Same as `POST [PLURAL_ENTITY_NAME]/[PRIMARY_KEY]`.
@@ -189,11 +186,11 @@ Same as `POST [PLURAL_ENTITY_NAME]/[PRIMARY_KEY]`.
 <a name="put-plural"></a>
 ## `PUT [PLURAL_ENTITY_NAME]`
 
-Updates all entities matching `where` clause
+Updates all entities matching the `where` clause
 
-_Example_
+**Example**
 
-```
+```bash
 $ curl -X 'PUT' \
   'http://localhost:3042/pages?where.id.in=1,2' \
   -H 'accept: application/json' \
@@ -218,9 +215,9 @@ $ curl -X 'PUT' \
 
 Deletes a row identified by the `PRIMARY_KEY`.
 
-_Example_
+**Example**
 
-```
+```bash
 $ curl -X 'DELETE' 'http://localhost:3042/pages/1?fields=title'
 
 {
@@ -244,7 +241,6 @@ CREATE TABLE IF NOT EXISTS quotes (
 );
 ```
 
-And:
 - `[P_PARENT_ENTITY]` is `movies`
 - `[S_PARENT_ENTITY]` is `movie`
 - `[P_CHILDREN_ENTITY]` is `quotes`
@@ -256,7 +252,9 @@ In this case, more APIs are available:
 
 Given a 1-to-many relationship, where a parent entity can have many children, you can query for the children directly.
 
-```
+**Example**
+
+```bash
 $ curl -X 'GET' 'http://localhost:3042/movies/1/quotes?fields=quote
 
 [
@@ -273,7 +271,7 @@ $ curl -X 'GET' 'http://localhost:3042/movies/1/quotes?fields=quote
 
 You can query for the parent directly, e.g.:
 
-```
+```bash
 $ curl -X 'GET' 'http://localhost:3042/quotes/1/movie?fields=title
 
 {
@@ -283,17 +281,17 @@ $ curl -X 'GET' 'http://localhost:3042/quotes/1/movie?fields=title
 
 ## Many-to-Many Relationships
 
-Many-to-Many relationship lets you relate each row in one table to many rows in
+Many-to-Many relationships let you relate each row in one table to many rows in
 another table and vice versa. 
 
-Many-to-many relationship are implemented in SQL via a "join table", a table whose **primary key**
+Many-to-many relationships are implemented in SQL via a "**join table**", a table whose **primary key**
 is composed by the identifier of the two parts of the many-to-many relationship.
 
 Platformatic DB fully support many-to-many relationships on all supported database.
 
 Let's consider the following SQL:
 
-```SQL
+```sql
 CREATE TABLE pages (
   id INTEGER PRIMARY KEY,
   the_title VARCHAR(42)
@@ -314,7 +312,6 @@ CREATE TABLE editors (
 );
 ```
 
-And:
 - `[P_ENTITY]` is `editors`
 - `[P_REL_1]` is `pages`
 - `[S_REL_1]` is `page`
@@ -323,7 +320,7 @@ And:
 - `[S_REL_2]` is `user`
 - `[KEY_REL_2]` is `users` PRIMARY KEY: `users(id)`
 
-In this case, here the APIs that are available for the join table:
+### Available APIs for the Join Table
 
 ### `GET [P_ENTITY]/[S_REL_1]/[KEY_REL_1]/[S_REL_2]/[KEY_REL_2]`
 
@@ -345,14 +342,14 @@ Delete the entity in the "join table", e.g. `DELETE /editors/page/1/user/1`.
 
 See the [above](#plural).
 
-*Offset* only accepts values `>= 0`. Otherwise an error is return.
+*Offset* only accepts values `>= 0`. Otherwise an error is returned.
 
 ## Pagination
 
-The Platformatic DB supports for result's pagination through input parameters: `limit` and `offset`
+Platformatic DB supports result pagination through input parameters: `limit` and `offset`
 
-_Example_
-```
+**Example**
+```bash
 $ curl -X 'GET' 'http://localhost:3042/movies?limit=5&offset=10
 
 [
@@ -368,16 +365,11 @@ $ curl -X 'GET' 'http://localhost:3042/movies?limit=5&offset=10
 ]
 ```
 
-It returns 5 movies starting from position 10.
-
-[TotalCount](#total-count) functionality can be used in order to evaluate if there are more pages.
+This returns 5 movies starting from position 10. The [TotalCount](#total-count) functionality can be used in order to evaluate if there are more pages.
 
 ### Limit
 
-By default a *limit* value (`10`) is applied to each request.
-
-Clients can override this behavior by passing a value.
-In this case the server validates the input and an error is return if exceeds the `max` accepted value (`100`).
+By default a *limit* value (`10`) is applied to each request. Clients can override this behavior by passing a value. In this case the server validates the input, and an error is return if exceeds the `max` accepted value (`100`).
 
 Limit's values can be customized through configuration:
 
@@ -409,19 +401,18 @@ Clients can override this behavior by passing a value.
 `@platformatic/sql-openapi` allows for specifying if to accept the table primary keys
 in the inputs to the various routes.
 
-To configure:
+### Configuration 
 
-```javascript
+```js
 app.register(require('@platformatic/sql-openapi'), {
   allowPrimaryKeysInInput: false
 })
 ```
-
-_Example_
+**Example**
 
 If `allowPrimaryKeysInInput` is set to `false`:
 
-```
+```bash
 $ curl -X 'POST' \
   'http://localhost:3042/pages/' \
   -H 'accept: application/json' \
@@ -445,7 +436,7 @@ $ curl -X 'POST' \
 
 If `allowPrimaryKeysInInput` is set to `true` or left `undefined`:
 
-```
+```bash
 $ curl -X 'POST' \
   'http://localhost:3042/pages/' \
   -H 'accept: application/json' \
