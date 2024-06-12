@@ -143,7 +143,7 @@ importers:
         version: 8.21.0
       pino-pretty:
         specifier: ^11.0.0
-        version: 11.2.0
+        version: 11.2.1
       undici:
         specifier: ^6.9.0
         version: 6.18.2
@@ -277,7 +277,7 @@ importers:
         version: 8.21.0
       pino-pretty:
         specifier: ^11.0.0
-        version: 11.2.0
+        version: 11.2.1
       undici:
         specifier: ^6.9.0
         version: 6.18.2
@@ -434,7 +434,7 @@ importers:
         version: 8.21.0
       pino-pretty:
         specifier: ^11.0.0
-        version: 11.2.0
+        version: 11.2.1
       rfdc:
         specifier: ^1.3.1
         version: 1.3.1
@@ -565,7 +565,7 @@ importers:
         version: 8.21.0
       pino-pretty:
         specifier: ^11.0.0
-        version: 11.2.0
+        version: 11.2.1
       table:
         specifier: ^6.8.1
         version: 6.8.2
@@ -656,7 +656,7 @@ importers:
         version: 8.21.0
       pino-pretty:
         specifier: ^11.0.0
-        version: 11.2.0
+        version: 11.2.1
       semver:
         specifier: ^7.6.0
         version: 7.6.2
@@ -768,7 +768,7 @@ importers:
         version: 8.21.0
       pino-pretty:
         specifier: ^11.0.0
-        version: 11.2.0
+        version: 11.2.1
       semver:
         specifier: ^7.6.0
         version: 7.6.2
@@ -946,7 +946,7 @@ importers:
         version: 8.21.0
       pino-pretty:
         specifier: ^11.0.0
-        version: 11.2.0
+        version: 11.2.1
       postgrator:
         specifier: ^7.2.0
         version: 7.2.0
@@ -1423,7 +1423,7 @@ importers:
         version: 8.21.0
       pino-pretty:
         specifier: ^11.0.0
-        version: 11.2.0
+        version: 11.2.1
       pino-roll:
         specifier: ^1.0.0
         version: 1.1.0
@@ -1633,7 +1633,7 @@ importers:
         version: 8.21.0
       pino-pretty:
         specifier: ^11.0.0
-        version: 11.2.0
+        version: 11.2.1
       rfdc:
         specifier: ^1.3.1
         version: 1.3.1
@@ -5280,8 +5280,8 @@ packages:
   pino-abstract-transport@1.2.0:
     resolution: {integrity: sha512-Guhh8EZfPCfH+PMXAb6rKOjGQEoy0xlAIn+irODG5kgfYV+BQ0rGYYWTIel3P5mmyXqkYkPmdIkywsn6QKUR1Q==}
 
-  pino-pretty@11.2.0:
-    resolution: {integrity: sha512-k6VHtZBcfLDB1mB8TWPE19OyLygfNdqOgX/uACqBbVMaUK2JeXHBUTINvJ/QPs5Vazwfq4gWIDpTYDnhkfy7Jw==}
+  pino-pretty@11.2.1:
+    resolution: {integrity: sha512-O05NuD9tkRasFRWVaF/uHLOvoRDFD7tb5VMertr78rbsYFjYp48Vg3477EshVAF5eZaEw+OpDl/tu+B0R5o+7g==}
     hasBin: true
 
   pino-roll@1.1.0:
@@ -10069,7 +10069,7 @@ snapshots:
       readable-stream: 4.5.2
       split2: 4.2.0
 
-  pino-pretty@11.2.0:
+  pino-pretty@11.2.1:
     dependencies:
       colorette: 2.0.20
       dateformat: 4.6.3
