@@ -90,12 +90,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
   function getQueryParamsString (operationParams) {
     return operationParams
       .filter((p) => p.in === 'query')
-      .map((p) => {
-        if (p.type === 'array') {
-          return `${p.name}[]`
-        }
-        return p.name
-      })
+      .map((p) => p.name)
   }
 
   function getHeaderParams (operationParams) {
@@ -162,7 +157,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
           writer.write('if (request[qp]) ').inlineBlock(() => {
             writer.write('if (Array.isArray(request[qp])) ').inlineBlock(() => {
               writer.write('request[qp].forEach((p) => ').inlineBlock(() => {
-                writer.write('searchParams.append(qp + \'[]\', qp[p].toString() || \'\')')
+                writer.write('searchParams.append(qp, p)')
               })
               writer.write(')')
             })

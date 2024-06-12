@@ -298,7 +298,7 @@ const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<T
     if (request[qp]) {
       if (Array.isArray(request[qp])) {
         request[qp].forEach((p) => {
-          searchParams.append(qp + '[]', qp[p].toString() || '')
+          searchParams.append(qp, p)
         })
       } else {
         searchParams.append(qp, request[qp]?.toString() || '')
@@ -537,14 +537,15 @@ test('serialize correctly array query parameters', async (t) => {
     await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend'])
     const implementationFile = join(dir, 'movies', 'movies.ts')
     const implementation = await readFile(implementationFile, 'utf-8')
+    console.log(implementation)
     const expected = `
-  const queryParameters: (keyof Types.GetMoviesRequest)[]  = ['ids[]']
+  const queryParameters: (keyof Types.GetMoviesRequest)[]  = ['ids']
   const searchParams = new URLSearchParams()
   queryParameters.forEach((qp) => {
     if (request[qp]) {
       if (Array.isArray(request[qp])) {
         request[qp].forEach((p) => {
-          searchParams.append(qp + '[]', qp[p].toString() || '')
+          searchParams.append(qp, p)
         })
       } else {
         searchParams.append(qp, request[qp]?.toString() || '')
@@ -552,7 +553,41 @@ test('serialize correctly array query parameters', async (t) => {
     }
     delete request[qp]
   })`
-
     equal(implementation.includes(expected), true)
   }
+})
+
+test('integration test for query parameters', async (t) => {
+  const fixturesDir = join(__dirname, 'fixtures', 'array-query-params')
+  try {
+    await fs.unlink(join(fixturesDir, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+
+  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+  const dir = await moveToTmpdir(after)
+
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'foobar', '--frontend'])
+  const testFile = `
+'use strict'
+
+import build, { setBaseUrl, getQueryParamsArray } from './foobar.mjs'
+const client = build('${app.url}')
+console.log(await client.getQueryParamsArray({ ids: ['foo', 'bar']}))
+`
+
+  await writeFile(join(dir, 'foobar', 'test.mjs'), testFile)
+
+  // execute the command
+  const output = await execa('node', [join(dir, 'foobar', 'test.mjs')])
+  /* eslint-disable no-control-regex */
+  const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n') // remove ANSI colors, if any
+  console.log(lines)
+  equal(lines[0], '{ message: \'ok\', data: [ \'foo\', \'bar\' ] }')
 })
