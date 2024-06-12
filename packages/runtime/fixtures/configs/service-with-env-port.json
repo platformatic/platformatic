@@ -10,13 +10,6 @@
         "docs",
         "composerApp"
       ],
-    "server": {
-        "logger": {
-            "level": "info"
-        },
-        "hostname": "127.0.0.1",
-        "port": "3000"
-    },
       "mappings": {
         "serviceAppWithLogger": {
           "id": "with-logger",
@@ -31,6 +24,10 @@
           "config": "platformatic.db.json"
         }
       }
+    },
+    "server":{
+        "hostname":"127.0.0.1",
+        "port":"{PORT}"
     }
   }
   
