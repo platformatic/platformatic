@@ -297,7 +297,7 @@ const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<T
   queryParameters.forEach((qp) => {
     if (request[qp]) {
       if (Array.isArray(request[qp])) {
-        request[qp].forEach((p) => {
+        (request[qp] as string[]).forEach((p) => {
           searchParams.append(qp, p)
         })
       } else {
@@ -537,14 +537,13 @@ test('serialize correctly array query parameters', async (t) => {
     await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend'])
     const implementationFile = join(dir, 'movies', 'movies.ts')
     const implementation = await readFile(implementationFile, 'utf-8')
-    console.log(implementation)
     const expected = `
   const queryParameters: (keyof Types.GetMoviesRequest)[]  = ['ids']
   const searchParams = new URLSearchParams()
   queryParameters.forEach((qp) => {
     if (request[qp]) {
       if (Array.isArray(request[qp])) {
-        request[qp].forEach((p) => {
+        (request[qp] as string[]).forEach((p) => {
           searchParams.append(qp, p)
         })
       } else {
@@ -588,6 +587,5 @@ console.log(await client.getQueryParamsArray({ ids: ['foo', 'bar']}))
   const output = await execa('node', [join(dir, 'foobar', 'test.mjs')])
   /* eslint-disable no-control-regex */
   const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n') // remove ANSI colors, if any
-  console.log(lines)
   equal(lines[0], '{ message: \'ok\', data: [ \'foo\', \'bar\' ] }')
 })
