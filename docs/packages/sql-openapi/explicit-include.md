@@ -1,9 +1,12 @@
 # Explicitly including entities
 
-`@platformatic/sql-openapi` allows for specifying entities to be included. **Note**:
-using the `include` option will ignore any unspecified entities in the schema.
+`@platformatic/sql-openapi` allows you to specify which entities to be included. 
 
-To include entities:
+**Note**: Using the `include` option will ignore any unspecified entities in the schema.
+
+## Including Entities 
+
+To include specific entities, use the following configuration:
 
 ```javascript
 app.register(require('@platformatic/sql-openapi'), {
