@@ -154,10 +154,25 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
         writer.writeLine(`const queryParameters${queryParametersType} = [${quotedParams.join(', ')}]`)
         writer.writeLine('const searchParams = new URLSearchParams()')
         writer.write('queryParameters.forEach((qp) => ').inlineBlock(() => {
-          writer.write('if (request[qp]) ').block(() => {
-            writer.writeLine('searchParams.append(qp, request[qp]?.toString() || \'\')')
-            writer.writeLine('delete request[qp]')
+          writer.write('if (request[qp]) ').inlineBlock(() => {
+            writer.write('if (Array.isArray(request[qp])) ').inlineBlock(() => {
+              if (language === 'ts') {
+                writer.write('(request[qp] as string[]).forEach((p) => ').inlineBlock(() => {
+                  writer.write('searchParams.append(qp, p)')
+                })
+              } else {
+                writer.write('request[qp].forEach((p) => ').inlineBlock(() => {
+                  writer.write('searchParams.append(qp, p)')
+                })
+              }
+
+              writer.write(')')
+            })
+            writer.write(' else ').inlineBlock(() => {
+              writer.writeLine('searchParams.append(qp, request[qp]?.toString() || \'\')')
+            })
           })
+          writer.writeLine('delete request[qp]')
         })
         writer.write(')')
         writer.blankLine()

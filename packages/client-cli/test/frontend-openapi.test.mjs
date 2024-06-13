@@ -296,9 +296,15 @@ const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<T
   const searchParams = new URLSearchParams()
   queryParameters.forEach((qp) => {
     if (request[qp]) {
-      searchParams.append(qp, request[qp]?.toString() || '')
-      delete request[qp]
+      if (Array.isArray(request[qp])) {
+        (request[qp] as string[]).forEach((p) => {
+          searchParams.append(qp, p)
+        })
+      } else {
+        searchParams.append(qp, request[qp]?.toString() || '')
+      }
     }
+    delete request[qp]
   })
 
   const headers = {
@@ -522,4 +528,64 @@ test('should match expected implementation with typescript', async (t) => {
   const implementation = await readFile(implementationFile, 'utf-8')
   const expected = await readFile(join(__dirname, 'expected-generated-code', 'multiple-responses-movies.ts'), 'utf-8')
   equal(implementation.replace(/\r/g, ''), expected.replace(/\r/g, '')) // to make windows CI happy
+})
+
+test('serialize correctly array query parameters', async (t) => {
+  const dir = await moveToTmpdir(after)
+  {
+    const openAPIfile = join(__dirname, 'fixtures', 'array-query-parameters-openapi.json')
+    await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend'])
+    const implementationFile = join(dir, 'movies', 'movies.ts')
+    const implementation = await readFile(implementationFile, 'utf-8')
+    const expected = `
+  const queryParameters: (keyof Types.GetMoviesRequest)[]  = ['ids']
+  const searchParams = new URLSearchParams()
+  queryParameters.forEach((qp) => {
+    if (request[qp]) {
+      if (Array.isArray(request[qp])) {
+        (request[qp] as string[]).forEach((p) => {
+          searchParams.append(qp, p)
+        })
+      } else {
+        searchParams.append(qp, request[qp]?.toString() || '')
+      }
+    }
+    delete request[qp]
+  })`
+    equal(implementation.includes(expected), true)
+  }
+})
+
+test('integration test for query parameters', async (t) => {
+  const fixturesDir = join(__dirname, 'fixtures', 'array-query-params')
+  try {
+    await fs.unlink(join(fixturesDir, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+
+  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+  const dir = await moveToTmpdir(after)
+
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'foobar', '--frontend'])
+  const testFile = `
+'use strict'
+
+import build, { setBaseUrl, getQueryParamsArray } from './foobar.mjs'
+const client = build('${app.url}')
+console.log(await client.getQueryParamsArray({ ids: ['foo', 'bar']}))
+`
+
+  await writeFile(join(dir, 'foobar', 'test.mjs'), testFile)
+
+  // execute the command
+  const output = await execa('node', [join(dir, 'foobar', 'test.mjs')])
+  /* eslint-disable no-control-regex */
+  const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n') // remove ANSI colors, if any
+  equal(lines[0], '{ message: \'ok\', data: [ \'foo\', \'bar\' ] }')
 })
