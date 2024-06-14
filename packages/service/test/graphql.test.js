@@ -223,3 +223,34 @@ test('graphql errors are correctly propagated in custom resolvers', async (t) =>
     assert.strictEqual(res.statusCode, 200, 'graphiql status code')
   }
 })
+
+test('do not include /graphql in the OpenAPI schema', async (t) => {
+  const app = await buildServer(buildConfig({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0,
+      forceCloseConnections: true,
+      healthCheck: {
+        enabled: true,
+        interval: 2000
+      }
+    },
+    service: {
+      graphql: true,
+      openapi: true
+    },
+    plugins: {
+      paths: [join(__dirname, 'fixtures', 'hello-world-resolver.js')]
+    }
+  }))
+
+  t.after(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const res = await request(`${app.url}/documentation/json`)
+  assert.strictEqual(res.statusCode, 200, 'status code')
+  const body = await res.body.json()
+  assert.strictEqual(body.paths['/graphql'], undefined)
+})
