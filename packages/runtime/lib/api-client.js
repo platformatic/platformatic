@@ -265,6 +265,7 @@ class RuntimeApiClient extends EventEmitter {
         metrics = await this.getFormattedMetrics()
       } catch (error) {
         if (!(error instanceof errors.RuntimeExitedError)) {
+          // TODO(mcollina): use the logger
           console.error('Error collecting metrics', error)
         }
         return
@@ -460,9 +461,11 @@ class RuntimeApiClient extends EventEmitter {
       }
       throw new errors.RuntimeExitedError()
     }
-    const { error, data } = message
+    const { error, data, code } = message
     if (error !== null) {
-      throw new Error(error)
+      const err = new Error(error)
+      err.code = code
+      throw err
     }
 
     return JSON.parse(data)

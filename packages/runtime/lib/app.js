@@ -133,7 +133,8 @@ class PlatformaticApp extends EventEmitter {
         /* c8 ignore next 5 */
       } catch (err) {
         this.server.log.error({ err })
-        process.exit(1)
+        this.#starting = false
+        throw err
       }
     } else {
       // Make sure the server has run all the onReady hooks before returning.

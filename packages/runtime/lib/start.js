@@ -157,16 +157,19 @@ async function setupAndStartRuntime (config) {
 
   let address = null
   let startErr = null
-  const originalPort = runtimeConfig.current.server.port
+  const originalPort = runtimeConfig.current.server?.port || 0
   while (address === null) {
     try {
       address = await runtime.start()
     } catch (err) {
       startErr = err
-      if (err.code === 'PLT_RUNTIME_EADDR_IN_USE') {
+      if (err.code === 'EADDRINUSE') {
+        await runtime.close()
         if (runtimeConfig.current.server.port > MAX_PORT) throw err
         runtimeConfig.current.server.port++
         runtime = await buildRuntime(runtimeConfig)
+      } else {
+        throw err
       }
     }
   }
@@ -242,4 +245,4 @@ async function startCommand (args) {
   }
 }
 
-module.exports = { buildRuntime, start, startCommand }
+module.exports = { buildRuntime, start, startCommand, setupAndStartRuntime }
