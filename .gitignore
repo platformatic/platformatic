@@ -127,3 +127,6 @@ packages/cli/fixtures/sqlite/db
 packages/client-cli/test/tmp
 packages/db/test/fixtures/schema.lock
 packages/runtime/test/tmp
+
+#OS Files
+.DS_Store

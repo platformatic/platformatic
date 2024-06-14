@@ -105,7 +105,7 @@ class RuntimeApi {
       const res = await this.#runCommandHandler(command, params)
       return { operationId, error: null, data: JSON.stringify(res || null) }
     } catch (err) {
-      return { operationId, error: err.message }
+      return { operationId, error: err.message, code: err.code }
     }
   }
 

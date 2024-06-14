@@ -265,6 +265,7 @@ class RuntimeApiClient extends EventEmitter {
         metrics = await this.getFormattedMetrics()
       } catch (error) {
         if (!(error instanceof errors.RuntimeExitedError)) {
+          // TODO(mcollina): use the logger
           console.error('Error collecting metrics', error)
         }
         return
@@ -449,19 +450,22 @@ class RuntimeApiClient extends EventEmitter {
 
   async #sendCommand (command, params = {}) {
     const operationId = randomUUID()
-
     this.worker.postMessage({ operationId, command, params })
     const [message] = await Promise.race(
       [once(this, operationId), this.#exitPromise]
     )
 
     if (this.#exitCode !== undefined) {
+      if (this.exitCode === 1) {
+        throw new errors.AddressInUseError()
+      }
       throw new errors.RuntimeExitedError()
     }
-
-    const { error, data } = message
+    const { error, data, code } = message
     if (error !== null) {
-      throw new Error(error)
+      const err = new Error(error)
+      err.code = code
+      throw err
     }
 
     return JSON.parse(data)
