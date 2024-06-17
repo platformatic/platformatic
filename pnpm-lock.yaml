@@ -226,7 +226,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.4.5))
       tsd:
         specifier: ^0.31.0
-        version: 0.31.0
+        version: 0.31.1
       typescript:
         specifier: ^5.4.2
         version: 5.4.5
@@ -329,7 +329,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.4.5))
       tsd:
         specifier: ^0.31.0
-        version: 0.31.0
+        version: 0.31.1
       typescript:
         specifier: ^5.4.2
         version: 5.4.5
@@ -477,7 +477,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.4.5))
       tsd:
         specifier: ^0.31.0
-        version: 0.31.0
+        version: 0.31.1
 
   packages/config:
     dependencies:
@@ -599,7 +599,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.4.5))
       tsd:
         specifier: ^0.31.0
-        version: 0.31.0
+        version: 0.31.1
 
   packages/create-platformatic:
     dependencies:
@@ -1004,7 +1004,7 @@ importers:
         version: 12.0.2(typescript@5.4.5)
       tsd:
         specifier: ^0.31.0
-        version: 0.31.0
+        version: 0.31.1
       typescript:
         specifier: ^5.4.2
         version: 5.4.5
@@ -1077,7 +1077,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.4.5))
       tsd:
         specifier: ^0.31.0
-        version: 0.31.0
+        version: 0.31.1
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
@@ -1339,7 +1339,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.4.5))
       tsd:
         specifier: ^0.31.0
-        version: 0.31.0
+        version: 0.31.1
       typescript:
         specifier: ^5.4.2
         version: 5.4.5
@@ -1490,7 +1490,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.4.5))
       tsd:
         specifier: ^0.31.0
-        version: 0.31.0
+        version: 0.31.1
       typescript:
         specifier: ^5.4.2
         version: 5.4.5
@@ -1685,7 +1685,7 @@ importers:
         version: 12.0.2(typescript@5.4.5)
       tsd:
         specifier: ^0.31.0
-        version: 0.31.0
+        version: 0.31.1
       typescript:
         specifier: ^5.4.2
         version: 5.4.5
@@ -1740,7 +1740,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.4.5))
       tsd:
         specifier: ^0.31.0
-        version: 0.31.0
+        version: 0.31.1
 
   packages/sql-graphql:
     dependencies:
@@ -1807,7 +1807,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.4.5))
       tsd:
         specifier: ^0.31.0
-        version: 0.31.0
+        version: 0.31.1
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
@@ -1899,7 +1899,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.4.5))
       tsd:
         specifier: ^0.31.0
-        version: 0.31.0
+        version: 0.31.1
 
   packages/sql-openapi:
     dependencies:
@@ -1963,7 +1963,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.4.5))
       tsd:
         specifier: ^0.31.0
-        version: 0.31.0
+        version: 0.31.1
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
@@ -6061,8 +6061,8 @@ packages:
   tsconfig-paths@3.15.0:
     resolution: {integrity: sha512-2Ac2RgzDe/cn48GvOe3M+o82pEFewD3UPbyoUHHdKasHwJKjds4fLXWf/Ux5kATBKN20oaFGu+jbElp1pos0mg==}
 
-  tsd@0.31.0:
-    resolution: {integrity: sha512-yjBiQ5n8OMv/IZOuhDjBy0ZLCoJ7rky/RxRh5W4sJ0oNNCU/kf6s3puPAkGNi59PptDdkcpUm+RsKSdjR2YbNg==}
+  tsd@0.31.1:
+    resolution: {integrity: sha512-sSL84A0SFwx2xGMWrxlGaarKFSQszWjJS2vgNDDLwatytzg2aq6ShlwHsBYxRNmjzXISODwMva5ZOdAg/4AoOA==}
     engines: {node: '>=14.16'}
     hasBin: true
 
@@ -11033,7 +11033,7 @@ snapshots:
       minimist: 1.2.8
       strip-bom: 3.0.0
 
-  tsd@0.31.0:
+  tsd@0.31.1:
     dependencies:
       '@tsd/typescript': 5.4.5
       eslint-formatter-pretty: 4.1.0
