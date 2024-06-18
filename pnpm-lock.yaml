@@ -65,7 +65,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.4.5))
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
 
   packages/cli:
     dependencies:
@@ -146,7 +146,7 @@ importers:
         version: 11.2.1
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
     devDependencies:
       borp:
         specifier: ^0.15.0
@@ -198,7 +198,7 @@ importers:
         version: 5.0.1
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
     devDependencies:
       '@platformatic/telemetry':
         specifier: workspace:*
@@ -280,7 +280,7 @@ importers:
         version: 11.2.1
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
       yaml:
         specifier: ^2.4.1
         version: 2.4.5
@@ -440,7 +440,7 @@ importers:
         version: 1.4.1
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
     devDependencies:
       '@platformatic/client':
         specifier: workspace:*
@@ -513,7 +513,7 @@ importers:
         version: 7.6.2
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
     devDependencies:
       '@iarna/toml':
         specifier: ^2.2.5
@@ -571,7 +571,7 @@ importers:
         version: 6.8.2
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
       ws:
         specifier: ^8.16.0
         version: 8.17.1
@@ -614,7 +614,7 @@ importers:
         version: link:../utils
       '@types/node':
         specifier: ^20.11.28
-        version: 20.14.4
+        version: 20.14.5
       boring-name-generator:
         specifier: ^1.0.3
         version: 1.0.3
@@ -665,7 +665,7 @@ importers:
         version: 7.1.0
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
       which:
         specifier: ^3.0.1
         version: 3.0.1
@@ -726,7 +726,7 @@ importers:
         version: link:../utils
       '@types/node':
         specifier: ^20.11.28
-        version: 20.14.4
+        version: 20.14.5
       boring-name-generator:
         specifier: ^1.0.3
         version: 1.0.3
@@ -777,7 +777,7 @@ importers:
         version: 7.1.0
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
       which:
         specifier: ^3.0.1
         version: 3.0.1
@@ -1010,7 +1010,7 @@ importers:
         version: 5.4.5
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
       vscode-json-languageservice:
         specifier: ^5.3.9
         version: 5.3.11
@@ -1043,7 +1043,7 @@ importers:
         version: 3.1.0
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
     devDependencies:
       '@fastify/cookie':
         specifier: ^8.3.0
@@ -1141,7 +1141,7 @@ importers:
         version: 7.2.0
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
     devDependencies:
       borp:
         specifier: ^0.15.0
@@ -1202,7 +1202,7 @@ importers:
         version: 1.2.8
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
     devDependencies:
       '@playwright/test':
         specifier: ^1.42.1
@@ -1215,7 +1215,7 @@ importers:
         version: 18.3.0
       '@vitejs/plugin-react':
         specifier: ^3.1.0
-        version: 3.1.0(vite@5.3.1(@types/node@20.14.4))
+        version: 3.1.0(vite@5.3.1(@types/node@20.14.5))
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -1233,7 +1233,7 @@ importers:
         version: 5.4.5
       vite:
         specifier: ^5.1.6
-        version: 5.3.1(@types/node@20.14.4)
+        version: 5.3.1(@types/node@20.14.5)
 
   packages/generate-errors-doc:
     devDependencies:
@@ -1320,7 +1320,7 @@ importers:
         version: 8.21.0
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
     devDependencies:
       '@types/inquirer':
         specifier: ^9.0.7
@@ -1435,7 +1435,7 @@ importers:
         version: 0.1.0
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
@@ -1507,7 +1507,7 @@ importers:
         version: 4.3.0
       '@fastify/autoload':
         specifier: ^5.8.0
-        version: 5.9.0
+        version: 5.10.0
       '@fastify/basic-auth':
         specifier: ^5.1.1
         version: 5.1.1
@@ -1642,7 +1642,7 @@ importers:
         version: 0.3.0
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
     devDependencies:
       '@fastify/aws-lambda':
         specifier: ^4.0.0
@@ -2035,7 +2035,7 @@ importers:
         version: 8.0.4
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
     devDependencies:
       '@matteo.collina/tspl':
         specifier: ^0.1.1
@@ -2394,8 +2394,8 @@ packages:
   '@fastify/ajv-compiler@3.5.0':
     resolution: {integrity: sha512-ebbEtlI7dxXF5ziNdr05mOY8NnDiPB1XvAlLHctRt/Rc+C3LCOVW5imUVX+mhvUhnNzmPBHewUkOFgGlCxgdAA==}
 
-  '@fastify/autoload@5.9.0':
-    resolution: {integrity: sha512-EM/2QKQW2oym0gwuPjhculnqbpqu0mWblxRJvYMTvb7SVRGWBh/SFWTtrNAb46fYIOirJUH95mc+dhYuFq99pg==}
+  '@fastify/autoload@5.10.0':
+    resolution: {integrity: sha512-4A6s86qMbjcpWHmJL7cErtjIxOPuW8c67DLiuO8HoJQxuK97vaptoUnK5BTOwRg1ntYqfc3tjwerTTo5NQ3fEQ==}
 
   '@fastify/aws-lambda@4.1.0':
     resolution: {integrity: sha512-293HSdtr4muZZi4UxjrDgddxlLRDbNxT5x/eOX78obMA1Du3tfpuP7WuyfnA4GXaeckj/soJ2jiuD2sM4VIW9Q==}
@@ -2819,8 +2819,8 @@ packages:
   '@types/mysql@2.15.26':
     resolution: {integrity: sha512-DSLCOXhkvfS5WNNPbfn2KdICAmk8lLc+/PNvnPnF7gOdMZCxopXduqv0OQ13y/yA/zXTSikZZqVgybUxOEg6YQ==}
 
-  '@types/node@20.14.4':
-    resolution: {integrity: sha512-1ChboN+57suCT2t/f8lwtPY/k3qTpuD/qnqQuYoBg6OQOcPyaw7PiZVdGpaZYAvhDDtqrt0oAaM8+oSu1xsUGw==}
+  '@types/node@20.14.5':
+    resolution: {integrity: sha512-aoRR+fJkZT2l0aGOJhuA8frnCSoNX6W7U2mpNq63+BxBIj5BQFt8rHy627kijCmm63ijdSdwvGgpUsU6MBsZZA==}
 
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
@@ -2935,8 +2935,8 @@ packages:
     peerDependencies:
       acorn: ^6.0.0 || ^7.0.0 || ^8.0.0
 
-  acorn@8.11.3:
-    resolution: {integrity: sha512-Y9rRfJG5jcKOE0CLisYbojUjIrIEE7AGMzA/Sm4BslANhbS+cDMpgBdcPT91oJ7OuJ9hYJBx59RjbhxVnrF8Xg==}
+  acorn@8.12.0:
+    resolution: {integrity: sha512-RTvkC4w+KNXrM39/lWCUaG0IbRkWdCv7W/IOW9oU6SawyxulvkQy5HQPVTKxEjczcUvapcrw3cFx/60VN/NRNw==}
     engines: {node: '>=0.4.0'}
     hasBin: true
 
@@ -3167,10 +3167,15 @@ packages:
     resolution: {integrity: sha512-/Nf7TyzTx6S3yRJObOAV7956r8cr2+Oj8AC5dt8wSP3BQAoeX58NoHyCU8P8zGkNXStjTSi6fzO6F0pBdcYbEg==}
     engines: {node: '>= 0.8'}
 
-  c8@10.0.0:
-    resolution: {integrity: sha512-rdQecjxw16P8kwgMBjruaQyfF+R2o/mucCCK4VPktwq2HFMWLOHGyUasb46+WlUOVJX94d6dZolcJxzjCzWmXg==}
+  c8@10.1.2:
+    resolution: {integrity: sha512-Qr6rj76eSshu5CgRYvktW0uM0CFY0yi4Fd5D0duDXO6sYinyopmftUiJVuzBQxQcwQLor7JWDVRP+dUfCmzgJw==}
     engines: {node: '>=18'}
     hasBin: true
+    peerDependencies:
+      monocart-coverage-reports: ^2
+    peerDependenciesMeta:
+      monocart-coverage-reports:
+        optional: true
 
   c8@9.1.0:
     resolution: {integrity: sha512-mBWcT5iqNir1zIkzSPyI3NCR9EZCVI3WUD+AVO17MVWTSFNyUueXE82qTeampNtTr+ilN/5Ua3j24LgbCKjDVg==}
@@ -3201,8 +3206,8 @@ packages:
     resolution: {integrity: sha512-8WB3Jcas3swSvjIeA2yvCJ+Miyz5l1ZmB6HFb9R1317dt9LCQoswg/BGrmAmkWVEszSrrg4RwmO46qIm2OEnSA==}
     engines: {node: '>=16'}
 
-  caniuse-lite@1.0.30001632:
-    resolution: {integrity: sha512-udx3o7yHJfUxMLkGohMlVHCvFvWmirKh9JAH/d7WOLPetlH+LTL5cocMZ0t7oZx/mdlOWXti97xLZWc8uURRHg==}
+  caniuse-lite@1.0.30001636:
+    resolution: {integrity: sha512-bMg2vmr8XBsbL6Lr0UHXy/21m84FTxDLWn2FSqMd5PrlbMxwJlQnC2YWYxVgp66PZE+BBNF2jYQUBKCo1FDeZg==}
 
   chalk@2.4.2:
     resolution: {integrity: sha512-Mti+f9lpJNcwF4tWV8/OrTTtF1gZi+f8FqlyAdouralcFWFQWF2+NgCHShjkCb+IFBLq9buZwE1xckQU4peSuQ==}
@@ -3548,8 +3553,8 @@ packages:
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
 
-  electron-to-chromium@1.4.796:
-    resolution: {integrity: sha512-NglN/xprcM+SHD2XCli4oC6bWe6kHoytcyLKCWXmRL854F0qhPhaYgUswUsglnPxYaNQIg2uMY4BvaomIf3kLA==}
+  electron-to-chromium@1.4.805:
+    resolution: {integrity: sha512-8W4UJwX/w9T0QSzINJckTKG6CYpAUTqsaWcWIsdud3I1FYJcMgW9QqT1/4CBff/pP/TihWh13OmiyY8neto6vw==}
 
   elliptic@6.5.5:
     resolution: {integrity: sha512-7EjbcmUm17NQFu4Pmgmq2olYMj8nwMnpcddByChSUjArp8F5DQWcIcpriwO4ZToLNAJig0yiyjswfyGNje/ixw==}
@@ -3913,9 +3918,6 @@ packages:
   fast-safe-stringify@2.1.1:
     resolution: {integrity: sha512-W+KJc2dmILlPplD/H4K9l9LcAHAfPtP6BY84uVLXQ6Evcz9Lcg33Y2z1IVblT6xdY54PXYVHEv+0Wpq8Io6zkA==}
 
-  fast-uri@2.3.1:
-    resolution: {integrity: sha512-iC7SLdMJx2KGdBkhJ6UulbNfpeIGTMS3/OIJpPa1JkZu9DKVQmPtBBme9Esoa4XP2eLGaHBv4vzRqlolXKo9cg==}
-
   fast-uri@2.4.0:
     resolution: {integrity: sha512-ypuAmmMKInk5q7XcepxlnUWDLWv4GFtaJqAzWKqn62IpQ3pejtr5dTVbt3vwqVaMKmkNR55sTT+CqUKIaT21BA==}
 
@@ -4023,8 +4025,8 @@ packages:
   for-each@0.3.3:
     resolution: {integrity: sha512-jqYfLp7mo9vIyQf8ykW2v7A+2N4QjeCeI5+Dz9XraiO1ign81wjiH7Fb9vSOWvQfNtmSa4H2RoQTrrXivdUZmw==}
 
-  foreground-child@3.1.1:
-    resolution: {integrity: sha512-TMKDUnIte6bfb5nWv7V/caI169OHgvwjb7V4WkeUvbQQdjr5rWKqHFiKWb/fcOwB+CzBT+qbWjvj+DVwRskpIg==}
+  foreground-child@3.2.1:
+    resolution: {integrity: sha512-PXUUyLqrR2XCWICfv6ukppP96sdFwWbNEnfEMt7jNsISjMsvaLNinAHNDYyvkyU+SZG2BTSbT5NjG+vZslfGTA==}
     engines: {node: '>=14'}
 
   formdata-polyfill@4.0.10:
@@ -4980,8 +4982,8 @@ packages:
   next-tick@1.1.0:
     resolution: {integrity: sha512-CXdUiJembsNjuToQvxayPZF9Vqht7hewsvy2sOWafLvi2awflj9mOC6bHIg50orX8IJvWKY9wYQ/zB2kogPslQ==}
 
-  node-abi@3.63.0:
-    resolution: {integrity: sha512-vAszCsOUrUxjGAmdnM/pq7gUgie0IRteCQMX6d4A534fQCR93EJU5qgzBvU6EkFfK27s0T3HEV3BOyJIr7OMYw==}
+  node-abi@3.65.0:
+    resolution: {integrity: sha512-ThjYBfoDNr08AWx6hGaRbfPwxKV9kVzAzOzlLKbk2CuqXE2xnCh+cbAGnwM3t8Lq4v9rUB7VfondlkBckcJrVA==}
     engines: {node: '>=10'}
 
   node-domexception@1.0.0:
@@ -5374,8 +5376,8 @@ packages:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
 
-  prettier@3.3.1:
-    resolution: {integrity: sha512-7CAwy5dRsxs8PHXT3twixW9/OEll8MLE0VRPCJyl7CkS6VHGPSlsVaWTiASPTyGyYRyApxlaWTzwUxVNrhcwDg==}
+  prettier@3.3.2:
+    resolution: {integrity: sha512-rAVeHYMcv8ATV5d508CFdn+8/pHPpXeIid1DdrPwXnaAdH7cqjVbpJaT5eq4yRAFU/lsbwYwSF/n5iNrdJHPQA==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -5407,8 +5409,8 @@ packages:
   prop-types@15.8.1:
     resolution: {integrity: sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==}
 
-  protobufjs@7.3.0:
-    resolution: {integrity: sha512-YWD03n3shzV9ImZRX3ccbjqLxj7NokGN0V/ESiBV5xWqrommYHYiihuIyavq03pWSGqlyvYUFmfoMKd+1rPA/g==}
+  protobufjs@7.3.2:
+    resolution: {integrity: sha512-RXyHaACeqXeqAKGLDl68rQKbmObRsTIn4TYVUUug1KfS47YWCo5MacGITEryugIgZqORCvJWEk4l449POg5Txg==}
     engines: {node: '>=12.0.0'}
 
   proxy-addr@2.0.7:
@@ -5606,9 +5608,6 @@ packages:
   reusify@1.0.4:
     resolution: {integrity: sha512-U9nH88a3fc/ekCF1l0/UP1IosiuIjyTh7hBvXVMHYgVcfGvt897Xguj2UOLDeI5BG2m7/uwyaLVT6fbtCwTyzw==}
     engines: {iojs: '>=1.0.0', node: '>=0.10.0'}
-
-  rfdc@1.3.1:
-    resolution: {integrity: sha512-r5a3l5HzYlIC68TpmYKlxWjmOP6wiPJ1vWv2HeLhNsRZMrCkxeqxiHlQ21oXmQ4F3SiryXBHhAD7JZqvOJjFmg==}
 
   rfdc@1.4.1:
     resolution: {integrity: sha512-q1b3N5QkRUWUl7iyylaaj3kOpIT0N2i9MqIEQXP73GVsN9cw3fdx8X63cEmWhJGi2PPCF23Ijp7ktmd39rawIA==}
@@ -6167,8 +6166,8 @@ packages:
     resolution: {integrity: sha512-72RFADWFqKmUb2hmmvNODKL3p9hcB6Gt2DOQMis1SEBaV6a4MH8soBvzg+95CYhCKPFedut2JY9bMfrDl9D23g==}
     engines: {node: '>=14.0'}
 
-  undici@6.19.0:
-    resolution: {integrity: sha512-9gGwbSLgYMjp4r6M5P9bhqhx1E+RyUIHqZE0r7BmrRoqroJUG6xlVu5TXH9DnwmCPLkcaVNrcYtxUE9d3InnyQ==}
+  undici@6.19.2:
+    resolution: {integrity: sha512-JfjKqIauur3Q6biAtHJ564e3bWa8VvT+7cSiOJHFbX4Erv6CLGDpg8z+Fmg/1OI/47RA+GI2QZaF48SSaLvyBA==}
     engines: {node: '>=18.17'}
 
   unicorn-magic@0.1.0:
@@ -6770,7 +6769,7 @@ snapshots:
       ajv-formats: 2.1.1(ajv@8.16.0)
       fast-uri: 2.4.0
 
-  '@fastify/autoload@5.9.0': {}
+  '@fastify/autoload@5.10.0': {}
 
   '@fastify/aws-lambda@4.1.0': {}
 
@@ -7086,7 +7085,7 @@ snapshots:
       '@opentelemetry/sdk-logs': 0.52.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-metrics': 1.25.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-base': 1.25.0(@opentelemetry/api@1.9.0)
-      protobufjs: 7.3.0
+      protobufjs: 7.3.2
 
   '@opentelemetry/resources@1.25.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -7128,7 +7127,7 @@ snapshots:
       mercurius: 14.1.0(graphql@16.8.2)
       metaline: 1.1.0
       pino: 8.21.0
-      undici: 6.19.0
+      undici: 6.19.2
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -7233,7 +7232,7 @@ snapshots:
 
   '@types/better-sqlite3@7.6.10':
     dependencies:
-      '@types/node': 20.14.4
+      '@types/node': 20.14.5
 
   '@types/eslint@7.29.0':
     dependencies:
@@ -7259,9 +7258,9 @@ snapshots:
 
   '@types/mysql@2.15.26':
     dependencies:
-      '@types/node': 20.14.4
+      '@types/node': 20.14.5
 
-  '@types/node@20.14.4':
+  '@types/node@20.14.5':
     dependencies:
       undici-types: 5.26.5
 
@@ -7282,11 +7281,11 @@ snapshots:
 
   '@types/through@0.0.33':
     dependencies:
-      '@types/node': 20.14.4
+      '@types/node': 20.14.5
 
   '@types/ws@8.5.10':
     dependencies:
-      '@types/node': 20.14.4
+      '@types/node': 20.14.5
 
   '@typescript-eslint/eslint-plugin@5.62.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5)':
     dependencies:
@@ -7374,14 +7373,14 @@ snapshots:
 
   '@ungap/structured-clone@1.2.0': {}
 
-  '@vitejs/plugin-react@3.1.0(vite@5.3.1(@types/node@20.14.4))':
+  '@vitejs/plugin-react@3.1.0(vite@5.3.1(@types/node@20.14.5))':
     dependencies:
       '@babel/core': 7.24.7
       '@babel/plugin-transform-react-jsx-self': 7.24.7(@babel/core@7.24.7)
       '@babel/plugin-transform-react-jsx-source': 7.24.7(@babel/core@7.24.7)
       magic-string: 0.27.0
       react-refresh: 0.14.2
-      vite: 5.3.1(@types/node@20.14.4)
+      vite: 5.3.1(@types/node@20.14.5)
     transitivePeerDependencies:
       - supports-color
 
@@ -7405,11 +7404,11 @@ snapshots:
       mime-types: 2.1.35
       negotiator: 0.6.3
 
-  acorn-jsx@5.3.2(acorn@8.11.3):
+  acorn-jsx@5.3.2(acorn@8.12.0):
     dependencies:
-      acorn: 8.11.3
+      acorn: 8.12.0
 
-  acorn@8.11.3: {}
+  acorn@8.12.0: {}
 
   acquerello@2.0.8: {}
 
@@ -7639,10 +7638,12 @@ snapshots:
   borp@0.15.0:
     dependencies:
       '@reporters/github': 1.7.0
-      c8: 10.0.0
+      c8: 10.1.2
       execa: 8.0.1
       find-up: 7.0.0
       glob: 10.4.1
+    transitivePeerDependencies:
+      - monocart-coverage-reports
 
   brace-expansion@1.1.11:
     dependencies:
@@ -7661,8 +7662,8 @@ snapshots:
 
   browserslist@4.23.1:
     dependencies:
-      caniuse-lite: 1.0.30001632
-      electron-to-chromium: 1.4.796
+      caniuse-lite: 1.0.30001636
+      electron-to-chromium: 1.4.805
       node-releases: 2.0.14
       update-browserslist-db: 1.0.16(browserslist@4.23.1)
 
@@ -7684,12 +7685,12 @@ snapshots:
 
   bytes@3.1.2: {}
 
-  c8@10.0.0:
+  c8@10.1.2:
     dependencies:
       '@bcoe/v8-coverage': 0.2.3
       '@istanbuljs/schema': 0.1.3
       find-up: 5.0.0
-      foreground-child: 3.1.1
+      foreground-child: 3.2.1
       istanbul-lib-coverage: 3.2.2
       istanbul-lib-report: 3.0.1
       istanbul-reports: 3.1.7
@@ -7703,7 +7704,7 @@ snapshots:
       '@bcoe/v8-coverage': 0.2.3
       '@istanbuljs/schema': 0.1.3
       find-up: 5.0.0
-      foreground-child: 3.1.1
+      foreground-child: 3.2.1
       istanbul-lib-coverage: 3.2.2
       istanbul-lib-report: 3.0.1
       istanbul-reports: 3.1.7
@@ -7734,7 +7735,7 @@ snapshots:
 
   camelcase@8.0.0: {}
 
-  caniuse-lite@1.0.30001632: {}
+  caniuse-lite@1.0.30001636: {}
 
   chalk@2.4.2:
     dependencies:
@@ -8048,7 +8049,7 @@ snapshots:
 
   ee-first@1.1.1: {}
 
-  electron-to-chromium@1.4.796: {}
+  electron-to-chromium@1.4.805: {}
 
   elliptic@6.5.5:
     dependencies:
@@ -8463,8 +8464,8 @@ snapshots:
 
   espree@9.6.1:
     dependencies:
-      acorn: 8.11.3
-      acorn-jsx: 5.3.2(acorn@8.11.3)
+      acorn: 8.12.0
+      acorn-jsx: 5.3.2(acorn@8.12.0)
       eslint-visitor-keys: 3.4.3
 
   esprima@1.2.2: {}
@@ -8582,9 +8583,9 @@ snapshots:
       ajv: 8.16.0
       ajv-formats: 3.0.1(ajv@8.16.0)
       fast-deep-equal: 3.1.3
-      fast-uri: 2.3.1
+      fast-uri: 2.4.0
       json-schema-ref-resolver: 1.0.1
-      rfdc: 1.3.1
+      rfdc: 1.4.1
 
   fast-jwt@4.0.1:
     dependencies:
@@ -8602,8 +8603,6 @@ snapshots:
   fast-redact@3.5.0: {}
 
   fast-safe-stringify@2.1.1: {}
-
-  fast-uri@2.3.1: {}
 
   fast-uri@2.4.0: {}
 
@@ -8638,7 +8637,7 @@ snapshots:
 
   fastify-undici-dispatcher@0.6.0:
     dependencies:
-      undici: 6.19.0
+      undici: 6.19.2
 
   fastify-user@0.3.3:
     dependencies:
@@ -8758,7 +8757,7 @@ snapshots:
     dependencies:
       is-callable: 1.2.7
 
-  foreground-child@3.1.1:
+  foreground-child@3.2.1:
     dependencies:
       cross-spawn: 7.0.3
       signal-exit: 4.1.0
@@ -8858,7 +8857,7 @@ snapshots:
 
   glob@10.4.1:
     dependencies:
-      foreground-child: 3.1.1
+      foreground-child: 3.2.1
       jackspeak: 3.4.0
       minimatch: 9.0.4
       minipass: 7.1.2
@@ -9311,7 +9310,7 @@ snapshots:
       mkdirp: 3.0.1
       mz: 2.7.0
       node-fetch: 3.3.2
-      prettier: 3.3.1
+      prettier: 3.3.2
 
   json-schema-traverse@0.4.1: {}
 
@@ -9752,7 +9751,7 @@ snapshots:
 
   next-tick@1.1.0: {}
 
-  node-abi@3.63.0:
+  node-abi@3.65.0:
     dependencies:
       semver: 7.6.2
 
@@ -10197,7 +10196,7 @@ snapshots:
       minimist: 1.2.8
       mkdirp-classic: 0.5.3
       napi-build-utils: 1.0.2
-      node-abi: 3.63.0
+      node-abi: 3.65.0
       pump: 3.0.0
       rc: 1.2.8
       simple-get: 4.0.1
@@ -10208,7 +10207,7 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier@3.3.1: {}
+  prettier@3.3.2: {}
 
   pretty-bytes@6.1.1: {}
 
@@ -10237,7 +10236,7 @@ snapshots:
       object-assign: 4.1.1
       react-is: 16.13.1
 
-  protobufjs@7.3.0:
+  protobufjs@7.3.2:
     dependencies:
       '@protobufjs/aspromise': 1.1.2
       '@protobufjs/base64': 1.1.2
@@ -10249,7 +10248,7 @@ snapshots:
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
-      '@types/node': 20.14.4
+      '@types/node': 20.14.5
       long: 5.2.3
 
   proxy-addr@2.0.7:
@@ -10473,8 +10472,6 @@ snapshots:
   ret@0.4.3: {}
 
   reusify@1.0.4: {}
-
-  rfdc@1.3.1: {}
 
   rfdc@1.4.1: {}
 
@@ -11135,7 +11132,7 @@ snapshots:
   undici-oidc-interceptor@0.5.0:
     dependencies:
       fast-jwt: 4.0.1
-      undici: 6.19.0
+      undici: 6.19.2
 
   undici-types@5.26.5: {}
 
@@ -11143,7 +11140,7 @@ snapshots:
     dependencies:
       '@fastify/busboy': 2.1.1
 
-  undici@6.19.0: {}
+  undici@6.19.2: {}
 
   unicorn-magic@0.1.0: {}
 
@@ -11193,13 +11190,13 @@ snapshots:
 
   version-guard@1.1.2: {}
 
-  vite@5.3.1(@types/node@20.14.4):
+  vite@5.3.1(@types/node@20.14.5):
     dependencies:
       esbuild: 0.21.5
       postcss: 8.4.38
       rollup: 4.18.0
     optionalDependencies:
-      '@types/node': 20.14.4
+      '@types/node': 20.14.5
       fsevents: 2.3.3
 
   vscode-json-languageservice@5.3.11:
