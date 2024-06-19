@@ -22,6 +22,10 @@ async function auth (app, opts) {
   const isRolePath = !!opts.rolePath // if `true` the role is intepreted as path like `user.role`
   const anonymousRole = opts.anonymousRole || 'anonymous'
 
+  if (opts.jwt && opts.jwt.namespace) {
+    opts.jwt.namespace = opts.jwt.namespace.replace(/\/?$/, '/')
+  }
+
   app.decorateRequest('setupDBAuthorizationUser', setupUser)
 
   async function setupUser () {
