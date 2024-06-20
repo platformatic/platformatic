@@ -97,15 +97,15 @@ const setupProvider = (app, opts) => {
   const exporterObjs = []
   const spanProcessors = []
   for (const exporter of exporters) {
-  // Exporter config:
-  // https://open-telemetry.github.io/opentelemetry-js/interfaces/_opentelemetry_exporter_zipkin.ExporterConfig.html
+    // Exporter config:
+    // https://open-telemetry.github.io/opentelemetry-js/interfaces/_opentelemetry_exporter_zipkin.ExporterConfig.html
     const exporterOptions = { ...exporter.options, serviceName }
 
     let exporterObj
     if (exporter.type === 'console') {
       exporterObj = new ConsoleSpanExporter(exporterOptions)
     } else if (exporter.type === 'otlp') {
-    // We require here because this require (and only the require!) creates some issue with c8 on some mjs tests on other modules. Since we need an assignemet here, we don't use a switch.
+      // We require here because this require (and only the require!) creates some issue with c8 on some mjs tests on other modules. Since we need an assignemet here, we don't use a switch.
       const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-proto')
       exporterObj = new OTLPTraceExporter(exporterOptions)
     } else if (exporter.type === 'zipkin') {
@@ -229,7 +229,12 @@ async function setupTelemetry (app, opts) {
 
     /* istanbul ignore next */
     method = method || ''
-    const name = `${method} ${urlObj.scheme}://${urlObj.host}:${urlObj.port}${urlObj.path}`
+    let name
+    if (urlObj.port) {
+      name = `${method} ${urlObj.scheme}://${urlObj.host}:${urlObj.port}${urlObj.path}`
+    } else {
+      name = `${method} ${urlObj.scheme}://${urlObj.host}${urlObj.path}`
+    }
 
     const span = tracer.startSpan(name, {}, context)
     span.kind = SpanKind.CLIENT
@@ -241,7 +246,8 @@ async function setupTelemetry (app, opts) {
           'server.port': urlObj.port,
           'http.request.method': method,
           'url.full': url,
-          'url.path': urlObj.path
+          'url.path': urlObj.path,
+          'url.scheme': urlObj.scheme
         }
       : {}
     span.setAttributes(attributes)
