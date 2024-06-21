@@ -704,8 +704,8 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.5.2))
       typescript:
-        specifier: ~5.4.2
-        version: 5.4.5
+        specifier: ~5.5.0
+        version: 5.5.2
       yaml:
         specifier: ^2.4.1
         version: 2.4.5
@@ -822,8 +822,8 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.5.2))
       typescript:
-        specifier: ~5.4.2
-        version: 5.4.5
+        specifier: ~5.5.0
+        version: 5.5.2
       yaml:
         specifier: ^2.4.1
         version: 2.4.5
@@ -6153,11 +6153,6 @@ packages:
   typedarray@0.0.6:
     resolution: {integrity: sha512-/aCDEGatGvZ2BIk+HmLf4ifCJFwvKFNb9/JeZPMulfgFracn9QFcAf5GO8B/mweUjSoblS5In0cWhqpfs/5PQA==}
 
-  typescript@5.4.5:
-    resolution: {integrity: sha512-vcI4UpRgg81oIRUFwR0WSIHKt11nJ7SAVlYNIu+QpqeyXP+gpQJy/Z4+F0aGxSE4MqwjyXvW/TzgkLAx2AGHwQ==}
-    engines: {node: '>=14.17'}
-    hasBin: true
-
   typescript@5.5.2:
     resolution: {integrity: sha512-NcRtPEOsPFFWjobJEtfihkLCZCXZt/os3zf8nTxjVH3RvTSxjrCamJpbExGvYOF+tFHc3pA65qpdwPbzjohhew==}
     engines: {node: '>=14.17'}
@@ -11152,8 +11147,6 @@ snapshots:
       possible-typed-array-names: 1.0.0
 
   typedarray@0.0.6: {}
-
-  typescript@5.4.5: {}
 
   typescript@5.5.2: {}
 
