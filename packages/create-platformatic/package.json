@@ -56,7 +56,7 @@
     "fastify": "^4.26.2",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "typescript": "~5.4.2",
+    "typescript": "~5.5.0",
     "yaml": "^2.4.1"
   }
 }
