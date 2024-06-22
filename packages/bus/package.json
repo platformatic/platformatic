@@ -18,6 +18,9 @@
     "url": "https://github.com/platformatic/platformatic/issues"
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
+  "dependencies": {
+    "@fastify/error": "^3.4.1"
+  },
   "devDependencies": {
     "@matteo.collina/tspl": "^0.1.1",
     "borp": "^0.15.0",
