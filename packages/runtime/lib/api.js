@@ -6,16 +6,19 @@ const { createFastifyInterceptor } = require('fastify-undici-dispatcher')
 const { PlatformaticApp } = require('./app')
 const errors = require('./errors')
 const { printSchema } = require('graphql')
+const { Bus } = require('@platformatic/bus')
 
 class RuntimeApi {
   #services
   #dispatcher
   #interceptor
   #logger
+  #bus
 
   constructor (config, logger, loaderPort, composedInterceptors = []) {
     this.#services = new Map()
     this.#logger = logger
+    this.#setupBus()
     const telemetryConfig = config.telemetry
 
     for (let i = 0; i < config.services.length; ++i) {
@@ -155,6 +158,7 @@ class RuntimeApi {
       const serviceUrl = new URL(service.appConfig.localUrl)
       this.#interceptor.route(serviceUrl.host, service.server)
     }
+    this.#bus.broadcast('runtime:services:started')
     return entrypointUrl
   }
 
@@ -172,6 +176,7 @@ class RuntimeApi {
       }
     }
     await Promise.all(stopServiceReqs)
+    this.#bus.broadcast('runtime:services:stopped')
   }
 
   async #restartServices () {
@@ -191,6 +196,7 @@ class RuntimeApi {
       const serviceUrl = new URL(service.appConfig.localUrl)
       this.#interceptor.route(serviceUrl.host, service.server)
     }
+    this.#bus.broadcast('runtime:services:restarted')
     return entrypointUrl
   }
 
@@ -344,6 +350,7 @@ class RuntimeApi {
     } else {
       await service.start()
     }
+    this.#bus.broadcast('runtime:service:started', id)
   }
 
   async #stopService ({ id }) {
@@ -355,6 +362,7 @@ class RuntimeApi {
     }
 
     await service.stop()
+    this.#bus.broadcast('runtime:service:stopped', id)
   }
 
   async #inject ({ id, injectParams }) {
@@ -373,6 +381,10 @@ class RuntimeApi {
       headers: res.headers,
       body: res.body
     }
+  }
+
+  #setupBus (config) {
+    this.#bus = new Bus('$root')
   }
 }
 
