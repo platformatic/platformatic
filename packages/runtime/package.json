@@ -46,6 +46,7 @@
     "@fastify/error": "^3.4.1",
     "@fastify/websocket": "^10.0.0",
     "@hapi/topo": "^6.0.2",
+    "@platformatic/bus": "workspace:*",
     "@platformatic/composer": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/db": "workspace:*",

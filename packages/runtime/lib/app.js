@@ -111,6 +111,7 @@ class PlatformaticApp extends EventEmitter {
       this.server = await buildServer({
         app: this.config.app,
         ...config,
+        id: this.appConfig.id,
         configManager
       })
     } catch (err) {
