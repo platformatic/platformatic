@@ -65,7 +65,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.4.5))
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
 
   packages/bus:
     dependencies:
@@ -174,7 +174,7 @@ importers:
         version: 11.2.1
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
     devDependencies:
       borp:
         specifier: ^0.15.0
@@ -226,7 +226,7 @@ importers:
         version: 5.0.1
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
     devDependencies:
       '@platformatic/telemetry':
         specifier: workspace:*
@@ -308,7 +308,7 @@ importers:
         version: 11.2.1
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
       yaml:
         specifier: ^2.4.1
         version: 2.4.5
@@ -468,7 +468,7 @@ importers:
         version: 1.4.1
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
     devDependencies:
       '@platformatic/client':
         specifier: workspace:*
@@ -541,7 +541,7 @@ importers:
         version: 7.6.2
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
     devDependencies:
       '@iarna/toml':
         specifier: ^2.2.5
@@ -599,7 +599,7 @@ importers:
         version: 6.8.2
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
       ws:
         specifier: ^8.16.0
         version: 8.17.1
@@ -693,7 +693,7 @@ importers:
         version: 7.1.0
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
       which:
         specifier: ^3.0.1
         version: 3.0.1
@@ -805,7 +805,7 @@ importers:
         version: 7.1.0
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
       which:
         specifier: ^3.0.1
         version: 3.0.1
@@ -1038,7 +1038,7 @@ importers:
         version: 5.4.5
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
       vscode-json-languageservice:
         specifier: ^5.3.9
         version: 5.3.11
@@ -1071,7 +1071,7 @@ importers:
         version: 3.1.0
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
     devDependencies:
       '@fastify/cookie':
         specifier: ^8.3.0
@@ -1169,7 +1169,7 @@ importers:
         version: 7.2.0
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
     devDependencies:
       borp:
         specifier: ^0.15.0
@@ -1230,7 +1230,7 @@ importers:
         version: 1.2.8
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
     devDependencies:
       '@playwright/test':
         specifier: ^1.42.1
@@ -1348,7 +1348,7 @@ importers:
         version: 8.21.0
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
     devDependencies:
       '@types/inquirer':
         specifier: ^9.0.7
@@ -1466,7 +1466,7 @@ importers:
         version: 0.1.0
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
@@ -1676,7 +1676,7 @@ importers:
         version: 0.3.0
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
     devDependencies:
       '@fastify/aws-lambda':
         specifier: ^4.0.0
@@ -2069,7 +2069,7 @@ importers:
         version: 8.0.4
       undici:
         specifier: ^6.9.0
-        version: 6.19.0
+        version: 6.19.2
     devDependencies:
       '@matteo.collina/tspl':
         specifier: ^0.1.1
@@ -6205,8 +6205,8 @@ packages:
     resolution: {integrity: sha512-72RFADWFqKmUb2hmmvNODKL3p9hcB6Gt2DOQMis1SEBaV6a4MH8soBvzg+95CYhCKPFedut2JY9bMfrDl9D23g==}
     engines: {node: '>=14.0'}
 
-  undici@6.19.0:
-    resolution: {integrity: sha512-9gGwbSLgYMjp4r6M5P9bhqhx1E+RyUIHqZE0r7BmrRoqroJUG6xlVu5TXH9DnwmCPLkcaVNrcYtxUE9d3InnyQ==}
+  undici@6.19.2:
+    resolution: {integrity: sha512-JfjKqIauur3Q6biAtHJ564e3bWa8VvT+7cSiOJHFbX4Erv6CLGDpg8z+Fmg/1OI/47RA+GI2QZaF48SSaLvyBA==}
     engines: {node: '>=18.17'}
 
   unicorn-magic@0.1.0:
@@ -7192,7 +7192,7 @@ snapshots:
       mercurius: 14.1.0(graphql@16.9.0)
       metaline: 1.1.0
       pino: 8.21.0
-      undici: 6.19.0
+      undici: 6.19.2
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -8711,7 +8711,7 @@ snapshots:
 
   fastify-undici-dispatcher@0.6.0:
     dependencies:
-      undici: 6.19.0
+      undici: 6.19.2
 
   fastify-user@0.3.3:
     dependencies:
@@ -11208,7 +11208,7 @@ snapshots:
   undici-oidc-interceptor@0.5.0:
     dependencies:
       fast-jwt: 4.0.1
-      undici: 6.19.0
+      undici: 6.19.2
 
   undici-types@5.26.5: {}
 
@@ -11216,7 +11216,7 @@ snapshots:
     dependencies:
       '@fastify/busboy': 2.1.1
 
-  undici@6.19.0: {}
+  undici@6.19.2: {}
 
   unicorn-magic@0.1.0: {}
 
