@@ -1041,7 +1041,7 @@ importers:
         version: 6.19.2
       vscode-json-languageservice:
         specifier: ^5.3.9
-        version: 5.3.11
+        version: 5.4.0
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
@@ -1725,7 +1725,7 @@ importers:
         version: 5.5.2
       vscode-json-languageservice:
         specifier: ^5.3.9
-        version: 5.3.11
+        version: 5.4.0
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.2.2
@@ -4633,6 +4633,9 @@ packages:
   jsonc-parser@3.2.1:
     resolution: {integrity: sha512-AilxAyFOAcK5wA1+LeaySVBrHsGQvUFCDWXKpZjzaL0PqW+xfBOttn8GNtWKFWqneyMZj41MWF9Kl6iPWLwgOA==}
 
+  jsonc-parser@3.3.1:
+    resolution: {integrity: sha512-HUgH65KyejrUFPvHFPbqOY0rsFip3Bo5wb4ngvdi1EpCYWUQDC5V+Y7mZws+DLkr4M//zQJoanu1SP+87Dv1oQ==}
+
   jsonfile@6.1.0:
     resolution: {integrity: sha512-5dgndWOriYSm5cnYaJNhalLNDKOqFwyDB/rr1E9ZsGciGvKPs8R2xYGCacuf3z6K1YKDz182fd+fY3cn3pMqXQ==}
 
@@ -6302,8 +6305,8 @@ packages:
       terser:
         optional: true
 
-  vscode-json-languageservice@5.3.11:
-    resolution: {integrity: sha512-WYS72Ymria3dn8ZbjtBbt5K71m05wY1Q6hpXV5JxUT0q75Ts0ljLmnZJAVpx8DjPgYbFD+Z8KHpWh2laKLUCtQ==}
+  vscode-json-languageservice@5.4.0:
+    resolution: {integrity: sha512-NCkkCr63OHVkE4lcb0xlUAaix6vE5gHQW4NrswbLEh3ArXj81lrGuFTsGEYEUXlNHdnc53vWPcjeSy/nMTrfXg==}
 
   vscode-languageserver-textdocument@1.0.11:
     resolution: {integrity: sha512-X+8T3GoiwTVlJbicx/sIAF+yuJAqz8VvwJyoMVhwEMoEKE/fkDmrqUgDMyBECcM2A2frVZIUj5HI/ErRXCfOeA==}
@@ -9390,6 +9393,8 @@ snapshots:
 
   jsonc-parser@3.2.1: {}
 
+  jsonc-parser@3.3.1: {}
+
   jsonfile@6.1.0:
     dependencies:
       universalify: 2.0.1
@@ -11265,10 +11270,10 @@ snapshots:
       '@types/node': 20.14.8
       fsevents: 2.3.3
 
-  vscode-json-languageservice@5.3.11:
+  vscode-json-languageservice@5.4.0:
     dependencies:
       '@vscode/l10n': 0.0.18
-      jsonc-parser: 3.2.1
+      jsonc-parser: 3.3.1
       vscode-languageserver-textdocument: 1.0.11
       vscode-languageserver-types: 3.17.5
       vscode-uri: 3.0.8
