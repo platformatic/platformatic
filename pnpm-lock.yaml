@@ -1065,7 +1065,7 @@ importers:
         version: 0.3.3
       get-jwks:
         specifier: ^9.0.1
-        version: 9.0.1
+        version: 9.0.2
       leven:
         specifier: ~3.1.0
         version: 3.1.0
@@ -4134,8 +4134,8 @@ packages:
     resolution: {integrity: sha512-fh7kfT1pW5Qynzx5Ug+yOi9DSRIGyabCsWZErDZqh/mh7YbeG2uaOTSWocA1pt0AuTTQasUm6EBJ1k0c8NAgWg==}
     engines: {node: '>=14'}
 
-  get-jwks@9.0.1:
-    resolution: {integrity: sha512-IgYxDsGIwXTfvTSKc+6CT9D/DNpN1d8qCViu+amq6jfP0RcVQVgv7PUxwyB5FdbqjFjCzfKOa5Evkd/u+Ls3MA==}
+  get-jwks@9.0.2:
+    resolution: {integrity: sha512-zn2OvElozYtckpYJvgRWMOMhEkW8KgFp+lN0B7Q6SXPZg/CFfeiPoh73Wbhacj4fYXDJxkxbcwI9j+/cubpzSQ==}
     engines: {node: '>=14'}
 
   get-port@7.1.0:
@@ -8880,7 +8880,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  get-jwks@9.0.1:
+  get-jwks@9.0.2:
     dependencies:
       jwk-to-pem: 2.0.5
       lru-cache: 10.2.2
