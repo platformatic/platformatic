@@ -580,13 +580,8 @@ jobs:
       run: cd packages/frontend-template && pnpm exec playwright install
     - name: Run Platformatic frontend cli and E2E tests
       run: |
-        node ./packages/cli/cli.js db migrations apply --config=./packages/frontend-template/test/e2e/fixtures/platformatic.e2e.db.json &&
-        node ./packages/cli/cli.js db start --config=./packages/frontend-template/test/e2e/fixtures/platformatic.e2e.db.json &
-        sleep 5 &&
-        rm -rf packages/frontend-template/src/platformatic-generated-code
-        mkdir -p packages/frontend-template/src/platformatic-generated-code &&
-        cd packages/frontend-template/src/platformatic-generated-code &&
-        node ../../../client-cli/cli.mjs http://127.0.0.1:9999 --frontend --language ts &&
+        cd packages/frontend-template
+        pnpm run test:prepare
         pnpm test
   ci-generators:
     needs: setup-node_modules

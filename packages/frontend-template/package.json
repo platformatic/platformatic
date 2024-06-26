@@ -19,6 +19,9 @@
     "preview": "vite preview",
     "test:e2e": "playwright test",
     "test:types": "tsc",
+    "test:server": "node ../cli/cli.js db start --config=test/e2e/fixtures/platformatic.e2e.db.json",
+    "test:prepare": "node test/prepare.mjs",
+    "test:cleanup": "rm -rf src/platformatic-generated-code test/e2e/fixtures/db.sqlite",
     "lint": "standard | snazzy",
     "test": "npm run lint && npm run test:e2e && npm run test:types"
   },
