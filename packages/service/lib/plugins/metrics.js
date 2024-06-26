@@ -5,16 +5,24 @@ const http = require('node:http')
 const { eventLoopUtilization } = require('node:perf_hooks').performance
 const fastify = require('fastify')
 const fp = require('fastify-plugin')
+const promClient = require('prom-client')
 
 const metricsPlugin = fp(async function (app, opts = {}) {
-  const defaultMetrics = opts.defaultMetrics ?? { enabled: true }
   const prefix = opts.prefix ?? ''
 
+  if (opts.labels) {
+    const labels = opts.labels ?? {}
+    promClient.register.setDefaultLabels(labels)
+  }
+  const defaultMetrics = opts.defaultMetrics ?? { enabled: true }
+
   app.register(require('fastify-metrics'), {
-    defaultMetrics: defaultMetrics || { enabled: true },
+    // TODO: check if passing the registry here affects the global registry
+    defaultMetrics,
     endpoint: null,
     name: 'metrics',
     clearRegisterOnInit: false,
+    promClient,
     routeMetrics: {
       enabled: true,
       overrides: {

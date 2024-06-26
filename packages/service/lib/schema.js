@@ -583,6 +583,10 @@ const metrics = {
           },
           additionalProperties: false,
           required: ['username', 'password']
+        },
+        labels: {
+          type: 'object',
+          additionalProperties: { type: 'string' }
         }
       },
       additionalProperties: false

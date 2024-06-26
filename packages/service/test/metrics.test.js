@@ -339,3 +339,64 @@ function testPrometheusJsonOutput (output) {
     assert.strictEqual(Array.isArray(metric.values), true, 'metric.values is array')
   }
 }
+
+function findFirstPrometheusLineForMetric (metric, output) {
+  const lines = output.split('\n')
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    if (line.startsWith(metric)) {
+      return line
+    }
+  }
+}
+
+function parseLabels (line) {
+  return line.split('{')[1].split('}')[0].split(',').reduce((acc, label) => {
+    const [key, value] = label.split('=')
+    acc[key] = value.replace(/^"(.*)"$/, '$1')
+    return acc
+  }, {})
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+test('specify custom labels', async (t) => {
+  const app = await buildServer({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0
+    },
+    metrics: {
+      labels: {
+        foo: 'bar'
+      }
+    }
+  })
+
+  t.after(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  // needed to reach 100% code cov, otherwise the ELU check won't run
+  await setTimeout(1000)
+  const res = await (request('http://127.0.0.1:9090/metrics'))
+  const body = await res.body.text()
+  sleep(1000)
+  assert.strictEqual(res.statusCode, 200)
+  assert.match(res.headers['content-type'], /^text\/plain/)
+
+  {
+    // We check one default metric to see if the labels are applied
+    const cpu = findFirstPrometheusLineForMetric('process_cpu_percent_usage', body)
+    const labels = parseLabels(cpu)
+    assert.strictEqual(labels.foo, 'bar')
+  }
+
+  {
+    // ...and one fastify-metric "route" metric
+    const httpRequest = findFirstPrometheusLineForMetric('http_request_all_summary_seconds', body)
+    const labels = parseLabels(httpRequest)
+    assert.strictEqual(labels.foo, 'bar')
+  }
+})
