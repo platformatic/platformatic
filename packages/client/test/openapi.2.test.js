@@ -215,6 +215,22 @@ test('build basic client from file (path parameter)', async (t) => {
     assert.equal(result.id, 'baz')
     assert.equal(result.name, 'foo')
   }
+  {
+    // with timeout options
+    const client = await buildOpenAPIClient({
+      fullRequest: false,
+      url: `${app.url}`,
+      path: join(__dirname, 'fixtures', 'path-params', 'openapi.json'),
+      bodyTimeout: 900000,
+      headersTimeout: 900000
+    })
+    const result = await client.getPath({
+      id: 'fracchia',
+      name: 'fantozzi'
+    })
+    assert.equal(result.id, 'fracchia')
+    assert.equal(result.name, 'fantozzi')
+  }
 })
 
 test('validate response', async (t) => {
