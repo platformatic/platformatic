@@ -5,32 +5,39 @@ const http = require('node:http')
 const { eventLoopUtilization } = require('node:perf_hooks').performance
 const fastify = require('fastify')
 const fp = require('fastify-plugin')
-const promClient = require('prom-client')
 
 const metricsPlugin = fp(async function (app, opts = {}) {
   const prefix = opts.prefix ?? ''
 
+  const promClient = require('prom-client')
+
+  const register = new promClient.Registry()
+  const defaultMetrics = opts.defaultMetrics ?? { enabled: true, register }
+
   if (opts.labels) {
     const labels = opts.labels ?? {}
-    promClient.register.setDefaultLabels(labels)
+    register.setDefaultLabels(labels)
   }
-  const defaultMetrics = opts.defaultMetrics ?? { enabled: true }
 
   app.register(require('fastify-metrics'), {
-    // TODO: check if passing the registry here affects the global registry
     defaultMetrics,
     endpoint: null,
     name: 'metrics',
     clearRegisterOnInit: false,
-    promClient,
+    promClient: {
+      ...promClient,
+      register
+    },
     routeMetrics: {
       enabled: true,
       overrides: {
         histogram: {
-          name: prefix + 'http_request_duration_seconds'
+          name: prefix + 'http_request_duration_seconds',
+          registers: [register]
         },
         summary: {
-          name: prefix + 'http_request_summary_seconds'
+          name: prefix + 'http_request_summary_seconds',
+          registers: [register]
         }
       }
     }
@@ -42,7 +49,8 @@ const metricsPlugin = fp(async function (app, opts = {}) {
       help: 'request duration in seconds summary for all requests',
       collect: () => {
         process.nextTick(() => httpLatencyMetric.reset())
-      }
+      },
+      registers: [register]
     })
     const ignoredMethods = ['HEAD', 'OPTIONS', 'TRACE', 'CONNECT']
     const timers = new WeakMap()
@@ -74,7 +82,8 @@ const metricsPlugin = fp(async function (app, opts = {}) {
           const result = eventLoopUtilization(endELU, startELU).utilization
           eluMetric.set(result)
           startELU = endELU
-        }
+        },
+        registers: [register]
       })
       app.metrics.client.register.registerMetric(eluMetric)
 
@@ -106,7 +115,8 @@ const metricsPlugin = fp(async function (app, opts = {}) {
 
           previousIdleTime = idleTime
           previousTotalTime = totalTime
-        }
+        },
+        registers: [register]
       })
       app.metrics.client.register.registerMetric(cpuMetric)
     })
