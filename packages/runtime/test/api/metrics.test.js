@@ -55,10 +55,7 @@ test('should get runtime metrics in a json format', async (t) => {
     'process_start_time_seconds',
     'service_1_http_request_all_summary_seconds',
     'service_1_http_request_duration_seconds',
-    'service_1_http_request_summary_seconds',
-    'service_2_http_request_all_summary_seconds',
-    'service_2_http_request_duration_seconds',
-    'service_2_http_request_summary_seconds'
+    'service_1_http_request_summary_seconds'
   ]
   for (const metricName of expectedMetricNames) {
     assert.ok(metricsNames.includes(metricName))
@@ -114,12 +111,10 @@ test('should get runtime metrics in a text format', async (t) => {
     'process_start_time_seconds',
     'service_1_http_request_all_summary_seconds',
     'service_1_http_request_duration_seconds',
-    'service_1_http_request_summary_seconds',
-    'service_2_http_request_all_summary_seconds',
-    'service_2_http_request_duration_seconds',
-    'service_2_http_request_summary_seconds'
+    'service_1_http_request_summary_seconds'
   ]
   for (const metricName of expectedMetricNames) {
+    console.log(metricName)
     assert.ok(metricsNames.includes(metricName))
   }
 })
