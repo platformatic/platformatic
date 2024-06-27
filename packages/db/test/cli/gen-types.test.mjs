@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { existsSync } from 'node:fs'
 import { test } from 'node:test'
 import { join } from 'node:path'
 import { setTimeout } from 'node:timers/promises'
@@ -11,7 +12,11 @@ import { cliPath } from './helper.js'
 
 let counter = 0
 
-const pathToTSD = join(urlDirname(import.meta.url), '../../node_modules/.bin/tsd')
+let pathToTSD = join(urlDirname(import.meta.url), '../../node_modules/.bin/tsd')
+
+if (!existsSync(pathToTSD)) {
+  pathToTSD = join(urlDirname(import.meta.url), '../../../../node_modules/.bin/tsd')
+}
 
 async function safeRm (dir) {
   // we are running on CI, no need for clean up

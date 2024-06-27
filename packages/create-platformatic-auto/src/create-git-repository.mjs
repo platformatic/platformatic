@@ -96,7 +96,7 @@ async function gitInit (logger, dir) {
 async function gitCommit (logger, dir) {
   try {
     await execa('git', ['add', '-A'], { cwd: dir })
-    await execa('git', ['commit', '-m', GIT_FIRST_COMMIT_MESSAGE], { cwd: dir })
+    await execa('git', ['commit', '-n', '-m', GIT_FIRST_COMMIT_MESSAGE], { cwd: dir })
     logger.debug('Git commit done.')
     return true
   } catch (err) {

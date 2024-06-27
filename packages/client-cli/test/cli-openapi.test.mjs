@@ -6,7 +6,7 @@ import { buildServer } from '@platformatic/runtime'
 import { join } from 'path'
 import * as desm from 'desm'
 import { execa } from 'execa'
-import { promises as fs } from 'fs'
+import { promises as fs, existsSync } from 'fs'
 import split from 'split2'
 import { copy } from 'fs-extra'
 import dotenv from 'dotenv'
@@ -14,6 +14,17 @@ import { readFile } from 'fs/promises'
 import { isFileAccessible } from '../cli.mjs'
 
 const env = { ...process.env, NODE_V8_COVERAGE: undefined }
+
+function findTSCPath () {
+  let tscPath = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
+
+  // If the local npm installation should use global tsc in the root
+  if (!existsSync(tscPath)) {
+    tscPath = desm.join(import.meta.url, '../../..', 'node_modules', '.bin', 'tsc')
+  }
+
+  return tscPath
+}
 
 test('openapi client generation (javascript)', async (t) => {
   try {
@@ -123,7 +134,7 @@ app.listen({ port: 0 });
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
-  const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
+  const tsc = findTSCPath()
   await execa(tsc, [], { env })
 
   // TODO how can we avoid this copy?
@@ -346,7 +357,7 @@ app.listen({ port: 0 });
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
-  const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
+  const tsc = findTSCPath()
   await execa(tsc, [], { env })
 
   // TODO how can we avoid this copy?
@@ -686,7 +697,7 @@ app.listen({ port: 0 });
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
-  const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
+  const tsc = findTSCPath()
   await execa(tsc, [], { env })
 
   // TODO how can we avoid this copy?
