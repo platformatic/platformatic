@@ -13,11 +13,12 @@ const metricsPlugin = fp(async function (app, opts = {}) {
 
   const register = new promClient.Registry()
 
+  const defaultMetrics = opts.defaultMetrics ?? { enabled: true }
   // We need to set the register because otherwise it not used for default metrics, see:
-  // https://github.com/SkeLLLa/fastify-metrics/blob/master/src/fastify-metrics.ts#L249
+  // https://github.com/skellla/fastify-metrics/blob/master/src/fastify-metrics.ts#l249
   // If register is not set in options, it uses the global one.
-  // See: https://github.com/siimon/prom-client?tab=readme-ov-file#default-metrics
-  const defaultMetrics = opts.defaultMetrics ?? { enabled: true, register }
+  // see: https://github.com/siimon/prom-client?tab=readme-ov-file#default-metrics
+  defaultMetrics.register = register
 
   if (opts.labels) {
     const labels = opts.labels ?? {}
