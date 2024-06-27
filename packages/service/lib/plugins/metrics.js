@@ -7,18 +7,12 @@ const fastify = require('fastify')
 const fp = require('fastify-plugin')
 
 const metricsPlugin = fp(async function (app, opts = {}) {
-  const prefix = opts.prefix ?? ''
-
   const promClient = require('prom-client')
 
   const register = new promClient.Registry()
 
   const defaultMetrics = opts.defaultMetrics ?? { enabled: true }
-  // We need to set the register because otherwise it not used for default metrics, see:
-  // https://github.com/skellla/fastify-metrics/blob/master/src/fastify-metrics.ts#l249
-  // If register is not set in options, it uses the global one.
-  // see: https://github.com/siimon/prom-client?tab=readme-ov-file#default-metrics
-  defaultMetrics.register = register
+  const prefix = opts.prefix ?? ''
 
   if (opts.labels) {
     const labels = opts.labels ?? {}
@@ -26,7 +20,10 @@ const metricsPlugin = fp(async function (app, opts = {}) {
   }
 
   app.register(require('fastify-metrics'), {
-    defaultMetrics,
+    defaultMetrics: {
+      ...defaultMetrics,
+      register
+    },
     endpoint: null,
     name: 'metrics',
     clearRegisterOnInit: false,
@@ -58,6 +55,7 @@ const metricsPlugin = fp(async function (app, opts = {}) {
       },
       registers: [register]
     })
+
     const ignoredMethods = ['HEAD', 'OPTIONS', 'TRACE', 'CONNECT']
     const timers = new WeakMap()
     app.addHook('onRequest', async (req) => {
