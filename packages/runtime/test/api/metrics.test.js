@@ -150,7 +150,6 @@ test.only('should get runtime metrics in a text format with custom labels', asyn
 
   const metrics = await app.getMetrics('text')
   const labels = getMetricsLines(metrics.metrics).map(parseLabels)
-  console.log(getMetricsLines(metrics.metrics).filter((line) => line.startsWith('service_db')))
 
   // Ensure that the custom labels are present in the metrics
   for (const lineLabel of labels) {

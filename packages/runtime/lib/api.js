@@ -320,7 +320,7 @@ class RuntimeApi {
   }
 
   async #getMetrics ({ format }) {
-    let metrics = format === 'json' ? [] : ''
+    let metrics = null
 
     for (const service of this.#services.values()) {
       const serviceId = service.appConfig.id
@@ -331,11 +331,16 @@ class RuntimeApi {
 
       const promRegister = service.server.metrics?.client?.register
 
-      if (format === 'json') {
-        metrics.push(...await promRegister.getMetricsAsJSON())
-      } else {
-        const serviceMetrics = await promRegister.metrics()
-        metrics += serviceMetrics
+      if (promRegister) {
+        if (metrics === null) {
+          metrics = format === 'json' ? [] : ''
+        }
+        if (format === 'json') {
+          metrics.push(...await promRegister.getMetricsAsJSON())
+        } else {
+          const serviceMetrics = await promRegister.metrics()
+          metrics += serviceMetrics
+        }
       }
     }
 

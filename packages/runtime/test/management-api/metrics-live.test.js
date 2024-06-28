@@ -105,19 +105,7 @@ test('should not throw if entrypoint does not have metrics enabled', async (t) =
       for (const record of records) {
         if (!record) continue
         const metrics = JSON.parse(record)
-        const metricsKeys = Object.keys(metrics).sort()
-        assert.deepStrictEqual(metricsKeys, [
-          'cpu',
-          'date',
-          'elu',
-          'entrypoint',
-          'newSpaceSize',
-          'oldSpaceSize',
-          'rss',
-          'totalHeapSize',
-          'usedHeapSize',
-          'version'
-        ])
+        assert.strictEqual(metrics, null)
       }
     })
   })

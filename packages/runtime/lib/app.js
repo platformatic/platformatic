@@ -257,10 +257,12 @@ class PlatformaticApp extends EventEmitter {
       metrics: this.#metricsConfig
     })
 
-    configManager.update({
-      ...configManager.current,
-      metrics: this.#metricsConfig
-    })
+    if (configManager.current.metrics !== false) {
+      configManager.update({
+        ...configManager.current,
+        metrics: this.#metricsConfig
+      })
+    }
 
     if (this.#serverConfig) {
       configManager.update({
