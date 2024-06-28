@@ -351,12 +351,12 @@ test('handle headers parameters', async (t) => {
     delete request['foo']
   }
 
-  const response = await fetch(\`\${url}\/\`, {
+  const response = await fetch(\`\${url}/\`, {
     method: 'POST',
     body: JSON.stringify(request),
     headers
   })`
-  
+
   ok(implementation)
   equal(implementation.includes(tsImplementationTemplate), true)
 })
