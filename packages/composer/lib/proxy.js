@@ -5,6 +5,8 @@ const httpProxy = require('@fastify/http-proxy')
 const fp = require('fastify-plugin')
 
 module.exports = fp(async function (app, opts) {
+  const config = app.platformatic.config
+
   for (const { proxy, origin } of opts.services) {
     if (!proxy) continue
 
@@ -33,12 +35,20 @@ module.exports = fp(async function (app, opts) {
           // - request.span: the span of the request to the proxy
           // - request.proxedCallSpan: the span of the request to the proxied service
           request.proxedCallSpan = span
-          return {
-            ...telemetryHeaders,
+
+          headers = {
             ...headers,
+            ...telemetryHeaders,
             'x-forwarded-for': request.ip,
             'x-forwarded-host': request.hostname
           }
+
+          const telemetryId = config.telemetry?.serviceName
+          if (telemetryId) {
+            headers['x-telemetry-id'] = telemetryId
+          }
+
+          return headers
         },
         onResponse: (request, reply, res) => {
           app.openTelemetry?.endSpanClient(reply.request.proxedCallSpan, { statusCode: reply.statusCode })

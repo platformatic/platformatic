@@ -43,9 +43,9 @@ async function buildRuntime (configManager, env) {
   env = env || process.env
   const config = configManager.current
 
-  if (inspector.url()) {
-    throw new errors.NodeInspectorFlagsNotSupportedError()
-  }
+  // if (inspector.url()) {
+  //   throw new errors.NodeInspectorFlagsNotSupportedError()
+  // }
 
   if (configManager.args) {
     parseInspectorOptions(configManager)
