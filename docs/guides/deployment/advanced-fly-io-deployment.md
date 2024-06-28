@@ -61,63 +61,70 @@ CMD ["npm", "start"]
 }
 ```
 
+4. **Connecting to the Database**
+   
+Use the following command from your local machine to connect directly to the database:
 
-
-
-
-
-
-
-Start by creating a script for launching the database, calling it **db-cli.sh**:
-
-```bash
-#!/bin/sh
-set -x
-# DSN will be defined in the Dockerfile
-sqlite3 $DSN
+```sh
+fly ssh console -C db-cli
 ```
 
-Create a new **Dockerfile** which will act as the build and deployment image:
+## TypeScript Compilation for Deployment
 
-```dockerfile
-FROM node:18-alpine
-
-# Setup sqlite viewer
-RUN apk add sqlite
-ENV DSN "/app/.platformatic/data/app.db"
-COPY db-cli.sh /usr/local/bin/db-cli
-RUN chmod +x /usr/local/bin/db-cli
-
-WORKDIR /app
-COPY package.json package.json
-COPY package-lock.json package-lock.json
-
-RUN npm ci --omit=dev
-
-COPY platformatic.db.json platformatic.db.json
-
-COPY migrations migrations
-# Uncomment if your application is running a plugin
-# COPY plugin.js plugin.js
-
-EXPOSE 8080
-
-CMD ["npm", "start"]
-```
-
-Add a `start` script to your **package.json**:
-
-```json
+To compile your TypeScript files before deployment, update your `platformatic.json` to include TypeScript settings:
+  
+```json 
 {
-  "scripts": {
-    "start": "platformatic db"
+  "plugins": {
+    "paths": [{
+      "path": "plugins",
+      "encapsulate": false
+    }, "routes"],
+    "typescript": {
+      "enabled": "{PLT_TYPESCRIPT}",
+      "outDir": "dist"
+    }
   }
 }
 ```
 
-With Fly, it becomes straightforward to connect directly to the database by
-running the following command from your local machine:
+Ensure `PLT_TYPESCRIPT=true` in your `.env` file for local development. For deployment, set `PLT_TYPESCRIPT=false` to avoid compiling TypeScript at runtime.
 
-```bash
-fly ssh console -C db-cli
+Compile your TypeScript source files with:
+
+```sh 
+plt service compile 
 ```
+
+This compiles your TypeScript files and outputs them to the specified `outDir`.
+
+## Deploy Application 
+
+A valid `package.json` will be needed. If you do not have one, generate one by running `npm init`.
+
+In your `package.json`, make sure there is a `start` script to run your application:
+
+```json 
+{
+  "scripts": {
+    "start": "platformatic start"
+  }
+}
+```
+
+Before deploying, make sure a `.dockerignore` file is created:
+
+```sh 
+cp .gitignore .dockerignore
+```
+
+Finally, deploy the application to Fly.io by running:
+
+```sh
+fly deploy
+```
+
+
+
+
+
