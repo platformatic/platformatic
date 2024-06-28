@@ -9,6 +9,9 @@ const { buildServer } = require('..')
 // TODO: check if it's still needed
 // require('./helper')
 
+// Make sure we are not mistakenly detecting the tsconfig.json file in the root of the package.
+process.chdir(__dirname)
+
 test('autoload & filesystem based routing / watch disabled', async (t) => {
   const config = {
     server: {

@@ -26,6 +26,7 @@ A object with the following settings:
 - **`hostname`** (**required**, `string`) — Hostname where Platformatic Service server will listen for connections.
 - **`port`** (**required**, `number` or `string`) — Port where Platformatic Service server will listen for connections.
 - **`healthCheck`** (`boolean` or `object`) — Enables the health check endpoint.
+
   - Powered by [`@fastify/under-pressure`](https://github.com/fastify/under-pressure).
   - The value can be an object, used to specify the interval between checks in milliseconds (default: `5000`)
 
@@ -41,6 +42,7 @@ A object with the following settings:
     }
   }
   ```
+
 - **`cors`** (`object`) — Configuration for Cross-Origin Resource Sharing (CORS) headers.
   - All options will be passed to the [`@fastify/cors`](https://github.com/fastify/fastify-cors) plugin. In order to specify a `RegExp` object, you can pass `{ regexp: 'yourregexp' }`,
     it will be automatically converted
@@ -90,10 +92,12 @@ Supported object properties:
 - **`endpoint`** (`string`) — The endpoint on which metrics will be served.
 - **`auth`** (`object`) — Basic Auth configuration. **`username`** and **`password`** are required here
   (use [environment variables](#environment-variables)).
+- **`labels`** (`object`) - `{ key : value }` map of labels that are applied to metrics
 
 ### `plugins`
 
 An optional object that defines the plugins loaded by Platformatic Service.
+
 - **`packages`**: : an array of packages/modules (`string`)
   or an array of objects composed as follows:
   - `name` (`string`): the name of the package to `import`; required.
@@ -108,7 +112,7 @@ An optional object that defines the plugins loaded by Platformatic Service.
   - `autoHooksPattern` (`string`): Regex to override the autohooks naming convention.
   - `cascadeHooks` (`boolean`): If using autoHooks, cascade hooks to all children. Ignored if autoHooks is false.
   - `overwriteHooks` (`boolean`): If using cascadeHooks, cascade will be reset when a new autohooks.js file is encountered. Ignored if autoHooks is false.
-  - `routeParams` (`boolean`): Folders prefixed with _ will be turned into route parameters.
+  - `routeParams` (`boolean`): Folders prefixed with \_ will be turned into route parameters.
   - `forceESM` (`boolean`): If set to 'true' it always use await import to load plugins or hooks.
   - `ignoreFilter` (`string`): Filter matching any path that should not be loaded. Can be a RegExp, a string or a function returning a boolean.
   - `matchFilter` (`string`): Filter matching any path that should be loaded. Can be a RegExp, a string or a function returning a boolean.
@@ -121,18 +125,22 @@ _Example_
 ```json
 {
   "plugins": {
-    "packages": [{
-      "name": "@fastify/compress",
-      "options": {
-        "threshold": 1
+    "packages": [
+      {
+        "name": "@fastify/compress",
+        "options": {
+          "threshold": 1
+        }
       }
-    }],
-    "paths": [{
-      "path": "./my-plugin.js",
-      "options": {
-        "foo": "bar"
+    ],
+    "paths": [
+      {
+        "path": "./my-plugin.js",
+        "options": {
+          "foo": "bar"
+        }
       }
-    }]
+    ]
   }
 }
 ```
@@ -141,24 +149,25 @@ _Example_
 
 The `typescript` can also be an object to customize the compilation. Here are the supported options:
 
-* `enabled` (`boolean` or `string`): enables compilation
-* `tsConfig` (`string`): path to the `tsconfig.json` file relative to the configuration
-* `outDir` (`string`): the output directory of `tsconfig.json`, in case `tsconfig.json` is not available
-and `enabled` is set to `false` (production build)
-* `flags` (array of `string`): flags to be passed to `tsc`. Overrides `tsConfig`.
-
+- `enabled` (`boolean` or `string`): enables compilation
+- `tsConfig` (`string`): path to the `tsconfig.json` file relative to the configuration
+- `outDir` (`string`): the output directory of `tsconfig.json`, in case `tsconfig.json` is not available
+  and `enabled` is set to `false` (production build)
+- `flags` (array of `string`): flags to be passed to `tsc`. Overrides `tsConfig`.
 
 Example:
 
 ```json
 {
   "plugins": {
-    "paths": [{
-      "path": "./my-plugin.js",
-      "options": {
-        "foo": "bar"
+    "paths": [
+      {
+        "path": "./my-plugin.js",
+        "options": {
+          "foo": "bar"
+        }
       }
-    }],
+    ],
     "typescript": {
       "enabled": false,
       "tsConfig": "./path/to/tsconfig.json",
@@ -170,11 +179,12 @@ Example:
 
 ### `watch`
 
-Enables watching for file changes if set to `true`  or `"true"`. It can also be customized with the following options:
+Enables watching for file changes if set to `true` or `"true"`. It can also be customized with the following options:
 
-* **`enabled`** (`boolean` or `string`): enables watching.
-- **`ignore`** (`string[]`, default: `null`): List of glob patterns to ignore when watching for changes. If `null` or not specified, ignore rule is not applied. Ignore option doesn't work for typescript files.
-- **`allow`** (`string[]`, default: `['*.js', '**/*.js']`): List of glob patterns to allow when watching for changes. If `null` or not specified, allow rule is not applied. Allow option doesn't work for typescript files.
+- **`enabled`** (`boolean` or `string`): enables watching.
+
+* **`ignore`** (`string[]`, default: `null`): List of glob patterns to ignore when watching for changes. If `null` or not specified, ignore rule is not applied. Ignore option doesn't work for typescript files.
+* **`allow`** (`string[]`, default: `['*.js', '**/*.js']`): List of glob patterns to allow when watching for changes. If `null` or not specified, allow rule is not applied. Allow option doesn't work for typescript files.
 
   _Example_
 
@@ -218,6 +228,7 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
   ```
 
 - **`openapi`** (`boolean` or `object`, default: `false`) — Enables OpenAPI REST support.
+
   - If value is an object, all [OpenAPI v3](https://swagger.io/specification/) allowed properties can be passed. Also a `prefix` property can be passed to set the OpenAPI prefix.
   - Platformatic Service uses [`@fastify/swagger`](https://github.com/fastify/fastify-swagger) under the hood to manage this configuration.
 
@@ -260,38 +271,39 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
     }
   }
   ```
+
 ### `telemetry`
+
 [Open Telemetry](https://opentelemetry.io/) is optionally supported with these settings:
 
 - **`serviceName`** (**required**, `string`) — Name of the service as will be reported in open telemetry.
 - **`version`** (`string`) — Optional version (free form)
-- **`skip`** (`array`). Optional list of operations to skip when exporting telemetry defined `object` with properties: 
-    - `method`: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE
-    - `path`. e.g.: `/documentation/json` 
+- **`skip`** (`array`). Optional list of operations to skip when exporting telemetry defined `object` with properties:
+  - `method`: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE
+  - `path`. e.g.: `/documentation/json`
 - **`exporter`** (`object` or `array`) — Exporter configuration. If not defined, the exporter defaults to `console`. If an array of objects is configured, every object must be a valid exporter object. The exporter object has the following properties:
-    - **`type`** (`string`) — Exporter type. Supported values are `console`, `otlp`, `zipkin` and `memory` (default: `console`). `memory` is only supported for testing purposes. 
-    - **`options`** (`object`) — These options are supported:
-        - **`url`** (`string`) — The URL to send the telemetry to. Required for `otlp` exporter. This has no effect on `console` and `memory` exporters.
-        - **`headers`** (`object`) — Optional headers to send with the telemetry. This has no effect on `console` and `memory` exporters.
-        
+  - **`type`** (`string`) — Exporter type. Supported values are `console`, `otlp`, `zipkin` and `memory` (default: `console`). `memory` is only supported for testing purposes.
+  - **`options`** (`object`) — These options are supported:
+    - **`url`** (`string`) — The URL to send the telemetry to. Required for `otlp` exporter. This has no effect on `console` and `memory` exporters.
+    - **`headers`** (`object`) — Optional headers to send with the telemetry. This has no effect on `console` and `memory` exporters.
+
 Note that OTLP traces can be consumed by different solutions, like [Jaeger](https://www.jaegertracing.io/). [Here](https://opentelemetry.io/ecosystem/vendors/) the full list.
 
-  _Example_
+_Example_
 
-  ```json
-  {
-    "telemetry": {
-        "serviceName": "test-service",
-        "exporter": {
-            "type": "otlp",
-            "options": {
-                "url": "http://localhost:4318/v1/traces"
-            }
-        }
+```json
+{
+  "telemetry": {
+    "serviceName": "test-service",
+    "exporter": {
+      "type": "otlp",
+      "options": {
+        "url": "http://localhost:4318/v1/traces"
+      }
     }
   }
-  ```
-
+}
+```
 
 ### `clients`
 
