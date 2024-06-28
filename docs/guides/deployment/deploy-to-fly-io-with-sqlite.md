@@ -112,6 +112,34 @@ This same configuration needs to added to `fly.toml`:
   DATABASE_URL = "sqlite:///app/.platformatic/data/movie-quotes.db"
 ```
 
+## TypeScript Compilation for Deployment 
+
+To compile your TypeScript files before deployment, update your `platformatic.json` to include TypeScript settings:
+
+```json
+{
+  "plugins": {
+    "paths": [{
+      "path": "plugins",
+      "encapsulate": false
+    }, "routes"],
+    "typescript": {
+      "enabled": "{PLT_TYPESCRIPT}",
+      "outDir": "dist"
+    }
+  }
+}
+```
+Ensure `PLT_TYPESCRIPT=true` in your `.env` file for local development. For deployment, set `PLT_TYPESCRIPT=false` to avoid compiling TypeScript at runtime.
+
+Compile your TypeScript source files with:
+
+```sh
+plt service compile 
+```
+
+This compiles your TypeScript files and outputs them to the specified `outDir`.
+
 ## Deploy application
 
 A valid `package.json` will be needed so if you do not have one, generate one by running `npm init`.
