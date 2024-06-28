@@ -11,12 +11,12 @@ export interface PlatformaticService {
     port?: number | string;
     pluginTimeout?: number;
     healthCheck?:
-      | boolean
-      | {
-          enabled?: boolean;
-          interval?: number;
-          [k: string]: unknown;
-        };
+    | boolean
+    | {
+      enabled?: boolean;
+      interval?: number;
+      [k: string]: unknown;
+    };
     ignoreTrailingSlash?: boolean;
     ignoreDuplicateSlashes?: boolean;
     connectionTimeout?: number;
@@ -29,38 +29,38 @@ export interface PlatformaticService {
     disableRequestLogging?: boolean;
     exposeHeadRoutes?: boolean;
     logger?:
-      | boolean
+    | boolean
+    | {
+      level?: string;
+      transport?:
       | {
-          level?: string;
-          transport?:
-            | {
-                target?: string;
-                options?: {
-                  [k: string]: unknown;
-                };
-              }
-            | {
-                targets?: {
-                  target?: string;
-                  options?: {
-                    [k: string]: unknown;
-                  };
-                  level?: string;
-                  additionalProperties?: never;
-                  [k: string]: unknown;
-                }[];
-                options?: {
-                  [k: string]: unknown;
-                };
-              };
-          pipeline?: {
-            target?: string;
-            options?: {
-              [k: string]: unknown;
-            };
-          };
+        target?: string;
+        options?: {
           [k: string]: unknown;
         };
+      }
+      | {
+        targets?: {
+          target?: string;
+          options?: {
+            [k: string]: unknown;
+          };
+          level?: string;
+          additionalProperties?: never;
+          [k: string]: unknown;
+        }[];
+        options?: {
+          [k: string]: unknown;
+        };
+      };
+      pipeline?: {
+        target?: string;
+        options?: {
+          [k: string]: unknown;
+        };
+      };
+      [k: string]: unknown;
+    };
     serializerOpts?: {
       schema?: {
         [k: string]: unknown;
@@ -82,45 +82,45 @@ export interface PlatformaticService {
     trustProxy?: boolean | string | string[] | number;
     https?: {
       key:
+      | string
+      | {
+        path?: string;
+      }
+      | (
         | string
         | {
-            path?: string;
-          }
-        | (
-            | string
-            | {
-                path?: string;
-              }
-          )[];
+          path?: string;
+        }
+      )[];
       cert:
+      | string
+      | {
+        path?: string;
+      }
+      | (
         | string
         | {
-            path?: string;
-          }
-        | (
-            | string
-            | {
-                path?: string;
-              }
-          )[];
+          path?: string;
+        }
+      )[];
       requestCert?: boolean;
       rejectUnauthorized?: boolean;
     };
     cors?: {
       origin?:
-        | boolean
+      | boolean
+      | string
+      | (
         | string
-        | (
-            | string
-            | {
-                regexp: string;
-                [k: string]: unknown;
-              }
-          )[]
         | {
-            regexp: string;
-            [k: string]: unknown;
-          };
+          regexp: string;
+          [k: string]: unknown;
+        }
+      )[]
+      | {
+        regexp: string;
+        [k: string]: unknown;
+      };
       methods?: string[];
       /**
        * Comma separated string of allowed headers.
@@ -140,59 +140,62 @@ export interface PlatformaticService {
     [k: string]: unknown;
   };
   metrics?:
-    | boolean
-    | {
-        port?: number | string;
-        hostname?: string;
-        endpoint?: string;
-        server?: "own" | "parent";
-        auth?: {
-          username: string;
-          password: string;
-        };
-      };
+  | boolean
+  | {
+    port?: number | string;
+    hostname?: string;
+    endpoint?: string;
+    server?: "own" | "parent";
+    auth?: {
+      username: string;
+      password: string;
+    };
+    labels?: {
+      [k: string]: string;
+    };
+  };
   telemetry?: OpenTelemetry;
   watch?:
-    | {
-        enabled?: boolean | string;
-        /**
-         * @minItems 1
-         */
-        allow?: [string, ...string[]];
-        ignore?: string[];
-      }
-    | boolean
-    | string;
+  | {
+    enabled?: boolean | string;
+    /**
+     * @minItems 1
+     */
+    allow?: [string, ...string[]];
+    ignore?: string[];
+  }
+  | boolean
+  | string;
   $schema?: string;
   service?: {
     openapi?:
-      | {
-          info?: Info;
-          jsonSchemaDialect?: string;
-          servers?: Server[];
-          paths?: Paths;
-          webhooks?: {
-            [k: string]: PathItemOrReference;
-          };
-          components?: Components;
-          security?: SecurityRequirement[];
-          tags?: Tag[];
-          externalDocs?: ExternalDocumentation;
-          /**
-           * Base URL for the OpenAPI Swagger Documentation
-           */
-          swaggerPrefix?: string;
-          /**
-           * Path to an OpenAPI spec file
-           */
-          path?: string;
-        }
-      | boolean;
+    | {
+      info?: Info;
+      jsonSchemaDialect?: string;
+      servers?: Server[];
+      paths?: Paths;
+      webhooks?: {
+        [k: string]: PathItemOrReference;
+      };
+      components?: Components;
+      security?: SecurityRequirement[];
+      tags?: Tag[];
+      externalDocs?: ExternalDocumentation;
+      /**
+       * Base URL for the OpenAPI Swagger Documentation
+       */
+      swaggerPrefix?: string;
+      /**
+       * Path to an OpenAPI spec file
+       */
+      path?: string;
+    }
+    | boolean;
     graphql?:
-      | {
-          graphiql?: boolean;
-        }
-      | boolean;
+    | {
+      graphiql?: boolean;
+    }
+    | boolean;
   };
   clients?: {
     serviceId?: string;
@@ -214,12 +217,12 @@ export interface PlatformaticService {
         path?: string;
       };
       plugins?:
-        | {
-            [k: string]: unknown;
-          }
-        | {
-            [k: string]: unknown;
-          };
+      | {
+        [k: string]: unknown;
+      }
+      | {
+        [k: string]: unknown;
+      };
     }[];
   };
 }
@@ -247,48 +250,48 @@ export interface OpenTelemetry {
     [k: string]: unknown;
   }[];
   exporter?:
-    | {
-        type?: "console" | "otlp" | "zipkin" | "memory";
-        /**
-         * Options for the exporter. These are passed directly to the exporter.
-         */
-        options?: {
-          /**
-           * The URL to send the traces to. Not used for console or memory exporters.
-           */
-          url?: string;
-          /**
-           * Headers to send to the exporter. Not used for console or memory exporters.
-           */
-          headers?: {
-            [k: string]: unknown;
-          };
-          [k: string]: unknown;
-        };
-        additionalProperties?: never;
-        [k: string]: unknown;
-      }[]
-    | {
-        type?: "console" | "otlp" | "zipkin" | "memory";
-        /**
-         * Options for the exporter. These are passed directly to the exporter.
-         */
-        options?: {
-          /**
-           * The URL to send the traces to. Not used for console or memory exporters.
-           */
-          url?: string;
-          /**
-           * Headers to send to the exporter. Not used for console or memory exporters.
-           */
-          headers?: {
-            [k: string]: unknown;
-          };
-          [k: string]: unknown;
-        };
-        additionalProperties?: never;
+  | {
+    type?: "console" | "otlp" | "zipkin" | "memory";
+    /**
+     * Options for the exporter. These are passed directly to the exporter.
+     */
+    options?: {
+      /**
+       * The URL to send the traces to. Not used for console or memory exporters.
+       */
+      url?: string;
+      /**
+       * Headers to send to the exporter. Not used for console or memory exporters.
+       */
+      headers?: {
         [k: string]: unknown;
       };
+      [k: string]: unknown;
+    };
+    additionalProperties?: never;
+    [k: string]: unknown;
+  }[]
+  | {
+    type?: "console" | "otlp" | "zipkin" | "memory";
+    /**
+     * Options for the exporter. These are passed directly to the exporter.
+     */
+    options?: {
+      /**
+       * The URL to send the traces to. Not used for console or memory exporters.
+       */
+      url?: string;
+      /**
+       * Headers to send to the exporter. Not used for console or memory exporters.
+       */
+      headers?: {
+        [k: string]: unknown;
+      };
+      [k: string]: unknown;
+    };
+    additionalProperties?: never;
+    [k: string]: unknown;
+  };
 }
 export interface Info {
   title: string;

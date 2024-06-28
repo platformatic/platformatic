@@ -20,10 +20,16 @@ class RuntimeApi {
     this.#logger = logger
     this.#setupBus()
     const telemetryConfig = config.telemetry
+    const metricsConfig = config.metrics
 
     for (let i = 0; i < config.services.length; ++i) {
       const service = config.services[i]
-      const serviceTelemetryConfig = telemetryConfig ? { ...telemetryConfig, serviceName: `${telemetryConfig.serviceName}-${service.id}` } : null
+      const serviceTelemetryConfig = telemetryConfig
+        ? {
+            ...telemetryConfig,
+            serviceName: `${telemetryConfig.serviceName}-${service.id}`
+          }
+        : null
 
       // If the service is an entrypoint and runtime server config is defined, use it.
       let serverConfig = null
@@ -37,7 +43,7 @@ class RuntimeApi {
         }
       }
 
-      const app = new PlatformaticApp(service, loaderPort, logger, serviceTelemetryConfig, serverConfig, !!config.managementApi)
+      const app = new PlatformaticApp(service, loaderPort, logger, serviceTelemetryConfig, serverConfig, !!config.managementApi, metricsConfig)
 
       this.#services.set(service.id, app)
     }
@@ -314,29 +320,24 @@ class RuntimeApi {
   }
 
   async #getMetrics ({ format }) {
-    let entrypoint = null
+    let metrics = format === 'json' ? [] : ''
+
     for (const service of this.#services.values()) {
-      if (service.appConfig.entrypoint) {
-        entrypoint = service
-        break
+      const serviceId = service.appConfig.id
+      const serviceStatus = service.getStatus()
+      if (serviceStatus !== 'started') {
+        throw new errors.ServiceNotStartedError(serviceId)
+      }
+
+      const promRegister = service.server.metrics?.client?.register
+
+      if (format === 'json') {
+        metrics.push(...await promRegister.getMetricsAsJSON())
+      } else {
+        const serviceMetrics = await promRegister.metrics()
+        metrics += serviceMetrics
       }
     }
-
-    const entrypointStatus = entrypoint.getStatus()
-    if (entrypointStatus !== 'started') {
-      throw new errors.ServiceNotStartedError(entrypoint.id)
-    }
-
-    const promRegister = entrypoint.server.metrics?.client?.register
-    if (!promRegister) {
-      return { metrics: null }
-    }
-
-    // All runtime services shares the same metrics registry.
-    // Getting metrics from the entrypoint returns all metrics.
-    const metrics = format === 'json'
-      ? await promRegister.getMetricsAsJSON()
-      : await promRegister.metrics()
 
     return { metrics }
   }
