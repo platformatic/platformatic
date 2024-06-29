@@ -5,9 +5,10 @@ settings:
   excludeLinksFromLockfile: false
 
 importers:
+
   .:
     devDependencies:
-      "@fastify/pre-commit":
+      '@fastify/pre-commit':
         specifier: ^2.1.0
         version: 2.1.0
       desm:
@@ -19,10 +20,10 @@ importers:
 
   packages/authenticate:
     dependencies:
-      "@fastify/error":
+      '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
-      "@platformatic/config":
+      '@platformatic/config':
         specifier: workspace:*
         version: link:../config
       colorette:
@@ -44,7 +45,7 @@ importers:
         specifier: ^8.16.0
         version: 8.16.0
     devDependencies:
-      "@fastify/websocket":
+      '@fastify/websocket':
         specifier: ^10.0.0
         version: 10.0.1
       borp:
@@ -68,11 +69,11 @@ importers:
 
   packages/bus:
     dependencies:
-      "@fastify/error":
+      '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
     devDependencies:
-      "@matteo.collina/tspl":
+      '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
       borp:
@@ -96,40 +97,40 @@ importers:
 
   packages/cli:
     dependencies:
-      "@fastify/error":
+      '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
-      "@platformatic/authenticate":
+      '@platformatic/authenticate':
         specifier: workspace:*
         version: link:../authenticate
-      "@platformatic/client-cli":
+      '@platformatic/client-cli':
         specifier: workspace:*
         version: link:../client-cli
-      "@platformatic/composer":
+      '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
-      "@platformatic/config":
+      '@platformatic/config':
         specifier: workspace:*
         version: link:../config
-      "@platformatic/control":
+      '@platformatic/control':
         specifier: workspace:*
         version: link:../control
-      "@platformatic/db":
+      '@platformatic/db':
         specifier: workspace:*
         version: link:../db
-      "@platformatic/deploy-client":
+      '@platformatic/deploy-client':
         specifier: workspace:*
         version: link:../deploy-client
-      "@platformatic/frontend-template":
+      '@platformatic/frontend-template':
         specifier: workspace:*
         version: link:../frontend-template
-      "@platformatic/runtime":
+      '@platformatic/runtime':
         specifier: workspace:*
         version: link:../runtime
-      "@platformatic/service":
+      '@platformatic/service':
         specifier: workspace:*
         version: link:../service
-      "@platformatic/utils":
+      '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
       colorette:
@@ -202,7 +203,7 @@ importers:
 
   packages/client:
     dependencies:
-      "@apidevtools/json-schema-ref-parser":
+      '@apidevtools/json-schema-ref-parser':
         specifier: ^11.5.4
         version: 11.5.5
       '@fastify/error':
@@ -227,7 +228,7 @@ importers:
         specifier: ^6.9.0
         version: 6.13.0
     devDependencies:
-      "@platformatic/telemetry":
+      '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
       borp:
@@ -260,13 +261,13 @@ importers:
 
   packages/client-cli:
     dependencies:
-      "@fastify/error":
+      '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
-      "@platformatic/client":
+      '@platformatic/client':
         specifier: workspace:*
         version: link:../client
-      "@platformatic/config":
+      '@platformatic/config':
         specifier: workspace:*
         version: link:../config
       abstract-logging:
@@ -312,19 +313,19 @@ importers:
         specifier: ^2.4.1
         version: 2.4.1
     devDependencies:
-      "@matteo.collina/tspl":
+      '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
-      "@platformatic/db":
+      '@platformatic/db':
         specifier: workspace:*
         version: link:../db
-      "@platformatic/runtime":
+      '@platformatic/runtime':
         specifier: workspace:*
         version: link:../runtime
-      "@platformatic/service":
+      '@platformatic/service':
         specifier: workspace:*
         version: link:../service
-      "@platformatic/utils":
+      '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
       borp:
@@ -366,13 +367,13 @@ importers:
 
   packages/composer:
     dependencies:
-      "@fastify/error":
+      '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
-      "@fastify/http-proxy":
+      '@fastify/http-proxy':
         specifier: ^9.4.0
         version: 9.5.0
-      "@fastify/reply-from":
+      '@fastify/reply-from':
         specifier: ^9.7.0
         version: 9.7.0
       '@fastify/static':
@@ -381,28 +382,28 @@ importers:
       '@fastify/swagger':
         specifier: ^8.14.0
         version: 8.14.0
-      "@platformatic/config":
+      '@platformatic/config':
         specifier: workspace:*
         version: link:../config
-      "@platformatic/generators":
+      '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
-      "@platformatic/graphql-composer":
+      '@platformatic/graphql-composer':
         specifier: ^0.7.0
         version: 0.7.0
-      "@platformatic/scalar-theme":
+      '@platformatic/scalar-theme':
         specifier: workspace:*
         version: link:../scalar-theme
-      "@platformatic/service":
+      '@platformatic/service':
         specifier: workspace:*
         version: link:../service
-      "@platformatic/telemetry":
+      '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
-      "@platformatic/utils":
+      '@platformatic/utils':
         specifier: workspace:^
         version: link:../utils
-      "@scalar/fastify-api-reference":
+      '@scalar/fastify-api-reference':
         specifier: ^1.19.5
         version: 1.21.0
       ajv:
@@ -469,10 +470,10 @@ importers:
         specifier: ^6.9.0
         version: 6.13.0
     devDependencies:
-      "@platformatic/client":
+      '@platformatic/client':
         specifier: workspace:*
         version: link:../client
-      "@platformatic/db":
+      '@platformatic/db':
         specifier: workspace:*
         version: link:../db
       borp:
@@ -508,13 +509,13 @@ importers:
 
   packages/config:
     dependencies:
-      "@fastify/deepmerge":
+      '@fastify/deepmerge':
         specifier: ^1.3.0
         version: 1.3.0
-      "@fastify/error":
+      '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
-      "@platformatic/utils":
+      '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
       abstract-logging:
@@ -542,10 +543,10 @@ importers:
         specifier: ^6.9.0
         version: 6.13.0
     devDependencies:
-      "@iarna/toml":
+      '@iarna/toml':
         specifier: ^2.2.5
         version: 2.2.5
-      "@matteo.collina/tspl":
+      '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
       borp:
@@ -578,7 +579,7 @@ importers:
 
   packages/control:
     dependencies:
-      "@fastify/error":
+      '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
       commist:
@@ -603,7 +604,7 @@ importers:
         specifier: ^8.16.0
         version: 8.16.0
     devDependencies:
-      "@platformatic/runtime":
+      '@platformatic/runtime':
         specifier: workspace:*
         version: link:../runtime
       borp:
@@ -630,16 +631,16 @@ importers:
 
   packages/create-platformatic:
     dependencies:
-      "@platformatic/config":
+      '@platformatic/config':
         specifier: workspace:*
         version: link:../config
-      "@platformatic/create-platformatic-auto":
+      '@platformatic/create-platformatic-auto':
         specifier: workspace:*
         version: link:../create-platformatic-auto
-      "@platformatic/utils":
+      '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
-      "@types/node":
+      '@types/node':
         specifier: ^20.11.28
         version: 20.12.7
       boring-name-generator:
@@ -697,10 +698,10 @@ importers:
         specifier: ^3.0.1
         version: 3.0.1
     devDependencies:
-      "@platformatic/db":
+      '@platformatic/db':
         specifier: workspace:*
         version: link:../db
-      "@platformatic/service":
+      '@platformatic/service':
         specifier: workspace:*
         version: link:../service
       ajv:
@@ -739,19 +740,19 @@ importers:
 
   packages/create-platformatic-auto:
     dependencies:
-      "@platformatic/authenticate":
+      '@platformatic/authenticate':
         specifier: workspace:*
         version: link:../authenticate
-      "@platformatic/config":
+      '@platformatic/config':
         specifier: workspace:*
         version: link:../config
-      "@platformatic/generators":
+      '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
-      "@platformatic/utils":
+      '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
-      "@types/node":
+      '@types/node':
         specifier: ^20.11.28
         version: 20.12.7
       boring-name-generator:
@@ -809,16 +810,16 @@ importers:
         specifier: ^3.0.1
         version: 3.0.1
     devDependencies:
-      "@platformatic/composer":
+      '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
-      "@platformatic/db":
+      '@platformatic/db':
         specifier: workspace:*
         version: link:../db
-      "@platformatic/runtime":
+      '@platformatic/runtime':
         specifier: workspace:*
         version: link:../runtime
-      "@platformatic/service":
+      '@platformatic/service':
         specifier: workspace:*
         version: link:../service
       ajv:
@@ -857,61 +858,61 @@ importers:
 
   packages/db:
     dependencies:
-      "@fastify/accepts":
+      '@fastify/accepts':
         specifier: ^4.3.0
         version: 4.3.0
-      "@fastify/basic-auth":
+      '@fastify/basic-auth':
         specifier: ^5.1.1
         version: 5.1.1
-      "@fastify/cors":
+      '@fastify/cors':
         specifier: ^9.0.1
         version: 9.0.1
-      "@fastify/deepmerge":
+      '@fastify/deepmerge':
         specifier: ^1.3.0
         version: 1.3.0
-      "@fastify/error":
+      '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
-      "@fastify/static":
+      '@fastify/static':
         specifier: ^7.0.1
         version: 7.0.3
       '@fastify/swagger':
         specifier: ^8.14.0
         version: 8.14.0
-      "@platformatic/config":
+      '@platformatic/config':
         specifier: workspace:*
         version: link:../config
-      "@platformatic/db-authorization":
+      '@platformatic/db-authorization':
         specifier: workspace:*
         version: link:../db-authorization
-      "@platformatic/db-core":
+      '@platformatic/db-core':
         specifier: workspace:*
         version: link:../db-core
-      "@platformatic/generators":
+      '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
-      "@platformatic/service":
+      '@platformatic/service':
         specifier: workspace:*
         version: link:../service
-      "@platformatic/sql-events":
+      '@platformatic/sql-events':
         specifier: workspace:*
         version: link:../sql-events
-      "@platformatic/sql-graphql":
+      '@platformatic/sql-graphql':
         specifier: workspace:*
         version: link:../sql-graphql
-      "@platformatic/sql-json-schema-mapper":
+      '@platformatic/sql-json-schema-mapper':
         specifier: workspace:*
         version: link:../sql-json-schema-mapper
-      "@platformatic/sql-mapper":
+      '@platformatic/sql-mapper':
         specifier: workspace:*
         version: link:../sql-mapper
-      "@platformatic/sql-openapi":
+      '@platformatic/sql-openapi':
         specifier: workspace:*
         version: link:../sql-openapi
-      "@platformatic/telemetry":
+      '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
-      "@platformatic/utils":
+      '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
       camelcase:
@@ -987,7 +988,7 @@ importers:
         specifier: ^0.3.0
         version: 0.3.0
     devDependencies:
-      "@databases/pg":
+      '@databases/pg':
         specifier: ^5.5.0
         version: 5.5.0(typescript@5.4.5)
       '@databases/sql':
@@ -1050,10 +1051,10 @@ importers:
 
   packages/db-authorization:
     dependencies:
-      "@fastify/error":
+      '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
-      "@fastify/jwt":
+      '@fastify/jwt':
         specifier: ^8.0.0
         version: 8.0.0
       fastify-plugin:
@@ -1072,19 +1073,19 @@ importers:
         specifier: ^6.9.0
         version: 6.13.0
     devDependencies:
-      "@fastify/cookie":
+      '@fastify/cookie':
         specifier: ^8.3.0
         version: 8.3.0
-      "@fastify/session":
+      '@fastify/session':
         specifier: ^10.7.0
         version: 10.7.1
       '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
-      "@platformatic/db-core":
+      '@platformatic/db-core':
         specifier: workspace:*
         version: link:../db-core
-      "@platformatic/sql-mapper":
+      '@platformatic/sql-mapper':
         specifier: workspace:*
         version: link:../sql-mapper
       borp:
@@ -1114,16 +1115,16 @@ importers:
 
   packages/db-core:
     dependencies:
-      "@platformatic/sql-events":
+      '@platformatic/sql-events':
         specifier: workspace:*
         version: link:../sql-events
-      "@platformatic/sql-graphql":
+      '@platformatic/sql-graphql':
         specifier: workspace:*
         version: link:../sql-graphql
-      "@platformatic/sql-mapper":
+      '@platformatic/sql-mapper':
         specifier: workspace:*
         version: link:../sql-mapper
-      "@platformatic/sql-openapi":
+      '@platformatic/sql-openapi':
         specifier: workspace:*
         version: link:../sql-openapi
       fastify-plugin:
@@ -1148,16 +1149,16 @@ importers:
 
   packages/deploy-client:
     dependencies:
-      "@fastify/error":
+      '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
-      "@platformatic/config":
+      '@platformatic/config':
         specifier: workspace:*
         version: link:../config
-      "@platformatic/runtime":
+      '@platformatic/runtime':
         specifier: workspace:*
         version: link:../runtime
-      "@platformatic/service":
+      '@platformatic/service':
         specifier: workspace:*
         version: link:../service
       pretty-bytes:
@@ -1197,10 +1198,10 @@ importers:
 
   packages/frontend-template:
     dependencies:
-      "@platformatic/client":
+      '@platformatic/client':
         specifier: workspace:*
         version: link:../client
-      "@platformatic/db":
+      '@platformatic/db':
         specifier: workspace:*
         version: link:../db
       camelcase:
@@ -1231,7 +1232,7 @@ importers:
         specifier: ^6.9.0
         version: 6.13.0
     devDependencies:
-      "@playwright/test":
+      '@playwright/test':
         specifier: ^1.42.1
         version: 1.43.1
       '@types/react':
@@ -1242,7 +1243,7 @@ importers:
         version: 18.2.25
       '@vitejs/plugin-react':
         specifier: ^3.1.0
-        version: 3.1.0(vite@5.2.9)
+        version: 3.1.0(vite@5.3.2(@types/node@20.14.9))
       react:
         specifier: ^18.2.0
         version: 18.2.0
@@ -1264,58 +1265,58 @@ importers:
 
   packages/generate-errors-doc:
     devDependencies:
-      "@platformatic/authenticate":
+      '@platformatic/authenticate':
         specifier: workspace:*
         version: link:../authenticate
-      "@platformatic/client":
+      '@platformatic/client':
         specifier: workspace:*
         version: link:../client
-      "@platformatic/client-cli":
+      '@platformatic/client-cli':
         specifier: workspace:*
         version: link:../client-cli
-      "@platformatic/composer":
+      '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
-      "@platformatic/config":
+      '@platformatic/config':
         specifier: workspace:*
         version: link:../config
-      "@platformatic/db":
+      '@platformatic/db':
         specifier: workspace:*
         version: link:../db
-      "@platformatic/db-authorization":
+      '@platformatic/db-authorization':
         specifier: workspace:*
         version: link:../db-authorization
-      "@platformatic/db-core":
+      '@platformatic/db-core':
         specifier: workspace:*
         version: link:../db-core
-      "@platformatic/deploy-client":
+      '@platformatic/deploy-client':
         specifier: workspace:*
         version: link:../deploy-client
-      "@platformatic/runtime":
+      '@platformatic/runtime':
         specifier: workspace:*
         version: link:../runtime
-      "@platformatic/service":
+      '@platformatic/service':
         specifier: workspace:*
         version: link:../service
-      "@platformatic/sql-events":
+      '@platformatic/sql-events':
         specifier: workspace:*
         version: link:../sql-events
-      "@platformatic/sql-graphql":
+      '@platformatic/sql-graphql':
         specifier: workspace:*
         version: link:../sql-graphql
-      "@platformatic/sql-json-schema-mapper":
+      '@platformatic/sql-json-schema-mapper':
         specifier: workspace:*
         version: link:../sql-json-schema-mapper
-      "@platformatic/sql-mapper":
+      '@platformatic/sql-mapper':
         specifier: workspace:*
         version: link:../sql-mapper
-      "@platformatic/sql-openapi":
+      '@platformatic/sql-openapi':
         specifier: workspace:*
         version: link:../sql-openapi
-      "@platformatic/telemetry":
+      '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
-      "@platformatic/utils":
+      '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
       platformatic:
@@ -1330,7 +1331,7 @@ importers:
 
   packages/generators:
     dependencies:
-      "@fastify/error":
+      '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
       boring-name-generator:
@@ -1349,7 +1350,7 @@ importers:
         specifier: ^6.9.0
         version: 6.13.0
     devDependencies:
-      "@types/inquirer":
+      '@types/inquirer':
         specifier: ^9.0.7
         version: 9.0.7
       borp:
@@ -1373,37 +1374,37 @@ importers:
 
   packages/runtime:
     dependencies:
-      "@fastify/error":
+      '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
-      "@fastify/websocket":
+      '@fastify/websocket':
         specifier: ^10.0.0
         version: 10.0.1
-      "@hapi/topo":
+      '@hapi/topo':
         specifier: ^6.0.2
         version: 6.0.2
-      "@platformatic/bus":
+      '@platformatic/bus':
         specifier: workspace:*
         version: link:../bus
-      "@platformatic/composer":
+      '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
-      "@platformatic/config":
+      '@platformatic/config':
         specifier: workspace:*
         version: link:../config
-      "@platformatic/db":
+      '@platformatic/db':
         specifier: workspace:*
         version: link:../db
-      "@platformatic/generators":
+      '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
-      "@platformatic/service":
+      '@platformatic/service':
         specifier: workspace:*
         version: link:../service
-      "@platformatic/telemetry":
+      '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
-      "@platformatic/utils":
+      '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
       boring-name-generator:
@@ -1473,19 +1474,19 @@ importers:
         specifier: ^8.16.0
         version: 8.16.0
     devDependencies:
-      "@fastify/express":
+      '@fastify/express':
         specifier: ^3.0.0
         version: 3.0.0
-      "@fastify/formbody":
+      '@fastify/formbody':
         specifier: ^7.4.0
         version: 7.4.0
-      "@matteo.collina/tspl":
+      '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
-      "@platformatic/sql-graphql":
+      '@platformatic/sql-graphql':
         specifier: workspace:*
         version: link:../sql-graphql
-      "@platformatic/sql-mapper":
+      '@platformatic/sql-mapper':
         specifier: workspace:*
         version: link:../sql-mapper
       borp:
@@ -1532,64 +1533,64 @@ importers:
 
   packages/service:
     dependencies:
-      "@fastify/accepts":
+      '@fastify/accepts':
         specifier: ^4.3.0
         version: 4.3.0
-      "@fastify/autoload":
+      '@fastify/autoload':
         specifier: ^5.8.0
         version: 5.8.0
       '@fastify/basic-auth':
         specifier: ^5.1.1
         version: 5.1.1
-      "@fastify/cors":
+      '@fastify/cors':
         specifier: ^9.0.1
         version: 9.0.1
-      "@fastify/deepmerge":
+      '@fastify/deepmerge':
         specifier: ^1.3.0
         version: 1.3.0
-      "@fastify/error":
+      '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
-      "@fastify/restartable":
+      '@fastify/restartable':
         specifier: ^2.2.0
         version: 2.3.0
-      "@fastify/static":
+      '@fastify/static':
         specifier: ^7.0.1
         version: 7.0.3
       '@fastify/swagger':
         specifier: ^8.14.0
         version: 8.14.0
-      "@fastify/under-pressure":
+      '@fastify/under-pressure':
         specifier: ^8.3.0
         version: 8.3.0
       '@mercuriusjs/federation':
         specifier: ^3.0.0
         version: 3.0.0
-      "@platformatic/authenticate":
+      '@platformatic/authenticate':
         specifier: workspace:*
         version: link:../authenticate
-      "@platformatic/bus":
+      '@platformatic/bus':
         specifier: workspace:*
         version: link:../bus
-      "@platformatic/client":
+      '@platformatic/client':
         specifier: workspace:*
         version: link:../client
-      "@platformatic/config":
+      '@platformatic/config':
         specifier: workspace:*
         version: link:../config
-      "@platformatic/generators":
+      '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
-      "@platformatic/scalar-theme":
+      '@platformatic/scalar-theme':
         specifier: workspace:*
         version: link:../scalar-theme
-      "@platformatic/telemetry":
+      '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
-      "@platformatic/utils":
+      '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
-      "@scalar/fastify-api-reference":
+      '@scalar/fastify-api-reference':
         specifier: ^1.19.5
         version: 1.21.0
       '@types/ws':
@@ -1680,7 +1681,7 @@ importers:
         specifier: ^6.9.0
         version: 6.13.0
     devDependencies:
-      "@fastify/aws-lambda":
+      '@fastify/aws-lambda':
         specifier: ^4.0.0
         version: 4.0.0
       '@fastify/compress':
@@ -1737,7 +1738,7 @@ importers:
 
   packages/sql-events:
     dependencies:
-      "@fastify/error":
+      '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
       camelcase:
@@ -1753,10 +1754,10 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0
     devDependencies:
-      "@matteo.collina/tspl":
+      '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
-      "@platformatic/sql-mapper":
+      '@platformatic/sql-mapper':
         specifier: workspace:*
         version: link:../sql-mapper
       borp:
@@ -1780,13 +1781,13 @@ importers:
 
   packages/sql-graphql:
     dependencies:
-      "@fastify/error":
+      '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
-      "@mercuriusjs/federation":
+      '@mercuriusjs/federation':
         specifier: ^3.0.0
         version: 3.0.0
-      "@platformatic/utils":
+      '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
       camelcase:
@@ -1811,22 +1812,22 @@ importers:
         specifier: ^14.0.0
         version: 14.0.0(graphql@16.8.1)
     devDependencies:
-      "@matteo.collina/snap":
+      '@matteo.collina/snap':
         specifier: ^0.3.0
         version: 0.3.0
-      "@matteo.collina/tspl":
+      '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
-      "@mercuriusjs/gateway":
+      '@mercuriusjs/gateway':
         specifier: ^3.0.0
         version: 3.0.0
       '@platformatic/sql-events':
         specifier: workspace:*
         version: link:../sql-events
-      "@platformatic/sql-mapper":
+      '@platformatic/sql-mapper':
         specifier: workspace:*
         version: link:../sql-mapper
-      "@platformatic/telemetry":
+      '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
       borp:
@@ -1860,7 +1861,7 @@ importers:
         specifier: ^0.4.2
         version: 0.4.2
     devDependencies:
-      "@platformatic/sql-mapper":
+      '@platformatic/sql-mapper':
         specifier: workspace:*
         version: link:../sql-mapper
       borp:
@@ -1884,7 +1885,7 @@ importers:
 
   packages/sql-mapper:
     dependencies:
-      "@databases/mysql":
+      '@databases/mysql':
         specifier: ^6.0.0
         version: 6.0.0
       '@databases/pg':
@@ -1893,16 +1894,16 @@ importers:
       '@databases/sql':
         specifier: ^3.3.0
         version: 3.3.0
-      "@fastify/error":
+      '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
-      "@hapi/topo":
+      '@hapi/topo':
         specifier: ^6.0.2
         version: 6.0.2
-      "@matteo.collina/sqlite-pool":
+      '@matteo.collina/sqlite-pool':
         specifier: ^0.4.0
         version: 0.4.0
-      "@platformatic/utils":
+      '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
       async-cache-dedupe:
@@ -1918,7 +1919,7 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
     devDependencies:
-      "@matteo.collina/tspl":
+      '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
       borp:
@@ -1939,25 +1940,25 @@ importers:
 
   packages/sql-openapi:
     dependencies:
-      "@fastify/deepmerge":
+      '@fastify/deepmerge':
         specifier: ^1.3.0
         version: 1.3.0
-      "@fastify/error":
+      '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
-      "@fastify/swagger":
+      '@fastify/swagger':
         specifier: ^8.14.0
         version: 8.14.0
-      "@platformatic/scalar-theme":
+      '@platformatic/scalar-theme':
         specifier: workspace:*
         version: link:../scalar-theme
-      "@platformatic/sql-json-schema-mapper":
+      '@platformatic/sql-json-schema-mapper':
         specifier: workspace:*
         version: link:../sql-json-schema-mapper
-      "@platformatic/utils":
+      '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
-      "@scalar/fastify-api-reference":
+      '@scalar/fastify-api-reference':
         specifier: ^1.19.5
         version: 1.21.0
       camelcase:
@@ -1970,13 +1971,13 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
     devDependencies:
-      "@matteo.collina/snap":
+      '@matteo.collina/snap':
         specifier: ^0.3.0
         version: 0.3.0
-      "@matteo.collina/tspl":
+      '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
-      "@platformatic/sql-mapper":
+      '@platformatic/sql-mapper':
         specifier: workspace:*
         version: link:../sql-mapper
       borp:
@@ -2011,10 +2012,10 @@ importers:
 
   packages/telemetry:
     dependencies:
-      "@fastify/swagger":
+      '@fastify/swagger':
         specifier: ^8.14.0
         version: 8.14.0
-      "@opentelemetry/api":
+      '@opentelemetry/api':
         specifier: ^1.8.0
         version: 1.8.0
       '@opentelemetry/core':
@@ -2057,10 +2058,10 @@ importers:
 
   packages/utils:
     dependencies:
-      "@fastify/deepmerge":
+      '@fastify/deepmerge':
         specifier: ^1.3.0
         version: 1.3.0
-      "@fastify/error":
+      '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
       leven:
@@ -2073,7 +2074,7 @@ importers:
         specifier: ^6.9.0
         version: 6.13.0
     devDependencies:
-      "@matteo.collina/tspl":
+      '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
       borp:
@@ -2766,7 +2767,7 @@ packages:
   /@fastify/basic-auth@5.1.1:
     resolution: {integrity: sha512-L4b7EK5LKZnV6fdH1+rQbjhkKGXjCfiKJ0JkdGHZQPBMHMiXDZF8xbZsCakWGf9c7jDXJicP3FPcIXUPBkuSeQ==}
     dependencies:
-      "@fastify/error": 3.4.1
+      '@fastify/error': 3.4.1
       fastify-plugin: 4.5.1
     dev: false
 
@@ -2777,7 +2778,7 @@ packages:
   /@fastify/compress@7.0.3:
     resolution: {integrity: sha512-xa9fo5/DgK1s0bkS6xrYgNn8HmofO5tJvbCDk8QuXshSgLd2cFZANv1ox/Qv7zswS7JroHwTlCVv/XGTVO98tg==}
     dependencies:
-      "@fastify/accept-negotiator": 1.1.0
+      '@fastify/accept-negotiator': 1.1.0
       fastify-plugin: 4.5.1
       mime-db: 1.52.0
       minipass: 7.0.4
@@ -2867,7 +2868,7 @@ packages:
   /@fastify/reply-from@9.7.0:
     resolution: {integrity: sha512-/F1QBl3FGlTqStjmiuoLRDchVxP967TZh6FZPwQteWhdLsDec8mqSACE+cRzw6qHUj3v9hfdd7JNgmb++fyFhQ==}
     dependencies:
-      "@fastify/error": 3.4.1
+      '@fastify/error': 3.4.1
       end-of-stream: 1.4.4
       fast-content-type-parse: 1.1.0
       fast-querystring: 1.1.2
@@ -2888,7 +2889,7 @@ packages:
   /@fastify/send@2.1.0:
     resolution: {integrity: sha512-yNYiY6sDkexoJR0D8IDy3aRP3+L4wdqCpvx5WP+VtEU58sn7USmKynBzDQex5X42Zzvw2gNzzYgP90UfWShLFA==}
     dependencies:
-      "@lukeed/ms": 2.0.2
+      '@lukeed/ms': 2.0.2
       escape-html: 1.0.3
       fast-decode-uri-component: 1.0.1
       http-errors: 2.0.0
@@ -2904,8 +2905,8 @@ packages:
   /@fastify/static@7.0.3:
     resolution: {integrity: sha512-2tmTdF+uFCykasutaO6k4/wOt7eXyi7m3dGuCPo5micXzv0qt6ttb/nWnDYL/BlXjYGfp1JI4a1gyluTIylvQA==}
     dependencies:
-      "@fastify/accept-negotiator": 1.1.0
-      "@fastify/send": 2.1.0
+      '@fastify/accept-negotiator': 1.1.0
+      '@fastify/send': 2.1.0
       content-disposition: 0.5.4
       fastify-plugin: 4.5.1
       fastq: 1.17.1
@@ -2926,7 +2927,7 @@ packages:
   /@fastify/under-pressure@8.3.0:
     resolution: {integrity: sha512-ap1EePB9vHm8uQLM0nnaOeIMBLooNmAMTnccavBRwaXmu+acJFuSEQRVdMGRkW6viFDhdo5RGTcHzMBQyrucEA==}
     dependencies:
-      "@fastify/error": 3.4.1
+      '@fastify/error': 3.4.1
       fastify-plugin: 4.5.1
     dev: false
 
@@ -3143,7 +3144,7 @@ packages:
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
     engines: {node: '>= 8'}
     dependencies:
-      "@nodelib/fs.stat": 2.0.5
+      '@nodelib/fs.stat': 2.0.5
       run-parallel: 1.2.0
     dev: true
 
@@ -3156,7 +3157,7 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
     dependencies:
-      "@nodelib/fs.scandir": 2.1.5
+      '@nodelib/fs.scandir': 2.1.5
       fastq: 1.17.1
     dev: true
 
@@ -3402,7 +3403,7 @@ packages:
   /@reporters/github@1.7.0:
     resolution: {integrity: sha512-5velzo4PWkfTqvZD2Ins5Wg38KSjPsWofS4jKTw61IjL4z2vLFGx2KL2Aqpa7bTOo3NYtc7w0zbyaHsBmZtCxQ==}
     dependencies:
-      "@actions/core": 1.10.1
+      '@actions/core': 1.10.1
       stack-utils: 2.0.6
     dev: true
 
@@ -3586,7 +3587,7 @@ packages:
   /@types/inquirer@9.0.7:
     resolution: {integrity: sha512-Q0zyBupO6NxGRZut/JdmqYKOnN95Eg5V8Csg3PGKkP+FnvsUZx1jAyK7fztIszxxMuoBA6E3KXWvdZVXIpx60g==}
     dependencies:
-      "@types/through": 0.0.33
+      '@types/through': 0.0.33
       rxjs: 7.8.1
     dev: true
 
@@ -3637,7 +3638,7 @@ packages:
   /@types/react@18.2.78:
     resolution: {integrity: sha512-qOwdPnnitQY4xKlKayt42q5W5UQrSHjgoXNVEtxeqdITJ99k4VXJOP3vt8Rkm9HmgJpH50UNU+rlqfkfWOqp0A==}
     dependencies:
-      "@types/prop-types": 15.7.12
+      '@types/prop-types': 15.7.12
       csstype: 3.1.3
     dev: true
 
@@ -3803,7 +3804,7 @@ packages:
     resolution: {integrity: sha512-07ny+LHRzQXepkGg6w0mFY41fVUNBrL2Roj/++7V1txKugfjm/Ci/qSND03r2RhlJhJYMcTn9AhhSSqQp0Ysyw==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dependencies:
-      "@typescript-eslint/types": 5.62.0
+      '@typescript-eslint/types': 5.62.0
       eslint-visitor-keys: 3.4.3
     dev: true
 
@@ -4229,7 +4230,7 @@ packages:
     resolution: {integrity: sha512-G3tAYzy+meolAqquLa52n4XGsER6lBsL3i+56C3JPZYkcCXUak7tMTJGOxVwwaxZM9GERGKTtqLr5H0yNZ+uXA==}
     hasBin: true
     dependencies:
-      "@reporters/github": 1.7.0
+      '@reporters/github': 1.7.0
       c8: 10.1.2
       execa: 8.0.1
       find-up: 7.0.0
@@ -4309,8 +4310,8 @@ packages:
       monocart-coverage-reports:
         optional: true
     dependencies:
-      "@bcoe/v8-coverage": 0.2.3
-      "@istanbuljs/schema": 0.1.3
+      '@bcoe/v8-coverage': 0.2.3
+      '@istanbuljs/schema': 0.1.3
       find-up: 5.0.0
       foreground-child: 3.1.1
       istanbul-lib-coverage: 3.2.2
@@ -4327,8 +4328,8 @@ packages:
     engines: {node: '>=14.14.0'}
     hasBin: true
     dependencies:
-      "@bcoe/v8-coverage": 0.2.3
-      "@istanbuljs/schema": 0.1.3
+      '@bcoe/v8-coverage': 0.2.3
+      '@istanbuljs/schema': 0.1.3
       find-up: 5.0.0
       foreground-child: 3.1.1
       istanbul-lib-coverage: 3.2.2
@@ -5271,7 +5272,7 @@ packages:
     resolution: {integrity: sha512-IsUTtGxF1hrH6lMWiSl1WbGaiP01eT6kzywdY1U+zLc0MP+nwEnUiS9UI8IaOTUhTeQJLlCEWIbXINBH4YJbBQ==}
     engines: {node: '>=10'}
     dependencies:
-      "@types/eslint": 7.29.0
+      '@types/eslint': 7.29.0
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       eslint-rule-docs: 1.1.235
@@ -5898,8 +5899,8 @@ packages:
     resolution: {integrity: sha512-oX2ruAFQwf/Orj8m737Y5adxDQO0LAB7/S5MnxCdTNDd4p6BsyIVsv9JQsATbTSq8KHRpLwIHbVlUNatxd+1Ow==}
     engines: {node: '>=8.6.0'}
     dependencies:
-      "@nodelib/fs.stat": 2.0.5
-      "@nodelib/fs.walk": 1.2.8
+      '@nodelib/fs.stat': 2.0.5
+      '@nodelib/fs.walk': 1.2.8
       glob-parent: 5.1.2
       merge2: 1.4.1
       micromatch: 4.0.5
@@ -5934,7 +5935,7 @@ packages:
     resolution: {integrity: sha512-CnI93Tmk7eSzfw4e0Jlc5ZcWiN+/zK7xAKAhtXS8PAcKmYqfcXqxJl1hMyhk3iEt0M9JLo7DCYRDV2XcIacWAw==}
     engines: {node: '>=16 <22'}
     dependencies:
-      "@lukeed/ms": 2.0.2
+      '@lukeed/ms': 2.0.2
       asn1.js: 5.4.1
       ecdsa-sig-formatter: 1.0.11
       mnemonist: 0.39.8
@@ -5986,7 +5987,7 @@ packages:
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
-      "@seriousme/openapi-schema-validator": 2.2.1
+      '@seriousme/openapi-schema-validator': 2.2.1
       fastify-plugin: 4.5.1
       js-yaml: 4.1.0
       minimist: 1.2.8
@@ -6031,9 +6032,9 @@ packages:
   /fastify@4.26.2:
     resolution: {integrity: sha512-90pjTuPGrfVKtdpLeLzND5nyC4woXZN5VadiNQCicj/iJU4viNHKhsAnb7jmv1vu2IzkLXyBiCzdWuzeXgQ5Ug==}
     dependencies:
-      "@fastify/ajv-compiler": 3.5.0
-      "@fastify/error": 3.4.1
-      "@fastify/fast-json-stringify-compiler": 4.3.0
+      '@fastify/ajv-compiler': 3.5.0
+      '@fastify/error': 3.4.1
+      '@fastify/fast-json-stringify-compiler': 4.3.0
       abstract-logging: 2.0.1
       avvio: 8.3.0
       fast-content-type-parse: 1.1.0
@@ -6449,7 +6450,7 @@ packages:
     resolution: {integrity: sha512-jOMLD2Z7MAhyG8aJpNOpmziMOP4rPLcc95oQPKXBazW82z+CEgPFBQvEpRUa1KeIMUJo4Wsm+q6uzO/Q/4BksQ==}
     engines: {node: '>=18'}
     dependencies:
-      "@sindresorhus/merge-streams": 2.3.0
+      '@sindresorhus/merge-streams': 2.3.0
       fast-glob: 3.3.2
       ignore: 5.3.1
       path-type: 5.0.0
@@ -6735,7 +6736,7 @@ packages:
     resolution: {integrity: sha512-1DKMMzlIHM02eBBVOFQ1+AolGjs6+xEcM4PDL7NqOS6szq7H9jSaEkIUH6/a5Hl241LzW6JLSiAbNvTQjUupUA==}
     engines: {node: '>=12.22.0'}
     dependencies:
-      "@ioredis/commands": 1.2.0
+      '@ioredis/commands': 1.2.0
       cluster-key-slot: 1.1.2
       debug: 4.3.4
       denque: 2.1.0
@@ -7042,7 +7043,7 @@ packages:
     resolution: {integrity: sha512-N3yCS/NegsOBokc8GAdM8UcmfsKiSS8cipheD/nivzr700H+nsMOxJjQnvwOcRYVuFkdH0wGUvW2WbXGmrZGbQ==}
     engines: {node: '>=14'}
     dependencies:
-      "@isaacs/cliui": 8.0.2
+      '@isaacs/cliui': 8.0.2
     optionalDependencies:
       '@pkgjs/parseargs': 0.11.0
 
@@ -7500,7 +7501,7 @@ packages:
     resolution: {integrity: sha512-+obSblOQmRhcyBt62furQqRAQpNyWXo8BuQ5bN7dG8wmwQ+vwHKp/rCFD4CrTP8CsDQD1sjoZ94K417XEUk8IQ==}
     engines: {node: '>=10'}
     dependencies:
-      "@types/minimist": 1.2.5
+      '@types/minimist': 1.2.5
       camelcase-keys: 6.2.2
       decamelize: 1.2.0
       decamelize-keys: 1.1.1
@@ -8567,7 +8568,7 @@ packages:
     resolution: {integrity: sha512-Pdlw/oPxN+aXdmM9R00JVC9WVFoCLTKJvDVLgmJ+qAffBMxsV85l/Lu7sNx4zSzPyoL2euImuEwHhOXdEgNFZQ==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
-      "@jest/schemas": 29.6.3
+      '@jest/schemas': 29.6.3
       ansi-styles: 5.2.0
       react-is: 18.2.0
     dev: true
@@ -8815,7 +8816,7 @@ packages:
     resolution: {integrity: sha512-Ug69mNOpfvKDAc2Q8DRpMjjzdtrnv9HcSMX+4VsZxD1aZ6ZzrIE7rlzXBtWTyhULSMKg076AW6WR5iZpD0JiOg==}
     engines: {node: '>=8'}
     dependencies:
-      "@types/normalize-package-data": 2.4.4
+      '@types/normalize-package-data': 2.4.4
       normalize-package-data: 2.5.0
       parse-json: 5.2.0
       type-fest: 0.6.0
@@ -9007,7 +9008,7 @@ packages:
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
     hasBin: true
     dependencies:
-      "@types/estree": 1.0.5
+      '@types/estree': 1.0.5
     optionalDependencies:
       '@rollup/rollup-android-arm-eabi': 4.14.3
       '@rollup/rollup-android-arm64': 4.14.3
@@ -9433,7 +9434,7 @@ packages:
       standard-engine: 15.1.0
       version-guard: 1.1.2
     transitivePeerDependencies:
-      - "@typescript-eslint/parser"
+      - '@typescript-eslint/parser'
       - eslint-import-resolver-typescript
       - eslint-import-resolver-webpack
       - supports-color
@@ -9673,7 +9674,7 @@ packages:
     resolution: {integrity: sha512-cAGWPIyOHU6zlmg88jwm7VRyXnMN7iV68OGAbYDk/Mh/xC/pzVPlQtY6ngoIH/5/tciuhGfvESU8GrHrcxD56w==}
     engines: {node: '>=8'}
     dependencies:
-      "@istanbuljs/schema": 0.1.3
+      '@istanbuljs/schema': 0.1.3
       glob: 7.2.3
       minimatch: 3.1.2
     dev: true
@@ -9813,7 +9814,7 @@ packages:
   /tsconfig-paths@3.15.0:
     resolution: {integrity: sha512-2Ac2RgzDe/cn48GvOe3M+o82pEFewD3UPbyoUHHdKasHwJKjds4fLXWf/Ux5kATBKN20oaFGu+jbElp1pos0mg==}
     dependencies:
-      "@types/json5": 0.0.29
+      '@types/json5': 0.0.29
       json5: 1.0.2
       minimist: 1.2.8
       strip-bom: 3.0.0
@@ -9824,7 +9825,7 @@ packages:
     engines: {node: '>=14.16'}
     hasBin: true
     dependencies:
-      "@tsd/typescript": 5.4.5
+      '@tsd/typescript': 5.4.5
       eslint-formatter-pretty: 4.1.0
       globby: 11.1.0
       jest-diff: 29.7.0
@@ -10083,8 +10084,8 @@ packages:
     resolution: {integrity: sha512-/EH/sDgxU2eGxajKdwLCDmQ4FWq+kpi3uCmBGpw1xJtnAxEjlD8j8PEiGWpCIMIs3ciNAgH0d3TTJiUkYzyZjA==}
     engines: {node: '>=10.12.0'}
     dependencies:
-      "@jridgewell/trace-mapping": 0.3.25
-      "@types/istanbul-lib-coverage": 2.0.6
+      '@jridgewell/trace-mapping': 0.3.25
+      '@types/istanbul-lib-coverage': 2.0.6
       convert-source-map: 2.0.0
     dev: true
 
