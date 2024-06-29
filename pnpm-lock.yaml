@@ -510,8 +510,8 @@ importers:
   packages/config:
     dependencies:
       '@fastify/deepmerge':
-        specifier: ^1.3.0
-        version: 1.3.0
+        specifier: ^2.0.0
+        version: 2.0.0
       '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
@@ -868,8 +868,8 @@ importers:
         specifier: ^9.0.1
         version: 9.0.1
       '@fastify/deepmerge':
-        specifier: ^1.3.0
-        version: 1.3.0
+        specifier: ^2.0.0
+        version: 2.0.0
       '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
@@ -1546,8 +1546,8 @@ importers:
         specifier: ^9.0.1
         version: 9.0.1
       '@fastify/deepmerge':
-        specifier: ^1.3.0
-        version: 1.3.0
+        specifier: ^2.0.0
+        version: 2.0.0
       '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
@@ -1941,8 +1941,8 @@ importers:
   packages/sql-openapi:
     dependencies:
       '@fastify/deepmerge':
-        specifier: ^1.3.0
-        version: 1.3.0
+        specifier: ^2.0.0
+        version: 2.0.0
       '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
@@ -2059,8 +2059,8 @@ importers:
   packages/utils:
     dependencies:
       '@fastify/deepmerge':
-        specifier: ^1.3.0
-        version: 1.3.0
+        specifier: ^2.0.0
+        version: 2.0.0
       '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
@@ -2455,6 +2455,9 @@ packages:
 
   '@fastify/deepmerge@1.3.0':
     resolution: {integrity: sha512-J8TOSBq3SoZbDhM9+R/u77hP93gz/rajSA+K2kGyijPpORPWUXHUpTaleoj+92As0S9uPRP7Oi8IqMf0u+ro6A==}
+
+  '@fastify/deepmerge@2.0.0':
+    resolution: {integrity: sha512-fsaybTGDyQ5KpPsplQqb9yKdCf2x/pbNpMNk8Tvp3rRz7lVcupKysH4b2ELMN2P4Hak1+UqTYdTj/u4FNV2p0g==}
 
   '@fastify/error@3.4.1':
     resolution: {integrity: sha512-wWSvph+29GR783IhmvdwWnN4bUxTD01Vm5Xad4i7i1VuAOItLvbPAb69sb0IQ2N57yprvhNIwAP5B6xfKTmjmQ==}
@@ -6846,6 +6849,8 @@ snapshots:
       mnemonist: 0.39.6
 
   '@fastify/deepmerge@1.3.0': {}
+
+  '@fastify/deepmerge@2.0.0': {}
 
   '@fastify/error@3.4.1': {}
 
