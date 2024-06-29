@@ -55,7 +55,10 @@ test('should get runtime metrics in a json format', async (t) => {
     'process_start_time_seconds',
     'service_1_http_request_all_summary_seconds',
     'service_1_http_request_duration_seconds',
-    'service_1_http_request_summary_seconds'
+    'service_1_http_request_summary_seconds',
+    'service_2_http_request_all_summary_seconds',
+    'service_2_http_request_duration_seconds',
+    'service_2_http_request_summary_seconds'
   ]
   for (const metricName of expectedMetricNames) {
     assert.ok(metricsNames.includes(metricName))
@@ -111,11 +114,67 @@ test('should get runtime metrics in a text format', async (t) => {
     'process_start_time_seconds',
     'service_1_http_request_all_summary_seconds',
     'service_1_http_request_duration_seconds',
-    'service_1_http_request_summary_seconds'
+    'service_1_http_request_summary_seconds',
+    'service_2_http_request_all_summary_seconds',
+    'service_2_http_request_duration_seconds',
+    'service_2_http_request_summary_seconds'
   ]
   for (const metricName of expectedMetricNames) {
-    console.log(metricName)
     assert.ok(metricsNames.includes(metricName))
+  }
+})
+
+function getMetricsLines (metrics) {
+  return metrics.split('\n').filter((line) => line && !line.startsWith('#'))
+}
+
+function parseLabels (line) {
+  return line.split('{')[1].split('}')[0].split(',').reduce((acc, label) => {
+    const [key, value] = label.split('=')
+    acc[key] = value.replace(/^"(.*)"$/, '$1')
+    return acc
+  }, {})
+}
+
+test.only('should get runtime metrics in a text format with custom labels', async (t) => {
+  const projectDir = join(fixturesDir, 'management-api-custom-labels')
+  const configFile = join(projectDir, 'platformatic.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  const metrics = await app.getMetrics('text')
+  const labels = getMetricsLines(metrics.metrics).map(parseLabels)
+
+  // Ensure that the custom labels are present in the metrics
+  for (const lineLabel of labels) {
+    assert.ok(lineLabel.foo === 'bar')
+  }
+})
+
+test('should get json runtime metrics with custom labels', async (t) => {
+  const projectDir = join(fixturesDir, 'management-api-custom-labels')
+  const configFile = join(projectDir, 'platformatic.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  const { metrics } = await app.getMetrics()
+
+  for (const metric of metrics) {
+    for (const value of metric.values) {
+      assert.ok(value.labels.foo === 'bar')
+    }
   }
 })
 

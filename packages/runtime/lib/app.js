@@ -21,8 +21,9 @@ class PlatformaticApp extends EventEmitter {
   #serverConfig
   #debouncedRestart
   #hasManagementApi
+  #metricsConfig
 
-  constructor (appConfig, loaderPort, logger, telemetryConfig, serverConfig, hasManagementApi) {
+  constructor (appConfig, loaderPort, logger, telemetryConfig, serverConfig, hasManagementApi, metricsConfig) {
     super()
     this.appConfig = appConfig
     this.config = null
@@ -38,6 +39,7 @@ class PlatformaticApp extends EventEmitter {
       name: this.appConfig.id
     })
     this.#telemetryConfig = telemetryConfig
+    this.#metricsConfig = metricsConfig
     this.#serverConfig = serverConfig
 
     /* c8 ignore next 4 */
@@ -251,8 +253,16 @@ class PlatformaticApp extends EventEmitter {
     const { configManager } = this.config
     configManager.update({
       ...configManager.current,
-      telemetry: this.#telemetryConfig
+      telemetry: this.#telemetryConfig,
+      metrics: this.#metricsConfig
     })
+
+    if (configManager.current.metrics !== false) {
+      configManager.update({
+        ...configManager.current,
+        metrics: this.#metricsConfig
+      })
+    }
 
     if (this.#serverConfig) {
       configManager.update({
