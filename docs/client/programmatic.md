@@ -72,6 +72,25 @@ const res = await client.yourOperationName({ foo: 'bar' })
 console.log(res)
 ```
 
+## Optional properties
+You can also pass the following properties to `buildOpenAPIClient`:
+```ts
+import { buildOpenAPIClient } from '@platformatic/client'
+
+const client = await buildOpenAPIClient({
+  url: 'string', // the URL of the service to be called
+  path: 'string', // the path to the Open API schema
+  fullResponse: true, // require or not a full response object
+  fullRequest: true, // require or not a full request object
+  throwOnError: true, // if there is an error, the client will throw depending ton this option
+  headers: {}, // additional headers to be passed
+  bodyTimeout: 900000, // body timeout passed to the undici request method
+  headersTimeout: 900000, // headers timeout passed to the undici request method
+  validateResponse: true, // validate or not the response received against the expected schema
+  queryParser: (query) => `${query.toString()}[]` // override the default query parser logic
+})
+```
+
 ## TypeScript Support 
 
 If you use Typescript, you can take advantage of the generated types file:

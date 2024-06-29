@@ -87,7 +87,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
   client[kOperationIdMap] = {}
   client[kHeaders] = options.headers || {}
 
-  let { fullRequest, fullResponse, throwOnError } = options
+  let { fullRequest, fullResponse, throwOnError, bodyTimeout, headersTimeout } = options
   const generatedOperationIds = []
   for (const path of Object.keys(spec.paths)) {
     const pathMeta = spec.paths[path]
@@ -114,7 +114,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
       }
 
       client[kOperationIdMap][operationId] = { path, method }
-      client[operationId] = await buildCallFunction(spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser)
+      client[operationId] = await buildCallFunction(spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser, bodyTimeout, headersTimeout)
     }
   }
   return client
@@ -137,7 +137,7 @@ function hasDuplicatedParameters (methodMeta) {
   return s.size !== methodMeta.parameters.length
 }
 
-async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser) {
+async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser, bodyTimeout, headersTimeout) {
   await $RefParser.dereference(spec)
   const ajv = new Ajv()
   const url = new URL(baseUrl)
@@ -227,7 +227,9 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
           ...headers,
           ...telemetryHeaders
         },
-        throwOnError
+        throwOnError,
+        bodyTimeout,
+        headersTimeout
       }
       if (canHaveBody) {
         requestOptions.headers['content-type'] = 'application/json; charset=utf-8'
