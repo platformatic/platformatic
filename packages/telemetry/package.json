@@ -28,7 +28,7 @@
     "@opentelemetry/resources": "^1.22.0",
     "@opentelemetry/sdk-trace-base": "^1.22.0",
     "@opentelemetry/semantic-conventions": "^1.22.0",
-    "fast-uri": "^2.3.0",
+    "fast-uri": "^3.0.0",
     "fastify-plugin": "^4.5.1"
   }
 }
