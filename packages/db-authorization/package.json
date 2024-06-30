@@ -30,7 +30,7 @@
     "ws": "^8.16.0"
   },
   "dependencies": {
-    "@fastify/error": "^3.4.1",
+    "@fastify/error": "^4.0.0",
     "@fastify/jwt": "^8.0.0",
     "fastify-plugin": "^4.5.1",
     "fastify-user": "^0.3.3",

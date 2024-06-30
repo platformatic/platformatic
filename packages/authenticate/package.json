@@ -28,7 +28,7 @@
     "undici": "^6.9.0"
   },
   "dependencies": {
-    "@fastify/error": "^3.4.1",
+    "@fastify/error": "^4.0.0",
     "@platformatic/config": "workspace:*",
     "colorette": "^2.0.20",
     "commist": "^3.2.0",

@@ -40,7 +40,7 @@
     "tsd": "^0.31.0"
   },
   "dependencies": {
-    "@fastify/error": "^3.4.1",
+    "@fastify/error": "^4.0.0",
     "@fastify/http-proxy": "^9.4.0",
     "@fastify/reply-from": "^9.7.0",
     "@fastify/static": "^7.0.1",

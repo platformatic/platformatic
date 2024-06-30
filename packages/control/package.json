@@ -33,7 +33,7 @@
     "tsd": "^0.31.0"
   },
   "dependencies": {
-    "@fastify/error": "^3.4.1",
+    "@fastify/error": "^4.0.0",
     "commist": "^3.2.0",
     "help-me": "^5.0.0",
     "pino": "^8.19.0",

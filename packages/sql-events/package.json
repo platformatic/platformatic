@@ -34,7 +34,7 @@
     "tsd": "^0.31.0"
   },
   "dependencies": {
-    "@fastify/error": "^3.4.1",
+    "@fastify/error": "^4.0.0",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^4.5.1",
     "mqemitter": "^5.0.0",

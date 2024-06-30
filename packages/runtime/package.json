@@ -43,7 +43,7 @@
     "why-is-node-running": "^2.2.2"
   },
   "dependencies": {
-    "@fastify/error": "^3.4.1",
+    "@fastify/error": "^4.0.0",
     "@fastify/websocket": "^10.0.0",
     "@hapi/topo": "^6.0.2",
     "@platformatic/bus": "workspace:*",

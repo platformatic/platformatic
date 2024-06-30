@@ -40,7 +40,7 @@
     "ws": "^8.16.0"
   },
   "dependencies": {
-    "@fastify/error": "^3.4.1",
+    "@fastify/error": "^4.0.0",
     "@mercuriusjs/federation": "^3.0.0",
     "@platformatic/utils": "workspace:*",
     "camelcase": "^6.3.0",

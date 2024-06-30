@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
-    "@fastify/error": "^3.4.1"
+    "@fastify/error": "^4.0.0"
   },
   "devDependencies": {
     "@matteo.collina/tspl": "^0.1.1",
