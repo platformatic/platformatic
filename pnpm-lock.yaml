@@ -1748,8 +1748,8 @@ importers:
         specifier: ^4.5.1
         version: 4.5.1
       mqemitter:
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^6.0.0
+        version: 6.0.0
       mqemitter-redis:
         specifier: ^5.0.0
         version: 5.1.0
@@ -4958,6 +4958,10 @@ packages:
     resolution: {integrity: sha512-rqNRQhGgl0W/NV+Zrx0rpAUTZcSlAtivCVUmXBUPcFYt+AeDEpoJgy5eKlFWJP6xnatONL59WIFdV0W6niOMhw==}
     engines: {node: '>=10'}
 
+  mqemitter@6.0.0:
+    resolution: {integrity: sha512-6+dd6arKyuX7c622gLMOSviiAIhORGNCi7r4KTft/XDetuedNZwRZWsED99nDeHPhkaftj7u7SlAbGhpFt319w==}
+    engines: {node: '>=16'}
+
   mri@1.2.0:
     resolution: {integrity: sha512-tzzskb3bG8LvYGFF/mDTpq3jpI6Q9wc3LEmBaghu+DdCssd1FakN7Bc0hVNmEyGq1bq3RgfkCb3cmQLpNPOroA==}
     engines: {node: '>=4'}
@@ -5485,6 +5489,10 @@ packages:
   qlobber@7.0.1:
     resolution: {integrity: sha512-FsFg9lMuMEFNKmTO9nV7tlyPhx8BmskPPjH2akWycuYVTtWaVwhW5yCHLJQ6Q+3mvw5cFX2vMfW2l9z2SiYAbg==}
     engines: {node: '>= 14'}
+
+  qlobber@8.0.1:
+    resolution: {integrity: sha512-O+Wd1chXj5YE1DwmD+ae0bXiSLehmnS3czlC1R9FL/Nt/3q8uMS1bIHmg2lJfCoiimCxClWM8AAuJrF0EvNiog==}
+    engines: {node: '>= 16'}
 
   qs@6.11.0:
     resolution: {integrity: sha512-MvjoMCJwEarSbUYk5O+nmoSzSutSsTwF85zcHPQ9OrlFoZOYIjaqBAJIqIXjptyD5vThxGq52Xu/MaJzRkIk4Q==}
@@ -9718,6 +9726,11 @@ snapshots:
       fastparallel: 2.4.1
       qlobber: 7.0.1
 
+  mqemitter@6.0.0:
+    dependencies:
+      fastparallel: 2.4.1
+      qlobber: 8.0.1
+
   mri@1.2.0: {}
 
   ms@2.0.0: {}
@@ -10311,6 +10324,8 @@ snapshots:
   qlobber@5.0.3: {}
 
   qlobber@7.0.1: {}
+
+  qlobber@8.0.1: {}
 
   qs@6.11.0:
     dependencies:
