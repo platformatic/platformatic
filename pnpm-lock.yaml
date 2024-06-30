@@ -52,8 +52,8 @@ importers:
         specifier: ^0.15.0
         version: 0.15.0
       c8:
-        specifier: ^9.1.0
-        version: 9.1.0
+        specifier: ^10.0.0
+        version: 10.1.2
       fastify:
         specifier: ^4.26.2
         version: 4.28.0
@@ -80,8 +80,8 @@ importers:
         specifier: ^0.15.0
         version: 0.15.0
       c8:
-        specifier: ^9.1.0
-        version: 9.1.0
+        specifier: ^10.0.0
+        version: 10.1.2
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -180,8 +180,8 @@ importers:
         specifier: ^0.15.0
         version: 0.15.0
       c8:
-        specifier: ^9.1.0
-        version: 9.1.0
+        specifier: ^10.0.0
+        version: 10.1.2
       fastify:
         specifier: ^4.26.2
         version: 4.28.0
@@ -235,8 +235,8 @@ importers:
         specifier: ^0.15.0
         version: 0.15.0
       c8:
-        specifier: ^9.1.0
-        version: 9.1.0
+        specifier: ^10.0.0
+        version: 10.1.2
       execa:
         specifier: ^8.0.1
         version: 8.0.1
@@ -480,8 +480,8 @@ importers:
         specifier: ^0.15.0
         version: 0.15.0
       c8:
-        specifier: ^9.1.0
-        version: 9.1.0
+        specifier: ^10.0.0
+        version: 10.1.2
       dedent:
         specifier: ^1.5.1
         version: 1.5.3
@@ -553,8 +553,8 @@ importers:
         specifier: ^0.15.0
         version: 0.15.0
       c8:
-        specifier: ^9.1.0
-        version: 9.1.0
+        specifier: ^10.0.0
+        version: 10.1.2
       fastify:
         specifier: ^4.26.2
         version: 4.28.0
@@ -711,8 +711,8 @@ importers:
         specifier: ^0.15.0
         version: 0.15.0
       c8:
-        specifier: ^9.1.0
-        version: 9.1.0
+        specifier: ^10.0.0
+        version: 10.1.2
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -829,8 +829,8 @@ importers:
         specifier: ^0.15.0
         version: 0.15.0
       c8:
-        specifier: ^9.1.0
-        version: 9.1.0
+        specifier: ^10.0.0
+        version: 10.1.2
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -1004,8 +1004,8 @@ importers:
         specifier: ^0.15.0
         version: 0.15.0
       c8:
-        specifier: ^9.1.0
-        version: 9.1.0
+        specifier: ^10.0.0
+        version: 10.1.2
       json-schema-to-typescript:
         specifier: ^14.0.0
         version: 14.1.0
@@ -1175,8 +1175,8 @@ importers:
         specifier: ^0.15.0
         version: 0.15.0
       c8:
-        specifier: ^9.1.0
-        version: 9.1.0
+        specifier: ^10.0.0
+        version: 10.1.2
       fastify:
         specifier: ^4.26.2
         version: 4.28.0
@@ -1357,8 +1357,8 @@ importers:
         specifier: ^0.15.0
         version: 0.15.0
       c8:
-        specifier: ^9.1.0
-        version: 9.1.0
+        specifier: ^10.0.0
+        version: 10.1.2
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -1493,8 +1493,8 @@ importers:
         specifier: ^0.15.0
         version: 0.15.0
       c8:
-        specifier: ^9.1.0
-        version: 9.1.0
+        specifier: ^10.0.0
+        version: 10.1.2
       execa:
         specifier: ^8.0.1
         version: 8.0.1
@@ -3206,11 +3206,6 @@ packages:
     peerDependenciesMeta:
       monocart-coverage-reports:
         optional: true
-
-  c8@9.1.0:
-    resolution: {integrity: sha512-mBWcT5iqNir1zIkzSPyI3NCR9EZCVI3WUD+AVO17MVWTSFNyUueXE82qTeampNtTr+ilN/5Ua3j24LgbCKjDVg==}
-    engines: {node: '>=14.14.0'}
-    hasBin: true
 
   call-bind@1.0.7:
     resolution: {integrity: sha512-GHTSNSYICQ7scH7sZ+M2rFopRoLh8t2bLSW6BbgrtLsahOIB5iyAVJf9GjWK3cYTDaMj4XdBpM1cA6pIS0Kv2w==}
@@ -6019,10 +6014,6 @@ packages:
   tdigest@0.1.2:
     resolution: {integrity: sha512-+G0LLgjjo9BZX2MfdvPfH+MKLCrxlXSYec5DaPYP1fe6Iyhf0/fSmJ0bFiZ1F8BT6cGXl2LpltQptzjXKWEkKA==}
 
-  test-exclude@6.0.0:
-    resolution: {integrity: sha512-cAGWPIyOHU6zlmg88jwm7VRyXnMN7iV68OGAbYDk/Mh/xC/pzVPlQtY6ngoIH/5/tciuhGfvESU8GrHrcxD56w==}
-    engines: {node: '>=8'}
-
   test-exclude@7.0.1:
     resolution: {integrity: sha512-pFYqmTw68LXVjeWJMST4+borgQP2AyMNbg1BpZh9LbyhUeNkeaPF9gzfPGUAnSMV3qPYdWUwDIjjCLiSDOl7vg==}
     engines: {node: '>=18'}
@@ -7727,20 +7718,6 @@ snapshots:
       istanbul-lib-report: 3.0.1
       istanbul-reports: 3.1.7
       test-exclude: 7.0.1
-      v8-to-istanbul: 9.2.0
-      yargs: 17.7.2
-      yargs-parser: 21.1.1
-
-  c8@9.1.0:
-    dependencies:
-      '@bcoe/v8-coverage': 0.2.3
-      '@istanbuljs/schema': 0.1.3
-      find-up: 5.0.0
-      foreground-child: 3.2.1
-      istanbul-lib-coverage: 3.2.2
-      istanbul-lib-report: 3.0.1
-      istanbul-reports: 3.1.7
-      test-exclude: 6.0.0
       v8-to-istanbul: 9.2.0
       yargs: 17.7.2
       yargs-parser: 21.1.1
@@ -10981,16 +10958,10 @@ snapshots:
     dependencies:
       bintrees: 1.0.2
 
-  test-exclude@6.0.0:
-    dependencies:
-      '@istanbuljs/schema': 0.1.3
-      glob: 7.2.3
-      minimatch: 3.1.2
-
   test-exclude@7.0.1:
     dependencies:
       '@istanbuljs/schema': 0.1.3
-      glob: 10.4.1
+      glob: 10.4.2
       minimatch: 9.0.4
 
   text-table@0.2.0: {}
