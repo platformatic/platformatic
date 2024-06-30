@@ -5,9 +5,18 @@ const httpProxy = require('@fastify/http-proxy')
 const fp = require('fastify-plugin')
 
 module.exports = fp(async function (app, opts) {
-  for (const { proxy, origin } of opts.services) {
-    if (!proxy) continue
+  for (const service of opts.services) {
+    if (!service.proxy) {
+      // When a service defines no expose config at all
+      // we assume a proxy exposed with a prefix equals to its id
+      if (service.proxy !== false && !service.openapi && !service.graphql) {
+        service.proxy = { prefix: service.id }
+      } else {
+        continue
+      }
+    }
 
+    const { origin, proxy } = service
     const prefix = proxy.prefix.at(-1) === '/'
       ? proxy.prefix.slice(0, -1)
       : proxy.prefix
