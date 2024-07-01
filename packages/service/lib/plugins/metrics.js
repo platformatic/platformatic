@@ -33,6 +33,9 @@ const metricsPlugin = fp(async function (app, opts = {}) {
     },
     routeMetrics: {
       enabled: true,
+      customLabels: {
+        telemetry_id: (req) => req.headers['x-telemetry-id'] ?? 'unknown'
+      },
       overrides: {
         histogram: {
           name: prefix + 'http_request_duration_seconds',

@@ -32,6 +32,8 @@ async function getOpenApiSchema (origin, openapi) {
 async function composeOpenAPI (app, opts) {
   if (!opts.services.some(s => s.openapi)) { return }
 
+  const config = app.platformatic.config
+
   const { services } = opts
 
   const openApiSchemas = []
@@ -40,10 +42,10 @@ async function composeOpenAPI (app, opts) {
   for (const { id, origin, openapi } of services) {
     if (!openapi) continue
 
-    let config = null
+    let openapiConfig = null
     if (openapi.config) {
       try {
-        config = await loadOpenApiConfig(openapi.config)
+        openapiConfig = await loadOpenApiConfig(openapi.config)
       } catch (error) {
         app.log.error(error)
         throw new errors.CouldNotReadOpenAPIConfigError(id)
@@ -58,7 +60,7 @@ async function composeOpenAPI (app, opts) {
       continue
     }
 
-    const schema = modifyOpenApiSchema(app, originSchema, config)
+    const schema = modifyOpenApiSchema(app, originSchema, openapiConfig)
 
     const prefix = openapi.prefix ? prefixWithSlash(openapi.prefix) : ''
     for (const path in schema.paths) {
@@ -69,7 +71,7 @@ async function composeOpenAPI (app, opts) {
       }
     }
 
-    openApiSchemas.push({ id, prefix, schema, originSchema, config })
+    openApiSchemas.push({ id, prefix, schema, originSchema, config: openapiConfig })
   }
 
   app.decorate('openApiSchemas', openApiSchemas)
@@ -117,12 +119,20 @@ async function composeOpenAPI (app, opts) {
             // - request.span: the span of the request to the proxy
             // - request.proxedCallSpan: the span of the request to the proxied service
             request.proxedCallSpan = span
-            return {
+
+            headers = {
               ...headers,
               ...telemetryHeaders,
               'x-forwarded-for': request.ip,
               'x-forwarded-host': request.hostname
             }
+
+            const telemetryId = config.telemetry?.serviceName
+            if (telemetryId) {
+              headers['x-telemetry-id'] = telemetryId
+            }
+
+            return headers
           }
           replyOptions.onResponse = onResponse
           replyOptions.rewriteRequestHeaders = rewriteRequestHeaders
